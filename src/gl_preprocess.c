@@ -45,13 +45,13 @@
 
 #include "z_zone.h"
 #include "doomstat.h"
-#include "gl_opengl.h"
-#include "gl_intern.h"
-#include "gl_struct.h"
 #include "p_maputl.h"
 #include "r_main.h"
 #include "am_map.h"
 #include "lprintf.h"
+#include "gl_opengl.h"
+#include "gl_intern.h"
+#include "gl_struct.h"
 
 static FILE *levelinfo;
 
