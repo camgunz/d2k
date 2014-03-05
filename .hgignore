@@ -1,5 +1,10 @@
 syntax: glob
 
+*.o
+*.swp
+*.swo
+*.a
+*.Po
 ICONS/Makefile.in
 Makefile.in
 VisualC6/Makefile.in
@@ -26,3 +31,26 @@ src/PCSOUND/Makefile.in
 src/POSIX/Makefile.in
 src/SDL/Makefile.in
 src/TEXTSCREEN/Makefile.in
+ICONS/Makefile
+Makefile
+VisualC6/Makefile
+VisualC8/Makefile
+config.h
+config.log
+config.status
+data/Makefile
+data/prboom-plus.wad
+data/rdatawad
+doc/Makefile
+prboom.spec
+src/MAC/Makefile
+src/MUSIC/Makefile
+src/Makefile
+src/PCSOUND/Makefile
+src/POSIX/Makefile
+src/SDL/Makefile
+src/TEXTSCREEN/Makefile
+src/TEXTSCREEN/libtextscreen.a
+src/prboom-plus
+src/prboom-plus-game-server
+stamp-h1
