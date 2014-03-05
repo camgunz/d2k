@@ -320,7 +320,9 @@ If you want to overrite the default, you can set the `SDL_VIDEODRIVER`
 enviromental variable. At a bash prompt, this is as easy as running:
 
     SDL_VIDEODRIVER=fbcon prboom
+
 or
+
     SDL_VIDEODRIVER=svga prboom
 
 Details
