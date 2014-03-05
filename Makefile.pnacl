@@ -64,6 +64,8 @@ LIBS = \
   nacl_io \
   ppapi_gles2 \
   ppapi_simple \
+  ppapi \
+  pthread \
   glibc-compat
 
 SOURCES =                              \
