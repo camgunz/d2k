@@ -38,9 +38,10 @@
 
 #ifdef USE_SHADERS
 
-#include <SDL.h>
-#include <SDL_opengl.h>
 #include <math.h>
+
+#include <SDL.h>
+
 #include "doomstat.h"
 #include "v_video.h"
 #include "gl_opengl.h"

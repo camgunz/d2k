@@ -40,9 +40,6 @@
 #include <direct.h>
 #include <winreg.h>
 #endif
-#ifdef GL_DOOM
-#include <SDL_opengl.h>
-#endif
 #include <string.h>
 #include <math.h>
 

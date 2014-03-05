@@ -38,12 +38,15 @@
 #include "config.h"
 #endif
 
-#define USE_VERTEX_ARRAYS
-//#define USE_VBO
+//#define USE_VERTEX_ARRAYS
+//#define USE_OPENGLES2
+#define USE_VBO
 
 #include <SDL.h>
-#include <SDL_opengl.h>
 
+#ifdef USE_OPENGLES2
+#include <GLES2/gl2.h>
+#else
 #if SDL_VERSION_ATLEAST(1, 3, 0)
 #if defined(__MACOSX__)
 #include <OpenGL/gl.h>	/* Header File For The OpenGL Library */
@@ -51,6 +54,10 @@
 #elif defined(__MACOS__)
 #include <gl.h>		/* Header File For The OpenGL Library */
 #include <glu.h>	/* Header File For The GLU Library */
+#else
+#include <GL/gl.h>	/* Header File For The OpenGL Library */
+#include <GL/glu.h>	/* Header File For The GLU Library */
+#endif
 #else
 #include <GL/gl.h>	/* Header File For The OpenGL Library */
 #include <GL/glu.h>	/* Header File For The GLU Library */

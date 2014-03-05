@@ -68,7 +68,6 @@
 **
 */
 
-#include <SDL_opengl.h>
 #include <math.h>
 #include "v_video.h"
 #include "gl_intern.h"
