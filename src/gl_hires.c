@@ -35,8 +35,6 @@
 #include "config.h"
 #endif
 
-#include "gl_opengl.h"
-
 #ifdef _MSC_VER
 //#include <ddraw.h> /* needed for DirectX's DDSURFACEDESC2 structure definition */
 #include <io.h>
@@ -49,8 +47,9 @@
 #include <SDL_image.h>
 #endif
 #include "doomstat.h"
-#include "v_video.h"
+#include "gl_opengl.h"
 #include "gl_intern.h"
+#include "v_video.h"
 #include "i_system.h"
 #include "w_wad.h"
 #include "lprintf.h"

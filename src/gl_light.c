@@ -43,8 +43,8 @@
 #include "lprintf.h"
 #include "v_video.h"
 #include "r_main.h"
-#include "gl_intern.h"
 #include "gl_opengl.h"
+#include "gl_intern.h"
 #include "e6y.h"
 
 gl_lightmode_t gl_lightmode;

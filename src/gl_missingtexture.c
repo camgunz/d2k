@@ -35,14 +35,14 @@
 #include "config.h"
 #endif
 
-#include "gl_opengl.h"
-
 #include <SDL.h>
 #ifdef HAVE_LIBSDL_IMAGE
 #include <SDL_image.h>
 #endif
+
 #include "doomstat.h"
 #include "v_video.h"
+#include "gl_opengl.h"
 #include "gl_intern.h"
 #include "i_system.h"
 #include "lprintf.h"

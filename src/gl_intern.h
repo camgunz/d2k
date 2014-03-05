@@ -164,8 +164,7 @@ typedef struct
 } GLFlat;
 
 /* GLLoopDef is the struct for one loop. A loop is a list of vertexes
- * for triangles, which is calculated by the gluTesselator in gld_PrecalculateSector
- * and in gld_PreprocessCarvedFlat
+ * for triangles
  */
 typedef struct
 {
@@ -386,6 +385,7 @@ void gld_InitPalettedTextures(void);
 int gld_GetTexDimension(int value);
 void gld_SetTexturePalette(GLenum target);
 void gld_Precache(void);
+void gld_BuildMipmaps(GLsizei w, GLsizei h, GLvoid *p, GLenum wrap);
 
 void SetFrameTextureMode(void);
 

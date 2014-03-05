@@ -194,7 +194,7 @@ extern int gl_ext_texture_filter_anisotropic_default;
 extern int gl_arb_texture_non_power_of_two_default;
 extern int gl_arb_multitexture_default;
 extern int gl_arb_texture_compression_default;
-extern int gl_ext_framebuffer_object_default;
+extern int gl_arb_framebuffer_object_default;
 extern int gl_ext_packed_depth_stencil_default;
 extern int gl_ext_blend_color_default;
 extern int gl_use_stencil_default;
@@ -459,7 +459,7 @@ default_t defaults[] =
    def_bool,ss_stat},
   {"gl_ext_blend_color", {&gl_ext_blend_color_default}, {1},0,1,
    def_bool,ss_stat},
-  {"gl_ext_framebuffer_object", {&gl_ext_framebuffer_object_default}, {1},0,1,
+  {"gl_arb_framebuffer_object", {&gl_arb_framebuffer_object_default}, {1},0,1,
    def_bool,ss_stat},
   {"gl_ext_packed_depth_stencil", {&gl_ext_packed_depth_stencil_default}, {1},0,1,
    def_bool,ss_stat},

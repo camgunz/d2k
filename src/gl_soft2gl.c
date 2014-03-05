@@ -37,7 +37,6 @@
 #endif
 
 #include "gl_opengl.h"
-
 #include "gl_intern.h"
 #include "gl_struct.h"
 #include "i_video.h"

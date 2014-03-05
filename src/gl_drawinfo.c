@@ -35,6 +35,7 @@
 #endif
 
 #include "doomtype.h"
+#include "gl_opengl.h"
 #include "gl_intern.h"
 #include "lprintf.h"
 

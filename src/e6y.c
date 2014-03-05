@@ -77,6 +77,7 @@
 #include "am_map.h"
 #include "hu_tracers.h"
 #ifdef GL_DOOM
+#include "gl_opengl.h"
 #include "gl_struct.h"
 #include "gl_intern.h"
 #endif

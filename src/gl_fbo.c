@@ -39,6 +39,7 @@
 
 #include <SDL.h>
 
+#include "gl_opengl.h"
 #include "gl_intern.h"
 
 #include "i_main.h"
@@ -67,9 +68,9 @@ void gld_InitFBO(void)
 {
   gld_FreeScreenSizeFBO();
 
-  gl_use_motionblur = gl_ext_framebuffer_object && gl_motionblur && gl_ext_blend_color;
+  gl_use_motionblur = gl_arb_framebuffer_object && gl_motionblur && gl_ext_blend_color;
 
-  gl_use_FBO = (gl_ext_framebuffer_object) && (gl_version >= OPENGL_VERSION_1_3) &&
+  gl_use_FBO = (gl_arb_framebuffer_object) && (gl_version >= OPENGL_VERSION_1_3) &&
     (gl_use_motionblur || !gl_boom_colormaps || gl_has_hires);
 
   if (gl_use_FBO)
@@ -83,7 +84,7 @@ void gld_InitFBO(void)
     {
       gld_FreeScreenSizeFBO();
       gl_use_FBO = false;
-      gl_ext_framebuffer_object = false;
+      gl_arb_framebuffer_object = false;
     }
   }
 }
@@ -94,7 +95,7 @@ static dboolean gld_CreateScreenSizeFBO(void)
   GLenum internalFormat;
   dboolean attach_stencil = gl_ext_packed_depth_stencil;// && (gl_has_hires || gl_use_motionblur);
 
-  if (!gl_ext_framebuffer_object)
+  if (!gl_arb_framebuffer_object)
     return false;
 
   GLEXT_glGenFramebuffersEXT(1, &glSceneImageFBOTexID);
@@ -150,7 +151,7 @@ static dboolean gld_CreateScreenSizeFBO(void)
 
 void gld_FreeScreenSizeFBO(void)
 {
-  if (!gl_ext_framebuffer_object)
+  if (!gl_arb_framebuffer_object)
     return;
 
   GLEXT_glDeleteFramebuffersEXT(1, &glSceneImageFBOTexID);

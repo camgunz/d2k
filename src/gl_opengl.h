@@ -41,26 +41,42 @@
 //#define USE_VERTEX_ARRAYS
 //#define USE_OPENGLES2
 #define USE_VBO
+#define USE_SHADERS
 
 #include <SDL.h>
 
+#undef USE_GLU_MIPMAP
+#undef USE_GLU_TESS
+#undef USE_GLU_IMAGESCALE
+
 #ifdef USE_OPENGLES2
 #include <GLES2/gl2.h>
+#undef USE_GLU_MIPMAP
+#undef USE_GLU_TESS
+#undef USE_GLU_IMAGESCALE
 #else
 #if SDL_VERSION_ATLEAST(1, 3, 0)
 #if defined(__MACOSX__)
 #include <OpenGL/gl.h>	/* Header File For The OpenGL Library */
+#if defined(USE_GLU_MIPMAP) || defined(USE_GLU_TESS) || defined(USE_GLU_IMAGESCALE)
 #include <OpenGL/glu.h>	/* Header File For The GLU Library */
+#endif
 #elif defined(__MACOS__)
 #include <gl.h>		/* Header File For The OpenGL Library */
+#if defined(USE_GLU_MIPMAP) || defined(USE_GLU_TESS) || defined(USE_GLU_IMAGESCALE)
 #include <glu.h>	/* Header File For The GLU Library */
-#else
-#include <GL/gl.h>	/* Header File For The OpenGL Library */
-#include <GL/glu.h>	/* Header File For The GLU Library */
 #endif
 #else
 #include <GL/gl.h>	/* Header File For The OpenGL Library */
+#if defined(USE_GLU_MIPMAP) || defined(USE_GLU_TESS) || defined(USE_GLU_IMAGESCALE)
 #include <GL/glu.h>	/* Header File For The GLU Library */
+#endif
+#endif
+#else
+#include <GL/gl.h>	/* Header File For The OpenGL Library */
+#if defined(USE_GLU_MIPMAP) || defined(USE_GLU_TESS) || defined(USE_GLU_IMAGESCALE)
+#include <GL/glu.h>	/* Header File For The GLU Library */
+#endif
 #endif
 #endif
 
@@ -101,7 +117,7 @@ extern dboolean gl_ext_texture_filter_anisotropic;
 extern dboolean gl_arb_texture_non_power_of_two;
 extern dboolean gl_arb_multitexture;
 extern dboolean gl_arb_texture_compression;
-extern dboolean gl_ext_framebuffer_object;
+extern dboolean gl_arb_framebuffer_object;
 extern dboolean gl_ext_packed_depth_stencil;
 extern dboolean gl_ext_blend_color;
 extern dboolean gl_use_stencil;
@@ -122,6 +138,7 @@ extern PFNGLFRAMEBUFFERTEXTURE2DEXTPROC    GLEXT_glFramebufferTexture2DEXT;
 extern PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC  GLEXT_glCheckFramebufferStatusEXT;
 extern PFNGLDELETEFRAMEBUFFERSEXTPROC      GLEXT_glDeleteFramebuffersEXT;
 extern PFNGLDELETERENDERBUFFERSEXTPROC     GLEXT_glDeleteRenderbuffersEXT;
+extern PFNGLGENERATEMIPMAPEXTPROC          GLEXT_glGenerateMipmapEXT;
 
 /* ARB_multitexture command function pointers */
 extern PFNGLACTIVETEXTUREARBPROC           GLEXT_glActiveTextureARB;

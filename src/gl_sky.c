@@ -41,12 +41,11 @@
 #include "config.h"
 #endif
 
-#include "gl_opengl.h"
-
 #include <SDL.h>
 
 #include "doomstat.h"
 #include "v_video.h"
+#include "gl_opengl.h"
 #include "gl_intern.h"
 #include "r_plane.h"
 #include "r_sky.h"

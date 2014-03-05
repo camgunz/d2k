@@ -64,7 +64,7 @@ dboolean gl_ext_texture_filter_anisotropic = false;
 dboolean gl_arb_texture_non_power_of_two = false;
 dboolean gl_arb_multitexture = false;
 dboolean gl_arb_texture_compression = false;
-dboolean gl_ext_framebuffer_object = false;
+dboolean gl_arb_framebuffer_object = false;
 dboolean gl_ext_packed_depth_stencil = false;
 dboolean gl_ext_blend_color = false;
 dboolean gl_use_stencil = false;
@@ -77,7 +77,7 @@ int gl_ext_texture_filter_anisotropic_default;
 int gl_arb_texture_non_power_of_two_default;
 int gl_arb_multitexture_default;
 int gl_arb_texture_compression_default;
-int gl_ext_framebuffer_object_default;
+int gl_arb_framebuffer_object_default;
 int gl_ext_packed_depth_stencil_default;
 int gl_ext_blend_color_default;
 int gl_use_stencil_default;
@@ -102,6 +102,7 @@ PFNGLFRAMEBUFFERTEXTURE2DEXTPROC    GLEXT_glFramebufferTexture2DEXT    = NULL;
 PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC  GLEXT_glCheckFramebufferStatusEXT  = NULL;
 PFNGLDELETEFRAMEBUFFERSEXTPROC      GLEXT_glDeleteFramebuffersEXT      = NULL;
 PFNGLDELETERENDERBUFFERSEXTPROC     GLEXT_glDeleteRenderbuffersEXT     = NULL;
+PFNGLGENERATEMIPMAPEXTPROC          GLEXT_glGenerateMipmapEXT          = NULL;
 
 /* ARB_multitexture command function pointers */
 PFNGLACTIVETEXTUREARBPROC        GLEXT_glActiveTextureARB              = NULL;
@@ -261,9 +262,9 @@ void gld_InitOpenGL(dboolean compatibility_mode)
   //
   // EXT_framebuffer_object
   //
-  gl_ext_framebuffer_object = gl_ext_framebuffer_object_default &&
-    isExtensionSupported("GL_EXT_framebuffer_object") != NULL;
-  if (gl_ext_framebuffer_object)
+  gl_arb_framebuffer_object = gl_arb_framebuffer_object_default &&
+    isExtensionSupported("GL_ARB_framebuffer_object") != NULL;
+  if (gl_arb_framebuffer_object)
   {
     GLEXT_glGenFramebuffersEXT         = SDL_GL_GetProcAddress("glGenFramebuffersEXT");
     GLEXT_glBindFramebufferEXT         = SDL_GL_GetProcAddress("glBindFramebufferEXT");
@@ -275,16 +276,26 @@ void gld_InitOpenGL(dboolean compatibility_mode)
     GLEXT_glCheckFramebufferStatusEXT  = SDL_GL_GetProcAddress("glCheckFramebufferStatusEXT");
     GLEXT_glDeleteFramebuffersEXT      = SDL_GL_GetProcAddress("glDeleteFramebuffersEXT");
     GLEXT_glDeleteRenderbuffersEXT     = SDL_GL_GetProcAddress("glDeleteRenderbuffersEXT");
+    GLEXT_glGenerateMipmapEXT          = SDL_GL_GetProcAddress("glGenerateMipMapEXT");
 
-    if (!GLEXT_glGenFramebuffersEXT || !GLEXT_glBindFramebufferEXT ||
-        !GLEXT_glGenRenderbuffersEXT || !GLEXT_glBindRenderbufferEXT ||
-        !GLEXT_glRenderbufferStorageEXT || !GLEXT_glFramebufferRenderbufferEXT ||
-        !GLEXT_glFramebufferTexture2DEXT || !GLEXT_glCheckFramebufferStatusEXT ||
-        !GLEXT_glDeleteFramebuffersEXT || !GLEXT_glDeleteRenderbuffersEXT)
-      gl_ext_framebuffer_object = false;
+    if (!GLEXT_glGenFramebuffersEXT         ||
+        !GLEXT_glBindFramebufferEXT         ||
+        !GLEXT_glGenRenderbuffersEXT        ||
+        !GLEXT_glBindRenderbufferEXT        ||
+        !GLEXT_glRenderbufferStorageEXT     ||
+        !GLEXT_glFramebufferRenderbufferEXT ||
+        !GLEXT_glFramebufferTexture2DEXT    ||
+        !GLEXT_glCheckFramebufferStatusEXT  ||
+        !GLEXT_glDeleteFramebuffersEXT      ||
+        !GLEXT_glDeleteRenderbuffersEXT     ||
+        !GLEXT_glGenerateMipmapEXT)
+    {
+      gl_arb_framebuffer_object = false;
+    }
   }
-  if (gl_ext_framebuffer_object)
-    lprintf(LO_INFO,"using GL_EXT_framebuffer_object\n");
+
+  if (gl_arb_framebuffer_object)
+    lprintf(LO_INFO,"using GL_ARB_framebuffer_object\n");
 
   gl_ext_packed_depth_stencil = gl_ext_packed_depth_stencil_default &&
     isExtensionSupported("GL_EXT_packed_depth_stencil") != NULL;
@@ -426,7 +437,7 @@ void gld_InitOpenGL(dboolean compatibility_mode)
   // Additional checks
   if (gl_version < OPENGL_VERSION_1_3)
   {
-    gl_ext_framebuffer_object = false;
+    gl_arb_framebuffer_object = false;
     gl_ext_blend_color = false;
   }
 
@@ -436,7 +447,7 @@ void gld_InitOpenGL(dboolean compatibility_mode)
     gl_arb_texture_non_power_of_two = false;
     gl_arb_multitexture = false;
     gl_arb_texture_compression = false;
-    gl_ext_framebuffer_object = false;
+    gl_arb_framebuffer_object = false;
     gl_ext_packed_depth_stencil = false;
     gl_ext_blend_color = false;
     gl_use_stencil = false;

@@ -35,8 +35,6 @@
 #include "config.h"
 #endif
 
-#include "gl_opengl.h"
-
 #include "z_zone.h"
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -64,6 +62,7 @@
 #include "p_tick.h"
 #include "m_bbox.h"
 #include "lprintf.h"
+#include "gl_opengl.h"
 #include "gl_intern.h"
 #include "gl_struct.h"
 #include "p_spec.h"
@@ -840,11 +839,9 @@ int gld_BuildTexture(GLTexture *gltexture, void *data, dboolean readonly, int wi
     goto l_exit;
   }
 
-#ifdef USE_GLU_MIPMAP
   if (gltexture->flags & GLTEXTURE_MIPMAP)
   {
-    gluBuild2DMipmaps(GL_TEXTURE_2D, gl_tex_format,
-      width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    gld_BuildMipmaps(width, height, data, GL_REPEAT);
 
     gld_RecolorMipLevels(data);
 
@@ -854,7 +851,6 @@ int gld_BuildTexture(GLTexture *gltexture, void *data, dboolean readonly, int wi
     goto l_exit;
   }
   else
-#endif // USE_GLU_MIPMAP
   {
 #ifdef USE_GLU_IMAGESCALE
     if ((width != tex_width) || (height != tex_height))
@@ -918,7 +914,7 @@ int gld_BuildTexture(GLTexture *gltexture, void *data, dboolean readonly, int wi
   }
 
 l_exit:
-  if (result)
+  if ((result) && ((gltexture->flags & GLTEXTURE_MIPMAP) == 0))
   {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -1339,6 +1335,55 @@ static void CalcHitsCount(const byte *hitlist, int size, int *hit, int*hitcount)
     if (hitlist[i])
       (*hitcount)++;
   }
+}
+
+void gld_BuildMipmaps(GLsizei w, GLsizei h, GLvoid *p, GLenum wrap)
+{
+  if (gl_arb_framebuffer_object)
+  {
+    printf("Using glGenerateMipmap\n");
+    glEnable(GL_TEXTURE_2D); // Buggy ATI drivers need this.
+    glTexImage2D(
+      GL_TEXTURE_2D, 0, gl_tex_format, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, p
+    );
+    GLEXT_glGenerateMipmapEXT(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  }
+  else if (gl_version >= OPENGL_VERSION_1_4)
+  {
+    printf("Using GL_GENERATE_MIPMAP\n");
+    glEnable(GL_TEXTURE_2D); // Buggy ATI drivers need this.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(
+      GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR
+    );
+    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+  }
+#ifdef USE_GLU_MIPMAP
+  else
+  {
+    printf("Using gluBuild2DMipmaps\n");
+    gluBuild2DMipmaps(
+      GL_TEXTURE_2D, gl_tex_format, w, h, GL_RGBA, GL_UNSIGNED_BYTE, p
+    );
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(
+      GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR
+    );
+  }
+#else
+  else
+  {
+    printf("[!!!] NOT BUILDING MIPMAPS!\n");
+  }
+#endif
 }
 
 void gld_Precache(void)

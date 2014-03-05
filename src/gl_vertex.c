@@ -74,10 +74,9 @@
 #include "config.h"
 #endif
 
-#include "gl_opengl.h"
-
 #include "z_zone.h"
 #include "v_video.h"
+#include "gl_opengl.h"
 #include "gl_intern.h"
 #include "r_main.h"
 

@@ -36,8 +36,6 @@
 #include "config.h"
 #endif
 
-#ifdef USE_SHADERS
-
 #include <math.h>
 
 #include <SDL.h>
@@ -53,6 +51,8 @@
 #include "lprintf.h"
 #include "e6y.h"
 #include "r_things.h"
+
+#ifdef USE_SHADERS
 
 GLShader *sh_main = NULL;
 static GLShader *active_shader = NULL;

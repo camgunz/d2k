@@ -35,9 +35,8 @@
 #include "config.h"
 #endif
 
-#include "gl_opengl.h"
-
 #include "v_video.h"
+#include "gl_opengl.h"
 #include "gl_intern.h"
 #include "m_random.h"
 #include "lprintf.h"
