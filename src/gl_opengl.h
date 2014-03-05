@@ -38,16 +38,12 @@
 #include "config.h"
 #endif
 
-//#define USE_VERTEX_ARRAYS
 //#define USE_OPENGLES2
+#define USE_VERTEX_ARRAYS
 #define USE_VBO
 #define USE_SHADERS
 
 #include <SDL.h>
-
-#undef USE_GLU_MIPMAP
-#undef USE_GLU_TESS
-#undef USE_GLU_IMAGESCALE
 
 #ifdef USE_OPENGLES2
 #include <GLES2/gl2.h>

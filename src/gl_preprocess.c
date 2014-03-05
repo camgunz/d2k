@@ -1104,9 +1104,6 @@ void gld_PreprocessLevel(void)
         gld_num_vertexes * sizeof(flats_vbo[0]),
         flats_vbo, GL_STATIC_DRAW_ARB);
 
-      free(flats_vbo);
-      flats_vbo = NULL;
-
       // bind VBO in order to use
       GLEXT_glBindBufferARB(GL_ARRAY_BUFFER, flats_vbo_id);
     }
