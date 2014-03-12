@@ -554,162 +554,171 @@ ENDIF(WIN32)
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
 
+IF(GCC_OR_CLANG)
+  ADD_DEFINITIONS(-D_GNU_SOURCE)
+ENDIF(GCC_OR_CLANG)
+
 IF(APPLE)
   INCLUDE_DIRECTORIES(src/MAC)
   FILE(GLOB ARCH_SPECIFIC_SOURCES src/MAC/*.m)
   SET(ARCH_SPECIFIC_SOURCES ${ARCH_SPECIFIC_SOURCES}
-    src/PCSOUND/pcsound_sdl.cpp
+    src/PCSOUND/pcsound_sdl.c
   )
 ELSE(APPLE)
   IF(UNIX)
-    INCLUDE_DIRECTORIES(src/POSIX)
-    FILE(GLOB ARCH_SPECIFIC_SOURCES src/POSIX/*.cpp)
     SET(ARCH_SPECIFIC_SOURCES ${ARCH_SPECIFIC_SOURCES}
-      src/PCSOUND/pcsound_linux.cpp
+      src/PCSOUND/pcsound_linux.c
     )
   ELSE(UNIX)
-    SET(ARCH_SPECIFIC_SOURCES src/SDL/SDL_win32_main.cpp)
+    SET(ARCH_SPECIFIC_SOURCES src/SDL/SDL_win32_main.c)
     SET(ARCH_SPECIFIC_SOURCES ${ARCH_SPECIFIC_SOURCES}
-      src/PCSOUND/pcsound_win32.cpp
+      src/PCSOUND/pcsound_win32.c
     )
   ENDIF(UNIX)
 ENDIF(APPLE)
 
 INCLUDE_DIRECTORIES(src/SDL)
 SET(SDL_SOURCES
-  src/SDL/i_joy.cpp
-  src/SDL/i_main.cpp
-  src/SDL/i_network.cpp
-  src/SDL/i_sound.cpp
-  src/SDL/i_sshot.cpp
-  src/SDL/i_system.cpp
-  src/SDL/i_video.cpp
+  src/SDL/i_joy.c
+  src/SDL/i_network.c
+  src/SDL/i_sound.c
+  src/SDL/i_sshot.c
+  src/SDL/i_video.c
 )
 
 INCLUDE_DIRECTORIES(src/PCSOUND)
-SET(PCSOUND_SOURCES src/PCSOUND/pcsound.cpp)
+SET(PCSOUND_SOURCES src/PCSOUND/pcsound.c)
+IF(NOT WIN32)
+  SET(PCSOUND_SOURCES ${PCSOUND_SOURCES} src/PCSOUND/pcsound_sdl)
+ENDIF(NOT WIN32)
 
 INCLUDE_DIRECTORIES(src/textscreen)
 FILE(GLOB TEXTSCREEN_SOURCES src/TEXTSCREEN/*.c)
 
 INCLUDE_DIRECTORIES(src/MUSIC)
-FILE(GLOB MUSIC_SOURCES src/MUSIC/*.cpp)
+FILE(GLOB MUSIC_SOURCES src/MUSIC/*.c)
 
 INCLUDE_DIRECTORIES(src)
 SET(PRBOOM_SOURCES
-  src/am_map.cpp
-  src/d_deh.cpp
-  src/d_ipxgate.cpp
-  src/d_items.cpp
-  src/d_main.cpp
-  src/d_server.cpp
-  src/doomdef.cpp
-  src/doomstat.cpp
-  src/dstrings.cpp
-  src/e6y.cpp
-  src/e6y_launcher.cpp
-  src/f_finale.cpp
-  src/f_wipe.cpp
-  src/g_game.cpp
-  src/g_overflow.cpp
-  src/hu_lib.cpp
-  src/hu_stuff.cpp
-  src/hu_tracers.cpp
-  src/i_capture.cpp
-  src/i_pcsound.cpp
-  src/i_smp.cpp
-  src/info.cpp
-  src/lprintf.cpp
-  src/m_argv.cpp
-  src/m_bbox.cpp
-  src/m_cheat.cpp
-  src/m_menu.cpp
-  src/m_misc.cpp
-  src/m_random.cpp
-  src/md5.cpp
-  src/p_ceilng.cpp
-  src/p_checksum.cpp
-  src/p_doors.cpp
-  src/p_enemy.cpp
-  src/p_floor.cpp
-  src/p_genlin.cpp
-  src/p_inter.cpp
-  src/p_lights.cpp
-  src/p_map.cpp
-  src/p_maputl.cpp
-  src/p_mobj.cpp
-  src/p_plats.cpp
-  src/p_pspr.cpp
-  src/p_saveg.cpp
-  src/p_setup.cpp
-  src/p_sight.cpp
-  src/p_spec.cpp
-  src/p_switch.cpp
-  src/p_telept.cpp
-  src/p_tick.cpp
-  src/p_user.cpp
-  src/r_bsp.cpp
-  src/r_data.cpp
-  src/r_demo.cpp
-  src/r_draw.cpp
-  src/r_filter.cpp
-  src/r_fps.cpp
-  src/r_main.cpp
-  src/r_patch.cpp
-  src/r_plane.cpp
-  src/r_screenmultiply.cpp
-  src/r_segs.cpp
-  src/r_sky.cpp
-  src/r_things.cpp
-  src/s_advsound.cpp
-  src/s_sound.cpp
-  src/sc_man.cpp
-  src/sounds.cpp
-  src/st_lib.cpp
-  src/st_stuff.cpp
-  src/tables.cpp
-  src/v_video.cpp
-  src/version.cpp
-  src/w_wad.cpp
-  src/wi_stuff.cpp
-  src/z_bmalloc.cpp
-  src/z_zone.cpp
+  src/am_map.c
+  src/d_deh.c
+  src/d_items.c
+  src/d_main.c
+  src/doomdef.c
+  src/doomstat.c
+  src/dstrings.c
+  src/e6y.c
+  src/e6y_launcher.c
+  src/f_finale.c
+  src/f_wipe.c
+  src/g_game.c
+  src/g_overflow.c
+  src/hu_lib.c
+  src/hu_stuff.c
+  src/hu_tracers.c
+  src/i_capture.c
+  src/i_pcsound.c
+  src/i_smp.c
+  src/info.c
+  src/m_bbox.c
+  src/m_cheat.c
+  src/m_menu.c
+  src/m_misc.c
+  src/m_random.c
+  src/md5.c
+  src/p_ceilng.c
+  src/p_checksum.c
+  src/p_doors.c
+  src/p_enemy.c
+  src/p_floor.c
+  src/p_genlin.c
+  src/p_inter.c
+  src/p_lights.c
+  src/p_map.c
+  src/p_maputl.c
+  src/p_mobj.c
+  src/p_plats.c
+  src/p_pspr.c
+  src/p_saveg.c
+  src/p_setup.c
+  src/p_sight.c
+  src/p_spec.c
+  src/p_switch.c
+  src/p_telept.c
+  src/p_tick.c
+  src/p_user.c
+  src/r_bsp.c
+  src/r_data.c
+  src/r_demo.c
+  src/r_draw.c
+  src/r_filter.c
+  src/r_fps.c
+  src/r_main.c
+  src/r_patch.c
+  src/r_plane.c
+  src/r_screenmultiply.c
+  src/r_segs.c
+  src/r_sky.c
+  src/r_things.c
+  src/s_advsound.c
+  src/s_sound.c
+  src/sc_man.c
+  src/sounds.c
+  src/st_lib.c
+  src/st_stuff.c
+  src/tables.c
+  src/v_video.c
+  src/version.c
+  src/w_wad.c
+  src/wi_stuff.c
+  src/z_bmalloc.c
+  src/z_zone.c
 )
 
-SET(SERVER_SOURCES src/d_server.cpp)
+SET(SERVER_SOURCES
+  src/POSIX/i_system.c
+  src/SDL/i_network.c
+  src/d_server.c
+)
 
-SET(CLIENT_SOURCES src/d_client.cpp)
+SET(CLIENT_SOURCES
+  src/SDL/i_main.c
+  src/SDL/i_system.c
+  src/d_client.c
+  src/lprintf.c
+  src/m_argv.c
+)
 
 SET(GL_SOURCES
-  src/gl_clipper.cpp
-  src/gl_detail.cpp
-  src/gl_drawinfo.cpp
-  src/gl_fbo.cpp
-  src/gl_gamma.cpp
-  src/gl_hires.cpp
-  src/gl_hqresize.cpp
-  src/gl_light.cpp
-  src/gl_main.cpp
-  src/gl_map.cpp
-  src/gl_missingtexture.cpp
-  src/gl_opengl.cpp
-  src/gl_preprocess.cpp
-  src/gl_shader.cpp
-  src/gl_shadow.cpp
-  src/gl_sky.cpp
-  src/gl_soft2gl.cpp
-  src/gl_texture.cpp
-  src/gl_vertex.cpp
-  src/gl_wipe.cpp
+  src/gl_clipper.c
+  src/gl_detail.c
+  src/gl_drawinfo.c
+  src/gl_fbo.c
+  src/gl_gamma.c
+  src/gl_hires.c
+  src/gl_hqresize.c
+  src/gl_light.c
+  src/gl_main.c
+  src/gl_map.c
+  src/gl_missingtexture.c
+  src/gl_opengl.c
+  src/gl_preprocess.c
+  src/gl_shader.c
+  src/gl_shadow.c
+  src/gl_sky.c
+  src/gl_soft2gl.c
+  src/gl_texture.c
+  src/gl_vertex.c
+  src/gl_wipe.c
 )
 
 IF(HAVE_MMAP)
-  SET(WAD_SOURCES src/w_mmap.cpp)
+  SET(WAD_SOURCES src/w_mmap.c)
 ELSE(HAVE_MMAP)
-  SET(WAD_SOURCES src/w_memcache.cpp)
+  SET(WAD_SOURCES src/w_memcache.c)
 ENDIF(HAVE_MMAP)
 
-SET(MUS2MID_SOURCES src/memio.cpp src/mus2mid.cpp)
+SET(MUS2MID_SOURCES src/memio.c src/mus2mid.c)
 
 SET(PRBOOM_CLIENT_SOURCES
   ${ARCH_SPECIFIC_SOURCES}
@@ -719,6 +728,7 @@ SET(PRBOOM_CLIENT_SOURCES
   ${MUSIC_SOURCES}
   ${PRBOOM_SOURCES}
   ${CLIENT_SOURCES}
+  ${MUS2MID_SOURCES}
   ${WAD_SOURCES}
 )
 
@@ -742,40 +752,26 @@ IF(GL_DOOM)
 ENDIF(GL_DOOM)
 
 ADD_EXECUTABLE(prboom-plus ${PRBOOM_CLIENT_SOURCES})
-ADD_EXECUTABLE(prboom-plus-game-server ${PRBOOM_SERVER_SOURCES})
 
 TARGET_LINK_LIBRARIES(prboom-plus
   ${SDL_LIBRARY}
   ${SDLMIXER_LIBRARY}
   ${SDLNET_LIBRARY}
   ${SDLIMAGE_LIBRARY}
-  ${FLUIDSYNTH_LIBRARY}
-  ${PORTMIDI_LIBRARY}
+  ${FLUIDSYNTH_LIBRARIES}
+  ${PORTMIDI_LIBRARIES}
   ${OGG_LIBRARY}
   ${VORBIS_LIBRARY}
   ${MAD_LIBRARY}
-  ${PCREPOSIX_LIBRARY}
+  ${PCRE_LIBRARY}
   ${PNG_LIBRARY}
   ${ZLIB_LIBRARY}
-)
-
-TARGET_LINK_LIBRARIES(prboom-plus-game-server
-  ${SDL_LIBRARY}
-  ${SDLMIXER_LIBRARY}
-  ${SDLNET_LIBRARY}
-  ${SDLIMAGE_LIBRARY}
-  ${FLUIDSYNTH_LIBRARY}
-  ${PORTMIDI_LIBRARY}
-  ${OGG_LIBRARY}
-  ${VORBIS_LIBRARY}
-  ${MAD_LIBRARY}
-  ${PCREPOSIX_LIBRARY}
-  ${PNG_LIBRARY}
-  ${ZLIB_LIBRARY}
+  ${OPENGL_gl_LIBRARY}
+  ${DUMB_LIBRARY}
 )
 
 INSTALL(
-  TARGETS prboom-plus prboom-plus-game-server
+  TARGETS prboom-plus
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR}
