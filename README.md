@@ -59,21 +59,17 @@ source ports as possible, including:
   * EDF
   * ExtraData
   * 3D floors
+  * 3D MidTex
   * Portals
   * Slopes
   * Polyobjects
   * Ambient sounds
-  * Etc.
-
-In addition, the fork aims to bring PrBoom+ up to the state-of-the-art in terms
-of Doom source ports:
-
   * Support for other ID Tech 1 engines (Heretic, Hexen, etc.)
-  * Add a console
-  * Support advanced binds
+  * Console
+  * Advanced binds
   * Cameras
   * UDMF
-  * ZIP/PK3 support
+  * ZIP/PK3
   * Bots
   * ...and much more
 
@@ -86,7 +82,7 @@ solve this problem, but all leave much to be desired.
 
 A scripting language would be much more powerful here.  The fork will move
 behavior and assets into a scripting language, allowing modders full control
-over the engine.
+over the engine.  It is extremely likely that this language will be Lua.
 
 ---
 

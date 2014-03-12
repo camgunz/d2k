@@ -5,6 +5,9 @@ syntax: glob
 *.swo
 *.a
 *.Po
+features.md
+build/
+cbuild/
 ICONS/Makefile.in
 Makefile.in
 VisualC6/Makefile.in
@@ -20,7 +23,6 @@ autotools/config.sub
 autotools/depcomp
 autotools/install-sh
 autotools/missing
-config.h.in
 configure
 data/Makefile.in
 doc/Makefile.in
