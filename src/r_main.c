@@ -1079,6 +1079,7 @@ void R_ShowStats(void)
 {
   static unsigned int FPS_SavedTick = 0, FPS_FrameCount = 0;
   unsigned int tick = SDL_GetTicks();
+
   FPS_FrameCount++;
   if(tick >= FPS_SavedTick + 1000)
   {

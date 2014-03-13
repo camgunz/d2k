@@ -38,13 +38,17 @@
 
 #include "z_zone.h"
 
+#include <stdint.h>
+#include <errno.h>
 #include <xdiff.h>
 
+#include "doomdef.h"
 #include "doomtype.h"
 #include "lprintf.h"
 #include "m_delta.h"
 
-#define BLKSIZE 2097152
+#define PRINT_DELTA_STATS
+#define BLKSIZE 1024
 
 typedef struct buf_s {
   size_t size;
@@ -54,13 +58,11 @@ typedef struct buf_s {
 
 static int write_delta_data(void *priv, mmbuffer_t *mb, int nbuf);
 
-static size_t delta_count = 0;
-static double avg_delta_size = 0;
+static delta_stats_t delta_stats = {0, 0, 0.0};
 static dboolean xdiff_initialized = false;
 static dboolean have_initial_state = false;
 static buf_t state = { 0, 0, NULL };
 static buf_t cur_delta = { 0, 0, NULL };
-static bdiffparam_t bdp = { 32 };
 static xdemitcb_t ecb = { &cur_delta, write_delta_data };
 
 extern int gametic;
@@ -104,12 +106,10 @@ static int write_delta_data(void *priv, mmbuffer_t *mb, int nbuf) {
 }
 
 static void update_delta_size_average(long size) {
-  delta_count++;
-
-  if (size > avg_delta_size)
-    avg_delta_size += size / (double)delta_count;
-  else if (size < avg_delta_size)
-    avg_delta_size -= size / (double)delta_count;
+  delta_stats.delta_count++;
+  delta_stats.total_delta_size += size;
+  delta_stats.average_delta_size =
+    (double)delta_stats.total_delta_size / delta_stats.delta_count;
 }
 
 static void set_state_buffer(byte *game_state, size_t state_size) {
@@ -142,8 +142,50 @@ static void initialize_xdiff(void) {
   xdl_set_allocator(&malt);
 }
 
+static void build_mmfile(mmfile_t *mmf, byte *data, size_t size) {
+  if ((xdl_init_mmfile(mmf, BLKSIZE, XDL_MMF_ATOMIC)) != 0)
+    I_Error("Error initializing mmfile");
+
+  xdl_write_mmfile(mmf, ((const void *)data), size);
+
+  /*
+   * CG 2014/3/13: Writing to a memory file can set errno to EAGAIN, so clear
+   *               it here
+   */
+  errno = 0;
+}
+
+static dboolean check_mmfile_compact(mmfile_t *mmf, mmfile_t *mmc) {
+  if (!xdl_mmfile_iscompact(mmf)) {
+    printf("Compacting state.\n");
+    if (xdl_mmfile_compact(mmf, mmc, BLKSIZE, XDL_MMF_ATOMIC) < 0) {
+      perror("");
+      I_Error("Error compacting state.\n");
+    }
+    return false;
+  }
+  return true;
+}
+
 dboolean M_RegisterGameState(byte *game_state, size_t state_size) {
-  mmfile_t cur_state, in_state;
+  static int saves = 0;
+
+  mmfile_t cs, ccs, is, cis;
+  mmfile_t *csp = &cs, *isp = &is;
+
+#ifdef PRINT_DELTA_STATS
+  if (++saves == TICRATE) {
+    delta_stats_t *ds = M_GetDeltaStats();
+
+    printf("Delta stats: %lu, %lu, %.2f (%.2f B/s)\n",
+      ds->delta_count,
+      ds->total_delta_size,
+      ds->average_delta_size,
+      ds->average_delta_size * TICRATE * 64
+    );
+    saves = 0;
+  }
+#endif
 
   initialize_xdiff();
 
@@ -153,29 +195,34 @@ dboolean M_RegisterGameState(byte *game_state, size_t state_size) {
     return true;
   }
 
-  if ((xdl_init_mmfile(&cur_state, BLKSIZE, XDL_MMF_ATOMIC)) != 0)
-    I_Error("Error initializing current state");
+  build_mmfile(&cs, state.data, state.size);
+  build_mmfile(&is, game_state, state_size);
 
-  if ((xdl_init_mmfile(&in_state, BLKSIZE, XDL_MMF_ATOMIC)) != 0)
-    I_Error("Error initializing incoming state");
+  if (xdl_mmfile_cmp(&cs, &is) != 0) {
+    if (!check_mmfile_compact(&cs, &ccs))
+      csp = &ccs;
 
-  xdl_write_mmfile(&cur_state, (const void *)state.data, state.size);
-  xdl_write_mmfile(&in_state, (const void *)game_state, state_size);
-  if (xdl_rabdiff(&cur_state, &in_state, &ecb) != 0)
-    I_Error("Error creating delta");
+    if (!check_mmfile_compact(&is, &cis))
+      isp = &cis;
 
-  update_delta_size_average(cur_delta.size);
+    if (xdl_rabdiff(csp, isp, &ecb) != 0) {
+      perror("");
+      I_Error("Error generating delta.");
+    }
 
-  set_state_buffer(game_state, state_size);
+    update_delta_size_average(cur_delta.size);
 
-  xdl_free_mmfile(&cur_state);
-  xdl_free_mmfile(&in_state);
+    set_state_buffer(game_state, state_size);
+  }
+
+  xdl_free_mmfile(&cs);
+  xdl_free_mmfile(&is);
 
   return true;
 }
 
-double M_GetAverageDeltaSize(void) {
-  return avg_delta_size;
+delta_stats_t* M_GetDeltaStats(void) {
+  return &delta_stats;
 }
 
 /* vi: set cindent et ts=2 sw=2: */

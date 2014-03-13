@@ -1020,16 +1020,7 @@ dboolean G_Responder (event_t* ev)
 
 static void G_MakeDelta()
 {
-  static int saves = 0;
   int i;
-
-  if (saves++ == TICRATE) {
-    double ads = M_GetAverageDeltaSize();
-
-    doom_printf("Average save size: %.2f (%.2f) %d.",
-      ads, ads * TICRATE, saves
-    );
-  }
 
   if (save_p == NULL || savebuffer == NULL)
     savebuffer = calloc(1, savegamesize);
@@ -1080,7 +1071,7 @@ static void G_MakeDelta()
   P_ArchiveMap();      // killough 1/22/98: save automap information
   *save_p++ = 0xe6;    // consistancy marker
 
-  M_RegisterGameState(savebuffer, savegamesize);
+  M_RegisterGameState(savebuffer, save_p - savebuffer);
 }
 
 //
@@ -1267,29 +1258,35 @@ void G_Ticker (void)
 
   // do main actions
   switch (gamestate)
-    {
-    case GS_LEVEL:
-      P_Ticker ();
-      P_WalkTicker();
-      mlooky = 0;
-      AM_Ticker();
-      ST_Ticker ();
-      HU_Ticker ();
-      G_MakeDelta();
-      break;
+  {
+  case GS_LEVEL:
+    P_Ticker ();
+    P_WalkTicker();
+    mlooky = 0;
+    AM_Ticker();
+    ST_Ticker ();
+    HU_Ticker ();
+    break;
 
-    case GS_INTERMISSION:
-       WI_Ticker ();
-      break;
+  case GS_INTERMISSION:
+     WI_Ticker ();
+    break;
 
-    case GS_FINALE:
-      F_Ticker ();
-      break;
+  case GS_FINALE:
+    F_Ticker ();
+    break;
 
-    case GS_DEMOSCREEN:
-      D_PageTicker ();
-      break;
-    }
+  case GS_DEMOSCREEN:
+    D_PageTicker ();
+    break;
+  }
+
+  /*
+  if (gamestate == GS_LEVEL || gamestate == GS_INTERMISSION ||
+                               gamestate == GS_FINALE) {
+    G_MakeDelta();
+  }
+  */
 }
 
 //

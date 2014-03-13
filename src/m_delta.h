@@ -35,8 +35,14 @@
 #ifndef M_DELTA__
 #define M_DELTA__
 
-dboolean M_RegisterGameState(byte *game_state, size_t state_size);
-double   M_GetAverageDeltaSize(void);
+typedef struct delta_stats_s {
+  uint64_t delta_count;
+  uint64_t total_delta_size;
+  double average_delta_size;
+} delta_stats_t;
+
+dboolean       M_RegisterGameState(byte *game_state, size_t state_size);
+delta_stats_t* M_GetDeltaStats(void);
 
 #endif
 
