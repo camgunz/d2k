@@ -5,6 +5,7 @@ syntax: glob
 *.swo
 *.a
 *.Po
+*.prof
 features.md
 build/
 cbuild/

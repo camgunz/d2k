@@ -25,33 +25,31 @@
 #===============================================================================
 ################################################# CMake Configuration ##########
 #===============================================================================
-PROJECT("PrBoom+" C CXX)
+PROJECT("PrBoom+" C)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 IF(${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
   MESSAGE(${CMAKE_SOURCE_DIR})
   MESSAGE(${CMAKE_BINARY_DIR})
   MESSAGE(FATAL_ERROR "In-tree Builds are NOT supported.")
-ENDIF(${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
+ENDIF()
 
 # Supported Build Types are:
-#    * Debug (CMAKE_C_FLAGS_DEBUG)
-#    * Release (CMAKE_C_FLAGS_RELEASE)
-#    * RelWithDebInfo (CMAKE_C_FLAGS_RELWITHDEBINFO)
-#    * MinSizeRel (CMAKE_C_FLAGS_MINSIZEREL)
+#  * Debug (CMAKE_C_FLAGS_DEBUG)
+#  * Release (CMAKE_C_FLAGS_RELEASE)
 # If no build type requested, default to Release
 IF(NOT DEFINED CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
-ENDIF(NOT DEFINED CMAKE_BUILD_TYPE)
+ENDIF()
 
 # Default to not building shared libraries.
 IF(NOT DEFINED BUILD_SHARED_LIBS)
   SET(BUILD_SHARED_LIBS OFF)
-ENDIF(NOT DEFINED BUILD_SHARED_LIBS)
+ENDIF()
 
 # Default to not installing any sub-projects.
 IF(NOT DEFINED SKIP_INSTALL_ALL)
   SET(SKIP_INSTALL_ALL ON)
-ENDIF(NOT DEFINED SKIP_INSTALL_ALL)
+ENDIF()
 
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
@@ -60,7 +58,6 @@ INCLUDE(CheckLibraryExists)
 INCLUDE(CheckTypeSize)
 INCLUDE(CheckCSourceCompiles)
 INCLUDE(CheckCCompilerFlag)
-INCLUDE(CheckCXXCompilerFlag)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
@@ -84,7 +81,10 @@ OPTION(
 )
 OPTION(PROFILE "Enable profiling" FALSE)
 OPTION(GL_DOOM "Build with OpenGL support" TRUE)
+###
+# TODO: How to make these dependent upon USE_GLU?
 # OPTION(USE_GLU "Use the OpenGL Utility Library (libGLU)" FALSE)
+###
 OPTION(USE_GLU_IMAGESCALE "Use gluImageScale" FALSE)
 OPTION(USE_GLU_MIPMAP "Use gluBuild2DMipmaps" FALSE)
 OPTION(USE_GLU_TESS "Use gluTesselator" FALSE)
@@ -108,9 +108,9 @@ OPTION(
 
 SET(VERSION "2.5.1.4-test")
 
-IF (NOT DOOMWADDIR)
+IF(NOT DOOMWADDIR)
   SET(DOOMWADDIR "${CMAKE_INSTALL_PREFIX}/share/games/doom")
-ENDIF (NOT DOOMWADDIR)
+ENDIF()
 
 #===============================================================================
 ##################################################### Platform Checks ##########
@@ -150,52 +150,52 @@ CHECK_C_SOURCE_COMPILES(
 
 IF(HAVE_ATTRIBUTE_PACKED)
   SET(PACKEDATTR "__attribute__((packed))")
-ELSE(HAVE_ATTRIBUTE_PACKED)
+ELSE()
   MESSAGE(FATAL_ERROR "Can't figure out how to pack structs with your compiler")
-ENDIF(HAVE_ATTRIBUTE_PACKED)
+ENDIF()
 
 IF(NOT HAVE_IPv6)
   IF(NOT HAVE_NETINET_IN_H)
     MESSAGE(FATAL_ERROR "Bad networking headers")
-  ENDIF(NOT HAVE_NETINET_IN_H)
+  ENDIF()
   SET(CMAKE_EXTRA_INCLUDE_FILES netinet/in.h)
   CHECK_TYPE_SIZE("struct sockaddr_in6" STRUCT_SOCKADDR_IN6_SIZE)
   SET(CMAKE_EXTRA_INCLUDE_FILES)
   IF(NOT STRUCT_SOCKADDR_IN6_SIZE EQUAL 0)
     SET(HAVE_IPv6 TRUE)
     MESSAGE(STATUS "Found IPv6 support")
-  ELSE(NOT STRUCT_SOCKADDR_IN6_SIZE EQUAL 0)
+  ELSE()
     MESSAGE(WARNING "Missing IPv6 support")
-  ENDIF(NOT STRUCT_SOCKADDR_IN6_SIZE EQUAL 0)
-ENDIF(NOT HAVE_IPv6)
+  ENDIF()
+ENDIF()
 
 IF(HAVE_STRICMP)
   SET(stricmp stricmp)
-ELSE(HAVE_STRICMP)
+ELSE()
   IF(HAVE__STRICMP)
     SET(stricmp _stricmp)
-  ELSE(HAVE__STRICMP)
+  ELSE()
     IF(HAVE_STRCASECMP)
       SET(stricmp strcasecmp)
-    ELSE(HAVE_STRCASECMP)
+    ELSE()
       MESSAGE(FATAL_ERROR "Neither _stricmp, stricmp, or strcasecmp found")
-    ENDIF(HAVE_STRCASECMP)
-  ENDIF(HAVE__STRICMP)
-ENDIF(HAVE_STRICMP)
+    ENDIF()
+  ENDIF()
+ENDIF()
 
 IF(HAVE_STRNICMP)
   SET(strnicmp strnicmp)
-ELSE(HAVE_STRNICMP)
+ELSE()
   IF(HAVE__STRNICMP)
     SET(strnicmp _strnicmp)
-  ELSE(HAVE__STRNICMP)
+  ELSE()
     IF(HAVE_STRNCASECMP)
       SET(strnicmp strncasecmp)
-    ELSE(HAVE_STRNCASECMP)
+    ELSE()
       MESSAGE(FATAL_ERROR "Neither _strnicmp, strnicmp, or strncasecmp found")
-    ENDIF(HAVE_STRNCASECMP)
-  ENDIF(HAVE__STRNICMP)
-ENDIF(HAVE_STRNICMP)
+    ENDIF()
+  ENDIF()
+ENDIF()
 
 #===============================================================================
 ########################################################### Functions ##########
@@ -204,21 +204,15 @@ FUNCTION(TRY_C_COMPILER_FLAG flag name)
   CHECK_C_COMPILER_FLAG("${flag}" ${name})
   IF(${name})
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${flag}" PARENT_SCOPE)
-  ENDIF(${name})
+  ENDIF()
 ENDFUNCTION(TRY_C_COMPILER_FLAG flag name)
-
-FUNCTION(TRY_CXX_COMPILER_FLAG flag name)
-   CHECK_CXX_COMPILER_FLAG(${flag} ${name})
-   IF(${name})
-      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flag}" PARENT_SCOPE)
-   ENDIF(${name})
-ENDFUNCTION(TRY_CXX_COMPILER_FLAG flag name)
 
 #===============================================================================
 ################################################# Set Package Details ##########
 #===============================================================================
 SET(CMAKE_MFC_FLAG 2)
 SET(CMAKE_INSTALL_MFC_LIBRARIES 1)
+
 INCLUDE(InstallRequiredSystemLibraries)
 SET(PACKAGE "PrBoom-Plus")
 SET(PACKAGE_NAME "PrBoom-Plus")
@@ -227,6 +221,7 @@ SET(PACKAGE_VERSION "2.5.1.4")
 SET(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 SET(PACKAGE_TARNAME "prboom-plus")
 SET(PACKAGE_URL "http://prboom-plus.sourceforge.net")
+
 SET(CPACK_GENERATOR "DEB;RPM;STGZ;ZIP")
 SET(CPACK_PACKAGE_VENDOR "Team TotalTrash")
 SET(CPACK_PACKAGE_CONTACT "Team TotalTrash <ladna@totaltrash.org>")
@@ -240,23 +235,28 @@ SET(
 SET(CPACK_DEBIAN_PACKAGE_SECTION "games")
 SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.11.0), libgcc1 (>= 1:4.4.3), libsdl1.2debian (>=1.2.14), libsdl-mixer1.2 (>=1.2.8), libsdl-net1.2 (>=1.2.7), bash")
 SET(CPACK_DEBIAN_PACKAGE_RECOMMENDS "freedoom, game-data-packager")
+
 SET(BUILD_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
+
 IF(${CMAKE_SYSTEM_PROCESSOR} MATCHES "i686")
-        SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386")
-        SET(CPACK_RPM_PACKAGE_ARCHITECTURE "i686" )
-        SET(BUILD_ARCH "${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
-ENDIF(${CMAKE_SYSTEM_PROCESSOR} MATCHES "i686")
+  SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386")
+  SET(CPACK_RPM_PACKAGE_ARCHITECTURE "i686" )
+  SET(BUILD_ARCH "${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
+ENDIF()
+
 IF(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
-        SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
-        SET(CPACK_RPM_PACKAGE_ARCHITECTURE "x86_64" )
-        SET(BUILD_ARCH "${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
-ENDIF(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+  SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+  SET(CPACK_RPM_PACKAGE_ARCHITECTURE "x86_64" )
+  SET(BUILD_ARCH "${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
+ENDIF()
+
 IF(WIN32)
   SET(BUILD_ARCH "windows-x86")
   IF("$ENV{PROCESSOR_ARCHITECTURE}" STREQUAL "AMD64")
     SET(BUILD_ARCH "windows-$ENV{PROCESSOR_ARCHITECTURE}")
-  ENDIF("$ENV{PROCESSOR_ARCHITECTURE}" STREQUAL "AMD64")
-ENDIF(WIN32)
+  ENDIF()
+ENDIF()
+
 SET(
   CPACK_PACKAGE_FILE_NAME "prboom-plus-${CPACK_PACKAGE_VERSION}_${BUILD_ARCH}"
 )
@@ -265,40 +265,26 @@ SET(CPACK_RPM_PACKAGE_NAME "${CPACK_PACKAGE_FILE_NAME}")
 
 SET(BIN_DIR bin)
 SET(SHARE_DIR share/eternity)
+
 IF(WIN32)
   SET(LIB_DIR ${BIN_DIR})
   SET(SHARE_DIR ${BIN_DIR})
-ELSE(WIN32)
+ELSE()
   SET(LIB_DIR lib)
-ENDIF(WIN32)
+ENDIF()
 INCLUDE(CPack)
 
-IF(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR
-   CMAKE_C_COMPILER_ID STREQUAL "Clang")
+IF(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
   SET(GCC_OR_CLANG TRUE)
-ELSE(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR
-     CMAKE_C_COMPILER_ID STREQUAL "Clang")
+ELSE()
   SET(GCC_OR_CLANG FALSE)
-ENDIF(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR
-      CMAKE_C_COMPILER_ID STREQUAL "Clang")
-
-IF(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
-   CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  SET(GXX_OR_CLANG TRUE)
-ELSE(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
-     CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  SET(GXX_OR_CLANG FALSE)
-ENDIF(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
-      CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-IF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    TRY_CXX_COMPILER_FLAG(-ferror-limit=8 FLAG_CXX_ERROR_LIMIT)
-ENDIF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+ENDIF()
 
 #===============================================================================
 ################################################## Compiler: Features ##########
 #===============================================================================
-IF(GXX_OR_CLANG)
-  TRY_CXX_COMPILER_FLAG(-std=c++11 FLAG_CXX_stdcxx11)
+IF(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  TRY_C_COMPILER_FLAG(--std=c99 FLAG_C_stdc99)
 ENDIF()
 
 #===============================================================================
@@ -308,22 +294,11 @@ IF(GCC_OR_CLANG)
   TRY_C_COMPILER_FLAG(-Wall   FLAG_C_Wall)
 ENDIF()
 
-IF(GXX_OR_CLANG)
-  TRY_CXX_COMPILER_FLAG(-Wall   FLAG_CXX_Wall)
-ENDIF()
-
 IF(CMAKE_C_COMPILER_ID STREQUAL "Intel")
   TRY_C_COMPILER_FLAG(-Wall              FLAG_C_Wall)
   TRY_C_COMPILER_FLAG(-Wcheck            FLAG_C_Wcheck)
   TRY_C_COMPILER_FLAG(-Wp64              FLAG_C_Wp64)
   TRY_C_COMPILER_FLAG(-Wshorten-64-to-32 FLAG_C_Wshorten_64_to_32)
-ENDIF()
-
-IF(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-  TRY_CXX_COMPILER_FLAG(-Wall              FLAG_CXX_Wall)
-  TRY_CXX_COMPILER_FLAG(-Wcheck            FLAG_CXX_Wcheck)
-  TRY_CXX_COMPILER_FLAG(-Wp64              FLAG_CXX_Wp64)
-  TRY_CXX_COMPILER_FLAG(-Wshorten-64-to-32 FLAG_CXX_Wshorten_64_to_32)
 ENDIF()
 
 IF(MSVC)
@@ -335,29 +310,25 @@ ENDIF()
 ################################################# Compiler: Hardening ##########
 #===============================================================================
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  IF(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    TRY_C_COMPILER_FLAG(-pg FLAG_C_profile)
+  ENDIF()
+  IF(GCC_OR_CLANG)
+    TRY_C_COMPILER_FLAG(-g FLAG_C_debug)
+  ENDIF()
+ELSE()
   IF(GCC_OR_CLANG)
     TRY_C_COMPILER_FLAG(-fstack-protector FLAG_C_fstack_protector)
 
     IF(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-      TRY_C_COMPILER_FLAG(-fPIC              FLAG_C_fPIC)
-      TRY_C_COMPILER_FLAG(-pie               FLAG_C_pie)
-      TRY_C_COMPILER_FLAG(-Wl,-z,relro       FLAG_C_Wl_z_relro)
-      TRY_C_COMPILER_FLAG(-Wl,-z,now         FLAG_C_Wl_z_now)
-      TRY_C_COMPILER_FLAG(-Wl,--as-needed    FLAG_C_Wl_as_needed)
-      TRY_C_COMPILER_FLAG(-Wl,-z,noexecstack FLAG_C_Wl_z_noexecstack)
-    ENDIF()
-  ENDIF()
-
-  IF(GXX_OR_CLANG)
-    TRY_CXX_COMPILER_FLAG(-fstack-protector FLAG_CXX_fstack_protector)
-
-    IF(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-      TRY_CXX_COMPILER_FLAG(-fPIC              FLAG_CXX_fPIC)
-      TRY_CXX_COMPILER_FLAG(-pie               FLAG_CXX_pie)
-      TRY_CXX_COMPILER_FLAG(-Wl,-z,relro       FLAG_CXX_Wl_z_relro)
-      TRY_CXX_COMPILER_FLAG(-Wl,-z,now         FLAG_CXX_Wl_z_now)
-      TRY_CXX_COMPILER_FLAG(-Wl,--as-needed    FLAG_CXX_Wl_as_needed)
-      TRY_CXX_COMPILER_FLAG(-Wl,-z,noexecstack FLAG_CXX_Wl_z_noexecstack)
+    ###
+    #   TRY_C_COMPILER_FLAG(-fPIC              FLAG_C_fPIC)
+    #   TRY_C_COMPILER_FLAG(-pie               FLAG_C_pie)
+    #   TRY_C_COMPILER_FLAG(-Wl,-z,relro       FLAG_C_Wl_z_relro)
+    #   TRY_C_COMPILER_FLAG(-Wl,-z,now         FLAG_C_Wl_z_now)
+    #   TRY_C_COMPILER_FLAG(-Wl,--as-needed    FLAG_C_Wl_as_needed)
+    #   TRY_C_COMPILER_FLAG(-Wl,-z,noexecstack FLAG_C_Wl_z_noexecstack)
+    ###
     ENDIF()
   ENDIF()
 
@@ -371,19 +342,8 @@ IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
     TRY_C_COMPILER_FLAG(-Wl,-z,noexecstack FLAG_C_Wl_z_noexecstack)
   ENDIF()
 
-  IF(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-    TRY_CXX_COMPILER_FLAG(-fstack-protector  FLAG_CXX_fstackprotector)
-    TRY_CXX_COMPILER_FLAG(-fPIC              FLAG_CXX_fPIC)
-    TRY_CXX_COMPILER_FLAG(-pie               FLAG_CXX_pie)
-    TRY_CXX_COMPILER_FLAG(-Wl,-z,relro       FLAG_CXX_Wl_z_relro)
-    TRY_CXX_COMPILER_FLAG(-Wl,-z,now         FLAG_CXX_Wl_z_now)
-    TRY_CXX_COMPILER_FLAG(-Wl,--as-needed    FLAG_CXX_Wl_as_needed)
-    TRY_CXX_COMPILER_FLAG(-Wl,-z,noexecstack FLAG_CXX_Wl_z_noexecstack)
-  ENDIF()
-
   IF(MSVC)
     TRY_C_COMPILER_FLAG(/GS FLAG_C_GS)
-    TRY_CXX_COMPILER_FLAG(/GS FLAG_CXX_GS)
   ENDIF()
 ENDIF()
 
@@ -391,12 +351,8 @@ ENDIF()
 ############################################## Compiler: Optimization ##########
 #===============================================================================
 IF(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel" OR CMAKE_BUILD_TYPE STREQUAL "Release")
-  IF(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  IF(GCC_OR_CLANG)
     TRY_C_COMPILER_FLAG(-fomit-frame-pointer FLAG_C_fomit_frame_pointer)
-  ENDIF()
-
-  IF(GXX_OR_CLANG)
-    TRY_CXX_COMPILER_FLAG(-fomit-frame-pointer FLAG_CXX_fomit_frame_pointer)
   ENDIF()
 
   IF(CMAKE_C_COMPILER_ID STREQUAL "Intel")
@@ -404,10 +360,6 @@ IF(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel" OR CMAKE_BUILD_TYPE STREQUAL "Release"
     TRY_C_COMPILER_FLAG(-ipo                 FLAG_C_ipo)
   ENDIF()
 
-  IF(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-    TRY_CXX_COMPILER_FLAG(-fomit-frame-pointer FLAG_CXX_fomit_frame_pointer)
-    TRY_CXX_COMPILER_FLAG(-ipo                 FLAG_CXX_ipo)
-  ENDIF()
 ENDIF()
 
 #===============================================================================
@@ -423,98 +375,116 @@ FIND_PACKAGE(SDL_net)
 IF(SDLNET_FOUND)
   INCLUDE_DIRECTORIES(${SDLNET_INCLUDE_DIR})
   SET(HAVE_LIBSDL_NET TRUE)
-ELSE(SDLNET_FOUND)
+ELSE()
   MESSAGE(WARNING "SDL_net not found")
   SET(HAVE_LIBSDL_NET FALSE)
-ENDIF(SDLNET_FOUND)
+ENDIF()
 
 FIND_PACKAGE(SDL_image)
 IF(SDLIMAGE_FOUND)
   INCLUDE_DIRECTORIES(${SDLIMAGE_INCLUDE_DIR})
   SET(HAVE_LIBSDL_IMAGE TRUE)
-ELSE(SDLIMAGE_FOUND)
+ELSE()
   MESSAGE(WARNING "SDL_image not found")
   SET(HAVE_LIBSDL_IMAGE FALSE)
-ENDIF(SDLIMAGE_FOUND)
+ENDIF()
 
 FIND_PACKAGE(SDL_mixer)
 IF(SDLMIXER_FOUND)
   INCLUDE_DIRECTORIES(${SDLMIXER_INCLUDE_DIR})
   SET(HAVE_LIBSDL_MIXER TRUE)
-ELSE(SDLMIXER_FOUND)
+ELSE()
   MESSAGE(WARNING "SDL_mixer not found")
   SET(HAVE_LIBSDL_MIXER FALSE)
-ENDIF(SDLMIXER_FOUND)
+ENDIF()
 
 FIND_PACKAGE(FluidSynth)
 IF(FLUIDSYNTH_FOUND)
   INCLUDE_DIRECTORIES(${FLUIDSYNTH_INCLUDE_DIR})
   SET(HAVE_LIBFLUIDSYNTH TRUE)
-ELSE(FLUIDSYNTH_FOUND)
+ELSE()
   MESSAGE(WARNING "FluidSynth not found")
-ENDIF(FLUIDSYNTH_FOUND)
+ENDIF()
 
 FIND_PACKAGE(PortMidi)
 IF(PORTMIDI_FOUND)
   INCLUDE_DIRECTORIES(${PORTMIDI_INCLUDE_DIR})
   SET(HAVE_LIBPORTMIDI TRUE)
-ELSE(PORTMIDI_FOUND)
+ELSE()
   MESSAGE(WARNING "PortMidi not found")
-ENDIF(PORTMIDI_FOUND)
+ENDIF()
 
 FIND_PACKAGE(Ogg)
 IF(OGG_FOUND)
   INCLUDE_DIRECTORIES(${OGG_INCLUDE_DIR})
-ELSE(OGG_FOUND)
+ELSE()
   MESSAGE(WARNING "Ogg not found")
-ENDIF(OGG_FOUND)
+ENDIF()
 
 FIND_PACKAGE(Vorbis)
 IF(VORBIS_FOUND)
   INCLUDE_DIRECTORIES(${VORBIS_INCLUDE_DIR})
   SET(HAVE_LIBVORBISFILE TRUE)
-ELSE(VORBIS_FOUND)
+ELSE()
   MESSAGE(WARNING "Vorbis not found")
-ENDIF(VORBIS_FOUND)
+ENDIF()
 
 FIND_PACKAGE(Dumb)
 IF(DUMB_FOUND)
   INCLUDE_DIRECTORIES(${DUMB_INCLUDE_DIR})
   SET(HAVE_LIBDUMB TRUE)
-ELSE(DUMB_FOUND)
+ELSE()
   MESSAGE(WARNING "Dumb not found")
-ENDIF(DUMB_FOUND)
+ENDIF()
 
 FIND_PACKAGE(Mad)
 IF(MAD_FOUND)
   INCLUDE_DIRECTORIES(${MAD_INCLUDE_DIR})
   SET(HAVE_LIBMAD TRUE)
-ELSE(MAD_FOUND)
+ELSE()
   MESSAGE(WARNING "Mad not found")
-ENDIF(MAD_FOUND)
+ENDIF()
 
 FIND_PACKAGE(PCREPOSIX)
 IF(PCRE_FOUND)
   INCLUDE_DIRECTORIES(${PCRE_INCLUDE_DIR})
   SET(HAVE_LIBPCREPOSIX TRUE)
-ELSE(PCRE_FOUND)
+ELSE()
   MESSAGE(WARNING "PCRE not found")
-ENDIF(PCRE_FOUND)
+ENDIF()
 
 FIND_PACKAGE(PNG)
 IF(PNG_FOUND)
   INCLUDE_DIRECTORIES(${PNG_INCLUDE_DIR})
   SET(HAVE_LIBPNG TRUE)
-ELSE(PNG_FOUND)
+ELSE()
   MESSAGE(WARNING "PNG not found")
-ENDIF(PNG_FOUND)
+ENDIF()
+
+FIND_PACKAGE(XDiff)
+IF(XDIFF_FOUND)
+  INCLUDE_DIRECTORIES(${XDIFF_INCLUDE_DIR})
+ELSE()
+  MESSAGE(FATAL "XDiff not found")
+ENDIF()
 
 FIND_PACKAGE(ZLIB)
 IF(ZLIB_FOUND)
   INCLUDE_DIRECTORIES(${ZLIB_INCLUDE_DIR})
-ELSE(ZLIB_FOUND)
+ELSE()
   MESSAGE(WARNING "zlib not found")
-ENDIF(ZLIB_FOUND)
+ENDIF()
+
+MARK_AS_ADVANCED(GPERF_LIBRARY)
+IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  MESSAGE(STATUS "Looking for Google Performance Tools")
+  FIND_LIBRARY(GPERF_LIBRARIES profiler HINTS $ENV{GPERF_DIR})
+  IF(${GPERF_LIBRARIES} STREQUAL "GPERF_LIBRARIES-NOTFOUND")
+    MESSAGE(WARNING "Google Performance Tools not found")
+  ELSE()
+    MESSAGE(STATUS "Google Performance Tools found: ${GPERF_LIBRARIES}")
+  ENDIF()
+ENDIF()
 
 CONFIGURE_FILE(
   ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
@@ -535,7 +505,7 @@ IF(WIN32)
     PATHS
   )
   FILE(GLOB SDL_SUPPORT_LIBS ${SDL_SUPPORT_LIBS_DIR}/*.dll)
-ENDIF(WIN32)
+ENDIF()
 
 #===============================================================================
 ################################################### Set Build Targets ##########
@@ -545,7 +515,7 @@ ENDIF(WIN32)
 ## the actual installation of those support libraries.
 IF(WIN32)
   INSTALL(PROGRAMS ${SDL_SUPPORT_LIBS} DESTINATION ${LIB_DIR})
-ENDIF(WIN32)
+ENDIF()
 
 #===============================================================================
 ################################################## Set Project Source ##########
@@ -556,7 +526,7 @@ INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
 
 IF(GCC_OR_CLANG)
   ADD_DEFINITIONS(-D_GNU_SOURCE)
-ENDIF(GCC_OR_CLANG)
+ENDIF()
 
 IF(APPLE)
   INCLUDE_DIRECTORIES(src/MAC)
@@ -564,18 +534,18 @@ IF(APPLE)
   SET(ARCH_SPECIFIC_SOURCES ${ARCH_SPECIFIC_SOURCES}
     src/PCSOUND/pcsound_sdl.c
   )
-ELSE(APPLE)
+ELSE()
   IF(UNIX)
     SET(ARCH_SPECIFIC_SOURCES ${ARCH_SPECIFIC_SOURCES}
       src/PCSOUND/pcsound_linux.c
     )
-  ELSE(UNIX)
+  ELSE()
     SET(ARCH_SPECIFIC_SOURCES src/SDL/SDL_win32_main.c)
     SET(ARCH_SPECIFIC_SOURCES ${ARCH_SPECIFIC_SOURCES}
       src/PCSOUND/pcsound_win32.c
     )
-  ENDIF(UNIX)
-ENDIF(APPLE)
+  ENDIF()
+ENDIF()
 
 INCLUDE_DIRECTORIES(src/SDL)
 SET(SDL_SOURCES
@@ -590,7 +560,7 @@ INCLUDE_DIRECTORIES(src/PCSOUND)
 SET(PCSOUND_SOURCES src/PCSOUND/pcsound.c)
 IF(NOT WIN32)
   SET(PCSOUND_SOURCES ${PCSOUND_SOURCES} src/PCSOUND/pcsound_sdl)
-ENDIF(NOT WIN32)
+ENDIF()
 
 INCLUDE_DIRECTORIES(src/textscreen)
 FILE(GLOB TEXTSCREEN_SOURCES src/TEXTSCREEN/*.c)
@@ -622,6 +592,7 @@ SET(PRBOOM_SOURCES
   src/info.c
   src/m_bbox.c
   src/m_cheat.c
+  src/m_delta.c
   src/m_menu.c
   src/m_misc.c
   src/m_random.c
@@ -714,9 +685,9 @@ SET(GL_SOURCES
 
 IF(HAVE_MMAP)
   SET(WAD_SOURCES src/w_mmap.c)
-ELSE(HAVE_MMAP)
+ELSE()
   SET(WAD_SOURCES src/w_memcache.c)
-ENDIF(HAVE_MMAP)
+ENDIF()
 
 SET(MUS2MID_SOURCES src/memio.c src/mus2mid.c)
 
@@ -734,7 +705,7 @@ SET(PRBOOM_CLIENT_SOURCES
 
 IF(GL_DOOM)
   SET(PRBOOM_CLIENT_SOURCES ${PRBOOM_CLIENT_SOURCES} ${GL_SOURCES})
-ENDIF(GL_DOOM)
+ENDIF()
 
 SET(PRBOOM_SERVER_SOURCES
   ${ARCH_SPECIFIC_SOURCES}
@@ -749,7 +720,7 @@ SET(PRBOOM_SERVER_SOURCES
 
 IF(GL_DOOM)
   SET(PRBOOM_CLIENT_SOURCES ${PRBOOM_CLIENT_SOURCES} ${GL_SOURCES})
-ENDIF(GL_DOOM)
+ENDIF()
 
 ADD_EXECUTABLE(prboom-plus ${PRBOOM_CLIENT_SOURCES})
 
@@ -758,16 +729,18 @@ TARGET_LINK_LIBRARIES(prboom-plus
   ${SDLMIXER_LIBRARY}
   ${SDLNET_LIBRARY}
   ${SDLIMAGE_LIBRARY}
+  ${OPENGL_gl_LIBRARY}
   ${FLUIDSYNTH_LIBRARIES}
   ${PORTMIDI_LIBRARIES}
-  ${OGG_LIBRARY}
-  ${VORBIS_LIBRARY}
-  ${MAD_LIBRARY}
-  ${PCRE_LIBRARY}
-  ${PNG_LIBRARY}
-  ${ZLIB_LIBRARY}
-  ${OPENGL_gl_LIBRARY}
-  ${DUMB_LIBRARY}
+  ${OGG_LIBRARIES}
+  ${VORBIS_LIBRARIES}
+  ${MAD_LIBRARIES}
+  ${DUMB_LIBRARIES}
+  ${PCRE_LIBRARIES}
+  ${PNG_LIBRARIES}
+  ${XDIFF_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+  ${GPERF_LIBRARIES}
 )
 
 INSTALL(
