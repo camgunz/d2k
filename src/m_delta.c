@@ -38,23 +38,18 @@
 
 #include "z_zone.h"
 
-#include <stdint.h>
-#include <errno.h>
 #include <xdiff.h>
 
 #include "doomdef.h"
 #include "doomtype.h"
 #include "lprintf.h"
+#include "m_buf.h"
 #include "m_delta.h"
+
+extern int gametic;
 
 #define PRINT_DELTA_STATS
 #define BLKSIZE 1024
-
-typedef struct buf_s {
-  size_t size;
-  size_t alloc;
-  byte *data;
-} buf_t;
 
 static int write_delta_data(void *priv, mmbuffer_t *mb, int nbuf);
 
@@ -64,8 +59,6 @@ static dboolean have_initial_state = false;
 static buf_t state = { 0, 0, NULL };
 static buf_t cur_delta = { 0, 0, NULL };
 static xdemitcb_t ecb = { &cur_delta, write_delta_data };
-
-extern int gametic;
 
 static void* wrap_malloc(void *priv, unsigned int size) {
   return malloc(size);
@@ -81,26 +74,16 @@ static void* wrap_realloc(void *priv, void *ptr, unsigned int size) {
 
 static int write_delta_data(void *priv, mmbuffer_t *mb, int nbuf) {
   int i;
-  byte *delta_p;
+  size_t delta_size;
   buf_t *delta = (buf_t *)priv;
 
-  for (delta->size = 0, i = 0; i < nbuf; i++)
-    delta->size += mb[i].size;
+  for (delta_size = 0, i = 0; i < nbuf; i++)
+    delta_size += mb[i].size;
 
-  if (delta->size > delta->alloc) {
-    delta->alloc = delta->size;
-    delta->data = realloc(delta->data, delta->alloc);
+  M_BufferEnsureTotalSize(delta, delta_size);
 
-    if (delta->data == NULL) {
-      perror("Allocating delta data failed");
-      return -1;
-    }
-  }
-
-  for (delta_p = delta->data, i = 0; i < nbuf; i++) {
-    memcpy(delta_p, mb[i].ptr, mb[i].size);
-    delta_p += mb[i].size;
-  }
+  for (i = 0; i < nbuf; i++)
+    M_BufferAppend(delta, (byte *)mb[i].ptr, mb[i].size);
 
   return 0;
 }
@@ -113,17 +96,9 @@ static void update_delta_size_average(long size) {
 }
 
 static void set_state_buffer(byte *game_state, size_t state_size) {
+  M_BufferClear(&state);
+  M_BufferAppend(&state, game_state, state_size);
   state.size = state_size;
-
-  if (state.size > state.alloc) {
-    state.alloc = state.size;
-    state.data = realloc(state.data, state.alloc);
-
-    if (state.data == NULL)
-      I_Error("Allocating state data failed");
-  }
-
-  memcpy(state.data, game_state, state_size);
 }
 
 static void initialize_xdiff(void) {
@@ -146,6 +121,7 @@ static void build_mmfile(mmfile_t *mmf, byte *data, size_t size) {
   if ((xdl_init_mmfile(mmf, BLKSIZE, XDL_MMF_ATOMIC)) != 0)
     I_Error("Error initializing mmfile");
 
+  /* CG 2014/03/16: TODO: Check return value and don't fuck it up */
   xdl_write_mmfile(mmf, ((const void *)data), size);
 
   /*

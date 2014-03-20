@@ -27,34 +27,34 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *      Main loop menu stuff.
- *      Random number LUT.
- *      Default Config File.
- *      PCX Screenshots.
  *
- *-----------------------------------------------------------------------------*/
+ *
+ *-----------------------------------------------------------------------------
+ */
 
-#include "z_zone.h"
+#ifndef NET_H__
+#define NET_H__
 
-#ifdef __GNUG__
-#pragma implementation "m_bbox.h"
+size_t   N_IPToString(int address, char *buffer);
+int      N_IPToInt(const char *address);
+size_t   N_GetHostFromAddressString(const char *address, char **host);
+dboolean N_GetPortFromAddressString(const char *address, unsigned short *port);
+size_t   N_ParseAddressString(const char *address, char **host,
+                              unsigned short *port);
+
+void     N_Init(void);
+void     N_Disconnect(void);
+void     N_Shutdown(void);
+dboolean N_Listen(const char *host, unsigned short port);
+dboolean N_Connect(const char *host, unsigned short port);
+dboolean N_Reconnect(void);
+void     N_WaitForPacket(int ms);
+dboolean N_ConnectToServer(const char *serv);
+void     N_PrintAddress(FILE *fp, int peernum);
+void     N_DisconnectPlayer(int playernum);
+void     N_ServiceNetwork(void);
+
 #endif
-#include "m_bbox.h"
 
-void M_ClearBox (fixed_t *box)
-{
-  box[BOXTOP] = box[BOXRIGHT] = INT_MIN;
-  box[BOXBOTTOM] = box[BOXLEFT] = INT_MAX;
-}
+/* vi: set cindent et ts=2 sw=2: */
 
-void M_AddToBox(fixed_t* box,fixed_t x,fixed_t y)
-{
-  if (x<box[BOXLEFT])
-    box[BOXLEFT] = x;
-  else if (x>box[BOXRIGHT])
-    box[BOXRIGHT] = x;
-  if (y<box[BOXBOTTOM])
-    box[BOXBOTTOM] = y;
-  else if (y>box[BOXTOP])
-    box[BOXTOP] = y;
-}

@@ -1391,8 +1391,6 @@ static void Exp_SetMusicVolume (int volume)
 static int Exp_RegisterSongEx (const void *data, size_t len, int try_mus2mid)
 {
   int i, j;
-  dboolean io_errors = false;
-
   MEMFILE *instream;
   MEMFILE *outstream;
   void *outbuf;

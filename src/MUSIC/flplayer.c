@@ -28,14 +28,11 @@
  *---------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
 #include "musicplayer.h"
 
 #ifndef HAVE_LIBFLUIDSYNTH
-#include <string.h>
 
 static const char *fl_name (void)
 {

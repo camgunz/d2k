@@ -45,11 +45,8 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
-#include <stddef.h>
 #include "w_wad.h"
 #include "tables.h"
 

@@ -32,9 +32,7 @@
  *
  *-----------------------------------------------------------------------------*/
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
 #include "r_screenmultiply.h"
 #include "doomdef.h"

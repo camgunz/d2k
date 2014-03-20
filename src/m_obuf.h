@@ -27,34 +27,28 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *      Main loop menu stuff.
- *      Random number LUT.
- *      Default Config File.
- *      PCX Screenshots.
+ *  A buffer of objects
  *
- *-----------------------------------------------------------------------------*/
+ *-----------------------------------------------------------------------------
+ */
 
-#include "z_zone.h"
+#ifndef OBUF_H__
+#define OBUF_H__
 
-#ifdef __GNUG__
-#pragma implementation "m_bbox.h"
+typedef struct objbuf_s {
+  int size;
+  void **objects;
+} objbuf_t;
+
+void M_ObjBufferInit(objbuf_t **obuf);
+void M_ObjBufferInitWithSize(objbuf_t **obuf, int size);
+void M_ObjBufferAppend(objbuf_t *obuf, void *obj);
+void M_ObjBufferInsert(objbuf_t *obuf, int index, void *obj);
+int  M_ObjBufferInsertAtFirstFreeSlot(objbuf_t *obuf, void *obj);
+void M_ObjBufferRemove(objbuf_t *obuf, int index);
+void M_ObjBufferEnsureSize(objbuf_t *obuf, int size);
+void M_ObjBufferClear(objbuf_t *obuf);
+void M_ObjBufferFree(objbuf_t *obuf);
+
 #endif
-#include "m_bbox.h"
 
-void M_ClearBox (fixed_t *box)
-{
-  box[BOXTOP] = box[BOXRIGHT] = INT_MIN;
-  box[BOXBOTTOM] = box[BOXLEFT] = INT_MAX;
-}
-
-void M_AddToBox(fixed_t* box,fixed_t x,fixed_t y)
-{
-  if (x<box[BOXLEFT])
-    box[BOXLEFT] = x;
-  else if (x>box[BOXRIGHT])
-    box[BOXRIGHT] = x;
-  if (y<box[BOXBOTTOM])
-    box[BOXBOTTOM] = y;
-  else if (y>box[BOXTOP])
-    box[BOXTOP] = y;
-}

@@ -364,7 +364,6 @@ unsigned char *I_GrabScreen (void)
     unsigned char *pixel_src = (unsigned char *) scr->pixels;
 
     int lock_needed = SDL_MUSTLOCK(scr);
-    int lock_was_successful = 0;
 
     if (!lock_needed || SDL_LockSurface(scr) >= 0)
     {

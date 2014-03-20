@@ -26,11 +26,17 @@
 ################################################# CMake Configuration ##########
 #===============================================================================
 PROJECT("PrBoom+" C)
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.0 FATAL_ERROR)
 IF(${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
   MESSAGE(${CMAKE_SOURCE_DIR})
   MESSAGE(${CMAKE_BINARY_DIR})
   MESSAGE(FATAL_ERROR "In-tree Builds are NOT supported.")
+ENDIF()
+
+IF (WIN32)
+  SET(CMAKE_MFC_FLAG 2)
+  SET(CMAKE_INSTALL_MFC_LIBRARIES 1)
+  INCLUDE(InstallRequiredSystemLibraries)
 ENDIF()
 
 # Supported Build Types are:
@@ -58,116 +64,155 @@ INCLUDE(CheckLibraryExists)
 INCLUDE(CheckTypeSize)
 INCLUDE(CheckCSourceCompiles)
 INCLUDE(CheckCCompilerFlag)
+INCLUDE(CMakeDependentOption)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
+SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 #===============================================================================
-############################################################# Options ##########
+########################################################### Functions ##########
 #===============================================================================
-OPTION(DOOMWADDIR, "The path where doom WADs are stored" "")
-OPTION(
-  CHECK_HEAP "Exhaustively run memory checks while the game is running" FALSE
-)
-OPTION(RANGECHECK "Enable internal range checking" FALSE)
-OPTION(
-  INSTRUMENTED
-  "Enable real-time memory allocation statistics and enable extra debugging features"
-  FALSE
-)
-OPTION(
-  TIMEDIAG
-  "Create timestamps whenever a lump is locked; report when lumps are locked for long periods of time"
-  FALSE
-)
-OPTION(PROFILE "Enable profiling" FALSE)
-OPTION(GL_DOOM "Build with OpenGL support" TRUE)
-###
-# TODO: How to make these dependent upon USE_GLU?
-# OPTION(USE_GLU "Use the OpenGL Utility Library (libGLU)" FALSE)
-###
-OPTION(USE_GLU_IMAGESCALE "Use gluImageScale" FALSE)
-OPTION(USE_GLU_MIPMAP "Use gluBuild2DMipmaps" FALSE)
-OPTION(USE_GLU_TESS "Use gluTesselator" FALSE)
-OPTION(HAVE_NET "Enable network game support" TRUE)
-OPTION(USE_SDL_NET "Use SDL_net networking library" TRUE)
-OPTION(DOGS "Enable MBF helper dogs" TRUE)
-OPTION(HIGHRES "Enable high resolution support" TRUE)
-OPTION(
-  SIMPLECHECKS
-  "Enable quick checks which only impose significant overhead if a possible error is detected"
-  FALSE
-)
-OPTION(
-  ZONEIDCHECK
-  "Perform ID checks on zone blocks to detect corrupted and illegally freed blocks"
-  FALSE
-)
-OPTION(
-  ONLY_FREE_GRAPHICS "Build prboom.wad without non-free menu text lumps" TRUE
-)
+FUNCTION(TRY_C_COMPILER_FLAG flag name)
+  CHECK_C_COMPILER_FLAG("${flag}" ${name})
+  IF(${name})
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${flag}" PARENT_SCOPE)
+  ENDIF()
+ENDFUNCTION(TRY_C_COMPILER_FLAG flag name)
 
-SET(VERSION "2.5.1.4-test")
+#===============================================================================
+##################################################### Package Details ##########
+#===============================================================================
+SET(VERSION "2.5.1.4")
+SET(PACKAGE "PrBoom-Plus")
+SET(PACKAGE_NAME "PrBoom-Plus")
+SET(PACKAGE_VERSION "2.5.1.4")
+# SET(PACKAGE_BUGREPORT "huh")
+SET(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
+SET(PACKAGE_TARNAME "prboom-plus")
+SET(PACKAGE_URL "http://prboom-plus.sourceforge.net")
 
-IF(NOT DOOMWADDIR)
-  SET(DOOMWADDIR "${CMAKE_INSTALL_PREFIX}/share/games/doom")
+SET(CPACK_GENERATOR "DEB;RPM;STGZ;ZIP")
+SET(CPACK_PACKAGE_VENDOR "Team TotalTrash")
+SET(CPACK_PACKAGE_CONTACT "Team TotalTrash <ladna@totaltrash.org>")
+SET(CPACK_PACKAGE_VERSION "2.5.1.4-test")
+SET(CPACK_PACKAGE_NAME "PrBoom+")
+SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING")
+SET(
+  CPACK_PACKAGE_DESCRIPTION_SUMMARY
+  "PrBoom+ extends the original PrBoom engine while maintaining compatibility."
+)
+SET(CPACK_DEBIAN_PACKAGE_SECTION "games")
+SET(CPACK_DEBIAN_PACKAGE_DEPENDS
+  "libc6 (>= 2.11.0),
+   libgcc1 (>= 1:4.4.3),
+   libsdl1.2debian (>=1.2.14),
+   libsdl-mixer1.2 (>=1.2.8),
+   libsdl-net1.2 (>=1.2.7),
+   bash"
+)
+SET(CPACK_DEBIAN_PACKAGE_RECOMMENDS "freedoom, game-data-packager")
+
+SET(BUILD_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
+
+IF(${CMAKE_SYSTEM_PROCESSOR} MATCHES "i686")
+  SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386")
+  SET(CPACK_RPM_PACKAGE_ARCHITECTURE "i686" )
+  SET(BUILD_ARCH "${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
+ENDIF()
+
+IF(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+  SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+  SET(CPACK_RPM_PACKAGE_ARCHITECTURE "x86_64" )
+  SET(BUILD_ARCH "${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
+ENDIF()
+
+IF(WIN32)
+  SET(BUILD_ARCH "windows-x86")
+  IF("$ENV{PROCESSOR_ARCHITECTURE}" STREQUAL "AMD64")
+    SET(BUILD_ARCH "windows-$ENV{PROCESSOR_ARCHITECTURE}")
+  ENDIF()
+ENDIF()
+
+SET(
+  CPACK_PACKAGE_FILE_NAME "prboom-plus-${CPACK_PACKAGE_VERSION}_${BUILD_ARCH}"
+)
+SET(CPACK_DEBIAN_PACKAGE_NAME "${CPACK_PACKAGE_FILE_NAME}")
+SET(CPACK_RPM_PACKAGE_NAME "${CPACK_PACKAGE_FILE_NAME}")
+
+INCLUDE(CPack)
+
+IF(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
+  SET(GCC_OR_CLANG TRUE)
+ELSE()
+  SET(GCC_OR_CLANG FALSE)
 ENDIF()
 
 #===============================================================================
 ##################################################### Platform Checks ##########
 #===============================================================================
+
+# CG SDL defines some of these, so they're not all strictly necessary
+
 CHECK_INCLUDE_FILES("asm/byteorder.h" HAVE_ASM_BYTEORDER_H)
-CHECK_INCLUDE_FILES("unistd.h" HAVE_UNISTD_H)
+CHECK_INCLUDE_FILES("inttypes.h" HAVE_INTTYPES_H)
+CHECK_INCLUDE_FILES("stdbool.h" HAVE_STDBOOL_H)
+CHECK_INCLUDE_FILES("stdint.h" HAVE_STDINT_H)
+CHECK_INCLUDE_FILES("sys/types.h" HAVE_SYS_TYPES_H)
 CHECK_INCLUDE_FILES("sys/wait.h" HAVE_SYS_WAIT_H)
-CHECK_INCLUDE_FILES("netinet/in.h" HAVE_NETINET_IN_H)
-CHECK_INCLUDE_FILES("netinet/in6.h" HAVE_IPv6)
-CHECK_FUNCTION_EXISTS("getopt" HAVE_GETOPT)
-CHECK_FUNCTION_EXISTS("inet_ntoa" HAVE_INET_NTOA)
-CHECK_FUNCTION_EXISTS("inet_aton" HAVE_INET_ATON)
-CHECK_FUNCTION_EXISTS("inet_ntop" HAVE_INET_NTOP)
-CHECK_FUNCTION_EXISTS("inet_pton" HAVE_INET_PTON)
-CHECK_FUNCTION_EXISTS("mmap" HAVE_MMAP)
-CHECK_FUNCTION_EXISTS("usleep" HAVE_USLEEP)
-CHECK_FUNCTION_EXISTS("sched_setaffinity" HAVE_SCHED_SETAFFINITY)
-CHECK_FUNCTION_EXISTS("min" MIN)
-CHECK_FUNCTION_EXISTS("max" MAX)
+CHECK_INCLUDE_FILES("unistd.h" HAVE_UNISTD_H)
+
+# IF(HAVE_ASM_BYTEORDER_H)
+#   SET(HAVE_ASM_BYTEORDER_H 1)
+# ENDIF()
+# 
+# IF(HAVE_INTTYPES_H)
+#   SET(HAVE_INTTYPES_H 1)
+# ENDIF()
+# 
+# IF(HAVE_STDBOOL_H)
+#   SET(HAVE_STDBOOL_H 1)
+# ENDIF()
+# 
+# IF(HAVE_STDINT_H)
+#   SET(HAVE_STDINT_H 1)
+# ENDIF()
+# 
+# IF(HAVE_SYS_WAIT_H)
+#   SET(HAVE_SYS_WAIT_H 1)
+# ENDIF()
+# 
+# IF(HAVE_UNISTD_H)
+#   SET(HAVE_UNISTD_H 1)
+# ENDIF()
+
 CHECK_SYMBOL_EXISTS(sys_siglist signal.h HAVE_DECL_SYS_SIGLIST)
-CHECK_SYMBOL_EXISTS(_stricmp string.h HAVE__STRICMP)
-CHECK_SYMBOL_EXISTS(stricmp string.h HAVE_STRICMP)
-CHECK_SYMBOL_EXISTS(strcasecmp string.h HAVE_STRCASECMP)
-CHECK_SYMBOL_EXISTS(_strnicmp string.h HAVE__STRNICMP)
-CHECK_SYMBOL_EXISTS(strnicmp string.h HAVE_STRNICMP)
-CHECK_SYMBOL_EXISTS(strncasecmp string.h HAVE_STRNCASECMP)
-CHECK_LIBRARY_EXISTS("m" "pow" "" HAVE_LIBM)
-CHECK_LIBRARY_EXISTS("GL" "glFinish" "" HAVE_LIBGL)
-CHECK_LIBRARY_EXISTS("GLU" "gluBuild2DMipmaps" "" HAVE_LIBGLU)
-CHECK_LIBRARY_EXISTS("GLESv2" "glFinish" "" HAVE_LIBGLESv2)
-CHECK_LIBRARY_EXISTS("SDL" "SDL_JoystickGetAxis" "" HAVE_SDL_JOYSTICKGETAXIS)
 
 CHECK_C_SOURCE_COMPILES(
   "struct __attribute__((packed)) foo { int a; } b; int main() { return 0; }"
   HAVE_ATTRIBUTE_PACKED
 )
-
 IF(HAVE_ATTRIBUTE_PACKED)
   SET(PACKEDATTR "__attribute__((packed))")
 ELSE()
   MESSAGE(FATAL_ERROR "Can't figure out how to pack structs with your compiler")
 ENDIF()
 
-IF(NOT HAVE_IPv6)
-  IF(NOT HAVE_NETINET_IN_H)
-    MESSAGE(FATAL_ERROR "Bad networking headers")
-  ENDIF()
-  SET(CMAKE_EXTRA_INCLUDE_FILES netinet/in.h)
-  CHECK_TYPE_SIZE("struct sockaddr_in6" STRUCT_SOCKADDR_IN6_SIZE)
-  SET(CMAKE_EXTRA_INCLUDE_FILES)
-  IF(NOT STRUCT_SOCKADDR_IN6_SIZE EQUAL 0)
-    SET(HAVE_IPv6 TRUE)
-    MESSAGE(STATUS "Found IPv6 support")
-  ELSE()
-    MESSAGE(WARNING "Missing IPv6 support")
-  ENDIF()
-ENDIF()
+CHECK_FUNCTION_EXISTS("max" MAX)
+CHECK_FUNCTION_EXISTS("min" MIN)
+CHECK_FUNCTION_EXISTS("mmap" HAVE_MMAP)
+CHECK_FUNCTION_EXISTS("sched_setaffinity" HAVE_SCHED_SETAFFINITY)
+CHECK_FUNCTION_EXISTS("usleep" HAVE_USLEEP)
+
+CHECK_SYMBOL_EXISTS(_stricmp string.h HAVE__STRICMP)
+CHECK_SYMBOL_EXISTS(stricmp string.h HAVE_STRICMP)
+CHECK_SYMBOL_EXISTS(strcasecmp string.h HAVE_STRCASECMP)
+CHECK_SYMBOL_EXISTS(_strnicmp string.h HAVE__STRNICMP)
+CHECK_SYMBOL_EXISTS(strnicmp string.h HAVE_STRNICMP)
+CHECK_SYMBOL_EXISTS(strncasecmp string.h HAVE_STRNCASECMP)
+CHECK_LIBRARY_EXISTS("GL" "glFinish" "" HAVE_LIBGL)
+CHECK_LIBRARY_EXISTS("GLU" "gluBuild2DMipmaps" "" HAVE_LIBGLU)
+CHECK_LIBRARY_EXISTS("GLESv2" "glFinish" "" HAVE_LIBGLESv2)
+CHECK_LIBRARY_EXISTS("SDL" "SDL_JoystickGetAxis" "" HAVE_SDL_JOYSTICKGETAXIS)
 
 IF(HAVE_STRICMP)
   SET(stricmp stricmp)
@@ -198,86 +243,47 @@ ELSE()
 ENDIF()
 
 #===============================================================================
-########################################################### Functions ##########
+############################################################# Options ##########
 #===============================================================================
-FUNCTION(TRY_C_COMPILER_FLAG flag name)
-  CHECK_C_COMPILER_FLAG("${flag}" ${name})
-  IF(${name})
-    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${flag}" PARENT_SCOPE)
-  ENDIF()
-ENDFUNCTION(TRY_C_COMPILER_FLAG flag name)
-
-#===============================================================================
-################################################# Set Package Details ##########
-#===============================================================================
-SET(CMAKE_MFC_FLAG 2)
-SET(CMAKE_INSTALL_MFC_LIBRARIES 1)
-
-INCLUDE(InstallRequiredSystemLibraries)
-SET(PACKAGE "PrBoom-Plus")
-SET(PACKAGE_NAME "PrBoom-Plus")
-SET(PACKAGE_VERSION "2.5.1.4")
-# SET(PACKAGE_BUGREPORT "huh")
-SET(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
-SET(PACKAGE_TARNAME "prboom-plus")
-SET(PACKAGE_URL "http://prboom-plus.sourceforge.net")
-
-SET(CPACK_GENERATOR "DEB;RPM;STGZ;ZIP")
-SET(CPACK_PACKAGE_VENDOR "Team TotalTrash")
-SET(CPACK_PACKAGE_CONTACT "Team TotalTrash <ladna@totaltrash.org>")
-SET(CPACK_PACKAGE_VERSION "2.5.1.4-test")
-SET(CPACK_PACKAGE_NAME "PrBoom+")
-SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING")
-SET(
-  CPACK_PACKAGE_DESCRIPTION_SUMMARY
-  "PrBoom+ extends the original PrBoom engine while maintaining compatibility."
+OPTION(DOOMWADDIR, "The path where doom WADs are stored" "")
+OPTION(
+  CHECK_HEAP "Exhaustively run memory checks while the game is running" OFF
 )
-SET(CPACK_DEBIAN_PACKAGE_SECTION "games")
-SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.11.0), libgcc1 (>= 1:4.4.3), libsdl1.2debian (>=1.2.14), libsdl-mixer1.2 (>=1.2.8), libsdl-net1.2 (>=1.2.7), bash")
-SET(CPACK_DEBIAN_PACKAGE_RECOMMENDS "freedoom, game-data-packager")
-
-SET(BUILD_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
-
-IF(${CMAKE_SYSTEM_PROCESSOR} MATCHES "i686")
-  SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386")
-  SET(CPACK_RPM_PACKAGE_ARCHITECTURE "i686" )
-  SET(BUILD_ARCH "${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
-ENDIF()
-
-IF(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
-  SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
-  SET(CPACK_RPM_PACKAGE_ARCHITECTURE "x86_64" )
-  SET(BUILD_ARCH "${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
-ENDIF()
-
-IF(WIN32)
-  SET(BUILD_ARCH "windows-x86")
-  IF("$ENV{PROCESSOR_ARCHITECTURE}" STREQUAL "AMD64")
-    SET(BUILD_ARCH "windows-$ENV{PROCESSOR_ARCHITECTURE}")
-  ENDIF()
-ENDIF()
-
-SET(
-  CPACK_PACKAGE_FILE_NAME "prboom-plus-${CPACK_PACKAGE_VERSION}_${BUILD_ARCH}"
+OPTION(HEAPDUMP "Dump the heap on a crash" OFF)
+OPTION(RANGECHECK "Enable internal range checking" OFF)
+OPTION(
+  INSTRUMENTED
+  "Enable real-time memory allocation statistics and enable extra debugging features"
+  OFF
 )
-SET(CPACK_DEBIAN_PACKAGE_NAME "${CPACK_PACKAGE_FILE_NAME}")
-SET(CPACK_RPM_PACKAGE_NAME "${CPACK_PACKAGE_FILE_NAME}")
+OPTION(
+  TIMEDIAG
+  "Create timestamps whenever a lump is locked; report when lumps are locked for long periods of time"
+  OFF
+)
+OPTION(
+  SIMPLECHECKS
+  "Enable quick checks which only impose significant overhead if a possible error is detected"
+  OFF
+)
+OPTION(
+  ZONEIDCHECK
+  "Perform ID checks on zone blocks to detect corrupted and illegally freed blocks"
+  OFF
+)
+OPTION(PROFILE "Enable profiling" OFF)
+OPTION(GL_DOOM "Build with OpenGL support" ON)
+CMAKE_DEPENDENT_OPTION(USE_GLU_IMAGESCALE "Use gluImageScale" OFF USE_GLU OFF)
+CMAKE_DEPENDENT_OPTION(USE_GLU_MIPMAP "Use gluBuild2DMipmaps" OFF USE_GLU OFF)
+CMAKE_DEPENDENT_OPTION(USE_GLU_TESS "Use gluTesselator" OFF USE_GLU OFF)
+OPTION(DOGS "Enable MBF helper dogs" ON)
+OPTION(HIGHRES "Enable high resolution support" ON)
+OPTION(
+  ONLY_FREE_GRAPHICS "Build prboom.wad without non-free menu text lumps" ON
+)
 
-SET(BIN_DIR bin)
-SET(SHARE_DIR share/eternity)
-
-IF(WIN32)
-  SET(LIB_DIR ${BIN_DIR})
-  SET(SHARE_DIR ${BIN_DIR})
-ELSE()
-  SET(LIB_DIR lib)
-ENDIF()
-INCLUDE(CPack)
-
-IF(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
-  SET(GCC_OR_CLANG TRUE)
-ELSE()
-  SET(GCC_OR_CLANG FALSE)
+IF(NOT DOOMWADDIR)
+  SET(DOOMWADDIR "${CMAKE_INSTALL_PREFIX}/share/games/doom")
 ENDIF()
 
 #===============================================================================
@@ -285,6 +291,9 @@ ENDIF()
 #===============================================================================
 IF(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   TRY_C_COMPILER_FLAG(--std=c99 FLAG_C_stdc99)
+  IF(PROFILE)
+    TRY_C_COMPILER_FLAG(-pg FLAG_C_profile)
+  ENDIF()
 ENDIF()
 
 #===============================================================================
@@ -310,9 +319,6 @@ ENDIF()
 ################################################# Compiler: Hardening ##########
 #===============================================================================
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  IF(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    TRY_C_COMPILER_FLAG(-pg FLAG_C_profile)
-  ENDIF()
   IF(GCC_OR_CLANG)
     TRY_C_COMPILER_FLAG(-g FLAG_C_debug)
   ENDIF()
@@ -363,22 +369,45 @@ IF(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel" OR CMAKE_BUILD_TYPE STREQUAL "Release"
 ENDIF()
 
 #===============================================================================
+################################################## Build Dependencies ##########
+#===============================================================================
+# cg: Don't really need to do this just yet
+
+# SET(DEPS_PREFIX "${CMAKE_BINARY_DIR/deps}")
+# SET(ENET_FOLDER "enet-1.3.11")
+# SET(MSGPACK_FOLDER "msgpack-0.5.8")
+
+# INCLUDE_DIRECTORIES("deps/${ENET_FOLDER}/include")
+# INCLUDE_DIRECTORIES("deps/${MSGPACK_FOLDER}/src")
+# ADD_SUBDIRECTORY(deps/enet-1.3.11)
+# ADD_SUBDIRECTORY(deps/msgpack-0.5.8)
+
+#===============================================================================
 ################################################### Find Dependencies ##########
 #===============================================================================
+FIND_PACKAGE(ENet REQUIRED)
+INCLUDE_DIRECTORIES(${ENET_INCLUDE_DIR})
+
+FIND_PACKAGE(MessagePack REQUIRED)
+INCLUDE_DIRECTORIES(${MSGPACK_INCLUDE_DIR})
+
+FIND_PACKAGE(Iconv REQUIRED)
+INCLUDE_DIRECTORIES(${ICONV_INCLUDE_DIR})
+
 FIND_PACKAGE(OpenGL)
+IF(OPENGL_FOUND)
+  INCLUDE_DIRECTORIES(${OPENGL_INCLUDE_DIR})
+ELSE()
+  IF (GL_DOOM)
+    MESSAGE(FATAL_ERROR "OpenGL not found")
+  ELSE()
+    MESSAGE(WARNING "OpenGL not found")
+  ENDIF()
+ENDIF()
 
 FIND_PACKAGE(SDL REQUIRED)
 SET(HAVE_LIBSDL TRUE)
 INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
-
-FIND_PACKAGE(SDL_net)
-IF(SDLNET_FOUND)
-  INCLUDE_DIRECTORIES(${SDLNET_INCLUDE_DIR})
-  SET(HAVE_LIBSDL_NET TRUE)
-ELSE()
-  MESSAGE(WARNING "SDL_net not found")
-  SET(HAVE_LIBSDL_NET FALSE)
-ENDIF()
 
 FIND_PACKAGE(SDL_image)
 IF(SDLIMAGE_FOUND)
@@ -465,7 +494,7 @@ FIND_PACKAGE(XDiff)
 IF(XDIFF_FOUND)
   INCLUDE_DIRECTORIES(${XDIFF_INCLUDE_DIR})
 ELSE()
-  MESSAGE(FATAL "XDiff not found")
+  MESSAGE(FATAL_ERROR "XDiff not found")
 ENDIF()
 
 FIND_PACKAGE(ZLIB)
@@ -480,7 +509,11 @@ IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
   MESSAGE(STATUS "Looking for Google Performance Tools")
   FIND_LIBRARY(GPERF_LIBRARIES profiler HINTS $ENV{GPERF_DIR})
   IF(${GPERF_LIBRARIES} STREQUAL "GPERF_LIBRARIES-NOTFOUND")
-    MESSAGE(WARNING "Google Performance Tools not found")
+    IF (PROFILE)
+      MESSAGE(FATAL_ERROR "Google Performance Tools not found")
+    ELSE()
+      MESSAGE(WARNING "Google Performance Tools not found")
+    ENDIF()
   ELSE()
     MESSAGE(STATUS "Google Performance Tools found: ${GPERF_LIBRARIES}")
   ENDIF()
@@ -505,16 +538,6 @@ IF(WIN32)
     PATHS
   )
   FILE(GLOB SDL_SUPPORT_LIBS ${SDL_SUPPORT_LIBS_DIR}/*.dll)
-ENDIF()
-
-#===============================================================================
-################################################### Set Build Targets ##########
-#===============================================================================
-
-## FIXME: This is a continuation of the Windows SDL inelegant hack. This does
-## the actual installation of those support libraries.
-IF(WIN32)
-  INSTALL(PROGRAMS ${SDL_SUPPORT_LIBS} DESTINATION ${LIB_DIR})
 ENDIF()
 
 #===============================================================================
@@ -596,7 +619,11 @@ SET(PRBOOM_SOURCES
   src/m_menu.c
   src/m_misc.c
   src/m_random.c
+  src/m_utf.c
   src/md5.c
+  src/n_net.c
+  src/n_peer.c
+  src/n_proto.c
   src/p_ceilng.c
   src/p_checksum.c
   src/p_doors.c
@@ -724,24 +751,79 @@ ENDIF()
 
 ADD_EXECUTABLE(prboom-plus ${PRBOOM_CLIENT_SOURCES})
 
-TARGET_LINK_LIBRARIES(prboom-plus
-  ${SDL_LIBRARY}
-  ${SDLMIXER_LIBRARY}
-  ${SDLNET_LIBRARY}
-  ${SDLIMAGE_LIBRARY}
-  ${OPENGL_gl_LIBRARY}
-  ${FLUIDSYNTH_LIBRARIES}
-  ${PORTMIDI_LIBRARIES}
-  ${OGG_LIBRARIES}
-  ${VORBIS_LIBRARIES}
-  ${MAD_LIBRARIES}
-  ${DUMB_LIBRARIES}
-  ${PCRE_LIBRARIES}
-  ${PNG_LIBRARIES}
-  ${XDIFF_LIBRARIES}
-  ${ZLIB_LIBRARIES}
-  ${GPERF_LIBRARIES}
-)
+SET(PRBOOM_LIBRARIES ${ENET_LIBRARIES} ${MSGPACK_LIBRARIES})
+
+IF(ICONV_STANDALONE)
+  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${ICONV_LIBRARIES})
+ENDIF()
+
+IF(GL_DOOM)
+  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${OPENGL_gl_LIBRARY})
+  IF(USE_GLU_IMAGESCALE OR USE_GLU_MIPMAP OR USE_GLU_TESS)
+    SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${OPENGL_glu_LIBRARY})
+  ENDIF()
+ENDIF()
+
+SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${SDL_LIBRARY})
+
+IF(SDLIMAGE_FOUND)
+  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${SDLIMAGE_LIBRARY})
+ENDIF()
+
+IF(SDLMIXER_FOUND)
+  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${SDLMIXER_LIBRARY})
+ENDIF()
+
+IF(FLUIDSYNTH_FOUND)
+  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${FLUIDSYNTH_LIBRARIES})
+ENDIF()
+
+IF(PORTMIDI_FOUND)
+  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${PORTMIDI_LIBRARIES})
+ENDIF()
+
+IF(OGG_FOUND)
+  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${OGG_LIBRARIES})
+ENDIF()
+
+IF(VORBIS_FOUND)
+  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${VORBIS_LIBRARIES})
+ENDIF()
+
+IF(MAD_FOUND)
+  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${MAD_LIBRARIES})
+ENDIF()
+
+IF(DUMB_FOUND)
+  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${DUMB_LIBRARIES})
+ENDIF()
+
+IF(PCRE_FOUND)
+  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${PCRE_LIBRARIES})
+ENDIF()
+
+IF(PNG_FOUND)
+  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${PNG_LIBRARIES})
+ENDIF()
+
+IF(XDIFF_FOUND)
+  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${XDIFF_LIBRARIES})
+ENDIF()
+
+IF(ZLIB_FOUND)
+  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${ZLIB_LIBRARIES})
+ENDIF()
+
+IF(GPERF_FOUND)
+  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${GPERF_LIBRARIES})
+ENDIF()
+
+TARGET_LINK_LIBRARIES(prboom-plus ${PRBOOM_LIBRARIES})
+
+SET(BIN_DIR "${PREFIX}/bin")
+SET(LIB_DIR "${PREFIX}/lib")
+SET(INCLUDE_DIR "${PREFIX}/include")
+SET(SHARE_DIR "${PREFIX}/share")
 
 INSTALL(
   TARGETS prboom-plus
@@ -749,6 +831,12 @@ INSTALL(
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR}
 )
+
+## FIXME: This is a continuation of the Windows SDL inelegant hack. This does
+## the actual installation of those support libraries.
+IF(WIN32)
+  INSTALL(PROGRAMS ${SDL_SUPPORT_LIBS} DESTINATION ${LIB_DIR})
+ENDIF()
 
 # vi: ai:ts=2:sw=2:et
 

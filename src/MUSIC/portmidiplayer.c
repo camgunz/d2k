@@ -31,14 +31,11 @@
 // TODO: some duplicated code with this and the fluidplayer should be
 // split off or something
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
 #include "musicplayer.h"
 
 #ifndef HAVE_LIBPORTMIDI
-#include <string.h>
 
 static const char *pm_name (void)
 {

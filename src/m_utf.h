@@ -27,34 +27,33 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *      Main loop menu stuff.
- *      Random number LUT.
- *      Default Config File.
- *      PCX Screenshots.
+ *  Low level UDP network interface. This is shared between the server
+ *  and client, with SERVER defined for the former to select some extra
+ *  functions. Handles socket creation, and packet send and receive.
  *
- *-----------------------------------------------------------------------------*/
+ *-----------------------------------------------------------------------------
+ */
 
-#include "z_zone.h"
+#ifndef M_UTF_H__
+#define M_UTF_H__
 
-#ifdef __GNUG__
-#pragma implementation "m_bbox.h"
+typedef uint8_t rune;
+
+const char* M_GetUTFError(void);
+
+dboolean    M_IsControlChar(wchar_t sc);
+dboolean    M_MustFeedLine(rune r);
+dboolean    M_CanBreakLine(rune r);
+
+size_t M_DecodeASCII(rune **out, char *in, size_t in_size);
+
+size_t M_EncodeLocal(char **out, rune *in, size_t in_size);
+size_t M_DecodeLocal(rune **out, char *in, size_t in_size);
+
+size_t M_EncodeWCHAR(wchar_t **out, rune *in, size_t in_size);
+size_t M_DecodeWCHAR(rune **out, wchar_t *in, size_t in_size);
+size_t M_DecodeWCHARNoAlloc(rune *out, uint16_t *in, size_t out_size,
+                            size_t in_size);
+
 #endif
-#include "m_bbox.h"
 
-void M_ClearBox (fixed_t *box)
-{
-  box[BOXTOP] = box[BOXRIGHT] = INT_MIN;
-  box[BOXBOTTOM] = box[BOXLEFT] = INT_MAX;
-}
-
-void M_AddToBox(fixed_t* box,fixed_t x,fixed_t y)
-{
-  if (x<box[BOXLEFT])
-    box[BOXLEFT] = x;
-  else if (x>box[BOXRIGHT])
-    box[BOXRIGHT] = x;
-  if (y<box[BOXBOTTOM])
-    box[BOXBOTTOM] = y;
-  else if (y>box[BOXTOP])
-    box[BOXTOP] = y;
-}

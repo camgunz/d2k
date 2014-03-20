@@ -27,34 +27,33 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *      Main loop menu stuff.
- *      Random number LUT.
- *      Default Config File.
- *      PCX Screenshots.
  *
- *-----------------------------------------------------------------------------*/
+ *
+ *-----------------------------------------------------------------------------
+ */
 
-#include "z_zone.h"
+#ifndef N_PEER_H__
+#define N_PEER_H__
 
-#ifdef __GNUG__
-#pragma implementation "m_bbox.h"
+typedef struct netpeer_s {
+  ENetPeer        *peer;
+  msgpack_sbuffer *buf;
+  msgpack_packer  *pk;
+  time_t           connect_time;
+  time_t           disconnect_time;
+  int              playernum;
+} netpeer_t;
+
+int        N_AddPeer(void);
+void       N_SetPeerConnected(int peernum, ENetPeer *peer);
+void       N_SetPeerDisconnected(int peernum);
+void       N_RemovePeer(netpeer_t *np);
+int        N_GetPeerCount(void);
+netpeer_t* N_GetPeer(int peernum);
+int        N_GetPeerNum(ENetPeer *peer);
+netpeer_t* N_GetPeerForPlayer(int playernum);
+int        N_GetPeerNumForPlayer(int playernum);
+dboolean   N_CheckPeerTimeout(int peernum);
+
 #endif
-#include "m_bbox.h"
 
-void M_ClearBox (fixed_t *box)
-{
-  box[BOXTOP] = box[BOXRIGHT] = INT_MIN;
-  box[BOXBOTTOM] = box[BOXLEFT] = INT_MAX;
-}
-
-void M_AddToBox(fixed_t* box,fixed_t x,fixed_t y)
-{
-  if (x<box[BOXLEFT])
-    box[BOXLEFT] = x;
-  else if (x>box[BOXRIGHT])
-    box[BOXRIGHT] = x;
-  if (y<box[BOXBOTTOM])
-    box[BOXBOTTOM] = y;
-  else if (y>box[BOXTOP])
-    box[BOXTOP] = y;
-}

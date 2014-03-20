@@ -32,6 +32,8 @@
  *-----------------------------------------------------------------------------
  */
 
+#include "z_zone.h"
+
 // We are referring to sprite numbers.
 #include "doomtype.h"
 #include "info.h"
@@ -40,7 +42,6 @@
 #pragma implementation "d_items.h"
 #endif
 #include "d_items.h"
-
 
 //
 // PSPRITE ACTIONS for waepons.

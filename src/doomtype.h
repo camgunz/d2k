@@ -41,14 +41,25 @@
 
 #ifndef __BYTEBOOL__
 #define __BYTEBOOL__
+
 /* Fixed to use builtin bool type with C++. */
 #ifdef __cplusplus
 typedef bool dboolean;
 #else
+#ifdef HAVE_STDBOOL_H
+typedef bool dboolean; // CG
+#else
 typedef enum {false, true} dboolean;
 #endif
+#endif
+
+#ifdef uint8_t // CG
+typedef uint8_t byte;
+#else
 typedef unsigned char byte;
 #endif
+
+#endif // __BYTEBOOL__
 
 //e6y
 #ifndef MAX
@@ -60,7 +71,6 @@ typedef unsigned char byte;
 #ifndef BETWEEN
 #define BETWEEN(l,u,x) ((l)>(x)?(l):(x)>(u)?(u):(x))
 #endif
-
 
 /* cph - Wrapper for the long long type, as Win32 used a different name.
  * Except I don't know what to test as it's compiler specific

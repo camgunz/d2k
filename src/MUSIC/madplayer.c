@@ -28,16 +28,11 @@
  *---------------------------------------------------------------------
  */
 
-
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
 #include "musicplayer.h"
 
 #ifndef HAVE_LIBMAD
-#include <string.h>
 
 static const char *mp_name (void)
 {

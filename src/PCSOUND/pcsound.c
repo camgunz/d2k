@@ -23,11 +23,8 @@
 //
 //-----------------------------------------------------------------------------
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "z_zone.h"
 
-#include "config.h"
 #include "pcsound.h"
 
 //e6y
