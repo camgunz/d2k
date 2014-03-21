@@ -54,6 +54,8 @@
     return; \
   }
 
+/* CG: C/S Message Handlers here */
+
 static void handle_game_state_message(netpeer_t *np) {
 }
 
@@ -111,22 +113,106 @@ static void handle_rcon_message(netpeer_t *np) {
 static void handle_vote_request_message(netpeer_t *np) {
 }
 
-void N_InitProtocol(void) {
-  msgpack_unpacker_init(&pac, MSGPACK_UNPACKER_INIT_BUFFER_SIZE);
-  msgpack_unpacked_init(&result);
+typedef enum {
+  P2P_STATE_NONE,
+  P2P_STATE_INITIALIZED,
+  P2P_STATE_SETUP,
+  P2P_STATE_GO,
+  P2P_STATE_MAX
+} p2p_state_e;
+
+/* CG: P2P Message Handlers here */
+
+static void handle_init_request_message(netpeer_t *np) {
 }
 
-void N_HandlePacket(int peernum, void *data, size_t data_size) {
-  netpeer_t *np = N_GetPeer(peernum);
-  byte message_type = 0;
+static void handle_setup_message(netpeer_t *np) {
+}
 
-  msgpack_unpacker_reserve_buffer(pac, data_size);
-  memcpy(msgpack_unpacker_buffer(pac), data, data_size);
-  msgpack_unpacker_buffer_consumed(pac, buf->size);
+static void handle_go_message(netpeer_t *np) {
+}
 
-  if (!N_UnpackMessageType(np, &message_type))
-    return;
+static void handle_client_tic_message(netpeer_t *np) {
+}
 
+static void handle_server_tic_message(netpeer_t *np) {
+}
+
+static void handle_retransmission_request_message(netpeer_t *np) {
+}
+
+static void handle_extra_message(netpeer_t *np) {
+}
+
+static void handle_quit_message(netpeer_t *np) {
+}
+
+static void handle_down_message(netpeer_t *np) {
+}
+
+static void handle_wad_message(netpeer_t *np) {
+}
+
+static void handle_backoff_message(netpeer_t *np) {
+}
+
+static void dispatch_p2p_message(netpeer_t *np, byte message_type) {
+  switch(message_type) {
+    case PKT_INIT:
+      SERVER_ONLY("initialization");
+      handle_init_request_message(np);
+    break;
+    case PKT_SETUP:
+      CLIENT_ONLY("setup");
+      handle_setup_message(np);
+    break;
+    case PKT_GO:
+      /* CG: Both clients and servers receive PKT_GO messages */
+      handle_go_message(np);
+    break;
+    case PKT_TICC:
+      SERVER_ONLY("client tic");
+      handle_client_tic_message(np);
+    break;
+    case PKT_TICS:
+      CLIENT_ONLY("server tic")
+      handle_server_tic_message(np);
+    break;
+    case PKT_RETRANS:
+      /* CG: Both clients and servers receive PKT_RETRANS messages */
+      handle_retransmission_request_message(np);
+    break;
+    case PKT_EXTRA:
+      SERVER_ONLY("extra");
+      handle_extra_message(np);
+    break;
+    case PKT_QUIT:
+      /* CG: Both clients and servers receive PKT_QUIT messages */
+      handle_quit_message(np);
+    break;
+    case PKT_DOWN:
+      CLIENT_ONLY("down");
+      handle_down_message(np);
+    break;
+    case PKT_WAD:
+      /* CG: Both clients and servers receive PKT_WAD messages */
+      handle_wad_message(np);
+    break;
+    case PKT_BACKOFF:
+      CLIENT_ONLY("backoff");
+      handle_backoff_message(np);
+    break;
+    default:
+      doom_printf("Received unknown message type %u from peer %s:%u.\n"
+        message_type,
+        I_IPToString(np->peer->address.host),
+        np->peer->address.peer
+      );
+    break;
+  }
+}
+
+static void dispatch_cs_message(netpeer_t *np, byte message_type) {
   switch (message_type) {
     case nm_gamestate:
       CLIENT_ONLY("game state");
@@ -196,7 +282,32 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
       SERVER_ONLY("vote request");
       handle_vote_request_message(np);
     break;
+    default:
+      doom_printf("Received unknown message type %u from peer %s:%u.\n"
+        message_type,
+        I_IPToString(np->peer->address.host),
+        np->peer->address.peer
+      );
+    break;
   }
 }
 
+void N_HandlePacket(int peernum, void *data, size_t data_size) {
+  netpeer_t *np = N_GetPeer(peernum);
+  byte message_type = 0;
+
+  msgpack_unpacker_reserve_buffer(pac, data_size);
+  memcpy(msgpack_unpacker_buffer(pac), data, data_size);
+  msgpack_unpacker_buffer_consumed(pac, buf->size);
+
+  if (!N_UnpackMessageType(np, &message_type))
+    return;
+
+  if (use_p2p_netcode)
+    dispatch_p2p_message(np, message_type);
+  else
+    dispatch_cs_message(np, message_type);
+}
+
 /* vi: set cindent et ts=2 sw=2: */
+

@@ -99,9 +99,31 @@ void M_ObjBufferEnsureSize(objbuf_t *obuf, int size) {
   }
 }
 
+int M_ObjBufferGetObjectCount(objbuf_t *obuf) {
+  int count = 0;
+
+  for (int i = 0; i < obuf->size; i++) {
+    if (objf->objects[i] != NULL) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
 void M_ObjBufferClear(objbuf_t *obuf) {
   memset(obuf->objects, 0, obuf->size);
   obuf->size = 0;
+}
+
+void M_ObjBufferFreeEntriesAndClear(objbuf_t *obuf) {
+  for (int i = 0; i < obuf->size; i++) {
+    if (objf->objects[i] != NULL) {
+      free(obuf->objects[i]);
+    }
+  }
+
+  M_ObjBufferClear(obuf);
 }
 
 void M_ObjBufferFree(objbuf_t *obuf) {

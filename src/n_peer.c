@@ -44,7 +44,7 @@
 #include "n_peer.h"
 #include "n_net.h"
 
-static obuf_t *net_peers = NULL;
+static objbuf_t *net_peers = NULL;
 
 int N_AddPeer(void) {
   int peernum = -1;

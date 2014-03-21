@@ -1,10 +1,7 @@
 # To Do
 
   1. Add old messages to `n_proto.c`
-    * Add pack/unpack functions.
-    * Create an `old_netcode_dispatch` function and a `new_netcode_dispatch`
-      function for the two `switch` statements; solves the problem with
-      overloaded network message values.
+    * Fill out the P2P pack/unpack functions
   2. Fill out the handler functions
     * Probably involves creating some new methods/enums/etc.
   3. Finally revamp `d_client.c` and `d_server.c`.

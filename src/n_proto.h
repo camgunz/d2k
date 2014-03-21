@@ -122,11 +122,12 @@ const byte PKT_GO      = 2;  /* game has started            */
 const byte PKT_TICC    = 3;  /* tics from client            */
 const byte PKT_TICS    = 4;  /* tics from server            */
 const byte PKT_RETRANS = 5;  /* Request for retransmission  */
-const byte PKT_EXTRA   = 6;  /* Extra info packet           */
-const byte PKT_QUIT    = 7;  /* Player quit game            */
-const byte PKT_DOWN    = 8;  /* Server downed               */
-const byte PKT_WAD     = 9;  /* Wad file request            */
-const byte PKT_BACKOFF = 10; /* Request for client back-off */
+const byte PKT_COLOR   = 6;  /* Player changed color        */
+const byte PKT_SAVEG   = 7;  /* Save game name changed      */
+const byte PKT_QUIT    = 8;  /* Player quit game            */
+const byte PKT_DOWN    = 9;  /* Server downed               */
+const byte PKT_WAD     = 10; /* Wad file request            */
+const byte PKT_BACKOFF = 11; /* Request for client back-off */
 
 typedef struct {
   // byte checksum;    /* Simple checksum of the entire packet */

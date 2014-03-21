@@ -47,7 +47,9 @@ void M_ObjBufferInsert(objbuf_t *obuf, int index, void *obj);
 int  M_ObjBufferInsertAtFirstFreeSlot(objbuf_t *obuf, void *obj);
 void M_ObjBufferRemove(objbuf_t *obuf, int index);
 void M_ObjBufferEnsureSize(objbuf_t *obuf, int size);
+int  M_ObjBufferGetObjectCount(objbuf_t *obuf);
 void M_ObjBufferClear(objbuf_t *obuf);
+void M_ObjBufferFreeEntriesAndClear(objbuf_t *obuf);
 void M_ObjBufferFree(objbuf_t *obuf);
 
 #endif
