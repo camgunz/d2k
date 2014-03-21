@@ -5,6 +5,18 @@
 This is a fork of [PrBoom+](http://prboom-plus.sourceforge.net) with several
 goals.
 
+Enhance Network Play
+---------------------
+
+PrBoom+ currently only supports the old, P2P, synchronized networking shipped
+with Doom.  This functionality has several limitations: only 4 players max may
+play together, players cannot join an in-progress game, game modes are
+hard-coded, and one player's lag lags the whole group.
+
+This fork will remove those limitations using a client-server (C/S)
+architecture, with synchronization similar to that of Quake 3 (compressed
+deltas).
+
 Port to PNaCl
 -------------
 
@@ -22,7 +34,7 @@ similar (but not identical) to OpenGL ES 2.0, meaning the fixed-function
 pipeline is unavailable.  The fork will convert the renderer from the
 fixed-function pipeline to the programmable pipeline.  In addition, the fork
 will upgrade the baseline OpenGL support necessary to run, requiring support
-for OpenGL 2.0.  Deprecated features, such as paletted textures, will be
+for OpenGL ES 2.0.  Deprecated features, such as paletted textures, will be
 removed and functionality dependent on them will be reimplemented.
 
 Maintain Compatibility
@@ -31,18 +43,6 @@ Maintain Compatibility
 One of the many strengths of PrBoom+ is its compatibility with past versions of
 Doom and Boom.  The fork will maintain this compatibility insofar as its target
 platforms (PNaCl, pepper.js) allow.
-
-Enhance Network Play
----------------------
-
-PrBoom+ currently only supports the old, P2P, synchronized networking shipped
-with Doom.  This functionality has several limitations: only 4 players max may
-play together, players cannot join an in-progress game, game modes are
-hard-coded, and one player's lag lags the whole group.
-
-This fork will remove those limitations using a client-server (C/S)
-architecture, with synchronization similar to that of Quake 3 (compressed
-deltas).
 
 Add Modern Features and Compatibility
 -------------------------------------
