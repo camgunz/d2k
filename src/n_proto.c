@@ -54,6 +54,12 @@
     return; \
   }
 
+#define CHECK_CONNECTION(np)                                                  \
+  if (np == NULL) {                                                           \
+    doom_printf(__func__ ": Not connected\n");                                \
+    return;                                                                   \
+  }
+
 /* CG: C/S Message Handlers here */
 
 static void handle_game_state_message(netpeer_t *np) {
@@ -62,7 +68,7 @@ static void handle_game_state_message(netpeer_t *np) {
 static void handle_server_message_message(netpeer_t *np) {
 }
 
-static void handle_authorization_response_message(netpeer_t *np) {
+static void handle_auth_response_message(netpeer_t *np) {
 }
 
 static void handle_player_message_message(netpeer_t *np) {
@@ -77,7 +83,7 @@ static void handle_player_message_message(netpeer_t *np) {
 static void handle_player_command_message(netpeer_t *np) {
 }
 
-static void handle_authorization_request_message(netpeer_t *np) {
+static void handle_auth_request_message(netpeer_t *np) {
 }
 
 static void handle_name_change_message(netpeer_t *np) {
@@ -123,7 +129,7 @@ typedef enum {
 
 /* CG: P2P Message Handlers here */
 
-static void handle_init_request_message(netpeer_t *np) {
+static void handle_init_message(netpeer_t *np) {
 }
 
 static void handle_setup_message(netpeer_t *np) {
@@ -141,7 +147,10 @@ static void handle_server_tic_message(netpeer_t *np) {
 static void handle_retransmission_request_message(netpeer_t *np) {
 }
 
-static void handle_extra_message(netpeer_t *np) {
+static void handle_color_message(netpeer_t *np) {
+}
+
+static void handle_save_game_name_message(netpeer_t *np) {
 }
 
 static void handle_quit_message(netpeer_t *np) {
@@ -182,9 +191,13 @@ static void dispatch_p2p_message(netpeer_t *np, byte message_type) {
       /* CG: Both clients and servers receive PKT_RETRANS messages */
       handle_retransmission_request_message(np);
     break;
-    case PKT_EXTRA:
-      SERVER_ONLY("extra");
-      handle_extra_message(np);
+    case PKT_COLOR:
+      /* CG: Both clients and servers receive PKT_COLOR messages */
+      handle_color_message(np);
+    break;
+    case PKT_SAVEG:
+      /* CG: Both clients and servers receive PKT_SAVEG messages */
+      handle_save_game_name_message(np);
     break;
     case PKT_QUIT:
       /* CG: Both clients and servers receive PKT_QUIT messages */
@@ -224,7 +237,7 @@ static void dispatch_cs_message(netpeer_t *np, byte message_type) {
     break;
     case nm_authresponse:
       CLIENT_ONLY("authorization response");
-      handle_authorization_response_message(np);
+      handle_auth_response_message(np);
     break;
     case nm_playermessage:
       /* CG: Both servers and clients receive player message messages */
@@ -236,7 +249,7 @@ static void dispatch_cs_message(netpeer_t *np, byte message_type) {
     break;
     case nm_authrequest:
       SERVER_ONLY("authorization request");
-      handle_authorization_request_message(np);
+      handle_auth_request_message(np);
     break;
     case nm_namechange:
       SERVER_ONLY("name change");
@@ -298,15 +311,167 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
 
   msgpack_unpacker_reserve_buffer(pac, data_size);
   memcpy(msgpack_unpacker_buffer(pac), data, data_size);
-  msgpack_unpacker_buffer_consumed(pac, buf->size);
+  msgpack_unpacker_buffer_consumed(pac, data_size);
 
-  if (!N_UnpackMessageType(np, &message_type))
-    return;
+  while (N_LoadNewMessage(np, &message_type)) {
+    if (use_p2p_netcode)
+      dispatch_p2p_message(np, message_type);
+    else
+      dispatch_cs_message(np, message_type);
+  }
+}
 
-  if (use_p2p_netcode)
-    dispatch_p2p_message(np, message_type);
-  else
-    dispatch_cs_message(np, message_type);
+#define CHECK_VALID_PLAYER(np, playernum) \
+  if (((np) == N_GetPlayerForPeer((playernum))) == NULL) \
+    I_Error(__func__ ": Invalid player %d.\n", playernum)
+
+void SV_SendStateDelta(short playernum) {
+  netpeer_t *np = NULL;
+  int tic_from = 0;
+  int tic_to = 0;
+
+
+  CHECK_VALID_PLAYER(np, playernum);
+
+  N_PackStateDelta(playernum, 
+
+void SV_BroadcastGameState(byte *state_data, size_t state_size) {
+  netpeer_t *np = NULL;
+
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
+
+    if ((np = N_GetPeer(i)) != NULL)
+      N_PackGameState(np, state_data, state_size);
+  }
+}
+
+void SV_SendMessage(short playernum, rune *message) {
+  netpeer_t *np = NULL;
+  CHECK_VALID_PLAYER(np, playernum);
+
+  N_PackMessage(np, message);
+}
+
+void SV_BroadcastMessage(rune *message) {
+  netpeer_t *np = NULL;
+
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
+
+    if ((np = N_GetPeer(i)) != NULL)
+      N_PackMessage(np, message);
+  }
+}
+
+void SV_SendAuthResponse(short playernum, auth_level_e auth_level) {
+  netpeer_t *np = N_GetPeerForPlayer(playernum);
+
+  if (np == NULL)
+    I_Error("SV_SendAuthResponse: Invalid player %d.\n", playernum);
+
+  N_PackMessage(np, auth_level);
+}
+
+void CL_SendPlayerMessage(short recipient, rune *message) {
+  netpeer_t *np = N_GetPeer(0);
+  CHECK_CONNECTION(np);
+
+  N_PackClientMessage(np, recipient, message);
+}
+
+void CL_SendPlayerCommand(unsigned int   index,
+                          unsigned int   world_index,
+                          signed   char  forward,
+                          signed   char  side,
+                          signed   short angle,
+                          byte           buttons) {
+  netpeer_t *np = N_GetPeer(0);
+  CHECK_CONNECTION(np);
+
+  N_PackPlayerCommand(np, index, world_index, forward, side, angle, buttons);
+}
+
+void CL_SendAuthRequest(rune *password) {
+  netpeer_t *np = N_GetPeer(0);
+  CHECK_CONNECTION(np);
+
+  N_PackAuthRequest(np, password);
+}
+
+void CL_SendNameChange(rune *new_name) {
+  netpeer_t *np = N_GetPeer(0);
+  CHECK_CONNECTION(np);
+
+  N_PackNameChange(np, new_name);
+}
+
+void CL_SendTeamChange(byte new_team) {
+  netpeer_t *np = N_GetPeer(0);
+  CHECK_CONNECTION(np);
+
+  N_PackTeamChange(np, new_team);
+}
+
+void CL_SendPWOChange(void) {
+  netpeer_t *np = N_GetPeer(0);
+  CHECK_CONNECTION(np);
+  /* CG: TODO */
+}
+
+void CL_SendWSOPChange(byte new_wsop_flags) {
+  netpeer_t *np = N_GetPeer(0);
+  CHECK_CONNECTION(np);
+
+  N_PackWSOPChange(np, new_wsop_flags);
+}
+
+void CL_SendBobbingChange(double new_bobbing_amount) {
+  netpeer_t *np = N_GetPeer(0);
+  CHECK_CONNECTION(np);
+
+  N_PackBobbingChange(np, new_bobbing_amount);
+}
+
+void CL_SendAutoaimChange(dboolean new_autoaim_enabled) {
+  netpeer_t *np = N_GetPeer(0);
+  CHECK_CONNECTION(np);
+
+  N_PackAutoaimChange(np, new_autoaim_enabled);
+}
+
+void CL_SendWeaponSpeedChange(byte new_weapon_speed) {
+  netpeer_t *np = N_GetPeer(0);
+  CHECK_CONNECTION(np);
+
+  N_PackWeaponSpeedChange(np, new_weapon_speed);
+}
+
+void CL_SendColorChange(byte new_red, byte new_green, byte new_blue) {
+  netpeer_t *np = N_GetPeer(0);
+  CHECK_CONNECTION(np);
+
+  N_PackColorChange(np, new_red, new_green, new_blue);
+}
+
+void CL_SendSkinChange(void) {
+  netpeer_t *np = N_GetPeer(0);
+  CHECK_CONNECTION(np);
+  /* CG: TODO */
+}
+
+void CL_SendRCONCommand(rune *command) {
+  netpeer_t *np = N_GetPeer(0);
+  CHECK_CONNECTION(np);
+
+  N_PackRCONCommand(np, command);
+}
+
+void CL_SendVoteRequest(rune *command) {
+  netpeer_t *np = N_GetPeer(0);
+  CHECK_CONNECTION(np);
+
+  N_PackVoteRequest(np, command);
 }
 
 /* vi: set cindent et ts=2 sw=2: */

@@ -36,12 +36,17 @@
 #define N_PACK_H__
 
 void     N_InitPacker(void);
+dboolean N_LoadNewMessage(netpeer_t *np, byte *message_type);
 
 /* CG: C/S message packing/unpacking here */
-dboolean N_UnpackMessageType(netpeer_t *np, byte *message_type);
 
-void     N_PackGameState(netpeer_t *np, void *state_data, size_t state_size);
-dboolean N_UnpackGameState(netpeer_t *np, buf_t *buf);
+void     N_PackStateDelta(netpeer_t *np, int tic_from, int tic_to,
+                                         buf_t *delta);
+dboolean N_UnpackStateDelta(netpeer_t *np, int *tic_from, int *tic_to,
+                                           buf_t *delta);
+
+void     N_PackFullState(netpeer_t *np, buf_t *state);
+dboolean N_UnpackFullState(netpeer_t *np, buf_t *buf);
 
 void     N_PackServerMessage(netpeer_t *np, rune *message);
 dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf);
@@ -49,43 +54,53 @@ dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf);
 void     N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level);
 dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level);
 
-void     N_PackPlayerCommand(netpeer_t *np, netticcmd_t *cmd);
-dboolean N_UnpackPlayerCommand(netpeer_t *np, netticcmd_t *cmd);
-
 void     N_PackPlayerMessage(netpeer_t *np, short recipient, rune *message);
 dboolean N_UnpackPlayerMessage(netpeer_t *np, short *recipient, buf_t *buf);
+
+void     N_PackPlayerCommand(netpeer_t *np, unsigned int index,
+                                            unsigned int world_index,
+                                            signed char  forward,
+                                            signed char  side,
+                                            signed short angle,
+                                            byte         buttons);
+dboolean N_UnpackPlayerCommand(netpeer_t *np, unsigned int *index,
+                                              unsigned int *world_index,
+                                              signed char  *forward,
+                                              signed char  *side,
+                                              signed short *angle,
+                                              byte         *buttons);
 
 void     N_PackAuthRequest(netpeer_t *np, rune *password);
 dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf);
 
-void     N_PackNameChanged(netpeer_t *np, rune *new_name);
-dboolean N_UnpackNameChanged(netpeer_t *np, buf_t *buf);
+void     N_PackNameChange(netpeer_t *np, rune *new_name);
+dboolean N_UnpackNameChange(netpeer_t *np, buf_t *buf);
 
-void     N_PackTeamChanged(netpeer_t *np, byte new_team);
-dboolean N_UnpackTeamChanged(netpeer_t *np, byte *new_team);
+void     N_PackTeamChange(netpeer_t *np, byte new_team);
+dboolean N_UnpackTeamChange(netpeer_t *np, byte *new_team);
 
-void     N_PackPWOChanged(netpeer_t *np);
-dboolean N_UnpackPWOChanged(netpeer_t *np);
+void     N_PackPWOChange(netpeer_t *np);
+dboolean N_UnpackPWOChange(netpeer_t *np);
 
-void     N_PackWSOPChanged(netpeer_t *np, byte new_wsop_flags);
-dboolean N_UnpackWSOPChanged(netpeer_t *np, byte *new_wsop_flags);
+void     N_PackWSOPChange(netpeer_t *np, byte new_wsop_flags);
+dboolean N_UnpackWSOPChange(netpeer_t *np, byte *new_wsop_flags);
 
-void     N_PackBobbingChanged(netpeer_t *np, double new_bobbing_amount);
-dboolean N_UnpackBobbingchanged(netpeer_t *np, double *new_bobbing_amount);
+void     N_PackBobbingChange(netpeer_t *np, double new_bobbing_amount);
+dboolean N_UnpackBobbingchange(netpeer_t *np, double *new_bobbing_amount);
 
-void     N_PackAutoaimChanged(netpeer_t *np, dboolean new_autoaim_enabled);
-dboolean N_UnpackAutoaimChanged(netpeer_t *np, dboolean *new_autoaim_enabled);
+void     N_PackAutoaimChange(netpeer_t *np, dboolean new_autoaim_enabled);
+dboolean N_UnpackAutoaimChange(netpeer_t *np, dboolean *new_autoaim_enabled);
 
-void     N_PackWeaponSpeedChanged(netpeer_t *np, byte new_weapon_speed);
-dboolean N_UnpackWeaponSpeedChanged(netpeer_t *np, byte *new_weapon_speed);
+void     N_PackWeaponSpeedChange(netpeer_t *np, byte new_weapon_speed);
+dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, byte *new_weapon_speed);
 
-void     N_PackColorChanged(netpeer_t *np, byte new_red, byte new_green,
-                                       byte new_blue);
-dboolean N_UnpackColorChanged(netpeer_t *np, byte *new_red, byte *new_green,
-                                             byte *new_blue);
+void     N_PackColorChange(netpeer_t *np, byte new_red, byte new_green,
+                                          byte new_blue);
+dboolean N_UnpackColorChange(netpeer_t *np, byte *new_red, byte *new_green,
+                                            byte *new_blue);
 
-void     N_PackSkinChanged(netpeer_t *np);
-dboolean N_UnpackSkinChanged(netpeer_t *np);
+void     N_PackSkinChange(netpeer_t *np);
+dboolean N_UnpackSkinChange(netpeer_t *np);
 
 void     N_PackRCONCommand(netpeer_t *np, rune *command);
 dboolean N_UnpackRCONCommand(netpeer_t *np, buf_t *buf);
@@ -94,44 +109,41 @@ void     N_PackVoteRequest(netpeer_t *np, rune *command);
 dboolean N_UnpackVoteRequest(netpeer_t *np, buf_t *buf);
 
 /* CG: P2P message packing/unpacking here */
-void     N_PackInitMessage(netpeer_t *np, short wanted_player_number);
-dboolean N_UnpackInitMessage(netpeer_t *np, short *wanted_player_number);
+void     N_PackInit(netpeer_t *np, short wanted_player_number);
+dboolean N_UnpackInit(netpeer_t *np, short *wanted_player_number);
 
-void     N_PackSetupMessage(netpeer_t *np, setup_packet_t *sinfo,
-                                           buf_t *wad_names);
-dboolean N_UnpackSetupMessage(netpeer_t *np, setup_packet_t *sinfo,
-                                             objbuf_t *wad_names);
+void     N_PackSetup(netpeer_t *np, setup_packet_t *sinfo, buf_t *wad_names);
+dboolean N_UnpackSetup(netpeer_t *np, setup_packet_t *sinfo,
+                                      objbuf_t *wad_names);
 
-void     N_PackGoMessage(netpeer_t *np);
+void     N_PackGo(netpeer_t *np);
 
-void     N_PackClientTicMessage(netpeer_t *np, int tic, objbuf_t *commands);
-dboolean N_UnpackClientTicMessage(netpeer_t *np, int *tic, objbuf_t *commands);
+void     N_PackClientTic(netpeer_t *np, int tic, objbuf_t *commands);
+dboolean N_UnpackClientTic(netpeer_t *np, int *tic, objbuf_t *commands);
 
-void     N_PackServerTicMessage(netpeer_t *np, int tic, objbuf_t *commands);
-dboolean N_UnpackServerTicMessage(netpeer_t *np, int *tic, objbuf_t *commands);
+void     N_PackServerTic(netpeer_t *np, int tic, objbuf_t *commands);
+dboolean N_UnpackServerTic(netpeer_t *np, int *tic, objbuf_t *commands);
 
-void     N_PackRetransmissionRequestMessage(netpeer_t *np, int tic);
-dboolean N_UnpackRetransmissionRequestMessage(netpeer_t *np, int *tic);
+void     N_PackRetransmissionRequest(netpeer_t *np, int tic);
+dboolean N_UnpackRetransmissionRequest(netpeer_t *np, int *tic);
 
-void     N_PackColorMessage(netpeer_t *np, int tic, int playernum,
-                                           mapcolor_me new_color);
-dboolean N_UnpackColorMessage(netpeer_t *np, int *tic, int *playernum,
-                                             mapcolor_me *new_color);
+void     N_PackColor(netpeer_t *np, mapcolor_me new_color);
+dboolean N_UnpackColor(netpeer_t *np, int *tic, short *playernum,
+                                      mapcolor_me *new_color);
 
-void     N_PackSaveGameNameMessage(netpeer_t *np, int tic,
-                                                  rune *new_save_game_name);
-dboolean N_UnpackSaveGameNameMessage(netpeer_t *np, int *tic, buf_t *buf);
+void     N_PackSaveGameName(netpeer_t *np, rune *new_save_game_name);
+dboolean N_UnpackSaveGameName(netpeer_t *np, int *tic, buf_t *buf);
 
-void     N_PackQuitMessage(netpeer_t *np, int tic, int playernum);
-dboolean N_UnpackQuitMessage(netpeer_t *np, int *tic, int *playernum);
+void     N_PackQuit(netpeer_t *np);
+dboolean N_UnpackQuit(netpeer_t *np, int *tic, short *playernum);
 
-void     N_PackDownMessage(netpeer_t *np);
+void     N_PackDown(netpeer_t *np);
 
-void     N_PackWadMessage(netpeer_t *np, rune *wad_name);
-dboolean N_UnpackWadMessage(netpeer_t *np, buf_t *wad_name);
+void     N_PackWad(netpeer_t *np, rune *wad_name_or_url);
+dboolean N_UnpackWad(netpeer_t *np, buf_t *wad_name_or_url);
 
-void     N_PackBackoffMessage(netpeer_t *np, int tic);
-dboolean N_UnpackBackoffMessage(netpeer_t *np, int *tic);
+void     N_PackBackoff(netpeer_t *np, int tic);
+dboolean N_UnpackBackoff(netpeer_t *np, int *tic);
 
 #endif
 

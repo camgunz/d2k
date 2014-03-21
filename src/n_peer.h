@@ -41,7 +41,10 @@ typedef struct netpeer_s {
   msgpack_packer  *pk;
   time_t           connect_time;
   time_t           disconnect_time;
-  int              playernum;
+  short            playernum;
+  int              last_state_received_tic;
+  int              last_state_sent_tic;
+  buf_t           *state;
 } netpeer_t;
 
 int        N_AddPeer(void);
@@ -51,8 +54,8 @@ void       N_RemovePeer(netpeer_t *np);
 int        N_GetPeerCount(void);
 netpeer_t* N_GetPeer(int peernum);
 int        N_GetPeerNum(ENetPeer *peer);
-netpeer_t* N_GetPeerForPlayer(int playernum);
-int        N_GetPeerNumForPlayer(int playernum);
+netpeer_t* N_GetPeerForPlayer(short playernum);
+int        N_GetPeerNumForPlayer(short playernum);
 dboolean   N_CheckPeerTimeout(int peernum);
 
 #endif

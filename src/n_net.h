@@ -35,6 +35,8 @@
 #ifndef NET_H__
 #define NET_H__
 
+#define DEFAULT_PORT 10666
+
 size_t   N_IPToString(int address, char *buffer);
 int      N_IPToInt(const char *address);
 size_t   N_GetHostFromAddressString(const char *address, char **host);
@@ -51,7 +53,7 @@ dboolean N_Reconnect(void);
 void     N_WaitForPacket(int ms);
 dboolean N_ConnectToServer(const char *serv);
 void     N_PrintAddress(FILE *fp, int peernum);
-void     N_DisconnectPlayer(int playernum);
+void     N_DisconnectPlayer(short playernum);
 void     N_ServiceNetwork(void);
 
 #endif

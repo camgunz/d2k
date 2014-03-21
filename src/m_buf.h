@@ -43,6 +43,7 @@ typedef struct buf_s {
 
 void M_BufferInit(buf_t **buf);
 void M_BufferInitWithCapacity(buf_t **buf, size_t size);
+void M_BufferCopy(buf_t *dest, buf_t *src);
 void M_BufferSetData(buf_t *buf, byte *data, size_t size);
 void M_BufferSetString(buf_t *buf, byte *data, size_t length);
 void M_BufferAppend(buf_t *buf, byte *data, size_t size);

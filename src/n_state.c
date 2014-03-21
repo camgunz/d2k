@@ -27,31 +27,69 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *  A buffer of objects
+ *
  *
  *-----------------------------------------------------------------------------
  */
 
-#ifndef OBUF_H__
-#define OBUF_H__
+#include "z_zone.h"
 
-typedef struct objbuf_s {
-  int size;
-  void **objects;
-} objbuf_t;
+#include "doomtype.h"
+#include "doomstat.h"
+#include "m_buf.h"
+#include "m_obuf.h"
 
-void M_ObjBufferInit(objbuf_t **obuf);
-void M_ObjBufferInitWithSize(objbuf_t **obuf, int size);
-void M_ObjBufferAppend(objbuf_t *obuf, void *obj);
-void M_ObjBufferInsert(objbuf_t *obuf, int index, void *obj);
-int  M_ObjBufferInsertAtFirstFreeSlot(objbuf_t *obuf, void *obj);
-int  M_ObjBufferInsertAtFirstFreeSlotOrAppend(objbuf_t *obuf, void *obj);
-void M_ObjBufferRemove(objbuf_t *obuf, int index);
-void M_ObjBufferEnsureSize(objbuf_t *obuf, int size);
-int  M_ObjBufferGetObjectCount(objbuf_t *obuf);
-void M_ObjBufferClear(objbuf_t *obuf);
-void M_ObjBufferFreeEntriesAndClear(objbuf_t *obuf);
-void M_ObjBufferFree(objbuf_t *obuf);
+typedef struct game_state_s {
+  int    tic;
+  buf_t *state;
+} game_state_t;
+
+static game_state_t *current_game_state;
+static obuf_t *saved_game_states = NULL
+
+void N_InitStates(void) {
+  current_game_state = calloc(1, sizeof(game_state_t));
+  M_BufferInit(&current_game_state->data);
+  M_ObjBufferInit(&saved_game_states);
+}
+
+void N_SaveCurrentState(buf_t *state) {
+  current_game_state->tic = gametic;
+  M_BufferCopy(current_game_state->data, state);
+}
+
+void N_SaveStateForTic(int tic, buf_t *state) {
+  game_state_t *gs = calloc(1, sizeof(game_state_t));
+
+  gs->tic = gs;
+  M_BufferCopy(gs->data, state);
+
+  M_ObjBufferInsertAtFirstFreeSlotOrAppend(saved_game_states, gs);
+}
+
+dboolean N_ApplyStateDelta(int tic, buf_t *delta) {
+  game_state_t *gs = NULL;
+
+  for (int i = 0; i < saved_game_states->size; i++) {
+    game_state_t *sgs = saved_game_states->objects[i];
+
+    if (sgs != NULL && sgs->tic == tic)
+      gs = sgs;
+  }
+
+  if (gs == NULL)
+    return false;
+
+  if (M_ApplyDelta(gs, current_game_state, delta))
+    return false;
+
+  current_game_state->tic = tic;
+  return true;
+}
+
+dboolean N_GenerateStateDelta(netpeer_t *np, buf_t *delta) {
+  return M_GenerateDelta(np->state, current_game_state->state, delta);
+}
 
 #endif
 

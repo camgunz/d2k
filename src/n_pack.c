@@ -37,6 +37,7 @@
 #include <msgpack.h>
 
 #include "doomtype.h"
+#include "lprintf.h"
 #include "m_obuf.h"
 
 #define unpack_and_validate(s, t)                                             \
@@ -179,9 +180,24 @@ void N_InitPacker(void) {
   msgpack_unpacked_init(&result);
 }
 
-dboolean N_UnpackMessageType(netpeer_t *np, byte *message_type) {
-  unpack_and_validate("message type", POSITIVE_INTEGER);
-  validate_is_byte("message type");
+dboolean N_LoadNewMessage(netpeer_t *np, byte *message_type) {
+  if (!msgpack_unpacker_next(&pac, &result))
+    return false;
+
+  if (result.data.type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
+    doom_printf(
+      "N_HandlePacket: Invalid packet: message type is not a positive "
+      "integer\n"
+    );
+    return false;
+  }
+
+  obj = result.data
+
+  if (obj.via.u64 > 0xFF) {
+    doom_printf("N_HandlePacket: message type out of range (> 0xFF)\n");
+    return false;
+  }
 
   *message_type = (byte)obj.via.u64;
 
@@ -241,59 +257,6 @@ dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
   return true;
 }
 
-void N_PackPlayerCommand(netpeer_t *np, netticcmd_t *cmd) {
-  msgpack_pack_unsigned_char(np->pk, nm_playercommand);
-  msgpack_pack_unsigned_int(np->pk, cmd->index);
-  msgpack_pack_unsigned_int(np->pk, cmd->world_index);
-  msgpack_pack_signed_char(np->pk, cmd->forward);
-  msgpack_pack_signed_char(np->pk, cmd->side);
-  msgpack_pack_short(np->pk, cmd->angle);
-  msgpack_pack_unsigned_char(np->pk, cmd->buttons);
-}
-
-dboolean N_UnpackPlayerCommand(netpeer_t *np, netticcmd_t *cmd) {
-  unsigned int index = 0;
-  unsigned int world_index = 0;
-  signed char  forward = 0;
-  signed char  side = 0;
-  short        angle = 0;
-  byte         buttons = 0;
-
-  unpack_and_validate("command index", POSITIVE_INTEGER);
-  validate_is_int("command index");
-  index = (unsigned int)obj.via.u64;
-
-  unpack_and_validate("command world index", POSITIVE_INTEGER);
-  validate_is_int("command world index");
-  world_index = (unsigned int)obj.via.u64;
-
-  unpack_and_validate("command forward value", NEGATIVE_INTEGER);
-  validate_is_byte("command forward value");
-  forward = (signed char)obj.via.i64;
-
-  unpack_and_validate("command side value", NEGATIVE_INTEGER);
-  validate_is_byte("command side value");
-  side = (signed char)obj.via.i64;
-
-  unpack_and_validate("command angle value", NEGATIVE_INTEGER);
-  validate_is_short("command angle value");
-  angle = (short)obj.via.i64;
-
-  unpack_and_validate("command buttons", POSITIVE_INTEGER);
-  validate_is_byte("command buttons");
-  buttons = (byte)obj.via.u64;
-
-  cmd->index = index;
-  cmd->world_index = world_index;
-  cmd->forward = forward;
-  cmd->side = side;
-  cmd->angle = angle;
-  cmd->buttons = buttons;
-
-  return true;
-}
-
-
 void N_PackPlayerMessage(netpeer_t *np, short recipient, rune *message) {
   size_t length = strlen(message) * sizeof(rune);
 
@@ -320,6 +283,69 @@ dboolean N_UnpackPlayerMessage(netpeer_t *np, short *recipient, buf_t *buf) {
   return true;
 }
 
+void N_PackPlayerCommand(netpeer_t *np, unsigned int index,
+                                        unsigned int world_index,
+                                        signed char  forward,
+                                        signed char  side,
+                                        signed short angle,
+                                        byte         buttons) {
+  msgpack_pack_unsigned_char(np->pk, nm_playercommand);
+  msgpack_pack_unsigned_int(np->pk, index);
+  msgpack_pack_unsigned_int(np->pk, world_index);
+  msgpack_pack_signed_char(np->pk, forward);
+  msgpack_pack_signed_char(np->pk, side);
+  msgpack_pack_short(np->pk, angle);
+  msgpack_pack_unsigned_char(np->pk, buttons);
+}
+
+dboolean N_UnpackPlayerCommand(netpeer_t *np, unsigned int *index,
+                                              unsigned int *world_index,
+                                              signed char  *forward,
+                                              signed char  *side,
+                                              signed short *angle,
+                                              byte         *buttons) {
+  unsigned int m_index = 0;
+  unsigned int m_world_index = 0;
+  signed char  m_forward = 0;
+  signed char  m_side = 0;
+  short        m_angle = 0;
+  byte         m_buttons = 0;
+
+  unpack_and_validate("command index", POSITIVE_INTEGER);
+  validate_is_int("command index");
+  m_index = (unsigned int)obj.via.u64;
+
+  unpack_and_validate("command world index", POSITIVE_INTEGER);
+  validate_is_int("command world index");
+  m_world_index = (unsigned int)obj.via.u64;
+
+  unpack_and_validate("command forward value", NEGATIVE_INTEGER);
+  validate_is_byte("command forward value");
+  m_forward = (signed char)obj.via.i64;
+
+  unpack_and_validate("command side value", NEGATIVE_INTEGER);
+  validate_is_byte("command side value");
+  m_side = (signed char)obj.via.i64;
+
+  unpack_and_validate("command angle value", NEGATIVE_INTEGER);
+  validate_is_short("command angle value");
+  m_angle = (short)obj.via.i64;
+
+  unpack_and_validate("command buttons", POSITIVE_INTEGER);
+  validate_is_byte("command buttons");
+  m_buttons = (byte)obj.via.u64;
+
+  *index = m_index;
+  *world_index = m_world_index;
+  *forward = m_forward;
+  *side = m_side;
+  *angle = m_angle;
+  *buttons = m_buttons;
+
+  return true;
+}
+
+
 void N_PackAuthRequest(netpeer_t *np, rune *password) {
   size_t length = strlen(password) * sizeof(rune);
 
@@ -336,7 +362,7 @@ dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
   return true;
 }
 
-void N_PackNameChanged(netpeer_t *np, rune *new_name) {
+void N_PackNameChange(netpeer_t *np, rune *new_name) {
   size_t length = strlen(new_name) * sizeof(rune);
 
   msgpack_pack_unsigned_char(np->pk, nm_namechange);
@@ -344,7 +370,7 @@ void N_PackNameChanged(netpeer_t *np, rune *new_name) {
   msgpack_pack_raw_body(np->pk, new_name, length);
 }
 
-dboolean N_UnpackNameChanged(netpeer_t *np, buf_t *buf) {
+dboolean N_UnpackNameChange(netpeer_t *np, buf_t *buf) {
   unpack_and_validate("new name", RAW);
 
   M_BufferSetString(buf, (rune *)obj.via.raw.ptr, (size_t)obj.via.raw.size);
@@ -352,12 +378,12 @@ dboolean N_UnpackNameChanged(netpeer_t *np, buf_t *buf) {
   return true;
 }
 
-void N_PackTeamChanged(netpeer_t *np, byte new_team) {
+void N_PackTeamChange(netpeer_t *np, byte new_team) {
   msgpack_pack_unsigned_char(np->pk, nm_teamchange);
   msgpack_pack_unsigned_char(np->pk, new_team);
 }
 
-dboolean N_UnpackTeamChanged(netpeer_t *np, byte *new_team) {
+dboolean N_UnpackTeamChange(netpeer_t *np, byte *new_team) {
   unpack_and_validate("team index", POSITIVE_INTEGER);
   /* CG: TODO: teams */
   if (team_count > 0)
@@ -370,22 +396,22 @@ dboolean N_UnpackTeamChanged(netpeer_t *np, byte *new_team) {
   return true;
 }
 
-void N_PackPWOChanged(netpeer_t *np) {
+void N_PackPWOChange(netpeer_t *np) {
   msgpack_pack_unsigned_char(np->pk, nm_pwochange);
   /* CG: TODO */
 }
 
-dboolean N_UnpackPWOChanged(netpeer_t *np) {
+dboolean N_UnpackPWOChange(netpeer_t *np) {
   /* CG: TODO */
   return false;
 }
 
-void N_PackWSOPChanged(netpeer_t *np, byte new_wsop_flags) {
+void N_PackWSOPChange(netpeer_t *np, byte new_wsop_flags) {
   msgpack_pack_unsigned_char(np->pk, nm_wsopchange);
   msgpack_pack_unsigned_char(np->pk, new_wsop_flags);
 }
 
-dboolean N_UnpackWSOPChanged(netpeer_t *np, byte *new_wsop_flags) {
+dboolean N_UnpackWSOPChange(netpeer_t *np, byte *new_wsop_flags) {
   unpack_and_validate("new WSOP value", POSITIVE_INTEGER);
   validate_range_unsigned(0, 2 << (WSOP_MAX - 2)); /* CG: TODO: WSOP */
 
@@ -394,7 +420,7 @@ dboolean N_UnpackWSOPChanged(netpeer_t *np, byte *new_wsop_flags) {
   return true;
 }
 
-void N_PackBobbingChanged(netpeer_t *np, double new_bobbing_amount) {
+void N_PackBobbingChange(netpeer_t *np, double new_bobbing_amount) {
   msgpack_pack_unsigned_char(np->pk, nm_bobbingchange);
   msgpack_pack_double(np->pk, new_bobbing_amount);
 }
@@ -408,7 +434,7 @@ dboolean N_UnpackBobbingchanged(netpeer_t *np, double *new_bobbing_amount) {
   return true;
 }
 
-void N_PackAutoaimChanged(netpeer_t *np, dboolean new_autoaim_enabled) {
+void N_PackAutoaimChange(netpeer_t *np, dboolean new_autoaim_enabled) {
   msgpack_pack_unsigned_char(np->pk, nm_autoaimchange);
   if (new_autoaim_enabled)
     msgpack_pack_true(np->pk);
@@ -416,7 +442,7 @@ void N_PackAutoaimChanged(netpeer_t *np, dboolean new_autoaim_enabled) {
     msgpack_pack_false(np->pk);
 }
 
-dboolean N_UnpackAutoaimChanged(netpeer_t *np, dboolean *new_autoaim_enabled) {
+dboolean N_UnpackAutoaimChange(netpeer_t *np, dboolean *new_autoaim_enabled) {
   unpack_and_validate("new Autoaim value", BOOLEAN);
 
   *new_autoaim_enabled = obj.via.bool;
@@ -424,12 +450,12 @@ dboolean N_UnpackAutoaimChanged(netpeer_t *np, dboolean *new_autoaim_enabled) {
   return true;
 }
 
-void N_PackWeaponSpeedChanged(netpeer_t *np, byte new_weapon_speed) {
+void N_PackWeaponSpeedChange(netpeer_t *np, byte new_weapon_speed) {
   msgpack_pack_unsigned_char(np->pk, nm_weaponspeedchange);
   msgpack_pack_unsigned_char(np->pk, new_autoaim_enabled);
 }
 
-dboolean N_UnpackWeaponSpeedChanged(netpeer_t *np, byte *new_weapon_speed) {
+dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, byte *new_weapon_speed) {
 
   unpack_and_validate("new weapon speed value", POSITIVE_INTEGER);
   validate_is_byte("new weapon speed value");
@@ -439,7 +465,7 @@ dboolean N_UnpackWeaponSpeedChanged(netpeer_t *np, byte *new_weapon_speed) {
   return true;
 }
 
-void N_PackColorChanged(netpeer_t *np, byte new_red, byte new_green,
+void N_PackColorChange(netpeer_t *np, byte new_red, byte new_green,
                                        byte new_blue) {
   msgpack_pack_unsigned_char(np->pk, nm_colorchange);
   msgpack_pack_unsigned_char(np->pk, new_red);
@@ -447,8 +473,7 @@ void N_PackColorChanged(netpeer_t *np, byte new_red, byte new_green,
   msgpack_pack_unsigned_char(np->pk, new_blue);
 }
 
-dboolean N_UnpackColorChanged(netpeer_t *np, byte *new_red,
-                                             byte *new_green,
+dboolean N_UnpackColorChange(netpeer_t *np, byte *new_red, byte *new_green,
                                              byte *new_blue) {
   byte m_new_red = 0;
   byte m_new_green = 0;
@@ -473,12 +498,12 @@ dboolean N_UnpackColorChanged(netpeer_t *np, byte *new_red,
   return true;
 }
 
-void N_PackSkinChanged(netpeer_t *np) {
+void N_PackSkinChange(netpeer_t *np) {
   msgpack_pack_unsigned_char(np->pk, nm_skinchange);
   /* CG: TODO */
 }
 
-dboolean N_UnpackSkinChanged(netpeer_t *np) {
+dboolean N_UnpackSkinChange(netpeer_t *np) {
 
   return false;
 }
@@ -517,12 +542,12 @@ dboolean N_UnpackVoteRequest(netpeer_t *np, buf_t *buf) {
 
 /* CG: P2P message packing/unpacking here */
 
-void N_PackInitMessage(netpeer_t *np, short wanted_player_number) {
+void N_PackInit(netpeer_t *np, short wanted_player_number) {
   msgpack_pack_unsigned_char(np->pk, PKT_INIT);
   msgpack_pack_short(np->pk, wanted_player_number);
 }
 
-dboolean N_UnpackInitMessage(netpeer_t *np, short *wanted_player_number) {
+dboolean N_UnpackInit(netpeer_t *np, short *wanted_player_number) {
   unpack_and_validate("wanted player number", POSITIVE_INTEGER);
   validate_is_short("wanted player number");
 
@@ -531,13 +556,12 @@ dboolean N_UnpackInitMessage(netpeer_t *np, short *wanted_player_number) {
   return true;
 }
 
-void N_PackSetupMessage(netpeer_t *np, setup_packet_t *sinfo,
-                                       buf_t *wad_names) {
+void N_PackSetup(netpeer_t *np, setup_packet_t *sinfo, buf_t *wad_names) {
   int offset = 0;
 
   msgpack_pack_unsigned_char(np->pk, PKT_SETUP);
-  msgpack_pack_unsigned_char(np->pk, sinfo->players);
-  msgpack_pack_unsigned_char(np->pk, sinfo->yourplayer);
+  msgpack_pack_short(np->pk, sinfo->players);
+  msgpack_pack_short(np->pk, sinfo->yourplayer);
   msgpack_pack_unsigned_char(np->pk, sinfo->skill);
   msgpack_pack_unsigned_char(np->pk, sinfo->episode);
   msgpack_pack_unsigned_char(np->pk, sinfo->level);
@@ -558,27 +582,27 @@ void N_PackSetupMessage(netpeer_t *np, setup_packet_t *sinfo,
   }
 }
 
-dboolean N_UnpackSetupMessage(netpeer_t *np, setup_packet_t *sinfo,
-                                             objbuf_t *wad_names) {
-  byte players;
-  byte yourplayer;
-  byte skill;
-  byte episode;
-  byte level;
-  byte deathmatch;
-  byte complevel;
-  byte ticdup;
-  byte extratic;
-  byte game_options[GAME_OPTIONS_SIZE];
-  byte numwads;
+dboolean N_UnpackSetup(netpeer_t *np, setup_packet_t *sinfo,
+                                      objbuf_t *wad_names) {
+  short players;
+  short yourplayer;
+  byte  skill;
+  byte  episode;
+  byte  level;
+  byte  deathmatch;
+  byte  complevel;
+  byte  ticdup;
+  byte  extratic;
+  byte  game_options[GAME_OPTIONS_SIZE];
+  byte  numwads;
 
   unpack_and_validate("players", POSITIVE_INTEGER);
-  validate_is_byte("players");
-  players = (byte)obj.via.u64;
+  validate_is_short("players");
+  players = (short)obj.via.i64;
 
   unpack_and_validate("yourplayer", POSITIVE_INTEGER);
-  validate_is_byte("yourplayer");
-  yourplayer = (byte)obj.via.u64;
+  validate_is_short("yourplayer");
+  yourplayer = (short)obj.via.i64;
 
   unpack_and_validate("skill", POSITIVE_INTEGER);
   validate_is_byte("skill");
@@ -630,11 +654,11 @@ dboolean N_UnpackSetupMessage(netpeer_t *np, setup_packet_t *sinfo,
   return true;
 }
 
-void N_PackGoMessage(netpeer_t *np) {
+void N_PackGo(netpeer_t *np) {
   msgpack_pack_unsigned_char(np->pk, PKT_GO);
 }
 
-void N_PackClientTicMessage(netpeer_t *np, int tic, objbuf_t *commands) {
+void N_PackClientTic(netpeer_t *np, int tic, objbuf_t *commands) {
   int command_count = M_ObjBufferGetObjectCount(commands);
 
   msgpack_pack_unsigned_char(np->pk, PKT_TICC);
@@ -652,110 +676,22 @@ void N_PackClientTicMessage(netpeer_t *np, int tic, objbuf_t *commands) {
   }
 }
 
-dboolean N_UnpackClientTicMessage(netpeer_t *np, int *tic,
-                                                 objbuf_t *commands) {
+dboolean N_UnpackClientTic(netpeer_t *np, int *tic, objbuf_t *commands) {
   int m_tic = 0;
-  int command_count = 0;
+  short command_count = 0;
 
   unpack_and_validate("tic", POSITIVE_INTEGER);
   m_tic = (int)obj.via.u64;
 
   unpack_and_validate("command count", POSITIVE_INTEGER);
-  command_count = (int)obj.via.u64;
+  command_count = (short)obj.via.i64;
 
-  M_ObjBufferClear(commands);
-  M_ObjBufferEnsureSize(commands, command_count);
-
-  for (int i = 0; i < command_count; i++) {
-    ticcmd_t cmd;
-
-    unpack_and_validate("forwardmove", NEGATIVE_INTEGER);
-    validate_is_byte("forwardmove");
-    cmd.forwardmove = (signed char)obj.via.i64;
-
-    unpack_and_validate("sidemove", NEGATIVE_INTEGER);
-    validate_is_byte("sidemove");
-    cmd.sidemove = (signed char)obj.via.i64;
-
-    unpack_and_validate("angleturn", NEGATIVE_INTEGER);
-    validate_is_byte("angleturn");
-    cmd.angleturn = (short)obj.via.i64;
-
-    unpack_and_validate("consistancy", NEGATIVE_INTEGER);
-    validate_is_byte("consistancy");
-    cmd.consistancy = (short)obj.via.i64;
-
-    unpack_and_validate("chatchar", POSITIVE_INTEGER);
-    validate_is_byte("chatchar");
-    cmd.chatchar = (byte)obj.via.u64;
-
-    unpack_and_validate("buttons", POSITIVE_INTEGER);
-    validate_is_byte("buttons");
-    cmd.buttons = (byte)obj.via.u64;
-
-    memcpy(commands->objects[i], &cmd, sizeof(ticcmd_t));
-  }
-
-  *tic = m_tic;
-
-  return true;
-}
-
-void N_PackServerTicMessage(netpeer_t *np, int tic, objbuf_t *commands) {
-  int players_this_tic = M_ObjBufferGetObjectCount(commands);
-
-  msgpack_pack_unsigned_char(np->pk, PKT_TICS);
-  msgpack_pack_int(np->pk, tic);
-  msgpack_pack_int(np->pk, M_ObjBufferGetObjectCount(commands));
-
-  for (int i = 0; i < commands->size; i++) {
-    ticcmd_t *cmd = commands->objects[i];
-
-    if (cmd == NULL)
-      continue;
-
-    msgpack_pack_unsigned_short(np->pk, i);
-    msgpack_pack_signed_char(np->pk, cmd->forwardmove, sizeof(signed char));
-    msgpack_pack_signed_char(np->pk, cmd->sidemove, sizeof(signed char));
-    msgpack_pack_short(np->pk, cmd->angleturn, sizeof(signed short));
-    msgpack_pack_short(np->pk, cmd->consistancy, sizeof(short));
-    msgpack_pack_byte(np->pk, cmd->chatchar, sizeof(byte));
-    msgpack_pack_byte(np->pk, cmd->buttons, sizeof(byte));
-  }
-
-}
-
-dboolean N_UnpackServerTicMessage(netpeer_t *np, int *tic,
-                                                 objbuf_t *commands) {
-  int m_tic = 0;
-  int players_this_tic = 0;
-
-  unpack_and_validate("tic", POSITIVE_INTEGER);
-  m_tic = (int)obj.via.u64;
-
-  unpack_and_validate("player command count", POSITIVE_INTEGER);
-  players_this_tic = (int)obj.via.u64;
-
-  for (int i = 0; i < players_this_tic; i++) {
-    if (commands->objects[i] == NULL)
-      commands->objects[i] = malloc(sizeof(ticcmd_t));
-
-    memcpy(commands->objects[i]
-  }
-
-  return true;
-}
-
-dboolean N_UnpackClientTicMessage(netpeer_t *np, int *tic,
-                                                 objbuf_t *commands) {
-  int m_tic = 0;
-  int players_this_tic = 0;
-
-  unpack_and_validate("tic", POSITIVE_INTEGER);
-  m_tic = (int)obj.via.u64;
-
-  unpack_and_validate("player count", POSITIVE_INTEGER);
-  players_this_tic = (int)obj.via.u64;
+  /*
+   * CG: FIXME: Put a limit on command_count to avoid pegging the CPU.  The
+   *            The 'unpack_and_validate' check probably already prevents
+   *            reading past the edge of the commands array, but CPU usage is a
+   *            valid concern and it's good to be explicit nonetheless.
+   */
 
   M_ObjBufferClear(commands);
 
@@ -769,17 +705,12 @@ dboolean N_UnpackClientTicMessage(netpeer_t *np, int *tic,
    */
 
   for (int i = 0; i < command_count; i++) {
-    int playernum = 0;
+    short playernum = 0;
     ticcmd_t cmd;
-
-    /*
-     * CG: Make playernum a short here to avoid allocating 2 billion pointers
-     *     just because the server said to.
-     */
 
     unpack_and_validate("player", POSITIVE_INTEGER);
     validate_is_short("player");
-    playernum = (int)obj.via.u64;
+    playernum = (short)obj.via.u64;
 
     M_ObjBufferEnsureSize(playernum + 1);
 
@@ -815,12 +746,55 @@ dboolean N_UnpackClientTicMessage(netpeer_t *np, int *tic,
   return true;
 }
 
-void N_PackRetransmissionRequestMessage(netpeer_t *np, int tic) {
+void N_PackServerTic(netpeer_t *np, int tic, objbuf_t *commands) {
+  int players_this_tic = M_ObjBufferGetObjectCount(commands);
+
+  msgpack_pack_unsigned_char(np->pk, PKT_TICS);
+  msgpack_pack_int(np->pk, tic);
+  msgpack_pack_int(np->pk, M_ObjBufferGetObjectCount(commands));
+
+  for (int i = 0; i < commands->size; i++) {
+    ticcmd_t *cmd = commands->objects[i];
+
+    if (cmd == NULL)
+      continue;
+
+    msgpack_pack_unsigned_short(np->pk, i);
+    msgpack_pack_signed_char(np->pk, cmd->forwardmove, sizeof(signed char));
+    msgpack_pack_signed_char(np->pk, cmd->sidemove, sizeof(signed char));
+    msgpack_pack_short(np->pk, cmd->angleturn, sizeof(signed short));
+    msgpack_pack_short(np->pk, cmd->consistancy, sizeof(short));
+    msgpack_pack_byte(np->pk, cmd->chatchar, sizeof(byte));
+    msgpack_pack_byte(np->pk, cmd->buttons, sizeof(byte));
+  }
+}
+
+dboolean N_UnpackServerTic(netpeer_t *np, int *tic, objbuf_t *commands) {
+  int m_tic = 0;
+  int players_this_tic = 0;
+
+  unpack_and_validate("tic", POSITIVE_INTEGER);
+  m_tic = (int)obj.via.u64;
+
+  unpack_and_validate("player command count", POSITIVE_INTEGER);
+  players_this_tic = (int)obj.via.u64;
+
+  for (int i = 0; i < players_this_tic; i++) {
+    if (commands->objects[i] == NULL)
+      commands->objects[i] = malloc(sizeof(ticcmd_t));
+
+    memcpy(commands->objects[i]
+  }
+
+  return true;
+}
+
+void N_PackRetransmissionRequest(netpeer_t *np, int tic) {
   msgpack_pack_unsigned_char(np->pk, PKT_RETRANS);
   msgpack_pack_int(np->pk, tic);
 }
 
-dboolean N_UnpackRetransmissionRequestMessage(netpeer_t *np, int *tic) {
+dboolean N_UnpackRetransmissionRequest(netpeer_t *np, int *tic) {
   unpack_and_validate("tic", POSITIVE_INTEGER);
   validate_is_int("tic");
 
@@ -829,18 +803,20 @@ dboolean N_UnpackRetransmissionRequestMessage(netpeer_t *np, int *tic) {
   return true;
 }
 
-void N_PackColorMessage(netpeer_t *np, int tic, int playernum,
-                                       mapcolor_me new_color) {
+void N_PackColor(netpeer_t *np, mapcolor_me new_color) {
   msgpack_pack_unsigned_char(np->pk, PKT_COLOR);
-  msgpack_pack_int(np->pk, tic);
-  msgpack_pack_int(np->pk, playernum);
+  msgpack_pack_int(np->pk, gametic);
+  if (server)
+    msgpack_pack_short(np->pk, np->playernum);
+  else
+    msgpack_pack_short(np->pk, consoleplayer);
   msgpack_pack_int(np->pk, new_color);
 }
 
-dboolean N_UnpackColorMessage(netpeer_t *np, int *tic, int *playernum,
-                                             mapcolor_me *new_color) {
+dboolean N_UnpackColor(netpeer_t *np, int *tic, short *playernum,
+                                      mapcolor_me *new_color) {
   int m_tic = -1;
-  int m_playernum = -1;
+  short m_playernum = -1;
   mapcolor_me m_new_color;
 
   unpack_and_validate("tic", POSITIVE_INTEGER);
@@ -848,11 +824,13 @@ dboolean N_UnpackColorMessage(netpeer_t *np, int *tic, int *playernum,
   m_tic = (int)obj.via.u64;
 
   unpack_and_validate("player", POSITIVE_INTEGER);
-  validate_is_int("player");
-  m_playernum = (int)obj.via.u64;
+  validate_is_short("player");
+  m_playernum = (short)obj.via.i64;
 
   unpack_and_validate("new color", POSITIVE_INTEGER);
   validate_is_int("new color");
+
+  /* CG: TODO: Validate color value is within the mapcolor_me enum */
   m_new_color = (mapcolor_me)obj.via.i64;
 
   *tic = m_tic;
@@ -862,29 +840,40 @@ dboolean N_UnpackColorMessage(netpeer_t *np, int *tic, int *playernum,
   return true;
 }
 
-void N_PackSaveGameNameMessage(netpeer_t *np, rune *new_save_game_name) {
+void N_PackSaveGameName(netpeer_t *np, rune *new_save_game_name) {
   size_t length = strlen(new_save_game_name);
 
   msgpack_pack_unsigned_char(np->pk, PKT_SAVEG);
+  msgpack_pack_int(np->pk, gametic);
   msgpack_pack_raw(np->pk, length);
   msgpack_pack_raw_body(np->pk, new_save_game_name, length);
 }
 
-dboolean N_UnpackSaveGameNameMessage(netpeer_t *np, buf_t *buf) {
+dboolean N_UnpackSaveGameName(netpeer_t *np, int *tic, buf_t *buf) {
+  int m_tic = 0;
+
+  unpack_and_validate("tic", POSITIVE_INTEGER);
+  validate_is_int("tic");
+  m_tic = (int)obj.via.i64;
+
   unpack_and_validate("save game name", RAW);
 
+  *tic = m_tic;
   M_BufferSetString(buf, (rune *)obj.via.raw.ptr, (size_t)obj.via.raw.size);
 
   return true;
 }
 
-void N_PackQuitMessage(netpeer_t *np, int tic, int playernum) {
+void N_PackQuit(netpeer_t *np) {
   msgpack_pack_unsigned_char(np->pk, PKT_QUIT);
-  msgpack_pack_int(np->pk, tic);
-  msgpack_pack_int(np->pk, playernum);
+  msgpack_pack_int(np->pk, gametic);
+  if (server)
+    msgpack_pack_short(np->pk, np->playernum);
+  else
+    msgpack_pack_short(np->pk, consoleplayer);
 }
 
-dboolean N_UnpackQuitMessage(netpeer_t *np, int *tic, int *playernum) {
+dboolean N_UnpackQuit(netpeer_t *np, int *tic, short *playernum) {
   int m_tic = -1;
   int m_playernum = -1;
 
@@ -902,7 +891,7 @@ dboolean N_UnpackQuitMessage(netpeer_t *np, int *tic, int *playernum) {
   return true;
 }
 
-void N_PackDownMessage(netpeer_t *np) {
+void N_PackDown(netpeer_t *np) {
   msgpack_pack_unsigned_char(np->pk, PKT_DOWN);
 }
 
@@ -912,15 +901,15 @@ void N_PackDownMessage(netpeer_t *np) {
  *     or a zero-length string.
  */
 
-void N_PackWadMessage(netpeer_t *np, rune *wad_name) {
-  size_t length = strlen(wad_name);
+void N_PackWad(netpeer_t *np, rune *wad_name_or_url) {
+  size_t length = strlen(wad_name_or_url);
 
   msgpack_pack_unsigned_char(np->pk, PKT_WAD);
   msgpack_pack_raw(np->pk, length);
-  msgpack_pack_raw_body(np->pk, wad_name, length);
+  msgpack_pack_raw_body(np->pk, wad_name_or_url, length);
 }
 
-dboolean N_UnpackWadMessage(netpeer_t *np, buf_t *wad_name) {
+dboolean N_UnpackWad(netpeer_t *np, buf_t *wad_name_or_url) {
   unpack_and_validate("wad name", RAW);
 
   M_BufferSetString(buf, (rune *)obj.via.raw.ptr, (size_t)obj.via.raw.size);
@@ -928,12 +917,12 @@ dboolean N_UnpackWadMessage(netpeer_t *np, buf_t *wad_name) {
   return true;
 }
 
-void N_PackBackoffMessage(netpeer_t *np, int tic) {
+void N_PackBackoff(netpeer_t *np, int tic) {
   msgpack_pack_unsigned_char(np->pk, PKT_BACKOFF);
   msgpack_pack_int(np->pk, tic);
 }
 
-dboolean N_UnpackBackoffMessage(netpeer_t *np, int *tic) {
+dboolean N_UnpackBackoff(netpeer_t *np, int *tic) {
   unpack_and_validate("tic", POSITIVE_INTEGER);
   validate_is_int("tic");
 

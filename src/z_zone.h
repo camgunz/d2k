@@ -50,6 +50,14 @@
 #include "config.h"
 #endif
 
+#ifndef __func__
+#ifdef __FUNCTION__
+#define __func__ __FUNCTION__
+#else
+#define __func__ "<unknown>"
+#endif
+#endif
+
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #define UNICODE

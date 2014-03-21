@@ -48,7 +48,7 @@ static objbuf_t *net_peers = NULL;
 
 int N_AddPeer(void) {
   int peernum = -1;
-  int playernum = -1;
+  short playernum = -1;
   netpeer_t *np = NULL;
 
   if (server) {
@@ -137,7 +137,7 @@ int N_GetPeerNum(ENetPeer *peer) {
   return -1;
 }
 
-netpeer_t* N_GetPeerForPlayer(int playernum) {
+netpeer_t* N_GetPeerForPlayer(short playernum) {
   for (int i = 0; i < net_pers->size; i++) {
     netpeer_t *np = net_peers->objects[i];
 
@@ -148,7 +148,7 @@ netpeer_t* N_GetPeerForPlayer(int playernum) {
   return NULL;
 }
 
-int N_GetPeerNumForPlayer(int playernum) {
+int N_GetPeerNumForPlayer(short playernum) {
   for (int i = 0; i < net_pers->size; i++) {
     netpeer_t *np = net_peers->objects[i];
 

@@ -54,6 +54,12 @@ void M_BufferInitWithCapacity(buf_t **buf, size_t size) {
   (*buf)->data = calloc(size, sizeof(byte));
 }
 
+void M_BufferCopy(buf_t *dest, buf_t *src) {
+  M_BufferEnsureTotalCapacity(dest, src->size);
+  M_BufferClear(dest);
+  M_BufferAppend(dest, src->data, src->size);
+}
+
 void M_BufferSetData(buf_t *buf, byte *data, size_t size) {
   M_BufferClear(buf);
   memcpy(buf->data, data, size);

@@ -367,7 +367,7 @@ void N_PrintAddress(FILE *fp, int peernum) {
   );
 }
 
-void N_DisconnectPlayer(int playernum) {
+void N_DisconnectPlayer(short playernum) {
   int peernum = N_GetPeerNumForPlayer(playernum);
   netpeer_t *np = NULL;
 

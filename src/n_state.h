@@ -27,31 +27,22 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *  A buffer of objects
+ *
  *
  *-----------------------------------------------------------------------------
  */
 
-#ifndef OBUF_H__
-#define OBUF_H__
+#ifndef N_STATE_H__
+#define N_STATE_H__
 
-typedef struct objbuf_s {
-  int size;
-  void **objects;
-} objbuf_t;
+extern buf_t *current_game_state;
+extern obuf_t *saved_game_states;
 
-void M_ObjBufferInit(objbuf_t **obuf);
-void M_ObjBufferInitWithSize(objbuf_t **obuf, int size);
-void M_ObjBufferAppend(objbuf_t *obuf, void *obj);
-void M_ObjBufferInsert(objbuf_t *obuf, int index, void *obj);
-int  M_ObjBufferInsertAtFirstFreeSlot(objbuf_t *obuf, void *obj);
-int  M_ObjBufferInsertAtFirstFreeSlotOrAppend(objbuf_t *obuf, void *obj);
-void M_ObjBufferRemove(objbuf_t *obuf, int index);
-void M_ObjBufferEnsureSize(objbuf_t *obuf, int size);
-int  M_ObjBufferGetObjectCount(objbuf_t *obuf);
-void M_ObjBufferClear(objbuf_t *obuf);
-void M_ObjBufferFreeEntriesAndClear(objbuf_t *obuf);
-void M_ObjBufferFree(objbuf_t *obuf);
+void     N_InitStates(void);
+void     N_SaveCurrentState(buf_t *state);
+void     N_SaveStateForTic(int tic, buf_t *state);
+dboolean N_ApplyStateDelta(int tic, buf_t *delta);
+dboolean N_GenerateStateDelta(netpeer_t *np, buf_t *state);
 
 #endif
 

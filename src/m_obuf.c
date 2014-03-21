@@ -81,6 +81,16 @@ int M_ObjBufferInsertAtFirstFreeSlot(objbuf_t *obuf, void *obj) {
   return -1;
 }
 
+int M_ObjBufferInsertAtFirstFreeSlotOrAppend(objbuf_t *obuf, void *obj) {
+  int slot = M_ObjBufferInsertAtFirstFreeSlot(obuf, obj);
+
+  if (slot != -1)
+    return slot;
+
+  M_ObjBufferAppend(obuf, obj);
+  return obuf->size - 1;
+}
+
 void M_ObjBufferRemove(objbuf_t *obuf, int index) {
   obuf->objects + index = NULL;
 }
