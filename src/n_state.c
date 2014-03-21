@@ -67,13 +67,13 @@ void N_SaveStateForTic(int tic, buf_t *state) {
   M_ObjBufferInsertAtFirstFreeSlotOrAppend(saved_game_states, gs);
 }
 
-dboolean N_ApplyStateDelta(int tic, buf_t *delta) {
+dboolean N_ApplyStateDelta(int from_tic, int to_tic, buf_t *delta) {
   game_state_t *gs = NULL;
 
   for (int i = 0; i < saved_game_states->size; i++) {
     game_state_t *sgs = saved_game_states->objects[i];
 
-    if (sgs != NULL && sgs->tic == tic)
+    if (sgs != NULL && sgs->tic == from_tic)
       gs = sgs;
   }
 
@@ -84,11 +84,21 @@ dboolean N_ApplyStateDelta(int tic, buf_t *delta) {
     return false;
 
   current_game_state->tic = tic;
+
+  for (int i = 0; i < saved_game_states->size; i++) {
+    game_state_t *sgs = saved_game_states->objects[i];
+
+    if (sgs != NULL && sgs->tic <= to_tic) {
+      M_ObjBufferRemove(saved_game_states, i);
+      M_BufferFree(sgs->state);
+      free(sgs->state);
+    }
+  }
   return true;
 }
 
-dboolean N_GenerateStateDelta(netpeer_t *np, buf_t *delta) {
-  return M_GenerateDelta(np->state, current_game_state->state, delta);
+dboolean N_BuildStateDelta(netpeer_t *np, buf_t *delta) {
+  return M_BuildDelta(np->state, current_game_state->state, delta);
 }
 
 #endif

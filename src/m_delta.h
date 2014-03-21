@@ -35,6 +35,7 @@
 #ifndef M_DELTA__
 #define M_DELTA__
 
+void M_InitDeltas(void);
 void M_BuildDelta(buf_t *b1, buf_t *b2, buf_t *delta);
 void M_ApplyDelta(buf_t *b1, buf_t *b2, buf_t *delta);
 

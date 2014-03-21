@@ -138,7 +138,7 @@ int N_GetPeerNum(ENetPeer *peer) {
 }
 
 netpeer_t* N_GetPeerForPlayer(short playernum) {
-  for (int i = 0; i < net_pers->size; i++) {
+  for (int i = 0; i < net_peers->size; i++) {
     netpeer_t *np = net_peers->objects[i];
 
     if (np != NULL && np->playernum == playernum)
@@ -149,7 +149,7 @@ netpeer_t* N_GetPeerForPlayer(short playernum) {
 }
 
 int N_GetPeerNumForPlayer(short playernum) {
-  for (int i = 0; i < net_pers->size; i++) {
+  for (int i = 0; i < net_peers->size; i++) {
     netpeer_t *np = net_peers->objects[i];
 
     if (np != NULL && np->playernum == playernum)

@@ -206,23 +206,53 @@ dboolean N_LoadNewMessage(netpeer_t *np, byte *message_type) {
 
 /* CG: C/S message packing/unpacking here */
 
-void N_PackGameState(netpeer_t *np, void *state_data, size_t state_size) {
-  msgpack_pack_unsigned_char(np->pk, nm_gamestate);
-  msgpack_pack_raw(np->pk, state_size);
-  msgpack_pack_raw_body(np->pk, state_data, state_size);
+void N_PackStateDelta(netpeer_t *np, int tic_from, int tic_to, buf_t *buf) {
+  msgpack_pack_unsigned_char(np->pk, nm_statedelta);
+  msgpack_pack_int(np->pk, tic_from);
+  msgpack_pack_int(np->pk, tic_to);
+  msgpack_pack_raw(np->pk, delta->size);
+  msgpack_pack_raw_body(np->pk, delta->data, delta->size);
 }
 
-dboolean N_UnpackGameState(netpeer_t *np, buf_t *buf) {
-  byte *state_data = NULL;
-  size_t state_size = 0;
+dboolean N_UnpackStateDelta(netpeer_t *np, int *tic_from, int *tic_to,
+                                           buf_t *buf) {
+  int m_tic_from = -1;
+  int m_tic_to = -1;
+
+  unpack_and_validate("state delta start tic", POSITIVE_INTEGER);
+  validate_is_int("state delta start tic");
+  m_tic_from = (int)obj.via.u64;
+
+  unpack_and_validate("state delta end tic", POSITIVE_INTEGER);
+  validate_is_int("state delta end tic");
+  m_tic_to = (int)obj.via.u64;
+
+  unpack_and_validate("game state delta data", RAW);
+
+  *tic_from = m_tic_from;
+  *tic_ti = m_tic_to;
+  M_BufferSetData(buf, (byte *)obj.via.raw.ptr, (size_t)obj.via.raw.size);
+
+  return true;
+}
+
+void N_PackFullState(netpeer_t *np, buf_t *buf) {
+  msgpack_pack_unsigned_char(np->pk, nm_gamestate);
+  msgpack_pack_unsigned_int(np->pk, gametic);
+  msgpack_pack_raw(np->pk, state->size);
+  msgpack_pack_raw_body(np->pk, state->data, state->size);
+}
+
+dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf) {
+  int m_tic;
+
+  unpack_and_validate("game state tic", POSITIVE_INTEGER);
+  m_tic = (int)obj.via.u64;
 
   unpack_and_validate("game state data", RAW);
-  state_data = (void *)obj.via.raw.ptr;
 
-  unpack_and_validate("game state size", POSITIVE_INTEGER);
-  state_size = (size_t)obj.via.u64;
-
-  M_BufferSetData(buf, state_data, state_size);
+  *tic = m_tic;
+  M_BufferSetData(buf, (byte *)obj.via.raw.ptr, (size_t)obj.via.raw.size);
 
   return true;
 }

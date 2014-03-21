@@ -67,13 +67,13 @@ void M_ObjBufferInsert(objbuf_t *obuf, int index, void *obj) {
       obuf->size
     );
   }
-  obuf->objects + index = obj;
+  obuf->objects[index] = obj;
 }
 
 int M_ObjBufferInsertAtFirstFreeSlot(objbuf_t *obuf, void *obj) {
   for (int i = 0; i < obuf->size; i++) {
     if (obuf[i] == NULL) {
-      obuf->objects + i = obj;
+      obuf->objects[i] = obj;
       return i;
     }
   }
@@ -92,7 +92,7 @@ int M_ObjBufferInsertAtFirstFreeSlotOrAppend(objbuf_t *obuf, void *obj) {
 }
 
 void M_ObjBufferRemove(objbuf_t *obuf, int index) {
-  obuf->objects + index = NULL;
+  obuf->objects[index] = NULL;
 }
 
 void M_ObjBufferEnsureSize(objbuf_t *obuf, int size) {

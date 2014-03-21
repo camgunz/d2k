@@ -62,7 +62,7 @@ static void* wrap_realloc(void *priv, void *ptr, unsigned int size) {
   return realloc(ptr, size);
 }
 
-static int write_delta_data(void *priv, mmbuffer_t *mb, int nbuf) {
+static int write_to_buffer(void *priv, mmbuffer_t *mb, int nbuf) {
   int i;
   size_t delta_size;
   buf_t *delta = (buf_t *)priv;
@@ -98,16 +98,16 @@ static void build_mmfile(mmfile_t *mmf, byte *data, size_t size) {
   errno = 0;
 }
 
-static dboolean check_mmfile_compact(mmfile_t *mmf, mmfile_t *mmc) {
+static mmfile_t* check_mmfile_compact(mmfile_t *mmf, mmfile_t *mmc) {
   if (!xdl_mmfile_iscompact(mmf)) {
     printf("Compacting state.\n");
     if (xdl_mmfile_compact(mmf, mmc, BLKSIZE, XDL_MMF_ATOMIC) < 0) {
       perror("");
       I_Error("Error compacting state.\n");
     }
-    return false;
+    return mmc;
   }
-  return true;
+  return mmf;
 }
 
 void M_InitDeltas(void) {
@@ -126,32 +126,44 @@ void M_InitDeltas(void) {
   xdl_set_allocator(&malt);
 }
 
-dboolean M_BuildDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
-  mmfile_t cs, ccs, is, cis;
-  mmfile_t *csp = &cs, *isp = &is;
+void M_BuildDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
+  mmbuffer_t mmb1, mmb2;
   xdemitcb_t ecb;
 
   ecb.priv = delta;
   ecb.outf = write_delta_data;
 
+  mmb1.ptr = (char *)b1->data;
+  mmb1.size = (long)b1->size;
+
+  mmb2.ptr = (char *)b2->data;
+  mmb2.size = (long)b2->size;
+
+  if (xdl_rabdiff_mb(&mmb1, &mmb2, &ecb) != 0) {
+    perror("");
+    I_Error("M_BuildData: Error building delta");
+  }
+
+  return true;
+}
+
+void M_ApplyDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
+  mmfile_t cs, ccs, is, cis;
+  mmfile_t *csp = &cs, *isp = &is;
+  xdemitcb_t ecb;
+
+  ecb.priv = delta;
+  ecb.outf = write_to_buffer;
+
   build_mmfile(&cs, b1->data, b1->size);
   build_mmfile(&is, b2->data, b2->size);
 
-  if (xdl_mmfile_cmp(&cs, &is) != 0) {
-    if (check_mmfile_compact(&cs, &ccs))
-      csp = &cs;
-    else
-      csp = &ccs;
+  csp = check_mmfile_compact(&cs, &ccs);
+  isp = check_mmfile_compact(&is, &cis);
 
-    if (check_mmfile_compact(&is, &cis))
-      isp = &is;
-    else
-      isp = &cis;
-
-    if (xdl_rabdiff(csp, isp, &ecb) != 0) {
-      perror("");
-      I_Error("M_BuildData: Error building delta");
-    }
+  if (xdl_bpatch(csp, isp, &ecb) != 0) {
+    perror("");
+    I_Error("M_BuildData: Error building delta");
   }
 
   xdl_free_mmfile(&cs);
