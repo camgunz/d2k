@@ -58,6 +58,10 @@ void N_SaveCurrentState(int tic, buf_t *state) {
   M_BufferCopy(current_game_state->data, state);
 }
 
+buf_t* N_GetCurrentState(void) {
+  return current_game_state;
+}
+
 void N_SaveStateForTic(int tic, buf_t *state) {
   game_state_t *gs = calloc(1, sizeof(game_state_t));
 
@@ -97,8 +101,8 @@ dboolean N_ApplyStateDelta(int from_tic, int to_tic, buf_t *delta) {
   return true;
 }
 
-dboolean N_BuildStateDelta(netpeer_t *np, buf_t *delta) {
-  return M_BuildDelta(np->state, current_game_state->state, delta);
+dboolean N_BuildStateDelta(netpeer_t *np) {
+  return M_BuildDelta(np->state, current_game_state->state, np->delta);
 }
 
 #endif

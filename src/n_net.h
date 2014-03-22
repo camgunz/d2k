@@ -59,6 +59,16 @@ typedef enum {
   MAX_CHANNELS
 } net_channel_e;
 
+typedef struct netticcmd_s {
+  int tic;
+  signed char forwardmove;
+  signed char sidemove;
+  signed short  angleturn;
+  short consistancy;
+  byte  chatchar;
+  byte  buttons;
+} netticcmd_t;
+
 size_t   N_IPToString(int address, char *buffer);
 int      N_IPToInt(const char *address);
 size_t   N_GetHostFromAddressString(const char *address, char **host);

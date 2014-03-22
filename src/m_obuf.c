@@ -91,6 +91,33 @@ int M_ObjBufferInsertAtFirstFreeSlotOrAppend(objbuf_t *obuf, void *obj) {
   return obuf->size - 1;
 }
 
+void M_ObjBufferConsolidate(objbuf_t *obuf) {
+  void **dest = obuf->objects;
+  void **src = NULL;
+
+  while (true) {
+    for (; *dest != NULL && dest - obuf->objects < obuf->size; dest++);
+    
+    if (src == NULL)
+      src = dest;
+
+    for (src == NULL && src - obuf->objects < obuf->size; src++);
+
+    if ((*src == NULL) || (*dest != NULL))
+      return;
+
+    *dest = *src;
+  }
+}
+
+void M_ObjBufferMoveToFront(objbuf_t *obuf) {
+  void **p = NULL;
+
+  for (p = obuf->objects; *p != NULL && p - obuf->objects < obuf->size; p++);
+
+  memmove(obuf->objects, p, p - obuf->objects);
+}
+
 void M_ObjBufferRemove(objbuf_t *obuf, int index) {
   obuf->objects[index] = NULL;
 }
@@ -123,7 +150,6 @@ int M_ObjBufferGetObjectCount(objbuf_t *obuf) {
 
 void M_ObjBufferClear(objbuf_t *obuf) {
   memset(obuf->objects, 0, obuf->size);
-  obuf->size = 0;
 }
 
 void M_ObjBufferFreeEntriesAndClear(objbuf_t *obuf) {

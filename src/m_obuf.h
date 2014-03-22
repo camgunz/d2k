@@ -40,17 +40,97 @@ typedef struct objbuf_s {
   void **objects;
 } objbuf_t;
 
+/*
+ * Allocates and initializes an object buffer.
+ */
 void M_ObjBufferInit(objbuf_t **obuf);
+
+/*
+ * Allocates and initializes an object buffer with the specified number of
+ * object spots available; allows avoiding several initial allocations.
+ */
 void M_ObjBufferInitWithSize(objbuf_t **obuf, int size);
+
+/*
+ * Appends an object to the buffer, allocating a new slot.
+ */
 void M_ObjBufferAppend(objbuf_t *obuf, void *obj);
+
+/*
+ * Inserts an object into the buffer, but will not allocate a new slot if the
+ * index is out of bounds; rather I_Error is called.
+ */
 void M_ObjBufferInsert(objbuf_t *obuf, int index, void *obj);
+
+/*
+ * Inserts an object into the first free slot and returns the index at which
+ * the object can be found.  If no slot was available, -1 is returned.
+ */
 int  M_ObjBufferInsertAtFirstFreeSlot(objbuf_t *obuf, void *obj);
+
+/*
+ * Inserts an object into the first free slot.  If no free slot was available,
+ * allocates a new slot at the end of the buffer and inserts the object there.
+ * Returns the index at which the object can be found.
+ */
 int  M_ObjBufferInsertAtFirstFreeSlotOrAppend(objbuf_t *obuf, void *obj);
+
+/*
+ * Consolidates all occupied slots to the front of the buffer; no empty space
+ * will be at the beginning of the buffer or between objects; all empty space
+ * will be at the end of the buffer (if any is available).
+ *
+ * WARNING: This will change the indices of contained objects.
+ *
+ */
+void M_ObjBufferConsolidate(objbuf_t *obuf);
+
+/*
+ * Moves any empty space at the front of the buffer to the back; no empty space
+ * will be at the beginning of the buffer, but empty space may remain between
+ * objects.
+ *
+ * WARNING: This will change the indices of contained objects.
+ *
+ */
+void M_ObjBufferMoveToFront(objbuf_t *obuf);
+
+/*
+ * Removes the object at the specified index from the buffer.  Object is not
+ * freed before it is removed.
+ */
 void M_ObjBufferRemove(objbuf_t *obuf, int index);
+
+/*
+ * Ensures the buffer is at least the specified size; if not, it is reallocated
+ * to the new size.
+ */
 void M_ObjBufferEnsureSize(objbuf_t *obuf, int size);
+
+/*
+ * Returns the total number of objects contained in the buffer.
+ *
+ * (for capacity, simply use buffer->size)
+ *
+ */
 int  M_ObjBufferGetObjectCount(objbuf_t *obuf);
+
+/*
+ * Removes all objects from the buffer.  Objects are not freed before they are
+ * removed.
+ */
 void M_ObjBufferClear(objbuf_t *obuf);
+
+/*
+ * Removes all objects from the buffer.  Objects are freed before they are
+ * removed.
+ */
 void M_ObjBufferFreeEntriesAndClear(objbuf_t *obuf);
+
+/*
+ * Frees the buffer's internal list, effectively removing all objects from the
+ * buffer.  Objects are not freed before they are removed.
+ */
 void M_ObjBufferFree(objbuf_t *obuf);
 
 #endif

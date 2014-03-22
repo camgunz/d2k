@@ -72,6 +72,11 @@ int N_AddPeer(void) {
   np->connect_time = time();
   np->disconnect_time = 0;
   np->playernum = playernum;
+  np->last_state_received_tic = 0;
+  np->last_state_sent_tic = 0;
+  M_BufferInit(&np->state);
+  M_BufferInit(&np->delta);
+  M_ObjBufferInit(&np->commands);
 
   if ((peernum = M_ObjBufferInsertAtFirstFreeSlot(net_peers, np)))
     return peernum;
@@ -108,15 +113,26 @@ void N_RemovePeer(netpeer_t *np) {
   msgpack_packer_free(np->rpk);
   msgpack_sbuffer_free(np->ubuf);
   msgpack_packer_free(np->upk);
+  M_BufferClear(&np->state);
+  M_BufferFree(&np->state);
+  M_BufferClear(&np->delta);
+  M_BufferFree(&np->delta);
+  M_ObjBufferFreeEntriesAndClear(&np->commands);
+  M_ObjBufferFree(&np->commands);
 
-  np->peer            = NULL;
-  np->rbuf            = NULL;
-  np->rpk             = NULL;
-  np->ubuf            = NULL;
-  np->upk             = NULL;
-  np->connect_time    = 0;
-  np->disconnect_time = 0;
-  np->playernum       = -1;
+  np->peer                    = NULL;
+  np->rbuf                    = NULL;
+  np->rpk                     = NULL;
+  np->ubuf                    = NULL;
+  np->upk                     = NULL;
+  np->connect_time            = 0;
+  np->disconnect_time         = 0;
+  np->playernum               = -1;
+  np->last_state_received_tic = 0;
+  np->last_state_sent_tic     = 0;
+  np->state                   = NULL;
+  np->delta                   = NULL;
+  np->commands                = NULL;
 
   M_ObjBufferRemove(net_peers, peernum);
 }

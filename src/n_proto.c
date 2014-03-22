@@ -92,6 +92,9 @@ static void handle_full_state(netpeer_t *np) {
 static void handle_auth_response(netpeer_t *np) {
 }
 
+static void handle_player_commands_received(netpeer_t *np) {
+}
+
 static void handle_server_message(netpeer_t *np) {
 }
 
@@ -104,7 +107,7 @@ static void handle_player_message(netpeer_t *np) {
   }
 }
 
-static void handle_player_command(netpeer_t *np) {
+static void handle_player_commands(netpeer_t *np) {
 }
 
 static void handle_auth_request(netpeer_t *np) {
@@ -243,25 +246,32 @@ static void dispatch_p2p_message(netpeer_t *np, byte message_type) {
 
 static void dispatch_cs_message(netpeer_t *np, byte message_type) {
   switch (message_type) {
-    case nm_gamestate:
-      CLIENT_ONLY("game state");
-      handle_game_state(np);
+    case nm_statedelta:
+      CLIENT_ONLY("state delta");
+      handle_state_delta(np);
     break;
-    case nm_servermessage:
-      CLIENT_ONLY("server message");
-      handle_server_message(np);
+    case nm_fullstate:
+      CLIENT_ONLY("game state");
+      handle_full_state(np);
     break;
     case nm_authresponse:
       CLIENT_ONLY("authorization response");
       handle_auth_response(np);
     break;
+    case nm_playercommandreceived:
+      CLIENT_ONLY("player command received");
+      handle_player_command_received(np);
+    case nm_servermessage:
+      CLIENT_ONLY("server message");
+      handle_server_message(np);
+    break;
     case nm_playermessage:
       /* CG: Both servers and clients receive player message messages */
       handle_player_message(np);
     break;
-    case nm_playercommand:
-      SERVER_ONLY("player command");
-      handle_player_command(np);
+    case nm_playercommands:
+      SERVER_ONLY("player commands");
+      handle_player_commands(np);
     break;
     case nm_authrequest:
       SERVER_ONLY("authorization request");
@@ -343,23 +353,30 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
 
 void SV_SendStateDelta(short playernum) {
   netpeer_t *np = NULL;
-  int tic_from = 0;
-  int tic_to = 0;
-
 
   CHECK_VALID_PLAYER(np, playernum);
 
-  N_PackStateDelta(playernum, 
+  N_BuildStateDelta(np);
+  N_PackStateDelta(np, np->last_state_received_tic, gametic, np->delta);
+  np->last_state_sent_tic = gametic;
+}
 
-void SV_BroadcastGameState(byte *state_data, size_t state_size) {
+void SV_SendFullState(short playernum) {
   netpeer_t *np = NULL;
 
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
+  CHECK_VALID_PLAYER(np, playernum);
 
-    if ((np = N_GetPeer(i)) != NULL)
-      N_PackGameState(np, state_data, state_size);
-  }
+  N_PackFullState(np, N_GetCurrentState());
+  np->last_state_sent_tic = gametic;
+}
+
+void SV_SendAuthResponse(short playernum, auth_level_e auth_level) {
+  netpeer_t *np = N_GetPeerForPlayer(playernum);
+
+  if (np == NULL)
+    I_Error("SV_SendAuthResponse: Invalid player %d.\n", playernum);
+
+  N_PackMessage(np, auth_level);
 }
 
 void SV_SendMessage(short playernum, rune *message) {
@@ -380,15 +397,6 @@ void SV_BroadcastMessage(rune *message) {
   }
 }
 
-void SV_SendAuthResponse(short playernum, auth_level_e auth_level) {
-  netpeer_t *np = N_GetPeerForPlayer(playernum);
-
-  if (np == NULL)
-    I_Error("SV_SendAuthResponse: Invalid player %d.\n", playernum);
-
-  N_PackMessage(np, auth_level);
-}
-
 void CL_SendPlayerMessage(short recipient, rune *message) {
   netpeer_t *np = N_GetPeer(0);
   CHECK_CONNECTION(np);
@@ -396,16 +404,11 @@ void CL_SendPlayerMessage(short recipient, rune *message) {
   N_PackClientMessage(np, recipient, message);
 }
 
-void CL_SendPlayerCommand(unsigned int   index,
-                          unsigned int   world_index,
-                          signed   char  forward,
-                          signed   char  side,
-                          signed   short angle,
-                          byte           buttons) {
+void CL_SendPlayerCommands(void) {
   netpeer_t *np = N_GetPeer(0);
   CHECK_CONNECTION(np);
 
-  N_PackPlayerCommand(np, index, world_index, forward, side, angle, buttons);
+  N_PackPlayerCommands(np);
 }
 
 void CL_SendAuthRequest(rune *password) {

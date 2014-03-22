@@ -48,27 +48,17 @@ dboolean N_UnpackStateDelta(netpeer_t *np, int *from_tic, int *to_tic,
 void     N_PackFullState(netpeer_t *np, buf_t *buf);
 dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf);
 
-void     N_PackServerMessage(netpeer_t *np, rune *message);
-dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf);
-
 void     N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level);
 dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level);
+
+void     N_PackServerMessage(netpeer_t *np, rune *message);
+dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf);
 
 void     N_PackPlayerMessage(netpeer_t *np, short recipient, rune *message);
 dboolean N_UnpackPlayerMessage(netpeer_t *np, short *recipient, buf_t *buf);
 
-void     N_PackPlayerCommand(netpeer_t *np, unsigned int index,
-                                            unsigned int world_index,
-                                            signed char  forward,
-                                            signed char  side,
-                                            signed short angle,
-                                            byte         buttons);
-dboolean N_UnpackPlayerCommand(netpeer_t *np, unsigned int *index,
-                                              unsigned int *world_index,
-                                              signed char  *forward,
-                                              signed char  *side,
-                                              signed short *angle,
-                                              byte         *buttons);
+void     N_PackPlayerCommands(netpeer_t *np);
+dboolean N_UnpackPlayerCommands(netpeer_t *np);
 
 void     N_PackAuthRequest(netpeer_t *np, rune *password);
 dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf);

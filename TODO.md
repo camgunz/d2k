@@ -1,11 +1,5 @@
 # To Do
 
-  - Create clientside command buffer, use it with `CL_SendCommands`
-  - Add functions:
-    - `N_PackPlayerCommandReceived`
-    - `SV_SendPlayerCommandReceived`
-    - `N_UnpackPlayerCommandReceived`
-    - `handle_player_command_received`
   - Modify save loading:
     - `savegamebuffer` & `savegamesize` should be rolled into a `buf_t`
     - Modify savegame stuff so that it uses `buf_t` functions instead of `*p++`

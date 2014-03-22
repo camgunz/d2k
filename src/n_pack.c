@@ -287,6 +287,18 @@ dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
   return true;
 }
 
+void N_PackPlayerCommandReceived(netpeer_t *np, int tic) {
+  msgpack_pack_unsigned_char(np->rpk, nm_playercommandreceived);
+  msgpack_pack_int(tic);
+}
+
+void N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic) {
+  unpack_and_validate("last command tic received", POSITIVE_INTEGER);
+  validate_is_int("last command tic received");
+
+  *tic = (int)obj.via.u64;
+}
+
 void N_PackPlayerMessage(netpeer_t *np, short recipient, rune *message) {
   size_t length = strlen(message) * sizeof(rune);
 
@@ -313,64 +325,69 @@ dboolean N_UnpackPlayerMessage(netpeer_t *np, short *recipient, buf_t *buf) {
   return true;
 }
 
-void N_PackPlayerCommand(netpeer_t *np, unsigned int index,
-                                        unsigned int world_index,
-                                        signed char  forward,
-                                        signed char  side,
-                                        signed short angle,
-                                        byte         buttons) {
-  msgpack_pack_unsigned_char(np->upk, nm_playercommand);
-  msgpack_pack_unsigned_int(np->upk, index);
-  msgpack_pack_unsigned_int(np->upk, world_index);
-  msgpack_pack_signed_char(np->upk, forward);
-  msgpack_pack_signed_char(np->upk, side);
-  msgpack_pack_short(np->upk, angle);
-  msgpack_pack_unsigned_char(np->upk, buttons);
+void N_PackPlayerCommands(netpeer_t *np) {
+  msgpack_pack_unsigned_char(np->upk, nm_playercommands);
+  msgpack_pack_unsigned_char(np->upk, M_ObjBufferGetObjectCount(np->commands));
+
+  for (int i = 0; i < commands->size; i++) {
+    netticcmd_t *cmd = commands->objects[i];
+
+    if (cmd == NULL)
+      continue;
+
+    msgpack_pack_unsigned_int(np->upk, cmd->tic);
+    msgpack_pack_signed_char(np->upk, cmd->forwardmove);
+    msgpack_pack_signed_char(np->upk, cmd->sidemove);
+    msgpack_pack_short(np->upk, cmd->angleturn);
+    msgpack_pack_short(np->upk, cmd->consistancy);
+    msgpack_pack_unsigned_char(np->upk, chatchar);
+    msgpack_pack_unsigned_char(np->upk, buttons);
+  }
 }
 
-dboolean N_UnpackPlayerCommand(netpeer_t *np, unsigned int *index,
-                                              unsigned int *world_index,
-                                              signed char  *forward,
-                                              signed char  *side,
-                                              signed short *angle,
-                                              byte         *buttons) {
-  unsigned int m_index = 0;
-  unsigned int m_world_index = 0;
-  signed char  m_forward = 0;
-  signed char  m_side = 0;
-  short        m_angle = 0;
-  byte         m_buttons = 0;
+dboolean N_UnpackPlayerCommands(netpeer_t *np) {
+  byte command_count = 0;
 
-  unpack_and_validate("command index", POSITIVE_INTEGER);
-  validate_is_int("command index");
-  m_index = (unsigned int)obj.via.u64;
+  unpack_and_validate("command count", POSITIVE_INTEGER);
+  validate_is_byte("command_count");
+  M_ObjBufferEnsureSize(np->commands, command_count);
 
-  unpack_and_validate("command world index", POSITIVE_INTEGER);
-  validate_is_int("command world index");
-  m_world_index = (unsigned int)obj.via.u64;
+  for (byte i = 0; i < command_count; i++) {
+    netticmd_t *cmd = np->commands->objects[i];
 
-  unpack_and_validate("command forward value", NEGATIVE_INTEGER);
-  validate_is_byte("command forward value");
-  m_forward = (signed char)obj.via.i64;
+    if (cmd == NULL)
+      cmd = calloc(1, sizeof(netticcmd_t));
+    else
+      memset(cmd, 0, sizeof(netticcmd_t));
 
-  unpack_and_validate("command side value", NEGATIVE_INTEGER);
-  validate_is_byte("command side value");
-  m_side = (signed char)obj.via.i64;
+    unpack_and_validate("command tic", POSITIVE_INTEGER);
+    validate_is_int("command tic");
+    cmd->tic = (int)obj.via.u64;
 
-  unpack_and_validate("command angle value", NEGATIVE_INTEGER);
-  validate_is_short("command angle value");
-  m_angle = (short)obj.via.i64;
+    unpack_and_validate("command forward value", NEGATIVE_INTEGER);
+    validate_is_byte("command forward value");
+    cmd->forwardmove = (signed char)obj.via.i64;
 
-  unpack_and_validate("command buttons", POSITIVE_INTEGER);
-  validate_is_byte("command buttons");
-  m_buttons = (byte)obj.via.u64;
+    unpack_and_validate("command side value", NEGATIVE_INTEGER);
+    validate_is_byte("command side value");
+    cmd->sidemove = (signed char)obj.via.i64;
 
-  *index = m_index;
-  *world_index = m_world_index;
-  *forward = m_forward;
-  *side = m_side;
-  *angle = m_angle;
-  *buttons = m_buttons;
+    unpack_and_validate("command angle value", NEGATIVE_INTEGER);
+    validate_is_short("command angle value");
+    cmd->angle = (signed short)obj.via.i64;
+
+    unpack_and_validate("command consistancy value", NEGATIVE_INTEGER);
+    validate_is_short("command consistancy value");
+    cmd->consistancy = (signed short)obj.via.i64;
+
+    unpack_and_validate("command chatchar value", POSITIVE_INTEGER);
+    validate_is_byte("command chatchar value");
+    cmd->chatchar = (byte)obj.via.u64;
+
+    unpack_and_validate("command buttons value", POSITIVE_INTEGER);
+    validate_is_byte("command buttons value");
+    cmd->buttons = (byte)obj.via.u64;
+  }
 
   return true;
 }

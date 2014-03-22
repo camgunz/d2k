@@ -59,7 +59,7 @@ const byte nm_authresponse          = 3;  /*   reliable */
 const byte nm_playercommandreceived = 4;  /*   reliable */
 const byte nm_servermessage         = 5;  /*   reliable */
 const byte nm_playermessage         = 6;  /*   reliable */
-const byte nm_playercommand         = 7;  /* unreliable */
+const byte nm_playercommands        = 7;  /* unreliable */
 const byte nm_authrequest           = 8;  /*   reliable */
 const byte nm_namechange            = 9;  /*   reliable */
 const byte nm_teamchange            = 10; /*   reliable */
@@ -76,6 +76,7 @@ const byte nm_voterequest           = 19; /*   reliable */
 void SV_SendStateDelta(short playernum);
 void SV_SendFullState(short playernum);
 void SV_SendAuthResponse(short playernum, auth_level_e auth_level);
+void SV_SendPlayerCommandReceived(short playernum, int tic);
 void SV_SendMessage(short playernum, rune *message);
 void SV_BroadcastMessage(rune *message);
 
