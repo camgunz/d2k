@@ -614,10 +614,13 @@ SET(PRBOOM_SOURCES
   src/i_smp.c
   src/info.c
   src/m_bbox.c
+  src/m_buf.c
   src/m_cheat.c
   src/m_delta.c
   src/m_menu.c
   src/m_misc.c
+  src/m_obuf.c
+  src/m_queue.c
   src/m_random.c
   src/m_utf.c
   src/md5.c
