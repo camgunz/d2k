@@ -62,16 +62,40 @@
 
 /* CG: C/S Message Handlers here */
 
-static void handle_game_state_message(netpeer_t *np) {
+static buf_t *delta_buffer = NULL;
+static buf_t *state_buffer = NULL;
+static auth_level_e = AUTH_LEVEL_NONE;
+
+static N_InitProtocol(void) {
+  M_BufferInit(&delta_buffer);
+  M_BufferInit(&state_buffer);
 }
 
-static void handle_server_message_message(netpeer_t *np) {
+static void handle_state_delta(netpeer_t *np) {
+  int from_tic, to_tic;
+
+  if (N_UnpackStateDelta(np, &from_tic, &to_tic, delta_buffer))
+    N_ApplyStateDelta(from_tic, to_tic, delta_buffer);
+
+  /* CG: TODO: Load the current state */
 }
 
-static void handle_auth_response_message(netpeer_t *np) {
+static void handle_full_state(netpeer_t *np) {
+  int tic;
+
+  if (N_UnpackFullState(np, &tic, state_buffer))
+    N_SaveCurrentState(from_tic, to_tic, state_buffer);
+
+  /* CG: TODO: Load the current state */
 }
 
-static void handle_player_message_message(netpeer_t *np) {
+static void handle_auth_response(netpeer_t *np) {
+}
+
+static void handle_server_message(netpeer_t *np) {
+}
+
+static void handle_player_message(netpeer_t *np) {
   if (server) {
     /* CG: TODO */
   }
@@ -80,140 +104,132 @@ static void handle_player_message_message(netpeer_t *np) {
   }
 }
 
-static void handle_player_command_message(netpeer_t *np) {
+static void handle_player_command(netpeer_t *np) {
 }
 
-static void handle_auth_request_message(netpeer_t *np) {
+static void handle_auth_request(netpeer_t *np) {
 }
 
-static void handle_name_change_message(netpeer_t *np) {
+static void handle_name_change(netpeer_t *np) {
 }
 
-static void handle_team_change_message(netpeer_t *np) {
+static void handle_team_change(netpeer_t *np) {
 }
 
-static void handle_pwo_change_message(netpeer_t *np) {
+static void handle_pwo_change(netpeer_t *np) {
 }
 
-static void handle_wsop_change_message(netpeer_t *np) {
+static void handle_wsop_change(netpeer_t *np) {
 }
 
-static void handle_bobbing_change_message(netpeer_t *np) {
+static void handle_bobbing_change(netpeer_t *np) {
 }
 
-static void handle_autoaim_change_message(netpeer_t *np) {
+static void handle_autoaim_change(netpeer_t *np) {
 }
 
-static void handle_weapon_speed_change_message(netpeer_t *np) {
+static void handle_weapon_speed_change(netpeer_t *np) {
 }
 
-static void handle_color_change_message(netpeer_t *np) {
+static void handle_color_change(netpeer_t *np) {
 }
 
-static void handle_skin_change_message(netpeer_t *np) {
+static void handle_skin_change(netpeer_t *np) {
 }
 
-static void handle_rcon_message(netpeer_t *np) {
+static void handle_rcon(netpeer_t *np) {
 }
 
-static void handle_vote_request_message(netpeer_t *np) {
+static void handle_vote_request(netpeer_t *np) {
 }
-
-typedef enum {
-  P2P_STATE_NONE,
-  P2P_STATE_INITIALIZED,
-  P2P_STATE_SETUP,
-  P2P_STATE_GO,
-  P2P_STATE_MAX
-} p2p_state_e;
 
 /* CG: P2P Message Handlers here */
 
-static void handle_init_message(netpeer_t *np) {
+static void handle_init(netpeer_t *np) {
 }
 
-static void handle_setup_message(netpeer_t *np) {
+static void handle_setup(netpeer_t *np) {
 }
 
-static void handle_go_message(netpeer_t *np) {
+static void handle_go(netpeer_t *np) {
 }
 
-static void handle_client_tic_message(netpeer_t *np) {
+static void handle_client_tic(netpeer_t *np) {
 }
 
-static void handle_server_tic_message(netpeer_t *np) {
+static void handle_server_tic(netpeer_t *np) {
 }
 
-static void handle_retransmission_request_message(netpeer_t *np) {
+static void handle_retransmission_request(netpeer_t *np) {
 }
 
-static void handle_color_message(netpeer_t *np) {
+static void handle_color(netpeer_t *np) {
 }
 
-static void handle_save_game_name_message(netpeer_t *np) {
+static void handle_save_game_name(netpeer_t *np) {
 }
 
-static void handle_quit_message(netpeer_t *np) {
+static void handle_quit(netpeer_t *np) {
 }
 
-static void handle_down_message(netpeer_t *np) {
+static void handle_down(netpeer_t *np) {
 }
 
-static void handle_wad_message(netpeer_t *np) {
+static void handle_wad(netpeer_t *np) {
 }
 
-static void handle_backoff_message(netpeer_t *np) {
+static void handle_backoff(netpeer_t *np) {
 }
 
 static void dispatch_p2p_message(netpeer_t *np, byte message_type) {
   switch(message_type) {
     case PKT_INIT:
       SERVER_ONLY("initialization");
-      handle_init_request_message(np);
+      handle_init_request(np);
     break;
     case PKT_SETUP:
       CLIENT_ONLY("setup");
-      handle_setup_message(np);
+      handle_setup(np);
     break;
     case PKT_GO:
       /* CG: Both clients and servers receive PKT_GO messages */
-      handle_go_message(np);
+      handle_go(np);
     break;
     case PKT_TICC:
       SERVER_ONLY("client tic");
-      handle_client_tic_message(np);
+      handle_client_tic(np);
     break;
     case PKT_TICS:
       CLIENT_ONLY("server tic")
-      handle_server_tic_message(np);
+      handle_server_tic(np);
     break;
     case PKT_RETRANS:
       /* CG: Both clients and servers receive PKT_RETRANS messages */
-      handle_retransmission_request_message(np);
+      handle_retransmission_request(np);
     break;
     case PKT_COLOR:
       /* CG: Both clients and servers receive PKT_COLOR messages */
-      handle_color_message(np);
+      handle_color(np);
     break;
     case PKT_SAVEG:
       /* CG: Both clients and servers receive PKT_SAVEG messages */
-      handle_save_game_name_message(np);
+      handle_save_game_name(np);
     break;
     case PKT_QUIT:
       /* CG: Both clients and servers receive PKT_QUIT messages */
-      handle_quit_message(np);
+      handle_quit(np);
     break;
     case PKT_DOWN:
       CLIENT_ONLY("down");
-      handle_down_message(np);
+      handle_down(np);
     break;
     case PKT_WAD:
       /* CG: Both clients and servers receive PKT_WAD messages */
-      handle_wad_message(np);
+      handle_wad(np);
     break;
     case PKT_BACKOFF:
       CLIENT_ONLY("backoff");
-      handle_backoff_message(np);
+      handle_backoff(np);
     break;
     default:
       doom_printf("Received unknown message type %u from peer %s:%u.\n"
@@ -229,71 +245,71 @@ static void dispatch_cs_message(netpeer_t *np, byte message_type) {
   switch (message_type) {
     case nm_gamestate:
       CLIENT_ONLY("game state");
-      handle_game_state_message(np);
+      handle_game_state(np);
     break;
     case nm_servermessage:
       CLIENT_ONLY("server message");
-      handle_server_message_message(np);
+      handle_server_message(np);
     break;
     case nm_authresponse:
       CLIENT_ONLY("authorization response");
-      handle_auth_response_message(np);
+      handle_auth_response(np);
     break;
     case nm_playermessage:
       /* CG: Both servers and clients receive player message messages */
-      handle_player_message_message(np);
+      handle_player_message(np);
     break;
     case nm_playercommand:
       SERVER_ONLY("player command");
-      handle_player_command_message(np);
+      handle_player_command(np);
     break;
     case nm_authrequest:
       SERVER_ONLY("authorization request");
-      handle_auth_request_message(np);
+      handle_auth_request(np);
     break;
     case nm_namechange:
       SERVER_ONLY("name change");
-      handle_name_change_message(np);
+      handle_name_change(np);
     break;
     case nm_teamchange:
       SERVER_ONLY("team change");
-      handle_team_change_message(np);
+      handle_team_change(np);
     break;
     case nm_pwochange:
       SERVER_ONLY("PWO change");
-      handle_pwo_change_message(np);
+      handle_pwo_change(np);
     break;
     case nm_wsopchange:
       SERVER_ONLY("WSOP change");
-      handle_wsop_change_message(np);
+      handle_wsop_change(np);
     break;
     case nm_bobbingchange:
       SERVER_ONLY("bobbing change");
-      handle_bobbing_change_message(np);
+      handle_bobbing_change(np);
     break;
     case nm_autoaimchange:
       SERVER_ONLY("autoaim change");
-      handle_autoaim_change_message(np);
+      handle_autoaim_change(np);
     break;
     case nm_weaponspeedchange:
       SERVER_ONLY("weapon speed change");
-      handle_weapon_speed_change_message(np);
+      handle_weapon_speed_change(np);
     break;
     case nm_colorchange:
       SERVER_ONLY("color change");
-      handle_color_change_message(np);
+      handle_color_change(np);
     break;
     case nm_skinchange:
       SERVER_ONLY("skin change");
-      handle_skin_change_message(np);
+      handle_skin_change(np);
     break;
     case nm_rconcommand:
       SERVER_ONLY("RCON command");
-      handle_rcon_message(np);
+      handle_rcon(np);
     break;
     case nm_voterequest:
       SERVER_ONLY("vote request");
-      handle_vote_request_message(np);
+      handle_vote_request(np);
     break;
     default:
       doom_printf("Received unknown message type %u from peer %s:%u.\n"

@@ -37,6 +37,28 @@
 
 #define DEFAULT_PORT 10666
 
+typedef enum {
+  P2P_STATE_NONE,
+  P2P_STATE_INITIALIZED,
+  P2P_STATE_SETUP,
+  P2P_STATE_GO,
+  P2P_STATE_MAX
+} p2p_state_e;
+
+typedef enum {
+  AUTH_LEVEL_NONE,
+  AUTH_LEVEL_SPECTATOR,
+  AUTH_LEVEL_PLAYER,
+  AUTH_LEVEL_MODERATOR,
+  AUTH_LEVEL_ADMINISTRATOR
+} auth_level_e;
+
+typedef enum {
+  NET_CHANNEL_RELIABLE,
+  NET_CHANNEL_UNRELIABLE,
+  MAX_CHANNELS
+} net_channel_e;
+
 size_t   N_IPToString(int address, char *buffer);
 int      N_IPToInt(const char *address);
 size_t   N_GetHostFromAddressString(const char *address, char **host);

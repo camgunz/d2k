@@ -65,8 +65,10 @@ int N_AddPeer(void) {
   np = calloc(1, sizeof(netpeer_t));
 
   np->peer = NULL;
-  np->buf = msgpack_sbuffer_new();
-  np->pk = msgpack_packer_new(np->buf, msgpack_sbuffer_write);
+  np->rbuf = msgpack_sbuffer_new();
+  np->rpk = msgpack_packer_new(np->buf, msgpack_sbuffer_write);
+  np->ubuf = msgpack_sbuffer_new();
+  np->upk = msgpack_packer_new(np->buf, msgpack_sbuffer_write);
   np->connect_time = time();
   np->disconnect_time = 0;
   np->playernum = playernum;
@@ -102,12 +104,16 @@ void N_RemovePeer(netpeer_t *np) {
     N_IPToString(np->peer->address.host), np->peer->address.port
   );
 
-  msgpack_sbuffer_free(np->buf);
-  msgpack_packer_free(np->pk);
+  msgpack_sbuffer_free(np->rbuf);
+  msgpack_packer_free(np->rpk);
+  msgpack_sbuffer_free(np->ubuf);
+  msgpack_packer_free(np->upk);
 
   np->peer            = NULL;
-  np->buf             = NULL;
-  np->pk              = NULL;
+  np->rbuf            = NULL;
+  np->rpk             = NULL;
+  np->ubuf            = NULL;
+  np->upk             = NULL;
   np->connect_time    = 0;
   np->disconnect_time = 0;
   np->playernum       = -1;

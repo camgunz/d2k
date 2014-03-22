@@ -53,8 +53,8 @@ void N_InitStates(void) {
   M_ObjBufferInit(&saved_game_states);
 }
 
-void N_SaveCurrentState(buf_t *state) {
-  current_game_state->tic = gametic;
+void N_SaveCurrentState(int tic, buf_t *state) {
+  current_game_state->tic = tic;
   M_BufferCopy(current_game_state->data, state);
 }
 

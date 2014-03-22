@@ -40,13 +40,13 @@ dboolean N_LoadNewMessage(netpeer_t *np, byte *message_type);
 
 /* CG: C/S message packing/unpacking here */
 
-void     N_PackStateDelta(netpeer_t *np, int tic_from, int tic_to,
+void     N_PackStateDelta(netpeer_t *np, int from_tic, int to_tic,
                                          buf_t *buf);
-dboolean N_UnpackStateDelta(netpeer_t *np, int *tic_from, int *tic_to,
+dboolean N_UnpackStateDelta(netpeer_t *np, int *from_tic, int *to_tic,
                                            buf_t *buf);
 
 void     N_PackFullState(netpeer_t *np, buf_t *buf);
-dboolean N_UnpackFullState(netpeer_t *np, buf_t *buf);
+dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf);
 
 void     N_PackServerMessage(netpeer_t *np, rune *message);
 dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf);

@@ -206,41 +206,41 @@ dboolean N_LoadNewMessage(netpeer_t *np, byte *message_type) {
 
 /* CG: C/S message packing/unpacking here */
 
-void N_PackStateDelta(netpeer_t *np, int tic_from, int tic_to, buf_t *buf) {
-  msgpack_pack_unsigned_char(np->pk, nm_statedelta);
-  msgpack_pack_int(np->pk, tic_from);
-  msgpack_pack_int(np->pk, tic_to);
-  msgpack_pack_raw(np->pk, delta->size);
-  msgpack_pack_raw_body(np->pk, delta->data, delta->size);
+void N_PackStateDelta(netpeer_t *np, int from_tic, int to_tic, buf_t *buf) {
+  msgpack_pack_unsigned_char(np->upk, nm_statedelta);
+  msgpack_pack_int(np->upk, from_tic);
+  msgpack_pack_int(np->upk, to_tic);
+  msgpack_pack_raw(np->upk, delta->size);
+  msgpack_pack_raw_body(np->upk, delta->data, delta->size);
 }
 
-dboolean N_UnpackStateDelta(netpeer_t *np, int *tic_from, int *tic_to,
+dboolean N_UnpackStateDelta(netpeer_t *np, int *from_tic, int *to_tic,
                                            buf_t *buf) {
-  int m_tic_from = -1;
-  int m_tic_to = -1;
+  int m_from_tic = -1;
+  int m_to_tic = -1;
 
   unpack_and_validate("state delta start tic", POSITIVE_INTEGER);
   validate_is_int("state delta start tic");
-  m_tic_from = (int)obj.via.u64;
+  m_from_tic = (int)obj.via.u64;
 
   unpack_and_validate("state delta end tic", POSITIVE_INTEGER);
   validate_is_int("state delta end tic");
-  m_tic_to = (int)obj.via.u64;
+  m_to_tic = (int)obj.via.u64;
 
   unpack_and_validate("game state delta data", RAW);
 
-  *tic_from = m_tic_from;
-  *tic_ti = m_tic_to;
+  *from_tic = m_from_tic;
+  *tic_ti = m_to_tic;
   M_BufferSetData(buf, (byte *)obj.via.raw.ptr, (size_t)obj.via.raw.size);
 
   return true;
 }
 
 void N_PackFullState(netpeer_t *np, buf_t *buf) {
-  msgpack_pack_unsigned_char(np->pk, nm_gamestate);
-  msgpack_pack_unsigned_int(np->pk, gametic);
-  msgpack_pack_raw(np->pk, state->size);
-  msgpack_pack_raw_body(np->pk, state->data, state->size);
+  msgpack_pack_unsigned_char(np->rpk, nm_gamestate);
+  msgpack_pack_unsigned_int(np->rpk, gametic);
+  msgpack_pack_raw(np->rpk, state->size);
+  msgpack_pack_raw_body(np->rpk, state->data, state->size);
 }
 
 dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf) {
@@ -260,9 +260,9 @@ dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf) {
 void N_PackServerMessage(netpeer_t *np, rune *message) {
   size_t length = strlen(message) * sizeof(rune);
 
-  msgpack_pack_unsigned_char(np->pk, nm_servermessage);
-  msgpack_pack_raw(np->pk, length);
-  msgpack_pack_raw_body(np->pk, message, length);
+  msgpack_pack_unsigned_char(np->rpk, nm_servermessage);
+  msgpack_pack_raw(np->rpk, length);
+  msgpack_pack_raw_body(np->rpk, message, length);
 }
 
 dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf) {
@@ -274,8 +274,8 @@ dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf) {
 }
 
 void N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level) {
-  msgpack_pack_unsigned_char(np->pk, nm_authresponse);
-  msgpack_pack_unsigned_char(np->pk, auth_level);
+  msgpack_pack_unsigned_char(np->rpk, nm_authresponse);
+  msgpack_pack_unsigned_char(np->rpk, auth_level);
 }
 
 dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
@@ -290,10 +290,10 @@ dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
 void N_PackPlayerMessage(netpeer_t *np, short recipient, rune *message) {
   size_t length = strlen(message) * sizeof(rune);
 
-  msgpack_pack_unsigned_char(np->pk, nm_playermessage);
-  msgpack_pack_short(np->pk, recipient);
-  msgpack_pack_raw(np->pk, length);
-  msgpack_pack_raw_body(np->pk, message, length);
+  msgpack_pack_unsigned_char(np->rpk, nm_playermessage);
+  msgpack_pack_short(np->rpk, recipient);
+  msgpack_pack_raw(np->rpk, length);
+  msgpack_pack_raw_body(np->rpk, message, length);
 }
 
 dboolean N_UnpackPlayerMessage(netpeer_t *np, short *recipient, buf_t *buf) {
@@ -319,13 +319,13 @@ void N_PackPlayerCommand(netpeer_t *np, unsigned int index,
                                         signed char  side,
                                         signed short angle,
                                         byte         buttons) {
-  msgpack_pack_unsigned_char(np->pk, nm_playercommand);
-  msgpack_pack_unsigned_int(np->pk, index);
-  msgpack_pack_unsigned_int(np->pk, world_index);
-  msgpack_pack_signed_char(np->pk, forward);
-  msgpack_pack_signed_char(np->pk, side);
-  msgpack_pack_short(np->pk, angle);
-  msgpack_pack_unsigned_char(np->pk, buttons);
+  msgpack_pack_unsigned_char(np->upk, nm_playercommand);
+  msgpack_pack_unsigned_int(np->upk, index);
+  msgpack_pack_unsigned_int(np->upk, world_index);
+  msgpack_pack_signed_char(np->upk, forward);
+  msgpack_pack_signed_char(np->upk, side);
+  msgpack_pack_short(np->upk, angle);
+  msgpack_pack_unsigned_char(np->upk, buttons);
 }
 
 dboolean N_UnpackPlayerCommand(netpeer_t *np, unsigned int *index,
@@ -379,9 +379,9 @@ dboolean N_UnpackPlayerCommand(netpeer_t *np, unsigned int *index,
 void N_PackAuthRequest(netpeer_t *np, rune *password) {
   size_t length = strlen(password) * sizeof(rune);
 
-  msgpack_pack_unsigned_char(np->pk, nm_authrequest);
-  msgpack_pack_raw(np->pk, length);
-  msgpack_pack_raw_body(np->pk, password, length);
+  msgpack_pack_unsigned_char(np->rpk, nm_authrequest);
+  msgpack_pack_raw(np->rpk, length);
+  msgpack_pack_raw_body(np->rpk, password, length);
 }
 
 dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
@@ -395,9 +395,9 @@ dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
 void N_PackNameChange(netpeer_t *np, rune *new_name) {
   size_t length = strlen(new_name) * sizeof(rune);
 
-  msgpack_pack_unsigned_char(np->pk, nm_namechange);
-  msgpack_pack_raw(np->pk, length)
-  msgpack_pack_raw_body(np->pk, new_name, length);
+  msgpack_pack_unsigned_char(np->rpk, nm_namechange);
+  msgpack_pack_raw(np->rpk, length)
+  msgpack_pack_raw_body(np->rpk, new_name, length);
 }
 
 dboolean N_UnpackNameChange(netpeer_t *np, buf_t *buf) {
@@ -409,8 +409,8 @@ dboolean N_UnpackNameChange(netpeer_t *np, buf_t *buf) {
 }
 
 void N_PackTeamChange(netpeer_t *np, byte new_team) {
-  msgpack_pack_unsigned_char(np->pk, nm_teamchange);
-  msgpack_pack_unsigned_char(np->pk, new_team);
+  msgpack_pack_unsigned_char(np->rpk, nm_teamchange);
+  msgpack_pack_unsigned_char(np->rpk, new_team);
 }
 
 dboolean N_UnpackTeamChange(netpeer_t *np, byte *new_team) {
@@ -427,7 +427,7 @@ dboolean N_UnpackTeamChange(netpeer_t *np, byte *new_team) {
 }
 
 void N_PackPWOChange(netpeer_t *np) {
-  msgpack_pack_unsigned_char(np->pk, nm_pwochange);
+  msgpack_pack_unsigned_char(np->rpk, nm_pwochange);
   /* CG: TODO */
 }
 
@@ -437,8 +437,8 @@ dboolean N_UnpackPWOChange(netpeer_t *np) {
 }
 
 void N_PackWSOPChange(netpeer_t *np, byte new_wsop_flags) {
-  msgpack_pack_unsigned_char(np->pk, nm_wsopchange);
-  msgpack_pack_unsigned_char(np->pk, new_wsop_flags);
+  msgpack_pack_unsigned_char(np->rpk, nm_wsopchange);
+  msgpack_pack_unsigned_char(np->rpk, new_wsop_flags);
 }
 
 dboolean N_UnpackWSOPChange(netpeer_t *np, byte *new_wsop_flags) {
@@ -451,8 +451,8 @@ dboolean N_UnpackWSOPChange(netpeer_t *np, byte *new_wsop_flags) {
 }
 
 void N_PackBobbingChange(netpeer_t *np, double new_bobbing_amount) {
-  msgpack_pack_unsigned_char(np->pk, nm_bobbingchange);
-  msgpack_pack_double(np->pk, new_bobbing_amount);
+  msgpack_pack_unsigned_char(np->rpk, nm_bobbingchange);
+  msgpack_pack_double(np->rpk, new_bobbing_amount);
 }
 
 dboolean N_UnpackBobbingchanged(netpeer_t *np, double *new_bobbing_amount) {
@@ -465,11 +465,11 @@ dboolean N_UnpackBobbingchanged(netpeer_t *np, double *new_bobbing_amount) {
 }
 
 void N_PackAutoaimChange(netpeer_t *np, dboolean new_autoaim_enabled) {
-  msgpack_pack_unsigned_char(np->pk, nm_autoaimchange);
+  msgpack_pack_unsigned_char(np->rpk, nm_autoaimchange);
   if (new_autoaim_enabled)
-    msgpack_pack_true(np->pk);
+    msgpack_pack_true(np->rpk);
   else
-    msgpack_pack_false(np->pk);
+    msgpack_pack_false(np->rpk);
 }
 
 dboolean N_UnpackAutoaimChange(netpeer_t *np, dboolean *new_autoaim_enabled) {
@@ -481,8 +481,8 @@ dboolean N_UnpackAutoaimChange(netpeer_t *np, dboolean *new_autoaim_enabled) {
 }
 
 void N_PackWeaponSpeedChange(netpeer_t *np, byte new_weapon_speed) {
-  msgpack_pack_unsigned_char(np->pk, nm_weaponspeedchange);
-  msgpack_pack_unsigned_char(np->pk, new_autoaim_enabled);
+  msgpack_pack_unsigned_char(np->rpk, nm_weaponspeedchange);
+  msgpack_pack_unsigned_char(np->rpk, new_autoaim_enabled);
 }
 
 dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, byte *new_weapon_speed) {
@@ -497,10 +497,10 @@ dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, byte *new_weapon_speed) {
 
 void N_PackColorChange(netpeer_t *np, byte new_red, byte new_green,
                                        byte new_blue) {
-  msgpack_pack_unsigned_char(np->pk, nm_colorchange);
-  msgpack_pack_unsigned_char(np->pk, new_red);
-  msgpack_pack_unsigned_char(np->pk, new_green);
-  msgpack_pack_unsigned_char(np->pk, new_blue);
+  msgpack_pack_unsigned_char(np->rpk, nm_colorchange);
+  msgpack_pack_unsigned_char(np->rpk, new_red);
+  msgpack_pack_unsigned_char(np->rpk, new_green);
+  msgpack_pack_unsigned_char(np->rpk, new_blue);
 }
 
 dboolean N_UnpackColorChange(netpeer_t *np, byte *new_red, byte *new_green,
@@ -529,7 +529,7 @@ dboolean N_UnpackColorChange(netpeer_t *np, byte *new_red, byte *new_green,
 }
 
 void N_PackSkinChange(netpeer_t *np) {
-  msgpack_pack_unsigned_char(np->pk, nm_skinchange);
+  msgpack_pack_unsigned_char(np->rpk, nm_skinchange);
   /* CG: TODO */
 }
 
@@ -541,9 +541,9 @@ dboolean N_UnpackSkinChange(netpeer_t *np) {
 void N_PackRCONCommand(netpeer_t *np, rune *command) {
   size_t length = strlen(command) * sizeof(rune);
 
-  msgpack_pack_unsigned_char(np->pk, nm_rconcommand);
-  msgpack_pack_raw(np->pk, length);
-  msgpack_pack_raw_body(np->pk, command, length);
+  msgpack_pack_unsigned_char(np->rpk, nm_rconcommand);
+  msgpack_pack_raw(np->rpk, length);
+  msgpack_pack_raw_body(np->rpk, command, length);
 }
 
 dboolean N_UnpackRCONCommand(netpeer_t *np, buf_t *buf) {
@@ -557,9 +557,9 @@ dboolean N_UnpackRCONCommand(netpeer_t *np, buf_t *buf) {
 void N_PackVoteRequest(netpeer_t *np, rune *command) {
   size_t length = strlen(command) * sizeof(rune);
 
-  msgpack_pack_unsigned_char(np->pk, nm_voterequest);
-  msgpack_pack_raw(np->pk, length);
-  msgpack_pack_raw_body(np->pk, command, length);
+  msgpack_pack_unsigned_char(np->rpk, nm_voterequest);
+  msgpack_pack_raw(np->rpk, length);
+  msgpack_pack_raw_body(np->rpk, command, length);
 }
 
 dboolean N_UnpackVoteRequest(netpeer_t *np, buf_t *buf) {
@@ -573,8 +573,8 @@ dboolean N_UnpackVoteRequest(netpeer_t *np, buf_t *buf) {
 /* CG: P2P message packing/unpacking here */
 
 void N_PackInit(netpeer_t *np, short wanted_player_number) {
-  msgpack_pack_unsigned_char(np->pk, PKT_INIT);
-  msgpack_pack_short(np->pk, wanted_player_number);
+  msgpack_pack_unsigned_char(np->rpk, PKT_INIT);
+  msgpack_pack_short(np->rpk, wanted_player_number);
 }
 
 dboolean N_UnpackInit(netpeer_t *np, short *wanted_player_number) {
@@ -589,24 +589,24 @@ dboolean N_UnpackInit(netpeer_t *np, short *wanted_player_number) {
 void N_PackSetup(netpeer_t *np, setup_packet_t *sinfo, buf_t *wad_names) {
   int offset = 0;
 
-  msgpack_pack_unsigned_char(np->pk, PKT_SETUP);
-  msgpack_pack_short(np->pk, sinfo->players);
-  msgpack_pack_short(np->pk, sinfo->yourplayer);
-  msgpack_pack_unsigned_char(np->pk, sinfo->skill);
-  msgpack_pack_unsigned_char(np->pk, sinfo->episode);
-  msgpack_pack_unsigned_char(np->pk, sinfo->level);
-  msgpack_pack_unsigned_char(np->pk, sinfo->deathmatch);
-  msgpack_pack_unsigned_char(np->pk, sinfo->complevel);
-  msgpack_pack_unsigned_char(np->pk, sinfo->ticdup);
-  msgpack_pack_unsigned_char(np->pk, sinfo->extratic);
-  msgpack_pack_raw(np->pk, GAME_OPTIONS_SIZE);
-  msgpack_pack_raw_body(np->pk, sinfo->game_options);
-  msgpack_pack_array(np->pk, sinfo->numwads);
+  msgpack_pack_unsigned_char(np->rpk, PKT_SETUP);
+  msgpack_pack_short(np->rpk, sinfo->players);
+  msgpack_pack_short(np->rpk, sinfo->yourplayer);
+  msgpack_pack_unsigned_char(np->rpk, sinfo->skill);
+  msgpack_pack_unsigned_char(np->rpk, sinfo->episode);
+  msgpack_pack_unsigned_char(np->rpk, sinfo->level);
+  msgpack_pack_unsigned_char(np->rpk, sinfo->deathmatch);
+  msgpack_pack_unsigned_char(np->rpk, sinfo->complevel);
+  msgpack_pack_unsigned_char(np->rpk, sinfo->ticdup);
+  msgpack_pack_unsigned_char(np->rpk, sinfo->extratic);
+  msgpack_pack_raw(np->rpk, GAME_OPTIONS_SIZE);
+  msgpack_pack_raw_body(np->rpk, sinfo->game_options);
+  msgpack_pack_array(np->rpk, sinfo->numwads);
   for (int i = 0; i < sinfo->numwads; i++) {
     size_t length = strlen(wad_names->data + offset);
 
-    msgpack_pack_raw(np->pk, length);
-    msgpack_raw_body(np->pk, wad_names->data + offset);
+    msgpack_pack_raw(np->rpk, length);
+    msgpack_raw_body(np->rpk, wad_names->data + offset);
 
     offset += length + 2;
   }
@@ -685,24 +685,24 @@ dboolean N_UnpackSetup(netpeer_t *np, setup_packet_t *sinfo,
 }
 
 void N_PackGo(netpeer_t *np) {
-  msgpack_pack_unsigned_char(np->pk, PKT_GO);
+  msgpack_pack_unsigned_char(np->rpk, PKT_GO);
 }
 
 void N_PackClientTic(netpeer_t *np, int tic, objbuf_t *commands) {
   int command_count = M_ObjBufferGetObjectCount(commands);
 
-  msgpack_pack_unsigned_char(np->pk, PKT_TICC);
-  msgpack_pack_unsigned_char(np->pk, tic);
-  msgpack_pack_int(np->pk, command_count);
+  msgpack_pack_unsigned_char(np->rpk, PKT_TICC);
+  msgpack_pack_unsigned_char(np->rpk, tic);
+  msgpack_pack_int(np->rpk, command_count);
   for (int i = 0; i < command_count; i++) {
     ticcmd_t *cmd = commands->objects[i];
 
-    msgpack_pack_signed_char(np->pk, cmd->forwardmove, sizeof(signed char));
-    msgpack_pack_signed_char(np->pk, cmd->sidemove, sizeof(signed char));
-    msgpack_pack_short(np->pk, cmd->angleturn, sizeof(signed short));
-    msgpack_pack_short(np->pk, cmd->consistancy, sizeof(short));
-    msgpack_pack_byte(np->pk, cmd->chatchar, sizeof(byte));
-    msgpack_pack_byte(np->pk, cmd->buttons, sizeof(byte));
+    msgpack_pack_signed_char(np->rpk, cmd->forwardmove, sizeof(signed char));
+    msgpack_pack_signed_char(np->rpk, cmd->sidemove, sizeof(signed char));
+    msgpack_pack_short(np->rpk, cmd->angleturn, sizeof(signed short));
+    msgpack_pack_short(np->rpk, cmd->consistancy, sizeof(short));
+    msgpack_pack_byte(np->rpk, cmd->chatchar, sizeof(byte));
+    msgpack_pack_byte(np->rpk, cmd->buttons, sizeof(byte));
   }
 }
 
@@ -779,9 +779,9 @@ dboolean N_UnpackClientTic(netpeer_t *np, int *tic, objbuf_t *commands) {
 void N_PackServerTic(netpeer_t *np, int tic, objbuf_t *commands) {
   int players_this_tic = M_ObjBufferGetObjectCount(commands);
 
-  msgpack_pack_unsigned_char(np->pk, PKT_TICS);
-  msgpack_pack_int(np->pk, tic);
-  msgpack_pack_int(np->pk, M_ObjBufferGetObjectCount(commands));
+  msgpack_pack_unsigned_char(np->rpk, PKT_TICS);
+  msgpack_pack_int(np->rpk, tic);
+  msgpack_pack_int(np->rpk, M_ObjBufferGetObjectCount(commands));
 
   for (int i = 0; i < commands->size; i++) {
     ticcmd_t *cmd = commands->objects[i];
@@ -789,13 +789,13 @@ void N_PackServerTic(netpeer_t *np, int tic, objbuf_t *commands) {
     if (cmd == NULL)
       continue;
 
-    msgpack_pack_unsigned_short(np->pk, i);
-    msgpack_pack_signed_char(np->pk, cmd->forwardmove, sizeof(signed char));
-    msgpack_pack_signed_char(np->pk, cmd->sidemove, sizeof(signed char));
-    msgpack_pack_short(np->pk, cmd->angleturn, sizeof(signed short));
-    msgpack_pack_short(np->pk, cmd->consistancy, sizeof(short));
-    msgpack_pack_byte(np->pk, cmd->chatchar, sizeof(byte));
-    msgpack_pack_byte(np->pk, cmd->buttons, sizeof(byte));
+    msgpack_pack_unsigned_short(np->rpk, i);
+    msgpack_pack_signed_char(np->rpk, cmd->forwardmove, sizeof(signed char));
+    msgpack_pack_signed_char(np->rpk, cmd->sidemove, sizeof(signed char));
+    msgpack_pack_short(np->rpk, cmd->angleturn, sizeof(signed short));
+    msgpack_pack_short(np->rpk, cmd->consistancy, sizeof(short));
+    msgpack_pack_byte(np->rpk, cmd->chatchar, sizeof(byte));
+    msgpack_pack_byte(np->rpk, cmd->buttons, sizeof(byte));
   }
 }
 
@@ -820,8 +820,8 @@ dboolean N_UnpackServerTic(netpeer_t *np, int *tic, objbuf_t *commands) {
 }
 
 void N_PackRetransmissionRequest(netpeer_t *np, int tic) {
-  msgpack_pack_unsigned_char(np->pk, PKT_RETRANS);
-  msgpack_pack_int(np->pk, tic);
+  msgpack_pack_unsigned_char(np->rpk, PKT_RETRANS);
+  msgpack_pack_int(np->rpk, tic);
 }
 
 dboolean N_UnpackRetransmissionRequest(netpeer_t *np, int *tic) {
@@ -834,13 +834,13 @@ dboolean N_UnpackRetransmissionRequest(netpeer_t *np, int *tic) {
 }
 
 void N_PackColor(netpeer_t *np, mapcolor_me new_color) {
-  msgpack_pack_unsigned_char(np->pk, PKT_COLOR);
-  msgpack_pack_int(np->pk, gametic);
+  msgpack_pack_unsigned_char(np->rpk, PKT_COLOR);
+  msgpack_pack_int(np->rpk, gametic);
   if (server)
-    msgpack_pack_short(np->pk, np->playernum);
+    msgpack_pack_short(np->rpk, np->playernum);
   else
-    msgpack_pack_short(np->pk, consoleplayer);
-  msgpack_pack_int(np->pk, new_color);
+    msgpack_pack_short(np->rpk, consoleplayer);
+  msgpack_pack_int(np->rpk, new_color);
 }
 
 dboolean N_UnpackColor(netpeer_t *np, int *tic, short *playernum,
@@ -873,10 +873,10 @@ dboolean N_UnpackColor(netpeer_t *np, int *tic, short *playernum,
 void N_PackSaveGameName(netpeer_t *np, rune *new_save_game_name) {
   size_t length = strlen(new_save_game_name);
 
-  msgpack_pack_unsigned_char(np->pk, PKT_SAVEG);
-  msgpack_pack_int(np->pk, gametic);
-  msgpack_pack_raw(np->pk, length);
-  msgpack_pack_raw_body(np->pk, new_save_game_name, length);
+  msgpack_pack_unsigned_char(np->rpk, PKT_SAVEG);
+  msgpack_pack_int(np->rpk, gametic);
+  msgpack_pack_raw(np->rpk, length);
+  msgpack_pack_raw_body(np->rpk, new_save_game_name, length);
 }
 
 dboolean N_UnpackSaveGameName(netpeer_t *np, int *tic, buf_t *buf) {
@@ -895,12 +895,12 @@ dboolean N_UnpackSaveGameName(netpeer_t *np, int *tic, buf_t *buf) {
 }
 
 void N_PackQuit(netpeer_t *np) {
-  msgpack_pack_unsigned_char(np->pk, PKT_QUIT);
-  msgpack_pack_int(np->pk, gametic);
+  msgpack_pack_unsigned_char(np->rpk, PKT_QUIT);
+  msgpack_pack_int(np->rpk, gametic);
   if (server)
-    msgpack_pack_short(np->pk, np->playernum);
+    msgpack_pack_short(np->rpk, np->playernum);
   else
-    msgpack_pack_short(np->pk, consoleplayer);
+    msgpack_pack_short(np->rpk, consoleplayer);
 }
 
 dboolean N_UnpackQuit(netpeer_t *np, int *tic, short *playernum) {
@@ -922,7 +922,7 @@ dboolean N_UnpackQuit(netpeer_t *np, int *tic, short *playernum) {
 }
 
 void N_PackDown(netpeer_t *np) {
-  msgpack_pack_unsigned_char(np->pk, PKT_DOWN);
+  msgpack_pack_unsigned_char(np->rpk, PKT_DOWN);
 }
 
 /*
@@ -934,9 +934,9 @@ void N_PackDown(netpeer_t *np) {
 void N_PackWad(netpeer_t *np, rune *wad_name_or_url) {
   size_t length = strlen(wad_name_or_url);
 
-  msgpack_pack_unsigned_char(np->pk, PKT_WAD);
-  msgpack_pack_raw(np->pk, length);
-  msgpack_pack_raw_body(np->pk, wad_name_or_url, length);
+  msgpack_pack_unsigned_char(np->rpk, PKT_WAD);
+  msgpack_pack_raw(np->rpk, length);
+  msgpack_pack_raw_body(np->rpk, wad_name_or_url, length);
 }
 
 dboolean N_UnpackWad(netpeer_t *np, buf_t *wad_name_or_url) {
@@ -948,8 +948,8 @@ dboolean N_UnpackWad(netpeer_t *np, buf_t *wad_name_or_url) {
 }
 
 void N_PackBackoff(netpeer_t *np, int tic) {
-  msgpack_pack_unsigned_char(np->pk, PKT_BACKOFF);
-  msgpack_pack_int(np->pk, tic);
+  msgpack_pack_unsigned_char(np->rpk, PKT_BACKOFF);
+  msgpack_pack_int(np->rpk, tic);
 }
 
 dboolean N_UnpackBackoff(netpeer_t *np, int *tic) {

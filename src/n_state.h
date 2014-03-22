@@ -39,9 +39,9 @@ extern buf_t *current_game_state;
 extern obuf_t *saved_game_states;
 
 void     N_InitStates(void);
-void     N_SaveCurrentState(buf_t *state);
+void     N_SaveCurrentState(int tic, buf_t *state);
 void     N_SaveStateForTic(int tic, buf_t *state);
-dboolean N_ApplyStateDelta(int tic, buf_t *delta);
+dboolean N_ApplyStateDelta(int from_tic, int to_tic, buf_t *delta);
 dboolean N_GenerateStateDelta(netpeer_t *np, buf_t *state);
 
 #endif

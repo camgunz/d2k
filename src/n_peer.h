@@ -37,8 +37,10 @@
 
 typedef struct netpeer_s {
   ENetPeer        *peer;
-  msgpack_sbuffer *buf;
-  msgpack_packer  *pk;
+  msgpack_sbuffer *rbuf;
+  msgpack_packer  *rpk;
+  msgpack_sbuffer *ubuf;
+  msgpack_packer  *upk;
   time_t           connect_time;
   time_t           disconnect_time;
   short            playernum;

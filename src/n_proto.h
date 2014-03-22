@@ -53,24 +53,25 @@ void N_HandlePacket(int peernum, void *data, size_t data_size);
 # CG: new netcode
 ################################################################################
 */
-const byte nm_statedelta        = 1;
-const byte nm_fullstate         = 2;
-const byte nm_authresponse      = 3;
-const byte nm_servermessage     = 4;
-const byte nm_playermessage     = 5;
-const byte nm_playercommand     = 6;
-const byte nm_authrequest       = 7;
-const byte nm_namechange        = 8;
-const byte nm_teamchange        = 9;
-const byte nm_pwochange         = 10;
-const byte nm_wsopchange        = 11;
-const byte nm_bobbingchange     = 12;
-const byte nm_autoaimchange     = 13;
-const byte nm_weaponspeedchange = 14;
-const byte nm_colorchange       = 15;
-const byte nm_skinchange        = 16;
-const byte nm_rconcommand       = 17;
-const byte nm_voterequest       = 18;
+const byte nm_statedelta            = 1;  /* unreliable */
+const byte nm_fullstate             = 2;  /*   reliable */
+const byte nm_authresponse          = 3;  /*   reliable */
+const byte nm_playercommandreceived = 4;  /*   reliable */
+const byte nm_servermessage         = 5;  /*   reliable */
+const byte nm_playermessage         = 6;  /*   reliable */
+const byte nm_playercommand         = 7;  /* unreliable */
+const byte nm_authrequest           = 8;  /*   reliable */
+const byte nm_namechange            = 9;  /*   reliable */
+const byte nm_teamchange            = 10; /*   reliable */
+const byte nm_pwochange             = 11; /*   reliable */
+const byte nm_wsopchange            = 12; /*   reliable */
+const byte nm_bobbingchange         = 13; /*   reliable */
+const byte nm_autoaimchange         = 14; /*   reliable */
+const byte nm_weaponspeedchange     = 15; /*   reliable */
+const byte nm_colorchange           = 16; /*   reliable */
+const byte nm_skinchange            = 17; /*   reliable */
+const byte nm_rconcommand           = 18; /*   reliable */
+const byte nm_voterequest           = 19; /*   reliable */
 
 void SV_SendStateDelta(short playernum);
 void SV_SendFullState(short playernum);

@@ -385,8 +385,38 @@ void N_ServiceNetwork(void) {
   int status = 0;
   int peernum = -1;
   netpeer_t *np = NULL;
+  ENetPacket *packet = NULL;
 
   check_peer_timeouts();
+
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
+
+    if (np == NULL)
+      continue;
+
+    if (np->rbuf->size != 0) {
+      ENetPacket *reliable_packet = enet_packet_create(
+        np->rbuf->data,
+        np->rbuf->size,
+        ENET_PACKET_FLAG_RELIABLE | ENET_PACKET_FLAG_NO_ALLOCATE
+      );
+      enet_peer_send(np->peer, NET_CHANNEL_RELIABLE, reliable_packet);
+      enet_packet_destroy(reliable_packet);
+      msgpack_sbuffer_clear(np->rbuf);
+    }
+
+    if (np->ubuf->size != 0) {
+      ENetPacket *unreliable_packet = enet_packet_create(
+        np->ubuf->data,
+        np->ubuf->size,
+        ENET_PACKET_FLAG_NO_ALLOCATE
+      );
+      enet_peer_send(np->peer, NET_CHANNEL_UNRELIABLE, unreliable_packet);
+      enet_packet_destroy(unreliable_packet);
+      msgpack_sbuffer_clear(np->ubuf);
+    }
+  }
 
   while (true) {
     status = enet_host_service(net_host, &net_event, 0);
