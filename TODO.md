@@ -1,11 +1,5 @@
 # To Do
 
-  - Modify save loading:
-    - `savegamebuffer` & `savegamesize` should be rolled into a `buf_t`
-    - Modify savegame stuff so that it uses `buf_t` functions instead of `*p++`
-      stuff.
-    - All the `P_Archive*` functions ought to take a `buf_t *` instead of using
-      a global.
   - Consider using a MessagePack map for all the player change stuff.
     - Extensible
     - Cuts down on the total # of messages

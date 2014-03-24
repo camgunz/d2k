@@ -71,6 +71,12 @@ wide.
   * Pad commas in general
     * Bad: `int x,y,z,a,b,c;`
     * Good: `int x, y, z, a, b, c;`
+  * Do not pad dereferences
+    * Bad: `p -> mo = NULL`;
+    * Good: `p->mo = NULL`;
+  * Pad pointer types in casts, but do not pad the cast itself
+    * Bad: `data = (void*) p;`
+    * Good: `data = (void *)p;`
 
 ## Switch Blocks
 
@@ -79,12 +85,32 @@ Format switch blocks accordingly:
     switch (x) {
       case 0:
       {
-        /* blah... */
+        int zero = 0;
+        M_DoingSomeThingsHere(zero);
       }
+      break;
+      case 1:
+        M_DoingSomeThingsHere(1);
       break;
       default:
       break;
     }
+
+The `break` is indented at the same level as the `case` because ugliness
+ensures otherwise if one creates a block:
+
+  switch (x) {
+    case 0:
+    {
+      int zero = 0;
+      M_DoingSomeThingsHere(zero);
+    }
+      break;
+    ...
+
+Putting the `break` inside the block is an option, however that breaks up the
+visual consistency of always having the `break` before the `case`, which is
+vitally important in checking for fall-through bugs.
 
 ## Braces
 
@@ -131,9 +157,10 @@ use braces for all of them.  For example, instead of:
 
     if (x == 0)
       return false;
-    else if (x == 1)
+    else if (x == 1) {
       printf("X: 1\n");
       return true;
+    }
     else
       I_Error("I_BadStyle: Got invalid value for x: %d.", x);
 
@@ -149,6 +176,10 @@ write:
     else {
       I_Error("I_BadStyle: Got invalid value for x: %d.", x);
     }
+
+## Multi-line Control Statements
+
+If your control statement spans more than one line, you must use braces.
 
 ## Else-If
 
@@ -185,7 +216,9 @@ some examples:
       /* Blah... */
     }
 
-That said, do not put more than one statement on a line, for example, this
+That said, these are very ugly, and you should consider a slight refactoring.
+
+Do not put more than one statement on a line, for example, this
 violates the style guidelines:
 
     case pc_unused: fputc(' ', stderr); break;
@@ -280,18 +313,26 @@ for example:
     }
 
 I sympathize with those who disagree, `char` is not the same type as `char*`,
-but this is to avoid ugliness when declaring a variable list of pointer types.
+but this is to avoid inconsistency when declaring a variable list of pointer
+types.
 
-However, when declaring a return value that is a pointer, keep the `*` with the
-type:
+However, there is no opportunity for inconsistency when declaring a return
+value that is a pointer, therefore in that case, keep the `*` with the type:
 
-    const char* get_utf_error(int error_code);
+    const char* M_GetUTFError(int error_code);
 
 ## Static Functions
 
 Declare static functions using lowercase and underscores, i.e.:
 
     static void try_harder(void);
+
+## Non-Static Functions
+
+Declare non-static functions with their prefix, an underscore, then a capital
+camel case name:
+
+    void M_GoodFunctionName(void);
 
 ## Includes
 
@@ -326,4 +367,14 @@ Include `z_zone.h` first, so that anything afterwards uses its configuration
 information and redefinitions.
 
 Include library headers next so that PrBoom+ headers can use their definitions.
+
+## Function Declarations
+
+Functions that take no arguments should be declared as:
+
+    void M_GreatFunction(void);
+
+not:
+
+    void M_GreatFunction();
 
