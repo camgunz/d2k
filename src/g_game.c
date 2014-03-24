@@ -143,10 +143,6 @@ int             demover;
 dboolean         singledemo;           // quit after playing a demo from cmdline
 wbstartstruct_t wminfo;               // parms for world map / intermission
 dboolean         haswolflevels = false;// jff 4/18/98 wolf levels present
-/*
-static byte     *savebuffer;          // CPhipps - static
-static size_t   savegamesize = SAVEGAMESIZE; // killough
-*/
 int             autorun = false;      // always running?          // phares
 int             totalleveltimes;      // CPhipps - total time for all completed levels
 int             longtics;
@@ -1857,10 +1853,6 @@ void G_LoadGame(int slot, dboolean command)
 
 static void G_LoadGameErr(const char *msg)
 {
-  /*
-  Z_Free(savebuffer);                // Free the savegame buffer
-  */
-  M_BufferFree(savebuffer);
   M_ForcedLoadGame(msg);             // Print message asking for 'Y' to force
   if (command_loadgame)              // If this was a command-line -loadgame
     {
@@ -2360,7 +2352,7 @@ dboolean G_SaveSaveData(buf_t *savebuffer) {
     for (i = 0; i < numwadfiles; i++) {
       const char *const w = wadfiles[i].name;
 
-      M_BufferEnsureCapacity(&savebuffer, strlen(w) + 2);
+      M_BufferEnsureCapacity(savebuffer, strlen(w) + 2);
       strcpy((char *)save_p, w);
       save_p += strlen((char *)save_p);
       *save_p++ = '\n';
@@ -2368,7 +2360,7 @@ dboolean G_SaveSaveData(buf_t *savebuffer) {
     *save_p++ = 0;
   }
 
-  M_BufferEnsureCapacity(&savebuffer,
+  M_BufferEnsureCapacity(savebuffer,
     GAME_OPTION_SIZE +
     MIN_MAXPLAYERS +
     14 +
@@ -2413,8 +2405,8 @@ dboolean G_SaveSaveData(buf_t *savebuffer) {
 
   // killough 3/22/98: add Z_CheckHeap after each call to ensure consistency
   Z_CheckHeap();
-  savebuffer.cursor = save_p - savebuffer.data;
-  P_ArchivePlayers(&savebuffer);
+  savebuffer->cursor = save_p - savebuffer->data;
+  P_ArchivePlayers(savebuffer);
   Z_CheckHeap();
 
   // phares 9/13/98: Move mobj_t->index out of P_ArchiveThinkers so the
@@ -2423,9 +2415,9 @@ dboolean G_SaveSaveData(buf_t *savebuffer) {
   // caused a sound, referenced by sector_t->soundtarget.
   P_ThinkerToIndex();
 
-  P_ArchiveWorld(&savebuffer);
+  P_ArchiveWorld(savebuffer);
   Z_CheckHeap();
-  P_ArchiveThinkers(&savebuffer);
+  P_ArchiveThinkers(savebuffer);
 
   // phares 9/13/98: Move index->mobj_t out of P_ArchiveThinkers, simply
   // for symmetry with the P_ThinkerToIndex call above.
@@ -2433,10 +2425,10 @@ dboolean G_SaveSaveData(buf_t *savebuffer) {
   P_IndexToThinker();
 
   Z_CheckHeap();
-  P_ArchiveSpecials(&savebuffer);
-  P_ArchiveRNG(&savebuffer);    // killough 1/18/98: save RNG information
+  P_ArchiveSpecials(savebuffer);
+  P_ArchiveRNG(savebuffer);    // killough 1/18/98: save RNG information
   Z_CheckHeap();
-  P_ArchiveMap(&savebuffer);    // killough 1/22/98: save automap information
+  P_ArchiveMap(savebuffer);    // killough 1/22/98: save automap information
 
   *save_p++ = 0xe6;   // consistancy marker
 
