@@ -16,7 +16,8 @@ First, some general guidelines.
 PrBoom+ has accepted contributions from numerous contributors over its storied
 lifespan, many of which have different code styles.  Going forward,
 contributions should be formatted according to this style guide, but existing
-code should be properly reformatted whenever it is found.  Some projects advise against formatting-only changes; this is not one of them.
+code should be properly reformatted whenever it is found.  Some projects advise
+against formatting-only changes; this is not one of them.
 
 ### Indenting
 
@@ -34,17 +35,33 @@ and no we aren't on tiny terminals anymore, but having multiple editing buffers
 open horizontally at a time (or browser windows, debuggers, etc.) is a much
 bigger increase of productivity than not having to break a line.
 
-A 100-character line width limit would mean that even using a typeface 7 pixels
-wide, a monitor with 1920 horizontal pixels could only fully display 2 editor
-buffers.  That's not so bad, but the most common resolution on notebooks (as of
-this writing) is 1366x768; such notebooks could not even fully display two
-editor buffers.  Furthermore, viewing code on mobile devices is more and more
-common; on my 1920x1080 Nexus 5 I get roughly 74 characters in landscape mode
-when viewing code on GitHub.
+Presuming a font that is 7 pixels wide:
 
-It's also worth saying that in the developing world, high-resolution displays
-are uncommon.  A 640x480 display ought to be sufficient to edit the source code
-of PrBoom+.
+  * 1024x768: 146 characters (1, 1)
+  * 1152x720: 164 characters (2, 1)
+  * 1280x720: 182 characters (2, 1)
+  * 1366x768: 195 characters (2, 1)
+  * 1440x900: 200 characters (2, 2)
+  * 1600x900: 228 characters (2, 2)
+  * 1920x1080: 274 characters (3, 2)
+  * 2048x1152: 292 characters (3, 2)
+  * 2560x1440: 365 characters (4, 3)
+  * 2880x1800: 411 characters (5, 4)
+
+100-column buffer widths only match up when using 1440x900 and 1600x900, two
+relatively uncommon resolutions.  Everywhere else, particularly the common
+resolutions of 1280x720, 1366x768 and 1920x1080, 80-column buffer widths afford
+the programmer an extra buffer.  Users of 1024x768 will have to scale down
+their font size if they desire more than 1 column regardless of buffer width.
+
+Furthermore, viewing code on mobile devices is more and more common; on my
+1920x1080 Nexus 5 I get roughly 74 characters in landscape mode when viewing
+code on GitHub.
+
+It's also worth saying that high-resolution displays are uncommon in the
+developing world.  You ought to be able to edit the source code of PrBoom+
+without ugly wrapping or painful scrolling no matter where you are, and a
+minimum 640x480 resolution is entirely reasonable.
 
 Finally, it is much easier to scan through code when it is only 80 characters
 wide.

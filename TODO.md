@@ -1,8 +1,9 @@
 # To Do
 
-  - Consider using a MessagePack map for all the player change stuff.
+  - Use a MessagePack map for all the player change stuff.
     - Extensible
     - Cuts down on the total # of messages
+    - Super easy to do
   - Fill out the handler functions
     - Probably involves creating some new methods/enums/etc.
   - Finally revamp `d_client.c` and `d_server.c`.
