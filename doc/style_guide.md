@@ -38,7 +38,9 @@ A 100-character line width limit would mean that even using a typeface 7 pixels
 wide, a monitor with 1920 horizontal pixels could only fully display 2 editor
 buffers.  That's not so bad, but the most common resolution on notebooks (as of
 this writing) is 1366x768; such notebooks could not even fully display two
-editor buffers.
+editor buffers.  Furthermore, viewing code on mobile devices is more and more
+common; on my 1920x1080 Nexus 5 I get roughly 74 characters in landscape mode
+when viewing code on GitHub.
 
 It's also worth saying that in the developing world, high-resolution displays
 are uncommon.  A 640x480 display ought to be sufficient to edit the source code
@@ -99,14 +101,14 @@ Format switch blocks accordingly:
 The `break` is indented at the same level as the `case` because ugliness
 ensures otherwise if one creates a block:
 
-  switch (x) {
-    case 0:
-    {
-      int zero = 0;
-      M_DoingSomeThingsHere(zero);
-    }
-      break;
-    ...
+    switch (x) {
+      case 0:
+      {
+        int zero = 0;
+        M_DoingSomeThingsHere(zero);
+      }
+        break;
+      ...
 
 Putting the `break` inside the block is an option, however that breaks up the
 visual consistency of always having the `break` before the `case`, which is
@@ -346,8 +348,8 @@ cuts down on compilation time and avoids complicated dependency problems.
 
 ### Header Defines
 
-The `__` prefix is reserved for compiler defines; do not use it for headers,
-for example, instead of:
+The `__` prefix is reserved for compiler defines; do not use it for headers.
+For example, instead of:
 
     #ifndef __P_MOBJ_H__
     #define __P_MOBJ_H__
