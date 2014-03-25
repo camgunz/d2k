@@ -137,5 +137,5 @@ dboolean N_UnpackBackoff(netpeer_t *np, int *tic);
 
 #endif
 
-/* vi: set cindent et ts=2 sw=2: */
+/* vi: set et ts=2 sw=2: */
 

@@ -90,5 +90,5 @@ void     N_ServiceNetwork(void);
 
 #endif
 
-/* vi: set cindent et ts=2 sw=2: */
+/* vi: set et ts=2 sw=2: */
 

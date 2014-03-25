@@ -43,7 +43,7 @@
 #include "n_proto.h"
 
 #define MAX_ADDRESS_LENGTH 500
-#define CONNECT_TIMEOUT 5
+#define CONNECT_TIMEOUT 3
 #define DISCONNECT_TIMEOUT 3
 
 #define to_byte(x)  ((byte)((x) & 0xFF))
@@ -493,5 +493,5 @@ void N_ServiceNetwork(void) {
   }
 }
 
-/* vi: set cindent et ts=2 sw=2: */
+/* vi: set et ts=2 sw=2: */
 

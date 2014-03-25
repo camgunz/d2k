@@ -49,6 +49,7 @@ void     M_BufferSetData(buf_t *buf, byte *data, size_t size);
 void     M_BufferSetString(buf_t *buf, byte *data, size_t length);
 dboolean M_BufferSetFile(buf_t *buf, const char *filename);
 void     M_BufferAppend(buf_t *buf, byte *data, size_t size);
+dboolean M_BufferEqualsString(buf_t *buf, const rune *s);
 void     M_BufferEnsureCapacity(buf_t *buf, size_t capacity);
 void     M_BufferEnsureTotalCapacity(buf_t *buf, size_t capacity);
 void     M_BufferCompact(buf_t *buf);
@@ -56,4 +57,6 @@ void     M_BufferClear(buf_t *buf);
 void     M_BufferFree(buf_t *buf);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

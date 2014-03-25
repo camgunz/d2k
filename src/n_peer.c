@@ -186,11 +186,11 @@ dboolean N_CheckPeerTimeout(int peernum) {
 
   if (np != NULL) {
     if ((np->connection_time != 0) &&
-        (difftime(time(), np->connection_time) > CONNECTION_TIMEOUT)) {
+        (difftime(time(), np->connection_time) > CONNECT_TIMEOUT)) {
       return true;
     }
     else if ((np->disconnection_time != 0) &&
-             (difftime(time(), np->disconnection_time) > CONNECTION_TIMEOUT)) {
+             (difftime(time(), np->disconnection_time) > DISCONNECT_TIMEOUT)) {
       return true;
     }
   }
@@ -198,5 +198,5 @@ dboolean N_CheckPeerTimeout(int peernum) {
   return false;
 }
 
-/* vi: set cindent et ts=2 sw=2: */
+/* vi: set et ts=2 sw=2: */
 

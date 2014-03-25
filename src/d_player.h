@@ -197,8 +197,17 @@ typedef struct player_s
   angle_t prev_viewangle;
   angle_t prev_viewpitch;
   fixed_t jumpTics;      // delay the next jump for a moment
-} player_t;
 
+  /*
+   * CG: Haven't really considered savegame compatibility here, so, dunno if
+   *     that's preserved or not.  My instinct is no; given that prev_viewz
+   *     (etc.) have been added, so I don't mind adding things here.
+   */
+
+  rune *name;
+  byte  team;
+
+} player_t;
 
 //
 // INTERMISSION

@@ -107,6 +107,13 @@ void M_BufferAppend(buf_t *buf, byte *data, size_t size) {
   buf->size += size;
 }
 
+dboolean M_BufferEqualsString(buf_t *buf, const rune *s) {
+  if (strncmp(buf->data, s, buf->size) == 0)
+    return true;
+
+  return false;
+}
+
 void M_BufferEnsureCapacity(buf_t *buf, size_t capacity) {
   if (buf->capacity < buf->size + capacity) {
     size_t old_capacity = buf->capacity;
@@ -161,4 +168,6 @@ void M_BufferFree(buf_t *buf) {
   free(buf->data);
   memset(buf, 0, sizeof(buf_t));
 }
+
+/* vi: set et ts=2 sw=2: */
 

@@ -38,58 +38,62 @@
 
 #include "n_peer.h"
 
-#define SERVER_ONLY(s) \
-  if (!server) { \
-    doom_printf( \
+#define MAX_PREF_NAME_SIZE 20
+
+#define SERVER_ONLY(s)                                                         \
+  if (!server) {                                                               \
+    doom_printf(                                                               \
       "N_HandlePacket: Erroneously received packet [" #s "] from the server\n" \
-    ); \
-    return; \
+    );                                                                         \
+    return;                                                                    \
   }
 
-#define CLIENT_ONLY(s) \
-  if (server) { \
-    doom_printf( \
-      "N_HandlePacket: Erroneously received packet [" #s "] from a client\n" \
-    ); \
-    return; \
+#define CLIENT_ONLY(s)                                                         \
+  if (server) {                                                                \
+    doom_printf(                                                               \
+      "N_HandlePacket: Erroneously received packet [" #s "] from a client\n"   \
+    );                                                                         \
+    return;                                                                    \
   }
 
-#define CHECK_CONNECTION(np)                                                  \
-  if (np == NULL) {                                                           \
-    doom_printf(__func__ ": Not connected\n");                                \
-    return;                                                                   \
-  }
+#define CHECK_VALID_PLAYER(np, playernum)                                      \
+  if (((np) == N_GetPlayerForPeer((playernum))) == NULL)                       \
+    I_Error(__func__ ": Invalid player %d.\n", playernum)
 
-/* CG: C/S Message Handlers here */
+#define CHECK_CONNECTION(np)                                                   \
+  if (((np) = N_GetPeer(0)) == NULL) {                                         \
+    doom_printf(__func__ ": Not connected\n");                                 \
+    return;                                                                    \
+  }
 
 static buf_t *delta_buffer = NULL;
 static buf_t *state_buffer = NULL;
-static auth_level_e = AUTH_LEVEL_NONE;
 
-static N_InitProtocol(void) {
-  M_BufferInit(&delta_buffer);
-  M_BufferInit(&state_buffer);
-}
-
+/*
+ ##############################################################################
+ # CG: C/S Message Handlers here
+ ##############################################################################
+*/
 static void handle_state_delta(netpeer_t *np) {
   int from_tic, to_tic;
 
-  if (N_UnpackStateDelta(np, &from_tic, &to_tic, delta_buffer))
+  if (N_UnpackStateDelta(np, &from_tic, &to_tic, delta_buffer)) {
     N_ApplyStateDelta(from_tic, to_tic, delta_buffer);
-
-  /* CG: TODO: Load the current state */
+    G_LoadSaveData(N_GetCurrentState(), true, false);
+  }
 }
 
 static void handle_full_state(netpeer_t *np) {
   int tic;
 
-  if (N_UnpackFullState(np, &tic, state_buffer))
-    N_SaveCurrentState(from_tic, to_tic, state_buffer);
-
-  /* CG: TODO: Load the current state */
+  if (N_UnpackFullState(np, &tic, state_buffer)) {
+    N_SaveCurrentState(tic, state_buffer);
+    G_LoadSaveData(N_GetCurrentState(), true, false);
+  }
 }
 
 static void handle_auth_response(netpeer_t *np) {
+  ifkk
 }
 
 static void handle_player_commands_received(netpeer_t *np) {
@@ -113,31 +117,65 @@ static void handle_player_commands(netpeer_t *np) {
 static void handle_auth_request(netpeer_t *np) {
 }
 
-static void handle_name_change(netpeer_t *np) {
-}
+static void handle_client_preference_change(netpeer_t *np) {
+  static buf_t pref_key_name;
+  static buf_t pref_key_value;
 
-static void handle_team_change(netpeer_t *np) {
-}
+  size_t pref_count = 0;
+  player_t *player = &players[np->playernum];
 
-static void handle_pwo_change(netpeer_t *np) {
-}
+  if (!N_UnpackClientPreferenceChange(np, &pref_count))
+    return;
 
-static void handle_wsop_change(netpeer_t *np) {
-}
+  for (size_t i = 0; i < pref_count; i++) {
+    if (!N_UnpackClientPreferenceChangeName(np, i, &pref_key_name)) {
+      doom_printf(
+        "N_HandlePacket: Error unpacking client preference change\n"
+      );
+      return;
+    }
 
-static void handle_bobbing_change(netpeer_t *np) {
-}
+    if (pref_key_name.size > MAX_PREF_NAME_SIZE) {
+      doom_printf(
+        "N_HandlePacket: Invalid client preference change packet: preference "
+        "name exceeds maximum length\n"
+      );
+      return;
+    }
 
-static void handle_autoaim_change(netpeer_t *np) {
-}
+    if (M_BufferEqualsString(&pref_key_name, "name")) {
+      N_UnpackNameChange(np, &pref_key_value);
 
-static void handle_weapon_speed_change(netpeer_t *np) {
-}
+      if (player->name != NULL) {
+        doom_printf("%s is now %s.\n", player->name, pref_key_value.data);
+        free(player->name);
+      }
 
-static void handle_color_change(netpeer_t *np) {
-}
+      player->name = strdup(pref_key_value.data);
+    }
+    else if (M_BufferEqualsString(&pref_key_name, "team")) {
+      byte new_team = 0;
 
-static void handle_skin_change(netpeer_t *np) {
+      if (!N_UnpackTeamChange(np, &new_team))
+        return;
+
+      player->team = new_team;
+    }
+    else if (M_BufferEqualsString(&pref_key_name, "pwo")) {
+    }
+    else if (M_BufferEqualsString(&pref_key_name, "wsop")) {
+    }
+    else if (M_BufferEqualsString(&pref_key_name, "bobbing")) {
+    }
+    else if (M_BufferEqualsString(&pref_key_name, "autoaim")) {
+    }
+    else if (M_BufferEqualsString(&pref_key_name, "weapon_speed")) {
+    }
+    else if (M_BufferEqualsString(&pref_key_name, "color")) {
+    }
+    else if (M_BufferEqualsString(&pref_key_name, "skin_name")) {
+    }
+  }
 }
 
 static void handle_rcon(netpeer_t *np) {
@@ -146,7 +184,11 @@ static void handle_rcon(netpeer_t *np) {
 static void handle_vote_request(netpeer_t *np) {
 }
 
-/* CG: P2P Message Handlers here */
+/*
+ ##############################################################################
+ # CG: P2P Message Handlers here
+ ##############################################################################
+*/
 
 static void handle_init(netpeer_t *np) {
 }
@@ -331,6 +373,11 @@ static void dispatch_cs_message(netpeer_t *np, byte message_type) {
   }
 }
 
+void N_InitProtocol(void) {
+  M_BufferInit(&delta_buffer);
+  M_BufferInit(&state_buffer);
+}
+
 void N_HandlePacket(int peernum, void *data, size_t data_size) {
   netpeer_t *np = N_GetPeer(peernum);
   byte message_type = 0;
@@ -347,13 +394,14 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
   }
 }
 
-#define CHECK_VALID_PLAYER(np, playernum) \
-  if (((np) == N_GetPlayerForPeer((playernum))) == NULL) \
-    I_Error(__func__ ": Invalid player %d.\n", playernum)
+/*
+ ##############################################################################
+ # CG: C/S netcode interface here
+ ##############################################################################
+*/
 
 void SV_SendStateDelta(short playernum) {
   netpeer_t *np = NULL;
-
   CHECK_VALID_PLAYER(np, playernum);
 
   N_BuildStateDelta(np);
@@ -363,7 +411,6 @@ void SV_SendStateDelta(short playernum) {
 
 void SV_SendFullState(short playernum) {
   netpeer_t *np = NULL;
-
   CHECK_VALID_PLAYER(np, playernum);
 
   N_PackFullState(np, N_GetCurrentState());
@@ -371,10 +418,8 @@ void SV_SendFullState(short playernum) {
 }
 
 void SV_SendAuthResponse(short playernum, auth_level_e auth_level) {
-  netpeer_t *np = N_GetPeerForPlayer(playernum);
-
-  if (np == NULL)
-    I_Error("SV_SendAuthResponse: Invalid player %d.\n", playernum);
+  netpeer_t *np = NULL;
+  CHECK_VALID_PLAYER(np, playernum);
 
   N_PackMessage(np, auth_level);
 }
@@ -397,14 +442,14 @@ void SV_BroadcastMessage(rune *message) {
   }
 }
 
-void CL_SendPlayerMessage(short recipient, rune *message) {
+void CL_SendMessage(short recipient, rune *message) {
   netpeer_t *np = N_GetPeer(0);
   CHECK_CONNECTION(np);
 
   N_PackClientMessage(np, recipient, message);
 }
 
-void CL_SendPlayerCommands(void) {
+void CL_SendCommands(void) {
   netpeer_t *np = N_GetPeer(0);
   CHECK_CONNECTION(np);
 
@@ -493,5 +538,5 @@ void CL_SendVoteRequest(rune *command) {
   N_PackVoteRequest(np, command);
 }
 
-/* vi: set cindent et ts=2 sw=2: */
+/* vi: set et ts=2 sw=2: */
 

@@ -176,5 +176,5 @@ void M_ApplyDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
   return true;
 }
 
-/* vi: set cindent et ts=2 sw=2: */
+/* vi: set et ts=2 sw=2: */
 
