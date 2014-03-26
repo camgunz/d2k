@@ -66,6 +66,8 @@
     return;                                                                    \
   }
 
+static buf_t message_recipients;
+
 /*
  ##############################################################################
  # CG: C/S Message Handlers here
@@ -101,6 +103,10 @@ static void handle_auth_response(netpeer_t *np) {
 }
 
 static void handle_player_command_received(netpeer_t *np) {
+  int tic;
+
+  if (N_UnpackServerMessage(np, &tic))
+    N_RemoveOldClientCommands(tic);
 }
 
 static void handle_server_message(netpeer_t *np) {
@@ -111,11 +117,43 @@ static void handle_server_message(netpeer_t *np) {
 }
 
 static void handle_player_message(netpeer_t *np) {
+  static buf_t player_message_buffer;
+
+  unsigned short sender = 0;
+  size_t recipient_count = 0;
+  dboolean unpacked_successfully = false;
+
+  unpacked_successfully = N_UnpackPlayerMessage(
+    np, &sender, &recipient_count, &message_recipients, &player_message_buffer
+  );
+
+  if (!unpacked_successfully)
+    return
+
   if (server) {
-    /* CG: TODO */
+    for (int i = 0; i < N_GetPeerCount(); i++) {
+      netpeer_t *np = N_GetPeer(i);
+
+      if (np != NULL) {
+        N_PackPlayerMessage(
+          np,
+          sender,
+          recipient_count,
+          &message_recipients,
+          player_message_buffer.data
+        );
+      }
+    }
   }
   else {
-    /* CG: TODO */
+    if (sender == -1) {
+      doom_printf("[SERVER]: %s\n", player_message_buffer.data);
+    }
+    else {
+      doom_printf(
+        "%s: %s\n", players->objects[sender]->name, player_message_buffer.data
+      );
+    }
   }
 }
 
@@ -124,6 +162,10 @@ static void handle_player_commands(netpeer_t *np) {
 }
 
 static void handle_auth_request(netpeer_t *np) {
+  auth_level_e level;
+
+  if (N_UnpackServerMessage(np, &level))
+    N_SetLocalClientAuthorizationLevel(level);
 }
 
 static void handle_client_preference_change(netpeer_t *np) {
@@ -398,6 +440,15 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
   }
 }
 
+buf_t* N_GetMessageRecipientBuffer(void) {
+  size_t capacity = (players->capacity + 1) * sizeof(short);
+
+  M_BufferEnsureCapacity(&message_recipients, capacity);
+  M_BufferZero(&message_recipients);
+
+  return &message_recipients;
+}
+
 /*
  ##############################################################################
  # CG: C/S netcode interface here
@@ -446,11 +497,38 @@ void SV_BroadcastMessage(rune *message) {
   }
 }
 
-void CL_SendMessage(short recipient, rune *message) {
-  netpeer_t *np = N_GetPeer(0);
+void CL_SendMessageToServer(rune *message) {
+  CL_SendMessageToPlayer(-1, message);
+}
+
+void CL_SendMessageToPlayer(short recipient, rune *message) {
+  buf_t *recipients = N_GetMessageRecipientBuffer();
+  netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
-  N_PackClientMessage(np, recipient, message);
+  ((short *)message_recipients.data)[0] = recipient;
+
+  N_PackPlayerMessage(np, consoleplayer, 1, recipients, message);
+}
+
+void CL_SendMessageToTeam(byte team, rune *message) {
+  buf_t *recipients = N_GetMessageRecipientBuffer();
+  size_t recipient_count = 0;
+  netpeer_t *np = NULL;
+  CHECK_CONNECTION(np);
+
+  for (int i = 0; i < players->size; i++) {
+    if (players->objects[i]->team == team) {
+      ((dboolean *)message_recipients.data)[i] = true;
+      recipient_count++;
+    }
+  }
+
+  N_PackPlayerMessage(np, consoleplayer, recipient_count, recipients, message);
+}
+
+void CL_SendMessageToCurrentTeam(rune *message) {
+  CL_SendMessageToTeam(players->objects[consoleplayer]->team, message);
 }
 
 void CL_SendCommands(void) {

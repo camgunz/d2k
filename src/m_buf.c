@@ -50,7 +50,7 @@ void M_BufferInitWithCapacity(buf_t **buf, size_t capacity) {
     I_Error("M_BufferInitWithCapacity: Allocating buffer failed");
 
   (*buf)->capacity = capacity;
-  (*buf)->data = calloc(capacity, sizeof(byte));
+  (*buf)->data = calloc(capacity, sizeof(char));
 }
 
 void M_BufferCopy(buf_t *dst, buf_t *src) {
@@ -60,7 +60,7 @@ void M_BufferCopy(buf_t *dst, buf_t *src) {
   src->cursor = dst->cursor;
 }
 
-void M_BufferSetData(buf_t *buf, byte *data, size_t size) {
+void M_BufferSetData(buf_t *buf, void *data, size_t size) {
   M_BufferClear(buf);
   memcpy(buf->data, data, size);
   buf->size = size;
@@ -101,7 +101,7 @@ dboolean M_BufferSetFile(buf_t *buf, const char *filename) {
   return out;
 }
 
-void M_BufferAppend(buf_t *buf, byte *data, size_t size) {
+void M_BufferAppend(buf_t *buf, void *data, size_t size) {
   M_BufferEnsureCapacity(buf, size);
   memcpy(buf->data + buf->size, data, size);
   buf->size += size;
@@ -144,7 +144,7 @@ void M_BufferEnsureTotalCapacity(buf_t *buf, size_t capacity) {
 
 void M_BufferCompact(buf_t *buf) {
   if (buf->size < buf->capacity) {
-    byte *new_buf = calloc(buf->size, sizeof(byte));
+    void *new_buf = calloc(buf->size, sizeof(byte));
 
     if (buf->data == NULL)
       I_Error("M_BufferCompact: Allocating new buffer data failed");
@@ -158,10 +158,14 @@ void M_BufferCompact(buf_t *buf) {
   }
 }
 
+void M_BufferZero(buf_t *buf) {
+  memset(buf->data, 0, buf->capacity);
+}
+
 void M_BufferClear(buf_t *buf) {
   buf->size = 0;
   buf->cursor = 0;
-  memset(buf->data, 0, buf->capacity);
+  M_BufferZero(buf);
 }
 
 void M_BufferFree(buf_t *buf) {

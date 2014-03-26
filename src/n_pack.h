@@ -57,8 +57,14 @@ void     N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic);
 void     N_PackServerMessage(netpeer_t *np, rune *message);
 dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf);
 
-void     N_PackPlayerMessage(netpeer_t *np, short recipient, rune *message);
-dboolean N_UnpackPlayerMessage(netpeer_t *np, short *recipient, buf_t *buf);
+void N_PackPlayerMessage(netpeer_t *np, unsigned short sender,
+                                        size_t recipient_count,
+                                        buf_t *recipients,
+                                        rune *message);
+dboolean N_UnpackPlayerMessage(netpeer_t *np, unsigned short *sender,
+                                              size_t *recipient_count,
+                                              buf_t *recipients,
+                                              buf_t *buf);
 
 void     N_PackPlayerCommands(netpeer_t *np);
 dboolean N_UnpackPlayerCommands(netpeer_t *np);

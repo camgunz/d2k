@@ -89,6 +89,8 @@ void     N_DisconnectPlayer(short playernum);
 void     N_ServiceNetwork(void);
 
 void     N_SetLocalClientAuthorizationLevel(auth_level_e level);
+void     N_AppendLocalClientCommand(ticcmd_t *cmd);
+void     N_RemoveOldClientCommands(int tic);
 
 #endif
 

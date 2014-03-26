@@ -204,8 +204,8 @@ typedef struct player_s
    *     (etc.) have been added, so I don't mind adding things here.
    */
 
-  rune *name;
-  byte  team;
+  rune     *name;
+  byte      team;
 
 } player_t;
 

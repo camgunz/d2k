@@ -40,16 +40,61 @@
 #include "lprintf.h"
 #include "m_obuf.h"
 
+#define mp_uint_name "an unsigned integer"
+static dboolean mp_uint(msgpack_object *o) {
+  return o->type == MSGPACK_OBJECT_POSITIVE_INTEGER;
+}
+
+#define mp_sint_name "a signed integer"
+static dboolean mp_sint(msgpack_object *o) {
+  return ((o->type == MSGPACK_OBJECT_POSITIVE_INTEGER) ||
+          (o->type == MSGPACK_OBJECT_NEGATIVE_INTEGER));
+}
+
+#define mp_nint_name "a negative integer"
+static dboolean mp_nint(msgpack_object *o) {
+  return o->type == MSGPACK_OBJECT_NEGATIVE_INTEGER;
+}
+
+#define mp_null_name "a NULL value"
+static dboolean mp_null(msgpack_object *o) {
+  return o->type == MSGPACK_OBJECT_NIL;
+}
+
+#define mp_bool_name "a boolean"
+static dboolean mp_bool(msgpack_object *o) {
+  return o->type == MSGPACK_OBJECT_BOOLEAN;
+}
+
+#define mp_double_name "a double"
+static dboolean mp_double(msgpack_object *o) {
+  return o->type == MSGPACK_OBJECT_DOUBLE;
+}
+
+#define mp_raw_name "raw bytes"
+static dboolean mp_raw(msgpack_object *o) {
+  return o->type == MSGPACK_OBJECT_RAW;
+}
+
+#define mp_array_name "an array"
+static dboolean mp_array(msgpack_object *o) {
+  return o->type == MSGPACK_OBJECT_ARRAY;
+}
+
+#define mp_map_name "a map"
+static dboolean mp_map(msgpack_object *o) {
+  return o->type == MSGPACK_OBJECT_MAP;
+}
+
 #define unpack_and_validate(s, t)                                             \
   if (!msgpack_unpacker_next(&pac, &result)) {                                \
     doom_printf(__func__ ": Error unpacking " #s "\n");                       \
     return false;                                                             \
   }                                                                           \
   else {                                                                      \
-    if (result.data.type != MSGPACK_OBJECT_ ##t) {                            \
+    if (!t(result.data.type)) {                                               \
       doom_printf(                                                            \
-        __func__ ": Invalid packet: " #s " is not "                           \
-        mp_type_names[MSGPACK_OBJECT_ ##t] "\n"                               \
+        __func__ ": Invalid packet: " #s " is not " t ## _name "\n"           \
       );                                                                      \
       return false;                                                           \
     }                                                                         \
@@ -57,16 +102,15 @@
   obj = &result.data
 
 #define unpack_and_validate_array(as, s, mt, t, ob)                           \
-  unpack_and_validate(as, ARRAY)                                              \
+  unpack_and_validate(as, mp_array)                                              \
   M_ObjBufferClear((ob));                                                     \
   M_ObjBufferEnsureSize(&(ob), obj->via.array.size);                          \
   for (int i = 0; i < obj->via.array.size; i++) {                             \
     t *buf_entry = NULL;                                                      \
     msgpack_object *array_entry = obj->via.array.ptr + i;                     \
-    if (array_entry->type != MSGPACK_OBJECT_ ##mt) {                          \
+    if (!mt(array_entry)) {                                                    \
       doom_printf(                                                            \
-        __func__ ": Invalid packet: " #s "is not "                            \
-        mp_type_names[MSGPACK_OBJECT_ ##t] "\n"                               \
+        __func__ ": Invalid packet: " #s " is not " mt ## _name "\n"          \
       );                                                                      \
       M_ObjBufferFreeEntriesAndClear((ob));                                   \
       return false;                                                           \
@@ -77,15 +121,14 @@
   }
 
 #define unpack_and_validate_string_array(as, s, ob)                           \
-  unpack_and_validate(as, ARRAY)                                              \
+  unpack_and_validate(as, mp_array)                                              \
   M_ObjBufferClear((ob));                                                     \
   M_ObjBufferEnsureSize(&(ob), obj->via.array.size);                          \
   for (int i = 0; i < obj->via.array.size; i++) {                             \
     msgpack_object *array_entry = obj->via.array.ptr + i;                     \
-    if (array_entry->type != MSGPACK_OBJECT_RAW) {                            \
+    if (!mp_raw(array_entry)) {                                               \
       doom_printf(                                                            \
-        __func__ ": Invalid packet: " #s "is not "                            \
-        mp_type_names[MSGPACK_OBJECT_RAW] "\n"                                \
+        __func__ ": Invalid packet: " #s " is not " mp_raw_name "\n"          \
       );                                                                      \
       M_ObjBufferFreeEntriesAndClear((ob));                                   \
       return false;                                                           \
@@ -159,17 +202,6 @@
     return;                                                                   \
   }
 
-static const char **mp_type_names = {
-  "a NULL",              /* MSGPACK_OBJECT_NIL */
-  "a boolean",           /* MSGPACK_OBJECT_BOOLEAN */
-  "an unsigned integer", /* MSGPACK_OBJECT_POSITIVE_INTEGER */
-  "a signed integer",    /* MSGPACK_OBJECT_NEGATIVE_INTEGER */
-  "a double",            /* MSGPACK_OBJECT_DOUBLE */
-  "raw bytes",           /* MSGPACK_OBJECT_RAW */
-  "an array",            /* MSGPACK_OBJECT_ARRAY */
-  "a map"                /* MSGPACK_OBJECT_MAP */
-};
-
 static msgpack_unpacker    pac;
 static msgpack_unpacked    result;
 static msgpack_object     *obj;
@@ -181,7 +213,7 @@ void N_InitPacker(void) {
 }
 
 dboolean N_LoadNewMessage(netpeer_t *np, byte *message_type) {
-  unpack_and_validate("message type", POSITIVE_INTEGER);
+  unpack_and_validate("message type", mp_uint);
   validate_is_byte("message type");
 
   *message_type = (byte)obj->via.u64;
@@ -204,15 +236,15 @@ dboolean N_UnpackStateDelta(netpeer_t *np, int *from_tic, int *to_tic,
   int m_from_tic = -1;
   int m_to_tic = -1;
 
-  unpack_and_validate("state delta start tic", POSITIVE_INTEGER);
+  unpack_and_validate("state delta start tic", mp_uint);
   validate_is_int("state delta start tic");
   m_from_tic = (int)obj->via.u64;
 
-  unpack_and_validate("state delta end tic", POSITIVE_INTEGER);
+  unpack_and_validate("state delta end tic", mp_uint);
   validate_is_int("state delta end tic");
   m_to_tic = (int)obj->via.u64;
 
-  unpack_and_validate("state delta data", RAW);
+  unpack_and_validate("state delta data", mp_raw);
 
   *from_tic = m_from_tic;
   *tic_ti = m_to_tic;
@@ -231,41 +263,13 @@ void N_PackFullState(netpeer_t *np, buf_t *buf) {
 dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf) {
   int m_tic;
 
-  unpack_and_validate("game state tic", POSITIVE_INTEGER);
+  unpack_and_validate("game state tic", mp_uint);
   m_tic = (int)obj->via.u64;
 
-  unpack_and_validate("game state data", RAW);
+  unpack_and_validate("game state data", mp_raw);
 
   *tic = m_tic;
   M_BufferSetData(buf, (byte *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
-
-  return true;
-}
-
-void N_PackPlayerCommandReceived(netpeer_t *np, int tic) {
-  msgpack_pack_unsigned_char(np->rpk, nm_playercommandreceived);
-  msgpack_pack_int(tic);
-}
-
-void N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic) {
-  unpack_and_validate("last player command tic received", POSITIVE_INTEGER);
-  validate_is_int("last player command tic received");
-
-  *tic = (int)obj.via.u64;
-}
-
-void N_PackServerMessage(netpeer_t *np, rune *message) {
-  size_t length = strlen(message) * sizeof(rune);
-
-  msgpack_pack_unsigned_char(np->rpk, nm_servermessage);
-  msgpack_pack_raw(np->rpk, length);
-  msgpack_pack_raw_body(np->rpk, message, length);
-}
-
-dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf) {
-  unpack_and_validate("server message content", RAW);
-
-  M_BufferSetString(buf, (rune *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
 
   return true;
 }
@@ -276,8 +280,8 @@ void N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level) {
 }
 
 dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
-  unpack_and_validate("authorization level", POSITIVE_INTEGER);
-  validate_range_signed(0, AUTH_LEVEL_MAX - 1); /* CG: TODO: auth levels */
+  unpack_and_validate("authorization level", mp_uint);
+  validate_range_signed(0, AUTH_LEVEL_MAX - 1);
 
   *auth_level = (auth_level_e)obj->via.u64;
 
@@ -289,35 +293,110 @@ void N_PackPlayerCommandReceived(netpeer_t *np, int tic) {
   msgpack_pack_int(tic);
 }
 
-void N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic) {
-  unpack_and_validate("last command tic received", POSITIVE_INTEGER);
-  validate_is_int("last command tic received");
+dboolean N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic) {
+  unpack_and_validate("last player command tic received", mp_uint);
+  validate_is_int("last player command tic received");
 
   *tic = (int)obj->via.u64;
+
+  return true;
 }
 
-void N_PackPlayerMessage(netpeer_t *np, short recipient, rune *message) {
+void N_PackServerMessage(netpeer_t *np, rune *message) {
   size_t length = strlen(message) * sizeof(rune);
 
-  msgpack_pack_unsigned_char(np->rpk, nm_playermessage);
-  msgpack_pack_short(np->rpk, recipient);
+  msgpack_pack_unsigned_char(np->rpk, nm_servermessage);
   msgpack_pack_raw(np->rpk, length);
   msgpack_pack_raw_body(np->rpk, message, length);
 }
 
-dboolean N_UnpackPlayerMessage(netpeer_t *np, short *recipient, buf_t *buf) {
-  short m_recipient = 0;
+dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf) {
+  unpack_and_validate("server message content", mp_raw);
 
-  unpack_and_validate("player message recipient");
-  validate_is_short("player message recipient");
-  /* CG: TODO: Player count */
-  validate_range_signed("player message recipient", player_count);
-  m_recipient = (short)obj->via.i64;
-
-  unpack_and_validate("player message content", RAW);
-
-  *recipient = m_recipient;
   M_BufferSetString(buf, (rune *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
+
+  return true;
+}
+
+void N_PackPlayerMessage(netpeer_t *np, unsigned short sender,
+                                        size_t recipient_count,
+                                        buf_t *recipients,
+                                        rune *message) {
+  int i = 0;
+  size_t length = strlen(message) * sizeof(rune);
+  short *ra = (short *)recipients->data;
+
+  msgpack_pack_unsigned_char(np->rpk, nm_playermessage);
+  msgpack_pack_unsigned_short(np->rpk, sender);
+  msgpack_pack_array(np->rpk, recipient_count);
+
+  for (int i = 0; i < recipient_count; i++)
+    msgpack_pack_short(ra[i]);
+
+  msgpack_pack_raw(np->rpk, length);
+  msgpack_pack_raw_body(np->rpk, message, length);
+}
+
+dboolean N_UnpackPlayerMessage(netpeer_t *np, unsigned short *sender,
+                                              size_t *recipient_count,
+                                              buf_t *recipients,
+                                              buf_t *buf) {
+  size_t m_recipient_count = 0;
+  unsigned short m_sender = 0;
+
+  /*
+   * CG: TODO: Add player validation.  All recipients should be valid players
+   *           as should the sender.
+   */
+
+  unpack_and_validate("player message sender", mp_uint);
+  validate_is_short("player message sender");
+  m_sender = (unsigned short)obj->via.u64;
+
+  unpack_and_validate("player message recipients", mp_array);
+  m_recipient_count = obj->via.array.size;
+
+  if (recipient_count > 0xFF) {
+    doom_printf(
+      "N_UnpackPlayerMessage: player message recipient count out of range
+      (> 0xFF)\n"
+    );
+    return false;
+  }
+
+  M_BufferEnsureTotalCapacity(recipients, recipient_count * sizeof(short));
+  M_BufferZero(recipients);
+
+  for (int i = 0; i < recipient_count; i++) {
+    short recipient = 0;
+
+    if (!mp_sint(obj->via.array.ptr[i])) {
+      doom_printf(
+        "N_UnpackPlayerMessage: Invalid packet: player message recipient is "
+        "not a signed integer\n"
+      );
+      M_BufferZero(recipients);
+      return false;
+    }
+
+    if (obj->via.array.ptr[i]->via.u64 > 0xFF) {
+      doom_printf(
+        "N_UnpackPlayerMessage: player message recipient out of range "
+        "(> 0xFF)\n"
+      );
+      M_BufferZero(recipients);
+      return false;
+    }
+
+    ((short *)recipients->data)[i] = obj->via.array.ptr[i]->via.i64;
+  }
+
+  unpack_and_validate("player message content", mp_raw);
+
+  M_BufferSetString(buf, (rune *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
+
+  *sender = m_sender;
+  *recipient_count = m_recipient_count;
 
   return true;
 }
@@ -345,7 +424,7 @@ void N_PackPlayerCommands(netpeer_t *np) {
 dboolean N_UnpackPlayerCommands(netpeer_t *np) {
   byte command_count = 0;
 
-  unpack_and_validate("command count", POSITIVE_INTEGER);
+  unpack_and_validate("command count", mp_uint);
   validate_is_byte("command_count");
   M_ObjBufferEnsureSize(np->commands, command_count);
 
@@ -357,31 +436,31 @@ dboolean N_UnpackPlayerCommands(netpeer_t *np) {
     else
       memset(cmd, 0, sizeof(netticcmd_t));
 
-    unpack_and_validate("command tic", POSITIVE_INTEGER);
+    unpack_and_validate("command tic", mp_uint);
     validate_is_int("command tic");
     cmd->tic = (int)obj->via.u64;
 
-    unpack_and_validate("command forward value", NEGATIVE_INTEGER);
+    unpack_and_validate("command forward value", mp_sint);
     validate_is_byte("command forward value");
     cmd->forwardmove = (signed char)obj->via.i64;
 
-    unpack_and_validate("command side value", NEGATIVE_INTEGER);
+    unpack_and_validate("command side value", mp_sint);
     validate_is_byte("command side value");
     cmd->sidemove = (signed char)obj->via.i64;
 
-    unpack_and_validate("command angle value", NEGATIVE_INTEGER);
+    unpack_and_validate("command angle value", mp_sint);
     validate_is_short("command angle value");
     cmd->angle = (signed short)obj->via.i64;
 
-    unpack_and_validate("command consistancy value", NEGATIVE_INTEGER);
+    unpack_and_validate("command consistancy value", mp_sint);
     validate_is_short("command consistancy value");
     cmd->consistancy = (signed short)obj->via.i64;
 
-    unpack_and_validate("command chatchar value", POSITIVE_INTEGER);
+    unpack_and_validate("command chatchar value", mp_uint);
     validate_is_byte("command chatchar value");
     cmd->chatchar = (byte)obj->via.u64;
 
-    unpack_and_validate("command buttons value", POSITIVE_INTEGER);
+    unpack_and_validate("command buttons value", mp_uint);
     validate_is_byte("command buttons value");
     cmd->buttons = (byte)obj->via.u64;
   }
@@ -399,7 +478,7 @@ void N_PackAuthRequest(netpeer_t *np, rune *password) {
 }
 
 dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
-  unpack_and_validate("authorization request password", RAW);
+  unpack_and_validate("authorization request password", mp_raw);
 
   M_BufferSetString(buf, (rune *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
 
@@ -407,7 +486,7 @@ dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
 }
 
 dboolean N_UnpackClientPreferenceChange(netpeer_t *np, size_t *count) {
-  unpack_and_validate("client preference change", MAP);
+  unpack_and_validate("client preference change", mp_map);
 
   map = &obj->via.map;
   *count = map->size;
@@ -428,7 +507,7 @@ dboolean N_UnpackClientPreferenceName(netpeer_t *np, size_t pref, buf_t *buf) {
 
   pair = map->ptr + pref;
 
-  if (pair->key.type != MSGPACK_OBJECT_RAW) {
+  if (!mp_raw(&pair->key)) {
     doom_printf(
       "N_UnpackClientPreferenceName: Invalid packet: client preference name "
       "is not raw bytes\n"
@@ -457,7 +536,7 @@ void N_PackNameChange(netpeer_t *np, rune *new_name) {
 }
 
 dboolean N_UnpackNameChange(netpeer_t *np, buf_t *buf) {
-  unpack_and_validate("new name", RAW);
+  unpack_and_validate("new name", mp_raw);
 
   M_BufferSetString(buf, (rune *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
 
@@ -473,7 +552,7 @@ void N_PackTeamChange(netpeer_t *np, byte new_team) {
 }
 
 dboolean N_UnpackTeamChange(netpeer_t *np, byte *new_team) {
-  unpack_and_validate("team index", POSITIVE_INTEGER);
+  unpack_and_validate("team index", mp_uint);
   /* CG: TODO: teams */
   if (team_count > 0)
     validate_range_unsigned(0, team_count - 1);
@@ -507,7 +586,7 @@ void N_PackWSOPChange(netpeer_t *np, byte new_wsop_flags) {
 }
 
 dboolean N_UnpackWSOPChange(netpeer_t *np, byte *new_wsop_flags) {
-  unpack_and_validate("new WSOP value", POSITIVE_INTEGER);
+  unpack_and_validate("new WSOP value", mp_uint);
   validate_range_unsigned(0, 2 << (WSOP_MAX - 2));
 
   *new_wsop_flags = (byte)obj->via.u64;
@@ -544,7 +623,7 @@ void N_PackAutoaimChange(netpeer_t *np, dboolean new_autoaim_enabled) {
 }
 
 dboolean N_UnpackAutoaimChange(netpeer_t *np, dboolean *new_autoaim_enabled) {
-  unpack_and_validate("new Autoaim value", BOOLEAN);
+  unpack_and_validate("new Autoaim value", mp_bool);
 
   *new_autoaim_enabled = obj->via.bool;
 
@@ -561,7 +640,7 @@ void N_PackWeaponSpeedChange(netpeer_t *np, byte new_weapon_speed) {
 
 dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, byte *new_weapon_speed) {
 
-  unpack_and_validate("new weapon speed value", POSITIVE_INTEGER);
+  unpack_and_validate("new weapon speed value", mp_uint);
   validate_is_byte("new weapon speed value");
 
   *new_weapon_speed = (byte)obj->via.u64;
@@ -582,7 +661,7 @@ void N_PackColorChange(netpeer_t *np, byte new_red, byte new_green,
 
 dboolean N_UnpackColorChange(netpeer_t *np, byte *new_red, byte *new_green,
                                             byte *new_blue) {
-  unpack_and_validate("new color", POSITIVE_INTEGER);
+  unpack_and_validate("new color", mp_uint);
   validate_is_int("new color");
 
   *new_red   = obj->via.u64 >> 24;
@@ -614,7 +693,7 @@ void N_PackRCONCommand(netpeer_t *np, rune *command) {
 }
 
 dboolean N_UnpackRCONCommand(netpeer_t *np, buf_t *buf) {
-  unpack_and_validate("RCON command", RAW);
+  unpack_and_validate("RCON command", mp_raw);
 
   M_BufferSetString(buf, (rune *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
 
@@ -630,7 +709,7 @@ void N_PackVoteRequest(netpeer_t *np, rune *command) {
 }
 
 dboolean N_UnpackVoteRequest(netpeer_t *np, buf_t *buf) {
-  unpack_and_validate("vote request command", RAW);
+  unpack_and_validate("vote request command", mp_raw);
 
   M_BufferSetString(buf, (rune *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
 
@@ -645,7 +724,7 @@ void N_PackInit(netpeer_t *np, short wanted_player_number) {
 }
 
 dboolean N_UnpackInit(netpeer_t *np, short *wanted_player_number) {
-  unpack_and_validate("wanted player number", POSITIVE_INTEGER);
+  unpack_and_validate("wanted player number", mp_uint);
   validate_is_short("wanted player number");
 
   *wanted_player_number = (short)obj->via.i64;
@@ -693,43 +772,43 @@ dboolean N_UnpackSetup(netpeer_t *np, setup_packet_t *sinfo,
   byte  game_options[GAME_OPTIONS_SIZE];
   byte  numwads;
 
-  unpack_and_validate("players", POSITIVE_INTEGER);
+  unpack_and_validate("players", mp_uint);
   validate_is_short("players");
   players = (short)obj->via.i64;
 
-  unpack_and_validate("yourplayer", POSITIVE_INTEGER);
+  unpack_and_validate("yourplayer", mp_uint);
   validate_is_short("yourplayer");
   yourplayer = (short)obj->via.i64;
 
-  unpack_and_validate("skill", POSITIVE_INTEGER);
+  unpack_and_validate("skill", mp_uint);
   validate_is_byte("skill");
   skill = (byte)obj->via.u64;
 
-  unpack_and_validate("episode", POSITIVE_INTEGER);
+  unpack_and_validate("episode", mp_uint);
   validate_is_byte("episode");
   episode = (byte)obj->via.u64;
 
-  unpack_and_validate("level", POSITIVE_INTEGER);
+  unpack_and_validate("level", mp_uint);
   validate_is_byte("level");
   level = (byte)obj->via.u64;
 
-  unpack_and_validate("deathmatch", POSITIVE_INTEGER);
+  unpack_and_validate("deathmatch", mp_uint);
   validate_is_byte("deathmatch");
   deathmatch = (byte)obj->via.u64;
 
-  unpack_and_validate("complevel", POSITIVE_INTEGER);
+  unpack_and_validate("complevel", mp_uint);
   validate_is_byte("complevel");
   complevel = (byte)obj->via.u64;
 
-  unpack_and_validate("ticdup", POSITIVE_INTEGER);
+  unpack_and_validate("ticdup", mp_uint);
   validate_is_byte("ticdup");
   ticdup = (byte)obj->via.u64;
 
-  unpack_and_validate("extratic", POSITIVE_INTEGER);
+  unpack_and_validate("extratic", mp_uint);
   validate_is_byte("extratic");
   extratic = (byte)obj->via.u64;
 
-  unpack_and_validate("game options", RAW);
+  unpack_and_validate("game options", mp_raw);
   validate_raw_size("game options", GAME_OPTIONS_SIZE);
   memcpy(game_options, (byte)obj->via.raw.ptr, GAME_OPTIONS_SIZE);
 
@@ -777,10 +856,10 @@ dboolean N_UnpackClientTic(netpeer_t *np, int *tic, objbuf_t *commands) {
   int m_tic = 0;
   short command_count = 0;
 
-  unpack_and_validate("tic", POSITIVE_INTEGER);
+  unpack_and_validate("tic", mp_uint);
   m_tic = (int)obj->via.u64;
 
-  unpack_and_validate("command count", POSITIVE_INTEGER);
+  unpack_and_validate("command count", mp_uint);
   command_count = (short)obj->via.i64;
 
   /*
@@ -805,33 +884,33 @@ dboolean N_UnpackClientTic(netpeer_t *np, int *tic, objbuf_t *commands) {
     short playernum = 0;
     ticcmd_t cmd;
 
-    unpack_and_validate("player", POSITIVE_INTEGER);
+    unpack_and_validate("player", mp_uint);
     validate_is_short("player");
     playernum = (short)obj->via.u64;
 
     M_ObjBufferEnsureSize(playernum + 1);
 
-    unpack_and_validate("forwardmove", NEGATIVE_INTEGER);
+    unpack_and_validate("forwardmove", mp_sint);
     validate_is_byte("forwardmove");
     cmd.forwardmove = (signed char)obj->via.i64;
 
-    unpack_and_validate("sidemove", NEGATIVE_INTEGER);
+    unpack_and_validate("sidemove", mp_sint);
     validate_is_byte("sidemove");
     cmd.sidemove = (signed char)obj->via.i64;
 
-    unpack_and_validate("angleturn", NEGATIVE_INTEGER);
+    unpack_and_validate("angleturn", mp_sint);
     validate_is_byte("angleturn");
     cmd.angleturn = (short)obj->via.i64;
 
-    unpack_and_validate("consistancy", NEGATIVE_INTEGER);
+    unpack_and_validate("consistancy", mp_sint);
     validate_is_byte("consistancy");
     cmd.consistancy = (short)obj->via.i64;
 
-    unpack_and_validate("chatchar", POSITIVE_INTEGER);
+    unpack_and_validate("chatchar", mp_uint);
     validate_is_byte("chatchar");
     cmd.chatchar = (byte)obj->via.u64;
 
-    unpack_and_validate("buttons", POSITIVE_INTEGER);
+    unpack_and_validate("buttons", mp_uint);
     validate_is_byte("buttons");
     cmd.buttons = (byte)obj->via.u64;
 
@@ -870,10 +949,10 @@ dboolean N_UnpackServerTic(netpeer_t *np, int *tic, objbuf_t *commands) {
   int m_tic = 0;
   int players_this_tic = 0;
 
-  unpack_and_validate("tic", POSITIVE_INTEGER);
+  unpack_and_validate("tic", mp_uint);
   m_tic = (int)obj->via.u64;
 
-  unpack_and_validate("player command count", POSITIVE_INTEGER);
+  unpack_and_validate("player command count", mp_uint);
   players_this_tic = (int)obj->via.u64;
 
   for (int i = 0; i < players_this_tic; i++) {
@@ -892,7 +971,7 @@ void N_PackRetransmissionRequest(netpeer_t *np, int tic) {
 }
 
 dboolean N_UnpackRetransmissionRequest(netpeer_t *np, int *tic) {
-  unpack_and_validate("tic", POSITIVE_INTEGER);
+  unpack_and_validate("tic", mp_uint);
   validate_is_int("tic");
 
   *tic = (int)obj->via.u64;
@@ -916,15 +995,15 @@ dboolean N_UnpackColor(netpeer_t *np, int *tic, short *playernum,
   short m_playernum = -1;
   mapcolor_me m_new_color;
 
-  unpack_and_validate("tic", POSITIVE_INTEGER);
+  unpack_and_validate("tic", mp_uint);
   validate_is_int("tic");
   m_tic = (int)obj->via.u64;
 
-  unpack_and_validate("player", POSITIVE_INTEGER);
+  unpack_and_validate("player", mp_uint);
   validate_is_short("player");
   m_playernum = (short)obj->via.i64;
 
-  unpack_and_validate("new color", POSITIVE_INTEGER);
+  unpack_and_validate("new color", mp_uint);
   validate_is_int("new color");
 
   /* CG: TODO: Validate color value is within the mapcolor_me enum */
@@ -949,11 +1028,11 @@ void N_PackSaveGameName(netpeer_t *np, rune *new_save_game_name) {
 dboolean N_UnpackSaveGameName(netpeer_t *np, int *tic, buf_t *buf) {
   int m_tic = 0;
 
-  unpack_and_validate("tic", POSITIVE_INTEGER);
+  unpack_and_validate("tic", mp_uint);
   validate_is_int("tic");
   m_tic = (int)obj->via.i64;
 
-  unpack_and_validate("save game name", RAW);
+  unpack_and_validate("save game name", mp_raw);
 
   *tic = m_tic;
   M_BufferSetString(buf, (rune *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
@@ -974,11 +1053,11 @@ dboolean N_UnpackQuit(netpeer_t *np, int *tic, short *playernum) {
   int m_tic = -1;
   int m_playernum = -1;
 
-  unpack_and_validate("tic", POSITIVE_INTEGER);
+  unpack_and_validate("tic", mp_uint);
   validate_is_int("tic");
   m_tic = (int)obj->via.u64;
 
-  unpack_and_validate("player", POSITIVE_INTEGER);
+  unpack_and_validate("player", mp_uint);
   validate_is_int("player");
   m_playernum = (int)obj->via.u64;
 
@@ -1007,7 +1086,7 @@ void N_PackWad(netpeer_t *np, rune *wad_name_or_url) {
 }
 
 dboolean N_UnpackWad(netpeer_t *np, buf_t *wad_name_or_url) {
-  unpack_and_validate("wad name", RAW);
+  unpack_and_validate("wad name", mp_raw);
 
   M_BufferSetString(buf, (rune *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
 
@@ -1020,7 +1099,7 @@ void N_PackBackoff(netpeer_t *np, int tic) {
 }
 
 dboolean N_UnpackBackoff(netpeer_t *np, int *tic) {
-  unpack_and_validate("tic", POSITIVE_INTEGER);
+  unpack_and_validate("tic", mp_uint);
   validate_is_int("tic");
 
   *tic = (int)obj->via.u64;
