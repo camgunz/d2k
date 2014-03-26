@@ -27,40 +27,24 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *
+ *  A buffer of commands
  *
  *-----------------------------------------------------------------------------
  */
 
-#ifndef N_PEER_H__
-#define N_PEER_H__
+#ifndef N_CMDBUF_H__
+#define N_CMDBUF_H__
 
-typedef struct netpeer_s {
-  ENetPeer        *peer;
-  msgpack_sbuffer *rbuf;
-  msgpack_packer  *rpk;
-  msgpack_sbuffer *ubuf;
-  msgpack_packer  *upk;
-  time_t           connect_time;
-  time_t           disconnect_time;
-  short            playernum;
-  int              last_state_received_tic;
-  int              last_state_sent_tic;
-  buf_t           state;
-  buf_t           delta;
-  cmdbuf_t        commands;
-} netpeer_t;
+typedef cobjbuf_t cmdbuf_t;
 
-int        N_AddPeer(void);
-void       N_SetPeerConnected(int peernum, ENetPeer *peer);
-void       N_SetPeerDisconnected(int peernum);
-void       N_RemovePeer(netpeer_t *np);
-int        N_GetPeerCount(void);
-netpeer_t* N_GetPeer(int peernum);
-int        N_GetPeerNum(ENetPeer *peer);
-netpeer_t* N_GetPeerForPlayer(short playernum);
-int        N_GetPeerNumForPlayer(short playernum);
-dboolean   N_CheckPeerTimeout(int peernum);
+void     N_CmdBufferInit(cmdbuf_t **cmds);
+void     N_CmdBufferInitWithCapacity(cmdbuf_t **cmds, size_t capacity);
+void     N_CmdBufferAppend(cmdbuf_t *cmds, netticcmd_t *cmd);
+void     N_CmdBufferRemoveOld(cmdbuf_t *cmds, int tic);
+void     N_CmdBufferClear(cmdbuf_t *cmds);
+void     N_CmdBufferFree(cmdbuf_t *cmds);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

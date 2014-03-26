@@ -27,40 +27,39 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *
+ *  A buffer of objects that uses copies instead of pointers.
  *
  *-----------------------------------------------------------------------------
  */
 
-#ifndef N_PEER_H__
-#define N_PEER_H__
+#ifndef M_COBUF_H__
+#define M_COBUF_H__
 
-typedef struct netpeer_s {
-  ENetPeer        *peer;
-  msgpack_sbuffer *rbuf;
-  msgpack_packer  *rpk;
-  msgpack_sbuffer *ubuf;
-  msgpack_packer  *upk;
-  time_t           connect_time;
-  time_t           disconnect_time;
-  short            playernum;
-  int              last_state_received_tic;
-  int              last_state_sent_tic;
-  buf_t           state;
-  buf_t           delta;
-  cmdbuf_t        commands;
-} netpeer_t;
+typedef struct cobjnode_s {
+  dboolean used;
+  void *obj;
+} cobjnode_t;
 
-int        N_AddPeer(void);
-void       N_SetPeerConnected(int peernum, ENetPeer *peer);
-void       N_SetPeerDisconnected(int peernum);
-void       N_RemovePeer(netpeer_t *np);
-int        N_GetPeerCount(void);
-netpeer_t* N_GetPeer(int peernum);
-int        N_GetPeerNum(ENetPeer *peer);
-netpeer_t* N_GetPeerForPlayer(short playernum);
-int        N_GetPeerNumForPlayer(short playernum);
-dboolean   N_CheckPeerTimeout(int peernum);
+typedef struct cobjbuf_s {
+  int capacity;
+  size_t obj_size;
+  cobjnode *nodes;
+} cobjbuf_t;
+
+void M_CObjBufferInit(cobjbuf_t **cobuf, size_t obj_size);
+void M_CObjBufferInitWithCapacity(cobjbuf_t **cobuf, size_t obj_size,
+                                                     int capacity);
+void M_CObjBufferAppend(cobjbuf_t *cobuf, void *obj);
+void M_CObjBufferInsert(cobjbuf_t *cobuf, int index, void *obj);
+int  M_CObjBufferInsertAtFirstFreeSlot(cobjbuf_t *cobuf, void *obj);
+int  M_CObjBufferInsertAtFirstFreeSlotOrAppend(cobjbuf_t *cobuf, void *obj);
+void M_CObjBufferConsolidate(cobjbuf_t *obuf);
+void M_CObjBufferRemove(cobjbuf_t *cobuf, int index);
+void M_CObjBufferEnsureCapacity(cobjbuf_t *cobuf, int capacity);
+int  M_CObjBufferGetObjectCount(cobjbuf_t *cobuf);
+void M_CObjBufferClear(cobjbuf_t *cobuf);
+void M_CObjBufferFreeEntriesAndClear(cobjbuf_t *cobuf);
+void M_CObjBufferFree(cobjbuf_t *cobuf);
 
 #endif
 

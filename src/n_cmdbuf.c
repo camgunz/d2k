@@ -27,40 +27,48 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *
+ *  A buffer of commands
  *
  *-----------------------------------------------------------------------------
  */
 
-#ifndef N_PEER_H__
-#define N_PEER_H__
+#include "z_zone.h"
+#include "lprintf.h"
+#include "m_cobuf.h"
+#include "n_net.h"
+#include "n_cmdbuf.h"
 
-typedef struct netpeer_s {
-  ENetPeer        *peer;
-  msgpack_sbuffer *rbuf;
-  msgpack_packer  *rpk;
-  msgpack_sbuffer *ubuf;
-  msgpack_packer  *upk;
-  time_t           connect_time;
-  time_t           disconnect_time;
-  short            playernum;
-  int              last_state_received_tic;
-  int              last_state_sent_tic;
-  buf_t           state;
-  buf_t           delta;
-  cmdbuf_t        commands;
-} netpeer_t;
+void N_CmdBufferInit(cmdbuf_t **cmds) {
+  M_CObjBufferInit((cobjbuf_t **)cmds, sizeof(netticcmd_t));
+}
 
-int        N_AddPeer(void);
-void       N_SetPeerConnected(int peernum, ENetPeer *peer);
-void       N_SetPeerDisconnected(int peernum);
-void       N_RemovePeer(netpeer_t *np);
-int        N_GetPeerCount(void);
-netpeer_t* N_GetPeer(int peernum);
-int        N_GetPeerNum(ENetPeer *peer);
-netpeer_t* N_GetPeerForPlayer(short playernum);
-int        N_GetPeerNumForPlayer(short playernum);
-dboolean   N_CheckPeerTimeout(int peernum);
+void N_CmdBufferInitWithCapacity(cmdbuf_t **cmds, int capacity) {
+  M_CObjBufferInitWithCapacity(
+    (cobjbuf_t **)cmds, sizeof(netticcmd_t), capacity
+  );
+}
 
-#endif
+void N_CmdBufferAppend(cmdbuf_t *cmds, netticcmd_t *cmd) {
+  M_CObjBufferAppend((cobjbuf_t *)cmds, (void *)cmd);
+}
+
+void N_CmdBufferRemoveOld(cmdbuf_t *cmds, int tic) {
+  for (int i = 0; i < cmds->capacity; i++) {
+    if (cmds->objects[i]->cmd.tic <= tic) {
+      cmds->objects[i]->used = false;
+    }
+  }
+
+  M_CObjBufferConsolidate((cobjbuf_t *)cmds);
+}
+
+void N_CmdBufferClear(cmdbuf_t *cmds) {
+  M_CObjBufferClear((cobjbuf_t *)cmds);
+}
+
+void N_CmdBufferFree(cmdbuf_t *cmds) {
+  M_CObjBufferFree((cobjbuf_t *)cmds);
+}
+
+/* vi: set et ts=2 sw=2: */
 
