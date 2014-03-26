@@ -51,6 +51,9 @@ dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf);
 void     N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level);
 dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level);
 
+void     N_PackPlayerCommandReceived(netpeer_t *np, int tic);
+void     N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic);
+
 void     N_PackServerMessage(netpeer_t *np, rune *message);
 dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf);
 

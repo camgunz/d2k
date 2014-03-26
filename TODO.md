@@ -1,11 +1,10 @@
 # To Do
 
-  - Use a MessagePack map for all the player change stuff.
-    - Extensible
-    - Cuts down on the total # of messages
-    - Super easy to do
   - Fill out the handler functions
     - Probably involves creating some new methods/enums/etc.
+    - Player messages should have a recipient array; this is both extensible
+      and avoids sending duplicate message content in the case of multiple
+      recipients
   - Finally revamp `d_client.c` and `d_server.c`.
   - Add command-line arguments for new netcode.
     - `-serve <host>:<port>`

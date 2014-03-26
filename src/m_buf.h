@@ -32,8 +32,8 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifndef BUF_H__
-#define BUF_H__
+#ifndef M_BUF_H__
+#define M_BUF_H__
 
 typedef struct buf_s {
   size_t size;

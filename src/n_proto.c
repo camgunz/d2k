@@ -66,40 +66,48 @@
     return;                                                                    \
   }
 
-static buf_t *delta_buffer = NULL;
-static buf_t *state_buffer = NULL;
-
 /*
  ##############################################################################
  # CG: C/S Message Handlers here
  ##############################################################################
 */
 static void handle_state_delta(netpeer_t *np) {
+  static buf_t delta_buffer;
+
   int from_tic, to_tic;
 
-  if (N_UnpackStateDelta(np, &from_tic, &to_tic, delta_buffer)) {
-    N_ApplyStateDelta(from_tic, to_tic, delta_buffer);
+  if (N_UnpackStateDelta(np, &from_tic, &to_tic, &delta_buffer)) {
+    N_ApplyStateDelta(from_tic, to_tic, &delta_buffer);
     G_LoadSaveData(N_GetCurrentState(), true, false);
   }
 }
 
 static void handle_full_state(netpeer_t *np) {
+  static buf_t state_buffer;
+
   int tic;
 
-  if (N_UnpackFullState(np, &tic, state_buffer)) {
-    N_SaveCurrentState(tic, state_buffer);
+  if (N_UnpackFullState(np, &tic, &state_buffer)) {
+    N_SaveCurrentState(tic, &state_buffer);
     G_LoadSaveData(N_GetCurrentState(), true, false);
   }
 }
 
 static void handle_auth_response(netpeer_t *np) {
-  ifkk
+  auth_level_e level;
+
+  if (N_UnpackAuthResponse(np, &level))
+    N_SetLocalClientAuthorizationLevel(level);
 }
 
-static void handle_player_commands_received(netpeer_t *np) {
+static void handle_player_command_received(netpeer_t *np) {
 }
 
 static void handle_server_message(netpeer_t *np) {
+  static buf_t server_message_buffer;
+
+  if (N_UnpackServerMessage(np, &server_message_buffer))
+    doom_printf("[SERVER]: %s\n", server_message_buffer.data);
 }
 
 static void handle_player_message(netpeer_t *np) {
@@ -112,6 +120,7 @@ static void handle_player_message(netpeer_t *np) {
 }
 
 static void handle_player_commands(netpeer_t *np) {
+  N_UnpackPlayerCommands(np);
 }
 
 static void handle_auth_request(netpeer_t *np) {
@@ -371,11 +380,6 @@ static void dispatch_cs_message(netpeer_t *np, byte message_type) {
       );
     break;
   }
-}
-
-void N_InitProtocol(void) {
-  M_BufferInit(&delta_buffer);
-  M_BufferInit(&state_buffer);
 }
 
 void N_HandlePacket(int peernum, void *data, size_t data_size) {

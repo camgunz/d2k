@@ -32,11 +32,11 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifndef OBUF_H__
-#define OBUF_H__
+#ifndef M_OBUF_H__
+#define M_OBUF_H__
 
 typedef struct objbuf_s {
-  int size;
+  int capacity;
   void **objects;
 } objbuf_t;
 
@@ -49,7 +49,7 @@ void M_ObjBufferInit(objbuf_t **obuf);
  * Allocates and initializes an object buffer with the specified number of
  * object spots available; allows avoiding several initial allocations.
  */
-void M_ObjBufferInitWithSize(objbuf_t **obuf, int size);
+void M_ObjBufferInitWithCapacity(objbuf_t **obuf, int capacity);
 
 /*
  * Appends an object to the buffer, allocating a new slot.
@@ -86,31 +86,21 @@ int  M_ObjBufferInsertAtFirstFreeSlotOrAppend(objbuf_t *obuf, void *obj);
 void M_ObjBufferConsolidate(objbuf_t *obuf);
 
 /*
- * Moves any empty space at the front of the buffer to the back; no empty space
- * will be at the beginning of the buffer, but empty space may remain between
- * objects.
- *
- * WARNING: This will change the indices of contained objects.
- *
- */
-void M_ObjBufferMoveToFront(objbuf_t *obuf);
-
-/*
  * Removes the object at the specified index from the buffer.  Object is not
  * freed before it is removed.
  */
 void M_ObjBufferRemove(objbuf_t *obuf, int index);
 
 /*
- * Ensures the buffer is at least the specified size; if not, it is reallocated
- * to the new size.
+ * Ensures the buffer is at least the specified capacity; if not, it is
+ * reallocated to the new capacity.
  */
-void M_ObjBufferEnsureSize(objbuf_t *obuf, int size);
+void M_ObjBufferEnsureCapacity(objbuf_t *obuf, int capacity);
 
 /*
  * Returns the total number of objects contained in the buffer.
  *
- * (for capacity, simply use buffer->size)
+ * (for capacity, simply use buffer->capacity)
  *
  */
 int  M_ObjBufferGetObjectCount(objbuf_t *obuf);

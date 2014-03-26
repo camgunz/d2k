@@ -88,6 +88,8 @@ void     N_PrintAddress(FILE *fp, int peernum);
 void     N_DisconnectPlayer(short playernum);
 void     N_ServiceNetwork(void);
 
+void     N_SetLocalClientAuthorizationLevel(auth_level_e level);
+
 #endif
 
 /* vi: set et ts=2 sw=2: */

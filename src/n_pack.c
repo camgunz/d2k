@@ -242,6 +242,18 @@ dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf) {
   return true;
 }
 
+void N_PackPlayerCommandReceived(netpeer_t *np, int tic) {
+  msgpack_pack_unsigned_char(np->rpk, nm_playercommandreceived);
+  msgpack_pack_int(tic);
+}
+
+void N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic) {
+  unpack_and_validate("last player command tic received", POSITIVE_INTEGER);
+  validate_is_int("last player command tic received");
+
+  *tic = (int)obj.via.u64;
+}
+
 void N_PackServerMessage(netpeer_t *np, rune *message) {
   size_t length = strlen(message) * sizeof(rune);
 

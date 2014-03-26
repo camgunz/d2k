@@ -37,6 +37,8 @@
 #include <enet/enet.h>
 
 #include "lprintf.h"
+#include "m_obuf.h"
+#include "n_cmdbuf.h"
 #include "n_net.h"
 #include "n_pack.h"
 #include "n_peer.h"
@@ -51,11 +53,17 @@
 #define string_to_byte(x) (to_byte(strtol(x, NULL, 10)))
 #define string_to_short(x) (to_short(strtol(x, NULL, 10)))
 
+/* CG: General networking */
+
 static ENetAddress  net_address;
 static ENetEvent    net_event;
 static ENetHost    *net_host = NULL;
 static const char  *previous_address = NULL;
 static short        previous_port = 0;
+
+/* CG: Local client only */
+static auth_level_e authorization_level;
+static cmdbuf_t     commands;
 
 static void check_peer_timeouts(void) {
   for (int i = 0; i < N_GetPeerCount(); i++) {
@@ -491,6 +499,28 @@ void N_ServiceNetwork(void) {
       );
     }
   }
+}
+
+void N_SetLocalClientAuthorizationLevel(auth_level_e level) {
+  authorization_level = level;
+}
+
+void N_AppendLocalClientCommand(ticcmd_t *cmd) {
+  netticcmd_t ncmd;
+  
+  ncmd.tic = gametic;
+  ncmd.forwardmove = cmd->forwardmove;
+  ncmd.sidemove = cmd->sidemove;
+  ncmd.angleturn = cmd->angleturn;
+  ncmd.consistancy = cmd->consistancy;
+  ncmd.chatchar = cmd->chatchar;
+  ncmd.buttons = cmd->buttons;
+
+  N_CmdBufferAppend(&commands, &ncmd);
+}
+
+void N_RemoveOldClientCommands(int tic) {
+  N_CmdBufferRemoveOld(&commands, tic);
 }
 
 /* vi: set et ts=2 sw=2: */

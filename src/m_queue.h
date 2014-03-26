@@ -28,10 +28,14 @@
 #ifndef M_QUEUE_H__
 #define M_QUEUE_H__
 
+typedef struct mqueueitem_s {
+  struct mqueueitem_s *next;
+  void *obj;
+} mqueueitem_t;
+
 typedef struct mqueue_s {
   mqueueitem_t head;
   mqueueitem_t *tail;
-  mqueueitem_t *rover;
   unsigned int size;
 } mqueue_t;
 
