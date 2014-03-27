@@ -91,6 +91,59 @@ int M_ObjBufferInsertAtFirstFreeSlotOrAppend(objbuf_t *obuf, void *obj) {
   return obuf->capacity - 1;
 }
 
+dboolean M_ObjBufferIter(objbuf_t *obuf, int *index, void **obj) {
+  int i;
+
+  if ((*index) == -1)
+    i = 0;
+  else
+    i = (*index);
+
+  for (*index = -1, *obj = NULL;i < obuf->capacity; i++) {
+    if (obuf->objects[i] != NULL) {
+      *index = i;
+      *obj = obuf->objects[i];
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void* M_ObjBufferIter(objbuf_t *obuf, void *obj) {
+  int i = 0;
+  void *out = obuf->objects[0];
+
+  if (obj != NULL)
+    for (; i < obuf->capacity && obuf->objects[i] != obj; i++);
+
+  if (i == obuf->capacity)
+    return NULL;
+
+  for (; i < obuf->capacity; i++) {
+    if (obuf->objects[i] != NULL) {
+      return obuf->objects[i];
+    }
+  }
+
+  return NULL;
+}
+
+int M_ObjBufferIterIndex(objbuf_t *obuf, int index) {
+  int i;
+
+  if (index == -1)
+    i = 0;
+  else
+    i = index;
+
+  for (; i < obuf->capacity; i++) {
+    if (obuf->objects[i] != NULL) {
+      return i;
+    }
+  }
+}
+
 void M_ObjBufferConsolidate(objbuf_t *obuf) {
   void **dst = obuf->objects;
   void **src = obuf->objects;

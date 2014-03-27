@@ -242,12 +242,48 @@ static void handle_vote_request(netpeer_t *np) {
 */
 
 static void handle_init(netpeer_t *np) {
+  short wanted_player_number;
+
+  if (N_UnpackInit(np, &wanted_player_number)) {
+    /* CG: TODO */
+  }
 }
 
 static void handle_setup(netpeer_t *np) {
+  setup_packet_t sinfo;
+  objbuf_t wad_names;
+
+  if (!N_UnpackSetup(np, &sinfo, &wad_names))
+    return;
+
+  consoleplayer = sinfo->yourplayer;
+  compatibility_level = sinfo->complevel;
+  G_Compatibility();
+  startskill = sinfo->skill;
+  deathmatch = sinfo->deathmatch;
+  startmap = sinfo->level;
+  startepisode = sinfo->episode;
+  ticdup = sinfo->ticdup;
+  xtratics = sinfo->extratic;
+  G_ReadOptions(sinfo->game_options);
+
+  M_ObjBufferEnsureCapacity(&players, sinfo->players);
+
+  for (int i = 0; i < wad_names.capacity; i++) {
+    if (wad_names.objects[i] != NULL) {
+      D_AddFile(wad_names.objects[i], source_net);
+    }
+  }
+
+  doom_printf("Joined game as player %d; %d WADs specified\n", 
+    consoleplayer, M_ObjBufferGetObjectCount(&wad_names);
+  );
+
+  N_SetP2PState(P2P_STATE_SETUP);
 }
 
 static void handle_go(netpeer_t *np) {
+  /* CG: TODO */
 }
 
 static void handle_client_tic(netpeer_t *np) {
@@ -476,14 +512,21 @@ void SV_SendAuthResponse(short playernum, auth_level_e auth_level) {
   netpeer_t *np = NULL;
   CHECK_VALID_PLAYER(np, playernum);
 
-  N_PackMessage(np, auth_level);
+  N_PackAuthResponse(np, auth_level);
+}
+
+void SV_SendPlayerCommandReceived(short playernum, int tic) {
+  netpeer_t *np = NULL;
+  CHECK_VALID_PLAYER(np, playernum);
+
+  N_PackPlayerCommandReceived(np, tic);
 }
 
 void SV_SendMessage(short playernum, rune *message) {
   netpeer_t *np = NULL;
   CHECK_VALID_PLAYER(np, playernum);
 
-  N_PackMessage(np, message);
+  N_PackServerMessage(np, message);
 }
 
 void SV_BroadcastMessage(rune *message) {
@@ -493,7 +536,7 @@ void SV_BroadcastMessage(rune *message) {
     netpeer_t *np = N_GetPeer(i);
 
     if ((np = N_GetPeer(i)) != NULL)
-      N_PackMessage(np, message);
+      N_PackServerMessage(np, message);
   }
 }
 

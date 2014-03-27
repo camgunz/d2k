@@ -73,8 +73,10 @@ void SV_SendPlayerCommandReceived(short playernum, int tic);
 void SV_SendMessage(short playernum, rune *message);
 void SV_BroadcastMessage(rune *message);
 
-void CL_SendMessage(short recipient, rune *message);
-void CL_SendTeamMessage(rune *message);
+void CL_SendMessageToServer(rune *message);
+void CL_SendMessageToPlayer(short recipient, rune *message);
+void CL_SendMessageToTeam(byte team, rune *message);
+void CL_SendMessageToCurrentTeam(rune *message);
 void CL_SendCommands(void);
 void CL_SendAuthRequest(rune *password);
 void CL_SendNameChange(rune *new_name);

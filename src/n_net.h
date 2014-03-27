@@ -36,10 +36,11 @@
 #define NET_H__
 
 #define DEFAULT_PORT 10666
+#define CONNECT_TIMEOUT 3
+#define DISCONNECT_TIMEOUT 3
 
 typedef enum {
   P2P_STATE_NONE,
-  P2P_STATE_INITIALIZED,
   P2P_STATE_SETUP,
   P2P_STATE_GO,
   P2P_STATE_MAX
@@ -69,6 +70,9 @@ typedef struct netticcmd_s {
   byte  buttons;
 } netticcmd_t;
 
+extern dboolean server;
+extern dboolean netgame;
+
 size_t   N_IPToString(int address, char *buffer);
 int      N_IPToInt(const char *address);
 size_t   N_GetHostFromAddressString(const char *address, char **host);
@@ -82,10 +86,10 @@ void     N_Shutdown(void);
 dboolean N_Listen(const char *host, unsigned short port);
 dboolean N_Connect(const char *host, unsigned short port);
 dboolean N_Reconnect(void);
-void     N_WaitForPacket(int ms);
-dboolean N_ConnectToServer(const char *serv);
+dboolean N_ConnectToServer(const char *address);
 void     N_PrintAddress(FILE *fp, int peernum);
 void     N_DisconnectPlayer(short playernum);
+void     N_ServiceNetworkTimeout(int timeout_ms);
 void     N_ServiceNetwork(void);
 
 void     N_SetLocalClientAuthorizationLevel(auth_level_e level);

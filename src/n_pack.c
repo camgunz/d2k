@@ -86,29 +86,31 @@ static dboolean mp_map(msgpack_object *o) {
   return o->type == MSGPACK_OBJECT_MAP;
 }
 
-#define unpack_and_validate(s, t)                                             \
+#define unpack(s) \
   if (!msgpack_unpacker_next(&pac, &result)) {                                \
     doom_printf(__func__ ": Error unpacking " #s "\n");                       \
     return false;                                                             \
   }                                                                           \
-  else {                                                                      \
-    if (!t(result.data.type)) {                                               \
-      doom_printf(                                                            \
-        __func__ ": Invalid packet: " #s " is not " t ## _name "\n"           \
-      );                                                                      \
-      return false;                                                           \
-    }                                                                         \
-  }                                                                           \
+
+#define validate(s, o, t)                                                     \
+  if (!(t((o)->type))) {                                                      \
+    doom_printf(__func__ ": Invalid packet: " #s " is not " t ## _name "\n"); \
+    return false;                                                             \
+  }
+
+#define unpack_and_validate(s, t)                                             \
+  unpack("last player command tic");                                          \
+  validate("last player command tic", &result.data, mp_uint);                 \
   obj = &result.data
 
 #define unpack_and_validate_array(as, s, mt, t, ob)                           \
-  unpack_and_validate(as, mp_array)                                              \
+  unpack_and_validate(as, mp_array)                                           \
   M_ObjBufferClear((ob));                                                     \
   M_ObjBufferEnsureSize(&(ob), obj->via.array.size);                          \
   for (int i = 0; i < obj->via.array.size; i++) {                             \
     t *buf_entry = NULL;                                                      \
     msgpack_object *array_entry = obj->via.array.ptr + i;                     \
-    if (!mt(array_entry)) {                                                    \
+    if (!mt(array_entry)) {                                                   \
       doom_printf(                                                            \
         __func__ ": Invalid packet: " #s " is not " mt ## _name "\n"          \
       );                                                                      \
@@ -121,7 +123,7 @@ static dboolean mp_map(msgpack_object *o) {
   }
 
 #define unpack_and_validate_string_array(as, s, ob)                           \
-  unpack_and_validate(as, mp_array)                                              \
+  unpack_and_validate(as, mp_array)                                           \
   M_ObjBufferClear((ob));                                                     \
   M_ObjBufferEnsureSize(&(ob), obj->via.array.size);                          \
   for (int i = 0; i < obj->via.array.size; i++) {                             \
@@ -163,7 +165,7 @@ static dboolean mp_map(msgpack_object *o) {
   }
 
 #define validate_range_unsigned(min, max, s)                                  \
-  if (obj->via.u64 < min || obj->via.u64 > max) {                               \
+  if (obj->via.u64 < min || obj->via.u64 > max) {                             \
     doom_printf(                                                              \
       __func__ ": " #s " out of range (" #min ", " #max ")\n"                 \
     );                                                                        \
@@ -171,7 +173,7 @@ static dboolean mp_map(msgpack_object *o) {
   }
 
 #define validate_range_signed(min, max, s)                                    \
-  if (obj->via.i64 < min || obj->via.i64 > max) {                               \
+  if (obj->via.i64 < min || obj->via.i64 > max) {                             \
     doom_printf(                                                              \
       __func__ ": " #s " out of range (" #min ", " #max ")\n"                 \
     );                                                                        \
@@ -179,10 +181,20 @@ static dboolean mp_map(msgpack_object *o) {
   }
 
 #define validate_range_double(min, max, s)                                    \
-  if (obj->via.dec < min || obj->via.dec > max) {                               \
+  if (obj->via.dec < min || obj->via.dec > max) {                             \
     doom_printf(                                                              \
       __func__ ": " #s " out of range (" #min ", " #max ")\n"                 \
     );                                                                        \
+    return false;                                                             \
+  }
+
+#define validate_player(pn)                                                   \
+  if (obj->via.u64 > (players->capacity - 1)) {                               \
+    doom_printf(__func__ ": Invalid player number\n");                        \
+    return false;                                                             \
+  }                                                                           \
+  if (players->objects[obj->via.u64] == NULL) {                               \
+    doom_printf(__func__ ": Invalid player number\n");                        \
     return false;                                                             \
   }
 

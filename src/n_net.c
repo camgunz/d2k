@@ -45,8 +45,6 @@
 #include "n_proto.h"
 
 #define MAX_ADDRESS_LENGTH 500
-#define CONNECT_TIMEOUT 3
-#define DISCONNECT_TIMEOUT 3
 
 #define to_byte(x)  ((byte)((x) & 0xFF))
 #define to_short(x) ((unsigned short)((x) & 0xFFFF))
@@ -64,6 +62,10 @@ static short        previous_port = 0;
 /* CG: Local client only */
 static auth_level_e authorization_level;
 static cmdbuf_t     commands;
+
+/* CG: Externally viewable */
+dboolean server = false;
+dboolean netgame = false;
 
 static void check_peer_timeouts(void) {
   for (int i = 0; i < N_GetPeerCount(); i++) {
@@ -389,7 +391,7 @@ void N_DisconnectPlayer(short playernum) {
   N_SetPeerDisconnected(peernum);
 }
 
-void N_ServiceNetwork(void) {
+void N_ServiceNetworkTimeout(int timeout_ms) {
   int status = 0;
   int peernum = -1;
   netpeer_t *np = NULL;
@@ -427,7 +429,7 @@ void N_ServiceNetwork(void) {
   }
 
   while (true) {
-    status = enet_host_service(net_host, &net_event, 0);
+    status = enet_host_service(net_host, &net_event, timeout_ms);
 
     /*
      * CG: ENet says this must be cleared, and since we don't use it, we do so
@@ -498,7 +500,14 @@ void N_ServiceNetwork(void) {
         net_event.peer->address.port
       );
     }
+
+    if (timeout_ms != 0)
+      break;
   }
+}
+
+void N_ServiceNetwork(void) {
+  N_ServiceNetworkTimeout(0);
 }
 
 void N_SetLocalClientAuthorizationLevel(auth_level_e level) {

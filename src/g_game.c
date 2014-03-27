@@ -760,8 +760,7 @@ void G_RestartLevel(void)
 // G_DoLoadLevel
 //
 
-static void G_DoLoadLevel (void)
-{
+static void G_DoLoadLevel (void) {
   int i;
 
   // Set the sky map.
@@ -770,37 +769,35 @@ static void G_DoLoadLevel (void)
   //  we look for an actual index, instead of simply
   //  setting one.
 
-  skyflatnum = R_FlatNumForName ( SKYFLATNAME );
+  skyflatnum = R_FlatNumForName(SKYFLATNAME);
 
   // DOOM determines the sky texture to be used
   // depending on the current episode, and the game version.
-  if (gamemode == commercial)
+  if (gamemode == commercial) {
     // || gamemode == pack_tnt   //jff 3/27/98 sorry guys pack_tnt,pack_plut
     // || gamemode == pack_plut) //aren't gamemodes, this was matching retail
-    {
-      skytexture = R_TextureNumForName ("SKY3");
-      if (gamemap < 12)
-        skytexture = R_TextureNumForName ("SKY1");
-      else
-        if (gamemap < 21)
-          skytexture = R_TextureNumForName ("SKY2");
-    }
-  else //jff 3/27/98 and lets not forget about DOOM and Ultimate DOOM huh?
-    switch (gameepisode)
-      {
+    skytexture = R_TextureNumForName ("SKY3");
+    if (gamemap < 12)
+      skytexture = R_TextureNumForName ("SKY1");
+    else if (gamemap < 21)
+      skytexture = R_TextureNumForName ("SKY2");
+  }
+  else { //jff 3/27/98 and lets not forget about DOOM and Ultimate DOOM huh?
+    switch (gameepisode) {
       case 1:
         skytexture = R_TextureNumForName ("SKY1");
-        break;
+      break;
       case 2:
         skytexture = R_TextureNumForName ("SKY2");
-        break;
+      break;
       case 3:
         skytexture = R_TextureNumForName ("SKY3");
-        break;
+      break;
       case 4: // Special Edition sky
         skytexture = R_TextureNumForName ("SKY4");
-        break;
-      }//jff 3/27/98 end sky setting fix
+      break;
+    }//jff 3/27/98 end sky setting fix
+  }
 
 	// [RH] Set up details about sky rendering
 	R_InitSkyMap ();
@@ -819,12 +816,12 @@ static void G_DoLoadLevel (void)
 
   gamestate = GS_LEVEL;
 
-  for (i=0 ; i<MAXPLAYERS ; i++)
-    {
-      if (playeringame[i] && players[i].playerstate == PST_DEAD)
-        players[i].playerstate = PST_REBORN;
-      memset (players[i].frags,0,sizeof(players[i].frags));
-    }
+  for (i = 0; i < MAXPLAYERS; i++) {
+    if (playeringame[i] && players[i].playerstate == PST_DEAD)
+      players[i].playerstate = PST_REBORN;
+
+    memset(players[i].frags, 0, sizeof(players[i].frags));
+  }
 
   // initialize the msecnode_t freelist.                     phares 3/25/98
   // any nodes in the freelist are gone by now, cleared
@@ -832,20 +829,20 @@ static void G_DoLoadLevel (void)
   // died.
   P_FreeSecNodeList();
 
-  P_SetupLevel (gameepisode, gamemap, 0, gameskill);
+  P_SetupLevel(gameepisode, gamemap, 0, gameskill);
   if (!demoplayback) // Don't switch views if playing a demo
     displayplayer = consoleplayer;    // view the guy you are playing
   gameaction = ga_nothing;
-  Z_CheckHeap ();
+  Z_CheckHeap();
 
   // clear cmd building stuff
-  memset (gamekeydown, 0, sizeof(gamekeydown));
+  memset(gamekeydown, 0, sizeof(gamekeydown));
   joyxmove = joyymove = 0;
   mousex = mousey = 0;
   mlooky = 0;//e6y
   special_event = 0; paused = false;
-  memset (&mousearray, 0, sizeof(mousearray));
-  memset (&joyarray, 0, sizeof(joyarray));
+  memset(&mousearray, 0, sizeof(mousearray));
+  memset(&joyarray, 0, sizeof(joyarray));
 
   // killough 5/13/98: in case netdemo has consoleplayer other than green
   ST_Start();
@@ -854,17 +851,15 @@ static void G_DoLoadLevel (void)
   // killough: make -timedemo work on multilevel demos
   // Move to end of function to minimize noise -- killough 2/22/98:
 
-  if (timingdemo)
-    {
-      static int first=1;
-      if (first)
-        {
-          starttime = I_GetTime_RealTime ();
-          first=0;
-        }
-    }
-}
+  if (timingdemo) {
+    static dboolean first = true;
 
+    if (first) {
+      starttime = I_GetTime_RealTime();
+      first = false;
+    }
+  }
+}
 
 //
 // G_Responder
@@ -2705,11 +2700,10 @@ void G_InitNew(skill_t skill, int episode, int map)
     compatibility_level == ultdoom_compatibility ||
     compatibility_level == finaldoom_compatibility;
 
-  if (paused)
-    {
-      paused = false;
-      S_ResumeSound();
-    }
+  if (paused) {
+    paused = false;
+    S_ResumeSound();
+  }
 
   if (skill > sk_nightmare)
     skill = sk_nightmare;
@@ -2719,38 +2713,33 @@ void G_InitNew(skill_t skill, int episode, int map)
 
   //e6y: We need to remove the fourth episode for pre-ultimate complevels.
   if (compatibility_level < ultdoom_compatibility && episode > 3)
-  {
     episode = 3;
-  }
 
   //e6y: DosDoom has only this check
-  if (compatibility_level == dosdoom_compatibility)
-  {
-    if (gamemode == shareware)
+  if (compatibility_level == dosdoom_compatibility) {
+    if (gamemode == shareware) {
       episode = 1; // only start episode 1 on shareware
-  }
-  else
-  if (gamemode == retail)
-    {
-      // e6y: Ability to play any episode with Ultimate Doom,
-      // Final Doom or Doom95 compatibility and -warp command line switch
-      // E5M1 from 2002ado.wad is an example.
-      // Now you can play it with "-warp 5 1 -complevel 3".
-      // 'Vanilla' Ultimate Doom executable also allows it.
-      if (fake_episode_check ? episode == 0 : episode > 4)
-        episode = 4;
     }
-  else
-    if (gamemode == shareware)
-      {
-        if (episode > 1)
-          episode = 1; // only start episode 1 on shareware
-      }
-    else
-      // e6y: Ability to play any episode with Ultimate Doom,
-      // Final Doom or Doom95 compatibility and -warp command line switch
-      if (fake_episode_check ? episode == 0 : episode > 3)
-        episode = 3;
+  }
+  else if (gamemode == retail) {
+    // e6y: Ability to play any episode with Ultimate Doom,
+    // Final Doom or Doom95 compatibility and -warp command line switch
+    // E5M1 from 2002ado.wad is an example.
+    // Now you can play it with "-warp 5 1 -complevel 3".
+    // 'Vanilla' Ultimate Doom executable also allows it.
+    if (fake_episode_check ? episode == 0 : episode > 4)
+      episode = 4;
+  }
+  else if (gamemode == shareware) {
+    if (episode > 1) {
+      episode = 1; // only start episode 1 on shareware
+    }
+  }
+  else if (fake_episode_check ? episode == 0 : episode > 3) {
+    // e6y: Ability to play any episode with Ultimate Doom,
+    // Final Doom or Doom95 compatibility and -warp command line switch
+    episode = 3;
+  }
 
   if (map < 1)
     map = 1;
@@ -2764,7 +2753,7 @@ void G_InitNew(skill_t skill, int episode, int map)
   respawnmonsters = skill == sk_nightmare || respawnparm;
 
   // force players to be initialized upon first level load
-  for (i=0 ; i<MAXPLAYERS ; i++)
+  for (i = 0; i < MAXPLAYERS; i++)
     players[i].playerstate = PST_REBORN;
 
   usergame = true;                // will be set false if a demo
@@ -2779,7 +2768,7 @@ void G_InitNew(skill_t skill, int episode, int map)
   //jff 4/16/98 force marks on automap cleared every new level start
   AM_clearMarks();
 
-  G_DoLoadLevel ();
+  G_DoLoadLevel();
 }
 
 //
@@ -4060,3 +4049,6 @@ void G_CheckDemoContinue(void)
     }
   }
 }
+
+/* vi: set et ts=2 sw=2: */
+

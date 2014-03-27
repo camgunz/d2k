@@ -441,65 +441,64 @@ static const char *auto_shot_fname;
 //  calls I_GetTime, I_StartFrame, and I_StartTic
 //
 
-static void D_DoomLoop(void)
-{
-  for (;;)
-    {
-      WasRenderedInTryRunTics = false;
-      // frame syncronous IO operations
-      I_StartFrame ();
+static void D_DoomLoop(void) {
+  while (true) {
+    WasRenderedInTryRunTics = false;
+    I_StartFrame(); /* frame syncronous IO operations */
 
-      if (ffmap == gamemap) ffmap = 0;
+    if (ffmap == gamemap)
+      ffmap = 0;
 
-      // process one or more tics
-      if (singletics)
-        {
-          I_StartTic ();
-          G_BuildTiccmd (&netcmds[consoleplayer][maketic%BACKUPTICS]);
-          if (advancedemo)
-            D_DoAdvanceDemo ();
-          M_Ticker ();
-          G_Ticker ();
-          P_Checksum(gametic);
-          gametic++;
-          maketic++;
-        }
-      else
-        TryRunTics (); // will run at least one tic
+    // process one or more tics
+    if (singletics) {
+      I_StartTic();
+      G_BuildTiccmd(&netcmds[consoleplayer][maketic % BACKUPTICS]);
 
-      // killough 3/16/98: change consoleplayer to displayplayer
-      if (players[displayplayer].mo) // cph 2002/08/10
-        S_UpdateSounds(players[displayplayer].mo);// move positional sounds
+      if (advancedemo)
+        D_DoAdvanceDemo();
 
-      if (!movement_smooth || !WasRenderedInTryRunTics || gamestate != wipegamestate)
-        {
-        // Update display, next frame, with current state.
-        D_Display();
-      }
+      M_Ticker();
+      G_Ticker();
+      P_Checksum(gametic);
+      gametic++;
+      maketic++;
+    }
+    else {
+      TryRunTics(); // will run at least one tic
+    }
 
-      // CPhipps - auto screenshot
-      if (auto_shot_fname && !--auto_shot_count) {
-  auto_shot_count = auto_shot_time;
-  M_DoScreenShot(auto_shot_fname);
-      }
-//e6y
-      if (avi_shot_fname && !doSkip)
-      {
-        int len;
-        char *avi_shot_curr_fname;
-        avi_shot_num++;
-        len = snprintf(NULL, 0, "%s%06d.tga", avi_shot_fname, avi_shot_num);
-        avi_shot_curr_fname = malloc(len+1);
-        sprintf(avi_shot_curr_fname, "%s%06d.tga", avi_shot_fname, avi_shot_num);
-        M_DoScreenShot(avi_shot_curr_fname);
-        free(avi_shot_curr_fname);
-      }
-      // NSM
-      if (capturing_video && !doSkip)
-      {
-        I_CaptureFrame ();
-      }
-}
+    // killough 3/16/98: change consoleplayer to displayplayer
+    if (players[displayplayer].mo) // cph 2002/08/10
+      S_UpdateSounds(players[displayplayer].mo);// move positional sounds
+
+    if (!movement_smooth || !WasRenderedInTryRunTics ||
+                            gamestate != wipegamestate) {
+      D_Display(); // Update display, next frame, with current state.
+    }
+
+    // CPhipps - auto screenshot
+    if (auto_shot_fname && !--auto_shot_count) {
+      auto_shot_count = auto_shot_time;
+      M_DoScreenShot(auto_shot_fname);
+    }
+
+    //e6y
+    if (avi_shot_fname && !doSkip) {
+      int len;
+      char *avi_shot_curr_fname;
+
+      avi_shot_num++;
+      len = snprintf(NULL, 0, "%s%06d.tga", avi_shot_fname, avi_shot_num);
+      avi_shot_curr_fname = malloc(len + 1);
+      sprintf(avi_shot_curr_fname, "%s%06d.tga", avi_shot_fname, avi_shot_num);
+      M_DoScreenShot(avi_shot_curr_fname);
+      free(avi_shot_curr_fname);
+    }
+    // NSM
+    if (capturing_video && !doSkip) {
+      I_CaptureFrame ();
+    }
+  }
 }
 
 //
@@ -1839,7 +1838,8 @@ static void D_DoomMainSetup(void)
 
 #ifdef HAVE_NET
   // CPhipps - now wait for netgame start
-  D_CheckNetGame();
+  if (using_p2p_netcode)
+    N_WaitForServer();
 #endif
 
   //jff 9/3/98 use logical output routine
@@ -1885,73 +1885,60 @@ static void D_DoomMainSetup(void)
   // killough 12/98:
   // Support -loadgame with -record and reimplement -recordfrom.
 
-  if ((slot = M_CheckParm("-recordfrom")) && (p = slot+2) < myargc)
-    G_RecordDemo(myargv[p]);
-  else
-    {
-      slot = M_CheckParm("-loadgame");
-      if ((p = M_CheckParm("-record")) && ++p < myargc)
-  {
-    autostart = true;
+  if ((slot = M_CheckParm("-recordfrom")) && (p = slot+2) < myargc) {
     G_RecordDemo(myargv[p]);
   }
+  else {
+    slot = M_CheckParm("-loadgame");
+    if ((p = M_CheckParm("-record")) && ++p < myargc) {
+      autostart = true;
+      G_RecordDemo(myargv[p]);
     }
+  }
 
   if ((p = M_CheckParm ("-checksum")) && ++p < myargc)
-    {
-      P_RecordChecksum (myargv[p]);
-    }
+    P_RecordChecksum (myargv[p]);
 
-  if ((p = M_CheckParm ("-fastdemo")) && ++p < myargc)
-    {                                 // killough
-      fastdemo = true;                // run at fastest speed possible
-      timingdemo = true;              // show stats after quit
-      G_DeferedPlayDemo(myargv[p]);
-      singledemo = true;              // quit after one demo
-    }
-  else
-    if ((p = M_CheckParm("-timedemo")) && ++p < myargc)
-      {
-  singletics = true;
-  timingdemo = true;            // show stats after quit
-  G_DeferedPlayDemo(myargv[p]);
-  singledemo = true;            // quit after one demo
-      }
-    else
-      if ((p = M_CheckParm("-playdemo")) && ++p < myargc)
-  {
+  if ((p = M_CheckParm ("-fastdemo")) && ++p < myargc) { // killough
+    fastdemo = true;                // run at fastest speed possible
+    timingdemo = true;              // show stats after quit
+    G_DeferedPlayDemo(myargv[p]);
+    singledemo = true;              // quit after one demo
+  }
+  else if ((p = M_CheckParm("-timedemo")) && ++p < myargc) {
+    singletics = true;
+    timingdemo = true;            // show stats after quit
+    G_DeferedPlayDemo(myargv[p]);
+    singledemo = true;            // quit after one demo
+  }
+  else if ((p = M_CheckParm("-playdemo")) && ++p < myargc) {
     G_DeferedPlayDemo(myargv[p]);
     singledemo = true;          // quit after one demo
   }
-  else
-    //e6y
-    if ((p = IsDemoContinue()))
-    {
-      G_DeferedPlayDemo(myargv[p+1]);
-      G_CheckDemoContinue();
-    }
-
-  if (slot && ++slot < myargc)
-    {
-      slot = atoi(myargv[slot]);        // killough 3/16/98: add slot info
-      G_LoadGame(slot, true);           // killough 5/15/98: add command flag // cph - no filename
-    }
-  else
-    if (!singledemo) {                  /* killough 12/98 */
-      if (autostart || netgame)
-  {
-    // sets first map and first episode if unknown
-    if (autostart)
-    {
-      GetFirstMap(&startepisode, &startmap);
-    }
-    G_InitNew(startskill, startepisode, startmap);
-    if (demorecording)
-      G_BeginRecording();
+  else if ((p = IsDemoContinue())) { //e6y
+    G_DeferedPlayDemo(myargv[p+1]);
+    G_CheckDemoContinue();
   }
-      else
-  D_StartTitle();                 // start up intro loop
+
+  if (slot && ++slot < myargc) {
+    slot = atoi(myargv[slot]);        // killough 3/16/98: add slot info
+    G_LoadGame(slot, true);           // killough 5/15/98: add command flag // cph - no filename
+  }
+  else if (!singledemo) {                  /* killough 12/98 */
+    if (autostart || netgame) {
+      // sets first map and first episode if unknown
+      if (autostart)
+        GetFirstMap(&startepisode, &startmap);
+
+      G_InitNew(startskill, startepisode, startmap);
+
+      if (demorecording)
+        G_BeginRecording();
     }
+    else {
+      D_StartTitle();                 // start up intro loop
+    }
+  }
 
   // do not try to interpolate during timedemo
   M_ChangeUncappedFrameRate();
@@ -1965,7 +1952,7 @@ void D_DoomMain(void)
 {
   D_DoomMainSetup(); // CPhipps - setup out of main execution stack
 
-  D_DoomLoop ();  // never returns
+  D_DoomLoop();  // never returns
 }
 
 //
@@ -2044,3 +2031,6 @@ void GetFirstMap(int *ep, int *map)
       newlevel ? "new " : "", name);  // Ty 10/04/98 - new level test
   }
 }
+
+/* vi: set et ts=2 sw=2: */
+

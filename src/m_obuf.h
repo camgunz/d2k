@@ -76,6 +76,13 @@ int  M_ObjBufferInsertAtFirstFreeSlot(objbuf_t *obuf, void *obj);
 int  M_ObjBufferInsertAtFirstFreeSlotOrAppend(objbuf_t *obuf, void *obj);
 
 /*
+ * Iterates over an object buffer.  Passing index -1 returns the first non-NULL
+ * object in obj, passing a different index returns the first non-NULL object
+ * with a greater index in obj.  Returns true if a non-NULL object was found.
+ */
+dboolean M_ObjBufferIter(objbuf_t *obuf, int *index, void **obj) {
+
+/*
  * Consolidates all occupied slots to the front of the buffer; no empty space
  * will be at the beginning of the buffer or between objects; all empty space
  * will be at the end of the buffer (if any is available).

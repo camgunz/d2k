@@ -66,10 +66,11 @@ static unsigned          numqueuedpackets;
 static packet_header_t **queuedpacket;
 static int               xtratics = 0;
 static dboolean          isExtraDDisplay = false;
+static p2p_state_e       p2p_state = P2P_STATE_NONE;
 
 int      maketic;
 int      ticdup = 1;
-int      wanted_player_number;
+int      wanted_player_number = 0;
 ticcmd_t netcmds[MAXPLAYERS][BACKUPTICS];
 
 static void packet_set(packet_header_t *p, unsigned char type,
@@ -105,9 +106,19 @@ static void TicToRaw(void* dst, const ticcmd_t* src) {
 
 static void D_QuitNetGame(void);
 
-void D_InitNetGame(void) {
+void N_SetP2PState(p2p_state_e new_state) {
+  if (p2p_state < new_state)
+    p2p_state = new_state;
+}
+
+void N_InitNetGame(void) {
   int i;
-  int numplayers = 1;
+  int player_count = 1;
+
+  /*
+   * CG: TODO: Create separate P2P and C/S initialization functions and,
+   *           depending upon command-line arguments, call them here
+   */
 
   i = M_CheckParm("-net");
   if (i && i < myargc - 1)
@@ -115,75 +126,34 @@ void D_InitNetGame(void) {
 
   if (!(netgame = server = !!i)) {
     playeringame[consoleplayer = 0] = true;
-    // e6y
-    // for play, recording or playback using "single-player coop" mode.
-    // Equivalent to using prboom_server with -N 1
     netgame = M_CheckParm("-solo-net");
   }
   else {
-    // Get game info from server
-    packet_header_t *packet = Z_Malloc(1000, PU_STATIC, NULL);
-    struct setup_packet_s *sinfo = (void *)(packet + 1);
-    struct { packet_header_t head; short pn; } PACKEDATTR initpacket;
+    N_Init();
 
-    I_InitNetwork();
-    I_ConnectToServer(myargv[i]);
+    if (!N_ConnectToServer(myargv[i]))
+      I_Error("Server aborted the game");
 
-    do {
-      do { 
-        // Send init packet
-        initpacket.pn = doom_htons(wanted_player_number);
-        packet_set(&initpacket.head, PKT_INIT, 0);
-        I_SendPacket(&initpacket.head, sizeof(initpacket));
-        I_WaitForPacket(5000);
-      } while (!I_GetPacket(packet, 1000));
+    N_ServiceNetworkTimeout(CONNECT_TIMEOUT * 1000);
 
-      if (packet->type == PKT_DOWN)
-        I_Error("Server aborted the game");
-    } while (packet->type != PKT_SETUP);
+    if (p2p_state != P2P_STATE_SETUP) 
+      I_Error("Timed out waiting for setup information from server");
 
     // Once we have been accepted by the server, we should tell it when we leave
-    atexit(D_QuitNetGame);
-
-    // Get info from the setup packet
-    consoleplayer = sinfo->yourplayer;
-    compatibility_level = sinfo->complevel;
-    G_Compatibility();
-    startskill = sinfo->skill;
-    deathmatch = sinfo->deathmatch;
-    startmap = sinfo->level;
-    startepisode = sinfo->episode;
-    ticdup = sinfo->ticdup;
-    xtratics = sinfo->extratic;
-    G_ReadOptions(sinfo->game_options);
-
-    lprintf(LO_INFO, "\tjoined game as player %d/%d; %d WADs specified\n",
-      consoleplayer + 1,
-      numplayers = sinfo->players,
-      sinfo->numwads
-    );
-    {
-      char *p = sinfo->wadnames;
-      int i = sinfo->numwads;
-
-      while (i--) {
-        D_AddFile(p, source_net);
-        p += strlen(p) + 1;
-      }
-    }
-    Z_Free(packet);
+    atexit(N_Disconnect()); // CG: TODO: C/S and P2P need their own d/c funcs
   }
-  localcmds = netcmds[displayplayer = consoleplayer];
-  for (i = 0; i < numplayers; i++)
-    playeringame[i] = true;
-  for (; i < MAXPLAYERS; i++)
-    playeringame[i] = false;
-  if (!playeringame[consoleplayer])
+
+  displayplayer = consoleplayer;
+  if (!playeringame(consoleplayer))
     I_Error("D_InitNetGame: consoleplayer not in game");
 }
 
-void D_CheckNetGame(void)
-{
+void N_WaitForServer(void) {
+  /*
+   * CG: This should basically not exist.  In D_DoomLoop or whatever, the
+   *     client needs to check its state, if it's SETUP and then it gets the GO
+   *     packet, then it loads the game, otherwise it returns.
+   */
   packet_header_t *packet = Z_Malloc(
     sizeof(packet_header_t) + 1, PU_STATIC, NULL
   );
@@ -204,67 +174,12 @@ void D_CheckNetGame(void)
   Z_Free(packet);
 }
 
-dboolean D_NetGetWad(const char* name)
-{
-#if defined(HAVE_WAIT_H)
-  size_t psize = sizeof(packet_header_t) + strlen(name) + 500;
-  packet_header_t *packet;
-  dboolean done = false;
-
-  if (!server || strchr(name, '/'))
-    return false; // If it contains path info, reject
-
-  do {
-    // Send WAD request to remote
-    packet = Z_Malloc(psize, PU_STATIC, NULL);
-    packet_set(packet, PKT_WAD, 0);
-    *(byte*)(packet + 1) = consoleplayer;
-    strcpy(1 + (byte *)(packet + 1), name);
-    I_SendPacket(packet, sizeof(packet_header_t) + strlen(name) + 2);
-    I_uSleep(10000);
-  } while (!I_GetPacket(packet, psize) || (packet->type != PKT_WAD));
-  Z_Free(packet);
-
-  if (!strcasecmp((void *)(packet + 1), name)) {
-    pid_t pid;
-    int   rv;
-    byte *p = (byte *)(packet + 1) + strlen(name) + 1;
-
-    /* Automatic wad file retrieval using wget (supports http and ftp, using
-     * URLs) Unix systems have all these commands handy, this kind of thing is
-     * easy Any windo$e port will have some awkward work replacing these.
-     */
-    /* cph - caution here. This is data from an untrusted source.
-     * Don't pass it via a shell. */
-    if ((pid = fork()) == -1)
-      perror("fork");
-    else if (!pid) /* Child chains to wget, does the download */
-      execlp("wget", "wget", p, NULL);
-    /* This is the parent, i.e. main LxDoom process */
-    wait(&rv);
-    if (!(done = !access(name, R_OK))) {
-      if (!strcmp(p + strlen(p) - 4, ".zip")) {
-        p = strrchr(p, '/') + 1;
-        if ((pid = fork()) == -1)
-          perror("fork");
-        else if (!pid) /* Child executes decompressor */
-          execlp("unzip", "unzip", p, name, NULL);
-        /* Parent waits for the file */
-        wait(&rv);
-        done = !!access(name, R_OK);
-      }
-      /* Add more decompression protocols here as desired */
-    }
-    Z_Free(buffer);
-  }
-  return done;
-#else /* HAVE_WAIT_H */
+dboolean D_NetGetWad(const char* name) {
+  /* CG: TODO: Do this when libcurl is added */
   return false;
-#endif
 }
 
-void NetUpdate(void)
-{
+void NetUpdate(void) {
   static int lastmadetic;
 
   if (isExtraDDisplay)
@@ -273,72 +188,73 @@ void NetUpdate(void)
   if (server) { // Receive network packets
     size_t recvlen;
     packet_header_t *packet = Z_Malloc(10000, PU_STATIC, NULL);
+
     while ((recvlen = I_GetPacket(packet, 10000))) {
-      switch(packet->type) {
-      case PKT_TICS:
-      {
-        byte *p = (void *)(packet + 1);
-        int tics = *p++;
-        unsigned long ptic = doom_ntohl(packet->tic);
-        if (ptic > (unsigned)remotetic) { // Missed some
-          packet_set(packet, PKT_RETRANS, remotetic);
-          *(byte *)(packet + 1) = consoleplayer;
-          I_SendPacket(packet, sizeof(*packet) + 1);
-        }
-        else {
-          if (ptic + tics <= (unsigned)remotetic)
-            break; // Will not improve things
+      switch (packet->type) {
+        case PKT_TICS:
+        {
+          byte *p = (void *)(packet + 1);
+          int tics = *p++;
+          unsigned long ptic = doom_ntohl(packet->tic);
+          if (ptic > (unsigned)remotetic) { // Missed some
+            packet_set(packet, PKT_RETRANS, remotetic);
+            *(byte *)(packet + 1) = consoleplayer;
+            I_SendPacket(packet, sizeof(*packet) + 1);
+          }
+          else {
+            if (ptic + tics <= (unsigned)remotetic)
+              break; // Will not improve things
 
-          remotetic = ptic;
+            remotetic = ptic;
 
-          while (tics--) {
-            int players = *p++;
+            while (tics--) {
+              int players = *p++;
 
-            while (players--) {
-              int n = *p++;
-              RawToTic(&netcmds[n][remotetic % BACKUPTICS], p);
-              p += sizeof(ticcmd_t);
+              while (players--) {
+                int n = *p++;
+                RawToTic(&netcmds[n][remotetic % BACKUPTICS], p);
+                p += sizeof(ticcmd_t);
+              }
+              remotetic++;
             }
-            remotetic++;
           }
         }
-      }
         break;
-      case PKT_RETRANS: // Resend request
-        remotesend = doom_ntohl(packet->tic);
+        case PKT_RETRANS: // Resend request
+          remotesend = doom_ntohl(packet->tic);
         break;
-      case PKT_DOWN: // Server downed
-      {
-        int j;
+        case PKT_DOWN: // Server downed
+        {
+          int j;
 
-        for (j = 0; j < MAXPLAYERS; j++) {
-          if (j != consoleplayer) {
-            playeringame[j] = false;
+          for (j = 0; j < MAXPLAYERS; j++) {
+            if (j != consoleplayer) {
+              playeringame[j] = false;
+            }
           }
+          server = false;
+          doom_printf(
+            "Server is down\nAll other players are no longer in the game\n"
+          );
         }
-        server = false;
-        doom_printf(
-          "Server is down\nAll other players are no longer in the game\n"
-        );
-      }
         break;
-      case PKT_EXTRA: // Misc stuff
-      case PKT_QUIT: // Player quit
-        // Queue packet to be processed when its tic time is reached
-        queuedpacket = Z_Realloc(queuedpacket, ++numqueuedpackets * sizeof *queuedpacket,
-               PU_STATIC, NULL);
-        queuedpacket[numqueuedpackets-1] = Z_Malloc(recvlen, PU_STATIC, NULL);
-        memcpy(queuedpacket[numqueuedpackets-1], packet, recvlen);
+        case PKT_EXTRA: // Misc stuff
+        case PKT_QUIT: // Player quit
+          // Queue packet to be processed when its tic time is reached
+          queuedpacket = Z_Realloc(queuedpacket, ++numqueuedpackets * sizeof *queuedpacket,
+                 PU_STATIC, NULL);
+          queuedpacket[numqueuedpackets-1] = Z_Malloc(recvlen, PU_STATIC, NULL);
+          memcpy(queuedpacket[numqueuedpackets-1], packet, recvlen);
         break;
-      case PKT_BACKOFF:
-        /* cph 2003-09-18 - The server sends this when we have got ahead of the
-         * other clients. We should stall the input side on this client, to
-         * allow other clients to catch up.
-         */
-         lastmadetic++;
+        case PKT_BACKOFF:
+          /* cph 2003-09-18 - The server sends this when we have got ahead of the
+           * other clients. We should stall the input side on this client, to
+           * allow other clients to catch up.
+           */
+           lastmadetic++;
         break;
         default: // Other packet, unrecognised or redundant
-      break;
+        break;
       }
     }
     Z_Free(packet);
@@ -476,13 +392,12 @@ static void CheckQueuedPackets(void)
   }
 }
 
-void TryRunTics (void)
-{
+void TryRunTics (void) {
   int runtics;
   int entertime = I_GetTime();
 
   // Wait for tics to run
-  while (1) {
+  while (true) {
     NetUpdate();
     runtics = (server ? remotetic : maketic) - gametic;
 
@@ -491,19 +406,12 @@ void TryRunTics (void)
 
     if (!movement_smooth || !window_focused) {
       if (server)
-        I_WaitForPacket(ms_to_next_tick);
+        N_ServiceNetworkTimeout(ms_to_next_tick);
       else
         I_uSleep(ms_to_next_tick * 1000);
     }
 
     if (I_GetTime() - entertime > 10) {
-      if (server) {
-        char buf[sizeof(packet_header_t) + 1];
-        remotesend--;
-        packet_set((packet_header_t *)buf, PKT_RETRANS, remotetic);
-        buf[sizeof(buf) - 1] = consoleplayer;
-        I_SendPacket((packet_header_t *)buf, sizeof(buf));
-      }
       M_Ticker();
       return;
     }
@@ -524,16 +432,17 @@ void TryRunTics (void)
       CheckQueuedPackets();
 
     if (advancedemo)
-      D_DoAdvanceDemo ();
+      D_DoAdvanceDemo();
 
-    M_Ticker ();
+    M_Ticker();
     I_GetTime_SaveMS();
-    G_Ticker ();
-    P_Checksum(gametic);
-    gametic++;
+    if ((!netgame) || (using_p2p_netcode && p2p_state == P2P_STATE_GO)) {
+      G_Ticker();
+      P_Checksum(gametic);
+      gametic++;
+    }
 
     NetUpdate(); // Keep sending our tics to avoid stalling remote nodes
-
   }
 }
 
@@ -554,4 +463,6 @@ static void D_QuitNetGame (void)
     I_uSleep(10000);
   }
 }
+
+/* vi: set et ts=2 sw=2: */
 
