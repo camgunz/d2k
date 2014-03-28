@@ -1,10 +1,13 @@
 # To Do
 
-1. Fill out the handler functions
-  - Probably involves creating some new methods/enums/etc.
-  - Player messages should have a recipient array; this is both extensible
-    and avoids sending duplicate message content in the case of multiple
-    recipients
+1. Use `nm_playercommandreceived` instead of `nm_ticmarker`.
+
+1. Replace "Client"/"client" with "Player"/"player"
+
+1. Make tics unsigned (there's no reason for a tic value to ever be negative)
+
+1. Make player numbers unsigned shorts
+  - Using -1 for the server's player number just shouldn't be a thing
 
 1. Finally revamp `d_client.c` and `d_server.c`.
 

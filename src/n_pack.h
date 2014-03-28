@@ -20,8 +20,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
+ * *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
  *  02111-1307, USA.
@@ -51,17 +50,11 @@ dboolean N_UnpackStateDelta(netpeer_t *np, int *from_tic, int *to_tic,
 void     N_PackFullState(netpeer_t *np, buf_t *buf);
 dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf);
 
-void     N_PackTicMarker(netpeer_t *np, int tic);
-dboolean N_UnpackTicMarker(netpeer_t *np, int *tic);
-
-void     N_PackPlayerCommandReceived(netpeer_t *np, int tic);
-void     N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic);
-
 void     N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level);
 dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level);
 
-void     N_PackSaveGameName(netpeer_t *np, rune *new_save_game_name);
-dboolean N_UnpackSaveGameName(netpeer_t *np, int *tic, buf_t *buf);
+void     N_PackPlayerCommandReceived(netpeer_t *np, int tic);
+void     N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic);
 
 void     N_PackServerMessage(netpeer_t *np, rune *message);
 dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf);
@@ -77,6 +70,9 @@ dboolean N_UnpackPlayerMessage(netpeer_t *np, unsigned short *sender,
 
 void     N_PackPlayerCommands(netpeer_t *np);
 dboolean N_UnpackPlayerCommands(netpeer_t *np);
+
+void     N_PackSaveGameNameChange(netpeer_t *np, rune *new_save_game_name);
+dboolean N_UnpackSaveGameNameChange(netpeer_t *np, int *tic, buf_t *buf);
 
 void     N_PackNameChange(netpeer_t *np, rune *new_name);
 dboolean N_UnpackNameChange(netpeer_t *np, buf_t *buf);
@@ -99,8 +95,8 @@ dboolean N_UnpackAutoaimChange(netpeer_t *np, dboolean *new_autoaim_enabled);
 void     N_PackWeaponSpeedChange(netpeer_t *np, byte new_weapon_speed);
 dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, byte *new_weapon_speed);
 
-void     N_PackColormapChange(netpeer_t *np, mapcolor_me new_color);
-dboolean N_UnpackColormapChange(netpeer_t *np, mapcolor_me *new_color);
+void     N_PackColormapChange(netpeer_t *np, int new_color);
+dboolean N_UnpackColormapChange(netpeer_t *np, int *new_color);
 
 void     N_PackColorChange(netpeer_t *np, byte new_red, byte new_green,
                                           byte new_blue);
@@ -110,14 +106,14 @@ dboolean N_UnpackColorChange(netpeer_t *np, byte *new_red, byte *new_green,
 void     N_PackSkinChange(netpeer_t *np);
 dboolean N_UnpackSkinChange(netpeer_t *np);
 
+void     N_PackAuthRequest(netpeer_t *np, rune *password);
+dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf);
+
 void     N_PackRCONCommand(netpeer_t *np, rune *command);
 dboolean N_UnpackRCONCommand(netpeer_t *np, buf_t *buf);
 
 void     N_PackVoteRequest(netpeer_t *np, rune *command);
 dboolean N_UnpackVoteRequest(netpeer_t *np, buf_t *buf);
-
-void     N_PackAuthRequest(netpeer_t *np, rune *password);
-dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf);
 
 #endif
 
