@@ -86,15 +86,49 @@ static dboolean mp_map(msgpack_object *o) {
   return o->type == MSGPACK_OBJECT_MAP;
 }
 
+#define mp_byte_size_name "0xFF"
+static dboolean mp_byte_size(msgpack_object *o) {
+  return o->via.u64 <= 0xFF;
+}
+
+#define mp_byte_size_name "0xFFFF"
+static dboolean mp_short_size(msgpack_object *o) {
+  return o->via.u64 <= 0xFFFF;
+}
+
+#define mp_byte_size_name "0xFFFFFFFF"
+static dboolean mp_int_size(msgpack_object *o) {
+  return o->via.u64 <= 0xFFFFFFFF;
+}
+
+static dboolean mp_int_range(msgpack_object *o, int min, int max) {
+  return obj->via.i64 <= min || obj->via.i64 >= max;
+}
+
+static dboolean mp_uint_range(msgpack_object *o, unsigned int min,
+                                                 unsigned int max) {
+  return obj->via.u64 <= min || obj->via.u64 >= max;
+}
+
+static dboolean mp_double_range(msgpack_object *o, double min, double max) {
+  return obj->via.double <= min || obj->via.double >= max;
+}
+
 #define unpack(s) \
   if (!msgpack_unpacker_next(&pac, &result)) {                                \
-    doom_printf(__func__ ": Error unpacking " #s "\n");                       \
+    doom_printf(__func__ ": Error unpacking " s "\n");                        \
     return false;                                                             \
   }                                                                           \
 
 #define validate(s, o, t)                                                     \
   if (!(t((o)->type))) {                                                      \
-    doom_printf(__func__ ": Invalid packet: " #s " is not " t ## _name "\n"); \
+    doom_printf(__func__ ": Invalid packet: " s " is not " t ## _name "\n");  \
+    return false;                                                             \
+  }
+
+#define validate_size(s, o, t)                                                \
+  if (!(t((o)))) {                                                            \
+    doom_printf(__func__ ": " s " out of range (> " t ## _name ")\n");        \
     return false;                                                             \
   }
 
@@ -112,7 +146,7 @@ static dboolean mp_map(msgpack_object *o) {
     msgpack_object *array_entry = obj->via.array.ptr + i;                     \
     if (!mt(array_entry)) {                                                   \
       doom_printf(                                                            \
-        __func__ ": Invalid packet: " #s " is not " mt ## _name "\n"          \
+        __func__ ": Invalid packet: " s " is not " mt ## _name "\n"           \
       );                                                                      \
       M_ObjBufferFreeEntriesAndClear((ob));                                   \
       return false;                                                           \
@@ -130,7 +164,7 @@ static dboolean mp_map(msgpack_object *o) {
     msgpack_object *array_entry = obj->via.array.ptr + i;                     \
     if (!mp_raw(array_entry)) {                                               \
       doom_printf(                                                            \
-        __func__ ": Invalid packet: " #s " is not " mp_raw_name "\n"          \
+        __func__ ": Invalid packet: " s " is not " mp_raw_name "\n"           \
       );                                                                      \
       M_ObjBufferFreeEntriesAndClear((ob));                                   \
       return false;                                                           \
@@ -142,66 +176,60 @@ static dboolean mp_map(msgpack_object *o) {
 
 #define validate_raw_size(s, sz)                                              \
   if (obj->via.raw.size != sz) {                                              \
-    doom_printf(__func__ ": Invalid packet, " #s " size is not %u", sz);      \
+    doom_printf(__func__ ": Invalid packet, " s " size is not %u", sz);       \
     return false;                                                             \
   }
 
 #define validate_is_byte(s)                                                   \
-  if (obj->via.u64 > 0xFF) {                                                  \
-    doom_printf(__func__ ": " #s " out of range (> 0xFF)\n");                 \
+  if (!mp_byte_size(obj)) {                                                   \
+    doom_printf(__func__ ": " s " out of range (> 0xFF)\n");                  \
     return false;                                                             \
   }
 
 #define validate_is_short(s)                                                  \
-  if (obj->via.u64 > 0xFFFF) {                                                \
-    doom_printf(__func__ ": " #s " out of range (> 0xFFFF)\n");               \
+  if (!mp_short_size(obj)) {                                                  \
+    doom_printf(__func__ ": " s " out of range (> 0xFFFF)\n");                \
     return false;                                                             \
   }
 
 #define validate_is_int(s)                                                    \
-  if (obj->via.u64 > 0xFFFFFFFF) {                                            \
-    doom_printf(__func__ ": " #s " out of range (> 0xFFFFFFFF)\n");           \
+  if (!mp_int_size(obj)) {                                                    \
+    doom_printf(__func__ ": " s " out of range (> 0xFFFFFFFF)\n");            \
     return false;                                                             \
   }
 
-#define validate_range_unsigned(min, max, s)                                  \
-  if (obj->via.u64 < min || obj->via.u64 > max) {                             \
-    doom_printf(                                                              \
-      __func__ ": " #s " out of range (" #min ", " #max ")\n"                 \
-    );                                                                        \
+#define validate_range_unsigned(s, min, max, s)                               \
+  if (!mp_uint_range(obj->via.u64, min, max)) {                               \
+    doom_printf(__func__ ": %s out of range (%u, %u)\n", s, min, max);        \
     return false;                                                             \
   }
 
 #define validate_range_signed(min, max, s)                                    \
-  if (obj->via.i64 < min || obj->via.i64 > max) {                             \
-    doom_printf(                                                              \
-      __func__ ": " #s " out of range (" #min ", " #max ")\n"                 \
-    );                                                                        \
+  if (!mp_int_range(obj->via.u64, min, max)) {                                \
+    doom_printf(__func__ ": %s out of range (%d, %d)\n", s, min, max);        \
     return false;                                                             \
   }
 
 #define validate_range_double(min, max, s)                                    \
   if (obj->via.dec < min || obj->via.dec > max) {                             \
-    doom_printf(                                                              \
-      __func__ ": " #s " out of range (" #min ", " #max ")\n"                 \
-    );                                                                        \
+    doom_printf(__func__ ": %s out of range (%f, %f)\n", s, min, max);        \
     return false;                                                             \
   }
 
 #define validate_player(pn)                                                   \
-  if (obj->via.u64 > (players->capacity - 1)) {                               \
+  if (!M_ObjBufferIsIndexValid(pn)) {                                         \
     doom_printf(__func__ ": Invalid player number\n");                        \
     return false;                                                             \
   }                                                                           \
-  if (players->objects[obj->via.u64] == NULL) {                               \
-    doom_printf(__func__ ": Invalid player number\n");                        \
+  if (!mp_short_size(pn)) {                                                   \
+    doom_printf(__func__ ": player number out of range (> 0xFFFF)\n");        \
     return false;                                                             \
   }
 
 #define SERVER_ONLY(s)                                                        \
   if (!server) {                                                              \
     doom_printf(                                                              \
-      __func__ ": Erroneously received packet [" #s "] from the server\n"     \
+      __func__ ": Erroneously received packet [" s "] from the server\n"     \
     );                                                                        \
     return;                                                                   \
   }
@@ -209,7 +237,7 @@ static dboolean mp_map(msgpack_object *o) {
 #define CLIENT_ONLY(s)                                                        \
   if (server) {                                                               \
     doom_printf(                                                              \
-      __func__ ": Erroneously received packet [" #s "] from a client\n"       \
+      __func__ ": Erroneously received packet [" s "] from a client\n"       \
     );                                                                        \
     return;                                                                   \
   }
@@ -233,7 +261,103 @@ dboolean N_LoadNewMessage(netpeer_t *np, byte *message_type) {
   return true;
 }
 
-/* CG: C/S message packing/unpacking here */
+void N_PackSetup(netpeer_t *np, setup_packet_t *sinfo, buf_t *wad_names) {
+  int offset = 0;
+
+  msgpack_pack_unsigned_char(np->rpk, nm_setup);
+  msgpack_pack_short(np->rpk, sinfo->players);
+  msgpack_pack_short(np->rpk, sinfo->yourplayer);
+  msgpack_pack_unsigned_char(np->rpk, sinfo->skill);
+  msgpack_pack_unsigned_char(np->rpk, sinfo->episode);
+  msgpack_pack_unsigned_char(np->rpk, sinfo->level);
+  msgpack_pack_unsigned_char(np->rpk, sinfo->deathmatch);
+  msgpack_pack_unsigned_char(np->rpk, sinfo->complevel);
+  msgpack_pack_unsigned_char(np->rpk, sinfo->ticdup);
+  msgpack_pack_unsigned_char(np->rpk, sinfo->extratic);
+  msgpack_pack_raw(np->rpk, GAME_OPTIONS_SIZE);
+  msgpack_pack_raw_body(np->rpk, sinfo->game_options);
+  msgpack_pack_array(np->rpk, sinfo->numwads);
+  for (int i = 0; i < sinfo->numwads; i++) {
+    size_t length = strlen(wad_names->data + offset);
+
+    msgpack_pack_raw(np->rpk, length);
+    msgpack_raw_body(np->rpk, wad_names->data + offset);
+
+    offset += length + 2;
+  }
+}
+
+dboolean N_UnpackSetup(netpeer_t *np, setup_packet_t *sinfo,
+                                      objbuf_t *wad_names) {
+  short players;
+  short yourplayer;
+  byte  skill;
+  byte  episode;
+  byte  level;
+  byte  deathmatch;
+  byte  complevel;
+  byte  ticdup;
+  byte  extratic;
+  byte  game_options[GAME_OPTIONS_SIZE];
+  byte  numwads;
+
+  unpack_and_validate("players", mp_uint);
+  validate_is_short("players");
+  players = (short)obj->via.i64;
+
+  unpack_and_validate("yourplayer", mp_uint);
+  validate_is_short("yourplayer");
+  yourplayer = (short)obj->via.i64;
+
+  unpack_and_validate("skill", mp_uint);
+  validate_is_byte("skill");
+  skill = (byte)obj->via.u64;
+
+  unpack_and_validate("episode", mp_uint);
+  validate_is_byte("episode");
+  episode = (byte)obj->via.u64;
+
+  unpack_and_validate("level", mp_uint);
+  validate_is_byte("level");
+  level = (byte)obj->via.u64;
+
+  unpack_and_validate("deathmatch", mp_uint);
+  validate_is_byte("deathmatch");
+  deathmatch = (byte)obj->via.u64;
+
+  unpack_and_validate("complevel", mp_uint);
+  validate_is_byte("complevel");
+  complevel = (byte)obj->via.u64;
+
+  unpack_and_validate("ticdup", mp_uint);
+  validate_is_byte("ticdup");
+  ticdup = (byte)obj->via.u64;
+
+  unpack_and_validate("extratic", mp_uint);
+  validate_is_byte("extratic");
+  extratic = (byte)obj->via.u64;
+
+  unpack_and_validate("game options", mp_raw);
+  validate_raw_size("game options", GAME_OPTIONS_SIZE);
+  memcpy(game_options, (byte)obj->via.raw.ptr, GAME_OPTIONS_SIZE);
+
+  unpack_and_validate_string_array("WAD names", "WAD name", wad_names);
+
+  sinfo->players      = players;
+  sinfo->yourplayer   = yourplayer;
+  sinfo->skill        = skill;
+  sinfo->episode      = episode;
+  sinfo->level        = level;
+  sinfo->deathmatch   = deathmatch;
+  sinfo->complevel    = complevel;
+  sinfo->ticdup       = ticdup;
+  sinfo->extratic     = extratic;
+  sinfo->numwads      = wad_names->size;
+
+  memcpy(sinfo->game_options, game_options, GAME_OPTIONS_SIZE);
+
+  return true;
+}
 
 void N_PackStateDelta(netpeer_t *np, int from_tic, int to_tic, buf_t *buf) {
   msgpack_pack_unsigned_char(np->upk, nm_statedelta);
@@ -286,16 +410,16 @@ dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf) {
   return true;
 }
 
-void N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level) {
-  msgpack_pack_unsigned_char(np->rpk, nm_authresponse);
-  msgpack_pack_unsigned_char(np->rpk, auth_level);
+void N_PackTicMarker(netpeer_t *np, int tic) {
+  msgpack_pack_unsigned_char(np->rpk, nm_ticmarker);
+  msgpack_pack_int(np->rpk, tic);
 }
 
-dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
-  unpack_and_validate("authorization level", mp_uint);
-  validate_range_signed(0, AUTH_LEVEL_MAX - 1);
+dboolean N_UnpackTicMarker(netpeer_t *np, int *tic) {
+  unpack_and_validate("tic", mp_uint);
+  validate_is_int("tic");
 
-  *auth_level = (auth_level_e)obj->via.u64;
+  *tic = (int)obj->via.u64;
 
   return true;
 }
@@ -310,6 +434,44 @@ dboolean N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic) {
   validate_is_int("last player command tic received");
 
   *tic = (int)obj->via.u64;
+
+  return true;
+}
+
+void N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level) {
+  msgpack_pack_unsigned_char(np->rpk, nm_authresponse);
+  msgpack_pack_unsigned_char(np->rpk, auth_level);
+}
+
+dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
+  unpack_and_validate("authorization level", mp_uint);
+  validate_range_signed(0, AUTH_LEVEL_MAX - 1);
+
+  *auth_level = (auth_level_e)obj->via.u64;
+
+  return true;
+}
+
+void N_PackSaveGameName(netpeer_t *np, rune *new_save_game_name) {
+  size_t length = strlen(new_save_game_name);
+
+  msgpack_pack_unsigned_char(np->rpk, PKT_SAVEG);
+  msgpack_pack_int(np->rpk, gametic);
+  msgpack_pack_raw(np->rpk, length);
+  msgpack_pack_raw_body(np->rpk, new_save_game_name, length);
+}
+
+dboolean N_UnpackSaveGameName(netpeer_t *np, int *tic, buf_t *buf) {
+  int m_tic = 0;
+
+  unpack_and_validate("tic", mp_uint);
+  validate_is_int("tic");
+  m_tic = (int)obj->via.i64;
+
+  unpack_and_validate("save game name", mp_raw);
+
+  *tic = m_tic;
+  M_BufferSetString(buf, (rune *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
 
   return true;
 }
@@ -480,27 +642,19 @@ dboolean N_UnpackPlayerCommands(netpeer_t *np) {
   return true;
 }
 
+dboolean N_UnpackClientPreferenceChange(netpeer_t *np, short *playernum,
+                                                       size_t *count) {
+  short m_playernum;
 
-void N_PackAuthRequest(netpeer_t *np, rune *password) {
-  size_t length = strlen(password) * sizeof(rune);
+  unpack_and_validate("client preference change player", mp_uint);
+  validate_is_short("client preference change player");
+  m_playernum = (short)obj->via.u64;
 
-  msgpack_pack_unsigned_char(np->rpk, nm_authrequest);
-  msgpack_pack_raw(np->rpk, length);
-  msgpack_pack_raw_body(np->rpk, password, length);
-}
-
-dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
-  unpack_and_validate("authorization request password", mp_raw);
-
-  M_BufferSetString(buf, (rune *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
-
-  return true;
-}
-
-dboolean N_UnpackClientPreferenceChange(netpeer_t *np, size_t *count) {
-  unpack_and_validate("client preference change", mp_map);
+  unpack_and_validate("client preference change map", mp_map);
 
   map = &obj->via.map;
+
+  *playernum = m_playernum;
   *count = map->size;
 
   return true;
@@ -519,13 +673,7 @@ dboolean N_UnpackClientPreferenceName(netpeer_t *np, size_t pref, buf_t *buf) {
 
   pair = map->ptr + pref;
 
-  if (!mp_raw(&pair->key)) {
-    doom_printf(
-      "N_UnpackClientPreferenceName: Invalid packet: client preference name "
-      "is not raw bytes\n"
-    );
-    return false;
-  }
+  validate("client preference name", &pair->key, mp_raw);
 
   M_BufferSetString(
     buf, (rune *)pair->key.via.raw.ptr, (size_t)pair->key.via.raw.size
@@ -660,6 +808,42 @@ dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, byte *new_weapon_speed) {
   return true;
 }
 
+void N_PackColormapChange(netpeer_t *np, mapcolor_me new_color) {
+  msgpack_pack_unsigned_char(np->rpk, PKT_COLOR);
+  if (server)
+    msgpack_pack_short(np->rpk, np->playernum);
+  else
+    msgpack_pack_short(np->rpk, consoleplayer);
+  msgpack_pack_int(np->rpk, new_color);
+}
+
+dboolean N_UnpackColormapChange(netpeer_t *np, short *playernum,
+                                               mapcolor_me *new_color) {
+  int m_tic = -1;
+  short m_playernum = -1;
+  mapcolor_me m_new_color;
+
+  unpack_and_validate("tic", mp_uint);
+  validate_is_int("tic");
+  m_tic = (int)obj->via.u64;
+
+  unpack_and_validate("player", mp_uint);
+  validate_is_short("player");
+  m_playernum = (short)obj->via.i64;
+
+  unpack_and_validate("new color", mp_uint);
+  validate_is_int("new color");
+
+  /* CG: TODO: Validate color value is within the mapcolor_me enum */
+  m_new_color = (mapcolor_me)obj->via.i64;
+
+  *tic = m_tic;
+  *playernum = m_playernum;
+  *new_color = m_new_color;
+
+  return true;
+}
+
 void N_PackColorChange(netpeer_t *np, byte new_red, byte new_green,
                                       byte new_blue) {
   msgpack_pack_unsigned_char(np->rpk, nm_clientpreferencechange);
@@ -696,6 +880,22 @@ dboolean N_UnpackSkinChange(netpeer_t *np) {
   return false;
 }
 
+void N_PackAuthRequest(netpeer_t *np, rune *password) {
+  size_t length = strlen(password) * sizeof(rune);
+
+  msgpack_pack_unsigned_char(np->rpk, nm_authrequest);
+  msgpack_pack_raw(np->rpk, length);
+  msgpack_pack_raw_body(np->rpk, password, length);
+}
+
+dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
+  unpack_and_validate("authorization request password", mp_raw);
+
+  M_BufferSetString(buf, (rune *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
+
+  return true;
+}
+
 void N_PackRCONCommand(netpeer_t *np, rune *command) {
   size_t length = strlen(command) * sizeof(rune);
 
@@ -726,124 +926,6 @@ dboolean N_UnpackVoteRequest(netpeer_t *np, buf_t *buf) {
   M_BufferSetString(buf, (rune *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
 
   return true;
-}
-
-/* CG: P2P message packing/unpacking here */
-
-void N_PackInit(netpeer_t *np, short wanted_player_number) {
-  msgpack_pack_unsigned_char(np->rpk, PKT_INIT);
-  msgpack_pack_short(np->rpk, wanted_player_number);
-}
-
-dboolean N_UnpackInit(netpeer_t *np, short *wanted_player_number) {
-  unpack_and_validate("wanted player number", mp_uint);
-  validate_is_short("wanted player number");
-
-  *wanted_player_number = (short)obj->via.i64;
-
-  return true;
-}
-
-void N_PackSetup(netpeer_t *np, setup_packet_t *sinfo, buf_t *wad_names) {
-  int offset = 0;
-
-  msgpack_pack_unsigned_char(np->rpk, PKT_SETUP);
-  msgpack_pack_short(np->rpk, sinfo->players);
-  msgpack_pack_short(np->rpk, sinfo->yourplayer);
-  msgpack_pack_unsigned_char(np->rpk, sinfo->skill);
-  msgpack_pack_unsigned_char(np->rpk, sinfo->episode);
-  msgpack_pack_unsigned_char(np->rpk, sinfo->level);
-  msgpack_pack_unsigned_char(np->rpk, sinfo->deathmatch);
-  msgpack_pack_unsigned_char(np->rpk, sinfo->complevel);
-  msgpack_pack_unsigned_char(np->rpk, sinfo->ticdup);
-  msgpack_pack_unsigned_char(np->rpk, sinfo->extratic);
-  msgpack_pack_raw(np->rpk, GAME_OPTIONS_SIZE);
-  msgpack_pack_raw_body(np->rpk, sinfo->game_options);
-  msgpack_pack_array(np->rpk, sinfo->numwads);
-  for (int i = 0; i < sinfo->numwads; i++) {
-    size_t length = strlen(wad_names->data + offset);
-
-    msgpack_pack_raw(np->rpk, length);
-    msgpack_raw_body(np->rpk, wad_names->data + offset);
-
-    offset += length + 2;
-  }
-}
-
-dboolean N_UnpackSetup(netpeer_t *np, setup_packet_t *sinfo,
-                                      objbuf_t *wad_names) {
-  short players;
-  short yourplayer;
-  byte  skill;
-  byte  episode;
-  byte  level;
-  byte  deathmatch;
-  byte  complevel;
-  byte  ticdup;
-  byte  extratic;
-  byte  game_options[GAME_OPTIONS_SIZE];
-  byte  numwads;
-
-  unpack_and_validate("players", mp_uint);
-  validate_is_short("players");
-  players = (short)obj->via.i64;
-
-  unpack_and_validate("yourplayer", mp_uint);
-  validate_is_short("yourplayer");
-  yourplayer = (short)obj->via.i64;
-
-  unpack_and_validate("skill", mp_uint);
-  validate_is_byte("skill");
-  skill = (byte)obj->via.u64;
-
-  unpack_and_validate("episode", mp_uint);
-  validate_is_byte("episode");
-  episode = (byte)obj->via.u64;
-
-  unpack_and_validate("level", mp_uint);
-  validate_is_byte("level");
-  level = (byte)obj->via.u64;
-
-  unpack_and_validate("deathmatch", mp_uint);
-  validate_is_byte("deathmatch");
-  deathmatch = (byte)obj->via.u64;
-
-  unpack_and_validate("complevel", mp_uint);
-  validate_is_byte("complevel");
-  complevel = (byte)obj->via.u64;
-
-  unpack_and_validate("ticdup", mp_uint);
-  validate_is_byte("ticdup");
-  ticdup = (byte)obj->via.u64;
-
-  unpack_and_validate("extratic", mp_uint);
-  validate_is_byte("extratic");
-  extratic = (byte)obj->via.u64;
-
-  unpack_and_validate("game options", mp_raw);
-  validate_raw_size("game options", GAME_OPTIONS_SIZE);
-  memcpy(game_options, (byte)obj->via.raw.ptr, GAME_OPTIONS_SIZE);
-
-  unpack_and_validate_string_array("WAD names", "WAD name", wad_names);
-
-  sinfo->players      = players;
-  sinfo->yourplayer   = yourplayer;
-  sinfo->skill        = skill;
-  sinfo->episode      = episode;
-  sinfo->level        = level;
-  sinfo->deathmatch   = deathmatch;
-  sinfo->complevel    = complevel;
-  sinfo->ticdup       = ticdup;
-  sinfo->extratic     = extratic;
-  sinfo->numwads      = wad_names->size;
-
-  memcpy(sinfo->game_options, game_options, GAME_OPTIONS_SIZE);
-
-  return true;
-}
-
-void N_PackGo(netpeer_t *np) {
-  msgpack_pack_unsigned_char(np->rpk, PKT_GO);
 }
 
 void N_PackClientTic(netpeer_t *np, int tic, objbuf_t *commands) {
@@ -973,81 +1055,6 @@ dboolean N_UnpackServerTic(netpeer_t *np, int *tic, objbuf_t *commands) {
 
     memcpy(commands->objects[i]
   }
-
-  return true;
-}
-
-void N_PackRetransmissionRequest(netpeer_t *np, int tic) {
-  msgpack_pack_unsigned_char(np->rpk, PKT_RETRANS);
-  msgpack_pack_int(np->rpk, tic);
-}
-
-dboolean N_UnpackRetransmissionRequest(netpeer_t *np, int *tic) {
-  unpack_and_validate("tic", mp_uint);
-  validate_is_int("tic");
-
-  *tic = (int)obj->via.u64;
-
-  return true;
-}
-
-void N_PackColor(netpeer_t *np, mapcolor_me new_color) {
-  msgpack_pack_unsigned_char(np->rpk, PKT_COLOR);
-  msgpack_pack_int(np->rpk, gametic);
-  if (server)
-    msgpack_pack_short(np->rpk, np->playernum);
-  else
-    msgpack_pack_short(np->rpk, consoleplayer);
-  msgpack_pack_int(np->rpk, new_color);
-}
-
-dboolean N_UnpackColor(netpeer_t *np, int *tic, short *playernum,
-                                      mapcolor_me *new_color) {
-  int m_tic = -1;
-  short m_playernum = -1;
-  mapcolor_me m_new_color;
-
-  unpack_and_validate("tic", mp_uint);
-  validate_is_int("tic");
-  m_tic = (int)obj->via.u64;
-
-  unpack_and_validate("player", mp_uint);
-  validate_is_short("player");
-  m_playernum = (short)obj->via.i64;
-
-  unpack_and_validate("new color", mp_uint);
-  validate_is_int("new color");
-
-  /* CG: TODO: Validate color value is within the mapcolor_me enum */
-  m_new_color = (mapcolor_me)obj->via.i64;
-
-  *tic = m_tic;
-  *playernum = m_playernum;
-  *new_color = m_new_color;
-
-  return true;
-}
-
-void N_PackSaveGameName(netpeer_t *np, rune *new_save_game_name) {
-  size_t length = strlen(new_save_game_name);
-
-  msgpack_pack_unsigned_char(np->rpk, PKT_SAVEG);
-  msgpack_pack_int(np->rpk, gametic);
-  msgpack_pack_raw(np->rpk, length);
-  msgpack_pack_raw_body(np->rpk, new_save_game_name, length);
-}
-
-dboolean N_UnpackSaveGameName(netpeer_t *np, int *tic, buf_t *buf) {
-  int m_tic = 0;
-
-  unpack_and_validate("tic", mp_uint);
-  validate_is_int("tic");
-  m_tic = (int)obj->via.i64;
-
-  unpack_and_validate("save game name", mp_raw);
-
-  *tic = m_tic;
-  M_BufferSetString(buf, (rune *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
 
   return true;
 }

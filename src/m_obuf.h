@@ -52,6 +52,11 @@ void M_ObjBufferInit(objbuf_t **obuf);
 void M_ObjBufferInitWithCapacity(objbuf_t **obuf, int capacity);
 
 /*
+ * Returns true if the passed index indexes a valid object.
+ */
+dboolean M_ObjBufferIsValidIndex(objbuf_t *obuf, int index);
+
+/*
  * Appends an object to the buffer, allocating a new slot.
  */
 void M_ObjBufferAppend(objbuf_t *obuf, void *obj);

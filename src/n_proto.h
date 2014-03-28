@@ -54,18 +54,24 @@ buf_t* N_GetMessageRecipientBuffer(void);
 # CG: new netcode
 ################################################################################
 */
-const byte nm_statedelta             = 1;  /* unreliable */
-const byte nm_fullstate              = 2;  /*   reliable */
-const byte nm_authresponse           = 3;  /*   reliable */
-const byte nm_playercommandreceived  = 4;  /*   reliable */
-const byte nm_servermessage          = 5;  /*   reliable */
-const byte nm_playermessage          = 6;  /*   reliable */
-const byte nm_playercommands         = 7;  /* unreliable */
-const byte nm_authrequest            = 8;  /*   reliable */
-const byte nm_clientpreferencechange = 9;  /*   reliable */
-const byte nm_rconcommand            = 10; /*   reliable */
-const byte nm_voterequest            = 11; /*   reliable */
 
+const byte nm_setup                  = 1;  /* S => C | P2P  |   reliable */
+const byte nm_statedelta             = 2;  /* S => C | C/S  | unreliable */
+const byte nm_fullstate              = 3;  /* S => C | C/S  |   reliable */
+const byte nm_ticmarker              = 4;  /* S => C | BOTH |   reliable */
+const byte nm_playercommandreceived  = 5;  /* S => C | BOTH |   reliable */
+const byte nm_authresponse           = 6;  /* S => C | BOTH |   reliable */
+const byte nm_savegamename           = 7;  /* S => C | BOTH |   reliable */
+const byte nm_servermessage          = 8;  /* S => C | BOTH |   reliable */
+const byte nm_playermessage          = 9;  /* BOTH   | BOTH |   reliable */
+const byte nm_playercommands         = 10; /* BOTH   | BOTH | unreliable */
+const byte nm_clientpreferencechange = 11; /* BOTH   | BOTH |   reliable */
+const byte nm_rconcommand            = 12; /* C => S | BOTH |   reliable */
+const byte nm_voterequest            = 13; /* C => S | BOTH |   reliable */
+const byte nm_authrequest            = 14; /* C => S | BOTH |   reliable */
+
+void SV_SendTICMarker(void);
+void SV_SendSetup(void);
 void SV_SendStateDelta(short playernum);
 void SV_SendFullState(short playernum);
 void SV_SendAuthResponse(short playernum, auth_level_e auth_level);

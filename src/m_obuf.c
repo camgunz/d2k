@@ -70,6 +70,13 @@ void M_ObjBufferInsert(objbuf_t *obuf, int index, void *obj) {
   obuf->objects[index] = obj;
 }
 
+dboolean M_ObjBufferIsValidIndex(objbuf_t *obuf, int index) {
+  if (index >= 0 && index < obuf->capacity && obuf->objects[index] != NULL)
+    return true;
+
+  return false;
+}
+
 int M_ObjBufferInsertAtFirstFreeSlot(objbuf_t *obuf, void *obj) {
   for (int i = 0; i < obuf->capacity; i++) {
     if (obuf[i] == NULL) {
