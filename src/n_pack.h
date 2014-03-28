@@ -72,7 +72,7 @@ void     N_PackPlayerCommands(netpeer_t *np);
 dboolean N_UnpackPlayerCommands(netpeer_t *np);
 
 void     N_PackSaveGameNameChange(netpeer_t *np, rune *new_save_game_name);
-dboolean N_UnpackSaveGameNameChange(netpeer_t *np, int *tic, buf_t *buf);
+dboolean N_UnpackSaveGameNameChange(netpeer_t *np, buf_t *buf);
 
 void     N_PackNameChange(netpeer_t *np, rune *new_name);
 dboolean N_UnpackNameChange(netpeer_t *np, buf_t *buf);

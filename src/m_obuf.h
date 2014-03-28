@@ -35,105 +35,29 @@
 #ifndef M_OBUF_H__
 #define M_OBUF_H__
 
-typedef struct objbuf_s {
+typedef struct obuf_s {
   int capacity;
   void **objects;
-} objbuf_t;
+} obuf_t;
 
-/*
- * Allocates and initializes an object buffer.
- */
-void M_ObjBufferInit(objbuf_t **obuf);
-
-/*
- * Allocates and initializes an object buffer with the specified number of
- * object spots available; allows avoiding several initial allocations.
- */
-void M_ObjBufferInitWithCapacity(objbuf_t **obuf, int capacity);
-
-/*
- * Returns true if the passed index indexes a valid object.
- */
-dboolean M_ObjBufferIsValidIndex(objbuf_t *obuf, int index);
-
-/*
- * Appends an object to the buffer, allocating a new slot.
- */
-void M_ObjBufferAppend(objbuf_t *obuf, void *obj);
-
-/*
- * Inserts an object into the buffer, but will not allocate a new slot if the
- * index is out of bounds; rather I_Error is called.
- */
-void M_ObjBufferInsert(objbuf_t *obuf, int index, void *obj);
-
-/*
- * Inserts an object into the first free slot and returns the index at which
- * the object can be found.  If no slot was available, -1 is returned.
- */
-int  M_ObjBufferInsertAtFirstFreeSlot(objbuf_t *obuf, void *obj);
-
-/*
- * Inserts an object into the first free slot.  If no free slot was available,
- * allocates a new slot at the end of the buffer and inserts the object there.
- * Returns the index at which the object can be found.
- */
-int  M_ObjBufferInsertAtFirstFreeSlotOrAppend(objbuf_t *obuf, void *obj);
-
-/*
- * Iterates over an object buffer.  Passing index -1 returns the first non-NULL
- * object in obj, passing a different index returns the first non-NULL object
- * with a greater index in obj.  Returns true if a non-NULL object was found.
- */
-dboolean M_ObjBufferIter(objbuf_t *obuf, int *index, void **obj) {
-
-/*
- * Consolidates all occupied slots to the front of the buffer; no empty space
- * will be at the beginning of the buffer or between objects; all empty space
- * will be at the end of the buffer (if any is available).
- *
- * WARNING: This will change the indices of contained objects.
- *
- */
-void M_ObjBufferConsolidate(objbuf_t *obuf);
-
-/*
- * Removes the object at the specified index from the buffer.  Object is not
- * freed before it is removed.
- */
-void M_ObjBufferRemove(objbuf_t *obuf, int index);
-
-/*
- * Ensures the buffer is at least the specified capacity; if not, it is
- * reallocated to the new capacity.
- */
-void M_ObjBufferEnsureCapacity(objbuf_t *obuf, int capacity);
-
-/*
- * Returns the total number of objects contained in the buffer.
- *
- * (for capacity, simply use buffer->capacity)
- *
- */
-int  M_ObjBufferGetObjectCount(objbuf_t *obuf);
-
-/*
- * Removes all objects from the buffer.  Objects are not freed before they are
- * removed.
- */
-void M_ObjBufferClear(objbuf_t *obuf);
-
-/*
- * Removes all objects from the buffer.  Objects are freed before they are
- * removed.
- */
-void M_ObjBufferFreeEntriesAndClear(objbuf_t *obuf);
-
-/*
- * Frees the buffer's internal list, effectively removing all objects from the
- * buffer.  Objects are not freed before they are removed.
- */
-void M_ObjBufferFree(objbuf_t *obuf);
+void     M_OBufInit(obuf_t *obuf);
+void     M_OBufInitWithCapacity(obuf_t *obuf, int capacity);
+dboolean M_OBufIsValidIndex(obuf_t *obuf, int index);
+void     M_OBufAppend(obuf_t *obuf, void *obj);
+void     M_OBufInsert(obuf_t *obuf, int index, void *obj);
+int      M_OBufInsertAtFirstFreeSlot(obuf_t *obuf, void *obj);
+int      M_OBufInsertAtFirstFreeSlotOrAppend(obuf_t *obuf, void *obj);
+dboolean M_OBufIter(obuf_t *obuf, int *index, void **obj);
+void*    M_OBufGet(obuf_t *obuf, int index);
+void     M_OBufConsolidate(obuf_t *obuf);
+void     M_OBufRemove(obuf_t *obuf, int index);
+void     M_OBufEnsureCapacity(obuf_t *obuf, int capacity);
+int      M_OBufGetObjectCount(obuf_t *obuf);
+void     M_OBufClear(obuf_t *obuf);
+void     M_OBufFreeEntriesAndClear(obuf_t *obuf);
+void     M_OBufFree(obuf_t *obuf);
 
 #endif
+
+/* vi: set et sw=2 ts=2: */
 

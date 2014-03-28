@@ -58,56 +58,22 @@
 #include "lprintf.h"
 #include "e6y.h"
 
-static dboolean          server;
-static int               remotetic;  // Tic expected from the remote
-static int               remotesend; // Tic expected by the remote
+static int               remotetic;  /* Tic expected from the remote */
+static int               remotesend; /* Tic expected by the remote   */
 static ticcmd_t         *localcmds;
 static unsigned          numqueuedpackets;
 static packet_header_t **queuedpacket;
 static int               xtratics = 0;
 static dboolean          isExtraDDisplay = false;
-static p2p_state_e       p2p_state = P2P_STATE_NONE;
+static net_state_e       net_state = NET_STATE_NONE;
 
 int      maketic;
 int      ticdup = 1;
 int      wanted_player_number = 0;
 ticcmd_t netcmds[MAXPLAYERS][BACKUPTICS];
 
-static void packet_set(packet_header_t *p, unsigned char type,
-                       unsigned long tic) {
-  p->tic = doom_htonl(tic);
-  p->type = type;
-  p->reserved[0] = 0;
-  p->reserved[1] = 0;
-}
-
-/* cph - convert network byte stream to usable ticcmd_t and visa-versa
- *     - the functions are functionally identical apart from parameters
- *     - the void* param can be unaligned. By using void* as the parameter
- *       it means gcc won't assume alignment so won't make false assumptions
- *       when optimising. So I'm told.
- */
-static void RawToTic(ticcmd_t* dst, const void* src) {
-  memcpy(dst, src, sizeof(*dst));
-  dst->angleturn = doom_ntohs(dst->angleturn);
-  dst->consistancy = doom_ntohs(dst->consistancy);
-}
-
-static void TicToRaw(void* dst, const ticcmd_t* src) {
-  /* We have to make a copy of the source struct, then do byte swaps,
-   * and fnially copy to the destination (can't do the swaps in the
-   * destination, because it might not be aligned).
-   */
-  ticcmd_t tmp = *src;
-  tmp.angleturn = doom_ntohs(tmp.angleturn);
-  tmp.consistancy = doom_ntohs(tmp.consistancy);
-  memcpy(dst, &tmp, sizeof(tmp));
-}
-
-static void D_QuitNetGame(void);
-
 void N_SetP2PState(p2p_state_e new_state) {
-  if (p2p_state < new_state)
+  if (new_state > p2p_state)
     p2p_state = new_state;
 }
 
@@ -115,20 +81,16 @@ void N_InitNetGame(void) {
   int i;
   int player_count = 1;
 
-  /*
-   * CG: TODO: Create separate P2P and C/S initialization functions and,
-   *           depending upon command-line arguments, call them here
-   */
-
   i = M_CheckParm("-net");
   if (i && i < myargc - 1)
     i++;
 
-  if (!(netgame = server = !!i)) {
+  if (!(netgame = have_peers = !!i)) {
     playeringame[consoleplayer = 0] = true;
     netgame = M_CheckParm("-solo-net");
   }
-  else {
+
+  if (have_peers) {
     N_Init();
 
     if (!N_ConnectToServer(myargv[i]))
@@ -139,8 +101,11 @@ void N_InitNetGame(void) {
     if (p2p_state != P2P_STATE_SETUP) 
       I_Error("Timed out waiting for setup information from server");
 
-    // Once we have been accepted by the server, we should tell it when we leave
-    atexit(N_Disconnect()); // CG: TODO: C/S and P2P need their own d/c funcs
+    /*
+     * Once we have been accepted by the server, we should tell it when we
+     * leave
+     */
+    atexit(N_Disconnect());
   }
 
   displayplayer = consoleplayer;
@@ -151,14 +116,14 @@ void N_InitNetGame(void) {
 void N_WaitForServer(void) {
   /*
    * CG: This should basically not exist.  In D_DoomLoop or whatever, the
-   *     client needs to check its state, if it's SETUP and then it gets the GO
-   *     packet, then it loads the game, otherwise it returns.
+   *     client needs to check its state, if it's SETUP and then it gets the
+   *     GO packet, then it loads the game, otherwise it returns.
    */
   packet_header_t *packet = Z_Malloc(
     sizeof(packet_header_t) + 1, PU_STATIC, NULL
   );
 
-  if (server) {
+  if (have_peers) {
     lprintf(LO_INFO,
       "D_CheckNetGame: waiting for server to signal game start\n"
     );
@@ -185,7 +150,7 @@ void NetUpdate(void) {
   if (isExtraDDisplay)
     return;
 
-  if (server) { // Receive network packets
+  if (have_peers) { // Receive network packets
     size_t recvlen;
     packet_header_t *packet = Z_Malloc(10000, PU_STATIC, NULL);
 
@@ -232,7 +197,7 @@ void NetUpdate(void) {
               playeringame[j] = false;
             }
           }
-          server = false;
+          have_peers = false;
           doom_printf(
             "Server is down\nAll other players are no longer in the game\n"
           );
@@ -247,9 +212,10 @@ void NetUpdate(void) {
           memcpy(queuedpacket[numqueuedpackets-1], packet, recvlen);
         break;
         case PKT_BACKOFF:
-          /* cph 2003-09-18 - The server sends this when we have got ahead of the
-           * other clients. We should stall the input side on this client, to
-           * allow other clients to catch up.
+          /*
+           * cph 2003-09-18 - The server sends this when we have got ahead of
+           * the other clients. We should stall the input side on this client,
+           * to allow other clients to catch up.
            */
            lastmadetic++;
         break;
@@ -283,7 +249,7 @@ void NetUpdate(void) {
       maketic++;
     }
 
-    if (server && maketic > remotesend) { // Send the tics to the server
+    if (have_peers && maketic > remotesend) { // Send the tics to the server
       int sendtics;
       remotesend -= xtratics;
 
@@ -317,7 +283,7 @@ void NetUpdate(void) {
 /* cph - data passed to this must be in the Doom (little-) endian */
 void D_NetSendMisc(netmisctype_t type, size_t len, void* data)
 {
-  if (server) {
+  if (have_peers) {
     size_t size = sizeof(packet_header_t) + 3 * sizeof(int) + len;
     packet_header_t *packet = Z_Malloc(size, PU_STATIC, NULL);
     int *p = (void *)(packet + 1);
@@ -399,13 +365,13 @@ void TryRunTics (void) {
   // Wait for tics to run
   while (true) {
     NetUpdate();
-    runtics = (server ? remotetic : maketic) - gametic;
+    runtics = (have_peers ? remotetic : maketic) - gametic;
 
     if (runtics)
       break;
 
     if (!movement_smooth || !window_focused) {
-      if (server)
+      if (have_peers)
         N_ServiceNetworkTimeout(ms_to_next_tick);
       else
         I_uSleep(ms_to_next_tick * 1000);
@@ -428,7 +394,7 @@ void TryRunTics (void) {
   }
 
   while (runtics--) {
-    if (server)
+    if (have_peers)
       CheckQueuedPackets();
 
     if (advancedemo)
@@ -452,7 +418,7 @@ static void D_QuitNetGame (void)
   packet_header_t *packet = (void *)buf;
   int i;
 
-  if (!server)
+  if (!have_peers)
     return;
 
   buf[sizeof(packet_header_t)] = consoleplayer;

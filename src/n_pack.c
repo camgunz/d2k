@@ -42,22 +42,6 @@
 
 #define MAX_ARRAY_SIZE 128
 
-#define SERVER_ONLY(s)                                                        \
-  if (!server) {                                                              \
-    doom_printf(                                                              \
-      __func__ ": Erroneously received packet [" s "] from the server\n"      \
-    );                                                                        \
-    return;                                                                   \
-  }
-
-#define CLIENT_ONLY(s)                                                        \
-  if (server) {                                                               \
-    doom_printf(                                                              \
-      __func__ ": Erroneously received packet [" s "] from a client\n"        \
-    );                                                                        \
-    return;                                                                   \
-  }
-
 #define DECLARE_SIGNED_TYPE(type, name, size)                                 \
   const char *npv_ ## type ## _name = name;                                   \
   static dboolean npv_ ## type ## _type(msgpack_object *o) {                  \
@@ -148,12 +132,6 @@ DECLARE_TYPE(map, "a map", MAP);
     return false;                                                             \
   }
 
-#define validate_player(obj)                                                  \
-  if (!M_ObjBufferIsIndexValid(obj->via.u64)) {                               \
-    doom_printf(__func__ ": Invalid player number\n");                        \
-    return false;                                                             \
-  }
-
 #define validate_array_size(arr, name, size)                                  \
   if (arr.size > size) {                                                      \
     doom_printf(__func__ ": Array %s too large (%u > %u)\n",                  \
@@ -166,6 +144,20 @@ DECLARE_TYPE(map, "a map", MAP);
   validate_type(object, name, type)                                           \
   validate_size(object, name, type)
 
+#define validate_player(object)                                               \
+  validate_type_and_size(object, "player number", short)                      \
+  if (!M_ObjBufferIsIndexValid(object->via.u64)) {                            \
+    doom_printf(__func__ ": Invalid player number\n");                        \
+    return false;                                                             \
+  }
+
+#define validate_recipient(object)                                            \
+  validate_type_and_size(object, "recipient number", short)                   \
+  if (object->via.i64 != -1 && !M_ObjBufferIsIndexValid(object->via.u64)) {   \
+    doom_printf(__func__ ": Invalid recipient number\n");                     \
+    return false;                                                             \
+  }
+
 #define unpack_and_validate(object, name, type)                               \
   unpack(name);                                                               \
   object = &result.data;                                                      \
@@ -176,7 +168,8 @@ DECLARE_TYPE(map, "a map", MAP);
   validate_range(object, name, type, min, max)
 
 #define unpack_and_validate_player(object)                                    \
-  unpack_and_validate(object, "player number", ushort)                        \
+  unpack(name);                                                               \
+  object = &result.data;                                                      \
   validate_player(object)
 
 #define unpack_and_validate_array(o, a, name, ename, etype, ectype, buf, sz)  \

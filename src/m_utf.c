@@ -34,15 +34,7 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "z_zone.h"
-#include "doomtype.h"
-#include "m_utf.h"
-
-#include <iconv.h>
+#include "doom.h"
 
 #define CHUNK_SIZE 32
 /*
@@ -65,48 +57,13 @@ const char* M_GetUTFError(void) {
 
 dboolean M_IsControlChar(wchar_t sc) {
   if (sc < 0x20)
-    return 1;
+    return true;
   if (sc == 0x7f)
-    return 1;
+    return true;
   if ((sc > 0x7e) && (sc < 0xa0))
-    return 1;
+    return true;
 
-  return 0;
-}
-
-dboolean M_MustFeedLine(rune r) {
-  switch (r) {
-    case 0x000A:
-    case 0x000D:
-    case 0x0085:
-    case 0x2028:
-    case 0x2029:
-      return true;
-    default:
-      return false;
-  }
-}
-
-dboolean M_CanBreakLine(rune r) {
-  switch (r) {
-    case 0x0009:
-    case 0x0020:
-    case 0x1680:
-    case 0x2000:
-    case 0x2001:
-    case 0x2002:
-    case 0x2003:
-    case 0x2004:
-    case 0x2005:
-    case 0x2006:
-    case 0x2007:
-    case 0x2008:
-    case 0x2009:
-    case 0x200A:
-        return true;
-    default:
-        return false;
-  }
+  return false;
 }
 
 size_t M_DecodeASCII(rune **out, char *in, size_t in_size) {
@@ -338,7 +295,7 @@ size_t M_EncodeLocal(char **out, rune *in, size_t in_size) {
   return r;
 }
 
-size_t M_DecodeLocal(rune **out, char *in, size_t in_size) {
+size_t M_DecodeLocal(rune **out, char *in) {
   size_t len = mbstowcs(NULL, in, 0);
   wchar_t *temp = malloc(len * sizeof(wchar_t));
   size_t r = M_DecodeWCHAR(out, temp, len * sizeof(wchar_t));
@@ -347,4 +304,6 @@ size_t M_DecodeLocal(rune **out, char *in, size_t in_size) {
 
   return r;
 }
+
+/* vi: set et sw=2 ts=2: */
 

@@ -40,39 +40,108 @@
 
 #define MAX_PREF_NAME_SIZE 20
 
-#define SERVER_ONLY(s)                                                         \
-  if (!server) {                                                               \
-    doom_printf(                                                               \
-      "N_HandlePacket: Erroneously received packet [" #s "] from the server\n" \
-    );                                                                         \
-    return;                                                                    \
+#define P2P_ONLY(name)                                                        \
+  if (!use_p2p_netcode) {                                                     \
+    doom_printf(                                                              \
+      __func__ ": Erroneously received P2P packet [" name "] in C\\S mode\n"  \
+    );                                                                        \
+    return;                                                                   \
   }
 
-#define CLIENT_ONLY(s)                                                         \
-  if (server) {                                                                \
-    doom_printf(                                                               \
-      "N_HandlePacket: Erroneously received packet [" #s "] from a client\n"   \
-    );                                                                         \
-    return;                                                                    \
+#define CS_ONLY(name)                                                         \
+  if (use_p2p_netcode) {                                                      \
+    doom_printf(                                                              \
+      __func__ ": Erroneously received C/S packet [" name "] in P2P mode\n"   \
+    );                                                                        \
+    return;                                                                   \
   }
 
-#define CHECK_VALID_PLAYER(np, playernum)                                      \
-  if (((np) == N_GetPlayerForPeer((playernum))) == NULL)                       \
+#define SERVER_ONLY(name)                                                     \
+  if (!server) {                                                              \
+    doom_printf(                                                              \
+      __func__ ": Erroneously received packet [" name "] from the server\n"   \
+    );                                                                        \
+    return;                                                                   \
+  }
+
+#define CLIENT_ONLY(name)                                                     \
+  if (server) {                                                               \
+    doom_printf(                                                              \
+      __func__ ": Erroneously received packet [" name "] from a client\n"     \
+    );                                                                        \
+    return;                                                                   \
+  }
+
+#define NOT_CS_CLIENT(name)                                                   \
+  if ((!use_p2p_netcode) && (!server)) {                                      \
+    doom_printf(                                                              \
+      __func__ ": Erroneously received packet [" name "] in C\\S client "     \
+      "mode\n"                                                                \
+    );                                                                        \
+    return;                                                                   \
+  }
+
+#define P2P_SERVER_ONLY(name)                                                 \
+  P2P_ONLY(name);                                                             \
+  SERVER_ONLY(name);
+
+#define P2P_CLIENT_ONLY(name)                                                 \
+  P2P_ONLY(name);                                                             \
+  CLIENT_ONLY(name);
+
+#define CS_SERVER_ONLY(name)                                                  \
+  CS_ONLY(name);                                                              \
+  SERVER_ONLY(name);
+
+#define CS_CLIENT_ONLY(name)                                                  \
+  CS_ONLY(name);                                                              \
+  CLIENT_ONLY(name);
+
+#define CHECK_VALID_PLAYER(np, playernum)                                     \
+  if (((np) == N_GetPlayerForPeer((playernum))) == NULL)                      \
     I_Error(__func__ ": Invalid player %d.\n", playernum)
 
-#define CHECK_CONNECTION(np)                                                   \
-  if (((np) = N_GetPeer(0)) == NULL) {                                         \
-    doom_printf(__func__ ": Not connected\n");                                 \
-    return;                                                                    \
+#define CHECK_CONNECTION(np)                                                  \
+  if (((np) = N_GetPeer(0)) == NULL) {                                        \
+    doom_printf(__func__ ": Not connected\n");                                \
+    return;                                                                   \
   }
 
 static buf_t message_recipients;
 
-/*
- ##############################################################################
- # CG: C/S Message Handlers here
- ##############################################################################
-*/
+static void handle_setup(netpeer_t *np) {
+  setup_packet_t sinfo;
+  objbuf_t wad_names;
+
+  if (!N_UnpackSetup(np, &sinfo, &wad_names))
+    return;
+
+  consoleplayer = sinfo->yourplayer;
+  compatibility_level = sinfo->complevel;
+  G_Compatibility();
+  startskill = sinfo->skill;
+  deathmatch = sinfo->deathmatch;
+  startmap = sinfo->level;
+  startepisode = sinfo->episode;
+  ticdup = sinfo->ticdup;
+  xtratics = sinfo->extratic;
+  G_ReadOptions(sinfo->game_options);
+
+  M_ObjBufferEnsureCapacity(&players, sinfo->players);
+
+  for (int i = 0; i < wad_names.capacity; i++) {
+    if (wad_names.objects[i] != NULL) {
+      D_AddFile(wad_names.objects[i], source_net);
+    }
+  }
+
+  doom_printf("Joined game as player %d; %d WADs specified\n", 
+    consoleplayer, M_ObjBufferGetObjectCount(&wad_names);
+  );
+
+  N_SetP2PState(P2P_STATE_SETUP);
+}
+
 static void handle_state_delta(netpeer_t *np) {
   static buf_t delta_buffer;
 
@@ -161,11 +230,15 @@ static void handle_player_commands(netpeer_t *np) {
   N_UnpackPlayerCommands(np);
 }
 
-static void handle_auth_request(netpeer_t *np) {
-  auth_level_e level;
+static void handle_save_game_name_change(netpeer_t *np) {
+  static buf_t save_game_name;
 
-  if (N_UnpackServerMessage(np, &level))
-    N_SetLocalClientAuthorizationLevel(level);
+  if (N_UnpackSaveGameNameChange(np, &save_game_name)) {
+    if (save_game_name.size < SAVEDESCLEN) {
+      memset(savedescription, 0, SAVEDESCLEN);
+      memcpy(savedescription, save_game_name.data, save_game_name.size);
+    }
+  }
 }
 
 static void handle_client_preference_change(netpeer_t *np) {
@@ -224,240 +297,28 @@ static void handle_client_preference_change(netpeer_t *np) {
     }
     else if (M_BufferEqualsString(&pref_key_name, "color")) {
     }
+    else if (M_BufferEqualsString(&pref_key_name, "colormap")) {
+      int new_color;
+
+      if (N_UnpackColormapChange(np, &new_color)
+        G_ChangedPlayerColour(np->playernum, new_color);
+    }
     else if (M_BufferEqualsString(&pref_key_name, "skin_name")) {
     }
   }
+}
+
+static void handle_auth_request(netpeer_t *np) {
+  auth_level_e level;
+
+  if (N_UnpackServerMessage(np, &level))
+    N_SetLocalClientAuthorizationLevel(level);
 }
 
 static void handle_rcon(netpeer_t *np) {
 }
 
 static void handle_vote_request(netpeer_t *np) {
-}
-
-/*
- ##############################################################################
- # CG: P2P Message Handlers here
- ##############################################################################
-*/
-
-static void handle_init(netpeer_t *np) {
-  short wanted_player_number;
-
-  if (N_UnpackInit(np, &wanted_player_number)) {
-    /* CG: TODO */
-  }
-}
-
-static void handle_setup(netpeer_t *np) {
-  setup_packet_t sinfo;
-  objbuf_t wad_names;
-
-  if (!N_UnpackSetup(np, &sinfo, &wad_names))
-    return;
-
-  consoleplayer = sinfo->yourplayer;
-  compatibility_level = sinfo->complevel;
-  G_Compatibility();
-  startskill = sinfo->skill;
-  deathmatch = sinfo->deathmatch;
-  startmap = sinfo->level;
-  startepisode = sinfo->episode;
-  ticdup = sinfo->ticdup;
-  xtratics = sinfo->extratic;
-  G_ReadOptions(sinfo->game_options);
-
-  M_ObjBufferEnsureCapacity(&players, sinfo->players);
-
-  for (int i = 0; i < wad_names.capacity; i++) {
-    if (wad_names.objects[i] != NULL) {
-      D_AddFile(wad_names.objects[i], source_net);
-    }
-  }
-
-  doom_printf("Joined game as player %d; %d WADs specified\n", 
-    consoleplayer, M_ObjBufferGetObjectCount(&wad_names);
-  );
-
-  N_SetP2PState(P2P_STATE_SETUP);
-}
-
-static void handle_go(netpeer_t *np) {
-  /* CG: TODO */
-}
-
-static void handle_client_tic(netpeer_t *np) {
-}
-
-static void handle_server_tic(netpeer_t *np) {
-}
-
-static void handle_retransmission_request(netpeer_t *np) {
-}
-
-static void handle_color(netpeer_t *np) {
-}
-
-static void handle_save_game_name(netpeer_t *np) {
-}
-
-static void handle_quit(netpeer_t *np) {
-}
-
-static void handle_down(netpeer_t *np) {
-}
-
-static void handle_wad(netpeer_t *np) {
-}
-
-static void handle_backoff(netpeer_t *np) {
-}
-
-static void dispatch_p2p_message(netpeer_t *np, byte message_type) {
-  switch(message_type) {
-    case PKT_INIT:
-      SERVER_ONLY("initialization");
-      handle_init_request(np);
-    break;
-    case PKT_SETUP:
-      CLIENT_ONLY("setup");
-      handle_setup(np);
-    break;
-    case PKT_GO:
-      /* CG: Both clients and servers receive PKT_GO messages */
-      handle_go(np);
-    break;
-    case PKT_TICC:
-      SERVER_ONLY("client tic");
-      handle_client_tic(np);
-    break;
-    case PKT_TICS:
-      CLIENT_ONLY("server tic")
-      handle_server_tic(np);
-    break;
-    case PKT_RETRANS:
-      /* CG: Both clients and servers receive PKT_RETRANS messages */
-      handle_retransmission_request(np);
-    break;
-    case PKT_COLOR:
-      /* CG: Both clients and servers receive PKT_COLOR messages */
-      handle_color(np);
-    break;
-    case PKT_SAVEG:
-      /* CG: Both clients and servers receive PKT_SAVEG messages */
-      handle_save_game_name(np);
-    break;
-    case PKT_QUIT:
-      /* CG: Both clients and servers receive PKT_QUIT messages */
-      handle_quit(np);
-    break;
-    case PKT_DOWN:
-      CLIENT_ONLY("down");
-      handle_down(np);
-    break;
-    case PKT_WAD:
-      /* CG: Both clients and servers receive PKT_WAD messages */
-      handle_wad(np);
-    break;
-    case PKT_BACKOFF:
-      CLIENT_ONLY("backoff");
-      handle_backoff(np);
-    break;
-    default:
-      doom_printf("Received unknown message type %u from peer %s:%u.\n"
-        message_type,
-        I_IPToString(np->peer->address.host),
-        np->peer->address.peer
-      );
-    break;
-  }
-}
-
-static void dispatch_cs_message(netpeer_t *np, byte message_type) {
-  switch (message_type) {
-    case nm_statedelta:
-      CLIENT_ONLY("state delta");
-      handle_state_delta(np);
-    break;
-    case nm_fullstate:
-      CLIENT_ONLY("game state");
-      handle_full_state(np);
-    break;
-    case nm_authresponse:
-      CLIENT_ONLY("authorization response");
-      handle_auth_response(np);
-    break;
-    case nm_playercommandreceived:
-      CLIENT_ONLY("player command received");
-      handle_player_command_received(np);
-    case nm_servermessage:
-      CLIENT_ONLY("server message");
-      handle_server_message(np);
-    break;
-    case nm_playermessage:
-      /* CG: Both servers and clients receive player message messages */
-      handle_player_message(np);
-    break;
-    case nm_playercommands:
-      SERVER_ONLY("player commands");
-      handle_player_commands(np);
-    break;
-    case nm_authrequest:
-      SERVER_ONLY("authorization request");
-      handle_auth_request(np);
-    break;
-    case nm_namechange:
-      SERVER_ONLY("name change");
-      handle_name_change(np);
-    break;
-    case nm_teamchange:
-      SERVER_ONLY("team change");
-      handle_team_change(np);
-    break;
-    case nm_pwochange:
-      SERVER_ONLY("PWO change");
-      handle_pwo_change(np);
-    break;
-    case nm_wsopchange:
-      SERVER_ONLY("WSOP change");
-      handle_wsop_change(np);
-    break;
-    case nm_bobbingchange:
-      SERVER_ONLY("bobbing change");
-      handle_bobbing_change(np);
-    break;
-    case nm_autoaimchange:
-      SERVER_ONLY("autoaim change");
-      handle_autoaim_change(np);
-    break;
-    case nm_weaponspeedchange:
-      SERVER_ONLY("weapon speed change");
-      handle_weapon_speed_change(np);
-    break;
-    case nm_colorchange:
-      SERVER_ONLY("color change");
-      handle_color_change(np);
-    break;
-    case nm_skinchange:
-      SERVER_ONLY("skin change");
-      handle_skin_change(np);
-    break;
-    case nm_rconcommand:
-      SERVER_ONLY("RCON command");
-      handle_rcon(np);
-    break;
-    case nm_voterequest:
-      SERVER_ONLY("vote request");
-      handle_vote_request(np);
-    break;
-    default:
-      doom_printf("Received unknown message type %u from peer %s:%u.\n"
-        message_type,
-        I_IPToString(np->peer->address.host),
-        np->peer->address.peer
-      );
-    break;
-  }
 }
 
 void N_HandlePacket(int peernum, void *data, size_t data_size) {
@@ -469,10 +330,65 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
   msgpack_unpacker_buffer_consumed(pac, data_size);
 
   while (N_LoadNewMessage(np, &message_type)) {
-    if (use_p2p_netcode)
-      dispatch_p2p_message(np, message_type);
-    else
-      dispatch_cs_message(np, message_type);
+    switch (message_type) {
+      case nm_setup:
+        P2P_CLIENT_ONLY("setup");
+        handle_setup(np);
+      break;
+      case nm_statedelta:
+        CS_ONLY("state delta");
+        handle_state_delta(np);
+      break;
+      case nm_fullstate:
+        CS_CLIENT_ONLY("full state");
+        handle_full_state(np);
+      break;
+      case nm_authresponse:
+        CLIENT_ONLY("authorization response");
+        handle_auth_response(np);
+      break;
+      case nm_playercommandreceived:
+        CLIENT_ONLY("player command received");
+        handle_player_command_received(np);
+      case nm_servermessage:
+        CLIENT_ONLY("server message");
+        handle_server_message(np);
+      break;
+      case nm_playermessage:
+        handle_player_message(np);
+      break;
+      case nm_playercommands:
+        NOT_CS_CLIENT("player commands");
+        handle_player_commands(np);
+      break;
+      case nm_savegamenamechange:
+        NOT_CS_CLIENT("save game name change");
+        handle_save_game_name_change(np);
+      break;
+      case nm_playerpreferencechange:
+        NOT_CS_CLIENT("player preference change");
+        handle_player_preference_change(np);
+      break;
+      case nm_authrequest:
+        SERVER_ONLY("authorization request");
+        handle_auth_request(np);
+      break;
+      case nm_rconcommand:
+        SERVER_ONLY("RCON command");
+        handle_rcon(np);
+      break;
+      case nm_voterequest:
+        SERVER_ONLY("vote request");
+        handle_vote_request(np);
+      break;
+      default:
+        doom_printf("Received unknown message type %u from peer %s:%u.\n"
+          message_type,
+          I_IPToString(np->peer->address.host),
+          np->peer->address.peer
+        );
+      break;
+    }
   }
 }
 
@@ -485,11 +401,13 @@ buf_t* N_GetMessageRecipientBuffer(void) {
   return &message_recipients;
 }
 
-/*
- ##############################################################################
- # CG: C/S netcode interface here
- ##############################################################################
-*/
+void SV_SendSetup(short playernum, setup_packet_t *setupinfo,
+                                   buf_t *wad_names) {
+  netpeer_t *np = NULL;
+  CHECK_VALID_PLAYER(np, playernum);
+
+  N_PackSetup(np, setupinfo, wad_names);
+}
 
 void SV_SendStateDelta(short playernum) {
   netpeer_t *np = NULL;
@@ -575,89 +493,96 @@ void CL_SendMessageToCurrentTeam(rune *message) {
 }
 
 void CL_SendCommands(void) {
-  netpeer_t *np = N_GetPeer(0);
+  netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
   N_PackPlayerCommands(np);
 }
 
-void CL_SendAuthRequest(rune *password) {
-  netpeer_t *np = N_GetPeer(0);
+void CL_SendSaveGameNameChange(rune *new_save_game_name) {
+  netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
-  N_PackAuthRequest(np, password);
+  N_PackSaveGameNameChange(np, new_save_game_name);
 }
 
 void CL_SendNameChange(rune *new_name) {
-  netpeer_t *np = N_GetPeer(0);
+  netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
   N_PackNameChange(np, new_name);
 }
 
 void CL_SendTeamChange(byte new_team) {
-  netpeer_t *np = N_GetPeer(0);
+  netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
   N_PackTeamChange(np, new_team);
 }
 
 void CL_SendPWOChange(void) {
-  netpeer_t *np = N_GetPeer(0);
+  netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
   /* CG: TODO */
 }
 
 void CL_SendWSOPChange(byte new_wsop_flags) {
-  netpeer_t *np = N_GetPeer(0);
+  netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
   N_PackWSOPChange(np, new_wsop_flags);
 }
 
 void CL_SendBobbingChange(double new_bobbing_amount) {
-  netpeer_t *np = N_GetPeer(0);
+  netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
   N_PackBobbingChange(np, new_bobbing_amount);
 }
 
 void CL_SendAutoaimChange(dboolean new_autoaim_enabled) {
-  netpeer_t *np = N_GetPeer(0);
+  netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
   N_PackAutoaimChange(np, new_autoaim_enabled);
 }
 
 void CL_SendWeaponSpeedChange(byte new_weapon_speed) {
-  netpeer_t *np = N_GetPeer(0);
+  netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
   N_PackWeaponSpeedChange(np, new_weapon_speed);
 }
 
 void CL_SendColorChange(byte new_red, byte new_green, byte new_blue) {
-  netpeer_t *np = N_GetPeer(0);
+  netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
   N_PackColorChange(np, new_red, new_green, new_blue);
 }
 
 void CL_SendSkinChange(void) {
-  netpeer_t *np = N_GetPeer(0);
+  netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
   /* CG: TODO */
 }
 
+void CL_SendAuthRequest(rune *password) {
+  netpeer_t *np = NULL;
+  CHECK_CONNECTION(np);
+
+  N_PackAuthRequest(np, password);
+}
+
 void CL_SendRCONCommand(rune *command) {
-  netpeer_t *np = N_GetPeer(0);
+  netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
   N_PackRCONCommand(np, command);
 }
 
 void CL_SendVoteRequest(rune *command) {
-  netpeer_t *np = N_GetPeer(0);
+  netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
   N_PackVoteRequest(np, command);

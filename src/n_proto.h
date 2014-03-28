@@ -39,10 +39,6 @@
 #define GAME_OPTIONS_SIZE 64
 #endif
 
-void   N_InitProtocol(void);
-void   N_HandlePacket(int peernum, void *data, size_t data_size);
-buf_t* N_GetMessageRecipientBuffer(void);
-
 typedef struct setup_packet_s {
   short players;
   short yourplayer;
@@ -65,12 +61,16 @@ const byte nm_authresponse           = 4;  /* S => C | BOTH |   reliable */
 const byte nm_playercommandreceived  = 5;  /* S => C | BOTH |   reliable */
 const byte nm_servermessage          = 6;  /* S => C | BOTH |   reliable */
 const byte nm_playermessage          = 7;  /* BOTH   | BOTH |   reliable */
-const byte nm_playercommands         = 8;  /* BOTH   | BOTH | unreliable */
-const byte nm_savegamenamechange     = 9;  /* BOTH   | BOTH |   reliable */
-const byte nm_playerpreferencechange = 10; /* BOTH   | BOTH |   reliable */
+const byte nm_playercommands         = 8;  /* NOT CS CLIENT | unreliable */
+const byte nm_savegamenamechange     = 9;  /* NOT CS CLIENT |   reliable */
+const byte nm_playerpreferencechange = 10; /* NOT CS CLIENT |   reliable */
 const byte nm_authrequest            = 11; /* C => S | BOTH |   reliable */
 const byte nm_rconcommand            = 12; /* C => S | BOTH |   reliable */
 const byte nm_voterequest            = 13; /* C => S | BOTH |   reliable */
+
+void   N_InitProtocol(void);
+void   N_HandlePacket(int peernum, void *data, size_t data_size);
+buf_t* N_GetMessageRecipientBuffer(void);
 
 void SV_SendSetup(short playernum, setup_packet_t *setupinfo);
 void SV_SendStateDelta(short playernum);
@@ -85,7 +85,7 @@ void CL_SendMessageToPlayer(short recipient, rune *message);
 void CL_SendMessageToTeam(byte team, rune *message);
 void CL_SendMessageToCurrentTeam(rune *message);
 void CL_SendCommands(void);
-void CL_SendSaveGameNamePacket(rune *new_save_game_name);
+void CL_SendSaveGameNameChange(rune *new_save_game_name);
 void CL_SendNameChange(rune *new_name);
 void CL_SendTeamChange(byte new_team);
 void CL_SendPWOChange(void); /* CG: TODO */

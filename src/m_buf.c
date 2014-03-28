@@ -32,25 +32,20 @@
  *-----------------------------------------------------------------------------
  */
 
-#include "z_zone.h"
-#include "l_printf.h"
+#include "doom.h"
+
 #include "m_buf.h"
 
-void M_BufferInit(buf_t **buf) {
-  (*buf) = calloc(1, sizeof(buf_t));
-
-  if ((*buf) == NULL)
-    I_Error("M_BufferInit: Allocating buffer failed");
+void M_BufferInit(buf_t *buf) {
+  buf->size     = 0;
+  buf->capacity = 0;
+  buf->cursor   = 0;
+  buf->data     = NULL;
 }
 
-void M_BufferInitWithCapacity(buf_t **buf, size_t capacity) {
-  (*buf) = calloc(1, sizeof(buf_t));
-
-  if ((*buf) == NULL)
-    I_Error("M_BufferInitWithCapacity: Allocating buffer failed");
-
-  (*buf)->capacity = capacity;
-  (*buf)->data = calloc(capacity, sizeof(char));
+void M_BufferInitWithCapacity(buf_t *buf, size_t capacity) {
+  M_BufferInit(buf);
+  M_BufferEnsureTotalCapacity(buf, capacity);
 }
 
 void M_BufferCopy(buf_t *dst, buf_t *src) {
@@ -60,19 +55,18 @@ void M_BufferCopy(buf_t *dst, buf_t *src) {
   src->cursor = dst->cursor;
 }
 
-void M_BufferSetData(buf_t *buf, void *data, size_t size) {
+void M_BufferSetData(buf_t *buf, char *data, size_t size) {
   M_BufferClear(buf);
   memcpy(buf->data, data, size);
   buf->size = size;
 }
 
-void M_BufferSetString(buf_t *buf, byte *data, size_t length) {
+void M_BufferSetString(buf_t *buf, rune *data, size_t length) {
   size_t size = length + 1;
 
   M_BufferClear(buf);
   M_BufferEnsureCapacity(buf, size);
-  memcpy(buf->data, data, size);
-  buf->data + length = 0;
+  strncpy(buf->data, data, size);
   buf->size = size;
 }
 
@@ -82,7 +76,7 @@ dboolean M_BufferSetFile(buf_t *buf, const char *filename) {
   size_t bytes_read = 0;
   dboolean out = false;
 
-  if ((fp = fopen(name, "rb")) == NULL)
+  if ((fp = fopen(filename, "rb")) == NULL)
     return false;
 
   fseek(fp, 0, SEEK_END);
@@ -90,9 +84,9 @@ dboolean M_BufferSetFile(buf_t *buf, const char *filename) {
   fseek(fp, 0, SEEK_SET);
 
   M_BufferClear(buf);
-  M_EnsureTotalCapacity(length);
+  M_BufferEnsureTotalCapacity(buf, length);
 
-  if (fread(buf->data, sizeof(byte), length - bytes_read) == length)
+  if (fread(buf->data, sizeof(byte), length - bytes_read, fp) == length)
     out = true;
   else
     M_BufferClear(buf);
@@ -101,9 +95,9 @@ dboolean M_BufferSetFile(buf_t *buf, const char *filename) {
   return out;
 }
 
-void M_BufferAppend(buf_t *buf, void *data, size_t size) {
+void M_BufferAppend(buf_t *buf, char *data, size_t size) {
   M_BufferEnsureCapacity(buf, size);
-  memcpy(buf->data + buf->size, data, size);
+  memcpy(&(buf->data[buf->size]), data, size);
   buf->size += size;
 }
 
@@ -144,7 +138,7 @@ void M_BufferEnsureTotalCapacity(buf_t *buf, size_t capacity) {
 
 void M_BufferCompact(buf_t *buf) {
   if (buf->size < buf->capacity) {
-    void *new_buf = calloc(buf->size, sizeof(byte));
+    char *new_buf = calloc(buf->size, sizeof(byte));
 
     if (buf->data == NULL)
       I_Error("M_BufferCompact: Allocating new buffer data failed");
@@ -158,19 +152,16 @@ void M_BufferCompact(buf_t *buf) {
   }
 }
 
-void M_BufferZero(buf_t *buf) {
-  memset(buf->data, 0, buf->capacity);
-}
-
 void M_BufferClear(buf_t *buf) {
   buf->size = 0;
   buf->cursor = 0;
-  M_BufferZero(buf);
+  memset(buf->data, 0, buf->capacity);
 }
 
 void M_BufferFree(buf_t *buf) {
   free(buf->data);
   memset(buf, 0, sizeof(buf_t));
+  buf->data = NULL;
 }
 
 /* vi: set et ts=2 sw=2: */

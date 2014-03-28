@@ -48,3 +48,5 @@ void     M_QueueFree(mqueue_t *queue);
 
 #endif
 
+/* vi: set et sw=2 ts=2: */
+

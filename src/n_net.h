@@ -40,11 +40,11 @@
 #define DISCONNECT_TIMEOUT 3
 
 typedef enum {
-  P2P_STATE_NONE,
-  P2P_STATE_SETUP,
-  P2P_STATE_GO,
-  P2P_STATE_MAX
-} p2p_state_e;
+  NET_STATE_NONE,
+  NET_STATE_SETUP,
+  NET_STATE_GO,
+  NET_STATE_MAX
+} net_state_e;
 
 typedef enum {
   AUTH_LEVEL_NONE,
@@ -60,6 +60,11 @@ typedef enum {
   MAX_CHANNELS
 } net_channel_e;
 
+typedef enum {
+  NET_SYNC_TYPE_TIC,
+  NET_SYNC_TYPE_DELTA,
+} net_sync_type_e;
+
 typedef struct netticcmd_s {
   int tic;
   signed char forwardmove;
@@ -70,8 +75,9 @@ typedef struct netticcmd_s {
   byte  buttons;
 } netticcmd_t;
 
-extern dboolean server;
 extern dboolean netgame;
+extern dboolean have_peers;
+extern net_sync_type_e net_sync_type;
 
 size_t   N_IPToString(int address, char *buffer);
 int      N_IPToInt(const char *address);

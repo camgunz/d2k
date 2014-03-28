@@ -143,7 +143,7 @@ int N_GetPeerCount(void) {
 
 netpeer_t* N_GetPeer(int peernum) {
   if (peernum < 0 || peernum >= net_peers->size)
-    N_Error("N_GetPeer: peernum %d out of range.\n", peernum);
+    I_Error("N_GetPeer: peernum %d out of range.\n", peernum);
 
   return net_peers->objects[i];
 }

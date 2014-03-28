@@ -32,173 +32,32 @@
  *-----------------------------------------------------------------------------
  */
 
-#include "z_zone.h"
-#include "l_printf.h"
+#include "doom.h"
+
 #include "m_obuf.h"
 
-void M_ObjBufferInit(objbuf_t **obuf) {
-  (*obuf) = calloc(1, sizeof(objbuf_t));
-
-  if ((*obuf) == NULL)
-    I_Error("M_ObjBufferInit: Allocating buffer failed");
+void M_OBufInit(obuf_t *obuf) {
+  obuf->capacity = 0;
+  obuf->objects  = NULL;
 }
 
-void M_ObjBufferInitWithCapacity(objbuf_t **obuf, int capacity) {
-  (*obuf) = calloc(1, sizeof(objbuf_t));
-
-  if ((*obuf) == NULL)
-    I_Error("M_ObjBufferInitWithCapacity: Allocating buffer failed");
-
-  (*obuf)->capacity = capacity;
-  (*obuf)->objects = calloc(capacity, sizeof(void *));
+void M_OBufInitWithCapacity(obuf_t *obuf, int capacity) {
+  M_OBufInit(obuf);
+  M_OBufEnsureCapacity(obuf, capacity);
 }
 
-void M_ObjBufferAppend(objbuf_t *obuf, void *obj) {
-  int index = obuf->capacity;
-
-  M_ObjBufferEnsureCapacity(obuf->capacity + 1);
-  M_ObjBufferInsert(obuf, index, obj);
-}
-
-void M_ObjBufferInsert(objbuf_t *obuf, int index, void *obj) {
-  if (index >= obuf->capacity) {
-    I_Error("M_ObjBufferInsert: Insertion index %d out of bounds (%d)",
-      index, obuf->capacity
-    );
-  }
-
-  obuf->objects[index] = obj;
-}
-
-dboolean M_ObjBufferIsValidIndex(objbuf_t *obuf, int index) {
+dboolean M_OBufIsValidIndex(obuf_t *obuf, int index) {
   if (index >= 0 && index < obuf->capacity && obuf->objects[index] != NULL)
     return true;
 
   return false;
 }
 
-int M_ObjBufferInsertAtFirstFreeSlot(objbuf_t *obuf, void *obj) {
-  for (int i = 0; i < obuf->capacity; i++) {
-    if (obuf[i] == NULL) {
-      obuf->objects[i] = obj;
-      return i;
-    }
-  }
-
-  return -1;
-}
-
-int M_ObjBufferInsertAtFirstFreeSlotOrAppend(objbuf_t *obuf, void *obj) {
-  int slot = M_ObjBufferInsertAtFirstFreeSlot(obuf, obj);
-
-  if (slot != -1)
-    return slot;
-
-  M_ObjBufferAppend(obuf, obj);
-  return obuf->capacity - 1;
-}
-
-dboolean M_ObjBufferIter(objbuf_t *obuf, int *index, void **obj) {
-  int i;
-
-  if ((*index) == -1)
-    i = 0;
-  else
-    i = (*index);
-
-  for (*index = -1, *obj = NULL;i < obuf->capacity; i++) {
-    if (obuf->objects[i] != NULL) {
-      *index = i;
-      *obj = obuf->objects[i];
-      return true;
-    }
-  }
-
-  return false;
-}
-
-void* M_ObjBufferIter(objbuf_t *obuf, void *obj) {
-  int i = 0;
-  void *out = obuf->objects[0];
-
-  if (obj != NULL)
-    for (; i < obuf->capacity && obuf->objects[i] != obj; i++);
-
-  if (i == obuf->capacity)
-    return NULL;
-
-  for (; i < obuf->capacity; i++) {
-    if (obuf->objects[i] != NULL) {
-      return obuf->objects[i];
-    }
-  }
-
-  return NULL;
-}
-
-int M_ObjBufferIterIndex(objbuf_t *obuf, int index) {
-  int i;
-
-  if (index == -1)
-    i = 0;
-  else
-    i = index;
-
-  for (; i < obuf->capacity; i++) {
-    if (obuf->objects[i] != NULL) {
-      return i;
-    }
-  }
-}
-
-void M_ObjBufferConsolidate(objbuf_t *obuf) {
-  void **dst = obuf->objects;
-  void **src = obuf->objects;
-
-  while (true) {
-    while (*dst != NULL && dst - obuf->objects < obuf->capacity)
-      dst++;
-
-    if (dst - obuf->objects >= obuf->capacity)
-      return;
-
-    if (src < dst)
-      src = dst + 1;
-
-    while (src == NULL && src - obuf->objects < obuf->capacity)
-      src++;
-
-    if (src - obuf->objects >= obuf->capacity)
-      return;
-
-    *dst = *src;
-    *src = NULL;
-  }
-}
-
-void M_ObjBufferRemove(objbuf_t *obuf, int index) {
-  obuf->objects[index] = NULL;
-}
-
-void M_ObjBufferEnsureCapacity(objbuf_t *obuf, int capacity) {
-  if (obuf->capacity < capacity) {
-    int old_capacity = obuf->capacity;
-
-    obuf->capacity = capacity;
-    obuf->objects = realloc(obuf->objects, obuf->capacity * sizeof(void *));
-
-    if (obuf->objects == NULL)
-      I_Error("M_ObjBufferEnsureCapacity: Allocating buffer objects failed");
-
-    memset(obuf->objects + old_capacity, 0, obuf->capacity - old_capacity);
-  }
-}
-
-int M_ObjBufferGetObjectCount(objbuf_t *obuf) {
+int M_OBufGetObjectCount(obuf_t *obuf) {
   int count = 0;
 
   for (int i = 0; i < obuf->capacity; i++) {
-    if (objf->objects[i] != NULL) {
+    if (obuf->objects[i] != NULL) {
       count++;
     }
   }
@@ -206,23 +65,125 @@ int M_ObjBufferGetObjectCount(objbuf_t *obuf) {
   return count;
 }
 
-void M_ObjBufferClear(objbuf_t *obuf) {
-  memset(obuf->objects, 0, obuf->capacity);
+void M_OBufEnsureCapacity(obuf_t *obuf, int capacity) {
+  if (obuf->capacity < capacity) {
+    int old_capacity = obuf->capacity;
+
+    obuf->capacity = capacity;
+    obuf->objects = realloc(obuf->objects, obuf->capacity * sizeof(void *));
+
+    if (obuf->objects == NULL)
+      I_Error("M_OBufEnsureCapacity: Allocating buffer objects failed");
+
+    memset(obuf->objects + old_capacity, 0, obuf->capacity - old_capacity);
+  }
 }
 
-void M_ObjBufferFreeEntriesAndClear(objbuf_t *obuf) {
+void M_OBufAppend(obuf_t *obuf, void *obj) {
+  int index = obuf->capacity;
+
+  M_OBufEnsureCapacity(obuf, obuf->capacity + 1);
+  M_OBufInsert(obuf, index, obj);
+}
+
+void M_OBufInsert(obuf_t *obuf, int index, void *obj) {
+  if (index >= obuf->capacity) {
+    I_Error("M_OBufInsert: Insertion index %d out of bounds (%d)",
+      index, obuf->capacity
+    );
+  }
+
+  obuf->objects[index] = obj;
+}
+
+int M_OBufInsertAtFirstFreeSlot(obuf_t *obuf, void *obj) {
   for (int i = 0; i < obuf->capacity; i++) {
-    if (objf->objects[i] != NULL) {
+    if (obuf->objects[i] == NULL) {
+      M_OBufInsert(obuf, i, obj);
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+int M_OBufInsertAtFirstFreeSlotOrAppend(obuf_t *obuf, void *obj) {
+  int slot = M_OBufInsertAtFirstFreeSlot(obuf, obj);
+
+  if (slot != -1)
+    return slot;
+
+  M_OBufAppend(obuf, obj);
+  return obuf->capacity - 1;
+}
+
+dboolean M_OBufIter(obuf_t *obuf, int *index, void **obj) {
+  for (int i = (*index) + 1; i < obuf->capacity; i++) {
+    if (obuf->objects[i] != NULL) {
+      *index = i;
+      *obj = obuf->objects[i];
+      return true;
+    }
+  }
+
+  *index = -1;
+  return false;
+}
+
+void M_OBufRemove(obuf_t *obuf, int index) {
+  obuf->objects[index] = NULL;
+}
+
+void* M_OBufGet(obuf_t *obuf, int index) {
+  if (!M_OBufIsValidIndex(obuf, index))
+    return NULL;
+
+  return obuf->objects[index];
+}
+
+void M_OBufConsolidate(obuf_t *obuf) {
+  int d = 0;
+  int s = 0;
+
+  while (true) {
+    while (d < obuf->capacity && obuf->objects[d] != NULL)
+      d++;
+
+    if (d >= obuf->capacity)
+      return;
+
+    if (s < d)
+      s = d + 1;
+
+    while (s < obuf->capacity && obuf->objects[s] == NULL)
+      s++;
+
+    if (s >= obuf->capacity)
+      return;
+
+    obuf->objects[d] = obuf->objects[s];
+    obuf->objects[s] = NULL;
+  }
+}
+
+void M_OBufClear(obuf_t *obuf) {
+  for (int i = 0; i < obuf->capacity; i++)
+    M_OBufRemove(obuf, i);
+}
+
+void M_OBufFreeEntriesAndClear(obuf_t *obuf) {
+  for (int i = 0; i < obuf->capacity; i++) {
+    if (obuf->objects[i] != NULL) {
       free(obuf->objects[i]);
     }
   }
 
-  M_ObjBufferClear(obuf);
+  M_OBufClear(obuf);
 }
 
-void M_ObjBufferFree(objbuf_t *obuf) {
-  obuf->capacity = 0;
+void M_OBufFree(obuf_t *obuf) {
   free(obuf->objects);
+  M_OBufInit(obuf);
 }
 
 /* vi: set et ts=2 sw=2: */

@@ -25,27 +25,16 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "z_zone.h"
+#include "doom.h"
 
 #include "m_queue.h"
 
-/*
- * M_QueueInit
- *
- * Sets up a queue. Can be called again to reset a used queue
- * structure.
- */
 void M_QueueInit(mqueue_t *queue) {
   queue->head.next = NULL;
   queue->tail = &queue->head;
   queue->size = 0;
 }
 
-/*
- * M_QueueIsEmpty
- *
- * Returns true if the queue is empty, false otherwise.
- */
 dboolean M_QueueIsEmpty(mqueue_t *queue) {
   if (queue->head.next == NULL)
     return true;
@@ -53,11 +42,6 @@ dboolean M_QueueIsEmpty(mqueue_t *queue) {
   return false;
 }
 
-/*
- * M_QueuePush
- *
- * Inserts the given item into the queue.
- */
 void M_QueuePush(mqueue_t *queue, void *obj) {
   mqueueitem_t *item = calloc(1, sizeof(mqueueitem_t));
   item->obj = obj;
@@ -67,11 +51,6 @@ void M_QueuePush(mqueue_t *queue, void *obj) {
   queue->size++;
 }
 
-/*
- * M_QueuePop
- *
- * Removes the oldest element in the queue and returns it.
- */
 void* M_QueuePop(mqueue_t *queue) {
   mqueueitem_t *item = NULL;
   void *obj = NULL;
@@ -93,11 +72,6 @@ void* M_QueuePop(mqueue_t *queue) {
   return obj;
 }
 
-//
-// M_QueuePeek
-//
-// Returns the first element of the queue.
-//
 void* M_QueuePeek(mqueue_t *queue) {
   if (M_QueueIsEmpty(queue))
     return NULL;
@@ -105,13 +79,10 @@ void* M_QueuePeek(mqueue_t *queue) {
   return queue->head.next->obj;
 }
 
-//
-// M_QueueFree
-//
-// Frees all the elements in the queue
-//
 void M_QueueFree(mqueue_t *queue) {
   while (!M_QueueIsEmpty(queue))
     free(M_QueuePop(queue));
 }
+
+/* vi: set et sw=2 ts=2: */
 

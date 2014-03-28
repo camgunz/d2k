@@ -64,8 +64,9 @@ static auth_level_e authorization_level;
 static cmdbuf_t     commands;
 
 /* CG: Externally viewable */
-dboolean server = false;
-dboolean netgame = false;
+dboolean        netgame       = false;
+dboolean        have_peers    = false;
+net_sync_type_e net_sync_type = NET_SYNC_TYPE_TIC;
 
 static void check_peer_timeouts(void) {
   for (int i = 0; i < N_GetPeerCount(); i++) {
@@ -511,7 +512,8 @@ void N_ServiceNetwork(void) {
 }
 
 void N_SetLocalClientAuthorizationLevel(auth_level_e level) {
-  authorization_level = level;
+  if (level > authorization_level)
+    authorization_level = level;
 }
 
 void N_AppendLocalClientCommand(ticcmd_t *cmd) {
