@@ -615,6 +615,7 @@ SET(PRBOOM_SOURCES
   src/info.c
   src/m_bbox.c
   src/m_buf.c
+  src/m_cbuf.c
   src/m_cheat.c
   src/m_delta.c
   src/m_menu.c
