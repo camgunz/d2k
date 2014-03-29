@@ -197,7 +197,7 @@ DECLARE_TYPE(map, "a map", MAP);
     M_ObjBufferAppend((obuf), buf_entry);                                     \
   }
 
-#define unpack_and_validate_player_array(obj, arr, name, buf, sz)      \
+#define unpack_and_validate_player_array(obj, arr, name, buf, sz)             \
   unpack_and_validate(obj, name, array);                                      \
   validate_array_size(obj->via.array);                                        \
   m_recipient_count = obj->via.array.size;                                    \
@@ -454,9 +454,9 @@ dboolean N_UnpackPlayerMessage(netpeer_t *np, unsigned short *sender,
   return true;
 }
 
-void N_PackPlayerCommands(netpeer_t *np) {
+void N_PackPlayerCommands(netpeer_t *np, cmdbuf_t *commands) {
   msgpack_pack_unsigned_char(np->upk, nm_playercommands);
-  msgpack_pack_unsigned_char(np->upk, M_ObjBufferGetObjectCount(np->commands));
+  msgpack_pack_unsigned_char(np->upk, M_ObjBufferGetObjectCount(commands));
 
   for (int i = 0; i < commands->size; i++) {
     netticcmd_t *cmd = commands->objects[i];

@@ -168,14 +168,17 @@ static void handle_auth_response(netpeer_t *np) {
   auth_level_e level;
 
   if (N_UnpackAuthResponse(np, &level))
-    N_SetLocalClientAuthorizationLevel(level);
+    CL_SetAuthorizationLevel(level);
 }
 
 static void handle_player_command_received(netpeer_t *np) {
   int tic;
 
   if (N_UnpackServerMessage(np, &tic))
-    N_RemoveOldClientCommands(tic);
+    CL_RemoveOldCommands(tic);
+
+  if (net_sync_type == NET_SYNC_TYPE_TIC)
+    CL_SetRemoteTic(tic);
 }
 
 static void handle_server_message(netpeer_t *np) {

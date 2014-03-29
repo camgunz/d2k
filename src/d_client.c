@@ -78,10 +78,8 @@ void N_SetP2PState(p2p_state_e new_state) {
 }
 
 void N_InitNetGame(void) {
-  int i;
-  int player_count = 1;
+  int i = M_CheckParm("-net");
 
-  i = M_CheckParm("-net");
   if (i && i < myargc - 1)
     i++;
 
@@ -101,10 +99,6 @@ void N_InitNetGame(void) {
     if (p2p_state != P2P_STATE_SETUP) 
       I_Error("Timed out waiting for setup information from server");
 
-    /*
-     * Once we have been accepted by the server, we should tell it when we
-     * leave
-     */
     atexit(N_Disconnect());
   }
 
@@ -144,138 +138,90 @@ dboolean D_NetGetWad(const char* name) {
   return false;
 }
 
+void CL_SetRemoteTic(int tic) {
+  remotetic = tic;
+}
+
+/*
+ * CG: TODO:
+ *   - Fix the input system to avoid mouse deceleration; it almost
+ *     certainly is a problem.
+ *   - Fix choppiness between frames; rendering is probably only done at 35Hz
+ *     if interpolation is disabled, which won't work for OpenGL.
+ */
+
 void NetUpdate(void) {
   static int lastmadetic;
+
+  int newtics;
+  int sendtics;
+  size_t pkt_size;
 
   if (isExtraDDisplay)
     return;
 
-  if (have_peers) { // Receive network packets
-    size_t recvlen;
-    packet_header_t *packet = Z_Malloc(10000, PU_STATIC, NULL);
+  if (have_peers)
+    N_ServiceNetwork();
 
-    while ((recvlen = I_GetPacket(packet, 10000))) {
-      switch (packet->type) {
-        case PKT_TICS:
-        {
-          byte *p = (void *)(packet + 1);
-          int tics = *p++;
-          unsigned long ptic = doom_ntohl(packet->tic);
-          if (ptic > (unsigned)remotetic) { // Missed some
-            packet_set(packet, PKT_RETRANS, remotetic);
-            *(byte *)(packet + 1) = consoleplayer;
-            I_SendPacket(packet, sizeof(*packet) + 1);
-          }
-          else {
-            if (ptic + tics <= (unsigned)remotetic)
-              break; // Will not improve things
+  // Build new ticcmds
+  newtics = I_GetTime() - lastmadetic;
 
-            remotetic = ptic;
+  //e6y    newtics = (newtics > 0 ? newtics : 0);
+  lastmadetic += newtics;
 
-            while (tics--) {
-              int players = *p++;
+  if (ffmap)
+    newtics++;
 
-              while (players--) {
-                int n = *p++;
-                RawToTic(&netcmds[n][remotetic % BACKUPTICS], p);
-                p += sizeof(ticcmd_t);
-              }
-              remotetic++;
-            }
-          }
-        }
-        break;
-        case PKT_RETRANS: // Resend request
-          remotesend = doom_ntohl(packet->tic);
-        break;
-        case PKT_DOWN: // Server downed
-        {
-          int j;
+  while (newtics--) {
+    I_StartTic();
+    if (maketic - gametic > BACKUPTICS / 2)
+      break;
 
-          for (j = 0; j < MAXPLAYERS; j++) {
-            if (j != consoleplayer) {
-              playeringame[j] = false;
-            }
-          }
-          have_peers = false;
-          doom_printf(
-            "Server is down\nAll other players are no longer in the game\n"
-          );
-        }
-        break;
-        case PKT_EXTRA: // Misc stuff
-        case PKT_QUIT: // Player quit
-          // Queue packet to be processed when its tic time is reached
-          queuedpacket = Z_Realloc(queuedpacket, ++numqueuedpackets * sizeof *queuedpacket,
-                 PU_STATIC, NULL);
-          queuedpacket[numqueuedpackets-1] = Z_Malloc(recvlen, PU_STATIC, NULL);
-          memcpy(queuedpacket[numqueuedpackets-1], packet, recvlen);
-        break;
-        case PKT_BACKOFF:
-          /*
-           * cph 2003-09-18 - The server sends this when we have got ahead of
-           * the other clients. We should stall the input side on this client,
-           * to allow other clients to catch up.
-           */
-           lastmadetic++;
-        break;
-        default: // Other packet, unrecognised or redundant
-        break;
-      }
+    /* Next command expected by the server:  remotesend                     */
+    /* Last command acknowledged from the server: remotetic                 */
+    /* Current game tic:                     gametic                        */
+    /* Number of tics to send to the server: maketic - remotesend           */
+    /* Number of tics to make commands for:  maketic - remotesend           */
+    
+    // e6y
+    // Eliminating the sudden jump of six frames(BACKUPTICS/2) 
+    // after change of realtic_clock_rate.
+    if (maketic - gametic &&
+        gametic <= force_singletics_to &&
+        realtic_clock_rate < 200) {
+      break;
     }
-    Z_Free(packet);
+
+    G_BuildTiccmd(&localcmds[maketic % BACKUPTICS]);
+    maketic++;
   }
-  { // Build new ticcmds
-    int newtics = I_GetTime() - lastmadetic;
-    //e6y    newtics = (newtics > 0 ? newtics : 0);
-    lastmadetic += newtics;
-    if (ffmap)
-      newtics++;
-    while (newtics--) {
-      I_StartTic();
-      if (maketic - gametic > BACKUPTICS / 2)
-        break;
-      
-      // e6y
-      // Eliminating the sudden jump of six frames(BACKUPTICS/2) 
-      // after change of realtic_clock_rate.
-      if (maketic - gametic &&
-          gametic <= force_singletics_to &&
-          realtic_clock_rate < 200) {
-        break;
-      }
 
-      G_BuildTiccmd(&localcmds[maketic % BACKUPTICS]);
-      maketic++;
-    }
+  if (have_peers && maketic > remotesend) { // Send the tics to the server
+    int sendtics;
+    remotesend -= xtratics;
 
-    if (have_peers && maketic > remotesend) { // Send the tics to the server
-      int sendtics;
-      remotesend -= xtratics;
+    if (remotesend < 0)
+      remotesend = 0;
 
-      if (remotesend < 0)
-        remotesend = 0;
+    sendtics = maketic - remotesend;
 
-      sendtics = maketic - remotesend;
+    {
+      size_t pkt_size =
+        sizeof(packet_header_t) + 2 + sendtics * sizeof(ticcmd_t);
+      packet_header_t *packet = Z_Malloc(pkt_size, PU_STATIC, NULL);
 
+      packet_set(packet, PKT_TICC, maketic - sendtics);
+      *(byte *)(packet + 1) = sendtics;
+      *(((byte *)(packet + 1)) + 1) = consoleplayer;
       {
-        size_t pkt_size =
-          sizeof(packet_header_t) + 2 + sendtics * sizeof(ticcmd_t);
-        packet_header_t *packet = Z_Malloc(pkt_size, PU_STATIC, NULL);
-
-        packet_set(packet, PKT_TICC, maketic - sendtics);
-        *(byte *)(packet + 1) = sendtics;
-        *(((byte *)(packet + 1)) + 1) = consoleplayer;
-        {
-          void *tic = ((byte *)(packet + 1)) + 2;
-          while (sendtics--) {
-            TicToRaw(tic, &localcmds[remotesend++ % BACKUPTICS]);
-            tic = (byte *)tic + sizeof(ticcmd_t);
-          }
+        void *tic = ((byte *)(packet + 1)) + 2;
+        while (sendtics--) {
+          TicToRaw(tic, &localcmds[remotesend++ % BACKUPTICS]);
+          tic = (byte *)tic + sizeof(ticcmd_t);
         }
-        I_SendPacket(packet, pkt_size);
-        Z_Free(packet);
       }
+      I_SendPacket(packet, pkt_size);
+      Z_Free(packet);
     }
   }
 }
