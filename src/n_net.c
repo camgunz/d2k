@@ -517,22 +517,17 @@ void N_SetLocalClientAuthorizationLevel(auth_level_e level) {
     authorization_level = level;
 }
 
-void N_AppendLocalClientCommand(ticcmd_t *cmd) {
-  netticcmd_t ncmd;
-  
-  ncmd.tic = gametic;
-  ncmd.forwardmove = cmd->forwardmove;
-  ncmd.sidemove = cmd->sidemove;
-  ncmd.angleturn = cmd->angleturn;
-  ncmd.consistancy = cmd->consistancy;
-  ncmd.chatchar = cmd->chatchar;
-  ncmd.buttons = cmd->buttons;
-
-  N_CmdBufferAppend(&commands, &ncmd);
-}
-
 void N_RemoveOldClientCommands(int tic) {
-  N_CmdBufferRemoveOld(&commands, tic);
+  int index = -1;
+  netticcmd_t *ncmd = NULL;
+  player_t *p = M_OBufGet(players, consoleplayer);
+
+  while (M_CBufIter(&p->commands, &index, (void **)&ncmd)) {
+    if (ncmd->tic <= tic) {
+      M_CBufRemove(&p->commands, index);
+      index--;
+    }
+  }
 }
 
 /* vi: set et ts=2 sw=2: */
