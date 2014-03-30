@@ -453,14 +453,15 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       if (server) {
         peernum = N_AddPeer();
         N_SetPeerConnected(peernum, net_event.peer);
+        /* CG: TODO: Sent setup info to the new peer */
       }
       else {
         np = N_GetPeer(0);
 
         if (np == NULL) {
           doom_printf(
-            "N_ServiceNetwork: Received a connect event but no connection was "
-            "requested.\n"
+            "N_ServiceNetwork: Received a 'connect' event but no connection "
+            "was requested.\n"
           );
           continue;
         }
@@ -471,7 +472,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     else if (net_event.type == ENET_EVENT_TYPE_DISCONNECT) {
       if ((peernum = get_peer_num(net_event.peer)) == -1) {
         doom_printf(
-          "N_ServiceNetwork: Received disconnect event from unknown "
+          "N_ServiceNetwork: Received 'disconnect' event from unknown "
           "peer %s:%u.\n",
           N_IPToString(net_event.peer->address.host),
           net_event.peer->address.port
@@ -483,7 +484,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     else if (net_event.type == ENET_EVENT_TYPE_RECEIVE) {
       if ((peernum = get_peer_num(net_event.peer)) == -1) {
         doom_printf(
-          "N_ServiceNetwork: Received packet event from unknown peer %s:%u.\n",
+          "N_ServiceNetwork: Received 'packet' event from unknown peer %s:%u.\n",
           N_IPToString(net_event.peer->address.host),
           net_event.peer->address.port
         );
@@ -496,7 +497,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     }
     else if (net_event.type != ENET_EVENT_TYPE_NONE) {
       doom_printf(
-        "N_ServiceNetwork: Received \"NONE\" event from peer %s:%u.\n",
+        "N_ServiceNetwork: Received 'NONE' event from peer %s:%u.\n",
         N_IPToString(net_event.peer->address.host),
         net_event.peer->address.port
       );

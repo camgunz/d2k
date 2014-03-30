@@ -29,38 +29,15 @@
  * DESCRIPTION:
  *
  *
- *-----------------------------------------------------------------------------
- */
+ *-----------------------------------------------------------------------------*/
 
-#ifndef N_PEER_H__
-#define N_PEER_H__
+#ifndef N_MAIN__
+#define N_MAIN__
 
-typedef struct netpeer_s {
-  ENetPeer        *peer;
-  msgpack_sbuffer *rbuf;
-  msgpack_packer  *rpk;
-  msgpack_sbuffer *ubuf;
-  msgpack_packer  *upk;
-  time_t           connect_time;
-  time_t           disconnect_time;
-  short            playernum;
-  int              last_sync_received_tic;
-  int              last_sync_sent_tic;
-  buf_t            state;
-  buf_t            delta;
-  cmdbuf_t         commands;
-} netpeer_t;
-
-int        N_AddPeer(void);
-void       N_SetPeerConnected(int peernum, ENetPeer *peer);
-void       N_SetPeerDisconnected(int peernum);
-void       N_RemovePeer(netpeer_t *np);
-int        N_GetPeerCount(void);
-netpeer_t* N_GetPeer(int peernum);
-int        N_GetPeerNum(ENetPeer *peer);
-netpeer_t* N_GetPeerForPlayer(short playernum);
-int        N_GetPeerNumForPlayer(short playernum);
-dboolean   N_CheckPeerTimeout(int peernum);
+void NetUpdate(void);
+void TryRunTics(void);
+void N_InitNetGame(void);
+void N_CheckNetGame(void);
+dboolean N_GetWad(const char* name);
 
 #endif
-

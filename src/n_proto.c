@@ -40,18 +40,18 @@
 
 #define MAX_PREF_NAME_SIZE 20
 
-#define P2P_ONLY(name)                                                        \
-  if (!use_p2p_netcode) {                                                     \
+#define TIC_SYNC_ONLY(name)                                                   \
+  if (net_sync_type != NET_SYNC_TYPE_TIC) {                                   \
     doom_printf(                                                              \
-      __func__ ": Erroneously received P2P packet [" name "] in C\\S mode\n"  \
+      __func__ ": Erroneously received TIC packet [" name "] in DELTA mode\n" \
     );                                                                        \
     return;                                                                   \
   }
 
-#define CS_ONLY(name)                                                         \
-  if (use_p2p_netcode) {                                                      \
+#define DELTA_SYNC_ONLY(name)                                                 \
+  if (net_sync_type != NET_SYNC_TYPE_DELTA) {                                 \
     doom_printf(                                                              \
-      __func__ ": Erroneously received C/S packet [" name "] in P2P mode\n"   \
+      __func__ ": Erroneously received DELTA packet [" name "] in TIC mode\n" \
     );                                                                        \
     return;                                                                   \
   }
@@ -72,29 +72,29 @@
     return;                                                                   \
   }
 
-#define NOT_CS_CLIENT(name)                                                   \
-  if ((!use_p2p_netcode) && (!server)) {                                      \
+#define NOT_DELTA_CLIENT(name)                                                \
+  if ((net_sync_type == NET_SYNC_TYPE_DELTA) && (!server)) {                  \
     doom_printf(                                                              \
-      __func__ ": Erroneously received packet [" name "] in C\\S client "     \
-      "mode\n"                                                                \
+      __func__ ": Erroneously received packet [" name "] as a client in "     \
+      "DELTA mode\n"                                                          \
     );                                                                        \
     return;                                                                   \
   }
 
-#define P2P_SERVER_ONLY(name)                                                 \
-  P2P_ONLY(name);                                                             \
+#define DELTA_SERVER_ONLY(name)                                               \
+  DELTA_ONLY(name);                                                           \
   SERVER_ONLY(name);
 
-#define P2P_CLIENT_ONLY(name)                                                 \
-  P2P_ONLY(name);                                                             \
+#define TIC_CLIENT_ONLY(name)                                                 \
+  TIC_ONLY(name);                                                             \
   CLIENT_ONLY(name);
 
-#define CS_SERVER_ONLY(name)                                                  \
-  CS_ONLY(name);                                                              \
+#define DELTA_SERVER_ONLY(name)                                               \
+  DELTA_ONLY(name);                                                           \
   SERVER_ONLY(name);
 
-#define CS_CLIENT_ONLY(name)                                                  \
-  CS_ONLY(name);                                                              \
+#define DELTA_CLIENT_ONLY(name)                                               \
+  DELTA_ONLY(name);                                                           \
   CLIENT_ONLY(name);
 
 #define CHECK_VALID_PLAYER(np, playernum)                                     \
@@ -139,7 +139,7 @@ static void handle_setup(netpeer_t *np) {
     consoleplayer, M_ObjBufferGetObjectCount(&wad_names);
   );
 
-  N_SetP2PState(P2P_STATE_SETUP);
+  N_SetNetState(NET_STATE_SETUP);
 }
 
 static void handle_state_delta(netpeer_t *np) {
@@ -150,6 +150,7 @@ static void handle_state_delta(netpeer_t *np) {
   if (N_UnpackStateDelta(np, &from_tic, &to_tic, &delta_buffer)) {
     N_ApplyStateDelta(from_tic, to_tic, &delta_buffer);
     G_LoadSaveData(N_GetCurrentState(), true, false);
+    CL_SendStateReceived(to_tic);
   }
 }
 
@@ -161,6 +162,7 @@ static void handle_full_state(netpeer_t *np) {
   if (N_UnpackFullState(np, &tic, &state_buffer)) {
     N_SaveCurrentState(tic, &state_buffer);
     G_LoadSaveData(N_GetCurrentState(), true, false);
+    CL_SendStateReceived(tic);
   }
 }
 
@@ -169,16 +171,6 @@ static void handle_auth_response(netpeer_t *np) {
 
   if (N_UnpackAuthResponse(np, &level))
     CL_SetAuthorizationLevel(level);
-}
-
-static void handle_player_command_received(netpeer_t *np) {
-  int tic;
-
-  if (N_UnpackServerMessage(np, &tic))
-    CL_RemoveOldCommands(tic);
-
-  if (net_sync_type == NET_SYNC_TYPE_TIC)
-    CL_SetRemoteTic(tic);
 }
 
 static void handle_server_message(netpeer_t *np) {
@@ -227,6 +219,19 @@ static void handle_player_message(netpeer_t *np) {
       );
     }
   }
+}
+
+static void handle_player_command_received(netpeer_t *np) {
+  int tic;
+
+  if (!N_UnpackPlayerCommandReceived(np, &tic))
+    return;
+
+  if (net_sync_type == NET_SYNC_TYPE_TIC)
+    np->last_sync_received_tic = tic;
+ 
+  if (!server)
+    CL_RemoveOldCommands(tic);
 }
 
 static void handle_player_commands(netpeer_t *np) {
@@ -303,12 +308,19 @@ static void handle_client_preference_change(netpeer_t *np) {
     else if (M_BufferEqualsString(&pref_key_name, "colormap")) {
       int new_color;
 
-      if (N_UnpackColormapChange(np, &new_color)
+      if (N_UnpackColormapChange(np, &new_color))
         G_ChangedPlayerColour(np->playernum, new_color);
     }
     else if (M_BufferEqualsString(&pref_key_name, "skin_name")) {
     }
   }
+}
+
+static void handle_state_received(netpeer_t *np) {
+  int tic;
+
+  if (N_UnpackStateReceived(np, &tic))
+    np->last_sync_received_tic = tic;
 }
 
 static void handle_auth_request(netpeer_t *np) {
@@ -335,15 +347,15 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
   while (N_LoadNewMessage(np, &message_type)) {
     switch (message_type) {
       case nm_setup:
-        P2P_CLIENT_ONLY("setup");
+        TIC_CLIENT_ONLY("setup");
         handle_setup(np);
       break;
       case nm_statedelta:
-        CS_ONLY("state delta");
+        DELTA_ONLY("state delta");
         handle_state_delta(np);
       break;
       case nm_fullstate:
-        CS_CLIENT_ONLY("full state");
+        DELTA_CLIENT_ONLY("full state");
         handle_full_state(np);
       break;
       case nm_authresponse:
@@ -361,16 +373,20 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
         handle_player_message(np);
       break;
       case nm_playercommands:
-        NOT_CS_CLIENT("player commands");
+        NOT_DELTA_CLIENT("player commands");
         handle_player_commands(np);
       break;
       case nm_savegamenamechange:
-        NOT_CS_CLIENT("save game name change");
+        NOT_DELTA_CLIENT("save game name change");
         handle_save_game_name_change(np);
       break;
       case nm_playerpreferencechange:
-        NOT_CS_CLIENT("player preference change");
+        NOT_DELTA_CLIENT("player preference change");
         handle_player_preference_change(np);
+      break;
+      case nm_statereceived:
+        DELTA_SERVER_ONLY("state received");
+        handle_state_received(np);
       break;
       case nm_authrequest:
         SERVER_ONLY("authorization request");
@@ -495,6 +511,13 @@ void CL_SendMessageToCurrentTeam(rune *message) {
   CL_SendMessageToTeam(players->objects[consoleplayer]->team, message);
 }
 
+void CL_SendPlayerCommandReceived(int tic) {
+  netpeer_t *np = NULL;
+  CHECK_CONNECTION(np);
+
+  N_PackPlayerCommandReceived(np, tic);
+}
+
 void CL_SendCommands(void) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
@@ -568,6 +591,13 @@ void CL_SendSkinChange(void) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
   /* CG: TODO */
+}
+
+void CL_SendStateReceived(int tic) {
+  netpeer_t *np = NULL;
+  CHECK_CONNECTION(np);
+
+  N_PackStateReceived(np, tic);
 }
 
 void CL_SendAuthRequest(rune *password) {

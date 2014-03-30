@@ -382,19 +382,6 @@ dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
   return true;
 }
 
-void N_PackPlayerCommandReceived(netpeer_t *np, int tic) {
-  msgpack_pack_unsigned_char(np->rpk, nm_playercommandreceived);
-  msgpack_pack_int(tic);
-}
-
-dboolean N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic) {
-  unpack_and_validate(obj, "last player command tic received", int);
-
-  *tic = (int)obj->via.u64;
-
-  return true;
-}
-
 void N_PackServerMessage(netpeer_t *np, rune *message) {
   size_t length = strlen(message) * sizeof(rune);
 
@@ -450,6 +437,19 @@ dboolean N_UnpackPlayerMessage(netpeer_t *np, unsigned short *sender,
 
   *sender = m_sender;
   *recipient_count = m_recipient_count;
+
+  return true;
+}
+
+void N_PackPlayerCommandReceived(netpeer_t *np, int tic) {
+  msgpack_pack_unsigned_char(np->rpk, nm_playercommandreceived);
+  msgpack_pack_int(tic);
+}
+
+dboolean N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic) {
+  unpack_and_validate(obj, "last player command tic received", int);
+
+  *tic = (int)obj->via.u64;
 
   return true;
 }
@@ -762,6 +762,19 @@ void N_PackSkinChange(netpeer_t *np) {
 dboolean N_UnpackSkinChange(netpeer_t *np) {
   /* CG: TODO */
   return false;
+}
+
+void N_PackStateReceived(netpeer_t *np, int tic) {
+  msgpack_pack_unsigned_char(np->rpk, nm_statereceived);
+  msgpack_pack_int(tic);
+}
+
+dboolean N_UnpackStateReceived(netpeer_t *np, int *tic) {
+  unpack_and_validate(obj, "last state tic received", int);
+
+  *tic = (int)obj->via.u64;
+
+  return true;
 }
 
 void N_PackAuthRequest(netpeer_t *np, rune *password) {

@@ -27,11 +27,7 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *    Network client. Passes information to/from server, staying
- *    synchronised.
- *    Contains the main wait loop, waiting for network input or
- *    time before doing the next tic.
- *    Rewritten for LxDoom, but based around bits of the old code.
+ *
  *
  *-----------------------------------------------------------------------------
  */
@@ -40,7 +36,6 @@
 
 #include "doomtype.h"
 #include "doomstat.h"
-#include "d_net.h"
 
 #include "d_main.h"
 #include "g_game.h"
@@ -58,17 +53,13 @@
 #include "lprintf.h"
 #include "e6y.h"
 
-static dboolean          isExtraDDisplay = false;
-static net_state_e       net_state = NET_STATE_NONE;
+#include "n_net.h"
+#include "n_main.h"
 
-int      maketic;
-int      wanted_player_number = 0;
-
-/*
-static int               xtratics = 0;
-int      ticdup = 1;
-ticcmd_t netcmds[MAXPLAYERS][BACKUPTICS];
-*/
+static int maketic = 0;
+static int wanted_player_number = 0;
+static dboolean isExtraDDisplay = false;
+static net_state_e net_state = NET_STATE_NONE;
 
 void N_SetP2PState(p2p_state_e new_state) {
   if (new_state > p2p_state)
@@ -102,36 +93,10 @@ void N_InitNetGame(void) {
 
   displayplayer = consoleplayer;
   if (!playeringame(consoleplayer))
-    I_Error("D_InitNetGame: consoleplayer not in game");
+    I_Error("N_InitNetGame: consoleplayer not in game");
 }
 
-void N_WaitForServer(void) {
-  /*
-   * CG: This should basically not exist.  In D_DoomLoop or whatever, the
-   *     client needs to check its state, if it's SETUP and then it gets the
-   *     GO packet, then it loads the game, otherwise it returns.
-   */
-  packet_header_t *packet = Z_Malloc(
-    sizeof(packet_header_t) + 1, PU_STATIC, NULL
-  );
-
-  if (have_peers) {
-    lprintf(LO_INFO,
-      "D_CheckNetGame: waiting for server to signal game start\n"
-    );
-    do {
-      while (!I_GetPacket(packet, sizeof(packet_header_t) + 1)) {
-        packet_set(packet, PKT_GO, 0);
-        *(byte *)(packet + 1) = consoleplayer;
-        I_SendPacket(packet, sizeof(packet_header_t) + 1);
-        I_uSleep(100000);
-      }
-    } while (packet->type != PKT_GO);
-  }
-  Z_Free(packet);
-}
-
-dboolean D_NetGetWad(const char* name) {
+dboolean N_GetWad(const char *name) {
   /* CG: TODO: Do this when libcurl is added */
   return false;
 }
@@ -159,7 +124,6 @@ void NetUpdate(void) {
 
   newtics = I_GetTime() - lastmadetic;
 
-  //e6y    newtics = (newtics > 0 ? newtics : 0);
   lastmadetic += newtics;
 
   if (ffmap)
@@ -236,9 +200,6 @@ void TryRunTics (void) {
   }
 
   while (runtics--) {
-    if (have_peers)
-      CheckQueuedPackets();
-
     if (advancedemo)
       D_DoAdvanceDemo();
 
@@ -251,24 +212,6 @@ void TryRunTics (void) {
     }
 
     NetUpdate(); // Keep sending our tics to avoid stalling remote nodes
-  }
-}
-
-static void D_QuitNetGame (void)
-{
-  byte buf[1 + sizeof(packet_header_t)];
-  packet_header_t *packet = (void *)buf;
-  int i;
-
-  if (!have_peers)
-    return;
-
-  buf[sizeof(packet_header_t)] = consoleplayer;
-  packet_set(packet, PKT_QUIT, gametic);
-
-  for (i = 0; i < 4; i++) {
-    I_SendPacket(packet, 1 + sizeof(packet_header_t));
-    I_uSleep(10000);
   }
 }
 

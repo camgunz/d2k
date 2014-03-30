@@ -53,9 +53,6 @@ dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf);
 void     N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level);
 dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level);
 
-void     N_PackPlayerCommandReceived(netpeer_t *np, int tic);
-void     N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic);
-
 void     N_PackServerMessage(netpeer_t *np, rune *message);
 dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf);
 
@@ -67,6 +64,9 @@ dboolean N_UnpackPlayerMessage(netpeer_t *np, unsigned short *sender,
                                               size_t *recipient_count,
                                               buf_t *recipients,
                                               buf_t *buf);
+
+void     N_PackPlayerCommandReceived(netpeer_t *np, int tic);
+void     N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic);
 
 void     N_PackPlayerCommands(netpeer_t *np);
 dboolean N_UnpackPlayerCommands(netpeer_t *np);
@@ -105,6 +105,9 @@ dboolean N_UnpackColorChange(netpeer_t *np, byte *new_red, byte *new_green,
 
 void     N_PackSkinChange(netpeer_t *np);
 dboolean N_UnpackSkinChange(netpeer_t *np);
+
+void     N_PackStateReceived(netpeer_t *np, int tic);
+void     N_UnpackStateReceived(netpeer_t *np, int *tic);
 
 void     N_PackAuthRequest(netpeer_t *np, rune *password);
 dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf);

@@ -54,25 +54,27 @@ typedef struct setup_packet_s {
   byte wadnames[1]; /* Actually longer */
 } setup_packet_t;
 
-const byte nm_setup                  = 1;  /* S => C | P2P  |   reliable */
-const byte nm_statedelta             = 2;  /* S => C | C/S  | unreliable */
-const byte nm_fullstate              = 3;  /* S => C | C/S  |   reliable */
-const byte nm_authresponse           = 4;  /* S => C | BOTH |   reliable */
-const byte nm_playercommandreceived  = 5;  /* S => C | BOTH |   reliable */
-const byte nm_servermessage          = 6;  /* S => C | BOTH |   reliable */
-const byte nm_playermessage          = 7;  /* BOTH   | BOTH |   reliable */
-const byte nm_playercommands         = 8;  /* NOT CS CLIENT | unreliable */
-const byte nm_savegamenamechange     = 9;  /* NOT CS CLIENT |   reliable */
-const byte nm_playerpreferencechange = 10; /* NOT CS CLIENT |   reliable */
-const byte nm_authrequest            = 11; /* C => S | BOTH |   reliable */
-const byte nm_rconcommand            = 12; /* C => S | BOTH |   reliable */
-const byte nm_voterequest            = 13; /* C => S | BOTH |   reliable */
+const byte nm_setup                  = 1;  /* S => C | TIC     |   reliable */
+const byte nm_statedelta             = 2;  /* S => C | DELTA   | unreliable */
+const byte nm_fullstate              = 3;  /* S => C | DELTA   |   reliable */
+const byte nm_authresponse           = 4;  /* S => C | BOTH    |   reliable */
+const byte nm_servermessage          = 5;  /* S => C | BOTH    |   reliable */
+const byte nm_playermessage          = 6;  /* BOTH   | BOTH    |   reliable */
+const byte nm_playercommandreceived  = 7;  /* BOTH   | BOTH    |   reliable */
+const byte nm_playercommands         = 8;  /* NOT DELTA CLIENT | unreliable */
+const byte nm_savegamenamechange     = 9;  /* NOT DELTA CLIENT |   reliable */
+const byte nm_playerpreferencechange = 10; /* NOT DELTA CLIENT |   reliable */
+const byte nm_statereceived          = 11; /* C => S | DELTA   |   reliable */
+const byte nm_authrequest            = 12; /* C => S | BOTH    |   reliable */
+const byte nm_rconcommand            = 13; /* C => S | BOTH    |   reliable */
+const byte nm_voterequest            = 14; /* C => S | BOTH    |   reliable */
 
 void   N_InitProtocol(void);
 void   N_HandlePacket(int peernum, void *data, size_t data_size);
 buf_t* N_GetMessageRecipientBuffer(void);
 
-void SV_SendSetup(short playernum, setup_packet_t *setupinfo);
+void SV_SendSetup(short playernum, setup_packet_t *setupinfo,
+                                   buf_t *wad_names);
 void SV_SendStateDelta(short playernum);
 void SV_SendFullState(short playernum);
 void SV_SendAuthResponse(short playernum, auth_level_e auth_level);
@@ -84,6 +86,7 @@ void CL_SendMessageToServer(rune *message);
 void CL_SendMessageToPlayer(short recipient, rune *message);
 void CL_SendMessageToTeam(byte team, rune *message);
 void CL_SendMessageToCurrentTeam(rune *message);
+void CL_SendPlayerCommandReceived(int tic);
 void CL_SendCommands(void);
 void CL_SendSaveGameNameChange(rune *new_save_game_name);
 void CL_SendNameChange(rune *new_name);
@@ -96,6 +99,7 @@ void CL_SendWeaponSpeedChange(byte new_weapon_speed);
 void CL_SendColorChange(byte new_red, byte new_green, byte new_blue);
 void CL_SendColormapChange(int new_color);
 void CL_SendSkinChange(void); /* CG: TODO */
+void CL_SendStateReceived(int tic);
 void CL_SendAuthRequest(rune *password);
 void CL_SendRCONCommand(rune *command);
 void CL_SendVoteRequest(rune *command);
