@@ -44,25 +44,12 @@
 #include "n_peer.h"
 #include "n_net.h"
 
-static objbuf_t *net_peers = NULL;
+static obuf_t *net_peers = NULL;
 
 int N_AddPeer(void) {
-  int peernum = -1;
-  short playernum = -1;
-  netpeer_t *np = NULL;
+  netpeer_t *np = calloc(1, sizeof(netpeer_t));
 
-  if (server) {
-    for (int i = 0; i < MAXPLAYERS; i++) {
-      if (!playeringame[i]) {
-        playernum = i;
-      }
-    }
-
-    if (playernum == -1)
-      return -1;
-  }
-
-  np = calloc(1, sizeof(netpeer_t));
+  /* CG: TODO: Add some kind of check for MAXCLIENTS */
 
   np->peer = NULL;
   np->rbuf = msgpack_sbuffer_new();
@@ -71,18 +58,15 @@ int N_AddPeer(void) {
   np->upk = msgpack_packer_new(np->buf, msgpack_sbuffer_write);
   np->connect_time = time();
   np->disconnect_time = 0;
-  np->playernum = playernum;
-  np->last_state_received_tic = 0;
-  np->last_state_sent_tic = 0;
+  np->playernum = 0;
+  np->last_sync_received_tic = 0;
+  np->last_sync_sent_tic = 0;
   M_BufferInit(&np->state);
   M_BufferInit(&np->delta);
-  M_ObjBufferInit(&np->commands);
 
-  if ((peernum = M_ObjBufferInsertAtFirstFreeSlot(net_peers, np)))
-    return peernum;
+  np->playernum = M_OBufInsertAtFirstFreeSlotOrAppend(netpeers, np);
 
-  M_ObjBufferAppend(net_peers, np);
-  return net_peers->size - 1;
+  return np->playernum;
 }
 
 void N_SetPeerConnected(int peernum, ENetPeer *peer) {
@@ -117,65 +101,65 @@ void N_RemovePeer(netpeer_t *np) {
   M_BufferFree(&np->state);
   M_BufferClear(&np->delta);
   M_BufferFree(&np->delta);
-  M_ObjBufferFreeEntriesAndClear(&np->commands);
-  M_ObjBufferFree(&np->commands);
 
-  np->peer                    = NULL;
-  np->rbuf                    = NULL;
-  np->rpk                     = NULL;
-  np->ubuf                    = NULL;
-  np->upk                     = NULL;
-  np->connect_time            = 0;
-  np->disconnect_time         = 0;
-  np->playernum               = -1;
-  np->last_state_received_tic = 0;
-  np->last_state_sent_tic     = 0;
-  np->state                   = NULL;
-  np->delta                   = NULL;
-  np->commands                = NULL;
+  np->peer                   = NULL;
+  np->rbuf                   = NULL;
+  np->rpk                    = NULL;
+  np->ubuf                   = NULL;
+  np->upk                    = NULL;
+  np->connect_time           = 0;
+  np->disconnect_time        = 0;
+  np->playernum              = -1;
+  np->last_sync_received_tic = 0;
+  np->last_sync_sent_tic     = 0;
+  np->state                  = NULL;
+  np->delta                  = NULL;
 
-  M_ObjBufferRemove(net_peers, peernum);
+  M_OBufRemove(net_peers, peernum);
 }
 
 int N_GetPeerCount(void) {
-  return net_peers->size;
+  return M_OBufGetObjectCount(net_peers);
 }
 
 netpeer_t* N_GetPeer(int peernum) {
-  if (peernum < 0 || peernum >= net_peers->size)
-    I_Error("N_GetPeer: peernum %d out of range.\n", peernum);
-
-  return net_peers->objects[i];
+  return M_OBufGet(net_peers, peernum);
 }
 
 int N_GetPeerNum(ENetPeer *peer) {
-  for (int i = 0; i < net_peers->size; i++) {
-    netpeer_t *np = net_peers->objects[i];
+  int index = -1;
+  netpeer_t *np = NULL;
 
-    if (np != NULL && np->peer->connectID == peer->connectID)
-      return i;
+  while (M_OBufIter(net_peers, &index, (void **)&np)) {
+    if (np->peer->connectID == peer->connectID) {
+      return index;
+    }
   }
 
   return -1;
 }
 
 netpeer_t* N_GetPeerForPlayer(short playernum) {
-  for (int i = 0; i < net_peers->size; i++) {
-    netpeer_t *np = net_peers->objects[i];
+  int index = -1;
+  netpeer_t *np = NULL;
 
-    if (np != NULL && np->playernum == playernum)
+  while (M_OBufIter(net_peers, &index, (void **)&np)) {
+    if (np->playernum == playernum) {
       return np;
+    }
   }
 
   return NULL;
 }
 
 int N_GetPeerNumForPlayer(short playernum) {
-  for (int i = 0; i < net_peers->size; i++) {
-    netpeer_t *np = net_peers->objects[i];
+  int index = -1;
+  netpeer_t *np = NULL;
 
-    if (np != NULL && np->playernum == playernum)
-      return i;
+  while (M_OBufIter(net_peers, &index, (void **)&np)) {
+    if (np->playernum == playernum) {
+      return index;
+    }
   }
 
   return -1;
@@ -184,15 +168,16 @@ int N_GetPeerNumForPlayer(short playernum) {
 dboolean N_CheckPeerTimeout(int peernum) {
   netpeer_t *np = N_GetPeer(peernum);
 
-  if (np != NULL) {
-    if ((np->connection_time != 0) &&
-        (difftime(time(), np->connection_time) > CONNECT_TIMEOUT)) {
-      return true;
-    }
-    else if ((np->disconnection_time != 0) &&
-             (difftime(time(), np->disconnection_time) > DISCONNECT_TIMEOUT)) {
-      return true;
-    }
+  if (np == NULL) {
+    return false;
+  }
+  else if ((np->connection_time != 0) &&
+           (difftime(time(), np->connection_time) > CONNECT_TIMEOUT)) {
+    return true;
+  }
+  else if ((np->disconnection_time != 0) &&
+           (difftime(time(), np->disconnection_time) > DISCONNECT_TIMEOUT)) {
+    return true;
   }
 
   return false;

@@ -218,13 +218,16 @@ static float Get_TextSpeed(void)
 void F_Ticker(void)
 {
   int i;
-  if (!demo_compatibility)
+  if (!demo_compatibility) {
     WI_checkForAccelerate();  // killough 3/28/98: check for acceleration
-  else
-    if (gamemode == commercial && finalecount > 50) // check for skipping
-      for (i=0; i<MAXPLAYERS; i++)
-        if (players[i].cmd.buttons)
-          goto next_level;      // go on to the next level
+  }
+  else if (gamemode == commercial && finalecount > 50) { // check for skipping
+    OBUF_FOR_EACH(&players, j, player_t *, p) {
+      if (p->cmd.buttons) {
+        goto next_level;      // go on to the next level
+      }
+    }
+  }
 
   // advance animation
   finalecount++;

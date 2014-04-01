@@ -34,10 +34,12 @@
 #ifndef N_MAIN__
 #define N_MAIN__
 
-void NetUpdate(void);
-void TryRunTics(void);
-void N_InitNetGame(void);
-void N_CheckNetGame(void);
+void     N_InitNetGame(void);
+void     N_Update(void);
 dboolean N_GetWad(const char* name);
+void     TryRunTics(void);
+void     CL_SetReady(dboolean new_ready);
+void     CL_SetAuthorizationLevel(auth_level_e level);
+void     CL_RemoveOldCommands(int tic);
 
 #endif

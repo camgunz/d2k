@@ -40,24 +40,26 @@
 
 #define MAX_PREF_NAME_SIZE 20
 
-#define TIC_SYNC_ONLY(name)                                                   \
-  if (net_sync_type != NET_SYNC_TYPE_TIC) {                                   \
+#define COMMAND_SYNC_ONLY(name)                                               \
+  if (!CMDSYNC) {                                                             \
     doom_printf(                                                              \
-      __func__ ": Erroneously received TIC packet [" name "] in DELTA mode\n" \
+      __func__ ": Erroneously received command-sync packet [" name "] in "    \
+      "delta-sync mode\n"                                                     \
     );                                                                        \
     return;                                                                   \
   }
 
 #define DELTA_SYNC_ONLY(name)                                                 \
-  if (net_sync_type != NET_SYNC_TYPE_DELTA) {                                 \
+  if (!DELTASYNC) {                                                           \
     doom_printf(                                                              \
-      __func__ ": Erroneously received DELTA packet [" name "] in TIC mode\n" \
+      __func__ ": Erroneously received delta-sync packet [" name "] in "      \
+      "command-sync mode\n"                                                   \
     );                                                                        \
     return;                                                                   \
   }
 
 #define SERVER_ONLY(name)                                                     \
-  if (!server) {                                                              \
+  if (!SERVER) {                                                              \
     doom_printf(                                                              \
       __func__ ": Erroneously received packet [" name "] from the server\n"   \
     );                                                                        \
@@ -65,18 +67,45 @@
   }
 
 #define CLIENT_ONLY(name)                                                     \
-  if (server) {                                                               \
+  if (SERVER) {                                                               \
     doom_printf(                                                              \
       __func__ ": Erroneously received packet [" name "] from a client\n"     \
     );                                                                        \
     return;                                                                   \
   }
 
+#define NOT_DELTA_SERVER(name)                                                \
+  if (DELTASERVER) {                                                          \
+    doom_printf(                                                              \
+      __func__ ": Erroneously received packet [" name "] as a server in "     \
+      "delta-sync mode\n"                                                     \
+    );                                                                        \
+    return;                                                                   \
+  }
+
 #define NOT_DELTA_CLIENT(name)                                                \
-  if ((net_sync_type == NET_SYNC_TYPE_DELTA) && (!server)) {                  \
+  if (DELTACLIENT) {                                                          \
     doom_printf(                                                              \
       __func__ ": Erroneously received packet [" name "] as a client in "     \
-      "DELTA mode\n"                                                          \
+      "delta-sync mode\n"                                                     \
+    );                                                                        \
+    return;                                                                   \
+  }
+
+#define NOT_COMMAND_SERVER(name)                                              \
+  if (COMMANDSERVER) {                                                        \
+    doom_printf(                                                              \
+      __func__ ": Erroneously received packet [" name "] as a server in "     \
+      "command-sync mode\n"                                                   \
+    );                                                                        \
+    return;                                                                   \
+  }
+
+#define NOT_COMMAND_CLIENT(name)                                              \
+  if (COMMANDCLIENT) {                                                        \
+    doom_printf(                                                              \
+      __func__ ": Erroneously received packet [" name "] as a client in "     \
+      "command-sync mode\n"                                                   \
     );                                                                        \
     return;                                                                   \
   }
@@ -85,9 +114,17 @@
   DELTA_ONLY(name);                                                           \
   SERVER_ONLY(name);
 
-#define TIC_CLIENT_ONLY(name)                                                 \
-  TIC_ONLY(name);                                                             \
+#define DELTA_CLIENT_ONLY(name)                                               \
+  DELTA_ONLY(name);                                                           \
+  SERVER_ONLY(name);
+
+#define COMMAND_CLIENT_ONLY(name)                                             \
+  COMMAND_ONLY(name);                                                         \
   CLIENT_ONLY(name);
+
+#define COMMAND_SERVER_ONLY(name)                                             \
+  COMMAND_ONLY(name);                                                         \
+  SERVER_ONLY(name);
 
 #define DELTA_SERVER_ONLY(name)                                               \
   DELTA_ONLY(name);                                                           \
@@ -110,59 +147,86 @@
 static buf_t message_recipients;
 
 static void handle_setup(netpeer_t *np) {
-  setup_packet_t sinfo;
-  objbuf_t wad_names;
+  unsigned short player_count = 0;
+  unsigned short playernum = 0;
+  int index = -1;
+  rune *name = NULL;
 
-  if (!N_UnpackSetup(np, &sinfo, &wad_names))
+  if (!N_UnpackResources(np, &player_count, &playernum)) {
+    M_OBufFreeEntriesAndClear(&resource_names);
+    M_OBufFreeEntriesAndClear(&deh_names);
     return;
+  }
 
-  consoleplayer = sinfo->yourplayer;
-  compatibility_level = sinfo->complevel;
-  G_Compatibility();
-  startskill = sinfo->skill;
-  deathmatch = sinfo->deathmatch;
-  startmap = sinfo->level;
-  startepisode = sinfo->episode;
-  ticdup = sinfo->ticdup;
-  xtratics = sinfo->extratic;
-  G_ReadOptions(sinfo->game_options);
+  M_OBufEnsureCapacity(&players, player_count);
+  for (int i = 0; i < player_count; i++)
+    M_OBufAppend(&players, calloc(1, sizeof(player_t)));
 
-  M_ObjBufferEnsureCapacity(&players, sinfo->players);
+  consoleplayer = playernum;
 
-  for (int i = 0; i < wad_names.capacity; i++) {
-    if (wad_names.objects[i] != NULL) {
-      D_AddFile(wad_names.objects[i], source_net);
+  while (M_OBufIter(&resource_names, &index, &name)) {
+    char *fpath = I_FindFile(name, NULL);
+
+    if (fpath == NULL) {
+      doom_printf("Unable to find resource \"%s\", disconnecting.\n", name);
+      N_Disconnect();
+      return;
+    }
+    else {
+      D_AddFile(fpath, source_net);
     }
   }
 
-  doom_printf("Joined game as player %d; %d WADs specified\n", 
-    consoleplayer, M_ObjBufferGetObjectCount(&wad_names);
-  );
+  while (M_OBufIter(&resource_names, &index, &name)) {
+    char *fpath = I_FindFile(name, NULL);
 
-  N_SetNetState(NET_STATE_SETUP);
-}
-
-static void handle_state_delta(netpeer_t *np) {
-  static buf_t delta_buffer;
-
-  int from_tic, to_tic;
-
-  if (N_UnpackStateDelta(np, &from_tic, &to_tic, &delta_buffer)) {
-    N_ApplyStateDelta(from_tic, to_tic, &delta_buffer);
-    G_LoadSaveData(N_GetCurrentState(), true, false);
-    CL_SendStateReceived(to_tic);
+    if (fpath == NULL) {
+      doom_printf(
+        "Unable to find DEH/BEX patch \"%s\", disconnecting.\n", name
+      );
+      N_Disconnect();
+      return;
+    }
+    else {
+      ProcessDehFile(fpath, D_dehout(), 0);
+    }
   }
 }
 
 static void handle_full_state(netpeer_t *np) {
   static buf_t state_buffer;
+  static dboolean initialized_buffer = false;
 
   int tic;
+
+  if (!initialized_buffer) {
+    M_BufferInit(&state_buffer);
+    initialized_buffer = true;
+  }
 
   if (N_UnpackFullState(np, &tic, &state_buffer)) {
     N_SaveCurrentState(tic, &state_buffer);
     G_LoadSaveData(N_GetCurrentState(), true, false);
     CL_SendStateReceived(tic);
+    CL_SetReady(true);
+  }
+}
+
+static void handle_state_delta(netpeer_t *np) {
+  static buf_t delta_buffer;
+  static dboolean initialized_buffer = false;
+
+  int from_tic, to_tic;
+
+  if (!initialized_buffer) {
+    M_BufferInit(&delta_buffer);
+    initialized_buffer = true;
+  }
+
+  if (N_UnpackStateDelta(np, &from_tic, &to_tic, &delta_buffer)) {
+    N_ApplyStateDelta(from_tic, to_tic, &delta_buffer);
+    G_LoadSaveData(N_GetCurrentState(), true, false);
+    CL_SendStateReceived(to_tic);
   }
 }
 
@@ -175,6 +239,12 @@ static void handle_auth_response(netpeer_t *np) {
 
 static void handle_server_message(netpeer_t *np) {
   static buf_t server_message_buffer;
+  static dboolean initialized_buffer = false;
+
+  if (!initialized_buffer) {
+    M_BufferInit(server_message_buffer);
+    initialized_buffer = true;
+  }
 
   if (N_UnpackServerMessage(np, &server_message_buffer))
     doom_printf("[SERVER]: %s\n", server_message_buffer.data);
@@ -182,10 +252,16 @@ static void handle_server_message(netpeer_t *np) {
 
 static void handle_player_message(netpeer_t *np) {
   static buf_t player_message_buffer;
+  static dboolean initialized_buffer = false;
 
   unsigned short sender = 0;
   size_t recipient_count = 0;
   dboolean unpacked_successfully = false;
+
+  if (!initialized_buffer) {
+    M_BufferInit(player_message_buffer);
+    initialized_buffer = true;
+  }
 
   unpacked_successfully = N_UnpackPlayerMessage(
     np, &sender, &recipient_count, &message_recipients, &player_message_buffer
@@ -194,7 +270,7 @@ static void handle_player_message(netpeer_t *np) {
   if (!unpacked_successfully)
     return
 
-  if (server) {
+  if (SERVER) {
     for (int i = 0; i < N_GetPeerCount(); i++) {
       netpeer_t *np = N_GetPeer(i);
 
@@ -227,10 +303,10 @@ static void handle_player_command_received(netpeer_t *np) {
   if (!N_UnpackPlayerCommandReceived(np, &tic))
     return;
 
-  if (net_sync_type == NET_SYNC_TYPE_TIC)
+  if (CMDSYNC)
     np->last_sync_received_tic = tic;
  
-  if (!server)
+  if (CLIENT)
     CL_RemoveOldCommands(tic);
 }
 
@@ -240,6 +316,12 @@ static void handle_player_commands(netpeer_t *np) {
 
 static void handle_save_game_name_change(netpeer_t *np) {
   static buf_t save_game_name;
+  static dboolean initialized_buffer = false;
+
+  if (!initialized_buffer) {
+    M_BufferInit(&save_game_name);
+    initialized_buffer = true;
+  }
 
   if (N_UnpackSaveGameNameChange(np, &save_game_name)) {
     if (save_game_name.size < SAVEDESCLEN) {
@@ -252,9 +334,16 @@ static void handle_save_game_name_change(netpeer_t *np) {
 static void handle_client_preference_change(netpeer_t *np) {
   static buf_t pref_key_name;
   static buf_t pref_key_value;
+  static dboolean initialized_buffers = false;
 
   size_t pref_count = 0;
   player_t *player = &players[np->playernum];
+
+  if (!initialized_buffers) {
+    M_BufferInit(&pref_key_name);
+    M_BufferInit(&pref_key_value);
+    initialized_buffers = true;
+  }
 
   if (!N_UnpackClientPreferenceChange(np, &pref_count))
     return;
@@ -347,23 +436,22 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
   while (N_LoadNewMessage(np, &message_type)) {
     switch (message_type) {
       case nm_setup:
-        TIC_CLIENT_ONLY("setup");
+        CLIENT_ONLY("setup");
         handle_setup(np);
-      break;
-      case nm_statedelta:
-        DELTA_ONLY("state delta");
-        handle_state_delta(np);
       break;
       case nm_fullstate:
         DELTA_CLIENT_ONLY("full state");
         handle_full_state(np);
+      break;
+      case nm_statedelta:
+        DELTA_CLIENT_ONLY("state delta");
+        handle_state_delta(np);
       break;
       case nm_authresponse:
         CLIENT_ONLY("authorization response");
         handle_auth_response(np);
       break;
       case nm_playercommandreceived:
-        CLIENT_ONLY("player command received");
         handle_player_command_received(np);
       case nm_servermessage:
         CLIENT_ONLY("server message");
@@ -420,12 +508,19 @@ buf_t* N_GetMessageRecipientBuffer(void) {
   return &message_recipients;
 }
 
-void SV_SendSetup(short playernum, setup_packet_t *setupinfo,
-                                   buf_t *wad_names) {
+void SV_SendSetup(short playernum) {
   netpeer_t *np = NULL;
   CHECK_VALID_PLAYER(np, playernum);
 
-  N_PackSetup(np, setupinfo, wad_names);
+  N_PackSetup(np);
+}
+
+void SV_SendFullState(short playernum) {
+  netpeer_t *np = NULL;
+  CHECK_VALID_PLAYER(np, playernum);
+
+  N_PackFullState(np, N_GetCurrentState());
+  np->last_state_sent_tic = gametic;
 }
 
 void SV_SendStateDelta(short playernum) {
@@ -434,14 +529,6 @@ void SV_SendStateDelta(short playernum) {
 
   N_BuildStateDelta(np);
   N_PackStateDelta(np, np->last_state_received_tic, gametic, np->delta);
-  np->last_state_sent_tic = gametic;
-}
-
-void SV_SendFullState(short playernum) {
-  netpeer_t *np = NULL;
-  CHECK_VALID_PLAYER(np, playernum);
-
-  N_PackFullState(np, N_GetCurrentState());
   np->last_state_sent_tic = gametic;
 }
 

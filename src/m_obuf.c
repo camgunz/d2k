@@ -182,7 +182,8 @@ void M_OBufFreeEntriesAndClear(obuf_t *obuf) {
 }
 
 void M_OBufFree(obuf_t *obuf) {
-  free(obuf->objects);
+  if (obuf->objects != NULL)
+    free(obuf->objects);
   M_OBufInit(obuf);
 }
 

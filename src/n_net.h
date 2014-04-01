@@ -39,12 +39,15 @@
 #define CONNECT_TIMEOUT 3
 #define DISCONNECT_TIMEOUT 3
 
-typedef enum {
-  NET_STATE_NONE,
-  NET_STATE_SETUP,
-  NET_STATE_GO,
-  NET_STATE_MAX
-} net_state_e;
+#define MULTINET    (netgame && (!solonet))
+#define CMDSYNC     (netsync == NET_SYNC_TYPE_COMMAND)
+#define DELTASYNC   (netsync == NET_SYNC_TYPE_DELTA)
+#define CLIENT      (MULTINET && (!netserver))
+#define SERVER      (MULTINET && netserver)
+#define CMDCLIENT   (CLIENT && CMDSYNC)
+#define CMDSERVER   (SERVER && CMDSYNC)
+#define DELTACLIENT (CLIENT && DELTASYNC)
+#define DELTASERVER (SERVER && DELTASYNC)
 
 typedef enum {
   AUTH_LEVEL_NONE,
@@ -61,7 +64,8 @@ typedef enum {
 } net_channel_e;
 
 typedef enum {
-  NET_SYNC_TYPE_TIC,
+  NET_SYNC_TYPE_NONE,
+  NET_SYNC_TYPE_COMMAND,
   NET_SYNC_TYPE_DELTA,
 } net_sync_type_e;
 
@@ -75,9 +79,10 @@ typedef struct netticcmd_s {
   byte  buttons;
 } netticcmd_t;
 
-extern dboolean netgame;
-extern dboolean have_peers;
-extern net_sync_type_e net_sync_type;
+extern dboolean        netgame;
+extern dboolean        solonet;
+extern dboolean        netserver;
+extern net_sync_type_e netsync;
 
 size_t   N_IPToString(int address, char *buffer);
 int      N_IPToInt(const char *address);
@@ -97,9 +102,6 @@ void     N_PrintAddress(FILE *fp, int peernum);
 void     N_DisconnectPlayer(short playernum);
 void     N_ServiceNetworkTimeout(int timeout_ms);
 void     N_ServiceNetwork(void);
-
-void     N_SetLocalClientAuthorizationLevel(auth_level_e level);
-void     N_RemoveOldClientCommands(int tic);
 
 #endif
 

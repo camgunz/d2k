@@ -27,9 +27,7 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *  Low level UDP network interface. This is shared between the server
- *  and client, with SERVER defined for the former to select some extra
- *  functions. Handles socket creation, and packet send and receive.
+ *
  *
  *-----------------------------------------------------------------------------
  */

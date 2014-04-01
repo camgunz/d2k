@@ -56,67 +56,93 @@
 #include "n_net.h"
 #include "n_main.h"
 
-static int maketic = 0;
-static int wanted_player_number = 0;
-static dboolean isExtraDDisplay = false;
-static net_state_e net_state = NET_STATE_NONE;
+/*
+ * CG: TODO:
+ *   - Add WAD fetching (waiting on libcurl)
+ */
 
-void N_SetP2PState(p2p_state_e new_state) {
-  if (new_state > p2p_state)
-    p2p_state = new_state;
-}
+static int maketic = 0;
+static int lastmadetic = 0;
+static dboolean is_extra_ddisplay = false;
+
+/* CG: Client only */
+static dboolean received_setup = false;
+static auth_level_e authorization_level = AUTH_LEVEL_NONE;
 
 void N_InitNetGame(void) {
-  int i = M_CheckParm("-net");
+  netgame   = false;
+  solonet   = false;
+  netserver = false;
+  netsync   = NET_SYNC_TYPE_NONE:
 
-  if (i && i < myargc - 1)
-    i++;
+  displayplayer = consoleplayer = 0;
+  playeringame[consoleplayer] = true; // CG: FIXME
 
-  if (!(netgame = have_peers = !!i)) {
-    playeringame[consoleplayer = 0] = true;
-    netgame = M_CheckParm("-solo-net");
+  if (M_CheckParm("-solo-net")) {
+    netgame = true;
+    solonet = true;
+  }
+  else if (M_CheckParm("-net")) {
+    if (i < myargc - 1) {
+      netgame = true;
+
+      N_Init();
+
+      if (!N_ConnectToServer(myargv[i + 1]))
+        I_Error("Connection aborted");
+
+      N_ServiceNetworkTimeout(CONNECT_TIMEOUT * 1000);
+
+      if (!received_setup)
+        I_Error("Timed out waiting for setup information from the server");
+
+      atexit(N_Disconnect());
+    }
+  }
+  else {
+    if (M_CheckParm("-commandserve") && M_CheckParm("-deltaserve"))
+      I_Error("Cannot specify both '-commandserve' and '-deltaserve'");
+    else if (M_CheckParm("-commandserve"))
+      netsync = NET_SYNC_TYPE_COMMAND;
+    else if (M_CheckParm("-deltaserve"))
+      netsync = NET_SYNC_TYPE_DELTA;
+
+    if (CMDSYNC || DELTASYNC) {
+      char *host = NULL;
+      unsigned short port = DEFAULT_PORT;
+
+      netgame = true;
+      netserver = true;
+      nodrawers = true;
+
+      N_Init();
+
+      if (i < myargc - 1) {
+        size_t host_length = N_ParseAddressString(myargv[i + 1], &host, &port);
+
+        if (host_length == 0)
+          host = strdup("0.0.0.0");
+      }
+
+      if (!N_Listen(host, port))
+        I_Error("Startup aborted");
+
+      atexit(N_Disconnect());
+    }
   }
 
-  if (have_peers) {
-    N_Init();
-
-    if (!N_ConnectToServer(myargv[i]))
-      I_Error("Server aborted the game");
-
-    N_ServiceNetworkTimeout(CONNECT_TIMEOUT * 1000);
-
-    if (p2p_state != P2P_STATE_SETUP) 
-      I_Error("Timed out waiting for setup information from server");
-
-    atexit(N_Disconnect());
-  }
-
-  displayplayer = consoleplayer;
-  if (!playeringame(consoleplayer))
-    I_Error("N_InitNetGame: consoleplayer not in game");
 }
 
 dboolean N_GetWad(const char *name) {
-  /* CG: TODO: Do this when libcurl is added */
   return false;
 }
 
-/*
- * CG: TODO:
- *   - Fix the input system to avoid mouse deceleration; it almost
- *     certainly is a problem.
- *   - Fix choppiness between frames; rendering is probably only done at 35Hz
- *     if interpolation is disabled, which won't work for OpenGL.
- */
-
-void NetUpdate(void) {
-  static int lastmadetic;
-
+void N_Update(void) {
   int newtics;
   ticcmd_t cmd;
   netticcmd_t ncmd;
 
-  if (isExtraDDisplay)
+  if (is_extra_ddisplay)
     return;
 
   if (have_peers)
@@ -163,7 +189,7 @@ void TryRunTics (void) {
   int entertime = I_GetTime();
 
   while (true) {
-    NetUpdate();
+    N_Update();
 
     if (have_peers) {
       while (M_OBufIter(players, &index, &player)) {
@@ -173,9 +199,25 @@ void TryRunTics (void) {
           runtics = command_count;
       }
     }
+    else {
+      runtics = maketic - gametic;
+    }
 
-    if (runtics)
+    if (runtics) {
+      while (runtics--) {
+        if (advancedemo)
+          D_DoAdvanceDemo();
+
+        M_Ticker();
+        I_GetTime_SaveMS();
+        G_Ticker();
+        P_Checksum(gametic);
+        gametic++;
+
+        N_Update(); // Keep sending our tics to avoid stalling remote nodes
+      }
       break;
+    }
 
     if (!movement_smooth || !window_focused) {
       if (have_peers)
@@ -192,26 +234,33 @@ void TryRunTics (void) {
     if (gametic > 0) {
       WasRenderedInTryRunTics = true;
       if (movement_smooth && gamestate == wipegamestate) {
-        isExtraDDisplay = true;
+        is_extra_ddisplay = true;
         D_Display();
-        isExtraDDisplay = false;
+        is_extra_ddisplay = false;
       }
     }
   }
+}
 
-  while (runtics--) {
-    if (advancedemo)
-      D_DoAdvanceDemo();
+void CL_SetReceivedSetup(dboolean new_received_setup) {
+  received_setup = new_received_setup;
+}
 
-    M_Ticker();
-    I_GetTime_SaveMS();
-    if ((!netgame) || (have_peers && net_state = NET_STATE_GO)) {
-      G_Ticker();
-      P_Checksum(gametic);
-      gametic++;
+void CL_SetAuthorizationLevel(auth_level_e level) {
+  if (level > authorization_level)
+    authorization_level = level;
+}
+
+void CL_RemoveOldCommands(int tic) {
+  int index = -1;
+  netticcmd_t *ncmd = NULL;
+  player_t *p = M_OBufGet(players, consoleplayer);
+
+  while (M_CBufIter(&p->commands, &index, (void **)&ncmd)) {
+    if (ncmd->tic <= tic) {
+      M_CBufRemove(&p->commands, index);
+      index--;
     }
-
-    NetUpdate(); // Keep sending our tics to avoid stalling remote nodes
   }
 }
 

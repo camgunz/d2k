@@ -38,17 +38,17 @@ void     N_InitPacker(void);
 
 dboolean N_LoadNewMessage(netpeer_t *np, byte *message_type);
 
-void     N_PackSetup(netpeer_t *np, setup_packet_t *sinfo, buf_t *wad_names);
-dboolean N_UnpackSetup(netpeer_t *np, setup_packet_t *sinfo,
-                                      objbuf_t *wad_names);
+void     N_PackSetup(netpeer_t *np);
+dboolean N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
+                                      unsigned short *playernum);
+
+void     N_PackFullState(netpeer_t *np, buf_t *buf);
+dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf);
 
 void     N_PackStateDelta(netpeer_t *np, int from_tic, int to_tic,
                                          buf_t *buf);
 dboolean N_UnpackStateDelta(netpeer_t *np, int *from_tic, int *to_tic,
                                            buf_t *buf);
-
-void     N_PackFullState(netpeer_t *np, buf_t *buf);
-dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf);
 
 void     N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level);
 dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level);

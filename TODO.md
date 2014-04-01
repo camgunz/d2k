@@ -1,32 +1,25 @@
 # To Do
 
-1. Use `nm_playercommandreceived` instead of `nm_ticmarker`.
+1. Update `players`:
+  - `players` will become an `obuf_t`
+  - `playeringame` becomes `dboolean playeringame(unsigned short playernum)`
+  - `MAXPLAYERS` becomes `VANILLA_MAXPLAYERS` for compat
+  - Anything defined using `MAXPLAYERS` will be refactored
+  - Servers aren't players
+    - Use a camera in non-headless mode
+    - All playernums should be unsigned shorts
+    - Sending a message to the server can use a bool `to_server` instead of the
+      `-1` recipient (which is a hack)
 
-1. Replace "Client"/"client" with "Player"/"player"
+1. Get rid of spurious NetUpdate calls everywhere; they don't help anymore, but
+   they do waste bandwidth
 
-1. Make tics unsigned (there's no reason for a tic value to ever be negative)
+1. Fix choppiness between frames; rendering is probably only done at 35Hz if
+   interpolation is disabled, which won't work for OpenGL.
 
-1. Make player numbers unsigned shorts
-  - Using -1 for the server's player number just shouldn't be a thing
+1. Have server actually send out updates
 
-1. Finally revamp `d_client.c` and `d_server.c`.
-
-1. Fix `players`/`MAXPLAYERS` problem
-  - players will become an `objbuf_t`
-  - `MAXPLAYERS` will become a define that calls a small function:
-    - If an old demo was loaded, `MAXPLAYERS` returns 4
-    - Else, `MAXPLAYERS` returns `players->capacity`
-  - Anything defined using `MAXPLAYERS` as a size will be refactored
-  - `playeringame[]` becomes `N_PlayerInGame(short playernum)`
-
-1. Add command-line arguments for new netcode.
-  - `-serve <host>:<port>`
-    - Also enables headless mode.
-  - `-connect <host>:<port>`
-  - host & port will live for now until HTTP/JSON comes online; let's get a
-    prototype out first.
-
-1. Test prototype
+1. Compile & Test prototype
 
 1. Add unlagged
   - Save attacking player position
@@ -40,4 +33,12 @@
   - Restore saved state
   - For every impacted actor:
     - Add new momx/momy/momz values to the current momx/momy/momz
+
+1. Add HTTP & JSON
+  - Have client download missing WADs
+    - the client should do this between frames in case it needs to download a
+      huge file (or a file from a slow server); libcurl ought to make this
+      pretty easy
+
+1. Make tics unsigned (there's no reason for a tic value to ever be negative)
 

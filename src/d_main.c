@@ -133,6 +133,14 @@ dboolean advancedemo;
 
 char    *basesavegame;             // killough 2/16/98: savegame directory
 
+/*
+ * CG: Keep track of the specified resource and DEH/BEX files so we can
+ *     potentially send them to a client on request, or save them in a
+ *     savegame, or whatever.
+ */
+obuf_t resource_files;
+obuf_t deh_files;
+
 //jff 4/19/98 list of standard IWAD names
 const char *const standard_iwads[]=
 {
@@ -350,15 +358,13 @@ void D_Display (void)
     // Boom colormaps should be applied for everything in R_RenderPlayerView
     use_boom_cm=true;
 
-    R_InterpolateView(&players[displayplayer]);
+    R_InterpolateView(D_DisplayPlayer());
 
     R_ClearStats();
 
     // Now do the drawing
     if (viewactive || map_always_updates)
-    {
-      R_RenderPlayerView (&players[displayplayer]);
-    }
+      R_RenderPlayerView(D_DisplayPlayer());
 
     // IDRATE cheat
     R_ShowStats();
@@ -369,17 +375,16 @@ void D_Display (void)
     frame_fixedcolormap = 0;
 
     if (automapmode & am_active)
-    {
       AM_Drawer();
-    }
 
     R_RestoreInterpolations();
 
     ST_Drawer(
-        ((viewheight != SCREENHEIGHT)
-         || ((automapmode & am_active) && !(automapmode & am_overlay))),
-        redrawborderstuff || BorderNeedRefresh,
-        (menuactive == mnact_full));
+      ((viewheight != SCREENHEIGHT)
+       || ((automapmode & am_active) && !(automapmode & am_overlay))),
+      redrawborderstuff || BorderNeedRefresh,
+      (menuactive == mnact_full)
+    );
 
     BorderNeedRefresh = false;
     if (V_GetMode() != VID_MODEGL)
@@ -468,8 +473,8 @@ static void D_DoomLoop(void) {
     }
 
     // killough 3/16/98: change consoleplayer to displayplayer
-    if (players[displayplayer].mo) // cph 2002/08/10
-      S_UpdateSounds(players[displayplayer].mo);// move positional sounds
+    if (D_DisplayPlayer()->mo) // cph 2002/08/10
+      S_UpdateSounds(D_DisplayPlayer()->mo);// move positional sounds
 
     if (!movement_smooth || !WasRenderedInTryRunTics ||
                             gamestate != wipegamestate) {
@@ -654,7 +659,7 @@ static struct
 
 void D_DoAdvanceDemo(void)
 {
-  players[consoleplayer].playerstate = PST_LIVE;  /* not reborn */
+  D_ConsolePlayer()->playerstate = PST_LIVE;  /* not reborn */
   advancedemo = usergame = paused = false;
   gameaction = ga_nothing;
 
@@ -1379,6 +1384,9 @@ static void D_DoomMainSetup(void)
     } while (rsp_found==true);
   }
 
+  M_OBufInit(&resource_files);
+  M_OBufInit(&deh_files);
+
   // e6y: moved to main()
   /*
   lprintf(LO_INFO,"M_LoadDefaults: Load system defaults.\n");
@@ -1653,6 +1661,7 @@ static void D_DoomMainSetup(void)
         if (file)
         {
           D_AddFile(file,source_pwad);
+          M_OBufAppend(&resource_files, strdup(myargv[p]));
           free(file);
         }
       }
@@ -1809,6 +1818,7 @@ static void D_DoomMainSetup(void)
       {
         // during the beta we have debug output to dehout.txt
         ProcessDehFile(file,D_dehout(),0);
+        M_OBufAppend(&deh_files, strdup(myargv[p]));
         free(file);
       }
       else

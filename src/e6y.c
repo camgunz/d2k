@@ -880,18 +880,14 @@ void e6y_G_DoCompleted(void)
   stats[numlevels].stat[TT_TOTALITEM]   = totalitems;
   stats[numlevels].stat[TT_TOTALSECRET] = totalsecret;
 
-  for (i=0 ; i<MAXPLAYERS ; i++)
-  {
-    if (playeringame[i])
-    {
-      stats[numlevels].kill[i]   = players[i].killcount - players[i].resurectedkillcount;
-      stats[numlevels].item[i]   = players[i].itemcount;
-      stats[numlevels].secret[i] = players[i].secretcount;
-      
-      stats[numlevels].stat[TT_ALLKILL]   += stats[numlevels].kill[i];
-      stats[numlevels].stat[TT_ALLITEM]   += stats[numlevels].item[i];
-      stats[numlevels].stat[TT_ALLSECRET] += stats[numlevels].secret[i];
-    }
+  OBUF_FOR_EACH(&players, j, player_t *, p) {
+    stats[numlevels].kill[j]   = p->killcount - p->resurectedkillcount;
+    stats[numlevels].item[j]   = p->itemcount;
+    stats[numlevels].secret[j] = p->secretcount;
+    
+    stats[numlevels].stat[TT_ALLKILL]   += stats[numlevels].kill[j];
+    stats[numlevels].stat[TT_ALLITEM]   += stats[numlevels].item[j];
+    stats[numlevels].stat[TT_ALLSECRET] += stats[numlevels].secret[j];
   }
 
   numlevels++;
@@ -920,33 +916,30 @@ void e6y_WriteStats(void)
   
   memset(&max, 0, sizeof(timetable_t));
 
-  playerscount = 0;
-  for (i=0; i<MAXPLAYERS; i++)
-    if (playeringame[i])
-      playerscount++;
+  playerscount = D_GetPlayerCount();
 
   for (level=0;level<numlevels;level++)
   {
     memset(&tmp, 0, sizeof(tmpdata_t));
-    for (i=0 ; i<MAXPLAYERS ; i++)
+    OBUF_FOR_EACH(&players, j, player_t *, p)
     {
-      if (playeringame[i])
-      {
-        char strtmp[200];
-        strcpy(str, tmp.kill[0] == '\0' ? "%s%d" : "%s+%d");
+      char strtmp[200];
+      strcpy(str, tmp.kill[0] == '\0' ? "%s%d" : "%s+%d");
 
-        doom_snprintf(strtmp, sizeof(strtmp), str, tmp.kill, stats[level].kill[i]);
-        strcpy(tmp.kill, strtmp);
-        
-        doom_snprintf(strtmp, sizeof(strtmp), str, tmp.item, stats[level].item[i]);
-        strcpy(tmp.item, strtmp);
-        
-        doom_snprintf(strtmp, sizeof(strtmp), str, tmp.secret, stats[level].secret[i]);
-        strcpy(tmp.secret, strtmp);
-      }
+      doom_snprintf(strtmp, sizeof(strtmp), str, tmp.kill, stats[level].kill[j]);
+      strcpy(tmp.kill, strtmp);
+      
+      doom_snprintf(strtmp, sizeof(strtmp), str, tmp.item, stats[level].item[j]);
+      strcpy(tmp.item, strtmp);
+      
+      doom_snprintf(strtmp, sizeof(strtmp), str, tmp.secret, stats[level].secret[j]);
+      strcpy(tmp.secret, strtmp);
     }
-    if (playerscount<2)
+
+    if (playerscount < 2)
+    {
       memset(&all[level], 0, sizeof(tmpdata_t));
+    }
     else
     {
       sprintf(all[level].kill,   " (%s)", tmp.kill  );
@@ -961,14 +954,14 @@ void e6y_WriteStats(void)
     if (strlen(all[level].secret) > allsecrets_len)
       allsecrets_len = strlen(all[level].secret);
 
-    for(i=0; i<TT_MAX; i++)
+    for (i = 0; i < TT_MAX; i++)
       if (stats[level].stat[i] > max.stat[i])
         max.stat[i] = stats[level].stat[i];
   }
   max.stat[TT_TIME] = max.stat[TT_TIME]/TICRATE/60;
   max.stat[TT_TOTALTIME] = max.stat[TT_TOTALTIME]/TICRATE/60;
   
-  for(i=0; i<TT_MAX; i++) {
+  for (i = 0; i < TT_MAX; i++) {
     doom_snprintf(str, 200, "%d", max.stat[i]);
     max.stat[i] = strlen(str);
   }

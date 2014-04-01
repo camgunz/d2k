@@ -35,6 +35,9 @@
 #ifndef M_OBUF_H__
 #define M_OBUF_H__
 
+#define OBUF_FOR_EACH(ob, i, ot, on) \
+  for (int (i) = -1, (ot) (on) = NULL; M_OBufIter(&(i), (void **)&on);)
+
 typedef struct obuf_s {
   int capacity;
   void **objects;

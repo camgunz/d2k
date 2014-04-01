@@ -39,24 +39,9 @@
 #define GAME_OPTIONS_SIZE 64
 #endif
 
-typedef struct setup_packet_s {
-  short players;
-  short yourplayer;
-  byte skill;
-  byte episode;
-  byte level;
-  byte deathmatch;
-  byte complevel;
-  byte ticdup;
-  byte extratic;
-  byte game_options[GAME_OPTIONS_SIZE];
-  byte numwads;
-  byte wadnames[1]; /* Actually longer */
-} setup_packet_t;
-
-const byte nm_setup                  = 1;  /* S => C | TIC     |   reliable */
-const byte nm_statedelta             = 2;  /* S => C | DELTA   | unreliable */
-const byte nm_fullstate              = 3;  /* S => C | DELTA   |   reliable */
+const byte nm_resources              = 1;  /* S => C | BOTH    |   reliable */
+const byte nm_fullstate              = 2;  /* S => C | BOTH    |   reliable */
+const byte nm_statedelta             = 3;  /* S => C | DELTA   | unreliable */
 const byte nm_authresponse           = 4;  /* S => C | BOTH    |   reliable */
 const byte nm_servermessage          = 5;  /* S => C | BOTH    |   reliable */
 const byte nm_playermessage          = 6;  /* BOTH   | BOTH    |   reliable */
@@ -73,8 +58,7 @@ void   N_InitProtocol(void);
 void   N_HandlePacket(int peernum, void *data, size_t data_size);
 buf_t* N_GetMessageRecipientBuffer(void);
 
-void SV_SendSetup(short playernum, setup_packet_t *setupinfo,
-                                   buf_t *wad_names);
+void SV_SendSetup(short playernum);
 void SV_SendStateDelta(short playernum);
 void SV_SendFullState(short playernum);
 void SV_SendAuthResponse(short playernum, auth_level_e auth_level);

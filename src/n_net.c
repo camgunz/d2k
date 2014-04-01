@@ -59,14 +59,11 @@ static ENetHost    *net_host = NULL;
 static const char  *previous_address = NULL;
 static short        previous_port = 0;
 
-/* CG: Local client only */
-static auth_level_e authorization_level;
-static cmdbuf_t     commands;
-
 /* CG: Externally viewable */
-dboolean        netgame       = false;
-dboolean        have_peers    = false;
-net_sync_type_e net_sync_type = NET_SYNC_TYPE_TIC;
+dboolean        netgame   = false;
+dboolean        solonet   = false;
+dboolean        netserver = false;
+net_sync_type_e netsync   = NET_SYNC_TYPE_NONE;
 
 static void check_peer_timeouts(void) {
   for (int i = 0; i < N_GetPeerCount(); i++) {
@@ -180,31 +177,38 @@ size_t N_ParseAddressString(const char *address, char **host, uint16_t *port) {
   if (address_length > MAX_ADDRESS_LENGTH)
     return 0;
 
+  if (address_length == 0)
+    return 0;
+
   sep = strchr(address, ':');
 
   if (sep == NULL) {
     host_length = address_length;
 
-    if (*host == NULL)
-      *host = strdup(address);
-    else
-      strncpy(*host, address, address_length + 1);
+    if (host_length > 0) {
+      if (*host == NULL)
+        *host = strdup(address);
+      else
+        strncpy(*host, address, address_length + 1);
+    }
   }
   else {
     host_length = sep - address;
 
-    if (*host == NULL)
-      *host = calloc(host_length + 1, sizeof(char));
-    else
-      (*host)[host_length] = '\0';
+    if (host_length > 0) {
+      if (*host == NULL) {
+        *host = calloc(host_length + 1, sizeof(char));
+        strncpy(*host, address, host_length + 1);
+      }
+      else {
+        strncpy(*host, address, host_length + 1);
+      }
+    }
 
-    strncpy(*host, address, host_length);
   }
 
-  if (sep && strlen(sep++))
+  if (sep && strlen(++sep))
     *port = string_to_short(sep);
-  else
-    *port = 0;
 
   return host_length;
 }
@@ -450,7 +454,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     }
 
     if (net_event.type == ENET_EVENT_TYPE_CONNECT) {
-      if (server) {
+      if (SERVER) {
         peernum = N_AddPeer();
         N_SetPeerConnected(peernum, net_event.peer);
         /* CG: TODO: Sent setup info to the new peer */
@@ -510,24 +514,6 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
 
 void N_ServiceNetwork(void) {
   N_ServiceNetworkTimeout(0);
-}
-
-void N_SetLocalClientAuthorizationLevel(auth_level_e level) {
-  if (level > authorization_level)
-    authorization_level = level;
-}
-
-void N_RemoveOldClientCommands(int tic) {
-  int index = -1;
-  netticcmd_t *ncmd = NULL;
-  player_t *p = M_OBufGet(players, consoleplayer);
-
-  while (M_CBufIter(&p->commands, &index, (void **)&ncmd)) {
-    if (ncmd->tic <= tic) {
-      M_CBufRemove(&p->commands, index);
-      index--;
-    }
-  }
 }
 
 /* vi: set et ts=2 sw=2: */

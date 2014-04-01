@@ -131,7 +131,9 @@ extern int WIDE_SCREENHEIGHT;
 extern int SCREEN_320x200;
 
 // The maximum number of players, multiplayer/networking.
-#define MAXPLAYERS       4
+// CG: Changed 'MAXPLAYERS' to VANILLA_MAXPLAYERS; the maximum number of
+//     players is now dynamic.
+#define VANILLA_MAXPLAYERS 4
 
 // phares 5/14/98:
 // DOOM Editor Numbers (aka doomednum in mobj_t)

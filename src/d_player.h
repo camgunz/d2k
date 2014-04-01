@@ -32,8 +32,8 @@
  *-----------------------------------------------------------------------------*/
 
 
-#ifndef __D_PLAYER__
-#define __D_PLAYER__
+#ifndef D_PLAYER__
+#define D_PLAYER__
 
 
 // The player data structure depends on a number
@@ -124,7 +124,7 @@ typedef struct player_s
   dboolean           backpack;
 
   // Frags, kills of other players.
-  int                 frags[MAXPLAYERS];
+  buf_t               frags;
   weapontype_t        readyweapon;
 
   // Is wp_nochange if not changing.
@@ -217,7 +217,7 @@ typedef struct
   int         sitems;
   int         ssecret;
   int         stime;
-  int         frags[4];
+  buf_t      *frags;   
   int         score;  // current score on entry, modified on return
 
 } wbplayerstruct_t;
@@ -244,12 +244,29 @@ typedef struct
   // index of this player in game
   int         pnum;
 
-  wbplayerstruct_t    plyr[MAXPLAYERS];
+  cbuf_t      plyr; /* CG: wbplayerstruct_t */
 
   // CPhipps - total game time for completed levels so far
   int         totaltimes;
 
 } wbstartstruct_t;
 
+extern obuf_t players;
+
+unsigned short D_AddPlayer(void);
+void           D_SetPlayer(unsigned short playernum);
+dboolean       D_RemovePlayer(unsigned short playernum);
+dboolean       D_ValidPlayer(unsigned short playernum);
+player_t*      D_GetPlayer(unsigned short playernum);
+unsigned short D_GetPlayerNum(player_t *player);
+player_t*      D_GetFirstValidPlayer(void);
+int            D_GetPlayerCount(void);
+dboolean       D_SetConsolePlayer(unsigned short playernum);
+dboolean       D_SetDisplayPlayer(unsigned short playernum);
+player_t*      D_ConsolePlayer(void);
+unsigned short D_ConsolePlayerNum(void);
+player_t*      D_DisplayPlayer(void);
+unsigned short D_DisplayPlayerNum(void);
+void           D_GetPlayerColorVanilla(unsigned short playernum);
 
 #endif

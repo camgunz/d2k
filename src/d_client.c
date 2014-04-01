@@ -187,7 +187,7 @@ void NetUpdate(void) {
     ncmd.consistancy = cmd.consistancy
     ncmd.chatchar    = cmd.chatchar
     ncmd.buttons     = cmd.buttons
-    M_CBufAppend(M_OBufGet(players, consoleplayer), &ncmd);
+    M_CBufAppend(&D_ConsolePlayer()->commands, &ncmd);
     maketic++;
   }
 }
@@ -199,10 +199,10 @@ void TryRunTics (void) {
   int entertime = I_GetTime();
 
   while (true) {
-    NetUpdate();
+    N_Update();
 
     if (have_peers) {
-      while (M_OBufIter(players, &index, &player)) {
+      OBUF_FOR_EACH(&players, index, player_t *, player) {
         int command_count = M_CBufGetObjectCount(&player->commands);
 
         if (runtics == -1 || runtics < command_count)

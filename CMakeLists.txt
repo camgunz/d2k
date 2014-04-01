@@ -25,7 +25,7 @@
 #===============================================================================
 ################################################# CMake Configuration ##########
 #===============================================================================
-PROJECT("PrBoom+" C)
+PROJECT("Doom2K" C)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.0 FATAL_ERROR)
 IF(${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
   MESSAGE(${CMAKE_SOURCE_DIR})
@@ -82,25 +82,22 @@ ENDFUNCTION(TRY_C_COMPILER_FLAG flag name)
 #===============================================================================
 ##################################################### Package Details ##########
 #===============================================================================
-SET(VERSION "2.5.1.4")
-SET(PACKAGE "PrBoom-Plus")
-SET(PACKAGE_NAME "PrBoom-Plus")
-SET(PACKAGE_VERSION "2.5.1.4")
-# SET(PACKAGE_BUGREPORT "huh")
+SET(VERSION "0")
+SET(PACKAGE "Doom2K")
+SET(PACKAGE_NAME "Doom2K")
+SET(PACKAGE_VERSION "${VERSION}")
+SET(PACKAGE_BUGREPORT "ladna@totaltrash.org")
 SET(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
-SET(PACKAGE_TARNAME "prboom-plus")
-SET(PACKAGE_URL "http://prboom-plus.sourceforge.net")
+SET(PACKAGE_TARNAME "doom2k")
+SET(PACKAGE_URL "http://totaltrash.org")
 
 SET(CPACK_GENERATOR "DEB;RPM;STGZ;ZIP")
 SET(CPACK_PACKAGE_VENDOR "Team TotalTrash")
 SET(CPACK_PACKAGE_CONTACT "Team TotalTrash <ladna@totaltrash.org>")
-SET(CPACK_PACKAGE_VERSION "2.5.1.4-test")
-SET(CPACK_PACKAGE_NAME "PrBoom+")
+SET(CPACK_PACKAGE_VERSION "0")
+SET(CPACK_PACKAGE_NAME "Doom2K")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING")
-SET(
-  CPACK_PACKAGE_DESCRIPTION_SUMMARY
-  "PrBoom+ extends the original PrBoom engine while maintaining compatibility."
-)
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Doom2K will make your head explode.")
 SET(CPACK_DEBIAN_PACKAGE_SECTION "games")
 SET(CPACK_DEBIAN_PACKAGE_DEPENDS
   "libc6 (>= 2.11.0),
@@ -134,7 +131,7 @@ IF(WIN32)
 ENDIF()
 
 SET(
-  CPACK_PACKAGE_FILE_NAME "prboom-plus-${CPACK_PACKAGE_VERSION}_${BUILD_ARCH}"
+  CPACK_PACKAGE_FILE_NAME "doom2k-${CPACK_PACKAGE_VERSION}_${BUILD_ARCH}"
 )
 SET(CPACK_DEBIAN_PACKAGE_NAME "${CPACK_PACKAGE_FILE_NAME}")
 SET(CPACK_RPM_PACKAGE_NAME "${CPACK_PACKAGE_FILE_NAME}")
@@ -245,7 +242,7 @@ ENDIF()
 #===============================================================================
 ############################################################# Options ##########
 #===============================================================================
-OPTION(DOOMWADDIR, "The path where doom WADs are stored" "")
+OPTION(DOOMWADDIR, "The path where Doom WADs are stored" "")
 OPTION(
   CHECK_HEAP "Exhaustively run memory checks while the game is running" OFF
 )
@@ -755,7 +752,7 @@ IF(GL_DOOM)
   SET(PRBOOM_CLIENT_SOURCES ${PRBOOM_CLIENT_SOURCES} ${GL_SOURCES})
 ENDIF()
 
-ADD_EXECUTABLE(prboom-plus ${PRBOOM_CLIENT_SOURCES})
+ADD_EXECUTABLE(doom2k ${PRBOOM_CLIENT_SOURCES})
 
 SET(PRBOOM_LIBRARIES ${ENET_LIBRARIES} ${MSGPACK_LIBRARIES})
 
@@ -824,7 +821,7 @@ IF(GPERF_FOUND)
   SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${GPERF_LIBRARIES})
 ENDIF()
 
-TARGET_LINK_LIBRARIES(prboom-plus ${PRBOOM_LIBRARIES})
+TARGET_LINK_LIBRARIES(doom2k ${PRBOOM_LIBRARIES})
 
 SET(BIN_DIR "${PREFIX}/bin")
 SET(LIB_DIR "${PREFIX}/lib")
@@ -832,7 +829,7 @@ SET(INCLUDE_DIR "${PREFIX}/include")
 SET(SHARE_DIR "${PREFIX}/share")
 
 INSTALL(
-  TARGETS prboom-plus
+  TARGETS doom2k
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR}

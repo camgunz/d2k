@@ -186,15 +186,15 @@ DECLARE_TYPE(map, "a map", MAP);
 #define unpack_and_validate_string_array(obj, arr, name, ename, obuf, sz)     \
   unpack_and_validate(obj, name, array)                                       \
   validate_array_size(arr, name, sz)                                          \
-  M_ObjBufferClear((obuf));                                                   \
-  M_ObjBufferEnsureSize((obuf), arr.size);                                    \
+  M_OBufClear(obuf);                                                          \
+  M_OBufEnsureSize(obuf, arr.size);                                           \
   for (int i = 0; i < arr.size; i++) {                                        \
     rune *buf_entry = NULL;                                                   \
     msgpack_object *array_entry = arr.ptr + i;                                \
     validate_type(array_entry, ename, raw);                                   \
     buf_entry = calloc(array_entry->via.raw.size + 1, sizeof(rune));          \
     memcpy(buf_entry, array_entry->via.raw.data, array_entry->via.raw.size);  \
-    M_ObjBufferAppend((obuf), buf_entry);                                     \
+    M_ObjBufferAppend(obuf, buf_entry);                                       \
   }
 
 #define unpack_and_validate_player_array(obj, arr, name, buf, sz)             \
@@ -228,92 +228,79 @@ dboolean N_LoadNewMessage(netpeer_t *np, byte *message_type) {
   return true;
 }
 
-void N_PackSetup(netpeer_t *np, setup_packet_t *sinfo, buf_t *wad_names) {
-  int offset = 0;
+void N_PackSetup(netpeer_t *np) {
+  int index = -1;
+  rune *resource_name = NULL;
+  rune *deh_name = NULL;
 
   msgpack_pack_unsigned_char(np->rpk, nm_setup);
-  msgpack_pack_short(np->rpk, sinfo->players);
-  msgpack_pack_short(np->rpk, sinfo->yourplayer);
-  msgpack_pack_unsigned_char(np->rpk, sinfo->skill);
-  msgpack_pack_unsigned_char(np->rpk, sinfo->episode);
-  msgpack_pack_unsigned_char(np->rpk, sinfo->level);
-  msgpack_pack_unsigned_char(np->rpk, sinfo->deathmatch);
-  msgpack_pack_unsigned_char(np->rpk, sinfo->complevel);
-  msgpack_pack_unsigned_char(np->rpk, sinfo->ticdup);
-  msgpack_pack_unsigned_char(np->rpk, sinfo->extratic);
-  msgpack_pack_raw(np->rpk, GAME_OPTIONS_SIZE);
-  msgpack_pack_raw_body(np->rpk, sinfo->game_options);
-  msgpack_pack_array(np->rpk, sinfo->numwads);
-  for (int i = 0; i < sinfo->numwads; i++) {
-    size_t length = strlen(wad_names->data + offset);
+  msgpack_pack_unsigned_short(np->rpk, M_OBufGetObjectCount(&players));
+  msgpack_pack_unsigned_short(np->rpk, np->playernum);
+
+  msgpack_pack_array(np->rpk, M_OBufGetObjectCount(&resource_files));
+  while (M_OBufIter(&resource_files, &index, &resource_name)) {
+    size_t length = strlen(resource_name);
 
     msgpack_pack_raw(np->rpk, length);
-    msgpack_raw_body(np->rpk, wad_names->data + offset);
+    msgpack_pack_raw_body(np->rpk, resource_name, length);
+  }
 
-    offset += length + 2;
+  msgpack_pack_array(np->rpk, M_OBufGetObjectCount(&deh_files));
+  while (M_OBufIter(&deh_files, &index, &deh_name)) {
+    size_t length = strlen(deh_name);
+
+    msgpack_pack_raw(np->rpk, length);
+    msgpack_pack_raw_body(np->rpk, deh_name, length);
   }
 }
 
-dboolean N_UnpackSetup(netpeer_t *np, setup_packet_t *sinfo,
-                                      objbuf_t *wad_names) {
-  short players;
-  short yourplayer;
-  byte  skill;
-  byte  episode;
-  byte  level;
-  byte  deathmatch;
-  byte  complevel;
-  byte  ticdup;
-  byte  extratic;
-  byte  game_options[GAME_OPTIONS_SIZE];
-  byte  numwads;
+dboolean N_UnpackSetup(netpeer_t *np, unsigned short &player_count,
+                                      unsigned short &playernum) {
+  unsigned short m_player_count = 0;
+  unsigned short m_playernum = 0;
 
-  unpack_and_validate(obj, "players", short);
-  players = (short)obj->via.i64;
+  unpack_and_validate(obj, "player count", ushort);
+  m_player_count = (unsigned short)obj->via.u64;
 
-  unpack_and_validate(obj, "local player number", short);
-  yourplayer = (short)obj->via.i64;
-
-  unpack_and_validate(obj, "skill", uchar);
-  skill = (byte)obj->via.u64;
-
-  unpack_and_validate(obj, "episode", uchar);
-  episode = (byte)obj->via.u64;
-
-  unpack_and_validate(obj, "level", uchar);
-  level = (byte)obj->via.u64;
-
-  unpack_and_validate(obj, "deathmatch", uchar);
-  deathmatch = (byte)obj->via.u64;
-
-  unpack_and_validate(obj, "complevel", uchar);
-  complevel = (byte)obj->via.u64;
-
-  unpack_and_validate(obj, "ticdup", uchar);
-  ticdup = (byte)obj->via.u64;
-
-  unpack_and_validate(obj, "extratic", uchar);
-  extratic = (byte)obj->via.u64;
-
-  unpack_and_validate(obj, "game options", raw);
-  memcpy(game_options, (byte)obj->via.raw.ptr, GAME_OPTIONS_SIZE);
+  unpack_and_validate(obj, "consoleplayer", ushort);
+  m_playernum = (unsigned short)obj->via.u64;
 
   unpack_and_validate_string_array(
-    obj->via.array, "WAD names", "WAD name", wad_names, MAX_WAD_NAMES
+    obj->via.array,
+    "resource names",
+    "resource name",
+    &resource_names,
+    MAX_RESOURCE_NAMES
   );
 
-  sinfo->players      = players;
-  sinfo->yourplayer   = yourplayer;
-  sinfo->skill        = skill;
-  sinfo->episode      = episode;
-  sinfo->level        = level;
-  sinfo->deathmatch   = deathmatch;
-  sinfo->complevel    = complevel;
-  sinfo->ticdup       = ticdup;
-  sinfo->extratic     = extratic;
-  sinfo->numwads      = wad_names->size;
+  unpack_and_validate_string_array(
+    obj->via.array,
+    "deh names",
+    "deh name",
+    &deh_names,
+    MAX_RESOURCE_NAMES
+  );
 
-  memcpy(sinfo->game_options, game_options, GAME_OPTIONS_SIZE);
+  return true;
+}
+
+void N_PackFullState(netpeer_t *np, buf_t *buf) {
+  msgpack_pack_unsigned_char(np->rpk, nm_gamestate);
+  msgpack_pack_unsigned_int(np->rpk, gametic);
+  msgpack_pack_raw(np->rpk, state->size);
+  msgpack_pack_raw_body(np->rpk, state->data, state->size);
+}
+
+dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf) {
+  int m_tic;
+
+  unpack_and_validate(obj, "game state tic", int);
+  m_tic = (int)obj->via.i64;
+
+  unpack_and_validate(obj, "game state data", raw);
+
+  *tic = m_tic;
+  M_BufferSetData(buf, (byte *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
 
   return true;
 }
@@ -341,27 +328,6 @@ dboolean N_UnpackStateDelta(netpeer_t *np, int *from_tic, int *to_tic,
 
   *from_tic = m_from_tic;
   *to_tic = m_to_tic;
-  M_BufferSetData(buf, (byte *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
-
-  return true;
-}
-
-void N_PackFullState(netpeer_t *np, buf_t *buf) {
-  msgpack_pack_unsigned_char(np->rpk, nm_gamestate);
-  msgpack_pack_unsigned_int(np->rpk, gametic);
-  msgpack_pack_raw(np->rpk, state->size);
-  msgpack_pack_raw_body(np->rpk, state->data, state->size);
-}
-
-dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf) {
-  int m_tic;
-
-  unpack_and_validate(obj, "game state tic", int);
-  m_tic = (int)obj->via.i64;
-
-  unpack_and_validate(obj, "game state data", raw);
-
-  *tic = m_tic;
   M_BufferSetData(buf, (byte *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
 
   return true;
@@ -454,21 +420,19 @@ dboolean N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic) {
   return true;
 }
 
-void N_PackPlayerCommands(netpeer_t *np, cmdbuf_t *commands) {
+void N_PackPlayerCommands(netpeer_t *np, cbuf_t *commands) {
+  int index = -1;
+  netticcmd_t *ncmd = NULL;
+
   msgpack_pack_unsigned_char(np->upk, nm_playercommands);
-  msgpack_pack_unsigned_char(np->upk, M_ObjBufferGetObjectCount(commands));
+  msgpack_pack_unsigned_char(np->upk, M_CBufGetObjectCount(commands));
 
-  for (int i = 0; i < commands->size; i++) {
-    netticcmd_t *cmd = commands->objects[i];
-
-    if (cmd == NULL)
-      continue;
-
-    msgpack_pack_unsigned_int(np->upk, cmd->tic);
-    msgpack_pack_signed_char(np->upk, cmd->forwardmove);
-    msgpack_pack_signed_char(np->upk, cmd->sidemove);
-    msgpack_pack_short(np->upk, cmd->angleturn);
-    msgpack_pack_short(np->upk, cmd->consistancy);
+  while (M_CBufIter(commands, &index, (void **)&ncmd)) {
+    msgpack_pack_unsigned_int(np->upk, ncmd->tic);
+    msgpack_pack_signed_char(np->upk, ncmd->forwardmove);
+    msgpack_pack_signed_char(np->upk, ncmd->sidemove);
+    msgpack_pack_short(np->upk, ncmd->angleturn);
+    msgpack_pack_short(np->upk, ncmd->consistancy);
     msgpack_pack_unsigned_char(np->upk, chatchar);
     msgpack_pack_unsigned_char(np->upk, buttons);
   }
@@ -481,10 +445,10 @@ dboolean N_UnpackPlayerCommands(netpeer_t *np) {
   M_ObjBufferEnsureSize(np->commands, command_count);
 
   for (byte i = 0; i < command_count; i++) {
-    netticmd_t *cmd = np->commands->objects[i];
+    netticmd_t *ncmd = np->commands->objects[i];
 
-    if (cmd == NULL)
-      cmd = calloc(1, sizeof(netticcmd_t));
+    if (ncmd == NULL)
+      ncmd = calloc(1, sizeof(netticcmd_t));
     else
       memset(cmd, 0, sizeof(netticcmd_t));
 
@@ -717,7 +681,7 @@ dboolean N_UnpackColorChange(netpeer_t *np, byte *new_red, byte *new_green,
 
 void N_PackColormapChange(netpeer_t *np, int new_color) {
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
-  if (server)
+  if (SERVER)
     msgpack_pack_short(np->rpk, np->playernum);
   else
     msgpack_pack_short(np->rpk, consoleplayer);

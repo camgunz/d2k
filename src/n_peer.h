@@ -48,7 +48,6 @@ typedef struct netpeer_s {
   int              last_sync_sent_tic;
   buf_t            state;
   buf_t            delta;
-  cmdbuf_t         commands;
 } netpeer_t;
 
 int        N_AddPeer(void);
