@@ -1,1 +1,1 @@
-gdb --args cbuild/prboom-plus -nomouse -warp 1
+gdb --args cbuild/doom2k -nomouse -warp 1
