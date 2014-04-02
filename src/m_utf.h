@@ -27,19 +27,33 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *   Binary delta routines using LibXDiff.
+ *  Low level UDP network interface. This is shared between the server
+ *  and client, with SERVER defined for the former to select some extra
+ *  functions. Handles socket creation, and packet send and receive.
  *
  *-----------------------------------------------------------------------------
  */
 
-#ifndef M_DELTA__
-#define M_DELTA__
+#ifndef M_UTF_H__
+#define M_UTF_H__
 
-void M_InitDeltas(void);
-void M_BuildDelta(buf_t *b1, buf_t *b2, buf_t *delta);
-void M_ApplyDelta(buf_t *b1, buf_t *b2, buf_t *delta);
+typedef char rune;
+
+const char* M_GetUTFError(void);
+
+dboolean    M_IsControlChar(wchar_t sc);
+
+size_t M_DecodeASCII(rune **out, char *in, size_t in_size);
+
+size_t M_EncodeWCHAR(wchar_t **out, rune *in, size_t in_size);
+size_t M_DecodeWCHAR(rune **out, wchar_t *in, size_t in_size);
+size_t M_DecodeWCHARNoAlloc(rune *out, uint16_t *in,
+                            size_t out_size, size_t in_size);
+
+size_t M_EncodeLocal(char **out, rune *in, size_t in_size);
+size_t M_DecodeLocal(rune **out, char *in);
 
 #endif
 
-/* vi: set et ts=2 sw=2: */
+/* vi: set et sw=2 ts=2: */
 

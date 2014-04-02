@@ -24,11 +24,7 @@
 //-----------------------------------------------------------------------------
 
 
-#include "config.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-
+#include "z_zone.h"
 
 #include "opl.h"
 #include "opl_queue.h"

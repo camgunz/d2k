@@ -29,21 +29,12 @@
  *---------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
 #ifndef CALLBACK
 #define CALLBACK
 #endif
 
-#include <math.h>
-
-#include "z_zone.h"
 #include "doomstat.h"
 #include "p_maputl.h"
 #include "r_main.h"

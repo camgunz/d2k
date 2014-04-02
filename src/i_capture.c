@@ -28,20 +28,18 @@
  *---------------------------------------------------------------------
  */
 
-#include "SDL.h"
-#include "SDL_thread.h"
+#include "z_zone.h"
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <SDL.h>
+#include <SDL_thread.h>
+
 #include "i_sound.h"
 #include "i_video.h"
 #include "lprintf.h"
 #include "i_capture.h"
 
-
 int capturing_video = 0;
 static const char *vid_fname;
-
 
 typedef struct
 { // information on a running pipe

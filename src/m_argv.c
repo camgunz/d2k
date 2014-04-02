@@ -31,10 +31,9 @@
  *
  *-----------------------------------------------------------------------------*/
 
-#include <string.h>
-// CPhipps - include the correct header
-#include "doomtype.h"
 #include "z_zone.h"
+#include "doomtype.h"
+
 #include "m_argv.h"
 
 int    myargc;

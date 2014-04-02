@@ -68,7 +68,8 @@
 **
 */
 
-#include <math.h>
+#include "z_zone.h"
+
 #include "v_video.h"
 #include "gl_opengl.h"
 #include "gl_intern.h"

@@ -27,19 +27,42 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *   Binary delta routines using LibXDiff.
+ *  A buffer of objects that uses copies instead of pointers.
  *
  *-----------------------------------------------------------------------------
  */
 
-#ifndef M_DELTA__
-#define M_DELTA__
+#ifndef M_CBUF_H__
+#define M_CBUF_H__
 
-void M_InitDeltas(void);
-void M_BuildDelta(buf_t *b1, buf_t *b2, buf_t *delta);
-void M_ApplyDelta(buf_t *b1, buf_t *b2, buf_t *delta);
+typedef struct cbufnode_s {
+  dboolean used;
+  void *obj;
+} cbufnode_t;
+
+typedef struct cobjbuf_s {
+  int capacity;
+  size_t obj_size;
+  cbufnode_t *nodes;
+} cbuf_t;
+
+void     M_CBufInit(cbuf_t *cbuf, size_t obj_sz);
+void     M_CBufInitWithCapacity(cbuf_t *cbuf, size_t obj_sz, int capacity);
+dboolean M_CBufIsValidIndex(cbuf_t *cbuf, int index);
+int      M_CBufGetObjectCount(cbuf_t *cbuf);
+void     M_CBufEnsureCapacity(cbuf_t *cbuf, int capacity);
+void     M_CBufAppend(cbuf_t *cbuf, void *obj);
+void     M_CBufInsert(cbuf_t *cbuf, int index, void *obj);
+int      M_CBufInsertAtFirstFreeSlot(cbuf_t *cbuf, void *obj);
+int      M_CBufInsertAtFirstFreeSlotOrAppend(cbuf_t *cbuf, void *obj);
+dboolean M_CBufIter(cbuf_t *cbuf, int *index, void **obj);
+void*    M_CBufGet(cbuf_t *cbuf, int index);
+void     M_CBufRemove(cbuf_t *cbuf, int index);
+void     M_CBufConsolidate(cbuf_t *cbuf);
+void     M_CBufClear(cbuf_t *cbuf);
+void     M_CBufFree(cbuf_t *cbuf);
 
 #endif
 
-/* vi: set et ts=2 sw=2: */
+/* vi: set et sw=2 ts=2: */
 

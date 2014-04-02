@@ -28,7 +28,9 @@
  *
  *-----------------------------------------------------------------------------*/
 
+#include "z_zone.h"
 #include "doomtype.h"
+
 #include "r_filter.h"
 
 #define DMR 16

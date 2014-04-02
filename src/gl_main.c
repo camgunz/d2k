@@ -33,15 +33,10 @@
  *---------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <math.h>
+#include "z_zone.h"
 
 #include <SDL.h>
 
-#include "z_zone.h"
 #include "doomtype.h"
 #include "w_wad.h"
 #include "m_argv.h"

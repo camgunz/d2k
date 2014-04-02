@@ -1627,7 +1627,7 @@ void M_LoadDefaults (void)
      doesn't overlap with the cfg settings */
   //e6y: Check on existence of prboom.wad
   if (!(wad_files[MAXLOADFILES-1] = I_FindFile(PACKAGE_TARNAME ".wad", "")))
-    I_Error("PrBoom-Plus.wad not found. Can't continue.");
+    I_Error(PACKAGE_TARNAME ".wad not found. Can't continue.");
 }
 
 

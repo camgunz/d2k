@@ -27,17 +27,35 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *   Binary delta routines using LibXDiff.
+ *  A simple buffer
  *
  *-----------------------------------------------------------------------------
  */
 
-#ifndef M_DELTA__
-#define M_DELTA__
+#ifndef M_BUF_H__
+#define M_BUF_H__
 
-void M_InitDeltas(void);
-void M_BuildDelta(buf_t *b1, buf_t *b2, buf_t *delta);
-void M_ApplyDelta(buf_t *b1, buf_t *b2, buf_t *delta);
+typedef struct buf_s {
+  size_t size;
+  size_t capacity;
+  size_t cursor;
+  char *data;
+} buf_t;
+
+void     M_BufferInit(buf_t *buf);
+void     M_BufferInitWithCapacity(buf_t *buf, size_t capacity);
+void     M_BufferCopy(buf_t *dst, buf_t *src);
+void     M_BufferSetData(buf_t *buf, char *data, size_t size);
+void     M_BufferSetString(buf_t *buf, char *data, size_t length);
+dboolean M_BufferSetFile(buf_t *buf, const char *filename);
+void     M_BufferAppend(buf_t *buf, char *data, size_t size);
+dboolean M_BufferEqualsString(buf_t *buf, const char *s);
+void     M_BufferEnsureCapacity(buf_t *buf, size_t capacity);
+void     M_BufferEnsureTotalCapacity(buf_t *buf, size_t capacity);
+void     M_BufferCompact(buf_t *buf);
+void     M_BufferZero(buf_t *buf);
+void     M_BufferClear(buf_t *buf);
+void     M_BufferFree(buf_t *buf);
 
 #endif
 

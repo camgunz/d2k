@@ -31,21 +31,14 @@
  *---------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "z_zone.h"
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
+
 #ifndef CALLBACK
 #define CALLBACK
 #endif
-#include <stdio.h>
-#include <string.h>
+
 #include <SDL.h>
+
 #include "doomtype.h"
 #include "w_wad.h"
 #include "m_argv.h"

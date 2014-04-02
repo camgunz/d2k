@@ -30,11 +30,9 @@
  *
  *-----------------------------------------------------------------------------*/
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
-#include "SDL.h"
+#include <SDL.h>
 
 #include "i_video.h"
 #include "i_sound.h"

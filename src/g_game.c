@@ -86,8 +86,6 @@
 #include "r_fps.h"
 #include "e6y.h"//e6y
 
-#include "m_delta.h"
-
 #define SAVEGAMESIZE  0x20000
 #define SAVESTRINGSIZE  24
 
@@ -1018,62 +1016,6 @@ dboolean G_Responder (event_t* ev)
   return false;
 }
 
-static void G_MakeDelta()
-{
-  int i;
-
-  if (save_p == NULL || savebuffer == NULL)
-    savebuffer = calloc(1, savegamesize);
-  else
-    memset(savebuffer, 0, savegamesize);
-
-  save_p = savebuffer;
-
-  CheckSaveGame(
-    SAVESTRINGSIZE +
-    16 + // VERSIONSIZE
-    sizeof(uint_64_t) +
-    GAME_OPTION_SIZE +
-    32 + // MIN_MAXPLAYERS
-    14 +
-    strlen(NEWFORMATSIG)
-  );
-
-  *save_p++ = compatibility_level;
-  *save_p++ = gameskill;
-  *save_p++ = gameepisode;
-  *save_p++ = gamemap;
-
-  for (i = 0; i < MAXPLAYERS; i++)
-    *save_p++ = playeringame[i];
-
-  for (;i < 16; i++) // MIN_MAXPLAYERS
-    *save_p++ = 0;
-
-  *save_p++ = idmusnum;
-  save_p = G_WriteOptions(save_p);
-
-  memcpy(save_p, &leveltime, sizeof(leveltime));
-  save_p += sizeof(leveltime);
-
-  memcpy(save_p, &totalleveltimes, sizeof(totalleveltimes));
-  save_p += sizeof(totalleveltimes);
-
-  *save_p++ = (gametic - basetic) & 255;
-
-  P_ArchivePlayers();
-  P_ThinkerToIndex();
-  P_ArchiveWorld();
-  P_ArchiveThinkers();
-  P_IndexToThinker();
-  P_ArchiveSpecials();
-  P_ArchiveRNG();      // killough 1/18/98: save RNG information
-  P_ArchiveMap();      // killough 1/22/98: save automap information
-  *save_p++ = 0xe6;    // consistancy marker
-
-  M_RegisterGameState(savebuffer, save_p - savebuffer);
-}
-
 //
 // G_Ticker
 // Make ticcmd_ts for the players.
@@ -1280,13 +1222,6 @@ void G_Ticker (void)
     D_PageTicker ();
     break;
   }
-
-  /*
-  if (gamestate == GS_LEVEL || gamestate == GS_INTERMISSION ||
-                               gamestate == GS_FINALE) {
-    G_MakeDelta();
-  }
-  */
 }
 
 //

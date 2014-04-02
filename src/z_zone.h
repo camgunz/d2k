@@ -49,10 +49,71 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#ifndef __func__
+#ifdef __FUNCTION__
+#define __func__ __FUNCTION__
+#else
+#define __func__ "<unknown>"
+#endif
+#endif
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define UNICODE
+#include <windows.h>
+#endif
+
+#ifdef _MSC_VER
+#define    F_OK    0    /* Check for file existence */
+#define    W_OK    2    /* Check for write permission */
+#define    R_OK    4    /* Check for read permission */
+#include <io.h>
+#include <direct.h>
+#endif
+
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <float.h>
+#include <iconv.h>
+#include <limits.h>
+#include <math.h>
+#include <memory.h>
+#include <sched.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
+#include <strings.h>
+#include <sys/stat.h>
+
+#ifdef HAVE_ASM_BYTEORDER_H
+#include <asm/byteorder.h>
+#endif
+
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
+#ifdef HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 // ZONE MEMORY
 // PU - purge tags.

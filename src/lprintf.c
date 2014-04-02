@@ -33,20 +33,8 @@
  *
  *-----------------------------------------------------------------------------*/
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#ifdef _MSC_VER
-#include <io.h>
-#endif
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <assert.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
+#include "z_zone.h"
+
 #include "doomtype.h"
 #include "lprintf.h"
 #include "i_main.h"

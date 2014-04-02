@@ -25,14 +25,9 @@
 
 // NSM: reworked to function without sdl_mixer (needs new i_sound.c)
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "SDL.h"
+#include <SDL.h>
 //#ifdef HAVE_LIBSDL_MIXER
 //#include "SDL_mixer.h"
 //#endif

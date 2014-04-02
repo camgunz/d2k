@@ -31,9 +31,7 @@
  *---------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
 #include <SDL.h>
 #ifdef HAVE_LIBSDL_IMAGE

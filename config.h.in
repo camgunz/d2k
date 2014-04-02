@@ -1,59 +1,9 @@
 #define IS_GNUG (defined(__GNUC__) || defined(__GNUG__)) && !(defined(__clang__) || defined(__INTEL_COMPILER))
 
-#cmakedefine DOOMWADDIR "@DOOMWADDIR@"
-#cmakedefine CHECK_HEAP
-#cmakedefine RANGECHECK
-#cmakedefine INSTRUMENTED
-#cmakedefine TIMEDIAG
-#cmakedefine PROFILE
-#cmakedefine GL_DOOM
-#cmakedefine USE_GLU_IMAGESCALE
-#cmakedefine USE_GLU_MIPMAP
-#cmakedefine USE_GLU_TESS
-#cmakedefine HAVE_NET
-#cmakedefine DOGS
-#cmakedefine HIGHRES
-#cmakedefine SIMPLECHECKS
-#cmakedefine ZONEIDCHECK
-#cmakedefine HAVE_ASM_BYTEORDER_H
-#cmakedefine HAVE_DECL_SYS_SIGLIST 1
-#cmakedefine HAVE_GETOPT
-#cmakedefine HAVE_INET_NTOA
-#cmakedefine HAVE_INET_ATON
-#cmakedefine HAVE_INET_NTOP
-#cmakedefine HAVE_INET_PTON
-#cmakedefine HAVE_INTTYPES_H
-#cmakedefine HAVE_IPv6
-#cmakedefine HAVE_LIBDUMB
-#cmakedefine HAVE_LIBFLUIDSYNTH
-#cmakedefine HAVE_LIBM
-#cmakedefine HAVE_LIBMAD
-#cmakedefine HAVE_LIBPCREPOSIX
-#cmakedefine HAVE_LIBPNG
-#cmakedefine HAVE_LIBPORTMIDI
-#cmakedefine HAVE_LIBSDL_IMAGE
-#cmakedefine HAVE_LIBSDL_MIXER
-#cmakedefine HAVE_LIBSDL_NET
-#cmakedefine HAVE_LIBVORBISFILE
-#cmakedefine HAVE_MEMORY_H
-#cmakedefine HAVE_MMAP
-#cmakedefine HAVE_NET
-#cmakedefine HAVE_SCHED_H
-#cmakedefine HAVE_SCHED_SETAFFINITY
-#cmakedefine HAVE_SDL_JOYSTICKGETAXIS
-#cmakedefine HAVE_STDLIB_H
-#cmakedefine HAVE_STRINGS_H
-#cmakedefine HAVE_STRING_H
-#cmakedefine HAVE_SYS_STAT_H
-#cmakedefine HAVE_SYS_WAIT_H
-#cmakedefine HAVE_UNISTD_H
-#cmakedefine HAVE_USLEEP
-#cmakedefine HEAPDUMP
-#cmakedefine MAX @MAX@
-#cmakedefine MIN @MIN@
-#define PACKEDATTR ${PACKEDATTR}
-#cmakedefine SDL_NET_UDP_PACKET_SRC
-#cmakedefine USE_SDL_NET
+#ifndef __GNUC__
+#define __attribute__(x)
+#endif
+
 #define VERSION "${VERSION}"
 #define PACKAGE "${PACKAGE}"
 #define PACKAGE_NAME "${PACKAGE_NAME}"
@@ -61,6 +11,49 @@
 #define PACKAGE_STRING "${PACKAGE_STRING}"
 #define PACKAGE_TARNAME "${PACKAGE_TARNAME}"
 #define PACKAGE_URL "${PACKAGE_URL}"
+
+#cmakedefine DOOMWADDIR "@DOOMWADDIR@"
+#cmakedefine CHECK_HEAP
+#cmakedefine HEAPDUMP
+#cmakedefine RANGECHECK
+#cmakedefine INSTRUMENTED
+#cmakedefine TIMEDIAG
+#cmakedefine PROFILE
+#cmakedefine SIMPLECHECKS
+#cmakedefine ZONEIDCHECK
+
+#cmakedefine GL_DOOM
+#cmakedefine USE_GLU_IMAGESCALE
+#cmakedefine USE_GLU_MIPMAP
+#cmakedefine USE_GLU_TESS
+#cmakedefine DOGS
+#cmakedefine HIGHRES
+
+#cmakedefine HAVE_ASM_BYTEORDER_H @HAVE_ASM_BYTEORDER_H@
+#cmakedefine HAVE_INTTYPES_H @HAVE_INTTYPES_H@
+#cmakedefine HAVE_STDINT_H @HAVE_STDINT_H@
+#cmakedefine HAVE_SYS_TYPES_H @HAVE_SYS_TYPES_H@
+#cmakedefine HAVE_SYS_WAIT_H @HAVE_SYS_WAIT_H@
+#cmakedefine HAVE_UNISTD_H @HAVE_UNISTD_H@
+#cmakedefine HAVE_DECL_SYS_SIGLIST 1
+#define PACKEDATTR ${PACKEDATTR}
+#cmakedefine MAX @MAX@
+#cmakedefine MIN @MIN@
+#cmakedefine HAVE_MMAP
+#cmakedefine HAVE_SCHED_SETAFFINITY
+#cmakedefine HAVE_USLEEP
+#cmakedefine HAVE_SDL_JOYSTICKGETAXIS
 #define stricmp ${stricmp}
 #define strnicmp ${strnicmp}
+
+#cmakedefine HAVE_LIBSDL_IMAGE
+#cmakedefine HAVE_LIBSDL_MIXER
+#cmakedefine HAVE_LIBFLUIDSYNTH
+#cmakedefine HAVE_LIBPORTMIDI
+#cmakedefine HAVE_OGG
+#cmakedefine HAVE_LIBVORBISFILE
+#cmakedefine HAVE_LIBDUMB
+#cmakedefine HAVE_LIBMAD
+#cmakedefine HAVE_LIBPCREPOSIX
+#cmakedefine HAVE_LIBPNG
 

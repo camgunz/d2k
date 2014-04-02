@@ -37,6 +37,11 @@
 #ifdef __GNUG__
 #pragma implementation "r_sky.h"
 #endif
+
+#include "z_zone.h"
+
+#include "doomtype.h"
+
 #include "r_sky.h"
 #include "r_main.h"
 #include "e6y.h"

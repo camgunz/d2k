@@ -36,25 +36,15 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include <sys/types.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
+#include "z_zone.h"
+#include "doomtype.h"
 
 #ifdef USE_SDL_NET
- #include "SDL.h"
+ #include <SDL.h>
 #endif
 
-#include "doomtype.h"
 #include "doomstat.h"
 #include "d_net.h"
-#include "z_zone.h"
 
 #include "d_main.h"
 #include "g_game.h"

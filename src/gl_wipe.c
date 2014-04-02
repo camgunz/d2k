@@ -31,9 +31,7 @@
  *---------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
 #include "v_video.h"
 #include "gl_opengl.h"

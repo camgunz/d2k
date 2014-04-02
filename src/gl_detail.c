@@ -31,22 +31,16 @@
  *---------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
 #include "gl_opengl.h"
 
-#include "z_zone.h"
 #include <SDL.h>
 
 #ifdef HAVE_LIBSDL_IMAGE
 #include <SDL_image.h>
 #endif
 
-#include <math.h>
-
-#include "gl_opengl.h"
 #include "v_video.h"
 #include "r_main.h"
 #include "gl_intern.h"

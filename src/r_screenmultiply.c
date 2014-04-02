@@ -32,13 +32,13 @@
  *
  *-----------------------------------------------------------------------------*/
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
-#include "r_screenmultiply.h"
+#include "doomtype.h"
 #include "doomdef.h"
 #include "lprintf.h"
+
+#include "r_screenmultiply.h"
 
 int render_screen_multiply;
 int screen_multiply;

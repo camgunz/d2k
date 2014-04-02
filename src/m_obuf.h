@@ -27,19 +27,37 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *   Binary delta routines using LibXDiff.
+ *  A buffer of objects
  *
  *-----------------------------------------------------------------------------
  */
 
-#ifndef M_DELTA__
-#define M_DELTA__
+#ifndef M_OBUF_H__
+#define M_OBUF_H__
 
-void M_InitDeltas(void);
-void M_BuildDelta(buf_t *b1, buf_t *b2, buf_t *delta);
-void M_ApplyDelta(buf_t *b1, buf_t *b2, buf_t *delta);
+typedef struct obuf_s {
+  int capacity;
+  void **objects;
+} obuf_t;
+
+void     M_OBufInit(obuf_t *obuf);
+void     M_OBufInitWithCapacity(obuf_t *obuf, int capacity);
+dboolean M_OBufIsValidIndex(obuf_t *obuf, int index);
+void     M_OBufAppend(obuf_t *obuf, void *obj);
+void     M_OBufInsert(obuf_t *obuf, int index, void *obj);
+int      M_OBufInsertAtFirstFreeSlot(obuf_t *obuf, void *obj);
+int      M_OBufInsertAtFirstFreeSlotOrAppend(obuf_t *obuf, void *obj);
+dboolean M_OBufIter(obuf_t *obuf, int *index, void **obj);
+void*    M_OBufGet(obuf_t *obuf, int index);
+void     M_OBufConsolidate(obuf_t *obuf);
+void     M_OBufRemove(obuf_t *obuf, int index);
+void     M_OBufEnsureCapacity(obuf_t *obuf, int capacity);
+int      M_OBufGetObjectCount(obuf_t *obuf);
+void     M_OBufClear(obuf_t *obuf);
+void     M_OBufFreeEntriesAndClear(obuf_t *obuf);
+void     M_OBufFree(obuf_t *obuf);
 
 #endif
 
-/* vi: set et ts=2 sw=2: */
+/* vi: set et sw=2 ts=2: */
 

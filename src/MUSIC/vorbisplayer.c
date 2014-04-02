@@ -28,16 +28,11 @@
  *---------------------------------------------------------------------
  */
 
-
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
 #include "musicplayer.h"
 
 #ifndef HAVE_LIBVORBISFILE
-#include <string.h>
 
 static const char *vorb_name (void)
 {

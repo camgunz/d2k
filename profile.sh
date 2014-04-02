@@ -1,3 +1,3 @@
 rm *.prof
-CPUPROFILE=prb.prof cbuild/prboom-plus -playdemo DEMO3
-google-pprof --gv cbuild/prboom-plus prb.prof
+CPUPROFILE=d2k.prof cbuild/doom2k -playdemo DEMO3
+google-pprof --gv cbuild/doom2k d2k.prof

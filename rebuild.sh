@@ -2,7 +2,7 @@
 
 if [ -d cbuild ]
 then
-  rm -rf cbuild
+    rm -rf cbuild
 fi
 
 ./build.sh

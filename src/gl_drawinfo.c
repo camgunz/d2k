@@ -30,9 +30,7 @@
  *---------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
 #include "doomtype.h"
 #include "gl_opengl.h"
