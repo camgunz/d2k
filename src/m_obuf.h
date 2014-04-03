@@ -35,6 +35,9 @@
 #ifndef M_OBUF_H__
 #define M_OBUF_H__
 
+#define OBUF_FOR_EACH(ob, i, ot, on) \
+  for (int (i) = -1, (ot) (on) = NULL; M_OBufIter(&(i), (void **)&on);)
+
 typedef struct obuf_s {
   int capacity;
   void **objects;
@@ -43,16 +46,16 @@ typedef struct obuf_s {
 void     M_OBufInit(obuf_t *obuf);
 void     M_OBufInitWithCapacity(obuf_t *obuf, int capacity);
 dboolean M_OBufIsValidIndex(obuf_t *obuf, int index);
+int      M_OBufGetObjectCount(obuf_t *obuf);
+void     M_OBufEnsureCapacity(obuf_t *obuf, int capacity);
 void     M_OBufAppend(obuf_t *obuf, void *obj);
 void     M_OBufInsert(obuf_t *obuf, int index, void *obj);
 int      M_OBufInsertAtFirstFreeSlot(obuf_t *obuf, void *obj);
 int      M_OBufInsertAtFirstFreeSlotOrAppend(obuf_t *obuf, void *obj);
 dboolean M_OBufIter(obuf_t *obuf, int *index, void **obj);
 void*    M_OBufGet(obuf_t *obuf, int index);
-void     M_OBufConsolidate(obuf_t *obuf);
 void     M_OBufRemove(obuf_t *obuf, int index);
-void     M_OBufEnsureCapacity(obuf_t *obuf, int capacity);
-int      M_OBufGetObjectCount(obuf_t *obuf);
+void     M_OBufConsolidate(obuf_t *obuf);
 void     M_OBufClear(obuf_t *obuf);
 void     M_OBufFreeEntriesAndClear(obuf_t *obuf);
 void     M_OBufFree(obuf_t *obuf);

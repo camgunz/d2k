@@ -600,10 +600,10 @@ SET(PRBOOM_SOURCES
   src/m_cbuf.c
   src/m_cheat.c
   src/m_delta.c
+  src/m_list.c
   src/m_menu.c
   src/m_misc.c
   src/m_obuf.c
-  src/m_queue.c
   src/m_random.c
   src/m_utf.c
   src/md5.c
