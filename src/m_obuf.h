@@ -35,8 +35,14 @@
 #ifndef M_OBUF_H__
 #define M_OBUF_H__
 
-#define OBUF_FOR_EACH(ob, i, ot, on) \
-  for (int (i) = -1, (ot) (on) = NULL; M_OBufIter(&(i), (void **)&on);)
+#define OBUF_FOR_EACH(ob, oin) for (                                         \
+  obufiternode_s (oin) = {-1, NULL}; M_OBufIter((ob), &oin.index, &oin.obj); \
+)
+
+typedef struct obufiternode_s {
+  int index;
+  void *obj;
+} obufiternode_t;
 
 typedef struct obuf_s {
   int capacity;

@@ -35,6 +35,15 @@
 #ifndef M_CBUF_H__
 #define M_CBUF_H__
 
+#define CBUF_FOR_EACH(cb, cin) for (                                         \
+  cbufiternode_s (cin) = {-1, NULL}; M_CBufIter((cb), &cin.index, &cin.obj); \
+)
+
+typedef struct cbufiternode_s {
+  int index;
+  void *obj;
+} cbufiternode_t;
+
 typedef struct cbufnode_s {
   dboolean used;
   void *obj;

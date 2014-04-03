@@ -35,8 +35,15 @@
 #ifndef M_LIST_H__
 #define M_LIST_H__
 
-#define LIST_FOR_EACH(ls, node_name) \
-  for (listnode_t *(node_name) = NULL; M_ListIter((ls), &(node_name));)
+#define LIST_FOR_EACH(ls, lin) for (      \
+  listiternote_t (lin) = {NULL, NULL};    \
+  M_ListIterObj(ls, &lin.node, &lin.obj); \
+)
+
+typedef struct listiternode_s {
+  listnode_t *node;
+  void *obj;
+} listiternode_t;
 
 typedef struct listnode_s {
   struct listnode_s *prev;
