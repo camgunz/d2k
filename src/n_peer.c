@@ -45,6 +45,11 @@
 
 static obuf_t net_peers;
 
+static int buf_write(void *data, const char *buf, size_t len) {
+  M_BufferAppend((buf_t *)data, buf, len);
+  return 0;
+}
+
 void N_InitPeers(void) {
   M_OBufInit(&net_peers);
 }
@@ -55,10 +60,10 @@ int N_AddPeer(void) {
   /* CG: TODO: Add some kind of check for MAXCLIENTS */
 
   np->peer = NULL;
-  np->rbuf = msgpack_sbuffer_new();
-  np->rpk = msgpack_packer_new(np->rbuf, msgpack_sbuffer_write);
-  np->ubuf = msgpack_sbuffer_new();
-  np->upk = msgpack_packer_new(np->ubuf, msgpack_sbuffer_write);
+  M_BufferInit(np->rbuf);
+  np->rpk = msgpack_packer_new(np->rbuf, buf_write);
+  M_BufferInit(np->ubuf);
+  np->upk = msgpack_packer_new(np->ubuf, buf_write);
   np->connect_time = time(NULL);
   np->disconnect_time = 0;
   np->playernum = 0;
@@ -98,9 +103,9 @@ void N_RemovePeer(netpeer_t *np) {
     N_IPToConstString(np->peer->address.host), np->peer->address.port
   );
 
-  msgpack_sbuffer_free(np->rbuf);
+  M_BufferFree(np->rbuf);
   msgpack_packer_free(np->rpk);
-  msgpack_sbuffer_free(np->ubuf);
+  M_BufferFree(np->ubuf);
   msgpack_packer_free(np->upk);
   M_BufferClear(&np->state);
   M_BufferFree(&np->state);
