@@ -105,9 +105,21 @@ SET(CPACK_DEBIAN_PACKAGE_DEPENDS
    libsdl1.2debian (>=1.2.14),
    libsdl-mixer1.2 (>=1.2.8),
    libsdl-net1.2 (>=1.2.7),
+   libsdl-image1.2 (>=1.2.12),
+   libpcre3 (>= 1:8.30),
+   libportmidi0 (>= 1:184-2.1),
+   libfluidsynth1 (>= 1.1.5-2),
+   libdumb1 (>= 1:0.9.3-5.4),
+   libgl1,
+   libmsgpackc2 (>= 0.5.7-2),
+   libenet1a (>= 1.3.3-2),
    bash"
 )
-SET(CPACK_DEBIAN_PACKAGE_RECOMMENDS "freedoom, game-data-packager")
+SET(CPACK_DEBIAN_PACKAGE_RECOMMENDS
+  "boom-wad or doom-wad,
+   timidity,
+   game-data-packager"
+)
 
 SET(BUILD_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
 
