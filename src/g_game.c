@@ -35,19 +35,9 @@
  *-----------------------------------------------------------------------------
  */
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#ifdef _MSC_VER
-#include <io.h>
-#else
-#include <unistd.h>
-#endif
-#include <fcntl.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
+#include "doomtype.h"
+#include "m_buf.h"
 
 #include "doomstat.h"
 #include "d_net.h"
@@ -142,7 +132,6 @@ int             demover;
 dboolean         singledemo;           // quit after playing a demo from cmdline
 wbstartstruct_t wminfo;               // parms for world map / intermission
 dboolean         haswolflevels = false;// jff 4/18/98 wolf levels present
-static byte     *savebuffer;          // CPhipps - static
 int             autorun = false;      // always running?          // phares
 int             totalleveltimes;      // CPhipps - total time for all completed levels
 int             longtics;
@@ -1838,7 +1827,6 @@ void G_LoadGame(int slot, dboolean command)
 
 static void G_LoadGameErr(const char *msg)
 {
-  Z_Free(savebuffer);                // Free the savegame buffer
   M_ForcedLoadGame(msg);             // Print message asking for 'Y' to force
   if (command_loadgame)              // If this was a command-line -loadgame
     {
@@ -1943,34 +1931,90 @@ void RecalculateDrawnSubsectors(void)
 #endif
 }
 
-void G_DoLoadGame(void)
-{
-  int  length, i;
+void G_DoLoadGame(void) {
   // CPhipps - do savegame filename stuff here
   char *name;                // killough 3/22/98
-  int savegame_compatibility = -1;
-  //e6y: numeric version number of package should be zero before initializing from savegame
-  unsigned int packageversion = 0;
-  char maplump[8];
-  int time, ttime;
+  size_t length;
+  buf_t savebuffer;
 
   length = G_SaveGameName(NULL, 0, savegameslot, demoplayback);
-  name = malloc(length+1);
-  G_SaveGameName(name, length+1, savegameslot, demoplayback);
+  name = malloc(length + 1);
+  G_SaveGameName(name, length + 1, savegameslot, demoplayback);
 
   gameaction = ga_nothing;
 
-  length = M_ReadFile(name, &savebuffer);
-  if (length<=0)
-    I_Error("Couldn't read file %s: %s", name, "(Unknown Error)");
+  if (!M_BufferSetFile(&savebuffer, name))
+    I_Error("Couldn't read file %s: %s", name, strerror(errno));
+
   free(name);
-  save_p = savebuffer + SAVESTRINGSIZE;
+
+  if (!G_LoadSaveData(&savebuffer, false, true))
+    I_Error("Error loading save data\n");
+
+  /* Print some information about the save game */
+  if (gamemode == commercial)
+    sprintf(maplump, "MAP%02d", gamemap);
+  else
+    sprintf(maplump, "E%dM%d", gameepisode, gamemap);
+
+  time = leveltime / TICRATE;
+  ttime = (totalleveltimes + leveltime) / TICRATE;
+
+  lprintf(LO_INFO,
+    "G_DoLoadGame: [%d] %s (%s), Skill %d, Level Time %02d:%02d:%02d, "
+    "Total Time %02d:%02d:%02d\n",
+    savegameslot + 1,
+    maplump,
+    W_GetLumpInfoByNum(W_GetNumForName(maplump))->wadfile->name,
+    gameskill + 1,
+    time / 3600,
+    (time % 3600) / 60,
+    time % 60,
+    ttime / 3600,
+    (ttime % 3600) / 60,
+    ttime % 60
+  );
+
+  // done
+  M_BufferFree(&savebuffer);
+
+  if (setsizeneeded)
+    R_ExecuteSetViewSize();
+
+  // draw the pattern into the back screen
+  R_FillBackScreen();
+
+  /* killough 12/98: support -recordfrom and -loadgame -playdemo */
+  if (!command_loadgame) {
+    singledemo = false;  /* Clear singledemo flag if loading from menu */
+  }
+  else if (singledemo) {
+    gameaction = ga_loadgame; /* Mark that we're loading a game before demo */
+    G_DoPlayDemo();           /* This will detect it and won't reinit level */
+  }
+  else if (demorecording) {
+    /* Command line + record means it's a recordfrom */
+    G_BeginRecording();
+  }
+}
+
+dboolean G_LoadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
+                                           dboolean init_new) {
+  int i;
+  int savegame_compatibility = -1;
+  dboolean d2k_savegame = false;
+  //e6y: numeric version number of package should be zero before initializing
+  //     from savegame
+  unsigned int packageversion = 0;
+  char maplump[8];
+  int time, ttime;
+  byte *save_p = savebuffer->data + SAVESTRINGSIZE;
 
   // CPhipps - read the description field, compare with supported ones
-  for (i=0; (size_t)i<num_version_headers; i++) {
+  for (i = 0; i < num_version_headers; i++) {
     char vcheck[VERSIONSIZE];
     // killough 2/22/98: "proprietary" version string :-)
-    sprintf (vcheck, version_headers[i].ver_printf, version_headers[i].version);
+    sprintf(vcheck, version_headers[i].ver_printf, version_headers[i].version);
 
     if (!strncmp((char*)save_p, vcheck, VERSIONSIZE)) {
       savegame_compatibility = version_headers[i].comp_level;
@@ -1978,10 +2022,14 @@ void G_DoLoadGame(void)
     }
   }
   if (savegame_compatibility == -1) {
-    if (forced_loadgame) {
-      savegame_compatibility = MAX_COMPATIBILITY_LEVEL-1;
-    } else {
-      G_LoadGameErr("Unrecognised savegame version!\nAre you sure? (y/n) ");
+    if (bail_on_errors) {
+      return false;
+    }
+    else if (forced_loadgame) {
+      savegame_compatibility = MAX_COMPATIBILITY_LEVEL - 1;
+    }
+    else {
+      G_LoadGameErr("Unrecognized savegame version!\nAre you sure? (y/n) ");
       return;
     }
   }
@@ -1989,63 +2037,96 @@ void G_DoLoadGame(void)
   save_p += VERSIONSIZE;
 
   // CPhipps - always check savegames even when forced,
-  //  only print a warning if forced
-  {  // killough 3/16/98: check lump name checksum (independent of order)
+  //           only print a warning if forced
+  {
+    // killough 3/16/98: check lump name checksum (independent of order)
     uint_64_t checksum = 0;
 
     checksum = G_Signature();
 
-    if (memcmp(&checksum, save_p, sizeof checksum)) {
-      if (!forced_loadgame) {
-        char *msg = malloc(strlen((char*)save_p + sizeof checksum) + 128);
-        strcpy(msg,"Incompatible Savegame!!!\n");
-        if (save_p[sizeof checksum])
-          strcat(strcat(msg,"Wads expected:\n\n"), (char*)save_p + sizeof checksum);
+    if (memcmp(&checksum, save_p, sizeof(checksum))) {
+      if (bail_on_errors) {
+        return false;
+      }
+      else if (!forced_loadgame) {
+        char *msg = malloc(strlen((char *)save_p + sizeof(checksum)) + 128);
+
+        strcpy(msg, "Incompatible Savegame!!!\n");
+        if (save_p[sizeof(checksum)]) {
+          strcat(
+            strcat(msg, "Wads expected:\n\n"),
+            (char *)save_p + sizeof(checksum)
+          );
+        }
         strcat(msg, "\nAre you sure?");
         G_LoadGameErr(msg);
         free(msg);
         return;
-      } else
-  lprintf(LO_WARN, "G_DoLoadGame: Incompatible savegame\n");
+      }
+      else {
+        lprintf(LO_WARN, "G_DoLoadGame: Incompatible savegame\n");
+      }
     }
-    save_p += sizeof checksum;
-   }
+    save_p += sizeof(checksum);
+  }
 
-  save_p += strlen((char*)save_p)+1;
+  save_p += strlen((char *)save_p) + 1;
 
   //e6y: check on new savegame format
-  if (!memcmp(NEWFORMATSIG, save_p, strlen(NEWFORMATSIG)))
-  {
+  if (!memcmp(NEWFORMATSIG, save_p, strlen(NEWFORMATSIG))) {
     save_p += strlen(NEWFORMATSIG);
-    memcpy(&packageversion, save_p, sizeof packageversion);
-    save_p += sizeof packageversion;
+    memcpy(&packageversion, save_p, sizeof(packageversion));
+    save_p += sizeof(packageversion);
   }
-  //e6y: let's show the warning if savegame is from the previous version of prboom
-  if (packageversion != GetPackageVersion())
-  {
-    if (!forced_loadgame)
-    {
+
+  /* CG: check on D2K savegame format */
+  if (!memcmp(D2KFORMATSIG, save_p, strlen(D2KFORMATSIG))) {
+    save_p += strlen(D2KFORMATSIG);
+    memcpy(&packageversion, save_p, sizeof(packageversion));
+    save_p += sizeof(packageversion);
+    d2k_savegame = true;
+  }
+
+  //e6y: let's show the warning if savegame is from the previous version of
+  //     prboom
+  if (packageversion != GetPackageVersion(d2k_savegame)) {
+    if (bail_on_errors) {
+      return false;
+    }
+    else if (!forced_loadgame) {
       G_LoadGameErr("Incompatible Savegame version!!!\n\nAre you sure?");
       return;
-    } else
+    }
+    else {
       lprintf(LO_WARN, "G_DoLoadGame: Incompatible savegame version\n");
+    }
   }
 
-  compatibility_level = (savegame_compatibility >= prboom_4_compatibility) ? *save_p : savegame_compatibility;
+  compatibility_level = (savegame_compatibility >= prboom_4_compatibility) ?
+    *save_p : savegame_compatibility;
   if (savegame_compatibility < prboom_6_compatibility)
     compatibility_level = map_old_comp_levels[compatibility_level];
+
   save_p++;
 
-  gameskill = *save_p++;
+  gameskill   = *save_p++;
   gameepisode = *save_p++;
-  gamemap = *save_p++;
+  gamemap     = *save_p++;
 
-  for (i=0 ; i<MAXPLAYERS ; i++)
-    playeringame[i] = *save_p++;
-  save_p += MIN_MAXPLAYERS-MAXPLAYERS;         // killough 2/28/98
+  /*
+   * CG: PrBoom+ writes out playeringame here.  D2K, however, uses a dynamic
+   *     list of players, so it just skips this altogether.
+   */
+  if (!d2k_savegame) {
+    for (i = 0; i < VANILLA_MAXPLAYERS; i++)
+      playeringame[i] = *save_p++;
+
+    save_p += BOOM_MIN_MAXPLAYERS - VANILLA_MAXPLAYERS; // killough 2/28/98
+  }
 
   idmusnum = *save_p++;           // jff 3/17/98 restore idmus music
-  if (idmusnum==255) idmusnum=-1; // jff 3/18/98 account for unsigned byte
+  if (idmusnum == 255)            // jff 3/18/98 account for unsigned byte
+    idmusnum=-1;
 
   /* killough 3/1/98: Read game options
    * killough 11/98: move down to here
@@ -2055,73 +2136,44 @@ void G_DoLoadGame(void)
   save_p += (G_ReadOptions(save_p) - save_p);
 
   // load a base level
-  G_InitNew (gameskill, gameepisode, gamemap);
+  if (init_new)
+    G_InitNew(gameskill, gameepisode, gamemap);
 
   /* get the times - killough 11/98: save entire word */
-  memcpy(&leveltime, save_p, sizeof leveltime);
-  save_p += sizeof leveltime;
+  memcpy(&leveltime, save_p, sizeof(leveltime));
+  save_p += sizeof(leveltime);
 
   /* cph - total episode time */
   //e6y: total level times are always saved since 2.4.8.1
-  memcpy(&totalleveltimes, save_p, sizeof totalleveltimes);
-  save_p += sizeof totalleveltimes;
+  memcpy(&totalleveltimes, save_p, sizeof(totalleveltimes));
+  save_p += sizeof(totalleveltimes);
 
   // killough 11/98: load revenant tracer state
   basetic = gametic - *save_p++;
 
+  savebuffer->cursor = save_p - savebuffer->data;
+
   // dearchive all the modifications
   P_MapStart();
-  P_UnArchivePlayers ();
-  P_UnArchiveWorld ();
-  P_UnArchiveThinkers ();
-  P_UnArchiveSpecials ();
-  P_UnArchiveRNG ();    // killough 1/18/98: load RNG information
-  P_UnArchiveMap ();    // killough 1/22/98: load automap information
+  P_UnArchivePlayers(savebuffer);
+  P_UnArchiveWorld(savebuffer);
+  P_UnArchiveThinkers(savebuffer);
+  P_UnArchiveSpecials(savebuffer);
+  P_UnArchiveRNG(savebuffer);    // killough 1/18/98: load RNG information
+  P_UnArchiveMap(savebuffer);    // killough 1/22/98: load automap information
   P_MapEnd();
   R_ActivateSectorInterpolations();//e6y
   R_SmoothPlaying_Reset(NULL); // e6y
 
   if (musinfo.current_item != -1)
-  {
     S_ChangeMusInfoMusic(musinfo.current_item, true);
-  }
 
   RecalculateDrawnSubsectors();
 
   if (*save_p != 0xe6)
-    I_Error ("G_DoLoadGame: Bad savegame");
+    I_Error("G_LoadSaveData: Bad savegame");
 
-  /* Print some information about the save game */
-  if (gamemode == commercial)
-    sprintf(maplump, "MAP%02d", gamemap);
-  else
-    sprintf(maplump, "E%dM%d", gameepisode, gamemap);
-  time = leveltime / TICRATE;
-  ttime = (totalleveltimes + leveltime) / TICRATE;
-
-  lprintf(LO_INFO, "G_DoLoadGame: [%d] %s (%s), Skill %d, Level Time %02d:%02d:%02d, Total Time %02d:%02d:%02d\n",
-    savegameslot + 1, maplump, W_GetLumpInfoByNum(W_GetNumForName(maplump))->wadfile->name, gameskill + 1,
-    time/3600, (time%3600)/60, time%60, ttime/3600, (ttime%3600)/60, ttime%60);
-
-  // done
-  Z_Free (savebuffer);
-
-  if (setsizeneeded)
-    R_ExecuteSetViewSize ();
-
-  // draw the pattern into the back screen
-  R_FillBackScreen ();
-
-  /* killough 12/98: support -recordfrom and -loadgame -playdemo */
-  if (!command_loadgame)
-    singledemo = false;  /* Clear singledemo flag if loading from menu */
-  else
-    if (singledemo) {
-      gameaction = ga_loadgame; /* Mark that we're loading a game before demo */
-      G_DoPlayDemo();           /* This will detect it and won't reinit level */
-    } else /* Command line + record means it's a recordfrom */
-      if (demorecording)
-        G_BeginRecording();
+  return true;
 }
 
 //
@@ -2148,6 +2200,7 @@ void G_SaveGame(int slot, char *description)
 #endif
 }
 
+#if 0
 // Check for overrun and realloc if necessary -- Lee Killough 1/22/98
 void (CheckSaveGame)(size_t size, const char* file, int line)
 {
@@ -2171,6 +2224,7 @@ void (CheckSaveGame)(size_t size, const char* file, int line)
     save_p = (savebuffer = realloc(savebuffer,
            savegamesize += (size+1023) & ~1023)) + pos;
 }
+#endif
 
 /* killough 3/22/98: form savegame name in one location
  * (previously code was scattered around in multiple places)
@@ -2183,72 +2237,121 @@ int G_SaveGameName(char *name, size_t size, int slot, dboolean demoplayback)
   return doom_snprintf (name, size, "%s/%s%d.dsg", basesavegame, sgn, slot);
 }
 
-static void G_DoSaveGame (dboolean menu)
-{
+static void G_DoSaveGame(dboolean menu) {
   char *name;
+  int length;
+  buf_t savebuffer;
+
+  gameaction = ga_nothing; // cph - cancel savegame at top of this function,
+                           // in case later problems cause a premature exit
+
+  length = G_SaveGameName(NULL, 0, savegameslot, demoplayback && !menu);
+  name = malloc(length + 1);
+  G_SaveGameName(name, length + 1, savegameslot, demoplayback && !menu);
+
+  G_WritG_Writeata(&savebuffer, false);
+
+  doom_printf( "%s", M_WriteFile(name, savebuffer.data, savebuffer.size)
+         ? s_GGSAVED /* Ty - externalised */
+         : "Game save failed!"); // CPhipps - not externalised
+
+  M_BufferFree(&savebuffer); // killough
+
+  /* Print some information about the save game */
+  if (gamemode == commercial)
+    sprintf(maplump, "MAP%02d", gamemap);
+  else
+    sprintf(maplump, "E%dM%d", gameepisode, gamemap);
+
+  time = leveltime / TICRATE;
+  ttime = (totalleveltimes + leveltime) / TICRATE;
+
+  lprintf(LO_INFO,
+    "G_DoSaveGame: [%d] %s (%s), Skill %d, Level Time %02d:%02d:%02d, "
+    "Total Time %02d:%02d:%02d\n",
+    savegameslot + 1,
+    maplump,
+    W_GetLumpInfoByNum(W_GetNumForName(maplump))->wadfile->name,
+    gameskill + 1,
+    time / 3600,
+    (time % 3600) / 60,
+    time % 60,
+    ttime / 3600,
+    (ttime % 3600) / 60,
+    ttime % 60
+  );
+
+  savedescription[0] = 0;
+  free(name);
+}
+
+dboolean G_WriteSaveData(buf_t *savebuffer) {
+  int i;
   char name2[VERSIONSIZE];
-  char *description;
-  int  length, i;
   //e6y: numeric version number of package
   unsigned int packageversion = GetPackageVersion();
   char maplump[8];
   int time, ttime;
+  byte *save_p = savebuffer->data;
+  char *description = savedescription;
 
-  gameaction = ga_nothing; // cph - cancel savegame at top of this function,
-    // in case later problems cause a premature exit
+  M_BufferEnsureCapacity(savebuffer,
+    savegamesize +
+    SAVESTRINGSIZE +
+    VERSIONSIZE +
+    sizeof(uint_64_t)
+  );
 
-  length = G_SaveGameName(NULL, 0, savegameslot, demoplayback && !menu);
-  name = malloc(length+1);
-  G_SaveGameName(name, length+1, savegameslot, demoplayback && !menu);
-
-  description = savedescription;
-
-  save_p = savebuffer = malloc(savegamesize);
-
-  CheckSaveGame(SAVESTRINGSIZE+VERSIONSIZE+sizeof(uint_64_t));
-  memcpy (save_p, description, SAVESTRINGSIZE);
+  memcpy(save_p, description, SAVESTRINGSIZE);
   save_p += SAVESTRINGSIZE;
-  memset (name2,0,sizeof(name2));
+  memset(name2, 0, sizeof(name2));
 
   // CPhipps - scan for the version header
-  for (i=0; (size_t)i<num_version_headers; i++)
+  for (i = 0; i < num_version_headers; i++) {
     if (version_headers[i].comp_level == best_compatibility) {
       // killough 2/22/98: "proprietary" version string :-)
-      sprintf (name2,version_headers[i].ver_printf,version_headers[i].version);
-      memcpy (save_p, name2, VERSIONSIZE);
-      i = num_version_headers+1;
+      sprintf(name2, version_headers[i].ver_printf, version_headers[i].version);
+      memcpy(save_p, name2, VERSIONSIZE);
+      i = num_version_headers + 1;
     }
+  }
 
   save_p += VERSIONSIZE;
 
   { /* killough 3/16/98, 12/98: store lump name checksum */
     uint_64_t checksum = G_Signature();
-    memcpy(save_p, &checksum, sizeof checksum);
-    save_p += sizeof checksum;
+    memcpy(save_p, &checksum, sizeof(checksum));
+    save_p += sizeof(checksum);
   }
 
   // killough 3/16/98: store pwad filenames in savegame
   {
     // CPhipps - changed for new wadfiles handling
     size_t i;
-    for (i = 0; i<numwadfiles; i++)
-      {
-        const char *const w = wadfiles[i].name;
-        CheckSaveGame(strlen(w)+2);
-        strcpy((char*)save_p, w);
-        save_p += strlen((char*)save_p);
-        *save_p++ = '\n';
-      }
+    for (i = 0; i < numwadfiles; i++) {
+      const char *const w = wadfiles[i].name;
+
+      M_BufferEnsureCapacity(savebuffer, strlen(w) + 2);
+      strcpy((char *)save_p, w);
+      save_p += strlen((char *)save_p);
+      *save_p++ = '\n';
+    }
     *save_p++ = 0;
   }
 
-  CheckSaveGame(GAME_OPTION_SIZE+MIN_MAXPLAYERS+14+strlen(NEWFORMATSIG)+sizeof packageversion);
+  M_BufferEnsureCapacity(savebuffer,
+    GAME_OPTION_SIZE +
+    BOOM_MIN_MAXPLAYERS +
+    14 +
+    strlen(NEWFORMATSIG) +
+    sizeof(packageversion)
+  );
 
   //e6y: saving of the version number of package
-  strcpy((char*)save_p, NEWFORMATSIG);
+  strcpy((char *)save_p, NEWFORMATSIG);
   save_p += strlen(NEWFORMATSIG);
-  memcpy(save_p, &packageversion, sizeof packageversion);
-  save_p += sizeof packageversion;
+  memcpy(save_p, &packageversion, sizeof(packageversion));
+  save_p += sizeof(packageversion);
 
   *save_p++ = compatibility_level;
 
@@ -2256,11 +2359,13 @@ static void G_DoSaveGame (dboolean menu)
   *save_p++ = gameepisode;
   *save_p++ = gamemap;
 
-  for (i=0 ; i<MAXPLAYERS ; i++)
+  /*
+  for (i = 0; i < MAXPLAYERS; i++)
     *save_p++ = playeringame[i];
 
-  for (;i<MIN_MAXPLAYERS;i++)         // killough 2/28/98
+  for (;i < MIN_MAXPLAYERS; i++)         // killough 2/28/98
     *save_p++ = 0;
+  */
 
   *save_p++ = idmusnum;               // jff 3/17/98 save idmus state
 
@@ -2268,20 +2373,21 @@ static void G_DoSaveGame (dboolean menu)
 
   /* cph - FIXME - endianness? */
   /* killough 11/98: save entire word */
-  memcpy(save_p, &leveltime, sizeof leveltime);
-  save_p += sizeof leveltime;
+  memcpy(save_p, &leveltime, sizeof(leveltime));
+  save_p += sizeof(leveltime);
 
   /* cph - total episode time */
   //e6y: always saved since 2.4.8
-  memcpy(save_p, &totalleveltimes, sizeof totalleveltimes);
-  save_p += sizeof totalleveltimes;
+  memcpy(save_p, &totalleveltimes, sizeof(totalleveltimes));
+  save_p += sizeof(totalleveltimes);
 
   // killough 11/98: save revenant tracer state
-  *save_p++ = (gametic-basetic) & 255;
+  *save_p++ = (gametic - basetic) & 255;
 
   // killough 3/22/98: add Z_CheckHeap after each call to ensure consistency
   Z_CheckHeap();
-  P_ArchivePlayers();
+  savebuffer->cursor = save_p - savebuffer->data;
+  P_ArchivePlayers(savebuffer);
   Z_CheckHeap();
 
   // phares 9/13/98: Move mobj_t->index out of P_ArchiveThinkers so the
@@ -2290,9 +2396,9 @@ static void G_DoSaveGame (dboolean menu)
   // caused a sound, referenced by sector_t->soundtarget.
   P_ThinkerToIndex();
 
-  P_ArchiveWorld();
+  P_ArchiveWorld(savebuffer);
   Z_CheckHeap();
-  P_ArchiveThinkers();
+  P_ArchiveThinkers(savebuffer);
 
   // phares 9/13/98: Move index->mobj_t out of P_ArchiveThinkers, simply
   // for symmetry with the P_ThinkerToIndex call above.
@@ -2300,35 +2406,15 @@ static void G_DoSaveGame (dboolean menu)
   P_IndexToThinker();
 
   Z_CheckHeap();
-  P_ArchiveSpecials();
-  P_ArchiveRNG();    // killough 1/18/98: save RNG information
+  P_ArchiveSpecials(savebuffer);
+  P_ArchiveRNG(savebuffer);    // killough 1/18/98: save RNG information
   Z_CheckHeap();
-  P_ArchiveMap();    // killough 1/22/98: save automap information
+  P_ArchiveMap(savebuffer);    // killough 1/22/98: save automap information
 
-  *save_p++ = 0xe6;   // consistancy marker
+  *save_p++ = 0xe6;   // consistency marker
 
   Z_CheckHeap();
-  doom_printf( "%s", M_WriteFile(name, savebuffer, save_p - savebuffer)
-         ? s_GGSAVED /* Ty - externalised */
-         : "Game save failed!"); // CPhipps - not externalised
 
-  /* Print some information about the save game */
-  if (gamemode == commercial)
-    sprintf(maplump, "MAP%02d", gamemap);
-  else
-    sprintf(maplump, "E%dM%d", gameepisode, gamemap);
-  time = leveltime / TICRATE;
-  ttime = (totalleveltimes + leveltime) / TICRATE;
-
-  lprintf(LO_INFO, "G_DoSaveGame: [%d] %s (%s), Skill %d, Level Time %02d:%02d:%02d, Total Time %02d:%02d:%02d\n",
-    savegameslot + 1, maplump, W_GetLumpInfoByNum(W_GetNumForName(maplump))->wadfile->name, gameskill + 1,
-    time/3600, (time%3600)/60, time%60, ttime/3600, (ttime%3600)/60, ttime%60);
-
-  free(savebuffer);  // killough
-  savebuffer = save_p = NULL;
-
-  savedescription[0] = 0;
-  free(name);
 }
 
 static skill_t d_skill;

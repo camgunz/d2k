@@ -187,4 +187,15 @@ void Z_DumpHistory(char *);
 
 void Z_ZoneHistory(char *);
 
+/*
+ * CG: Include the basic data structures so other stuff (like player_t) can use
+ *     them
+ */
+
+#include "doomtype.h"
+#include "m_buf.h"
+#include "m_cbuf.h"
+#include "m_list.h"
+#include "m_obuf.h"
+
 #endif
