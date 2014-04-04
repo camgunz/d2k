@@ -534,282 +534,284 @@ IF(GCC_OR_CLANG)
 ENDIF()
 
 IF(APPLE)
-  INCLUDE_DIRECTORIES(src/MAC)
-  FILE(GLOB ARCH_SPECIFIC_SOURCES src/MAC/*.m)
+  INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/MAC)
+  FILE(GLOB ARCH_SPECIFIC_SOURCES ${CMAKE_SOURCE_DIR}/src/MAC/*.m)
   SET(ARCH_SPECIFIC_SOURCES ${ARCH_SPECIFIC_SOURCES}
-    src/PCSOUND/pcsound_sdl.c
+    ${CMAKE_SOURCE_DIR}/src/PCSOUND/pcsound_sdl.c
   )
 ELSE()
   IF(UNIX)
     SET(ARCH_SPECIFIC_SOURCES ${ARCH_SPECIFIC_SOURCES}
-      src/PCSOUND/pcsound_linux.c
+      ${CMAKE_SOURCE_DIR}/src/PCSOUND/pcsound_linux.c
     )
   ELSE()
-    SET(ARCH_SPECIFIC_SOURCES src/SDL/SDL_win32_main.c)
+    SET(ARCH_SPECIFIC_SOURCES ${CMAKE_SOURCE_DIR}/src/SDL/SDL_win32_main.c)
     SET(ARCH_SPECIFIC_SOURCES ${ARCH_SPECIFIC_SOURCES}
-      src/PCSOUND/pcsound_win32.c
+      ${CMAKE_SOURCE_DIR}/src/PCSOUND/pcsound_win32.c
     )
   ENDIF()
 ENDIF()
 
-INCLUDE_DIRECTORIES(src/SDL)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/SDL)
 SET(SDL_SOURCES
-  src/SDL/i_joy.c
-  src/SDL/i_network.c
-  src/SDL/i_sound.c
-  src/SDL/i_sshot.c
-  src/SDL/i_video.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_joy.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_network.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_sound.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_sshot.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_video.c
 )
 
-INCLUDE_DIRECTORIES(src/PCSOUND)
-SET(PCSOUND_SOURCES src/PCSOUND/pcsound.c)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/PCSOUND)
+SET(PCSOUND_SOURCES ${CMAKE_SOURCE_DIR}/src/PCSOUND/pcsound.c)
 IF(NOT WIN32)
-  SET(PCSOUND_SOURCES ${PCSOUND_SOURCES} src/PCSOUND/pcsound_sdl)
+  SET(PCSOUND_SOURCES
+    ${PCSOUND_SOURCES}
+    ${CMAKE_SOURCE_DIR}/src/PCSOUND/pcsound_sdl
+  )
 ENDIF()
 
-INCLUDE_DIRECTORIES(src/textscreen)
-FILE(GLOB TEXTSCREEN_SOURCES src/TEXTSCREEN/*.c)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/textscreen)
+FILE(GLOB TEXTSCREEN_SOURCES ${CMAKE_SOURCE_DIR}/src/TEXTSCREEN/*.c)
 
-INCLUDE_DIRECTORIES(src/MUSIC)
-FILE(GLOB MUSIC_SOURCES src/MUSIC/*.c)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/MUSIC)
+FILE(GLOB MUSIC_SOURCES ${CMAKE_SOURCE_DIR}/src/MUSIC/*.c)
 
-INCLUDE_DIRECTORIES(src)
-SET(PRBOOM_SOURCES
-  src/am_map.c
-  src/d_deh.c
-  src/d_items.c
-  src/d_main.c
-  src/doomdef.c
-  src/doomstat.c
-  src/dstrings.c
-  src/e6y.c
-  src/e6y_launcher.c
-  src/f_finale.c
-  src/f_wipe.c
-  src/g_game.c
-  src/g_overflow.c
-  src/hu_lib.c
-  src/hu_stuff.c
-  src/hu_tracers.c
-  src/i_capture.c
-  src/i_pcsound.c
-  src/i_smp.c
-  src/info.c
-  src/m_bbox.c
-  src/m_buf.c
-  src/m_cbuf.c
-  src/m_cheat.c
-  src/m_delta.c
-  src/m_list.c
-  src/m_menu.c
-  src/m_misc.c
-  src/m_obuf.c
-  src/m_random.c
-  src/m_utf.c
-  src/md5.c
-  src/p_ceilng.c
-  src/p_checksum.c
-  src/p_doors.c
-  src/p_enemy.c
-  src/p_floor.c
-  src/p_genlin.c
-  src/p_inter.c
-  src/p_lights.c
-  src/p_map.c
-  src/p_maputl.c
-  src/p_mobj.c
-  src/p_plats.c
-  src/p_pspr.c
-  src/p_saveg.c
-  src/p_setup.c
-  src/p_sight.c
-  src/p_spec.c
-  src/p_switch.c
-  src/p_telept.c
-  src/p_tick.c
-  src/p_user.c
-  src/r_bsp.c
-  src/r_data.c
-  src/r_demo.c
-  src/r_draw.c
-  src/r_filter.c
-  src/r_fps.c
-  src/r_main.c
-  src/r_patch.c
-  src/r_plane.c
-  src/r_screenmultiply.c
-  src/r_segs.c
-  src/r_sky.c
-  src/r_things.c
-  src/s_advsound.c
-  src/s_sound.c
-  src/sc_man.c
-  src/sounds.c
-  src/st_lib.c
-  src/st_stuff.c
-  src/tables.c
-  src/v_video.c
-  src/version.c
-  src/w_wad.c
-  src/wi_stuff.c
-  src/z_bmalloc.c
-  src/z_zone.c
-)
-
-SET(SERVER_SOURCES
-  src/POSIX/i_system.c
-  src/SDL/i_network.c
-  src/d_server.c
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src)
+SET(DOOM2K_SOURCES
+  ${CMAKE_SOURCE_DIR}/src/am_map.c
+  ${CMAKE_SOURCE_DIR}/src/d_deh.c
+  ${CMAKE_SOURCE_DIR}/src/d_items.c
+  ${CMAKE_SOURCE_DIR}/src/d_main.c
+  ${CMAKE_SOURCE_DIR}/src/doomdef.c
+  ${CMAKE_SOURCE_DIR}/src/doomstat.c
+  ${CMAKE_SOURCE_DIR}/src/dstrings.c
+  ${CMAKE_SOURCE_DIR}/src/e6y.c
+  ${CMAKE_SOURCE_DIR}/src/e6y_launcher.c
+  ${CMAKE_SOURCE_DIR}/src/f_finale.c
+  ${CMAKE_SOURCE_DIR}/src/f_wipe.c
+  ${CMAKE_SOURCE_DIR}/src/g_game.c
+  ${CMAKE_SOURCE_DIR}/src/g_overflow.c
+  ${CMAKE_SOURCE_DIR}/src/hu_lib.c
+  ${CMAKE_SOURCE_DIR}/src/hu_stuff.c
+  ${CMAKE_SOURCE_DIR}/src/hu_tracers.c
+  ${CMAKE_SOURCE_DIR}/src/i_capture.c
+  ${CMAKE_SOURCE_DIR}/src/i_pcsound.c
+  ${CMAKE_SOURCE_DIR}/src/i_smp.c
+  ${CMAKE_SOURCE_DIR}/src/info.c
+  ${CMAKE_SOURCE_DIR}/src/m_bbox.c
+  ${CMAKE_SOURCE_DIR}/src/m_buf.c
+  ${CMAKE_SOURCE_DIR}/src/m_cbuf.c
+  ${CMAKE_SOURCE_DIR}/src/m_cheat.c
+  ${CMAKE_SOURCE_DIR}/src/m_delta.c
+  ${CMAKE_SOURCE_DIR}/src/m_list.c
+  ${CMAKE_SOURCE_DIR}/src/m_menu.c
+  ${CMAKE_SOURCE_DIR}/src/m_misc.c
+  ${CMAKE_SOURCE_DIR}/src/m_obuf.c
+  ${CMAKE_SOURCE_DIR}/src/m_random.c
+  ${CMAKE_SOURCE_DIR}/src/m_utf.c
+  ${CMAKE_SOURCE_DIR}/src/md5.c
+  ${CMAKE_SOURCE_DIR}/src/p_ceilng.c
+  ${CMAKE_SOURCE_DIR}/src/p_checksum.c
+  ${CMAKE_SOURCE_DIR}/src/p_doors.c
+  ${CMAKE_SOURCE_DIR}/src/p_enemy.c
+  ${CMAKE_SOURCE_DIR}/src/p_floor.c
+  ${CMAKE_SOURCE_DIR}/src/p_genlin.c
+  ${CMAKE_SOURCE_DIR}/src/p_inter.c
+  ${CMAKE_SOURCE_DIR}/src/p_lights.c
+  ${CMAKE_SOURCE_DIR}/src/p_map.c
+  ${CMAKE_SOURCE_DIR}/src/p_maputl.c
+  ${CMAKE_SOURCE_DIR}/src/p_mobj.c
+  ${CMAKE_SOURCE_DIR}/src/p_plats.c
+  ${CMAKE_SOURCE_DIR}/src/p_pspr.c
+  ${CMAKE_SOURCE_DIR}/src/p_saveg.c
+  ${CMAKE_SOURCE_DIR}/src/p_setup.c
+  ${CMAKE_SOURCE_DIR}/src/p_sight.c
+  ${CMAKE_SOURCE_DIR}/src/p_spec.c
+  ${CMAKE_SOURCE_DIR}/src/p_switch.c
+  ${CMAKE_SOURCE_DIR}/src/p_telept.c
+  ${CMAKE_SOURCE_DIR}/src/p_tick.c
+  ${CMAKE_SOURCE_DIR}/src/p_user.c
+  ${CMAKE_SOURCE_DIR}/src/r_bsp.c
+  ${CMAKE_SOURCE_DIR}/src/r_data.c
+  ${CMAKE_SOURCE_DIR}/src/r_demo.c
+  ${CMAKE_SOURCE_DIR}/src/r_draw.c
+  ${CMAKE_SOURCE_DIR}/src/r_filter.c
+  ${CMAKE_SOURCE_DIR}/src/r_fps.c
+  ${CMAKE_SOURCE_DIR}/src/r_main.c
+  ${CMAKE_SOURCE_DIR}/src/r_patch.c
+  ${CMAKE_SOURCE_DIR}/src/r_plane.c
+  ${CMAKE_SOURCE_DIR}/src/r_screenmultiply.c
+  ${CMAKE_SOURCE_DIR}/src/r_segs.c
+  ${CMAKE_SOURCE_DIR}/src/r_sky.c
+  ${CMAKE_SOURCE_DIR}/src/r_things.c
+  ${CMAKE_SOURCE_DIR}/src/s_advsound.c
+  ${CMAKE_SOURCE_DIR}/src/s_sound.c
+  ${CMAKE_SOURCE_DIR}/src/sc_man.c
+  ${CMAKE_SOURCE_DIR}/src/sounds.c
+  ${CMAKE_SOURCE_DIR}/src/st_lib.c
+  ${CMAKE_SOURCE_DIR}/src/st_stuff.c
+  ${CMAKE_SOURCE_DIR}/src/tables.c
+  ${CMAKE_SOURCE_DIR}/src/v_video.c
+  ${CMAKE_SOURCE_DIR}/src/version.c
+  ${CMAKE_SOURCE_DIR}/src/w_wad.c
+  ${CMAKE_SOURCE_DIR}/src/wi_stuff.c
+  ${CMAKE_SOURCE_DIR}/src/z_bmalloc.c
+  ${CMAKE_SOURCE_DIR}/src/z_zone.c
 )
 
 SET(CLIENT_SOURCES
-  src/SDL/i_main.c
-  src/SDL/i_system.c
-  src/d_client.c
-  src/lprintf.c
-  src/m_argv.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_main.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_system.c
+  ${CMAKE_SOURCE_DIR}/src/d_client.c
+  ${CMAKE_SOURCE_DIR}/src/lprintf.c
+  ${CMAKE_SOURCE_DIR}/src/m_argv.c
 )
 
 SET(GL_SOURCES
-  src/gl_clipper.c
-  src/gl_detail.c
-  src/gl_drawinfo.c
-  src/gl_fbo.c
-  src/gl_gamma.c
-  src/gl_hires.c
-  src/gl_hqresize.c
-  src/gl_light.c
-  src/gl_main.c
-  src/gl_map.c
-  src/gl_missingtexture.c
-  src/gl_opengl.c
-  src/gl_preprocess.c
-  src/gl_shader.c
-  src/gl_shadow.c
-  src/gl_sky.c
-  src/gl_soft2gl.c
-  src/gl_texture.c
-  src/gl_vertex.c
-  src/gl_wipe.c
+  ${CMAKE_SOURCE_DIR}/src/gl_clipper.c
+  ${CMAKE_SOURCE_DIR}/src/gl_detail.c
+  ${CMAKE_SOURCE_DIR}/src/gl_drawinfo.c
+  ${CMAKE_SOURCE_DIR}/src/gl_fbo.c
+  ${CMAKE_SOURCE_DIR}/src/gl_gamma.c
+  ${CMAKE_SOURCE_DIR}/src/gl_hires.c
+  ${CMAKE_SOURCE_DIR}/src/gl_hqresize.c
+  ${CMAKE_SOURCE_DIR}/src/gl_light.c
+  ${CMAKE_SOURCE_DIR}/src/gl_main.c
+  ${CMAKE_SOURCE_DIR}/src/gl_map.c
+  ${CMAKE_SOURCE_DIR}/src/gl_missingtexture.c
+  ${CMAKE_SOURCE_DIR}/src/gl_opengl.c
+  ${CMAKE_SOURCE_DIR}/src/gl_preprocess.c
+  ${CMAKE_SOURCE_DIR}/src/gl_shader.c
+  ${CMAKE_SOURCE_DIR}/src/gl_shadow.c
+  ${CMAKE_SOURCE_DIR}/src/gl_sky.c
+  ${CMAKE_SOURCE_DIR}/src/gl_soft2gl.c
+  ${CMAKE_SOURCE_DIR}/src/gl_texture.c
+  ${CMAKE_SOURCE_DIR}/src/gl_vertex.c
+  ${CMAKE_SOURCE_DIR}/src/gl_wipe.c
 )
 
 IF(HAVE_MMAP)
-  SET(WAD_SOURCES src/w_mmap.c)
+  SET(WAD_SOURCES ${CMAKE_SOURCE_DIR}/src/w_mmap.c)
 ELSE()
-  SET(WAD_SOURCES src/w_memcache.c)
+  SET(WAD_SOURCES ${CMAKE_SOURCE_DIR}/src/w_memcache.c)
 ENDIF()
 
-SET(MUS2MID_SOURCES src/memio.c src/mus2mid.c)
+SET(MUS2MID_SOURCES
+  ${CMAKE_SOURCE_DIR}/src/memio.c
+  ${CMAKE_SOURCE_DIR}/src/mus2mid.c
+)
 
-SET(PRBOOM_CLIENT_SOURCES
+SET(DOOM2K_CLIENT_SOURCES
   ${ARCH_SPECIFIC_SOURCES}
   ${SDL_SOURCES}
   ${PCSOUND_SOURCES}
   ${TEXTSCREEN_SOURCES}
   ${MUSIC_SOURCES}
-  ${PRBOOM_SOURCES}
+  ${DOOM2K_SOURCES}
   ${CLIENT_SOURCES}
   ${MUS2MID_SOURCES}
   ${WAD_SOURCES}
 )
 
 IF(GL_DOOM)
-  SET(PRBOOM_CLIENT_SOURCES ${PRBOOM_CLIENT_SOURCES} ${GL_SOURCES})
+  SET(DOOM2K_CLIENT_SOURCES ${DOOM2K_CLIENT_SOURCES} ${GL_SOURCES})
 ENDIF()
-
-SET(PRBOOM_SERVER_SOURCES
-  ${ARCH_SPECIFIC_SOURCES}
-  ${SDL_SOURCES}
-  ${PCSOUND_SOURCES}
-  ${TEXTSCREEN_SOURCES}
-  ${MUSIC_SOURCES}
-  ${PRBOOM_SOURCES}
-  ${SERVER_SOURCES}
-  ${WAD_SOURCES}
-)
 
 IF(GL_DOOM)
-  SET(PRBOOM_CLIENT_SOURCES ${PRBOOM_CLIENT_SOURCES} ${GL_SOURCES})
+  SET(DOOM2K_CLIENT_SOURCES ${DOOM2K_CLIENT_SOURCES} ${GL_SOURCES})
 ENDIF()
 
-ADD_EXECUTABLE(doom2k ${PRBOOM_CLIENT_SOURCES})
+FILE(GLOB TESTING_SOURCES ${CMAKE_SOURCE_DIR}/unittests/*.c)
 
-SET(PRBOOM_LIBRARIES ${ENET_LIBRARIES} ${MSGPACK_LIBRARIES})
+SET(TESTING_SOURCES ${TESTING_SOURCES} ${CMAKE_SOURCE_DIR}/cutest/CuTest.c)
+
+SET(DOOM2K_TESTING_SOURCES ${DOOM2K_CLIENT_SOURCES} ${TESTING_SOURCES})
+
+SET(DOOM2K_LIBRARIES ${ENET_LIBRARIES} ${MSGPACK_LIBRARIES})
 
 IF(ICONV_STANDALONE)
-  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${ICONV_LIBRARIES})
+  SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${ICONV_LIBRARIES})
 ENDIF()
 
 IF(GL_DOOM)
-  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${OPENGL_gl_LIBRARY})
+  SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${OPENGL_gl_LIBRARY})
   IF(USE_GLU_IMAGESCALE OR USE_GLU_MIPMAP OR USE_GLU_TESS)
-    SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${OPENGL_glu_LIBRARY})
+    SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${OPENGL_glu_LIBRARY})
   ENDIF()
 ENDIF()
 
-SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${SDL_LIBRARY})
+SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${SDL_LIBRARY})
 
 IF(SDLIMAGE_FOUND)
-  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${SDLIMAGE_LIBRARY})
+  SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${SDLIMAGE_LIBRARY})
 ENDIF()
 
 IF(SDLMIXER_FOUND)
-  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${SDLMIXER_LIBRARY})
+  SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${SDLMIXER_LIBRARY})
 ENDIF()
 
 IF(FLUIDSYNTH_FOUND)
-  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${FLUIDSYNTH_LIBRARIES})
+  SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${FLUIDSYNTH_LIBRARIES})
 ENDIF()
 
 IF(PORTMIDI_FOUND)
-  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${PORTMIDI_LIBRARIES})
+  SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${PORTMIDI_LIBRARIES})
 ENDIF()
 
 IF(OGG_FOUND)
-  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${OGG_LIBRARIES})
+  SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${OGG_LIBRARIES})
 ENDIF()
 
 IF(VORBIS_FOUND)
-  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${VORBIS_LIBRARIES})
+  SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${VORBIS_LIBRARIES})
 ENDIF()
 
 IF(MAD_FOUND)
-  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${MAD_LIBRARIES})
+  SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${MAD_LIBRARIES})
 ENDIF()
 
 IF(DUMB_FOUND)
-  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${DUMB_LIBRARIES})
+  SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${DUMB_LIBRARIES})
 ENDIF()
 
 IF(PCRE_FOUND)
-  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${PCRE_LIBRARIES})
+  SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${PCRE_LIBRARIES})
 ENDIF()
 
 IF(PNG_FOUND)
-  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${PNG_LIBRARIES})
+  SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${PNG_LIBRARIES})
 ENDIF()
 
 IF(XDIFF_FOUND)
-  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${XDIFF_LIBRARIES})
+  SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${XDIFF_LIBRARIES})
 ENDIF()
 
 IF(ZLIB_FOUND)
-  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${ZLIB_LIBRARIES})
+  SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${ZLIB_LIBRARIES})
 ENDIF()
 
 IF(GPERF_FOUND)
-  SET(PRBOOM_LIBRARIES ${PRBOOM_LIBRARIES} ${GPERF_LIBRARIES})
+  SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${GPERF_LIBRARIES})
 ENDIF()
 
-TARGET_LINK_LIBRARIES(doom2k ${PRBOOM_LIBRARIES})
+ADD_EXECUTABLE(doom2k ${DOOM2K_CLIENT_SOURCES})
+TARGET_LINK_LIBRARIES(doom2k ${DOOM2K_LIBRARIES})
+
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/unittests)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/cutest)
+ADD_DEFINITIONS(-DRUNNING_UNIT_TESTS)
+ADD_EXECUTABLE(test-doom2k ${DOOM2K_TESTING_SOURCES})
+TARGET_LINK_LIBRARIES(test-doom2k ${DOOM2K_LIBRARIES})
 
 SET(BIN_DIR "${PREFIX}/bin")
 SET(LIB_DIR "${PREFIX}/lib")
 SET(INCLUDE_DIR "${PREFIX}/include")
 SET(SHARE_DIR "${PREFIX}/share")
 
+## TODO: Need to run test-doom2k and use deutex to build the WAD here
+
 INSTALL(
-  TARGETS doom2k
+  TARGETS doom2k test-doom2k
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR}
