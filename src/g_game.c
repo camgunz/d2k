@@ -37,7 +37,6 @@
 
 #include "z_zone.h"
 
-#include "m_cbuf.h"
 #include "doomstat.h"
 #include "d_net.h"
 #include "f_finale.h"
@@ -1934,6 +1933,8 @@ void G_DoLoadGame(void) {
   char *name;                // killough 3/22/98
   size_t length;
   buf_t savebuffer;
+  char maplump[8];
+  int seconds, total_seconds;
 
   length = G_SaveGameName(NULL, 0, savegameslot, demoplayback);
   name = malloc(length + 1);
@@ -1946,7 +1947,7 @@ void G_DoLoadGame(void) {
 
   free(name);
 
-  if (!G_LoadSaveData(&savebuffer, false, true))
+  if (!G_ReadSaveData(&savebuffer, false, true))
     I_Error("Error loading save data\n");
 
   /* Print some information about the save game */
@@ -1955,8 +1956,8 @@ void G_DoLoadGame(void) {
   else
     sprintf(maplump, "E%dM%d", gameepisode, gamemap);
 
-  time = leveltime / TICRATE;
-  ttime = (totalleveltimes + leveltime) / TICRATE;
+  seconds = leveltime / TICRATE;
+  total_seconds = (totalleveltimes + leveltime) / TICRATE;
 
   lprintf(LO_INFO,
     "G_DoLoadGame: [%d] %s (%s), Skill %d, Level Time %02d:%02d:%02d, "
@@ -1965,12 +1966,12 @@ void G_DoLoadGame(void) {
     maplump,
     W_GetLumpInfoByNum(W_GetNumForName(maplump))->wadfile->name,
     gameskill + 1,
-    time / 3600,
-    (time % 3600) / 60,
-    time % 60,
-    ttime / 3600,
-    (ttime % 3600) / 60,
-    ttime % 60
+    seconds / 3600,
+    (seconds % 3600) / 60,
+    seconds % 60,
+    total_seconds / 3600,
+    (total_seconds % 3600) / 60,
+    total_seconds % 60
   );
 
   // done
@@ -1996,17 +1997,14 @@ void G_DoLoadGame(void) {
   }
 }
 
-dboolean G_LoadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
+dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
                                            dboolean init_new) {
   int i;
   int savegame_compatibility = -1;
-  dboolean d2k_savegame = false;
   //e6y: numeric version number of package should be zero before initializing
   //     from savegame
   unsigned int packageversion = 0;
-  char maplump[8];
-  int time, ttime;
-  byte *save_p = savebuffer->data + SAVESTRINGSIZE;
+  byte *save_p = ((byte *)savebuffer->data) + SAVESTRINGSIZE;
 
   // CPhipps - read the description field, compare with supported ones
   for (i = 0; i < num_version_headers; i++) {
@@ -2028,7 +2026,7 @@ dboolean G_LoadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
     }
     else {
       G_LoadGameErr("Unrecognized savegame version!\nAre you sure? (y/n) ");
-      return;
+      return false;
     }
   }
 
@@ -2059,7 +2057,7 @@ dboolean G_LoadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
         strcat(msg, "\nAre you sure?");
         G_LoadGameErr(msg);
         free(msg);
-        return;
+        return false;
       }
       else {
         lprintf(LO_WARN, "G_DoLoadGame: Incompatible savegame\n");
@@ -2077,23 +2075,15 @@ dboolean G_LoadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
     save_p += sizeof(packageversion);
   }
 
-  /* CG: check on D2K savegame format */
-  if (!memcmp(D2KFORMATSIG, save_p, strlen(D2KFORMATSIG))) {
-    save_p += strlen(D2KFORMATSIG);
-    memcpy(&packageversion, save_p, sizeof(packageversion));
-    save_p += sizeof(packageversion);
-    d2k_savegame = true;
-  }
-
   //e6y: let's show the warning if savegame is from the previous version of
   //     prboom
-  if (packageversion != GetPackageVersion(d2k_savegame)) {
+  if (packageversion != GetPackageVersion()) {
     if (bail_on_errors) {
       return false;
     }
     else if (!forced_loadgame) {
       G_LoadGameErr("Incompatible Savegame version!!!\n\nAre you sure?");
-      return;
+      return false;
     }
     else {
       lprintf(LO_WARN, "G_DoLoadGame: Incompatible savegame version\n");
@@ -2111,16 +2101,10 @@ dboolean G_LoadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
   gameepisode = *save_p++;
   gamemap     = *save_p++;
 
-  /*
-   * CG: PrBoom+ writes out playeringame here.  D2K, however, uses a dynamic
-   *     list of players, so it just skips this altogether.
-   */
-  if (!d2k_savegame) {
-    for (i = 0; i < VANILLA_MAXPLAYERS; i++)
-      playeringame[i] = *save_p++;
+  for (i = 0; i < MAXPLAYERS; i++)
+    playeringame[i] = *save_p++;
 
-    save_p += BOOM_MIN_MAXPLAYERS - VANILLA_MAXPLAYERS; // killough 2/28/98
-  }
+  save_p += MIN_MAXPLAYERS - MAXPLAYERS; // killough 2/28/98
 
   idmusnum = *save_p++;           // jff 3/17/98 restore idmus music
   if (idmusnum == 255)            // jff 3/18/98 account for unsigned byte
@@ -2149,7 +2133,7 @@ dboolean G_LoadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
   // killough 11/98: load revenant tracer state
   basetic = gametic - *save_p++;
 
-  savebuffer->cursor = save_p - savebuffer->data;
+  savebuffer->cursor = save_p - (byte *)savebuffer->data;
 
   // dearchive all the modifications
   P_MapStart();
@@ -2169,7 +2153,7 @@ dboolean G_LoadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
   RecalculateDrawnSubsectors();
 
   if (*save_p != 0xe6)
-    I_Error("G_LoadSaveData: Bad savegame");
+    I_Error("G_ReadSaveData: Bad savegame");
 
   return true;
 }
@@ -2239,6 +2223,8 @@ static void G_DoSaveGame(dboolean menu) {
   char *name;
   int length;
   buf_t savebuffer;
+  char maplump[8];
+  int seconds, total_seconds;
 
   gameaction = ga_nothing; // cph - cancel savegame at top of this function,
                            // in case later problems cause a premature exit
@@ -2247,7 +2233,7 @@ static void G_DoSaveGame(dboolean menu) {
   name = malloc(length + 1);
   G_SaveGameName(name, length + 1, savegameslot, demoplayback && !menu);
 
-  G_WritG_Writeata(&savebuffer, false);
+  G_WriteSaveData(&savebuffer);
 
   doom_printf( "%s", M_WriteFile(name, savebuffer.data, savebuffer.size)
          ? s_GGSAVED /* Ty - externalised */
@@ -2261,8 +2247,8 @@ static void G_DoSaveGame(dboolean menu) {
   else
     sprintf(maplump, "E%dM%d", gameepisode, gamemap);
 
-  time = leveltime / TICRATE;
-  ttime = (totalleveltimes + leveltime) / TICRATE;
+  seconds = leveltime / TICRATE;
+  total_seconds = (totalleveltimes + leveltime) / TICRATE;
 
   lprintf(LO_INFO,
     "G_DoSaveGame: [%d] %s (%s), Skill %d, Level Time %02d:%02d:%02d, "
@@ -2271,26 +2257,24 @@ static void G_DoSaveGame(dboolean menu) {
     maplump,
     W_GetLumpInfoByNum(W_GetNumForName(maplump))->wadfile->name,
     gameskill + 1,
-    time / 3600,
-    (time % 3600) / 60,
-    time % 60,
-    ttime / 3600,
-    (ttime % 3600) / 60,
-    ttime % 60
+    seconds / 3600,
+    (seconds % 3600) / 60,
+    seconds % 60,
+    total_seconds / 3600,
+    (total_seconds % 3600) / 60,
+    total_seconds % 60
   );
 
   savedescription[0] = 0;
   free(name);
 }
 
-dboolean G_WriteSaveData(buf_t *savebuffer) {
+void G_WriteSaveData(buf_t *savebuffer) {
   int i;
   char name2[VERSIONSIZE];
   //e6y: numeric version number of package
   unsigned int packageversion = GetPackageVersion();
-  char maplump[8];
-  int time, ttime;
-  byte *save_p = savebuffer->data;
+  byte *save_p = (byte *)savebuffer->data;
   char *description = savedescription;
 
   M_BufferEnsureCapacity(savebuffer,
@@ -2339,7 +2323,7 @@ dboolean G_WriteSaveData(buf_t *savebuffer) {
 
   M_BufferEnsureCapacity(savebuffer,
     GAME_OPTION_SIZE +
-    BOOM_MIN_MAXPLAYERS +
+    MIN_MAXPLAYERS +
     14 +
     strlen(NEWFORMATSIG) +
     sizeof(packageversion)
@@ -2384,7 +2368,7 @@ dboolean G_WriteSaveData(buf_t *savebuffer) {
 
   // killough 3/22/98: add Z_CheckHeap after each call to ensure consistency
   Z_CheckHeap();
-  savebuffer->cursor = save_p - savebuffer->data;
+  savebuffer->cursor = save_p - (byte *)savebuffer->data;
   P_ArchivePlayers(savebuffer);
   Z_CheckHeap();
 
@@ -2412,7 +2396,6 @@ dboolean G_WriteSaveData(buf_t *savebuffer) {
   *save_p++ = 0xe6;   // consistency marker
 
   Z_CheckHeap();
-
 }
 
 static skill_t d_skill;

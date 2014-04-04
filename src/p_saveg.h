@@ -40,27 +40,29 @@
 
 /* Persistent storage/archiving.
  * These are the load / save game routines. */
-void P_ArchivePlayers(void);
-void P_UnArchivePlayers(void);
-void P_ArchiveWorld(void);
-void P_UnArchiveWorld(void);
-void P_ArchiveThinkers(void);
-void P_UnArchiveThinkers(void);
-void P_ArchiveSpecials(void);
-void P_UnArchiveSpecials(void);
+void P_ArchivePlayers(buf_t *savebuffer);
+void P_UnArchivePlayers(buf_t *savebuffer);
+void P_ArchiveWorld(buf_t *savebuffer);
+void P_UnArchiveWorld(buf_t *savebuffer);
+void P_ArchiveThinkers(buf_t *savebuffer);
+void P_UnArchiveThinkers(buf_t *savebuffer);
+void P_ArchiveSpecials(buf_t *savebuffer);
+void P_UnArchiveSpecials(buf_t *savebuffer);
+
 void P_ThinkerToIndex(void); /* phares 9/13/98: save soundtarget in savegame */
 void P_IndexToThinker(void); /* phares 9/13/98: save soundtarget in savegame */
 
 /* 1/18/98 killough: add RNG info to savegame */
-void P_ArchiveRNG(void);
-void P_UnArchiveRNG(void);
+void P_ArchiveRNG(buf_t *savebuffer);
+void P_UnArchiveRNG(buf_t *savebuffer);
 
 /* 2/21/98 killough: add automap info to savegame */
-void P_ArchiveMap(void);
-void P_UnArchiveMap(void);
+void P_ArchiveMap(buf_t *savebuffer);
+void P_UnArchiveMap(buf_t *savebuffer);
 
-extern byte *save_p;
+#if 0
 void CheckSaveGame(size_t,const char*, int);              /* killough */
 #define CheckSaveGame(a) (CheckSaveGame)(a, __FILE__, __LINE__)
+#endif
 
 #endif
