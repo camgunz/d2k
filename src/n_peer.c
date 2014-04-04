@@ -60,10 +60,10 @@ int N_AddPeer(void) {
   /* CG: TODO: Add some kind of check for MAXCLIENTS */
 
   np->peer = NULL;
-  M_BufferInit(np->rbuf);
-  np->rpk = msgpack_packer_new(np->rbuf, buf_write);
-  M_BufferInit(np->ubuf);
-  np->upk = msgpack_packer_new(np->ubuf, buf_write);
+  M_BufferInit(&np->rbuf);
+  np->rpk = msgpack_packer_new(&np->rbuf, buf_write);
+  M_BufferInit(&np->ubuf);
+  np->upk = msgpack_packer_new(&np->ubuf, buf_write);
   np->connect_time = time(NULL);
   np->disconnect_time = 0;
   np->playernum = 0;
@@ -113,9 +113,7 @@ void N_RemovePeer(netpeer_t *np) {
   M_BufferFree(&np->delta);
 
   np->peer                   = NULL;
-  np->rbuf                   = NULL;
   np->rpk                    = NULL;
-  np->ubuf                   = NULL;
   np->upk                    = NULL;
   np->connect_time           = 0;
   np->disconnect_time        = 0;
