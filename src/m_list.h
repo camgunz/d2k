@@ -36,14 +36,9 @@
 #define M_LIST_H__
 
 #define LIST_FOR_EACH(ls, lin) for (      \
-  listiternote_t (lin) = {NULL, NULL};    \
+  listiternode_t (lin) = {NULL, NULL};    \
   M_ListIterObj(ls, &lin.node, &lin.obj); \
 )
-
-typedef struct listiternode_s {
-  listnode_t *node;
-  void *obj;
-} listiternode_t;
 
 typedef struct listnode_s {
   struct listnode_s *prev;
@@ -55,6 +50,11 @@ typedef struct list_s {
   int         size;
   listnode_t *nodes;
 } list_t;
+
+typedef struct listiternode_s {
+  listnode_t *node;
+  void *obj;
+} listiternode_t;
 
 void        M_ListInit(list_t *ls);
 dboolean    M_ListIsEmpty(list_t *ls);

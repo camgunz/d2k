@@ -82,6 +82,13 @@ typedef struct
   fixed_t sy;
 } pspdef_t;
 
+typedef enum
+{
+  WSOP_WEAPON_PICKUP,
+  WSOP_AMMO_PICKUP,
+  WSOP_MAX
+} wsop_e;
+
 extern int weapon_preferences[2][NUMWEAPONS+1];      /* killough 5/2/98 */
 int P_WeaponPreferred(int w1, int w2);
 

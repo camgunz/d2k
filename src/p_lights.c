@@ -33,6 +33,9 @@
  *
  *-----------------------------------------------------------------------------*/
 
+#include "z_zone.h"
+
+#include "m_cbuf.h"
 #include "doomstat.h" //jff 5/18/98
 #include "doomdef.h"
 #include "m_random.h"

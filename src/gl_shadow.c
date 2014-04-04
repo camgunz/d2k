@@ -31,6 +31,7 @@
 
 #include "gl_opengl.h"
 #include "gl_intern.h"
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "p_maputl.h"
 #include "w_wad.h"

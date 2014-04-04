@@ -36,18 +36,18 @@
 #define M_OBUF_H__
 
 #define OBUF_FOR_EACH(ob, oin) for (                                         \
-  obufiternode_s (oin) = {-1, NULL}; M_OBufIter((ob), &oin.index, &oin.obj); \
+  obufiternode_t (oin) = {-1, NULL}; M_OBufIter((ob), &oin.index, &oin.obj); \
 )
-
-typedef struct obufiternode_s {
-  int index;
-  void *obj;
-} obufiternode_t;
 
 typedef struct obuf_s {
   int capacity;
   void **objects;
 } obuf_t;
+
+typedef struct obufiternode_s {
+  int index;
+  void *obj;
+} obufiternode_t;
 
 void     M_OBufInit(obuf_t *obuf);
 void     M_OBufInitWithCapacity(obuf_t *obuf, int capacity);

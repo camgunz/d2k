@@ -58,18 +58,18 @@
 #endif
 #endif
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #define WIN32_LEAN_AND_MEAN
 #define UNICODE
 #include <windows.h>
-#endif
-
-#ifdef _MSC_VER
+#include <direct.h>
+#include <io.h>
+#include <process.h>
+#include <stddef.h>
+#include <winreg.h>
 #define    F_OK    0    /* Check for file existence */
 #define    W_OK    2    /* Check for write permission */
 #define    R_OK    4    /* Check for read permission */
-#include <io.h>
-#include <direct.h>
 #endif
 
 #include <assert.h>
@@ -90,6 +90,7 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #ifdef HAVE_ASM_BYTEORDER_H
 #include <asm/byteorder.h>
@@ -101,6 +102,10 @@
 
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
+
+#ifdef HAVE_MMAP
+#include <sys/mman.h>
 #endif
 
 #ifdef HAVE_SYS_TYPES_H

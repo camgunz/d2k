@@ -197,6 +197,11 @@ typedef struct player_s
   angle_t prev_viewangle;
   angle_t prev_viewpitch;
   fixed_t jumpTics;      // delay the next jump for a moment
+
+  /* CG 4/3/2014: New fields for netcode */
+  char *name;
+  byte  team;
+  cbuf_t commands;
 } player_t;
 
 

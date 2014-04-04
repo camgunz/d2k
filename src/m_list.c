@@ -245,16 +245,16 @@ void M_ListClear(list_t *ls) {
 }
 
 void M_ListFree(list_t *ls) {
-  LIST_FOR_EACH(ls, node)
-    M_ListRemove(ls, node);
+  LIST_FOR_EACH(ls, entry)
+    entry.node = M_ListRemove(ls, entry.node);
 
   M_ListClear(ls);
 }
 
 void M_ListFreeEntriesAndClear(list_t *ls) {
-  LIST_FOR_EACH(ls, node) {
-    free(node->obj);
-    node = M_ListRemove(ls, node);
+  LIST_FOR_EACH(ls, entry) {
+    free(entry.obj);
+    entry.node = M_ListRemove(ls, entry.node);
   }
 
   M_ListClear(ls);

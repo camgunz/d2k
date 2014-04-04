@@ -34,6 +34,7 @@
 
 #include <SDL.h>
 
+#include "m_cbuf.h"
 #include "i_video.h"
 #include "i_sound.h"
 #include "v_video.h"

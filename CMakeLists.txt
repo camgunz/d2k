@@ -607,6 +607,12 @@ SET(PRBOOM_SOURCES
   src/m_random.c
   src/m_utf.c
   src/md5.c
+  src/n_main.c
+  src/n_net.c
+  src/n_pack.c
+  src/n_peer.c
+  src/n_proto.c
+  src/n_state.c
   src/p_ceilng.c
   src/p_checksum.c
   src/p_doors.c

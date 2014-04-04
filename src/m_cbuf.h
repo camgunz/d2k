@@ -36,13 +36,8 @@
 #define M_CBUF_H__
 
 #define CBUF_FOR_EACH(cb, cin) for (                                         \
-  cbufiternode_s (cin) = {-1, NULL}; M_CBufIter((cb), &cin.index, &cin.obj); \
+  cbufiternode_t (cin) = {-1, NULL}; M_CBufIter((cb), &cin.index, &cin.obj); \
 )
-
-typedef struct cbufiternode_s {
-  int index;
-  void *obj;
-} cbufiternode_t;
 
 typedef struct cbufnode_s {
   dboolean used;
@@ -55,6 +50,11 @@ typedef struct cobjbuf_s {
   cbufnode_t *nodes;
 } cbuf_t;
 
+typedef struct cbufiternode_s {
+  int index;
+  void *obj;
+} cbufiternode_t;
+
 void     M_CBufInit(cbuf_t *cbuf, size_t obj_sz);
 void     M_CBufInitWithCapacity(cbuf_t *cbuf, size_t obj_sz, int capacity);
 dboolean M_CBufIsValidIndex(cbuf_t *cbuf, int index);
@@ -66,6 +66,9 @@ int      M_CBufInsertAtFirstFreeSlot(cbuf_t *cbuf, void *obj);
 int      M_CBufInsertAtFirstFreeSlotOrAppend(cbuf_t *cbuf, void *obj);
 dboolean M_CBufIter(cbuf_t *cbuf, int *index, void **obj);
 void*    M_CBufGet(cbuf_t *cbuf, int index);
+void*    M_CBufGetFirstFreeSlot(cbuf_t *cbuf);
+void*    M_CBufGetNewSlot(cbuf_t *cbuf);
+void*    M_CBufGetFirstFreeOrNewSlot(cbuf_t *cbuf);
 void     M_CBufRemove(cbuf_t *cbuf, int index);
 void     M_CBufConsolidate(cbuf_t *cbuf);
 void     M_CBufClear(cbuf_t *cbuf);

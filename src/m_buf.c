@@ -154,10 +154,14 @@ void M_BufferCompact(buf_t *buf) {
   }
 }
 
+void M_BufferZero(buf_t *buf) {
+  memset(buf->data, 0, buf->capacity);
+}
+
 void M_BufferClear(buf_t *buf) {
   buf->size = 0;
   buf->cursor = 0;
-  memset(buf->data, 0, buf->capacity);
+  M_BufferZero(buf);
 }
 
 void M_BufferFree(buf_t *buf) {

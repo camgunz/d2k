@@ -36,9 +36,8 @@
  */
 
 #include "z_zone.h"
-#include "doomtype.h"
-#include "m_buf.h"
 
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "d_net.h"
 #include "f_finale.h"
@@ -114,7 +113,6 @@ dboolean         nodrawers;     // for comparative timing purposes
 dboolean         noblit;        // for comparative timing purposes
 int             starttime;     // for comparative timing purposes
 dboolean         deathmatch;    // only if started as net death
-dboolean         netgame;       // only true if packets are broadcast
 dboolean         playeringame[MAXPLAYERS];
 player_t        players[MAXPLAYERS];
 int             upmove;

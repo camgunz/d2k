@@ -50,6 +50,7 @@
 
 #include "i_smp.h"
 
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "m_argv.h"
 #include "g_game.h"

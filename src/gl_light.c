@@ -35,6 +35,7 @@
 
 #include <SDL.h>
 
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "lprintf.h"
 #include "v_video.h"

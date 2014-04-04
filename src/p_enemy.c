@@ -33,6 +33,8 @@
  *
  *-----------------------------------------------------------------------------*/
 
+#include "z_zone.h"
+
 #include "doomstat.h"
 #include "m_random.h"
 #include "r_main.h"

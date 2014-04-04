@@ -33,11 +33,11 @@
  *
  *-----------------------------------------------------------------------------*/
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include "SDL.h"
+#include "z_zone.h"
 
+#include <SDL.h>
+
+#include "m_buf.h"
 #include "doomstat.h"
 #include "d_net.h"
 #include "w_wad.h"

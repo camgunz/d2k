@@ -31,6 +31,9 @@
  *
  *-----------------------------------------------------------------------------*/
 
+#include "z_zone.h"
+
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "m_bbox.h"
 #include "r_main.h"

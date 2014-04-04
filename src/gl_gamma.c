@@ -34,6 +34,7 @@
 #include "z_zone.h"
 
 #include <SDL.h>
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "v_video.h"
 #include "gl_opengl.h"

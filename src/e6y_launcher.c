@@ -39,6 +39,7 @@
 
 #include "doomtype.h"
 #include "w_wad.h"
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "lprintf.h"
 #include "d_main.h"
