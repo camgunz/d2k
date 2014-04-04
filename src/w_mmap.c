@@ -30,26 +30,15 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#else
-#include <sys/mman.h>
-#endif
-
+#include "m_cbuf.h"
 #include "doomstat.h"
-#include "doomtype.h"
 
 #ifdef __GNUG__
 #pragma implementation "w_wad.h"
 #endif
+
 #include "w_wad.h"
 #include "z_zone.h"
 #include "lprintf.h"

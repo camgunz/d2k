@@ -36,6 +36,7 @@
 #endif
 
 #include "doomdef.h"
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "m_argv.h"
 #include "m_misc.h"

@@ -35,6 +35,7 @@
 
 #include "g_overflow.h"
 
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "lprintf.h"
 #include "m_argv.h"

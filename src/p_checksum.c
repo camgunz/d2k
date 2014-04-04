@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <stdlib.h> /* exit(), atexit() */
+#include "z_zone.h"
 
 #include "p_checksum.h"
 #include "md5.h"

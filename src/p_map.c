@@ -32,6 +32,9 @@
  *
  *-----------------------------------------------------------------------------*/
 
+#include "z_zone.h"
+
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "r_main.h"
 #include "p_mobj.h"

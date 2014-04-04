@@ -32,6 +32,9 @@
  *-----------------------------------------------------------------------------
  */
 
+#include "z_zone.h"
+
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "d_event.h"
 #include "g_game.h"

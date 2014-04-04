@@ -32,6 +32,9 @@
  *
  *-----------------------------------------------------------------------------*/
 
+#include "z_zone.h"
+
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "w_wad.h"
 #include "r_draw.h"

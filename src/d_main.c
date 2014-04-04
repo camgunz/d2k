@@ -35,24 +35,12 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
-#include "SDL_timer.h"
-
-#ifdef _MSC_VER
-#include <io.h>
-#include <direct.h>
-#else
-#include <unistd.h>
-#endif
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#include <SDL_timer.h>
 
 #include "doomdef.h"
-#include "doomtype.h"
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "d_net.h"
 #include "dstrings.h"
@@ -132,6 +120,14 @@ int ffmap;
 dboolean advancedemo;
 
 char    *basesavegame;             // killough 2/16/98: savegame directory
+
+/*
+ * CG: Keep track of the specified resource and DEH/BEX files so we can
+ *     potentially send them to a client on request, or save them in a
+ *     savegame, or whatever.
+ */
+obuf_t resource_files_buf;
+obuf_t deh_files_buf;
 
 //jff 4/19/98 list of standard IWAD names
 const char *const standard_iwads[]=
@@ -1380,6 +1376,9 @@ static void D_DoomMainSetup(void)
     } while (rsp_found==true);
   }
 
+  M_OBufInit(&resource_files_buf);
+  M_OBufInit(&deh_files_buf);
+
   // e6y: moved to main()
   /*
   lprintf(LO_INFO,"M_LoadDefaults: Load system defaults.\n");
@@ -1654,6 +1653,7 @@ static void D_DoomMainSetup(void)
         if (file)
         {
           D_AddFile(file,source_pwad);
+          M_OBufAppend(&resource_files_buf, strdup(myargv[p]));
           free(file);
         }
       }
@@ -1810,6 +1810,7 @@ static void D_DoomMainSetup(void)
       {
         // during the beta we have debug output to dehout.txt
         ProcessDehFile(file,D_dehout(),0);
+        M_OBufAppend(&deh_files_buf, strdup(myargv[p]));
         free(file);
       }
       else

@@ -35,6 +35,7 @@
 #define CALLBACK
 #endif
 
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "p_maputl.h"
 #include "r_main.h"

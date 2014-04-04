@@ -32,36 +32,30 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include <math.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
+#include "z_zone.h"
+
 #ifdef HAVE_LIBSDL_MIXER
 #define HAVE_MIXER
 #endif
 
-#include "SDL.h"
-#include "SDL_audio.h"
-#include "SDL_mutex.h"
+#include <SDL.h>
+#include <SDL_audio.h>
+#include <SDL_mutex.h>
 
 #if SDL_VERSION_ATLEAST(1, 3, 0)
-#include "SDL_endian.h"
+#include <SDL_endian.h>
 #else
-#include "SDL_byteorder.h"
+#include <SDL_byteorder.h>
 #endif
 
-#include "SDL_version.h"
-#include "SDL_thread.h"
+#include <SDL_version.h>
+#include <SDL_thread.h>
 #ifdef HAVE_MIXER
 #define USE_RWOPS
-#include "SDL_mixer.h"
+#include <SDL_mixer.h>
 #endif
 
-#include "z_zone.h"
-
+#include "m_cbuf.h"
 #include "m_swap.h"
 #include "i_sound.h"
 #include "m_argv.h"
@@ -72,7 +66,6 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
-#include "doomtype.h"
 
 #include "d_main.h"
 

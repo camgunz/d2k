@@ -33,11 +33,11 @@
 //
 // 4/25/98, 5/2/98 killough: reformatted, beautified
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include "SDL.h"
+#include "z_zone.h"
 
+#include <SDL.h>
+
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "r_main.h"
 #include "r_bsp.h"

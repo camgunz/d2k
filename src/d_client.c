@@ -37,12 +37,12 @@
  */
 
 #include "z_zone.h"
-#include "doomtype.h"
 
 #ifdef USE_SDL_NET
  #include <SDL.h>
 #endif
 
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "d_net.h"
 
@@ -68,7 +68,6 @@ ticcmd_t         netcmds[MAXPLAYERS][BACKUPTICS];
 static ticcmd_t* localcmds;
 static unsigned          numqueuedpackets;
 static packet_header_t** queuedpacket;
-int maketic;
 int ticdup = 1;
 static int xtratics = 0;
 int              wanted_player_number;
@@ -152,6 +151,12 @@ void D_InitNetGame (void)
   for (; i<MAXPLAYERS; i++)
     playeringame[i] = false;
   if (!playeringame[consoleplayer]) I_Error("D_InitNetGame: consoleplayer not in game");
+
+  for (i = 0; i < numplayers; i++) {
+    if (playeringame[i]) {
+      M_CBufInit(&players[i].commands);
+    }
+  }
 }
 #else
 void D_InitNetGame (void)
@@ -533,3 +538,6 @@ static void D_QuitNetGame (void)
   }
 }
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

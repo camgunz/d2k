@@ -33,11 +33,9 @@
  */
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "z_zone.h"
+
+#include "m_cbuf.h"
 #include "doomdef.h"
 #include "i_video.h"
 #include "v_video.h"

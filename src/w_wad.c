@@ -32,19 +32,9 @@
  *-----------------------------------------------------------------------------
  */
 
-// use config.h if autoconf made one -- josh
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef _MSC_VER
-#include <stddef.h>
-#include <io.h>
-#endif
-#include <fcntl.h>
+#include "z_zone.h"
 
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "d_net.h"
 #include "doomtype.h"

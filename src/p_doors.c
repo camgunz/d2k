@@ -31,6 +31,8 @@
  *
  *-----------------------------------------------------------------------------*/
 
+#include "z_zone.h"
+
 #include "doomstat.h"
 #include "p_spec.h"
 #include "p_tick.h"

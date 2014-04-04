@@ -32,20 +32,9 @@
  *---------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
-#ifdef _WIN32
-#include <io.h>
-#include <process.h>
-#else
-#include <unistd.h>
-#endif
-
-#include <errno.h>
-#include <fcntl.h>
-
+#include "m_cbuf.h"
 #include "doomdef.h"
 #include "doomtype.h"
 #include "doomstat.h"

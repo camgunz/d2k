@@ -33,6 +33,7 @@
 #include <SDL.h>
 #include <SDL_thread.h>
 
+#include "m_cbuf.h"
 #include "i_sound.h"
 #include "i_video.h"
 #include "lprintf.h"

@@ -39,6 +39,7 @@
 #include <SDL_image.h>
 #endif
 
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "gl_opengl.h"
 #include "gl_intern.h"

@@ -32,21 +32,17 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
-#include <stdlib.h>
-
-#include "SDL.h"
+#include <SDL.h>
 
 #ifdef HAVE_LIBPNG
 #include <png.h>
 #endif
 
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "doomdef.h"
-#include "doomtype.h"
 #include "v_video.h"
 #include "i_video.h"
 #include "z_zone.h"

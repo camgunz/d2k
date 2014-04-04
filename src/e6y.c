@@ -31,30 +31,15 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <direct.h>
-#include <winreg.h>
-#endif
-#include <string.h>
-#include <math.h>
+#include "z_zone.h"
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdlib.h>
-
-#include "SDL.h"
+#include <SDL.h>
 #ifdef _WIN32
 #include <SDL_syswm.h>
 #endif
 
+#include "m_cbuf.h"
 #include "hu_lib.h"
-
-#include "doomtype.h"
 #include "doomstat.h"
 #include "d_main.h"
 #include "s_sound.h"

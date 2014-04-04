@@ -43,6 +43,7 @@
 #include <fcntl.h>
 
 #include "doomdef.h"
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "dstrings.h"
 #include "d_main.h"

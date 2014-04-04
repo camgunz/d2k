@@ -32,31 +32,18 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif // _WIN32
-
-#include <stdlib.h>
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#include "SDL.h"
+#include <SDL.h>
 //e6y
 #ifdef _WIN32
 #include <SDL_syswm.h>
 #endif
 
 #include "m_argv.h"
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "doomdef.h"
-#include "doomtype.h"
 #include "v_video.h"
 #include "r_draw.h"
 #include "r_things.h"

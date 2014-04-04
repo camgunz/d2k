@@ -31,6 +31,8 @@
  *
  *-----------------------------------------------------------------------------*/
 
+#include "z_zone.h"
+
 #include "doomstat.h"
 #include "dstrings.h"
 #include "m_random.h"

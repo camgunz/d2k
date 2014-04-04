@@ -38,6 +38,7 @@
 #include "gl_opengl.h"
 #endif
 
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "st_stuff.h"
 #include "r_main.h"

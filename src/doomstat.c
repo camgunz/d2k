@@ -35,6 +35,10 @@
 #ifdef __GNUG__
 #pragma implementation "doomstat.h"
 #endif
+
+#include "z_zone.h"
+
+#include "m_cbuf.h"
 #include "doomstat.h"
 
 // Game Mode - identify IWAD as shareware, retail etc.

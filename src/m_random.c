@@ -37,7 +37,9 @@
  *
  *-----------------------------------------------------------------------------*/
 
+#include "z_zone.h"
 
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "m_random.h"
 #include "lprintf.h"

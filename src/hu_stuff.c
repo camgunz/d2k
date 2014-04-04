@@ -33,6 +33,9 @@
 
 // killough 5/3/98: remove unnecessary headers
 
+#include "z_zone.h"
+
+#include "m_cbuf.h"
 #include "doomstat.h"
 #include "hu_stuff.h"
 #include "hu_lib.h"
