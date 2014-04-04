@@ -428,26 +428,26 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     if (np == NULL)
       continue;
 
-    if (np->rbuf->size != 0) {
+    if (np->rbuf.size != 0) {
       ENetPacket *reliable_packet = enet_packet_create(
-        np->rbuf->data,
-        np->rbuf->size,
+        np->rbuf.data,
+        np->rbuf.size,
         ENET_PACKET_FLAG_RELIABLE | ENET_PACKET_FLAG_NO_ALLOCATE
       );
       enet_peer_send(np->peer, NET_CHANNEL_RELIABLE, reliable_packet);
       enet_packet_destroy(reliable_packet);
-      msgpack_sbuffer_clear(np->rbuf);
+      M_BufferClear(&np->rbuf);
     }
 
-    if (np->ubuf->size != 0) {
+    if (np->ubuf.size != 0) {
       ENetPacket *unreliable_packet = enet_packet_create(
-        np->ubuf->data,
-        np->ubuf->size,
+        np->ubuf.data,
+        np->ubuf.size,
         ENET_PACKET_FLAG_NO_ALLOCATE
       );
       enet_peer_send(np->peer, NET_CHANNEL_UNRELIABLE, unreliable_packet);
       enet_packet_destroy(unreliable_packet);
-      msgpack_sbuffer_clear(np->ubuf);
+      M_BufferClear(&np->ubuf);
     }
   }
 
