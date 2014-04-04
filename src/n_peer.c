@@ -45,8 +45,8 @@
 
 static obuf_t net_peers;
 
-static int buf_write(void *data, const char *buf, size_t len) {
-  M_BufferAppend((buf_t *)data, buf, len);
+static int buf_write(void *data, const char *buf, unsigned int len) {
+  M_BufferAppend((buf_t *)data, (char *)buf, len);
   return 0;
 }
 
@@ -61,9 +61,9 @@ int N_AddPeer(void) {
 
   np->peer = NULL;
   M_BufferInit(&np->rbuf);
-  np->rpk = msgpack_packer_new(&np->rbuf, buf_write);
+  np->rpk = msgpack_packer_new((void *)&np->rbuf, buf_write);
   M_BufferInit(&np->ubuf);
-  np->upk = msgpack_packer_new(&np->ubuf, buf_write);
+  np->upk = msgpack_packer_new((void *)&np->ubuf, buf_write);
   np->connect_time = time(NULL);
   np->disconnect_time = 0;
   np->playernum = 0;
@@ -103,9 +103,9 @@ void N_RemovePeer(netpeer_t *np) {
     N_IPToConstString(np->peer->address.host), np->peer->address.port
   );
 
-  M_BufferFree(np->rbuf);
+  M_BufferFree(&np->rbuf);
   msgpack_packer_free(np->rpk);
-  M_BufferFree(np->ubuf);
+  M_BufferFree(&np->ubuf);
   msgpack_packer_free(np->upk);
   M_BufferClear(&np->state);
   M_BufferFree(&np->state);

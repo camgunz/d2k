@@ -241,7 +241,7 @@ static void handle_full_state(netpeer_t *np) {
 
   if (N_UnpackFullState(np, &tic, &state_buffer)) {
     N_SaveCurrentState(tic, &state_buffer);
-    G_LoadSaveData(N_GetCurrentState(), true, false);
+    G_ReadSaveData(N_GetCurrentState(), true, false);
     CL_SendStateReceived(tic);
     CL_SetReceivedSetup(true);
   }
@@ -260,7 +260,7 @@ static void handle_state_delta(netpeer_t *np) {
 
   if (N_UnpackStateDelta(np, &from_tic, &to_tic, &delta_buffer)) {
     N_ApplyStateDelta(from_tic, to_tic, &delta_buffer);
-    G_LoadSaveData(N_GetCurrentState(), true, false);
+    G_ReadSaveData(N_GetCurrentState(), true, false);
     CL_SendStateReceived(to_tic);
   }
 }
