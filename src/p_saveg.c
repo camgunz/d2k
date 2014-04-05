@@ -102,9 +102,10 @@ static void P_SetNewTarget(mobj_t **mop, mobj_t *targ) {
 //
 void P_ArchivePlayers(buf_t *savebuffer) {
   int i;
-  byte *save_p = (byte *)savebuffer->data[savebuffer->cursor];
+  byte *save_p = NULL;
 
   M_BufferEnsureCapacity(savebuffer, sizeof(player_t) * MAXPLAYERS); // killough
+  save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
 
   for (i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
@@ -125,7 +126,7 @@ void P_ArchivePlayers(buf_t *savebuffer) {
     }
   }
 
-  savebuffer->cursor = save_p - (byte *)savebuffer->data;
+  M_BufferUpdateCursor(savebuffer, (char *)save_p);
 }
 
 //
@@ -133,7 +134,7 @@ void P_ArchivePlayers(buf_t *savebuffer) {
 //
 void P_UnArchivePlayers(buf_t *savebuffer) {
   int i, j;
-  byte *save_p = (byte *)savebuffer->data[savebuffer->cursor];
+  byte *save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
 
   for (i = 0; i < MAXPLAYERS; i++) {
     if (!playeringame[i])
@@ -157,7 +158,7 @@ void P_UnArchivePlayers(buf_t *savebuffer) {
     }
   }
 
-  savebuffer->cursor = save_p - (byte *)savebuffer->data;
+  M_BufferUpdateCursor(savebuffer, (char *)save_p);
 }
 
 //
@@ -169,7 +170,7 @@ void P_ArchiveWorld(buf_t *savebuffer) {
   const line_t   *li;
   const side_t   *si;
   short          *put;
-  byte           *save_p = (byte *)savebuffer->data[savebuffer->cursor];
+  byte           *save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
 
   // killough 3/22/98: fix bug caused by hoisting save_p too early
   // killough 10/98: adjust size for changes below
@@ -189,6 +190,8 @@ void P_ArchiveWorld(buf_t *savebuffer) {
   }
 
   M_BufferEnsureCapacity(savebuffer, size); // killough
+  save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
+
   PADSAVEP(save_p);                         // killough 3/22/98
 
   put = (short *)save_p;
@@ -238,7 +241,7 @@ void P_ArchiveWorld(buf_t *savebuffer) {
   *put++ = musinfo.current_item;
 
   save_p = (byte *)put;
-  savebuffer->cursor = save_p - (byte *)savebuffer->data;
+  M_BufferUpdateCursor(savebuffer, (char *)save_p);
 }
 
 //
@@ -249,7 +252,7 @@ void P_UnArchiveWorld(buf_t *savebuffer) {
   sector_t *sec;
   line_t   *li;
   short    *get;
-  byte     *save_p = (byte *)savebuffer->data[savebuffer->cursor];
+  byte     *save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
 
   PADSAVEP(save_p);          // killough 3/22/98
 
@@ -303,7 +306,7 @@ void P_UnArchiveWorld(buf_t *savebuffer) {
   musinfo.current_item = *get++;
 
   save_p = (byte *)get;
-  savebuffer->cursor = save_p - (byte *)savebuffer->data;
+  M_BufferUpdateCursor(savebuffer, (char *)save_p);
 }
 
 //
@@ -348,10 +351,12 @@ void P_IndexToThinker(void) {
 void P_ArchiveThinkers(buf_t *savebuffer) {
   int i;
   thinker_t *th;
-  byte *save_p = (byte *)savebuffer->data[savebuffer->cursor];
+  byte *save_p = NULL;
 
   // killough 3/26/98: Save boss brain state
   M_BufferEnsureCapacity(savebuffer, sizeof(brain));
+  save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
+
   memcpy(save_p, &brain, sizeof(brain));
   save_p += sizeof(brain);
 
@@ -371,6 +376,7 @@ void P_ArchiveThinkers(buf_t *savebuffer) {
       sizeof(mobj_t) - 3 * sizeof(fixed_t) + 4 + 3 * sizeof(void *)
     ) + 1
   );
+  save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
 
   // save off the current thinkers
   for (th = thinkercap.next; th != &thinkercap; th = th->next) {
@@ -429,6 +435,7 @@ void P_ArchiveThinkers(buf_t *savebuffer) {
   M_BufferEnsureCapacity(
     savebuffer, numsectors * sizeof(mobj_t *)
   ); // killough 9/14/98
+  save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
 
   for (i = 0; i < numsectors; i++) {
     mobj_t *target = sectors[i].soundtarget;
@@ -442,7 +449,7 @@ void P_ArchiveThinkers(buf_t *savebuffer) {
     save_p += sizeof(target);
   }
 
-  savebuffer->cursor = save_p - (byte *)savebuffer->data;
+  M_BufferUpdateCursor(savebuffer, (char *)save_p);
 }
 
 //
@@ -456,7 +463,7 @@ void P_UnArchiveThinkers(buf_t *savebuffer) {
   thinker_t  *th;
   mobj_t    **mobj_p;    // killough 2/14/98: Translation table
   size_t      size;      // killough 2/14/98: size of or index into table
-  byte       *save_p = (byte *)savebuffer->data[savebuffer->cursor];
+  byte       *save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
   byte       *sp = NULL;
 
   totallive = 0;
@@ -568,7 +575,7 @@ void P_UnArchiveThinkers(buf_t *savebuffer) {
       brain = brain_tmp; // restoring
   }
 
-  savebuffer->cursor = save_p - (byte *)savebuffer->data;
+  M_BufferUpdateCursor(savebuffer, (char *)save_p);
 }
 
 //
@@ -594,7 +601,7 @@ void P_UnArchiveThinkers(buf_t *savebuffer) {
 void P_ArchiveSpecials(buf_t *savebuffer) {
   thinker_t *th;
   size_t     size = 0;          // killough
-  byte      *save_p = (byte *)savebuffer->data[savebuffer->cursor];
+  byte      *save_p = NULL;
 
   // save off the current thinkers (memory size calculation -- killough)
 
@@ -634,6 +641,7 @@ void P_ArchiveSpecials(buf_t *savebuffer) {
 
   // killough; cph: +1 for the tc_endspecials
   M_BufferEnsureCapacity(savebuffer, size + 1);
+  save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
 
   // save off the current thinkers
   for (th=thinkercap.next; th!=&thinkercap; th=th->next)
@@ -796,7 +804,7 @@ void P_ArchiveSpecials(buf_t *savebuffer) {
   // add a terminating marker
   *save_p++ = tc_endspecials;
 
-  savebuffer->cursor = save_p - (byte *)savebuffer->data;
+  M_BufferUpdateCursor(savebuffer, (char *)save_p);
 }
 
 //
@@ -804,7 +812,7 @@ void P_ArchiveSpecials(buf_t *savebuffer) {
 //
 void P_UnArchiveSpecials(buf_t *savebuffer) {
   byte tclass;
-  byte *save_p = (byte *)savebuffer->data[savebuffer->cursor];
+  byte *save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
 
   // read in saved thinkers
   while ((tclass = *save_p++) != tc_endspecials) { // killough 2/14/98
@@ -950,36 +958,37 @@ void P_UnArchiveSpecials(buf_t *savebuffer) {
     }
   }
 
-  savebuffer->cursor = save_p - (byte *)savebuffer->data;
+  M_BufferUpdateCursor(savebuffer, (char *)save_p);
 }
 
 // killough 2/16/98: save/restore random number generator state information
 
 void P_ArchiveRNG(buf_t *savebuffer) {
-  byte *save_p = (byte *)savebuffer->data[savebuffer->cursor];
+  byte *save_p = NULL;
 
   M_BufferEnsureCapacity(savebuffer, sizeof(rng));
+  save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
 
   memcpy(save_p, &rng, sizeof(rng));
   save_p += sizeof(rng);
 
-  savebuffer->cursor = save_p - (byte *)savebuffer->data;
+  M_BufferUpdateCursor(savebuffer, (char *)save_p);
 }
 
 void P_UnArchiveRNG(buf_t *savebuffer) {
-  byte *save_p = (byte *)savebuffer->data[savebuffer->cursor];
+  byte *save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
 
   memcpy(&rng, save_p, sizeof(rng));
   save_p += sizeof(rng);
 
-  savebuffer->cursor = save_p - (byte *)savebuffer->data;
+  M_BufferUpdateCursor(savebuffer, (char *)save_p);
 }
 
 // killough 2/22/98: Save/restore automap state
 // killough 2/22/98: Save/restore automap state
 void P_ArchiveMap(buf_t *savebuffer) {
   int i, zero = 0, one = 1;
-  byte *save_p = (byte *)savebuffer->data[savebuffer->cursor];
+  byte *save_p = NULL;
 
   M_BufferEnsureCapacity(
     savebuffer,
@@ -987,6 +996,7 @@ void P_ArchiveMap(buf_t *savebuffer) {
       sizeof(markpoints[0].x) + sizeof(markpoints[0].y)
     ) + sizeof(automapmode) + sizeof(one)
   );
+  save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
 
   memcpy(save_p, &automapmode, sizeof(automapmode));
   save_p += sizeof(automapmode);
@@ -1010,12 +1020,12 @@ void P_ArchiveMap(buf_t *savebuffer) {
     save_p += sizeof(markpoints[i].y);
   }
 
-  savebuffer->cursor = save_p - (byte *)savebuffer->data;
+  M_BufferUpdateCursor(savebuffer, (char *)save_p);
 }
 
 void P_UnArchiveMap(buf_t *savebuffer) {
   int unused;
-  byte *save_p = (byte *)savebuffer->data[savebuffer->cursor];
+  byte *save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
 
   memcpy(&automapmode, save_p, sizeof(automapmode));
   save_p += sizeof(automapmode);
@@ -1053,6 +1063,6 @@ void P_UnArchiveMap(buf_t *savebuffer) {
     }
   }
 
-  savebuffer->cursor = save_p - (byte *)savebuffer->data;
+  M_BufferUpdateCursor(savebuffer, (char *)save_p);
 }
 

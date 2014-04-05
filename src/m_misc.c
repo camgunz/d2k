@@ -105,6 +105,7 @@ static inline void I_EndRead(void) {}
 dboolean M_WriteFile(char const *name, const void *source, size_t length)
 {
   FILE *fp;
+  dboolean success = false;
 
   errno = 0;
 
@@ -112,14 +113,14 @@ dboolean M_WriteFile(char const *name, const void *source, size_t length)
     return 0;                          // Could not open file for writing
 
   I_BeginRead();                       // Disk icon on
-  length = fwrite(source, 1, length, fp) == (size_t)length;   // Write data
+  success = fwrite(source, 1, length, fp) == (size_t)length;   // Write data
   fclose(fp);
   I_EndRead();                         // Disk icon off
 
-  if (!length)                         // Remove partially written file
+  if (!success)                         // Remove partially written file
     remove(name);
 
-  return length;
+  return success;
 }
 
 /*

@@ -45,11 +45,15 @@ typedef struct buf_s {
 void     M_BufferInit(buf_t *buf);
 void     M_BufferInitWithCapacity(buf_t *buf, size_t capacity);
 void     M_BufferCopy(buf_t *dst, buf_t *src);
-void     M_BufferSetData(buf_t *buf, char *data, size_t size);
+void     M_BufferSetData(buf_t *buf, void *data, size_t size);
 void     M_BufferSetString(buf_t *buf, char *data, size_t length);
 dboolean M_BufferSetFile(buf_t *buf, const char *filename);
-void     M_BufferAppend(buf_t *buf, char *data, size_t size);
+void     M_BufferAppend(buf_t *buf, void *data, size_t size);
+void     M_BufferAppendString(buf_t *buf, char *data, size_t length);
+void     M_BufferAppendZeros(buf_t *buf, size_t count);
 dboolean M_BufferEqualsString(buf_t *buf, const char *s);
+char*    M_BufferGetDataAtCursor(buf_t *buf);
+void     M_BufferUpdateCursor(buf_t *buf, void *p);
 void     M_BufferEnsureCapacity(buf_t *buf, size_t capacity);
 void     M_BufferEnsureTotalCapacity(buf_t *buf, size_t capacity);
 void     M_BufferCompact(buf_t *buf);

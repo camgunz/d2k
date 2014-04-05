@@ -57,7 +57,7 @@ void M_BufferCopy(buf_t *dst, buf_t *src) {
   src->cursor = dst->cursor;
 }
 
-void M_BufferSetData(buf_t *buf, char *data, size_t size) {
+void M_BufferSetData(buf_t *buf, void *data, size_t size) {
   M_BufferClear(buf);
   memcpy(buf->data, data, size);
   buf->size = size;
@@ -97,10 +97,25 @@ dboolean M_BufferSetFile(buf_t *buf, const char *filename) {
   return out;
 }
 
-void M_BufferAppend(buf_t *buf, char *data, size_t size) {
+void M_BufferAppend(buf_t *buf, void *data, size_t size) {
   M_BufferEnsureCapacity(buf, size);
   memcpy(&(buf->data[buf->size]), data, size);
   buf->size += size;
+}
+
+void M_BufferAppendString(buf_t *buf, char *data, size_t length) {
+  size_t size = length + 1;
+
+  M_BufferEnsureCapacity(buf, size);
+  strncpy(buf->data, data, size);
+  buf->size += size;
+}
+
+void M_BufferAppendZeros(buf_t *buf, size_t count) {
+  M_BufferEnsureCapacity(buf, count);
+
+  for (int i = 0; i < count; i++)
+    buf->data[buf->size++] = 0;
 }
 
 dboolean M_BufferEqualsString(buf_t *buf, const char *s) {
@@ -136,6 +151,16 @@ void M_BufferEnsureTotalCapacity(buf_t *buf, size_t capacity) {
 
     memset(buf->data + old_capacity, 0, buf->capacity - old_capacity);
   }
+}
+
+char* M_BufferGetDataAtCursor(buf_t *buf) {
+  return buf->data + buf->cursor;
+}
+
+void M_BufferUpdateCursor(buf_t *buf, void *p) {
+  buf->cursor = (char *)p - buf->data;
+  buf->size = buf->cursor;
+  printf("Cursor is now %lu.\n", buf->cursor);
 }
 
 void M_BufferCompact(buf_t *buf) {

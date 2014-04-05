@@ -1942,6 +1942,8 @@ void G_DoLoadGame(void) {
 
   gameaction = ga_nothing;
 
+  M_BufferInitWithCapacity(&savebuffer, 16);
+
   if (!M_BufferSetFile(&savebuffer, name))
     I_Error("Couldn't read file %s: %s", name, strerror(errno));
 
@@ -2006,6 +2008,8 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
   unsigned int packageversion = 0;
   byte *save_p = ((byte *)savebuffer->data) + SAVESTRINGSIZE;
 
+  printf("Reading version at %u\n", savebuffer->cursor);
+
   // CPhipps - read the description field, compare with supported ones
   for (i = 0; i < num_version_headers; i++) {
     char vcheck[VERSIONSIZE];
@@ -2018,6 +2022,7 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
     }
   }
   if (savegame_compatibility == -1) {
+    fprintf(stderr, "savegame_compatibility == -1 (%s)\n", (char *)save_p);
     if (bail_on_errors) {
       return false;
     }
@@ -2041,6 +2046,7 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
     checksum = G_Signature();
 
     if (memcmp(&checksum, save_p, sizeof(checksum))) {
+      fprintf(stderr, "bad checksum: %llu != %u\n", checksum, *save_p);
       if (bail_on_errors) {
         return false;
       }
@@ -2078,6 +2084,9 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
   //e6y: let's show the warning if savegame is from the previous version of
   //     prboom
   if (packageversion != GetPackageVersion()) {
+    fprintf(stderr, "bad packageversion: %u != %u\n",
+      packageversion, GetPackageVersion()
+    );
     if (bail_on_errors) {
       return false;
     }
@@ -2229,12 +2238,15 @@ static void G_DoSaveGame(dboolean menu) {
   gameaction = ga_nothing; // cph - cancel savegame at top of this function,
                            // in case later problems cause a premature exit
 
+  M_BufferInitWithCapacity(&savebuffer, 16);
+
   length = G_SaveGameName(NULL, 0, savegameslot, demoplayback && !menu);
   name = malloc(length + 1);
   G_SaveGameName(name, length + 1, savegameslot, demoplayback && !menu);
 
   G_WriteSaveData(&savebuffer);
 
+  printf("%lu/%lu/%lu\n", savebuffer.size, savebuffer.cursor, savebuffer.capacity);
   doom_printf( "%s", M_WriteFile(name, savebuffer.data, savebuffer.size)
          ? s_GGSAVED /* Ty - externalised */
          : "Game save failed!"); // CPhipps - not externalised
@@ -2274,18 +2286,23 @@ void G_WriteSaveData(buf_t *savebuffer) {
   char name2[VERSIONSIZE];
   //e6y: numeric version number of package
   unsigned int packageversion = GetPackageVersion();
-  byte *save_p = (byte *)savebuffer->data;
+  byte *save_p = NULL;
   char *description = savedescription;
 
+  /*
   M_BufferEnsureCapacity(savebuffer,
-    savegamesize +
     SAVESTRINGSIZE +
     VERSIONSIZE +
     sizeof(uint_64_t)
   );
+  */
 
+  M_BufferAppend(savebuffer, description, SAVESTRINGSIZE);
+  /*
+  save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
   memcpy(save_p, description, SAVESTRINGSIZE);
   save_p += SAVESTRINGSIZE;
+  */
   memset(name2, 0, sizeof(name2));
 
   // CPhipps - scan for the version header
@@ -2293,17 +2310,26 @@ void G_WriteSaveData(buf_t *savebuffer) {
     if (version_headers[i].comp_level == best_compatibility) {
       // killough 2/22/98: "proprietary" version string :-)
       sprintf(name2, version_headers[i].ver_printf, version_headers[i].version);
+      M_BufferAppend(savebuffer, name2, VERSIONSIZE);
+      /*
       memcpy(save_p, name2, VERSIONSIZE);
+      */
       i = num_version_headers + 1;
     }
   }
 
+  /*
+  printf("Wrote %s at %u.\n", (char *)save_p, savebuffer->cursor);
   save_p += VERSIONSIZE;
+  */
 
   { /* killough 3/16/98, 12/98: store lump name checksum */
     uint_64_t checksum = G_Signature();
+    M_BufferAppend(savebuffer, (char *)&checksum, sizeof(checksum));
+    /*
     memcpy(save_p, &checksum, sizeof(checksum));
     save_p += sizeof(checksum);
+    */
   }
 
   // killough 3/16/98: store pwad filenames in savegame
@@ -2313,14 +2339,22 @@ void G_WriteSaveData(buf_t *savebuffer) {
     for (i = 0; i < numwadfiles; i++) {
       const char *const w = wadfiles[i].name;
 
+      M_BufferAppend(savebuffer, w, strlen(w));
+      M_BufferAppendString(savebuffer, "\n", 1);
+      /*
       M_BufferEnsureCapacity(savebuffer, strlen(w) + 2);
+      save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
       strcpy((char *)save_p, w);
       save_p += strlen((char *)save_p);
       *save_p++ = '\n';
+      */
     }
+    /*
     *save_p++ = 0;
+    */
   }
 
+  /*
   M_BufferEnsureCapacity(savebuffer,
     GAME_OPTION_SIZE +
     MIN_MAXPLAYERS +
@@ -2328,7 +2362,22 @@ void G_WriteSaveData(buf_t *savebuffer) {
     strlen(NEWFORMATSIG) +
     sizeof(packageversion)
   );
+  save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
+  */
 
+  M_BufferAppend(savebuffer, NEWFORMATSIG, strlen(NEWFORMATSIG));
+  M_BufferAppend(savebuffer, &packageversion, sizeof(packageversion));
+  M_BufferAppend(savebuffer, &compatibility_level, sizeof(compatibility_level));
+  M_BufferAppend(savebuffer, &gameskill, sizeof(gameskill));
+  M_BufferAppend(savebuffer, &gameepisode, sizeof(gameepisode));
+  M_BufferAppend(savebuffer, &gamemap, sizeof(gamemap));
+  for (i = 0; i < MAXPLAYERS; i++)
+    M_BufferAppend(savebuffer, &playeringame[i], sizeof(dboolean));
+  M_BufferAppendZeros(savebuffer, MIN_MAXPLAYERS - i);
+  M_BufferAppend(savebuffer, &idmusnum, sizeof(idmusnum));
+  return true;
+
+  /*
   //e6y: saving of the version number of package
   strcpy((char *)save_p, NEWFORMATSIG);
   save_p += strlen(NEWFORMATSIG);
@@ -2341,15 +2390,14 @@ void G_WriteSaveData(buf_t *savebuffer) {
   *save_p++ = gameepisode;
   *save_p++ = gamemap;
 
-  /*
   for (i = 0; i < MAXPLAYERS; i++)
     *save_p++ = playeringame[i];
 
   for (;i < MIN_MAXPLAYERS; i++)         // killough 2/28/98
     *save_p++ = 0;
-  */
 
   *save_p++ = idmusnum;               // jff 3/17/98 save idmus state
+  */
 
   save_p = G_WriteOptions(save_p);    // killough 3/1/98: save game options
 
@@ -2368,7 +2416,7 @@ void G_WriteSaveData(buf_t *savebuffer) {
 
   // killough 3/22/98: add Z_CheckHeap after each call to ensure consistency
   Z_CheckHeap();
-  savebuffer->cursor = save_p - (byte *)savebuffer->data;
+  M_BufferUpdateCursor(savebuffer, save_p);
   P_ArchivePlayers(savebuffer);
   Z_CheckHeap();
 
@@ -4025,3 +4073,6 @@ void G_CheckDemoContinue(void)
     }
   }
 }
+
+/* vi: set et ts=2 sw=2: */
+
