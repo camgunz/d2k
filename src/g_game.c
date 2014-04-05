@@ -2372,53 +2372,20 @@ void G_WriteSaveData(buf_t *savebuffer) {
   M_BufferAppend(savebuffer, &gameepisode, sizeof(gameepisode));
   M_BufferAppend(savebuffer, &gamemap, sizeof(gamemap));
   for (i = 0; i < MAXPLAYERS; i++)
-    M_BufferAppend(savebuffer, &playeringame[i], sizeof(dboolean));
-  M_BufferAppendZeros(savebuffer, MIN_MAXPLAYERS - i);
+    M_BufferAppend(savebuffer, &playeringame[i], sizeof(byte));
+  M_BufferAppendZeros(savebuffer, (MIN_MAXPLAYERS - i) * sizeof(byte));
   M_BufferAppend(savebuffer, &idmusnum, sizeof(idmusnum));
-  return true;
+  G_WriteOptions(savebuffer);    // killough 3/1/98: save game options
+  M_BufferAppend(savebuffer, &leveltime, sizeof(leveltime));
+  M_BufferAppend(savebuffer, &totalleveltimes, sizeof(totalleveltimes));
+  {
+    // killough 11/98: save revenant tracer state
+    byte tracer = (gametic - basetic) & 255;
 
-  /*
-  //e6y: saving of the version number of package
-  strcpy((char *)save_p, NEWFORMATSIG);
-  save_p += strlen(NEWFORMATSIG);
-  memcpy(save_p, &packageversion, sizeof(packageversion));
-  save_p += sizeof(packageversion);
+    M_BufferAppend(savebuffer, &tracer, sizeof(byte));
+  }
 
-  *save_p++ = compatibility_level;
-
-  *save_p++ = gameskill;
-  *save_p++ = gameepisode;
-  *save_p++ = gamemap;
-
-  for (i = 0; i < MAXPLAYERS; i++)
-    *save_p++ = playeringame[i];
-
-  for (;i < MIN_MAXPLAYERS; i++)         // killough 2/28/98
-    *save_p++ = 0;
-
-  *save_p++ = idmusnum;               // jff 3/17/98 save idmus state
-  */
-
-  save_p = G_WriteOptions(save_p);    // killough 3/1/98: save game options
-
-  /* cph - FIXME - endianness? */
-  /* killough 11/98: save entire word */
-  memcpy(save_p, &leveltime, sizeof(leveltime));
-  save_p += sizeof(leveltime);
-
-  /* cph - total episode time */
-  //e6y: always saved since 2.4.8
-  memcpy(save_p, &totalleveltimes, sizeof(totalleveltimes));
-  save_p += sizeof(totalleveltimes);
-
-  // killough 11/98: save revenant tracer state
-  *save_p++ = (gametic - basetic) & 255;
-
-  // killough 3/22/98: add Z_CheckHeap after each call to ensure consistency
-  Z_CheckHeap();
-  M_BufferUpdateCursor(savebuffer, save_p);
   P_ArchivePlayers(savebuffer);
-  Z_CheckHeap();
 
   // phares 9/13/98: Move mobj_t->index out of P_ArchiveThinkers so the
   // indices can be used by P_ArchiveWorld when the sectors are saved.
@@ -2427,7 +2394,6 @@ void G_WriteSaveData(buf_t *savebuffer) {
   P_ThinkerToIndex();
 
   P_ArchiveWorld(savebuffer);
-  Z_CheckHeap();
   P_ArchiveThinkers(savebuffer);
 
   // phares 9/13/98: Move index->mobj_t out of P_ArchiveThinkers, simply
@@ -2435,15 +2401,15 @@ void G_WriteSaveData(buf_t *savebuffer) {
 
   P_IndexToThinker();
 
-  Z_CheckHeap();
   P_ArchiveSpecials(savebuffer);
   P_ArchiveRNG(savebuffer);    // killough 1/18/98: save RNG information
-  Z_CheckHeap();
   P_ArchiveMap(savebuffer);    // killough 1/22/98: save automap information
 
-  *save_p++ = 0xe6;   // consistency marker
+  {
+    byte consistency = 0xe6; // consistency marker
 
-  Z_CheckHeap();
+    M_BufferAppend(savebuffer, &consistency, sizeof(consistency));
+  }
 }
 
 static skill_t d_skill;
@@ -3001,85 +2967,66 @@ void G_RecordDemo (const char* name)
 
 extern int forceOldBsp;
 
-byte *G_WriteOptions(byte *demo_p)
+void G_WriteOptions(buf_t *buf)
 {
-  byte *target = demo_p + GAME_OPTION_SIZE;
+  size_t current_size = buf->size;
+  size_t target_size  = current_size + GAME_OPTION_SIZE;
 
-  *demo_p++ = monsters_remember;  // part of monster AI
-
-  *demo_p++ = variable_friction;  // ice & mud
-
-  *demo_p++ = weapon_recoil;      // weapon recoil
-
-  *demo_p++ = allow_pushers;      // MT_PUSH Things
-
-  *demo_p++ = 0;
-
-  *demo_p++ = player_bobbing;  // whether player bobs or not
-
-  // killough 3/6/98: add parameters to savegame, move around some in demos
-  *demo_p++ = respawnparm;
-  *demo_p++ = fastparm;
-  *demo_p++ = nomonsters;
-
-  *demo_p++ = demo_insurance;        // killough 3/31/98
-
-  // killough 3/26/98: Added rngseed. 3/31/98: moved here
-  *demo_p++ = (byte)((rngseed >> 24) & 0xff);
-  *demo_p++ = (byte)((rngseed >> 16) & 0xff);
-  *demo_p++ = (byte)((rngseed >>  8) & 0xff);
-  *demo_p++ = (byte)( rngseed        & 0xff);
-
-  // Options new to v2.03 begin here
-
-  *demo_p++ = monster_infighting;   // killough 7/19/98
-
+  M_BufferAppend(buf, &monsters_remember, sizeof(monsters_remember));
+  M_BufferAppend(buf, &variable_friction, sizeof(variable_friction));
+  M_BufferAppend(buf, &weapon_recoil, sizeof(weapon_recoil));
+  M_BufferAppend(buf, &allow_pushers, sizeof(allow_pushers));
+  M_BufferAppendZeros(buf, 0);
+  M_BufferAppend(buf, &player_bobbing, sizeof(player_bobbing));
+  M_BufferAppend(buf, &respawnparm, sizeof(respawnparm));
+  M_BufferAppend(buf, &fastparm, sizeof(fastparm));
+  M_BufferAppend(buf, &nomonsters, sizeof(nomonsters));
+  M_BufferAppend(buf, &demo_insurance, sizeof(demo_insurance));
+  M_BufferAppend(buf, &rngseed, sizeof(rngseed));
+  M_BufferAppend(buf, &monster_infighting, sizeof(monster_infighting));
 #ifdef DOGS
-  *demo_p++ = dogs;                 // killough 7/19/98
+  M_BufferAppend(buf, &dogs, sizeof(dogs));
 #else
-  *demo_p++ = 0;
+  M_BufferAppendZeros(buf, 1);
 #endif
 
-  *demo_p++ = 0;
-  *demo_p++ = 0;
+  M_BufferAppendZeros(buf, 2);
 
-  *demo_p++ = (distfriend >> 8) & 0xff;  // killough 8/8/98
-  *demo_p++ =  distfriend       & 0xff;  // killough 8/8/98
-
-  *demo_p++ = monster_backing;         // killough 9/8/98
-
-  *demo_p++ = monster_avoid_hazards;    // killough 9/9/98
-
-  *demo_p++ = monster_friction;         // killough 10/98
-
-  *demo_p++ = help_friends;             // killough 9/9/98
+  M_BufferAppend(buf, &distfriend, sizeof(distfriend));
+  M_BufferAppend(buf, &monster_backing, sizeof(monster_backing));
+  M_BufferAppend(buf, &monster_avoid_hazards, sizeof(monster_avoid_hazards));
+  M_BufferAppend(buf, &monster_friction, sizeof(monster_friction));
+  M_BufferAppend(buf, &help_friends, sizeof(help_friends));
 
 #ifdef DOGS
-  *demo_p++ = dog_jumping;
+  M_BufferAppend(buf, &dog_jumping, sizeof(dog_jumping));
 #else
-  *demo_p++ = 0;
+  M_BufferAppendZeros(buf, 1);
 #endif
 
-  *demo_p++ = monkeys;
+  M_BufferAppend(buf, &monkeys, sizeof(monkeys));
 
-  {   // killough 10/98: a compatibility vector now
-    int i;
-    for (i=0; i < COMP_TOTAL; i++)
-      *demo_p++ = comp[i] != 0;
+  for (int i = 0; i < COMP_TOTAL; i++) {
+    byte enabled = comp[i] != 0;
+
+    M_BufferAppend(buf, &enabled, sizeof(enabled));
   }
 
-  *demo_p++ = (compatibility_level >= prboom_2_compatibility) && forceOldBsp; // cph 2002/07/20
+  {
+    byte old_bsp = 0;
+
+    if ((compatibility_level >= prboom_2_compatibility) && forceOldBsp)
+      old_bsp = 1; // cph 2002/07/20
+    M_BufferAppend(buf, &old_bsp, sizeof(old_bsp));
+  }
 
   //----------------
   // Padding at end
   //----------------
-  while (demo_p < target)
-    *demo_p++ = 0;
-
-  if (demo_p != target)
+  if (buf->size > target_size)
     I_Error("G_WriteOptions: GAME_OPTION_SIZE is too small");
 
-  return target;
+  M_BufferAppendZeros(buf, target_size - buf->size);
 }
 
 /* Same, but read instead of write

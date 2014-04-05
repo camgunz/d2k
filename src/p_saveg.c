@@ -102,31 +102,30 @@ static void P_SetNewTarget(mobj_t **mop, mobj_t *targ) {
 //
 void P_ArchivePlayers(buf_t *savebuffer) {
   int i;
-  byte *save_p = NULL;
 
   M_BufferEnsureCapacity(savebuffer, sizeof(player_t) * MAXPLAYERS); // killough
-  save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
 
   for (i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
-      int       j;
-      player_t *dest;
+      int j;
 
-      PADSAVEP(save_p);
-      dest = (player_t *)save_p;
-      memcpy(dest, &players[i], sizeof(player_t));
-      save_p += sizeof(player_t);
       for (j = 0; j < NUMPSPRITES; j++) {
-        if (dest->psprites[j].state) {
-          dest->psprites[j].state = (state_t *)(
-            dest->psprites[j].state - states
-          );
+        if (players[i].psprites[j].state) {
+          players[i].psprites[j].state =
+            (state_t *)(players[i].psprites[j].state - states);
+        }
+      }
+
+      M_BufferAppend(savebuffer, &players[i], sizeof(player_t));
+
+      for (j = 0; j < NUMPSPRITES; j++) {
+        if (players[i].psprites[j].state) {
+          players[i].psprites[j].state =
+            &states[(int)players[i].psprites[j].state];
         }
       }
     }
   }
-
-  M_BufferUpdateCursor(savebuffer, (char *)save_p);
 }
 
 //
@@ -1065,4 +1064,6 @@ void P_UnArchiveMap(buf_t *savebuffer) {
 
   M_BufferUpdateCursor(savebuffer, (char *)save_p);
 }
+
+/* vi: set et ts=2 sw=2: */
 

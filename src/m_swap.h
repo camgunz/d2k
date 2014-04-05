@@ -32,8 +32,8 @@
  *-----------------------------------------------------------------------------*/
 
 
-#ifndef __M_SWAP__
-#define __M_SWAP__
+#ifndef M_SWAP__
+#define M_SWAP__
 
 #ifdef __GNUG__
 #pragma interface
@@ -68,6 +68,9 @@
 #ifdef __arch__swab32
 #define doom_swap_l  (signed long)__arch__swab32
 #endif
+#ifdef __arch__swab64
+#define doom_swap_ll (signed long long)__arch__swab64
+#endif
 #endif /* HAVE_ASM_BYTEORDER_H */
 
 #ifdef HAVE_LIBKERN_OSBYTEORDER_H
@@ -75,20 +78,35 @@
 
 #define doom_swap_s (short)OSSwapInt16
 #define doom_swap_l (long)OSSwapInt32
+#ifdef OSSwapInt64
+#define doom_swap_ll (long long)OSSwapInt64
+#endif
+#endif
+
+#ifndef doom_swap_ll
+#define doom_swap_ll(x) \
+        ((int_64_t)((((uint_64_t)(x) & 0x00000000000000ffLL) << 56) | \
+                    (((uint_64_t)(x) & 0x000000000000ff00LL) << 40) | \
+                    (((uint_64_t)(x) & 0x0000000000ff00ffLL) << 24) | \
+                    (((uint_64_t)(x) & 0x00000000ff0000ffLL) <<  8) | \
+                    (((uint_64_t)(x) & 0x000000ff000000ffLL) >>  8) | \
+                    (((uint_64_t)(x) & 0x0000ff00000000ffLL) >> 24) | \
+                    (((uint_64_t)(x) & 0x00ff0000000000ffLL) >> 40) | \
+                    (((uint_64_t)(x) & 0xff000000000000ffLL) >> 56)))
 #endif
 
 #ifndef doom_swap_l
 #define doom_swap_l(x) \
         ((long int)((((unsigned long int)(x) & 0x000000ffU) << 24) | \
-                             (((unsigned long int)(x) & 0x0000ff00U) <<  8) | \
-                             (((unsigned long int)(x) & 0x00ff0000U) >>  8) | \
-                             (((unsigned long int)(x) & 0xff000000U) >> 24)))
+                    (((unsigned long int)(x) & 0x0000ff00U) <<  8) | \
+                    (((unsigned long int)(x) & 0x00ff0000U) >>  8) | \
+                    (((unsigned long int)(x) & 0xff000000U) >> 24)))
 #endif
 
 #ifndef doom_swap_s
 #define doom_swap_s(x) \
         ((short int)((((unsigned short int)(x) & 0x00ff) << 8) | \
-                              (((unsigned short int)(x) & 0xff00) >> 8))) 
+                     (((unsigned short int)(x) & 0xff00) >> 8))) 
 #endif
 
 /* Macros are named doom_XtoYT, where 
@@ -102,11 +120,15 @@
 
 #ifdef WORDS_BIGENDIAN
 
-#define doom_wtohl(x) doom_swap_l(x)
+#define doom_wtohll(x) doom_swap_ll(x)
+#define doom_htowll(x) doom_swap_ll(x)
+#define doom_wtohl(x) doom_swap_l(x) /* CG: Actually used */
 #define doom_htowl(x) doom_swap_l(x)
 #define doom_wtohs(x) doom_swap_s(x)
-#define doom_htows(x) doom_swap_s(x)
+#define doom_htows(x) doom_swap_s(x) /* CG: Actually used */
 
+#define doom_ntohll(x) doom_swap_ll(x)
+#define doom_htonll(x) doom_swap_ll(x)
 #define doom_ntohl(x) doom_swap_l(x)
 #define doom_htonl(x) doom_swap_l(x)
 #define doom_ntohs(x) doom_swap_s(x)
@@ -114,11 +136,15 @@
 
 #else
 
-#define doom_wtohl(x) (long int)(x)
+#define doom_wtohll(x) (int_64_t)(x)
+#define doom_htowll(x) (int_64_t)(x)
+#define doom_wtohl(x) (long int)(x) /* CG: Actually used */
 #define doom_htowl(x) (long int)(x)
 #define doom_wtohs(x) (short int)(x)
-#define doom_htows(x) (short int)(x)
+#define doom_htows(x) (short int)(x) /* CG: Actually used */
 
+#define doom_ntohll(x) (int_64_t)(x)
+#define doom_htonll(x) (int_64_t)(x)
 #define doom_ntohl(x) (long int)(x)
 #define doom_htonl(x) (long int)(x)
 #define doom_ntohs(x) (short int)(x)
