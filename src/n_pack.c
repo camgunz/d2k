@@ -553,10 +553,11 @@ dboolean N_UnpackPlayerPreferenceChange(netpeer_t *np, short *playernum,
   return true;
 }
 
-dboolean N_UnpackPlayerPreferenceName(netpeer_t *np, size_t pref, buf_t *buf) {
+dboolean N_UnpackPlayerPreferenceName(netpeer_t *np, size_t pref_index,
+                                                     buf_t *buf) {
   msgpack_object_kv *pair = NULL;
   
-  if (pref >= map->size) {
+  if (pref_index >= map->size) {
     doom_printf(
       "N_UnpackPlayerPreferenceName: Attempted to index past preference "
       "count\n"
@@ -564,7 +565,7 @@ dboolean N_UnpackPlayerPreferenceName(netpeer_t *np, size_t pref, buf_t *buf) {
     return false;
   }
 
-  pair = map->ptr + pref;
+  pair = map->ptr + pref_index;
 
   validate_type(&pair->key, "player preference name", raw);
 
@@ -577,15 +578,12 @@ dboolean N_UnpackPlayerPreferenceName(netpeer_t *np, size_t pref, buf_t *buf) {
   return true;
 }
 
-void N_PackNameChange(netpeer_t *np, char *new_name) {
+void N_PackNameChange(netpeer_t *np, short playernum, char *new_name) {
   size_t length = strlen(new_name) * sizeof(char);
 
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
-  if (SERVER)
-    msgpack_pack_short(np->rpk, np->playernum);
-  else
-    msgpack_pack_short(np->rpk, consoleplayer);
+  msgpack_pack_short(np->rpk, playernum);
   msgpack_pack_map(np->rpk, 2);
   msgpack_pack_raw(np->rpk, 4);
   msgpack_pack_raw_body(np->rpk, "name", 4);
@@ -601,13 +599,10 @@ dboolean N_UnpackNameChange(netpeer_t *np, buf_t *buf) {
   return true;
 }
 
-void N_PackTeamChange(netpeer_t *np, byte new_team) {
+void N_PackTeamChange(netpeer_t *np, short playernum, byte new_team) {
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
-  if (SERVER)
-    msgpack_pack_short(np->rpk, np->playernum);
-  else
-    msgpack_pack_short(np->rpk, consoleplayer);
+  msgpack_pack_short(np->rpk, playernum);
   msgpack_pack_map(np->rpk, 2);
   msgpack_pack_raw(np->rpk, 4);
   msgpack_pack_raw_body(np->rpk, "team", 4);
@@ -628,13 +623,10 @@ dboolean N_UnpackTeamChange(netpeer_t *np, byte *new_team) {
   return true;
 }
 
-void N_PackPWOChange(netpeer_t *np) {
+void N_PackPWOChange(netpeer_t *np, short playernum) {
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
-  if (SERVER)
-    msgpack_pack_short(np->rpk, np->playernum);
-  else
-    msgpack_pack_short(np->rpk, consoleplayer);
+  msgpack_pack_short(np->rpk, playernum);
   msgpack_pack_map(np->rpk, 2);
   msgpack_pack_raw(np->rpk, 3);
   msgpack_pack_raw_body(np->rpk, "pwo", 3);
@@ -646,13 +638,10 @@ dboolean N_UnpackPWOChange(netpeer_t *np) {
   return false;
 }
 
-void N_PackWSOPChange(netpeer_t *np, byte new_wsop_flags) {
+void N_PackWSOPChange(netpeer_t *np, short playernum, byte new_wsop_flags) {
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
-  if (SERVER)
-    msgpack_pack_short(np->rpk, np->playernum);
-  else
-    msgpack_pack_short(np->rpk, consoleplayer);
+  msgpack_pack_short(np->rpk, playernum);
   msgpack_pack_map(np->rpk, 2);
   msgpack_pack_raw(np->rpk, 4);
   msgpack_pack_raw_body(np->rpk, "wsop", 4);
@@ -669,13 +658,11 @@ dboolean N_UnpackWSOPChange(netpeer_t *np, byte *new_wsop_flags) {
   return true;
 }
 
-void N_PackBobbingChange(netpeer_t *np, double new_bobbing_amount) {
+void N_PackBobbingChange(netpeer_t *np, short playernum,
+                                        double new_bobbing_amount) {
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
-  if (SERVER)
-    msgpack_pack_short(np->rpk, np->playernum);
-  else
-    msgpack_pack_short(np->rpk, consoleplayer);
+  msgpack_pack_short(np->rpk, playernum);
   msgpack_pack_map(np->rpk, 2);
   msgpack_pack_raw(np->rpk, 7);
   msgpack_pack_raw_body(np->rpk, "bobbing", 7);
@@ -690,13 +677,11 @@ dboolean N_UnpackBobbingchanged(netpeer_t *np, double *new_bobbing_amount) {
   return true;
 }
 
-void N_PackAutoaimChange(netpeer_t *np, dboolean new_autoaim_enabled) {
+void N_PackAutoaimChange(netpeer_t *np, short playernum,
+                                        dboolean new_autoaim_enabled) {
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
-  if (SERVER)
-    msgpack_pack_short(np->rpk, np->playernum);
-  else
-    msgpack_pack_short(np->rpk, consoleplayer);
+  msgpack_pack_short(np->rpk, playernum);
   msgpack_pack_map(np->rpk, 2);
   msgpack_pack_raw(np->rpk, 7);
   msgpack_pack_raw_body(np->rpk, "autoaim", 7);
@@ -714,13 +699,11 @@ dboolean N_UnpackAutoaimChange(netpeer_t *np, dboolean *new_autoaim_enabled) {
   return true;
 }
 
-void N_PackWeaponSpeedChange(netpeer_t *np, byte new_weapon_speed) {
+void N_PackWeaponSpeedChange(netpeer_t *np, short playernum,
+                                            byte new_weapon_speed) {
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
-  if (SERVER)
-    msgpack_pack_short(np->rpk, np->playernum);
-  else
-    msgpack_pack_short(np->rpk, consoleplayer);
+  msgpack_pack_short(np->rpk, playernum);
   msgpack_pack_map(np->rpk, 2);
   msgpack_pack_raw(np->rpk, 12);
   msgpack_pack_raw_body(np->rpk, "weapon_speed", 12);
@@ -736,14 +719,12 @@ dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, byte *new_weapon_speed) {
   return true;
 }
 
-void N_PackColorChange(netpeer_t *np, byte new_red, byte new_green,
-                                      byte new_blue) {
+void N_PackColorChange(netpeer_t *np, short playernum, byte new_red,
+                                                       byte new_green,
+                                                       byte new_blue) {
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
-  if (SERVER)
-    msgpack_pack_short(np->rpk, np->playernum);
-  else
-    msgpack_pack_short(np->rpk, consoleplayer);
+  msgpack_pack_short(np->rpk, playernum);
   msgpack_pack_map(np->rpk, 2);
   msgpack_pack_raw(np->rpk, 5);
   msgpack_pack_raw_body(np->rpk, "color", 5);
@@ -763,13 +744,10 @@ dboolean N_UnpackColorChange(netpeer_t *np, byte *new_red, byte *new_green,
   return true;
 }
 
-void N_PackColormapChange(netpeer_t *np, int new_color) {
+void N_PackColormapChange(netpeer_t *np, short playernum, int new_color) {
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
-  if (SERVER)
-    msgpack_pack_short(np->rpk, np->playernum);
-  else
-    msgpack_pack_short(np->rpk, consoleplayer);
+  msgpack_pack_short(np->rpk, playernum);
   msgpack_pack_map(np->rpk, 2);
   msgpack_pack_raw(np->rpk, 8);
   msgpack_pack_raw_body(np->rpk, "colormap", 8);
@@ -795,13 +773,10 @@ dboolean N_UnpackColormapChange(netpeer_t *np, short *playernum,
   return true;
 }
 
-void N_PackSkinChange(netpeer_t *np) {
+void N_PackSkinChange(netpeer_t *np, short playernum) {
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
-  if (SERVER)
-    msgpack_pack_short(np->rpk, np->playernum);
-  else
-    msgpack_pack_short(np->rpk, consoleplayer);
+  msgpack_pack_short(np->rpk, playernum);
   msgpack_pack_map(np->rpk, 2);
   msgpack_pack_raw(np->rpk, 9);
   msgpack_pack_raw_body(np->rpk, "skin_name", 9);

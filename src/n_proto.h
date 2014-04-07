@@ -65,6 +65,20 @@ void SV_SendAuthResponse(short playernum, auth_level_e auth_level);
 void SV_SendPlayerCommandReceived(short playernum, int tic);
 void SV_SendMessage(short playernum, char *message);
 void SV_BroadcastMessage(char *message);
+void SV_BroadcastPlayerNameChanged(short playernum, char *new_name);
+void SV_BroadcastPlayerTeamChanged(short playernum, byte new_team);
+void SV_BroadcastPlayerPWOChanged(short playernum);
+void SV_BroadcastPlayerWSOPChanged(short playernum, byte new_wsop_flags);
+void SV_BroadcastPlayerBobbingChanged(short playernum,
+                                      double new_bobbing_amount);
+void SV_BroadcastPlayerAutoaimChanged(short playernum,
+                                      dboolean new_autoaim_enabled);
+void SV_BroadcastPlayerWeaponSpeedChanged(short playernum,
+                                          byte new_weapon_speed);
+void SV_BroadcastPlayerColorChanged(short playernum, byte new_red,
+                                                     byte new_green,
+                                                     byte new_blue);
+void SV_BroadcastPlayerSkinChanged(short playernum);
 
 void CL_SendMessageToServer(char *message);
 void CL_SendMessageToPlayer(short recipient, char *message);

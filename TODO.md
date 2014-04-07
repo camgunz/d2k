@@ -1,10 +1,5 @@
 # To Do
 
-1. Player preferences are fucked up
-
-1. Set up `G_LoadSaveData` in `g_game.c`
-  - Includes re-doing the savebuffer stuff
-
 1. Junk old busted netcode, replace with the new hotness
 
 1. Get rid of spurious NetUpdate calls everywhere; they don't help anymore, but
@@ -21,6 +16,12 @@
 1. Compile & Test prototype
 
 ---
+
+1. If there are errors while reading a network message, message reading
+   completely bails, leaving the message partially read.  I'm not totally sure
+   what to do about that though.  I'm dissatisfied with attaching a size to the
+   message, but I think that's the only solution.  Unfortunately, this
+   necessitates a pretty thorough reworking of the netcode.
 
 1. Add unlagged
   - Save attacking player position

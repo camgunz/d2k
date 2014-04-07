@@ -372,6 +372,7 @@ static void handle_player_preference_change(netpeer_t *np) {
   static dboolean initialized_buffers = false;
 
   short playernum = 0;
+  int tic = 0;
   size_t pref_count = 0;
   player_t *player = &players[np->playernum];
 
@@ -381,8 +382,15 @@ static void handle_player_preference_change(netpeer_t *np) {
     initialized_buffers = true;
   }
 
-  if (!N_UnpackPlayerPreferenceChange(np, &playernum, &pref_count))
+  if (!N_UnpackPlayerPreferenceChange(np, &playernum, &tic, &pref_count))
     return;
+
+  if (SERVER && playernum != np->playernum) {
+    doom_printf("Received player preference for player %d from peer %d.\n",
+      playernum, np->playernum
+    );
+    return;
+  }
 
   for (size_t i = 0; i < pref_count; i++) {
     if (!N_UnpackPlayerPreferenceName(np, i, &pref_key_name)) {
@@ -437,6 +445,9 @@ static void handle_player_preference_change(netpeer_t *np) {
         G_ChangedPlayerColour(np->playernum, new_color);
     }
     else if (M_BufferEqualsString(&pref_key_name, "skin_name")) {
+    }
+    else {
+      doom_printf("Unsupported player preference %s.\n", pref_key_name.data);
     }
   }
 }
@@ -591,7 +602,7 @@ void SV_BroadcastMessage(char *message) {
   for (int i = 0; i < N_GetPeerCount(); i++) {
     netpeer_t *np = N_GetPeer(i);
 
-    if ((np = N_GetPeer(i)) != NULL)
+    if (np != NULL)
       N_PackServerMessage(np, message);
   }
 }
@@ -655,14 +666,32 @@ void CL_SendNameChange(char *new_name) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
-  N_PackNameChange(np, new_name);
+  N_PackNameChange(np, consoleplayer, new_name);
+}
+
+void SV_BroadcastPlayerNameChanged(short playernum, char *new_name) {
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
+
+    if (np != NULL && np->playernum != playernum)
+      N_PackNameChange(np, playernum, new_name);
+  }
 }
 
 void CL_SendTeamChange(byte new_team) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
-  N_PackTeamChange(np, new_team);
+  N_PackTeamChange(np, consoleplayer, new_team);
+}
+
+void SV_BroadcastPlayerTeamChanged(short playernum, byte new_team) {
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
+
+    if (np != NULL && np->playernum != playernum)
+      N_PackTeamChange(np, playernum, new_team);
+  }
 }
 
 void CL_SendPWOChange(void) {
@@ -671,44 +700,102 @@ void CL_SendPWOChange(void) {
   /* CG: TODO */
 }
 
+void SV_BroadcastPlayerPWOChanged(short playernum) {
+  /* CG: TODO */
+}
+
 void CL_SendWSOPChange(byte new_wsop_flags) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
-  N_PackWSOPChange(np, new_wsop_flags);
+  N_PackWSOPChange(np, consoleplayer, new_wsop_flags);
+}
+
+void SV_BroadcastPlayerWSOPChanged(short playernum, byte new_wsop_flags) {
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
+
+    if (np != NULL && np->playernum != playernum)
+      N_PackWSOPChange(np, playernum, new_wsop_flags);
+  }
 }
 
 void CL_SendBobbingChange(double new_bobbing_amount) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
-  N_PackBobbingChange(np, new_bobbing_amount);
+  N_PackBobbingChange(np, consoleplayer, new_bobbing_amount);
+}
+
+void SV_BroadcastPlayerBobbingChanged(short playernum,
+                                      double new_bobbing_amount) {
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
+
+    if (np != NULL && np->playernum != playernum)
+      N_PackBobbingChange(np, playernum, new_bobbing_amount);
+  }
 }
 
 void CL_SendAutoaimChange(dboolean new_autoaim_enabled) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
-  N_PackAutoaimChange(np, new_autoaim_enabled);
+  N_PackAutoaimChange(np, consoleplayer, new_autoaim_enabled);
+}
+
+void SV_BroadcastPlayerAutoaimChanged(short playernum,
+                                      dboolean new_autoaim_enabled) {
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
+
+    if (np != NULL && np->playernum != playernum)
+      N_PackAutoaimChange(np, playernum, new_autoaim_enabled);
+  }
 }
 
 void CL_SendWeaponSpeedChange(byte new_weapon_speed) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
-  N_PackWeaponSpeedChange(np, new_weapon_speed);
+  N_PackWeaponSpeedChange(np, consoleplayer, new_weapon_speed);
+}
+
+void SV_BroadcastPlayerWeaponSpeedChanged(short playernum,
+                                          byte new_weapon_speed) {
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
+
+    if (np != NULL && np->playernum != playernum)
+      N_PackWeaponSpeedChange(np, playernum, new_weapon_speed);
+  }
 }
 
 void CL_SendColorChange(byte new_red, byte new_green, byte new_blue) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
-  N_PackColorChange(np, new_red, new_green, new_blue);
+  N_PackColorChange(np, consoleplayer, new_red, new_green, new_blue);
+}
+
+void SV_BroadcastPlayerColorChanged(short playernum, byte new_red,
+                                                     byte new_green,
+                                                     byte new_blue) {
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
+
+    if (np != NULL && np->playernum != playernum)
+      N_PackColorChange(np, playernum, new_red, new_green, new_blue);
+  }
 }
 
 void CL_SendSkinChange(void) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
+  /* CG: TODO */
+}
+
+void SV_BroadcastPlayerSkinChanged(short playernum) {
   /* CG: TODO */
 }
 
