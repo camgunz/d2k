@@ -32,6 +32,17 @@
  *-----------------------------------------------------------------------------
  */
 
+#include "z_zone.h"
+
+#include "m_buf.h"
+#include "m_cbuf.h"
+#include "m_obuf.h"
+#include "m_queue.h"
+
+#include "d_ticcmd.h"
+#include "g_game.h"
+#include "lprintf.h"
+
 static void set_cmd(ticcmd_t *cmd, int val) {
   cmd->forwardmove = val;
   cmd->sidemove    = val;
@@ -139,7 +150,5 @@ void test_m_list(void) {
 
   M_ListFree(&ls_copy);
   print_list("Freed copy", &ls_copy);
-
-  return EXIT_SUCCESS;
 }
 

@@ -624,6 +624,7 @@ void I_SetProcessPriority(void)
   }
 }
 
+#ifndef RUNNING_UNIT_TESTS
 //int main(int argc, const char * const * argv)
 int main(int argc, char **argv)
 {
@@ -710,3 +711,5 @@ int main(int argc, char **argv)
   D_DoomMain ();
   return 0;
 }
+#endif
+
