@@ -1,14 +1,14 @@
-# PrBoom+
+# Doom2K
 
 ---
 
-This is a fork of [PrBoom+](http://prboom-plus.sourceforge.net) with several
+Doom2K is a fork of [PrBoom+](http://prboom-plus.sourceforge.net) with several
 goals.
 
 Port to PNaCl
 -------------
 
-The fork will be playable using Google's [Portable Native
+Doom2K will be playable using Google's [Portable Native
 Client](http://gonacl.com).  The intent is to allow playing either via PNaCl
 itself, or in browsers that do not support PNaCl via
 [Emscripten](https://github.com/kripken/emscripten/wiki) and
@@ -19,7 +19,7 @@ Modernize Renderer
 
 PNaCl and pepper.js provide access to graphics acceleration via WebGL, which is
 similar (but not identical) to OpenGL ES 2.0, meaning the fixed-function
-pipeline is unavailable.  The fork will convert the renderer from the
+pipeline is unavailable.  Doom2K will convert the renderer from the
 fixed-function pipeline to the programmable pipeline.  In addition, the fork
 will upgrade the baseline OpenGL support necessary to run, requiring support
 for OpenGL 2.0.  Deprecated features, such as paletted textures, will be
@@ -29,20 +29,21 @@ Maintain Compatibility
 ----------------------
 
 One of the many strengths of PrBoom+ is its compatibility with past versions of
-Doom and Boom.  The fork will maintain this compatibility insofar as its target
+Doom and Boom.  Doom2K will maintain this compatibility insofar as its target
 platforms (PNaCl, pepper.js) allow.
 
 Enhance Network Play
 ---------------------
 
-PrBoom+ currently only supports the old, P2P, synchronized networking shipped
-with Doom.  This functionality has several limitations: only 4 players max may
-play together, players cannot join an in-progress game, game modes are
-hard-coded, and one player's lag lags the whole group.
+PrBoom+ only supports the command-based synchronized networking, which is very
+similar to the original networking that shipped with Doom.  This functionality
+has several limitations: only 4 players may play together, players cannot join
+an in-progress game, game modes are hard-coded, and one player's lag lags the
+whole group.
 
-This fork will remove those limitations using a client-server (C/S)
-architecture, with synchronization similar to that of Quake 3 (compressed
-deltas).
+Doom2K will remove those limitations, and will add an additional
+synchronization method based on compressed state deltas -- very similar to the
+Quake 3 architecture.
 
 Add Modern Features and Compatibility
 -------------------------------------
