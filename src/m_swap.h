@@ -120,37 +120,37 @@
 
 #ifdef WORDS_BIGENDIAN
 
-#define doom_wtohll(x) doom_swap_ll(x)
-#define doom_htowll(x) doom_swap_ll(x)
-#define doom_wtohl(x) doom_swap_l(x) /* CG: Actually used */
-#define doom_htowl(x) doom_swap_l(x)
-#define doom_wtohs(x) doom_swap_s(x)
-#define doom_htows(x) doom_swap_s(x) /* CG: Actually used */
-
-#define doom_ntohll(x) doom_swap_ll(x)
-#define doom_htonll(x) doom_swap_ll(x)
-#define doom_ntohl(x) doom_swap_l(x)
-#define doom_htonl(x) doom_swap_l(x)
-#define doom_ntohs(x) doom_swap_s(x)
-#define doom_htons(x) doom_swap_s(x)
+#define doom_b16(x) (short int)(x)
+#define doom_b32(x) (long int)(x)
+#define doom_b64(x) (int_64_t)(x)
+#define doom_l16(x) doom_swap_s(x)
+#define doom_l32(x) doom_swap_l(x)
+#define doom_l64(x) doom_swap_ll(x)
 
 #else
 
-#define doom_wtohll(x) (int_64_t)(x)
-#define doom_htowll(x) (int_64_t)(x)
-#define doom_wtohl(x) (long int)(x) /* CG: Actually used */
-#define doom_htowl(x) (long int)(x)
-#define doom_wtohs(x) (short int)(x)
-#define doom_htows(x) (short int)(x) /* CG: Actually used */
-
-#define doom_ntohll(x) (int_64_t)(x)
-#define doom_htonll(x) (int_64_t)(x)
-#define doom_ntohl(x) (long int)(x)
-#define doom_htonl(x) (long int)(x)
-#define doom_ntohs(x) (short int)(x)
-#define doom_htons(x) (short int)(x)
+#define doom_b16(x) doom_swap_s(x)
+#define doom_b32(x) doom_swap_l(x)
+#define doom_b64(x) doom_swap_ll(x)
+#define doom_l16(x) (short int)(x)
+#define doom_l32(x) (long int)(x)
+#define doom_l64(x) (int_64_t)(x)
 
 #endif
+
+#define doom_wtohll(x) doom_l64(x)
+#define doom_htowll(x) doom_l64(x)
+#define doom_wtohl(x)  doom_l32(x) /* CG: Actually used */
+#define doom_htowl(x)  doom_l32(x)
+#define doom_wtohs(x)  doom_l16(x)
+#define doom_htows(x)  doom_l16(x) /* CG: Actually used */
+
+#define doom_ntohll(x) doom_b64(x)
+#define doom_htonll(x) doom_b64(x)
+#define doom_ntohl(x)  doom_b32(x)
+#define doom_htonl(x)  doom_b32(x)
+#define doom_ntohs(x)  doom_b16(x)
+#define doom_htons(x)  doom_b16(x)
 
 /* CPhipps - Boom's old LONG and SHORT endianness macros are for WAD stuff */
 

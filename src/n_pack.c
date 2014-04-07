@@ -183,7 +183,7 @@ DECLARE_TYPE(map, "a map", MAP);
   for (int i = 0; i < a.size; i++) {                                          \
     msgpack_object *array_entry = a.ptr + i;                                  \
     validate_type_and_size(array_entry, ename, etype);                        \
-    M_BufferAppend(buf, array_entry->via.raw.ptr, sizeof(ectype));            \
+    M_BufferWrite(buf, array_entry->via.raw.ptr, sizeof(ectype));             \
   }
 
 #define unpack_and_validate_string_array(obj, arr, name, ename, obuf, sz)     \
@@ -207,7 +207,7 @@ DECLARE_TYPE(map, "a map", MAP);
   M_BufferEnsureTotalCapacity(buf, arr.size * sizeof(short));                 \
   for (int i = 0; i < arr.size; i++) {                                        \
     validate_player((&(arr.ptr[i])));                                         \
-    M_BufferAppend(buf, (char *)&arr.ptr[i].via.i64, sizeof(short));          \
+    M_BufferWrite(buf, (char *)&arr.ptr[i].via.i64, sizeof(short));           \
   }
 
 #ifndef msgpack_pack_char

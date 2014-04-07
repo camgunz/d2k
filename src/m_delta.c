@@ -76,7 +76,7 @@ static int write_to_buffer(void *priv, mmbuffer_t *mb, int nbuf) {
   M_BufferEnsureTotalCapacity(delta, delta_size);
 
   for (i = 0; i < nbuf; i++)
-    M_BufferAppend(delta, (char *)mb[i].ptr, mb[i].size);
+    M_BufferWrite(delta, (char *)mb[i].ptr, mb[i].size);
 
   return 0;
 }

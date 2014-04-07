@@ -84,7 +84,6 @@
 // The old format is still supported.
 #define NEWFORMATSIG "\xff\xff\xff\xff"
 
-static size_t   savegamesize = SAVEGAMESIZE; // killough
 static dboolean  netdemo;
 static const byte *demobuffer;   /* cph - only used for playback */
 static int demolength; // check for overrun (missing DEMOMARKER)
@@ -1015,9 +1014,8 @@ void G_Ticker (void)
   // CPhipps - player colour changing
   if (!demoplayback && mapcolor_plyr[consoleplayer] != mapcolor_me) {
     // Changed my multiplayer colour - Inform the whole game
-    int net_cl = LittleLong(mapcolor_me);
 #ifdef HAVE_NET
-    D_NetSendMisc(nm_plcolour, sizeof(net_cl), &net_cl);
+    D_NetSendMisc(nm_plcolour, sizeof(int), &LittleLong(mapcolor_me));
 #endif
     G_ChangedPlayerColour(consoleplayer, mapcolor_me);
   }
@@ -1942,12 +1940,14 @@ void G_DoLoadGame(void) {
 
   gameaction = ga_nothing;
 
-  M_BufferInitWithCapacity(&savebuffer, 16);
+  M_BufferInitWithCapacity(&savebuffer, 16384);
 
   if (!M_BufferSetFile(&savebuffer, name))
     I_Error("Couldn't read file %s: %s", name, strerror(errno));
 
   free(name);
+
+  M_BufferSeek(&savebuffer, 0);
 
   if (!G_ReadSaveData(&savebuffer, false, true))
     I_Error("Error loading save data\n");
@@ -2006,9 +2006,13 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
   //e6y: numeric version number of package should be zero before initializing
   //     from savegame
   unsigned int packageversion = 0;
-  byte *save_p = ((byte *)savebuffer->data) + SAVESTRINGSIZE;
+  char description[SAVESTRINGSIZE];
+  char save_version[VERSIONSIZE];
+  byte game_options[GAME_OPTION_SIZE];
 
-  printf("Reading version at %u\n", savebuffer->cursor);
+  M_BufferRead(savebuffer, description, SAVESTRINGSIZE);
+
+  M_BufferRead(savebuffer, save_version, VERSIONSIZE);
 
   // CPhipps - read the description field, compare with supported ones
   for (i = 0; i < num_version_headers; i++) {
@@ -2016,13 +2020,13 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
     // killough 2/22/98: "proprietary" version string :-)
     sprintf(vcheck, version_headers[i].ver_printf, version_headers[i].version);
 
-    if (!strncmp((char*)save_p, vcheck, VERSIONSIZE)) {
+    if (!strncmp(save_version, vcheck, VERSIONSIZE)) {
       savegame_compatibility = version_headers[i].comp_level;
       break;
     }
   }
   if (savegame_compatibility == -1) {
-    fprintf(stderr, "savegame_compatibility == -1 (%s)\n", (char *)save_p);
+    fprintf(stderr, "savegame_compatibility == -1 (%s)\n", save_version);
     if (bail_on_errors) {
       return false;
     }
@@ -2035,50 +2039,57 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
     }
   }
 
-  save_p += VERSIONSIZE;
-
   // CPhipps - always check savegames even when forced,
   //           only print a warning if forced
   {
     // killough 3/16/98: check lump name checksum (independent of order)
-    uint_64_t checksum = 0;
+    uint_64_t checksum = G_Signature();
+    uint_64_t save_checksum = 0;
 
-    checksum = G_Signature();
+    M_BufferReadLong(savebuffer, (int_64_t *)&save_checksum);
 
-    if (memcmp(&checksum, save_p, sizeof(checksum))) {
-      fprintf(stderr, "bad checksum: %llu != %u\n", checksum, *save_p);
-      if (bail_on_errors) {
+    if (save_checksum != checksum) {
+      fprintf(stderr, "bad checksum: %llu != %llu\n", checksum, save_checksum);
+
+      if (bail_on_errors)
         return false;
-      }
-      else if (!forced_loadgame) {
-        char *msg = malloc(strlen((char *)save_p + sizeof(checksum)) + 128);
 
-        strcpy(msg, "Incompatible Savegame!!!\n");
-        if (save_p[sizeof(checksum)]) {
-          strcat(
-            strcat(msg, "Wads expected:\n\n"),
-            (char *)save_p + sizeof(checksum)
-          );
+      if (!forced_loadgame) {
+        buf_t msg;
+
+        M_BufferInitWithCapacity(&msg, 64);
+
+        M_BufferWrite(&msg, "Incompatible Savegame!!!\n", 25);
+
+        if (checksum != 0) {
+          M_BufferCopyString(&msg, savebuffer);
+          M_BufferSeekBackward(&msg, 1);
         }
-        strcat(msg, "\nAre you sure?");
-        G_LoadGameErr(msg);
-        free(msg);
+
+        M_BufferWriteString(&msg, "\nAre you sure?", 14);
+
+        M_BufferSeek(&msg, 0);
+        G_LoadGameErr(M_BufferGetData(&msg));
+        M_BufferFree(&msg);
+
         return false;
       }
       else {
         lprintf(LO_WARN, "G_DoLoadGame: Incompatible savegame\n");
       }
     }
-    save_p += sizeof(checksum);
   }
 
-  save_p += strlen((char *)save_p) + 1;
+  while (M_BufferPeek(savebuffer) != 0)
+    M_BufferSeekForward(savebuffer, 1);
+
+  if (M_BufferPeek(savebuffer) == 0)
+    M_BufferSeekForward(savebuffer, 1);
 
   //e6y: check on new savegame format
-  if (!memcmp(NEWFORMATSIG, save_p, strlen(NEWFORMATSIG))) {
-    save_p += strlen(NEWFORMATSIG);
-    memcpy(&packageversion, save_p, sizeof(packageversion));
-    save_p += sizeof(packageversion);
+  if (M_BufferEqualsData(savebuffer, NEWFORMATSIG, strlen(NEWFORMATSIG))) {
+    M_BufferSeekForward(savebuffer, strlen(NEWFORMATSIG));
+    M_BufferReadInt(savebuffer, (int *)&packageversion);
   }
 
   //e6y: let's show the warning if savegame is from the previous version of
@@ -2099,50 +2110,55 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
     }
   }
 
-  compatibility_level = (savegame_compatibility >= prboom_4_compatibility) ?
-    *save_p : savegame_compatibility;
+  if (savegame_compatibility >= prboom_4_compatibility)
+    M_BufferReadInt(savebuffer, &compatibility_level);
+  else
+    compatibility_level = savegame_compatibility;
+
   if (savegame_compatibility < prboom_6_compatibility)
     compatibility_level = map_old_comp_levels[compatibility_level];
 
-  save_p++;
-
-  gameskill   = *save_p++;
-  gameepisode = *save_p++;
-  gamemap     = *save_p++;
+  M_BufferReadInt(savebuffer, &gameskill);
+  M_BufferReadInt(savebuffer, &gameepisode);
+  M_BufferReadInt(savebuffer, &gamemap);
 
   for (i = 0; i < MAXPLAYERS; i++)
-    playeringame[i] = *save_p++;
+    M_BufferReadInt(savebuffer, (int *)&playeringame[i]);
 
-  save_p += MIN_MAXPLAYERS - MAXPLAYERS; // killough 2/28/98
+  // killough 2/28/98
+  M_BufferSeekForward(savebuffer, MIN_MAXPLAYERS - MAXPLAYERS);
 
-  idmusnum = *save_p++;           // jff 3/17/98 restore idmus music
-  if (idmusnum == 255)            // jff 3/18/98 account for unsigned byte
-    idmusnum=-1;
+  M_BufferReadInt(savebuffer, &idmusnum); // jff 3/17/98 restore idmus music
 
   /* killough 3/1/98: Read game options
    * killough 11/98: move down to here
    */
-  // Avoid assignment of const to non-const: add the difference
-  // between the updated and original pointer onto the original
-  save_p += (G_ReadOptions(save_p) - save_p);
+  if (mbf_features) {
+    for (i = 0; i < GAME_OPTION_SIZE; i++) {
+      M_BufferReadByte(savebuffer, &game_options[i]);
+    }
+  }
+  else {
+    for (i = 0; i < OLD_GAME_OPTION_SIZE; i++) {
+      M_BufferReadByte(savebuffer, &game_options[i]);
+    }
+  }
+  G_ReadOptions(game_options);  // killough 3/1/98: Read game options
 
   // load a base level
   if (init_new)
     G_InitNew(gameskill, gameepisode, gamemap);
 
   /* get the times - killough 11/98: save entire word */
-  memcpy(&leveltime, save_p, sizeof(leveltime));
-  save_p += sizeof(leveltime);
+  M_BufferReadInt(savebuffer, &leveltime);
 
   /* cph - total episode time */
   //e6y: total level times are always saved since 2.4.8.1
-  memcpy(&totalleveltimes, save_p, sizeof(totalleveltimes));
-  save_p += sizeof(totalleveltimes);
+  M_BufferReadInt(savebuffer, &totalleveltimes);
 
   // killough 11/98: load revenant tracer state
-  basetic = gametic - *save_p++;
-
-  savebuffer->cursor = save_p - (byte *)savebuffer->data;
+  basetic = gametic - M_BufferPeek(savebuffer);
+  M_BufferSeekForward(savebuffer, 1);
 
   // dearchive all the modifications
   P_MapStart();
@@ -2161,7 +2177,7 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
 
   RecalculateDrawnSubsectors();
 
-  if (*save_p != 0xe6)
+  if (M_BufferPeek(savebuffer) != 0xe6)
     I_Error("G_ReadSaveData: Bad savegame");
 
   return true;
@@ -2191,39 +2207,12 @@ void G_SaveGame(int slot, char *description)
 #endif
 }
 
-#if 0
-// Check for overrun and realloc if necessary -- Lee Killough 1/22/98
-void (CheckSaveGame)(size_t size, const char* file, int line)
-{
-  size_t pos = save_p - savebuffer;
-
-#ifdef RANGECHECK
-  /* cph 2006/08/07 - after-the-fact sanity checking of CheckSaveGame calls */
-  static size_t prev_check;
-  static const char* prevf;
-  static int prevl;
-
-  if (pos > prev_check)
-    I_Error("CheckSaveGame at %s:%d called for insufficient buffer (%u < %u)", prevf, prevl, prev_check, pos);
-  prev_check = size + pos;
-  prevf = file;
-  prevl = line;
-#endif
-
-  size += 1024;  // breathing room
-  if (pos+size > savegamesize)
-    save_p = (savebuffer = realloc(savebuffer,
-           savegamesize += (size+1023) & ~1023)) + pos;
-}
-#endif
-
 /* killough 3/22/98: form savegame name in one location
  * (previously code was scattered around in multiple places)
  * cph - Avoid possible buffer overflow problems by passing
  * size to this function and using snprintf */
 
-int G_SaveGameName(char *name, size_t size, int slot, dboolean demoplayback)
-{
+int G_SaveGameName(char *name, size_t size, int slot, dboolean demoplayback) {
   const char* sgn = demoplayback ? "demosav" : savegamename;
   return doom_snprintf (name, size, "%s/%s%d.dsg", basesavegame, sgn, slot);
 }
@@ -2238,7 +2227,7 @@ static void G_DoSaveGame(dboolean menu) {
   gameaction = ga_nothing; // cph - cancel savegame at top of this function,
                            // in case later problems cause a premature exit
 
-  M_BufferInitWithCapacity(&savebuffer, 16);
+  M_BufferInitWithCapacity(&savebuffer, 16384);
 
   length = G_SaveGameName(NULL, 0, savegameslot, demoplayback && !menu);
   name = malloc(length + 1);
@@ -2246,7 +2235,6 @@ static void G_DoSaveGame(dboolean menu) {
 
   G_WriteSaveData(&savebuffer);
 
-  printf("%lu/%lu/%lu\n", savebuffer.size, savebuffer.cursor, savebuffer.capacity);
   doom_printf( "%s", M_WriteFile(name, savebuffer.data, savebuffer.size)
          ? s_GGSAVED /* Ty - externalised */
          : "Game save failed!"); // CPhipps - not externalised
@@ -2284,53 +2272,26 @@ static void G_DoSaveGame(dboolean menu) {
 void G_WriteSaveData(buf_t *savebuffer) {
   int i;
   char name2[VERSIONSIZE];
+  byte game_options[GAME_OPTION_SIZE];
   //e6y: numeric version number of package
   unsigned int packageversion = GetPackageVersion();
-  byte *save_p = NULL;
   char *description = savedescription;
 
-  /*
-  M_BufferEnsureCapacity(savebuffer,
-    SAVESTRINGSIZE +
-    VERSIONSIZE +
-    sizeof(uint_64_t)
-  );
-  */
+  M_BufferWrite(savebuffer, description, SAVESTRINGSIZE);
 
-  M_BufferAppend(savebuffer, description, SAVESTRINGSIZE);
-  /*
-  save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
-  memcpy(save_p, description, SAVESTRINGSIZE);
-  save_p += SAVESTRINGSIZE;
-  */
   memset(name2, 0, sizeof(name2));
-
   // CPhipps - scan for the version header
   for (i = 0; i < num_version_headers; i++) {
     if (version_headers[i].comp_level == best_compatibility) {
       // killough 2/22/98: "proprietary" version string :-)
       sprintf(name2, version_headers[i].ver_printf, version_headers[i].version);
-      M_BufferAppend(savebuffer, name2, VERSIONSIZE);
-      /*
-      memcpy(save_p, name2, VERSIONSIZE);
-      */
       i = num_version_headers + 1;
     }
   }
+  M_BufferWrite(savebuffer, name2, VERSIONSIZE);
 
-  /*
-  printf("Wrote %s at %u.\n", (char *)save_p, savebuffer->cursor);
-  save_p += VERSIONSIZE;
-  */
-
-  { /* killough 3/16/98, 12/98: store lump name checksum */
-    uint_64_t checksum = G_Signature();
-    M_BufferAppend(savebuffer, (char *)&checksum, sizeof(checksum));
-    /*
-    memcpy(save_p, &checksum, sizeof(checksum));
-    save_p += sizeof(checksum);
-    */
-  }
+  /* killough 3/16/98, 12/98: store lump name checksum */
+  M_BufferWriteLong(savebuffer, G_Signature());
 
   // killough 3/16/98: store pwad filenames in savegame
   {
@@ -2339,51 +2300,37 @@ void G_WriteSaveData(buf_t *savebuffer) {
     for (i = 0; i < numwadfiles; i++) {
       const char *const w = wadfiles[i].name;
 
-      M_BufferAppend(savebuffer, w, strlen(w));
-      M_BufferAppendString(savebuffer, "\n", 1);
-      /*
-      M_BufferEnsureCapacity(savebuffer, strlen(w) + 2);
-      save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
-      strcpy((char *)save_p, w);
-      save_p += strlen((char *)save_p);
-      *save_p++ = '\n';
-      */
+      M_BufferWrite(savebuffer, (void *)w, strlen(w));
+      M_BufferWriteByte(savebuffer, '\n');
     }
-    /*
-    *save_p++ = 0;
-    */
+    M_BufferWriteByte(savebuffer, 0);
   }
 
-  /*
-  M_BufferEnsureCapacity(savebuffer,
-    GAME_OPTION_SIZE +
-    MIN_MAXPLAYERS +
-    14 +
-    strlen(NEWFORMATSIG) +
-    sizeof(packageversion)
-  );
-  save_p = (byte *)M_BufferGetDataAtCursor(savebuffer);
-  */
-
-  M_BufferAppend(savebuffer, NEWFORMATSIG, strlen(NEWFORMATSIG));
-  M_BufferAppend(savebuffer, &packageversion, sizeof(packageversion));
-  M_BufferAppend(savebuffer, &compatibility_level, sizeof(compatibility_level));
-  M_BufferAppend(savebuffer, &gameskill, sizeof(gameskill));
-  M_BufferAppend(savebuffer, &gameepisode, sizeof(gameepisode));
-  M_BufferAppend(savebuffer, &gamemap, sizeof(gamemap));
+  M_BufferWrite(savebuffer, NEWFORMATSIG, strlen(NEWFORMATSIG));
+  M_BufferWriteInt(savebuffer, packageversion);
+  M_BufferWriteInt(savebuffer, compatibility_level);
+  M_BufferWriteInt(savebuffer, gameskill);
+  M_BufferWriteInt(savebuffer, gameepisode);
+  M_BufferWriteInt(savebuffer, gamemap);
   for (i = 0; i < MAXPLAYERS; i++)
-    M_BufferAppend(savebuffer, &playeringame[i], sizeof(byte));
-  M_BufferAppendZeros(savebuffer, (MIN_MAXPLAYERS - i) * sizeof(byte));
-  M_BufferAppend(savebuffer, &idmusnum, sizeof(idmusnum));
-  G_WriteOptions(savebuffer);    // killough 3/1/98: save game options
-  M_BufferAppend(savebuffer, &leveltime, sizeof(leveltime));
-  M_BufferAppend(savebuffer, &totalleveltimes, sizeof(totalleveltimes));
-  {
-    // killough 11/98: save revenant tracer state
-    byte tracer = (gametic - basetic) & 255;
-
-    M_BufferAppend(savebuffer, &tracer, sizeof(byte));
+    M_BufferWriteInt(savebuffer, playeringame[i]);
+  M_BufferWriteZeros(savebuffer, (MIN_MAXPLAYERS - i) * sizeof(byte));
+  M_BufferWriteInt(savebuffer, idmusnum);
+  G_WriteOptions(game_options);    // killough 3/1/98: save game options
+  if (mbf_features) {
+    M_BufferWriteBytes(
+      savebuffer, game_options, GAME_OPTION_SIZE * sizeof(byte)
+    );
   }
+  else {
+    M_BufferWriteBytes(
+      savebuffer, game_options, OLD_GAME_OPTION_SIZE * sizeof(byte)
+    );
+  }
+  M_BufferWriteInt(savebuffer, leveltime);
+  M_BufferWriteInt(savebuffer, totalleveltimes);
+  // killough 11/98: save revenant tracer state
+  M_BufferWriteByte(savebuffer, (gametic - basetic) & 255);
 
   P_ArchivePlayers(savebuffer);
 
@@ -2404,12 +2351,7 @@ void G_WriteSaveData(buf_t *savebuffer) {
   P_ArchiveSpecials(savebuffer);
   P_ArchiveRNG(savebuffer);    // killough 1/18/98: save RNG information
   P_ArchiveMap(savebuffer);    // killough 1/22/98: save automap information
-
-  {
-    byte consistency = 0xe6; // consistency marker
-
-    M_BufferAppend(savebuffer, &consistency, sizeof(consistency));
-  }
+  M_BufferWriteByte(savebuffer, 0xe6); // consistency marker
 }
 
 static skill_t d_skill;
@@ -2845,8 +2787,8 @@ void G_WriteDemoTiccmd (ticcmd_t* cmd)
     I_Error("G_WriteDemoTiccmd: error writing demo");
 
   /* cph - alias demo_p to it so we can read it back */
-  demo_p = buf;
-  G_ReadDemoTiccmd (cmd);         // make SURE it is exactly the same
+  demo_p = (const byte *)buf;
+  G_ReadDemoTiccmd(cmd);         // make SURE it is exactly the same
 }
 
 //
@@ -2967,161 +2909,138 @@ void G_RecordDemo (const char* name)
 
 extern int forceOldBsp;
 
-void G_WriteOptions(buf_t *buf)
-{
-  size_t current_size = buf->size;
-  size_t target_size  = current_size + GAME_OPTION_SIZE;
+void G_WriteOptions(byte game_options[]) {
+  int i = 0;
 
-  M_BufferAppend(buf, &monsters_remember, sizeof(monsters_remember));
-  M_BufferAppend(buf, &variable_friction, sizeof(variable_friction));
-  M_BufferAppend(buf, &weapon_recoil, sizeof(weapon_recoil));
-  M_BufferAppend(buf, &allow_pushers, sizeof(allow_pushers));
-  M_BufferAppendZeros(buf, 0);
-  M_BufferAppend(buf, &player_bobbing, sizeof(player_bobbing));
-  M_BufferAppend(buf, &respawnparm, sizeof(respawnparm));
-  M_BufferAppend(buf, &fastparm, sizeof(fastparm));
-  M_BufferAppend(buf, &nomonsters, sizeof(nomonsters));
-  M_BufferAppend(buf, &demo_insurance, sizeof(demo_insurance));
-  M_BufferAppend(buf, &rngseed, sizeof(rngseed));
-  M_BufferAppend(buf, &monster_infighting, sizeof(monster_infighting));
+  memset(game_options, 0, GAME_OPTION_SIZE * sizeof(byte));
+
+  game_options[i++] = monsters_remember; // part of monster AI
+  game_options[i++] = variable_friction; // ice & mud
+  game_options[i++] = weapon_recoil;     // weapon recoil
+  game_options[i++] = allow_pushers;     // MT_PUSH Things
+
+  i++;
+
+  game_options[i++] = player_bobbing;    // whether player bobs or not
+
+  // killough 3/6/98: add parameters to savegame, move around some in demos
+  game_options[i++] = respawnparm;
+  game_options[i++] = fastparm;
+  game_options[i++] = nomonsters;
+
+  game_options[i++] = demo_insurance;    // killough 3/31/98
+
+  // killough 3/26/98: Added rngseed. 3/31/98: moved here
+  game_options[i++] = (byte)((rngseed >> 24) & 0xff);
+  game_options[i++] = (byte)((rngseed >> 16) & 0xff);
+  game_options[i++] = (byte)((rngseed >>  8) & 0xff);
+  game_options[i++] = (byte)( rngseed        & 0xff);
+
+  // Options new to v2.03 begin here
+  game_options[i++] = monster_infighting;
+
 #ifdef DOGS
-  M_BufferAppend(buf, &dogs, sizeof(dogs));
+  game_options[i++] = dogs;
 #else
-  M_BufferAppendZeros(buf, 1);
+  i++;
 #endif
 
-  M_BufferAppendZeros(buf, 2);
+  i += 2;
 
-  M_BufferAppend(buf, &distfriend, sizeof(distfriend));
-  M_BufferAppend(buf, &monster_backing, sizeof(monster_backing));
-  M_BufferAppend(buf, &monster_avoid_hazards, sizeof(monster_avoid_hazards));
-  M_BufferAppend(buf, &monster_friction, sizeof(monster_friction));
-  M_BufferAppend(buf, &help_friends, sizeof(help_friends));
+  game_options[i++] = (distfriend >> 8) & 0xff;  // killough 8/8/98
+  game_options[i++] =  distfriend       & 0xff;
+
+  game_options[i++] = monster_backing;       // killough 9/8/98
+  game_options[i++] = monster_avoid_hazards; // killough 9/9/98
+  game_options[i++] = monster_friction;      // killough 10/98
+  game_options[i++] = help_friends;          // killough 9/9/98
 
 #ifdef DOGS
-  M_BufferAppend(buf, &dog_jumping, sizeof(dog_jumping));
+  game_options[i++] = dog_jumping; // killough 10/98
 #else
-  M_BufferAppendZeros(buf, 1);
+  i++;
 #endif
 
-  M_BufferAppend(buf, &monkeys, sizeof(monkeys));
+  game_options[i++] = monkeys;
 
-  for (int i = 0; i < COMP_TOTAL; i++) {
-    byte enabled = comp[i] != 0;
+  // killough 10/98: a compatibility vector now
+  for (int o = 0; o < COMP_TOTAL; o++)
+    game_options[i + o] = (comp[o] != 0);
 
-    M_BufferAppend(buf, &enabled, sizeof(enabled));
-  }
+  i += COMP_TOTAL;
 
-  {
-    byte old_bsp = 0;
-
-    if ((compatibility_level >= prboom_2_compatibility) && forceOldBsp)
-      old_bsp = 1; // cph 2002/07/20
-    M_BufferAppend(buf, &old_bsp, sizeof(old_bsp));
-  }
-
-  //----------------
-  // Padding at end
-  //----------------
-  if (buf->size > target_size)
-    I_Error("G_WriteOptions: GAME_OPTION_SIZE is too small");
-
-  M_BufferAppendZeros(buf, target_size - buf->size);
+  // cph 2002/07/20
+  if ((compatibility_level >= prboom_2_compatibility) && forceOldBsp)
+    game_options[i++] = 1;
+  else
+    game_options[i++] = 0;
 }
 
 /* Same, but read instead of write
  * cph - const byte*'s
  */
 
-const byte *G_ReadOptions(const byte *demo_p)
-{
-  const byte *target = demo_p + GAME_OPTION_SIZE;
+void G_ReadOptions(byte game_options[]) {
+  int i = 0;
 
-  monsters_remember = *demo_p++;
+  monsters_remember = game_options[i++];
+  variable_friction = game_options[i++]; // ice & mud
+  weapon_recoil = game_options[i++];     // weapon recoil
+  allow_pushers = game_options[i++];     // MT_PUSH Things
 
-  variable_friction = *demo_p;  // ice & mud
-  demo_p++;
+  i++;
 
-  weapon_recoil = *demo_p;       // weapon recoil
-  demo_p++;
-
-  allow_pushers = *demo_p;      // MT_PUSH Things
-  demo_p++;
-
-  demo_p++;
-
-  player_bobbing = *demo_p;     // whether player bobs or not
-  demo_p++;
-
+  player_bobbing = game_options[i++];    // Whether player bobs or not
   // killough 3/6/98: add parameters to savegame, move from demo
-  respawnparm = *demo_p++;
-  fastparm = *demo_p++;
-  nomonsters = *demo_p++;
-
-  demo_insurance = *demo_p++;              // killough 3/31/98
-
-  // killough 3/26/98: Added rngseed to demos; 3/31/98: moved here
-
-  rngseed  = *demo_p++ & 0xff;
-  rngseed <<= 8;
-  rngseed += *demo_p++ & 0xff;
-  rngseed <<= 8;
-  rngseed += *demo_p++ & 0xff;
-  rngseed <<= 8;
-  rngseed += *demo_p++ & 0xff;
+  respawnparm = game_options[i++];
+  fastparm = game_options[i++];
+  nomonsters = game_options[i++];
+  demo_insurance = game_options[i++]; // killough 3/31/98
+  rngseed =                  (game_options[i++] & 0xFF);
+  rngseed = (rngseed << 8) + (game_options[i++] & 0xFF);
+  rngseed = (rngseed << 8) + (game_options[i++] & 0xFF);
+  rngseed = (rngseed << 8) + (game_options[i++] & 0xFF);
 
   // Options new to v2.03
-  if (mbf_features)
-    {
-      monster_infighting = *demo_p++;   // killough 7/19/98
-
+  if (mbf_features) {
+    monster_infighting = game_options[i++]; // killough 7/19/98
 #ifdef DOGS
-      dogs = *demo_p++;                 // killough 7/19/98
+    dogs = game_options[i++]; // killough 7/19/98
 #else
-      demo_p++;
+    dogs = 0;
 #endif
 
-      demo_p += 2;
+    i += 2;
 
-      distfriend = *demo_p++ << 8;      // killough 8/8/98
-      distfriend+= *demo_p++;
-
-      monster_backing = *demo_p++;     // killough 9/8/98
-
-      monster_avoid_hazards = *demo_p++; // killough 9/9/98
-
-      monster_friction = *demo_p++;      // killough 10/98
-
-      help_friends = *demo_p++;          // killough 9/9/98
+    distfriend = game_options[i++]; // killough 8/8/98
+    monster_backing = game_options[i++]; // killough 9/8/98
+    monster_avoid_hazards = game_options[i++]; // killough 9/9/98
+    monster_friction = game_options[i++]; // killough 10/98
+    help_friends = game_options[i++]; // killough 9/9/98
 
 #ifdef DOGS
-      dog_jumping = *demo_p++;           // killough 10/98
+    dog_jumping = game_options[i++]; // killough 10/98
 #else
-      demo_p++;
+    dog_jumping = 0;
 #endif
 
-      monkeys = *demo_p++;
+    monkeys = game_options[i++];
 
-      {   // killough 10/98: a compatibility vector now
-  int i;
-  for (i=0; i < COMP_TOTAL; i++)
-    comp[i] = *demo_p++;
-      }
+    for (int o = 0; o < COMP_TOTAL; o++)
+      comp[o] = game_options[i + o];
 
-      forceOldBsp = *demo_p++; // cph 2002/07/20
-    }
-  else  /* defaults for versions <= 2.02 */
-    {
-      /* G_Compatibility will set these */
-    }
+    i += COMP_TOTAL;
+
+    forceOldBsp = game_options[i++]; // cph 2002/07/20
+  }
 
   G_Compatibility();
-  return target;
 }
 
 void G_BeginRecording (void)
 {
   int i;
+  byte game_options[GAME_OPTION_SIZE];
   byte *demostart, *demo_p;
   demostart = demo_p = malloc(1000);
   longtics = 0;
@@ -3163,16 +3082,18 @@ void G_BeginRecording (void)
     *demo_p++ = deathmatch;
     *demo_p++ = consoleplayer;
 
-    demo_p = G_WriteOptions(demo_p); // killough 3/1/98: Save game options
+    G_WriteOptions(game_options); // killough 3/1/98: Save game options
+    for (i = 0; i < GAME_OPTION_SIZE; i++)
+      *demo_p++ = game_options[i];
 
-    for (i=0 ; i<MAXPLAYERS ; i++)
+    for (i = 0; i < MAXPLAYERS; i++)
       *demo_p++ = playeringame[i];
 
     // killough 2/28/98:
     // We always store at least MIN_MAXPLAYERS bytes in demo, to
     // support enhancements later w/o losing demo compatibility
 
-    for (; i<MIN_MAXPLAYERS; i++)
+    for (; i < MIN_MAXPLAYERS; i++)
       *demo_p++ = 0;
 
   // FIXME } else if (compatibility_level >= boom_compatibility_compatibility) { //e6y
@@ -3203,16 +3124,18 @@ void G_BeginRecording (void)
     *demo_p++ = deathmatch;
     *demo_p++ = consoleplayer;
 
-    demo_p = G_WriteOptions(demo_p); // killough 3/1/98: Save game options
+    G_WriteOptions(game_options); // killough 3/1/98: Save game options
+    for (i = 0; i < GAME_OPTION_SIZE; i++)
+      *demo_p++ = game_options[i];
 
-    for (i=0 ; i<MAXPLAYERS ; i++)
+    for (i = 0; i < MAXPLAYERS; i++)
       *demo_p++ = playeringame[i];
 
     // killough 2/28/98:
     // We always store at least MIN_MAXPLAYERS bytes in demo, to
     // support enhancements later w/o losing demo compatibility
 
-    for (; i<MIN_MAXPLAYERS; i++)
+    for (; i < MIN_MAXPLAYERS; i++)
       *demo_p++ = 0;
   } else { // cph - write old v1.9 demos (might even sync)
     unsigned char v = 109;
@@ -3433,6 +3356,7 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size, unsigned int par
 {
   skill_t skill;
   int i, episode, map;
+  byte game_options[GAME_OPTION_SIZE];
 
   // e6y
   // The local variable should be used instead of demobuffer,
@@ -3628,7 +3552,17 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size, unsigned int par
       if (CheckForOverrun(header_p, demo_p, size, GAME_OPTION_SIZE, failonerror))
         return NULL;
 
-      demo_p = G_ReadOptions(demo_p);  // killough 3/1/98: Read game options
+      if (mbf_features) {
+        for (i = 0; i < OLD_GAME_OPTION_SIZE; i++) {
+          game_options[i] = *demo_p++;
+        }
+      }
+      else {
+        for (i = 0; i < OLD_GAME_OPTION_SIZE; i++) {
+          game_options[i] = *demo_p++;
+        }
+      }
+      G_ReadOptions(game_options);  // killough 3/1/98: Read game options
 
       if (demover == 200)              // killough 6/3/98: partially fix v2.00 demos
         demo_p += 256-GAME_OPTION_SIZE;

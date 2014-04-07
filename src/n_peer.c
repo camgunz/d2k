@@ -46,7 +46,7 @@
 static obuf_t net_peers;
 
 static int buf_write(void *data, const char *buf, unsigned int len) {
-  M_BufferAppend((buf_t *)data, (char *)buf, len);
+  M_BufferWrite((buf_t *)data, (char *)buf, len);
   return 0;
 }
 

@@ -42,6 +42,8 @@
 
 #define DEMOMARKER    0x80
 
+// CG 04/06/2014: The old number of options is 14
+#define OLD_GAME_OPTION_SIZE 14
 // killough 5/2/98: number of bytes reserved for saving options
 #define GAME_OPTION_SIZE 64
 
@@ -78,8 +80,8 @@ void G_ReadDemoTiccmd(ticcmd_t *cmd);
 void G_WriteDemoTiccmd(ticcmd_t *cmd);
 void G_DoWorldDone(void);
 void G_Compatibility(void);
-const byte *G_ReadOptions(const byte *demo_p);   /* killough 3/1/98 - cph: const byte* */
-void G_WriteOptions(buf_t *buf);          // killough 3/1/98
+void G_ReadOptions(byte game_options[]);
+void G_WriteOptions(byte game_options[]);
 void G_PlayerReborn(int player);
 void G_RestartLevel(void); // CPhipps - menu involked level restart
 void G_DoVictory(void);
