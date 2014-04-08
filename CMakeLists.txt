@@ -680,7 +680,7 @@ SET(DOOM2K_SOURCES
 SET(CLIENT_SOURCES
   ${CMAKE_SOURCE_DIR}/src/SDL/i_main.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_system.c
-  ${CMAKE_SOURCE_DIR}/src/d_client.c
+  ## ${CMAKE_SOURCE_DIR}/src/d_client.c
   ${CMAKE_SOURCE_DIR}/src/lprintf.c
   ${CMAKE_SOURCE_DIR}/src/m_argv.c
 )

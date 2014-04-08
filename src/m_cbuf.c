@@ -147,7 +147,8 @@ void* M_CBufGet(cbuf_t *cbuf, int index) {
 void* M_CBufGetFirstFreeSlot(cbuf_t *cbuf) {
   for (int i = 0; i < cbuf->capacity; i++) {
     if (!cbuf->nodes[i].used) {
-      return &cbuf->nodes[i].obj;
+      cbuf->nodes[i].used = true;
+      return cbuf->nodes[i].obj;
     }
   }
 
@@ -158,7 +159,8 @@ void* M_CBufGetNewSlot(cbuf_t *cbuf) {
   int index = cbuf->capacity;
 
   M_CBufEnsureCapacity(cbuf, cbuf->capacity + 1);
-  return &cbuf->nodes[index].obj;
+  cbuf->nodes[index].used = true;
+  return cbuf->nodes[index].obj;
 }
 
 void* M_CBufGetFirstFreeOrNewSlot(cbuf_t *cbuf) {

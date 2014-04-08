@@ -186,8 +186,12 @@ static void handle_setup(netpeer_t *np) {
     return;
   }
 
-  for (i = 0; i < player_count; i++)
+  for (i = 0; i < player_count; i++) {
     playeringame[i] = true;
+    M_CBufInitWithCapacity(
+      &players[i].commands, sizeof(netticcmd_t), BACKUPTICS
+    );
+  }
 
   for (; i < MAXPLAYERS; i++)
     playeringame[i] = false;
@@ -786,6 +790,22 @@ void SV_BroadcastPlayerColorChanged(short playernum, byte new_red,
 
     if (np != NULL && np->playernum != playernum)
       N_PackColorChange(np, playernum, new_red, new_green, new_blue);
+  }
+}
+
+void CL_SendColormapChange(int new_color) {
+  netpeer_t *np = NULL;
+  CHECK_CONNECTION(np);
+
+  N_PackColormapChange(np, consoleplayer, new_color);
+}
+
+void SV_BroadcastPlayerColormapChanged(short playernum, int new_color) {
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
+
+    if (np != NULL && np->playernum != playernum)
+      N_PackColormapChange(np, consoleplayer, new_color);
   }
 }
 

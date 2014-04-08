@@ -79,7 +79,7 @@ void N_InitNetGame(void) {
   netsync   = NET_SYNC_TYPE_NONE;
 
   displayplayer = consoleplayer = 0;
-  playeringame[consoleplayer] = true; // CG: FIXME
+  playeringame[consoleplayer] = true;
 
   if ((i = M_CheckParm("-solo-net"))) {
     netgame = true;
@@ -137,6 +137,11 @@ void N_InitNetGame(void) {
     }
   }
 
+  if (!MULTINET) {
+    M_CBufInitWithCapacity(
+      &players[consoleplayer].commands, sizeof(netticcmd_t), BACKUPTICS
+    );
+  }
 }
 
 dboolean N_GetWad(const char *name) {
@@ -145,7 +150,6 @@ dboolean N_GetWad(const char *name) {
 
 void N_Update(void) {
   int newtics;
-  netticcmd_t *ncmd = NULL;
 
   if (is_extra_ddisplay)
     return;
@@ -175,8 +179,9 @@ void N_Update(void) {
     }
 
     M_CBufConsolidate(&players[consoleplayer].commands);
-    ncmd = M_CBufGetFirstFreeOrNewSlot(&players[consoleplayer].commands);
-    G_BuildTiccmd(&ncmd->cmd);
+    G_BuildTiccmd(
+      M_CBufGetFirstFreeOrNewSlot(&players[consoleplayer].commands)
+    );
     maketic++;
   }
 }
@@ -190,14 +195,12 @@ void N_TryRunTics(void) {
 
     if (MULTINET) {
       for (int i = 0; i < MAXPLAYERS; i++) {
-        int command_count;
+        if (playeringame[i]) {
+          int command_count = M_CBufGetObjectCount(&players[i].commands);
 
-        if (!playeringame[i])
-          continue;
-
-        command_count = M_CBufGetObjectCount(&players[i].commands);
-        if (runtics == -1 || runtics < command_count)
-          runtics = command_count;
+          if (runtics < command_count)
+            runtics = command_count;
+        }
       }
     }
     else {

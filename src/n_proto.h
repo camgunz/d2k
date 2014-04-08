@@ -78,6 +78,7 @@ void SV_BroadcastPlayerWeaponSpeedChanged(short playernum,
 void SV_BroadcastPlayerColorChanged(short playernum, byte new_red,
                                                      byte new_green,
                                                      byte new_blue);
+void SV_BroadcastPlayerColormapChanged(short playernum, int new_color);
 void SV_BroadcastPlayerSkinChanged(short playernum);
 
 void CL_SendMessageToServer(char *message);

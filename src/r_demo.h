@@ -117,8 +117,6 @@ extern dboolean use_demoex_info;
 void R_DemoEx_WriteMLook(angle_t pitch);
 angle_t R_DemoEx_ReadMLook(void);
 
-dboolean D_TryGetWad(const char* name);
-
 int IsDemoPlayback(void);
 int IsDemoContinue(void);
 

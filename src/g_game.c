@@ -74,6 +74,8 @@
 #include "r_fps.h"
 #include "e6y.h"//e6y
 
+#include "n_net.h"
+
 #define SAVEGAMESIZE  0x20000
 #define SAVESTRINGSIZE  24
 
@@ -432,7 +434,7 @@ static int G_NextWeapon(int direction)
   return weapon_order_table[i].weapon_num;
 }
 
-void G_BuildTiccmd(ticcmd_t* cmd)
+void G_BuildTiccmd(netticcmd_t* ncmd)
 {
   int strafe;
   int bstrafe;
@@ -441,9 +443,13 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   int forward;
   int side;
   int newweapon;                                          // phares
+
+  ticcmd_t *cmd = &ncmd->cmd;
+
   /* cphipps - remove needless I_BaseTiccmd call, just set the ticcmd to zero */
-  memset(cmd,0,sizeof*cmd);
-  cmd->consistancy = consistancy[consoleplayer][maketic%BACKUPTICS];
+  ncmd->tic = maketic;
+  memset(cmd, 0, sizeof(ticcmd_t));
+  cmd->consistancy = consistancy[consoleplayer][maketic % BACKUPTICS];
 
   strafe = gamekeydown[key_strafe] || mousebuttons[mousebstrafe]
     || joybuttons[joybstrafe];
@@ -462,11 +468,15 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
     // use two stage accelerative turning
     // on the keyboard and joystick
-  if (joyxmove < 0 || joyxmove > 0 ||
-      gamekeydown[key_right] || gamekeydown[key_left])
-    turnheld += ticdup;
-  else
+  if (joyxmove < 0 ||
+      joyxmove > 0 ||
+      gamekeydown[key_right] ||
+      gamekeydown[key_left]) {
+    turnheld++;
+  }
+  else {
     turnheld = 0;
+  }
 
   if (turnheld < SLOWTURNTICS)
     tspeed = 2;             // slow turn
@@ -628,49 +638,49 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   if (mouse_doubleclick_as_use) {//e6y
 
-  // forward double click
-  if (mousebuttons[mousebforward] != dclickstate && dclicktime > 1 )
-    {
+    // forward double click
+    if (mousebuttons[mousebforward] != dclickstate && dclicktime > 1) {
       dclickstate = mousebuttons[mousebforward];
+
       if (dclickstate)
         dclicks++;
-      if (dclicks == 2)
-        {
-          cmd->buttons |= BT_USE;
-          dclicks = 0;
-        }
-      else
-        dclicktime = 0;
-    }
-  else
-    if ((dclicktime += ticdup) > 20)
-      {
+
+      if (dclicks == 2) {
+        cmd->buttons |= BT_USE;
         dclicks = 0;
-        dclickstate = 0;
+      }
+      else {
+        dclicktime = 0;
       }
 
-  // strafe double click
-
-  bstrafe = mousebuttons[mousebstrafe] || joybuttons[joybstrafe];
-  if (bstrafe != dclickstate2 && dclicktime2 > 1 )
-    {
-      dclickstate2 = bstrafe;
-      if (dclickstate2)
-        dclicks2++;
-      if (dclicks2 == 2)
-        {
-          cmd->buttons |= BT_USE;
-          dclicks2 = 0;
-        }
-      else
-        dclicktime2 = 0;
     }
-  else
-    if ((dclicktime2 += ticdup) > 20)
+    else if ((dclicktime++) > 20) {
+      dclicks = 0;
+      dclickstate = 0;
+    }
+
+    // strafe double click
+
+    bstrafe = mousebuttons[mousebstrafe] || joybuttons[joybstrafe];
+    if (bstrafe != dclickstate2 && dclicktime2 > 1 )
       {
-        dclicks2 = 0;
-        dclickstate2 = 0;
+        dclickstate2 = bstrafe;
+        if (dclickstate2)
+          dclicks2++;
+        if (dclicks2 == 2)
+          {
+            cmd->buttons |= BT_USE;
+            dclicks2 = 0;
+          }
+        else
+          dclicktime2 = 0;
       }
+    else
+      if ((dclicktime2++) > 20)
+        {
+          dclicks2 = 0;
+          dclickstate2 = 0;
+        }
 
   }//e6y: end if (mouse_doubleclick_as_use)
 
@@ -1014,67 +1024,81 @@ void G_Ticker (void)
   // CPhipps - player colour changing
   if (!demoplayback && mapcolor_plyr[consoleplayer] != mapcolor_me) {
     // Changed my multiplayer colour - Inform the whole game
-#ifdef HAVE_NET
-    D_NetSendMisc(nm_plcolour, sizeof(int), &LittleLong(mapcolor_me));
-#endif
+    if (CLIENT)
+      CL_SendColormapChange(mapcolor_me);
     G_ChangedPlayerColour(consoleplayer, mapcolor_me);
   }
+
   P_MapStart();
+
   // do player reborns if needed
-  for (i=0 ; i<MAXPLAYERS ; i++)
-    if (playeringame[i] && players[i].playerstate == PST_REBORN)
-      G_DoReborn (i);
+  for (i = 0; i < MAXPLAYERS; i++) {
+    if (playeringame[i] && players[i].playerstate == PST_REBORN) {
+      G_DoReborn(i);
+    }
+  }
+
   P_MapEnd();
 
   // do things to change the game state
-  while (gameaction != ga_nothing)
-    {
-      switch (gameaction)
-        {
-        case ga_loadlevel:
-    // force players to be initialized on level reload
-    for (i=0 ; i<MAXPLAYERS ; i++)
-      players[i].playerstate = PST_REBORN;
-          G_DoLoadLevel ();
-          break;
-        case ga_newgame:
-          G_DoNewGame ();
-          break;
-        case ga_loadgame:
-          G_DoLoadGame ();
-          break;
-        case ga_savegame:
-          G_DoSaveGame (false);
-          break;
-        case ga_playdemo:
-          G_DoPlayDemo ();
-          break;
-        case ga_completed:
-          G_DoCompleted ();
-          break;
-        case ga_victory:
-          F_StartFinale ();
-          break;
-        case ga_worlddone:
-          G_DoWorldDone ();
-          break;
-        case ga_nothing:
-          break;
-        }
+  while (gameaction != ga_nothing) {
+    switch (gameaction) {
+      case ga_loadlevel:
+        // force players to be initialized on level reload
+        for (i = 0; i < MAXPLAYERS; i++)
+          players[i].playerstate = PST_REBORN;
+
+        G_DoLoadLevel();
+      break;
+      case ga_newgame:
+        G_DoNewGame();
+      break;
+      case ga_loadgame:
+        G_DoLoadGame();
+      break;
+      case ga_savegame:
+        G_DoSaveGame(false);
+      break;
+      case ga_playdemo:
+        G_DoPlayDemo();
+      break;
+      case ga_completed:
+        G_DoCompleted();
+      break;
+      case ga_victory:
+        F_StartFinale();
+      break;
+      case ga_worlddone:
+        G_DoWorldDone();
+      break;
+      case ga_nothing:
+      break;
     }
+  }
 
   if (paused & 2 || (!demoplayback && menuactive && !netgame))
     basetic++;  // For revenant tracers and RNG -- we must maintain sync
   else {
     // get commands, check consistancy, and build new consistancy check
-    int buf = (gametic/ticdup)%BACKUPTICS;
+    int buf = gametic % BACKUPTICS;
 
     for (i=0 ; i<MAXPLAYERS ; i++) {
       if (playeringame[i])
         {
           ticcmd_t *cmd = &players[i].cmd;
+          netticcmd_t *ncmd = NULL;
+          
+          ncmd = M_CBufGet(&players[i].commands, 0);
 
-          memcpy(cmd, &netcmds[i][buf], sizeof *cmd);
+          if (ncmd == NULL) {
+            lprintf(LO_INFO, "G_Ticker: Command for player %d was NULL.\n", i);
+            continue;
+          }
+
+          memcpy(cmd, &ncmd->cmd, sizeof(ticcmd_t));
+
+          M_CBufRemove(&players[i].commands, 0);
+          M_CBufConsolidate(&players[i].commands);
 
           //e6y
           if (democontinue)
@@ -1096,7 +1120,7 @@ void G_Ticker (void)
               doom_printf ("%s is turbo!", player_names[i]);
             }
 
-          if (netgame && !netdemo && !(gametic%ticdup) )
+          if (netgame && !netdemo)
             {
               if (gametic > BACKUPTICS
                   && consistancy[i][buf] != cmd->consistancy)
@@ -1262,46 +1286,54 @@ void G_ChangedPlayerColour(int pn, int cl)
 // almost everything is cleared and initialized
 //
 
-void G_PlayerReborn (int player)
-{
-  player_t *p;
-  int i;
-  int frags[MAXPLAYERS];
-  int killcount;
-  int itemcount;
-  int secretcount;
-  int resurectedkillcount; //e6y
+void G_PlayerReborn(int player) {
+  player_t *p = &players[player];
 
-  memcpy (frags, players[player].frags, sizeof frags);
-  killcount = players[player].killcount;
-  itemcount = players[player].itemcount;
-  secretcount = players[player].secretcount;
-  resurectedkillcount = players[player].resurectedkillcount; //e6y
-
-  p = &players[player];
-
-  // killough 3/10/98,3/21/98: preserve cheats across idclev
-  {
-    int cheats = p->cheats;
-    memset (p, 0, sizeof(*p));
-    p->cheats = cheats;
-  }
-
-  memcpy(players[player].frags, frags, sizeof(players[player].frags));
-  players[player].killcount = killcount;
-  players[player].itemcount = itemcount;
-  players[player].secretcount = secretcount;
-  players[player].resurectedkillcount = resurectedkillcount; //e6y
+  p->mo = NULL;
+  p->playerstate = PST_LIVE;
+  memset(&p->cmd, 0, sizeof(ticcmd_t));
+  p->viewz = 0;
+  p->viewheight = 0;
+  p->deltaviewheight = 0;
+  p->bob = 0;
+  p->health = initial_health; // Ty 03/12/98 - use dehacked values
+  p->armorpoints = 0;
+  p->armortype = 0;
+  memset(p->powers, 0, sizeof(int) * NUMPOWERS);
+  memset(p->cards, 0,  sizeof(dboolean) * NUMCARDS);
+  p->backpack = 0;
+  p->readyweapon = 0;
+  p->pendingweapon = 0;
+  memset(p->weaponowned, 0, sizeof(dboolean) * NUMWEAPONS);
+  memset(p->ammo, 0, sizeof(int) * NUMAMMO);
+  memset(p->maxammo, 0, sizeof(int) * NUMAMMO);
+  p->attackdown = 0;
+  p->usedown = 0;
+  p->refire = 0;
+  p->message = 0;
+  p->damagecount = 0;
+  p->bonuscount = 0;
+  p->attacker = NULL;
+  p->extralight = 0;
+  p->fixedcolormap = 0;
+  p->colormap = 0;
+  memset(p->psprites, 0, sizeof(pspdef_t) * NUMPSPRITES);
+  p->didsecret = 0;
+  p->momx = 0;
+  p->momy = 0;
+  p->centermessage = NULL;
+  p->prev_viewz = 0;
+  p->prev_viewangle = 0;
+  p->prev_viewpitch = 0;
+  p->jumpTics = 0;
 
   p->usedown = p->attackdown = true;  // don't do anything immediately
-  p->playerstate = PST_LIVE;
-  p->health = initial_health;  // Ty 03/12/98 - use dehacked values
   p->readyweapon = p->pendingweapon = wp_pistol;
   p->weaponowned[wp_fist] = true;
   p->weaponowned[wp_pistol] = true;
   p->ammo[am_clip] = initial_bullets; // Ty 03/12/98 - use dehacked values
 
-  for (i=0 ; i<NUMAMMO ; i++)
+  for (int i = 0; i < NUMAMMO; i++)
     p->maxammo[i] = maxammo[i];
 }
 
@@ -2200,11 +2232,12 @@ void G_SaveGame(int slot, char *description)
     G_DoSaveGame(true);
   }
   // CPhipps - store info in special_event
-  special_event = BT_SPECIAL | (BTS_SAVEGAME & BT_SPECIALMASK) |
-    ((slot << BTS_SAVESHIFT) & BTS_SAVEMASK);
-#ifdef HAVE_NET
-  D_NetSendMisc(nm_savegamename, strlen(savedescription)+1, savedescription);
-#endif
+  special_event = BT_SPECIAL |
+                  (BTS_SAVEGAME & BT_SPECIALMASK) |
+                  ((slot << BTS_SAVESHIFT) & BTS_SAVEMASK);
+
+  if (CLIENT)
+    CL_SendSaveGameNameChange(savedescription);
 }
 
 /* killough 3/22/98: form savegame name in one location
@@ -3778,11 +3811,15 @@ void P_WalkTicker()
 
     // use two stage accelerative turning
     // on the keyboard and joystick
-  if (joyxmove < 0 || joyxmove > 0 ||
-      gamekeydown[key_right] || gamekeydown[key_left])
-    turnheld += ticdup;
-  else
+  if (joyxmove < 0 ||
+      joyxmove > 0 ||
+      gamekeydown[key_right] ||
+      gamekeydown[key_left]) {
+    turnheld++;
+  }
+  else {
     turnheld = 0;
+  }
 
   if (turnheld < SLOWTURNTICS)
     tspeed = 0;             // slow turn

@@ -36,6 +36,8 @@
 #include "d_event.h"
 #include "d_ticcmd.h"
 
+struct netticcmd_s;
+
 //
 // GAME
 //
@@ -85,7 +87,7 @@ void G_WriteOptions(byte game_options[]);
 void G_PlayerReborn(int player);
 void G_RestartLevel(void); // CPhipps - menu involked level restart
 void G_DoVictory(void);
-void G_BuildTiccmd (ticcmd_t* cmd); // CPhipps - move decl to header
+void G_BuildTiccmd (struct netticcmd_s* ncmd); // CPhipps - move decl to header
 void G_ChangedPlayerColour(int pn, int cl); // CPhipps - On-the-fly player colour changing
 void G_MakeSpecialEvent(buttoncode_t bc, ...); /* cph - new event stuff */
 

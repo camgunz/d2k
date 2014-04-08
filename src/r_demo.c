@@ -1271,9 +1271,8 @@ int ParseDemoPattern(const char *str, waddata_t* waddata, char **missed, dboolea
     processed++;
 
     if (trytodownload && !I_FindFile2(pToken, ".wad"))
-    {
-      D_TryGetWad(pToken);
-    }
+      N_GetWad(pToken);
+
 #ifdef _MSC_VER
     token = malloc(PATH_MAX);
     if (GetFullPath(pToken, ".wad", token, PATH_MAX))
@@ -1472,7 +1471,7 @@ void WadDataToWadFiles(waddata_t *waddata)
     if (waddata->wadfiles[i].src == source_pwad)
     {
       const char *file = I_FindFile2(waddata->wadfiles[i].name, ".wad");
-      if (!file && D_TryGetWad(waddata->wadfiles[i].name))
+      if (!file && N_GetWad(waddata->wadfiles[i].name))
       {
         file = I_FindFile2(waddata->wadfiles[i].name, ".wad");
         if (file)
@@ -1601,6 +1600,7 @@ int CheckAutoDemo(void)
 
 const char *getwad_cmdline;
 
+#if 0
 dboolean D_TryGetWad(const char* name)
 {
   dboolean result = false;
@@ -1666,3 +1666,4 @@ dboolean D_TryGetWad(const char* name)
 
   return result;
 }
+#endif

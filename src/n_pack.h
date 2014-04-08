@@ -74,8 +74,8 @@ dboolean N_UnpackPlayerCommands(netpeer_t *np);
 void     N_PackSaveGameNameChange(netpeer_t *np, char *new_save_game_name);
 dboolean N_UnpackSaveGameNameChange(netpeer_t *np, buf_t *buf);
 
-dboolean N_UnpackPlayerPreferenceChange(netpeer_t *np, int *tic,
-                                                       short *playernum,
+dboolean N_UnpackPlayerPreferenceChange(netpeer_t *np, short *playernum,
+                                                       int *tic,
                                                        size_t *count);
 dboolean N_UnpackPlayerPreferenceName(netpeer_t *np, size_t pref_index,
                                                      buf_t *buf);
@@ -105,14 +105,14 @@ void     N_PackWeaponSpeedChange(netpeer_t *np, short playernum,
                                                 byte new_weapon_speed);
 dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, byte *new_weapon_speed);
 
-void     N_PackColormapChange(netpeer_t *np, short playernum, int new_color);
-dboolean N_UnpackColormapChange(netpeer_t *np, int *new_color);
-
 void     N_PackColorChange(netpeer_t *np, short playernum, byte new_red,
                                                            byte new_green,
                                                            byte new_blue);
 dboolean N_UnpackColorChange(netpeer_t *np, byte *new_red, byte *new_green,
                                             byte *new_blue);
+
+void     N_PackColormapChange(netpeer_t *np, short playernum, int new_color);
+dboolean N_UnpackColormapChange(netpeer_t *np, int *new_color);
 
 void     N_PackSkinChange(netpeer_t *np, short playernum);
 dboolean N_UnpackSkinChange(netpeer_t *np);

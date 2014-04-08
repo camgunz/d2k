@@ -1141,11 +1141,6 @@ void R_RenderPlayerView (player_t* player)
     }
   }
 
-  // check for new console commands.
-#ifdef HAVE_NET
-  NetUpdate ();
-#endif
-
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
     {
@@ -1162,13 +1157,6 @@ void R_RenderPlayerView (player_t* player)
   // The head node is the last node output.
   R_RenderBSPNode (numnodes-1);
 
-#ifdef HAVE_NET
-  if (!use_smp)
-  {
-    NetUpdate ();
-  }
-#endif
-
   if (V_GetMode() != VID_MODEGL)
     R_DrawPlanes();
 
@@ -1177,20 +1165,10 @@ void R_RenderPlayerView (player_t* player)
 
   R_ResetColumnBuffer();
 
-  // Check for new console commands.
-#ifdef HAVE_NET
-  NetUpdate ();
-#endif
-
   if (V_GetMode() != VID_MODEGL) {
     R_DrawMasked ();
     R_ResetColumnBuffer();
   }
-
-  // Check for new console commands.
-#ifdef HAVE_NET
-  NetUpdate ();
-#endif
 
   if (V_GetMode() == VID_MODEGL && !automap) {
 #ifdef GL_DOOM
@@ -1201,3 +1179,4 @@ void R_RenderPlayerView (player_t* player)
 #endif
   }
 }
+

@@ -83,6 +83,9 @@
 // NSM
 #include "i_capture.h"
 
+#include "n_net.h"
+#include "n_main.h"
+
 void GetFirstMap(int *ep, int *map); // Ty 08/29/98 - add "-warp x" functionality
 static void D_PageDrawer(void);
 
@@ -395,11 +398,7 @@ void D_Display (void)
 
   // menus go directly to the screen
   M_Drawer();          // menu is drawn even on top of everything
-#ifdef HAVE_NET
-  NetUpdate();         // send out any new accumulation
-#else
-  D_BuildNewTiccmds();
-#endif
+  N_Update();          // send out any new accumulation
 
   HU_DrawDemoProgress(true); //e6y
 
@@ -451,7 +450,10 @@ static void D_DoomLoop(void)
       if (singletics)
         {
           I_StartTic ();
-          G_BuildTiccmd (&netcmds[consoleplayer][maketic%BACKUPTICS]);
+          M_CBufConsolidate(&players[consoleplayer].commands);
+          G_BuildTiccmd(
+            M_CBufGetFirstFreeOrNewSlot(&players[consoleplayer].commands)
+          );
           if (advancedemo)
             D_DoAdvanceDemo ();
           M_Ticker ();
@@ -461,7 +463,7 @@ static void D_DoomLoop(void)
           maketic++;
         }
       else
-        TryRunTics (); // will run at least one tic
+        N_TryRunTics(); // will run at least one tic
 
       // killough 3/16/98: change consoleplayer to displayplayer
       if (players[displayplayer].mo) // cph 2002/08/10
@@ -1636,28 +1638,26 @@ static void D_DoomMainSetup(void)
   // killough 1/31/98, 5/2/98: reload hack removed, -wart same as -warp now.
 
   if ((p = M_CheckParm ("-file")))
-    {
-      // the parms after p are wadfile/lump names,
-      // until end of parms or another - preceded parm
-      modifiedgame = true;            // homebrew levels
-      while (++p != myargc && *myargv[p] != '-')
-      {
-        // e6y
-        // reorganization of the code for looking for wads
-        // in all standard dirs (%DOOMWADDIR%, etc)
-        char *file = I_FindFile(myargv[p], ".wad");
-        if (!file && D_TryGetWad(myargv[p]))
-        {
-          file = I_FindFile(myargv[p], ".wad");
-        }
-        if (file)
-        {
-          D_AddFile(file,source_pwad);
-          M_OBufAppend(&resource_files_buf, strdup(myargv[p]));
-          free(file);
-        }
+  {
+    // the parms after p are wadfile/lump names,
+    // until end of parms or another - preceded parm
+    modifiedgame = true;            // homebrew levels
+    while (++p != myargc && *myargv[p] != '-') {
+      // e6y
+      // reorganization of the code for looking for wads
+      // in all standard dirs (%DOOMWADDIR%, etc)
+      char *file = I_FindFile(myargv[p], ".wad");
+
+      if (!file && N_GetWad(myargv[p]))
+        file = I_FindFile(myargv[p], ".wad");
+
+      if (file) {
+        D_AddFile(file,source_pwad);
+        M_OBufAppend(&resource_files_buf, strdup(myargv[p]));
+        free(file);
       }
     }
+  }
 
   if (!(p = M_CheckParm("-playdemo")) || p >= myargc-1) {   /* killough */
     if ((p = M_CheckParm ("-fastdemo")) && p < myargc-1)    /* killough */
@@ -1708,8 +1708,13 @@ static void D_DoomMainSetup(void)
 
   // CPhipps - move up netgame init
   //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO,"D_InitNetGame: Checking for network game.\n");
-  D_InitNetGame();
+  lprintf(LO_INFO,"N_InitNetGame: Checking for network game.\n");
+  N_InitNetGame();
+  for (int q = 0; q < MAXPLAYERS; q++) {
+    printf("Commands for %d: %d, %lu.\n",
+      q, players[q].commands.capacity, players[q].commands.obj_size
+    );
+  }
 
   //jff 9/3/98 use logical output routine
   lprintf(LO_INFO,"W_Init: Init WADfiles.\n");
@@ -1837,11 +1842,6 @@ static void D_DoomMainSetup(void)
   //jff 9/3/98 use logical output routine
   lprintf(LO_INFO,"M_Init: Init miscellaneous info.\n");
   M_Init();
-
-#ifdef HAVE_NET
-  // CPhipps - now wait for netgame start
-  D_CheckNetGame();
-#endif
 
   //jff 9/3/98 use logical output routine
   lprintf(LO_INFO,"R_Init: Init DOOM refresh daemon - ");
@@ -2045,3 +2045,6 @@ void GetFirstMap(int *ep, int *map)
       newlevel ? "new " : "", name);  // Ty 10/04/98 - new level test
   }
 }
+
+/* vi: set et ts=2 sw=2: */
+

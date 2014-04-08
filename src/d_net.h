@@ -187,25 +187,13 @@ typedef struct
 
 } doomcom_t;
 
-// Create any new ticcmds and broadcast to other players.
-#ifdef HAVE_NET
-void NetUpdate (void);
-#else
-void D_BuildNewTiccmds(void);
-#endif
-
-//? how many ticks to run?
-void TryRunTics (void);
-
 // CPhipps - move to header file
-void D_InitNetGame (void); // This does the setup
-void D_CheckNetGame(void); // This waits for game start
 
 // CPhipps - misc info broadcast
 void D_NetSendMisc(netmisctype_t type, size_t len, void* data);
 
 // CPhipps - ask server for a wad file we need
-dboolean D_NetGetWad(const char* name);
+dboolean D_GetWad(const char* name);
 
 // Netgame stuff (buffers and pointers, i.e. indices).
 extern  doomcom_t  *doomcom;

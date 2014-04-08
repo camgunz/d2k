@@ -36,6 +36,7 @@
 
 void     N_InitNetGame(void);
 void     N_Update(void);
+void     N_CheckNetGame(void);
 dboolean N_GetWad(const char* name);
 void     N_TryRunTics(void);
 void     CL_SetReceivedSetup(dboolean new_received_setup);
