@@ -130,6 +130,8 @@ void N_InitNetGame(void) {
         host = strdup("0.0.0.0");
       }
 
+      printf("N_InitNetGame: Attempting to listen on %s:%u.\n", host, port);
+
       if (!N_Listen(host, port))
         I_Error("Startup aborted");
 
@@ -178,10 +180,12 @@ void N_Update(void) {
       break;
     }
 
-    M_CBufConsolidate(&players[consoleplayer].commands);
-    G_BuildTiccmd(
-      M_CBufGetFirstFreeOrNewSlot(&players[consoleplayer].commands)
-    );
+    if (!SERVER) {
+      M_CBufConsolidate(&players[consoleplayer].commands);
+      G_BuildTiccmd(
+        M_CBufGetFirstFreeOrNewSlot(&players[consoleplayer].commands)
+      );
+    }
     maketic++;
   }
 }

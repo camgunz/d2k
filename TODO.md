@@ -1,7 +1,5 @@
 # To Do
 
-1. Fix demo playback
-
 1. Figure out how to have the server run the game with zero players
   - Probably just have the server be player 0 for now
 

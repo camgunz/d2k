@@ -318,7 +318,7 @@ dboolean N_Listen(const char *host, unsigned short port) {
   net_host = enet_host_create(&address, MAXPLAYERS, MAX_CHANNELS, 0, 0);
   
   if (net_host == NULL) {
-    doom_printf("N_Listen: Error creating host");
+    doom_printf("N_Listen: Error creating host on %s:%u\n", host, port);
     return false;
   }
   
@@ -458,7 +458,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
      * CG: ENet says this must be cleared, and since we don't use it, we do so
      *     here up top.
      */
-    if (net_event.peer->data != NULL)
+    if (net_event.peer != NULL && net_event.peer->data != NULL)
       net_event.peer->data = NULL;
 
     if (status == 0)
