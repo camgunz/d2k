@@ -130,8 +130,6 @@ void N_InitNetGame(void) {
         host = strdup("0.0.0.0");
       }
 
-      printf("N_InitNetGame: Attempting to listen on %s:%u.\n", host, port);
-
       if (!N_Listen(host, port))
         I_Error("Startup aborted");
 

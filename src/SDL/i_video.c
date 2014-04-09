@@ -1192,6 +1192,9 @@ void I_UpdateVideoMode(void)
 {
   int init_flags;
 
+  if (nodrawers)
+    return;
+
   if(screen)
   {
     // video capturing cannot be continued with new screen settings
