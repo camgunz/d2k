@@ -1,21 +1,15 @@
 # To Do
 
-1. Junk old busted netcode, replace with the new hotness
-
-1. Get rid of spurious NetUpdate calls everywhere; they don't help anymore, but
-   they do waste bandwidth
-
-1. Fix choppiness between frames; rendering is probably only done at 35Hz if
-   interpolation is disabled, which won't work for OpenGL.
-
-1. Have server actually send out updates
+1. Fix demo playback
 
 1. Figure out how to have the server run the game with zero players
   - Probably just have the server be player 0 for now
 
-1. Compile & Test prototype
+1. Start testing prototype
 
 ---
+
+1. Fix command-sync netcode
 
 1. If there are errors while reading a network message, message reading
    completely bails, leaving the message partially read.  I'm not totally sure
@@ -60,4 +54,11 @@
 1. Make tics unsigned (there's no reason for a tic value to ever be negative)
 
 1. Update renderer
+
+1. Player names are hardcoded for DeHackEd; the way this should work is:
+  - Keep a private array of the default names ("Green", "Indigo", etc.)
+  - After initialization, check if the names have been modified, by a DeHackEd
+    patch or anything
+  - If so, set each player's name accordingly
+  - Of course, this only works for the 1st 4 players; after that, fuck it
 

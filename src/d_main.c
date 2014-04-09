@@ -268,9 +268,7 @@ void D_Display (void)
 
 #ifdef GL_DOOM
     if (V_GetMode() == VID_MODEGL)
-    {
       gld_PreprocessLevel();
-    }
 #endif
   }
   
@@ -355,9 +353,7 @@ void D_Display (void)
 
     // Now do the drawing
     if (viewactive || map_always_updates)
-    {
       R_RenderPlayerView (&players[displayplayer]);
-    }
 
     // IDRATE cheat
     R_ShowStats();
@@ -368,9 +364,7 @@ void D_Display (void)
     frame_fixedcolormap = 0;
 
     if (automapmode & am_active)
-    {
       AM_Drawer();
-    }
 
     R_RestoreInterpolations();
 
@@ -404,7 +398,7 @@ void D_Display (void)
 
   // normal update
   if (!wipe)
-    I_FinishUpdate ();              // page flip or blit buffer
+    I_FinishUpdate();              // page flip or blit buffer
   else {
     // wipe update
     wipe_EndScreen();

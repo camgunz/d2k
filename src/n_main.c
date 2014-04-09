@@ -187,6 +187,7 @@ void N_Update(void) {
 }
 
 void N_TryRunTics(void) {
+  int timeout = ms_to_next_tick;
   int runtics = -1;
   int entertime = I_GetTime();
 
@@ -223,12 +224,18 @@ void N_TryRunTics(void) {
       break;
     }
 
-    if (!movement_smooth || !window_focused) {
-      if (MULTINET)
-        N_ServiceNetworkTimeout(ms_to_next_tick);
-      else
-        I_uSleep(ms_to_next_tick * 1000);
-    }
+    if (movement_smooth && window_focused)
+      timeout = 0;
+
+#ifdef GL_DOOM
+    if (V_GetMode() == VID_MODEGL)
+      timeout = 0;
+#endif
+
+    if (MULTINET)
+      N_ServiceNetworkTimeout(timeout);
+    else
+      I_uSleep(timeout * 1000);
 
     if (I_GetTime() - entertime > 10) {
       M_Ticker();
