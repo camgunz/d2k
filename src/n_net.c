@@ -67,6 +67,25 @@ dboolean        solonet   = false;
 dboolean        netserver = false;
 net_sync_type_e netsync   = NET_SYNC_TYPE_NONE;
 
+static void print_bytes(char *bytes, size_t size) {
+  for (int i = 0; i < size; i++) {
+    if ((i * 5) >= 80)
+      printf("%4d\n", bytes[i]);
+    else
+      printf("%4d ", bytes[i]);
+  }
+  printf("\n");
+}
+
+static void print_buffer(buf_t *buf) {
+  printf("Buffer capacity, size and cursor: [%lu, %lu, %lu].\n",
+    buf->capacity,
+    buf->size,
+    buf->cursor
+  );
+  print_bytes(buf->data, buf->size);
+}
+
 static void check_peer_timeouts(void) {
   for (int i = 0; i < N_GetPeerCount(); i++) {
     if (N_CheckPeerTimeout(i)) {
@@ -79,6 +98,31 @@ static void check_peer_timeouts(void) {
 
       enet_peer_reset(np->peer);
       N_RemovePeer(np);
+    }
+  }
+}
+
+static void flush_peer_buffers(void) {
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
+
+    if (np == NULL)
+      continue;
+
+    if (np->rbuf.size != 0) {
+      ENetPacket *reliable_packet = enet_packet_create(
+        np->rbuf.data, np->rbuf.size, ENET_PACKET_FLAG_RELIABLE
+      );
+      enet_peer_send(np->peer, NET_CHANNEL_RELIABLE, reliable_packet);
+      M_BufferClear(&np->rbuf);
+    }
+
+    if (np->ubuf.size != 0) {
+      ENetPacket *unreliable_packet = enet_packet_create(
+        np->ubuf.data, np->ubuf.size, ENET_PACKET_FLAG_UNSEQUENCED
+      );
+      enet_peer_send(np->peer, NET_CHANNEL_UNRELIABLE, unreliable_packet);
+      M_BufferClear(&np->ubuf);
     }
   }
 }
@@ -420,21 +464,6 @@ void N_DisconnectPlayer(short playernum) {
   N_SetPeerDisconnected(peernum);
 }
 
-static void print_buffer(buf_t *buf) {
-  printf("Buffer capacity, size and cursor: [%lu, %lu, %lu].\n",
-    buf->capacity,
-    buf->size,
-    buf->cursor
-  );
-  for (int i = 0; i < buf->size; i++) {
-    if ((i * 5) >= 80)
-      printf("%4d\n", buf->data[i]);
-    else
-      printf("%4d ", buf->data[i]);
-  }
-  printf("\n");
-}
-
 void N_ServiceNetworkTimeout(int timeout_ms) {
   int status = 0;
   int peernum = -1;
@@ -442,29 +471,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
 
   check_peer_timeouts();
 
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
-
-    if (np == NULL)
-      continue;
-
-
-    if (np->rbuf.size != 0) {
-      ENetPacket *reliable_packet = enet_packet_create(
-        np->rbuf.data, np->rbuf.size, ENET_PACKET_FLAG_RELIABLE
-      );
-      enet_peer_send(np->peer, NET_CHANNEL_RELIABLE, reliable_packet);
-      M_BufferClear(&np->rbuf);
-    }
-
-    if (np->ubuf.size != 0) {
-      ENetPacket *unreliable_packet = enet_packet_create(
-        np->ubuf.data, np->ubuf.size, ENET_PACKET_FLAG_UNSEQUENCED
-      );
-      enet_peer_send(np->peer, NET_CHANNEL_UNRELIABLE, unreliable_packet);
-      M_BufferClear(&np->ubuf);
-    }
-  }
+  flush_peer_buffers();
 
   while (true) {
     status = enet_host_service(net_host, &net_event, timeout_ms);

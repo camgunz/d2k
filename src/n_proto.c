@@ -484,6 +484,7 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
   N_LoadPacketData(data, data_size);
 
   while (N_LoadNewMessage(np, &message_type)) {
+    printf("Handling message %u.\n", message_type);
     switch (message_type) {
       case nm_setup:
         CLIENT_ONLY("setup");
