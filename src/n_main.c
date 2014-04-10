@@ -191,25 +191,9 @@ void N_TryRunTics(void) {
   int sleep_time = ms_to_next_tick;
   int current_time = I_GetTime();
   int delta_time = current_time - commands_last_built_time;
-  /*
-  int menu_renderer_calls = delta_time / ((1000.0 / TICRATE) / 3.0);
-  int commands_to_build = delta_time / (1000.0 / TICRATE);
-  */
   int commands_to_build = delta_time;
   int menu_renderer_calls = commands_to_build * 3;
   int tics_to_run = INT_MAX;
-
-#if 0
-  printf("clbt, st, ct, dt: %d, %d, %d, %d (%d, %d, %d).\n",
-    commands_last_built_time,
-    sleep_time,
-    current_time,
-    delta_time,
-    commands_to_build,
-    tics_to_run,
-    menu_renderer_calls
-  );
-#endif
 
   if (commands_to_build > 0)
     commands_last_built_time = current_time;
@@ -223,8 +207,6 @@ void N_TryRunTics(void) {
         tics_to_run = MIN(
           tics_to_run, M_CBufGetObjectCount(&players[i].commands)
         );
-        if (tics_to_run < 0)
-          printf("Command count for %d was %d.\n", i, tics_to_run);
       }
     }
   }
@@ -236,38 +218,6 @@ void N_TryRunTics(void) {
     menu_renderer_calls -= tics_to_run;
   else
     menu_renderer_calls = 0;
-
-  if (commands_to_build < 0) {
-    I_Error("CTB < 0: %d, %d, %d, %d.\n",
-      commands_last_built_time,
-      sleep_time,
-      current_time,
-      delta_time
-    );
-  }
-
-  if (tics_to_run < 0) {
-    I_Error("TTR < 0: %d, %d, %d, %d.\n",
-      commands_last_built_time,
-      sleep_time,
-      current_time,
-      delta_time
-    );
-  }
-
-#if 0
-  if (commands_to_build > 0 || tics_to_run > 0) {
-    printf("clbt, st, ct, dt: %d, %d, %d, %d (%d, %d, %d).\n",
-      commands_last_built_time,
-      sleep_time,
-      current_time,
-      delta_time,
-      commands_to_build,
-      tics_to_run,
-      menu_renderer_calls
-    );
-  }
-#endif
 
   if (commands_to_build > 0) {
     while (commands_to_build--) {

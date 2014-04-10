@@ -420,6 +420,21 @@ void N_DisconnectPlayer(short playernum) {
   N_SetPeerDisconnected(peernum);
 }
 
+static void print_buffer(buf_t *buf) {
+  printf("Buffer capacity, size and cursor: [%lu, %lu, %lu].\n",
+    buf->capacity,
+    buf->size,
+    buf->cursor
+  );
+  for (int i = 0; i < buf->size; i++) {
+    if ((i * 5) >= 80)
+      printf("%4d\n", buf->data[i]);
+    else
+      printf("%4d ", buf->data[i]);
+  }
+  printf("\n");
+}
+
 void N_ServiceNetworkTimeout(int timeout_ms) {
   int status = 0;
   int peernum = -1;
@@ -433,27 +448,20 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     if (np == NULL)
       continue;
 
-    doom_printf("Flushing network buffer of peer %d.\n", i);
 
     if (np->rbuf.size != 0) {
       ENetPacket *reliable_packet = enet_packet_create(
-        np->rbuf.data,
-        np->rbuf.size,
-        ENET_PACKET_FLAG_RELIABLE | ENET_PACKET_FLAG_NO_ALLOCATE
+        np->rbuf.data, np->rbuf.size, ENET_PACKET_FLAG_RELIABLE
       );
       enet_peer_send(np->peer, NET_CHANNEL_RELIABLE, reliable_packet);
-      enet_packet_destroy(reliable_packet);
       M_BufferClear(&np->rbuf);
     }
 
     if (np->ubuf.size != 0) {
       ENetPacket *unreliable_packet = enet_packet_create(
-        np->ubuf.data,
-        np->ubuf.size,
-        ENET_PACKET_FLAG_NO_ALLOCATE
+        np->ubuf.data, np->ubuf.size, ENET_PACKET_FLAG_UNSEQUENCED
       );
       enet_peer_send(np->peer, NET_CHANNEL_UNRELIABLE, unreliable_packet);
-      enet_packet_destroy(unreliable_packet);
       M_BufferClear(&np->ubuf);
     }
   }
