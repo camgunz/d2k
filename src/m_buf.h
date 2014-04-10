@@ -97,6 +97,8 @@ void     M_BufferZero(buf_t *buf);
 void     M_BufferClear(buf_t *buf);
 void     M_BufferFree(buf_t *buf);
 
+void     M_BufferPrint(buf_t *buf);
+
 #endif
 
 /* vi: set et ts=2 sw=2: */

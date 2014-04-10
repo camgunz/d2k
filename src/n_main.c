@@ -248,19 +248,24 @@ void N_TryRunTics(void) {
       M_Ticker();
   }
 
-  if (movement_smooth && window_focused)
-    sleep_time = 0;
+  if (SERVER) {
+    N_ServiceNetworkTimeout(sleep_time);
+  }
+  else {
+    if (movement_smooth && window_focused)
+      sleep_time = 0;
 
 #ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL)
-    sleep_time = 0;
+    if (V_GetMode() == VID_MODEGL)
+      sleep_time = 0;
 #endif
 
-  if (MULTINET)
-    sleep_time = 0;
+    if (MULTINET)
+      sleep_time = 0;
 
-  if (sleep_time > 0)
-    I_uSleep(sleep_time * 1000);
+    if (sleep_time > 0)
+      I_uSleep(sleep_time * 1000);
+  }
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {

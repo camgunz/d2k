@@ -97,6 +97,7 @@ dboolean    N_Connect(const char *host, unsigned short port);
 dboolean    N_Reconnect(void);
 dboolean    N_ConnectToServer(const char *address);
 void        N_PrintAddress(FILE *fp, int peernum);
+void        N_DisconnectPeer(int peernum);
 void        N_DisconnectPlayer(short playernum);
 void        N_ServiceNetworkTimeout(int timeout_ms);
 void        N_ServiceNetwork(void);

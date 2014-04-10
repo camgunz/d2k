@@ -58,6 +58,7 @@ void   N_InitProtocol(void);
 void   N_HandlePacket(int peernum, void *data, size_t data_size);
 buf_t* N_GetMessageRecipientBuffer(void);
 
+void SV_SetupNewPeer(int peernum);
 void SV_SendSetup(short playernum);
 void SV_SendStateDelta(short playernum);
 void SV_SendFullState(short playernum);

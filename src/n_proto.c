@@ -199,6 +199,8 @@ static void handle_setup(netpeer_t *np) {
 
   consoleplayer = playernum;
 
+  printf("Assigned player %u out of %u\n", playernum, player_count);
+
   if (!playeringame[consoleplayer])
     I_Error("consoleplayer not in game");
 
@@ -216,7 +218,7 @@ static void handle_setup(netpeer_t *np) {
     }
   }
 
-  OBUF_FOR_EACH(&resource_files_buf, entry) {
+  OBUF_FOR_EACH(&deh_files_buf, entry) {
     char *name = entry.obj;
     char *fpath = I_FindFile(name, NULL);
 
@@ -557,6 +559,35 @@ buf_t* N_GetMessageRecipientBuffer(void) {
   M_BufferZero(&message_recipients);
 
   return &message_recipients;
+}
+
+void SV_SetupNewPeer(int peernum) {
+  short playernum;
+  netpeer_t *np = N_GetPeer(peernum);
+
+  if (np == NULL) {
+    doom_printf("SV_SetupNewPlayer: invalid peer %d.\n", peernum);
+    return;
+  }
+
+  for (playernum = 0; playernum < MAXPLAYERS; playernum++) {
+    if (!playeringame[playernum]) {
+      break;
+    }
+  }
+
+  if (playernum == MAXPLAYERS) {
+    N_DisconnectPeer(peernum);
+    return;
+  }
+
+  playeringame[playernum] = true;
+  players[playernum].playerstate = PST_REBORN;
+  np->playernum = playernum;
+
+  SV_SendSetup(playernum);
+
+  SV_SendFullUpdate(playernum);
 }
 
 void SV_SendSetup(short playernum) {

@@ -237,11 +237,26 @@ void N_InitPacker(void) {
 void N_LoadPacketData(void *data, size_t data_size) {
   msgpack_unpacker_reserve_buffer(&pac, data_size);
   memcpy(msgpack_unpacker_buffer(&pac), data, data_size);
+
+  for (int i = 0; i < data_size; i++) {
+    if (((i + 1) * 5) >= 80)
+      printf("%4d\n", ((char *)msgpack_unpacker_buffer(&pac))[i]);
+    else
+      printf("%4d ", ((char *)msgpack_unpacker_buffer(&pac))[i]);
+  }
+  printf("\n");
+
   msgpack_unpacker_buffer_consumed(&pac, data_size);
 }
 
 dboolean N_LoadNewMessage(netpeer_t *np, byte *message_type) {
-  unpack_and_validate(obj, "message type", uchar);
+  if (!msgpack_unpacker_next(&pac, &result)) {
+    return false;
+  }
+
+  obj = &result.data;
+
+  validate_type_and_size(obj, "message type", uchar);
 
   *message_type = (byte)obj->via.u64;
 
@@ -260,6 +275,8 @@ void N_PackSetup(netpeer_t *np) {
   msgpack_pack_unsigned_short(np->rpk, player_count);
   msgpack_pack_unsigned_short(np->rpk, np->playernum);
 
+  printf("Assigned player %d/%d.\n", np->playernum, player_count);
+
   msgpack_pack_array(np->rpk, M_OBufGetObjectCount(&resource_files_buf));
   OBUF_FOR_EACH(&resource_files_buf, entry) {
     char *resource_name = entry.obj;
@@ -267,7 +284,10 @@ void N_PackSetup(netpeer_t *np) {
 
     msgpack_pack_raw(np->rpk, length);
     msgpack_pack_raw_body(np->rpk, resource_name, length);
+
+    printf("Sent a resource.\n");
   }
+
 
   msgpack_pack_array(np->rpk, M_OBufGetObjectCount(&deh_files_buf));
   OBUF_FOR_EACH(&deh_files_buf, entry) {
@@ -276,6 +296,8 @@ void N_PackSetup(netpeer_t *np) {
 
     msgpack_pack_raw(np->rpk, length);
     msgpack_pack_raw_body(np->rpk, deh_name, length);
+
+    printf("Sent a BEX/DEH patch.\n");
   }
 }
 
@@ -309,6 +331,9 @@ dboolean N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
     &deh_files_buf,
     MAX_RESOURCE_NAMES
   );
+
+  *player_count = m_player_count;
+  *playernum = m_playernum;
 
   return true;
 }
@@ -420,8 +445,6 @@ dboolean N_UnpackPlayerMessage(netpeer_t *np, unsigned short *sender,
 
   unpack_and_validate_player(obj);
   m_sender = (unsigned short)obj->via.u64;
-
-  // #define unpack_and_validate_player_array(obj, arr, name, buf, sz)
 
   unpack_and_validate_player_array(
     obj, obj->via.array, "player message recipients", recipients, 0xFF

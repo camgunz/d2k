@@ -381,5 +381,22 @@ void M_BufferFree(buf_t *buf) {
   buf->data = NULL;
 }
 
+void M_BufferPrint(buf_t *buf) {
+  printf("Buffer capacity, size and cursor: [%lu, %lu, %lu].\n",
+    buf->capacity,
+    buf->size,
+    buf->cursor
+  );
+
+  for (size_t i = 0; i < buf->size; i++) {
+    if (((i + 1) * 5) >= 80)
+      printf("%4d\n", buf->data[i]);
+    else
+      printf("%4d ", buf->data[i]);
+  }
+
+  printf("\n");
+}
+
 /* vi: set et ts=2 sw=2: */
 

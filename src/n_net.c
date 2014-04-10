@@ -69,7 +69,7 @@ net_sync_type_e netsync   = NET_SYNC_TYPE_NONE;
 
 static void print_bytes(char *bytes, size_t size) {
   for (int i = 0; i < size; i++) {
-    if ((i * 5) >= 80)
+    if (((i + 1) * 5) >= 80)
       printf("%4d\n", bytes[i]);
     else
       printf("%4d ", bytes[i]);
@@ -110,6 +110,7 @@ static void flush_peer_buffers(void) {
       continue;
 
     if (np->rbuf.size != 0) {
+      M_BufferPrint(&np->rbuf);
       ENetPacket *reliable_packet = enet_packet_create(
         np->rbuf.data, np->rbuf.size, ENET_PACKET_FLAG_RELIABLE
       );
@@ -118,6 +119,7 @@ static void flush_peer_buffers(void) {
     }
 
     if (np->ubuf.size != 0) {
+      M_BufferPrint(&np->rbuf);
       ENetPacket *unreliable_packet = enet_packet_create(
         np->ubuf.data, np->ubuf.size, ENET_PACKET_FLAG_UNSEQUENCED
       );
@@ -450,18 +452,26 @@ void N_PrintAddress(FILE *fp, int peernum) {
   );
 }
 
-void N_DisconnectPlayer(short playernum) {
-  int peernum = N_GetPeerNumForPlayer(playernum);
-  netpeer_t *np = NULL;
+void N_DisconnectPeer(int peernum) {
+  netpeer_t *np = N_GetPeer(peernum);
 
-  if (peernum == -1)
-    I_Error("N_DisconnectPlayer: Invalid peer %d.\n", peernum);
-  
-  np = N_GetPeer(peernum);
 
-  doom_printf("N_DisconnectPlayer: Disconnecting player %d\n", playernum);
+  if (np == NULL)
+    I_Error("N_DisconnectPeer: Invalid peer %d.\n", peernum);
+
+  doom_printf("N_DisconnectPeer: Disconnecting peer %d\n", peernum);
   enet_peer_disconnect(np->peer, 0);
   N_SetPeerDisconnected(peernum);
+}
+
+void N_DisconnectPlayer(short playernum) {
+  int peernum = N_GetPeerNumForPlayer(playernum);
+
+  if (peernum == -1)
+    I_Error("N_DisconnectPlayer: Invalid player %d.\n", playernum);
+  
+  doom_printf("N_DisconnectPlayer: Disconnecting player %d\n", playernum);
+  N_DisconnectPeer(peernum);
 }
 
 void N_ServiceNetworkTimeout(int timeout_ms) {
@@ -500,7 +510,8 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       if (SERVER) {
         peernum = N_AddPeer();
         N_SetPeerConnected(peernum, net_event.peer);
-        N_PackSetup(N_GetPeer(peernum));
+
+        SV_SetupNewPeer(peernum);
       }
       else {
         np = N_GetPeer(0);
@@ -539,6 +550,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
         );
         continue;
       }
+      print_bytes(net_event.packet->data, net_event.packet->dataLength);
       N_HandlePacket(
         peernum, net_event.packet->data, net_event.packet->dataLength
       );
