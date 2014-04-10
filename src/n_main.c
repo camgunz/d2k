@@ -34,7 +34,9 @@
 
 #include "z_zone.h"
 
-#include "m_cbuf.h"
+#include <enet/enet.h>
+#include <msgpack.h>
+
 #include "doomstat.h"
 #include "protocol.h"
 
@@ -55,15 +57,13 @@
 
 #include "n_net.h"
 #include "n_main.h"
+#include "n_peer.h"
 
 /*
  * CG: TODO:
  *   - Add WAD fetching (waiting on libcurl)
  */
 
-int maketic = 0;
-
-static int lastmadetic = 0;
 static dboolean is_extra_ddisplay = false;
 
 /* CG: Client only */
@@ -87,17 +87,32 @@ void N_InitNetGame(void) {
   }
   else if ((i = M_CheckParm("-net"))) {
     if (i < myargc - 1) {
+      char *host = NULL;
+      unsigned short port = 0;
+
       netgame = true;
 
       N_Init();
 
-      if (!N_ConnectToServer(myargv[i + 1]))
-        I_Error("Connection aborted");
+      N_ParseAddressString(myargv[i + 1], &host, &port);
+
+      if (N_Connect(host, port))
+        printf("N_InitNetGame: Connected to server %s:%u.\n", host, port);
+      else
+        I_Error("N_InitNetGame: Connection aborted");
+
 
       N_ServiceNetworkTimeout(CONNECT_TIMEOUT * 1000);
 
-      if (!received_setup)
-        I_Error("Timed out waiting for setup information from the server");
+      if (N_GetPeer(0) == NULL)
+        I_Error("N_InitNetGame: Timed out connecting to server");
+
+      N_ServiceNetworkTimeout(CONNECT_TIMEOUT * 1000);
+
+      if (received_setup)
+        doom_printf("N_InitNetGame: Setup information received.\n");
+      else
+        I_Error("N_InitNetGame: Timed out waiting for setup information.");
 
       atexit(N_Disconnect);
     }
@@ -130,14 +145,16 @@ void N_InitNetGame(void) {
         host = strdup("0.0.0.0");
       }
 
-      if (!N_Listen(host, port))
+      if (N_Listen(host, port))
+        doom_printf("N_InitNetGame: Listening on %s:%u.\n", host, port);
+      else
         I_Error("Startup aborted");
 
       atexit(N_Disconnect);
     }
   }
 
-  if (!MULTINET) {
+  if (!CLIENT) {
     M_CBufInitWithCapacity(
       &players[consoleplayer].commands, sizeof(netticcmd_t), BACKUPTICS
     );
@@ -149,26 +166,13 @@ dboolean N_GetWad(const char *name) {
 }
 
 void N_Update(void) {
-  int newtics;
-
   if (is_extra_ddisplay)
     return;
 
   if (MULTINET)
     N_ServiceNetwork();
 
-  newtics = I_GetTime() - lastmadetic;
-
-  lastmadetic += newtics;
-
-  if (ffmap)
-    newtics++;
-
-  while (newtics--) {
-    I_StartTic();
-    if (maketic - gametic > BACKUPTICS / 2)
-      break;
-
+#if 0
     // e6y
     // Eliminating the sudden jump of six frames(BACKUPTICS/2) 
     // after change of realtic_clock_rate.
@@ -177,82 +181,154 @@ void N_Update(void) {
         realtic_clock_rate < 200) {
       break;
     }
+#endif
 
-    if (!SERVER) {
+}
+
+void N_TryRunTics(void) {
+  static int commands_last_built_time = 0;
+
+  int sleep_time = ms_to_next_tick;
+  int current_time = I_GetTime();
+  int delta_time = current_time - commands_last_built_time;
+  /*
+  int menu_renderer_calls = delta_time / ((1000.0 / TICRATE) / 3.0);
+  int commands_to_build = delta_time / (1000.0 / TICRATE);
+  */
+  int commands_to_build = delta_time;
+  int menu_renderer_calls = commands_to_build * 3;
+  int tics_to_run = INT_MAX;
+
+#if 0
+  printf("clbt, st, ct, dt: %d, %d, %d, %d (%d, %d, %d).\n",
+    commands_last_built_time,
+    sleep_time,
+    current_time,
+    delta_time,
+    commands_to_build,
+    tics_to_run,
+    menu_renderer_calls
+  );
+#endif
+
+  if (commands_to_build > 0)
+    commands_last_built_time = current_time;
+
+  if (ffmap)
+    commands_to_build++;
+
+  if (MULTINET) {
+    for (int i = 0; i < MAXPLAYERS; i++) {
+      if (playeringame[i]) {
+        tics_to_run = MIN(
+          tics_to_run, M_CBufGetObjectCount(&players[i].commands)
+        );
+        if (tics_to_run < 0)
+          printf("Command count for %d was %d.\n", i, tics_to_run);
+      }
+    }
+  }
+  else {
+    tics_to_run = commands_to_build;
+  }
+
+  if (menu_renderer_calls > tics_to_run)
+    menu_renderer_calls -= tics_to_run;
+  else
+    menu_renderer_calls = 0;
+
+  if (commands_to_build < 0) {
+    I_Error("CTB < 0: %d, %d, %d, %d.\n",
+      commands_last_built_time,
+      sleep_time,
+      current_time,
+      delta_time
+    );
+  }
+
+  if (tics_to_run < 0) {
+    I_Error("TTR < 0: %d, %d, %d, %d.\n",
+      commands_last_built_time,
+      sleep_time,
+      current_time,
+      delta_time
+    );
+  }
+
+#if 0
+  if (commands_to_build > 0 || tics_to_run > 0) {
+    printf("clbt, st, ct, dt: %d, %d, %d, %d (%d, %d, %d).\n",
+      commands_last_built_time,
+      sleep_time,
+      current_time,
+      delta_time,
+      commands_to_build,
+      tics_to_run,
+      menu_renderer_calls
+    );
+  }
+#endif
+
+  if (commands_to_build > 0) {
+    while (commands_to_build--) {
+      I_StartTic();
       M_CBufConsolidate(&players[consoleplayer].commands);
       G_BuildTiccmd(
         M_CBufGetFirstFreeOrNewSlot(&players[consoleplayer].commands)
       );
+      N_Update();
     }
-    maketic++;
   }
-}
 
-void N_TryRunTics(void) {
-  int timeout = ms_to_next_tick;
-  int runtics = -1;
-  int entertime = I_GetTime();
+  if (tics_to_run > 0) {
+    while (tics_to_run--) {
+      if (advancedemo)
+        D_DoAdvanceDemo();
 
-  while (true) {
-    N_Update();
-
-    if (MULTINET) {
-      for (int i = 0; i < MAXPLAYERS; i++) {
-        if (playeringame[i]) {
-          int command_count = M_CBufGetObjectCount(&players[i].commands);
-
-          if (runtics < command_count)
-            runtics = command_count;
-        }
-      }
+      M_Ticker();
+      I_GetTime_SaveMS();
+      G_Ticker();
+      P_Checksum(gametic);
+      gametic++;
     }
-    else {
-      runtics = maketic - gametic;
-    }
+  }
 
-    if (runtics) {
-      while (runtics--) {
-        if (advancedemo)
-          D_DoAdvanceDemo();
+  if (menu_renderer_calls > 0) {
+    while (menu_renderer_calls--)
+      M_Ticker();
+  }
 
-        M_Ticker();
-        I_GetTime_SaveMS();
-        G_Ticker();
-        P_Checksum(gametic);
-        gametic++;
-
-        N_Update(); // Keep sending our tics to avoid stalling remote nodes
-      }
-      break;
-    }
-
-    if (movement_smooth && window_focused)
-      timeout = 0;
+  if (movement_smooth && window_focused)
+    sleep_time = 0;
 
 #ifdef GL_DOOM
-    if (V_GetMode() == VID_MODEGL)
-      timeout = 0;
+  if (V_GetMode() == VID_MODEGL)
+    sleep_time = 0;
 #endif
 
-    if (MULTINET)
-      N_ServiceNetworkTimeout(timeout);
-    else
-      I_uSleep(timeout * 1000);
+  if (MULTINET)
+    sleep_time = 0;
 
-    if (I_GetTime() - entertime > 10) {
-      M_Ticker();
-      return;
-    }
+  if (sleep_time > 0)
+    I_uSleep(sleep_time * 1000);
 
-    if (gametic > 0) {
-      WasRenderedInTryRunTics = true;
-      if (movement_smooth && gamestate == wipegamestate) {
-        is_extra_ddisplay = true;
-        D_Display();
-        is_extra_ddisplay = false;
-      }
+#ifdef GL_DOOM
+  if (V_GetMode() == VID_MODEGL) {
+    WasRenderedInTryRunTics = true;
+    is_extra_ddisplay = true;
+    D_Display();
+    is_extra_ddisplay = false;
+  }
+#else
+  if (gametic > 0) {
+    WasRenderedInTryRunTics = true;
+    if (movement_smooth && gamestate == wipegamestate) {
+      is_extra_ddisplay = true;
+      D_Display();
+      is_extra_ddisplay = false;
     }
   }
+#endif
 }
 
 void CL_SetReceivedSetup(dboolean new_received_setup) {

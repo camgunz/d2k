@@ -430,68 +430,63 @@ static const char *auto_shot_fname;
 //  calls I_GetTime, I_StartFrame, and I_StartTic
 //
 
-static void D_DoomLoop(void)
-{
-  for (;;)
-    {
-      WasRenderedInTryRunTics = false;
-      // frame syncronous IO operations
-      I_StartFrame ();
+static void D_DoomLoop(void) {
+  for (;;) {
+    WasRenderedInTryRunTics = false;
+    // frame syncronous IO operations
+    I_StartFrame();
 
-      if (ffmap == gamemap) ffmap = 0;
+    if (ffmap == gamemap)
+      ffmap = 0;
 
-      // process one or more tics
-      if (singletics)
-        {
-          I_StartTic ();
-          M_CBufConsolidate(&players[consoleplayer].commands);
-          G_BuildTiccmd(
-            M_CBufGetFirstFreeOrNewSlot(&players[consoleplayer].commands)
-          );
-          if (advancedemo)
-            D_DoAdvanceDemo ();
-          M_Ticker ();
-          G_Ticker ();
-          P_Checksum(gametic);
-          gametic++;
-          maketic++;
-        }
-      else
-        N_TryRunTics(); // will run at least one tic
+    // process one or more tics
+    if (singletics) {
+      I_StartTic();
+      M_CBufConsolidate(&players[consoleplayer].commands);
+      G_BuildTiccmd(
+        M_CBufGetFirstFreeOrNewSlot(&players[consoleplayer].commands)
+      );
+      if (advancedemo)
+        D_DoAdvanceDemo();
+      M_Ticker();
+      G_Ticker();
+      P_Checksum(gametic);
+      gametic++;
+    }
+    else
+      N_TryRunTics(); // will run at least one tic
 
-      // killough 3/16/98: change consoleplayer to displayplayer
-      if (players[displayplayer].mo) // cph 2002/08/10
-        S_UpdateSounds(players[displayplayer].mo);// move positional sounds
+    // killough 3/16/98: change consoleplayer to displayplayer
+    if (players[displayplayer].mo) // cph 2002/08/10
+      S_UpdateSounds(players[displayplayer].mo);// move positional sounds
 
-      if (!movement_smooth || !WasRenderedInTryRunTics || gamestate != wipegamestate)
-        {
-        // Update display, next frame, with current state.
-        D_Display();
-      }
+    if (!movement_smooth || !WasRenderedInTryRunTics || gamestate != wipegamestate) {
+      // Update display, next frame, with current state.
+      D_Display();
+    }
 
-      // CPhipps - auto screenshot
-      if (auto_shot_fname && !--auto_shot_count) {
-  auto_shot_count = auto_shot_time;
-  M_DoScreenShot(auto_shot_fname);
-      }
-//e6y
-      if (avi_shot_fname && !doSkip)
-      {
-        int len;
-        char *avi_shot_curr_fname;
-        avi_shot_num++;
-        len = snprintf(NULL, 0, "%s%06d.tga", avi_shot_fname, avi_shot_num);
-        avi_shot_curr_fname = malloc(len+1);
-        sprintf(avi_shot_curr_fname, "%s%06d.tga", avi_shot_fname, avi_shot_num);
-        M_DoScreenShot(avi_shot_curr_fname);
-        free(avi_shot_curr_fname);
-      }
-      // NSM
-      if (capturing_video && !doSkip)
-      {
-        I_CaptureFrame ();
-      }
-}
+    // CPhipps - auto screenshot
+    if (auto_shot_fname && !--auto_shot_count) {
+      auto_shot_count = auto_shot_time;
+      M_DoScreenShot(auto_shot_fname);
+    }
+
+    //e6y
+    if (avi_shot_fname && !doSkip) {
+      int len;
+      char *avi_shot_curr_fname;
+
+      avi_shot_num++;
+      len = snprintf(NULL, 0, "%s%06d.tga", avi_shot_fname, avi_shot_num);
+      avi_shot_curr_fname = malloc(len+1);
+      sprintf(avi_shot_curr_fname, "%s%06d.tga", avi_shot_fname, avi_shot_num);
+      M_DoScreenShot(avi_shot_curr_fname);
+      free(avi_shot_curr_fname);
+    }
+    // NSM
+    if (capturing_video && !doSkip)
+      I_CaptureFrame();
+  }
 }
 
 //
@@ -1857,14 +1852,14 @@ static void D_DoomMainSetup(void)
   lprintf(LO_INFO,"HU_Init: Setting up heads up display.\n");
   HU_Init();
 
-  if (!(M_CheckParm("-nodraw") && M_CheckParm("-nosound")))
+  if ((!SERVER) && !(M_CheckParm("-nodraw") && M_CheckParm("-nosound")))
     I_InitGraphics();
+
+  graphics_initialized = true;
 
   // NSM
   if ((p = M_CheckParm("-viddump")) && (p < myargc-1))
-  {
     I_CapturePrep(myargv[p + 1]);
-  }
 
   //jff 9/3/98 use logical output routine
   lprintf(LO_INFO,"ST_Init: Init status bar.\n");

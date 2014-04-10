@@ -37,11 +37,11 @@
 #include <enet/enet.h>
 #include <msgpack.h>
 
-#include "m_buf.h"
 #include "d_ticcmd.h"
 
 #include "lprintf.h"
 #include "g_game.h" // for doom_printf... inexplicably
+#include "m_swap.h"
 #include "n_net.h"
 #include "n_peer.h"
 #include "n_pack.h"
@@ -73,7 +73,8 @@ static void check_peer_timeouts(void) {
       netpeer_t *np = N_GetPeer(i);
 
       doom_printf("Peer %s:%u timed out.\n",
-        N_IPToConstString(np->peer->address.host), np->peer->address.port
+        N_IPToConstString(doom_b32(np->peer->address.host)),
+        np->peer->address.port
       );
 
       enet_peer_reset(np->peer);
@@ -201,10 +202,13 @@ size_t N_ParseAddressString(const char *address, char **host, uint16_t *port) {
     host_length = address_length;
 
     if (host_length > 0) {
-      if (*host == NULL)
+      if (*host == NULL) {
         *host = strdup(address);
-      else
-        strncpy(*host, address, address_length + 1);
+      }
+      else {
+        memset(*host, 0, (address_length + 1) * sizeof(char));
+        strncpy(*host, address, address_length);
+      }
     }
   }
   else {
@@ -213,10 +217,11 @@ size_t N_ParseAddressString(const char *address, char **host, uint16_t *port) {
     if (host_length > 0) {
       if (*host == NULL) {
         *host = calloc(host_length + 1, sizeof(char));
-        strncpy(*host, address, host_length + 1);
+        strncpy(*host, address, host_length);
       }
       else {
-        strncpy(*host, address, host_length + 1);
+        memset(host, 0, (host_length + 1) * sizeof(char));
+        strncpy(*host, address, host_length);
       }
     }
 
@@ -262,7 +267,7 @@ void N_Disconnect(void) {
       if (peernum == -1) {
         doom_printf(
           "N_Disconnect: Received network event from unknown peer %s:%u\n",
-          N_IPToConstString(net_event.peer->address.host),
+          N_IPToConstString(doom_b32(net_event.peer->address.host)),
           net_event.peer->address.port
         );
         continue;
@@ -397,7 +402,7 @@ void N_PrintAddress(FILE *fp, int peernum) {
     I_Error("N_PrintAddress: Invalid peer %d.\n", peernum);
 
   fprintf(fp, "%s:%u",
-    N_IPToConstString(np->peer->address.host), np->peer->address.port
+    N_IPToConstString(doom_b32(np->peer->address.host)), np->peer->address.port
   );
 }
 
@@ -427,6 +432,8 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
 
     if (np == NULL)
       continue;
+
+    doom_printf("Flushing network buffer of peer %d.\n", i);
 
     if (np->rbuf.size != 0) {
       ENetPacket *reliable_packet = enet_packet_create(
@@ -471,11 +478,14 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       break;
     }
 
+    doom_printf("Got event type %d from enet_host_service\n", net_event.type);
+
     if (net_event.type == ENET_EVENT_TYPE_CONNECT) {
+      doom_printf("Got 'CONNECT' event\n");
       if (SERVER) {
         peernum = N_AddPeer();
         N_SetPeerConnected(peernum, net_event.peer);
-        /* CG: TODO: Sent setup info to the new peer */
+        N_PackSetup(N_GetPeer(peernum));
       }
       else {
         np = N_GetPeer(0);
@@ -492,11 +502,12 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       }
     }
     else if (net_event.type == ENET_EVENT_TYPE_DISCONNECT) {
+      doom_printf("Got 'DISCONNECT' event\n");
       if ((peernum = N_GetPeerNum(net_event.peer)) == -1) {
         doom_printf(
           "N_ServiceNetwork: Received 'disconnect' event from unknown "
           "peer %s:%u.\n",
-          N_IPToConstString(net_event.peer->address.host),
+          N_IPToConstString(doom_b32(net_event.peer->address.host)),
           net_event.peer->address.port
         );
         continue;
@@ -504,10 +515,11 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       N_RemovePeer(N_GetPeer(peernum));
     }
     else if (net_event.type == ENET_EVENT_TYPE_RECEIVE) {
+      doom_printf("Got 'RECEIVE' event\n");
       if ((peernum = N_GetPeerNum(net_event.peer)) == -1) {
         doom_printf(
           "N_ServiceNetwork: Received 'packet' event from unknown peer %s:%u.\n",
-          N_IPToConstString(net_event.peer->address.host),
+          N_IPToConstString(doom_b32(net_event.peer->address.host)),
           net_event.peer->address.port
         );
         continue;
@@ -517,10 +529,13 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       );
       enet_packet_destroy(net_event.packet);
     }
-    else if (net_event.type != ENET_EVENT_TYPE_NONE) {
+    else if (net_event.type == ENET_EVENT_TYPE_NONE) {
+      doom_printf("Got 'NONE' event\n");
+    }
+    else {
       doom_printf(
-        "N_ServiceNetwork: Received 'NONE' event from peer %s:%u.\n",
-        N_IPToConstString(net_event.peer->address.host),
+        "N_ServiceNetwork: Received unknown event from peer %s:%u.\n",
+        N_IPToConstString(doom_b32(net_event.peer->address.host)),
         net_event.peer->address.port
       );
     }

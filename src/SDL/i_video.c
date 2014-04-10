@@ -1165,25 +1165,24 @@ int I_GetModeFromString(const char *modestr)
 {
   video_mode_t mode;
 
-  if (!stricmp(modestr,"15")) {
+  if (!stricmp(modestr,"15"))
     mode = VID_MODE15;
-  } else if (!stricmp(modestr,"15bit")) {
+  else if (!stricmp(modestr,"15bit"))
     mode = VID_MODE15;
-  } else if (!stricmp(modestr,"16")) {
+  else if (!stricmp(modestr,"16"))
     mode = VID_MODE16;
-  } else if (!stricmp(modestr,"16bit")) {
+  else if (!stricmp(modestr,"16bit"))
     mode = VID_MODE16;
-  } else if (!stricmp(modestr,"32")) {
+  else if (!stricmp(modestr,"32"))
     mode = VID_MODE32;
-  } else if (!stricmp(modestr,"32bit")) {
+  else if (!stricmp(modestr,"32bit"))
     mode = VID_MODE32;
-  } else if (!stricmp(modestr,"gl")) {
+  else if (!stricmp(modestr,"gl"))
     mode = VID_MODEGL;
-  } else if (!stricmp(modestr,"OpenGL")) {
+  else if (!stricmp(modestr,"OpenGL"))
     mode = VID_MODEGL;
-  } else {
+  else
     mode = VID_MODE8;
-  }
 
   return mode;
 }
@@ -1191,9 +1190,6 @@ int I_GetModeFromString(const char *modestr)
 void I_UpdateVideoMode(void)
 {
   int init_flags;
-
-  if (nodrawers)
-    return;
 
   if(screen)
   {

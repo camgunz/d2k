@@ -299,6 +299,13 @@ dboolean gamekeydown[NUMKEYS];
 // Description to save in savegame if gameaction == ga_savegame
 char savedescription[SAVEDESCLEN];
 
+/*
+ * CG: This is set to true when graphics have been initialized; useful for
+ *     printf and other routines that would like to fallback to some console
+ *     output if the screen is not yet available.
+ */
+dboolean graphics_initialized = false;
+
 //jff 3/24/98 define defaultskill here
 int defaultskill;               //note 1-based
 
@@ -413,6 +420,8 @@ static int G_NextWeapon(int direction)
 }
 
 void G_BuildTiccmd(netticcmd_t* ncmd) {
+  static int maketic = 0;
+
   int strafe;
   int bstrafe;
   int speed;
@@ -423,8 +432,8 @@ void G_BuildTiccmd(netticcmd_t* ncmd) {
 
   ticcmd_t *cmd = &ncmd->cmd;
 
+  ncmd->tic = maketic++;
   /* cphipps - remove needless I_BaseTiccmd call, just set the ticcmd to zero */
-  ncmd->tic = gametic;
   memset(cmd, 0, sizeof(ticcmd_t));
 
   strafe = gamekeydown[key_strafe] || mousebuttons[mousebstrafe]
@@ -3710,7 +3719,7 @@ void doom_printf(const char *s, ...) {
   va_list v;
 
   va_start(v,s);
-  if (nodrawers) {
+  if (nodrawers || !graphics_initialized) {
     vprintf(s, v);
   }
   else {

@@ -100,7 +100,8 @@ void N_RemovePeer(netpeer_t *np) {
   int peernum = N_GetPeerNum(np->peer);
 
   doom_printf("Removing peer %s:%u\n",
-    N_IPToConstString(np->peer->address.host), np->peer->address.port
+    N_IPToConstString((doom_b32(np->peer->address.host))),
+    np->peer->address.port
   );
 
   M_BufferFree(&np->rbuf);

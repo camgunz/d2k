@@ -199,6 +199,9 @@ extern int  joybstraferight;
 extern int  joybuse;
 extern int  joybspeed;
 
+/* CG: This is set to true when graphics have been initialized */
+extern dboolean graphics_initialized;
+
 extern int  defaultskill;      //jff 3/24/98 default skill
 extern dboolean haswolflevels;  //jff 4/18/98 wolf levels present
 

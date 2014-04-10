@@ -45,6 +45,7 @@
 #include "g_game.h"
 #include "i_system.h"
 #include "lprintf.h"
+#include "m_swap.h"
 #include "w_wad.h"
 
 #include "n_net.h"
@@ -540,7 +541,7 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
       default:
         doom_printf("Received unknown message type %u from peer %s:%u.\n",
           message_type,
-          N_IPToConstString(np->peer->address.host),
+          N_IPToConstString(doom_b32(np->peer->address.host)),
           np->peer->address.port
         );
       break;
