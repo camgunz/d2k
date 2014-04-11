@@ -46,21 +46,21 @@ typedef struct game_state_s {
   buf_t state;
 } game_state_t;
 
-static game_state_t *current_game_state;
+static game_state_t current_game_state;
 static obuf_t saved_game_states;
 
 void N_InitStates(void) {
-  M_BufferInit(&current_game_state->state);
+  M_BufferInit(&current_game_state.state);
   M_OBufInit(&saved_game_states);
 }
 
 void N_SaveCurrentState(int tic, buf_t *state) {
-  current_game_state->tic = tic;
-  M_BufferCopy(&current_game_state->state, state);
+  current_game_state.tic = tic;
+  M_BufferCopy(&current_game_state.state, state);
 }
 
 buf_t* N_GetCurrentState(void) {
-  return &current_game_state->state;
+  return &current_game_state.state;
 }
 
 void N_SaveStateForTic(int tic, buf_t *state) {
@@ -87,9 +87,9 @@ dboolean N_ApplyStateDelta(int from_tic, int to_tic, buf_t *delta) {
   if (gs == NULL)
     return false;
 
-  M_ApplyDelta(&gs->state, &current_game_state->state, delta);
+  M_ApplyDelta(&gs->state, &current_game_state.state, delta);
 
-  current_game_state->tic = to_tic;
+  current_game_state.tic = to_tic;
 
   OBUF_FOR_EACH(&saved_game_states, entry) {
     game_state_t *sgs = entry.obj;
@@ -107,7 +107,7 @@ dboolean N_ApplyStateDelta(int from_tic, int to_tic, buf_t *delta) {
 }
 
 void N_BuildStateDelta(netpeer_t *np) {
-  M_BuildDelta(&np->state, &current_game_state->state, &np->delta);
+  M_BuildDelta(&np->state, &current_game_state.state, &np->delta);
 }
 
 /* vi: set et sw=2 ts=2: */

@@ -1,3 +1,3 @@
 HOST=10.0.2.15
 
-cbuild/doom2k -net $HOST:10666
+gdb -ex run --args cbuild/doom2k -nomouse -net $HOST:10666

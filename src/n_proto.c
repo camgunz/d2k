@@ -135,15 +135,15 @@ const char *D_dehout(void); /* CG: from d_main.c */
 
 #define DELTA_CLIENT_ONLY(name)                                               \
   DELTA_SYNC_ONLY(name);                                                      \
-  SERVER_ONLY(name);
-
-#define COMMAND_CLIENT_ONLY(name)                                             \
-  COMMAND_SYNC_ONLY(name);                                                    \
   CLIENT_ONLY(name);
 
 #define COMMAND_SERVER_ONLY(name)                                             \
   COMMAND_SYNC_ONLY(name);                                                    \
   SERVER_ONLY(name);
+
+#define COMMAND_CLIENT_ONLY(name)                                             \
+  COMMAND_SYNC_ONLY(name);                                                    \
+  CLIENT_ONLY(name);
 
 #define CHECK_VALID_PLAYER(np, playernum)                                     \
   if (playernum < 0 || playernum >= MAXPLAYERS)                               \
@@ -177,15 +177,18 @@ const byte nm_voterequest            = 14; /* C => S | BOTH    |   reliable */
 static buf_t message_recipients;
 
 static void handle_setup(netpeer_t *np) {
+  net_sync_type_e net_sync = NET_SYNC_TYPE_NONE;
   unsigned short player_count = 0;
   unsigned short playernum = 0;
   int i;
 
-  if (!N_UnpackSetup(np, &player_count, &playernum)) {
+  if (!N_UnpackSetup(np, &net_sync, &player_count, &playernum)) {
     M_OBufFreeEntriesAndClear(&resource_files_buf);
     M_OBufFreeEntriesAndClear(&deh_files_buf);
     return;
   }
+
+  netsync = net_sync;
 
   for (i = 0; i < player_count; i++) {
     playeringame[i] = true;
@@ -198,8 +201,6 @@ static void handle_setup(netpeer_t *np) {
     playeringame[i] = false;
 
   consoleplayer = playernum;
-
-  printf("Assigned player %u out of %u\n", playernum, player_count);
 
   if (!playeringame[consoleplayer])
     I_Error("consoleplayer not in game");
@@ -240,6 +241,7 @@ static void handle_full_state(netpeer_t *np) {
   static dboolean initialized_buffer = false;
 
   int tic;
+  dboolean call_init_new = CL_ReceivedSetup();
 
   if (!initialized_buffer) {
     M_BufferInit(&state_buffer);
@@ -248,7 +250,7 @@ static void handle_full_state(netpeer_t *np) {
 
   if (N_UnpackFullState(np, &tic, &state_buffer)) {
     N_SaveCurrentState(tic, &state_buffer);
-    G_ReadSaveData(N_GetCurrentState(), true, false);
+    G_ReadSaveData(N_GetCurrentState(), true, call_init_new);
     CL_SendStateReceived(tic);
     CL_SetReceivedSetup(true);
   }
@@ -582,12 +584,12 @@ void SV_SetupNewPeer(int peernum) {
   }
 
   playeringame[playernum] = true;
-  players[playernum].playerstate = PST_REBORN;
+  P_SpawnPlayer(playernum, &playerstarts[playernum]);
   np->playernum = playernum;
 
   SV_SendSetup(playernum);
 
-  SV_SendFullUpdate(playernum);
+  SV_SendFullState(playernum);
 }
 
 void SV_SendSetup(short playernum) {
@@ -689,7 +691,7 @@ void CL_SendCommands(void) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
-  N_PackPlayerCommands(np);
+  N_PackPlayerCommands(np, consoleplayer);
 }
 
 void CL_SendSaveGameNameChange(char *new_save_game_name) {

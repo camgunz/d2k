@@ -29,8 +29,8 @@
  * DESCRIPTION: Main game control interface.
  *-----------------------------------------------------------------------------*/
 
-#ifndef __G_GAME__
-#define __G_GAME__
+#ifndef G_GAME__
+#define G_GAME__
 
 #include "doomdef.h"
 #include "d_event.h"
@@ -48,6 +48,8 @@ struct netticcmd_s;
 #define OLD_GAME_OPTION_SIZE 14
 // killough 5/2/98: number of bytes reserved for saving options
 #define GAME_OPTION_SIZE 64
+
+#define MAX_MESSAGE_SIZE 1024
 
 dboolean G_Responder(event_t *ev);
 dboolean G_CheckDemoStatus(void);
@@ -104,6 +106,9 @@ const byte* G_ReadDemoHeaderEx(const byte* demo_p, size_t size, unsigned int par
 const byte* G_ReadDemoHeader(const byte* demo_p, size_t size);
 void G_CalculateDemoParams(const byte *demo_p);
 
+void doom_pprintf(short playernum, const char *, ...) __attribute__((
+  format(printf, 2, 3)
+));
 // killough 1/18/98: Doom-style printf;   killough 4/25/98: add gcc attributes
 // CPhipps - renames to doom_printf to avoid name collision with glibc
 void doom_printf(const char *, ...) __attribute__((format(printf,1,2)));
@@ -234,3 +239,6 @@ extern int bytes_per_tic;
 #define comperr(i) (default_comperr[i] && !demorecording && !demoplayback && !democontinue && !netgame)
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

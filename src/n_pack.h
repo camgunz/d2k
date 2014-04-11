@@ -39,7 +39,8 @@ void     N_LoadPacketData(void *data, size_t data_size);
 dboolean N_LoadNewMessage(netpeer_t *np, byte *message_type);
 
 void     N_PackSetup(netpeer_t *np);
-dboolean N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
+dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
+                                      unsigned short *player_count,
                                       unsigned short *playernum);
 
 void     N_PackFullState(netpeer_t *np, buf_t *buf);
@@ -68,7 +69,7 @@ dboolean N_UnpackPlayerMessage(netpeer_t *np, unsigned short *sender,
 void     N_PackPlayerCommandReceived(netpeer_t *np, int tic);
 dboolean N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic);
 
-void     N_PackPlayerCommands(netpeer_t *np);
+void     N_PackPlayerCommands(netpeer_t *np, unsigned short playernum);
 dboolean N_UnpackPlayerCommands(netpeer_t *np);
 
 void     N_PackSaveGameNameChange(netpeer_t *np, char *new_save_game_name);

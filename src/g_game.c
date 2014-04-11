@@ -77,7 +77,6 @@
 #include "n_net.h"
 #include "n_proto.h"
 
-#define MAX_MESSAGE_SIZE 1024
 #define SAVESTRINGSIZE  24
 
 // e6y
@@ -1138,11 +1137,10 @@ void G_Ticker(void) {
   }
 
   for (i = 0; i < MAXPLAYERS; i++) {
-    if (!playeringame[i])
-      continue;
-
-    M_CBufRemove(&players[i].commands, 0);
-    M_CBufConsolidate(&players[i].commands);
+    if (playeringame[i] && M_CBufGet(&players[i].commands, 0)) {
+      M_CBufRemove(&players[i].commands, 0);
+      M_CBufConsolidate(&players[i].commands);
+    }
   }
 
   // cph - if the gamestate changed, we may need to clean up the old gamestate
@@ -3704,6 +3702,30 @@ dboolean G_CheckDemoStatus (void)
       return true;
     }
   return false;
+}
+
+// CG 4/11/2014: Generalize doom_printf to send messages to any player
+//         TODO: At some point, this is gonna have to be revamped.  The rest
+//               of the engine expects to be able to just assign static strings
+//               to player_t.message, but messages sent over the network are
+//               obviously not static, so they have to be copied.
+void doom_pprintf(short playernum, const char *s, ...) {
+  static char msg[MAXPLAYERS][MAX_MESSAGE_SIZE];
+
+  va_list v;
+
+  va_start(v,s);
+  if (nodrawers || !graphics_initialized) {
+    vprintf(s, v);
+  }
+  else {
+    /* print message in buffer */
+    doom_vsnprintf(msg[playernum], sizeof(msg[playernum]), s, v);
+    /* set new message */
+    players[playernum].message = msg[playernum];
+  }
+  va_end(v);
+
 }
 
 // killough 1/22/98: this is a "Doom printf" for messages. I've gotten

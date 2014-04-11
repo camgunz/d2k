@@ -272,10 +272,9 @@ void N_PackSetup(netpeer_t *np) {
   }
 
   msgpack_pack_unsigned_char(np->rpk, nm_setup);
+  msgpack_pack_int(np->rpk, netsync);
   msgpack_pack_unsigned_short(np->rpk, player_count);
   msgpack_pack_unsigned_short(np->rpk, np->playernum);
-
-  printf("Assigned player %d/%d.\n", np->playernum, player_count);
 
   msgpack_pack_array(np->rpk, M_OBufGetObjectCount(&resource_files_buf));
   OBUF_FOR_EACH(&resource_files_buf, entry) {
@@ -284,8 +283,6 @@ void N_PackSetup(netpeer_t *np) {
 
     msgpack_pack_raw(np->rpk, length);
     msgpack_pack_raw_body(np->rpk, resource_name, length);
-
-    printf("Sent a resource.\n");
   }
 
 
@@ -296,15 +293,20 @@ void N_PackSetup(netpeer_t *np) {
 
     msgpack_pack_raw(np->rpk, length);
     msgpack_pack_raw_body(np->rpk, deh_name, length);
-
-    printf("Sent a BEX/DEH patch.\n");
   }
 }
 
-dboolean N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
+dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
+                                      unsigned short *player_count,
                                       unsigned short *playernum) {
+  net_sync_type_e m_sync_type = NET_SYNC_TYPE_NONE;
   unsigned short m_player_count = 0;
   unsigned short m_playernum = 0;
+
+  unpack_and_validate_range(
+    obj, "net sync type", int, NET_SYNC_TYPE_COMMAND, NET_SYNC_TYPE_DELTA
+  );
+  m_sync_type = (net_sync_type_e)obj->via.u64;
 
   unpack_and_validate(obj, "player count", ushort);
   m_player_count = (unsigned short)obj->via.u64;
@@ -332,6 +334,7 @@ dboolean N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
     MAX_RESOURCE_NAMES
   );
 
+  *sync_type = m_sync_type;
   *player_count = m_player_count;
   *playernum = m_playernum;
 
@@ -474,8 +477,16 @@ dboolean N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic) {
   return true;
 }
 
-void N_PackPlayerCommands(netpeer_t *np, cbuf_t *commands) {
+void N_PackPlayerCommands(netpeer_t *np, unsigned short playernum) {
+  cbuf_t *commands = NULL;
+
+  if (CLIENT)
+    commands = CL_GetLocalCommands();
+  else
+    commands = &players[playernum].commands;
+
   msgpack_pack_unsigned_char(np->upk, nm_playercommands);
+  msgpack_pack_unsigned_short(np->upk, playernum);
   msgpack_pack_unsigned_char(np->upk, M_CBufGetObjectCount(commands));
 
   CBUF_FOR_EACH(commands, entry) {
@@ -492,9 +503,20 @@ void N_PackPlayerCommands(netpeer_t *np, cbuf_t *commands) {
 }
 
 dboolean N_UnpackPlayerCommands(netpeer_t *np) {
+  unsigned short playernum = 0;
   byte command_count = 0;
   int latest_command_tic = 0;
 
+  unpack_and_validate_player(obj);
+  playernum = (unsigned short)obj->via.u64;
+
+  /*
+   * CG: TODO: Add a limit to the number of commands accepted here.  uchar
+   *           limits this to 255 commands, but in reality that's > 7 seconds,
+   *           which is still far too long.  Quake has a "sv_maxlag" setting
+   *           (or something), that may be preferable to a static limit... but
+   *           I think having an upper bound on that setting is still prudent.
+   */
   unpack_and_validate(obj, "command count", uchar);
   M_CBufEnsureCapacity(&players[np->playernum].commands, command_count);
   M_CBufConsolidate(&players[np->playernum].commands);
@@ -507,31 +529,44 @@ dboolean N_UnpackPlayerCommands(netpeer_t *np) {
   }
 
   for (byte i = 0; i < command_count; i++) {
-    netticcmd_t ncmd;
+    int tic = 0;
 
     unpack_and_validate(obj, "command tic", int);
-    ncmd.tic = (int)obj->via.i64;
+    tic = (int)obj->via.i64;
 
-    unpack_and_validate(obj, "command forward value", char);
-    ncmd.cmd.forwardmove = (signed char)obj->via.i64;
+    if (tic <= latest_command_tic) {
+      unpack_and_validate(obj, "command forward value", char);
+      unpack_and_validate(obj, "command side value", char);
+      unpack_and_validate(obj, "command angle value", short);
+      unpack_and_validate(obj, "command consistancy value", short);
+      unpack_and_validate(obj, "command chatchar value", uchar);
+      unpack_and_validate(obj, "command buttons value", uchar);
+    }
+    else {
+      netticcmd_t *ncmd = ncmd = M_CBufGetFirstFreeOrNewSlot(
+        &players[playernum].commands
+      );
 
-    unpack_and_validate(obj, "command side value", char);
-    ncmd.cmd.sidemove = (signed char)obj->via.i64;
+      ncmd->tic = tic;
 
-    unpack_and_validate(obj, "command angle value", short);
-    ncmd.cmd.angleturn = (signed short)obj->via.i64;
+      unpack_and_validate(obj, "command forward value", char);
+      ncmd->cmd.forwardmove = (signed char)obj->via.i64;
 
-    unpack_and_validate(obj, "command consistancy value", short);
-    ncmd.cmd.consistancy = (signed short)obj->via.i64;
+      unpack_and_validate(obj, "command side value", char);
+      ncmd->cmd.sidemove = (signed char)obj->via.i64;
 
-    unpack_and_validate(obj, "command chatchar value", uchar);
-    ncmd.cmd.chatchar = (byte)obj->via.u64;
+      unpack_and_validate(obj, "command angle value", short);
+      ncmd->cmd.angleturn = (signed short)obj->via.i64;
 
-    unpack_and_validate(obj, "command buttons value", uchar);
-    ncmd.cmd.buttons = (byte)obj->via.u64;
+      unpack_and_validate(obj, "command consistancy value", short);
+      ncmd->cmd.consistancy = (signed short)obj->via.i64;
 
-    if (ncmd.tic > latest_command_tic)
-      M_CBufAppend(&players[np->playernum].commands, &ncmd);
+      unpack_and_validate(obj, "command chatchar value", uchar);
+      ncmd->cmd.chatchar = (byte)obj->via.u64;
+
+      unpack_and_validate(obj, "command buttons value", uchar);
+      ncmd->cmd.buttons = (byte)obj->via.u64;
+    }
   }
 
   return true;

@@ -33,8 +33,8 @@
 
 #include "z_zone.h"
 
-#include "m_cbuf.h"
 #include "doomstat.h"
+#include "g_game.h"
 #include "r_main.h"
 #include "p_maputl.h"
 #include "p_spec.h"
@@ -46,6 +46,8 @@
 #include "lprintf.h"
 #include "s_advsound.h"
 #include "e6y.h"//e6y
+
+#include "n_net.h"
 
 typedef enum {
   tc_end,
@@ -99,58 +101,182 @@ static void P_SetNewTarget(mobj_t **mop, mobj_t *targ) {
   P_SetTarget(mop, targ);
 }
 
+static void P_ArchivePlayer(buf_t *savebuffer, player_t *player) {
+  M_BufferWriteInt(savebuffer, player->playerstate);
+  M_BufferWriteByte(savebuffer, player->cmd.forwardmove);
+  M_BufferWriteByte(savebuffer, player->cmd.sidemove);
+  M_BufferWriteShort(savebuffer, player->cmd.angleturn);
+  M_BufferWriteShort(savebuffer, player->cmd.consistancy);
+  M_BufferWriteByte(savebuffer, player->cmd.chatchar);
+  M_BufferWriteByte(savebuffer, player->cmd.buttons);
+  M_BufferWriteInt(savebuffer, player->viewz);
+  M_BufferWriteInt(savebuffer, player->viewheight);
+  M_BufferWriteInt(savebuffer, player->deltaviewheight);
+  M_BufferWriteInt(savebuffer, player->bob);
+  M_BufferWriteInt(savebuffer, player->health);
+  M_BufferWriteInt(savebuffer, player->armorpoints);
+  M_BufferWriteInt(savebuffer, player->armortype);
+  for (int i = 0; i < NUMPOWERS; i++)
+    M_BufferWriteInt(savebuffer, player->powers[i]);
+  for (int i = 0; i < NUMCARDS; i++)
+    M_BufferWriteInt(savebuffer, player->cards[i]);
+  M_BufferWriteInt(savebuffer, player->backpack);
+  for (int i = 0; i < MAXPLAYERS; i++)
+    M_BufferWriteInt(savebuffer, player->frags[i]);
+  M_BufferWriteInt(savebuffer, player->readyweapon);
+  M_BufferWriteInt(savebuffer, player->pendingweapon);
+  for (int i = 0; i < NUMWEAPONS; i++)
+    M_BufferWriteInt(savebuffer, player->weaponowned[i]);
+  for (int i = 0; i < NUMAMMO; i++)
+    M_BufferWriteInt(savebuffer, player->ammo[i]);
+  for (int i = 0; i < NUMAMMO; i++)
+    M_BufferWriteInt(savebuffer, player->maxammo[i]);
+  M_BufferWriteInt(savebuffer, player->attackdown);
+  M_BufferWriteInt(savebuffer, player->usedown);
+  M_BufferWriteInt(savebuffer, player->cheats);
+  M_BufferWriteInt(savebuffer, player->refire);
+  M_BufferWriteInt(savebuffer, player->killcount);
+  M_BufferWriteInt(savebuffer, player->itemcount);
+  M_BufferWriteInt(savebuffer, player->secretcount);
+  M_BufferWriteString(
+    savebuffer, (char *)player->message, strlen(player->message)
+  );
+  M_BufferWriteInt(savebuffer, player->damagecount);
+  M_BufferWriteInt(savebuffer, player->bonuscount);
+  M_BufferWriteInt(savebuffer, player->extralight);
+  M_BufferWriteInt(savebuffer, player->fixedcolormap);
+  M_BufferWriteInt(savebuffer, player->colormap);
+  for (int i = 0; i < NUMPSPRITES; i++) {
+    M_BufferWriteLong(savebuffer, player->psprites[i].state - states);
+  }
+  M_BufferWriteInt(savebuffer, player->didsecret);
+  M_BufferWriteInt(savebuffer, player->momx);
+  M_BufferWriteInt(savebuffer, player->momy);
+  M_BufferWriteInt(savebuffer, player->resurectedkillcount);
+  M_BufferWriteInt(savebuffer, player->prev_viewz);
+  M_BufferWriteInt(savebuffer, player->prev_viewangle);
+  M_BufferWriteInt(savebuffer, player->prev_viewpitch);
+  M_BufferWriteInt(savebuffer, player->jumpTics);
+  M_BufferWriteString(savebuffer, player->name, strlen(player->name));
+  M_BufferWriteByte(savebuffer, player->team);
+  M_CBufConsolidate(&player->commands);
+  M_BufferWriteInt(savebuffer, M_CBufGetObjectCount(&player->commands));
+  CBUF_FOR_EACH(&player->commands, entry) {
+    netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+
+    M_BufferWriteInt(savebuffer, ncmd->tic);
+    M_BufferWriteByte(savebuffer, ncmd->cmd.forwardmove);
+    M_BufferWriteByte(savebuffer, ncmd->cmd.sidemove);
+    M_BufferWriteShort(savebuffer, ncmd->cmd.angleturn);
+    M_BufferWriteShort(savebuffer, ncmd->cmd.consistancy);
+    M_BufferWriteByte(savebuffer, ncmd->cmd.chatchar);
+    M_BufferWriteByte(savebuffer, ncmd->cmd.buttons);
+  }
+}
+
+static void P_UnArchivePlayer(buf_t *savebuffer, player_t *player) {
+  int command_count = 0;
+  char msg[MAX_MESSAGE_SIZE];
+
+  memset(msg, 0, MAX_MESSAGE_SIZE * sizeof(char));
+
+  M_BufferReadInt(savebuffer, (int *)&player->playerstate);
+  M_BufferReadByte(savebuffer, (byte *)&player->cmd.forwardmove);
+  M_BufferReadByte(savebuffer, (byte *)&player->cmd.sidemove);
+  M_BufferReadShort(savebuffer, &player->cmd.angleturn);
+  M_BufferReadShort(savebuffer, &player->cmd.consistancy);
+  M_BufferReadByte(savebuffer, &player->cmd.chatchar);
+  M_BufferReadByte(savebuffer, &player->cmd.buttons);
+  M_BufferReadInt(savebuffer, &player->viewz);
+  M_BufferReadInt(savebuffer, &player->viewheight);
+  M_BufferReadInt(savebuffer, &player->deltaviewheight);
+  M_BufferReadInt(savebuffer, &player->bob);
+  M_BufferReadInt(savebuffer, &player->health);
+  M_BufferReadInt(savebuffer, &player->armorpoints);
+  M_BufferReadInt(savebuffer, &player->armortype);
+  for (int i = 0; i < NUMPOWERS; i++)
+    M_BufferReadInt(savebuffer, &player->powers[i]);
+  for (int i = 0; i < NUMCARDS; i++)
+    M_BufferReadInt(savebuffer, (int *)&player->cards[i]);
+  M_BufferReadInt(savebuffer, (int *)&player->backpack);
+  for (int i = 0; i < MAXPLAYERS; i++)
+    M_BufferReadInt(savebuffer, &player->frags[i]);
+  M_BufferReadInt(savebuffer, (int *)&player->readyweapon);
+  M_BufferReadInt(savebuffer, (int *)&player->pendingweapon);
+  for (int i = 0; i < NUMWEAPONS; i++)
+    M_BufferReadInt(savebuffer, (int *)&player->weaponowned[i]);
+  for (int i = 0; i < NUMAMMO; i++)
+    M_BufferReadInt(savebuffer, &player->ammo[i]);
+  for (int i = 0; i < NUMAMMO; i++)
+    M_BufferReadInt(savebuffer, &player->maxammo[i]);
+  M_BufferReadInt(savebuffer, &player->attackdown);
+  M_BufferReadInt(savebuffer, &player->usedown);
+  M_BufferReadInt(savebuffer, &player->cheats);
+  M_BufferReadInt(savebuffer, &player->refire);
+  M_BufferReadInt(savebuffer, &player->killcount);
+  M_BufferReadInt(savebuffer, &player->itemcount);
+  M_BufferReadInt(savebuffer, &player->secretcount);
+  M_BufferReadString(savebuffer, msg, MAX_MESSAGE_SIZE);
+  doom_pprintf(player - players, msg);
+  M_BufferReadInt(savebuffer, &player->damagecount);
+  M_BufferReadInt(savebuffer, &player->bonuscount);
+  M_BufferReadInt(savebuffer, &player->extralight);
+  M_BufferReadInt(savebuffer, &player->fixedcolormap);
+  M_BufferReadInt(savebuffer, &player->colormap);
+  for (int i = 0; i < NUMPSPRITES; i++) {
+    int_64_t state_index = 0;
+
+    M_BufferReadLong(savebuffer, &state_index);
+    player->psprites[i].state = &states[state_index];
+  }
+  M_BufferReadInt(savebuffer, (int *)&player->didsecret);
+  M_BufferReadInt(savebuffer, &player->momx);
+  M_BufferReadInt(savebuffer, &player->momy);
+  M_BufferReadInt(savebuffer, &player->resurectedkillcount);
+  M_BufferReadInt(savebuffer, &player->prev_viewz);
+  M_BufferReadInt(savebuffer, (int *)&player->prev_viewangle);
+  M_BufferReadInt(savebuffer, (int *)&player->prev_viewpitch);
+  M_BufferReadInt(savebuffer, &player->jumpTics);
+  if (player->name != NULL)
+    free(player->name);
+  M_BufferReadStringDup(savebuffer, &player->name);
+  M_BufferReadByte(savebuffer, &player->team);
+  M_BufferReadInt(savebuffer, &command_count);
+  M_CBufClear(&player->commands);
+  M_CBufEnsureCapacity(&player->commands, command_count);
+
+  while (command_count--) {
+    netticcmd_t *ncmd = M_CBufGetFirstFreeOrNewSlot(&player->commands);
+
+    M_BufferReadInt(savebuffer, &ncmd->tic);
+    M_BufferReadByte(savebuffer, (byte *)&ncmd->cmd.forwardmove);
+    M_BufferReadByte(savebuffer, (byte *)&ncmd->cmd.sidemove);
+    M_BufferReadShort(savebuffer, &ncmd->cmd.angleturn);
+    M_BufferReadShort(savebuffer, &ncmd->cmd.consistancy);
+    M_BufferReadByte(savebuffer, &ncmd->cmd.chatchar);
+    M_BufferReadByte(savebuffer, &ncmd->cmd.buttons);
+  }
+}
+
 //
 // P_ArchivePlayers
 //
 void P_ArchivePlayers(buf_t *savebuffer) {
-  int i;
-
-  for (i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i]) {
-      int j;
-
-      for (j = 0; j < NUMPSPRITES; j++) {
-        if (players[i].psprites[j].state) {
-          players[i].psprites[j].state =
-            (state_t *)(players[i].psprites[j].state - states);
-        }
-      }
-
-      M_BufferWrite(savebuffer, &players[i], sizeof(player_t));
-
-      for (j = 0; j < NUMPSPRITES; j++) {
-        if (players[i].psprites[j].state) {
-          players[i].psprites[j].state =
-            &states[(int)players[i].psprites[j].state];
-        }
-      }
-    }
-  }
+  for (int i = 0; i < MAXPLAYERS; i++)
+    P_ArchivePlayer(savebuffer, &players[i]);
 }
 
 //
 // P_UnArchivePlayers
 //
 void P_UnArchivePlayers(buf_t *savebuffer) {
-  int i, j;
-
-  for (i = 0; i < MAXPLAYERS; i++) {
-    if (!playeringame[i])
-      continue;
-
-    M_BufferRead(savebuffer, &players[i], sizeof(player_t));
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    P_UnArchivePlayer(savebuffer, &players[i]);
 
     // will be set when unarc thinker
     players[i].mo = NULL;
     players[i].message = NULL;
     players[i].attacker = NULL;
-
-    for (j = 0; j < NUMPSPRITES; j++) {
-      if (!players[i].psprites[j].state)
-        continue;
-
-      players[i].psprites[j].state = &states[(int)players[i].psprites[j].state];
-    }
   }
 }
 

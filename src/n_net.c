@@ -46,6 +46,7 @@
 #include "n_peer.h"
 #include "n_pack.h"
 #include "n_proto.h"
+#include "n_state.h"
 
 #define MAX_ADDRESS_LENGTH 500
 
@@ -285,6 +286,7 @@ void N_Init(void) {
 
   N_InitPeers();
   N_InitPacker();
+  N_InitStates();
   atexit(N_Shutdown);
 }
 

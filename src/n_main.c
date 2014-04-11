@@ -58,6 +58,7 @@
 #include "n_net.h"
 #include "n_main.h"
 #include "n_peer.h"
+#include "n_proto.h"
 
 /*
  * CG: TODO:
@@ -69,6 +70,7 @@ static dboolean is_extra_ddisplay = false;
 /* CG: Client only */
 static dboolean received_setup = false;
 static auth_level_e authorization_level = AUTH_LEVEL_NONE;
+static cbuf_t local_commands;
 
 void N_InitNetGame(void) {
   int i;
@@ -113,6 +115,8 @@ void N_InitNetGame(void) {
         doom_printf("N_InitNetGame: Setup information received.\n");
       else
         I_Error("N_InitNetGame: Timed out waiting for setup information.");
+
+      M_CBufInit(&local_commands, sizeof(netticcmd_t));
 
       atexit(N_Disconnect);
     }
@@ -201,7 +205,7 @@ void N_TryRunTics(void) {
   if (ffmap)
     commands_to_build++;
 
-  if (MULTINET) {
+  if (CMDCLIENT) {
     for (int i = 0; i < MAXPLAYERS; i++) {
       if (playeringame[i]) {
         tics_to_run = MIN(
@@ -267,6 +271,17 @@ void N_TryRunTics(void) {
       I_uSleep(sleep_time * 1000);
   }
 
+  if (DELTASERVER) {
+    for (short i = 0; i < MAXPLAYERS; i++) {
+      if (playeringame[i]) {
+        SV_SendStateDelta(i);
+      }
+    }
+  }
+  else if (CLIENT) {
+    CL_SendCommands();
+  }
+
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
     WasRenderedInTryRunTics = true;
@@ -286,6 +301,10 @@ void N_TryRunTics(void) {
 #endif
 }
 
+dboolean CL_ReceivedSetup(void) {
+  return received_setup;
+}
+
 void CL_SetReceivedSetup(dboolean new_received_setup) {
   received_setup = new_received_setup;
 }
@@ -295,12 +314,21 @@ void CL_SetAuthorizationLevel(auth_level_e level) {
     authorization_level = level;
 }
 
+cbuf_t* CL_GetLocalCommands(void) {
+  return &local_commands;
+}
+
+void CL_SaveNewCommand(netticcmd_t *ncmd) {
+  M_CBufConsolidate(&local_commands);
+  M_CBufInsertAtFirstFreeSlotOrAppend(&local_commands, ncmd);
+}
+
 void CL_RemoveOldCommands(int tic) {
-  CBUF_FOR_EACH(&players[consoleplayer].commands, entry) {
+  CBUF_FOR_EACH(&local_commands, entry) {
     netticcmd_t *ncmd = entry.obj;
 
     if (ncmd->tic <= tic) {
-      M_CBufRemove(&players[consoleplayer].commands, entry.index);
+      M_CBufRemove(&local_commands, entry.index);
       entry.index--;
     }
   }
