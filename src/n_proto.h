@@ -98,7 +98,7 @@ void CL_SendWeaponSpeedChange(byte new_weapon_speed);
 void CL_SendColorChange(byte new_red, byte new_green, byte new_blue);
 void CL_SendColormapChange(int new_color);
 void CL_SendSkinChange(void); /* CG: TODO */
-void CL_SendStateReceived(int tic);
+void CL_SendStateReceived(void);
 void CL_SendAuthRequest(char *password);
 void CL_SendRCONCommand(char *command);
 void CL_SendVoteRequest(char *command);

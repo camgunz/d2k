@@ -257,9 +257,7 @@ void N_TryRunTics(void) {
     if (CMDSERVER)
       SV_BroadcastPlayerCommands();
     else if (DELTASERVER)
-      SV_BroadcastStateDeltas();
-    else if (CMDCLIENT)
-      CL_SendPlayerCommandsReceived();
+      SV_BroadcastStateUpdates();
     else if (CLIENT)
       CL_SendCommands();
   }
@@ -324,7 +322,9 @@ void CL_SaveNewCommand(netticcmd_t *ncmd) {
   M_CBufInsertAtFirstFreeSlotOrAppend(&local_commands, ncmd);
 }
 
-void CL_RemoveOldCommands(int tic) {
+void CL_RemoveOldCommands(void) {
+  int tic = N_GetPeerForPlayer(consoleplayer)->last_sync_received_tic;
+
   CBUF_FOR_EACH(&local_commands, entry) {
     netticcmd_t *ncmd = entry.obj;
 

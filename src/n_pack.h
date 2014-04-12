@@ -114,7 +114,7 @@ dboolean N_UnpackColormapChange(netpeer_t *np, int *new_color);
 void     N_PackSkinChange(netpeer_t *np, short playernum);
 dboolean N_UnpackSkinChange(netpeer_t *np);
 
-void     N_PackStateReceived(netpeer_t *np, int tic);
+void     N_PackStateReceived(netpeer_t *np);
 dboolean N_UnpackStateReceived(netpeer_t *np, int *tic);
 
 void     N_PackAuthRequest(netpeer_t *np, char *password);

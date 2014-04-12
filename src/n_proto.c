@@ -62,8 +62,9 @@ const char *D_dehout(void); /* CG: from d_main.c */
 #define COMMAND_SYNC_ONLY(name)                                               \
   if (!CMDSYNC) {                                                             \
     doom_printf(                                                              \
-      __func__ ": Erroneously received command-sync packet [" name "] in "    \
-      "delta-sync mode\n"                                                     \
+      "%s: Erroneously received command-sync packet [%s] in delta-sync "      \
+      "mode\n",                                                               \
+      __func__, name                                                          \
     );                                                                        \
     return;                                                                   \
   }
@@ -71,8 +72,9 @@ const char *D_dehout(void); /* CG: from d_main.c */
 #define DELTA_SYNC_ONLY(name)                                                 \
   if (!DELTASYNC) {                                                           \
     doom_printf(                                                              \
-      __func__ ": Erroneously received delta-sync packet [" name "] in "      \
-      "command-sync mode\n"                                                   \
+      "%s: Erroneously received delta-sync packet [%s] in command-sync "      \
+      "mode\n",                                                               \
+      __func__, name                                                          \
     );                                                                        \
     return;                                                                   \
   }
@@ -80,7 +82,8 @@ const char *D_dehout(void); /* CG: from d_main.c */
 #define SERVER_ONLY(name)                                                     \
   if (!SERVER) {                                                              \
     doom_printf(                                                              \
-      __func__ ": Erroneously received packet [" name "] from the server\n"   \
+      "%s: Erroneously received packet [%s] from the server\n",               \
+      __func__, name                                                          \
     );                                                                        \
     return;                                                                   \
   }
@@ -88,7 +91,8 @@ const char *D_dehout(void); /* CG: from d_main.c */
 #define CLIENT_ONLY(name)                                                     \
   if (SERVER) {                                                               \
     doom_printf(                                                              \
-      __func__ ": Erroneously received packet [" name "] from a client\n"     \
+      "%s: Erroneously received packet [%s] from a client\n",                 \
+      __func__, name                                                          \
     );                                                                        \
     return;                                                                   \
   }
@@ -96,8 +100,8 @@ const char *D_dehout(void); /* CG: from d_main.c */
 #define NOT_DELTA_SERVER(name)                                                \
   if (DELTASERVER) {                                                          \
     doom_printf(                                                              \
-      __func__ ": Erroneously received packet [" name "] as a server in "     \
-      "delta-sync mode\n"                                                     \
+      "%s: Erroneously received packet [%s] as a server in delta-sync mode\n",\
+      __func__, name                                                          \
     );                                                                        \
     return;                                                                   \
   }
@@ -105,8 +109,8 @@ const char *D_dehout(void); /* CG: from d_main.c */
 #define NOT_DELTA_CLIENT(name)                                                \
   if (DELTACLIENT) {                                                          \
     doom_printf(                                                              \
-      __func__ ": Erroneously received packet [" name "] as a client in "     \
-      "delta-sync mode\n"                                                     \
+      "%s: Erroneously received packet [%s] as a client in delta-sync mode\n",\
+      __func__, name                                                          \
     );                                                                        \
     return;                                                                   \
   }
@@ -114,8 +118,9 @@ const char *D_dehout(void); /* CG: from d_main.c */
 #define NOT_COMMAND_SERVER(name)                                              \
   if (COMMANDSERVER) {                                                        \
     doom_printf(                                                              \
-      __func__ ": Erroneously received packet [" name "] as a server in "     \
-      "command-sync mode\n"                                                   \
+      "%s: Erroneously received packet [%s] as a server in command-sync "     \
+      "mode\n",                                                               \
+      __func__, name                                                          \
     );                                                                        \
     return;                                                                   \
   }
@@ -123,8 +128,9 @@ const char *D_dehout(void); /* CG: from d_main.c */
 #define NOT_COMMAND_CLIENT(name)                                              \
   if (COMMANDCLIENT) {                                                        \
     doom_printf(                                                              \
-      __func__ ": Erroneously received packet [" name "] as a client in "     \
-      "command-sync mode\n"                                                   \
+      "%s: Erroneously received packet [%s] as a client in command-sync "     \
+      "mode\n",                                                               \
+      __func__, name                                                          \
     );                                                                        \
     return;                                                                   \
   }
@@ -147,15 +153,15 @@ const char *D_dehout(void); /* CG: from d_main.c */
 
 #define CHECK_VALID_PLAYER(np, playernum)                                     \
   if (playernum < 0 || playernum >= MAXPLAYERS)                               \
-    I_Error(__func__ ": Invalid player %d.\n", playernum);                    \
+    I_Error("%s: Invalid player %d.\n", __func__, playernum);                 \
   if (!playeringame[playernum])                                               \
-    I_Error(__func__ ": Invalid player %d.\n", playernum);                    \
+    I_Error("%s: Invalid player %d.\n", __func__, playernum);                 \
   if (((np) = N_GetPeerForPlayer(playernum)) == NULL)                         \
-    I_Error(__func__ ": Invalid player %d.\n", playernum)
+    I_Error("%s: Invalid player %d.\n", __func__, playernum);                 \
 
 #define CHECK_CONNECTION(np)                                                  \
   if (((np) = N_GetPeer(0)) == NULL) {                                        \
-    doom_printf(__func__ ": Not connected\n");                                \
+    doom_printf("%s: Not connected\n", __func__);                             \
     return;                                                                   \
   }
 
@@ -250,7 +256,8 @@ static void handle_full_state(netpeer_t *np) {
   if (N_UnpackFullState(np, &tic, &state_buffer)) {
     N_SaveCurrentState(tic, &state_buffer);
     G_ReadSaveData(N_GetCurrentState(), true, call_init_new);
-    CL_SendStateReceived(tic);
+    np->last_sync_received_tic = tic;
+    CL_SendStateReceived();
     CL_SetReceivedSetup(true);
   }
 }
@@ -269,7 +276,8 @@ static void handle_state_delta(netpeer_t *np) {
   if (N_UnpackStateDelta(np, &from_tic, &to_tic, &delta_buffer)) {
     N_ApplyStateDelta(from_tic, to_tic, &delta_buffer);
     G_ReadSaveData(N_GetCurrentState(), true, false);
-    CL_SendStateReceived(to_tic);
+    np->last_sync_received_tic = to_tic;
+    CL_SendStateReceived();
   }
 }
 
@@ -596,7 +604,7 @@ void SV_SendStateDelta(short playernum) {
   CHECK_VALID_PLAYER(np, playernum);
 
   N_BuildStateDelta(np);
-  N_PackStateDelta(np, np->last_sync_received_tic, gametic, &np->delta);
+  N_PackStateDelta(np);
   np->last_sync_sent_tic = gametic;
 }
 
@@ -849,11 +857,11 @@ void SV_BroadcastStateUpdates(void) {
   }
 }
 
-void CL_SendStateReceived(int tic) {
+void CL_SendStateReceived(void) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
-  N_PackStateReceived(np, tic);
+  N_PackStateReceived(np);
 }
 
 void CL_SendAuthRequest(char *password) {

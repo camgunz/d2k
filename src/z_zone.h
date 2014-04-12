@@ -50,11 +50,13 @@
 #include "config.h"
 #endif
 
+#if 0
 #ifndef __func__
 #ifdef __FUNCTION__
 #define __func__ __FUNCTION__
 #else
 #define __func__ "<unknown>"
+#endif
 #endif
 #endif
 

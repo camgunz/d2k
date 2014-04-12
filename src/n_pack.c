@@ -107,38 +107,38 @@ DECLARE_TYPE(map, "a map", MAP);
 
 #define unpack(name)                                                          \
   if (!msgpack_unpacker_next(&pac, &result)) {                                \
-    doom_printf(__func__ ": Error unpacking " name "\n");                     \
+    doom_printf("%s: Error unpacking %s\n", __func__, name);                  \
     return false;                                                             \
   }
 
 #define validate_type(obj, name, type)                                        \
   if (!(npv_ ## type ## _type((obj)))) {                                      \
-    doom_printf( __func__ ": Invalid packet: " name " is not %s\n",           \
-      npv_ ## type ## _name                                                   \
+    doom_printf("%s: Invalid packet: %s is not %s.\n",                        \
+      __func__, name, npv_ ## type ## _name                                   \
     );                                                                        \
     return false;                                                             \
   }
 
 #define validate_size(obj, name, type)                                        \
   if (!(npv_ ## type ## _size((obj)))) {                                      \
-    doom_printf( __func__ ": " name " is too large (> %s)\n",                 \
-      npv_ ## type ## _size_limit                                             \
+    doom_printf("%s: Invalid packet: %s is too large (> %s)\n",               \
+      __func__, name, npv_ ## type ## _size_limit                             \
     );                                                                        \
     return false;                                                             \
   }
 
 #define validate_range(obj, name, type, min, max)                             \
   if (!(npv_ ## type ## _range((obj), (min), (max)))) {                       \
-    doom_printf(                                                              \
-      __func__ ": " name " is out of range (" #min ", " #max ")\n"            \
+    doom_printf("%s: Invalid packet: %s is out of range (%s, %s)\n",          \
+      __func__, name, #min, #max                                              \
     );                                                                        \
     return false;                                                             \
   }
 
 #define validate_array_size(arr, name, asize)                                 \
   if (arr.size > asize) {                                                     \
-    doom_printf(__func__ ": Array %s too large (%u > %u)\n",                  \
-      name, arr.size, asize                                                   \
+    doom_printf("%s: Invalid packet: Array %s too large (%u > %u)\n",         \
+      __func__, name, arr.size, asize                                         \
     );                                                                        \
     return false;                                                             \
   }
@@ -150,14 +150,14 @@ DECLARE_TYPE(map, "a map", MAP);
 #define validate_player(object)                                               \
   validate_type_and_size(object, "player number", short)                      \
   if (object->via.i64 >= MAXPLAYERS) {                                        \
-    doom_printf(__func__ ": Invalid player number\n");                        \
+    doom_printf("%s: Invalid player number\n", __func__);                     \
     return false;                                                             \
   }
 
 #define validate_recipient(object)                                            \
   validate_type_and_size(object, "recipient number", short)                   \
   if (object->via.i64 != -1 && object->via.i64 >= MAXPLAYERS) {               \
-    doom_printf(__func__ ": Invalid recipient number\n");                     \
+    doom_printf("%s: Invalid recipient number\n", __func__);                  \
     return false;                                                             \
   }
 
@@ -562,7 +562,7 @@ dboolean N_UnpackPlayerCommands(netpeer_t *np) {
     if (SERVER && np->playernum != playernum) {
       doom_printf(
         "N_UnpackPlayerCommands: Erroneously received player commands for %d "
-        "from player %d\n"
+        "from player %d\n",
         playernum,
         np->playernum
       );
@@ -570,10 +570,10 @@ dboolean N_UnpackPlayerCommands(netpeer_t *np) {
     }
 
     if (CLIENT && playernum == consoleplayer) {
-      unpacK_and_validate(obj, "last sync received tic", int);
+      unpack_and_validate(obj, "last sync received tic", int);
       np->last_sync_received_tic = (int)obj->via.i64;
 
-      CL_RemoveOldCommands(void);
+      CL_RemoveOldCommands();
       continue;
     }
 
@@ -636,6 +636,7 @@ dboolean N_UnpackPlayerCommands(netpeer_t *np) {
         ncmd->cmd.buttons = (byte)obj->via.u64;
       }
     }
+  }
 
   return true;
 }
@@ -914,9 +915,9 @@ dboolean N_UnpackSkinChange(netpeer_t *np) {
   return false;
 }
 
-void N_PackStateReceived(netpeer_t *np, int tic) {
+void N_PackStateReceived(netpeer_t *np) {
   msgpack_pack_unsigned_char(np->rpk, nm_statereceived);
-  msgpack_pack_int(np->rpk, tic);
+  msgpack_pack_int(np->rpk, np->last_sync_received_tic);
 }
 
 dboolean N_UnpackStateReceived(netpeer_t *np, int *tic) {
