@@ -198,6 +198,7 @@ void N_TryRunTics(void) {
   int commands_to_build = delta_time;
   int menu_renderer_calls = commands_to_build * 3;
   int tics_to_run = INT_MAX;
+  dboolean tic_elapsed = (delta_time > 0);
 
   if (commands_to_build > 0)
     commands_last_built_time = current_time;
@@ -252,6 +253,17 @@ void N_TryRunTics(void) {
       M_Ticker();
   }
 
+  if (tic_elapsed) {
+    if (CMDSERVER)
+      SV_BroadcastPlayerCommands();
+    else if (DELTASERVER)
+      SV_BroadcastStateDeltas();
+    else if (CMDCLIENT)
+      CL_SendPlayerCommandsReceived();
+    else if (CLIENT)
+      CL_SendCommands();
+  }
+
   if (SERVER) {
     N_ServiceNetworkTimeout(sleep_time);
   }
@@ -269,17 +281,6 @@ void N_TryRunTics(void) {
 
     if (sleep_time > 0)
       I_uSleep(sleep_time * 1000);
-  }
-
-  if (DELTASERVER) {
-    for (short i = 0; i < MAXPLAYERS; i++) {
-      if (playeringame[i]) {
-        SV_SendStateDelta(i);
-      }
-    }
-  }
-  else if (CLIENT) {
-    CL_SendCommands();
   }
 
 #ifdef GL_DOOM

@@ -165,14 +165,13 @@ const byte nm_statedelta             = 3;  /* S => C | DELTA   | unreliable */
 const byte nm_authresponse           = 4;  /* S => C | BOTH    |   reliable */
 const byte nm_servermessage          = 5;  /* S => C | BOTH    |   reliable */
 const byte nm_playermessage          = 6;  /* BOTH   | BOTH    |   reliable */
-const byte nm_playercommandreceived  = 7;  /* BOTH   | BOTH    |   reliable */
-const byte nm_playercommands         = 8;  /* NOT DELTA CLIENT | unreliable */
-const byte nm_savegamenamechange     = 9;  /* NOT DELTA CLIENT |   reliable */
-const byte nm_playerpreferencechange = 10; /* NOT DELTA CLIENT |   reliable */
-const byte nm_statereceived          = 11; /* C => S | DELTA   |   reliable */
-const byte nm_authrequest            = 12; /* C => S | BOTH    |   reliable */
-const byte nm_rconcommand            = 13; /* C => S | BOTH    |   reliable */
-const byte nm_voterequest            = 14; /* C => S | BOTH    |   reliable */
+const byte nm_playercommands         = 7;  /* NOT DELTA CLIENT | unreliable */
+const byte nm_savegamenamechange     = 8;  /* NOT DELTA CLIENT |   reliable */
+const byte nm_playerpreferencechange = 9;  /* NOT DELTA CLIENT |   reliable */
+const byte nm_statereceived          = 10; /* C => S | DELTA   |   reliable */
+const byte nm_authrequest            = 11; /* C => S | BOTH    |   reliable */
+const byte nm_rconcommand            = 12; /* C => S | BOTH    |   reliable */
+const byte nm_voterequest            = 13; /* C => S | BOTH    |   reliable */
 
 static buf_t message_recipients;
 
@@ -341,19 +340,6 @@ static void handle_player_message(netpeer_t *np) {
   }
 }
 
-static void handle_player_command_received(netpeer_t *np) {
-  int tic;
-
-  if (!N_UnpackPlayerCommandReceived(np, &tic))
-    return;
-
-  if (CMDSYNC)
-    np->last_sync_received_tic = tic;
- 
-  if (CLIENT)
-    CL_RemoveOldCommands(tic);
-}
-
 static void handle_player_commands(netpeer_t *np) {
   N_UnpackPlayerCommands(np);
 }
@@ -506,8 +492,6 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
         CLIENT_ONLY("authorization response");
         handle_auth_response(np);
       break;
-      case nm_playercommandreceived:
-        handle_player_command_received(np);
       case nm_servermessage:
         CLIENT_ONLY("server message");
         handle_server_message(np);
@@ -623,13 +607,6 @@ void SV_SendAuthResponse(short playernum, auth_level_e auth_level) {
   N_PackAuthResponse(np, auth_level);
 }
 
-void SV_SendPlayerCommandReceived(short playernum, int tic) {
-  netpeer_t *np = NULL;
-  CHECK_VALID_PLAYER(np, playernum);
-
-  N_PackPlayerCommandReceived(np, tic);
-}
-
 void SV_SendMessage(short playernum, char *message) {
   netpeer_t *np = NULL;
   CHECK_VALID_PLAYER(np, playernum);
@@ -680,11 +657,16 @@ void CL_SendMessageToCurrentTeam(char *message) {
   CL_SendMessageToTeam(players[consoleplayer].team, message);
 }
 
-void CL_SendPlayerCommandReceived(int tic) {
-  netpeer_t *np = NULL;
-  CHECK_CONNECTION(np);
+void SV_BroadcastPlayerCommands(void) {
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
 
-  N_PackPlayerCommandReceived(np, tic);
+    if (np != NULL) {
+      for (int j = 0; j < MAXPLAYERS; j++) {
+        N_PackPlayerCommands(np, j);
+      }
+    }
+  }
 }
 
 void CL_SendCommands(void) {
@@ -852,6 +834,19 @@ void CL_SendSkinChange(void) {
 
 void SV_BroadcastPlayerSkinChanged(short playernum) {
   /* CG: TODO */
+}
+
+void SV_BroadcastStateUpdates(void) {
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
+
+    if (np == NULL)
+      continue;
+
+    N_BuildStateDelta(np);
+    N_PackStateDelta(np);
+    np->last_sync_sent_tic = gametic;
+  }
 }
 
 void CL_SendStateReceived(int tic) {

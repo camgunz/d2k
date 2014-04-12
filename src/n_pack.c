@@ -362,12 +362,12 @@ dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf) {
   return true;
 }
 
-void N_PackStateDelta(netpeer_t *np, int from_tic, int to_tic, buf_t *buf) {
+void N_PackStateDelta(netpeer_t *np) {
   msgpack_pack_unsigned_char(np->upk, nm_statedelta);
-  msgpack_pack_int(np->upk, from_tic);
-  msgpack_pack_int(np->upk, to_tic);
-  msgpack_pack_raw(np->upk, buf->size);
-  msgpack_pack_raw_body(np->upk, buf->data, buf->size);
+  msgpack_pack_int(np->upk, np->last_sync_received_tic);
+  msgpack_pack_int(np->upk, gametic);
+  msgpack_pack_raw(np->upk, np->delta.size);
+  msgpack_pack_raw_body(np->upk, np->delta.data, np->delta.size);
 }
 
 dboolean N_UnpackStateDelta(netpeer_t *np, int *from_tic, int *to_tic,
@@ -464,51 +464,118 @@ dboolean N_UnpackPlayerMessage(netpeer_t *np, unsigned short *sender,
   return true;
 }
 
-void N_PackPlayerCommandReceived(netpeer_t *np, int tic) {
-  msgpack_pack_unsigned_char(np->rpk, nm_playercommandreceived);
-  msgpack_pack_int(np->rpk, tic);
-}
+void N_PackPlayerCommands(netpeer_t *np) {
+  if (SERVER) {
+    unsigned short player_count = 0;
 
-dboolean N_UnpackPlayerCommandReceived(netpeer_t *np, int *tic) {
-  unpack_and_validate(obj, "last player command tic received", int);
+    for (int i = 0; i < N_GetPeerCount(); i++) {
+      if (N_GetPeer(i) != NULL) {
+        player_count++;
+      }
+    }
 
-  *tic = (int)obj->via.u64;
+    msgpack_pack_unsigned_short(np->upk, player_count);
 
-  return true;
-}
+    for (int i = 0; i < N_GetPeerCount(); i++) {
+      netpeer_t *snp = N_GetPeer(i);
+      cbuf_t *commands = NULL;
+      int command_count = 0;
 
-void N_PackPlayerCommands(netpeer_t *np, unsigned short playernum) {
-  cbuf_t *commands = NULL;
+      if (snp == NULL)
+        continue;
 
-  if (CLIENT)
-    commands = CL_GetLocalCommands();
-  else
-    commands = &players[playernum].commands;
+      msgpack_pack_unsigned_short(np->upk, np->playernum);
 
-  msgpack_pack_unsigned_char(np->upk, nm_playercommands);
-  msgpack_pack_unsigned_short(np->upk, playernum);
-  msgpack_pack_unsigned_char(np->upk, M_CBufGetObjectCount(commands));
+      if (snp == np) {
+        msgpack_pack_int(np->upk, np->last_sync_received_tic);
+        continue;
+      }
 
-  CBUF_FOR_EACH(commands, entry) {
-    netticcmd_t *ncmd = entry.obj;
+      commands = &players[snp->playernum].commands;
+      command_count = M_CBufGetObjectCount(commands);
 
-    msgpack_pack_unsigned_int(np->upk, ncmd->tic);
-    msgpack_pack_signed_char(np->upk, ncmd->cmd.forwardmove);
-    msgpack_pack_signed_char(np->upk, ncmd->cmd.sidemove);
-    msgpack_pack_short(np->upk, ncmd->cmd.angleturn);
-    msgpack_pack_short(np->upk, ncmd->cmd.consistancy);
-    msgpack_pack_unsigned_char(np->upk, ncmd->cmd.chatchar);
-    msgpack_pack_unsigned_char(np->upk, ncmd->cmd.buttons);
+      CBUF_FOR_EACH(commands, entry) {
+        netticcmd_t *ncmd = entry.obj;
+
+        if (ncmd->tic <= np->last_sync_received_tic) {
+          command_count--;
+          continue;
+        }
+
+        if (ncmd->tic == np->last_sync_received_tic + 1)
+          msgpack_pack_unsigned_char(np->upk, command_count);
+
+        msgpack_pack_unsigned_int(np->upk, ncmd->tic);
+        msgpack_pack_signed_char(np->upk, ncmd->cmd.forwardmove);
+        msgpack_pack_signed_char(np->upk, ncmd->cmd.sidemove);
+        msgpack_pack_short(np->upk, ncmd->cmd.angleturn);
+        msgpack_pack_short(np->upk, ncmd->cmd.consistancy);
+        msgpack_pack_unsigned_char(np->upk, ncmd->cmd.chatchar);
+        msgpack_pack_unsigned_char(np->upk, ncmd->cmd.buttons);
+      }
+
+      if (command_count == 0)
+        msgpack_pack_unsigned_char(np->upk, 0);
+    }
+  }
+  else {
+    cbuf_t *commands = CL_GetLocalCommands();
+    int command_count = M_CBufGetObjectCount(commands);
+
+    CBUF_FOR_EACH(commands, entry) {
+      netticcmd_t *ncmd = entry.obj;
+
+      if (ncmd->tic <= np->last_sync_received_tic) {
+        command_count--;
+        continue;
+      }
+
+      if (ncmd->tic == np->last_sync_received_tic + 1)
+        msgpack_pack_unsigned_char(np->upk, command_count);
+
+      msgpack_pack_unsigned_int(np->upk, ncmd->tic);
+      msgpack_pack_signed_char(np->upk, ncmd->cmd.forwardmove);
+      msgpack_pack_signed_char(np->upk, ncmd->cmd.sidemove);
+      msgpack_pack_short(np->upk, ncmd->cmd.angleturn);
+      msgpack_pack_short(np->upk, ncmd->cmd.consistancy);
+      msgpack_pack_unsigned_char(np->upk, ncmd->cmd.chatchar);
+      msgpack_pack_unsigned_char(np->upk, ncmd->cmd.buttons);
+    }
   }
 }
 
 dboolean N_UnpackPlayerCommands(netpeer_t *np) {
-  unsigned short playernum = 0;
-  byte command_count = 0;
-  int latest_command_tic = 0;
+  unsigned short player_count = 0;
 
-  unpack_and_validate_player(obj);
-  playernum = (unsigned short)obj->via.u64;
+  unpack_and_validate(obj, "player count", ushort);
+  player_count = (unsigned short)obj->via.u64;
+
+  for (int i = 0; i < player_count; i++) {
+    unsigned short playernum = 0;
+    byte command_count = 0;
+    int latest_command_tic = -1;
+    cbuf_t *commands = NULL;
+
+    unpack_and_validate_player(obj);
+    playernum = (unsigned short)obj->via.u64;
+
+    if (SERVER && np->playernum != playernum) {
+      doom_printf(
+        "N_UnpackPlayerCommands: Erroneously received player commands for %d "
+        "from player %d\n"
+        playernum,
+        np->playernum
+      );
+      return false;
+    }
+
+    if (CLIENT && playernum == consoleplayer) {
+      unpacK_and_validate(obj, "last sync received tic", int);
+      np->last_sync_received_tic = (int)obj->via.i64;
+
+      CL_RemoveOldCommands(void);
+      continue;
+    }
 
   /*
    * CG: TODO: Add a limit to the number of commands accepted here.  uchar
@@ -517,57 +584,58 @@ dboolean N_UnpackPlayerCommands(netpeer_t *np) {
    *           (or something), that may be preferable to a static limit... but
    *           I think having an upper bound on that setting is still prudent.
    */
-  unpack_and_validate(obj, "command count", uchar);
-  M_CBufEnsureCapacity(&players[np->playernum].commands, command_count);
-  M_CBufConsolidate(&players[np->playernum].commands);
+    unpack_and_validate(obj, "command count", uchar);
+    command_count = (byte)obj->via.u64;
 
-  CBUF_FOR_EACH(&players[np->playernum].commands, entry) {
-    netticcmd_t *ncmd = entry.obj;
+    commands = &players[playernum].commands;
 
-    if (ncmd->tic > latest_command_tic)
-      latest_command_tic = ncmd->tic;
-  }
+    M_CBufEnsureCapacity(commands, command_count);
+    M_CBufConsolidate(commands);
 
-  for (byte i = 0; i < command_count; i++) {
-    int tic = 0;
+    CBUF_FOR_EACH(commands, entry) {
+      netticcmd_t *ncmd = entry.obj;
 
-    unpack_and_validate(obj, "command tic", int);
-    tic = (int)obj->via.i64;
-
-    if (tic <= latest_command_tic) {
-      unpack_and_validate(obj, "command forward value", char);
-      unpack_and_validate(obj, "command side value", char);
-      unpack_and_validate(obj, "command angle value", short);
-      unpack_and_validate(obj, "command consistancy value", short);
-      unpack_and_validate(obj, "command chatchar value", uchar);
-      unpack_and_validate(obj, "command buttons value", uchar);
+      latest_command_tic = MAX(latest_command_tic, ncmd->tic);
     }
-    else {
-      netticcmd_t *ncmd = ncmd = M_CBufGetFirstFreeOrNewSlot(
-        &players[playernum].commands
-      );
 
-      ncmd->tic = tic;
+    while (command_count--) {
+      int tic = 0;
 
-      unpack_and_validate(obj, "command forward value", char);
-      ncmd->cmd.forwardmove = (signed char)obj->via.i64;
+      unpack_and_validate(obj, "command tic", int);
+      tic = (int)obj->via.i64;
 
-      unpack_and_validate(obj, "command side value", char);
-      ncmd->cmd.sidemove = (signed char)obj->via.i64;
+      if (tic <= latest_command_tic) {
+        unpack_and_validate(obj, "command forward value", char);
+        unpack_and_validate(obj, "command side value", char);
+        unpack_and_validate(obj, "command angle value", short);
+        unpack_and_validate(obj, "command consistancy value", short);
+        unpack_and_validate(obj, "command chatchar value", uchar);
+        unpack_and_validate(obj, "command buttons value", uchar);
+      }
+      else {
+        netticcmd_t *ncmd = M_CBufGetFirstFreeOrNewSlot(commands);
 
-      unpack_and_validate(obj, "command angle value", short);
-      ncmd->cmd.angleturn = (signed short)obj->via.i64;
+        ncmd->tic = tic;
 
-      unpack_and_validate(obj, "command consistancy value", short);
-      ncmd->cmd.consistancy = (signed short)obj->via.i64;
+        unpack_and_validate(obj, "command forward value", char);
+        ncmd->cmd.forwardmove = (signed char)obj->via.i64;
 
-      unpack_and_validate(obj, "command chatchar value", uchar);
-      ncmd->cmd.chatchar = (byte)obj->via.u64;
+        unpack_and_validate(obj, "command side value", char);
+        ncmd->cmd.sidemove = (signed char)obj->via.i64;
 
-      unpack_and_validate(obj, "command buttons value", uchar);
-      ncmd->cmd.buttons = (byte)obj->via.u64;
+        unpack_and_validate(obj, "command angle value", short);
+        ncmd->cmd.angleturn = (signed short)obj->via.i64;
+
+        unpack_and_validate(obj, "command consistancy value", short);
+        ncmd->cmd.consistancy = (signed short)obj->via.i64;
+
+        unpack_and_validate(obj, "command chatchar value", uchar);
+        ncmd->cmd.chatchar = (byte)obj->via.u64;
+
+        unpack_and_validate(obj, "command buttons value", uchar);
+        ncmd->cmd.buttons = (byte)obj->via.u64;
+      }
     }
-  }
 
   return true;
 }
