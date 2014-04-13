@@ -189,6 +189,15 @@ void N_Update(void) {
 
 }
 
+void N_SendSync(void) {
+  if (CLIENT)
+    CL_SendCommands();
+  else if (CMDSERVER)
+    SV_BroadcastPlayerCommands();
+  else if (DELTASERVER)
+    SV_BroadcastStateUpdates();
+}
+
 void N_TryRunTics(void) {
   static int commands_last_built_time = 0;
 
@@ -253,14 +262,8 @@ void N_TryRunTics(void) {
       M_Ticker();
   }
 
-  if (tic_elapsed) {
-    if (CMDSERVER)
-      SV_BroadcastPlayerCommands();
-    else if (DELTASERVER)
-      SV_BroadcastStateUpdates();
-    else if (CLIENT)
-      CL_SendCommands();
-  }
+  if (tic_elapsed)
+    N_SendSync();
 
   if (SERVER) {
     N_ServiceNetworkTimeout(sleep_time);

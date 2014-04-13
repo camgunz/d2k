@@ -29,10 +29,6 @@ There will never be holes in ncmd buffers, because clients only flush them when
 the server has acknowledged receipt, either through the above method or through delta
 sync.
 
-I believe I can remove the clientside player command buffer by being smarter in
-`G_Ticker`.  Instead of always running the 1st command, we should seek to the
-command for the current tic (`maketic` == `gametic`), 
-
 Clients must trim their local player command buffers whenever sync is received;
 either via a command array or a delta.
 
@@ -41,10 +37,7 @@ receipt of.
 
 ## To Do (For Real)
 
-1. Have servers send full arrays of commands in command sync, not just the next
-   command for each player.
-
-1. Have players send commands.
+1. Seek to the command for the current tic (`maketic` == `gametic`).
 
 1. Have players properly trim their local command buffers in both command and
    delta sync.

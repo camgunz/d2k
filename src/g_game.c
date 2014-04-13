@@ -1059,6 +1059,8 @@ void G_Ticker(void) {
   }
   else {
     for (i = 0; i < MAXPLAYERS; i++) {
+      dboolean found_command = false;
+
       if (playeringame[i]) {
         ticcmd_t *cmd = &players[i].cmd;
         netticcmd_t *ncmd = NULL;
@@ -1072,10 +1074,19 @@ void G_Ticker(void) {
         }
         else {
           M_CBufConsolidate(&players[i].commands);
-          if ((ncmd = M_CBufGet(&players[i].commands, 0)) == NULL)
-            continue;
 
-          memcpy(cmd, &ncmd->cmd, sizeof(ticcmd_t));
+          CBUF_FOR_EACH(&players[i].commands, entry) {
+            netticcmd_t *ncmd = entry.obj;
+
+            if (ncmd->tic == gametic) {
+              memcpy(cmd, &ncmd->cmd, sizeof(ticcmd_t));
+              found_command = true;
+              break;
+            }
+          }
+
+          if (!found_command)
+            continue;
         }
 
         if (demorecording)

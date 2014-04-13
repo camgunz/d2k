@@ -131,6 +131,7 @@ void M_InitDeltas(void) {
 void M_BuildDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
   mmbuffer_t mmb1, mmb2;
   xdemitcb_t ecb;
+  int res = 0;
 
   ecb.priv = delta;
   ecb.outf = write_to_buffer;
@@ -141,9 +142,10 @@ void M_BuildDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
   mmb2.ptr = (char *)b2->data;
   mmb2.size = (long)b2->size;
 
-  if (xdl_rabdiff_mb(&mmb1, &mmb2, &ecb) != 0) {
+  res = xdl_rabdiff_mb(&mmb1, &mmb2, &ecb);
+  if (res != 0) {
     perror("");
-    I_Error("M_BuildData: Error building delta");
+    I_Error("M_BuildData: Error building delta: %d", res);
   }
 }
 
