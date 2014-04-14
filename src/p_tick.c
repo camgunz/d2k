@@ -304,7 +304,7 @@ void P_Ticker(void) {
           M_CBufRemove(&players[i].commands, entry.index);
           entry.index--;
 
-          /* CG: TODO: Is it save to just run this multiple times? */
+          /* CG: TODO: Is it safe to just run this multiple times? */
           P_PlayerThink(&players[i]);
         }
       }
