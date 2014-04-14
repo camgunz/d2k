@@ -296,29 +296,39 @@ static void handle_server_message(netpeer_t *np) {
 }
 
 static void handle_sync(netpeer_t *np) {
-  if (CMDSERVER && !N_UnpackCommandClientSync(np))
+  int old_state_tic = 0;
+
+  if (DELTACLIENT) {
+    old_state_tic = np->state_tic;
+
+    if (!N_UnpackDeltaSync(np))
+      return;
+
+    if (np->state_tic != old_state_tic)
+      N_ApplyStateDelta(&np->delta);
+  }
+  else if (!N_UnpackSync(np)) {
     return;
-
-  if (DELTASERVER && !N_UnpackDeltaClientSync(np))
-    return;
-
-  if (CMDCLIENT && !N_UnpackCommandServerSync(np))
-    return;
-
-  if (DELTACLIENT && !N_UnpackDeltaServerSync(np))
-    return;
-
-  if (SERVER)
-    SV_RemoveOldCommands();
-
+  }
+  
   if (CLIENT)
     CL_RemoveOldCommands();
 
+  if (CMDSERVER)
+    SV_RemoveOldCommands();
+
   if (DELTACLIENT)
-    N_ApplyStateDelta(&np->delta);
+    CL_RemoveOldStates();
 
   if (DELTASERVER)
     SV_RemoveOldStates();
+
+  M_BufferZero(&np->ubuf);
+
+  if (DELTASERVER)
+    N_PackDeltaSync(np);
+  else
+    N_PackSync(np);
 }
 
 static void handle_player_message(netpeer_t *np) {

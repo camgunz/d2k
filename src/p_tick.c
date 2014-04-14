@@ -264,8 +264,7 @@ static void P_RunThinkers (void)
 // P_Ticker
 //
 
-void P_Ticker (void)
-{
+void P_Ticker(void) {
   int i;
 
   /* pause if in menu and at least one tic has been run
@@ -278,25 +277,49 @@ void P_Ticker (void)
    */
 
   if (paused || (menuactive && !demoplayback && !netgame &&
-     players[consoleplayer].viewz != 1))
-  {
+                 players[consoleplayer].viewz != 1)) {
     P_ResetWalkcam();
     return;
   }
 
-  R_UpdateInterpolations ();
+  R_UpdateInterpolations();
 
   P_MapStart();
-               // not if this is an intermission screen
-  if(gamestate==GS_LEVEL)
-  for (i=0; i<MAXPLAYERS; i++)
-    if (playeringame[i])
-      P_PlayerThink(&players[i]);
+
+  // not if this is an intermission screen
+  if (gamestate == GS_LEVEL) {
+    for (i = 0; i < MAXPLAYERS; i++) {
+      if (!playeringame[i])
+        continue;
+
+      if (MULTINET && DELTASYNC) {
+        /*
+         * CG: TODO: Fix skipping caused by running a shit-ton of commands in a
+         *           single TIC.
+         */
+        CBUF_FOR_EACH(&players[i].commands, entry) {
+          netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+
+          memcpy(&players[i].cmd, &ncmd.cmd, sizeof(ticcmd_t));
+          M_CBufRemove(&players[i].commands, entry.index);
+          entry.index--;
+
+          /* CG: TODO: Is it save to just run this multiple times? */
+          P_PlayerThink(&players[i]);
+        }
+      }
+      else
+        P_PlayerThink(&players[i]);
+      }
+    }
+  }
 
   P_RunThinkers();
   P_UpdateSpecials();
   P_RespawnSpecials();
   P_MapEnd();
-  leveltime++;                       // for par times
+  leveltime++; // for par times
 }
+
+/* vi: set et ts=2 sw=2: */
 

@@ -77,6 +77,8 @@
 #include "n_net.h"
 #include "n_proto.h"
 
+extern char *player_names[];
+
 #define SAVESTRINGSIZE  24
 
 // e6y
@@ -957,7 +959,7 @@ dboolean G_Responder (event_t* ev) {
       /* killough */
       //e6y
       mousex += (AccelerateMouse(ev->data2) * (mouseSensitivity_horiz)) / 10;
-      if(GetMouseLook()) {
+      if (GetMouseLook()) {
         if (movement_mouseinvert)
           mlooky += (AccelerateMouse(ev->data3) * (mouseSensitivity_mlook)) / 10;
         else
@@ -1057,58 +1059,63 @@ void G_Ticker(void) {
   if (paused & 2 || (!demoplayback && menuactive && !netgame)) {
     basetic++;  // For revenant tracers and RNG -- we must maintain sync
   }
-  else {
+  else if (!(MULTINET && DELTASYNC)) {
     for (i = 0; i < MAXPLAYERS; i++) {
-      if (playeringame[i]) {
-        ticcmd_t *cmd = &players[i].cmd;
-        
-        //e6y
-        if (demoplayback) {
-          G_ReadDemoTiccmd(cmd);
-        }
-        else if (democontinue) {
-          G_ReadDemoContinueTiccmd(cmd);
-        }
-        else {
-          dboolean found_command = false;
+      ticcmd_t *cmd = NULL;
+      if (!playeringame[i])
+        continue;
 
-          M_CBufConsolidate(&players[i].commands);
+      cmd = &players[i].cmd;
+      
+      //e6y
+      if (demoplayback) {
+        G_ReadDemoTiccmd(cmd);
+      }
+      else if (democontinue) {
+        G_ReadDemoContinueTiccmd(cmd);
+      }
+      else if (MULTINET && CMDSYNC) {
+        netpeer_t *np = NULL;
+        dboolean found_command = false;
 
-          CBUF_FOR_EACH(&players[i].commands, entry) {
-            netticcmd_t *ncmd = entry.obj;
+        M_CBufConsolidate(&players[i].commands);
 
-            if (ncmd->index == gametic) {
-              memcpy(cmd, &ncmd->cmd, sizeof(ticcmd_t));
-              found_command = true;
-              break;
-            }
+        CBUF_FOR_EACH(&players[i].commands, entry) {
+          netticcmd_t *ncmd = entry.obj;
+
+          if (ncmd->index == gametic) {
+            memcpy(cmd, &ncmd->cmd, sizeof(ticcmd_t));
+            found_command = true;
+            break;
           }
-
-          if (!found_command)
-            continue;
         }
 
-        if (demorecording)
-          G_WriteDemoTiccmd(cmd);
+        if (!found_command)
+          continue;
+      }
 
-        // check for turbo cheats
-        // killough 2/14/98, 2/20/98 -- only warn in netgames and demos
+      if (demorecording)
+        G_WriteDemoTiccmd(cmd);
 
-        if ((netgame || demoplayback) &&
-            cmd->forwardmove > TURBOTHRESHOLD &&
-            !(gametic & 31) &&
-            ((gametic >> 5) & 3) == i) {
-          extern char *player_names[];
+      // check for turbo cheats
+      // killough 2/14/98, 2/20/98 -- only warn in netgames and demos
 
-          /* cph - don't use sprintf, use doom_printf */
-          doom_printf ("%s is turbo!", player_names[i]);
-        }
+      if ((netgame || demoplayback) &&
+          cmd->forwardmove > TURBOTHRESHOLD &&
+          !(gametic & 31) &&
+          ((gametic >> 5) & 3) == i) {
+
+        /* cph - don't use sprintf, use doom_printf */
+        doom_printf ("%s is turbo!", player_names[i]);
       }
     }
 
     // check for special buttons
     for (i = 0; i < MAXPLAYERS; i++) {
       if (!playeringame[i])
+        continue;
+
+      if (MULTINET)
         continue;
 
       if (players[i].cmd.buttons & BT_SPECIAL) {

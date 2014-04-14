@@ -49,17 +49,11 @@ dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level);
 void     N_PackServerMessage(netpeer_t *np, char *message);
 dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf);
 
-void     N_PackCommandClientSync(netpeer_t *np);
-dboolean N_UnpackCommandClientSync(netpeer_t *np);
+void     N_PackSync(netpeer_t *np);
+dboolean N_UnpackSync(netpeer_t *np);
 
-void     N_PackCommandServerSync(netpeer_t *np);
-dboolean N_UnpackCommandServerSync(netpeer_t *np);
-
-void     N_PackDeltaClientSync(netpeer_t *np);
-dboolean N_UnpackDeltaClientSync(netpeer_t *np);
-
-void     N_PackDeltaServerSync(netpeer_t *np);
-dboolean N_UnpackDeltaServerSync(netpeer_t *np);
+void     N_PackDeltaSync(netpeer_t *np);
+dboolean N_UnpackDeltaSync(netpeer_t *np);
 
 void     N_PackPlayerMessage(netpeer_t *np, unsigned short sender,
                                             size_t recipient_count,

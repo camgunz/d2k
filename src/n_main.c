@@ -72,7 +72,7 @@ static dboolean is_extra_ddisplay = false;
 static dboolean received_setup = false;
 static auth_level_e authorization_level = AUTH_LEVEL_NONE;
 
-void do_net_sync(void) {
+void send_net_sync(void) {
   if (CLIENT)
     CL_SendCommands();
   else if (CMDSERVER)
@@ -230,12 +230,12 @@ void N_TryRunTics(void) {
   if (ffmap)
     commands_to_build++;
 
-  if (CMDCLIENT) {
+  if (MULTINET && CMDSYNC) {
     for (int i = 0; i < MAXPLAYERS; i++) {
       if (playeringame[i]) {
-        tics_to_run = MIN(
-          tics_to_run, M_CBufGetObjectCount(&players[i].commands)
-        );
+        int command_count = M_CBufGetObjectCount(&players[i].commands);
+
+        tics_to_run = MIN(tics_to_run, command_count);
       }
     }
   }
@@ -273,18 +273,27 @@ void N_TryRunTics(void) {
       if (DELTASERVER)
         N_SaveCurrentState();
     }
+
+    if (CMDSERVER) {
+      for (int i = 0; i < N_GetPeerCount(); i++) {
+        netpeer_t *np = N_GetPeer(i);
+
+        if (np != NULL)
+          np->command_index = gametic;
+      }
+    }
   }
 
   if (menu_renderer_calls > 0) {
-    while (menu_renderer_calls--)
+    while (menu_renderer_calls--) {
       M_Ticker();
+    }
   }
 
-  if (tic_elapsed)
-    do_net_sync();
+  send_net_sync();
 
-  if (SERVER) {
-    N_ServiceNetworkTimeout(sleep_time);
+  if (MULTINET) {
+    N_ServiceNetwork();
   }
   else {
     if (movement_smooth && window_focused)
@@ -294,9 +303,6 @@ void N_TryRunTics(void) {
     if (V_GetMode() == VID_MODEGL)
       sleep_time = 0;
 #endif
-
-    if (MULTINET)
-      sleep_time = 0;
 
     if (sleep_time > 0)
       I_uSleep(sleep_time * 1000);

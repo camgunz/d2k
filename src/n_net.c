@@ -94,20 +94,31 @@ static void flush_peer_buffers(void) {
     if (np->rbuf.size != 0) {
       M_BufferPrint(&np->rbuf);
       ENetPacket *reliable_packet = enet_packet_create(
-        np->rbuf.data, np->rbuf.size, ENET_PACKET_FLAG_RELIABLE
+        np->rbuf.data,
+        np->rbuf.size,
+        ENET_PACKET_FLAG_RELIABLE | ENET_PACKET_FLAG_NO_ALLOCATE
       );
       enet_peer_send(np->peer, NET_CHANNEL_RELIABLE, reliable_packet);
-      M_BufferClear(&np->rbuf);
     }
 
     if (np->ubuf.size != 0) {
       M_BufferPrint(&np->rbuf);
       ENetPacket *unreliable_packet = enet_packet_create(
-        np->ubuf.data, np->ubuf.size, ENET_PACKET_FLAG_UNSEQUENCED
+        np->ubuf.data,
+        np->ubuf.size,
+        ENET_PACKET_FLAG_UNSEQUENCED | ENET_PACKET_FLAG_NO_ALLOCATE
       );
       enet_peer_send(np->peer, NET_CHANNEL_UNRELIABLE, unreliable_packet);
-      M_BufferClear(&np->ubuf);
     }
+  }
+}
+
+static void clear_peer_buffers(void) {
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
+
+    if (np != NULL && np->rbuf.size != 0)
+      M_BufferClear(&np->rbuf);
   }
 }
 
@@ -552,6 +563,8 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     if (timeout_ms != 0)
       break;
   }
+
+  clear_peer_buffers();
 }
 
 void N_ServiceNetwork(void) {

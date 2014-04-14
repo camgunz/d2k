@@ -143,16 +143,17 @@ dboolean N_ApplyStateDelta(game_state_delta_t *delta) {
   return true;
 }
 
-void N_BuildStateDelta(netpeer_t *np) {
-  game_state_t *peer_state = get_state(np->state_tic);
+void N_BuildStateDelta(int tic, game_state_delta_t *delta) {
+  game_state_t *state = get_state(tic);
 
-  if (peer_state == NULL)
-    I_Error("N_BuildStateDelta: Missing game state %d.\n", np->state_tic);
+  if (state == NULL)
+    I_Error("N_BuildStateDelta: Missing game state %d.\n", tic);
 
-  M_BuildDelta(&peer_state->data, &latest_game_state->data, &np->delta.data);
+  M_BufferZero(&delta->data);
+  M_BuildDelta(&state->data, &latest_game_state->data, &delta->data);
 
-  np->delta.from_tic = np->state_tic;
-  np->delta.to_tic = latest_game_state->tic;
+  delta->from_tic = tic;
+  delta->to_tic = latest_game_state->tic;
 }
 
 /* vi: set et sw=2 ts=2: */
