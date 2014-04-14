@@ -37,7 +37,8 @@ receipt of.
 
 ## To Do (For Real)
 
-1. Servers still play music (rofl)
+1. Have a look at command & state buffer trimming; the chance these are correct
+   is very small.
 
 1. Start testing prototype
 
