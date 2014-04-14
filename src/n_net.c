@@ -68,25 +68,6 @@ dboolean        solonet   = false;
 dboolean        netserver = false;
 net_sync_type_e netsync   = NET_SYNC_TYPE_NONE;
 
-static void print_bytes(char *bytes, size_t size) {
-  for (int i = 0; i < size; i++) {
-    if (((i + 1) * 5) >= 80)
-      printf("%4d\n", bytes[i]);
-    else
-      printf("%4d ", bytes[i]);
-  }
-  printf("\n");
-}
-
-static void print_buffer(buf_t *buf) {
-  printf("Buffer capacity, size and cursor: [%lu, %lu, %lu].\n",
-    buf->capacity,
-    buf->size,
-    buf->cursor
-  );
-  print_bytes(buf->data, buf->size);
-}
-
 static void check_peer_timeouts(void) {
   for (int i = 0; i < N_GetPeerCount(); i++) {
     if (N_CheckPeerTimeout(i)) {
@@ -552,7 +533,6 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
         );
         continue;
       }
-      print_bytes(net_event.packet->data, net_event.packet->dataLength);
       N_HandlePacket(
         peernum, net_event.packet->data, net_event.packet->dataLength
       );

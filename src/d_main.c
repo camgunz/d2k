@@ -85,6 +85,7 @@
 
 #include "n_net.h"
 #include "n_main.h"
+#include "n_state.h"
 
 void GetFirstMap(int *ep, int *map); // Ty 08/29/98 - add "-warp x" functionality
 static void D_PageDrawer(void);
@@ -1557,7 +1558,8 @@ static void D_DoomMainSetup(void)
   // non-numeric will do that but we'll only document "*"
 
   //jff 1/22/98 add command line parms to disable sound and music
-  {
+  /* CG: The server does this itself */
+  if (!SERVER) {
     int nosound = M_CheckParm("-nosound");
     nomusicparm = nosound || M_CheckParm("-nomusic");
     nosfxparm   = nosound || M_CheckParm("-nosfx");
@@ -1875,73 +1877,64 @@ static void D_DoomMainSetup(void)
   // killough 12/98:
   // Support -loadgame with -record and reimplement -recordfrom.
 
-  if ((slot = M_CheckParm("-recordfrom")) && (p = slot+2) < myargc)
-    G_RecordDemo(myargv[p]);
-  else
-    {
-      slot = M_CheckParm("-loadgame");
-      if ((p = M_CheckParm("-record")) && ++p < myargc)
-  {
-    autostart = true;
+  if ((slot = M_CheckParm("-recordfrom")) && (p = slot+2) < myargc) {
     G_RecordDemo(myargv[p]);
   }
+  else {
+    slot = M_CheckParm("-loadgame");
+    if ((p = M_CheckParm("-record")) && ++p < myargc) {
+      autostart = true;
+      G_RecordDemo(myargv[p]);
     }
+  }
 
   if ((p = M_CheckParm ("-checksum")) && ++p < myargc)
-    {
-      P_RecordChecksum (myargv[p]);
-    }
+    P_RecordChecksum(myargv[p]);
 
-  if ((p = M_CheckParm ("-fastdemo")) && ++p < myargc)
-    {                                 // killough
-      fastdemo = true;                // run at fastest speed possible
-      timingdemo = true;              // show stats after quit
-      G_DeferedPlayDemo(myargv[p]);
-      singledemo = true;              // quit after one demo
-    }
-  else
-    if ((p = M_CheckParm("-timedemo")) && ++p < myargc)
-      {
-  singletics = true;
-  timingdemo = true;            // show stats after quit
-  G_DeferedPlayDemo(myargv[p]);
-  singledemo = true;            // quit after one demo
-      }
-    else
-      if ((p = M_CheckParm("-playdemo")) && ++p < myargc)
-  {
+  if ((p = M_CheckParm ("-fastdemo")) && ++p < myargc) { // killough
+    fastdemo = true;                // run at fastest speed possible
+    timingdemo = true;              // show stats after quit
+    G_DeferedPlayDemo(myargv[p]);
+    singledemo = true;              // quit after one demo
+  }
+  else if ((p = M_CheckParm("-timedemo")) && ++p < myargc) {
+    singletics = true;
+    timingdemo = true;            // show stats after quit
+    G_DeferedPlayDemo(myargv[p]);
+    singledemo = true;            // quit after one demo
+  }
+  else if ((p = M_CheckParm("-playdemo")) && ++p < myargc) {
     G_DeferedPlayDemo(myargv[p]);
     singledemo = true;          // quit after one demo
   }
-  else
-    //e6y
-    if ((p = IsDemoContinue()))
-    {
-      G_DeferedPlayDemo(myargv[p+1]);
-      G_CheckDemoContinue();
-    }
-
-  if (slot && ++slot < myargc)
-    {
-      slot = atoi(myargv[slot]);        // killough 3/16/98: add slot info
-      G_LoadGame(slot, true);           // killough 5/15/98: add command flag // cph - no filename
-    }
-  else
-    if (!singledemo) {                  /* killough 12/98 */
-      if (autostart || netgame)
-  {
-    // sets first map and first episode if unknown
-    if (autostart)
-    {
-      GetFirstMap(&startepisode, &startmap);
-    }
-    G_InitNew(startskill, startepisode, startmap);
-    if (demorecording)
-      G_BeginRecording();
+  else if ((p = IsDemoContinue())) { //e6y
+    G_DeferedPlayDemo(myargv[p + 1]);
+    G_CheckDemoContinue();
   }
+
+  if (slot && ++slot < myargc) {
+    slot = atoi(myargv[slot]); // killough 3/16/98: add slot info
+    // killough 5/15/98: add command flag
+    // cph - no filename
+    G_LoadGame(slot, true);
+  }
+  else if (!singledemo) { /* killough 12/98 */
+    if (autostart || netgame) {
+      if (autostart) // sets first map and first episode if unknown
+        GetFirstMap(&startepisode, &startmap);
+
+      if (MULTINET)
+        N_LoadLatestState(true);
       else
-  D_StartTitle();                 // start up intro loop
+        G_InitNew(startskill, startepisode, startmap);
+
+      if (demorecording)
+        G_BeginRecording();
     }
+    else {
+      D_StartTitle();                 // start up intro loop
+    }
+  }
 
   // do not try to interpolate during timedemo
   M_ChangeUncappedFrameRate();
@@ -1951,8 +1944,7 @@ static void D_DoomMainSetup(void)
 // D_DoomMain
 //
 
-void D_DoomMain(void)
-{
+void D_DoomMain(void) {
   D_DoomMainSetup(); // CPhipps - setup out of main execution stack
 
   D_DoomLoop ();  // never returns

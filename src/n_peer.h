@@ -36,18 +36,17 @@
 #define N_PEER_H__
 
 typedef struct netpeer_s {
-  ENetPeer        *peer;
-  buf_t            rbuf;
-  msgpack_packer  *rpk;
-  buf_t            ubuf;
-  msgpack_packer  *upk;
-  time_t           connect_time;
-  time_t           disconnect_time;
-  short            playernum;
-  int              last_sync_received_tic;
-  int              last_sync_sent_tic;
-  buf_t            state;
-  buf_t            delta;
+  ENetPeer           *peer;
+  buf_t               rbuf;
+  msgpack_packer     *rpk;
+  buf_t               ubuf;
+  msgpack_packer     *upk;
+  time_t              connect_time;
+  time_t              disconnect_time;
+  short               playernum;
+  int                 command_index;
+  int                 state_tic;
+  game_state_delta_t  delta;
 } netpeer_t;
 
 void       N_InitPeers(void);

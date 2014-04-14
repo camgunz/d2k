@@ -71,7 +71,7 @@ typedef enum {
 } net_sync_type_e;
 
 typedef struct netticcmd_s {
-  int tic;
+  int index;
   ticcmd_t cmd;
 } netticcmd_t;
 

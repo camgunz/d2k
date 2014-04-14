@@ -55,6 +55,8 @@
 #include "g_overflow.h"
 #include "e6y.h"//e6y
 
+#include "n_net.h"
+
 //
 // P_SetMobjState
 // Returns true if the mobj is still present.
@@ -1119,14 +1121,11 @@ void P_RespawnSpecials (void)
 
 extern byte playernumtotrans[MAXPLAYERS];
 
-void P_SpawnPlayer (int n, const mapthing_t* mthing)
-{
-  player_t* p;
-  fixed_t   x;
-  fixed_t   y;
-  fixed_t   z;
-  mobj_t*   mobj;
+void P_SpawnPlayer(int playernum, const mapthing_t* mthing) {
   int       i;
+  fixed_t   x, y, z;
+  player_t *p;
+  mobj_t   *mobj;
 
   // e6y
   // playeringame overflow detection
@@ -1137,13 +1136,13 @@ void P_SpawnPlayer (int n, const mapthing_t* mthing)
                                                                 
   // not playing?
 
-  if (!playeringame[n])
+  if (!playeringame[playernum])
     return;
 
-  p = &players[n];
+  p = &players[playernum];
 
   if (p->playerstate == PST_REBORN)
-    G_PlayerReborn (n);
+    G_PlayerReborn(playernum);
 
   /* cph 2001/08/14 - use the options field of memorised player starts to
    * indicate whether the start really exists in the level.
@@ -1154,19 +1153,28 @@ void P_SpawnPlayer (int n, const mapthing_t* mthing)
   x    = mthing->x << FRACBITS;
   y    = mthing->y << FRACBITS;
   z    = ONFLOORZ;
-  mobj = P_SpawnMobj (x,y,z, MT_PLAYER);
+  mobj = P_SpawnMobj(x, y, z, MT_PLAYER);
 
   if (deathmatch)
-    mobj->index = TracerGetDeathmatchStart(n);
+    mobj->index = TracerGetDeathmatchStart(playernum);
   else
     mobj->index = TracerGetPlayerStart(mthing->type - 1);
 
 
   // set color translations for player sprites
 
-  mobj->flags |= playernumtotrans[n]<<MF_TRANSSHIFT;
+  mobj->flags |= playernumtotrans[playernum] << MF_TRANSSHIFT;
 
-  mobj->angle      = ANG45 * (mthing->angle/45);
+  /* CG: Make the server's player invisible, etc. */
+  if (MULTINET && playernum == 0) {
+    mobj->flags &= ~MF_SOLID;
+    mobj->flags &= ~MF_SHOOTABLE;
+    mobj->flags |=  MF_NOSECTOR;
+    mobj->flags |=  MF_NOBLOCKMAP;
+    printf("Spawned invisible server player: %llu.\n", mobj->flags);
+  }
+
+  mobj->angle      = ANG45 * (mthing->angle / 45);
   mobj->player     = p;
   mobj->health     = p->health;
   mobj->player->prev_viewangle = mobj->angle + viewangleoffset;
@@ -1185,20 +1193,22 @@ void P_SpawnPlayer (int n, const mapthing_t* mthing)
 
   // setup gun psprite
 
-  P_SetupPsprites (p);
+  P_SetupPsprites(p);
 
   // give all cards in death match mode
 
-  if (deathmatch)
-    for (i = 0 ; i < NUMCARDS ; i++)
+  if (deathmatch) {
+    for (i = 0; i < NUMCARDS; i++) {
       p->cards[i] = true;
+    }
+  }
 
-  if (mthing->type-1 == consoleplayer)
-    {
+  if (mthing->type - 1 == consoleplayer) {
     ST_Start(); // wake up the status bar
     HU_Start(); // wake up the heads up text
-    }
-    R_SmoothPlaying_Reset(p); // e6y
+  }
+
+  R_SmoothPlaying_Reset(p); // e6y
 }
 
 /*
@@ -1643,4 +1653,7 @@ void P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   th->momz = FixedMul(th->info->speed,slope);
 
   P_CheckMissileSpawn(th);
-  }
+}
+
+/* vi: set et ts=2 sw=2: */
+

@@ -59,6 +59,7 @@
 #include "n_main.h"
 #include "n_peer.h"
 #include "n_proto.h"
+#include "n_state.h"
 
 /*
  * CG: TODO:
@@ -70,7 +71,29 @@ static dboolean is_extra_ddisplay = false;
 /* CG: Client only */
 static dboolean received_setup = false;
 static auth_level_e authorization_level = AUTH_LEVEL_NONE;
-static cbuf_t local_commands;
+
+void do_net_sync(void) {
+  if (CLIENT)
+    CL_SendCommands();
+  else if (CMDSERVER)
+    SV_BroadcastPlayerCommands();
+  else if (DELTASERVER)
+    SV_BroadcastStateUpdates();
+
+  if (SERVER)
+    SV_RemoveOldCommands();
+}
+
+static void remove_old_commands(cbuf_t *commands, int index) {
+  CBUF_FOR_EACH(commands, entry) {
+    netticcmd_t *ncmd = entry.obj;
+
+    if (ncmd->index <= index) {
+      M_CBufRemove(commands, entry.index);
+      entry.index--;
+    }
+  }
+}
 
 void N_InitNetGame(void) {
   int i;
@@ -116,8 +139,6 @@ void N_InitNetGame(void) {
       else
         I_Error("N_InitNetGame: Timed out waiting for setup information.");
 
-      M_CBufInit(&local_commands, sizeof(netticcmd_t));
-
       atexit(N_Disconnect);
     }
   }
@@ -135,7 +156,10 @@ void N_InitNetGame(void) {
 
       netgame = true;
       netserver = true;
-      nodrawers = true;
+
+      nodrawers   = true;
+      nosfxparm   = true;
+      nomusicparm = true;
 
       N_Init();
 
@@ -187,15 +211,6 @@ void N_Update(void) {
     }
 #endif
 
-}
-
-void N_SendSync(void) {
-  if (CLIENT)
-    CL_SendCommands();
-  else if (CMDSERVER)
-    SV_BroadcastPlayerCommands();
-  else if (DELTASERVER)
-    SV_BroadcastStateUpdates();
 }
 
 void N_TryRunTics(void) {
@@ -254,6 +269,9 @@ void N_TryRunTics(void) {
       G_Ticker();
       P_Checksum(gametic);
       gametic++;
+
+      if (DELTASERVER)
+        N_SaveCurrentState();
     }
   }
 
@@ -263,7 +281,7 @@ void N_TryRunTics(void) {
   }
 
   if (tic_elapsed)
-    N_SendSync();
+    do_net_sync();
 
   if (SERVER) {
     N_ServiceNetworkTimeout(sleep_time);
@@ -316,26 +334,30 @@ void CL_SetAuthorizationLevel(auth_level_e level) {
     authorization_level = level;
 }
 
-cbuf_t* CL_GetLocalCommands(void) {
-  return &local_commands;
-}
+void SV_RemoveOldCommands(void) {
+  int oldest_tic = INT_MAX;
 
-void CL_SaveNewCommand(netticcmd_t *ncmd) {
-  M_CBufConsolidate(&local_commands);
-  M_CBufInsertAtFirstFreeSlotOrAppend(&local_commands, ncmd);
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
+
+    if (np == NULL)
+      continue;
+
+    oldest_tic = MIN(oldest_tic, np->last_sync_received_tic);
+  }
+
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    if (playeringame[i]) {
+      remove_old_commands(&players[i].commands, oldest_tic);
+    }
+  }
 }
 
 void CL_RemoveOldCommands(void) {
-  int tic = N_GetPeerForPlayer(consoleplayer)->last_sync_received_tic;
-
-  CBUF_FOR_EACH(&local_commands, entry) {
-    netticcmd_t *ncmd = entry.obj;
-
-    if (ncmd->tic <= tic) {
-      M_CBufRemove(&local_commands, entry.index);
-      entry.index--;
-    }
-  }
+  remove_old_commands(
+    &players[consoleplayer].commands,
+    N_GetPeerForPlayer(consoleplayer)->last_sync_received_tic
+  );
 }
 
 /* vi: set et ts=2 sw=2: */

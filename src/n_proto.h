@@ -40,22 +40,18 @@
 #endif
 
 extern const byte nm_setup;
-extern const byte nm_fullstate;
-extern const byte nm_statedelta;
 extern const byte nm_authresponse;
 extern const byte nm_servermessage;
+extern const byte nm_sync;
 extern const byte nm_playermessage;
-extern const byte nm_playercommands;
-extern const byte nm_savegamenamechange;
 extern const byte nm_playerpreferencechange;
-extern const byte nm_statereceived;
 extern const byte nm_authrequest;
 extern const byte nm_rconcommand;
 extern const byte nm_voterequest;
 
 void   N_InitProtocol(void);
-void   N_HandlePacket(int peernum, void *data, size_t data_size);
 buf_t* N_GetMessageRecipientBuffer(void);
+void   N_HandlePacket(int peernum, void *data, size_t data_size);
 
 void SV_SetupNewPeer(int peernum);
 void SV_SendSetup(short playernum);

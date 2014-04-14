@@ -51,6 +51,9 @@
 #include "r_demo.h"
 #include "e6y.h"
 
+#include "n_net.h"
+#include "n_main.h"
+
 //
 // GLOBALS
 //
@@ -79,7 +82,7 @@ void ExtractFileBase (const char *path, char *dest)
   while ((*src) && (*src != '.') && (++length<9))
   {
     *dest++ = toupper(*src);
-    *src++;
+    src++;
   }
   /* cph - length check removed, just truncate at 8 chars.
    * If there are 8 or more chars, we'll copy 8, and no zero termination

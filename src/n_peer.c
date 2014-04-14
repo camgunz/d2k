@@ -67,10 +67,9 @@ int N_AddPeer(void) {
   np->connect_time = time(NULL);
   np->disconnect_time = 0;
   np->playernum = 0;
-  np->last_sync_received_tic = 0;
-  np->last_sync_sent_tic = 0;
-  M_BufferInit(&np->state);
-  M_BufferInit(&np->delta);
+  np->command_index = 0;
+  np->state_tic = 0;
+  M_BufferInit(&np->delta.data);
 
   np->playernum = M_OBufInsertAtFirstFreeSlotOrAppend(&net_peers, np);
 
@@ -108,10 +107,7 @@ void N_RemovePeer(netpeer_t *np) {
   msgpack_packer_free(np->rpk);
   M_BufferFree(&np->ubuf);
   msgpack_packer_free(np->upk);
-  M_BufferClear(&np->state);
-  M_BufferFree(&np->state);
-  M_BufferClear(&np->delta);
-  M_BufferFree(&np->delta);
+  M_BufferFree(&np->delta.data);
 
   np->peer                   = NULL;
   np->rpk                    = NULL;
@@ -119,8 +115,8 @@ void N_RemovePeer(netpeer_t *np) {
   np->connect_time           = 0;
   np->disconnect_time        = 0;
   np->playernum              = -1;
-  np->last_sync_received_tic = 0;
-  np->last_sync_sent_tic     = 0;
+  np->command_index          = 0;
+  np->state_tic              = 0;
 
   M_OBufRemove(&net_peers, peernum);
 }
@@ -179,12 +175,14 @@ dboolean N_CheckPeerTimeout(int peernum) {
   if (np == NULL) {
     return false;
   }
-  else if ((np->connect_time != 0) &&
-           (difftime(t, np->connect_time) > CONNECT_TIMEOUT)) {
+
+  if ((np->connect_time != 0) &&
+      (difftime(t, np->connect_time) > CONNECT_TIMEOUT)) {
     return true;
   }
-  else if ((np->disconnect_time != 0) &&
-           (difftime(t, np->disconnect_time) > DISCONNECT_TIMEOUT)) {
+
+  if ((np->disconnect_time != 0) &&
+      (difftime(t, np->disconnect_time) > DISCONNECT_TIMEOUT)) {
     return true;
   }
 

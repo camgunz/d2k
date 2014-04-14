@@ -45,5 +45,6 @@ void     CL_SetAuthorizationLevel(auth_level_e level);
 cbuf_t*  CL_GetLocalCommands(void);
 void     CL_SaveNewCommand(netticcmd_t *ncmd);
 void     CL_RemoveOldCommands(void);
+void     SV_RemoveOldCommands(void);
 
 #endif

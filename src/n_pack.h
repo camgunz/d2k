@@ -43,18 +43,23 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
                                       unsigned short *player_count,
                                       unsigned short *playernum);
 
-void     N_PackFullState(netpeer_t *np, buf_t *buf);
-dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf);
-
-void     N_PackStateDelta(netpeer_t *np);
-dboolean N_UnpackStateDelta(netpeer_t *np, int *from_tic, int *to_tic,
-                                           buf_t *buf);
-
 void     N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level);
 dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level);
 
 void     N_PackServerMessage(netpeer_t *np, char *message);
 dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf);
+
+void     N_PackCommandClientSync(netpeer_t *np);
+dboolean N_UnpackCommandClientSync(netpeer_t *np);
+
+void     N_PackCommandServerSync(netpeer_t *np);
+dboolean N_UnpackCommandServerSync(netpeer_t *np);
+
+void     N_PackDeltaClientSync(netpeer_t *np);
+dboolean N_UnpackDeltaClientSync(netpeer_t *np);
+
+void     N_PackDeltaServerSync(netpeer_t *np);
+dboolean N_UnpackDeltaServerSync(netpeer_t *np);
 
 void     N_PackPlayerMessage(netpeer_t *np, unsigned short sender,
                                             size_t recipient_count,
@@ -64,12 +69,6 @@ dboolean N_UnpackPlayerMessage(netpeer_t *np, unsigned short *sender,
                                               size_t *recipient_count,
                                               buf_t *recipients,
                                               buf_t *buf);
-
-void     N_PackPlayerCommands(netpeer_t *np, unsigned short playernum);
-dboolean N_UnpackPlayerCommands(netpeer_t *np);
-
-void     N_PackSaveGameNameChange(netpeer_t *np, char *new_save_game_name);
-dboolean N_UnpackSaveGameNameChange(netpeer_t *np, buf_t *buf);
 
 dboolean N_UnpackPlayerPreferenceChange(netpeer_t *np, short *playernum,
                                                        int *tic,
@@ -113,9 +112,6 @@ dboolean N_UnpackColormapChange(netpeer_t *np, int *new_color);
 
 void     N_PackSkinChange(netpeer_t *np, short playernum);
 dboolean N_UnpackSkinChange(netpeer_t *np);
-
-void     N_PackStateReceived(netpeer_t *np);
-dboolean N_UnpackStateReceived(netpeer_t *np, int *tic);
 
 void     N_PackAuthRequest(netpeer_t *np, char *password);
 dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf);

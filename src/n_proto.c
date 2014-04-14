@@ -165,21 +165,30 @@ const char *D_dehout(void); /* CG: from d_main.c */
     return;                                                                   \
   }
 
-const byte nm_setup                  = 1;  /* S => C | BOTH    |   reliable */
-const byte nm_fullstate              = 2;  /* S => C | BOTH    |   reliable */
-const byte nm_statedelta             = 3;  /* S => C | DELTA   | unreliable */
-const byte nm_authresponse           = 4;  /* S => C | BOTH    |   reliable */
-const byte nm_servermessage          = 5;  /* S => C | BOTH    |   reliable */
-const byte nm_playermessage          = 6;  /* BOTH   | BOTH    |   reliable */
-const byte nm_playercommands         = 7;  /* NOT DELTA CLIENT | unreliable */
-const byte nm_savegamenamechange     = 8;  /* NOT DELTA CLIENT |   reliable */
-const byte nm_playerpreferencechange = 9;  /* NOT DELTA CLIENT |   reliable */
-const byte nm_statereceived          = 10; /* C => S | DELTA   |   reliable */
-const byte nm_authrequest            = 11; /* C => S | BOTH    |   reliable */
-const byte nm_rconcommand            = 12; /* C => S | BOTH    |   reliable */
-const byte nm_voterequest            = 13; /* C => S | BOTH    |   reliable */
+const byte nm_setup                  = 1; /* S => C | BOTH    |   reliable */
+const byte nm_authresponse           = 2; /* S => C | BOTH    |   reliable */
+const byte nm_servermessage          = 3; /* S => C | BOTH    |   reliable */
+const byte nm_sync                   = 4; /* BOTH   | BOTH    | unreliable */
+const byte nm_playermessage          = 5; /* BOTH   | BOTH    |   reliable */
+const byte nm_playerpreferencechange = 6; /* NOT DELTA CLIENT |   reliable */
+const byte nm_authrequest            = 7; /* C => S | BOTH    |   reliable */
+const byte nm_rconcommand            = 8; /* C => S | BOTH    |   reliable */
+const byte nm_voterequest            = 9; /* C => S | BOTH    |   reliable */
 
-static buf_t message_recipients;
+buf_t* N_GetMessageRecipientBuffer(void) {
+  static buf_t message_recipients;
+  static dboolean initialized = false;
+
+  if (!initialized)
+    M_BufferInit(&message_recipients);
+
+  M_BufferEnsureCapacity(
+    &message_recipients, MAXPLAYERS * sizeof(unsigned short)
+  );
+  M_BufferClear(&message_recipients);
+
+  return &message_recipients;
+}
 
 static void handle_setup(netpeer_t *np) {
   net_sync_type_e net_sync = NET_SYNC_TYPE_NONE;
@@ -187,9 +196,12 @@ static void handle_setup(netpeer_t *np) {
   unsigned short playernum = 0;
   int i;
 
+  N_ClearStates();
+
   if (!N_UnpackSetup(np, &net_sync, &player_count, &playernum)) {
     M_OBufFreeEntriesAndClear(&resource_files_buf);
     M_OBufFreeEntriesAndClear(&deh_files_buf);
+    N_ClearStates();
     return;
   }
 
@@ -209,6 +221,14 @@ static void handle_setup(netpeer_t *np) {
 
   if (!playeringame[consoleplayer])
     I_Error("consoleplayer not in game");
+
+  /*
+   * CG: TODO: Add missing resources to a list of resources to fetch with
+   *           N_GetWad (which should probably be N_GetResource); in the event
+   *           fetching is required, disconnect, fetch all the missing
+   *           resources, and reconnect (provided all resources were
+   *           successfully obtained
+   */
 
   OBUF_FOR_EACH(&resource_files_buf, entry) {
     char *name = entry.obj;
@@ -242,43 +262,17 @@ static void handle_setup(netpeer_t *np) {
 }
 
 static void handle_full_state(netpeer_t *np) {
-  static buf_t state_buffer;
-  static dboolean initialized_buffer = false;
+  int tic = 0;
+  game_state_t *state = N_GetNewState();
+  dboolean call_init_new = true;
 
-  int tic;
-  dboolean call_init_new = CL_ReceivedSetup();
+  if (!N_UnpackFullState(np, &state->tic, &state->data))
+    return;
 
-  if (!initialized_buffer) {
-    M_BufferInit(&state_buffer);
-    initialized_buffer = true;
-  }
-
-  if (N_UnpackFullState(np, &tic, &state_buffer)) {
-    N_SaveCurrentState(tic, &state_buffer);
-    G_ReadSaveData(N_GetCurrentState(), true, call_init_new);
-    np->last_sync_received_tic = tic;
-    CL_SendStateReceived();
-    CL_SetReceivedSetup(true);
-  }
-}
-
-static void handle_state_delta(netpeer_t *np) {
-  static buf_t delta_buffer;
-  static dboolean initialized_buffer = false;
-
-  int from_tic, to_tic;
-
-  if (!initialized_buffer) {
-    M_BufferInit(&delta_buffer);
-    initialized_buffer = true;
-  }
-
-  if (N_UnpackStateDelta(np, &from_tic, &to_tic, &delta_buffer)) {
-    N_ApplyStateDelta(from_tic, to_tic, &delta_buffer);
-    G_ReadSaveData(N_GetCurrentState(), true, false);
-    np->last_sync_received_tic = to_tic;
-    CL_SendStateReceived();
-  }
+  N_SetLatestState(state);
+  N_LoadLatestState(call_init_new);
+  np->state_tic = latest_state->tic;
+  CL_SetReceivedSetup(true);
 }
 
 static void handle_auth_response(netpeer_t *np) {
@@ -299,6 +293,32 @@ static void handle_server_message(netpeer_t *np) {
 
   if (N_UnpackServerMessage(np, &server_message_buffer))
     doom_printf("[SERVER]: %s\n", server_message_buffer.data);
+}
+
+static void handle_sync(netpeer_t *np) {
+  if (CMDSERVER && !N_UnpackCommandClientSync(np))
+    return;
+
+  if (DELTASERVER && !N_UnpackDeltaClientSync(np))
+    return;
+
+  if (CMDCLIENT && !N_UnpackCommandServerSync(np))
+    return;
+
+  if (DELTACLIENT && !N_UnpackDeltaServerSync(np))
+    return;
+
+  if (SERVER)
+    SV_RemoveOldCommands();
+
+  if (CLIENT)
+    CL_RemoveOldCommands();
+
+  if (DELTACLIENT)
+    N_ApplyStateDelta(&np->delta);
+
+  if (DELTASERVER)
+    SV_RemoveOldStates();
 }
 
 static void handle_player_message(netpeer_t *np) {
@@ -346,10 +366,6 @@ static void handle_player_message(netpeer_t *np) {
       );
     }
   }
-}
-
-static void handle_player_commands(netpeer_t *np) {
-  N_UnpackPlayerCommands(np);
 }
 
 static void handle_save_game_name_change(netpeer_t *np) {
@@ -492,10 +508,6 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
         DELTA_CLIENT_ONLY("full state");
         handle_full_state(np);
       break;
-      case nm_statedelta:
-        DELTA_CLIENT_ONLY("state delta");
-        handle_state_delta(np);
-      break;
       case nm_authresponse:
         CLIENT_ONLY("authorization response");
         handle_auth_response(np);
@@ -507,10 +519,6 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
       case nm_playermessage:
         handle_player_message(np);
       break;
-      case nm_playercommands:
-        NOT_DELTA_CLIENT("player commands");
-        handle_player_commands(np);
-      break;
       case nm_savegamenamechange:
         NOT_DELTA_CLIENT("save game name change");
         handle_save_game_name_change(np);
@@ -518,10 +526,6 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
       case nm_playerpreferencechange:
         NOT_DELTA_CLIENT("player preference change");
         handle_player_preference_change(np);
-      break;
-      case nm_statereceived:
-        DELTA_SERVER_ONLY("state received");
-        handle_state_received(np);
       break;
       case nm_authrequest:
         SERVER_ONLY("authorization request");
@@ -544,15 +548,6 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
       break;
     }
   }
-}
-
-buf_t* N_GetMessageRecipientBuffer(void) {
-  M_BufferEnsureCapacity(
-    &message_recipients, MAXPLAYERS * sizeof(unsigned short)
-  );
-  M_BufferZero(&message_recipients);
-
-  return &message_recipients;
 }
 
 void SV_SetupNewPeer(int peernum) {
@@ -580,8 +575,6 @@ void SV_SetupNewPeer(int peernum) {
   np->playernum = playernum;
 
   SV_SendSetup(playernum);
-
-  SV_SendFullState(playernum);
 }
 
 void SV_SendSetup(short playernum) {
@@ -589,23 +582,6 @@ void SV_SendSetup(short playernum) {
   CHECK_VALID_PLAYER(np, playernum);
 
   N_PackSetup(np);
-}
-
-void SV_SendFullState(short playernum) {
-  netpeer_t *np = NULL;
-  CHECK_VALID_PLAYER(np, playernum);
-
-  N_PackFullState(np, N_GetCurrentState());
-  np->last_sync_sent_tic = gametic;
-}
-
-void SV_SendStateDelta(short playernum) {
-  netpeer_t *np = NULL;
-  CHECK_VALID_PLAYER(np, playernum);
-
-  N_BuildStateDelta(np);
-  N_PackStateDelta(np);
-  np->last_sync_sent_tic = gametic;
 }
 
 void SV_SendAuthResponse(short playernum, auth_level_e auth_level) {
@@ -629,6 +605,30 @@ void SV_BroadcastMessage(char *message) {
     if (np != NULL)
       N_PackServerMessage(np, message);
   }
+}
+
+void SV_SendSync(short playernum) {
+  netpeer_t *np = NULL;
+  CHECK_VALID_PLAYER(np, playernum);
+
+  N_BuildStateDelta(np);
+  N_PackStateDelta(np);
+  np->last_sync_sent_tic = gametic;
+}
+
+void SV_BroadcastSync(void) {
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    if (playeringame[i]) {
+      SV_SendSync(i);
+    }
+  }
+}
+
+void CL_SendSync(void) {
+  netpeer_t *np = NULL;
+  CHECK_CONNECTION(np);
+
+  N_PackPlayerCommands(np, consoleplayer);
 }
 
 void CL_SendMessageToServer(char *message) {
@@ -663,32 +663,6 @@ void CL_SendMessageToTeam(byte team, char *message) {
 
 void CL_SendMessageToCurrentTeam(char *message) {
   CL_SendMessageToTeam(players[consoleplayer].team, message);
-}
-
-void SV_BroadcastPlayerCommands(void) {
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
-
-    if (np != NULL) {
-      for (int j = 0; j < MAXPLAYERS; j++) {
-        N_PackPlayerCommands(np, j);
-      }
-    }
-  }
-}
-
-void CL_SendCommands(void) {
-  netpeer_t *np = NULL;
-  CHECK_CONNECTION(np);
-
-  N_PackPlayerCommands(np, consoleplayer);
-}
-
-void CL_SendSaveGameNameChange(char *new_save_game_name) {
-  netpeer_t *np = NULL;
-  CHECK_CONNECTION(np);
-
-  N_PackSaveGameNameChange(np, new_save_game_name);
 }
 
 void CL_SendNameChange(char *new_name) {
@@ -842,26 +816,6 @@ void CL_SendSkinChange(void) {
 
 void SV_BroadcastPlayerSkinChanged(short playernum) {
   /* CG: TODO */
-}
-
-void SV_BroadcastStateUpdates(void) {
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
-
-    if (np == NULL)
-      continue;
-
-    N_BuildStateDelta(np);
-    N_PackStateDelta(np);
-    np->last_sync_sent_tic = gametic;
-  }
-}
-
-void CL_SendStateReceived(void) {
-  netpeer_t *np = NULL;
-  CHECK_CONNECTION(np);
-
-  N_PackStateReceived(np);
 }
 
 void CL_SendAuthRequest(char *password) {

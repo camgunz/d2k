@@ -37,12 +37,7 @@ receipt of.
 
 ## To Do (For Real)
 
-1. Seek to the command for the current tic (`maketic` == `gametic`).
-
-1. Have players properly trim their local command buffers in both command and
-   delta sync.
-
-1. Have servers broadcast state.
+1. Servers still play music (rofl)
 
 1. Start testing prototype
 

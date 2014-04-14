@@ -419,7 +419,7 @@ static int G_NextWeapon(int direction)
 }
 
 void G_BuildTiccmd(netticcmd_t* ncmd) {
-  static int maketic = 0;
+  static int command_index = 0;
 
   int strafe;
   int bstrafe;
@@ -431,7 +431,7 @@ void G_BuildTiccmd(netticcmd_t* ncmd) {
 
   ticcmd_t *cmd = &ncmd->cmd;
 
-  ncmd->tic = maketic++;
+  ncmd->index = command_index++;
   /* cphipps - remove needless I_BaseTiccmd call, just set the ticcmd to zero */
   memset(cmd, 0, sizeof(ticcmd_t));
 
@@ -1059,11 +1059,8 @@ void G_Ticker(void) {
   }
   else {
     for (i = 0; i < MAXPLAYERS; i++) {
-      dboolean found_command = false;
-
       if (playeringame[i]) {
         ticcmd_t *cmd = &players[i].cmd;
-        netticcmd_t *ncmd = NULL;
         
         //e6y
         if (demoplayback) {
@@ -1073,12 +1070,14 @@ void G_Ticker(void) {
           G_ReadDemoContinueTiccmd(cmd);
         }
         else {
+          dboolean found_command = false;
+
           M_CBufConsolidate(&players[i].commands);
 
           CBUF_FOR_EACH(&players[i].commands, entry) {
             netticcmd_t *ncmd = entry.obj;
 
-            if (ncmd->tic == gametic) {
+            if (ncmd->index == gametic) {
               memcpy(cmd, &ncmd->cmd, sizeof(ticcmd_t));
               found_command = true;
               break;
@@ -1144,13 +1143,6 @@ void G_Ticker(void) {
         }
         players[i].cmd.buttons = 0;
       }
-    }
-  }
-
-  for (i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i] && M_CBufGet(&players[i].commands, 0)) {
-      M_CBufRemove(&players[i].commands, 0);
-      M_CBufConsolidate(&players[i].commands);
     }
   }
 

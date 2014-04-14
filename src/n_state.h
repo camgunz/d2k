@@ -35,15 +35,30 @@
 #ifndef N_STATE_H__
 #define N_STATE_H__
 
-extern buf_t *current_game_state;
-extern obuf_t *saved_game_states;
+typedef struct game_state_s {
+  int   tic;
+  buf_t data;
+} game_state_t;
 
-void     N_InitStates(void);
-void     N_SaveCurrentState(int tic, buf_t *state);
-buf_t*   N_GetCurrentState(void);
-void     N_SaveStateForTic(int tic, buf_t *state);
-dboolean N_ApplyStateDelta(int from_tic, int to_tic, buf_t *delta);
-void     N_BuildStateDelta(netpeer_t *np);
+typedef struct game_state_delta_s {
+  int   from_tic;
+  int   to_tic;
+  buf_t data;
+} game_state_delta_t;
+
+void          N_InitStates(void);
+void          N_SaveState(void);
+dboolean      N_LoadState(int tic, dboolean call_init_new);
+void          N_RemoveOldStates(int tic);
+void          N_ClearStates(void);
+game_state_t* N_GetNewState(void);
+game_state_t* N_GetLatestState(void);
+void          N_SetLatestState(game_state_t *state);
+void          N_LoadLatestState(dboolean call_init_new);
+dboolean      N_ApplyStateDelta(game_state_delta_t *delta);
+void          N_BuildStateDelta(netpeer_t *np);
 
 #endif
+
+/* vi: set et sw=2 ts=2: */
 

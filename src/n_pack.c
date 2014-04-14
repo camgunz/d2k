@@ -47,6 +47,7 @@
 #include "n_net.h"
 #include "n_peer.h"
 #include "n_proto.h"
+#include "n_main.h"
 
 #define MAX_ARRAY_SIZE 128
 
@@ -88,22 +89,6 @@
   static dboolean npv_ ## tname ## _size(msgpack_object *o) {                 \
     return true;                                                              \
   }
-
-DECLARE_SIGNED_TYPE(char, char, "a char", 0xFF);
-DECLARE_UNSIGNED_TYPE(uchar, unsigned char, "an unsigned char", 0xFF);
-DECLARE_SIGNED_TYPE(short, short, "a short", 0xFFFF);
-DECLARE_UNSIGNED_TYPE(ushort, unsigned short, "an unsigned short", 0xFFFF);
-DECLARE_SIGNED_TYPE(int, int, "an int", 0xFFFFFFFF);
-DECLARE_UNSIGNED_TYPE(uint, unsigned int, "an unsigned int", 0xFFFFFFFF);
-DECLARE_TYPE(double, "a double", DOUBLE);
-static dboolean npv_double_range(msgpack_object *o, double min, double max) {
-  return o->via.dec >= min && o->via.dec <= max;
-}
-DECLARE_TYPE(null, "a NULL value", NIL);
-DECLARE_TYPE(boolean, "a boolean", BOOLEAN);
-DECLARE_TYPE(raw, "raw bytes", RAW);
-DECLARE_TYPE(array, "an array", ARRAY);
-DECLARE_TYPE(map, "a map", MAP);
 
 #define unpack(name)                                                          \
   if (!msgpack_unpacker_next(&pac, &result)) {                                \
@@ -224,10 +209,62 @@ DECLARE_TYPE(map, "a map", MAP);
 
 #define MAX_RESOURCE_NAMES 1000
 
+DECLARE_SIGNED_TYPE(char, char, "a char", 0xFF);
+DECLARE_UNSIGNED_TYPE(uchar, unsigned char, "an unsigned char", 0xFF);
+DECLARE_SIGNED_TYPE(short, short, "a short", 0xFFFF);
+DECLARE_UNSIGNED_TYPE(ushort, unsigned short, "an unsigned short", 0xFFFF);
+DECLARE_SIGNED_TYPE(int, int, "an int", 0xFFFFFFFF);
+DECLARE_UNSIGNED_TYPE(uint, unsigned int, "an unsigned int", 0xFFFFFFFF);
+DECLARE_TYPE(double, "a double", DOUBLE);
+static dboolean npv_double_range(msgpack_object *o, double min, double max) {
+  return o->via.dec >= min && o->via.dec <= max;
+}
+DECLARE_TYPE(null, "a NULL value", NIL);
+DECLARE_TYPE(boolean, "a boolean", BOOLEAN);
+DECLARE_TYPE(raw, "raw bytes", RAW);
+DECLARE_TYPE(array, "an array", ARRAY);
+DECLARE_TYPE(map, "a map", MAP);
+
 static msgpack_unpacker    pac;
 static msgpack_unpacked    result;
 static msgpack_object     *obj;
 static msgpack_object_map *map = NULL;
+
+static void pack_commands(netpeer_t *np, unsigned short playernum) {
+  int command_count = 0;
+
+  msgpack_pack_unsigned_short(np->upk, playernum);
+
+  if (np->playernum == playernum)
+    msgpack_pack_int(np->upk, np->command_index);
+    return;
+  }
+
+  commands = &players[playernum].commands;
+
+  CBUF_FOR_EACH(commands, entry) {
+    if (ncmd->index > np->command_index) {
+      command_count++;
+    }
+  }
+
+  msgpack_pack_unsigned_char(np->upk, command_count);
+
+  CBUF_FOR_EACH(commands, entry) {
+    netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+
+    if (ncmd->index <= np->command_index)
+      continue;
+
+    msgpack_pack_unsigned_int(np->upk, ncmd->index);
+    msgpack_pack_signed_char(np->upk, ncmd->cmd.forwardmove);
+    msgpack_pack_signed_char(np->upk, ncmd->cmd.sidemove);
+    msgpack_pack_short(np->upk, ncmd->cmd.angleturn);
+    msgpack_pack_short(np->upk, ncmd->cmd.consistancy);
+    msgpack_pack_unsigned_char(np->upk, ncmd->cmd.chatchar);
+    msgpack_pack_unsigned_char(np->upk, ncmd->cmd.buttons);
+  }
+}
 
 void N_InitPacker(void) {
   msgpack_unpacker_init(&pac, MSGPACK_UNPACKER_INIT_BUFFER_SIZE);
@@ -250,9 +287,8 @@ void N_LoadPacketData(void *data, size_t data_size) {
 }
 
 dboolean N_LoadNewMessage(netpeer_t *np, byte *message_type) {
-  if (!msgpack_unpacker_next(&pac, &result)) {
+  if (!msgpack_unpacker_next(&pac, &result))
     return false;
-  }
 
   obj = &result.data;
 
@@ -264,11 +300,13 @@ dboolean N_LoadNewMessage(netpeer_t *np, byte *message_type) {
 }
 
 void N_PackSetup(netpeer_t *np) {
+  game_state_t *gs = N_GetLatestState();
   unsigned short player_count = 0;
 
   for (int i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i])
+    if (playeringame[i]) {
       player_count++;
+    }
   }
 
   msgpack_pack_unsigned_char(np->rpk, nm_setup);
@@ -285,7 +323,6 @@ void N_PackSetup(netpeer_t *np) {
     msgpack_pack_raw_body(np->rpk, resource_name, length);
   }
 
-
   msgpack_pack_array(np->rpk, M_OBufGetObjectCount(&deh_files_buf));
   OBUF_FOR_EACH(&deh_files_buf, entry) {
     char *deh_name = entry.obj;
@@ -294,6 +331,10 @@ void N_PackSetup(netpeer_t *np) {
     msgpack_pack_raw(np->rpk, length);
     msgpack_pack_raw_body(np->rpk, deh_name, length);
   }
+
+  msgpack_pack_unsigned_int(np->rpk, gs->tic);
+  msgpack_pack_raw(np->rpk, gs->data.size);
+  msgpack_pack_raw_body(np->rpk, gs->data.data, gs->data.size);
 }
 
 dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
@@ -302,6 +343,7 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   net_sync_type_e m_sync_type = NET_SYNC_TYPE_NONE;
   unsigned short m_player_count = 0;
   unsigned short m_playernum = 0;
+  game_state_t *gs = N_GetNewState();
 
   unpack_and_validate_range(
     obj, "net sync type", int, NET_SYNC_TYPE_COMMAND, NET_SYNC_TYPE_DELTA
@@ -313,8 +355,6 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
 
   unpack_and_validate(obj, "consoleplayer", ushort);
   m_playernum = (unsigned short)obj->via.u64;
-
-  // #define unpack_and_validate_string_array(obj, arr, name, ename, obuf, sz)
 
   unpack_and_validate_string_array(
     obj,
@@ -334,58 +374,18 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
     MAX_RESOURCE_NAMES
   );
 
-  *sync_type = m_sync_type;
-  *player_count = m_player_count;
-  *playernum = m_playernum;
-
-  return true;
-}
-
-void N_PackFullState(netpeer_t *np, buf_t *buf) {
-  msgpack_pack_unsigned_char(np->rpk, nm_fullstate);
-  msgpack_pack_unsigned_int(np->rpk, gametic);
-  msgpack_pack_raw(np->rpk, buf->size);
-  msgpack_pack_raw_body(np->rpk, buf->data, buf->size);
-}
-
-dboolean N_UnpackFullState(netpeer_t *np, int *tic, buf_t *buf) {
-  int m_tic;
-
   unpack_and_validate(obj, "game state tic", int);
-  m_tic = (int)obj->via.i64;
+  gs->tic = (int)obj->via.i64;
 
   unpack_and_validate(obj, "game state data", raw);
 
-  *tic = m_tic;
-  M_BufferSetData(buf, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
+  M_BufferSetData(
+    &gs->data, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size
+  );
 
-  return true;
-}
-
-void N_PackStateDelta(netpeer_t *np) {
-  msgpack_pack_unsigned_char(np->upk, nm_statedelta);
-  msgpack_pack_int(np->upk, np->last_sync_received_tic);
-  msgpack_pack_int(np->upk, gametic);
-  msgpack_pack_raw(np->upk, np->delta.size);
-  msgpack_pack_raw_body(np->upk, np->delta.data, np->delta.size);
-}
-
-dboolean N_UnpackStateDelta(netpeer_t *np, int *from_tic, int *to_tic,
-                                           buf_t *buf) {
-  int m_from_tic = -1;
-  int m_to_tic = -1;
-
-  unpack_and_validate(obj, "state delta start tic", int);
-  m_from_tic = (int)obj->via.i64;
-
-  unpack_and_validate(obj, "state delta end tic", int);
-  m_to_tic = (int)obj->via.u64;
-
-  unpack_and_validate(obj, "state delta data", raw);
-
-  *from_tic = m_from_tic;
-  *to_tic = m_to_tic;
-  M_BufferSetData(buf, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
+  *sync_type = m_sync_type;
+  *player_count = m_player_count;
+  *playernum = m_playernum;
 
   return true;
 }
@@ -417,6 +417,183 @@ dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf) {
   unpack_and_validate(obj, "server message content", raw);
 
   M_BufferSetString(buf, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
+
+  return true;
+}
+
+void N_PackCommandClientSync(netpeer_t *np) {
+  cbuf_t *commands = &players[consoleplayer].commands;
+  int command_count = M_CBufGetObjectCount(commands);
+
+  msgpack_pack_unsigned_char(np->upk, nm_sync);
+  msgpack_pack_unsigned_short(np->upk, 1);
+
+  pack_commands(np, consoleplayer);
+}
+
+void N_PackCommandServerSync(netpeer_t *np) {
+  unsigned short player_count = 0;
+
+  msgpack_pack_unsigned_char(np->upk, nm_sync);
+
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    if (N_GetPeer(i) != NULL) {
+      player_count++;
+    }
+  }
+
+  msgpack_pack_unsigned_short(np->upk, player_count);
+
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *snp = N_GetPeer(i);
+
+    if (snp != NULL)
+      pack_commands(np, snp->playernum);
+  }
+}
+
+dboolean N_UnpackCommandSync(netpeer_t *np) {
+  unsigned short player_count = 0;
+
+  unpack_and_validate(obj, "player count", ushort);
+  player_count = (unsigned short)obj->via.u64;
+
+  for (int i = 0; i < player_count; i++) {
+    unsigned short playernum = 0;
+    byte command_count = 0;
+    int latest_command_index = -1;
+    cbuf_t *commands = NULL;
+
+    unpack_and_validate_player(obj);
+    playernum = (unsigned short)obj->via.u64;
+
+    if (SERVER && np->playernum != playernum) {
+      doom_printf(
+        "N_UnpackPlayerCommands: Erroneously received player commands for %d "
+        "from player %d\n",
+        playernum,
+        np->playernum
+      );
+      return false;
+    }
+
+    if (CMDCLIENT && playernum == consoleplayer) {
+      unpack_and_validate(obj, "command index", int);
+      np->command_index = (int)obj->via.i64;
+
+      continue;
+    }
+
+  /*
+   * CG: TODO: Add a limit to the number of commands accepted here.  uchar
+   *           limits this to 255 commands, but in reality that's > 7 seconds,
+   *           which is still far too long.  Quake has a "sv_maxlag" setting
+   *           (or something), that may be preferable to a static limit... but
+   *           I think having an upper bound on that setting is still prudent.
+   */
+    unpack_and_validate(obj, "command count", uchar);
+    command_count = (byte)obj->via.u64;
+
+    commands = &players[playernum].commands;
+
+    M_CBufEnsureCapacity(commands, command_count);
+    M_CBufConsolidate(commands);
+
+    CBUF_FOR_EACH(commands, entry) {
+      netticcmd_t *ncmd = entry.obj;
+
+      latest_command_index = MAX(latest_command_index, ncmd->index);
+    }
+
+    while (command_count--) {
+      int index = 0;
+
+      unpack_and_validate(obj, "command index", int);
+      index = (int)obj->via.i64;
+
+      if (index > latest_command_index) {
+        netticcmd_t *ncmd = M_CBufGetFirstFreeOrNewSlot(commands);
+
+        ncmd->index = index;
+
+        unpack_and_validate(obj, "command forward value", char);
+        ncmd->cmd.forwardmove = (signed char)obj->via.i64;
+
+        unpack_and_validate(obj, "command side value", char);
+        ncmd->cmd.sidemove = (signed char)obj->via.i64;
+
+        unpack_and_validate(obj, "command angle value", short);
+        ncmd->cmd.angleturn = (signed short)obj->via.i64;
+
+        unpack_and_validate(obj, "command consistancy value", short);
+        ncmd->cmd.consistancy = (signed short)obj->via.i64;
+
+        unpack_and_validate(obj, "command chatchar value", uchar);
+        ncmd->cmd.chatchar = (byte)obj->via.u64;
+
+        unpack_and_validate(obj, "command buttons value", uchar);
+        ncmd->cmd.buttons = (byte)obj->via.u64;
+      }
+      else {
+        unpack_and_validate(obj, "command forward value", char);
+        unpack_and_validate(obj, "command side value", char);
+        unpack_and_validate(obj, "command angle value", short);
+        unpack_and_validate(obj, "command consistancy value", short);
+        unpack_and_validate(obj, "command chatchar value", uchar);
+        unpack_and_validate(obj, "command buttons value", uchar);
+      }
+    }
+  }
+
+  return true;
+}
+
+
+void N_PackDeltaClientSync(netpeer_t *np) {
+  N_PackCommandClientSync(np);
+
+  msgpack_pack_int(np->upk, np->state_tic)
+}
+
+dboolean N_UnpackDeltaClientSync(netpeer_t *np) {
+  N_UnpackCommandClientSync(np);
+
+  unpack_and_validate(obj, "state tic", int);
+  np->state_tic = (int)obj->via.i64;
+
+  return true;
+}
+
+void N_PackDeltaServerSync(netpeer_t *np) {
+}
+
+dboolean N_UnpackDeltaServerSync(netpeer_t *np) {
+}
+
+void N_PackStateDelta(netpeer_t *np) {
+  msgpack_pack_unsigned_char(np->upk, nm_statedelta);
+  msgpack_pack_int(np->upk, np->last_sync_received_tic);
+  msgpack_pack_int(np->upk, gametic);
+  msgpack_pack_raw(np->upk, np->delta.size);
+  msgpack_pack_raw_body(np->upk, np->delta.data, np->delta.size);
+}
+
+dboolean N_UnpackStateDelta(netpeer_t *np, int *from_tic, int *to_tic,
+                                           buf_t *buf) {
+  int m_from_tic = -1;
+  int m_to_tic = -1;
+
+  unpack_and_validate(obj, "state delta start tic", int);
+  m_from_tic = (int)obj->via.i64;
+
+  unpack_and_validate(obj, "state delta end tic", int);
+  m_to_tic = (int)obj->via.u64;
+
+  unpack_and_validate(obj, "state delta data", raw);
+
+  *from_tic = m_from_tic;
+  *to_tic = m_to_tic;
+  M_BufferSetData(buf, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
 
   return true;
 }
@@ -497,15 +674,15 @@ void N_PackPlayerCommands(netpeer_t *np) {
       CBUF_FOR_EACH(commands, entry) {
         netticcmd_t *ncmd = entry.obj;
 
-        if (ncmd->tic <= np->last_sync_received_tic) {
+        if (ncmd->index <= np->last_sync_received_tic) {
           command_count--;
           continue;
         }
 
-        if (ncmd->tic == np->last_sync_received_tic + 1)
+        if (ncmd->index == np->last_sync_received_tic + 1)
           msgpack_pack_unsigned_char(np->upk, command_count);
 
-        msgpack_pack_unsigned_int(np->upk, ncmd->tic);
+        msgpack_pack_unsigned_int(np->upk, ncmd->index);
         msgpack_pack_signed_char(np->upk, ncmd->cmd.forwardmove);
         msgpack_pack_signed_char(np->upk, ncmd->cmd.sidemove);
         msgpack_pack_short(np->upk, ncmd->cmd.angleturn);
@@ -519,21 +696,21 @@ void N_PackPlayerCommands(netpeer_t *np) {
     }
   }
   else {
-    cbuf_t *commands = CL_GetLocalCommands();
+    cbuf_t *commands = &players[consoleplayer].commands;
     int command_count = M_CBufGetObjectCount(commands);
 
     CBUF_FOR_EACH(commands, entry) {
       netticcmd_t *ncmd = entry.obj;
 
-      if (ncmd->tic <= np->last_sync_received_tic) {
+      if (ncmd->index <= np->last_sync_received_tic) {
         command_count--;
         continue;
       }
 
-      if (ncmd->tic == np->last_sync_received_tic + 1)
+      if (ncmd->index == np->last_sync_received_tic + 1)
         msgpack_pack_unsigned_char(np->upk, command_count);
 
-      msgpack_pack_unsigned_int(np->upk, ncmd->tic);
+      msgpack_pack_unsigned_int(np->upk, ncmd->index);
       msgpack_pack_signed_char(np->upk, ncmd->cmd.forwardmove);
       msgpack_pack_signed_char(np->upk, ncmd->cmd.sidemove);
       msgpack_pack_short(np->upk, ncmd->cmd.angleturn);
@@ -544,7 +721,7 @@ void N_PackPlayerCommands(netpeer_t *np) {
   }
 }
 
-dboolean N_UnpackPlayerCommands(netpeer_t *np) {
+dboolean N_UnpackPlayerCommands(netpeer_t *np, int *tic) {
   unsigned short player_count = 0;
 
   unpack_and_validate(obj, "player count", ushort);
@@ -569,11 +746,10 @@ dboolean N_UnpackPlayerCommands(netpeer_t *np) {
       return false;
     }
 
-    if (CLIENT && playernum == consoleplayer) {
+    if (CMDCLIENT && playernum == consoleplayer) {
       unpack_and_validate(obj, "last sync received tic", int);
       np->last_sync_received_tic = (int)obj->via.i64;
 
-      CL_RemoveOldCommands();
       continue;
     }
 
@@ -638,6 +814,7 @@ dboolean N_UnpackPlayerCommands(netpeer_t *np) {
     }
   }
 
+  *tic = latest_command_tic + 1;
   return true;
 }
 
