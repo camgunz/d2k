@@ -43,10 +43,10 @@
 #include "g_game.h" // for doom_printf... inexplicably
 #include "m_swap.h"
 #include "n_net.h"
+#include "n_state.h"
 #include "n_peer.h"
 #include "n_pack.h"
 #include "n_proto.h"
-#include "n_state.h"
 
 #define MAX_ADDRESS_LENGTH 500
 

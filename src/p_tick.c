@@ -43,6 +43,8 @@
 #include "e6y.h"
 #include "s_advsound.h"
 
+#include "n_net.h"
+
 int leveltime;
 
 static dboolean newthinkerpresent;
@@ -300,7 +302,7 @@ void P_Ticker(void) {
         CBUF_FOR_EACH(&players[i].commands, entry) {
           netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-          memcpy(&players[i].cmd, &ncmd.cmd, sizeof(ticcmd_t));
+          memcpy(&players[i].cmd, &ncmd->cmd, sizeof(ticcmd_t));
           M_CBufRemove(&players[i].commands, entry.index);
           entry.index--;
 
@@ -308,7 +310,7 @@ void P_Ticker(void) {
           P_PlayerThink(&players[i]);
         }
       }
-      else
+      else {
         P_PlayerThink(&players[i]);
       }
     }

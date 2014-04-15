@@ -83,7 +83,7 @@ static int P_GetMobj(mobj_t* mi, size_t s) {
   size_t i = (size_t)mi;
 
   if (i >= s)
-    I_Error("Corrupt savegame (%lu >= %lu)", i, s);
+    I_Error("Corrupt savegame (%zu >= %zu)", i, s);
 
   return i;
 }
@@ -164,7 +164,7 @@ static void P_ArchivePlayer(buf_t *savebuffer, player_t *player) {
   CBUF_FOR_EACH(&player->commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-    M_BufferWriteInt(savebuffer, ncmd->tic);
+    M_BufferWriteInt(savebuffer, ncmd->index);
     M_BufferWriteByte(savebuffer, ncmd->cmd.forwardmove);
     M_BufferWriteByte(savebuffer, ncmd->cmd.sidemove);
     M_BufferWriteShort(savebuffer, ncmd->cmd.angleturn);
@@ -248,7 +248,7 @@ static void P_UnArchivePlayer(buf_t *savebuffer, player_t *player) {
   while (command_count--) {
     netticcmd_t *ncmd = M_CBufGetFirstFreeOrNewSlot(&player->commands);
 
-    M_BufferReadInt(savebuffer, &ncmd->tic);
+    M_BufferReadInt(savebuffer, &ncmd->index);
     M_BufferReadByte(savebuffer, (byte *)&ncmd->cmd.forwardmove);
     M_BufferReadByte(savebuffer, (byte *)&ncmd->cmd.sidemove);
     M_BufferReadShort(savebuffer, &ncmd->cmd.angleturn);

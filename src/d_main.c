@@ -254,7 +254,7 @@ void D_Display (void)
 {
   static dboolean isborderstate        = false;
   static dboolean borderwillneedredraw = false;
-  static gamestate_t oldgamestate = -1;
+  static gamestate_t oldgamestate = GS_BAD;
   dboolean wipe;
   dboolean viewactive = false, isborder = false;
 
@@ -283,7 +283,7 @@ void D_Display (void)
 
   if (setsizeneeded) {               // change the view size if needed
     R_ExecuteSetViewSize();
-    oldgamestate = -1;            // force background redraw
+    oldgamestate = GS_BAD;        // force background redraw
   }
 
   // save the current screen if about to wipe
@@ -295,7 +295,7 @@ void D_Display (void)
 
   if (gamestate != GS_LEVEL) { // Not a level
     switch (oldgamestate) {
-    case -1:
+    case GS_BAD:
     case GS_LEVEL:
       V_SetPalette(0); // cph - use default (basic) palette
     default:
@@ -1701,11 +1701,6 @@ static void D_DoomMainSetup(void)
   //jff 9/3/98 use logical output routine
   lprintf(LO_INFO,"N_InitNetGame: Checking for network game.\n");
   N_InitNetGame();
-  for (int q = 0; q < MAXPLAYERS; q++) {
-    printf("Commands for %d: %d, %lu.\n",
-      q, players[q].commands.capacity, players[q].commands.obj_size
-    );
-  }
 
   //jff 9/3/98 use logical output routine
   lprintf(LO_INFO,"W_Init: Init WADfiles.\n");

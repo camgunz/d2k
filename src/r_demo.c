@@ -54,6 +54,9 @@
 #include "g_overflow.h"
 #include "e6y.h"
 
+#include "n_net.h"
+#include "n_main.h"
+
 int IsDemoPlayback(void)
 {
   int p;
@@ -419,7 +422,7 @@ angle_t R_DemoEx_ReadMLook(void)
     return 0;
 
   // mlook data must be initialised here
-  if ((mlook_lump.lump == -2))
+  if (mlook_lump.lump == -2)
   {
     if (R_DemoEx_GetVersion() < 2)
     {

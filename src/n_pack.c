@@ -45,9 +45,10 @@
 #include "w_wad.h"
 
 #include "n_net.h"
+#include "n_main.h"
+#include "n_state.h"
 #include "n_peer.h"
 #include "n_proto.h"
-#include "n_main.h"
 
 #define MAX_ARRAY_SIZE 128
 
@@ -232,10 +233,11 @@ static msgpack_object_map *map = NULL;
 
 static void pack_commands(netpeer_t *np, unsigned short playernum) {
   int command_count = 0;
+  cbuf_t *commands = NULL;
 
   msgpack_pack_unsigned_short(np->upk, playernum);
 
-  if (np->playernum == playernum)
+  if (np->playernum == playernum) {
     msgpack_pack_int(np->upk, np->command_index);
     return;
   }
@@ -243,6 +245,8 @@ static void pack_commands(netpeer_t *np, unsigned short playernum) {
   commands = &players[playernum].commands;
 
   CBUF_FOR_EACH(commands, entry) {
+    netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+
     if (ncmd->index > np->command_index) {
       command_count++;
     }
@@ -565,7 +569,7 @@ void N_PackDeltaSync(netpeer_t *np) {
   msgpack_pack_int(np->upk, np->delta.from_tic);
   msgpack_pack_int(np->upk, np->delta.to_tic);
   msgpack_pack_raw(np->upk, np->delta.data.size);
-  msgpack_pack_raw(np->upk, np->delta.data.data, np->delta.data.size);
+  msgpack_pack_raw_body(np->upk, np->delta.data.data, np->delta.data.size);
 }
 
 dboolean N_UnpackDeltaSync(netpeer_t *np) {
@@ -587,8 +591,8 @@ dboolean N_UnpackDeltaSync(netpeer_t *np) {
   np->command_index = m_command_index;
 
   if (m_delta_to_tic > np->state_tic) {
-    np->delta.from_tic = m_from_tic;
-    np->delta.to_tic = m_to_tic;
+    np->delta.from_tic = m_delta_from_tic;
+    np->delta.to_tic = m_delta_to_tic;
     np->state_tic = m_delta_to_tic;
     M_BufferSetData(
       &np->delta.data, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size
@@ -897,19 +901,6 @@ void N_PackSkinChange(netpeer_t *np, short playernum) {
 dboolean N_UnpackSkinChange(netpeer_t *np) {
   /* CG: TODO */
   return false;
-}
-
-void N_PackStateReceived(netpeer_t *np) {
-  msgpack_pack_unsigned_char(np->rpk, nm_statereceived);
-  msgpack_pack_int(np->rpk, np->last_sync_received_tic);
-}
-
-dboolean N_UnpackStateReceived(netpeer_t *np, int *tic) {
-  unpack_and_validate(obj, "last state tic received", int);
-
-  *tic = (int)obj->via.u64;
-
-  return true;
 }
 
 void N_PackAuthRequest(netpeer_t *np, char *password) {

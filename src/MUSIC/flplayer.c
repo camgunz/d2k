@@ -86,7 +86,7 @@ static int f_soundrate;
 
 #define SYSEX_BUFF_SIZE 1024
 static unsigned char sysexbuff[SYSEX_BUFF_SIZE];
-static int sysexbufflen;
+static int sysexbufflen = 0;
 
 static const char *fl_name (void)
 {
@@ -324,7 +324,7 @@ static void writesysex (unsigned char *data, int len)
   // it's possible to use an auto-resizing buffer here, but a malformed
   // midi file could make it grow arbitrarily large (since it must grow
   // until it hits an 0xf7 terminator)
-  int didrespond;
+  int didrespond = 0;
   
   if (len + sysexbufflen > SYSEX_BUFF_SIZE)
   {
@@ -336,12 +336,15 @@ static void writesysex (unsigned char *data, int len)
   sysexbufflen += len;
   if (sysexbuff[sysexbufflen - 1] == 0xf7) // terminator
   { // pass len-1 because fluidsynth does NOT want the final F7
-    fluid_synth_sysex (f_syn, sysexbuff, sysexbufflen - 1, NULL, NULL, &didrespond, 0);
+    fluid_synth_sysex (f_syn, (const char *)sysexbuff, sysexbufflen - 1, NULL, NULL, &didrespond, 0);
     sysexbufflen = 0;
   }
+
   if (!didrespond)
   {
-    lprintf (LO_WARN, "fluidplayer: SYSEX message received but not understood\n");
+    lprintf(
+      LO_WARN, "fluidplayer: SYSEX message received but not understood\n"
+    );
   }
 }  
 

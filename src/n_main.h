@@ -46,5 +46,7 @@ cbuf_t*  CL_GetLocalCommands(void);
 void     CL_SaveNewCommand(netticcmd_t *ncmd);
 void     CL_RemoveOldCommands(void);
 void     SV_RemoveOldCommands(void);
+void     CL_RemoveOldStates(void);
+void     SV_RemoveOldStates(void);
 
 #endif

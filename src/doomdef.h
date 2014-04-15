@@ -32,8 +32,8 @@
  *
  *-----------------------------------------------------------------------------*/
 
-#ifndef __DOOMDEF__
-#define __DOOMDEF__
+#ifndef DOOMDEF__
+#define DOOMDEF__
 
 /* use config.h if autoconf made one -- josh */
 #ifdef HAVE_CONFIG_H
@@ -148,7 +148,8 @@ extern int SCREEN_320x200;
 // at the intermission screen, the game final animation, or a demo.
 
 typedef enum {
-  GS_LEVEL,
+  GS_BAD = -1,
+  GS_LEVEL = 0,
   GS_INTERMISSION,
   GS_FINALE,
   GS_DEMOSCREEN

@@ -142,8 +142,6 @@ void M_BuildDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
   mmb2.ptr = (char *)b2->data;
   mmb2.size = (long)b2->size;
 
-  printf("B1/B2 sizes: %lu, %lu.\n", b1->size, b2->size);
-
   res = xdl_rabdiff_mb(&mmb1, &mmb2, &ecb);
   if (res != 0) {
     perror("");

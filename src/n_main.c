@@ -57,9 +57,9 @@
 
 #include "n_net.h"
 #include "n_main.h"
+#include "n_state.h"
 #include "n_peer.h"
 #include "n_proto.h"
-#include "n_state.h"
 
 /*
  * CG: TODO:
@@ -222,7 +222,6 @@ void N_TryRunTics(void) {
   int commands_to_build = delta_time;
   int menu_renderer_calls = commands_to_build * 3;
   int tics_to_run = INT_MAX;
-  dboolean tic_elapsed = (delta_time > 0);
 
   if (commands_to_build > 0)
     commands_last_built_time = current_time;
@@ -271,7 +270,7 @@ void N_TryRunTics(void) {
       gametic++;
 
       if (DELTASERVER)
-        N_SaveCurrentState();
+        N_SaveState();
     }
 
     if (CMDSERVER) {
@@ -341,20 +340,18 @@ void CL_SetAuthorizationLevel(auth_level_e level) {
 }
 
 void SV_RemoveOldCommands(void) {
-  int oldest_tic = INT_MAX;
+  int command_index = INT_MAX;
 
   for (int i = 0; i < N_GetPeerCount(); i++) {
     netpeer_t *np = N_GetPeer(i);
 
-    if (np == NULL)
-      continue;
-
-    oldest_tic = MIN(oldest_tic, np->last_sync_received_tic);
+    if (np != NULL)
+      command_index = MIN(command_index, np->command_index);
   }
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
-      remove_old_commands(&players[i].commands, oldest_tic);
+      remove_old_commands(&players[i].commands, command_index);
     }
   }
 }
@@ -362,7 +359,7 @@ void SV_RemoveOldCommands(void) {
 void CL_RemoveOldCommands(void) {
   remove_old_commands(
     &players[consoleplayer].commands,
-    N_GetPeerForPlayer(consoleplayer)->last_sync_received_tic
+    N_GetPeerForPlayer(consoleplayer)->command_index
   );
 }
 

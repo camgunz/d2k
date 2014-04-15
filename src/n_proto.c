@@ -50,10 +50,10 @@
 
 #include "n_net.h"
 #include "n_main.h"
+#include "n_state.h"
 #include "n_peer.h"
 #include "n_pack.h"
 #include "n_proto.h"
-#include "n_state.h"
 
 const char *D_dehout(void); /* CG: from d_main.c */
 
@@ -261,20 +261,6 @@ static void handle_setup(netpeer_t *np) {
   }
 }
 
-static void handle_full_state(netpeer_t *np) {
-  int tic = 0;
-  game_state_t *state = N_GetNewState();
-  dboolean call_init_new = true;
-
-  if (!N_UnpackFullState(np, &state->tic, &state->data))
-    return;
-
-  N_SetLatestState(state);
-  N_LoadLatestState(call_init_new);
-  np->state_tic = latest_state->tic;
-  CL_SetReceivedSetup(true);
-}
-
 static void handle_auth_response(netpeer_t *np) {
   auth_level_e level;
 
@@ -338,6 +324,7 @@ static void handle_player_message(netpeer_t *np) {
   unsigned short sender = 0;
   size_t recipient_count = 0;
   dboolean unpacked_successfully = false;
+  buf_t *message_recipients = N_GetMessageRecipientBuffer();
 
   if (!initialized_buffer) {
     M_BufferInit(&player_message_buffer);
@@ -345,7 +332,7 @@ static void handle_player_message(netpeer_t *np) {
   }
 
   unpacked_successfully = N_UnpackPlayerMessage(
-    np, &sender, &recipient_count, &message_recipients, &player_message_buffer
+    np, &sender, &recipient_count, message_recipients, &player_message_buffer
   );
 
   if (!unpacked_successfully)
@@ -360,7 +347,7 @@ static void handle_player_message(netpeer_t *np) {
           np,
           sender,
           recipient_count,
-          &message_recipients,
+          message_recipients,
           player_message_buffer.data
         );
       }
@@ -374,23 +361,6 @@ static void handle_player_message(netpeer_t *np) {
       doom_printf(
         "%s: %s\n", players[sender].name, player_message_buffer.data
       );
-    }
-  }
-}
-
-static void handle_save_game_name_change(netpeer_t *np) {
-  static buf_t save_game_name;
-  static dboolean initialized_buffer = false;
-
-  if (!initialized_buffer) {
-    M_BufferInit(&save_game_name);
-    initialized_buffer = true;
-  }
-
-  if (N_UnpackSaveGameNameChange(np, &save_game_name)) {
-    if (save_game_name.size < SAVEDESCLEN) {
-      memset(savedescription, 0, SAVEDESCLEN);
-      memcpy(savedescription, save_game_name.data, save_game_name.size);
     }
   }
 }
@@ -481,13 +451,6 @@ static void handle_player_preference_change(netpeer_t *np) {
   }
 }
 
-static void handle_state_received(netpeer_t *np) {
-  int tic;
-
-  if (N_UnpackStateReceived(np, &tic))
-    np->last_sync_received_tic = tic;
-}
-
 static void handle_auth_request(netpeer_t *np) {
   auth_level_e level;
 
@@ -514,10 +477,6 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
         CLIENT_ONLY("setup");
         handle_setup(np);
       break;
-      case nm_fullstate:
-        DELTA_CLIENT_ONLY("full state");
-        handle_full_state(np);
-      break;
       case nm_authresponse:
         CLIENT_ONLY("authorization response");
         handle_auth_response(np);
@@ -526,12 +485,11 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
         CLIENT_ONLY("server message");
         handle_server_message(np);
       break;
+      case nm_sync:
+        handle_sync(np);
+      break;
       case nm_playermessage:
         handle_player_message(np);
-      break;
-      case nm_savegamenamechange:
-        NOT_DELTA_CLIENT("save game name change");
-        handle_save_game_name_change(np);
       break;
       case nm_playerpreferencechange:
         NOT_DELTA_CLIENT("player preference change");
@@ -617,30 +575,6 @@ void SV_BroadcastMessage(char *message) {
   }
 }
 
-void SV_SendSync(short playernum) {
-  netpeer_t *np = NULL;
-  CHECK_VALID_PLAYER(np, playernum);
-
-  N_BuildStateDelta(np);
-  N_PackStateDelta(np);
-  np->last_sync_sent_tic = gametic;
-}
-
-void SV_BroadcastSync(void) {
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i]) {
-      SV_SendSync(i);
-    }
-  }
-}
-
-void CL_SendSync(void) {
-  netpeer_t *np = NULL;
-  CHECK_CONNECTION(np);
-
-  N_PackPlayerCommands(np, consoleplayer);
-}
-
 void CL_SendMessageToServer(char *message) {
   CL_SendMessageToPlayer(-1, message);
 }
@@ -650,7 +584,7 @@ void CL_SendMessageToPlayer(short recipient, char *message) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
-  ((short *)message_recipients.data)[0] = recipient;
+  ((short *)recipients->data)[0] = recipient;
 
   N_PackPlayerMessage(np, consoleplayer, 1, recipients, message);
 }
@@ -663,8 +597,7 @@ void CL_SendMessageToTeam(byte team, char *message) {
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (players[i].team == team) {
-      ((dboolean *)message_recipients.data)[i] = true;
-      recipient_count++;
+      ((short *)recipients->data)[recipient_count++] = i;
     }
   }
 

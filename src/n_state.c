@@ -38,9 +38,11 @@
 #include <msgpack.h>
 
 #include "doomstat.h"
+#include "g_game.h"
+#include "lprintf.h"
 #include "m_delta.h"
-#include "n_peer.h"
 #include "n_state.h"
+#include "n_peer.h"
 
 static game_state_t *latest_game_state = NULL;
 static cbuf_t saved_game_states;
@@ -57,7 +59,7 @@ static game_state_t* get_state(int tic) {
 }
 
 void N_InitStates(void) {
-  M_CBufInit(&saved_game_states);
+  M_CBufInit(&saved_game_states, sizeof(game_state_t));
 }
 
 void N_SaveState(void) {

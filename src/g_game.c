@@ -1075,7 +1075,6 @@ void G_Ticker(void) {
         G_ReadDemoContinueTiccmd(cmd);
       }
       else if (MULTINET && CMDSYNC) {
-        netpeer_t *np = NULL;
         dboolean found_command = false;
 
         M_CBufConsolidate(&players[i].commands);
@@ -1197,6 +1196,8 @@ void G_Ticker(void) {
     break;
     case GS_DEMOSCREEN:
       D_PageTicker();
+    break;
+    case GS_BAD:
     break;
   }
 }
@@ -2207,9 +2208,6 @@ void G_SaveGame(int slot, char *description)
   special_event = BT_SPECIAL |
                   (BTS_SAVEGAME & BT_SPECIALMASK) |
                   ((slot << BTS_SAVESHIFT) & BTS_SAVEMASK);
-
-  if (CLIENT)
-    CL_SendSaveGameNameChange(savedescription);
 }
 
 /* killough 3/22/98: form savegame name in one location

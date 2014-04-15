@@ -36,8 +36,8 @@
  *
  *---------------------------------------------------------------------*/
 
-#ifndef __Z_ZONE__
-#define __Z_ZONE__
+#ifndef Z_ZONE__
+#define Z_ZONE__
 
 #ifndef __GNUC__
 #define __attribute__(x)
