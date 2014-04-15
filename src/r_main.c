@@ -71,7 +71,7 @@ int render_doom_lightmaps;
 int r_frame_count;
 
 //e6y
-render_precise_t render_precise;
+render_precise_t render_precise = render_precise_speed;
 const char *render_precises[] = {"Speed","Quality"};
 
 int r_have_internal_hires = false;

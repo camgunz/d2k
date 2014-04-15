@@ -310,6 +310,11 @@ static void R_DoAnInterpolation (int i, fixed_t smoothratio)
     case INTERP_SectorCeiling:
       gld_UpdateSplitData(((sector_t*)curipos[i].address));
       break;
+    case INTERP_Vertex:
+    case INTERP_WallPanning:
+    case INTERP_FloorPanning:
+    case INTERP_CeilingPanning:
+      break;
     }
   }
 #endif
@@ -370,6 +375,8 @@ static void R_SetInterpolation(interpolation_type_e type, void *posptr)
   case INTERP_CeilingPanning:
     i = &(((sector_t*)posptr)->INTERP_CeilingPanning);
     break;
+  case INTERP_Vertex:
+    break;
   }
 
   if (i != NULL && (*i) == 0)
@@ -408,6 +415,8 @@ static void R_StopInterpolation(interpolation_type_e type, void *posptr)
   case INTERP_CeilingPanning:
     i = &(((sector_t*)posptr)->INTERP_CeilingPanning);
     break;
+  case INTERP_Vertex:
+    break;
   }
 
   if (i != NULL && (*i) != 0)
@@ -440,6 +449,8 @@ static void R_StopInterpolation(interpolation_type_e type, void *posptr)
       break;
     case INTERP_CeilingPanning:
       j = &(((sector_t*)posptr_last)->INTERP_CeilingPanning);
+      break;
+    case INTERP_Vertex:
       break;
     }
 

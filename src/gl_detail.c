@@ -677,6 +677,10 @@ void gld_SetTexDetail(GLTexture *gltexture)
         if (details[TAG_DETAIL_FLAT].texid > 0)
           gltexture->detail = &details[TAG_DETAIL_FLAT];
         break;
+      case GLDT_UNREGISTERED:
+      case GLDT_BROKEN:
+      case GLDT_PATCH:
+        break;
       }
     }
 
@@ -818,6 +822,8 @@ void gld_ParseDetailItem(tag_detail_e item)
           break;
         case TAG_DETAIL_FLAT:
           detail.texture_num = (W_CheckNumForName)(sc_String, ns_flats);
+          break;
+        case TAG_DETAIL_MAX:
           break;
         }
 

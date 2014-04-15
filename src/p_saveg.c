@@ -217,7 +217,7 @@ static void P_UnArchivePlayer(buf_t *savebuffer, player_t *player) {
   M_BufferReadInt(savebuffer, &player->itemcount);
   M_BufferReadInt(savebuffer, &player->secretcount);
   M_BufferReadString(savebuffer, msg, MAX_MESSAGE_SIZE);
-  doom_pprintf(player - players, msg);
+  doom_pprintf(player - players, "%s", msg);
   M_BufferReadInt(savebuffer, &player->damagecount);
   M_BufferReadInt(savebuffer, &player->bonuscount);
   M_BufferReadInt(savebuffer, &player->extralight);

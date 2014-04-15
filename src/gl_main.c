@@ -1144,8 +1144,6 @@ void gld_Clear(void)
 
 void gld_StartDrawScene(void)
 {
-  extern int screenblocks;
-
   gld_MultisamplingSet();
 
   if (gl_shared_texture_palette)
@@ -1437,6 +1435,22 @@ static void gld_AddDrawWallItem(GLDrawItemType itemtype, void *itemdata)
           wall->gltexture = gld_RegisterTexture(nextpic, true, false);
         }
       }
+      break;
+    case GLDIT_NONE:
+    case GLDIT_TWALL:
+    case GLDIT_SWALL:
+    case GLDIT_AWALL:
+    case GLDIT_FAWALL:
+    case GLDIT_CEILING:
+    case GLDIT_FLOOR:
+    case GLDIT_ACEILING:
+    case GLDIT_AFLOOR:
+    case GLDIT_SPRITE:
+    case GLDIT_TSPRITE:
+    case GLDIT_ASPRITE:
+    case GLDIT_SHADOW:
+    case GLDIT_HBAR:
+    case GLDIT_TYPES:
       break;
     }
   }

@@ -270,6 +270,14 @@ static void pack_commands(netpeer_t *np, unsigned short playernum) {
   }
 }
 
+void N_ShutUpClang(void) {
+  npv_char_range(NULL, 0, 0);
+  npv_short_range(NULL, 0, 0);
+  npv_ushort_range(NULL, 0, 0);
+  npv_null_type(NULL);
+  npv_null_size(NULL);
+}
+
 void N_InitPacker(void) {
   msgpack_unpacker_init(&pac, MSGPACK_UNPACKER_INIT_BUFFER_SIZE);
   msgpack_unpacked_init(&result);

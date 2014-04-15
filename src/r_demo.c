@@ -1101,7 +1101,7 @@ static int G_ReadDemoFooter(const char *filename)
       size_t i;
       waddata_t waddata;
 
-      if (!CheckWadBufIntegrity(demoex_p, size))
+      if (!CheckWadBufIntegrity((const char *)demoex_p, size))
       {
         lprintf(LO_ERROR, "G_ReadDemoFooter: demo footer is currupted\n");
       }

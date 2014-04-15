@@ -251,12 +251,43 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
 // do nothing else when drawin fuzz columns
 #if (!(R_DRAWCOLUMN_PIPELINE & RDC_FUZZ))
   {
+#if (!(R_DRAWCOLUMN_PIPELINE & RDC_BILINEAR) || R_DRAWCOLUMN_PIPELINE_BITS != 8)
     const byte          *source = dcvars->source;
+#endif
+#if (R_DRAWCOLUMN_PIPELINE & RDC_NOCOLMAP)
+#elif (R_DRAWCOLUMN_PIPELINE & RDC_DITHERZ)
+#else
     const lighttable_t  *colormap = dcvars->colormap;
+#endif
+#if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLATED)
     const byte          *translation = dcvars->translation;
+#endif
 #if (R_DRAWCOLUMN_PIPELINE & (RDC_BILINEAR|RDC_ROUNDED|RDC_DITHERZ))
     int y = dcvars->yl;
+#if (\
+  ( \
+   (R_DRAWCOLUMN_PIPELINE & (RDC_DITHERZ)) && \
+   (R_DRAWCOLUMN_PIPELINE_BITS == 8) \
+  ) || \
+  ( \
+   (R_DRAWCOLUMN_PIPELINE & (RDC_BILINEAR)) && \
+   (R_DRAWCOLUMN_PIPELINE_BITS == 8) \
+  ) || \
+  ( \
+   (R_DRAWCOLUMN_PIPELINE & (RDC_DITHERZ)) && \
+   (R_DRAWCOLUMN_PIPELINE_BITS == 15) \
+  ) || \
+  ( \
+   (R_DRAWCOLUMN_PIPELINE & (RDC_DITHERZ)) && \
+   (R_DRAWCOLUMN_PIPELINE_BITS == 16) \
+  ) || \
+  ( \
+   (R_DRAWCOLUMN_PIPELINE & (RDC_DITHERZ)) && \
+   (R_DRAWCOLUMN_PIPELINE_BITS == 32) \
+  ) \
+)
     const int x = dcvars->x;
+#endif
 #endif
 #if (R_DRAWCOLUMN_PIPELINE & RDC_DITHERZ)
     const int fracz = (dcvars->z >> 6) & 255;
@@ -320,7 +351,9 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
           *dest = GETDESTCOLOR(GETCOL(frac & fixedt_heightmask, (frac+FRACUNIT) & fixedt_heightmask));
           INCY(y);
       } else {
+#if (R_DRAWCOLUMN_PIPELINE & (RDC_BILINEAR|RDC_ROUNDED))
         fixed_t nextfrac = 0;
+#endif
 
         heightmask++;
         heightmask <<= FRACBITS;

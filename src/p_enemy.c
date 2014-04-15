@@ -1116,6 +1116,7 @@ void A_Look(mobj_t *actor)
 // Allows monsters to continue movement while attacking
 //
 
+#if 0
 static void A_KeepChasing(mobj_t *actor)
 {
   if (actor->movecount)
@@ -1126,6 +1127,7 @@ static void A_KeepChasing(mobj_t *actor)
       P_SmartMove(actor);
     }
 }
+#endif
 
 //
 // A_Chase

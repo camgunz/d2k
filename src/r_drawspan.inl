@@ -96,11 +96,24 @@ static void R_DRAWSPAN_FUNCNAME(draw_span_vars_t *dsvars)
   const fixed_t xstep = dsvars->xstep;
   const fixed_t ystep = dsvars->ystep;
   const byte *source = dsvars->source;
+#if (R_DRAWSPAN_PIPELINE & RDC_NOCOLMAP)
+#elif (R_DRAWSPAN_PIPELINE & RDC_DITHERZ)
+#else
   const byte *colormap = dsvars->colormap;
+#endif
   SCREENTYPE *dest = drawvars.TOPLEFT + dsvars->y*drawvars.PITCH + dsvars->x1;
+#if ((R_DRAWSPAN_PIPELINE & RDC_DITHERZ) || ( \
+    ((R_DRAWSPAN_PIPELINE_BITS == 8) || (!(R_DRAWSPAN_PIPELINE & RDC_BILINEAR))) && \
+    (!(R_DRAWSPAN_PIPELINE & RDC_ROUNDED)) && \
+    (R_DRAWSPAN_PIPELINE & RDC_BILINEAR)))
+  const int y = dsvars->y;
+  int x1 = dsvars->x1;
+#endif
+#if 0
 #if (R_DRAWSPAN_PIPELINE & (RDC_DITHERZ|RDC_BILINEAR))
   const int y = dsvars->y;
   int x1 = dsvars->x1;
+#endif
 #endif
 #if (R_DRAWSPAN_PIPELINE & RDC_DITHERZ)
   const int fracz = (dsvars->z >> 12) & 255;

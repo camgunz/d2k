@@ -817,10 +817,10 @@ static void RenderDome(SkyBoxParams_t *sky)
       if (vbo->id)
       {
         // delete VBO when already exists
-        GLEXT_glDeleteBuffersARB(1, &vbo->id);
+        GLEXT_glDeleteBuffersARB(1, (const GLuint *)&vbo->id);
       }
       // generate a new VBO and get the associated ID
-      GLEXT_glGenBuffersARB(1, &vbo->id);
+      GLEXT_glGenBuffersARB(1, (GLuint *)&vbo->id);
       // bind VBO in order to use
       GLEXT_glBindBufferARB(GL_ARRAY_BUFFER, vbo->id);
       // upload data to VBO

@@ -47,9 +47,11 @@ extern int  key_enter;                                              // phares
 // not used currently
 // code to initialize HUlib would go here if needed
 //
+#if 0
 static void HUlib_init(void)
 {
 }
+#endif
 
 ////////////////////////////////////////////////////////
 //
@@ -694,11 +696,13 @@ static void HUlib_delCharFromIText(hu_itext_t* it)
 // Passed the hu_itext_t
 // Returns nothing
 //
+#if 0
 static void HUlib_eraseLineFromIText(hu_itext_t* it)
 {
   while (it->lm != it->l.len)
     HUlib_delCharFromTextLine(&it->l);
 }
+#endif
 
 //
 // HUlib_resetIText()
