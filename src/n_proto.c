@@ -299,8 +299,10 @@ static void handle_server_message(netpeer_t *np) {
 }
 
 static void handle_sync(netpeer_t *np) {
+  dboolean update_sync = false;
+
   if (DELTACLIENT) {
-    if (!N_UnpackDeltaSync(np)) {
+    if (!N_UnpackDeltaSync(np, &update_sync)) {
       printf("Error unpacking delta sync\n");
       return;
     }
@@ -314,27 +316,31 @@ static void handle_sync(netpeer_t *np) {
       np->state_tic = np->delta.to_tic;
     }
   }
-  else if (!N_UnpackSync(np)) {
+  else if (!N_UnpackSync(np, &update_sync)) {
     return;
   }
-  
+  else if (update_sync) {
+    if (CMDCLIENT) {
+      np->needs_sync_update = true;
+    }
+    else if (CMDSERVER) {
+      for (int i = 0; i < N_GetPeerCount(); i++) {
+        netpeer_t *csnp = N_GetPeer(i);
+
+        if (csnp != NULL)
+          csnp->needs_sync_update = true;
+      }
+    }
+    else if (DELTASERVER) {
+      np->needs_sync_update = true;
+    }
+  }
+
   if (DELTACLIENT)
     CL_RemoveOldStates();
 
   if (DELTASERVER)
     SV_RemoveOldStates();
-
-  M_BufferClear(&np->ubuf);
-
-  if (DELTASERVER) {
-    if (np->state_tic != gametic)
-      N_BuildStateDelta(np->state_tic, &np->delta);
-
-    N_PackDeltaSync(np);
-  }
-  else {
-    N_PackSync(np);
-  }
 }
 
 static void handle_player_message(netpeer_t *np) {
@@ -541,6 +547,37 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
   }
 }
 
+void N_SendSync(void) {
+  netpeer_t *np = NULL;
+
+  if (CLIENT) {
+    np = N_GetPeer(0);
+
+    if (np == NULL || !np->needs_sync_update)
+      return;
+
+    M_BufferClear(&np->ubuf);
+    N_PackSync();
+  }
+  else {
+    for (int i = 0; i < N_GetPeerCount(); i++) {
+      np = N_GetPeer(i);
+
+      if (np == NULL || !np->needs_sync_update)
+        continue;
+
+      M_BufferClear(&np->ubuf);
+
+      if (DELTASERVER)
+        N_PackDeltaSync();
+      else
+        N_PackSync();
+    }
+  }
+
+  sync_needs_updating = false;
+}
+
 void SV_SetupNewPeer(int peernum) {
   short playernum;
   netpeer_t *np = N_GetPeer(peernum);
@@ -564,7 +601,6 @@ void SV_SetupNewPeer(int peernum) {
   playeringame[playernum] = true;
   P_SpawnPlayer(playernum, &playerstarts[playernum]);
   np->playernum = playernum;
-  printf("Set needs_setup for %d to %d.\n", playernum, gametic);
   np->needs_setup = gametic;
 }
 
@@ -576,19 +612,6 @@ void SV_SendSetup(short playernum) {
 
   np->needs_setup = 0;
   np->state_tic = gametic;
-  printf("Set state TIC to %d.\n", gametic);
-  printf("Set state TIC to %d.\n", gametic);
-  printf("Set state TIC to %d.\n", gametic);
-  printf("Set state TIC to %d.\n", gametic);
-  printf("Set state TIC to %d.\n", gametic);
-  printf("Set state TIC to %d.\n", gametic);
-  printf("Set state TIC to %d.\n", gametic);
-  printf("Set state TIC to %d.\n", gametic);
-  printf("Set state TIC to %d.\n", gametic);
-  printf("Set state TIC to %d.\n", gametic);
-  printf("Set state TIC to %d.\n", gametic);
-  printf("Set state TIC to %d.\n", gametic);
-  printf("Set state TIC to %d.\n", gametic);
 }
 
 void SV_SendAuthResponse(short playernum, auth_level_e auth_level) {

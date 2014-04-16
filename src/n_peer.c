@@ -61,18 +61,20 @@ int N_AddPeer(void) {
 
   /* CG: TODO: Add some kind of check for MAXCLIENTS */
 
-  np->peer = NULL;
   M_BufferInit(&np->rbuf);
-  np->rpk = msgpack_packer_new((void *)&np->rbuf, buf_write);
   M_BufferInit(&np->ubuf);
-  np->upk = msgpack_packer_new((void *)&np->ubuf, buf_write);
-  np->connect_time = time(NULL);
-  np->disconnect_time = 0;
-  np->playernum = 0;
-  np->command_tic = 0;
-  np->state_tic = 0;
   M_BufferInit(&np->delta.data);
-  np->needs_setup = 0;
+
+  np->peer              = NULL;
+  np->rpk               = msgpack_packer_new((void *)&np->rbuf, buf_write);
+  np->upk               = msgpack_packer_new((void *)&np->ubuf, buf_write);
+  np->connect_time      = time(NULL);
+  np->disconnect_time   = 0;
+  np->playernum         = 0;
+  np->command_tic       = 0;
+  np->state_tic         = 0;
+  np->needs_setup       = 0;
+  np->needs_sync_update = false;
 
   np->playernum = M_OBufInsertAtFirstFreeSlotOrAppend(&net_peers, np);
 
@@ -112,15 +114,16 @@ void N_RemovePeer(netpeer_t *np) {
   msgpack_packer_free(np->upk);
   M_BufferFree(&np->delta.data);
 
-  np->peer                   = NULL;
-  np->rpk                    = NULL;
-  np->upk                    = NULL;
-  np->connect_time           = 0;
-  np->disconnect_time        = 0;
-  np->playernum              = -1;
-  np->command_tic            = 0;
-  np->state_tic              = 0;
-  np->needs_setup            = 0;
+  np->peer              = NULL;
+  np->rpk               = NULL;
+  np->upk               = NULL;
+  np->connect_time      = 0;
+  np->disconnect_time   = 0;
+  np->playernum         = -1;
+  np->command_tic       = 0;
+  np->state_tic         = 0;
+  np->needs_setup       = 0;
+  np->needs_sync_update = false;
 
   M_OBufRemove(&net_peers, peernum);
 }

@@ -1,46 +1,7 @@
 # To Do
 
-## Notes
-
-In command sync, servers send an array of commands for each player, so:
-
-    [
-      0: cmd1, cmd2,
-      1: cmd1
-      2: cmd1, cmd2, cmd3, cmd4
-      3: cmd1, cmd2, cmd3
-    ]
-
-In delta sync, the command arrays are stored in each `player_t`, which leads to
-the same result.
-
-This accomplishes two things:
-
-- Each player receives the other players' commands, and can therefore run a
-  tic; in this example `cmd1` is present for all players, so the receiving
-  player can run 1 tic.
-- The receiving player knows which of its commands have made it to the server
-  and can pop them off the local command buffer
-
-`maketic` and `gametic` are always sync'd, meaning that a `netticcmd_t`'s `tic`
-member always refers to the tic in which it is intended to be run.
-
-There will never be holes in ncmd buffers, because clients only flush them when
-the server has acknowledged receipt, either through the above method or through delta
-sync.
-
-Clients must trim their local player command buffers whenever sync is received;
-either via a command array or a delta.
-
-Servers have to keep track of which commands each client has acknowledged
-receipt of.
-
-## To Do (For Real)
-
-1. Have a look at command & state buffer trimming; the chance these are correct
-   is very small.
-
-1. Start testing prototype
+1. Server spontaneously gets a "player preference" message when the client
+   doesn't send one.
 
 ---
 

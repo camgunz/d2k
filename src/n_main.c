@@ -310,6 +310,8 @@ void N_TryRunTics(void) {
     }
   }
 
+  N_SendSync();
+
   if (MULTINET) {
     N_ServiceNetwork();
 

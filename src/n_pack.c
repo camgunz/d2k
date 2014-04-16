@@ -496,7 +496,7 @@ dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf) {
 void N_PackSync(netpeer_t *np) {
   msgpack_pack_unsigned_char(np->upk, nm_sync);
 
-  if (DELTASYNC)
+  if (DELTACLIENT)
     msgpack_pack_int(np->upk, np->state_tic);
 
   if (SERVER) {
@@ -523,12 +523,13 @@ void N_PackSync(netpeer_t *np) {
   }
 }
 
-dboolean N_UnpackSync(netpeer_t *np) {
+dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
   unsigned short player_count = 0;
   int m_state_tic = 0;
   int m_command_tic = 0;
+  dboolean command_sync_needs_updating = false;
 
-  if (DELTASYNC) {
+  if (DELTASERVER) {
     unpack_and_validate(obj, "state tic", int);
     m_state_tic = (int)obj->via.i64;
     printf("%d State: %d.\n", np->playernum, m_state_tic);
@@ -614,6 +615,8 @@ dboolean N_UnpackSync(netpeer_t *np) {
 
         unpack_and_validate(obj, "command buttons value", uchar);
         ncmd->cmd.buttons = (byte)obj->via.u64;
+
+        command_sync_needs_updating = true;
       }
       else {
         unpack_and_validate(obj, "command forward value", char);
@@ -626,9 +629,16 @@ dboolean N_UnpackSync(netpeer_t *np) {
     }
   }
 
-  np->command_tic = m_command_tic;
+  if (CMDCLIENT)
+    *update_sync = (np->command_tic != m_command_tic);
+  else if (DELTASERVER)
+    *update_sync = (np->state_tic != m_state_tic);
+  else
+    *update_sync = false;
 
-  if (DELTASYNC)
+  if (CMDCLIENT)
+    np->command_tic = m_command_tic;
+  else if (DELTASERVER)
     np->state_tic = m_state_tic;
 
   return true;

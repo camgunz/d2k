@@ -48,6 +48,7 @@ typedef struct netpeer_s {
   int                 state_tic;
   game_state_delta_t  delta;
   int                 needs_setup;
+  dboolean            needs_sync_update;
 } netpeer_t;
 
 void       N_InitPeers(void);
