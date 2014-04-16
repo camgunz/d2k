@@ -238,7 +238,7 @@ static void pack_commands(netpeer_t *np, unsigned short playernum) {
   msgpack_pack_unsigned_short(np->upk, playernum);
 
   if (np->playernum == playernum) {
-    msgpack_pack_int(np->upk, np->command_index);
+    msgpack_pack_int(np->upk, np->command_tic);
     return;
   }
 
@@ -247,7 +247,7 @@ static void pack_commands(netpeer_t *np, unsigned short playernum) {
   CBUF_FOR_EACH(commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-    if (ncmd->index > np->command_index) {
+    if (ncmd->tic > np->command_tic) {
       command_count++;
     }
   }
@@ -257,10 +257,9 @@ static void pack_commands(netpeer_t *np, unsigned short playernum) {
   CBUF_FOR_EACH(commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-    if (ncmd->index <= np->command_index)
+    if (ncmd->tic <= np->command_tic)
       continue;
 
-    msgpack_pack_unsigned_int(np->upk, ncmd->index);
     msgpack_pack_signed_char(np->upk, ncmd->cmd.forwardmove);
     msgpack_pack_signed_char(np->upk, ncmd->cmd.sidemove);
     msgpack_pack_short(np->upk, ncmd->cmd.angleturn);
@@ -287,6 +286,7 @@ void N_LoadPacketData(void *data, size_t data_size) {
   msgpack_unpacker_reserve_buffer(&pac, data_size);
   memcpy(msgpack_unpacker_buffer(&pac), data, data_size);
 
+#if 0
   for (int i = 0; i < data_size; i++) {
     if (((i + 1) * 5) >= 80)
       printf("%4d\n", ((char *)msgpack_unpacker_buffer(&pac))[i]);
@@ -294,6 +294,7 @@ void N_LoadPacketData(void *data, size_t data_size) {
       printf("%4d ", ((char *)msgpack_unpacker_buffer(&pac))[i]);
   }
   printf("\n");
+#endif
 
   msgpack_unpacker_buffer_consumed(&pac, data_size);
 }
@@ -314,6 +315,8 @@ dboolean N_LoadNewMessage(netpeer_t *np, byte *message_type) {
 void N_PackSetup(netpeer_t *np) {
   game_state_t *gs = N_GetLatestState();
   unsigned short player_count = 0;
+
+  doom_printf("Packing setup (%d)\n", gametic);
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
@@ -343,6 +346,11 @@ void N_PackSetup(netpeer_t *np) {
     msgpack_pack_raw(np->rpk, length);
     msgpack_pack_raw_body(np->rpk, deh_name, length);
   }
+
+  printf(
+    "N_PackSetup: Sent game state at %d (player count: %d).\n",
+    gs->tic, player_count
+  );
 
   msgpack_pack_unsigned_int(np->rpk, gs->tic);
   msgpack_pack_raw(np->rpk, gs->data.size);
@@ -399,10 +407,14 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   *player_count = m_player_count;
   *playernum = m_playernum;
 
+  N_SetLatestState(gs);
+
   return true;
 }
 
 void N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level) {
+  doom_printf("Packing auth response\n");
+
   msgpack_pack_unsigned_char(np->rpk, nm_authresponse);
   msgpack_pack_unsigned_char(np->rpk, auth_level);
 }
@@ -420,6 +432,8 @@ dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
 void N_PackServerMessage(netpeer_t *np, char *message) {
   size_t length = strlen(message) * sizeof(char);
 
+  doom_printf("Packing server message\n");
+
   msgpack_pack_unsigned_char(np->rpk, nm_servermessage);
   msgpack_pack_raw(np->rpk, length);
   msgpack_pack_raw_body(np->rpk, message, length);
@@ -434,6 +448,8 @@ dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf) {
 }
 
 void N_PackSync(netpeer_t *np) {
+  doom_printf("Packing sync\n");
+
   msgpack_pack_unsigned_char(np->upk, nm_sync);
 
   if (DELTASYNC)
@@ -466,9 +482,8 @@ void N_PackSync(netpeer_t *np) {
 dboolean N_UnpackSync(netpeer_t *np) {
   unsigned short player_count = 0;
   int m_state_tic = 0;
-  int m_command_index = 0;
-
-  if (DELTASYNC) {
+  int m_command_tic = 0;
+if (DELTASYNC) {
     unpack_and_validate(obj, "state tic", int);
     m_state_tic = (int)obj->via.i64;
   }
@@ -479,7 +494,7 @@ dboolean N_UnpackSync(netpeer_t *np) {
   for (int i = 0; i < player_count; i++) {
     unsigned short playernum = 0;
     byte command_count = 0;
-    int latest_command_index = -1;
+    int latest_command_tic = -1;
     cbuf_t *commands = NULL;
 
     unpack_and_validate_player(obj);
@@ -496,8 +511,8 @@ dboolean N_UnpackSync(netpeer_t *np) {
     }
 
     if (CMDCLIENT && playernum == consoleplayer) {
-      unpack_and_validate(obj, "command index", int);
-      m_command_index = (int)obj->via.i64;
+      unpack_and_validate(obj, "command tic", int);
+      m_command_tic = (int)obj->via.i64;
 
       continue;
     }
@@ -520,19 +535,19 @@ dboolean N_UnpackSync(netpeer_t *np) {
     CBUF_FOR_EACH(commands, entry) {
       netticcmd_t *ncmd = entry.obj;
 
-      latest_command_index = MAX(latest_command_index, ncmd->index);
+      latest_command_tic = MAX(latest_command_tic, ncmd->tic);
     }
 
     while (command_count--) {
-      int index = 0;
+      int tic = 0;
 
-      unpack_and_validate(obj, "command index", int);
-      index = (int)obj->via.i64;
+      unpack_and_validate(obj, "command tic", int);
+      tic = (int)obj->via.i64;
 
-      if (index > latest_command_index) {
+      if (tic > latest_command_tic) {
         netticcmd_t *ncmd = M_CBufGetFirstFreeOrNewSlot(commands);
 
-        ncmd->index = index;
+        ncmd->tic = tic;
 
         unpack_and_validate(obj, "command forward value", char);
         ncmd->cmd.forwardmove = (signed char)obj->via.i64;
@@ -563,7 +578,7 @@ dboolean N_UnpackSync(netpeer_t *np) {
     }
   }
 
-  np->command_index = m_command_index;
+  np->command_tic = m_command_tic;
 
   if (DELTASYNC)
     np->state_tic = m_state_tic;
@@ -572,8 +587,10 @@ dboolean N_UnpackSync(netpeer_t *np) {
 }
 
 void N_PackDeltaSync(netpeer_t *np) {
+  doom_printf("Packing delta sync\n");
+
   msgpack_pack_unsigned_char(np->upk, nm_sync);
-  msgpack_pack_int(np->upk, np->command_index);
+  msgpack_pack_int(np->upk, np->command_tic);
   msgpack_pack_int(np->upk, np->delta.from_tic);
   msgpack_pack_int(np->upk, np->delta.to_tic);
   msgpack_pack_raw(np->upk, np->delta.data.size);
@@ -581,12 +598,12 @@ void N_PackDeltaSync(netpeer_t *np) {
 }
 
 dboolean N_UnpackDeltaSync(netpeer_t *np) {
-  int m_command_index = 0;
+  int m_command_tic = 0;
   int m_delta_from_tic = 0;
   int m_delta_to_tic = 0;
 
   unpack_and_validate(obj, "command index", int);
-  m_command_index = (int)obj->via.i64;
+  m_command_tic = (int)obj->via.i64;
 
   unpack_and_validate(obj, "delta from tic", int);
   m_delta_from_tic = (int)obj->via.i64;
@@ -596,7 +613,7 @@ dboolean N_UnpackDeltaSync(netpeer_t *np) {
 
   unpack_and_validate(obj, "delta data", raw);
 
-  np->command_index = m_command_index;
+  np->command_tic = m_command_tic;
 
   if (m_delta_to_tic > np->state_tic) {
     np->delta.from_tic = m_delta_from_tic;
@@ -616,6 +633,8 @@ void N_PackPlayerMessage(netpeer_t *np, unsigned short sender,
                                         char *message) {
   size_t length = strlen(message) * sizeof(char);
   short *ra = (short *)recipients->data;
+
+  doom_printf("Packing player message\n");
 
   msgpack_pack_unsigned_char(np->rpk, nm_playermessage);
   msgpack_pack_unsigned_short(np->rpk, sender);
@@ -658,6 +677,8 @@ dboolean N_UnpackPlayerPreferenceChange(netpeer_t *np, short *playernum,
                                                        size_t *count) {
   short m_playernum = 0;
   int m_tic = 0;
+
+  doom_printf("Packing player preference change\n");
 
   unpack_and_validate_player(obj);
   m_playernum = (short)obj->via.i64;
@@ -704,6 +725,8 @@ dboolean N_UnpackPlayerPreferenceName(netpeer_t *np, size_t pref_index,
 void N_PackNameChange(netpeer_t *np, short playernum, char *new_name) {
   size_t length = strlen(new_name) * sizeof(char);
 
+  doom_printf("Packing name change\n");
+
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
   msgpack_pack_short(np->rpk, playernum);
@@ -723,6 +746,8 @@ dboolean N_UnpackNameChange(netpeer_t *np, buf_t *buf) {
 }
 
 void N_PackTeamChange(netpeer_t *np, short playernum, byte new_team) {
+  doom_printf("Packing team change\n");
+
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
   msgpack_pack_short(np->rpk, playernum);
@@ -747,6 +772,8 @@ dboolean N_UnpackTeamChange(netpeer_t *np, byte *new_team) {
 }
 
 void N_PackPWOChange(netpeer_t *np, short playernum) {
+  doom_printf("Packing PWO change\n");
+
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
   msgpack_pack_short(np->rpk, playernum);
@@ -762,6 +789,8 @@ dboolean N_UnpackPWOChange(netpeer_t *np) {
 }
 
 void N_PackWSOPChange(netpeer_t *np, short playernum, byte new_wsop_flags) {
+  doom_printf("Packing WSOP change\n");
+
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
   msgpack_pack_short(np->rpk, playernum);
@@ -783,6 +812,8 @@ dboolean N_UnpackWSOPChange(netpeer_t *np, byte *new_wsop_flags) {
 
 void N_PackBobbingChange(netpeer_t *np, short playernum,
                                         double new_bobbing_amount) {
+  doom_printf("Packing bobbing change\n");
+
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
   msgpack_pack_short(np->rpk, playernum);
@@ -802,6 +833,8 @@ dboolean N_UnpackBobbingchanged(netpeer_t *np, double *new_bobbing_amount) {
 
 void N_PackAutoaimChange(netpeer_t *np, short playernum,
                                         dboolean new_autoaim_enabled) {
+  doom_printf("Packing autoaim change\n");
+
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
   msgpack_pack_short(np->rpk, playernum);
@@ -824,6 +857,8 @@ dboolean N_UnpackAutoaimChange(netpeer_t *np, dboolean *new_autoaim_enabled) {
 
 void N_PackWeaponSpeedChange(netpeer_t *np, short playernum,
                                             byte new_weapon_speed) {
+  doom_printf("Packing weapon speed change\n");
+
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
   msgpack_pack_short(np->rpk, playernum);
@@ -845,6 +880,8 @@ dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, byte *new_weapon_speed) {
 void N_PackColorChange(netpeer_t *np, short playernum, byte new_red,
                                                        byte new_green,
                                                        byte new_blue) {
+  doom_printf("Packing color change\n");
+
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
   msgpack_pack_short(np->rpk, playernum);
@@ -868,6 +905,8 @@ dboolean N_UnpackColorChange(netpeer_t *np, byte *new_red, byte *new_green,
 }
 
 void N_PackColormapChange(netpeer_t *np, short playernum, int new_color) {
+  doom_printf("Packing colormap change\n");
+
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
   msgpack_pack_short(np->rpk, playernum);
@@ -897,6 +936,8 @@ dboolean N_UnpackColormapChange(netpeer_t *np, short *playernum,
 }
 
 void N_PackSkinChange(netpeer_t *np, short playernum) {
+  doom_printf("Packing skin change\n");
+
   msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
   msgpack_pack_int(np->rpk, gametic);
   msgpack_pack_short(np->rpk, playernum);
@@ -912,6 +953,8 @@ dboolean N_UnpackSkinChange(netpeer_t *np) {
 }
 
 void N_PackAuthRequest(netpeer_t *np, char *password) {
+  doom_printf("Packing auth request\n");
+
   size_t length = strlen(password) * sizeof(char);
 
   msgpack_pack_unsigned_char(np->rpk, nm_authrequest);
@@ -928,6 +971,8 @@ dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
 }
 
 void N_PackRCONCommand(netpeer_t *np, char *command) {
+  doom_printf("Packing RCON\n");
+
   size_t length = strlen(command) * sizeof(char);
 
   msgpack_pack_unsigned_char(np->rpk, nm_rconcommand);
@@ -944,6 +989,8 @@ dboolean N_UnpackRCONCommand(netpeer_t *np, buf_t *buf) {
 }
 
 void N_PackVoteRequest(netpeer_t *np, char *command) {
+  doom_printf("Packing vote request\n");
+
   size_t length = strlen(command) * sizeof(char);
 
   msgpack_pack_unsigned_char(np->rpk, nm_voterequest);

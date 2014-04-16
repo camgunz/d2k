@@ -420,12 +420,10 @@ static int G_NextWeapon(int direction)
   return weapon_order_table[i].weapon_num;
 }
 
-void G_BuildTiccmd(netticcmd_t* ncmd) {
-  static int command_index = 0;
-
-  int strafe;
+void G_BuildTiccmd(netticcmd_t *ncmd) {
+  int strafe = false;
   int bstrafe;
-  int speed;
+  int speed = autorun;
   int tspeed;
   int forward;
   int side;
@@ -433,27 +431,35 @@ void G_BuildTiccmd(netticcmd_t* ncmd) {
 
   ticcmd_t *cmd = &ncmd->cmd;
 
-  ncmd->index = command_index++;
+  ncmd->tic = gametic;
   /* cphipps - remove needless I_BaseTiccmd call, just set the ticcmd to zero */
   memset(cmd, 0, sizeof(ticcmd_t));
 
-  strafe = gamekeydown[key_strafe] || mousebuttons[mousebstrafe]
-    || joybuttons[joybstrafe];
+  if (gamekeydown[key_strafe])
+    strafe = true;
+  else if (mousebuttons[mousebstrafe])
+    strafe = true;
+  else if (joybuttons[joybstrafe])
+    strafe = true;
+
   //e6y: the "RUN" key inverts the autorun state
-  speed = (gamekeydown[key_speed] || joybuttons[joybspeed] ? !autorun : autorun); // phares
+
+  if (gamekeydown[key_speed])
+    speed = !autorun;
+
+  if (joybuttons[joybspeed])
+    speed = !autorun;
 
   forward = side = 0;
 
   G_SkipDemoCheck(); //e6y
 
-  if (democontinue)
-  {
+  if (democontinue) {
     mousex = mousey = 0;
     return;
   }
 
-    // use two stage accelerative turning
-    // on the keyboard and joystick
+  // use two stage accelerative turning on the keyboard and joystick
   if (joyxmove < 0 ||
       joyxmove > 0 ||
       gamekeydown[key_right] ||
@@ -471,36 +477,33 @@ void G_BuildTiccmd(netticcmd_t* ncmd) {
 
   // turn 180 degrees in one keystroke?                           // phares
                                                                   //    |
-  if (gamekeydown[key_reverse])                                   //    V
-    {
-      cmd->angleturn += QUICKREVERSE;                             //    ^
-      gamekeydown[key_reverse] = false;                           //    |
-    }                                                             // phares
+  if (gamekeydown[key_reverse]) {                                 //    V
+    cmd->angleturn += QUICKREVERSE;                               //    ^
+    gamekeydown[key_reverse] = false;                             //    |
+  }                                                               // phares
 
   // let movement keys cancel each other out
 
-  if (strafe)
-    {
-      if (gamekeydown[key_right])
-        side += sidemove[speed];
-      if (gamekeydown[key_left])
-        side -= sidemove[speed];
-      if (joyxmove > 0)
-        side += sidemove[speed];
-      if (joyxmove < 0)
-        side -= sidemove[speed];
-    }
-  else
-    {
-      if (gamekeydown[key_right])
-        cmd->angleturn -= angleturn[tspeed];
-      if (gamekeydown[key_left])
-        cmd->angleturn += angleturn[tspeed];
-      if (joyxmove > 0)
-        cmd->angleturn -= angleturn[tspeed];
-      if (joyxmove < 0)
-        cmd->angleturn += angleturn[tspeed];
-    }
+  if (strafe) {
+    if (gamekeydown[key_right])
+      side += sidemove[speed];
+    if (gamekeydown[key_left])
+      side -= sidemove[speed];
+    if (joyxmove > 0)
+      side += sidemove[speed];
+    if (joyxmove < 0)
+      side -= sidemove[speed];
+  }
+  else {
+    if (gamekeydown[key_right])
+      cmd->angleturn -= angleturn[tspeed];
+    if (gamekeydown[key_left])
+      cmd->angleturn += angleturn[tspeed];
+    if (joyxmove > 0)
+      cmd->angleturn -= angleturn[tspeed];
+    if (joyxmove < 0)
+      cmd->angleturn += angleturn[tspeed];
+  }
 
   if (gamekeydown[key_up])
     forward += forwardmove[speed];
@@ -518,21 +521,22 @@ void G_BuildTiccmd(netticcmd_t* ncmd) {
     // buttons
   cmd->chatchar = HU_dequeueChatChar();
 
-  if (gamekeydown[key_fire] || mousebuttons[mousebfire] ||
-      joybuttons[joybfire])
+  if (gamekeydown[key_fire])
     cmd->buttons |= BT_ATTACK;
 
-  if (gamekeydown[key_use] || mousebuttons[mousebuse] ||
-      joybuttons[joybuse])
-    {
-      cmd->buttons |= BT_USE;
-      // clear double clicks if hit use button
-      dclicks = 0;
-    }
+  if (mousebuttons[mousebfire])
+    cmd->buttons |= BT_ATTACK;
+
+  if (gamekeydown[key_use] || mousebuttons[mousebuse] || joybuttons[joybuse]) {
+    cmd->buttons |= BT_USE;
+    dclicks = 0; // clear double clicks if hit use button
+  }
 
   // Toggle between the top 2 favorite weapons.                   // phares
   // If not currently aiming one of these, switch to              // phares
   // the favorite. Only switch if you possess the weapon.         // phares
+
+  // CG: The above comment is by phares (rofl)
 
   // killough 3/22/98:
   //
@@ -542,79 +546,92 @@ void G_BuildTiccmd(netticcmd_t* ncmd) {
   // killough 3/26/98, 4/2/98: fix autoswitch when no weapons are left
 
   if ((!demo_compatibility && players[consoleplayer].attackdown && // killough
-       !P_CheckAmmo(&players[consoleplayer])) || gamekeydown[key_weapontoggle])
+       !P_CheckAmmo(&players[consoleplayer])) ||
+      gamekeydown[key_weapontoggle]) {
     newweapon = P_SwitchWeapon(&players[consoleplayer]);           // phares
-  else
-    {                                 // phares 02/26/98: Added gamemode checks
-      if (next_weapon)
-      {
-        newweapon = G_NextWeapon(next_weapon);
-        next_weapon = 0;
-      }
-      else
-      {
-      newweapon =
-        gamekeydown[key_weapon1] ? wp_fist :    // killough 5/2/98: reformatted
-        gamekeydown[key_weapon2] ? wp_pistol :
-        gamekeydown[key_weapon3] ? wp_shotgun :
-        gamekeydown[key_weapon4] ? wp_chaingun :
-        gamekeydown[key_weapon5] ? wp_missile :
-        gamekeydown[key_weapon6] && gamemode != shareware ? wp_plasma :
-        gamekeydown[key_weapon7] && gamemode != shareware ? wp_bfg :
-        gamekeydown[key_weapon8] ? wp_chainsaw :
-        (!demo_compatibility && gamekeydown[key_weapon9] && gamemode == commercial) ? wp_supershotgun :
-        wp_nochange;
-      }
+  }
+  else {                                 // phares 02/26/98: Added gamemode checks
+    if (next_weapon) {
+      newweapon = G_NextWeapon(next_weapon);
+      next_weapon = 0;
+    }
+    else {
+      // killough 5/2/98: reformatted
+      // CG: 04/15/2014: re-reformatted
+      dboolean can_check_wp9 = (!demo_compatibility) && gamemode == commercial;
 
-      // killough 3/22/98: For network and demo consistency with the
-      // new weapons preferences, we must do the weapons switches here
-      // instead of in p_user.c. But for old demos we must do it in
-      // p_user.c according to the old rules. Therefore demo_compatibility
-      // determines where the weapons switch is made.
+      newweapon = wp_nochange;
 
-      // killough 2/8/98:
-      // Allow user to switch to fist even if they have chainsaw.
-      // Switch to fist or chainsaw based on preferences.
-      // Switch to shotgun or SSG based on preferences.
-
-      if (!demo_compatibility)
-        {
-          const player_t *player = &players[consoleplayer];
-
-          // only select chainsaw from '1' if it's owned, it's
-          // not already in use, and the player prefers it or
-          // the fist is already in use, or the player does not
-          // have the berserker strength.
-
-          if (newweapon==wp_fist && player->weaponowned[wp_chainsaw] &&
-              player->readyweapon!=wp_chainsaw &&
-              (player->readyweapon==wp_fist ||
-               !player->powers[pw_strength] ||
-               P_WeaponPreferred(wp_chainsaw, wp_fist)))
-            newweapon = wp_chainsaw;
-
-          // Select SSG from '3' only if it's owned and the player
-          // does not have a shotgun, or if the shotgun is already
-          // in use, or if the SSG is not already in use and the
-          // player prefers it.
-
-          if (newweapon == wp_shotgun && gamemode == commercial &&
-              player->weaponowned[wp_supershotgun] &&
-              (!player->weaponowned[wp_shotgun] ||
-               player->readyweapon == wp_shotgun ||
-               (player->readyweapon != wp_supershotgun &&
-                P_WeaponPreferred(wp_supershotgun, wp_shotgun))))
-            newweapon = wp_supershotgun;
-        }
-      // killough 2/8/98, 3/22/98 -- end of weapon selection changes
-      //}
+      if (gamekeydown[key_weapon1])
+        newweapon = wp_fist;
+      else if (gamekeydown[key_weapon2])
+        newweapon = wp_pistol;
+      else if (gamekeydown[key_weapon3])
+        newweapon = wp_shotgun;
+      else if (gamekeydown[key_weapon4])
+        newweapon = wp_chaingun;
+      else if (gamekeydown[key_weapon5])
+        newweapon = wp_missile;
+      else if (gamekeydown[key_weapon6] && gamemode != shareware)
+        newweapon = wp_plasma;
+      else if (gamekeydown[key_weapon7] && gamemode != shareware)
+        newweapon = wp_bfg;
+      else if (gamekeydown[key_weapon8])
+        newweapon = wp_chainsaw;
+      else if (can_check_wp9 && gamekeydown[key_weapon9])
+        newweapon = wp_supershotgun;
     }
 
-  if (newweapon != wp_nochange)
-    {
-      cmd->buttons |= BT_CHANGE;
-      cmd->buttons |= newweapon<<BT_WEAPONSHIFT;
+    // killough 3/22/98: For network and demo consistency with the
+    // new weapons preferences, we must do the weapons switches here
+    // instead of in p_user.c. But for old demos we must do it in
+    // p_user.c according to the old rules. Therefore demo_compatibility
+    // determines where the weapons switch is made.
+
+    // killough 2/8/98:
+    // Allow user to switch to fist even if they have chainsaw.
+    // Switch to fist or chainsaw based on preferences.
+    // Switch to shotgun or SSG based on preferences.
+
+    if (!demo_compatibility) {
+      const player_t *player = &players[consoleplayer];
+
+      // only select chainsaw from '1' if it's owned, it's
+      // not already in use, and the player prefers it or
+      // the fist is already in use, or the player does not
+      // have the berserker strength.
+
+      if (newweapon==wp_fist &&
+          player->weaponowned[wp_chainsaw] &&
+          player->readyweapon!=wp_chainsaw && (
+            player->readyweapon==wp_fist ||
+            !player->powers[pw_strength] ||
+            P_WeaponPreferred(wp_chainsaw, wp_fist))) {
+        newweapon = wp_chainsaw;
+      }
+
+      // Select SSG from '3' only if it's owned and the player
+      // does not have a shotgun, or if the shotgun is already
+      // in use, or if the SSG is not already in use and the
+      // player prefers it.
+
+      if (newweapon == wp_shotgun &&
+          gamemode == commercial &&
+          player->weaponowned[wp_supershotgun] && (
+            !player->weaponowned[wp_shotgun] ||
+            player->readyweapon == wp_shotgun || (
+              player->readyweapon != wp_supershotgun &&
+              P_WeaponPreferred(wp_supershotgun, wp_shotgun)))) {
+        newweapon = wp_supershotgun;
+      }
     }
+    // killough 2/8/98, 3/22/98 -- end of weapon selection changes
+  }
+
+  if (newweapon != wp_nochange) {
+    cmd->buttons |= BT_CHANGE;
+    cmd->buttons |= newweapon<<BT_WEAPONSHIFT;
+  }
 
   // mouse
   if (mousebuttons[mousebforward])
@@ -648,26 +665,22 @@ void G_BuildTiccmd(netticcmd_t* ncmd) {
     // strafe double click
 
     bstrafe = mousebuttons[mousebstrafe] || joybuttons[joybstrafe];
-    if (bstrafe != dclickstate2 && dclicktime2 > 1 )
-      {
-        dclickstate2 = bstrafe;
-        if (dclickstate2)
-          dclicks2++;
-        if (dclicks2 == 2)
-          {
-            cmd->buttons |= BT_USE;
-            dclicks2 = 0;
-          }
-        else
-          dclicktime2 = 0;
-      }
-    else
-      if ((dclicktime2++) > 20)
+    if (bstrafe != dclickstate2 && dclicktime2 > 1) {
+      dclickstate2 = bstrafe;
+      if (dclickstate2)
+        dclicks2++;
+      if (dclicks2 == 2)
         {
+          cmd->buttons |= BT_USE;
           dclicks2 = 0;
-          dclickstate2 = 0;
         }
-
+      else
+        dclicktime2 = 0;
+    }
+    else if ((dclicktime2++) > 20) {
+      dclicks2 = 0;
+      dclickstate2 = 0;
+    }
   }//e6y: end if (mouse_doubleclick_as_use)
 
   forward += mousey;
@@ -678,6 +691,7 @@ void G_BuildTiccmd(netticcmd_t* ncmd) {
 
   if (!walkcamera.type || menuactive) //e6y
     mousex = mousey = 0;
+
 #ifdef GL_DOOM
   motion_blur.curr_speed_pow2 = 0;
 #endif
@@ -686,29 +700,26 @@ void G_BuildTiccmd(netticcmd_t* ncmd) {
     forward = MAXPLMOVE;
   else if (forward < -MAXPLMOVE)
     forward = -MAXPLMOVE;
+
   if (side > MAXPLMOVE)
     side = MAXPLMOVE;
   else if (side < -MAXPLMOVE)
     side = -MAXPLMOVE;
 
   //e6y
-  if (movement_strafe50)
-  {
-    if (!speed)
-    {
+  if (movement_strafe50) {
+    if (!speed) {
       if (side > sidemove_strafe50[0])
         side = sidemove_strafe50[0];
       else if (side < -sidemove_strafe50[0])
         side = -sidemove_strafe50[0];
     }
-    else if(!movement_strafe50onturns && !strafe && cmd->angleturn)
-    {
+    else if (!movement_strafe50onturns && !strafe && cmd->angleturn) {
       if (side > sidemove_normal[1])
         side = sidemove_normal[1];
       else if (side < -sidemove_normal[1])
         side = -sidemove_normal[1];
     }
-
   }
 
   cmd->forwardmove += fudgef((signed char)forward);
@@ -732,8 +743,7 @@ void G_BuildTiccmd(netticcmd_t* ncmd) {
 // G_RestartLevel
 //
 
-void G_RestartLevel(void)
-{
+void G_RestartLevel(void) {
   special_event = BT_SPECIAL | (BTS_RESTARTLEVEL & BT_SPECIALMASK);
 }
 
@@ -741,8 +751,7 @@ void G_RestartLevel(void)
 // G_DoLoadLevel
 //
 
-static void G_DoLoadLevel (void)
-{
+static void G_DoLoadLevel(void) {
   int i;
 
   // Set the sky map.
@@ -1062,6 +1071,7 @@ void G_Ticker(void) {
   else if (!(MULTINET && DELTASYNC)) {
     for (i = 0; i < MAXPLAYERS; i++) {
       ticcmd_t *cmd = NULL;
+
       if (!playeringame[i])
         continue;
 
@@ -1082,11 +1092,18 @@ void G_Ticker(void) {
         CBUF_FOR_EACH(&players[i].commands, entry) {
           netticcmd_t *ncmd = entry.obj;
 
-          if (ncmd->index == gametic) {
+          if (ncmd->tic == gametic) {
             memcpy(cmd, &ncmd->cmd, sizeof(ticcmd_t));
             found_command = true;
-            break;
           }
+
+          if (ncmd->tic <= gametic) {
+            M_CBufRemove(&players[i].commands, entry.index);
+            entry.index--;
+          }
+
+          if (found_command)
+            break;
         }
 
         if (!found_command)
@@ -2167,12 +2184,19 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
 
   // dearchive all the modifications
   P_MapStart();
+  printf("UnArchiving players at %lu.\n", savebuffer->cursor);
   P_UnArchivePlayers(savebuffer);
+  printf("UnArchiving world at %lu.\n", savebuffer->cursor);
   P_UnArchiveWorld(savebuffer);
+  printf("UnArchiving thinkers at %lu.\n", savebuffer->cursor);
   P_UnArchiveThinkers(savebuffer);
+  printf("UnArchiving specials at %lu.\n", savebuffer->cursor);
   P_UnArchiveSpecials(savebuffer);
+  printf("UnArchiving RNG at %lu.\n", savebuffer->cursor);
   P_UnArchiveRNG(savebuffer);    // killough 1/18/98: load RNG information
+  printf("UnArchiving Map at %lu.\n", savebuffer->cursor);
   P_UnArchiveMap(savebuffer);    // killough 1/22/98: load automap information
+  printf("UnArchiving consistency marker at %lu.\n", savebuffer->cursor);
   P_MapEnd();
   R_ActivateSectorInterpolations();//e6y
   R_SmoothPlaying_Reset(NULL); // e6y
@@ -2335,6 +2359,7 @@ void G_WriteSaveData(buf_t *savebuffer) {
   // killough 11/98: save revenant tracer state
   M_BufferWriteByte(savebuffer, (gametic - basetic) & 255);
 
+  printf("Archiving players at %lu.\n", savebuffer->cursor);
   P_ArchivePlayers(savebuffer);
 
   // phares 9/13/98: Move mobj_t->index out of P_ArchiveThinkers so the
@@ -2343,7 +2368,9 @@ void G_WriteSaveData(buf_t *savebuffer) {
   // caused a sound, referenced by sector_t->soundtarget.
   P_ThinkerToIndex();
 
+  printf("Archiving world at %lu.\n", savebuffer->cursor);
   P_ArchiveWorld(savebuffer);
+  printf("Archiving thinkers at %lu.\n", savebuffer->cursor);
   P_ArchiveThinkers(savebuffer);
 
   // phares 9/13/98: Move index->mobj_t out of P_ArchiveThinkers, simply
@@ -2351,9 +2378,13 @@ void G_WriteSaveData(buf_t *savebuffer) {
 
   P_IndexToThinker();
 
+  // printf("Archiving specials at %lu.\n", savebuffer->cursor);
   P_ArchiveSpecials(savebuffer);
+  // printf("Archiving RNG at %lu.\n", savebuffer->cursor);
   P_ArchiveRNG(savebuffer);    // killough 1/18/98: save RNG information
+  // printf("Archiving map at %lu.\n", savebuffer->cursor);
   P_ArchiveMap(savebuffer);    // killough 1/22/98: save automap information
+  // printf("Archiving consistency marker at %lu.\n", savebuffer->cursor);
   M_BufferWriteByte(savebuffer, 0xe6); // consistency marker
 }
 
@@ -2361,8 +2392,7 @@ static skill_t d_skill;
 static int     d_episode;
 static int     d_map;
 
-void G_DeferedInitNew(skill_t skill, int episode, int map)
-{
+void G_DeferedInitNew(skill_t skill, int episode, int map) {
   d_skill = skill;
   d_episode = episode;
   d_map = map;

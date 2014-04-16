@@ -38,15 +38,14 @@ void     N_InitNetGame(void);
 void     N_Update(void);
 void     N_CheckNetGame(void);
 dboolean N_GetWad(const char *name);
-void     N_TryRunTics(void);
+
 dboolean CL_ReceivedSetup(void);
 void     CL_SetReceivedSetup(dboolean new_received_setup);
 void     CL_SetAuthorizationLevel(auth_level_e level);
-cbuf_t*  CL_GetLocalCommands(void);
-void     CL_SaveNewCommand(netticcmd_t *ncmd);
-void     CL_RemoveOldCommands(void);
-void     SV_RemoveOldCommands(void);
 void     CL_RemoveOldStates(void);
+
 void     SV_RemoveOldStates(void);
+
+void     N_TryRunTics(void);
 
 #endif

@@ -69,9 +69,10 @@ int N_AddPeer(void) {
   np->connect_time = time(NULL);
   np->disconnect_time = 0;
   np->playernum = 0;
-  np->command_index = 0;
+  np->command_tic = 0;
   np->state_tic = 0;
   M_BufferInit(&np->delta.data);
+  np->needs_setup = 0;
 
   np->playernum = M_OBufInsertAtFirstFreeSlotOrAppend(&net_peers, np);
 
@@ -117,8 +118,9 @@ void N_RemovePeer(netpeer_t *np) {
   np->connect_time           = 0;
   np->disconnect_time        = 0;
   np->playernum              = -1;
-  np->command_index          = 0;
+  np->command_tic            = 0;
   np->state_tic              = 0;
+  np->needs_setup            = 0;
 
   M_OBufRemove(&net_peers, peernum);
 }

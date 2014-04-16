@@ -138,9 +138,17 @@ static void P_ArchivePlayer(buf_t *savebuffer, player_t *player) {
   M_BufferWriteInt(savebuffer, player->killcount);
   M_BufferWriteInt(savebuffer, player->itemcount);
   M_BufferWriteInt(savebuffer, player->secretcount);
-  M_BufferWriteString(
-    savebuffer, (char *)player->message, strlen(player->message)
-  );
+  if (player->message) {
+    size_t message_length = MIN(MAX_MESSAGE_SIZE, strlen(player->message));
+
+    M_BufferWriteLong(savebuffer, message_length);
+
+    if (message_length > 0)
+      M_BufferWriteString(savebuffer, (char *)player->message, message_length);
+  }
+  else {
+    M_BufferWriteLong(savebuffer, 0);
+  }
   M_BufferWriteInt(savebuffer, player->damagecount);
   M_BufferWriteInt(savebuffer, player->bonuscount);
   M_BufferWriteInt(savebuffer, player->extralight);
@@ -157,14 +165,28 @@ static void P_ArchivePlayer(buf_t *savebuffer, player_t *player) {
   M_BufferWriteInt(savebuffer, player->prev_viewangle);
   M_BufferWriteInt(savebuffer, player->prev_viewpitch);
   M_BufferWriteInt(savebuffer, player->jumpTics);
-  M_BufferWriteString(savebuffer, player->name, strlen(player->name));
+  /*
+   * CG: TODO: Settle the maximum name size, don't just use MAX_MESSAGE_SIZE
+   *           here, which is something like 500.
+   */
+  if (player->name) {
+    size_t name_length = MIN(MAX_MESSAGE_SIZE, strlen(player->name));
+
+    M_BufferWriteLong(savebuffer, name_length);
+
+    if (name_length > 0)
+      M_BufferWriteString(savebuffer, (char *)player->name, name_length);
+  }
+  else {
+    M_BufferWriteLong(savebuffer, 0);
+  }
   M_BufferWriteByte(savebuffer, player->team);
   M_CBufConsolidate(&player->commands);
   M_BufferWriteInt(savebuffer, M_CBufGetObjectCount(&player->commands));
   CBUF_FOR_EACH(&player->commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-    M_BufferWriteInt(savebuffer, ncmd->index);
+    M_BufferWriteInt(savebuffer, ncmd->tic);
     M_BufferWriteByte(savebuffer, ncmd->cmd.forwardmove);
     M_BufferWriteByte(savebuffer, ncmd->cmd.sidemove);
     M_BufferWriteShort(savebuffer, ncmd->cmd.angleturn);
@@ -177,6 +199,8 @@ static void P_ArchivePlayer(buf_t *savebuffer, player_t *player) {
 static void P_UnArchivePlayer(buf_t *savebuffer, player_t *player) {
   int command_count = 0;
   char msg[MAX_MESSAGE_SIZE];
+  char name[MAX_MESSAGE_SIZE];
+  size_t message_length, name_length;
 
   memset(msg, 0, MAX_MESSAGE_SIZE * sizeof(char));
 
@@ -216,7 +240,9 @@ static void P_UnArchivePlayer(buf_t *savebuffer, player_t *player) {
   M_BufferReadInt(savebuffer, &player->killcount);
   M_BufferReadInt(savebuffer, &player->itemcount);
   M_BufferReadInt(savebuffer, &player->secretcount);
-  M_BufferReadString(savebuffer, msg, MAX_MESSAGE_SIZE);
+  M_BufferReadLong(savebuffer, (int_64_t *)&message_length);
+  if (message_length > 0)
+    M_BufferReadString(savebuffer, msg, message_length + 1);
   doom_pprintf(player - players, "%s", msg);
   M_BufferReadInt(savebuffer, &player->damagecount);
   M_BufferReadInt(savebuffer, &player->bonuscount);
@@ -237,18 +263,24 @@ static void P_UnArchivePlayer(buf_t *savebuffer, player_t *player) {
   M_BufferReadInt(savebuffer, (int *)&player->prev_viewangle);
   M_BufferReadInt(savebuffer, (int *)&player->prev_viewpitch);
   M_BufferReadInt(savebuffer, &player->jumpTics);
-  if (player->name != NULL)
-    free(player->name);
-  M_BufferReadStringDup(savebuffer, &player->name);
+  M_BufferReadLong(savebuffer, (int_64_t *)&name_length);
+  if (name_length > 0) {
+    M_BufferReadString(savebuffer, name, name_length + 1);
+    if (player->name != NULL)
+      free(player->name);
+    player->name = strdup(name);
+  }
   M_BufferReadByte(savebuffer, &player->team);
   M_BufferReadInt(savebuffer, &command_count);
+  if (command_count > 100)
+    I_Error("Command count too high\n");
   M_CBufClear(&player->commands);
   M_CBufEnsureCapacity(&player->commands, command_count);
 
   while (command_count--) {
     netticcmd_t *ncmd = M_CBufGetFirstFreeOrNewSlot(&player->commands);
 
-    M_BufferReadInt(savebuffer, &ncmd->index);
+    M_BufferReadInt(savebuffer, &ncmd->tic);
     M_BufferReadByte(savebuffer, (byte *)&ncmd->cmd.forwardmove);
     M_BufferReadByte(savebuffer, (byte *)&ncmd->cmd.sidemove);
     M_BufferReadShort(savebuffer, &ncmd->cmd.angleturn);
@@ -262,8 +294,12 @@ static void P_UnArchivePlayer(buf_t *savebuffer, player_t *player) {
 // P_ArchivePlayers
 //
 void P_ArchivePlayers(buf_t *savebuffer) {
-  for (int i = 0; i < MAXPLAYERS; i++)
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    if (!playeringame[i])
+      continue;
+
     P_ArchivePlayer(savebuffer, &players[i]);
+  }
 }
 
 //
@@ -271,6 +307,9 @@ void P_ArchivePlayers(buf_t *savebuffer) {
 //
 void P_UnArchivePlayers(buf_t *savebuffer) {
   for (int i = 0; i < MAXPLAYERS; i++) {
+    if (!playeringame[i])
+      continue;
+
     P_UnArchivePlayer(savebuffer, &players[i]);
 
     // will be set when unarc thinker
@@ -287,7 +326,6 @@ void P_ArchiveWorld(buf_t *savebuffer) {
   int i;
   const sector_t *sec;
   const line_t *li;
-  const side_t *si;
 
   // do sectors
   for (i = 0, sec = sectors; i < numsectors; i++, sec++) {
@@ -314,7 +352,7 @@ void P_ArchiveWorld(buf_t *savebuffer) {
 
     for (j = 0; j < 2; j++) {
       if (li->sidenum[j] != NO_INDEX) {
-        si = &sides[li->sidenum[j]];
+        side_t *si = &sides[li->sidenum[j]];
 
         // killough 10/98: save full sidedef offsets,
         // preserving fractional scroll offsets
@@ -426,7 +464,8 @@ void P_ArchiveThinkers(buf_t *savebuffer) {
   unsigned int thinker_count = 0;
 
   // killough 3/26/98: Save boss brain state
-  M_BufferWrite(savebuffer, &brain, sizeof(brain));
+  M_BufferWriteInt(savebuffer, brain.easy);
+  M_BufferWriteInt(savebuffer, brain.targeton);
 
   // save off the current thinkers
   for (th = thinkercap.next; th != &thinkercap; th = th->next) {
@@ -481,8 +520,12 @@ void P_ArchiveThinkers(buf_t *savebuffer) {
 
       mobj->state = (state_t *)(state - states);
 
-      if (player)
-        mobj->player = (player_t *)((player - players) + 1);
+      if (player) {
+        uint_64_t playernum = (uint_64_t)(mobj->player - players) + 1;
+
+        printf("mobj->player: %llu.\n", playernum);
+        mobj->player = (player_t *)playernum;
+      }
 
       // M_BufferWriteByte(savebuffer, tc_mobj);
       M_BufferWrite(savebuffer, mobj, sizeof(mobj_t));
@@ -530,7 +573,8 @@ void P_UnArchiveThinkers(buf_t *savebuffer) {
   totallive = 0; // CG: This is a global that lives in g_game.c, just FYI
 
   // killough 3/26/98: Load boss brain state
-  M_BufferRead(savebuffer, &brain, sizeof(brain));
+  M_BufferReadInt(savebuffer, &brain.easy);
+  M_BufferReadInt(savebuffer, &brain.targeton);
 
   // remove all the current thinkers
   for (th = thinkercap.next; th != &thinkercap;) {
@@ -568,8 +612,13 @@ void P_UnArchiveThinkers(buf_t *savebuffer) {
 
     mobj->state = states + (uint_64_t)mobj->state;
 
-    if (mobj->player)
-      (mobj->player = &players[(uint_64_t)mobj->player - 1])->mo = mobj;
+    if (mobj->player) {
+      uint_64_t playernum = (uint_64_t)mobj->player;
+
+      printf("mobj->player: %llu.\n", playernum);
+      mobj->player = &players[playernum - 1];
+      mobj->player->mo = mobj;
+    }
 
     P_SetThingPosition(mobj);
     mobj->info = &mobjinfo[mobj->type];

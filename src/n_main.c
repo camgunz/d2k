@@ -72,29 +72,6 @@ static dboolean is_extra_ddisplay = false;
 static dboolean received_setup = false;
 static auth_level_e authorization_level = AUTH_LEVEL_NONE;
 
-void send_net_sync(void) {
-  if (CLIENT)
-    CL_SendCommands();
-  else if (CMDSERVER)
-    SV_BroadcastPlayerCommands();
-  else if (DELTASERVER)
-    SV_BroadcastStateUpdates();
-
-  if (SERVER)
-    SV_RemoveOldCommands();
-}
-
-static void remove_old_commands(cbuf_t *commands, int index) {
-  CBUF_FOR_EACH(commands, entry) {
-    netticcmd_t *ncmd = entry.obj;
-
-    if (ncmd->index <= index) {
-      M_CBufRemove(commands, entry.index);
-      entry.index--;
-    }
-  }
-}
-
 void N_InitNetGame(void) {
   int i;
 
@@ -213,6 +190,39 @@ void N_Update(void) {
 
 }
 
+dboolean CL_ReceivedSetup(void) {
+  return received_setup;
+}
+
+void CL_SetReceivedSetup(dboolean new_received_setup) {
+  received_setup = new_received_setup;
+}
+
+void CL_SetAuthorizationLevel(auth_level_e level) {
+  if (level > authorization_level)
+    authorization_level = level;
+}
+
+void CL_RemoveOldStates(void) {
+  netpeer_t *server = N_GetPeer(0);
+
+  if (server != NULL)
+    N_RemoveOldStates(server->delta.from_tic);
+}
+
+void SV_RemoveOldStates(void) {
+  int command_tic = INT_MAX;
+
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
+
+    if (np != NULL)
+      command_tic = MIN(command_tic, np->command_tic);
+  }
+
+  N_RemoveOldStates(command_tic);
+}
+
 void N_TryRunTics(void) {
   static int commands_last_built_time = 0;
 
@@ -269,8 +279,10 @@ void N_TryRunTics(void) {
       P_Checksum(gametic);
       gametic++;
 
-      if (DELTASERVER)
+      if (DELTASERVER) {
+        printf("Saving state at %d.\n", gametic);
         N_SaveState();
+      }
     }
 
     if (CMDSERVER) {
@@ -278,8 +290,17 @@ void N_TryRunTics(void) {
         netpeer_t *np = N_GetPeer(i);
 
         if (np != NULL)
-          np->command_index = gametic;
+          np->command_tic = gametic;
       }
+    }
+  }
+
+  if (SERVER) {
+    for (int i = 0; i < N_GetPeerCount(); i++) {
+      netpeer_t *np = N_GetPeer(i);
+
+      if (np != NULL && np->needs_setup != 0 && gametic > np->needs_setup)
+        SV_SendSetup(np->playernum);
     }
   }
 
@@ -289,10 +310,13 @@ void N_TryRunTics(void) {
     }
   }
 
-  send_net_sync();
-
   if (MULTINET) {
     N_ServiceNetwork();
+
+    if (N_GetPeerCount() == 0) {
+      I_uSleep(sleep_time * 1000);
+      N_RemoveOldStates(gametic);
+    }
   }
   else {
     if (movement_smooth && window_focused)
@@ -324,43 +348,6 @@ void N_TryRunTics(void) {
     }
   }
 #endif
-}
-
-dboolean CL_ReceivedSetup(void) {
-  return received_setup;
-}
-
-void CL_SetReceivedSetup(dboolean new_received_setup) {
-  received_setup = new_received_setup;
-}
-
-void CL_SetAuthorizationLevel(auth_level_e level) {
-  if (level > authorization_level)
-    authorization_level = level;
-}
-
-void SV_RemoveOldCommands(void) {
-  int command_index = INT_MAX;
-
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
-
-    if (np != NULL)
-      command_index = MIN(command_index, np->command_index);
-  }
-
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i]) {
-      remove_old_commands(&players[i].commands, command_index);
-    }
-  }
-}
-
-void CL_RemoveOldCommands(void) {
-  remove_old_commands(
-    &players[consoleplayer].commands,
-    N_GetPeerForPlayer(consoleplayer)->command_index
-  );
 }
 
 /* vi: set et ts=2 sw=2: */

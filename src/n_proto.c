@@ -207,6 +207,9 @@ static void handle_setup(netpeer_t *np) {
 
   netsync = net_sync;
 
+  for (i = 0; i < MAXPLAYERS; i++)
+    playeringame[i] = false;
+
   for (i = 0; i < player_count; i++) {
     playeringame[i] = true;
     M_CBufInitWithCapacity(
@@ -214,8 +217,7 @@ static void handle_setup(netpeer_t *np) {
     );
   }
 
-  for (; i < MAXPLAYERS; i++)
-    playeringame[i] = false;
+  printf("Player count: %u.\n", player_count);
 
   consoleplayer = playernum;
 
@@ -259,6 +261,8 @@ static void handle_setup(netpeer_t *np) {
       ProcessDehFile(fpath, D_dehout(), 0);
     }
   }
+
+  CL_SetReceivedSetup(true);
 }
 
 static void handle_auth_response(netpeer_t *np) {
@@ -297,12 +301,6 @@ static void handle_sync(netpeer_t *np) {
     return;
   }
   
-  if (CLIENT)
-    CL_RemoveOldCommands();
-
-  if (CMDSERVER)
-    SV_RemoveOldCommands();
-
   if (DELTACLIENT)
     CL_RemoveOldStates();
 
@@ -541,8 +539,8 @@ void SV_SetupNewPeer(int peernum) {
   playeringame[playernum] = true;
   P_SpawnPlayer(playernum, &playerstarts[playernum]);
   np->playernum = playernum;
-
-  SV_SendSetup(playernum);
+  printf("Set needs_setup for %d to %d.\n", playernum, gametic);
+  np->needs_setup = gametic;
 }
 
 void SV_SendSetup(short playernum) {
@@ -550,6 +548,8 @@ void SV_SendSetup(short playernum) {
   CHECK_VALID_PLAYER(np, playernum);
 
   N_PackSetup(np);
+
+  np->needs_setup = 0;
 }
 
 void SV_SendAuthResponse(short playernum, auth_level_e auth_level) {

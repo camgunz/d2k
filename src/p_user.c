@@ -270,31 +270,26 @@ void P_SetPitch(player_t *player)
 //
 // killough 10/98: simplified
 
-void P_MovePlayer (player_t* player)
-{
+void P_MovePlayer(player_t *player) {
   ticcmd_t *cmd = &player->cmd;
   mobj_t *mo = player->mo;
 
   mo->angle += cmd->angleturn << 16;
 
   if (demo_smoothturns && player == &players[displayplayer])
-  {
     R_SmoothPlaying_Add(cmd->angleturn << 16);
-  }
 
   onground = mo->z <= mo->floorz;
 
   if ((player->mo->flags & MF_FLY) && player == &players[consoleplayer] && upmove != 0)
-  {
     mo->momz = upmove << 8;
-  }
 
-  if (comperr(comperr_allowjump))
-  {
-    if (upmove > 0 && onground && player == &players[consoleplayer] && !(player->mo->flags & MF_FLY))
-    {
-      if (!player->jumpTics)
-      {
+  if (comperr(comperr_allowjump)) {
+    if (upmove > 0 &&
+        onground &&
+        player == &players[consoleplayer] &&
+        !(player->mo->flags & MF_FLY)) {
+      if (!player->jumpTics) {
         mo->momz = 9 * FRACUNIT;
         player->jumpTics = 18;
       }
@@ -309,49 +304,43 @@ void P_MovePlayer (player_t* player)
   // thrust applied to the movement varies with 'movefactor'.
 
   //e6y
-  if ((!demo_compatibility && !mbf_features && !prboom_comp[PC_PRBOOM_FRICTION].state) || 
-    (cmd->forwardmove | cmd->sidemove)) // killough 10/98
-    {
-      if (onground || mo->flags & MF_BOUNCES || (mo->flags & MF_FLY)) // killough 8/9/98
-      {
-        int friction, movefactor = P_GetMoveFactor(mo, &friction);
+  if ((!demo_compatibility &&
+       !mbf_features &&
+       !prboom_comp[PC_PRBOOM_FRICTION].state) || 
+      (cmd->forwardmove | cmd->sidemove)) { // killough 10/98
+    if (onground || mo->flags & MF_BOUNCES || (mo->flags & MF_FLY)) {
+      // killough 8/9/98
+      int friction, movefactor = P_GetMoveFactor(mo, &friction);
 
-        // killough 11/98:
-        // On sludge, make bobbing depend on efficiency.
-        // On ice, make it depend on effort.
+      // killough 11/98:
+      // On sludge, make bobbing depend on efficiency.
+      // On ice, make it depend on effort.
 
-        int bobfactor =
-          friction < ORIG_FRICTION ? movefactor : ORIG_FRICTION_FACTOR;
+      int bobfactor =
+        friction < ORIG_FRICTION ? movefactor : ORIG_FRICTION_FACTOR;
 
-        if (cmd->forwardmove)
-        {
-          P_Bob(player,mo->angle,cmd->forwardmove*bobfactor);
-          P_Thrust(player,mo->angle,cmd->forwardmove*movefactor);
-        }
-
-        if (cmd->sidemove)
-        {
-          P_Bob(player,mo->angle-ANG90,cmd->sidemove*bobfactor);
-          P_SideThrust(player,mo->angle-ANG90,cmd->sidemove*movefactor);
-        }
+      if (cmd->forwardmove) {
+        P_Bob(player,mo->angle,cmd->forwardmove*bobfactor);
+        P_Thrust(player,mo->angle,cmd->forwardmove*movefactor);
       }
-      else if (comperr(comperr_allowjump))
-      {
-        if (!onground)
-        {
-          if (cmd->forwardmove)
-          {
-            P_Thrust(player, mo->angle, FRACUNIT >> 8);
-          }
-          if (cmd->sidemove)
-          {
-            P_Thrust(player, mo->angle, FRACUNIT >> 8);
-          }
-        }
+
+      if (cmd->sidemove) {
+        P_Bob(player,mo->angle-ANG90,cmd->sidemove*bobfactor);
+        P_SideThrust(player,mo->angle-ANG90,cmd->sidemove*movefactor);
       }
-      if (mo->state == states+S_PLAY)
-        P_SetMobjState(mo,S_PLAY_RUN1);
     }
+    else if (comperr(comperr_allowjump)) {
+      if (!onground) {
+        if (cmd->forwardmove)
+          P_Thrust(player, mo->angle, FRACUNIT >> 8);
+        if (cmd->sidemove)
+          P_Thrust(player, mo->angle, FRACUNIT >> 8);
+      }
+    }
+
+    if (mo->state == states+S_PLAY)
+      P_SetMobjState(mo,S_PLAY_RUN1);
+  }
 }
 
 #define ANG5 (ANG90/18)
@@ -432,21 +421,17 @@ void P_DeathThink (player_t* player)
 // P_PlayerThink
 //
 
-void P_PlayerThink (player_t* player)
-{
-  ticcmd_t*    cmd;
+void P_PlayerThink(player_t *player) {
+  ticcmd_t*    cmd = &player->cmd;
   weapontype_t newweapon;
 
-  if (movement_smooth)
-  {
+  if (movement_smooth) {
     player->prev_viewz = player->viewz;
     player->prev_viewangle = R_SmoothPlaying_Get(player) + viewangleoffset;
     player->prev_viewpitch = player->mo->pitch;
 
     if (&players[displayplayer] == player)
-    {
       P_ResetWalkcam();
-    }
   }
 
   // killough 2/8/98, 3/21/98:
@@ -456,49 +441,40 @@ void P_PlayerThink (player_t* player)
     player->mo->flags &= ~MF_NOCLIP;
 
   // chain saw run forward
-
-  cmd = &player->cmd;
-  if (player->mo->flags & MF_JUSTATTACKED)
-    {
+  if (player->mo->flags & MF_JUSTATTACKED) {
     cmd->angleturn = 0;
-    cmd->forwardmove = 0xc800/512;
+    cmd->forwardmove = 0xc800 /512;
     cmd->sidemove = 0;
     player->mo->flags &= ~MF_JUSTATTACKED;
-    }
+  }
 
-  if (player->playerstate == PST_DEAD)
-    {
-    P_DeathThink (player);
+  if (player->playerstate == PST_DEAD) {
+    P_DeathThink(player);
     return;
-    }
+  }
 
-    if (player->jumpTics)
-    {
-        player->jumpTics--;
-    }
+  if (player->jumpTics)
+    player->jumpTics--;
+
   // Move around.
   // Reactiontime is used to prevent movement
   //  for a bit after a teleport.
-
   if (player->mo->reactiontime)
     player->mo->reactiontime--;
   else
-    P_MovePlayer (player);
+    P_MovePlayer(player);
 
   P_SetPitch(player);
 
-  P_CalcHeight (player); // Determines view height and bobbing
+  P_CalcHeight(player); // Determines view height and bobbing
 
   // Determine if there's anything about the sector you're in that's
   // going to affect you, like painful floors.
-
   if (player->mo->subsector->sector->special)
     P_PlayerInSpecialSector (player);
 
   // Check for weapon change.
-
-  if (cmd->buttons & BT_CHANGE)
-    {
+  if (cmd->buttons & BT_CHANGE) {
     // The actual changing of the weapon is done
     //  when the weapon psprite can do it
     //  (read: not in the middle of an attack).
@@ -509,51 +485,52 @@ void P_PlayerThink (player_t* player)
     // and SSG weapons switches here, rather than in G_BuildTiccmd(). For
     // other games which rely on user preferences, we must use the latter.
 
-    if (demo_compatibility)
-      { // compatibility mode -- required for old demos -- killough
+    // compatibility mode -- required for old demos -- killough
+    if (demo_compatibility) {
       //e6y
       if (!prboom_comp[PC_ALLOW_SSG_DIRECT].state)
-        newweapon = (cmd->buttons & BT_WEAPONMASK_OLD)>>BT_WEAPONSHIFT;
+        newweapon = (cmd->buttons & BT_WEAPONMASK_OLD) >> BT_WEAPONSHIFT;
 
-      if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
-        (player->readyweapon != wp_chainsaw ||
-         !player->powers[pw_strength]))
+      if (newweapon == wp_fist &&
+          player->weaponowned[wp_chainsaw] && (
+            player->readyweapon != wp_chainsaw ||
+            !player->powers[pw_strength])) {
         newweapon = wp_chainsaw;
+      }
       if (gamemode == commercial &&
-        newweapon == wp_shotgun &&
-        player->weaponowned[wp_supershotgun] &&
-        player->readyweapon != wp_supershotgun)
+          newweapon == wp_shotgun &&
+          player->weaponowned[wp_supershotgun] &&
+          player->readyweapon != wp_supershotgun) {
         newweapon = wp_supershotgun;
       }
+    }
 
     // killough 2/8/98, 3/22/98 -- end of weapon selection changes
 
-    if (player->weaponowned[newweapon] && newweapon != player->readyweapon)
-
-      // Do not go to plasma or BFG in shareware,
-      //  even if cheated.
-
-      if ((newweapon != wp_plasma && newweapon != wp_bfg)
-          || (gamemode != shareware) )
-        player->pendingweapon = newweapon;
+    // Do not go to plasma or BFG in shareware, even if cheated.
+    if (player->weaponowned[newweapon] &&
+        newweapon != player->readyweapon && (
+          (newweapon != wp_plasma && newweapon != wp_bfg) ||
+          (gamemode != shareware))) {
+      player->pendingweapon = newweapon;
     }
+  }
 
   // check for use
 
-  if (cmd->buttons & BT_USE)
-    {
-    if (!player->usedown)
-      {
-      P_UseLines (player);
+  if (cmd->buttons & BT_USE) {
+    if (!player->usedown) {
+      P_UseLines(player);
       player->usedown = true;
-      }
     }
-  else
+  }
+  else {
     player->usedown = false;
+  }
 
   // cycle psprites
 
-  P_MovePsprites (player);
+  P_MovePsprites(player);
 
   // Counters, time dependent power ups.
 
@@ -568,7 +545,7 @@ void P_PlayerThink (player_t* player)
     player->powers[pw_invulnerability]--;
 
   if (player->powers[pw_invisibility] > 0)    // killough
-    if (! --player->powers[pw_invisibility] )
+    if (! --player->powers[pw_invisibility])
       player->mo->flags &= ~MF_SHADOW;
 
   if (player->powers[pw_infrared] > 0)        // killough
@@ -590,3 +567,6 @@ void P_PlayerThink (player_t* player)
     player->powers[pw_invulnerability] & 8) ? INVERSECOLORMAP :
     player->powers[pw_infrared] > 4*32 || player->powers[pw_infrared] & 8;
 }
+
+/* vi: set et ts=2 sw=2: */
+

@@ -60,7 +60,6 @@ void SV_SendFullState(short playernum);
 void SV_SendAuthResponse(short playernum, auth_level_e auth_level);
 void SV_SendMessage(short playernum, char *message);
 void SV_BroadcastMessage(char *message);
-void SV_BroadcastPlayerCommands(void);
 void SV_BroadcastPlayerNameChanged(short playernum, char *new_name);
 void SV_BroadcastPlayerTeamChanged(short playernum, byte new_team);
 void SV_BroadcastPlayerPWOChanged(short playernum);

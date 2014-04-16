@@ -1918,7 +1918,7 @@ static void D_DoomMainSetup(void)
       if (autostart) // sets first map and first episode if unknown
         GetFirstMap(&startepisode, &startmap);
 
-      if (MULTINET)
+      if (CLIENT)
         N_LoadLatestState(true);
       else
         G_InitNew(startskill, startepisode, startmap);

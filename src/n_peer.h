@@ -44,9 +44,10 @@ typedef struct netpeer_s {
   time_t              connect_time;
   time_t              disconnect_time;
   short               playernum;
-  int                 command_index;
+  int                 command_tic;
   int                 state_tic;
   game_state_delta_t  delta;
+  int                 needs_setup;
 } netpeer_t;
 
 void       N_InitPeers(void);
