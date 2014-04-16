@@ -48,7 +48,7 @@
 #include "i_video.h"
 #include "lprintf.h"
 #include "m_argv.h"
-#include "m_cbuf.h"
+#include "m_delta.h"
 #include "m_menu.h"
 #include "m_utf.h"
 #include "p_checksum.h"
@@ -82,6 +82,8 @@ void N_InitNetGame(void) {
 
   displayplayer = consoleplayer = 0;
   playeringame[consoleplayer] = true;
+
+  M_InitDeltas();
 
   if ((i = M_CheckParm("-solo-net"))) {
     netgame = true;
@@ -159,9 +161,9 @@ void N_InitNetGame(void) {
     }
   }
 
-  if (!CLIENT) {
+  for (int i = 0; i < MAXPLAYERS; i++) {
     M_CBufInitWithCapacity(
-      &players[consoleplayer].commands, sizeof(netticcmd_t), BACKUPTICS
+      &players[i].commands, sizeof(netticcmd_t), BACKUPTICS
     );
   }
 }
@@ -279,10 +281,8 @@ void N_TryRunTics(void) {
       P_Checksum(gametic);
       gametic++;
 
-      if (DELTASERVER) {
-        printf("Saving state at %d.\n", gametic);
+      if (DELTASERVER)
         N_SaveState();
-      }
     }
 
     if (CMDSERVER) {

@@ -67,7 +67,7 @@ void N_SaveState(void) {
   latest_game_state = M_CBufGetFirstFreeOrNewSlot(&saved_game_states);
 
   latest_game_state->tic = gametic;
-  M_BufferZero(&latest_game_state->data);
+  M_BufferClear(&latest_game_state->data);
   G_WriteSaveData(&latest_game_state->data);
 }
 
@@ -136,6 +136,12 @@ dboolean N_ApplyStateDelta(game_state_delta_t *delta) {
   if (gs == NULL)
     return false;
 
+  new_gs = N_GetNewState();
+
+  M_BufferSeek(&gs->data, 0);
+  M_BufferSeek(&new_gs->data, 0);
+  M_BufferSeek(&delta->data, 0);
+
   M_ApplyDelta(&gs->data, &new_gs->data, &delta->data);
 
   new_gs->tic = delta->to_tic;
@@ -151,7 +157,7 @@ void N_BuildStateDelta(int tic, game_state_delta_t *delta) {
   if (state == NULL)
     I_Error("N_BuildStateDelta: Missing game state %d.\n", tic);
 
-  M_BufferZero(&delta->data);
+  M_BufferClear(&delta->data);
   M_BuildDelta(&state->data, &latest_game_state->data, &delta->data);
 
   delta->from_tic = tic;

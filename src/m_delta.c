@@ -72,8 +72,7 @@ static int write_to_buffer(void *priv, mmbuffer_t *mb, int nbuf) {
   for (delta_size = 0, i = 0; i < nbuf; i++)
     delta_size += mb[i].size;
 
-  M_BufferClear(delta);
-  M_BufferEnsureTotalCapacity(delta, delta_size);
+  M_BufferEnsureCapacity(delta, delta_size);
 
   for (i = 0; i < nbuf; i++)
     M_BufferWrite(delta, (char *)mb[i].ptr, mb[i].size);
@@ -82,34 +81,16 @@ static int write_to_buffer(void *priv, mmbuffer_t *mb, int nbuf) {
 }
 
 static void build_mmfile(mmfile_t *mmf, char *data, size_t size) {
-  long bytes_written = 0;
+  char *blk;
 
   if ((xdl_init_mmfile(mmf, BLKSIZE, XDL_MMF_ATOMIC)) != 0)
     I_Error("Error initializing mmfile");
 
-  while (bytes_written < size) {
-    bytes_written += xdl_write_mmfile(
-      mmf, ((const void *)(data + bytes_written)), size - bytes_written
-    );
-  }
+  blk = xdl_mmfile_writeallocate(mmf, size);
+  if (blk == NULL)
+    I_Error("Error allocating mmfile buffer");
 
-  /*
-   * CG 2014/3/13: Writing to a memory file can set errno to EAGAIN, so clear
-   *               it here
-   */
-  errno = 0;
-}
-
-static mmfile_t* check_mmfile_compact(mmfile_t *mmf, mmfile_t *mmc) {
-  if (!xdl_mmfile_iscompact(mmf)) {
-    printf("Compacting state.\n");
-    if (xdl_mmfile_compact(mmf, mmc, BLKSIZE, XDL_MMF_ATOMIC) < 0) {
-      perror("");
-      I_Error("Error compacting state.\n");
-    }
-    return mmc;
-  }
-  return mmf;
+  memcpy(blk, data, size);
 }
 
 void M_InitDeltas(void) {
@@ -142,6 +123,8 @@ void M_BuildDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
   mmb2.ptr = (char *)b2->data;
   mmb2.size = (long)b2->size;
 
+  M_BufferClear(delta);
+
   res = xdl_rabdiff_mb(&mmb1, &mmb2, &ecb);
   if (res != 0) {
     perror("");
@@ -150,30 +133,22 @@ void M_BuildDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
 }
 
 void M_ApplyDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
-  mmfile_t cs, ccs, is, cis;
-  mmfile_t *csp = &cs, *isp = &is;
+  mmfile_t cs, is;
   xdemitcb_t ecb;
 
-  ecb.priv = delta;
+  ecb.priv = b2;
   ecb.outf = write_to_buffer;
 
   build_mmfile(&cs, b1->data, b1->size);
-  build_mmfile(&is, b2->data, b2->size);
+  build_mmfile(&is, delta->data, delta->size);
 
-  csp = check_mmfile_compact(&cs, &ccs);
-  isp = check_mmfile_compact(&is, &cis);
-
-  if (xdl_bpatch(csp, isp, &ecb) != 0) {
+  if (xdl_bpatch(&cs, &is, &ecb) != 0) {
     perror("");
-    I_Error("M_BuildData: Error building delta");
+    I_Error("M_BuildData: Error applying delta");
   }
 
   xdl_free_mmfile(&cs);
-  if (csp == &ccs)
-    xdl_free_mmfile(&ccs);
   xdl_free_mmfile(&is);
-  if (isp == &cis)
-    xdl_free_mmfile(&cis);
 }
 
 /* vi: set et ts=2 sw=2: */

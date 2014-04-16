@@ -388,12 +388,8 @@ void M_BufferPrint(buf_t *buf) {
     buf->cursor
   );
 
-  for (size_t i = 0; i < buf->size; i++) {
-    if (((i + 1) * 5) >= 80)
-      printf("%4d\n", buf->data[i]);
-    else
-      printf("%4d ", buf->data[i]);
-  }
+  for (size_t i = 0; i < MIN(64, buf->size); i++)
+    printf("%X ", (unsigned char)buf->data[i]);
 
   printf("\n");
 }

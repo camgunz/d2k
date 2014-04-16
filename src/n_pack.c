@@ -54,7 +54,16 @@
 
 #define DECLARE_SIGNED_TYPE(tname, ctype, name, size)                         \
   const char *npv_ ## tname ## _name = name;                                  \
-  const char *npv_ ## tname ## _size_limit = #size;                           \
+  int64_t     npv_ ## tname ## _size_limit_low = -(size);                     \
+  int64_t     npv_ ## tname ## _size_limit_high = (size >> 1);                \
+  static const char* npv_ ## tname ## _get_size_limit_range(void) {           \
+    static char buf[50];                                                      \
+    snprintf(buf, sizeof(buf), "%ld <==> %ld",                                \
+      npv_ ## tname ## _size_limit_low,                                       \
+      npv_ ## tname ## _size_limit_high                                       \
+    );                                                                        \
+    return buf;                                                               \
+  }                                                                           \
   static dboolean npv_ ## tname ## _type(msgpack_object *o) {                 \
     return ((o->type == MSGPACK_OBJECT_POSITIVE_INTEGER) ||                   \
             (o->type == MSGPACK_OBJECT_NEGATIVE_INTEGER));                    \
@@ -64,12 +73,28 @@
     return o->via.i64 >= min && o->via.i64 <= max;                            \
   }                                                                           \
   static dboolean npv_ ## tname ## _size(msgpack_object *o) {                 \
-    return o->via.u64 <= size;                                                \
+    if (!(npv_ ## tname ## _size_limit_low <=                                 \
+          o->via.i64 <=                                                       \
+          npv_ ## tname ## _size_limit_high)) {                               \
+      printf("%ld\n", o->via.i64);                                            \
+    }                                                                         \
+    return npv_ ## tname ## _size_limit_low <=                                \
+           o->via.i64 <=                                                      \
+           npv_ ## tname ## _size_limit_high;                                 \
   }
 
 #define DECLARE_UNSIGNED_TYPE(tname, ctype, name, size)                       \
   const char *npv_ ## tname ## _name = name;                                  \
-  const char *npv_ ## tname ## _size_limit = #size;                           \
+  uint64_t    npv_ ## tname ## _size_limit_low = 0;                           \
+  uint64_t    npv_ ## tname ## _size_limit_high = size;                       \
+  static const char* npv_ ## tname ## _get_size_limit_range(void) {           \
+    static char buf[50];                                                      \
+    snprintf(buf, sizeof(buf), "%lu <==> %lu",                                \
+      npv_ ## tname ## _size_limit_low,                                       \
+      npv_ ## tname ## _size_limit_high                                       \
+    );                                                                        \
+    return buf;                                                               \
+  }                                                                           \
   static dboolean npv_ ## tname ## _type(msgpack_object *o) {                 \
     return o->type == MSGPACK_OBJECT_POSITIVE_INTEGER;                        \
   }                                                                           \
@@ -78,12 +103,24 @@
     return o->via.u64 >= min && o->via.u64 <= max;                            \
   }                                                                           \
   static dboolean npv_ ## tname ## _size(msgpack_object *o) {                 \
-    return o->via.u64 <= size;                                                \
+    if (!(npv_ ## tname ## _size_limit_low <=                                 \
+          o->via.u64 <=                                                       \
+          npv_ ## tname ## _size_limit_high)) {                               \
+      printf("%lu\n", o->via.u64);                                            \
+    }                                                                         \
+    return npv_ ## tname ## _size_limit_low <=                                \
+           o->via.u64 <=                                                      \
+           npv_ ## tname ## _size_limit_high;                                 \
   }
 
 #define DECLARE_TYPE(tname, name, mp_type)                                    \
   const char *npv_ ## tname ## _name = name;                                  \
   const char *npv_ ## tname ## _size_limit = 0;                               \
+  char        npv_ ## tname ## _size_limit_low = 0;                           \
+  char        npv_ ## tname ## _size_limit_high = 0;                          \
+  static const char* npv_ ## tname ## _get_size_limit_range(void) {           \
+    return "0 <==> 0";                                                        \
+  }                                                                           \
   static dboolean npv_ ## tname ## _type(msgpack_object *o) {                 \
     return o->type == MSGPACK_OBJECT_ ## mp_type;                             \
   }                                                                           \
@@ -107,8 +144,8 @@
 
 #define validate_size(obj, name, type)                                        \
   if (!(npv_ ## type ## _size((obj)))) {                                      \
-    doom_printf("%s: Invalid packet: %s is too large (> %s)\n",               \
-      __func__, name, npv_ ## type ## _size_limit                             \
+    doom_printf("%s: Invalid packet: %s is too large (%s)\n",                 \
+      __func__, name, npv_ ## type ## _get_size_limit_range()                 \
     );                                                                        \
     return false;                                                             \
   }
@@ -164,7 +201,7 @@
 #define unpack_and_validate_array(o, a, name, ename, etype, ectype, buf, sz)  \
   unpack_and_validate(o, name, array)                                         \
   validate_array_size(a, name, sz)                                            \
-  M_BufferZero((buf));                                                        \
+  M_BufferClear((buf));                                                       \
   M_BufferEnsureTotalCapacity(&(buf), a.size);                                \
   for (int i = 0; i < a.size; i++) {                                          \
     msgpack_object *array_entry = a.ptr + i;                                  \
@@ -189,7 +226,7 @@
 #define unpack_and_validate_player_array(obj, arr, name, buf, sz)             \
   unpack_and_validate(obj, name, array);                                      \
   validate_array_size(arr, name, sz);                                         \
-  M_BufferZero(buf);                                                          \
+  M_BufferClear((buf));                                                       \
   M_BufferEnsureTotalCapacity(buf, arr.size * sizeof(short));                 \
   for (int i = 0; i < arr.size; i++) {                                        \
     validate_player((&(arr.ptr[i])));                                         \
@@ -232,12 +269,14 @@ static msgpack_object     *obj;
 static msgpack_object_map *map = NULL;
 
 static void pack_commands(netpeer_t *np, unsigned short playernum) {
-  int command_count = 0;
+  byte command_count = 0;
   cbuf_t *commands = NULL;
 
   msgpack_pack_unsigned_short(np->upk, playernum);
 
   if (np->playernum == playernum) {
+    if (CLIENT)
+      I_Error("This should never happen\n");
     msgpack_pack_int(np->upk, np->command_tic);
     return;
   }
@@ -254,12 +293,18 @@ static void pack_commands(netpeer_t *np, unsigned short playernum) {
 
   msgpack_pack_unsigned_char(np->upk, command_count);
 
+  printf("Packing %d commands.\n", command_count);
+
+  if (command_count == 0)
+    return;
+
   CBUF_FOR_EACH(commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
     if (ncmd->tic <= np->command_tic)
       continue;
 
+    msgpack_pack_int(np->upk, ncmd->tic);
     msgpack_pack_signed_char(np->upk, ncmd->cmd.forwardmove);
     msgpack_pack_signed_char(np->upk, ncmd->cmd.sidemove);
     msgpack_pack_short(np->upk, ncmd->cmd.angleturn);
@@ -275,6 +320,7 @@ void N_ShutUpClang(void) {
   npv_ushort_range(NULL, 0, 0);
   npv_null_type(NULL);
   npv_null_size(NULL);
+  npv_null_get_size_limit_range();
 }
 
 void N_InitPacker(void) {
@@ -448,8 +494,6 @@ dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf) {
 }
 
 void N_PackSync(netpeer_t *np) {
-  doom_printf("Packing sync\n");
-
   msgpack_pack_unsigned_char(np->upk, nm_sync);
 
   if (DELTASYNC)
@@ -483,9 +527,11 @@ dboolean N_UnpackSync(netpeer_t *np) {
   unsigned short player_count = 0;
   int m_state_tic = 0;
   int m_command_tic = 0;
-if (DELTASYNC) {
+
+  if (DELTASYNC) {
     unpack_and_validate(obj, "state tic", int);
     m_state_tic = (int)obj->via.i64;
+    printf("%d State: %d.\n", np->playernum, m_state_tic);
   }
 
   unpack_and_validate(obj, "player count", ushort);
@@ -526,6 +572,8 @@ if (DELTASYNC) {
    */
     unpack_and_validate(obj, "command count", uchar);
     command_count = (byte)obj->via.u64;
+
+    printf("Unpacking %d commands.\n", command_count);
 
     commands = &players[playernum].commands;
 
@@ -587,8 +635,6 @@ if (DELTASYNC) {
 }
 
 void N_PackDeltaSync(netpeer_t *np) {
-  doom_printf("Packing delta sync\n");
-
   msgpack_pack_unsigned_char(np->upk, nm_sync);
   msgpack_pack_int(np->upk, np->command_tic);
   msgpack_pack_int(np->upk, np->delta.from_tic);
@@ -618,7 +664,6 @@ dboolean N_UnpackDeltaSync(netpeer_t *np) {
   if (m_delta_to_tic > np->state_tic) {
     np->delta.from_tic = m_delta_from_tic;
     np->delta.to_tic = m_delta_to_tic;
-    np->state_tic = m_delta_to_tic;
     M_BufferSetData(
       &np->delta.data, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size
     );
@@ -677,8 +722,6 @@ dboolean N_UnpackPlayerPreferenceChange(netpeer_t *np, short *playernum,
                                                        size_t *count) {
   short m_playernum = 0;
   int m_tic = 0;
-
-  doom_printf("Packing player preference change\n");
 
   unpack_and_validate_player(obj);
   m_playernum = (short)obj->via.i64;

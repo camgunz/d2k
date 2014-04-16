@@ -2184,19 +2184,19 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
 
   // dearchive all the modifications
   P_MapStart();
-  printf("UnArchiving players at %lu.\n", savebuffer->cursor);
+  // printf("UnArchiving players at %lu.\n", savebuffer->cursor);
   P_UnArchivePlayers(savebuffer);
-  printf("UnArchiving world at %lu.\n", savebuffer->cursor);
+  // printf("UnArchiving world at %lu.\n", savebuffer->cursor);
   P_UnArchiveWorld(savebuffer);
-  printf("UnArchiving thinkers at %lu.\n", savebuffer->cursor);
+  // printf("UnArchiving thinkers at %lu.\n", savebuffer->cursor);
   P_UnArchiveThinkers(savebuffer);
-  printf("UnArchiving specials at %lu.\n", savebuffer->cursor);
+  // printf("UnArchiving specials at %lu.\n", savebuffer->cursor);
   P_UnArchiveSpecials(savebuffer);
-  printf("UnArchiving RNG at %lu.\n", savebuffer->cursor);
+  // printf("UnArchiving RNG at %lu.\n", savebuffer->cursor);
   P_UnArchiveRNG(savebuffer);    // killough 1/18/98: load RNG information
-  printf("UnArchiving Map at %lu.\n", savebuffer->cursor);
+  // printf("UnArchiving Map at %lu.\n", savebuffer->cursor);
   P_UnArchiveMap(savebuffer);    // killough 1/22/98: load automap information
-  printf("UnArchiving consistency marker at %lu.\n", savebuffer->cursor);
+  // printf("UnArchiving consistency marker at %lu.\n", savebuffer->cursor);
   P_MapEnd();
   R_ActivateSectorInterpolations();//e6y
   R_SmoothPlaying_Reset(NULL); // e6y
@@ -2359,7 +2359,7 @@ void G_WriteSaveData(buf_t *savebuffer) {
   // killough 11/98: save revenant tracer state
   M_BufferWriteByte(savebuffer, (gametic - basetic) & 255);
 
-  printf("Archiving players at %lu.\n", savebuffer->cursor);
+  // printf("Archiving players at %lu.\n", savebuffer->cursor);
   P_ArchivePlayers(savebuffer);
 
   // phares 9/13/98: Move mobj_t->index out of P_ArchiveThinkers so the
@@ -2368,9 +2368,9 @@ void G_WriteSaveData(buf_t *savebuffer) {
   // caused a sound, referenced by sector_t->soundtarget.
   P_ThinkerToIndex();
 
-  printf("Archiving world at %lu.\n", savebuffer->cursor);
+  // printf("Archiving world at %lu.\n", savebuffer->cursor);
   P_ArchiveWorld(savebuffer);
-  printf("Archiving thinkers at %lu.\n", savebuffer->cursor);
+  // printf("Archiving thinkers at %lu.\n", savebuffer->cursor);
   P_ArchiveThinkers(savebuffer);
 
   // phares 9/13/98: Move index->mobj_t out of P_ArchiveThinkers, simply

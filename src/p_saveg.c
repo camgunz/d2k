@@ -523,7 +523,6 @@ void P_ArchiveThinkers(buf_t *savebuffer) {
       if (player) {
         uint_64_t playernum = (uint_64_t)(mobj->player - players) + 1;
 
-        printf("mobj->player: %llu.\n", playernum);
         mobj->player = (player_t *)playernum;
       }
 
@@ -615,7 +614,6 @@ void P_UnArchiveThinkers(buf_t *savebuffer) {
     if (mobj->player) {
       uint_64_t playernum = (uint_64_t)mobj->player;
 
-      printf("mobj->player: %llu.\n", playernum);
       mobj->player = &players[playernum - 1];
       mobj->player->mo = mobj;
     }

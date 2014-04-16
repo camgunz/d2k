@@ -175,6 +175,18 @@ const byte nm_authrequest            = 7; /* C => S | BOTH    |   reliable */
 const byte nm_rconcommand            = 8; /* C => S | BOTH    |   reliable */
 const byte nm_voterequest            = 9; /* C => S | BOTH    |   reliable */
 
+const char *nm_names[9] = {
+  "setup",
+  "auth response",
+  "server message",
+  "sync",
+  "player message",
+  "player preference change",
+  "auth request",
+  "RCON command",
+  "vote request"
+};
+
 buf_t* N_GetMessageRecipientBuffer(void) {
   static buf_t message_recipients;
   static dboolean initialized = false;
@@ -210,12 +222,8 @@ static void handle_setup(netpeer_t *np) {
   for (i = 0; i < MAXPLAYERS; i++)
     playeringame[i] = false;
 
-  for (i = 0; i < player_count; i++) {
+  for (i = 0; i < player_count; i++)
     playeringame[i] = true;
-    M_CBufInitWithCapacity(
-      &players[i].commands, sizeof(netticcmd_t), BACKUPTICS
-    );
-  }
 
   printf("Player count: %u.\n", player_count);
 
@@ -262,7 +270,12 @@ static void handle_setup(netpeer_t *np) {
     }
   }
 
+  if (DELTACLIENT)
+    np->state_tic = N_GetLatestState()->tic;
+
   CL_SetReceivedSetup(true);
+  M_BufferClear(&np->ubuf);
+  N_PackSync(np);
 }
 
 static void handle_auth_response(netpeer_t *np) {
@@ -286,16 +299,20 @@ static void handle_server_message(netpeer_t *np) {
 }
 
 static void handle_sync(netpeer_t *np) {
-  int old_state_tic = 0;
-
   if (DELTACLIENT) {
-    old_state_tic = np->state_tic;
-
-    if (!N_UnpackDeltaSync(np))
+    if (!N_UnpackDeltaSync(np)) {
+      printf("Error unpacking delta sync\n");
       return;
+    }
 
-    if (np->state_tic != old_state_tic)
+    if (np->state_tic != np->delta.to_tic) {
+      printf(
+        "Applying delta from %d to %d.\n", np->delta.from_tic, np->delta.to_tic
+      );
       N_ApplyStateDelta(&np->delta);
+      N_LoadLatestState(false);
+      np->state_tic = np->delta.to_tic;
+    }
   }
   else if (!N_UnpackSync(np)) {
     return;
@@ -307,12 +324,17 @@ static void handle_sync(netpeer_t *np) {
   if (DELTASERVER)
     SV_RemoveOldStates();
 
-  M_BufferZero(&np->ubuf);
+  M_BufferClear(&np->ubuf);
 
-  if (DELTASERVER)
+  if (DELTASERVER) {
+    if (np->state_tic != gametic)
+      N_BuildStateDelta(np->state_tic, &np->delta);
+
     N_PackDeltaSync(np);
-  else
+  }
+  else {
     N_PackSync(np);
+  }
 }
 
 static void handle_player_message(netpeer_t *np) {
@@ -469,7 +491,10 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
   N_LoadPacketData(data, data_size);
 
   while (N_LoadNewMessage(np, &message_type)) {
-    printf("Handling message %u.\n", message_type);
+
+    if (message_type >= 1 && message_type <= sizeof(nm_names))
+      printf("Handling [%s] message.\n", nm_names[message_type - 1]);
+
     switch (message_type) {
       case nm_setup:
         CLIENT_ONLY("setup");
@@ -550,6 +575,20 @@ void SV_SendSetup(short playernum) {
   N_PackSetup(np);
 
   np->needs_setup = 0;
+  np->state_tic = gametic;
+  printf("Set state TIC to %d.\n", gametic);
+  printf("Set state TIC to %d.\n", gametic);
+  printf("Set state TIC to %d.\n", gametic);
+  printf("Set state TIC to %d.\n", gametic);
+  printf("Set state TIC to %d.\n", gametic);
+  printf("Set state TIC to %d.\n", gametic);
+  printf("Set state TIC to %d.\n", gametic);
+  printf("Set state TIC to %d.\n", gametic);
+  printf("Set state TIC to %d.\n", gametic);
+  printf("Set state TIC to %d.\n", gametic);
+  printf("Set state TIC to %d.\n", gametic);
+  printf("Set state TIC to %d.\n", gametic);
+  printf("Set state TIC to %d.\n", gametic);
 }
 
 void SV_SendAuthResponse(short playernum, auth_level_e auth_level) {

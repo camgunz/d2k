@@ -489,10 +489,8 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       break;
     }
 
-    doom_printf("Got event type %d from enet_host_service\n", net_event.type);
-
     if (net_event.type == ENET_EVENT_TYPE_CONNECT) {
-      doom_printf("Got 'CONNECT' event\n");
+      // doom_printf("Got 'CONNECT' event\n");
       if (SERVER) {
         peernum = N_AddPeer();
         N_SetPeerConnected(peernum, net_event.peer);
@@ -514,7 +512,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       }
     }
     else if (net_event.type == ENET_EVENT_TYPE_DISCONNECT) {
-      doom_printf("Got 'DISCONNECT' event\n");
+      // doom_printf("Got 'DISCONNECT' event\n");
       if ((peernum = N_GetPeerNum(net_event.peer)) == -1) {
         doom_printf(
           "N_ServiceNetwork: Received 'disconnect' event from unknown "
@@ -527,7 +525,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       N_RemovePeer(N_GetPeer(peernum));
     }
     else if (net_event.type == ENET_EVENT_TYPE_RECEIVE) {
-      doom_printf("Got 'RECEIVE' event\n");
+      // doom_printf("Got 'RECEIVE' event\n");
       if ((peernum = N_GetPeerNum(net_event.peer)) == -1) {
         doom_printf(
           "N_ServiceNetwork: Received 'packet' event from unknown peer %s:%u.\n",
