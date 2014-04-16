@@ -2792,9 +2792,13 @@ static void deh_procStrings(DEHFILE *fpin, FILE* fpout, char *line)
         {
     // killough 11/98: allocate enough the first time
           maxstrlen = strlen(holdstring) + strlen(inbuffer);
-          if (fpout) fprintf(fpout,
-                             "* increased buffer from to %lu for buffer size %d\n",
-                             maxstrlen,(int)strlen(inbuffer));
+          if (fpout) {
+            fprintf(
+              fpout,
+              "* increased buffer from to %zu for buffer size %d\n",
+              maxstrlen, (int)strlen(inbuffer)
+            );
+          }
           holdstring = realloc(holdstring,maxstrlen*sizeof(*holdstring));
         }
       // concatenate the whole buffer if continuation or the value iffirst

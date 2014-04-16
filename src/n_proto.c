@@ -299,10 +299,8 @@ static void handle_server_message(netpeer_t *np) {
 }
 
 static void handle_sync(netpeer_t *np) {
-  dboolean update_sync = false;
-
   if (DELTACLIENT) {
-    if (!N_UnpackDeltaSync(np, &update_sync)) {
+    if (!N_UnpackDeltaSync(np)) {
       printf("Error unpacking delta sync\n");
       return;
     }
@@ -314,26 +312,11 @@ static void handle_sync(netpeer_t *np) {
       N_ApplyStateDelta(&np->delta);
       N_LoadLatestState(false);
       np->state_tic = np->delta.to_tic;
+      np->needs_sync_update = true;
     }
   }
-  else if (!N_UnpackSync(np, &update_sync)) {
+  else if (!N_UnpackSync(np)) {
     return;
-  }
-  else if (update_sync) {
-    if (CMDCLIENT) {
-      np->needs_sync_update = true;
-    }
-    else if (CMDSERVER) {
-      for (int i = 0; i < N_GetPeerCount(); i++) {
-        netpeer_t *csnp = N_GetPeer(i);
-
-        if (csnp != NULL)
-          csnp->needs_sync_update = true;
-      }
-    }
-    else if (DELTASERVER) {
-      np->needs_sync_update = true;
-    }
   }
 
   if (DELTACLIENT)
@@ -553,29 +536,28 @@ void N_SendSync(void) {
   if (CLIENT) {
     np = N_GetPeer(0);
 
-    if (np == NULL || !np->needs_sync_update)
-      return;
-
-    M_BufferClear(&np->ubuf);
-    N_PackSync();
+    if (np != NULL && np->needs_sync_update) {
+      M_BufferClear(&np->ubuf);
+      N_PackSync(np);
+      np->needs_sync_update = false;
+    }
   }
   else {
     for (int i = 0; i < N_GetPeerCount(); i++) {
       np = N_GetPeer(i);
 
-      if (np == NULL || !np->needs_sync_update)
-        continue;
+      if (np != NULL && np->needs_sync_update) {
+        M_BufferClear(&np->ubuf);
 
-      M_BufferClear(&np->ubuf);
+        if (DELTASERVER)
+          N_PackDeltaSync(np);
+        else
+          N_PackSync(np);
 
-      if (DELTASERVER)
-        N_PackDeltaSync();
-      else
-        N_PackSync();
+        np->needs_sync_update = false;
+      }
     }
   }
-
-  sync_needs_updating = false;
 }
 
 void SV_SetupNewPeer(int peernum) {

@@ -3439,7 +3439,9 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size,
     // killough 3/6/98: rearrange to fix savegame bugs (moved fastparm,
     // respawnparm, nomonsters flags to G_LoadOptions()/G_SaveOptions())
 
-    if ((skill=demover) >= 100) {       // For demos from versions >= 1.4
+    skill = demover;
+
+    if (demover >= 100) {                 // For demos from versions >= 1.4
       //e6y: check for overrun
       if (CheckForOverrun(header_p, demo_p, size, 8, failonerror))
         return NULL;

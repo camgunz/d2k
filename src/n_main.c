@@ -285,12 +285,18 @@ void N_TryRunTics(void) {
         N_SaveState();
     }
 
-    if (CMDSERVER) {
-      for (int i = 0; i < N_GetPeerCount(); i++) {
-        netpeer_t *np = N_GetPeer(i);
+    if (CMDCLIENT) {
+      netpeer_t *server = N_GetPeer(0);
 
-        if (np != NULL)
-          np->command_tic = gametic;
+      if (server != NULL)
+        server->needs_sync_update = true;
+    }
+    else if (CMDSERVER) {
+      for (int i = 0; i < N_GetPeerCount(); i++) {
+        netpeer_t *client = N_GetPeer(i);
+
+        if (client != NULL)
+          client->needs_sync_update = true;
       }
     }
   }

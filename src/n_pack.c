@@ -58,7 +58,7 @@
   int64_t     npv_ ## tname ## _size_limit_high = (size >> 1);                \
   static const char* npv_ ## tname ## _get_size_limit_range(void) {           \
     static char buf[50];                                                      \
-    snprintf(buf, sizeof(buf), "%ld <==> %ld",                                \
+    snprintf(buf, sizeof(buf), "%" PRIi64 " <==> %" PRIi64,                   \
       npv_ ## tname ## _size_limit_low,                                       \
       npv_ ## tname ## _size_limit_high                                       \
     );                                                                        \
@@ -73,11 +73,6 @@
     return o->via.i64 >= min && o->via.i64 <= max;                            \
   }                                                                           \
   static dboolean npv_ ## tname ## _size(msgpack_object *o) {                 \
-    if (!(npv_ ## tname ## _size_limit_low <=                                 \
-          o->via.i64 <=                                                       \
-          npv_ ## tname ## _size_limit_high)) {                               \
-      printf("%ld\n", o->via.i64);                                            \
-    }                                                                         \
     return npv_ ## tname ## _size_limit_low <=                                \
            o->via.i64 <=                                                      \
            npv_ ## tname ## _size_limit_high;                                 \
@@ -89,7 +84,7 @@
   uint64_t    npv_ ## tname ## _size_limit_high = size;                       \
   static const char* npv_ ## tname ## _get_size_limit_range(void) {           \
     static char buf[50];                                                      \
-    snprintf(buf, sizeof(buf), "%lu <==> %lu",                                \
+    snprintf(buf, sizeof(buf), "%" PRIu64 " <==> %" PRIu64,                   \
       npv_ ## tname ## _size_limit_low,                                       \
       npv_ ## tname ## _size_limit_high                                       \
     );                                                                        \
@@ -103,11 +98,6 @@
     return o->via.u64 >= min && o->via.u64 <= max;                            \
   }                                                                           \
   static dboolean npv_ ## tname ## _size(msgpack_object *o) {                 \
-    if (!(npv_ ## tname ## _size_limit_low <=                                 \
-          o->via.u64 <=                                                       \
-          npv_ ## tname ## _size_limit_high)) {                               \
-      printf("%lu\n", o->via.u64);                                            \
-    }                                                                         \
     return npv_ ## tname ## _size_limit_low <=                                \
            o->via.u64 <=                                                      \
            npv_ ## tname ## _size_limit_high;                                 \
@@ -275,8 +265,6 @@ static void pack_commands(netpeer_t *np, unsigned short playernum) {
   msgpack_pack_unsigned_short(np->upk, playernum);
 
   if (np->playernum == playernum) {
-    if (CLIENT)
-      I_Error("This should never happen\n");
     msgpack_pack_int(np->upk, np->command_tic);
     return;
   }
@@ -331,17 +319,6 @@ void N_InitPacker(void) {
 void N_LoadPacketData(void *data, size_t data_size) {
   msgpack_unpacker_reserve_buffer(&pac, data_size);
   memcpy(msgpack_unpacker_buffer(&pac), data, data_size);
-
-#if 0
-  for (int i = 0; i < data_size; i++) {
-    if (((i + 1) * 5) >= 80)
-      printf("%4d\n", ((char *)msgpack_unpacker_buffer(&pac))[i]);
-    else
-      printf("%4d ", ((char *)msgpack_unpacker_buffer(&pac))[i]);
-  }
-  printf("\n");
-#endif
-
   msgpack_unpacker_buffer_consumed(&pac, data_size);
 }
 
@@ -523,7 +500,7 @@ void N_PackSync(netpeer_t *np) {
   }
 }
 
-dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
+dboolean N_UnpackSync(netpeer_t *np) {
   unsigned short player_count = 0;
   int m_state_tic = 0;
   int m_command_tic = 0;
@@ -629,17 +606,12 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
     }
   }
 
-  if (CMDCLIENT)
-    *update_sync = (np->command_tic != m_command_tic);
-  else if (DELTASERVER)
-    *update_sync = (np->state_tic != m_state_tic);
-  else
-    *update_sync = false;
+  if (DELTASERVER) {
+    if (np->state_tic != m_state_tic)
+      np->needs_sync_update = true;
 
-  if (CMDCLIENT)
-    np->command_tic = m_command_tic;
-  else if (DELTASERVER)
     np->state_tic = m_state_tic;
+  }
 
   return true;
 }
@@ -669,9 +641,12 @@ dboolean N_UnpackDeltaSync(netpeer_t *np) {
 
   unpack_and_validate(obj, "delta data", raw);
 
+  if (np->command_tic != m_command_tic)
+    np->needs_sync_update = true;
+
   np->command_tic = m_command_tic;
 
-  if (m_delta_to_tic > np->state_tic) {
+  if (np->state_tic <= m_delta_to_tic) {
     np->delta.from_tic = m_delta_from_tic;
     np->delta.to_tic = m_delta_to_tic;
     M_BufferSetData(

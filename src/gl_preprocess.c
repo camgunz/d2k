@@ -227,8 +227,8 @@ static void gld_FlatConvexCarver(int ssidx, int num, divline_t *list)
     if (levelinfo) {
       fprintf(
         levelinfo,
-        "All carved away: subsector %ld - sector %i\n",
-        ssec-subsectors,
+        "All carved away: subsector %td - sector %i\n",
+        ssec - subsectors,
         ssec->sector->iSectorID
       );
     }

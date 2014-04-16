@@ -382,7 +382,7 @@ void M_BufferFree(buf_t *buf) {
 }
 
 void M_BufferPrint(buf_t *buf) {
-  printf("Buffer capacity, size and cursor: [%lu, %lu, %lu].\n",
+  printf("Buffer capacity, size and cursor: [%zu, %zu, %zu].\n",
     buf->capacity,
     buf->size,
     buf->cursor

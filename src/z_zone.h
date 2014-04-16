@@ -50,6 +50,8 @@
 #include "config.h"
 #endif
 
+#define __STDC_FORMAT_MACROS
+
 #if 0
 #ifndef __func__
 #ifdef __FUNCTION__

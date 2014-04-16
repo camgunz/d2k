@@ -92,7 +92,6 @@ static void flush_peer_buffers(void) {
       continue;
 
     if (np->rbuf.size != 0) {
-      // M_BufferPrint(&np->rbuf);
       ENetPacket *reliable_packet = enet_packet_create(
         np->rbuf.data,
         np->rbuf.size,
@@ -103,11 +102,10 @@ static void flush_peer_buffers(void) {
     }
 
     if (np->ubuf.size != 0) {
-      // M_BufferPrint(&np->ubuf);
       ENetPacket *unreliable_packet = enet_packet_create(
         np->ubuf.data,
         np->ubuf.size,
-        ENET_PACKET_FLAG_UNSEQUENCED
+        ENET_PACKET_FLAG_UNSEQUENCED | ENET_PACKET_FLAG_NO_ALLOCATE
       );
       enet_peer_send(np->peer, NET_CHANNEL_UNRELIABLE, unreliable_packet);
     }
