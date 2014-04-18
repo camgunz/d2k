@@ -479,8 +479,8 @@ dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf) {
 void N_PackSync(netpeer_t *np) {
   msgpack_pack_unsigned_char(np->upk, nm_sync);
 
-  printf("Sending sync to %d: [%d, %d].\n",
-    np->playernum, np->command_tic, np->state_tic
+  printf("Sending sync to %d (%d): [%d, %d].\n",
+    np->playernum, gametic, np->command_tic, np->state_tic
   );
 
   if (DELTACLIENT)
@@ -630,8 +630,8 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
 }
 
 void N_PackDeltaSync(netpeer_t *np) {
-  printf("Sending sync to %d: [%d, %d].\n",
-    np->playernum, np->command_tic, np->state_tic
+  printf("Sending sync to %d (%d): [%d, %d].\n",
+    np->playernum, gametic, np->command_tic, np->state_tic
   );
 
   msgpack_pack_unsigned_char(np->upk, nm_sync);

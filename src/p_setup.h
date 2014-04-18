@@ -31,8 +31,8 @@
  *
  *-----------------------------------------------------------------------------*/
 
-#ifndef __P_SETUP__
-#define __P_SETUP__
+#ifndef P_SETUP__
+#define P_SETUP__
 
 #include "p_mobj.h"
 
@@ -40,6 +40,7 @@
 #pragma interface
 #endif
 
+void P_ClearSectors(void);
 void P_SetupLevel(int episode, int map, int playermask, skill_t skill);
 void P_Init(void);               /* Called by startup code. */
 
@@ -59,3 +60,6 @@ extern int blockmapxneg;
 extern int blockmapyneg;
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

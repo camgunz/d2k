@@ -849,53 +849,51 @@ static void P_LoadSubsectors_V4(int lump)
 //
 // killough 5/3/98: reformatted, cleaned up
 
-static void P_LoadSectors (int lump)
-{
+static void P_LoadSectors(int lump) {
   const byte *data; // cph - const*
   int  i;
 
   numsectors = W_LumpLength (lump) / sizeof(mapsector_t);
   sectors = calloc_IfSameLevel(sectors, numsectors, sizeof(sector_t));
-  data = W_CacheLumpNum (lump); // cph - wad lump handling updated
+  data = W_CacheLumpNum(lump); // cph - wad lump handling updated
 
-  for (i=0; i<numsectors; i++)
-    {
-      sector_t *ss = sectors + i;
-      const mapsector_t *ms = (const mapsector_t *) data + i;
+  for (i = 0; i < numsectors; i++) {
+    sector_t *ss = sectors + i;
+    const mapsector_t *ms = (const mapsector_t *) data + i;
 
-      ss->iSectorID=i; // proff 04/05/2000: needed for OpenGL
-      ss->floorheight = LittleShort(ms->floorheight)<<FRACBITS;
-      ss->ceilingheight = LittleShort(ms->ceilingheight)<<FRACBITS;
-      ss->floorpic = R_FlatNumForName(ms->floorpic);
-      ss->ceilingpic = R_FlatNumForName(ms->ceilingpic);
-      ss->lightlevel = LittleShort(ms->lightlevel);
-      ss->special = LittleShort(ms->special);
-      ss->oldspecial = LittleShort(ms->special);
-      ss->tag = LittleShort(ms->tag);
-      ss->thinglist = NULL;
-      ss->touching_thinglist = NULL;            // phares 3/14/98
+    ss->iSectorID=i; // proff 04/05/2000: needed for OpenGL
+    ss->floorheight = LittleShort(ms->floorheight) << FRACBITS;
+    ss->ceilingheight = LittleShort(ms->ceilingheight) << FRACBITS;
+    ss->floorpic = R_FlatNumForName(ms->floorpic);
+    ss->ceilingpic = R_FlatNumForName(ms->ceilingpic);
+    ss->lightlevel = LittleShort(ms->lightlevel);
+    ss->special = LittleShort(ms->special);
+    ss->oldspecial = LittleShort(ms->special);
+    ss->tag = LittleShort(ms->tag);
+    ss->thinglist = NULL;
+    ss->touching_thinglist = NULL;            // phares 3/14/98
 
-      ss->nextsec = -1; //jff 2/26/98 add fields to support locking out
-      ss->prevsec = -1; // stair retriggering until build completes
+    ss->nextsec = -1; //jff 2/26/98 add fields to support locking out
+    ss->prevsec = -1; // stair retriggering until build completes
 
-      // killough 3/7/98:
-      ss->floor_xoffs = 0;
-      ss->floor_yoffs = 0;      // floor and ceiling flats offsets
-      ss->ceiling_xoffs = 0;
-      ss->ceiling_yoffs = 0;
-      ss->heightsec = -1;       // sector used to get floor and ceiling height
-      ss->floorlightsec = -1;   // sector used to get floor lighting
-      // killough 3/7/98: end changes
+    // killough 3/7/98:
+    ss->floor_xoffs = 0;
+    ss->floor_yoffs = 0;      // floor and ceiling flats offsets
+    ss->ceiling_xoffs = 0;
+    ss->ceiling_yoffs = 0;
+    ss->heightsec = -1;       // sector used to get floor and ceiling height
+    ss->floorlightsec = -1;   // sector used to get floor lighting
+    // killough 3/7/98: end changes
 
-      // killough 4/11/98 sector used to get ceiling lighting:
-      ss->ceilinglightsec = -1;
+    // killough 4/11/98 sector used to get ceiling lighting:
+    ss->ceilinglightsec = -1;
 
-      // killough 4/4/98: colormaps:
-      ss->bottommap = ss->midmap = ss->topmap = 0;
+    // killough 4/4/98: colormaps:
+    ss->bottommap = ss->midmap = ss->topmap = 0;
 
-      // killough 10/98: sky textures coming from sidedefs:
-      ss->sky = 0;
-    }
+    // killough 10/98: sky textures coming from sidedefs:
+    ss->sky = 0;
+  }
 
   W_UnlockLumpNum(lump); // cph - release the data
 }
@@ -2713,3 +2711,6 @@ void P_Init (void)
   P_InitPicAnims();
   R_InitSprites(sprnames);
 }
+
+/* vi: set et ts=2 sw=2: */
+

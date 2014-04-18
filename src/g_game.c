@@ -2049,6 +2049,7 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
   }
   if (savegame_compatibility == -1) {
     fprintf(stderr, "savegame_compatibility == -1 (%s)\n", save_version);
+    M_BufferPrint(savebuffer);
     if (bail_on_errors) {
       return false;
     }
@@ -2168,8 +2169,16 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
   G_ReadOptions(game_options);  // killough 3/1/98: Read game options
 
   // load a base level
-  if (init_new)
+  if (init_new) {
     G_InitNew(gameskill, gameepisode, gamemap);
+  }
+  else {
+    P_InitThinkers();
+    for (int i = 0; i < numsectors; i++) {
+      sectors[i].thinglist = NULL;
+      sectors[i].touching_thinglist = NULL;
+    }
+  }
 
   /* get the times - killough 11/98: save entire word */
   M_BufferReadInt(savebuffer, &leveltime);
