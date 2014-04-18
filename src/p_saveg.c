@@ -181,6 +181,10 @@ static void P_ArchivePlayer(buf_t *savebuffer, player_t *player) {
     M_BufferWriteLong(savebuffer, 0);
   }
   M_BufferWriteByte(savebuffer, player->team);
+  /*
+   * CG: Don't use P_GetPlayerCommands here; that would overwrite the local
+   * command buffer.
+   */
   M_CBufConsolidate(&player->commands);
   M_BufferWriteInt(savebuffer, M_CBufGetObjectCount(&player->commands));
   CBUF_FOR_EACH(&player->commands, entry) {
@@ -274,6 +278,7 @@ static void P_UnArchivePlayer(buf_t *savebuffer, player_t *player) {
   M_BufferReadInt(savebuffer, &command_count);
   if (command_count > 100)
     I_Error("Command count too high\n");
+
   M_CBufClear(&player->commands);
   M_CBufEnsureCapacity(&player->commands, command_count);
 

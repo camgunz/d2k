@@ -35,7 +35,6 @@
 
 #include "z_zone.h"
 
-#include "m_cbuf.h"
 #include "doomstat.h"
 #include "d_event.h"
 #include "r_main.h"
@@ -46,6 +45,28 @@
 #include "r_fps.h"
 #include "g_game.h"
 #include "e6y.h"//e6y
+
+// Commands
+
+static cbuf_t local_commands;
+
+//
+// P_GetPlayerCommands
+// Returns the player's command buffer, consolidated
+//
+
+cbuf_t* P_GetPlayerCommands(unsigned short playernum) {
+  cbuf_t *commands = NULL;
+
+  if (playernum == consoleplayer)
+    commands = &local_commands;
+  else
+    commands = &players[playernum].commands;
+
+  M_CBufConsolidate(commands);
+
+  return commands;
+}
 
 //
 // Movement.

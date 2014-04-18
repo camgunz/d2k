@@ -52,7 +52,7 @@ extern const byte nm_voterequest;
 void   N_InitProtocol(void);
 buf_t* N_GetMessageRecipientBuffer(void);
 void   N_HandlePacket(int peernum, void *data, size_t data_size);
-void   N_SendSync(void);
+void   N_UpdateSync(void);
 
 void SV_SetupNewPeer(int peernum);
 void SV_SendSetup(short playernum);

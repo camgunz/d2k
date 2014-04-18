@@ -55,6 +55,7 @@
 #include "m_misc.h"
 #include "m_menu.h"
 #include "p_checksum.h"
+#include "p_user.h"
 #include "i_main.h"
 #include "i_system.h"
 #include "i_sound.h"
@@ -443,9 +444,8 @@ static void D_DoomLoop(void) {
     // process one or more tics
     if (singletics) {
       I_StartTic();
-      M_CBufConsolidate(&players[consoleplayer].commands);
       G_BuildTiccmd(
-        M_CBufGetFirstFreeOrNewSlot(&players[consoleplayer].commands)
+        M_CBufGetFirstFreeOrNewSlot(P_GetPlayerCommands(consoleplayer))
       );
       if (advancedemo)
         D_DoAdvanceDemo();

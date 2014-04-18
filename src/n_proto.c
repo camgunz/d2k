@@ -299,31 +299,35 @@ static void handle_server_message(netpeer_t *np) {
 }
 
 static void handle_sync(netpeer_t *np) {
-  if (DELTACLIENT) {
-    if (!N_UnpackDeltaSync(np)) {
-      printf("Error unpacking delta sync\n");
-      return;
-    }
+  dboolean update_sync = false;
 
-    if (np->state_tic != np->delta.to_tic) {
-      printf(
-        "Applying delta from %d to %d.\n", np->delta.from_tic, np->delta.to_tic
-      );
-      N_ApplyStateDelta(&np->delta);
-      N_LoadLatestState(false);
-      np->state_tic = np->delta.to_tic;
+  if (DELTACLIENT && !N_UnpackDeltaSync(np, &update_sync))
+    return;
+
+  if ((!DELTACLIENT) && (!N_UnpackSync(np, &update_sync)))
+    return;
+
+  if (DELTACLIENT && update_sync)
+    CL_LoadState();
+
+  if (DELTASERVER) {
+    SV_RemoveOldCommands();
+    SV_RemoveOldStates();
+  }
+
+  if (update_sync) {
+    if (CMDSERVER) {
+      for (int i = 0; i < N_GetPeerCount(); i++) {
+        netpeer_t *client = N_GetPeer(i);
+
+        if (client != NULL)
+          client->needs_sync_update = true;
+      }
+    }
+    else {
       np->needs_sync_update = true;
     }
   }
-  else if (!N_UnpackSync(np)) {
-    return;
-  }
-
-  if (DELTACLIENT)
-    CL_RemoveOldStates();
-
-  if (DELTASERVER)
-    SV_RemoveOldStates();
 }
 
 static void handle_player_message(netpeer_t *np) {
@@ -481,8 +485,10 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
 
   while (N_LoadNewMessage(np, &message_type)) {
 
+#if 0
     if (message_type >= 1 && message_type <= sizeof(nm_names))
       printf("Handling [%s] message.\n", nm_names[message_type - 1]);
+#endif
 
     switch (message_type) {
       case nm_setup:
@@ -530,7 +536,7 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
   }
 }
 
-void N_SendSync(void) {
+void N_UpdateSync(void) {
   netpeer_t *np = NULL;
 
   if (CLIENT) {
@@ -549,10 +555,13 @@ void N_SendSync(void) {
       if (np != NULL && np->needs_sync_update) {
         M_BufferClear(&np->ubuf);
 
-        if (DELTASERVER)
+        if (DELTASERVER) {
+          N_BuildStateDelta(gametic, &np->delta);
           N_PackDeltaSync(np);
-        else
+        }
+        else {
           N_PackSync(np);
+        }
 
         np->needs_sync_update = false;
       }

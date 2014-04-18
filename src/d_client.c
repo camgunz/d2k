@@ -152,7 +152,7 @@ void N_InitNetGame (void)
   for (i=0; i<numplayers; i++) {
     playeringame[i] = true;
     M_CBufInitWithCapacity(
-      &players[i].commands, sizeof(netticcmd_t), BACKUPTICS
+      P_GetPlayerCommands(i) sizeof(netticcmd_t), BACKUPTICS
     );
   }
   for (; i<MAXPLAYERS; i++) {
@@ -175,10 +175,7 @@ void N_InitNetGame (void)
   for (i=0; i<doomcom->numplayers; i++) {
     playeringame[i] = true;
     M_CBufInitWithCapacity(
-      &players[i].commands, sizeof(netticcmd_t), BACKUPTICS
-    );
-    printf("Commands for %d: %d, %lu.\n",
-      i, players[i].commands.capacity, players[i].commands.obj_size
+      P_GetPlayerCommands(i) sizeof(netticcmd_t), BACKUPTICS
     );
   }
 

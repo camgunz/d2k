@@ -294,19 +294,18 @@ void P_Ticker(void) {
       if (!playeringame[i])
         continue;
 
+      /*
+       * CG: TODO: Fix skipping caused by running a shit-ton of commands in a
+       *           single TIC.
+       */
       if (MULTINET && DELTASYNC) {
-        /*
-         * CG: TODO: Fix skipping caused by running a shit-ton of commands in a
-         *           single TIC.
-         */
         CBUF_FOR_EACH(&players[i].commands, entry) {
           netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-          memcpy(&players[i].cmd, &ncmd->cmd, sizeof(ticcmd_t));
-          M_CBufRemove(&players[i].commands, entry.index);
-          entry.index--;
-
-          P_PlayerThink(&players[i]);
+          if (ncmd->tic >= gametic) {
+            memcpy(&players[i].cmd, &ncmd->cmd, sizeof(ticcmd_t));
+            P_PlayerThink(&players[i]);
+          }
         }
       }
       else {

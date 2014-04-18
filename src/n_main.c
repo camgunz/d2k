@@ -52,6 +52,7 @@
 #include "m_menu.h"
 #include "m_utf.h"
 #include "p_checksum.h"
+#include "p_user.h"
 #include "r_fps.h"
 #include "e6y.h"
 
@@ -163,9 +164,13 @@ void N_InitNetGame(void) {
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     M_CBufInitWithCapacity(
-      &players[i].commands, sizeof(netticcmd_t), BACKUPTICS
+      P_GetPlayerCommands(i), sizeof(netticcmd_t), BACKUPTICS
     );
   }
+
+  M_CBufInitWithCapacity(
+    &players[consoleplayer].commands, sizeof(netticcmd_t), BACKUPTICS
+  );
 }
 
 dboolean N_GetWad(const char *name) {
@@ -205,6 +210,77 @@ void CL_SetAuthorizationLevel(auth_level_e level) {
     authorization_level = level;
 }
 
+void SV_RemoveOldCommands(void) {
+  int oldest_gametic = INT_MAX;
+
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *client = N_GetPeer(i);
+
+    if (client != NULL)
+      oldest_gametic = MIN(oldest_gametic, client->state_tic);
+  }
+
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    cbuf_t *commands = NULL;
+    netpeer_t *client = N_GetPeer(i);
+
+    if (client == NULL)
+      continue;
+
+    commands = P_GetPlayerCommands(client->playernum);
+
+    CBUF_FOR_EACH(commands, entry) {
+      netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+
+      if (ncmd->tic < oldest_gametic) {
+        M_CBufRemove(commands, entry.index);
+        entry.index--;
+      }
+    }
+  }
+}
+
+void CL_LoadState(void) {
+  cbuf_t *player_commands = &players[consoleplayer].commands;
+  cbuf_t *local_commands = P_GetPlayerCommands(consoleplayer);
+  netpeer_t *server = N_GetPeer(0);
+  game_state_delta_t *delta = NULL;
+  
+  if (server == NULL)
+    return;
+
+  delta = &server->delta;
+
+  printf("Applying delta from %d to %d.\n", delta->from_tic, delta->to_tic);
+  N_ApplyStateDelta(delta);
+  N_LoadLatestState(false);
+
+  if (M_CBufGetObjectCount(player_commands) == 0) {
+    server->command_tic = gametic;
+  }
+  else {
+    CBUF_FOR_EACH(player_commands, entry) {
+      netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+
+      server->command_tic = MAX(server->command_tic, ncmd->tic);
+    }
+  }
+
+  CBUF_FOR_EACH(local_commands, entry) {
+    netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+
+    if (ncmd->tic < server->command_tic) {
+      M_CBufRemove(local_commands, entry.index);
+      entry.index--;
+    }
+    else {
+      M_CBufAppend(player_commands, ncmd);
+    }
+  }
+
+  CL_RemoveOldStates();
+}
+
 void CL_RemoveOldStates(void) {
   netpeer_t *server = N_GetPeer(0);
 
@@ -225,108 +301,138 @@ void SV_RemoveOldStates(void) {
   N_RemoveOldStates(command_tic);
 }
 
+static void build_command(void) {
+  cbuf_t *commands = P_GetPlayerCommands(consoleplayer);
+
+  I_StartTic();
+  M_CBufConsolidate(commands);
+  G_BuildTiccmd(M_CBufGetFirstFreeOrNewSlot(commands));
+}
+
+static void run_tic(void) {
+  if (advancedemo)
+    D_DoAdvanceDemo();
+
+  M_Ticker();
+  I_GetTime_SaveMS();
+  G_Ticker();
+  P_Checksum(gametic);
+  gametic++;
+}
+
+static int run_tics(int tic_count) {
+  int out = tic_count;
+
+  while (tic_count--) {
+    build_command();
+    run_tic();
+  }
+
+  return out;
+}
+
+static int run_commandsync_tics(int command_count) {
+  int tic_count = command_count;
+
+  for (int i = 0; i < command_count; i++)
+    build_command();
+
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    if (playeringame[i]) {
+      tic_count = MIN(tic_count, M_CBufGetObjectCount(P_GetPlayerCommands(i)));
+    }
+  }
+
+  if (tic_count)
+    run_tics(tic_count);
+
+  if (CMDCLIENT && (command_count > 0)) {
+    netpeer_t *server = N_GetPeer(0);
+
+    if (server != NULL)
+      server->needs_sync_update = true;
+  }
+
+  return tic_count;
+}
+
+static int run_deltasync_tics(int tic_count) {
+  int out = tic_count;
+  dboolean clients_need_updating = DELTASERVER && (tic_count > 0);
+  dboolean server_needs_updating = DELTACLIENT && (tic_count > 0);
+
+  while (tic_count--) {
+    build_command();
+    run_tic();
+
+    if (DELTASERVER)
+      N_SaveState();
+  }
+
+  if (server_needs_updating) {
+    netpeer_t *server = N_GetPeer(0);
+
+    if (server != NULL)
+      server->needs_sync_update = true;
+  }
+
+  if (clients_need_updating) {
+    for (int i = 0; i < N_GetPeerCount(); i++) {
+      netpeer_t *client = N_GetPeer(i);
+
+      if (client != NULL)
+        client->needs_sync_update = true;
+    }
+  }
+
+  return out;
+}
+
+static void setup_new_peers(void) {
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
+
+    if (np != NULL && np->needs_setup != 0 && gametic > np->needs_setup)
+      SV_SendSetup(np->playernum);
+  }
+}
+
 void N_TryRunTics(void) {
   static int commands_last_built_time = 0;
 
   int sleep_time = ms_to_next_tick;
   int current_time = I_GetTime();
-  int delta_time = current_time - commands_last_built_time;
-  int commands_to_build = delta_time;
-  int menu_renderer_calls = commands_to_build * 3;
-  int tics_to_run = INT_MAX;
+  int tics_elapsed = current_time - commands_last_built_time;
+  int menu_renderer_calls = tics_elapsed * 3;
+  int tics_run = 0;
 
-  if (commands_to_build > 0)
+  if (tics_elapsed > 0)
     commands_last_built_time = current_time;
 
   if (ffmap)
-    commands_to_build++;
+    tics_elapsed++;
 
-  if (MULTINET && CMDSYNC) {
-    for (int i = 0; i < MAXPLAYERS; i++) {
-      if (playeringame[i]) {
-        int command_count = M_CBufGetObjectCount(&players[i].commands);
-
-        tics_to_run = MIN(tics_to_run, command_count);
-      }
-    }
-  }
-  else {
-    tics_to_run = commands_to_build;
+  if (tics_elapsed) {
+    if (!MULTINET)
+      tics_run = run_tics(tics_elapsed);
+    else if (CMDSYNC)
+      tics_run = run_commandsync_tics(tics_elapsed);
+    else if (DELTASYNC)
+      tics_run = run_deltasync_tics(tics_elapsed);
   }
 
-  if (menu_renderer_calls > tics_to_run)
-    menu_renderer_calls -= tics_to_run;
-  else
-    menu_renderer_calls = 0;
+  menu_renderer_calls = MAX(menu_renderer_calls - tics_run, 0);
 
-  if (commands_to_build > 0) {
-    while (commands_to_build--) {
-      I_StartTic();
-      M_CBufConsolidate(&players[consoleplayer].commands);
-      G_BuildTiccmd(
-        M_CBufGetFirstFreeOrNewSlot(&players[consoleplayer].commands)
-      );
-      N_Update();
-    }
-  }
+  while (menu_renderer_calls--)
+    M_Ticker();
 
-  if (tics_to_run > 0) {
-    while (tics_to_run--) {
-      if (advancedemo)
-        D_DoAdvanceDemo();
+  if (SERVER)
+    setup_new_peers();
 
-      M_Ticker();
-      I_GetTime_SaveMS();
-      G_Ticker();
-      P_Checksum(gametic);
-      gametic++;
-
-      if (DELTASERVER)
-        N_SaveState();
-    }
-
-    if (CMDCLIENT) {
-      netpeer_t *server = N_GetPeer(0);
-
-      if (server != NULL)
-        server->needs_sync_update = true;
-    }
-    else if (CMDSERVER) {
-      for (int i = 0; i < N_GetPeerCount(); i++) {
-        netpeer_t *client = N_GetPeer(i);
-
-        if (client != NULL)
-          client->needs_sync_update = true;
-      }
-    }
-  }
-
-  if (SERVER) {
-    for (int i = 0; i < N_GetPeerCount(); i++) {
-      netpeer_t *np = N_GetPeer(i);
-
-      if (np != NULL && np->needs_setup != 0 && gametic > np->needs_setup)
-        SV_SendSetup(np->playernum);
-    }
-  }
-
-  if (menu_renderer_calls > 0) {
-    while (menu_renderer_calls--) {
-      M_Ticker();
-    }
-  }
-
-  N_SendSync();
-
-  if (MULTINET) {
+  if (MULTINET)
     N_ServiceNetwork();
 
-    if (N_GetPeerCount() == 0) {
-      I_uSleep(sleep_time * 1000);
-      N_RemoveOldStates(gametic);
-    }
-  }
-  else {
+  if (!MULTINET) {
     if (movement_smooth && window_focused)
       sleep_time = 0;
 
@@ -335,9 +441,13 @@ void N_TryRunTics(void) {
       sleep_time = 0;
 #endif
 
-    if (sleep_time > 0)
-      I_uSleep(sleep_time * 1000);
   }
+  else if (N_GetPeerCount() == 0) {
+    N_RemoveOldStates(gametic);
+  }
+
+  if (sleep_time > 0)
+    I_uSleep(sleep_time * 1000);
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
@@ -356,6 +466,8 @@ void N_TryRunTics(void) {
     }
   }
 #endif
+
+  N_UpdateSync();
 }
 
 /* vi: set et ts=2 sw=2: */

@@ -49,6 +49,7 @@
 #include "p_tick.h"
 #include "p_map.h"
 #include "p_checksum.h"
+#include "p_user.h"
 #include "d_main.h"
 #include "wi_stuff.h"
 #include "hu_stuff.h"
@@ -1086,10 +1087,9 @@ void G_Ticker(void) {
       }
       else if (MULTINET && CMDSYNC) {
         dboolean found_command = false;
+        cbuf_t *commands = P_GetPlayerCommands(i);
 
-        M_CBufConsolidate(&players[i].commands);
-
-        CBUF_FOR_EACH(&players[i].commands, entry) {
+        CBUF_FOR_EACH(commands, entry) {
           netticcmd_t *ncmd = entry.obj;
 
           if (ncmd->tic == gametic) {
@@ -1098,7 +1098,7 @@ void G_Ticker(void) {
           }
 
           if (ncmd->tic <= gametic) {
-            M_CBufRemove(&players[i].commands, entry.index);
+            M_CBufRemove(commands, entry.index);
             entry.index--;
           }
 

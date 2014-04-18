@@ -42,6 +42,7 @@
 #include "g_game.h"
 #include "lprintf.h"
 #include "p_pspr.h"
+#include "p_user.h"
 #include "w_wad.h"
 
 #include "n_net.h"
@@ -269,7 +270,11 @@ static void pack_commands(netpeer_t *np, unsigned short playernum) {
     return;
   }
 
-  commands = &players[playernum].commands;
+  commands = P_GetPlayerCommands(playernum);
+
+  printf("Packing commands for %d (%d).\n",
+    playernum, M_CBufGetObjectCount(commands)
+  );
 
   CBUF_FOR_EACH(commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
@@ -281,7 +286,8 @@ static void pack_commands(netpeer_t *np, unsigned short playernum) {
 
   msgpack_pack_unsigned_char(np->upk, command_count);
 
-  printf("Packing %d commands.\n", command_count);
+  if (command_count > 0)
+    printf("Packing %d commands.\n", command_count);
 
   if (command_count == 0)
     return;
@@ -473,6 +479,10 @@ dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf) {
 void N_PackSync(netpeer_t *np) {
   msgpack_pack_unsigned_char(np->upk, nm_sync);
 
+  printf("Sending sync to %d: [%d, %d].\n",
+    np->playernum, np->command_tic, np->state_tic
+  );
+
   if (DELTACLIENT)
     msgpack_pack_int(np->upk, np->state_tic);
 
@@ -500,16 +510,20 @@ void N_PackSync(netpeer_t *np) {
   }
 }
 
-dboolean N_UnpackSync(netpeer_t *np) {
+dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
   unsigned short player_count = 0;
-  int m_state_tic = 0;
-  int m_command_tic = 0;
-  dboolean command_sync_needs_updating = false;
+  int m_state_tic = -1;
+  int m_command_tic = -1;
+  dboolean m_update_sync = false;
+
+  *update_sync = false;
 
   if (DELTASERVER) {
     unpack_and_validate(obj, "state tic", int);
     m_state_tic = (int)obj->via.i64;
-    printf("%d State: %d.\n", np->playernum, m_state_tic);
+
+    if (np->state_tic != m_state_tic)
+      m_update_sync = true;
   }
 
   unpack_and_validate(obj, "player count", ushort);
@@ -518,7 +532,6 @@ dboolean N_UnpackSync(netpeer_t *np) {
   for (int i = 0; i < player_count; i++) {
     unsigned short playernum = 0;
     byte command_count = 0;
-    int latest_command_tic = -1;
     cbuf_t *commands = NULL;
 
     unpack_and_validate_player(obj);
@@ -538,42 +551,38 @@ dboolean N_UnpackSync(netpeer_t *np) {
       unpack_and_validate(obj, "command tic", int);
       m_command_tic = (int)obj->via.i64;
 
+      if (np->command_tic != m_command_tic)
+        m_update_sync = true;
+
       continue;
     }
 
   /*
    * CG: TODO: Add a limit to the number of commands accepted here.  uchar
    *           limits this to 255 commands, but in reality that's > 7 seconds,
-   *           which is still far too long.  Quake has a "sv_maxlag" setting
+   *           which is still far too long.  Quake has an "sv_maxlag" setting
    *           (or something), that may be preferable to a static limit... but
    *           I think having an upper bound on that setting is still prudent.
    */
     unpack_and_validate(obj, "command count", uchar);
     command_count = (byte)obj->via.u64;
 
-    printf("Unpacking %d commands.\n", command_count);
+    if (command_count > 0)
+      printf("Unpacking %d commands.\n", command_count);
 
-    commands = &players[playernum].commands;
+    commands = P_GetPlayerCommands(playernum);
 
     M_CBufEnsureCapacity(commands, command_count);
     M_CBufConsolidate(commands);
 
-    CBUF_FOR_EACH(commands, entry) {
-      netticcmd_t *ncmd = entry.obj;
-
-      latest_command_tic = MAX(latest_command_tic, ncmd->tic);
-    }
-
     while (command_count--) {
-      int tic = 0;
-
       unpack_and_validate(obj, "command tic", int);
-      tic = (int)obj->via.i64;
+      m_command_tic = (int)obj->via.i64;
 
-      if (tic > latest_command_tic) {
+      if (m_command_tic > np->command_tic) {
         netticcmd_t *ncmd = M_CBufGetFirstFreeOrNewSlot(commands);
 
-        ncmd->tic = tic;
+        ncmd->tic = m_command_tic;
 
         unpack_and_validate(obj, "command forward value", char);
         ncmd->cmd.forwardmove = (signed char)obj->via.i64;
@@ -593,7 +602,6 @@ dboolean N_UnpackSync(netpeer_t *np) {
         unpack_and_validate(obj, "command buttons value", uchar);
         ncmd->cmd.buttons = (byte)obj->via.u64;
 
-        command_sync_needs_updating = true;
       }
       else {
         unpack_and_validate(obj, "command forward value", char);
@@ -606,32 +614,39 @@ dboolean N_UnpackSync(netpeer_t *np) {
     }
   }
 
-  if (DELTASERVER) {
-    if (np->state_tic != m_state_tic)
-      np->needs_sync_update = true;
+  if (SERVER && np->command_tic < m_command_tic)
+    m_update_sync = true;
 
+  if (m_state_tic != -1)
     np->state_tic = m_state_tic;
-  }
+
+  if (m_command_tic != -1)
+    np->command_tic = m_command_tic;
+
+  if (m_update_sync)
+    *update_sync = m_update_sync;
 
   return true;
 }
 
 void N_PackDeltaSync(netpeer_t *np) {
+  printf("Sending sync to %d: [%d, %d].\n",
+    np->playernum, np->command_tic, np->state_tic
+  );
+
   msgpack_pack_unsigned_char(np->upk, nm_sync);
-  msgpack_pack_int(np->upk, np->command_tic);
   msgpack_pack_int(np->upk, np->delta.from_tic);
   msgpack_pack_int(np->upk, np->delta.to_tic);
   msgpack_pack_raw(np->upk, np->delta.data.size);
   msgpack_pack_raw_body(np->upk, np->delta.data.data, np->delta.data.size);
 }
 
-dboolean N_UnpackDeltaSync(netpeer_t *np) {
-  int m_command_tic = 0;
+dboolean N_UnpackDeltaSync(netpeer_t *np, dboolean *update_sync) {
   int m_delta_from_tic = 0;
   int m_delta_to_tic = 0;
+  dboolean m_update_sync = false;
 
-  unpack_and_validate(obj, "command index", int);
-  m_command_tic = (int)obj->via.i64;
+  *update_sync = false;
 
   unpack_and_validate(obj, "delta from tic", int);
   m_delta_from_tic = (int)obj->via.i64;
@@ -641,18 +656,18 @@ dboolean N_UnpackDeltaSync(netpeer_t *np) {
 
   unpack_and_validate(obj, "delta data", raw);
 
-  if (np->command_tic != m_command_tic)
-    np->needs_sync_update = true;
-
-  np->command_tic = m_command_tic;
-
-  if (np->state_tic <= m_delta_to_tic) {
+  if (np->state_tic < m_delta_to_tic) {
     np->delta.from_tic = m_delta_from_tic;
     np->delta.to_tic = m_delta_to_tic;
+    np->state_tic = m_delta_to_tic;
     M_BufferSetData(
       &np->delta.data, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size
     );
+
+    m_update_sync = true;
   }
+
+  *update_sync = m_update_sync;
 
   return true;
 }
