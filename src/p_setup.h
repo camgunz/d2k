@@ -40,7 +40,6 @@
 #pragma interface
 #endif
 
-void P_ClearSectors(void);
 void P_SetupLevel(int episode, int map, int playermask, skill_t skill);
 void P_Init(void);               /* Called by startup code. */
 
