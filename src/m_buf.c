@@ -388,10 +388,12 @@ void M_BufferPrint(buf_t *buf) {
     buf->cursor
   );
 
+#if 0
   for (size_t i = 0; i < MIN(64, buf->size); i++)
     printf("%X ", (unsigned char)buf->data[i]);
 
   printf("\n");
+#endif
 }
 
 /* vi: set et ts=2 sw=2: */

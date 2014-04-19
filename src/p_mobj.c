@@ -1131,13 +1131,15 @@ void P_SpawnPlayer(int playernum, const mapthing_t* mthing) {
   // playeringame overflow detection
   // it detects and emulates overflows on vex6d.wad\bug_wald(toke).lmp, etc.
   // http://www.doom2.net/doom2/research/runningbody.zip
-  if (PlayeringameOverrun(mthing))
+  if ((!MULTINET) && PlayeringameOverrun(mthing))
     return;
-                                                                
+
   // not playing?
 
   if (!playeringame[playernum])
     return;
+
+  printf("Spawning player %d.\n", playernum);
 
   p = &players[playernum];
 
@@ -1171,7 +1173,6 @@ void P_SpawnPlayer(int playernum, const mapthing_t* mthing) {
     mobj->flags &= ~MF_SHOOTABLE;
     mobj->flags |=  MF_NOSECTOR;
     mobj->flags |=  MF_NOBLOCKMAP;
-    printf("Spawned invisible server player: %llu.\n", mobj->flags);
   }
 
   mobj->angle      = ANG45 * (mthing->angle / 45);

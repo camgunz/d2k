@@ -595,10 +595,14 @@ void SV_SetupNewPeer(int peernum) {
     return;
   }
 
+  printf("SV_SetupNewPeer: Spawning a new peer's player (%d)\n", playernum);
+
   playeringame[playernum] = true;
   P_SpawnPlayer(playernum, &playerstarts[playernum]);
   np->playernum = playernum;
   np->needs_setup = gametic;
+
+  printf("Spawned new player %d.\n", playernum);
 }
 
 void SV_SendSetup(short playernum) {

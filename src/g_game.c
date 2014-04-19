@@ -95,6 +95,9 @@ extern char *player_names[];
 #define QUICKREVERSE (short)32768 // 180 degree reverse                    // phares
 #define NUMKEYS   512
 
+static size_t average_savebuffer_size = 0;
+static size_t savebuffer_count = 0;
+
 static dboolean  netdemo;
 static const byte *demobuffer;   /* cph - only used for playback */
 static int demolength; // check for overrun (missing DEMOMARKER)
@@ -1958,7 +1961,7 @@ void G_DoLoadGame(void) {
 
   gameaction = ga_nothing;
 
-  M_BufferInitWithCapacity(&savebuffer, 16384);
+  M_BufferInitWithCapacity(&savebuffer, MAX(average_savebuffer_size, 16384));
 
   if (!M_BufferSetFile(&savebuffer, name)) {
     doom_printf("Couldn't read file %s: %s", name, strerror(errno));
@@ -2218,6 +2221,11 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
   if (M_BufferPeek(savebuffer) != 0xe6)
     I_Error("G_ReadSaveData: Bad savegame");
 
+  average_savebuffer_size = (
+    ((average_savebuffer_size * savebuffer_count) + savebuffer->capacity) /
+    ++savebuffer_count
+  );
+
   return true;
 }
 
@@ -2263,7 +2271,7 @@ static void G_DoSaveGame(dboolean menu) {
   gameaction = ga_nothing; // cph - cancel savegame at top of this function,
                            // in case later problems cause a premature exit
 
-  M_BufferInitWithCapacity(&savebuffer, 16384);
+  M_BufferInitWithCapacity(&savebuffer, MAX(average_savebuffer_size, 16384));
 
   length = G_SaveGameName(NULL, 0, savegameslot, demoplayback && !menu);
   name = malloc(length + 1);
@@ -2395,6 +2403,11 @@ void G_WriteSaveData(buf_t *savebuffer) {
   P_ArchiveMap(savebuffer);    // killough 1/22/98: save automap information
   // printf("Archiving consistency marker at %lu.\n", savebuffer->cursor);
   M_BufferWriteByte(savebuffer, 0xe6); // consistency marker
+
+  average_savebuffer_size = (
+    ((average_savebuffer_size * savebuffer_count) + savebuffer->capacity) /
+    ++savebuffer_count
+  );
 }
 
 static skill_t d_skill;

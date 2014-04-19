@@ -46,6 +46,8 @@
 
 static game_state_t *latest_game_state = NULL;
 static cbuf_t saved_game_states;
+static size_t average_state_size = 0;
+static size_t state_count = 0;
 
 static game_state_t* get_state(int tic) {
   CBUF_FOR_EACH(&saved_game_states, entry) {
@@ -64,11 +66,16 @@ void N_InitStates(void) {
 
 void N_SaveState(void) {
   M_CBufConsolidate(&saved_game_states);
-  latest_game_state = M_CBufGetFirstFreeOrNewSlot(&saved_game_states);
+  latest_game_state = N_GetNewState();
 
   latest_game_state->tic = gametic;
   M_BufferClear(&latest_game_state->data);
   G_WriteSaveData(&latest_game_state->data);
+
+  average_state_size = (
+    ((average_state_size * state_count) + latest_game_state->data.capacity) /
+    ++state_count
+  );
 }
 
 dboolean N_LoadState(int tic, dboolean call_init_new) {
@@ -106,12 +113,18 @@ void N_ClearStates(void) {
 }
 
 game_state_t* N_GetNewState(void) {
-  game_state_t *new_gs = M_CBufGetFirstFreeSlot(&saved_game_states);
+  game_state_t *new_gs = NULL;
+  
+  M_CBufConsolidate(&saved_game_states);
+
+  new_gs = M_CBufGetFirstFreeSlot(&saved_game_states);
 
   if (new_gs == NULL) {
     new_gs = M_CBufGetNewSlot(&saved_game_states);
     M_BufferInit(&new_gs->data);
   }
+
+  M_BufferEnsureTotalCapacity(&new_gs->data, MAX(average_state_size, 16384));
 
   return new_gs;
 }

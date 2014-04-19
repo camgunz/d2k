@@ -275,6 +275,7 @@ void CL_LoadState(void) {
     }
     else {
       M_CBufAppend(player_commands, ncmd);
+      printf("Appending local command %d.\n", ncmd->tic);
     }
   }
 
