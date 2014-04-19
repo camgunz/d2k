@@ -436,6 +436,7 @@ void G_BuildTiccmd(netticcmd_t *ncmd) {
   ticcmd_t *cmd = &ncmd->cmd;
 
   ncmd->tic = gametic;
+  printf("Built command for %d.\n", gametic);
   /* cphipps - remove needless I_BaseTiccmd call, just set the ticcmd to zero */
   memset(cmd, 0, sizeof(ticcmd_t));
 
@@ -2147,6 +2148,7 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
   M_BufferReadInt(savebuffer, &gameskill);
   M_BufferReadInt(savebuffer, &gameepisode);
   M_BufferReadInt(savebuffer, &gamemap);
+  M_BufferReadInt(savebuffer, &gametic);
 
   for (i = 0; i < MAXPLAYERS; i++)
     M_BufferReadInt(savebuffer, (int *)&playeringame[i]);
@@ -2181,6 +2183,7 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
       sectors[i].thinglist = NULL;
       sectors[i].touching_thinglist = NULL;
     }
+    memset(blocklinks, 0, bmapwidth * bmapheight * sizeof(*blocklinks));
   }
 
   /* get the times - killough 11/98: save entire word */
@@ -2356,6 +2359,7 @@ void G_WriteSaveData(buf_t *savebuffer) {
   M_BufferWriteInt(savebuffer, gameskill);
   M_BufferWriteInt(savebuffer, gameepisode);
   M_BufferWriteInt(savebuffer, gamemap);
+  M_BufferWriteInt(savebuffer, gametic);
   for (i = 0; i < MAXPLAYERS; i++)
     M_BufferWriteInt(savebuffer, playeringame[i]);
   M_BufferWriteZeros(savebuffer, (MIN_MAXPLAYERS - i) * sizeof(byte));

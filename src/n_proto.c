@@ -315,10 +315,6 @@ static void handle_sync(netpeer_t *np) {
     SV_RemoveOldStates();
   }
 
-  printf("Received sync from %d (%d): [%d, %d].\n",
-    np->playernum, gametic, np->command_tic, np->state_tic
-  );
-
   if (update_sync) {
     if (CMDSERVER) {
       for (int i = 0; i < N_GetPeerCount(); i++) {

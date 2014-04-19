@@ -260,6 +260,7 @@ static msgpack_object     *obj;
 static msgpack_object_map *map = NULL;
 
 static void pack_commands(netpeer_t *np, unsigned short playernum) {
+  netticcmd_t *n = NULL;
   byte command_count = 0;
   cbuf_t *commands = NULL;
 
@@ -272,10 +273,6 @@ static void pack_commands(netpeer_t *np, unsigned short playernum) {
 
   commands = P_GetPlayerCommands(playernum);
 
-  printf("Packing commands for %d (%d).\n",
-    playernum, M_CBufGetObjectCount(commands)
-  );
-
   CBUF_FOR_EACH(commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
@@ -286,9 +283,6 @@ static void pack_commands(netpeer_t *np, unsigned short playernum) {
 
   msgpack_pack_unsigned_char(np->upk, command_count);
 
-  if (command_count > 0)
-    printf("Packing %d commands.\n", command_count);
-
   if (command_count == 0)
     return;
 
@@ -298,6 +292,11 @@ static void pack_commands(netpeer_t *np, unsigned short playernum) {
     if (ncmd->tic <= np->command_tic)
       continue;
 
+    if (n == NULL)
+      printf("Packing commands [%d => ", ncmd->tic);
+
+    n = ncmd;
+
     msgpack_pack_int(np->upk, ncmd->tic);
     msgpack_pack_signed_char(np->upk, ncmd->cmd.forwardmove);
     msgpack_pack_signed_char(np->upk, ncmd->cmd.sidemove);
@@ -306,6 +305,10 @@ static void pack_commands(netpeer_t *np, unsigned short playernum) {
     msgpack_pack_unsigned_char(np->upk, ncmd->cmd.chatchar);
     msgpack_pack_unsigned_char(np->upk, ncmd->cmd.buttons);
   }
+
+  if (n != NULL)
+    printf("%d]\n", n->tic);
+
 }
 
 void N_ShutUpClang(void) {
@@ -479,10 +482,6 @@ dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf) {
 void N_PackSync(netpeer_t *np) {
   msgpack_pack_unsigned_char(np->upk, nm_sync);
 
-  printf("Sending sync to %d (%d): [%d, %d].\n",
-    np->playernum, gametic, np->command_tic, np->state_tic
-  );
-
   if (DELTACLIENT)
     msgpack_pack_int(np->upk, np->state_tic);
 
@@ -567,13 +566,12 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
     unpack_and_validate(obj, "command count", uchar);
     command_count = (byte)obj->via.u64;
 
-    if (command_count > 0)
-      printf("Unpacking %d commands.\n", command_count);
-
     commands = P_GetPlayerCommands(playernum);
 
     M_CBufEnsureCapacity(commands, command_count);
     M_CBufConsolidate(commands);
+
+    netticcmd_t *n = NULL;
 
     while (command_count--) {
       unpack_and_validate(obj, "command tic", int);
@@ -581,6 +579,11 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
 
       if (m_command_tic > np->command_tic) {
         netticcmd_t *ncmd = M_CBufGetFirstFreeOrNewSlot(commands);
+
+        if (n == NULL)
+          printf("Unpacking commands [%d => ", ncmd->tic);
+
+        n = ncmd;
 
         ncmd->tic = m_command_tic;
 
@@ -612,6 +615,9 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
         unpack_and_validate(obj, "command buttons value", uchar);
       }
     }
+
+    if (n != NULL)
+      printf("%d]\n", n->tic);
   }
 
   if (SERVER && np->command_tic < m_command_tic)
@@ -625,6 +631,10 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
 
   if (m_update_sync)
     *update_sync = m_update_sync;
+
+  printf("Received sync (%d): [%d, %d] (%d).\n",
+    gametic, np->command_tic, np->state_tic, m_update_sync
+  );
 
   return true;
 }
@@ -666,6 +676,10 @@ dboolean N_UnpackDeltaSync(netpeer_t *np, dboolean *update_sync) {
 
     m_update_sync = true;
   }
+
+  printf("Received sync (%d): [%d, %d] (%d).\n",
+    gametic, np->command_tic, np->state_tic, m_update_sync
+  );
 
   *update_sync = m_update_sync;
 

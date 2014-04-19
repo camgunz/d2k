@@ -95,6 +95,7 @@ void N_RemoveOldStates(int tic) {
     game_state_t *gs = (game_state_t *)entry.obj;
 
     if (gs->tic < tic) {
+      printf("Removing old state %d.\n", gs->tic);
       M_BufferFree(&gs->data);
       M_CBufRemove(&saved_game_states, entry.index);
       entry.index--;
