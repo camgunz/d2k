@@ -156,7 +156,7 @@ ENetPacket* N_NBufGetPacket(netbuf_t *nb, net_channel_e chan) {
 
 dboolean N_NBufLoadIncoming(netbuf_t *nb, unsigned char *data, size_t size) {
   netchan_t *incoming = &nb->incoming;
-  size_t toc_size = 0;
+  unsigned int toc_size = 0;
   buf_t *buf = M_PBufGetBuffer(&incoming->packet_data);
 
   M_PBufSetData(&incoming->packet_data, data, size);

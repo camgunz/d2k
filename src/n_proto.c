@@ -381,7 +381,7 @@ static void handle_player_preference_change(netpeer_t *np) {
 
   short playernum = 0;
   int tic = 0;
-  size_t pref_count = 0;
+  unsigned int pref_count = 0;
   player_t *player = &players[np->playernum];
 
   if (!initialized_buffers) {
