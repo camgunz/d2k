@@ -62,24 +62,26 @@ static int basetime = 0;
 
 int ms_to_next_tick;
 
-void I_uSleep(unsigned long usecs)
-{
-    SDL_Delay(usecs/1000);
+void I_uSleep(unsigned long usecs) {
+  SDL_Delay(usecs / 1000);
 }
 
-int I_GetTime_RealTime (void)
-{
+int I_GetTime_RealTime(void) {
   int i;
   int t = SDL_GetTicks();
   
   //e6y: removing startup delay
   if (basetime == 0)
     basetime = t;
+
   t -= basetime;
 
-  i = t*(TICRATE/5)/200;
-  ms_to_next_tick = (i+1)*200/(TICRATE/5) - t;
-  if (ms_to_next_tick > 1000/TICRATE || ms_to_next_tick<1) ms_to_next_tick = 1;
+  i = t * (TICRATE / 5) / 200;
+
+  ms_to_next_tick = (i + 1) * 200 / (TICRATE / 5) - t;
+  if (ms_to_next_tick > 1000 / TICRATE || ms_to_next_tick < 1)
+      ms_to_next_tick = 1;
+
   return i;
 }
 

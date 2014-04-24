@@ -37,20 +37,18 @@
 #include <enet/enet.h>
 #include <msgpack.h>
 
+#include "doomstat.h"
 #include "d_ticcmd.h"
 #include "g_game.h"
 #include "lprintf.h"
+#include "m_pbuf.h"
 
 #include "n_net.h"
+#include "n_buf.h"
 #include "n_state.h"
 #include "n_peer.h"
 
 static obuf_t net_peers;
-
-static int buf_write(void *data, const char *buf, unsigned int len) {
-  M_BufferWrite((buf_t *)data, (char *)buf, len);
-  return 0;
-}
 
 void N_InitPeers(void) {
   M_OBufInit(&net_peers);
@@ -61,18 +59,15 @@ int N_AddPeer(void) {
 
   /* CG: TODO: Add some kind of check for MAXCLIENTS */
 
-  M_BufferInit(&np->rbuf);
-  M_BufferInit(&np->ubuf);
+  N_NBufInit(&np->netbuf);
   M_BufferInit(&np->delta.data);
 
   np->peer              = NULL;
-  np->rpk               = msgpack_packer_new((void *)&np->rbuf, buf_write);
-  np->upk               = msgpack_packer_new((void *)&np->ubuf, buf_write);
   np->connect_time      = time(NULL);
   np->disconnect_time   = 0;
   np->playernum         = 0;
-  np->command_tic       = 0;
   np->state_tic         = 0;
+  np->command_tic       = 0;
   np->needs_setup       = 0;
   np->needs_sync_update = false;
 
@@ -108,20 +103,17 @@ void N_RemovePeer(netpeer_t *np) {
     np->peer->address.port
   );
 
-  M_BufferFree(&np->rbuf);
-  msgpack_packer_free(np->rpk);
-  M_BufferFree(&np->ubuf);
-  msgpack_packer_free(np->upk);
+  playeringame[np->playernum] = false;
+
+  N_NBufFree(&np->netbuf);
   M_BufferFree(&np->delta.data);
 
   np->peer              = NULL;
-  np->rpk               = NULL;
-  np->upk               = NULL;
   np->connect_time      = 0;
   np->disconnect_time   = 0;
   np->playernum         = -1;
-  np->command_tic       = 0;
   np->state_tic         = 0;
+  np->command_tic       = 0;
   np->needs_setup       = 0;
   np->needs_sync_update = false;
 
@@ -196,5 +188,28 @@ dboolean N_CheckPeerTimeout(int peernum) {
   return false;
 }
 
+void N_PeerFlushBuffers(int peernum) {
+  netpeer_t *np = N_GetPeer(peernum);
+
+  if (np == NULL)
+    return;
+
+  if (!N_NBufChannelEmpty(&np->netbuf, NET_CHANNEL_RELIABLE)) {
+    enet_peer_send(
+      np->peer,
+      NET_CHANNEL_RELIABLE,
+      N_NBufGetPacket(&np->netbuf, NET_CHANNEL_RELIABLE)
+    );
+    N_NBufClearChannel(&np->netbuf, NET_CHANNEL_RELIABLE);
+  }
+
+  if (!N_NBufChannelEmpty(&np->netbuf, NET_CHANNEL_UNRELIABLE)) {
+    enet_peer_send(
+      np->peer,
+      NET_CHANNEL_UNRELIABLE,
+      N_NBufGetPacket(&np->netbuf, NET_CHANNEL_UNRELIABLE)
+    );
+  }
+}
 /* vi: set et ts=2 sw=2: */
 

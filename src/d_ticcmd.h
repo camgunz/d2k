@@ -31,8 +31,8 @@
  *
  *-----------------------------------------------------------------------------*/
 
-#ifndef __D_TICCMD__
-#define __D_TICCMD__
+#ifndef D_TICCMD__
+#define D_TICCMD__
 
 #include "doomtype.h"
 
@@ -46,14 +46,21 @@
  * plus a checksum for internal state consistency.
  * CPhipps - explicitely signed the elements, since they have to be signed to work right
  */
-typedef struct
-{
-  signed char forwardmove;  /* *2048 for move       */
-  signed char sidemove;     /* *2048 for move       */
-  signed short  angleturn;  /* <<16 for angle delta */
-  short consistancy;        /* checks for net game  */
-  byte  chatchar;
-  byte  buttons;
+
+ /*
+  * CG 04/23/2014: Un-explicitly sign the elements.  If a platform's char's are
+  *                implicitly unsigned, that's too bad.  They'll be fixed again
+  *                when the grand "use explicitly sized types where needed"
+  *                initiative is completed.
+  */
+
+typedef struct {
+  char   forwardmove;  /* *2048 for move       */
+  char   sidemove;     /* *2048 for move       */
+  short  angleturn;    /* <<16 for angle delta */
+  short  consistancy;  /* checks for net game  */
+  byte   chatchar;
+  byte   buttons;
 } ticcmd_t;
 
 #endif

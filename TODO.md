@@ -1,20 +1,12 @@
 # To Do
 
-1. Deltasync clients aren't handling commands properly.
+Get prototype working
+
+- Wiping really lags the client; is it possible to detect a wipe and not build
+  commands or service the network for that time?
+  - In fact, "resync" functionality might be useful in other areas as well
 
 ---
-
-1. Don't have the command-sync server run any game code; it should strictly
-   relay commands between clients.
-
-1. If there are errors while reading a network message, message reading
-   completely bails, leaving the message partially read.  I think the best
-   solution here is a "table of contents" message prepended to the packet,
-   which is just an array of byte indices.  Whenever a packing routine writes
-   a message type marker, it first writes to the TOC the current cursor
-   position of the buffer it's about to use.  When packet sending time arrives,
-   `N_ServiceNetworkTimeout` creates a new `nm_toc` message, which is a msgpack
-   array of byte indices, and writes it to the packet before the other buffer.
 
 1. Add unlagged
   - Save attacking player position
@@ -28,6 +20,22 @@
   - Restore saved state
   - For every impacted actor:
     - Add new momx/momy/momz values to the current momx/momy/momz
+
+1. Type problems:
+  - Playernums are unsigned shorts; fix this everywhere
+  - TICs are unsigned ints; fix this everywhere
+
+1. Don't have the command-sync server run any game code; it should strictly
+   relay commands between clients.
+
+1. If there are errors while reading a network message, message reading
+   completely bails, leaving the message partially read.  I think the best
+   solution here is a "table of contents" message prepended to the packet,
+   which is just an array of byte indices.  Whenever a packing routine writes
+   a message type marker, it first writes to the TOC the current cursor
+   position of the buffer it's about to use.  When packet sending time arrives,
+   `N_ServiceNetworkTimeout` creates a new `nm_toc` message, which is a msgpack
+   array of byte indices, and writes it to the packet before the other buffer.
 
 1. Setup testing framework
 

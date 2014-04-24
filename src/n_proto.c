@@ -45,10 +45,11 @@
 #include "g_game.h"
 #include "i_system.h"
 #include "lprintf.h"
-#include "m_swap.h"
+#include "m_pbuf.h"
 #include "w_wad.h"
 
 #include "n_net.h"
+#include "n_buf.h"
 #include "n_main.h"
 #include "n_state.h"
 #include "n_peer.h"
@@ -62,7 +63,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
 #define COMMAND_SYNC_ONLY(name)                                               \
   if (!CMDSYNC) {                                                             \
     doom_printf(                                                              \
-      "%s: Erroneously received command-sync packet [%s] in delta-sync "      \
+      "%s: Erroneously received command-sync message [%s] in delta-sync "     \
       "mode\n",                                                               \
       __func__, name                                                          \
     );                                                                        \
@@ -72,7 +73,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
 #define DELTA_SYNC_ONLY(name)                                                 \
   if (!DELTASYNC) {                                                           \
     doom_printf(                                                              \
-      "%s: Erroneously received delta-sync packet [%s] in command-sync "      \
+      "%s: Erroneously received delta-sync message [%s] in command-sync "     \
       "mode\n",                                                               \
       __func__, name                                                          \
     );                                                                        \
@@ -82,7 +83,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
 #define SERVER_ONLY(name)                                                     \
   if (!SERVER) {                                                              \
     doom_printf(                                                              \
-      "%s: Erroneously received packet [%s] from the server\n",               \
+      "%s: Erroneously received message [%s] from the server\n",              \
       __func__, name                                                          \
     );                                                                        \
     return;                                                                   \
@@ -91,7 +92,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
 #define CLIENT_ONLY(name)                                                     \
   if (SERVER) {                                                               \
     doom_printf(                                                              \
-      "%s: Erroneously received packet [%s] from a client\n",                 \
+      "%s: Erroneously received message [%s] from a client\n",                \
       __func__, name                                                          \
     );                                                                        \
     return;                                                                   \
@@ -100,7 +101,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
 #define NOT_DELTA_SERVER(name)                                                \
   if (DELTASERVER) {                                                          \
     doom_printf(                                                              \
-      "%s: Erroneously received packet [%s] as a server in delta-sync mode\n",\
+      "%s: Erroneously received message [%s] as a delta-sync server\n",       \
       __func__, name                                                          \
     );                                                                        \
     return;                                                                   \
@@ -109,7 +110,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
 #define NOT_DELTA_CLIENT(name)                                                \
   if (DELTACLIENT) {                                                          \
     doom_printf(                                                              \
-      "%s: Erroneously received packet [%s] as a client in delta-sync mode\n",\
+      "%s: Erroneously received message [%s] as a delta-sync client\n",       \
       __func__, name                                                          \
     );                                                                        \
     return;                                                                   \
@@ -118,7 +119,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
 #define NOT_COMMAND_SERVER(name)                                              \
   if (COMMANDSERVER) {                                                        \
     doom_printf(                                                              \
-      "%s: Erroneously received packet [%s] as a server in command-sync "     \
+      "%s: Erroneously received message [%s] as a command-sync server "       \
       "mode\n",                                                               \
       __func__, name                                                          \
     );                                                                        \
@@ -128,7 +129,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
 #define NOT_COMMAND_CLIENT(name)                                              \
   if (COMMANDCLIENT) {                                                        \
     doom_printf(                                                              \
-      "%s: Erroneously received packet [%s] as a client in command-sync "     \
+      "%s: Erroneously received message [%s] as a command-sync client"        \
       "mode\n",                                                               \
       __func__, name                                                          \
     );                                                                        \
@@ -203,10 +204,14 @@ buf_t* N_GetMessageRecipientBuffer(void) {
 }
 
 static void handle_setup(netpeer_t *np) {
+  netpeer_t *server = N_GetPeer(0);
   net_sync_type_e net_sync = NET_SYNC_TYPE_NONE;
   unsigned short player_count = 0;
   unsigned short playernum = 0;
   int i;
+
+  if (server == NULL)
+    return;
 
   N_ClearStates();
 
@@ -270,12 +275,10 @@ static void handle_setup(netpeer_t *np) {
     }
   }
 
-  if (DELTACLIENT)
-    np->state_tic = N_GetLatestState()->tic;
+  np->state_tic = N_GetLatestState()->tic;
 
   CL_SetReceivedSetup(true);
-  M_BufferClear(&np->ubuf);
-  N_PackSync(np);
+  server->needs_sync_update = true;
 }
 
 static void handle_auth_response(netpeer_t *np) {
@@ -304,7 +307,7 @@ static void handle_sync(netpeer_t *np) {
   if (DELTACLIENT && !N_UnpackDeltaSync(np, &update_sync))
     return;
 
-  if ((!DELTACLIENT) && (!N_UnpackSync(np, &update_sync)))
+  if ((!DELTACLIENT) && (!N_UnpackSync(np)))
     return;
 
   if (DELTACLIENT && update_sync)
@@ -334,8 +337,7 @@ static void handle_player_message(netpeer_t *np) {
   static buf_t player_message_buffer;
   static dboolean initialized_buffer = false;
 
-  unsigned short sender = 0;
-  size_t recipient_count = 0;
+  short sender = 0;
   dboolean unpacked_successfully = false;
   buf_t *message_recipients = N_GetMessageRecipientBuffer();
 
@@ -345,7 +347,7 @@ static void handle_player_message(netpeer_t *np) {
   }
 
   unpacked_successfully = N_UnpackPlayerMessage(
-    np, &sender, &recipient_count, message_recipients, &player_message_buffer
+    np, &sender, message_recipients, &player_message_buffer
   );
 
   if (!unpacked_successfully)
@@ -357,24 +359,18 @@ static void handle_player_message(netpeer_t *np) {
 
       if (np != NULL) {
         N_PackPlayerMessage(
-          np,
-          sender,
-          recipient_count,
-          message_recipients,
-          player_message_buffer.data
+          np, sender, message_recipients, player_message_buffer.data
         );
       }
     }
   }
+  else if (sender == -1) {
+    doom_printf("[SERVER]: %s\n", player_message_buffer.data);
+  }
   else {
-    if (sender == -1) {
-      doom_printf("[SERVER]: %s\n", player_message_buffer.data);
-    }
-    else {
-      doom_printf(
-        "%s: %s\n", players[sender].name, player_message_buffer.data
-      );
-    }
+    doom_printf(
+      "%s: %s\n", players[sender].name, player_message_buffer.data
+    );
   }
 }
 
@@ -405,7 +401,7 @@ static void handle_player_preference_change(netpeer_t *np) {
   }
 
   for (size_t i = 0; i < pref_count; i++) {
-    if (!N_UnpackPlayerPreferenceName(np, i, &pref_key_name)) {
+    if (!N_UnpackPlayerPreferenceName(np, &pref_key_name)) {
       doom_printf(
         "N_HandlePacket: Error unpacking client preference change\n"
       );
@@ -414,14 +410,14 @@ static void handle_player_preference_change(netpeer_t *np) {
 
     if (pref_key_name.size > MAX_PREF_NAME_SIZE) {
       doom_printf(
-        "N_HandlePacket: Invalid client preference change packet: preference "
+        "N_HandlePacket: Invalid client preference change message: preference "
         "name exceeds maximum length\n"
       );
       return;
     }
 
     if (M_BufferEqualsString(&pref_key_name, "name")) {
-      N_UnpackNameChange(np, &pref_key_value);
+      N_UnpackNameChange(np, &playernum, &pref_key_value);
 
       if (player->name != NULL) {
         doom_printf("%s is now %s.\n", player->name, pref_key_value.data);
@@ -433,7 +429,7 @@ static void handle_player_preference_change(netpeer_t *np) {
     else if (M_BufferEqualsString(&pref_key_name, "team")) {
       byte new_team = 0;
 
-      if (!N_UnpackTeamChange(np, &new_team))
+      if (!N_UnpackTeamChange(np, &playernum, &new_team))
         return;
 
       player->team = new_team;
@@ -446,17 +442,17 @@ static void handle_player_preference_change(netpeer_t *np) {
     }
     else if (M_BufferEqualsString(&pref_key_name, "autoaim")) {
     }
-    else if (M_BufferEqualsString(&pref_key_name, "weapon_speed")) {
+    else if (M_BufferEqualsString(&pref_key_name, "weapon speed")) {
     }
     else if (M_BufferEqualsString(&pref_key_name, "color")) {
     }
-    else if (M_BufferEqualsString(&pref_key_name, "colormap")) {
+    else if (M_BufferEqualsString(&pref_key_name, "color index")) {
       int new_color;
 
-      if (N_UnpackColormapChange(np, &new_color))
+      if (N_UnpackColorIndexChange(np, &playernum, &new_color))
         G_ChangedPlayerColour(np->playernum, new_color);
     }
-    else if (M_BufferEqualsString(&pref_key_name, "skin_name")) {
+    else if (M_BufferEqualsString(&pref_key_name, "skin name")) {
     }
     else {
       doom_printf("Unsupported player preference %s.\n", pref_key_name.data);
@@ -479,11 +475,14 @@ static void handle_vote_request(netpeer_t *np) {
 
 void N_HandlePacket(int peernum, void *data, size_t data_size) {
   netpeer_t *np = N_GetPeer(peernum);
-  byte message_type = 0;
+  unsigned char message_type = 0;
 
-  N_LoadPacketData(data, data_size);
+  if (!N_NBufLoadIncoming(&np->netbuf, data, data_size)) {
+    doom_printf("N_HandlePacket: Ignoring packet with malformed TOC.\n");
+    return;
+  }
 
-  while (N_LoadNewMessage(np, &message_type)) {
+  while (N_NBufLoadNextMessage(&np->netbuf, &message_type)) {
 
 #if 0
     if (message_type >= 1 && message_type <= sizeof(nm_names))
@@ -543,7 +542,8 @@ void N_UpdateSync(void) {
     np = N_GetPeer(0);
 
     if (np != NULL && np->needs_sync_update) {
-      M_BufferClear(&np->ubuf);
+      printf("Updating server sync.\n");
+      N_NBufClearChannel(&np->netbuf, NET_CHANNEL_UNRELIABLE);
       N_PackSync(np);
       np->needs_sync_update = false;
     }
@@ -553,7 +553,8 @@ void N_UpdateSync(void) {
       np = N_GetPeer(i);
 
       if (np != NULL && np->needs_sync_update) {
-        M_BufferClear(&np->ubuf);
+        printf("Updating client %d sync.\n", np->playernum);
+        N_NBufClearChannel(&np->netbuf, NET_CHANNEL_UNRELIABLE);
 
         if (DELTASERVER) {
           if (np->state_tic < N_GetLatestState()->tic) {
@@ -643,24 +644,23 @@ void CL_SendMessageToPlayer(short recipient, char *message) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
-  ((short *)recipients->data)[0] = recipient;
+  M_BufferWriteShort(recipients, recipient);
 
-  N_PackPlayerMessage(np, consoleplayer, 1, recipients, message);
+  N_PackPlayerMessage(np, consoleplayer, recipients, message);
 }
 
 void CL_SendMessageToTeam(byte team, char *message) {
   buf_t *recipients = N_GetMessageRecipientBuffer();
-  size_t recipient_count = 0;
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
-  for (int i = 0; i < MAXPLAYERS; i++) {
+  for (short i = 0; i < MAXPLAYERS; i++) {
     if (players[i].team == team) {
-      ((short *)recipients->data)[recipient_count++] = i;
+      M_BufferWriteShort(recipients,i);
     }
   }
 
-  N_PackPlayerMessage(np, consoleplayer, recipient_count, recipients, message);
+  N_PackPlayerMessage(np, consoleplayer, recipients, message);
 }
 
 void CL_SendMessageToCurrentTeam(char *message) {
@@ -794,19 +794,19 @@ void SV_BroadcastPlayerColorChanged(short playernum, byte new_red,
   }
 }
 
-void CL_SendColormapChange(int new_color) {
+void CL_SendColorIndexChange(int new_color) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
-  N_PackColormapChange(np, consoleplayer, new_color);
+  N_PackColorIndexChange(np, consoleplayer, new_color);
 }
 
-void SV_BroadcastPlayerColormapChanged(short playernum, int new_color) {
+void SV_BroadcastPlayerColorIndexChanged(short playernum, int new_color) {
   for (int i = 0; i < N_GetPeerCount(); i++) {
     netpeer_t *np = N_GetPeer(i);
 
     if (np != NULL && np->playernum != playernum)
-      N_PackColormapChange(np, consoleplayer, new_color);
+      N_PackColorIndexChange(np, consoleplayer, new_color);
   }
 }
 

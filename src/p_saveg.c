@@ -103,12 +103,12 @@ static void P_SetNewTarget(mobj_t **mop, mobj_t *targ) {
 
 static void P_ArchivePlayer(buf_t *savebuffer, player_t *player) {
   M_BufferWriteInt(savebuffer, player->playerstate);
-  M_BufferWriteByte(savebuffer, player->cmd.forwardmove);
-  M_BufferWriteByte(savebuffer, player->cmd.sidemove);
+  M_BufferWriteChar(savebuffer, player->cmd.forwardmove);
+  M_BufferWriteChar(savebuffer, player->cmd.sidemove);
   M_BufferWriteShort(savebuffer, player->cmd.angleturn);
   M_BufferWriteShort(savebuffer, player->cmd.consistancy);
-  M_BufferWriteByte(savebuffer, player->cmd.chatchar);
-  M_BufferWriteByte(savebuffer, player->cmd.buttons);
+  M_BufferWriteUChar(savebuffer, player->cmd.chatchar);
+  M_BufferWriteUChar(savebuffer, player->cmd.buttons);
   M_BufferWriteInt(savebuffer, player->viewz);
   M_BufferWriteInt(savebuffer, player->viewheight);
   M_BufferWriteInt(savebuffer, player->deltaviewheight);
@@ -139,7 +139,7 @@ static void P_ArchivePlayer(buf_t *savebuffer, player_t *player) {
   M_BufferWriteInt(savebuffer, player->itemcount);
   M_BufferWriteInt(savebuffer, player->secretcount);
   if (player->message) {
-    size_t message_length = MIN(MAX_MESSAGE_SIZE, strlen(player->message));
+    size_t message_length = MIN(MAX_MESSAGE_SIZE - 1, strlen(player->message));
 
     M_BufferWriteLong(savebuffer, message_length);
 
@@ -170,7 +170,7 @@ static void P_ArchivePlayer(buf_t *savebuffer, player_t *player) {
    *           here, which is something like 500.
    */
   if (player->name) {
-    size_t name_length = MIN(MAX_MESSAGE_SIZE, strlen(player->name));
+    size_t name_length = MIN(MAX_MESSAGE_SIZE - 1, strlen(player->name));
 
     M_BufferWriteLong(savebuffer, name_length);
 
@@ -180,10 +180,10 @@ static void P_ArchivePlayer(buf_t *savebuffer, player_t *player) {
   else {
     M_BufferWriteLong(savebuffer, 0);
   }
-  M_BufferWriteByte(savebuffer, player->team);
+  M_BufferWriteUChar(savebuffer, player->team);
   /*
    * CG: Don't use P_GetPlayerCommands here; that would overwrite the local
-   * command buffer.
+   *     command buffer.
    */
   M_CBufConsolidate(&player->commands);
   M_BufferWriteInt(savebuffer, M_CBufGetObjectCount(&player->commands));
@@ -191,30 +191,32 @@ static void P_ArchivePlayer(buf_t *savebuffer, player_t *player) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
     M_BufferWriteInt(savebuffer, ncmd->tic);
-    M_BufferWriteByte(savebuffer, ncmd->cmd.forwardmove);
-    M_BufferWriteByte(savebuffer, ncmd->cmd.sidemove);
+    M_BufferWriteChar(savebuffer, ncmd->cmd.forwardmove);
+    M_BufferWriteChar(savebuffer, ncmd->cmd.sidemove);
     M_BufferWriteShort(savebuffer, ncmd->cmd.angleturn);
     M_BufferWriteShort(savebuffer, ncmd->cmd.consistancy);
-    M_BufferWriteByte(savebuffer, ncmd->cmd.chatchar);
-    M_BufferWriteByte(savebuffer, ncmd->cmd.buttons);
+    M_BufferWriteUChar(savebuffer, ncmd->cmd.chatchar);
+    M_BufferWriteUChar(savebuffer, ncmd->cmd.buttons);
   }
 }
 
 static void P_UnArchivePlayer(buf_t *savebuffer, player_t *player) {
+  static char msg[MAX_MESSAGE_SIZE];
+  static char name[MAX_MESSAGE_SIZE];
+
   int command_count = 0;
-  char msg[MAX_MESSAGE_SIZE];
-  char name[MAX_MESSAGE_SIZE];
   size_t message_length, name_length;
 
   memset(msg, 0, MAX_MESSAGE_SIZE * sizeof(char));
+  memset(name, 0, MAX_MESSAGE_SIZE * sizeof(char));
 
   M_BufferReadInt(savebuffer, (int *)&player->playerstate);
-  M_BufferReadByte(savebuffer, (byte *)&player->cmd.forwardmove);
-  M_BufferReadByte(savebuffer, (byte *)&player->cmd.sidemove);
+  M_BufferReadChar(savebuffer, &player->cmd.forwardmove);
+  M_BufferReadChar(savebuffer, &player->cmd.sidemove);
   M_BufferReadShort(savebuffer, &player->cmd.angleturn);
   M_BufferReadShort(savebuffer, &player->cmd.consistancy);
-  M_BufferReadByte(savebuffer, &player->cmd.chatchar);
-  M_BufferReadByte(savebuffer, &player->cmd.buttons);
+  M_BufferReadUChar(savebuffer, &player->cmd.chatchar);
+  M_BufferReadUChar(savebuffer, &player->cmd.buttons);
   M_BufferReadInt(savebuffer, &player->viewz);
   M_BufferReadInt(savebuffer, &player->viewheight);
   M_BufferReadInt(savebuffer, &player->deltaviewheight);
@@ -245,9 +247,14 @@ static void P_UnArchivePlayer(buf_t *savebuffer, player_t *player) {
   M_BufferReadInt(savebuffer, &player->itemcount);
   M_BufferReadInt(savebuffer, &player->secretcount);
   M_BufferReadLong(savebuffer, (int_64_t *)&message_length);
-  if (message_length > 0)
-    M_BufferReadString(savebuffer, msg, message_length + 1);
-  doom_pprintf(player - players, "%s", msg);
+  if (message_length > 0) {
+    message_length = MIN(MAX_MESSAGE_SIZE, message_length + 1);
+    M_BufferReadString(savebuffer, msg, message_length);
+    doom_pprintf(player - players, "%s", msg);
+  }
+  else {
+    player->message = "";
+  }
   M_BufferReadInt(savebuffer, &player->damagecount);
   M_BufferReadInt(savebuffer, &player->bonuscount);
   M_BufferReadInt(savebuffer, &player->extralight);
@@ -269,14 +276,18 @@ static void P_UnArchivePlayer(buf_t *savebuffer, player_t *player) {
   M_BufferReadInt(savebuffer, &player->jumpTics);
   M_BufferReadLong(savebuffer, (int_64_t *)&name_length);
   if (name_length > 0) {
-    M_BufferReadString(savebuffer, name, name_length + 1);
+    name_length = MIN(MAX_MESSAGE_SIZE, name_length + 1);
+    M_BufferReadString(savebuffer, name, name_length);
     if (player->name != NULL)
       free(player->name);
     player->name = strdup(name);
   }
-  M_BufferReadByte(savebuffer, &player->team);
+  else {
+    player->name = "";
+  }
+  M_BufferReadUChar(savebuffer, &player->team);
   M_BufferReadInt(savebuffer, &command_count);
-  if (command_count > 100)
+  if (command_count > 10000)
     I_Error("Command count too high\n");
 
   M_CBufClear(&player->commands);
@@ -286,12 +297,12 @@ static void P_UnArchivePlayer(buf_t *savebuffer, player_t *player) {
     netticcmd_t *ncmd = M_CBufGetFirstFreeOrNewSlot(&player->commands);
 
     M_BufferReadInt(savebuffer, &ncmd->tic);
-    M_BufferReadByte(savebuffer, (byte *)&ncmd->cmd.forwardmove);
-    M_BufferReadByte(savebuffer, (byte *)&ncmd->cmd.sidemove);
+    M_BufferReadChar(savebuffer, &ncmd->cmd.forwardmove);
+    M_BufferReadChar(savebuffer, &ncmd->cmd.sidemove);
     M_BufferReadShort(savebuffer, &ncmd->cmd.angleturn);
     M_BufferReadShort(savebuffer, &ncmd->cmd.consistancy);
-    M_BufferReadByte(savebuffer, &ncmd->cmd.chatchar);
-    M_BufferReadByte(savebuffer, &ncmd->cmd.buttons);
+    M_BufferReadUChar(savebuffer, &ncmd->cmd.chatchar);
+    M_BufferReadUChar(savebuffer, &ncmd->cmd.buttons);
   }
 }
 
@@ -531,7 +542,6 @@ void P_ArchiveThinkers(buf_t *savebuffer) {
         mobj->player = (player_t *)playernum;
       }
 
-      // M_BufferWriteByte(savebuffer, tc_mobj);
       M_BufferWrite(savebuffer, mobj, sizeof(mobj_t));
 
       mobj->state = state;
@@ -546,9 +556,6 @@ void P_ArchiveThinkers(buf_t *savebuffer) {
       mobj->lastenemy = lastenemy;
     }
   }
-
-  // add a terminating marker
-  // M_BufferWriteByte(savebuffer, tc_end);
 
   // killough 9/14/98: save soundtargets
   for (i = 0; i < numsectors; i++) {
@@ -744,7 +751,7 @@ void P_ArchiveSpecials(buf_t *savebuffer) {
 
       ceiling->sector = (sector_t *)(ceiling->sector->iSectorID);
 
-      M_BufferWriteByte(savebuffer, tc_ceiling);
+      M_BufferWriteUChar(savebuffer, tc_ceiling);
       M_BufferWrite(savebuffer, ceiling, sizeof(*ceiling));
 
       ceiling->sector = sector;
@@ -763,7 +770,7 @@ void P_ArchiveSpecials(buf_t *savebuffer) {
       else
         door->line = (line_t *)-1;
 
-      M_BufferWriteByte(savebuffer, tc_door);
+      M_BufferWriteUChar(savebuffer, tc_door);
       M_BufferWrite(savebuffer, door, sizeof(*door));
 
       door->sector = sector;
@@ -781,7 +788,7 @@ void P_ArchiveSpecials(buf_t *savebuffer) {
 
       floor->sector = (sector_t *)(floor->sector->iSectorID);
 
-      M_BufferWriteByte(savebuffer, tc_floor);
+      M_BufferWriteUChar(savebuffer, tc_floor);
       M_BufferWrite(savebuffer, floor, sizeof(*floor));
 
       floor->sector = sector;
@@ -800,7 +807,7 @@ void P_ArchiveSpecials(buf_t *savebuffer) {
 
       plat->sector = (sector_t *)(plat->sector->iSectorID);
 
-      M_BufferWriteByte(savebuffer, tc_plat);
+      M_BufferWriteUChar(savebuffer, tc_plat);
       M_BufferWrite(savebuffer, plat, sizeof(*plat));
 
       plat->sector = sector;
@@ -814,7 +821,7 @@ void P_ArchiveSpecials(buf_t *savebuffer) {
 
       flash->sector = (sector_t *)(flash->sector->iSectorID);
 
-      M_BufferWriteByte(savebuffer, tc_flash);
+      M_BufferWriteUChar(savebuffer, tc_flash);
       M_BufferWrite(savebuffer, flash, sizeof(*flash));
 
       flash->sector = sector;
@@ -828,7 +835,7 @@ void P_ArchiveSpecials(buf_t *savebuffer) {
 
       strobe->sector = (sector_t *)(strobe->sector->iSectorID);
 
-      M_BufferWriteByte(savebuffer, tc_strobe);
+      M_BufferWriteUChar(savebuffer, tc_strobe);
       M_BufferWrite(savebuffer, strobe, sizeof(*strobe));
 
       strobe->sector = sector;
@@ -842,7 +849,7 @@ void P_ArchiveSpecials(buf_t *savebuffer) {
 
       glow->sector = (sector_t *)(glow->sector->iSectorID);
 
-      M_BufferWriteByte(savebuffer, tc_glow);
+      M_BufferWriteUChar(savebuffer, tc_glow);
       M_BufferWrite(savebuffer, glow, sizeof(*glow));
 
       glow->sector = sector;
@@ -857,7 +864,7 @@ void P_ArchiveSpecials(buf_t *savebuffer) {
 
       flicker->sector = (sector_t *)(flicker->sector->iSectorID);
 
-      M_BufferWriteByte(savebuffer, tc_flicker);
+      M_BufferWriteUChar(savebuffer, tc_flicker);
       M_BufferWrite(savebuffer, flicker, sizeof(*flicker));
 
       flicker->sector = sector;
@@ -872,7 +879,7 @@ void P_ArchiveSpecials(buf_t *savebuffer) {
 
       elevator->sector = (sector_t *)(elevator->sector->iSectorID);
 
-      M_BufferWriteByte(savebuffer, tc_elevator);
+      M_BufferWriteUChar(savebuffer, tc_elevator);
       M_BufferWrite(savebuffer, elevator, sizeof(*elevator));
 
       elevator->sector = sector;
@@ -882,7 +889,7 @@ void P_ArchiveSpecials(buf_t *savebuffer) {
 
     // killough 3/7/98: Scroll effect thinkers
     if (th->function == T_Scroll) {
-      M_BufferWriteByte(savebuffer, tc_scroll);
+      M_BufferWriteUChar(savebuffer, tc_scroll);
       M_BufferWrite(savebuffer, th, sizeof(scroll_t));
 
       continue;
@@ -890,7 +897,7 @@ void P_ArchiveSpecials(buf_t *savebuffer) {
 
     // phares 3/22/98: Push/Pull effect thinkers
     if (th->function == T_Pusher) {
-      M_BufferWriteByte(savebuffer, tc_pusher);
+      M_BufferWriteUChar(savebuffer, tc_pusher);
       M_BufferWrite(savebuffer, th, sizeof(pusher_t));
 
       continue;
@@ -898,7 +905,7 @@ void P_ArchiveSpecials(buf_t *savebuffer) {
   }
 
   // add a terminating marker
-  M_BufferWriteByte(savebuffer, tc_endspecials);
+  M_BufferWriteUChar(savebuffer, tc_endspecials);
 }
 
 //
@@ -907,11 +914,11 @@ void P_ArchiveSpecials(buf_t *savebuffer) {
 void P_UnArchiveSpecials(buf_t *savebuffer) {
   byte tclass;
 
-  M_BufferReadByte(savebuffer, &tclass);
+  M_BufferReadUChar(savebuffer, &tclass);
 
   // read in saved thinkers
   // killough 2/14/98
-  for (; tclass != tc_endspecials; M_BufferReadByte(savebuffer, &tclass)) {
+  for (; tclass != tc_endspecials; M_BufferReadUChar(savebuffer, &tclass)) {
     switch (tclass) {
       case tc_ceiling:
       {

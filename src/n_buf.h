@@ -32,36 +32,33 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifndef N_PEER_H__
-#define N_PEER_H__
+#ifndef N_BUF_H__
+#define N_BUF_H__
 
-/* CG: TODO: Break out sync stuff into its own netsync_t thing */
+typedef struct netchan_s {
+  pbuf_t header;
+  pbuf_t toc;
+  pbuf_t messages;
+  pbuf_t packet_data;
+  unsigned int message_index;
+} netchan_t;
 
-typedef struct netpeer_s {
-  unsigned short      playernum;
-  ENetPeer           *peer;
-  netbuf_t            netbuf;
-  time_t              connect_time;
-  time_t              disconnect_time;
-  int                 needs_setup;
-  int                 state_tic;
-  int                 command_tic;
-  game_state_delta_t  delta;
-  dboolean            needs_sync_update;
-} netpeer_t;
+typedef struct netbuf_s {
+  netchan_t incoming;
+  netchan_t reliable;
+  netchan_t unreliable;
+} netbuf_t;
 
-void       N_InitPeers(void);
-int        N_AddPeer(void);
-void       N_SetPeerConnected(int peernum, ENetPeer *peer);
-void       N_SetPeerDisconnected(int peernum);
-void       N_RemovePeer(netpeer_t *np);
-int        N_GetPeerCount(void);
-netpeer_t* N_GetPeer(int peernum);
-int        N_GetPeerNum(ENetPeer *peer);
-netpeer_t* N_GetPeerForPlayer(short playernum);
-int        N_GetPeerNumForPlayer(short playernum);
-dboolean   N_CheckPeerTimeout(int peernum);
-void       N_PeerFlushBuffers(int peernum);
+void        N_NBufInit(netbuf_t *nb);
+void        N_NBufClear(netbuf_t *nb);
+void        N_NBufClearIncoming(netbuf_t *nb);
+void        N_NBufClearChannel(netbuf_t *nb, net_channel_e chan);
+dboolean    N_NBufChannelEmpty(netbuf_t *nb, net_channel_e chan);
+pbuf_t*     N_NBufBeginMessage(netbuf_t *nb, net_channel_e chan, byte type);
+ENetPacket* N_NBufGetPacket(netbuf_t *nb, net_channel_e chan);
+dboolean    N_NBufLoadIncoming(netbuf_t *nb, unsigned char *data, size_t size);
+dboolean    N_NBufLoadNextMessage(netbuf_t *nb, unsigned char *message_type);
+void        N_NBufFree(netbuf_t *nb);
 
 #endif
 

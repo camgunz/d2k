@@ -41,8 +41,11 @@
 
 #include "lprintf.h"
 #include "g_game.h" // for doom_printf... inexplicably
+#include "m_pbuf.h"
 #include "m_swap.h"
+
 #include "n_net.h"
+#include "n_buf.h"
 #include "n_state.h"
 #include "n_peer.h"
 #include "n_pack.h"
@@ -67,50 +70,6 @@ dboolean        netgame   = false;
 dboolean        solonet   = false;
 dboolean        netserver = false;
 net_sync_type_e netsync   = NET_SYNC_TYPE_NONE;
-
-static void check_peer_timeouts(void) {
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    if (N_CheckPeerTimeout(i)) {
-      netpeer_t *np = N_GetPeer(i);
-
-      doom_printf("Peer %s:%u timed out.\n",
-        N_IPToConstString(doom_b32(np->peer->address.host)),
-        np->peer->address.port
-      );
-
-      enet_peer_reset(np->peer);
-      N_RemovePeer(np);
-    }
-  }
-}
-
-static void flush_peer_buffers(void) {
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
-
-    if (np == NULL)
-      continue;
-
-    if (np->rbuf.size != 0) {
-      ENetPacket *reliable_packet = enet_packet_create(
-        np->rbuf.data,
-        np->rbuf.size,
-        ENET_PACKET_FLAG_RELIABLE
-      );
-      enet_peer_send(np->peer, NET_CHANNEL_RELIABLE, reliable_packet);
-      M_BufferClear(&np->rbuf);
-    }
-
-    if (np->ubuf.size != 0) {
-      ENetPacket *unreliable_packet = enet_packet_create(
-        np->ubuf.data,
-        np->ubuf.size,
-        ENET_PACKET_FLAG_UNSEQUENCED | ENET_PACKET_FLAG_NO_ALLOCATE
-      );
-      enet_peer_send(np->peer, NET_CHANNEL_UNRELIABLE, unreliable_packet);
-    }
-  }
-}
 
 size_t N_IPToString(int address, char *buffer) {
   return snprintf(buffer, 16, "%u.%u.%u.%u",
@@ -267,7 +226,6 @@ void N_Init(void) {
     I_Error("Error initializing ENet");
 
   N_InitPeers();
-  N_InitPacker();
   N_InitStates();
   atexit(N_Shutdown);
 }
@@ -350,7 +308,7 @@ dboolean N_Listen(const char *host, unsigned short port) {
   else
     address.port = DEFAULT_PORT;
 
-  net_host = enet_host_create(&address, MAXPLAYERS, MAX_CHANNELS, 0, 0);
+  net_host = enet_host_create(&address, MAXPLAYERS, NET_CHANNEL_MAX, 0, 0);
   
   if (net_host == NULL) {
     doom_printf("N_Listen: Error creating host on %s:%u\n", host, port);
@@ -365,7 +323,7 @@ dboolean N_Connect(const char *host, unsigned short port) {
   ENetPeer *server = NULL;
   ENetAddress address;
 
-  net_host = enet_host_create(NULL, 1, MAX_CHANNELS, 0, 0);
+  net_host = enet_host_create(NULL, 1, NET_CHANNEL_MAX, 0, 0);
 
   if (net_host == NULL) {
     doom_printf("N_Connect: Error creating host");
@@ -380,7 +338,7 @@ dboolean N_Connect(const char *host, unsigned short port) {
     address.port = DEFAULT_PORT;
 
   peernum = N_AddPeer();
-  server = enet_host_connect(net_host, &address, MAX_CHANNELS, 0);
+  server = enet_host_connect(net_host, &address, NET_CHANNEL_MAX, 0);
 
   if (server == NULL) {
     doom_printf("N_Connect: Error connecting to server");
@@ -463,9 +421,25 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
   int peernum = -1;
   netpeer_t *np = NULL;
 
-  check_peer_timeouts();
+  for (int i = 0; i < N_GetPeerCount(); i++) {
+    netpeer_t *np = N_GetPeer(i);
 
-  flush_peer_buffers();
+    if (np == NULL)
+      continue;
+
+    if (N_CheckPeerTimeout(i)) {
+      doom_printf("Peer %s:%u timed out.\n",
+        N_IPToConstString(doom_b32(np->peer->address.host)),
+        np->peer->address.port
+      );
+
+      enet_peer_reset(np->peer);
+      N_RemovePeer(np);
+      continue;
+    }
+
+    N_PeerFlushBuffers(i);
+  }
 
   while (true) {
     status = enet_host_service(net_host, &net_event, timeout_ms);

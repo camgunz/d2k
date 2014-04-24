@@ -298,18 +298,74 @@ void P_Ticker(void) {
        * CG: TODO: Fix skipping caused by running a shit-ton of commands in a
        *           single TIC.
        */
-      if (MULTINET && DELTASYNC) {
-        CBUF_FOR_EACH(&players[i].commands, entry) {
+      if ((!MULTINET) || (!DELTASYNC)) {
+        P_PlayerThink(&players[i]);
+        continue;
+      }
+
+      if (i == consoleplayer) {
+        player_t *player = &players[consoleplayer];
+        dboolean found_command = false;
+
+        CBUF_FOR_EACH(&player->commands, entry) {
           netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-          if (ncmd->tic >= gametic) {
-            memcpy(&players[i].cmd, &ncmd->cmd, sizeof(ticcmd_t));
+          if (ncmd->tic == gametic) {
+            memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
+            found_command = true;
+          }
+
+          if (found_command) {
+            /*
+            printf("[%d: %d] P_Ticker: Running command %d.\n",
+              gametic, i, ncmd->tic
+            );
+            */
+          }
+
+          if (ncmd->tic <= gametic) {
+            if (!found_command) {
+              printf("[%d: %d] P_Ticker: Removing old player command %d.\n",
+                gametic, i, ncmd->tic
+              );
+            }
+            M_CBufRemove(&player->commands, entry.index);
+            entry.index--;
+          }
+
+          if (found_command) {
             P_PlayerThink(&players[i]);
+            break;
           }
         }
+
+        if (CLIENT && !found_command)
+          printf("[%d: %d] No command.\n", gametic, i);
+
+        continue;
       }
-      else {
-        P_PlayerThink(&players[i]);
+
+      CBUF_FOR_EACH(&players[i].commands, entry) {
+        netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+
+        if (ncmd->tic <= gametic) {
+          memcpy(&players[i].cmd, &ncmd->cmd, sizeof(ticcmd_t));
+
+          /*
+          printf("[%d: %d] P_Ticker: Running command %d.\n",
+            gametic, i, ncmd->tic
+          );
+          */
+
+          P_PlayerThink(&players[i]);
+        }
+        else {
+          /*
+          printf("[%d: %d] Not running %d until later.\n",
+            gametic, i, ncmd->tic
+          );
+          */
+        }
       }
     }
   }

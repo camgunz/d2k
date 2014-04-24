@@ -34,15 +34,16 @@
 #ifndef N_MAIN__
 #define N_MAIN__
 
+void     N_PrintPlayerCommands(cbuf_t *commands);
 void     N_InitNetGame(void);
 void     N_Update(void);
-void     N_CheckNetGame(void);
 dboolean N_GetWad(const char *name);
 
 dboolean CL_ReceivedSetup(void);
 void     CL_SetReceivedSetup(dboolean new_received_setup);
 void     CL_SetAuthorizationLevel(auth_level_e level);
 void     CL_LoadState(void);
+void     CL_RunLocalCommands(void);
 void     CL_RemoveOldStates(void);
 
 void     SV_RemoveOldCommands(void);
@@ -51,3 +52,6 @@ void     SV_RemoveOldStates(void);
 void     N_TryRunTics(void);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

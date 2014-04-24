@@ -74,7 +74,7 @@ void SV_BroadcastPlayerWeaponSpeedChanged(short playernum,
 void SV_BroadcastPlayerColorChanged(short playernum, byte new_red,
                                                      byte new_green,
                                                      byte new_blue);
-void SV_BroadcastPlayerColormapChanged(short playernum, int new_color);
+void SV_BroadcastPlayerColorIndexChanged(short playernum, int new_color);
 void SV_BroadcastPlayerSkinChanged(short playernum);
 void SV_BroadcastStateUpdates(void);
 
@@ -92,7 +92,7 @@ void CL_SendBobbingChange(double new_bobbing_amount);
 void CL_SendAutoaimChange(dboolean new_autoaim_enabled);
 void CL_SendWeaponSpeedChange(byte new_weapon_speed);
 void CL_SendColorChange(byte new_red, byte new_green, byte new_blue);
-void CL_SendColormapChange(int new_color);
+void CL_SendColorIndexChange(int new_color);
 void CL_SendSkinChange(void); /* CG: TODO */
 void CL_SendStateReceived(void);
 void CL_SendAuthRequest(char *password);

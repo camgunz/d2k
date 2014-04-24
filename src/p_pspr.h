@@ -84,9 +84,10 @@ typedef struct
 
 typedef enum
 {
-  WSOP_WEAPON_PICKUP,
-  WSOP_AMMO_PICKUP,
-  WSOP_MAX
+  WSOP_NONE   = 0x0,
+  WSOP_WEAPON = 0x1,
+  WSOP_AMMO   = 0x2,
+  WSOP_MAX    = 0x4,
 } wsop_e;
 
 extern int weapon_preferences[2][NUMWEAPONS+1];      /* killough 5/2/98 */
@@ -125,3 +126,6 @@ void A_BFGSpray();
 void A_FireOldBFG();
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

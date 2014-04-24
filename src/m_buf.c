@@ -39,13 +39,41 @@
 #include "m_buf.h"
 #include "m_swap.h"
 
-union short_bytes { byte b[2]; short s; };
-union int_bytes   { byte b[4]; int i; };
-union long_bytes  { byte b[8]; int_64_t l; };
+union short_bytes  { unsigned char c[2]; short s; };
+union ushort_bytes { unsigned char c[2]; unsigned short s; };
+union int_bytes    { unsigned char c[4]; int i; };
+union uint_bytes   { unsigned char c[4]; unsigned int i; };
+union float_bytes  { unsigned char c[4]; float f; };
+union bool_bytes   { unsigned char c[4]; dboolean b; };
+union long_bytes   { unsigned char c[8]; int_64_t l; };
+union ulong_bytes  { unsigned char c[8]; uint_64_t l; };
+union double_bytes { unsigned char c[8]; double d; };
 
 static void check_cursor(buf_t *buf) {
   if (buf->cursor > buf->size)
     buf->size = buf->cursor;
+}
+
+buf_t* M_BufferNew(void) {
+  buf_t *buf = calloc(1, sizeof(buf_t));
+
+  if (buf == NULL)
+    I_Error("M_BufferNew: Calloc returned NULL.\n");
+
+  M_BufferInit(buf);
+
+  return buf;
+}
+
+buf_t* M_BufferNewWithCapacity(size_t capacity) {
+  buf_t *buf = calloc(1, sizeof(buf_t));
+
+  if (buf == NULL)
+    I_Error("M_BufferNew: Calloc returned NULL.\n");
+
+  M_BufferInitWithCapacity(buf, capacity);
+
+  return buf;
 }
 
 void M_BufferInit(buf_t *buf) {
@@ -105,13 +133,12 @@ void M_BufferEnsureTotalCapacity(buf_t *buf, size_t capacity) {
 }
 
 void M_BufferCopy(buf_t *dst, buf_t *src) {
-  M_BufferEnsureTotalCapacity(dst, src->size);
-  M_BufferClear(dst);
-  M_BufferWrite(dst, src->data, src->size);
+  M_BufferSetData(dst, M_BufferGetData(src), M_BufferGetSize(src));
 }
 
 void M_BufferSetData(buf_t *buf, void *data, size_t size) {
   M_BufferClear(buf);
+  M_BufferEnsureTotalCapacity(buf, size);
   M_BufferWrite(buf, data, size);
 }
 
@@ -123,7 +150,6 @@ void M_BufferSetString(buf_t *buf, char *data, size_t length) {
 dboolean M_BufferSetFile(buf_t *buf, const char *filename) {
   FILE *fp = NULL;
   size_t length = 0;
-  size_t bytes_read = 0;
   dboolean out = false;
 
   if ((fp = fopen(filename, "rb")) == NULL)
@@ -136,7 +162,7 @@ dboolean M_BufferSetFile(buf_t *buf, const char *filename) {
   M_BufferClear(buf);
   M_BufferEnsureTotalCapacity(buf, length);
 
-  if (fread(buf->data, sizeof(byte), length - bytes_read, fp) == length) {
+  if (fread(buf->data, sizeof(byte), length, fp) == length) {
     buf->cursor = length;
     buf->size = length;
     out = true;
@@ -186,28 +212,64 @@ void M_BufferWrite(buf_t *buf, void *data, size_t size) {
   check_cursor(buf);
 }
 
-void M_BufferWriteByte(buf_t *buf, byte b) {
-  M_BufferWriteBytes(buf, &b, 1);
+void M_BufferWriteBool(buf_t *buf, dboolean b) {
+  M_BufferWriteBools(buf, &b, 1);
 }
 
-void M_BufferWriteBytes(buf_t *buf, void *data, size_t count) {
-  M_BufferWrite(buf, data, count * sizeof(byte));
+void M_BufferWriteBools(buf_t *buf, dboolean *bools, size_t count) {
+  M_BufferEnsureCapacity(buf, count * sizeof(dboolean));
+
+  for (int i = 0; i < count; i++) {
+    union bool_bytes bb;
+
+    bb.b = doom_l32(bools[i]);
+    M_BufferWriteUChars(buf, bb.c, 4);
+  }
+}
+
+void M_BufferWriteChar(buf_t *buf, char c) {
+  M_BufferWriteChars(buf, &c, 1);
+}
+
+void M_BufferWriteChars(buf_t *buf, char *chars, size_t count) {
+  M_BufferWrite(buf, chars, count * sizeof(char));
+}
+
+void M_BufferWriteUChar(buf_t *buf, unsigned char c) {
+  M_BufferWriteUChars(buf, &c, 1);
+}
+
+void M_BufferWriteUChars(buf_t *buf, unsigned char *uchars, size_t count) {
+  M_BufferWrite(buf, uchars, count * sizeof(unsigned char));
 }
 
 void M_BufferWriteShort(buf_t *buf, short s) {
   M_BufferWriteShorts(buf, &s, 1);
 }
 
-void M_BufferWriteShorts(buf_t *buf, void *data, size_t count) {
-  short *shorts = (short *)data;
-
+void M_BufferWriteShorts(buf_t *buf, short *shorts, size_t count) {
   M_BufferEnsureCapacity(buf, count * sizeof(short));
 
   for (int i = 0; i < count; i++) {
     union short_bytes sb;
 
     sb.s = doom_l16(shorts[i]);
-    M_BufferWriteBytes(buf, sb.b, 2);
+    M_BufferWriteUChars(buf, sb.c, 2);
+  }
+}
+
+void M_BufferWriteUShort(buf_t *buf, unsigned short s) {
+  M_BufferWriteUShorts(buf, &s, 1);
+}
+
+void M_BufferWriteUShorts(buf_t *buf, unsigned short *ushorts, size_t count) {
+  M_BufferEnsureCapacity(buf, count * sizeof(unsigned short));
+
+  for (int i = 0; i < count; i++) {
+    union ushort_bytes sb;
+
+    sb.s = doom_l16(ushorts[i]);
+    M_BufferWriteUChars(buf, sb.c, 2);
   }
 }
 
@@ -215,16 +277,29 @@ void M_BufferWriteInt(buf_t *buf, int i) {
   M_BufferWriteInts(buf, &i, 1);
 }
 
-void M_BufferWriteInts(buf_t *buf, void *data, size_t count) {
-  int *ints = (int *)data;
-
+void M_BufferWriteInts(buf_t *buf, int *ints, size_t count) {
   M_BufferEnsureCapacity(buf, count * sizeof(int));
 
   for (int i = 0; i < count; i++) {
     union int_bytes ib;
 
     ib.i = doom_l32(ints[i]);
-    M_BufferWriteBytes(buf, ib.b, 4);
+    M_BufferWriteUChars(buf, ib.c, 4);
+  }
+}
+
+void M_BufferWriteUInt(buf_t *buf, unsigned int s) {
+  M_BufferWriteUInts(buf, &s, 1);
+}
+
+void M_BufferWriteUInts(buf_t *buf, unsigned int *uints, size_t count) {
+  M_BufferEnsureCapacity(buf, count * sizeof(unsigned int));
+
+  for (int i = 0; i < count; i++) {
+    union uint_bytes ib;
+
+    ib.i = doom_l32(uints[i]);
+    M_BufferWriteUChars(buf, ib.c, 4);
   }
 }
 
@@ -232,25 +307,66 @@ void M_BufferWriteLong(buf_t *buf, int_64_t l) {
   M_BufferWriteLongs(buf, &l, 1);
 }
 
-void M_BufferWriteLongs(buf_t *buf, void *data, size_t count) {
-  int_64_t *longs = (int_64_t *)data;
-
+void M_BufferWriteLongs(buf_t *buf, int_64_t *longs, size_t count) {
   M_BufferEnsureCapacity(buf, count * sizeof(int_64_t));
 
   for (int i = 0; i < count; i++) {
     union long_bytes lb;
 
     lb.l = doom_l64(longs[i]);
-    M_BufferWriteBytes(buf, lb.b, 8);
+    M_BufferWriteUChars(buf, lb.c, 8);
   }
 }
 
-void M_BufferWriteString(buf_t *buf, char *data, size_t length) {
-  size_t size = length + 1;
+void M_BufferWriteULong(buf_t *buf, uint_64_t l) {
+  M_BufferWriteULongs(buf, &l, 1);
+}
 
-  M_BufferEnsureCapacity(buf, size);
-  strncpy(buf->data + buf->cursor, data, size);
-  buf->cursor += size;
+void M_BufferWriteULongs(buf_t *buf, uint_64_t *ulongs, size_t count) {
+  M_BufferEnsureCapacity(buf, count * sizeof(uint_64_t));
+
+  for (int i = 0; i < count; i++) {
+    union ulong_bytes lb;
+
+    lb.l = doom_l64(ulongs[i]);
+    M_BufferWriteUChars(buf, lb.c, 8);
+  }
+}
+
+void M_BufferWriteFloat(buf_t *buf, float f) {
+  M_BufferWriteFloats(buf, &f, 1);
+}
+
+void M_BufferWriteFloats(buf_t *buf, float *floats, size_t count) {
+  M_BufferEnsureCapacity(buf, count * sizeof(float));
+
+  for (int i = 0; i < count; i++) {
+    union float_bytes fb;
+
+    fb.f = doom_l32(floats[i]);
+    M_BufferWriteUChars(buf, fb.c, 4);
+  }
+}
+
+void M_BufferWriteDouble(buf_t *buf, double d) {
+  M_BufferWriteDoubles(buf, &d, 1);
+}
+
+void M_BufferWriteDoubles(buf_t *buf, double *doubles, size_t count) {
+  M_BufferEnsureCapacity(buf, count * sizeof(double));
+
+  for (int i = 0; i < count; i++) {
+    union double_bytes db;
+
+    db.d = doom_l64(doubles[i]);
+    M_BufferWriteUChars(buf, db.c, 8);
+  }
+}
+
+void M_BufferWriteString(buf_t *buf, char *string, size_t length) {
+  M_BufferEnsureCapacity(buf, length + 1);
+  strncpy(buf->data + buf->cursor, string, length + 1);
+  buf->cursor += (length + 1);
 
   check_cursor(buf);
 }
@@ -291,12 +407,28 @@ dboolean M_BufferRead(buf_t *buf, void *data, size_t size) {
   return true;
 }
 
-dboolean M_BufferReadByte(buf_t *buf, byte *b) {
-  return M_BufferReadBytes(buf, b, 1);
+dboolean M_BufferReadBool(buf_t *buf, dboolean *b) {
+  return M_BufferReadBools(buf, b, 1);
 }
 
-dboolean M_BufferReadBytes(buf_t *buf, byte *b, size_t count) {
-  return M_BufferRead(buf, b, count * sizeof(byte));
+dboolean M_BufferReadBools(buf_t *buf, dboolean *b, size_t count) {
+  return M_BufferRead(buf, b, count * sizeof(dboolean));
+}
+
+dboolean M_BufferReadChar(buf_t *buf, char *c) {
+  return M_BufferReadChars(buf, c, 1);
+}
+
+dboolean M_BufferReadChars(buf_t *buf, char *c, size_t count) {
+  return M_BufferRead(buf, c, count * sizeof(char));
+}
+
+dboolean M_BufferReadUChar(buf_t *buf, unsigned char *c) {
+  return M_BufferReadUChars(buf, c, 1);
+}
+
+dboolean M_BufferReadUChars(buf_t *buf, unsigned char *c, size_t count) {
+  return M_BufferRead(buf, c, count * sizeof(unsigned char));
 }
 
 dboolean M_BufferReadShort(buf_t *buf, short *s) {
@@ -307,6 +439,14 @@ dboolean M_BufferReadShorts(buf_t *buf, short *s, size_t count) {
   return M_BufferRead(buf, s, count * sizeof(short));
 }
 
+dboolean M_BufferReadUShort(buf_t *buf, unsigned short *s) {
+  return M_BufferReadUShorts(buf, s, 1);
+}
+
+dboolean M_BufferReadUShorts(buf_t *buf, unsigned short *s, size_t count) {
+  return M_BufferRead(buf, s, count * sizeof(unsigned short));
+}
+
 dboolean M_BufferReadInt(buf_t *buf, int *i) {
   return M_BufferReadInts(buf, i, 1);
 }
@@ -315,12 +455,44 @@ dboolean M_BufferReadInts(buf_t *buf, int *i, size_t count) {
   return M_BufferRead(buf, i, count * sizeof(int));
 }
 
+dboolean M_BufferReadUInt(buf_t *buf, unsigned int *i) {
+  return M_BufferReadUInts(buf, i, 1);
+}
+
+dboolean M_BufferReadUInts(buf_t *buf, unsigned int *i, size_t count) {
+  return M_BufferRead(buf, i, count * sizeof(unsigned int));
+}
+
 dboolean M_BufferReadLong(buf_t *buf, int_64_t *l) {
   return M_BufferReadLongs(buf, l, 1);
 }
 
 dboolean M_BufferReadLongs(buf_t *buf, int_64_t *l, size_t count) {
   return M_BufferRead(buf, l, count * sizeof(int_64_t));
+}
+
+dboolean M_BufferReadULong(buf_t *buf, uint_64_t *l) {
+  return M_BufferReadULongs(buf, l, 1);
+}
+
+dboolean M_BufferReadULongs(buf_t *buf, uint_64_t *l, size_t count) {
+  return M_BufferRead(buf, l, count * sizeof(uint_64_t));
+}
+
+dboolean M_BufferReadFloat(buf_t *buf, float *f) {
+  return M_BufferReadFloats(buf, f, 1);
+}
+
+dboolean M_BufferReadFloats(buf_t *buf, float *f, size_t count) {
+  return M_BufferRead(buf, f, count * sizeof(float));
+}
+
+dboolean M_BufferReadDouble(buf_t *buf, double *d) {
+  return M_BufferReadDoubles(buf, d, 1);
+}
+
+dboolean M_BufferReadDoubles(buf_t *buf, double *d, size_t count) {
+  return M_BufferRead(buf, d, count * sizeof(double));
 }
 
 dboolean M_BufferReadString(buf_t *buf, char *s, size_t length) {

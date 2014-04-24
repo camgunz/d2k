@@ -436,7 +436,10 @@ void G_BuildTiccmd(netticcmd_t *ncmd) {
   ticcmd_t *cmd = &ncmd->cmd;
 
   ncmd->tic = gametic;
-  printf("Built command for %d.\n", gametic);
+
+  if (DELTACLIENT)
+    printf("(%d) Building a command.\n", gametic);
+
   /* cphipps - remove needless I_BaseTiccmd call, just set the ticcmd to zero */
   memset(cmd, 0, sizeof(ticcmd_t));
 
@@ -1018,7 +1021,7 @@ void G_Ticker(void) {
   if (!demoplayback && mapcolor_plyr[consoleplayer] != mapcolor_me) {
 
     if (CLIENT) // Changed my multiplayer colour - Inform the whole game
-      CL_SendColormapChange(mapcolor_me);
+      CL_SendColorIndexChange(mapcolor_me);
 
     G_ChangedPlayerColour(consoleplayer, mapcolor_me);
   }
@@ -1089,7 +1092,7 @@ void G_Ticker(void) {
       else if (democontinue) {
         G_ReadDemoContinueTiccmd(cmd);
       }
-      else if (MULTINET && CMDSYNC) {
+      else if ((!MULTINET) || CMDSYNC) {
         dboolean found_command = false;
         cbuf_t *commands = P_GetPlayerCommands(i);
 
@@ -2163,12 +2166,12 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
    */
   if (mbf_features) {
     for (i = 0; i < GAME_OPTION_SIZE; i++) {
-      M_BufferReadByte(savebuffer, &game_options[i]);
+      M_BufferReadUChar(savebuffer, &game_options[i]);
     }
   }
   else {
     for (i = 0; i < OLD_GAME_OPTION_SIZE; i++) {
-      M_BufferReadByte(savebuffer, &game_options[i]);
+      M_BufferReadUChar(savebuffer, &game_options[i]);
     }
   }
   G_ReadOptions(game_options);  // killough 3/1/98: Read game options
@@ -2348,9 +2351,9 @@ void G_WriteSaveData(buf_t *savebuffer) {
       const char *const w = wadfiles[i].name;
 
       M_BufferWrite(savebuffer, (void *)w, strlen(w));
-      M_BufferWriteByte(savebuffer, '\n');
+      M_BufferWriteUChar(savebuffer, '\n');
     }
-    M_BufferWriteByte(savebuffer, 0);
+    M_BufferWriteUChar(savebuffer, 0);
   }
 
   M_BufferWrite(savebuffer, NEWFORMATSIG, strlen(NEWFORMATSIG));
@@ -2366,19 +2369,19 @@ void G_WriteSaveData(buf_t *savebuffer) {
   M_BufferWriteInt(savebuffer, idmusnum);
   G_WriteOptions(game_options);    // killough 3/1/98: save game options
   if (mbf_features) {
-    M_BufferWriteBytes(
+    M_BufferWriteUChars(
       savebuffer, game_options, GAME_OPTION_SIZE * sizeof(byte)
     );
   }
   else {
-    M_BufferWriteBytes(
+    M_BufferWriteUChars(
       savebuffer, game_options, OLD_GAME_OPTION_SIZE * sizeof(byte)
     );
   }
   M_BufferWriteInt(savebuffer, leveltime);
   M_BufferWriteInt(savebuffer, totalleveltimes);
   // killough 11/98: save revenant tracer state
-  M_BufferWriteByte(savebuffer, (gametic - basetic) & 255);
+  M_BufferWriteUChar(savebuffer, (gametic - basetic) & 255);
 
   // printf("Archiving players at %lu.\n", savebuffer->cursor);
   P_ArchivePlayers(savebuffer);
@@ -2406,7 +2409,7 @@ void G_WriteSaveData(buf_t *savebuffer) {
   // printf("Archiving map at %lu.\n", savebuffer->cursor);
   P_ArchiveMap(savebuffer);    // killough 1/22/98: save automap information
   // printf("Archiving consistency marker at %lu.\n", savebuffer->cursor);
-  M_BufferWriteByte(savebuffer, 0xe6); // consistency marker
+  M_BufferWriteUChar(savebuffer, 0xe6); // consistency marker
 
   average_savebuffer_size = (
     ((average_savebuffer_size * savebuffer_count) + savebuffer->capacity) /

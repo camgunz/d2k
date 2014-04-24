@@ -61,7 +61,7 @@ typedef enum {
 typedef enum {
   NET_CHANNEL_RELIABLE,
   NET_CHANNEL_UNRELIABLE,
-  MAX_CHANNELS
+  NET_CHANNEL_MAX
 } net_channel_e;
 
 typedef enum {

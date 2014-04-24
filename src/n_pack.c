@@ -41,250 +41,219 @@
 #include "doomstat.h"
 #include "g_game.h"
 #include "lprintf.h"
+#include "m_pbuf.h"
 #include "p_pspr.h"
 #include "p_user.h"
 #include "w_wad.h"
 
 #include "n_net.h"
+#include "n_buf.h"
 #include "n_main.h"
 #include "n_state.h"
 #include "n_peer.h"
 #include "n_proto.h"
 
-#define MAX_ARRAY_SIZE 128
-
-#define DECLARE_SIGNED_TYPE(tname, ctype, name, size)                         \
-  const char *npv_ ## tname ## _name = name;                                  \
-  int64_t     npv_ ## tname ## _size_limit_low = -(size);                     \
-  int64_t     npv_ ## tname ## _size_limit_high = (size >> 1);                \
-  static const char* npv_ ## tname ## _get_size_limit_range(void) {           \
-    static char buf[50];                                                      \
-    snprintf(buf, sizeof(buf), "%" PRIi64 " <==> %" PRIi64,                   \
-      npv_ ## tname ## _size_limit_low,                                       \
-      npv_ ## tname ## _size_limit_high                                       \
-    );                                                                        \
-    return buf;                                                               \
-  }                                                                           \
-  static dboolean npv_ ## tname ## _type(msgpack_object *o) {                 \
-    return ((o->type == MSGPACK_OBJECT_POSITIVE_INTEGER) ||                   \
-            (o->type == MSGPACK_OBJECT_NEGATIVE_INTEGER));                    \
-  }                                                                           \
-  static dboolean npv_ ## tname ## _range(msgpack_object *o, ctype min,       \
-                                                             ctype max) {     \
-    return o->via.i64 >= min && o->via.i64 <= max;                            \
-  }                                                                           \
-  static dboolean npv_ ## tname ## _size(msgpack_object *o) {                 \
-    return npv_ ## tname ## _size_limit_low <=                                \
-           o->via.i64 <=                                                      \
-           npv_ ## tname ## _size_limit_high;                                 \
-  }
-
-#define DECLARE_UNSIGNED_TYPE(tname, ctype, name, size)                       \
-  const char *npv_ ## tname ## _name = name;                                  \
-  uint64_t    npv_ ## tname ## _size_limit_low = 0;                           \
-  uint64_t    npv_ ## tname ## _size_limit_high = size;                       \
-  static const char* npv_ ## tname ## _get_size_limit_range(void) {           \
-    static char buf[50];                                                      \
-    snprintf(buf, sizeof(buf), "%" PRIu64 " <==> %" PRIu64,                   \
-      npv_ ## tname ## _size_limit_low,                                       \
-      npv_ ## tname ## _size_limit_high                                       \
-    );                                                                        \
-    return buf;                                                               \
-  }                                                                           \
-  static dboolean npv_ ## tname ## _type(msgpack_object *o) {                 \
-    return o->type == MSGPACK_OBJECT_POSITIVE_INTEGER;                        \
-  }                                                                           \
-  static dboolean npv_ ## tname ## _range(msgpack_object *o, ctype min,       \
-                                                             ctype max) {     \
-    return o->via.u64 >= min && o->via.u64 <= max;                            \
-  }                                                                           \
-  static dboolean npv_ ## tname ## _size(msgpack_object *o) {                 \
-    return npv_ ## tname ## _size_limit_low <=                                \
-           o->via.u64 <=                                                      \
-           npv_ ## tname ## _size_limit_high;                                 \
-  }
-
-#define DECLARE_TYPE(tname, name, mp_type)                                    \
-  const char *npv_ ## tname ## _name = name;                                  \
-  const char *npv_ ## tname ## _size_limit = 0;                               \
-  char        npv_ ## tname ## _size_limit_low = 0;                           \
-  char        npv_ ## tname ## _size_limit_high = 0;                          \
-  static const char* npv_ ## tname ## _get_size_limit_range(void) {           \
-    return "0 <==> 0";                                                        \
-  }                                                                           \
-  static dboolean npv_ ## tname ## _type(msgpack_object *o) {                 \
-    return o->type == MSGPACK_OBJECT_ ## mp_type;                             \
-  }                                                                           \
-  static dboolean npv_ ## tname ## _size(msgpack_object *o) {                 \
-    return true;                                                              \
-  }
-
-#define unpack(name)                                                          \
-  if (!msgpack_unpacker_next(&pac, &result)) {                                \
-    doom_printf("%s: Error unpacking %s\n", __func__, name);                  \
-    return false;                                                             \
-  }
-
-#define validate_type(obj, name, type)                                        \
-  if (!(npv_ ## type ## _type((obj)))) {                                      \
-    doom_printf("%s: Invalid packet: %s is not %s.\n",                        \
-      __func__, name, npv_ ## type ## _name                                   \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define validate_size(obj, name, type)                                        \
-  if (!(npv_ ## type ## _size((obj)))) {                                      \
-    doom_printf("%s: Invalid packet: %s is too large (%s)\n",                 \
-      __func__, name, npv_ ## type ## _get_size_limit_range()                 \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define validate_range(obj, name, type, min, max)                             \
-  if (!(npv_ ## type ## _range((obj), (min), (max)))) {                       \
-    doom_printf("%s: Invalid packet: %s is out of range (%s, %s)\n",          \
-      __func__, name, #min, #max                                              \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define validate_array_size(arr, name, asize)                                 \
-  if (arr.size > asize) {                                                     \
-    doom_printf("%s: Invalid packet: Array %s too large (%u > %u)\n",         \
-      __func__, name, arr.size, asize                                         \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define validate_type_and_size(object, name, type)                            \
-  validate_type(object, name, type)                                           \
-  validate_size(object, name, type)
-
-#define validate_player(object)                                               \
-  validate_type_and_size(object, "player number", short)                      \
-  if (object->via.i64 >= MAXPLAYERS) {                                        \
-    doom_printf("%s: Invalid player number\n", __func__);                     \
-    return false;                                                             \
-  }
-
-#define validate_recipient(object)                                            \
-  validate_type_and_size(object, "recipient number", short)                   \
-  if (object->via.i64 != -1 && object->via.i64 >= MAXPLAYERS) {               \
-    doom_printf("%s: Invalid recipient number\n", __func__);                  \
-    return false;                                                             \
-  }
-
-#define unpack_and_validate(object, name, type)                               \
-  unpack(name);                                                               \
-  object = &result.data;                                                      \
-  validate_type_and_size(object, name, type)
-
-#define unpack_and_validate_range(object, name, type, min, max)               \
-  unpack_and_validate(object, name, type)                                     \
-  validate_range(object, name, type, min, max)
-
-#define unpack_and_validate_player(object)                                    \
-  unpack("player number");                                                    \
-  object = &result.data;                                                      \
-  validate_player(object)
-
-#define unpack_and_validate_array(o, a, name, ename, etype, ectype, buf, sz)  \
-  unpack_and_validate(o, name, array)                                         \
-  validate_array_size(a, name, sz)                                            \
-  M_BufferClear((buf));                                                       \
-  M_BufferEnsureTotalCapacity(&(buf), a.size);                                \
-  for (int i = 0; i < a.size; i++) {                                          \
-    msgpack_object *array_entry = a.ptr + i;                                  \
-    validate_type_and_size(array_entry, ename, etype);                        \
-    M_BufferWrite(buf, array_entry->via.raw.ptr, sizeof(ectype));             \
-  }
-
-#define unpack_and_validate_string_array(obj, arr, name, ename, obuf, sz)     \
-  unpack_and_validate(obj, name, array)                                       \
-  validate_array_size(arr, name, sz)                                          \
-  M_OBufClear(obuf);                                                          \
-  M_OBufEnsureCapacity(obuf, arr.size);                                       \
-  for (int i = 0; i < arr.size; i++) {                                        \
-    char *buf_entry = NULL;                                                   \
-    msgpack_object *array_entry = arr.ptr + i;                                \
-    validate_type(array_entry, ename, raw);                                   \
-    buf_entry = calloc(array_entry->via.raw.size + 1, sizeof(char));          \
-    memcpy(buf_entry, array_entry->via.raw.ptr, array_entry->via.raw.size);   \
-    M_OBufAppend(obuf, buf_entry);                                            \
-  }
-
-#define unpack_and_validate_player_array(obj, arr, name, buf, sz)             \
-  unpack_and_validate(obj, name, array);                                      \
-  validate_array_size(arr, name, sz);                                         \
-  M_BufferClear((buf));                                                       \
-  M_BufferEnsureTotalCapacity(buf, arr.size * sizeof(short));                 \
-  for (int i = 0; i < arr.size; i++) {                                        \
-    validate_player((&(arr.ptr[i])));                                         \
-    M_BufferWrite(buf, (char *)&arr.ptr[i].via.i64, sizeof(short));           \
-  }
-
-#ifndef msgpack_pack_char
-#define msgpack_pack_char msgpack_pack_int8
-#endif
-
-#ifndef msgpack_pack_signed_char
-#define msgpack_pack_signed_char msgpack_pack_int8
-#endif
-
-#ifndef msgpack_pack_unsigned_char
-#define msgpack_pack_unsigned_char msgpack_pack_uint8
-#endif
-
+/* CG: FIXME: Most of these should be more than just defines tucked here */
 #define MAX_RESOURCE_NAMES 1000
+#define MAX_RESOURCE_NAME_LENGTH 128
+#define MAX_SERVER_MESSAGE_SIZE 256
+#define MAX_PLAYER_MESSAGE_SIZE 256
+#define MAX_PLAYER_PREFERENCE_NAME_SIZE 32
+#define MAX_PLAYER_NAME_SIZE 32
+#define MAX_PASSWORD_LENGTH 256
+#define MAX_COMMAND_LENGTH 32
 
-DECLARE_SIGNED_TYPE(char, char, "a char", 0xFF);
-DECLARE_UNSIGNED_TYPE(uchar, unsigned char, "an unsigned char", 0xFF);
-DECLARE_SIGNED_TYPE(short, short, "a short", 0xFFFF);
-DECLARE_UNSIGNED_TYPE(ushort, unsigned short, "an unsigned short", 0xFFFF);
-DECLARE_SIGNED_TYPE(int, int, "an int", 0xFFFFFFFF);
-DECLARE_UNSIGNED_TYPE(uint, unsigned int, "an unsigned int", 0xFFFFFFFF);
-DECLARE_TYPE(double, "a double", DOUBLE);
-static dboolean npv_double_range(msgpack_object *o, double min, double max) {
-  return o->via.dec >= min && o->via.dec <= max;
-}
-DECLARE_TYPE(null, "a NULL value", NIL);
-DECLARE_TYPE(boolean, "a boolean", BOOLEAN);
-DECLARE_TYPE(raw, "raw bytes", RAW);
-DECLARE_TYPE(array, "an array", ARRAY);
-DECLARE_TYPE(map, "a map", MAP);
+#define check_range(x, min, max)                                              \
+  if (!(min <= x <= max)) {                                                   \
+    doom_printf("%s: Invalid message: %s is out of range (%s, %s)\n",         \
+      __func__, #x, #min, #max                                                \
+    );                                                                        \
+  }
 
-static msgpack_unpacker    pac;
-static msgpack_unpacked    result;
-static msgpack_object     *obj;
-static msgpack_object_map *map = NULL;
+#define read_char(pbuf, var, name)                                            \
+  if (!M_PBufReadChar(pbuf, &var)) {                                          \
+    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    return false;                                                             \
+  }
 
-static void pack_commands(netpeer_t *np, unsigned short playernum) {
+#define read_ranged_char(pbuf, var, name, min, max)                           \
+  read_char(pbuf, var, name);                                                 \
+  check_range(var, min, max);
+
+#define read_uchar(pbuf, var, name)                                           \
+  if (!M_PBufReadUChar(pbuf, &var)) {                                         \
+    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    return false;                                                             \
+  }
+
+#define read_ranged_uchar(pbuf, var, name, min, max)                          \
+  read_uchar(pbuf, var, name);                                                \
+  check_range(var, min, max);
+
+#define read_short(pbuf, var, name)                                           \
+  if (!M_PBufReadShort(pbuf, &var)) {                                         \
+    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    return false;                                                             \
+  }
+
+#define read_ranged_short(pbuf, var, name, min, max)                          \
+  read_short(pbuf, var, name);                                                \
+  check_range(var, min, max);
+
+#define read_ushort(pbuf, var, name)                                          \
+  if (!M_PBufReadUShort(pbuf, &var)) {                                        \
+    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    return false;                                                             \
+  }
+
+#define read_ranged_ushort(pbuf, var, name, min, max)                         \
+  read_ushort(pbuf, var, name);                                               \
+  check_range(var, min, max);
+
+#define read_int(pbuf, var, name)                                             \
+  if (!M_PBufReadInt(pbuf, &var)) {                                           \
+    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    return false;                                                             \
+  }
+
+#define read_ranged_int(pbuf, var, name, min, max)                            \
+  read_int(pbuf, var, name);                                                  \
+  check_range(var, min, max);
+
+#define read_uint(pbuf, var, name)                                            \
+  if (!M_PBufReadUInt(pbuf, &var)) {                                          \
+    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    return false;                                                             \
+  }
+
+#define read_ranged_uint(pbuf, var, name, min, max)                           \
+  read_uint(pbuf, var, name);                                                 \
+  check_range(var, min, max);
+
+#define read_long(pbuf, var, name)                                            \
+  if (!M_PBufReadLong(pbuf, &var)) {                                          \
+    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    return false;                                                             \
+  }
+
+#define read_ranged_long(pbuf, var, name, min, max)                           \
+  read_long(pbuf, var, name);                                                 \
+  check_range(var, min, max);
+
+#define read_ulong(pbuf, var, name)                                           \
+  if (!M_PBufReadULong(pbuf, &var)) {                                         \
+    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    return false;                                                             \
+  }
+
+#define read_ranged_ulong(pbuf, var, name, min, max)                          \
+  read_ulong(pbuf, var, name);                                                \
+  check_range(var, min, max);
+
+#define read_double(pbuf, var, name)                                          \
+  if (!M_PBufReadDouble(pbuf, &var)) {                                        \
+    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    return false;                                                             \
+  }
+
+#define read_ranged_double(pbuf, var, name, min, max)                         \
+  read_double(pbuf, var, name);                                               \
+  check_range(var, min, max);
+
+#define read_bool(pbuf, var, name)                                            \
+  if (!M_PBufReadBool(pbuf, &var)) {                                          \
+    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    return false;                                                             \
+  }
+
+#define read_array(pbuf, var, name)                                           \
+  if (!M_PBufReadArray(pbuf, &var)) {                                         \
+    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    return false;                                                             \
+  }
+
+#define read_map(pbuf, var, name)                                             \
+  if (!M_PBufReadMap(pbuf, &var)) {                                           \
+    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    return false;                                                             \
+  }
+
+#define read_bytes(pbuf, var, name)                                           \
+  if (!M_PBufReadBytes(pbuf, &var)) {                                         \
+    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    return false;                                                             \
+  }
+
+#define read_string(pbuf, var, name, sz)                                      \
+  if (!M_PBufReadString(pbuf, var, sz)) {                                    \
+    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    return false;                                                             \
+  }
+
+#define read_string_array(pbuf, var, name, count, length)                     \
+  if (!M_PBufReadStringArray(pbuf, var, count, length)) {                    \
+    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    return false;                                                             \
+  }
+
+#define read_recipient_array(pbuf, var, name, count)                          \
+  if (!M_PBufReadShortArray(pbuf, var, count)) {                             \
+    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    return false;                                                             \
+  }
+
+#define read_player(pbuf, var)                                                \
+  if (!M_PBufReadShort(pbuf, &var)) {                                         \
+    doom_printf("%s: Error reading player number.\n", __func__);              \
+    return false;                                                             \
+  }                                                                           \
+  if (var >= MAXPLAYERS) {                                                    \
+    doom_printf("%s: Invalid player number %d.\n", __func__, var);            \
+    return false;                                                             \
+  }
+
+#define read_message_recipient(pbuf, var)                                     \
+  if (!M_PBufReadShort(pbuf, &var)) {                                         \
+    doom_printf("%s: Error reading recipient number.\n", __func__);           \
+    return false;                                                             \
+  }                                                                           \
+  if (var != -1 && var >= MAXPLAYERS) {                                       \
+    doom_printf("%s: Invalid recipient number %d.\n", __func__, var);         \
+    return false;                                                             \
+  }
+
+#define pack_player_preference_change(pbuf, gametic, playernum, pn, pnsz)     \
+  pbuf_t *pbuf = N_NBufBeginMessage(                                          \
+    &np->netbuf, NET_CHANNEL_RELIABLE, nm_playerpreferencechange              \
+  );                                                                          \
+  M_PBufWriteInt(pbuf, gametic);                                              \
+  M_PBufWriteShort(pbuf, playernum);                                          \
+  M_PBufWriteMap(pbuf, 2);                                                    \
+  M_PBufWriteBytes(pbuf, pn, pnsz)
+
+static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   netticcmd_t *n = NULL;
   byte command_count = 0;
   cbuf_t *commands = NULL;
 
-  msgpack_pack_unsigned_short(np->upk, playernum);
-
-  if (np->playernum == playernum) {
-    msgpack_pack_int(np->upk, np->command_tic);
-    return;
-  }
+  M_PBufWriteShort(pbuf, playernum);
 
   commands = P_GetPlayerCommands(playernum);
 
   CBUF_FOR_EACH(commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-    if (ncmd->tic > np->command_tic) {
+    if (ncmd->tic > np->command_tic)
       command_count++;
-    }
+
   }
 
-  msgpack_pack_unsigned_char(np->upk, command_count);
+  M_PBufWriteUChar(pbuf, command_count);
 
-  if (command_count == 0)
+  if (command_count == 0) {
+    printf("[...]\n");
     return;
+  }
 
   CBUF_FOR_EACH(commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
@@ -293,62 +262,29 @@ static void pack_commands(netpeer_t *np, unsigned short playernum) {
       continue;
 
     if (n == NULL)
-      printf("Packing commands [%d => ", ncmd->tic);
+      printf("[%d => ", ncmd->tic);
 
     n = ncmd;
 
-    msgpack_pack_int(np->upk, ncmd->tic);
-    msgpack_pack_signed_char(np->upk, ncmd->cmd.forwardmove);
-    msgpack_pack_signed_char(np->upk, ncmd->cmd.sidemove);
-    msgpack_pack_short(np->upk, ncmd->cmd.angleturn);
-    msgpack_pack_short(np->upk, ncmd->cmd.consistancy);
-    msgpack_pack_unsigned_char(np->upk, ncmd->cmd.chatchar);
-    msgpack_pack_unsigned_char(np->upk, ncmd->cmd.buttons);
+    M_PBufWriteInt(pbuf, ncmd->tic);
+    M_PBufWriteChar(pbuf, ncmd->cmd.forwardmove);
+    M_PBufWriteChar(pbuf, ncmd->cmd.sidemove);
+    M_PBufWriteShort(pbuf, ncmd->cmd.angleturn);
+    M_PBufWriteShort(pbuf, ncmd->cmd.consistancy);
+    M_PBufWriteUChar(pbuf, ncmd->cmd.chatchar);
+    M_PBufWriteUChar(pbuf, ncmd->cmd.buttons);
   }
 
   if (n != NULL)
     printf("%d]\n", n->tic);
-
-}
-
-void N_ShutUpClang(void) {
-  npv_char_range(NULL, 0, 0);
-  npv_short_range(NULL, 0, 0);
-  npv_ushort_range(NULL, 0, 0);
-  npv_null_type(NULL);
-  npv_null_size(NULL);
-  npv_null_get_size_limit_range();
-}
-
-void N_InitPacker(void) {
-  msgpack_unpacker_init(&pac, MSGPACK_UNPACKER_INIT_BUFFER_SIZE);
-  msgpack_unpacked_init(&result);
-}
-
-void N_LoadPacketData(void *data, size_t data_size) {
-  msgpack_unpacker_reserve_buffer(&pac, data_size);
-  memcpy(msgpack_unpacker_buffer(&pac), data, data_size);
-  msgpack_unpacker_buffer_consumed(&pac, data_size);
-}
-
-dboolean N_LoadNewMessage(netpeer_t *np, byte *message_type) {
-  if (!msgpack_unpacker_next(&pac, &result))
-    return false;
-
-  obj = &result.data;
-
-  validate_type_and_size(obj, "message type", uchar);
-
-  *message_type = (byte)obj->via.u64;
-
-  return true;
 }
 
 void N_PackSetup(netpeer_t *np) {
   game_state_t *gs = N_GetLatestState();
   unsigned short player_count = 0;
+  pbuf_t *pbuf = NULL;
 
-  doom_printf("Packing setup (%d)\n", gametic);
+  printf("Packing setup (%d)\n", gametic);
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
@@ -356,86 +292,67 @@ void N_PackSetup(netpeer_t *np) {
     }
   }
 
-  msgpack_pack_unsigned_char(np->rpk, nm_setup);
-  msgpack_pack_int(np->rpk, netsync);
-  msgpack_pack_unsigned_short(np->rpk, player_count);
-  msgpack_pack_unsigned_short(np->rpk, np->playernum);
-
-  msgpack_pack_array(np->rpk, M_OBufGetObjectCount(&resource_files_buf));
-  OBUF_FOR_EACH(&resource_files_buf, entry) {
-    char *resource_name = entry.obj;
-    size_t length = strlen(resource_name);
-
-    msgpack_pack_raw(np->rpk, length);
-    msgpack_pack_raw_body(np->rpk, resource_name, length);
-  }
-
-  msgpack_pack_array(np->rpk, M_OBufGetObjectCount(&deh_files_buf));
-  OBUF_FOR_EACH(&deh_files_buf, entry) {
-    char *deh_name = entry.obj;
-    size_t length = strlen(deh_name);
-
-    msgpack_pack_raw(np->rpk, length);
-    msgpack_pack_raw_body(np->rpk, deh_name, length);
-  }
+  pbuf = N_NBufBeginMessage(&np->netbuf, NET_CHANNEL_RELIABLE, nm_setup);
+  M_PBufWriteInt(pbuf, netsync);
+  M_PBufWriteUShort(pbuf, player_count);
+  M_PBufWriteShort(pbuf, np->playernum);
+  M_PBufWriteStringArray(pbuf, &resource_files_buf);
+  M_PBufWriteStringArray(pbuf, &deh_files_buf);
+  M_PBufWriteUInt(pbuf, gs->tic);
+  M_PBufWriteBytes(pbuf, gs->data.data, gs->data.size);
 
   printf(
     "N_PackSetup: Sent game state at %d (player count: %d).\n",
     gs->tic, player_count
   );
-
-  msgpack_pack_unsigned_int(np->rpk, gs->tic);
-  msgpack_pack_raw(np->rpk, gs->data.size);
-  msgpack_pack_raw_body(np->rpk, gs->data.data, gs->data.size);
 }
 
 dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
                                       unsigned short *player_count,
-                                      unsigned short *playernum) {
-  net_sync_type_e m_sync_type = NET_SYNC_TYPE_NONE;
+                                      short *playernum) {
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  int m_sync_type = 0;
   unsigned short m_player_count = 0;
-  unsigned short m_playernum = 0;
-  game_state_t *gs = N_GetNewState();
-
-  unpack_and_validate_range(
-    obj, "net sync type", int, NET_SYNC_TYPE_COMMAND, NET_SYNC_TYPE_DELTA
+  short m_playernum = 0;
+  game_state_t *gs = NULL;
+  
+  read_ranged_int(
+    pbuf, m_sync_type, "netsync", NET_SYNC_TYPE_COMMAND, NET_SYNC_TYPE_DELTA
   );
-  m_sync_type = (net_sync_type_e)obj->via.u64;
-
-  unpack_and_validate(obj, "player count", ushort);
-  m_player_count = (unsigned short)obj->via.u64;
-
-  unpack_and_validate(obj, "consoleplayer", ushort);
-  m_playernum = (unsigned short)obj->via.u64;
-
-  unpack_and_validate_string_array(
-    obj,
-    obj->via.array,
-    "resource names",
-    "resource name",
+  read_ushort(pbuf, m_player_count, "player count");
+  read_short(pbuf, m_playernum, "consoleplayer");
+  read_string_array(
+    pbuf,
     &resource_files_buf,
-    MAX_RESOURCE_NAMES
+    "resource names",
+    MAX_RESOURCE_NAMES,
+    MAX_RESOURCE_NAME_LENGTH
   );
-
-  unpack_and_validate_string_array(
-    obj,
-    obj->via.array,
-    "deh names",
-    "deh name",
+  read_string_array(
+    pbuf,
     &deh_files_buf,
-    MAX_RESOURCE_NAMES
+    "DeHackEd/BEX names",
+    MAX_RESOURCE_NAMES,
+    MAX_RESOURCE_NAME_LENGTH
   );
 
-  unpack_and_validate(obj, "game state tic", int);
-  gs->tic = (int)obj->via.i64;
+  gs = N_GetNewState();
 
-  unpack_and_validate(obj, "game state data", raw);
+  read_int(pbuf, gs->tic, "game state tic");
+  read_bytes(pbuf, gs->data, "game state data");
 
-  M_BufferSetData(
-    &gs->data, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size
-  );
-
-  *sync_type = m_sync_type;
+  switch (m_sync_type) {
+    case NET_SYNC_TYPE_COMMAND:
+      *sync_type = NET_SYNC_TYPE_COMMAND;
+    break;
+    case NET_SYNC_TYPE_DELTA:
+      *sync_type = NET_SYNC_TYPE_DELTA;
+    break;
+    default:
+      doom_printf("Invalid sync type %d.\n", m_sync_type);
+      return false;
+    break;
+  }
   *player_count = m_player_count;
   *playernum = m_playernum;
 
@@ -445,115 +362,138 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
 }
 
 void N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level) {
-  doom_printf("Packing auth response\n");
+  pbuf_t *pbuf = N_NBufBeginMessage(
+    &np->netbuf, NET_CHANNEL_RELIABLE, nm_authresponse
+  );
+  printf("Packing auth response\n");
 
-  msgpack_pack_unsigned_char(np->rpk, nm_authresponse);
-  msgpack_pack_unsigned_char(np->rpk, auth_level);
+  M_PBufWriteUChar(pbuf, auth_level);
 }
 
 dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
-  unpack_and_validate_range(
-    obj, "authorization level", uint, 0, AUTH_LEVEL_MAX - 1
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  unsigned char m_auth_level = 0;
+
+  read_ranged_uchar(
+    pbuf, m_auth_level, "auth level", AUTH_LEVEL_NONE, AUTH_LEVEL_MAX - 1
   );
 
-  *auth_level = (auth_level_e)obj->via.u64;
+  switch (m_auth_level) {
+    case AUTH_LEVEL_NONE:
+      *auth_level = AUTH_LEVEL_NONE;
+    break;
+    case AUTH_LEVEL_SPECTATOR:
+      *auth_level = AUTH_LEVEL_SPECTATOR;
+    break;
+    case AUTH_LEVEL_PLAYER:
+      *auth_level = AUTH_LEVEL_PLAYER;
+    break;
+    case AUTH_LEVEL_MODERATOR:
+      *auth_level = AUTH_LEVEL_MODERATOR;
+    break;
+    case AUTH_LEVEL_ADMINISTRATOR:
+      *auth_level = AUTH_LEVEL_ADMINISTRATOR;
+    break;
+    default:
+      doom_printf("Invalid auth level type %d.\n", m_auth_level);
+      return false;
+    break;
+  }
 
   return true;
 }
 
 void N_PackServerMessage(netpeer_t *np, char *message) {
-  size_t length = strlen(message) * sizeof(char);
+  pbuf_t *pbuf = N_NBufBeginMessage(
+    &np->netbuf, NET_CHANNEL_RELIABLE, nm_servermessage
+  );
 
-  doom_printf("Packing server message\n");
-
-  msgpack_pack_unsigned_char(np->rpk, nm_servermessage);
-  msgpack_pack_raw(np->rpk, length);
-  msgpack_pack_raw_body(np->rpk, message, length);
+  printf("Packing server message\n");
+  M_PBufWriteString(pbuf, message, strlen(message));
 }
 
 dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf) {
-  unpack_and_validate(obj, "server message content", raw);
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
 
-  M_BufferSetString(buf, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
+  read_string(pbuf, buf, "server message content", MAX_SERVER_MESSAGE_SIZE);
 
   return true;
 }
 
 void N_PackSync(netpeer_t *np) {
-  msgpack_pack_unsigned_char(np->upk, nm_sync);
+  pbuf_t *pbuf = N_NBufBeginMessage(
+    &np->netbuf, NET_CHANNEL_UNRELIABLE, nm_sync
+  );
+  unsigned short player_count = 0;
 
-  if (DELTACLIENT)
-    msgpack_pack_int(np->upk, np->state_tic);
+
+  printf("(%d) Sending sync: ST/CT: (%d/%d) ",
+    gametic, np->state_tic, np->command_tic
+  );
+
+  M_PBufWriteInt(pbuf, np->state_tic);
 
   if (SERVER) {
-    unsigned short player_count = 0;
-
     for (int i = 0; i < N_GetPeerCount(); i++) {
       if (N_GetPeer(i) != NULL) {
         player_count++;
       }
     }
+  }
+  else {
+    player_count = 1;
+  }
 
-    msgpack_pack_unsigned_short(np->upk, player_count);
+  M_PBufWriteUShort(pbuf, player_count);
 
+  if (SERVER) {
     for (int i = 0; i < N_GetPeerCount(); i++) {
       netpeer_t *snp = N_GetPeer(i);
 
       if (snp != NULL)
-        pack_commands(np, snp->playernum);
+        pack_commands(pbuf, np, snp->playernum);
     }
   }
   else {
-    msgpack_pack_unsigned_short(np->upk, 1);
-    pack_commands(np, consoleplayer);
+    pack_commands(pbuf, np, consoleplayer);
   }
 }
 
 dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
-  unsigned short player_count = 0;
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  unsigned short m_player_count = 0;
   int m_state_tic = -1;
-  int m_command_tic = -1;
+  int m_command_tic = np->command_tic;
   dboolean m_update_sync = false;
 
   *update_sync = false;
 
-  if (DELTASERVER) {
-    unpack_and_validate(obj, "state tic", int);
-    m_state_tic = (int)obj->via.i64;
+  printf("(%d) Received sync ", gametic);
 
-    if (np->state_tic != m_state_tic)
-      m_update_sync = true;
-  }
+  read_int(pbuf, m_state_tic, "state_tic");
 
-  unpack_and_validate(obj, "player count", ushort);
-  player_count = (unsigned short)obj->via.u64;
+  if ((np->state_tic != m_state_tic))
+    m_update_sync = true;
 
-  for (int i = 0; i < player_count; i++) {
-    unsigned short playernum = 0;
+  printf("ST/CT: (%d/%d) ", m_state_tic, m_command_tic);
+
+  read_ushort(pbuf, m_player_count, "player count");
+
+  for (int i = 0; i < m_player_count; i++) {
+    short m_playernum = 0;
     byte command_count = 0;
     cbuf_t *commands = NULL;
 
-    unpack_and_validate_player(obj);
-    playernum = (unsigned short)obj->via.u64;
+    read_player(pbuf, m_playernum);
 
-    if (SERVER && np->playernum != playernum) {
-      doom_printf(
+    if (SERVER && np->playernum != m_playernum) {
+      printf(
         "N_UnpackPlayerCommands: Erroneously received player commands for %d "
         "from player %d\n",
-        playernum,
+        m_playernum,
         np->playernum
       );
       return false;
-    }
-
-    if (CMDCLIENT && playernum == consoleplayer) {
-      unpack_and_validate(obj, "command tic", int);
-      m_command_tic = (int)obj->via.i64;
-
-      if (np->command_tic != m_command_tic)
-        m_update_sync = true;
-
-      continue;
     }
 
   /*
@@ -563,373 +503,368 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
    *           (or something), that may be preferable to a static limit... but
    *           I think having an upper bound on that setting is still prudent.
    */
-    unpack_and_validate(obj, "command count", uchar);
-    command_count = (byte)obj->via.u64;
+    read_uchar(pbuf, command_count, "command count");
 
-    commands = P_GetPlayerCommands(playernum);
+    commands = &players[m_playernum].commands;
 
     M_CBufEnsureCapacity(commands, command_count);
-    M_CBufConsolidate(commands);
 
     netticcmd_t *n = NULL;
 
-    while (command_count--) {
-      unpack_and_validate(obj, "command tic", int);
-      m_command_tic = (int)obj->via.i64;
+    printf("Unpacking %d commands.\n", command_count);
 
-      if (m_command_tic > np->command_tic) {
+    /*
+     * CG: It seems like this allows holes in the command buffer, i.e.
+     *     [67, 68, 70, 71, 73, 76].  This is true, but such holes do not
+     *     result from packet loss, rather they result from CPU lag on the
+     *     client; it simply didn't make a command fast enough and dropped the
+     *     tic.  This is surprisingly normal, so command buffers won't be
+     *     contiguous.
+     */
+
+    while (command_count--) {
+      int command_tic = -1;
+
+      read_int(pbuf, command_tic, "command tic");
+      
+      if (m_command_tic == 0)
+        m_command_tic = command_tic - 1;
+
+      if (command_tic > m_command_tic) {
         netticcmd_t *ncmd = M_CBufGetFirstFreeOrNewSlot(commands);
 
+        m_command_tic = command_tic;
+
+        ncmd->tic = command_tic;
+
         if (n == NULL)
-          printf("Unpacking commands [%d => ", ncmd->tic);
+          printf(" [%d => ", ncmd->tic);
 
         n = ncmd;
 
-        ncmd->tic = m_command_tic;
+        read_char(pbuf, ncmd->cmd.forwardmove, "command forward value");
+        read_char(pbuf, ncmd->cmd.sidemove, "command side value");
+        read_short(pbuf, ncmd->cmd.angleturn, "command angle value");
+        read_short(pbuf, ncmd->cmd.consistancy, "command consistancy value");
+        read_uchar(pbuf, ncmd->cmd.chatchar, "comand chatchar value");
+        read_uchar(pbuf, ncmd->cmd.buttons, "command buttons value");
 
-        unpack_and_validate(obj, "command forward value", char);
-        ncmd->cmd.forwardmove = (signed char)obj->via.i64;
-
-        unpack_and_validate(obj, "command side value", char);
-        ncmd->cmd.sidemove = (signed char)obj->via.i64;
-
-        unpack_and_validate(obj, "command angle value", short);
-        ncmd->cmd.angleturn = (signed short)obj->via.i64;
-
-        unpack_and_validate(obj, "command consistancy value", short);
-        ncmd->cmd.consistancy = (signed short)obj->via.i64;
-
-        unpack_and_validate(obj, "command chatchar value", uchar);
-        ncmd->cmd.chatchar = (byte)obj->via.u64;
-
-        unpack_and_validate(obj, "command buttons value", uchar);
-        ncmd->cmd.buttons = (byte)obj->via.u64;
-
+        printf("CMD: {%d, %d, %d, %d, %d, %u, %u}\n",
+          ncmd->tic,
+          ncmd->cmd.forwardmove,
+          ncmd->cmd.sidemove,
+          ncmd->cmd.angleturn,
+          ncmd->cmd.consistancy,
+          ncmd->cmd.chatchar,
+          ncmd->cmd.buttons
+        );
       }
       else {
-        unpack_and_validate(obj, "command forward value", char);
-        unpack_and_validate(obj, "command side value", char);
-        unpack_and_validate(obj, "command angle value", short);
-        unpack_and_validate(obj, "command consistancy value", short);
-        unpack_and_validate(obj, "command chatchar value", uchar);
-        unpack_and_validate(obj, "command buttons value", uchar);
+        ticcmd_t cmd;
+
+        // printf("Skipping %d (< %d)\n", command_tic, m_command_tic + 1);
+        read_char(pbuf, cmd.forwardmove, "command forward value");
+        read_char(pbuf, cmd.sidemove, "command side value");
+        read_short(pbuf, cmd.angleturn, "command angle value");
+        read_short(pbuf, cmd.consistancy, "command consistancy value");
+        read_uchar(pbuf, cmd.chatchar, "comand chatchar value");
+        read_uchar(pbuf, cmd.buttons, "command buttons value");
       }
     }
 
     if (n != NULL)
       printf("%d]\n", n->tic);
+    else
+      printf("[...]\n");
+
+    if (n != NULL) {
+      printf("Commands after sync: ");
+      N_PrintPlayerCommands(commands);
+    }
   }
 
-  if (SERVER && np->command_tic < m_command_tic)
+  if (np->command_tic != m_command_tic)
     m_update_sync = true;
 
-  if (m_state_tic != -1)
+  if (m_update_sync) {
     np->state_tic = m_state_tic;
-
-  if (m_command_tic != -1)
     np->command_tic = m_command_tic;
-
-  if (m_update_sync)
     *update_sync = m_update_sync;
-
-  printf("Received sync (%d): [%d, %d] (%d).\n",
-    gametic, np->command_tic, np->state_tic, m_update_sync
-  );
+  }
 
   return true;
 }
 
 void N_PackDeltaSync(netpeer_t *np) {
-  printf("Sending sync to %d (%d): [%d, %d].\n",
-    np->playernum, gametic, np->command_tic, np->state_tic
+  pbuf_t *pbuf = N_NBufBeginMessage(
+    &np->netbuf, NET_CHANNEL_UNRELIABLE, nm_sync
   );
 
-  msgpack_pack_unsigned_char(np->upk, nm_sync);
-  msgpack_pack_int(np->upk, np->delta.from_tic);
-  msgpack_pack_int(np->upk, np->delta.to_tic);
-  msgpack_pack_raw(np->upk, np->delta.data.size);
-  msgpack_pack_raw_body(np->upk, np->delta.data.data, np->delta.data.size);
+  printf("(%d) Sending sync: ST/CT: (%d/%d) Delta: [%d => %d]\n",
+    gametic,
+    np->state_tic,
+    np->command_tic,
+    np->delta.from_tic,
+    np->delta.to_tic
+  );
+
+  M_PBufWriteInt(pbuf, np->state_tic);
+  M_PBufWriteInt(pbuf, np->command_tic);
+  M_PBufWriteInt(pbuf, np->delta.from_tic);
+  M_PBufWriteInt(pbuf, np->delta.to_tic);
+  M_PBufWriteBytes(pbuf, np->delta.data.data, np->delta.data.size);
 }
 
-dboolean N_UnpackDeltaSync(netpeer_t *np, dboolean *update_sync) {
+dboolean N_UnpackDeltaSync(netpeer_t *np) {
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  int m_state_tic = 0;
+  int m_command_tic = 0;
   int m_delta_from_tic = 0;
   int m_delta_to_tic = 0;
-  dboolean m_update_sync = false;
 
-  *update_sync = false;
+  read_int(pbuf, m_state_tic, "state tic");
+  read_int(pbuf, m_command_tic, "command tic");
+  read_int(pbuf, m_delta_from_tic, "delta from tic");
+  read_int(pbuf, m_delta_to_tic, "delta to tic");
 
-  unpack_and_validate(obj, "delta from tic", int);
-  m_delta_from_tic = (int)obj->via.i64;
-
-  unpack_and_validate(obj, "delta to tic", int);
-  m_delta_to_tic = (int)obj->via.i64;
-
-  unpack_and_validate(obj, "delta data", raw);
-
-  if (np->state_tic < m_delta_to_tic) {
-    np->delta.from_tic = m_delta_from_tic;
-    np->delta.to_tic = m_delta_to_tic;
-    np->state_tic = m_delta_to_tic;
-    M_BufferSetData(
-      &np->delta.data, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size
-    );
-
-    m_update_sync = true;
-  }
-
-  printf("Received sync (%d): [%d, %d] (%d).\n",
-    gametic, np->command_tic, np->state_tic, m_update_sync
+  /*
+  printf("(%d) Received sync: ST/CT: (%d/%d) Delta: [%d => %d] (%d).\n",
+    gametic,
+    m_state_tic,
+    m_command_tic,
+    m_delta_from_tic,
+    m_delta_to_tic,
+    np->state_tic < m_delta_to_tic
   );
+  */
 
-  *update_sync = m_update_sync;
+  if (np->state_tic >= m_delta_to_tic)
+    return false;
+
+  np->state_tic = m_state_tic;
+  np->command_tic = m_command_tic;
+  np->delta.from_tic = m_delta_from_tic;
+  np->delta.to_tic = m_delta_to_tic;
+  read_bytes(pbuf, np->delta.data, "delta data");
 
   return true;
 }
 
-void N_PackPlayerMessage(netpeer_t *np, unsigned short sender,
-                                        size_t recipient_count,
-                                        buf_t *recipients,
+void N_PackPlayerMessage(netpeer_t *np, short sender, buf_t *recipients,
                                         char *message) {
-  size_t length = strlen(message) * sizeof(char);
-  short *ra = (short *)recipients->data;
+  pbuf_t *pbuf = N_NBufBeginMessage(
+    &np->netbuf, NET_CHANNEL_RELIABLE, nm_playermessage
+  );
 
-  doom_printf("Packing player message\n");
+  M_PBufWriteUShort(pbuf, sender);
+  M_PBufWriteShortArray(pbuf, recipients);
+  M_PBufWriteString(pbuf, message, strlen(message));
 
-  msgpack_pack_unsigned_char(np->rpk, nm_playermessage);
-  msgpack_pack_unsigned_short(np->rpk, sender);
-  msgpack_pack_array(np->rpk, recipient_count);
-
-  for (int i = 0; i < recipient_count; i++)
-    msgpack_pack_short(np->rpk, ra[i]);
-
-  msgpack_pack_raw(np->rpk, length);
-  msgpack_pack_raw_body(np->rpk, message, length);
+  printf("Packed player message\n");
 }
 
-dboolean N_UnpackPlayerMessage(netpeer_t *np, unsigned short *sender,
-                                              size_t *recipient_count,
-                                              buf_t *recipients,
+dboolean N_UnpackPlayerMessage(netpeer_t *np, short *sender, buf_t *recipients,
                                               buf_t *buf) {
-  size_t m_recipient_count = 0;
-  unsigned short m_sender = 0;
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  short m_sender = 0;
 
-  unpack_and_validate_player(obj);
-  m_sender = (unsigned short)obj->via.u64;
-
-  unpack_and_validate_player_array(
-    obj, obj->via.array, "player message recipients", recipients, 0xFF
-  );
-  m_recipient_count = obj->via.array.size;
-
-  unpack_and_validate(obj, "player message content", raw);
-
-  M_BufferSetString(buf, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
+  read_player(pbuf, m_sender);
+  read_recipient_array(pbuf, recipients, "message recipients", MAXPLAYERS + 1);
+  read_string(pbuf, buf, "player message content", MAX_PLAYER_MESSAGE_SIZE);
 
   *sender = m_sender;
-  *recipient_count = m_recipient_count;
 
   return true;
 }
 
 dboolean N_UnpackPlayerPreferenceChange(netpeer_t *np, short *playernum,
                                                        int *tic,
-                                                       size_t *count) {
+                                                       unsigned int *count) {
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
   short m_playernum = 0;
   int m_tic = 0;
+  unsigned int m_count = 0;
 
-  unpack_and_validate_player(obj);
-  m_playernum = (short)obj->via.i64;
-
-  unpack_and_validate(obj, "player preference change tic", int);
-  m_tic = (int)obj->via.i64;
-
-  unpack_and_validate(obj, "player preference change map", map);
-
-  map = &obj->via.map;
+  read_player(pbuf, m_playernum);
+  read_int(pbuf, m_tic, "player preference change tic");
+  read_map(pbuf, m_count, "player preference change count");
 
   *playernum = m_playernum;
   *tic = m_tic;
-  *count = map->size;
+  *count = m_count;
 
   return true;
 }
 
-dboolean N_UnpackPlayerPreferenceName(netpeer_t *np, size_t pref_index,
-                                                     buf_t *buf) {
-  msgpack_object_kv *pair = NULL;
+dboolean N_UnpackPlayerPreferenceName(netpeer_t *np, buf_t *buf) {
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
   
-  if (pref_index >= map->size) {
-    doom_printf(
-      "N_UnpackPlayerPreferenceName: Attempted to index past preference "
-      "count\n"
-    );
-    return false;
-  }
-
-  pair = map->ptr + pref_index;
-
-  validate_type(&pair->key, "player preference name", raw);
-
-  obj = &pair->val;
-
-  M_BufferSetString(
-    buf, (char *)pair->key.via.raw.ptr, (size_t)pair->key.via.raw.size
+  read_string(
+    pbuf, buf, "player preference name", MAX_PLAYER_PREFERENCE_NAME_SIZE
   );
 
   return true;
 }
 
 void N_PackNameChange(netpeer_t *np, short playernum, char *new_name) {
-  size_t length = strlen(new_name) * sizeof(char);
+  pack_player_preference_change(pbuf, gametic, playernum, "name", 4);
 
-  doom_printf("Packing name change\n");
+  M_PBufWriteShort(pbuf, playernum);
+  M_PBufWriteString(pbuf, new_name, strlen(new_name));
 
-  msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
-  msgpack_pack_int(np->rpk, gametic);
-  msgpack_pack_short(np->rpk, playernum);
-  msgpack_pack_map(np->rpk, 2);
-  msgpack_pack_raw(np->rpk, 4);
-  msgpack_pack_raw_body(np->rpk, "name", 4);
-  msgpack_pack_raw(np->rpk, length);
-  msgpack_pack_raw_body(np->rpk, new_name, length);
+  printf("Packed name change\n");
 }
 
-dboolean N_UnpackNameChange(netpeer_t *np, buf_t *buf) {
-  unpack_and_validate(obj, "new name", raw);
+dboolean N_UnpackNameChange(netpeer_t *np, short *playernum, buf_t *buf) {
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  short m_playernum = 0;
 
-  M_BufferSetString(buf, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
+  read_player(pbuf, m_playernum);
+  read_string(pbuf, buf, "new name", MAX_PLAYER_NAME_SIZE);
+
+  *playernum = m_playernum;
 
   return true;
 }
 
 void N_PackTeamChange(netpeer_t *np, short playernum, byte new_team) {
-  doom_printf("Packing team change\n");
+  pack_player_preference_change(pbuf, gametic, playernum, "team", 4);
 
-  msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
-  msgpack_pack_int(np->rpk, gametic);
-  msgpack_pack_short(np->rpk, playernum);
-  msgpack_pack_map(np->rpk, 2);
-  msgpack_pack_raw(np->rpk, 4);
-  msgpack_pack_raw_body(np->rpk, "team", 4);
-  msgpack_pack_unsigned_char(np->rpk, new_team);
+  M_PBufWriteShort(pbuf, playernum);
+  M_PBufWriteUChar(pbuf, new_team);
+
+  printf("Packed team change\n");
 }
 
-dboolean N_UnpackTeamChange(netpeer_t *np, byte *new_team) {
-  int team_count = 0; /* CG: TODO: teams */
+dboolean N_UnpackTeamChange(netpeer_t *np, short *playernum, byte *new_team) {
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  int team_count = 0;
+  short m_playernum = 0;
+  byte m_new_team = 0;
 
-  if (team_count > 0) {
-    unpack_and_validate_range(obj, "team index", uchar, 0, team_count - 1);
-    *new_team = (byte)obj->via.u64;
+  read_player(pbuf, m_playernum);
+  if (team_count > 0) { /* CG: TODO: teams */
+    read_ranged_uchar(pbuf, m_new_team, "new team index", 0, team_count - 1);
   }
-  else {
-    *new_team = 0;
-  }
+
+  *new_team = m_new_team;
+  *playernum = m_playernum;
 
   return true;
 }
 
 void N_PackPWOChange(netpeer_t *np, short playernum) {
-  doom_printf("Packing PWO change\n");
+  pack_player_preference_change(pbuf, gametic, playernum, "pwo", 3);
 
-  msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
-  msgpack_pack_int(np->rpk, gametic);
-  msgpack_pack_short(np->rpk, playernum);
-  msgpack_pack_map(np->rpk, 2);
-  msgpack_pack_raw(np->rpk, 3);
-  msgpack_pack_raw_body(np->rpk, "pwo", 3);
-  /* CG: TODO */
+  M_PBufWriteShort(pbuf, playernum);
+  M_PBufWriteUChar(pbuf, 0); /* CG: TODO */
+
+  printf("Packed PWO change\n");
 }
 
-dboolean N_UnpackPWOChange(netpeer_t *np) {
-  /* CG: TODO */
-  return false;
+dboolean N_UnpackPWOChange(netpeer_t *np, short *playernum) {
+  return false; /* CG: TODO */
 }
 
 void N_PackWSOPChange(netpeer_t *np, short playernum, byte new_wsop_flags) {
-  doom_printf("Packing WSOP change\n");
+  pack_player_preference_change(pbuf, gametic, playernum, "wsop", 4);
 
-  msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
-  msgpack_pack_int(np->rpk, gametic);
-  msgpack_pack_short(np->rpk, playernum);
-  msgpack_pack_map(np->rpk, 2);
-  msgpack_pack_raw(np->rpk, 4);
-  msgpack_pack_raw_body(np->rpk, "wsop", 4);
-  msgpack_pack_unsigned_char(np->rpk, new_wsop_flags);
+  M_PBufWriteShort(pbuf, playernum);
+  M_PBufWriteUChar(pbuf, new_wsop_flags);
+
+  printf("Packed WSOP change\n");
 }
 
-dboolean N_UnpackWSOPChange(netpeer_t *np, byte *new_wsop_flags) {
-  unpack_and_validate_range(
-    obj, "new WSOP value", uchar, 0, 2 << (WSOP_MAX - 2)
+dboolean N_UnpackWSOPChange(netpeer_t *np, short *playernum,
+                                           byte *new_wsop_flags) {
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  short m_playernum = 0;
+  byte m_new_wsop_flags = 0;
+
+  read_player(pbuf, m_playernum);
+  read_ranged_uchar(
+    pbuf, m_new_wsop_flags, "new WSOP flags", WSOP_NONE, WSOP_MAX - 1
   );
 
-  *new_wsop_flags = (byte)obj->via.u64;
+  *playernum = m_playernum;
+  *new_wsop_flags = m_new_wsop_flags;
 
   return true;
 }
 
 void N_PackBobbingChange(netpeer_t *np, short playernum,
                                         double new_bobbing_amount) {
-  doom_printf("Packing bobbing change\n");
+  pack_player_preference_change(pbuf, gametic, playernum, "bobbing", 7);
 
-  msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
-  msgpack_pack_int(np->rpk, gametic);
-  msgpack_pack_short(np->rpk, playernum);
-  msgpack_pack_map(np->rpk, 2);
-  msgpack_pack_raw(np->rpk, 7);
-  msgpack_pack_raw_body(np->rpk, "bobbing", 7);
-  msgpack_pack_double(np->rpk, new_bobbing_amount);
+  M_PBufWriteShort(pbuf, playernum);
+  M_PBufWriteDouble(pbuf, new_bobbing_amount);
+
+  printf("Packed bobbing change\n");
 }
 
-dboolean N_UnpackBobbingchanged(netpeer_t *np, double *new_bobbing_amount) {
-  unpack_and_validate_range(obj, "new bobbing amount", double, 0.0, 1.0);
+dboolean N_UnpackBobbingChanged(netpeer_t *np, short *playernum,
+                                               double *new_bobbing_amount) {
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  short m_playernum = 0;
+  double m_new_bobbing_amount = 0;
 
-  *new_bobbing_amount = obj->via.dec;
+  read_player(pbuf, m_playernum);
+  read_ranged_double(
+    pbuf, m_new_bobbing_amount, "new bobbing amount", 0.0, 1.0
+  );
+
+  *playernum = m_playernum;
+  *new_bobbing_amount = m_new_bobbing_amount;
 
   return true;
 }
 
 void N_PackAutoaimChange(netpeer_t *np, short playernum,
                                         dboolean new_autoaim_enabled) {
-  doom_printf("Packing autoaim change\n");
+  pack_player_preference_change(pbuf, gametic, playernum, "autoaim", 7);
 
-  msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
-  msgpack_pack_int(np->rpk, gametic);
-  msgpack_pack_short(np->rpk, playernum);
-  msgpack_pack_map(np->rpk, 2);
-  msgpack_pack_raw(np->rpk, 7);
-  msgpack_pack_raw_body(np->rpk, "autoaim", 7);
-  if (new_autoaim_enabled)
-    msgpack_pack_true(np->rpk);
-  else
-    msgpack_pack_false(np->rpk);
+  M_PBufWriteShort(pbuf, playernum);
+  M_PBufWriteBool(pbuf, new_autoaim_enabled);
+
+  printf("Packed autoaim change\n");
 }
 
-dboolean N_UnpackAutoaimChange(netpeer_t *np, dboolean *new_autoaim_enabled) {
-  unpack_and_validate(obj, "new Autoaim value", boolean);
+dboolean N_UnpackAutoaimChange(netpeer_t *np, short *playernum,
+                                              dboolean *new_autoaim_enabled) {
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  short m_playernum = 0;
+  dboolean m_new_autoaim_enabled = false;
 
-  *new_autoaim_enabled = obj->via.boolean;
+  read_player(pbuf, m_playernum);
+  read_bool(pbuf, m_new_autoaim_enabled, "new autoaim enabled value");
+
+  *playernum = m_playernum;
+  *new_autoaim_enabled = m_new_autoaim_enabled;
 
   return true;
 }
 
 void N_PackWeaponSpeedChange(netpeer_t *np, short playernum,
                                             byte new_weapon_speed) {
-  doom_printf("Packing weapon speed change\n");
+  pack_player_preference_change(pbuf, gametic, playernum, "weapon speed", 12);
 
-  msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
-  msgpack_pack_int(np->rpk, gametic);
-  msgpack_pack_short(np->rpk, playernum);
-  msgpack_pack_map(np->rpk, 2);
-  msgpack_pack_raw(np->rpk, 12);
-  msgpack_pack_raw_body(np->rpk, "weapon_speed", 12);
-  msgpack_pack_unsigned_char(np->rpk, new_weapon_speed);
+  M_PBufWriteShort(pbuf, playernum);
+  M_PBufWriteUChar(pbuf, new_weapon_speed);
+
+  printf("Packed weapon speed change\n");
 }
 
-dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, byte *new_weapon_speed) {
+dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, short *playernum,
+                                                  byte *new_weapon_speed) {
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  short m_playernum = 0;
+  byte m_new_weapon_speed = 0;
 
-  unpack_and_validate(obj, "new weapon speed value", uchar);
+  read_player(pbuf, m_playernum);
+  read_uchar(pbuf, m_new_weapon_speed, "new weapon speed");
 
-  *new_weapon_speed = (byte)obj->via.u64;
+  *playernum = m_playernum;
+  *new_weapon_speed = m_new_weapon_speed;
 
   return true;
 }
@@ -937,128 +872,123 @@ dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, byte *new_weapon_speed) {
 void N_PackColorChange(netpeer_t *np, short playernum, byte new_red,
                                                        byte new_green,
                                                        byte new_blue) {
-  doom_printf("Packing color change\n");
+  pack_player_preference_change(pbuf, gametic, playernum, "color", 5);
 
-  msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
-  msgpack_pack_int(np->rpk, gametic);
-  msgpack_pack_short(np->rpk, playernum);
-  msgpack_pack_map(np->rpk, 2);
-  msgpack_pack_raw(np->rpk, 5);
-  msgpack_pack_raw_body(np->rpk, "color", 5);
-  msgpack_pack_unsigned_int(np->rpk, (new_red   << 24) |
-                                     (new_green << 16) |
-                                     (new_blue  <<  8));
+  M_PBufWriteShort(pbuf, playernum);
+  M_PBufWriteUInt(pbuf, (new_red << 24) | (new_green << 16) | (new_blue << 8));
+
+  printf("Packed color change\n");
 }
 
-dboolean N_UnpackColorChange(netpeer_t *np, byte *new_red, byte *new_green,
-                                            byte *new_blue) {
-  unpack_and_validate(obj, "new color", uint);
+dboolean N_UnpackColorChange(netpeer_t *np, short *playernum, byte *new_red,
+                                                              byte *new_green,
+                                                              byte *new_blue) {
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  short m_playernum = 0;
+  unsigned int m_new_color = 0;
 
-  *new_red   = (obj->via.u64 >> 24) & 0xFF;
-  *new_green = (obj->via.u64 >> 16) & 0xFF;;
-  *new_blue  = (obj->via.u64 >>  8) & 0xFF;;
+  read_player(pbuf, m_playernum);
+  read_uint(pbuf, m_new_color, "new color");
+
+  *playernum = m_playernum;
+  *new_red   = (m_new_color >> 24) & 0xFF;
+  *new_green = (m_new_color >> 16) & 0xFF;
+  *new_blue  = (m_new_color >>  8) & 0xFF;
 
   return true;
 }
 
-void N_PackColormapChange(netpeer_t *np, short playernum, int new_color) {
-  doom_printf("Packing colormap change\n");
+void N_PackColorIndexChange(netpeer_t *np, short playernum,
+                                           int new_color_index) {
+  pack_player_preference_change(pbuf, gametic, playernum, "color index", 11);
 
-  msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
-  msgpack_pack_int(np->rpk, gametic);
-  msgpack_pack_short(np->rpk, playernum);
-  msgpack_pack_map(np->rpk, 2);
-  msgpack_pack_raw(np->rpk, 8);
-  msgpack_pack_raw_body(np->rpk, "colormap", 8);
-  msgpack_pack_int(np->rpk, new_color);
+  M_PBufWriteShort(pbuf, playernum);
+  M_PBufWriteInt(pbuf, new_color_index);
+
+  printf("Packed color index change\n");
 }
 
-dboolean N_UnpackColormapChange(netpeer_t *np, short *playernum,
-                                               int *new_color) {
-  short m_playernum = -1;
-  int   m_new_color = -1;
+dboolean N_UnpackColorIndexChange(netpeer_t *np, short *playernum,
+                                                 int *new_color_index) {
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  short m_playernum = 0;
+  int m_new_color_index = 0;
 
-  unpack_and_validate_player(obj);
-  m_playernum = (short)obj->via.i64;
-
-  unpack_and_validate(obj, "new color", uchar);
-
-  /* CG: TODO: Validate color value is reasonable */
-  m_new_color = (int)obj->via.i64;
+  read_player(pbuf, m_playernum);
+  /* CG: TODO: Ensure new color map index is reasonable */
+  read_int(pbuf, m_new_color_index, "new color index");
 
   *playernum = m_playernum;
-  *new_color = m_new_color;
+  *new_color_index = m_new_color_index;
 
   return true;
 }
 
 void N_PackSkinChange(netpeer_t *np, short playernum) {
-  doom_printf("Packing skin change\n");
+  pack_player_preference_change(pbuf, gametic, playernum, "skin name", 9);
 
-  msgpack_pack_unsigned_char(np->rpk, nm_playerpreferencechange);
-  msgpack_pack_int(np->rpk, gametic);
-  msgpack_pack_short(np->rpk, playernum);
-  msgpack_pack_map(np->rpk, 2);
-  msgpack_pack_raw(np->rpk, 9);
-  msgpack_pack_raw_body(np->rpk, "skin_name", 9);
-  /* CG: TODO */
+  M_PBufWriteShort(pbuf, playernum);
+  M_PBufWriteUChar(pbuf, 0); /* CG: TODO */
+
+  printf("Packed skin change\n");
 }
 
-dboolean N_UnpackSkinChange(netpeer_t *np) {
-  /* CG: TODO */
-  return false;
+dboolean N_UnpackSkinChange(netpeer_t *np, short *playernum) {
+  return false; /* CG: TODO */
 }
 
 void N_PackAuthRequest(netpeer_t *np, char *password) {
-  doom_printf("Packing auth request\n");
+  pbuf_t *pbuf = N_NBufBeginMessage(
+    &np->netbuf, NET_CHANNEL_RELIABLE, nm_authrequest
+  );
 
-  size_t length = strlen(password) * sizeof(char);
+  M_PBufWriteString(pbuf, password, strlen(password));
 
-  msgpack_pack_unsigned_char(np->rpk, nm_authrequest);
-  msgpack_pack_raw(np->rpk, length);
-  msgpack_pack_raw_body(np->rpk, password, length);
+  printf("Packed auth request\n");
 }
 
 dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
-  unpack_and_validate(obj, "authorization request password", raw);
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
 
-  M_BufferSetString(buf, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
+  read_string(
+    pbuf, buf, "authorization request password", MAX_PASSWORD_LENGTH
+  );
 
   return true;
 }
 
 void N_PackRCONCommand(netpeer_t *np, char *command) {
-  doom_printf("Packing RCON\n");
+  pbuf_t *pbuf = N_NBufBeginMessage(
+    &np->netbuf, NET_CHANNEL_RELIABLE, nm_rconcommand
+  );
 
-  size_t length = strlen(command) * sizeof(char);
+  M_PBufWriteString(pbuf, command, strlen(command));
 
-  msgpack_pack_unsigned_char(np->rpk, nm_rconcommand);
-  msgpack_pack_raw(np->rpk, length);
-  msgpack_pack_raw_body(np->rpk, command, length);
+  printf("Packed RCON command\n");
 }
 
 dboolean N_UnpackRCONCommand(netpeer_t *np, buf_t *buf) {
-  unpack_and_validate(obj, "RCON command", raw);
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
 
-  M_BufferSetString(buf, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
+  read_string(pbuf, buf, "RCON command", MAX_COMMAND_LENGTH);
 
   return true;
 }
 
 void N_PackVoteRequest(netpeer_t *np, char *command) {
-  doom_printf("Packing vote request\n");
+  pbuf_t *pbuf = N_NBufBeginMessage(
+    &np->netbuf, NET_CHANNEL_RELIABLE, nm_voterequest
+  );
 
-  size_t length = strlen(command) * sizeof(char);
+  M_PBufWriteString(pbuf, command, strlen(command));
 
-  msgpack_pack_unsigned_char(np->rpk, nm_voterequest);
-  msgpack_pack_raw(np->rpk, length);
-  msgpack_pack_raw_body(np->rpk, command, length);
+  printf("Packed vote request\n");
 }
 
 dboolean N_UnpackVoteRequest(netpeer_t *np, buf_t *buf) {
-  unpack_and_validate(obj, "vote request command", raw);
+  pbuf_t *pbuf = &np->netbuf.incoming.messages;
 
-  M_BufferSetString(buf, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size);
+  read_string(pbuf, buf, "vote command", MAX_COMMAND_LENGTH);
 
   return true;
 }
