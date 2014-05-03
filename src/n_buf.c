@@ -35,6 +35,7 @@
 #include "z_zone.h"
 
 #include <enet/enet.h>
+#include "cmp.h"
 
 #include "d_ticcmd.h"
 #include "g_game.h"
@@ -53,24 +54,66 @@
   else                                                                        \
     I_Error("%s: Invalid network channel %d.\n", __func__, chan)
 
-static void init_channel(netchan_t *nc, pbuf_mode_t mode) {
-  M_PBufInit(&nc->header, mode);
-  M_PBufInit(&nc->toc, mode);
-  M_PBufInit(&nc->messages, mode);
-  M_PBufInit(&nc->packet_data, mode);
+typedef struct tocentry_s {
+  unsigned int index;
+  unsigned char type;
+} tocentry_t;
+
+static void init_channel(netchan_t *nc) {
+  M_CBufInit(&nc->toc, sizeof(tocentry_t));
+  M_PBufInit(&nc->messages);
+  M_PBufInit(&nc->packet_data);
 }
 
 static void clear_channel(netchan_t *nc) {
-  M_PBufClear(&nc->header);
-  M_PBufClear(&nc->toc);
+  M_CBufClear(&nc->toc);
   M_PBufClear(&nc->messages);
   M_PBufClear(&nc->packet_data);
 }
 
+static void serialize_toc(pbuf_t *packet_data, cbuf_t *toc) {
+  M_PBufWriteMap(packet_data, M_CBufGetObjectCount(toc));
+
+  CBUF_FOR_EACH(toc, entry) {
+    tocentry_t *message = (tocentry_t *)entry.obj;
+
+    M_PBufWriteUInt(packet_data, message->index);
+    M_PBufWriteUChar(packet_data, message->type);
+  }
+}
+
+static dboolean deserialize_toc(cbuf_t *toc, pbuf_t *packet_data) {
+  unsigned int toc_size = 0;
+
+  if (!M_PBufReadMap(packet_data, &toc_size)) {
+    M_PBufPrint(packet_data);
+    return false;
+  }
+
+  M_CBufClear(toc);
+  M_CBufEnsureCapacity(toc, toc_size);
+
+  for (int i = 0; i < toc_size; i++) {
+    tocentry_t *message = (tocentry_t *)M_CBufGetFirstFreeOrNewSlot(toc);
+
+    if (!M_PBufReadUInt(packet_data, &message->index))
+      return false;
+
+    if (!M_PBufReadUChar(packet_data, &message->type))
+      return false;
+  }
+
+  return true;
+}
+
+static dboolean channel_empty(netchan_t *nc) {
+  return M_CBufGetObjectCount(&nc->toc) <= 0;
+}
+
 void N_NBufInit(netbuf_t *nb) {
-  init_channel(&nb->incoming, PBUF_MODE_READ);
-  init_channel(&nb->reliable, PBUF_MODE_WRITE);
-  init_channel(&nb->unreliable, PBUF_MODE_WRITE);
+  init_channel(&nb->incoming);
+  init_channel(&nb->reliable);
+  init_channel(&nb->unreliable);
 }
 
 void N_NBufClear(netbuf_t *nb) {
@@ -96,52 +139,69 @@ dboolean N_NBufChannelEmpty(netbuf_t *nb, net_channel_e chan) {
 
   get_netchan(nc, nb, chan);
 
-  return M_PBufGetSize(&nc->toc) > 0;
+  return channel_empty(nc);
 }
 
 pbuf_t* N_NBufBeginMessage(netbuf_t *nb, net_channel_e chan, byte type) {
   netchan_t *nc = NULL;
+  tocentry_t *message = NULL;
 
   get_netchan(nc, nb, chan);
 
-  M_PBufWriteUInt(&nc->toc, M_PBufGetCursor(&nc->messages));
-  M_PBufWriteUChar(&nc->toc, type);
+  printf("Beginning %s message.\n",
+    chan == NET_CHANNEL_RELIABLE ? "reliable" : "unreliable"
+  );
+  message = M_CBufGetFirstFreeOrNewSlot(&nc->toc);
+  message->index = M_PBufGetCursor(&nc->messages);
+  message->type = type;
+
+  CBUF_FOR_EACH(&nc->toc, entry) {
+    tocentry_t *te = (tocentry_t *)entry.obj;
+
+    printf("%u: %u\n", te->index, te->type);
+  }
 
   return &nc->messages;
 }
 
 ENetPacket* N_NBufGetPacket(netbuf_t *nb, net_channel_e chan) {
   netchan_t *nc = NULL;
-  size_t header_size, toc_size, msg_size, packet_size;
+  size_t toc_size, msg_size, packet_size;
   ENetPacket *packet = NULL;
+  pbuf_t packed_toc;
 
   get_netchan(nc, nb, chan);
 
-  M_PBufClear(&nc->toc);
-  toc_size = M_PBufGetSize(&nc->toc);
-  M_PBufWriteUInt(&nc->header, toc_size);
+  M_PBufInit(&packed_toc);
+  serialize_toc(&packed_toc, &nc->toc);
 
-  header_size = M_PBufGetSize(&nc->header);
-  toc_size = M_PBufGetSize(&nc->toc);
+  toc_size = M_PBufGetSize(&packed_toc);
   msg_size = M_PBufGetSize(&nc->messages);
-  packet_size = header_size + toc_size + msg_size;
+  packet_size = toc_size + msg_size;
+
+  printf("Building %s packet (%zu/%zu, %p).\n",
+    chan == NET_CHANNEL_RELIABLE ? "reliable" : "unreliable",
+    toc_size,
+    packet_size,
+    &nc->toc
+  );
+
+  printf("TOC:\n");
+  M_PBufPrint(&packed_toc);
 
   if (chan == NET_CHANNEL_RELIABLE) {
-    size_t msg_index = header_size + toc_size;
-
     packet = enet_packet_create(NULL, packet_size, ENET_PACKET_FLAG_RELIABLE);
 
-    memcpy(packet->data, M_PBufGetData(&nc->header), header_size);
-    memcpy(packet->data + header_size, M_PBufGetData(&nc->toc), toc_size);
-    memcpy(packet->data + msg_index, M_PBufGetData(&nc->messages), msg_size);
+    // memcpy(packet->data, M_PBufGetData(&packed_toc), toc_size);
+    memset(packet->data, 5, toc_size);
+    memcpy(packet->data + toc_size, M_PBufGetData(&nc->messages), msg_size);
   }
   else if (chan == NET_CHANNEL_UNRELIABLE) {
     buf_t *buf = M_PBufGetBuffer(&nc->packet_data);
 
     M_BufferClear(buf);
     M_BufferEnsureTotalCapacity(buf, packet_size);
-    M_BufferWrite(buf, M_PBufGetData(&nc->header), header_size);
-    M_BufferWrite(buf, M_PBufGetData(&nc->toc), toc_size);
+    M_BufferWrite(buf, M_PBufGetData(&packed_toc), toc_size);
     M_BufferWrite(buf, M_PBufGetData(&nc->messages), msg_size);
 
     packet = enet_packet_create(
@@ -151,26 +211,35 @@ ENetPacket* N_NBufGetPacket(netbuf_t *nb, net_channel_e chan) {
     );
   }
 
+  printf("Packet data:\n");
+  for (int i = 0; i < MIN(64, packet->dataLength); i++)
+    printf("%X ", packet->data[i] & 0xFF);
+  printf("\n");
+
+  printf("Sending packet (packet size %zu):\n", packet->dataLength);
+
   return packet;
 }
 
 dboolean N_NBufLoadIncoming(netbuf_t *nb, unsigned char *data, size_t size) {
   netchan_t *incoming = &nb->incoming;
-  unsigned int toc_size = 0;
+  size_t toc_size = 0;
   buf_t *buf = M_PBufGetBuffer(&incoming->packet_data);
 
   M_PBufSetData(&incoming->packet_data, data, size);
 
-  if (!M_PBufReadUInt(&incoming->packet_data, &toc_size)) {
-    doom_printf("N_NBufLoadIncoming: Error reading TOC size.\n");
+  if (!deserialize_toc(&incoming->toc, &incoming->packet_data)) {
+    doom_printf("N_NBufLoadIncoming: Error reading packet's TOC.\n");
     return false;
   }
 
-  M_PBufSetData(
-    &incoming->toc, M_BufferGetData(buf) + M_BufferGetCursor(buf), toc_size
-  );
+  toc_size = M_PBufGetCursor(&incoming->packet_data);
 
-  incoming->message_index = 0;
+  M_PBufSetData(
+    &incoming->messages,
+    M_BufferGetData(buf) + toc_size,
+    M_PBufGetSize(&incoming->packet_data) - toc_size
+  );
 
   return true;
 }
@@ -178,76 +247,51 @@ dboolean N_NBufLoadIncoming(netbuf_t *nb, unsigned char *data, size_t size) {
 dboolean N_NBufLoadNextMessage(netbuf_t *nb, unsigned char *message_type) {
   netchan_t *incoming = &nb->incoming;
   buf_t *buf = M_PBufGetBuffer(&incoming->packet_data);
-  unsigned int  m_message_index = 0;
-  unsigned int  m_next_message_index = 0;
-  unsigned char m_message_type = 0;
-  size_t        message_size = 0;
+  int64_t message_size = 0;
+  unsigned int next_index = 0;
+  tocentry_t *message = NULL;
+  size_t message_count = M_CBufGetObjectCount(&incoming->toc);
 
-  if (M_PBufAtEOF(&incoming->toc))
+  if (message_count == 0)
     return false;
 
-  if (incoming->message_index == 0) {
-    if (!M_PBufReadUInt(&incoming->messages, &m_message_index)) {
-      doom_printf("N_NBufLoadNextMessage: Error reading message index.\n");
-      return false;
-    }
-  }
-  else {
-    m_message_index = incoming->message_index;
-  }
+  message = M_CBufGet(&incoming->toc, 0);
 
-  if (!M_PBufReadUChar(&incoming->toc, &m_message_type)) {
-    doom_printf("N_NBufLoadNextMessage: Error reading message type.\n");
-    return false;
-  }
+  M_CBufRemove(&incoming->toc, 0);
 
-  if (m_message_index <= incoming->message_index)
+  if (message_count > 1)
+    next_index = ((tocentry_t *)M_CBufGet(&incoming->toc, 0))->index;
+  else
+    next_index = M_PBufGetSize(&incoming->packet_data);
+
+  message_size = next_index - message->index;
+
+  if (message_size <= 0)
     return false;
 
-  if (M_PBufAtEOF(&incoming->toc)) {
-    m_next_message_index = M_PBufGetCursor(&incoming->toc);
-  }
-  else {
-    if (!M_PBufReadUInt(&incoming->toc, &m_next_message_index)) {
-      doom_printf(
-        "N_NBufLoadNextMessage: Error reading next message index.\n"
-      );
-      return false;
-    }
-  }
-
-  if (m_next_message_index <= m_message_index)
-    return false;
-
-  message_size = m_next_message_index - m_message_index;
-
-  if (!M_BufferSeek(buf, m_message_index)) {
-    doom_printf("N_NBufLoadNextMessage: Error seeking to message index.\n");
+  if (message->index >= M_BufferGetSize(buf)) {
+    doom_printf("N_NBufLoadNextMessage: Invalid message index (%u >= %zu).\n",
+      message->index,
+      M_BufferGetSize(buf)
+    );
     return false;
   }
 
   M_PBufSetData(
-    &incoming->messages,
-    M_BufferGetData(buf) + M_BufferGetCursor(buf),
-    message_size
+    &incoming->messages, M_BufferGetData(buf) + message->index, message_size
   );
-
-  incoming->message_index = m_next_message_index;
 
   return true;
 }
 
 void N_NBufFree(netbuf_t *nb) {
-  M_PBufFree(&nb->incoming.header);
-  M_PBufFree(&nb->incoming.toc);
+  M_CBufFree(&nb->incoming.toc);
   M_PBufFree(&nb->incoming.messages);
   M_PBufFree(&nb->incoming.packet_data);
-  M_PBufFree(&nb->reliable.header);
-  M_PBufFree(&nb->reliable.toc);
+  M_CBufFree(&nb->reliable.toc);
   M_PBufFree(&nb->reliable.messages);
   M_PBufFree(&nb->reliable.packet_data);
-  M_PBufFree(&nb->unreliable.header);
-  M_PBufFree(&nb->unreliable.toc);
+  M_CBufFree(&nb->unreliable.toc);
   M_PBufFree(&nb->unreliable.messages);
   M_PBufFree(&nb->unreliable.packet_data);
 }

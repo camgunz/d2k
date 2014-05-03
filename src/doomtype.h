@@ -41,8 +41,10 @@
 /* Fixed to use builtin bool type with C++. */
 #ifdef __cplusplus
 typedef bool dboolean;
-#else
+#elif !defined(HAVE_STDBOOL_H)
 typedef enum {false, true} dboolean;
+#else
+typedef int dboolean;
 #endif
 
 #ifdef uint8_t // CG
@@ -68,8 +70,13 @@ typedef unsigned char byte;
  * Except I don't know what to test as it's compiler specific
  * Proff - I fixed it */
 #ifndef _MSC_VER
+#ifdef HAVE_STDINT_H
+typedef int64_t int_64_t;
+typedef uint64_t uint_64_t;
+#else
 typedef signed long long int_64_t;
 typedef unsigned long long uint_64_t;
+#endif
 // define compiled-specific long-long contstant notation here
 #define LONGLONG(num)   (uint_64_t)num ## ll
 #else

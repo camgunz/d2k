@@ -35,7 +35,7 @@
 #include "z_zone.h"
 
 #include <enet/enet.h>
-#include <msgpack.h>
+#include "cmp.h"
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -484,10 +484,8 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
 
   while (N_NBufLoadNextMessage(&np->netbuf, &message_type)) {
 
-#if 0
     if (message_type >= 1 && message_type <= sizeof(nm_names))
       printf("Handling [%s] message.\n", nm_names[message_type - 1]);
-#endif
 
     switch (message_type) {
       case nm_setup:

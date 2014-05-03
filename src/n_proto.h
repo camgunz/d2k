@@ -101,3 +101,5 @@ void CL_SendVoteRequest(char *command);
 
 #endif
 
+/* vi: set et ts=2 sw=2: */
+

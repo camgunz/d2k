@@ -204,7 +204,7 @@ byte M_BufferPeek(buf_t *buf) {
   return *(buf->data + buf->cursor);
 }
 
-void M_BufferWrite(buf_t *buf, void *data, size_t size) {
+void M_BufferWrite(buf_t *buf, const void *data, size_t size) {
   M_BufferEnsureCapacity(buf, size);
   memcpy(buf->data + buf->cursor, data, size);
   buf->cursor += size;
@@ -560,12 +560,10 @@ void M_BufferPrint(buf_t *buf) {
     buf->cursor
   );
 
-#if 0
   for (size_t i = 0; i < MIN(64, buf->size); i++)
     printf("%X ", (unsigned char)buf->data[i]);
 
   printf("\n");
-#endif
 }
 
 /* vi: set et ts=2 sw=2: */

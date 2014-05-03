@@ -35,7 +35,7 @@
 #include "z_zone.h"
 
 #include <enet/enet.h>
-#include <msgpack.h>
+#include "cmp.h"
 
 #include "doomstat.h"
 #include "g_game.h"

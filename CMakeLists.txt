@@ -111,7 +111,6 @@ SET(CPACK_DEBIAN_PACKAGE_DEPENDS
    libfluidsynth1 (>= 1.1.5-2),
    libdumb1 (>= 1:0.9.3-5.4),
    libgl1,
-   libmsgpackc2 (>= 0.5.7-2),
    libenet1a (>= 1.3.3-2),
    bash"
 )
@@ -161,10 +160,9 @@ ENDIF()
 ##################################################### Platform Checks ##########
 #===============================================================================
 
-# CG SDL defines some of these, so they're not all strictly necessary
-
 CHECK_INCLUDE_FILES("asm/byteorder.h" HAVE_ASM_BYTEORDER_H)
 CHECK_INCLUDE_FILES("inttypes.h" HAVE_INTTYPES_H)
+CHECK_INCLUDE_FILES("stdbool.h" HAVE_STDBOOL_H)
 CHECK_INCLUDE_FILES("stdint.h" HAVE_STDINT_H)
 CHECK_INCLUDE_FILES("sys/types.h" HAVE_SYS_TYPES_H)
 CHECK_INCLUDE_FILES("sys/wait.h" HAVE_SYS_WAIT_H)
@@ -360,21 +358,15 @@ ENDIF()
 
 # SET(DEPS_PREFIX "${CMAKE_BINARY_DIR/deps}")
 # SET(ENET_FOLDER "enet-1.3.11")
-# SET(MSGPACK_FOLDER "msgpack-0.5.8")
 
 # INCLUDE_DIRECTORIES("deps/${ENET_FOLDER}/include")
-# INCLUDE_DIRECTORIES("deps/${MSGPACK_FOLDER}/src")
 # ADD_SUBDIRECTORY(deps/enet-1.3.11)
-# ADD_SUBDIRECTORY(deps/msgpack-0.5.8)
 
 #===============================================================================
 ################################################### Find Dependencies ##########
 #===============================================================================
 FIND_PACKAGE(ENet REQUIRED)
 INCLUDE_DIRECTORIES(${ENET_INCLUDE_DIR})
-
-FIND_PACKAGE(MessagePack REQUIRED)
-INCLUDE_DIRECTORIES(${MSGPACK_INCLUDE_DIR})
 
 FIND_PACKAGE(Iconv REQUIRED)
 INCLUDE_DIRECTORIES(${ICONV_INCLUDE_DIR})
@@ -591,6 +583,7 @@ FILE(GLOB MUSIC_SOURCES ${CMAKE_SOURCE_DIR}/src/MUSIC/*.c)
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src)
 SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/am_map.c
+  ${CMAKE_SOURCE_DIR}/src/cmp.c
   ${CMAKE_SOURCE_DIR}/src/d_deh.c
   ${CMAKE_SOURCE_DIR}/src/d_items.c
   ${CMAKE_SOURCE_DIR}/src/d_main.c
@@ -749,10 +742,7 @@ SET(DOOM2K_TESTING_SOURCES ${DOOM2K_CLIENT_SOURCES} ${TESTING_SOURCES})
 
 SET(DOOM2K_LIBRARIES "-lm")
 
-SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES}
-  ${ENET_LIBRARIES}
-  ${MSGPACK_LIBRARIES}
-)
+SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${ENET_LIBRARIES})
 
 IF(ICONV_STANDALONE)
   SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${ICONV_LIBRARIES})

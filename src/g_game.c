@@ -2079,7 +2079,7 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
     M_BufferReadLong(savebuffer, (int_64_t *)&save_checksum);
 
     if (save_checksum != checksum) {
-      fprintf(stderr, "bad checksum: %llu != %llu\n", checksum, save_checksum);
+      fprintf(stderr, "bad checksum: %lu != %lu\n", checksum, save_checksum);
 
       if (bail_on_errors)
         return false;

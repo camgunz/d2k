@@ -34,275 +34,58 @@
 
 #include "z_zone.h"
 
-#include <msgpack.h>
+#include "cmp.h"
 
 #include "g_game.h"
 #include "lprintf.h"
 #include "m_pbuf.h"
 
-#define DECLARE_SIGNED_TYPE(tname, ctype, name, size)                         \
-  const char *pbv_ ## tname ## _name = name;                                  \
-  int64_t     pbv_ ## tname ## _size_limit_low = -(size);                     \
-  int64_t     pbv_ ## tname ## _size_limit_high = (size >> 1);                \
-  static const char* pbv_ ## tname ## _get_size_limit_range(void) {           \
-    static char buf[50];                                                      \
-    snprintf(buf, sizeof(buf), "%" PRId64 " <==> %" PRId64,                   \
-      pbv_ ## tname ## _size_limit_low,                                       \
-      pbv_ ## tname ## _size_limit_high                                       \
-    );                                                                        \
-    return buf;                                                               \
-  }                                                                           \
-  static dboolean pbv_ ## tname ## _type(msgpack_object *o) {                 \
-    return ((o->type == MSGPACK_OBJECT_POSITIVE_INTEGER) ||                   \
-            (o->type == MSGPACK_OBJECT_NEGATIVE_INTEGER));                    \
-  }                                                                           \
-  static dboolean pbv_ ## tname ## _size(msgpack_object *o) {                 \
-    return pbv_ ## tname ## _size_limit_low <=                                \
-           o->via.i64 <=                                                      \
-           pbv_ ## tname ## _size_limit_high;                                 \
-  }
-
-#define DECLARE_UNSIGNED_TYPE(tname, ctype, name, size)                       \
-  const char *pbv_ ## tname ## _name = name;                                  \
-  uint64_t    pbv_ ## tname ## _size_limit_low = 0;                           \
-  uint64_t    pbv_ ## tname ## _size_limit_high = size;                       \
-  static const char* pbv_ ## tname ## _get_size_limit_range(void) {           \
-    static char buf[50];                                                      \
-    snprintf(buf, sizeof(buf), "%" PRIu64 " <==> %" PRIu64,                   \
-      pbv_ ## tname ## _size_limit_low,                                       \
-      pbv_ ## tname ## _size_limit_high                                       \
-    );                                                                        \
-    return buf;                                                               \
-  }                                                                           \
-  static dboolean pbv_ ## tname ## _type(msgpack_object *o) {                 \
-    return o->type == MSGPACK_OBJECT_POSITIVE_INTEGER;                        \
-  }                                                                           \
-  static dboolean pbv_ ## tname ## _size(msgpack_object *o) {                 \
-    return pbv_ ## tname ## _size_limit_low <=                                \
-           o->via.u64 <=                                                      \
-           pbv_ ## tname ## _size_limit_high;                                 \
-  }
-
-#define DECLARE_TYPE(tname, name, mp_type)                                    \
-  const char *pbv_ ## tname ## _name = name;                                  \
-  const char *pbv_ ## tname ## _size_limit = 0;                               \
-  char        pbv_ ## tname ## _size_limit_low = 0;                           \
-  char        pbv_ ## tname ## _size_limit_high = 0;                          \
-  static const char* pbv_ ## tname ## _get_size_limit_range(void) {           \
-    return "0 <==> 0";                                                        \
-  }                                                                           \
-  static dboolean pbv_ ## tname ## _type(msgpack_object *o) {                 \
-    return o->type == MSGPACK_OBJECT_ ## mp_type;                             \
-  }                                                                           \
-  static dboolean pbv_ ## tname ## _size(msgpack_object *o) {                 \
-    return true;                                                              \
-  }
-
-#define unpack(pbuf)                                                          \
-  if (!msgpack_unpacker_next(pbuf->unpacker, pbuf->result)) {                 \
-    doom_printf("%s: Unpacking error\n", __func__);                           \
-    return false;                                                             \
-  }
-
-#define validate_type(obj, type)                                              \
-  if (!(pbv_ ## type ## _type((obj)))) {                                      \
-    doom_printf("%s: Invalid message: object is not %s.\n",                   \
-      __func__, pbv_ ## type ## _name                                         \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define validate_size(obj, type)                                              \
-  if (!(pbv_ ## type ## _size((obj)))) {                                      \
-    doom_printf("%s: Invalid message: object is too large (%s)\n",            \
-      __func__, pbv_ ## type ## _get_size_limit_range()                       \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define validate_range(obj, type, min, max)                                   \
-  if (!(pbv_ ## type ## _range((obj), (min), (max)))) {                       \
-    doom_printf("%s: Invalid message: %s is out of range (%s, %s)\n",         \
-      __func__, #min, #max                                                    \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define validate_array_size(arr, asize)                                       \
-  if (arr.size > asize) {                                                     \
-    doom_printf("%s: Invalid message: Array too large (%u > %u)\n",           \
-      __func__, arr.size, asize                                               \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define validate_type_and_size(object, type)                                  \
-  validate_type(object, type)                                                 \
-  validate_size(object, type)
-
-#define unpack_and_validate(pbuf, object, type)                               \
-  unpack(pbuf);                                                               \
-  object = &pbuf->result->data;                                               \
-  validate_type_and_size(object, type)
-
-#define unpack_and_validate_range(pbuf, object, type, min, max)               \
-  unpack_and_validate(pbuf, type)                                             \
-  validate_range(object, type, min, max)
-
-DECLARE_SIGNED_TYPE(char, char, "a char", 0xFF);
-DECLARE_UNSIGNED_TYPE(uchar, unsigned char, "an unsigned char", 0xFF);
-DECLARE_SIGNED_TYPE(short, short, "a short", 0xFFFF);
-DECLARE_UNSIGNED_TYPE(ushort, unsigned short, "an unsigned short", 0xFFFF);
-DECLARE_SIGNED_TYPE(int, int, "an int", 0xFFFFFFFF);
-DECLARE_UNSIGNED_TYPE(uint, unsigned int, "an unsigned int", 0xFFFFFFFF);
-DECLARE_SIGNED_TYPE(long, int_64_t, "a long", 0xFFFFFFFFFFFFFFFF);
-DECLARE_SIGNED_TYPE(ulong, uint_64_t, "an unsigned long", 0xFFFFFFFFFFFFFFFF);
-DECLARE_TYPE(double, "a double", DOUBLE);
-DECLARE_TYPE(null, "a NULL value", NIL);
-DECLARE_TYPE(boolean, "a boolean", BOOLEAN);
-DECLARE_TYPE(raw, "raw bytes", RAW);
-DECLARE_TYPE(array, "an array", ARRAY);
-DECLARE_TYPE(map, "a map", MAP);
-
-#define READ_ONLY(pbuf)                                                       \
-  if (pbuf->mode != PBUF_MODE_READ)                                           \
-    I_Error("%s: Packed buffer is not in read mode.\n", __func__)
-
-#define WRITE_ONLY(pbuf)                                                      \
-  if (pbuf->mode != PBUF_MODE_WRITE)                                          \
-    I_Error("%s: Packed buffer is not in write mode.\n", __func__)
-
-#define CHECK_MODE(mode)                                                      \
-  if (mode != PBUF_MODE_READ && mode != PBUF_MODE_WRITE)                      \
-    I_Error("%s: Invalid mode %d.\n", __func__, mode)
-
-#define UNPACK(pbuf, type)                                                    \
-  msgpack_object *obj = NULL;                                                 \
-  READ_ONLY(pbuf);                                                            \
-  unpack_and_validate(pbuf, obj, type)
-
-void d2k_shut_up_clang(void) {
-  pbv_null_type(NULL);
-  pbv_null_size(NULL);
-  pbv_null_get_size_limit_range();
+static bool buf_read(cmp_ctx_t *ctx, void *data, size_t limit) {
+  return M_BufferRead((buf_t *)ctx->buf, data, limit);
 }
 
-static int buf_write(void *data, const char *buf, unsigned int len) {
-  M_BufferWrite((buf_t *)data, (char *)buf, len);
+static size_t buf_write(cmp_ctx_t *ctx, const void *data, size_t count) {
+  M_BufferWrite((buf_t *)ctx->buf, (const char *)data, count);
 
-  return 0;
+  return count;
 }
 
-void M_PBufInit(pbuf_t *pbuf, pbuf_mode_t mode) {
-  CHECK_MODE(mode);
-
-  if (mode == PBUF_MODE_READ) {
-    pbuf->packer = msgpack_packer_new((void *)&pbuf->buf, buf_write);
-
-    if (pbuf->packer == NULL)
-      I_Error("M_PBufInit: Error initializing packed buffer's packer.");
-
-    pbuf->unpacker = msgpack_unpacker_new(MSGPACK_UNPACKER_INIT_BUFFER_SIZE);
-
-    if (pbuf->unpacker == NULL)
-      I_Error("M_PBufInit: Error initializing packed buffer's unpacker.");
-
-    pbuf->result = calloc(1, sizeof(msgpack_unpacked));
-    msgpack_unpacked_init(pbuf->result);
-  }
-  else if (mode == PBUF_MODE_WRITE) {
-    M_BufferInit(&pbuf->buf);
-  }
-  else {
-    I_Error("Invalid mode %d.\n", mode);
-  }
-
-  pbuf->mode = mode;
+void M_PBufInit(pbuf_t *pbuf) {
+  M_BufferInit(&pbuf->buf);
+  cmp_init(&pbuf->cmp, &pbuf->buf, &buf_read, &buf_write);
 }
 
 void M_PBufInitWithCapacity(pbuf_t *pbuf, size_t capacity) {
   M_BufferInitWithCapacity(&pbuf->buf, capacity);
-  pbuf->mode = PBUF_MODE_WRITE;
+  cmp_init(&pbuf->cmp, &pbuf->buf, &buf_read, &buf_write);
 }
 
 size_t M_PBufGetCapacity(pbuf_t *pbuf) {
-  CHECK_MODE(pbuf->mode);
-
-  if (pbuf->mode == PBUF_MODE_READ)
-    return pbuf->unpacker->used + pbuf->unpacker->free;
-  else if (pbuf->mode == PBUF_MODE_WRITE)
-    return M_BufferGetCapacity(&pbuf->buf);
-  else
-    return 0;
+  return M_BufferGetCapacity(&pbuf->buf);
 }
 
 size_t M_PBufGetSize(pbuf_t *pbuf) {
-  CHECK_MODE(pbuf->mode);
-
-  if (pbuf->mode == PBUF_MODE_READ)
-    return pbuf->unpacker->used;
-  else if (pbuf->mode == PBUF_MODE_WRITE)
-    return M_BufferGetSize(&pbuf->buf);
-  else
-    return 0;
+  return M_BufferGetSize(&pbuf->buf);
 }
 
 size_t M_PBufGetCursor(pbuf_t *pbuf) {
-  CHECK_MODE(pbuf->mode);
-
-  if (pbuf->mode == PBUF_MODE_READ)
-    return pbuf->unpacker->parsed;
-  else if (pbuf->mode == PBUF_MODE_WRITE)
-    return M_BufferGetCursor(&pbuf->buf);
-  else
-    return 0;
+  return M_BufferGetCursor(&pbuf->buf);
 }
 
 buf_t* M_PBufGetBuffer(pbuf_t *pbuf) {
-  CHECK_MODE(pbuf->mode);
-
   return &pbuf->buf;
 }
 
 char* M_PBufGetData(pbuf_t *pbuf) {
-  CHECK_MODE(pbuf->mode);
-
-  if (pbuf->mode == PBUF_MODE_READ)
-    return msgpack_unpacker_buffer(pbuf->unpacker);
-  else if (pbuf->mode == PBUF_MODE_WRITE)
-    return M_BufferGetData(&pbuf->buf);
-  else
-    return 0;
+  return M_BufferGetData(&pbuf->buf);
 }
 
 void M_PBufEnsureCapacity(pbuf_t *pbuf, size_t capacity) {
-  CHECK_MODE(pbuf->mode);
-
-  if (pbuf->mode == PBUF_MODE_READ) {
-    if (!msgpack_unpacker_reserve_buffer(pbuf->unpacker, capacity)) {
-      I_Error(
-        "M_PBufEnsureCapacity: Error reserving packed buffer capacity.\n"
-      );
-    }
-  }
-  else if (pbuf->mode == PBUF_MODE_WRITE) {
-    M_BufferEnsureCapacity(&pbuf->buf, capacity);
-  }
+  M_BufferEnsureCapacity(&pbuf->buf, capacity);
 }
 
 void M_PBufEnsureTotalCapacity(pbuf_t *pbuf, size_t capacity) {
-  CHECK_MODE(pbuf->mode);
-
-  if (pbuf->mode == PBUF_MODE_READ) {
-    if (!msgpack_unpacker_expand_buffer(pbuf->unpacker, capacity)) {
-      I_Error(
-        "M_PBufEnsureTotalCapacity: Error expanding packed buffer capacity.\n"
-      );
-    }
-  }
-  else if (pbuf->mode == PBUF_MODE_WRITE) {
-    M_BufferEnsureTotalCapacity(&pbuf->buf, capacity);
-  }
+  M_BufferEnsureTotalCapacity(&pbuf->buf, capacity);
 }
 
 void M_PBufCopy(pbuf_t *dst, pbuf_t *src) {
@@ -310,244 +93,260 @@ void M_PBufCopy(pbuf_t *dst, pbuf_t *src) {
 }
 
 void M_PBufSetData(pbuf_t *pbuf, void *data, size_t size) {
-  CHECK_MODE(pbuf->mode);
-
-  M_PBufClear(pbuf);
-  M_PBufEnsureCapacity(pbuf, size);
-
-  if (pbuf->mode == PBUF_MODE_READ) {
-    memcpy(msgpack_unpacker_buffer(pbuf->unpacker), data, size);
-    msgpack_unpacker_buffer_consumed(pbuf->unpacker, size);
-  }
-  else {
-    M_BufferWrite(&pbuf->buf, data, size);
-  }
+  return M_BufferSetData(&pbuf->buf, data, size);
 }
 
 dboolean M_PBufSetFile(pbuf_t *pbuf, const char *filename) {
-  FILE *fp = NULL;
-  size_t size = 0;
-  size_t items_read = 0;
-  dboolean out = false;
-
-  CHECK_MODE(pbuf->mode);
-
-  if ((fp = fopen(filename, "rb")) == NULL)
-    return false;
-
-  fseek(fp, 0, SEEK_END);
-  size = ftell(fp);
-  fseek(fp, 0, SEEK_SET);
-
-  M_PBufClear(pbuf);
-  M_PBufEnsureCapacity(pbuf, size);
-
-  items_read = fread(M_PBufGetData(pbuf), sizeof(byte), size, fp);
-
-  if (items_read == size) {
-    if (pbuf->mode == PBUF_MODE_READ) {
-      msgpack_unpacker_buffer_consumed(pbuf->unpacker, size);
-    }
-    else if (pbuf->mode == PBUF_MODE_WRITE) {
-      pbuf->buf.cursor = size;
-      pbuf->buf.size = size;
-    }
-    out = true;
-  }
-  else {
-    M_PBufClear(pbuf);
-    out = false;
-  }
-
-  fclose(fp);
-
-  return out;
+  return M_BufferSetFile(&pbuf->buf, filename);
 }
 
-void M_PBufWriteChar(pbuf_t *pbuf, char c) {
-  WRITE_ONLY(pbuf);
-  msgpack_pack_int8(pbuf->packer, c);
+dboolean M_PBufWriteChar(pbuf_t *pbuf, char c) {
+  return cmp_write_sint(&pbuf->cmp, c);
 }
 
-void M_PBufWriteCharArray(pbuf_t *pbuf, buf_t *chars) {
+dboolean M_PBufWriteCharArray(pbuf_t *pbuf, buf_t *chars) {
   size_t count = M_BufferGetSize(chars) / sizeof(char);
 
-  M_PBufWriteArray(pbuf, count);
+  if (!M_PBufWriteArray(pbuf, count))
+    return false;
 
-  for (int i = 0; i < count; i++)
-    M_PBufWriteChar(pbuf, ((char *)chars->data)[i]);
+  for (int i = 0; i < count; i++) {
+    if (!M_PBufWriteChar(pbuf, ((char *)chars->data)[i]))
+      return false;
+  }
+
+  return true;
 }
 
-void M_PBufWriteUChar(pbuf_t *pbuf, unsigned char c) {
-  WRITE_ONLY(pbuf);
-  msgpack_pack_uint8(pbuf->packer, c);
+dboolean M_PBufWriteUChar(pbuf_t *pbuf, unsigned char c) {
+  return cmp_write_uint(&pbuf->cmp, c);
 }
 
-void M_PBufWriteUCharArray(pbuf_t *pbuf, buf_t *uchars) {
+dboolean M_PBufWriteUCharArray(pbuf_t *pbuf, buf_t *uchars) {
   size_t count = M_BufferGetSize(uchars) / sizeof(unsigned char);
 
-  M_PBufWriteArray(pbuf, count);
+  if (!M_PBufWriteArray(pbuf, count))
+    return false;
 
-  for (int i = 0; i < count; i++)
-    M_PBufWriteUChar(pbuf, ((unsigned char *)uchars->data)[i]);
+  for (int i = 0; i < count; i++) {
+    if (!M_PBufWriteUChar(pbuf, ((unsigned char *)uchars->data)[i]))
+      return false;
+  }
+
+  return true;
 }
 
-void M_PBufWriteShort(pbuf_t *pbuf, short s) {
-  WRITE_ONLY(pbuf);
-  msgpack_pack_int16(pbuf->packer, s);
+dboolean M_PBufWriteShort(pbuf_t *pbuf, short s) {
+  return cmp_write_sint(&pbuf->cmp, s);
 }
 
-void M_PBufWriteShortArray(pbuf_t *pbuf, buf_t *shorts) {
+dboolean M_PBufWriteShortArray(pbuf_t *pbuf, buf_t *shorts) {
   size_t count = M_BufferGetSize(shorts) / sizeof(short);
 
-  M_PBufWriteArray(pbuf, count);
+  if (!M_PBufWriteArray(pbuf, count))
+    return false;
 
-  for (int i = 0; i < count; i++)
-    M_PBufWriteShort(pbuf, ((short *)shorts->data)[i]);
+  for (int i = 0; i < count; i++) {
+    if (!M_PBufWriteShort(pbuf, ((short *)shorts->data)[i]))
+      return false;
+  }
+
+  return true;
 }
 
-void M_PBufWriteUShort(pbuf_t *pbuf, unsigned short s) {
-  WRITE_ONLY(pbuf);
-  msgpack_pack_uint16(pbuf->packer, s);
+dboolean M_PBufWriteUShort(pbuf_t *pbuf, unsigned short s) {
+  return cmp_write_uint(&pbuf->cmp, s);
 }
 
-void M_PBufWriteUShortArray(pbuf_t *pbuf, buf_t *ushorts) {
+dboolean M_PBufWriteUShortArray(pbuf_t *pbuf, buf_t *ushorts) {
   size_t count = M_BufferGetSize(ushorts) / sizeof(unsigned short);
 
-  M_PBufWriteArray(pbuf, count);
+  if (!M_PBufWriteArray(pbuf, count))
+    return false;
 
-  for (int i = 0; i < count; i++)
-    M_PBufWriteUShort(pbuf, ((unsigned short *)ushorts->data)[i]);
+  for (int i = 0; i < count; i++) {
+    if (!M_PBufWriteUShort(pbuf, ((unsigned short *)ushorts->data)[i]))
+      return false;
+  }
+
+  return true;
 }
 
-void M_PBufWriteInt(pbuf_t *pbuf, int i) {
-  WRITE_ONLY(pbuf);
-  msgpack_pack_int32(pbuf->packer, i);
+dboolean M_PBufWriteInt(pbuf_t *pbuf, int i) {
+  return cmp_write_sint(&pbuf->cmp, i);
 }
 
-void M_PBufWriteIntArray(pbuf_t *pbuf, buf_t *ints) {
+dboolean M_PBufWriteIntArray(pbuf_t *pbuf, buf_t *ints) {
   size_t count = M_BufferGetSize(ints) / sizeof(int);
 
-  M_PBufWriteArray(pbuf, count);
+  if (!M_PBufWriteArray(pbuf, count))
+    return false;
 
-  for (int i = 0; i < count; i++)
-    M_PBufWriteInt(pbuf, ((int *)ints->data)[i]);
+  for (int i = 0; i < count; i++) {
+    if (!M_PBufWriteInt(pbuf, ((int *)ints->data)[i]))
+      return false;
+  }
+
+  return true;
 }
 
-void M_PBufWriteUInt(pbuf_t *pbuf, unsigned int i) {
-  WRITE_ONLY(pbuf);
-  msgpack_pack_uint32(pbuf->packer, i);
+dboolean M_PBufWriteUInt(pbuf_t *pbuf, unsigned int i) {
+  return cmp_write_uint(&pbuf->cmp, i);
 }
 
-void M_PBufWriteUIntArray(pbuf_t *pbuf, buf_t *uints) {
+dboolean M_PBufWriteUIntArray(pbuf_t *pbuf, buf_t *uints) {
   size_t count = M_BufferGetSize(uints) / sizeof(unsigned int);
 
-  M_PBufWriteArray(pbuf, count);
+  if (!M_PBufWriteArray(pbuf, count))
+    return false;
 
-  for (int i = 0; i < count; i++)
-    M_PBufWriteUInt(pbuf, ((unsigned int *)uints->data)[i]);
+  for (int i = 0; i < count; i++) {
+    if (!M_PBufWriteUInt(pbuf, ((unsigned int *)uints->data)[i]))
+      return false;
+  }
+
+  return true;
 }
 
-void M_PBufWriteLong(pbuf_t *pbuf, int_64_t l) {
-  WRITE_ONLY(pbuf);
-  msgpack_pack_int64(pbuf->packer, l);
+dboolean M_PBufWriteLong(pbuf_t *pbuf, int_64_t l) {
+  return cmp_write_uint(&pbuf->cmp, l);
 }
 
-void M_PBufWriteLongArray(pbuf_t *pbuf, buf_t *longs) {
+dboolean M_PBufWriteLongArray(pbuf_t *pbuf, buf_t *longs) {
   size_t count = M_BufferGetSize(longs) / sizeof(int_64_t);
 
-  M_PBufWriteArray(pbuf, count);
+  if (!M_PBufWriteArray(pbuf, count))
+    return false;
 
-  for (int i = 0; i < count; i++)
-    M_PBufWriteLong(pbuf, ((int_64_t *)longs->data)[i]);
+  for (int i = 0; i < count; i++) {
+    if (!M_PBufWriteLong(pbuf, ((int_64_t *)longs->data)[i]))
+      return false;
+  }
+
+  return true;
 }
 
-void M_PBufWriteULong(pbuf_t *pbuf, uint_64_t l) {
-  WRITE_ONLY(pbuf);
-  msgpack_pack_uint64(pbuf->packer, l);
+dboolean M_PBufWriteULong(pbuf_t *pbuf, uint_64_t l) {
+  return cmp_write_uint(&pbuf->cmp, l);
 }
 
-void M_PBufWriteULongArray(pbuf_t *pbuf, buf_t *ulongs) {
+dboolean M_PBufWriteULongArray(pbuf_t *pbuf, buf_t *ulongs) {
   size_t count = M_BufferGetSize(ulongs) / sizeof(uint_64_t);
 
-  M_PBufWriteArray(pbuf, count);
+  if (!M_PBufWriteArray(pbuf, count))
+    return false;
 
-  for (int i = 0; i < count; i++)
-    M_PBufWriteULong(pbuf, ((uint_64_t *)ulongs->data)[i]);
+  for (int i = 0; i < count; i++) {
+    if (!M_PBufWriteULong(pbuf, ((uint_64_t *)ulongs->data)[i]))
+      return false;
+  }
+
+  return true;
 }
 
-void M_PBufWriteDouble(pbuf_t *pbuf, double d) {
-  WRITE_ONLY(pbuf);
-  msgpack_pack_double(pbuf->packer, d);
+dboolean M_PBufWriteFloat(pbuf_t *pbuf, float f) {
+  return cmp_write_float(&pbuf->cmp, f);
 }
 
-void M_PBufWriteDoubleArray(pbuf_t *pbuf, buf_t *doubles) {
+dboolean M_PBufWriteFloatArray(pbuf_t *pbuf, buf_t *floats) {
+  size_t count = M_BufferGetSize(floats) / sizeof(float);
+
+  if (!M_PBufWriteArray(pbuf, count))
+    return false;
+
+  for (int i = 0; i < count; i++) {
+    if (!M_PBufWriteFloat(pbuf, ((float *)floats->data)[i]))
+      return false;
+  }
+
+  return true;
+}
+
+dboolean M_PBufWriteDouble(pbuf_t *pbuf, double d) {
+  return cmp_write_double(&pbuf->cmp, d);
+}
+
+dboolean M_PBufWriteDoubleArray(pbuf_t *pbuf, buf_t *doubles) {
   size_t count = M_BufferGetSize(doubles) / sizeof(double);
 
-  M_PBufWriteArray(pbuf, count);
+  if (!M_PBufWriteArray(pbuf, count))
+    return false;
 
-  for (int i = 0; i < count; i++)
-    M_PBufWriteDouble(pbuf, ((double *)doubles->data)[i]);
+  for (int i = 0; i < count; i++) {
+    if (!M_PBufWriteDouble(pbuf, ((double *)doubles->data)[i]))
+      return false;
+  }
+
+  return true;
 }
 
-void M_PBufWriteBool(pbuf_t *pbuf, dboolean b) {
-  WRITE_ONLY(pbuf);
-
+dboolean M_PBufWriteBool(pbuf_t *pbuf, dboolean b) {
   if (b)
-    msgpack_pack_true(pbuf->packer);
-  else
-    msgpack_pack_false(pbuf->packer);
+    return cmp_write_true(&pbuf->cmp);
+
+  return cmp_write_false(&pbuf->cmp);
 }
 
-void M_PBufWriteBoolArray(pbuf_t *pbuf, buf_t *bools) {
+dboolean M_PBufWriteBoolArray(pbuf_t *pbuf, buf_t *bools) {
   size_t count = M_BufferGetSize(bools) / sizeof(dboolean);
 
-  M_PBufWriteArray(pbuf, count);
+  if (!M_PBufWriteArray(pbuf, count))
+    return false;
 
-  for (int i = 0; i < count; i++)
-    M_PBufWriteBool(pbuf, ((dboolean *)bools->data)[i]);
+  for (int i = 0; i < count; i++) {
+    if (!M_PBufWriteBool(pbuf, ((dboolean *)bools->data)[i]))
+      return false;
+  }
+
+  return true;
 }
 
-void M_PBufWriteNil(pbuf_t *pbuf) {
-  WRITE_ONLY(pbuf);
-  msgpack_pack_nil(pbuf->packer);
+dboolean M_PBufWriteNil(pbuf_t *pbuf) {
+  return cmp_write_nil(&pbuf->cmp);
 }
 
-void M_PBufWriteArray(pbuf_t *pbuf, unsigned int array_size) {
-  WRITE_ONLY(pbuf);
-  msgpack_pack_array(pbuf->packer, array_size);
+dboolean M_PBufWriteArray(pbuf_t *pbuf, unsigned int array_size) {
+  return cmp_write_array(&pbuf->cmp, array_size);
 }
 
-void M_PBufWriteMap(pbuf_t *pbuf, unsigned int map_size) {
-  WRITE_ONLY(pbuf);
-  msgpack_pack_map(pbuf->packer, map_size);
+dboolean M_PBufWriteMap(pbuf_t *pbuf, unsigned int map_size) {
+  return cmp_write_map(&pbuf->cmp, map_size);
 }
 
-void M_PBufWriteBytes(pbuf_t *pbuf, void *data, size_t size) {
-  WRITE_ONLY(pbuf);
-  msgpack_pack_raw(pbuf->packer, size);
-  msgpack_pack_raw_body(pbuf->packer, data, size);
+dboolean M_PBufWriteBytes(pbuf_t *pbuf, const void *data, size_t size) {
+  return cmp_write_bin(&pbuf->cmp, data, size);
 }
 
-void M_PBufWriteString(pbuf_t *pbuf, char *data, size_t length) {
-  M_PBufWriteBytes(pbuf, data, length);
+dboolean M_PBufWriteString(pbuf_t *pbuf, const char *data, size_t length) {
+  return cmp_write_str(&pbuf->cmp, data, length);
 }
 
-void M_PBufWriteStringArray(pbuf_t *pbuf, obuf_t *obuf) {
-  M_PBufWriteArray(pbuf, M_OBufGetObjectCount(obuf));
+dboolean M_PBufWriteStringArray(pbuf_t *pbuf, obuf_t *obuf) {
+  if (!M_PBufWriteArray(pbuf, M_OBufGetObjectCount(obuf)))
+    return false;
 
   OBUF_FOR_EACH(obuf, entry) {
     char *s = entry.obj;
     size_t length = strlen(s);
 
-    M_PBufWriteString(pbuf, s, length);
+    if (!M_PBufWriteString(pbuf, s, length))
+      return false;
   }
+
+  return true;
 }
 
 dboolean M_PBufReadChar(pbuf_t *pbuf, char *c) {
-  UNPACK(pbuf, char);
+  int64_t value = 0;
 
-  *c = (char)obj->via.i64;
+  if (!cmp_read_sint(&pbuf->cmp, &value))
+    return false;
+
+  if (value < -128 || value > 127)
+    return false;
+
+  *c = value;
+
   return true;
 }
 
@@ -575,9 +374,16 @@ dboolean M_PBufReadCharArray(pbuf_t *pbuf, buf_t *chars, size_t limit) {
 }
 
 dboolean M_PBufReadUChar(pbuf_t *pbuf, unsigned char *c) {
-  UNPACK(pbuf, uchar);
+  uint64_t value = 0;
 
-  *c = (unsigned char)obj->via.u64;
+  if (!cmp_read_uint(&pbuf->cmp, &value))
+    return false;
+
+  if (value > 255)
+    return false;
+
+  *c = value;
+
   return true;
 }
 
@@ -605,9 +411,16 @@ dboolean M_PBufReadUCharArray(pbuf_t *pbuf, buf_t *uchars, size_t limit) {
 }
 
 dboolean M_PBufReadShort(pbuf_t *pbuf, short *s) {
-  UNPACK(pbuf, short);
+  int64_t value = 0;
 
-  *s = (short)obj->via.i64;
+  if (!cmp_read_sint(&pbuf->cmp, &value))
+    return false;
+
+  if (value < -32768 || value > 32767)
+    return false;
+
+  *s = value;
+
   return true;
 }
 
@@ -635,9 +448,16 @@ dboolean M_PBufReadShortArray(pbuf_t *pbuf, buf_t *shorts, size_t limit) {
 }
 
 dboolean M_PBufReadUShort(pbuf_t *pbuf, unsigned short *s) {
-  UNPACK(pbuf, ushort);
+  uint64_t value = 0;
 
-  *s = (unsigned short)obj->via.u64;
+  if (!cmp_read_uint(&pbuf->cmp, &value))
+    return false;
+
+  if (value > 65535)
+    return false;
+
+  *s = value;
+
   return true;
 }
 
@@ -665,9 +485,16 @@ dboolean M_PBufReadUShortArray(pbuf_t *pbuf, buf_t *ushorts, size_t limit) {
 }
 
 dboolean M_PBufReadInt(pbuf_t *pbuf, int *i) {
-  UNPACK(pbuf, int);
+  int64_t value = 0;
 
-  *i = (int)obj->via.i64;
+  if (!cmp_read_sint(&pbuf->cmp, &value))
+    return false;
+
+  if (value < -2147483648 || value > 2147483647)
+    return false;
+
+  *i = value;
+
   return true;
 }
 
@@ -695,9 +522,16 @@ dboolean M_PBufReadIntArray(pbuf_t *pbuf, buf_t *ints, size_t limit) {
 }
 
 dboolean M_PBufReadUInt(pbuf_t *pbuf, unsigned int *i) {
-  UNPACK(pbuf, uint);
+  uint64_t value = 0;
 
-  *i = (unsigned int)obj->via.u64;
+  if (!cmp_read_uint(&pbuf->cmp, &value))
+    return false;
+
+  if (value > 4294967295)
+    return false;
+
+  *i = value;
+
   return true;
 }
 
@@ -725,10 +559,7 @@ dboolean M_PBufReadUIntArray(pbuf_t *pbuf, buf_t *uints, size_t limit) {
 }
 
 dboolean M_PBufReadLong(pbuf_t *pbuf, int_64_t *l) {
-  UNPACK(pbuf, long);
-
-  *l = obj->via.i64;
-  return true;
+  return cmp_read_sint(&pbuf->cmp, l);
 }
 
 dboolean M_PBufReadLongArray(pbuf_t *pbuf, buf_t *longs, size_t limit) {
@@ -755,10 +586,7 @@ dboolean M_PBufReadLongArray(pbuf_t *pbuf, buf_t *longs, size_t limit) {
 }
 
 dboolean M_PBufReadULong(pbuf_t *pbuf, uint_64_t *l) {
-  UNPACK(pbuf, ulong);
-
-  *l = obj->via.u64;
-  return true;
+  return cmp_read_uint(&pbuf->cmp, l);
 }
 
 dboolean M_PBufReadULongArray(pbuf_t *pbuf, buf_t *ulongs, size_t limit) {
@@ -784,11 +612,35 @@ dboolean M_PBufReadULongArray(pbuf_t *pbuf, buf_t *ulongs, size_t limit) {
   return true;
 }
 
-dboolean M_PBufReadDouble(pbuf_t *pbuf, double *d) {
-  UNPACK(pbuf, double);
+dboolean M_PBufReadFloat(pbuf_t *pbuf, float *f) {
+  return cmp_read_float(&pbuf->cmp, f);
+}
 
-  *d = obj->via.dec;
+dboolean M_PBufReadFloatArray(pbuf_t *pbuf, buf_t *floats, size_t limit) {
+  float f = 0.0f;
+  unsigned int array_size = 0;
+
+  if (!M_PBufReadArray(pbuf, &array_size))
+    return false;
+
+  if (array_size > limit)
+    return false;
+
+  M_BufferClear(floats);
+  M_BufferEnsureTotalCapacity(floats, array_size * sizeof(float));
+
+  while (array_size--) {
+    if (!M_PBufReadFloat(pbuf, &f))
+      return false;
+
+    M_BufferWriteFloat(floats, f);
+  }
+
   return true;
+}
+
+dboolean M_PBufReadDouble(pbuf_t *pbuf, double *d) {
+  return cmp_read_double(&pbuf->cmp, d);
 }
 
 dboolean M_PBufReadDoubleArray(pbuf_t *pbuf, buf_t *doubles, size_t limit) {
@@ -815,9 +667,12 @@ dboolean M_PBufReadDoubleArray(pbuf_t *pbuf, buf_t *doubles, size_t limit) {
 }
 
 dboolean M_PBufReadBool(pbuf_t *pbuf, dboolean *b) {
-  UNPACK(pbuf, boolean);
+  cmp_object_t obj;
 
-  if (obj->via.boolean)
+  if (!cmp_read_object(&pbuf->cmp, &obj))
+    return false;
+
+  if (obj.as.boolean)
     *b = true;
   else
     *b = false;
@@ -849,62 +704,61 @@ dboolean M_PBufReadBoolArray(pbuf_t *pbuf, buf_t *bools, size_t limit) {
 }
 
 dboolean M_PBufReadNil(pbuf_t *pbuf) {
-  UNPACK(pbuf, null);
-
-  return true;
+  return cmp_read_nil(&pbuf->cmp);
 }
 
 dboolean M_PBufReadArray(pbuf_t *pbuf, unsigned int *array_size) {
-  UNPACK(pbuf, array);
-
-  *array_size = obj->via.array.size;
-  return true;
+  return cmp_read_array(&pbuf->cmp, array_size);
 }
 
 dboolean M_PBufReadMap(pbuf_t *pbuf, unsigned int *map_size) {
-  UNPACK(pbuf, map);
-
-  *map_size = obj->via.map.size;
-  return true;
+  return cmp_read_map(&pbuf->cmp, map_size);
 }
 
 dboolean M_PBufReadBytes(pbuf_t *pbuf, buf_t *buf) {
-  UNPACK(pbuf, raw);
+  cmp_object_t obj;
 
-  if ((size_t)obj->via.raw.size > 0x00FFFFFF) { /* CG: 16MB */
-    doom_printf("M_PBufReadString: String too long.\n");
+  if (!cmp_read_object(&pbuf->cmp, &obj))
+    return false;
+
+  /*
+   * CG: This is a hack to prevent overallocating like crazy: limit the size to
+   *     16MB
+   */
+  if (obj.as.bin_size > 0x00FFFFFF) {
+    doom_printf("M_PBufReadBytes: Attempted to read more than 16MB.\n");
     return false;
   }
 
-  M_BufferSetData(
-    &pbuf->buf, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size
-  );
+  M_BufferWrite(buf, M_PBufGetData(pbuf), obj.as.bin_size);
 
   return true;
 }
 
 dboolean M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit) {
-  UNPACK(pbuf, raw);
+  cmp_object_t obj;
 
-  if ((size_t)obj->via.raw.size > limit) {
+  if (!cmp_read_object(&pbuf->cmp, &obj))
+    return false;
+
+  if (obj.as.str_size > limit) {
     doom_printf("M_PBufReadString: String too long.\n");
     return false;
   }
 
-  M_BufferSetData(
-    &pbuf->buf, (char *)obj->via.raw.ptr, (size_t)obj->via.raw.size
-  );
+  M_BufferWrite(buf, M_PBufGetData(pbuf), obj.as.str_size);
   M_BufferWriteUChar(buf, 0);
+
   return true;
 }
 
 dboolean M_PBufReadStringArray(pbuf_t *pbuf, obuf_t *obuf,
                                              size_t string_count_limit,
                                              size_t string_size_limit) {
-  size_t string_count = 0;
-  UNPACK(pbuf, array);
+  uint32_t string_count = 0;
 
-  string_count = obj->via.array.size;
+  if (!M_PBufReadArray(pbuf, &string_count))
+    return false;
 
   if (string_count > string_count_limit) {
     doom_printf("M_PBufReadStringArray: Too many strings.\n");
@@ -923,27 +777,6 @@ dboolean M_PBufReadStringArray(pbuf_t *pbuf, obuf_t *obuf,
     M_OBufAppend(obuf, buf);
   }
 
-#if 0
-  for (int i = 0; i < string_count; i++) {
-    char *s = NULL;
-    msgpack_object *ps = obj->via.array.ptr + i;
-
-    validate_type(ps, raw);
-    if (ps->via.raw.size > string_size_limit) {
-      doom_printf("M_PBufReadStringArray: String too long.\n");
-      return false;
-    }
-
-    buf_entry = calloc(ps->via.raw.size + 1, sizeof(char));
-
-    if (buf_entry == NULL)
-      I_Error("M_PBufReadStringArray: calloc returned NULL.\n");
-
-    memcpy(s, ps->via.raw.ptr, ps->via.raw.size);
-    M_OBufAppend(obuf, buf_entry);
-  }
-#endif
-
   return true;
 }
 
@@ -952,52 +785,24 @@ dboolean M_PBufAtEOF(pbuf_t *pbuf) {
 }
 
 void M_PBufCompact(pbuf_t *pbuf) {
-  CHECK_MODE(pbuf->mode);
-
-  /* CG: This is a no-op in READ mode. */
-
-  if (pbuf->mode == PBUF_MODE_WRITE)
-    M_BufferCompact(&pbuf->buf);
-}
-
-void M_PBufZero(pbuf_t *pbuf) {
-  CHECK_MODE(pbuf->mode);
-
-  if (pbuf->mode == PBUF_MODE_READ) {
-    msgpack_unpacker_reset_zone(pbuf->unpacker);
-    msgpack_unpacked_init(pbuf->result);
-  }
-  else if (pbuf->mode == PBUF_MODE_WRITE) {
-    M_BufferZero(&pbuf->buf);
-  }
+  M_BufferCompact(&pbuf->buf);
 }
 
 void M_PBufClear(pbuf_t *pbuf) {
-  CHECK_MODE(pbuf->mode);
-
-  if (pbuf->mode == PBUF_MODE_READ) {
-    msgpack_unpacker_reset(pbuf->unpacker);
-    msgpack_unpacked_destroy(pbuf->result);
-  }
-  else if (pbuf->mode == PBUF_MODE_WRITE) {
-    M_BufferClear(&pbuf->buf);
-  }
+  M_BufferClear(&pbuf->buf);
 }
 
 void M_PBufFree(pbuf_t *pbuf) {
-  CHECK_MODE(pbuf->mode);
+  M_BufferFree(&pbuf->buf);
+}
 
-  if (pbuf->mode == PBUF_MODE_READ) {
-    msgpack_unpacker_free(pbuf->unpacker);
-    pbuf->unpacker = NULL;
+void M_PBufPrint(pbuf_t *pbuf) {
+  char *data = M_PBufGetData(pbuf);
 
-    msgpack_unpacked_destroy(pbuf->result);
-    free(pbuf->result);
-    pbuf->result = NULL;
-  }
-  else if (pbuf->mode == PBUF_MODE_WRITE) {
-    M_BufferFree(&pbuf->buf);
-  }
+  printf("Raw %p: [", pbuf);
+  for (int i = 0; i < MIN(64, M_PBufGetSize(pbuf)); i++)
+    printf(" %02X", data[i] & 0xFF);
+  printf(" ]\n");
 }
 
 /* vi: set et ts=2 sw=2: */

@@ -35,25 +35,12 @@
 #ifndef M_PBUF_H__
 #define M_PBUF_H__
 
-struct msgpack_packer;
-struct msgpack_unpacker;
-struct msgpack_unpacked;
-
-typedef enum {
-  PBUF_MODE_NONE,
-  PBUF_MODE_READ,
-  PBUF_MODE_WRITE
-} pbuf_mode_t;
-
 typedef struct pbuf_s {
-  pbuf_mode_t mode;
   buf_t buf;
-  struct msgpack_packer *packer;
-  struct msgpack_unpacker *unpacker;
-  struct msgpack_unpacked *result;
+  cmp_ctx_t cmp;
 } pbuf_t;
 
-void M_PBufInit(pbuf_t *pbuf, pbuf_mode_t mode);
+void M_PBufInit(pbuf_t *pbuf);
 void M_PBufInitWithCapacity(pbuf_t *pbuf, size_t capacity);
 
 size_t M_PBufGetCapacity(pbuf_t *pbuf);
@@ -69,32 +56,32 @@ void     M_PBufCopy(pbuf_t *dst, pbuf_t *src);
 void     M_PBufSetData(pbuf_t *pbuf, void *data, size_t size);
 dboolean M_PBufSetFile(pbuf_t *pbuf, const char *filename);
 
-void M_PBufWriteChar(pbuf_t *pbuf, char c);
-void M_PBufWriteCharArray(pbuf_t *pbuf, buf_t *chars);
-void M_PBufWriteUChar(pbuf_t *pbuf, unsigned char c);
-void M_PBufWriteUCharArray(pbuf_t *pbuf, buf_t *uchars);
-void M_PBufWriteShort(pbuf_t *pbuf, short s);
-void M_PBufWriteShortArray(pbuf_t *pbuf, buf_t *shorts);
-void M_PBufWriteUShort(pbuf_t *pbuf, unsigned short s);
-void M_PBufWriteUShortArray(pbuf_t *pbuf, buf_t *ushorts);
-void M_PBufWriteInt(pbuf_t *pbuf, int i);
-void M_PBufWriteIntArray(pbuf_t *pbuf, buf_t *ints);
-void M_PBufWriteUInt(pbuf_t *pbuf, unsigned int i);
-void M_PBufWriteUIntArray(pbuf_t *pbuf, buf_t *uints);
-void M_PBufWriteLong(pbuf_t *pbuf, int_64_t l);
-void M_PBufWriteLongArray(pbuf_t *pbuf, buf_t *longs);
-void M_PBufWriteULong(pbuf_t *pbuf, uint_64_t l);
-void M_PBufWriteULongArray(pbuf_t *pbuf, buf_t *ulongs);
-void M_PBufWriteDouble(pbuf_t *pbuf, double d);
-void M_PBufWriteDoubleArray(pbuf_t *pbuf, buf_t *doubles);
-void M_PBufWriteBool(pbuf_t *pbuf, dboolean b);
-void M_PBufWriteBoolArray(pbuf_t *pbuf, buf_t *bools);
-void M_PBufWriteNil(pbuf_t *pbuf);
-void M_PBufWriteArray(pbuf_t *pbuf, unsigned int array_size);
-void M_PBufWriteMap(pbuf_t *pbuf, unsigned int map_size);
-void M_PBufWriteBytes(pbuf_t *pbuf, void *data, size_t size);
-void M_PBufWriteString(pbuf_t *pbuf, char *data, size_t length);
-void M_PBufWriteStringArray(pbuf_t *pbuf, obuf_t *obuf);
+dboolean M_PBufWriteChar(pbuf_t *pbuf, char c);
+dboolean M_PBufWriteCharArray(pbuf_t *pbuf, buf_t *chars);
+dboolean M_PBufWriteUChar(pbuf_t *pbuf, unsigned char c);
+dboolean M_PBufWriteUCharArray(pbuf_t *pbuf, buf_t *uchars);
+dboolean M_PBufWriteShort(pbuf_t *pbuf, short s);
+dboolean M_PBufWriteShortArray(pbuf_t *pbuf, buf_t *shorts);
+dboolean M_PBufWriteUShort(pbuf_t *pbuf, unsigned short s);
+dboolean M_PBufWriteUShortArray(pbuf_t *pbuf, buf_t *ushorts);
+dboolean M_PBufWriteInt(pbuf_t *pbuf, int i);
+dboolean M_PBufWriteIntArray(pbuf_t *pbuf, buf_t *ints);
+dboolean M_PBufWriteUInt(pbuf_t *pbuf, unsigned int i);
+dboolean M_PBufWriteUIntArray(pbuf_t *pbuf, buf_t *uints);
+dboolean M_PBufWriteLong(pbuf_t *pbuf, int_64_t l);
+dboolean M_PBufWriteLongArray(pbuf_t *pbuf, buf_t *longs);
+dboolean M_PBufWriteULong(pbuf_t *pbuf, uint_64_t l);
+dboolean M_PBufWriteULongArray(pbuf_t *pbuf, buf_t *ulongs);
+dboolean M_PBufWriteDouble(pbuf_t *pbuf, double d);
+dboolean M_PBufWriteDoubleArray(pbuf_t *pbuf, buf_t *doubles);
+dboolean M_PBufWriteBool(pbuf_t *pbuf, dboolean b);
+dboolean M_PBufWriteBoolArray(pbuf_t *pbuf, buf_t *bools);
+dboolean M_PBufWriteNil(pbuf_t *pbuf);
+dboolean M_PBufWriteArray(pbuf_t *pbuf, unsigned int array_size);
+dboolean M_PBufWriteMap(pbuf_t *pbuf, unsigned int map_size);
+dboolean M_PBufWriteBytes(pbuf_t *pbuf, const void *data, size_t size);
+dboolean M_PBufWriteString(pbuf_t *pbuf, const char *data, size_t length);
+dboolean M_PBufWriteStringArray(pbuf_t *pbuf, obuf_t *obuf);
 
 dboolean M_PBufReadChar(pbuf_t *pbuf, char *c);
 dboolean M_PBufReadCharArray(pbuf_t *pbuf, buf_t *chars, size_t limit);
@@ -132,6 +119,8 @@ void M_PBufCompact(pbuf_t *pbuf);
 void M_PBufZero(pbuf_t *pbuf);
 void M_PBufClear(pbuf_t *pbuf);
 void M_PBufFree(pbuf_t *pbuf);
+
+void M_PBufPrint(pbuf_t *pbuf);
 
 #endif
 

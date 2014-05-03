@@ -36,11 +36,9 @@
 #define N_BUF_H__
 
 typedef struct netchan_s {
-  pbuf_t header;
-  pbuf_t toc;
+  cbuf_t toc;
   pbuf_t messages;
   pbuf_t packet_data;
-  unsigned int message_index;
 } netchan_t;
 
 typedef struct netbuf_s {

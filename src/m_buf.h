@@ -66,7 +66,7 @@ dboolean M_BufferSeekBackward(buf_t *buf, size_t count);
 dboolean M_BufferSeekForward(buf_t *buf, size_t count);
 byte     M_BufferPeek(buf_t *buf);
 
-void     M_BufferWrite(buf_t *buf, void *data, size_t size);
+void     M_BufferWrite(buf_t *buf, const void *data, size_t size);
 void     M_BufferWriteBool(buf_t *buf, dboolean b);
 void     M_BufferWriteBools(buf_t *buf, dboolean *bools, size_t count);
 void     M_BufferWriteChar(buf_t *buf, char c);
