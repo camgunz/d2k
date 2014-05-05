@@ -58,7 +58,6 @@
 #include "e6y.h"
 
 #include "n_net.h"
-#include "n_buf.h"
 #include "n_main.h"
 #include "n_state.h"
 #include "n_peer.h"
@@ -129,7 +128,7 @@ static int run_commandsync_tics(int command_count) {
     run_tics(tic_count);
 
   if (CMDCLIENT && (command_count > 0)) {
-    netpeer_t *server = N_GetPeer(0);
+    netpeer_t *server = N_PeerGet(0);
 
     if (server != NULL)
       server->needs_sync_update = true;
@@ -152,15 +151,15 @@ static int run_deltasync_tics(int tic_count) {
   }
 
   if (server_needs_updating) {
-    netpeer_t *server = N_GetPeer(0);
+    netpeer_t *server = N_PeerGet(0);
 
     if (server != NULL)
       server->needs_sync_update = true;
   }
 
   if (clients_need_updating) {
-    for (int i = 0; i < N_GetPeerCount(); i++) {
-      netpeer_t *client = N_GetPeer(i);
+    for (int i = 0; i < N_PeerGetCount(); i++) {
+      netpeer_t *client = N_PeerGet(i);
 
       if (client != NULL)
         client->needs_sync_update = true;
@@ -192,8 +191,8 @@ static void setup_new_peers(void) {
   if (!SERVER)
     return;
 
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
+  for (int i = 0; i < N_PeerGetCount(); i++) {
+    netpeer_t *np = N_PeerGet(i);
 
     if (np != NULL && np->needs_setup != 0 && gametic > np->needs_setup)
       SV_SendSetup(np->playernum);
@@ -213,7 +212,7 @@ static void service_network(void) {
     N_UpdateSync();
     N_ServiceNetwork();
 
-    if (DELTASERVER && N_GetPeerCount() == 0)
+    if (DELTASERVER && N_PeerGetCount() == 0)
       N_RemoveOldStates(gametic);
   }
 }
@@ -282,7 +281,7 @@ void N_InitNetGame(void) {
 
       N_ServiceNetworkTimeout(CONNECT_TIMEOUT * 1000);
 
-      if (N_GetPeer(0) == NULL)
+      if (N_PeerGet(0) == NULL)
         I_Error("N_InitNetGame: Timed out connecting to server");
 
       N_ServiceNetworkTimeout(CONNECT_TIMEOUT * 1000);
@@ -383,7 +382,7 @@ void CL_SetAuthorizationLevel(auth_level_e level) {
 }
 
 void CL_LoadState(void) {
-  netpeer_t *server = N_GetPeer(0);
+  netpeer_t *server = N_PeerGet(0);
   game_state_delta_t *delta = NULL;
   cbuf_t *local_commands = P_GetPlayerCommands(consoleplayer);
   
@@ -445,7 +444,7 @@ void CL_RunLocalCommands(void) {
 }
 
 void CL_RemoveOldStates(void) {
-  netpeer_t *server = N_GetPeer(0);
+  netpeer_t *server = N_PeerGet(0);
 
   if (server != NULL)
     N_RemoveOldStates(server->delta.from_tic);
@@ -455,16 +454,16 @@ void CL_RemoveOldStates(void) {
 void SV_RemoveOldCommands(void) {
   int oldest_state_tic = gametic;
 
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *client = N_GetPeer(i);
+  for (int i = 0; i < N_PeerGetCount(); i++) {
+    netpeer_t *client = N_PeerGet(i);
 
     if (client != NULL && client->state_tic)
       oldest_state_tic = MIN(oldest_state_tic, client->state_tic);
   }
 
-  for (int i = 0; i < N_GetPeerCount(); i++) {
+  for (int i = 0; i < N_PeerGetCount(); i++) {
     cbuf_t *commands = NULL;
-    netpeer_t *client = N_GetPeer(i);
+    netpeer_t *client = N_PeerGet(i);
 
     if (client == NULL)
       continue;
@@ -488,8 +487,8 @@ void SV_RemoveOldCommands(void) {
 void SV_RemoveOldStates(void) {
   int oldest_state_tic = gametic;
 
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
+  for (int i = 0; i < N_PeerGetCount(); i++) {
+    netpeer_t *np = N_PeerGet(i);
 
     if (np != NULL)
       oldest_state_tic = MIN(oldest_state_tic, np->state_tic);
@@ -517,8 +516,8 @@ void N_TryRunTics(void) {
   if ((!MULTINET) && (!render_fast) && (tics_elapsed <= 0))
     I_uSleep(ms_to_next_tick * 1000);
 
-  if (CLIENT && N_GetPeer(0) != NULL) {
-    netpeer_t *s = N_GetPeer(0);
+  if (CLIENT && N_PeerGet(0) != NULL) {
+    netpeer_t *s = N_PeerGet(0);
 
     printf("\n=== Starting new loop (%d/%d)\n", s->state_tic, s->command_tic);
   }
@@ -540,7 +539,7 @@ void N_TryRunTics(void) {
 
   service_network();
 
-  if (CLIENT && gametic > 0 && N_GetPeer(0) == NULL)
+  if (CLIENT && gametic > 0 && N_PeerGet(0) == NULL)
     I_Error("Server disconnected.\n");
 
   if (render_fast)

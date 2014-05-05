@@ -47,7 +47,6 @@
 #include "w_wad.h"
 
 #include "n_net.h"
-#include "n_buf.h"
 #include "n_main.h"
 #include "n_state.h"
 #include "n_peer.h"
@@ -223,8 +222,8 @@
   }
 
 #define pack_player_preference_change(pbuf, gametic, playernum, pn, pnsz)     \
-  pbuf_t *pbuf = N_NBufBeginMessage(                                          \
-    &np->netbuf, NET_CHANNEL_RELIABLE, nm_playerpreferencechange              \
+  pbuf_t *pbuf = N_PeerBeginMessage(                                          \
+    np->peernum, NET_CHANNEL_RELIABLE, nm_playerpreferencechange              \
   );                                                                          \
   M_PBufWriteInt(pbuf, gametic);                                              \
   M_PBufWriteShort(pbuf, playernum);                                          \
@@ -292,7 +291,7 @@ void N_PackSetup(netpeer_t *np) {
     }
   }
 
-  pbuf = N_NBufBeginMessage(&np->netbuf, NET_CHANNEL_RELIABLE, nm_setup);
+  pbuf = N_PeerBeginMessage(np->peernum, NET_CHANNEL_RELIABLE, nm_setup);
   M_PBufWriteInt(pbuf, netsync);
   M_PBufWriteUShort(pbuf, player_count);
   M_PBufWriteShort(pbuf, np->playernum);
@@ -310,7 +309,7 @@ void N_PackSetup(netpeer_t *np) {
 dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
                                       unsigned short *player_count,
                                       short *playernum) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
   int m_sync_type = 0;
   unsigned short m_player_count = 0;
   short m_playernum = 0;
@@ -362,8 +361,8 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
 }
 
 void N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level) {
-  pbuf_t *pbuf = N_NBufBeginMessage(
-    &np->netbuf, NET_CHANNEL_RELIABLE, nm_authresponse
+  pbuf_t *pbuf = N_PeerBeginMessage(
+    np->peernum, NET_CHANNEL_RELIABLE, nm_authresponse
   );
   printf("Packing auth response\n");
 
@@ -371,7 +370,7 @@ void N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level) {
 }
 
 dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
   unsigned char m_auth_level = 0;
 
   read_ranged_uchar(
@@ -404,8 +403,8 @@ dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
 }
 
 void N_PackServerMessage(netpeer_t *np, char *message) {
-  pbuf_t *pbuf = N_NBufBeginMessage(
-    &np->netbuf, NET_CHANNEL_RELIABLE, nm_servermessage
+  pbuf_t *pbuf = N_PeerBeginMessage(
+    np->peernum, NET_CHANNEL_RELIABLE, nm_servermessage
   );
 
   printf("Packing server message\n");
@@ -413,7 +412,7 @@ void N_PackServerMessage(netpeer_t *np, char *message) {
 }
 
 dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
 
   read_string(pbuf, buf, "server message content", MAX_SERVER_MESSAGE_SIZE);
 
@@ -421,8 +420,8 @@ dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf) {
 }
 
 void N_PackSync(netpeer_t *np) {
-  pbuf_t *pbuf = N_NBufBeginMessage(
-    &np->netbuf, NET_CHANNEL_UNRELIABLE, nm_sync
+  pbuf_t *pbuf = N_PeerBeginMessage(
+    np->peernum, NET_CHANNEL_UNRELIABLE, nm_sync
   );
   unsigned short player_count = 0;
 
@@ -434,8 +433,8 @@ void N_PackSync(netpeer_t *np) {
   M_PBufWriteInt(pbuf, np->state_tic);
 
   if (SERVER) {
-    for (int i = 0; i < N_GetPeerCount(); i++) {
-      if (N_GetPeer(i) != NULL) {
+    for (int i = 0; i < N_PeerGetCount(); i++) {
+      if (N_PeerGet(i) != NULL) {
         player_count++;
       }
     }
@@ -447,11 +446,11 @@ void N_PackSync(netpeer_t *np) {
   M_PBufWriteUShort(pbuf, player_count);
 
   if (SERVER) {
-    for (int i = 0; i < N_GetPeerCount(); i++) {
-      netpeer_t *snp = N_GetPeer(i);
+    for (int i = 0; i < N_PeerGetCount(); i++) {
+      netpeer_t *cnp = N_PeerGet(i);
 
-      if (snp != NULL)
-        pack_commands(pbuf, np, snp->playernum);
+      if (cnp != NULL)
+        pack_commands(pbuf, np, cnp->playernum);
     }
   }
   else {
@@ -460,7 +459,7 @@ void N_PackSync(netpeer_t *np) {
 }
 
 dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
   unsigned short m_player_count = 0;
   int m_state_tic = -1;
   int m_command_tic = np->command_tic;
@@ -596,8 +595,8 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
 }
 
 void N_PackDeltaSync(netpeer_t *np) {
-  pbuf_t *pbuf = N_NBufBeginMessage(
-    &np->netbuf, NET_CHANNEL_UNRELIABLE, nm_sync
+  pbuf_t *pbuf = N_PeerBeginMessage(
+    np->peernum, NET_CHANNEL_UNRELIABLE, nm_sync
   );
 
   printf("(%d) Sending sync: ST/CT: (%d/%d) Delta: [%d => %d]\n",
@@ -616,7 +615,7 @@ void N_PackDeltaSync(netpeer_t *np) {
 }
 
 dboolean N_UnpackDeltaSync(netpeer_t *np) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
   int m_state_tic = 0;
   int m_command_tic = 0;
   int m_delta_from_tic = 0;
@@ -652,8 +651,8 @@ dboolean N_UnpackDeltaSync(netpeer_t *np) {
 
 void N_PackPlayerMessage(netpeer_t *np, short sender, buf_t *recipients,
                                         char *message) {
-  pbuf_t *pbuf = N_NBufBeginMessage(
-    &np->netbuf, NET_CHANNEL_RELIABLE, nm_playermessage
+  pbuf_t *pbuf = N_PeerBeginMessage(
+    np->peernum, NET_CHANNEL_RELIABLE, nm_playermessage
   );
 
   M_PBufWriteUShort(pbuf, sender);
@@ -665,7 +664,7 @@ void N_PackPlayerMessage(netpeer_t *np, short sender, buf_t *recipients,
 
 dboolean N_UnpackPlayerMessage(netpeer_t *np, short *sender, buf_t *recipients,
                                               buf_t *buf) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
   short m_sender = 0;
 
   read_player(pbuf, m_sender);
@@ -680,7 +679,7 @@ dboolean N_UnpackPlayerMessage(netpeer_t *np, short *sender, buf_t *recipients,
 dboolean N_UnpackPlayerPreferenceChange(netpeer_t *np, short *playernum,
                                                        int *tic,
                                                        unsigned int *count) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
   short m_playernum = 0;
   int m_tic = 0;
   unsigned int m_count = 0;
@@ -697,7 +696,7 @@ dboolean N_UnpackPlayerPreferenceChange(netpeer_t *np, short *playernum,
 }
 
 dboolean N_UnpackPlayerPreferenceName(netpeer_t *np, buf_t *buf) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
   
   read_string(
     pbuf, buf, "player preference name", MAX_PLAYER_PREFERENCE_NAME_SIZE
@@ -716,7 +715,7 @@ void N_PackNameChange(netpeer_t *np, short playernum, char *new_name) {
 }
 
 dboolean N_UnpackNameChange(netpeer_t *np, short *playernum, buf_t *buf) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
   short m_playernum = 0;
 
   read_player(pbuf, m_playernum);
@@ -737,7 +736,7 @@ void N_PackTeamChange(netpeer_t *np, short playernum, byte new_team) {
 }
 
 dboolean N_UnpackTeamChange(netpeer_t *np, short *playernum, byte *new_team) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
   int team_count = 0;
   short m_playernum = 0;
   byte m_new_team = 0;
@@ -777,7 +776,7 @@ void N_PackWSOPChange(netpeer_t *np, short playernum, byte new_wsop_flags) {
 
 dboolean N_UnpackWSOPChange(netpeer_t *np, short *playernum,
                                            byte *new_wsop_flags) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
   short m_playernum = 0;
   byte m_new_wsop_flags = 0;
 
@@ -804,7 +803,7 @@ void N_PackBobbingChange(netpeer_t *np, short playernum,
 
 dboolean N_UnpackBobbingChanged(netpeer_t *np, short *playernum,
                                                double *new_bobbing_amount) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
   short m_playernum = 0;
   double m_new_bobbing_amount = 0;
 
@@ -831,7 +830,7 @@ void N_PackAutoaimChange(netpeer_t *np, short playernum,
 
 dboolean N_UnpackAutoaimChange(netpeer_t *np, short *playernum,
                                               dboolean *new_autoaim_enabled) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
   short m_playernum = 0;
   dboolean m_new_autoaim_enabled = false;
 
@@ -856,7 +855,7 @@ void N_PackWeaponSpeedChange(netpeer_t *np, short playernum,
 
 dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, short *playernum,
                                                   byte *new_weapon_speed) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
   short m_playernum = 0;
   byte m_new_weapon_speed = 0;
 
@@ -883,7 +882,7 @@ void N_PackColorChange(netpeer_t *np, short playernum, byte new_red,
 dboolean N_UnpackColorChange(netpeer_t *np, short *playernum, byte *new_red,
                                                               byte *new_green,
                                                               byte *new_blue) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
   short m_playernum = 0;
   unsigned int m_new_color = 0;
 
@@ -910,7 +909,7 @@ void N_PackColorIndexChange(netpeer_t *np, short playernum,
 
 dboolean N_UnpackColorIndexChange(netpeer_t *np, short *playernum,
                                                  int *new_color_index) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
   short m_playernum = 0;
   int m_new_color_index = 0;
 
@@ -938,8 +937,8 @@ dboolean N_UnpackSkinChange(netpeer_t *np, short *playernum) {
 }
 
 void N_PackAuthRequest(netpeer_t *np, char *password) {
-  pbuf_t *pbuf = N_NBufBeginMessage(
-    &np->netbuf, NET_CHANNEL_RELIABLE, nm_authrequest
+  pbuf_t *pbuf = N_PeerBeginMessage(
+    np->peernum, NET_CHANNEL_RELIABLE, nm_authrequest
   );
 
   M_PBufWriteString(pbuf, password, strlen(password));
@@ -948,7 +947,7 @@ void N_PackAuthRequest(netpeer_t *np, char *password) {
 }
 
 dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
 
   read_string(
     pbuf, buf, "authorization request password", MAX_PASSWORD_LENGTH
@@ -958,8 +957,8 @@ dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
 }
 
 void N_PackRCONCommand(netpeer_t *np, char *command) {
-  pbuf_t *pbuf = N_NBufBeginMessage(
-    &np->netbuf, NET_CHANNEL_RELIABLE, nm_rconcommand
+  pbuf_t *pbuf = N_PeerBeginMessage(
+    np->peernum, NET_CHANNEL_RELIABLE, nm_rconcommand
   );
 
   M_PBufWriteString(pbuf, command, strlen(command));
@@ -968,7 +967,7 @@ void N_PackRCONCommand(netpeer_t *np, char *command) {
 }
 
 dboolean N_UnpackRCONCommand(netpeer_t *np, buf_t *buf) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
 
   read_string(pbuf, buf, "RCON command", MAX_COMMAND_LENGTH);
 
@@ -976,8 +975,8 @@ dboolean N_UnpackRCONCommand(netpeer_t *np, buf_t *buf) {
 }
 
 void N_PackVoteRequest(netpeer_t *np, char *command) {
-  pbuf_t *pbuf = N_NBufBeginMessage(
-    &np->netbuf, NET_CHANNEL_RELIABLE, nm_voterequest
+  pbuf_t *pbuf = N_PeerBeginMessage(
+    np->peernum, NET_CHANNEL_RELIABLE, nm_voterequest
   );
 
   M_PBufWriteString(pbuf, command, strlen(command));
@@ -986,7 +985,7 @@ void N_PackVoteRequest(netpeer_t *np, char *command) {
 }
 
 dboolean N_UnpackVoteRequest(netpeer_t *np, buf_t *buf) {
-  pbuf_t *pbuf = &np->netbuf.incoming.messages;
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
 
   read_string(pbuf, buf, "vote command", MAX_COMMAND_LENGTH);
 

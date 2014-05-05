@@ -48,6 +48,7 @@ size_t M_PBufGetSize(pbuf_t *pbuf);
 size_t M_PBufGetCursor(pbuf_t *pbuf);
 buf_t* M_PBufGetBuffer(pbuf_t *pbuf);
 char*  M_PBufGetData(pbuf_t *pbuf);
+char*  M_PBufGetDataAtCursor(pbuf_t *pbuf);
 
 void M_PBufEnsureCapacity(pbuf_t *pbuf, size_t capacity);
 void M_PBufEnsureTotalCapacity(pbuf_t *pbuf, size_t capacity);
@@ -55,6 +56,10 @@ void M_PBufEnsureTotalCapacity(pbuf_t *pbuf, size_t capacity);
 void     M_PBufCopy(pbuf_t *dst, pbuf_t *src);
 void     M_PBufSetData(pbuf_t *pbuf, void *data, size_t size);
 dboolean M_PBufSetFile(pbuf_t *pbuf, const char *filename);
+
+dboolean M_PBufSeek(pbuf_t *pbuf, size_t pos);
+dboolean M_PBufSeekBackward(pbuf_t *pbuf, size_t count);
+dboolean M_PBufSeekForward(pbuf_t *pbuf, size_t count);
 
 dboolean M_PBufWriteChar(pbuf_t *pbuf, char c);
 dboolean M_PBufWriteCharArray(pbuf_t *pbuf, buf_t *chars);

@@ -44,7 +44,6 @@
 #include "m_pbuf.h"
 
 #include "n_net.h"
-#include "n_buf.h"
 #include "n_state.h"
 #include "n_peer.h"
 

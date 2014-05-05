@@ -101,6 +101,10 @@ size_t M_BufferGetCursor(buf_t *buf) {
 }
 
 char* M_BufferGetData(buf_t *buf) {
+  return buf->data;
+}
+
+char* M_BufferGetDataAtCursor(buf_t *buf) {
   return buf->data + buf->cursor;
 }
 
@@ -203,6 +207,15 @@ dboolean M_BufferSeekForward(buf_t *buf, size_t count) {
 byte M_BufferPeek(buf_t *buf) {
   return *(buf->data + buf->cursor);
 }
+
+#include <enet/enet.h>
+#include "cmp.h"
+
+#include "d_ticcmd.h"
+#include "m_pbuf.h"
+#include "n_net.h"
+#include "n_state.h"
+#include "n_peer.h"
 
 void M_BufferWrite(buf_t *buf, const void *data, size_t size) {
   M_BufferEnsureCapacity(buf, size);
@@ -388,7 +401,7 @@ dboolean M_BufferEqualsString(buf_t *buf, const char *s) {
 }
 
 dboolean M_BufferEqualsData(buf_t *buf, const void *d, size_t size) {
-  if (buf->cursor + size >= buf->size)
+  if (buf->cursor + size > buf->size)
     return false;
 
   if (memcmp(buf->data + buf->cursor, d, size) == 0)
@@ -398,12 +411,13 @@ dboolean M_BufferEqualsData(buf_t *buf, const void *d, size_t size) {
 }
 
 dboolean M_BufferRead(buf_t *buf, void *data, size_t size) {
-  if (buf->cursor + size >= buf->size)
+  if (buf->cursor + size > buf->size)
     return false;
 
   memcpy(data, buf->data + buf->cursor, size);
 
   buf->cursor += size;
+
   return true;
 }
 
@@ -503,7 +517,7 @@ dboolean M_BufferReadStringDup(buf_t *buf, char **s) {
   char *d = buf->data + buf->cursor;
   size_t length = strlen(d);
 
-  if (buf->cursor + length >= buf->size)
+  if (buf->cursor + length > buf->size)
     return false;
 
   (*s) = strdup(buf->data + buf->cursor);
@@ -532,8 +546,8 @@ void M_BufferCompact(buf_t *buf) {
     free(buf->data);
     buf->data = new_buf;
     buf->capacity = buf->size;
-    if (buf->cursor >= buf->size)
-      buf->cursor = buf->size - 1;
+    if (buf->cursor > buf->size)
+      buf->cursor = buf->size;
   }
 }
 
@@ -560,8 +574,12 @@ void M_BufferPrint(buf_t *buf) {
     buf->cursor
   );
 
-  for (size_t i = 0; i < MIN(64, buf->size); i++)
-    printf("%X ", (unsigned char)buf->data[i]);
+  for (size_t i = 0; i < MIN(64, buf->size); i++) {
+    printf("%02X ", (unsigned char)buf->data[i]);
+
+    if ((i > 0) && (((i + 1) % 25) == 0))
+      printf("\n");
+  }
 
   printf("\n");
 }

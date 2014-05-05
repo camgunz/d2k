@@ -51,6 +51,7 @@ size_t   M_BufferGetCapacity(buf_t *buf);
 size_t   M_BufferGetSize(buf_t *buf);
 size_t   M_BufferGetCursor(buf_t *buf);
 char*    M_BufferGetData(buf_t *buf);
+char*    M_BufferGetDataAtCursor(buf_t *buf);
 
 void     M_BufferEnsureCapacity(buf_t *buf, size_t capacity);
 void     M_BufferEnsureTotalCapacity(buf_t *buf, size_t capacity);
@@ -64,6 +65,7 @@ dboolean M_BufferSetFile(buf_t *buf, const char *filename);
 dboolean M_BufferSeek(buf_t *buf, size_t pos);
 dboolean M_BufferSeekBackward(buf_t *buf, size_t count);
 dboolean M_BufferSeekForward(buf_t *buf, size_t count);
+
 byte     M_BufferPeek(buf_t *buf);
 
 void     M_BufferWrite(buf_t *buf, const void *data, size_t size);

@@ -49,7 +49,6 @@
 #include "w_wad.h"
 
 #include "n_net.h"
-#include "n_buf.h"
 #include "n_main.h"
 #include "n_state.h"
 #include "n_peer.h"
@@ -153,15 +152,15 @@ const char *D_dehout(void); /* CG: from d_main.c */
   CLIENT_ONLY(name);
 
 #define CHECK_VALID_PLAYER(np, playernum)                                     \
-  if (playernum < 0 || playernum >= MAXPLAYERS)                               \
+  if (((np) = N_PeerForPlayer(playernum)) == NULL)                            \
     I_Error("%s: Invalid player %d.\n", __func__, playernum);                 \
-  if (!playeringame[playernum])                                               \
-    I_Error("%s: Invalid player %d.\n", __func__, playernum);                 \
-  if (((np) = N_GetPeerForPlayer(playernum)) == NULL)                         \
-    I_Error("%s: Invalid player %d.\n", __func__, playernum);                 \
+  if (np->playernum < 0 || np->playernum >= MAXPLAYERS)                       \
+    I_Error("%s: Invalid player %d.\n", __func__, np->playernum);             \
+  if (!playeringame[np->playernum])                                           \
+    I_Error("%s: Invalid player %d.\n", __func__, np->playernum);
 
 #define CHECK_CONNECTION(np)                                                  \
-  if (((np) = N_GetPeer(0)) == NULL) {                                        \
+  if (((np) = N_PeerGet(0)) == NULL) {                                        \
     doom_printf("%s: Not connected\n", __func__);                             \
     return;                                                                   \
   }
@@ -204,11 +203,13 @@ buf_t* N_GetMessageRecipientBuffer(void) {
 }
 
 static void handle_setup(netpeer_t *np) {
-  netpeer_t *server = N_GetPeer(0);
+  netpeer_t *server = N_PeerGet(0);
   net_sync_type_e net_sync = NET_SYNC_TYPE_NONE;
   unsigned short player_count = 0;
   unsigned short playernum = 0;
   int i;
+
+  puts("Handling setup");
 
   if (server == NULL)
     return;
@@ -320,8 +321,8 @@ static void handle_sync(netpeer_t *np) {
 
   if (update_sync) {
     if (CMDSERVER) {
-      for (int i = 0; i < N_GetPeerCount(); i++) {
-        netpeer_t *client = N_GetPeer(i);
+      for (int i = 0; i < N_PeerGetCount(); i++) {
+        netpeer_t *client = N_PeerGet(i);
 
         if (client != NULL)
           client->needs_sync_update = true;
@@ -354,8 +355,8 @@ static void handle_player_message(netpeer_t *np) {
     return;
 
   if (SERVER) {
-    for (int i = 0; i < N_GetPeerCount(); i++) {
-      netpeer_t *np = N_GetPeer(i);
+    for (int i = 0; i < N_PeerGetCount(); i++) {
+      netpeer_t *np = N_PeerGet(i);
 
       if (np != NULL) {
         N_PackPlayerMessage(
@@ -474,15 +475,15 @@ static void handle_vote_request(netpeer_t *np) {
 }
 
 void N_HandlePacket(int peernum, void *data, size_t data_size) {
-  netpeer_t *np = N_GetPeer(peernum);
+  netpeer_t *np = N_PeerGet(peernum);
   unsigned char message_type = 0;
 
-  if (!N_NBufLoadIncoming(&np->netbuf, data, data_size)) {
+  if (!N_PeerLoadIncoming(peernum, data, data_size)) {
     doom_printf("N_HandlePacket: Ignoring packet with malformed TOC.\n");
     return;
   }
 
-  while (N_NBufLoadNextMessage(&np->netbuf, &message_type)) {
+  while (N_PeerLoadNextMessage(np->playernum, &message_type)) {
 
     if (message_type >= 1 && message_type <= sizeof(nm_names))
       printf("Handling [%s] message.\n", nm_names[message_type - 1]);
@@ -537,22 +538,22 @@ void N_UpdateSync(void) {
   netpeer_t *np = NULL;
 
   if (CLIENT) {
-    np = N_GetPeer(0);
+    np = N_PeerGet(0);
 
     if (np != NULL && np->needs_sync_update) {
       printf("Updating server sync.\n");
-      N_NBufClearChannel(&np->netbuf, NET_CHANNEL_UNRELIABLE);
+      N_PeerClearUnreliable(np->peernum);
       N_PackSync(np);
       np->needs_sync_update = false;
     }
   }
   else {
-    for (int i = 0; i < N_GetPeerCount(); i++) {
-      np = N_GetPeer(i);
+    for (int i = 0; i < N_PeerGetCount(); i++) {
+      np = N_PeerGet(i);
 
       if (np != NULL && np->needs_sync_update) {
         printf("Updating client %d sync.\n", np->playernum);
-        N_NBufClearChannel(&np->netbuf, NET_CHANNEL_UNRELIABLE);
+        N_PeerClearUnreliable(np->peernum);
 
         if (DELTASERVER) {
           if (np->state_tic < N_GetLatestState()->tic) {
@@ -572,12 +573,10 @@ void N_UpdateSync(void) {
 
 void SV_SetupNewPeer(int peernum) {
   short playernum;
-  netpeer_t *np = N_GetPeer(peernum);
+  netpeer_t *np = N_PeerGet(peernum);
 
-  if (np == NULL) {
-    doom_printf("SV_SetupNewPlayer: invalid peer %d.\n", peernum);
-    return;
-  }
+  if (np == NULL)
+    I_Error("SV_SetupNewPlayer: invalid peer %d.\n", peernum);
 
   for (playernum = 0; playernum < MAXPLAYERS; playernum++) {
     if (!playeringame[playernum]) {
@@ -589,8 +588,6 @@ void SV_SetupNewPeer(int peernum) {
     N_DisconnectPeer(peernum);
     return;
   }
-
-  printf("SV_SetupNewPeer: Spawning a new peer's player (%d)\n", playernum);
 
   playeringame[playernum] = true;
   P_SpawnPlayer(playernum, &playerstarts[playernum]);
@@ -625,8 +622,8 @@ void SV_SendMessage(short playernum, char *message) {
 }
 
 void SV_BroadcastMessage(char *message) {
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
+  for (int i = 0; i < N_PeerGetCount(); i++) {
+    netpeer_t *np = N_PeerGet(i);
 
     if (np != NULL)
       N_PackServerMessage(np, message);
@@ -673,8 +670,8 @@ void CL_SendNameChange(char *new_name) {
 }
 
 void SV_BroadcastPlayerNameChanged(short playernum, char *new_name) {
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
+  for (int i = 0; i < N_PeerGetCount(); i++) {
+    netpeer_t *np = N_PeerGet(i);
 
     if (np != NULL && np->playernum != playernum)
       N_PackNameChange(np, playernum, new_name);
@@ -689,8 +686,8 @@ void CL_SendTeamChange(byte new_team) {
 }
 
 void SV_BroadcastPlayerTeamChanged(short playernum, byte new_team) {
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
+  for (int i = 0; i < N_PeerGetCount(); i++) {
+    netpeer_t *np = N_PeerGet(i);
 
     if (np != NULL && np->playernum != playernum)
       N_PackTeamChange(np, playernum, new_team);
@@ -715,8 +712,8 @@ void CL_SendWSOPChange(byte new_wsop_flags) {
 }
 
 void SV_BroadcastPlayerWSOPChanged(short playernum, byte new_wsop_flags) {
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
+  for (int i = 0; i < N_PeerGetCount(); i++) {
+    netpeer_t *np = N_PeerGet(i);
 
     if (np != NULL && np->playernum != playernum)
       N_PackWSOPChange(np, playernum, new_wsop_flags);
@@ -732,8 +729,8 @@ void CL_SendBobbingChange(double new_bobbing_amount) {
 
 void SV_BroadcastPlayerBobbingChanged(short playernum,
                                       double new_bobbing_amount) {
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
+  for (int i = 0; i < N_PeerGetCount(); i++) {
+    netpeer_t *np = N_PeerGet(i);
 
     if (np != NULL && np->playernum != playernum)
       N_PackBobbingChange(np, playernum, new_bobbing_amount);
@@ -749,8 +746,8 @@ void CL_SendAutoaimChange(dboolean new_autoaim_enabled) {
 
 void SV_BroadcastPlayerAutoaimChanged(short playernum,
                                       dboolean new_autoaim_enabled) {
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
+  for (int i = 0; i < N_PeerGetCount(); i++) {
+    netpeer_t *np = N_PeerGet(i);
 
     if (np != NULL && np->playernum != playernum)
       N_PackAutoaimChange(np, playernum, new_autoaim_enabled);
@@ -766,8 +763,8 @@ void CL_SendWeaponSpeedChange(byte new_weapon_speed) {
 
 void SV_BroadcastPlayerWeaponSpeedChanged(short playernum,
                                           byte new_weapon_speed) {
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
+  for (int i = 0; i < N_PeerGetCount(); i++) {
+    netpeer_t *np = N_PeerGet(i);
 
     if (np != NULL && np->playernum != playernum)
       N_PackWeaponSpeedChange(np, playernum, new_weapon_speed);
@@ -784,8 +781,8 @@ void CL_SendColorChange(byte new_red, byte new_green, byte new_blue) {
 void SV_BroadcastPlayerColorChanged(short playernum, byte new_red,
                                                      byte new_green,
                                                      byte new_blue) {
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
+  for (int i = 0; i < N_PeerGetCount(); i++) {
+    netpeer_t *np = N_PeerGet(i);
 
     if (np != NULL && np->playernum != playernum)
       N_PackColorChange(np, playernum, new_red, new_green, new_blue);
@@ -800,8 +797,8 @@ void CL_SendColorIndexChange(int new_color) {
 }
 
 void SV_BroadcastPlayerColorIndexChanged(short playernum, int new_color) {
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
+  for (int i = 0; i < N_PeerGetCount(); i++) {
+    netpeer_t *np = N_PeerGet(i);
 
     if (np != NULL && np->playernum != playernum)
       N_PackColorIndexChange(np, consoleplayer, new_color);

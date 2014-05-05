@@ -41,13 +41,23 @@
 #include "m_pbuf.h"
 
 static bool buf_read(cmp_ctx_t *ctx, void *data, size_t limit) {
-  return M_BufferRead((buf_t *)ctx->buf, data, limit);
+  buf_t *buf = (buf_t *)ctx->buf;
+  size_t pos = M_BufferGetCursor(buf);
+  bool res = M_BufferRead(buf, data, limit);
+
+  if (res && (M_BufferGetCursor(buf) - pos) == limit)
+    return true;
+
+  return false;
 }
 
 static size_t buf_write(cmp_ctx_t *ctx, const void *data, size_t count) {
-  M_BufferWrite((buf_t *)ctx->buf, (const char *)data, count);
+  buf_t *buf = (buf_t *)ctx->buf;
+  size_t pos = M_BufferGetCursor(buf);
 
-  return count;
+  M_BufferWrite(buf, data, count);
+
+  return M_BufferGetCursor(buf) - pos;
 }
 
 void M_PBufInit(pbuf_t *pbuf) {
@@ -80,6 +90,10 @@ char* M_PBufGetData(pbuf_t *pbuf) {
   return M_BufferGetData(&pbuf->buf);
 }
 
+char* M_PBufGetDataAtCursor(pbuf_t *pbuf) {
+  return M_BufferGetDataAtCursor(&pbuf->buf);
+}
+
 void M_PBufEnsureCapacity(pbuf_t *pbuf, size_t capacity) {
   M_BufferEnsureCapacity(&pbuf->buf, capacity);
 }
@@ -98,6 +112,18 @@ void M_PBufSetData(pbuf_t *pbuf, void *data, size_t size) {
 
 dboolean M_PBufSetFile(pbuf_t *pbuf, const char *filename) {
   return M_BufferSetFile(&pbuf->buf, filename);
+}
+
+dboolean M_PBufSeek(pbuf_t *pbuf, size_t pos) {
+  return M_BufferSeek(&pbuf->buf, pos);
+}
+
+dboolean M_PBufSeekBackward(pbuf_t *pbuf, size_t count) {
+  return M_BufferSeekBackward(&pbuf->buf, count);
+}
+
+dboolean M_PBufSeekForward(pbuf_t *pbuf, size_t count) {
+  return M_BufferSeekForward(&pbuf->buf, count);
 }
 
 dboolean M_PBufWriteChar(pbuf_t *pbuf, char c) {
@@ -337,17 +363,7 @@ dboolean M_PBufWriteStringArray(pbuf_t *pbuf, obuf_t *obuf) {
 }
 
 dboolean M_PBufReadChar(pbuf_t *pbuf, char *c) {
-  int64_t value = 0;
-
-  if (!cmp_read_sint(&pbuf->cmp, &value))
-    return false;
-
-  if (value < -128 || value > 127)
-    return false;
-
-  *c = value;
-
-  return true;
+  return cmp_read_char(&pbuf->cmp, (signed char *)c);
 }
 
 dboolean M_PBufReadCharArray(pbuf_t *pbuf, buf_t *chars, size_t limit) {
@@ -374,17 +390,7 @@ dboolean M_PBufReadCharArray(pbuf_t *pbuf, buf_t *chars, size_t limit) {
 }
 
 dboolean M_PBufReadUChar(pbuf_t *pbuf, unsigned char *c) {
-  uint64_t value = 0;
-
-  if (!cmp_read_uint(&pbuf->cmp, &value))
-    return false;
-
-  if (value > 255)
-    return false;
-
-  *c = value;
-
-  return true;
+  return cmp_read_uchar(&pbuf->cmp, c);
 }
 
 dboolean M_PBufReadUCharArray(pbuf_t *pbuf, buf_t *uchars, size_t limit) {
@@ -411,17 +417,7 @@ dboolean M_PBufReadUCharArray(pbuf_t *pbuf, buf_t *uchars, size_t limit) {
 }
 
 dboolean M_PBufReadShort(pbuf_t *pbuf, short *s) {
-  int64_t value = 0;
-
-  if (!cmp_read_sint(&pbuf->cmp, &value))
-    return false;
-
-  if (value < -32768 || value > 32767)
-    return false;
-
-  *s = value;
-
-  return true;
+  return cmp_read_short(&pbuf->cmp, s);
 }
 
 dboolean M_PBufReadShortArray(pbuf_t *pbuf, buf_t *shorts, size_t limit) {
@@ -448,17 +444,7 @@ dboolean M_PBufReadShortArray(pbuf_t *pbuf, buf_t *shorts, size_t limit) {
 }
 
 dboolean M_PBufReadUShort(pbuf_t *pbuf, unsigned short *s) {
-  uint64_t value = 0;
-
-  if (!cmp_read_uint(&pbuf->cmp, &value))
-    return false;
-
-  if (value > 65535)
-    return false;
-
-  *s = value;
-
-  return true;
+  return cmp_read_ushort(&pbuf->cmp, s);
 }
 
 dboolean M_PBufReadUShortArray(pbuf_t *pbuf, buf_t *ushorts, size_t limit) {
@@ -485,17 +471,7 @@ dboolean M_PBufReadUShortArray(pbuf_t *pbuf, buf_t *ushorts, size_t limit) {
 }
 
 dboolean M_PBufReadInt(pbuf_t *pbuf, int *i) {
-  int64_t value = 0;
-
-  if (!cmp_read_sint(&pbuf->cmp, &value))
-    return false;
-
-  if (value < -2147483648 || value > 2147483647)
-    return false;
-
-  *i = value;
-
-  return true;
+  return cmp_read_int(&pbuf->cmp, i);
 }
 
 dboolean M_PBufReadIntArray(pbuf_t *pbuf, buf_t *ints, size_t limit) {
@@ -522,17 +498,7 @@ dboolean M_PBufReadIntArray(pbuf_t *pbuf, buf_t *ints, size_t limit) {
 }
 
 dboolean M_PBufReadUInt(pbuf_t *pbuf, unsigned int *i) {
-  uint64_t value = 0;
-
-  if (!cmp_read_uint(&pbuf->cmp, &value))
-    return false;
-
-  if (value > 4294967295)
-    return false;
-
-  *i = value;
-
-  return true;
+  return cmp_read_uint(&pbuf->cmp, i);
 }
 
 dboolean M_PBufReadUIntArray(pbuf_t *pbuf, buf_t *uints, size_t limit) {
@@ -559,7 +525,7 @@ dboolean M_PBufReadUIntArray(pbuf_t *pbuf, buf_t *uints, size_t limit) {
 }
 
 dboolean M_PBufReadLong(pbuf_t *pbuf, int_64_t *l) {
-  return cmp_read_sint(&pbuf->cmp, l);
+  return cmp_read_long(&pbuf->cmp, l);
 }
 
 dboolean M_PBufReadLongArray(pbuf_t *pbuf, buf_t *longs, size_t limit) {
@@ -586,7 +552,7 @@ dboolean M_PBufReadLongArray(pbuf_t *pbuf, buf_t *longs, size_t limit) {
 }
 
 dboolean M_PBufReadULong(pbuf_t *pbuf, uint_64_t *l) {
-  return cmp_read_uint(&pbuf->cmp, l);
+  return cmp_read_ulong(&pbuf->cmp, l);
 }
 
 dboolean M_PBufReadULongArray(pbuf_t *pbuf, buf_t *ulongs, size_t limit) {
@@ -797,12 +763,15 @@ void M_PBufFree(pbuf_t *pbuf) {
 }
 
 void M_PBufPrint(pbuf_t *pbuf) {
-  char *data = M_PBufGetData(pbuf);
-
-  printf("Raw %p: [", pbuf);
-  for (int i = 0; i < MIN(64, M_PBufGetSize(pbuf)); i++)
-    printf(" %02X", data[i] & 0xFF);
-  printf(" ]\n");
+  printf("PBuf capacity, size, cursor, address: [%zu, %zu, %zu, %p]: [\n",
+    pbuf->buf.capacity, pbuf->buf.size, pbuf->buf.cursor, pbuf
+  );
+  for (int i = 0; i < MIN(24, pbuf->buf.size); i++) {
+    printf("%02X ",
+      ((const unsigned char *)(pbuf->buf.data + pbuf->buf.cursor))[i]
+    );
+  }
+  printf("\n]\n");
 }
 
 /* vi: set et ts=2 sw=2: */

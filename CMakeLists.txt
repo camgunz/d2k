@@ -616,7 +616,6 @@ SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/m_random.c
   ${CMAKE_SOURCE_DIR}/src/m_utf.c
   ${CMAKE_SOURCE_DIR}/src/md5.c
-  ${CMAKE_SOURCE_DIR}/src/n_buf.c
   ${CMAKE_SOURCE_DIR}/src/n_main.c
   ${CMAKE_SOURCE_DIR}/src/n_net.c
   ${CMAKE_SOURCE_DIR}/src/n_pack.c
