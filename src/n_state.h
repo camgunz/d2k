@@ -54,7 +54,7 @@ void          N_ClearStates(void);
 game_state_t* N_GetNewState(void);
 game_state_t* N_GetLatestState(void);
 void          N_SetLatestState(game_state_t *state);
-void          N_LoadLatestState(dboolean call_init_new);
+dboolean      N_LoadLatestState(dboolean call_init_new);
 dboolean      N_ApplyStateDelta(game_state_delta_t *delta);
 void          N_BuildStateDelta(int tic, game_state_delta_t *delta);
 

@@ -59,7 +59,6 @@
 
 /* CG: General networking */
 
-static ENetEvent    net_event;
 static ENetHost    *net_host = NULL;
 static const char  *previous_host = NULL;
 static short        previous_port = 0;
@@ -232,6 +231,7 @@ void N_Init(void) {
 void N_Disconnect(void) {
   int res = 0;
   netpeer_t *np = NULL;
+  ENetEvent net_event;
 
   if (net_host == NULL)
     return;
@@ -363,6 +363,8 @@ dboolean N_Reconnect(void) {
 }
 
 void N_WaitForPacket(int ms) {
+  ENetEvent net_event;
+
   enet_host_service(net_host, &net_event, ms);
 }
 
@@ -420,6 +422,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
   int status = 0;
   int peernum = -1;
   netpeer_t *np = NULL;
+  ENetEvent net_event;
 
   for (int i = 0; i < N_PeerGetCount(); i++) {
     netpeer_t *np = N_PeerGet(i);
@@ -497,7 +500,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       N_PeerRemove(N_PeerGet(peernum));
     }
     else if (net_event.type == ENET_EVENT_TYPE_RECEIVE) {
-      doom_printf("Got 'RECEIVE' event\n");
+      doom_printf("Got 'RECEIVE' event:\n");
       if ((peernum = N_PeerGetNum(net_event.peer)) == -1) {
         doom_printf(
           "N_ServiceNetwork: Received 'packet' event from unknown peer %s:%u.\n",
@@ -506,9 +509,11 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
         );
         continue;
       }
-      N_HandlePacket(
-        peernum, net_event.packet->data, net_event.packet->dataLength
-      );
+      if ((net_event.packet->data[0] & 0x80) == 0x80) {
+        N_HandlePacket(
+          peernum, net_event.packet->data, net_event.packet->dataLength
+        );
+      }
       enet_packet_destroy(net_event.packet);
     }
     else if (net_event.type == ENET_EVENT_TYPE_NONE) {

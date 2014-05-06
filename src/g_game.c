@@ -2039,8 +2039,12 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
   char save_version[VERSIONSIZE];
   byte game_options[GAME_OPTION_SIZE];
 
-  M_BufferRead(savebuffer, description, SAVESTRINGSIZE);
+  memset(description, 0, SAVESTRINGSIZE);
+  memset(save_version, 0, VERSIONSIZE);
 
+  printf("Savebuffer Cursor: %zu.\n", M_BufferGetCursor(savebuffer));
+
+  M_BufferRead(savebuffer, description, SAVESTRINGSIZE);
   M_BufferRead(savebuffer, save_version, VERSIONSIZE);
 
   // CPhipps - read the description field, compare with supported ones
@@ -2178,9 +2182,11 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
 
   // load a base level
   if (init_new) {
+    printf("G_ReadSaveData: Running G_InitNew\n");
     G_InitNew(gameskill, gameepisode, gamemap);
   }
   else {
+    printf("G_ReadSaveData: Clearing stuff instead of running G_InitNew\n");
     P_InitThinkers();
     for (int i = 0; i < numsectors; i++) {
       sectors[i].thinglist = NULL;
@@ -3804,21 +3810,22 @@ void doom_pprintf(short playernum, const char *s, ...) {
 // this function, without calling realloc(), which seems to cause problems.
 
 // CPhipps - renamed to doom_printf to avoid name collision with glibc
-void doom_printf(const char *s, ...) {
+void doom_printf(const char *fmt, ...) {
   static char msg[MAX_MESSAGE_SIZE];
 
-  va_list v;
+  va_list args, pargs;
 
-  va_start(v,s);
+  va_start(args, fmt);
+  va_copy(pargs, args);
   if (nodrawers || !graphics_initialized) {
-    vprintf(s, v);
+    vprintf(fmt, args);
   }
   else {
-    doom_vsnprintf(msg, sizeof(msg), s, v);   /* print message in buffer */
+    doom_vsnprintf(msg, sizeof(msg), fmt, args); /* print message in buffer */
+    vprintf(fmt, args);
     players[consoleplayer].message = msg;  // set new message
   }
-  va_end(v);
-
+  va_end(args);
 }
 
 //e6y

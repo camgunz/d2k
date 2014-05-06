@@ -81,6 +81,9 @@ void M_CBufEnsureCapacity(cbuf_t *cbuf, int capacity) {
     for (int i = old_capacity; i < cbuf->capacity; i++) {
       cbuf->nodes[i].used = false;
       cbuf->nodes[i].obj = calloc(1, cbuf->obj_size);
+
+      if (cbuf->nodes[i].obj == NULL)
+        I_Error("M_CBufEnsureCapacity: Allocating buffer node's obj failed");
     }
   }
 }

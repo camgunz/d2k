@@ -125,6 +125,8 @@ void M_PBufZero(pbuf_t *pbuf);
 void M_PBufClear(pbuf_t *pbuf);
 void M_PBufFree(pbuf_t *pbuf);
 
+const char* M_PBufGetError(pbuf_t *pbuf);
+
 void M_PBufPrint(pbuf_t *pbuf);
 
 #endif

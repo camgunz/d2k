@@ -682,21 +682,21 @@ dboolean M_PBufReadMap(pbuf_t *pbuf, unsigned int *map_size) {
 }
 
 dboolean M_PBufReadBytes(pbuf_t *pbuf, buf_t *buf) {
-  cmp_object_t obj;
+  uint32_t size = 0;
 
-  if (!cmp_read_object(&pbuf->cmp, &obj))
+  if (!cmp_read_bin_size(&pbuf->cmp, &size))
     return false;
 
   /*
    * CG: This is a hack to prevent overallocating like crazy: limit the size to
    *     16MB
    */
-  if (obj.as.bin_size > 0x00FFFFFF) {
+  if (size > 0x00FFFFFF) {
     doom_printf("M_PBufReadBytes: Attempted to read more than 16MB.\n");
     return false;
   }
 
-  M_BufferWrite(buf, M_PBufGetData(pbuf), obj.as.bin_size);
+  M_BufferWrite(buf, M_PBufGetDataAtCursor(pbuf), size);
 
   return true;
 }
@@ -712,7 +712,7 @@ dboolean M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit) {
     return false;
   }
 
-  M_BufferWrite(buf, M_PBufGetData(pbuf), obj.as.str_size);
+  M_BufferWrite(buf, M_PBufGetDataAtCursor(pbuf), obj.as.str_size);
   M_BufferWriteUChar(buf, 0);
 
   return true;
@@ -760,6 +760,10 @@ void M_PBufClear(pbuf_t *pbuf) {
 
 void M_PBufFree(pbuf_t *pbuf) {
   M_BufferFree(&pbuf->buf);
+}
+
+const char* M_PBufGetError(pbuf_t *pbuf) {
+  return cmp_strerror(&pbuf->cmp);
 }
 
 void M_PBufPrint(pbuf_t *pbuf) {

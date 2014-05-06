@@ -71,7 +71,9 @@
 
 #define read_char(pbuf, var, name)                                            \
   if (!M_PBufReadChar(pbuf, &var)) {                                          \
-    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    doom_printf("%s: Error reading %s: %s.\n",                                \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
     return false;                                                             \
   }
 
@@ -81,7 +83,9 @@
 
 #define read_uchar(pbuf, var, name)                                           \
   if (!M_PBufReadUChar(pbuf, &var)) {                                         \
-    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    doom_printf("%s: Error reading %s: %s.\n",                                \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
     return false;                                                             \
   }
 
@@ -91,7 +95,9 @@
 
 #define read_short(pbuf, var, name)                                           \
   if (!M_PBufReadShort(pbuf, &var)) {                                         \
-    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    doom_printf("%s: Error reading %s: %s.\n",                                \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
     return false;                                                             \
   }
 
@@ -101,7 +107,9 @@
 
 #define read_ushort(pbuf, var, name)                                          \
   if (!M_PBufReadUShort(pbuf, &var)) {                                        \
-    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    doom_printf("%s: Error reading %s: %s.\n",                                \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
     return false;                                                             \
   }
 
@@ -111,7 +119,10 @@
 
 #define read_int(pbuf, var, name)                                             \
   if (!M_PBufReadInt(pbuf, &var)) {                                           \
-    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    doom_printf("%s: Error reading %s: %s.\n",                                \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
+    M_PBufPrint(pbuf);                                                        \
     return false;                                                             \
   }
 
@@ -121,7 +132,9 @@
 
 #define read_uint(pbuf, var, name)                                            \
   if (!M_PBufReadUInt(pbuf, &var)) {                                          \
-    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    doom_printf("%s: Error reading %s: %s.\n",                                \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
     return false;                                                             \
   }
 
@@ -131,7 +144,9 @@
 
 #define read_long(pbuf, var, name)                                            \
   if (!M_PBufReadLong(pbuf, &var)) {                                          \
-    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    doom_printf("%s: Error reading %s: %s.\n",                                \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
     return false;                                                             \
   }
 
@@ -141,7 +156,9 @@
 
 #define read_ulong(pbuf, var, name)                                           \
   if (!M_PBufReadULong(pbuf, &var)) {                                         \
-    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    doom_printf("%s: Error reading %s: %s.\n",                                \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
     return false;                                                             \
   }
 
@@ -151,7 +168,9 @@
 
 #define read_double(pbuf, var, name)                                          \
   if (!M_PBufReadDouble(pbuf, &var)) {                                        \
-    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    doom_printf("%s: Error reading %s: %s.\n",                                \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
     return false;                                                             \
   }
 
@@ -161,49 +180,67 @@
 
 #define read_bool(pbuf, var, name)                                            \
   if (!M_PBufReadBool(pbuf, &var)) {                                          \
-    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    doom_printf("%s: Error reading %s: %s.\n",                                \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
     return false;                                                             \
   }
 
 #define read_array(pbuf, var, name)                                           \
   if (!M_PBufReadArray(pbuf, &var)) {                                         \
-    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    doom_printf("%s: Error reading %s: %s.\n",                                \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
     return false;                                                             \
   }
 
 #define read_map(pbuf, var, name)                                             \
   if (!M_PBufReadMap(pbuf, &var)) {                                           \
-    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    doom_printf("%s: Error reading %s: %s.\n",                                \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
     return false;                                                             \
   }
 
 #define read_bytes(pbuf, var, name)                                           \
+  M_BufferClear(&var);                                                        \
   if (!M_PBufReadBytes(pbuf, &var)) {                                         \
-    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    doom_printf("%s: Error reading %s: %s.\n",                                \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
     return false;                                                             \
   }
 
 #define read_string(pbuf, var, name, sz)                                      \
+  M_BufferClear(var);                                                         \
   if (!M_PBufReadString(pbuf, var, sz)) {                                    \
-    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    doom_printf("%s: Error reading %s: %s.\n",                                \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
     return false;                                                             \
   }
 
 #define read_string_array(pbuf, var, name, count, length)                     \
   if (!M_PBufReadStringArray(pbuf, var, count, length)) {                    \
-    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    doom_printf("%s: Error reading %s: %s.\n",                                \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
     return false;                                                             \
   }
 
 #define read_recipient_array(pbuf, var, name, count)                          \
   if (!M_PBufReadShortArray(pbuf, var, count)) {                             \
-    doom_printf("%s: Error reading %s.\n", __func__, name);                   \
+    doom_printf("%s: Error reading %s: %s.\n",                                \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
     return false;                                                             \
   }
 
 #define read_player(pbuf, var)                                                \
   if (!M_PBufReadShort(pbuf, &var)) {                                         \
-    doom_printf("%s: Error reading player number.\n", __func__);              \
+    doom_printf("%s: Error reading player number: %s.\n",                     \
+      __func__, M_PBufGetError(pbuf)                                          \
+    );                                                                        \
     return false;                                                             \
   }                                                                           \
   if (var >= MAXPLAYERS) {                                                    \
@@ -213,7 +250,9 @@
 
 #define read_message_recipient(pbuf, var)                                     \
   if (!M_PBufReadShort(pbuf, &var)) {                                         \
-    doom_printf("%s: Error reading recipient number.\n", __func__);           \
+    doom_printf("%s: Error reading recipient number: %s.\n",                  \
+      __func__, M_PBufGetError(pbuf)                                          \
+    );                                                                        \
     return false;                                                             \
   }                                                                           \
   if (var != -1 && var >= MAXPLAYERS) {                                       \
@@ -244,7 +283,6 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
 
     if (ncmd->tic > np->command_tic)
       command_count++;
-
   }
 
   M_PBufWriteUChar(pbuf, command_count);
@@ -297,7 +335,7 @@ void N_PackSetup(netpeer_t *np) {
   M_PBufWriteShort(pbuf, np->playernum);
   M_PBufWriteStringArray(pbuf, &resource_files_buf);
   M_PBufWriteStringArray(pbuf, &deh_files_buf);
-  M_PBufWriteUInt(pbuf, gs->tic);
+  M_PBufWriteInt(pbuf, gs->tic);
   M_PBufWriteBytes(pbuf, gs->data.data, gs->data.size);
 
   printf(
@@ -314,7 +352,7 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   unsigned short m_player_count = 0;
   short m_playernum = 0;
   game_state_t *gs = NULL;
-  
+
   read_ranged_int(
     pbuf, m_sync_type, "netsync", NET_SYNC_TYPE_COMMAND, NET_SYNC_TYPE_DELTA
   );
@@ -547,16 +585,6 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
         read_short(pbuf, ncmd->cmd.consistancy, "command consistancy value");
         read_uchar(pbuf, ncmd->cmd.chatchar, "comand chatchar value");
         read_uchar(pbuf, ncmd->cmd.buttons, "command buttons value");
-
-        printf("CMD: {%d, %d, %d, %d, %d, %u, %u}\n",
-          ncmd->tic,
-          ncmd->cmd.forwardmove,
-          ncmd->cmd.sidemove,
-          ncmd->cmd.angleturn,
-          ncmd->cmd.consistancy,
-          ncmd->cmd.chatchar,
-          ncmd->cmd.buttons
-        );
       }
       else {
         ticcmd_t cmd;
@@ -599,12 +627,13 @@ void N_PackDeltaSync(netpeer_t *np) {
     np->peernum, NET_CHANNEL_UNRELIABLE, nm_sync
   );
 
-  printf("(%d) Sending sync: ST/CT: (%d/%d) Delta: [%d => %d]\n",
+  printf("(%d) Sending sync: ST/CT: (%d/%d) Delta: [%d => %d] (%zu)\n",
     gametic,
     np->state_tic,
     np->command_tic,
     np->delta.from_tic,
-    np->delta.to_tic
+    np->delta.to_tic,
+    np->delta.data.size
   );
 
   M_PBufWriteInt(pbuf, np->state_tic);
@@ -614,7 +643,7 @@ void N_PackDeltaSync(netpeer_t *np) {
   M_PBufWriteBytes(pbuf, np->delta.data.data, np->delta.data.size);
 }
 
-dboolean N_UnpackDeltaSync(netpeer_t *np) {
+dboolean N_UnpackDeltaSync(netpeer_t *np, dboolean *update_sync) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
   int m_state_tic = 0;
   int m_command_tic = 0;
@@ -626,7 +655,6 @@ dboolean N_UnpackDeltaSync(netpeer_t *np) {
   read_int(pbuf, m_delta_from_tic, "delta from tic");
   read_int(pbuf, m_delta_to_tic, "delta to tic");
 
-  /*
   printf("(%d) Received sync: ST/CT: (%d/%d) Delta: [%d => %d] (%d).\n",
     gametic,
     m_state_tic,
@@ -635,16 +663,18 @@ dboolean N_UnpackDeltaSync(netpeer_t *np) {
     m_delta_to_tic,
     np->state_tic < m_delta_to_tic
   );
-  */
 
-  if (np->state_tic >= m_delta_to_tic)
-    return false;
-
-  np->state_tic = m_state_tic;
-  np->command_tic = m_command_tic;
-  np->delta.from_tic = m_delta_from_tic;
-  np->delta.to_tic = m_delta_to_tic;
-  read_bytes(pbuf, np->delta.data, "delta data");
+  if (np->state_tic < m_delta_to_tic) {
+    np->state_tic = m_state_tic;
+    np->command_tic = m_command_tic;
+    np->delta.from_tic = m_delta_from_tic;
+    np->delta.to_tic = m_delta_to_tic;
+    read_bytes(pbuf, np->delta.data, "delta data");
+    *update_sync = true;
+  }
+  else {
+    *update_sync = false;
+  }
 
   return true;
 }

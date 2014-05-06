@@ -140,9 +140,9 @@ void N_SetLatestState(game_state_t *state) {
   latest_game_state = state;
 }
 
-void N_LoadLatestState(dboolean call_init_new) {
+dboolean N_LoadLatestState(dboolean call_init_new) {
   M_BufferSeek(&latest_game_state->data, 0);
-  G_ReadSaveData(&latest_game_state->data, true, call_init_new);
+  return G_ReadSaveData(&latest_game_state->data, true, call_init_new);
 }
 
 dboolean N_ApplyStateDelta(game_state_delta_t *delta) {
@@ -158,13 +158,22 @@ dboolean N_ApplyStateDelta(game_state_delta_t *delta) {
   M_BufferSeek(&new_gs->data, 0);
   M_BufferSeek(&delta->data, 0);
 
-  M_ApplyDelta(&gs->data, &new_gs->data, &delta->data);
+  if (M_ApplyDelta(&gs->data, &new_gs->data, &delta->data)) {
+    new_gs->tic = delta->to_tic;
+    N_SetLatestState(new_gs);
+    return true;
+  }
 
-  new_gs->tic = delta->to_tic;
+  CBUF_FOR_EACH(&saved_game_states, entry) {
+    game_state_t *egs = entry.obj;
 
-  N_SetLatestState(new_gs);
+    if (egs == new_gs) {
+      M_CBufRemove(&saved_game_states, entry.index);
+      break;
+    }
+  }
 
-  return true;
+  return false;
 }
 
 void N_BuildStateDelta(int tic, game_state_delta_t *delta) {

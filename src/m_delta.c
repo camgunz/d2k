@@ -128,13 +128,15 @@ void M_BuildDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
   res = xdl_rabdiff_mb(&mmb1, &mmb2, &ecb);
   if (res != 0) {
     perror("");
-    I_Error("M_BuildData: Error building delta: %d", res);
+    I_Error("M_BuildDelta: Error building delta: %d", res);
   }
 }
 
-void M_ApplyDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
+dboolean M_ApplyDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
   mmfile_t cs, is;
   xdemitcb_t ecb;
+  buf_t delta_copy;
+  dboolean res = false;
 
   ecb.priv = b2;
   ecb.outf = write_to_buffer;
@@ -142,13 +144,26 @@ void M_ApplyDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
   build_mmfile(&cs, b1->data, b1->size);
   build_mmfile(&is, delta->data, delta->size);
 
-  if (xdl_bpatch(&cs, &is, &ecb) != 0) {
-    perror("");
-    I_Error("M_BuildData: Error applying delta");
+  M_BufferInitWithCapacity(&delta_copy, M_BufferGetSize(delta));
+  M_BufferCopy(&delta_copy, delta);
+
+  if (xdl_bpatch(&cs, &is, &ecb) == 0) {
+    res = true;
   }
+  else {
+    perror("M_BuildDelta: Error applying delta");
+    M_BufferPrint(delta);
+    M_BufferPrint(&delta_copy);
+    M_BufferPrint(b1);
+    M_BufferPrint(b2);
+  }
+
+  M_BufferFree(&delta_copy);
 
   xdl_free_mmfile(&cs);
   xdl_free_mmfile(&is);
+
+  return res;
 }
 
 /* vi: set et ts=2 sw=2: */

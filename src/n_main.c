@@ -170,7 +170,9 @@ static int run_deltasync_tics(int tic_count) {
 }
 
 static int process_tics(int tics_elapsed) {
+  /*
   printf("(%d) Running %d TICs.\n", gametic, tics_elapsed);
+  */
 
   if (tics_elapsed <= 0)
     return 0;
@@ -394,8 +396,15 @@ void CL_LoadState(void) {
     gametic, delta->from_tic, delta->to_tic
   );
 
-  N_ApplyStateDelta(delta);
-  N_LoadLatestState(false);
+  if (!N_ApplyStateDelta(delta)) {
+    doom_printf("Error applying state delta.\n");
+    return;
+  }
+
+  if (!N_LoadLatestState(false)) {
+    doom_printf("Error loading state.\n");
+    return;
+  }
 
   server->state_tic = delta->to_tic;
 

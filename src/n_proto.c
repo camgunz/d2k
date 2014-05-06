@@ -308,11 +308,10 @@ static void handle_sync(netpeer_t *np) {
   if (DELTACLIENT && !N_UnpackDeltaSync(np, &update_sync))
     return;
 
-  if ((!DELTACLIENT) && (!N_UnpackSync(np)))
+  if ((!DELTACLIENT) && (!N_UnpackSync(np, &update_sync)))
     return;
 
-  if (DELTACLIENT && update_sync)
-    CL_LoadState();
+  printf("Successfully unpacked sync\n");
 
   if (DELTASERVER) {
     SV_RemoveOldCommands();
@@ -320,6 +319,9 @@ static void handle_sync(netpeer_t *np) {
   }
 
   if (update_sync) {
+    if (DELTACLIENT)
+      CL_LoadState();
+
     if (CMDSERVER) {
       for (int i = 0; i < N_PeerGetCount(); i++) {
         netpeer_t *client = N_PeerGet(i);
@@ -483,7 +485,7 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
     return;
   }
 
-  while (N_PeerLoadNextMessage(np->playernum, &message_type)) {
+  while (N_PeerLoadNextMessage(peernum, &message_type)) {
 
     if (message_type >= 1 && message_type <= sizeof(nm_names))
       printf("Handling [%s] message.\n", nm_names[message_type - 1]);

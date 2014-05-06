@@ -119,6 +119,11 @@ static dboolean deserialize_toc(cbuf_t *toc, unsigned char *data,
 
   if (!cmp_read_map(&cmp, &toc_size)) {
     printf("Error reading map: %s\n", cmp_strerror(&cmp));
+
+    printf("Packet data: ");
+    for (unsigned int i = 0; i < MIN(size, 26); i++)
+      printf("%02X ", data[i] & 0xFF);
+    printf("\n");
     return false;
   }
 
@@ -336,7 +341,7 @@ pbuf_t* N_PeerBeginMessage(int peernum, net_channel_e chan_type,
   tocentry_t *message = NULL;
 
   if (np == NULL)
-    I_Error("N_PeerGetPacket: Invalid peer number %d.\n", peernum);
+    I_Error("N_PeerBeginMessage: Invalid peer number %d.\n", peernum);
 
   nc = &np->netcom;
   get_netchan(chan, nc, chan_type);
@@ -371,32 +376,22 @@ ENetPacket* N_PeerGetPacket(int peernum, net_channel_e chan_type) {
 
   if (chan_type == NET_CHANNEL_RELIABLE) {
     packet = enet_packet_create(NULL, packet_size, ENET_PACKET_FLAG_RELIABLE);
-
-    memcpy(packet->data, M_PBufGetData(&packed_toc), toc_size);
-    memcpy(packet->data + toc_size, M_PBufGetData(&chan->messages), msg_size);
   }
-  else if (chan_type == NET_CHANNEL_UNRELIABLE) {
-    buf_t *buf = M_PBufGetBuffer(&chan->packet_data);
-
-    M_BufferClear(buf);
-    M_BufferEnsureTotalCapacity(buf, packet_size);
-    M_BufferWrite(buf, M_PBufGetData(&packed_toc), toc_size);
-    M_BufferWrite(buf, M_PBufGetData(&chan->messages), msg_size);
-
+  else {
     packet = enet_packet_create(
-      M_BufferGetData(buf),
-      M_BufferGetSize(buf),
-      ENET_PACKET_FLAG_UNSEQUENCED | ENET_PACKET_FLAG_NO_ALLOCATE
+      NULL, packet_size, ENET_PACKET_FLAG_UNSEQUENCED
     );
   }
 
-#if 0
-  for (int i = 0; i < MIN(64, packet->dataLength); i++)
-    printf("%02X ", packet->data[i] & 0xFF);
-  printf("\n");
+  memcpy(packet->data, M_PBufGetData(&packed_toc), toc_size);
+  memcpy(packet->data + toc_size, M_PBufGetData(&chan->messages), msg_size);
 
-  printf("Sending packet (packet size %zu):\n", packet->dataLength);
-#endif
+  if (packet->data[2] != 4) {
+    printf("Sending packet (packet size %zu):\n", packet->dataLength);
+    for (int i = 0; i < MIN(26, packet->dataLength); i++)
+      printf("%02X ", packet->data[i] & 0xFF);
+    printf("\n");
+  }
 
   return packet;
 }
@@ -405,17 +400,26 @@ dboolean N_PeerLoadIncoming(int peernum, unsigned char *data, size_t size) {
   netpeer_t *np = N_PeerGet(peernum);
   netchan_t *incoming = NULL;
   size_t message_start_point = 0;
+  buf_t buf;
 
   if (np == NULL)
     I_Error("N_PeerLoadIncoming: Invalid peer number %d.\n", peernum);
 
   incoming = &np->netcom.incoming;
   clear_channel(incoming);
+  M_BufferInitWithCapacity(&buf, size);
+  M_BufferWrite(&buf, data, size);
 
   if (!deserialize_toc(&incoming->toc, data, size, &message_start_point)) {
-    doom_printf("N_PeerLoadIncoming: Error reading packet's TOC.\n");
+    for (size_t i = 0; i < size; i++)
+      printf("%02X ", data[i] & 0xFF);
+    printf("\n");
+    M_BufferPrint(&buf);
+    I_Error("N_PeerLoadIncoming: Error reading packet's TOC.\n");
     return false;
   }
+
+  M_BufferFree(&buf);
 
   if (message_start_point >= size) {
     doom_printf("N_PeerLoadIncoming: Received empty packet.\n");
@@ -439,10 +443,8 @@ dboolean N_PeerLoadNextMessage(int peernum, unsigned char *message_type) {
 
   incoming = &np->netcom.incoming;
 
-  if (M_CBufGetObjectCount(&incoming->toc) == 0) {
-    printf("N_PeerLoadNextMessage: TOC is empty.\n");
+  if (M_CBufGetObjectCount(&incoming->toc) == 0)
     return false;
-  }
 
   toc_entry = M_CBufGet(&incoming->toc, 0);
 
