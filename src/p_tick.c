@@ -33,8 +33,11 @@
 
 #include "z_zone.h"
 
-#include "m_cbuf.h"
+#include <enet/enet.h>
+#include "cmp.h"
+
 #include "doomstat.h"
+#include "m_pbuf.h"
 #include "p_user.h"
 #include "p_spec.h"
 #include "p_tick.h"
@@ -44,6 +47,8 @@
 #include "s_advsound.h"
 
 #include "n_net.h"
+#include "n_state.h"
+#include "n_peer.h"
 
 int leveltime;
 
@@ -291,6 +296,8 @@ void P_Ticker(void) {
   // not if this is an intermission screen
   if (gamestate == GS_LEVEL) {
     for (i = 0; i < MAXPLAYERS; i++) {
+      netpeer_t *np = NULL;
+
       if (!playeringame[i])
         continue;
 
@@ -302,6 +309,8 @@ void P_Ticker(void) {
         P_PlayerThink(&players[i]);
         continue;
       }
+
+      np = N_PeerForPlayer(i);
 
       if (i == consoleplayer) {
         player_t *player = &players[consoleplayer];
@@ -315,12 +324,10 @@ void P_Ticker(void) {
             found_command = true;
           }
 
-          if (found_command) {
-            /*
+          if (CLIENT && found_command) {
             printf("[%d: %d] P_Ticker: Running command %d.\n",
               gametic, i, ncmd->tic
             );
-            */
           }
 
           if (ncmd->tic <= gametic) {
@@ -348,16 +355,19 @@ void P_Ticker(void) {
       CBUF_FOR_EACH(&players[i].commands, entry) {
         netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
+        if (SERVER && ncmd->tic <= np->last_command_run)
+          continue;
+
         if (ncmd->tic <= gametic) {
           memcpy(&players[i].cmd, &ncmd->cmd, sizeof(ticcmd_t));
 
-          /*
-          printf("[%d: %d] P_Ticker: Running command %d.\n",
-            gametic, i, ncmd->tic
+          printf("[%d: %d (%d/%d)] P_Ticker: Running command %d.\n",
+            gametic, i, np->state_tic, np->command_tic, ncmd->tic
           );
-          */
 
           P_PlayerThink(&players[i]);
+
+          np->last_command_run = ncmd->tic;
         }
         else {
           /*

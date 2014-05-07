@@ -59,6 +59,7 @@ typedef struct netpeer_s {
   int                 needs_setup;
   int                 state_tic;
   int                 command_tic;
+  int                 last_command_run;
   game_state_delta_t  delta;
   dboolean            needs_sync_update;
 } netpeer_t;

@@ -311,8 +311,6 @@ static void handle_sync(netpeer_t *np) {
   if ((!DELTACLIENT) && (!N_UnpackSync(np, &update_sync)))
     return;
 
-  printf("Successfully unpacked sync\n");
-
   if (DELTASERVER) {
     SV_RemoveOldCommands();
     SV_RemoveOldStates();
@@ -488,7 +486,9 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
   while (N_PeerLoadNextMessage(peernum, &message_type)) {
 
     if (message_type >= 1 && message_type <= sizeof(nm_names))
+      /*
       printf("Handling [%s] message.\n", nm_names[message_type - 1]);
+      */
 
     switch (message_type) {
       case nm_setup:
@@ -543,7 +543,9 @@ void N_UpdateSync(void) {
     np = N_PeerGet(0);
 
     if (np != NULL && np->needs_sync_update) {
+      /*
       printf("Updating server sync.\n");
+      */
       N_PeerClearUnreliable(np->peernum);
       N_PackSync(np);
       np->needs_sync_update = false;
@@ -553,14 +555,16 @@ void N_UpdateSync(void) {
     for (int i = 0; i < N_PeerGetCount(); i++) {
       np = N_PeerGet(i);
 
-      if (np != NULL && np->needs_sync_update) {
+      if (np != NULL && np->needs_sync_update && np->state_tic != 0) {
+        /*
         printf("Updating client %d sync.\n", np->playernum);
+        */
         N_PeerClearUnreliable(np->peernum);
 
         if (DELTASERVER) {
-          if (np->state_tic < N_GetLatestState()->tic) {
+          if (np->state_tic < N_GetLatestState()->tic)
             N_BuildStateDelta(np->state_tic, &np->delta);
-          }
+
           N_PackDeltaSync(np);
         }
         else {

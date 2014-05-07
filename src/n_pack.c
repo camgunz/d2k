@@ -655,16 +655,15 @@ dboolean N_UnpackDeltaSync(netpeer_t *np, dboolean *update_sync) {
   read_int(pbuf, m_delta_from_tic, "delta from tic");
   read_int(pbuf, m_delta_to_tic, "delta to tic");
 
-  printf("(%d) Received sync: ST/CT: (%d/%d) Delta: [%d => %d] (%d).\n",
-    gametic,
-    m_state_tic,
-    m_command_tic,
-    m_delta_from_tic,
-    m_delta_to_tic,
-    np->state_tic < m_delta_to_tic
-  );
-
   if (np->state_tic < m_delta_to_tic) {
+    printf("(%d) Received new sync: ST/CT: (%d/%d) Delta: [%d => %d] (%d).\n",
+      gametic,
+      m_state_tic,
+      m_command_tic,
+      m_delta_from_tic,
+      m_delta_to_tic,
+      np->state_tic < m_delta_to_tic
+    );
     np->state_tic = m_state_tic;
     np->command_tic = m_command_tic;
     np->delta.from_tic = m_delta_from_tic;
