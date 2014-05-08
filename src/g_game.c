@@ -2189,12 +2189,15 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
   }
   else {
     printf("G_ReadSaveData: Clearing stuff instead of running G_InitNew\n");
+#if 0
     P_InitThinkers();
     for (int i = 0; i < numsectors; i++) {
       sectors[i].thinglist = NULL;
       sectors[i].touching_thinglist = NULL;
     }
     memset(blocklinks, 0, bmapwidth * bmapheight * sizeof(*blocklinks));
+    P_FreeSecNodeList();
+#endif
   }
 
   /* get the times - killough 11/98: save entire word */
@@ -2207,6 +2210,8 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
   // killough 11/98: load revenant tracer state
   basetic = gametic - M_BufferPeek(savebuffer);
   M_BufferSeekForward(savebuffer, 1);
+
+  printf("G_ReadSaveData: Running P_UnArchive*\n");
 
   // dearchive all the modifications
   P_MapStart();

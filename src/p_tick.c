@@ -47,6 +47,7 @@
 #include "s_advsound.h"
 
 #include "n_net.h"
+#include "n_main.h"
 #include "n_state.h"
 #include "n_peer.h"
 
@@ -271,10 +272,9 @@ static void P_RunThinkers (void)
 // P_Ticker
 //
 
-void P_Ticker(void) {
-  int i;
-
-  /* pause if in menu and at least one tic has been run
+static void setup_tic(void) {
+  /*
+   * pause if in menu and at least one tic has been run
    *
    * killough 9/29/98: note that this ties in with basetic,
    * since G_Ticker does the pausing during recording or
@@ -283,108 +283,140 @@ void P_Ticker(void) {
    * All of this complicated mess is used to preserve demo sync.
    */
 
-  if (paused || (menuactive && !demoplayback && !netgame &&
+  if (paused || (menuactive &&
+                 !demoplayback &&
+                 !netgame &&
                  players[consoleplayer].viewz != 1)) {
     P_ResetWalkcam();
     return;
   }
 
-  R_UpdateInterpolations();
-
+  R_UpdateInterpolations ();
   P_MapStart();
+}
 
-  // not if this is an intermission screen
-  if (gamestate == GS_LEVEL) {
-    for (i = 0; i < MAXPLAYERS; i++) {
-      netpeer_t *np = NULL;
+static void run_regular_tic(void) {
+  int i;
 
-      if (!playeringame[i])
-        continue;
+  for (i = 0; i < MAXPLAYERS; i++) {
+    if (playeringame[i]) {
+      P_PlayerThink(&players[i]);
+    }
+  }
+}
 
-      /*
-       * CG: TODO: Fix skipping caused by running a shit-ton of commands in a
-       *           single TIC.
-       */
-      if ((!MULTINET) || (!DELTASYNC)) {
-        P_PlayerThink(&players[i]);
-        continue;
-      }
+/*
+ * CG: TODO: Fix skipping caused by running a shit-ton of commands in a single
+ *           TIC.
+ */
+static void run_deltasync_tic(void) {
+  int i;
+  player_t *player = NULL;
+  dboolean found_command = false;
+  netpeer_t *np = NULL;
 
-      np = N_PeerForPlayer(i);
+  for (i = 0; i < MAXPLAYERS; i++) {
+    if (!playeringame[i])
+      continue;
 
-      if (i == consoleplayer) {
-        player_t *player = &players[consoleplayer];
-        dboolean found_command = false;
+    player = &players[i];
+    np = N_PeerForPlayer(i);
 
-        CBUF_FOR_EACH(&player->commands, entry) {
-          netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+    if (np == NULL)
+      continue;
 
-          if (ncmd->tic == gametic) {
-            memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
-            found_command = true;
-          }
+    printf("Player commands: ");
+    N_PrintPlayerCommands(&players[i].commands);
+    printf("Local commands: ");
+    N_PrintPlayerCommands(P_GetPlayerCommands(i));
 
-          if (CLIENT && found_command) {
-            printf("[%d: %d] P_Ticker: Running command %d.\n",
+    if (i == consoleplayer) {
+      player = &players[consoleplayer];
+      found_command = false;
+
+      CBUF_FOR_EACH(&player->commands, entry) {
+        netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+
+        if (ncmd->tic == gametic) {
+          memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
+          found_command = true;
+        }
+
+        if (CLIENT && found_command) {
+          printf("[%d: %d] P_Ticker: Running command %d.\n",
+            gametic, i, ncmd->tic
+          );
+        }
+
+        if (ncmd->tic <= gametic) {
+          if (!found_command) {
+            printf("[%d: %d] P_Ticker: Removing old player command %d.\n",
               gametic, i, ncmd->tic
             );
           }
-
-          if (ncmd->tic <= gametic) {
-            if (!found_command) {
-              printf("[%d: %d] P_Ticker: Removing old player command %d.\n",
-                gametic, i, ncmd->tic
-              );
-            }
-            M_CBufRemove(&player->commands, entry.index);
-            entry.index--;
-          }
-
-          if (found_command) {
-            P_PlayerThink(&players[i]);
-            break;
-          }
+          M_CBufRemove(&player->commands, entry.index);
+          entry.index--;
         }
 
-        if (CLIENT && !found_command)
-          printf("[%d: %d] No command.\n", gametic, i);
-
-        continue;
+        if (found_command) {
+          P_PlayerThink(&players[i]);
+          break;
+        }
       }
 
-      CBUF_FOR_EACH(&players[i].commands, entry) {
-        netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+      if (CLIENT && !found_command)
+        printf("[%d: %d] No command.\n", gametic, i);
 
-        if (SERVER && ncmd->tic <= np->last_command_run)
-          continue;
+      continue;
+    }
 
-        if (ncmd->tic <= gametic) {
-          memcpy(&players[i].cmd, &ncmd->cmd, sizeof(ticcmd_t));
+    CBUF_FOR_EACH(&players[i].commands, entry) {
+      netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-          printf("[%d: %d (%d/%d)] P_Ticker: Running command %d.\n",
-            gametic, i, np->state_tic, np->command_tic, ncmd->tic
-          );
+      if (SERVER && ncmd->tic <= np->last_command_run)
+        continue;
 
-          P_PlayerThink(&players[i]);
+      if (ncmd->tic <= gametic) {
+        memcpy(&players[i].cmd, &ncmd->cmd, sizeof(ticcmd_t));
 
-          np->last_command_run = ncmd->tic;
-        }
-        else {
-          /*
-          printf("[%d: %d] Not running %d until later.\n",
-            gametic, i, ncmd->tic
-          );
-          */
-        }
+        printf("[%d: %d (%d/%d)] P_Ticker: Running command %d.\n",
+          gametic, i, np->state_tic, np->command_tic, ncmd->tic
+        );
+
+        P_PlayerThink(&players[i]);
+
+        np->last_command_run = ncmd->tic;
+      }
+      else {
+        /*
+        printf("[%d: %d] Not running %d until later.\n",
+          gametic, i, ncmd->tic
+        );
+        */
       }
     }
   }
+}
 
+static void run_thinkers_and_specials(void) {
   P_RunThinkers();
   P_UpdateSpecials();
   P_RespawnSpecials();
   P_MapEnd();
   leveltime++; // for par times
+}
+
+void P_Ticker(void) {
+  setup_tic();
+
+  if (gamestate == GS_LEVEL) { // not if this is an intermission screen
+    if (DELTASYNC)
+      run_deltasync_tic();
+    else
+      run_regular_tic();
+  }
+
+  run_thinkers_and_specials();
 }
 
 /* vi: set et ts=2 sw=2: */

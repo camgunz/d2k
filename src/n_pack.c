@@ -649,6 +649,10 @@ dboolean N_UnpackDeltaSync(netpeer_t *np, dboolean *update_sync) {
   int m_command_tic = 0;
   int m_delta_from_tic = 0;
   int m_delta_to_tic = 0;
+  int saved_state_tic = np->state_tic;
+  int saved_command_tic = np->command_tic;
+  int saved_delta_from_tic = np->delta.from_tic;
+  int saved_delta_to_tic = np->delta.to_tic;
 
   read_int(pbuf, m_state_tic, "state tic");
   read_int(pbuf, m_command_tic, "command tic");
@@ -669,7 +673,17 @@ dboolean N_UnpackDeltaSync(netpeer_t *np, dboolean *update_sync) {
     np->delta.from_tic = m_delta_from_tic;
     np->delta.to_tic = m_delta_to_tic;
     read_bytes(pbuf, np->delta.data, "delta data");
-    *update_sync = true;
+
+    if (CL_LoadState()) {
+      *update_sync = true;
+    }
+    else {
+      np->state_tic = saved_state_tic;
+      np->command_tic = saved_command_tic;
+      np->delta.from_tic = saved_delta_from_tic;
+      np->delta.to_tic = saved_delta_to_tic;
+      *update_sync = false;
+    }
   }
   else {
     *update_sync = false;

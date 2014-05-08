@@ -317,10 +317,7 @@ static void handle_sync(netpeer_t *np) {
   }
 
   if (update_sync) {
-    if (DELTACLIENT)
-      CL_LoadState();
-
-    if (CMDSERVER) {
+    if (SERVER) {
       for (int i = 0; i < N_PeerGetCount(); i++) {
         netpeer_t *client = N_PeerGet(i);
 

@@ -42,7 +42,7 @@ dboolean N_GetWad(const char *name);
 dboolean CL_ReceivedSetup(void);
 void     CL_SetReceivedSetup(dboolean new_received_setup);
 void     CL_SetAuthorizationLevel(auth_level_e level);
-void     CL_LoadState(void);
+dboolean CL_LoadState(void);
 void     CL_RunLocalCommands(void);
 void     CL_RemoveOldStates(void);
 

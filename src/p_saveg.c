@@ -36,7 +36,9 @@
 #include "doomstat.h"
 #include "g_game.h"
 #include "r_main.h"
+#include "p_map.h"
 #include "p_maputl.h"
+#include "p_setup.h"
 #include "p_spec.h"
 #include "p_tick.h"
 #include "p_saveg.h"
@@ -601,6 +603,12 @@ void P_UnArchiveThinkers(buf_t *savebuffer) {
   }
 
   P_InitThinkers();
+  for (int i = 0; i < numsectors; i++) {
+    sectors[i].thinglist = NULL;
+    sectors[i].touching_thinglist = NULL;
+  }
+  memset(blocklinks, 0, bmapwidth * bmapheight * sizeof(*blocklinks));
+  P_FreeSecNodeList();
 
   M_BufferReadInt(savebuffer, (int *)&thinker_count);
 
@@ -630,6 +638,8 @@ void P_UnArchiveThinkers(buf_t *savebuffer) {
       mobj->player->mo = mobj;
     }
 
+    mobj->snext = NULL;
+    mobj->sprev = NULL;
     P_SetThingPosition(mobj);
     mobj->info = &mobjinfo[mobj->type];
 

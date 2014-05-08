@@ -395,12 +395,12 @@ void CL_SetAuthorizationLevel(auth_level_e level) {
     authorization_level = level;
 }
 
-void CL_LoadState(void) {
+dboolean CL_LoadState(void) {
   netpeer_t *server = N_PeerGet(0);
   game_state_delta_t *delta = NULL;
   
   if (server == NULL)
-    return;
+    return false;
 
   delta = &server->delta;
   printf("(%d) Applying delta from %d to %d.\n",
@@ -409,15 +409,16 @@ void CL_LoadState(void) {
 
   if (!N_ApplyStateDelta(delta)) {
     doom_printf("Error applying state delta.\n");
-    return;
+    return false;
   }
 
   if (!N_LoadLatestState(false)) {
     doom_printf("Error loading state.\n");
-    return;
+    return false;
   }
 
   server->state_tic = delta->to_tic;
+  return true;
 }
 
 void CL_RunLocalCommands(void) {
