@@ -63,7 +63,7 @@
 #include "n_peer.h"
 #include "n_proto.h"
 
-#define DEBUG_SYNC 0
+#define DEBUG_SYNC 1
 
 /* CG: TODO: Add WAD fetching (waiting on libcurl) */
 

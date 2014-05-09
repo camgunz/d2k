@@ -37,10 +37,10 @@
 #include "d_log.h"
 #include "lprintf.h"
 
-static cbuf_t log_files;
+static obuf_t log_files;
 
 static void close_logs(void) {
-  CBUF_FOR_EACH(&log_files, entry) {
+  OBUF_FOR_EACH(&log_files, entry) {
     FILE *fh = (FILE *)entry.obj;
 
     fclose(fh);
@@ -48,7 +48,7 @@ static void close_logs(void) {
 }
 
 void D_InitLogging(void) {
-  M_CBufInitWithCapacity(&log_files, sizeof(FILE *), LOG_MAX);
+  M_OBufInitWithCapacity(&log_files, LOG_MAX);
   atexit(close_logs);
 }
 
@@ -58,11 +58,11 @@ void D_EnableLogChannel(log_channel_e channel, const char *filename) {
   if (fh == NULL)
     I_Error("Error opening log file %s: %s.\n", filename, strerror(errno));
 
-  M_CBufInsert(&log_files, channel, fh);
+  M_OBufInsert(&log_files, channel, fh);
 }
 
 void D_Log(log_channel_e channel, const char *fmt, ...) {
-  FILE *fh = M_CBufGet(&log_files, channel);
+  FILE *fh = M_OBufGet(&log_files, channel);
   va_list args;
 
   if (fh != NULL) {

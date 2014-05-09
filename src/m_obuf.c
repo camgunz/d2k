@@ -27,7 +27,10 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *  A buffer of objects
+ *  A buffer of objects, more efficient than m_cbuf when an object must be
+ *  allocated (avoids copying and then deallocating the original object) or
+ *  when the object is large enough that a copy takes more time than an
+ *  allocation.
  *
  *-----------------------------------------------------------------------------
  */

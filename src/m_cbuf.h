@@ -27,7 +27,8 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *  A buffer of objects that uses copies instead of pointers.
+ *  A buffer of objects that uses copies instead of pointers, more efficient
+ *  than m_obuf when allocations can be avoided or have already been performed.
  *
  *-----------------------------------------------------------------------------
  */
