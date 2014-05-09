@@ -329,7 +329,7 @@ static void run_deltasync_tic(void) {
     if (np == NULL)
       continue;
 
-    printf("(%d) Player %d commands: ", consoleplayer, i);
+    SYNC_DEBUG("(%d) Player %d commands: ", consoleplayer, i);
     N_PrintPlayerCommands(&player->commands);
 
     if (i == consoleplayer) {
@@ -340,14 +340,14 @@ static void run_deltasync_tic(void) {
           break;
 
         if (ncmd->tic == gametic) {
-          printf("[%d: %d (%d/%d)] P_Ticker: Running command %d.\n",
+          SYNC_DEBUG("[%d: %d (%d/%d)] P_Ticker: Running command %d.\n",
             gametic, i, np->state_tic, np->command_tic, ncmd->tic
           );
           memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
           P_PlayerThink(player);
         }
         else {
-          printf("[%d: %d] P_Ticker: Removing old player command %d.\n",
+          SYNC_DEBUG("[%d: %d] P_Ticker: Removing old player command %d.\n",
             gametic, i, ncmd->tic
           );
         }
@@ -356,28 +356,13 @@ static void run_deltasync_tic(void) {
       }
     }
     else {
-
-    // CG: I don't think this is strictly necessary; at least, it shouldn't be
-#if 0
-      if (SERVER) {
-        CBUF_FOR_EACH(&player->commands, entry) {
-          netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
-
-          if (ncmd->tic <= np->last_command_run) {
-            M_CBufRemove(&player->commands, entry.index);
-            entry.index--;
-            continue;
-          }
-        }
-      }
-#endif
       CBUF_FOR_EACH(&player->commands, entry) {
         netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
         if (ncmd->tic > gametic)
           break;
 
-        printf("[%d: %d (%d/%d)] P_Ticker: Running command %d.\n",
+        SYNC_DEBUG("[%d: %d (%d/%d)] P_Ticker: Running command %d.\n",
           gametic, i, np->state_tic, np->command_tic, ncmd->tic
         );
         memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));

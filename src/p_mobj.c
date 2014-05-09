@@ -1139,8 +1139,6 @@ void P_SpawnPlayer(int playernum, const mapthing_t* mthing) {
   if (!playeringame[playernum])
     return;
 
-  printf("Spawning player %d.\n", playernum);
-
   p = &players[playernum];
 
   if (p->playerstate == PST_REBORN)
@@ -1149,8 +1147,11 @@ void P_SpawnPlayer(int playernum, const mapthing_t* mthing) {
   /* cph 2001/08/14 - use the options field of memorised player starts to
    * indicate whether the start really exists in the level.
    */
-  if (!mthing->options)
-    I_Error("P_SpawnPlayer: attempt to spawn player at unavailable start point");
+  if (!mthing->options) {
+    I_Error(
+      "P_SpawnPlayer: attempt to spawn player at unavailable start point"
+    );
+  }
   
   x    = mthing->x << FRACBITS;
   y    = mthing->y << FRACBITS;

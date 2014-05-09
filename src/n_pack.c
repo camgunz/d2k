@@ -291,7 +291,7 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   M_PBufWriteUChar(pbuf, command_count);
 
   if (command_count == 0) {
-    printf("[...]\n");
+    SYNC_DEBUG("[...]\n");
     return;
   }
 
@@ -302,7 +302,7 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
       continue;
 
     if (n == NULL)
-      printf("[%d => ", ncmd->tic);
+      SYNC_DEBUG("[%d => ", ncmd->tic);
 
     n = ncmd;
 
@@ -316,15 +316,13 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   }
 
   if (n != NULL)
-    printf("%d]\n", n->tic);
+    SYNC_DEBUG("%d]\n", n->tic);
 }
 
 void N_PackSetup(netpeer_t *np) {
   game_state_t *gs = N_GetLatestState();
   unsigned short player_count = 0;
   pbuf_t *pbuf = NULL;
-
-  printf("Packing setup (%d)\n", gametic);
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
@@ -341,7 +339,7 @@ void N_PackSetup(netpeer_t *np) {
   M_PBufWriteInt(pbuf, gs->tic);
   M_PBufWriteBytes(pbuf, gs->data.data, gs->data.size);
 
-  printf(
+  SYNC_DEBUG(
     "N_PackSetup: Sent game state at %d (player count: %d).\n",
     gs->tic, player_count
   );
@@ -467,7 +465,7 @@ void N_PackSync(netpeer_t *np) {
   unsigned short player_count = 0;
 
 
-  printf("(%d) Sending sync: ST/CT: (%d/%d) ",
+  SYNC_DEBUG("(%d) Sending sync: ST/CT: (%d/%d) ",
     gametic, np->state_tic, np->command_tic
   );
 
@@ -508,14 +506,14 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
 
   *update_sync = false;
 
-  printf("(%d) Received sync ", gametic);
+  SYNC_DEBUG("(%d) Received sync ", gametic);
 
   read_int(pbuf, m_state_tic, "state_tic");
 
   if ((np->state_tic != m_state_tic))
     m_update_sync = true;
 
-  printf("ST/CT: (%d/%d) ", m_state_tic, m_command_tic);
+  SYNC_DEBUG("ST/CT: (%d/%d) ", m_state_tic, m_command_tic);
 
   read_ushort(pbuf, m_player_count, "player count");
 
@@ -527,7 +525,7 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
     read_player(pbuf, m_playernum);
 
     if (SERVER && np->playernum != m_playernum) {
-      printf(
+      SYNC_DEBUG(
         "N_UnpackPlayerCommands: Erroneously received player commands for %d "
         "from player %d\n",
         m_playernum,
@@ -551,7 +549,7 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
 
     netticcmd_t *n = NULL;
 
-    printf("Unpacking %d commands.\n", command_count);
+    SYNC_DEBUG("Unpacking %d commands.\n", command_count);
 
     /*
      * CG: It seems like this allows holes in the command buffer, i.e.
@@ -578,7 +576,7 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
         ncmd->tic = command_tic;
 
         if (n == NULL)
-          printf(" [%d => ", ncmd->tic);
+          SYNC_DEBUG(" [%d => ", ncmd->tic);
 
         n = ncmd;
 
@@ -592,7 +590,6 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
       else {
         ticcmd_t cmd;
 
-        // printf("Skipping %d (< %d)\n", command_tic, m_command_tic + 1);
         read_char(pbuf, cmd.forwardmove, "command forward value");
         read_char(pbuf, cmd.sidemove, "command side value");
         read_short(pbuf, cmd.angleturn, "command angle value");
@@ -603,12 +600,12 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
     }
 
     if (n != NULL)
-      printf("%d]\n", n->tic);
+      SYNC_DEBUG("%d]\n", n->tic);
     else
-      printf("[...]\n");
+      SYNC_DEBUG("[...]\n");
 
     if (n != NULL) {
-      printf("Commands after sync: ");
+      SYNC_DEBUG("Commands after sync: ");
       N_PrintPlayerCommands(commands);
     }
   }
@@ -630,7 +627,7 @@ void N_PackDeltaSync(netpeer_t *np) {
     np->peernum, NET_CHANNEL_UNRELIABLE, nm_sync
   );
 
-  printf("(%d) Sending sync: ST/CT: (%d/%d) Delta: [%d => %d] (%zu)\n",
+  SYNC_DEBUG("(%d) Sending sync: ST/CT: (%d/%d) Delta: [%d => %d] (%zu)\n",
     gametic,
     np->state_tic,
     np->command_tic,
@@ -663,7 +660,8 @@ dboolean N_UnpackDeltaSync(netpeer_t *np, dboolean *update_sync) {
   read_int(pbuf, m_delta_to_tic, "delta to tic");
 
   if (np->state_tic < m_delta_to_tic) {
-    printf("(%d) Received new sync: ST/CT: (%d/%d) Delta: [%d => %d] (%d).\n",
+    SYNC_DEBUG(
+      "(%d) Received new sync: ST/CT: (%d/%d) Delta: [%d => %d] (%d).\n",
       gametic,
       m_state_tic,
       m_command_tic,

@@ -84,8 +84,8 @@ static mobj_t **mobj_p = NULL; // killough 2/14/98: Translation table
 static int P_GetMobj(mobj_t* mi, size_t s) {
   size_t i = (size_t)mi;
 
-  if (i >= s)
-    I_Error("Corrupt savegame (%zu >= %zu)", i, s);
+  if (i > s)
+    I_Error("Corrupt savegame (thinker %zu > max thinker count %zu)", i, s);
 
   return i;
 }
@@ -332,7 +332,7 @@ void P_UnArchivePlayers(buf_t *savebuffer) {
 
     // will be set when unarc thinker
     players[i].mo = NULL;
-    players[i].message = NULL;
+    // players[i].message = NULL;
     players[i].attacker = NULL;
   }
 }
@@ -616,11 +616,11 @@ void P_UnArchiveThinkers(buf_t *savebuffer) {
     // table of pointers
     // first table entry special: 0 maps to NULL
     old_thinker_count = thinker_count;
-    *(mobj_p = realloc(mobj_p, old_thinker_count * sizeof(*mobj_p))) = 0;
+    mobj_p = realloc(mobj_p, (thinker_count + 1) * sizeof(*mobj_p));
   }
-  memset(mobj_p, 0, old_thinker_count * sizeof(*mobj_p));
+  memset(mobj_p, 0, (thinker_count + 1) * sizeof(*mobj_p));
 
-  for (i = 0; i < thinker_count; i++) {
+  for (i = 1; i < (thinker_count + 1); i++) {
     // killough 2/14/98
     mobj_t *mobj = Z_Malloc(sizeof(mobj_t), PU_LEVEL, NULL);
 

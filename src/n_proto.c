@@ -229,8 +229,6 @@ static void handle_setup(netpeer_t *np) {
   for (i = 0; i < player_count; i++)
     playeringame[i] = true;
 
-  printf("Player count: %u.\n", player_count);
-
   consoleplayer = playernum;
 
   if (!playeringame[consoleplayer])
@@ -535,9 +533,6 @@ void N_UpdateSync(void) {
     np = N_PeerGet(0);
 
     if (np != NULL && np->needs_sync_update) {
-      /*
-      printf("Updating server sync.\n");
-      */
       N_PeerClearUnreliable(np->peernum);
       N_PackSync(np);
       np->needs_sync_update = false;
@@ -548,9 +543,6 @@ void N_UpdateSync(void) {
       np = N_PeerGet(i);
 
       if (np != NULL && np->needs_sync_update && np->state_tic != 0) {
-        /*
-        printf("Updating client %d sync.\n", np->playernum);
-        */
         N_PeerClearUnreliable(np->peernum);
 
         if (DELTASERVER) {
@@ -591,8 +583,6 @@ void SV_SetupNewPeer(int peernum) {
   P_SpawnPlayer(playernum, &playerstarts[playernum]);
   np->playernum = playernum;
   np->needs_setup = gametic;
-
-  printf("Spawned new player %d.\n", playernum);
 }
 
 void SV_SendSetup(short playernum) {

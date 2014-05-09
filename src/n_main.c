@@ -87,7 +87,7 @@ static void build_command(void) {
   I_StartTic();
   G_BuildTiccmd(ncmd);
 
-  printf("(%d) Built command %d.\n", gametic, ncmd->tic);
+  SYNC_DEBUG("(%d) Built command %d.\n", gametic, ncmd->tic);
 
   if (CLIENT) {
     netpeer_t *server = N_PeerGet(0);
@@ -171,17 +171,13 @@ static int run_commandsync_tics(int command_count) {
 }
 
 static int process_tics(int tics_elapsed) {
-  /*
-  printf("(%d) Running %d TICs.\n", gametic, tics_elapsed);
-  */
+  netpeer_t *p = N_PeerGet(0);
 
   if (tics_elapsed <= 0)
     return 0;
 
-  if (N_PeerGet(0) != NULL) {
-    netpeer_t *p = N_PeerGet(0);
-
-    printf("\n(%d) === Running %d TICs (%d/%d)\n",
+  if (p != NULL) {
+    SYNC_DEBUG("\n(%d) === Running %d TICs (%d/%d)\n",
       gametic, tics_elapsed, p->state_tic, p->command_tic
     );
   }
@@ -235,12 +231,12 @@ void cleanup_old_commands_and_states(void) {
 }
 
 void N_PrintPlayerCommands(cbuf_t *commands) {
-  printf("[ ");
+  SYNC_DEBUG("[ ");
 
   CBUF_FOR_EACH(commands, entry)
-    printf("%d ", ((netticcmd_t *)entry.obj)->tic);
+    SYNC_DEBUG("%d ", ((netticcmd_t *)entry.obj)->tic);
 
-  printf("]\n");
+  SYNC_DEBUG("]\n");
 }
 
 void N_InitNetGame(void) {
@@ -272,7 +268,7 @@ void N_InitNetGame(void) {
       N_ParseAddressString(myargv[i + 1], &host, &port);
 
       if (N_Connect(host, port))
-        printf("N_InitNetGame: Connected to server %s:%u.\n", host, port);
+        doom_printf("N_InitNetGame: Connected to server %s:%u.\n", host, port);
       else
         I_Error("N_InitNetGame: Connection aborted");
 
@@ -385,18 +381,18 @@ dboolean CL_LoadState(void) {
   if (server == NULL)
     return false;
 
-  printf("(%d) CL_LoadState\n", gametic);
+  SYNC_DEBUG("(%d) CL_LoadState\n", gametic);
 
   delta = &server->delta;
-  printf("  Applying delta from %d to %d.\n", delta->from_tic, delta->to_tic);
+  SYNC_DEBUG("  Applying delta from %d to %d.\n", delta->from_tic, delta->to_tic);
 
   if (!N_ApplyStateDelta(delta)) {
-    doom_printf("  Error applying state delta.\n");
+    doom_printf("Error applying state delta.\n");
     return false;
   }
 
   if (!N_LoadLatestState(false)) {
-    doom_printf("  Error loading state.\n");
+    doom_printf("Error loading state.\n");
     return false;
   }
 
@@ -406,20 +402,20 @@ dboolean CL_LoadState(void) {
 
   if (M_CBufGetObjectCount(&local_commands) > 0) {
     M_CBufConsolidate(player_commands);
-    printf("  Local Commands: ");
+    SYNC_DEBUG("  Local Commands: ");
     N_PrintPlayerCommands(&local_commands);
 
     CBUF_FOR_EACH(&local_commands, entry) {
       netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
       if (ncmd->tic > server->command_tic) {
-        printf("  Appending local command %d/%d.\n",
+        SYNC_DEBUG("  Appending local command %d/%d.\n",
           ncmd->tic, server->command_tic
         );
         M_CBufAppend(player_commands, ncmd);
       }
       else {
-        printf("  Removing old local command %d/%d.\n",
+        SYNC_DEBUG("  Removing old local command %d/%d.\n",
           ncmd->tic, server->command_tic
         );
         M_CBufRemove(&local_commands, entry.index);
@@ -463,7 +459,7 @@ void SV_RemoveOldCommands(void) {
       netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
       if (ncmd->tic < oldest_state_tic) {
-        printf(
+        SYNC_DEBUG(
           "SV_RemoveOldCommands: (%d: %d) Removing old command %d (< %d).\n",
           gametic, client->playernum, ncmd->tic, oldest_state_tic
         );
@@ -510,16 +506,6 @@ void N_TryRunTics(void) {
 
   if ((!MULTINET) && (!render_fast) && (tics_elapsed <= 0))
     I_uSleep(ms_to_next_tick * 1000);
-
-#if 0
-  if (N_PeerGet(0) != NULL) {
-    netpeer_t *p = N_PeerGet(0);
-
-    printf("\n(%d) === Starting new loop (%d/%d)\n",
-      gametic, p->state_tic, p->command_tic
-    );
-  }
-#endif
 
   if (tics_elapsed) {
     tics_built += tics_elapsed;

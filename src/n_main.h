@@ -34,6 +34,14 @@
 #ifndef N_MAIN__
 #define N_MAIN__
 
+#define DEBUG_SYNC 0
+
+#if DEBUG_SYNC
+#define SYNC_DEBUG(...) fprintf(stdout, __VA_ARGS__);
+#else
+#define SYNC_DEBUG(...)
+#endif
+
 void     N_PrintPlayerCommands(cbuf_t *commands);
 void     N_InitNetGame(void);
 void     N_Update(void);
