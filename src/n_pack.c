@@ -266,8 +266,8 @@
   );                                                                          \
   M_PBufWriteInt(pbuf, gametic);                                              \
   M_PBufWriteShort(pbuf, playernum);                                          \
-  M_PBufWriteMap(pbuf, 2);                                                    \
-  M_PBufWriteBytes(pbuf, pn, pnsz)
+  M_PBufWriteMap(pbuf, 1);                                                    \
+  M_PBufWriteString(pbuf, pn, pnsz)
 
 static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   netticcmd_t *n = NULL;
@@ -276,7 +276,10 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
 
   M_PBufWriteShort(pbuf, playernum);
 
-  commands = P_GetPlayerCommands(playernum);
+  if (DELTACLIENT && playernum == consoleplayer)
+    commands = N_GetLocalCommands();
+  else
+    commands = &players[playernum].commands;
 
   CBUF_FOR_EACH(commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
@@ -719,20 +722,20 @@ dboolean N_UnpackPlayerMessage(netpeer_t *np, short *sender, buf_t *recipients,
   return true;
 }
 
-dboolean N_UnpackPlayerPreferenceChange(netpeer_t *np, short *playernum,
-                                                       int *tic,
+dboolean N_UnpackPlayerPreferenceChange(netpeer_t *np, int *tic,
+                                                       short *playernum,
                                                        unsigned int *count) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
   short m_playernum = 0;
   int m_tic = 0;
   unsigned int m_count = 0;
 
-  read_player(pbuf, m_playernum);
   read_int(pbuf, m_tic, "player preference change tic");
+  read_player(pbuf, m_playernum);
   read_map(pbuf, m_count, "player preference change count");
 
-  *playernum = m_playernum;
   *tic = m_tic;
+  *playernum = m_playernum;
   *count = m_count;
 
   return true;
@@ -757,14 +760,10 @@ void N_PackNameChange(netpeer_t *np, short playernum, char *new_name) {
   printf("Packed name change\n");
 }
 
-dboolean N_UnpackNameChange(netpeer_t *np, short *playernum, buf_t *buf) {
+dboolean N_UnpackNameChange(netpeer_t *np, buf_t *buf) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
-  short m_playernum = 0;
 
-  read_player(pbuf, m_playernum);
   read_string(pbuf, buf, "new name", MAX_PLAYER_NAME_SIZE);
-
-  *playernum = m_playernum;
 
   return true;
 }
@@ -778,19 +777,16 @@ void N_PackTeamChange(netpeer_t *np, short playernum, byte new_team) {
   printf("Packed team change\n");
 }
 
-dboolean N_UnpackTeamChange(netpeer_t *np, short *playernum, byte *new_team) {
+dboolean N_UnpackTeamChange(netpeer_t *np, byte *new_team) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
   int team_count = 0;
-  short m_playernum = 0;
   byte m_new_team = 0;
 
-  read_player(pbuf, m_playernum);
   if (team_count > 0) { /* CG: TODO: teams */
     read_ranged_uchar(pbuf, m_new_team, "new team index", 0, team_count - 1);
   }
 
   *new_team = m_new_team;
-  *playernum = m_playernum;
 
   return true;
 }
@@ -804,7 +800,7 @@ void N_PackPWOChange(netpeer_t *np, short playernum) {
   printf("Packed PWO change\n");
 }
 
-dboolean N_UnpackPWOChange(netpeer_t *np, short *playernum) {
+dboolean N_UnpackPWOChange(netpeer_t *np) {
   return false; /* CG: TODO */
 }
 
@@ -817,18 +813,14 @@ void N_PackWSOPChange(netpeer_t *np, short playernum, byte new_wsop_flags) {
   printf("Packed WSOP change\n");
 }
 
-dboolean N_UnpackWSOPChange(netpeer_t *np, short *playernum,
-                                           byte *new_wsop_flags) {
+dboolean N_UnpackWSOPChange(netpeer_t *np, byte *new_wsop_flags) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
-  short m_playernum = 0;
   byte m_new_wsop_flags = 0;
 
-  read_player(pbuf, m_playernum);
   read_ranged_uchar(
     pbuf, m_new_wsop_flags, "new WSOP flags", WSOP_NONE, WSOP_MAX - 1
   );
 
-  *playernum = m_playernum;
   *new_wsop_flags = m_new_wsop_flags;
 
   return true;
@@ -844,18 +836,14 @@ void N_PackBobbingChange(netpeer_t *np, short playernum,
   printf("Packed bobbing change\n");
 }
 
-dboolean N_UnpackBobbingChanged(netpeer_t *np, short *playernum,
-                                               double *new_bobbing_amount) {
+dboolean N_UnpackBobbingChanged(netpeer_t *np, double *new_bobbing_amount) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
-  short m_playernum = 0;
   double m_new_bobbing_amount = 0;
 
-  read_player(pbuf, m_playernum);
   read_ranged_double(
     pbuf, m_new_bobbing_amount, "new bobbing amount", 0.0, 1.0
   );
 
-  *playernum = m_playernum;
   *new_bobbing_amount = m_new_bobbing_amount;
 
   return true;
@@ -871,16 +859,12 @@ void N_PackAutoaimChange(netpeer_t *np, short playernum,
   printf("Packed autoaim change\n");
 }
 
-dboolean N_UnpackAutoaimChange(netpeer_t *np, short *playernum,
-                                              dboolean *new_autoaim_enabled) {
+dboolean N_UnpackAutoaimChange(netpeer_t *np, dboolean *new_autoaim_enabled) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
-  short m_playernum = 0;
   dboolean m_new_autoaim_enabled = false;
 
-  read_player(pbuf, m_playernum);
   read_bool(pbuf, m_new_autoaim_enabled, "new autoaim enabled value");
 
-  *playernum = m_playernum;
   *new_autoaim_enabled = m_new_autoaim_enabled;
 
   return true;
@@ -896,16 +880,12 @@ void N_PackWeaponSpeedChange(netpeer_t *np, short playernum,
   printf("Packed weapon speed change\n");
 }
 
-dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, short *playernum,
-                                                  byte *new_weapon_speed) {
+dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, byte *new_weapon_speed) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
-  short m_playernum = 0;
   byte m_new_weapon_speed = 0;
 
-  read_player(pbuf, m_playernum);
   read_uchar(pbuf, m_new_weapon_speed, "new weapon speed");
 
-  *playernum = m_playernum;
   *new_weapon_speed = m_new_weapon_speed;
 
   return true;
@@ -922,17 +902,14 @@ void N_PackColorChange(netpeer_t *np, short playernum, byte new_red,
   printf("Packed color change\n");
 }
 
-dboolean N_UnpackColorChange(netpeer_t *np, short *playernum, byte *new_red,
-                                                              byte *new_green,
-                                                              byte *new_blue) {
+dboolean N_UnpackColorChange(netpeer_t *np, byte *new_red,
+                                            byte *new_green,
+                                            byte *new_blue) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
-  short m_playernum = 0;
   unsigned int m_new_color = 0;
 
-  read_player(pbuf, m_playernum);
   read_uint(pbuf, m_new_color, "new color");
 
-  *playernum = m_playernum;
   *new_red   = (m_new_color >> 24) & 0xFF;
   *new_green = (m_new_color >> 16) & 0xFF;
   *new_blue  = (m_new_color >>  8) & 0xFF;
@@ -950,17 +927,13 @@ void N_PackColorIndexChange(netpeer_t *np, short playernum,
   printf("Packed color index change\n");
 }
 
-dboolean N_UnpackColorIndexChange(netpeer_t *np, short *playernum,
-                                                 int *new_color_index) {
+dboolean N_UnpackColorIndexChange(netpeer_t *np, int *new_color_index) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
-  short m_playernum = 0;
   int m_new_color_index = 0;
 
-  read_player(pbuf, m_playernum);
   /* CG: TODO: Ensure new color map index is reasonable */
   read_int(pbuf, m_new_color_index, "new color index");
 
-  *playernum = m_playernum;
   *new_color_index = m_new_color_index;
 
   return true;

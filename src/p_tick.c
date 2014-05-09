@@ -311,88 +311,83 @@ static void run_regular_tic(void) {
  */
 static void run_deltasync_tic(void) {
   int i;
-  player_t *player = NULL;
-  dboolean found_command = false;
-  netpeer_t *np = NULL;
 
   for (i = 0; i < MAXPLAYERS; i++) {
+    player_t *player = NULL;
+    netpeer_t *np = NULL;
+
     if (!playeringame[i])
       continue;
 
     player = &players[i];
-    np = N_PeerForPlayer(i);
+
+    if (SERVER)
+      np = N_PeerForPlayer(i);
+    else
+      np = N_PeerGet(0);
 
     if (np == NULL)
       continue;
 
-    printf("Player commands: ");
-    N_PrintPlayerCommands(&players[i].commands);
-    printf("Local commands: ");
-    N_PrintPlayerCommands(P_GetPlayerCommands(i));
+    printf("(%d) Player %d commands: ", consoleplayer, i);
+    N_PrintPlayerCommands(&player->commands);
 
     if (i == consoleplayer) {
-      player = &players[consoleplayer];
-      found_command = false;
-
       CBUF_FOR_EACH(&player->commands, entry) {
         netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-        if (ncmd->tic == gametic) {
-          memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
-          found_command = true;
-        }
+        if (ncmd->tic > gametic)
+          break;
 
-        if (CLIENT && found_command) {
-          printf("[%d: %d] P_Ticker: Running command %d.\n",
+        if (ncmd->tic == gametic) {
+          printf("[%d: %d (%d/%d)] P_Ticker: Running command %d.\n",
+            gametic, i, np->state_tic, np->command_tic, ncmd->tic
+          );
+          memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
+          P_PlayerThink(player);
+        }
+        else {
+          printf("[%d: %d] P_Ticker: Removing old player command %d.\n",
             gametic, i, ncmd->tic
           );
         }
+        M_CBufRemove(&player->commands, entry.index);
+        entry.index--;
+      }
+    }
+    else {
 
-        if (ncmd->tic <= gametic) {
-          if (!found_command) {
-            printf("[%d: %d] P_Ticker: Removing old player command %d.\n",
-              gametic, i, ncmd->tic
-            );
+    // CG: I don't think this is strictly necessary; at least, it shouldn't be
+#if 0
+      if (SERVER) {
+        CBUF_FOR_EACH(&player->commands, entry) {
+          netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+
+          if (ncmd->tic <= np->last_command_run) {
+            M_CBufRemove(&player->commands, entry.index);
+            entry.index--;
+            continue;
           }
-          M_CBufRemove(&player->commands, entry.index);
-          entry.index--;
-        }
-
-        if (found_command) {
-          P_PlayerThink(&players[i]);
-          break;
         }
       }
+#endif
+      CBUF_FOR_EACH(&player->commands, entry) {
+        netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-      if (CLIENT && !found_command)
-        printf("[%d: %d] No command.\n", gametic, i);
-
-      continue;
-    }
-
-    CBUF_FOR_EACH(&players[i].commands, entry) {
-      netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
-
-      if (SERVER && ncmd->tic <= np->last_command_run)
-        continue;
-
-      if (ncmd->tic <= gametic) {
-        memcpy(&players[i].cmd, &ncmd->cmd, sizeof(ticcmd_t));
+        if (ncmd->tic > gametic)
+          break;
 
         printf("[%d: %d (%d/%d)] P_Ticker: Running command %d.\n",
           gametic, i, np->state_tic, np->command_tic, ncmd->tic
         );
+        memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
+        P_PlayerThink(player);
 
-        P_PlayerThink(&players[i]);
+        if (SERVER)
+          np->last_command_run = ncmd->tic;
 
-        np->last_command_run = ncmd->tic;
-      }
-      else {
-        /*
-        printf("[%d: %d] Not running %d until later.\n",
-          gametic, i, ncmd->tic
-        );
-        */
+        M_CBufRemove(&player->commands, entry.index);
+        entry.index--;
       }
     }
   }

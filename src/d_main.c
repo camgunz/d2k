@@ -445,7 +445,7 @@ static void D_DoomLoop(void) {
     if (singletics) {
       I_StartTic();
       G_BuildTiccmd(
-        M_CBufGetFirstFreeOrNewSlot(P_GetPlayerCommands(consoleplayer))
+        M_CBufGetFirstFreeOrNewSlot(&players[consoleplayer].commands)
       );
       if (advancedemo)
         D_DoAdvanceDemo();

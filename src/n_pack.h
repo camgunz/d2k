@@ -56,53 +56,48 @@ void     N_PackPlayerMessage(netpeer_t *np, short sender, buf_t *recipients,
 dboolean N_UnpackPlayerMessage(netpeer_t *np, short *sender, buf_t *recipients,
                                               buf_t *buf);
 
-dboolean N_UnpackPlayerPreferenceChange(netpeer_t *np, short *playernum,
-                                                       int *tic,
+dboolean N_UnpackPlayerPreferenceChange(netpeer_t *np, int *tic,
+                                                       short *playernum,
                                                        unsigned int *count);
 dboolean N_UnpackPlayerPreferenceName(netpeer_t *np, buf_t *buf);
 
 void     N_PackNameChange(netpeer_t *np, short playernum, char *new_name);
-dboolean N_UnpackNameChange(netpeer_t *np, short *playernum, buf_t *buf);
+dboolean N_UnpackNameChange(netpeer_t *np, buf_t *buf);
 
 void     N_PackTeamChange(netpeer_t *np, short playernum, byte new_team);
-dboolean N_UnpackTeamChange(netpeer_t *np, short *playernum, byte *new_team);
+dboolean N_UnpackTeamChange(netpeer_t *np, byte *new_team);
 
 void     N_PackPWOChange(netpeer_t *np, short playernum);
-dboolean N_UnpackPWOChange(netpeer_t *np, short *playernum);
+dboolean N_UnpackPWOChange(netpeer_t *np);
 
 void     N_PackWSOPChange(netpeer_t *np, short playernum,
                                          byte new_wsop_flags);
-dboolean N_UnpackWSOPChange(netpeer_t *np, short *playernum,
-                                           byte *new_wsop_flags);
+dboolean N_UnpackWSOPChange(netpeer_t *np, byte *new_wsop_flags);
 
 void     N_PackBobbingChange(netpeer_t *np, short playernum,
                                             double new_bobbing_amount);
-dboolean N_UnpackBobbingchange(netpeer_t *np, short *playernum,
-                                              double *new_bobbing_amount);
+dboolean N_UnpackBobbingchange(netpeer_t *np, double *new_bobbing_amount);
 
 void     N_PackAutoaimChange(netpeer_t *np, short playernum,
                                             dboolean new_autoaim_enabled);
-dboolean N_UnpackAutoaimChange(netpeer_t *np, short *playernum,
-                                              dboolean *new_autoaim_enabled);
+dboolean N_UnpackAutoaimChange(netpeer_t *np, dboolean *new_autoaim_enabled);
 
 void     N_PackWeaponSpeedChange(netpeer_t *np, short playernum,
                                                 byte new_weapon_speed);
-dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, short *playernum,
-                                                  byte *new_weapon_speed);
+dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, byte *new_weapon_speed);
 
 void     N_PackColorChange(netpeer_t *np, short playernum, byte new_red,
                                                            byte new_green,
                                                            byte new_blue);
-dboolean N_UnpackColorChange(netpeer_t *np, short *playernum, byte *new_red,
-                                                              byte *new_green,
-                                                              byte *new_blue);
+dboolean N_UnpackColorChange(netpeer_t *np, byte *new_red,
+                                            byte *new_green,
+                                            byte *new_blue);
 
 void     N_PackColorIndexChange(netpeer_t *np, short playernum, int new_color);
-dboolean N_UnpackColorIndexChange(netpeer_t *np, short *playernum,
-                                                 int *new_color);
+dboolean N_UnpackColorIndexChange(netpeer_t *np, int *new_color);
 
 void     N_PackSkinChange(netpeer_t *np, short playernum);
-dboolean N_UnpackSkinChange(netpeer_t *np, short *playernum);
+dboolean N_UnpackSkinChange(netpeer_t *np);
 
 void     N_PackAuthRequest(netpeer_t *np, char *password);
 dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf);

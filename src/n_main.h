@@ -43,12 +43,11 @@ dboolean CL_ReceivedSetup(void);
 void     CL_SetReceivedSetup(dboolean new_received_setup);
 void     CL_SetAuthorizationLevel(auth_level_e level);
 dboolean CL_LoadState(void);
-void     CL_RunLocalCommands(void);
-void     CL_RemoveOldStates(void);
 
 void     SV_RemoveOldCommands(void);
 void     SV_RemoveOldStates(void);
 
+cbuf_t*  N_GetLocalCommands(void);
 void     N_TryRunTics(void);
 
 #endif

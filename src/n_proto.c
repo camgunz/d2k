@@ -209,8 +209,6 @@ static void handle_setup(netpeer_t *np) {
   unsigned short playernum = 0;
   int i;
 
-  puts("Handling setup");
-
   if (server == NULL)
     return;
 
@@ -311,11 +309,6 @@ static void handle_sync(netpeer_t *np) {
   if ((!DELTACLIENT) && (!N_UnpackSync(np, &update_sync)))
     return;
 
-  if (DELTASERVER) {
-    SV_RemoveOldCommands();
-    SV_RemoveOldStates();
-  }
-
   if (update_sync) {
     if (SERVER) {
       for (int i = 0; i < N_PeerGetCount(); i++) {
@@ -388,7 +381,7 @@ static void handle_player_preference_change(netpeer_t *np) {
     initialized_buffers = true;
   }
 
-  if (!N_UnpackPlayerPreferenceChange(np, &playernum, &tic, &pref_count))
+  if (!N_UnpackPlayerPreferenceChange(np, &tic, &playernum, &pref_count))
     return;
 
   if (SERVER && playernum != np->playernum) {
@@ -414,8 +407,10 @@ static void handle_player_preference_change(netpeer_t *np) {
       return;
     }
 
+    M_BufferSeek(&pref_key_name, 0);
+
     if (M_BufferEqualsString(&pref_key_name, "name")) {
-      N_UnpackNameChange(np, &playernum, &pref_key_value);
+      N_UnpackNameChange(np, &pref_key_value);
 
       if (player->name != NULL) {
         doom_printf("%s is now %s.\n", player->name, pref_key_value.data);
@@ -427,7 +422,7 @@ static void handle_player_preference_change(netpeer_t *np) {
     else if (M_BufferEqualsString(&pref_key_name, "team")) {
       byte new_team = 0;
 
-      if (!N_UnpackTeamChange(np, &playernum, &new_team))
+      if (!N_UnpackTeamChange(np, &new_team))
         return;
 
       player->team = new_team;
@@ -447,7 +442,7 @@ static void handle_player_preference_change(netpeer_t *np) {
     else if (M_BufferEqualsString(&pref_key_name, "color index")) {
       int new_color;
 
-      if (N_UnpackColorIndexChange(np, &playernum, &new_color))
+      if (N_UnpackColorIndexChange(np, &new_color))
         G_ChangedPlayerColour(np->playernum, new_color);
     }
     else if (M_BufferEqualsString(&pref_key_name, "skin name")) {
@@ -482,10 +477,10 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
 
   while (N_PeerLoadNextMessage(peernum, &message_type)) {
 
+    /*
     if (message_type >= 1 && message_type <= sizeof(nm_names))
-      /*
       printf("Handling [%s] message.\n", nm_names[message_type - 1]);
-      */
+    */
 
     switch (message_type) {
       case nm_setup:

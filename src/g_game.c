@@ -1096,7 +1096,7 @@ void G_Ticker(void) {
       }
       else if ((!MULTINET) || CMDSYNC) {
         dboolean found_command = false;
-        cbuf_t *commands = P_GetPlayerCommands(i);
+        cbuf_t *commands = &players[i].commands;
 
         CBUF_FOR_EACH(commands, entry) {
           netticcmd_t *ncmd = entry.obj;
@@ -2044,8 +2044,6 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
   memset(description, 0, SAVESTRINGSIZE);
   memset(save_version, 0, VERSIONSIZE);
 
-  printf("Savebuffer Cursor: %zu.\n", M_BufferGetCursor(savebuffer));
-
   M_BufferRead(savebuffer, description, SAVESTRINGSIZE);
   M_BufferRead(savebuffer, save_version, VERSIONSIZE);
 
@@ -2188,8 +2186,8 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
     G_InitNew(gameskill, gameepisode, gamemap);
   }
   else {
-    printf("G_ReadSaveData: Clearing stuff instead of running G_InitNew\n");
 #if 0
+    printf("G_ReadSaveData: Clearing stuff instead of running G_InitNew\n");
     P_InitThinkers();
     for (int i = 0; i < numsectors; i++) {
       sectors[i].thinglist = NULL;
@@ -2210,8 +2208,6 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
   // killough 11/98: load revenant tracer state
   basetic = gametic - M_BufferPeek(savebuffer);
   M_BufferSeekForward(savebuffer, 1);
-
-  printf("G_ReadSaveData: Running P_UnArchive*\n");
 
   // dearchive all the modifications
   P_MapStart();
