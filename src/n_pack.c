@@ -291,7 +291,7 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   M_PBufWriteUChar(pbuf, command_count);
 
   if (command_count == 0) {
-    SYNC_DEBUG("[...]\n");
+    D_Log(LOG_SYNC, "[...]\n");
     return;
   }
 
@@ -302,7 +302,7 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
       continue;
 
     if (n == NULL)
-      SYNC_DEBUG("[%d => ", ncmd->tic);
+      D_Log(LOG_SYNC, "[%d => ", ncmd->tic);
 
     n = ncmd;
 
@@ -316,7 +316,7 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   }
 
   if (n != NULL)
-    SYNC_DEBUG("%d]\n", n->tic);
+    D_Log(LOG_SYNC, "%d]\n", n->tic);
 }
 
 void N_PackSetup(netpeer_t *np) {
@@ -339,8 +339,7 @@ void N_PackSetup(netpeer_t *np) {
   M_PBufWriteInt(pbuf, gs->tic);
   M_PBufWriteBytes(pbuf, gs->data.data, gs->data.size);
 
-  SYNC_DEBUG(
-    "N_PackSetup: Sent game state at %d (player count: %d).\n",
+  D_Log(LOG_SYNC, "N_PackSetup: Sent game state at %d (player count: %d).\n",
     gs->tic, player_count
   );
 }
@@ -465,7 +464,7 @@ void N_PackSync(netpeer_t *np) {
   unsigned short player_count = 0;
 
 
-  SYNC_DEBUG("(%d) Sending sync: ST/CT: (%d/%d) ",
+  D_Log(LOG_SYNC, "(%d) Sending sync: ST/CT: (%d/%d) ",
     gametic, np->state_tic, np->command_tic
   );
 
@@ -506,14 +505,14 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
 
   *update_sync = false;
 
-  SYNC_DEBUG("(%d) Received sync ", gametic);
+  D_Log(LOG_SYNC, "(%d) Received sync ", gametic);
 
   read_int(pbuf, m_state_tic, "state_tic");
 
   if ((np->state_tic != m_state_tic))
     m_update_sync = true;
 
-  SYNC_DEBUG("ST/CT: (%d/%d) ", m_state_tic, m_command_tic);
+  D_Log(LOG_SYNC, "ST/CT: (%d/%d) ", m_state_tic, m_command_tic);
 
   read_ushort(pbuf, m_player_count, "player count");
 
@@ -525,7 +524,8 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
     read_player(pbuf, m_playernum);
 
     if (SERVER && np->playernum != m_playernum) {
-      SYNC_DEBUG(
+      D_Log(
+        LOG_SYNC, 
         "N_UnpackPlayerCommands: Erroneously received player commands for %d "
         "from player %d\n",
         m_playernum,
@@ -549,7 +549,7 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
 
     netticcmd_t *n = NULL;
 
-    SYNC_DEBUG("Unpacking %d commands.\n", command_count);
+    D_Log(LOG_SYNC, "Unpacking %d commands.\n", command_count);
 
     /*
      * CG: It seems like this allows holes in the command buffer, i.e.
@@ -576,7 +576,7 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
         ncmd->tic = command_tic;
 
         if (n == NULL)
-          SYNC_DEBUG(" [%d => ", ncmd->tic);
+          D_Log(LOG_SYNC, " [%d => ", ncmd->tic);
 
         n = ncmd;
 
@@ -600,12 +600,12 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
     }
 
     if (n != NULL)
-      SYNC_DEBUG("%d]\n", n->tic);
+      D_Log(LOG_SYNC, "%d]\n", n->tic);
     else
-      SYNC_DEBUG("[...]\n");
+      D_Log(LOG_SYNC, "[...]\n");
 
     if (n != NULL) {
-      SYNC_DEBUG("Commands after sync: ");
+      D_Log(LOG_SYNC, "Commands after sync: ");
       N_PrintPlayerCommands(commands);
     }
   }
@@ -627,7 +627,7 @@ void N_PackDeltaSync(netpeer_t *np) {
     np->peernum, NET_CHANNEL_UNRELIABLE, nm_sync
   );
 
-  SYNC_DEBUG("(%d) Sending sync: ST/CT: (%d/%d) Delta: [%d => %d] (%zu)\n",
+  D_Log(LOG_SYNC, "(%d) Sending sync: ST/CT: (%d/%d) Delta: [%d => %d] (%zu)\n",
     gametic,
     np->state_tic,
     np->command_tic,
@@ -660,7 +660,8 @@ dboolean N_UnpackDeltaSync(netpeer_t *np, dboolean *update_sync) {
   read_int(pbuf, m_delta_to_tic, "delta to tic");
 
   if (np->state_tic < m_delta_to_tic) {
-    SYNC_DEBUG(
+    D_Log(
+      LOG_SYNC, 
       "(%d) Received new sync: ST/CT: (%d/%d) Delta: [%d => %d] (%d).\n",
       gametic,
       m_state_tic,

@@ -29,28 +29,48 @@
  * DESCRIPTION:
  *
  *
- *-----------------------------------------------------------------------------*/
+ *-----------------------------------------------------------------------------
+ */
 
-#ifndef N_MAIN__
-#define N_MAIN__
+#include "z_zone.h"
 
-void     N_PrintPlayerCommands(cbuf_t *commands);
-void     N_InitNetGame(void);
-void     N_Update(void);
-dboolean N_GetWad(const char *name);
+#include "d_log.h"
+#include "lprintf.h"
 
-dboolean CL_ReceivedSetup(void);
-void     CL_SetReceivedSetup(dboolean new_received_setup);
-void     CL_SetAuthorizationLevel(auth_level_e level);
-dboolean CL_LoadState(void);
+static cbuf_t log_files;
 
-void     SV_RemoveOldCommands(void);
-void     SV_RemoveOldStates(void);
+static void close_logs(void) {
+  CBUF_FOR_EACH(&log_files, entry) {
+    FILE *fh = (FILE *)entry.obj;
 
-cbuf_t*  N_GetLocalCommands(void);
-void     N_TryRunTics(void);
+    fclose(fh);
+  }
+}
 
-#endif
+void D_InitLogging(void) {
+  M_CBufInitWithCapacity(&log_files, sizeof(FILE *), LOG_MAX);
+  atexit(close_logs);
+}
+
+void D_EnableLogChannel(log_channel_e channel, const char *filename) {
+  FILE *fh = fopen(filename, "w");
+
+  if (fh == NULL)
+    I_Error("Error opening log file %s: %s.\n", filename, strerror(errno));
+
+  M_CBufInsert(&log_files, channel, fh);
+}
+
+void D_Log(log_channel_e channel, const char *fmt, ...) {
+  FILE *fh = M_CBufGet(&log_files, channel);
+  va_list args;
+
+  if (fh != NULL) {
+    va_start(args, fmt);
+    vfprintf(fh, fmt, args);
+    va_end(args);
+  }
+}
 
 /* vi: set et ts=2 sw=2: */
 

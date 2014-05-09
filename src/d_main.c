@@ -1694,6 +1694,8 @@ static void D_DoomMainSetup(void)
 #endif
   }
 
+  // 05/09/14 CG: Enable logging
+  D_InitLogging();
 
   // 1/18/98 killough: Z_Init() call moved to i_main.c
 

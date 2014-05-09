@@ -29,26 +29,22 @@
  * DESCRIPTION:
  *
  *
- *-----------------------------------------------------------------------------*/
+ *-----------------------------------------------------------------------------
+ */
 
-#ifndef N_MAIN__
-#define N_MAIN__
+#ifndef D_LOG_H__
+#define D_LOG_H__
 
-void     N_PrintPlayerCommands(cbuf_t *commands);
-void     N_InitNetGame(void);
-void     N_Update(void);
-dboolean N_GetWad(const char *name);
+typedef enum {
+  LOG_SYNC,
+  LOG_MAX
+} log_channel_e;
 
-dboolean CL_ReceivedSetup(void);
-void     CL_SetReceivedSetup(dboolean new_received_setup);
-void     CL_SetAuthorizationLevel(auth_level_e level);
-dboolean CL_LoadState(void);
-
-void     SV_RemoveOldCommands(void);
-void     SV_RemoveOldStates(void);
-
-cbuf_t*  N_GetLocalCommands(void);
-void     N_TryRunTics(void);
+void D_InitLogging(void);
+void D_EnableLogChannel(log_channel_e channel, const char *filename);
+void D_Log(log_channel_e channel, const char *fmt, ...) __attribute__((
+  format(printf, 2, 3)
+));
 
 #endif
 

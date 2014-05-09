@@ -586,6 +586,7 @@ SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/cmp.c
   ${CMAKE_SOURCE_DIR}/src/d_deh.c
   ${CMAKE_SOURCE_DIR}/src/d_items.c
+  ${CMAKE_SOURCE_DIR}/src/d_log.c
   ${CMAKE_SOURCE_DIR}/src/d_main.c
   ${CMAKE_SOURCE_DIR}/src/doomdef.c
   ${CMAKE_SOURCE_DIR}/src/doomstat.c

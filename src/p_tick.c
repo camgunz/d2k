@@ -329,7 +329,7 @@ static void run_deltasync_tic(void) {
     if (np == NULL)
       continue;
 
-    SYNC_DEBUG("(%d) Player %d commands: ", consoleplayer, i);
+    D_Log(LOG_SYNC, "(%d) Player %d commands: ", consoleplayer, i);
     N_PrintPlayerCommands(&player->commands);
 
     if (i == consoleplayer) {
@@ -340,14 +340,16 @@ static void run_deltasync_tic(void) {
           break;
 
         if (ncmd->tic == gametic) {
-          SYNC_DEBUG("[%d: %d (%d/%d)] P_Ticker: Running command %d.\n",
+          D_Log(LOG_SYNC, "[%d: %d (%d/%d)] P_Ticker: Running command %d.\n",
             gametic, i, np->state_tic, np->command_tic, ncmd->tic
           );
           memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
           P_PlayerThink(player);
         }
         else {
-          SYNC_DEBUG("[%d: %d] P_Ticker: Removing old player command %d.\n",
+          D_Log(
+            LOG_SYNC,
+            "[%d: %d] P_Ticker: Removing old player command %d.\n",
             gametic, i, ncmd->tic
           );
         }
@@ -362,7 +364,7 @@ static void run_deltasync_tic(void) {
         if (ncmd->tic > gametic)
           break;
 
-        SYNC_DEBUG("[%d: %d (%d/%d)] P_Ticker: Running command %d.\n",
+        D_Log(LOG_SYNC, "[%d: %d (%d/%d)] P_Ticker: Running command %d.\n",
           gametic, i, np->state_tic, np->command_tic, ncmd->tic
         );
         memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
