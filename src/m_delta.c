@@ -46,8 +46,6 @@
 #include "m_buf.h"
 #include "m_delta.h"
 
-extern int gametic;
-
 #define BLKSIZE 1024
 
 static dboolean xdiff_initialized = false;

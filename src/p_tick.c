@@ -370,9 +370,6 @@ static void run_deltasync_tic(void) {
         memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
         P_PlayerThink(player);
 
-        if (SERVER)
-          np->last_command_run = ncmd->tic;
-
         M_CBufRemove(&player->commands, entry.index);
         entry.index--;
       }

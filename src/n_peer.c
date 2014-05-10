@@ -188,7 +188,6 @@ int N_PeerAdd(void) {
   np->disconnect_time   = 0;
   np->state_tic         = 0;
   np->command_tic       = 0;
-  np->last_command_run  = 0;
   np->needs_setup       = 0;
   np->needs_sync_update = false;
 
@@ -236,7 +235,6 @@ void N_PeerRemove(netpeer_t *np) {
   np->disconnect_time   = 0;
   np->state_tic         = 0;
   np->command_tic       = 0;
-  np->last_command_run  = 0;
   np->needs_setup       = 0;
   np->needs_sync_update = false;
 

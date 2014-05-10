@@ -72,6 +72,7 @@ typedef enum {
 
 typedef struct netticcmd_s {
   int tic;
+  int index;
   ticcmd_t cmd;
 } netticcmd_t;
 
