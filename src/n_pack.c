@@ -284,7 +284,7 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   CBUF_FOR_EACH(commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-    if (ncmd->tic > np->command_tic)
+    if (ncmd->tic > np->sync.cmd)
       command_count++;
   }
 
@@ -298,7 +298,7 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   CBUF_FOR_EACH(commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-    if (ncmd->tic <= np->command_tic)
+    if (ncmd->tic <= np->sync.cmd)
       continue;
 
     if (n == NULL)
@@ -465,10 +465,10 @@ void N_PackSync(netpeer_t *np) {
 
 
   D_Log(LOG_SYNC, "(%d) Sending sync: ST/CT: (%d/%d) ",
-    gametic, np->state_tic, np->command_tic
+    gametic, np->sync.tic, np->sync.cmd
   );
 
-  M_PBufWriteInt(pbuf, np->state_tic);
+  M_PBufWriteInt(pbuf, np->sync.tic);
 
   if (SERVER) {
     for (int i = 0; i < N_PeerGetCount(); i++) {
@@ -499,20 +499,20 @@ void N_PackSync(netpeer_t *np) {
 dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
   unsigned short m_player_count = 0;
-  int m_state_tic = -1;
-  int m_command_tic = np->command_tic;
+  int m_sync_tic = -1;
+  int m_command_index = np->sync.cmd;
   dboolean m_update_sync = false;
 
   *update_sync = false;
 
   D_Log(LOG_SYNC, "(%d) Received sync ", gametic);
 
-  read_int(pbuf, m_state_tic, "state_tic");
+  read_int(pbuf, m_sync_tic, "sync tic");
 
-  if ((np->state_tic != m_state_tic))
+  if ((np->sync.tic != m_sync_tic))
     m_update_sync = true;
 
-  D_Log(LOG_SYNC, "ST/CT: (%d/%d) ", m_state_tic, m_command_tic);
+  D_Log(LOG_SYNC, "ST/CT: (%d/%d) ", m_sync_tic, m_command_index);
 
   read_ushort(pbuf, m_player_count, "player count");
 
@@ -561,19 +561,19 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
      */
 
     while (command_count--) {
-      int command_tic = -1;
+      int command_index = -1;
 
-      read_int(pbuf, command_tic, "command tic");
+      read_int(pbuf, command_index, "command index");
       
-      if (m_command_tic == 0)
-        m_command_tic = command_tic - 1;
+      if (m_command_index == 0)
+        m_command_index = command_index - 1;
 
-      if (command_tic > m_command_tic) {
+      if (command_index > m_command_index) {
         netticcmd_t *ncmd = M_CBufGetFirstFreeOrNewSlot(commands);
 
-        m_command_tic = command_tic;
+        m_command_index = command_index;
 
-        ncmd->tic = command_tic;
+        ncmd->tic = command_index;
 
         if (n == NULL)
           D_Log(LOG_SYNC, " [%d => ", ncmd->tic);
@@ -610,12 +610,12 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
     }
   }
 
-  if (np->command_tic != m_command_tic)
+  if (np->sync.cmd != m_command_index)
     m_update_sync = true;
 
   if (m_update_sync) {
-    np->state_tic = m_state_tic;
-    np->command_tic = m_command_tic;
+    np->sync.tic = m_sync_tic;
+    np->sync.cmd = m_command_index;
     *update_sync = m_update_sync;
   }
 
@@ -629,61 +629,61 @@ void N_PackDeltaSync(netpeer_t *np) {
 
   D_Log(LOG_SYNC, "(%d) Sending sync: ST/CT: (%d/%d) Delta: [%d => %d] (%zu)\n",
     gametic,
-    np->state_tic,
-    np->command_tic,
-    np->delta.from_tic,
-    np->delta.to_tic,
-    np->delta.data.size
+    np->sync.tic,
+    np->sync.cmd,
+    np->sync.delta.from_tic,
+    np->sync.delta.to_tic,
+    np->sync.delta.data.size
   );
 
-  M_PBufWriteInt(pbuf, np->state_tic);
-  M_PBufWriteInt(pbuf, np->command_tic);
-  M_PBufWriteInt(pbuf, np->delta.from_tic);
-  M_PBufWriteInt(pbuf, np->delta.to_tic);
-  M_PBufWriteBytes(pbuf, np->delta.data.data, np->delta.data.size);
+  M_PBufWriteInt(pbuf, np->sync.tic);
+  M_PBufWriteInt(pbuf, np->sync.cmd);
+  M_PBufWriteInt(pbuf, np->sync.delta.from_tic);
+  M_PBufWriteInt(pbuf, np->sync.delta.to_tic);
+  M_PBufWriteBytes(pbuf, np->sync.delta.data.data, np->sync.delta.data.size);
 }
 
 dboolean N_UnpackDeltaSync(netpeer_t *np, dboolean *update_sync) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
-  int m_state_tic = 0;
-  int m_command_tic = 0;
+  int m_sync_tic = 0;
+  int m_command_index = 0;
   int m_delta_from_tic = 0;
   int m_delta_to_tic = 0;
-  int saved_state_tic = np->state_tic;
-  int saved_command_tic = np->command_tic;
-  int saved_delta_from_tic = np->delta.from_tic;
-  int saved_delta_to_tic = np->delta.to_tic;
+  int saved_sync_tic = np->sync.tic;
+  int saved_command_index = np->sync.cmd;
+  int saved_delta_from_tic = np->sync.delta.from_tic;
+  int saved_delta_to_tic = np->sync.delta.to_tic;
 
-  read_int(pbuf, m_state_tic, "state tic");
-  read_int(pbuf, m_command_tic, "command tic");
+  read_int(pbuf, m_sync_tic, "delta tic");
+  read_int(pbuf, m_command_index, "delta command index");
   read_int(pbuf, m_delta_from_tic, "delta from tic");
   read_int(pbuf, m_delta_to_tic, "delta to tic");
 
-  if (np->state_tic < m_delta_to_tic) {
+  if (np->sync.tic < m_delta_to_tic) {
     D_Log(
       LOG_SYNC, 
       "(%d) Received new sync: ST/CT: (%d/%d) Delta: [%d => %d] (%d).\n",
       gametic,
-      m_state_tic,
-      m_command_tic,
+      m_sync_tic,
+      m_command_index,
       m_delta_from_tic,
       m_delta_to_tic,
-      np->state_tic < m_delta_to_tic
+      np->sync.tic < m_delta_to_tic
     );
-    np->state_tic = m_state_tic;
-    np->command_tic = m_command_tic;
-    np->delta.from_tic = m_delta_from_tic;
-    np->delta.to_tic = m_delta_to_tic;
-    read_bytes(pbuf, np->delta.data, "delta data");
+    np->sync.tic = m_sync_tic;
+    np->sync.cmd = m_command_index;
+    np->sync.delta.from_tic = m_delta_from_tic;
+    np->sync.delta.to_tic = m_delta_to_tic;
+    read_bytes(pbuf, np->sync.delta.data, "delta data");
 
     if (CL_LoadState()) {
       *update_sync = true;
     }
     else {
-      np->state_tic = saved_state_tic;
-      np->command_tic = saved_command_tic;
-      np->delta.from_tic = saved_delta_from_tic;
-      np->delta.to_tic = saved_delta_to_tic;
+      np->sync.tic = saved_sync_tic;
+      np->sync.cmd = saved_command_index;
+      np->sync.delta.from_tic = saved_delta_from_tic;
+      np->sync.delta.to_tic = saved_delta_to_tic;
       *update_sync = false;
     }
   }

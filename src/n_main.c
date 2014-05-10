@@ -95,7 +95,7 @@ static void build_command(void) {
     netpeer_t *server = N_PeerGet(0);
 
     if (server != NULL)
-      server->needs_sync_update = true;
+      server->sync.outdated = true;
 
     N_UpdateSync();
   }
@@ -124,10 +124,10 @@ static void run_tic(void) {
       if (client == NULL)
         continue;
 
-      if (client->needs_setup != 0 && gametic > client->needs_setup)
+      if (client->sync.initialized)
+        client->sync.outdated = true;
+      else if (gametic > client->sync.tic)
         SV_SendSetup(client->playernum);
-      else
-        client->needs_sync_update = true;
     }
 
     N_UpdateSync();
@@ -166,7 +166,7 @@ static int run_commandsync_tics(int command_count) {
     netpeer_t *server = N_PeerGet(0);
 
     if (server != NULL)
-      server->needs_sync_update = true;
+      server->sync.outdated = true;
   }
 
   return tic_count;
@@ -180,7 +180,7 @@ static int process_tics(int tics_elapsed) {
 
   if (p != NULL) {
     D_Log(LOG_SYNC, "\n(%d) === Running %d TICs (%d/%d)\n",
-      gametic, tics_elapsed, p->state_tic, p->command_tic
+      gametic, tics_elapsed, p->sync.tic, p->sync.cmd
     );
   }
 
@@ -392,7 +392,7 @@ dboolean CL_LoadState(void) {
 
   D_Log(LOG_SYNC, "(%d) CL_LoadState\n", gametic);
 
-  delta = &server->delta;
+  delta = &server->sync.delta;
   D_Log(LOG_SYNC, "  Applying delta from %d to %d.\n",
     delta->from_tic, delta->to_tic
   );
@@ -409,7 +409,7 @@ dboolean CL_LoadState(void) {
 
   N_RemoveOldStates(delta->from_tic);
 
-  server->state_tic = delta->to_tic;
+  server->sync.tic = delta->to_tic;
 
   if (M_CBufGetObjectCount(&local_commands) > 0) {
     M_CBufConsolidate(player_commands);
@@ -419,15 +419,15 @@ dboolean CL_LoadState(void) {
     CBUF_FOR_EACH(&local_commands, entry) {
       netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-      if (ncmd->tic > server->command_tic) {
+      if (ncmd->tic > server->sync.cmd) {
         D_Log(LOG_SYNC, "  Appending local command %d/%d.\n",
-          ncmd->tic, server->command_tic
+          ncmd->tic, server->sync.cmd
         );
         M_CBufAppend(player_commands, ncmd);
       }
       else {
         D_Log(LOG_SYNC, "  Removing old local command %d/%d.\n",
-          ncmd->tic, server->command_tic
+          ncmd->tic, server->sync.cmd
         );
         M_CBufRemove(&local_commands, entry.index);
         entry.index--;
@@ -446,15 +446,15 @@ dboolean CL_LoadState(void) {
 }
 
 void SV_RemoveOldCommands(void) {
-  int oldest_state_tic = gametic;
+  int oldest_gametic = gametic;
 
   M_CBufClear(&local_commands);
 
   for (int i = 0; i < N_PeerGetCount(); i++) {
     netpeer_t *client = N_PeerGet(i);
 
-    if (client != NULL && client->state_tic)
-      oldest_state_tic = MIN(oldest_state_tic, client->state_tic);
+    if (client != NULL && client->sync.tic)
+      oldest_gametic = MIN(oldest_gametic, client->sync.tic);
   }
 
   for (int i = 0; i < N_PeerGetCount(); i++) {
@@ -469,10 +469,10 @@ void SV_RemoveOldCommands(void) {
     CBUF_FOR_EACH(commands, entry) {
       netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-      if (ncmd->tic < oldest_state_tic) {
+      if (ncmd->tic < oldest_gametic) {
         D_Log(LOG_SYNC, 
           "SV_RemoveOldCommands: (%d: %d) Removing old command %d (< %d).\n",
-          gametic, client->playernum, ncmd->tic, oldest_state_tic
+          gametic, client->playernum, ncmd->tic, oldest_gametic
         );
         M_CBufRemove(commands, entry.index);
         entry.index--;
@@ -482,16 +482,16 @@ void SV_RemoveOldCommands(void) {
 }
 
 void SV_RemoveOldStates(void) {
-  int oldest_state_tic = gametic;
+  int oldest_gametic = gametic;
 
   for (int i = 0; i < N_PeerGetCount(); i++) {
     netpeer_t *np = N_PeerGet(i);
 
-    if (np != NULL && np->state_tic > 0)
-      oldest_state_tic = MIN(oldest_state_tic, np->state_tic);
+    if (np != NULL && np->sync.tic > 0)
+      oldest_gametic = MIN(oldest_gametic, np->sync.tic);
   }
 
-  N_RemoveOldStates(oldest_state_tic);
+  N_RemoveOldStates(oldest_gametic);
 }
 
 cbuf_t* N_GetLocalCommands(void) {

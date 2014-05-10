@@ -170,6 +170,22 @@ static void free_netcom(netcom_t *nc) {
   M_PBufFree(&nc->unreliable.packet_data);
 }
 
+static void init_netsync(netsync_t *ns) {
+  ns->initialized = false;
+  ns->outdated = false;
+  ns->tic = 0;
+  ns->cmd = 0;
+  M_BufferInit(&ns->delta.data);
+}
+
+static void free_netsync(netsync_t *ns) {
+  ns->initialized = false;
+  ns->outdated = false;
+  ns->tic = 0;
+  ns->cmd = 0;
+  M_BufferFree(&ns->delta.data);
+}
+
 void N_InitPeers(void) {
   M_OBufInit(&net_peers);
 }
@@ -180,16 +196,12 @@ int N_PeerAdd(void) {
   /* CG: TODO: Add some kind of check for MAXCLIENTS */
 
   init_netcom(&np->netcom);
-  M_BufferInit(&np->delta.data);
+  init_netsync(&np->sync);
 
-  np->playernum         = 0;
-  np->peer              = NULL;
-  np->connect_time      = time(NULL);
-  np->disconnect_time   = 0;
-  np->state_tic         = 0;
-  np->command_tic       = 0;
-  np->needs_setup       = 0;
-  np->needs_sync_update = false;
+  np->playernum       = 0;
+  np->peer            = NULL;
+  np->connect_time    = time(NULL);
+  np->disconnect_time = 0;
 
   np->peernum = M_OBufInsertAtFirstFreeSlotOrAppend(&net_peers, np);
 
@@ -226,17 +238,13 @@ void N_PeerRemove(netpeer_t *np) {
   playeringame[np->playernum] = false;
 
   free_netcom(&np->netcom);
-  M_BufferFree(&np->delta.data);
+  free_netsync(&np->sync);
 
-  np->peernum           = 0;
-  np->playernum         = 0;
-  np->peer              = NULL;
-  np->connect_time      = 0;
-  np->disconnect_time   = 0;
-  np->state_tic         = 0;
-  np->command_tic       = 0;
-  np->needs_setup       = 0;
-  np->needs_sync_update = false;
+  np->peernum         = 0;
+  np->playernum       = 0;
+  np->peer            = NULL;
+  np->connect_time    = 0;
+  np->disconnect_time = 0;
 
   M_OBufRemove(&net_peers, peernum);
 }

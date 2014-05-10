@@ -49,18 +49,22 @@ typedef struct netcom_s {
   netchan_t unreliable;
 } netcom_t;
 
+typedef struct netsync_s {
+  dboolean           initialized;
+  dboolean           outdated;
+  int                tic;
+  int                cmd;
+  game_state_delta_t delta;
+} netsync_t;
+
 typedef struct netpeer_s {
   unsigned short      peernum;
   unsigned short      playernum;
   ENetPeer           *peer;
   netcom_t            netcom;
+  netsync_t           sync;
   time_t              connect_time;
   time_t              disconnect_time;
-  int                 needs_setup;
-  int                 state_tic;
-  int                 command_tic;
-  game_state_delta_t  delta;
-  dboolean            needs_sync_update;
 } netpeer_t;
 
 void        N_InitPeers(void);

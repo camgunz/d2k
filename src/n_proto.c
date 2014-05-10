@@ -272,10 +272,10 @@ static void handle_setup(netpeer_t *np) {
     }
   }
 
-  np->state_tic = N_GetLatestState()->tic;
+  np->sync.tic = N_GetLatestState()->tic;
 
   CL_SetReceivedSetup(true);
-  server->needs_sync_update = true;
+  server->sync.outdated = true;
 }
 
 static void handle_auth_response(netpeer_t *np) {
@@ -313,11 +313,11 @@ static void handle_sync(netpeer_t *np) {
         netpeer_t *client = N_PeerGet(i);
 
         if (client != NULL)
-          client->needs_sync_update = true;
+          client->sync.outdated = true;
       }
     }
     else {
-      np->needs_sync_update = true;
+      np->sync.outdated = true;
     }
   }
 }
@@ -532,22 +532,22 @@ void N_UpdateSync(void) {
   if (CLIENT) {
     np = N_PeerGet(0);
 
-    if (np != NULL && np->needs_sync_update) {
+    if (np != NULL && np->sync.outdated) {
       N_PeerClearUnreliable(np->peernum);
       N_PackSync(np);
-      np->needs_sync_update = false;
+      np->sync.outdated = false;
     }
   }
   else {
     for (int i = 0; i < N_PeerGetCount(); i++) {
       np = N_PeerGet(i);
 
-      if (np != NULL && np->needs_sync_update && np->state_tic != 0) {
+      if (np != NULL && np->sync.outdated && np->sync.tic != 0) {
         N_PeerClearUnreliable(np->peernum);
 
         if (DELTASERVER) {
-          if (np->state_tic < N_GetLatestState()->tic)
-            N_BuildStateDelta(np->state_tic, &np->delta);
+          if (np->sync.tic < N_GetLatestState()->tic)
+            N_BuildStateDelta(np->sync.tic, &np->sync.delta);
 
           N_PackDeltaSync(np);
         }
@@ -555,7 +555,7 @@ void N_UpdateSync(void) {
           N_PackSync(np);
         }
 
-        np->needs_sync_update = false;
+        np->sync.outdated = false;
       }
     }
   }
@@ -582,17 +582,21 @@ void SV_SetupNewPeer(int peernum) {
   playeringame[playernum] = true;
   P_SpawnPlayer(playernum, &playerstarts[playernum]);
   np->playernum = playernum;
-  np->needs_setup = gametic;
+  np->sync.tic = gametic;
+
+  printf("(%d) Setup to new peer %d (%d, %d, %d).\n",
+    gametic, peernum, playernum, np->sync.initialized, np->sync.tic
+  );
+
 }
 
 void SV_SendSetup(short playernum) {
   netpeer_t *np = NULL;
   CHECK_VALID_PLAYER(np, playernum);
 
+  np->sync.initialized = true;
+  np->sync.tic = gametic;
   N_PackSetup(np);
-
-  np->needs_setup = 0;
-  np->state_tic = gametic;
 }
 
 void SV_SendAuthResponse(short playernum, auth_level_e auth_level) {

@@ -80,7 +80,8 @@ void M_OBufEnsureCapacity(obuf_t *obuf, int capacity) {
     if (obuf->objects == NULL)
       I_Error("M_OBufEnsureCapacity: Allocating buffer objects failed");
 
-    memset(obuf->objects + old_capacity, 0, obuf->capacity - old_capacity);
+    for (int i = old_capacity; i < obuf->capacity; i++)
+      obuf->objects[i] = NULL;
   }
 }
 

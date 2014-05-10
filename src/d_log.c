@@ -34,7 +34,6 @@
 
 #include "z_zone.h"
 
-#include "d_log.h"
 #include "lprintf.h"
 
 static obuf_t log_files;

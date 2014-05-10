@@ -341,7 +341,7 @@ static void run_deltasync_tic(void) {
 
         if (ncmd->tic == gametic) {
           D_Log(LOG_SYNC, "[%d: %d (%d/%d)] P_Ticker: Running command %d.\n",
-            gametic, i, np->state_tic, np->command_tic, ncmd->tic
+            gametic, i, np->sync.tic, np->sync.cmd, ncmd->tic
           );
           memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
           P_PlayerThink(player);
@@ -365,7 +365,7 @@ static void run_deltasync_tic(void) {
           break;
 
         D_Log(LOG_SYNC, "[%d: %d (%d/%d)] P_Ticker: Running command %d.\n",
-          gametic, i, np->state_tic, np->command_tic, ncmd->tic
+          gametic, i, np->sync.tic, np->sync.cmd, ncmd->tic
         );
         memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
         P_PlayerThink(player);
