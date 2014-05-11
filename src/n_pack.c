@@ -284,7 +284,7 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   CBUF_FOR_EACH(commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-    if (ncmd->tic > np->sync.cmd)
+    if (ncmd->index > np->sync.cmd)
       command_count++;
   }
 
@@ -298,15 +298,15 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   CBUF_FOR_EACH(commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-    if (ncmd->tic <= np->sync.cmd)
+    if (ncmd->index <= np->sync.cmd)
       continue;
 
     if (n == NULL)
-      D_Log(LOG_SYNC, "[%d => ", ncmd->tic);
+      D_Log(LOG_SYNC, "[%d => ", ncmd->index);
 
     n = ncmd;
 
-    M_PBufWriteInt(pbuf, ncmd->tic);
+    M_PBufWriteInt(pbuf, ncmd->index);
     M_PBufWriteChar(pbuf, ncmd->cmd.forwardmove);
     M_PBufWriteChar(pbuf, ncmd->cmd.sidemove);
     M_PBufWriteShort(pbuf, ncmd->cmd.angleturn);
@@ -316,7 +316,7 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   }
 
   if (n != NULL)
-    D_Log(LOG_SYNC, "%d]\n", n->tic);
+    D_Log(LOG_SYNC, "%d]\n", n->index);
 }
 
 void N_PackSetup(netpeer_t *np) {
@@ -573,10 +573,10 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
 
         m_command_index = command_index;
 
-        ncmd->tic = command_index;
+        ncmd->index = command_index;
 
         if (n == NULL)
-          D_Log(LOG_SYNC, " [%d => ", ncmd->tic);
+          D_Log(LOG_SYNC, " [%d => ", ncmd->index);
 
         n = ncmd;
 
@@ -600,7 +600,7 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
     }
 
     if (n != NULL)
-      D_Log(LOG_SYNC, "%d]\n", n->tic);
+      D_Log(LOG_SYNC, "%d]\n", n->index);
     else
       D_Log(LOG_SYNC, "[...]\n");
 

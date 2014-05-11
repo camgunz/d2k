@@ -394,7 +394,6 @@ void D_Display (void)
 
   // menus go directly to the screen
   M_Drawer();          // menu is drawn even on top of everything
-  N_Update();          // send out any new accumulation
 
   HU_DrawDemoProgress(true); //e6y
 

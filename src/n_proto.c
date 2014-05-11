@@ -213,6 +213,7 @@ static void handle_setup(netpeer_t *np) {
     return;
 
   N_ClearStates();
+  N_ResetLocalCommandIndex();
 
   if (!N_UnpackSetup(np, &net_sync, &player_count, &playernum)) {
     M_OBufFreeEntriesAndClear(&resource_files_buf);
@@ -583,11 +584,6 @@ void SV_SetupNewPeer(int peernum) {
   P_SpawnPlayer(playernum, &playerstarts[playernum]);
   np->playernum = playernum;
   np->sync.tic = gametic;
-
-  printf("(%d) Setup to new peer %d (%d, %d, %d).\n",
-    gametic, peernum, playernum, np->sync.initialized, np->sync.tic
-  );
-
 }
 
 void SV_SendSetup(short playernum) {

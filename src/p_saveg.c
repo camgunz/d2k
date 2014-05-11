@@ -158,6 +158,9 @@ static void P_ArchivePlayer(buf_t *savebuffer, player_t *player) {
   M_BufferWriteInt(savebuffer, player->colormap);
   for (int i = 0; i < NUMPSPRITES; i++) {
     M_BufferWriteLong(savebuffer, player->psprites[i].state - states);
+    M_BufferWriteInt(savebuffer, player->psprites[i].tics);
+    M_BufferWriteInt(savebuffer, player->psprites[i].sx);
+    M_BufferWriteInt(savebuffer, player->psprites[i].sy);
   }
   M_BufferWriteInt(savebuffer, player->didsecret);
   M_BufferWriteInt(savebuffer, player->momx);
@@ -192,7 +195,7 @@ static void P_ArchivePlayer(buf_t *savebuffer, player_t *player) {
   CBUF_FOR_EACH(&player->commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-    M_BufferWriteInt(savebuffer, ncmd->tic);
+    M_BufferWriteInt(savebuffer, ncmd->index);
     M_BufferWriteChar(savebuffer, ncmd->cmd.forwardmove);
     M_BufferWriteChar(savebuffer, ncmd->cmd.sidemove);
     M_BufferWriteShort(savebuffer, ncmd->cmd.angleturn);
@@ -267,6 +270,9 @@ static void P_UnArchivePlayer(buf_t *savebuffer, player_t *player) {
 
     M_BufferReadLong(savebuffer, &state_index);
     player->psprites[i].state = &states[state_index];
+    M_BufferReadInt(savebuffer, &player->psprites[i].tics);
+    M_BufferReadInt(savebuffer, &player->psprites[i].sx);
+    M_BufferReadInt(savebuffer, &player->psprites[i].sy);
   }
   M_BufferReadInt(savebuffer, (int *)&player->didsecret);
   M_BufferReadInt(savebuffer, &player->momx);
@@ -298,7 +304,7 @@ static void P_UnArchivePlayer(buf_t *savebuffer, player_t *player) {
   while (command_count--) {
     netticcmd_t *ncmd = M_CBufGetFirstFreeOrNewSlot(&player->commands);
 
-    M_BufferReadInt(savebuffer, &ncmd->tic);
+    M_BufferReadInt(savebuffer, &ncmd->index);
     M_BufferReadChar(savebuffer, &ncmd->cmd.forwardmove);
     M_BufferReadChar(savebuffer, &ncmd->cmd.sidemove);
     M_BufferReadShort(savebuffer, &ncmd->cmd.angleturn);

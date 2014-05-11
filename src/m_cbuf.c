@@ -148,6 +148,19 @@ void* M_CBufGet(cbuf_t *cbuf, int index) {
   return cbuf->nodes[index].obj;
 }
 
+dboolean M_CBufPop(cbuf_t *cbuf, void *obj) {
+  void *buffered_object = M_CBufGet(cbuf, 0);
+
+  if (buffered_object == NULL)
+    return false;
+
+  memcpy(obj, buffered_object, cbuf->obj_size);
+  M_CBufRemove(cbuf, 0);
+  M_CBufConsolidate(cbuf);
+
+  return true;
+}
+
 void* M_CBufGetFirstFreeSlot(cbuf_t *cbuf) {
   for (int i = 0; i < cbuf->capacity; i++) {
     if (!cbuf->nodes[i].used) {

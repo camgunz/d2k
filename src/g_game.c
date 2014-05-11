@@ -437,11 +437,6 @@ void G_BuildTiccmd(netticcmd_t *ncmd) {
 
   ncmd->tic = gametic;
 
-  /*
-  if (DELTACLIENT)
-    printf("(%d) Building a command.\n", gametic);
-  */
-
   /* cphipps - remove needless I_BaseTiccmd call, just set the ticcmd to zero */
   memset(cmd, 0, sizeof(ticcmd_t));
 

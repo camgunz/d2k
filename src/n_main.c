@@ -73,6 +73,7 @@ static dboolean is_extra_ddisplay = false;
 static dboolean received_setup = false;
 static auth_level_e authorization_level = AUTH_LEVEL_NONE;
 static cbuf_t local_commands;
+static int local_command_index = 0;
 
 static void build_command(void) {
   cbuf_t *commands = NULL;
@@ -88,8 +89,10 @@ static void build_command(void) {
 
   I_StartTic();
   G_BuildTiccmd(ncmd);
+  ncmd->index = local_command_index;
+  local_command_index++;
 
-  D_Log(LOG_SYNC, "(%d) Built command %d.\n", gametic, ncmd->tic);
+  D_Log(LOG_SYNC, "(%d) Built command %d.\n", gametic, ncmd->index);
 
   if (CLIENT) {
     netpeer_t *server = N_PeerGet(0);
@@ -114,6 +117,7 @@ static void run_tic(void) {
   I_GetTime_SaveMS();
   G_Ticker();
   P_Checksum(gametic);
+  gametic++;
 
   if (DELTASERVER) {
     N_SaveState();
@@ -132,8 +136,6 @@ static void run_tic(void) {
 
     N_UpdateSync();
   }
-
-  gametic++;
 }
 
 static int run_tics(int tic_count) {
@@ -236,7 +238,7 @@ void N_PrintPlayerCommands(cbuf_t *commands) {
   D_Log(LOG_SYNC, "[ ");
 
   CBUF_FOR_EACH(commands, entry)
-    D_Log(LOG_SYNC, "%d ", ((netticcmd_t *)entry.obj)->tic);
+    D_Log(LOG_SYNC, "%d ", ((netticcmd_t *)entry.obj)->index);
 
   D_Log(LOG_SYNC, "]\n");
 }
@@ -346,25 +348,6 @@ void N_InitNetGame(void) {
 
 }
 
-void N_Update(void) {
-  if (is_extra_ddisplay)
-    return;
-
-  if (MULTINET)
-    N_ServiceNetwork();
-
-#if 0
-    // e6y
-    // Eliminating the sudden jump of six frames(BACKUPTICS/2) 
-    // after change of realtic_clock_rate.
-    if (maketic - gametic &&
-        gametic <= force_singletics_to &&
-        realtic_clock_rate < 200) {
-      break;
-    }
-#endif
-}
-
 dboolean N_GetWad(const char *name) {
   return false;
 }
@@ -419,15 +402,15 @@ dboolean CL_LoadState(void) {
     CBUF_FOR_EACH(&local_commands, entry) {
       netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-      if (ncmd->tic > server->sync.cmd) {
+      if (ncmd->index > server->sync.cmd) {
         D_Log(LOG_SYNC, "  Appending local command %d/%d.\n",
-          ncmd->tic, server->sync.cmd
+          ncmd->index, server->sync.cmd
         );
         M_CBufAppend(player_commands, ncmd);
       }
       else {
         D_Log(LOG_SYNC, "  Removing old local command %d/%d.\n",
-          ncmd->tic, server->sync.cmd
+          ncmd->index, server->sync.cmd
         );
         M_CBufRemove(&local_commands, entry.index);
         entry.index--;
@@ -449,6 +432,9 @@ void SV_RemoveOldCommands(void) {
   int oldest_gametic = gametic;
 
   M_CBufClear(&local_commands);
+
+  if (!CMDSYNC)
+    return;
 
   for (int i = 0; i < N_PeerGetCount(); i++) {
     netpeer_t *client = N_PeerGet(i);
@@ -497,6 +483,10 @@ void SV_RemoveOldStates(void) {
 cbuf_t* N_GetLocalCommands(void) {
   M_CBufConsolidate(&local_commands);
   return &local_commands;
+}
+
+void N_ResetLocalCommandIndex(void) {
+  local_command_index = 0;
 }
 
 void N_TryRunTics(void) {

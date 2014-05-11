@@ -36,7 +36,6 @@
 
 void     N_PrintPlayerCommands(cbuf_t *commands);
 void     N_InitNetGame(void);
-void     N_Update(void);
 dboolean N_GetWad(const char *name);
 
 dboolean CL_ReceivedSetup(void);
@@ -48,6 +47,7 @@ void     SV_RemoveOldCommands(void);
 void     SV_RemoveOldStates(void);
 
 cbuf_t*  N_GetLocalCommands(void);
+void     N_ResetLocalCommandIndex(void);
 void     N_TryRunTics(void);
 
 #endif

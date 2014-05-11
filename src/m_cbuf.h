@@ -67,6 +67,7 @@ int      M_CBufInsertAtFirstFreeSlot(cbuf_t *cbuf, void *obj);
 int      M_CBufInsertAtFirstFreeSlotOrAppend(cbuf_t *cbuf, void *obj);
 dboolean M_CBufIter(cbuf_t *cbuf, int *index, void **obj);
 void*    M_CBufGet(cbuf_t *cbuf, int index);
+dboolean M_CBufPop(cbuf_t *cbuf, void *obj);
 void*    M_CBufGetFirstFreeSlot(cbuf_t *cbuf);
 void*    M_CBufGetNewSlot(cbuf_t *cbuf);
 void*    M_CBufGetFirstFreeOrNewSlot(cbuf_t *cbuf);
