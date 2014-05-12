@@ -302,11 +302,12 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
       continue;
 
     if (n == NULL)
-      D_Log(LOG_SYNC, "[%d => ", ncmd->index);
+      D_Log(LOG_SYNC, "[%d/%d => ", ncmd->index, ncmd->tic);
 
     n = ncmd;
 
     M_PBufWriteInt(pbuf, ncmd->index);
+    M_PBufWriteInt(pbuf, ncmd->tic);
     M_PBufWriteChar(pbuf, ncmd->cmd.forwardmove);
     M_PBufWriteChar(pbuf, ncmd->cmd.sidemove);
     M_PBufWriteShort(pbuf, ncmd->cmd.angleturn);
@@ -316,7 +317,7 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   }
 
   if (n != NULL)
-    D_Log(LOG_SYNC, "%d]\n", n->index);
+    D_Log(LOG_SYNC, "%d/%d]\n", n->index, n->tic);
 }
 
 void N_PackSetup(netpeer_t *np) {
@@ -551,19 +552,12 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
 
     D_Log(LOG_SYNC, "Unpacking %d commands.\n", command_count);
 
-    /*
-     * CG: It seems like this allows holes in the command buffer, i.e.
-     *     [67, 68, 70, 71, 73, 76].  This is true, but such holes do not
-     *     result from packet loss, rather they result from CPU lag on the
-     *     client; it simply didn't make a command fast enough and dropped the
-     *     tic.  This is surprisingly normal, so command buffers won't be
-     *     contiguous.
-     */
-
     while (command_count--) {
       int command_index = -1;
+      int tic = -1;
 
       read_int(pbuf, command_index, "command index");
+      read_int(pbuf, tic, "command tic");
       
       if (m_command_index == 0)
         m_command_index = command_index - 1;
@@ -574,9 +568,10 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
         m_command_index = command_index;
 
         ncmd->index = command_index;
+        ncmd->tic = tic;
 
         if (n == NULL)
-          D_Log(LOG_SYNC, " [%d => ", ncmd->index);
+          D_Log(LOG_SYNC, " [%d/%d => ", ncmd->index, ncmd->tic);
 
         n = ncmd;
 
@@ -600,7 +595,7 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
     }
 
     if (n != NULL)
-      D_Log(LOG_SYNC, "%d]\n", n->index);
+      D_Log(LOG_SYNC, "%d/%d]\n", n->index, n->tic);
     else
       D_Log(LOG_SYNC, "[...]\n");
 
@@ -659,35 +654,55 @@ dboolean N_UnpackDeltaSync(netpeer_t *np, dboolean *update_sync) {
   read_int(pbuf, m_delta_from_tic, "delta from tic");
   read_int(pbuf, m_delta_to_tic, "delta to tic");
 
-  if (np->sync.tic < m_delta_to_tic) {
+  if (m_delta_to_tic <= np->sync.tic) {
+    *update_sync = false;
+    return true;
+  }
+
+  /*
+   * CG: Don't load a delta in the very near future; give ourselves time to
+   * catch up
+   */
+  if ((m_delta_to_tic >= gametic) && (m_delta_to_tic < gametic + 1)) {
+    *update_sync = false;
+    return true;
+  }
+
+  if (m_delta_to_tic > gametic) {
     D_Log(
       LOG_SYNC, 
-      "(%d) Received new sync: ST/CT: (%d/%d) Delta: [%d => %d] (%d).\n",
+      "(%d) [!!!] Received future sync! -- Delta: [%d => %d] -- %d, %d.\n",
       gametic,
-      m_sync_tic,
-      m_command_index,
       m_delta_from_tic,
       m_delta_to_tic,
-      np->sync.tic < m_delta_to_tic
+      m_delta_to_tic - gametic,
+      m_delta_to_tic > gametic
     );
-    np->sync.tic = m_sync_tic;
-    np->sync.cmd = m_command_index;
-    np->sync.delta.from_tic = m_delta_from_tic;
-    np->sync.delta.to_tic = m_delta_to_tic;
-    read_bytes(pbuf, np->sync.delta.data, "delta data");
+  }
 
-    if (CL_LoadState()) {
-      *update_sync = true;
-    }
-    else {
-      np->sync.tic = saved_sync_tic;
-      np->sync.cmd = saved_command_index;
-      np->sync.delta.from_tic = saved_delta_from_tic;
-      np->sync.delta.to_tic = saved_delta_to_tic;
-      *update_sync = false;
-    }
+  D_Log(
+    LOG_SYNC, 
+    "(%d) Received new sync: ST/CT: (%d/%d) Delta: [%d => %d].\n",
+    gametic,
+    m_sync_tic,
+    m_command_index,
+    m_delta_from_tic,
+    m_delta_to_tic
+  );
+  np->sync.tic = m_sync_tic;
+  np->sync.cmd = m_command_index;
+  np->sync.delta.from_tic = m_delta_from_tic;
+  np->sync.delta.to_tic = m_delta_to_tic;
+  read_bytes(pbuf, np->sync.delta.data, "delta data");
+
+  if (CL_LoadState()) {
+    *update_sync = true;
   }
   else {
+    np->sync.tic = saved_sync_tic;
+    np->sync.cmd = saved_command_index;
+    np->sync.delta.from_tic = saved_delta_from_tic;
+    np->sync.delta.to_tic = saved_delta_to_tic;
     *update_sync = false;
   }
 

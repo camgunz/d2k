@@ -340,17 +340,17 @@ static void run_deltasync_tic(void) {
       P_PlayerThink(player);
       */
     }
-    else if (i == consoleplayer) {
+    else if (SERVER && i == consoleplayer) {
       netticcmd_t *ncmd = NULL;
       
       M_CBufConsolidate(&player->commands);
       ncmd = M_CBufGet(&player->commands, 0);
 
       if (!SERVER) {
-        D_Log(LOG_SYNC, "Player %d commands: ", i);
-        N_PrintPlayerCommands(&player->commands);
-        D_Log(LOG_SYNC, "[%d: %d (%d/%d)] P_Ticker: Running command %d.\n",
-          gametic, i, np->sync.tic, np->sync.cmd, ncmd->index
+        // D_Log(LOG_SYNC, "Player %d commands: ", i);
+        // N_PrintPlayerCommands(&player->commands);
+        D_Log(LOG_SYNC, "[%d: %d (%d/%d)] P_Ticker: Running command %d, %d.\n",
+          gametic, i, np->sync.cmd, np->sync.tic, ncmd->index, ncmd->tic
         );
       }
       memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
@@ -358,23 +358,56 @@ static void run_deltasync_tic(void) {
       M_CBufRemove(&player->commands, 0);
       M_CBufConsolidate(&player->commands);
     }
-    else {
-      if (i != 0) {
-        D_Log(LOG_SYNC, "Player %d commands: ", i);
-        N_PrintPlayerCommands(&player->commands);
-      }
+    else if (CLIENT && i == consoleplayer) {
       CBUF_FOR_EACH(&player->commands, entry) {
         netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-        if (i != 0) {
-          D_Log(LOG_SYNC, "[%d: %d (%d/%d)] P_Ticker: Running command %d.\n",
-            gametic, i, np->sync.tic, np->sync.cmd, ncmd->index
+        // D_Log(LOG_SYNC, "Player %d commands: ", i);
+        // N_PrintPlayerCommands(&player->commands);
+        D_Log(LOG_SYNC, "[%d: %d (%d/%d)] P_Ticker: Running command %d, %d.\n",
+          gametic, i, np->sync.cmd, np->sync.tic, ncmd->index, ncmd->tic
+        );
+
+        if (ncmd->tic != gametic) {
+          D_Log(LOG_SYNC, "  Command %d out of order: %d/%d.\n",
+            ncmd->index, ncmd->tic, gametic
           );
         }
         memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
         P_PlayerThink(player);
+        M_CBufRemove(&player->commands, entry.index);
+        entry.index--;
       }
-      M_CBufClear(&player->commands);
+    }
+    else {
+      /*
+      if (i != 0) {
+        D_Log(LOG_SYNC, "Player %d commands: ", i);
+        N_PrintPlayerCommands(&player->commands);
+      }
+      */
+      CBUF_FOR_EACH(&player->commands, entry) {
+        netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+
+        if (ncmd->tic > gametic)
+          break;
+
+        if (i != 0) {
+          D_Log(LOG_SYNC, "[%d: %d (%d/%d)] P_Ticker: Running command %d, %d.\n",
+            gametic, i, np->sync.cmd, np->sync.tic, ncmd->index, ncmd->tic
+          );
+          if (ncmd->tic != gametic) {
+            D_Log(LOG_SYNC, "  Command %d out of order: %d/%d.\n",
+              ncmd->index, ncmd->tic, gametic
+            );
+          }
+        }
+        memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
+        P_PlayerThink(player);
+        M_CBufRemove(&player->commands, entry.index);
+        entry.index--;
+      }
+      // M_CBufClear(&player->commands);
     }
   }
 }

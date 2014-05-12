@@ -196,6 +196,7 @@ static void P_ArchivePlayer(buf_t *savebuffer, player_t *player) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
     M_BufferWriteInt(savebuffer, ncmd->index);
+    M_BufferWriteInt(savebuffer, ncmd->tic);
     M_BufferWriteChar(savebuffer, ncmd->cmd.forwardmove);
     M_BufferWriteChar(savebuffer, ncmd->cmd.sidemove);
     M_BufferWriteShort(savebuffer, ncmd->cmd.angleturn);
@@ -305,6 +306,7 @@ static void P_UnArchivePlayer(buf_t *savebuffer, player_t *player) {
     netticcmd_t *ncmd = M_CBufGetFirstFreeOrNewSlot(&player->commands);
 
     M_BufferReadInt(savebuffer, &ncmd->index);
+    M_BufferReadInt(savebuffer, &ncmd->tic);
     M_BufferReadChar(savebuffer, &ncmd->cmd.forwardmove);
     M_BufferReadChar(savebuffer, &ncmd->cmd.sidemove);
     M_BufferReadShort(savebuffer, &ncmd->cmd.angleturn);

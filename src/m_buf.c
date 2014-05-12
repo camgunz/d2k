@@ -208,15 +208,6 @@ byte M_BufferPeek(buf_t *buf) {
   return *(buf->data + buf->cursor);
 }
 
-#include <enet/enet.h>
-#include "cmp.h"
-
-#include "d_ticcmd.h"
-#include "m_pbuf.h"
-#include "n_net.h"
-#include "n_state.h"
-#include "n_peer.h"
-
 void M_BufferWrite(buf_t *buf, const void *data, size_t size) {
   M_BufferEnsureCapacity(buf, size);
   memcpy(buf->data + buf->cursor, data, size);
