@@ -63,28 +63,25 @@ dboolean onground; // whether player is on ground or in air
 // Moves the given origin along a given angle.
 //
 
-void P_SideThrust(player_t *player, angle_t angle, fixed_t move)
-{
+void P_SideThrust(player_t *player, angle_t angle, fixed_t move) {
   angle >>= ANGLETOFINESHIFT;
 
-  player->mo->momx += FixedMul(move,finecosine[angle]);
-  player->mo->momy += FixedMul(move,finesine[angle]);
+  player->mo->momx += FixedMul(move, finecosine[angle]);
+  player->mo->momy += FixedMul(move, finesine[angle]);
 }
 
-void P_Thrust(player_t* player,angle_t angle,fixed_t move)
-{
+void P_Thrust(player_t* player,angle_t angle,fixed_t move) {
   angle >>= ANGLETOFINESHIFT;
 
-  if ((player->mo->flags & MF_FLY) && player->mo->pitch != 0)
-  {
+  if ((player->mo->flags & MF_FLY) && player->mo->pitch != 0) {
     angle_t pitch = player->mo->pitch >> ANGLETOFINESHIFT;
     fixed_t zpush = FixedMul(move, finesine[pitch]);
     player->mo->momz -= zpush;
     move = FixedMul(move, finecosine[pitch]);
   }
 
-  player->mo->momx += FixedMul(move,finecosine[angle]);
-  player->mo->momy += FixedMul(move,finesine[angle]);
+  player->mo->momx += FixedMul(move, finecosine[angle]);
+  player->mo->momy += FixedMul(move, finesine[angle]);
 }
 
 
@@ -99,14 +96,12 @@ void P_Thrust(player_t* player,angle_t angle,fixed_t move)
  * reduced at a regular rate, even on ice (where the player coasts).
  */
 
-static void P_Bob(player_t *player, angle_t angle, fixed_t move)
-{
-  //e6y
-  if (!mbf_features && !prboom_comp[PC_PRBOOM_FRICTION].state)
+static void P_Bob(player_t *player, angle_t angle, fixed_t move) {
+  if (!mbf_features && !prboom_comp[PC_PRBOOM_FRICTION].state) //e6y
     return;
 
-  player->momx += FixedMul(move,finecosine[angle >>= ANGLETOFINESHIFT]);
-  player->momy += FixedMul(move,finesine[angle]);
+  player->momx += FixedMul(move, finecosine[angle >>= ANGLETOFINESHIFT]);
+  player->momy += FixedMul(move, finesine[angle]);
 }
 
 //
@@ -114,9 +109,8 @@ static void P_Bob(player_t *player, angle_t angle, fixed_t move)
 // Calculate the walking / running height adjustment
 //
 
-void P_CalcHeight (player_t* player)
-{
-  int     angle;
+void P_CalcHeight(player_t *player) {
+  int angle;
   fixed_t bob;
 
   // Regular movement bobbing
@@ -134,94 +128,84 @@ void P_CalcHeight (player_t* player)
    * and vice-versa.
    */
 
-    player->bob = 0;
+  player->bob = 0;
 
-    if ((player->mo->flags & MF_FLY) && !onground)
-    {
-      player->bob = FRACUNIT / 2;
-    }	
+  if ((player->mo->flags & MF_FLY) && !onground)
+    player->bob = FRACUNIT / 2;
 
-    if (mbf_features)
-    {
-      if (player_bobbing)
-      {
-        player->bob = (FixedMul(player->momx, player->momx) +
-          FixedMul(player->momy, player->momy)) >> 2;
-      }
+  if (mbf_features) {
+    if (player_bobbing) {
+      player->bob = (
+        FixedMul(player->momx, player->momx) +
+        FixedMul(player->momy, player->momy)
+      ) >> 2;
     }
-    else
-    {
-      if (demo_compatibility || player_bobbing || prboom_comp[PC_FORCE_INCORRECT_BOBBING_IN_BOOM].state)
-      {
-        player->bob = (FixedMul(player->mo->momx, player->mo->momx) +
-          FixedMul(player->mo->momy, player->mo->momy)) >> 2;
-      }
-    }
+  }
+  else if (demo_compatibility || player_bobbing ||
+           prboom_comp[PC_FORCE_INCORRECT_BOBBING_IN_BOOM].state) {
+    player->bob = (
+      FixedMul(player->mo->momx, player->mo->momx) +
+      FixedMul(player->mo->momy, player->mo->momy)
+    ) >> 2;
+  }
 
-    //e6y
-    if (!prboom_comp[PC_PRBOOM_FRICTION].state &&
-        compatibility_level >= boom_202_compatibility && 
-        compatibility_level <= lxdoom_1_compatibility &&
-        player->mo->friction > ORIG_FRICTION) // ice?
-    {
-      if (player->bob > (MAXBOB>>2))
-        player->bob = MAXBOB>>2;
-    }
-    else
-    {
-      if (player->bob > MAXBOB)
-        player->bob = MAXBOB;
-    }
+  //e6y
+  if (!prboom_comp[PC_PRBOOM_FRICTION].state &&
+      compatibility_level >= boom_202_compatibility && 
+      compatibility_level <= lxdoom_1_compatibility &&
+      player->mo->friction > ORIG_FRICTION) { // ice?
+    if (player->bob > (MAXBOB >> 2))
+      player->bob = MAXBOB >> 2;
+  }
+  else if (player->bob > MAXBOB) {
+    player->bob = MAXBOB;
+  }
 
-  if (!onground || player->cheats & CF_NOMOMENTUM)
-    {
+  if (!onground || player->cheats & CF_NOMOMENTUM) {
     player->viewz = player->mo->z + VIEWHEIGHT;
 
-    if (player->viewz > player->mo->ceilingz-4*FRACUNIT)
-      player->viewz = player->mo->ceilingz-4*FRACUNIT;
+    if (player->viewz > player->mo->ceilingz - 4 * FRACUNIT)
+      player->viewz = player->mo->ceilingz - 4 * FRACUNIT;
 
-// The following line was in the Id source and appears      // phares 2/25/98
-// to be a bug. player->viewz is checked in a similar
-// manner at a different exit below.
+    // The following line was in the Id source and appears    // phares 2/25/98
+    // to be a bug. player->viewz is checked in a similar
+    // manner at a different exit below.
 
-//  player->viewz = player->mo->z + player->viewheight;
+    // player->viewz = player->mo->z + player->viewheight;
     return;
-    }
+  }
 
   angle = (FINEANGLES / 20 * leveltime) & FINEMASK;
   bob = FixedMul(player->bob / 2, finesine[angle]);
 
   // move viewheight
 
-  if (player->playerstate == PST_LIVE)
-    {
+  if (player->playerstate == PST_LIVE) {
     player->viewheight += player->deltaviewheight;
 
-    if (player->viewheight > VIEWHEIGHT)
-      {
+    if (player->viewheight > VIEWHEIGHT) {
       player->viewheight = VIEWHEIGHT;
       player->deltaviewheight = 0;
-      }
+    }
 
-    if (player->viewheight < VIEWHEIGHT/2)
-      {
-      player->viewheight = VIEWHEIGHT/2;
+    if (player->viewheight < VIEWHEIGHT / 2) {
+      player->viewheight = VIEWHEIGHT / 2;
       if (player->deltaviewheight <= 0)
         player->deltaviewheight = 1;
-      }
+    }
 
-    if (player->deltaviewheight)
-      {
-      player->deltaviewheight += FRACUNIT/4;
+    if (player->deltaviewheight) {
+      player->deltaviewheight += FRACUNIT / 4;
+
       if (!player->deltaviewheight)
         player->deltaviewheight = 1;
-      }
     }
+  }
 
   player->viewz = player->mo->z + player->viewheight + bob;
 
-  if (player->viewz > player->mo->ceilingz-4*FRACUNIT)
-    player->viewz = player->mo->ceilingz-4*FRACUNIT;
+  if (player->viewz > player->mo->ceilingz - 4 * FRACUNIT)
+    player->viewz = player->mo->ceilingz - 4 * FRACUNIT;
 }
 
 
@@ -229,37 +213,30 @@ void P_CalcHeight (player_t* player)
 // P_SetPitch
 // Mouse Look Stuff
 //
-void P_SetPitch(player_t *player)
-{
+void P_SetPitch(player_t *player) {
   mobj_t *mo = player->mo;
 
-  if (player == &players[consoleplayer])
-  {
-    if (!(demoplayback || democontinue))
-    {
-      if (GetMouseLook())
-      {
-        if (!mo->reactiontime && (!(automapmode & am_active) || (automapmode & am_overlay)))
-        {
+  if (player == &players[consoleplayer]) {
+    if (!(demoplayback || democontinue)) {
+      if (GetMouseLook()) {
+        if (!mo->reactiontime &&
+            (!(automapmode & am_active) || (automapmode & am_overlay))) {
           mo->pitch += (mlooky << 16);
           CheckPitch((signed int *)&mo->pitch);
         }
       }
-      else
-      {
+      else {
         mo->pitch = 0;
       }
 
       R_DemoEx_WriteMLook(mo->pitch);
     }
-    else
-    {
+    else {
       mo->pitch = R_DemoEx_ReadMLook();
       CheckPitch((signed int *)&mo->pitch);
     }
   }
-  else
-  {
+  else {
     mo->pitch = 0;
   }
 }
@@ -339,7 +316,7 @@ void P_MovePlayer(player_t *player) {
       }
     }
 
-    if (mo->state == states+S_PLAY)
+    if (mo->state == states + S_PLAY)
       P_SetMobjState(mo,S_PLAY_RUN1);
   }
 }
@@ -352,50 +329,42 @@ void P_MovePlayer(player_t *player) {
 // Decrease POV height to floor height.
 //
 
-void P_DeathThink (player_t* player)
-{
+void P_DeathThink(player_t *player) {
   angle_t angle;
   angle_t delta;
 
-  P_MovePsprites (player);
+  P_MovePsprites(player);
 
   // fall to the ground
 
   onground = (player->mo->z <= player->mo->floorz);
-  if (player->mo->type == MT_GIBDTH)
-  {
+  if (player->mo->type == MT_GIBDTH) {
     // Flying bloody skull
     player->viewheight = 6*FRACUNIT;
     player->deltaviewheight = 0;
-    if (onground && (int)player->mo->pitch > -(int)ANG1*19)
-    {
-      player->mo->pitch -= ((int)ANG1*19 - player->mo->pitch) / 8;
-    }
+    if (onground && (int)player->mo->pitch > -(int)ANG1 * 19)
+      player->mo->pitch -= ((int)ANG1 * 19 - player->mo->pitch) / 8;
   }
-  else
-  {
-    if (player->viewheight > 6*FRACUNIT)
+  else {
+    if (player->viewheight > 6 * FRACUNIT)
       player->viewheight -= FRACUNIT;
 
-    if (player->viewheight < 6*FRACUNIT)
-      player->viewheight = 6*FRACUNIT;
+    if (player->viewheight < 6 * FRACUNIT)
+      player->viewheight = 6 * FRACUNIT;
 
     player->deltaviewheight = 0;
   }
 
-  P_CalcHeight (player);
+  P_CalcHeight(player);
 
-  if (player->attacker && player->attacker != player->mo)
-    {
-    angle = R_PointToAngle2 (player->mo->x,
-                             player->mo->y,
-                             player->attacker->x,
-                             player->attacker->y);
+  if (player->attacker && player->attacker != player->mo) {
+    angle = R_PointToAngle2(
+      player->mo->x, player->mo->y, player->attacker->x, player->attacker->y
+    );
 
     delta = angle - player->mo->angle;
 
-    if (delta < ANG5 || delta > (unsigned)-ANG5)
-      {
+    if (delta < ANG5 || delta > (unsigned)-ANG5) {
       // Looking at killer,
       //  so fade damage flash down.
 
@@ -403,17 +372,21 @@ void P_DeathThink (player_t* player)
 
       if (player->damagecount)
         player->damagecount--;
-      }
-    else if (delta < ANG180)
+    }
+    else if (delta < ANG180) {
       player->mo->angle += ANG5;
-    else
+    }
+    else {
       player->mo->angle -= ANG5;
     }
-  else if (player->damagecount)
+  }
+  else if (player->damagecount) {
     player->damagecount--;
+  }
 
   if (player->cmd.buttons & BT_USE)
     player->playerstate = PST_REBORN;
+
   R_SmoothPlaying_Reset(player); // e6y
 }
 
@@ -487,6 +460,7 @@ void P_PlayerThink(player_t *player) {
     (player->powers[pw_invulnerability] > 4 * 32 ||
     player->powers[pw_invulnerability] & 8) ? INVERSECOLORMAP :
     player->powers[pw_infrared] > 4 * 32 || player->powers[pw_infrared] & 8;
+
 }
 
 static void run_player_command(player_t *player) {
@@ -573,9 +547,6 @@ static void run_player_command(player_t *player) {
   // cycle psprites
 
   P_MovePsprites(player);
-
-  if (DELTACLIENT || DELTASERVER)
-    P_MobjThinker(player->mo);
 }
 
 void P_RunPlayerCommands(player_t *player) {

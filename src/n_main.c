@@ -63,6 +63,7 @@
 #include "n_peer.h"
 #include "n_proto.h"
 
+#define DEBUG_NET 1
 #define DEBUG_SYNC 1
 
 /* CG: TODO: Add WAD fetching (waiting on libcurl) */
@@ -377,6 +378,12 @@ void N_InitNetGame(void) {
   }
 
   M_CBufInitWithCapacity(&local_commands, sizeof(netticcmd_t), BACKUPTICS);
+  if (DEBUG_NET) {
+    if (SERVER)
+      D_EnableLogChannel(LOG_NET, "server-net.log");
+    else
+      D_EnableLogChannel(LOG_NET, "client-net.log");
+  }
   if (DEBUG_SYNC) {
     if (SERVER)
       D_EnableLogChannel(LOG_SYNC, "server-sync.log");

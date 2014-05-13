@@ -500,9 +500,6 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       N_PeerRemove(N_PeerGet(peernum));
     }
     else if (net_event.type == ENET_EVENT_TYPE_RECEIVE) {
-      /*
-      doom_printf("Got 'RECEIVE' event:\n");
-      */
       if ((peernum = N_PeerGetNum(net_event.peer)) == -1) {
         doom_printf(
           "N_ServiceNetwork: Received 'packet' event from unknown peer %s:%u.\n",

@@ -209,6 +209,8 @@ static void handle_setup(netpeer_t *np) {
   unsigned short playernum = 0;
   int i;
 
+  D_Log(LOG_NET, "Handling setup.\n");
+
   if (server == NULL)
     return;
 
@@ -470,16 +472,17 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
   unsigned char message_type = 0;
 
   if (!N_PeerLoadIncoming(peernum, data, data_size)) {
-    doom_printf("N_HandlePacket: Ignoring packet with malformed TOC.\n");
+    D_Log(LOG_NET, "N_HandlePacket: Ignoring packet with malformed TOC.\n");
     return;
   }
 
   while (N_PeerLoadNextMessage(peernum, &message_type)) {
 
-    /*
-    if (message_type >= 1 && message_type <= sizeof(nm_names))
-      printf("Handling [%s] message.\n", nm_names[message_type - 1]);
-    */
+    if (message_type >= 1 &&
+        message_type != nm_sync &&
+        message_type <= sizeof(nm_names)) {
+      D_Log(LOG_NET, "Handling [%s] message.\n", nm_names[message_type - 1]);
+    }
 
     switch (message_type) {
       case nm_setup:

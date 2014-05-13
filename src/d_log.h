@@ -36,6 +36,7 @@
 #define D_LOG_H__
 
 typedef enum {
+  LOG_NET,
   LOG_SYNC,
   LOG_MAX
 } log_channel_e;
