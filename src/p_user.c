@@ -46,6 +46,8 @@
 #include "g_game.h"
 #include "e6y.h"//e6y
 
+#include "n_net.h"
+
 //
 // Movement.
 //
@@ -186,8 +188,8 @@ void P_CalcHeight (player_t* player)
     return;
     }
 
-  angle = (FINEANGLES/20*leveltime)&FINEMASK;
-  bob = FixedMul(player->bob/2,finesine[angle]);
+  angle = (FINEANGLES / 20 * leveltime) & FINEMASK;
+  bob = FixedMul(player->bob / 2, finesine[angle]);
 
   // move viewheight
 
@@ -421,9 +423,6 @@ void P_DeathThink (player_t* player)
 //
 
 void P_PlayerThink(player_t *player) {
-  ticcmd_t*    cmd = &player->cmd;
-  weapontype_t newweapon;
-
   if (movement_smooth) {
     player->prev_viewz = player->viewz;
     player->prev_viewangle = R_SmoothPlaying_Get(player) + viewangleoffset;
@@ -439,17 +438,67 @@ void P_PlayerThink(player_t *player) {
   else
     player->mo->flags &= ~MF_NOCLIP;
 
-  // chain saw run forward
-  if (player->mo->flags & MF_JUSTATTACKED) {
-    cmd->angleturn = 0;
-    cmd->forwardmove = 0xc800 /512;
-    cmd->sidemove = 0;
-    player->mo->flags &= ~MF_JUSTATTACKED;
-  }
-
   if (player->playerstate == PST_DEAD) {
     P_DeathThink(player);
     return;
+  }
+
+  P_RunPlayerCommands(player);
+
+  // Determine if there's anything about the sector you're in that's
+  // going to affect you, like painful floors.
+  if (player->mo->subsector->sector->special)
+    P_PlayerInSpecialSector(player);
+
+  // Counters, time dependent power ups.
+
+  // Strength counts up to diminish fade.
+
+  if (player->powers[pw_strength])
+    player->powers[pw_strength]++;
+
+  // killough 1/98: Make idbeholdx toggle:
+
+  if (player->powers[pw_invulnerability] > 0) // killough
+    player->powers[pw_invulnerability]--;
+
+  if (player->powers[pw_invisibility] > 0) {  // killough
+    player->powers[pw_invisibility]--;
+
+    if (!player->powers[pw_invisibility])
+      player->mo->flags &= ~MF_SHADOW;
+  }
+
+  if (player->powers[pw_infrared] > 0)        // killough
+    player->powers[pw_infrared]--;
+
+  if (player->powers[pw_ironfeet] > 0)        // killough
+    player->powers[pw_ironfeet]--;
+
+  if (player->damagecount)
+    player->damagecount--;
+
+  if (player->bonuscount)
+    player->bonuscount--;
+
+  // Handling colormaps.
+  // killough 3/20/98: reformat to terse C syntax
+  player->fixedcolormap = palette_onpowers &&
+    (player->powers[pw_invulnerability] > 4 * 32 ||
+    player->powers[pw_invulnerability] & 8) ? INVERSECOLORMAP :
+    player->powers[pw_infrared] > 4 * 32 || player->powers[pw_infrared] & 8;
+}
+
+static void run_player_command(player_t *player) {
+  ticcmd_t *cmd = &player->cmd;
+  weapontype_t newweapon;
+
+  // chain saw run forward
+  if (player->mo->flags & MF_JUSTATTACKED) {
+    cmd->angleturn = 0;
+    cmd->forwardmove = 0xc800 / 512;
+    cmd->sidemove = 0;
+    player->mo->flags &= ~MF_JUSTATTACKED;
   }
 
   if (player->jumpTics)
@@ -467,18 +516,13 @@ void P_PlayerThink(player_t *player) {
 
   P_CalcHeight(player); // Determines view height and bobbing
 
-  // Determine if there's anything about the sector you're in that's
-  // going to affect you, like painful floors.
-  if (player->mo->subsector->sector->special)
-    P_PlayerInSpecialSector (player);
-
   // Check for weapon change.
   if (cmd->buttons & BT_CHANGE) {
     // The actual changing of the weapon is done
     //  when the weapon psprite can do it
     //  (read: not in the middle of an attack).
 
-    newweapon = (cmd->buttons & BT_WEAPONMASK)>>BT_WEAPONSHIFT;
+    newweapon = (cmd->buttons & BT_WEAPONMASK) >> BT_WEAPONSHIFT;
 
     // killough 3/22/98: For demo compatibility we must perform the fist
     // and SSG weapons switches here, rather than in G_BuildTiccmd(). For
@@ -490,16 +534,15 @@ void P_PlayerThink(player_t *player) {
       if (!prboom_comp[PC_ALLOW_SSG_DIRECT].state)
         newweapon = (cmd->buttons & BT_WEAPONMASK_OLD) >> BT_WEAPONSHIFT;
 
-      if (newweapon == wp_fist &&
-          player->weaponowned[wp_chainsaw] && (
+      if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] && (
             player->readyweapon != wp_chainsaw ||
             !player->powers[pw_strength])) {
         newweapon = wp_chainsaw;
       }
-      if (gamemode == commercial &&
-          newweapon == wp_shotgun &&
-          player->weaponowned[wp_supershotgun] &&
-          player->readyweapon != wp_supershotgun) {
+
+      if (gamemode == commercial && newweapon == wp_shotgun &&
+                                    player->weaponowned[wp_supershotgun] &&
+                                    player->readyweapon != wp_supershotgun) {
         newweapon = wp_supershotgun;
       }
     }
@@ -531,40 +574,92 @@ void P_PlayerThink(player_t *player) {
 
   P_MovePsprites(player);
 
-  // Counters, time dependent power ups.
+  if (DELTACLIENT || DELTASERVER)
+    P_MobjThinker(player->mo);
+}
 
-  // Strength counts up to diminish fade.
+void P_RunPlayerCommands(player_t *player) {
+  int saved_leveltime;
 
-  if (player->powers[pw_strength])
-    player->powers[pw_strength]++;
+  if ((!MULTINET) || CMDSYNC) {
+    run_player_command(player);
+    return;
+  }
+  
+  if (M_CBufGetObjectCount(&player->commands) == 0)
+    return; /* [CG] Vector prediction would go here */
 
-  // killough 1/98: Make idbeholdx toggle:
+  if (DELTASERVER) {
+    CBUF_FOR_EACH(&player->commands, entry) {
+      netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-  if (player->powers[pw_invulnerability] > 0) // killough
-    player->powers[pw_invulnerability]--;
+      if (ncmd->tic > gametic)
+        break;
 
-  if (player->powers[pw_invisibility] > 0)    // killough
-    if (! --player->powers[pw_invisibility])
-      player->mo->flags &= ~MF_SHADOW;
+      D_Log(
+        LOG_SYNC,
+        "[%d: %ld] P_RunPlayerCommands: Running command { %d/%d %d %d %d %d %u %u }\n",
+        gametic, player - players,
+        ncmd->index,
+        ncmd->tic,
+        ncmd->cmd.forwardmove,
+        ncmd->cmd.sidemove,
+        ncmd->cmd.angleturn,
+        ncmd->cmd.consistancy,
+        ncmd->cmd.buttons,
+        ncmd->cmd.chatchar
+      );
 
-  if (player->powers[pw_infrared] > 0)        // killough
-    player->powers[pw_infrared]--;
+      memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
+      saved_leveltime = leveltime;
+      leveltime = ncmd->tic;
+      run_player_command(player);
+      leveltime = saved_leveltime;
+      M_CBufRemove(&player->commands, entry.index);
+      entry.index--;
+    }
+  }
 
-  if (player->powers[pw_ironfeet] > 0)        // killough
-    player->powers[pw_ironfeet]--;
+  if (DELTACLIENT) {
+    if (player == &players[consoleplayer]) {
+      CBUF_FOR_EACH(&player->commands, entry) {
+        netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-  if (player->damagecount)
-    player->damagecount--;
+        D_Log(
+          LOG_SYNC,
+          "[%d: %ld] P_RunPlayerCommands: Running command "
+          "{ %d/%d %d %d %d %d %u %u }\n",
+          gametic, player - players,
+          ncmd->index,
+          ncmd->tic,
+          ncmd->cmd.forwardmove,
+          ncmd->cmd.sidemove,
+          ncmd->cmd.angleturn,
+          ncmd->cmd.consistancy,
+          ncmd->cmd.buttons,
+          ncmd->cmd.chatchar
+        );
 
-  if (player->bonuscount)
-    player->bonuscount--;
+        memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
+        run_player_command(player);
+        M_CBufRemove(&player->commands, entry.index);
+        entry.index--;
+      }
+    }
+    else {
+      netticcmd_t *ncmd = NULL;
 
-  // Handling colormaps.
-  // killough 3/20/98: reformat to terse C syntax
-  player->fixedcolormap = palette_onpowers &&
-    (player->powers[pw_invulnerability] > 4*32 ||
-    player->powers[pw_invulnerability] & 8) ? INVERSECOLORMAP :
-    player->powers[pw_infrared] > 4*32 || player->powers[pw_infrared] & 8;
+      if (M_CBufGetObjectCount(&player->commands) <= 0)
+        return;
+
+      M_CBufConsolidate(&player->commands);
+      ncmd = M_CBufGet(&player->commands, 0);
+      memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
+      run_player_command(player);
+      M_CBufRemove(&player->commands, 0);
+      M_CBufConsolidate(&player->commands);
+    }
+  }
 }
 
 /* vi: set et ts=2 sw=2: */

@@ -44,5 +44,6 @@ void    P_DeathThink(player_t *player);
 void    P_MovePlayer(player_t *player);
 void    P_Thrust(player_t *player, angle_t angle, fixed_t move);
 void    P_SetPitch(player_t *player);
+void    P_RunPlayerCommands(player_t *player);
 
 #endif  /* P_USER__ */

@@ -75,16 +75,21 @@ static auth_level_e authorization_level = AUTH_LEVEL_NONE;
 static cbuf_t local_commands;
 static int local_command_index = 0;
 
-static log_player_position(player_t *player) {
-  D_Log(LOG_SYNC, "(%5d): %d: {%4d/%4d/%4d %4d/%4d/%4d}\n", 
+static void log_player_position(player_t *player) {
+  D_Log(LOG_SYNC, "(%5d/%5d): %ld: {%4d/%4d/%4d %4d/%4d/%4d %4d/%4d/%4d/%4d}\n", 
     gametic,
-    i,
-    player->mo->x    >> FRACBITS,
-    player->mo->y    >> FRACBITS,
-    player->mo->z    >> FRACBITS,
-    player->mo->momx >> FRACBITS,
-    player->mo->momy >> FRACBITS,
-    player->mo->momz >> FRACBITS
+    leveltime,
+    player - players,
+    player->mo->x           >> FRACBITS,
+    player->mo->y           >> FRACBITS,
+    player->mo->z           >> FRACBITS,
+    player->mo->momx        >> FRACBITS,
+    player->mo->momy        >> FRACBITS,
+    player->mo->momz        >> FRACBITS,
+    player->viewz           >> FRACBITS,
+    player->viewheight      >> FRACBITS,
+    player->deltaviewheight >> FRACBITS,
+    player->bob             >> FRACBITS
   );
 }
 
@@ -104,10 +109,6 @@ static void build_command(void) {
   G_BuildTiccmd(ncmd);
   ncmd->index = local_command_index;
   local_command_index++;
-
-  D_Log(LOG_SYNC, "(%d) Built command %d, %d.\n",
-    gametic, ncmd->index, ncmd->tic
-  );
 
   if (CLIENT) {
     netpeer_t *server = N_PeerGet(0);
@@ -412,10 +413,6 @@ dboolean CL_LoadState(void) {
 
   delta = &server->sync.delta;
 
-  D_Log(LOG_SYNC, "(%d) === CL_LoadState: Applying delta from %d to %d.\n",
-    gametic, delta->from_tic, delta->to_tic
-  );
-
   if (!N_ApplyStateDelta(delta)) {
     doom_printf("Error applying state delta.\n");
     return false;
@@ -430,27 +427,24 @@ dboolean CL_LoadState(void) {
 
   server->sync.tic = delta->to_tic;
 
-  M_CBufClear(player_commands);
-  D_Log(LOG_SYNC, "(%d) Local Commands: ", gametic);
   N_PrintPlayerCommands(&local_commands);
 
   CBUF_FOR_EACH(&local_commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
     if (ncmd->index <= server->sync.cmd && ncmd->tic <= server->sync.tic) {
-      D_Log(LOG_SYNC, "(%d) Removing old local command (%d, %d < %d, %d).\n",
-        gametic, ncmd->index, ncmd->tic, server->sync.cmd, server->sync.tic
-      );
       M_CBufRemove(&local_commands, entry.index);
       entry.index--;
     }
   }
 
-  if (M_CBufGetObjectCount(&local_commands) <= 0) {
-    gametic++;
-    return true;
-  }
+  gametic++;
 
+  if (M_CBufGetObjectCount(&local_commands) <= 0)
+    return true;
+
+#if 0
+  M_CBufClear(player_commands);
   CBUF_FOR_EACH(&local_commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
@@ -473,17 +467,36 @@ dboolean CL_LoadState(void) {
     gametic++;
   }
 
+#endif
+
   M_CBufClear(player_commands);
   CBUF_FOR_EACH(&local_commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
-    if (ncmd->tic <= server->sync.tic)
-      continue;
+    if (ncmd->tic > gametic)
+      break;
 
-    D_Log(LOG_SYNC, "(%d) Re-Predicting command %d, %d, (%d, %d).\n",
-      gametic, ncmd->index, ncmd->tic, server->sync.cmd, server->sync.tic
-    );
-    M_CBufAppend(player_commands, ncmd);
+    M_CBufAppend(player_commands, entry.obj);
+  }
+  is_extra_ddisplay = true;
+  run_tic();
+  is_extra_ddisplay = false;
+
+  M_CBufClear(player_commands);
+  while (1) {
+    dboolean found_command = false;
+
+    CBUF_FOR_EACH(&local_commands, entry) {
+      netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+
+      if (ncmd->tic == gametic) {
+        found_command = true;
+        M_CBufAppend(player_commands, entry.obj);
+      }
+    }
+
+    if (!found_command)
+      break;
 
     is_extra_ddisplay = true;
     run_tic();

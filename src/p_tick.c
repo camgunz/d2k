@@ -251,16 +251,24 @@ void P_SetTarget(mobj_t **mop, mobj_t *targ)
 // external and using P_RemoveThinkerDelayed() implicitly.
 //
 
-static void P_RunThinkers (void)
-{
+static void P_RunThinkers(void) {
   for (currentthinker = thinkercap.next;
        currentthinker != &thinkercap;
-       currentthinker = currentthinker->next)
-  {
+       currentthinker = currentthinker->next) {
+
     if (newthinkerpresent)
       R_ActivateThinkerInterpolations(currentthinker);
-    if (currentthinker->function)
+
+    if (!currentthinker->function)
+      continue;
+
+    if (!(DELTACLIENT || DELTASERVER)) {
       currentthinker->function(currentthinker);
+    }
+    else if ((currentthinker->function != P_MobjThinker) ||
+             (((mobj_t *)currentthinker)->player == NULL)) {
+      currentthinker->function(currentthinker);
+    }
   }
   newthinkerpresent = false;
 
@@ -272,7 +280,7 @@ static void P_RunThinkers (void)
 // P_Ticker
 //
 
-static void setup_tic(void) {
+static dboolean setup_tic(void) {
   /*
    * pause if in menu and at least one tic has been run
    *
@@ -288,11 +296,13 @@ static void setup_tic(void) {
                  !netgame &&
                  players[consoleplayer].viewz != 1)) {
     P_ResetWalkcam();
-    return;
+    return false;
   }
 
   R_UpdateInterpolations ();
   P_MapStart();
+
+  return true;
 }
 
 static void run_regular_tic(void) {
@@ -311,107 +321,6 @@ static void run_regular_tic(void) {
  *           combined with a time limit which, if exceeded, disconnects the
  *           player.
  */
-static void run_deltasync_tic(void) {
-  int i;
-
-  for (i = 0; i < MAXPLAYERS; i++) {
-    player_t *player = NULL;
-    netpeer_t *np = NULL;
-
-    if (!playeringame[i])
-      continue;
-
-    player = &players[i];
-
-    if (SERVER)
-      np = N_PeerForPlayer(i);
-    else
-      np = N_PeerGet(0);
-
-    if (np == NULL)
-      continue;
-
-    if (M_CBufGetObjectCount(&player->commands) == 0) {
-      memset(&player->cmd, 0, sizeof(ticcmd_t));
-      /*
-      D_Log(LOG_SYNC, "[%d: %d (%d/%d)] P_Ticker: Running blank command.\n",
-        gametic, i, np->sync.tic, np->sync.cmd
-      );
-      P_PlayerThink(player);
-      */
-    }
-    else if (SERVER && i == consoleplayer) {
-      netticcmd_t *ncmd = NULL;
-      
-      M_CBufConsolidate(&player->commands);
-      ncmd = M_CBufGet(&player->commands, 0);
-
-      if (!SERVER) {
-        // D_Log(LOG_SYNC, "Player %d commands: ", i);
-        // N_PrintPlayerCommands(&player->commands);
-        D_Log(LOG_SYNC, "[%d: %d (%d/%d)] P_Ticker: Running command %d, %d.\n",
-          gametic, i, np->sync.cmd, np->sync.tic, ncmd->index, ncmd->tic
-        );
-      }
-      memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
-      P_PlayerThink(player);
-      M_CBufRemove(&player->commands, 0);
-      M_CBufConsolidate(&player->commands);
-    }
-    else if (CLIENT && i == consoleplayer) {
-      CBUF_FOR_EACH(&player->commands, entry) {
-        netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
-
-        // D_Log(LOG_SYNC, "Player %d commands: ", i);
-        // N_PrintPlayerCommands(&player->commands);
-        D_Log(LOG_SYNC, "[%d: %d (%d/%d)] P_Ticker: Running command %d, %d.\n",
-          gametic, i, np->sync.cmd, np->sync.tic, ncmd->index, ncmd->tic
-        );
-
-        if (ncmd->tic != gametic) {
-          D_Log(LOG_SYNC, "  Command %d out of order: %d/%d.\n",
-            ncmd->index, ncmd->tic, gametic
-          );
-        }
-        memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
-        P_PlayerThink(player);
-        M_CBufRemove(&player->commands, entry.index);
-        entry.index--;
-      }
-    }
-    else {
-      /*
-      if (i != 0) {
-        D_Log(LOG_SYNC, "Player %d commands: ", i);
-        N_PrintPlayerCommands(&player->commands);
-      }
-      */
-      CBUF_FOR_EACH(&player->commands, entry) {
-        netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
-
-        if (ncmd->tic > gametic)
-          break;
-
-        if (i != 0) {
-          D_Log(LOG_SYNC, "[%d: %d (%d/%d)] P_Ticker: Running command %d, %d.\n",
-            gametic, i, np->sync.cmd, np->sync.tic, ncmd->index, ncmd->tic
-          );
-          if (ncmd->tic != gametic) {
-            D_Log(LOG_SYNC, "  Command %d out of order: %d/%d.\n",
-              ncmd->index, ncmd->tic, gametic
-            );
-          }
-        }
-        memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
-        P_PlayerThink(player);
-        M_CBufRemove(&player->commands, entry.index);
-        entry.index--;
-      }
-      // M_CBufClear(&player->commands);
-    }
-  }
-}
-
 static void run_thinkers_and_specials(void) {
   P_RunThinkers();
   P_UpdateSpecials();
@@ -421,11 +330,12 @@ static void run_thinkers_and_specials(void) {
 }
 
 void P_Ticker(void) {
-  setup_tic();
+  if (!setup_tic())
+    return;
 
   if (gamestate == GS_LEVEL) { // not if this is an intermission screen
     if (DELTASYNC)
-      run_deltasync_tic();
+      run_regular_tic();
     else
       run_regular_tic();
   }
