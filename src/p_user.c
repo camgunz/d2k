@@ -340,7 +340,7 @@ void P_DeathThink(player_t *player) {
   onground = (player->mo->z <= player->mo->floorz);
   if (player->mo->type == MT_GIBDTH) {
     // Flying bloody skull
-    player->viewheight = 6*FRACUNIT;
+    player->viewheight = 6 * FRACUNIT;
     player->deltaviewheight = 0;
     if (onground && (int)player->mo->pitch > -(int)ANG1 * 19)
       player->mo->pitch -= ((int)ANG1 * 19 - player->mo->pitch) / 8;
@@ -411,12 +411,12 @@ void P_PlayerThink(player_t *player) {
   else
     player->mo->flags &= ~MF_NOCLIP;
 
+  P_RunPlayerCommands(player);
+
   if (player->playerstate == PST_DEAD) {
     P_DeathThink(player);
     return;
   }
-
-  P_RunPlayerCommands(player);
 
   // Determine if there's anything about the sector you're in that's
   // going to affect you, like painful floors.
@@ -474,6 +474,9 @@ static void run_player_command(player_t *player) {
     cmd->sidemove = 0;
     player->mo->flags &= ~MF_JUSTATTACKED;
   }
+
+  if (player->playerstate == PST_DEAD)
+    return;
 
   if (player->jumpTics)
     player->jumpTics--;
