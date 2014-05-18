@@ -165,16 +165,6 @@ const char *D_dehout(void); /* CG: from d_main.c */
     return;                                                                   \
   }
 
-const byte nm_setup                  = 1; /* S => C | BOTH    |   reliable */
-const byte nm_authresponse           = 2; /* S => C | BOTH    |   reliable */
-const byte nm_servermessage          = 3; /* S => C | BOTH    |   reliable */
-const byte nm_sync                   = 4; /* BOTH   | BOTH    | unreliable */
-const byte nm_playermessage          = 5; /* BOTH   | BOTH    |   reliable */
-const byte nm_playerpreferencechange = 6; /* NOT DELTA CLIENT |   reliable */
-const byte nm_authrequest            = 7; /* C => S | BOTH    |   reliable */
-const byte nm_rconcommand            = 8; /* C => S | BOTH    |   reliable */
-const byte nm_voterequest            = 9; /* C => S | BOTH    |   reliable */
-
 const char *nm_names[9] = {
   "setup",
   "auth response",

@@ -107,23 +107,12 @@ static const char *pm_name (void)
   return "portmidi midi player";
 }
 
-
-
-#ifdef _MSC_VER
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <delayimp.h>
-#endif
-
-
 static int pm_init (int samplerate)
 {
   PmDeviceID outputdevice;
   const PmDeviceInfo *oinfo;
   int i;
   char devname[64];
-
-  TESTDLLLOAD ("portmidi.dll", TRUE)
 
   if (Pm_Initialize () != pmNoError)
   {

@@ -63,11 +63,10 @@ const music_player_t fl_player =
 #else // HAVE_LIBFLUIDSYNTH
 
 #include <fluidsynth.h>
+
 #include "i_sound.h" // for snd_soundfont, mus_fluidsynth_gain
 #include "lprintf.h"
 #include "midifile.h"
-#include <stdlib.h>
-#include <string.h>
 
 static fluid_settings_t *f_set;
 static fluid_synth_t *f_syn;
@@ -93,19 +92,9 @@ static const char *fl_name (void)
   return "fluidsynth midi player";
 }
 
-#ifdef _MSC_VER
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <delayimp.h>
-#endif
-
 static int fl_init (int samplerate)
 {
 #ifdef _WIN32
-  #ifndef _MSC_VER
-  int __stdcall GetVersion (void);
-  #endif // _MSC_VER
-
   if ((int)GetVersion() < 0) // win9x
   {
     lprintf (LO_INFO, "Fluidplayer: Win9x is not supported\n");
@@ -113,11 +102,10 @@ static int fl_init (int samplerate)
   }
 #endif // _WIN32
 
-  TESTDLLLOAD ("libfluidsynth.dll", TRUE)
-
   f_soundrate = samplerate;
-  // fluidsynth 1.1.4 supports sample rates as low as 8000hz.  earlier versions only go down to 22050hz
-  // since the versions are ABI compatible, detect at runtime, not compile time
+  // fluidsynth 1.1.4 supports sample rates as low as 8000hz.  earlier versions
+  // only go down to 22050hz since the versions are ABI compatible, detect at
+  // runtime, not compile time
   if (1)
   {
     int sratemin;

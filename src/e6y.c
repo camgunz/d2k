@@ -1269,7 +1269,7 @@ int HU_DrawDemoProgress(int force)
   return true;
 }
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 int GetFullPath(const char* FileName, const char* ext, char *Buffer, size_t BufferLength)
 {
   int i, Result;
@@ -1303,7 +1303,7 @@ int GetFullPath(const char* FileName, const char* ext, char *Buffer, size_t Buff
 #endif
 
 #ifdef _WIN32
-#include <Mmsystem.h>
+#include <mmsystem.h>
 #pragma comment( lib, "winmm.lib" )
 int mus_extend_volume;
 void I_midiOutSetVolumes(int volume)

@@ -50,7 +50,7 @@
 //#include "dosbox.h"
 #include "dbopl.h"
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define inline __inline
 #endif
 

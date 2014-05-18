@@ -47,33 +47,12 @@
 
 #ifdef USE_OPENGLES2
 #include <GLES2/gl2.h>
+#include <GL/glext.h>
 #undef USE_GLU_MIPMAP
 #undef USE_GLU_TESS
 #undef USE_GLU_IMAGESCALE
 #else
-#if SDL_VERSION_ATLEAST(1, 3, 0)
-#if defined(__MACOSX__)
-#include <OpenGL/gl.h>	/* Header File For The OpenGL Library */
-#if defined(USE_GLU_MIPMAP) || defined(USE_GLU_TESS) || defined(USE_GLU_IMAGESCALE)
-#include <OpenGL/glu.h>	/* Header File For The GLU Library */
-#endif
-#elif defined(__MACOS__)
-#include <gl.h>		/* Header File For The OpenGL Library */
-#if defined(USE_GLU_MIPMAP) || defined(USE_GLU_TESS) || defined(USE_GLU_IMAGESCALE)
-#include <glu.h>	/* Header File For The GLU Library */
-#endif
-#else
-#include <GL/gl.h>	/* Header File For The OpenGL Library */
-#if defined(USE_GLU_MIPMAP) || defined(USE_GLU_TESS) || defined(USE_GLU_IMAGESCALE)
-#include <GL/glu.h>	/* Header File For The GLU Library */
-#endif
-#endif
-#else
-#include <GL/gl.h>	/* Header File For The OpenGL Library */
-#if defined(USE_GLU_MIPMAP) || defined(USE_GLU_TESS) || defined(USE_GLU_IMAGESCALE)
-#include <GL/glu.h>	/* Header File For The GLU Library */
-#endif
-#endif
+#include <SDL_opengl.h>
 #endif
 
 #include "doomtype.h"

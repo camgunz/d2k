@@ -70,7 +70,7 @@ typedef unsigned char byte;
 #endif // ntohl
 
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #pragma pack(push, 1)
 #endif
 
@@ -88,7 +88,7 @@ typedef struct
     unsigned short time_division;
 } PACKEDATTR midi_header_t;
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #pragma pack(pop)
 #endif
 

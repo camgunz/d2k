@@ -39,15 +39,15 @@
 #define GAME_OPTIONS_SIZE 64
 #endif
 
-extern const byte nm_setup;
-extern const byte nm_authresponse;
-extern const byte nm_servermessage;
-extern const byte nm_sync;
-extern const byte nm_playermessage;
-extern const byte nm_playerpreferencechange;
-extern const byte nm_authrequest;
-extern const byte nm_rconcommand;
-extern const byte nm_voterequest;
+#define nm_setup                  1
+#define nm_authresponse           2
+#define nm_servermessage          3
+#define nm_sync                   4
+#define nm_playermessage          5
+#define nm_playerpreferencechange 6
+#define nm_authrequest            7
+#define nm_rconcommand            8
+#define nm_voterequest            9
 
 void   N_InitProtocol(void);
 buf_t* N_GetMessageRecipientBuffer(void);

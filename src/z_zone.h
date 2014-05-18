@@ -52,25 +52,17 @@
 
 #define __STDC_FORMAT_MACROS
 
-#if 0
-#ifndef __func__
-#ifdef __FUNCTION__
-#define __func__ __FUNCTION__
-#else
-#define __func__ "<unknown>"
-#endif
-#endif
-#endif
-
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #define UNICODE
 #include <windows.h>
 #include <direct.h>
+#include <commctrl.h>
 #include <io.h>
 #include <process.h>
 #include <stddef.h>
 #include <winreg.h>
+#include <delayimp.h>
 #define    F_OK    0    /* Check for file existence */
 #define    W_OK    2    /* Check for write permission */
 #define    R_OK    4    /* Check for read permission */

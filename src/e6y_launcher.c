@@ -32,14 +32,12 @@
  */
 
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <direct.h>
-#include <commctrl.h>
+#include "z_zone.h"
+
+#include "pcreposix.h"
 
 #include "doomtype.h"
 #include "w_wad.h"
-#include "m_cbuf.h"
 #include "doomstat.h"
 #include "lprintf.h"
 #include "d_main.h"
@@ -47,8 +45,7 @@
 #include "i_system.h"
 #include "m_argv.h"
 #include "i_main.h"
-#include ".\..\ICONS\resource.h"
-#include "pcreposix.h"
+#include "resource.h"
 #include "r_demo.h"
 #include "e6y.h"
 #include "e6y_launcher.h"

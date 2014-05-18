@@ -63,7 +63,7 @@
 #define MAX_COMMAND_LENGTH 32
 
 #define check_range(x, min, max)                                              \
-  if (!(min <= x <= max)) {                                                   \
+  if (x < min || x > max) {                                                   \
     doom_printf("%s: Invalid message: %s is out of range (%s, %s)\n",         \
       __func__, #x, #min, #max                                                \
     );                                                                        \
