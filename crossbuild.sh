@@ -42,6 +42,7 @@ cd cbuild && \
              -DSDL_LIBRARY_TEMP="$CROSSLIBS/libSDL.a" \
              -DPCRE_LIBRARY="$CROSSLIBS/libpcre.a" \
              -DPCREPOSIX_LIBRARY="$CROSSLIBS/libpcreposix.a" \
+             -DLZMA_LIBRARIES="$CROSSLIBS/liblzma.a" \
              -DCMAKE_TOOLCHAIN_FILE=mingw32-toolchain.cmake && \
     clear && \
     make
