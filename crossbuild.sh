@@ -29,10 +29,12 @@ cd cbuild && \
     SDLDIR="$CROSSDEPS" \
     cmake .. -DCMAKE_BUILD_TYPE=Debug \
              -DPORTMIDI_LIBRARIES="$CROSSLIBS/libportmidi_s.a" \
+             -DFLUIDSYNTH_LIBRARIES="$CROSSLIBS/libfluidsynth.a" \
              -DOGG_LIBRARIES="$CROSSLIBS/libogg.a" \
              -DVORBIS_LIBRARY="$CROSSLIBS/libvorbis.a" \
              -DVORBISFILE_LIBRARY="$CROSSLIBS/libvorbisfile.a" \
              -DFLAC_LIBRARIES="$CROSSLIBS/libFLAC.a" \
+             -DMIKMOD_LIBRARIES="$CROSSLIBS/libmikmod.a" \
              -DSDLMIXER_LIBRARY="$CROSSLIBS/libSDL_mixer.a" \
              -DJPG_LIBRARIES="$CROSSLIBS/libjpeg.a" \
              -DPNG_LIBRARIES="$CROSSLIBS/libpng.a" \
@@ -43,6 +45,12 @@ cd cbuild && \
              -DPCRE_LIBRARY="$CROSSLIBS/libpcre.a" \
              -DPCREPOSIX_LIBRARY="$CROSSLIBS/libpcreposix.a" \
              -DLZMA_LIBRARIES="$CROSSLIBS/liblzma.a" \
+             -DGIO_LIBRARY="$CROSSLIBS/libgio-2.0.a" \
+             -DGMODULE_LIBRARY="$CROSSLIBS/libgmodule-2.0.a" \
+             -DGOBJECT_LIBRARY="$CROSSLIBS/libgobject-2.0.a" \
+             -DGTHREAD_LIBRARY="$CROSSLIBS/libgthread-2.0.a" \
+             -DGLIB_LIBRARY="$CROSSLIBS/libglib-2.0.a" \
+             -DINTL_LIBRARY="$CROSSLIBS/libintl.a" \
              -DCMAKE_TOOLCHAIN_FILE=mingw32-toolchain.cmake && \
     clear && \
     make
