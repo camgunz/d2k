@@ -65,6 +65,7 @@
 
 #define DEBUG_NET 0
 #define DEBUG_SYNC 0
+#define PRINT_BANDWIDTH_STATS 0
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
 #define SERVER_SLEEP_TIMEOUT 1
@@ -619,11 +620,13 @@ void N_TryRunTics(void) {
   if ((!SERVER) && render_fast)
     render_extra_frame();
 
+#if PRINT_BANDWIDTH_STATS
   if (((loop_count++ % 2000) == 0) && SERVER && N_PeerGetCount() > 0) {
     printf("(%d) U/D: %d/%d b/s\n",
       gametic, N_GetUploadBandwidth(), N_GetDownloadBandwidth()
     );
   }
+#endif
 }
 
 /* vi: set et ts=2 sw=2: */

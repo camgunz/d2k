@@ -32,10 +32,6 @@
  *-----------------------------------------------------------------------------
  */
 
-#define USE_RANGE_CODER 0
-#define MAX_DOWNLOAD 0
-#define MAX_UPLOAD 0
-
 #include "z_zone.h"
 
 #include <enet/enet.h>
@@ -54,6 +50,10 @@
 #include "n_peer.h"
 #include "n_pack.h"
 #include "n_proto.h"
+
+#define USE_RANGE_CODER 0
+#define MAX_DOWNLOAD 0
+#define MAX_UPLOAD 0
 
 #define MAX_ADDRESS_LENGTH 500
 
