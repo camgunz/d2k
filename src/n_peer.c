@@ -66,27 +66,35 @@ static void init_channel(netchan_t *nc) {
   M_CBufInit(&nc->toc, sizeof(tocentry_t));
   M_PBufInit(&nc->messages);
   M_PBufInit(&nc->packet_data);
+  M_PBufInit(&nc->packed_toc);
 }
 
 static void clear_channel(netchan_t *nc) {
   M_CBufClear(&nc->toc);
   M_PBufClear(&nc->messages);
   M_PBufClear(&nc->packet_data);
+  M_PBufClear(&nc->packed_toc);
 }
 
-static void serialize_toc(pbuf_t *packet_data, cbuf_t *toc) {
-  M_PBufClear(packet_data);
+static void serialize_toc(netchan_t *chan) {
+  M_PBufClear(&chan->packed_toc);
 
-  if (!M_PBufWriteMap(packet_data, M_CBufGetObjectCount(toc)))
-    I_Error("Error writing map: %s.\n", cmp_strerror(&packet_data->cmp));
+  if (!M_PBufWriteMap(&chan->packed_toc, M_CBufGetObjectCount(&chan->toc)))
+    I_Error("Error writing map: %s.\n", cmp_strerror(&chan->packed_toc.cmp));
 
-  CBUF_FOR_EACH(toc, entry) {
+  D_Log(LOG_MEM, "serialize_toc: Buffer cursor, size, capacity: %lu/%lu/%lu\n",
+    M_PBufGetCursor(&chan->packed_toc),
+    M_PBufGetSize(&chan->packed_toc),
+    M_PBufGetCapacity(&chan->packed_toc)
+  );
+
+  CBUF_FOR_EACH(&chan->toc, entry) {
     tocentry_t *message = (tocentry_t *)entry.obj;
 
-    if (!M_PBufWriteUInt(packet_data, message->index))
-      I_Error("Error writing UInt: %s.\n", cmp_strerror(&packet_data->cmp));
-    if (!M_PBufWriteUChar(packet_data, message->type))
-      I_Error("Error writing UChar: %s\n", cmp_strerror(&packet_data->cmp));
+    if (!M_PBufWriteUInt(&chan->packed_toc, message->index))
+      I_Error("Error writing UInt: %s.\n", cmp_strerror(&chan->packed_toc.cmp));
+    if (!M_PBufWriteUChar(&chan->packed_toc, message->type))
+      I_Error("Error writing UChar: %s\n", cmp_strerror(&chan->packed_toc.cmp));
   }
 }
 
@@ -373,7 +381,6 @@ ENetPacket* N_PeerGetPacket(int peernum, net_channel_e chan_type) {
   netchan_t *chan = NULL;
   size_t toc_size, msg_size, packet_size;
   ENetPacket *packet = NULL;
-  pbuf_t packed_toc;
 
   if (np == NULL)
     I_Error("N_PeerGetPacket: Invalid peer number %d.\n", peernum);
@@ -381,10 +388,10 @@ ENetPacket* N_PeerGetPacket(int peernum, net_channel_e chan_type) {
   nc = &np->netcom;
   get_netchan(chan, nc, chan_type);
 
-  M_PBufInit(&packed_toc);
-  serialize_toc(&packed_toc, &chan->toc);
+  M_PBufClear(&chan->packed_toc);
+  serialize_toc(chan);
 
-  toc_size = M_PBufGetSize(&packed_toc);
+  toc_size = M_PBufGetSize(&chan->packed_toc);
   msg_size = M_PBufGetSize(&chan->messages);
   packet_size = toc_size + msg_size;
 
@@ -397,7 +404,7 @@ ENetPacket* N_PeerGetPacket(int peernum, net_channel_e chan_type) {
     );
   }
 
-  memcpy(packet->data, M_PBufGetData(&packed_toc), toc_size);
+  memcpy(packet->data, M_PBufGetData(&chan->packed_toc), toc_size);
   memcpy(packet->data + toc_size, M_PBufGetData(&chan->messages), msg_size);
 
   if (packet->data[2] != 4) {

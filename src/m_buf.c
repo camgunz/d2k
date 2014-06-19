@@ -99,16 +99,20 @@ char* M_BufferGetDataAtCursor(buf_t *buf) {
 }
 
 void M_BufferEnsureCapacity(buf_t *buf, size_t capacity) {
-  if (buf->capacity < buf->cursor + capacity) {
-    size_t old_capacity = buf->capacity;
+  size_t needed_capacity = buf->cursor + capacity;
 
-    buf->capacity = buf->cursor + capacity;
-    buf->data = realloc(buf->data, buf->capacity * sizeof(byte));
+  if (buf->capacity < needed_capacity) {
+    D_Log(LOG_MEM,
+      "M_BufferEnsureCapacity: Increasing capacity %lu bytes (%lu/%lu/%lu)\n",
+      needed_capacity - buf->capacity, buf->cursor, buf->size, buf->capacity
+    );
+    buf->data = realloc(buf->data, needed_capacity * sizeof(byte));
 
     if (buf->data == NULL)
-      I_Error("M_BufferEnsureCapacity: Allocating buffer data failed");
+      I_Error("M_BufferEnsureCapacity: Reallocating buffer data failed");
 
-    memset(buf->data + old_capacity, 0, buf->capacity - old_capacity);
+    memset(buf->data + buf->capacity, 0, needed_capacity - buf->capacity);
+    buf->capacity = needed_capacity;
   }
 }
 

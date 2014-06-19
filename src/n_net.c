@@ -32,6 +32,10 @@
  *-----------------------------------------------------------------------------
  */
 
+#define USE_RANGE_CODER 0
+#define MAX_DOWNLOAD 0
+#define MAX_UPLOAD 0
+
 #include "z_zone.h"
 
 #include <enet/enet.h>
@@ -39,8 +43,9 @@
 
 #include "d_ticcmd.h"
 
+#include "g_game.h"
 #include "lprintf.h"
-#include "g_game.h" // for doom_printf... inexplicably
+#include "i_system.h"
 #include "m_pbuf.h"
 #include "m_swap.h"
 
@@ -307,13 +312,22 @@ dboolean N_Listen(const char *host, unsigned short port) {
   else
     address.port = DEFAULT_PORT;
 
-  net_host = enet_host_create(&address, MAXPLAYERS, NET_CHANNEL_MAX, 0, 0);
+  net_host = enet_host_create(
+    &address, MAXPLAYERS, NET_CHANNEL_MAX, MAX_DOWNLOAD, MAX_UPLOAD
+  );
   
   if (net_host == NULL) {
     doom_printf("N_Listen: Error creating host on %s:%u\n", host, port);
     return false;
   }
-  
+
+#if USE_RANGE_CODER
+  if (enet_host_compress_with_range_coder(net_host) < 0) {
+    doom_printf("N_Listen: Error activating range coder\n");
+    return false;
+  }
+#endif
+
   return true;
 }
 
@@ -328,6 +342,13 @@ dboolean N_Connect(const char *host, unsigned short port) {
     doom_printf("N_Connect: Error creating host");
     return false;
   }
+
+#if USE_RANGE_CODER
+  if (enet_host_compress_with_range_coder(net_host) < 0) {
+    doom_printf("N_Connect: Error activating range coder\n");
+    return false;
+  }
+#endif
 
   enet_address_set_host(&address, host);
 
@@ -533,6 +554,74 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
 
 void N_ServiceNetwork(void) {
   N_ServiceNetworkTimeout(0);
+}
+
+uint32_t N_GetUploadBandwidth(void) {
+  static uint32_t last_ms = 0;
+
+  uint32_t ms;
+  uint32_t bytes_sent;
+  uint32_t time_elapsed;
+  netpeer_t *np = N_PeerGet(0);
+
+  if (np == NULL)
+    return 0;
+
+  ms = I_GetTicks();
+
+  if (last_ms == 0) {
+    last_ms = ms;
+    return 0;
+  }
+
+  bytes_sent = net_host->totalSentData;
+
+  if (ms < last_ms)
+    time_elapsed = (0xFFFFFFFF - last_ms) + ms;
+  else
+    time_elapsed = ms - last_ms;
+
+  if (time_elapsed == 0)
+    return 0;
+
+  last_ms = ms;
+  net_host->totalSentData = 0;
+
+  return (bytes_sent / time_elapsed);
+}
+
+uint32_t N_GetDownloadBandwidth(void) {
+  static uint32_t last_ms = 0;
+
+  uint32_t ms;
+  uint32_t bytes_received;
+  uint32_t time_elapsed;
+  netpeer_t *np = N_PeerGet(0);
+
+  if (np == NULL)
+    return 0;
+
+  ms = I_GetTicks();
+
+  if (last_ms == 0) {
+    last_ms = ms;
+    return 0;
+  }
+
+  bytes_received = net_host->totalReceivedData;
+
+  if (ms < last_ms)
+    time_elapsed = (0xFFFFFFFF - last_ms) + ms;
+  else
+    time_elapsed = ms - last_ms;
+
+  if (time_elapsed == 0)
+    return 0;
+
+  last_ms = ms;
+  net_host->totalReceivedData = 0;
+
+  return (bytes_received / time_elapsed);
 }
 
 /* vi: set et ts=2 sw=2: */

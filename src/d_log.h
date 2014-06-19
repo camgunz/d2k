@@ -39,6 +39,7 @@ typedef enum {
   LOG_NET,
   LOG_SYNC,
   LOG_STATE,
+  LOG_MEM,
   LOG_MAX
 } log_channel_e;
 

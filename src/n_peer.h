@@ -41,6 +41,7 @@ typedef struct netchan_s {
   cbuf_t toc;
   pbuf_t messages;
   pbuf_t packet_data;
+  pbuf_t packed_toc;
 } netchan_t;
 
 typedef struct netcom_s {

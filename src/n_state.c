@@ -32,7 +32,7 @@
  *-----------------------------------------------------------------------------
  */
 
-#define DEBUG_STATES 1
+#define DEBUG_STATES 0
 
 #include "z_zone.h"
 

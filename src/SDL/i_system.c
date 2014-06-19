@@ -62,6 +62,10 @@ static int basetime = 0;
 
 int ms_to_next_tick;
 
+uint32_t I_GetTicks(void) {
+  return SDL_GetTicks();
+}
+
 void I_uSleep(unsigned long usecs) {
   SDL_Delay(usecs / 1000);
 }

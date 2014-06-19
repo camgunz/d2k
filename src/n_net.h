@@ -102,6 +102,8 @@ void        N_DisconnectPeer(int peernum);
 void        N_DisconnectPlayer(short playernum);
 void        N_ServiceNetworkTimeout(int timeout_ms);
 void        N_ServiceNetwork(void);
+uint32_t    N_GetUploadBandwidth(void);
+uint32_t    N_GetDownloadBandwidth(void);
 
 #endif
 
