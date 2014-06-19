@@ -387,6 +387,7 @@ static void I_InitInputs(void)
 //
 // Returns true if it thinks we can afford to skip this frame
 
+#if 0
 inline static dboolean I_SkipFrame(void)
 {
   static int frameno;
@@ -401,6 +402,7 @@ inline static dboolean I_SkipFrame(void)
     return (frameno & 1) ? true : false;
   }
 }
+#endif
 
 ///////////////////////////////////////////////////////////
 // Palette stuff.

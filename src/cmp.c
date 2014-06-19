@@ -1,3 +1,4 @@
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -1619,7 +1620,6 @@ bool cmp_read_map(cmp_ctx_t *ctx, uint32_t *size) {
       *size = obj.as.map_size;
       return true;
     default:
-      fprintf(stderr, "Invalid Type %u.\n", obj.type);
       ctx->error = INVALID_TYPE_ERROR;
       return false;
   }
@@ -2159,7 +2159,6 @@ bool cmp_read_object(cmp_ctx_t *ctx, cmp_object_t *obj) {
     obj->as.s8 = type_marker;
   }
   else {
-    fprintf(stderr, "Invalid Type %u.\n", obj->type);
     ctx->error = INVALID_TYPE_ERROR;
     return false;
   }

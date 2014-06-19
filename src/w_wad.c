@@ -34,22 +34,21 @@
 
 #include "z_zone.h"
 
-#include "m_cbuf.h"
-#include "doomstat.h"
-#include "d_net.h"
-#include "doomtype.h"
-#include "i_system.h"
-#include "r_main.h"
-
 #ifdef __GNUG__
 #pragma implementation "w_wad.h"
 #endif
-#include "w_wad.h"
-#include "lprintf.h"
 
-//e6y
-#include "r_demo.h"
+#include "doomstat.h"
+#include "d_main.h"
+#include "d_net.h"
+#include "doomtype.h"
 #include "e6y.h"
+#include "i_system.h"
+#include "lprintf.h"
+#include "m_file.h"
+#include "r_demo.h"
+#include "r_main.h"
+#include "w_wad.h"
 
 #include "n_net.h"
 #include "n_main.h"
@@ -61,50 +60,6 @@
 // Location of each lump on disk.
 lumpinfo_t *lumpinfo;
 int        numlumps;         // killough
-
-void ExtractFileBase (const char *path, char *dest)
-{
-  const char *src = path + strlen(path) - 1;
-  int length;
-
-  // back up until a \ or the start
-  while (src != path && src[-1] != ':' // killough 3/22/98: allow c:filename
-         && *(src-1) != '\\'
-         && *(src-1) != '/')
-  {
-    src--;
-  }
-
-  // copy up to eight characters
-  memset(dest,0,8);
-  length = 0;
-
-  while ((*src) && (*src != '.') && (++length<9))
-  {
-    *dest++ = toupper(*src);
-    src++;
-  }
-  /* cph - length check removed, just truncate at 8 chars.
-   * If there are 8 or more chars, we'll copy 8, and no zero termination
-   */
-}
-
-//
-// 1/18/98 killough: adds a default extension to a path
-// Note: Backslashes are treated specially, for MS-DOS.
-//
-
-char *AddDefaultExtension(char *path, const char *ext)
-{
-  char *p = path;
-  while (*p++);
-  while (p-->path && *p!='/' && *p!='\\')
-    if (*p=='.')
-      return path;
-  if (*ext!='.')
-    strcat(path,".");
-  return strcat(path,ext);
-}
 
 //
 // LUMP BASED ROUTINES.
@@ -123,15 +78,14 @@ char *AddDefaultExtension(char *path, const char *ext)
 // CPhipps - source is an enum
 //
 // proff - changed using pointer to wadfile_info_t
-static void W_AddFile(wadfile_info_t *wadfile) 
 // killough 1/31/98: static, const
-{
+static void W_AddFile(wadfile_info_t *wadfile) {
   wadinfo_t   header;
   lumpinfo_t* lump_p;
   unsigned    i;
   int         length;
   int         startlump;
-  filelump_t  *fileinfo, *fileinfo2free=NULL; //killough
+  filelump_t  *fileinfo, *fileinfo2free = NULL; //killough
   filelump_t  singleinfo;
   int         flags = 0;
 
@@ -143,105 +97,99 @@ static void W_AddFile(wadfile_info_t *wadfile)
     wadfile->handle = open(wadfile->name, O_RDONLY | O_BINARY);
 
   if (wadfile->handle == -1 &&
-    strlen(wadfile->name) > 4 &&
-    wadfile->src == source_pwad && 
-    !strcasecmp(wadfile->name + strlen(wadfile->name) - 4 , ".wad") &&
-    N_GetWad(wadfile->name))
-  {
+      strlen(wadfile->name) > 4 &&
+      wadfile->src == source_pwad && 
+      !strcasecmp(wadfile->name + strlen(wadfile->name) - 4 , ".wad") &&
+      N_GetWad(wadfile->name)) {
     wadfile->handle = open(wadfile->name, O_RDONLY | O_BINARY);
   }
 
-  if (wadfile->handle == -1) 
-    {
-      if (  strlen(wadfile->name)<=4 ||      // add error check -- killough
-	         (strcasecmp(wadfile->name+strlen(wadfile->name)-4 , ".lmp" ) &&
-	          strcasecmp(wadfile->name+strlen(wadfile->name)-4 , ".gwa" ) )
-         )
-	I_Error("W_AddFile: couldn't open %s",wadfile->name);
-      return;
+  if (wadfile->handle == -1) {
+    if (strlen(wadfile->name) <= 4 ||      // add error check -- killough
+        (strcasecmp(wadfile->name + strlen(wadfile->name) - 4, ".lmp") &&
+         strcasecmp(wadfile->name + strlen(wadfile->name) - 4, ".gwa"))) {
+      I_Error("W_AddFile: couldn't open %s",wadfile->name);
     }
+    return;
+  }
 
   //jff 8/3/98 use logical output routine
-  lprintf (LO_INFO," adding %s\n",wadfile->name);
+  lprintf(LO_INFO, " adding %s\n", wadfile->name);
   startlump = numlumps;
 
+  D_AddResource(wadfile->name);
+
   // mark lumps from internal resource
-  if (wadfile->src == source_auto_load)
-  {
+  if (wadfile->src == source_auto_load) {
     int len = strlen(PACKAGE_TARNAME ".wad");
     int len_file = strlen(wadfile->name);
-    if (len_file >= len)
-    {
-      if (!strcasecmp(wadfile->name + len_file - len, PACKAGE_TARNAME ".wad"))
-      {
+
+    if (len_file >= len) {
+      if (!strcasecmp(wadfile->name + len_file - len, PACKAGE_TARNAME ".wad")) {
         flags = LUMP_PRBOOM;
       }
     }
   }
 
-  if (  strlen(wadfile->name)<=4 || 
-	      (
-          strcasecmp(wadfile->name+strlen(wadfile->name)-4,".wad") && 
-	        strcasecmp(wadfile->name+strlen(wadfile->name)-4,".gwa")
-        )
-     )
-    {
+  if (strlen(wadfile->name) <=4 || 
+	    (strcasecmp(wadfile->name + strlen(wadfile->name) - 4,".wad") && 
+	     strcasecmp(wadfile->name + strlen(wadfile->name) - 4,".gwa"))) {
       // single lump file
       fileinfo = &singleinfo;
       singleinfo.filepos = 0;
       singleinfo.size = LittleLong(I_Filelength(wadfile->handle));
-      ExtractFileBase(wadfile->name, singleinfo.name);
+      M_ExtractFileBase(wadfile->name, singleinfo.name);
       numlumps++;
+  }
+  else {
+    // WAD file
+    I_Read(wadfile->handle, &header, sizeof(header));
+    if (strncmp(header.identification,"IWAD",4) &&
+        strncmp(header.identification,"PWAD",4)) {
+      I_Error("W_AddFile: Wad file %s doesn't have IWAD or PWAD id",
+        wadfile->name
+      );
     }
-  else
-    {
-      // WAD file
-      I_Read(wadfile->handle, &header, sizeof(header));
-      if (strncmp(header.identification,"IWAD",4) &&
-          strncmp(header.identification,"PWAD",4))
-        I_Error("W_AddFile: Wad file %s doesn't have IWAD or PWAD id", wadfile->name);
-      header.numlumps = LittleLong(header.numlumps);
-      header.infotableofs = LittleLong(header.infotableofs);
-      length = header.numlumps*sizeof(filelump_t);
-      fileinfo2free = fileinfo = malloc(length);    // killough
-      lseek(wadfile->handle, header.infotableofs, SEEK_SET),
-      I_Read(wadfile->handle, fileinfo, length);
-      numlumps += header.numlumps;
-    }
+    header.numlumps = LittleLong(header.numlumps);
+    header.infotableofs = LittleLong(header.infotableofs);
+    length = header.numlumps * sizeof(filelump_t);
+    fileinfo2free = fileinfo = malloc(length);    // killough
+    lseek(wadfile->handle, header.infotableofs, SEEK_SET),
+    I_Read(wadfile->handle, fileinfo, length);
+    numlumps += header.numlumps;
+  }
 
-    // Fill in lumpinfo
-    lumpinfo = realloc(lumpinfo, numlumps*sizeof(lumpinfo_t));
+  // Fill in lumpinfo
+  lumpinfo = realloc(lumpinfo, numlumps*sizeof(lumpinfo_t));
 
-    lump_p = &lumpinfo[startlump];
+  lump_p = &lumpinfo[startlump];
 
-    for (i=startlump ; (int)i<numlumps ; i++,lump_p++, fileinfo++)
-      {
-        lump_p->flags = flags;
-        lump_p->wadfile = wadfile;                    //  killough 4/25/98
-        lump_p->position = LittleLong(fileinfo->filepos);
-        lump_p->size = LittleLong(fileinfo->size);
-        if (wadfile->src == source_lmp)
-        {
-          // Modifications to place command-line-added demo lumps
-          // into a separate "ns_demos" namespace so that they cannot
-          // conflict with other lump names
-          lump_p->li_namespace = ns_demos;
-        }
-        else
-        {
-          lump_p->li_namespace = ns_global;              // killough 4/17/98
-        }
-        strncpy (lump_p->name, fileinfo->name, 8);
-	lump_p->source = wadfile->src;                    // Ty 08/29/98
+  for (i = startlump; (int)i < numlumps; i++, lump_p++, fileinfo++) {
+    lump_p->flags = flags;
+    lump_p->wadfile = wadfile;                    //  killough 4/25/98
+    lump_p->position = LittleLong(fileinfo->filepos);
+    lump_p->size = LittleLong(fileinfo->size);
+
+    // Modifications to place command-line-added demo lumps
+    // into a separate "ns_demos" namespace so that they cannot
+    // conflict with other lump names
+    if (wadfile->src == source_lmp)
+      lump_p->li_namespace = ns_demos;
+    else
+      lump_p->li_namespace = ns_global;              // killough 4/17/98
+
+    strncpy (lump_p->name, fileinfo->name, 8);
+    lump_p->source = wadfile->src;                    // Ty 08/29/98
     // IWAD file used as recource PWAD must not override TEXTURE1 or PNAMES
-    if (wadfile->src != source_iwad && !strncmp(header.identification,"IWAD",4) &&
-      (!strnicmp(fileinfo->name,"TEXTURE1",8) || !strnicmp(fileinfo->name,"PNAMES",6)))
-    {
-      strncpy (lump_p->name, "-IGNORE-", 8);
+    if (wadfile->src != source_iwad &&
+        !strncmp(header.identification,"IWAD",4) &&
+        (!strnicmp(fileinfo->name,"TEXTURE1", 8) ||
+         !strnicmp(fileinfo->name,"PNAMES", 6))) {
+      strncpy(lump_p->name, "-IGNORE-", 8);
     }
-      }
+  }
 
-    free(fileinfo2free);      // killough
+  free(fileinfo2free);      // killough
 }
 
 // jff 1/23/98 Create routines to reorder the master directory
@@ -507,21 +455,19 @@ wadfile_info_t *wadfiles=NULL;
 
 size_t numwadfiles = 0; // CPhipps - size of the wadfiles array (dynamic, no limit)
 
-void W_Init(void)
-{
+void W_Init(void) {
   // CPhipps - start with nothing
 
-  numlumps = 0; lumpinfo = NULL;
+  numlumps = 0;
+  lumpinfo = NULL;
 
-  { // CPhipps - new wadfiles array used 
-    // open all the files, load headers, and count lumps
-    int i;
-    for (i=0; (size_t)i<numwadfiles; i++)
-      W_AddFile(&wadfiles[i]);
-  }
+  // CPhipps - new wadfiles array used 
+  // open all the files, load headers, and count lumps
+  for (int i = 0; (size_t)i < numwadfiles; i++)
+    W_AddFile(&wadfiles[i]);
 
   if (!numlumps)
-    I_Error ("W_Init: No files found");
+    I_Error("W_Init: No files found");
 
   //jff 1/23/98
   // get all the sprites and flats into one marked block each
@@ -532,13 +478,15 @@ void W_Init(void)
   W_CoalesceMarkedResource("F_START", "F_END", ns_flats);
   W_CoalesceMarkedResource("C_START", "C_END", ns_colormaps);
   W_CoalesceMarkedResource("B_START", "B_END", ns_prboom);
-  r_have_internal_hires = ( 0 < W_CoalesceMarkedResource("HI_START", "HI_END", ns_hires));
+  r_have_internal_hires = (
+    0 < W_CoalesceMarkedResource("HI_START", "HI_END", ns_hires)
+  );
 
   // killough 1/31/98: initialize lump hash table
   W_HashLumps();
 
   /* cph 2001/07/07 - separated cache setup */
-  lprintf(LO_INFO,"W_InitCache\n");
+  lprintf(LO_INFO, "W_InitCache\n");
   W_InitCache();
 
   V_FreePlaypal();
@@ -603,4 +551,6 @@ void W_ReadLump(int lump, void *dest)
       }
     }
 }
+
+/* vi: set et ts=2 sw=2: */
 

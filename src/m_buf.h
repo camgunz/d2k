@@ -58,8 +58,8 @@ void     M_BufferEnsureTotalCapacity(buf_t *buf, size_t capacity);
 
 void     M_BufferCopy(buf_t *dst, buf_t *src);
 
-void     M_BufferSetData(buf_t *buf, void *data, size_t size);
-void     M_BufferSetString(buf_t *buf, char *data, size_t length);
+void     M_BufferSetData(buf_t *buf, const void *data, size_t size);
+void     M_BufferSetString(buf_t *buf, const char *data, size_t length);
 dboolean M_BufferSetFile(buf_t *buf, const char *filename);
 
 dboolean M_BufferSeek(buf_t *buf, size_t pos);
@@ -70,29 +70,31 @@ byte     M_BufferPeek(buf_t *buf);
 
 void     M_BufferWrite(buf_t *buf, const void *data, size_t size);
 void     M_BufferWriteBool(buf_t *buf, dboolean b);
-void     M_BufferWriteBools(buf_t *buf, dboolean *bools, size_t count);
+void     M_BufferWriteBools(buf_t *buf, const dboolean *bools, size_t count);
 void     M_BufferWriteChar(buf_t *buf, char c);
-void     M_BufferWriteChars(buf_t *buf, char *chars, size_t count);
+void     M_BufferWriteChars(buf_t *buf, const char *chars, size_t count);
 void     M_BufferWriteUChar(buf_t *buf, unsigned char c);
-void     M_BufferWriteUChars(buf_t *buf, unsigned char *uchars, size_t count);
+void     M_BufferWriteUChars(buf_t *buf, const unsigned char *uchars,
+                                         size_t count);
 void     M_BufferWriteShort(buf_t *buf, short s);
-void     M_BufferWriteShorts(buf_t *buf, short *shorts, size_t count);
+void     M_BufferWriteShorts(buf_t *buf, const short *shorts, size_t count);
 void     M_BufferWriteUShort(buf_t *buf, unsigned short s);
-void     M_BufferWriteUShorts(buf_t *buf, unsigned short *ushorts,
+void     M_BufferWriteUShorts(buf_t *buf, const unsigned short *ushorts,
                                           size_t count);
 void     M_BufferWriteInt(buf_t *buf, int i);
-void     M_BufferWriteInts(buf_t *buf, int *ints, size_t count);
+void     M_BufferWriteInts(buf_t *buf, const int *ints, size_t count);
 void     M_BufferWriteUInt(buf_t *buf, unsigned int i);
-void     M_BufferWriteUInts(buf_t *buf, unsigned int *ints, size_t count);
+void     M_BufferWriteUInts(buf_t *buf, const unsigned int *ints,
+                                        size_t count);
 void     M_BufferWriteLong(buf_t *buf, int_64_t l);
-void     M_BufferWriteLongs(buf_t *buf, int_64_t *longs, size_t count);
+void     M_BufferWriteLongs(buf_t *buf, const int_64_t *longs, size_t count);
 void     M_BufferWriteULong(buf_t *buf, uint_64_t l);
-void     M_BufferWriteULongs(buf_t *buf, uint_64_t *longs, size_t count);
+void     M_BufferWriteULongs(buf_t *buf, const uint_64_t *longs, size_t count);
 void     M_BufferWriteFloat(buf_t *buf, float f);
-void     M_BufferWriteFloats(buf_t *buf, float *floats, size_t count);
+void     M_BufferWriteFloats(buf_t *buf, const float *floats, size_t count);
 void     M_BufferWriteDouble(buf_t *buf, double d);
-void     M_BufferWriteDoubles(buf_t *buf, double *doubles, size_t count);
-void     M_BufferWriteString(buf_t *buf, char *string, size_t length);
+void     M_BufferWriteDoubles(buf_t *buf, const double *doubles, size_t count);
+void     M_BufferWriteString(buf_t *buf, const char *string, size_t length);
 void     M_BufferWriteZeros(buf_t *buf, size_t count);
 
 dboolean M_BufferEqualsString(buf_t *buf, const char *s);

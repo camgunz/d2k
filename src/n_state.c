@@ -75,9 +75,10 @@ void N_SaveState(void) {
   M_BufferClear(&latest_game_state->data);
   G_WriteSaveData(&latest_game_state->data);
 
+  state_count++;
   average_state_size = (
     ((average_state_size * state_count) + latest_game_state->data.capacity) /
-    ++state_count
+    state_count
   );
 }
 

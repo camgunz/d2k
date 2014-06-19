@@ -223,7 +223,7 @@ void I_ExeptionProcess(void)
  * Its not pretty, but it does the job - rain
  * CPhipps - made static
  */
-
+#if 0
 inline static int convert(int color, int *bold)
 {
   if (color > 7) {
@@ -250,6 +250,7 @@ inline static int convert(int color, int *bold)
   }
   return 0;
 }
+#endif
 
 /* CPhipps - flags controlling ENDOOM behaviour */
 enum {

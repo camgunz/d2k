@@ -52,6 +52,7 @@
 #include "f_finale.h"
 #include "f_wipe.h"
 #include "m_argv.h"
+#include "m_file.h"
 #include "m_misc.h"
 #include "m_menu.h"
 #include "p_checksum.h"
@@ -640,8 +641,7 @@ static struct
  * killough 11/98: made table-driven
  */
 
-void D_DoAdvanceDemo(void)
-{
+void D_DoAdvanceDemo(void) {
   players[consoleplayer].playerstate = PST_LIVE;  /* not reborn */
   advancedemo = usergame = paused = false;
   gameaction = ga_nothing;
@@ -649,23 +649,37 @@ void D_DoAdvanceDemo(void)
   pagetic = TICRATE * 11;         /* killough 11/98: default behavior */
   gamestate = GS_DEMOSCREEN;
 
-  if (netgame && !demoplayback) {
+  if (netgame && !demoplayback)
     demosequence = 0;
-  } else
-   if (!demostates[++demosequence][gamemode].func)
+  else if (!demostates[++demosequence][gamemode].func)
     demosequence = 0;
-  demostates[demosequence][gamemode].func
-    (demostates[demosequence][gamemode].name);
+
+  demostates[demosequence][gamemode].func(
+    demostates[demosequence][gamemode].name
+  );
 }
 
 //
 // D_StartTitle
 //
-void D_StartTitle (void)
-{
+void D_StartTitle (void) {
   gameaction = ga_nothing;
   demosequence = -1;
   D_AdvanceDemo();
+}
+
+//
+// D_AddResource
+//
+void D_AddResource(const char *filename) {
+  M_OBufAppend(&resource_files_buf, (void *)M_Basename(filename));
+}
+
+//
+// D_AddDEHFile
+//
+void D_AddDEHFile(const char *filename) {
+  M_OBufAppend(&deh_files_buf, (void *)M_Basename(filename));
 }
 
 //
@@ -677,49 +691,62 @@ void D_StartTitle (void)
 // CPhipps - static, const char* parameter
 //         - source is an enum
 //         - modified to allocate & use new wadfiles array
-void D_AddFile (const char *file, wad_source_t source)
-{
-  char *gwa_filename=NULL;
+void D_AddFile(const char *file, wad_source_t source) {
+  char *gwa_filename = NULL;
   int len;
 
-  wadfiles = realloc(wadfiles, sizeof(*wadfiles)*(numwadfiles+1));
-  wadfiles[numwadfiles].name =
-    AddDefaultExtension(strcpy(malloc(strlen(file)+5), file), ".wad");
+  printf("D_AddFile: Adding %s.\n", file);
+
+  wadfiles = realloc(wadfiles, sizeof(*wadfiles) * (numwadfiles + 1));
+  wadfiles[numwadfiles].name = M_AddDefaultExtension(
+    strcpy(malloc(strlen(file) + 5), file), ".wad"
+  );
   wadfiles[numwadfiles].src = source; // Ty 08/29/98
   wadfiles[numwadfiles].handle = 0;
 
   // No Rest For The Living
-  len=strlen(wadfiles[numwadfiles].name);
-  if (len>=9 && !strnicmp(wadfiles[numwadfiles].name+len-9,"nerve.wad",9))
-    if (bfgedition)
+  len = strlen(wadfiles[numwadfiles].name);
+  if (len >= 9 &&
+      !strnicmp(wadfiles[numwadfiles].name + len - 9, "nerve.wad", 9)) {
+    if (bfgedition) {
       gamemission = pack_nerve;
+    }
+  }
 
   numwadfiles++;
+
   // proff: automatically try to add the gwa files
   // proff - moved from w_wad.c
-  gwa_filename=AddDefaultExtension(strcpy(malloc(strlen(file)+5), file), ".wad");
-  if (strlen(gwa_filename)>4)
-    if (!strcasecmp(gwa_filename+(strlen(gwa_filename)-4),".wad"))
-    {
+  gwa_filename = M_AddDefaultExtension(
+    strcpy(malloc(strlen(file) + 5), file), ".wad"
+  );
+
+  if (strlen(gwa_filename) > 4) {
+    if (!strcasecmp(gwa_filename + (strlen(gwa_filename) - 4), ".wad")) {
       char *ext;
-      ext = &gwa_filename[strlen(gwa_filename)-4];
-      ext[1] = 'g'; ext[2] = 'w'; ext[3] = 'a';
-      wadfiles = realloc(wadfiles, sizeof(*wadfiles)*(numwadfiles+1));
+
+      ext = &gwa_filename[strlen(gwa_filename) - 4];
+      ext[1] = 'g';
+      ext[2] = 'w';
+      ext[3] = 'a';
+      wadfiles = realloc(wadfiles, sizeof(*wadfiles) * (numwadfiles + 1));
       wadfiles[numwadfiles].name = gwa_filename;
       wadfiles[numwadfiles].src = source; // Ty 08/29/98
       wadfiles[numwadfiles].handle = 0;
       numwadfiles++;
     }
+  }
 }
 
 // killough 10/98: support -dehout filename
 // cph - made const, don't cache results
 //e6y static 
-const char *D_dehout(void)
-{
+const char *D_dehout(void) {
   int p = M_CheckParm("-dehout");
+
   if (!p)
     p = M_CheckParm("-bexout");
+
   return (p && ++p < myargc ? myargv[p] : NULL);
 }
 
@@ -881,10 +908,11 @@ void AddIWAD(const char *iwad)
     gamemission = none;
     break;
   }
-  if (gamemode == indetermined)
+  if (gamemode == indetermined) {
     //jff 9/3/98 use logical output routine
     lprintf(LO_WARN,"Unknown Game Version, may not work\n");
-  D_AddFile(iwad,source_iwad);
+  }
+  D_AddFile(iwad, source_iwad);
 }
 
 // NormalizeSlashes
@@ -1036,7 +1064,7 @@ static void FindResponseFile (void)
 
         fname = malloc(strlen(&myargv[i][i])+4+1);
         strcpy(fname,&myargv[i][1]);
-        AddDefaultExtension(fname,".rsp");
+        M_AddDefaultExtension(fname,".rsp");
 
         // READ THE RESPONSE FILE INTO MEMORY
         // proff 04/05/2000: changed for searching responsefile
@@ -1050,7 +1078,7 @@ static void FindResponseFile (void)
           fname = realloc(fname, fnlen+4+1);
           doom_snprintf(fname, fnlen+1, "%s/%s",
                         I_DoomExeDir(), &myargv[i][1]);
-          AddDefaultExtension(fname,".rsp");
+          M_AddDefaultExtension(fname,".rsp");
 	  size = M_ReadFile(fname, &file);
         }
         if (size < 0)
@@ -1606,17 +1634,20 @@ static void D_DoomMainSetup(void)
     // only autoloaded wads here - autoloaded patches moved down below W_Init
     int i;
 
-    for (i=0; i<MAXLOADFILES; i++) {
+    for (i = 0; i < MAXLOADFILES; i++) {
       const char *fname = wad_files[i];
       char *fpath;
 
-      if (!(fname && *fname)) continue;
+      if (!(fname && *fname))
+        continue;
+
       // Filename is now stored as a zero terminated string
       fpath = I_FindFile(fname, ".wad");
-      if (!fpath)
+      if (!fpath) {
         lprintf(LO_WARN, "Failed to autoload %s\n", fname);
+      }
       else {
-        D_AddFile(fpath,source_auto_load);
+        D_AddFile(fpath, source_auto_load);
         free(fpath);
       }
     }
@@ -1627,8 +1658,7 @@ static void D_DoomMainSetup(void)
 
   // killough 1/31/98, 5/2/98: reload hack removed, -wart same as -warp now.
 
-  if ((p = M_CheckParm ("-file")))
-  {
+  if ((p = M_CheckParm("-file"))) {
     // the parms after p are wadfile/lump names,
     // until end of parms or another - preceded parm
     modifiedgame = true;            // homebrew levels
@@ -1642,43 +1672,42 @@ static void D_DoomMainSetup(void)
         file = I_FindFile(myargv[p], ".wad");
 
       if (file) {
-        D_AddFile(file,source_pwad);
-        M_OBufAppend(&resource_files_buf, strdup(myargv[p]));
+        D_AddFile(file, source_pwad);
         free(file);
       }
     }
   }
 
-  if (!(p = M_CheckParm("-playdemo")) || p >= myargc-1) {   /* killough */
-    if ((p = M_CheckParm ("-fastdemo")) && p < myargc-1)    /* killough */
+  if (!(p = M_CheckParm("-playdemo")) || p >= myargc - 1) {   /* killough */
+    if ((p = M_CheckParm ("-fastdemo")) && p < myargc - 1) {  /* killough */
       fastdemo = true;             // run at fastest speed possible
-    else
-    {
-      if ((p = IsDemoContinue()))
-      {
+    }
+    else {
+      if ((p = IsDemoContinue())) {
         democontinue = true;
-        AddDefaultExtension(strcpy(democontinuename, myargv[p + 2]), ".lmp");
+        M_AddDefaultExtension(strcpy(democontinuename, myargv[p + 2]), ".lmp");
       }
-      else
-      {
+      else {
         p = M_CheckParm ("-timedemo");
       }
     }
   }
 
-  if (p && p < myargc-1)
-    {
-      char *file = malloc(strlen(myargv[p+1])+4+1); // cph - localised
-      strcpy(file,myargv[p+1]);
-      AddDefaultExtension(file,".lmp");     // killough
-      D_AddFile (file,source_lmp);
-      //jff 9/3/98 use logical output routine
-      lprintf(LO_CONFIRM,"Playing demo %s\n",file);
-      if ((p = M_CheckParm ("-ffmap")) && p < myargc-1) {
-        ffmap = atoi(myargv[p+1]);
-      }
-      free(file);
-    }
+  if (p && p < myargc-1) {
+    char *file = malloc(strlen(myargv[p + 1]) + 4 + 1); // cph - localised
+
+    strcpy(file, myargv[p + 1]);
+    M_AddDefaultExtension(file, ".lmp");     // killough
+    D_AddFile(file, source_lmp);
+
+    //jff 9/3/98 use logical output routine
+    lprintf(LO_CONFIRM, "Playing demo %s\n", file);
+
+    if ((p = M_CheckParm("-ffmap")) && p < myargc - 1)
+      ffmap = atoi(myargv[p + 1]);
+
+    free(file);
+  }
 
   // internal translucency set to config file value               // phares
   general_translucency = default_translucency;                    // phares
@@ -1802,7 +1831,6 @@ static void D_DoomMainSetup(void)
       {
         // during the beta we have debug output to dehout.txt
         ProcessDehFile(file,D_dehout(),0);
-        M_OBufAppend(&deh_files_buf, strdup(myargv[p]));
         free(file);
       }
       else

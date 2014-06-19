@@ -37,9 +37,12 @@
 #include <enet/enet.h>
 #include "cmp.h"
 
+#include "d_deh.h"
+#include "d_main.h"
 #include "d_ticcmd.h"
 #include "doomstat.h"
 #include "g_game.h"
+#include "i_system.h"
 #include "lprintf.h"
 #include "m_pbuf.h"
 #include "p_pspr.h"
@@ -213,7 +216,7 @@
 
 #define read_string(pbuf, var, name, sz)                                      \
   M_BufferClear(var);                                                         \
-  if (!M_PBufReadString(pbuf, var, sz)) {                                    \
+  if (!M_PBufReadString(pbuf, var, sz)) {                                     \
     doom_printf("%s: Error reading %s: %s.\n",                                \
       __func__, name, M_PBufGetError(pbuf)                                    \
     );                                                                        \
@@ -221,7 +224,7 @@
   }
 
 #define read_string_array(pbuf, var, name, count, length)                     \
-  if (!M_PBufReadStringArray(pbuf, var, count, length)) {                    \
+  if (!M_PBufReadStringArray(pbuf, var, count, length)) {                     \
     doom_printf("%s: Error reading %s: %s.\n",                                \
       __func__, name, M_PBufGetError(pbuf)                                    \
     );                                                                        \
@@ -229,7 +232,7 @@
   }
 
 #define read_recipient_array(pbuf, var, name, count)                          \
-  if (!M_PBufReadShortArray(pbuf, var, count)) {                             \
+  if (!M_PBufReadShortArray(pbuf, var, count)) {                              \
     doom_printf("%s: Error reading %s: %s.\n",                                \
       __func__, name, M_PBufGetError(pbuf)                                    \
     );                                                                        \
@@ -324,6 +327,8 @@ void N_PackSetup(netpeer_t *np) {
   game_state_t *gs = N_GetLatestState();
   unsigned short player_count = 0;
   pbuf_t *pbuf = NULL;
+  size_t resource_count = M_OBufGetObjectCount(&resource_files_buf);
+  size_t deh_count = M_OBufGetObjectCount(&deh_files_buf);
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
@@ -332,13 +337,39 @@ void N_PackSetup(netpeer_t *np) {
   }
 
   pbuf = N_PeerBeginMessage(np->peernum, NET_CHANNEL_RELIABLE, nm_setup);
+
   M_PBufWriteInt(pbuf, netsync);
   M_PBufWriteUShort(pbuf, player_count);
   M_PBufWriteShort(pbuf, np->playernum);
-  M_PBufWriteStringArray(pbuf, &resource_files_buf);
-  M_PBufWriteStringArray(pbuf, &deh_files_buf);
+
+  M_PBufWriteUInt(pbuf, resource_count);
+  if (resource_count > 0)
+    M_PBufWriteStringArray(pbuf, &resource_files_buf);
+
+  M_PBufWriteUInt(pbuf, deh_count);
+  if (deh_count > 0)
+    M_PBufWriteStringArray(pbuf, &deh_files_buf);
+
   M_PBufWriteInt(pbuf, gs->tic);
   M_PBufWriteBytes(pbuf, gs->data.data, gs->data.size);
+
+  D_Log(LOG_SYNC, "Resources:");
+  OBUF_FOR_EACH(&resource_files_buf, entry) {
+    D_Log(LOG_SYNC, "  %s\n", (char *)entry.obj);
+  }
+
+  D_Log(LOG_SYNC, "DeH/BEX files:");
+  OBUF_FOR_EACH(&deh_files_buf, entry) {
+    D_Log(LOG_SYNC, "  %s\n", (char *)entry.obj);
+  }
+
+  D_Log(LOG_SYNC, "N_PackSetup: Game State: %d %d %d %d %d %d %lu\n",
+    netsync, player_count, np->playernum,
+    M_OBufGetObjectCount(&resource_files_buf),
+    M_OBufGetObjectCount(&deh_files_buf),
+    gs->tic,
+    gs->data.size
+  );
 
   D_Log(LOG_SYNC, "N_PackSetup: Sent game state at %d (player count: %d).\n",
     gs->tic, player_count
@@ -353,30 +384,105 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   unsigned short m_player_count = 0;
   short m_playernum = 0;
   game_state_t *gs = NULL;
+  unsigned int resource_count = 0;
+  unsigned int deh_count = 0;
+  obuf_t resource_files;
+  obuf_t deh_files;
 
   read_ranged_int(
     pbuf, m_sync_type, "netsync", NET_SYNC_TYPE_COMMAND, NET_SYNC_TYPE_DELTA
   );
+  D_Log(LOG_SYNC, "netsync: %d\n", m_sync_type);
   read_ushort(pbuf, m_player_count, "player count");
+  D_Log(LOG_SYNC, "player count: %d\n", m_player_count);
   read_short(pbuf, m_playernum, "consoleplayer");
-  read_string_array(
-    pbuf,
-    &resource_files_buf,
-    "resource names",
-    MAX_RESOURCE_NAMES,
-    MAX_RESOURCE_NAME_LENGTH
+  D_Log(LOG_SYNC, "consoleplayer: %d\n", m_playernum);
+
+  /*
+   * CG: TODO: Add missing resources to a list of resources to fetch with
+   *           N_GetWad (which should probably be N_GetResource); in the event
+   *           fetching is required, disconnect, fetch all the missing
+   *           resources, and reconnect (provided all resources were
+   *           successfully obtained
+   */
+
+  read_ranged_uint(
+    pbuf, resource_count, "resource file count", 1, MAX_RESOURCE_NAMES
   );
-  read_string_array(
-    pbuf,
-    &deh_files_buf,
-    "DeHackEd/BEX names",
-    MAX_RESOURCE_NAMES,
-    MAX_RESOURCE_NAME_LENGTH
+  D_Log(LOG_SYNC, "resource file count: %u\n", resource_count);
+  if (resource_count > 0) {
+    M_OBufInitWithCapacity(&resource_files, resource_count);
+    read_string_array(
+      pbuf,
+      &resource_files,
+      "resource names",
+      MAX_RESOURCE_NAMES,
+      MAX_RESOURCE_NAME_LENGTH
+    );
+    D_Log(LOG_SYNC,
+      "loaded resource file count: %d", M_OBufGetObjectCount(&resource_files)
+    );
+    OBUF_FOR_EACH(&resource_files, entry) {
+      int resource_index = entry.index;
+      char *resource_name = (char *)entry.obj;
+      char *resource_path = I_FindFile(resource_name, NULL);
+
+      if (resource_path == NULL) {
+        doom_printf("Unable to find resource \"%s\", disconnecting.\n",
+          resource_name
+        );
+        N_Disconnect();
+        return false;
+      }
+
+      D_Log(LOG_SYNC, "resource %d: %s\n", resource_index, resource_name);
+      D_AddFile(resource_path, source_net);
+    }
+  }
+
+  read_ranged_uint(
+    pbuf, deh_count, "DeH/BEX file count", 0, MAX_RESOURCE_NAMES
   );
+  D_Log(LOG_SYNC, "DeH/BEX file count: %u\n", deh_count);
+  if (deh_count) {
+    M_OBufInitWithCapacity(&deh_files, deh_count);
+    read_string_array(
+      pbuf,
+      &deh_files,
+      "DeH/BEX names",
+      MAX_RESOURCE_NAMES,
+      MAX_RESOURCE_NAME_LENGTH
+    );
+    D_Log(LOG_SYNC,
+      "loaded DeH/BEX file count: %d", M_OBufGetObjectCount(&deh_files)
+    );
+    OBUF_FOR_EACH(&deh_files, entry) {
+      int deh_index = entry.index;
+      char *deh_name = (char *)entry.obj;
+      char *deh_path = I_FindFile(deh_name, NULL);
+
+      if (deh_path == NULL) {
+        doom_printf("Unable to find DeH/BEX \"%s\", disconnecting.\n",
+          deh_name
+        );
+        N_Disconnect();
+        return false;
+      }
+      D_Log(LOG_SYNC, "DeH/BEX %d: %s\n", deh_index, deh_name);
+      ProcessDehFile((char *)entry.obj, D_dehout(), 0);
+    }
+  }
 
   gs = N_GetNewState();
 
   read_int(pbuf, gs->tic, "game state tic");
+  D_Log(LOG_SYNC, "Game State TIC: %d\n", gs->tic);
+
+  D_Log(LOG_SYNC, "N_UnpackSetup: Game State: %d %d %d %d %d %d\n",
+    m_sync_type, m_player_count, m_playernum, resource_count, deh_count,
+    gs->tic
+  );
+
   read_bytes(pbuf, gs->data, "game state data");
 
   switch (m_sync_type) {

@@ -85,14 +85,14 @@ void M_OBufEnsureCapacity(obuf_t *obuf, int capacity) {
   }
 }
 
-void M_OBufAppend(obuf_t *obuf, void *obj) {
+void M_OBufAppend(obuf_t *obuf, const void *obj) {
   int index = obuf->capacity;
 
   M_OBufEnsureCapacity(obuf, obuf->capacity + 1);
   M_OBufInsert(obuf, index, obj);
 }
 
-void M_OBufInsert(obuf_t *obuf, int index, void *obj) {
+void M_OBufInsert(obuf_t *obuf, int index, const void *obj) {
   if (index >= obuf->capacity) {
     I_Error("M_OBufInsert: Insertion index %d out of bounds (%d)",
       index, obuf->capacity
@@ -102,7 +102,7 @@ void M_OBufInsert(obuf_t *obuf, int index, void *obj) {
   obuf->objects[index] = obj;
 }
 
-int M_OBufInsertAtFirstFreeSlot(obuf_t *obuf, void *obj) {
+int M_OBufInsertAtFirstFreeSlot(obuf_t *obuf, const void *obj) {
   for (int i = 0; i < obuf->capacity; i++) {
     if (obuf->objects[i] == NULL) {
       M_OBufInsert(obuf, i, obj);
@@ -113,7 +113,7 @@ int M_OBufInsertAtFirstFreeSlot(obuf_t *obuf, void *obj) {
   return -1;
 }
 
-int M_OBufInsertAtFirstFreeSlotOrAppend(obuf_t *obuf, void *obj) {
+int M_OBufInsertAtFirstFreeSlotOrAppend(obuf_t *obuf, const void *obj) {
   int slot = M_OBufInsertAtFirstFreeSlot(obuf, obj);
 
   if (slot != -1)

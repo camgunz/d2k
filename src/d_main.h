@@ -67,13 +67,16 @@ void D_DoAdvanceDemo (void);
 // BASE LEVEL
 //
 
-void D_Display(void);
-void D_PageTicker(void);
-void D_StartTitle(void);
-void D_DoomMain(void);
-void D_AddFile (const char *file, wad_source_t source);
+void        D_Display(void);
+void        D_PageTicker(void);
+void        D_StartTitle(void);
+void        D_DoomMain(void);
+void        D_AddFile (const char *file, wad_source_t source);
+const char* D_dehout(void);
+void        D_AddResource(const char *filename);
+void        D_AddDEHFile(const char *filename);
 
-void AddIWAD(const char *iwad);
+void        AddIWAD(const char *iwad);
 
 /* cph - MBF-like wad/deh/bex autoload code */
 /* proff 2001/7/1 - added prboom.wad as last entry so it's always loaded and

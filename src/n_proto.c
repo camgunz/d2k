@@ -43,7 +43,6 @@
 #include "d_main.h"
 #include "d_ticcmd.h"
 #include "g_game.h"
-#include "i_system.h"
 #include "lprintf.h"
 #include "m_pbuf.h"
 #include "w_wad.h"
@@ -226,44 +225,6 @@ static void handle_setup(netpeer_t *np) {
 
   if (!playeringame[consoleplayer])
     I_Error("consoleplayer not in game");
-
-  /*
-   * CG: TODO: Add missing resources to a list of resources to fetch with
-   *           N_GetWad (which should probably be N_GetResource); in the event
-   *           fetching is required, disconnect, fetch all the missing
-   *           resources, and reconnect (provided all resources were
-   *           successfully obtained
-   */
-
-  OBUF_FOR_EACH(&resource_files_buf, entry) {
-    char *name = entry.obj;
-    char *fpath = I_FindFile(name, NULL);
-
-    if (fpath == NULL) {
-      doom_printf("Unable to find resource \"%s\", disconnecting.\n", name);
-      N_Disconnect();
-      return;
-    }
-    else {
-      D_AddFile(fpath, source_net);
-    }
-  }
-
-  OBUF_FOR_EACH(&deh_files_buf, entry) {
-    char *name = entry.obj;
-    char *fpath = I_FindFile(name, NULL);
-
-    if (fpath == NULL) {
-      doom_printf(
-        "Unable to find DEH/BEX patch \"%s\", disconnecting.\n", name
-      );
-      N_Disconnect();
-      return;
-    }
-    else {
-      ProcessDehFile(fpath, D_dehout(), 0);
-    }
-  }
 
   np->sync.tic = N_GetLatestState()->tic;
 

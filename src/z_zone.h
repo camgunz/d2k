@@ -66,6 +66,9 @@
 #define    F_OK    0    /* Check for file existence */
 #define    W_OK    2    /* Check for write permission */
 #define    R_OK    4    /* Check for read permission */
+#else
+#include <dirent.h>
+#include <libgen.h>
 #endif
 
 #include <assert.h>
@@ -118,6 +121,13 @@
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#ifndef _WIN32
+#ifndef __USE_XOPEN_EXTENDED
+#define __USE_XOPEN_EXTENDED
+#endif
+#include <ftw.h>
+#endif
+
 #endif
 
 // ZONE MEMORY

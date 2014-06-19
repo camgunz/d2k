@@ -1541,8 +1541,12 @@ void ProcessDehFile(const char *filename, const char *outfilename, int lumpnum)
       file_or_lump = "lump from";
     }
 
-  lprintf(LO_INFO, "Loading DEH %s %s\n",file_or_lump,filename);
-  if (fileout) fprintf(fileout,"\nLoading DEH %s %s\n\n",file_or_lump,filename);
+  if (filename != NULL)
+    D_AddDEHFile(filename);
+
+  lprintf(LO_INFO, "Loading DEH %s %s\n", file_or_lump, filename);
+  if (fileout)
+    fprintf(fileout, "\nLoading DEH %s %s\n\n", file_or_lump, filename);
 
   // move deh_codeptr initialisation to D_BuildBEXTables
 

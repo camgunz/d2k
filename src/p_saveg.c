@@ -157,10 +157,20 @@ static void P_ArchivePlayer(buf_t *savebuffer, player_t *player) {
   M_BufferWriteInt(savebuffer, player->fixedcolormap);
   M_BufferWriteInt(savebuffer, player->colormap);
   for (int i = 0; i < NUMPSPRITES; i++) {
-    M_BufferWriteLong(savebuffer, player->psprites[i].state - states);
-    M_BufferWriteInt(savebuffer, player->psprites[i].tics);
-    M_BufferWriteInt(savebuffer, player->psprites[i].sx);
-    M_BufferWriteInt(savebuffer, player->psprites[i].sy);
+    if (player->psprites[i].state) {
+      M_BufferWriteLong(
+        savebuffer, (int_64_t)(player->psprites[i].state - states)
+      );
+      M_BufferWriteInt(savebuffer, player->psprites[i].tics);
+      M_BufferWriteInt(savebuffer, player->psprites[i].sx);
+      M_BufferWriteInt(savebuffer, player->psprites[i].sy);
+    }
+    else {
+      M_BufferWriteLong(savebuffer, 0);
+      M_BufferWriteInt(savebuffer, 0);
+      M_BufferWriteInt(savebuffer, 0);
+      M_BufferWriteInt(savebuffer, 0);
+    }
   }
   M_BufferWriteInt(savebuffer, player->didsecret);
   M_BufferWriteInt(savebuffer, player->momx);
@@ -270,7 +280,11 @@ static void P_UnArchivePlayer(buf_t *savebuffer, player_t *player) {
     int_64_t state_index = 0;
 
     M_BufferReadLong(savebuffer, &state_index);
-    player->psprites[i].state = &states[state_index];
+    if (state_index != 0)
+      player->psprites[i].state = &states[state_index];
+    else
+      player->psprites[i].state = NULL;
+
     M_BufferReadInt(savebuffer, &player->psprites[i].tics);
     M_BufferReadInt(savebuffer, &player->psprites[i].sx);
     M_BufferReadInt(savebuffer, &player->psprites[i].sy);
@@ -321,10 +335,8 @@ static void P_UnArchivePlayer(buf_t *savebuffer, player_t *player) {
 //
 void P_ArchivePlayers(buf_t *savebuffer) {
   for (int i = 0; i < MAXPLAYERS; i++) {
-    if (!playeringame[i])
-      continue;
-
-    P_ArchivePlayer(savebuffer, &players[i]);
+    if (playeringame[i])
+      P_ArchivePlayer(savebuffer, &players[i]);
   }
 }
 

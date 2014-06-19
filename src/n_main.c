@@ -66,6 +66,8 @@
 #define DEBUG_NET 1
 #define DEBUG_SYNC 1
 
+#define SERVER_SLEEP_TIMEOUT 20
+
 /* CG: TODO: Add WAD fetching (waiting on libcurl) */
 
 static dboolean is_extra_ddisplay = false;
@@ -237,7 +239,10 @@ static void service_network(void) {
   if (!MULTINET)
     return;
 
-  N_ServiceNetwork();
+  if (SERVER && N_PeerGetCount() == 0)
+    N_ServiceNetworkTimeout(SERVER_SLEEP_TIMEOUT);
+  else
+    N_ServiceNetwork();
 
   if (DELTASERVER)
     SV_RemoveOldStates();
@@ -308,13 +313,17 @@ void N_InitNetGame(void) {
 
       N_Init();
 
+      if (DEBUG_NET && CLIENT)
+        D_EnableLogChannel(LOG_NET, "client-net.log");
+      if (DEBUG_SYNC && CLIENT)
+        D_EnableLogChannel(LOG_SYNC, "client-sync.log");
+
       N_ParseAddressString(myargv[i + 1], &host, &port);
 
       if (N_Connect(host, port))
         doom_printf("N_InitNetGame: Connected to server %s:%u.\n", host, port);
       else
         I_Error("N_InitNetGame: Connection aborted");
-
 
       N_ServiceNetworkTimeout(CONNECT_TIMEOUT * 1000);
 
@@ -367,6 +376,11 @@ void N_InitNetGame(void) {
       else
         I_Error("Startup aborted");
 
+      if (DEBUG_NET && SERVER)
+        D_EnableLogChannel(LOG_NET, "server-net.log");
+      if (DEBUG_SYNC && SERVER)
+        D_EnableLogChannel(LOG_SYNC, "server-sync.log");
+
       atexit(N_Disconnect);
     }
   }
@@ -378,19 +392,6 @@ void N_InitNetGame(void) {
   }
 
   M_CBufInitWithCapacity(&local_commands, sizeof(netticcmd_t), BACKUPTICS);
-  if (DEBUG_NET) {
-    if (SERVER)
-      D_EnableLogChannel(LOG_NET, "server-net.log");
-    else
-      D_EnableLogChannel(LOG_NET, "client-net.log");
-  }
-  if (DEBUG_SYNC) {
-    if (SERVER)
-      D_EnableLogChannel(LOG_SYNC, "server-sync.log");
-    else
-      D_EnableLogChannel(LOG_SYNC, "client-sync.log");
-  }
-
 }
 
 dboolean N_GetWad(const char *name) {
@@ -611,7 +612,7 @@ void N_TryRunTics(void) {
   if (CLIENT && gametic > 0 && N_PeerGet(0) == NULL)
     I_Error("Server disconnected.\n");
 
-  if (render_fast)
+  if ((!SERVER) && render_fast)
     render_extra_frame();
 }
 

@@ -41,6 +41,7 @@
 #include "d_net.h"
 #include "f_finale.h"
 #include "m_argv.h"
+#include "m_file.h"
 #include "m_misc.h"
 #include "m_menu.h"
 #include "m_random.h"
@@ -2072,8 +2073,13 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
   //           only print a warning if forced
   {
     // killough 3/16/98: check lump name checksum (independent of order)
-    uint_64_t checksum = G_Signature();
+    uint_64_t checksum;
     uint_64_t save_checksum = 0;
+
+    if (MULTINET)
+      checksum = 1;
+    else
+      checksum = G_Signature();
 
     M_BufferReadLong(savebuffer, (int_64_t *)&save_checksum);
 
@@ -2231,9 +2237,10 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
   if (M_BufferPeek(savebuffer) != 0xe6)
     I_Error("G_ReadSaveData: Bad savegame");
 
+  savebuffer_count++;
   average_savebuffer_size = (
     ((average_savebuffer_size * savebuffer_count) + savebuffer->capacity) /
-    ++savebuffer_count
+    savebuffer_count
   );
 
   return true;
@@ -2345,7 +2352,10 @@ void G_WriteSaveData(buf_t *savebuffer) {
   M_BufferWrite(savebuffer, name2, VERSIONSIZE);
 
   /* killough 3/16/98, 12/98: store lump name checksum */
-  M_BufferWriteLong(savebuffer, G_Signature());
+  if (MULTINET)
+    M_BufferWriteLong(savebuffer, 1);
+  else
+    M_BufferWriteLong(savebuffer, G_Signature());
 
   // killough 3/16/98: store pwad filenames in savegame
   {
@@ -2415,9 +2425,10 @@ void G_WriteSaveData(buf_t *savebuffer) {
   // printf("Archiving consistency marker at %lu.\n", savebuffer->cursor);
   M_BufferWriteUChar(savebuffer, 0xe6); // consistency marker
 
+  savebuffer_count++;
   average_savebuffer_size = (
     ((average_savebuffer_size * savebuffer_count) + savebuffer->capacity) /
-    ++savebuffer_count
+    savebuffer_count
   );
 }
 
@@ -2862,7 +2873,7 @@ void G_RecordDemo (const char* name)
   char *demoname;
   usergame = false;
   demoname = malloc(strlen(name)+4+1);
-  AddDefaultExtension(strcpy(demoname, name), ".lmp");  // 1/18/98 killough
+  M_AddDefaultExtension(strcpy(demoname, name), ".lmp");  // 1/18/98 killough
   demorecording = true;
   
   /* cph - Record demos straight to file

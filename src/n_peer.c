@@ -401,10 +401,10 @@ ENetPacket* N_PeerGetPacket(int peernum, net_channel_e chan_type) {
   memcpy(packet->data + toc_size, M_PBufGetData(&chan->messages), msg_size);
 
   if (packet->data[2] != 4) {
-    printf("Sending packet (packet size %zu):\n", packet->dataLength);
+    D_Log(LOG_NET, "Sending packet (packet size %zu):\n", packet->dataLength);
     for (int i = 0; i < MIN(26, packet->dataLength); i++)
-      printf("%02X ", packet->data[i] & 0xFF);
-    printf("\n");
+      D_Log(LOG_NET, "%02X ", packet->data[i] & 0xFF);
+    D_Log(LOG_NET, "\n");
   }
 
   return packet;
@@ -443,6 +443,13 @@ dboolean N_PeerLoadIncoming(int peernum, unsigned char *data, size_t size) {
   M_PBufSetData(
     &incoming->messages, data + message_start_point, size - message_start_point
   );
+
+  if (data[2] != 4) {
+    D_Log(LOG_NET, "Received packet (packet size %zu):\n", size);
+    for (int i = 0; i < MIN(26, size); i++)
+      D_Log(LOG_NET, "%02X ", data[i] & 0xFF);
+    D_Log(LOG_NET, "\n");
+  }
 
   return true;
 }

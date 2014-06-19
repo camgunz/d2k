@@ -69,6 +69,8 @@ void D_Log(log_channel_e channel, const char *fmt, ...) {
     vfprintf(fh, fmt, args);
     va_end(args);
   }
+
+  fflush(fh);
 }
 
 /* vi: set et ts=2 sw=2: */

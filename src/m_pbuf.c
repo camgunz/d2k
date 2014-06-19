@@ -352,7 +352,7 @@ dboolean M_PBufWriteStringArray(pbuf_t *pbuf, obuf_t *obuf) {
     return false;
 
   OBUF_FOR_EACH(obuf, entry) {
-    char *s = entry.obj;
+    char *s = (char *)entry.obj;
     size_t length = strlen(s);
 
     if (!M_PBufWriteString(pbuf, s, length))
@@ -633,12 +633,12 @@ dboolean M_PBufReadDoubleArray(pbuf_t *pbuf, buf_t *doubles, size_t limit) {
 }
 
 dboolean M_PBufReadBool(pbuf_t *pbuf, dboolean *b) {
-  cmp_object_t obj;
+  uint8_t u8 = 0;
 
-  if (!cmp_read_object(&pbuf->cmp, &obj))
+  if (!cmp_read_bool_as_u8(&pbuf->cmp, &u8))
     return false;
 
-  if (obj.as.boolean)
+  if (u8)
     *b = true;
   else
     *b = false;
@@ -698,14 +698,20 @@ dboolean M_PBufReadBytes(pbuf_t *pbuf, buf_t *buf) {
 
   M_BufferWrite(buf, M_PBufGetDataAtCursor(pbuf), size);
 
+  M_BufferSeekForward(&pbuf->buf, size);
+
   return true;
 }
 
 dboolean M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit) {
   cmp_object_t obj;
 
-  if (!cmp_read_object(&pbuf->cmp, &obj))
+  if (!cmp_read_object(&pbuf->cmp, &obj)) {
+    doom_printf("M_PBufReadString: Error reading from packed buffer: %s\n",
+      cmp_strerror(&pbuf->cmp)
+    );
     return false;
+  }
 
   if (obj.as.str_size > limit) {
     doom_printf("M_PBufReadString: String too long.\n");
@@ -714,6 +720,10 @@ dboolean M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit) {
 
   M_BufferWrite(buf, M_PBufGetDataAtCursor(pbuf), obj.as.str_size);
   M_BufferWriteUChar(buf, 0);
+
+  M_BufferSeekForward(&pbuf->buf, obj.as.str_size);
+
+  printf("M_PBufReadString: [%s]\n", M_BufferGetData(&pbuf->buf));
 
   return true;
 }
@@ -735,12 +745,31 @@ dboolean M_PBufReadStringArray(pbuf_t *pbuf, obuf_t *obuf,
   M_OBufEnsureCapacity(obuf, string_count);
 
   for (int i = 0; i < string_count; i++) {
-    buf_t *buf = M_BufferNew();
+    cmp_object_t obj;
+    char *s = NULL;
 
-    if (!M_PBufReadString(pbuf, buf, string_size_limit))
+    if (!cmp_read_object(&pbuf->cmp, &obj)) {
+      doom_printf(
+        "M_PBufReadStringArray: Error reading from packed buffer: %s\n",
+        cmp_strerror(&pbuf->cmp)
+      );
       return false;
+    }
 
-    M_OBufAppend(obuf, buf);
+    if (obj.as.str_size > string_size_limit) {
+      doom_printf("M_PBufReadStringArray: String too long.\n");
+      return false;
+    }
+
+    if (!(s = calloc(obj.as.str_size + 1, sizeof(char))))
+      I_Error("M_PBufReadStringArray: Error allocating string\n");
+
+    if (!M_BufferReadString(&pbuf->buf, s, obj.as.str_size)) {
+      doom_printf("M_PBufReadStringArray: Error reading string\n");
+      return false;
+    }
+
+    M_OBufAppend(obuf, s);
   }
 
   return true;

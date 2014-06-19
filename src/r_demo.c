@@ -43,6 +43,7 @@
 #include "lprintf.h"
 #include "i_system.h"
 #include "i_video.h"
+#include "m_file.h"
 #include "m_misc.h"
 #include "m_argv.h"
 #include "w_wad.h"
@@ -92,7 +93,7 @@ int LoadDemo(const char *name, const byte **buffer, int *length, int *lump)
   int len = 0;
   const byte *buf = NULL;
 
-  ExtractFileBase(name, basename);
+  M_ExtractFileBase(name, basename);
   basename[8] = 0;
 
   // check ns_demos namespace first, then ns_global
@@ -1092,7 +1093,7 @@ static int G_ReadDemoFooter(const char *filename)
   }
   else
   {
-    AddDefaultExtension(demoex_filename, ".wad");
+    M_AddDefaultExtension(demoex_filename, ".wad");
 
     buffer = G_GetDemoFooter(filename, &demoex_p, &size);
     if (buffer)
@@ -1105,10 +1106,9 @@ static int G_ReadDemoFooter(const char *filename)
       {
         lprintf(LO_ERROR, "G_ReadDemoFooter: demo footer is currupted\n");
       }
-      else
-      //write an additional info from a demo to demoex.wad
-      if (!M_WriteFile(demoex_filename, demoex_p, size))
+      else if (!M_WriteFile(demoex_filename, demoex_p, size))
       {
+        // write an additional info from a demo to demoex.wad
         lprintf(LO_ERROR, "G_ReadDemoFooter: failed to create demoex temp file %s\n", demoex_filename);
       }
       else
@@ -1536,7 +1536,7 @@ int CheckDemoExDemo(void)
 
     filename = malloc(strlen(myargv[p + 1]) + 16);
     strcpy(filename, myargv[p + 1]);
-    AddDefaultExtension(filename, ".lmp");
+    M_AddDefaultExtension(filename, ".lmp");
 
     demoname = I_FindFile(filename, NULL);
     if (demoname)
