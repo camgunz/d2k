@@ -392,9 +392,6 @@ void N_InitNetGame(void) {
   }
 
   M_CBufInitWithCapacity(&local_commands, sizeof(netticcmd_t), BACKUPTICS);
-
-  if (SERVER)
-    D_EnableLogChannel(LOG_MEM, "server-mem.log");
 }
 
 dboolean N_GetWad(const char *name) {
