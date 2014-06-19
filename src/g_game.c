@@ -1029,8 +1029,23 @@ void G_Ticker(void) {
 
   // do player reborns if needed
   for (i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i] && players[i].playerstate == PST_REBORN) {
+    if (playeringame[i] && players[i].playerstate == PST_REBORN)
       G_DoReborn(i);
+
+    if (players[i].playerstate == PST_DISCONNECTED) {
+      if (players[i].mo) {
+        mobj_t *actor = players[i].mo;
+        fixed_t x     = actor->x;
+        fixed_t y     = actor->y;
+        fixed_t z     = actor->z;
+
+        P_RemoveMobj(players[i].mo);
+        players[i].mo = NULL;
+        P_SpawnMobj(x, y, z, MT_TFOG);
+        S_StartSound(actor, sfx_telept);
+      }
+      playeringame[i] = false;
+      players[i].playerstate = PST_LIVE;
     }
   }
 

@@ -580,7 +580,6 @@ void N_ResetLocalCommandIndex(void) {
 }
 
 void N_TryRunTics(void) {
-  static uint64_t loop_count = 0;
   static int tics_built = 0;
 
   int tics_elapsed = I_GetTime() - tics_built;
@@ -621,6 +620,7 @@ void N_TryRunTics(void) {
     render_extra_frame();
 
 #if PRINT_BANDWIDTH_STATS
+  static uint64_t loop_count = 0;
   if (((loop_count++ % 2000) == 0) && SERVER && N_PeerGetCount() > 0) {
     printf("(%d) U/D: %d/%d b/s\n",
       gametic, N_GetUploadBandwidth(), N_GetDownloadBandwidth()

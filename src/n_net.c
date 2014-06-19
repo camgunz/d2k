@@ -420,7 +420,6 @@ void N_PrintAddress(FILE *fp, int peernum) {
 void N_DisconnectPeer(int peernum) {
   netpeer_t *np = N_PeerGet(peernum);
 
-
   if (np == NULL)
     I_Error("N_DisconnectPeer: Invalid peer %d.\n", peernum);
 

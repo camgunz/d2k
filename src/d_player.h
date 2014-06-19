@@ -67,8 +67,9 @@ typedef enum
   // Dead on the ground, view follows killer.
   PST_DEAD,
   // Ready to restart/respawn???
-  PST_REBORN
-
+  PST_REBORN,
+  // Disconnected
+  PST_DISCONNECTED
 } playerstate_t;
 
 
@@ -252,5 +253,6 @@ typedef struct
 
 } wbstartstruct_t;
 
-
 #endif
+
+/* vi: set et ts=2 sw=2: */
