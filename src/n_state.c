@@ -32,6 +32,8 @@
  *-----------------------------------------------------------------------------
  */
 
+#define DEBUG_STATES 1
+
 #include "z_zone.h"
 
 #include <enet/enet.h>
@@ -40,6 +42,7 @@
 #include "doomstat.h"
 #include "g_game.h"
 #include "lprintf.h"
+#include "m_avg.h"
 #include "m_delta.h"
 #include "m_pbuf.h"
 
@@ -49,8 +52,7 @@
 
 static game_state_t *latest_game_state = NULL;
 static cbuf_t saved_game_states;
-static size_t average_state_size = 0;
-static size_t state_count = 0;
+static avg_t average_state_size;
 
 static game_state_t* get_state(int tic) {
   CBUF_FOR_EACH(&saved_game_states, entry) {
@@ -64,6 +66,11 @@ static game_state_t* get_state(int tic) {
 }
 
 void N_InitStates(void) {
+#if DEBUG_STATES
+  if (SERVER)
+    D_EnableLogChannel(LOG_STATE, "server-states.log");
+#endif
+  M_AverageInit(&average_state_size);
   M_CBufInit(&saved_game_states, sizeof(game_state_t));
 }
 
@@ -75,11 +82,9 @@ void N_SaveState(void) {
   M_BufferClear(&latest_game_state->data);
   G_WriteSaveData(&latest_game_state->data);
 
-  state_count++;
-  average_state_size = (
-    ((average_state_size * state_count) + latest_game_state->data.capacity) /
-    state_count
-  );
+  M_AverageUpdate(&average_state_size, latest_game_state->data.capacity);
+
+  D_Log(LOG_STATE, "Saving state %d\n", gametic);
 }
 
 dboolean N_LoadState(int tic, dboolean call_init_new) {
@@ -99,6 +104,7 @@ void N_RemoveOldStates(int tic) {
     game_state_t *gs = (game_state_t *)entry.obj;
 
     if (gs->tic < tic) {
+      D_Log(LOG_STATE, "Removing state %d\n", gs->tic);
       M_BufferFree(&gs->data);
       M_CBufRemove(&saved_game_states, entry.index);
       entry.index--;
@@ -128,7 +134,9 @@ game_state_t* N_GetNewState(void) {
     M_BufferInit(&new_gs->data);
   }
 
-  M_BufferEnsureTotalCapacity(&new_gs->data, MAX(average_state_size, 16384));
+  M_BufferEnsureTotalCapacity(
+    &new_gs->data, MAX(average_state_size.value, 16384)
+  );
 
   return new_gs;
 }

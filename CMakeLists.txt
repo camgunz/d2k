@@ -678,6 +678,7 @@ SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/i_pcsound.c
   ${CMAKE_SOURCE_DIR}/src/i_smp.c
   ${CMAKE_SOURCE_DIR}/src/info.c
+  ${CMAKE_SOURCE_DIR}/src/m_avg.c
   ${CMAKE_SOURCE_DIR}/src/m_bbox.c
   ${CMAKE_SOURCE_DIR}/src/m_buf.c
   ${CMAKE_SOURCE_DIR}/src/m_cbuf.c

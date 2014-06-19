@@ -32,23 +32,32 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifndef D_LOG_H__
-#define D_LOG_H__
+#include "z_zone.h"
 
-typedef enum {
-  LOG_NET,
-  LOG_SYNC,
-  LOG_STATE,
-  LOG_MAX
-} log_channel_e;
+#include "lprintf.h"
+#include "m_avg.h" 
 
-void D_InitLogging(void);
-void D_EnableLogChannel(log_channel_e channel, const char *filename);
-void D_Log(log_channel_e channel, const char *fmt, ...) __attribute__((
-  format(printf, 2, 3)
-));
+avg_t* M_AverageNew(void) {
+  avg_t *avg = calloc(1, sizeof(avg_t));
 
-#endif
+  if (avg == NULL)
+    I_Error("M_NewAverage: calloc returned NULL\n");
+
+  return avg;
+}
+
+void M_AverageInit(avg_t *avg) {
+  avg->count = 0;
+  avg->value = 0;
+}
+
+void M_AverageUpdate(avg_t *avg, int new_data_point) {
+  unsigned int old_count = avg->count;
+
+  avg->count++;
+
+  avg->value = ((avg->value * old_count) + new_data_point) / avg->count;
+}
 
 /* vi: set et ts=2 sw=2: */
 

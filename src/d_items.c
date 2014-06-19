@@ -36,6 +36,7 @@
 
 // We are referring to sprite numbers.
 #include "doomtype.h"
+#include "d_main.h"
 #include "info.h"
 
 #ifdef __GNUG__
@@ -56,8 +57,7 @@
 //  atkstate, i.e. attack/fire/hit frame
 //  flashstate, muzzle flash
 //
-weaponinfo_t    weaponinfo[NUMWEAPONS+2] =
-{
+weaponinfo_t weaponinfo[NUMWEAPONS + 2] = {
   {
     // fist
     am_noammo,

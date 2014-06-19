@@ -32,21 +32,17 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifndef D_LOG_H__
-#define D_LOG_H__
+#ifndef M_AVG_H__
+#define M_AVG_H__
 
-typedef enum {
-  LOG_NET,
-  LOG_SYNC,
-  LOG_STATE,
-  LOG_MAX
-} log_channel_e;
+typedef struct avg_s {
+  unsigned int count;
+  int value;
+} avg_t;
 
-void D_InitLogging(void);
-void D_EnableLogChannel(log_channel_e channel, const char *filename);
-void D_Log(log_channel_e channel, const char *fmt, ...) __attribute__((
-  format(printf, 2, 3)
-));
+avg_t* M_AverageNew(void);
+void   M_AverageInit(avg_t *avg);
+void   M_AverageUpdate(avg_t *avg, int new_data_point);
 
 #endif
 

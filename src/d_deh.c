@@ -34,22 +34,25 @@
  *
  *--------------------------------------------------------------------*/
 
+#include "z_zone.h"
+
 // killough 5/2/98: fixed headers, removed rendunant external declarations:
 #include "doomdef.h"
-#include "doomtype.h"
-#include "m_cbuf.h"
 #include "doomstat.h"
+#include "doomtype.h"
 #include "d_deh.h"
-#include "sounds.h"
-#include "info.h"
-#include "m_cheat.h"
-#include "p_inter.h"
-#include "p_enemy.h"
-#include "g_game.h"
+#include "d_main.h"
 #include "d_think.h"
-#include "w_wad.h"
+#include "g_game.h"
+#include "info.h"
 #include "m_argv.h"
+#include "m_cheat.h"
 #include "m_misc.h"
+#include "p_enemy.h"
+#include "p_inter.h"
+#include "sounds.h"
+#include "w_wad.h"
+
 #include "e6y.h"//e6y
 
 // CPhipps - modify to use logical output routine

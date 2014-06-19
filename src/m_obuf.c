@@ -99,7 +99,7 @@ void M_OBufInsert(obuf_t *obuf, int index, const void *obj) {
     );
   }
 
-  obuf->objects[index] = obj;
+  obuf->objects[index] = (void *)obj;
 }
 
 int M_OBufInsertAtFirstFreeSlot(obuf_t *obuf, const void *obj) {

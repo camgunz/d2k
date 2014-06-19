@@ -723,8 +723,6 @@ dboolean M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit) {
 
   M_BufferSeekForward(&pbuf->buf, obj.as.str_size);
 
-  printf("M_PBufReadString: [%s]\n", M_BufferGetData(&pbuf->buf));
-
   return true;
 }
 
