@@ -66,7 +66,8 @@
 #define DEBUG_NET 0
 #define DEBUG_SYNC 0
 
-#define SERVER_SLEEP_TIMEOUT 20
+#define SERVER_NO_PEER_SLEEP_TIMEOUT 20
+#define SERVER_SLEEP_TIMEOUT 1
 
 /* CG: TODO: Add WAD fetching (waiting on libcurl) */
 
@@ -239,10 +240,12 @@ static void service_network(void) {
   if (!MULTINET)
     return;
 
-  if (SERVER && N_PeerGetCount() == 0)
+  if (CLIENT)
+    N_ServiceNetwork();
+  else if (N_PeerGetCount() > 0)
     N_ServiceNetworkTimeout(SERVER_SLEEP_TIMEOUT);
   else
-    N_ServiceNetwork();
+    N_ServiceNetworkTimeout(SERVER_NO_PEER_SLEEP_TIMEOUT);
 
   if (DELTASERVER)
     SV_RemoveOldStates();
@@ -617,8 +620,8 @@ void N_TryRunTics(void) {
     render_extra_frame();
 
   if (((loop_count++ % 2000) == 0) && SERVER && N_PeerGetCount() > 0) {
-    printf("(%d) U/D: %d/%d kb/s\n",
-      gametic, N_GetUploadBandwidth() / 1024, N_GetDownloadBandwidth() / 1024
+    printf("(%d) U/D: %d/%d b/s\n",
+      gametic, N_GetUploadBandwidth(), N_GetDownloadBandwidth()
     );
   }
 }
