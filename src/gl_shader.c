@@ -56,19 +56,11 @@ static GLShader *active_shader = NULL;
 
 static GLShader* gld_LoadShader(const char *vpname, const char *fpname);
 
-int glsl_Init(void)
-{
-  // static int init = false;
-
-  //if (!init)
-  // {
-    // init = true;
-
-    if (!gl_arb_shader_objects)
-      lprintf(LO_WARN, "glsl_Init: shaders expects OpenGL 2.0\n");
-    else
-      sh_main = gld_LoadShader("glvp", "glfp");
-  // }
+int glsl_Init(void) {
+  if (!gl_arb_shader_objects)
+    lprintf(LO_WARN, "glsl_Init: shaders expects OpenGL 2.0\n");
+  else
+    sh_main = gld_LoadShader("glvp", "glfp");
 
   return (sh_main != NULL);
 }
@@ -221,3 +213,6 @@ int glsl_IsActive(void)
 }
 
 #endif // USE_SHADERS
+
+/* vi: set et ts=2 sw=2: */
+

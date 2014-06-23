@@ -51,7 +51,6 @@
 #include "m_delta.h"
 #include "m_menu.h"
 #include "m_pbuf.h"
-#include "m_utf.h"
 #include "p_checksum.h"
 #include "p_user.h"
 #include "r_fps.h"
