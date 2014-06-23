@@ -47,6 +47,7 @@
 #include "e6y.h"//e6y
 
 #include "n_net.h"
+#include "n_main.h"
 
 //
 // Movement.
@@ -591,6 +592,7 @@ void P_RunPlayerCommands(player_t *player) {
       leveltime = saved_leveltime;
       M_CBufRemove(&player->commands, entry.index);
       entry.index--;
+      N_LogPlayerPosition(player);
     }
   }
 
@@ -618,6 +620,7 @@ void P_RunPlayerCommands(player_t *player) {
         run_player_command(player);
         M_CBufRemove(&player->commands, entry.index);
         entry.index--;
+        N_LogPlayerPosition(player);
       }
     }
     else {
