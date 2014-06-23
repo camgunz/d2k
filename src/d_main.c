@@ -1634,6 +1634,16 @@ static void D_DoomMainSetup(void)
   G_ReloadDefaults();    // killough 3/4/98: set defaults just loaded.
   // jff 3/24/98 this sets startskill if it was -1
 
+  // 05/09/14 CG: Enable logging
+  D_InitLogging();
+
+  // 1/18/98 killough: Z_Init() call moved to i_main.c
+
+  // CPhipps - move up netgame init
+  //jff 9/3/98 use logical output routine
+  lprintf(LO_INFO,"N_InitNetGame: Checking for network game.\n");
+  N_InitNetGame();
+
 #ifdef GL_DOOM
   // proff 04/05/2000: for GL-specific switches
   gld_InitCommandLine();
@@ -1744,16 +1754,6 @@ static void D_DoomMainSetup(void)
     LauncherShow(demo_footer);
 #endif
   }
-
-  // 05/09/14 CG: Enable logging
-  D_InitLogging();
-
-  // 1/18/98 killough: Z_Init() call moved to i_main.c
-
-  // CPhipps - move up netgame init
-  //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO,"N_InitNetGame: Checking for network game.\n");
-  N_InitNetGame();
 
   //jff 9/3/98 use logical output routine
   lprintf(LO_INFO,"W_Init: Init WADfiles.\n");
