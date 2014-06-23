@@ -34,6 +34,7 @@
 #ifndef N_MAIN__
 #define N_MAIN__
 
+void     N_LogPlayerPosition(player_t *player);
 void     N_PrintPlayerCommands(cbuf_t *commands);
 void     N_InitNetGame(void);
 dboolean N_GetWad(const char *name);

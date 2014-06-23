@@ -63,7 +63,7 @@
 #include "n_proto.h"
 
 #define DEBUG_NET 0
-#define DEBUG_SYNC 0
+#define DEBUG_SYNC 1
 #define PRINT_BANDWIDTH_STATS 0
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
@@ -78,24 +78,6 @@ static dboolean received_setup = false;
 static auth_level_e authorization_level = AUTH_LEVEL_NONE;
 static cbuf_t local_commands;
 static int local_command_index = 0;
-
-static void log_player_position(player_t *player) {
-  D_Log(LOG_SYNC, "(%5d/%5d): %td: {%4d/%4d/%4d %4d/%4d/%4d %4d/%4d/%4d/%4d}\n", 
-    gametic,
-    leveltime,
-    player - players,
-    player->mo->x           >> FRACBITS,
-    player->mo->y           >> FRACBITS,
-    player->mo->z           >> FRACBITS,
-    player->mo->momx        >> FRACBITS,
-    player->mo->momy        >> FRACBITS,
-    player->mo->momz        >> FRACBITS,
-    player->viewz           >> FRACBITS,
-    player->viewheight      >> FRACBITS,
-    player->deltaviewheight >> FRACBITS,
-    player->bob             >> FRACBITS
-  );
-}
 
 static void build_command(void) {
   cbuf_t *commands = NULL;
@@ -135,7 +117,7 @@ static void run_tic(void) {
 
   for (int i = 1; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
-      log_player_position(&players[i]);
+      N_LogPlayerPosition(&players[i]);
     }
   }
 
@@ -164,7 +146,7 @@ static void run_tic(void) {
 
   for (int i = 1; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
-      log_player_position(&players[i]);
+      N_LogPlayerPosition(&players[i]);
     }
   }
 
@@ -270,12 +252,30 @@ static void render_extra_frame(void) {
   }
 }
 
-void cleanup_old_commands_and_states(void) {
+static void cleanup_old_commands_and_states(void) {
   if (!DELTASERVER)
     return;
 
   SV_RemoveOldStates();
   SV_RemoveOldCommands();
+}
+
+void N_LogPlayerPosition(player_t *player) {
+  D_Log(LOG_SYNC, "(%5d/%5d): %td: {%4d/%4d/%4d %4d/%4d/%4d %4d/%4d/%4d/%4d}\n", 
+    gametic,
+    leveltime,
+    player - players,
+    player->mo->x           >> FRACBITS,
+    player->mo->y           >> FRACBITS,
+    player->mo->z           >> FRACBITS,
+    player->mo->momx        >> FRACBITS,
+    player->mo->momy        >> FRACBITS,
+    player->mo->momz        >> FRACBITS,
+    player->viewz           >> FRACBITS,
+    player->viewheight      >> FRACBITS,
+    player->deltaviewheight >> FRACBITS,
+    player->bob             >> FRACBITS
+  );
 }
 
 void N_PrintPlayerCommands(cbuf_t *commands) {
