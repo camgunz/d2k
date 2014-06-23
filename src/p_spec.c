@@ -157,41 +157,45 @@ void MarkAnimatedTextures(void)
 // source text file DEFSWANI.DAT also in the BOOM util distribution.
 //
 //
-void P_InitPicAnims (void)
-{
-  int         i;
+void P_InitPicAnims(void) {
   const animdef_t *animdefs; //jff 3/23/98 pointer to animation lump
-  int         lump = W_GetNumForName("ANIMATED"); // cph - new wad lump handling
-  //  Init animation
-
+  int lump = W_GetNumForName("ANIMATED"); // cph - new wad lump handling
+  size_t animdef_count;
+  
   //jff 3/23/98 read from predefined or wad lump instead of table
   animdefs = (const animdef_t *)W_CacheLumpNum(lump);
 
+  for (animdef_count = 0;
+       animdefs[animdef_count].istexture != -1;
+       animdef_count++);
+
   lastanim = anims;
-  for (i=0 ; animdefs[i].istexture != -1 ; i++)
-  {
-    // 1/11/98 killough -- removed limit by array-doubling
-    if (lastanim >= anims + maxanims)
-    {
-      size_t newmax = maxanims ? maxanims*2 : MAXANIMS;
-      anims = realloc(anims, newmax*sizeof(*anims));   // killough
+
+  for (int i = 0; i < animdef_count; i++) {
+    if (lastanim >= anims + maxanims) {
+      // 1/11/98 killough -- removed limit by array-doubling
+      size_t newmax = maxanims ? maxanims * 2 : MAXANIMS;
+
+      anims = realloc(anims, newmax * sizeof(*anims));   // killough
       lastanim = anims + maxanims;
       maxanims = newmax;
     }
 
-    if (animdefs[i].istexture)
-    {
-      // different episode ?
+    if (animdefs[i].istexture) {
+      printf("P_InitPicAnims: %d: %d, %s, %s, %d.\n",
+          i, animdefs[i].istexture, animdefs[i].endname,
+             animdefs[i].startname, animdefs[i].speed
+      );
+
       if (R_CheckTextureNumForName(animdefs[i].startname) == -1)
-          continue;
+        continue; // different episode ?
 
       lastanim->picnum = R_TextureNumForName (animdefs[i].endname);
       lastanim->basepic = R_TextureNumForName (animdefs[i].startname);
     }
-    else
-    {
-      if ((W_CheckNumForName)(animdefs[i].startname, ns_flats) == -1)  // killough 4/17/98
-          continue;
+    else {
+      if ((W_CheckNumForName)(animdefs[i].startname, ns_flats) == -1)
+        continue; // killough 4/17/98
 
       lastanim->picnum = R_FlatNumForName (animdefs[i].endname);
       lastanim->basepic = R_FlatNumForName (animdefs[i].startname);
@@ -200,16 +204,19 @@ void P_InitPicAnims (void)
     lastanim->istexture = animdefs[i].istexture;
     lastanim->numpics = lastanim->picnum - lastanim->basepic + 1;
 
-    if (lastanim->numpics < 2)
-        I_Error ("P_InitPicAnims: bad cycle from %s to %s",
-                  animdefs[i].startname,
-                  animdefs[i].endname);
+    if (lastanim->numpics < 2) {
+      I_Error("P_InitPicAnims: bad cycle from %s to %s",
+        animdefs[i].startname, animdefs[i].endname
+      );
+    }
 
-    lastanim->speed = LittleLong(animdefs[i].speed); // killough 5/5/98: add LONG()
+    // killough 5/5/98: add LONG()
+    lastanim->speed = LittleLong(animdefs[i].speed);
     lastanim++;
   }
+
   W_UnlockLumpNum(lump);
-  MarkAnimatedTextures();//e6y
+  MarkAnimatedTextures(); //e6y
 }
 
 ///////////////////////////////////////////////////////////////
@@ -3505,3 +3512,5 @@ static void P_SpawnPushers(void)
 // phares 3/20/98: End of Pusher effects
 //
 ////////////////////////////////////////////////////////////////////////////
+
+/* vi: set et ts=2 sw=2: */

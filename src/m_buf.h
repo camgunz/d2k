@@ -95,6 +95,8 @@ void     M_BufferWriteFloats(buf_t *buf, const float *floats, size_t count);
 void     M_BufferWriteDouble(buf_t *buf, double d);
 void     M_BufferWriteDoubles(buf_t *buf, const double *doubles, size_t count);
 void     M_BufferWriteString(buf_t *buf, const char *string, size_t length);
+void     M_BufferWriteWideString(buf_t *buf, const wchar_t *wstring,
+                                             size_t length);
 void     M_BufferWriteZeros(buf_t *buf, size_t count);
 
 dboolean M_BufferEqualsString(buf_t *buf, const char *s);
@@ -128,11 +130,13 @@ dboolean M_BufferReadStringDup(buf_t *buf, char **s);
 dboolean M_BufferCopyString(buf_t *dst, buf_t *src);
 
 void     M_BufferCompact(buf_t *buf);
+void     M_BufferTruncate(buf_t *buf, size_t new_size);
 void     M_BufferZero(buf_t *buf);
 void     M_BufferClear(buf_t *buf);
 void     M_BufferFree(buf_t *buf);
 
 void     M_BufferPrint(buf_t *buf);
+void     M_BufferPrintAll(buf_t *buf);
 
 #endif
 

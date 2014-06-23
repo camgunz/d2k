@@ -81,7 +81,7 @@ static cbuf_t local_commands;
 static int local_command_index = 0;
 
 static void log_player_position(player_t *player) {
-  D_Log(LOG_SYNC, "(%5d/%5d): %ld: {%4d/%4d/%4d %4d/%4d/%4d %4d/%4d/%4d/%4d}\n", 
+  D_Log(LOG_SYNC, "(%5d/%5d): %td: {%4d/%4d/%4d %4d/%4d/%4d %4d/%4d/%4d/%4d}\n", 
     gametic,
     leveltime,
     player - players,

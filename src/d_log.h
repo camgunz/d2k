@@ -45,9 +45,7 @@ typedef enum {
 
 void D_InitLogging(void);
 void D_EnableLogChannel(log_channel_e channel, const char *filename);
-void D_Log(log_channel_e channel, const char *fmt, ...) __attribute__((
-  format(printf, 2, 3)
-));
+void D_Log(log_channel_e channel, const char *fmt, ...) PRINTF_DECL(2, 3);
 
 #endif
 

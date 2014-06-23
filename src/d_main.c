@@ -169,8 +169,7 @@ const int nstandard_iwads = sizeof standard_iwads/sizeof*standard_iwads;
  *  short ciruit operator madness begin!
  */
 
-void D_PostEvent(event_t *ev)
-{
+void D_PostEvent(event_t *ev) {
   /* cph - suppress all input events at game start
    * FIXME: This is a lousy kludge */
   
@@ -180,34 +179,28 @@ void D_PostEvent(event_t *ev)
   // if (gametic < 3) return;
 
   // Allow only sensible keys during skipping
-  if (doSkip)
-  {
-    if (ev->type == ev_keydown || ev->type == ev_keyup)
-    {
-      if (ev->data1 == key_quit)
-      {
+  if (doSkip) {
+    if (ev->type == ev_keydown || ev->type == ev_keyup) {
+      if (ev->data1 == key_quit) {
         // Immediate exit if key_quit is pressed in skip mode
         I_SafeExit(0);
       }
-      else
-      {
+      else {
         // key_use is used for seeing the current frame
         if (ev->data1 != key_use && ev->data1 != key_demo_skip)
-        {
           return;
-        }
       }
     }
   }
 
-  M_Responder(ev) ||
-	  (gamestate == GS_LEVEL && (
-				     HU_Responder(ev) ||
-				     ST_Responder(ev) ||
-				     AM_Responder(ev)
-				     )
-	  ) ||
-	G_Responder(ev);
+  if ((!M_Responder(ev)) && gamestate == GS_LEVEL) {
+    if (!HU_Responder(ev)) {
+      if (!ST_Responder(ev)) {
+        if (!AM_Responder(ev))
+          G_Responder(ev);
+      }
+    }
+  }
 }
 
 //
@@ -217,29 +210,26 @@ void D_PostEvent(event_t *ev)
 // The screens to wipe between are already stored, this just does the timing
 // and screen updating
 
-static void D_Wipe(void)
-{
+static void D_Wipe(void) {
   dboolean done;
-  int wipestart = I_GetTime () - 1;
+  int wipestart = I_GetTime() - 1;
 
-  if (!render_wipescreen) return;//e6y
-  do
-    {
-      int nowtime, tics;
-      do
-        {
-          I_uSleep(5000); // CPhipps - don't thrash cpu in this loop
-          nowtime = I_GetTime();
-          tics = nowtime - wipestart;
-        }
-      while (!tics);
-      wipestart = nowtime;
-      done = wipe_ScreenWipe(tics);
-      I_UpdateNoBlit();
-      M_Drawer();                   // menu is drawn even on top of wipes
-      I_FinishUpdate();             // page flip or blit buffer
-    }
-  while (!done);
+  if (!render_wipescreen)
+    return; //e6y
+
+  do {
+    int nowtime, tics;
+    do {
+      I_uSleep(5000); // CPhipps - don't thrash cpu in this loop
+      nowtime = I_GetTime();
+      tics = nowtime - wipestart;
+    } while (!tics);
+    wipestart = nowtime;
+    done = wipe_ScreenWipe(tics);
+    I_UpdateNoBlit();
+    M_Drawer();                   // menu is drawn even on top of wipes
+    I_FinishUpdate();             // page flip or blit buffer
+  } while (!done);
 }
 
 //
@@ -672,14 +662,30 @@ void D_StartTitle (void) {
 // D_AddResource
 //
 void D_AddResource(const char *filename) {
-  M_OBufAppend(&resource_files_buf, (void *)M_Basename(filename));
+  const char *basename = M_Basename(filename);
+
+  if (basename == NULL) {
+    I_Error("D_AddResource: Error adding %s: %s\n",
+      filename, M_GetFileError()
+    );
+  }
+
+  M_OBufAppend(&resource_files_buf, (void *)basename);
 }
 
 //
 // D_AddDEHFile
 //
 void D_AddDEHFile(const char *filename) {
-  M_OBufAppend(&deh_files_buf, (void *)M_Basename(filename));
+  const char *basename = M_Basename(filename);
+
+  if (basename == NULL) {
+    I_Error("D_AddResource: Error adding %s: %s\n",
+      filename, M_GetFileError()
+    );
+  }
+
+  M_OBufAppend(&deh_files_buf, (void *)basename);
 }
 
 //
@@ -1048,124 +1054,141 @@ static void IdentifyVersion (void)
 
 static void FindResponseFile (void)
 {
-  int i;
+  for (int i = 1; i < myargc; i++) {
+    if (myargv[i][0] == '@') {
+      size_t size;
+      int index;
+      int indexinfile;
+      byte *file = NULL;
+      const char **moreargs = malloc(myargc * sizeof(const char*));
+      char **newargv;
+      // proff 04/05/2000: Added for searching responsefile
+      char *fname;
 
-  for (i = 1;i < myargc;i++)
-    if (myargv[i][0] == '@')
-      {
-        int  size;
-        int  index;
-	int indexinfile;
-        byte *file = NULL;
-        const char **moreargs = malloc(myargc * sizeof(const char*));
-        char **newargv;
-        // proff 04/05/2000: Added for searching responsefile
-        char *fname;
+      fname = malloc(strlen(&myargv[i][i]) + 4 + 1);
+      strcpy(fname,&myargv[i][1]);
+      M_AddDefaultExtension(fname,".rsp");
 
-        fname = malloc(strlen(&myargv[i][i])+4+1);
-        strcpy(fname,&myargv[i][1]);
+      // READ THE RESPONSE FILE INTO MEMORY
+      // proff 04/05/2000: changed for searching responsefile
+      // cph 2002/08/09 - use M_ReadFile for simplicity
+      // proff 04/05/2000: Added for searching responsefile
+      if (!M_ReadFile(fname, (char **)&file, &size)) {
+        size_t fnlen = doom_snprintf(NULL, 0, "%s/%s",
+          I_DoomExeDir(), &myargv[i][1]
+        );
+
+        fname = realloc(fname, fnlen + 4 + 1);
+        doom_snprintf(fname, fnlen + 1, "%s/%s",
+          I_DoomExeDir(), &myargv[i][1]
+        );
         M_AddDefaultExtension(fname,".rsp");
-
-        // READ THE RESPONSE FILE INTO MEMORY
-        // proff 04/05/2000: changed for searching responsefile
-        // cph 2002/08/09 - use M_ReadFile for simplicity
-	size = M_ReadFile(fname, &file);
-        // proff 04/05/2000: Added for searching responsefile
-        if (size < 0)
-        {
-          size_t fnlen = doom_snprintf(NULL, 0, "%s/%s",
-                                       I_DoomExeDir(), &myargv[i][1]);
-          fname = realloc(fname, fnlen+4+1);
-          doom_snprintf(fname, fnlen+1, "%s/%s",
-                        I_DoomExeDir(), &myargv[i][1]);
-          M_AddDefaultExtension(fname,".rsp");
-	  size = M_ReadFile(fname, &file);
+        if (!M_ReadFile(fname, (char **)&file, &size)) {
+          /*
+           * proff 04/05/2000: Changed from LO_FATAL
+           * proff 04/05/2000: Simply removed the exit(1);
+           * cph - made fatal, don't drop through and SEGV
+           */
+          I_Error("No such response file: %s",fname);
         }
-        if (size < 0)
-        {
-            /* proff 04/05/2000: Changed from LO_FATAL
-             * proff 04/05/2000: Simply removed the exit(1);
-       * cph - made fatal, don't drop through and SEGV
-       */
-            I_Error("No such response file: %s",fname);
-        }
-        //jff 9/3/98 use logical output routine
-        lprintf(LO_CONFIRM,"Found response file %s\n",fname);
-        free(fname);
-        // proff 04/05/2000: Added check for empty rsp file
-        if (size<=0)
-        {
-	  int k;
-          lprintf(LO_ERROR,"\nResponse file empty!\n");
-
-          newargv = calloc(sizeof(newargv[0]),myargc);
-          newargv[0] = myargv[0];
-          for (k = 1,index = 1;k < myargc;k++)
-          {
-            if (i!=k)
-              newargv[index++] = myargv[k];
-          }
-          myargc = index;
-          myargv = newargv;
-          return;
-        }
-
-        // KEEP ALL CMDLINE ARGS FOLLOWING @RESPONSEFILE ARG
-	memcpy((void *)moreargs,&myargv[i+1],(index = myargc - i - 1) * sizeof(myargv[0]));
-
-	{
-	  char *firstargv = myargv[0];
-	  newargv = calloc(sizeof(newargv[0]), 1);
-	  newargv[0] = firstargv;
-	}
-
-        {
-	  byte *infile = file;
-	  indexinfile = 0;
-	  indexinfile++;  // SKIP PAST ARGV[0] (KEEP IT)
-	  do {
-	    while (size > 0 && isspace(*infile)) { infile++; size--; }
-	    if (size > 0) {
-	      char *s = malloc(size+1);
-	      char *p = s;
-	      int quoted = 0; 
-
-	      while (size > 0) {
-		// Whitespace terminates the token unless quoted
-		if (!quoted && isspace(*infile)) break;
-		if (*infile == '\"') {
-		  // Quotes are removed but remembered
-		  infile++; size--; quoted ^= 1; 
-		} else {
-		  *p++ = *infile++; size--;
-		}
-	      }
-	      if (quoted) I_Error("Runaway quoted string in response file");
-
-	      // Terminate string, realloc and add to argv
-	      *p = 0;
-        newargv = realloc(newargv, sizeof(newargv[0]) * (indexinfile + 1));
-	      newargv[indexinfile++] = realloc(s,strlen(s)+1);
-	    }
-	  } while(size > 0);
-	}
-	free(file);
-
-  newargv = realloc(newargv, sizeof(newargv[0]) * (indexinfile + index));
-	memcpy((void *)&newargv[indexinfile],moreargs,index*sizeof(moreargs[0]));
-	free((void *)moreargs);
-
-        myargc = indexinfile+index;
-        myargv = newargv;
-
-        // DISPLAY ARGS
-        //jff 9/3/98 use logical output routine
-        lprintf(LO_CONFIRM,"%d command-line args:\n",myargc);
-	for (index=1;index<myargc;index++)
-	  //jff 9/3/98 use logical output routine
-          lprintf(LO_CONFIRM,"%s\n",myargv[index]);
-        break;
       }
+
+
+      //jff 9/3/98 use logical output routine
+      lprintf(LO_CONFIRM,"Found response file %s\n", fname);
+      free(fname);
+
+      // proff 04/05/2000: Added check for empty rsp file
+      if (size <= 0) {
+        int k;
+        lprintf(LO_ERROR,"\nResponse file empty!\n");
+
+        newargv = calloc(sizeof(newargv[0]), myargc);
+        newargv[0] = myargv[0];
+        for (k = 1,index = 1; k < myargc; k++) {
+          if (i != k)
+            newargv[index++] = myargv[k];
+        }
+        myargc = index;
+        myargv = newargv;
+        return;
+      }
+
+      // KEEP ALL CMDLINE ARGS FOLLOWING @RESPONSEFILE ARG
+      memcpy(
+        (void *)moreargs,
+        &myargv[i + 1],
+        (index = myargc - i - 1) * sizeof(myargv[0])
+      );
+
+      {
+        char *firstargv = myargv[0];
+        newargv = calloc(sizeof(newargv[0]), 1);
+        newargv[0] = firstargv;
+      }
+
+      {
+        byte *infile = file;
+        indexinfile = 0;
+        indexinfile++;  // SKIP PAST ARGV[0] (KEEP IT)
+        do {
+          while (size > 0 && isspace(*infile)) {
+            infile++;
+            size--;
+          }
+
+          if (size > 0) {
+            char *s = malloc(size + 1);
+            char *p = s;
+            int quoted = 0; 
+
+            while (size > 0) {
+              // Whitespace terminates the token unless quoted
+              if (!quoted && isspace(*infile))
+                break;
+
+              if (*infile == '\"') {
+                // Quotes are removed but remembered
+                infile++;
+                size--;
+                quoted ^= 1; 
+              }
+              else {
+                *p++ = *infile++;
+                size--;
+              }
+            }
+            if (quoted)
+              I_Error("Runaway quoted string in response file");
+
+            // Terminate string, realloc and add to argv
+            *p = 0;
+            newargv = realloc(newargv, sizeof(newargv[0]) * (indexinfile + 1));
+            newargv[indexinfile++] = realloc(s, strlen(s) + 1);
+          }
+        } while(size > 0);
+      }
+      free(file);
+
+      newargv = realloc(newargv, sizeof(newargv[0]) * (indexinfile + index));
+      memcpy(
+        (void *)&newargv[indexinfile], moreargs, index * sizeof(moreargs[0])
+      );
+      free((void *)moreargs);
+
+      myargc = indexinfile + index;
+      myargv = newargv;
+
+      // DISPLAY ARGS
+      //jff 9/3/98 use logical output routine
+      lprintf(LO_CONFIRM, "%d command-line args:\n", myargc);
+      //jff 9/3/98 use logical output routine
+      for (index = 1; index < myargc; index++)
+        lprintf(LO_CONFIRM, "%s\n",myargv[index]);
+
+      break;
+    }
+  }
 }
 
 //

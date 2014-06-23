@@ -38,7 +38,6 @@
 #include <SDL_syswm.h>
 #endif
 
-#include "m_cbuf.h"
 #include "hu_lib.h"
 #include "doomstat.h"
 #include "d_main.h"
@@ -1302,7 +1301,7 @@ int GetFullPath(const char* FileName, const char* ext, char *Buffer, size_t Buff
 }
 #endif
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 #include <mmsystem.h>
 #pragma comment( lib, "winmm.lib" )
 int mus_extend_volume;

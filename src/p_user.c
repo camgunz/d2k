@@ -572,7 +572,7 @@ void P_RunPlayerCommands(player_t *player) {
 
       D_Log(
         LOG_SYNC,
-        "[%d: %ld] P_RunPlayerCommands: Running command { %d/%d %d %d %d %d %u %u }\n",
+        "[%d: %td] P_RunPlayerCommands: Running command { %d/%d %d %d %d %d %u %u }\n",
         gametic, player - players,
         ncmd->index,
         ncmd->tic,
@@ -601,7 +601,7 @@ void P_RunPlayerCommands(player_t *player) {
 
         D_Log(
           LOG_SYNC,
-          "[%d: %ld] P_RunPlayerCommands: Running command "
+          "[%d: %td] P_RunPlayerCommands: Running command "
           "{ %d/%d %d %d %d %d %u %u }\n",
           gametic, player - players,
           ncmd->index,

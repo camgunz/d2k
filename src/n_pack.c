@@ -363,7 +363,7 @@ void N_PackSetup(netpeer_t *np) {
     D_Log(LOG_SYNC, "  %s\n", (char *)entry.obj);
   }
 
-  D_Log(LOG_SYNC, "N_PackSetup: Game State: %d %d %d %d %d %d %lu\n",
+  D_Log(LOG_SYNC, "N_PackSetup: Game State: %d %d %d %d %d %d %zu\n",
     netsync, player_count, np->playernum,
     M_OBufGetObjectCount(&resource_files_buf),
     M_OBufGetObjectCount(&deh_files_buf),

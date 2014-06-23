@@ -85,13 +85,13 @@ int IsDemoContinue(void)
   return 0;
 }
 
-int LoadDemo(const char *name, const byte **buffer, int *length, int *lump)
-{
+int LoadDemo(const char *name, const byte **buffer, int *length, int *lump) {
   char basename[9];
   char *filename = NULL;
   int num = -1;
-  int len = 0;
+  size_t len = 0;
   const byte *buf = NULL;
+  bool success;
 
   M_ExtractFileBase(name, basename);
   basename[8] = 0;
@@ -99,39 +99,39 @@ int LoadDemo(const char *name, const byte **buffer, int *length, int *lump)
   // check ns_demos namespace first, then ns_global
   num = (W_CheckNumForName)(basename, ns_demos);
   if (num < 0)
-  {
     num = W_CheckNumForName(basename);
-  }
 
-  if (num < 0)
-  {
+  if (num < 0) {
     // Allow for demos not loaded as lumps
-    static byte *sbuf = NULL;
+    static char *sbuf = NULL;
     filename = I_FindFile(name, ".lmp");
-    if (filename)
-    {
-      if (sbuf)
-      {
+    if (filename) {
+      if (sbuf) {
         free(sbuf);
         sbuf = NULL;
       }
 
-      len = M_ReadFile(filename, &sbuf);
-      buf = (const byte *)sbuf;
+      success = M_ReadFile(filename, &sbuf, &len);
       free(filename);
+
+      if (!success)
+        return false;
+
+      buf = (const byte *)sbuf;
     }
   }
-  else
-  {
+  else {
+    int lump_len;
     buf = W_CacheLumpNum(num);
-    len = W_LumpLength(num);
+    lump_len = W_LumpLength(num);
+
+    if (lump_len >= 0)
+      len = lump_len;
+    else
+      len = 0;
   }
 
-  if (len < 0)
-    len = 0;
-
-  if (len > 0)
-  {
+  if (len > 0) {
     if (buffer)
       *buffer = buf;
     if (length)
@@ -1106,7 +1106,7 @@ static int G_ReadDemoFooter(const char *filename)
       {
         lprintf(LO_ERROR, "G_ReadDemoFooter: demo footer is currupted\n");
       }
-      else if (!M_WriteFile(demoex_filename, demoex_p, size))
+      else if (!M_WriteFile(demoex_filename, (const char *)demoex_p, size))
       {
         // write an additional info from a demo to demoex.wad
         lprintf(LO_ERROR, "G_ReadDemoFooter: failed to create demoex temp file %s\n", demoex_filename);
@@ -1670,3 +1670,6 @@ dboolean D_TryGetWad(const char* name)
   return result;
 }
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

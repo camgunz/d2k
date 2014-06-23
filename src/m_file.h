@@ -27,19 +27,7 @@
 #ifndef M_FILE_H__
 #define M_FILE_H__
 
-#include "z_zone.h"
-
-#ifndef _WIN32
-#include <unistd.h>
-#ifndef __USE_XOPEN_EXTENDED
-#define __USE_XOPEN_EXTENDED
-#endif
-#include <ftw.h> // [CG] Quite possibly the best header.
-#endif
-
-#include "doomtype.h"
-#include "i_system.h"
-
+#if 0
 typedef bool(*file_iterator)(const char *path);
 
 #ifdef _WIN32
@@ -48,46 +36,56 @@ typedef bool(*file_walker)(const char *path);
 typedef  int(*file_walker)(const char *path, const struct stat *stat_result,
                            int flags, struct FTW *walker);
 #endif
+#endif
 
-const char* M_GetFileSystemErrorMessage(void);
-void        M_NormalizeSlashes(char *str);
+const char* M_GetFileError(void);
+char*       M_LocalizePath(const char *path);
+char*       M_UnLocalizePath(const char *local_path);
 bool        M_PathExists(const char *path);
-bool        M_DirnameIsFolder(const char *path);
-void        M_PathJoinBuf(buf_t *buf, const char *d, const char *f);
-char*       M_PathJoin(const char *one, const char *two);
-bool        M_IsFile(const char *path);
-bool        M_IsFileInFolder(const char *folder, const char *file);
-bool        M_IsFolder(const char *path);
-bool        M_IsRootFolder(const char *path);
-bool        M_IsAbsolutePath(const char *path);
-const char* M_StripAbsolutePath(const char *path);
-bool        M_CreateFolder(const char *path);
-bool        M_CreateFile(const char *path);
-bool        M_DeletePath(const char *path);
-bool        M_DeleteFile(const char *path);
-bool        M_DeleteFileInFolder(const char *folder, const char *file);
-bool        M_DeleteFolder(const char *path);
-bool        M_IterateFiles(const char *path, file_iterator iterator);
-bool        M_WalkFiles(const char *path, file_walker walker);
-bool        M_DeleteFolderAndContents(const char *path);
 char*       M_GetCurrentFolder(void);
 bool        M_SetCurrentFolder(const char *path);
 char*       M_Dirname(const char *path);
-const char* M_Basename(const char *path);
+char*       M_Basename(const char *path);
+bool        M_DirnameIsFolder(const char *path);
+bool        M_PathJoinBuf(buf_t *buf, const char *one, const char *two);
+char*       M_PathJoin(const char *one, const char *two);
+bool        M_IsFolder(const char *path);
+bool        M_IsFile(const char *path);
+bool        M_IsFileInFolder(const char *folder, const char *file);
+bool        M_IsRootFolder(const char *path);
+bool        M_IsAbsolutePath(const char *path);
+char*       M_StripAbsolutePath(const char *path);
 bool        M_RenamePath(const char *oldpath, const char *newpath);
-FILE*       M_OpenFile(const char *path, const char *mode);
+
+bool        M_CreateFolder(const char *path, int mode);
+bool        M_CreateFile(const char *path, int mode);
+bool        M_DeletePath(const char *path);
+bool        M_DeleteFolder(const char *path);
+bool        M_DeleteFile(const char *path);
+bool        M_DeleteFileInFolder(const char *folder, const char *file);
+#if 0
+bool        M_IterateFiles(const char *path, file_iterator iterator);
+bool        M_WalkFiles(const char *path, file_walker walker);
+bool        M_DeleteFolderAndContents(const char *path);
 bool        M_ReadFromFile(void *ptr, size_t size, size_t count, FILE *f);
 bool        M_WriteToFile(const void *ptr, size_t size, size_t count, FILE *f);
+#endif
+int         M_Open(const char *path, int flags, int mode);
+bool        M_Close(int fd);
+bool        M_Seek(int fd, off_t offset, int origin);
+bool        M_Read(int fd, void *vbuf, size_t sz);
+uint32_t    M_FDLength(int fd);
+FILE*       M_OpenFile(const char *path, const char *mode);
+bool        M_ReadFile(const char *path, char **data, size_t *size);
+bool        M_ReadFileBuf(buf_t *buf, const char *path);
+bool        M_WriteFile(const char* name, const char* source, size_t size);
 long        M_GetFilePosition(FILE *f);
 bool        M_SeekFile(FILE *f, long int offset, int origin);
 uint32_t    M_FileLength(FILE *f);
 bool        M_FlushFile(FILE *f);
 bool        M_CloseFile(FILE *f);
-int         M_ReadFile (const char* name, byte **buffer);
-bool        M_WriteFile (const char* name, const void* source, size_t length);
 void        M_ExtractFileBase(const char *, char *);      // killough
 char*       M_AddDefaultExtension(char *, const char *);  // killough 1/18/98
-void        M_ReportFileSystemError(void);
 
 #endif
 

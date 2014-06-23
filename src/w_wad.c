@@ -91,17 +91,17 @@ static void W_AddFile(wadfile_info_t *wadfile) {
 
   // open the file and add to directory
 
-  wadfile->handle = open(wadfile->name,O_RDONLY | O_BINARY);
+  wadfile->handle = M_Open(wadfile->name, O_RDONLY | O_BINARY, S_IRUSR);
 
   if (wadfile->handle == -1 && N_GetWad(wadfile->name)) // CPhipps
-    wadfile->handle = open(wadfile->name, O_RDONLY | O_BINARY);
+    wadfile->handle = M_Open(wadfile->name, O_RDONLY | O_BINARY, S_IRUSR);
 
   if (wadfile->handle == -1 &&
       strlen(wadfile->name) > 4 &&
       wadfile->src == source_pwad && 
       !strcasecmp(wadfile->name + strlen(wadfile->name) - 4 , ".wad") &&
       N_GetWad(wadfile->name)) {
-    wadfile->handle = open(wadfile->name, O_RDONLY | O_BINARY);
+    wadfile->handle = M_Open(wadfile->name, O_RDONLY | O_BINARY, S_IRUSR);
   }
 
   if (wadfile->handle == -1) {
@@ -137,13 +137,13 @@ static void W_AddFile(wadfile_info_t *wadfile) {
       // single lump file
       fileinfo = &singleinfo;
       singleinfo.filepos = 0;
-      singleinfo.size = LittleLong(I_Filelength(wadfile->handle));
+      singleinfo.size = LittleLong(M_FDLength(wadfile->handle));
       M_ExtractFileBase(wadfile->name, singleinfo.name);
       numlumps++;
   }
   else {
     // WAD file
-    I_Read(wadfile->handle, &header, sizeof(header));
+    M_Read(wadfile->handle, &header, sizeof(header));
     if (strncmp(header.identification,"IWAD",4) &&
         strncmp(header.identification,"PWAD",4)) {
       I_Error("W_AddFile: Wad file %s doesn't have IWAD or PWAD id",
@@ -154,8 +154,8 @@ static void W_AddFile(wadfile_info_t *wadfile) {
     header.infotableofs = LittleLong(header.infotableofs);
     length = header.numlumps * sizeof(filelump_t);
     fileinfo2free = fileinfo = malloc(length);    // killough
-    lseek(wadfile->handle, header.infotableofs, SEEK_SET),
-    I_Read(wadfile->handle, fileinfo, length);
+    M_Seek(wadfile->handle, header.infotableofs, SEEK_SET),
+    M_Read(wadfile->handle, fileinfo, length);
     numlumps += header.numlumps;
   }
 
@@ -497,7 +497,7 @@ void W_ReleaseAllWads(void)
   {
     if (wadfiles[i].handle > 0)
     {
-      close(wadfiles[i].handle);
+      M_Close(wadfiles[i].handle);
       wadfiles[i].handle = 0;
     }
   }
@@ -529,22 +529,22 @@ int W_LumpLength (int lump)
 //  which must be >= W_LumpLength().
 //
 
-void W_ReadLump(int lump, void *dest)
-{
-  lumpinfo_t *l = lumpinfo + lump;
-
+void W_ReadLump(int lump, void *dest) {
 #ifdef RANGECHECK
   if (lump >= numlumps)
     I_Error ("W_ReadLump: %i >= numlumps",lump);
 #endif
 
-    {
-      if (l->wadfile)
-      {
-        lseek(l->wadfile->handle, l->position, SEEK_SET);
-        I_Read(l->wadfile->handle, dest, l->size);
-      }
-    }
+  lumpinfo_t *l = lumpinfo + lump;
+
+  if (!l->wadfile)
+    return;
+
+  if (!M_Seek(l->wadfile->handle, l->position, SEEK_SET))
+    I_Error("W_ReadLump: seek failed: %s.\n", M_GetFileError());
+
+  if (!M_Read(l->wadfile->handle, dest, l->size))
+    I_Error("W_ReadLump: read failed: %s\n", M_GetFileError());
 }
 
 /* vi: set et ts=2 sw=2: */

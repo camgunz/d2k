@@ -32,6 +32,7 @@
  */
 
 #ifdef _WIN32
+#ifndef __MINGW32__
 #include "z_zone.h"
 
 #include "pcreposix.h"
@@ -1490,4 +1491,5 @@ void LauncherShow(unsigned int params)
   }
 }
 
+#endif // !__MINGW32__
 #endif // _WIN32

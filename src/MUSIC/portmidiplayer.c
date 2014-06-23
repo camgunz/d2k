@@ -249,7 +249,7 @@ portmidi has no overall volume control.  we have two options:
 2. monitor the controller volume events and tweak them to serve our purpose
 */
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 extern int mus_extend_volume; // from e6y.h
 void I_midiOutSetVolumes (int volume); // from e6y.h
 #endif
@@ -295,7 +295,7 @@ static void pm_setvolume (int v)
   // (portmidi could know what device it's using, but the numbers
   //  don't match up with the winapi numbers...)
 
-  #ifdef _WIN32
+  #if defined(_WIN32) && !defined(__MINGW32__)
   if (mus_extend_volume)
     I_midiOutSetVolumes (pm_volume);
   else
@@ -463,7 +463,7 @@ static void pm_render (void *vdest, unsigned bufflen)
       case MIDI_EVENT_CONTROLLER:
         if (currevent->data.channel.param1 == 7)
         { // volume event
-          #ifdef _WIN32
+          #if defined(_WIN32) && !defined(__MINGW32__)
           if (!mus_extend_volume)
           #endif
           {

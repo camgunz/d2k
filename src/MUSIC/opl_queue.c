@@ -24,10 +24,9 @@
 //
 //-----------------------------------------------------------------------------
 
-#include <stdlib.h>
-#include <string.h>
-#include "lprintf.h"
+#include "z_zone.h"
 
+#include "lprintf.h"
 #include "opl_queue.h"
 
 #define MAX_OPL_QUEUE 64

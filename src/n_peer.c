@@ -82,7 +82,7 @@ static void serialize_toc(netchan_t *chan) {
   if (!M_PBufWriteMap(&chan->packed_toc, M_CBufGetObjectCount(&chan->toc)))
     I_Error("Error writing map: %s.\n", cmp_strerror(&chan->packed_toc.cmp));
 
-  D_Log(LOG_MEM, "serialize_toc: Buffer cursor, size, capacity: %lu/%lu/%lu\n",
+  D_Log(LOG_MEM, "serialize_toc: Buffer cursor, size, capacity: %zu/%zu/%zu\n",
     M_PBufGetCursor(&chan->packed_toc),
     M_PBufGetSize(&chan->packed_toc),
     M_PBufGetCapacity(&chan->packed_toc)
@@ -316,9 +316,8 @@ dboolean N_PeerCheckTimeout(int peernum) {
   time_t t = time(NULL);
   netpeer_t *np = N_PeerGet(peernum);
 
-  if (np == NULL) {
+  if (np == NULL)
     return false;
-  }
 
   if ((np->connect_time != 0) &&
       (difftime(t, np->connect_time) > (CONNECT_TIMEOUT * 1000))) {
@@ -410,7 +409,9 @@ ENetPacket* N_PeerGetPacket(int peernum, net_channel_e chan_type) {
   memcpy(packet->data + toc_size, M_PBufGetData(&chan->messages), msg_size);
 
   if (packet->data[2] != 4) {
-    D_Log(LOG_NET, "Sending packet (packet size %zu):\n", packet->dataLength);
+    D_Log(LOG_NET,
+      "Sending packet (packet size %zu):\n", packet->dataLength
+    );
     for (int i = 0; i < MIN(26, packet->dataLength); i++)
       D_Log(LOG_NET, "%02X ", packet->data[i] & 0xFF);
     D_Log(LOG_NET, "\n");
@@ -479,7 +480,8 @@ dboolean N_PeerLoadNextMessage(int peernum, unsigned char *message_type) {
   toc_entry = M_CBufGet(&incoming->toc, 0);
 
   if (toc_entry->index >= M_PBufGetSize(&incoming->messages)) {
-    doom_printf("N_PeerLoadNextMessage: Invalid message index (%u >= %zu).\n",
+    doom_printf(
+      "N_PeerLoadNextMessage: Invalid message index (%u >= %zu).\n",
       toc_entry->index, M_PBufGetSize(&incoming->messages)
     );
     M_CBufRemove(&incoming->toc, 0);

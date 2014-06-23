@@ -58,21 +58,17 @@ static GLShader* gld_LoadShader(const char *vpname, const char *fpname);
 
 int glsl_Init(void)
 {
-  static int init = false;
+  // static int init = false;
 
   //if (!init)
-  {
-    init = true;
+  // {
+    // init = true;
 
     if (!gl_arb_shader_objects)
-    {
       lprintf(LO_WARN, "glsl_Init: shaders expects OpenGL 2.0\n");
-    }
     else
-    {
       sh_main = gld_LoadShader("glvp", "glfp");
-    }
-  }
+  // }
 
   return (sh_main != NULL);
 }

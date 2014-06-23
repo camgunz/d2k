@@ -550,32 +550,33 @@ void HUlib_drawMBg
 //
 void HUlib_drawMText(hu_mtext_t* m)
 {
-  int i, idx, y;
+  int idx;
   hu_textline_t *l;
 
-  if (!*m->on)
+  if (!(*m->on))
     return; // if not on, don't draw
 
   // draw everything
   if (hud_list_bgon)
     HUlib_drawMBg(m->x,m->y,m->w,m->h,m->bg);
-  y = m->y + HU_REFRESHSPACING;
-  for (i=0 ; i<m->nl ; i++)
-  {
+
+  // [CG] Unused...?
+  // int y = m->y + HU_REFRESHSPACING;
+
+  for (int i = 0; i < m->nl; i++) {
     idx = m->cl - i;
+
     if (idx < 0)
       idx += m->nl; // handle queue of lines
 
     l = &m->l[idx];
-    if (hud_list_bgon)
-    {
+    if (hud_list_bgon) {
       l->x = m->x + 4;
-      l->y = m->y + (i+1)*HU_REFRESHSPACING;
+      l->y = m->y + (i + 1) * HU_REFRESHSPACING;
     }
-    else
-    {
+    else {
       l->x = m->x;
-      l->y = m->y + i*HU_REFRESHSPACING;
+      l->y = m->y + i * HU_REFRESHSPACING;
     }
 
     // need a decision made here on whether to skip the draw

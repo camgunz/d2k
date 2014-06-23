@@ -39,7 +39,6 @@
 #include <SDL_image.h>
 #endif
 
-#include "m_cbuf.h"
 #include "doomstat.h"
 #include "gl_opengl.h"
 #include "gl_intern.h"
@@ -53,6 +52,7 @@
 #include "r_main.h"
 #include "r_sky.h"
 #include "m_argv.h"
+#include "m_file.h"
 #include "m_misc.h"
 #include "e6y.h"
 
@@ -942,10 +942,17 @@ int gld_HiRes_BuildTables(void)
       memset(&RGB24to8_stat, 0, sizeof(RGB24to8_stat));
       stat((const char *)RGB2PAL_fname, &RGB24to8_stat);
       size = 0;
-      if (RGB24to8_stat.st_size == RGB2PAL_size)
-      {
-        I_FileToBuffer((const char *)RGB2PAL_fname, &RGB2PAL, &size);
+
+      if (RGB24to8_stat.st_size == RGB2PAL_size) {
+        size_t pal_size;
+        bool success = M_ReadFile(
+          (const char *)RGB2PAL_fname, (char **)&RGB2PAL, &pal_size
+        );
+
+        if (success)
+          size = pal_size;
       }
+
       free(RGB2PAL_fname);
 
       if (size == RGB2PAL_size)
@@ -1477,3 +1484,6 @@ int gld_PrecacheGUIPatches(void)
 }
 
 #endif // HAVE_LIBSDL_IMAGE
+
+/* vi: set et ts=2 sw=2: */
+

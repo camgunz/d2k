@@ -32,7 +32,6 @@
 
 #include "z_zone.h"
 
-#include "m_cbuf.h"
 #include "doomstat.h"
 
 #ifdef __GNUG__
@@ -43,6 +42,7 @@
 #include "z_zone.h"
 #include "lprintf.h"
 #include "i_system.h"
+#include "m_file.h"
 
 #include "e6y.h"//e6y
 
@@ -87,6 +87,9 @@ static void W_ReportLocks(void)
 #endif
 
 #ifdef _WIN32
+
+#include "wchar.h"
+
 typedef struct {
   HANDLE hnd;
   OFSTRUCT fileinfo;
@@ -96,8 +99,7 @@ typedef struct {
 
 mmap_info_t *mapped_wad;
 
-void W_DoneCache(void)
-{
+void W_DoneCache(void) {
   size_t i;
 
   if (cachelump) {
@@ -107,85 +109,104 @@ void W_DoneCache(void)
 
   if (!mapped_wad)
     return;
-  for (i=0; i<numwadfiles; i++)
-  {
-    if (mapped_wad[i].data)
-    {
+
+  for (i = 0; i < numwadfiles; i++) {
+    if (mapped_wad[i].data) {
       UnmapViewOfFile(mapped_wad[i].data);
-      mapped_wad[i].data=NULL;
+      mapped_wad[i].data = NULL;
     }
-    if (mapped_wad[i].hnd_map)
-    {
+    if (mapped_wad[i].hnd_map) {
       CloseHandle(mapped_wad[i].hnd_map);
-      mapped_wad[i].hnd_map=NULL;
+      mapped_wad[i].hnd_map = NULL;
     }
-    if (mapped_wad[i].hnd)
-    {
+
+    if (mapped_wad[i].hnd) {
       CloseHandle(mapped_wad[i].hnd);
-      mapped_wad[i].hnd=NULL;
+      mapped_wad[i].hnd = NULL;
     }
   }
+
   free(mapped_wad);
+
   mapped_wad = NULL;
 }
 
-void W_InitCache(void)
-{
+void W_InitCache(void) {
   // set up caching
   cachelump = calloc(numlumps, sizeof *cachelump);
   if (!cachelump)
-    I_Error ("W_Init: Couldn't allocate lumpcache");
+    I_Error("W_InitCache: Couldn't allocate lumpcache");
 
 #ifdef TIMEDIAG
   atexit(W_ReportLocks);
 #endif
 
-  mapped_wad = calloc(numwadfiles,sizeof(mmap_info_t));
-  memset(mapped_wad,0,sizeof(mmap_info_t)*numwadfiles);
-  {
-    int i;
-    for (i=0; i<numlumps; i++)
-    {
-      int wad_index = (int)(lumpinfo[i].wadfile-wadfiles);
+  mapped_wad = calloc(numwadfiles, sizeof(mmap_info_t));
+  memset(mapped_wad, 0, sizeof(mmap_info_t) * numwadfiles);
 
-      cachelump[i].locks = -1;
+  for (int i = 0; i < numlumps; i++) {
+    int wad_index = (int)(lumpinfo[i].wadfile - wadfiles);
+    cachelump[i].locks = -1;
 
-      if (!lumpinfo[i].wadfile)
-        continue;
+    if (!lumpinfo[i].wadfile)
+      continue;
+
 #ifdef RANGECHECK
-      if ((wad_index<0)||((size_t)wad_index>=numwadfiles))
-        I_Error("W_InitCache: wad_index out of range");
+    if ((wad_index < 0) || ((size_t)wad_index >= numwadfiles))
+      I_Error("W_InitCache: wad_index out of range");
 #endif
-      if (!mapped_wad[wad_index].data)
-      {
-        mapped_wad[wad_index].hnd = CreateFile(wadfiles[wad_index].name,
-          GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
-          NULL, OPEN_EXISTING, 0, NULL);
-        if (mapped_wad[wad_index].hnd==INVALID_HANDLE_VALUE)
-          I_Error("W_InitCache: CreateFile for memory mapping failed (LastError %i)",GetLastError());
-        mapped_wad[wad_index].hnd_map =
-          CreateFileMapping(
-            mapped_wad[wad_index].hnd,
-            NULL,
-            PAGE_READONLY,
-            0,
-            0,
-            NULL
-          );
-        if (mapped_wad[wad_index].hnd_map==NULL)
-          I_Error("W_InitCache: CreateFileMapping for memory mapping failed (LastError %i)",GetLastError());
-        mapped_wad[wad_index].data =
-          MapViewOfFile(
-            mapped_wad[wad_index].hnd_map,
-            FILE_MAP_READ,
-            0,
-            0,
-            0
-          );
-        if (mapped_wad[wad_index].data==NULL)
-          I_Error("W_InitCache: MapViewOfFile for memory mapping failed (LastError %i)",GetLastError());
-      }
+
+    if (mapped_wad[wad_index].data)
+      continue;
+
+    wchar_t *local_path = (wchar_t *)M_LocalizePath(wadfiles[wad_index].name);
+
+    if (!local_path) {
+      I_Error(
+        "W_InitCache: Error localizing path %s: %s",
+        wadfiles[wad_index].name, M_GetFileError()
+      );
     }
+
+    mapped_wad[wad_index].hnd = CreateFile(
+      local_path,
+      GENERIC_READ,
+      FILE_SHARE_READ | FILE_SHARE_WRITE,
+      NULL,
+      OPEN_EXISTING,
+      0,
+      NULL
+    );
+    if (mapped_wad[wad_index].hnd == INVALID_HANDLE_VALUE) {
+      I_Error(
+        "W_InitCache: CreateFile for memory mapping %S failed (LastError %lu)",
+        local_path, GetLastError()
+      );
+    }
+
+    mapped_wad[wad_index].hnd_map = CreateFileMapping(
+      mapped_wad[wad_index].hnd, NULL, PAGE_READONLY, 0, 0, NULL
+    );
+    if (mapped_wad[wad_index].hnd_map == NULL) {
+      I_Error(
+        "W_InitCache: CreateFileMapping for memory mapping %S failed "
+        "(LastError %lu)",
+        local_path, GetLastError()
+      );
+    }
+
+    mapped_wad[wad_index].data = MapViewOfFile(
+      mapped_wad[wad_index].hnd_map, FILE_MAP_READ, 0, 0, 0
+    );
+    if (mapped_wad[wad_index].data == NULL) {
+      I_Error(
+        "W_InitCache: MapViewOfFile for memory mapping %S failed "
+        "(LastError %lu)",
+        local_path, GetLastError()
+      );
+    }
+
+    free(local_path);
   }
 }
 
@@ -233,7 +254,7 @@ void W_InitCache(void)
       if (lumpinfo[i].wadfile) {
         int fd = lumpinfo[i].wadfile->handle;
         if (!mapped_wad[fd])
-          if ((mapped_wad[fd] = mmap(NULL,I_Filelength(fd),PROT_READ,MAP_SHARED,fd,0)) == MAP_FAILED) 
+          if ((mapped_wad[fd] = mmap(NULL,M_FDLength(fd),PROT_READ,MAP_SHARED,fd,0)) == MAP_FAILED) 
             I_Error("W_InitCache: failed to mmap");
       }
     }
@@ -248,7 +269,7 @@ void W_DoneCache(void)
       if (lumpinfo[i].wadfile) {
         int fd = lumpinfo[i].wadfile->handle;
         if (mapped_wad[fd]) {
-          if (munmap(mapped_wad[fd],I_Filelength(fd))) 
+          if (munmap(mapped_wad[fd],M_FDLength(fd))) 
             I_Error("W_DoneCache: failed to munmap");
           mapped_wad[fd] = NULL;
         }
@@ -331,4 +352,6 @@ void W_UnlockLumpNum(int lump) {
   if (cachelump[lump].locks == 0)
     Z_ChangeTag(cachelump[lump].cache, PU_CACHE);
 }
+
+/* vi: set et ts=2 sw=2: */
 

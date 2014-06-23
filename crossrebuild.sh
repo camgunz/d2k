@@ -4,6 +4,13 @@ CROSSDEPS="`pwd`/crossdeps"
 CROSSLIBS="$CROSSDEPS/lib"
 BUILD_DIR=crossbuild
 
+rm -rf $BUILD_DIR
+
+if [ ! -d $BUILD_DIR ]
+then
+  mkdir $BUILD_DIR
+fi
+
 # -DENET_INCLUDE_DIR="$CROSSINCS" \
 # -DENET_LIBRARY="$CROSSLIBS/libenet.a" \
 # -DSDL_INCLUDE_DIR="$CROSSDEPS/include/SDL" \

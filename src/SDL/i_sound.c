@@ -1165,7 +1165,7 @@ void I_SetMusicVolume(int volume)
 #ifdef HAVE_MIXER
   Mix_VolumeMusic(volume*8);
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
   // e6y: workaround
   if (mus_extend_volume && Mix_GetMusicType(NULL) == MUS_MID)
     I_midiOutSetVolumes(volume  /* *8  */);
@@ -1512,23 +1512,23 @@ static int Exp_RegisterSong (const void *data, size_t len)
 
 // try register external music file (not in WAD)
 
-static int Exp_RegisterMusic (const char *filename, musicinfo_t *song)
-{
-  int len;
+static int Exp_RegisterMusic(const char *filename, musicinfo_t *song) {
+  size_t len;
 
-  len = M_ReadFile (filename, (byte **) &song_data);
-
-  if (len == -1)
-  {
-    lprintf (LO_WARN, "Couldn't read %s\nAttempting to load default MIDI music.\n", filename);
+  if (!M_ReadFile(filename, (char **)&song_data, &len)) {
+    lprintf(LO_WARN,
+      "Couldn't read %s\nAttempting to load default MIDI music.\n", filename
+    );
     return 1;
   }
 
-  if (!Exp_RegisterSongEx (song_data, len, 1))
-  {
+  if (!Exp_RegisterSongEx(song_data, len, 1)) {
     free (song_data);
     song_data = NULL;
-    lprintf(LO_WARN, "Couldn't load music from %s\nAttempting to load default MIDI music.\n", filename);
+    lprintf(LO_WARN,
+      "Couldn't load music from %s\nAttempting to load default MIDI music.\n",
+      filename
+    );
     return 1; // failure
   }
 
@@ -1538,17 +1538,14 @@ static int Exp_RegisterMusic (const char *filename, musicinfo_t *song)
   return 0;
 }
 
-static void Exp_UpdateMusic (void *buff, unsigned nsamp)
-{
+static void Exp_UpdateMusic(void *buff, unsigned nsamp) {
 
-  if (!music_handle)
-  {
-    memset (buff, 0, nsamp * 4);
+  if (!music_handle) {
+    memset(buff, 0, nsamp * 4);
     return;
   }
 
-
-  music_players[current_player]->render (buff, nsamp);
+  music_players[current_player]->render(buff, nsamp);
 }
 
 void M_ChangeMIDIPlayer(void)
@@ -1623,3 +1620,6 @@ void M_ChangeMIDIPlayer(void)
 }
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

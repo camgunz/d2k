@@ -285,16 +285,14 @@ void gld_MultisamplingSet(void)
   }
 }
 
+typedef enum {
+  TAG_SKYBOX,
+  TAG_DETAIL,
+  TAG_MAX
+} gldef_type_e;
+
 int gld_LoadGLDefs(const char * defsLump)
 {
-  typedef enum
-  {
-    TAG_SKYBOX,
-    TAG_DETAIL,
-
-    TAG_MAX
-  } gldef_type_e;
-
   // these are the core types available in the *DEFS lump
   static const char *CoreKeywords[TAG_MAX + 1] =
   {

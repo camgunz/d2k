@@ -36,7 +36,7 @@
 
 #include "doomtype.h"
 #include "lprintf.h"
-#include "m_buf.h"
+#include "m_file.h"
 #include "m_swap.h"
 
 static void check_cursor(buf_t *buf) {
@@ -102,10 +102,6 @@ void M_BufferEnsureCapacity(buf_t *buf, size_t capacity) {
   size_t needed_capacity = buf->cursor + capacity;
 
   if (buf->capacity < needed_capacity) {
-    D_Log(LOG_MEM,
-      "M_BufferEnsureCapacity: Increasing capacity %lu bytes (%lu/%lu/%lu)\n",
-      needed_capacity - buf->capacity, buf->cursor, buf->size, buf->capacity
-    );
     buf->data = realloc(buf->data, needed_capacity * sizeof(byte));
 
     if (buf->data == NULL)
@@ -146,32 +142,8 @@ void M_BufferSetString(buf_t *buf, const char *data, size_t length) {
 }
 
 dboolean M_BufferSetFile(buf_t *buf, const char *filename) {
-  FILE *fp = NULL;
-  size_t length = 0;
-  dboolean out = false;
-
-  if ((fp = fopen(filename, "rb")) == NULL)
-    return false;
-
-  fseek(fp, 0, SEEK_END);
-  length = ftell(fp);
-  fseek(fp, 0, SEEK_SET);
-
   M_BufferClear(buf);
-  M_BufferEnsureTotalCapacity(buf, length);
-
-  if (fread(buf->data, sizeof(byte), length, fp) == length) {
-    buf->cursor = length;
-    buf->size = length;
-    out = true;
-  }
-  else {
-    M_BufferClear(buf);
-    out = false;
-  }
-
-  fclose(fp);
-  return out;
+  return M_ReadFileBuf(buf, filename);
 }
 
 dboolean M_BufferSeek(buf_t *buf, size_t pos) {
@@ -483,6 +455,19 @@ void M_BufferCompact(buf_t *buf) {
   }
 }
 
+void M_BufferTruncate(buf_t *buf, size_t new_size) {
+  size_t old_size = buf->size;
+
+  if (new_size >= buf->size)
+    I_Error("M_BufferTruncate: %zu >= %zu.", new_size, buf->size);
+
+  memset(buf->data + new_size, 0, old_size - new_size);
+  buf->size = new_size;
+
+  if (buf->cursor >= buf->size)
+    buf->cursor = buf->size - 1;
+}
+
 void M_BufferZero(buf_t *buf) {
   memset(buf->data, 0, buf->capacity);
 }
@@ -507,6 +492,23 @@ void M_BufferPrint(buf_t *buf) {
   );
 
   for (size_t i = 0; i < MIN(64, buf->size); i++) {
+    printf("%02X ", (unsigned char)buf->data[i]);
+
+    if ((i > 0) && (((i + 1) % 25) == 0))
+      printf("\n");
+  }
+
+  printf("\n");
+}
+
+void M_BufferPrintAll(buf_t *buf) {
+  printf("Buffer capacity, size and cursor: [%zu, %zu, %zu].\n",
+    buf->capacity,
+    buf->size,
+    buf->cursor
+  );
+
+  for (size_t i = 0; i < buf->size; i++) {
     printf("%02X ", (unsigned char)buf->data[i]);
 
     if ((i > 0) && (((i + 1) % 25) == 0))

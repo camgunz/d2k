@@ -39,8 +39,18 @@
 #ifndef Z_ZONE__
 #define Z_ZONE__
 
-#ifndef __GNUC__
+#ifdef __GNUC__
+
+#ifdef __MINGW32__
+#define PRINTF_DECL(x, y) __attribute__((format(gnu_printf, x, y)))
+#else
+#define PRINTF_DECL(x, y) __attribute__((format(printf, x, y)))
+#endif
+
+#else
+#error "What in the fuck"
 #define __attribute__(x)
+#define PRINTF_DECL(x, y)
 #endif
 
 // Include system definitions so that prototypes become
@@ -55,6 +65,7 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #define UNICODE
+#define _UNICODE
 #include <windows.h>
 #include <direct.h>
 #include <commctrl.h>
@@ -107,7 +118,7 @@
 #include <stdint.h>
 #endif
 
-#ifdef HAVE_MMAP
+#if defined(HAVE_MMAP) && !defined(_WIN32)
 #include <sys/mman.h>
 #endif
 
@@ -121,13 +132,6 @@
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#ifndef _WIN32
-#ifndef __USE_XOPEN_EXTENDED
-#define __USE_XOPEN_EXTENDED
-#endif
-#include <ftw.h>
-#endif
-
 #endif
 
 // ZONE MEMORY
