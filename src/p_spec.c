@@ -182,11 +182,6 @@ void P_InitPicAnims(void) {
     }
 
     if (animdefs[i].istexture) {
-      printf("P_InitPicAnims: %d: %d, %s, %s, %d.\n",
-          i, animdefs[i].istexture, animdefs[i].endname,
-             animdefs[i].startname, animdefs[i].speed
-      );
-
       if (R_CheckTextureNumForName(animdefs[i].startname) == -1)
         continue; // different episode ?
 
