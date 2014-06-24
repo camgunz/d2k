@@ -767,40 +767,38 @@ static void G_DoLoadLevel(void) {
   //  we look for an actual index, instead of simply
   //  setting one.
 
-  skyflatnum = R_FlatNumForName ( SKYFLATNAME );
+  skyflatnum = R_FlatNumForName(SKYFLATNAME);
 
   // DOOM determines the sky texture to be used
   // depending on the current episode, and the game version.
-  if (gamemode == commercial)
+  if (gamemode == commercial) {
     // || gamemode == pack_tnt   //jff 3/27/98 sorry guys pack_tnt,pack_plut
     // || gamemode == pack_plut) //aren't gamemodes, this was matching retail
-    {
-      skytexture = R_TextureNumForName ("SKY3");
-      if (gamemap < 12)
-        skytexture = R_TextureNumForName ("SKY1");
-      else
-        if (gamemap < 21)
-          skytexture = R_TextureNumForName ("SKY2");
-    }
-  else //jff 3/27/98 and lets not forget about DOOM and Ultimate DOOM huh?
-    switch (gameepisode)
-      {
-      case 1:
-        skytexture = R_TextureNumForName ("SKY1");
-        break;
-      case 2:
-        skytexture = R_TextureNumForName ("SKY2");
-        break;
-      case 3:
-        skytexture = R_TextureNumForName ("SKY3");
-        break;
-      case 4: // Special Edition sky
-        skytexture = R_TextureNumForName ("SKY4");
-        break;
-      }//jff 3/27/98 end sky setting fix
+    skytexture = R_TextureNumForName("SKY3");
+    if (gamemap < 12)
+      skytexture = R_TextureNumForName("SKY1");
+    else if (gamemap < 21)
+      skytexture = R_TextureNumForName("SKY2");
+  }
+  else { //jff 3/27/98 and lets not forget about DOOM and Ultimate DOOM huh?
+    switch (gameepisode) {
+    case 1:
+      skytexture = R_TextureNumForName("SKY1");
+      break;
+    case 2:
+      skytexture = R_TextureNumForName("SKY2");
+      break;
+    case 3:
+      skytexture = R_TextureNumForName("SKY3");
+      break;
+    case 4: // Special Edition sky
+      skytexture = R_TextureNumForName("SKY4");
+      break;
+    } //jff 3/27/98 end sky setting fix
+  }
 
 	// [RH] Set up details about sky rendering
-	R_InitSkyMap ();
+	R_InitSkyMap();
 
 #ifdef GL_DOOM
   R_SetBoxSkybox(skytexture);
@@ -816,12 +814,12 @@ static void G_DoLoadLevel(void) {
 
   gamestate = GS_LEVEL;
 
-  for (i=0 ; i<MAXPLAYERS ; i++)
-    {
-      if (playeringame[i] && players[i].playerstate == PST_DEAD)
-        players[i].playerstate = PST_REBORN;
-      memset (players[i].frags,0,sizeof(players[i].frags));
-    }
+  for (i = 0; i < MAXPLAYERS; i++) {
+    if (playeringame[i] && players[i].playerstate == PST_DEAD)
+      players[i].playerstate = PST_REBORN;
+
+    memset(players[i].frags, 0, sizeof(players[i].frags));
+  }
 
   // initialize the msecnode_t freelist.                     phares 3/25/98
   // any nodes in the freelist are gone by now, cleared
@@ -829,20 +827,22 @@ static void G_DoLoadLevel(void) {
   // died.
   P_FreeSecNodeList();
 
-  P_SetupLevel (gameepisode, gamemap, 0, gameskill);
+  P_SetupLevel(gameepisode, gamemap, 0, gameskill);
+
   if (!demoplayback) // Don't switch views if playing a demo
     displayplayer = consoleplayer;    // view the guy you are playing
+
   gameaction = ga_nothing;
-  Z_CheckHeap ();
+  Z_CheckHeap();
 
   // clear cmd building stuff
-  memset (gamekeydown, 0, sizeof(gamekeydown));
+  memset(gamekeydown, 0, sizeof(gamekeydown));
   joyxmove = joyymove = 0;
   mousex = mousey = 0;
   mlooky = 0;//e6y
   special_event = 0; paused = false;
-  memset (&mousearray, 0, sizeof(mousearray));
-  memset (&joyarray, 0, sizeof(joyarray));
+  memset(&mousearray, 0, sizeof(mousearray));
+  memset(&joyarray, 0, sizeof(joyarray));
 
   // killough 5/13/98: in case netdemo has consoleplayer other than green
   ST_Start();
@@ -851,15 +851,14 @@ static void G_DoLoadLevel(void) {
   // killough: make -timedemo work on multilevel demos
   // Move to end of function to minimize noise -- killough 2/22/98:
 
-  if (timingdemo)
-    {
-      static int first=1;
-      if (first)
-        {
-          starttime = I_GetTime_RealTime ();
-          first=0;
-        }
+  if (timingdemo) {
+    static int first = 1;
+
+    if (first) {
+      starttime = I_GetTime_RealTime();
+      first = 0;
     }
+  }
 }
 
 
@@ -868,7 +867,7 @@ static void G_DoLoadLevel(void) {
 // Get info needed to make ticcmd_ts for the players.
 //
 
-dboolean G_Responder (event_t* ev) {
+dboolean G_Responder(event_t* ev) {
   // allow spy mode changes even during the demo
   // killough 2/22/98: even during DM demo
   //
@@ -2811,7 +2810,7 @@ void G_InitNew(skill_t skill, int episode, int map)
   //jff 4/16/98 force marks on automap cleared every new level start
   AM_clearMarks();
 
-  G_DoLoadLevel ();
+  G_DoLoadLevel();
 }
 
 //

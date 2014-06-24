@@ -327,8 +327,6 @@ void N_InitNetGame(void) {
         doom_printf("N_InitNetGame: Setup information received.\n");
       else
         I_Error("N_InitNetGame: Timed out waiting for setup information.");
-
-      atexit(N_Disconnect);
     }
   }
   else {
@@ -371,8 +369,6 @@ void N_InitNetGame(void) {
         D_EnableLogChannel(LOG_NET, "server-net.log");
       if (DEBUG_SYNC && SERVER)
         D_EnableLogChannel(LOG_SYNC, "server-sync.log");
-
-      atexit(N_Disconnect);
     }
   }
 

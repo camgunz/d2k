@@ -247,6 +247,7 @@ void N_Disconnect(void) {
     if (np == NULL)
       continue;
 
+    printf("N_Disconnect: Disconnecting peer %d\n", i);
     enet_peer_disconnect(np->peer, 0);
   }
 
@@ -294,6 +295,7 @@ void N_Disconnect(void) {
 }
 
 void N_Shutdown(void) {
+  printf("N_Shutdown: shutting down\n");
   N_Disconnect();
 
   enet_deinitialize();
@@ -424,6 +426,7 @@ void N_DisconnectPeer(int peernum) {
     I_Error("N_DisconnectPeer: Invalid peer %d.\n", peernum);
 
   doom_printf("N_DisconnectPeer: Disconnecting peer %d\n", peernum);
+  printf("N_DisconnectPeer: Disconnecting peer %d\n", peernum);
   enet_peer_disconnect(np->peer, 0);
   N_PeerSetDisconnected(peernum);
 }

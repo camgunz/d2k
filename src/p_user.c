@@ -551,6 +551,14 @@ static void run_player_command(player_t *player) {
   // cycle psprites
 
   P_MovePsprites(player);
+
+  if ((DELTACLIENT || DELTASERVER) && player->mo) {
+    P_MobjThinker(player->mo);
+    if ((player - players) != 0) {
+      D_Log(LOG_SYNC, "After P_MobjThinker:\n");
+      N_LogPlayerPosition(player);
+    }
+  }
 }
 
 void P_RunPlayerCommands(player_t *player) {

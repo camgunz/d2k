@@ -2570,13 +2570,9 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   // BlockMap should be reloaded after OVERFLOW_INTERCEPT,
   // because bmapwidth/bmapheight/bmaporgx/bmaporgy can be overwritten
   if (!samelevel || overflows[OVERFLOW_INTERCEPT].shit_happens)
-  {
     P_LoadBlockMap  (lumpnum+ML_BLOCKMAP);
-  }
   else
-  {
     memset(blocklinks, 0, bmapwidth*bmapheight*sizeof(*blocklinks));
-  }
 
   if (nodesVersion > 0)
   {
@@ -2605,9 +2601,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   }
 
   if (!samelevel)
-  {
     P_InitSubsectorsLines();
-  }
 
 #ifdef GL_DOOM
   map_subsectors = calloc_IfSameLevel(map_subsectors,
@@ -2630,7 +2624,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   bodyqueslot = 0;
 
   /* cph - reset all multiplayer starts */
-  memset(playerstarts,0,sizeof(playerstarts));
+  memset(playerstarts, 0, sizeof(playerstarts));
   deathmatch_p = deathmatchstarts;
   for (i = 0; i < MAXPLAYERS; i++)
     players[i].mo = NULL;
@@ -2641,26 +2635,24 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   P_LoadThings(lumpnum+ML_THINGS);
 
   // if deathmatch, randomly spawn the active players
-  if (deathmatch)
-  {
-    for (i=0; i<MAXPLAYERS; i++)
-      if (playeringame[i])
-        {
-          players[i].mo = NULL; // not needed? - done before P_LoadThings
-          G_DeathMatchSpawnPlayer(i);
-        }
+  if (deathmatch) {
+    for (i = 0; i < MAXPLAYERS; i++) {
+      if (playeringame[i]) {
+        players[i].mo = NULL; // not needed? - done before P_LoadThings
+        G_DeathMatchSpawnPlayer(i);
+      }
+    }
   }
-  else // if !deathmatch, check all necessary player starts actually exist
-  {
-    for (i=0; i<MAXPLAYERS; i++)
+  else { // if !deathmatch, check all necessary player starts actually exist
+    for (i = 0; i < MAXPLAYERS; i++) {
       if (playeringame[i] && !players[i].mo)
-        I_Error("P_SetupLevel: missing player %d start\n", i+1);
+        I_Error("P_SetupLevel: missing player %d start\n", i + 1);
+    }
   }
 
   if (players[consoleplayer].cheats & CF_FLY)
-  {
     players[consoleplayer].mo->flags |= (MF_NOGRAVITY | MF_FLY);
-  }
+
 
   // killough 3/26/98: Spawn icon landings:
   if (gamemode==commercial)
