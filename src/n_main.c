@@ -115,12 +115,6 @@ static void run_tic(void) {
   if (advancedemo)
     D_DoAdvanceDemo();
 
-  for (int i = 1; i < MAXPLAYERS; i++) {
-    if (playeringame[i]) {
-      N_LogPlayerPosition(&players[i]);
-    }
-  }
-
   M_Ticker();
   I_GetTime_SaveMS();
   G_Ticker();
@@ -142,12 +136,6 @@ static void run_tic(void) {
     }
 
     N_UpdateSync();
-  }
-
-  for (int i = 1; i < MAXPLAYERS; i++) {
-    if (playeringame[i]) {
-      N_LogPlayerPosition(&players[i]);
-    }
   }
 
   gametic++;
