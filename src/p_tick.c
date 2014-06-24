@@ -316,8 +316,10 @@ static void run_regular_tic(void) {
     P_PlayerThink(player);
     if ((DELTACLIENT || DELTASERVER) && player->mo) {
       P_MobjThinker(player->mo);
-      D_Log(LOG_SYNC, "After P_MobjThinker: ");
-      N_LogPlayerPosition(player);
+      if (i != 0) {
+        D_Log(LOG_SYNC, "After P_MobjThinker: ");
+        N_LogPlayerPosition(player);
+      }
     }
   }
 }
