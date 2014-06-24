@@ -66,6 +66,7 @@ typedef struct netpeer_s {
   netsync_t           sync;
   time_t              connect_time;
   time_t              disconnect_time;
+  bool                loaded;
 } netpeer_t;
 
 void        N_InitPeers(void);

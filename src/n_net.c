@@ -471,8 +471,8 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     status = enet_host_service(net_host, &net_event, timeout_ms);
 
     /*
-     * CG: ENet says this must be cleared, and since we don't use it, we do so
-     *     here up top.
+     * [CG]: ENet says this must be cleared, and since we don't use it, we do
+     *       so here up top.
      */
     if (net_event.peer != NULL && net_event.peer->data != NULL)
       net_event.peer->data = NULL;
@@ -491,6 +491,16 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       doom_printf("Got 'CONNECT' event\n");
       if (SERVER) {
         peernum = N_PeerAdd();
+        netpeer_t *np = N_PeerGet(peernum);
+
+        if (np == NULL) {
+          doom_printf("N_ServiceNetwork: Getting new peer failed\n");
+          continue;
+        }
+
+        np->loaded = false;
+        enet_peer_timeout(net_event.peer, 65536, 10000, 60000);
+
         N_PeerSetConnected(peernum, net_event.peer);
 
         SV_SetupNewPeer(peernum);
@@ -505,6 +515,8 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
           );
           continue;
         }
+
+        np->loaded = false;
 
         N_PeerSetConnected(0, net_event.peer);
       }
@@ -531,6 +543,18 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
         );
         continue;
       }
+      netpeer_t *np = N_PeerGet(peernum);
+
+      if (np == NULL) {
+        doom_printf("N_ServiceNetwork: Error getting peer that just sent data\n");
+        continue;
+      }
+
+      if (!np->loaded) {
+        enet_peer_timeout(net_event.peer, 0, 0, 0);
+        np->loaded = true;
+      }
+
       if ((net_event.packet->data[0] & 0x80) == 0x80) {
         N_HandlePacket(
           peernum, net_event.packet->data, net_event.packet->dataLength

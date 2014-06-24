@@ -210,6 +210,7 @@ int N_PeerAdd(void) {
   np->peer            = NULL;
   np->connect_time    = time(NULL);
   np->disconnect_time = 0;
+  np->loaded          = false;
 
   np->peernum = M_OBufInsertAtFirstFreeSlotOrAppend(&net_peers, np);
 
@@ -261,6 +262,7 @@ void N_PeerRemove(netpeer_t *np) {
   np->peer            = NULL;
   np->connect_time    = 0;
   np->disconnect_time = 0;
+  np->loaded          = false;
 
   M_OBufRemove(&net_peers, peernum);
 }
