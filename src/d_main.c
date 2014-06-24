@@ -89,6 +89,8 @@
 #include "n_main.h"
 #include "n_state.h"
 
+static char *main_iwad = NULL;
+
 void GetFirstMap(int *ep, int *map); // Ty 08/29/98 - add "-warp x" functionality
 static void D_PageDrawer(void);
 
@@ -230,6 +232,20 @@ static void D_Wipe(void) {
     M_Drawer();                   // menu is drawn even on top of wipes
     I_FinishUpdate();             // page flip or blit buffer
   } while (!done);
+}
+
+void D_SetIWAD(const char *iwad) {
+  if (main_iwad)
+    free(main_iwad);
+
+  main_iwad = M_Basename(iwad);
+
+  if (main_iwad == NULL)
+    I_Error("Error getting basename of %s: %s\n", iwad, M_GetFileError());
+}
+
+const char* D_GetIWAD(void) {
+  return main_iwad;
 }
 
 //
@@ -663,6 +679,7 @@ void D_StartTitle (void) {
 //
 void D_AddResource(const char *filename) {
   const char *basename = M_Basename(filename);
+  bool found = false;
 
   if (basename == NULL) {
     I_Error("D_AddResource: Error adding %s: %s\n",
@@ -670,7 +687,24 @@ void D_AddResource(const char *filename) {
     );
   }
 
-  M_OBufAppend(&resource_files_buf, (void *)basename);
+  if (strcmp(basename, D_GetIWAD()) == 0) {
+    lprintf(LO_INFO, "Resource %s is the IWAD, skipping\n", basename);
+    return;
+  }
+
+  OBUF_FOR_EACH(&resource_files_buf, entry) {
+    char *resource_name = (char *)entry.obj;
+
+    if (strcmp(basename, resource_name) == 0) {
+      found = true;
+      break;
+    }
+  }
+
+  if (found)
+    lprintf(LO_INFO, "Resource %s already added, skipping\n", basename);
+  else
+    M_OBufAppend(&resource_files_buf, (void *)basename);
 }
 
 //
@@ -678,6 +712,7 @@ void D_AddResource(const char *filename) {
 //
 void D_AddDEHFile(const char *filename) {
   const char *basename = M_Basename(filename);
+  bool found = false;
 
   if (basename == NULL) {
     I_Error("D_AddResource: Error adding %s: %s\n",
@@ -685,7 +720,19 @@ void D_AddDEHFile(const char *filename) {
     );
   }
 
-  M_OBufAppend(&deh_files_buf, (void *)basename);
+  OBUF_FOR_EACH(&deh_files_buf, entry) {
+    char *deh_name = (char *)entry.obj;
+
+    if (strcmp(basename, deh_name) == 0) {
+      found = true;
+      break;
+    }
+  }
+
+  if (found)
+    lprintf(LO_INFO, "DeH/BEX %s already added, skipping\n", basename);
+  else
+    M_OBufAppend(&deh_files_buf, (void *)basename);
 }
 
 //
@@ -770,144 +817,154 @@ const char *D_dehout(void) {
 // the gamemode from it. Also note if DOOM II, whether secret levels exist
 // CPhipps - const char* for iwadname, made static
 //e6y static 
-void CheckIWAD(const char *iwadname,GameMode_t *gmode,dboolean *hassec)
-{
-  if ( !access (iwadname,R_OK) )
-  {
-    int ud=0,rg=0,sw=0,cm=0,sc=0,hx=0,cq=0;
-    dboolean noiwad=0;
-    FILE* fp;
+void CheckIWAD(const char *iwadname, GameMode_t *gmode, dboolean *hassec) {
+  int ud = 0;
+  int rg = 0;
+  int sw = 0;
+  int cm = 0;
+  int sc = 0;
+  int hx = 0;
+  int cq = 0;
+  dboolean noiwad = false;
+  FILE *fp;
+  wadinfo_t header;
+  size_t length;
+  filelump_t *fileinfo;
 
-    // Identify IWAD correctly
-    if ((fp = fopen(iwadname, "rb")))
-    {
-      wadinfo_t header;
+  if (access(iwadname, R_OK)) // error from access call
+    I_Error("CheckIWAD: IWAD %s not readable", iwadname);
 
-      // read IWAD header
-      if (fread(&header, sizeof(header), 1, fp) == 1)
-      {
-        size_t length;
-        filelump_t *fileinfo;
+  if (!(fp = fopen(iwadname, "rb"))) // error from open call
+    I_Error("CheckIWAD: Can't open IWAD %s", iwadname);
 
-        if (strncmp(header.identification, "IWAD", 4)) // missing IWAD tag in header
-        {
-          noiwad++;
+  *gmode = indetermined;
+  *hassec = false;
+
+  if (fread(&header, sizeof(header), 1, fp) != 1) {
+    fclose(fp);
+    return;
+  }
+
+  // Identify IWAD correctly
+
+  // read IWAD header
+
+  // check for missing IWAD tag in header
+  if (strncmp(header.identification, "IWAD", 4))
+    noiwad = true;
+
+  // read IWAD directory
+  header.numlumps = LittleLong(header.numlumps);
+  header.infotableofs = LittleLong(header.infotableofs);
+  length = header.numlumps;
+  fileinfo = malloc(length * sizeof(filelump_t));
+
+  if (fileinfo == NULL)
+    I_Error("CheckIWAD: malloc returned NULL");
+
+  if (fseek(fp, header.infotableofs, SEEK_SET) ||
+      fread(fileinfo, sizeof(filelump_t), length, fp) != length ||
+      fclose(fp)) {
+    I_Error("CheckIWAD: failed to read directory %s", iwadname);
+  }
+
+  // scan directory for levelname lumps
+  while (length--) {
+    if (fileinfo[length].name[0] == 'E' &&
+        fileinfo[length].name[2] == 'M' &&
+        fileinfo[length].name[4] == 0) {
+      if (fileinfo[length].name[1] == '4')
+        ud++;
+      else if (fileinfo[length].name[1] == '3')
+        rg++;
+      else if (fileinfo[length].name[1] == '2')
+        rg++;
+      else if (fileinfo[length].name[1] == '1')
+        sw++;
+    }
+    else if (fileinfo[length].name[0] == 'M' &&
+             fileinfo[length].name[1] == 'A' &&
+             fileinfo[length].name[2] == 'P' &&
+             fileinfo[length].name[5] == 0) {
+      cm++;
+      if (fileinfo[length].name[3] == '3') {
+        if (fileinfo[length].name[4] == '1' ||
+            fileinfo[length].name[4] == '2') {
+          sc++;
         }
-
-        // read IWAD directory
-        header.numlumps = LittleLong(header.numlumps);
-        header.infotableofs = LittleLong(header.infotableofs);
-        length = header.numlumps;
-        fileinfo = malloc(length*sizeof(filelump_t));
-        if (fseek (fp, header.infotableofs, SEEK_SET) ||
-            fread (fileinfo, sizeof(filelump_t), length, fp) != length ||
-            fclose(fp))
-          I_Error("CheckIWAD: failed to read directory %s",iwadname);
-
-        // scan directory for levelname lumps
-        while (length--)
-        {
-          if (fileinfo[length].name[0] == 'E' &&
-              fileinfo[length].name[2] == 'M' &&
-              fileinfo[length].name[4] == 0)
-          {
-            if (fileinfo[length].name[1] == '4')
-              ++ud;
-            else if (fileinfo[length].name[1] == '3')
-              ++rg;
-            else if (fileinfo[length].name[1] == '2')
-              ++rg;
-            else if (fileinfo[length].name[1] == '1')
-              ++sw;
-          }
-          else if (fileinfo[length].name[0] == 'M' &&
-                    fileinfo[length].name[1] == 'A' &&
-                    fileinfo[length].name[2] == 'P' &&
-                    fileinfo[length].name[5] == 0)
-          {
-            ++cm;
-            if (fileinfo[length].name[3] == '3')
-              if (fileinfo[length].name[4] == '1' ||
-                  fileinfo[length].name[4] == '2')
-                ++sc;
-          }
-
-          if (!strncmp(fileinfo[length].name,"DMENUPIC",8))
-            bfgedition++;
-          if (!strncmp(fileinfo[length].name,"HACX",4))
-            hx++;
-          if (!strncmp(fileinfo[length].name,"W94_1",5) ||
-              !strncmp(fileinfo[length].name,"POSSH0M0",8))
-            cq++;
-        }
-        free(fileinfo);
-
-        if (noiwad && !bfgedition && cq < 2)
-          I_Error("CheckIWAD: IWAD tag %s not present", iwadname);
-
       }
     }
-    else // error from open call
-      I_Error("CheckIWAD: Can't open IWAD %s", iwadname);
 
-    // Determine game mode from levels present
-    // Must be a full set for whichever mode is present
-    // Lack of wolf-3d levels also detected here
-
-    *gmode = indetermined;
-    *hassec = false;
-    if (cm>=30 || (cm>=20 && hx))
-    {
-      *gmode = commercial;
-      *hassec = sc>=2;
+    if (!strncmp(fileinfo[length].name, "DMENUPIC", 8))
+      bfgedition++;
+    if (!strncmp(fileinfo[length].name, "HACX", 4))
+      hx++;
+    if (!strncmp(fileinfo[length].name, "W94_1", 5) ||
+        !strncmp(fileinfo[length].name, "POSSH0M0", 8)) {
+      cq++;
     }
-    else if (ud>=9)
-      *gmode = retail;
-    else if (rg>=18)
-      *gmode = registered;
-    else if (sw>=9)
-      *gmode = shareware;
   }
-  else // error from access call
-    I_Error("CheckIWAD: IWAD %s not readable", iwadname);
+
+  free(fileinfo);
+
+  if (noiwad && !bfgedition && cq < 2)
+    I_Error("CheckIWAD: IWAD tag %s not present", iwadname);
+
+  // Determine game mode from levels present
+  // Must be a full set for whichever mode is present
+  // Lack of wolf-3d levels also detected here
+
+  if (cm >= 30 || (cm >= 20 && hx)) {
+    *gmode = commercial;
+    *hassec = sc >= 2;
+  }
+  else if (ud >= 9) {
+    *gmode = retail;
+  }
+  else if (rg >= 18) {
+    *gmode = registered;
+  }
+  else if (sw >= 9) {
+    *gmode = shareware;
+  }
 }
 
 //
 // AddIWAD
 //
-void AddIWAD(const char *iwad)
-{
+void AddIWAD(const char *iwad) {
   size_t i;
 
   if (!(iwad && *iwad))
     return;
 
   //jff 9/3/98 use logical output routine
-  lprintf(LO_CONFIRM,"IWAD found: %s\n",iwad); //jff 4/20/98 print only if found
-  CheckIWAD(iwad,&gamemode,&haswolflevels);
+  lprintf(LO_CONFIRM, "IWAD found: %s\n", iwad); //jff 4/20/98 print only if found
+  CheckIWAD(iwad, &gamemode, &haswolflevels);
 
-  /* jff 8/23/98 set gamemission global appropriately in all cases
-  * cphipps 12/1999 - no version output here, leave that to the caller
-  */
+  /*
+   * jff 8/23/98 set gamemission global appropriately in all cases
+   * cphipps 12/1999 - no version output here, leave that to the caller
+   */
   i = strlen(iwad);
-  switch(gamemode)
-  {
+
+  switch(gamemode) {
   case retail:
   case registered:
   case shareware:
     gamemission = doom;
-    if (i>=8 && !strnicmp(iwad+i-8,"chex.wad",8))
+    if (i >= 8 && !strnicmp(iwad + i - 8,"chex.wad", 8))
       gamemission = chex;
     break;
   case commercial:
     gamemission = doom2;
-    if (i>=10 && !strnicmp(iwad+i-10,"doom2f.wad",10))
+    if (i >= 10 && !strnicmp(iwad + i - 10,"doom2f.wad",10))
       language=french;
-    else if (i>=7 && !strnicmp(iwad+i-7,"tnt.wad",7))
+    else if (i >= 7 && !strnicmp(iwad + i - 7,"tnt.wad",7))
       gamemission = pack_tnt;
-    else if (i>=12 && !strnicmp(iwad+i-12,"plutonia.wad",12))
+    else if (i >= 12 && !strnicmp(iwad + i - 12,"plutonia.wad",12))
       gamemission = pack_plut;
-    else if (i>=8 && !strnicmp(iwad+i-8,"hacx.wad",8))
+    else if (i >= 8 && !strnicmp(iwad + i - 8,"hacx.wad",8))
       gamemission = hacx;
     break;
   default:
@@ -916,8 +973,9 @@ void AddIWAD(const char *iwad)
   }
   if (gamemode == indetermined) {
     //jff 9/3/98 use logical output routine
-    lprintf(LO_WARN,"Unknown Game Version, may not work\n");
+    lprintf(LO_WARN, "Unknown Game Version, may not work\n");
   }
+  D_SetIWAD(iwad);
   D_AddFile(iwad, source_iwad);
 }
 

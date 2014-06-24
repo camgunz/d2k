@@ -210,6 +210,7 @@ static void handle_setup(netpeer_t *np) {
     M_OBufFreeEntriesAndClear(&resource_files_buf);
     M_OBufFreeEntriesAndClear(&deh_files_buf);
     N_ClearStates();
+    N_Disconnect();
     return;
   }
 

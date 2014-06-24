@@ -67,6 +67,8 @@ void D_DoAdvanceDemo (void);
 // BASE LEVEL
 //
 
+void        D_SetIWAD(const char *iwad);
+const char* D_GetIWAD(void);
 void        D_Display(void);
 void        D_PageTicker(void);
 void        D_StartTitle(void);

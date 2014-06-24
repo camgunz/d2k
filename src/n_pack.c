@@ -56,6 +56,7 @@
 #include "n_proto.h"
 
 /* CG: FIXME: Most of these should be more than just defines tucked here */
+#define MAX_IWAD_NAME_LENGTH 20
 #define MAX_RESOURCE_NAMES 1000
 #define MAX_RESOURCE_NAME_LENGTH 128
 #define MAX_SERVER_MESSAGE_SIZE 256
@@ -329,6 +330,7 @@ void N_PackSetup(netpeer_t *np) {
   pbuf_t *pbuf = NULL;
   size_t resource_count = M_OBufGetObjectCount(&resource_files_buf);
   size_t deh_count = M_OBufGetObjectCount(&deh_files_buf);
+  const char *iwad = D_GetIWAD();
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
@@ -341,6 +343,7 @@ void N_PackSetup(netpeer_t *np) {
   M_PBufWriteInt(pbuf, netsync);
   M_PBufWriteUShort(pbuf, player_count);
   M_PBufWriteShort(pbuf, np->playernum);
+  M_PBufWriteString(pbuf, iwad, strlen(iwad));
 
   M_PBufWriteUInt(pbuf, resource_count);
   if (resource_count > 0)
@@ -386,6 +389,8 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   game_state_t *gs = NULL;
   unsigned int resource_count = 0;
   unsigned int deh_count = 0;
+  char *iwad;
+  buf_t iwad_buf;
   obuf_t resource_files;
   obuf_t deh_files;
 
@@ -397,6 +402,17 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   D_Log(LOG_SYNC, "player count: %d\n", m_player_count);
   read_short(pbuf, m_playernum, "consoleplayer");
   D_Log(LOG_SYNC, "consoleplayer: %d\n", m_playernum);
+
+  M_BufferInit(&iwad_buf);
+  read_string(pbuf, &iwad_buf, "IWAD", MAX_IWAD_NAME_LENGTH);
+  iwad = I_FindFile(M_BufferGetData(&iwad_buf), NULL);
+  M_BufferFree(&iwad_buf);
+  if (iwad == NULL) {
+    doom_printf("N_UnpackSetup: Couldn't find IWAD %s\n", iwad);
+    return false;
+  }
+  AddIWAD(iwad);
+  free(iwad);
 
   /*
    * CG: TODO: Add missing resources to a list of resources to fetch with
