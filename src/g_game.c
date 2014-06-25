@@ -1045,6 +1045,7 @@ void G_Ticker(void) {
         P_SpawnMobj(x, y, z, MT_TFOG);
         S_StartSound(actor, sfx_telept);
       }
+
       playeringame[i] = false;
       players[i].playerstate = PST_LIVE;
     }
