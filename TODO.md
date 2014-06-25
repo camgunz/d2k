@@ -1,8 +1,7 @@
 # To Do
 
 - Get prototype working
-  - Fix disconnection issues
-  - Test with > 1 player
+  - Test with > 1 player remotely
   - Make a section for D2K on totaltrash.org & package up a Windows binary
     - Figure out how to do an icon with MinGW-w64?
 

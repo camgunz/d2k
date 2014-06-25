@@ -118,13 +118,14 @@ char* M_LocalizePath(const char *path) {
 
 #ifdef _WIN32
   size_t path_len = strlen(path);
+
   lp = g_convert(path, path_len, "wchar_t", "UTF-8", NULL, &sz, &file_error);
+  out = calloc(sz + sizeof(wchar_t), 1);
 #else
   lp = g_filename_from_utf8(path, -1, NULL, &sz, &file_error);
+  out = calloc(sz + 1, sizeof(char));
 #endif
   
-  out = calloc(sz, sizeof(char));
-
   if (!out)
     I_Error("M_LocalizePath: calloc failed");
 
@@ -149,7 +150,7 @@ char* M_UnLocalizePath(const char *local_path) {
   ulp = g_filename_to_utf8(local_path, -1, NULL, &sz, &file_error);
 #endif
   
-  out = calloc(sz, sizeof(char));
+  out = calloc(sz + 1, sizeof(char));
 
   if (!out)
     I_Error("M_UnLocalizePath: calloc failed");
@@ -579,10 +580,9 @@ void M_ExtractFileBase(const char *path, char *dest) {
 char* M_AddDefaultExtension(const char *path, const char *ext) {
   char *dirname;
   char *basename;
-  size_t ext_len = strlen(ext);
-  size_t base_len;
   char *path_ext;
   char *out;
+  buf_t buf;
 
   basename = M_Basename(path);
 
@@ -601,8 +601,6 @@ char* M_AddDefaultExtension(const char *path, const char *ext) {
   }
 
   path_ext = strrchr(basename, '.');
-
-  base_len = strlen(basename);
 
   if (path_ext) {
     free(dirname);
@@ -610,15 +608,26 @@ char* M_AddDefaultExtension(const char *path, const char *ext) {
     return strdup(path);
   }
 
-  out = calloc(base_len + ext_len + 2, sizeof(char));
-  strcat(out, dirname);
-  strcat(out, basename);
+  *path_ext = 0;
 
-  strcat(out, ".");
-  strcat(out, ext);
+  M_BufferInit(&buf);
+
+  if (!M_PathJoinBuf(&buf, dirname, basename)) {
+    I_Error("M_AddDefaultExtension: Error joining %s and %s (%s)",
+      dirname, basename, M_GetFileError()
+    );
+  }
 
   free(dirname);
   free(basename);
+
+  M_BufferSeekBackward(&buf, 1);
+  M_BufferWriteUChar(&buf, '.');
+  M_BufferWriteString(&buf, ext, strlen(ext));
+
+  out = strdup(M_BufferGetData(&buf));
+
+  M_BufferFree(&buf);
 
   return out;
 }
@@ -626,15 +635,14 @@ char* M_AddDefaultExtension(const char *path, const char *ext) {
 char* M_SetFileExtension(const char *path, const char *ext) {
   char *dirname;
   char *basename;
-  size_t ext_len = strlen(ext);
-  size_t base_len;
   char *path_ext;
   char *out;
+  buf_t buf;
 
   basename = M_Basename(path);
 
   if (basename == NULL) {
-    I_Error("M_AddDefaultExtension: Error getting basename of %s (%s)",
+    I_Error("M_SetFileExtension: Error getting basename of %s (%s)",
       path, M_GetFileError()
     );
   }
@@ -642,33 +650,33 @@ char* M_SetFileExtension(const char *path, const char *ext) {
   dirname = M_Dirname(path);
 
   if (dirname == NULL) {
-    I_Error("M_AddDefaultExtension: Error getting dirname of %s (%s)",
+    I_Error("M_SetFileExtension: Error getting dirname of %s (%s)",
       path, M_GetFileError()
     );
   }
 
   path_ext = strrchr(basename, '.');
+  if (path_ext)
+    *path_ext = 0;
 
-  base_len = strlen(basename);
+  M_BufferInit(&buf);
 
-  if (!path_ext) {
-    out = calloc(base_len + ext_len + 2, sizeof(char));
-    strcat(out, dirname);
-    strcat(out, basename);
+  if (!M_PathJoinBuf(&buf, dirname, basename)) {
+    I_Error("M_SetFileExtension: Error joining %s and %s (%s)",
+      dirname, basename, M_GetFileError()
+    );
   }
-  else {
-    size_t name_len = path_ext - basename;
-
-    out = calloc(name_len + ext_len + 2, sizeof(char));
-    strcat(out, dirname);
-    strncat(out, basename, name_len);
-  }
-
-  strcat(out, ".");
-  strcat(out, ext);
 
   free(dirname);
   free(basename);
+
+  M_BufferSeekBackward(&buf, 1);
+  M_BufferWriteUChar(&buf, '.');
+  M_BufferWriteString(&buf, ext, strlen(ext));
+
+  out = strdup(M_BufferGetData(&buf));
+
+  M_BufferFree(&buf);
 
   return out;
 }

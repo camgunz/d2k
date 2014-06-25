@@ -219,10 +219,11 @@ void W_InitCache(void) {
 }
 
 const void* W_CacheLumpNum(int lump) {
-  size_t wadfile_count = M_CBufGetObjectCount(&resource_files_buf);
   int wad_index = (int)(lumpinfo[lump].wadfile);
 
 #ifdef RANGECHECK
+  size_t wadfile_count = M_CBufGetObjectCount(&resource_files_buf);
+
   if ((wad_index < 0)||((size_t)wad_index >= wadfile_count))
     I_Error("W_CacheLumpNum: wad_index out of range");
 
