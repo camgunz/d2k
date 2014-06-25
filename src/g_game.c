@@ -1032,6 +1032,8 @@ void G_Ticker(void) {
       G_DoReborn(i);
 
     if (players[i].playerstate == PST_DISCONNECTED) {
+      printf("Player %d disconnected\n", i);
+
       if (players[i].mo) {
         mobj_t *actor = players[i].mo;
         fixed_t x     = actor->x;

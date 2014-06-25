@@ -496,11 +496,6 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
           continue;
         }
 
-#ifdef RAISE_TIMEOUTS
-        np->loaded = false;
-        enet_peer_timeout(net_event.peer, 65536, 10000, 60000);
-#endif
-
         N_PeerSetConnected(peernum, net_event.peer);
 
         SV_SetupNewPeer(peernum);
@@ -515,10 +510,6 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
           );
           continue;
         }
-
-#ifdef RAISE_TIMEOUTS
-        np->loaded = false;
-#endif
 
         N_PeerSetConnected(0, net_event.peer);
       }
@@ -550,13 +541,6 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
         doom_printf("N_ServiceNetwork: Error getting peer that just sent data\n");
         continue;
       }
-
-#ifdef RAISE_TIMEOUTS
-      if (!np->loaded) {
-        enet_peer_timeout(net_event.peer, 0, 0, 0);
-        np->loaded = true;
-      }
-#endif
 
       if ((net_event.packet->data[0] & 0x80) == 0x80) {
         N_HandlePacket(
