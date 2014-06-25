@@ -576,20 +576,101 @@ void M_ExtractFileBase(const char *path, char *dest) {
  * 1/18/98 killough: adds a default extension to a path
  * Note: Backslashes are treated specially, for MS-DOS.
  */
-char* M_AddDefaultExtension(char *path, const char *ext) {
-  char *p = path;
+char* M_AddDefaultExtension(const char *path, const char *ext) {
+  char *dirname;
+  char *basename;
+  size_t ext_len = strlen(ext);
+  size_t base_len;
+  char *path_ext;
+  char *out;
 
-  while (*p++);
+  basename = M_Basename(path);
 
-  while (p-- > path && *p != '/' && *p != '\\') {
-    if (*p == '.')
-      return path;
+  if (basename == NULL) {
+    I_Error("M_AddDefaultExtension: Error getting basename of %s (%s)",
+      path, M_GetFileError()
+    );
   }
 
-  if (*ext != '.')
-    strcat(path, ".");
+  dirname = M_Dirname(path);
 
-  return strcat(path, ext);
+  if (dirname == NULL) {
+    I_Error("M_AddDefaultExtension: Error getting dirname of %s (%s)",
+      path, M_GetFileError()
+    );
+  }
+
+  path_ext = strrchr(basename, '.');
+
+  base_len = strlen(basename);
+
+  if (path_ext) {
+    free(dirname);
+    free(basename);
+    return strdup(path);
+  }
+
+  out = calloc(base_len + ext_len + 2, sizeof(char));
+  strcat(out, dirname);
+  strcat(out, basename);
+
+  strcat(out, ".");
+  strcat(out, ext);
+
+  free(dirname);
+  free(basename);
+
+  return out;
+}
+
+char* M_SetFileExtension(const char *path, const char *ext) {
+  char *dirname;
+  char *basename;
+  size_t ext_len = strlen(ext);
+  size_t base_len;
+  char *path_ext;
+  char *out;
+
+  basename = M_Basename(path);
+
+  if (basename == NULL) {
+    I_Error("M_AddDefaultExtension: Error getting basename of %s (%s)",
+      path, M_GetFileError()
+    );
+  }
+
+  dirname = M_Dirname(path);
+
+  if (dirname == NULL) {
+    I_Error("M_AddDefaultExtension: Error getting dirname of %s (%s)",
+      path, M_GetFileError()
+    );
+  }
+
+  path_ext = strrchr(basename, '.');
+
+  base_len = strlen(basename);
+
+  if (!path_ext) {
+    out = calloc(base_len + ext_len + 2, sizeof(char));
+    strcat(out, dirname);
+    strcat(out, basename);
+  }
+  else {
+    size_t name_len = path_ext - basename;
+
+    out = calloc(name_len + ext_len + 2, sizeof(char));
+    strcat(out, dirname);
+    strncat(out, basename, name_len);
+  }
+
+  strcat(out, ".");
+  strcat(out, ext);
+
+  free(dirname);
+  free(basename);
+
+  return out;
 }
 
 /* vi: set et ts=2 sw=2: */

@@ -919,7 +919,7 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
 
   // set subsector and/or block links
 
-  P_SetThingPosition (mobj);
+  P_SetThingPosition(mobj);
 
   mobj->dropoffz =           /* killough 11/98: for tracking dropoffs */
   mobj->floorz   = mobj->subsector->sector->floorheight;
@@ -956,34 +956,29 @@ int        iquetail;
 // P_RemoveMobj
 //
 
-void P_RemoveMobj (mobj_t* mobj)
-{
-  if ((mobj->flags & MF_SPECIAL)
-      && !(mobj->flags & MF_DROPPED)
-      && (mobj->type != MT_INV)
-      && (mobj->type != MT_INS))
-    {
+void P_RemoveMobj(mobj_t* mobj) {
+  if ((mobj->flags & MF_SPECIAL) &&
+      !(mobj->flags & MF_DROPPED) &&
+      (mobj->type != MT_INV) &&
+      (mobj->type != MT_INS)) {
     itemrespawnque[iquehead] = mobj->spawnpoint;
     itemrespawntime[iquehead] = leveltime;
-    iquehead = (iquehead+1)&(ITEMQUESIZE-1);
+    iquehead = (iquehead + 1) & (ITEMQUESIZE - 1);
 
     // lose one off the end?
 
     if (iquehead == iquetail)
-      iquetail = (iquetail+1)&(ITEMQUESIZE-1);
-    }
+      iquetail = (iquetail + 1) & (ITEMQUESIZE - 1);
+  }
 
   // unlink from sector and block lists
-
-  P_UnsetThingPosition (mobj);
+  P_UnsetThingPosition(mobj);
 
   // Delete all nodes on the current sector_list               phares 3/16/98
-
-  if (sector_list)
-    {
+  if (sector_list) {
     P_DelSeclist(sector_list);
     sector_list = NULL;
-    }
+  }
 
   // stop any playing sound
 
@@ -1005,9 +1000,9 @@ void P_RemoveMobj (mobj_t* mobj)
     P_SetTarget(&mobj->tracer,    NULL);
     P_SetTarget(&mobj->lastenemy, NULL);
   }
-  // free block
 
-  P_RemoveThinker (&mobj->thinker);
+  // free block
+  P_RemoveThinker(&mobj->thinker);
 }
 
 

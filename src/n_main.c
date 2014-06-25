@@ -321,6 +321,9 @@ void N_InitNetGame(void) {
       if (N_PeerGet(0) == NULL)
         I_Error("N_InitNetGame: Timed out connecting to server");
 
+      if (CLIENT)
+        G_ReloadDefaults();
+
       N_ServiceNetworkTimeout(CONNECT_TIMEOUT * 1000);
 
       if (received_setup)

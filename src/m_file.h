@@ -84,8 +84,9 @@ bool        M_SeekFile(FILE *f, long int offset, int origin);
 uint32_t    M_FileLength(FILE *f);
 bool        M_FlushFile(FILE *f);
 bool        M_CloseFile(FILE *f);
-void        M_ExtractFileBase(const char *, char *);      // killough
-char*       M_AddDefaultExtension(char *, const char *);  // killough 1/18/98
+void        M_ExtractFileBase(const char *path, char *dest); // killough
+char*       M_AddDefaultExtension(const char *path, const char *ext); // killough 1/18/98
+char*       M_SetFileExtension(const char *path, const char *ext);
 
 #endif
 

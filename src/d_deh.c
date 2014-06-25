@@ -1538,14 +1538,21 @@ void ProcessDehFile(const char *filename, const char *outfilename, int lumpnum)
     }
   else  // DEH file comes from lump indicated by third argument
     {
+      wadfile_info_t *wf = M_CBufGet(
+        &resource_files_buf, lumpinfo[lumpnum].wadfile
+      );
+
+      if (wf == NULL) {
+        I_Error("ProcessDehFile: Bad wadfile index in lump %d (%d)\n",
+          lumpnum, lumpinfo[lumpnum].wadfile
+        );
+      }
+
       infile.size = W_LumpLength(lumpnum);
       infile.inp = infile.lump = W_CacheLumpNum(lumpnum);
-      filename = lumpinfo[lumpnum].wadfile->name;
+      filename = wf->name;
       file_or_lump = "lump from";
     }
-
-  if (filename != NULL)
-    D_AddDEHFile(filename);
 
   lprintf(LO_INFO, "Loading DEH %s %s\n", file_or_lump, filename);
   if (fileout)

@@ -1421,26 +1421,16 @@ void M_LoadDefaults (void)
     }
   }
 
-  // check for a custom default file
-
-#if ((defined GL_DOOM) && (defined _MSC_VER))
-#define BOOM_CFG "glboom-plus.cfg"
-#else
-#define BOOM_CFG "prboom-plus.cfg"
-#endif
-
-  i = M_CheckParm ("-config");
-  if (i && i < myargc-1)
-  {
+  i = M_CheckParm ("-config"); // check for a custom default file
+  if (i && i < myargc-1) {
     defaultfile = strdup(myargv[i+1]);
   }
-  else
-  {
+  else { /* get config file from same directory as executable */
     const char* exedir = I_DoomExeDir();
-    /* get config file from same directory as executable */
-    int len = doom_snprintf(NULL, 0, "%s/" BOOM_CFG, exedir);
+    int len = snprintf(NULL, 0, "%s/%s.cfg", exedir, PACKAGE_TARNAME);
+
     defaultfile = malloc(len+1);
-    doom_snprintf(defaultfile, len+1, "%s/" BOOM_CFG, exedir);
+    snprintf(defaultfile, len + 1, "%s/%s.cfg", exedir, PACKAGE_TARNAME);
   }
 
   lprintf (LO_CONFIRM, " default file: %s\n",defaultfile);
@@ -1561,11 +1551,6 @@ void M_LoadDefaults (void)
   free(cfgline);
 
   //jff 3/4/98 redundant range checks for hud deleted here
-  /* proff 2001/7/1 - added prboom.wad as last entry so it's always loaded and
-     doesn't overlap with the cfg settings */
-  //e6y: Check on existence of prboom.wad
-  if (!(wad_files[MAXLOADFILES-1] = I_FindFile(PACKAGE_TARNAME ".wad", "")))
-    I_Error(PACKAGE_TARNAME ".wad not found. Can't continue.");
 }
 
 

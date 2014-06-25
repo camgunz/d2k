@@ -207,8 +207,8 @@ static void handle_setup(netpeer_t *np) {
   N_ResetLocalCommandIndex();
 
   if (!N_UnpackSetup(np, &net_sync, &player_count, &playernum)) {
-    M_OBufFreeEntriesAndClear(&resource_files_buf);
-    M_OBufFreeEntriesAndClear(&deh_files_buf);
+    M_CBufFree(&resource_files_buf);
+    M_CBufFree(&deh_files_buf);
     N_ClearStates();
     N_Disconnect();
     return;

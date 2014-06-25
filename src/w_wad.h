@@ -88,12 +88,8 @@ typedef struct {
   int handle;
 } wadfile_info_t;
 
-extern obuf_t resource_files_buf;
-extern obuf_t deh_files_buf;
-
-extern wadfile_info_t *wadfiles;
-
-extern size_t numwadfiles; // CPhipps - size of the wadfiles array
+extern cbuf_t resource_files_buf;
+extern cbuf_t deh_files_buf;
 
 void W_Init(void); // CPhipps - uses the above array
 void W_ReleaseAllWads(void); // Proff - Added for iwad switching
@@ -124,7 +120,7 @@ typedef struct
   // killough 4/17/98: namespace tags, to prevent conflicts between resources
   li_namespace_e li_namespace; // haleyjd 05/21/02: renamed from "namespace"
 
-  wadfile_info_t *wadfile;
+  int wadfile;
   int position;
   wad_source_t source;
   int flags; //e6y

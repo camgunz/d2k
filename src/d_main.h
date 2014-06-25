@@ -67,16 +67,16 @@ void D_DoAdvanceDemo (void);
 // BASE LEVEL
 //
 
+void        IdentifyVersion(void);
 void        D_SetIWAD(const char *iwad);
 const char* D_GetIWAD(void);
+const char* D_GetIWADPath(void);
 void        D_Display(void);
 void        D_PageTicker(void);
 void        D_StartTitle(void);
 void        D_DoomMain(void);
 void        D_AddFile (const char *file, wad_source_t source);
-const char* D_dehout(void);
-void        D_AddResource(const char *filename);
-void        D_AddDEHFile(const char *filename);
+void        D_AddDEH(const char *filename, int lumpnum);
 
 void        AddIWAD(const char *iwad);
 

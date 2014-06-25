@@ -44,6 +44,7 @@
 #include "g_game.h"
 #include "i_system.h"
 #include "lprintf.h"
+#include "m_file.h"
 #include "m_pbuf.h"
 #include "p_pspr.h"
 #include "p_user.h"
@@ -328,8 +329,8 @@ void N_PackSetup(netpeer_t *np) {
   game_state_t *gs = N_GetLatestState();
   unsigned short player_count = 0;
   pbuf_t *pbuf = NULL;
-  size_t resource_count = M_OBufGetObjectCount(&resource_files_buf);
-  size_t deh_count = M_OBufGetObjectCount(&deh_files_buf);
+  size_t resource_count = 0;
+  size_t deh_count = M_CBufGetObjectCount(&deh_files_buf);
   const char *iwad = D_GetIWAD();
 
   for (int i = 0; i < MAXPLAYERS; i++) {
@@ -345,17 +346,55 @@ void N_PackSetup(netpeer_t *np) {
   M_PBufWriteShort(pbuf, np->playernum);
   M_PBufWriteString(pbuf, iwad, strlen(iwad));
 
-  M_PBufWriteUInt(pbuf, resource_count);
-  if (resource_count > 0)
-    M_PBufWriteStringArray(pbuf, &resource_files_buf);
+  CBUF_FOR_EACH(&resource_files_buf, entry) {
+    wadfile_info_t *wf = (wadfile_info_t *)entry.obj;
 
-  M_PBufWriteUInt(pbuf, deh_count);
-  if (deh_count > 0)
-    M_PBufWriteStringArray(pbuf, &deh_files_buf);
+    if (wf->src != source_iwad && wf->src != source_auto_load)
+      resource_count++;
+  }
+
+  M_PBufWriteBool(pbuf, resource_count > 0);
+  if (resource_count > 0) {
+    M_PBufWriteArray(pbuf, resource_count);
+
+    CBUF_FOR_EACH(&resource_files_buf, entry) {
+      wadfile_info_t *wf = (wadfile_info_t *)entry.obj;
+      char *wad_name;
+
+      if (wf->src == source_iwad || wf->src == source_auto_load)
+        continue;
+      
+      wad_name = M_Basename(wf->name);
+
+      if (!wad_name)
+        I_Error("N_PackSetup: Error getting basename of %s\n", wf->name);
+
+      M_PBufWriteString(pbuf, wad_name, strlen(wad_name));
+
+      free(wad_name);
+    }
+  }
+
+  M_PBufWriteBool(pbuf, deh_count > 0);
+  if (deh_count > 0) {
+    M_PBufWriteArray(pbuf, M_CBufGetObjectCount(&deh_files_buf));
+
+    CBUF_FOR_EACH(&deh_files_buf, entry) {
+      deh_file_t *df = (deh_file_t *)entry.obj;
+      char *deh_name = M_Basename(df->filename);
+
+      if (!deh_name)
+        I_Error("N_PackSetup: Error getting basename of %s\n", df->filename);
+
+      M_PBufWriteString(pbuf, deh_name, strlen(deh_name));
+      free(deh_name);
+    }
+  }
 
   M_PBufWriteInt(pbuf, gs->tic);
   M_PBufWriteBytes(pbuf, gs->data.data, gs->data.size);
 
+  /*
   D_Log(LOG_SYNC, "Resources:");
   OBUF_FOR_EACH(&resource_files_buf, entry) {
     D_Log(LOG_SYNC, "  %s\n", (char *)entry.obj);
@@ -373,6 +412,7 @@ void N_PackSetup(netpeer_t *np) {
     gs->tic,
     gs->data.size
   );
+  */
 
   D_Log(LOG_SYNC, "N_PackSetup: Sent game state at %d (player count: %d).\n",
     gs->tic, player_count
@@ -387,9 +427,8 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   unsigned short m_player_count = 0;
   short m_playernum = 0;
   game_state_t *gs = NULL;
-  unsigned int resource_count = 0;
-  unsigned int deh_count = 0;
-  char *iwad;
+  dboolean has_resources;
+  dboolean has_deh_files;
   buf_t iwad_buf;
   obuf_t resource_files;
   obuf_t deh_files;
@@ -405,14 +444,11 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
 
   M_BufferInit(&iwad_buf);
   read_string(pbuf, &iwad_buf, "IWAD", MAX_IWAD_NAME_LENGTH);
-  iwad = I_FindFile(M_BufferGetData(&iwad_buf), NULL);
+  D_SetIWAD(M_BufferGetData(&iwad_buf));
+  IdentifyVersion();
   M_BufferFree(&iwad_buf);
-  if (iwad == NULL) {
-    doom_printf("N_UnpackSetup: Couldn't find IWAD %s\n", iwad);
-    return false;
-  }
-  AddIWAD(iwad);
-  free(iwad);
+
+  D_AddFile(PACKAGE_TARNAME ".wad", source_auto_load);
 
   /*
    * CG: TODO: Add missing resources to a list of resources to fetch with
@@ -422,12 +458,9 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
    *           successfully obtained
    */
 
-  read_ranged_uint(
-    pbuf, resource_count, "resource file count", 1, MAX_RESOURCE_NAMES
-  );
-  D_Log(LOG_SYNC, "resource file count: %u\n", resource_count);
-  if (resource_count > 0) {
-    M_OBufInitWithCapacity(&resource_files, resource_count);
+  read_bool(pbuf, has_resources, "has resources");
+  if (has_resources) {
+    M_OBufInit(&resource_files);
     read_string_array(
       pbuf,
       &resource_files,
@@ -436,32 +469,20 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
       MAX_RESOURCE_NAME_LENGTH
     );
     D_Log(LOG_SYNC,
-      "loaded resource file count: %d", M_OBufGetObjectCount(&resource_files)
+      "Loaded %d resource files\n", M_OBufGetObjectCount(&resource_files)
     );
     OBUF_FOR_EACH(&resource_files, entry) {
       int resource_index = entry.index;
       char *resource_name = (char *)entry.obj;
-      char *resource_path = I_FindFile(resource_name, NULL);
 
-      if (resource_path == NULL) {
-        doom_printf("Unable to find resource \"%s\", disconnecting.\n",
-          resource_name
-        );
-        N_Disconnect();
-        return false;
-      }
-
-      D_Log(LOG_SYNC, "resource %d: %s\n", resource_index, resource_name);
-      D_AddFile(resource_path, source_net);
+      D_AddFile(resource_name, source_net);
+      D_Log(LOG_SYNC, " %d: %s\n", resource_index, resource_name);
     }
   }
 
-  read_ranged_uint(
-    pbuf, deh_count, "DeH/BEX file count", 0, MAX_RESOURCE_NAMES
-  );
-  D_Log(LOG_SYNC, "DeH/BEX file count: %u\n", deh_count);
-  if (deh_count) {
-    M_OBufInitWithCapacity(&deh_files, deh_count);
+  read_bool(pbuf, has_deh_files, "has DeH/BEX file");
+  if (has_deh_files) {
+    M_OBufInit(&deh_files);
     read_string_array(
       pbuf,
       &deh_files,
@@ -470,22 +491,14 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
       MAX_RESOURCE_NAME_LENGTH
     );
     D_Log(LOG_SYNC,
-      "loaded DeH/BEX file count: %d", M_OBufGetObjectCount(&deh_files)
+      "Loaded %d DeH/BEX files", M_OBufGetObjectCount(&deh_files)
     );
     OBUF_FOR_EACH(&deh_files, entry) {
       int deh_index = entry.index;
       char *deh_name = (char *)entry.obj;
-      char *deh_path = I_FindFile(deh_name, NULL);
 
-      if (deh_path == NULL) {
-        doom_printf("Unable to find DeH/BEX \"%s\", disconnecting.\n",
-          deh_name
-        );
-        N_Disconnect();
-        return false;
-      }
+      D_AddDEH(deh_name, 0);
       D_Log(LOG_SYNC, "DeH/BEX %d: %s\n", deh_index, deh_name);
-      ProcessDehFile((char *)entry.obj, D_dehout(), 0);
     }
   }
 
@@ -495,7 +508,9 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   D_Log(LOG_SYNC, "Game State TIC: %d\n", gs->tic);
 
   D_Log(LOG_SYNC, "N_UnpackSetup: Game State: %d %d %d %d %d %d\n",
-    m_sync_type, m_player_count, m_playernum, resource_count, deh_count,
+    m_sync_type, m_player_count, m_playernum,
+    M_CBufGetObjectCount(&resource_files_buf),
+    M_CBufGetObjectCount(&deh_files_buf),
     gs->tic
   );
 

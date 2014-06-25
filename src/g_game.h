@@ -95,7 +95,7 @@ void G_MakeSpecialEvent(buttoncode_t bc, ...); /* cph - new event stuff */
 
 //e6y
 extern dboolean democontinue;
-extern char democontinuename[];
+extern char* demo_continue_name;
 void G_CheckDemoContinue(void);
 void G_SetSpeed(void);
 

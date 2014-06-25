@@ -2262,34 +2262,14 @@ static void P_RemoveSlimeTrails(void)         // killough 10/98
 //
 // Are these lumps in the same wad file?
 //
-
-dboolean P_CheckLumpsForSameSource(int lump1, int lump2)
-{
-  int wad1_index, wad2_index;
-  wadfile_info_t *wad1, *wad2;
-
-  if (((unsigned)lump1 >= (unsigned)numlumps) || ((unsigned)lump2 >= (unsigned)numlumps))
-    return false;
-  
-  wad1 = lumpinfo[lump1].wadfile;
-  wad2 = lumpinfo[lump2].wadfile;
-  
-  if (!wad1 || !wad2)
+dboolean P_CheckLumpsForSameSource(int lump1, int lump2) {
+  if (((unsigned int)lump1 >= numlumps) || ((unsigned int)lump2 >= numlumps))
     return false;
 
-  wad1_index = (int)(wad1 - wadfiles);
-  wad2_index = (int)(wad2 - wadfiles);
-
-  if (wad1_index != wad2_index)
+  if (lumpinfo[lump1].wadfile == -1 || lumpinfo[lump2].wadfile == -1)
     return false;
 
-  if ((wad1_index < 0) || ((size_t)wad1_index >= numwadfiles))
-    return false;
-
-  if ((wad2_index < 0) || ((size_t)wad2_index >= numwadfiles))
-    return false;
-
-  return true;
+  return lumpinfo[lump1].wadfile == lumpinfo[lump2].wadfile;
 }
 
 //
@@ -2297,9 +2277,7 @@ dboolean P_CheckLumpsForSameSource(int lump1, int lump2)
 //
 // Checking for presence of necessary lumps
 //
-
-void P_CheckLevelWadStructure(const char *mapname)
-{
+void P_CheckLevelWadStructure(const char *mapname) {
   int i, lumpnum;
 
   static const char *ml_labels[] = {
@@ -2317,33 +2295,28 @@ void P_CheckLevelWadStructure(const char *mapname)
   };
 
   if (!mapname)
-  {
     I_Error("P_SetupLevel: Wrong map name");
-  }
 
   lumpnum = W_CheckNumForName(mapname);
 
   if (lumpnum < 0)
-  {
     I_Error("P_SetupLevel: There is no %s map.", mapname);
-  }
 
-  for (i = ML_THINGS + 1; i <= ML_SECTORS; i++)
-  {
-    if (!P_CheckLumpsForSameSource(lumpnum, lumpnum + i))
-    {
-      I_Error("P_SetupLevel: Level wad structure is incomplete. There is no %s lump.", ml_labels[i]);
+  for (i = ML_THINGS + 1; i <= ML_SECTORS; i++) {
+    if (!P_CheckLumpsForSameSource(lumpnum, lumpnum + i)) {
+      I_Error(
+        "P_SetupLevel: Level wad structure is incomplete. There is no %s "
+        "lump.",
+        ml_labels[i]
+      );
     }
   }
 
   // refuse to load Hexen-format maps, avoid segfaults
   i = lumpnum + ML_BLOCKMAP + 1;
-  if (P_CheckLumpsForSameSource(lumpnum, i))
-  {
+  if (P_CheckLumpsForSameSource(lumpnum, i)) {
     if (!strncasecmp(lumpinfo[i].name, "BEHAVIOR", 8))
-    {
       I_Error("P_SetupLevel: %s: Hexen format not supported", mapname);
-    }
   }
 }
 

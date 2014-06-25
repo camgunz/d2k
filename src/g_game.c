@@ -162,18 +162,18 @@ const byte *demo_continue_p = NULL;
 gameaction_t    gameaction;
 gamestate_t     gamestate;
 skill_t         gameskill;
-dboolean         respawnmonsters;
+dboolean        respawnmonsters;
 int             gameepisode;
 int             gamemap;
-dboolean         paused;
-dboolean         usergame;      // ok to save / end game
-dboolean         timingdemo;    // if true, exit with report on completion
-dboolean         fastdemo;      // if true, run at full speed -- killough
-dboolean         nodrawers;     // for comparative timing purposes
-dboolean         noblit;        // for comparative timing purposes
+dboolean        paused;
+dboolean        usergame;      // ok to save / end game
+dboolean        timingdemo;    // if true, exit with report on completion
+dboolean        fastdemo;      // if true, run at full speed -- killough
+dboolean        nodrawers;     // for comparative timing purposes
+dboolean        noblit;        // for comparative timing purposes
 int             starttime;     // for comparative timing purposes
-dboolean         deathmatch;    // only if started as net death
-dboolean         playeringame[MAXPLAYERS];
+dboolean        deathmatch;    // only if started as net death
+dboolean        playeringame[MAXPLAYERS];
 player_t        players[MAXPLAYERS];
 int             upmove;
 int             consoleplayer; // player taking events and displaying
@@ -182,14 +182,14 @@ int             gametic;
 int             basetic;       /* killough 9/29/98: for demo sync */
 int             totalkills, totallive, totalitems, totalsecret;    // for intermission
 int             show_alive;
-dboolean         demorecording;
-dboolean         demoplayback;
-dboolean         democontinue = false;
-char             democontinuename[PATH_MAX];
+dboolean        demorecording;
+dboolean        demoplayback;
+dboolean        democontinue = false;
+char*           demo_continue_name;
 int             demover;
-dboolean         singledemo;           // quit after playing a demo from cmdline
+dboolean        singledemo;           // quit after playing a demo from cmdline
 wbstartstruct_t wminfo;               // parms for world map / intermission
-dboolean         haswolflevels = false;// jff 4/18/98 wolf levels present
+dboolean        haswolflevels = false;// jff 4/18/98 wolf levels present
 int             autorun = false;      // always running?          // phares
 int             totalleveltimes;      // CPhipps - total time for all completed levels
 int             longtics;
@@ -2010,12 +2010,20 @@ void G_DoLoadGame(void) {
   seconds = leveltime / TICRATE;
   total_seconds = (totalleveltimes + leveltime) / TICRATE;
 
+  wadfile_info_t *wf = M_CBufGet(
+    &resource_files_buf, 
+    W_GetLumpInfoByNum(W_GetNumForName(maplump))->wadfile
+  );
+
+  if (wf == NULL)
+    I_Error("G_DoLoadGame: Couldn't find wadfile for %s\n", maplump);
+
   lprintf(LO_INFO,
     "G_DoLoadGame: [%d] %s (%s), Skill %d, Level Time %02d:%02d:%02d, "
     "Total Time %02d:%02d:%02d\n",
     savegameslot + 1,
     maplump,
-    W_GetLumpInfoByNum(W_GetNumForName(maplump))->wadfile->name,
+    wf->name,
     gameskill + 1,
     seconds / 3600,
     (seconds % 3600) / 60,
@@ -2139,11 +2147,25 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
     }
   }
 
+  /*
+  int resource_count;
+
+  M_BufferReadInt(savebuffer, &resource_count);
+
+  if (resource_count > 100)
+    I_Error("G_ReadSaveData: 100 resources seems excessive, bailing");
+
+  while (resource_count--) {
+  }
+  */
+
+  /*
   while (M_BufferPeek(savebuffer) != 0)
     M_BufferSeekForward(savebuffer, 1);
 
   if (M_BufferPeek(savebuffer) == 0)
     M_BufferSeekForward(savebuffer, 1);
+  */
 
   //e6y: check on new savegame format
   if (M_BufferEqualsData(savebuffer, NEWFORMATSIG, strlen(NEWFORMATSIG))) {
@@ -2236,19 +2258,19 @@ dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
 
   // dearchive all the modifications
   P_MapStart();
-  // printf("UnArchiving players at %lu.\n", savebuffer->cursor);
+  // D_Log(LOG_SYNC, "UnArchiving players at %lu.\n", savebuffer->cursor);
   P_UnArchivePlayers(savebuffer);
-  // printf("UnArchiving world at %lu.\n", savebuffer->cursor);
+  // D_Log(LOG_SYNC, "UnArchiving world at %lu.\n", savebuffer->cursor);
   P_UnArchiveWorld(savebuffer);
-  // printf("UnArchiving thinkers at %lu.\n", savebuffer->cursor);
+  // D_Log(LOG_SYNC, "UnArchiving thinkers at %lu.\n", savebuffer->cursor);
   P_UnArchiveThinkers(savebuffer);
-  // printf("UnArchiving specials at %lu.\n", savebuffer->cursor);
+  // D_Log(LOG_SYNC, "UnArchiving specials at %lu.\n", savebuffer->cursor);
   P_UnArchiveSpecials(savebuffer);
-  // printf("UnArchiving RNG at %lu.\n", savebuffer->cursor);
+  // D_Log(LOG_SYNC, "UnArchiving RNG at %lu.\n", savebuffer->cursor);
   P_UnArchiveRNG(savebuffer);    // killough 1/18/98: load RNG information
-  // printf("UnArchiving Map at %lu.\n", savebuffer->cursor);
+  // D_Log(LOG_SYNC, "UnArchiving Map at %lu.\n", savebuffer->cursor);
   P_UnArchiveMap(savebuffer);    // killough 1/22/98: load automap information
-  // printf("UnArchiving consistency marker at %lu.\n", savebuffer->cursor);
+  // D_Log(LOG_SYNC, "UnArchiving consistency marker at %lu.\n", savebuffer->cursor);
   P_MapEnd();
   R_ActivateSectorInterpolations();//e6y
   R_SmoothPlaying_Reset(NULL); // e6y
@@ -2343,12 +2365,20 @@ static void G_DoSaveGame(dboolean menu) {
   seconds = leveltime / TICRATE;
   total_seconds = (totalleveltimes + leveltime) / TICRATE;
 
+  wadfile_info_t *wf = M_CBufGet(
+    &resource_files_buf, 
+    W_GetLumpInfoByNum(W_GetNumForName(maplump))->wadfile
+  );
+
+  if (wf == NULL)
+    I_Error("G_DoSaveGame: Couldn't find wadfile for %s\n", maplump);
+
   lprintf(LO_INFO,
     "G_DoSaveGame: [%d] %s (%s), Skill %d, Level Time %02d:%02d:%02d, "
     "Total Time %02d:%02d:%02d\n",
     savegameslot + 1,
     maplump,
-    W_GetLumpInfoByNum(W_GetNumForName(maplump))->wadfile->name,
+    wf->name,
     gameskill + 1,
     seconds / 3600,
     (seconds % 3600) / 60,
@@ -2390,17 +2420,18 @@ void G_WriteSaveData(buf_t *savebuffer) {
     M_BufferWriteLong(savebuffer, G_Signature());
 
   // killough 3/16/98: store pwad filenames in savegame
-  {
-    // CPhipps - changed for new wadfiles handling
-    size_t i;
-    for (i = 0; i < numwadfiles; i++) {
-      const char *const w = wadfiles[i].name;
+  // CPhipps - changed for new wadfiles handling
+  /* CG: changed again
+   *
+   * M_BufferWriteInt(savebuffer, M_CBufGetObjectCount(&resource_files_buf));
+   * CBUF_FOR_EACH(&resource_files_buf, entry) {
+   *   wadfile_info_t *wadfile = (wadfile_info_t *)entry.obj;
 
-      M_BufferWrite(savebuffer, (void *)w, strlen(w));
-      M_BufferWriteUChar(savebuffer, '\n');
-    }
-    M_BufferWriteUChar(savebuffer, 0);
-  }
+   *   printf("Writing resource [%s]\n", wadfile->name);
+
+   *   M_BufferWriteString(savebuffer, (void *)wadfile->name, strlen(wadfile->name));
+   * }
+  */
 
   M_BufferWrite(savebuffer, NEWFORMATSIG, strlen(NEWFORMATSIG));
   M_BufferWriteInt(savebuffer, packageversion);
@@ -2429,7 +2460,7 @@ void G_WriteSaveData(buf_t *savebuffer) {
   // killough 11/98: save revenant tracer state
   M_BufferWriteUChar(savebuffer, (gametic - basetic) & 255);
 
-  // printf("Archiving players at %lu.\n", savebuffer->cursor);
+  // D_Log(LOG_SYNC, "Archiving players at %lu.\n", savebuffer->cursor);
   P_ArchivePlayers(savebuffer);
 
   // phares 9/13/98: Move mobj_t->index out of P_ArchiveThinkers so the
@@ -2438,9 +2469,9 @@ void G_WriteSaveData(buf_t *savebuffer) {
   // caused a sound, referenced by sector_t->soundtarget.
   P_ThinkerToIndex();
 
-  // printf("Archiving world at %lu.\n", savebuffer->cursor);
+  // D_Log(LOG_SYNC, "Archiving world at %lu.\n", savebuffer->cursor);
   P_ArchiveWorld(savebuffer);
-  // printf("Archiving thinkers at %lu.\n", savebuffer->cursor);
+  // D_Log(LOG_SYNC, "Archiving thinkers at %lu.\n", savebuffer->cursor);
   P_ArchiveThinkers(savebuffer);
 
   // phares 9/13/98: Move index->mobj_t out of P_ArchiveThinkers, simply
@@ -2448,13 +2479,13 @@ void G_WriteSaveData(buf_t *savebuffer) {
 
   P_IndexToThinker();
 
-  // printf("Archiving specials at %lu.\n", savebuffer->cursor);
+  // D_Log(LOG_SYNC, "Archiving specials at %lu.\n", savebuffer->cursor);
   P_ArchiveSpecials(savebuffer);
-  // printf("Archiving RNG at %lu.\n", savebuffer->cursor);
+  // D_Log(LOG_SYNC, "Archiving RNG at %lu.\n", savebuffer->cursor);
   P_ArchiveRNG(savebuffer);    // killough 1/18/98: save RNG information
-  // printf("Archiving map at %lu.\n", savebuffer->cursor);
+  // D_Log(LOG_SYNC, "Archiving map at %lu.\n", savebuffer->cursor);
   P_ArchiveMap(savebuffer);    // killough 1/22/98: save automap information
-  // printf("Archiving consistency marker at %lu.\n", savebuffer->cursor);
+  // D_Log(LOG_SYNC, "Archiving consistency marker at %lu.\n", savebuffer->cursor);
   M_BufferWriteUChar(savebuffer, 0xe6); // consistency marker
 
   if (!average_savebuffer_size_initialized) {
@@ -2583,21 +2614,20 @@ void G_Compatibility(void)
 
 #ifdef DOGS
 /* killough 7/19/98: Marine's best friend :) */
-static int G_GetHelpers(void)
-{
+static int G_GetHelpers(void) {
   int j = M_CheckParm ("-dog");
 
   if (!j)
     j = M_CheckParm ("-dogs");
-  return j ? j+1 < myargc ? atoi(myargv[j+1]) : 1 : default_dogs;
+
+  return j ? j + 1 < myargc ? atoi(myargv[j + 1]) : 1 : default_dogs;
 }
 #endif
 
 // killough 3/1/98: function to reload all the default parameter
 // settings before a new game begins
 
-void G_ReloadDefaults(void)
-{
+void G_ReloadDefaults(void) {
   // killough 3/1/98: Initialize options based on config file
   // (allows functions above to load different values for demos
   // and savegames without messing up defaults).
@@ -2606,7 +2636,10 @@ void G_ReloadDefaults(void)
 
   player_bobbing = default_player_bobbing;  // whether player bobs or not
 
-  /* cph 2007/06/31 - for some reason, the default_* of the next 2 vars was never implemented */
+  /*
+   * cph 2007/06/31 - for some reason, the default_* of the next 2 vars was
+   * never implemented
+   */
   variable_friction = default_variable_friction;
   allow_pushers     = default_allow_pushers;
 
@@ -2634,21 +2667,21 @@ void G_ReloadDefaults(void)
 
   // jff 1/24/98 reset play mode to command line spec'd version
   // killough 3/1/98: moved to here
-  respawnparm = clrespawnparm;
-  fastparm = clfastparm;
-  nomonsters = clnomonsters;
+  nomonsters  = clnomonsters  = M_CheckParm("-nomonsters");
+  respawnparm = clrespawnparm = M_CheckParm("-respawn");
+  fastparm    = clfastparm    = M_CheckParm("-fast");
 
   //jff 3/24/98 set startskill from defaultskill in config file, unless
   // it has already been set by a -skill parameter
   if (startskill==sk_none)
-    startskill = (skill_t)(defaultskill-1);
+    startskill = (skill_t)(defaultskill - 1);
 
   demoplayback = false;
-  singledemo = false;            // killough 9/29/98: don't stop after 1 demo
+  singledemo = false; // killough 9/29/98: don't stop after 1 demo
   netdemo = false;
 
   // killough 2/21/98:
-  memset(playeringame+1, 0, sizeof(*playeringame)*(MAXPLAYERS-1));
+  memset(playeringame + 1, 0, sizeof(*playeringame) * (MAXPLAYERS - 1));
 
   consoleplayer = 0;
 
@@ -2903,10 +2936,9 @@ void G_WriteDemoTiccmd (ticcmd_t* cmd)
 
 void G_RecordDemo (const char* name)
 {
-  char *demoname;
+  char *demoname = M_AddDefaultExtension(name, "lmp"); // 1/18/98 killough
+
   usergame = false;
-  demoname = malloc(strlen(name)+4+1);
-  M_AddDefaultExtension(strcpy(demoname, name), ".lmp");  // 1/18/98 killough
   demorecording = true;
   
   /* cph - Record demos straight to file
@@ -4059,7 +4091,7 @@ void G_CheckDemoContinue(void) {
 
       singledemo = true;
       autostart = true;
-      G_RecordDemo(democontinuename);
+      G_RecordDemo(demo_continue_name);
       G_BeginRecording();
       usergame = true;
     }

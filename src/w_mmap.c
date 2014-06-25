@@ -97,6 +97,8 @@ typedef struct {
 mmap_info_t *mapped_wad;
 
 void W_DoneCache(void) {
+  size_t wadfile_count = M_CBufGetObjectCount(&resource_files_buf);
+
   if (cachelump) {
     free(cachelump);
     cachelump = NULL;
@@ -105,7 +107,7 @@ void W_DoneCache(void) {
   if (!mapped_wad)
     return;
 
-  for (size_t i = 0; i < numwadfiles; i++) {
+  for (size_t i = 0; i < wadfile_count; i++) {
     if (mapped_wad[i].data) {
       UnmapViewOfFile(mapped_wad[i].data);
       mapped_wad[i].data = NULL;
@@ -127,8 +129,10 @@ void W_DoneCache(void) {
 }
 
 void W_InitCache(void) {
+  size_t wadfile_count = M_CBufGetObjectCount(&resource_files_buf);
+
   // set up caching
-  cachelump = calloc(numlumps, sizeof *cachelump);
+  cachelump = calloc(numlumps, sizeof(*cachelump));
   if (!cachelump)
     I_Error("W_InitCache: Couldn't allocate lumpcache");
 
@@ -136,30 +140,37 @@ void W_InitCache(void) {
   atexit(W_ReportLocks);
 #endif
 
-  mapped_wad = calloc(numwadfiles, sizeof(mmap_info_t));
-  memset(mapped_wad, 0, sizeof(mmap_info_t) * numwadfiles);
+  mapped_wad = calloc(wadfile_count, sizeof(mmap_info_t));
+  memset(mapped_wad, 0, sizeof(mmap_info_t) * wadfile_count);
 
   for (int i = 0; i < numlumps; i++) {
-    int wad_index = (int)(lumpinfo[i].wadfile - wadfiles);
+    int wad_index = (int)(lumpinfo[i].wadfile);
+    wadfile_info_t *wadfile;
     cachelump[i].locks = -1;
 
-    if (!lumpinfo[i].wadfile)
+    if (lumpinfo[i].wadfile == -1)
       continue;
 
+    wadfile = M_CBufGet(&resource_files_buf, wad_index);
+
 #ifdef RANGECHECK
-    if ((wad_index < 0) || ((size_t)wad_index >= numwadfiles))
+    if ((wad_index < 0) || ((size_t)wad_index >= wadfile_count))
       I_Error("W_InitCache: wad_index out of range");
 #endif
 
     if (mapped_wad[wad_index].data)
       continue;
 
-    wchar_t *local_path = (wchar_t *)M_LocalizePath(wadfiles[wad_index].name);
+    lprintf(LO_INFO, "Mapping %s (%d/%d)\n",
+      wadfile->name, wad_index, wadfile_count
+    );
+
+    wchar_t *local_path = (wchar_t *)M_LocalizePath(wadfile->name);
 
     if (!local_path) {
       I_Error(
         "W_InitCache: Error localizing path %s: %s",
-        wadfiles[wad_index].name, M_GetFileError()
+        wadfile->name, M_GetFileError()
       );
     }
 
@@ -201,23 +212,28 @@ void W_InitCache(void) {
       );
     }
 
+    lprintf(LO_INFO, "W_InitCache: Mapped %s.\n", wadfile->name);
+
     free(local_path);
   }
 }
 
 const void* W_CacheLumpNum(int lump) {
-  int wad_index = (int)(lumpinfo[lump].wadfile - wadfiles);
+  size_t wadfile_count = M_CBufGetObjectCount(&resource_files_buf);
+  int wad_index = (int)(lumpinfo[lump].wadfile);
+
 #ifdef RANGECHECK
-  if ((wad_index < 0)||((size_t)wad_index >= numwadfiles))
+  if ((wad_index < 0)||((size_t)wad_index >= wadfile_count))
     I_Error("W_CacheLumpNum: wad_index out of range");
 
   if ((unsigned)lump >= (unsigned)numlumps)
     I_Error ("W_CacheLumpNum: %i >= numlumps", lump);
 #endif
-  if (!lumpinfo[lump].wadfile)
+
+  if (lumpinfo[lump].wadfile == -1)
     return NULL;
 
-  return (void*)(
+  return (void *)(
     (unsigned char *)mapped_wad[wad_index].data + lumpinfo[lump].position
   );
 }
@@ -230,6 +246,8 @@ void W_InitCache(void) {
   int maxfd = 0;
   cachelump = calloc(numlumps, sizeof(*cachelump)); // set up caching
 
+  lprintf(LO_INFO, "W_InitCache\n");
+
   if (!cachelump)
     I_Error("W_InitCache: Couldn't allocate lumpcache");
 
@@ -238,54 +256,84 @@ void W_InitCache(void) {
 #endif
 
   for (int i = 0; i < numlumps; i++) {
-    if (!lumpinfo[i].wadfile)
+    wadfile_info_t *wf = NULL;
+
+    if (lumpinfo[i].wadfile == -1)
       continue;
 
-    if (lumpinfo[i].wadfile->handle > maxfd)
-      maxfd = lumpinfo[i].wadfile->handle;
+    wf = M_CBufGet(&resource_files_buf, lumpinfo[i].wadfile);
+
+    if (wf == NULL) {
+      I_Error(
+        "W_InitCache: Lump %d has invalid wadfile index (%d)",
+        i, lumpinfo[i].wadfile
+      );
+    }
+
+    maxfd = MAX(maxfd, lumpinfo[i].wadfile);
   }
 
-  mapped_wad = calloc(maxfd + 1, sizeof(*mapped_wad));
+  if (maxfd <= 0)
+    I_Error("W_InitCache: No WADs loaded");
+
+  mapped_wad = calloc(maxfd + 1, sizeof(void *));
 
   for (int i = 0; i < numlumps; i++) {
     int fd;
     void *map;
+    wadfile_info_t *wf = NULL;
 
     cachelump[i].locks = -1;
 
-    if (!lumpinfo[i].wadfile)
+    if (lumpinfo[i].wadfile == -1)
       continue;
 
-    fd = lumpinfo[i].wadfile->handle;
+    wf = M_CBufGet(&resource_files_buf, lumpinfo[i].wadfile);
 
-    if (mapped_wad[fd])
+    if (wf == NULL) {
+      I_Error(
+        "W_InitCache: Lump %d has invalid wadfile index (%d)",
+        i, lumpinfo[i].wadfile
+      );
+    }
+
+    fd = wf->handle;
+
+    if (mapped_wad[lumpinfo[i].wadfile])
       continue;
 
-    map = mmap(NULL, M_FDLength(fd), PROT_READ, MAP_SHARED, fd, 0);
+    map = mmap(NULL, M_FDLength(wf->handle), PROT_READ, MAP_SHARED, fd, 0);
 
     if (map == MAP_FAILED)
-      I_Error("W_InitCache: failed to mmap");
+      I_Error("W_InitCache: failed to mmap [%s]", wf->name);
 
-    mapped_wad[fd] = map;
+    mapped_wad[lumpinfo[i].wadfile] = map;
+    lprintf(LO_INFO, " Mapped %s\n", wf->name);
   }
 }
 
 void W_DoneCache(void) {
   for (int i = 0; i < numlumps; i++) {
     int fd;
+    wadfile_info_t *wf;
 
-    if (!lumpinfo[i].wadfile)
+    if (lumpinfo[i].wadfile == -1)
       continue;
 
-    fd = lumpinfo[i].wadfile->handle;
+    wf = M_CBufGet(&resource_files_buf, lumpinfo[i].wadfile);
 
-    if (!mapped_wad[fd])
+    if (wf == NULL)
       continue;
 
-    if (munmap(mapped_wad[fd], M_FDLength(fd))) 
+    fd = wf->handle;
+
+    if (!mapped_wad[lumpinfo[i].wadfile])
+      continue;
+
+    if (munmap(mapped_wad[lumpinfo[i].wadfile], M_FDLength(fd))) 
       I_Error("W_DoneCache: failed to munmap");
 
-    mapped_wad[fd] = NULL;
+    mapped_wad[lumpinfo[i].wadfile] = NULL;
   }
 
   free(mapped_wad);
@@ -293,17 +341,20 @@ void W_DoneCache(void) {
 }
 
 const void* W_CacheLumpNum(int lump) {
+  lumpinfo_t *l;
+
 #ifdef RANGECHECK
   if ((unsigned)lump >= (unsigned)numlumps)
     I_Error("W_CacheLumpNum: %i >= numlumps", lump);
 #endif
-  if (!lumpinfo[lump].wadfile)
+  l = &lumpinfo[lump];
+
+  if (l->wadfile == -1)
     return NULL;
 
-  return (const void *) (
-      ((const byte *)(mapped_wad[lumpinfo[lump].wadfile->handle]))
-      + lumpinfo[lump].position
-    );
+  return (const void *)(
+    ((const byte *)(mapped_wad[l->wadfile])) + l->position
+  );
 }
 #endif
 

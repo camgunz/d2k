@@ -359,7 +359,6 @@ dboolean N_Connect(const char *host, unsigned short port) {
   else
     address.port = DEFAULT_PORT;
 
-  printf("Adding server peer\n");
   peernum = N_PeerAdd();
   server = enet_host_connect(net_host, &address, NET_CHANNEL_MAX, 0);
 
@@ -488,7 +487,6 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     }
 
     if (net_event.type == ENET_EVENT_TYPE_CONNECT) {
-      doom_printf("Got 'CONNECT' event\n");
       if (SERVER) {
         peernum = N_PeerAdd();
         netpeer_t *np = N_PeerGet(peernum);
@@ -526,7 +524,6 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       }
     }
     else if (net_event.type == ENET_EVENT_TYPE_DISCONNECT) {
-      doom_printf("Got 'DISCONNECT' event\n");
       if ((peernum = N_PeerGetNum(net_event.peer)) == -1) {
         doom_printf(
           "N_ServiceNetwork: Received 'disconnect' event from unknown "
@@ -568,10 +565,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       }
       enet_packet_destroy(net_event.packet);
     }
-    else if (net_event.type == ENET_EVENT_TYPE_NONE) {
-      doom_printf("Got 'NONE' event\n");
-    }
-    else {
+    else if (net_event.type != ENET_EVENT_TYPE_NONE) {
       doom_printf(
         "N_ServiceNetwork: Received unknown event from peer %s:%u.\n",
         N_IPToConstString(doom_b32(net_event.peer->address.host)),

@@ -660,6 +660,7 @@ void P_UnArchiveThinkers(buf_t *savebuffer) {
 
     mobj->snext = NULL;
     mobj->sprev = NULL;
+
     P_SetThingPosition(mobj);
     mobj->info = &mobjinfo[mobj->type];
 

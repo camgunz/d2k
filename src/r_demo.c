@@ -673,41 +673,40 @@ static void R_DemoEx_GetParams(const byte *pwad_p, waddata_t *waddata)
   free(str);
 }
 
-static void R_DemoEx_AddParams(wadtbl_t *wadtbl)
-{
-  size_t i;
+static void R_DemoEx_AddParams(wadtbl_t *wadtbl) {
   int p;
   char buf[200];
 
-  char* filename_p;
-  char* fileext_p;
-
-  char *files = NULL;
-  char *iwad  = NULL;
-  char *pwads = NULL;
-  char *dehs  = NULL;
   char **item;
+  char  *filename_p;
+  char  *fileext_p;
+  char  *files = NULL;
+  char  *iwad  = NULL;
+  char  *pwads = NULL;
+  char  *dehs  = NULL;
 
-  //iwad and pwads
-  for (i = 0; i < numwadfiles; i++)
-  {
-    filename_p = PathFindFileName(wadfiles[i].name);
+  // IWAD and PWADs
+  CBUF_FOR_EACH(&resource_files_buf, entry) {
+    wadfile_info_t *wf = (wadfile_info_t *)entry.obj;
+
+    filename_p = PathFindFileName(wf->name);
     fileext_p = filename_p + strlen(filename_p) - 1;
+
     while (fileext_p != filename_p && *(fileext_p - 1) != '.')
       fileext_p--;
+
     if (fileext_p == filename_p)
       continue;
 
     item = NULL;
 
-    if (wadfiles[i].src == source_iwad && !iwad && !strcasecmp(fileext_p, "wad"))
+    if (wf->src == source_iwad && !iwad && !strcasecmp(fileext_p, "wad"))
       item = &iwad;
 
-    if (wadfiles[i].src == source_pwad && !strcasecmp(fileext_p, "wad"))
+    if (wf->src == source_pwad && !strcasecmp(fileext_p, "wad"))
       item = &pwads;
 
-    if (item)
-    {
+    if (item) {
       AddString(item, "\"");
       AddString(item, filename_p);
       AddString(item, "\" ");
@@ -1045,8 +1044,7 @@ int CheckWadFileIntegrity(const char *filename)
   return result;
 }
 
-static int G_ReadDemoFooter(const char *filename)
-{
+static int G_ReadDemoFooter(const char *filename) {
   int result = false;
 
   byte *buffer = NULL;
@@ -1060,15 +1058,13 @@ static int G_ReadDemoFooter(const char *filename)
 
   demoex_filename[0] = 0;
 
-  if (demo_demoex_filename && *demo_demoex_filename)
-  {
+  if (demo_demoex_filename && *demo_demoex_filename) {
     strncpy(demoex_filename, demo_demoex_filename, PATH_MAX);
   }
-  else
-  {
+  else {
     const char* tmp_dir;
     char* tmp_path = NULL;
-    const char* template_format = "%sprboom-plus-demoex-XXXXXX";
+    const char* template_format = "%sdoom2k-demoex-XXXXXX";
 
     tmp_dir = I_GetTempDir();
     if (tmp_dir && *tmp_dir != '\0')
@@ -1093,7 +1089,14 @@ static int G_ReadDemoFooter(const char *filename)
   }
   else
   {
-    M_AddDefaultExtension(demoex_filename, ".wad");
+    char *temp = M_AddDefaultExtension(demoex_filename, "wad");
+
+    if (strlen(temp) >= PATH_MAX)
+      I_Error("G_ReadDemoFooter: No room in demoex_filename for extension");
+
+    strcpy(demoex_filename, temp);
+
+    free(temp);
 
     buffer = G_GetDemoFooter(filename, &demoex_p, &size);
     if (buffer)
@@ -1104,7 +1107,7 @@ static int G_ReadDemoFooter(const char *filename)
 
       if (!CheckWadBufIntegrity((const char *)demoex_p, size))
       {
-        lprintf(LO_ERROR, "G_ReadDemoFooter: demo footer is currupted\n");
+        lprintf(LO_ERROR, "G_ReadDemoFooter: demo footer is corrupted\n");
       }
       else if (!M_WriteFile(demoex_filename, (const char *)demoex_p, size))
       {
@@ -1122,14 +1125,13 @@ static int G_ReadDemoFooter(const char *filename)
         WadDataInit(&waddata);
 
         //enumerate and save all auto-loaded files and demo for future use
-        for (i = 0; i < numwadfiles; i++)
-        {
-          if (
-            wadfiles[i].src == source_auto_load ||
-            wadfiles[i].src == source_pre ||
-            wadfiles[i].src == source_lmp)
-          {
-            WadDataAddItem(&waddata, wadfiles[i].name, wadfiles[i].src, 0);
+        CBUF_FOR_EACH(&resource_files_buf, entry) {
+          wadfile_info_t *wf = (wadfile_info_t *)entry.obj;
+
+          if (wf->src == source_auto_load ||
+              wf->src == source_pre ||
+              wf->src == source_lmp) {
+            WadDataAddItem(&waddata, wf->name, wf->src, 0);
           }
         }
 
@@ -1240,12 +1242,14 @@ void WadDataFree(waddata_t *waddata)
   }
 }
 
-int WadDataAddItem(waddata_t *waddata, const char *filename, wad_source_t source, int handle)
-{
+int WadDataAddItem(waddata_t *waddata, const char *filename,
+                   wad_source_t source, int handle) {
   if (!waddata || !filename)
     return false;
 
-  waddata->wadfiles = realloc(waddata->wadfiles, sizeof(*wadfiles) * (waddata->numwadfiles + 1));
+  waddata->wadfiles = realloc(
+    waddata->wadfiles, sizeof(wadfile_info_t) * (waddata->numwadfiles + 1)
+  );
   waddata->wadfiles[waddata->numwadfiles].name = strdup(filename);
   waddata->wadfiles[waddata->numwadfiles].src = source;
   waddata->wadfiles[waddata->numwadfiles].handle = handle;
@@ -1380,7 +1384,7 @@ int DemoNameToWadData(const char * demoname, waddata_t *waddata, patterndata_t *
           numwadfiles_required = ParseDemoPattern(buf + pmatch[3].rm_so, waddata,
             (patterndata ? &patterndata->missed : NULL), true);
 
-          waddata->wadfiles = realloc(waddata->wadfiles, sizeof(*wadfiles)*(waddata->numwadfiles+1));
+          waddata->wadfiles = realloc(waddata->wadfiles, sizeof(wadfile_info_t)*(waddata->numwadfiles+1));
           waddata->wadfiles[waddata->numwadfiles].name = strdup(demoname);
           waddata->wadfiles[waddata->numwadfiles].src = source_lmp;
           waddata->wadfiles[waddata->numwadfiles].handle = 0;
@@ -1407,28 +1411,27 @@ int DemoNameToWadData(const char * demoname, waddata_t *waddata, patterndata_t *
 }
 #endif // HAVE_LIBPCREPOSIX
 
-void WadDataToWadFiles(waddata_t *waddata)
-{
-  void ProcessDehFile(const char *filename, const char *outfilename, int lumpnum);
-  const char *D_dehout(void);
+void WadDataToWadFiles(waddata_t *waddata) {
+  size_t wadfile_count = M_CBufGetObjectCount(&resource_files_buf);
 
-  int i, iwadindex = -1;
+  int i = 0;
+  int iwadindex = -1;
 
-  wadfile_info_t *old_wadfiles=NULL;
-  size_t old_numwadfiles = numwadfiles;
+  wadfile_info_t *old_wadfiles = NULL;
+  size_t old_numwadfiles = wadfile_count;
 
-  old_numwadfiles = numwadfiles;
-  old_wadfiles = malloc(sizeof(*(wadfiles)) * numwadfiles);
-  memcpy(old_wadfiles, wadfiles, sizeof(*(wadfiles)) * numwadfiles);
+  old_numwadfiles = wadfile_count;
+  old_wadfiles = malloc(sizeof(wadfile_info_t) * wadfile_count);
 
-  free(wadfiles);
-  wadfiles = NULL;
-  numwadfiles = 0;
+  CBUF_FOR_EACH(&resource_files_buf, entry) {
+    memcpy(&old_wadfiles[i], entry.obj, sizeof(wadfile_info_t));
+    i++;
+  }
 
-  for (i = 0; (size_t)i < waddata->numwadfiles; i++)
-  {
-    if (waddata->wadfiles[i].src == source_iwad)
-    {
+  M_CBufClear(&resource_files_buf);
+
+  for (i = 0; (size_t)i < waddata->numwadfiles; i++) {
+    if (waddata->wadfiles[i].src == source_iwad) {
       AddIWAD(I_FindFile(waddata->wadfiles[i].name, ".wad"));
       iwadindex = i;
       break;
@@ -1436,111 +1439,93 @@ void WadDataToWadFiles(waddata_t *waddata)
   }
 
   if (iwadindex == -1)
-  {
     I_Error("WadDataToWadFiles: IWAD not found\n");
-  }
 
-  for (i = 0; (size_t)i < old_numwadfiles; i++)
-  {
-    if (old_wadfiles[i].src == source_auto_load || old_wadfiles[i].src == source_pre)
-    {
-      wadfiles = realloc(wadfiles, sizeof(*wadfiles)*(numwadfiles+1));
-      wadfiles[numwadfiles].name = strdup(old_wadfiles[i].name);
-      wadfiles[numwadfiles].src = old_wadfiles[i].src;
-      wadfiles[numwadfiles].handle = old_wadfiles[i].handle;
-      numwadfiles++;
+  for (i = 0; (size_t)i < old_numwadfiles; i++) {
+    if (old_wadfiles[i].src == source_auto_load ||
+        old_wadfiles[i].src == source_pre) {
+      wadfile_info_t wadfile;
+
+      wadfile.name = strdup(old_wadfiles[i].name);
+      wadfile.src = old_wadfiles[i].src;
+      wadfile.handle = old_wadfiles[i].handle;
+
+      M_CBufAppend(&resource_files_buf, &wadfile);
     }
   }
 
-  for (i = 0; (size_t)i < waddata->numwadfiles; i++)
-  {
-    if (waddata->wadfiles[i].src == source_auto_load)
-    {
-      wadfiles = realloc(wadfiles, sizeof(*wadfiles)*(numwadfiles+1));
-      wadfiles[numwadfiles].name = strdup(waddata->wadfiles[i].name);
-      wadfiles[numwadfiles].src = waddata->wadfiles[i].src;
-      wadfiles[numwadfiles].handle = waddata->wadfiles[i].handle;
-      numwadfiles++;
+  for (i = 0; (size_t)i < waddata->numwadfiles; i++) {
+    if (waddata->wadfiles[i].src == source_auto_load) {
+      wadfile_info_t wadfile;
+
+      wadfile.name = strdup(waddata->wadfiles[i].name);
+      wadfile.src = waddata->wadfiles[i].src;
+      wadfile.handle = waddata->wadfiles[i].handle;
+
+      M_CBufAppend(&resource_files_buf, &wadfile);
     }
   }
 
-  for (i = 0; (size_t)i < waddata->numwadfiles; i++)
-  {
-    if (waddata->wadfiles[i].src == source_iwad && i != iwadindex)
-    {
+  for (i = 0; (size_t)i < waddata->numwadfiles; i++) {
+    if (waddata->wadfiles[i].src == source_iwad && i != iwadindex) {
       D_AddFile(waddata->wadfiles[i].name, source_pwad);
       modifiedgame = true;
     }
-    if (waddata->wadfiles[i].src == source_pwad)
-    {
+    if (waddata->wadfiles[i].src == source_pwad) {
       const char *file = I_FindFile2(waddata->wadfiles[i].name, ".wad");
-      if (!file && N_GetWad(waddata->wadfiles[i].name))
-      {
+      if (!file && N_GetWad(waddata->wadfiles[i].name)) {
         file = I_FindFile2(waddata->wadfiles[i].name, ".wad");
-        if (file)
-        {
+        if (file) {
           free(waddata->wadfiles[i].name);
           waddata->wadfiles[i].name = strdup(file); 
         }
       }
-      if (file)
-      {
+      if (file) {
         D_AddFile(waddata->wadfiles[i].name, source_pwad);
         modifiedgame = true;
       }
     }
     if (waddata->wadfiles[i].src == source_deh)
-    {
-      ProcessDehFile(waddata->wadfiles[i].name, D_dehout(), 0);
-    }
+      D_AddDEH(waddata->wadfiles[i].name, 0);
   }
 
-  for (i = 0; (size_t)i < waddata->numwadfiles; i++)
-  {
-    if (waddata->wadfiles[i].src == source_lmp || waddata->wadfiles[i].src == source_net)
+  for (i = 0; (size_t)i < waddata->numwadfiles; i++) {
+    if (waddata->wadfiles[i].src == source_lmp ||
+        waddata->wadfiles[i].src == source_net) {
       D_AddFile(waddata->wadfiles[i].name, waddata->wadfiles[i].src);
+    }
   }
 
   free(old_wadfiles);
 }
 
-void WadFilesToWadData(waddata_t *waddata)
-{
-  int i;
-
+void WadFilesToWadData(waddata_t *waddata) {
   if (!waddata)
     return;
 
-  for (i = 0; i < (int)numwadfiles; i++)
-  {
-    WadDataAddItem(waddata, wadfiles[i].name, wadfiles[i].src, wadfiles[i].handle);
+  CBUF_FOR_EACH(&resource_files_buf, entry) {
+    wadfile_info_t *wf = (wadfile_info_t *)entry.obj;
+
+    WadDataAddItem(waddata, wf->name, wf->src, wf->handle);
   }
 }
 
-int CheckDemoExDemo(void)
-{
+int CheckDemoExDemo(void) {
   int result = false;
   int p;
 
   M_ChangeDemoExtendedFormat();
 
   p = IsDemoPlayback();
+
   if (!p)
-  {
     p = IsDemoContinue();
-  }
 
-  if (p)
-  {
-    char *demoname, *filename;
+  if (p) {
+    char *filename = M_AddDefaultExtension(myargv[p + 1], "lmp");
+    char *demoname = I_FindFile(filename, NULL);
 
-    filename = malloc(strlen(myargv[p + 1]) + 16);
-    strcpy(filename, myargv[p + 1]);
-    M_AddDefaultExtension(filename, ".lmp");
-
-    demoname = I_FindFile(filename, NULL);
-    if (demoname)
-    {
+    if (demoname) {
       result = G_ReadDemoFooter(demoname);
       free(demoname);
     }
@@ -1551,49 +1536,50 @@ int CheckDemoExDemo(void)
   return result;
 }
 
-int CheckAutoDemo(void)
-{
+int CheckAutoDemo(void) {
+  waddata_t waddata;
   int result = false;
-  if (M_CheckParm("-auto"))
+
+  if (!M_CheckParm("-auto"))
+    return false;
+
 #ifndef HAVE_LIBPCREPOSIX
-    I_Error("Cannot process -auto - "
-        PACKAGE_NAME " was compiled without LIBPCRE support");
+  I_Error("Can't process -auto - " PACKAGE_NAME " was compiled w/o LIBPCRE");
 #else
-  {
-    int i;
-    waddata_t waddata;
 
-    for (i = 0; (size_t)i < numwadfiles; i++)
-    {
-      if (wadfiles[i].src == source_lmp)
-      {
-        int numwadfiles_required;
-        
-        patterndata_t patterndata;
-        memset(&patterndata, 0, sizeof(patterndata));
+  CBUF_FOR_EACH(&resource_files_buf, entry) {
+    wadfile_info_t *wf = (wadfile_info_t *)entry.obj;
 
-        numwadfiles_required = DemoNameToWadData(wadfiles[i].name, &waddata, &patterndata);
-        
-        if (waddata.numwadfiles)
-        {
-          result = true;
-          if ((size_t)numwadfiles_required + 1 != waddata.numwadfiles && patterndata.missed)
-          {
-            I_Warning(
-              "DataAutoload: pattern #%i is used\n"
-              "%s not all required files are found, may not work\n",
-              patterndata.pattern_num, patterndata.missed);
-          }
-          else
-          {
-            lprintf(LO_WARN,"DataAutoload: pattern #%i is used\n", patterndata.pattern_num);
-          }
-          WadDataToWadFiles(&waddata);
+    if (wf->src == source_lmp) {
+      int numwadfiles_required;
+      
+      patterndata_t patterndata;
+      memset(&patterndata, 0, sizeof(patterndata));
+
+      numwadfiles_required = DemoNameToWadData(wf->name, &waddata, &patterndata);
+      
+      if (waddata.numwadfiles) {
+        result = true;
+        if ((size_t)numwadfiles_required + 1 != waddata.numwadfiles &&
+            patterndata.missed) {
+          I_Warning(
+            "DataAutoload: pattern #%i is used\n"
+            "%s not all required files are found, may not work\n",
+            patterndata.pattern_num, patterndata.missed
+          );
         }
-        free(patterndata.missed);
-        WadDataFree(&waddata);
-        break;
+        else {
+          lprintf(LO_WARN,
+            "DataAutoload: pattern #%i is used\n", patterndata.pattern_num
+          );
+        }
+        WadDataToWadFiles(&waddata);
       }
+
+      free(patterndata.missed);
+      WadDataFree(&waddata);
+
+      break;
     }
   }
 #endif // HAVE_LIBPCREPOSIX

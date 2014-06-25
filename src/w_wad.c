@@ -79,7 +79,8 @@ int        numlumps;         // killough
 //
 // proff - changed using pointer to wadfile_info_t
 // killough 1/31/98: static, const
-static void W_AddFile(wadfile_info_t *wadfile) {
+static void W_AddFile(size_t wadfile_index) {
+  wadfile_info_t *wadfile = M_CBufGet(&resource_files_buf, wadfile_index);
   wadinfo_t   header;
   lumpinfo_t* lump_p;
   unsigned    i;
@@ -88,6 +89,9 @@ static void W_AddFile(wadfile_info_t *wadfile) {
   filelump_t  *fileinfo, *fileinfo2free = NULL; //killough
   filelump_t  singleinfo;
   int         flags = 0;
+
+  if (wadfile == NULL)
+    I_Error("W_AddFile: Invalid wadfile index %zu\n", wadfile_index);
 
   // open the file and add to directory
 
@@ -116,8 +120,6 @@ static void W_AddFile(wadfile_info_t *wadfile) {
   //jff 8/3/98 use logical output routine
   lprintf(LO_INFO, " adding %s\n", wadfile->name);
   startlump = numlumps;
-
-  D_AddResource(wadfile->name);
 
   // mark lumps from internal resource
   if (wadfile->src == source_auto_load) {
@@ -166,7 +168,7 @@ static void W_AddFile(wadfile_info_t *wadfile) {
 
   for (i = startlump; (int)i < numlumps; i++, lump_p++, fileinfo++) {
     lump_p->flags = flags;
-    lump_p->wadfile = wadfile;                    //  killough 4/25/98
+    lump_p->wadfile = wadfile_index;              //  killough 4/25/98
     lump_p->position = LittleLong(fileinfo->filepos);
     lump_p->size = LittleLong(fileinfo->size);
 
@@ -199,11 +201,10 @@ static void W_AddFile(wadfile_info_t *wadfile) {
 //
 // killough 1/24/98 modified routines to be a little faster and smaller
 
-static int IsMarker(const char *marker, const char *name)
-{
+static int IsMarker(const char *marker, const char *name) {
+  // doubled first character test for single-character prefixes only
+  // FF_* is valid alias for F_*, but HI_* should not allow HHI_*
   return !strncasecmp(name, marker, 8) ||
-    // doubled first character test for single-character prefixes only
-    // FF_* is valid alias for F_*, but HI_* should not allow HHI_*
     (marker[1] == '_' && *name == *marker && !strncasecmp(name+1, marker, 7));
 }
 
@@ -225,7 +226,7 @@ static int W_CoalesceMarkedResource(const char *start_marker,
         strncpy(marked->name, start_marker, 8);
         marked->size = 0;  // killough 3/20/98: force size to be 0
         marked->li_namespace = ns_global;        // killough 4/17/98
-        marked->wadfile = NULL;
+        marked->wadfile = -1;
         num_marked = 1;
       }
       is_marked = 1;                            // start marking lumps
@@ -263,7 +264,7 @@ static int W_CoalesceMarkedResource(const char *start_marker,
 
   if (mark_end) {                                 // add end marker
     lumpinfo[numlumps].size = 0;  // killough 3/20/98: force size to be 0
-    lumpinfo[numlumps].wadfile = NULL;
+    lumpinfo[numlumps].wadfile = -1;
     lumpinfo[numlumps].li_namespace = ns_global;   // killough 4/17/98
     strncpy(lumpinfo[numlumps++].name, end_marker, 8);
   }
@@ -313,30 +314,30 @@ unsigned W_LumpNameHash(const char *s)
 // W_FindNumFromName, an iterative version of W_CheckNumForName
 // returns list of lump numbers for a given name (latest first)
 //
-int (W_FindNumFromName)(const char *name, int li_namespace, int i)
-{
+int (W_FindNumFromName)(const char *name, int li_namespace, int i) {
   // Hash function maps the name to one of possibly numlump chains.
   // It has been tuned so that the average chain length never exceeds 2.
 
   // proff 2001/09/07 - check numlumps==0, this happens when called before WAD loaded
-  if (numlumps == 0)
+  if (numlumps == 0) {
     i = -1;
-  else
-  {
+  }
+  else {
     if (i < 0)
       i = lumpinfo[W_LumpNameHash(name) % (unsigned) numlumps].index;
     else
       i = lumpinfo[i].next;
 
-  // We search along the chain until end, looking for case-insensitive
-  // matches which also match a namespace tag. Separate hash tables are
-  // not used for each namespace, because the performance benefit is not
-  // worth the overhead, considering namespace collisions are rare in
-  // Doom wads.
+    // We search along the chain until end, looking for case-insensitive
+    // matches which also match a namespace tag. Separate hash tables are
+    // not used for each namespace, because the performance benefit is not
+    // worth the overhead, considering namespace collisions are rare in
+    // Doom wads.
 
-  while (i >= 0 && (strncasecmp(lumpinfo[i].name, name, 8) ||
-                    lumpinfo[i].li_namespace != li_namespace))
-    i = lumpinfo[i].next;
+    while (i >= 0 && (strncasecmp(lumpinfo[i].name, name, 8) ||
+                      lumpinfo[i].li_namespace != li_namespace)) {
+      i = lumpinfo[i].next;
+    }
   }
 
   // Return the matching lump, or -1 if none found.
@@ -348,23 +349,23 @@ int (W_FindNumFromName)(const char *name, int li_namespace, int i)
 // killough 1/31/98: Initialize lump hash table
 //
 
-void W_HashLumps(void)
-{
+void W_HashLumps(void) {
   int i;
 
-  for (i=0; i<numlumps; i++)
+  for (i = 0; i < numlumps; i++)
     lumpinfo[i].index = -1;                     // mark slots empty
 
   // Insert nodes to the beginning of each chain, in first-to-last
   // lump order, so that the last lump of a given name appears first
   // in any chain, observing pwad ordering rules. killough
 
-  for (i=0; i<numlumps; i++)
-    {                                           // hash function:
-      int j = W_LumpNameHash(lumpinfo[i].name) % (unsigned) numlumps;
-      lumpinfo[i].next = lumpinfo[j].index;     // Prepend to list
-      lumpinfo[j].index = i;
-    }
+  for (i=0; i<numlumps; i++) {
+    // hash function:
+    int j = W_LumpNameHash(lumpinfo[i].name) % (unsigned) numlumps;
+
+    lumpinfo[i].next = lumpinfo[j].index;     // Prepend to list
+    lumpinfo[j].index = i;
+  }
 }
 
 // End of lump hashing -- killough 1/31/98
@@ -374,11 +375,12 @@ void W_HashLumps(void)
 // W_GetNumForName
 // Calls W_CheckNumForName, but bombs out if not found.
 //
-int W_GetNumForName (const char* name)     // killough -- const added
-{
-  int i = W_CheckNumForName (name);
+int W_GetNumForName(const char* name) {   // killough -- const added
+  int i = W_CheckNumForName(name);
+
   if (i == -1)
     I_Error("W_GetNumForName: %.8s not found", name);
+
   return i;
 }
 
@@ -386,16 +388,16 @@ int W_GetNumForName (const char* name)     // killough -- const added
 // W_SafeGetNumForName
 // Calls W_CheckNumForName, and returns (-1) if any error happens
 // Makes sense for doom.wad v1.2 for skip of some absent sounds
-int W_SafeGetNumForName(const char *name)
-{
+int W_SafeGetNumForName(const char *name) {
   int i = W_CheckNumForName (name);
+
   if (i == -1)
     lprintf(LO_DEBUG, "W_GetNumForName: %.8s not found\n", name);
+
   return i;
 }
 
-const lumpinfo_t* W_GetLumpInfoByNum(int lump)
-{
+const lumpinfo_t* W_GetLumpInfoByNum(int lump) {
   if (lump < 0 || lump >= numlumps)
     I_Error("W_GetLumpInfoByNum: lump num %d out of range", lump);
 
@@ -405,29 +407,27 @@ const lumpinfo_t* W_GetLumpInfoByNum(int lump)
 // W_CheckNumForNameInternal
 // checks only internal resource
 //
-int W_CheckNumForNameInternal(const char *name)
-{
+int W_CheckNumForNameInternal(const char *name) {
   int p;
-  for (p = -1; (p = W_ListNumFromName(name, p)) >= 0; )
-  {
+
+  for (p = -1; (p = W_ListNumFromName(name, p)) >= 0; ) {
     if (lumpinfo[p].flags == LUMP_PRBOOM)
-    {
       return p;
-    }
   }
+
   return -1;
 }
 
 // W_ListNumFromName
 // calls W_FindNumFromName and returns the lumps in ascending order
 //
-int W_ListNumFromName(const char *name, int lump)
-{
+int W_ListNumFromName(const char *name, int lump) {
   int i, next;
 
-  for (i = -1; (next = W_FindNumFromName(name, i)) >= 0; i = next)
+  for (i = -1; (next = W_FindNumFromName(name, i)) >= 0; i = next) {
     if (next == lump)
       break;
+  }
 
   return i;
 }
@@ -446,9 +446,6 @@ int W_ListNumFromName(const char *name, int lump)
 //
 // CPhipps - modified to use the new wadfiles array
 //
-wadfile_info_t *wadfiles=NULL;
-
-size_t numwadfiles = 0; // CPhipps - size of the wadfiles array (dynamic, no limit)
 
 void W_Init(void) {
   // CPhipps - start with nothing
@@ -458,8 +455,8 @@ void W_Init(void) {
 
   // CPhipps - new wadfiles array used 
   // open all the files, load headers, and count lumps
-  for (int i = 0; (size_t)i < numwadfiles; i++)
-    W_AddFile(&wadfiles[i]);
+  CBUF_FOR_EACH(&resource_files_buf, entry)
+    W_AddFile(entry.index);
 
   if (!numlumps)
     I_Error("W_Init: No files found");
@@ -481,30 +478,25 @@ void W_Init(void) {
   W_HashLumps();
 
   /* cph 2001/07/07 - separated cache setup */
-  lprintf(LO_INFO, "W_InitCache\n");
   W_InitCache();
 
   V_FreePlaypal();
 }
 
-void W_ReleaseAllWads(void)
-{
-  size_t i;
-
+void W_ReleaseAllWads(void) {
   W_DoneCache();
 
-  for (i = 0; i < numwadfiles; i++)
-  {
-    if (wadfiles[i].handle > 0)
-    {
-      M_Close(wadfiles[i].handle);
-      wadfiles[i].handle = 0;
+  CBUF_FOR_EACH(&resource_files_buf, entry) {
+    wadfile_info_t *wf = (wadfile_info_t *)entry.obj;
+
+    if (wf->handle > 0) {
+      M_Close(wf->handle);
+      wf->handle = 0;
     }
   }
 
-  numwadfiles = 0;
-  free(wadfiles);
-  wadfiles = NULL;
+  M_CBufClear(&resource_files_buf);
+
   numlumps = 0;
   free(lumpinfo);
   lumpinfo = NULL;
@@ -516,10 +508,10 @@ void W_ReleaseAllWads(void)
 // W_LumpLength
 // Returns the buffer size needed to load the given lump.
 //
-int W_LumpLength (int lump)
-{
+int W_LumpLength (int lump) {
   if (lump >= numlumps)
-    I_Error ("W_LumpLength: %i >= numlumps",lump);
+    I_Error("W_LumpLength: %i >= numlumps", lump);
+
   return lumpinfo[lump].size;
 }
 
@@ -530,20 +522,27 @@ int W_LumpLength (int lump)
 //
 
 void W_ReadLump(int lump, void *dest) {
+  wadfile_info_t *wadfile;
+  
 #ifdef RANGECHECK
   if (lump >= numlumps)
-    I_Error ("W_ReadLump: %i >= numlumps",lump);
+    I_Error ("W_ReadLump: %i >= numlumps", lump);
 #endif
 
   lumpinfo_t *l = lumpinfo + lump;
 
-  if (!l->wadfile)
+  if (l->wadfile == -1)
     return;
 
-  if (!M_Seek(l->wadfile->handle, l->position, SEEK_SET))
+  wadfile = M_CBufGet(&resource_files_buf, l->wadfile);
+
+  if (wadfile == NULL)
+    return;
+
+  if (!M_Seek(wadfile->handle, l->position, SEEK_SET))
     I_Error("W_ReadLump: seek failed: %s.\n", M_GetFileError());
 
-  if (!M_Read(l->wadfile->handle, dest, l->size))
+  if (!M_Read(wadfile->handle, dest, l->size))
     I_Error("W_ReadLump: read failed: %s\n", M_GetFileError());
 }
 
