@@ -1099,11 +1099,13 @@ void I_InitScreenResolution(void)
 
 void I_SetWindowCaption(void)
 {
-  char *buf;
+  size_t len = strlen(PACKAGE_NAME) + strlen(PACKAGE_VERSION) + 3;
+  char *buf = calloc(len, sizeof(char));
 
-  buf = malloc(strlen(PACKAGE_NAME) + strlen(PACKAGE_VERSION) + 10);
+  if (buf == NULL)
+    I_Error("I_SetWindowCaption: calloc failed\n");
 
-  sprintf(buf, "%s %s", PACKAGE_NAME, PACKAGE_VERSION);
+  snprintf(buf, len, "%s v%s", PACKAGE_NAME, PACKAGE_VERSION);
 
   SDL_WM_SetCaption(buf, NULL);
 
@@ -1678,3 +1680,6 @@ static void ApplyWindowResize(SDL_Event *resize_event)
     doom_printf("%dx%d", w, h);
   }
 }
+
+/* vi: set et ts=2 sw=2: */
+
