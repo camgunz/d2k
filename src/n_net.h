@@ -36,8 +36,9 @@
 #define NET_H__
 
 #define DEFAULT_PORT 10666
-#define CONNECT_TIMEOUT 3
-#define DISCONNECT_TIMEOUT 3
+#define NET_TIMEOUT 3
+#define CONNECT_TIMEOUT NET_TIMEOUT
+#define DISCONNECT_TIMEOUT NET_TIMEOUT
 
 #define MULTINET    (netgame && (!solonet))
 #define CMDSYNC     (netsync == NET_SYNC_TYPE_COMMAND)

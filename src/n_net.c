@@ -496,6 +496,10 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
           continue;
         }
 
+        enet_peer_timeout(
+          net_event.peer, 0, NET_TIMEOUT * 1000, NET_TIMEOUT * 1000
+        );
+
         N_PeerSetConnected(peernum, net_event.peer);
 
         SV_SetupNewPeer(peernum);
