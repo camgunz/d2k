@@ -370,6 +370,9 @@ typedef struct mobj_s
 
     int iden_nums;		// hi word stores thing num, low word identifier num
 
+    /* CG 06/26/2014: Try not storing indices in pointers */
+    unsigned int        serialization_index;
+
     fixed_t             pad; // cph - needed so I can get the size unambiguously on amd64
 
     // SEE WARNING ABOVE ABOUT POINTER FIELDS!!!

@@ -1,7 +1,6 @@
 /* Emacs style mode select   -*- C++ -*-
  *-----------------------------------------------------------------------------
  *
- *
  *  PrBoom: a Doom port merged with LxDoom and LSDLDoom
  *  based on BOOM, a modified and improved DOOM engine
  *  Copyright (C) 1999 by
@@ -27,17 +26,19 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *   Binary delta routines using LibXDiff.
+ *
  *
  *-----------------------------------------------------------------------------
  */
 
-#ifndef M_DELTA__
-#define M_DELTA__
+#ifndef G_SAVE_H__
+#define G_SAVE_H__
 
-void     M_InitDeltas(void);
-void     M_BuildDelta(pbuf_t *b1, pbuf_t *b2, buf_t *delta);
-dboolean M_ApplyDelta(pbuf_t *b1, pbuf_t *b2, buf_t *delta);
+void     G_UpdateAverageSaveSize(int new_size);
+int      G_GetAverageSaveSize(void);
+dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
+                                            dboolean init_new);
+void     G_WriteSaveData(pbuf_t *savebuffer);
 
 #endif
 

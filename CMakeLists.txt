@@ -689,6 +689,7 @@ SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/f_wipe.c
   ${CMAKE_SOURCE_DIR}/src/g_game.c
   ${CMAKE_SOURCE_DIR}/src/g_overflow.c
+  ${CMAKE_SOURCE_DIR}/src/g_save.c
   ${CMAKE_SOURCE_DIR}/src/hu_lib.c
   ${CMAKE_SOURCE_DIR}/src/hu_stuff.c
   ${CMAKE_SOURCE_DIR}/src/hu_tracers.c

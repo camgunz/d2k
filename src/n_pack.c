@@ -216,6 +216,15 @@
     return false;                                                             \
   }
 
+#define read_packed_bytes(pbuf, var, name)                                    \
+  M_PBufClear(&var);                                                          \
+  if (!M_PBufReadBytes(pbuf, M_PBufGetBuffer(&var))) {                        \
+    doom_printf("%s: Error reading %s: %s.\n",                                \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
+    return false;                                                             \
+  }
+
 #define read_string(pbuf, var, name, sz)                                      \
   M_BufferClear(var);                                                         \
   if (!M_PBufReadString(pbuf, var, sz)) {                                     \
@@ -392,7 +401,7 @@ void N_PackSetup(netpeer_t *np) {
   }
 
   M_PBufWriteInt(pbuf, gs->tic);
-  M_PBufWriteBytes(pbuf, gs->data.data, gs->data.size);
+  M_PBufWriteBytes(pbuf, M_PBufGetData(&gs->data), M_PBufGetSize(&gs->data));
 
   /*
   D_Log(LOG_SYNC, "Resources:");
@@ -514,7 +523,7 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
     gs->tic
   );
 
-  read_bytes(pbuf, gs->data, "game state data");
+  read_packed_bytes(pbuf, gs->data, "game state data");
 
   switch (m_sync_type) {
     case NET_SYNC_TYPE_COMMAND:

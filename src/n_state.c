@@ -40,12 +40,13 @@
 #include "cmp.h"
 
 #include "doomstat.h"
-#include "g_game.h"
-#include "lprintf.h"
+#include "m_pbuf.h"
 #include "m_avg.h"
 #include "m_delta.h"
-#include "m_pbuf.h"
 
+#include "g_game.h"
+#include "g_save.h"
+#include "lprintf.h"
 #include "n_net.h"
 #include "n_state.h"
 #include "n_peer.h"
@@ -79,19 +80,19 @@ void N_SaveState(void) {
   latest_game_state = N_GetNewState();
 
   latest_game_state->tic = gametic;
-  M_BufferClear(&latest_game_state->data);
+  M_PBufClear(&latest_game_state->data);
   G_WriteSaveData(&latest_game_state->data);
 
-  M_AverageUpdate(&average_state_size, latest_game_state->data.capacity);
-
-  D_Log(LOG_STATE, "Saving state %d\n", gametic);
+  M_AverageUpdate(
+    &average_state_size, M_PBufGetCapacity(&latest_game_state->data)
+  );
 }
 
 dboolean N_LoadState(int tic, dboolean call_init_new) {
   game_state_t *gs = get_state(tic);
 
   if (gs != NULL) {
-    M_BufferSeek(&gs->data, 0);
+    M_PBufSeek(&gs->data, 0);
     G_ReadSaveData(&gs->data, true, call_init_new);
     return true;
   }
@@ -105,7 +106,7 @@ void N_RemoveOldStates(int tic) {
 
     if (gs->tic < tic) {
       D_Log(LOG_STATE, "Removing state %d\n", gs->tic);
-      M_BufferFree(&gs->data);
+      M_PBufFree(&gs->data);
       M_CBufRemove(&saved_game_states, entry.index);
       entry.index--;
     }
@@ -116,7 +117,7 @@ void N_ClearStates(void) {
   CBUF_FOR_EACH(&saved_game_states, entry) {
     game_state_t *gs = (game_state_t *)entry.obj;
 
-    M_BufferFree(&gs->data);
+    M_PBufFree(&gs->data);
     M_CBufRemove(&saved_game_states, entry.index);
     entry.index--;
   }
@@ -131,10 +132,10 @@ game_state_t* N_GetNewState(void) {
 
   if (new_gs == NULL) {
     new_gs = M_CBufGetNewSlot(&saved_game_states);
-    M_BufferInit(&new_gs->data);
+    M_PBufInit(&new_gs->data);
   }
 
-  M_BufferEnsureTotalCapacity(
+  M_PBufEnsureTotalCapacity(
     &new_gs->data, MAX(average_state_size.value, 16384)
   );
 
@@ -150,7 +151,7 @@ void N_SetLatestState(game_state_t *state) {
 }
 
 dboolean N_LoadLatestState(dboolean call_init_new) {
-  M_BufferSeek(&latest_game_state->data, 0);
+  M_PBufSeek(&latest_game_state->data, 0);
   return G_ReadSaveData(&latest_game_state->data, true, call_init_new);
 }
 
@@ -163,8 +164,8 @@ dboolean N_ApplyStateDelta(game_state_delta_t *delta) {
 
   new_gs = N_GetNewState();
 
-  M_BufferSeek(&gs->data, 0);
-  M_BufferSeek(&new_gs->data, 0);
+  M_PBufSeek(&gs->data, 0);
+  M_PBufSeek(&new_gs->data, 0);
   M_BufferSeek(&delta->data, 0);
 
   if (M_ApplyDelta(&gs->data, &new_gs->data, &delta->data)) {

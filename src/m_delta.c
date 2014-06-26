@@ -39,11 +39,12 @@
 #include "z_zone.h"
 
 #include <xdiff.h>
+#include "cmp.h"
 
 #include "doomdef.h"
 #include "doomtype.h"
 #include "lprintf.h"
-#include "m_buf.h"
+#include "m_pbuf.h"
 #include "m_delta.h"
 
 #define BLKSIZE 1024
@@ -107,7 +108,7 @@ void M_InitDeltas(void) {
   xdl_set_allocator(&malt);
 }
 
-void M_BuildDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
+void M_BuildDelta(pbuf_t *b1, pbuf_t *b2, buf_t *delta) {
   mmbuffer_t mmb1, mmb2;
   xdemitcb_t ecb;
   int res = 0;
@@ -115,11 +116,11 @@ void M_BuildDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
   ecb.priv = delta;
   ecb.outf = write_to_buffer;
 
-  mmb1.ptr = (char *)b1->data;
-  mmb1.size = (long)b1->size;
+  mmb1.ptr = (char *)M_PBufGetData(b1);
+  mmb1.size = (long)M_PBufGetSize(b1);
 
-  mmb2.ptr = (char *)b2->data;
-  mmb2.size = (long)b2->size;
+  mmb2.ptr = (char *)M_PBufGetData(b2);
+  mmb2.size = (long)M_PBufGetSize(b2);
 
   M_BufferClear(delta);
 
@@ -130,7 +131,7 @@ void M_BuildDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
   }
 }
 
-dboolean M_ApplyDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
+dboolean M_ApplyDelta(pbuf_t *b1, pbuf_t *b2, buf_t *delta) {
   mmfile_t cs, is;
   xdemitcb_t ecb;
   buf_t delta_copy;
@@ -139,8 +140,8 @@ dboolean M_ApplyDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
   ecb.priv = b2;
   ecb.outf = write_to_buffer;
 
-  build_mmfile(&cs, b1->data, b1->size);
-  build_mmfile(&is, delta->data, delta->size);
+  build_mmfile(&cs, M_PBufGetData(b1), M_PBufGetSize(b1));
+  build_mmfile(&is, M_BufferGetData(delta), M_BufferGetSize(delta));
 
   M_BufferInitWithCapacity(&delta_copy, M_BufferGetSize(delta));
   M_BufferCopy(&delta_copy, delta);
@@ -150,10 +151,6 @@ dboolean M_ApplyDelta(buf_t *b1, buf_t *b2, buf_t *delta) {
   }
   else {
     perror("M_BuildDelta: Error applying delta");
-    M_BufferPrint(delta);
-    M_BufferPrint(&delta_copy);
-    M_BufferPrint(b1);
-    M_BufferPrint(b2);
   }
 
   M_BufferFree(&delta_copy);

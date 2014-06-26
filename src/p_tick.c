@@ -65,17 +65,17 @@ static dboolean newthinkerpresent;
 
 // killough 8/29/98: we maintain several separate threads, each containing
 // a special class of thinkers, to allow more efficient searches.
-thinker_t thinkerclasscap[th_all+1];
+thinker_t thinkerclasscap[th_all + 1];
 
 //
 // P_InitThinkers
 //
 
-void P_InitThinkers(void)
-{
+void P_InitThinkers(void) {
   int i;
 
-  for (i=0; i<NUMTHCLASS; i++)  // killough 8/29/98: initialize threaded lists
+  // killough 8/29/98: initialize threaded lists
+  for (i = 0; i < NUMTHCLASS; i++)
     thinkerclasscap[i].cprev = thinkerclasscap[i].cnext = &thinkerclasscap[i];
 
   thinkercap.prev = thinkercap.next  = &thinkercap;
@@ -172,6 +172,7 @@ void P_RemoveThinkerDelayed(thinker_t *thinker)
         thinker_t *th = thinker->cnext;
         (th->cprev = thinker->cprev)->cnext = th;
       }
+
       Z_Free(thinker);
     }
 }

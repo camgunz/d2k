@@ -37,7 +37,7 @@
 
 typedef struct game_state_s {
   int   tic;
-  buf_t data;
+  pbuf_t data;
 } game_state_t;
 
 typedef struct game_state_delta_s {

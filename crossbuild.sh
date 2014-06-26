@@ -16,7 +16,7 @@ BUILD_DIR=crossbuild
 # -DVORBIS_INCLUDE_DIR="$CROSSDEPS/include" \
 
 cd $BUILD_DIR && \
-    CPPFLAGS="-I$CROSSDEPS/include" \
+    CPPFLAGS="-I$CROSSDEPS/include -DINSTRUMENTED -DCHECKHEAP" \
     LDFLAGS="-L$CROSSDEPS/lib" \
     SDLDIR="$CROSSDEPS" \
     PKG_CONFIG_PATH="$CROSSDEPS/lib/pkgconfig" \

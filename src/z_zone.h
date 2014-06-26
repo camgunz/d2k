@@ -46,9 +46,7 @@
 #else
 #define PRINTF_DECL(x, y) __attribute__((format(printf, x, y)))
 #endif
-
 #else
-#error "What in the fuck"
 #define __attribute__(x)
 #define PRINTF_DECL(x, y)
 #endif

@@ -38,9 +38,9 @@
 #include "z_zone.h"
 
 #include <SDL_timer.h>
+#include "cmp.h"
 
 #include "doomdef.h"
-#include "m_cbuf.h"
 #include "doomstat.h"
 #include "d_net.h"
 #include "dstrings.h"
@@ -55,6 +55,7 @@
 #include "m_file.h"
 #include "m_misc.h"
 #include "m_menu.h"
+#include "m_pbuf.h"
 #include "p_checksum.h"
 #include "p_user.h"
 #include "i_main.h"

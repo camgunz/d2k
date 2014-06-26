@@ -597,9 +597,9 @@ void (Z_ChangeTag)(void *ptr, int tag
 
   if (block == block->next)
     blockbytag[block->tag] = NULL;
-  else
-    if (blockbytag[block->tag] == block)
-      blockbytag[block->tag] = block->next;
+  else if (blockbytag[block->tag] == block)
+    blockbytag[block->tag] = block->next;
+
   block->prev->next = block->next;
   block->next->prev = block->prev;
 

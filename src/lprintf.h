@@ -31,10 +31,14 @@
  *
  *-----------------------------------------------------------------------------*/
 
-#ifndef __LPRINTF__
-#define __LPRINTF__
+#ifndef LPRINTF__
+#define LPRINTF__
 
-#include <stdarg.h>
+/* cphipps - enlarged message buffer and made non-static
+ * We still have to be careful here, this function can be called after exit
+ */
+#define MAX_MESSAGE_LENGTH 2048
+
 
 typedef enum                /* Logical output levels */
 {
