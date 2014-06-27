@@ -308,22 +308,8 @@ static dboolean setup_tic(void) {
 
 static void run_regular_tic(void) {
   for (int i = 0; i < MAXPLAYERS; i++) {
-    player_t *player = NULL;
-
-    if (!playeringame[i])
-      continue;
-
-    player = &players[i];
-    P_PlayerThink(player);
-    /*
-    if ((DELTACLIENT || DELTASERVER) && player->mo) {
-      P_MobjThinker(player->mo);
-      if (i != 0) {
-        D_Log(LOG_SYNC, "After P_MobjThinker:\n");
-        N_LogPlayerPosition(player);
-      }
-    }
-    */
+    if (playeringame[i])
+      P_PlayerThink(&players[i]);
   }
 }
 

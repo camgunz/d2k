@@ -476,16 +476,8 @@ static void run_player_command(player_t *player) {
     player->mo->flags &= ~MF_JUSTATTACKED;
   }
 
-  if (player->playerstate == PST_DEAD) {
-    if ((DELTACLIENT || DELTASERVER) && player->mo) {
-      P_MobjThinker(player->mo);
-      if ((player - players) != 0) {
-        D_Log(LOG_SYNC, "After P_MobjThinker:\n");
-        N_LogPlayerPosition(player);
-      }
-    }
+  if (player->playerstate == PST_DEAD)
     return;
-  }
 
   if (player->jumpTics)
     player->jumpTics--;
@@ -559,26 +551,33 @@ static void run_player_command(player_t *player) {
   // cycle psprites
 
   P_MovePsprites(player);
-
-  if ((DELTACLIENT || DELTASERVER) && player->mo) {
-    P_MobjThinker(player->mo);
-    if ((player - players) != 0) {
-      D_Log(LOG_SYNC, "After P_MobjThinker:\n");
-      N_LogPlayerPosition(player);
-    }
-  }
 }
 
 void P_RunPlayerCommands(player_t *player) {
   int saved_leveltime;
+  int player_index = player - players;
 
   if ((!MULTINET) || CMDSYNC) {
     run_player_command(player);
+
+    if (player->mo)
+      P_MobjThinker(player->mo);
+
     return;
   }
   
-  if (M_CBufGetObjectCount(&player->commands) == 0)
-    return; /* [CG] Vector prediction would go here */
+  if (M_CBufGetObjectCount(&player->commands) == 0) {
+    /* [CG] Vector prediction... take 1*/
+    if (DELTACLIENT && player->mo) {
+      P_MobjThinker(player->mo);
+      if (player_index != 0) {
+        D_Log(LOG_SYNC, "After P_MobjThinker:\n");
+        N_LogPlayerPosition(player);
+      }
+    }
+
+    return;
+  }
 
   if (DELTASERVER) {
     CBUF_FOR_EACH(&player->commands, entry) {
@@ -606,10 +605,15 @@ void P_RunPlayerCommands(player_t *player) {
       saved_leveltime = leveltime;
       leveltime = ncmd->tic;
       run_player_command(player);
+      N_LogPlayerPosition(player);
+      if (player_index != consoleplayer && player->mo) {
+        P_MobjThinker(player->mo);
+        D_Log(LOG_SYNC, "After P_MobjThinker:\n");
+        N_LogPlayerPosition(player);
+      }
       leveltime = saved_leveltime;
       M_CBufRemove(&player->commands, entry.index);
       entry.index--;
-      N_LogPlayerPosition(player);
     }
   }
 
@@ -635,6 +639,8 @@ void P_RunPlayerCommands(player_t *player) {
 
         memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
         run_player_command(player);
+        if (player->mo)
+          P_MobjThinker(player->mo);
         M_CBufRemove(&player->commands, entry.index);
         entry.index--;
         N_LogPlayerPosition(player);
@@ -650,6 +656,8 @@ void P_RunPlayerCommands(player_t *player) {
       ncmd = M_CBufGet(&player->commands, 0);
       memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
       run_player_command(player);
+      if (player->mo)
+        P_MobjThinker(player->mo);
       M_CBufRemove(&player->commands, 0);
       M_CBufConsolidate(&player->commands);
     }
