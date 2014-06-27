@@ -691,13 +691,16 @@ void D_StartTitle (void) {
 // killough 10/98: support -dehout filename
 // cph - made const, don't cache results
 //e6y static 
-static const char *D_dehout(void) {
+static const char* D_dehout(void) {
   int p = M_CheckParm("-dehout");
 
   if (!p)
     p = M_CheckParm("-bexout");
 
-  return (p && ++p < myargc ? myargv[p] : NULL);
+  if (p && ++p < myargc)
+    return myargv[p];
+
+  return NULL;
 }
 
 //
@@ -776,6 +779,7 @@ void D_AddFile(const char *path, wad_source_t source) {
 void D_AddDEH(const char *filename, int lumpnum) {
   char *deh_path;
   deh_file_t dehfile;
+  const char *deh_out = D_dehout();
 
   if (filename == NULL && lumpnum == 0)
     I_Error("D_AddDEH: No filename or lumpnum given\n");
@@ -805,7 +809,10 @@ void D_AddDEH(const char *filename, int lumpnum) {
   lprintf(LO_INFO, "D_AddDEH: Adding %s.\n", deh_path);
 
   dehfile.filename = deh_path;
-  dehfile.outfilename = strdup(D_dehout());
+  if (deh_out != NULL)
+    dehfile.outfilename = strdup(deh_out);
+  else
+    dehfile.outfilename = NULL;
   dehfile.lumpnum = lumpnum;
 
   M_CBufAppend(&deh_files_buf, &dehfile);
