@@ -45,6 +45,11 @@ static GError *file_error = NULL;
 static inline void I_BeginRead(void) {}
 static inline void I_EndRead(void) {}
 
+static void clear_file_error(void) {
+  if (file_error)
+    g_clear_error(&file_error);
+}
+
 static void set_file_error(GQuark domain, gint code, gchar *message) {
   if (file_error)
     g_clear_error(&file_error);
@@ -116,6 +121,8 @@ char* M_LocalizePath(const char *path) {
   if (!path)
     return NULL;
 
+  clear_file_error();
+
 #ifdef _WIN32
   size_t path_len = strlen(path);
 
@@ -143,6 +150,8 @@ char* M_UnLocalizePath(const char *local_path) {
 
   if (!local_path)
     return NULL;
+
+  clear_file_error();
 
 #ifdef _WIN32
   ulp = g_convert(local_path, -1, "UTF-8", "wchar_t", NULL, &sz, &file_error);
@@ -412,6 +421,8 @@ int M_Open(const char *path, int flags, int mode) {
 }
 
 bool M_Close(int fd) {
+  clear_file_error();
+
   return g_close(fd, &file_error);
 }
 
@@ -463,6 +474,8 @@ FILE* M_OpenFile(const char *path, const char *mode) {
 }
 
 bool M_ReadFile(const char *path, char **data, size_t *size) {
+  clear_file_error();
+
   I_BeginRead();
   gboolean res = g_file_get_contents(path, data, size, &file_error);
   I_EndRead();
@@ -473,6 +486,8 @@ bool M_ReadFile(const char *path, char **data, size_t *size) {
 bool M_ReadFileBuf(buf_t *buf, const char *path) {
   char *data = NULL;
   gsize size;
+
+  clear_file_error();
 
   I_BeginRead();
   gboolean res = g_file_get_contents(path, &data, &size, &file_error);
@@ -487,6 +502,8 @@ bool M_ReadFileBuf(buf_t *buf, const char *path) {
 }
 
 bool M_WriteFile(const char *path, const char *contents, size_t size) {
+  clear_file_error();
+
   I_BeginRead();
   gboolean res = g_file_set_contents(path, contents, size, &file_error);
   I_EndRead();

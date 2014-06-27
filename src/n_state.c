@@ -130,12 +130,10 @@ game_state_t* N_GetNewState(void) {
 
   new_gs = M_CBufGetFirstFreeSlot(&saved_game_states);
 
-  if (new_gs == NULL) {
+  if (new_gs == NULL)
     new_gs = M_CBufGetNewSlot(&saved_game_states);
-    M_PBufInit(&new_gs->data);
-  }
 
-  M_PBufEnsureTotalCapacity(
+  M_PBufInitWithCapacity(
     &new_gs->data, MAX(average_state_size.value, 16384)
   );
 

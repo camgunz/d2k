@@ -80,6 +80,7 @@ static int number_of_thinkers;
 // CG: Broke out ouf P_UnArchiveThinkers to avoid reallocating a new array
 //     every time a savegame is loaded.  For the old netcode that was fine,
 //     for the new netcode that's untenable.
+static unsigned int max_thinker_count = 0;
 static unsigned int thinker_count = 0;
 static mobj_t **mobj_p = NULL; // killough 2/14/98: Translation table
 
@@ -128,14 +129,14 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   for (int i = 0; i < NUMPOWERS; i++)
     M_PBufWriteInt(savebuffer, player->powers[i]);
   for (int i = 0; i < NUMCARDS; i++)
-    M_PBufWriteInt(savebuffer, player->cards[i]);
-  M_PBufWriteInt(savebuffer, player->backpack);
+    M_PBufWriteBool(savebuffer, player->cards[i]);
+  M_PBufWriteBool(savebuffer, player->backpack);
   for (int i = 0; i < MAXPLAYERS; i++)
     M_PBufWriteInt(savebuffer, player->frags[i]);
   M_PBufWriteInt(savebuffer, player->readyweapon);
   M_PBufWriteInt(savebuffer, player->pendingweapon);
   for (int i = 0; i < NUMWEAPONS; i++)
-    M_PBufWriteInt(savebuffer, player->weaponowned[i]);
+    M_PBufWriteBool(savebuffer, player->weaponowned[i]);
   for (int i = 0; i < NUMAMMO; i++)
     M_PBufWriteInt(savebuffer, player->ammo[i]);
   for (int i = 0; i < NUMAMMO; i++)
@@ -158,20 +159,37 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufWriteInt(savebuffer, player->colormap);
   for (int i = 0; i < NUMPSPRITES; i++) {
     if (player->psprites[i].state) {
-      M_PBufWriteLong(
-        savebuffer, (int_64_t)(player->psprites[i].state - states)
-      );
+      uint_64_t state_index;
+
+      if (player->psprites[i].state < states) {
+        I_Error(
+          "P_ArchivePlayer: Invalid psprite state %p",
+          player->psprites[i].state
+        );
+      }
+
+      state_index = player->psprites[i].state - states;
+
+      if (state_index > NUMSTATES) {
+        I_Error(
+          "P_ArchivePlayer: Invalid psprite state %p",
+          player->psprites[i].state
+        );
+      }
+
+      M_PBufWriteULong(savebuffer, state_index + 1);
       M_PBufWriteInt(savebuffer, player->psprites[i].tics);
       M_PBufWriteInt(savebuffer, player->psprites[i].sx);
       M_PBufWriteInt(savebuffer, player->psprites[i].sy);
     }
     else {
-      M_PBufWriteLong(savebuffer, 0);
+      M_PBufWriteULong(savebuffer, 0);
       M_PBufWriteInt(savebuffer, 0);
       M_PBufWriteInt(savebuffer, 0);
       M_PBufWriteInt(savebuffer, 0);
     }
   }
+
   M_PBufWriteInt(savebuffer, player->didsecret);
   M_PBufWriteInt(savebuffer, player->momx);
   M_PBufWriteInt(savebuffer, player->momy);
@@ -243,14 +261,14 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   for (int i = 0; i < NUMPOWERS; i++)
     M_PBufReadInt(savebuffer, &player->powers[i]);
   for (int i = 0; i < NUMCARDS; i++)
-    M_PBufReadInt(savebuffer, (int *)&player->cards[i]);
-  M_PBufReadInt(savebuffer, (int *)&player->backpack);
+    M_PBufReadBool(savebuffer, (int *)&player->cards[i]);
+  M_PBufReadBool(savebuffer, (int *)&player->backpack);
   for (int i = 0; i < MAXPLAYERS; i++)
     M_PBufReadInt(savebuffer, &player->frags[i]);
   M_PBufReadInt(savebuffer, (int *)&player->readyweapon);
   M_PBufReadInt(savebuffer, (int *)&player->pendingweapon);
   for (int i = 0; i < NUMWEAPONS; i++)
-    M_PBufReadInt(savebuffer, (int *)&player->weaponowned[i]);
+    M_PBufReadBool(savebuffer, (int *)&player->weaponowned[i]);
   for (int i = 0; i < NUMAMMO; i++)
     M_PBufReadInt(savebuffer, &player->ammo[i]);
   for (int i = 0; i < NUMAMMO; i++)
@@ -273,9 +291,9 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufReadInt(savebuffer, &player->fixedcolormap);
   M_PBufReadInt(savebuffer, &player->colormap);
   for (int i = 0; i < NUMPSPRITES; i++) {
-    int_64_t state_index = 0;
+    uint_64_t state_index = 0;
 
-    M_PBufReadLong(savebuffer, &state_index);
+    M_PBufReadULong(savebuffer, &state_index);
 
     if (state_index > NUMSTATES) {
       I_Error(
@@ -284,15 +302,16 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
       );
     }
 
-    if (state_index != 0)
-      player->psprites[i].state = &states[state_index];
-    else
+    if (state_index == 0)
       player->psprites[i].state = NULL;
+    else
+      player->psprites[i].state = &states[state_index - 1];
 
     M_PBufReadInt(savebuffer, &player->psprites[i].tics);
     M_PBufReadInt(savebuffer, &player->psprites[i].sx);
     M_PBufReadInt(savebuffer, &player->psprites[i].sy);
   }
+
   M_PBufReadInt(savebuffer, (int *)&player->didsecret);
   M_PBufReadInt(savebuffer, &player->momx);
   M_PBufReadInt(savebuffer, &player->momy);
@@ -598,8 +617,8 @@ void P_ArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
   M_PBufWriteShort(savebuffer, mobj->spawnpoint.angle);
   M_PBufWriteShort(savebuffer, mobj->spawnpoint.type);
   M_PBufWriteShort(savebuffer, mobj->spawnpoint.options);
-  M_PBufWriteShort(savebuffer, tracer_index);
-  M_PBufWriteShort(savebuffer, lastenemy_index);
+  M_PBufWriteUInt(savebuffer, tracer_index);
+  M_PBufWriteUInt(savebuffer, lastenemy_index);
   M_PBufWriteInt(savebuffer, mobj->friction);
   M_PBufWriteInt(savebuffer, mobj->movefactor);
   M_PBufWriteInt(savebuffer, mobj->PrevX);
@@ -751,7 +770,7 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
     M_PBufWriteLong(savebuffer, (int_64_t)target);
     */
     if (target && target->thinker.function == P_MobjThinker)
-      M_PBufWriteUInt(savebuffer, target->index);
+      M_PBufWriteUInt(savebuffer, target->serialization_index);
     else
       M_PBufWriteUInt(savebuffer, 0);
   }
@@ -766,8 +785,6 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
 void P_UnArchiveThinkers(pbuf_t *savebuffer) {
   int         i;
   thinker_t  *th;
-  unsigned int new_thinker_count = 0;
-
   totallive = 0; /* CG: This is a global that lives in g_game.c, just FYI */
 
   // killough 3/26/98: Load boss brain state
@@ -801,16 +818,16 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
   /* CG: TODO: Seriously think about using a cbuf_t here */
   /*-----------------------------------------------------*/
 
-  M_PBufReadUInt(savebuffer, &new_thinker_count);
+  M_PBufReadUInt(savebuffer, &thinker_count);
 
-  if (new_thinker_count > thinker_count) {
+  if (thinker_count > max_thinker_count) {
     // table of pointers
     // first table entry special: 0 maps to NULL
-    thinker_count = new_thinker_count;
-    mobj_p = realloc(mobj_p, (thinker_count + 1) * sizeof(mobj_t *));
+    max_thinker_count = thinker_count;
+    mobj_p = realloc(mobj_p, (max_thinker_count + 1) * sizeof(mobj_t *));
   }
 
-  memset(mobj_p, 0, (thinker_count + 1) * sizeof(mobj_t *));
+  memset(mobj_p, 0, (max_thinker_count + 1) * sizeof(mobj_t *));
 
   // killough 2/14/98 -- insert pointers to thinkers into table, in order:
   for (i = 1; i < (thinker_count + 1); i++) {
