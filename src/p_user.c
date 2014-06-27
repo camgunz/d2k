@@ -476,8 +476,16 @@ static void run_player_command(player_t *player) {
     player->mo->flags &= ~MF_JUSTATTACKED;
   }
 
-  if (player->playerstate == PST_DEAD)
+  if (player->playerstate == PST_DEAD) {
+    if ((DELTACLIENT || DELTASERVER) && player->mo) {
+      P_MobjThinker(player->mo);
+      if ((player - players) != 0) {
+        D_Log(LOG_SYNC, "After P_MobjThinker:\n");
+        N_LogPlayerPosition(player);
+      }
+    }
     return;
+  }
 
   if (player->jumpTics)
     player->jumpTics--;
