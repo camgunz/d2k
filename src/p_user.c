@@ -568,7 +568,7 @@ void P_RunPlayerCommands(player_t *player) {
   
   if (M_CBufGetObjectCount(&player->commands) == 0) {
     /* [CG] Vector prediction... take 1*/
-    if (DELTACLIENT && player->mo) {
+    if (DELTACLIENT && player_index != consoleplayer && player->mo) {
       P_MobjThinker(player->mo);
       if (player_index != 0) {
         D_Log(LOG_SYNC, "After P_MobjThinker:\n");
@@ -639,8 +639,12 @@ void P_RunPlayerCommands(player_t *player) {
 
         memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
         run_player_command(player);
-        if (player->mo)
+        N_LogPlayerPosition(player);
+        if (player->mo) {
           P_MobjThinker(player->mo);
+          D_Log(LOG_SYNC, "After P_MobjThinker:\n");
+          N_LogPlayerPosition(player);
+        }
         M_CBufRemove(&player->commands, entry.index);
         entry.index--;
         N_LogPlayerPosition(player);
