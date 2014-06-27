@@ -147,7 +147,10 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufWriteInt(savebuffer, player->killcount);
   M_PBufWriteInt(savebuffer, player->itemcount);
   M_PBufWriteInt(savebuffer, player->secretcount);
-  M_PBufWriteString(savebuffer, player->message, MAX_MESSAGE_LENGTH);
+  if (player->message)
+    M_PBufWriteString(savebuffer, player->message, strlen(player->message));
+  else
+    M_PBufWriteString(savebuffer, "", 0);
   M_PBufWriteInt(savebuffer, player->damagecount);
   M_PBufWriteInt(savebuffer, player->bonuscount);
   M_PBufWriteInt(savebuffer, player->extralight);
@@ -177,7 +180,10 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufWriteInt(savebuffer, player->prev_viewangle);
   M_PBufWriteInt(savebuffer, player->prev_viewpitch);
   M_PBufWriteInt(savebuffer, player->jumpTics);
-  M_PBufWriteString(savebuffer, player->name, MAX_NAME_LENGTH);
+  if (player->name)
+    M_PBufWriteString(savebuffer, player->name, strlen(player->name));
+  else
+    M_PBufWriteString(savebuffer, "", 0);
   M_PBufWriteUChar(savebuffer, player->team);
   /*
    * CG: Don't use P_GetPlayerCommands here; that would overwrite the local

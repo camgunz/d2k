@@ -336,15 +336,36 @@ dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
   unsigned int game_option_count;
   unsigned char tic_delta;
   unsigned char safety_byte;
+  buf_t byte_buf;
+
+  M_BufferInit(&byte_buf);
 
   memset(description, 0, SAVESTRINGSIZE);
   memset(save_version, 0, VERSIONSIZE);
 
-  for (i = 0; i < SAVESTRINGSIZE; i++)
-    M_PBufReadUChar(savebuffer, &description[i]);
+  M_PBufReadBytes(savebuffer, &byte_buf);
 
-  for (i = 0; i < VERSIONSIZE; i++)
-    M_PBufReadUChar(savebuffer, &save_version[i]);
+  if (M_BufferGetSize(&byte_buf) != SAVESTRINGSIZE) {
+    I_Error("G_ReadSaveData: save string size mismatch (%zu != %u)",
+      M_BufferGetSize(&byte_buf), SAVESTRINGSIZE
+    );
+  }
+
+  memcpy(description, M_BufferGetData(&byte_buf), M_BufferGetSize(&byte_buf));
+
+  M_BufferClear(&byte_buf);
+
+  M_PBufReadBytes(savebuffer, &byte_buf);
+
+  if (M_BufferGetSize(&byte_buf) != VERSIONSIZE) {
+    I_Error("G_ReadSaveData: version size mismatch (%zu != %u)",
+      M_BufferGetSize(&byte_buf), VERSIONSIZE
+    );
+  }
+
+  memcpy(save_version, M_BufferGetData(&byte_buf), M_BufferGetSize(&byte_buf));
+
+  M_BufferFree(&byte_buf);
 
   // CPhipps - read the description field, compare with supported ones
   for (i = 0; i < num_version_headers; i++) {
@@ -358,6 +379,7 @@ dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
       break;
     }
   }
+
   if (savegame_compatibility == -1) {
     fprintf(stderr, "savegame_compatibility == -1 (%s)\n", save_version);
     if (bail_on_errors) {
