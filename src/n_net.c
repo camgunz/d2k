@@ -251,6 +251,9 @@ void N_Disconnect(void) {
     enet_peer_disconnect(np->peer, 0);
   }
 
+  if (CLIENT)
+    CL_SetReceivedSetup(false);
+
   while (true) {
     res = enet_host_service(net_host, &net_event, DISCONNECT_TIMEOUT * 1000);
 
