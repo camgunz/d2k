@@ -623,11 +623,11 @@ void N_TryRunTics(void) {
   render_fast = movement_smooth && (!window_focused) && (gametic > 0);
 
 #ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL)
+  if ((!SERVER) && (V_GetMode() == VID_MODEGL))
     render_fast = true;
 #endif
 
-  if ((!MULTINET) && (!render_fast) && (tics_elapsed <= 0))
+  if ((!render_fast) && (tics_elapsed <= 0))
     I_uSleep(ms_to_next_tick * 1000);
 
   if (tics_elapsed > 0) {

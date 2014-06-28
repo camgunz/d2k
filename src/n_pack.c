@@ -820,16 +820,12 @@ dboolean N_UnpackDeltaSync(netpeer_t *np) {
 
   D_Log(
     LOG_SYNC, 
-    "(%d) Received new sync: ST/CT: (%d/%d) Delta: [%d => %d].\n",
+    "(%d) Received new sync: ST/CT: (%d/%d) Delta: [%d => %d] (%d).\n",
     gametic,
     m_sync_tic,
     m_command_index,
     m_delta_from_tic,
-    m_delta_to_tic
-  );
-
-  printf("(%d %d > %d) N_UnpackDeltaSync: New sync [%d => %d] (%d)\n",
-    gametic, np->sync.tic, m_sync_tic, m_delta_from_tic, m_delta_to_tic,
+    m_delta_to_tic,
     m_delta_to_tic - m_delta_from_tic
   );
 
