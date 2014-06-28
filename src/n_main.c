@@ -63,7 +63,7 @@
 #include "n_proto.h"
 
 #define DEBUG_NET 0
-#define DEBUG_SYNC 0
+#define DEBUG_SYNC 1
 #define PRINT_BANDWIDTH_STATS 0
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
@@ -471,6 +471,7 @@ dboolean CL_LoadState(void) {
 
   server->sync.tic = delta->to_tic;
 
+  D_Log(LOG_SYNC, "Local commands: ");
   N_PrintPlayerCommands(&local_commands);
 
   CBUF_FOR_EACH(&local_commands, entry) {
@@ -522,6 +523,10 @@ dboolean CL_LoadState(void) {
 
     M_CBufAppend(player_commands, entry.obj);
   }
+
+  D_Log(LOG_SYNC, "First command batch: ");
+  N_PrintPlayerCommands(player_commands);
+
   is_extra_ddisplay = true;
   run_tic();
   is_extra_ddisplay = false;
@@ -542,12 +547,21 @@ dboolean CL_LoadState(void) {
     if (!found_command)
       break;
 
+    D_Log(LOG_SYNC, "Second command batch: ");
+    N_PrintPlayerCommands(player_commands);
+
     is_extra_ddisplay = true;
     run_tic();
     is_extra_ddisplay = false;
   }
 
   return true;
+}
+
+static bool catching_up;
+
+bool CL_IsCatchingUp(void) {
+  return catching_up;
 }
 
 void SV_RemoveOldCommands(void) {

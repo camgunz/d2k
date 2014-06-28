@@ -647,7 +647,6 @@ void P_RunPlayerCommands(player_t *player) {
         }
         M_CBufRemove(&player->commands, entry.index);
         entry.index--;
-        N_LogPlayerPosition(player);
       }
     }
     else {
