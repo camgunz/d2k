@@ -210,12 +210,16 @@ static void service_network(void) {
   if (!MULTINET)
     return;
 
+  N_ServiceNetwork();
+
+#if 0
   if (CLIENT)
     N_ServiceNetworkTimeout(SERVER_NO_PEER_SLEEP_TIMEOUT);
   else if (N_PeerGetCount() > 0)
     N_ServiceNetworkTimeout(SERVER_SLEEP_TIMEOUT);
   else
     N_ServiceNetworkTimeout(SERVER_NO_PEER_SLEEP_TIMEOUT);
+#endif
 
   if (DELTASERVER)
     SV_RemoveOldStates();
@@ -585,6 +589,7 @@ void N_TryRunTics(void) {
     I_uSleep(ms_to_next_tick * 1000);
 
   if (tics_elapsed) {
+    service_network();
     tics_built += tics_elapsed;
 
     if (ffmap)
@@ -594,8 +599,6 @@ void N_TryRunTics(void) {
 
     render_menu(MAX(menu_renderer_calls - tics_run, 0));
   }
-
-  service_network();
 
   cleanup_old_commands_and_states();
 

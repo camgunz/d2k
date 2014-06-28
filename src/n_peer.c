@@ -251,8 +251,6 @@ void N_PeerRemove(netpeer_t *np) {
 
   players[np->playernum].playerstate = PST_DISCONNECTED;
 
-  // playeringame[np->playernum] = false;
-
   free_netcom(&np->netcom);
   free_netsync(&np->sync);
 
