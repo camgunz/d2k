@@ -784,35 +784,27 @@ void N_PackDeltaSync(netpeer_t *np) {
   M_PBufWriteBytes(pbuf, np->sync.delta.data.data, np->sync.delta.data.size);
 }
 
-dboolean N_UnpackDeltaSync(netpeer_t *np, dboolean *update_sync) {
+dboolean N_UnpackDeltaSync(netpeer_t *np) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
   int m_sync_tic = 0;
   int m_command_index = 0;
   int m_delta_from_tic = 0;
   int m_delta_to_tic = 0;
-  int saved_sync_tic = np->sync.tic;
-  int saved_command_index = np->sync.cmd;
-  int saved_delta_from_tic = np->sync.delta.from_tic;
-  int saved_delta_to_tic = np->sync.delta.to_tic;
 
   read_int(pbuf, m_sync_tic, "delta tic");
   read_int(pbuf, m_command_index, "delta command index");
   read_int(pbuf, m_delta_from_tic, "delta from tic");
   read_int(pbuf, m_delta_to_tic, "delta to tic");
 
-  if (m_delta_to_tic <= np->sync.tic) {
-    *update_sync = false;
+  if (m_delta_to_tic <= np->sync.tic)
     return true;
-  }
 
   /*
    * CG: Don't load a delta in the very near future; give ourselves time to
    * catch up
    */
-  if ((m_delta_to_tic >= gametic) && (m_delta_to_tic < gametic + 1)) {
-    *update_sync = false;
+  if ((m_delta_to_tic >= gametic) && (m_delta_to_tic < gametic + 1))
     return true;
-  }
 
   if (m_delta_to_tic > gametic) {
     D_Log(
@@ -835,22 +827,17 @@ dboolean N_UnpackDeltaSync(netpeer_t *np, dboolean *update_sync) {
     m_delta_from_tic,
     m_delta_to_tic
   );
+
+  printf("(%d %d > %d) N_UnpackDeltaSync: New sync [%d => %d] (%d)\n",
+    gametic, np->sync.tic, m_sync_tic, m_delta_from_tic, m_delta_to_tic,
+    m_delta_to_tic - m_delta_from_tic
+  );
+
   np->sync.tic = m_sync_tic;
   np->sync.cmd = m_command_index;
   np->sync.delta.from_tic = m_delta_from_tic;
   np->sync.delta.to_tic = m_delta_to_tic;
   read_bytes(pbuf, np->sync.delta.data, "delta data");
-
-  if (CL_LoadState()) {
-    *update_sync = true;
-  }
-  else {
-    np->sync.tic = saved_sync_tic;
-    np->sync.cmd = saved_command_index;
-    np->sync.delta.from_tic = saved_delta_from_tic;
-    np->sync.delta.to_tic = saved_delta_to_tic;
-    *update_sync = false;
-  }
 
   return true;
 }

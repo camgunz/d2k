@@ -225,6 +225,41 @@ static void service_network(void) {
     SV_RemoveOldStates();
 }
 
+static void deltaclient_service_network(void) {
+  netpeer_t *server = N_PeerGet(0);
+  int latest_sync_tic;
+  int latest_command_index;
+  int latest_delta_from_tic;
+  int latest_delta_to_tic;
+
+  if (gametic <= 0) {
+    service_network();
+    return;
+  }
+
+  if (server == NULL)
+    I_Error("Server disconnected");
+
+  latest_sync_tic = server->sync.tic;
+  latest_command_index = server->sync.cmd;
+  latest_delta_from_tic = server->sync.delta.from_tic;
+  latest_delta_to_tic = server->sync.delta.to_tic;
+
+  service_network();
+
+  if (server->sync.delta.to_tic != latest_delta_to_tic) {
+    if (CL_LoadState()) {
+      server->sync.outdated = true;
+    }
+    else {
+      server->sync.tic = latest_sync_tic;
+      server->sync.cmd = latest_command_index;
+      server->sync.delta.from_tic = latest_delta_from_tic;
+      server->sync.delta.to_tic = latest_delta_to_tic;
+    }
+  }
+}
+
 static void render_extra_frame(void) {
   dboolean should_render = false;
 
@@ -595,8 +630,12 @@ void N_TryRunTics(void) {
   if ((!MULTINET) && (!render_fast) && (tics_elapsed <= 0))
     I_uSleep(ms_to_next_tick * 1000);
 
-  if (tics_elapsed) {
-    service_network();
+  if (tics_elapsed > 0) {
+    if (DELTACLIENT)
+      deltaclient_service_network();
+    else
+      service_network();
+
     tics_built += tics_elapsed;
 
     if (ffmap)

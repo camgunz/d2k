@@ -256,8 +256,10 @@ static void handle_server_message(netpeer_t *np) {
 static void handle_sync(netpeer_t *np) {
   dboolean update_sync = false;
 
-  if (DELTACLIENT && !N_UnpackDeltaSync(np, &update_sync))
+  if (DELTACLIENT) {
+    N_UnpackDeltaSync(np);
     return;
+  }
 
   if ((!DELTACLIENT) && (!N_UnpackSync(np, &update_sync)))
     return;

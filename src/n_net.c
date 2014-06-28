@@ -451,6 +451,8 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
   netpeer_t *np = NULL;
   ENetEvent net_event;
 
+  // printf("(%d) N_ServiceNetworkTimeout(%d)\n", gametic, timeout_ms);
+
   for (int i = 0; i < N_PeerGetCount(); i++) {
     netpeer_t *np = N_PeerGet(i);
 

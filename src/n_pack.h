@@ -49,7 +49,7 @@ void     N_PackSync(netpeer_t *np);
 dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync);
 
 void     N_PackDeltaSync(netpeer_t *np);
-dboolean N_UnpackDeltaSync(netpeer_t *np, dboolean *update_sync);
+dboolean N_UnpackDeltaSync(netpeer_t *np);
 
 void     N_PackPlayerMessage(netpeer_t *np, short sender, buf_t *recipients,
                                             char *message);
