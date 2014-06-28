@@ -1268,7 +1268,7 @@ void G_Ticker(void) {
       }
 
       playeringame[i] = false;
-      players[i].playerstate = PST_LIVE;
+      players[i].playerstate = PST_REBORN;
     }
   }
 
