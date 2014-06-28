@@ -211,7 +211,7 @@ static void service_network(void) {
     return;
 
   if (CLIENT)
-    N_ServiceNetwork();
+    N_ServiceNetworkTimeout(SERVER_NO_PEER_SLEEP_TIMEOUT);
   else if (N_PeerGetCount() > 0)
     N_ServiceNetworkTimeout(SERVER_SLEEP_TIMEOUT);
   else
