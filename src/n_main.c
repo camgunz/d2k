@@ -303,6 +303,7 @@ void N_InitNetGame(void) {
     if (i < myargc - 1) {
       char *host = NULL;
       unsigned short port = 0;
+      time_t connect_time;
 
       netgame = true;
 
@@ -315,25 +316,31 @@ void N_InitNetGame(void) {
 
       N_ParseAddressString(myargv[i + 1], &host, &port);
 
-      if (N_Connect(host, port))
-        doom_printf("N_InitNetGame: Connected to server %s:%u.\n", host, port);
-      else
-        I_Error("N_InitNetGame: Connection aborted");
-
-      N_ServiceNetworkTimeout(CONNECT_TIMEOUT * 1000);
+      doom_printf("N_InitNetGame: Connecting to server %s:%u...\n", host, port);
+      if (!N_Connect(host, port))
+        I_Error("N_InitNetGame: Connection refused");
+      doom_printf("N_InitNetGame: Connected!\n");
 
       if (N_PeerGet(0) == NULL)
-        I_Error("N_InitNetGame: Timed out connecting to server");
+        I_Error("N_InitNetGame: Server peer was NULL");
 
-      if (CLIENT)
-        G_ReloadDefaults();
+      connect_time = time(NULL);
 
-      N_ServiceNetworkTimeout(CONNECT_TIMEOUT * 1000);
+      G_ReloadDefaults();
 
-      if (received_setup)
-        doom_printf("N_InitNetGame: Setup information received.\n");
-      else
-        I_Error("N_InitNetGame: Timed out waiting for setup information.");
+      doom_printf("N_InitNetGame: Waiting for setup information...\n");
+      while (true) {
+        time_t now = time(NULL);
+
+        N_ServiceNetwork();
+
+        if (received_setup)
+          break;
+
+        if (difftime(now, connect_time) > (CONNECT_TIMEOUT * 1000))
+          I_Error("N_InitNetGame: Timed out waiting for setup information");
+      }
+      doom_printf("N_InitNetGame: Setup information received!\n");
     }
   }
   else {

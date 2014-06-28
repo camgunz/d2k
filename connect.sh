@@ -5,8 +5,8 @@ PORT=10666
 HOST=totaltrash.org
 HOST=127.0.0.1
 
-# gdb -ex run --args cbuild/doom2k -nomouse -net $HOST:10666
+gdb -ex run --args cbuild/doom2k -nomouse -net $HOST:10666
 # valgrind cbuild/doom2k -nomouse -net $HOST:10666
-CPUPROFILE=cpu.prof cbuild/doom2k -nomouse -net $HOST:$PORT
+# CPUPROFILE=cpu.prof cbuild/doom2k -nomouse -net $HOST:$PORT
 # cbuild/doom2k -nomouse -net $HOST:$PORT
 

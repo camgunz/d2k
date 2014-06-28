@@ -38,7 +38,7 @@
 #include "cmp.h"
 
 #include "d_ticcmd.h"
-
+#include "d_player.h"
 #include "g_game.h"
 #include "lprintf.h"
 #include "i_system.h"
@@ -46,6 +46,7 @@
 #include "m_swap.h"
 
 #include "n_net.h"
+#include "n_main.h"
 #include "n_state.h"
 #include "n_peer.h"
 #include "n_pack.h"
@@ -363,6 +364,7 @@ dboolean N_Connect(const char *host, unsigned short port) {
     address.port = DEFAULT_PORT;
 
   peernum = N_PeerAdd();
+
   server = enet_host_connect(net_host, &address, NET_CHANNEL_MAX, 0);
 
   if (server == NULL) {
@@ -511,7 +513,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
         np = N_PeerGet(0);
 
         if (np == NULL) {
-          doom_printf(
+          printf(
             "N_ServiceNetwork: Received a 'connect' event but no connection "
             "was requested.\n"
           );
