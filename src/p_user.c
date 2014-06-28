@@ -615,56 +615,58 @@ void P_RunPlayerCommands(player_t *player) {
       M_CBufRemove(&player->commands, entry.index);
       entry.index--;
     }
+
+    return;
   }
 
-  if (DELTACLIENT) {
-    if (player == &players[consoleplayer]) {
-      CBUF_FOR_EACH(&player->commands, entry) {
-        netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+  if (player_index != consoleplayer) {
+    netticcmd_t *ncmd = NULL;
 
-        D_Log(
-          LOG_SYNC,
-          "[%d: %td] P_RunPlayerCommands: After command "
-          "{ %d/%d %d %d %d %d %u %u }\n",
-          gametic, player - players,
-          ncmd->index,
-          ncmd->tic,
-          ncmd->cmd.forwardmove,
-          ncmd->cmd.sidemove,
-          ncmd->cmd.angleturn,
-          ncmd->cmd.consistancy,
-          ncmd->cmd.buttons,
-          ncmd->cmd.chatchar
-        );
+    if (M_CBufGetObjectCount(&player->commands) <= 0)
+      return;
 
-        memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
-        run_player_command(player);
-        N_LogPlayerPosition(player);
-        if (player->mo) {
-          P_MobjThinker(player->mo);
-          D_Log(LOG_SYNC, "After P_MobjThinker:\n");
-          N_LogPlayerPosition(player);
-        }
-        M_CBufRemove(&player->commands, entry.index);
-        entry.index--;
-      }
-    }
-    else {
-      netticcmd_t *ncmd = NULL;
+    M_CBufConsolidate(&player->commands);
+    ncmd = M_CBufGet(&player->commands, 0);
+    memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
+    run_player_command(player);
+    if (player->mo)
+      P_MobjThinker(player->mo);
+    M_CBufRemove(&player->commands, 0);
+    M_CBufConsolidate(&player->commands);
 
-      if (M_CBufGetObjectCount(&player->commands) <= 0)
-        return;
-
-      M_CBufConsolidate(&player->commands);
-      ncmd = M_CBufGet(&player->commands, 0);
-      memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
-      run_player_command(player);
-      if (player->mo)
-        P_MobjThinker(player->mo);
-      M_CBufRemove(&player->commands, 0);
-      M_CBufConsolidate(&player->commands);
-    }
+    return;
   }
+
+  CBUF_FOR_EACH(&player->commands, entry) {
+    netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+
+    D_Log(
+      LOG_SYNC,
+      "[%d: %td] P_RunPlayerCommands: After command "
+      "{ %d/%d %d %d %d %d %u %u }\n",
+      gametic, player - players,
+      ncmd->index,
+      ncmd->tic,
+      ncmd->cmd.forwardmove,
+      ncmd->cmd.sidemove,
+      ncmd->cmd.angleturn,
+      ncmd->cmd.consistancy,
+      ncmd->cmd.buttons,
+      ncmd->cmd.chatchar
+    );
+
+    memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
+    run_player_command(player);
+    N_LogPlayerPosition(player);
+    if (player->mo) {
+      P_MobjThinker(player->mo);
+      D_Log(LOG_SYNC, "After P_MobjThinker:\n");
+      N_LogPlayerPosition(player);
+    }
+    M_CBufRemove(&player->commands, entry.index);
+    entry.index--;
+  }
+
 }
 
 /* vi: set et ts=2 sw=2: */

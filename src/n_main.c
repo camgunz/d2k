@@ -104,13 +104,6 @@ static void build_command(void) {
 
     N_UpdateSync();
   }
-
-  /*
-  if (DELTACLIENT) {
-    M_CBufConsolidate(&players[consoleplayer].commands);
-    M_CBufAppend(&players[consoleplayer].commands, ncmd);
-  }
-  */
 }
 
 static void run_tic(void) {
