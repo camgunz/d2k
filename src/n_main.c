@@ -106,6 +106,9 @@ static void build_command(void) {
 
     N_UpdateSync();
   }
+
+  if (DELTACLIENT)
+    M_CBufAppend(&players[consoleplayer].commands, ncmd);
 }
 
 static void run_tic(void) {
@@ -448,7 +451,7 @@ dboolean CL_LoadState(void) {
   netpeer_t *server = N_PeerGet(0);
   game_state_delta_t *delta = NULL;
   cbuf_t *player_commands = &players[consoleplayer].commands;
-  
+
   if (server == NULL)
     return false;
 

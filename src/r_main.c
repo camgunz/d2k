@@ -1087,8 +1087,8 @@ void R_ShowStats(void)
     if (rendering_stats)
     {
       doom_printf((V_GetMode() == VID_MODEGL)
-                  ?"Frame rate %d fps\nWalls %d, Flats %d, Sprites %d"
-                  :"Frame rate %d fps\nSegs %d, Visplanes %d, Sprites %d",
+                  ?"Frame rate %d fps\nWalls %d, Flats %d, Sprites %d\n"
+                  :"Frame rate %d fps\nSegs %d, Visplanes %d, Sprites %d\n",
       renderer_fps, rendered_segs, rendered_visplanes, rendered_vissprites);
     }
     FPS_SavedTick = tick;
