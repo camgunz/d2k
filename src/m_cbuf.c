@@ -87,14 +87,23 @@ void M_CBufEnsureCapacity(cbuf_t *cbuf, int capacity) {
   }
 }
 
-void M_CBufAppend(cbuf_t *cbuf, void *obj) {
+int M_CBufAppend(cbuf_t *cbuf, void *obj) {
+  int slot = M_CBufInsertAtFirstFreeSlot(cbuf, obj);
+
+  if (slot != -1)
+    return slot;
+
+  return M_CBufAppendNew(cbuf, obj);
+}
+
+int M_CBufAppendNew(cbuf_t *cbuf, void *obj) {
   int index = cbuf->capacity;
 
   M_CBufEnsureCapacity(cbuf, cbuf->capacity + 1);
-  M_CBufInsert(cbuf, index, obj);
+  return M_CBufInsert(cbuf, index, obj);
 }
 
-void M_CBufInsert(cbuf_t *cbuf, int index, void *obj) {
+int M_CBufInsert(cbuf_t *cbuf, int index, void *obj) {
   if (index >= cbuf->capacity) {
     I_Error("M_CBufInsert: Insertion index %d out of bounds (>= %d)",
       index, cbuf->capacity
@@ -104,6 +113,8 @@ void M_CBufInsert(cbuf_t *cbuf, int index, void *obj) {
   memcpy(cbuf->nodes[index], obj, cbuf->obj_size);
   cbuf->used[index] = true;
   cbuf->size++;
+
+  return index;
 }
 
 int M_CBufInsertAtFirstFreeSlot(cbuf_t *cbuf, void *obj) {
@@ -115,16 +126,6 @@ int M_CBufInsertAtFirstFreeSlot(cbuf_t *cbuf, void *obj) {
   }
 
   return -1;
-}
-
-int M_CBufInsertAtFirstFreeSlotOrAppend(cbuf_t *cbuf, void *obj) {
-  int slot = M_CBufInsertAtFirstFreeSlot(cbuf, obj);
-
-  if (slot != -1)
-    return slot;
-
-  M_CBufAppend(cbuf, obj);
-  return cbuf->capacity - 1;
 }
 
 dboolean M_CBufIter(cbuf_t *cbuf, int *index, void **obj) {

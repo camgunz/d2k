@@ -512,6 +512,7 @@ dboolean CL_LoadState(void) {
 #endif
 
   M_CBufClear(player_commands);
+  M_CBufEnsureCapacity(player_commands, M_CBufGetObjectCount(&local_commands));
   CBUF_FOR_EACH(&local_commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
