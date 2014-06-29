@@ -59,17 +59,6 @@ dboolean M_CBufIsValidIndex(cbuf_t *cbuf, int index) {
 }
 
 int M_CBufGetObjectCount(cbuf_t *cbuf) {
-  int count = 0;
-
-  for (int i = 0; i < cbuf->capacity; i++) {
-    if (cbuf->nodes[i].used) {
-      count++;
-    }
-  }
-
-  if (count != cbuf->size)
-    I_Error("M_CBufGetObjectCount: size mismatch\n");
-
   return cbuf->size;
 }
 
