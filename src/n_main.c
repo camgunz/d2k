@@ -94,6 +94,8 @@ static void build_command(void) {
   I_StartTic();
   G_BuildTiccmd(ncmd);
   ncmd->index = local_command_index;
+  if (DELTACLIENT)
+    D_Log(LOG_SYNC, "Built command (%d, %d)\n", ncmd->index, ncmd->tic);
   local_command_index++;
 
   if (CLIENT) {

@@ -318,7 +318,10 @@ dboolean M_BufferRead(buf_t *buf, void *data, size_t size) {
   if (buf->cursor + size > buf->size)
     return false;
 
-  memcpy(data, buf->data + buf->cursor, size);
+  if (size == 1)
+    *((char *)data) = *(buf->data + buf->cursor);
+  else
+    memcpy(data, buf->data + buf->cursor, size);
 
   buf->cursor += size;
 
