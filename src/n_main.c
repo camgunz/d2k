@@ -85,6 +85,9 @@ static void build_command(void) {
   cbuf_t *commands = NULL;
   netticcmd_t *ncmd = NULL;
 
+  if (DELTASERVER)
+    return;
+
   if (DELTASYNC)
     commands = &local_commands;
   else
