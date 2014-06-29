@@ -56,6 +56,7 @@
 #include "e6y.h"//e6y
 
 #include "n_net.h"
+#include "n_main.h"
 
 //
 // P_SetMobjState
@@ -982,7 +983,8 @@ void P_RemoveMobj(mobj_t* mobj) {
 
   // stop any playing sound
 
-  S_StopSound (mobj);
+  if (!CL_LoadingState())
+    S_StopSound(mobj);
 
   // killough 11/98:
   //

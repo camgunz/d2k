@@ -304,8 +304,8 @@ void P_MovePlayer(player_t *player) {
       }
 
       if (cmd->sidemove) {
-        P_Bob(player,mo->angle-ANG90,cmd->sidemove*bobfactor);
-        P_SideThrust(player,mo->angle-ANG90,cmd->sidemove*movefactor);
+        P_Bob(player,mo->angle - ANG90,cmd->sidemove * bobfactor);
+        P_SideThrust(player,mo->angle - ANG90, cmd->sidemove * movefactor);
       }
     }
     else if (comperr(comperr_allowjump)) {
@@ -318,7 +318,7 @@ void P_MovePlayer(player_t *player) {
     }
 
     if (mo->state == states + S_PLAY)
-      P_SetMobjState(mo,S_PLAY_RUN1);
+      P_SetMobjState(mo, S_PLAY_RUN1);
   }
 }
 

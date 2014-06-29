@@ -74,10 +74,12 @@
 static dboolean is_extra_ddisplay = false;
 
 /* CG: Client only */
-static dboolean received_setup = false;
+static bool received_setup = false;
 static auth_level_e authorization_level = AUTH_LEVEL_NONE;
 static cbuf_t local_commands;
 static int local_command_index = 0;
+static bool predicting = false;
+static bool loading_state = false;
 
 static void build_command(void) {
   cbuf_t *commands = NULL;
@@ -430,11 +432,19 @@ void N_InitNetGame(void) {
   M_CBufInitWithCapacity(&local_commands, sizeof(netticcmd_t), BACKUPTICS);
 }
 
-dboolean N_GetWad(const char *name) {
+bool N_GetWad(const char *name) {
   return false;
 }
 
-dboolean CL_ReceivedSetup(void) {
+bool CL_LoadingState(void) {
+  return loading_state;
+}
+
+bool CL_Predicting(void) {
+  return predicting;
+}
+
+bool CL_ReceivedSetup(void) {
   return received_setup;
 }
 
@@ -447,7 +457,7 @@ void CL_SetAuthorizationLevel(auth_level_e level) {
     authorization_level = level;
 }
 
-dboolean CL_LoadState(void) {
+bool CL_LoadState(void) {
   netpeer_t *server = N_PeerGet(0);
   game_state_delta_t *delta = NULL;
   cbuf_t *player_commands = &players[consoleplayer].commands;
@@ -457,13 +467,17 @@ dboolean CL_LoadState(void) {
 
   delta = &server->sync.delta;
 
+  predicting = true;
+
   if (!N_ApplyStateDelta(delta)) {
     doom_printf("Error applying state delta.\n");
+    predicting = false;
     return false;
   }
 
   if (!N_LoadLatestState(false)) {
     doom_printf("Error loading state.\n");
+    predicting = false;
     return false;
   }
 
@@ -485,34 +499,10 @@ dboolean CL_LoadState(void) {
 
   gametic++;
 
-  if (M_CBufGetObjectCount(&local_commands) <= 0)
+  if (M_CBufGetObjectCount(&local_commands) <= 0) {
+    predicting = false;
     return true;
-
-#if 0
-  M_CBufClear(player_commands);
-  CBUF_FOR_EACH(&local_commands, entry) {
-    netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
-
-    if (ncmd->tic <= server->sync.tic) {
-      D_Log(LOG_SYNC, "(%d) Appending local command %d, %d, (%d, %d).\n",
-        gametic, ncmd->index, ncmd->tic, server->sync.cmd, server->sync.tic
-      );
-      M_CBufAppend(player_commands, ncmd);
-    }
   }
-
-  if (M_CBufGetObjectCount(player_commands) > 0) {
-    D_Log(LOG_SYNC, "(%d) Running command batch: ", gametic);
-    N_PrintPlayerCommands(player_commands);
-    is_extra_ddisplay = true;
-    run_tic();
-    is_extra_ddisplay = false;
-  }
-  else {
-    gametic++;
-  }
-
-#endif
 
   M_CBufClear(player_commands);
   M_CBufEnsureCapacity(player_commands, M_CBufGetObjectCount(&local_commands));
@@ -527,7 +517,6 @@ dboolean CL_LoadState(void) {
 
   // D_Log(LOG_SYNC, "First command batch: ");
   // N_PrintPlayerCommands(player_commands);
-
   is_extra_ddisplay = true;
   run_tic();
   is_extra_ddisplay = false;
@@ -556,6 +545,7 @@ dboolean CL_LoadState(void) {
     is_extra_ddisplay = false;
   }
 
+  predicting = false;
   return true;
 }
 
@@ -646,10 +636,14 @@ void N_TryRunTics(void) {
     I_uSleep(ms_to_next_tick * 1000);
 
   if (tics_elapsed > 0) {
-    if (DELTACLIENT)
+    if (DELTACLIENT) {
+      loading_state = true;
       deltaclient_service_network();
-    else
+      loading_state = false;
+    }
+    else {
       service_network();
+    }
 
     tics_built += tics_elapsed;
 
