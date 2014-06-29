@@ -468,8 +468,8 @@ dboolean CL_LoadState(void) {
 
   server->sync.tic = delta->to_tic;
 
-  D_Log(LOG_SYNC, "Local commands: ");
-  N_PrintPlayerCommands(&local_commands);
+  // D_Log(LOG_SYNC, "Local commands: ");
+  // N_PrintPlayerCommands(&local_commands);
 
   CBUF_FOR_EACH(&local_commands, entry) {
     netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
@@ -521,8 +521,8 @@ dboolean CL_LoadState(void) {
     M_CBufAppend(player_commands, entry.obj);
   }
 
-  D_Log(LOG_SYNC, "First command batch: ");
-  N_PrintPlayerCommands(player_commands);
+  // D_Log(LOG_SYNC, "First command batch: ");
+  // N_PrintPlayerCommands(player_commands);
 
   is_extra_ddisplay = true;
   run_tic();
@@ -544,8 +544,8 @@ dboolean CL_LoadState(void) {
     if (!found_command)
       break;
 
-    D_Log(LOG_SYNC, "Second command batch: ");
-    N_PrintPlayerCommands(player_commands);
+    // D_Log(LOG_SYNC, "Second command batch: ");
+    // N_PrintPlayerCommands(player_commands);
 
     is_extra_ddisplay = true;
     run_tic();
