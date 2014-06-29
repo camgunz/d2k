@@ -28,7 +28,7 @@
  *
  * DESCRIPTION:
  *  A buffer of objects that uses copies instead of pointers, more efficient
- *  than m_obuf when allocations can be avoided or have already been performed.
+ *  than m_obuf when you cannot keep the original object.
  *
  *-----------------------------------------------------------------------------
  */
@@ -40,16 +40,12 @@
   cbufiternode_t (cin) = {-1, NULL}; M_CBufIter((cb), &cin.index, &cin.obj); \
 )
 
-typedef struct cbufnode_s {
-  dboolean used;
-  void *obj;
-} cbufnode_t;
-
 typedef struct cobjbuf_s {
   int capacity;
   int size;
   size_t obj_size;
-  cbufnode_t *nodes;
+  bool *used;
+  void **nodes;
 } cbuf_t;
 
 typedef struct cbufiternode_s {
