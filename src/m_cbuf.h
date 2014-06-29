@@ -47,6 +47,7 @@ typedef struct cbufnode_s {
 
 typedef struct cobjbuf_s {
   int capacity;
+  int size;
   size_t obj_size;
   cbufnode_t *nodes;
 } cbuf_t;
