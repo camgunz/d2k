@@ -561,6 +561,9 @@ bool CL_IsCatchingUp(void) {
 void SV_RemoveOldCommands(void) {
   int oldest_gametic = gametic;
 
+  if (DELTASERVER)
+    return;
+
   M_CBufClear(&local_commands);
 
   if (!CMDSYNC)
@@ -628,7 +631,8 @@ void N_TryRunTics(void) {
   int tics_run = 0;
   dboolean render_fast = false;
   
-  render_fast = movement_smooth && (!window_focused) && (gametic > 0);
+  if (!SERVER)
+    render_fast = movement_smooth && (!window_focused) && (gametic > 0);
 
 #ifdef GL_DOOM
   if ((!SERVER) && (V_GetMode() == VID_MODEGL))
