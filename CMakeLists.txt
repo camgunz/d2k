@@ -362,6 +362,7 @@ IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
 ELSE()
   IF(GCC_OR_CLANG)
     TRY_C_COMPILER_FLAG(-fstack-protector FLAG_C_fstack_protector)
+    TRY_C_COMPILER_FLAG(-O3 FLAG_C_optimizations)
 
     IF(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     ###

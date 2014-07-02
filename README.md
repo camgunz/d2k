@@ -3,10 +3,41 @@
 ---
 
 Doom2K is a fork of [PrBoom+](http://prboom-plus.sourceforge.net) with several
-goals.
+lofty goals.
 
-Port to PNaCl
--------------
+Maintain Compatibility
+----------------------
+
+One of the many strengths of PrBoom+ is its compatibility with past versions of
+Doom and Boom.  Doom2K will maintain this compatibility insofar as its target
+platforms (PNaCl, pepper.js) allow.  This will be achieved using a new
+compatibility testing framework.
+
+Enhance Network Play
+--------------------
+
+PrBoom+ only supports the original command-based synchronized networking, This
+implementation has several limitations: only 4 players may play together,
+players cannot join an in-progress game, game modes are hard-coded, and one
+player's lag lags the whole group.
+
+Doom2K will replace this implementation with new netcode based on game saves,
+using delta compression to only send changes over the wire -- very similar to
+the Quake 3 architecture.
+
+Add Extensibility via Scripting
+-------------------------------
+
+Doom's behavior and assets are hardcoded, making it difficult to extend the
+engine with new capabilities.  ACS, DECORATE, EDF and ExtraData attempt to
+solve this problem, but all leave much to be desired.
+
+A scripting language would be much more powerful here.  The fork will move
+behavior and assets into a scripting language, allowing modders full control
+over the engine.  It is extremely likely that this language will be Lua.
+
+Add PNaCl Port
+--------------
 
 Doom2K will be playable using Google's [Portable Native
 Client](http://gonacl.com).  The intent is to allow playing either via PNaCl
@@ -24,26 +55,6 @@ fixed-function pipeline to the programmable pipeline.  In addition, the fork
 will upgrade the baseline OpenGL support necessary to run, requiring support
 for OpenGL 2.0.  Deprecated features, such as paletted textures, will be
 removed and functionality dependent on them will be reimplemented.
-
-Maintain Compatibility
-----------------------
-
-One of the many strengths of PrBoom+ is its compatibility with past versions of
-Doom and Boom.  Doom2K will maintain this compatibility insofar as its target
-platforms (PNaCl, pepper.js) allow.
-
-Enhance Network Play
----------------------
-
-PrBoom+ only supports the command-based synchronized networking, which is very
-similar to the original networking that shipped with Doom.  This functionality
-has several limitations: only 4 players may play together, players cannot join
-an in-progress game, game modes are hard-coded, and one player's lag lags the
-whole group.
-
-Doom2K will remove those limitations, and will add an additional
-synchronization method based on compressed state deltas -- very similar to the
-Quake 3 architecture.
 
 Add Modern Features and Compatibility
 -------------------------------------
@@ -73,17 +84,6 @@ source ports as possible, including:
   * ZIP/PK3
   * Bots
   * ...and much more
-
-Add Extensibility via Scripting
--------------------------------
-
-Doom's behavior and assets are hardcoded, making it difficult to extend the
-engine with new capabilities.  ACS, DECORATE, EDF and ExtraData attempt to
-solve this problem, but all leave much to be desired.
-
-A scripting language would be much more powerful here.  The fork will move
-behavior and assets into a scripting language, allowing modders full control
-over the engine.  It is extremely likely that this language will be Lua.
 
 ---
 
@@ -336,4 +336,6 @@ Details on these extra features are split into separate text files:
 
 Editing features are not covered in the docs with this package. We plan to
 bundle the editing docs as a separate download. Watch our website for news.
+
+<!-- vi: set et ts=4 sw=4 tw=79: -->
 

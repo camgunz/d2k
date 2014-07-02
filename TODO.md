@@ -1,13 +1,8 @@
 # To Do
 
-- Get prototype working
-  - Test with > 1 player remotely
-  - Make a section for D2K on totaltrash.org & package up a Windows binary
-    - Figure out how to do an icon with MinGW-w64?
+1. Fix moving from one map to the next
 
----
-
-1. Add unlagged
+2. Add unlagged
   - Save attacking player position
   - Save current game state
   - Restore game state that player was viewing during the attack
@@ -20,31 +15,31 @@
   - For every impacted actor:
     - Add new momx/momy/momz values to the current momx/momy/momz
 
-2. Add spectators
+3. Add spectators
 
-3. Add a scoreboard
+4. Add a scoreboard
 
-4. Add enough scripting to add a console
+5. Add enough scripting to add a console
 
-5. Add HTTP & JSON
+6. Add HTTP & JSON
   - Have client download missing WADs
     - the client should do this between frames in case it needs to download a
       huge file (or a file from a slow server); libcurl ought to make this
       pretty easy
   - Convert configuration file(s) to JSON
 
-6. Revamp configuration
+7. Revamp configuration
 
-7. Setup testing framework
+8. Setup testing framework
 
-8. Type problems:
+9. Type problems:
   - Playernums are unsigned shorts; fix this everywhere
   - TICs are unsigned ints; fix this everywhere
 
-9. Build the command-sync server (or decide to remove command-sync)
+10. Build the command-sync server (or decide to remove command-sync)
   - Shouldn't run any game code; just relay commands between clients
 
-10. Update `players`:
+11. Update `players`:
   - `players` will become an `obuf_t`
   - `playeringame` becomes `dboolean playeringame(unsigned short playernum)`
   - `MAXPLAYERS` becomes `VANILLA_MAXPLAYERS` for compat
@@ -61,9 +56,9 @@
     - If so, set each player's name accordingly
     - Of course, this only works for the 1st 4 players; after that, fuck it
 
-11. Header cleanup (omfg)
+12. Header cleanup (omfg)
 
-12. Update renderer
+13. Update renderer
 
 <!-- vi: set et ts=4 sw=4 tw=79: -->
 
