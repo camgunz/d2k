@@ -570,6 +570,8 @@ void P_ArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
   if (state_index >= NUMSTATES) 
     I_Error("P_ArchiveActor: Invalid mobj state %p", mobj->state);
 
+  state_index++;
+
   if (mobj->player) {
     for (unsigned int i = 0; i < MAXPLAYERS; i++) {
       if (mobj->player == &players[i]) {
@@ -710,7 +712,10 @@ void P_UnArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
   if (player_index > MAXPLAYERS)
     I_Error("P_UnArchiveActor: Invalid mobj player %u", player_index);
 
-  mobj->state = &states[state_index];
+  if (state_index)
+    mobj->state = &states[state_index - 1];
+  else
+    mobj->state = (state_t *)S_NULL;
 
   if (target_index)
     P_SetTarget(&mobj->target, mobj_p[target_index]);
@@ -725,6 +730,7 @@ void P_UnArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
     mobj->player = &players[player_index - 1];
     mobj->player->mo = mobj;
   }
+
 }
 
 //
@@ -796,6 +802,8 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
     thinker_t *next = th->next;
 
     if (th->function == P_MobjThinker) {
+      mobj_t *mobj = (mobj_t *)th;
+
       P_RemoveMobj((mobj_t *)th);
       P_RemoveThinkerDelayed(th); // fix mobj leak
     }
@@ -827,11 +835,14 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
     mobj_p = realloc(mobj_p, (max_thinker_count + 1) * sizeof(mobj_t *));
   }
 
-  memset(mobj_p, 0, (max_thinker_count + 1) * sizeof(mobj_t *));
+  // memset(mobj_p, 0, (max_thinker_count + 1) * sizeof(mobj_t *));
+  for (i = 0; i <= max_thinker_count; i++)
+    mobj_p[i] = NULL;
 
   // killough 2/14/98 -- insert pointers to thinkers into table, in order:
   for (i = 1; i < (thinker_count + 1); i++) {
     mobj_p[i] = Z_Malloc(sizeof(mobj_t), PU_LEVEL, NULL); // killough 2/14/98
+    memset(mobj_p[i], 0, sizeof(mobj_t));
     mobj_p[i]->thinker.function = P_MobjThinker;
     P_AddThinker(&mobj_p[i]->thinker);
   }
@@ -866,23 +877,23 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
 
   // killough 9/14/98: restore soundtargets
   for (i = 0; i < numsectors; i++) {
-    unsigned int target_index;
+    unsigned int st_index;
 
-    M_PBufReadUInt(savebuffer, &target_index);
+    M_PBufReadUInt(savebuffer, &st_index);
 
     // Must verify soundtarget. See P_ArchiveThinkers.
-    if (target_index > thinker_count) {
+    if (st_index > thinker_count) {
       I_Error(
-        "P_UnArchiveThinkers: Invalid soundtarget index %u", target_index
+        "P_UnArchiveThinkers: Invalid soundtarget index %u", st_index
       );
     }
 
-    if (target_index == 0) {
+    if (st_index == 0) {
       sectors[i].soundtarget = NULL;
       continue;
     }
 
-    P_SetTarget(&sectors[i].soundtarget, mobj_p[target_index]);
+    P_SetTarget(&sectors[i].soundtarget, mobj_p[st_index]);
   }
 
   // killough 3/26/98: Spawn icon landings:
