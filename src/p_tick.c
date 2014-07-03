@@ -88,8 +88,7 @@ void P_InitThinkers(void) {
 // efficient searches.
 //
 
-void P_UpdateThinker(thinker_t *thinker)
-{
+void P_UpdateThinker(thinker_t *thinker) {
   register thinker_t *th;
   // find the class the thinker belongs to
 
@@ -102,11 +101,9 @@ void P_UpdateThinker(thinker_t *thinker)
     ((mobj_t *) thinker)->flags & MF_FRIEND ?
     th_friends : th_enemies : th_misc;
 
-  {
-    /* Remove from current thread, if in one */
-    if ((th = thinker->cnext)!= NULL)
-      (th->cprev = thinker->cprev)->cnext = th;
-  }
+  /* Remove from current thread, if in one */
+  if ((th = thinker->cnext)!= NULL)
+    (th->cprev = thinker->cprev)->cnext = th;
 
   // Add to appropriate thread
   th = &thinkerclasscap[class];
@@ -121,8 +118,7 @@ void P_UpdateThinker(thinker_t *thinker)
 // Adds a new thinker at the end of the list.
 //
 
-void P_AddThinker(thinker_t* thinker)
-{
+void P_AddThinker(thinker_t* thinker) {
   thinkercap.prev->next = thinker;
   thinker->next = &thinkercap;
   thinker->prev = thinkercap.prev;
@@ -155,26 +151,26 @@ static thinker_t *currentthinker;
 // that the next step in P_RunThinkers() will get its successor.
 //
 
-void P_RemoveThinkerDelayed(thinker_t *thinker)
-{
-  if (!thinker->references)
-    {
-      { /* Remove from main thinker list */
-        thinker_t *next = thinker->next;
-        /* Note that currentthinker is guaranteed to point to us,
-         * and since we're freeing our memory, we had better change that. So
-         * point it to thinker->prev, so the iterator will correctly move on to
-         * thinker->prev->next = thinker->next */
-        (next->prev = currentthinker = thinker->prev)->next = next;
-      }
-      {
-        /* Remove from current thinker class list */
-        thinker_t *th = thinker->cnext;
-        (th->cprev = thinker->cprev)->cnext = th;
-      }
+void P_RemoveThinkerDelayed(thinker_t *thinker) {
+  thinker_t *next, *th;
 
-      Z_Free(thinker);
-    }
+  if (thinker->references)
+    return;
+
+  /* Remove from main thinker list */
+  next = thinker->next;
+  /*
+   * Note that currentthinker is guaranteed to point to us,
+   * and since we're freeing our memory, we had better change that. So
+   * point it to thinker->prev, so the iterator will correctly move on to
+   * thinker->prev->next = thinker->next
+   */
+  (next->prev = currentthinker = thinker->prev)->next = next;
+  /* Remove from current thinker class list */
+  th = thinker->cnext;
+  (th->cprev = thinker->cprev)->cnext = th;
+
+  Z_Free(thinker);
 }
 
 //
@@ -190,8 +186,7 @@ void P_RemoveThinkerDelayed(thinker_t *thinker)
 // removed automatically as part of the thinker process.
 //
 
-void P_RemoveThinker(thinker_t *thinker)
-{
+void P_RemoveThinker(thinker_t *thinker) {
   R_StopInterpolationIfNeeded(thinker);
   thinker->function = P_RemoveThinkerDelayed;
 
@@ -201,12 +196,21 @@ void P_RemoveThinker(thinker_t *thinker)
 /* cph 2002/01/13 - iterator for thinker list
  * WARNING: Do not modify thinkers between calls to this functin
  */
-thinker_t* P_NextThinker(thinker_t* th, th_class cl)
-{
+thinker_t* P_NextThinker(thinker_t* th, th_class cl) {
   thinker_t* top = &thinkerclasscap[cl];
-  if (!th) th = top;
-  th = cl == th_all ? th->next : th->cnext;
-  return th == top ? NULL : th;
+
+  if (!th)
+    th = top;
+
+  if (cl == th_all)
+    th = th->next;
+  else
+    th = th->next;
+
+  if (th == top)
+    return NULL;
+
+  return th;
 }
 
 /*
@@ -221,8 +225,7 @@ thinker_t* P_NextThinker(thinker_t* th, th_class cl)
  * references, and delay removal until the count is 0.
  */
 
-void P_SetTarget(mobj_t **mop, mobj_t *targ)
-{
+void P_SetTarget(mobj_t **mop, mobj_t *targ) {
   if (*mop)             // If there was a target already, decrease its refcount
     (*mop)->thinker.references--;
   if ((*mop = targ))    // Set new target and if non-NULL, increase its counter
@@ -300,7 +303,7 @@ static dboolean setup_tic(void) {
     return false;
   }
 
-  R_UpdateInterpolations ();
+  R_UpdateInterpolations();
   P_MapStart();
 
   return true;
