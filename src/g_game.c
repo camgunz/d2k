@@ -50,7 +50,6 @@
 #include "m_pbuf.h"
 #include "m_random.h"
 #include "p_setup.h"
-// #include "p_saveg.h"
 #include "p_tick.h"
 #include "p_map.h"
 #include "p_checksum.h"
@@ -1107,7 +1106,7 @@ dboolean G_Responder(event_t *ev) {
       do {                                        // spy mode
         if (++displayplayer >= MAXPLAYERS)
           displayplayer = 0;
-      } while (!playeringame[displayplayer] && displayplayer!=consoleplayer);
+      } while (!playeringame[displayplayer] && displayplayer != consoleplayer);
 
       ST_Start();    // killough 3/7/98: switch status bar views too
       HU_Start();
