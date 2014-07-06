@@ -37,6 +37,7 @@
 #include <enet/enet.h>
 #include "cmp.h"
 
+#include "doomdef.h"
 #include "d_deh.h"
 #include "d_main.h"
 #include "d_ticcmd.h"
@@ -450,6 +451,11 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   D_Log(LOG_SYNC, "player count: %d\n", m_player_count);
   read_short(pbuf, m_playernum, "consoleplayer");
   D_Log(LOG_SYNC, "consoleplayer: %d\n", m_playernum);
+
+  D_ClearIWAD();
+  D_ClearResourceFiles();
+  D_ClearDEHFiles();
+  N_PeerResetSync(0);
 
   M_BufferInit(&iwad_buf);
   read_string(pbuf, &iwad_buf, "IWAD", MAX_IWAD_NAME_LENGTH);

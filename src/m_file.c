@@ -625,8 +625,6 @@ char* M_AddDefaultExtension(const char *path, const char *ext) {
     return strdup(path);
   }
 
-  *path_ext = 0;
-
   M_BufferInit(&buf);
 
   if (!M_PathJoinBuf(&buf, dirname, basename)) {

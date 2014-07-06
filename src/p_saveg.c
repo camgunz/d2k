@@ -53,7 +53,7 @@
 #include "s_advsound.h"
 #include "e6y.h"//e6y
 
-#define MAX_COMMAND_COUNT 1000
+#define MAX_COMMAND_COUNT 10000
 
 typedef enum {
   tc_end,
@@ -331,7 +331,7 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufReadUChar(savebuffer, &player->team);
   M_PBufReadInt(savebuffer, &command_count);
   if (command_count > MAX_COMMAND_COUNT)
-    I_Error("Command count too high\n");
+    I_Error("Command count too high (%d)\n", command_count);
 
   M_CBufClear(&player->commands);
   M_CBufEnsureCapacity(&player->commands, command_count);
@@ -802,8 +802,6 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
     thinker_t *next = th->next;
 
     if (th->function == P_MobjThinker) {
-      mobj_t *mobj = (mobj_t *)th;
-
       P_RemoveMobj((mobj_t *)th);
       P_RemoveThinkerDelayed(th); // fix mobj leak
     }

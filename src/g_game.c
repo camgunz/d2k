@@ -82,6 +82,7 @@
 
 #include "n_net.h"
 #include "n_proto.h"
+#include "n_state.h"
 
 extern int forceOldBsp;
 extern char *player_names[];
@@ -1080,6 +1081,12 @@ static void G_DoLoadLevel(void) {
       first = 0;
     }
   }
+
+  if (DELTASYNC)
+    N_ClearStates();
+
+  if (DELTASERVER)
+    SV_BroadcastDoLoadLevel();
 }
 
 //
@@ -1108,7 +1115,7 @@ dboolean G_Responder(event_t *ev) {
           displayplayer = 0;
       } while (!playeringame[displayplayer] && displayplayer != consoleplayer);
 
-      ST_Start();    // killough 3/7/98: switch status bar views too
+      ST_Start(); // killough 3/7/98: switch status bar views too
       HU_Start();
       S_UpdateSounds(players[displayplayer].mo);
       R_ActivateSectorInterpolations();
@@ -1237,7 +1244,6 @@ void G_Ticker(void) {
 
   // CPhipps - player colour changing
   if (!demoplayback && mapcolor_plyr[consoleplayer] != mapcolor_me) {
-
     if (CLIENT) // Changed my multiplayer colour - Inform the whole game
       CL_SendColorIndexChange(mapcolor_me);
 
@@ -1921,7 +1927,7 @@ void G_DoCompleted(void) {
 
   e6y_G_DoCompleted();//e6y
 
-  WI_Start (&wminfo);
+  WI_Start(&wminfo);
 }
 
 //

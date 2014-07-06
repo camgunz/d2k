@@ -511,5 +511,15 @@ void N_PeerClearUnreliable(int peernum) {
   clear_channel(&np->netcom.unreliable);
 }
 
+void N_PeerResetSync(int peernum) {
+  netpeer_t *np = N_PeerGet(peernum);
+
+  if (np == NULL)
+    I_Error("N_PeerResetSync: Invalid peer number %d.\n", peernum);
+
+  free_netsync(&np->sync);
+  init_netsync(&np->sync);
+}
+
 /* vi: set et ts=2 sw=2: */
 

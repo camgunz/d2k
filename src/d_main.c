@@ -197,14 +197,22 @@ void D_PostEvent(event_t *ev) {
     }
   }
 
-  if ((!M_Responder(ev)) && gamestate == GS_LEVEL) {
-    if (!HU_Responder(ev)) {
-      if (!ST_Responder(ev)) {
-        if (!AM_Responder(ev))
-          G_Responder(ev);
-      }
-    }
-  }
+  if (M_Responder(ev))
+    return;
+
+  if (gamestate != GS_LEVEL)
+    return;
+
+  if (HU_Responder(ev))
+    return;
+
+  if (ST_Responder(ev))
+    return;
+
+  if (AM_Responder(ev))
+    return;
+
+  G_Responder(ev);
 }
 
 //
@@ -213,7 +221,7 @@ void D_PostEvent(event_t *ev) {
 // CPhipps - moved the screen wipe code from D_Display to here
 // The screens to wipe between are already stored, this just does the timing
 // and screen updating
-
+//
 static void D_Wipe(void) {
   dboolean done;
   int wipestart = I_GetTime() - 1;
@@ -235,32 +243,6 @@ static void D_Wipe(void) {
     M_Drawer();                   // menu is drawn even on top of wipes
     I_FinishUpdate();             // page flip or blit buffer
   } while (!done);
-}
-
-void D_SetIWAD(const char *iwad) {
-  if (iwad_base)
-    free(iwad_base);
-
-  iwad_base = M_Basename(iwad);
-
-  if (iwad_base == NULL) {
-    I_Error(
-      "D_SetIWAD: Error getting basename of %s: %s\n", iwad, M_GetFileError()
-    );
-  }
-
-  if (iwad_path)
-    free(iwad_path);
-
-  iwad_path = strdup(iwad);
-}
-
-const char* D_GetIWAD(void) {
-  return iwad_base;
-}
-
-const char* D_GetIWADPath(void) {
-  return iwad_path;
 }
 
 //
@@ -819,6 +801,107 @@ void D_AddDEH(const char *filename, int lumpnum) {
 }
 
 //
+// AddIWAD
+//
+void AddIWAD(const char *iwad) {
+  size_t i;
+
+  if (!(iwad && *iwad))
+    return;
+
+  //jff 9/3/98 use logical output routine
+  lprintf(LO_CONFIRM, "IWAD found: %s\n", iwad); //jff 4/20/98 print only if found
+  CheckIWAD(iwad, &gamemode, &haswolflevels);
+
+  /*
+   * jff 8/23/98 set gamemission global appropriately in all cases
+   * cphipps 12/1999 - no version output here, leave that to the caller
+   */
+  i = strlen(iwad);
+
+  switch(gamemode) {
+  case retail:
+  case registered:
+  case shareware:
+    gamemission = doom;
+    if (i >= 8 && !strnicmp(iwad + i - 8,"chex.wad", 8))
+      gamemission = chex;
+    break;
+  case commercial:
+    gamemission = doom2;
+    if (i >= 10 && !strnicmp(iwad + i - 10,"doom2f.wad", 10))
+      language=french;
+    else if (i >= 7 && !strnicmp(iwad + i - 7,"tnt.wad", 7))
+      gamemission = pack_tnt;
+    else if (i >= 12 && !strnicmp(iwad + i - 12,"plutonia.wad", 12))
+      gamemission = pack_plut;
+    else if (i >= 8 && !strnicmp(iwad + i - 8,"hacx.wad", 8))
+      gamemission = hacx;
+    break;
+  default:
+    gamemission = none;
+    break;
+  }
+
+  if (gamemode == indetermined) //jff 9/3/98 use logical output routine
+    lprintf(LO_WARN, "Unknown Game Version, may not work\n");
+}
+
+void D_SetIWAD(const char *iwad) {
+  if (iwad_base)
+    free(iwad_base);
+
+  iwad_base = M_Basename(iwad);
+
+  if (iwad_base == NULL) {
+    I_Error(
+      "D_SetIWAD: Error getting basename of %s: %s\n", iwad, M_GetFileError()
+    );
+  }
+
+  if (iwad_path)
+    free(iwad_path);
+
+  iwad_path = strdup(iwad);
+}
+
+const char* D_GetIWAD(void) {
+  return iwad_base;
+}
+
+const char* D_GetIWADPath(void) {
+  return iwad_path;
+}
+
+//
+// D_ClearIWAD
+//
+void D_ClearIWAD(void) {
+  if (iwad_base)
+    free(iwad_base);
+
+  if (iwad_path)
+    free(iwad_path);
+
+  iwad_base = NULL;
+  iwad_path = NULL;
+}
+
+//
+// D_ClearResourceFiles
+//
+void D_ClearResourceFiles(void) {
+  M_CBufClear(&resource_files_buf);
+}
+
+//
+// D_ClearDEHFiles
+//
+void D_ClearDEHFiles(void) {
+  M_CBufClear(&deh_files_buf);
+}
+
+//
 // CheckIWAD
 //
 // Verify a file is indeed tagged as an IWAD
@@ -942,53 +1025,6 @@ void CheckIWAD(const char *iwadname, GameMode_t *gmode, dboolean *hassec) {
   else if (sw >= 9) {
     *gmode = shareware;
   }
-}
-
-//
-// AddIWAD
-//
-void AddIWAD(const char *iwad) {
-  size_t i;
-
-  if (!(iwad && *iwad))
-    return;
-
-  //jff 9/3/98 use logical output routine
-  lprintf(LO_CONFIRM, "IWAD found: %s\n", iwad); //jff 4/20/98 print only if found
-  CheckIWAD(iwad, &gamemode, &haswolflevels);
-
-  /*
-   * jff 8/23/98 set gamemission global appropriately in all cases
-   * cphipps 12/1999 - no version output here, leave that to the caller
-   */
-  i = strlen(iwad);
-
-  switch(gamemode) {
-  case retail:
-  case registered:
-  case shareware:
-    gamemission = doom;
-    if (i >= 8 && !strnicmp(iwad + i - 8,"chex.wad", 8))
-      gamemission = chex;
-    break;
-  case commercial:
-    gamemission = doom2;
-    if (i >= 10 && !strnicmp(iwad + i - 10,"doom2f.wad", 10))
-      language=french;
-    else if (i >= 7 && !strnicmp(iwad + i - 7,"tnt.wad", 7))
-      gamemission = pack_tnt;
-    else if (i >= 12 && !strnicmp(iwad + i - 12,"plutonia.wad", 12))
-      gamemission = pack_plut;
-    else if (i >= 8 && !strnicmp(iwad + i - 8,"hacx.wad", 8))
-      gamemission = hacx;
-    break;
-  default:
-    gamemission = none;
-    break;
-  }
-
-  if (gamemode == indetermined) //jff 9/3/98 use logical output routine
-    lprintf(LO_WARN, "Unknown Game Version, may not work\n");
 }
 
 // NormalizeSlashes
@@ -1826,11 +1862,19 @@ static void D_DoomMainSetup(void) {
 
   if (p && p < myargc - 1) {
     char *file = M_AddDefaultExtension(myargv[p + 1], "lmp");     // killough
+    char *file_path = I_FindFile(file, NULL);
 
-    D_AddFile(file, source_lmp);
-
-    //jff 9/3/98 use logical output routine
-    lprintf(LO_CONFIRM, "Playing demo %s\n", file);
+    if (file_path) {
+      //jff 9/3/98 use logical output routine
+      lprintf(LO_CONFIRM, "Playing demo %s\n", file);
+      D_AddFile(file, source_lmp);
+    }
+    else {
+      lprintf(LO_CONFIRM,
+        "Demo file %s not found, assuming %s is a lump name\n",
+        file, myargv[p + 1]
+      );
+    }
 
     if ((p = M_CheckParm("-ffmap")) && p < myargc - 1)
       ffmap = atoi(myargv[p + 1]);

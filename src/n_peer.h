@@ -87,6 +87,7 @@ dboolean    N_PeerLoadIncoming(int peernum, unsigned char *data, size_t size);
 dboolean    N_PeerLoadNextMessage(int peernum, unsigned char *message_type);
 void        N_PeerClearReliable(int peernum);
 void        N_PeerClearUnreliable(int peernum);
+void        N_PeerResetSync(int peernum);
 
 #endif
 

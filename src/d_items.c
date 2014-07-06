@@ -35,7 +35,7 @@
 #include "z_zone.h"
 
 // We are referring to sprite numbers.
-#include "doomtype.h"
+#include "doomdef.h"
 #include "d_main.h"
 #include "info.h"
 

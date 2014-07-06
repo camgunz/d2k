@@ -67,18 +67,21 @@ void D_DoAdvanceDemo (void);
 // BASE LEVEL
 //
 
-void        IdentifyVersion(void);
-void        D_SetIWAD(const char *iwad);
-const char* D_GetIWAD(void);
-const char* D_GetIWADPath(void);
 void        D_Display(void);
 void        D_PageTicker(void);
 void        D_StartTitle(void);
 void        D_DoomMain(void);
-void        D_AddFile (const char *file, wad_source_t source);
+void        D_AddFile(const char *file, wad_source_t source);
 void        D_AddDEH(const char *filename, int lumpnum);
-
 void        AddIWAD(const char *iwad);
+void        D_SetIWAD(const char *iwad);
+const char* D_GetIWAD(void);
+const char* D_GetIWADPath(void);
+void        D_ClearIWAD(void);
+void        D_ClearResourceFiles(void);
+void        D_ClearDEHFiles(void);
+void        CheckIWAD(const char *iwadname, GameMode_t *gmode, dboolean *hassec);
+void        IdentifyVersion(void);
 
 /* cph - MBF-like wad/deh/bex autoload code */
 /* proff 2001/7/1 - added prboom.wad as last entry so it's always loaded and

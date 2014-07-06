@@ -554,15 +554,10 @@ static void run_player_command(player_t *player) {
 }
 
 void P_RunPlayerCommands(player_t *player) {
-  int saved_leveltime;
   int player_index = player - players;
 
-  if ((!MULTINET) || CMDSYNC) {
+  if (!(DELTACLIENT || DELTASERVER)) {
     run_player_command(player);
-
-    if (player->mo)
-      P_MobjThinker(player->mo);
-
     return;
   }
   
@@ -580,6 +575,8 @@ void P_RunPlayerCommands(player_t *player) {
   }
 
   if (DELTASERVER) {
+    int saved_leveltime;
+
     CBUF_FOR_EACH(&player->commands, entry) {
       netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 

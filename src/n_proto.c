@@ -760,6 +760,27 @@ void SV_BroadcastPlayerSkinChanged(short playernum) {
   /* CG: TODO */
 }
 
+void SV_BroadcastDoLoadLevel(void) {
+  netpeer_t *np = NULL;
+
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    if (i == consoleplayer)
+      continue;
+
+    if (!playeringame[i])
+      continue;
+
+    np = N_PeerForPlayer(i);
+
+    if (np == NULL)
+      continue;
+
+    N_PeerResetSync(np->peernum);
+    P_SpawnPlayer(i, &playerstarts[i]);
+    SV_SendSetup(i);
+  }
+}
+
 void CL_SendAuthRequest(char *password) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
