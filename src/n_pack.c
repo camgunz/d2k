@@ -403,6 +403,7 @@ void N_PackSetup(netpeer_t *np) {
 
   M_PBufWriteInt(pbuf, gs->tic);
   M_PBufWriteBytes(pbuf, M_PBufGetData(&gs->data), M_PBufGetSize(&gs->data));
+  np->sync.tic = gs->tic;
 
   /*
   D_Log(LOG_SYNC, "Resources:");
@@ -452,10 +453,10 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   read_short(pbuf, m_playernum, "consoleplayer");
   D_Log(LOG_SYNC, "consoleplayer: %d\n", m_playernum);
 
+  W_ReleaseAllWads();
   D_ClearIWAD();
   D_ClearResourceFiles();
   D_ClearDEHFiles();
-  N_PeerResetSync(0);
 
   M_BufferInit(&iwad_buf);
   read_string(pbuf, &iwad_buf, "IWAD", MAX_IWAD_NAME_LENGTH);
@@ -517,6 +518,12 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
     }
   }
 
+  //jff 9/3/98 use logical output routine
+  lprintf(LO_INFO, "W_Init: Init WADfiles.\n");
+  W_Init();
+  // killough 3/6/98: add a newline, by popular demand :)
+  lprintf(LO_INFO, "\n");
+
   gs = N_GetNewState();
 
   read_int(pbuf, gs->tic, "game state tic");
@@ -543,10 +550,16 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
       return false;
     break;
   }
+
   *player_count = m_player_count;
   *playernum = m_playernum;
 
   N_SetLatestState(gs);
+
+  np->sync.tic = gs->tic;
+
+  if (gamestate == GS_INTERMISSION)
+    N_LoadLatestState(true);
 
   return true;
 }
@@ -658,9 +671,12 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
 
   *update_sync = false;
 
-  D_Log(LOG_SYNC, "(%d) Received sync ", gametic);
-
   read_int(pbuf, m_sync_tic, "sync tic");
+
+  if (m_sync_tic <= np->sync.tic)
+    return true;
+
+  D_Log(LOG_SYNC, "(%d) Received sync ", gametic);
 
   if ((np->sync.tic != m_sync_tic))
     m_update_sync = true;
@@ -824,22 +840,22 @@ dboolean N_UnpackDeltaSync(netpeer_t *np) {
     );
   }
 
-  D_Log(
-    LOG_SYNC, 
-    "(%d) Received new sync: ST/CT: (%d/%d) Delta: [%d => %d] (%d).\n",
-    gametic,
-    m_sync_tic,
-    m_command_index,
-    m_delta_from_tic,
-    m_delta_to_tic,
-    m_delta_to_tic - m_delta_from_tic
-  );
-
   np->sync.tic = m_sync_tic;
   np->sync.cmd = m_command_index;
   np->sync.delta.from_tic = m_delta_from_tic;
   np->sync.delta.to_tic = m_delta_to_tic;
   read_bytes(pbuf, np->sync.delta.data, "delta data");
+
+  D_Log(LOG_SYNC,
+    "(%d) Received new sync: ST/CT: (%d/%d) Delta: [%d => %d (%d)] (%zu)\n",
+    gametic,
+    np->sync.tic,
+    np->sync.cmd,
+    np->sync.delta.from_tic,
+    np->sync.delta.to_tic,
+    np->sync.delta.to_tic - np->sync.delta.from_tic,
+    np->sync.delta.data.size
+  );
 
   return true;
 }

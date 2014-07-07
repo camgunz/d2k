@@ -53,6 +53,8 @@
 #include "s_advsound.h"
 #include "s_sound.h"
 
+#include "p_tick.h"
+
 #include "gl_intern.h"
 #include "gl_struct.h"
 
@@ -298,8 +300,6 @@ void G_WriteSaveData(pbuf_t *savebuffer) {
   // killough 11/98: save revenant tracer state
   M_PBufWriteUChar(savebuffer, (gametic - basetic) & 255);
 
-  P_ArchivePlayers(savebuffer);
-
   // phares 9/13/98: Move mobj_t->index out of P_ArchiveThinkers so the
   // indices can be used by P_ArchiveWorld when the sectors are saved.
   // This is so we can save the index of the mobj_t of the thinker that
@@ -307,6 +307,7 @@ void G_WriteSaveData(pbuf_t *savebuffer) {
   // P_ThinkerToIndex();
   P_UpdateMobjIndices();
 
+  P_ArchivePlayers(savebuffer);
   P_ArchiveWorld(savebuffer);
   P_ArchiveThinkers(savebuffer);
 

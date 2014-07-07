@@ -1082,11 +1082,8 @@ static void G_DoLoadLevel(void) {
     }
   }
 
-  if (DELTASYNC)
-    N_ClearStates();
-
   if (DELTASERVER)
-    SV_BroadcastDoLoadLevel();
+    SV_ResyncPeers();
 }
 
 //

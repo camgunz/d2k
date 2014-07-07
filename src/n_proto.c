@@ -115,7 +115,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
   }
 
 #define NOT_COMMAND_SERVER(name)                                              \
-  if (COMMANDSERVER) {                                                        \
+  if (CMDSERVER) {                                                            \
     doom_printf(                                                              \
       "%s: Erroneously received message [%s] as a command-sync server "       \
       "mode\n",                                                               \
@@ -125,7 +125,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
   }
 
 #define NOT_COMMAND_CLIENT(name)                                              \
-  if (COMMANDCLIENT) {                                                        \
+  if (CMDCLIENT) {                                                            \
     doom_printf(                                                              \
       "%s: Erroneously received message [%s] as a command-sync client"        \
       "mode\n",                                                               \
@@ -204,7 +204,7 @@ static void handle_setup(netpeer_t *np) {
     return;
 
   N_ClearStates();
-  N_ResetLocalCommandIndex();
+  // N_ResetLocalCommandIndex();
 
   if (!N_UnpackSetup(np, &net_sync, &player_count, &playernum)) {
     M_CBufFree(&resource_files_buf);
@@ -548,7 +548,6 @@ void SV_SendSetup(short playernum) {
   CHECK_VALID_PLAYER(np, playernum);
 
   np->sync.initialized = true;
-  np->sync.tic = gametic;
   N_PackSetup(np);
 }
 
@@ -760,24 +759,14 @@ void SV_BroadcastPlayerSkinChanged(short playernum) {
   /* CG: TODO */
 }
 
-void SV_BroadcastDoLoadLevel(void) {
-  netpeer_t *np = NULL;
-
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    if (i == consoleplayer)
-      continue;
-
-    if (!playeringame[i])
-      continue;
-
-    np = N_PeerForPlayer(i);
+void SV_ResyncPeers(void) {
+  for (int i = 1; i < MAXPLAYERS; i++) {
+    netpeer_t *np = N_PeerForPlayer(i);
 
     if (np == NULL)
       continue;
 
     N_PeerResetSync(np->peernum);
-    P_SpawnPlayer(i, &playerstarts[i]);
-    SV_SendSetup(i);
   }
 }
 

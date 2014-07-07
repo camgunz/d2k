@@ -517,8 +517,8 @@ void N_PeerResetSync(int peernum) {
   if (np == NULL)
     I_Error("N_PeerResetSync: Invalid peer number %d.\n", peernum);
 
-  free_netsync(&np->sync);
-  init_netsync(&np->sync);
+  np->sync.initialized = false;
+  np->sync.outdated = false;
 }
 
 /* vi: set et ts=2 sw=2: */

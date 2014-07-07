@@ -1896,11 +1896,12 @@ static void D_DoomMainSetup(void) {
   }
 
   //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO,"W_Init: Init WADfiles.\n");
-  W_Init(); // CPhipps - handling of wadfiles init changed
-
-  // killough 3/6/98: add a newline, by popular demand :)
-  lprintf(LO_INFO, "\n");
+  if (!DELTACLIENT) {
+    lprintf(LO_INFO, "W_Init: Init WADfiles.\n");
+    W_Init(); // CPhipps - handling of wadfiles init changed
+    // killough 3/6/98: add a newline, by popular demand :)
+    lprintf(LO_INFO, "\n");
+  }
 
   // e6y 
   // option to disable automatic loading of dehacked-in-wad lump
@@ -2060,7 +2061,7 @@ static void D_DoomMainSetup(void) {
   ST_Init();
 
   // CPhipps - auto screenshots
-  if ((p = M_CheckParm("-autoshot")) && (p < myargc-2))
+  if ((p = M_CheckParm("-autoshot")) && (p < myargc - 2))
     if ((auto_shot_count = auto_shot_time = atoi(myargv[p + 1])))
       auto_shot_fname = myargv[p + 2];
 
@@ -2069,7 +2070,7 @@ static void D_DoomMainSetup(void) {
   // killough 12/98:
   // Support -loadgame with -record and reimplement -recordfrom.
 
-  if ((slot = M_CheckParm("-recordfrom")) && (p = slot+2) < myargc) {
+  if ((slot = M_CheckParm("-recordfrom")) && (p = slot + 2) < myargc) {
     G_RecordDemo(myargv[p]);
   }
   else {

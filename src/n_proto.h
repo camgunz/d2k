@@ -77,7 +77,7 @@ void SV_BroadcastPlayerColorChanged(short playernum, byte new_red,
 void SV_BroadcastPlayerColorIndexChanged(short playernum, int new_color);
 void SV_BroadcastPlayerSkinChanged(short playernum);
 void SV_BroadcastStateUpdates(void);
-void SV_BroadcastDoLoadLevel(void);
+void SV_ResyncPeers(void);
 
 void CL_SendMessageToServer(char *message);
 void CL_SendMessageToPlayer(short recipient, char *message);

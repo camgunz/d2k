@@ -52,7 +52,7 @@
 #include "n_pack.h"
 #include "n_proto.h"
 
-#define USE_RANGE_CODER 0
+#define USE_RANGE_CODER 1
 #define MAX_DOWNLOAD 0
 #define MAX_UPLOAD 0
 
