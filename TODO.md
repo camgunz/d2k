@@ -1,8 +1,6 @@
 # To Do
 
-1. Fix moving from one map to the next
-
-2. Add unlagged
+1. Add unlagged
   - Save attacking player position
   - Save current game state
   - Restore game state that player was viewing during the attack
@@ -15,31 +13,31 @@
   - For every impacted actor:
     - Add new momx/momy/momz values to the current momx/momy/momz
 
-3. Add spectators
+2. Add spectators
 
-4. Add a scoreboard
+3. Add a scoreboard
 
-5. Add enough scripting to add a console
+4. Add enough scripting to add a console
 
-6. Add HTTP & JSON
+5. Add HTTP & JSON
   - Have client download missing WADs
     - the client should do this between frames in case it needs to download a
       huge file (or a file from a slow server); libcurl ought to make this
       pretty easy
   - Convert configuration file(s) to JSON
 
-7. Revamp configuration
+6. Revamp configuration
 
-8. Setup testing framework
+7. Setup testing framework
 
-9. Type problems:
+8. Type problems:
   - Playernums are unsigned shorts; fix this everywhere
   - TICs are unsigned ints; fix this everywhere
 
-10. Build the command-sync server (or decide to remove command-sync)
+9. Build the command-sync server (or decide to remove command-sync)
   - Shouldn't run any game code; just relay commands between clients
 
-11. Update `players`:
+10. Update `players`:
   - `players` will become an `obuf_t`
   - `playeringame` becomes `dboolean playeringame(unsigned short playernum)`
   - `MAXPLAYERS` becomes `VANILLA_MAXPLAYERS` for compat
@@ -56,9 +54,9 @@
     - If so, set each player's name accordingly
     - Of course, this only works for the 1st 4 players; after that, fuck it
 
-12. Header cleanup (omfg)
+11. Header cleanup (omfg)
 
-13. Update renderer
+12. Update renderer
 
 <!-- vi: set et ts=4 sw=4 tw=79: -->
 
