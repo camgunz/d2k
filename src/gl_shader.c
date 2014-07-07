@@ -56,23 +56,11 @@ static GLShader *active_shader = NULL;
 
 static GLShader* gld_LoadShader(const char *vpname, const char *fpname);
 
-int glsl_Init(void)
-{
-  static int init = false;
-
-  //if (!init)
-  {
-    init = true;
-
-    if (!gl_arb_shader_objects)
-    {
-      lprintf(LO_WARN, "glsl_Init: shaders expects OpenGL 2.0\n");
-    }
-    else
-    {
-      sh_main = gld_LoadShader("glvp", "glfp");
-    }
-  }
+int glsl_Init(void) {
+  if (!gl_arb_shader_objects)
+    lprintf(LO_WARN, "glsl_Init: shaders expects OpenGL 2.0\n");
+  else
+    sh_main = gld_LoadShader("glvp", "glfp");
 
   return (sh_main != NULL);
 }
@@ -142,10 +130,10 @@ static GLShader* gld_LoadShader(const char *vpname, const char *fpname)
   filename = malloc(MAX(vp_fnlen, fp_fnlen) + 1);
 
   sprintf(filename, "%s/shaders/%s.txt", I_DoomExeDir(), vpname);
-  vp_size = ReadLump(filename, vpname, &vp_data);
+  vp_size = ReadLump(filename, vpname, (unsigned char **)&vp_data);
 
   sprintf(filename, "%s/shaders/%s.txt", I_DoomExeDir(), fpname);
-  fp_size = ReadLump(filename, fpname, &fp_data);
+  fp_size = ReadLump(filename, fpname, (unsigned char **)&fp_data);
   
   if (vp_data && fp_data)
   {
@@ -154,8 +142,8 @@ static GLShader* gld_LoadShader(const char *vpname, const char *fpname)
     shader->hVertProg = GLEXT_glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB);
     shader->hFragProg = GLEXT_glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);	
 
-    GLEXT_glShaderSourceARB(shader->hVertProg, 1, &vp_data, &vp_size);
-    GLEXT_glShaderSourceARB(shader->hFragProg, 1, &fp_data, &fp_size);
+    GLEXT_glShaderSourceARB(shader->hVertProg, 1, (const GLcharARB **)&vp_data, &vp_size);
+    GLEXT_glShaderSourceARB(shader->hFragProg, 1, (const GLcharARB **)&fp_data, &fp_size);
 
     GLEXT_glCompileShaderARB(shader->hVertProg);
     GLEXT_glCompileShaderARB(shader->hFragProg);
@@ -225,3 +213,6 @@ int glsl_IsActive(void)
 }
 
 #endif // USE_SHADERS
+
+/* vi: set et ts=2 sw=2: */
+

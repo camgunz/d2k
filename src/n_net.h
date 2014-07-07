@@ -36,8 +36,9 @@
 #define NET_H__
 
 #define DEFAULT_PORT 10666
-#define CONNECT_TIMEOUT 3
-#define DISCONNECT_TIMEOUT 3
+#define NET_TIMEOUT 6
+#define CONNECT_TIMEOUT NET_TIMEOUT
+#define DISCONNECT_TIMEOUT NET_TIMEOUT
 
 #define MULTINET    (netgame && (!solonet))
 #define CMDSYNC     (netsync == NET_SYNC_TYPE_COMMAND)
@@ -61,7 +62,7 @@ typedef enum {
 typedef enum {
   NET_CHANNEL_RELIABLE,
   NET_CHANNEL_UNRELIABLE,
-  MAX_CHANNELS
+  NET_CHANNEL_MAX
 } net_channel_e;
 
 typedef enum {
@@ -71,6 +72,7 @@ typedef enum {
 } net_sync_type_e;
 
 typedef struct netticcmd_s {
+  int index;
   int tic;
   ticcmd_t cmd;
 } netticcmd_t;
@@ -97,9 +99,12 @@ dboolean    N_Connect(const char *host, unsigned short port);
 dboolean    N_Reconnect(void);
 dboolean    N_ConnectToServer(const char *address);
 void        N_PrintAddress(FILE *fp, int peernum);
+void        N_DisconnectPeer(int peernum);
 void        N_DisconnectPlayer(short playernum);
 void        N_ServiceNetworkTimeout(int timeout_ms);
 void        N_ServiceNetwork(void);
+uint32_t    N_GetUploadBandwidth(void);
+uint32_t    N_GetDownloadBandwidth(void);
 
 #endif
 

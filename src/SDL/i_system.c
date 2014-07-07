@@ -44,6 +44,7 @@
 #include "lprintf.h"
 #include "doomtype.h"
 #include "doomdef.h"
+#include "m_file.h"
 
 #ifndef PRBOOM_SERVER
 #include "d_player.h"
@@ -62,24 +63,30 @@ static int basetime = 0;
 
 int ms_to_next_tick;
 
-void I_uSleep(unsigned long usecs)
-{
-    SDL_Delay(usecs/1000);
+uint32_t I_GetTicks(void) {
+  return SDL_GetTicks();
 }
 
-int I_GetTime_RealTime (void)
-{
+void I_uSleep(unsigned long usecs) {
+  SDL_Delay(usecs / 1000);
+}
+
+int I_GetTime_RealTime(void) {
   int i;
   int t = SDL_GetTicks();
   
   //e6y: removing startup delay
   if (basetime == 0)
     basetime = t;
+
   t -= basetime;
 
-  i = t*(TICRATE/5)/200;
-  ms_to_next_tick = (i+1)*200/(TICRATE/5) - t;
-  if (ms_to_next_tick > 1000/TICRATE || ms_to_next_tick<1) ms_to_next_tick = 1;
+  i = t * (TICRATE / 5) / 200;
+
+  ms_to_next_tick = (i + 1) * 200 / (TICRATE / 5) - t;
+  if (ms_to_next_tick > 1000 / TICRATE || ms_to_next_tick < 1)
+      ms_to_next_tick = 1;
+
   return i;
 }
 
@@ -192,6 +199,7 @@ const char* I_SigString(char* buf, size_t sz, int signum)
   return buf;
 }
 
+#if 0
 #ifndef PRBOOM_SERVER
 dboolean I_FileToBuffer(const char *filename, byte **data, int *size)
 {
@@ -272,6 +280,7 @@ int I_Filelength(int handle)
     I_Error("I_Filelength: %s",strerror(errno));
   return fileinfo.st_size;
 }
+#endif
 
 #ifndef PRBOOM_SERVER
 
@@ -356,7 +365,8 @@ const char* I_GetTempDir(void)
 // cph - V.Aguilar (5/30/99) suggested return ~/.lxdoom/, creating
 //  if non-existant
 // cph 2006/07/23 - give prboom+ its own dir
-static const char prboom_dir[] = {"/.prboom-plus"}; // Mead rem extra slash 8/21/03
+// Mead rem extra slash 8/21/03
+static const char prboom_dir[] = {"/." PACKAGE_TARNAME};
 
 const char *I_DoomExeDir(void)
 {
@@ -414,8 +424,7 @@ dboolean HasTrailingSlash(const char* dn)
 
 #ifndef MACOSX /* OSX defines its search paths elsewhere. */
 
-char* I_FindFileInternal(const char* wfname, const char* ext, dboolean isStatic)
-{
+char* I_FindFileInternal(const char* wfname, const char* ext) {
   // lookup table of directories to search
   static const struct {
     const char *dir; // directory
@@ -435,63 +444,117 @@ char* I_FindFileInternal(const char* wfname, const char* ext, dboolean isStatic)
     {"/usr/share/doom"},
   };
 
-  size_t  i;
-  size_t  pl;
+  size_t i;
+  buf_t buf;
 
+  M_BufferInit(&buf);
+
+  /*
+  size_t pl;
   static char static_p[PATH_MAX];
-  char * dinamic_p = NULL;
-  char *p = (isStatic ? static_p : dinamic_p);
+  char * dynamic_p = NULL;
+  char *p = (is_static ? static_p : dynamic_p);
+  */
 
   if (!wfname)
     return NULL;
 
   /* Precalculate a length we will need in the loop */
-  pl = strlen(wfname) + (ext ? strlen(ext) : 0) + 4;
+  // pl = strlen(wfname) + (ext ? strlen(ext) : 0) + 4;
 
-  for (i = 0; i < sizeof(search)/sizeof(*search); i++) {
-    const char  * d = NULL;
-    const char  * s = NULL;
-    /* Each entry in the switch sets d to the directory to look in,
-     * and optionally s to a subdirectory of d */
-    // switch replaced with lookup table
+  for (i = 0; i < sizeof(search) / sizeof(*search); i++) {
+    const char *d = NULL;
+    const char *s = NULL;
+
+    /*
+     * Each entry in the switch sets d to the directory to look in, and
+     * optionally s to a subdirectory of d
+     */
+
+    /* switch replaced with lookup table */
     if (search[i].env) {
       if (!(d = getenv(search[i].env)))
         continue;
-    } else if (search[i].func)
+    }
+    else if (search[i].func) {
       d = search[i].func();
-    else
+    }
+    else {
       d = search[i].dir;
+    }
     s = search[i].sub;
 
-    if (!isStatic)
-      p = malloc((d ? strlen(d) : 0) + (s ? strlen(s) : 0) + pl);
-    sprintf(p, "%s%s%s%s%s", d ? d : "", (d && !HasTrailingSlash(d)) ? "/" : "",
-                             s ? s : "", (s && !HasTrailingSlash(s)) ? "/" : "",
-                             wfname);
+    M_BufferClear(&buf);
 
-    if (ext && access(p,F_OK))
-      strcat(p, ext);
-    if (!access(p,F_OK)) {
-      if (!isStatic)
-        lprintf(LO_INFO, " found %s\n", p);
-      return p;
+    if (d == NULL && s == NULL) {
+      M_BufferWriteString(&buf, wfname, strlen(wfname));
     }
-    if (!isStatic)
-      free(p);
+    else if (d != NULL && s != NULL) {
+      if (!M_PathJoinBuf(&buf, d, s)) {
+        lprintf(LO_WARN, " Error looking for %s: %s.\n",
+          wfname, M_GetFileError()
+        );
+        continue;
+      }
+
+      M_BufferSeekBackward(&buf, 1);
+
+      if (!M_PathJoinBuf(&buf, M_BufferGetData(&buf), wfname)) {
+        lprintf(LO_WARN, " Error looking for %s: %s.\n",
+          wfname, M_GetFileError()
+        );
+        continue;
+      }
+
+    }
+    else if (d == NULL) {
+      if (!M_PathJoinBuf(&buf, s, wfname)) {
+        lprintf(LO_WARN, " Error looking for %s: %s.\n",
+          wfname, M_GetFileError()
+        );
+        continue;
+      }
+    }
+    else if (s == NULL) {
+      if (!M_PathJoinBuf(&buf, d, wfname)) {
+        lprintf(LO_WARN, " Error looking for %s: %s.\n",
+          wfname, M_GetFileError()
+        );
+        continue;
+      }
+    }
+
+    if (ext && !M_IsFile(M_BufferGetData(&buf))) {
+      M_BufferSeekBackward(&buf, 1);
+      M_BufferWriteString(&buf, ext, strlen(ext));
+    }
+
+    if (M_IsFile(M_BufferGetData(&buf))) {
+      char *out = strdup(M_BufferGetData(&buf));
+
+      M_BufferFree(&buf);
+      lprintf(LO_INFO, " found %s\n", out);
+      return out;
+    }
+
+    M_BufferClear(&buf);
   }
+
+  M_BufferFree(&buf);
   return NULL;
 }
 
-char* I_FindFile(const char* wfname, const char* ext)
-{
-  return I_FindFileInternal(wfname, ext, false);
+char* I_FindFile(const char* wfname, const char* ext) {
+  return I_FindFileInternal(wfname, ext);
 }
 
-const char* I_FindFile2(const char* wfname, const char* ext)
-{
-  return (const char*) I_FindFileInternal(wfname, ext, true);
+const char* I_FindFile2(const char* wfname, const char* ext) {
+  return (const char*)I_FindFileInternal(wfname, ext);
 }
 
 #endif
 
 #endif // PRBOOM_SERVER
+
+/* vi: set et ts=2 sw=2: */
+

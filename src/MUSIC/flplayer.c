@@ -63,11 +63,10 @@ const music_player_t fl_player =
 #else // HAVE_LIBFLUIDSYNTH
 
 #include <fluidsynth.h>
+
 #include "i_sound.h" // for snd_soundfont, mus_fluidsynth_gain
 #include "lprintf.h"
 #include "midifile.h"
-#include <stdlib.h>
-#include <string.h>
 
 static fluid_settings_t *f_set;
 static fluid_synth_t *f_syn;
@@ -86,26 +85,16 @@ static int f_soundrate;
 
 #define SYSEX_BUFF_SIZE 1024
 static unsigned char sysexbuff[SYSEX_BUFF_SIZE];
-static int sysexbufflen;
+static int sysexbufflen = 0;
 
 static const char *fl_name (void)
 {
   return "fluidsynth midi player";
 }
 
-#ifdef _MSC_VER
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <delayimp.h>
-#endif
-
 static int fl_init (int samplerate)
 {
 #ifdef _WIN32
-  #ifndef _MSC_VER
-  int __stdcall GetVersion (void);
-  #endif // _MSC_VER
-
   if ((int)GetVersion() < 0) // win9x
   {
     lprintf (LO_INFO, "Fluidplayer: Win9x is not supported\n");
@@ -113,11 +102,10 @@ static int fl_init (int samplerate)
   }
 #endif // _WIN32
 
-  TESTDLLLOAD ("libfluidsynth.dll", TRUE)
-
   f_soundrate = samplerate;
-  // fluidsynth 1.1.4 supports sample rates as low as 8000hz.  earlier versions only go down to 22050hz
-  // since the versions are ABI compatible, detect at runtime, not compile time
+  // fluidsynth 1.1.4 supports sample rates as low as 8000hz.  earlier versions
+  // only go down to 22050hz since the versions are ABI compatible, detect at
+  // runtime, not compile time
   if (1)
   {
     int sratemin;
@@ -324,7 +312,7 @@ static void writesysex (unsigned char *data, int len)
   // it's possible to use an auto-resizing buffer here, but a malformed
   // midi file could make it grow arbitrarily large (since it must grow
   // until it hits an 0xf7 terminator)
-  int didrespond;
+  int didrespond = 0;
   
   if (len + sysexbufflen > SYSEX_BUFF_SIZE)
   {
@@ -336,12 +324,15 @@ static void writesysex (unsigned char *data, int len)
   sysexbufflen += len;
   if (sysexbuff[sysexbufflen - 1] == 0xf7) // terminator
   { // pass len-1 because fluidsynth does NOT want the final F7
-    fluid_synth_sysex (f_syn, sysexbuff, sysexbufflen - 1, NULL, NULL, &didrespond, 0);
+    fluid_synth_sysex (f_syn, (const char *)sysexbuff, sysexbufflen - 1, NULL, NULL, &didrespond, 0);
     sysexbufflen = 0;
   }
+
   if (!didrespond)
   {
-    lprintf (LO_WARN, "fluidplayer: SYSEX message received but not understood\n");
+    lprintf(
+      LO_WARN, "fluidplayer: SYSEX message received but not understood\n"
+    );
   }
 }  
 

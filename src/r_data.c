@@ -293,8 +293,17 @@ static void R_InitTextures (void)
   if (errors)
   {
     const lumpinfo_t* info = W_GetLumpInfoByNum(names_lump);
-    lprintf(LO_INFO, "\nR_InitTextures: The file %s seems to be incompatible with \"%s\".\n",
-      info->wadfile->name,
+    wadfile_info_t *wf = M_CBufGet(&resource_files_buf, info->wadfile);
+
+    if (wf == NULL) {
+      I_Error(
+        "R_InitTextures: Bad wadfile for %s (%d)\n", info->name, info->wadfile
+      );
+    }
+
+    lprintf(LO_INFO,
+      "\nR_InitTextures: The file %s seems to be incompatible with \"%s\".\n",
+      wf->name,
       (doomverstr ? doomverstr : "DOOM"));
     I_Error("R_InitTextures: %d errors", errors);
   }
@@ -612,9 +621,19 @@ int PUREFUNC R_TextureNumForName(const char *name)  // const added -- killough
   {
     int lump = W_GetNumForName("TEXTURE1");
     const lumpinfo_t* info = W_GetLumpInfoByNum(lump);
-    lprintf(LO_INFO, "R_TextureNumForName: The file %s seems to be incompatible with \"%s\".\n",
-      info->wadfile->name,
-      (doomverstr ? doomverstr : "DOOM"));
+    wadfile_info_t *wf = M_CBufGet(&resource_files_buf, info->wadfile);
+
+    if (wf == NULL) {
+      I_Error(
+        "R_InitTextures: Bad wadfile for %s (%d)\n", info->name, info->wadfile
+      );
+    }
+
+    lprintf(LO_INFO,
+      "R_TextureNumForName: The file %s seems incompatible with \"%s\".\n",
+      wf->name,
+      (doomverstr ? doomverstr : "DOOM")
+    );
     I_Error("R_TextureNumForName: %.8s not found", name);
   }
   return i;

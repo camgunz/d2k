@@ -38,7 +38,6 @@
 #include <SDL_syswm.h>
 #endif
 
-#include "m_cbuf.h"
 #include "hu_lib.h"
 #include "doomstat.h"
 #include "d_main.h"
@@ -295,7 +294,7 @@ void G_SkipDemoStart(void)
   nosfxparm = true;
   nomusicparm = true;
 
-  render_precise = false;
+  render_precise = render_precise_speed;
   M_ChangeRenderPrecise();
 
   I_Init2();
@@ -385,15 +384,16 @@ int G_GotoNextLevel(void)
   // secret level
   doom2_next[14] = (haswolflevels ? 31 : 16);
   
-  if (bfgedition && singleplayer)
-    if (gamemission == pack_nerve)
-    {
+  if (bfgedition && singleplayer) {
+    if (gamemission == pack_nerve) {
       doom2_next[3] = 9;
       doom2_next[7] = 1;
       doom2_next[8] = 5;
     }
-    else
+    else {
       doom2_next[1] = 33;
+    }
+  }
 
   // shareware doom has only episode 1
   doom_next[0][7] = (gamemode == shareware ? 11 : 21);
@@ -755,10 +755,10 @@ void I_Warning(const char *message, ...)
 
 int I_MessageBox(const char* text, unsigned int type)
 {
-  int result = PRB_IDCANCEL;
-
 #ifdef _WIN32
   {
+    int result = PRB_IDCANCEL;
+
     HWND current_hwnd = GetForegroundWindow();
     result = MessageBox(GetDesktopWindow(), text, PACKAGE_NAME, type|MB_TASKMODAL|MB_TOPMOST);
     I_SwitchToWindow(current_hwnd);
@@ -961,7 +961,7 @@ void e6y_WriteStats(void)
   for (level=0;level<numlevels;level++)
   {
     sprintf(str,
-      "%%s - %%%dd:%%05.2f (%%%dd:%%02d)  K: %%%dd/%%-%dd%%%ds  I: %%%dd/%%-%dd%%%ds  S: %%%dd/%%-%dd %%%ds\r\n",
+      "%%s - %%%dd:%%05.2f (%%%dd:%%02d)  K: %%%dd/%%-%dd%%%zus  I: %%%dd/%%-%dd%%%zus  S: %%%dd/%%-%dd %%%zus\r\n",
       max.stat[TT_TIME],      max.stat[TT_TOTALTIME],
       max.stat[TT_ALLKILL],   max.stat[TT_TOTALKILL],   allkills_len,
       max.stat[TT_ALLITEM],   max.stat[TT_TOTALITEM],   allitems_len,
@@ -1268,7 +1268,7 @@ int HU_DrawDemoProgress(int force)
   return true;
 }
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 int GetFullPath(const char* FileName, const char* ext, char *Buffer, size_t BufferLength)
 {
   int i, Result;
@@ -1301,8 +1301,8 @@ int GetFullPath(const char* FileName, const char* ext, char *Buffer, size_t Buff
 }
 #endif
 
-#ifdef _WIN32
-#include <Mmsystem.h>
+#if defined(_WIN32) && !defined(__MINGW32__)
+#include <mmsystem.h>
 #pragma comment( lib, "winmm.lib" )
 int mus_extend_volume;
 void I_midiOutSetVolumes(int volume)

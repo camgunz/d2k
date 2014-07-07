@@ -27,7 +27,8 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *  A buffer of objects that uses copies instead of pointers
+ *  A buffer of objects that uses copies instead of pointers, more efficient
+ *  than m_obuf when allocations can be avoided or have already been performed.
  *
  *-----------------------------------------------------------------------------
  */
@@ -40,6 +41,7 @@
 
 void M_CBufInit(cbuf_t *cbuf, size_t obj_size) {
   cbuf->capacity = 0;
+  cbuf->size     = 0;
   cbuf->obj_size = obj_size;
   cbuf->nodes    = NULL;
 }
@@ -50,22 +52,14 @@ void M_CBufInitWithCapacity(cbuf_t *cbuf, size_t obj_size, int capacity) {
 }
 
 dboolean M_CBufIsValidIndex(cbuf_t *cbuf, int index) {
-  if (index >= 0 && index < cbuf->capacity && cbuf->nodes[index].used)
+  if (index >= 0 && index < cbuf->capacity && cbuf->used[index])
     return true;
 
   return false;
 }
 
 int M_CBufGetObjectCount(cbuf_t *cbuf) {
-  int count = 0;
-
-  for (int i = 0; i < cbuf->capacity; i++) {
-    if (cbuf->nodes[i].used) {
-      count++;
-    }
-  }
-
-  return count;
+  return cbuf->size;
 }
 
 void M_CBufEnsureCapacity(cbuf_t *cbuf, int capacity) {
@@ -73,39 +67,59 @@ void M_CBufEnsureCapacity(cbuf_t *cbuf, int capacity) {
     int old_capacity = cbuf->capacity;
 
     cbuf->capacity = capacity;
-    cbuf->nodes = realloc(cbuf->nodes, cbuf->capacity * sizeof(cbufnode_t));
+    cbuf->used = realloc(cbuf->used, cbuf->capacity * sizeof(bool));
+
+    if (cbuf->used == NULL)
+      I_Error("M_CBufEnsureCapacity: Allocating buffer used list failed");
+
+    cbuf->nodes = realloc(cbuf->nodes, cbuf->capacity * sizeof(void *));
 
     if (cbuf->nodes == NULL)
       I_Error("M_CBufEnsureCapacity: Allocating buffer nodes failed");
 
     for (int i = old_capacity; i < cbuf->capacity; i++) {
-      cbuf->nodes[i].used = false;
-      cbuf->nodes[i].obj = calloc(1, cbuf->obj_size);
+      cbuf->used[i] = false;
+      cbuf->nodes[i] = malloc(cbuf->obj_size);
+
+      if (cbuf->nodes[i] == NULL)
+        I_Error("M_CBufEnsureCapacity: Allocating buffer node's obj failed");
     }
   }
 }
 
-void M_CBufAppend(cbuf_t *cbuf, void *obj) {
+int M_CBufAppend(cbuf_t *cbuf, void *obj) {
+  int slot = M_CBufInsertAtFirstFreeSlot(cbuf, obj);
+
+  if (slot != -1)
+    return slot;
+
+  return M_CBufAppendNew(cbuf, obj);
+}
+
+int M_CBufAppendNew(cbuf_t *cbuf, void *obj) {
   int index = cbuf->capacity;
 
   M_CBufEnsureCapacity(cbuf, cbuf->capacity + 1);
-  M_CBufInsert(cbuf, index, obj);
+  return M_CBufInsert(cbuf, index, obj);
 }
 
-void M_CBufInsert(cbuf_t *cbuf, int index, void *obj) {
+int M_CBufInsert(cbuf_t *cbuf, int index, void *obj) {
   if (index >= cbuf->capacity) {
     I_Error("M_CBufInsert: Insertion index %d out of bounds (>= %d)",
       index, cbuf->capacity
     );
   }
 
-  memcpy(cbuf->nodes[index].obj, obj, cbuf->obj_size);
-  cbuf->nodes[index].used = true;
+  memcpy(cbuf->nodes[index], obj, cbuf->obj_size);
+  cbuf->used[index] = true;
+  cbuf->size++;
+
+  return index;
 }
 
 int M_CBufInsertAtFirstFreeSlot(cbuf_t *cbuf, void *obj) {
   for (int i = 0; i < cbuf->capacity; i++) {
-    if (!cbuf->nodes[i].used) {
+    if (!cbuf->used[i]) {
       M_CBufInsert(cbuf, i, obj);
       return i;
     }
@@ -114,21 +128,11 @@ int M_CBufInsertAtFirstFreeSlot(cbuf_t *cbuf, void *obj) {
   return -1;
 }
 
-int M_CBufInsertAtFirstFreeSlotOrAppend(cbuf_t *cbuf, void *obj) {
-  int slot = M_CBufInsertAtFirstFreeSlot(cbuf, obj);
-
-  if (slot != -1)
-    return slot;
-
-  M_CBufAppend(cbuf, obj);
-  return cbuf->capacity - 1;
-}
-
 dboolean M_CBufIter(cbuf_t *cbuf, int *index, void **obj) {
   for (int i = (*index) + 1; i < cbuf->capacity; i++) {
-    if (cbuf->nodes[i].used) {
+    if (cbuf->used[i]) {
       *index = i;
-      *obj = cbuf->nodes[i].obj;
+      *obj = cbuf->nodes[i];
       return true;
     }
   }
@@ -141,13 +145,28 @@ void* M_CBufGet(cbuf_t *cbuf, int index) {
   if (!M_CBufIsValidIndex(cbuf, index))
     return NULL;
 
-  return cbuf->nodes[index].obj;
+  return cbuf->nodes[index];
+}
+
+dboolean M_CBufPop(cbuf_t *cbuf, void *obj) {
+  void *buffered_object = M_CBufGet(cbuf, 0);
+
+  if (buffered_object == NULL)
+    return false;
+
+  memcpy(obj, buffered_object, cbuf->obj_size);
+  M_CBufRemove(cbuf, 0);
+  M_CBufConsolidate(cbuf);
+
+  return true;
 }
 
 void* M_CBufGetFirstFreeSlot(cbuf_t *cbuf) {
   for (int i = 0; i < cbuf->capacity; i++) {
-    if (!cbuf->nodes[i].used) {
-      return &cbuf->nodes[i].obj;
+    if (!cbuf->used[i]) {
+      cbuf->used[i] = true;
+      cbuf->size++;
+      return cbuf->nodes[i];
     }
   }
 
@@ -158,7 +177,9 @@ void* M_CBufGetNewSlot(cbuf_t *cbuf) {
   int index = cbuf->capacity;
 
   M_CBufEnsureCapacity(cbuf, cbuf->capacity + 1);
-  return &cbuf->nodes[index].obj;
+  cbuf->used[index] = true;
+  cbuf->size++;
+  return cbuf->nodes[index];
 }
 
 void* M_CBufGetFirstFreeOrNewSlot(cbuf_t *cbuf) {
@@ -171,8 +192,11 @@ void* M_CBufGetFirstFreeOrNewSlot(cbuf_t *cbuf) {
 }
 
 void M_CBufRemove(cbuf_t *cbuf, int index) {
-  cbuf->nodes[index].used = false;
-  memset(cbuf->nodes[index].obj, 0, cbuf->obj_size);
+  if (M_CBufIsValidIndex(cbuf, index)) {
+    cbuf->used[index] = false;
+    cbuf->size--;
+    memset(cbuf->nodes[index], 0, cbuf->obj_size);
+  }
 }
 
 void M_CBufConsolidate(cbuf_t *cbuf) {
@@ -181,7 +205,7 @@ void M_CBufConsolidate(cbuf_t *cbuf) {
   void *tmp = NULL;
 
   while (true) {
-    while (d < cbuf->capacity && cbuf->nodes[d].used)
+    while (d < cbuf->capacity && cbuf->used[d])
       d++;
 
     if (d >= cbuf->capacity)
@@ -190,17 +214,17 @@ void M_CBufConsolidate(cbuf_t *cbuf) {
     if (s < d)
       s = d + 1;
 
-    while (s < cbuf->capacity && (!cbuf->nodes[s].used))
+    while (s < cbuf->capacity && (!cbuf->used[s]))
       s++;
 
     if (s >= cbuf->capacity)
       return;
 
-    tmp = cbuf->nodes[d].obj;
-    cbuf->nodes[d].obj = cbuf->nodes[s].obj;
-    cbuf->nodes[s].obj = tmp;
-    cbuf->nodes[d].used = true;
-    cbuf->nodes[s].used = false;
+    tmp = cbuf->nodes[d];
+    cbuf->nodes[d] = cbuf->nodes[s];
+    cbuf->nodes[s] = tmp;
+    cbuf->used[d] = true;
+    cbuf->used[s] = false;
   }
 }
 
@@ -211,7 +235,7 @@ void M_CBufClear(cbuf_t *cbuf) {
 
 void M_CBufFree(cbuf_t *cbuf) {
   for (int i = 0; i < cbuf->capacity; i++)
-    free(cbuf->nodes[i].obj);
+    free(cbuf->nodes[i]);
 
   free(cbuf->nodes);
   M_CBufInit(cbuf, 0);

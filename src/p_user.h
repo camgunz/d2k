@@ -33,17 +33,17 @@
  *
  *-----------------------------------------------------------------------------*/
 
-#ifndef __P_USER__
-#define __P_USER__
+#ifndef P_USER__
+#define P_USER__
 
 #include "d_player.h"
 
-void P_PlayerThink(player_t *player);
-void P_CalcHeight(player_t *player);
-void P_DeathThink(player_t *player);
-void P_MovePlayer(player_t *player);
-void P_Thrust(player_t *player, angle_t angle, fixed_t move);
+void    P_PlayerThink(player_t *player);
+void    P_CalcHeight(player_t *player);
+void    P_DeathThink(player_t *player);
+void    P_MovePlayer(player_t *player);
+void    P_Thrust(player_t *player, angle_t angle, fixed_t move);
+void    P_SetPitch(player_t *player);
+void    P_RunPlayerCommands(player_t *player);
 
-void P_SetPitch(player_t *player);
-
-#endif  /* __P_USER__ */
+#endif  /* P_USER__ */

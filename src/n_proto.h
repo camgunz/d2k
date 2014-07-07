@@ -39,30 +39,26 @@
 #define GAME_OPTIONS_SIZE 64
 #endif
 
-extern const byte nm_setup;
-extern const byte nm_fullstate;
-extern const byte nm_statedelta;
-extern const byte nm_authresponse;
-extern const byte nm_servermessage;
-extern const byte nm_playermessage;
-extern const byte nm_playercommandreceived;
-extern const byte nm_playercommands;
-extern const byte nm_savegamenamechange;
-extern const byte nm_playerpreferencechange;
-extern const byte nm_statereceived;
-extern const byte nm_authrequest;
-extern const byte nm_rconcommand;
-extern const byte nm_voterequest;
+#define nm_setup                  1
+#define nm_authresponse           2
+#define nm_servermessage          3
+#define nm_sync                   4
+#define nm_playermessage          5
+#define nm_playerpreferencechange 6
+#define nm_authrequest            7
+#define nm_rconcommand            8
+#define nm_voterequest            9
 
 void   N_InitProtocol(void);
-void   N_HandlePacket(int peernum, void *data, size_t data_size);
 buf_t* N_GetMessageRecipientBuffer(void);
+void   N_HandlePacket(int peernum, void *data, size_t data_size);
+void   N_UpdateSync(void);
 
+void SV_SetupNewPeer(int peernum);
 void SV_SendSetup(short playernum);
 void SV_SendStateDelta(short playernum);
 void SV_SendFullState(short playernum);
 void SV_SendAuthResponse(short playernum, auth_level_e auth_level);
-void SV_SendPlayerCommandReceived(short playernum, int tic);
 void SV_SendMessage(short playernum, char *message);
 void SV_BroadcastMessage(char *message);
 void SV_BroadcastPlayerNameChanged(short playernum, char *new_name);
@@ -78,13 +74,15 @@ void SV_BroadcastPlayerWeaponSpeedChanged(short playernum,
 void SV_BroadcastPlayerColorChanged(short playernum, byte new_red,
                                                      byte new_green,
                                                      byte new_blue);
+void SV_BroadcastPlayerColorIndexChanged(short playernum, int new_color);
 void SV_BroadcastPlayerSkinChanged(short playernum);
+void SV_BroadcastStateUpdates(void);
+void SV_ResyncPeers(void);
 
 void CL_SendMessageToServer(char *message);
 void CL_SendMessageToPlayer(short recipient, char *message);
 void CL_SendMessageToTeam(byte team, char *message);
 void CL_SendMessageToCurrentTeam(char *message);
-void CL_SendPlayerCommandReceived(int tic);
 void CL_SendCommands(void);
 void CL_SendSaveGameNameChange(char *new_save_game_name);
 void CL_SendNameChange(char *new_name);
@@ -95,12 +93,14 @@ void CL_SendBobbingChange(double new_bobbing_amount);
 void CL_SendAutoaimChange(dboolean new_autoaim_enabled);
 void CL_SendWeaponSpeedChange(byte new_weapon_speed);
 void CL_SendColorChange(byte new_red, byte new_green, byte new_blue);
-void CL_SendColormapChange(int new_color);
+void CL_SendColorIndexChange(int new_color);
 void CL_SendSkinChange(void); /* CG: TODO */
-void CL_SendStateReceived(int tic);
+void CL_SendStateReceived(void);
 void CL_SendAuthRequest(char *password);
 void CL_SendRCONCommand(char *command);
 void CL_SendVoteRequest(char *command);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

@@ -49,6 +49,9 @@
 #include "sc_man.h"
 #include "e6y.h"
 
+#include "n_net.h"
+#include "n_main.h"
+
 // when to clip out sounds
 // Does not fit the large outdoor areas.
 #define S_CLIPPING_DIST (1200<<FRACBITS)
@@ -320,7 +323,8 @@ void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume)
 
 void S_StartSound(void *origin, int sfx_id)
 {
-  S_StartSoundAtVolume(origin, sfx_id, snd_SfxVolume);
+  if (!CL_Predicting())
+    S_StartSoundAtVolume(origin, sfx_id, snd_SfxVolume);
 }
 
 void S_StopSound(void *origin)
@@ -759,3 +763,6 @@ static int S_getChannel(void *origin, sfxinfo_t *sfxinfo, int is_pickup)
   c->is_pickup = is_pickup;         // killough 4/25/98
   return cnum;
 }
+
+/* vi: set et ts=2 sw=2: */
+

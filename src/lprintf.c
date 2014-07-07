@@ -45,11 +45,6 @@
 int cons_error_mask = -1-LO_INFO; /* all but LO_INFO when redir'd */
 int cons_output_mask = -1;        /* all output enabled */
 
-/* cphipps - enlarged message buffer and made non-static
- * We still have to be careful here, this function can be called after exit
- */
-#define MAX_MESSAGE_SIZE 2048
-
 #ifdef _WIN32
 // Variables for the console
 HWND con_hWnd=0;
@@ -314,7 +309,7 @@ void Done_ConsoleWin(void)
 int lprintf(OutputLevels pri, const char *s, ...)
 {
   int r=0;
-  char msg[MAX_MESSAGE_SIZE];
+  char msg[MAX_MESSAGE_LENGTH];
   int lvl=pri;
 
   va_list v;
@@ -350,7 +345,7 @@ int lprintf(OutputLevels pri, const char *s, ...)
 
 void I_Error(const char *error, ...)
 {
-  char errmsg[MAX_MESSAGE_SIZE];
+  char errmsg[MAX_MESSAGE_LENGTH];
   va_list argptr;
   va_start(argptr,error);
   doom_vsnprintf(errmsg,sizeof(errmsg),error,argptr);

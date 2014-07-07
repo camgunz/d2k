@@ -32,14 +32,13 @@
  */
 
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <direct.h>
-#include <commctrl.h>
+#ifndef __MINGW32__
+#include "z_zone.h"
+
+#include "pcreposix.h"
 
 #include "doomtype.h"
 #include "w_wad.h"
-#include "m_cbuf.h"
 #include "doomstat.h"
 #include "lprintf.h"
 #include "d_main.h"
@@ -47,8 +46,7 @@
 #include "i_system.h"
 #include "m_argv.h"
 #include "i_main.h"
-#include ".\..\ICONS\resource.h"
-#include "pcreposix.h"
+#include "resource.h"
 #include "r_demo.h"
 #include "e6y.h"
 #include "e6y_launcher.h"
@@ -625,53 +623,51 @@ static dboolean L_PrepareToLaunch(void)
   size_t new_numwadfiles = 0;
   int *selection = NULL;
   int selectioncount = 0;
+  size_t wadfiles_count = M_CBufGetObjectCount(&resource_files_buf);
 
-  new_numwadfiles = numwadfiles;
-  new_wadfiles = malloc(sizeof(*wadfiles) * numwadfiles);
-  memcpy(new_wadfiles, wadfiles, sizeof(*wadfiles) * numwadfiles);
-  numwadfiles = 0;
-  free(wadfiles);
-  wadfiles = NULL;
+  new_numwadfiles = wadfiles_count;
+  new_wadfiles = malloc(sizeof(*wadfiles) * wadfiles_count);
+  memcpy(new_wadfiles, wadfiles, sizeof(*wadfiles) * wadfiles_count);
+  M_CBufClear(&resource_files_buf);
   
   listPWADCount = (int)SendMessage(launcher.listPWAD, LB_GETCOUNT, 0, 0);
   
   index = (int)SendMessage(launcher.listIWAD, CB_GETCURSEL, 0, 0);
-  if (index != CB_ERR)
-  {
+  if (index != CB_ERR) {
     index = (int)SendMessage(launcher.listIWAD, CB_GETITEMDATA, index, 0);
-    if (index != CB_ERR)
-    {
+
+    if (index != CB_ERR) {
       char *iwadname = PathFindFileName(launcher.files[index].name);
+
       history = malloc(strlen(iwadname) + 8);
       strcpy(history, iwadname);
       AddIWAD(launcher.files[index].name);
     }
   }
 
-  if (numwadfiles == 0)
+  if (M_CBufGetObjectCount(&resource_files_buf) == 0)
     return false;
 
-  for (i = 0; (size_t)i < new_numwadfiles; i++)
-  {
-    if (new_wadfiles[i].src == source_auto_load || new_wadfiles[i].src == source_pre)
-    {
-      wadfiles = realloc(wadfiles, sizeof(*wadfiles)*(numwadfiles+1));
-      wadfiles[numwadfiles].name = strdup(new_wadfiles[i].name);
-      wadfiles[numwadfiles].src = new_wadfiles[i].src;
-      wadfiles[numwadfiles].handle = new_wadfiles[i].handle;
-      numwadfiles++;
+  for (i = 0; (size_t)i < new_numwadfiles; i++) {
+    if (new_wadfiles[i].src == source_auto_load ||
+        new_wadfiles[i].src == source_pre) {
+      wadfile_info_t wadfile;
+
+      wadfile.name = strdup(new_wadfiles[i].name);
+      wadfile.src = new_wadfiles[i].src;
+      wadfile.handle = new_wadfiles[i].handle;
+
+      M_CBufAppend(&resource_files_buf, &wadfile);
     }
   }
 
   selectioncount = L_SelGetList(&selection);
 
-  for (i=0; i < selectioncount; i++)
-  {
+  for (i = 0; i < selectioncount; i++) {
     int index = selection[i];
     fileitem_t *item = &launcher.files[index];
 
-    if (item->source == source_pwad || item->source == source_iwad)
-    {
+    if (item->source == source_pwad || item->source == source_iwad) {
       D_AddFile(item->name, source_pwad);
       modifiedgame = true;
     }
@@ -687,25 +683,23 @@ static dboolean L_PrepareToLaunch(void)
   free(selection);
   L_SelClearAndFree();
 
-  for (i = 0; (size_t)i < new_numwadfiles; i++)
-  {
+  for (i = 0; (size_t)i < new_numwadfiles; i++) {
     if (new_wadfiles[i].src == source_lmp || new_wadfiles[i].src == source_net)
       D_AddFile(new_wadfiles[i].name, new_wadfiles[i].src);
+
     if (new_wadfiles[i].name)
-      free((char*)new_wadfiles[i].name);
+      free((char *)new_wadfiles[i].name);
   }
   free(new_wadfiles);
 
-  if (history)
-  {
+  if (history) {
     size_t i;
     char str[32];
     default_t *history1, *history2;
     size_t historycount = sizeof(launcher_history)/sizeof(launcher_history[0]);
     size_t shiftfrom = historycount - 1;
 
-    for (i = 0; i < historycount; i++)
-    {
+    for (i = 0; i < historycount; i++) {
       sprintf(str, "launcher_history%d", i);
       history1 = M_LookupDefault(str);
 
@@ -1112,9 +1106,10 @@ static void L_FillHistoryList(void)
 
 BOOL CALLBACK LauncherClientCallback (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	switch (message)
-	{
-  case WM_INITDIALOG:
+  BOOL found_matching_wads = false;
+
+	switch (message) {
+    case WM_INITDIALOG:
     {
       int i;
       HMODULE hMod;
@@ -1128,12 +1123,15 @@ BOOL CALLBACK LauncherClientCallback (HWND hDlg, UINT message, WPARAM wParam, LP
       launcher.staticFileName = GetDlgItem(launcher.HWNDClient, IDC_FULLFILENAMESTATIC);
 
       hMod = LoadLibrary("uxtheme.dll");
-      if (hMod)
-      {
+      if (hMod) {
         EnableThemeDialogTexturePROC pEnableThemeDialogTexture;
-        pEnableThemeDialogTexture = (EnableThemeDialogTexturePROC)GetProcAddress(hMod, "EnableThemeDialogTexture");
+        pEnableThemeDialogTexture =
+          (EnableThemeDialogTexturePROC)GetProcAddress(
+            hMod, "EnableThemeDialogTexture"
+          );
         if (pEnableThemeDialogTexture)
           pEnableThemeDialogTexture(hDlg, ETDT_ENABLETAB);
+
         FreeLibrary(hMod);
       }
 
@@ -1164,27 +1162,29 @@ BOOL CALLBACK LauncherClientCallback (HWND hDlg, UINT message, WPARAM wParam, LP
       L_FillGameList();
       L_FillHistoryList();
 
-      i = -1;
-      if (launcher_params)
-      {
+      if (launcher_params) {
         WadDataInit(&data);
         WadFilesToWadData(&data);
         L_GUISelect(&data);
       }
-      else
-      {
-        for (i = 0; (size_t)i < numwadfiles; i++)
-        {
-          if (wadfiles[i].src == source_lmp)
-          {
+      else {
+        CBUF_FOR_EACH(&resource_files_buf, entry) {
+          wadfile_info_t *wadfile = (wadfile_info_t *)entry.obj;
+
+          if (wadfile->src == source_lmp) {
             patterndata_t patterndata;
             memset(&patterndata, 0, sizeof(patterndata));
 
-            if (DemoNameToWadData(wadfiles[i].name, &data, &patterndata))
-            {
+            if (DemoNameToWadData(wadfile->name, &data, &patterndata)) {
               L_GUISelect(&data);
-              SendMessage(launcher.staticFileName, WM_SETTEXT, 0, (LPARAM)patterndata.pattern_name);
+              SendMessage(
+                launcher.staticFileName,
+                WM_SETTEXT,
+                0,
+                (LPARAM)patterndata.pattern_name
+              );
               WadDataFree(&data);
+              found_matching_wads = true;
               break;
             }
             free(patterndata.missed);
@@ -1192,27 +1192,24 @@ BOOL CALLBACK LauncherClientCallback (HWND hDlg, UINT message, WPARAM wParam, LP
         }
       }
       
-      if ((size_t)i == numwadfiles)
-      {
-        if (SendMessage(launcher.listHistory, CB_SETCURSEL, 0, 0) != CB_ERR)
-        {
+      if (!found_matching_wads) {
+        if (SendMessage(launcher.listHistory, CB_SETCURSEL, 0, 0) != CB_ERR) {
           L_HistoryOnChange();
           SetFocus(launcher.listHistory);
         }
-        else if (SendMessage(launcher.listIWAD, CB_SETCURSEL, 0, 0) != CB_ERR)
-        {
+        else if (SendMessage(launcher.listIWAD, CB_SETCURSEL, 0, 0) != CB_ERR) {
           L_GameOnChange();
           SetFocus(launcher.listPWAD);
         }
       }
     }
-		break;
-
-  case WM_NOTIFY:
-    OnWMNotify(lParam);
     break;
 
-  case WM_COMMAND:
+    case WM_NOTIFY:
+      OnWMNotify(lParam);
+      break;
+
+    case WM_COMMAND:
     {
       int wmId    = LOWORD(wParam);
       int wmEvent = HIWORD(wParam);
@@ -1238,11 +1235,11 @@ BOOL CALLBACK LauncherClientCallback (HWND hDlg, UINT message, WPARAM wParam, LP
 
       if (wmId == IDC_COMMANDCOMBO && wmEvent == CBN_SELCHANGE)
         L_CommandOnChange();
+      break;
     }
-    break;
 	}
 	return FALSE;
-  }
+}
 
 BOOL CALLBACK LauncherServerCallback (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -1462,8 +1459,14 @@ static dboolean L_LauncherIsNeeded(void)
   if (i && (++i < myargc))
     iwad = I_FindFile(myargv[i], ".wad");
 
-  for (i=0; !pwad && i < (int)numwadfiles; i++)
-    pwad = wadfiles[i].src == source_pwad;
+  CBUF_FOR_EACH(&resource_files_buf, entry) {
+    wadfile_info_t *wadfile = (wadfile_info_t *)entry.obj;
+
+    if (wadfile->src == source_pwad) {
+      pwad = true;
+      break;
+    }
+  }
 
   return (!iwad && !pwad && !M_CheckParm("-auto"));
 }
@@ -1493,4 +1496,8 @@ void LauncherShow(unsigned int params)
   }
 }
 
+#endif // !__MINGW32__
 #endif // _WIN32
+
+/* vi: set et ts=2 sw=2: */
+

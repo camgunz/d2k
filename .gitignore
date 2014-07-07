@@ -7,6 +7,7 @@
 features.md
 build/
 cbuild/
+crossdeps/*
 ICONS/Makefile.in
 Makefile.in
 VisualC6/Makefile.in

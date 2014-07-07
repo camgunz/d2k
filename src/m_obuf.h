@@ -27,7 +27,10 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *  A buffer of objects
+ *  A buffer of objects.  More efficient than m_cbuf when allocations cannot be
+ *  avoided (allocating is faster than allocating, copying and deallocating) or
+ *  when the object is large enough that a copy takes more time than an
+ *  allocation.
  *
  *-----------------------------------------------------------------------------
  */
@@ -54,10 +57,10 @@ void     M_OBufInitWithCapacity(obuf_t *obuf, int capacity);
 dboolean M_OBufIsValidIndex(obuf_t *obuf, int index);
 int      M_OBufGetObjectCount(obuf_t *obuf);
 void     M_OBufEnsureCapacity(obuf_t *obuf, int capacity);
-void     M_OBufAppend(obuf_t *obuf, void *obj);
-void     M_OBufInsert(obuf_t *obuf, int index, void *obj);
-int      M_OBufInsertAtFirstFreeSlot(obuf_t *obuf, void *obj);
-int      M_OBufInsertAtFirstFreeSlotOrAppend(obuf_t *obuf, void *obj);
+void     M_OBufAppend(obuf_t *obuf, const void *obj);
+void     M_OBufInsert(obuf_t *obuf, int index, const void *obj);
+int      M_OBufInsertAtFirstFreeSlot(obuf_t *obuf, const void *obj);
+int      M_OBufInsertAtFirstFreeSlotOrAppend(obuf_t *obuf, const void *obj);
 dboolean M_OBufIter(obuf_t *obuf, int *index, void **obj);
 void*    M_OBufGet(obuf_t *obuf, int index);
 void     M_OBufRemove(obuf_t *obuf, int index);

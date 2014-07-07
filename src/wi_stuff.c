@@ -34,7 +34,6 @@
 
 #include "z_zone.h"
 
-#include "m_cbuf.h"
 #include "doomstat.h"
 #include "m_random.h"
 #include "w_wad.h"
@@ -46,6 +45,8 @@
 #include "sounds.h"
 #include "lprintf.h"  // jff 08/03/98 - declaration of lprintf
 #include "r_draw.h"
+
+#include "n_net.h"
 
 // Ty 03/17/98: flag that new par times have been loaded in d_deh
 extern dboolean deh_pars;
@@ -1192,10 +1193,10 @@ void WI_drawDeathmatchStats(void)
   int   y;
   int   w;
 
-  int   lh; // line height
   int   halfface = V_NamePatchWidth(facebackp)/2;
 
-  lh = WI_SPACINGY;
+  // [CG] Unused?
+  // int lh = WI_SPACINGY;
 
   WI_slamBackground();
 
@@ -1480,10 +1481,10 @@ void WI_updateNetgameStats(void)
   }
   else if (ng_state == 10)
   {
-    if (acceleratestage)
+    if (DELTASERVER || acceleratestage)
     {
       S_StartSound(0, sfx_sgcock);
-      if ( gamemode == commercial )
+      if (gamemode == commercial)
         WI_initNoState();
       else
         WI_initShowNextLoc();
@@ -2019,3 +2020,6 @@ void WI_Start(wbstartstruct_t* wbstartstruct)
   else
     WI_initStats();
 }
+
+/* vi: set et ts=2 sw=2: */
+

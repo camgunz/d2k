@@ -387,6 +387,7 @@ static void I_InitInputs(void)
 //
 // Returns true if it thinks we can afford to skip this frame
 
+#if 0
 inline static dboolean I_SkipFrame(void)
 {
   static int frameno;
@@ -401,6 +402,7 @@ inline static dboolean I_SkipFrame(void)
     return (frameno & 1) ? true : false;
   }
 }
+#endif
 
 ///////////////////////////////////////////////////////////
 // Palette stuff.
@@ -1097,11 +1099,13 @@ void I_InitScreenResolution(void)
 
 void I_SetWindowCaption(void)
 {
-  char *buf;
+  size_t len = strlen(PACKAGE_NAME) + strlen(PACKAGE_VERSION) + 3;
+  char *buf = calloc(len, sizeof(char));
 
-  buf = malloc(strlen(PACKAGE_NAME) + strlen(PACKAGE_VERSION) + 10);
+  if (buf == NULL)
+    I_Error("I_SetWindowCaption: calloc failed\n");
 
-  sprintf(buf, "%s %s", PACKAGE_NAME, PACKAGE_VERSION);
+  snprintf(buf, len, "%s v%s", PACKAGE_NAME, PACKAGE_VERSION);
 
   SDL_WM_SetCaption(buf, NULL);
 
@@ -1165,25 +1169,24 @@ int I_GetModeFromString(const char *modestr)
 {
   video_mode_t mode;
 
-  if (!stricmp(modestr,"15")) {
+  if (!stricmp(modestr,"15"))
     mode = VID_MODE15;
-  } else if (!stricmp(modestr,"15bit")) {
+  else if (!stricmp(modestr,"15bit"))
     mode = VID_MODE15;
-  } else if (!stricmp(modestr,"16")) {
+  else if (!stricmp(modestr,"16"))
     mode = VID_MODE16;
-  } else if (!stricmp(modestr,"16bit")) {
+  else if (!stricmp(modestr,"16bit"))
     mode = VID_MODE16;
-  } else if (!stricmp(modestr,"32")) {
+  else if (!stricmp(modestr,"32"))
     mode = VID_MODE32;
-  } else if (!stricmp(modestr,"32bit")) {
+  else if (!stricmp(modestr,"32bit"))
     mode = VID_MODE32;
-  } else if (!stricmp(modestr,"gl")) {
+  else if (!stricmp(modestr,"gl"))
     mode = VID_MODEGL;
-  } else if (!stricmp(modestr,"OpenGL")) {
+  else if (!stricmp(modestr,"OpenGL"))
     mode = VID_MODEGL;
-  } else {
+  else
     mode = VID_MODE8;
-  }
 
   return mode;
 }
@@ -1677,3 +1680,6 @@ static void ApplyWindowResize(SDL_Event *resize_event)
     doom_printf("%dx%d", w, h);
   }
 }
+
+/* vi: set et ts=2 sw=2: */
+

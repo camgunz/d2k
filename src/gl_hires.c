@@ -39,7 +39,6 @@
 #include <SDL_image.h>
 #endif
 
-#include "m_cbuf.h"
 #include "doomstat.h"
 #include "gl_opengl.h"
 #include "gl_intern.h"
@@ -53,6 +52,7 @@
 #include "r_main.h"
 #include "r_sky.h"
 #include "m_argv.h"
+#include "m_file.h"
 #include "m_misc.h"
 #include "e6y.h"
 
@@ -427,6 +427,9 @@ static const char* gld_HiRes_GetInternalName(GLTexture *gltexture)
   case GLDT_PATCH:
     texname_p = lumpinfo[gltexture->index].name;
     break;
+  case GLDT_UNREGISTERED:
+  case GLDT_BROKEN:
+    break;
   }
 
   if (!texname_p)
@@ -682,6 +685,9 @@ static int gld_HiRes_GetExternalName(GLTexture *gltexture, char *img_path, char 
       texname_p = lumpinfo[gltexture->index].name;
     }
     break;
+  case GLDT_UNREGISTERED:
+  case GLDT_BROKEN:
+    break;
   }
 
   if (!texname_p)
@@ -772,6 +778,9 @@ static void gld_HiRes_Bind(GLTexture *gltexture, GLuint *glTexID)
     break;
   case GLDT_PATCH:
     gl_has_hires |= 4;
+    break;
+  case GLDT_UNREGISTERED:
+  case GLDT_BROKEN:
     break;
   }
 
@@ -926,17 +935,24 @@ int gld_HiRes_BuildTables(void)
       }
     }
 
-    RGB2PAL_fname = I_FindFile(RGB2PAL_NAME".dat", ".dat");
+    RGB2PAL_fname = (unsigned char *)I_FindFile(RGB2PAL_NAME".dat", ".dat");
     if (RGB2PAL_fname)
     {
       struct stat RGB24to8_stat;
       memset(&RGB24to8_stat, 0, sizeof(RGB24to8_stat));
-      stat(RGB2PAL_fname, &RGB24to8_stat);
+      stat((const char *)RGB2PAL_fname, &RGB24to8_stat);
       size = 0;
-      if (RGB24to8_stat.st_size == RGB2PAL_size)
-      {
-        I_FileToBuffer(RGB2PAL_fname, &RGB2PAL, &size);
+
+      if (RGB24to8_stat.st_size == RGB2PAL_size) {
+        size_t pal_size;
+        bool success = M_ReadFile(
+          (const char *)RGB2PAL_fname, (char **)&RGB2PAL, &pal_size
+        );
+
+        if (success)
+          size = pal_size;
       }
+
       free(RGB2PAL_fname);
 
       if (size == RGB2PAL_size)
@@ -1176,15 +1192,17 @@ static int gld_HiRes_WriteCache(GLTexture* gltexture, GLuint* texid, const char*
   struct stat tex_stat;
   FILE *cachefp;
 
-  doom_snprintf(cache_filename, sizeof(cache_filename), "%s.cache", img_path);
-  if (access(cache_filename, F_OK))
+  doom_snprintf(
+    (char *)cache_filename, sizeof(cache_filename), "%s.cache", img_path
+  );
+  if (access((char *)cache_filename, F_OK))
   {
     buf = gld_GetTextureBuffer(*texid, 0, &w, &h);
     if (buf)
     {
       memset(&tex_stat, 0, sizeof(tex_stat));
       stat(img_path, &tex_stat);
-      cachefp = fopen(cache_filename, "wb");
+      cachefp = fopen((char *)cache_filename, "wb");
       if (cachefp)
       {
         result =
@@ -1466,3 +1484,6 @@ int gld_PrecacheGUIPatches(void)
 }
 
 #endif // HAVE_LIBSDL_IMAGE
+
+/* vi: set et ts=2 sw=2: */
+

@@ -65,10 +65,9 @@ static dboolean   server;
 static int       remotetic; // Tic expected from the remote
 static int       remotesend; // Tic expected by the remote
 ticcmd_t         netcmds[MAXPLAYERS][BACKUPTICS];
-static ticcmd_t* localcmds;
 static unsigned          numqueuedpackets;
 static packet_header_t** queuedpacket;
-int ticdup = 1;
+static int ticdup = 1;
 static int xtratics = 0;
 int              wanted_player_number;
 
@@ -81,7 +80,7 @@ doomcom_t*      doomcom;
 #endif
 
 #ifdef HAVE_NET
-void D_InitNetGame (void)
+void N_InitNetGame (void)
 {
   int i;
   int numplayers = 1;
@@ -129,6 +128,11 @@ void D_InitNetGame (void)
     startmap = sinfo->level;
     startepisode = sinfo->episode;
     ticdup = sinfo->ticdup;
+    /*
+     * CG: no such thing as ticdup anymore, too lazy to change everything
+     *     properly
+     */
+    ticdup = 1;
     xtratics = sinfo->extratic;
     G_ReadOptions(sinfo->game_options);
 
@@ -145,34 +149,39 @@ void D_InitNetGame (void)
     }
     Z_Free(packet);
   }
-  localcmds = netcmds[displayplayer = consoleplayer];
-  for (i=0; i<numplayers; i++)
+  for (i=0; i<numplayers; i++) {
     playeringame[i] = true;
-  for (; i<MAXPLAYERS; i++)
-    playeringame[i] = false;
-  if (!playeringame[consoleplayer]) I_Error("D_InitNetGame: consoleplayer not in game");
-
-  for (i = 0; i < numplayers; i++) {
-    if (playeringame[i]) {
-      M_CBufInit(&players[i].commands);
-    }
+    M_CBufInitWithCapacity(
+      P_GetPlayerCommands(i) sizeof(netticcmd_t), BACKUPTICS
+    );
   }
+  for (; i<MAXPLAYERS; i++) {
+    playeringame[i] = false;
+  }
+
+  if (!playeringame[consoleplayer])
+    I_Error("N_InitNetGame: consoleplayer not in game");
 }
 #else
-void D_InitNetGame (void)
+void N_InitNetGame (void)
 {
   int i;
 
   doomcom = Z_Malloc(sizeof *doomcom, PU_STATIC, NULL);
   doomcom->consoleplayer = 0;
   doomcom->numnodes = 0; doomcom->numplayers = 1;
-  localcmds = netcmds[consoleplayer];
   netgame = (M_CheckParm("-solo-net") != 0);
 
-  for (i=0; i<doomcom->numplayers; i++)
+  for (i=0; i<doomcom->numplayers; i++) {
     playeringame[i] = true;
-  for (; i<MAXPLAYERS; i++)
+    M_CBufInitWithCapacity(
+      P_GetPlayerCommands(i) sizeof(netticcmd_t), BACKUPTICS
+    );
+  }
+
+  for (; i<MAXPLAYERS; i++) {
     playeringame[i] = false;
+  }
 
   consoleplayer = displayplayer = doomcom->consoleplayer;
 }
@@ -197,7 +206,7 @@ void D_CheckNetGame(void)
   Z_Free(packet);
 }
 
-dboolean D_NetGetWad(const char* name)
+dboolean N_GetWad(const char* name)
 {
 #if defined(HAVE_WAIT_H)
   size_t psize = sizeof(packet_header_t) + strlen(name) + 500;
@@ -341,7 +350,7 @@ void NetUpdate(void)
       // after change of realtic_clock_rate.
       if (maketic - gametic && gametic <= force_singletics_to && realtic_clock_rate < 200) break;
 
-      G_BuildTiccmd(&localcmds[maketic%BACKUPTICS]);
+      G_BuildTiccmd(&netcmds[consoleplayer][maketic % BACKUPTICS]);
       maketic++;
     }
     if (server && maketic > remotesend) { // Send the tics to the server
@@ -359,7 +368,7 @@ void NetUpdate(void)
   {
     void *tic = ((byte*)(packet+1)) +2;
     while (sendtics--) {
-      TicToRaw(tic, &localcmds[remotesend++%BACKUPTICS]);
+      TicToRaw(tic, &netcmds[consoleplayer][remotesend++ % BACKUPTICS]);
       tic = (byte *)tic + sizeof(ticcmd_t);
     }
   }
@@ -456,7 +465,7 @@ static void CheckQueuedPackets(void)
 }
 #endif // HAVE_NET
 
-void TryRunTics (void)
+void N_TryRunTics(void)
 {
   int runtics;
   int entertime = I_GetTime();

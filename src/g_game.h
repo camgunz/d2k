@@ -29,12 +29,35 @@
  * DESCRIPTION: Main game control interface.
  *-----------------------------------------------------------------------------*/
 
-#ifndef __G_GAME__
-#define __G_GAME__
+#ifndef G_GAME__
+#define G_GAME__
 
 #include "doomdef.h"
 #include "d_event.h"
 #include "d_ticcmd.h"
+
+struct netticcmd_s;
+
+//
+// SAVE
+//
+
+// CPhipps - Make savedesciption visible in wider scope
+#define SAVEDESCLEN 32
+
+// Description to save in savegame
+extern char savedescription[SAVEDESCLEN];
+
+// killough 5/15/98: forced loadgames
+void G_ForcedLoadGame(void);
+void G_DoSaveGame(dboolean menu);
+void G_DoLoadGame(void);
+// Called by M_Responder.
+void G_SaveGame(int slot, char *description);
+// killough 5/15/98
+void G_LoadGame(int slot, dboolean is_command);
+/* killough 3/22/98: sets savegame filename */
+int G_SaveGameName(char *name, size_t size, int slot, dboolean demoplayback);
 
 //
 // GAME
@@ -42,10 +65,18 @@
 
 #define DEMOMARKER    0x80
 
+// killough 2/28/98: A ridiculously large number
+// of players, the most you'll ever need in a demo
+// or savegame. This is used to prevent problems, in
+// case more players in a game are supported later.
+#define MIN_MAXPLAYERS 32
+
 // CG 04/06/2014: The old number of options is 14
 #define OLD_GAME_OPTION_SIZE 14
 // killough 5/2/98: number of bytes reserved for saving options
 #define GAME_OPTION_SIZE 64
+
+#define MAX_NAME_LENGTH 255
 
 dboolean G_Responder(event_t *ev);
 dboolean G_CheckDemoStatus(void);
@@ -53,13 +84,6 @@ void G_DeathMatchSpawnPlayer(int playernum);
 void G_InitNew(skill_t skill, int episode, int map);
 void G_DeferedInitNew(skill_t skill, int episode, int map);
 void G_DeferedPlayDemo(const char *demo); // CPhipps - const
-void G_LoadGame(int slot, dboolean is_command); // killough 5/15/98
-void G_ForcedLoadGame(void);           // killough 5/15/98: forced loadgames
-void G_DoLoadGame(void);
-dboolean G_ReadSaveData(buf_t *savebuffer, dboolean bail_on_errors,
-                                           dboolean init_new);
-void G_WriteSaveData(buf_t *savebuffer);
-void G_SaveGame(int slot, char *description); // Called by M_Responder.
 void G_BeginRecording(void);
 // CPhipps - const on these string params
 void G_RecordDemo(const char *name);          // Only called by startup code.
@@ -69,7 +93,6 @@ void G_WorldDone(void);
 void G_EndGame(void); /* cph - make m_menu.c call a G_* function for this */
 void G_Ticker(void);
 void G_ReloadDefaults(void);     // killough 3/1/98: loads game defaults
-int  G_SaveGameName(char *, size_t, int, dboolean); /* killough 3/22/98: sets savegame filename */
 void G_SetFastParms(int);        // killough 4/10/98: sets -fast parameters
 void G_DoNewGame(void);
 void G_DoReborn(int playernum);
@@ -85,13 +108,18 @@ void G_WriteOptions(byte game_options[]);
 void G_PlayerReborn(int player);
 void G_RestartLevel(void); // CPhipps - menu involked level restart
 void G_DoVictory(void);
-void G_BuildTiccmd (ticcmd_t* cmd); // CPhipps - move decl to header
+void G_BuildTiccmd (struct netticcmd_s *ncmd); // CPhipps - move decl to header
 void G_ChangedPlayerColour(int pn, int cl); // CPhipps - On-the-fly player colour changing
 void G_MakeSpecialEvent(buttoncode_t bc, ...); /* cph - new event stuff */
 
+extern dboolean forced_loadgame;
+extern dboolean command_loadgame;
+
+extern int totalleveltimes;
+
 //e6y
 extern dboolean democontinue;
-extern char democontinuename[];
+extern char* demo_continue_name;
 void G_CheckDemoContinue(void);
 void G_SetSpeed(void);
 
@@ -102,9 +130,11 @@ const byte* G_ReadDemoHeaderEx(const byte* demo_p, size_t size, unsigned int par
 const byte* G_ReadDemoHeader(const byte* demo_p, size_t size);
 void G_CalculateDemoParams(const byte *demo_p);
 
+void doom_pprintf(short playernum, const char *, ...) PRINTF_DECL(2, 3);
+
 // killough 1/18/98: Doom-style printf;   killough 4/25/98: add gcc attributes
 // CPhipps - renames to doom_printf to avoid name collision with glibc
-void doom_printf(const char *, ...) __attribute__((format(printf,1,2)));
+void doom_printf(const char *, ...) PRINTF_DECL(1, 2);
 
 // killough 5/2/98: moved from m_misc.c:
 
@@ -197,6 +227,9 @@ extern int  joybstraferight;
 extern int  joybuse;
 extern int  joybspeed;
 
+/* CG: This is set to true when graphics have been initialized */
+extern dboolean graphics_initialized;
+
 extern int  defaultskill;      //jff 3/24/98 default skill
 extern dboolean haswolflevels;  //jff 4/18/98 wolf levels present
 
@@ -206,9 +239,6 @@ extern int  bodyquesize;       // killough 2/8/98: adustable corpse limit
 // Par times (new item with BOOM) - from g_game.c
 extern int pars[5][10];  // hardcoded array size
 extern int cpars[];      // hardcoded array size
-// CPhipps - Make savedesciption visible in wider scope
-#define SAVEDESCLEN 32
-extern char savedescription[SAVEDESCLEN];  // Description to save in savegame
 
 /* cph - compatibility level strings */
 extern const char * comp_lev_str[];
@@ -229,3 +259,6 @@ extern int bytes_per_tic;
 #define comperr(i) (default_comperr[i] && !demorecording && !demoplayback && !democontinue && !netgame)
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

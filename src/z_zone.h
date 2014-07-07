@@ -36,11 +36,19 @@
  *
  *---------------------------------------------------------------------*/
 
-#ifndef __Z_ZONE__
-#define __Z_ZONE__
+#ifndef Z_ZONE__
+#define Z_ZONE__
 
-#ifndef __GNUC__
+#ifdef __GNUC__
+
+#ifdef __MINGW32__
+#define PRINTF_DECL(x, y) __attribute__((format(gnu_printf, x, y)))
+#else
+#define PRINTF_DECL(x, y) __attribute__((format(printf, x, y)))
+#endif
+#else
 #define __attribute__(x)
+#define PRINTF_DECL(x, y)
 #endif
 
 // Include system definitions so that prototypes become
@@ -50,26 +58,26 @@
 #include "config.h"
 #endif
 
-#ifndef __func__
-#ifdef __FUNCTION__
-#define __func__ __FUNCTION__
-#else
-#define __func__ "<unknown>"
-#endif
-#endif
+#define __STDC_FORMAT_MACROS
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #define UNICODE
+#define _UNICODE
 #include <windows.h>
 #include <direct.h>
+#include <commctrl.h>
 #include <io.h>
 #include <process.h>
 #include <stddef.h>
 #include <winreg.h>
+#include <delayimp.h>
 #define    F_OK    0    /* Check for file existence */
 #define    W_OK    2    /* Check for write permission */
 #define    R_OK    4    /* Check for read permission */
+#else
+#include <dirent.h>
+#include <libgen.h>
 #endif
 
 #include <assert.h>
@@ -96,6 +104,10 @@
 #include <asm/byteorder.h>
 #endif
 
+#ifdef HAVE_STDBOOL_H
+#include <stdbool.h>
+#endif
+
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
@@ -104,7 +116,7 @@
 #include <stdint.h>
 #endif
 
-#ifdef HAVE_MMAP
+#if defined(HAVE_MMAP) && !defined(_WIN32)
 #include <sys/mman.h>
 #endif
 
@@ -198,6 +210,7 @@ void Z_ZoneHistory(char *);
  */
 
 #include "doomtype.h"
+#include "d_log.h"
 #include "m_buf.h"
 #include "m_cbuf.h"
 #include "m_list.h"

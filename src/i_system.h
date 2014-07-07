@@ -53,48 +53,40 @@
 
 extern int interpolation_method;
 extern int ms_to_next_tick;
-dboolean I_StartDisplay(void);
-void I_EndDisplay(void);
-int I_GetTime_RealTime(void);     /* killough */
+
+uint32_t      I_GetTicks(void);
+dboolean      I_StartDisplay(void);
+void          I_EndDisplay(void);
+int           I_GetTime_RealTime(void);     /* killough */
 #ifndef PRBOOM_SERVER
-fixed_t I_GetTimeFrac (void);
+fixed_t       I_GetTimeFrac (void);
 #endif
-void I_GetTime_SaveMS(void);
-
+void          I_GetTime_SaveMS(void);
 unsigned long I_GetRandomTimeSeed(void); /* cphipps */
-
-void I_uSleep(unsigned long usecs);
-
-/* cphipps - I_GetVersionString
+void          I_uSleep(unsigned long usecs);
+/*
+ * cphipps - I_GetVersionString
  * Returns a version string in the given buffer
  */
-const char* I_GetVersionString(char* buf, size_t sz);
-
-/* cphipps - I_SigString
+const char*   I_GetVersionString(char* buf, size_t sz); 
+/*
+ * cphipps - I_SigString
  * Returns a string describing a signal number
  */
-const char* I_SigString(char* buf, size_t sz, int signum);
-
+const char*   I_SigString(char* buf, size_t sz, int signum);
 #ifdef _WIN32
-void I_SwitchToWindow(HWND hwnd);
+void          I_SwitchToWindow(HWND hwnd);
 #endif
-
-// e6y
-const char* I_GetTempDir(void);
-
-const char *I_DoomExeDir(void); // killough 2/16/98: path to executable's dir
-
-dboolean HasTrailingSlash(const char* dn);
-char* I_FindFile(const char* wfname, const char* ext);
-char* I_FindFileEx(const char* wfname, const char* ext);
-const char* I_FindFile2(const char* wfname, const char* ext);
-
-dboolean I_FileToBuffer(const char *filename, byte **data, int *size);
-
+const char*   I_GetTempDir(void); // e6y
+const char*   I_DoomExeDir(void); // killough 2/16/98: path to executable's dir
+dboolean      HasTrailingSlash(const char* dn);
+char*         I_FindFile(const char* wfname, const char* ext);
+char*         I_FindFileEx(const char* wfname, const char* ext);
+const char*   I_FindFile2(const char* wfname, const char* ext);
+dboolean      I_FileToBuffer(const char *filename, byte **data, int *size);
 /* cph 2001/11/18 - wrapper for read(2) which deals with partial reads */
-void I_Read(int fd, void* buf, size_t sz);
-
+void          I_Read(int fd, void* buf, size_t sz);
 /* cph 2001/11/18 - Move W_Filelength to i_system.c */
-int I_Filelength(int handle);
+int           I_Filelength(int handle);
 
 #endif

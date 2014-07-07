@@ -35,15 +35,11 @@
  *
  *-----------------------------------------------------------------------------*/
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
-#include <stdio.h>
-#include <fcntl.h>
+#include "cmp.h"
 
 #include "doomdef.h"
-#include "m_cbuf.h"
 #include "doomstat.h"
 #include "dstrings.h"
 #include "d_main.h"
@@ -56,6 +52,7 @@
 #include "s_sound.h"
 #include "sounds.h"
 #include "m_menu.h"
+#include "m_pbuf.h"
 #include "d_deh.h"
 #include "m_misc.h"
 #include "lprintf.h"
@@ -862,31 +859,49 @@ menu_t SaveDef =
 // M_ReadSaveStrings
 //  read the strings from the savegame files
 //
-void M_ReadSaveStrings(void)
-{
-  int i;
+void M_ReadSaveStrings(void) {
+  char *name; // killough 3/22/98
+  int len;
+  pbuf_t savebuffer;
+  buf_t save_game_string;
+  bool load_succeeded;
 
-  for (i = 0 ; i < load_end ; i++) {
-    char *name;               // killough 3/22/98
-    int len;
-    FILE *fp;  // killough 11/98: change to use stdio
+  M_PBufInit(&savebuffer);
+  M_BufferInitWithCapacity(&save_game_string, SAVESTRINGSIZE);
 
+  /* CG: FIXME: Reading the entire save for just the first 24 bytes sucks */
+
+  for (int i = 0; i < load_end; i++) {
     /* killough 3/22/98
      * cph - add not-demoplayback parameter */
+    M_PBufClear(&savebuffer);
+    M_BufferClear(&save_game_string);
+    memset(&savegamestrings[i][0], 0, SAVESTRINGSIZE);
+
     len = G_SaveGameName(NULL, 0, i, false);
-    name = malloc(len+1);
-    G_SaveGameName(name, len+1, i, false);
-    fp = fopen(name,"rb");
+    name = malloc(len + 1);
+    G_SaveGameName(name, len + 1, i, false);
+    load_succeeded = M_PBufSetFile(&savebuffer, name);
     free(name);
-    if (!fp) {   // Ty 03/27/98 - externalized:
-      strcpy(&savegamestrings[i][0],s_EMPTYSTRING);
+
+    if (!load_succeeded) {  // Ty 03/27/98 - externalized:
+      strcpy(&savegamestrings[i][0], s_EMPTYSTRING);
       LoadMenue[i].status = 0;
       continue;
     }
-    fread(&savegamestrings[i], SAVESTRINGSIZE, 1, fp);
-    fclose(fp);
+
+    M_PBufSeek(&savebuffer, 0);
+    M_PBufReadBytes(&savebuffer, &save_game_string);
+    memcpy(
+      &savegamestrings[i][0],
+      M_BufferGetData(&save_game_string),
+      M_BufferGetSize(&save_game_string)
+    );
     LoadMenue[i].status = 1;
   }
+
+  M_PBufFree(&savebuffer);
+  M_BufferFree(&save_game_string);
 }
 
 //
@@ -6102,3 +6117,6 @@ void M_Init(void)
 // End of General Routines
 //
 /////////////////////////////////////////////////////////////////////////////
+
+/* vi: set et ts=2 sw=2: */
+

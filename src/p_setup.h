@@ -31,8 +31,8 @@
  *
  *-----------------------------------------------------------------------------*/
 
-#ifndef __P_SETUP__
-#define __P_SETUP__
+#ifndef P_SETUP__
+#define P_SETUP__
 
 #include "p_mobj.h"
 
@@ -59,3 +59,6 @@ extern int blockmapxneg;
 extern int blockmapyneg;
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

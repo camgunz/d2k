@@ -67,8 +67,9 @@ typedef enum
   // Dead on the ground, view follows killer.
   PST_DEAD,
   // Ready to restart/respawn???
-  PST_REBORN
-
+  PST_REBORN,
+  // Disconnected
+  PST_DISCONNECTED
 } playerstate_t;
 
 
@@ -120,8 +121,8 @@ typedef struct player_s
 
   // Power ups. invinc and invis are tic counters.
   int                 powers[NUMPOWERS];
-  dboolean           cards[NUMCARDS];
-  dboolean           backpack;
+  dboolean            cards[NUMCARDS];
+  dboolean            backpack;
 
   // Frags, kills of other players.
   int                 frags[MAXPLAYERS];
@@ -130,7 +131,7 @@ typedef struct player_s
   // Is wp_nochange if not changing.
   weapontype_t        pendingweapon;
 
-  dboolean           weaponowned[NUMWEAPONS];
+  dboolean            weaponowned[NUMWEAPONS];
   int                 ammo[NUMAMMO];
   int                 maxammo[NUMAMMO];
 
@@ -175,7 +176,7 @@ typedef struct player_s
   pspdef_t            psprites[NUMPSPRITES];
 
   // True if secret level has been done.
-  dboolean           didsecret;
+  dboolean            didsecret;
 
   // e6y
   // All non original (new) fields of player_t struct are moved to bottom
@@ -186,7 +187,7 @@ typedef struct player_s
    * This only represents the thrust that the player applies himself.
    * This avoids anomolies with such things as Boom ice and conveyors.
    */
-  fixed_t            momx, momy;      // killough 10/98
+  fixed_t             momx, momy;      // killough 10/98
 
   //e6y
   int                 resurectedkillcount;
@@ -252,5 +253,6 @@ typedef struct
 
 } wbstartstruct_t;
 
-
 #endif
+
+/* vi: set et ts=2 sw=2: */

@@ -1329,10 +1329,12 @@ static void I_OPL_UnRegisterSong(const void *handle)
 
 // Determine whether memory block is a .mid file
 
+#if 0
 static dboolean IsMid(byte *mem, int len)
 {
     return len > 4 && !memcmp(mem, "MThd", 4);
 }
+#endif
 
 // now only takes files in MIDI format
 static const void *I_OPL_RegisterSong(const void *data, unsigned len)
@@ -1356,7 +1358,9 @@ static const void *I_OPL_RegisterSong(const void *data, unsigned len)
     // time numbers we have to traverse the tracks and everything
     if (mf.len < 100)
     {
-        lprintf (LO_WARN, "I_OPL_RegisterSong: Very short MIDI (%i bytes)\n", mf.len);
+        lprintf(LO_WARN,
+          "I_OPL_RegisterSong: Very short MIDI (%zu bytes)\n", mf.len
+        );
         return NULL;
     }
 

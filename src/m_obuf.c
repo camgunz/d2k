@@ -27,7 +27,10 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *  A buffer of objects
+ *  A buffer of objects, more efficient than m_cbuf when an object must be
+ *  allocated (avoids copying and then deallocating the original object) or
+ *  when the object is large enough that a copy takes more time than an
+ *  allocation.
  *
  *-----------------------------------------------------------------------------
  */
@@ -77,28 +80,29 @@ void M_OBufEnsureCapacity(obuf_t *obuf, int capacity) {
     if (obuf->objects == NULL)
       I_Error("M_OBufEnsureCapacity: Allocating buffer objects failed");
 
-    memset(obuf->objects + old_capacity, 0, obuf->capacity - old_capacity);
+    for (int i = old_capacity; i < obuf->capacity; i++)
+      obuf->objects[i] = NULL;
   }
 }
 
-void M_OBufAppend(obuf_t *obuf, void *obj) {
+void M_OBufAppend(obuf_t *obuf, const void *obj) {
   int index = obuf->capacity;
 
   M_OBufEnsureCapacity(obuf, obuf->capacity + 1);
   M_OBufInsert(obuf, index, obj);
 }
 
-void M_OBufInsert(obuf_t *obuf, int index, void *obj) {
+void M_OBufInsert(obuf_t *obuf, int index, const void *obj) {
   if (index >= obuf->capacity) {
     I_Error("M_OBufInsert: Insertion index %d out of bounds (%d)",
       index, obuf->capacity
     );
   }
 
-  obuf->objects[index] = obj;
+  obuf->objects[index] = (void *)obj;
 }
 
-int M_OBufInsertAtFirstFreeSlot(obuf_t *obuf, void *obj) {
+int M_OBufInsertAtFirstFreeSlot(obuf_t *obuf, const void *obj) {
   for (int i = 0; i < obuf->capacity; i++) {
     if (obuf->objects[i] == NULL) {
       M_OBufInsert(obuf, i, obj);
@@ -109,7 +113,7 @@ int M_OBufInsertAtFirstFreeSlot(obuf_t *obuf, void *obj) {
   return -1;
 }
 
-int M_OBufInsertAtFirstFreeSlotOrAppend(obuf_t *obuf, void *obj) {
+int M_OBufInsertAtFirstFreeSlotOrAppend(obuf_t *obuf, const void *obj) {
   int slot = M_OBufInsertAtFirstFreeSlot(obuf, obj);
 
   if (slot != -1)

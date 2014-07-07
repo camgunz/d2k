@@ -109,7 +109,7 @@ const void *W_CacheLumpNum(int lump)
   const int locks = 1;
 #ifdef RANGECHECK
   if ((unsigned)lump >= (unsigned)numlumps)
-    I_Error ("W_CacheLumpNum: %i >= numlumps",lump);
+    I_Error("W_CacheLumpNum: %i >= numlumps", lump);
 #endif
 
   if (!cachelump[lump].cache)      // read the lump in

@@ -161,8 +161,7 @@ dboolean PIT_StompThing (mobj_t* thing)
  * Returns the friction associated with a particular mobj.
  */
 
-int P_GetFriction(const mobj_t *mo, int *frictionfactor)
-{
+int P_GetFriction(const mobj_t *mo, int *frictionfactor) {
   int friction = ORIG_FRICTION;
   int movefactor = ORIG_FRICTION_FACTOR;
   const msecnode_t *m;
@@ -177,23 +176,21 @@ int P_GetFriction(const mobj_t *mo, int *frictionfactor)
    * friction value (muddy has precedence over icy).
    */
 
-  if (mo->flags & MF_FLY)
-  {
+  if (mo->flags & MF_FLY) {
     friction = FRICTION_FLY;
   }
-  else
-  {
-  if (!(mo->flags & (MF_NOCLIP|MF_NOGRAVITY))
-      && (mbf_features || (mo->player && !compatibility)) &&
-      variable_friction)
-    for (m = mo->touching_sectorlist; m; m = m->m_tnext)
+  else if (!(mo->flags & (MF_NOCLIP|MF_NOGRAVITY))
+           && (mbf_features || (mo->player && !compatibility)) &&
+           variable_friction) {
+    for (m = mo->touching_sectorlist; m; m = m->m_tnext) {
       if ((sec = m->m_sector)->special & FRICTION_MASK &&
-    (sec->friction < friction || friction == ORIG_FRICTION) &&
-    (mo->z <= sec->floorheight ||
-     (sec->heightsec != -1 &&
-      mo->z <= sectors[sec->heightsec].floorheight &&
-      mbf_features)))
-  friction = sec->friction, movefactor = sec->movefactor;
+          (sec->friction < friction || friction == ORIG_FRICTION) &&
+          (mo->z <= sec->floorheight ||
+           (sec->heightsec != -1 &&
+            mo->z <= sectors[sec->heightsec].floorheight && mbf_features))) {
+        friction = sec->friction, movefactor = sec->movefactor;
+      }
+    }
   }
 
   if (frictionfactor)
@@ -340,7 +337,7 @@ dboolean P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, dboolean boss)
   // the move is ok,
   // so unlink from the old position & link into the new position
 
-  P_UnsetThingPosition (thing);
+  P_UnsetThingPosition(thing);
 
   thing->floorz = tmfloorz;
   thing->ceilingz = tmceilingz;
@@ -349,7 +346,7 @@ dboolean P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, dboolean boss)
   thing->x = x;
   thing->y = y;
 
-  P_SetThingPosition (thing);
+  P_SetThingPosition(thing);
 
   thing->PrevX = x;
   thing->PrevY = y;
@@ -938,7 +935,7 @@ dboolean P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,
   // the move is ok,
   // so unlink from the old position and link into the new position
 
-  P_UnsetThingPosition (thing);
+  P_UnsetThingPosition(thing);
 
   oldx = thing->x;
   oldy = thing->y;
@@ -948,7 +945,7 @@ dboolean P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,
   thing->x = x;
   thing->y = y;
 
-  P_SetThingPosition (thing);
+  P_SetThingPosition(thing);
 
   // if any special lines were hit, do the effect
 
@@ -2218,54 +2215,53 @@ msecnode_t* P_AddSecnode(sector_t* s, mobj_t* thing, msecnode_t* nextnode)
 // sectors this object appears in. Returns a pointer to the next node
 // on the linked list, or NULL.
 
-msecnode_t* P_DelSecnode(msecnode_t* node)
-{
+msecnode_t* P_DelSecnode(msecnode_t* node) {
   msecnode_t* tp;  // prev node on thing thread
   msecnode_t* tn;  // next node on thing thread
   msecnode_t* sp;  // prev node on sector thread
   msecnode_t* sn;  // next node on sector thread
 
-  if (node)
-    {
+  if (!node)
+    return NULL;
 
-    // Unlink from the Thing thread. The Thing thread begins at
-    // sector_list and not from mobj_t->touching_sectorlist.
+  // Unlink from the Thing thread. The Thing thread begins at
+  // sector_list and not from mobj_t->touching_sectorlist.
 
-    tp = node->m_tprev;
-    tn = node->m_tnext;
-    if (tp)
-      tp->m_tnext = tn;
-    if (tn)
-      tn->m_tprev = tp;
+  tp = node->m_tprev;
+  tn = node->m_tnext;
 
-    // Unlink from the sector thread. This thread begins at
-    // sector_t->touching_thinglist.
+  if (tp)
+    tp->m_tnext = tn;
 
-    sp = node->m_sprev;
-    sn = node->m_snext;
-    if (sp)
-      sp->m_snext = sn;
-    else
-      node->m_sector->touching_thinglist = sn;
-    if (sn)
-      sn->m_sprev = sp;
+  if (tn)
+    tn->m_tprev = tp;
 
-    // Return this node to the freelist
+  // Unlink from the sector thread. This thread begins at
+  // sector_t->touching_thinglist.
 
-    P_PutSecnode(node);
-    return(tn);
-    }
-  return(NULL);
+  sp = node->m_sprev;
+  sn = node->m_snext;
+
+  if (sp)
+    sp->m_snext = sn;
+  else
+    node->m_sector->touching_thinglist = sn;
+
+  if (sn)
+    sn->m_sprev = sp;
+
+  // Return this node to the freelist
+
+  P_PutSecnode(node);
+  return(tn);
 }                               // phares 3/13/98
 
 // Delete an entire sector list
 
-void P_DelSeclist(msecnode_t* node)
-
-  {
+void P_DelSeclist(msecnode_t* node) {
   while (node)
     node = P_DelSecnode(node);
-  }
+}
 
 
 // phares 3/14/98
@@ -2311,14 +2307,12 @@ dboolean PIT_GetSectors(line_t* ld)
   return true;
 }
 
-
 // phares 3/14/98
 //
 // P_CreateSecNodeList alters/creates the sector_list that shows what sectors
 // the object resides in.
 
-void P_CreateSecNodeList(mobj_t* thing,fixed_t x,fixed_t y)
-{
+void P_CreateSecNodeList(mobj_t* thing, fixed_t x, fixed_t y) {
   int xl;
   int xh;
   int yl;
@@ -2334,12 +2328,8 @@ void P_CreateSecNodeList(mobj_t* thing,fixed_t x,fixed_t y)
   // finished, delete all nodes where m_thing is still NULL. These
   // represent the sectors the Thing has vacated.
 
-  node = sector_list;
-  while (node)
-    {
+  for (node = sector_list; node != NULL; node = node->m_tnext)
     node->m_thing = NULL;
-    node = node->m_tnext;
-    }
 
   tmthing = thing;
 
@@ -2358,29 +2348,28 @@ void P_CreateSecNodeList(mobj_t* thing,fixed_t x,fixed_t y)
   yl = P_GetSafeBlockY(tmbbox[BOXBOTTOM] - bmaporgy);
   yh = P_GetSafeBlockY(tmbbox[BOXTOP] - bmaporgy);
 
-  for (bx=xl ; bx<=xh ; bx++)
-    for (by=yl ; by<=yh ; by++)
-      P_BlockLinesIterator(bx,by,PIT_GetSectors);
+  for (bx = xl; bx <= xh; bx++) {
+    for (by = yl; by <= yh; by++)
+      P_BlockLinesIterator(bx, by, PIT_GetSectors);
+  }
 
   // Add the sector of the (x,y) point to sector_list.
-
-  sector_list = P_AddSecnode(thing->subsector->sector,thing,sector_list);
+  sector_list = P_AddSecnode(thing->subsector->sector, thing, sector_list);
 
   // Now delete any nodes that won't be used. These are the ones where
   // m_thing is still NULL.
 
-  node = sector_list;
-  while (node)
-    {
-    if (node->m_thing == NULL)
-      {
+  for (node = sector_list; node != NULL; ) {
+    if (node->m_thing == NULL) {
       if (node == sector_list)
         sector_list = node->m_tnext;
+
       node = P_DelSecnode(node);
-      }
-    else
+    }
+    else {
       node = node->m_tnext;
     }
+  }
 
   /* cph -
    * This is the strife we get into for using global variables. tmthing
@@ -2390,15 +2379,18 @@ void P_CreateSecNodeList(mobj_t* thing,fixed_t x,fixed_t y)
    * OTOH for Boom/MBF demos we have to preserve the buggy behavior.
    *  Fun. We restore its previous value unless we're in a Boom/MBF demo.
    */
-  if (!prboom_comp[PC_FORCE_LXDOOM_DEMO_COMPATIBILITY].state)
-  if ((compatibility_level < boom_compatibility_compatibility) ||
-      (compatibility_level >= prboom_3_compatibility))
-    tmthing = saved_tmthing;
+  if (!prboom_comp[PC_FORCE_LXDOOM_DEMO_COMPATIBILITY].state) {
+    if ((compatibility_level < boom_compatibility_compatibility) ||
+        (compatibility_level >= prboom_3_compatibility))
+      tmthing = saved_tmthing;
+  }
   /* And, duh, the same for tmx/y - cph 2002/09/22
    * And for tmbbox - cph 2003/08/10 */
   if ((compatibility_level < boom_compatibility_compatibility) /* ||
       (compatibility_level >= prboom_4_compatibility) */) {
-    tmx = saved_tmx, tmy = saved_tmy;
+    tmx = saved_tmx;
+    tmy = saved_tmy;
+
     if (tmthing) {
       tmbbox[BOXTOP]  = tmy + tmthing->radius;
       tmbbox[BOXBOTTOM] = tmy - tmthing->radius;
@@ -2408,11 +2400,21 @@ void P_CreateSecNodeList(mobj_t* thing,fixed_t x,fixed_t y)
   }
 }
 
-/* cphipps 2004/08/30 - 
- * Must clear tmthing at tic end, as it might contain a pointer to a removed thinker, or the level might have ended/been ended and we clear the objects it was pointing too. Hopefully we don't need to carry this between tics for sync. */
+/*
+ * cphipps 2004/08/30 - 
+ * Must clear tmthing at tic end, as it might contain a pointer to a removed
+ * thinker, or the level might have ended/been ended and we clear the objects
+ * it was pointing too. Hopefully we don't need to carry this between tics for
+ * sync.
+ */
 void P_MapStart(void) {
-	if (tmthing) I_Error("P_MapStart: tmthing set!");
+	if (tmthing)
+    I_Error("P_MapStart: tmthing set!");
 }
+
 void P_MapEnd(void) {
 	tmthing = NULL;
 }
+
+/* vi: set et ts=2 sw=2: */
+

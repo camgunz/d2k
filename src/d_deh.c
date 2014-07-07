@@ -34,22 +34,25 @@
  *
  *--------------------------------------------------------------------*/
 
+#include "z_zone.h"
+
 // killough 5/2/98: fixed headers, removed rendunant external declarations:
 #include "doomdef.h"
-#include "doomtype.h"
-#include "m_cbuf.h"
 #include "doomstat.h"
+#include "doomtype.h"
 #include "d_deh.h"
-#include "sounds.h"
-#include "info.h"
-#include "m_cheat.h"
-#include "p_inter.h"
-#include "p_enemy.h"
-#include "g_game.h"
+#include "d_main.h"
 #include "d_think.h"
-#include "w_wad.h"
+#include "g_game.h"
+#include "info.h"
 #include "m_argv.h"
+#include "m_cheat.h"
 #include "m_misc.h"
+#include "p_enemy.h"
+#include "p_inter.h"
+#include "sounds.h"
+#include "w_wad.h"
+
 #include "e6y.h"//e6y
 
 // CPhipps - modify to use logical output routine
@@ -1535,14 +1538,25 @@ void ProcessDehFile(const char *filename, const char *outfilename, int lumpnum)
     }
   else  // DEH file comes from lump indicated by third argument
     {
+      wadfile_info_t *wf = M_CBufGet(
+        &resource_files_buf, lumpinfo[lumpnum].wadfile
+      );
+
+      if (wf == NULL) {
+        I_Error("ProcessDehFile: Bad wadfile index in lump %d (%d)\n",
+          lumpnum, lumpinfo[lumpnum].wadfile
+        );
+      }
+
       infile.size = W_LumpLength(lumpnum);
       infile.inp = infile.lump = W_CacheLumpNum(lumpnum);
-      filename = lumpinfo[lumpnum].wadfile->name;
+      filename = wf->name;
       file_or_lump = "lump from";
     }
 
-  lprintf(LO_INFO, "Loading DEH %s %s\n",file_or_lump,filename);
-  if (fileout) fprintf(fileout,"\nLoading DEH %s %s\n\n",file_or_lump,filename);
+  lprintf(LO_INFO, "Loading DEH %s %s\n", file_or_lump, filename);
+  if (fileout)
+    fprintf(fileout, "\nLoading DEH %s %s\n\n", file_or_lump, filename);
 
   // move deh_codeptr initialisation to D_BuildBEXTables
 
@@ -1990,25 +2004,25 @@ static void deh_procFrame(DEHFILE *fpin, FILE* fpout, char *line)
         }
       if (!deh_strcasecmp(key,deh_state[0]))  // Sprite number
         {
-          if (fpout) fprintf(fpout," - sprite = %lld\n",value);
+          if (fpout) fprintf(fpout," - sprite = %" PRIu64 "\n",value);
           states[indexnum].sprite = (spritenum_t)value;
         }
       else
         if (!deh_strcasecmp(key,deh_state[1]))  // Sprite subnumber
           {
-            if (fpout) fprintf(fpout," - frame = %lld\n",value);
+            if (fpout) fprintf(fpout," - frame = %" PRIu64 "\n",value);
             states[indexnum].frame = (long)value; // long
           }
         else
           if (!deh_strcasecmp(key,deh_state[2]))  // Duration
             {
-              if (fpout) fprintf(fpout," - tics = %lld\n",value);
+              if (fpout) fprintf(fpout," - tics = %" PRIu64 "\n",value);
               states[indexnum].tics = (long)value; // long
             }
           else
             if (!deh_strcasecmp(key,deh_state[3]))  // Next frame
               {
-                if (fpout) fprintf(fpout," - nextstate = %lld\n",value);
+                if (fpout) fprintf(fpout," - nextstate = %" PRIu64 "\n",value);
                 states[indexnum].nextstate = (statenum_t)value;
               }
             else
@@ -2020,13 +2034,13 @@ static void deh_procFrame(DEHFILE *fpin, FILE* fpout, char *line)
               else
                 if (!deh_strcasecmp(key,deh_state[5]))  // Unknown 1
                   {
-                    if (fpout) fprintf(fpout," - misc1 = %lld\n",value);
+                    if (fpout) fprintf(fpout," - misc1 = %" PRIu64 "\n",value);
                     states[indexnum].misc1 = (long)value; // long
                   }
                 else
                   if (!deh_strcasecmp(key,deh_state[6]))  // Unknown 2
                     {
-                      if (fpout) fprintf(fpout," - misc2 = %lld\n",value);
+                      if (fpout) fprintf(fpout," - misc2 = %" PRIu64 "\n",value);
                       states[indexnum].misc2 = (long)value; // long
                     }
                   else
@@ -2083,14 +2097,14 @@ static void deh_procPointer(DEHFILE *fpin, FILE* fpout, char *line) // done
       if (value >= NUMSTATES)
         {
           if (fpout)
-            fprintf(fpout,"Bad pointer number %lld of %d\n",value, NUMSTATES);
+            fprintf(fpout,"Bad pointer number %" PRIu64 " of %d\n",value, NUMSTATES);
           return;
         }
 
       if (!deh_strcasecmp(key,deh_state[4]))  // Codep frame (not set in Frame deh block)
         {
           states[indexnum].action = deh_codeptr[value];
-          if (fpout) fprintf(fpout," - applied from codeptr[%lld] to states[%d]\n",
+          if (fpout) fprintf(fpout," - applied from codeptr[%" PRIu64 "] to states[%d]\n",
            value,indexnum);
           // Write BEX-oriented line to match:
           // for (i=0;i<NUMSTATES;i++) could go past the end of the array
@@ -2107,7 +2121,7 @@ static void deh_procPointer(DEHFILE *fpin, FILE* fpout, char *line) // done
             }
         }
       else
-        if (fpout) fprintf(fpout,"Invalid frame pointer index for '%s' at %lld\n",
+        if (fpout) fprintf(fpout,"Invalid frame pointer index for '%s' at %" PRIu64 "\n",
                            key, value);
     }
   return;
@@ -2792,9 +2806,13 @@ static void deh_procStrings(DEHFILE *fpin, FILE* fpout, char *line)
         {
     // killough 11/98: allocate enough the first time
           maxstrlen = strlen(holdstring) + strlen(inbuffer);
-          if (fpout) fprintf(fpout,
-                             "* increased buffer from to %d for buffer size %d\n",
-                             maxstrlen,(int)strlen(inbuffer));
+          if (fpout) {
+            fprintf(
+              fpout,
+              "* increased buffer from to %zu for buffer size %d\n",
+              maxstrlen, (int)strlen(inbuffer)
+            );
+          }
           holdstring = realloc(holdstring,maxstrlen*sizeof(*holdstring));
         }
       // concatenate the whole buffer if continuation or the value iffirst

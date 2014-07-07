@@ -32,6 +32,8 @@
 #include "config.h"
 #endif
 
+#include "z_zone.h"
+
 #include "musicplayer.h"
 
 #ifndef HAVE_LIBDUMB

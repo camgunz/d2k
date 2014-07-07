@@ -35,17 +35,26 @@
 #include "z_zone.h"
 
 #include <enet/enet.h>
-#include <msgpack.h>
+#include "cmp.h"
 
-#include "m_buf.h"
 #include "d_ticcmd.h"
-
+#include "d_player.h"
+#include "g_game.h"
 #include "lprintf.h"
-#include "g_game.h" // for doom_printf... inexplicably
+#include "i_system.h"
+#include "m_pbuf.h"
+#include "m_swap.h"
+
 #include "n_net.h"
+#include "n_main.h"
+#include "n_state.h"
 #include "n_peer.h"
 #include "n_pack.h"
 #include "n_proto.h"
+
+#define USE_RANGE_CODER 1
+#define MAX_DOWNLOAD 0
+#define MAX_UPLOAD 0
 
 #define MAX_ADDRESS_LENGTH 500
 
@@ -56,7 +65,6 @@
 
 /* CG: General networking */
 
-static ENetEvent    net_event;
 static ENetHost    *net_host = NULL;
 static const char  *previous_host = NULL;
 static short        previous_port = 0;
@@ -66,21 +74,6 @@ dboolean        netgame   = false;
 dboolean        solonet   = false;
 dboolean        netserver = false;
 net_sync_type_e netsync   = NET_SYNC_TYPE_NONE;
-
-static void check_peer_timeouts(void) {
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    if (N_CheckPeerTimeout(i)) {
-      netpeer_t *np = N_GetPeer(i);
-
-      doom_printf("Peer %s:%u timed out.\n",
-        N_IPToConstString(np->peer->address.host), np->peer->address.port
-      );
-
-      enet_peer_reset(np->peer);
-      N_RemovePeer(np);
-    }
-  }
-}
 
 size_t N_IPToString(int address, char *buffer) {
   return snprintf(buffer, 16, "%u.%u.%u.%u",
@@ -201,10 +194,13 @@ size_t N_ParseAddressString(const char *address, char **host, uint16_t *port) {
     host_length = address_length;
 
     if (host_length > 0) {
-      if (*host == NULL)
+      if (*host == NULL) {
         *host = strdup(address);
-      else
-        strncpy(*host, address, address_length + 1);
+      }
+      else {
+        memset(*host, 0, (address_length + 1) * sizeof(char));
+        strncpy(*host, address, address_length);
+      }
     }
   }
   else {
@@ -213,10 +209,11 @@ size_t N_ParseAddressString(const char *address, char **host, uint16_t *port) {
     if (host_length > 0) {
       if (*host == NULL) {
         *host = calloc(host_length + 1, sizeof(char));
-        strncpy(*host, address, host_length + 1);
+        strncpy(*host, address, host_length);
       }
       else {
-        strncpy(*host, address, host_length + 1);
+        memset(host, 0, (host_length + 1) * sizeof(char));
+        strncpy(*host, address, host_length);
       }
     }
 
@@ -233,43 +230,48 @@ void N_Init(void) {
     I_Error("Error initializing ENet");
 
   N_InitPeers();
-  N_InitPacker();
+  N_InitStates();
   atexit(N_Shutdown);
 }
 
 void N_Disconnect(void) {
   int res = 0;
   netpeer_t *np = NULL;
+  ENetEvent net_event;
 
   if (net_host == NULL)
     return;
 
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    np = N_GetPeer(i);
+  for (int i = 0; i < N_PeerGetCount(); i++) {
+    np = N_PeerGet(i);
 
     if (np == NULL)
       continue;
 
+    printf("N_Disconnect: Disconnecting peer %d\n", i);
     enet_peer_disconnect(np->peer, 0);
   }
+
+  if (CLIENT)
+    CL_SetReceivedSetup(false);
 
   while (true) {
     res = enet_host_service(net_host, &net_event, DISCONNECT_TIMEOUT * 1000);
 
     if (res > 0) {
-      int peernum = N_GetPeerNum(net_event.peer);
+      int peernum = N_PeerGetNum(net_event.peer);
 
       if (peernum == -1) {
         doom_printf(
           "N_Disconnect: Received network event from unknown peer %s:%u\n",
-          N_IPToConstString(net_event.peer->address.host),
+          N_IPToConstString(doom_b32(net_event.peer->address.host)),
           net_event.peer->address.port
         );
         continue;
       }
 
       if (net_event.type == ENET_EVENT_TYPE_DISCONNECT)
-        N_RemovePeer(N_GetPeer(peernum));
+        N_PeerRemove(N_PeerGet(peernum));
 
     }
     else if (res < 0) {
@@ -281,12 +283,12 @@ void N_Disconnect(void) {
     }
   }
 
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    np = N_GetPeer(i);
+  for (int i = 0; i < N_PeerGetCount(); i++) {
+    np = N_PeerGet(i);
 
     if (np != NULL) {
       enet_peer_reset(np->peer);
-      N_RemovePeer(np);
+      N_PeerRemove(np);
     }
   }
 
@@ -297,6 +299,7 @@ void N_Disconnect(void) {
 }
 
 void N_Shutdown(void) {
+  printf("N_Shutdown: shutting down\n");
   N_Disconnect();
 
   enet_deinitialize();
@@ -315,13 +318,22 @@ dboolean N_Listen(const char *host, unsigned short port) {
   else
     address.port = DEFAULT_PORT;
 
-  net_host = enet_host_create(&address, MAXPLAYERS, MAX_CHANNELS, 0, 0);
+  net_host = enet_host_create(
+    &address, MAXPLAYERS, NET_CHANNEL_MAX, MAX_DOWNLOAD, MAX_UPLOAD
+  );
   
   if (net_host == NULL) {
-    doom_printf("N_Listen: Error creating host");
+    doom_printf("N_Listen: Error creating host on %s:%u\n", host, port);
     return false;
   }
-  
+
+#if USE_RANGE_CODER
+  if (enet_host_compress_with_range_coder(net_host) < 0) {
+    doom_printf("N_Listen: Error activating range coder\n");
+    return false;
+  }
+#endif
+
   return true;
 }
 
@@ -330,12 +342,19 @@ dboolean N_Connect(const char *host, unsigned short port) {
   ENetPeer *server = NULL;
   ENetAddress address;
 
-  net_host = enet_host_create(NULL, 1, MAX_CHANNELS, 0, 0);
+  net_host = enet_host_create(NULL, 1, NET_CHANNEL_MAX, 0, 0);
 
   if (net_host == NULL) {
     doom_printf("N_Connect: Error creating host");
     return false;
   }
+
+#if USE_RANGE_CODER
+  if (enet_host_compress_with_range_coder(net_host) < 0) {
+    doom_printf("N_Connect: Error activating range coder\n");
+    return false;
+  }
+#endif
 
   enet_address_set_host(&address, host);
 
@@ -344,8 +363,9 @@ dboolean N_Connect(const char *host, unsigned short port) {
   else
     address.port = DEFAULT_PORT;
 
-  peernum = N_AddPeer();
-  server = enet_host_connect(net_host, &address, MAX_CHANNELS, 0);
+  peernum = N_PeerAdd();
+
+  server = enet_host_connect(net_host, &address, NET_CHANNEL_MAX, 0);
 
   if (server == NULL) {
     doom_printf("N_Connect: Error connecting to server");
@@ -353,7 +373,7 @@ dboolean N_Connect(const char *host, unsigned short port) {
     return false;
   }
 
-  N_GetPeer(peernum)->peer = server;
+  N_PeerGet(peernum)->peer = server;
 
   previous_host = host;
   previous_port = port;
@@ -370,6 +390,8 @@ dboolean N_Reconnect(void) {
 }
 
 void N_WaitForPacket(int ms) {
+  ENetEvent net_event;
+
   enet_host_service(net_host, &net_event, ms);
 }
 
@@ -391,74 +413,72 @@ dboolean N_ConnectToServer(const char *address) {
 }
 
 void N_PrintAddress(FILE *fp, int peernum) {
-  netpeer_t *np = N_GetPeer(peernum);
+  netpeer_t *np = N_PeerGet(peernum);
 
   if (np == NULL)
     I_Error("N_PrintAddress: Invalid peer %d.\n", peernum);
 
   fprintf(fp, "%s:%u",
-    N_IPToConstString(np->peer->address.host), np->peer->address.port
+    N_IPToConstString(doom_b32(np->peer->address.host)), np->peer->address.port
   );
 }
 
+void N_DisconnectPeer(int peernum) {
+  netpeer_t *np = N_PeerGet(peernum);
+
+  if (np == NULL)
+    I_Error("N_DisconnectPeer: Invalid peer %d.\n", peernum);
+
+  doom_printf("N_DisconnectPeer: Disconnecting peer %d\n", peernum);
+  printf("N_DisconnectPeer: Disconnecting peer %d\n", peernum);
+  enet_peer_disconnect(np->peer, 0);
+  N_PeerSetDisconnected(peernum);
+}
+
 void N_DisconnectPlayer(short playernum) {
-  int peernum = N_GetPeerNumForPlayer(playernum);
-  netpeer_t *np = NULL;
+  int peernum = N_PeerGetNumForPlayer(playernum);
 
   if (peernum == -1)
-    I_Error("N_DisconnectPlayer: Invalid peer %d.\n", peernum);
+    I_Error("N_DisconnectPlayer: Invalid player %d.\n", playernum);
   
-  np = N_GetPeer(peernum);
-
   doom_printf("N_DisconnectPlayer: Disconnecting player %d\n", playernum);
-  enet_peer_disconnect(np->peer, 0);
-  N_SetPeerDisconnected(peernum);
+  N_DisconnectPeer(peernum);
 }
 
 void N_ServiceNetworkTimeout(int timeout_ms) {
   int status = 0;
   int peernum = -1;
   netpeer_t *np = NULL;
+  ENetEvent net_event;
 
-  check_peer_timeouts();
-
-  for (int i = 0; i < N_GetPeerCount(); i++) {
-    netpeer_t *np = N_GetPeer(i);
+  for (int i = 0; i < N_PeerGetCount(); i++) {
+    netpeer_t *np = N_PeerGet(i);
 
     if (np == NULL)
       continue;
 
-    if (np->rbuf.size != 0) {
-      ENetPacket *reliable_packet = enet_packet_create(
-        np->rbuf.data,
-        np->rbuf.size,
-        ENET_PACKET_FLAG_RELIABLE | ENET_PACKET_FLAG_NO_ALLOCATE
+    if (N_PeerCheckTimeout(i)) {
+      doom_printf("Peer %s:%u timed out.\n",
+        N_IPToConstString(doom_b32(np->peer->address.host)),
+        np->peer->address.port
       );
-      enet_peer_send(np->peer, NET_CHANNEL_RELIABLE, reliable_packet);
-      enet_packet_destroy(reliable_packet);
-      M_BufferClear(&np->rbuf);
+
+      enet_peer_reset(np->peer);
+      N_PeerRemove(np);
+      continue;
     }
 
-    if (np->ubuf.size != 0) {
-      ENetPacket *unreliable_packet = enet_packet_create(
-        np->ubuf.data,
-        np->ubuf.size,
-        ENET_PACKET_FLAG_NO_ALLOCATE
-      );
-      enet_peer_send(np->peer, NET_CHANNEL_UNRELIABLE, unreliable_packet);
-      enet_packet_destroy(unreliable_packet);
-      M_BufferClear(&np->ubuf);
-    }
+    N_PeerFlushBuffers(i);
   }
 
   while (true) {
     status = enet_host_service(net_host, &net_event, timeout_ms);
 
     /*
-     * CG: ENet says this must be cleared, and since we don't use it, we do so
-     *     here up top.
+     * [CG]: ENet says this must be cleared, and since we don't use it, we do
+     *       so here up top.
      */
-    if (net_event.peer->data != NULL)
+    if (net_event.peer != NULL && net_event.peer->data != NULL)
       net_event.peer->data = NULL;
 
     if (status == 0)
@@ -473,54 +493,75 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
 
     if (net_event.type == ENET_EVENT_TYPE_CONNECT) {
       if (SERVER) {
-        peernum = N_AddPeer();
-        N_SetPeerConnected(peernum, net_event.peer);
-        /* CG: TODO: Sent setup info to the new peer */
-      }
-      else {
-        np = N_GetPeer(0);
+        peernum = N_PeerAdd();
+        netpeer_t *np = N_PeerGet(peernum);
 
         if (np == NULL) {
-          doom_printf(
+          doom_printf("N_ServiceNetwork: Getting new peer failed\n");
+          continue;
+        }
+
+        enet_peer_timeout(
+          net_event.peer, 0, NET_TIMEOUT * 1000, NET_TIMEOUT * 1000
+        );
+
+        N_PeerSetConnected(peernum, net_event.peer);
+
+        SV_SetupNewPeer(peernum);
+      }
+      else {
+        np = N_PeerGet(0);
+
+        if (np == NULL) {
+          printf(
             "N_ServiceNetwork: Received a 'connect' event but no connection "
             "was requested.\n"
           );
           continue;
         }
 
-        N_SetPeerConnected(0, net_event.peer);
+        N_PeerSetConnected(0, net_event.peer);
       }
     }
     else if (net_event.type == ENET_EVENT_TYPE_DISCONNECT) {
-      if ((peernum = N_GetPeerNum(net_event.peer)) == -1) {
+      if ((peernum = N_PeerGetNum(net_event.peer)) == -1) {
         doom_printf(
           "N_ServiceNetwork: Received 'disconnect' event from unknown "
           "peer %s:%u.\n",
-          N_IPToConstString(net_event.peer->address.host),
+          N_IPToConstString(doom_b32(net_event.peer->address.host)),
           net_event.peer->address.port
         );
         continue;
       }
-      N_RemovePeer(N_GetPeer(peernum));
+      N_PeerRemove(N_PeerGet(peernum));
     }
     else if (net_event.type == ENET_EVENT_TYPE_RECEIVE) {
-      if ((peernum = N_GetPeerNum(net_event.peer)) == -1) {
+      if ((peernum = N_PeerGetNum(net_event.peer)) == -1) {
         doom_printf(
           "N_ServiceNetwork: Received 'packet' event from unknown peer %s:%u.\n",
-          N_IPToConstString(net_event.peer->address.host),
+          N_IPToConstString(doom_b32(net_event.peer->address.host)),
           net_event.peer->address.port
         );
         continue;
       }
-      N_HandlePacket(
-        peernum, net_event.packet->data, net_event.packet->dataLength
-      );
+      netpeer_t *np = N_PeerGet(peernum);
+
+      if (np == NULL) {
+        doom_printf("N_ServiceNetwork: Error getting peer that just sent data\n");
+        continue;
+      }
+
+      if ((net_event.packet->data[0] & 0x80) == 0x80) {
+        N_HandlePacket(
+          peernum, net_event.packet->data, net_event.packet->dataLength
+        );
+      }
       enet_packet_destroy(net_event.packet);
     }
     else if (net_event.type != ENET_EVENT_TYPE_NONE) {
       doom_printf(
-        "N_ServiceNetwork: Received 'NONE' event from peer %s:%u.\n",
-        N_IPToConstString(net_event.peer->address.host),
+        "N_ServiceNetwork: Received unknown event from peer %s:%u.\n",
+        N_IPToConstString(doom_b32(net_event.peer->address.host)),
         net_event.peer->address.port
       );
     }
@@ -532,6 +573,74 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
 
 void N_ServiceNetwork(void) {
   N_ServiceNetworkTimeout(0);
+}
+
+uint32_t N_GetUploadBandwidth(void) {
+  static uint32_t last_ms = 0;
+
+  uint32_t ms;
+  uint32_t bytes_sent;
+  uint32_t time_elapsed;
+  netpeer_t *np = N_PeerGet(0);
+
+  if (np == NULL)
+    return 0;
+
+  ms = I_GetTicks();
+
+  if (last_ms == 0) {
+    last_ms = ms;
+    return 0;
+  }
+
+  bytes_sent = net_host->totalSentData;
+
+  if (ms < last_ms)
+    time_elapsed = (0xFFFFFFFF - last_ms) + ms;
+  else
+    time_elapsed = ms - last_ms;
+
+  if (time_elapsed == 0)
+    return 0;
+
+  last_ms = ms;
+  net_host->totalSentData = 0;
+
+  return (bytes_sent / time_elapsed);
+}
+
+uint32_t N_GetDownloadBandwidth(void) {
+  static uint32_t last_ms = 0;
+
+  uint32_t ms;
+  uint32_t bytes_received;
+  uint32_t time_elapsed;
+  netpeer_t *np = N_PeerGet(0);
+
+  if (np == NULL)
+    return 0;
+
+  ms = I_GetTicks();
+
+  if (last_ms == 0) {
+    last_ms = ms;
+    return 0;
+  }
+
+  bytes_received = net_host->totalReceivedData;
+
+  if (ms < last_ms)
+    time_elapsed = (0xFFFFFFFF - last_ms) + ms;
+  else
+    time_elapsed = ms - last_ms;
+
+  if (time_elapsed == 0)
+    return 0;
+
+  last_ms = ms;
+  net_host->totalReceivedData = 0;
+
+  return (bytes_received / time_elapsed);
 }
 
 /* vi: set et ts=2 sw=2: */

@@ -1,7 +1,6 @@
 /* Emacs style mode select   -*- C++ -*-
  *-----------------------------------------------------------------------------
  *
- *
  *  PrBoom: a Doom port merged with LxDoom and LSDLDoom
  *  based on BOOM, a modified and improved DOOM engine
  *  Copyright (C) 1999 by
@@ -27,33 +26,21 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *  Low level UDP network interface. This is shared between the server
- *  and client, with SERVER defined for the former to select some extra
- *  functions. Handles socket creation, and packet send and receive.
+ *
  *
  *-----------------------------------------------------------------------------
  */
 
-#ifndef M_UTF_H__
-#define M_UTF_H__
+#ifndef G_SAVE_H__
+#define G_SAVE_H__
 
-typedef char rune;
-
-const char* M_GetUTFError(void);
-
-dboolean    M_IsControlChar(wchar_t sc);
-
-size_t M_DecodeASCII(rune **out, char *in, size_t in_size);
-
-size_t M_EncodeWCHAR(wchar_t **out, rune *in, size_t in_size);
-size_t M_DecodeWCHAR(rune **out, wchar_t *in, size_t in_size);
-size_t M_DecodeWCHARNoAlloc(rune *out, uint16_t *in,
-                            size_t out_size, size_t in_size);
-
-size_t M_EncodeLocal(char **out, rune *in, size_t in_size);
-size_t M_DecodeLocal(rune **out, char *in);
+void     G_UpdateAverageSaveSize(int new_size);
+int      G_GetAverageSaveSize(void);
+dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
+                                            dboolean init_new);
+void     G_WriteSaveData(pbuf_t *savebuffer);
 
 #endif
 
-/* vi: set et sw=2 ts=2: */
+/* vi: set et ts=2 sw=2: */
 

@@ -27,7 +27,8 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *  A buffer of objects that uses copies instead of pointers.
+ *  A buffer of objects that uses copies instead of pointers, more efficient
+ *  than m_obuf when you cannot keep the original object.
  *
  *-----------------------------------------------------------------------------
  */
@@ -39,15 +40,12 @@
   cbufiternode_t (cin) = {-1, NULL}; M_CBufIter((cb), &cin.index, &cin.obj); \
 )
 
-typedef struct cbufnode_s {
-  dboolean used;
-  void *obj;
-} cbufnode_t;
-
 typedef struct cobjbuf_s {
   int capacity;
+  int size;
   size_t obj_size;
-  cbufnode_t *nodes;
+  bool *used;
+  void **nodes;
 } cbuf_t;
 
 typedef struct cbufiternode_s {
@@ -60,12 +58,13 @@ void     M_CBufInitWithCapacity(cbuf_t *cbuf, size_t obj_sz, int capacity);
 dboolean M_CBufIsValidIndex(cbuf_t *cbuf, int index);
 int      M_CBufGetObjectCount(cbuf_t *cbuf);
 void     M_CBufEnsureCapacity(cbuf_t *cbuf, int capacity);
-void     M_CBufAppend(cbuf_t *cbuf, void *obj);
-void     M_CBufInsert(cbuf_t *cbuf, int index, void *obj);
+int      M_CBufAppend(cbuf_t *cbuf, void *obj);
+int      M_CBufAppendNew(cbuf_t *cbuf, void *obj);
+int      M_CBufInsert(cbuf_t *cbuf, int index, void *obj);
 int      M_CBufInsertAtFirstFreeSlot(cbuf_t *cbuf, void *obj);
-int      M_CBufInsertAtFirstFreeSlotOrAppend(cbuf_t *cbuf, void *obj);
 dboolean M_CBufIter(cbuf_t *cbuf, int *index, void **obj);
 void*    M_CBufGet(cbuf_t *cbuf, int index);
+dboolean M_CBufPop(cbuf_t *cbuf, void *obj);
 void*    M_CBufGetFirstFreeSlot(cbuf_t *cbuf);
 void*    M_CBufGetNewSlot(cbuf_t *cbuf);
 void*    M_CBufGetFirstFreeOrNewSlot(cbuf_t *cbuf);

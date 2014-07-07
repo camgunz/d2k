@@ -71,7 +71,7 @@ int render_doom_lightmaps;
 int r_frame_count;
 
 //e6y
-render_precise_t render_precise;
+render_precise_t render_precise = render_precise_speed;
 const char *render_precises[] = {"Speed","Quality"};
 
 int r_have_internal_hires = false;
@@ -1087,8 +1087,8 @@ void R_ShowStats(void)
     if (rendering_stats)
     {
       doom_printf((V_GetMode() == VID_MODEGL)
-                  ?"Frame rate %d fps\nWalls %d, Flats %d, Sprites %d"
-                  :"Frame rate %d fps\nSegs %d, Visplanes %d, Sprites %d",
+                  ?"Frame rate %d fps\nWalls %d, Flats %d, Sprites %d\n"
+                  :"Frame rate %d fps\nSegs %d, Visplanes %d, Sprites %d\n",
       renderer_fps, rendered_segs, rendered_visplanes, rendered_vissprites);
     }
     FPS_SavedTick = tick;
@@ -1141,11 +1141,6 @@ void R_RenderPlayerView (player_t* player)
     }
   }
 
-  // check for new console commands.
-#ifdef HAVE_NET
-  NetUpdate ();
-#endif
-
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
     {
@@ -1162,13 +1157,6 @@ void R_RenderPlayerView (player_t* player)
   // The head node is the last node output.
   R_RenderBSPNode (numnodes-1);
 
-#ifdef HAVE_NET
-  if (!use_smp)
-  {
-    NetUpdate ();
-  }
-#endif
-
   if (V_GetMode() != VID_MODEGL)
     R_DrawPlanes();
 
@@ -1177,20 +1165,10 @@ void R_RenderPlayerView (player_t* player)
 
   R_ResetColumnBuffer();
 
-  // Check for new console commands.
-#ifdef HAVE_NET
-  NetUpdate ();
-#endif
-
   if (V_GetMode() != VID_MODEGL) {
     R_DrawMasked ();
     R_ResetColumnBuffer();
   }
-
-  // Check for new console commands.
-#ifdef HAVE_NET
-  NetUpdate ();
-#endif
 
   if (V_GetMode() == VID_MODEGL && !automap) {
 #ifdef GL_DOOM
@@ -1201,3 +1179,4 @@ void R_RenderPlayerView (player_t* player)
 #endif
   }
 }
+

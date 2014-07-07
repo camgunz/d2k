@@ -1116,6 +1116,7 @@ void A_Look(mobj_t *actor)
 // Allows monsters to continue movement while attacking
 //
 
+#if 0
 static void A_KeepChasing(mobj_t *actor)
 {
   if (actor->movecount)
@@ -1126,6 +1127,7 @@ static void A_KeepChasing(mobj_t *actor)
       P_SmartMove(actor);
     }
 }
+#endif
 
 //
 // A_Chase
@@ -1770,7 +1772,7 @@ void A_StartFire(mobj_t *actor)
 
 void A_FireCrackle(mobj_t* actor)
 {
-  S_StartSound(actor,sfx_flame);
+  S_StartSound(actor, sfx_flame);
   A_Fire(actor);
 }
 
@@ -1786,14 +1788,14 @@ void A_Fire(mobj_t *actor)
   target = P_SubstNullMobj(actor->target);
 
   // don't move it if the vile lost sight
-  if (!P_CheckSight(target, dest) )
+  if (!P_CheckSight(target, dest))
     return;
 
   an = dest->angle >> ANGLETOFINESHIFT;
 
   P_UnsetThingPosition(actor);
-  actor->x = dest->x + FixedMul(24*FRACUNIT, finecosine[an]);
-  actor->y = dest->y + FixedMul(24*FRACUNIT, finesine[an]);
+  actor->x = dest->x + FixedMul(24 * FRACUNIT, finecosine[an]);
+  actor->y = dest->y + FixedMul(24 * FRACUNIT, finesine[an]);
   actor->z = dest->z;
   P_SetThingPosition(actor);
 }

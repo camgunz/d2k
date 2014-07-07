@@ -438,11 +438,13 @@ static int checkGLVertex(int num)
 }
 
 
+#if 0
 static float GetDistance(int dx, int dy)
 {
   float fx = (float)(dx)/FRACUNIT, fy = (float)(dy)/FRACUNIT;
   return (float)sqrt(fx*fx + fy*fy);
 }
+#endif
 
 static float GetTexelDistance(int dx, int dy)
 {
@@ -847,53 +849,51 @@ static void P_LoadSubsectors_V4(int lump)
 //
 // killough 5/3/98: reformatted, cleaned up
 
-static void P_LoadSectors (int lump)
-{
+static void P_LoadSectors(int lump) {
   const byte *data; // cph - const*
   int  i;
 
   numsectors = W_LumpLength (lump) / sizeof(mapsector_t);
   sectors = calloc_IfSameLevel(sectors, numsectors, sizeof(sector_t));
-  data = W_CacheLumpNum (lump); // cph - wad lump handling updated
+  data = W_CacheLumpNum(lump); // cph - wad lump handling updated
 
-  for (i=0; i<numsectors; i++)
-    {
-      sector_t *ss = sectors + i;
-      const mapsector_t *ms = (const mapsector_t *) data + i;
+  for (i = 0; i < numsectors; i++) {
+    sector_t *ss = sectors + i;
+    const mapsector_t *ms = (const mapsector_t *) data + i;
 
-      ss->iSectorID=i; // proff 04/05/2000: needed for OpenGL
-      ss->floorheight = LittleShort(ms->floorheight)<<FRACBITS;
-      ss->ceilingheight = LittleShort(ms->ceilingheight)<<FRACBITS;
-      ss->floorpic = R_FlatNumForName(ms->floorpic);
-      ss->ceilingpic = R_FlatNumForName(ms->ceilingpic);
-      ss->lightlevel = LittleShort(ms->lightlevel);
-      ss->special = LittleShort(ms->special);
-      ss->oldspecial = LittleShort(ms->special);
-      ss->tag = LittleShort(ms->tag);
-      ss->thinglist = NULL;
-      ss->touching_thinglist = NULL;            // phares 3/14/98
+    ss->iSectorID=i; // proff 04/05/2000: needed for OpenGL
+    ss->floorheight = LittleShort(ms->floorheight) << FRACBITS;
+    ss->ceilingheight = LittleShort(ms->ceilingheight) << FRACBITS;
+    ss->floorpic = R_FlatNumForName(ms->floorpic);
+    ss->ceilingpic = R_FlatNumForName(ms->ceilingpic);
+    ss->lightlevel = LittleShort(ms->lightlevel);
+    ss->special = LittleShort(ms->special);
+    ss->oldspecial = LittleShort(ms->special);
+    ss->tag = LittleShort(ms->tag);
+    ss->thinglist = NULL;
+    ss->touching_thinglist = NULL;            // phares 3/14/98
 
-      ss->nextsec = -1; //jff 2/26/98 add fields to support locking out
-      ss->prevsec = -1; // stair retriggering until build completes
+    ss->nextsec = -1; //jff 2/26/98 add fields to support locking out
+    ss->prevsec = -1; // stair retriggering until build completes
 
-      // killough 3/7/98:
-      ss->floor_xoffs = 0;
-      ss->floor_yoffs = 0;      // floor and ceiling flats offsets
-      ss->ceiling_xoffs = 0;
-      ss->ceiling_yoffs = 0;
-      ss->heightsec = -1;       // sector used to get floor and ceiling height
-      ss->floorlightsec = -1;   // sector used to get floor lighting
-      // killough 3/7/98: end changes
+    // killough 3/7/98:
+    ss->floor_xoffs = 0;
+    ss->floor_yoffs = 0;      // floor and ceiling flats offsets
+    ss->ceiling_xoffs = 0;
+    ss->ceiling_yoffs = 0;
+    ss->heightsec = -1;       // sector used to get floor and ceiling height
+    ss->floorlightsec = -1;   // sector used to get floor lighting
+    // killough 3/7/98: end changes
 
-      // killough 4/11/98 sector used to get ceiling lighting:
-      ss->ceilinglightsec = -1;
+    // killough 4/11/98 sector used to get ceiling lighting:
+    ss->ceilinglightsec = -1;
 
-      // killough 4/4/98: colormaps:
-      ss->bottommap = ss->midmap = ss->topmap = 0;
+    // killough 4/4/98: colormaps:
+    ss->bottommap = ss->midmap = ss->topmap = 0;
 
-      // killough 10/98: sky textures coming from sidedefs:
-      ss->sky = 0;
-    }
+    // killough 10/98: sky textures coming from sidedefs:
+    ss->sky = 0;
+  }
 
   W_UnlockLumpNum(lump); // cph - release the data
 }
@@ -2262,34 +2262,14 @@ static void P_RemoveSlimeTrails(void)         // killough 10/98
 //
 // Are these lumps in the same wad file?
 //
-
-dboolean P_CheckLumpsForSameSource(int lump1, int lump2)
-{
-  int wad1_index, wad2_index;
-  wadfile_info_t *wad1, *wad2;
-
-  if (((unsigned)lump1 >= (unsigned)numlumps) || ((unsigned)lump2 >= (unsigned)numlumps))
-    return false;
-  
-  wad1 = lumpinfo[lump1].wadfile;
-  wad2 = lumpinfo[lump2].wadfile;
-  
-  if (!wad1 || !wad2)
+dboolean P_CheckLumpsForSameSource(int lump1, int lump2) {
+  if (((unsigned int)lump1 >= numlumps) || ((unsigned int)lump2 >= numlumps))
     return false;
 
-  wad1_index = (int)(wad1 - wadfiles);
-  wad2_index = (int)(wad2 - wadfiles);
-
-  if (wad1_index != wad2_index)
+  if (lumpinfo[lump1].wadfile == -1 || lumpinfo[lump2].wadfile == -1)
     return false;
 
-  if ((wad1_index < 0) || ((size_t)wad1_index >= numwadfiles))
-    return false;
-
-  if ((wad2_index < 0) || ((size_t)wad2_index >= numwadfiles))
-    return false;
-
-  return true;
+  return lumpinfo[lump1].wadfile == lumpinfo[lump2].wadfile;
 }
 
 //
@@ -2297,9 +2277,7 @@ dboolean P_CheckLumpsForSameSource(int lump1, int lump2)
 //
 // Checking for presence of necessary lumps
 //
-
-void P_CheckLevelWadStructure(const char *mapname)
-{
+void P_CheckLevelWadStructure(const char *mapname) {
   int i, lumpnum;
 
   static const char *ml_labels[] = {
@@ -2317,33 +2295,28 @@ void P_CheckLevelWadStructure(const char *mapname)
   };
 
   if (!mapname)
-  {
     I_Error("P_SetupLevel: Wrong map name");
-  }
 
   lumpnum = W_CheckNumForName(mapname);
 
   if (lumpnum < 0)
-  {
     I_Error("P_SetupLevel: There is no %s map.", mapname);
-  }
 
-  for (i = ML_THINGS + 1; i <= ML_SECTORS; i++)
-  {
-    if (!P_CheckLumpsForSameSource(lumpnum, lumpnum + i))
-    {
-      I_Error("P_SetupLevel: Level wad structure is incomplete. There is no %s lump.", ml_labels[i]);
+  for (i = ML_THINGS + 1; i <= ML_SECTORS; i++) {
+    if (!P_CheckLumpsForSameSource(lumpnum, lumpnum + i)) {
+      I_Error(
+        "P_SetupLevel: Level wad structure is incomplete. There is no %s "
+        "lump.",
+        ml_labels[i]
+      );
     }
   }
 
   // refuse to load Hexen-format maps, avoid segfaults
   i = lumpnum + ML_BLOCKMAP + 1;
-  if (P_CheckLumpsForSameSource(lumpnum, i))
-  {
+  if (P_CheckLumpsForSameSource(lumpnum, i)) {
     if (!strncasecmp(lumpinfo[i].name, "BEHAVIOR", 8))
-    {
       I_Error("P_SetupLevel: %s: Hexen format not supported", mapname);
-    }
   }
 }
 
@@ -2570,13 +2543,9 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   // BlockMap should be reloaded after OVERFLOW_INTERCEPT,
   // because bmapwidth/bmapheight/bmaporgx/bmaporgy can be overwritten
   if (!samelevel || overflows[OVERFLOW_INTERCEPT].shit_happens)
-  {
     P_LoadBlockMap  (lumpnum+ML_BLOCKMAP);
-  }
   else
-  {
     memset(blocklinks, 0, bmapwidth*bmapheight*sizeof(*blocklinks));
-  }
 
   if (nodesVersion > 0)
   {
@@ -2605,9 +2574,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   }
 
   if (!samelevel)
-  {
     P_InitSubsectorsLines();
-  }
 
 #ifdef GL_DOOM
   map_subsectors = calloc_IfSameLevel(map_subsectors,
@@ -2630,7 +2597,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   bodyqueslot = 0;
 
   /* cph - reset all multiplayer starts */
-  memset(playerstarts,0,sizeof(playerstarts));
+  memset(playerstarts, 0, sizeof(playerstarts));
   deathmatch_p = deathmatchstarts;
   for (i = 0; i < MAXPLAYERS; i++)
     players[i].mo = NULL;
@@ -2641,26 +2608,24 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   P_LoadThings(lumpnum+ML_THINGS);
 
   // if deathmatch, randomly spawn the active players
-  if (deathmatch)
-  {
-    for (i=0; i<MAXPLAYERS; i++)
-      if (playeringame[i])
-        {
-          players[i].mo = NULL; // not needed? - done before P_LoadThings
-          G_DeathMatchSpawnPlayer(i);
-        }
+  if (deathmatch) {
+    for (i = 0; i < MAXPLAYERS; i++) {
+      if (playeringame[i]) {
+        players[i].mo = NULL; // not needed? - done before P_LoadThings
+        G_DeathMatchSpawnPlayer(i);
+      }
+    }
   }
-  else // if !deathmatch, check all necessary player starts actually exist
-  {
-    for (i=0; i<MAXPLAYERS; i++)
+  else { // if !deathmatch, check all necessary player starts actually exist
+    for (i = 0; i < MAXPLAYERS; i++) {
       if (playeringame[i] && !players[i].mo)
-        I_Error("P_SetupLevel: missing player %d start\n", i+1);
+        I_Error("P_SetupLevel: missing player %d start\n", i + 1);
+    }
   }
 
   if (players[consoleplayer].cheats & CF_FLY)
-  {
     players[consoleplayer].mo->flags |= (MF_NOGRAVITY | MF_FLY);
-  }
+
 
   // killough 3/26/98: Spawn icon landings:
   if (gamemode==commercial)
@@ -2711,3 +2676,6 @@ void P_Init (void)
   P_InitPicAnims();
   R_InitSprites(sprnames);
 }
+
+/* vi: set et ts=2 sw=2: */
+

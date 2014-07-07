@@ -92,70 +92,6 @@
 // NSM
 #include "i_capture.h"
 
-/* cph - disk icon not implemented */
-static inline void I_BeginRead(void) {}
-static inline void I_EndRead(void) {}
-
-/*
- * M_WriteFile
- *
- * killough 9/98: rewritten to use stdio and to flash disk icon
- */
-
-dboolean M_WriteFile(char const *name, const void *source, size_t length)
-{
-  FILE *fp;
-  dboolean success = false;
-
-  errno = 0;
-
-  if (!(fp = fopen(name, "wb")))       // Try opening file
-    return 0;                          // Could not open file for writing
-
-  I_BeginRead();                       // Disk icon on
-  success = fwrite(source, 1, length, fp) == (size_t)length;   // Write data
-  fclose(fp);
-  I_EndRead();                         // Disk icon off
-
-  if (!success)                         // Remove partially written file
-    remove(name);
-
-  return success;
-}
-
-/*
- * M_ReadFile
- *
- * killough 9/98: rewritten to use stdio and to flash disk icon
- */
-
-int M_ReadFile(char const *name, byte **buffer)
-{
-  FILE *fp;
-
-  if ((fp = fopen(name, "rb")))
-    {
-      size_t length;
-
-      I_BeginRead();
-      fseek(fp, 0, SEEK_END);
-      length = ftell(fp);
-      fseek(fp, 0, SEEK_SET);
-      *buffer = Z_Malloc(length, PU_STATIC, 0);
-      if (fread(*buffer, 1, length, fp) == length)
-        {
-          fclose(fp);
-          I_EndRead();
-          return length;
-        }
-      fclose(fp);
-    }
-
-  /* cph 2002/08/10 - this used to return 0 on error, but that's ambiguous,
-   * because we could have a legit 0-length file. So make it -1. */
-  return -1;
-}
-
 //
 // DEFAULTS
 //
@@ -387,7 +323,7 @@ default_t defaults[] =
   {"snd_soundfont",{NULL, &snd_soundfont},{0,"TimGM6mb.sf2"},UL,UL,def_str,ss_none}, // soundfont name for synths that support it
   {"snd_mididev",{NULL, &snd_mididev},{0,""},UL,UL,def_str,ss_none}, // midi device to use for portmidiplayer
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
   {"mus_extend_volume",{&mus_extend_volume},{0},0,1,
    def_bool,ss_none}, // e6y: apply midi volume to all midi devices
 #endif
@@ -1485,26 +1421,16 @@ void M_LoadDefaults (void)
     }
   }
 
-  // check for a custom default file
-
-#if ((defined GL_DOOM) && (defined _MSC_VER))
-#define BOOM_CFG "glboom-plus.cfg"
-#else
-#define BOOM_CFG "prboom-plus.cfg"
-#endif
-
-  i = M_CheckParm ("-config");
-  if (i && i < myargc-1)
-  {
+  i = M_CheckParm ("-config"); // check for a custom default file
+  if (i && i < myargc-1) {
     defaultfile = strdup(myargv[i+1]);
   }
-  else
-  {
+  else { /* get config file from same directory as executable */
     const char* exedir = I_DoomExeDir();
-    /* get config file from same directory as executable */
-    int len = doom_snprintf(NULL, 0, "%s/" BOOM_CFG, exedir);
+    int len = snprintf(NULL, 0, "%s/%s.cfg", exedir, PACKAGE_TARNAME);
+
     defaultfile = malloc(len+1);
-    doom_snprintf(defaultfile, len+1, "%s/" BOOM_CFG, exedir);
+    snprintf(defaultfile, len + 1, "%s/%s.cfg", exedir, PACKAGE_TARNAME);
   }
 
   lprintf (LO_CONFIRM, " default file: %s\n",defaultfile);
@@ -1625,11 +1551,6 @@ void M_LoadDefaults (void)
   free(cfgline);
 
   //jff 3/4/98 redundant range checks for hud deleted here
-  /* proff 2001/7/1 - added prboom.wad as last entry so it's always loaded and
-     doesn't overlap with the cfg settings */
-  //e6y: Check on existence of prboom.wad
-  if (!(wad_files[MAXLOADFILES-1] = I_FindFile(PACKAGE_TARNAME ".wad", "")))
-    I_Error(PACKAGE_TARNAME ".wad not found. Can't continue.");
 }
 
 
