@@ -13,8 +13,8 @@ cd $BUILD_DIR && \
              -DPORTMIDI_LIBRARIES="$CROSSLIBS/libportmidi_s.a" \
              -DFLUIDSYNTH_LIBRARIES="$CROSSLIBS/libfluidsynth.a" \
              -DOGG_LIBRARIES="$CROSSLIBS/libogg.a" \
-             -DVORBIS_LIBRARIES="$CROSSLIBS/libvorbis.a" \
-             -DVORBISFILE_LIBRARIES="$CROSSLIBS/libvorbisfile.a" \
+             -DVORBIS_LIBRARY="$CROSSLIBS/libvorbis.a" \
+             -DVORBISFILE_LIBRARY="$CROSSLIBS/libvorbisfile.a" \
              -DFLAC_LIBRARIES="$CROSSLIBS/libFLAC.a" \
              -DMIKMOD_LIBRARIES="$CROSSLIBS/libmikmod.a" \
              -DSDLMIXER_LIBRARY="$CROSSLIBS/libSDL_mixer.a" \
@@ -37,14 +37,17 @@ cd $BUILD_DIR && \
              -DFONTCONFIG_LIBRARIES="$CROSSLIBS/libfontconfig.a" \
              -DEXPAT_LIBRARIES="$CROSSLIBS/libexpat.a" \
              -DFREETYPE_LIBRARIES="$CROSSLIBS/libfreetype.a" \
+             -DFREETYPE_INCLUDE_DIRS="$CROSSDEPS/include/freetype2" \
              -DPIXMAN_LIBRARIES="$CROSSLIBS/libpixman-1.a" \
              -DCAIRO_LIBRARIES="$CROSSLIBS/libcairo.a" \
+             -DCAIRO_INCLUDE_DIR="$CROSSDEPS/include/cairo" \
              -DPANGOFT2_LIBRARIES="$CROSSLIBS/libpangoft2-1.0.a" \
              -DPANGOWIN32_LIBRARIES="$CROSSLIBS/libpangowin32-1.0.a" \
              -DPANGOCAIRO_LIBRARIES="$CROSSLIBS/libpangocairo-1.0.a" \
              -DHARFBUZZ_LIBRARIES="$CROSSLIBS/libharfbuzz.a" \
              -DPANGO_LIBRARIES="$CROSSLIBS/libpango-1.0.a" \
+             -DICONV_LIBRARIES="$CROSSLIBS/libiconv.a" \
              -DCMAKE_TOOLCHAIN_FILE=mingw32-toolchain.cmake && \
     clear && \
-    make
+    VERBOSE=1 make
 

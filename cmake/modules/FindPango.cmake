@@ -30,17 +30,12 @@ FIND_LIBRARY(PANGO_LIBRARIES
 )
 
 FIND_PATH(PANGO_INCLUDE_DIR
-    NAMES pango.h
+    NAMES pango/pango.h
     HINTS ${PC_PANGO_INCLUDEDIR} ${PC_PANGO_INCLUDE_DIRS}
     PATH_SUFFIXES pango-1.0
 )
 
 SET(PANGO_INCLUDE_DIRS ${PANGO_INCLUDE_DIR})
-
-libpango-1.0.a
-libpangocairo-1.0.a
-libpangoft2-1.0.a
-libpangowin32-1.0.a
 
 # Additional Pango components.  We only look for libraries, as not all of them
 # have corresponding headers and all headers are installed alongside the main
@@ -90,7 +85,7 @@ ENDFOREACH()
 
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(
-    PANGO REQUIRED_VARS
+    Pango REQUIRED_VARS
     PANGO_INCLUDE_DIRS
     PANGO_LIBRARIES
     ${ADDITIONAL_REQUIRED_VARS}
