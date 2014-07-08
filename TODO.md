@@ -1,6 +1,8 @@
 # To Do
 
-1. Add unlagged
+1. Add enough scripting to add a console
+
+2. Add unlagged
   - Save attacking player position
   - Save current game state
   - Restore game state that player was viewing during the attack
@@ -13,20 +15,18 @@
   - For every impacted actor:
     - Add new momx/momy/momz values to the current momx/momy/momz
 
-2. Add spectators
+3. Add spectators
 
-3. Add a scoreboard
+4. Add a scoreboard
 
-4. Add enough scripting to add a console
-
-5. Add HTTP & JSON
+5. Add HTTP & JSON (either Jansson or JSON-C)
   - Have client download missing WADs
     - the client should do this between frames in case it needs to download a
       huge file (or a file from a slow server); libcurl ought to make this
       pretty easy
   - Convert configuration file(s) to JSON
 
-6. Revamp configuration
+6. Revamp configuration (probably libConfuse)
 
 7. Setup testing framework
 
