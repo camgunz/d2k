@@ -34,7 +34,6 @@
 
 #include "z_zone.h"
 
-#include "doomtype.h"
 #include "lprintf.h"
 #include "m_file.h"
 #include "m_swap.h"

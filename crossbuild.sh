@@ -18,7 +18,7 @@ cd $BUILD_DIR && \
              -DFLAC_LIBRARIES="$CROSSLIBS/libFLAC.a" \
              -DMIKMOD_LIBRARIES="$CROSSLIBS/libmikmod.a" \
              -DSDLMIXER_LIBRARY="$CROSSLIBS/libSDL_mixer.a" \
-             -DJPG_LIBRARIES="$CROSSLIBS/libjpeg.a" \
+             -DJPEG_LIBRARIES="$CROSSLIBS/libjpeg.a" \
              -DPNG_LIBRARIES="$CROSSLIBS/libpng.a" \
              -DTIFF_LIBRARIES="$CROSSLIBS/libtiff.a" \
              -DWEBP_LIBRARIES="$CROSSLIBS/libwebp.a" \
@@ -31,9 +31,23 @@ cd $BUILD_DIR && \
              -DGLIB_GMODULE_LIBRARIES="$CROSSLIBS/libgmodule-2.0.a" \
              -DGLIB_GOBJECT_LIBRARIES="$CROSSLIBS/libgobject-2.0.a" \
              -DGLIB_GTHREAD_LIBRARIES="$CROSSLIBS/libgthread-2.0.a" \
-             -DGLIB_LIBRARY="$CROSSLIBS/libglib-2.0.a" \
-             -DINTL_LIBRARY="$CROSSLIBS/libintl.a" \
+             -DGLIB_LIBRARIES="$CROSSLIBS/libglib-2.0.a" \
+             -DINTL_LIBRARIES="$CROSSLIBS/libintl.a" \
+             -DFFI_LIBRARIES="$CROSSLIBS/libffi.a" \
+             -DFONTCONFIG_LIBRARIES="$CROSSLIBS/libfontconfig.a" \
+             -DEXPAT_LIBRARIES="$CROSSLIBS/libexpat.a" \
+             -DFREETYPE_LIBRARIES="$CROSSLIBS/libfreetype.a" \
+             -DFREETYPE_INCLUDE_DIRS="$CROSSDEPS/include/freetype2" \
+             -DPIXMAN_LIBRARIES="$CROSSLIBS/libpixman-1.a" \
+             -DCAIRO_LIBRARIES="$CROSSLIBS/libcairo.a" \
+             -DCAIRO_INCLUDE_DIR="$CROSSDEPS/include/cairo" \
+             -DPANGOFT2_LIBRARIES="$CROSSLIBS/libpangoft2-1.0.a" \
+             -DPANGOWIN32_LIBRARIES="$CROSSLIBS/libpangowin32-1.0.a" \
+             -DPANGOCAIRO_LIBRARIES="$CROSSLIBS/libpangocairo-1.0.a" \
+             -DHARFBUZZ_LIBRARIES="$CROSSLIBS/libharfbuzz.a" \
+             -DPANGO_LIBRARIES="$CROSSLIBS/libpango-1.0.a" \
+             -DICONV_LIBRARIES="$CROSSLIBS/libiconv.a" \
              -DCMAKE_TOOLCHAIN_FILE=mingw32-toolchain.cmake && \
     clear && \
-    make
+    VERBOSE=1 make
 
