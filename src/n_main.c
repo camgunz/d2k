@@ -632,7 +632,7 @@ void N_TryRunTics(void) {
   dboolean render_fast = false;
   
   if (!SERVER)
-    render_fast = movement_smooth && (!window_focused) && (gametic > 0);
+    render_fast = movement_smooth && window_focused && (gametic > 0);
 
 #ifdef GL_DOOM
   if ((!SERVER) && (V_GetMode() == VID_MODEGL))

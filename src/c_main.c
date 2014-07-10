@@ -38,6 +38,7 @@
 #include <pango/pangocairo.h>
 
 #include "doomdef.h"
+#include "c_main.h"
 #include "lprintf.h"
 
 #define CAIRO_ASHIFT 24
@@ -76,11 +77,10 @@ static PangoLayout *pango_input_layout = NULL;
 void C_Init(void) {
   cairo_status_t status;
 
-  if (cairo_surface)
-    cairo_surface_destroy(cairo_surface);
+  C_Reset();
 
-  cairo_surface = cairo_image_surface_create(
-    CAIRO_FORMAT_ARGB32, REAL_SCREENWIDTH, REAL_SCREENHEIGHT
+  cairo_surface = cairo_image_surface_create_for_data(
+    screen->pixels, CAIRO_FORMAT_RGB24, screen->w, screen->h, screen->pitch
   );
 
   status = cairo_surface_status(cairo_surface);
@@ -102,6 +102,9 @@ void C_Init(void) {
 }
 
 void C_Reset(void) {
+  if (cairo_context)
+    cairo_destroy(cairo_context);
+
   if (cairo_surface)
     cairo_surface_destroy(cairo_surface);
 
@@ -121,8 +124,14 @@ void C_Ticker(void) {
 void C_Drawer(void) {
   PangoFontDescription *desc = pango_font_description_from_string("Unifont 12");
 
+  return;
+
+  if (SDL_MUSTLOCK(screen))
+    SDL_LockSurface(screen);
+
   cairo_set_source_rgb(cairo_context, 1.0, 1.0, 1.0);
   cairo_paint(cairo_context);
+  cairo_set_source_rgb(cairo_context, 0.0, 0.0, 0.0);
 
   pango_layout_set_text(pango_scrollback_layout, TEST_SCROLLBACK_TEXT, -1);
   pango_layout_set_font_description(pango_scrollback_layout, desc);
@@ -134,9 +143,10 @@ void C_Drawer(void) {
   pango_cairo_update_layout(cairo_context, pango_input_layout);
   pango_cairo_show_layout(cairo_context, pango_input_layout);
 
-  pango_font_description_free(desc);
+  if (SDL_MUSTLOCK(screen))
+    SDL_UnlockSurface(screen);
 
-  printf("Drew console\n");
+  pango_font_description_free(desc);
 }
 
 /* vi: set et ts=2 sw=2: */

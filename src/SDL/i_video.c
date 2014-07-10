@@ -1235,7 +1235,7 @@ void I_UpdateVideoMode(void)
 #endif
   }
 
-  if ( desired_fullscreen )
+  if (desired_fullscreen)
     init_flags |= SDL_FULLSCREEN;
 
   // In windowed mode, the window can be resized while the game is
@@ -1261,19 +1261,19 @@ void I_UpdateVideoMode(void)
   if (V_GetMode() == VID_MODEGL)
   {
 #ifdef GL_DOOM
-    SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_ACCUM_RED_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_ACCUM_GREEN_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_ACCUM_BLUE_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_ACCUM_ALPHA_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-    SDL_GL_SetAttribute( SDL_GL_BUFFER_SIZE, gl_colorbuffer_bits );
-    SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, gl_depthbuffer_bits );
-    SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 8 );
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 0);
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 0);
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 0);
+    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 0);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
+    SDL_GL_SetAttribute(SDL_GL_ACCUM_RED_SIZE, 0);
+    SDL_GL_SetAttribute(SDL_GL_ACCUM_GREEN_SIZE, 0);
+    SDL_GL_SetAttribute(SDL_GL_ACCUM_BLUE_SIZE, 0);
+    SDL_GL_SetAttribute(SDL_GL_ACCUM_ALPHA_SIZE, 0);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, gl_colorbuffer_bits);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, gl_depthbuffer_bits);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
     //e6y: vertical sync
 #if !SDL_VERSION_ATLEAST(1, 3, 0)
@@ -1283,7 +1283,13 @@ void I_UpdateVideoMode(void)
     //e6y: anti-aliasing
     gld_MultisamplingInit();
 
-    screen = SDL_SetVideoMode(REAL_SCREENWIDTH, REAL_SCREENHEIGHT, gl_colorbuffer_bits, init_flags);
+    screen = SDL_SetVideoMode(
+      REAL_SCREENWIDTH,
+      REAL_SCREENHEIGHT,
+      gl_colorbuffer_bits,
+      init_flags
+    );
+
     gld_CheckHardwareGamma();
 #endif
   }
@@ -1294,12 +1300,12 @@ void I_UpdateVideoMode(void)
     {
       int flags = SDL_OPENGL;
 
-      if ( desired_fullscreen )
+      if (desired_fullscreen)
         flags |= SDL_FULLSCREEN;
 
-      SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-      SDL_GL_SetAttribute( SDL_GL_BUFFER_SIZE, gl_colorbuffer_bits );
-      SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, gl_depthbuffer_bits );
+      SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+      SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, gl_colorbuffer_bits);
+      SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, gl_depthbuffer_bits);
       //e6y: vertical sync
 #if !SDL_VERSION_ATLEAST(1, 3, 0)
       SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, (gl_vsync ? 1 : 0));
@@ -1314,8 +1320,14 @@ void I_UpdateVideoMode(void)
 
       screen = SDL_CreateRGBSurface(
         init_flags & ~SDL_FULLSCREEN,
-        REAL_SCREENWIDTH, REAL_SCREENHEIGHT,
-        V_GetNumPixelBits(), 0, 0, 0, 0);
+        REAL_SCREENWIDTH,
+        REAL_SCREENHEIGHT,
+        V_GetNumPixelBits(),
+        0x00FF0000,
+        0x0000FF00,
+        0x000000FF,
+        0x00000000
+      );
 
       vid_8ingl.screen = screen;
 
@@ -1324,7 +1336,12 @@ void I_UpdateVideoMode(void)
     else
 #endif
     {
-      screen = SDL_SetVideoMode(REAL_SCREENWIDTH, REAL_SCREENHEIGHT, V_GetNumPixelBits(), init_flags);
+      screen = SDL_SetVideoMode(
+        REAL_SCREENWIDTH,
+        REAL_SCREENHEIGHT,
+        V_GetNumPixelBits(),
+        init_flags
+      );
     }
   }
 
