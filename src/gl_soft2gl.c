@@ -115,53 +115,7 @@ void UpdatePixels(unsigned char* dst)
 {
   int x, y;
 
-  unsigned int *pal = (unsigned int*)(vid_8ingl.colours +
-    256 * vid_8ingl.palette * 4);
-
-  if (V_GetMode() == VID_MODE8)
-  {
-    for (y = 0; y < REAL_SCREENHEIGHT; y++)
-    {
-      byte *px = (((byte*)vid_8ingl.screen->pixels) + y * vid_8ingl.screen->pitch);
-      int *py = ((int*)dst) + y * vid_8ingl.width;
-      for (x = 0; x < REAL_SCREENWIDTH; x++)
-      {
-        *(int*)py = pal[*(byte*)px];
-        px += 1;
-        py += 1;
-      }
-    }
-  } else if (V_GetMode() == VID_MODE15 || V_GetMode() == VID_MODE16)
-  {
-    unsigned int Rshift, Gshift, Bshift;
-    unsigned int Rmask, Gmask, Bmask;
-    SDL_PixelFormat *format = vid_8ingl.screen->format;
-
-    Rmask = format->Rmask;
-    Gmask = format->Gmask;
-    Bmask = format->Bmask;
-   
-    Rshift = 16 - format->Rshift + format->Rloss;
-    Gshift =  8 - format->Gshift + format->Gloss;
-    Bshift =  0 - format->Bshift + format->Bloss;
-
-    for (y = 0; y < REAL_SCREENHEIGHT; y++)
-    {
-      byte *px = (((byte*)vid_8ingl.screen->pixels) + y * vid_8ingl.screen->pitch);
-      int *py = ((int*)dst) + y * vid_8ingl.width;
-      for (x = 0; x < REAL_SCREENWIDTH; x++)
-      {
-        short color = *(short*)px;
-        *(int*)py =
-          ((color & Bmask) << Bshift) |
-          ((color & Gmask) << Gshift) |
-          ((color & Rmask) << Rshift);
-        px += 2;
-        py += 1;
-      }
-    }
-  }
-  else if (V_GetMode() == VID_MODE32)
+  if (V_GetMode() == VID_MODE32)
   {
     for (y = 0; y < REAL_SCREENHEIGHT; y++)
     {

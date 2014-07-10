@@ -3066,8 +3066,12 @@ setup_menu_t* gen_settings[] =
 #define G_Y 23
 #define G_X2 284
 
+/*
 static const char *videomodes[] = {
   "8bit","15bit","16bit", "32bit", "OpenGL", NULL};
+*/
+
+static const char *videomodes[] = {"32bit", "OpenGL", NULL};
 
 static const char *gltexformats[] = {
   "GL_RGBA","GL_RGB5_A1", "GL_RGBA4", NULL};

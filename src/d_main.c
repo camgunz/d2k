@@ -37,11 +37,11 @@
 
 #include "z_zone.h"
 
-#include <SDL_timer.h>
 #include "cmp.h"
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "c_main.h"
 #include "d_net.h"
 #include "dstrings.h"
 #include "sounds.h"
@@ -394,6 +394,9 @@ void D_Display(void) {
     V_DrawNamePatch((320 - V_NamePatchWidth("M_PAUSE"))/2, 4,
                     0, "M_PAUSE", CR_DEFAULT, VPT_STRETCH);
   }
+
+  // CG 07/09/2014: Console goes over everything except the menu
+  C_Drawer();
 
   // menus go directly to the screen
   M_Drawer();          // menu is drawn even on top of everything
@@ -2059,6 +2062,10 @@ static void D_DoomMainSetup(void) {
   //jff 9/3/98 use logical output routine
   lprintf(LO_INFO,"ST_Init: Init status bar.\n");
   ST_Init();
+
+  // CG 07/09/2014: Console
+  lprintf(LO_INFO, "C_Init: Init console.\n");
+  C_Init();
 
   // CPhipps - auto screenshots
   if ((p = M_CheckParm("-autoshot")) && (p < myargc - 2))

@@ -40,7 +40,7 @@ SET(PANGO_INCLUDE_DIRS ${PANGO_INCLUDE_DIR})
 # Additional Pango components.  We only look for libraries, as not all of them
 # have corresponding headers and all headers are installed alongside the main
 # Pango ones.
-FOREACH(_component ${PANGO_FIND_COMPONENTS})
+FOREACH(_component ${Pango_FIND_COMPONENTS})
     IF(${_component} STREQUAL "pangoft2")
         IF(NOT PANGOFT2_LIBRARIES)
             FIND_LIBRARY(PANGOFT2_LIBRARIES
@@ -81,6 +81,7 @@ FOREACH(_component ${PANGO_FIND_COMPONENTS})
                 PANGOWIN32_LIBRARIES
             )
         ENDIF()
+    ENDIF()
 ENDFOREACH()
 
 INCLUDE(FindPackageHandleStandardArgs)

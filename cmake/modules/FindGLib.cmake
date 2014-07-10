@@ -91,7 +91,7 @@ SET(GLIB_VERSION
 # Additional Glib components.  We only look for libraries, as not all of them
 # have corresponding headers and all headers are installed alongside the main
 # glib ones.
-FOREACH(_component ${GLIB_FIND_COMPONENTS})
+FOREACH(_component ${GLib_FIND_COMPONENTS})
     IF(${_component} STREQUAL "gio")
         IF(NOT GLIB_GIO_LIBRARIES)
             FIND_LIBRARY(GLIB_GIO_LIBRARIES

@@ -77,35 +77,6 @@ static void warning_fn(png_structp p, png_const_charp s)
 // Software mode screenshots
 //
 
-// Write the indexed palette of the passed surface to the PNG file
-// Called from I_ScreenShot in 8bpp mode only
-
-static int write_png_palette(
-    png_struct *png_ptr, png_info *info_ptr, SDL_Surface *scr)
-{
-  int i, result = -1;
-  png_color *palette;
-
-  palette = malloc(sizeof(*palette) * scr->format->palette->ncolors);
-
-  if (palette)
-  {
-    // Convert SDL palette to libpng
-    for (i = 0; i < scr->format->palette->ncolors; i++) {
-      palette[i].red   = scr->format->palette->colors[i].r;
-      palette[i].green = scr->format->palette->colors[i].g;
-      palette[i].blue  = scr->format->palette->colors[i].b;
-    }
-
-    png_set_PLTE(png_ptr, info_ptr,
-        palette, scr->format->palette->ncolors);
-
-    free(palette);
-    result = 0;
-  }
-  return result;
-}
-
 // Helper functions for screenshot_sdl
 // Encapsulate differences between writing indexed palette and hicolor images
 
@@ -251,13 +222,7 @@ int I_ScreenShot (const char *fname)
         png_init_io(png_ptr, fp);
         png_set_IHDR(
             png_ptr, info_ptr, REAL_SCREENWIDTH, REAL_SCREENHEIGHT, 8,
-            (V_GetMode() == VID_MODE8
-#ifdef GL_DOOM
-             && !vid_8ingl.enabled
-#endif
-             )
-              ? PNG_COLOR_TYPE_PALETTE
-              : PNG_COLOR_TYPE_RGB,
+            PNG_COLOR_TYPE_RGB,
             PNG_INTERLACE_NONE,
             PNG_COMPRESSION_TYPE_DEFAULT,
             PNG_FILTER_TYPE_DEFAULT);
@@ -273,17 +238,8 @@ int I_ScreenShot (const char *fname)
         else
 #endif
         {
-          if (V_GetMode() == VID_MODE8)
-          {
-            if (write_png_palette(png_ptr, info_ptr, scr) >= 0)
-              result = screenshot_sdl(png_ptr, info_ptr, scr,
-                  &screenshot_sdl_funcs[SCREENSHOT_SDL_INDEXED]);
-          }
-          else
-          {
-            result = screenshot_sdl(png_ptr, info_ptr, scr,
-                &screenshot_sdl_funcs[SCREENSHOT_SDL_HICOLOR]);
-          }
+        result = screenshot_sdl(png_ptr, info_ptr, scr,
+            &screenshot_sdl_funcs[SCREENSHOT_SDL_HICOLOR]);
         }
       }
       png_destroy_write_struct(&png_ptr, NULL);

@@ -41,7 +41,6 @@
 #endif
 
 #include "m_argv.h"
-#include "m_cbuf.h"
 #include "doomstat.h"
 #include "doomdef.h"
 #include "v_video.h"
@@ -441,17 +440,7 @@ static void I_UploadNewPalette(int pal, int force)
     // set the colormap entries
     for (i=0 ; (size_t)i<num_pals ; i++) {
 #ifdef GL_DOOM
-      if (vid_8ingl.enabled)
-      {
-        if (V_GetMode() == VID_MODE8)
-        {
-          vid_8ingl.colours[i * 4 + 0] = gtable[palette[2]];
-          vid_8ingl.colours[i * 4 + 1] = gtable[palette[1]];
-          vid_8ingl.colours[i * 4 + 2] = gtable[palette[0]];
-          vid_8ingl.colours[i * 4 + 3] = 255;
-        }
-      }
-      else
+      if (!vid_8ingl.enabled)
 #endif
       {
         colours[i].r = gtable[palette[0]];
@@ -1077,7 +1066,7 @@ void I_InitScreenResolution(void)
     screens[i].width = REAL_SCREENWIDTH;
     screens[i].height = REAL_SCREENHEIGHT;
     screens[i].byte_pitch = REAL_SCREENPITCH;
-    screens[i].short_pitch = REAL_SCREENPITCH / V_GetModePixelDepth(VID_MODE16);
+    screens[i].short_pitch = 0;
     screens[i].int_pitch = REAL_SCREENPITCH / V_GetModePixelDepth(VID_MODE32);
   }
 
@@ -1085,7 +1074,7 @@ void I_InitScreenResolution(void)
   screens[4].width = REAL_SCREENWIDTH;
   screens[4].height = REAL_SCREENHEIGHT;
   screens[4].byte_pitch = REAL_SCREENPITCH;
-  screens[4].short_pitch = REAL_SCREENPITCH / V_GetModePixelDepth(VID_MODE16);
+  screens[4].short_pitch = 0;
   screens[4].int_pitch = REAL_SCREENPITCH / V_GetModePixelDepth(VID_MODE32);
 
   I_InitBuffersRes();
@@ -1167,28 +1156,35 @@ void I_InitGraphics(void)
 
 int I_GetModeFromString(const char *modestr)
 {
+  /*
   video_mode_t mode;
 
   if (!stricmp(modestr,"15"))
-    mode = VID_MODE15;
-  else if (!stricmp(modestr,"15bit"))
-    mode = VID_MODE15;
-  else if (!stricmp(modestr,"16"))
-    mode = VID_MODE16;
-  else if (!stricmp(modestr,"16bit"))
-    mode = VID_MODE16;
-  else if (!stricmp(modestr,"32"))
-    mode = VID_MODE32;
-  else if (!stricmp(modestr,"32bit"))
-    mode = VID_MODE32;
-  else if (!stricmp(modestr,"gl"))
-    mode = VID_MODEGL;
-  else if (!stricmp(modestr,"OpenGL"))
-    mode = VID_MODEGL;
-  else
-    mode = VID_MODE8;
+    return VID_MODE15;
 
-  return mode;
+  if (!stricmp(modestr,"15bit"))
+    return VID_MODE15;
+
+  if (!stricmp(modestr,"16"))
+    return VID_MODE16;
+
+  if (!stricmp(modestr,"16bit"))
+    return VID_MODE16;
+  */
+
+  if (!stricmp(modestr,"32"))
+    return VID_MODE32;
+
+  if (!stricmp(modestr,"32bit"))
+    return VID_MODE32;
+
+  if (!stricmp(modestr,"gl"))
+    return VID_MODEGL;
+
+  if (!stricmp(modestr,"OpenGL"))
+    return VID_MODEGL;
+
+  return VID_MODE32;
 }
 
 void I_UpdateVideoMode(void)
@@ -1362,7 +1358,7 @@ void I_UpdateVideoMode(void)
     screens[0].not_on_heap = true;
     screens[0].data = (unsigned char *) (screen->pixels);
     screens[0].byte_pitch = screen->pitch;
-    screens[0].short_pitch = screen->pitch / V_GetModePixelDepth(VID_MODE16);
+    screens[0].short_pitch = 0;
     screens[0].int_pitch = screen->pitch / V_GetModePixelDepth(VID_MODE32);
   }
   else
