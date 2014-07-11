@@ -41,6 +41,7 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
 #include "c_main.h"
 #include "d_net.h"
 #include "dstrings.h"

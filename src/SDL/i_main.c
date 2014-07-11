@@ -709,7 +709,10 @@ int main(int argc, char **argv)
   /* cphipps - call to video specific startup code */
   I_PreInitGraphics();
 
-  D_DoomMain ();
+  /* CG 07/11/2014: Enable Unicode in SDL */
+  SDL_EnableUNICODE(true);
+
+  D_DoomMain();
   return 0;
 }
 #endif

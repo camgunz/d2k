@@ -39,6 +39,7 @@ void C_Init(void);
 void C_Reset(void);
 void C_Ticker(void);
 void C_Drawer(void);
+void C_Responder(event_t *ev);
 
 #endif
 

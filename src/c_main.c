@@ -39,6 +39,7 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
 #include "c_main.h"
 #include "lprintf.h"
 
@@ -233,7 +234,6 @@ void C_Drawer(void) {
     pango_layout_get_size(pango_scrollback_layout, &sb_width, &sb_height);
     sb_width /= PANGO_SCALE;
     sb_height /= PANGO_SCALE;
-    printf("%d, %d, %d\n", input_height, console_current_height, sb_height);
     cairo_move_to(cairo_context, 4, console_current_height -
       ((input_height * 2) + sb_height)
     );
@@ -248,6 +248,9 @@ void C_Drawer(void) {
     SDL_UnlockSurface(screen);
 
   pango_font_description_free(desc);
+}
+
+void C_Responder(event_t *ev) {
 }
 
 /* vi: set et ts=2 sw=2: */
