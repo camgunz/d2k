@@ -123,6 +123,7 @@ static void run_tic(void) {
   M_Ticker();
   I_GetTime_SaveMS();
   G_Ticker();
+  C_Ticker();
   P_Checksum(gametic);
 
   if (DELTASERVER) {

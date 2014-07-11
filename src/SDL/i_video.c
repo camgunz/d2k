@@ -1315,7 +1315,7 @@ void I_UpdateVideoMode(void)
         REAL_SCREENWIDTH, REAL_SCREENHEIGHT,
         gl_colorbuffer_bits, flags);
 
-      if(vid_8ingl.surface == NULL)
+      if (vid_8ingl.surface == NULL)
         I_Error("Couldn't set %dx%d video mode [%s]", REAL_SCREENWIDTH, REAL_SCREENHEIGHT, SDL_GetError());
 
       screen = SDL_CreateRGBSurface(

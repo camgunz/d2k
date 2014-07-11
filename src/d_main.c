@@ -456,6 +456,7 @@ static void D_DoomLoop(void) {
         D_DoAdvanceDemo();
       M_Ticker();
       G_Ticker();
+      C_Ticker();
       P_Checksum(gametic);
       gametic++;
     }
