@@ -8,7 +8,7 @@ export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/opt/pixman/lib/pkgconfig
 export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/opt/libpng/lib/pkgconfig
 export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/opt/cairo/lib/pkgconfig
 
-BUILD_FOLDER=xcode
+BUILD_FOLDER=cbuild
 
 if [ ! -d $BUILD_FOLDER ]
 then
