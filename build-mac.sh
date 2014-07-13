@@ -15,5 +15,5 @@ then
   mkdir $BUILD_FOLDER
 fi
 
-( cd $BUILD_FOLDER && cmake .. -DCMAKE_BUILD_TYPE=Release -G Xcode )
+( cd $BUILD_FOLDER && cmake .. -DCMAKE_BUILD_TYPE=Release && make )
 
