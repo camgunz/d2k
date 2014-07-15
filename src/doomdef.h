@@ -243,7 +243,7 @@ typedef enum {
 // Most key data are simple ascii (uppercased).
 
 enum {
-  KEYD_LEFTARROW,
+  KEYD_LEFTARROW = 1,
   KEYD_UPARROW,
   KEYD_RIGHTARROW,
   KEYD_DOWNARROW,

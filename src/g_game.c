@@ -3401,7 +3401,7 @@ void doom_pprintf(short playernum, const char *s, ...) {
 void doom_printf(const char *fmt, ...) {
   static char msg[MAX_MESSAGE_LENGTH];
 
-  va_list args, pargs;
+  va_list args;
 
   va_start(args, fmt);
   if (nodrawers || !graphics_initialized) {
