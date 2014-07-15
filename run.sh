@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export LIBGL_ALWAYS_SOFTWARE=1
+# export LIBGL_ALWAYS_SOFTWARE=1
 
 # gdb -ex run --args cbuild/doom2k -file sunder.wad -warp 6 -nomouse
 # CPUPROFILE=cpu.prof cbuild/doom2k
