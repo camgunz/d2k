@@ -41,6 +41,7 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
 #include "c_main.h"
 #include "d_net.h"
 #include "dstrings.h"
@@ -200,6 +201,9 @@ void D_PostEvent(event_t *ev) {
   if (M_Responder(ev))
     return;
 
+  if (C_Responder(ev))
+    return;
+
   if (gamestate != GS_LEVEL)
     return;
 
@@ -240,6 +244,7 @@ static void D_Wipe(void) {
     wipestart = nowtime;
     done = wipe_ScreenWipe(tics);
     I_UpdateNoBlit();
+    C_Drawer();
     M_Drawer();                   // menu is drawn even on top of wipes
     I_FinishUpdate();             // page flip or blit buffer
   } while (!done);

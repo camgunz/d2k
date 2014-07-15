@@ -2667,16 +2667,14 @@ unlock_patch:
  *****************/
 
 //e6y
-void gld_ProcessWall(GLWall *wall)
-{
+void gld_ProcessWall(GLWall *wall) {
   // e6y
   // The ultimate 'ATI sucks' fix: Some of ATIs graphics cards are so unprecise when 
   // rendering geometry that each and every border between polygons must be seamless, 
   // otherwise there are rendering artifacts worse than anything that could be seen 
   // on Geforce 2's! Made this a menu option because the speed impact is quite severe
   // and this special handling is not necessary on modern NVidia cards.
-  if (gl_seamless)
-  {
+  if (gl_seamless) {
     seg_t *seg = wall->seg;
 
     wall->glseg->fracleft  = 0;
@@ -2689,69 +2687,78 @@ void gld_ProcessWall(GLWall *wall)
   gld_DrawWall(wall);
 }
 
-static int C_DECL dicmp_wall(const void *a, const void *b)
-{
+static int C_DECL dicmp_wall(const void *a, const void *b) {
   GLTexture *tx1 = ((const GLDrawItem *)a)->item.wall->gltexture;
   GLTexture *tx2 = ((const GLDrawItem *)b)->item.wall->gltexture;
-  return tx1 - tx2;
-}
-static int C_DECL dicmp_flat(const void *a, const void *b)
-{
-  GLTexture *tx1 = ((const GLDrawItem *)a)->item.flat->gltexture;
-  GLTexture *tx2 = ((const GLDrawItem *)b)->item.flat->gltexture;
-  return tx1 - tx2;
-}
-static int C_DECL dicmp_sprite(const void *a, const void *b)
-{
-  GLTexture *tx1 = ((const GLDrawItem *)a)->item.sprite->gltexture;
-  GLTexture *tx2 = ((const GLDrawItem *)b)->item.sprite->gltexture;
+
   return tx1 - tx2;
 }
 
-static int C_DECL dicmp_sprite_scale(const void *a, const void *b)
-{
+static int C_DECL dicmp_flat(const void *a, const void *b) {
+  GLTexture *tx1 = ((const GLDrawItem *)a)->item.flat->gltexture;
+  GLTexture *tx2 = ((const GLDrawItem *)b)->item.flat->gltexture;
+
+  return tx1 - tx2;
+}
+
+static int C_DECL dicmp_sprite(const void *a, const void *b) {
+  GLTexture *tx1 = ((const GLDrawItem *)a)->item.sprite->gltexture;
+  GLTexture *tx2 = ((const GLDrawItem *)b)->item.sprite->gltexture;
+
+  return tx1 - tx2;
+}
+
+static int C_DECL dicmp_sprite_scale(const void *a, const void *b) {
   GLSprite *sprite1 = ((const GLDrawItem *)a)->item.sprite;
   GLSprite *sprite2 = ((const GLDrawItem *)b)->item.sprite;
 
   if (sprite1->scale != sprite2->scale)
-  {
     return sprite2->scale - sprite1->scale;
-  }
-  else
-  {
-    return sprite1->gltexture - sprite2->gltexture;
-  }
+
+  return sprite1->gltexture - sprite2->gltexture;
 }
 
-static void gld_DrawItemsSortByTexture(GLDrawItemType itemtype)
-{
+static void gld_DrawItemsSortByTexture(GLDrawItemType itemtype) {
   typedef int(C_DECL *DICMP_ITEM)(const void *a, const void *b);
 
   static DICMP_ITEM itemfuncs[GLDIT_TYPES] = {
     0,
-    dicmp_wall, dicmp_wall, dicmp_wall, dicmp_wall, dicmp_wall,
-    dicmp_wall, dicmp_wall,
-    dicmp_flat, dicmp_flat,
-    dicmp_flat, dicmp_flat,
-    dicmp_sprite, dicmp_sprite_scale, dicmp_sprite,
+    dicmp_wall,
+    dicmp_wall,
+    dicmp_wall,
+    dicmp_wall,
+    dicmp_wall,
+    dicmp_wall,
+    dicmp_wall,
+    dicmp_flat,
+    dicmp_flat,
+    dicmp_flat,
+    dicmp_flat,
+    dicmp_sprite,
+    dicmp_sprite_scale,
+    dicmp_sprite,
     0,
     0,
   };
 
-  if (itemfuncs[itemtype] && gld_drawinfo.num_items[itemtype] > 1)
-  {
-    qsort(gld_drawinfo.items[itemtype], gld_drawinfo.num_items[itemtype],
-      sizeof(gld_drawinfo.items[itemtype][0]), itemfuncs[itemtype]);
+  if (itemfuncs[itemtype] && gld_drawinfo.num_items[itemtype] > 1) {
+    qsort(
+      gld_drawinfo.items[itemtype],
+      gld_drawinfo.num_items[itemtype],
+      sizeof(gld_drawinfo.items[itemtype][0]),
+      itemfuncs[itemtype]
+    );
   }
 }
 
 static int no_overlapped_sprites;
-static int C_DECL dicmp_sprite_by_pos(const void *a, const void *b)
-{
+static int C_DECL dicmp_sprite_by_pos(const void *a, const void *b) {
   GLSprite *s1 = ((const GLDrawItem *)a)->item.sprite;
   GLSprite *s2 = ((const GLDrawItem *)b)->item.sprite;
   int res = s2->xy - s1->xy;
+
   no_overlapped_sprites = no_overlapped_sprites && res;
+
   return res;
 }
 
@@ -3235,7 +3242,8 @@ void gld_DrawScene(player_t *player)
   gld_RenderShadows();
   glsl_SetActiveShader(sh_main);
 
-  if (gld_drawinfo.num_items[GLDIT_TWALL] > 0 || gld_drawinfo.num_items[GLDIT_TSPRITE] > 0)
+  if (gld_drawinfo.num_items[GLDIT_TWALL] > 0 ||
+      gld_drawinfo.num_items[GLDIT_TSPRITE] > 0)
   {
     if (gld_drawinfo.num_items[GLDIT_TWALL] > 0)
     {
@@ -3296,3 +3304,6 @@ void gld_DrawScene(player_t *player)
 
   glsl_SetActiveShader(NULL);
 }
+
+/* vi: set et ts=2 sw=2: */
+

@@ -4260,7 +4260,7 @@ static void M_DrawString(int cx, int cy, int color, const char* ch)
 
 static void M_DrawMenuString(int cx, int cy, int color)
 {
-    M_DrawString(cx, cy, color, menu_buffer);
+  M_DrawString(cx, cy, color, menu_buffer);
 }
 
 // M_GetPixelWidth() returns the number of pixels in the width of

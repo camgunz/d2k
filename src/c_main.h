@@ -39,6 +39,12 @@ void C_Init(void);
 void C_Reset(void);
 void C_Ticker(void);
 void C_Drawer(void);
+bool C_Responder(event_t *ev);
+void C_ScrollDown(void);
+void C_ScrollUp(void);
+void C_ToggleScroll(void);
+void C_SetFullScreen(void);
+void C_Banish(void);
 
 #endif
 

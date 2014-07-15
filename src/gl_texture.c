@@ -804,11 +804,12 @@ void gld_SetTexClamp(GLTexture *gltexture, unsigned int flags)
   }
 }
 
-int gld_BuildTexture(GLTexture *gltexture, void *data, dboolean readonly, int width, int height)
-{
+int gld_BuildTexture(GLTexture *gltexture, void *data, dboolean readonly,
+                     int width, int height) {
   int result = false;
-
-  int tex_width, tex_height, tex_buffer_size;
+  int tex_width;
+  int tex_height;
+  int tex_buffer_size;
   unsigned char *tex_buffer = NULL;
 
   tex_width  = gld_GetTexDimension(width);
@@ -816,89 +817,123 @@ int gld_BuildTexture(GLTexture *gltexture, void *data, dboolean readonly, int wi
   tex_buffer_size = tex_width * tex_height * 4;
 
   //your video is modern
-  if (gl_arb_texture_non_power_of_two)
-  {
-    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP,
-      ((gltexture->flags & GLTEXTURE_MIPMAP) ? GL_TRUE : GL_FALSE));
+  if (gl_arb_texture_non_power_of_two) {
+    glTexParameteri(
+      GL_TEXTURE_2D,
+      GL_GENERATE_MIPMAP,
+      ((gltexture->flags & GLTEXTURE_MIPMAP) ? GL_TRUE : GL_FALSE)
+    );
 
-    glTexImage2D( GL_TEXTURE_2D, 0, gl_tex_format,
-      tex_width, tex_height,
-      0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(
+      GL_TEXTURE_2D,
+      0,
+      gl_tex_format,
+      tex_width,
+      tex_height,
+      0,
+      GL_RGBA,
+      GL_UNSIGNED_BYTE,
+      data
+    );
 
     gld_RecolorMipLevels(data);
-
     gld_SetTexFilters(gltexture);
 
     result = true;
     goto l_exit;
   }
 
-  if (gltexture->flags & GLTEXTURE_MIPMAP)
-  {
+  if (gltexture->flags & GLTEXTURE_MIPMAP) {
     gld_BuildMipmaps(width, height, data, GL_REPEAT);
-
     gld_RecolorMipLevels(data);
-
     gld_SetTexFilters(gltexture);
 
     result = true;
     goto l_exit;
   }
-  else
-  {
+  else {
 #ifdef USE_GLU_IMAGESCALE
-    if ((width != tex_width) || (height != tex_height))
-    {
+    if ((width != tex_width) || (height != tex_height)) {
       tex_buffer = malloc(tex_buffer_size);
+
       if (!tex_buffer)
-      {
         goto l_exit;
-      }
 
-      gluScaleImage(GL_RGBA, width, height,
-        GL_UNSIGNED_BYTE, data,
-        tex_width, tex_height,
-        GL_UNSIGNED_BYTE, tex_buffer);
+      gluScaleImage(
+        GL_RGBA,
+        width,
+        height,
+        GL_UNSIGNED_BYTE,
+        data,
+        tex_width,
+        tex_height,
+        GL_UNSIGNED_BYTE,
+        tex_buffer
+      );
 
-      glTexImage2D( GL_TEXTURE_2D, 0, gl_tex_format,
-        tex_width, tex_height,
-        0, GL_RGBA, GL_UNSIGNED_BYTE, tex_buffer);
+      glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        gl_tex_format,
+        tex_width,
+        tex_height,
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        tex_buffer
+      );
     }
     else
 #endif // USE_GLU_IMAGESCALE
     {
-      if ((width != tex_width) || (height != tex_height))
-      {
-        if (width == tex_width)
-        {
+      if ((width != tex_width) || (height != tex_height)) {
+        if (width == tex_width) {
           tex_buffer = malloc(tex_buffer_size);
           memcpy(tex_buffer, data, width * height * 4);
         }
-        else
-        {
+        else {
           int y;
+
           tex_buffer = calloc(1, tex_buffer_size);
-          for (y = 0; y < height; y++)          
-          {
-            memcpy(tex_buffer + y * tex_width * 4,
-              ((unsigned char*)data) + y * width * 4, width * 4);
+          for (y = 0; y < height; y++) {
+            memcpy(
+              tex_buffer + y * tex_width * 4,
+              ((unsigned char*)data) + y * width * 4,
+              width * 4
+            );
           }
         }
       }
-      else
-      {
+      else {
         tex_buffer = data;
       }
 
       if (gl_paletted_texture) {
         gld_SetTexturePalette(GL_TEXTURE_2D);
-        glTexImage2D( GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT,
-          tex_width, tex_height,
-          0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, tex_buffer);
-      } else {
-        glTexImage2D( GL_TEXTURE_2D, 0, gl_tex_format,
-          tex_width, tex_height,
-          0, GL_RGBA, GL_UNSIGNED_BYTE, tex_buffer);
+        glTexImage2D(
+          GL_TEXTURE_2D,
+          0,
+          GL_COLOR_INDEX8_EXT,
+          tex_width,
+          tex_height,
+          0,
+          GL_COLOR_INDEX,
+          GL_UNSIGNED_BYTE,
+          tex_buffer
+        );
+      }
+      else {
+        glTexImage2D(
+          GL_TEXTURE_2D,
+          0,
+          gl_tex_format,
+          tex_width,
+          tex_height,
+          0,
+          GL_RGBA,
+          GL_UNSIGNED_BYTE,
+          tex_buffer
+        );
       }
     }
 
@@ -908,20 +943,17 @@ int gld_BuildTexture(GLTexture *gltexture, void *data, dboolean readonly, int wi
   }
 
 l_exit:
-  if ((result) && ((gltexture->flags & GLTEXTURE_MIPMAP) == 0))
-  {
+  if ((result) && ((gltexture->flags & GLTEXTURE_MIPMAP) == 0)) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   }
 
-  if (tex_buffer && tex_buffer != data)
-  {
+  if (tex_buffer && tex_buffer != data) {
     free(tex_buffer);
     tex_buffer = NULL;
   }
 
-  if (!readonly)
-  {
+  if (!readonly) {
     free(data);
     data = NULL;
   }
@@ -929,22 +961,19 @@ l_exit:
   return result;
 }
 
-void gld_BindTexture(GLTexture *gltexture, unsigned int flags)
-{
+void gld_BindTexture(GLTexture *gltexture, unsigned int flags) {
   const rpatch_t *patch;
   unsigned char *buffer;
   int w, h;
 
-  if (!gltexture || gltexture->textype != GLDT_TEXTURE)
-  {
+  if (!gltexture || gltexture->textype != GLDT_TEXTURE) {
     glBindTexture(GL_TEXTURE_2D, 0);
     last_glTexID = NULL;
     return;
   }
 
 #ifdef HAVE_LIBSDL_IMAGE
-  if (gld_LoadHiresTex(gltexture, CR_DEFAULT))
-  {
+  if (gld_LoadHiresTex(gltexture, CR_DEFAULT)) {
     gld_SetTexClamp(gltexture, flags);
     last_glTexID = gltexture->texid_p;
     return;
@@ -953,40 +982,51 @@ void gld_BindTexture(GLTexture *gltexture, unsigned int flags)
 
   gld_GetTextureTexID(gltexture, CR_DEFAULT);
 
-  if (last_glTexID == gltexture->texid_p)
-  {
+  if (last_glTexID == gltexture->texid_p) {
     gld_SetTexClamp(gltexture, flags);
     return;
   }
 
   last_glTexID = gltexture->texid_p;
 
-  if (*gltexture->texid_p != 0)
-  {
+  if (*gltexture->texid_p != 0) {
     glBindTexture(GL_TEXTURE_2D, *gltexture->texid_p);
     gld_SetTexClamp(gltexture, flags);
     return;
   }
 
-  buffer=(unsigned char*)Z_Malloc(gltexture->buffer_size,PU_STATIC,0);
+  buffer = (unsigned char*)Z_Malloc(gltexture->buffer_size, PU_STATIC, 0);
+
   if (!(gltexture->flags & GLTEXTURE_MIPMAP) && gl_paletted_texture)
-    memset(buffer,transparent_pal_index,gltexture->buffer_size);
+    memset(buffer, transparent_pal_index, gltexture->buffer_size);
   else
-    memset(buffer,0,gltexture->buffer_size);
-  patch=R_CacheTextureCompositePatchNum(gltexture->index);
-  gld_AddPatchToTexture(gltexture, buffer, patch, 0, 0,
-                        CR_DEFAULT, !(gltexture->flags & GLTEXTURE_MIPMAP) && gl_paletted_texture);
+    memset(buffer, 0, gltexture->buffer_size);
+
+  patch = R_CacheTextureCompositePatchNum(gltexture->index);
+
+  gld_AddPatchToTexture(
+    gltexture,
+    buffer,
+    patch,
+    0,
+    0,
+    CR_DEFAULT,
+    !(gltexture->flags & GLTEXTURE_MIPMAP) && gl_paletted_texture
+  );
+
   R_UnlockTextureCompositePatchNum(gltexture->index);
+
   if (*gltexture->texid_p == 0)
     glGenTextures(1, gltexture->texid_p);
+
   glBindTexture(GL_TEXTURE_2D, *gltexture->texid_p);
   
   if (gltexture->flags & GLTEXTURE_HASHOLES)
-  {
     SmoothEdges(buffer, gltexture->buffer_width, gltexture->buffer_height);
-  }
 
-  buffer = gld_HQResize(gltexture, buffer, gltexture->buffer_width, gltexture->buffer_height, &w, &h);
+  buffer = gld_HQResize(
+    gltexture, buffer, gltexture->buffer_width, gltexture->buffer_height, &w, &h
+  );
 
   gld_BuildTexture(gltexture, buffer, false, w, h);
 
@@ -1635,3 +1675,6 @@ void gld_CleanStaticMemory(void)
 {
   gld_CleanTexItems(numlumps, &gld_GLStaticPatchTextures);
 }
+
+/* vi: set et ts=2 sw=2: */
+

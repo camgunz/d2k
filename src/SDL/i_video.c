@@ -131,61 +131,67 @@ static int I_TranslateKey(SDL_keysym* key)
   int rc = 0;
 
   switch (key->sym) {
-  case SDLK_LEFT: rc = KEYD_LEFTARROW;  break;
-  case SDLK_RIGHT:  rc = KEYD_RIGHTARROW; break;
-  case SDLK_DOWN: rc = KEYD_DOWNARROW;  break;
-  case SDLK_UP:   rc = KEYD_UPARROW;  break;
-  case SDLK_ESCAPE: rc = KEYD_ESCAPE; break;
-  case SDLK_RETURN: rc = KEYD_ENTER;  break;
-  case SDLK_TAB:  rc = KEYD_TAB;    break;
-  case SDLK_F1:   rc = KEYD_F1;   break;
-  case SDLK_F2:   rc = KEYD_F2;   break;
-  case SDLK_F3:   rc = KEYD_F3;   break;
-  case SDLK_F4:   rc = KEYD_F4;   break;
-  case SDLK_F5:   rc = KEYD_F5;   break;
-  case SDLK_F6:   rc = KEYD_F6;   break;
-  case SDLK_F7:   rc = KEYD_F7;   break;
-  case SDLK_F8:   rc = KEYD_F8;   break;
-  case SDLK_F9:   rc = KEYD_F9;   break;
-  case SDLK_F10:  rc = KEYD_F10;    break;
-  case SDLK_F11:  rc = KEYD_F11;    break;
-  case SDLK_F12:  rc = KEYD_F12;    break;
-  case SDLK_BACKSPACE:  rc = KEYD_BACKSPACE;  break;
-  case SDLK_DELETE: rc = KEYD_DEL;  break;
-  case SDLK_INSERT: rc = KEYD_INSERT; break;
-  case SDLK_PAGEUP: rc = KEYD_PAGEUP; break;
-  case SDLK_PAGEDOWN: rc = KEYD_PAGEDOWN; break;
-  case SDLK_HOME: rc = KEYD_HOME; break;
-  case SDLK_END:  rc = KEYD_END;  break;
-  case SDLK_PAUSE:  rc = KEYD_PAUSE;  break;
-  case SDLK_EQUALS: rc = KEYD_EQUALS; break;
-  case SDLK_MINUS:  rc = KEYD_MINUS;  break;
-  case SDLK_KP0:  rc = KEYD_KEYPAD0;  break;
-  case SDLK_KP1:  rc = KEYD_KEYPAD1;  break;
-  case SDLK_KP2:  rc = KEYD_KEYPAD2;  break;
-  case SDLK_KP3:  rc = KEYD_KEYPAD3;  break;
-  case SDLK_KP4:  rc = KEYD_KEYPAD4;  break;
-  case SDLK_KP5:  rc = KEYD_KEYPAD5;  break;
-  case SDLK_KP6:  rc = KEYD_KEYPAD6;  break;
-  case SDLK_KP7:  rc = KEYD_KEYPAD7;  break;
-  case SDLK_KP8:  rc = KEYD_KEYPAD8;  break;
-  case SDLK_KP9:  rc = KEYD_KEYPAD9;  break;
-  case SDLK_KP_PLUS:  rc = KEYD_KEYPADPLUS; break;
-  case SDLK_KP_MINUS: rc = KEYD_KEYPADMINUS;  break;
-  case SDLK_KP_DIVIDE:  rc = KEYD_KEYPADDIVIDE; break;
-  case SDLK_KP_MULTIPLY: rc = KEYD_KEYPADMULTIPLY; break;
-  case SDLK_KP_ENTER: rc = KEYD_KEYPADENTER;  break;
-  case SDLK_KP_PERIOD:  rc = KEYD_KEYPADPERIOD; break;
+  case SDLK_LEFT:            rc = KEYD_LEFTARROW;          break;
+  case SDLK_UP:              rc = KEYD_UPARROW;            break;
+  case SDLK_RIGHT:           rc = KEYD_RIGHTARROW;         break;
+  case SDLK_DOWN:            rc = KEYD_DOWNARROW;          break;
+  case SDLK_ESCAPE:          rc = KEYD_ESCAPE;             break;
+  case SDLK_RETURN:          rc = KEYD_ENTER;              break;
+  case SDLK_TAB:             rc = KEYD_TAB;                break;
+  case SDLK_F1:              rc = KEYD_F1;                 break;
+  case SDLK_F2:              rc = KEYD_F2;                 break;
+  case SDLK_F3:              rc = KEYD_F3;                 break;
+  case SDLK_F4:              rc = KEYD_F4;                 break;
+  case SDLK_F5:              rc = KEYD_F5;                 break;
+  case SDLK_F6:              rc = KEYD_F6;                 break;
+  case SDLK_F7:              rc = KEYD_F7;                 break;
+  case SDLK_F8:              rc = KEYD_F8;                 break;
+  case SDLK_F9:              rc = KEYD_F9;                 break;
+  case SDLK_F10:             rc = KEYD_F10;                break;
+  case SDLK_F11:             rc = KEYD_F11;                break;
+  case SDLK_F12:             rc = KEYD_F12;                break;
+  case SDLK_BACKSPACE:       rc = KEYD_BACKSPACE;          break;
+  case SDLK_PAUSE:           rc = KEYD_PAUSE;              break;
+  case SDLK_EQUALS:          rc = KEYD_EQUALS;             break;
+  case SDLK_MINUS:           rc = KEYD_MINUS;              break;
   case SDLK_LSHIFT:
-  case SDLK_RSHIFT: rc = KEYD_RSHIFT; break;
+  case SDLK_RSHIFT:          rc = KEYD_RSHIFT;             break;
   case SDLK_LCTRL:
-  case SDLK_RCTRL:  rc = KEYD_RCTRL;  break;
+  case SDLK_RCTRL:           rc = KEYD_RCTRL;              break;
   case SDLK_LALT:
+  case SDLK_RALT:            rc = KEYD_RALT;               break;
   case SDLK_LMETA:
-  case SDLK_RALT:
-  case SDLK_RMETA:  rc = KEYD_RALT;   break;
-  case SDLK_CAPSLOCK: rc = KEYD_CAPSLOCK; break;
-  default:    rc = key->sym;    break;
+  case SDLK_RMETA:           rc = KEYD_RMETA;              break;
+  case SDLK_LSUPER:
+  case SDLK_RSUPER:          rc = KEYD_RSUPER;             break;
+  case SDLK_CAPSLOCK:        rc = KEYD_CAPSLOCK;           break;
+  case SDLK_BACKQUOTE:       rc = KEYD_BACKQUOTE;          break;
+  case SDLK_INSERT:          rc = KEYD_INSERT;             break;
+  case SDLK_HOME:            rc = KEYD_HOME;               break;
+  case SDLK_PAGEUP:          rc = KEYD_PAGEUP;             break;
+  case SDLK_PAGEDOWN:        rc = KEYD_PAGEDOWN;           break;
+  case SDLK_DELETE:          rc = KEYD_DEL;                break;
+  case SDLK_END:             rc = KEYD_END;                break;
+  case SDLK_SCROLLOCK:       rc = KEYD_SCROLLLOCK;         break;
+  case SDLK_SPACE:           rc = KEYD_SPACEBAR;           break;
+  case SDLK_NUMLOCK:         rc = KEYD_NUMLOCK;            break;
+  case SDLK_KP0:             rc = KEYD_KEYPAD0;            break;
+  case SDLK_KP1:             rc = KEYD_KEYPAD1;            break;
+  case SDLK_KP2:             rc = KEYD_KEYPAD2;            break;
+  case SDLK_KP3:             rc = KEYD_KEYPAD3;            break;
+  case SDLK_KP4:             rc = KEYD_KEYPAD4;            break;
+  case SDLK_KP5:             rc = KEYD_KEYPAD5;            break;
+  case SDLK_KP6:             rc = KEYD_KEYPAD6;            break;
+  case SDLK_KP7:             rc = KEYD_KEYPAD7;            break;
+  case SDLK_KP8:             rc = KEYD_KEYPAD8;            break;
+  case SDLK_KP9:             rc = KEYD_KEYPAD9;            break;
+  case SDLK_KP_ENTER:        rc = KEYD_KEYPADENTER;        break;
+  case SDLK_KP_DIVIDE:       rc = KEYD_KEYPADDIVIDE;       break;
+  case SDLK_KP_MULTIPLY:     rc = KEYD_KEYPADMULTIPLY;     break;
+  case SDLK_KP_MINUS:        rc = KEYD_KEYPADMINUS;        break;
+  case SDLK_KP_PLUS:         rc = KEYD_KEYPADPLUS;         break;
+  case SDLK_KP_PERIOD:       rc = KEYD_KEYPADPERIOD;       break;
+  default:                   rc = key->sym;                break;
   }
 
   return rc;
