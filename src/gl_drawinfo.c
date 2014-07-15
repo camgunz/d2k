@@ -74,30 +74,26 @@ void gld_FreeDrawInfo(void)
 //
 // Should be used between frames (in gld_StartDrawScene)
 //
-void gld_ResetDrawInfo(void)
-{
+void gld_ResetDrawInfo(void) {
   int i;
 
   for (i = 0; i < gld_drawinfo.maxsize; i++)
-  {
     gld_drawinfo.data[i].size = 0;
-  }
+
   gld_drawinfo.size = 0;
 
   for (i = 0; i < GLDIT_TYPES; i++)
-  {
     gld_drawinfo.num_items[i] = 0;
-  }
 }
 
 //
 // gld_AddDrawRange
 //
-static void gld_AddDrawRange(int size)
-{
+static void gld_AddDrawRange(int size) {
   gld_drawinfo.maxsize++;
-  gld_drawinfo.data = realloc(gld_drawinfo.data, 
-    gld_drawinfo.maxsize * sizeof(gld_drawinfo.data[0]));
+  gld_drawinfo.data = realloc(
+    gld_drawinfo.data, gld_drawinfo.maxsize * sizeof(gld_drawinfo.data[0])
+  );
 
   gld_drawinfo.data[gld_drawinfo.size].maxsize = size;
   gld_drawinfo.data[gld_drawinfo.size].data = malloc(size);
@@ -107,62 +103,62 @@ static void gld_AddDrawRange(int size)
 //
 // gld_AddDrawItem
 //
-#define NEWSIZE (MAX(64 * 1024, itemsize))
-#define SIZEOF8(type) ((sizeof(type)+7)&~7)
-void gld_AddDrawItem(GLDrawItemType itemtype, void *itemdata)
-{
+static int itemsizes[GLDIT_TYPES] = {
+  0,
+  (sizeof(GLWall)      + 7) & ~7,
+  (sizeof(GLWall)      + 7) & ~7,
+  (sizeof(GLWall)      + 7) & ~7,
+  (sizeof(GLWall)      + 7) & ~7,
+  (sizeof(GLWall)      + 7) & ~7,
+  (sizeof(GLWall)      + 7) & ~7,
+  (sizeof(GLWall)      + 7) & ~7,
+  (sizeof(GLFlat)      + 7) & ~7,
+  (sizeof(GLFlat)      + 7) & ~7,
+  (sizeof(GLFlat)      + 7) & ~7,
+  (sizeof(GLFlat)      + 7) & ~7,
+  (sizeof(GLSprite)    + 7) & ~7,
+  (sizeof(GLSprite)    + 7) & ~7,
+  (sizeof(GLSprite)    + 7) & ~7,
+  (sizeof(GLShadow)    + 7) & ~7,
+  (sizeof(GLHealthBar) + 7) & ~7,
+};
+
+void gld_AddDrawItem(GLDrawItemType dit, void *itemdata) {
   int itemsize = 0;
   byte *item_p = NULL;
 
-  static int itemsizes[GLDIT_TYPES] = {
-    0,
-    SIZEOF8(GLWall), SIZEOF8(GLWall), SIZEOF8(GLWall), SIZEOF8(GLWall), SIZEOF8(GLWall),
-    SIZEOF8(GLWall), SIZEOF8(GLWall),
-    SIZEOF8(GLFlat), SIZEOF8(GLFlat),
-    SIZEOF8(GLFlat), SIZEOF8(GLFlat),
-    SIZEOF8(GLSprite), SIZEOF8(GLSprite), SIZEOF8(GLSprite),
-    SIZEOF8(GLShadow),
-    SIZEOF8(GLHealthBar)
-  };
-
-  itemsize = itemsizes[itemtype];
+  itemsize = itemsizes[dit];
   if (itemsize == 0)
-  {
-    I_Error("gld_AddDrawItem: unknown GLDrawItemType %d", itemtype);
-  }
+    I_Error("gld_AddDrawItem: unknown GLDrawItemType %d", dit);
 
   if (gld_drawinfo.maxsize == 0)
-  {
-    gld_AddDrawRange(NEWSIZE);
-  }
+    gld_AddDrawRange(MAX(64 * 1024, itemsize));
 
   if (gld_drawinfo.data[gld_drawinfo.size].size + itemsize >=
-    gld_drawinfo.data[gld_drawinfo.size].maxsize)
-  {
+      gld_drawinfo.data[gld_drawinfo.size].maxsize) {
     gld_drawinfo.size++;
+
     if (gld_drawinfo.size >= gld_drawinfo.maxsize)
-    {
-      gld_AddDrawRange(NEWSIZE);
-    }
+      gld_AddDrawRange(MAX(64 * 1024, itemsize));
   }
 
   item_p = gld_drawinfo.data[gld_drawinfo.size].data +
-    gld_drawinfo.data[gld_drawinfo.size].size;
+           gld_drawinfo.data[gld_drawinfo.size].size;
 
   memcpy(item_p, itemdata, itemsize);
 
   gld_drawinfo.data[gld_drawinfo.size].size += itemsize;
 
-  if (gld_drawinfo.num_items[itemtype] >= gld_drawinfo.max_items[itemtype])
-  {
-    gld_drawinfo.max_items[itemtype] += 64;
-    gld_drawinfo.items[itemtype] = realloc(
-      gld_drawinfo.items[itemtype],
-      gld_drawinfo.max_items[itemtype] * sizeof(gld_drawinfo.items[0][0]));
+  if (gld_drawinfo.num_items[dit] >= gld_drawinfo.max_items[dit]) {
+    gld_drawinfo.max_items[dit] += 64;
+    gld_drawinfo.items[dit] = realloc(
+      gld_drawinfo.items[dit],
+      gld_drawinfo.max_items[dit] * sizeof(gld_drawinfo.items[0][0]));
   }
 
-  gld_drawinfo.items[itemtype][gld_drawinfo.num_items[itemtype]].item.item = item_p;
-  gld_drawinfo.num_items[itemtype]++;
+  gld_drawinfo.items[dit][gld_drawinfo.num_items[dit]].item.item = item_p;
+  gld_drawinfo.num_items[dit]++;
 }
-#undef SIZEOF8
-#undef NEWSIZE
+
+/* vi: set et ts=2 sw=2: */
+

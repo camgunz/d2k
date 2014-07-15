@@ -242,76 +242,81 @@ typedef enum {
 // This is the stuff configured by Setup.Exe.
 // Most key data are simple ascii (uppercased).
 
-#define KEYD_RIGHTARROW 0xae
-#define KEYD_LEFTARROW  0xac
-#define KEYD_UPARROW    0xad
-#define KEYD_DOWNARROW  0xaf
-#define KEYD_ESCAPE     27
-#define KEYD_ENTER      13
-#define KEYD_TAB        9
-#define KEYD_F1         (0x80+0x3b)
-#define KEYD_F2         (0x80+0x3c)
-#define KEYD_F3         (0x80+0x3d)
-#define KEYD_F4         (0x80+0x3e)
-#define KEYD_F5         (0x80+0x3f)
-#define KEYD_F6         (0x80+0x40)
-#define KEYD_F7         (0x80+0x41)
-#define KEYD_F8         (0x80+0x42)
-#define KEYD_F9         (0x80+0x43)
-#define KEYD_F10        (0x80+0x44)
-#define KEYD_F11        (0x80+0x57)
-#define KEYD_F12        (0x80+0x58)
-#define KEYD_BACKSPACE  127
-#define KEYD_PAUSE      0xff
-#define KEYD_EQUALS     0x3d
-#define KEYD_MINUS      0x2d
-#define KEYD_RSHIFT     (0x80+0x36)
-#define KEYD_RCTRL      (0x80+0x1d)
-#define KEYD_RALT       (0x80+0x38)
-#define KEYD_LALT       KEYD_RALT
-#define KEYD_CAPSLOCK   0xba                                        // phares
+enum {
+  KEYD_LEFTARROW,
+  KEYD_UPARROW,
+  KEYD_RIGHTARROW,
+  KEYD_DOWNARROW,
+  KEYD_ESCAPE,
+  KEYD_ENTER,
+  KEYD_TAB,
+  KEYD_F1,
+  KEYD_F2,
+  KEYD_F3,
+  KEYD_F4,
+  KEYD_F5,
+  KEYD_F6,
+  KEYD_F7,
+  KEYD_F8,
+  KEYD_F9,
+  KEYD_F10,
+  KEYD_F11,
+  KEYD_F12,
+  KEYD_BACKSPACE,
+  KEYD_PAUSE,
+  KEYD_EQUALS,
+  KEYD_MINUS,
+  KEYD_RSHIFT,
+  KEYD_RCTRL,
+  KEYD_RALT,
+  KEYD_LALT = KEYD_RALT,
+  KEYD_RMETA,
+  KEYD_RSUPER,
+  KEYD_CAPSLOCK,
+  KEYD_BACKQUOTE,
 
 // phares 3/2/98:
-#define KEYD_INSERT     0xd2
-#define KEYD_HOME       0xc7
-#define KEYD_PAGEUP     0xc9
-#define KEYD_PAGEDOWN   0xd1
-#define KEYD_DEL        0xc8
-#define KEYD_END        0xcf
-#define KEYD_SCROLLLOCK 0xc6
-#define KEYD_SPACEBAR   0x20
+  KEYD_INSERT,
+  KEYD_HOME,
+  KEYD_PAGEUP,
+  KEYD_PAGEDOWN,
+  KEYD_DEL,
+  KEYD_END,
+  KEYD_SCROLLLOCK,
+  KEYD_SPACEBAR,
 // phares 3/2/98
 
-#define KEYD_NUMLOCK    0xC5                 // killough 3/6/98
+  KEYD_NUMLOCK,
 
 // cph - Add the numeric keypad keys, as suggested by krose 4/22/99:
 // The way numbers are assigned to keys is a mess, but it's too late to
 // change that easily. At least these additions are don neatly.
 // Codes 0x100-0x200 are reserved for number pad
 
-#define KEYD_KEYPAD0      (0x100 + '0')
-#define KEYD_KEYPAD1      (0x100 + '1')
-#define KEYD_KEYPAD2      (0x100 + '2')
-#define KEYD_KEYPAD3      (0x100 + '3')
-#define KEYD_KEYPAD4      (0x100 + '4')
-#define KEYD_KEYPAD5      (0x100 + '5')
-#define KEYD_KEYPAD6      (0x100 + '6')
-#define KEYD_KEYPAD7      (0x100 + '7')
-#define KEYD_KEYPAD8      (0x100 + '8')
-#define KEYD_KEYPAD9      (0x100 + '9')
-#define KEYD_KEYPADENTER  (0x100 + KEYD_ENTER)
-#define KEYD_KEYPADDIVIDE (0x100 + '/')
-#define KEYD_KEYPADMULTIPLY (0x100 + '*')
-#define KEYD_KEYPADMINUS  (0x100 + '-')
-#define KEYD_KEYPADPLUS   (0x100 + '+')
-#define KEYD_KEYPADPERIOD (0x100 + '.')
+  KEYD_KEYPAD0,
+  KEYD_KEYPAD1,
+  KEYD_KEYPAD2,
+  KEYD_KEYPAD3,
+  KEYD_KEYPAD4,
+  KEYD_KEYPAD5,
+  KEYD_KEYPAD6,
+  KEYD_KEYPAD7,
+  KEYD_KEYPAD8,
+  KEYD_KEYPAD9,
+  KEYD_KEYPADENTER,
+  KEYD_KEYPADDIVIDE,
+  KEYD_KEYPADMULTIPLY,
+  KEYD_KEYPADMINUS,
+  KEYD_KEYPADPLUS,
+  KEYD_KEYPADPERIOD,
 
 // haleyjd: virtual keys
-#define KEYD_MOUSE1     (0x80 + 0x60)
-#define KEYD_MOUSE2     (0x80 + 0x61)
-#define KEYD_MOUSE3     (0x80 + 0x62)
-#define KEYD_MWHEELUP   (0x80 + 0x6b)
-#define KEYD_MWHEELDOWN (0x80 + 0x6c)
+  KEYD_MOUSE1,
+  KEYD_MOUSE2,
+  KEYD_MOUSE3,
+  KEYD_MWHEELUP,
+  KEYD_MWHEELDOWN
+};
 
 // phares 4/19/98:
 // Defines Setup Screen groups that config variables appear in.
@@ -343,3 +348,6 @@ typedef enum {
 #define FRICTION_FLY           0xeb00
 
 #endif          // __DOOMDEF__
+
+/* vi: set et ts=2 sw=2: */
+

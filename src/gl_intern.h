@@ -585,3 +585,6 @@ int glsl_IsActive(void);
 #endif // USE_SHADERS
 
 #endif // _GL_INTERN_H
+
+/* vi: set et ts=2 sw=2: */
+

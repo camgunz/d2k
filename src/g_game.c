@@ -3404,7 +3404,6 @@ void doom_printf(const char *fmt, ...) {
   va_list args, pargs;
 
   va_start(args, fmt);
-  va_copy(pargs, args);
   if (nodrawers || !graphics_initialized) {
     vprintf(fmt, args);
   }

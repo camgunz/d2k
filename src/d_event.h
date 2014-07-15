@@ -55,10 +55,10 @@ typedef enum
 // Event structure.
 typedef struct
 {
-  evtype_t  type;
-  int       data1;    // keys / mouse/joystick buttons
-  int       data2;    // mouse/joystick x move
-  int       data3;    // mouse/joystick y move
+  evtype_t     type;
+  unsigned int data1;    // keys / mouse/joystick buttons
+  int          data2;    // mouse/joystick x move
+  int          data3;    // mouse/joystick y move
 } event_t;
 
 

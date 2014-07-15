@@ -41,6 +41,8 @@
 #include "SDL.h"
 
 #include "doomdef.h"
+#include "d_event.h"
+#include "c_main.h"
 #include "r_main.h"
 #include "r_draw.h"
 #include "m_bbox.h"
