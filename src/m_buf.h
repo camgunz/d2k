@@ -57,6 +57,8 @@ void     M_BufferEnsureCapacity(buf_t *buf, size_t capacity);
 void     M_BufferEnsureTotalCapacity(buf_t *buf, size_t capacity);
 
 void     M_BufferCopy(buf_t *dst, buf_t *src);
+void     M_BufferCursorCopy(buf_t *dst, buf_t *src);
+dboolean M_BufferMove(buf_t *buf, size_t dpos, size_t spos, size_t count);
 
 void     M_BufferSetData(buf_t *buf, const void *data, size_t size);
 void     M_BufferSetString(buf_t *buf, const char *data, size_t length);

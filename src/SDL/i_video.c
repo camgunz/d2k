@@ -220,6 +220,12 @@ static void I_GetEvent(void)
 {
   event_t event;
 
+  event.type  = ev_none;
+  event.data1 = 0;
+  event.data2 = 0;
+  event.data3 = 0;
+  event.wchar = 0;
+
   SDL_Event SDLEvent;
   SDL_Event *Event = &SDLEvent;
 
@@ -263,6 +269,7 @@ while (SDL_PollEvent(Event))
 #endif
     event.type = ev_keydown;
     event.data1 = I_TranslateKey(&Event->key.keysym);
+    event.wchar = Event->key.keysym.unicode;
     D_PostEvent(&event);
     break;
 

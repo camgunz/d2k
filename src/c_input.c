@@ -27,7 +27,7 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *   Console
+ *   Console input
  *
  *-----------------------------------------------------------------------------
  */
@@ -505,7 +505,7 @@ bool C_Responder(event_t *ev) {
     return true;
   }
 
-  if (ev->data1 == KEYD_DEL) {
+  if (ev->data1 == KEYD_DELETE) {
     if (console.cursor == strlen(CONSOLE_PROMPT))
       return true;
 

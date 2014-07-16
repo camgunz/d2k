@@ -129,6 +129,25 @@ void M_BufferCopy(buf_t *dst, buf_t *src) {
   M_BufferSetData(dst, M_BufferGetData(src), M_BufferGetSize(src));
 }
 
+void M_BufferCursorCopy(buf_t *dst, buf_t *src) {
+  M_BufferWrite(
+    dst,
+    M_BufferGetDataAtCursor(src),
+    M_BufferGetSize(src) - (M_BufferGetCursor(src) - 1)
+  );
+}
+
+dboolean M_BufferMove(buf_t *buf, size_t dpos, size_t spos, size_t count) {
+  if ((spos + count) > M_BufferGetSize(buf))
+    return false;
+
+  M_BufferEnsureTotalCapacity(buf, dpos + count);
+
+  memmove(M_BufferGetData(buf) + dpos, M_BufferGetData(buf) + spos, count);
+
+  return true;
+}
+
 void M_BufferSetData(buf_t *buf, const void *data, size_t size) {
   M_BufferClear(buf);
   M_BufferEnsureTotalCapacity(buf, size);

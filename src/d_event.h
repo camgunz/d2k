@@ -46,6 +46,7 @@
 // Input event types.
 typedef enum
 {
+  ev_none,
   ev_keydown,
   ev_keyup,
   ev_mouse,
@@ -56,9 +57,10 @@ typedef enum
 typedef struct
 {
   evtype_t     type;
-  unsigned int data1;    // keys / mouse/joystick buttons
+  int          data1;    // keys / mouse/joystick buttons
   int          data2;    // mouse/joystick x move
   int          data3;    // mouse/joystick y move
+  uint16_t     wchar;    // CG 07/15/14: SDL relays Unicode input as UTF-16
 } event_t;
 
 
