@@ -44,6 +44,7 @@
 #include "gl_opengl.h"
 #include "gl_intern.h"
 #include "lprintf.h"
+#include "i_main.h"
 #include "i_system.h"
 #include "v_video.h"
 
@@ -97,7 +98,7 @@ extern SDL_Surface *screen;
 typedef struct console_input_s {
   GString *gstr;
   size_t cursor;
-  bool cursor_visible;
+  uint32_t cursor_active;
 } console_input_t;
 
 typedef struct console_s {
@@ -150,6 +151,8 @@ static bool move_input_cursor_left(void) {
 
   console.input->cursor = n_char - console.input->gstr->str;
 
+  console.input->cursor_active = I_GetTime();
+
   return true;
 }
 
@@ -167,6 +170,8 @@ static bool move_input_cursor_right(void) {
     return false;
 
   console.input->cursor = n_char - console.input->gstr->str;
+
+  console.input->cursor_active = I_GetTime();
 
   return true;
 }
@@ -188,6 +193,8 @@ static void insert_input(const char *new_input) {
   g_string_insert(console.input->gstr, console.input->cursor, new_input);
   normalize_input();
   console.input->cursor += strlen(new_input);
+
+  console.input->cursor_active = I_GetTime();
 
   console.rebuild_input_layout = true;
 }
@@ -222,6 +229,8 @@ static void backspace_input(void) {
   g_string_erase(console.input->gstr, pos, size);
   normalize_input();
 
+  console.input->cursor_active = I_GetTime();
+
   console.rebuild_input_layout = true;
 }
 
@@ -254,6 +263,8 @@ static void delete_input(void) {
   g_string_erase(console.input->gstr, console.input->cursor, size);
   normalize_input();
 
+  console.input->cursor_active = I_GetTime();
+
   console.rebuild_input_layout = true;
 }
 
@@ -261,6 +272,8 @@ static void clear_input(void) {
   g_string_erase(console.input->gstr, 0, -1);
   console.input->cursor = 0;
   normalize_input();
+
+  console.input->cursor_active = I_GetTime();
 
   console.rebuild_input_layout = true;
 }
@@ -277,6 +290,8 @@ static void process_input(void) {
   clear_input();
 
   printf("process_input: processing command [%s]\n", command);
+
+  console.input->cursor_active = I_GetTime();
 
   free(command);
 }
@@ -408,7 +423,7 @@ void C_Init(void) {
   console.input = malloc(sizeof(console_input_t));
   console.input->gstr = g_string_new("");
   console.input->cursor = 0;
-  console.input->cursor_visible = true;
+  console.input->cursor_active = 0;
   console.font_description = "FreeSans 8";
 
   C_Reset();
@@ -513,8 +528,6 @@ void C_Ticker(void) {
 
   int ms_elapsed;
   int current_ms = I_GetTicks();
-  int ms_per_tic = (int)(1000 * (1.0 / TICRATE));
-  int tic_ms = current_ms % ms_per_tic;
 
   if (last_run_ms == 0)
     last_run_ms = current_ms;
@@ -537,9 +550,6 @@ void C_Ticker(void) {
     console.height = console.max_height;
     console.scroll_rate = 0.0;
   }
-
-  if (tic_ms < ms_per_tic) {
-  }
 }
 
 void C_Drawer(void) {
@@ -550,6 +560,8 @@ void C_Drawer(void) {
   double input_height_fracedge;
   int sb_width;
   int sb_height;
+  int cursor_visible;
+  uint32_t current_tic = I_GetTime();
 
   if (V_GetMode() == VID_MODE32 && SDL_MUSTLOCK(screen))
     SDL_LockSurface(screen);
@@ -612,7 +624,14 @@ void C_Drawer(void) {
   cairo_set_line_width(console.cairo_context, CONSOLE_PROMPT_THICKNESS);
   cairo_stroke(console.cairo_context);
 
-  if (console.input->cursor_visible) {
+  current_tic = I_GetTime();
+
+  cursor_visible = (
+    ((current_tic % TICRATE) >= ((TICRATE / 2))) ||
+    (console.input->cursor_active >= (current_tic - TICRATE))
+  );
+
+  if (cursor_visible) {
     PangoRectangle pos;
     int x;
     int y;
