@@ -122,10 +122,8 @@ static void run_tic(void) {
   if (advancedemo)
     D_DoAdvanceDemo();
 
-  M_Ticker();
   I_GetTime_SaveMS();
   G_Ticker();
-  C_Ticker();
   P_Checksum(gametic);
 
   if (DELTASERVER) {
@@ -189,10 +187,15 @@ static int run_commandsync_tics(int command_count) {
 }
 
 static int process_tics(int tics_elapsed) {
-  netpeer_t *p = N_PeerGet(0);
+  netpeer_t *p;
 
   if (tics_elapsed <= 0)
     return 0;
+
+  if (!MULTINET)
+    return run_tics(tics_elapsed);
+
+  p = N_PeerGet(0);
 
   if (p != NULL) {
     if (SERVER)
@@ -234,11 +237,16 @@ static void service_network(void) {
 }
 
 static void deltaclient_service_network(void) {
-  netpeer_t *server = N_PeerGet(0);
+  netpeer_t *server;
   int latest_sync_tic;
   int latest_command_index;
   int latest_delta_from_tic;
   int latest_delta_to_tic;
+
+  if (!DELTACLIENT)
+    return;
+
+  server = N_PeerGet(0);
 
   if (gametic <= 0) {
     service_network();
@@ -665,6 +673,7 @@ void N_TryRunTics(void) {
     render_menu(MAX(menu_renderer_calls - tics_run, 0));
   }
 
+  C_Ticker();
   cleanup_old_commands_and_states();
 
   if (CLIENT && gametic > 0 && N_PeerGet(0) == NULL)
