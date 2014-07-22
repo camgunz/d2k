@@ -132,7 +132,7 @@ static bool input_cursor_at_start(void) {
 }
 
 static bool input_cursor_at_end(void) {
-  return console.input->cursor > (console.input->gstr->len - 1);
+  return console.input->cursor >= console.input->gstr->len;
 }
 
 static bool move_input_cursor_left(void) {
@@ -746,6 +746,16 @@ bool C_Responder(event_t *ev) {
 
   if (ev->data1 == KEYD_RIGHTARROW) {
     move_input_cursor_right();
+    return true;
+  }
+
+  if (ev->data1 == KEYD_HOME) {
+    console.input->cursor = 0;
+    return true;
+  }
+
+  if (ev->data1 == KEYD_END) {
+    console.input->cursor = console.input->gstr->len;
     return true;
   }
 

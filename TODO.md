@@ -1,6 +1,9 @@
 # To Do
 
 1. Add enough scripting to add a console
+  - Ellipsization of input line ought to follow the cursor
+  - Repeating key events
+  - Command history
 
 2. Add unlagged
   - Save attacking player position
