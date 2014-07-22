@@ -690,9 +690,8 @@ int main(int argc, char **argv)
   atexit(I_Quit);
 #ifndef PRBOOM_DEBUG
   if (!M_CheckParm("-devparm"))
-  {
     signal(SIGSEGV, I_SignalHandler);
-  }
+
   signal(SIGTERM, I_SignalHandler);
   signal(SIGFPE,  I_SignalHandler);
   signal(SIGILL,  I_SignalHandler);
@@ -711,6 +710,9 @@ int main(int argc, char **argv)
 
   /* CG 07/11/2014: Enable Unicode in SDL */
   SDL_EnableUNICODE(true);
+
+  /* CG 07/22/2014: Enable key repeating */
+  SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
   D_DoomMain();
   return 0;

@@ -2,7 +2,7 @@
 
 1. Add enough scripting to add a console
   - Ellipsization of input line ought to follow the cursor
-  - Repeating key events
+  - Scroll up/down through scrollback
   - Command history
 
 2. Add unlagged
