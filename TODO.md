@@ -1,9 +1,26 @@
 # To Do
 
-1. Add enough scripting to add a console
+1. Add a console
   - Ellipsization of input line ought to follow the cursor
   - Scroll up/down through scrollback
   - Command history
+    - Do this yourself
+  - Problems in multiplayer?
+  - Clipboard (cut/copy/paste)
+  - Selection
+    - Mouse
+  - Move the demo commands out of `M_Responder` (I'm guessing)
+
+2. Add scripting
+  - quit
+  - echo
+  - say
+
+3. Single-player intermission is broken
+
+4. Make it possible to play a game
+  - Something about quitting & rejoining
+  - Sounds with > 1 player are busted
 
 2. Add unlagged
   - Save attacking player position
