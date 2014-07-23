@@ -121,8 +121,8 @@ void X_Init(void) {
   atexit(X_Close);
 
   lua_createtable(L, g_hash_table_size(x_funcs), 0);
-  lua_setglobal(L, "xf");
-  lua_getglobal(L, "xf");
+  lua_setglobal(L, X_NAMESPACE);
+  lua_getglobal(L, X_NAMESPACE);
   g_hash_table_foreach(x_funcs, load_x_func, NULL);
 }
 

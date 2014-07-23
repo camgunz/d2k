@@ -39,6 +39,8 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
+#define X_NAMESPACE "xf"
+
 void        X_RegisterFunc(const char *name, lua_CFunction func);
 void        X_Init(void);
 const char* X_GetError(void);
