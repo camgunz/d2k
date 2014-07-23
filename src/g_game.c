@@ -3373,18 +3373,18 @@ dboolean G_CheckDemoStatus(void) {
 //               of the engine expects to be able to just assign static strings
 //               to player_t.message, but messages sent over the network are
 //               obviously not static, so they have to be copied.
-void doom_pprintf(short playernum, const char *s, ...) {
+void doom_pprintf(short playernum, const char *fmt, ...) {
   static char msg[MAXPLAYERS][MAX_MESSAGE_LENGTH];
 
   va_list v;
 
-  va_start(v, s);
+  va_start(v, fmt);
   if (nodrawers || !graphics_initialized) {
-    vprintf(s, v);
+    vprintf(fmt, v);
   }
   else {
     /* print message in buffer */
-    doom_vsnprintf(msg[playernum], sizeof(msg[playernum]), s, v);
+    doom_vsnprintf(msg[playernum], sizeof(msg[playernum]), fmt, v);
     /* set new message */
     players[playernum].message = msg[playernum];
   }

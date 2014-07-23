@@ -90,6 +90,7 @@
 #include "n_net.h"
 #include "n_main.h"
 #include "n_state.h"
+#include "x_main.h"
 
 static char *iwad_base = NULL;
 static char *iwad_path = NULL;
@@ -2072,6 +2073,10 @@ static void D_DoomMainSetup(void) {
   // CG 07/09/2014: Console
   lprintf(LO_INFO, "C_Init: Init console.\n");
   C_Init();
+
+  // CG 07/22/2014: Scripting
+  lprintf(LO_INFO, "X_Init: Init script engine.\n");
+  X_Init();
 
   // CPhipps - auto screenshots
   if ((p = M_CheckParm("-autoshot")) && (p < myargc - 2))

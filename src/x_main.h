@@ -27,28 +27,22 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *  Console
+ *   Scripting
  *
  *-----------------------------------------------------------------------------
  */
 
-#ifndef C_MAIN__
-#define C_MAIN__
+#ifndef X_MAIN__
+#define X_MAIN__
 
-void C_Init(void);
-void C_Reset(void);
-void C_Ticker(void);
-void C_Drawer(void);
-bool C_Responder(event_t *ev);
-void C_ScrollDown(void);
-void C_ScrollUp(void);
-void C_ToggleScroll(void);
-void C_SetFullScreen(void);
-void C_Banish(void);
-void C_Printf(const char *fmt, ...) PRINTF_DECL(1, 2);
-void C_MPrintf(const char *fmt, ...) PRINTF_DECL(1, 2);
-void C_Echo(const char *message);
-void C_MEcho(const char *message);
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
+
+void        X_RegisterFunc(const char *name, lua_CFunction func);
+void        X_Init(void);
+const char* X_GetError(void);
+bool        X_RunCode(const char *code);
 
 #endif
 

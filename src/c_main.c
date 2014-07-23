@@ -47,6 +47,7 @@
 #include "i_main.h"
 #include "i_system.h"
 #include "v_video.h"
+#include "x_main.h"
 
 #define CONSOLE_MAXHEIGHT (REAL_SCREENHEIGHT / 2)
 #define CONSOLE_MAXWIDTH  (REAL_SCREENWIDTH)
@@ -56,7 +57,7 @@
 #define CONSOLE_SCROLL_UP_RATE   -(CONSOLE_MAXHEIGHT / CONSOLE_SCROLL_UP_TIME)
 #define CONSOLE_CURSOR_THICKNESS 2
 #define CONSOLE_PROMPT_THICKNESS 1
-#define CONSOLE_MARGIN 4
+#define CONSOLE_MARGIN 8
 
 #define TEST_SCROLLBACK_TEXT \
 "&lt;[UD]Ladna&gt; line 1\n" \
@@ -95,28 +96,32 @@
 
 extern SDL_Surface *screen;
 
+typedef struct console_scrollback_s {
+  GString *buf;
+  PangoLayout *layout;
+  bool rebuild;
+} console_scrollback_t;
+
 typedef struct console_input_s {
-  GString *gstr;
+  GString *buf;
   size_t cursor;
   uint32_t cursor_active;
+  PangoLayout *layout;
+  bool rebuild;
 } console_input_t;
 
 typedef struct console_s {
-  buf_t *scrollback;
-  console_input_t *input;
+  console_scrollback_t scrollback;
+  console_input_t input;
   int cursor;
   double scroll_rate;
   double height;
   int max_height;
   int max_width;
-  const char *font_description;
+  char *font_description;
   cairo_t *cairo_context;
   cairo_surface_t *cairo_surface;
   PangoContext *pango_context;
-  PangoLayout *scrollback_layout;
-  PangoLayout *input_layout;
-  bool rebuild_scrollback_layout;
-  bool rebuild_input_layout;
 #ifdef GL_DOOM
   GLuint tex_id;
   bool repaint;
@@ -128,11 +133,15 @@ typedef struct console_s {
 static console_t console;
 
 static bool input_cursor_at_start(void) {
-  return console.input->cursor <= 0;
+  return console.input.cursor <= 0;
 }
 
 static bool input_cursor_at_end(void) {
-  return console.input->cursor >= console.input->gstr->len;
+  return console.input.cursor >= console.input.buf->len;
+}
+
+static void activate_cursor(void) {
+  console.input.cursor_active = I_GetTime();
 }
 
 static bool move_input_cursor_left(void) {
@@ -142,16 +151,16 @@ static bool move_input_cursor_left(void) {
     return false;
 
   n_char = g_utf8_find_prev_char(
-    console.input->gstr->str,
-    console.input->gstr->str + console.input->cursor
+    console.input.buf->str,
+    console.input.buf->str + console.input.cursor
   );
 
   if (n_char == NULL)
     return false;
 
-  console.input->cursor = n_char - console.input->gstr->str;
+  console.input.cursor = n_char - console.input.buf->str;
 
-  console.input->cursor_active = I_GetTime();
+  activate_cursor();
 
   return true;
 }
@@ -163,40 +172,40 @@ static bool move_input_cursor_right(void) {
     return false;
 
   n_char = g_utf8_find_next_char(
-    console.input->gstr->str + console.input->cursor, NULL
+    console.input.buf->str + console.input.cursor, NULL
   );
 
   if (n_char == NULL)
     return false;
 
-  console.input->cursor = n_char - console.input->gstr->str;
+  console.input.cursor = n_char - console.input.buf->str;
 
-  console.input->cursor_active = I_GetTime();
+  activate_cursor();
 
   return true;
 }
 
 static void normalize_input(void) {
   char *normalized_input = g_utf8_normalize(
-    console.input->gstr->str, -1, G_NORMALIZE_DEFAULT
+    console.input.buf->str, -1, G_NORMALIZE_DEFAULT
   );
 
   if (normalized_input == NULL)
     return;
 
-  g_string_assign(console.input->gstr, normalized_input);
+  g_string_assign(console.input.buf, normalized_input);
 
   g_free(normalized_input);
 }
 
 static void insert_input(const char *new_input) {
-  g_string_insert(console.input->gstr, console.input->cursor, new_input);
+  g_string_insert(console.input.buf, console.input.cursor, new_input);
   normalize_input();
-  console.input->cursor += strlen(new_input);
+  console.input.cursor += strlen(new_input);
 
-  console.input->cursor_active = I_GetTime();
+  activate_cursor();
 
-  console.rebuild_input_layout = true;
+  console.input.rebuild = true;
 }
 
 static void backspace_input(void) {
@@ -208,30 +217,30 @@ static void backspace_input(void) {
     return;
 
   p_char = g_utf8_find_prev_char(
-    console.input->gstr->str,
-    console.input->gstr->str + console.input->cursor
+    console.input.buf->str,
+    console.input.buf->str + console.input.cursor
   );
 
   if (p_char == NULL)
     return;
 
-  if (p_char < console.input->gstr->str)
+  if (p_char < console.input.buf->str)
     I_Error("backspace_input: previous character exists before string");
 
-  pos = p_char - console.input->gstr->str;
+  pos = p_char - console.input.buf->str;
 
-  if (pos >= console.input->cursor)
+  if (pos >= console.input.cursor)
     I_Error("backspace_input: previous character exists after cursor");
 
-  size = console.input->cursor - pos;
+  size = console.input.cursor - pos;
 
-  console.input->cursor -= size;
-  g_string_erase(console.input->gstr, pos, size);
+  console.input.cursor -= size;
+  g_string_erase(console.input.buf, pos, size);
   normalize_input();
 
-  console.input->cursor_active = I_GetTime();
+  activate_cursor();
 
-  console.rebuild_input_layout = true;
+  console.input.rebuild = true;
 }
 
 static void delete_input(void) {
@@ -243,57 +252,67 @@ static void delete_input(void) {
     return;
 
   n_char = g_utf8_find_next_char(
-    console.input->gstr->str + console.input->cursor,
+    console.input.buf->str + console.input.cursor,
     NULL
   );
 
   if (n_char == NULL)
     I_Error("delete_input: no next character exists after cursor");
 
-  if (n_char < console.input->gstr->str)
+  if (n_char < console.input.buf->str)
     I_Error("delete_input: next character exists before string");
 
-  pos = n_char - console.input->gstr->str;
+  pos = n_char - console.input.buf->str;
 
-  if (pos < console.input->cursor)
+  if (pos < console.input.cursor)
     I_Error("delete_input: next character exists before cursor");
 
-  size = pos - console.input->cursor;
+  size = pos - console.input.cursor;
 
-  g_string_erase(console.input->gstr, console.input->cursor, size);
+  g_string_erase(console.input.buf, console.input.cursor, size);
   normalize_input();
 
-  console.input->cursor_active = I_GetTime();
+  activate_cursor();
 
-  console.rebuild_input_layout = true;
+  console.input.rebuild = true;
 }
 
 static void clear_input(void) {
-  g_string_erase(console.input->gstr, 0, -1);
-  console.input->cursor = 0;
+  g_string_erase(console.input.buf, 0, -1);
+  console.input.cursor = 0;
   normalize_input();
 
-  console.input->cursor_active = I_GetTime();
+  activate_cursor();
 
-  console.rebuild_input_layout = true;
+  console.input.rebuild = true;
 }
 
 static void process_input(void) {
-  size_t command_length = console.input->gstr->len;
-  char *command = calloc(command_length + 1, sizeof(char));
+  bool success = X_RunCode(console.input.buf->str);
 
-  if (command == NULL)
-    I_Error("process_input: calloc'ing input command failed");
-
-  strncpy(command, console.input->gstr->str, command_length);
+  if (!success)
+    C_MPrintf("<span color='red'>Error: %s</span>\n", X_GetError());
 
   clear_input();
+  activate_cursor();
+}
 
-  printf("process_input: processing command [%s]\n", command);
+int XF_Echo(lua_State *L) {
+  const char *message = luaL_checkstring(L, 1);
 
-  console.input->cursor_active = I_GetTime();
+  if (message)
+    C_Echo(message);
 
-  free(command);
+  return 0;
+}
+
+int XF_MEcho(lua_State *L) {
+  const char *markup_message = luaL_checkstring(L, 1);
+
+  if (markup_message)
+    C_MEcho(markup_message);
+
+  return 0;
 }
 
 static void build_gl_texture(void) {
@@ -334,11 +353,14 @@ static void rebuild_scrollback_layout(void) {
   );
 
   pango_layout_set_markup(
-    console.scrollback_layout, M_BufferGetData(console.scrollback), -1
+    console.scrollback.layout, console.scrollback.buf->str, -1
   );
-  pango_layout_set_font_description(console.scrollback_layout, desc);
-  pango_layout_set_wrap(console.scrollback_layout, PANGO_WRAP_WORD_CHAR);
-  pango_cairo_update_layout(console.cairo_context, console.scrollback_layout);
+  pango_layout_set_font_description(console.scrollback.layout, desc);
+  pango_layout_set_width(console.scrollback.layout, console.max_width - (
+      CONSOLE_MARGIN + CONSOLE_MARGIN
+  ) * PANGO_SCALE);
+  pango_layout_set_wrap(console.scrollback.layout, PANGO_WRAP_WORD_CHAR);
+  pango_cairo_update_layout(console.cairo_context, console.scrollback.layout);
 
   pango_font_description_free(desc);
 #ifdef GL_DOOM
@@ -354,21 +376,21 @@ static void rebuild_input_layout(void) {
   int input_height;
   int console_input_width;
 
-  pango_layout_get_size(console.input_layout, &input_width, &input_height);
+  pango_layout_get_size(console.input.layout, &input_width, &input_height);
   input_width /= PANGO_SCALE;
   input_height /= PANGO_SCALE;
 
   console_input_width = console.max_width - (
     CONSOLE_MARGIN +
     CONSOLE_MARGIN +
-    (input_height + CONSOLE_MARGIN)
+    (input_height)
   ) * PANGO_SCALE;
 
-  pango_layout_set_text(console.input_layout, console.input->gstr->str, -1);
-  pango_layout_set_font_description(console.input_layout, desc);
-  pango_layout_set_ellipsize(console.input_layout, PANGO_ELLIPSIZE_START);
-  pango_layout_set_width(console.input_layout, console_input_width);
-  pango_cairo_update_layout(console.cairo_context, console.input_layout);
+  pango_layout_set_text(console.input.layout, console.input.buf->str, -1);
+  pango_layout_set_font_description(console.input.layout, desc);
+  pango_layout_set_ellipsize(console.input.layout, PANGO_ELLIPSIZE_START);
+  pango_layout_set_width(console.input.layout, console_input_width);
+  pango_cairo_update_layout(console.cairo_context, console.input.layout);
 
   pango_font_description_free(desc);
 #ifdef GL_DOOM
@@ -376,54 +398,11 @@ static void rebuild_input_layout(void) {
 #endif
 }
 
-void C_Printf(const char *fmt, ...) {
-  gchar *markup_string;
-  va_list args;
-
-  va_start(args, fmt);
-  markup_string = g_markup_vprintf_escaped(fmt, args);
-  M_BufferWriteString(
-    console.scrollback, markup_string, strlen(markup_string)
-  );
-  g_free(markup_string);
-  va_end(args);
-
-  console.rebuild_scrollback_layout = true;
-}
-
-void C_MPrintf(const char *fmt, ...) {
-  gint size, new_size;
-  va_list args;
-
-  va_start(args, fmt);
-  size = g_vsnprintf(NULL, 0, fmt, args);
-  if (size < 0) {
-    perror("C_RawPrintf: g_vsnprintf returned an error: ");
-    I_Error("");
-  }
-  M_BufferEnsureCapacity(console.scrollback, size + 1);
-  new_size = g_vsnprintf(
-    M_BufferGetDataAtCursor(console.scrollback), size + 1, fmt, args
-  );
-  if (size < 0) {
-    perror(
-      "C_RawPrintf: g_vsnprintf returned an error writing to scrollback: "
-    );
-    I_Error("");
-  }
-  va_end(args);
-
-  M_BufferSeekForward(console.scrollback, new_size + 1);
-
-  console.rebuild_scrollback_layout = true;
-}
-
 void C_Init(void) {
-  console.scrollback = M_BufferNew();
-  console.input = malloc(sizeof(console_input_t));
-  console.input->gstr = g_string_new("");
-  console.input->cursor = 0;
-  console.input->cursor_active = 0;
+  console.scrollback.buf = g_string_new("");
+  console.input.buf = g_string_new("");
+  console.input.cursor = 0;
+  console.input.cursor_active = 0;
   console.font_description = "FreeSans 8";
 
   C_Reset();
@@ -433,6 +412,9 @@ void C_Init(void) {
   C_MPrintf(TEST_SCROLLBACK_TEXT);
 
   build_gl_texture();
+
+  X_RegisterFunc("echo", XF_Echo);
+  X_RegisterFunc("mecho", XF_MEcho);
 }
 
 void C_Reset(void) {
@@ -500,25 +482,25 @@ void C_Reset(void) {
 
   console.pango_context = pango_cairo_create_context(console.cairo_context);
 
-  if (console.scrollback_layout)
-    g_object_unref(console.scrollback_layout);
+  if (console.scrollback.layout)
+    g_object_unref(console.scrollback.layout);
 
-  console.scrollback_layout = pango_layout_new(console.pango_context);
+  console.scrollback.layout = pango_layout_new(console.pango_context);
   pango_layout_set_width(
-    console.scrollback_layout, console.max_width * PANGO_SCALE
+    console.scrollback.layout, console.max_width * PANGO_SCALE
   );
-  pango_layout_set_wrap(console.scrollback_layout, PANGO_WRAP_WORD_CHAR);
+  pango_layout_set_wrap(console.scrollback.layout, PANGO_WRAP_WORD_CHAR);
 
-  if (console.input_layout)
-    g_object_unref(console.input_layout);
+  if (console.input.layout)
+    g_object_unref(console.input.layout);
 
-  console.input_layout = pango_layout_new(console.pango_context);
+  console.input.layout = pango_layout_new(console.pango_context);
   pango_layout_set_width(
-    console.input_layout, console.max_width * PANGO_SCALE
+    console.input.layout, console.max_width * PANGO_SCALE
   );
 
-  console.rebuild_scrollback_layout = true;
-  console.rebuild_input_layout = true;
+  console.scrollback.rebuild = true;
+  console.input.rebuild = true;
 
   // cairo_font_options_destroy(font_options);
 }
@@ -571,10 +553,10 @@ void C_Drawer(void) {
     cairo_set_operator(console.cairo_context, CAIRO_OPERATOR_SOURCE);
 #endif
 
-  if (console.rebuild_scrollback_layout)
+  if (console.scrollback.rebuild)
     rebuild_scrollback_layout();
 
-  if (console.rebuild_input_layout)
+  if (console.input.rebuild)
     rebuild_input_layout();
 
   cairo_reset_clip(console.cairo_context);
@@ -593,32 +575,37 @@ void C_Drawer(void) {
 
   cairo_set_source_rgba(console.cairo_context, 1.0f, 1.0f, 1.0f, 1.0f);
 
-  pango_layout_get_size(console.input_layout, &input_width, &input_height);
+  pango_layout_get_size(console.input.layout, &input_width, &input_height);
   input_width /= PANGO_SCALE;
   input_height /= PANGO_SCALE;
   input_height_frac = input_height / input_height_fracunit;
   input_height_fracedge = input_height_frac * (input_height_fracunit - 1.0);
+
+  pango_layout_get_size(console.scrollback.layout, &sb_width, &sb_height);
+  sb_width /= PANGO_SCALE;
+  sb_height /= PANGO_SCALE;
   cairo_move_to(
     console.cairo_context,
-    CONSOLE_MARGIN + (input_height + CONSOLE_MARGIN),
-    console.height - (input_height + CONSOLE_MARGIN)
+    CONSOLE_MARGIN,
+    console.height - ((input_height * 2) + sb_height)
   );
-  pango_cairo_show_layout(console.cairo_context, console.input_layout);
+
+  pango_cairo_show_layout(console.cairo_context, console.scrollback.layout);
 
   cairo_move_to(
     console.cairo_context,
-    CONSOLE_MARGIN + input_height_frac,
-    console.height - ((input_height_fracedge) + CONSOLE_MARGIN)
+    CONSOLE_MARGIN,
+    console.height - (CONSOLE_MARGIN + input_height_fracedge)
   );
 
   cairo_line_to(
     console.cairo_context,
-    CONSOLE_MARGIN + (input_height_fracedge),
-    console.height - ((input_height >> 1) + CONSOLE_MARGIN)
+    CONSOLE_MARGIN + (input_height >> 1),
+    console.height - (CONSOLE_MARGIN + (input_height >> 1))
   );
   cairo_line_to(
     console.cairo_context,
-    CONSOLE_MARGIN + input_height_frac,
+    CONSOLE_MARGIN,
     console.height - (CONSOLE_MARGIN + input_height_frac)
   );
   cairo_set_line_width(console.cairo_context, CONSOLE_PROMPT_THICKNESS);
@@ -628,7 +615,7 @@ void C_Drawer(void) {
 
   cursor_visible = (
     ((current_tic % TICRATE) >= ((TICRATE / 2))) ||
-    (console.input->cursor_active >= (current_tic - TICRATE))
+    (console.input.cursor_active >= (current_tic - TICRATE))
   );
 
   if (cursor_visible) {
@@ -639,7 +626,7 @@ void C_Drawer(void) {
     int height;
 
     pango_layout_index_to_pos(
-      console.input_layout, console.input->cursor, &pos
+      console.input.layout, console.input.cursor, &pos
     );
 
     x      = pos.x / PANGO_SCALE;
@@ -647,7 +634,7 @@ void C_Drawer(void) {
     width  = pos.width / PANGO_SCALE;
     height = pos.height / PANGO_SCALE;
 
-    x += (CONSOLE_MARGIN + (input_height + CONSOLE_MARGIN));
+    x += (CONSOLE_MARGIN + input_height);
     y += (console.height - (input_height + CONSOLE_MARGIN));
 
     cairo_set_source_rgba(console.cairo_context, 0.8f, 0.8f, 0.8f, 1.0f);
@@ -659,16 +646,12 @@ void C_Drawer(void) {
     cairo_set_source_rgba(console.cairo_context, 1.0f, 1.0f, 1.0f, 1.0f);
   }
 
-  pango_layout_get_size(console.scrollback_layout, &sb_width, &sb_height);
-  sb_width /= PANGO_SCALE;
-  sb_height /= PANGO_SCALE;
   cairo_move_to(
     console.cairo_context,
-    CONSOLE_MARGIN,
-    console.height - ((input_height * 2) + sb_height)
+    CONSOLE_MARGIN + input_height,
+    console.height - (input_height + CONSOLE_MARGIN)
   );
-
-  pango_cairo_show_layout(console.cairo_context, console.scrollback_layout);
+  pango_cairo_show_layout(console.cairo_context, console.input.layout);
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
@@ -750,12 +733,12 @@ bool C_Responder(event_t *ev) {
   }
 
   if (ev->data1 == KEYD_HOME) {
-    console.input->cursor = 0;
+    console.input.cursor = 0;
     return true;
   }
 
   if (ev->data1 == KEYD_END) {
-    console.input->cursor = console.input->gstr->len;
+    console.input.cursor = console.input.buf->len;
     return true;
   }
 
@@ -808,6 +791,49 @@ void C_Banish(void) {
 void C_SetFullScreen(void) {
   console.height = REAL_SCREENHEIGHT;
   console.scroll_rate = 0.0;
+}
+
+void C_Printf(const char *fmt, ...) {
+  gchar *markup_string;
+  va_list args;
+
+  if (fmt == NULL)
+    return;
+
+  va_start(args, fmt);
+  markup_string = g_markup_vprintf_escaped(fmt, args);
+  g_string_append(console.scrollback.buf, markup_string);
+  g_free(markup_string);
+  va_end(args);
+
+  console.scrollback.rebuild = true;
+}
+
+void C_MPrintf(const char *fmt, ...) {
+  va_list args;
+
+  if (fmt == NULL)
+    return;
+
+  va_start(args, fmt);
+  g_string_append_vprintf(console.scrollback.buf, fmt, args);
+  va_end(args);
+
+  console.scrollback.rebuild = true;
+}
+
+void C_Echo(const char *message) {
+  gchar *markup_message = g_markup_escape_text(message, -1);
+
+  g_string_append(console.scrollback.buf, markup_message);
+  g_string_append(console.scrollback.buf, "\n");
+
+  g_free(markup_message);
+}
+
+void C_MEcho(const char *message) {
+  g_string_append(console.scrollback.buf, message);
+  g_string_append(console.scrollback.buf, "\n");
 }
 
 /* vi: set et ts=2 sw=2: */
