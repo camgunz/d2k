@@ -1,6 +1,7 @@
 # To Do
 
 1. Add a console
+  - Fix console in server
   - Ellipsization of input line ought to follow the cursor
   - Scroll up/down through scrollback
   - Command history
@@ -11,53 +12,59 @@
     - Mouse
   - Move the demo commands out of `M_Responder` (I'm guessing)
 
-2. Add scripting
-  - quit
-  - echo
-  - say
+1. Add more scripting commands
+  - `say`
+  - `say_team`
+  - `alias`
 
-3. Single-player intermission is broken
-
-4. Make it possible to play a game
+1. Make it possible to play a game
   - Something about quitting & rejoining
   - Sounds with > 1 player are busted
+  - Fix chatting
+  - Fix intermission (single-player is busted too)
 
-2. Add unlagged
-  - Save attacking player position
-  - Save current game state
-  - Restore game state that player was viewing during the attack
-    - This is contained in the command
-  - Restore attacking player position (if possible)
-  - Run hit detection & damage calculation
+1. Add latency mitigation
+  - unlagged
+    - Save attacking player position
+    - Save current game state
+    - Restore game state that player was viewing during the attack
+      - This is contained in the command
+    - Restore attacking player position (if possible)
+    - Run hit detection & damage calculation
+      - For every impacted actor:
+        - Save momx/momy/momz values
+    - Restore saved state
     - For every impacted actor:
-      - Save momx/momy/momz values
-  - Restore saved state
-  - For every impacted actor:
-    - Add new momx/momy/momz values to the current momx/momy/momz
+      - Add new momx/momy/momz values to the current momx/momy/momz
+  - projectile nudging
+  - skip correction
 
-3. Add spectators
+1. Add spectators
 
-4. Add a scoreboard
+1. Add a scoreboard
 
-5. Add HTTP & JSON (either Jansson or JSON-C)
+1. Better configuration file & configuration variable system
+  - Ties into scripting & console
+
+1. Add HTTP & JSON (cURL and Jansson)
   - Have client download missing WADs
     - the client should do this between frames in case it needs to download a
       huge file (or a file from a slow server); libcurl ought to make this
       pretty easy
-  - Convert configuration file(s) to JSON
+  - Create a server description specification in JSON
 
-6. Revamp configuration (probably libConfuse)
+1. Setup testing framework
+  - Demos
+  - Multiplayer command injection
 
-7. Setup testing framework
-
-8. Type problems:
+1. Type problems:
   - Playernums are unsigned shorts; fix this everywhere
+    - Then we can use int and use -1 for an invalid player number
   - TICs are unsigned ints; fix this everywhere
 
-9. Build the command-sync server (or decide to remove command-sync)
-  - Shouldn't run any game code; just relay commands between clients
+1. Remove all vestiges of command sync, it just doesn't make sense anymore
 
-10. Update `players`:
+1. Update `players`:
   - `players` will become an `obuf_t`
   - `playeringame` becomes `dboolean playeringame(unsigned short playernum)`
   - `MAXPLAYERS` becomes `VANILLA_MAXPLAYERS` for compat
@@ -74,9 +81,9 @@
     - If so, set each player's name accordingly
     - Of course, this only works for the 1st 4 players; after that, fuck it
 
-11. Header cleanup (omfg)
+1. Header cleanup (omfg)
 
-12. Update renderer
+1. Update renderer
 
 <!-- vi: set et ts=4 sw=4 tw=79: -->
 
