@@ -390,6 +390,9 @@ int XF_MEcho(lua_State *L) {
 }
 
 static void build_gl_texture(void) {
+  if (nodrawers)
+    return;
+
   if (console.tex_id)
     glDeleteTextures(1, &console.tex_id);
 
@@ -407,6 +410,9 @@ static void build_gl_texture(void) {
 }
 
 static void update_gl_texture(void) {
+  if (nodrawers)
+    return;
+
   glBindTexture(GL_TEXTURE_2D, console.tex_id);
   glTexImage2D(
     GL_TEXTURE_2D,
@@ -422,9 +428,12 @@ static void update_gl_texture(void) {
 }
 
 static void rebuild_scrollback_layout(void) {
-  PangoFontDescription *desc = pango_font_description_from_string(
-    console.font_description
-  );
+  PangoFontDescription *desc;
+
+  if (nodrawers)
+    return;
+  
+  desc = pango_font_description_from_string(console.font_description);
 
   pango_layout_set_markup(
     console.scrollback.layout, console.scrollback.buf->str, -1
@@ -443,12 +452,16 @@ static void rebuild_scrollback_layout(void) {
 }
 
 static void rebuild_input_layout(void) {
-  PangoFontDescription *desc = pango_font_description_from_string(
-    console.font_description
-  );
+  PangoFontDescription *desc;
+  
   int input_width;
   int input_height;
   int console_input_width;
+
+  if (nodrawers)
+    return;
+  
+  desc = pango_font_description_from_string(console.font_description);
 
   pango_layout_get_size(console.input.layout, &input_width, &input_height);
   input_width /= PANGO_SCALE;
@@ -513,6 +526,9 @@ void C_Reset(void) {
   console.height = 0.0;
   console.max_height = CONSOLE_MAXHEIGHT;
   console.max_width = CONSOLE_MAXWIDTH;
+
+  if (nodrawers)
+    return;
 
   if (V_GetMode() == VID_MODE32) {
     console.pixels = screen->pixels;
