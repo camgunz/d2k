@@ -467,56 +467,42 @@ void D_PostEvent(event_t *ev) {
   }
 
   if (ev->type == ev_keydown) {
-    if (ev->data1 == KEYD_RSHIFT) {
-      keybindings.shiftdown = true;
-      return;
-    }
-
-    if (ev->data1 == KEYD_RCTRL) {
-      keybindings.ctrldown = true;
-      return;
-    }
-
-    if (ev->data1 == KEYD_RALT) {
-      keybindings.altdown = true;
-      return;
-    }
-
-    if (ev->data1 == KEYD_RMETA) {
-      keybindings.metadown = true;
-      return;
-    }
-
-    if (ev->data1 == KEYD_RSUPER) {
-      keybindings.superdown = true;
-      return;
+    switch (ev->data1) {
+      case KEYD_RSHIFT:
+        keybindings.shiftdown = true;
+      break;
+      case KEYD_RCTRL:
+        keybindings.ctrldown = true;
+      break;
+      case KEYD_RALT:
+        keybindings.altdown = true;
+      break;
+      case KEYD_RMETA:
+        keybindings.metadown = true;
+      break;
+      case KEYD_RSUPER:
+        keybindings.superdown = true;
+      break;
     }
   }
 
   if (ev->type == ev_keyup) {
-    if (ev->data1 == KEYD_RSHIFT) {
-      keybindings.shiftdown = false;
-      return;
-    }
-
-    if (ev->data1 == KEYD_RCTRL) {
-      keybindings.ctrldown = false;
-      return;
-    }
-
-    if (ev->data1 == KEYD_RALT) {
-      keybindings.altdown = false;
-      return;
-    }
-
-    if (ev->data1 == KEYD_RMETA) {
-      keybindings.metadown = false;
-      return;
-    }
-
-    if (ev->data1 == KEYD_RSUPER) {
-      keybindings.superdown = false;
-      return;
+    switch (ev->data1) {
+      case KEYD_RSHIFT:
+        keybindings.shiftdown = true;
+      break;
+      case KEYD_RCTRL:
+        keybindings.ctrldown = true;
+      break;
+      case KEYD_RALT:
+        keybindings.altdown = true;
+      break;
+      case KEYD_RMETA:
+        keybindings.metadown = true;
+      break;
+      case KEYD_RSUPER:
+        keybindings.superdown = true;
+      break;
     }
   }
 

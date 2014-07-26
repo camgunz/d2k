@@ -3,7 +3,6 @@
 1. Add a console
   - Fix problems
     - Multiplayer issues?
-    - Move the demo commands out of `M_Responder` (I'm guessing)
     - Ellipsization of input line ought to follow the cursor
   - Scroll up/down through scrollback
   - Command history
