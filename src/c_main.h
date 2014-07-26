@@ -50,6 +50,8 @@ void C_Printf(const char *fmt, ...) PRINTF_DECL(1, 2);
 void C_MPrintf(const char *fmt, ...) PRINTF_DECL(1, 2);
 void C_Echo(const char *message);
 void C_MEcho(const char *message);
+void C_Write(const char *message);
+void C_MWrite(const char *message);
 
 #endif
 

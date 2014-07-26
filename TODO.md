@@ -1,29 +1,34 @@
 # To Do
 
-1. Add a console
-  - Fix problems
-    - Ellipsization of input line ought to follow the cursor
-    - `doom_printf`, `doom_pprintf`, `doom_echo`, etc. all need to be
-      console-enabled
-  - Scroll up/down through scrollback
-  - Command history
-    - Do this yourself
-  - Clipboard (cut/copy/paste)
-  - Selection
-    - Mouse
-
-1. Add more scripting commands
-  - `say`
-  - `say_team`
-  - `alias`
+1. Fix messaging
+  - Add `player->messages`, a string queue
+    - Nothing uses `player->message` anymore
+    - Display N messages for M seconds
+    - Is serialized in savegames
+  - Fix MP chatting
+  - `doom_printf` becomes `HU_Printf`
+    - Still console-ized
+  - `doom_echo` becomes `HU_Echo`
+    - Still console-ized
+  - Add:
+    - `HU_CenterPrintf`
+      - console-ized
+    - `HU_CenterEcho`
+      - console-ized
+  - `doom_pprintf` goes away
+  - Add more scripting commands
+    - `say`
+    - `say_team`
+    - `alias`
 
 1. Make it possible to play a game
   - Something about quitting & rejoining
   - Sounds with > 1 player are busted
-  - Fix chatting
   - Fix intermission (single-player is busted too)
 
 1. Add latency mitigation
+  - projectile nudging
+  - skip correction
   - unlagged
     - Save attacking player position
     - Save current game state
@@ -36,8 +41,6 @@
     - Restore saved state
     - For every impacted actor:
       - Add new momx/momy/momz values to the current momx/momy/momz
-  - projectile nudging
-  - skip correction
 
 1. Add spectators
 
@@ -45,6 +48,14 @@
 
 1. Better configuration file & configuration variable system
   - Ties into scripting & console
+
+1. Improve console
+  - Command history
+    - Do this yourself
+  - Tab-completion
+  - Clipboard (cut/copy/paste)
+  - Selection
+    - Mouse
 
 1. Add HTTP & JSON (cURL and Jansson)
   - Have client download missing WADs

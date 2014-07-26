@@ -1046,5 +1046,17 @@ void C_MEcho(const char *message) {
   g_string_append(console.scrollback.buf, "\n");
 }
 
+void C_Write(const char *message) {
+  gchar *markup_message = g_markup_escape_text(message, -1);
+
+  g_string_append(console.scrollback.buf, markup_message);
+
+  g_free(markup_message);
+}
+
+void C_MWrite(const char *message) {
+  g_string_append(console.scrollback.buf, message);
+}
+
 /* vi: set et ts=2 sw=2: */
 

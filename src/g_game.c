@@ -80,6 +80,7 @@
 #include "r_fps.h"
 #include "e6y.h"//e6y
 
+#include "c_main.h"
 #include "n_net.h"
 #include "n_proto.h"
 #include "n_state.h"
@@ -3404,19 +3405,20 @@ void doom_printf(const char *fmt, ...) {
   va_list args;
 
   va_start(args, fmt);
-  if (nodrawers || !graphics_initialized) {
-    vprintf(fmt, args);
-  }
-  else {
+  if ((!nodrawers) && graphics_initialized) {
     doom_vsnprintf(msg, sizeof(msg), fmt, args); /* print message in buffer */
-    vprintf(fmt, args);
     players[consoleplayer].message = msg;  // set new message
   }
+  vprintf(fmt, args);
   va_end(args);
+
+  C_Write(msg);
 }
 
 void doom_echo(const char *message) {
   static char msg[MAX_MESSAGE_LENGTH];
+
+  C_Echo(message);
 
   if (nodrawers || !graphics_initialized) {
     puts(message);
