@@ -1465,7 +1465,7 @@ void V_ToggleFullscreen(void)
 
   I_UpdateVideoMode();
 
-  C_Init();
+  C_Reset();
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL)
@@ -1479,7 +1479,7 @@ void V_ChangeScreenResolution(void)
 {
   I_UpdateVideoMode();
 
-  C_Init();
+  C_Reset();
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL)

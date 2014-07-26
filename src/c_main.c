@@ -41,6 +41,7 @@
 #include "doomstat.h"
 #include "d_event.h"
 #include "c_main.h"
+#include "d_main.h"
 #include "gl_opengl.h"
 #include "gl_intern.h"
 #include "lprintf.h"
@@ -101,6 +102,7 @@ typedef struct console_scrollback_s {
   GString *buf;
   PangoLayout *layout;
   bool rebuild;
+  int offset;
 } console_scrollback_t;
 
 typedef struct console_input_s {
@@ -109,6 +111,7 @@ typedef struct console_input_s {
   uint32_t cursor_active;
   PangoLayout *layout;
   bool rebuild;
+  int height;
 } console_input_t;
 
 typedef struct console_s {
@@ -134,28 +137,6 @@ typedef struct console_s {
 static console_t console;
 static GRegex *shorthand_regex = NULL;
 
-static int get_scrollback_width(void) {
-  int scrollback_width;
-  int scrollback_height;
-
-  pango_layout_get_size(
-    console.scrollback.layout, &scrollback_width, &scrollback_height
-  );
-
-  return scrollback_width / PANGO_SCALE;
-}
-
-static int get_scrollback_height(void) {
-  int scrollback_width;
-  int scrollback_height;
-
-  pango_layout_get_size(
-    console.scrollback.layout, &scrollback_width, &scrollback_height
-  );
-
-  return scrollback_height / PANGO_SCALE;
-}
-
 static void get_scrollback_width_and_height(int *scrollback_width,
                                             int *scrollback_height) {
   int sw;
@@ -165,24 +146,6 @@ static void get_scrollback_width_and_height(int *scrollback_width,
 
   *scrollback_width = sw / PANGO_SCALE;
   *scrollback_height = sh / PANGO_SCALE;
-}
-
-static int get_input_width(void) {
-  int input_width;
-  int input_height;
-
-  pango_layout_get_size(console.input.layout, &input_width, &input_height);
-
-  return input_width / PANGO_SCALE;
-}
-
-static int get_input_height(void) {
-  int input_width;
-  int input_height;
-
-  pango_layout_get_size(console.input.layout, &input_width, &input_height);
-
-  return input_height / PANGO_SCALE;
 }
 
 static void get_input_width_and_height(int *input_width, int *input_height) {
@@ -202,12 +165,6 @@ static bool input_cursor_at_start(void) {
 static bool input_cursor_at_end(void) {
   return console.input.cursor >= console.input.buf->len;
 }
-
-#if 0
-static bool input_cursor_pushing_left(void) {
-  return (!input_cursor_at_start()) && 
-}
-#endif
 
 static void activate_cursor(void) {
   console.input.cursor_active = I_GetTime();
@@ -442,22 +399,20 @@ static void process_input(void) {
   activate_cursor();
 }
 
-int XF_Echo(lua_State *L) {
-  const char *message = luaL_checkstring(L, 1);
-
-  if (message)
-    C_Echo(message);
-
-  return 0;
+static void load_previous_history_line(void) {
+  puts("Loading previous history line");
 }
 
-int XF_MEcho(lua_State *L) {
-  const char *markup_message = luaL_checkstring(L, 1);
+static void load_next_history_line(void) {
+  puts("Loading next history line");
+}
 
-  if (markup_message)
-    C_MEcho(markup_message);
+static void scroll_scrollback_up(void) {
+  puts("Scrolling scrollback up");
+}
 
-  return 0;
+static void scroll_scrollback_down(void) {
+  puts("Scrolling scrollback down");
 }
 
 static void build_gl_texture(void) {
@@ -503,7 +458,7 @@ static void rebuild_scrollback_layout(void) {
 
   if (nodrawers)
     return;
-  
+
   desc = pango_font_description_from_string(console.font_description);
 
   pango_layout_set_markup(
@@ -524,14 +479,13 @@ static void rebuild_scrollback_layout(void) {
 
 static void rebuild_input_layout(void) {
   PangoFontDescription *desc;
-  
   int input_width;
   int input_height;
   int console_input_width;
 
   if (nodrawers)
     return;
-  
+
   desc = pango_font_description_from_string(console.font_description);
 
   get_input_width_and_height(&input_width, &input_height);
@@ -545,12 +499,33 @@ static void rebuild_input_layout(void) {
   pango_layout_set_text(console.input.layout, console.input.buf->str, -1);
   pango_layout_set_font_description(console.input.layout, desc);
   pango_layout_set_width(console.input.layout, console_input_width);
+  pango_layout_set_height(
+    console.input.layout, console.input.height * PANGO_SCALE
+  );
   pango_cairo_update_layout(console.cairo_context, console.input.layout);
 
   pango_font_description_free(desc);
 #ifdef GL_DOOM
   console.repaint = true;
 #endif
+}
+
+int XF_Echo(lua_State *L) {
+  const char *message = luaL_checkstring(L, 1);
+
+  if (message)
+    C_Echo(message);
+
+  return 0;
+}
+
+int XF_MEcho(lua_State *L) {
+  const char *markup_message = luaL_checkstring(L, 1);
+
+  if (markup_message)
+    C_MEcho(markup_message);
+
+  return 0;
 }
 
 void C_Init(void) {
@@ -585,6 +560,8 @@ void C_Init(void) {
 }
 
 void C_Reset(void) {
+  int input_width;
+  int input_height;
   cairo_status_t status;
   // cairo_font_options_t *font_options = cairo_font_options_create();
 
@@ -656,18 +633,24 @@ void C_Reset(void) {
     g_object_unref(console.scrollback.layout);
 
   console.scrollback.layout = pango_layout_new(console.pango_context);
-  pango_layout_set_width(
-    console.scrollback.layout, console.max_width * PANGO_SCALE
-  );
   pango_layout_set_wrap(console.scrollback.layout, PANGO_WRAP_WORD_CHAR);
 
   if (console.input.layout)
     g_object_unref(console.input.layout);
 
   console.input.layout = pango_layout_new(console.pango_context);
-  pango_layout_set_width(
-    console.input.layout, console.max_width * PANGO_SCALE
-  );
+
+  if (console.input.buf->len <= 0) {
+    g_string_append(console.input.buf, "DOOM");
+    rebuild_input_layout();
+    get_input_width_and_height(&input_width, &input_height);
+    console.input.height = input_height;
+    g_string_erase(console.input.buf, 0, -1);
+  }
+  else {
+    get_input_width_and_height(&input_width, &input_height);
+    console.input.height = input_height;
+  }
 
   console.scrollback.rebuild = true;
   console.input.rebuild = true;
@@ -710,9 +693,14 @@ void C_Drawer(void) {
   double input_height_fracunit = 4.0;
   double input_height_frac;
   double input_height_fracedge;
+  int input_offset;
   int sb_width;
   int sb_height;
   int cursor_visible;
+  PangoRectangle cpos;
+  int cx;
+  int cy;
+  int cheight;
   uint32_t current_tic = I_GetTime();
 
   if (V_GetMode() == VID_MODE32 && SDL_MUSTLOCK(screen))
@@ -753,7 +741,9 @@ void C_Drawer(void) {
   cairo_move_to(
     console.cairo_context,
     CONSOLE_MARGIN,
-    console.height - ((input_height * 2) + sb_height)
+    console.height - (
+      ((input_height * 2) + sb_height) - console.scrollback.offset
+    )
   );
 
   pango_cairo_show_layout(console.cairo_context, console.scrollback.layout);
@@ -784,37 +774,46 @@ void C_Drawer(void) {
     (console.input.cursor_active >= (current_tic - TICRATE))
   );
 
+  pango_layout_index_to_pos(console.input.layout, console.input.cursor, &cpos);
+
+  cx = (cpos.x / PANGO_SCALE) + CONSOLE_MARGIN + input_height;
+  cy = (cpos.y / PANGO_SCALE) + (
+    console.height - (input_height + CONSOLE_MARGIN)
+  );
+  cheight = cpos.height / PANGO_SCALE;
+
+  if (cx < (CONSOLE_MARGIN + input_height))
+    input_offset = (CONSOLE_MARGIN + input_height) - cx;
+  else if (cx > (console.max_width - CONSOLE_MARGIN))
+    input_offset = (console.max_width - CONSOLE_MARGIN) - cx;
+  else
+    input_offset = 0;
+
+  cx += input_offset;
+
   if (cursor_visible) {
-    PangoRectangle pos;
-    int x;
-    int y;
-    int width;
-    int height;
-
-    pango_layout_index_to_pos(
-      console.input.layout, console.input.cursor, &pos
-    );
-
-    x      = pos.x / PANGO_SCALE;
-    y      = pos.y / PANGO_SCALE;
-    width  = pos.width / PANGO_SCALE;
-    height = pos.height / PANGO_SCALE;
-
-    x += (CONSOLE_MARGIN + input_height);
-    y += (console.height - (input_height + CONSOLE_MARGIN));
-
     cairo_set_source_rgba(console.cairo_context, 0.8f, 0.8f, 0.8f, 1.0f);
-    cairo_move_to(console.cairo_context, x, y);
-    cairo_line_to(console.cairo_context, x, y + height);
+    cairo_move_to(console.cairo_context, cx, cy);
+    cairo_line_to(console.cairo_context, cx, cy + cheight);
     cairo_set_line_width(console.cairo_context, CONSOLE_CURSOR_THICKNESS);
     cairo_stroke(console.cairo_context);
-
     cairo_set_source_rgba(console.cairo_context, 1.0f, 1.0f, 1.0f, 1.0f);
   }
 
-  cairo_move_to(
+  cairo_reset_clip(console.cairo_context);
+  cairo_new_path(console.cairo_context);
+  cairo_rectangle(
     console.cairo_context,
     CONSOLE_MARGIN + input_height,
+    0,
+    console.max_width - (CONSOLE_MARGIN + CONSOLE_MARGIN + input_height),
+    console.max_height
+  );
+  cairo_clip(console.cairo_context);
+
+  cairo_move_to(
+    console.cairo_context,
+    CONSOLE_MARGIN + input_height + input_offset,
     console.height - (input_height + CONSOLE_MARGIN)
   );
   pango_cairo_show_layout(console.cairo_context, console.input.layout);
@@ -852,7 +851,7 @@ bool C_Responder(event_t *ev) {
   size_t us_len;
   GError *error = NULL;
 
-  if ((ev->type != ev_keydown) && (ev->type != ev_mouse))
+  if (!((ev->type == ev_keydown) || (ev->type == ev_mouse)))
     return false;
 
   /*
@@ -905,6 +904,26 @@ bool C_Responder(event_t *ev) {
 
   if (ev->data1 == KEYD_END) {
     console.input.cursor = console.input.buf->len;
+    return true;
+  }
+
+  if (ev->data1 == KEYD_UPARROW) {
+    load_previous_history_line();
+    return true;
+  }
+
+  if (ev->data1 == KEYD_DOWNARROW) {
+    load_next_history_line();
+    return true;
+  }
+
+  if (ev->data1 == KEYD_PAGEUP && keybindings.ctrldown) {
+    scroll_scrollback_up();
+    return true;
+  }
+
+  if (ev->data1 == KEYD_PAGEDOWN && keybindings.ctrldown) {
+    scroll_scrollback_down();
     return true;
   }
 
