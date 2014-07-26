@@ -901,6 +901,10 @@ void C_SetFullScreen(void) {
   console.scroll_rate = 0.0;
 }
 
+bool C_Active(void) {
+  return (console.height > 0.0);
+}
+
 void C_Printf(const char *fmt, ...) {
   gchar *markup_string;
   va_list args;

@@ -45,6 +45,54 @@
 // this can resize the view and change game parameters.
 // Does all the real work of the menu interaction.
 
+typedef struct menuitem_s {
+  short status; // 0 = no cursor here, 1 = ok, 2 = arrows ok
+  char  name[10];
+
+  // choice = menu item #.
+  // if status = 2,
+  //   choice=0:leftarrow,1:rightarrow
+  void  (*routine)(int choice);
+  char  alphaKey; // hotkey in menu
+  const char *alttext;
+} menuitem_t;
+
+typedef struct menu_s {
+  short           numitems;     // # of menu items
+  struct menu_s*  prevMenu;     // previous menu
+  menuitem_t*     menuitems;    // menu items
+  void            (*routine)(); // draw routine
+  short           x;
+  short           y;            // x,y of menu
+  short           lastOn;       // last item user was on in menu
+} menu_t;
+
+enum {
+  sfx_vol,
+  sfx_empty1,
+  music_vol,
+  sfx_empty2,
+  sound_end
+} sound_e;
+
+extern short itemOn;
+extern menu_t HelpDef;
+extern menu_t SoundDef;
+extern menu_t SetupDef;
+extern int screenSize;
+
+void M_SaveGame(int choice);
+void M_LoadGame(int choice);
+void M_QuickSave(void);
+void M_EndGame(int choice);
+void M_ChangeMessages(int choice);
+void M_QuickLoad(void);
+void M_QuitDOOM(int choice);
+void M_SizeDisplay(int choice);
+void M_SetupNextMenu(menu_t *menudef);
+
+void M_SetCurrentMenu(menu_t *new_menu);
+
 dboolean M_Responder (event_t *ev);
 
 // Called by main loop,

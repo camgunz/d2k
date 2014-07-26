@@ -3415,6 +3415,22 @@ void doom_printf(const char *fmt, ...) {
   va_end(args);
 }
 
+void doom_echo(const char *message) {
+  static char msg[MAX_MESSAGE_LENGTH];
+
+  if (nodrawers || !graphics_initialized) {
+    puts(message);
+    return;
+  }
+
+  if ((strlen(message) + 1) >= MAX_MESSAGE_LENGTH)
+    I_Error("doom_echo: Message [%s] too long", message);
+
+  memset(msg, 0, MAX_MESSAGE_LENGTH * sizeof(char));
+  strcpy(msg, message);
+  strcat(msg, "\n");
+}
+
 //e6y
 void P_WalkTicker() {
   int strafe;

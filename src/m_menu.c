@@ -71,8 +71,6 @@
 extern patchnum_t hu_font[HU_FONTSIZE];
 extern dboolean  message_dontfuckwithme;
 
-extern dboolean chat_on;          // in heads-up code
-
 //
 // defaulted values
 //
@@ -159,30 +157,6 @@ char savegamestrings[10][SAVESTRINGSIZE];
 //
 // MENU TYPEDEFS
 //
-
-typedef struct
-{
-  short status; // 0 = no cursor here, 1 = ok, 2 = arrows ok
-  char  name[10];
-
-  // choice = menu item #.
-  // if status = 2,
-  //   choice=0:leftarrow,1:rightarrow
-  void  (*routine)(int choice);
-  char  alphaKey; // hotkey in menu
-  const char *alttext;
-} menuitem_t;
-
-typedef struct menu_s
-{
-  short           numitems;     // # of menu items
-  struct menu_s*  prevMenu;     // previous menu
-  menuitem_t*     menuitems;    // menu items
-  void            (*routine)(); // draw routine
-  short           x;
-  short           y;            // x,y of menu
-  short           lastOn;       // last item user was on in menu
-} menu_t;
 
 short itemOn;           // menu item skull is on (for Big Font menus)
 short skullAnimCounter; // skull animation counter
@@ -630,6 +604,10 @@ void M_DrawNewGame(void)
   V_DrawNamePatch(54, 38, 0, "M_SKILL",CR_DEFAULT, VPT_STRETCH);
 }
 
+void M_SetCurrentMenu(menu_t *new_menu) {
+  currentMenu = new_menu;
+}
+
 /* cph - make `New Game' restart the level in a netgame */
 static void M_RestartLevelResponse(int ch)
 {
@@ -640,8 +618,8 @@ static void M_RestartLevelResponse(int ch)
     exit(0);
 
   currentMenu->lastOn = itemOn;
-  M_ClearMenus ();
-  G_RestartLevel ();
+  M_ClearMenus();
+  G_RestartLevel();
 }
 
 void M_NewGame(int choice)
@@ -1141,15 +1119,6 @@ void M_QuitDOOM(int choice)
 
 // numerical values for the Sound Volume menu items
 // The 'empty' slots are where the sliding scales appear.
-
-enum
-{
-  sfx_vol,
-  sfx_empty1,
-  music_vol,
-  sfx_empty2,
-  sound_end
-} sound_e;
 
 // The definitions of the Sound Volume menu
 
@@ -4518,274 +4487,8 @@ dboolean M_Responder(event_t* ev) {
     return true;
   }
 
-#if 0
-  /*
-   * killough 2/22/98: add support for screenshot key:
-   * cph 2001/02/04: no need for this to be a gameaction, just do it
-   */
-  if (ch == key_screenshot) {
-    // Don't eat the keypress in this case. See sf bug #1843280.
-    M_ScreenShot();
-  }
-#endif
-
   // If there is no active menu displayed...
 
-  if (!menuactive) {                    // phares
-    if (ch == key_autorun) { // Autorun //  V
-      autorun = !autorun;
-      return true;
-    }
-
-    if (ch == key_help) {    // Help key
-      M_StartControlPanel ();
-
-      currentMenu = &HelpDef;         // killough 10/98: new help screen
-
-      itemOn = 0;
-      S_StartSound(NULL, sfx_swtchn);
-
-      return true;
-    }
-
-    if (ch == key_savegame)     // Save Game
-    {
-      M_StartControlPanel();
-      S_StartSound(NULL, sfx_swtchn);
-      M_SaveGame(0);
-      return true;
-    }
-
-    if (ch == key_loadgame)     // Load Game
-    {
-      M_StartControlPanel();
-      S_StartSound(NULL, sfx_swtchn);
-      M_LoadGame(0);
-      return true;
-    }
-
-    if (ch == key_soundvolume)      // Sound Volume
-    {
-      M_StartControlPanel ();
-      currentMenu = &SoundDef;
-      itemOn = sfx_vol;
-      S_StartSound(NULL, sfx_swtchn);
-      return true;
-    }
-
-    if (ch == key_quicksave)      // Quicksave
-    {
-      S_StartSound(NULL, sfx_swtchn);
-      M_QuickSave();
-      return true;
-    }
-
-    if (ch == key_endgame)      // End game
-    {
-      S_StartSound(NULL, sfx_swtchn);
-      M_EndGame(0);
-      return true;
-    }
-
-    if (ch == key_messages)      // Toggle messages
-    {
-      M_ChangeMessages(0);
-      S_StartSound(NULL, sfx_swtchn);
-      return true;
-    }
-
-    if (ch == key_quickload)      // Quickload
-    {
-      S_StartSound(NULL, sfx_swtchn);
-      M_QuickLoad();
-      return true;
-    }
-
-    if (ch == key_quit)       // Quit DOOM
-    {
-      S_StartSound(NULL, sfx_swtchn);
-      M_QuitDOOM(0);
-      return true;
-    }
-
-    if (ch == key_gamma)       // gamma toggle
-    {
-//e6y
-#ifdef GL_DOOM
-      if (V_GetMode() == VID_MODEGL && gl_hardware_gamma)
-      {
-        static char str[200];
-        useglgamma++;
-        if (useglgamma > MAX_GLGAMMA)
-          useglgamma = 0;
-        sprintf(str, "Gamma correction level %d", useglgamma); 
-        players[consoleplayer].message = str; 
-
-        gld_SetGammaRamp(useglgamma);
-      }
-      else
-#endif
-      {
-        usegamma++;
-        if (usegamma > 4)
-          usegamma = 0;
-
-        players[consoleplayer].message =
-          usegamma == 0 ? s_GAMMALVL0 :
-          usegamma == 1 ? s_GAMMALVL1 :
-          usegamma == 2 ? s_GAMMALVL2 :
-          usegamma == 3 ? s_GAMMALVL3 :
-          s_GAMMALVL4;
-        V_SetPalette(0);
-        return true;
-      }
-    }
-
-
-    if (ch == key_zoomout)     // zoom out
-    {
-      if ((automapmode & am_active) || chat_on)
-        return false;
-
-      M_SizeDisplay(0);
-      S_StartSound(NULL, sfx_stnmov);
-      return true;
-    }
-
-    if (ch == key_zoomin)               // zoom in
-    {                                 // jff 2/23/98
-      if ((automapmode & am_active) || chat_on)     // allow
-        return false;                   // key_hud==key_zoomin
-      M_SizeDisplay(1);                                             //  ^
-      S_StartSound(NULL, sfx_stnmov);                               //  |
-      return true;                                                  // phares
-    }
-
-    //e6y
-    if (ch == key_speed_default && (!netgame || demoplayback))               
-    {
-      realtic_clock_rate = StepwiseSum(realtic_clock_rate, 0, speed_step, 3, 10000, 100);
-      I_Init2();
-      // Don't eat the keypress in this case.
-      // return true;
-    }
-    if (ch == key_speed_up && (!netgame || demoplayback))
-    {
-      realtic_clock_rate = StepwiseSum(realtic_clock_rate, 1, speed_step, 3, 10000, 100);
-      I_Init2();
-      // Don't eat the keypress in this case.
-      // return true;
-    }
-    if (ch == key_speed_down && (!netgame || demoplayback))
-    {
-      realtic_clock_rate = StepwiseSum(realtic_clock_rate, -1, speed_step, 3, 10000, 100);
-      I_Init2();
-      // Don't eat the keypress in this case.
-      // return true;
-    }
-    if (ch == key_nextlevel)
-    {
-      if (demoplayback && !doSkip && singledemo)
-      {
-        demo_stoponnext = true;
-        G_SkipDemoStart();
-        return true;
-      }
-      else
-      {
-        if (G_GotoNextLevel())
-          return true;
-      }
-    }
-
-    if (ch == key_level_restart)
-    {
-      if (G_ReloadLevel())
-        return true;
-    }
- 
-    if (ch == key_demo_endlevel)
-    {
-      if (demoplayback && !doSkip && singledemo)
-      {
-        demo_stoponend = true;
-        G_SkipDemoStart();
-        return true;
-      }
-    }
-
-    if (ch == key_demo_skip)
-    {
-      if (demoplayback && singledemo)
-      {
-        if (doSkip)
-          G_SkipDemoStop();
-        else
-          G_SkipDemoStart();
-        return true;
-      }
-    }
-
-    if (ch == key_walkcamera)
-    {
-      if (demoplayback && gamestate == GS_LEVEL)
-      {
-        walkcamera.type = (walkcamera.type + 1) % 3;
-        P_SyncWalkcam (true, (walkcamera.type != 2));
-        R_ResetViewInterpolation ();
-        if (walkcamera.type == 0)
-          R_SmoothPlaying_Reset(NULL);
-        // Don't eat the keypress in this case.
-        // return true;
-      }
-    }
-
-#ifdef GL_DOOM
-    if (V_GetMode() == VID_MODEGL)
-    {
-      if (ch == key_showalive)
-      {
-        show_alive = (show_alive + 1) % 3;
-        doom_printf("Show Alive Monsters %s",
-          (show_alive ? (show_alive == 1 ? "(mode 1) on" : "(mode 2) on" ) : "off"));
-      }
-    }
-#endif
-
-    if (ch == key_mlook) // mouse look
-    {
-      movement_mouselook = !movement_mouselook;
-      M_ChangeMouseLook();
-      // Don't eat the keypress in this case.
-      // return true;
-    }
-
-    if (ch == key_hud)   // heads-up mode
-    {
-      if ((automapmode & am_active) || chat_on)    // jff 2/22/98
-        return false;                  // HUD mode control
-
-      if (screenSize < 8) {              // function on default F5
-        while (screenSize < 8 || !hud_displayed) // make hud visible
-          M_SizeDisplay(1);            // when configuring it
-      }
-      else
-      {
-        hud_displayed = 1;               //jff 3/3/98 turn hud on
-        HU_NextHud();
-        HU_MoveHud(true);                //jff 3/9/98 move it now to avoid glitch
-      }
-      return true;
-    }
-
-    /* killough 10/98: allow key shortcut into Setup menu */
-    if (ch == key_setup) {
-      M_StartControlPanel();
-      S_StartSound(NULL, sfx_swtchn);
-      M_SetupNextMenu(&SetupDef);
-      return true;
-    }
-  }
   // Pop-up Main menu?
 
   if (!menuactive)

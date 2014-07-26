@@ -76,6 +76,7 @@
 #include "d_deh.h"  // Ty 04/08/98 - Externalizations
 #include "lprintf.h"  // jff 08/03/98 - declaration of lprintf
 #include "am_map.h"
+#include "sounds.h"
 
 //e6y
 #include "r_demo.h"
@@ -175,62 +176,267 @@ const int nstandard_iwads = sizeof(standard_iwads) / sizeof(*standard_iwads);
  */
 
 bool D_Responder(event_t *ev) {
-  if (ev->type == ev_keydown) {
-    if (ev->data1 == KEYD_RSHIFT) {
-      keybindings.shiftdown = true;
-      return true;
-    }
+  /*
+   * killough 2/22/98: add support for screenshot key:
+   * cph 2001/02/04: no need for this to be a gameaction, just do it
+   */
+  if (ev->type == ev_keydown && ev->data1 == key_screenshot)
+    M_ScreenShot(); /* Don't eat the keypress. See sf bug #1843280. */
 
-    if (ev->data1 == KEYD_RCTRL) {
-      keybindings.ctrldown = true;
-      return true;
-    }
-
-    if (ev->data1 == KEYD_RALT) {
-      keybindings.altdown = true;
-      return true;
-    }
-
-    if (ev->data1 == KEYD_RMETA) {
-      keybindings.metadown = true;
-      return true;
-    }
-
-    if (ev->data1 == KEYD_RSUPER) {
-      keybindings.superdown = true;
-      return true;
-    }
-
+  if (menuactive)
     return false;
-  }
 
-  if (ev->type == ev_keyup) {
-    if (ev->data1 == KEYD_RSHIFT) {
-      keybindings.shiftdown = false;
-      return true;
-    }
-
-    if (ev->data1 == KEYD_RCTRL) {
-      keybindings.ctrldown = false;
-      return true;
-    }
-
-    if (ev->data1 == KEYD_RALT) {
-      keybindings.altdown = false;
-      return true;
-    }
-
-    if (ev->data1 == KEYD_RMETA) {
-      keybindings.metadown = false;
-      return true;
-    }
-
-    if (ev->data1 == KEYD_RSUPER) {
-      keybindings.superdown = false;
-      return true;
-    }
-
+  if (C_Active())
     return false;
+
+  if (!menuactive) {                                           // phares
+    if (ev->data1 == key_autorun) {                            //  |
+      autorun = !autorun;                                      //  V
+      return true;
+    }
+
+    if (ev->data1 == key_help) {
+      M_StartControlPanel();
+
+      M_SetCurrentMenu(&HelpDef); // killough 10/98: new help screen
+
+      itemOn = 0;
+      S_StartSound(NULL, sfx_swtchn);
+
+      return true;
+    }
+
+    if (ev->data1 == key_savegame) {
+      M_StartControlPanel();
+      S_StartSound(NULL, sfx_swtchn);
+      M_SaveGame(0);
+      return true;
+    }
+
+    if (ev->data1 == key_loadgame) {
+      M_StartControlPanel();
+      S_StartSound(NULL, sfx_swtchn);
+      M_LoadGame(0);
+      return true;
+    }
+
+    if (ev->data1 == key_soundvolume) {
+      M_StartControlPanel();
+      M_SetCurrentMenu(&SoundDef);
+      itemOn = sfx_vol;
+      S_StartSound(NULL, sfx_swtchn);
+      return true;
+    }
+
+    if (ev->data1 == key_quicksave) {
+      S_StartSound(NULL, sfx_swtchn);
+      M_QuickSave();
+      return true;
+    }
+
+    if (ev->data1 == key_endgame)
+    {
+      S_StartSound(NULL, sfx_swtchn);
+      M_EndGame(0);
+      return true;
+    }
+
+    if (ev->data1 == key_messages)
+    {
+      M_ChangeMessages(0);
+      S_StartSound(NULL, sfx_swtchn);
+      return true;
+    }
+
+    if (ev->data1 == key_quickload)
+    {
+      S_StartSound(NULL, sfx_swtchn);
+      M_QuickLoad();
+      return true;
+    }
+
+    if (ev->data1 == key_quit)
+    {
+      S_StartSound(NULL, sfx_swtchn);
+      M_QuitDOOM(0);
+      return true;
+    }
+
+    if (ev->data1 == key_gamma) {
+//e6y
+#ifdef GL_DOOM
+      if (V_GetMode() == VID_MODEGL && gl_hardware_gamma) {
+        static char str[200];
+
+        useglgamma++;
+
+        if (useglgamma > MAX_GLGAMMA)
+          useglgamma = 0;
+
+        sprintf(str, "Gamma correction level %d", useglgamma); 
+        players[consoleplayer].message = str; 
+
+        gld_SetGammaRamp(useglgamma);
+      }
+      else
+#endif
+      {
+        usegamma++;
+
+        if (usegamma > 4)
+          usegamma = 0;
+
+        if (usegamma == 0)
+          doom_echo(s_GAMMALVL0);
+        else if (usegamma == 1)
+          doom_echo(s_GAMMALVL1);
+        else if (usegamma == 2)
+          doom_echo(s_GAMMALVL2);
+        else if (usegamma == 3)
+          doom_echo(s_GAMMALVL3);
+
+        V_SetPalette(0);
+
+        return true;
+      }
+    }
+
+
+    if (ev->data1 == key_zoomout) {
+      if ((automapmode & am_active) || chat_on)
+        return false;
+
+      M_SizeDisplay(0);
+      S_StartSound(NULL, sfx_stnmov);
+      return true;
+    }
+
+    // jff 2/23/98 allow key_hud == key_zoomin
+    if (ev->data1 == key_zoomin) {
+      if ((automapmode & am_active) || chat_on)
+        return false;
+
+      M_SizeDisplay(1);                                        //  ^
+      S_StartSound(NULL, sfx_stnmov);                          //  |
+      return true;                                             // phares
+    }
+
+    //e6y
+    if (ev->data1 == key_speed_default && (!netgame || demoplayback)) {
+      realtic_clock_rate = StepwiseSum(
+        realtic_clock_rate, 0, speed_step, 3, 10000, 100
+      );
+      I_Init2();
+      return true;
+    }
+
+    if (ev->data1 == key_speed_up && (!netgame || demoplayback)) {
+      realtic_clock_rate = StepwiseSum(
+        realtic_clock_rate, 1, speed_step, 3, 10000, 100
+      );
+      I_Init2();
+      return true;
+    }
+
+    if (ev->data1 == key_speed_down && (!netgame || demoplayback)) {
+      realtic_clock_rate = StepwiseSum(
+        realtic_clock_rate, -1, speed_step, 3, 10000, 100
+      );
+      I_Init2();
+      return true;
+    }
+
+    if (ev->data1 == key_nextlevel) {
+      if (demoplayback && !doSkip && singledemo) {
+        demo_stoponnext = true;
+        G_SkipDemoStart();
+        return true;
+      }
+
+      if (G_GotoNextLevel())
+        return true;
+    }
+
+    if (ev->data1 == key_level_restart && G_ReloadLevel())
+      return true;
+ 
+    if (ev->data1 == key_demo_endlevel) {
+      if (demoplayback && !doSkip && singledemo) {
+        demo_stoponend = true;
+        G_SkipDemoStart();
+        return true;
+      }
+    }
+
+    if (ev->data1 == key_demo_skip) {
+      if (demoplayback && singledemo) {
+        if (doSkip)
+          G_SkipDemoStop();
+        else
+          G_SkipDemoStart();
+
+        return true;
+      }
+    }
+
+    if (ev->data1 == key_walkcamera) {
+      if (demoplayback && gamestate == GS_LEVEL) {
+        walkcamera.type = (walkcamera.type + 1) % 3;
+
+        P_SyncWalkcam(true, (walkcamera.type != 2));
+        R_ResetViewInterpolation();
+
+        if (walkcamera.type == 0)
+          R_SmoothPlaying_Reset(NULL);
+
+        return true;
+      }
+    }
+
+#ifdef GL_DOOM
+    if (V_GetMode() == VID_MODEGL) {
+      if (ev->data1 == key_showalive) {
+        show_alive = (show_alive + 1) % 3;
+        if (show_alive == 0)
+          doom_printf("Show Alive Monsters off");
+        if (show_alive == 1)
+          doom_printf("Show Alive Monsters (mode 1) on");
+        if (show_alive == 2)
+          doom_printf("Show Alive Monsters (mode 2) on");
+      }
+    }
+#endif
+
+    if (ev->data1 == key_mlook) {
+      movement_mouselook = !movement_mouselook;
+      M_ChangeMouseLook();
+      return true;
+    }
+
+    if (ev->data1 == key_hud) {
+      // jff 2/22/98
+      if ((automapmode & am_active) || chat_on)
+        return false; // HUD mode control
+
+      if (screenSize < 8) {                      // function on default F5
+        while (screenSize < 8 || !hud_displayed) // make hud visible
+          M_SizeDisplay(1);                      // when configuring it
+      }
+      else {
+        hud_displayed = 1; //jff 3/3/98 turn hud on
+        HU_NextHud();
+        HU_MoveHud(true);  //jff 3/9/98 move it now to avoid glitch
+      }
+      return true;
+    }
+
+    /* killough 10/98: allow key shortcut into Setup menu */
+    if (ev->data1 == key_setup) {
+      M_StartControlPanel();
+      S_StartSound(NULL, sfx_swtchn);
+      M_SetupNextMenu(&SetupDef);
+      return true;
+    }
   }
 
   return false;
@@ -260,8 +466,59 @@ void D_PostEvent(event_t *ev) {
     }
   }
 
-  if (D_Responder(ev))
-    return;
+  if (ev->type == ev_keydown) {
+    if (ev->data1 == KEYD_RSHIFT) {
+      keybindings.shiftdown = true;
+      return;
+    }
+
+    if (ev->data1 == KEYD_RCTRL) {
+      keybindings.ctrldown = true;
+      return;
+    }
+
+    if (ev->data1 == KEYD_RALT) {
+      keybindings.altdown = true;
+      return;
+    }
+
+    if (ev->data1 == KEYD_RMETA) {
+      keybindings.metadown = true;
+      return;
+    }
+
+    if (ev->data1 == KEYD_RSUPER) {
+      keybindings.superdown = true;
+      return;
+    }
+  }
+
+  if (ev->type == ev_keyup) {
+    if (ev->data1 == KEYD_RSHIFT) {
+      keybindings.shiftdown = false;
+      return;
+    }
+
+    if (ev->data1 == KEYD_RCTRL) {
+      keybindings.ctrldown = false;
+      return;
+    }
+
+    if (ev->data1 == KEYD_RALT) {
+      keybindings.altdown = false;
+      return;
+    }
+
+    if (ev->data1 == KEYD_RMETA) {
+      keybindings.metadown = false;
+      return;
+    }
+
+    if (ev->data1 == KEYD_RSUPER) {
+      keybindings.superdown = false;
+      return;
+    }
+  }
 
   if (M_Responder(ev))
     return;
@@ -269,12 +526,8 @@ void D_PostEvent(event_t *ev) {
   if (C_Responder(ev))
     return;
 
-  /*
-   * killough 2/22/98: add support for screenshot key:
-   * cph 2001/02/04: no need for this to be a gameaction, just do it
-   */
-  if (ev->type == ev_keydown && ev->data1 == key_screenshot)
-    M_ScreenShot(); /* Don't eat the keypress. See sf bug #1843280. */
+  if (D_Responder(ev))
+    return;
 
   if (gamestate != GS_LEVEL)
     return;

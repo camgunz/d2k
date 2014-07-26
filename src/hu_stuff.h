@@ -58,6 +58,8 @@
 extern const char *crosshair_nam[HU_CROSSHAIRS];
 extern const char *crosshair_str[HU_CROSSHAIRS];
 
+extern dboolean chat_on;
+
 /*
  * Heads up text
  */

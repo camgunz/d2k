@@ -136,6 +136,9 @@ void doom_pprintf(short playernum, const char *, ...) PRINTF_DECL(2, 3);
 // CPhipps - renames to doom_printf to avoid name collision with glibc
 void doom_printf(const char *fmt, ...) PRINTF_DECL(1, 2);
 
+// CG 07/26/2014: For writing static strings
+void doom_echo(const char *message);
+
 // killough 5/2/98: moved from m_misc.c:
 
 extern int  key_right;
