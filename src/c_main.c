@@ -51,8 +51,8 @@
 
 #define CONSOLE_MAXHEIGHT (REAL_SCREENHEIGHT / 2)
 #define CONSOLE_MAXWIDTH  (REAL_SCREENWIDTH)
-#define CONSOLE_SCROLL_DOWN_TIME 356.25
-#define CONSOLE_SCROLL_UP_TIME   213.75
+#define CONSOLE_SCROLL_DOWN_TIME 150.0
+#define CONSOLE_SCROLL_UP_TIME   150.0
 #define CONSOLE_SCROLL_DOWN_RATE  (CONSOLE_MAXHEIGHT / CONSOLE_SCROLL_DOWN_TIME)
 #define CONSOLE_SCROLL_UP_RATE   -(CONSOLE_MAXHEIGHT / CONSOLE_SCROLL_UP_TIME)
 #define CONSOLE_CURSOR_THICKNESS 2
@@ -134,6 +134,67 @@ typedef struct console_s {
 static console_t console;
 static GRegex *shorthand_regex = NULL;
 
+static int get_scrollback_width(void) {
+  int scrollback_width;
+  int scrollback_height;
+
+  pango_layout_get_size(
+    console.scrollback.layout, &scrollback_width, &scrollback_height
+  );
+
+  return scrollback_width / PANGO_SCALE;
+}
+
+static int get_scrollback_height(void) {
+  int scrollback_width;
+  int scrollback_height;
+
+  pango_layout_get_size(
+    console.scrollback.layout, &scrollback_width, &scrollback_height
+  );
+
+  return scrollback_height / PANGO_SCALE;
+}
+
+static void get_scrollback_width_and_height(int *scrollback_width,
+                                            int *scrollback_height) {
+  int sw;
+  int sh;
+
+  pango_layout_get_size(console.scrollback.layout, &sw, &sh);
+
+  *scrollback_width = sw / PANGO_SCALE;
+  *scrollback_height = sh / PANGO_SCALE;
+}
+
+static int get_input_width(void) {
+  int input_width;
+  int input_height;
+
+  pango_layout_get_size(console.input.layout, &input_width, &input_height);
+
+  return input_width / PANGO_SCALE;
+}
+
+static int get_input_height(void) {
+  int input_width;
+  int input_height;
+
+  pango_layout_get_size(console.input.layout, &input_width, &input_height);
+
+  return input_height / PANGO_SCALE;
+}
+
+static void get_input_width_and_height(int *input_width, int *input_height) {
+  int iw;
+  int ih;
+
+  pango_layout_get_size(console.input.layout, &iw, &ih);
+
+  *input_width = iw / PANGO_SCALE;
+  *input_height = ih / PANGO_SCALE;
+}
+
 static bool input_cursor_at_start(void) {
   return console.input.cursor <= 0;
 }
@@ -141,6 +202,12 @@ static bool input_cursor_at_start(void) {
 static bool input_cursor_at_end(void) {
   return console.input.cursor >= console.input.buf->len;
 }
+
+#if 0
+static bool input_cursor_pushing_left(void) {
+  return (!input_cursor_at_start()) && 
+}
+#endif
 
 static void activate_cursor(void) {
   console.input.cursor_active = I_GetTime();
@@ -467,9 +534,7 @@ static void rebuild_input_layout(void) {
   
   desc = pango_font_description_from_string(console.font_description);
 
-  pango_layout_get_size(console.input.layout, &input_width, &input_height);
-  input_width /= PANGO_SCALE;
-  input_height /= PANGO_SCALE;
+  get_input_width_and_height(&input_width, &input_height);
 
   console_input_width = (console.max_width - (
     CONSOLE_MARGIN +
@@ -495,7 +560,7 @@ void C_Init(void) {
   console.input.buf = g_string_new("");
   console.input.cursor = 0;
   console.input.cursor_active = 0;
-  console.font_description = "Sans 8";
+  console.font_description = "Sans 9";
 
   C_Reset();
 
@@ -680,15 +745,11 @@ void C_Drawer(void) {
 
   cairo_set_source_rgba(console.cairo_context, 1.0f, 1.0f, 1.0f, 1.0f);
 
-  pango_layout_get_size(console.input.layout, &input_width, &input_height);
-  input_width /= PANGO_SCALE;
-  input_height /= PANGO_SCALE;
+  get_input_width_and_height(&input_width, &input_height);
   input_height_frac = input_height / input_height_fracunit;
   input_height_fracedge = input_height_frac * (input_height_fracunit - 1.0);
 
-  pango_layout_get_size(console.scrollback.layout, &sb_width, &sb_height);
-  sb_width /= PANGO_SCALE;
-  sb_height /= PANGO_SCALE;
+  get_scrollback_width_and_height(&sb_width, &sb_height);
   cairo_move_to(
     console.cairo_context,
     CONSOLE_MARGIN,
