@@ -2,8 +2,9 @@
 
 1. Add a console
   - Fix problems
-    - Multiplayer issues?
     - Ellipsization of input line ought to follow the cursor
+    - `doom_printf`, `doom_pprintf`, `doom_echo`, etc. all need to be
+      console-enabled
   - Scroll up/down through scrollback
   - Command history
     - Do this yourself

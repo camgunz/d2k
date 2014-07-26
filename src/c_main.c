@@ -443,9 +443,9 @@ static void rebuild_scrollback_layout(void) {
     console.scrollback.layout, console.scrollback.buf->str, -1
   );
   pango_layout_set_font_description(console.scrollback.layout, desc);
-  pango_layout_set_width(console.scrollback.layout, console.max_width - (
+  pango_layout_set_width(console.scrollback.layout, (console.max_width - (
       CONSOLE_MARGIN + CONSOLE_MARGIN
-  ) * PANGO_SCALE);
+  )) * PANGO_SCALE);
   pango_layout_set_wrap(console.scrollback.layout, PANGO_WRAP_WORD_CHAR);
   pango_cairo_update_layout(console.cairo_context, console.scrollback.layout);
 
@@ -471,15 +471,14 @@ static void rebuild_input_layout(void) {
   input_width /= PANGO_SCALE;
   input_height /= PANGO_SCALE;
 
-  console_input_width = console.max_width - (
+  console_input_width = (console.max_width - (
     CONSOLE_MARGIN +
     CONSOLE_MARGIN +
-    (input_height)
-  ) * PANGO_SCALE;
+    input_height
+  )) * PANGO_SCALE;
 
   pango_layout_set_text(console.input.layout, console.input.buf->str, -1);
   pango_layout_set_font_description(console.input.layout, desc);
-  pango_layout_set_ellipsize(console.input.layout, PANGO_ELLIPSIZE_START);
   pango_layout_set_width(console.input.layout, console_input_width);
   pango_cairo_update_layout(console.cairo_context, console.input.layout);
 
@@ -496,7 +495,7 @@ void C_Init(void) {
   console.input.buf = g_string_new("");
   console.input.cursor = 0;
   console.input.cursor_active = 0;
-  console.font_description = "FreeSans 8";
+  console.font_description = "Sans 8";
 
   C_Reset();
 
@@ -505,8 +504,6 @@ void C_Init(void) {
   C_MPrintf(TEST_SCROLLBACK_TEXT);
 
   build_gl_texture();
-
-  /* "([^\"]\\S*|\".+?\")\\s*", */
 
   shorthand_regex = g_regex_new(
     "([^\"]\\S*|\".+?\"|'.+?'|)\\s*",
