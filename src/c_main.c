@@ -54,6 +54,7 @@
 #define CONSOLE_MAXWIDTH  (REAL_SCREENWIDTH)
 #define CONSOLE_SCROLL_DOWN_TIME 150.0
 #define CONSOLE_SCROLL_UP_TIME   150.0
+#define CONSOLE_SCROLLBACK_AMOUNT (CONSOLE_MAXHEIGHT / 4)
 #define CONSOLE_SCROLL_DOWN_RATE  (CONSOLE_MAXHEIGHT / CONSOLE_SCROLL_DOWN_TIME)
 #define CONSOLE_SCROLL_UP_RATE   -(CONSOLE_MAXHEIGHT / CONSOLE_SCROLL_UP_TIME)
 #define CONSOLE_CURSOR_THICKNESS 2
@@ -408,11 +409,14 @@ static void load_next_history_line(void) {
 }
 
 static void scroll_scrollback_up(void) {
-  puts("Scrolling scrollback up");
+  console.scrollback.offset += CONSOLE_SCROLLBACK_AMOUNT;
 }
 
 static void scroll_scrollback_down(void) {
-  puts("Scrolling scrollback down");
+  console.scrollback.offset -= CONSOLE_SCROLLBACK_AMOUNT;
+
+  if (console.scrollback.offset <= 0)
+    console.scrollback.offset = 0;
 }
 
 static void build_gl_texture(void) {
@@ -738,6 +742,20 @@ void C_Drawer(void) {
   input_height_fracedge = input_height_frac * (input_height_fracunit - 1.0);
 
   get_scrollback_width_and_height(&sb_width, &sb_height);
+  if (console.scrollback.offset > sb_height)
+    console.scrollback.offset = sb_height;
+
+  cairo_reset_clip(console.cairo_context);
+  cairo_new_path(console.cairo_context);
+  cairo_rectangle(
+    console.cairo_context,
+    CONSOLE_MARGIN,
+    0,
+    console.max_width,
+    console.height - (input_height * 2)
+  );
+  cairo_clip(console.cairo_context);
+
   cairo_move_to(
     console.cairo_context,
     CONSOLE_MARGIN,
@@ -747,6 +765,9 @@ void C_Drawer(void) {
   );
 
   pango_cairo_show_layout(console.cairo_context, console.scrollback.layout);
+
+  cairo_reset_clip(console.cairo_context);
+  cairo_new_path(console.cairo_context);
 
   cairo_move_to(
     console.cairo_context,
@@ -917,12 +938,12 @@ bool C_Responder(event_t *ev) {
     return true;
   }
 
-  if (ev->data1 == KEYD_PAGEUP && keybindings.ctrldown) {
+  if (ev->data1 == KEYD_PAGEUP && keybindings.shiftdown) {
     scroll_scrollback_up();
     return true;
   }
 
-  if (ev->data1 == KEYD_PAGEDOWN && keybindings.ctrldown) {
+  if (ev->data1 == KEYD_PAGEDOWN && keybindings.shiftdown) {
     scroll_scrollback_down();
     return true;
   }
