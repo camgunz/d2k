@@ -356,6 +356,7 @@ static const char* parse_shorthand_command(const char *short_command) {
 static void process_input(void) {
   bool success;
   const char *command;
+  char *error_message;
 
   if (command_is_shorthand(console.input.buf->str))
     command = parse_shorthand_command(console.input.buf->str);
@@ -364,8 +365,11 @@ static void process_input(void) {
 
   success = X_RunCode(command);
 
-  if (!success)
-    C_MPrintf("<span color='red'>Error: %s</span>\n", X_GetError());
+  if (!success) {
+    error_message = g_markup_escape_text(X_GetError(), -1);
+    C_MPrintf("<span color='red'>Error: %s</span>\n", error_message);
+    g_free(error_message);
+  }
 
   clear_input();
   activate_cursor();

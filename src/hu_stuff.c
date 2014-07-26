@@ -35,8 +35,8 @@
 
 #include "z_zone.h"
 
-#include "m_cbuf.h"
 #include "doomstat.h"
+#include "d_main.h"
 #include "hu_stuff.h"
 #include "hu_lib.h"
 #include "hu_tracers.h"
@@ -2705,35 +2705,20 @@ char HU_dequeueChatChar(void)
 //
 // Passed the event to respond to, returns true if the event was handled
 //
-dboolean HU_Responder(event_t *ev)
-{
+dboolean HU_Responder(event_t *ev) {
+  static char lastmessage[HU_MAXLINELENGTH + 1];
+  static int num_nobrainers = 0;
 
-  static char   lastmessage[HU_MAXLINELENGTH+1];
-  const char*   macromessage; // CPhipps - const char*
-  dboolean   eatkey = false;
-  static dboolean  shiftdown = false;
-  static dboolean  altdown = false;
-  unsigned char   c;
-  int     i;
-  int     numplayers;
-
-  static int    num_nobrainers = 0;
-
-  numplayers = 0;
-  for (i=0 ; i<MAXPLAYERS ; i++)
+  const char *macromessage; // CPhipps - const char*
+  dboolean eatkey = false;
+  unsigned char c;
+  int i;
+  int numplayers = 0;
+ 
+  for (i = 0; i < MAXPLAYERS; i++)
     numplayers += playeringame[i];
 
-  if (ev->data1 == key_shift)
-  {
-    shiftdown = ev->type == ev_keydown;
-    return false;
-  }
-  else if (ev->data1 == key_alt)
-  {
-    altdown = ev->type == ev_keydown;
-    return false;
-  }
-  else if (ev->data1 == key_backspace)
+  if (ev->data1 == key_backspace)
   {
     bsdown = ev->type == ev_keydown;
     bscounter = 0;
@@ -2806,7 +2791,7 @@ dboolean HU_Responder(event_t *ev)
   {
     c = ev->data1;
     // send a macro
-    if (altdown)
+    if (keybindings.altdown)
     {
       c = c - '0';
       if (c > 9)
@@ -2829,8 +2814,9 @@ dboolean HU_Responder(event_t *ev)
     }
     else
     {
-      if (shiftdown || (c >= 'a' && c <= 'z'))
+      if (keybindings.shiftdown || (c >= 'a' && c <= 'z'))
         c = shiftxform[c];
+
       eatkey = HUlib_keyInIText(&w_chat, c);
       if (eatkey)
         HU_queueChatChar(c);

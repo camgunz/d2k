@@ -41,6 +41,16 @@
 #pragma interface
 #endif
 
+typedef struct keybindings_s {
+  bool shiftdown;
+  bool ctrldown;
+  bool altdown;
+  bool metadown;
+  bool superdown;
+} keybindings_t;
+
+extern keybindings_t keybindings;
+
 /* CPhipps - removed wadfiles[] stuff to w_wad.h */
 
 extern char *basesavegame;      // killough 2/16/98: savegame path

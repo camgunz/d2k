@@ -1,16 +1,16 @@
 # To Do
 
 1. Add a console
-  - Fix console in server
-  - Ellipsization of input line ought to follow the cursor
+  - Fix problems
+    - Multiplayer issues?
+    - Move the demo commands out of `M_Responder` (I'm guessing)
+    - Ellipsization of input line ought to follow the cursor
   - Scroll up/down through scrollback
   - Command history
     - Do this yourself
-  - Problems in multiplayer?
   - Clipboard (cut/copy/paste)
   - Selection
     - Mouse
-  - Move the demo commands out of `M_Responder` (I'm guessing)
 
 1. Add more scripting commands
   - `say`

@@ -141,6 +141,9 @@ char    *basesavegame;             // killough 2/16/98: savegame directory
 cbuf_t resource_files_buf;
 cbuf_t deh_files_buf;
 
+/* CG 7/24/2014: D_Responder changes */
+keybindings_t keybindings;
+
 //jff 4/19/98 list of standard IWAD names
 const char *const standard_iwads[]=
 {
@@ -163,8 +166,75 @@ const char *const standard_iwads[]=
   "bfgdoom2.wad",
   "bfgdoom.wad",
 };
+
 //e6y static 
-const int nstandard_iwads = sizeof standard_iwads/sizeof*standard_iwads;
+const int nstandard_iwads = sizeof(standard_iwads) / sizeof(*standard_iwads);
+
+/*
+ * D_Responder - Main event handler
+ */
+
+bool D_Responder(event_t *ev) {
+  if (ev->type == ev_keydown) {
+    if (ev->data1 == KEYD_RSHIFT) {
+      keybindings.shiftdown = true;
+      return true;
+    }
+
+    if (ev->data1 == KEYD_RCTRL) {
+      keybindings.ctrldown = true;
+      return true;
+    }
+
+    if (ev->data1 == KEYD_RALT) {
+      keybindings.altdown = true;
+      return true;
+    }
+
+    if (ev->data1 == KEYD_RMETA) {
+      keybindings.metadown = true;
+      return true;
+    }
+
+    if (ev->data1 == KEYD_RSUPER) {
+      keybindings.superdown = true;
+      return true;
+    }
+
+    return false;
+  }
+
+  if (ev->type == ev_keyup) {
+    if (ev->data1 == KEYD_RSHIFT) {
+      keybindings.shiftdown = false;
+      return true;
+    }
+
+    if (ev->data1 == KEYD_RCTRL) {
+      keybindings.ctrldown = false;
+      return true;
+    }
+
+    if (ev->data1 == KEYD_RALT) {
+      keybindings.altdown = false;
+      return true;
+    }
+
+    if (ev->data1 == KEYD_RMETA) {
+      keybindings.metadown = false;
+      return true;
+    }
+
+    if (ev->data1 == KEYD_RSUPER) {
+      keybindings.superdown = false;
+      return true;
+    }
+
+    return false;
+  }
+
+  return false;
+}
 
 /*
  * D_PostEvent - Event handling
@@ -173,37 +243,38 @@ const int nstandard_iwads = sizeof standard_iwads/sizeof*standard_iwads;
  * Try event handlers for each code area in turn.
  * cph - in the true spirit of the Boom source, let the 
  *  short ciruit operator madness begin!
+ * CG - not so much with the madness anymore
  */
 
 void D_PostEvent(event_t *ev) {
-  /* cph - suppress all input events at game start
-   * FIXME: This is a lousy kludge */
-  
-  // e6y
-  // Is this condition needed here?
-  // Moved to I_StartTic()
-  // if (gametic < 3) return;
-
   // Allow only sensible keys during skipping
   if (doSkip) {
     if (ev->type == ev_keydown || ev->type == ev_keyup) {
-      if (ev->data1 == key_quit) {
-        // Immediate exit if key_quit is pressed in skip mode
+      // Immediate exit if key_quit is pressed in skip mode
+      if (ev->data1 == key_quit)
         I_SafeExit(0);
-      }
-      else {
-        // key_use is used for seeing the current frame
-        if (ev->data1 != key_use && ev->data1 != key_demo_skip)
-          return;
-      }
+
+      // key_use is used for seeing the current frame
+      if (ev->data1 != key_use && ev->data1 != key_demo_skip)
+        return;
     }
   }
+
+  if (D_Responder(ev))
+    return;
 
   if (M_Responder(ev))
     return;
 
   if (C_Responder(ev))
     return;
+
+  /*
+   * killough 2/22/98: add support for screenshot key:
+   * cph 2001/02/04: no need for this to be a gameaction, just do it
+   */
+  if (ev->type == ev_keydown && ev->data1 == key_screenshot)
+    M_ScreenShot(); /* Don't eat the keypress. See sf bug #1843280. */
 
   if (gamestate != GS_LEVEL)
     return;
