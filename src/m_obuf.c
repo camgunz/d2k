@@ -41,6 +41,22 @@
 #include "lprintf.h"
 #include "m_obuf.h"
 
+obuf_t* M_OBufNew(void) {
+  obuf_t *obuf = malloc(sizeof(obuf_t));
+
+  M_OBufInit(obuf);
+
+  return obuf;
+}
+
+obuf_t* M_OBufNewWithCapacity(int capacity) {
+  obuf_t *obuf = malloc(sizeof(obuf_t));
+
+  M_OBufInitWithCapacity(obuf, capacity);
+
+  return obuf;
+}
+
 void M_OBufInit(obuf_t *obuf) {
   obuf->capacity = 0;
   obuf->objects  = NULL;

@@ -37,27 +37,26 @@
 
 #include <SDL.h>
 
-#include "m_buf.h"
 #include "doomstat.h"
 #include "d_net.h"
-#include "w_wad.h"
-#include "r_main.h"
-#include "r_things.h"
-#include "r_plane.h"
-#include "r_bsp.h"
-#include "r_draw.h"
-#include "m_bbox.h"
-#include "r_sky.h"
-#include "v_video.h"
-#include "lprintf.h"
-#include "st_stuff.h"
-#include "i_main.h"
-#include "i_system.h"
-#include "i_smp.h"
 #include "g_game.h"
+#include "i_main.h"
+#include "i_smp.h"
+#include "i_system.h"
+#include "lprintf.h"
+#include "m_bbox.h"
+#include "p_user.h"
+#include "r_bsp.h"
 #include "r_demo.h"
+#include "r_draw.h"
 #include "r_fps.h"
-#include <math.h>
+#include "r_main.h"
+#include "r_plane.h"
+#include "r_sky.h"
+#include "r_things.h"
+#include "st_stuff.h"
+#include "v_video.h"
+#include "w_wad.h"
 #include "e6y.h"//e6y
 
 // e6y
@@ -1086,7 +1085,7 @@ void R_ShowStats(void)
     renderer_fps = 1000 * FPS_FrameCount / (tick - FPS_SavedTick);
     if (rendering_stats)
     {
-      doom_printf((V_GetMode() == VID_MODEGL)
+      P_Printf(consoleplayer, (V_GetMode() == VID_MODEGL)
                   ?"Frame rate %d fps\nWalls %d, Flats %d, Sprites %d\n"
                   :"Frame rate %d fps\nSegs %d, Visplanes %d, Sprites %d\n",
       renderer_fps, rendered_segs, rendered_visplanes, rendered_vissprites);

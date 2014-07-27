@@ -55,6 +55,7 @@
 #include "r_main.h"
 #include "lprintf.h"
 #include "e6y.h" //e6y
+#include "p_user.h"
 
 // global heads up display controls
 
@@ -183,16 +184,16 @@ static hu_textline_t  w_ammo_big;
 static hu_textline_t  w_ammo_icon;
 static hu_textline_t  w_keys_icon;
 
-static dboolean    always_off = false;
-static char       chat_dest[MAXPLAYERS];
-dboolean           chat_on;
-static dboolean    message_on;
-static dboolean    message_list; //2/26/98 enable showing list of messages
-dboolean           message_dontfuckwithme;
-static dboolean    message_nottobefuckedwith;
-static int        message_counter;
-extern int        showMessages;
-static dboolean    headsupactive = false;
+static dboolean always_off = false;
+static char     chat_dest[MAXPLAYERS];
+dboolean        chat_on;
+static dboolean message_on;
+static dboolean message_list; //2/26/98 enable showing list of messages
+dboolean        message_dontfuckwithme;
+static dboolean message_nottobefuckedwith;
+static int      message_counter;
+extern int      showMessages;
+static dboolean headsupactive = false;
 
 //jff 2/16/98 hud supported automap colors added
 int hudcolor_titl;  // color range of automap level title
@@ -2550,6 +2551,7 @@ void HU_Ticker(void)
     message_on = false;
     message_nottobefuckedwith = false;
   }
+
   if (bsdown && bscounter++ > 9) {
     HUlib_keyInIText(&w_chat, (unsigned char)key_backspace);
     bscounter = 8;
@@ -2559,9 +2561,11 @@ void HU_Ticker(void)
   // this allows the notification of turning messages off to be seen
   if (showMessages || message_dontfuckwithme)
   {
+#ifdef OLD_MESSAGES
+#if 0
     // display message if necessary
-    if ((plr->message && !message_nottobefuckedwith)
-        || (plr->message && message_dontfuckwithme))
+    if ((plr->message && !message_nottobefuckedwith) ||
+        (plr->message && message_dontfuckwithme))
     {
       //post the message to the message widget
       HUlib_addMessageToSText(&w_message, 0, plr->message);
@@ -2579,6 +2583,8 @@ void HU_Ticker(void)
       // clear the flag that "Messages Off" is being posted
       message_dontfuckwithme = 0;
     }
+#endif
+#endif
   }
   
   // centered messages
@@ -2662,16 +2668,13 @@ static int  tail = 0;
 //
 // Passed the character to queue, returns nothing
 //
-static void HU_queueChatChar(char c)
-{
-  if (((head + 1) & (QUEUESIZE-1)) == tail)
-  {
-    plr->message = HUSTR_MSGU;
+static void HU_queueChatChar(char c) {
+  if (((head + 1) & (QUEUESIZE - 1)) == tail) {
+    P_Write(displayplayer, HUSTR_MSGU);
   }
-  else
-  {
+  else {
     chatchars[head] = c;
-    head = (head + 1) & (QUEUESIZE-1);
+    head = (head + 1) & (QUEUESIZE - 1);
   }
 }
 
@@ -2732,7 +2735,7 @@ dboolean HU_Responder(event_t *ev) {
     if (ev->data1 == key_enter)                                 // phares
     {
 #ifndef INSTRUMENTED  // never turn on message review if INSTRUMENTED defined
-      if (hud_msg_lines>1)  // it posts multi-line messages that will trash
+      if (hud_msg_lines > 1)  // it posts multi-line messages that will trash
       {
         if (message_list) HU_Erase(); //jff 4/28/98 erase behind messages
         message_list = !message_list; //jff 2/26/98 toggle list of messages
@@ -2750,41 +2753,41 @@ dboolean HU_Responder(event_t *ev) {
     else if (!demoplayback && !message_list && netgame && numplayers > 1)
     {
       if (ev->data1 == key_chat)
-    {
-      eatkey = chat_on = true;
-      HUlib_resetIText(&w_chat);
-      HU_queueChatChar(HU_BROADCAST);
-    }
-    else if (numplayers > 2)
-    {
-      for (i=0; i<MAXPLAYERS ; i++)
       {
-        if (ev->data1 == destination_keys[i])
+        eatkey = chat_on = true;
+        HUlib_resetIText(&w_chat);
+        HU_queueChatChar(HU_BROADCAST);
+      }
+      else if (numplayers > 2)
+      {
+        for (i=0; i<MAXPLAYERS ; i++)
         {
-          if (playeringame[i] && i!=consoleplayer)
+          if (ev->data1 == destination_keys[i])
           {
-            eatkey = chat_on = true;
-            HUlib_resetIText(&w_chat);
-            HU_queueChatChar((char)(i+1));
-            break;
-          }
-          else if (i == consoleplayer)
-          {
-            num_nobrainers++;
-            if (num_nobrainers < 3)
-                plr->message = HUSTR_TALKTOSELF1;
-            else if (num_nobrainers < 6)
-                plr->message = HUSTR_TALKTOSELF2;
-            else if (num_nobrainers < 9)
-                plr->message = HUSTR_TALKTOSELF3;
-            else if (num_nobrainers < 32)
-                plr->message = HUSTR_TALKTOSELF4;
-            else
-                plr->message = HUSTR_TALKTOSELF5;
+            if (playeringame[i] && i != consoleplayer)
+            {
+              eatkey = chat_on = true;
+              HUlib_resetIText(&w_chat);
+              HU_queueChatChar((char)(i + 1));
+              break;
+            }
+            else if (i == consoleplayer)
+            {
+              num_nobrainers++;
+              if (num_nobrainers < 3)
+                P_Write(displayplayer, HUSTR_TALKTOSELF1);
+              else if (num_nobrainers < 6)
+                P_Write(displayplayer, HUSTR_TALKTOSELF2);
+              else if (num_nobrainers < 9)
+                P_Write(displayplayer, HUSTR_TALKTOSELF3);
+              else if (num_nobrainers < 32)
+                P_Write(displayplayer, HUSTR_TALKTOSELF4);
+              else
+                P_Write(displayplayer, HUSTR_TALKTOSELF5);
+            }
           }
         }
       }
-    }
     }
   }//jff 2/26/98 no chat functions if message review is displayed
   else if (!message_list)
@@ -2796,20 +2799,22 @@ dboolean HU_Responder(event_t *ev) {
       c = c - '0';
       if (c > 9)
         return false;
+
       macromessage = chat_macros[c];
 
       // kill last message with a '\n'
-        HU_queueChatChar((char)key_enter); // DEBUG!!!                // phares
+      HU_queueChatChar((char)key_enter); // DEBUG!!!                // phares
 
       // send the macro message
       while (*macromessage)
         HU_queueChatChar(*macromessage++);
+
       HU_queueChatChar((char)key_enter);                            // phares
 
       // leave chat mode and notify that it was sent
       chat_on = false;
       strcpy(lastmessage, chat_macros[c]);
-      plr->message = lastmessage;
+      P_Write(displayplayer, lastmessage);
       eatkey = true;
     }
     else
@@ -2827,23 +2832,30 @@ dboolean HU_Responder(event_t *ev) {
         if (w_chat.l.len)
         {
           strcpy(lastmessage, w_chat.l.l);
-          plr->message = lastmessage;
+          P_Write(displayplayer, lastmessage);
         }
       }
-      else if (c == key_escape)                               // phares
+      else if (c == key_escape) {                             // phares
         chat_on = false;
+      }
     }
   }
   return eatkey;
 }
 
-void T_ShowMessage (message_thinker_t* message)
+void T_ShowMessage(message_thinker_t* message)
 {
   if (--message->delay > 0)
     return;
 
-  SetCustomMessage(message->plr, message->msg.msg, 0,
-    message->msg.ticks, message->msg.cm, message->msg.sfx);
+  SetCustomMessage(
+    message->plr,
+    message->msg.msg,
+    0,
+    message->msg.ticks,
+    message->msg.cm,
+    message->msg.sfx
+  );
 
   P_RemoveThinker(&message->thinker); // unlink and free
 }
@@ -2881,3 +2893,6 @@ int SetCustomMessage(int plr, const char *msg, int delay, int ticks, int cm, int
 
   return true;
 }
+
+/* vi: set et ts=2 sw=2: */
+

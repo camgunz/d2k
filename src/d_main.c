@@ -234,29 +234,25 @@ bool D_Responder(event_t *ev) {
       return true;
     }
 
-    if (ev->data1 == key_endgame)
-    {
+    if (ev->data1 == key_endgame) {
       S_StartSound(NULL, sfx_swtchn);
       M_EndGame(0);
       return true;
     }
 
-    if (ev->data1 == key_messages)
-    {
+    if (ev->data1 == key_messages) {
       M_ChangeMessages(0);
       S_StartSound(NULL, sfx_swtchn);
       return true;
     }
 
-    if (ev->data1 == key_quickload)
-    {
+    if (ev->data1 == key_quickload) {
       S_StartSound(NULL, sfx_swtchn);
       M_QuickLoad();
       return true;
     }
 
-    if (ev->data1 == key_quit)
-    {
+    if (ev->data1 == key_quit) {
       S_StartSound(NULL, sfx_swtchn);
       M_QuitDOOM(0);
       return true;
@@ -266,15 +262,12 @@ bool D_Responder(event_t *ev) {
 //e6y
 #ifdef GL_DOOM
       if (V_GetMode() == VID_MODEGL && gl_hardware_gamma) {
-        static char str[200];
-
         useglgamma++;
 
         if (useglgamma > MAX_GLGAMMA)
           useglgamma = 0;
 
-        sprintf(str, "Gamma correction level %d", useglgamma); 
-        players[consoleplayer].message = str; 
+        P_Printf(consoleplayer, "Gamma correction level %d", useglgamma);
 
         gld_SetGammaRamp(useglgamma);
       }
@@ -287,13 +280,13 @@ bool D_Responder(event_t *ev) {
           usegamma = 0;
 
         if (usegamma == 0)
-          doom_echo(s_GAMMALVL0);
+          P_Echo(consoleplayer, s_GAMMALVL0);
         else if (usegamma == 1)
-          doom_echo(s_GAMMALVL1);
+          P_Echo(consoleplayer, s_GAMMALVL1);
         else if (usegamma == 2)
-          doom_echo(s_GAMMALVL2);
+          P_Echo(consoleplayer, s_GAMMALVL2);
         else if (usegamma == 3)
-          doom_echo(s_GAMMALVL3);
+          P_Echo(consoleplayer, s_GAMMALVL3);
 
         V_SetPalette(0);
 
@@ -398,11 +391,11 @@ bool D_Responder(event_t *ev) {
       if (ev->data1 == key_showalive) {
         show_alive = (show_alive + 1) % 3;
         if (show_alive == 0)
-          doom_printf("Show Alive Monsters off");
+          P_Echo(consoleplayer, "Show Alive Monsters off");
         if (show_alive == 1)
-          doom_printf("Show Alive Monsters (mode 1) on");
+          P_Echo(consoleplayer, "Show Alive Monsters (mode 1) on");
         if (show_alive == 2)
-          doom_printf("Show Alive Monsters (mode 2) on");
+          P_Echo(consoleplayer, "Show Alive Monsters (mode 2) on");
       }
     }
 #endif

@@ -64,6 +64,53 @@
       pretty easy
   - Create a server description specification in JSON
 
+1. 3D physics
+
+1. SNDCURVE
+
+1. ZDoom physics
+  - ZDoom SSG spread
+
+1. PWO
+
+<!-- Now ZDDL-worthy -->
+
+1. Slopes
+
+1. Hexen map support
+
+<!-- Now CTF-worthy -->
+
+1. ACS Scripting
+
+1. DECORATE
+
+1. EDF
+
+1. ExtraData
+
+1. MAPINFO
+
+1. 3D floors
+
+1. 3D MixTex
+
+1. Portals
+
+1. Polyobjects
+
+1. Ambient Sounds
+
+1. Support for other ID Tech 1 games (Heretic, Hexen, etc.)
+
+1. Cameras
+
+1. UDMF
+
+1. ZIP/PK3 resource files
+
+1. Bots
+
 1. Setup testing framework
   - Demos
   - Multiplayer command injection

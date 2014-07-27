@@ -64,6 +64,7 @@
 #include "am_map.h"
 #include "g_game.h"
 #include "lprintf.h"
+#include "p_user.h"
 
 #ifdef GL_DOOM
 #include "gl_struct.h"
@@ -1700,7 +1701,7 @@ static void ApplyWindowResize(SDL_Event *resize_event)
 
     V_ChangeScreenResolution();
 
-    doom_printf("%dx%d", w, h);
+    P_Printf(consoleplayer, "%dx%d\n", w, h);
   }
 }
 

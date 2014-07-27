@@ -53,6 +53,7 @@
 #include "lprintf.h"
 #include "r_demo.h"
 #include "g_overflow.h"
+#include "p_user.h"
 #include "e6y.h"//e6y
 
 #include "n_net.h"
@@ -104,12 +105,11 @@ dboolean P_SetMobjState(mobj_t *mobj, statenum_t state) {
   } while (!mobj->tics && !seenstate[state]);   // killough 4/9/98
 
   if (ret && !mobj->tics)  // killough 4/9/98: detect state cycles
-    doom_printf("Warning: State Cycle Detected");
+    P_Echo(consoleplayer, "Warning: State Cycle Detected");
 
   if (!--recursion) {
-    for (; (state = seenstate[i]); i = state - 1) {
+    for (; (state = seenstate[i]); i = state - 1)
       seenstate[i] = 0;  // killough 4/9/98: erase memory of states
-    }
   }
 
   return ret;
@@ -1174,7 +1174,7 @@ void P_SpawnPlayer(int playernum, const mapthing_t* mthing) {
   p->mo            = mobj;
   p->playerstate   = PST_LIVE;
   p->refire        = 0;
-  p->message       = NULL;
+  P_ClearMessages(playernum);
   p->damagecount   = 0;
   p->bonuscount    = 0;
   p->extralight    = 0;
@@ -1333,7 +1333,9 @@ mobj_t* P_SpawnMapThing (const mapthing_t* mthing, int index)
       }
       else
       {
-        doom_printf("Invalid value %i for helper, ignored.", HelperThing);
+        P_Printf(consoleplayer,
+          "Invalid value %i for helper, ignored.", HelperThing
+        );
         i = MT_DOGS;
       }
     }

@@ -37,6 +37,9 @@
 #include <enet/enet.h>
 #include "cmp.h"
 
+#include "doomstat.h"
+#include "d_event.h"
+#include "c_main.h"
 #include "d_ticcmd.h"
 #include "d_player.h"
 #include "g_game.h"
@@ -44,6 +47,7 @@
 #include "i_system.h"
 #include "m_pbuf.h"
 #include "m_swap.h"
+#include "p_user.h"
 
 #include "n_net.h"
 #include "n_main.h"
@@ -106,7 +110,7 @@ int N_IPToInt(const char *address) {
   size_t address_length = strlen(address);
 
   if (address_length > 16 || address_length < 7) {
-    doom_printf("Malformed IP address %s.", address);
+    P_Printf(consoleplayer, "Malformed IP address %s.\n", address);
     return 0;
   }
 
@@ -115,7 +119,7 @@ int N_IPToInt(const char *address) {
   octets[0] = addr;
   for (i = 1; i < 4; i++) {
     if ((p = strchr(octets[i - 1], '.')) == NULL) {
-      doom_printf("Malformed IP address %s.", address);
+      P_Printf(consoleplayer, "Malformed IP address %s.\n", address);
       return 0;
     }
 
@@ -262,7 +266,7 @@ void N_Disconnect(void) {
       int peernum = N_PeerGetNum(net_event.peer);
 
       if (peernum == -1) {
-        doom_printf(
+        P_Printf(consoleplayer,
           "N_Disconnect: Received network event from unknown peer %s:%u\n",
           N_IPToConstString(doom_b32(net_event.peer->address.host)),
           net_event.peer->address.port
@@ -275,7 +279,7 @@ void N_Disconnect(void) {
 
     }
     else if (res < 0) {
-      doom_printf("N_Disconnect: Unknown error disconnecting\n");
+      P_Echo(consoleplayer, "N_Disconnect: Unknown error disconnecting");
       break;
     }
     else if (res == 0) {
@@ -323,13 +327,15 @@ dboolean N_Listen(const char *host, unsigned short port) {
   );
   
   if (net_host == NULL) {
-    doom_printf("N_Listen: Error creating host on %s:%u\n", host, port);
+    P_Printf(consoleplayer, "N_Listen: Error creating host on %s:%u\n",
+      host, port
+    );
     return false;
   }
 
 #if USE_RANGE_CODER
   if (enet_host_compress_with_range_coder(net_host) < 0) {
-    doom_printf("N_Listen: Error activating range coder\n");
+    P_Echo(consoleplayer, "N_Listen: Error activating range coder");
     return false;
   }
 #endif
@@ -345,13 +351,13 @@ dboolean N_Connect(const char *host, unsigned short port) {
   net_host = enet_host_create(NULL, 1, NET_CHANNEL_MAX, 0, 0);
 
   if (net_host == NULL) {
-    doom_printf("N_Connect: Error creating host");
+    P_Echo(consoleplayer, "N_Connect: Error creating host");
     return false;
   }
 
 #if USE_RANGE_CODER
   if (enet_host_compress_with_range_coder(net_host) < 0) {
-    doom_printf("N_Connect: Error activating range coder\n");
+    P_Echo(consoleplayer, "N_Connect: Error activating range coder");
     return false;
   }
 #endif
@@ -368,7 +374,7 @@ dboolean N_Connect(const char *host, unsigned short port) {
   server = enet_host_connect(net_host, &address, NET_CHANNEL_MAX, 0);
 
   if (server == NULL) {
-    doom_printf("N_Connect: Error connecting to server");
+    P_Echo(consoleplayer, "N_Connect: Error connecting to server");
     N_Disconnect();
     return false;
   }
@@ -385,7 +391,7 @@ dboolean N_Reconnect(void) {
   if ((previous_host != NULL) && (previous_port != 0))
     return N_Connect(previous_host, previous_port);
 
-  doom_printf("No previous connection\n");
+  P_Echo(consoleplayer, "No previous connection");
   return false;
 }
 
@@ -429,7 +435,9 @@ void N_DisconnectPeer(int peernum) {
   if (np == NULL)
     I_Error("N_DisconnectPeer: Invalid peer %d.\n", peernum);
 
-  doom_printf("N_DisconnectPeer: Disconnecting peer %d\n", peernum);
+  P_Printf(consoleplayer, "N_DisconnectPeer: Disconnecting peer %d\n",
+    peernum
+  );
   printf("N_DisconnectPeer: Disconnecting peer %d\n", peernum);
   enet_peer_disconnect(np->peer, 0);
   N_PeerSetDisconnected(peernum);
@@ -441,7 +449,9 @@ void N_DisconnectPlayer(short playernum) {
   if (peernum == -1)
     I_Error("N_DisconnectPlayer: Invalid player %d.\n", playernum);
   
-  doom_printf("N_DisconnectPlayer: Disconnecting player %d\n", playernum);
+  P_Printf(consoleplayer, "N_DisconnectPlayer: Disconnecting player %d\n",
+    playernum
+  );
   N_DisconnectPeer(peernum);
 }
 
@@ -458,7 +468,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       continue;
 
     if (N_PeerCheckTimeout(i)) {
-      doom_printf("Peer %s:%u timed out.\n",
+      P_Printf(consoleplayer, "Peer %s:%u timed out.\n",
         N_IPToConstString(doom_b32(np->peer->address.host)),
         np->peer->address.port
       );
@@ -485,8 +495,8 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       break;
 
     if (status < 0) {
-      doom_printf(
-        "N_ServiceNetwork: Unknown error occurred while servicing host\n"
+      P_Echo(consoleplayer,
+        "N_ServiceNetwork: Unknown error occurred while servicing host"
       );
       break;
     }
@@ -497,7 +507,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
         netpeer_t *np = N_PeerGet(peernum);
 
         if (np == NULL) {
-          doom_printf("N_ServiceNetwork: Getting new peer failed\n");
+          P_Echo(consoleplayer, "N_ServiceNetwork: Getting new peer failed");
           continue;
         }
 
@@ -513,9 +523,9 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
         np = N_PeerGet(0);
 
         if (np == NULL) {
-          printf(
+          C_Echo(
             "N_ServiceNetwork: Received a 'connect' event but no connection "
-            "was requested.\n"
+            "was requested."
           );
           continue;
         }
@@ -525,7 +535,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     }
     else if (net_event.type == ENET_EVENT_TYPE_DISCONNECT) {
       if ((peernum = N_PeerGetNum(net_event.peer)) == -1) {
-        doom_printf(
+        P_Printf(consoleplayer,
           "N_ServiceNetwork: Received 'disconnect' event from unknown "
           "peer %s:%u.\n",
           N_IPToConstString(doom_b32(net_event.peer->address.host)),
@@ -537,7 +547,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     }
     else if (net_event.type == ENET_EVENT_TYPE_RECEIVE) {
       if ((peernum = N_PeerGetNum(net_event.peer)) == -1) {
-        doom_printf(
+        P_Printf(consoleplayer,
           "N_ServiceNetwork: Received 'packet' event from unknown peer %s:%u.\n",
           N_IPToConstString(doom_b32(net_event.peer->address.host)),
           net_event.peer->address.port
@@ -547,7 +557,9 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       netpeer_t *np = N_PeerGet(peernum);
 
       if (np == NULL) {
-        doom_printf("N_ServiceNetwork: Error getting peer that just sent data\n");
+        P_Echo(consoleplayer,
+          "N_ServiceNetwork: Error getting peer that just sent data"
+        );
         continue;
       }
 
@@ -559,7 +571,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       enet_packet_destroy(net_event.packet);
     }
     else if (net_event.type != ENET_EVENT_TYPE_NONE) {
-      doom_printf(
+      P_Printf(consoleplayer,
         "N_ServiceNetwork: Received unknown event from peer %s:%u.\n",
         N_IPToConstString(doom_b32(net_event.peer->address.host)),
         net_event.peer->address.port

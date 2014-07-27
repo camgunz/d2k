@@ -42,6 +42,7 @@
 #include "g_game.h"
 #include "lprintf.h"
 #include "m_pbuf.h"
+#include "p_user.h"
 
 #include "n_net.h"
 #include "n_state.h"
@@ -244,7 +245,7 @@ void N_PeerSetDisconnected(int peernum) {
 void N_PeerRemove(netpeer_t *np) {
   int peernum = N_PeerGetNum(np->peer);
 
-  doom_printf("Removing peer %s:%u\n",
+  P_Printf(consoleplayer, "Removing peer %s:%u\n",
     N_IPToConstString((doom_b32(np->peer->address.host))),
     np->peer->address.port
   );
@@ -444,7 +445,7 @@ dboolean N_PeerLoadIncoming(int peernum, unsigned char *data, size_t size) {
   M_BufferFree(&buf);
 
   if (message_start_point >= size) {
-    doom_printf("N_PeerLoadIncoming: Received empty packet.\n");
+    P_Echo(consoleplayer, "N_PeerLoadIncoming: Received empty packet.");
     return false;
   }
 
@@ -478,7 +479,7 @@ dboolean N_PeerLoadNextMessage(int peernum, unsigned char *message_type) {
   toc_entry = M_CBufGet(&incoming->toc, 0);
 
   if (toc_entry->index >= M_PBufGetSize(&incoming->messages)) {
-    doom_printf(
+    P_Printf(consoleplayer,
       "N_PeerLoadNextMessage: Invalid message index (%u >= %zu).\n",
       toc_entry->index, M_PBufGetSize(&incoming->messages)
     );

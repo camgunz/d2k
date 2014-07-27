@@ -52,6 +52,8 @@ typedef struct obufiternode_s {
   void *obj;
 } obufiternode_t;
 
+obuf_t*  M_OBufNew(void);
+obuf_t*  M_OBufNewWithCapacity(int capacity);
 void     M_OBufInit(obuf_t *obuf);
 void     M_OBufInitWithCapacity(obuf_t *obuf, int capacity);
 dboolean M_OBufIsValidIndex(obuf_t *obuf, int index);

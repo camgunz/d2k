@@ -36,9 +36,11 @@
 
 #include "cmp.h"
 
+#include "doomstat.h"
 #include "g_game.h"
 #include "lprintf.h"
 #include "m_pbuf.h"
+#include "p_user.h"
 
 static bool buf_read(cmp_ctx_t *ctx, void *data, size_t limit) {
   buf_t *buf = (buf_t *)ctx->buf;
@@ -692,7 +694,7 @@ dboolean M_PBufReadBytes(pbuf_t *pbuf, buf_t *buf) {
    *     16MB
    */
   if (size > 0x00FFFFFF) {
-    doom_printf("M_PBufReadBytes: Attempted to read more than 16MB.\n");
+    P_Echo(consoleplayer, "M_PBufReadBytes: Tried to read more than 16MB.");
     return false;
   }
 
@@ -707,14 +709,15 @@ dboolean M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit) {
   cmp_object_t obj;
 
   if (!cmp_read_object(&pbuf->cmp, &obj)) {
-    doom_printf("M_PBufReadString: Error reading from packed buffer: %s\n",
+    P_Printf(consoleplayer,
+      "M_PBufReadString: Error reading from packed buffer: %s\n",
       cmp_strerror(&pbuf->cmp)
     );
     return false;
   }
 
   if (obj.as.str_size > limit) {
-    doom_printf("M_PBufReadString: String too long.\n");
+    P_Echo(consoleplayer, "M_PBufReadString: String too long.");
     return false;
   }
 
@@ -734,8 +737,8 @@ dboolean M_PBufReadStringArray(pbuf_t *pbuf, obuf_t *obuf,
   if (!M_PBufReadArray(pbuf, &string_count))
     return false;
 
-  if (string_count > string_count_limit) {
-    doom_printf("M_PBufReadStringArray: Too many strings.\n");
+  if (string_count_limit > 0 && string_count > string_count_limit) {
+    P_Echo(consoleplayer, "M_PBufReadStringArray: Too many strings.");
     return false;
   }
 
@@ -747,23 +750,23 @@ dboolean M_PBufReadStringArray(pbuf_t *pbuf, obuf_t *obuf,
     char *s = NULL;
 
     if (!cmp_read_object(&pbuf->cmp, &obj)) {
-      doom_printf(
+      P_Printf(consoleplayer,
         "M_PBufReadStringArray: Error reading from packed buffer: %s\n",
         cmp_strerror(&pbuf->cmp)
       );
       return false;
     }
 
-    if (obj.as.str_size > string_size_limit) {
-      doom_printf("M_PBufReadStringArray: String too long.\n");
+    if (string_size_limit > 0 && obj.as.str_size > string_size_limit) {
+      P_Echo(consoleplayer, "M_PBufReadStringArray: String too long.");
       return false;
     }
 
     if (!(s = calloc(obj.as.str_size + 1, sizeof(char))))
-      I_Error("M_PBufReadStringArray: Error allocating string\n");
+      I_Error("M_PBufReadStringArray: Error allocating string");
 
     if (!M_BufferReadString(&pbuf->buf, s, obj.as.str_size)) {
-      doom_printf("M_PBufReadStringArray: Error reading string\n");
+      P_Echo(consoleplayer, "M_PBufReadStringArray: Error reading string");
       return false;
     }
 

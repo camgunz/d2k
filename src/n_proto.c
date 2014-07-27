@@ -45,6 +45,7 @@
 #include "g_game.h"
 #include "lprintf.h"
 #include "m_pbuf.h"
+#include "p_user.h"
 #include "w_wad.h"
 
 #include "n_net.h"
@@ -60,7 +61,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
 
 #define COMMAND_SYNC_ONLY(name)                                               \
   if (!CMDSYNC) {                                                             \
-    doom_printf(                                                              \
+    P_Printf(consoleplayer,                                                   \
       "%s: Erroneously received command-sync message [%s] in delta-sync "     \
       "mode\n",                                                               \
       __func__, name                                                          \
@@ -70,7 +71,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
 
 #define DELTA_SYNC_ONLY(name)                                                 \
   if (!DELTASYNC) {                                                           \
-    doom_printf(                                                              \
+    P_Printf(consoleplayer,                                                   \
       "%s: Erroneously received delta-sync message [%s] in command-sync "     \
       "mode\n",                                                               \
       __func__, name                                                          \
@@ -80,7 +81,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
 
 #define SERVER_ONLY(name)                                                     \
   if (!SERVER) {                                                              \
-    doom_printf(                                                              \
+    P_Printf(consoleplayer,                                                   \
       "%s: Erroneously received message [%s] from the server\n",              \
       __func__, name                                                          \
     );                                                                        \
@@ -89,7 +90,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
 
 #define CLIENT_ONLY(name)                                                     \
   if (SERVER) {                                                               \
-    doom_printf(                                                              \
+    P_Printf(consoleplayer,                                                   \
       "%s: Erroneously received message [%s] from a client\n",                \
       __func__, name                                                          \
     );                                                                        \
@@ -98,7 +99,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
 
 #define NOT_DELTA_SERVER(name)                                                \
   if (DELTASERVER) {                                                          \
-    doom_printf(                                                              \
+    P_Printf(consoleplayer,                                                   \
       "%s: Erroneously received message [%s] as a delta-sync server\n",       \
       __func__, name                                                          \
     );                                                                        \
@@ -107,7 +108,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
 
 #define NOT_DELTA_CLIENT(name)                                                \
   if (DELTACLIENT) {                                                          \
-    doom_printf(                                                              \
+    P_Printf(consoleplayer,                                                   \
       "%s: Erroneously received message [%s] as a delta-sync client\n",       \
       __func__, name                                                          \
     );                                                                        \
@@ -116,7 +117,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
 
 #define NOT_COMMAND_SERVER(name)                                              \
   if (CMDSERVER) {                                                            \
-    doom_printf(                                                              \
+    P_Printf(consoleplayer,                                                   \
       "%s: Erroneously received message [%s] as a command-sync server "       \
       "mode\n",                                                               \
       __func__, name                                                          \
@@ -126,7 +127,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
 
 #define NOT_COMMAND_CLIENT(name)                                              \
   if (CMDCLIENT) {                                                            \
-    doom_printf(                                                              \
+    P_Printf(consoleplayer,                                                   \
       "%s: Erroneously received message [%s] as a command-sync client"        \
       "mode\n",                                                               \
       __func__, name                                                          \
@@ -160,7 +161,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
 
 #define CHECK_CONNECTION(np)                                                  \
   if (((np) = N_PeerGet(0)) == NULL) {                                        \
-    doom_printf("%s: Not connected\n", __func__);                             \
+    P_Printf(consoleplayer, "%s: Not connected\n", __func__);                 \
     return;                                                                   \
   }
 
@@ -250,7 +251,7 @@ static void handle_server_message(netpeer_t *np) {
   }
 
   if (N_UnpackServerMessage(np, &server_message_buffer))
-    doom_printf("[SERVER]: %s\n", server_message_buffer.data);
+    P_Printf(consoleplayer, "[SERVER]: %s\n", server_message_buffer.data);
 }
 
 static void handle_sync(netpeer_t *np) {
@@ -311,10 +312,10 @@ static void handle_player_message(netpeer_t *np) {
     }
   }
   else if (sender == -1) {
-    doom_printf("[SERVER]: %s\n", player_message_buffer.data);
+    P_Printf(consoleplayer, "[SERVER]: %s\n", player_message_buffer.data);
   }
   else {
-    doom_printf(
+    P_Printf(consoleplayer,
       "%s: %s\n", players[sender].name, player_message_buffer.data
     );
   }
@@ -340,7 +341,8 @@ static void handle_player_preference_change(netpeer_t *np) {
     return;
 
   if (SERVER && playernum != np->playernum) {
-    doom_printf("Received player preference for player %d from peer %d.\n",
+    P_Printf(consoleplayer,
+      "Received player preference for player %d from peer %d.\n",
       playernum, np->playernum
     );
     return;
@@ -348,16 +350,16 @@ static void handle_player_preference_change(netpeer_t *np) {
 
   for (size_t i = 0; i < pref_count; i++) {
     if (!N_UnpackPlayerPreferenceName(np, &pref_key_name)) {
-      doom_printf(
-        "N_HandlePacket: Error unpacking client preference change\n"
+      P_Echo(consoleplayer,
+        "N_HandlePacket: Error unpacking client preference change"
       );
       return;
     }
 
     if (pref_key_name.size > MAX_PREF_NAME_SIZE) {
-      doom_printf(
+      P_Echo(consoleplayer,
         "N_HandlePacket: Invalid client preference change message: preference "
-        "name exceeds maximum length\n"
+        "name exceeds maximum length"
       );
       return;
     }
@@ -368,7 +370,10 @@ static void handle_player_preference_change(netpeer_t *np) {
       N_UnpackNameChange(np, &pref_key_value);
 
       if (player->name != NULL) {
-        doom_printf("%s is now %s.\n", player->name, pref_key_value.data);
+        P_Printf(consoleplayer,
+          "%s is now %s.\n",
+          player->name, pref_key_value.data
+        );
         free(player->name);
       }
 
@@ -403,7 +408,9 @@ static void handle_player_preference_change(netpeer_t *np) {
     else if (M_BufferEqualsString(&pref_key_name, "skin name")) {
     }
     else {
-      doom_printf("Unsupported player preference %s.\n", pref_key_name.data);
+      P_Printf(consoleplayer,
+        "Unsupported player preference %s.\n", pref_key_name.data
+      );
     }
   }
 }
@@ -474,7 +481,8 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
         handle_vote_request(np);
       break;
       default:
-        doom_printf("Received unknown message type %u from peer %s:%u.\n",
+        P_Printf(consoleplayer,
+          "Received unknown message type %u from peer %s:%u.\n",
           message_type,
           N_IPToConstString(doom_b32(np->peer->address.host)),
           np->peer->address.port

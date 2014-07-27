@@ -394,7 +394,7 @@ void G_DoLoadGame(void) {
   M_PBufInitWithCapacity(&savebuffer, MAX(G_GetAverageSaveSize(), 16384));
 
   if (!M_PBufSetFile(&savebuffer, name)) {
-    doom_printf("Couldn't read file %s: %s", name, strerror(errno));
+    P_Printf(consoleplayer, "Couldn't read file %s: %s\n", name, strerror(errno));
     return;
   }
 
@@ -506,9 +506,9 @@ void G_DoSaveGame(dboolean menu) {
   );
   
   if (save_succeeded)
-    doom_printf("%s", s_GGSAVED); /* Ty - externalised */
+    P_Echo(consoleplayer, s_GGSAVED); /* Ty - externalized */
   else
-    doom_printf("%s", "Game save failed!"); // CPhipps - not externalised
+    P_Echo(consoleplayer, "Game save failed!"); // CPhipps - not externalised
 
   M_PBufFree(&savebuffer); // killough
 
@@ -1369,7 +1369,7 @@ void G_Ticker(void) {
           ((gametic >> 5) & 3) == i) {
 
         /* cph - don't use sprintf, use doom_printf */
-        doom_printf ("%s is turbo!", player_names[i]);
+        P_Printf(consoleplayer, "%s is turbo!\n", player_names[i]);
       }
     }
 
@@ -1542,7 +1542,6 @@ void G_PlayerReborn(int player) {
   p->attackdown = 0;
   p->usedown = 0;
   p->refire = 0;
-  p->message = 0;
   p->damagecount = 0;
   p->bonuscount = 0;
   p->attacker = NULL;
@@ -1553,7 +1552,6 @@ void G_PlayerReborn(int player) {
   p->didsecret = 0;
   p->momx = 0;
   p->momy = 0;
-  p->centermessage = NULL;
   p->prev_viewz = 0;
   p->prev_viewangle = 0;
   p->prev_viewpitch = 0;
@@ -3345,7 +3343,7 @@ dboolean G_CheckDemoStatus(void) {
     M_SaveDefaults();
 
     I_Error("Timed %u gametics in %u realtics = %-.1f frames per second",
-      (unsigned) gametic,realtics,
+      (unsigned) gametic, realtics,
       (unsigned) gametic * (double) TICRATE / realtics
     );
   }
@@ -3362,75 +3360,11 @@ dboolean G_CheckDemoStatus(void) {
     G_ReloadDefaults();    // killough 3/1/98
     netgame = false;       // killough 3/29/98
     deathmatch = false;
-    D_AdvanceDemo ();
+    D_AdvanceDemo();
     return true;
   }
 
   return false;
-}
-
-// CG 4/11/2014: Generalize doom_printf to send messages to any player
-//         TODO: At some point, this is gonna have to be revamped.  The rest
-//               of the engine expects to be able to just assign static strings
-//               to player_t.message, but messages sent over the network are
-//               obviously not static, so they have to be copied.
-void doom_pprintf(short playernum, const char *fmt, ...) {
-  static char msg[MAXPLAYERS][MAX_MESSAGE_LENGTH];
-
-  va_list v;
-
-  va_start(v, fmt);
-  if (nodrawers || !graphics_initialized) {
-    vprintf(fmt, v);
-  }
-  else {
-    /* print message in buffer */
-    doom_vsnprintf(msg[playernum], sizeof(msg[playernum]), fmt, v);
-    /* set new message */
-    players[playernum].message = msg[playernum];
-  }
-  va_end(v);
-}
-
-// killough 1/22/98: this is a "Doom printf" for messages. I've gotten
-// tired of using players->message=... and so I've added this dprintf.
-//
-// killough 3/6/98: Made limit static to allow z_zone functions to call
-// this function, without calling realloc(), which seems to cause problems.
-
-// CPhipps - renamed to doom_printf to avoid name collision with glibc
-void doom_printf(const char *fmt, ...) {
-  static char msg[MAX_MESSAGE_LENGTH];
-
-  va_list args;
-
-  va_start(args, fmt);
-  if ((!nodrawers) && graphics_initialized) {
-    doom_vsnprintf(msg, sizeof(msg), fmt, args); /* print message in buffer */
-    players[consoleplayer].message = msg;  // set new message
-  }
-  vprintf(fmt, args);
-  va_end(args);
-
-  C_Write(msg);
-}
-
-void doom_echo(const char *message) {
-  static char msg[MAX_MESSAGE_LENGTH];
-
-  C_Echo(message);
-
-  if (nodrawers || !graphics_initialized) {
-    puts(message);
-    return;
-  }
-
-  if ((strlen(message) + 1) >= MAX_MESSAGE_LENGTH)
-    I_Error("doom_echo: Message [%s] too long", message);
-
-  memset(msg, 0, MAX_MESSAGE_LENGTH * sizeof(char));
-  strcpy(msg, message);
-  strcat(msg, "\n");
 }
 
 //e6y

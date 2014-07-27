@@ -362,15 +362,20 @@ void N_InitNetGame(void) {
 
       if (DEBUG_NET && CLIENT)
         D_EnableLogChannel(LOG_NET, "client-net.log");
+
       if (DEBUG_SYNC && CLIENT)
         D_EnableLogChannel(LOG_SYNC, "client-sync.log");
 
       N_ParseAddressString(myargv[i + 1], &host, &port);
 
-      doom_printf("N_InitNetGame: Connecting to server %s:%u...\n", host, port);
+      P_Printf(consoleplayer,
+        "N_InitNetGame: Connecting to server %s:%u...\n", host, port
+      );
+
       if (!N_Connect(host, port))
         I_Error("N_InitNetGame: Connection refused");
-      doom_printf("N_InitNetGame: Connected!\n");
+
+      P_Echo(consoleplayer, "N_InitNetGame: Connected!");
 
       if (N_PeerGet(0) == NULL)
         I_Error("N_InitNetGame: Server peer was NULL");
@@ -379,7 +384,8 @@ void N_InitNetGame(void) {
 
       G_ReloadDefaults();
 
-      doom_printf("N_InitNetGame: Waiting for setup information...\n");
+      P_Echo(consoleplayer, "N_InitNetGame: Waiting for setup information...");
+
       while (true) {
         time_t now = time(NULL);
 
@@ -391,7 +397,8 @@ void N_InitNetGame(void) {
         if (difftime(now, connect_time) > (CONNECT_TIMEOUT * 1000))
           I_Error("N_InitNetGame: Timed out waiting for setup information");
       }
-      doom_printf("N_InitNetGame: Setup information received!\n");
+
+      P_Echo(consoleplayer, "N_InitNetGame: Setup information received!");
     }
   }
   else {
@@ -425,10 +432,12 @@ void N_InitNetGame(void) {
         host = strdup("0.0.0.0");
       }
 
-      if (N_Listen(host, port))
-        doom_printf("N_InitNetGame: Listening on %s:%u.\n", host, port);
-      else
+      if (!N_Listen(host, port))
         I_Error("Startup aborted");
+
+      P_Printf(consoleplayer, "N_InitNetGame: Listening on %s:%u.\n",
+        host, port
+      );
 
       if (DEBUG_NET && SERVER)
         D_EnableLogChannel(LOG_NET, "server-net.log");
@@ -441,6 +450,7 @@ void N_InitNetGame(void) {
     M_CBufInitWithCapacity(
       &players[i].commands, sizeof(netticcmd_t), BACKUPTICS
     );
+    M_OBufInit(&players[i].messages);
   }
 
   M_CBufInitWithCapacity(&local_commands, sizeof(netticcmd_t), BACKUPTICS);
@@ -484,13 +494,13 @@ bool CL_LoadState(void) {
   predicting = true;
 
   if (!N_ApplyStateDelta(delta)) {
-    doom_printf("Error applying state delta.\n");
+    P_Echo(consoleplayer, "Error applying state delta");
     predicting = false;
     return false;
   }
 
   if (!N_LoadLatestState(false)) {
-    doom_printf("Error loading state.\n");
+    P_Echo(consoleplayer, "Error loading state");
     predicting = false;
     return false;
   }

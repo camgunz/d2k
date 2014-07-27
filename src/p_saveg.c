@@ -27,7 +27,7 @@
  *  02111-1307, USA.
  *
  * DESCRIPTION:
- *      Archiving: SaveGame I/O.
+ *   Archiving: SaveGame I/O.
  *
  *-----------------------------------------------------------------------------*/
 
@@ -148,10 +148,7 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufWriteInt(savebuffer, player->killcount);
   M_PBufWriteInt(savebuffer, player->itemcount);
   M_PBufWriteInt(savebuffer, player->secretcount);
-  if (player->message)
-    M_PBufWriteString(savebuffer, player->message, strlen(player->message));
-  else
-    M_PBufWriteString(savebuffer, "", 0);
+  M_PBufWriteStringArray(savebuffer, &player->messages);
   M_PBufWriteInt(savebuffer, player->damagecount);
   M_PBufWriteInt(savebuffer, player->bonuscount);
   M_PBufWriteInt(savebuffer, player->extralight);
@@ -280,11 +277,7 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufReadInt(savebuffer, &player->killcount);
   M_PBufReadInt(savebuffer, &player->itemcount);
   M_PBufReadInt(savebuffer, &player->secretcount);
-  M_PBufReadString(savebuffer, &msg, MAX_MESSAGE_LENGTH);
-  if (M_BufferGetSize(&msg) > 0)
-    doom_pprintf(player - players, "%s", M_BufferGetData(&msg));
-  else
-    player->message = "";
+  M_PBufReadStringArray(savebuffer, &player->messages, 0, 0);
   M_PBufReadInt(savebuffer, &player->damagecount);
   M_PBufReadInt(savebuffer, &player->bonuscount);
   M_PBufReadInt(savebuffer, &player->extralight);
@@ -372,7 +365,6 @@ void P_UnArchivePlayers(pbuf_t *savebuffer) {
 
     // will be set when unarc thinker
     players[i].mo = NULL;
-    // players[i].message = NULL;
     players[i].attacker = NULL;
   }
 }

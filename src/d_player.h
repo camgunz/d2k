@@ -146,20 +146,23 @@ typedef struct player_s
   // Refired shots are less accurate.
   int                 refire;
 
-   // For intermission stats.
+  // For intermission stats.
   int                 killcount;
   int                 itemcount;
   int                 secretcount;
 
-  // Hint messages. // CPhipps - const
-  const char*         message;
+  // Hint messages.
+  // CPhipps - const
+  // const char         *message;
+
+  obuf_t              messages;
 
   // For screen flashing (red or bright).
   int                 damagecount;
   int                 bonuscount;
 
   // Who did damage (NULL for floors/ceilings).
-  mobj_t*             attacker;
+  mobj_t             *attacker;
 
   // So gun flashes light up areas.
   int                 extralight;

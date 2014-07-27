@@ -38,7 +38,6 @@
 #include "gl_opengl.h"
 #endif
 
-#include "m_cbuf.h"
 #include "doomstat.h"
 #include "st_stuff.h"
 #include "r_main.h"
@@ -55,6 +54,7 @@
 #include "r_demo.h"
 #include "m_misc.h"
 #include "m_bbox.h"
+#include "p_user.h"
 
 extern dboolean gamekeydown[];
 
@@ -791,42 +791,57 @@ dboolean AM_Responder
     {
       automapmode ^= am_follow;     // CPhipps - put all automap mode stuff into one enum
       // Ty 03/27/98 - externalized
-      plr->message = (automapmode & am_follow) ? s_AMSTR_FOLLOWON : s_AMSTR_FOLLOWOFF;
+      if (automapmode & am_follow)
+        P_Echo(consoleplayer, s_AMSTR_FOLLOWON);
+      else
+        P_Echo(consoleplayer, s_AMSTR_FOLLOWOFF);
     }
     else if (ch == key_map_grid)
     {
       automapmode ^= am_grid;      // CPhipps
       // Ty 03/27/98 - *not* externalized
-      plr->message = (automapmode & am_grid) ? s_AMSTR_GRIDON : s_AMSTR_GRIDOFF;
+      if (automapmode & am_grid)
+        P_Echo(consoleplayer, s_AMSTR_GRIDON);
+      else
+        P_Echo(consoleplayer, s_AMSTR_GRIDOFF);
     }
     else if (ch == key_map_mark)
     {
       /* Ty 03/27/98 - *not* externalized     
        * cph 2001/11/20 - use doom_printf so we don't have our own buffer */
-      doom_printf("%s %d", s_AMSTR_MARKEDSPOT, markpointnum);
+      P_Printf(consoleplayer, "%s %d\n", s_AMSTR_MARKEDSPOT, markpointnum);
       AM_addMark();
     }
     else if (ch == key_map_clear)
     {
       AM_clearMarks();  // Ty 03/27/98 - *not* externalized
-      plr->message = s_AMSTR_MARKSCLEARED;                      //    ^
+      P_Echo(consoleplayer, s_AMSTR_MARKSCLEARED);                            //    ^
     }                                                           //    |
     else if (ch == key_map_rotate) {
       automapmode ^= am_rotate;
-      plr->message = (automapmode & am_rotate) ? s_AMSTR_ROTATEON : s_AMSTR_ROTATEOFF;
+      if (automapmode & am_rotate)
+        P_Echo(consoleplayer, s_AMSTR_ROTATEON);
+      else
+        P_Echo(consoleplayer, s_AMSTR_ROTATEOFF);
     }
     else if (ch == key_map_overlay) {
       automapmode ^= am_overlay;
       AM_SetPosition();
       AM_SetScale();
       AM_initVariables();
-      plr->message = (automapmode & am_overlay) ? s_AMSTR_OVERLAYON : s_AMSTR_OVERLAYOFF;
+      if (automapmode & am_overlay)
+        P_Echo(consoleplayer, s_AMSTR_OVERLAYON);
+      else
+        P_Echo(consoleplayer, s_AMSTR_OVERLAYOFF);
     }
 #ifdef GL_DOOM
     else if (ch == key_map_textured) {
       map_textured = !map_textured;
       M_ChangeMapTextured();
-      plr->message = (map_textured ? s_AMSTR_TEXTUREDON : s_AMSTR_TEXTUREDOFF);
+      if (map_textured)
+        P_Echo(consoleplayer, s_AMSTR_TEXTUREDON);
+      else
+        P_Echo(consoleplayer, s_AMSTR_TEXTUREDOFF);
     }
 #endif
     else                                                        // phares
@@ -2329,3 +2344,6 @@ void AM_Drawer (void)
 
   AM_drawMarks();
 }
+
+/* vi: set et ts=2 sw=2: */
+

@@ -77,6 +77,7 @@
 #include "r_main.h"
 #include "r_things.h"
 #include "r_sky.h"
+#include "p_user.h"
 
 //e6y
 #ifdef GL_DOOM
@@ -1574,10 +1575,9 @@ void M_LoadDefaults (void)
 
 const char *screenshot_dir;
 
-void M_DoScreenShot (const char* fname)
-{
+void M_DoScreenShot(const char* fname) {
   if (I_ScreenShot(fname) != 0)
-    doom_printf("M_ScreenShot: Error writing screenshot\n");
+    P_Echo(consoleplayer, "M_ScreenShot: Error writing screenshot");
 }
 
 #ifndef SCREENSHOT_DIR
@@ -1590,8 +1590,7 @@ void M_DoScreenShot (const char* fname)
 #define SCREENSHOT_EXT ".bmp"
 #endif
 
-const char* M_CheckWritableDir(const char *dir)
-{
+const char* M_CheckWritableDir(const char *dir) {
   static char *base = NULL;
   static int base_len = 0;
 
@@ -1599,24 +1598,20 @@ const char* M_CheckWritableDir(const char *dir)
   int len;
 
   if (!dir || !(len = strlen(dir)))
-  {
     return NULL;
-  }
 
-  if (len + 1 > base_len)
-  {
+  if (len + 1 > base_len) {
     base_len = len + 1;
     base = malloc(len + 1);
   }
 
-  if (base)
-  {
+  if (base) {
     strcpy(base, dir);
 
     if (base[len - 1] != '\\' && base[len - 1] != '/')
       strcat(base, "/");
-    if (!access(base, O_RDWR))
-    {
+
+    if (!access(base, O_RDWR)) {
       base[strlen(base) - 1] = 0;
       result = base;
     }
@@ -1625,8 +1620,7 @@ const char* M_CheckWritableDir(const char *dir)
   return result;
 }
 
-void M_ScreenShot(void)
-{
+void M_ScreenShot(void) {
   static int shot;
   char       *lbmname = NULL;
   int        startshot;
@@ -1645,33 +1639,32 @@ void M_ScreenShot(void)
     shot_dir = (!access(SCREENSHOT_DIR, 2) ? SCREENSHOT_DIR : NULL);
 #endif
 
-  if (shot_dir)
-  {
+  if (shot_dir) {
     startshot = shot; // CPhipps - prevent infinite loop
 
     do {
       int size = doom_snprintf(NULL, 0, "%s/doom%02d" SCREENSHOT_EXT, shot_dir, shot);
+
       lbmname = realloc(lbmname, size+1);
       doom_snprintf(lbmname, size+1, "%s/doom%02d" SCREENSHOT_EXT, shot_dir, shot);
       shot++;
     } while (!access(lbmname,0) && (shot != startshot) && (shot < 10000));
 
-    if (access(lbmname,0))
-    {
-      S_StartSound(NULL,gamemode==commercial ? sfx_radio : sfx_tink);
+    if (access(lbmname,0)) {
+      S_StartSound(NULL,  gamemode == commercial ? sfx_radio : sfx_tink);
       M_DoScreenShot(lbmname); // cph
       success = 1;
     }
     free(lbmname);
-    if (success) return;
+
+    if (success)
+      return;
   }
 
-  doom_printf ("M_ScreenShot: Couldn't create screenshot");
-  return;
+  P_Echo(consoleplayer, "M_ScreenShot: Couldn't create screenshot");
 }
 
-int M_StrToInt(const char *s, int *l)
-{      
+int M_StrToInt(const char *s, int *l) {      
   return (
     (sscanf(s, " 0x%x", l) == 1) ||
     (sscanf(s, " 0X%x", l) == 1) ||
@@ -1680,15 +1673,11 @@ int M_StrToInt(const char *s, int *l)
   );
 }
 
-int M_StrToFloat(const char *s, float *f)
-{      
-  return (
-    (sscanf(s, " %f", f) == 1)
-  );
+int M_StrToFloat(const char *s, float *f) {      
+  return sscanf(s, " %f", f) == 1;
 }
 
-int M_DoubleToInt(double x)
-{
+int M_DoubleToInt(double x) {
 #ifdef __GNUC__
  double tmp = x;
  return (int)tmp;
@@ -1697,32 +1686,31 @@ int M_DoubleToInt(double x)
 #endif
 }
 
-char* M_Strlwr(char* str)
-{
+char* M_Strlwr(char* str) {
   char* p;
+
   for (p=str; *p; p++) *p = tolower(*p);
+
   return str;
 }
 
-char* M_Strupr(char* str)
-{
+char* M_Strupr(char* str) {
   char* p;
+
   for (p=str; *p; p++) *p = toupper(*p);
+
   return str;
 }
 
-char *M_StrRTrim(char *str)
-{
+char *M_StrRTrim(char *str) {
   char *end;
 
-  if (str)
-  {
+  if (str) {
     // Trim trailing space
     end = str + strlen(str) - 1;
+
     while(end > str && isspace(*end))
-    {
       end--;
-    }
 
     // Write new null terminator
     *(end + 1) = 0;
@@ -1731,15 +1719,12 @@ char *M_StrRTrim(char *str)
   return str;
 }
 
-void M_ArrayClear(array_t *data)
-{
+void M_ArrayClear(array_t *data) {
   data->count = 0;
 }
 
-void M_ArrayFree(array_t *data)
-{
-  if (data->data)
-  {
+void M_ArrayFree(array_t *data) {
+  if (data->data) {
     free(data->data);
     data->data = NULL;
   }
@@ -1748,10 +1733,8 @@ void M_ArrayFree(array_t *data)
   data->count = 0;
 }
 
-void M_ArrayAddItem(array_t *data, void *item, int itemsize)
-{
-  if (data->count + 1 >= data->capacity)
-  {
+void M_ArrayAddItem(array_t *data, void *item, int itemsize) {
+  if (data->count + 1 >= data->capacity) {
     data->capacity = (data->capacity ? data->capacity * 2 : 128);
     data->data = realloc(data->data, data->capacity * itemsize);
   }
@@ -1760,10 +1743,8 @@ void M_ArrayAddItem(array_t *data, void *item, int itemsize)
   data->count++;
 }
 
-void* M_ArrayGetNewItem(array_t *data, int itemsize)
-{
-  if (data->count + 1 >= data->capacity)
-  {
+void* M_ArrayGetNewItem(array_t *data, int itemsize) {
+  if (data->count + 1 >= data->capacity) {
     data->capacity = (data->capacity ? data->capacity * 2 : 128);
     data->data = realloc(data->data, data->capacity * itemsize);
   }
@@ -1772,3 +1753,4 @@ void* M_ArrayGetNewItem(array_t *data, int itemsize)
 
   return (unsigned char*)data->data + (data->count - 1) * itemsize;
 }
+

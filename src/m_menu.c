@@ -63,6 +63,7 @@
 #include "i_sound.h"
 #include "r_demo.h"
 #include "r_fps.h"
+#include "p_user.h"
 #include "e6y.h"//e6y
 #ifdef _WIN32
 #include "e6y_launcher.h"
@@ -1406,31 +1407,27 @@ static void M_EndGameResponse(int ch)
   D_StartTitle ();
 }
 
-void M_EndGame(int choice)
-{
+void M_EndGame(int choice) {
+  // Ty 03/27/98 - externalized
   if (netgame)
-    {
-    M_StartMessage(s_NETEND,NULL,false); // Ty 03/27/98 - externalized
-    return;
-    }
-  M_StartMessage(s_ENDGAME,M_EndGameResponse,true); // Ty 03/27/98 - externalized
+    M_StartMessage(s_NETEND, NULL, false);
+  else
+    M_StartMessage(s_ENDGAME, M_EndGameResponse, true);
 }
 
 /////////////////////////////
 //
-//    Toggle messages on/off
+// Toggle messages on/off
 //
 
-void M_ChangeMessages(int choice)
-{
-  // warning: unused parameter `int choice'
-  choice = 0;
+void M_ChangeMessages(int choice) {
+  choice = 0; // suppress warning: unused parameter `int choice'
   showMessages = 1 - showMessages;
 
   if (!showMessages)
-    players[consoleplayer].message = s_MSGOFF; // Ty 03/27/98 - externalized
+    P_Write(consoleplayer, s_MSGOFF); // Ty 03/27/98 - externalized
   else
-    players[consoleplayer].message = s_MSGON ; // Ty 03/27/98 - externalized
+    P_Write(consoleplayer, s_MSGON); // Ty 03/27/98 - externalized
 
   message_dontfuckwithme = true;
 }

@@ -38,12 +38,28 @@
 
 #include "d_player.h"
 
-void    P_PlayerThink(player_t *player);
-void    P_CalcHeight(player_t *player);
-void    P_DeathThink(player_t *player);
-void    P_MovePlayer(player_t *player);
-void    P_Thrust(player_t *player, angle_t angle, fixed_t move);
-void    P_SetPitch(player_t *player);
-void    P_RunPlayerCommands(player_t *player);
+typedef struct player_message_s {
+  uint64_t timestamp;
+  char *content;
+  bool centered;
+} player_message_t;
+
+void P_PlayerThink(player_t *player);
+void P_CalcHeight(player_t *player);
+void P_DeathThink(player_t *player);
+void P_MovePlayer(player_t *player);
+void P_Thrust(player_t *player, angle_t angle, fixed_t move);
+void P_SetPitch(player_t *player);
+void P_RunPlayerCommands(player_t *player);
+void P_Printf(int playernum, const char *fmt, ...) PRINTF_DECL(2, 3);
+void P_Echo(int playernum, const char *message);
+void P_Write(int playernum, const char *message);
+void P_CenterPrintf(int playernum, const char *fmt, ...) PRINTF_DECL(2, 3);
+void P_CenterEcho(int playernum, const char *message);
+void P_CenterWrite(int playernum, const char *message);
+void P_ClearMessages(int playernum);
 
 #endif  /* P_USER__ */
+
+/* vi: set et ts=2 sw=2: */
+
