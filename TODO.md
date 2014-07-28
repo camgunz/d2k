@@ -1,29 +1,23 @@
 # To Do
 
 1. Fix messaging
-  - Add `player->messages`, a string queue
-    - Nothing uses `player->message` anymore
-    - Display N messages for M seconds
-    - Is serialized in savegames
-  - Fix MP chatting
-  - `doom_printf` becomes `HU_Printf`
-    - Still console-ized
-  - `doom_echo` becomes `HU_Echo`
-    - Still console-ized
-  - Add:
-    - `HU_CenterPrintf`
-      - console-ized
-    - `HU_CenterEcho`
-      - console-ized
-  - `doom_pprintf` goes away
-  - Add more scripting commands
-    - `say`
-    - `say_team`
-    - `alias`
+  * Update HUD widgets
+    * Top message widget
+      * Display N messages for M seconds
+    * Chat input widget
+  * Add:
+    * `HU_CenterPrintf`
+      * console-ized
+    * `HU_CenterEcho`
+      * console-ized
+  * Add more scripting commands
+    * `say`
+    * `say_team`
+    * `alias`
 
 1. Make it possible to play a game
-  - Something about quitting & rejoining
-  - Sounds with > 1 player are busted
+  - Something about quitting and rejoining
+  - Sounds with more than 1 player are busted
   - Fix intermission (single-player is busted too)
 
 1. Add latency mitigation
@@ -35,7 +29,7 @@
     - Restore game state that player was viewing during the attack
       - This is contained in the command
     - Restore attacking player position (if possible)
-    - Run hit detection & damage calculation
+    - Run hit detection and damage calculation
       - For every impacted actor:
         - Save momx/momy/momz values
     - Restore saved state
@@ -46,8 +40,8 @@
 
 1. Add a scoreboard
 
-1. Better configuration file & configuration variable system
-  - Ties into scripting & console
+1. Better configuration file and configuration variable system
+  - Ties into scripting and console
 
 1. Improve console
   - Command history
@@ -57,7 +51,7 @@
   - Selection
     - Mouse
 
-1. Add HTTP & JSON (cURL and Jansson)
+1. Add HTTP and JSON (cURL and Jansson)
   - Have client download missing WADs
     - the client should do this between frames in case it needs to download a
       huge file (or a file from a slow server); libcurl ought to make this
@@ -119,6 +113,10 @@
   - Playernums are unsigned shorts; fix this everywhere
     - Then we can use int and use -1 for an invalid player number
   - TICs are unsigned ints; fix this everywhere
+
+1. Refactor the HUD to use cairo
+
+1. Reimplement the HUD entirely in scripting
 
 1. Remove all vestiges of command sync, it just doesn't make sense anymore
 

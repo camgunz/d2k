@@ -772,7 +772,9 @@ SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/g_game.c
   ${CMAKE_SOURCE_DIR}/src/g_overflow.c
   ${CMAKE_SOURCE_DIR}/src/g_save.c
+  ${CMAKE_SOURCE_DIR}/src/hu_input.c
   ${CMAKE_SOURCE_DIR}/src/hu_lib.c
+  ${CMAKE_SOURCE_DIR}/src/hu_msg.c
   ${CMAKE_SOURCE_DIR}/src/hu_stuff.c
   ${CMAKE_SOURCE_DIR}/src/hu_tracers.c
   ${CMAKE_SOURCE_DIR}/src/i_capture.c

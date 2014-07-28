@@ -53,6 +53,13 @@
 /*jff 2/26/98 maximum number of messages allowed in refresh list */
 #define HU_MAXMESSAGES 16
 
+typedef struct hu_color_s {
+  float r;
+  float g;
+  float b;
+  float a;
+} hu_color_t;
+
 /*
  * Typedefs of widgets
  */
