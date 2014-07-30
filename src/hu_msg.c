@@ -334,7 +334,12 @@ void HU_MessageWidgetMVPrintf(message_widget_t *mw, const char *fmt,
 }
 
 void HU_MessageWidgetEcho(message_widget_t *mw, const char *message) {
-  gchar *markup_message = g_markup_escape_text(message, -1);
+  gchar *markup_message;
+
+  if (message == NULL)
+    return;
+  
+  markup_message = g_markup_escape_text(message, -1);
 
   if (nodrawers)
     puts(markup_message);
@@ -348,6 +353,9 @@ void HU_MessageWidgetEcho(message_widget_t *mw, const char *message) {
 }
 
 void HU_MessageWidgetMEcho(message_widget_t *mw, const char *message) {
+  if (message == NULL)
+    return;
+
   if (nodrawers)
     puts(message);
 
@@ -358,7 +366,12 @@ void HU_MessageWidgetMEcho(message_widget_t *mw, const char *message) {
 }
 
 void HU_MessageWidgetWrite(message_widget_t *mw, const char *message) {
-  gchar *markup_message = g_markup_escape_text(message, -1);
+  gchar *markup_message;
+
+  if (message == NULL)
+    return;
+  
+  markup_message = g_markup_escape_text(message, -1);
 
   if (nodrawers)
     printf("%s", message);
@@ -371,6 +384,9 @@ void HU_MessageWidgetWrite(message_widget_t *mw, const char *message) {
 }
 
 void HU_MessageWidgetMWrite(message_widget_t *mw, const char *message) {
+  if (message == NULL)
+    return;
+
   if (nodrawers)
     printf("%s", message);
 

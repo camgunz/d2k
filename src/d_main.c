@@ -1822,7 +1822,7 @@ static void D_DoomMainSetup(void) {
   do {
     rsp_found = false;
     for (int i = 0; i < myargc; i++)
-      if (myargv[i][0]=='@')
+      if (myargv[i][0] == '@')
         rsp_found = true;
 
     FindResponseFile();
@@ -2447,9 +2447,11 @@ static void D_DoomMainSetup(void) {
 //
 
 void D_DoomMain(void) {
-  D_DoomMainSetup(); // CPhipps - setup out of main execution stack
+  // CPhipps - setup out of main execution stack
+  D_DoomMainSetup();
 
-  D_DoomLoop ();  // never returns
+  // never returns
+  D_DoomLoop();
 }
 
 //

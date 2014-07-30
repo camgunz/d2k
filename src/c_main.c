@@ -56,6 +56,7 @@ typedef struct console_s {
 } console_t;
 
 static console_widget_t *cons;
+static GString *tempbuf = NULL;
 static GRegex *shorthand_regex = NULL;
 
 static bool command_is_shorthand(const char *command) {
@@ -144,6 +145,103 @@ static void process_console_input(input_widget_t *iw) {
   HU_InputWidgetClear(iw);
 }
 
+static void tempbuf_vprintf(const char *fmt, va_list args) {
+  gchar *markup_string;
+
+  if (fmt == NULL)
+    return;
+
+  if (tempbuf == NULL)
+    tempbuf = g_string_new("");
+
+  markup_string = g_markup_vprintf_escaped(fmt, args);
+
+  if (nodrawers)
+    printf("%s", markup_string);
+
+  g_string_append(tempbuf, markup_string);
+  g_free(markup_string);
+}
+
+static void tempbuf_mvprintf(const char *fmt, va_list args) {
+  if (fmt == NULL)
+    return;
+
+  if (tempbuf == NULL)
+    tempbuf = g_string_new("");
+
+  if (nodrawers)
+    vprintf(fmt, args);
+
+  g_string_append_vprintf(tempbuf, fmt, args);
+}
+
+static void tempbuf_echo(const char *message) {
+  gchar *markup_message;
+
+  if (message == NULL)
+    return;
+  
+  if (tempbuf == NULL)
+    tempbuf = g_string_new("");
+
+  markup_message = g_markup_escape_text(message, -1);
+
+  if (nodrawers)
+    puts(markup_message);
+
+  g_string_append(tempbuf, markup_message);
+  g_string_append(tempbuf, "\n");
+
+  g_free(markup_message);
+}
+
+static void tempbuf_mecho(const char *message) {
+  if (message == NULL)
+    return;
+
+  if (tempbuf == NULL)
+    tempbuf = g_string_new("");
+
+  if (nodrawers)
+    puts(message);
+
+  g_string_append(tempbuf, message);
+  g_string_append(tempbuf, "\n");
+}
+
+static void tempbuf_write(const char *message) {
+  gchar *markup_message;
+
+  if (message == NULL)
+    return;
+  
+  if (tempbuf == NULL)
+    tempbuf = g_string_new("");
+
+  markup_message = g_markup_escape_text(message, -1);
+
+  if (nodrawers)
+    printf("%s", message);
+
+  g_string_append(tempbuf, markup_message);
+
+  g_free(markup_message);
+}
+
+static void tempbuf_mwrite(const char *message) {
+  if (message == NULL)
+    return;
+
+  if (tempbuf == NULL)
+    tempbuf = g_string_new("");
+
+  if (nodrawers)
+    printf("%s", message);
+
+  g_string_append(tempbuf, message);
+}
+
 int XF_Echo(lua_State *L) {
   const char *message = luaL_checkstring(L, 1);
 
@@ -182,6 +280,11 @@ void C_Init(void) {
 
   if (error)
     I_Error("C_Init: Error compiling shorthand regex: %s", error->message);
+
+  if (tempbuf) {
+    C_MWrite(tempbuf->str);
+    g_string_free(tempbuf, true);
+  }
 
   X_RegisterFunc("echo", XF_Echo);
   X_RegisterFunc("mecho", XF_MEcho);
@@ -240,32 +343,64 @@ void C_Printf(const char *fmt, ...) {
   va_list args;
 
   va_start(args, fmt);
-  HU_ConsoleWidgetVPrintf(cons, fmt, args);
+  if (cons)
+    HU_ConsoleWidgetVPrintf(cons, fmt, args);
+  else
+    tempbuf_vprintf(fmt, args);
   va_end(args);
+}
+
+void C_VPrintf(const char *fmt, va_list args) {
+  if (cons)
+    HU_ConsoleWidgetVPrintf(cons, fmt, args);
+  else
+    tempbuf_vprintf(fmt, args);
 }
 
 void C_MPrintf(const char *fmt, ...) {
   va_list args;
 
   va_start(args, fmt);
-  HU_ConsoleWidgetMVPrintf(cons, fmt, args);
+  if (cons)
+    HU_ConsoleWidgetMVPrintf(cons, fmt, args);
+  else
+    tempbuf_mvprintf(fmt, args);
   va_end(args);
 }
 
+void C_MVPrintf(const char *fmt, va_list args) {
+  if (cons)
+    HU_ConsoleWidgetMVPrintf(cons, fmt, args);
+  else
+    tempbuf_mvprintf(fmt, args);
+}
+
 void C_Echo(const char *message) {
-  HU_ConsoleWidgetEcho(cons, message);
+  if (cons)
+    HU_ConsoleWidgetEcho(cons, message);
+  else
+    tempbuf_echo(message);
 }
 
 void C_MEcho(const char *message) {
-  HU_ConsoleWidgetMEcho(cons, message);
+  if (cons)
+    HU_ConsoleWidgetMEcho(cons, message);
+  else
+    tempbuf_mecho(message);
 }
 
 void C_Write(const char *message) {
-  HU_ConsoleWidgetWrite(cons, message);
+  if (cons)
+    HU_ConsoleWidgetWrite(cons, message);
+  else
+    tempbuf_write(message);
 }
 
 void C_MWrite(const char *message) {
-  HU_ConsoleWidgetMWrite(cons, message);
+  if (cons)
+    HU_ConsoleWidgetMWrite(cons, message);
+  else
+    tempbuf_mwrite(message);
 }
 
 /* vi: set et ts=2 sw=2: */

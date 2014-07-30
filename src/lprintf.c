@@ -24,6 +24,8 @@
 #include "z_zone.h"
 
 #include "doomtype.h"
+#include "d_event.h"
+#include "c_main.h"
 #include "lprintf.h"
 #include "i_main.h"
 #include "i_system.h"
@@ -294,32 +296,24 @@ void Done_ConsoleWin(void)
 }
 #endif
 
-int lprintf(OutputLevels pri, const char *s, ...)
-{
-  int r=0;
-  char msg[MAX_MESSAGE_LENGTH];
-  int lvl=pri;
+void lprintf(OutputLevels pri, const char *s, ...) {
+  va_list args, console_args, print_args, error_args;
 
-  va_list v;
-  va_start(v,s);
-  doom_vsnprintf(msg,sizeof(msg),s,v);    /* print message in buffer  */
-  va_end(v);
+  va_start(args, s);
 
-  if (lvl&cons_output_mask)               /* mask output as specified */
-  {
-#ifdef _WIN32
-    // do not crash with unicode dirs
-    if (fileno(stdout) != -1)
-#endif
-    r=fprintf(stdout,"%s",msg);
-#ifdef _WIN32
-    I_ConPrintString(msg);
-#endif
-  }
-  if (!isatty(1) && lvl&cons_error_mask)  /* if stdout redirected     */
-    r=fprintf(stderr,"%s",msg);           /* select output at console */
+  va_copy(console_args, args);
+  va_copy(print_args, args);
+  va_copy(error_args, args);
 
-  return r;
+  C_VPrintf(s, console_args);
+
+  if (pri & cons_output_mask)
+    vfprintf(stdout, s, print_args);
+
+  if (pri & cons_error_mask)
+    vfprintf(stderr, s, error_args);
+
+  va_end(args);
 }
 
 /*

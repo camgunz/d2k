@@ -1,6 +1,7 @@
 # To Do
 
 1. Fix messaging
+  * Scrollback offset no longer works
   * Add more scripting commands
     * `say`
     * `say_team`
