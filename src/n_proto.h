@@ -1,36 +1,26 @@
-/* Emacs style mode select   -*- C++ -*-
- *-----------------------------------------------------------------------------
- *
- *
- *  PrBoom: a Doom port merged with LxDoom and LSDLDoom
- *  based on BOOM, a modified and improved DOOM engine
- *  Copyright (C) 1999 by
- *  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
- *  Copyright (C) 1999-2000 by
- *  Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze
- *  Copyright 2005, 2006 by
- *  Florian Schulze, Colin Phipps, Neil Stevens, Andrey Budko
- *
- *  This program is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU General Public License
- *  as published by the Free Software Foundation; either version 2
- *  of the License, or (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
- *  02111-1307, USA.
- *
- * DESCRIPTION:
- *
- *
- *-----------------------------------------------------------------------------
- */
+/*****************************************************************************/
+/* D2K: A Doom Source Port for the 21st Century                              */
+/*                                                                           */
+/* Copyright (C) 2014: See COPYRIGHT file                                    */
+/*                                                                           */
+/* This file is part of D2K.                                                 */
+/*                                                                           */
+/* D2K is free software: you can redistribute it and/or modify it under the  */
+/* terms of the GNU General Public License as published by the Free Software */
+/* Foundation, either version 2 of the License, or (at your option) any      */
+/* later version.                                                            */
+/*                                                                           */
+/* D2K is distributed in the hope that it will be useful, but WITHOUT ANY    */
+/* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS */
+/* FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more    */
+/* details.                                                                  */
+/*                                                                           */
+/* You should have received a copy of the GNU General Public License along   */
+/* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
+/*                                                                           */
+/* vi: set et ts=2 sw=2:                                                     */
+/*                                                                           */
+/*****************************************************************************/
 
 #ifndef N_PROTO_H__
 #define N_PROTO_H__
@@ -83,6 +73,7 @@ void CL_SendMessageToServer(char *message);
 void CL_SendMessageToPlayer(short recipient, char *message);
 void CL_SendMessageToTeam(byte team, char *message);
 void CL_SendMessageToCurrentTeam(char *message);
+void CL_SendMessage(char *message);
 void CL_SendCommands(void);
 void CL_SendSaveGameNameChange(char *new_save_game_name);
 void CL_SendNameChange(char *new_name);
@@ -101,6 +92,4 @@ void CL_SendRCONCommand(char *command);
 void CL_SendVoteRequest(char *command);
 
 #endif
-
-/* vi: set et ts=2 sw=2: */
 

@@ -1,36 +1,26 @@
-/* Emacs style mode select -*- C++ -*-
- *-----------------------------------------------------------------------------
- *
- *
- *  PrBoom: a Doom port merged with LxDoom and LSDLDoom
- *  based on BOOM, a modified and improved DOOM engine
- *  Copyright (C) 1999 by
- *  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
- *  Copyright (C) 1999-2000 by
- *  Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze
- *  Copyright 2005, 2006 by
- *  Florian Schulze, Colin Phipps, Neil Stevens, Andrey Budko
- *
- *  This program is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU General Public License
- *  as published by the Free Software Foundation; either version 2
- *  of the License, or (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
- *  02111-1307, USA.
- *
- * DESCRIPTION:
- *   Input Widget
- *
- *-----------------------------------------------------------------------------
- */
+/*****************************************************************************/
+/* D2K: A Doom Source Port for the 21st Century                              */
+/*                                                                           */
+/* Copyright (C) 2014: See COPYRIGHT file                                    */
+/*                                                                           */
+/* This file is part of D2K.                                                 */
+/*                                                                           */
+/* D2K is free software: you can redistribute it and/or modify it under the  */
+/* terms of the GNU General Public License as published by the Free Software */
+/* Foundation, either version 2 of the License, or (at your option) any      */
+/* later version.                                                            */
+/*                                                                           */
+/* D2K is distributed in the hope that it will be useful, but WITHOUT ANY    */
+/* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS */
+/* FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more    */
+/* details.                                                                  */
+/*                                                                           */
+/* You should have received a copy of the GNU General Public License along   */
+/* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
+/*                                                                           */
+/* vi: set et ts=2 sw=2:                                                     */
+/*                                                                           */
+/*****************************************************************************/
 
 #include "z_zone.h"
 
@@ -40,6 +30,7 @@
 #include "d_event.h"
 #include "hu_lib.h"
 #include "hu_input.h"
+#include "hu_stuff.h"
 #include "i_main.h"
 #include "lprintf.h"
 
@@ -235,7 +226,7 @@ input_widget_t* HU_InputWidgetNew(void *render_context, int x, int y,
   iw->buf = g_string_new("");
   iw->layout_context = NULL;
   iw->layout = NULL;
-  iw->font_description = "Sans 9";
+  iw->font_description = HU_FONT;
   iw->x = x;
   iw->y = y;
   iw->width = w;
@@ -330,6 +321,34 @@ void HU_InputWidgetSetFont(input_widget_t *iw, const char *font) {
   iw->needs_rebuilding = true;
 }
 
+void HU_InputWidgetSetHeightByLines(input_widget_t *iw, int lines) {
+  int layout_width;
+  int layout_height;
+  int widget_width;
+  int widget_height;
+  guint line_count = g_slist_length(pango_layout_get_lines_readonly(
+    iw->layout
+  ));
+  bool was_blank = false;
+
+  if (line_count == 0) {
+    g_string_append(iw->buf, "Doom");
+    line_count = 1;
+    was_blank = true;
+  }
+
+  HU_InputWidgetGetLayoutSize(iw, &layout_width, &layout_height);
+  HU_InputWidgetGetSize(iw, &widget_width, &widget_height);
+  HU_InputWidgetSetSize(
+    iw,
+    widget_width,
+    ((float)layout_height / (float)line_count) * lines
+  );
+
+  if (was_blank)
+    g_string_erase(iw->buf, 0, -1);
+}
+
 void HU_InputWidgetRebuild(input_widget_t *iw, void *render_context) {
   PangoFontDescription *desc;
   int width;
@@ -341,7 +360,7 @@ void HU_InputWidgetRebuild(input_widget_t *iw, void *render_context) {
 
   pango_layout_set_text(iw->layout, iw->buf->str, -1);
   pango_layout_set_font_description(iw->layout, desc);
-  pango_layout_set_width(iw->layout, iw->width * PANGO_SCALE);
+  pango_layout_set_width(iw->layout, -1);
   pango_layout_set_height(iw->layout, iw->height * PANGO_SCALE);
   pango_cairo_update_layout(render_context, iw->layout);
 
@@ -507,5 +526,13 @@ char* HU_InputWidgetGetText(input_widget_t *iw) {
   return iw->buf->str;
 }
 
-/* vi: set et ts=2 sw=2: */
+size_t HU_InputWidgetGetTextLength(input_widget_t *iw) {
+  return iw->buf->len;
+}
+
+void HU_InputWidgetClear(input_widget_t *iw) {
+  g_string_erase(iw->buf, 0, -1);
+  iw->cursor = 0;
+  activate_cursor(iw);
+}
 

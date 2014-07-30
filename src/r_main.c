@@ -1,37 +1,27 @@
-/* Emacs style mode select   -*- C++ -*-
- *-----------------------------------------------------------------------------
- *
- *
- *  PrBoom: a Doom port merged with LxDoom and LSDLDoom
- *  based on BOOM, a modified and improved DOOM engine
- *  Copyright (C) 1999 by
- *  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
- *  Copyright (C) 1999-2000 by
- *  Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze
- *  Copyright 2005, 2006 by
- *  Florian Schulze, Colin Phipps, Neil Stevens, Andrey Budko
- *
- *  This program is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU General Public License
- *  as published by the Free Software Foundation; either version 2
- *  of the License, or (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
- *  02111-1307, USA.
- *
- * DESCRIPTION:
- *      Rendering main loop and setup functions,
- *       utility functions (BSP, geometry, trigonometry).
- *      See tables.c, too.
- *
- *-----------------------------------------------------------------------------*/
+/*****************************************************************************/
+/*                                                                           */
+/* vi: set et ts=2 sw=2:                                                     */
+/*                                                                           */
+/* D2K: A Doom Source Port for the 21st Century                              */
+/*                                                                           */
+/* Copyright (C) 2014: See COPYRIGHT file                                    */
+/*                                                                           */
+/* This file is part of D2K.                                                 */
+/*                                                                           */
+/* D2K is free software: you can redistribute it and/or modify it under the  */
+/* terms of the GNU General Public License as published by the Free Software */
+/* Foundation, either version 2 of the License, or (at your option) any      */
+/* later version.                                                            */
+/*                                                                           */
+/* D2K is distributed in the hope that it will be useful, but WITHOUT ANY    */
+/* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS */
+/* FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more    */
+/* details.                                                                  */
+/*                                                                           */
+/* You should have received a copy of the GNU General Public License along   */
+/* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
+/*                                                                           */
+/*****************************************************************************/
 
 #include "z_zone.h"
 
@@ -1074,24 +1064,38 @@ int rendered_visplanes, rendered_segs, rendered_vissprites;
 dboolean rendering_stats;
 int renderer_fps = 0;
 
-void R_ShowStats(void)
-{
-  static unsigned int FPS_SavedTick = 0, FPS_FrameCount = 0;
-  unsigned int tick = SDL_GetTicks();
+void R_ShowStats(void) {
+  static unsigned int saved_tic = 0;
+  static unsigned int frame_count = 0;
 
-  FPS_FrameCount++;
-  if(tick >= FPS_SavedTick + 1000)
-  {
-    renderer_fps = 1000 * FPS_FrameCount / (tick - FPS_SavedTick);
-    if (rendering_stats)
-    {
-      P_Printf(consoleplayer, (V_GetMode() == VID_MODEGL)
-                  ?"Frame rate %d fps\nWalls %d, Flats %d, Sprites %d\n"
-                  :"Frame rate %d fps\nSegs %d, Visplanes %d, Sprites %d\n",
-      renderer_fps, rendered_segs, rendered_visplanes, rendered_vissprites);
+  unsigned int tic = SDL_GetTicks();
+
+  frame_count++;
+
+  if(tic >= saved_tic + 1000) {
+    renderer_fps = 1000 * frame_count / (tic - saved_tic);
+
+    if (rendering_stats) {
+#ifdef GL_DOOM
+      if (V_GetMode() == VID_MODEGL) {
+        P_Printf(consoleplayer,
+          "Frame rate %d fps\nWalls %d, Flats %d, Sprites %d\n",
+          renderer_fps, rendered_segs, rendered_visplanes, rendered_vissprites
+        );
+      }
+      else
+#endif
+      {
+        P_Printf(consoleplayer,
+          "Frame rate %d fps\nSegs %d, Visplanes %d, Sprites %d\n",
+          renderer_fps, rendered_segs, rendered_visplanes, rendered_vissprites
+        );
+      }
+      P_Echo(consoleplayer, "開発メモ 技術系の作業メモおよびアイデアの記録");
     }
-    FPS_SavedTick = tick;
-    FPS_FrameCount = 0;
+
+    saved_tic = tic;
+    frame_count = 0;
   }
 }
 

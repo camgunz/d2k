@@ -1,31 +1,33 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// Copyright(C) 1993-1996 Id Software, Inc.
-// Copyright(C) 2005 Simon Howard
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-// 02111-1307, USA.
-//
+/*****************************************************************************/
+/* D2K: A Doom Source Port for the 21st Century                              */
+/*                                                                           */
+/* Copyright (C) 2014: See COPYRIGHT file                                    */
+/*                                                                           */
+/* This file is part of D2K.                                                 */
+/*                                                                           */
+/* D2K is free software: you can redistribute it and/or modify it under the  */
+/* terms of the GNU General Public License as published by the Free Software */
+/* Foundation, either version 2 of the License, or (at your option) any      */
+/* later version.                                                            */
+/*                                                                           */
+/* D2K is distributed in the hope that it will be useful, but WITHOUT ANY    */
+/* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS */
+/* FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more    */
+/* details.                                                                  */
+/*                                                                           */
+/* You should have received a copy of the GNU General Public License along   */
+/* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
+/*                                                                           */
+/* vi: set et ts=2 sw=2:                                                     */
+/*                                                                           */
+/*****************************************************************************/
 
 // e6y
 // All tabs are replaced with spaces.
 // Fixed eol style of files.
 
-#ifndef MEMIO_H
-#define MEMIO_H
+#ifndef MEMIO_H__
+#define MEMIO_H__
 
 typedef struct _MEMFILE MEMFILE;
 
@@ -46,3 +48,4 @@ long mem_ftell(MEMFILE *stream);
 int mem_fseek(MEMFILE *stream, signed long offset, mem_rel_t whence);
 
 #endif /* #ifndef MEMIO_H */
+

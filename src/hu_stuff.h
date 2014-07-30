@@ -1,34 +1,26 @@
-/* Emacs style mode select   -*- C++ -*-
- *-----------------------------------------------------------------------------
- *
- *
- *  PrBoom: a Doom port merged with LxDoom and LSDLDoom
- *  based on BOOM, a modified and improved DOOM engine
- *  Copyright (C) 1999 by
- *  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
- *  Copyright (C) 1999-2000 by
- *  Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze
- *  Copyright 2005, 2006 by
- *  Florian Schulze, Colin Phipps, Neil Stevens, Andrey Budko
- *
- *  This program is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU General Public License
- *  as published by the Free Software Foundation; either version 2
- *  of the License, or (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
- *  02111-1307, USA.
- *
- * DESCRIPTION:  Head up display
- *
- *-----------------------------------------------------------------------------*/
+/*****************************************************************************/
+/* D2K: A Doom Source Port for the 21st Century                              */
+/*                                                                           */
+/* Copyright (C) 2014: See COPYRIGHT file                                    */
+/*                                                                           */
+/* This file is part of D2K.                                                 */
+/*                                                                           */
+/* D2K is free software: you can redistribute it and/or modify it under the  */
+/* terms of the GNU General Public License as published by the Free Software */
+/* Foundation, either version 2 of the License, or (at your option) any      */
+/* later version.                                                            */
+/*                                                                           */
+/* D2K is distributed in the hope that it will be useful, but WITHOUT ANY    */
+/* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS */
+/* FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more    */
+/* details.                                                                  */
+/*                                                                           */
+/* You should have received a copy of the GNU General Public License along   */
+/* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
+/*                                                                           */
+/* vi: set et ts=2 sw=2:                                                     */
+/*                                                                           */
+/*****************************************************************************/
 
 #ifndef __HU_STUFF_H__
 #define __HU_STUFF_H__
@@ -38,6 +30,18 @@
 /*
  * Globally visible constants.
  */
+
+/*
+#define HU_FONT "boombox2 8"
+#define HU_FONT "snap 8"
+#define HU_FONT "Monkirta Pursuit NC 12"
+*/
+
+#define HU_FONT         "Monkirta Pursuit NC 12"
+#define HU_FONT_FILE    "Monkirta Pursuit NC.ttf"
+#define HU_UNIFONT      "unifont 12"
+#define HU_UNIFONT_FILE "unifont-7.0.03.ttf"
+
 #define HU_FONTSTART    '!'     /* the first font characters */
 #define HU_FONTEND      (0x7f) /*jff 2/16/98 '_' the last font characters */
 
@@ -67,14 +71,18 @@ void HU_Init(void);
 void HU_LoadHUDDefs(void);
 void HU_Start(void);
 
+bool HU_ChatActive(void);
+void HU_DeactivateChat(void);
+
 dboolean HU_Responder(event_t* ev);
 
-void HU_Ticker(void);
-void HU_Drawer(void);
-char HU_dequeueChatChar(void);
-void HU_Erase(void);
-void HU_MoveHud(int force); // jff 3/9/98 avoid glitch in HUD display
-void HU_NextHud(void);
+void  HU_Ticker(void);
+void  HU_Drawer(void);
+char  HU_dequeueChatChar(void);
+void  HU_Erase(void);
+void  HU_MoveHud(int force); // jff 3/9/98 avoid glitch in HUD display
+void  HU_NextHud(void);
+void* HU_GetRenderContext(void);
 
 /* killough 5/2/98: moved from m_misc.c: */
 
@@ -125,3 +133,4 @@ extern crosshair_t crosshair;
 int SetCustomMessage(int plr, const char *msg, int delay, int ticks, int cm, int sfx);
 
 #endif
+

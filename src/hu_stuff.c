@@ -1,61 +1,65 @@
-/* Emacs style mode select   -*- C++ -*-
- *-----------------------------------------------------------------------------
- *
- *
- *  PrBoom: a Doom port merged with LxDoom and LSDLDoom
- *  based on BOOM, a modified and improved DOOM engine
- *  Copyright (C) 1999 by
- *  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
- *  Copyright (C) 1999-2000 by
- *  Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze
- *  Copyright 2005, 2006 by
- *  Florian Schulze, Colin Phipps, Neil Stevens, Andrey Budko
- *
- *  This program is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU General Public License
- *  as published by the Free Software Foundation; either version 2
- *  of the License, or (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
- *  02111-1307, USA.
- *
- * DESCRIPTION:  Heads-up displays
- *
- *-----------------------------------------------------------------------------
- */
+/*****************************************************************************/
+/* vi: set et ts=2 sw=2:                                                     */
+/*                                                                           */
+/* D2K: A Doom Source Port for the 21st Century                              */
+/*                                                                           */
+/* Copyright (C) 2014: See COPYRIGHT file                                    */
+/*                                                                           */
+/* This file is part of D2K.                                                 */
+/*                                                                           */
+/* D2K is free software: you can redistribute it and/or modify it under the  */
+/* terms of the GNU General Public License as published by the Free Software */
+/* Foundation, either version 2 of the License, or (at your option) any      */
+/* later version.                                                            */
+/*                                                                           */
+/* D2K is distributed in the hope that it will be useful, but WITHOUT ANY    */
+/* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS */
+/* FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more    */
+/* details.                                                                  */
+/*                                                                           */
+/* You should have received a copy of the GNU General Public License along   */
+/* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
+/*                                                                           */
+/*****************************************************************************/
 
 // killough 5/3/98: remove unnecessary headers
 
 #include "z_zone.h"
 
+#include <fontconfig/fontconfig.h>
+#include <pango/pangocairo.h>
+
 #include "doomstat.h"
-#include "d_main.h"
-#include "hu_stuff.h"
-#include "hu_lib.h"
-#include "hu_tracers.h"
-#include "st_stuff.h" /* jff 2/16/98 need loc of status bar */
-#include "s_sound.h"
-#include "dstrings.h"
-#include "sounds.h"
 #include "d_deh.h"   /* Ty 03/27/98 - externalization of mapnamesx arrays */
+#include "d_event.h"
+#include "d_main.h"
+#include "dstrings.h"
+#include "c_main.h"
 #include "g_game.h"
-#include "r_main.h"
-#include "p_inter.h"
-#include "p_tick.h"
-#include "p_map.h"
-#include "sc_man.h"
-#include "m_misc.h"
-#include "r_main.h"
+#include "hu_lib.h"
+#include "hu_input.h"
+#include "hu_chat.h"
+#include "hu_msg.h"
+#include "hu_stuff.h"
+#include "hu_tracers.h"
+#include "i_main.h"
 #include "lprintf.h"
-#include "e6y.h" //e6y
+#include "m_misc.h"
+#include "n_net.h"
+#include "n_proto.h"
+#include "p_inter.h"
+#include "p_map.h"
+#include "p_tick.h"
 #include "p_user.h"
+#include "r_main.h"
+#include "r_main.h"
+#include "s_sound.h"
+#include "sc_man.h"
+#include "sounds.h"
+#include "st_stuff.h" /* jff 2/16/98 need loc of status bar */
+#include "e6y.h" //e6y
+
+extern SDL_Surface *screen;
 
 // global heads up display controls
 
@@ -135,10 +139,10 @@ const char* player_names[] =
 };
 
 //jff 3/17/98 translate player colmap to text color ranges
-int plyrcoltran[MAXPLAYERS]={CR_GREEN,CR_GRAY,CR_BROWN,CR_RED};
+int plyrcoltran[MAXPLAYERS] = {CR_GREEN, CR_GRAY, CR_BROWN, CR_RED};
 
 char chat_char;                 // remove later.
-static player_t*  plr;
+static player_t *plr;
 
 // font sets
 patchnum_t hu_font[HU_FONTSIZE];
@@ -148,10 +152,17 @@ patchnum_t hu_msgbg[9];          //jff 2/26/98 add patches for message backgroun
 patchnum_t hu_font_hud[HU_FONTSIZE];
 
 // widgets
+static message_widget_t *w_messages;
+static message_widget_t *w_centermsg;
+static chat_widget_t *w_chat;
+
 static hu_textline_t  w_title;
+/*
 static hu_stext_t     w_message;
 static hu_itext_t     w_chat;
 static hu_itext_t     w_inputbuffer[MAXPLAYERS];
+static hu_mtext_t     w_rtext;  //jff 2/26/98 text message refresh widget
+*/
 static hu_textline_t  w_coordx; //jff 2/16/98 new coord widget for automap
 static hu_textline_t  w_coordy; //jff 3/3/98 split coord widgets automap
 static hu_textline_t  w_coordz; //jff 3/3/98 split coord widgets automap
@@ -162,7 +173,6 @@ static hu_textline_t  w_weapon; //jff 2/16/98 new weapon widget for hud
 static hu_textline_t  w_keys;   //jff 2/16/98 new keys widget for hud
 static hu_textline_t  w_gkeys;  //jff 3/7/98 graphic keys widget for hud
 static hu_textline_t  w_monsec; //jff 2/16/98 new kill/secret widget for hud
-static hu_mtext_t     w_rtext;  //jff 2/26/98 text message refresh widget
 
 static hu_textline_t  w_map_monsters;  //e6y monsters widget for automap
 static hu_textline_t  w_map_secrets;   //e6y secrets widgets automap
@@ -184,16 +194,20 @@ static hu_textline_t  w_ammo_big;
 static hu_textline_t  w_ammo_icon;
 static hu_textline_t  w_keys_icon;
 
-static dboolean always_off = false;
-static char     chat_dest[MAXPLAYERS];
-dboolean        chat_on;
 static dboolean message_on;
 static dboolean message_list; //2/26/98 enable showing list of messages
 dboolean        message_dontfuckwithme;
 static dboolean message_nottobefuckedwith;
-static int      message_counter;
 extern int      showMessages;
 static dboolean headsupactive = false;
+
+static bool hud_owns_pixels = false;
+static unsigned char *hud_pixels;
+static cairo_surface_t *hud_cairo_surface;
+static cairo_t *hud_cairo_context;
+#ifdef GL_DOOM
+static GLuint hud_tex_id = 0;
+#endif
 
 //jff 2/16/98 hud supported automap colors added
 int hudcolor_titl;  // color range of automap level title
@@ -296,6 +310,119 @@ static void HU_SetLumpTrans(const char *name)
   }
 }
 
+static void build_texture(void) {
+#ifdef GL_DOOM
+  if (nodrawers)
+    return;
+
+  if (hud_tex_id)
+    glDeleteTextures(1, &hud_tex_id);
+
+  glGenTextures(1, &hud_tex_id);
+
+  glBindTexture(GL_TEXTURE_2D, hud_tex_id);
+
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GLEXT_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GLEXT_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+#endif
+}
+
+static void reset_rendering_context(void) {
+  cairo_status_t status;
+
+  if (nodrawers)
+    return;
+
+  if (V_GetMode() == VID_MODE32) {
+    hud_pixels = screen->pixels;
+    hud_owns_pixels = false;
+  }
+#ifdef GL_DOOM
+  else if (V_GetMode() == VID_MODEGL) {
+    if (hud_owns_pixels && hud_pixels)
+      free(hud_pixels);
+
+    hud_pixels = malloc(
+      REAL_SCREENWIDTH * REAL_SCREENHEIGHT * sizeof(unsigned int)
+    );
+
+    if (hud_pixels == NULL)
+      I_Error("HU_Init: malloc failed");
+
+    hud_owns_pixels = true;
+
+    build_texture();
+  }
+#endif
+  else {
+    I_Error("HU_Init: Invalid video mode %d\n", V_GetMode());
+  }
+
+  if (hud_cairo_surface)
+    cairo_surface_destroy(hud_cairo_surface);
+
+  hud_cairo_surface = cairo_image_surface_create_for_data(
+    hud_pixels,
+    CAIRO_FORMAT_ARGB32,
+    REAL_SCREENWIDTH,
+    REAL_SCREENHEIGHT,
+    cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, REAL_SCREENWIDTH)
+  );
+
+  status = cairo_surface_status(hud_cairo_surface);
+
+  if (status != CAIRO_STATUS_SUCCESS)
+    I_Error("HU_Init: Error creating cairo surface (error %d)", status);
+
+  if (hud_cairo_context)
+    cairo_destroy(hud_cairo_context);
+
+  hud_cairo_context = cairo_create(hud_cairo_surface);
+
+  status = cairo_status(hud_cairo_context);
+
+  if (status != CAIRO_STATUS_SUCCESS)
+    I_Error("HU_Init: Error creating cairo context (error %d)", status);
+}
+
+static void update_texture(void) {
+#ifdef GL_DOOM
+  if (nodrawers)
+    return;
+
+  glBindTexture(GL_TEXTURE_2D, hud_tex_id);
+  glTexImage2D(
+    GL_TEXTURE_2D,
+    0,
+    GL_RGBA,
+    REAL_SCREENWIDTH,
+    REAL_SCREENHEIGHT,
+    0,
+    GL_RGBA,
+    GL_UNSIGNED_BYTE,
+    hud_pixels
+  );
+#endif
+}
+
+static void send_chat_message(chat_widget_t *cw) {
+  char *msg = HU_ChatWidgetGetInputText(cw);
+
+  if (CLIENT)
+    CL_SendMessage(msg);
+  else if (SERVER)
+    SV_BroadcastMessage(msg);
+  else if (players[consoleplayer].name != NULL)
+    P_Printf(consoleplayer, "<%s>: %s\n", players[consoleplayer].name, msg);
+  else
+    P_Printf(consoleplayer, "<Player %d>: %s\n", consoleplayer, msg);
+}
+
 //
 // HU_Init()
 //
@@ -303,9 +430,7 @@ static void HU_SetLumpTrans(const char *name)
 //
 // Passed nothing, returns nothing
 //
-void HU_Init(void)
-{
-
+void HU_Init(void) {
   int   i;
   int   j;
   char  buffer[9];
@@ -314,74 +439,63 @@ void HU_Init(void)
 
   // load the heads-up font
   j = HU_FONTSTART;
-  for (i=0;i<HU_FONTSIZE;i++,j++)
-  {
-    if ('0'<=j && j<='9')
-    {
-      sprintf(buffer, "DIG%.1d",j-48);
+  for (i = 0; i < HU_FONTSIZE; i++, j++) {
+    if ('0' <= j && j <= '9') {
+      sprintf(buffer, "DIG%.1d", j - 48);
       R_SetPatchNum(&hu_font2[i], buffer);
       sprintf(buffer, "STCFN%.3d",j);
       R_SetPatchNum(&hu_font[i], buffer);
-      sprintf(buffer, "STTNUM%.1d",j-48);
+      sprintf(buffer, "STTNUM%.1d",j - 48);
       R_SetPatchNum(&hu_font_hud[i], buffer);
     }
-    else if ('A'<=j && j<='Z')
-    {
-      sprintf(buffer, "DIG%c",j);
+    else if ('A' <= j && j <= 'Z') {
+      sprintf(buffer, "DIG%c", j);
       R_SetPatchNum(&hu_font2[i], buffer);
-      sprintf(buffer, "STCFN%.3d",j);
+      sprintf(buffer, "STCFN%.3d", j);
       R_SetPatchNum(&hu_font[i], buffer);
     }
-    else if (j=='-')
-    {
+    else if (j == '-') {
       R_SetPatchNum(&hu_font2[i], "DIG45");
       R_SetPatchNum(&hu_font[i], "STCFN045");
     }
-    else if (j=='/')
-    {
+    else if (j == '/') {
       R_SetPatchNum(&hu_font2[i], "DIG47");
       R_SetPatchNum(&hu_font[i], "STCFN047");
     }
-    else if (j==':')
-    {
+    else if (j == ':') {
       R_SetPatchNum(&hu_font2[i], "DIG58");
       R_SetPatchNum(&hu_font[i], "STCFN058");
     }
-    else if (j=='[')
-    {
+    else if (j == '[') {
       R_SetPatchNum(&hu_font2[i], "DIG91");
       R_SetPatchNum(&hu_font[i], "STCFN091");
     }
-    else if (j==']')
-    {
+    else if (j == ']') {
       R_SetPatchNum(&hu_font2[i], "DIG93");
       R_SetPatchNum(&hu_font[i], "STCFN093");
     }
-    else if (j<97)
-    {
-      sprintf(buffer, "STCFN%.3d",j);
+    else if (j < 97) {
+      sprintf(buffer, "STCFN%.3d", j);
       R_SetPatchNum(&hu_font2[i], buffer);
       R_SetPatchNum(&hu_font[i], buffer);
       //jff 2/23/98 make all font chars defined, useful or not
     }
-    else if (j>122)
-    {
-      sprintf(buffer, "STBR%.3d",j);
+    else if (j > 122) {
+      sprintf(buffer, "STBR%.3d", j);
       R_SetPatchNum(&hu_font2[i], buffer);
       R_SetPatchNum(&hu_font[i], buffer);
     }
-    else
+    else {
       hu_font[i] = hu_font[0]; //jff 2/16/98 account for gap
+    }
   }
 
   // these patches require cm to rgb translation
-  for (i = 33; i < 96; i++)
-  {
+  for (i = 33; i < 96; i++) {
     sprintf(buffer, "STCFN%.3d", i);
     HU_SetLumpTrans(buffer);
   }
-  for (i = 0; i < 10; i++)
-  {
+  for (i = 0; i < 10; i++) {
     sprintf(buffer, "STTNUM%d", i);
     HU_SetLumpTrans(buffer);
   }
@@ -389,13 +503,13 @@ void HU_Init(void)
   HU_SetLumpTrans("STTMINUS");
 
   // CPhipps - load patches for message background
-  for (i=0; i<9; i++) {
-    sprintf(buffer, "BOX%c%c", "UCL"[i/3], "LCR"[i%3]);
+  for (i = 0; i < 9; i++) {
+    sprintf(buffer, "BOX%c%c", "UCL"[i / 3], "LCR"[i % 3]);
     R_SetPatchNum(&hu_msgbg[i], buffer);
   }
 
   // CPhipps - load patches for keys and double keys
-  for (i=0; i<6; i++) {
+  for (i = 0; i < 6; i++) {
     sprintf(buffer, "STKEYS%d", i);
     R_SetPatchNum(&hu_fontk[i], buffer);
   }
@@ -423,6 +537,21 @@ void HU_Init(void)
   R_SetSpriteByName(&hu_font_hud[42], "CELLA0");
   R_SetSpriteByName(&hu_font_hud[43], "ROCKA0");
 
+  char *hud_font_file = HU_FONT_FILE;
+  char *hud_unifont_file = HU_UNIFONT_FILE;
+  FcConfig *config = FcInitLoadConfigAndFonts();
+  
+  if (!FcConfigAppFontAddFile(config, (const FcChar8 *)hud_font_file))
+    I_Error("HU_Init: Error loading default HUD font");
+
+  if (!FcConfigAppFontAddFile(config, (const FcChar8 *)hud_unifont_file))
+    I_Error("HU_Init: Error loading Unicode HUD font");
+
+  if (!FcConfigSetCurrent(config))
+    I_Error("HU_Init: Error re-setting font config");
+
+  reset_rendering_context();
+  build_texture();
 }
 
 //
@@ -432,8 +561,7 @@ void HU_Init(void)
 //
 // Passed nothing, returns nothing
 //
-static void HU_Stop(void)
-{
+static void HU_Stop(void) {
   headsupactive = false;
 }
 
@@ -448,35 +576,29 @@ static void HU_Stop(void)
 //
 // Passed nothing, returns nothing
 //
-void HU_Start(void)
-{
+void HU_Start(void) {
   int   i;
   const char* s; /* cph - const */
+  hu_color_t white = {1.0f, 1.0f, 1.0f, 1.0f};
+  hu_color_t grey  = {0.0f, 0.0f, 0.0f, 0.9f};
 
   if (headsupactive)                    // stop before starting
     HU_Stop();
+
+  reset_rendering_context();
 
   plr = &players[displayplayer];        // killough 3/7/98
   custom_message_p = &custom_message[displayplayer];
   message_on = false;
   message_dontfuckwithme = false;
   message_nottobefuckedwith = false;
-  chat_on = false;
 
   // create the message widget
   // messages to player in upper-left of screen
-  HUlib_initSText
-  (
-    &w_message,
-    HU_MSGX,
-    HU_MSGY,
-    HU_MSGHEIGHT,
-    hu_font,
-    HU_FONTSTART,
-    hudcolor_mesg,
-    VPT_ALIGN_LEFT_TOP,
-    &message_on
+  w_messages = HU_MessageWidgetNew(
+    hud_cairo_context, HU_MSGX, HU_MSGY, REAL_SCREENWIDTH, 0, 0
   );
+  HU_MessageWidgetSetHeightByLines(w_messages, 4);
 
   //jff 2/16/98 added some HUD widgets
   // create the map title widget - map title display in lower left of automap
@@ -719,13 +841,12 @@ void HU_Start(void)
   //jff 4/21/98 if setup has disabled message list while active, turn it off
   message_list = hud_msg_lines > 1; //jff 8/8/98 initialize both ways
   //jff 2/26/98 add the text refresh widget initialization
-  HUlib_initMText
-  (
+  /*
+  HUlib_initMText(
     &w_rtext,
     0,
     0,
-    320,
-//    SCREENWIDTH,
+    320, // SCREENWIDTH,
     (hud_msg_lines+2)*HU_REFRESHSPACING,
     hu_font,
     HU_FONTSTART,
@@ -734,31 +855,33 @@ void HU_Start(void)
     VPT_ALIGN_LEFT_TOP,
     &message_list
   );
+  */
 
   // initialize the automap's level title widget
   // e6y: stop SEGV here when gamemap is not initialized
-  if (gamestate == GS_LEVEL && gamemap > 0) /* cph - stop SEGV here when not in level */
-  switch (gamemode)
-  {
-    case shareware:
-    case registered:
-    case retail:
-      s = HU_TITLE;
+  /* cph - stop SEGV here when not in level */
+  if (gamestate == GS_LEVEL && gamemap > 0) {
+    switch (gamemode) {
+      case shareware:
+      case registered:
+      case retail:
+        s = HU_TITLE;
       break;
-
-    case commercial:
-    default:  // Ty 08/27/98 - modified to check mission for TNT/Plutonia
-      s = (gamemission==pack_tnt)  ? HU_TITLET :
-          (gamemission==pack_plut) ? HU_TITLEP : HU_TITLE2;
+      case commercial:
+      default:  // Ty 08/27/98 - modified to check mission for TNT/Plutonia
+        s = (gamemission==pack_tnt)  ? HU_TITLET :
+            (gamemission==pack_plut) ? HU_TITLEP : HU_TITLE2;
       break;
-  } else s = "";
+    }
+  }
+  else {
+    s = "";
+  }
 
   // Chex.exe always uses the episode 1 level title
   // eg. E2M1 gives the title for E1M1
   if (gamemission == chex)
-  {
     s = HU_TITLEC;
-  }
 
   while (*s)
     HUlib_addCharToTextLine(&w_title, *(s++));
@@ -856,16 +979,12 @@ void HU_Start(void)
     CR_GRAY,
     VPT_NONE
   );
-  HUlib_initTextLine
-  (
-    &w_centermsg,
-    HU_CENTERMSGX,
-    HU_CENTERMSGY,
-    hu_font,
-    HU_FONTSTART,
-    hudcolor_titl,
-    VPT_STRETCH
+
+  w_centermsg = HU_MessageWidgetNew(
+    hud_cairo_context, HU_CENTERMSGX, HU_CENTERMSGY, REAL_SCREENWIDTH, 0, 0
   );
+  HU_MessageWidgetSetHeightByLines(w_centermsg, 2);
+
   HUlib_initTextLine
   (
     &w_precache,
@@ -911,47 +1030,33 @@ void HU_Start(void)
   strcpy(hud_armorstr,"ARM ");
 
   //jff 2/17/98 initialize weapons widget
-  strcpy(hud_weapstr,"WEA ");
+  strcpy(hud_weapstr, "WEA ");
 
   //jff 2/17/98 initialize keys widget
   //jff 3/17/98 show frags in deathmatch mode
-  strcpy(hud_keysstr,(deathmatch ? "FRG " : "KEY "));
+  strcpy(hud_keysstr, (deathmatch ? "FRG " : "KEY "));
 
   //jff 2/17/98 initialize graphic keys widget
-  strcpy(hud_gkeysstr," ");
+  strcpy(hud_gkeysstr, " ");
 
   //jff 2/17/98 initialize kills/items/secret widget
-  strcpy(hud_monsecstr,"STS ");
+  strcpy(hud_monsecstr, "STS ");
 
-  // create the chat widget
-  HUlib_initIText
-  (
-    &w_chat,
-    HU_INPUTX,
-    HU_INPUTY,
-    hu_font,
-    HU_FONTSTART,
-    hudcolor_chat,
-    VPT_NONE,
-    &chat_on
+  w_chat = HU_ChatWidgetNew(
+    hud_cairo_context,
+    0,
+    0,
+    REAL_SCREENWIDTH,
+    0,
+    send_chat_message
   );
-
-  // create the inputbuffer widgets, one per player
-  for (i=0 ; i<MAXPLAYERS ; i++)
-    HUlib_initIText
-    (
-      &w_inputbuffer[i],
-      0,
-      0,
-      0,
-      0,
-      hudcolor_chat,
-      VPT_NONE,
-      &always_off
-    );
+  HU_ChatWidgetMoveToBottom(w_chat, REAL_SCREENHEIGHT);
+  HU_ChatWidgetSetHeightByLines(w_chat, 1);
+  HU_ChatWidgetSetFGColor(w_chat, white);
+  HU_ChatWidgetSetBGColor(w_chat, grey);
 
   HU_init_crosshair();
-  
+
   // now allow the heads-up display to run
   headsupactive = true;
 
@@ -960,12 +1065,13 @@ void HU_Start(void)
   HU_MoveHud(true);
 }
 
-void HU_NextHud(void)
-{
+void HU_NextHud(void) {
   if (huds_count > 0)
-  {
     hud_num = (hud_num + 1) % huds_count;    // cycle hud_active
-  }
+}
+
+void* HU_GetRenderContext(void) {
+  return hud_cairo_context;
 }
 
 typedef void (*HU_widget_build_func)(void);
@@ -1254,7 +1360,7 @@ int HU_GetAmmoColor(int ammo, int fullammo, int def, int tofire, dboolean backpa
 
   if (ammo < tofire)
     result = CR_BROWN;
-  else if ((ammo==fullammo) || 
+  else if ((ammo==fullammo) ||
     (ammo_colour_behaviour == ammo_colour_behaviour_no && backpack && ammo*2 >= fullammo))
     result=def;
   else {
@@ -1984,11 +2090,11 @@ void HU_widget_build_hudadd(void)
     static char demo_len_null[1]={0};
     char *demo_len = demoplayback && hudadd_demotime ? demo_len_st : demo_len_null;
     if (totalleveltimes)
-      sprintf(hud_add+strlen(hud_add),"\x1b\x32time \x1b\x35%d:%02d%s \x1b\x33%d:%05.2f ", 
-      (totalleveltimes+leveltime)/35/60, ((totalleveltimes+leveltime)%(60*35))/35, demo_len, 
+      sprintf(hud_add+strlen(hud_add),"\x1b\x32time \x1b\x35%d:%02d%s \x1b\x33%d:%05.2f ",
+      (totalleveltimes+leveltime)/35/60, ((totalleveltimes+leveltime)%(60*35))/35, demo_len,
       leveltime/35/60, (float)(leveltime%(60*35))/35);
     else
-      sprintf(hud_add+strlen(hud_add),"\x1b\x32time \x1b\x33%d:%05.2f%s ", 
+      sprintf(hud_add+strlen(hud_add),"\x1b\x32time \x1b\x33%d:%05.2f%s ",
       leveltime/35/60, (float)(leveltime%(60*35))/35, demo_len);
   }
   HUlib_clearTextLine(&w_hudadd);
@@ -2300,48 +2406,55 @@ void HU_draw_crosshair(void)
 //
 // Passed nothing, returns nothing
 //
-void HU_Drawer(void)
-{
+void HU_Drawer(void) {
   char *s;
   player_t *plr;
-  //jff 3/4/98 speed update up for slow systems
-  //e6y: speed update for uncapped framerate
-  static dboolean needupdate = false;
-  if (realframe) needupdate = !needupdate;
 
   // don't draw anything if there's a fullscreen menu up
   if (menuactive == mnact_full)
     return;
 
+  if (V_GetMode() == VID_MODE32 && SDL_MUSTLOCK(screen))
+    SDL_LockSurface(screen);
+
+#ifdef GL_DOOM
+  if (V_GetMode() == VID_MODEGL)
+    cairo_set_operator(hud_cairo_context, CAIRO_OPERATOR_SOURCE);
+#endif
+
+  cairo_reset_clip(hud_cairo_context);
+  cairo_new_path(hud_cairo_context);
+  cairo_rectangle(hud_cairo_context, 0, 0, REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
+  cairo_clip(hud_cairo_context);
+  cairo_set_source_rgba(hud_cairo_context, 0.0f, 0.0f, 0.0f, 0.0f);
+  cairo_paint(hud_cairo_context);
+
   plr = &players[displayplayer];         // killough 3/7/98
   // draw the automap widgets if automap is displayed
-  if (automapmode & am_active)
-  {
-    if (!(automapmode & am_overlay) || (viewheight != SCREENHEIGHT))//!hud_displayed)
-    {
-      // map title
+  if (automapmode & am_active) {
+    // map title
+    //!hud_displayed)
+    if (!(automapmode & am_overlay) || (viewheight != SCREENHEIGHT))
       HUlib_drawTextLine(&w_title, false);
-    }
 
     //jff 2/16/98 output new coord display
     // x-coord
-    if (map_point_coordinates)
-    {
+    if (map_point_coordinates) {
 
       //e6y: speedup
-      if (!realframe)
-      {
+      if (!realframe) {
         HUlib_drawTextLine(&w_coordx, false);
         HUlib_drawTextLine(&w_coordy, false);
         HUlib_drawTextLine(&w_coordz, false);
       }
-      else
-      {
-        sprintf(hud_coordstrx,"X: %-5d", (plr->mo->x)>>FRACBITS);
+      else {
+        sprintf(hud_coordstrx, "X: %-5d", (plr->mo->x) >> FRACBITS);
         HUlib_clearTextLine(&w_coordx);
         s = hud_coordstrx;
+
         while (*s)
           HUlib_addCharToTextLine(&w_coordx, *(s++));
+
         HUlib_drawTextLine(&w_coordx, false);
 
         //jff 3/3/98 split coord display into x,y,z lines
@@ -2486,22 +2599,44 @@ void HU_Drawer(void)
     message_list = false;
 
   // if the message review not enabled, show the standard message widget
-  if (!message_list)
-    HUlib_drawSText(&w_message);
+  HU_MessageWidgetDrawer(w_messages, hud_cairo_context);
 
   //e6y
-  if (custom_message_p->ticks > 0)
-    HUlib_drawTextLine(&w_centermsg, false);
+  HU_MessageWidgetDrawer(w_centermsg, hud_cairo_context);
+
+  C_Drawer();
 
   if (hudadd_crosshair)
     HU_draw_crosshair();
 
-  // if the message review is enabled show the scrolling message review
-  if (hud_msg_lines>1 && message_list)
-    HUlib_drawMText(&w_rtext);
-
   // display the interactive buffer for chat entry
-  HUlib_drawIText(&w_chat);
+  if (HU_ChatWidgetActive(w_chat))
+    HU_ChatWidgetDrawer(w_chat, hud_cairo_context);
+
+#ifdef GL_DOOM
+  if (V_GetMode() == VID_MODEGL) {
+    cairo_set_operator(hud_cairo_context, CAIRO_OPERATOR_OVER);
+    cairo_surface_flush(hud_cairo_surface);
+
+    update_texture();
+
+    glBindTexture(GL_TEXTURE_2D, hud_tex_id);
+
+    glBegin(GL_TRIANGLE_STRIP);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex2f(0.0f, 0.0f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex2f(0.0f, REAL_SCREENHEIGHT);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex2f(REAL_SCREENWIDTH, 0.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex2f(REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
+    glEnd();
+  }
+#endif
+
+  if (V_GetMode() == VID_MODE32 && SDL_MUSTLOCK(screen))
+    SDL_UnlockSurface(screen);
 }
 
 //
@@ -2511,24 +2646,13 @@ void HU_Drawer(void)
 //
 // Passed nothing, returns nothing
 //
-void HU_Erase(void)
-{
-  // erase the message display or the message review display
-  if (!message_list)
-    HUlib_eraseSText(&w_message);
-  else
-    HUlib_eraseMText(&w_rtext);
-
-  //e6y
-  if (custom_message_p->ticks > 0)
-    HUlib_eraseTextLine(&w_centermsg);
-
-  // erase the interactive text buffer for chat entry
-  HUlib_eraseIText(&w_chat);
-
+void HU_Erase(void) {
   // erase the automap title
   HUlib_eraseTextLine(&w_title);
 }
+
+#define MESSAGE_TIMEOUT (TICRATE * 4)
+#define MAX_MESSAGE_COUNT 4
 
 //
 // HU_Ticker()
@@ -2537,168 +2661,107 @@ void HU_Erase(void)
 //
 // Passed nothing, returns nothing
 //
-static dboolean bsdown; // Is backspace down?
-static int bscounter;
+void HU_Ticker(void) {
+  int current_ms = I_GetTime();
+  int message_count = 0;
+  int center_message_count = 0;
+  char *center_message = NULL;
 
-void HU_Ticker(void)
-{
-  int i, rc;
-  char c;
+  HU_MessageWidgetClear(w_centermsg);
+  HU_MessageWidgetClear(w_messages);
 
-  // tick down message counter if message is up
-  if (message_counter && !--message_counter)
-  {
-    message_on = false;
-    message_nottobefuckedwith = false;
-  }
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    player_t *player = &players[i];
 
-  if (bsdown && bscounter++ > 9) {
-    HUlib_keyInIText(&w_chat, (unsigned char)key_backspace);
-    bscounter = 8;
-  }
+    M_OBufConsolidate(&player->messages);
 
-  // if messages on, or "Messages Off" is being displayed
-  // this allows the notification of turning messages off to be seen
-  if (showMessages || message_dontfuckwithme)
-  {
-#ifdef OLD_MESSAGES
-#if 0
-    // display message if necessary
-    if ((plr->message && !message_nottobefuckedwith) ||
-        (plr->message && message_dontfuckwithme))
-    {
-      //post the message to the message widget
-      HUlib_addMessageToSText(&w_message, 0, plr->message);
-      //jff 2/26/98 add message to refresh text widget too
-      HUlib_addMessageToMText(&w_rtext, 0, plr->message);
+    OBUF_FOR_EACH(&player->messages, entry) {
+      player_message_t *msg = (player_message_t *)entry.obj;
 
-      // clear the message to avoid posting multiple times
-      plr->message = 0;
-      // note a message is displayed
-      message_on = true;
-      // start the message persistence counter
-      message_counter = HU_MSGTIMEOUT;
-      // transfer "Messages Off" exception to the "being displayed" variable
-      message_nottobefuckedwith = message_dontfuckwithme;
-      // clear the flag that "Messages Off" is being posted
-      message_dontfuckwithme = 0;
-    }
-#endif
-#endif
-  }
-  
-  // centered messages
-  for (i = 0; i < MAXPLAYERS; i++)
-  {
-    if (custom_message[i].ticks > 0)
-      custom_message[i].ticks--;
-  }
-  if (custom_message_p->msg)
-  {
-    const char *s = custom_message_p->msg; 
-    HUlib_clearTextLine(&w_centermsg);
-    while (*s)
-    {
-      HUlib_addCharToTextLine(&w_centermsg, *(s++));
-    }
-    HUlib_setTextXCenter(&w_centermsg);
-    w_centermsg.cm = custom_message_p->cm;
-    custom_message_p->msg = NULL;
-
-    if (custom_message_p->sfx > 0 && custom_message_p->sfx < NUMSFX)
-    {
-      S_StartSound(NULL, custom_message_p->sfx);
-    }
-  }
-
-  // check for incoming chat characters
-  if (netgame)
-  {
-    for (i=0; i<MAXPLAYERS; i++)
-    {
-      if (!playeringame[i])
+      if (msg->timestamp == 0)
         continue;
-      if (i != consoleplayer
-          && (c = players[i].cmd.chatchar))
-      {
-        if (c <= HU_BROADCAST)
-          chat_dest[i] = c;
-        else
-        {
-          if (c >= 'a' && c <= 'z')
-            c = (char) shiftxform[(unsigned char) c];
-          rc = HUlib_keyInIText(&w_inputbuffer[i], c);
-          if (rc && c == KEYD_ENTER)
-          {
-            if (w_inputbuffer[i].l.len
-                && (chat_dest[i] == consoleplayer+1
-                || chat_dest[i] == HU_BROADCAST))
-            {
-              HUlib_addMessageToSText(&w_message,
-                                      player_names[i],
-                                      w_inputbuffer[i].l.l);
 
-              message_nottobefuckedwith = true;
-              message_on = true;
-              message_counter = HU_MSGTIMEOUT;
-              if ( gamemode == commercial )
-                S_StartSound(0, sfx_radio);
-              else
-                S_StartSound(0, sfx_tink);
-            }
-            HUlib_resetIText(&w_inputbuffer[i]);
-          }
+      if ((current_ms - msg->timestamp) > MESSAGE_TIMEOUT) {
+        M_OBufRemove(&player->messages, entry.index);
+        g_free(msg->content);
+        free(msg);
+        entry.index--;
+      }
+    }
+
+    OBUF_FOR_EACH(&player->messages, entry) {
+      player_message_t *msg = (player_message_t *)entry.obj;
+
+      if (msg->centered)
+        continue;
+
+      message_count++;
+    }
+
+    OBUF_FOR_EACH(&player->messages, entry) {
+      player_message_t *msg = (player_message_t *)entry.obj;
+
+      if (msg->centered)
+        continue;
+
+      if (message_count >= MAX_MESSAGE_COUNT) {
+        M_OBufRemove(&player->messages, entry.index);
+        entry.index--;
+      }
+
+      message_count--;
+    }
+
+    OBUF_FOR_EACH(&player->messages, entry) {
+      player_message_t *msg = (player_message_t *)entry.obj;
+
+      if (!msg->centered)
+        continue;
+
+      center_message_count++;
+    }
+
+    if (center_message_count > 1) {
+      OBUF_FOR_EACH(&player->messages, entry) {
+        player_message_t *msg = (player_message_t *)entry.obj;
+
+        if (!msg->centered)
+          continue;
+
+        if (center_message_count == 1) {
+          if (i == displayplayer)
+            center_message = msg->content;
+
+          break;
         }
-        players[i].cmd.chatchar = 0;
+
+        center_message_count--;
+        M_OBufRemove(&player->messages, entry.index);
+        entry.index--;
       }
     }
   }
-}
 
-#define QUEUESIZE   128
+  if (center_message != NULL)
+    HU_MessageWidgetMWrite(w_centermsg, center_message);
 
-static char chatchars[QUEUESIZE];
-static int  head = 0;
-static int  tail = 0;
+  OBUF_FOR_EACH(&players[displayplayer].messages, entry) {
+    player_message_t *msg = (player_message_t *)entry.obj;
 
-//
-// HU_queueChatChar()
-//
-// Add an incoming character to the circular chat queue
-//
-// Passed the character to queue, returns nothing
-//
-static void HU_queueChatChar(char c) {
-  if (((head + 1) & (QUEUESIZE - 1)) == tail) {
-    P_Write(displayplayer, HUSTR_MSGU);
+    if (msg->centered) {
+      HU_MessageWidgetClear(w_centermsg);
+      HU_MessageWidgetMWrite(w_centermsg, msg->content);
+      if (!msg->processed) {
+        if (msg->sfx > 0 && msg->sfx < NUMSFX)
+          S_StartSound(NULL, msg->sfx);
+
+        msg->processed = true;
+      }
+      continue;
+    }
+
+    HU_MessageWidgetWrite(w_messages, msg->content);
   }
-  else {
-    chatchars[head] = c;
-    head = (head + 1) & (QUEUESIZE - 1);
-  }
-}
-
-//
-// HU_dequeueChatChar()
-//
-// Remove the earliest added character from the circular chat queue
-//
-// Passed nothing, returns the character dequeued
-//
-char HU_dequeueChatChar(void)
-{
-  char c;
-
-  if (head != tail)
-  {
-    c = chatchars[tail];
-    tail = (tail + 1) & (QUEUESIZE-1);
-  }
-  else
-  {
-    c = 0;
-  }
-  return c;
 }
 
 //
@@ -2709,142 +2772,31 @@ char HU_dequeueChatChar(void)
 // Passed the event to respond to, returns true if the event was handled
 //
 dboolean HU_Responder(event_t *ev) {
-  static char lastmessage[HU_MAXLINELENGTH + 1];
-  static int num_nobrainers = 0;
-
-  const char *macromessage; // CPhipps - const char*
-  dboolean eatkey = false;
-  unsigned char c;
-  int i;
-  int numplayers = 0;
- 
-  for (i = 0; i < MAXPLAYERS; i++)
-    numplayers += playeringame[i];
-
-  if (ev->data1 == key_backspace)
-  {
-    bsdown = ev->type == ev_keydown;
-    bscounter = 0;
-  }
-
-  if (ev->type != ev_keydown)
+  if (!((ev->type == ev_keydown) || (ev->type == ev_mouse)))
     return false;
 
-  if (!chat_on)
-  {
-    if (ev->data1 == key_enter)                                 // phares
-    {
-#ifndef INSTRUMENTED  // never turn on message review if INSTRUMENTED defined
-      if (hud_msg_lines > 1)  // it posts multi-line messages that will trash
-      {
-        if (message_list) HU_Erase(); //jff 4/28/98 erase behind messages
-        message_list = !message_list; //jff 2/26/98 toggle list of messages
-      }
-#endif
-      if (!message_list)              // if not message list, refresh message
-      {
-        message_on = true;
-        message_counter = HU_MSGTIMEOUT;
-      }
-      eatkey = true;
-    }//jff 2/26/98 no chat if message review is displayed
-    // killough 10/02/98: no chat if demo playback
-    // no chat in -solo-net mode
-    else if (!demoplayback && !message_list && netgame && numplayers > 1)
-    {
-      if (ev->data1 == key_chat)
-      {
-        eatkey = chat_on = true;
-        HUlib_resetIText(&w_chat);
-        HU_queueChatChar(HU_BROADCAST);
-      }
-      else if (numplayers > 2)
-      {
-        for (i=0; i<MAXPLAYERS ; i++)
-        {
-          if (ev->data1 == destination_keys[i])
-          {
-            if (playeringame[i] && i != consoleplayer)
-            {
-              eatkey = chat_on = true;
-              HUlib_resetIText(&w_chat);
-              HU_queueChatChar((char)(i + 1));
-              break;
-            }
-            else if (i == consoleplayer)
-            {
-              num_nobrainers++;
-              if (num_nobrainers < 3)
-                P_Write(displayplayer, HUSTR_TALKTOSELF1);
-              else if (num_nobrainers < 6)
-                P_Write(displayplayer, HUSTR_TALKTOSELF2);
-              else if (num_nobrainers < 9)
-                P_Write(displayplayer, HUSTR_TALKTOSELF3);
-              else if (num_nobrainers < 32)
-                P_Write(displayplayer, HUSTR_TALKTOSELF4);
-              else
-                P_Write(displayplayer, HUSTR_TALKTOSELF5);
-            }
-          }
-        }
-      }
-    }
-  }//jff 2/26/98 no chat functions if message review is displayed
-  else if (!message_list)
-  {
-    c = ev->data1;
-    // send a macro
-    if (keybindings.altdown)
-    {
-      c = c - '0';
-      if (c > 9)
-        return false;
-
-      macromessage = chat_macros[c];
-
-      // kill last message with a '\n'
-      HU_queueChatChar((char)key_enter); // DEBUG!!!                // phares
-
-      // send the macro message
-      while (*macromessage)
-        HU_queueChatChar(*macromessage++);
-
-      HU_queueChatChar((char)key_enter);                            // phares
-
-      // leave chat mode and notify that it was sent
-      chat_on = false;
-      strcpy(lastmessage, chat_macros[c]);
-      P_Write(displayplayer, lastmessage);
-      eatkey = true;
-    }
-    else
-    {
-      if (keybindings.shiftdown || (c >= 'a' && c <= 'z'))
-        c = shiftxform[c];
-
-      eatkey = HUlib_keyInIText(&w_chat, c);
-      if (eatkey)
-        HU_queueChatChar(c);
-
-      if (c == key_enter)                                     // phares
-      {
-        chat_on = false;
-        if (w_chat.l.len)
-        {
-          strcpy(lastmessage, w_chat.l.l);
-          P_Write(displayplayer, lastmessage);
-        }
-      }
-      else if (c == key_escape) {                             // phares
-        chat_on = false;
-      }
-    }
+  if ((ev->type == ev_keydown) &&
+      (ev->data1 == key_chat) &&
+      (!HU_ChatWidgetActive(w_chat))) {
+    HU_ChatWidgetActivate(w_chat);
+    return true;
   }
-  return eatkey;
+
+  if (HU_ChatWidgetResponder(w_chat, ev))
+    return true;
+
+  return false;
 }
 
-void T_ShowMessage(message_thinker_t* message)
-{
+bool HU_ChatActive(void) {
+  return HU_ChatWidgetActive(w_chat);
+}
+
+void HU_DeactivateChat(void) {
+  HU_ChatWidgetDeactivate(w_chat);
+}
+
+void T_ShowMessage(message_thinker_t* message) {
   if (--message->delay > 0)
     return;
 
@@ -2860,13 +2812,11 @@ void T_ShowMessage(message_thinker_t* message)
   P_RemoveThinker(&message->thinker); // unlink and free
 }
 
-int SetCustomMessage(int plr, const char *msg, int delay, int ticks, int cm, int sfx)
-{
+int SetCustomMessage(int plr, const char *msg, int delay, int ticks, int cm, int sfx) {
   custom_message_t item;
 
   if (plr < 0 || plr >= MAXPLAYERS || !msg || ticks < 0 ||
-      sfx < 0 || sfx >= NUMSFX || cm < 0 || cm >= CR_LIMIT)
-  {
+      sfx < 0 || sfx >= NUMSFX || cm < 0 || cm >= CR_LIMIT) {
     return false;
   }
 
@@ -2875,12 +2825,10 @@ int SetCustomMessage(int plr, const char *msg, int delay, int ticks, int cm, int
   item.cm = cm;
   item.sfx = sfx;
 
-  if (delay <= 0)
-  {
+  if (delay <= 0) {
     custom_message[plr] = item;
   }
-  else
-  {
+  else {
     message_thinker_t *message = Z_Calloc(1, sizeof(*message), PU_LEVEL, NULL);
     message->thinker.function = T_ShowMessage;
     message->delay = delay;
@@ -2893,6 +2841,4 @@ int SetCustomMessage(int plr, const char *msg, int delay, int ticks, int cm, int
 
   return true;
 }
-
-/* vi: set et ts=2 sw=2: */
 

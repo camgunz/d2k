@@ -1,37 +1,26 @@
-/* Emacs style mode select   -*- C++ -*-
- *-----------------------------------------------------------------------------
- *
- *
- *  PrBoom: a Doom port merged with LxDoom and LSDLDoom
- *  based on BOOM, a modified and improved DOOM engine
- *  Copyright (C) 1999 by
- *  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
- *  Copyright (C) 1999-2000 by
- *  Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze
- *  Copyright 2005, 2006 by
- *  Florian Schulze, Colin Phipps, Neil Stevens, Andrey Budko
- *
- *  This program is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU General Public License
- *  as published by the Free Software Foundation; either version 2
- *  of the License, or (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
- *  02111-1307, USA.
- *
- * DESCRIPTION:
- *      Player related stuff.
- *      Bobbing POV/weapon, movement.
- *      Pending weapon.
- *
- *-----------------------------------------------------------------------------*/
+/*****************************************************************************/
+/* D2K: A Doom Source Port for the 21st Century                              */
+/*                                                                           */
+/* Copyright (C) 2014: See COPYRIGHT file                                    */
+/*                                                                           */
+/* This file is part of D2K.                                                 */
+/*                                                                           */
+/* D2K is free software: you can redistribute it and/or modify it under the  */
+/* terms of the GNU General Public License as published by the Free Software */
+/* Foundation, either version 2 of the License, or (at your option) any      */
+/* later version.                                                            */
+/*                                                                           */
+/* D2K is distributed in the hope that it will be useful, but WITHOUT ANY    */
+/* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS */
+/* FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more    */
+/* details.                                                                  */
+/*                                                                           */
+/* You should have received a copy of the GNU General Public License along   */
+/* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
+/*                                                                           */
+/* vi: set et ts=2 sw=2:                                                     */
+/*                                                                           */
+/*****************************************************************************/
 
 #include "z_zone.h"
 
@@ -684,6 +673,8 @@ void P_Printf(int playernum, const char *fmt, ...) {
 
   msg->timestamp = I_GetTime();
   msg->centered = false;
+  msg->processed = true;
+  msg->sfx = 0;
 
   M_OBufAppend(&players[playernum].messages, msg);
   C_Write(msg->content);
@@ -698,6 +689,8 @@ void P_Echo(int playernum, const char *message) {
   msg->content = g_strdup_printf("%s\n", message);
   msg->timestamp = I_GetTime();
   msg->centered = false;
+  msg->processed = true;
+  msg->sfx = 0;
 
   M_OBufAppend(&players[playernum].messages, msg);
   C_Write(msg->content);
@@ -712,12 +705,14 @@ void P_Write(int playernum, const char *message) {
   msg->content = g_strdup(message);
   msg->timestamp = I_GetTime();
   msg->centered = false;
+  msg->processed = true;
+  msg->sfx = 0;
 
   M_OBufAppend(&players[playernum].messages, msg);
   C_Write(msg->content);
 }
 
-void P_CenterPrintf(int playernum, const char *fmt, ...) {
+void P_CenterPrintf(int playernum, int sfx, const char *fmt, ...) {
   va_list args;
   player_message_t *msg = malloc(sizeof(player_message_t));
 
@@ -730,12 +725,14 @@ void P_CenterPrintf(int playernum, const char *fmt, ...) {
 
   msg->timestamp = I_GetTime();
   msg->centered = true;
+  msg->processed = true;
+  msg->sfx = sfx;
 
   M_OBufAppend(&players[playernum].messages, msg);
   C_Write(msg->content);
 }
 
-void P_CenterEcho(int playernum, const char *message) {
+void P_CenterEcho(int playernum, int sfx, const char *message) {
   player_message_t *msg = malloc(sizeof(player_message_t));
 
   if (msg == NULL)
@@ -744,12 +741,14 @@ void P_CenterEcho(int playernum, const char *message) {
   msg->content = g_strdup_printf("%s\n", message);
   msg->timestamp = I_GetTime();
   msg->centered = true;
+  msg->processed = true;
+  msg->sfx = sfx;
 
   M_OBufAppend(&players[playernum].messages, msg);
   C_Write(msg->content);
 }
 
-void P_CenterWrite(int playernum, const char *message) {
+void P_CenterWrite(int playernum, int sfx, const char *message) {
   player_message_t *msg = malloc(sizeof(player_message_t));
 
   if (msg == NULL)
@@ -758,6 +757,60 @@ void P_CenterWrite(int playernum, const char *message) {
   msg->content = g_strdup(message);
   msg->timestamp = I_GetTime();
   msg->centered = true;
+  msg->processed = true;
+  msg->sfx = sfx;
+
+  M_OBufAppend(&players[playernum].messages, msg);
+  C_Write(msg->content);
+}
+
+void P_CenterQPrintf(int playernum, int sfx, const char *fmt, ...) {
+  va_list args;
+  player_message_t *msg = malloc(sizeof(player_message_t));
+
+  if (msg == NULL)
+    I_Error("P_Printf: malloc failed");
+
+  va_start(args, fmt);
+  msg->content = g_strdup_vprintf(fmt, args);
+  va_end(args);
+
+  msg->timestamp = 0;
+  msg->centered = true;
+  msg->processed = true;
+  msg->sfx = sfx;
+
+  M_OBufAppend(&players[playernum].messages, msg);
+  C_Write(msg->content);
+}
+
+void P_CenterQEcho(int playernum, int sfx, const char *message) {
+  player_message_t *msg = malloc(sizeof(player_message_t));
+
+  if (msg == NULL)
+    I_Error("P_Echo: malloc failed");
+
+  msg->content = g_strdup_printf("%s\n", message);
+  msg->timestamp = 0;
+  msg->centered = true;
+  msg->processed = true;
+  msg->sfx = sfx;
+
+  M_OBufAppend(&players[playernum].messages, msg);
+  C_Write(msg->content);
+}
+
+void P_CenterQWrite(int playernum, int sfx, const char *message) {
+  player_message_t *msg = malloc(sizeof(player_message_t));
+
+  if (msg == NULL)
+    I_Error("P_Write: malloc failed");
+
+  msg->content = g_strdup(message);
+  msg->timestamp = 0;
+  msg->centered = true;
+  msg->processed = true;
+  msg->sfx = sfx;
 
   M_OBufAppend(&players[playernum].messages, msg);
   C_Write(msg->content);
@@ -772,6 +825,4 @@ void P_ClearMessages(int playernum) {
 
   M_OBufClear(&players[playernum].messages);
 }
-
-/* vi: set et ts=2 sw=2: */
 

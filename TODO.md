@@ -1,19 +1,12 @@
 # To Do
 
 1. Fix messaging
-  * Update HUD widgets
-    * Top message widget
-      * Display N messages for M seconds
-    * Chat input widget
-  * Add:
-    * `HU_CenterPrintf`
-      * console-ized
-    * `HU_CenterEcho`
-      * console-ized
   * Add more scripting commands
     * `say`
     * `say_team`
     * `alias`
+
+1. Fix keybindings
 
 1. Make it possible to play a game
   - Something about quitting and rejoining
@@ -67,15 +60,11 @@
 
 1. PWO
 
-<!-- Now ZDDL-worthy -->
-
-1. Slopes
+1. Slopes <!-- Now ZDDL-worthy -->
 
 1. Hexen map support
 
-<!-- Now CTF-worthy -->
-
-1. ACS Scripting
+1. ACS Scripting <!-- Now CTF-worthy -->
 
 1. DECORATE
 

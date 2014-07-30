@@ -1,39 +1,26 @@
-/* Emacs style mode select   -*- C++ -*-
- *-----------------------------------------------------------------------------
- *
- *
- *  PrBoom: a Doom port merged with LxDoom and LSDLDoom
- *  based on BOOM, a modified and improved DOOM engine
- *  Copyright (C) 1999 by
- *  id Software, Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
- *  Copyright (C) 1999-2004 by
- *  Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze
- *  Copyright 2005, 2006 by
- *  Florian Schulze, Colin Phipps, Neil Stevens, Andrey Budko
- *
- *  This program is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU General Public License
- *  as published by the Free Software Foundation; either version 2
- *  of the License, or (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
- *  02111-1307, USA.
- *
- * DESCRIPTION:
- *  DOOM main program (D_DoomMain) and game loop (D_DoomLoop),
- *  plus functions to determine game mode (shareware, registered),
- *  parse command line parameters, configure game parameters (turbo),
- *  and call the startup functions.
- *
- *-----------------------------------------------------------------------------
- */
+/*****************************************************************************/
+/* D2K: A Doom Source Port for the 21st Century                              */
+/*                                                                           */
+/* Copyright (C) 2014: See COPYRIGHT file                                    */
+/*                                                                           */
+/* This file is part of D2K.                                                 */
+/*                                                                           */
+/* D2K is free software: you can redistribute it and/or modify it under the  */
+/* terms of the GNU General Public License as published by the Free Software */
+/* Foundation, either version 2 of the License, or (at your option) any      */
+/* later version.                                                            */
+/*                                                                           */
+/* D2K is distributed in the hope that it will be useful, but WITHOUT ANY    */
+/* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS */
+/* FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more    */
+/* details.                                                                  */
+/*                                                                           */
+/* You should have received a copy of the GNU General Public License along   */
+/* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
+/*                                                                           */
+/* vi: set et ts=2 sw=2:                                                     */
+/*                                                                           */
+/*****************************************************************************/
 
 #include "z_zone.h"
 
@@ -296,7 +283,7 @@ bool D_Responder(event_t *ev) {
 
 
     if (ev->data1 == key_zoomout) {
-      if ((automapmode & am_active) || chat_on)
+      if (automapmode & am_active)
         return false;
 
       M_SizeDisplay(0);
@@ -306,7 +293,7 @@ bool D_Responder(event_t *ev) {
 
     // jff 2/23/98 allow key_hud == key_zoomin
     if (ev->data1 == key_zoomin) {
-      if ((automapmode & am_active) || chat_on)
+      if (automapmode & am_active)
         return false;
 
       M_SizeDisplay(1);                                        //  ^
@@ -408,7 +395,7 @@ bool D_Responder(event_t *ev) {
 
     if (ev->data1 == key_hud) {
       // jff 2/22/98
-      if ((automapmode & am_active) || chat_on)
+      if (automapmode & am_active)
         return false; // HUD mode control
 
       if (screenSize < 8) {                      // function on default F5
@@ -499,6 +486,12 @@ void D_PostEvent(event_t *ev) {
     }
   }
 
+  /* CG 7/30/2014: ESC ought to quit chat if it's active */
+  if (ev->type == ev_keydown && ev->data1 == KEYD_ESCAPE && HU_ChatActive()) {
+    HU_DeactivateChat();
+    return;
+  }
+
   if (M_Responder(ev))
     return;
 
@@ -548,7 +541,6 @@ static void D_Wipe(void) {
     wipestart = nowtime;
     done = wipe_ScreenWipe(tics);
     I_UpdateNoBlit();
-    C_Drawer();
     M_Drawer();                   // menu is drawn even on top of wipes
     I_FinishUpdate();             // page flip or blit buffer
   } while (!done);
@@ -703,9 +695,6 @@ void D_Display(void) {
     V_DrawNamePatch((320 - V_NamePatchWidth("M_PAUSE"))/2, 4,
                     0, "M_PAUSE", CR_DEFAULT, VPT_STRETCH);
   }
-
-  // CG 07/09/2014: Console goes over everything except the menu
-  C_Drawer();
 
   // menus go directly to the screen
   M_Drawer();          // menu is drawn even on top of everything
@@ -2356,14 +2345,14 @@ static void D_DoomMainSetup(void) {
   lprintf(LO_INFO,"S_Init: Setting up sound.\n");
   S_Init(snd_SfxVolume /* *8 */, snd_MusicVolume /* *8*/ );
 
-  //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO,"HU_Init: Setting up heads up display.\n");
-  HU_Init();
-
   if ((!SERVER) && !(M_CheckParm("-nodraw") && M_CheckParm("-nosound")))
     I_InitGraphics();
 
   graphics_initialized = true;
+
+  //jff 9/3/98 use logical output routine
+  lprintf(LO_INFO,"HU_Init: Setting up heads up display.\n");
+  HU_Init();
 
   // NSM
   if ((p = M_CheckParm("-viddump")) && (p < myargc - 1))
