@@ -8,6 +8,7 @@ features.md
 build/
 cbuild/
 crossdeps/*
+crossbuild/*
 ICONS/Makefile.in
 Makefile.in
 VisualC6/Makefile.in
@@ -41,7 +42,7 @@ config.h
 config.log
 config.status
 data/Makefile
-data/prboom-plus.wad
+data/doom2k.wad
 data/rdatawad
 doc/Makefile
 prboom.spec
