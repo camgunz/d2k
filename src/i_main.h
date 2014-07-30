@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __I_MAIN__
-#define __I_MAIN__
+
+#ifndef I_MAIN_H__
+#define I_MAIN_H__
 
 //
 // e6y: exeptions handling
@@ -62,4 +61,6 @@ void I_SafeExit(int rc);
 extern int (*I_GetTime)(void);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

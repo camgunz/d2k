@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef G_GAME__
-#define G_GAME__
+
+#ifndef G_GAME_H__
+#define G_GAME_H__
 
 #include "doomdef.h"
 #include "d_event.h"

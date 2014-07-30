@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef M_RANDOM_H__
 #define M_RANDOM_H__
@@ -142,4 +141,6 @@ int P_Random(pr_class_t DA(const char *, int));
 void M_ClearRandom(void);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __I_CAPTURE__
-#define __I_CAPTURE__
+
+#ifndef I_CAPTURE_H__
+#define I_CAPTURE_H__
 
 // commandlines passed to popen()
 // this one recieves raw PCM sound on stdin
@@ -52,4 +51,6 @@ void I_CaptureFrame (void);
 void I_CaptureFinish (void);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

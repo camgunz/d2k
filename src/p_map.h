@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef P_MAP_H__
 #define P_MAP_H__
@@ -89,4 +88,6 @@ extern fixed_t tmbbox[4];         // phares 3/20/98
 extern line_t *blockline;   // killough 8/11/98
 
 #endif // __P_MAP__
+
+/* vi: set et ts=2 sw=2: */
 

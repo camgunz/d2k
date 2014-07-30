@@ -255,3 +255,5 @@ void TXT_ClearScreen(void)
     cur_y = 0;
 }
 
+/* vi: set et ts=2 sw=2: */
+

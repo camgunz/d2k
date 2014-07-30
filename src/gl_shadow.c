@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #include "z_zone.h"
 
@@ -268,3 +267,6 @@ void gld_RenderShadows(void)
   glDepthMask(GL_TRUE);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
+
+/* vi: set et ts=2 sw=2: */
+

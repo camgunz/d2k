@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef N_MAIN__
-#define N_MAIN__
+
+#ifndef N_MAIN_H__
+#define N_MAIN_H__
 
 void N_LogPlayerPosition(player_t *player);
 void N_PrintPlayerCommands(cbuf_t *commands);
@@ -45,4 +44,6 @@ void    N_ResetLocalCommandIndex(void);
 void    N_TryRunTics(void);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef V_VIDEO_H__
 #define V_VIDEO_H__
@@ -296,4 +295,6 @@ int V_BestColor(const unsigned char *palette, int r, int g, int b);
 #include "gl_struct.h"
 #endif
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef M_OBUF_H__
 #define M_OBUF_H__
@@ -59,4 +58,6 @@ void     M_OBufFreeEntriesAndClear(obuf_t *obuf);
 void     M_OBufFree(obuf_t *obuf);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

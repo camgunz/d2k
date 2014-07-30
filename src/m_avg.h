@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef M_AVG_H__
 #define M_AVG_H__
@@ -35,4 +34,6 @@ void   M_AverageInit(avg_t *avg);
 void   M_AverageUpdate(avg_t *avg, int new_data_point);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

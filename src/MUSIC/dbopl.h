@@ -216,3 +216,5 @@ void Chip__GenerateBlock2(Chip *self, Bitu total, Bit32s* output );
 
 #endif
 
+/* vi: set et ts=2 sw=2: */
+

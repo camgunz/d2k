@@ -408,3 +408,5 @@ void TXT_PopClipArea(void)
     cliparea = next_cliparea;
 }
 
+/* vi: set et ts=2 sw=2: */
+

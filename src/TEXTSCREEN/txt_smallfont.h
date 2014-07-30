@@ -2881,4 +2881,5 @@ static txt_font_t small_font =
     8                    // height
 };
 
+/* vi: set et ts=2 sw=2: */
 

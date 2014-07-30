@@ -136,4 +136,5 @@ void TXT_SetWidgetAlign(TXT_UNCAST_ARG(widget), txt_horiz_align_t horiz_align);
 
 #endif /* #ifndef TXT_WIDGET_H */
 
+/* vi: set et ts=2 sw=2: */
 

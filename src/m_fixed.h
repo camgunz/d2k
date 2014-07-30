@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef M_FIXED_H__
 #define M_FIXED_H__
@@ -108,4 +107,6 @@ inline static CONSTFUNC fixed_t FixedMod(fixed_t a, fixed_t b)
 }
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

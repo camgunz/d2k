@@ -302,3 +302,5 @@ txt_inputbox_t *TXT_NewIntInputBox(int *value, int size)
     return inputbox;
 }
 
+/* vi: set et ts=2 sw=2: */
+

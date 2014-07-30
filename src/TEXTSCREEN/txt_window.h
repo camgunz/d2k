@@ -178,4 +178,5 @@ void TXT_SetMouseListener(txt_window_t *window,
 
 #endif /* #ifndef TXT_WINDOW_T */
 
+/* vi: set et ts=2 sw=2: */
 

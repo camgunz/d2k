@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef R_DEMO_H__
 #define R_DEMO_H__
@@ -113,4 +112,6 @@ int IsDemoContinue(void);
 int LoadDemo(const char *name, const byte **buffer, int *length, int *lump);
 
 #endif // __R_DEMO__
+
+/* vi: set et ts=2 sw=2: */
 

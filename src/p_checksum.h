@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef P_CHECKSUM_H__
 #define P_CHECKSUM_H__
@@ -32,4 +31,6 @@ void P_RecordChecksum(const char *file);
 //void P_VerifyChecksum(const char *file);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

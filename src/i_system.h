@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __I_SYSTEM__
-#define __I_SYSTEM__
+
+#ifndef I_SYSTEM_H__
+#define I_SYSTEM_H__
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -81,4 +80,6 @@ void          I_Read(int fd, void* buf, size_t sz);
 int           I_Filelength(int handle);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

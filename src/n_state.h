@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef N_STATE_H__
 #define N_STATE_H__
@@ -49,4 +48,6 @@ dboolean      N_ApplyStateDelta(game_state_delta_t *delta);
 void          N_BuildStateDelta(int tic, game_state_delta_t *delta);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

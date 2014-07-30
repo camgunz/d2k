@@ -77,3 +77,5 @@ txt_strut_t *TXT_NewStrut(int width, int height)
     return strut;
 }
 
+/* vi: set et ts=2 sw=2: */
+

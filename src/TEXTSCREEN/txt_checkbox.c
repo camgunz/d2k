@@ -149,3 +149,5 @@ txt_checkbox_t *TXT_NewInvertedCheckBox(char *label, int *variable)
     return result;
 }
 
+/* vi: set et ts=2 sw=2: */
+

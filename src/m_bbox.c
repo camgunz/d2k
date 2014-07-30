@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifdef __GNUG__
 #pragma implementation "m_bbox.h"
@@ -47,4 +46,6 @@ void M_AddToBox(fixed_t* box,fixed_t x,fixed_t y)
   else if (y>box[BOXTOP])
     box[BOXTOP] = y;
 }
+
+/* vi: set et ts=2 sw=2: */
 

@@ -65,4 +65,5 @@ void TXT_GUIMainLoop(void);
 
 #endif /* #ifndef TXT_DESKTOP_H */
 
+/* vi: set et ts=2 sw=2: */
 

@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef M_FILE_H__
 #define M_FILE_H__
@@ -89,4 +88,6 @@ char*       M_AddDefaultExtension(const char *path, const char *ext);
 char*       M_SetFileExtension(const char *path, const char *ext);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

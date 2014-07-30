@@ -61,4 +61,5 @@ txt_separator_t *TXT_NewSeparator(char *label);
 
 #endif /* #ifndef TXT_SEPARATOR_H */
 
+/* vi: set et ts=2 sw=2: */
 

@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifdef _WIN32
 #ifndef __MINGW32__
@@ -195,7 +194,7 @@ static void L_FilesOnChange(void)
   int index;
   int i, start, end;
 
-  // блядь, как заебал этот винапи...
+  // ГЎГ«ГїГ¤Гј, ГЄГ ГЄ Г§Г ГҐГЎГ Г« ГЅГІГ®ГІ ГўГЁГ­Г ГЇГЁ...
   start = (int)SendMessage(launcher.listPWAD, LB_GETANCHORINDEX, 0, 0);
   end = (int)SendMessage(launcher.listPWAD, LB_GETCARETINDEX, 0, 0);
   

@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef P_INTER_H__
 #define P_INTER_H__
@@ -65,4 +64,6 @@ extern int monsters_infight; // e6y: Dehacked support - monsters infight
 extern int maxammo[], clipammo[];
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

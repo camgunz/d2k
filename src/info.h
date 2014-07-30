@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __INFO__
-#define __INFO__
+
+#ifndef INFO_H__
+#define INFO_H__
 
 /* Needed for action function pointer handling. */
 #include "d_think.h"
@@ -1508,4 +1507,6 @@ typedef struct
 extern mobjinfo_t mobjinfo[NUMMOBJTYPES];
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

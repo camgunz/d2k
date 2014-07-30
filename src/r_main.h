@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef R_MAIN_H__
 #define R_MAIN_H__
@@ -172,4 +171,6 @@ extern float projMatrix[16];
 int R_Project(float objx, float objy, float objz, float *winx, float *winy, float *winz);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

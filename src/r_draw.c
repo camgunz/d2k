@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #include "z_zone.h"
 
@@ -933,7 +932,7 @@ void R_DrawViewBorder(void)
   }
 
   if ( viewheight >= ( SCREENHEIGHT - ST_SCALED_HEIGHT ))
-    return; // if high-res, don´t go any further!
+    return; // if high-res, donÂ´t go any further!
 
   top = ((SCREENHEIGHT-ST_SCALED_HEIGHT)-viewheight)/2;
   side = (SCREENWIDTH-scaledviewwidth)/2;
@@ -952,4 +951,6 @@ void R_DrawViewBorder(void)
   for (i = top+viewheight; i < (SCREENHEIGHT - ST_SCALED_HEIGHT); i++)
     R_VideoErase (0, i, SCREENWIDTH);
 }
+
+/* vi: set et ts=2 sw=2: */
 

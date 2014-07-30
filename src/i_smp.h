@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __I_SMP__
-#define __I_SMP__
+
+#ifndef I_SMP_H__
+#define I_SMP_H__
 
 #include "SDL.h"
 
@@ -56,4 +55,6 @@ void SMP_ColFunc(draw_column_vars_t *data);
 void SMP_SpanFunc(draw_span_vars_t *data);
 
 #endif // __I_SMP__
+
+/* vi: set et ts=2 sw=2: */
 

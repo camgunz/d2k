@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef SC_MAN_H__
 #define SC_MAN_H__
@@ -48,4 +47,6 @@ int      SC_MustMatchString(const char **strings);
 void     SC_ScriptError(const char *message);
 
 #endif // __SC_MAN__
+
+/* vi: set et ts=2 sw=2: */
 

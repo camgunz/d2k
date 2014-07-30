@@ -149,3 +149,5 @@ void TXT_SetRadioButtonLabel(txt_radiobutton_t *radiobutton, char *value)
     radiobutton->label = strdup(value);
 }
 
+/* vi: set et ts=2 sw=2: */
+

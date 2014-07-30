@@ -36,8 +36,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "SDL.h"
-#include "SDL_thread.h"
+#include <SDL.h>
+#include <SDL_thread.h>
 
 #include "pcsound.h"
 
@@ -126,4 +126,6 @@ pcsound_driver_t pcsound_linux_driver =
 };
 
 #endif /* #ifdef HAVE_LINUX_KD_H */
+
+/* vi: set et ts=2 sw=2: */
 

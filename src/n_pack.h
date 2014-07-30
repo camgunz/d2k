@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef N_PACK_H__
 #define N_PACK_H__
@@ -100,4 +99,6 @@ void     N_PackVoteRequest(netpeer_t *np, char *command);
 dboolean N_UnpackVoteRequest(netpeer_t *np, buf_t *buf);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

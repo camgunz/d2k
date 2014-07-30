@@ -136,3 +136,5 @@ txt_button_t *TXT_NewButton2(char *label, TxtWidgetSignalFunc func,
     return button;
 }
 
+/* vi: set et ts=2 sw=2: */
+

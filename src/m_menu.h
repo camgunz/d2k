@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef M_MENU_H__
 #define M_MENU_H__
@@ -224,4 +223,6 @@ typedef struct setup_menu_s
 } setup_menu_t;
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

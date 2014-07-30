@@ -1447,6 +1447,5 @@ const music_player_t opl_synth_player =
   I_OPL_RenderSamples
 };
 
-
-
+/* vi: set et ts=2 sw=2: */
 

@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef P_SPEC_H__
 #define P_SPEC_H__
@@ -1154,4 +1153,6 @@ int P_ActivateInStasisCeiling
 mobj_t* P_GetPushThing(int);                                // phares 3/23/98
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

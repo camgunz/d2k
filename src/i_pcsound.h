@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __I_PCSOUND_H__
-#define __I_PCSOUND_H__
+
+#ifndef I_PCSOUND_H__
+#define I_PCSOUND_H__
 
 int I_PCS_StartSound(int id,
                      int channel,
@@ -36,4 +35,6 @@ int I_PCS_SoundIsPlaying(int handle);
 void I_PCS_InitSound(void);
 
 #endif /* #ifndef __I_PCSOUND_H__ */
+
+/* vi: set et ts=2 sw=2: */
 

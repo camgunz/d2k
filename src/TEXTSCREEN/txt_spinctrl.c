@@ -413,3 +413,5 @@ txt_spincontrol_t *TXT_NewFloatSpinControl(float *value, float min, float max)
     return spincontrol;
 }
 
+/* vi: set et ts=2 sw=2: */
+

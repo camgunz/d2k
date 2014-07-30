@@ -445,11 +445,5 @@ void OPL_SetPaused(int paused)
     opl_paused = paused;
 }
 
-
-
-
-
-
-
-
+/* vi: set et ts=2 sw=2: */
 

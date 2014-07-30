@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -150,4 +149,6 @@ dboolean M_ApplyDelta(pbuf_t *b1, pbuf_t *b2, buf_t *delta) {
 
   return res;
 }
+
+/* vi: set et ts=2 sw=2: */
 

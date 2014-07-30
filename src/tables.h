@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef TABLES_H__
 #define TABLES_H__
@@ -71,4 +70,6 @@ extern angle_t tantoangle[SLOPERANGE+1];
 int SlopeDiv(unsigned num, unsigned den);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

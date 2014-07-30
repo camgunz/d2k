@@ -18,13 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #include "z_zone.h"
 
-#include "m_cbuf.h"
 #include "doomstat.h"
 #include "d_event.h"
 #include "g_game.h"
@@ -668,3 +666,6 @@ void F_Drawer (void)
     V_FillBorder(-1, 0);
   }
 }
+
+/* vi: set et ts=2 sw=2: */
+

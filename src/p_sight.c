@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #include "z_zone.h"
 
@@ -931,4 +930,6 @@ dboolean P_CheckSight(mobj_t *t1, mobj_t *t2)
   // the head node is the last node output
   return P_CrossBSPNode(numnodes-1);
 }
+
+/* vi: set et ts=2 sw=2: */
 

@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef S_ADVSOUND_H__
 #define S_ADVSOUND_H__
@@ -53,4 +52,6 @@ void MusInfoThinker(mobj_t *thing);
 void T_MAPMusic(void);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

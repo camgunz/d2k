@@ -43,10 +43,6 @@ typedef unsigned char byte;
 #define TRACK_CHUNK_ID  "MTrk"
 #define MAX_BUFFER_SIZE 0x10000
 
-
-
-
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -1265,4 +1261,6 @@ int main(int argc, char *argv[])
 }
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

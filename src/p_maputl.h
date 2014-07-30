@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef P_MAPUTL__
-#define P_MAPUTL__
+
+#ifndef P_MAPUTL_H__
+#define P_MAPUTL_H__
 
 #include "r_defs.h"
 
@@ -87,4 +86,6 @@ extern fixed_t lowfloor;
 extern divline_t trace;
 
 #endif  /* __P_MAPUTL__ */
+
+/* vi: set et ts=2 sw=2: */
 

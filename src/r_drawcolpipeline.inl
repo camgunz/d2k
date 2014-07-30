@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 // no color mapping
 #define R_DRAWCOLUMN_FUNCNAME R_DRAWCOLUMN_FUNCNAME_COMPOSITE(_PointUV)
@@ -72,4 +71,6 @@
 #undef R_FLUSHQUAD_FUNCNAME
 #undef R_DRAWCOLUMN_FUNCNAME_COMPOSITE
 #undef R_DRAWCOLUMN_PIPELINE_BITS
+
+/* vi: set et ts=2 sw=2: */
 

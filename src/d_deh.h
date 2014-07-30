@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef D_DEH_H__
 #define D_DEH_H__
@@ -1113,3 +1112,6 @@ void deh_changeCompTranslucency(void);
 void deh_applyCompatibility(void);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

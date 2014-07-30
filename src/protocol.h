@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef __PROTOCOL__
 #define __PROTOCOL__
@@ -91,4 +90,6 @@ inline static void TicToRaw(void* dst, const ticcmd_t* src)
 }
 
 #endif // __PROTOCOL__
+
+/* vi: set et ts=2 sw=2: */
 

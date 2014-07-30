@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __D_STATE__
-#define __D_STATE__
+
+#ifndef D_STATE_H__
+#define D_STATE_H__
 
 // We need the playr data structure as well.
 #include "d_player.h"
@@ -344,3 +343,6 @@ extern int monkeys, default_monkeys;
 extern int HelperThing;          // type of thing to use for helper
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

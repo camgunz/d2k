@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __M_ARGV__
-#define __M_ARGV__
+
+#ifndef M_ARGV_H__
+#define M_ARGV_H__
 
 /*
  * MISC
@@ -44,4 +43,6 @@ void M_AddParam(const char *param);
 void M_ParseCmdLine(char *cmdstart, char **argv, char *args, int *numargs, int *numchars);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

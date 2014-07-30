@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #include "z_zone.h"
 
@@ -213,7 +212,7 @@ static void R_InitTextures (void)
       texture->height = LittleShort(mtexture->height);
       texture->patchcount = LittleShort(mtexture->patchcount);
 
-        /* Mattias Engdegård emailed me of the following explenation of
+        /* Mattias EngdegÃ¥rd emailed me of the following explenation of
          * why memcpy doesnt work on some systems:
          * "I suppose it is the mad unaligned allocation
          * going on (and which gcc in some way manages to cope with
@@ -799,4 +798,6 @@ void R_SetFloorNum(patchnum_t *patchnum, const char *name)
   patchnum->topoffset = 0;
   patchnum->lumpnum = R_FlatNumForName(name);
 }
+
+/* vi: set et ts=2 sw=2: */
 

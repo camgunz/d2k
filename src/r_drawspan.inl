@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 //
 // R_DrawSpan
@@ -165,4 +164,6 @@ static void R_DRAWSPAN_FUNCNAME(draw_span_vars_t *dsvars)
 #undef R_DRAWSPAN_PIPELINE_BITS
 #undef R_DRAWSPAN_PIPELINE
 #undef R_DRAWSPAN_FUNCNAME
+
+/* vi: set et ts=2 sw=2: */
 

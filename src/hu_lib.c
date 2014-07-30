@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -796,4 +795,6 @@ void HUlib_setTextXCenter(hu_textline_t *t)
 
   t->x >>= 1;
 }
+
+/* vi: set et ts=2 sw=2: */
 

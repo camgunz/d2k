@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef HU_CHAT_H__
 #define HU_CHAT_H__
@@ -48,4 +47,6 @@ size_t HU_ChatWidgetGetTextLength(chat_widget_t *cw);
 void   HU_ChatWidgetClear(chat_widget_t *cw);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

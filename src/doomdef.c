@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifdef __GNUG__
 #pragma implementation "doomdef.h"
@@ -44,3 +43,6 @@ int REAL_SCREENPITCH;
 int SCREEN_320x200;
 int WIDE_SCREENWIDTH = 320;
 int WIDE_SCREENHEIGHT = 200;
+
+/* vi: set et ts=2 sw=2: */
+

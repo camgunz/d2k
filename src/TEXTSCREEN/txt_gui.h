@@ -41,3 +41,5 @@ void TXT_PopClipArea(void);
 
 #endif /* #ifndef TXT_GUI_H */
 
+/* vi: set et ts=2 sw=2: */
+

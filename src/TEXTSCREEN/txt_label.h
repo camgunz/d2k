@@ -87,4 +87,5 @@ void TXT_SetFGColor(txt_label_t *label, txt_color_t color);
 
 #endif /* #ifndef TXT_LABEL_H */
 
+/* vi: set et ts=2 sw=2: */
 

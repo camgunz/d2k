@@ -39,3 +39,5 @@ void TXT_ClearScreen(void);
 
 #endif /* #ifndef TXT_IO_H */
 
+/* vi: set et ts=2 sw=2: */
+

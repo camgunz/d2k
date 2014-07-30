@@ -674,3 +674,5 @@ void TXT_SDL_SetEventCallback(TxtSDLEventCallbackFunc callback, void *user_data)
     event_callback_data = user_data;
 }
 
+/* vi: set et ts=2 sw=2: */
+

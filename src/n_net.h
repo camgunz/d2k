@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef NET_H__
 #define NET_H__
@@ -97,4 +96,6 @@ uint32_t    N_GetUploadBandwidth(void);
 uint32_t    N_GetDownloadBandwidth(void);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

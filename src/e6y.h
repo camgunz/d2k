@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __E6Y__
-#define __E6Y__
+
+#ifndef E6Y_H__
+#define E6Y_H__
 
 #include <stdarg.h>
 
@@ -360,3 +359,6 @@ void I_midiOutSetVolumes(int volume);
 #endif
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

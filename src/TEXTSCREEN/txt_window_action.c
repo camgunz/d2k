@@ -162,3 +162,5 @@ txt_window_action_t *TXT_NewWindowSelectAction(txt_window_t *window)
     return action;
 }
 
+/* vi: set et ts=2 sw=2: */
+

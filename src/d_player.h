@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __D_PLAYER__
-#define __D_PLAYER__
+
+#ifndef D_PLAYER_H__
+#define D_PLAYER_H__
 
 
 // The player data structure depends on a number
@@ -249,3 +248,4 @@ typedef struct
 #endif
 
 /* vi: set et ts=2 sw=2: */
+

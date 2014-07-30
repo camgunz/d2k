@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef DOOMTYPE__
-#define DOOMTYPE__
+
+#ifndef DOOMTYPE_H__
+#define DOOMTYPE_H__
 
 #ifndef BYTEBOOL__
 #define BYTEBOOL__
@@ -154,3 +153,6 @@ enum patch_translation_e {
 };
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef C_MAIN__
-#define C_MAIN__
+
+#ifndef C_MAIN_H__
+#define C_MAIN_H__
 
 void C_Init(void);
 void C_Reset(void);

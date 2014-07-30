@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef LPRINTF_H__
 #define LPRINTF_H__
@@ -60,4 +59,6 @@ void Done_ConsoleWin(void);
 int doom_vsnprintf(char *buf, size_t max, const char *fmt, va_list va);
 int doom_snprintf(char *buf, size_t max, const char *fmt, ...) PRINTF_DECL(3, 4);
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

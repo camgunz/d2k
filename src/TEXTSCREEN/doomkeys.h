@@ -97,3 +97,5 @@
 
 #endif          // __DOOMKEYS__
 
+/* vi: set et ts=2 sw=2: */
+

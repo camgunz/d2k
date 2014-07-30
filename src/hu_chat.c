@@ -1,7 +1,4 @@
 /*****************************************************************************/
-/*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /* D2K: A Doom Source Port for the 21st Century                              */
 /*                                                                           */
 /* Copyright (C) 2014: See COPYRIGHT file                                    */
@@ -21,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #include "z_zone.h"
 
@@ -160,4 +156,6 @@ size_t HU_ChatWidgetGetTextLength(chat_widget_t *cw) {
 void HU_ChatWidgetClear(chat_widget_t *cw) {
   HU_InputWidgetClear(cw->input);
 }
+
+/* vi: set et ts=2 sw=2: */
 

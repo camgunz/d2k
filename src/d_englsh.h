@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __D_ENGLSH__
-#define __D_ENGLSH__
+
+#ifndef D_ENGLSH_H__
+#define D_ENGLSH_H__
 
 /* d_main.c */
 #define D_DEVSTR    "Development mode ON.\n"
@@ -698,3 +697,6 @@
 
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

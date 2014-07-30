@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef _GL_OPENGL_H
-#define _GL_OPENGL_H
+
+#ifndef GL_OPENGL_H__
+#define GL_OPENGL_H__
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -179,3 +178,6 @@ typedef enum
 void SetTextureMode(tex_mode_e type);
 
 #endif // _GL_OPENGL_H
+
+/* vi: set et ts=2 sw=2: */
+

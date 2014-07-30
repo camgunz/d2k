@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __I_SOUND__
-#define __I_SOUND__
+
+#ifndef I_SOUND_H__
+#define I_SOUND_H__
 
 #include "sounds.h"
 #include "doomtype.h"
@@ -144,4 +143,6 @@ extern const char *midiplayers[];
 void M_ChangeMIDIPlayer(void);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #include "z_zone.h"
 
@@ -697,4 +696,6 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec, int secnum) {
   door->line = NULL; // jff 1/31/98 remember line that triggered us
   door->lighttag = 0; /* killough 10/98: no lighting changes */
 }
+
+/* vi: set et ts=2 sw=2: */
 

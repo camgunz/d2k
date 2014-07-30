@@ -70,8 +70,8 @@ wide.
 
   * Pad operators
     * Bad: `myargv[p+1]`
-    * Bad: `for (i=0;i<MAXPLAYERS;i++)`
     * Good: `myargv[p + 1]`
+    * Bad: `for (i=0;i<MAXPLAYERS;i++)`
     * Good: `for (i = 0; i < MAXPLAYERS; i++)`
   * Put a space after control statements
     * Bad: `if(`
@@ -87,12 +87,15 @@ wide.
   * Pad function parameters
     * Bad: `P_SpawnMobj(x,y,z,MT_PLAYER);`
     * Good: `P_SpawnMobj(x, y, z, MT_PLAYER);`
+  * Do not pad function names
+    * Bad: `P_SpawnMobj (x, y, z, MT_PLAYER);`
+    * Good: `P_SpawnMobj(x, y, z, MT_PLAYER);`
   * Pad commas in general
     * Bad: `int x,y,z,a,b,c;`
     * Good: `int x, y, z, a, b, c;`
   * Do not pad dereferences
-    * Bad: `p -> mo = NULL`;
-    * Good: `p->mo = NULL`;
+    * Bad: `p -> mo = NULL;`
+    * Good: `p->mo = NULL;`
   * Pad pointer types in casts, but do not pad the cast itself
     * Bad: `data = (void*) p;`
     * Good: `data = (void *)p;`
@@ -235,7 +238,7 @@ some examples:
       /* Blah... */
     }
 
-That said, these are very ugly, and you should consider a slight refactoring.
+That said, these are quite ugly, and you should consider a slight refactoring.
 
 Do not put more than one statement on a line, for example, this
 violates the style guidelines:
@@ -291,7 +294,7 @@ Then it is time to refactor.
 ## Ternaries
 
 Don't use them.  They're hard to edit when they're small, and they're
-impossible to understand when they're large.
+difficult to understand when they're large.
 
 ## Variable Declarations
 
@@ -365,7 +368,7 @@ touchstones of communication.  Therefore, editing for style is not entirely
 justified.  Besides, the prefix can hold useful information: M is for "misc" or
 "menu", N is for "net", R is for "renderer", etc.
 
-## Includes
+## Header files
 
 ### Header Includes
 
@@ -375,7 +378,10 @@ If you need something declared in a different header file, forward declare it.
 If you need to modify the original header file to do so, feel free to.  This
 cuts down on compilation time and avoids complicated dependency problems.
 
-### Header Defines
+### Header Guards
+
+Always use header guards.  Name them after the file itself, i.e.,
+`p_mobj.h` becomes `P_MOBJ_H__`.
 
 The `__` prefix is reserved for compiler defines; do not use it for headers.
 For example, instead of:
@@ -398,6 +404,27 @@ Include `z_zone.h` first, so that anything afterwards uses its configuration
 information and redefinitions.
 
 Include library headers next so that Doom2K headers can use their definitions.
+
+### Local Headers
+
+Always surround local headers with double-quotation marks, i.e.:
+
+    #include "p_mobj.h"
+
+instead of
+
+    #include <p_mobj.h>
+
+Conversely, always surround non-local headers (like `stddef.h` and
+`SDL.h`) with angle brackets, i.e.:
+
+    #include <stddef.h>
+
+    #include <SDL.h>
+
+instead of
+
+    #include "SDL.h"
 
 ### System Headers
 

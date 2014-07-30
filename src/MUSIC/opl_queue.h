@@ -43,3 +43,5 @@ unsigned int OPL_Queue_Peek(opl_callback_queue_t *queue);
 
 #endif /* #ifndef OPL_QUEUE_H */
 
+/* vi: set et ts=2 sw=2: */
+

@@ -43,3 +43,5 @@
 
 #endif /* #ifndef TEXTSCREEN_H */
 
+/* vi: set et ts=2 sw=2: */
+

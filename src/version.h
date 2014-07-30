@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef VERSION_H___
 #define VERSION_H___
@@ -28,4 +27,6 @@
 extern const char version_date[];
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #include "z_zone.h"
 
@@ -40,7 +39,7 @@
 #include "p_pspr.h"
 #include "p_user.h"
 #include "w_wad.h"
-/******************************************************************************/
+
 #include "n_net.h"
 #include "n_main.h"
 #include "n_state.h"

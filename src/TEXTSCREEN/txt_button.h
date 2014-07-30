@@ -78,4 +78,5 @@ void TXT_SetButtonLabel(txt_button_t *button, char *label);
 
 #endif /* #ifndef TXT_BUTTON_H */
 
+/* vi: set et ts=2 sw=2: */
 

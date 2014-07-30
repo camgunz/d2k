@@ -78,4 +78,5 @@ txt_inputbox_t *TXT_NewIntInputBox(int *value, int size);
 
 #endif /* #ifndef TXT_INPUTBOX_H */
 
+/* vi: set et ts=2 sw=2: */
 

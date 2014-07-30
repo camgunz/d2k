@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef Z_BMALLOC_H__
 #define Z_BMALLOC_H__
@@ -46,4 +45,6 @@ inline static void* Z_BCalloc(struct block_memory_alloc_s *pzone)
 void Z_BFree(struct block_memory_alloc_s *pzone, void* p);
 
 #endif //__Z_BMALLOC__
+
+/* vi: set et ts=2 sw=2: */
 

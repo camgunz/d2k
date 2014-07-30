@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef M_PBUF_H__
 #define M_PBUF_H__
@@ -120,4 +119,6 @@ const char* M_PBufGetError(pbuf_t *pbuf);
 void M_PBufPrint(pbuf_t *pbuf);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

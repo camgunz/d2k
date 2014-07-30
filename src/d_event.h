@@ -18,16 +18,13 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __D_EVENT__
-#define __D_EVENT__
 
+#ifndef D_EVENT_H__
+#define D_EVENT_H__
 
 #include "doomtype.h"
-
 
 //
 // Event handling.
@@ -115,3 +112,6 @@ BT_WEAPONMASK_OLD   = (8+16+32),//e6y
 extern gameaction_t gameaction;
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

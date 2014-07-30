@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef HU_MSG_H__
 #define HU_MSG_H__
@@ -63,4 +62,6 @@ void HU_MessageWidgetMWrite(message_widget_t *mw, const char *message);
 void HU_MessageWidgetClear(message_widget_t *mw);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

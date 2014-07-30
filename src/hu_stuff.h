@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __HU_STUFF_H__
-#define __HU_STUFF_H__
+
+#ifndef HU_STUFF_H__
+#define HU_STUFF_H__
 
 #include "d_event.h"
 
@@ -133,4 +132,6 @@ extern crosshair_t crosshair;
 int SetCustomMessage(int plr, const char *msg, int delay, int ticks, int cm, int sfx);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

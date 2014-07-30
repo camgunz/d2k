@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __HU_TRACERS__
-#define __HU_TRACERS__
+
+#ifndef HU_TRACERS_H__
+#define HU_TRACERS_H__
 
 #include "hu_lib.h"
 
@@ -87,4 +86,6 @@ int TracerGetDeathmatchStart(int index);
 int TracerGetPlayerStart(int index);
 
 #endif // __HU_TRACERS__
+
+/* vi: set et ts=2 sw=2: */
 

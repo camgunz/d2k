@@ -214,3 +214,5 @@ void TXT_LayoutWidget(TXT_UNCAST_ARG(widget))
     }
 }
 
+/* vi: set et ts=2 sw=2: */
+

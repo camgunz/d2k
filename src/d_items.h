@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __D_ITEMS__
-#define __D_ITEMS__
+
+#ifndef D_ITEMS_H__
+#define D_ITEMS_H__
 
 #include "doomdef.h"
 
@@ -48,3 +47,6 @@ extern  weaponinfo_t    weaponinfo[NUMWEAPONS+2];
 extern int ammopershot[NUMWEAPONS+2];
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

@@ -1,6 +1,4 @@
 /*****************************************************************************/
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /* D2K: A Doom Source Port for the 21st Century                              */
 /*                                                                           */
 /* Copyright (C) 2014: See COPYRIGHT file                                    */
@@ -21,6 +19,7 @@
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
 /*****************************************************************************/
+
 
 // killough 5/3/98: remove unnecessary headers
 
@@ -2841,4 +2840,6 @@ int SetCustomMessage(int plr, const char *msg, int delay, int ticks, int cm, int
 
   return true;
 }
+
+/* vi: set et ts=2 sw=2: */
 

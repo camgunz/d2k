@@ -1,3 +1,26 @@
+/*****************************************************************************/
+/* D2K: A Doom Source Port for the 21st Century                              */
+/*                                                                           */
+/* Copyright (C) 2014: See COPYRIGHT file                                    */
+/*                                                                           */
+/* This file is part of D2K.                                                 */
+/*                                                                           */
+/* D2K is free software: you can redistribute it and/or modify it under the  */
+/* terms of the GNU General Public License as published by the Free Software */
+/* Foundation, either version 2 of the License, or (at your option) any      */
+/* later version.                                                            */
+/*                                                                           */
+/* D2K is distributed in the hope that it will be useful, but WITHOUT ANY    */
+/* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS */
+/* FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more    */
+/* details.                                                                  */
+/*                                                                           */
+/* You should have received a copy of the GNU General Public License along   */
+/* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
+/*                                                                           */
+/*****************************************************************************/
+
+
 /*************************************************
 *      Perl-Compatible Regular Expressions       *
 *************************************************/
@@ -291,7 +314,7 @@ static const unsigned char digitab[] =
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /*    - 71 40 */
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /*  72- |     */
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /*  & - 87 50 */
-  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /*  88- ¬     */
+  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /*  88- Â¬     */
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /*  - -103 60 */
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /* 104- ?     */
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /* 112-119 70 */
@@ -325,7 +348,7 @@ static const unsigned char ebcdic_chartab[] = { /* chartable partial dup */
   0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /*    - 71 */
   0x00,0x00,0x00,0x80,0x00,0x80,0x80,0x80, /*  72- |  */
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /*  & - 87 */
-  0x00,0x00,0x00,0x80,0x80,0x80,0x00,0x00, /*  88- ¬  */
+  0x00,0x00,0x00,0x80,0x80,0x80,0x00,0x00, /*  88- Â¬  */
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /*  - -103 */
   0x00,0x00,0x00,0x00,0x00,0x10,0x00,0x80, /* 104- ?  */
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, /* 112-119 */
@@ -5279,3 +5302,6 @@ return (pcre *)re;
 }
 
 /* End of pcre_compile.c */
+
+/* vi: set et ts=2 sw=2: */
+

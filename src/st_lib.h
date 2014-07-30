@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef ST_LIB_H__
 #define ST_LIB_H__
@@ -198,4 +197,6 @@ void STlib_updateBinIcon
   dboolean refresh );
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

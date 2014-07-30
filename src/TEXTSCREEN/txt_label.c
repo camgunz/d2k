@@ -194,3 +194,5 @@ void TXT_SetBGColor(txt_label_t *label, txt_color_t color)
     label->bgcolor = color;
 }
 
+/* vi: set et ts=2 sw=2: */
+

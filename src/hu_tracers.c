@@ -18,13 +18,10 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+#include "z_zone.h"
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -294,4 +291,6 @@ void TracerClearStarts(void)
     deathmatchstarts_indexes = NULL;
   }
 }
+
+/* vi: set et ts=2 sw=2: */
 

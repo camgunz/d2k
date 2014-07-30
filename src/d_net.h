@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef D_NET_H__
 #define D_NET_H__
@@ -190,3 +189,6 @@ extern  doomcom_t  *doomcom;
 extern  doomdata_t *netbuffer;  // This points inside doomcom.
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

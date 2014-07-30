@@ -1,7 +1,4 @@
 /*****************************************************************************/
-/*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /* D2K: A Doom Source Port for the 21st Century                              */
 /*                                                                           */
 /* Copyright (C) 2014: See COPYRIGHT file                                    */
@@ -22,6 +19,7 @@
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
 /*****************************************************************************/
+
 
 #include "z_zone.h"
 
@@ -344,4 +342,6 @@ void HU_ConsoleWidgetWrite(console_widget_t *cons, const char *message) {
 void HU_ConsoleWidgetMWrite(console_widget_t *cons, const char *message) {
   HU_MessageWidgetMWrite(cons->scrollback, message);
 }
+
+/* vi: set et ts=2 sw=2: */
 

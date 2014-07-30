@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __D_THINK__
-#define __D_THINK__
+
+#ifndef D_THINK_H__
+#define D_THINK_H__
 
 #ifdef __GNUG__
 #pragma interface
@@ -83,3 +82,6 @@ typedef struct thinker_s
 } thinker_t;
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

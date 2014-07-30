@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef _GL_STRUCT_H
-#define _GL_STRUCT_H
+
+#ifndef GL_STRUCT_H__
+#define GL_STRUCT_H__
 
 extern int nodesVersion;
 
@@ -286,3 +285,6 @@ void gld_DrawNiceThings(int fx, int fy, int fw, int fh);
 void gld_ClearNiceThings(void);
 
 #endif // _GL_STRUCT_H
+
+/* vi: set et ts=2 sw=2: */
+

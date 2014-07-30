@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef P_SAVEG_H__
 #define P_SAVEG_H__
@@ -58,4 +57,6 @@ void CheckSaveGame(size_t,const char*, int);              /* killough */
 #endif
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

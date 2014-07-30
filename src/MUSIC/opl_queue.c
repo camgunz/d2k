@@ -277,3 +277,5 @@ int main()
 
 #endif
 
+/* vi: set et ts=2 sw=2: */
+

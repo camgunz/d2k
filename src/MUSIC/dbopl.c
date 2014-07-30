@@ -1592,4 +1592,5 @@ void DBOPL_InitTables( void ) {
 #endif
 }
 
+/* vi: set et ts=2 sw=2: */
 

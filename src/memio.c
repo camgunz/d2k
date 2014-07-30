@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 // e6y
 // All tabs are replaced with spaces.
@@ -203,4 +202,6 @@ int mem_fseek(MEMFILE *stream, signed long position, mem_rel_t whence)
     return -1;
   }
 }
+
+/* vi: set et ts=2 sw=2: */
 

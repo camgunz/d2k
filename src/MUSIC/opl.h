@@ -121,3 +121,5 @@ void OPL_ClearCallbacks(void);
 
 #endif
 
+/* vi: set et ts=2 sw=2: */
+

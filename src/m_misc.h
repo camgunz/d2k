@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef M_MISC_H__
 #define M_MISC_H__
@@ -124,4 +123,6 @@ void M_ArrayAddItem(array_t *data, void *item, int itemsize);
 void* M_ArrayGetNewItem(array_t *data, int itemsize);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

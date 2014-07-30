@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __E6Y_LAUNCHER__
-#define __E6Y_LAUNCHER__
+
+#ifndef E6Y_LAUNCHER_H__
+#define E6Y_LAUNCHER_H__
 
 #ifdef _WIN32
 
@@ -44,3 +43,6 @@ void LauncherShow(unsigned int params);
 #endif
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

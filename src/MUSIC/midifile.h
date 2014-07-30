@@ -192,3 +192,5 @@ midi_file_t *MIDI_LoadFileSpecial (midimem_t *mf);
 
 #endif /* #ifndef MIDIFILE_H */
 
+/* vi: set et ts=2 sw=2: */
+

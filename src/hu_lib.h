@@ -18,17 +18,15 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __HULIB__
-#define __HULIB__
+
+#ifndef HULIB_H__
+#define HULIB_H__
 
 // We are referring to patches.
 #include "r_defs.h"
 #include "v_video.h"  //jff 2/16/52 include color range defs
-
 
 /* background and foreground screen numbers
  * different from other modules. */
@@ -254,4 +252,6 @@ void HUlib_eraseIText(hu_itext_t* it);
 void HUlib_setTextXCenter(hu_textline_t* t);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

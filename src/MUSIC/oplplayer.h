@@ -25,10 +25,12 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef OPLPLAYER_H
-#define OPLPLAYER_H
+#ifndef OPLPLAYER_H__
+#define OPLPLAYER_H__
 
 extern const music_player_t opl_synth_player;
 
-
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef I_NETWORK_H__
 #define I_NETWORK_H__
@@ -69,4 +68,6 @@ extern int v4socket, v6socket;
 extern size_t sentbytes, recvdbytes;
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

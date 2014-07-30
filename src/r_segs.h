@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef R_SEGS_H__
 #define R_SEGS_H__
@@ -33,4 +32,6 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2);
 void R_StoreWallRange(const int start, const int stop);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

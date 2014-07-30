@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __AMMAP_H__
-#define __AMMAP_H__
+
+#ifndef AMMAP_H__
+#define AMMAP_H__
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -177,3 +176,6 @@ extern map_things_appearance_t map_things_appearance;
 extern const char *map_things_appearance_list[];
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

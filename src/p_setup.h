@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef P_SETUP_H__
 #define P_SETUP_H__
@@ -50,4 +49,6 @@ extern int blockmapxneg;
 extern int blockmapyneg;
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

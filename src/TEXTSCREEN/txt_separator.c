@@ -111,3 +111,5 @@ txt_separator_t *TXT_NewSeparator(char *label)
     return separator;
 }
 
+/* vi: set et ts=2 sw=2: */
+

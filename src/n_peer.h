@@ -18,14 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef N_PEER_H__
 #define N_PEER_H__
-
-/* CG: TODO: Break out sync stuff into its own netsync_t thing */
 
 typedef struct netchan_s {
   cbuf_t toc;
@@ -80,4 +77,6 @@ void        N_PeerClearUnreliable(int peernum);
 void        N_PeerResetSync(int peernum);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

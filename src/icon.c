@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 static int icon_w = 32;
 static int icon_h = 32;
@@ -283,4 +282,6 @@ static unsigned char icon_data[] = {
   0xff,0xff,0xff,0x00, 0xff,0xff,0xff,0x00, 0xff,0xff,0xff,0x00, 0xff,0xff,0xff,0x00,
   0xff,0xff,0xff,0x00, 0xff,0xff,0xff,0x00, 0x00,0x00,0x00,0x13, 0x00,0x00,0x00,0x17,
 };
+
+/* vi: set et ts=2 sw=2: */
 

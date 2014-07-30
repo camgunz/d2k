@@ -18,11 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
+
 #include "z_zone.h"
+
 #include "doomtype.h"
 
 #include "m_argv.h"
@@ -180,4 +180,6 @@ void M_ParseCmdLine(char *cmdstart, char **argv, char *args, int *numargs, int *
     ++*numchars;
   }
 }
+
+/* vi: set et ts=2 sw=2: */
 

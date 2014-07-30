@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef I_VIDEO_H__
 #define I_VIDEO_H__
@@ -119,4 +118,6 @@ extern int use_gl_surface;
 #endif // GL_DOOM
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

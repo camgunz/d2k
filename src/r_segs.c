@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 // 4/25/98, 5/2/98 killough: reformatted, beautified
 
@@ -915,4 +914,6 @@ void R_StoreWallRange(const int start, const int stop)
     }
   ds_p++;
 }
+
+/* vi: set et ts=2 sw=2: */
 

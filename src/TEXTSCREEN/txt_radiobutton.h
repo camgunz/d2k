@@ -82,4 +82,5 @@ void TXT_SetRadioButtonLabel(txt_radiobutton_t *radiobutton, char *value);
 
 #endif /* #ifndef TXT_RADIOBUTTON_H */
 
+/* vi: set et ts=2 sw=2: */
 

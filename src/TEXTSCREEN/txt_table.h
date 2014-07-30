@@ -193,4 +193,5 @@ int TXT_PageTable(TXT_UNCAST_ARG(table), int pagex, int pagey);
 
 #endif /* #ifndef TXT_TABLE_T */
 
+/* vi: set et ts=2 sw=2: */
 

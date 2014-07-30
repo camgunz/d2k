@@ -23,14 +23,11 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "z_zone.h"
 
 #ifdef USE_WIN32_PCSOUND_DRIVER
 
-#include "SDL.h"
-#include <windows.h>
+#include <SDL.h>
 
 #include "pcsound.h"
 
@@ -116,4 +113,6 @@ pcsound_driver_t pcsound_win32_driver =
 };
 
 #endif /* #ifdef _WIN32 */
+
+/* vi: set et ts=2 sw=2: */
 

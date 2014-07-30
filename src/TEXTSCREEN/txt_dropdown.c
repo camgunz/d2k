@@ -285,3 +285,5 @@ txt_dropdown_list_t *TXT_NewDropdownList(int *variable, char **values,
     return list;
 }
 
+/* vi: set et ts=2 sw=2: */
+

@@ -852,3 +852,5 @@ int TXT_PageTable(TXT_UNCAST_ARG(table), int pagex, int pagey)
     return changed;
 }
 
+/* vi: set et ts=2 sw=2: */
+

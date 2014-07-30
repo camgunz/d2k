@@ -117,3 +117,5 @@ void TXT_SetWindowTitle(char *title);
 
 #endif /* #ifndef TXT_MAIN_H */
 
+/* vi: set et ts=2 sw=2: */
+

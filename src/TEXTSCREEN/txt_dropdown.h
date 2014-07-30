@@ -73,4 +73,5 @@ txt_dropdown_list_t *TXT_NewDropdownList(int *variable,
 
 #endif /* #ifndef TXT_DROPDOWN_H */
 
+/* vi: set et ts=2 sw=2: */
 

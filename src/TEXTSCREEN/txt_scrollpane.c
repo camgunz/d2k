@@ -514,3 +514,5 @@ txt_scrollpane_t *TXT_NewScrollPane(int w, int h, TXT_UNCAST_ARG(target))
     return scrollpane;
 }
 
+/* vi: set et ts=2 sw=2: */
+

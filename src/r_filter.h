@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef R_FILTER_H__
 #define R_FILTER_H__
@@ -166,4 +165,6 @@ byte *filter_getScale2xQuadColors(byte e, byte b, byte f, byte h, byte d);
   ((((col1&0x00ff00)*15+(col2&0x00ff00))>>4)&0x00ff00)
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

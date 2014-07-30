@@ -122,3 +122,5 @@ void PCSound_Shutdown(void)
     pcsound_driver = NULL;
 }
 
+/* vi: set et ts=2 sw=2: */
+

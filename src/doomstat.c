@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifdef __GNUG__
 #pragma implementation "doomstat.h"
@@ -104,4 +103,6 @@ int flashing_hom;     // killough 10/98
 int doom_weapon_toggles; // killough 10/98
 
 int monkeys, default_monkeys;
+
+/* vi: set et ts=2 sw=2: */
 

@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __DSTRINGS__
-#define __DSTRINGS__
+
+#ifndef DSTRINGS__
+#define DSTRINGS__
 
 /* All important printed strings.
  * Language selection (message strings).
@@ -64,3 +63,6 @@ extern const size_t NUM_QUITMESSAGES;  /* Calculated in dstrings.c */
 extern const char* const endmsg[];   /* killough 1/18/98 const added */
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
+

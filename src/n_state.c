@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #define DEBUG_STATES 0
 
@@ -186,4 +185,6 @@ void N_BuildStateDelta(int tic, game_state_delta_t *delta) {
   delta->from_tic = tic;
   delta->to_tic = latest_game_state->tic;
 }
+
+/* vi: set et ts=2 sw=2: */
 

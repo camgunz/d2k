@@ -23,8 +23,8 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifndef PCSOUND_H
-#define PCSOUND_H
+#ifndef PCSOUND_H__
+#define PCSOUND_H__
 
 #define PCSOUND_8253_FREQUENCY 1193280
 
@@ -33,15 +33,16 @@ typedef void (*pcsound_callback_func)(int *duration, int *frequency);
 typedef int (*pcsound_init_func)(pcsound_callback_func callback);
 typedef void (*pcsound_shutdown_func)(void);
 
-struct pcsound_driver_s
-{
-    const char *name;
-    pcsound_init_func init_func;
-    pcsound_shutdown_func shutdown_func;
+struct pcsound_driver_s {
+  const char *name;
+  pcsound_init_func init_func;
+  pcsound_shutdown_func shutdown_func;
 };
 
 int PCSound_Init(pcsound_callback_func callback_func);
 void PCSound_Shutdown(void);
 
-#endif /* #ifndef PCSOUND_H */
+#endif /* #ifndef PCSOUND_H__ */
+
+/* vi: set et ts=2 sw=2: */
 

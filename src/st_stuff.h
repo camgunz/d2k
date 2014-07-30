@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef STSTUFF_H__
-#define STSTUFF_H__
+
+#ifndef ST_STUFF_H__
+#define ST_STUFF_H__
 
 #include "doomtype.h"
 #include "d_event.h"
@@ -110,4 +109,6 @@ extern patchnum_t brdr_t, brdr_b, brdr_l, brdr_r;
 extern patchnum_t brdr_tl, brdr_tr, brdr_bl, brdr_br;
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

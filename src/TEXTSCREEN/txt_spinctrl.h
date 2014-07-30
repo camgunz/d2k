@@ -81,4 +81,5 @@ txt_spincontrol_t *TXT_NewFloatSpinControl(float *value, float min, float max);
 
 #endif /* #ifndef TXT_SPINCONTROL_H */
 
+/* vi: set et ts=2 sw=2: */
 

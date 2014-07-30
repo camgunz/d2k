@@ -18,12 +18,11 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#ifndef __G_OVERFLOW__
-#define __G_OVERFLOW__
+
+#ifndef G_OVERFLOW_H__
+#define G_OVERFLOW_H__
 
 #include "doomtype.h"
 #include "doomdata.h"
@@ -127,3 +126,6 @@ int MissedBackSideOverrun(line_t *line);
 sector_t* GetSectorAtNullAddress(void);
 
 #endif // __G_OVERFLOW__
+
+/* vi: set et ts=2 sw=2: */
+

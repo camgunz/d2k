@@ -18,13 +18,10 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#include "z_zone.h"
 
-#include "doomstat.h"
+#include "z_zone.h"
 
 #ifdef __GNUG__
 #pragma implementation "w_wad.h"
@@ -409,4 +406,6 @@ void W_UnlockLumpNum(int lump) {
   if (cachelump[lump].locks == 0)
     Z_ChangeTag(cachelump[lump].cache, PU_CACHE);
 }
+
+/* vi: set et ts=2 sw=2: */
 

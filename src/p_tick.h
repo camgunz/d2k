@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef P_TICK_H__
 #define P_TICK_H__
@@ -65,4 +64,6 @@ extern thinker_t thinkerclasscap[];
 thinker_t* P_NextThinker(thinker_t*,th_class);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

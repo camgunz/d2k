@@ -18,11 +18,10 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
 
-#include "SDL.h"
+
+#include <SDL.h>
 
 #include "doomdef.h"
 #include "doomtype.h"
@@ -233,4 +232,6 @@ void I_PCS_InitSound(void)
 
     sound_lock = SDL_CreateMutex();
 }
+
+/* vi: set et ts=2 sw=2: */
 

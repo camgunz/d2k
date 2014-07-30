@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifdef __GNUG__
 #pragma implementation "dstrings.h"
@@ -72,4 +71,7 @@ const char *const endmsg[]=
 };
 
 // killough 1/18/98: remove hardcoded limit and replace with var (silly hack):
-const size_t NUM_QUITMESSAGES = sizeof(endmsg)/sizeof(*endmsg) - 1;
+const size_t NUM_QUITMESSAGES = sizeof(endmsg) / sizeof(*endmsg) - 1;
+
+/* vi: set et ts=2 sw=2: */
+

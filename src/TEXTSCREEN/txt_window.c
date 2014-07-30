@@ -442,3 +442,5 @@ void TXT_SetMouseListener(txt_window_t *window,
     window->mouse_listener_data = user_data;
 }
 
+/* vi: set et ts=2 sw=2: */
+

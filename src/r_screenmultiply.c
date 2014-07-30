@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #include "z_zone.h"
 
@@ -293,4 +292,6 @@ void R_ProcessScreenMultiply(byte* pixels_src, byte* pixels_dest,
     }
   }
 }
+
+/* vi: set et ts=2 sw=2: */
 

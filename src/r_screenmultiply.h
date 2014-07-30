@@ -18,9 +18,8 @@
 /* You should have received a copy of the GNU General Public License along   */
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
-/* vi: set et ts=2 sw=2:                                                     */
-/*                                                                           */
 /*****************************************************************************/
+
 
 #ifndef R_SCREENMULTIPLY_H__
 #define R_SCREENMULTIPLY_H__
@@ -40,4 +39,6 @@ void R_ProcessScreenMultiply(byte* pixels_src, byte* pixels_dest,
   int pixel_depth, int pitch_src, int pitch_dest);
 
 #endif
+
+/* vi: set et ts=2 sw=2: */
 

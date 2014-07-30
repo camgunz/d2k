@@ -553,3 +553,5 @@ static txt_font_t main_font =
 
 #endif /* __FONT_H__ */
 
+/* vi: set et ts=2 sw=2: */
+
