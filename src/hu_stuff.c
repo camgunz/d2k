@@ -108,9 +108,6 @@ int hud_num;
 #define HU_TRACERX (2)
 #define HU_TRACERY (hu_font['A'-HU_FONTSTART].height)
 
-#define key_alt KEYD_RALT
-#define key_shift KEYD_RSHIFT
-
 const char* chat_macros[] =
 // Ty 03/27/98 - *not* externalized
 // CPhipps - const char*

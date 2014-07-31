@@ -432,6 +432,22 @@ bool D_Responder(event_t *ev) {
  */
 
 void D_PostEvent(event_t *ev) {
+  SDLMod mod_keys = SDL_GetModState();
+
+  keybindings.shiftdown = false;
+  keybindings.ctrldown  = false;
+  keybindings.altdown   = false;
+  keybindings.metadown  = false;
+
+  if (mod_keys & KMOD_SHIFT)
+    keybindings.shiftdown = true;
+  if (mod_keys & KMOD_CTRL)
+    keybindings.ctrldown = true;
+  if (mod_keys & KMOD_ALT)
+    keybindings.altdown = true;
+  if (mod_keys & KMOD_META)
+    keybindings.metadown = true;
+
   // Allow only sensible keys during skipping
   if (doSkip) {
     if (ev->type == ev_keydown || ev->type == ev_keyup) {
@@ -445,48 +461,17 @@ void D_PostEvent(event_t *ev) {
     }
   }
 
-  if (ev->type == ev_keydown) {
-    switch (ev->data1) {
-      case KEYD_RSHIFT:
-        keybindings.shiftdown = true;
-      break;
-      case KEYD_RCTRL:
-        keybindings.ctrldown = true;
-      break;
-      case KEYD_RALT:
-        keybindings.altdown = true;
-      break;
-      case KEYD_RMETA:
-        keybindings.metadown = true;
-      break;
-      case KEYD_RSUPER:
-        keybindings.superdown = true;
-      break;
-    }
-  }
-
-  if (ev->type == ev_keyup) {
-    switch (ev->data1) {
-      case KEYD_RSHIFT:
-        keybindings.shiftdown = true;
-      break;
-      case KEYD_RCTRL:
-        keybindings.ctrldown = true;
-      break;
-      case KEYD_RALT:
-        keybindings.altdown = true;
-      break;
-      case KEYD_RMETA:
-        keybindings.metadown = true;
-      break;
-      case KEYD_RSUPER:
-        keybindings.superdown = true;
-      break;
-    }
-  }
+  if (ev->type == ev_keydown && ev->data1 == SDLK_LSUPER)
+    keybindings.lsuperdown = true;
+  else if (ev->type == ev_keydown && ev->data1 == SDLK_RSUPER)
+    keybindings.rsuperdown = true;
+  if (ev->type == ev_keyup && ev->data1 == SDLK_LSUPER)
+    keybindings.lsuperdown = false;
+  else if (ev->type == ev_keyup && ev->data1 == SDLK_RSUPER)
+    keybindings.rsuperdown = false;
 
   /* CG 7/30/2014: ESC ought to quit chat if it's active */
-  if (ev->type == ev_keydown && ev->data1 == KEYD_ESCAPE && HU_ChatActive()) {
+  if (ev->type == ev_keydown && ev->data1 == SDLK_ESCAPE && HU_ChatActive()) {
     HU_DeactivateChat();
     return;
   }

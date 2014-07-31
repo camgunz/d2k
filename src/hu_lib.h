@@ -33,10 +33,6 @@
 //e6y #define BG      1
 #define FG      0
 
-/* font stuff
- * #define HU_CHARERASE    KEYD_BACKSPACE / not used               / phares
- */
-
 #define HU_MAXLINES   4
 #define HU_MAXLINELENGTH  80
 #define HU_REFRESHSPACING 8 /*jff 2/26/98 space lines in text refresh widget*/

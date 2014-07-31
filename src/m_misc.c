@@ -451,9 +451,9 @@ default_t defaults[] =
 // CPhipps - now they're the doom codes, so default.cfg can be portable
 
   {"Key bindings",{NULL},{0},UL,UL,def_none,ss_none},
-  {"key_right",       {&key_right},          {KEYD_RIGHTARROW},
+  {"key_right",       {&key_right},          {SDLK_RIGHT},
    0,MAX_KEY,def_key,ss_keys}, // key to turn right
-  {"key_left",        {&key_left},           {KEYD_LEFTARROW} ,
+  {"key_left",        {&key_left},           {SDLK_LEFT} ,
    0,MAX_KEY,def_key,ss_keys}, // key to turn left
   {"key_up",          {&key_up},             {'w'}   ,
    0,MAX_KEY,def_key,ss_keys}, // key to move forward
@@ -461,19 +461,19 @@ default_t defaults[] =
    0,MAX_KEY,def_key,ss_keys}, // key to move backward
   {"key_mlook",       {&key_mlook},           {'\\'},
    0,MAX_KEY,def_key,ss_keys}, // key to move backward
-  {"key_menu_right",  {&key_menu_right},     {KEYD_RIGHTARROW},// phares 3/7/98
+  {"key_menu_right",  {&key_menu_right},     {SDLK_RIGHT},// phares 3/7/98
    0,MAX_KEY,def_key,ss_keys}, // key to move right in a menu  //     |
-  {"key_menu_left",   {&key_menu_left},      {KEYD_LEFTARROW} ,//     V
+  {"key_menu_left",   {&key_menu_left},      {SDLK_LEFT} ,//     V
    0,MAX_KEY,def_key,ss_keys}, // key to move left in a menu
-  {"key_menu_up",     {&key_menu_up},        {KEYD_UPARROW}   ,
+  {"key_menu_up",     {&key_menu_up},        {SDLK_UP}   ,
    0,MAX_KEY,def_key,ss_keys}, // key to move up in a menu
-  {"key_menu_down",   {&key_menu_down},      {KEYD_DOWNARROW} ,
+  {"key_menu_down",   {&key_menu_down},      {SDLK_DOWN} ,
    0,MAX_KEY,def_key,ss_keys}, // key to move down in a menu
-  {"key_menu_backspace",{&key_menu_backspace},{KEYD_BACKSPACE} ,
+  {"key_menu_backspace",{&key_menu_backspace},{SDLK_BACKSPACE} ,
    0,MAX_KEY,def_key,ss_keys}, // delete key in a menu
-  {"key_menu_escape", {&key_menu_escape},    {KEYD_ESCAPE}    ,
+  {"key_menu_escape", {&key_menu_escape},    {SDLK_ESCAPE}    ,
    0,MAX_KEY,def_key,ss_keys}, // key to leave a menu      ,   // phares 3/7/98
-  {"key_menu_enter",  {&key_menu_enter},     {KEYD_ENTER}     ,
+  {"key_menu_enter",  {&key_menu_enter},     {SDLK_RETURN}     ,
    0,MAX_KEY,def_key,ss_keys}, // key to select from menu
   {"key_setup",       {&key_setup},          {0},
    0,MAX_KEY,def_key,ss_keys}, //e6y: key for entering setup menu
@@ -486,56 +486,56 @@ default_t defaults[] =
   {"key_flydown", {&key_flydown}, {','},
    0,MAX_KEY,def_key,ss_keys}, // key to strafe right
 
-  {"key_fire",        {&key_fire},           {KEYD_RCTRL}     ,
+  {"key_fire",        {&key_fire},           {SDLK_LCTRL}     ,
    0,MAX_KEY,def_key,ss_keys}, // duh
   {"key_use",         {&key_use},            {' '}           ,
    0,MAX_KEY,def_key,ss_keys}, // key to open a door, use a switch
-  {"key_strafe",      {&key_strafe},         {KEYD_RALT}      ,
+  {"key_strafe",      {&key_strafe},         {SDLK_LALT}      ,
    0,MAX_KEY,def_key,ss_keys}, // key to use with arrows to strafe
-  {"key_speed",       {&key_speed},          {KEYD_RSHIFT}    ,
+  {"key_speed",       {&key_speed},          {SDLK_LSHIFT}    ,
    0,MAX_KEY,def_key,ss_keys}, // key to run
 
-  {"key_savegame",    {&key_savegame},       {KEYD_F2}        ,
+  {"key_savegame",    {&key_savegame},       {SDLK_F2}        ,
    0,MAX_KEY,def_key,ss_keys}, // key to save current game
-  {"key_loadgame",    {&key_loadgame},       {KEYD_F3}        ,
+  {"key_loadgame",    {&key_loadgame},       {SDLK_F3}        ,
    0,MAX_KEY,def_key,ss_keys}, // key to restore from saved games
-  {"key_soundvolume", {&key_soundvolume},    {KEYD_F4}        ,
+  {"key_soundvolume", {&key_soundvolume},    {SDLK_F4}        ,
    0,MAX_KEY,def_key,ss_keys}, // key to bring up sound controls
-  {"key_hud",         {&key_hud},            {KEYD_F5}        ,
+  {"key_hud",         {&key_hud},            {SDLK_F5}        ,
    0,MAX_KEY,def_key,ss_keys}, // key to adjust HUD
-  {"key_quicksave",   {&key_quicksave},      {KEYD_F6}        ,
+  {"key_quicksave",   {&key_quicksave},      {SDLK_F6}        ,
    0,MAX_KEY,def_key,ss_keys}, // key to to quicksave
-  {"key_endgame",     {&key_endgame},        {KEYD_F7}        ,
+  {"key_endgame",     {&key_endgame},        {SDLK_F7}        ,
    0,MAX_KEY,def_key,ss_keys}, // key to end the game
-  {"key_messages",    {&key_messages},       {KEYD_F8}        ,
+  {"key_messages",    {&key_messages},       {SDLK_F8}        ,
    0,MAX_KEY,def_key,ss_keys}, // key to toggle message enable
-  {"key_quickload",   {&key_quickload},      {KEYD_F9}        ,
+  {"key_quickload",   {&key_quickload},      {SDLK_F9}        ,
    0,MAX_KEY,def_key,ss_keys}, // key to load from quicksave
-  {"key_quit",        {&key_quit},           {KEYD_F10}       ,
+  {"key_quit",        {&key_quit},           {SDLK_F10}       ,
    0,MAX_KEY,def_key,ss_keys}, // key to quit game
-  {"key_gamma",       {&key_gamma},          {KEYD_F11}       ,
+  {"key_gamma",       {&key_gamma},          {SDLK_F11}       ,
    0,MAX_KEY,def_key,ss_keys}, // key to adjust gamma correction
-  {"key_spy",         {&key_spy},            {KEYD_F12}       ,
+  {"key_spy",         {&key_spy},            {SDLK_F12}       ,
    0,MAX_KEY,def_key,ss_keys}, // key to view from another coop player's view
-  {"key_pause",       {&key_pause},          {KEYD_PAUSE}     ,
+  {"key_pause",       {&key_pause},          {SDLK_PAUSE}     ,
    0,MAX_KEY,def_key,ss_keys}, // key to pause the game
-  {"key_autorun",     {&key_autorun},        {KEYD_CAPSLOCK}  ,
+  {"key_autorun",     {&key_autorun},        {SDLK_CAPSLOCK}  ,
    0,MAX_KEY,def_key,ss_keys}, // key to toggle always run mode
   {"key_chat",        {&key_chat},           {'t'}            ,
    0,MAX_KEY,def_key,ss_keys}, // key to enter a chat message
-  {"key_backspace",   {&key_backspace},      {KEYD_BACKSPACE} ,
+  {"key_backspace",   {&key_backspace},      {SDLK_BACKSPACE} ,
    0,MAX_KEY,def_key,ss_keys}, // backspace key
-  {"key_enter",       {&key_enter},          {KEYD_ENTER}     ,
+  {"key_enter",       {&key_enter},          {SDLK_RETURN}     ,
    0,MAX_KEY,def_key,ss_keys}, // key to select from menu or see last message
-  {"key_map",         {&key_map},            {KEYD_TAB}       ,
+  {"key_map",         {&key_map},            {SDLK_TAB}       ,
    0,MAX_KEY,def_key,ss_keys}, // key to toggle automap display
-  {"key_map_right",   {&key_map_right},      {KEYD_RIGHTARROW},// phares 3/7/98
+  {"key_map_right",   {&key_map_right},      {SDLK_RIGHT},// phares 3/7/98
    0,MAX_KEY,def_key,ss_keys}, // key to shift automap right   //     |
-  {"key_map_left",    {&key_map_left},       {KEYD_LEFTARROW} ,//     V
+  {"key_map_left",    {&key_map_left},       {SDLK_LEFT} ,//     V
    0,MAX_KEY,def_key,ss_keys}, // key to shift automap left
-  {"key_map_up",      {&key_map_up},         {KEYD_UPARROW}   ,
+  {"key_map_up",      {&key_map_up},         {SDLK_UP}   ,
    0,MAX_KEY,def_key,ss_keys}, // key to shift automap up
-  {"key_map_down",    {&key_map_down},       {KEYD_DOWNARROW} ,
+  {"key_map_down",    {&key_map_down},       {SDLK_DOWN} ,
    0,MAX_KEY,def_key,ss_keys}, // key to shift automap down
   {"key_map_zoomin",  {&key_map_zoomin},      {'='}           ,
    0,MAX_KEY,def_key,ss_keys}, // key to enlarge automap
@@ -594,9 +594,9 @@ default_t defaults[] =
    0,MAX_KEY,def_key,ss_keys}, // key to switch to weapon 8 (chainsaw)        //    |
   {"key_weapon9",     {&key_weapon9},         {'9'}            ,
    0,MAX_KEY,def_key,ss_keys}, // key to switch to weapon 9 (supershotgun)    // phares
-  {"key_nextweapon",  {&key_nextweapon},      {KEYD_MWHEELUP}  ,
+  {"key_nextweapon",  {&key_nextweapon},      {SDL_BUTTON_WHEELUP}  ,
    0,MAX_KEY,def_key,ss_keys}, // key to cycle to the next weapon
-  {"key_prevweapon",  {&key_prevweapon},      {KEYD_MWHEELDOWN},
+  {"key_prevweapon",  {&key_prevweapon},      {SDL_BUTTON_WHEELDOWN},
    0,MAX_KEY,def_key,ss_keys}, // key to cycle to the previous weapon
 
   // killough 2/22/98: screenshot key
@@ -794,26 +794,26 @@ default_t defaults[] =
 
 //e6y
   {"Prboom-plus key bindings",{NULL},{0},UL,UL,def_none,ss_none},
-  {"key_speedup", {&key_speed_up}, {KEYD_KEYPADPLUS},
+  {"key_speedup", {&key_speed_up}, {SDLK_KP_PLUS},
    0,MAX_KEY,def_key,ss_keys},
-  {"key_speeddown", {&key_speed_down}, {KEYD_KEYPADMINUS},
+  {"key_speeddown", {&key_speed_down}, {SDLK_KP_MINUS},
    0,MAX_KEY,def_key,ss_keys},
-  {"key_speeddefault", {&key_speed_default}, {KEYD_KEYPADMULTIPLY},
+  {"key_speeddefault", {&key_speed_default}, {SDLK_KP_MULTIPLY},
    0,MAX_KEY,def_key,ss_keys},
   {"speed_step",{&speed_step},{0},0,1000,
    def_int,ss_none},
-  {"key_demo_skip", {&key_demo_skip}, {KEYD_INSERT},
+  {"key_demo_skip", {&key_demo_skip}, {SDLK_INSERT},
    0,MAX_KEY,def_key,ss_keys},
-  {"key_level_restart", {&key_level_restart}, {KEYD_HOME},
+  {"key_level_restart", {&key_level_restart}, {SDLK_HOME},
    0,MAX_KEY,def_key,ss_keys},
-  {"key_nextlevel", {&key_nextlevel}, {KEYD_PAGEDOWN},
+  {"key_nextlevel", {&key_nextlevel}, {SDLK_PAGEDOWN},
    0,MAX_KEY,def_key,ss_keys},
   {"key_demo_jointogame", {&key_demo_jointogame}, {'q'},
    0,MAX_KEY,def_key,ss_keys},
-  // {"key_demo_endlevel", {&key_demo_endlevel}, {KEYD_END}, 0,MAX_KEY,def_key,ss_keys},
-  {"key_walkcamera", {&key_walkcamera}, {KEYD_KEYPAD0},
+  // {"key_demo_endlevel", {&key_demo_endlevel}, {SDLK_END}, 0,MAX_KEY,def_key,ss_keys},
+  {"key_walkcamera", {&key_walkcamera}, {SDLK_KP0},
    0,MAX_KEY,def_key,ss_keys},
-  {"key_showalive", {&key_showalive}, {KEYD_KEYPADDIVIDE},
+  {"key_showalive", {&key_showalive}, {SDLK_KP_DIVIDE},
    0,MAX_KEY,def_key,ss_keys},
 
   {"Prboom-plus heads-up display settings",{NULL},{0},UL,UL,def_none,ss_none},

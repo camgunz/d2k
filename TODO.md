@@ -1,7 +1,6 @@
 # To Do
 
 1. Fix messaging
-  * Console font is busted
   * Add more scripting commands
     * `say`
     * `say_team`

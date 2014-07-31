@@ -25,6 +25,7 @@
 
 #include <pango/pangocairo.h>
 #include <glib.h>
+#include <SDL.h>
 
 #include "d_event.h"
 #include "hu_lib.h"
@@ -446,59 +447,49 @@ bool HU_InputWidgetResponder(input_widget_t *iw, event_t *ev) {
   if (!((ev->type == ev_keydown) || (ev->type == ev_mouse)))
     return false;
 
-  /*
-   * Mouse keys
-   *
-   * KEYD_MOUSE1
-   * KEYD_MOUSE2
-   * KEYD_MOUSE3
-   * KEYD_MWHEELUP
-   * KEYD_MWHEELDOWN
-   */
-
-  if (ev->data1 == KEYD_ENTER) {
+  if (ev->data1 == SDLK_RETURN) {
     iw->handleInput(iw);
     clear(iw);
     activate_cursor(iw);
     return true;
   }
 
-  if (ev->data1 == KEYD_DEL) {
+  if (ev->data1 == SDLK_DELETE) {
     delete(iw);
     return true;
   }
 
-  if (ev->data1 == KEYD_BACKSPACE) {
+  if (ev->data1 == SDLK_BACKSPACE) {
     backspace(iw);
     return true;
   }
 
-  if (ev->data1 == KEYD_LEFTARROW) {
+  if (ev->data1 == SDLK_LEFT) {
     move_cursor_left(iw);
     return true;
   }
 
-  if (ev->data1 == KEYD_RIGHTARROW) {
+  if (ev->data1 == SDLK_RIGHT) {
     move_cursor_right(iw);
     return true;
   }
 
-  if (ev->data1 == KEYD_HOME) {
+  if (ev->data1 == SDLK_HOME) {
     iw->cursor = 0;
     return true;
   }
 
-  if (ev->data1 == KEYD_END) {
+  if (ev->data1 == SDLK_END) {
     iw->cursor = iw->buf->len;
     return true;
   }
 
-  if (ev->data1 == KEYD_UPARROW) {
+  if (ev->data1 == SDLK_UP) {
     load_previous_history_line(iw);
     return true;
   }
 
-  if (ev->data1 == KEYD_DOWNARROW) {
+  if (ev->data1 == SDLK_DOWN) {
     load_next_history_line(iw);
     return true;
   }

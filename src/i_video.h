@@ -92,6 +92,8 @@ extern int try_to_reduce_cpu_cache_misses;
 extern dboolean window_focused;
 void UpdateGrab(void);
 
+const char* I_GetKeyString(int keycode);
+
 #ifdef GL_DOOM
 typedef struct SDL_Surface *PSDL_Surface;
 typedef struct vid_8ingl_s

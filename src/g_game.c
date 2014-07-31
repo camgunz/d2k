@@ -213,7 +213,7 @@ int     key_fire;
 int     key_use;
 int     key_strafe;
 int     key_speed;
-int     key_escape = KEYD_ESCAPE;                           // phares 4/13/98
+int     key_escape = SDLK_ESCAPE;                           // phares 4/13/98
 int     key_savegame;                                               // phares
 int     key_loadgame;                                               //    |
 int     key_autorun;                                                //    V
@@ -238,7 +238,7 @@ int     key_map_grid;
 int     key_map_overlay; // cph - map overlay
 int     key_map_rotate;  // cph - map rotation
 int     key_map_textured;  // e6y - textured automap
-int     key_help = KEYD_F1;                                 // phares 4/13/98
+int     key_help = SDLK_F1;                                 // phares 4/13/98
 int     key_soundvolume;
 int     key_hud;
 int     key_quicksave;

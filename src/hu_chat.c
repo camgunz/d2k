@@ -25,6 +25,7 @@
 
 #include <pango/pangocairo.h>
 #include <glib.h>
+#include <SDL.h>
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -131,12 +132,12 @@ bool HU_ChatWidgetResponder(chat_widget_t *cw, event_t *ev) {
   if (ev->type != ev_keydown)
       return false;
 
-  if (ev->data1 == KEYD_ESCAPE) {
+  if (ev->data1 == SDLK_ESCAPE) {
     HU_ChatWidgetDeactivate(cw);
     return true;
   }
 
-  if (ev->data1 == KEYD_ENTER) {
+  if (ev->data1 == SDLK_RETURN) {
     cw->handleInput(cw);
     HU_ChatWidgetDeactivate(cw);
     return true;

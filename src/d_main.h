@@ -36,7 +36,8 @@ typedef struct keybindings_s {
   bool ctrldown;
   bool altdown;
   bool metadown;
-  bool superdown;
+  bool lsuperdown;
+  bool rsuperdown;
 } keybindings_t;
 
 extern keybindings_t keybindings;

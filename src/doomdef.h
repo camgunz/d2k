@@ -221,91 +221,11 @@ typedef enum {
 
 // Power up durations (how many seconds till expiration).
 typedef enum {
-  INVULNTICS  = (30*TICRATE),
-  INVISTICS   = (60*TICRATE),
-  INFRATICS   = (120*TICRATE),
-  IRONTICS    = (60*TICRATE)
+  INVULNTICS  = (30  * TICRATE),
+  INVISTICS   = (60  * TICRATE),
+  INFRATICS   = (120 * TICRATE),
+  IRONTICS    = (60  * TICRATE)
 } powerduration_t;
-
-// DOOM keyboard definition.
-// This is the stuff configured by Setup.Exe.
-// Most key data are simple ascii (uppercased).
-
-enum {
-  KEYD_LEFTARROW = 1,
-  KEYD_UPARROW,
-  KEYD_RIGHTARROW,
-  KEYD_DOWNARROW,
-  KEYD_ESCAPE,
-  KEYD_ENTER,
-  KEYD_TAB,
-  KEYD_F1,
-  KEYD_F2,
-  KEYD_F3,
-  KEYD_F4,
-  KEYD_F5,
-  KEYD_F6,
-  KEYD_F7,
-  KEYD_F8,
-  KEYD_F9,
-  KEYD_F10,
-  KEYD_F11,
-  KEYD_F12,
-  KEYD_BACKSPACE,
-  KEYD_PAUSE,
-  KEYD_EQUALS,
-  KEYD_MINUS,
-  KEYD_RSHIFT,
-  KEYD_RCTRL,
-  KEYD_RALT,
-  KEYD_LALT = KEYD_RALT,
-  KEYD_RMETA,
-  KEYD_RSUPER,
-  KEYD_CAPSLOCK,
-  KEYD_BACKQUOTE,
-
-// phares 3/2/98:
-  KEYD_INSERT,
-  KEYD_HOME,
-  KEYD_PAGEUP,
-  KEYD_PAGEDOWN,
-  KEYD_DEL,
-  KEYD_END,
-  KEYD_SCROLLLOCK,
-  KEYD_SPACEBAR,
-// phares 3/2/98
-
-  KEYD_NUMLOCK,
-
-// cph - Add the numeric keypad keys, as suggested by krose 4/22/99:
-// The way numbers are assigned to keys is a mess, but it's too late to
-// change that easily. At least these additions are don neatly.
-// Codes 0x100-0x200 are reserved for number pad
-
-  KEYD_KEYPAD0,
-  KEYD_KEYPAD1,
-  KEYD_KEYPAD2,
-  KEYD_KEYPAD3,
-  KEYD_KEYPAD4,
-  KEYD_KEYPAD5,
-  KEYD_KEYPAD6,
-  KEYD_KEYPAD7,
-  KEYD_KEYPAD8,
-  KEYD_KEYPAD9,
-  KEYD_KEYPADENTER,
-  KEYD_KEYPADDIVIDE,
-  KEYD_KEYPADMULTIPLY,
-  KEYD_KEYPADMINUS,
-  KEYD_KEYPADPLUS,
-  KEYD_KEYPADPERIOD,
-
-// haleyjd: virtual keys
-  KEYD_MOUSE1,
-  KEYD_MOUSE2,
-  KEYD_MOUSE3,
-  KEYD_MWHEELUP,
-  KEYD_MWHEELDOWN
-};
 
 // phares 4/19/98:
 // Defines Setup Screen groups that config variables appear in.

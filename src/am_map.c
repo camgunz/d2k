@@ -23,6 +23,8 @@
 
 #include "z_zone.h"
 
+#include <SDL.h>
+
 #ifdef GL_DOOM
 #include "gl_opengl.h"
 #endif
@@ -707,86 +709,83 @@ static void AM_maxOutWindowScale(void)
 //
 // Passed an input event, returns true if its handled
 //
-dboolean AM_Responder
-( event_t*  ev )
-{
+dboolean AM_Responder(event_t *ev) {
   int rc;
   static int bigstate=0;
   int ch;                                                       // phares
 
   rc = false;
 
-  if (!(automapmode & am_active))
-  {
-    if (ev->type == ev_keydown && ev->data1 == key_map)         // phares
-    {
+  if (!(automapmode & am_active)) {
+    if (ev->type == ev_keydown && ev->data1 == key_map) {       // phares
       AM_Start ();
       rc = true;
     }
   }
-  else if (ev->type == ev_keydown)
-  {
+  else if (ev->type == ev_keydown) {
     rc = true;
     ch = ev->data1;                                             // phares
-    if (ch == key_map_right)                                    //    |
-      if (!(automapmode & am_follow))                           //    V
+                                                                //    |
+    if (ch == key_map_right) {                                  //    V
+      if (!(automapmode & am_follow))
         m_paninc.x = FTOM(F_PANINC);
       else
         rc = false;
-    else if (ch == key_map_left)
+    }
+    else if (ch == key_map_left) {
       if (!(automapmode & am_follow))
-          m_paninc.x = -FTOM(F_PANINC);
+        m_paninc.x = -FTOM(F_PANINC);
       else
-          rc = false;
-    else if (ch == key_map_up)
+        rc = false;
+    }
+    else if (ch == key_map_up) {
       if (!(automapmode & am_follow))
-          m_paninc.y = FTOM(F_PANINC);
+        m_paninc.y = FTOM(F_PANINC);
       else
-          rc = false;
-    else if (ch == key_map_down)
+        rc = false;
+    }
+    else if (ch == key_map_down) {
       if (!(automapmode & am_follow))
-          m_paninc.y = -FTOM(F_PANINC);
+        m_paninc.y = -FTOM(F_PANINC);
       else
-          rc = false;
-    else if ((ch == key_map_zoomout) || (map_wheel_zoom && ch == KEYD_MWHEELDOWN))
-    {
+        rc = false;
+    }
+    else if ((ch == key_map_zoomout) ||
+             (map_wheel_zoom && ch == SDL_BUTTON_WHEELDOWN)) {
       mtof_zoommul = M_ZOOMOUT;
       ftom_zoommul = M_ZOOMIN;
       curr_mtof_zoommul = mtof_zoommul;
     }
-    else if ((ch == key_map_zoomin) || (map_wheel_zoom && ch == KEYD_MWHEELUP))
-    {
+    else if ((ch == key_map_zoomin) ||
+             (map_wheel_zoom && ch == SDL_BUTTON_WHEELUP)) {
       mtof_zoommul = M_ZOOMIN;
       ftom_zoommul = M_ZOOMOUT;
       curr_mtof_zoommul = mtof_zoommul;
     }
-    else if (ch == key_map)
-    {
+    else if (ch == key_map) {
       bigstate = 0;
       AM_Stop ();
     }
-    else if (ch == key_map_gobig)
-    {
+    else if (ch == key_map_gobig) {
       bigstate = !bigstate;
-      if (bigstate)
-      {
+      if (bigstate) {
         AM_saveScaleAndLoc();
         AM_minOutWindowScale();
       }
-      else
+      else {
         AM_restoreScaleAndLoc();
+      }
     }
-    else if (ch == key_map_follow)
-    {
-      automapmode ^= am_follow;     // CPhipps - put all automap mode stuff into one enum
+    else if (ch == key_map_follow) {
+      // CPhipps - put all automap mode stuff into one enum
+      automapmode ^= am_follow;
       // Ty 03/27/98 - externalized
       if (automapmode & am_follow)
         P_Echo(consoleplayer, s_AMSTR_FOLLOWON);
       else
         P_Echo(consoleplayer, s_AMSTR_FOLLOWOFF);
     }
-    else if (ch == key_map_grid)
-    {
+    else if (ch == key_map_grid) {
       automapmode ^= am_grid;      // CPhipps
       // Ty 03/27/98 - *not* externalized
       if (automapmode & am_grid)
@@ -794,17 +793,15 @@ dboolean AM_Responder
       else
         P_Echo(consoleplayer, s_AMSTR_GRIDOFF);
     }
-    else if (ch == key_map_mark)
-    {
+    else if (ch == key_map_mark) {
       /* Ty 03/27/98 - *not* externalized     
        * cph 2001/11/20 - use doom_printf so we don't have our own buffer */
       P_Printf(consoleplayer, "%s %d\n", s_AMSTR_MARKEDSPOT, markpointnum);
       AM_addMark();
     }
-    else if (ch == key_map_clear)
-    {
+    else if (ch == key_map_clear) {
       AM_clearMarks();  // Ty 03/27/98 - *not* externalized
-      P_Echo(consoleplayer, s_AMSTR_MARKSCLEARED);                            //    ^
+      P_Echo(consoleplayer, s_AMSTR_MARKSCLEARED);              //    ^
     }                                                           //    |
     else if (ch == key_map_rotate) {
       automapmode ^= am_rotate;
@@ -833,42 +830,38 @@ dboolean AM_Responder
         P_Echo(consoleplayer, s_AMSTR_TEXTUREDOFF);
     }
 #endif
-    else                                                        // phares
-    {
+    else {                                                      // phares
       rc = false;
     }
   }
-  else if (ev->type == ev_keyup)
-  {
+  else if (ev->type == ev_keyup) {
     rc = false;
     ch = ev->data1;
-    if (ch == key_map_right)
-    {
+    if (ch == key_map_right) {
       if (!(automapmode & am_follow))
-          m_paninc.x = 0;
+        m_paninc.x = 0;
     }
-    else if (ch == key_map_left)
-    {
+    else if (ch == key_map_left) {
       if (!(automapmode & am_follow))
-          m_paninc.x = 0;
+        m_paninc.x = 0;
     }
-    else if (ch == key_map_up)
-    {
+    else if (ch == key_map_up) {
       if (!(automapmode & am_follow))
-          m_paninc.y = 0;
+        m_paninc.y = 0;
     }
-    else if (ch == key_map_down)
-    {
+    else if (ch == key_map_down) {
       if (!(automapmode & am_follow))
-          m_paninc.y = 0;
+        m_paninc.y = 0;
     }
-    else if ((ch == key_map_zoomout) || (ch == key_map_zoomin) ||
-             (map_wheel_zoom && ((ch == KEYD_MWHEELDOWN) || (ch == KEYD_MWHEELUP))))
-    {
+    else if ((ch == key_map_zoomout) ||
+             (ch == key_map_zoomin) ||
+             (map_wheel_zoom &&
+              ((ch == SDL_BUTTON_WHEELDOWN) || (ch == SDL_BUTTON_WHEELUP)))) {
       mtof_zoommul = FRACUNIT;
       ftom_zoommul = FRACUNIT;
     }
   }
+
   return rc;
 }
 
