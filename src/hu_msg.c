@@ -54,16 +54,10 @@ struct message_widget_s {
 };
 
 static void scroll_up(message_widget_t *mw) {
-  if (mw->layout_height <= mw->height)
-    return;
-
   mw->offset += mw->scroll_amount;
 }
 
 static void scroll_down(message_widget_t *mw) {
-  if (mw->layout_height <= mw->height)
-    return;
-
   mw->offset -= mw->scroll_amount;
 
   if (mw->offset <= 0)
