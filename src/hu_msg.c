@@ -96,13 +96,27 @@ message_widget_t* HU_MessageWidgetNew(void *render_context, int x, int y,
 }
 
 void HU_MessageWidgetReset(message_widget_t *mw, void *render_context) {
+  cairo_font_options_t *font_options = cairo_font_options_create();
+  PangoFontMap *fm = pango_cairo_font_map_get_default();
+
   if (mw->layout)
     g_object_unref(mw->layout);
 
   if (mw->layout_context)
     g_object_unref(mw->layout_context);
 
-  mw->layout_context = pango_cairo_create_context(render_context);
+  mw->layout_context = pango_font_map_create_context(fm);
+  pango_cairo_context_set_resolution(mw->layout_context, 96.0);
+
+  cairo_font_options_set_hint_style(font_options, CAIRO_HINT_STYLE_FULL);
+  cairo_font_options_set_hint_metrics(font_options, CAIRO_HINT_METRICS_ON);
+  cairo_font_options_set_antialias(font_options, CAIRO_ANTIALIAS_SUBPIXEL);
+  cairo_font_options_set_subpixel_order(font_options, CAIRO_SUBPIXEL_ORDER_RGB);
+  pango_cairo_context_set_font_options(mw->layout_context, font_options);
+  cairo_font_options_destroy(font_options);
+
+  pango_cairo_update_context(render_context, mw->layout_context);
+
   mw->layout = pango_layout_new(mw->layout_context);
 
   mw->needs_rebuilding = true;
@@ -219,6 +233,10 @@ void HU_MessageWidgetDrawer(message_widget_t *mw, void *render_context) {
   if (mw->needs_rebuilding)
     HU_MessageWidgetRebuild(mw, cr);
 
+  cairo_save(cr);
+
+  cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+
   cairo_reset_clip(cr);
   cairo_new_path(cr);
   cairo_rectangle(cr, mw->x, mw->y, mw->width, mw->height);
@@ -238,6 +256,8 @@ void HU_MessageWidgetDrawer(message_widget_t *mw, void *render_context) {
     cairo_move_to(cr, mw->x, mw->y - mw->offset);
 
   pango_cairo_show_layout(cr, mw->layout);
+
+  cairo_restore(cr);
 }
 
 bool HU_MessageWidgetResponder(message_widget_t *mw, event_t *ev) {

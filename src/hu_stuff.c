@@ -42,7 +42,9 @@
 #include "hu_stuff.h"
 #include "hu_tracers.h"
 #include "i_main.h"
+#include "i_video.h"
 #include "lprintf.h"
+#include "m_file.h"
 #include "m_misc.h"
 #include "n_net.h"
 #include "n_proto.h"
@@ -197,14 +199,6 @@ static dboolean message_nottobefuckedwith;
 extern int      showMessages;
 static dboolean headsupactive = false;
 
-static bool hud_owns_pixels = false;
-static unsigned char *hud_pixels;
-static cairo_surface_t *hud_cairo_surface;
-static cairo_t *hud_cairo_context;
-#ifdef GL_DOOM
-static GLuint hud_tex_id = 0;
-#endif
-
 //jff 2/16/98 hud supported automap colors added
 int hudcolor_titl;  // color range of automap level title
 int hudcolor_xyco;  // color range of new coords on automap
@@ -304,106 +298,6 @@ static void HU_SetLumpTrans(const char *name)
   {
     lumpinfo[lump].flags |= LUMP_CM2RGB;
   }
-}
-
-static void build_texture(void) {
-#ifdef GL_DOOM
-  if (nodrawers)
-    return;
-
-  if (hud_tex_id)
-    glDeleteTextures(1, &hud_tex_id);
-
-  glGenTextures(1, &hud_tex_id);
-
-  glBindTexture(GL_TEXTURE_2D, hud_tex_id);
-
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GLEXT_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GLEXT_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-#endif
-}
-
-static void reset_rendering_context(void) {
-  cairo_status_t status;
-
-  if (nodrawers)
-    return;
-
-  if (V_GetMode() == VID_MODE32) {
-    hud_pixels = screen->pixels;
-    hud_owns_pixels = false;
-  }
-#ifdef GL_DOOM
-  else if (V_GetMode() == VID_MODEGL) {
-    if (hud_owns_pixels && hud_pixels)
-      free(hud_pixels);
-
-    hud_pixels = malloc(
-      REAL_SCREENWIDTH * REAL_SCREENHEIGHT * sizeof(unsigned int)
-    );
-
-    if (hud_pixels == NULL)
-      I_Error("HU_Init: malloc failed");
-
-    hud_owns_pixels = true;
-
-    build_texture();
-  }
-#endif
-  else {
-    I_Error("HU_Init: Invalid video mode %d\n", V_GetMode());
-  }
-
-  if (hud_cairo_surface)
-    cairo_surface_destroy(hud_cairo_surface);
-
-  hud_cairo_surface = cairo_image_surface_create_for_data(
-    hud_pixels,
-    CAIRO_FORMAT_ARGB32,
-    REAL_SCREENWIDTH,
-    REAL_SCREENHEIGHT,
-    cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, REAL_SCREENWIDTH)
-  );
-
-  status = cairo_surface_status(hud_cairo_surface);
-
-  if (status != CAIRO_STATUS_SUCCESS)
-    I_Error("HU_Init: Error creating cairo surface (error %d)", status);
-
-  if (hud_cairo_context)
-    cairo_destroy(hud_cairo_context);
-
-  hud_cairo_context = cairo_create(hud_cairo_surface);
-
-  status = cairo_status(hud_cairo_context);
-
-  if (status != CAIRO_STATUS_SUCCESS)
-    I_Error("HU_Init: Error creating cairo context (error %d)", status);
-}
-
-static void update_texture(void) {
-#ifdef GL_DOOM
-  if (nodrawers)
-    return;
-
-  glBindTexture(GL_TEXTURE_2D, hud_tex_id);
-  glTexImage2D(
-    GL_TEXTURE_2D,
-    0,
-    GL_RGBA,
-    REAL_SCREENWIDTH,
-    REAL_SCREENHEIGHT,
-    0,
-    GL_RGBA,
-    GL_UNSIGNED_BYTE,
-    hud_pixels
-  );
-#endif
 }
 
 static void send_chat_message(chat_widget_t *cw) {
@@ -539,9 +433,13 @@ void HU_Init(void) {
 
   if (!FcConfigAppFontAddFile(config, (const FcChar8 *)hud_font_file))
     I_Error("HU_Init: Error loading default HUD font");
+  else
+    C_Printf("Added HUD font file %s\n", hud_font_file);
 
   if (!FcConfigAppFontAddFile(config, (const FcChar8 *)hud_unifont_file))
     I_Error("HU_Init: Error loading Unicode HUD font");
+  else
+    C_Printf("Added unicode HUD font file %s\n", hud_unifont_file);
 
   if (!FcConfigSetCurrent(config))
     I_Error("HU_Init: Error re-setting font config");
@@ -549,8 +447,7 @@ void HU_Init(void) {
   free(hud_font_file);
   free(hud_unifont_file);
 
-  reset_rendering_context();
-  build_texture();
+  I_ResetRenderContext();
 }
 
 //
@@ -584,7 +481,7 @@ void HU_Start(void) {
   if (headsupactive)                    // stop before starting
     HU_Stop();
 
-  reset_rendering_context();
+  I_ResetRenderContext();
 
   plr = &players[displayplayer];        // killough 3/7/98
   custom_message_p = &custom_message[displayplayer];
@@ -595,7 +492,7 @@ void HU_Start(void) {
   // create the message widget
   // messages to player in upper-left of screen
   w_messages = HU_MessageWidgetNew(
-    hud_cairo_context, HU_MSGX, HU_MSGY, REAL_SCREENWIDTH, 0, 0
+    I_GetRenderContext(), HU_MSGX, HU_MSGY, REAL_SCREENWIDTH, 0, 0
   );
   HU_MessageWidgetSetHeightByLines(w_messages, 4);
 
@@ -980,7 +877,7 @@ void HU_Start(void) {
   );
 
   w_centermsg = HU_MessageWidgetNew(
-    hud_cairo_context, HU_CENTERMSGX, HU_CENTERMSGY, REAL_SCREENWIDTH, 0, 0
+    I_GetRenderContext(), HU_CENTERMSGX, HU_CENTERMSGY, REAL_SCREENWIDTH, 0, 0
   );
   HU_MessageWidgetSetHeightByLines(w_centermsg, 2);
 
@@ -1042,12 +939,7 @@ void HU_Start(void) {
   strcpy(hud_monsecstr, "STS ");
 
   w_chat = HU_ChatWidgetNew(
-    hud_cairo_context,
-    0,
-    0,
-    REAL_SCREENWIDTH,
-    0,
-    send_chat_message
+    I_GetRenderContext(), 0, 0, REAL_SCREENWIDTH, 0, send_chat_message
   );
   HU_ChatWidgetMoveToBottom(w_chat, REAL_SCREENHEIGHT);
   HU_ChatWidgetSetHeightByLines(w_chat, 1);
@@ -1067,10 +959,6 @@ void HU_Start(void) {
 void HU_NextHud(void) {
   if (huds_count > 0)
     hud_num = (hud_num + 1) % huds_count;    // cycle hud_active
-}
-
-void* HU_GetRenderContext(void) {
-  return hud_cairo_context;
 }
 
 typedef void (*HU_widget_build_func)(void);
@@ -2413,21 +2301,6 @@ void HU_Drawer(void) {
   if (menuactive == mnact_full)
     return;
 
-  if (V_GetMode() == VID_MODE32 && SDL_MUSTLOCK(screen))
-    SDL_LockSurface(screen);
-
-#ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL)
-    cairo_set_operator(hud_cairo_context, CAIRO_OPERATOR_SOURCE);
-#endif
-
-  cairo_reset_clip(hud_cairo_context);
-  cairo_new_path(hud_cairo_context);
-  cairo_rectangle(hud_cairo_context, 0, 0, REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
-  cairo_clip(hud_cairo_context);
-  cairo_set_source_rgba(hud_cairo_context, 0.0f, 0.0f, 0.0f, 0.0f);
-  cairo_paint(hud_cairo_context);
-
   plr = &players[displayplayer];         // killough 3/7/98
   // draw the automap widgets if automap is displayed
   if (automapmode & am_active) {
@@ -2598,10 +2471,10 @@ void HU_Drawer(void) {
     message_list = false;
 
   // if the message review not enabled, show the standard message widget
-  HU_MessageWidgetDrawer(w_messages, hud_cairo_context);
+  HU_MessageWidgetDrawer(w_messages, I_GetRenderContext());
 
   //e6y
-  HU_MessageWidgetDrawer(w_centermsg, hud_cairo_context);
+  HU_MessageWidgetDrawer(w_centermsg, I_GetRenderContext());
 
   C_Drawer();
 
@@ -2610,32 +2483,7 @@ void HU_Drawer(void) {
 
   // display the interactive buffer for chat entry
   if (HU_ChatWidgetActive(w_chat))
-    HU_ChatWidgetDrawer(w_chat, hud_cairo_context);
-
-#ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL) {
-    cairo_set_operator(hud_cairo_context, CAIRO_OPERATOR_OVER);
-    cairo_surface_flush(hud_cairo_surface);
-
-    update_texture();
-
-    glBindTexture(GL_TEXTURE_2D, hud_tex_id);
-
-    glBegin(GL_TRIANGLE_STRIP);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(0.0f, 0.0f);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(0.0f, REAL_SCREENHEIGHT);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(REAL_SCREENWIDTH, 0.0f);
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
-    glEnd();
-  }
-#endif
-
-  if (V_GetMode() == VID_MODE32 && SDL_MUSTLOCK(screen))
-    SDL_UnlockSurface(screen);
+    HU_ChatWidgetDrawer(w_chat, I_GetRenderContext());
 }
 
 //

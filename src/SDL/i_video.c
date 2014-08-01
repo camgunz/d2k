@@ -23,11 +23,26 @@
 
 #include "z_zone.h"
 
-#include <SDL.h>
-//e6y
-#ifdef _WIN32
-#include <SDL_syswm.h>
+#include <cairo/cairo.h>
+
+#if CAIRO_HAS_XLIB_SURFACE
+#include <cairo/cairo-xlib.h>
+
+#if CAIRO_HAS_XLIB_XRENDER_SURFACE
+#include <cairo/cairo-xlib-xrender.h>
 #endif
+#endif
+
+#if CAIRO_HAS_QUARTZ_SURFACE
+#include <cairo/cairo-quartz.h>
+#endif
+
+#if CAIRO_HAS_WIN32_SURFACE
+#include <cairo/cairo-win32.h>
+#endif
+
+#include <SDL.h>
+#include <SDL_syswm.h>
 
 #include "m_argv.h"
 #include "doomstat.h"
@@ -66,6 +81,13 @@
 //e6y: new mouse code
 static SDL_Cursor* cursors[2] = {NULL, NULL};
 
+static unsigned char *local_pixels = NULL;
+static cairo_t *render_context = NULL;
+static cairo_surface_t *render_surface = NULL;
+#ifdef GL_DOOM
+static GLuint overlay_tex_id = 0;
+#endif
+
 dboolean window_focused;
 
 // Window resize state.
@@ -82,8 +104,8 @@ static void I_ReadMouse(void);
 static dboolean MouseShouldBeGrabbed();
 static void UpdateFocus(void);
 
-int gl_colorbuffer_bits=16;
-int gl_depthbuffer_bits=16;
+int gl_colorbuffer_bits = 16;
+int gl_depthbuffer_bits = 16;
 
 extern void M_QuitDOOM(int choice);
 #ifdef DISABLE_DOUBLEBUFFER
@@ -251,28 +273,25 @@ static void I_GetEvent(void) {
 // I_StartTic
 //
 
-void I_StartTic (void)
-{
+void I_StartTic(void) {
   I_GetEvent();
-
   I_ReadMouse();
-
   I_PollJoystick();
 }
 
 //
 // I_StartFrame
 //
-void I_StartFrame (void)
-{
+void I_StartFrame(void) {
+  cairo_set_operator(render_context, CAIRO_OPERATOR_CLEAR);
+  cairo_paint(render_context);
 }
 
 //
 // I_InitInputs
 //
 
-static void I_InitInputs(void)
-{
+static void I_InitInputs(void) {
   static Uint8 empty_cursor_data = 0;
 
   int nomouse_parm = M_CheckParm("-nomouse");
@@ -287,14 +306,14 @@ static void I_InitInputs(void)
   // Create an empty cursor
   cursors[1] = SDL_CreateCursor(&empty_cursor_data, &empty_cursor_data, 8, 1, 0, 0);
 
-  if (mouse_enabled)
-  {
+  if (mouse_enabled) {
     CenterMouse();
     MouseAccelChanging();
   }
 
   I_InitJoystick();
 }
+
 /////////////////////////////////////////////////////////////////////////////
 
 // I_SkipFrame
@@ -317,6 +336,152 @@ inline static dboolean I_SkipFrame(void)
   }
 }
 #endif
+
+#if CAIRO_HAS_XLIB_SURFACE
+#include <X11/Xlib.h>
+#endif
+
+void* I_GetRenderContext(void) {
+  cairo_status_t status;
+  SDL_SysWMinfo wm_info;
+
+#ifdef GL_DOOM
+  if (V_GetMode() == VID_MODEGL) {
+    if (render_surface && render_context && overlay_tex_id)
+      return render_context;
+  }
+  else
+#endif
+  if (render_surface && render_context)
+    return render_context;
+
+  SDL_VERSION(&wm_info.version);
+  SDL_GetWMInfo(&wm_info);
+
+  if (render_surface == NULL) {
+#if CAIRO_HAS_WIN32_SURFACE
+    render_surface = cairo_win32_surface_create_with_dib(
+      CAIRO_FORMAT_RGB24,
+      REAL_SCREENWIDTH,
+      REAL_SCREENHEIGHT
+    );
+
+#endif
+
+#if CAIRO_HAS_XLIB_SURFACE
+    Display *dpy = wm_info.info.x11.gfxdisplay;
+
+    render_surface = cairo_xlib_surface_create(
+      wm_info.info.x11.gfxdisplay,
+      (Drawable)wm_info.info.x11.window,
+      DefaultVisual(dpy, 0),
+      REAL_SCREENWIDTH,
+      REAL_SCREENHEIGHT
+    );
+
+#if CAIRO_HAS_XLIB_XRENDER_SURFACE
+    status = cairo_surface_status(render_surface);
+
+    if (status != CAIRO_STATUS_SUCCESS) {
+      I_Error("I_GetRenderContext: Error creating cairo surface (%s)",
+        cairo_status_to_string(status)
+      );
+    }
+
+    cairo_surface_t *xr = cairo_xlib_surface_create_with_xrender_format(
+      wm_info.info.x11.gfxdisplay,
+      cairo_xlib_surface_get_drawable(render_surface),
+      cairo_xlib_surface_get_screen(render_surface),
+      cairo_xlib_surface_get_xrender_format(render_surface),
+      REAL_SCREENWIDTH,
+      REAL_SCREENHEIGHT
+    );
+
+    cairo_surface_destroy(render_surface);
+    render_surface = xr;
+#endif
+#endif
+
+#if CAIRO_HAS_QUARTZ_SURFACE
+    render_surface = cairo_quartz_surface_create(
+      CAIRO_FORMAT_ARGB32,
+      REAL_SCREENWIDTH,
+      REAL_SCREENHEIGHT
+    );
+#endif
+
+    if (render_surface == NULL) {
+      if (local_pixels)
+        free(local_pixels);
+
+      local_pixels = malloc(
+        REAL_SCREENWIDTH * REAL_SCREENHEIGHT * sizeof(unsigned int)
+      );
+
+      if (local_pixels == NULL)
+        I_Error("I_GetRenderContext: malloc'ing pixels failed");
+
+      render_surface = cairo_image_surface_create_for_data(
+        local_pixels,
+        CAIRO_FORMAT_ARGB32,
+        REAL_SCREENWIDTH,
+        REAL_SCREENHEIGHT,
+        cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, REAL_SCREENWIDTH)
+      );
+    }
+  }
+
+  status = cairo_surface_status(render_surface);
+
+  if (status != CAIRO_STATUS_SUCCESS) {
+    I_Error("I_GetRenderContext: Error creating cairo surface (%s)",
+      cairo_status_to_string(status)
+    );
+  }
+
+  if (!render_context)
+    render_context = cairo_create(render_surface);
+  else
+    cairo_set_source_surface(render_context, render_surface, 0.0, 0.0);
+
+#ifdef GL_DOOM
+  if (V_GetMode() == VID_MODEGL && !overlay_tex_id) {
+    glGenTextures(1, &overlay_tex_id);
+
+    glBindTexture(GL_TEXTURE_2D, overlay_tex_id);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GLEXT_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GLEXT_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+  }
+#endif
+
+  return render_context;
+}
+
+void I_ResetRenderContext(void) {
+  if (render_surface) {
+    cairo_surface_destroy(render_surface);
+    render_surface = NULL;
+  }
+
+  if (render_context) {
+    cairo_destroy(render_context);
+    render_context = NULL;
+  }
+
+#ifdef GL_DOOM
+  if (overlay_tex_id) {
+    glDeleteTextures(1, &overlay_tex_id);
+    overlay_tex_id = 0;
+  }
+#endif
+}
 
 ///////////////////////////////////////////////////////////
 // Palette stuff.
@@ -407,14 +572,124 @@ void I_UpdateNoBlit (void)
 {
 }
 
+void I_ReadOverlay(void) {
+#ifdef GL_DOOM
+  if (V_GetMode() == VID_MODEGL) {
+    glBindTexture(GL_TEXTURE_2D, overlay_tex_id);
+    glTexImage2D(
+      GL_TEXTURE_2D,
+      0,
+      GL_RGBA,
+      REAL_SCREENWIDTH,
+      REAL_SCREENHEIGHT,
+      0,
+      GL_RGBA,
+      GL_UNSIGNED_BYTE,
+      cairo_image_surface_get_data(render_surface)
+    );
+
+    return;
+  }
+#endif
+
+  if (SDL_MUSTLOCK(screen)) {
+    if (SDL_LockSurface(screen) < 0) {
+      lprintf(LO_INFO, "I_ReadOverlay: %s\n", SDL_GetError());
+      return;
+    }
+  }
+
+  cairo_surface_t *csurf = cairo_surface_map_to_image(render_surface, NULL);
+  SDL_Surface *screen_surf = SDL_GetVideoSurface();
+  SDL_Surface *sdl_surf;
+  
+  if (csurf == NULL)
+    I_Error("I_ReadOverlay: Error getting cairo image surface");
+
+  if (screen_surf == NULL) {
+    I_Error("I_ReadOverlay: Error getting current SDL display surface (%s)",
+      SDL_GetError()
+    );
+  }
+
+  sdl_surf = SDL_CreateRGBSurfaceFrom(
+    cairo_image_surface_get_data(csurf),
+    cairo_image_surface_get_width(csurf),
+    cairo_image_surface_get_height(csurf),
+    V_GetNumPixelBits(),
+    cairo_image_surface_get_width(csurf) * (V_GetNumPixelBits() / 8),
+    0x00FF0000,
+    0x0000FF00,
+    0x000000FF,
+    0xFF000000
+  );
+
+  if (sdl_surf == NULL) {
+    I_Error("I_ReadOverlay: Error getting SDL surface (%s)",
+      SDL_GetError()
+    );
+  }
+
+#if CAIRO_HAS_WIN32_SURFACE
+  SDL_SetAlpha(sdl_surf, SDL_SRCALPHA | SDL_RLEACCEL, SDL_ALPHA_OPAQUE);
+#else
+  SDL_SetAlpha(sdl_surf, SDL_SRCALPHA | SDL_RLEACCEL, SDL_ALPHA_TRANSPARENT);
+#endif
+
+  SDL_BlitSurface(sdl_surf, NULL, screen_surf, NULL);
+
+  if (SDL_MUSTLOCK(screen))
+    SDL_UnlockSurface(screen);
+}
+
+void I_RenderOverlay(void) {
+  /*
+  cairo_set_operator(render_context, CAIRO_OPERATOR_OVER);
+  cairo_reset_clip(render_context);
+  cairo_new_path(render_context);
+  cairo_rectangle(render_context, 0, 0, REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
+  cairo_clip(render_context);
+  cairo_set_source_rgba(render_context, 0.0f, 0.0f, 0.0f, 0.0f);
+  cairo_paint(render_context);
+  */
+
+#ifdef GL_DOOM
+  if (V_GetMode() == VID_MODEGL)
+    cairo_set_operator(render_context, CAIRO_OPERATOR_SOURCE);
+  else
+#endif
+    cairo_set_operator(render_context, CAIRO_OPERATOR_SOURCE);
+
+  I_ReadOverlay();
+
+#ifdef GL_DOOM
+  if (V_GetMode() == VID_MODEGL) {
+    cairo_set_operator(render_context, CAIRO_OPERATOR_OVER);
+    cairo_surface_flush(render_surface);
+
+    glBindTexture(GL_TEXTURE_2D, overlay_tex_id);
+
+    glBegin(GL_TRIANGLE_STRIP);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex2f(0.0f, 0.0f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex2f(0.0f, REAL_SCREENHEIGHT);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex2f(REAL_SCREENWIDTH, 0.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex2f(REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
+    glEnd();
+  }
+#endif
+}
+
 //
 // I_FinishUpdate
 //
 static int newpal = 0;
 #define NO_PALETTE_CHANGE 1000
 
-void I_FinishUpdate (void)
-{
+void I_FinishUpdate(void) {
   //e6y: new mouse code
   UpdateGrab();
 
@@ -423,10 +698,12 @@ void I_FinishUpdate (void)
   // if (I_SkipFrame())return;
 
 #ifdef MONITOR_VISIBILITY
-  if (!(SDL_GetAppState()&SDL_APPACTIVE)) {
+  if (!(SDL_GetAppState() & SDL_APPACTIVE)) {
     return;
   }
 #endif
+
+  I_RenderOverlay();
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
@@ -437,35 +714,37 @@ void I_FinishUpdate (void)
 #endif
 
   if ((screen_multiply > 1) || SDL_MUSTLOCK(screen)) {
-      int h;
-      byte *src;
-      byte *dest;
+    int h;
+    byte *src;
+    byte *dest;
 
-      if (SDL_LockSurface(screen) < 0) {
-        lprintf(LO_INFO,"I_FinishUpdate: %s\n", SDL_GetError());
-        return;
-      }
+    if (SDL_LockSurface(screen) < 0) {
+      lprintf(LO_INFO,"I_FinishUpdate: %s\n", SDL_GetError());
+      return;
+    }
 
-      // e6y: processing of screen_multiply
-      if (screen_multiply > 1)
-      {
-        R_ProcessScreenMultiply(screens[0].data, screen->pixels,
-          V_GetPixelDepth(), screens[0].byte_pitch, screen->pitch);
-      }
-      else
-      {
-        dest=screen->pixels;
-        src=screens[0].data;
-        h=screen->h;
-        for (; h>0; h--)
-        {
-          memcpy(dest,src,SCREENWIDTH*V_GetPixelDepth()); //e6y
-          dest+=screen->pitch;
-          src+=screens[0].byte_pitch;
-        }
-      }
+    // e6y: processing of screen_multiply
+    if (screen_multiply > 1) {
+      R_ProcessScreenMultiply(
+        screens[0].data,
+        screen->pixels,
+        V_GetPixelDepth(),
+        screens[0].byte_pitch,
+        screen->pitch);
+    }
+    else {
+      dest = screen->pixels;
+      src = screens[0].data;
+      h = screen->h;
 
-      SDL_UnlockSurface(screen);
+      while (h-- > 0) {
+        memcpy(dest, src, SCREENWIDTH * V_GetPixelDepth()); //e6y
+        dest += screen->pitch;
+        src += screens[0].byte_pitch;
+      }
+    }
+
+    SDL_UnlockSurface(screen);
   }
 
   /* Update the display buffer (flipping video pages if supported)
@@ -477,14 +756,10 @@ void I_FinishUpdate (void)
 
 #ifdef GL_DOOM
   if (vid_8ingl.enabled)
-  {
     gld_Draw8InGL();
-  }
   else
 #endif
-  {
     SDL_Flip(screen);
-  }
 }
 
 //
@@ -542,10 +817,8 @@ void I_PreInitGraphics(void)
   }
   else
   {
-    // videodriver == default
 #ifdef _WIN32
-    if ((int)GetVersion() < 0 && V_GetMode() != VID_MODEGL ) // win9x
-    {
+    if ((int)GetVersion() < 0 && V_GetMode() != VID_MODEGL ) { // win9x
       free(video_driver);
       video_driver = strdup("directx");
       putenv("SDL_VIDEODRIVER=directx");
@@ -555,15 +828,19 @@ void I_PreInitGraphics(void)
 
   p = SDL_Init(flags);
 
-  if (p < 0 && strcasecmp(video_driver, "default"))
-  {
+  if (p < 0 && strcasecmp(video_driver, "default")) {
     static const union {
       const char *c;
       char *s;
     } u = { "SDL_VIDEODRIVER=" };
 
     //e6y: wrong videodriver?
-    lprintf(LO_ERROR, "Could not initialize SDL with SDL_VIDEODRIVER=%s [%s]\n", video_driver, SDL_GetError());
+    lprintf(
+      LO_ERROR,
+      "Could not initialize SDL with SDL_VIDEODRIVER=%s [%s]\n",
+      video_driver,
+      SDL_GetError()
+    );
 
     putenv(u.s);
 
@@ -1100,8 +1377,7 @@ int I_GetModeFromString(const char *modestr)
   return VID_MODE32;
 }
 
-void I_UpdateVideoMode(void)
-{
+void I_UpdateVideoMode(void) {
   int init_flags;
 
   if(screen)
@@ -1228,10 +1504,14 @@ void I_UpdateVideoMode(void)
 
       vid_8ingl.surface = SDL_SetVideoMode(
         REAL_SCREENWIDTH, REAL_SCREENHEIGHT,
-        gl_colorbuffer_bits, flags);
+        gl_colorbuffer_bits, flags
+      );
 
-      if (vid_8ingl.surface == NULL)
-        I_Error("Couldn't set %dx%d video mode [%s]", REAL_SCREENWIDTH, REAL_SCREENHEIGHT, SDL_GetError());
+      if (vid_8ingl.surface == NULL) {
+        I_Error("Couldn't set %dx%d video mode [%s]",
+          REAL_SCREENWIDTH, REAL_SCREENHEIGHT, SDL_GetError()
+        );
+      }
 
       screen = SDL_CreateRGBSurface(
         init_flags & ~SDL_FULLSCREEN,

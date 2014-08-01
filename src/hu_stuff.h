@@ -36,10 +36,11 @@
 #define HU_FONT "Monkirta Pursuit NC 12"
 */
 
-#define HU_FONT         "Monkirta Pursuit NC 12"
 #define HU_FONT_FILE    "Monkirta Pursuit NC.ttf"
-#define HU_UNIFONT      "unifont 12"
 #define HU_UNIFONT_FILE "unifont-7.0.03.ttf"
+
+#define HU_FONT         "Monkirta Pursuit NC 12"
+#define HU_UNIFONT      "unifont 12"
 
 #define HU_FONTSTART    '!'     /* the first font characters */
 #define HU_FONTEND      (0x7f) /*jff 2/16/98 '_' the last font characters */
@@ -80,7 +81,6 @@ char  HU_dequeueChatChar(void);
 void  HU_Erase(void);
 void  HU_MoveHud(int force); // jff 3/9/98 avoid glitch in HUD display
 void  HU_NextHud(void);
-void* HU_GetRenderContext(void);
 
 /* killough 5/2/98: moved from m_misc.c: */
 

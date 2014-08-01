@@ -410,7 +410,7 @@ bool D_Responder(event_t *ev) {
     }
 
     /* killough 10/98: allow key shortcut into Setup menu */
-    if (ev->data1 == key_setup) {
+    if (ev->type == ev_keydown && ev->data1 == key_setup) {
       M_StartControlPanel();
       S_StartSound(NULL, sfx_swtchn);
       M_SetupNextMenu(&SetupDef);

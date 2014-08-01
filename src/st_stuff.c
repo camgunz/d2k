@@ -870,35 +870,24 @@ void ST_SetResolution(void)
   R_FillBackScreen();
 }
 
-void ST_Drawer(dboolean statusbaron, dboolean refresh, dboolean fullmenu)
-{
-  /* cph - let status bar on be controlled
-   * completely by the call from D_Display
-   * proff - really do it
-   */
-  st_firsttime = st_firsttime || refresh || fullmenu;
-
+void ST_Drawer(dboolean statusbaron, dboolean refresh, dboolean fullmenu) {
   ST_doPaletteStuff();  // Do red-/gold-shifts from damage/items
 
-  if (statusbaron) {
-    if (st_firsttime || (V_GetMode() == VID_MODEGL))
-    {
-      /* If just after ST_Start(), refresh all */
-      st_firsttime = false;
-      ST_refreshBackground(); // draw status bar background to off-screen buff
-      if (!fullmenu)
-        ST_drawWidgets(true); // and refresh all widgets
-    }
-    else
-    {
-      /* Otherwise, update as little as possible */
-      if (!fullmenu)
-        ST_drawWidgets(false); // update all widgets
-    }
-  }
+  if (!statusbaron)
+    return;
+
+  if (fullmenu)
+    return;
+
+  /*
+   * CG 08/01/2014: Remove status bar caching, behaves incorrectly with the
+   *                HUD overlay
+   */
+
+  st_firsttime = false;
+  ST_refreshBackground(); // draw status bar background to off-screen buff
+  ST_drawWidgets(true);
 }
-
-
 
 //
 // ST_loadGraphics

@@ -68,7 +68,6 @@ console_widget_t* HU_ConsoleWidgetNew(void *render_context,
   int input_height;
   hu_color_t white = {1.0f, 1.0f, 1.0f, 1.0f};
   hu_color_t clear = {0.0f, 0.0f, 0.0f, 0.0f};
-  hu_color_t grey  = {0.0f, 0.0f, 0.0f, 0.8f};
   console_widget_t *cons = calloc(1, sizeof(console_widget_t));
 
   if (cons == NULL)
@@ -112,21 +111,10 @@ console_widget_t* HU_ConsoleWidgetNew(void *render_context,
   );
   HU_MessageWidgetSetAlignBottom(cons->scrollback, true);
 
-#ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL) {
-    HU_InputWidgetSetFGColor(cons->input, white);
-    HU_InputWidgetSetBGColor(cons->input, grey);
-    HU_MessageWidgetSetFGColor(cons->scrollback, white);
-    HU_MessageWidgetSetBGColor(cons->scrollback, grey);
-  }
-  else
-#endif
-  {
-    HU_InputWidgetSetFGColor(cons->input, white);
-    HU_InputWidgetSetBGColor(cons->input, clear);
-    HU_MessageWidgetSetFGColor(cons->scrollback, white);
-    HU_MessageWidgetSetBGColor(cons->scrollback, clear);
-  }
+  HU_InputWidgetSetFGColor(cons->input, white);
+  HU_InputWidgetSetBGColor(cons->input, clear);
+  HU_MessageWidgetSetFGColor(cons->scrollback, white);
+  HU_MessageWidgetSetBGColor(cons->scrollback, clear);
 
   return cons;
 }
@@ -136,7 +124,7 @@ void HU_ConsoleWidgetReset(console_widget_t *cons, void *render_context) {
   int input_height;
   hu_color_t white = {1.0f, 1.0f, 1.0f, 1.0f};
   hu_color_t clear = {0.0f, 0.0f, 0.0f, 0.0f};
-  hu_color_t grey  = {0.0f, 0.0f, 0.0f, 0.8f};
+  // hu_color_t grey  = {0.0f, 0.0f, 0.0f, 0.8f};
 
   cons->scroll_rate = 0.0;
   cons->height = 0.0;
@@ -162,21 +150,10 @@ void HU_ConsoleWidgetReset(console_widget_t *cons, void *render_context) {
     cons->max_height - (CONSOLE_MARGIN + input_height + input_height)
   );
 
-#ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL) {
-    HU_InputWidgetSetFGColor(cons->input, white);
-    HU_InputWidgetSetBGColor(cons->input, grey);
-    HU_MessageWidgetSetFGColor(cons->scrollback, white);
-    HU_MessageWidgetSetBGColor(cons->scrollback, grey);
-  }
-  else
-#endif
-  {
-    HU_InputWidgetSetFGColor(cons->input, white);
-    HU_InputWidgetSetBGColor(cons->input, clear);
-    HU_MessageWidgetSetFGColor(cons->scrollback, white);
-    HU_MessageWidgetSetBGColor(cons->scrollback, clear);
-  }
+  HU_InputWidgetSetFGColor(cons->input, white);
+  HU_InputWidgetSetBGColor(cons->input, clear);
+  HU_MessageWidgetSetFGColor(cons->scrollback, white);
+  HU_MessageWidgetSetBGColor(cons->scrollback, clear);
 }
 
 void HU_ConsoleWidgetTicker(console_widget_t *cons) {
@@ -210,19 +187,17 @@ void HU_ConsoleWidgetDrawer(console_widget_t *cons, void *render_context) {
   int input_width;
   int input_height;
 
-  cairo_reset_clip(cr);
-  cairo_new_path(cr);
-  cairo_rectangle(cr, 0, 0, cons->max_width, cons->max_height);
-  cairo_clip(cr);
-  cairo_set_source_rgba(cr, 0.0f, 0.0f, 0.0f, 0.0f);
-  cairo_paint(cr);
+  cairo_save(cr);
 
   cairo_reset_clip(cr);
   cairo_new_path(cr);
   cairo_rectangle(cr, 0, 0, cons->max_width, cons->height);
   cairo_clip(cr);
+  cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
   cairo_set_source_rgba(cr, 0.0f, 0.0f, 0.0f, 0.8f);
   cairo_paint(cr);
+
+  cairo_restore(cr);
 
   HU_MessageWidgetGetLayoutSize(cons->scrollback, &sb_width, &sb_height);
   HU_InputWidgetGetLayoutSize(cons->input, &input_width, &input_height);

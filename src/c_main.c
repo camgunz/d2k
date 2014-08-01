@@ -40,6 +40,7 @@
 #include "hu_stuff.h"
 #include "i_main.h"
 #include "i_system.h"
+#include "i_video.h"
 #include "lprintf.h"
 #include "v_video.h"
 #include "x_main.h"
@@ -264,7 +265,7 @@ void C_Init(void) {
   GError *error = NULL;
 
   cons = HU_ConsoleWidgetNew(
-    HU_GetRenderContext(),
+    I_GetRenderContext(),
     0,
     0,
     REAL_SCREENWIDTH, REAL_SCREENHEIGHT >> 1,
@@ -291,7 +292,7 @@ void C_Init(void) {
 }
 
 void C_Reset(void) {
-  HU_ConsoleWidgetReset(cons, HU_GetRenderContext());
+  HU_ConsoleWidgetReset(cons, I_GetRenderContext());
 }
 
 void C_Ticker(void) {
@@ -299,7 +300,7 @@ void C_Ticker(void) {
 }
 
 void C_Drawer(void) {
-  HU_ConsoleWidgetDrawer(cons, HU_GetRenderContext());
+  HU_ConsoleWidgetDrawer(cons, I_GetRenderContext());
 }
 
 bool C_Responder(event_t *ev) {

@@ -1,17 +1,32 @@
 # To Do
 
+1. Fix HUD problems
+  * Antialiasing on Windows is broken
+  * Antialiasing in the messages widget is bad
+  * OpenGL overlay is broken
+  * Only allow one "foreground" interface at a time
+    * menu
+    * console
+    * chat
+
+1. Fix keybindings
+  * Set the keybindings to reasonable default values
+    * Only speed up or slow down the game if nothing else is going on
+      * Maybe add a widget for this somehow
+
 1. Fix messaging
   * Add more scripting commands
     * `say`
     * `say_team`
     * `alias`
 
-1. Fix keybindings
-
-1. Make it possible to play a game
+1. Make playing a game possible
   - Something about quitting and rejoining
   - Sounds with more than 1 player are busted
   - Fix intermission (single-player is busted too)
+
+1. Make Windows compilation possible
+  * Need to build a libXDiff DLL in mingw64-builds
 
 1. Add latency mitigation
   - projectile nudging

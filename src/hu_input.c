@@ -246,6 +246,8 @@ input_widget_t* HU_InputWidgetNew(void *render_context, int x, int y,
 void HU_InputWidgetReset(input_widget_t *iw, void *render_context) {
   int layout_width;
   int layout_height;
+  cairo_font_options_t *font_options = cairo_font_options_create();
+  PangoFontMap *fm = pango_cairo_font_map_get_default();
 
   if (iw->layout)
     g_object_unref(iw->layout);
@@ -253,7 +255,18 @@ void HU_InputWidgetReset(input_widget_t *iw, void *render_context) {
   if (iw->layout_context)
     g_object_unref(iw->layout_context);
 
-  iw->layout_context = pango_cairo_create_context(render_context);
+  iw->layout_context = pango_font_map_create_context(fm);
+  pango_cairo_context_set_resolution(iw->layout_context, 96.0);
+
+  cairo_font_options_set_hint_style(font_options, CAIRO_HINT_STYLE_FULL);
+  cairo_font_options_set_hint_metrics(font_options, CAIRO_HINT_METRICS_ON);
+  cairo_font_options_set_antialias(font_options, CAIRO_ANTIALIAS_SUBPIXEL);
+  cairo_font_options_set_subpixel_order(font_options, CAIRO_SUBPIXEL_ORDER_BGR);
+  pango_cairo_context_set_font_options(iw->layout_context, font_options);
+  cairo_font_options_destroy(font_options);
+
+  pango_cairo_update_context(render_context, iw->layout_context);
+
   iw->layout = pango_layout_new(iw->layout_context);
 
   if (iw->buf->len <= 0) {
@@ -387,6 +400,10 @@ void HU_InputWidgetDrawer(input_widget_t *iw, void *render_context) {
   if (iw->needs_rebuilding)
     HU_InputWidgetRebuild(iw, cr);
 
+  cairo_save(cr);
+
+  cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+
   cairo_reset_clip(cr);
   cairo_new_path(cr);
   cairo_rectangle(cr, iw->x, iw->y, iw->width, iw->height);
@@ -437,6 +454,8 @@ void HU_InputWidgetDrawer(input_widget_t *iw, void *render_context) {
 
   cairo_move_to(cr, iw->x + ih + offset, iw->y);
   pango_cairo_show_layout(cr, iw->layout);
+
+  cairo_restore(cr);
 }
 
 bool HU_InputWidgetResponder(input_widget_t *iw, event_t *ev) {

@@ -49,6 +49,11 @@ void I_InitGraphics (void);
 void I_UpdateVideoMode(void);
 void I_ShutdownGraphics(void);
 
+void* I_GetRenderContext(void);
+void  I_ResetRenderContext(void);
+void  I_ReadOverlay(void);
+void  I_RenderOverlay(void);
+
 /* Takes full 8 bit values. */
 void I_SetPalette(int pal); /* CPhipps - pass down palette number */
 

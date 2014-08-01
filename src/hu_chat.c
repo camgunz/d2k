@@ -56,6 +56,8 @@ chat_widget_t* HU_ChatWidgetNew(void *render_context,
                                 ChatInputHandler handler) {
   int input_width;
   int input_height;
+  hu_color_t white = {1.0f, 1.0f, 1.0f, 1.0f};
+  hu_color_t clear = {0.0f, 0.0f, 0.0f, 0.0f};
   chat_widget_t *cw = calloc(1, sizeof(chat_widget_t));
 
   if (cw == NULL)
@@ -67,6 +69,8 @@ chat_widget_t* HU_ChatWidgetNew(void *render_context,
   HU_InputWidgetSetFont(cw->input, HU_FONT);
   HU_InputWidgetGetLayoutSize(cw->input, &input_width, &input_height);
   HU_InputWidgetSetSize(cw->input, REAL_SCREENWIDTH, input_height);
+  HU_InputWidgetSetFGColor(cw->input, white);
+  HU_InputWidgetSetBGColor(cw->input, clear);
 
   return cw;
 }
