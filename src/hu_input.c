@@ -261,7 +261,6 @@ void HU_InputWidgetReset(input_widget_t *iw, void *render_context) {
   cairo_font_options_set_hint_style(font_options, CAIRO_HINT_STYLE_FULL);
   cairo_font_options_set_hint_metrics(font_options, CAIRO_HINT_METRICS_ON);
   cairo_font_options_set_antialias(font_options, CAIRO_ANTIALIAS_SUBPIXEL);
-  cairo_font_options_set_subpixel_order(font_options, CAIRO_SUBPIXEL_ORDER_BGR);
   pango_cairo_context_set_font_options(iw->layout_context, font_options);
   cairo_font_options_destroy(font_options);
 
