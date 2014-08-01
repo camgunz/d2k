@@ -448,6 +448,8 @@ void HU_Init(void) {
   free(hud_unifont_file);
 
   I_ResetRenderContext();
+
+  HU_Start();
 }
 
 //

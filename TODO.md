@@ -1,13 +1,13 @@
 # To Do
 
 1. Fix HUD problems
-  * Antialiasing on Windows is broken
   * Antialiasing in the messages widget is bad
-  * OpenGL overlay is broken
   * Only allow one "foreground" interface at a time
     * menu
     * console
     * chat
+  * Render console during the DOOM screen
+    * Full height?
 
 1. Fix keybindings
   * Set the keybindings to reasonable default values
