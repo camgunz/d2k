@@ -337,10 +337,6 @@ inline static dboolean I_SkipFrame(void)
 }
 #endif
 
-#if CAIRO_HAS_XLIB_SURFACE
-#include <X11/Xlib.h>
-#endif
-
 void* I_GetRenderContext(void) {
   cairo_status_t status;
   SDL_SysWMinfo wm_info;
@@ -358,17 +354,42 @@ void* I_GetRenderContext(void) {
   SDL_VERSION(&wm_info.version);
   SDL_GetWMInfo(&wm_info);
 
-  if (render_surface == NULL) {
+#ifdef GL_DOOM
+  if (V_GetMode() == VID_MODEGL) {
+    if (render_surface == NULL) {
+      if (local_pixels)
+        free(local_pixels);
+
+      local_pixels = malloc(
+        REAL_SCREENWIDTH * REAL_SCREENHEIGHT * sizeof(unsigned int)
+      );
+
+      if (local_pixels == NULL)
+        I_Error("I_GetRenderContext: malloc'ing pixels failed");
+
+      render_surface = cairo_image_surface_create_for_data(
+        local_pixels,
+        CAIRO_FORMAT_ARGB32,
+        REAL_SCREENWIDTH,
+        REAL_SCREENHEIGHT,
+        cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, REAL_SCREENWIDTH)
+      );
+    }
+  }
+#endif
+
 #if CAIRO_HAS_WIN32_SURFACE
+  if (render_surface == NULL) {
     render_surface = cairo_win32_surface_create_with_dib(
       CAIRO_FORMAT_RGB24,
       REAL_SCREENWIDTH,
       REAL_SCREENHEIGHT
     );
-
+  }
 #endif
 
 #if CAIRO_HAS_XLIB_SURFACE
+  if (render_surface == NULL) {
     Display *dpy = wm_info.info.x11.gfxdisplay;
 
     render_surface = cairo_xlib_surface_create(
@@ -400,35 +421,36 @@ void* I_GetRenderContext(void) {
     cairo_surface_destroy(render_surface);
     render_surface = xr;
 #endif
+  }
 #endif
 
 #if CAIRO_HAS_QUARTZ_SURFACE
+  if (render_surface == NULL) {
     render_surface = cairo_quartz_surface_create(
       CAIRO_FORMAT_ARGB32,
       REAL_SCREENWIDTH,
       REAL_SCREENHEIGHT
     );
+  }
 #endif
+  if (render_surface == NULL) {
+    if (local_pixels)
+      free(local_pixels);
 
-    if (render_surface == NULL) {
-      if (local_pixels)
-        free(local_pixels);
+    local_pixels = malloc(
+      REAL_SCREENWIDTH * REAL_SCREENHEIGHT * sizeof(unsigned int)
+    );
 
-      local_pixels = malloc(
-        REAL_SCREENWIDTH * REAL_SCREENHEIGHT * sizeof(unsigned int)
-      );
+    if (local_pixels == NULL)
+      I_Error("I_GetRenderContext: malloc'ing pixels failed");
 
-      if (local_pixels == NULL)
-        I_Error("I_GetRenderContext: malloc'ing pixels failed");
-
-      render_surface = cairo_image_surface_create_for_data(
-        local_pixels,
-        CAIRO_FORMAT_ARGB32,
-        REAL_SCREENWIDTH,
-        REAL_SCREENHEIGHT,
-        cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, REAL_SCREENWIDTH)
-      );
-    }
+    render_surface = cairo_image_surface_create_for_data(
+      local_pixels,
+      CAIRO_FORMAT_ARGB32,
+      REAL_SCREENWIDTH,
+      REAL_SCREENHEIGHT,
+      cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, REAL_SCREENWIDTH)
+    );
   }
 
   status = cairo_surface_status(render_surface);
@@ -439,10 +461,10 @@ void* I_GetRenderContext(void) {
     );
   }
 
-  if (!render_context)
-    render_context = cairo_create(render_surface);
-  else
+  if (render_context)
     cairo_set_source_surface(render_context, render_surface, 0.0, 0.0);
+  else
+    render_context = cairo_create(render_surface);
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL && !overlay_tex_id) {
@@ -545,22 +567,26 @@ static void I_UploadNewPalette(int pal, int force)
   // store the colors to the current display
   // SDL_SetColors(SDL_GetVideoSurface(), colours+256*pal, 0, 256);
 #ifdef GL_DOOM
-  if (vid_8ingl.enabled)
-  {
+  if (vid_8ingl.enabled) {
     vid_8ingl.palette = pal;
   }
   else
 #endif
   {
-    SDL_SetPalette(SDL_GetVideoSurface(),SDL_LOGPAL|SDL_PHYSPAL,colours+256*pal, 0, 256);
+    SDL_SetPalette(
+      SDL_GetVideoSurface(),
+      SDL_LOGPAL | SDL_PHYSPAL,
+      colours + 256 * pal,
+      0,
+      256
+    );
   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 // Graphics API
 
-void I_ShutdownGraphics(void)
-{
+void I_ShutdownGraphics(void) {
   SDL_FreeCursor(cursors[1]);
   DeactivateMouse();
 }
@@ -568,8 +594,7 @@ void I_ShutdownGraphics(void)
 //
 // I_UpdateNoBlit
 //
-void I_UpdateNoBlit (void)
-{
+void I_UpdateNoBlit(void) {
 }
 
 void I_ReadOverlay(void) {
@@ -643,22 +668,10 @@ void I_ReadOverlay(void) {
 }
 
 void I_RenderOverlay(void) {
-  /*
-  cairo_set_operator(render_context, CAIRO_OPERATOR_OVER);
-  cairo_reset_clip(render_context);
-  cairo_new_path(render_context);
-  cairo_rectangle(render_context, 0, 0, REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
-  cairo_clip(render_context);
-  cairo_set_source_rgba(render_context, 0.0f, 0.0f, 0.0f, 0.0f);
-  cairo_paint(render_context);
-  */
+  if (render_context == NULL || render_surface == NULL)
+    I_GetRenderContext();
 
-#ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL)
-    cairo_set_operator(render_context, CAIRO_OPERATOR_SOURCE);
-  else
-#endif
-    cairo_set_operator(render_context, CAIRO_OPERATOR_SOURCE);
+  cairo_set_operator(render_context, CAIRO_OPERATOR_SOURCE);
 
   I_ReadOverlay();
 
@@ -1638,6 +1651,9 @@ void I_UpdateVideoMode(void) {
     deh_changeCompTranslucency();
   }
 #endif
+
+  I_ResetRenderContext();
+  I_GetRenderContext();
 }
 
 static void ActivateMouse(void)
