@@ -460,7 +460,10 @@ void HU_InputWidgetDrawer(input_widget_t *iw, void *render_context) {
 bool HU_InputWidgetResponder(input_widget_t *iw, event_t *ev) {
   char *us;
   size_t us_len;
+  gunichar *ucss;
+  glong char_count;
   GError *error = NULL;
+  bool unprintable = false;
 
   if (!((ev->type == ev_keydown) || (ev->type == ev_mouse)))
     return false;
@@ -512,19 +515,32 @@ bool HU_InputWidgetResponder(input_widget_t *iw, event_t *ev) {
     return true;
   }
 
-  /* CG: TODO: Add check for printability here */
-
   us = g_locale_to_utf8(
     (const char *)&ev->wchar, sizeof(uint16_t), NULL, &us_len, &error
   );
 
   if (us == NULL) {
-    I_Error("C_Responder: Error converting UTF-16 input to UTF-8: %s (%d)\n",
+    I_Error("C_Responder: Error converting local input to UTF-8: %s (%d)",
       error->message, error->code
     );
   }
 
-  insert_text(iw, us);
+  ucss = g_utf8_to_ucs4_fast(us, -1, &char_count);
+
+  for (glong i = 0; i < char_count; i++) {
+    if (!g_unichar_isprint(ucss[i])) {
+      unprintable = true;
+      break;
+    }
+  }
+
+  g_free(ucss);
+
+  if (unprintable)
+    lprintf(LO_WARN, "Unprintable text in console input\n");
+  else
+    insert_text(iw, us);
+
   g_free(us);
 
   return true;

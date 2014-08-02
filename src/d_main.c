@@ -162,13 +162,6 @@ const int nstandard_iwads = sizeof(standard_iwads) / sizeof(*standard_iwads);
  */
 
 bool D_Responder(event_t *ev) {
-  /*
-   * killough 2/22/98: add support for screenshot key:
-   * cph 2001/02/04: no need for this to be a gameaction, just do it
-   */
-  if (ev->type == ev_keydown && ev->data1 == key_screenshot)
-    M_ScreenShot(); /* Don't eat the keypress. See sf bug #1843280. */
-
   if (menuactive)
     return false;
 
@@ -434,10 +427,12 @@ bool D_Responder(event_t *ev) {
 void D_PostEvent(event_t *ev) {
   SDLMod mod_keys = SDL_GetModState();
 
-  keybindings.shiftdown = false;
-  keybindings.ctrldown  = false;
-  keybindings.altdown   = false;
-  keybindings.metadown  = false;
+  keybindings.shiftdown  = false;
+  keybindings.ctrldown   = false;
+  keybindings.altdown    = false;
+  keybindings.metadown   = false;
+  keybindings.lsuperdown = false;
+  keybindings.rsuperdown = false;
 
   if (mod_keys & KMOD_SHIFT)
     keybindings.shiftdown = true;
@@ -447,6 +442,15 @@ void D_PostEvent(event_t *ev) {
     keybindings.altdown = true;
   if (mod_keys & KMOD_META)
     keybindings.metadown = true;
+
+  if (ev->type == ev_keydown && ev->data1 == SDLK_LSUPER)
+    keybindings.lsuperdown = true;
+  else if (ev->type == ev_keydown && ev->data1 == SDLK_RSUPER)
+    keybindings.rsuperdown = true;
+  if (ev->type == ev_keyup && ev->data1 == SDLK_LSUPER)
+    keybindings.lsuperdown = false;
+  else if (ev->type == ev_keyup && ev->data1 == SDLK_RSUPER)
+    keybindings.rsuperdown = false;
 
   // Allow only sensible keys during skipping
   if (doSkip) {
@@ -461,20 +465,38 @@ void D_PostEvent(event_t *ev) {
     }
   }
 
-  if (ev->type == ev_keydown && ev->data1 == SDLK_LSUPER)
-    keybindings.lsuperdown = true;
-  else if (ev->type == ev_keydown && ev->data1 == SDLK_RSUPER)
-    keybindings.rsuperdown = true;
-  if (ev->type == ev_keyup && ev->data1 == SDLK_LSUPER)
-    keybindings.lsuperdown = false;
-  else if (ev->type == ev_keyup && ev->data1 == SDLK_RSUPER)
-    keybindings.rsuperdown = false;
+  /*
+   * killough 2/22/98: add support for screenshot key:
+   * cph 2001/02/04: no need for this to be a gameaction, just do it
+   */
+  if (ev->type == ev_keydown && ev->data1 == key_screenshot)
+    M_ScreenShot(); /* Don't eat the keypress. See sf bug #1843280. */
 
   /* CG 7/30/2014: ESC ought to quit chat if it's active */
+  /*
   if (ev->type == ev_keydown && ev->data1 == SDLK_ESCAPE && HU_ChatActive()) {
     HU_DeactivateChat();
     return;
   }
+  */
+
+  if (HU_ChatActive()) {
+    HU_Responder(ev);
+    return;
+  }
+
+  if (menuactive) {
+    M_Responder(ev);
+    return;
+  }
+
+  if (C_Active()) {
+    C_Responder(ev);
+    return;
+  }
+
+  if (HU_Responder(ev))
+    return;
 
   if (M_Responder(ev))
     return;
@@ -486,9 +508,6 @@ void D_PostEvent(event_t *ev) {
     return;
 
   if (gamestate != GS_LEVEL)
-    return;
-
-  if (HU_Responder(ev))
     return;
 
   if (ST_Responder(ev))

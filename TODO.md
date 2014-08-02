@@ -1,11 +1,7 @@
 # To Do
 
 1. Fix HUD problems
-  * Antialiasing in the messages widget is bad
-  * Only allow one "foreground" interface at a time
-    * menu
-    * console
-    * chat
+  * Windows doesn't find the font
   * Render console during the DOOM screen
     * Full height?
 
@@ -13,6 +9,7 @@
   * Set the keybindings to reasonable default values
     * Only speed up or slow down the game if nothing else is going on
       * Maybe add a widget for this somehow
+  * Can't bind mouse buttons in menu anymore
 
 1. Fix messaging
   * Add more scripting commands
