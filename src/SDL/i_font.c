@@ -60,7 +60,16 @@ void I_LoadCustomFonts(void) {
 
     free(font_path);
   }
-#else
+
+  if (!g_setenv("FONTCONFIG_PATH", cwd, true)) {
+    I_Error(
+      "I_LoadCustomFonts: Error setting FONTCONFIG_PATH environment variable"
+    );
+  }
+
+  M_OBufFreeEntriesAndClear(font_files);
+  M_OBufFree(font_files);
+#endif
   FcConfig *config = FcInitLoadConfigAndFonts();
 
   if (!FcConfigAppFontAddDir(config, (FcChar8 *)font_folder)) {
@@ -72,7 +81,6 @@ void I_LoadCustomFonts(void) {
   free(font_folder);
 
   FcConfigSetCurrent(config);
-#endif
 }
 
 /* vi: set et ts=2 sw=2: */
