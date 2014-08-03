@@ -61,7 +61,7 @@ void I_LoadCustomFonts(void) {
     free(font_path);
   }
 
-  if (!g_setenv("FONTCONFIG_PATH", cwd, true)) {
+  if (!g_setenv("FONTCONFIG_PATH", font_folder, true)) {
     I_Error(
       "I_LoadCustomFonts: Error setting FONTCONFIG_PATH environment variable"
     );
