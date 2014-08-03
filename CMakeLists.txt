@@ -718,6 +718,7 @@ ENDIF()
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/SDL)
 SET(SDL_SOURCES
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_font.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_joy.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_network.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_sound.c

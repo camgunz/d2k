@@ -97,7 +97,9 @@ message_widget_t* HU_MessageWidgetNew(void *render_context, int x, int y,
 
 void HU_MessageWidgetReset(message_widget_t *mw, void *render_context) {
   cairo_font_options_t *font_options = cairo_font_options_create();
-  PangoFontMap *fm = pango_cairo_font_map_get_default();
+  PangoFontMap *dfm = pango_cairo_font_map_get_default();
+  cairo_font_type_t ft = pango_cairo_font_map_get_font_type((PangoCairoFontMap *)dfm);
+  PangoFontMap *fm = pango_cairo_font_map_new_for_font_type(ft);
 
   if (mw->layout)
     g_object_unref(mw->layout);

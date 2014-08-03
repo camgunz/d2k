@@ -23,6 +23,8 @@
 
 #include "z_zone.h"
 
+#include <glib.h>
+
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
@@ -34,6 +36,7 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 #include "m_argv.h"
 #include "d_main.h"
 #include "m_fixed.h"
+#include "i_font.h"
 #include "i_system.h"
 #include "i_video.h"
 #include "z_zone.h"
@@ -685,7 +688,10 @@ int main(int argc, char **argv)
   /* CG 07/22/2014: Enable key repeating */
   SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
+  I_LoadCustomFonts();
+
   D_DoomMain();
+
   return 0;
 }
 #endif

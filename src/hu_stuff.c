@@ -324,10 +324,6 @@ void HU_Init(void) {
   int   i;
   int   j;
   char  buffer[9];
-  char *hud_font_file = M_PathJoin("fonts", HU_FONT_FILE);
-  char *hud_unifont_file = M_PathJoin("fonts", HU_UNIFONT_FILE);
-  FcConfig *config = FcInitLoadConfigAndFonts();
-  
 
   shiftxform = english_shiftxform;
 
@@ -430,22 +426,6 @@ void HU_Init(void) {
   R_SetSpriteByName(&hu_font_hud[41], "SHELA0");
   R_SetSpriteByName(&hu_font_hud[42], "CELLA0");
   R_SetSpriteByName(&hu_font_hud[43], "ROCKA0");
-
-  if (!FcConfigAppFontAddFile(config, (const FcChar8 *)hud_font_file))
-    I_Error("HU_Init: Error loading default HUD font");
-  else
-    C_Printf("Added HUD font file %s\n", hud_font_file);
-
-  if (!FcConfigAppFontAddFile(config, (const FcChar8 *)hud_unifont_file))
-    I_Error("HU_Init: Error loading Unicode HUD font");
-  else
-    C_Printf("Added unicode HUD font file %s\n", hud_unifont_file);
-
-  if (!FcConfigSetCurrent(config))
-    I_Error("HU_Init: Error re-setting font config");
-
-  free(hud_font_file);
-  free(hud_unifont_file);
 
   I_ResetRenderContext();
 
