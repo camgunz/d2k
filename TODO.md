@@ -1,5 +1,7 @@
 # To Do
 
+## Prototype
+
 1. Fix keybindings
   * Set the keybindings to reasonable default values
     * Only speed up or slow down the game if nothing else is going on
@@ -17,8 +19,7 @@
   - Sounds with more than 1 player are busted
   - Fix intermission (single-player is busted too)
 
-1. Make Windows compilation possible
-  * Need to build a libXDiff DLL in mingw64-builds
+## ZDDL
 
 1. Add latency mitigation
   - projectile nudging
@@ -67,11 +68,64 @@
 
 1. PWO
 
-1. Slopes <!-- Now ZDDL-worthy -->
+1. Slopes
+
+## CTF
 
 1. Hexen map support
 
-1. ACS Scripting <!-- Now CTF-worthy -->
+1. Scripted game modes
+
+## Version 1.0
+
+1. Make Windows compilation possible
+  * Need to build a libXDiff DLL in mingw64-builds
+
+1. Remove all vestiges of command sync, it just doesn't make sense anymore
+
+1. Remove software renderer
+  * See about implementing Doom lighting and 8-bit color using shaders
+
+1. Setup testing framework
+  - Demos
+  - Multiplayer command injection
+
+## Miscellaneous
+
+1. Settle on types for:
+    - Player indices
+    - TICs
+
+1. Cleanup #includes
+
+1. Update renderer
+
+1. Update `players`:
+  - `players` will become an `obuf_t`
+  - `playeringame` becomes `dboolean playeringame(unsigned short playernum)`
+  - `MAXPLAYERS` becomes `VANILLA_MAXPLAYERS` for compat
+  - Anything defined using `MAXPLAYERS` will be refactored
+  - Servers aren't players
+    - Use a camera in non-headless mode
+    - All playernums should be unsigned shorts
+    - Sending a message to the server can use a bool `to_server` instead of the
+      `-1` recipient (which is a hack)
+  - Player names are hardcoded for DeHackEd; the way this should work is:
+    - Keep a private array of the default names ("Green", "Indigo", etc.)
+    - After initialization, check if the names have been modified, by a
+      DeHackEd patch or anything
+    - If so, set each player's name accordingly
+    - Of course, this only works for the 1st 4 players; after that, fuck it
+
+1. Refactor the HUD to use cairo
+
+1. Reimplement the HUD entirely in scripting
+
+## Features
+
+1. Bots
+
+1. ACS Scripting
 
 1. DECORATE
 
@@ -98,44 +152,6 @@
 1. UDMF
 
 1. ZIP/PK3 resource files
-
-1. Bots
-
-1. Setup testing framework
-  - Demos
-  - Multiplayer command injection
-
-1. Type problems:
-  - Playernums are unsigned shorts; fix this everywhere
-    - Then we can use int and use -1 for an invalid player number
-  - TICs are unsigned ints; fix this everywhere
-
-1. Refactor the HUD to use cairo
-
-1. Reimplement the HUD entirely in scripting
-
-1. Remove all vestiges of command sync, it just doesn't make sense anymore
-
-1. Update `players`:
-  - `players` will become an `obuf_t`
-  - `playeringame` becomes `dboolean playeringame(unsigned short playernum)`
-  - `MAXPLAYERS` becomes `VANILLA_MAXPLAYERS` for compat
-  - Anything defined using `MAXPLAYERS` will be refactored
-  - Servers aren't players
-    - Use a camera in non-headless mode
-    - All playernums should be unsigned shorts
-    - Sending a message to the server can use a bool `to_server` instead of the
-      `-1` recipient (which is a hack)
-  - Player names are hardcoded for DeHackEd; the way this should work is:
-    - Keep a private array of the default names ("Green", "Indigo", etc.)
-    - After initialization, check if the names have been modified, by a
-      DeHackEd patch or anything
-    - If so, set each player's name accordingly
-    - Of course, this only works for the 1st 4 players; after that, fuck it
-
-1. Header cleanup (omfg)
-
-1. Update renderer
 
 <!-- vi: set et ts=4 sw=4 tw=79: -->
 
