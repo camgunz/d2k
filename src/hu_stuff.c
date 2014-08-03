@@ -2284,6 +2284,10 @@ void HU_Drawer(void) {
     return;
 
   plr = &players[displayplayer];         // killough 3/7/98
+
+  if (gamestate != GS_LEVEL)
+    goto main_widgets;
+
   // draw the automap widgets if automap is displayed
   if (automapmode & am_active) {
     // map title
@@ -2452,18 +2456,14 @@ void HU_Drawer(void) {
   if (hud_msg_lines<=1)
     message_list = false;
 
-  // if the message review not enabled, show the standard message widget
-  HU_MessageWidgetDrawer(w_messages, I_GetRenderContext());
-
-  //e6y
-  HU_MessageWidgetDrawer(w_centermsg, I_GetRenderContext());
-
-  C_Drawer();
-
   if (hudadd_crosshair)
     HU_draw_crosshair();
 
-  // display the interactive buffer for chat entry
+main_widgets:
+
+  HU_MessageWidgetDrawer(w_messages, I_GetRenderContext());
+  HU_MessageWidgetDrawer(w_centermsg, I_GetRenderContext());
+  C_Drawer();
   if (HU_ChatWidgetActive(w_chat))
     HU_ChatWidgetDrawer(w_chat, I_GetRenderContext());
 }

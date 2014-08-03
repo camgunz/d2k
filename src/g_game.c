@@ -146,7 +146,7 @@ const byte *demo_continue_p = NULL;
 dboolean        forced_loadgame = false;
 dboolean        command_loadgame = false;
 gameaction_t    gameaction;
-gamestate_t     gamestate;
+gamestate_t     gamestate = -1;
 skill_t         gameskill;
 dboolean        respawnmonsters;
 int             gameepisode;

@@ -81,6 +81,10 @@
 
 static char *iwad_base = NULL;
 static char *iwad_path = NULL;
+static int  demosequence;         // killough 5/2/98: made static
+static int  pagetic;
+static const char *pagename; // CPhipps - const
+
 
 void GetFirstMap(int *ep, int *map); // Ty 08/29/98 - add "-warp x" functionality
 static void D_PageDrawer(void);
@@ -623,7 +627,9 @@ void D_Display(void) {
     default:
       break;
     }
-  } else if (gametic != basetic) { // In a level
+  }
+  else if (gametic != basetic) {
+    // In a level
     dboolean redrawborderstuff;
 
     HU_Erase();
@@ -684,10 +690,15 @@ void D_Display(void) {
         (menuactive == mnact_full));
 
     BorderNeedRefresh = false;
+
     if (V_GetMode() != VID_MODEGL)
       R_DrawViewBorder();
-    HU_Drawer();
+
+    // HU_Drawer();
   }
+
+  // C_Drawer();
+  HU_Drawer();
 
   isborderstate      = isborder;
   oldgamestate = wipegamestate = gamestate;
@@ -801,9 +812,6 @@ static void D_DoomLoop(void) {
 //  DEMO LOOP
 //
 
-static int  demosequence;         // killough 5/2/98: made static
-static int  pagetic;
-static const char *pagename; // CPhipps - const
 dboolean bfgedition = 0;
 
 //

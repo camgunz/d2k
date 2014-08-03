@@ -1,10 +1,5 @@
 # To Do
 
-1. Fix HUD problems
-  * Windows doesn't find the font
-  * Render console during the DOOM screen
-    * Full height?
-
 1. Fix keybindings
   * Set the keybindings to reasonable default values
     * Only speed up or slow down the game if nothing else is going on
