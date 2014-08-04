@@ -2,12 +2,6 @@
 
 ## Prototype
 
-1. Fix keybindings
-  * Set the keybindings to reasonable default values
-    * Only speed up or slow down the game if nothing else is going on
-      * Maybe add a widget for this somehow
-  * Can't bind mouse buttons in menu anymore
-
 1. Fix messaging
   * Add more scripting commands
     * `say`

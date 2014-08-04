@@ -50,6 +50,7 @@
 #include "i_sound.h"
 #include "i_video.h"
 #include "g_game.h"
+#include "g_keys.h"
 #include "hu_stuff.h"
 #include "wi_stuff.h"
 #include "st_stuff.h"

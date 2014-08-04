@@ -35,6 +35,7 @@
 #include "hu_stuff.h"
 #include "st_stuff.h"
 #include "g_game.h"
+#include "g_keys.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "m_menu.h"
@@ -2268,7 +2269,7 @@ setup_menu_t keys_settings2[] =  // Key Binding screen strings
   // key with other keys in the same 'group'. (m_scrn, etc.)
 
   {"HELP"        ,S_SKIP|S_KEEP ,m_scrn,0   ,0    ,{&key_help}},
-  {"MENU"        ,S_SKIP|S_KEEP ,m_scrn,0   ,0    ,{&key_escape}},
+  {"MENU"        ,S_SKIP|S_KEEP ,m_scrn,0   ,0    ,{&key_menu_toggle}},
   // killough 10/98: hotkey for entering setup menu:
   {"SETUP"       ,S_KEY       ,m_scrn,KB_X,KB_Y+ 1*8,{&key_setup}},
   {"PAUSE"       ,S_KEY       ,m_scrn,KB_X,KB_Y+ 2*8,{&key_pause}},
@@ -4053,7 +4054,7 @@ setup_menu_t helpstrings[] =  // HELP screen strings
 {
   {"SCREEN"      ,S_SKIP|S_TITLE,m_null,KT_X1,KT_Y1},
   {"HELP"        ,S_SKIP|S_KEY,m_null,KT_X1,KT_Y1+ 1*8,{&key_help}},
-  {"MENU"        ,S_SKIP|S_KEY,m_null,KT_X1,KT_Y1+ 2*8,{&key_escape}},
+  {"MENU"        ,S_SKIP|S_KEY,m_null,KT_X1,KT_Y1+ 2*8,{&key_menu_toggle}},
   {"SETUP"       ,S_SKIP|S_KEY,m_null,KT_X1,KT_Y1+ 3*8,{&key_setup}},
   {"PAUSE"       ,S_SKIP|S_KEY,m_null,KT_X1,KT_Y1+ 4*8,{&key_pause}},
   {"AUTOMAP"     ,S_SKIP|S_KEY,m_null,KT_X1,KT_Y1+ 5*8,{&key_map}},
@@ -4414,7 +4415,7 @@ dboolean M_Responder(event_t* ev) {
 
   if (!menuactive)
   {
-    if (ch == key_escape)                                     // phares
+    if (ch == key_menu_toggle)
     {
       M_StartControlPanel ();
       S_StartSound(NULL, sfx_swtchn);

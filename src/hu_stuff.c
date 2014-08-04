@@ -35,6 +35,7 @@
 #include "dstrings.h"
 #include "c_main.h"
 #include "g_game.h"
+#include "g_keys.h"
 #include "hu_lib.h"
 #include "hu_input.h"
 #include "hu_chat.h"

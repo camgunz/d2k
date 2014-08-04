@@ -28,6 +28,7 @@
 #include "doomstat.h"
 #include "m_argv.h"
 #include "g_game.h"
+#include "g_keys.h"
 #include "m_menu.h"
 #include "am_map.h"
 #include "w_wad.h"
@@ -70,6 +71,9 @@
 //
 // DEFAULTS
 //
+
+#define KEYBIND(name, keyloc, keyval) \
+  {name, {&keyloc}, {keyval}, 0, MAX_KEY, def_key, ss_keys}
 
 int usemouse;
 dboolean    precache = true; /* if true, load all graphics at start */
@@ -451,157 +455,83 @@ default_t defaults[] =
 // CPhipps - now they're the doom codes, so default.cfg can be portable
 
   {"Key bindings",{NULL},{0},UL,UL,def_none,ss_none},
-  {"key_right",       {&key_right},          {SDLK_RIGHT},
-   0,MAX_KEY,def_key,ss_keys}, // key to turn right
-  {"key_left",        {&key_left},           {SDLK_LEFT} ,
-   0,MAX_KEY,def_key,ss_keys}, // key to turn left
-  {"key_up",          {&key_up},             {'w'}   ,
-   0,MAX_KEY,def_key,ss_keys}, // key to move forward
-  {"key_down",        {&key_down},           {'s'},
-   0,MAX_KEY,def_key,ss_keys}, // key to move backward
-  {"key_mlook",       {&key_mlook},           {'\\'},
-   0,MAX_KEY,def_key,ss_keys}, // key to move backward
-  {"key_menu_right",  {&key_menu_right},     {SDLK_RIGHT},// phares 3/7/98
-   0,MAX_KEY,def_key,ss_keys}, // key to move right in a menu  //     |
-  {"key_menu_left",   {&key_menu_left},      {SDLK_LEFT} ,//     V
-   0,MAX_KEY,def_key,ss_keys}, // key to move left in a menu
-  {"key_menu_up",     {&key_menu_up},        {SDLK_UP}   ,
-   0,MAX_KEY,def_key,ss_keys}, // key to move up in a menu
-  {"key_menu_down",   {&key_menu_down},      {SDLK_DOWN} ,
-   0,MAX_KEY,def_key,ss_keys}, // key to move down in a menu
-  {"key_menu_backspace",{&key_menu_backspace},{SDLK_BACKSPACE} ,
-   0,MAX_KEY,def_key,ss_keys}, // delete key in a menu
-  {"key_menu_escape", {&key_menu_escape},    {SDLK_ESCAPE}    ,
-   0,MAX_KEY,def_key,ss_keys}, // key to leave a menu      ,   // phares 3/7/98
-  {"key_menu_enter",  {&key_menu_enter},     {SDLK_RETURN}     ,
-   0,MAX_KEY,def_key,ss_keys}, // key to select from menu
-  {"key_setup",       {&key_setup},          {0},
-   0,MAX_KEY,def_key,ss_keys}, //e6y: key for entering setup menu
-  {"key_strafeleft",  {&key_strafeleft},     {'a'}           ,
-   0,MAX_KEY,def_key,ss_keys}, // key to strafe left
-  {"key_straferight", {&key_straferight},    {'d'}           ,
-   0,MAX_KEY,def_key,ss_keys}, // key to fly up
-  {"key_flyup",  {&key_flyup}, {'.'},
-   0,MAX_KEY,def_key,ss_keys}, // key to fly down
-  {"key_flydown", {&key_flydown}, {','},
-   0,MAX_KEY,def_key,ss_keys}, // key to strafe right
-
-  {"key_fire",        {&key_fire},           {SDLK_LCTRL}     ,
-   0,MAX_KEY,def_key,ss_keys}, // duh
-  {"key_use",         {&key_use},            {' '}           ,
-   0,MAX_KEY,def_key,ss_keys}, // key to open a door, use a switch
-  {"key_strafe",      {&key_strafe},         {SDLK_LALT}      ,
-   0,MAX_KEY,def_key,ss_keys}, // key to use with arrows to strafe
-  {"key_speed",       {&key_speed},          {SDLK_LSHIFT}    ,
-   0,MAX_KEY,def_key,ss_keys}, // key to run
-
-  {"key_savegame",    {&key_savegame},       {SDLK_F2}        ,
-   0,MAX_KEY,def_key,ss_keys}, // key to save current game
-  {"key_loadgame",    {&key_loadgame},       {SDLK_F3}        ,
-   0,MAX_KEY,def_key,ss_keys}, // key to restore from saved games
-  {"key_soundvolume", {&key_soundvolume},    {SDLK_F4}        ,
-   0,MAX_KEY,def_key,ss_keys}, // key to bring up sound controls
-  {"key_hud",         {&key_hud},            {SDLK_F5}        ,
-   0,MAX_KEY,def_key,ss_keys}, // key to adjust HUD
-  {"key_quicksave",   {&key_quicksave},      {SDLK_F6}        ,
-   0,MAX_KEY,def_key,ss_keys}, // key to to quicksave
-  {"key_endgame",     {&key_endgame},        {SDLK_F7}        ,
-   0,MAX_KEY,def_key,ss_keys}, // key to end the game
-  {"key_messages",    {&key_messages},       {SDLK_F8}        ,
-   0,MAX_KEY,def_key,ss_keys}, // key to toggle message enable
-  {"key_quickload",   {&key_quickload},      {SDLK_F9}        ,
-   0,MAX_KEY,def_key,ss_keys}, // key to load from quicksave
-  {"key_quit",        {&key_quit},           {SDLK_F10}       ,
-   0,MAX_KEY,def_key,ss_keys}, // key to quit game
-  {"key_gamma",       {&key_gamma},          {SDLK_F11}       ,
-   0,MAX_KEY,def_key,ss_keys}, // key to adjust gamma correction
-  {"key_spy",         {&key_spy},            {SDLK_F12}       ,
-   0,MAX_KEY,def_key,ss_keys}, // key to view from another coop player's view
-  {"key_pause",       {&key_pause},          {SDLK_PAUSE}     ,
-   0,MAX_KEY,def_key,ss_keys}, // key to pause the game
-  {"key_autorun",     {&key_autorun},        {SDLK_CAPSLOCK}  ,
-   0,MAX_KEY,def_key,ss_keys}, // key to toggle always run mode
-  {"key_chat",        {&key_chat},           {'t'}            ,
-   0,MAX_KEY,def_key,ss_keys}, // key to enter a chat message
-  {"key_backspace",   {&key_backspace},      {SDLK_BACKSPACE} ,
-   0,MAX_KEY,def_key,ss_keys}, // backspace key
-  {"key_enter",       {&key_enter},          {SDLK_RETURN}     ,
-   0,MAX_KEY,def_key,ss_keys}, // key to select from menu or see last message
-  {"key_map",         {&key_map},            {SDLK_TAB}       ,
-   0,MAX_KEY,def_key,ss_keys}, // key to toggle automap display
-  {"key_map_right",   {&key_map_right},      {SDLK_RIGHT},// phares 3/7/98
-   0,MAX_KEY,def_key,ss_keys}, // key to shift automap right   //     |
-  {"key_map_left",    {&key_map_left},       {SDLK_LEFT} ,//     V
-   0,MAX_KEY,def_key,ss_keys}, // key to shift automap left
-  {"key_map_up",      {&key_map_up},         {SDLK_UP}   ,
-   0,MAX_KEY,def_key,ss_keys}, // key to shift automap up
-  {"key_map_down",    {&key_map_down},       {SDLK_DOWN} ,
-   0,MAX_KEY,def_key,ss_keys}, // key to shift automap down
-  {"key_map_zoomin",  {&key_map_zoomin},      {'='}           ,
-   0,MAX_KEY,def_key,ss_keys}, // key to enlarge automap
-  {"key_map_zoomout", {&key_map_zoomout},     {'-'}           ,
-   0,MAX_KEY,def_key,ss_keys}, // key to reduce automap
-  {"key_map_gobig",   {&key_map_gobig},       {'0'}           ,
-   0,MAX_KEY,def_key,ss_keys},  // key to get max zoom for automap
-  {"key_map_follow",  {&key_map_follow},      {'f'}           ,
-   0,MAX_KEY,def_key,ss_keys}, // key to toggle follow mode
-  {"key_map_mark",    {&key_map_mark},        {'m'}           ,
-   0,MAX_KEY,def_key,ss_keys}, // key to drop a marker on automap
-  {"key_map_clear",   {&key_map_clear},       {'c'}           ,
-   0,MAX_KEY,def_key,ss_keys}, // key to clear all markers on automap
-  {"key_map_grid",    {&key_map_grid},        {'g'}           ,
-   0,MAX_KEY,def_key,ss_keys}, // key to toggle grid display over automap
-  {"key_map_rotate",  {&key_map_rotate},      {'r'}           ,
-   0,MAX_KEY,def_key,ss_keys}, // key to toggle rotating the automap to match the player's orientation
-  {"key_map_overlay", {&key_map_overlay},     {'o'}           ,
-   0,MAX_KEY,def_key,ss_keys}, // key to toggle overlaying the automap on the rendered display
+  KEYBIND("key_right", key_right, SDLK_RIGHT),
+  KEYBIND("key_left", key_left, SDLK_LEFT),
+  KEYBIND("key_up", key_up, 'w'),
+  KEYBIND("key_down", key_down, 's'),
+  KEYBIND("key_mlook", key_mlook, '\\'),
+  KEYBIND("key_menu_toggle", key_menu_toggle, SDLK_ESCAPE),
+  KEYBIND("key_menu_right", key_menu_right, SDLK_RIGHT),
+  KEYBIND("key_menu_left", key_menu_left, SDLK_LEFT),
+  KEYBIND("key_menu_up", key_menu_up, SDLK_UP),
+  KEYBIND("key_menu_down", key_menu_down, SDLK_DOWN),
+  KEYBIND("key_menu_backspace", key_menu_backspace, SDLK_BACKSPACE),
+  KEYBIND("key_menu_escape", key_menu_escape, SDLK_ESCAPE),
+  KEYBIND("key_menu_enter", key_menu_enter, SDLK_RETURN),
+  KEYBIND("key_setup", key_setup, 0),
+  KEYBIND("key_strafeleft", key_strafeleft, 'a'),
+  KEYBIND("key_straferight", key_straferight, 'd'),
+  KEYBIND("key_flyup", key_flyup, '.'),
+  KEYBIND("key_flydown", key_flydown, ','),
+  KEYBIND("key_fire", key_fire, SDLK_LCTRL),
+  KEYBIND("key_use", key_use, ' '),
+  KEYBIND("key_strafe", key_strafe, SDLK_LALT),
+  KEYBIND("key_speed", key_speed, SDLK_LSHIFT),
+  KEYBIND("key_savegame", key_savegame, SDLK_F2),
+  KEYBIND("key_loadgame", key_loadgame, SDLK_F3),
+  KEYBIND("key_soundvolume", key_soundvolume, SDLK_F4),
+  KEYBIND("key_hud", key_hud, SDLK_F5),
+  KEYBIND("key_quicksave", key_quicksave, SDLK_F6),
+  KEYBIND("key_endgame", key_endgame, SDLK_F7),
+  KEYBIND("key_messages", key_messages, SDLK_F8),
+  KEYBIND("key_quickload", key_quickload, SDLK_F9),
+  KEYBIND("key_quit", key_quit, SDLK_F10),
+  KEYBIND("key_gamma", key_gamma, SDLK_F11),
+  KEYBIND("key_spy", key_spy, SDLK_F12),
+  KEYBIND("key_pause", key_pause, SDLK_PAUSE),
+  KEYBIND("key_autorun", key_autorun, SDLK_CAPSLOCK),
+  KEYBIND("key_chat", key_chat, 't'),
+  KEYBIND("key_backspace", key_backspace, SDLK_BACKSPACE),
+  KEYBIND("key_enter", key_enter, SDLK_RETURN),
+  KEYBIND("key_map", key_map, SDLK_TAB),
+  KEYBIND("key_map_right", key_map_right, SDLK_RIGHT),
+  KEYBIND("key_map_left", key_map_left, SDLK_LEFT),
+  KEYBIND("key_map_up", key_map_up, SDLK_UP),
+  KEYBIND("key_map_down", key_map_down, SDLK_DOWN),
+  KEYBIND("key_map_zoomin", key_map_zoomin, '='),
+  KEYBIND("key_map_zoomout", key_map_zoomout, '-'),
+  KEYBIND("key_map_gobig", key_map_gobig, '0'),
+  KEYBIND("key_map_follow", key_map_follow, 'f'),
+  KEYBIND("key_map_mark", key_map_mark, 'm'),
+  KEYBIND("key_map_clear", key_map_clear, 'c'),
+  KEYBIND("key_map_grid", key_map_grid, 'g'),
+  KEYBIND("key_map_rotate", key_map_rotate, 'r'),
+  KEYBIND("key_map_overlay", key_map_overlay, 'o'),
 #ifdef GL_DOOM
-  {"key_map_textured", {&key_map_textured},   {0}             ,
-   0,MAX_KEY,def_key,ss_keys}, // key to toggle textured automap
+  KEYBIND("key_map_textured", key_map_textured, 0),
 #endif
-  {"key_reverse",     {&key_reverse},         {'/'}           ,
-   0,MAX_KEY,def_key,ss_keys}, // key to spin 180 instantly
-  {"key_zoomin",      {&key_zoomin},          {'='}           ,
-   0,MAX_KEY,def_key,ss_keys}, // key to enlarge display
-  {"key_zoomout",     {&key_zoomout},         {'-'}           ,
-   0,MAX_KEY,def_key,ss_keys}, // key to reduce display
-  {"key_chatplayer1", {&destination_keys[0]}, {'g'}            ,
-   0,MAX_KEY,def_key,ss_keys}, // key to chat with player 1
+  KEYBIND("key_reverse", key_reverse, '/'),
+  KEYBIND("key_zoomin", key_zoomin, '='),
+  KEYBIND("key_zoomout", key_zoomout, '-'),
+  KEYBIND("key_chatplayer1", destination_keys[0], 'g'),
   // killough 11/98: fix 'i'/'b' reversal
-  {"key_chatplayer2", {&destination_keys[1]}, {'i'}            ,
-   0,MAX_KEY,def_key,ss_keys}, // key to chat with player 2
-  {"key_chatplayer3", {&destination_keys[2]}, {'b'}            ,
-   0,MAX_KEY,def_key,ss_keys}, // key to chat with player 3
-  {"key_chatplayer4", {&destination_keys[3]}, {'r'}            ,
-   0,MAX_KEY,def_key,ss_keys}, // key to chat with player 4
-  {"key_weapontoggle",{&key_weapontoggle},    {'0'}            ,
-   0,MAX_KEY,def_key,ss_keys}, // key to toggle between two most preferred weapons with ammo
-  {"key_weapon1",     {&key_weapon1},         {'1'}            ,
-   0,MAX_KEY,def_key,ss_keys}, // key to switch to weapon 1 (fist/chainsaw)
-  {"key_weapon2",     {&key_weapon2},         {'2'}            ,
-   0,MAX_KEY,def_key,ss_keys}, // key to switch to weapon 2 (pistol)
-  {"key_weapon3",     {&key_weapon3},         {'3'}            ,
-   0,MAX_KEY,def_key,ss_keys}, // key to switch to weapon 3 (supershotgun/shotgun)
-  {"key_weapon4",     {&key_weapon4},         {'4'}            ,
-   0,MAX_KEY,def_key,ss_keys}, // key to switch to weapon 4 (chaingun)
-  {"key_weapon5",     {&key_weapon5},         {'5'}            ,
-   0,MAX_KEY,def_key,ss_keys}, // key to switch to weapon 5 (rocket launcher)
-  {"key_weapon6",     {&key_weapon6},         {'6'}            ,
-   0,MAX_KEY,def_key,ss_keys}, // key to switch to weapon 6 (plasma rifle)
-  {"key_weapon7",     {&key_weapon7},         {'7'}            ,
-   0,MAX_KEY,def_key,ss_keys}, // key to switch to weapon 7 (bfg9000)         //    ^
-  {"key_weapon8",     {&key_weapon8},         {'8'}            ,
-   0,MAX_KEY,def_key,ss_keys}, // key to switch to weapon 8 (chainsaw)        //    |
-  {"key_weapon9",     {&key_weapon9},         {'9'}            ,
-   0,MAX_KEY,def_key,ss_keys}, // key to switch to weapon 9 (supershotgun)    // phares
-  {"key_nextweapon",  {&key_nextweapon},      {SDL_BUTTON_WHEELUP}  ,
-   0,MAX_KEY,def_key,ss_keys}, // key to cycle to the next weapon
-  {"key_prevweapon",  {&key_prevweapon},      {SDL_BUTTON_WHEELDOWN},
-   0,MAX_KEY,def_key,ss_keys}, // key to cycle to the previous weapon
-
+  KEYBIND("key_chatplayer2", destination_keys[1], 'i'),
+  KEYBIND("key_chatplayer3", destination_keys[2], 'b'),
+  KEYBIND("key_chatplayer4", destination_keys[3], 'r'),
+  KEYBIND("key_weapontoggle",key_weapontoggle, '0'),
+  KEYBIND("key_weapon1", key_weapon1, '1'),
+  KEYBIND("key_weapon2", key_weapon2, '2'),
+  KEYBIND("key_weapon3", key_weapon3, '3'),
+  KEYBIND("key_weapon4", key_weapon4, '4'),
+  KEYBIND("key_weapon5", key_weapon5, '5'),
+  KEYBIND("key_weapon6", key_weapon6, '6'),
+  KEYBIND("key_weapon7", key_weapon7, '7'),
+  KEYBIND("key_weapon8", key_weapon8, '8'),
+  KEYBIND("key_weapon9", key_weapon9, '9'),
+  KEYBIND("key_nextweapon", key_nextweapon, SDL_BUTTON_WHEELUP),
+  KEYBIND("key_prevweapon", key_prevweapon, SDL_BUTTON_WHEELDOWN),
   // killough 2/22/98: screenshot key
-  {"key_screenshot",  {&key_screenshot},      {'*'}            ,
-   0,MAX_KEY,def_key,ss_keys}, // key to take a screenshot
+  KEYBIND("key_screenshot",  key_screenshot, '*'),
 
   {"Joystick settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"use_joystick",{&usejoystick},{0},0,2,
@@ -794,27 +724,17 @@ default_t defaults[] =
 
 //e6y
   {"Prboom-plus key bindings",{NULL},{0},UL,UL,def_none,ss_none},
-  {"key_speedup", {&key_speed_up}, {SDLK_KP_PLUS},
-   0,MAX_KEY,def_key,ss_keys},
-  {"key_speeddown", {&key_speed_down}, {SDLK_KP_MINUS},
-   0,MAX_KEY,def_key,ss_keys},
-  {"key_speeddefault", {&key_speed_default}, {SDLK_KP_MULTIPLY},
-   0,MAX_KEY,def_key,ss_keys},
-  {"speed_step",{&speed_step},{0},0,1000,
-   def_int,ss_none},
-  {"key_demo_skip", {&key_demo_skip}, {SDLK_INSERT},
-   0,MAX_KEY,def_key,ss_keys},
-  {"key_level_restart", {&key_level_restart}, {SDLK_HOME},
-   0,MAX_KEY,def_key,ss_keys},
-  {"key_nextlevel", {&key_nextlevel}, {SDLK_PAGEDOWN},
-   0,MAX_KEY,def_key,ss_keys},
-  {"key_demo_jointogame", {&key_demo_jointogame}, {'q'},
-   0,MAX_KEY,def_key,ss_keys},
-  // {"key_demo_endlevel", {&key_demo_endlevel}, {SDLK_END}, 0,MAX_KEY,def_key,ss_keys},
-  {"key_walkcamera", {&key_walkcamera}, {SDLK_KP0},
-   0,MAX_KEY,def_key,ss_keys},
-  {"key_showalive", {&key_showalive}, {SDLK_KP_DIVIDE},
-   0,MAX_KEY,def_key,ss_keys},
+  KEYBIND("key_speedup", key_speed_up, SDLK_KP8),
+  KEYBIND("key_speeddown", key_speed_down, SDLK_KP2),
+  KEYBIND("key_speeddefault", key_speed_default, SDLK_KP5),
+  KEYBIND("key_demo_skip", key_demo_skip, SDLK_KP6),
+  KEYBIND("key_level_restart", key_level_restart, SDLK_KP8),
+  KEYBIND("key_demo_endlevel", key_demo_endlevel, SDLK_KP1),
+  KEYBIND("key_nextlevel", key_nextlevel, SDLK_KP6),
+  KEYBIND("key_demo_jointogame", key_demo_jointogame, SDLK_KP_ENTER),
+  KEYBIND("key_walkcamera", key_walkcamera, SDLK_KP_MULTIPLY),
+  KEYBIND("key_showalive", key_showalive, SDLK_KP_DIVIDE),
+  {"speed_step", {&speed_step}, {0}, 0, 1000, def_int, ss_none},
 
   {"Prboom-plus heads-up display settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"hudadd_gamespeed", {&hudadd_gamespeed},  {0},0,1,
