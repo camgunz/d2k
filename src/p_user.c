@@ -36,6 +36,7 @@
 #include "r_fps.h"
 #include "g_game.h"
 #include "i_main.h"
+#include "i_system.h"
 #include "lprintf.h"
 #include "e6y.h"//e6y
 
@@ -670,7 +671,7 @@ void P_Printf(int playernum, const char *fmt, ...) {
   msg->content = g_strdup_vprintf(fmt, args);
   va_end(args);
 
-  msg->timestamp = I_GetTime();
+  msg->timestamp = I_GetTicks();
   msg->centered = false;
   msg->processed = true;
   msg->sfx = 0;

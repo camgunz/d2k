@@ -157,9 +157,6 @@ static void tempbuf_vprintf(const char *fmt, va_list args) {
 
   markup_string = g_markup_vprintf_escaped(fmt, args);
 
-  if (nodrawers)
-    printf("%s", markup_string);
-
   g_string_append(tempbuf, markup_string);
   g_free(markup_string);
 }
@@ -170,9 +167,6 @@ static void tempbuf_mvprintf(const char *fmt, va_list args) {
 
   if (tempbuf == NULL)
     tempbuf = g_string_new("");
-
-  if (nodrawers)
-    vprintf(fmt, args);
 
   g_string_append_vprintf(tempbuf, fmt, args);
 }
@@ -188,9 +182,6 @@ static void tempbuf_echo(const char *message) {
 
   markup_message = g_markup_escape_text(message, -1);
 
-  if (nodrawers)
-    puts(markup_message);
-
   g_string_append(tempbuf, markup_message);
   g_string_append(tempbuf, "\n");
 
@@ -203,9 +194,6 @@ static void tempbuf_mecho(const char *message) {
 
   if (tempbuf == NULL)
     tempbuf = g_string_new("");
-
-  if (nodrawers)
-    puts(message);
 
   g_string_append(tempbuf, message);
   g_string_append(tempbuf, "\n");
@@ -222,9 +210,6 @@ static void tempbuf_write(const char *message) {
 
   markup_message = g_markup_escape_text(message, -1);
 
-  if (nodrawers)
-    printf("%s", message);
-
   g_string_append(tempbuf, markup_message);
 
   g_free(markup_message);
@@ -236,9 +221,6 @@ static void tempbuf_mwrite(const char *message) {
 
   if (tempbuf == NULL)
     tempbuf = g_string_new("");
-
-  if (nodrawers)
-    printf("%s", message);
 
   g_string_append(tempbuf, message);
 }

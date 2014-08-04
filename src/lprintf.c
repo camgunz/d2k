@@ -297,21 +297,17 @@ void Done_ConsoleWin(void)
 #endif
 
 void lprintf(OutputLevels pri, const char *s, ...) {
-  va_list args, console_args, print_args, error_args;
+  va_list args, console_args, error_args;
 
   va_start(args, s);
 
   va_copy(console_args, args);
-  va_copy(print_args, args);
   va_copy(error_args, args);
 
-  C_VPrintf(s, console_args);
-
   if (pri & cons_output_mask)
-    vfprintf(stdout, s, print_args);
+    C_VPrintf(s, console_args);
 
-  if (pri & cons_error_mask)
-    vfprintf(stderr, s, error_args);
+  /* CG: TODO: Removed error mask handling, re-add it? */
 
   va_end(args);
 }
