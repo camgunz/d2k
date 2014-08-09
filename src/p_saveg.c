@@ -44,6 +44,7 @@
 #include "s_advsound.h"
 #include "e6y.h"//e6y
 
+#define MAX_PLAYER_MESSAGE_SIZE 256
 #define MAX_COMMAND_COUNT 10000
 
 typedef enum {
@@ -139,7 +140,16 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufWriteInt(savebuffer, player->killcount);
   M_PBufWriteInt(savebuffer, player->itemcount);
   M_PBufWriteInt(savebuffer, player->secretcount);
-  M_PBufWriteStringArray(savebuffer, &player->messages);
+  M_PBufWriteInt(savebuffer, M_OBufGetObjectCount(&player->messages));
+  OBUF_FOR_EACH(&player->messages, entry) {
+    player_message_t *msg = (player_message_t *)entry.obj;
+
+    M_PBufWriteString(savebuffer, msg->content, strlen(msg->content));
+    M_PBufWriteLong(savebuffer, msg->tics);
+    M_PBufWriteBool(savebuffer, msg->centered);
+    M_PBufWriteBool(savebuffer, msg->processed);
+    M_PBufWriteInt(savebuffer, msg->sfx);
+  }
   M_PBufWriteInt(savebuffer, player->damagecount);
   M_PBufWriteInt(savebuffer, player->bonuscount);
   M_PBufWriteInt(savebuffer, player->extralight);
@@ -212,25 +222,27 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
 }
 
 static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
-  static buf_t msg;
-  static buf_t name;
-  static bool initialized_msg = false;
-  static bool initialized_name = false;
+  static buf_t player_message_buf;
+  static buf_t name_buf;
+  static bool player_message_buf_initialized = false;
+  static bool name_buf_initialized = false;
 
   int command_count = 0;
+  int message_count = 0;
 
-  if (!initialized_msg) {
-    M_BufferInitWithCapacity(&msg, MAX_MESSAGE_LENGTH);
-    initialized_msg = true;
+  if (!player_message_buf_initialized) {
+    M_BufferInit(&player_message_buf);
+    player_message_buf_initialized = true;
   }
 
-  if (!initialized_name) {
-    M_BufferInitWithCapacity(&msg, MAX_NAME_LENGTH);
-    initialized_name = true;
+  if (!name_buf_initialized) {
+    M_BufferInitWithCapacity(&name_buf, MAX_NAME_LENGTH);
+    name_buf_initialized = true;
   }
 
-  M_BufferClear(&msg);
-  M_BufferClear(&name);
+  M_BufferClear(&name_buf);
+
+  P_ClearMessages(player - players);
 
   M_PBufReadInt(savebuffer, (int *)&player->playerstate);
   M_PBufReadChar(savebuffer, &player->cmd.forwardmove);
@@ -268,8 +280,22 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufReadInt(savebuffer, &player->killcount);
   M_PBufReadInt(savebuffer, &player->itemcount);
   M_PBufReadInt(savebuffer, &player->secretcount);
-  P_ClearMessages(player - players);
-  M_PBufReadStringArray(savebuffer, &player->messages, 0, 0);
+  M_PBufReadInt(savebuffer, &message_count);
+  for (int i = 0; i < message_count; i++) {
+    player_message_t *msg = malloc(sizeof(player_message_t));
+
+    if (msg == NULL)
+      I_Error("P_UnArchivePlayer: Allocating new player message failed");
+
+    M_BufferClear(&player_message_buf);
+    M_PBufReadString(savebuffer, &player_message_buf, 0);
+    M_BufferSeek(&player_message_buf, 0);
+    M_BufferReadStringDup(&player_message_buf, &msg->content);
+    M_PBufReadLong(savebuffer, &msg->tics);
+    M_PBufReadBool(savebuffer, &msg->centered);
+    M_PBufReadBool(savebuffer, &msg->processed);
+    M_PBufReadInt(savebuffer, &msg->sfx);
+  }
   M_PBufReadInt(savebuffer, &player->damagecount);
   M_PBufReadInt(savebuffer, &player->bonuscount);
   M_PBufReadInt(savebuffer, &player->extralight);
@@ -305,13 +331,13 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufReadInt(savebuffer, (int *)&player->prev_viewangle);
   M_PBufReadInt(savebuffer, (int *)&player->prev_viewpitch);
   M_PBufReadInt(savebuffer, &player->jumpTics);
-  M_PBufReadString(savebuffer, &name, MAX_NAME_LENGTH);
-  if (M_BufferGetSize(&name) > 0) {
+  M_PBufReadString(savebuffer, &name_buf, MAX_NAME_LENGTH);
+  if (M_BufferGetSize(&name_buf) > 0) {
     if (player->name)
       free(player->name);
 
-    M_BufferSeek(&name, 0);
-    M_BufferReadStringDup(&name, &player->name);
+    M_BufferSeek(&name_buf, 0);
+    M_BufferReadStringDup(&name_buf, &player->name);
   }
   M_PBufReadUChar(savebuffer, &player->team);
   M_PBufReadInt(savebuffer, &command_count);

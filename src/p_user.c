@@ -28,17 +28,18 @@
 #include "doomstat.h"
 #include "d_event.h"
 #include "c_main.h"
-#include "r_main.h"
+#include "e6y.h"//e6y
+#include "g_game.h"
+#include "hu_stuff.h"
+#include "i_main.h"
+#include "i_system.h"
+#include "lprintf.h"
 #include "p_map.h"
 #include "p_spec.h"
 #include "p_user.h"
 #include "r_demo.h"
 #include "r_fps.h"
-#include "g_game.h"
-#include "i_main.h"
-#include "i_system.h"
-#include "lprintf.h"
-#include "e6y.h"//e6y
+#include "r_main.h"
 
 #include "n_net.h"
 #include "n_main.h"
@@ -661,21 +662,31 @@ void P_RunPlayerCommands(player_t *player) {
 }
 
 void P_Printf(int playernum, const char *fmt, ...) {
+  gchar *gcontent;
   va_list args;
-  player_message_t *msg = malloc(sizeof(player_message_t));
+  player_message_t *msg;
+
+  if (strlen(fmt) <= 0)
+    return;
+
+  msg = malloc(sizeof(player_message_t));
 
   if (msg == NULL)
     I_Error("P_Printf: malloc failed");
 
   va_start(args, fmt);
-  msg->content = g_strdup_vprintf(fmt, args);
+  gcontent = g_strdup_vprintf(fmt, args);
   va_end(args);
 
-  msg->timestamp = I_GetTicks();
+  msg->content = strdup(gcontent);
+  msg->tics = HU_MSGTIMEOUT;
   msg->centered = false;
   msg->processed = true;
   msg->sfx = 0;
 
+  g_free(gcontent);
+
+  M_OBufConsolidate(&players[playernum].messages);
   M_OBufAppend(&players[playernum].messages, msg);
 
   if (playernum == consoleplayer)
@@ -683,17 +694,31 @@ void P_Printf(int playernum, const char *fmt, ...) {
 }
 
 void P_Echo(int playernum, const char *message) {
-  player_message_t *msg = malloc(sizeof(player_message_t));
+  gchar *gcontent;
+  player_message_t *msg;
+
+  if (!message)
+    return;
+  
+  if (strlen(message) <= 0)
+    return;
+
+  msg = malloc(sizeof(player_message_t));
 
   if (msg == NULL)
     I_Error("P_Echo: malloc failed");
 
-  msg->content = g_strdup_printf("%s\n", message);
-  msg->timestamp = I_GetTicks();
+  gcontent = g_strdup_printf("%s\n", message);
+
+  msg->content = strdup(gcontent);
+  msg->tics = HU_MSGTIMEOUT;
   msg->centered = false;
   msg->processed = true;
   msg->sfx = 0;
 
+  g_free(gcontent);
+
+  M_OBufConsolidate(&players[playernum].messages);
   M_OBufAppend(&players[playernum].messages, msg);
 
   if (playernum == consoleplayer)
@@ -701,17 +726,23 @@ void P_Echo(int playernum, const char *message) {
 }
 
 void P_Write(int playernum, const char *message) {
-  player_message_t *msg = malloc(sizeof(player_message_t));
+  player_message_t *msg;
+  
+  if (strlen(message) <= 0)
+    return;
+
+  msg = malloc(sizeof(player_message_t));
 
   if (msg == NULL)
     I_Error("P_Write: malloc failed");
 
-  msg->content = g_strdup(message);
-  msg->timestamp = I_GetTicks();
+  msg->content = strdup(message);
+  msg->tics = HU_MSGTIMEOUT;
   msg->centered = false;
   msg->processed = true;
   msg->sfx = 0;
 
+  M_OBufConsolidate(&players[playernum].messages);
   M_OBufAppend(&players[playernum].messages, msg);
 
   if (playernum == consoleplayer)
@@ -719,21 +750,31 @@ void P_Write(int playernum, const char *message) {
 }
 
 void P_CenterPrintf(int playernum, int sfx, const char *fmt, ...) {
+  gchar *gcontent;
   va_list args;
-  player_message_t *msg = malloc(sizeof(player_message_t));
+  player_message_t *msg;
+  
+  if (strlen(fmt) <= 0)
+    return;
+
+  msg = malloc(sizeof(player_message_t));
 
   if (msg == NULL)
     I_Error("P_Printf: malloc failed");
 
   va_start(args, fmt);
-  msg->content = g_strdup_vprintf(fmt, args);
+  gcontent = g_strdup_vprintf(fmt, args);
   va_end(args);
 
-  msg->timestamp = I_GetTicks();
+  msg->content = strdup(gcontent);
+  msg->tics = HU_MSGTIMEOUT;
   msg->centered = true;
   msg->processed = true;
   msg->sfx = sfx;
 
+  g_free(gcontent);
+
+  M_OBufConsolidate(&players[playernum].messages);
   M_OBufAppend(&players[playernum].messages, msg);
 
   if (playernum == consoleplayer)
@@ -741,17 +782,28 @@ void P_CenterPrintf(int playernum, int sfx, const char *fmt, ...) {
 }
 
 void P_CenterEcho(int playernum, int sfx, const char *message) {
-  player_message_t *msg = malloc(sizeof(player_message_t));
+  gchar *gcontent;
+  player_message_t *msg;
+  
+  if (strlen(message) <= 0)
+    return;
+
+  msg = malloc(sizeof(player_message_t));
 
   if (msg == NULL)
     I_Error("P_Echo: malloc failed");
 
-  msg->content = g_strdup_printf("%s\n", message);
-  msg->timestamp = I_GetTicks();
+  gcontent = g_strdup_printf("%s\n", message);
+
+  msg->content = strdup(gcontent);
+  msg->tics = HU_MSGTIMEOUT;
   msg->centered = true;
   msg->processed = true;
   msg->sfx = sfx;
 
+  g_free(gcontent);
+
+  M_OBufConsolidate(&players[playernum].messages);
   M_OBufAppend(&players[playernum].messages, msg);
 
   if (playernum == consoleplayer)
@@ -759,75 +811,113 @@ void P_CenterEcho(int playernum, int sfx, const char *message) {
 }
 
 void P_CenterWrite(int playernum, int sfx, const char *message) {
-  player_message_t *msg = malloc(sizeof(player_message_t));
+  gchar *gcontent;
+  player_message_t *msg;
+  
+  if (strlen(message) <= 0)
+    return;
+
+  msg = malloc(sizeof(player_message_t));
 
   if (msg == NULL)
     I_Error("P_Write: malloc failed");
 
-  msg->content = g_strdup(message);
-  msg->timestamp = I_GetTicks();
+  gcontent = g_strdup(message);
+
+  msg->content = strdup(gcontent);
+  msg->tics = HU_MSGTIMEOUT;
   msg->centered = true;
   msg->processed = true;
   msg->sfx = sfx;
 
+  g_free(gcontent);
+
+  M_OBufConsolidate(&players[playernum].messages);
   M_OBufAppend(&players[playernum].messages, msg);
 
   if (playernum == consoleplayer)
     C_Write(msg->content);
 }
 
-void P_CenterQPrintf(int playernum, int sfx, const char *fmt, ...) {
+void P_CenterSPrintf(int playernum, int sfx, const char *fmt, ...) {
+  gchar *gcontent;
   va_list args;
-  player_message_t *msg = malloc(sizeof(player_message_t));
+  player_message_t *msg;
+  
+  if (strlen(fmt) <= 0)
+    return;
+
+  msg = malloc(sizeof(player_message_t));
 
   if (msg == NULL)
     I_Error("P_Printf: malloc failed");
 
   va_start(args, fmt);
-  msg->content = g_strdup_vprintf(fmt, args);
+  gcontent = g_strdup_vprintf(fmt, args);
   va_end(args);
 
-  msg->timestamp = 0;
+  msg->content = strdup(gcontent);
+  msg->tics = 0;
   msg->centered = true;
   msg->processed = true;
   msg->sfx = sfx;
 
+  g_free(gcontent);
+
+  M_OBufConsolidate(&players[playernum].messages);
   M_OBufAppend(&players[playernum].messages, msg);
 
   if (playernum == consoleplayer)
     C_Write(msg->content);
 }
 
-void P_CenterQEcho(int playernum, int sfx, const char *message) {
-  player_message_t *msg = malloc(sizeof(player_message_t));
+void P_CenterSEcho(int playernum, int sfx, const char *message) {
+  gchar *gcontent;
+  player_message_t *msg;
+  
+  if (strlen(message) <= 0)
+    return;
+
+  msg = malloc(sizeof(player_message_t));
 
   if (msg == NULL)
     I_Error("P_Echo: malloc failed");
 
-  msg->content = g_strdup_printf("%s\n", message);
-  msg->timestamp = 0;
+  gcontent = g_strdup_printf("%s\n", message);
+
+  msg->content = strdup(gcontent);
+  msg->tics = 0;
   msg->centered = true;
   msg->processed = true;
   msg->sfx = sfx;
 
+  g_free(gcontent);
+
+  M_OBufConsolidate(&players[playernum].messages);
   M_OBufAppend(&players[playernum].messages, msg);
 
   if (playernum == consoleplayer)
     C_Write(msg->content);
 }
 
-void P_CenterQWrite(int playernum, int sfx, const char *message) {
-  player_message_t *msg = malloc(sizeof(player_message_t));
+void P_CenterSWrite(int playernum, int sfx, const char *message) {
+  player_message_t *msg;
+  
+  if (strlen(message) <= 0)
+    return;
+
+  msg = malloc(sizeof(player_message_t));
 
   if (msg == NULL)
     I_Error("P_Write: malloc failed");
 
-  msg->content = g_strdup(message);
-  msg->timestamp = 0;
+  msg->content = strdup(message);
+  msg->tics = 0;
   msg->centered = true;
   msg->processed = true;
   msg->sfx = sfx;
 
+  M_OBufConsolidate(&players[playernum].messages);
   M_OBufAppend(&players[playernum].messages, msg);
 
   if (playernum == consoleplayer)
@@ -838,11 +928,10 @@ void P_ClearMessages(int playernum) {
   OBUF_FOR_EACH(&players[playernum].messages, entry) {
     player_message_t *msg = (player_message_t *)entry.obj;
 
-    g_free(msg->content);
-    free(msg);
+    free(msg->content);
   }
 
-  M_OBufClear(&players[playernum].messages);
+  M_OBufFreeEntriesAndClear(&players[playernum].messages);
 }
 
 /* vi: set et ts=2 sw=2: */

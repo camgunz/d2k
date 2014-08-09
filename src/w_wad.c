@@ -240,7 +240,9 @@ static int W_CoalesceMarkedResource(const char *start_marker,
       }
     }
     else {
-      lumpinfo[num_unmarked++] = *lump;       // else move down THIS list
+      // else move down THIS list
+      memmove(lumpinfo + num_unmarked, lump, sizeof(lumpinfo_t));
+      num_unmarked++;
     }
   }
 

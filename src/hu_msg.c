@@ -215,6 +215,7 @@ void HU_MessageWidgetRebuild(message_widget_t *mw, void *render_context) {
 
   desc = pango_font_description_from_string(mw->font_description);
 
+  pango_layout_set_attributes(mw->layout, NULL);
   pango_layout_set_markup(mw->layout, mw->buf->str, -1);
   pango_layout_set_font_description(mw->layout, desc);
   pango_layout_set_width(mw->layout, mw->width * PANGO_SCALE);

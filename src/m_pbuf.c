@@ -705,7 +705,7 @@ dboolean M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit) {
     return false;
   }
 
-  if (obj.as.str_size > limit) {
+  if (limit != 0 && obj.as.str_size > limit) {
     P_Echo(consoleplayer, "M_PBufReadString: String too long.");
     return false;
   }

@@ -639,11 +639,14 @@ void S_StopChannel(int cnum)
 int S_AdjustSoundParams(mobj_t *listener, mobj_t *source,
                         int *vol, int *sep, int *pitch)
 {
-  fixed_t adx, ady,approx_dist;
+  fixed_t adx, ady, approx_dist;
   angle_t angle;
 
   //jff 1/22/98 return if sound is not enabled
   if (!snd_card || nosfxparm)
+    return 0;
+
+  if (!source)
     return 0;
 
   // e6y

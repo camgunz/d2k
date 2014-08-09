@@ -27,10 +27,10 @@
 #include "d_player.h"
 
 typedef struct player_message_s {
-  uint64_t timestamp;
   char *content;
-  bool centered;
-  bool processed;
+  int64_t tics;
+  dboolean centered;
+  dboolean processed;
   int sfx;
 } player_message_t;
 

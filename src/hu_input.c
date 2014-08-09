@@ -370,6 +370,7 @@ void HU_InputWidgetRebuild(input_widget_t *iw, void *render_context) {
 
   HU_InputWidgetGetSize(iw, &width, &height);
 
+  pango_layout_set_attributes(iw->layout, NULL);
   pango_layout_set_text(iw->layout, iw->buf->str, -1);
   pango_layout_set_font_description(iw->layout, desc);
   pango_layout_set_width(iw->layout, -1);

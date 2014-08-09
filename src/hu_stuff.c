@@ -43,6 +43,7 @@
 #include "hu_stuff.h"
 #include "hu_tracers.h"
 #include "i_main.h"
+#include "i_system.h"
 #include "i_video.h"
 #include "lprintf.h"
 #include "m_file.h"
@@ -156,12 +157,6 @@ static message_widget_t *w_centermsg;
 static chat_widget_t *w_chat;
 
 static hu_textline_t  w_title;
-/*
-static hu_stext_t     w_message;
-static hu_itext_t     w_chat;
-static hu_itext_t     w_inputbuffer[MAXPLAYERS];
-static hu_mtext_t     w_rtext;  //jff 2/26/98 text message refresh widget
-*/
 static hu_textline_t  w_coordx; //jff 2/16/98 new coord widget for automap
 static hu_textline_t  w_coordy; //jff 3/3/98 split coord widgets automap
 static hu_textline_t  w_coordz; //jff 3/3/98 split coord widgets automap
@@ -325,6 +320,8 @@ void HU_Init(void) {
   int   i;
   int   j;
   char  buffer[9];
+  hu_color_t white = {1.0f, 1.0f, 1.0f, 1.0f};
+  hu_color_t grey  = {0.0f, 0.0f, 0.0f, 0.9f};
 
   shiftxform = english_shiftxform;
 
@@ -430,6 +427,26 @@ void HU_Init(void) {
 
   I_ResetRenderContext();
 
+  // create the message widget
+  // messages to player in upper-left of screen
+  w_messages = HU_MessageWidgetNew(
+    I_GetRenderContext(), HU_MSGX, HU_MSGY, REAL_SCREENWIDTH, 0, 0
+  );
+  HU_MessageWidgetSetHeightByLines(w_messages, HU_MSGHEIGHT);
+
+  w_centermsg = HU_MessageWidgetNew(
+    I_GetRenderContext(), HU_CENTERMSGX, HU_CENTERMSGY, REAL_SCREENWIDTH, 0, 0
+  );
+  HU_MessageWidgetSetHeightByLines(w_centermsg, 2);
+
+  w_chat = HU_ChatWidgetNew(
+    I_GetRenderContext(), 0, 0, REAL_SCREENWIDTH, 0, send_chat_message
+  );
+  HU_ChatWidgetMoveToBottom(w_chat, REAL_SCREENHEIGHT);
+  HU_ChatWidgetSetHeightByLines(w_chat, 1);
+  HU_ChatWidgetSetFGColor(w_chat, white);
+  HU_ChatWidgetSetBGColor(w_chat, grey);
+
   HU_Start();
 }
 
@@ -458,8 +475,6 @@ static void HU_Stop(void) {
 void HU_Start(void) {
   int   i;
   const char* s; /* cph - const */
-  hu_color_t white = {1.0f, 1.0f, 1.0f, 1.0f};
-  hu_color_t grey  = {0.0f, 0.0f, 0.0f, 0.9f};
 
   if (headsupactive)                    // stop before starting
     HU_Stop();
@@ -472,12 +487,8 @@ void HU_Start(void) {
   message_dontfuckwithme = false;
   message_nottobefuckedwith = false;
 
-  // create the message widget
-  // messages to player in upper-left of screen
-  w_messages = HU_MessageWidgetNew(
-    I_GetRenderContext(), HU_MSGX, HU_MSGY, REAL_SCREENWIDTH, 0, 0
-  );
-  HU_MessageWidgetSetHeightByLines(w_messages, 4);
+  HU_MessageWidgetClear(w_messages);
+  HU_MessageWidgetRebuild(w_messages, I_GetRenderContext());
 
   //jff 2/16/98 added some HUD widgets
   // create the map title widget - map title display in lower left of automap
@@ -715,8 +726,8 @@ void HU_Start(void) {
 
   // create the hud text refresh widget
   // scrolling display of last hud_msg_lines messages received
-  if (hud_msg_lines>HU_MAXMESSAGES)
-    hud_msg_lines=HU_MAXMESSAGES;
+  if (hud_msg_lines > HU_MAXMESSAGES)
+    hud_msg_lines = HU_MAXMESSAGES;
   //jff 4/21/98 if setup has disabled message list while active, turn it off
   message_list = hud_msg_lines > 1; //jff 8/8/98 initialize both ways
   //jff 2/26/98 add the text refresh widget initialization
@@ -859,10 +870,8 @@ void HU_Start(void) {
     VPT_NONE
   );
 
-  w_centermsg = HU_MessageWidgetNew(
-    I_GetRenderContext(), HU_CENTERMSGX, HU_CENTERMSGY, REAL_SCREENWIDTH, 0, 0
-  );
-  HU_MessageWidgetSetHeightByLines(w_centermsg, 2);
+  HU_MessageWidgetClear(w_centermsg);
+  HU_MessageWidgetRebuild(w_centermsg, I_GetRenderContext());
 
   HUlib_initTextLine
   (
@@ -921,13 +930,7 @@ void HU_Start(void) {
   //jff 2/17/98 initialize kills/items/secret widget
   strcpy(hud_monsecstr, "STS ");
 
-  w_chat = HU_ChatWidgetNew(
-    I_GetRenderContext(), 0, 0, REAL_SCREENWIDTH, 0, send_chat_message
-  );
-  HU_ChatWidgetMoveToBottom(w_chat, REAL_SCREENHEIGHT);
-  HU_ChatWidgetSetHeightByLines(w_chat, 1);
-  HU_ChatWidgetSetFGColor(w_chat, white);
-  HU_ChatWidgetSetBGColor(w_chat, grey);
+  HU_ChatWidgetClear(w_chat);
 
   HU_init_crosshair();
 
@@ -2481,9 +2484,6 @@ void HU_Erase(void) {
   HUlib_eraseTextLine(&w_title);
 }
 
-#define MESSAGE_TIMEOUT 4000
-#define MAX_MESSAGE_COUNT 4
-
 //
 // HU_Ticker()
 //
@@ -2492,28 +2492,40 @@ void HU_Erase(void) {
 // Passed nothing, returns nothing
 //
 void HU_Ticker(void) {
-  int current_ms = I_GetTicks();
   int message_count = 0;
   int center_message_count = 0;
   char *center_message = NULL;
+
+  return;
 
   HU_MessageWidgetClear(w_centermsg);
   HU_MessageWidgetClear(w_messages);
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     player_t *player = &players[i];
+    int player_message_count = M_OBufGetObjectCount(&player->messages);
+
+    if (!playeringame)
+      continue;
+
+    if (player_message_count <= 0)
+      continue;
 
     M_OBufConsolidate(&player->messages);
+
+    printf("HU_Ticker: Processing %d messages for %d\n", player_message_count, i);
 
     OBUF_FOR_EACH(&player->messages, entry) {
       player_message_t *msg = (player_message_t *)entry.obj;
 
-      if (msg->timestamp == 0)
+      if (msg->tics == 0)
         continue;
 
-      if ((current_ms - msg->timestamp) > MESSAGE_TIMEOUT) {
+      msg->tics--;
+
+      if (msg->tics == 0) {
         M_OBufRemove(&player->messages, entry.index);
-        g_free(msg->content);
+        free(msg->content);
         free(msg);
         entry.index--;
       }
@@ -2522,10 +2534,8 @@ void HU_Ticker(void) {
     OBUF_FOR_EACH(&player->messages, entry) {
       player_message_t *msg = (player_message_t *)entry.obj;
 
-      if (msg->centered)
-        continue;
-
-      message_count++;
+      if (!msg->centered)
+        message_count++;
     }
 
     OBUF_FOR_EACH(&player->messages, entry) {
@@ -2534,7 +2544,7 @@ void HU_Ticker(void) {
       if (msg->centered)
         continue;
 
-      if (message_count >= MAX_MESSAGE_COUNT) {
+      if (message_count > HU_MSGHEIGHT) {
         M_OBufRemove(&player->messages, entry.index);
         entry.index--;
       }
@@ -2545,10 +2555,8 @@ void HU_Ticker(void) {
     OBUF_FOR_EACH(&player->messages, entry) {
       player_message_t *msg = (player_message_t *)entry.obj;
 
-      if (!msg->centered)
-        continue;
-
-      center_message_count++;
+      if (msg->centered)
+        center_message_count++;
     }
 
     if (center_message_count > 1) {
@@ -2567,6 +2575,8 @@ void HU_Ticker(void) {
 
         center_message_count--;
         M_OBufRemove(&player->messages, entry.index);
+        free(msg->content);
+        free(msg);
         entry.index--;
       }
     }
