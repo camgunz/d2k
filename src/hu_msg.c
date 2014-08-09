@@ -289,9 +289,6 @@ void HU_MessageWidgetPrintf(message_widget_t *mw, const char *fmt, ...) {
 
   markup_string = g_markup_vprintf_escaped(fmt, args);
 
-  if (nodrawers)
-    printf("%s", markup_string);
-
   g_string_append(mw->buf, markup_string);
   g_free(markup_string);
 
@@ -309,9 +306,6 @@ void HU_MessageWidgetVPrintf(message_widget_t *mw, const char *fmt,
 
   markup_string = g_markup_vprintf_escaped(fmt, args);
 
-  if (nodrawers)
-    printf("%s", markup_string);
-
   g_string_append(mw->buf, markup_string);
   g_free(markup_string);
 
@@ -328,9 +322,6 @@ void HU_MessageWidgetMPrintf(message_widget_t *mw, const char *fmt, ...) {
 
   g_string_append_vprintf(mw->buf, fmt, args);
 
-  if (nodrawers)
-    vprintf(fmt, args);
-
   va_end(args);
 
   mw->needs_rebuilding = true;
@@ -343,9 +334,6 @@ void HU_MessageWidgetMVPrintf(message_widget_t *mw, const char *fmt,
 
   g_string_append_vprintf(mw->buf, fmt, args);
 
-  if (nodrawers)
-    vprintf(fmt, args);
-
   mw->needs_rebuilding = true;
 }
 
@@ -356,9 +344,6 @@ void HU_MessageWidgetEcho(message_widget_t *mw, const char *message) {
     return;
   
   markup_message = g_markup_escape_text(message, -1);
-
-  if (nodrawers)
-    puts(markup_message);
 
   g_string_append(mw->buf, markup_message);
   g_string_append(mw->buf, "\n");
@@ -371,9 +356,6 @@ void HU_MessageWidgetEcho(message_widget_t *mw, const char *message) {
 void HU_MessageWidgetMEcho(message_widget_t *mw, const char *message) {
   if (message == NULL)
     return;
-
-  if (nodrawers)
-    puts(message);
 
   g_string_append(mw->buf, message);
   g_string_append(mw->buf, "\n");
@@ -389,9 +371,6 @@ void HU_MessageWidgetWrite(message_widget_t *mw, const char *message) {
   
   markup_message = g_markup_escape_text(message, -1);
 
-  if (nodrawers)
-    printf("%s", message);
-
   g_string_append(mw->buf, markup_message);
 
   g_free(markup_message);
@@ -402,9 +381,6 @@ void HU_MessageWidgetWrite(message_widget_t *mw, const char *message) {
 void HU_MessageWidgetMWrite(message_widget_t *mw, const char *message) {
   if (message == NULL)
     return;
-
-  if (nodrawers)
-    printf("%s", message);
 
   g_string_append(mw->buf, message);
 

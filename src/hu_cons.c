@@ -280,42 +280,74 @@ void HU_ConsoleWidgetPrintf(console_widget_t *cons, const char *fmt, ...) {
   va_list args;
 
   va_start(args, fmt);
-  HU_MessageWidgetVPrintf(cons->scrollback, fmt, args);
+  if (nodrawers)
+    vprintf(fmt, args);
+  else
+    HU_MessageWidgetVPrintf(cons->scrollback, fmt, args);
   va_end(args);
 }
 
 void HU_ConsoleWidgetVPrintf(console_widget_t *cons, const char *fmt,
                                                      va_list args) {
-  HU_MessageWidgetVPrintf(cons->scrollback, fmt, args);
+  if (nodrawers)
+    vprintf(fmt, args);
+  else
+    HU_MessageWidgetVPrintf(cons->scrollback, fmt, args);
 }
 
 void HU_ConsoleWidgetMPrintf(console_widget_t *cons, const char *fmt, ...) {
   va_list args;
 
+  /* CG: TODO: Strip markup in nodrawers case */
+
   va_start(args, fmt);
-  HU_MessageWidgetMVPrintf(cons->scrollback, fmt, args);
+  if (nodrawers)
+    vprintf(fmt, args);
+  else
+    HU_MessageWidgetMVPrintf(cons->scrollback, fmt, args);
   va_end(args);
 }
 
 void HU_ConsoleWidgetMVPrintf(console_widget_t *cons, const char *fmt,
                                                       va_list args) {
-  HU_MessageWidgetMVPrintf(cons->scrollback, fmt, args);
+  /* CG: TODO: Strip markup in nodrawers case */
+
+  if (nodrawers)
+    vprintf(fmt, args);
+  else
+    HU_MessageWidgetMVPrintf(cons->scrollback, fmt, args);
 }
 
 void HU_ConsoleWidgetEcho(console_widget_t *cons, const char *message) {
-  HU_MessageWidgetEcho(cons->scrollback, message);
+  if (nodrawers)
+    puts(message);
+  else
+    HU_MessageWidgetEcho(cons->scrollback, message);
 }
 
 void HU_ConsoleWidgetMEcho(console_widget_t *cons, const char *message) {
-  HU_MessageWidgetMEcho(cons->scrollback, message);
+  /* CG: TODO: Strip markup in nodrawers case */
+
+  if (nodrawers)
+    puts(message);
+  else
+    HU_MessageWidgetMEcho(cons->scrollback, message);
 }
 
 void HU_ConsoleWidgetWrite(console_widget_t *cons, const char *message) {
-  HU_MessageWidgetWrite(cons->scrollback, message);
+  if (nodrawers)
+    printf("%s", message);
+  else
+    HU_MessageWidgetWrite(cons->scrollback, message);
 }
 
 void HU_ConsoleWidgetMWrite(console_widget_t *cons, const char *message) {
-  HU_MessageWidgetMWrite(cons->scrollback, message);
+  /* CG: TODO: Strip markup in nodrawers case */
+
+  if (nodrawers)
+    printf("%s", message);
+  else
+    HU_MessageWidgetMWrite(cons->scrollback, message);
 }
 
 /* vi: set et ts=2 sw=2: */

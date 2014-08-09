@@ -2,6 +2,10 @@
 
 ## Prototype
 
+1. Fix problems
+  * Messages widget no longer displays
+  * Handle player input during intermission
+
 1. Fix messaging
   * Add more scripting commands
     * `say`

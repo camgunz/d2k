@@ -39,6 +39,7 @@
 #include "p_spec.h"
 #include "p_tick.h"
 #include "p_saveg.h"
+#include "p_user.h"
 #include "r_main.h"
 #include "s_advsound.h"
 #include "e6y.h"//e6y
@@ -267,6 +268,7 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufReadInt(savebuffer, &player->killcount);
   M_PBufReadInt(savebuffer, &player->itemcount);
   M_PBufReadInt(savebuffer, &player->secretcount);
+  P_ClearMessages(player - players);
   M_PBufReadStringArray(savebuffer, &player->messages, 0, 0);
   M_PBufReadInt(savebuffer, &player->damagecount);
   M_PBufReadInt(savebuffer, &player->bonuscount);

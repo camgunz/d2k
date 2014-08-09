@@ -2481,7 +2481,7 @@ void HU_Erase(void) {
   HUlib_eraseTextLine(&w_title);
 }
 
-#define MESSAGE_TIMEOUT (TICRATE * 4)
+#define MESSAGE_TIMEOUT 4000
 #define MAX_MESSAGE_COUNT 4
 
 //
@@ -2492,7 +2492,7 @@ void HU_Erase(void) {
 // Passed nothing, returns nothing
 //
 void HU_Ticker(void) {
-  int current_ms = I_GetTime();
+  int current_ms = I_GetTicks();
   int message_count = 0;
   int center_message_count = 0;
   char *center_message = NULL;

@@ -677,7 +677,9 @@ void P_Printf(int playernum, const char *fmt, ...) {
   msg->sfx = 0;
 
   M_OBufAppend(&players[playernum].messages, msg);
-  C_Write(msg->content);
+
+  if (playernum == consoleplayer)
+    C_Write(msg->content);
 }
 
 void P_Echo(int playernum, const char *message) {
@@ -687,13 +689,15 @@ void P_Echo(int playernum, const char *message) {
     I_Error("P_Echo: malloc failed");
 
   msg->content = g_strdup_printf("%s\n", message);
-  msg->timestamp = I_GetTime();
+  msg->timestamp = I_GetTicks();
   msg->centered = false;
   msg->processed = true;
   msg->sfx = 0;
 
   M_OBufAppend(&players[playernum].messages, msg);
-  C_Write(msg->content);
+
+  if (playernum == consoleplayer)
+    C_Write(msg->content);
 }
 
 void P_Write(int playernum, const char *message) {
@@ -703,13 +707,15 @@ void P_Write(int playernum, const char *message) {
     I_Error("P_Write: malloc failed");
 
   msg->content = g_strdup(message);
-  msg->timestamp = I_GetTime();
+  msg->timestamp = I_GetTicks();
   msg->centered = false;
   msg->processed = true;
   msg->sfx = 0;
 
   M_OBufAppend(&players[playernum].messages, msg);
-  C_Write(msg->content);
+
+  if (playernum == consoleplayer)
+    C_Write(msg->content);
 }
 
 void P_CenterPrintf(int playernum, int sfx, const char *fmt, ...) {
@@ -723,13 +729,15 @@ void P_CenterPrintf(int playernum, int sfx, const char *fmt, ...) {
   msg->content = g_strdup_vprintf(fmt, args);
   va_end(args);
 
-  msg->timestamp = I_GetTime();
+  msg->timestamp = I_GetTicks();
   msg->centered = true;
   msg->processed = true;
   msg->sfx = sfx;
 
   M_OBufAppend(&players[playernum].messages, msg);
-  C_Write(msg->content);
+
+  if (playernum == consoleplayer)
+    C_Write(msg->content);
 }
 
 void P_CenterEcho(int playernum, int sfx, const char *message) {
@@ -739,13 +747,15 @@ void P_CenterEcho(int playernum, int sfx, const char *message) {
     I_Error("P_Echo: malloc failed");
 
   msg->content = g_strdup_printf("%s\n", message);
-  msg->timestamp = I_GetTime();
+  msg->timestamp = I_GetTicks();
   msg->centered = true;
   msg->processed = true;
   msg->sfx = sfx;
 
   M_OBufAppend(&players[playernum].messages, msg);
-  C_Write(msg->content);
+
+  if (playernum == consoleplayer)
+    C_Write(msg->content);
 }
 
 void P_CenterWrite(int playernum, int sfx, const char *message) {
@@ -755,13 +765,15 @@ void P_CenterWrite(int playernum, int sfx, const char *message) {
     I_Error("P_Write: malloc failed");
 
   msg->content = g_strdup(message);
-  msg->timestamp = I_GetTime();
+  msg->timestamp = I_GetTicks();
   msg->centered = true;
   msg->processed = true;
   msg->sfx = sfx;
 
   M_OBufAppend(&players[playernum].messages, msg);
-  C_Write(msg->content);
+
+  if (playernum == consoleplayer)
+    C_Write(msg->content);
 }
 
 void P_CenterQPrintf(int playernum, int sfx, const char *fmt, ...) {
@@ -781,7 +793,9 @@ void P_CenterQPrintf(int playernum, int sfx, const char *fmt, ...) {
   msg->sfx = sfx;
 
   M_OBufAppend(&players[playernum].messages, msg);
-  C_Write(msg->content);
+
+  if (playernum == consoleplayer)
+    C_Write(msg->content);
 }
 
 void P_CenterQEcho(int playernum, int sfx, const char *message) {
@@ -797,7 +811,9 @@ void P_CenterQEcho(int playernum, int sfx, const char *message) {
   msg->sfx = sfx;
 
   M_OBufAppend(&players[playernum].messages, msg);
-  C_Write(msg->content);
+
+  if (playernum == consoleplayer)
+    C_Write(msg->content);
 }
 
 void P_CenterQWrite(int playernum, int sfx, const char *message) {
@@ -813,7 +829,9 @@ void P_CenterQWrite(int playernum, int sfx, const char *message) {
   msg->sfx = sfx;
 
   M_OBufAppend(&players[playernum].messages, msg);
-  C_Write(msg->content);
+
+  if (playernum == consoleplayer)
+    C_Write(msg->content);
 }
 
 void P_ClearMessages(int playernum) {
@@ -821,6 +839,7 @@ void P_ClearMessages(int playernum) {
     player_message_t *msg = (player_message_t *)entry.obj;
 
     g_free(msg->content);
+    free(msg);
   }
 
   M_OBufClear(&players[playernum].messages);

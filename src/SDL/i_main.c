@@ -580,21 +580,23 @@ void I_SetProcessPriority(void)
         dwPriorityClass = REALTIME_PRIORITY_CLASS;
 
       if (SetPriorityClass(GetCurrentProcess(), dwPriorityClass) == 0)
-      {
         errbuf = WINError();
-      }
     }
 #else
     return;
 #endif
 
-    if (errbuf == NULL)
-    {
-      lprintf(LO_INFO, "I_SetProcessPriority: priority for the process is %d\n", process_priority);
+    if (errbuf == NULL) {
+      lprintf(LO_INFO,
+        "I_SetProcessPriority: priority for the process is %d\n",
+        process_priority
+      );
     }
-    else
-    {
-      lprintf(LO_ERROR, "I_SetProcessPriority: failed to set priority for the process (%s)\n", errbuf);
+    else {
+      lprintf(LO_ERROR,
+        "I_SetProcessPriority: failed to set priority for the process (%s)\n",
+        errbuf
+      );
     }
   }
 }
@@ -606,11 +608,12 @@ int main(int argc, char **argv)
 #ifdef SECURE_UID
   /* First thing, revoke setuid status (if any) */
   stored_euid = geteuid();
-  if (getuid() != stored_euid)
+  if (getuid() != stored_euid) {
     if (seteuid(getuid()) < 0)
       fprintf(stderr, "Failed to revoke setuid\n");
     else
-      fprintf(stderr, "Revoked uid %d\n",stored_euid);
+      fprintf(stderr, "Revoked uid %d\n", stored_euid);
+  }
 #endif
 
   myargc = argc;
@@ -626,7 +629,7 @@ int main(int argc, char **argv)
   // e6y: was moved from D_DoomMainSetup
   // init subsystems
   //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO,"M_LoadDefaults: Load system defaults.\n");
+  lprintf(LO_INFO, "M_LoadDefaults: Load system defaults.\n");
   M_LoadDefaults();              // load before initing other systems
 
 #ifdef _WIN32
@@ -638,7 +641,7 @@ int main(int argc, char **argv)
 #endif
 
   /* Version info */
-  lprintf(LO_INFO,"\n");
+  lprintf(LO_INFO, "\n");
   PrintVer();
 
   /* cph - Z_Close must be done after I_Quit, so we register it first. */
