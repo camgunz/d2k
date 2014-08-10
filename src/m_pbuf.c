@@ -23,12 +23,9 @@
 
 #include "z_zone.h"
 
-#include "cmp.h"
-
 #include "doomstat.h"
 #include "g_game.h"
 #include "lprintf.h"
-#include "m_pbuf.h"
 #include "p_user.h"
 
 static bool buf_read(cmp_ctx_t *ctx, void *data, size_t limit) {

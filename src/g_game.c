@@ -23,8 +23,6 @@
 
 #include "z_zone.h"
 
-#include "cmp.h"
-
 #include "doomstat.h"
 #include "d_net.h"
 #include "f_finale.h"
@@ -33,8 +31,8 @@
 #include "m_file.h"
 #include "m_misc.h"
 #include "m_menu.h"
-#include "m_pbuf.h"
 #include "m_random.h"
+#include "p_ident.h"
 #include "p_setup.h"
 #include "p_tick.h"
 #include "p_map.h"
@@ -291,8 +289,6 @@ void G_DoLoadGame(void) {
     P_Printf(consoleplayer, "Couldn't read file %s: %s\n", name, strerror(errno));
     return;
   }
-
-  printf("Reading savegame %s.\n", name);
 
   free(name);
 
@@ -944,6 +940,9 @@ static void G_DoLoadLevel(void) {
   // died.
   P_FreeSecNodeList();
 
+  /* CG 08/10/2014: Reset IDs */
+  P_IdentReset();
+
   P_SetupLevel(gameepisode, gamemap, 0, gameskill);
 
   if (!demoplayback) // Don't switch views if playing a demo
@@ -1130,6 +1129,8 @@ dboolean G_Responder(event_t *ev) {
 // Make ticcmd_ts for the players.
 //
 
+void M_LogRandom(void);
+
 void G_Ticker(void) {
   int i;
   static gamestate_t prevgamestate;
@@ -1150,7 +1151,7 @@ void G_Ticker(void) {
       G_DoReborn(i);
 
     if (players[i].playerstate == PST_DISCONNECTED) {
-      printf("Player %d disconnected\n", i);
+      C_Printf("Player %d disconnected\n", i);
 
       if (players[i].mo) {
         mobj_t *actor = players[i].mo;
@@ -1165,7 +1166,7 @@ void G_Ticker(void) {
       }
 
       playeringame[i] = false;
-      players[i].playerstate = PST_REBORN;
+      players[i].playerstate = PST_LIVE;
     }
   }
 
@@ -1210,7 +1211,7 @@ void G_Ticker(void) {
   if (paused & 2 || (!demoplayback && menuactive && !netgame)) {
     basetic++;  // For revenant tracers and RNG -- we must maintain sync
   }
-  else if (!(MULTINET && DELTASYNC)) {
+  else if (gamestate != GS_LEVEL || (!(MULTINET && DELTASYNC))) {
     for (i = 0; i < MAXPLAYERS; i++) {
       ticcmd_t *cmd = NULL;
 
@@ -1226,7 +1227,7 @@ void G_Ticker(void) {
       else if (democontinue) {
         G_ReadDemoContinueTiccmd(cmd);
       }
-      else if ((!MULTINET) || CMDSYNC) {
+      else if (gamestate != GS_LEVEL || ((!MULTINET) || CMDSYNC)) {
         dboolean found_command = false;
         cbuf_t *commands = &players[i].commands;
 
@@ -1358,6 +1359,8 @@ void G_Ticker(void) {
     case GS_BAD:
     break;
   }
+
+  M_LogRandom();
 }
 
 //
@@ -1572,64 +1575,62 @@ static dboolean G_CheckSpot(int playernum, mapthing_t *mthing) {
 // called at level load and each death
 //
 void G_DeathMatchSpawnPlayer(int playernum) {
-  int j, selections = deathmatch_p - deathmatchstarts;
+  int selections = deathmatch_p - deathmatchstarts;
 
-  if (selections < MAXPLAYERS)
+  if (selections < MAXPLAYERS) {
     I_Error("G_DeathMatchSpawnPlayer: Only %i deathmatch spots, %d required",
-    selections, MAXPLAYERS);
+      selections, MAXPLAYERS
+    );
+  }
 
-  for (j=0 ; j<20 ; j++)
-    {
-      int i = P_Random(pr_dmspawn) % selections;
-      if (G_CheckSpot (playernum, &deathmatchstarts[i]) )
-        {
-          deathmatchstarts[i].type = playernum+1;
-          P_SpawnPlayer (playernum, &deathmatchstarts[i]);
-          return;
-        }
+  for (int j = 0; j < 20; j++) {
+    int i = P_Random(pr_dmspawn) % selections;
+
+    if (G_CheckSpot(playernum, &deathmatchstarts[i])) {
+      deathmatchstarts[i].type = playernum + 1;
+      P_SpawnPlayer(playernum, &deathmatchstarts[i]);
+      return;
     }
+  }
 
   // no good spot, so the player will probably get stuck
-  P_SpawnPlayer (playernum, &playerstarts[playernum]);
+  P_SpawnPlayer(playernum, &playerstarts[playernum]);
 }
 
 //
 // G_DoReborn
 //
 void G_DoReborn(int playernum) {
-  if (!netgame) {
-    gameaction = ga_loadlevel;      // reload the level from scratch
-  }
-  else { // respawn at the start
-    int i;
+  if (netgame) {
+    // respawn at the start
 
     // first dissasociate the corpse
-    players[playernum].mo->player = NULL;
+    if (players[playernum].mo)
+      players[playernum].mo->player = NULL;
 
     // spawn at random spot if in death match
-    if (deathmatch)
-      {
-        G_DeathMatchSpawnPlayer (playernum);
-        return;
-      }
+    if (deathmatch) {
+      G_DeathMatchSpawnPlayer (playernum);
+      return;
+    }
 
-    if (G_CheckSpot (playernum, &playerstarts[playernum]) )
-      {
-        P_SpawnPlayer (playernum, &playerstarts[playernum]);
-        return;
-      }
+    if (G_CheckSpot(playernum, &playerstarts[playernum])) {
+      P_SpawnPlayer(playernum, &playerstarts[playernum]);
+      return;
+    }
 
     // try to spawn at one of the other players spots
-    for (i=0 ; i<MAXPLAYERS ; i++)
-      {
-        if (G_CheckSpot (playernum, &playerstarts[i]) )
-          {
-            P_SpawnPlayer (playernum, &playerstarts[i]);
-            return;
-          }
-        // he's going to be inside something.  Too bad.
+    for (int i = 0; i < MAXPLAYERS; i++) {
+      if (G_CheckSpot(playernum, &playerstarts[i])) {
+        P_SpawnPlayer(playernum, &playerstarts[i]);
+        return;
       }
-    P_SpawnPlayer (playernum, &playerstarts[playernum]);
+      // he's going to be inside something.  Too bad.
+    }
+    P_SpawnPlayer(playernum, &playerstarts[playernum]);
+  }
+  else {
+    gameaction = ga_loadlevel;      // reload the level from scratch
   }
 }
 
@@ -2467,44 +2468,47 @@ void G_WriteOptions(byte game_options[]) {
   game_options[i++] = (byte)((rngseed >>  8) & 0xff);
   game_options[i++] = (byte)( rngseed        & 0xff);
 
+
   // Options new to v2.03 begin here
-  game_options[i++] = monster_infighting;
+  if (mbf_features) {
+    game_options[i++] = monster_infighting;
 
 #ifdef DOGS
-  game_options[i++] = dogs;
+    game_options[i++] = dogs;
 #else
-  i++;
+    i++;
 #endif
 
-  i += 2;
+    i += 2;
 
-  game_options[i++] = (distfriend >> 8) & 0xff;  // killough 8/8/98
-  game_options[i++] =  distfriend       & 0xff;
+    game_options[i++] = (distfriend >> 8) & 0xff;  // killough 8/8/98
+    game_options[i++] =  distfriend       & 0xff;
 
-  game_options[i++] = monster_backing;       // killough 9/8/98
-  game_options[i++] = monster_avoid_hazards; // killough 9/9/98
-  game_options[i++] = monster_friction;      // killough 10/98
-  game_options[i++] = help_friends;          // killough 9/9/98
+    game_options[i++] = monster_backing;       // killough 9/8/98
+    game_options[i++] = monster_avoid_hazards; // killough 9/9/98
+    game_options[i++] = monster_friction;      // killough 10/98
+    game_options[i++] = help_friends;          // killough 9/9/98
 
 #ifdef DOGS
-  game_options[i++] = dog_jumping; // killough 10/98
+    game_options[i++] = dog_jumping; // killough 10/98
 #else
-  i++;
+    i++;
 #endif
 
-  game_options[i++] = monkeys;
+    game_options[i++] = monkeys;
 
-  // killough 10/98: a compatibility vector now
-  for (int o = 0; o < COMP_TOTAL; o++)
-    game_options[i + o] = (comp[o] != 0);
+    // killough 10/98: a compatibility vector now
+    for (int o = 0; o < COMP_TOTAL; o++)
+      game_options[i + o] = (comp[o] != 0);
 
-  i += COMP_TOTAL;
+    i += COMP_TOTAL;
 
-  // cph 2002/07/20
-  if ((compatibility_level >= prboom_2_compatibility) && forceOldBsp)
-    game_options[i++] = 1;
-  else
-    game_options[i++] = 0;
+    // cph 2002/07/20
+    if ((compatibility_level >= prboom_2_compatibility) && forceOldBsp)
+      game_options[i++] = 1;
+    else
+      game_options[i++] = 0;
+  }
 }
 
 /* Same, but read instead of write
@@ -2527,23 +2531,29 @@ void G_ReadOptions(byte game_options[]) {
   fastparm = game_options[i++];
   nomonsters = game_options[i++];
   demo_insurance = game_options[i++]; // killough 3/31/98
-  rngseed =                  (game_options[i++] & 0xFF);
-  rngseed = (rngseed << 8) + (game_options[i++] & 0xFF);
-  rngseed = (rngseed << 8) + (game_options[i++] & 0xFF);
-  rngseed = (rngseed << 8) + (game_options[i++] & 0xFF);
+  rngseed = ((game_options[i] & 0xFF) << 24) +
+            ((game_options[i + 1] & 0xFF) << 16) +
+            ((game_options[i + 2] & 0xFF) <<  8) +
+            ((game_options[i + 3] & 0xFF));
+
+  i += 4;
 
   // Options new to v2.03
   if (mbf_features) {
     monster_infighting = game_options[i++]; // killough 7/19/98
+
 #ifdef DOGS
     dogs = game_options[i++]; // killough 7/19/98
 #else
     dogs = 0;
+    i++;
 #endif
 
     i += 2;
 
-    distfriend = game_options[i++]; // killough 8/8/98
+    distfriend = ((game_options[i] & 0xFF) << 8) +
+                 ((game_options[i + 1] & 0xFF)); // killough 8/8/98
+    i += 2;
     monster_backing = game_options[i++]; // killough 9/8/98
     monster_avoid_hazards = game_options[i++]; // killough 9/9/98
     monster_friction = game_options[i++]; // killough 10/98
@@ -2553,6 +2563,7 @@ void G_ReadOptions(byte game_options[]) {
     dog_jumping = game_options[i++]; // killough 10/98
 #else
     dog_jumping = 0;
+    i++;
 #endif
 
     monkeys = game_options[i++];

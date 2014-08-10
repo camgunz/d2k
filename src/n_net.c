@@ -24,7 +24,6 @@
 #include "z_zone.h"
 
 #include <enet/enet.h>
-#include "cmp.h"
 
 #include "doomstat.h"
 #include "d_event.h"
@@ -34,7 +33,6 @@
 #include "g_game.h"
 #include "lprintf.h"
 #include "i_system.h"
-#include "m_pbuf.h"
 #include "m_swap.h"
 #include "p_user.h"
 

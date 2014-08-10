@@ -76,11 +76,22 @@ int (P_Random)(pr_class_t pr_class
   //lprintf(LO_DEBUG, "%.10d: %.10d - %s:%.5d\n", gametic, pr_class, file, line);
 #endif
 
-  int compat = pr_class == pr_misc ?
-    (rng.prndindex = (rng.prndindex + 1) & 255) :
-    (rng. rndindex = (rng. rndindex + 1) & 255) ;
-
+  int compat;
   unsigned long boom;
+
+  if (pr_class == pr_misc) {
+    rng.prndindex = (rng.prndindex + 1) & 255;
+    compat = rng.prndindex;
+  }
+  else {
+    rng.rndindex = (rng.rndindex + 1) & 255;
+    compat = rng.rndindex;
+
+    D_Log(LOG_SAVE, "(%d) P_Random: rndindex, pr_class: %d, %d\n",
+      gametic, rng.rndindex, pr_class
+    );
+  }
+
 
   // killough 3/31/98:
   // If demo sync insurance is not requested, use
@@ -130,6 +141,13 @@ void M_ClearRandom(void) {
     rng.seed[i] = seed *= 69069ul;     // each starting seed differently
 
   rng.prndindex = rng.rndindex = 0;    // clear two compatibility indices
+}
+
+void M_LogRandom(void) {
+  D_Log(LOG_SAVE, "(%d) RNG: %d, %d\n", gametic, rng.prndindex, rng.rndindex);
+  for (int i = 0; i < NUMPRCLASS; i++)
+    D_Log(LOG_SAVE, "  %d\n", rng.seed[i]);
+  D_Log(LOG_SAVE, "\n");
 }
 
 /* vi: set et ts=2 sw=2: */

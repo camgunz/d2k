@@ -23,8 +23,6 @@
 
 #include "z_zone.h"
 
-#include "cmp.h"
-
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
@@ -42,8 +40,8 @@
 #include "m_file.h"
 #include "m_misc.h"
 #include "m_menu.h"
-#include "m_pbuf.h"
 #include "p_checksum.h"
+#include "p_ident.h"
 #include "p_user.h"
 #include "i_main.h"
 #include "i_system.h"
@@ -773,8 +771,9 @@ static void D_DoomLoop(void) {
       P_Checksum(gametic);
       gametic++;
     }
-    else
+    else {
       N_TryRunTics(); // will run at least one tic
+    }
 
     // killough 3/16/98: change consoleplayer to displayplayer
     if (players[displayplayer].mo) // cph 2002/08/10
@@ -2326,35 +2325,38 @@ static void D_DoomMainSetup(void) {
   // The expectation is that these will be set in a .bex file
   //jff 9/3/98 use logical output routine
   if (*startup1)
-    lprintf(LO_INFO,"%s",startup1);
+    lprintf(LO_INFO, "%s", startup1);
   if (*startup2)
-    lprintf(LO_INFO,"%s",startup2);
+    lprintf(LO_INFO, "%s", startup2);
   if (*startup3)
-    lprintf(LO_INFO,"%s",startup3);
+    lprintf(LO_INFO, "%s", startup3);
   if (*startup4)
-    lprintf(LO_INFO,"%s",startup4);
+    lprintf(LO_INFO, "%s", startup4);
   if (*startup5)
-    lprintf(LO_INFO,"%s",startup5);
+    lprintf(LO_INFO, "%s", startup5);
   // End new startup strings
 
   //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO,"M_Init: Init miscellaneous info.\n");
+  lprintf(LO_INFO, "M_Init: Init miscellaneous info.\n");
   M_Init();
 
   //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO,"R_Init: Init DOOM refresh daemon - ");
+  lprintf(LO_INFO, "R_Init: Init DOOM refresh daemon - ");
   R_Init();
 
+  lprintf(LO_INFO, "\nP_IdentInit: Init actor IDs.\n");
+  P_IdentInit();
+
   //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO,"\nP_Init: Init Playloop state.\n");
+  lprintf(LO_INFO,"P_Init: Init Playloop state.\n");
   P_Init();
 
   //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO,"I_Init: Setting up machine state.\n");
+  lprintf(LO_INFO, "I_Init: Setting up machine state.\n");
   I_Init();
 
   //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO,"S_Init: Setting up sound.\n");
+  lprintf(LO_INFO, "S_Init: Setting up sound.\n");
   S_Init(snd_SfxVolume /* *8 */, snd_MusicVolume /* *8*/ );
 
   if ((!SERVER) && !(M_CheckParm("-nodraw") && M_CheckParm("-nosound")))
@@ -2363,7 +2365,7 @@ static void D_DoomMainSetup(void) {
   graphics_initialized = true;
 
   //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO,"HU_Init: Setting up heads up display.\n");
+  lprintf(LO_INFO, "HU_Init: Setting up heads up display.\n");
   HU_Init();
 
   // NSM
@@ -2371,7 +2373,7 @@ static void D_DoomMainSetup(void) {
     I_CapturePrep(myargv[p + 1]);
 
   //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO,"ST_Init: Init status bar.\n");
+  lprintf(LO_INFO, "ST_Init: Init status bar.\n");
   ST_Init();
 
   // CG 07/09/2014: Console

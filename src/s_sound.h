@@ -78,9 +78,15 @@ void S_ResumeSound(void);
 //
 // Updates music & sounds
 //
-void S_UpdateSounds(void* listener);
+void S_UpdateSounds(void *listener);
 void S_SetMusicVolume(int volume);
 void S_SetSfxVolume(int volume);
+
+//
+// Serialization routines
+//
+void S_SaveChannelOrigins(buf_t *origin_ids);
+void S_LoadChannelOrigins(buf_t *origin_ids);
 
 // machine-independent sound params
 extern int default_numChannels;

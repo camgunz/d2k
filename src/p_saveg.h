@@ -38,23 +38,12 @@ void P_ArchiveThinkers(pbuf_t *savebuffer);
 void P_UnArchiveThinkers(pbuf_t *savebuffer);
 void P_ArchiveSpecials(pbuf_t *savebuffer);
 void P_UnArchiveSpecials(pbuf_t *savebuffer);
-
-void P_UpdateMobjIndices(void);
-void P_ThinkerToIndex(void); /* phares 9/13/98: save soundtarget in savegame */
-void P_IndexToThinker(void); /* phares 9/13/98: save soundtarget in savegame */
-
 /* 1/18/98 killough: add RNG info to savegame */
 void P_ArchiveRNG(pbuf_t *savebuffer);
 void P_UnArchiveRNG(pbuf_t *savebuffer);
-
 /* 2/21/98 killough: add automap info to savegame */
 void P_ArchiveMap(pbuf_t *savebuffer);
 void P_UnArchiveMap(pbuf_t *savebuffer);
-
-#if 0
-void CheckSaveGame(size_t,const char*, int);              /* killough */
-#define CheckSaveGame(a) (CheckSaveGame)(a, __FILE__, __LINE__)
-#endif
 
 #endif
 

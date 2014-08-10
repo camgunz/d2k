@@ -24,7 +24,6 @@
 #include "z_zone.h"
 
 #include <enet/enet.h>
-#include "cmp.h"
 
 #include "doomdef.h"
 #include "d_deh.h"
@@ -35,7 +34,6 @@
 #include "i_system.h"
 #include "lprintf.h"
 #include "m_file.h"
-#include "m_pbuf.h"
 #include "p_pspr.h"
 #include "p_user.h"
 #include "w_wad.h"

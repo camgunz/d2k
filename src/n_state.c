@@ -26,10 +26,8 @@
 #include "z_zone.h"
 
 #include <enet/enet.h>
-#include "cmp.h"
 
 #include "doomstat.h"
-#include "m_pbuf.h"
 #include "m_avg.h"
 #include "m_delta.h"
 

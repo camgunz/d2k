@@ -557,7 +557,7 @@ void P_RunPlayerCommands(player_t *player) {
   }
   
   if (M_CBufGetObjectCount(&player->commands) == 0) {
-    /* [CG] Vector prediction... take 1*/
+    /* [CG] Vector prediction... take 1 */
     if (DELTACLIENT && player_index != consoleplayer && player->mo) {
       P_MobjThinker(player->mo);
       if (player_index != 0) {

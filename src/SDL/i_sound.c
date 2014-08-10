@@ -44,7 +44,6 @@
 #include <SDL_mixer.h>
 #endif
 
-#include "m_cbuf.h"
 #include "m_swap.h"
 #include "i_sound.h"
 #include "m_argv.h"

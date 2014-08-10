@@ -24,7 +24,6 @@
 #include "z_zone.h"
 
 #include <enet/enet.h>
-#include "cmp.h"
 
 #include "doomstat.h"
 #include "protocol.h"
@@ -39,7 +38,6 @@
 #include "i_video.h"
 #include "lprintf.h"
 #include "m_argv.h"
-#include "m_pbuf.h"
 #include "m_delta.h"
 #include "m_menu.h"
 #include "p_checksum.h"
@@ -54,7 +52,8 @@
 #include "n_proto.h"
 
 #define DEBUG_NET 0
-#define DEBUG_SYNC 1
+#define DEBUG_SYNC 0
+#define DEBUG_SAVE 1
 #define PRINT_BANDWIDTH_STATS 0
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
@@ -352,6 +351,9 @@ void N_InitNetGame(void) {
       if (DEBUG_NET && CLIENT)
         D_EnableLogChannel(LOG_NET, "client-net.log");
 
+      if (DEBUG_SAVE && CLIENT)
+        D_EnableLogChannel(LOG_SAVE, "client-save.log");
+
       if (DEBUG_SYNC && CLIENT)
         D_EnableLogChannel(LOG_SYNC, "client-sync.log");
 
@@ -430,6 +432,10 @@ void N_InitNetGame(void) {
 
       if (DEBUG_NET && SERVER)
         D_EnableLogChannel(LOG_NET, "server-net.log");
+
+      if (DEBUG_SAVE && SERVER)
+        D_EnableLogChannel(LOG_SAVE, "server-save.log");
+
       if (DEBUG_SYNC && SERVER)
         D_EnableLogChannel(LOG_SYNC, "server-sync.log");
     }

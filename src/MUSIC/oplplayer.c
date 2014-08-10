@@ -24,9 +24,7 @@
 //
 //-----------------------------------------------------------------------------
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "z_zone.h"
 
 #include "doomdef.h"
 #include "memio.h"
@@ -35,7 +33,6 @@
 #include "m_misc.h"
 #include "s_sound.h"
 #include "w_wad.h"
-#include "z_zone.h"
 
 #include "opl.h"
 #include "midifile.h"

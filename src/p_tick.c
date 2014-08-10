@@ -24,10 +24,8 @@
 #include "z_zone.h"
 
 #include <enet/enet.h>
-#include "cmp.h"
 
 #include "doomstat.h"
-#include "m_pbuf.h"
 #include "p_user.h"
 #include "p_spec.h"
 #include "p_tick.h"
@@ -324,12 +322,10 @@ void P_Ticker(void) {
   if (!setup_tic())
     return;
 
-  if (gamestate == GS_LEVEL) { // not if this is an intermission screen
-    if (DELTASYNC)
-      run_regular_tic();
-    else
-      run_regular_tic();
-  }
+  if (gamestate != GS_LEVEL)
+    return; // not if this is an intermission screen
+
+  run_regular_tic();
 
   run_thinkers_and_specials();
 }

@@ -28,12 +28,10 @@
 #include "z_zone.h"
 
 #include <xdiff.h>
-#include "cmp.h"
 
 #include "doomdef.h"
 #include "doomtype.h"
 #include "lprintf.h"
-#include "m_pbuf.h"
 #include "m_delta.h"
 
 #define BLKSIZE 1024

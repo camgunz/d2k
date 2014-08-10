@@ -368,8 +368,9 @@ ENDIF()
 ################################################# Compiler: Hardening ##########
 #===============================================================================
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  IF(GCC_OR_CLANG)
-    TRY_C_COMPILER_FLAG(-g FLAG_C_debug)
+  IF(CLANG)
+    SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
   ENDIF()
 ELSE()
   IF(GCC_OR_CLANG)
@@ -591,7 +592,7 @@ ENDIF()
 
 FIND_PACKAGE(WebP)
 IF(WEBP_FOUND)
-  INCLUDE_DIRECTORIES(&{WEBP_INCLUDE_DIR})
+  INCLUDE_DIRECTORIES(${WEBP_INCLUDE_DIR})
   SET(HAVE_WEBP TRUE)
 ELSE()
   MESSAGE(WARNING "WebP not found")
@@ -823,6 +824,7 @@ SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/p_enemy.c
   ${CMAKE_SOURCE_DIR}/src/p_floor.c
   ${CMAKE_SOURCE_DIR}/src/p_genlin.c
+  ${CMAKE_SOURCE_DIR}/src/p_ident.c
   ${CMAKE_SOURCE_DIR}/src/p_inter.c
   ${CMAKE_SOURCE_DIR}/src/p_lights.c
   ${CMAKE_SOURCE_DIR}/src/p_map.c

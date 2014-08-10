@@ -24,7 +24,6 @@
 #include "z_zone.h"
 
 #include <enet/enet.h>
-#include "cmp.h"
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -33,7 +32,6 @@
 #include "d_ticcmd.h"
 #include "g_game.h"
 #include "lprintf.h"
-#include "m_pbuf.h"
 #include "p_user.h"
 #include "w_wad.h"
 
@@ -535,7 +533,7 @@ void SV_SetupNewPeer(int peernum) {
   }
 
   playeringame[playernum] = true;
-  P_SpawnPlayer(playernum, &playerstarts[playernum]);
+  players[playernum].playerstate = PST_REBORN;
   np->playernum = playernum;
   np->sync.tic = gametic;
 }

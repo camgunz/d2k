@@ -60,7 +60,6 @@
 #include "i_video.h"
 #include "i_smp.h"
 #include "i_capture.h"
-#include "z_zone.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "w_wad.h"
@@ -662,6 +661,10 @@ void I_ReadOverlay(void) {
 #endif
 
   SDL_BlitSurface(sdl_surf, NULL, screen_surf, NULL);
+
+  SDL_FreeSurface(sdl_surf);
+
+  cairo_surface_destroy(csurf);
 
   if (SDL_MUSTLOCK(screen))
     SDL_UnlockSurface(screen);

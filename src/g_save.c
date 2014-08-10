@@ -23,17 +23,15 @@
 
 #include "z_zone.h"
 
-#include "cmp.h"
-
 #include "doomstat.h"
 #include "m_avg.h"
-#include "m_pbuf.h"
 #include "d_main.h"
 #include "g_game.h"
 #include "g_save.h"
 #include "lprintf.h"
 #include "m_menu.h"
 #include "n_net.h"
+#include "p_ident.h"
 #include "p_map.h"
 #include "p_saveg.h"
 #include "r_demo.h"
@@ -290,21 +288,9 @@ void G_WriteSaveData(pbuf_t *savebuffer) {
   // killough 11/98: save revenant tracer state
   M_PBufWriteUChar(savebuffer, (gametic - basetic) & 255);
 
-  // phares 9/13/98: Move mobj_t->index out of P_ArchiveThinkers so the
-  // indices can be used by P_ArchiveWorld when the sectors are saved.
-  // This is so we can save the index of the mobj_t of the thinker that
-  // caused a sound, referenced by sector_t->soundtarget.
-  // P_ThinkerToIndex();
-  P_UpdateMobjIndices();
-
   P_ArchivePlayers(savebuffer);
   P_ArchiveWorld(savebuffer);
   P_ArchiveThinkers(savebuffer);
-
-  // phares 9/13/98: Move index->mobj_t out of P_ArchiveThinkers, simply
-  // for symmetry with the P_ThinkerToIndex call above.
-
-  // P_IndexToThinker();
 
   P_ArchiveSpecials(savebuffer);
   P_ArchiveRNG(savebuffer);    // killough 1/18/98: save RNG information
@@ -316,6 +302,8 @@ void G_WriteSaveData(pbuf_t *savebuffer) {
 
 dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
                                             dboolean init_new) {
+  static buf_t *sound_origin_ids = NULL;
+  
   int i;
   int savegame_compatibility = -1;
   //e6y: numeric version number of package should be zero before initializing
@@ -328,6 +316,9 @@ dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
   unsigned char tic_delta;
   unsigned char safety_byte;
   buf_t byte_buf;
+
+  if (sound_origin_ids == NULL)
+    sound_origin_ids = M_BufferNew();
 
   M_BufferInit(&byte_buf);
 
@@ -460,6 +451,8 @@ dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
   // load a base level
   if (init_new)
     G_InitNew(gameskill, gameepisode, gamemap);
+  else
+    P_IdentReset();
 
   /* get the times - killough 11/98: save entire word */
   M_PBufReadInt(savebuffer, &leveltime);
@@ -473,14 +466,18 @@ dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
 
   basetic = gametic - tic_delta;
 
+  M_BufferClear(sound_origin_ids);
+
   // dearchive all the modifications
   P_MapStart();
+  S_SaveChannelOrigins(sound_origin_ids);
   P_UnArchivePlayers(savebuffer);
   P_UnArchiveWorld(savebuffer);
   P_UnArchiveThinkers(savebuffer);
   P_UnArchiveSpecials(savebuffer);
   P_UnArchiveRNG(savebuffer);    // killough 1/18/98: load RNG information
   P_UnArchiveMap(savebuffer);    // killough 1/22/98: load automap information
+  S_LoadChannelOrigins(sound_origin_ids);
   P_MapEnd();
   R_ActivateSectorInterpolations();//e6y
   R_SmoothPlaying_Reset(NULL); // e6y

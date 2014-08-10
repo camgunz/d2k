@@ -23,9 +23,6 @@
 
 #include "z_zone.h"
 
-#include "cmp.h"
-#include "m_pbuf.h"
-
 #include "doomstat.h"
 #include "am_map.h"
 #include "g_game.h"
@@ -33,6 +30,7 @@
 #include "m_random.h"
 #include "n_net.h"
 #include "p_enemy.h"
+#include "p_ident.h"
 #include "p_map.h"
 #include "p_maputl.h"
 #include "p_setup.h"
@@ -46,6 +44,8 @@
 
 #define MAX_PLAYER_MESSAGE_SIZE 256
 #define MAX_COMMAND_COUNT 10000
+
+static uint32_t current_thinker_count;
 
 typedef enum {
   tc_end,
@@ -66,42 +66,6 @@ enum {
   tc_flicker,     // killough 10/4/98
   tc_endspecials
 } specials_e;
-
-static int number_of_thinkers;
-
-// CG: Broke out ouf P_UnArchiveThinkers to avoid reallocating a new array
-//     every time a savegame is loaded.  For the old netcode that was fine,
-//     for the new netcode that's untenable.
-static unsigned int max_thinker_count = 0;
-static unsigned int thinker_count = 0;
-static mobj_t **mobj_p = NULL; // killough 2/14/98: Translation table
-
-#if 0
-// savegame file stores ints in the corresponding * field; this function
-// safely casts them back to int.
-// /
-static int P_GetMobj(mobj_t* mi, size_t s) {
-  size_t i = (size_t)mi;
-
-  if (i > s)
-    I_Error("Corrupt savegame (thinker %zu > max thinker count %zu)", i, s);
-
-  return i;
-}
-
-/*
- * killough 11/98
- *
- * Same as P_SetTarget() in p_tick.c, except that the target is nullified
- * first, so that no old target's reference count is decreased (when loading
- * savegames, old targets are indices, not really pointers to targets).
- */
-
-static void P_SetNewTarget(mobj_t **mop, mobj_t *targ) {
-  *mop = NULL;
-  P_SetTarget(mop, targ);
-}
-#endif
 
 static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufWriteInt(savebuffer, player->playerstate);
@@ -244,6 +208,8 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
 
   P_ClearMessages(player - players);
 
+  player->mo = NULL;
+
   M_PBufReadInt(savebuffer, (int *)&player->playerstate);
   M_PBufReadChar(savebuffer, &player->cmd.forwardmove);
   M_PBufReadChar(savebuffer, &player->cmd.sidemove);
@@ -361,6 +327,255 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   }
 }
 
+static void P_ArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
+  /* CG 06/26/2014: Try not storing indices in pointers */
+  unsigned int target_id = 0;
+  unsigned int tracer_id = 0;
+  unsigned int lastenemy_id = 0;
+  uint_64_t    state_index = 0;
+  unsigned int player_index = 0;
+
+  // killough 2/14/98: convert pointers into indices.
+  // Fixes many savegame problems, by properly saving
+  // target and tracer fields. Note: we store NULL if
+  // the thinker pointed to by these fields is not a
+  // mobj thinker.
+
+  if (mobj->target && mobj->target->thinker.function == P_MobjThinker)
+    target_id = mobj->target->id;
+
+  if (mobj->tracer && mobj->tracer->thinker.function == P_MobjThinker)
+    tracer_id = mobj->tracer->id;
+
+  // killough 2/14/98: new field: save last known enemy. Prevents
+  // monsters from going to sleep after killing monsters and not
+  // seeing player anymore.
+
+  if (mobj->lastenemy && mobj->lastenemy->thinker.function == P_MobjThinker)
+    lastenemy_id = mobj->lastenemy->id;
+
+  // killough 2/14/98: end changes
+
+  if (mobj->state < states)
+    I_Error("P_ArchiveActor: Invalid mobj state %p", mobj->state);
+
+  state_index = (uint_64_t)(mobj->state - states);
+
+  if (state_index >= NUMSTATES) 
+    I_Error("P_ArchiveActor: Invalid mobj state %p", mobj->state);
+
+  state_index++;
+
+  if (mobj->player) {
+    for (unsigned int i = 0; i < MAXPLAYERS; i++) {
+      if (mobj->player == &players[i]) {
+        player_index = i + 1;
+        break;
+      }
+    }
+    if (player_index == 0)
+      I_Error("P_ArchiveActor: Invalid mobj player %p", mobj->player);
+  }
+
+  M_PBufWriteUInt(savebuffer, mobj->id);
+  M_PBufWriteULong(savebuffer, state_index);
+  M_PBufWriteUInt(savebuffer, target_id);
+  M_PBufWriteUInt(savebuffer, player_index);
+  M_PBufWriteUInt(savebuffer, tracer_id);
+  M_PBufWriteUInt(savebuffer, lastenemy_id);
+
+  D_Log(LOG_SAVE, "  Actor %u: {%d, %d, %d, %d, %d, %d, %d}\n",
+    mobj->id,
+    mobj->validcount,
+    mobj->movedir,
+    mobj->movecount,
+    mobj->strafecount,
+    mobj->reactiontime,
+    mobj->threshold,
+    mobj->pursuecount
+  );
+}
+
+static void P_UnArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
+  unsigned int target_id = 0;
+  unsigned int tracer_id = 0;
+  unsigned int lastenemy_id = 0;
+  uint_64_t    state_index = 0;
+  unsigned int player_index = 0;
+  mobj_t *target = NULL;
+  mobj_t *tracer = NULL;
+  mobj_t *lastenemy = NULL;
+
+  mobj->target = NULL;
+  mobj->tracer = NULL;
+  mobj->lastenemy = NULL;
+  mobj->state = NULL;
+  mobj->player = NULL;
+
+  M_PBufReadULong(savebuffer, &state_index);
+  M_PBufReadUInt(savebuffer, &target_id);
+  M_PBufReadUInt(savebuffer, &player_index);
+  M_PBufReadUInt(savebuffer, &tracer_id);
+  M_PBufReadUInt(savebuffer, &lastenemy_id);
+
+  if (state_index > NUMSTATES)
+    I_Error("P_UnArchiveActor: Invalid mobj state %" PRIu64, state_index);
+
+  if (target_id > current_thinker_count)
+    I_Error("P_UnArchiveActor: Invalid mobj target %u", target_id);
+
+  if (tracer_id > current_thinker_count)
+    I_Error("P_UnArchiveActor: Invalid mobj tracer %u", tracer_id);
+
+  if (lastenemy_id > current_thinker_count)
+    I_Error("P_UnArchiveActor: Invalid mobj lastenemy %u", lastenemy_id);
+
+  if (player_index > MAXPLAYERS)
+    I_Error("P_UnArchiveActor: Invalid mobj player %u", player_index);
+
+  if (state_index)
+    mobj->state = &states[state_index - 1];
+  else
+    mobj->state = (state_t *)S_NULL;
+
+  if (target_id) {
+    target = P_IdentLookup(target_id);
+
+    if (target == NULL)
+      I_Error("P_UnArchiveActor: Invalid mobj target %u", target_id);
+
+    P_SetTarget(&mobj->target, P_IdentLookup(target_id));
+  }
+
+  if (tracer_id) {
+    tracer = P_IdentLookup(tracer_id);
+
+    if (tracer == NULL)
+      I_Error("P_UnArchiveActor: Invalid mobj tracer %u", tracer_id);
+
+    P_SetTarget(&mobj->tracer, P_IdentLookup(tracer_id));
+  }
+
+  if (lastenemy_id) {
+    lastenemy = P_IdentLookup(lastenemy_id);
+
+    if (lastenemy == NULL)
+      I_Error("P_UnArchiveActor: Invalid mobj lastenemy %u", lastenemy_id);
+
+    P_SetTarget(&mobj->lastenemy, P_IdentLookup(lastenemy_id));
+  }
+
+  if (player_index) {
+    mobj->player = &players[player_index - 1];
+    mobj->player->mo = mobj;
+  }
+
+  D_Log(LOG_SAVE, "  Actor %u: {%d, %d, %d, %d, %d, %d, %d}\n",
+    mobj->id,
+    mobj->validcount,
+    mobj->movedir,
+    mobj->movecount,
+    mobj->strafecount,
+    mobj->reactiontime,
+    mobj->threshold,
+    mobj->pursuecount
+  );
+}
+
+static void P_ArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
+  M_PBufWriteInt(savebuffer, mobj->x);
+  M_PBufWriteInt(savebuffer, mobj->y);
+  M_PBufWriteInt(savebuffer, mobj->z);
+  M_PBufWriteUInt(savebuffer, mobj->angle);
+  M_PBufWriteInt(savebuffer, mobj->sprite);
+  M_PBufWriteInt(savebuffer, mobj->frame);
+  M_PBufWriteInt(savebuffer, mobj->floorz);
+  M_PBufWriteInt(savebuffer, mobj->ceilingz);
+  M_PBufWriteInt(savebuffer, mobj->dropoffz);
+  M_PBufWriteInt(savebuffer, mobj->radius);
+  M_PBufWriteInt(savebuffer, mobj->height);
+  M_PBufWriteInt(savebuffer, mobj->momx);
+  M_PBufWriteInt(savebuffer, mobj->momy);
+  M_PBufWriteInt(savebuffer, mobj->momz);
+  M_PBufWriteInt(savebuffer, mobj->validcount);
+  M_PBufWriteInt(savebuffer, mobj->type);
+  M_PBufWriteInt(savebuffer, mobj->tics);
+  M_PBufWriteULong(savebuffer, mobj->flags);
+  M_PBufWriteInt(savebuffer, mobj->intflags);
+  M_PBufWriteInt(savebuffer, mobj->health);
+  M_PBufWriteShort(savebuffer, mobj->movedir);
+  M_PBufWriteShort(savebuffer, mobj->movecount);
+  M_PBufWriteShort(savebuffer, mobj->strafecount);
+  M_PBufWriteShort(savebuffer, mobj->reactiontime);
+  M_PBufWriteShort(savebuffer, mobj->threshold);
+  M_PBufWriteShort(savebuffer, mobj->pursuecount);
+  M_PBufWriteShort(savebuffer, mobj->gear);
+  M_PBufWriteShort(savebuffer, mobj->lastlook);
+  M_PBufWriteShort(savebuffer, mobj->spawnpoint.x);
+  M_PBufWriteShort(savebuffer, mobj->spawnpoint.y);
+  M_PBufWriteShort(savebuffer, mobj->spawnpoint.angle);
+  M_PBufWriteShort(savebuffer, mobj->spawnpoint.type);
+  M_PBufWriteShort(savebuffer, mobj->spawnpoint.options);
+  M_PBufWriteInt(savebuffer, mobj->friction);
+  M_PBufWriteInt(savebuffer, mobj->movefactor);
+  M_PBufWriteInt(savebuffer, mobj->PrevX);
+  M_PBufWriteInt(savebuffer, mobj->PrevY);
+  M_PBufWriteInt(savebuffer, mobj->PrevZ);
+  M_PBufWriteUInt(savebuffer, mobj->pitch);
+  M_PBufWriteInt(savebuffer, mobj->index);
+  M_PBufWriteShort(savebuffer, mobj->patch_width);
+  M_PBufWriteInt(savebuffer, mobj->iden_nums);
+  M_PBufWriteUInt(savebuffer, mobj->id);
+}
+
+static void P_UnArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
+  M_PBufReadInt(savebuffer, &mobj->x);
+  M_PBufReadInt(savebuffer, &mobj->y);
+  M_PBufReadInt(savebuffer, &mobj->z);
+  M_PBufReadUInt(savebuffer, &mobj->angle);
+  M_PBufReadInt(savebuffer, (int *)&mobj->sprite);
+  M_PBufReadInt(savebuffer, &mobj->frame);
+  M_PBufReadInt(savebuffer, &mobj->floorz);
+  M_PBufReadInt(savebuffer, &mobj->ceilingz);
+  M_PBufReadInt(savebuffer, &mobj->dropoffz);
+  M_PBufReadInt(savebuffer, &mobj->radius);
+  M_PBufReadInt(savebuffer, &mobj->height);
+  M_PBufReadInt(savebuffer, &mobj->momx);
+  M_PBufReadInt(savebuffer, &mobj->momy);
+  M_PBufReadInt(savebuffer, &mobj->momz);
+  M_PBufReadInt(savebuffer, &mobj->validcount);
+  M_PBufReadInt(savebuffer, (int *)&mobj->type);
+  M_PBufReadInt(savebuffer, &mobj->tics);
+  M_PBufReadULong(savebuffer, &mobj->flags);
+  M_PBufReadInt(savebuffer, &mobj->intflags);
+  M_PBufReadInt(savebuffer, &mobj->health);
+  M_PBufReadShort(savebuffer, &mobj->movedir);
+  M_PBufReadShort(savebuffer, &mobj->movecount);
+  M_PBufReadShort(savebuffer, &mobj->strafecount);
+  M_PBufReadShort(savebuffer, &mobj->reactiontime);
+  M_PBufReadShort(savebuffer, &mobj->threshold);
+  M_PBufReadShort(savebuffer, &mobj->pursuecount);
+  M_PBufReadShort(savebuffer, &mobj->gear);
+  M_PBufReadShort(savebuffer, &mobj->lastlook);
+  M_PBufReadShort(savebuffer, &mobj->spawnpoint.x);
+  M_PBufReadShort(savebuffer, &mobj->spawnpoint.y);
+  M_PBufReadShort(savebuffer, &mobj->spawnpoint.angle);
+  M_PBufReadShort(savebuffer, &mobj->spawnpoint.type);
+  M_PBufReadShort(savebuffer, &mobj->spawnpoint.options);
+  M_PBufReadInt(savebuffer, &mobj->friction);
+  M_PBufReadInt(savebuffer, &mobj->movefactor);
+  M_PBufReadInt(savebuffer, &mobj->PrevX);
+  M_PBufReadInt(savebuffer, &mobj->PrevY);
+  M_PBufReadInt(savebuffer, &mobj->PrevZ);
+  M_PBufReadUInt(savebuffer, &mobj->pitch);
+  M_PBufReadInt(savebuffer, &mobj->index);
+  M_PBufReadShort(savebuffer, &mobj->patch_width);
+  M_PBufReadInt(savebuffer, &mobj->iden_nums);
+  M_PBufReadUInt(savebuffer, &mobj->id);
+
+  P_IdentAssignID(mobj, mobj->id);
+}
+
 //
 // P_ArchivePlayers
 //
@@ -404,21 +619,21 @@ void P_ArchiveWorld(pbuf_t *savebuffer) {
     M_PBufWriteShort(savebuffer, sec->floorpic);
     M_PBufWriteShort(savebuffer, sec->ceilingpic);
     M_PBufWriteShort(savebuffer, sec->lightlevel);
+
     // needed?   yes -- transfer types
     M_PBufWriteShort(savebuffer, sec->special);
+
     // needed?   need them -- killough
     M_PBufWriteShort(savebuffer, sec->tag);
   }
 
   // do lines
   for (i = 0, li = lines; i < numlines; i++, li++) {
-    int j;
-
     M_PBufWriteShort(savebuffer, li->flags);
     M_PBufWriteShort(savebuffer, li->special);
     M_PBufWriteShort(savebuffer, li->tag);
 
-    for (j = 0; j < 2; j++) {
+    for (int j = 0; j < 2; j++) {
       if (li->sidenum[j] != NO_INDEX) {
         side_t *si = &sides[li->sidenum[j]];
 
@@ -463,13 +678,11 @@ void P_UnArchiveWorld(pbuf_t *savebuffer) {
 
   // do lines
   for (i = 0, li = lines; i < numlines; i++, li++) {
-    int j;
-
     M_PBufReadShort(savebuffer, (short *)&li->flags);
     M_PBufReadShort(savebuffer, &li->special);
     M_PBufReadShort(savebuffer, &li->tag);
 
-    for (j = 0; j < 2; j++) {
+    for (int j = 0; j < 2; j++) {
       if (li->sidenum[j] != NO_INDEX) {
         side_t *si = &sides[li->sidenum[j]];
 
@@ -487,271 +700,12 @@ void P_UnArchiveWorld(pbuf_t *savebuffer) {
 }
 
 //
-// Thinkers
-//
-
-/* CG 06/26/2014: Try not storing indices in pointers */
-void P_UpdateMobjIndices(void) {
-  thinker_t *th;
-
-  // killough 2/14/98:
-  // count the number of thinkers, and mark each one with its index, using
-  // the prev field as a placeholder, since it can be restored later.
-
-  number_of_thinkers = 0;
-  for (th = thinkercap.next; th != &thinkercap; th = th->next) {
-    if (th->function == P_MobjThinker) {
-      mobj_t *actor = (mobj_t *)th;
-
-      number_of_thinkers++;
-      actor->serialization_index = number_of_thinkers;
-    }
-  }
-}
-
-#if 0
-
-// phares 9/13/98: Moved this code outside of P_ArchiveThinkers so the
-// thinker indices could be used by the code that saves sector info.
-
-void P_ThinkerToIndex(void) {
-  thinker_t *th;
-
-  number_of_thinkers = 0;
-
-  // killough 2/14/98:
-  // count the number of thinkers, and mark each one with its index, using
-  // the prev field as a placeholder, since it can be restored later.
-
-  for (th = thinkercap.next; th != &thinkercap; th = th->next) {
-    if (th->function == P_MobjThinker)
-      th->prev = (thinker_t *) ++number_of_thinkers;
-  }
-}
-
-// phares 9/13/98: Moved this code outside of P_ArchiveThinkers so the
-// thinker indices could be used by the code that saves sector info.
-
-void P_IndexToThinker(void) {
-  // killough 2/14/98: restore prev pointers
-  thinker_t *th;
-  thinker_t *prev = &thinkercap;
-
-  for (th = thinkercap.next; th != &thinkercap; prev = th, th = th->next)
-    th->prev = prev;
-}
-
-#endif
-
-void P_ArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
-  /* CG 06/26/2014: Try not storing indices in pointers */
-  unsigned int target_index = 0;
-  unsigned int tracer_index = 0;
-  unsigned int lastenemy_index = 0;
-  uint_64_t    state_index = 0;
-  unsigned int player_index = 0;
-
-  // killough 2/14/98: convert pointers into indices.
-  // Fixes many savegame problems, by properly saving
-  // target and tracer fields. Note: we store NULL if
-  // the thinker pointed to by these fields is not a
-  // mobj thinker.
-
-  if (mobj->target && mobj->target->thinker.function == P_MobjThinker)
-    target_index = mobj->target->serialization_index;
-
-  if (mobj->tracer && mobj->tracer->thinker.function == P_MobjThinker)
-    tracer_index = mobj->tracer->serialization_index;
-
-  // killough 2/14/98: new field: save last known enemy. Prevents
-  // monsters from going to sleep after killing monsters and not
-  // seeing player anymore.
-
-  if (mobj->lastenemy && mobj->lastenemy->thinker.function == P_MobjThinker)
-    lastenemy_index = mobj->lastenemy->serialization_index;
-
-  // killough 2/14/98: end changes
-
-  if (mobj->state < states)
-    I_Error("P_ArchiveActor: Invalid mobj state %p", mobj->state);
-
-  state_index = (uint_64_t)(mobj->state - states);
-
-  if (state_index >= NUMSTATES) 
-    I_Error("P_ArchiveActor: Invalid mobj state %p", mobj->state);
-
-  state_index++;
-
-  if (mobj->player) {
-    for (unsigned int i = 0; i < MAXPLAYERS; i++) {
-      if (mobj->player == &players[i]) {
-        player_index = i + 1;
-        break;
-      }
-    }
-    if (player_index == 0)
-      I_Error("P_ArchiveActor: Invalid mobj player %p", mobj->player);
-  }
-
-  M_PBufWriteInt(savebuffer, mobj->x);
-  M_PBufWriteInt(savebuffer, mobj->y);
-  M_PBufWriteInt(savebuffer, mobj->z);
-  M_PBufWriteUInt(savebuffer, mobj->angle);
-  M_PBufWriteInt(savebuffer, mobj->sprite);
-  M_PBufWriteInt(savebuffer, mobj->frame);
-  M_PBufWriteInt(savebuffer, mobj->floorz);
-  M_PBufWriteInt(savebuffer, mobj->ceilingz);
-  M_PBufWriteInt(savebuffer, mobj->dropoffz);
-  M_PBufWriteInt(savebuffer, mobj->radius);
-  M_PBufWriteInt(savebuffer, mobj->height);
-  M_PBufWriteInt(savebuffer, mobj->momx);
-  M_PBufWriteInt(savebuffer, mobj->momy);
-  M_PBufWriteInt(savebuffer, mobj->momz);
-  M_PBufWriteInt(savebuffer, mobj->validcount);
-  M_PBufWriteInt(savebuffer, mobj->type);
-  M_PBufWriteInt(savebuffer, mobj->tics);
-  M_PBufWriteULong(savebuffer, state_index);
-  M_PBufWriteULong(savebuffer, mobj->flags);
-  M_PBufWriteInt(savebuffer, mobj->intflags);
-  M_PBufWriteInt(savebuffer, mobj->health);
-  M_PBufWriteShort(savebuffer, mobj->movedir);
-  M_PBufWriteShort(savebuffer, mobj->movecount);
-  M_PBufWriteShort(savebuffer, mobj->strafecount);
-  M_PBufWriteUInt(savebuffer, target_index);
-  M_PBufWriteShort(savebuffer, mobj->reactiontime);
-  M_PBufWriteShort(savebuffer, mobj->threshold);
-  M_PBufWriteShort(savebuffer, mobj->pursuecount);
-  M_PBufWriteShort(savebuffer, mobj->gear);
-  M_PBufWriteUInt(savebuffer, player_index);
-  M_PBufWriteShort(savebuffer, mobj->lastlook);
-  M_PBufWriteShort(savebuffer, mobj->spawnpoint.x);
-  M_PBufWriteShort(savebuffer, mobj->spawnpoint.y);
-  M_PBufWriteShort(savebuffer, mobj->spawnpoint.angle);
-  M_PBufWriteShort(savebuffer, mobj->spawnpoint.type);
-  M_PBufWriteShort(savebuffer, mobj->spawnpoint.options);
-  M_PBufWriteUInt(savebuffer, tracer_index);
-  M_PBufWriteUInt(savebuffer, lastenemy_index);
-  M_PBufWriteInt(savebuffer, mobj->friction);
-  M_PBufWriteInt(savebuffer, mobj->movefactor);
-  M_PBufWriteInt(savebuffer, mobj->PrevX);
-  M_PBufWriteInt(savebuffer, mobj->PrevY);
-  M_PBufWriteInt(savebuffer, mobj->PrevZ);
-  M_PBufWriteUInt(savebuffer, mobj->pitch);
-  M_PBufWriteInt(savebuffer, mobj->index);
-  M_PBufWriteShort(savebuffer, mobj->patch_width);
-  M_PBufWriteInt(savebuffer, mobj->iden_nums);
-  M_PBufWriteUInt(savebuffer, mobj->serialization_index);
-  M_PBufWriteInt(savebuffer, mobj->pad);
-}
-
-void P_UnArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
-  unsigned int target_index = 0;
-  unsigned int tracer_index = 0;
-  unsigned int lastenemy_index = 0;
-  uint_64_t    state_index = 0;
-  unsigned int player_index = 0;
-
-  mobj->target = NULL;
-  mobj->tracer = NULL;
-  mobj->lastenemy = NULL;
-  mobj->state = NULL;
-  mobj->player = NULL;
-
-  M_PBufReadInt(savebuffer, &mobj->x);
-  M_PBufReadInt(savebuffer, &mobj->y);
-  M_PBufReadInt(savebuffer, &mobj->z);
-  M_PBufReadUInt(savebuffer, &mobj->angle);
-  M_PBufReadInt(savebuffer, (int *)&mobj->sprite);
-  M_PBufReadInt(savebuffer, &mobj->frame);
-  M_PBufReadInt(savebuffer, &mobj->floorz);
-  M_PBufReadInt(savebuffer, &mobj->ceilingz);
-  M_PBufReadInt(savebuffer, &mobj->dropoffz);
-  M_PBufReadInt(savebuffer, &mobj->radius);
-  M_PBufReadInt(savebuffer, &mobj->height);
-  M_PBufReadInt(savebuffer, &mobj->momx);
-  M_PBufReadInt(savebuffer, &mobj->momy);
-  M_PBufReadInt(savebuffer, &mobj->momz);
-  M_PBufReadInt(savebuffer, &mobj->validcount);
-  M_PBufReadInt(savebuffer, (int *)&mobj->type);
-  M_PBufReadInt(savebuffer, &mobj->tics);
-  M_PBufReadULong(savebuffer, &state_index);
-  M_PBufReadULong(savebuffer, &mobj->flags);
-  M_PBufReadInt(savebuffer, &mobj->intflags);
-  M_PBufReadInt(savebuffer, &mobj->health);
-  M_PBufReadShort(savebuffer, &mobj->movedir);
-  M_PBufReadShort(savebuffer, &mobj->movecount);
-  M_PBufReadShort(savebuffer, &mobj->strafecount);
-  M_PBufReadUInt(savebuffer, &target_index);
-  M_PBufReadShort(savebuffer, &mobj->reactiontime);
-  M_PBufReadShort(savebuffer, &mobj->threshold);
-  M_PBufReadShort(savebuffer, &mobj->pursuecount);
-  M_PBufReadShort(savebuffer, &mobj->gear);
-  M_PBufReadUInt(savebuffer, &player_index);
-  M_PBufReadShort(savebuffer, &mobj->lastlook);
-  M_PBufReadShort(savebuffer, &mobj->spawnpoint.x);
-  M_PBufReadShort(savebuffer, &mobj->spawnpoint.y);
-  M_PBufReadShort(savebuffer, &mobj->spawnpoint.angle);
-  M_PBufReadShort(savebuffer, &mobj->spawnpoint.type);
-  M_PBufReadShort(savebuffer, &mobj->spawnpoint.options);
-  M_PBufReadUInt(savebuffer, &tracer_index);
-  M_PBufReadUInt(savebuffer, &lastenemy_index);
-  M_PBufReadInt(savebuffer, &mobj->friction);
-  M_PBufReadInt(savebuffer, &mobj->movefactor);
-  M_PBufReadInt(savebuffer, &mobj->PrevX);
-  M_PBufReadInt(savebuffer, &mobj->PrevY);
-  M_PBufReadInt(savebuffer, &mobj->PrevZ);
-  M_PBufReadUInt(savebuffer, &mobj->pitch);
-  M_PBufReadInt(savebuffer, &mobj->index);
-  M_PBufReadShort(savebuffer, &mobj->patch_width);
-  M_PBufReadInt(savebuffer, &mobj->iden_nums);
-  M_PBufReadUInt(savebuffer, &mobj->serialization_index);
-  M_PBufReadInt(savebuffer, &mobj->pad);
-
-  if (state_index > NUMSTATES)
-    I_Error("P_UnArchiveActor: Invalid mobj state %" PRIu64, state_index);
-
-  if (target_index > thinker_count)
-    I_Error("P_UnArchiveActor: Invalid mobj target %u", target_index);
-
-  if (tracer_index > thinker_count)
-    I_Error("P_UnArchiveActor: Invalid mobj tracer %u", tracer_index);
-
-  if (lastenemy_index > thinker_count)
-    I_Error("P_UnArchiveActor: Invalid mobj lastenemy %u", lastenemy_index);
-
-  if (player_index > MAXPLAYERS)
-    I_Error("P_UnArchiveActor: Invalid mobj player %u", player_index);
-
-  if (state_index)
-    mobj->state = &states[state_index - 1];
-  else
-    mobj->state = (state_t *)S_NULL;
-
-  if (target_index)
-    P_SetTarget(&mobj->target, mobj_p[target_index]);
-
-  if (tracer_index)
-    P_SetTarget(&mobj->tracer, mobj_p[tracer_index]);
-
-  if (lastenemy_index)
-    P_SetTarget(&mobj->lastenemy, mobj_p[lastenemy_index]);
-
-  if (player_index) {
-    mobj->player = &players[player_index - 1];
-    mobj->player->mo = mobj;
-  }
-
-}
-
-//
 // P_ArchiveThinkers
 //
 // 2/14/98 killough: substantially modified to fix savegame bugs
 //
 
 void P_ArchiveThinkers(pbuf_t *savebuffer) {
-  int i;
-  thinker_t *th;
   unsigned int thinker_count = 0;
 
   // killough 3/26/98: Save boss brain state
@@ -759,34 +713,34 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
   M_PBufWriteInt(savebuffer, brain.targeton);
 
   // save off the current thinkers
-  for (th = thinkercap.next; th != &thinkercap; th = th->next) {
+  for (thinker_t *th = thinkercap.next; th != &thinkercap; th = th->next) {
     if (th->function == P_MobjThinker) {
       thinker_count++;
     }
   }
 
+  D_Log(LOG_SAVE, "(%d) %u thinkers\n", gametic, thinker_count);
+
   M_PBufWriteUInt(savebuffer, thinker_count);
 
-  for (th = thinkercap.next; th != &thinkercap; th = th->next) {
+  for (thinker_t *th = thinkercap.next; th != &thinkercap; th = th->next) {
     if (th->function == P_MobjThinker)
       P_ArchiveActor(savebuffer, (mobj_t *)th);
   }
 
+  for (thinker_t *th = thinkercap.next; th != &thinkercap; th = th->next) {
+    if (th->function == P_MobjThinker)
+      P_ArchiveActorPointers(savebuffer, (mobj_t *)th);
+  }
+
+  D_Log(LOG_SAVE, "\n");
+
   // killough 9/14/98: save soundtargets
-  for (i = 0; i < numsectors; i++) {
+  for (int i = 0; i < numsectors; i++) {
     mobj_t *target = sectors[i].soundtarget;
-    // Fix crash on reload when a soundtarget points to a removed corpse
-    // (prboom bug #1590350)
-    /* CG 06/26/2014: Try not storing indices in pointers */
-    /*
+
     if (target && target->thinker.function == P_MobjThinker)
-      target = (mobj_t *) target->thinker.prev;
-    else
-      target = NULL;
-    M_PBufWriteLong(savebuffer, (int_64_t)target);
-    */
-    if (target && target->thinker.function == P_MobjThinker)
-      M_PBufWriteUInt(savebuffer, target->serialization_index);
+      M_PBufWriteUInt(savebuffer, target->id);
     else
       M_PBufWriteUInt(savebuffer, 0);
   }
@@ -799,109 +753,103 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
 //
 
 void P_UnArchiveThinkers(pbuf_t *savebuffer) {
-  int         i;
-  thinker_t  *th;
   totallive = 0; /* CG: This is a global that lives in g_game.c, just FYI */
 
   // killough 3/26/98: Load boss brain state
   M_PBufReadInt(savebuffer, &brain.easy);
   M_PBufReadInt(savebuffer, &brain.targeton);
 
-  // remove all the current thinkers
-  for (th = thinkercap.next; th != &thinkercap; ) {
+  for (thinker_t *th = thinkercap.next; th != &thinkercap; ) {
     thinker_t *next = th->next;
 
-    if (th->function == P_MobjThinker) {
+    if (th->function == P_MobjThinker)
       P_RemoveMobj((mobj_t *)th);
-      P_RemoveThinkerDelayed(th); // fix mobj leak
-    }
-    else {
-      Z_Free(th);
-    }
+
+    th = next;
+  }
+
+  // remove all the current thinkers
+  for (thinker_t *th = thinkercap.next; th != &thinkercap; ) {
+    thinker_t *next = th->next;
+
+    Z_Free(th);
 
     th = next;
   }
 
   P_InitThinkers();
+
   for (int i = 0; i < numsectors; i++) {
     sectors[i].thinglist = NULL;
     sectors[i].touching_thinglist = NULL;
   }
+
   memset(blocklinks, 0, bmapwidth * bmapheight * sizeof(*blocklinks));
+
   P_FreeSecNodeList();
 
-  /*-----------------------------------------------------*/
-  /* CG: TODO: Seriously think about using a cbuf_t here */
-  /*-----------------------------------------------------*/
+  M_PBufReadUInt(savebuffer, &current_thinker_count);
 
-  M_PBufReadUInt(savebuffer, &thinker_count);
+  D_Log(LOG_SAVE, "(%d) %u thinkers\n", gametic, current_thinker_count);
 
-  if (thinker_count > max_thinker_count) {
-    // table of pointers
-    // first table entry special: 0 maps to NULL
-    max_thinker_count = thinker_count;
-    mobj_p = realloc(mobj_p, (max_thinker_count + 1) * sizeof(mobj_t *));
-  }
+  for (int i = 0; i < current_thinker_count; i++) {
+    mobj_t *mo = Z_Malloc(sizeof(mobj_t), PU_LEVEL, NULL); // killough 2/14/98
 
-  // memset(mobj_p, 0, (max_thinker_count + 1) * sizeof(mobj_t *));
-  for (i = 0; i <= max_thinker_count; i++)
-    mobj_p[i] = NULL;
+    memset(mo, 0, sizeof(mobj_t));
 
-  // killough 2/14/98 -- insert pointers to thinkers into table, in order:
-  for (i = 1; i < (thinker_count + 1); i++) {
-    mobj_p[i] = Z_Malloc(sizeof(mobj_t), PU_LEVEL, NULL); // killough 2/14/98
-    memset(mobj_p[i], 0, sizeof(mobj_t));
-    mobj_p[i]->thinker.function = P_MobjThinker;
-    P_AddThinker(&mobj_p[i]->thinker);
-  }
+    mo->thinker.function = P_MobjThinker;
 
-  for (i = 1; i < (thinker_count + 1); i++) {
-    mobj_t *mobj = mobj_p[i];
+    P_UnArchiveActor(savebuffer, mo);
 
-    P_UnArchiveActor(savebuffer, mobj);
+    P_AddThinker(&mo->thinker);
 
-    mobj->snext = NULL;
-    mobj->sprev = NULL;
+    mo->sprev = NULL;
+    mo->snext = NULL;
+    P_SetThingPosition(mo);
 
-    P_SetThingPosition(mobj);
-    mobj->info = &mobjinfo[mobj->type];
+    mo->info = &mobjinfo[mo->type];
 
     // killough 2/28/98:
     // Fix for falling down into a wall after savegame loaded:
     //      mobj->floorz = mobj->subsector->sector->floorheight;
     //      mobj->ceilingz = mobj->subsector->sector->ceilingheight;
 
-    if (!((mobj->flags ^ MF_COUNTKILL) &
-        (MF_FRIEND | MF_COUNTKILL | MF_CORPSE))) {
+    if (!((mo->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL | MF_CORPSE)))
       totallive++;
-    }
   }
 
-  // killough 2/14/98: adjust target and tracer fields, plus
-  // lastenemy field, to correctly point to mobj thinkers.
-  // NULL entries automatically handled by first table entry.
-  //
-  // killough 11/98: use P_SetNewTarget() to set fields
+  for (int i = 0; i < current_thinker_count; i++) {
+    uint32_t mobj_id;
+    mobj_t *mo = NULL;
+    
+    M_PBufReadUInt(savebuffer, &mobj_id);
+    mo = P_IdentLookup(mobj_id);
+
+    if (mo)
+      P_UnArchiveActorPointers(savebuffer, mo);
+  }
+
+  D_Log(LOG_SAVE, "\n");
 
   // killough 9/14/98: restore soundtargets
-  for (i = 0; i < numsectors; i++) {
-    unsigned int st_index;
+  for (int i = 0; i < numsectors; i++) {
+    unsigned int st_id;
+    mobj_t *sound_target = NULL;
 
-    M_PBufReadUInt(savebuffer, &st_index);
+    M_PBufReadUInt(savebuffer, &st_id);
 
-    // Must verify soundtarget. See P_ArchiveThinkers.
-    if (st_index > thinker_count) {
-      I_Error(
-        "P_UnArchiveThinkers: Invalid soundtarget index %u", st_index
-      );
-    }
-
-    if (st_index == 0) {
+    if (st_id == 0) {
       sectors[i].soundtarget = NULL;
       continue;
     }
 
-    P_SetTarget(&sectors[i].soundtarget, mobj_p[st_index]);
+    sound_target = P_IdentLookup(st_id);
+
+    // Must verify soundtarget. See P_ArchiveThinkers.
+    if (!sound_target)
+      I_Error("P_UnArchiveThinkers: Invalid soundtarget index %u", st_id);
+
+    P_SetTarget(&sectors[i].soundtarget, sound_target);
   }
 
   // killough 3/26/98: Spawn icon landings:

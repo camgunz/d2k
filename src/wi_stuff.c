@@ -1824,15 +1824,13 @@ void WI_checkForAccelerate(void)
 // Args:    none
 // Returns: void
 //
-void WI_Ticker(void)
-{
+void WI_Ticker(void) {
   // counter for general background animation
   bcnt++;
 
-  if (bcnt == 1)
-  {
+  if (bcnt == 1) {
     // intermission music
-    if ( gamemode == commercial )
+    if (gamemode == commercial)
       S_ChangeMusic(mus_dm2int, true);
     else
       S_ChangeMusic(mus_inter, true);
@@ -1840,21 +1838,21 @@ void WI_Ticker(void)
 
   WI_checkForAccelerate();
 
-  switch (state)
-  {
+  switch (state) {
     case StatCount:
-         if (deathmatch) WI_updateDeathmatchStats();
-         else if (netgame) WI_updateNetgameStats();
-         else WI_updateStats();
-         break;
-
+      if (deathmatch)
+        WI_updateDeathmatchStats();
+      else if (netgame)
+        WI_updateNetgameStats();
+      else
+        WI_updateStats();
+    break;
     case ShowNextLoc:
-         WI_updateShowNextLoc();
-         break;
-
+      WI_updateShowNextLoc();
+    break;
     case NoState:
-         WI_updateNoState();
-         break;
+      WI_updateNoState();
+    break;
   }
 }
 

@@ -247,8 +247,7 @@ enum {
 /* cph 2006/08/28 - move Prev[XYZ] fields to the end of the struct. Add any
  * other new fields to the end, and make sure you don't break savegames! */
 
-typedef struct mobj_s
-{
+typedef struct mobj_s {
     // List: thinker links.
     thinker_t           thinker;
 
@@ -360,10 +359,9 @@ typedef struct mobj_s
 
     int iden_nums;		// hi word stores thing num, low word identifier num
 
-    /* CG 06/26/2014: Try not storing indices in pointers */
-    unsigned int        serialization_index;
-
     fixed_t             pad; // cph - needed so I can get the size unambiguously on amd64
+
+    uint32_t            id;
 
     // SEE WARNING ABOVE ABOUT POINTER FIELDS!!!
 } mobj_t;
@@ -397,21 +395,21 @@ typedef struct mobj_s
 extern int iquehead;
 extern int iquetail;
 
-mobj_t* P_SubstNullMobj (mobj_t* th);
-void    P_RespawnSpecials(void);
-mobj_t  *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
-void    P_RemoveMobj(mobj_t *th);
+mobj_t*  P_SubstNullMobj (mobj_t* th);
+void     P_RespawnSpecials(void);
+mobj_t*  P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
+void     P_RemoveMobj(mobj_t *th);
 dboolean P_SetMobjState(mobj_t *mobj, statenum_t state);
-void    P_MobjThinker(mobj_t *mobj);
-void    P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z);
-void    P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage);
-mobj_t  *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type);
-void    P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type);
+void     P_MobjThinker(mobj_t *mobj);
+void     P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z);
+void     P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage);
+mobj_t*  P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type);
+void     P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type);
 dboolean P_IsDoomnumAllowed(int doomnum);
-mobj_t* P_SpawnMapThing (const mapthing_t*  mthing, int index);
-void    P_SpawnPlayer(int playernum, const mapthing_t *mthing);
-void    P_CheckMissileSpawn(mobj_t*);  // killough 8/2/98
-void    P_ExplodeMissile(mobj_t*);    // killough
+mobj_t*  P_SpawnMapThing (const mapthing_t*  mthing, int index);
+void     P_SpawnPlayer(int playernum, const mapthing_t *mthing);
+void     P_CheckMissileSpawn(mobj_t*);  // killough 8/2/98
+void     P_ExplodeMissile(mobj_t*);     // killough
 
 #endif
 

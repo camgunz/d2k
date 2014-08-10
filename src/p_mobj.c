@@ -27,6 +27,7 @@
 #include "doomstat.h"
 #include "m_random.h"
 #include "r_main.h"
+#include "p_ident.h"
 #include "p_maputl.h"
 #include "p_map.h"
 #include "p_tick.h"
@@ -54,24 +55,23 @@
 //
 
 dboolean P_SetMobjState(mobj_t *mobj, statenum_t state) {
-  state_t *st;
-
-  // killough 4/9/98: remember states seen, to detect cycles:
-
   static statenum_t seenstate_tab[NUMSTATES]; // fast transition table
-  statenum_t *seenstate = seenstate_tab;      // pointer to table
   static int recursion;                       // detects recursion
+
+  state_t *st;
+  // killough 4/9/98: remember states seen, to detect cycles:
+  statenum_t *seenstate = seenstate_tab;      // pointer to table
   statenum_t i = state;                       // initial state
-  dboolean ret = true;                         // return value
+  dboolean ret = true;                        // return value
   statenum_t tempstate[NUMSTATES];            // for use with recursion
 
   if (recursion++)                            // if recursion detected,
-    memset(seenstate=tempstate,0,sizeof tempstate); // clear state table
+    memset(seenstate = tempstate, 0, sizeof(tempstate)); // clear state table
 
   do {
     if (state == S_NULL) {
-      mobj->state = (state_t *) S_NULL;
-      P_RemoveMobj (mobj);
+      mobj->state = (state_t *)S_NULL;
+      P_RemoveMobj(mobj);
       ret = false;
       break;                 // killough 4/9/98
     }
@@ -658,14 +658,13 @@ floater:
 // P_NightmareRespawn
 //
 
-static void P_NightmareRespawn(mobj_t* mobj)
-{
+static void P_NightmareRespawn(mobj_t *mobj) {
   fixed_t      x;
   fixed_t      y;
   fixed_t      z;
-  subsector_t* ss;
-  mobj_t*      mo;
-  mapthing_t*  mthing;
+  subsector_t *ss;
+  mobj_t      *mo;
+  mapthing_t  *mthing;
 
   x = mobj->spawnpoint.x << FRACBITS;
   y = mobj->spawnpoint.y << FRACBITS;
@@ -682,8 +681,7 @@ static void P_NightmareRespawn(mobj_t* mobj)
    *   and the logic is reversed (i.e. like the rest of comp_ it *disables*
    *   the fix)
    */
-  if(!comp[comp_respawn] && !x && !y)
-  {
+  if(!comp[comp_respawn] && !x && !y) {
      // spawnpoint was zeroed out, so use point of death instead
      x = mobj->x;
      y = mobj->y;
@@ -691,28 +689,27 @@ static void P_NightmareRespawn(mobj_t* mobj)
 
   // something is occupying its position?
 
-  if (!P_CheckPosition (mobj, x, y) )
+  if (!P_CheckPosition(mobj, x, y))
     return; // no respwan
 
   // spawn a teleport fog at old spot
   // because of removal of the body?
 
-  mo = P_SpawnMobj (mobj->x,
-                    mobj->y,
-                    mobj->subsector->sector->floorheight,
-                    MT_TFOG);
+  mo = P_SpawnMobj(
+    mobj->x, mobj->y, mobj->subsector->sector->floorheight, MT_TFOG
+  );
 
   // initiate teleport sound
 
-  S_StartSound (mo, sfx_telept);
+  S_StartSound(mo, sfx_telept);
 
   // spawn a teleport fog at the new spot
 
   ss = R_PointInSubsector (x,y);
 
-  mo = P_SpawnMobj (x, y, ss->sector->floorheight , MT_TFOG);
+  mo = P_SpawnMobj(x, y, ss->sector->floorheight, MT_TFOG);
 
-  S_StartSound (mo, sfx_telept);
+  S_StartSound(mo, sfx_telept);
 
   // spawn the new monster
 
@@ -724,9 +721,9 @@ static void P_NightmareRespawn(mobj_t* mobj)
 
   // inherit attributes from deceased one
 
-  mo = P_SpawnMobj (x,y,z, mobj->type);
+  mo = P_SpawnMobj(x, y, z, mobj->type);
   mo->spawnpoint = mobj->spawnpoint;
-  mo->angle = ANG45 * (mthing->angle/45);
+  mo->angle = ANG45 * (mthing->angle / 45);
   mo->index = mobj->index;
 
   if (mthing->options & MTF_AMBUSH)
@@ -740,7 +737,7 @@ static void P_NightmareRespawn(mobj_t* mobj)
 
   // remove the old monster,
 
-  P_RemoveMobj (mobj);
+  P_RemoveMobj(mobj);
 }
 
 
@@ -845,34 +842,31 @@ void P_MobjThinker(mobj_t* mobj) {
 // Doom did not crash because of the lack of proper memory 
 // protection. This function substitutes NULL pointers for
 // pointers to a dummy mobj, to avoid a crash.
-mobj_t *P_SubstNullMobj(mobj_t *mobj)
-{
-    if (mobj == NULL)
-    {
-        static mobj_t dummy_mobj;
+mobj_t *P_SubstNullMobj(mobj_t *mobj) {
+  if (mobj == NULL) {
+    static mobj_t dummy_mobj;
 
-        dummy_mobj.x = 0;
-        dummy_mobj.y = 0;
-        dummy_mobj.z = 0;
-        dummy_mobj.flags = 0;
+    dummy_mobj.x = 0;
+    dummy_mobj.y = 0;
+    dummy_mobj.z = 0;
+    dummy_mobj.flags = 0;
 
-        mobj = &dummy_mobj;
-    }
+    mobj = &dummy_mobj;
+  }
 
-    return mobj;
+  return mobj;
 }
 
 //
 // P_SpawnMobj
 //
-mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
-{
-  mobj_t*     mobj;
-  state_t*    st;
-  mobjinfo_t* info;
+mobj_t* P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type) {
+  mobj_t     *mobj;
+  state_t    *st;
+  mobjinfo_t *info;
 
-  mobj = Z_Malloc (sizeof(*mobj), PU_LEVEL, NULL);
-  memset (mobj, 0, sizeof (*mobj));
+  mobj = Z_Malloc(sizeof(*mobj), PU_LEVEL, NULL);
+  memset(mobj, 0, sizeof(*mobj));
   info = &mobjinfo[type];
   mobj->type = type;
   mobj->info = info;
@@ -885,9 +879,8 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
   /* killough 8/23/98: no friends, bouncers, or touchy things in old demos */
   if (!mbf_features)
     mobj->flags &= ~(MF_BOUNCES | MF_FRIEND | MF_TOUCHY);
-  else
-    if (type == MT_PLAYER)         // Except in old demos, players
-      mobj->flags |= MF_FRIEND;    // are always friends.
+  else if (type == MT_PLAYER)    // Except in old demos, players
+    mobj->flags |= MF_FRIEND;    // are always friends.
 
   mobj->health = info->spawnhealth;
 
@@ -911,7 +904,8 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
 
   P_SetThingPosition(mobj);
 
-  mobj->dropoffz =           /* killough 11/98: for tracking dropoffs */
+  /* killough 11/98: for tracking dropoffs */
+  mobj->dropoffz = mobj->subsector->sector->floorheight;
   mobj->floorz   = mobj->subsector->sector->floorheight;
   mobj->ceilingz = mobj->subsector->sector->ceilingheight;
 
@@ -925,13 +919,16 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
   mobj->thinker.function = P_MobjThinker;
 
   //e6y
-  mobj->friction    = ORIG_FRICTION;                        // phares 3/17/98
+  mobj->friction = ORIG_FRICTION;                        // phares 3/17/98
   mobj->index = -1;
 
   mobj->target = mobj->tracer = mobj->lastenemy = NULL;
-  P_AddThinker (&mobj->thinker);
+  P_AddThinker(&mobj->thinker);
   if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
     totallive++;
+
+  P_IdentGetID(mobj, &mobj->id);
+
   return mobj;
 }
 
@@ -994,6 +991,8 @@ void P_RemoveMobj(mobj_t* mobj) {
 
   // free block
   P_RemoveThinker(&mobj->thinker);
+
+  P_IdentReleaseID(&mobj->id);
 }
 
 
@@ -1005,28 +1004,30 @@ void P_RemoveMobj(mobj_t* mobj) {
  * killough 8/24/98: rewrote to use hashing
  */
 
-static PUREFUNC int P_FindDoomedNum(unsigned type)
-{
+static PUREFUNC int P_FindDoomedNum(unsigned int type) {
   static struct { int first, next; } *hash;
   register int i;
 
-  if (!hash)
-    {
-      hash = Z_Malloc(sizeof *hash * NUMMOBJTYPES, PU_CACHE, (void **) &hash);
-      for (i=0; i<NUMMOBJTYPES; i++)
-  hash[i].first = NUMMOBJTYPES;
-      for (i=0; i<NUMMOBJTYPES; i++)
-  if (mobjinfo[i].doomednum != -1)
-    {
-      unsigned h = (unsigned) mobjinfo[i].doomednum % NUMMOBJTYPES;
-      hash[i].next = hash[h].first;
-      hash[h].first = i;
+  if (!hash) {
+    hash = Z_Malloc(sizeof(*hash) * NUMMOBJTYPES, PU_CACHE, (void **)&hash);
+
+    for (i = 0; i < NUMMOBJTYPES; i++)
+      hash[i].first = NUMMOBJTYPES;
+
+    for (i = 0; i < NUMMOBJTYPES; i++) {
+      if (mobjinfo[i].doomednum != -1) {
+        unsigned int h = (unsigned int)mobjinfo[i].doomednum % NUMMOBJTYPES;
+        hash[i].next = hash[h].first;
+        hash[h].first = i;
+      }
     }
-    }
+  }
 
   i = hash[type % NUMMOBJTYPES].first;
+
   while ((i < NUMMOBJTYPES) && ((unsigned)mobjinfo[i].doomednum != type))
     i = hash[i].next;
+
   return i;
 }
 

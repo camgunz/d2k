@@ -24,13 +24,11 @@
 #include "z_zone.h"
 
 #include <enet/enet.h>
-#include "cmp.h"
 
 #include "doomstat.h"
 #include "d_ticcmd.h"
 #include "g_game.h"
 #include "lprintf.h"
-#include "m_pbuf.h"
 #include "p_user.h"
 
 #include "n_net.h"

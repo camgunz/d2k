@@ -23,8 +23,6 @@
 
 #include "z_zone.h"
 
-#include "cmp.h"
-
 #include "doomdef.h"
 #include "doomstat.h"
 #include "dstrings.h"
@@ -39,7 +37,6 @@
 #include "s_sound.h"
 #include "sounds.h"
 #include "m_menu.h"
-#include "m_pbuf.h"
 #include "d_deh.h"
 #include "m_misc.h"
 #include "lprintf.h"
