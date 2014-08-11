@@ -613,18 +613,6 @@ void P_ArchiveWorld(pbuf_t *savebuffer) {
     // needed?   need them -- killough
     M_PBufWriteShort(savebuffer, sec->tag);
 
-    if (sec == sectors) {
-      printf("Sector 0: %d, %d, %d, %d, %d, %d, %d\n",
-        sec->floorheight,
-        sec->ceilingheight,
-        sec->floorpic,
-        sec->ceilingpic,
-        sec->lightlevel,
-        sec->special,
-        sec->tag
-      );
-    }
-
     M_PBufWriteInt(savebuffer, sec->soundorg.x);
     M_PBufWriteInt(savebuffer, sec->soundorg.y);
     M_PBufWriteInt(savebuffer, sec->soundorg.z);
@@ -674,18 +662,6 @@ void P_UnArchiveWorld(pbuf_t *savebuffer) {
     M_PBufReadShort(savebuffer, &sec->lightlevel);
     M_PBufReadShort(savebuffer, &sec->special);
     M_PBufReadShort(savebuffer, &sec->tag);
-
-    if (sec == sectors) {
-      printf("Sector 0: %d, %d, %d, %d, %d, %d, %d\n",
-        sec->floorheight,
-        sec->ceilingheight,
-        sec->floorpic,
-        sec->ceilingpic,
-        sec->lightlevel,
-        sec->special,
-        sec->tag
-      );
-    }
 
     M_PBufReadInt(savebuffer, &sec->soundorg.x);
     M_PBufReadInt(savebuffer, &sec->soundorg.y);

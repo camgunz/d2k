@@ -18,7 +18,8 @@
     * `alias`
     * `idrate` (make a widget for this?)
 
-1. Make playing a game possible
+1. Make playing a game possible in general
+  * Probably need stuff like fraglimit or whatever
 
 ## ZDDL
 
