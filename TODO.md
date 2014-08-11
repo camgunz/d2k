@@ -3,19 +3,22 @@
 ## Prototype
 
 1. Fix problems
-  * Messages widget no longer displays
-  * Handle player input during intermission
+  * Monsters freaking out randomly
+    * Dump the game options array to check
+  * Fix intermission (single-player is busted too)
+    * Handle player input during intermission
+  * Test quitting and rejoining
+  * Test sounds with more than 1 player
 
 1. Fix messaging
+  * Walking over stuff prints 5000 messages to the console
   * Add more scripting commands
     * `say`
     * `say_team`
     * `alias`
+    * `idrate` (make a widget for this?)
 
 1. Make playing a game possible
-  - Something about quitting and rejoining
-  - Sounds with more than 1 player are busted
-  - Fix intermission (single-player is busted too)
 
 ## ZDDL
 

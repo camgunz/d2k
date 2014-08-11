@@ -274,7 +274,7 @@ manual_ceiling://e6y
 
     // create a new ceiling thinker
     rtn = 1;
-    ceiling = Z_Malloc (sizeof(*ceiling), PU_LEVSPEC, 0);
+    ceiling = Z_Malloc(sizeof(*ceiling), PU_LEVSPEC, 0);
     memset(ceiling, 0, sizeof(*ceiling));
     P_AddThinker (&ceiling->thinker);
     sec->ceilingdata = ceiling;               //jff 2/22/98
@@ -402,7 +402,7 @@ int EV_CeilingCrushStop(line_t* line)
       ceiling->olddirection = ceiling->direction;
       ceiling->direction = 0;
       ceiling->thinker.function = NULL;
-      rtn=1;
+      rtn = 1;
     }
   }
   return rtn;
@@ -416,14 +416,17 @@ int EV_CeilingCrushStop(line_t* line)
 // Passed the ceiling motion structure
 // Returns nothing
 //
-void P_AddActiveCeiling(ceiling_t* ceiling)
-{
+void P_AddActiveCeiling(ceiling_t *ceiling) {
   ceilinglist_t *list = malloc(sizeof *list);
+
   list->ceiling = ceiling;
   ceiling->list = list;
+
   if ((list->next = activeceilings))
     list->next->prev = &list->next;
+
   list->prev = &activeceilings;
+
   activeceilings = list;
 }
 
@@ -435,13 +438,16 @@ void P_AddActiveCeiling(ceiling_t* ceiling)
 // Passed the ceiling motion structure
 // Returns nothing
 //
-void P_RemoveActiveCeiling(ceiling_t* ceiling)
-{
+void P_RemoveActiveCeiling(ceiling_t *ceiling) {
   ceilinglist_t *list = ceiling->list;
+
   ceiling->sector->ceilingdata = NULL;  //jff 2/22/98
+
   P_RemoveThinker(&ceiling->thinker);
+
   if ((*list->prev = list->next))
     list->next->prev = list->prev;
+
   free(list);
 }
 

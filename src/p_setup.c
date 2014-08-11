@@ -30,6 +30,7 @@
 #include "w_wad.h"
 #include "r_main.h"
 #include "r_things.h"
+#include "p_ident.h"
 #include "p_maputl.h"
 #include "p_map.h"
 #include "p_setup.h"
@@ -1400,6 +1401,7 @@ static void P_LoadLineDefs (int lump)
       // no need for comp_sound test, these are only used when comp_sound = 0
       ld->soundorg.x = ld->bbox[BOXLEFT] / 2 + ld->bbox[BOXRIGHT] / 2;
       ld->soundorg.y = ld->bbox[BOXTOP] / 2 + ld->bbox[BOXBOTTOM] / 2;
+      P_IdentGetID(&ld->soundorg, &ld->soundorg.id);
 
       ld->iLineID=i; // proff 04/05/2000: needed for OpenGL
       ld->sidenum[0] = LittleShort(mld->sidenum[0]);
@@ -1411,7 +1413,7 @@ static void P_LoadLineDefs (int lump)
          * in compatibility mode - a desync is better than a crash! */
         int j;
         
-        for (j=0; j < 2; j++)
+        for (j = 0; j < 2; j++)
         {
           if (ld->sidenum[j] != NO_INDEX && ld->sidenum[j] >= numsides) {
             ld->sidenum[j] = NO_INDEX;
@@ -2139,6 +2141,7 @@ static int P_GroupLines (void)
       sector->soundorg.x = bbox[BOXRIGHT]/2+bbox[BOXLEFT]/2;
       sector->soundorg.y = bbox[BOXTOP]/2+bbox[BOXBOTTOM]/2;
     }
+    P_IdentGetID(&sector->soundorg, &sector->soundorg.id);
 
     // adjust bounding box to map blocks
     block = (bbox[BOXTOP]-bmaporgy+MAXRADIUS)>>MAPBLOCKSHIFT;

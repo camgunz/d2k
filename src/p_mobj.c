@@ -989,10 +989,10 @@ void P_RemoveMobj(mobj_t* mobj) {
     P_SetTarget(&mobj->lastenemy, NULL);
   }
 
+  P_IdentReleaseID(&mobj->id);
+
   // free block
   P_RemoveThinker(&mobj->thinker);
-
-  P_IdentReleaseID(&mobj->id);
 }
 
 

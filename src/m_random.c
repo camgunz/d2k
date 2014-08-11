@@ -26,6 +26,8 @@
 #include "doomstat.h"
 #include "m_random.h"
 #include "lprintf.h"
+#include "n_net.h"
+#include "n_main.h"
 
 //
 // M_Random
@@ -87,11 +89,12 @@ int (P_Random)(pr_class_t pr_class
     rng.rndindex = (rng.rndindex + 1) & 255;
     compat = rng.rndindex;
 
-    D_Log(LOG_SAVE, "(%d) P_Random: rndindex, pr_class: %d, %d\n",
-      gametic, rng.rndindex, pr_class
-    );
+    if (!CL_Predicting()) {
+      D_Log(LOG_SAVE, "(%d) P_Random: rndindex, pr_class: %d, %d\n",
+        gametic, rng.rndindex, pr_class
+      );
+    }
   }
-
 
   // killough 3/31/98:
   // If demo sync insurance is not requested, use

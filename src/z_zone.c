@@ -23,6 +23,8 @@
 
 #include "z_zone.h"
 
+#include "d_event.h"
+#include "c_main.h"
 #include "doomstat.h"
 #include "m_argv.h"
 #include "v_video.h"
@@ -103,31 +105,38 @@ static void Z_DrawStats(void)            // Print allocation statistics
     unsigned long total_memory = free_memory + memory_size + active_memory + purgable_memory;
     double s = 100.0 / total_memory;
 
-    doom_printf("%-5i\t%6.01f%%\tstatic\n"
-            "%-5i\t%6.01f%%\tpurgable\n"
-            "%-5i\t%6.01f%%\tfree\n"
-            "%-5li\t\ttotal\n",
-            active_memory,
-            active_memory*s,
-            purgable_memory,
-            purgable_memory*s,
-            (free_memory + memory_size),
-            (free_memory + memory_size)*s,
-            total_memory
-            );
-  } else {
+    /*
+    C_Printf(
+      "%-5i\t%6.01f%%\tstatic\n"
+      "%-5i\t%6.01f%%\tpurgable\n"
+      "%-5i\t%6.01f%%\tfree\n"
+      "%-5li\t\ttotal\n",
+      active_memory,
+      active_memory*s,
+      purgable_memory,
+      purgable_memory*s,
+      (free_memory + memory_size),
+      (free_memory + memory_size)*s,
+      total_memory
+    );
+    */
+  }
+  else {
     unsigned long total_memory = active_memory + purgable_memory;
     double s = 100.0 / total_memory;
 
-    doom_printf("%-5i\t%6.01f%%\tstatic\n"
-            "%-5i\t%6.01f%%\tpurgable\n"
-            "%-5li\t\ttotal\n",
-            active_memory,
-            active_memory*s,
-            purgable_memory,
-            purgable_memory*s,
-            total_memory
-            );
+    /*
+    C_Printf(
+      "%-5i\t%6.01f%%\tstatic\n"
+      "%-5i\t%6.01f%%\tpurgable\n"
+      "%-5li\t\ttotal\n",
+      active_memory,
+      active_memory*s,
+      purgable_memory,
+      purgable_memory*s,
+      total_memory
+    );
+    */
   }
 }
 

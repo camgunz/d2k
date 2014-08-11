@@ -72,7 +72,10 @@ typedef struct
 typedef struct
 {
   thinker_t thinker;  // not used for anything
-  fixed_t x, y, z;
+  fixed_t             x;
+  fixed_t             y;
+  fixed_t             z;
+  uint32_t            id;
 } degenmobj_t;
 
 //

@@ -421,15 +421,6 @@ static void P_UnArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
   if (state_index > NUMSTATES)
     I_Error("P_UnArchiveActor: Invalid mobj state %" PRIu64, state_index);
 
-  if (target_id > current_thinker_count)
-    I_Error("P_UnArchiveActor: Invalid mobj target %u", target_id);
-
-  if (tracer_id > current_thinker_count)
-    I_Error("P_UnArchiveActor: Invalid mobj tracer %u", tracer_id);
-
-  if (lastenemy_id > current_thinker_count)
-    I_Error("P_UnArchiveActor: Invalid mobj lastenemy %u", lastenemy_id);
-
   if (player_index > MAXPLAYERS)
     I_Error("P_UnArchiveActor: Invalid mobj player %u", player_index);
 
@@ -606,12 +597,8 @@ void P_UnArchivePlayers(pbuf_t *savebuffer) {
 // P_ArchiveWorld
 //
 void P_ArchiveWorld(pbuf_t *savebuffer) {
-  int i;
-  const sector_t *sec;
-  const line_t *li;
-
   // do sectors
-  for (i = 0, sec = sectors; i < numsectors; i++, sec++) {
+  for (sector_t *sec = sectors; (sec - sectors) < numsectors; sec++) {
     // killough 10/98: save full floor & ceiling heights, including fraction
     M_PBufWriteInt(savebuffer, sec->floorheight);
     M_PBufWriteInt(savebuffer, sec->ceilingheight);
@@ -625,10 +612,27 @@ void P_ArchiveWorld(pbuf_t *savebuffer) {
 
     // needed?   need them -- killough
     M_PBufWriteShort(savebuffer, sec->tag);
+
+    if (sec == sectors) {
+      printf("Sector 0: %d, %d, %d, %d, %d, %d, %d\n",
+        sec->floorheight,
+        sec->ceilingheight,
+        sec->floorpic,
+        sec->ceilingpic,
+        sec->lightlevel,
+        sec->special,
+        sec->tag
+      );
+    }
+
+    M_PBufWriteInt(savebuffer, sec->soundorg.x);
+    M_PBufWriteInt(savebuffer, sec->soundorg.y);
+    M_PBufWriteInt(savebuffer, sec->soundorg.z);
+    M_PBufWriteUInt(savebuffer, sec->soundorg.id);
   }
 
   // do lines
-  for (i = 0, li = lines; i < numlines; i++, li++) {
+  for (line_t *li = lines; (li - lines) < numlines; li++) {
     M_PBufWriteShort(savebuffer, li->flags);
     M_PBufWriteShort(savebuffer, li->special);
     M_PBufWriteShort(savebuffer, li->tag);
@@ -646,6 +650,11 @@ void P_ArchiveWorld(pbuf_t *savebuffer) {
         M_PBufWriteShort(savebuffer, si->midtexture);
       }
     }
+
+    M_PBufWriteInt(savebuffer, li->soundorg.x);
+    M_PBufWriteInt(savebuffer, li->soundorg.y);
+    M_PBufWriteInt(savebuffer, li->soundorg.z);
+    M_PBufWriteUInt(savebuffer, li->soundorg.id);
   }
 
   M_PBufWriteInt(savebuffer, musinfo.current_item);
@@ -655,12 +664,8 @@ void P_ArchiveWorld(pbuf_t *savebuffer) {
 // P_UnArchiveWorld
 //
 void P_UnArchiveWorld(pbuf_t *savebuffer) {
-  int i;
-  sector_t *sec;
-  line_t *li;
-
   // do sectors
-  for (i = 0, sec = sectors; i < numsectors; i++, sec++) {
+  for (sector_t *sec = sectors; (sec - sectors) < numsectors; sec++) {
     // killough 10/98: load full floor & ceiling heights, including fractions
     M_PBufReadInt(savebuffer, &sec->floorheight);
     M_PBufReadInt(savebuffer, &sec->ceilingheight);
@@ -670,6 +675,24 @@ void P_UnArchiveWorld(pbuf_t *savebuffer) {
     M_PBufReadShort(savebuffer, &sec->special);
     M_PBufReadShort(savebuffer, &sec->tag);
 
+    if (sec == sectors) {
+      printf("Sector 0: %d, %d, %d, %d, %d, %d, %d\n",
+        sec->floorheight,
+        sec->ceilingheight,
+        sec->floorpic,
+        sec->ceilingpic,
+        sec->lightlevel,
+        sec->special,
+        sec->tag
+      );
+    }
+
+    M_PBufReadInt(savebuffer, &sec->soundorg.x);
+    M_PBufReadInt(savebuffer, &sec->soundorg.y);
+    M_PBufReadInt(savebuffer, &sec->soundorg.z);
+    M_PBufReadUInt(savebuffer, &sec->soundorg.id);
+    P_IdentAssignID(&sec->soundorg, sec->soundorg.id);
+
     sec->ceilingdata = 0; //jff 2/22/98 now three thinker fields, not two
     sec->floordata = 0;
     sec->lightingdata = 0;
@@ -677,7 +700,7 @@ void P_UnArchiveWorld(pbuf_t *savebuffer) {
   }
 
   // do lines
-  for (i = 0, li = lines; i < numlines; i++, li++) {
+  for (line_t *li = lines; (li - lines) < numlines; li++) {
     M_PBufReadShort(savebuffer, (short *)&li->flags);
     M_PBufReadShort(savebuffer, &li->special);
     M_PBufReadShort(savebuffer, &li->tag);
@@ -694,6 +717,12 @@ void P_UnArchiveWorld(pbuf_t *savebuffer) {
         M_PBufReadShort(savebuffer, &si->midtexture);
       }
     }
+
+    M_PBufReadInt(savebuffer, &li->soundorg.x);
+    M_PBufReadInt(savebuffer, &li->soundorg.y);
+    M_PBufReadInt(savebuffer, &li->soundorg.z);
+    M_PBufReadUInt(savebuffer, &li->soundorg.id);
+    P_IdentAssignID(&li->soundorg, li->soundorg.id);
   }
 
   M_PBufReadInt(savebuffer, &musinfo.current_item);
@@ -1495,6 +1524,12 @@ void P_ArchiveRNG(pbuf_t *savebuffer) {
 
   M_PBufWriteInt(savebuffer, rng.rndindex);
   M_PBufWriteInt(savebuffer, rng.prndindex);
+
+  D_Log(LOG_SAVE, "(%d) ArchiveRNG: rndindex, prndindex: %d, %d\n",
+    gametic,
+    rng.rndindex,
+    rng.prndindex
+  );
 }
 
 void P_UnArchiveRNG(pbuf_t *savebuffer) {
@@ -1513,6 +1548,12 @@ void P_UnArchiveRNG(pbuf_t *savebuffer) {
 
   M_PBufReadInt(savebuffer, &rng.rndindex);
   M_PBufReadInt(savebuffer, &rng.prndindex);
+
+  D_Log(LOG_SAVE, "(%d) ArchiveRNG: rndindex, prndindex: %d, %d\n",
+    gametic,
+    rng.rndindex,
+    rng.prndindex
+  );
 }
 
 // killough 2/22/98: Save/restore automap state

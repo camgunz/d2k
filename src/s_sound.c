@@ -65,7 +65,8 @@ const char* S_music_files[NUMMUSIC]; // cournia - stores music file names
 
 typedef struct {
   sfxinfo_t *sfxinfo;  // sound information (if null, channel avail.)
-  void *origin;        // origin of sound
+  mobj_t *origin;      // origin of sound
+  uint32_t origin_id;  // sound origin ID
   int handle;          // handle of the sound being played
   int is_pickup;       // killough 4/25/98: whether sound is a player's weapon
   int pitch;
@@ -109,7 +110,7 @@ void S_StopChannel(int cnum);
 int S_AdjustSoundParams(mobj_t *listener, mobj_t *source,
                         int *vol, int *sep, int *pitch);
 
-static int S_getChannel(void *origin, sfxinfo_t *sfxinfo, int is_pickup);
+static int S_getChannel(mobj_t *mobj, sfxinfo_t *sfxinfo, int is_pickup);
 
 // Initializes sound stuff, including volume
 // Sets channels, SFX and music volume,
@@ -205,10 +206,9 @@ void S_Start(void) {
   S_ChangeMusic(mnum, true);
 }
 
-void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume) {
+void S_StartSoundAtVolume(mobj_t *origin, int sfx_id, int volume) {
   int sep, pitch, priority, cnum, is_pickup;
   sfxinfo_t *sfx;
-  mobj_t *origin = (mobj_t *)origin_p;
 
   //jff 1/22/98 return if sound is not enabled
   if (!snd_card || nosfxparm)
@@ -248,7 +248,7 @@ void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume) {
 
   if (!origin || (origin == players[displayplayer].mo && walkcamera.type < 2)) {
     sep = NORM_SEP;
-    volume *= 8;
+    volume <<= 3;
   }
   else if (!S_AdjustSoundParams(players[displayplayer].mo, origin, &volume,
                                 &sep, &pitch)) {
@@ -261,9 +261,9 @@ void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume) {
 
   // hacks to vary the sfx pitches
   if (sfx_id >= sfx_sawup && sfx_id <= sfx_sawhit)
-    pitch += 8 - (M_Random()&15);
+    pitch += 8 - (M_Random() & 15);
   else if (sfx_id != sfx_itemup && sfx_id != sfx_tink)
-    pitch += 16 - (M_Random()&31);
+    pitch += 16 - (M_Random() & 31);
 
   if (pitch < 0)
     pitch = 0;
@@ -273,7 +273,7 @@ void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume) {
 
   // kill old sound
   for (cnum = 0; cnum < numChannels; cnum++) {
-    if (channels[cnum].sfxinfo && channels[cnum].origin == origin &&
+    if (channels[cnum].sfxinfo && channels[cnum].origin_id == origin->id &&
         (comp[comp_sound] || channels[cnum].is_pickup == is_pickup)) {
       S_StopChannel(cnum);
       break;
@@ -305,12 +305,12 @@ void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume) {
   }
 }
 
-void S_StartSound(void *origin, int sfx_id) {
+void S_StartSound(mobj_t *mobj, int sfx_id) {
   if (!CL_Predicting())
-    S_StartSoundAtVolume(origin, sfx_id, snd_SfxVolume);
+    S_StartSoundAtVolume(mobj, sfx_id, snd_SfxVolume);
 }
 
-void S_StopSound(void *origin) {
+void S_StopSound(mobj_t *mobj) {
   int cnum;
 
   //jff 1/22/98 return if sound is not enabled
@@ -318,7 +318,7 @@ void S_StopSound(void *origin) {
     return;
 
   for (cnum = 0; cnum < numChannels; cnum++) {
-    if (channels[cnum].sfxinfo && channels[cnum].origin == origin) {
+    if (channels[cnum].sfxinfo && channels[cnum].origin_id == mobj->id) {
       S_StopChannel(cnum);
       break;
     }
@@ -356,8 +356,7 @@ void S_ResumeSound(void)
 //
 // Updates music & sounds
 //
-void S_UpdateSounds(void *listener_p) {
-  mobj_t *listener = (mobj_t *)listener_p;
+void S_UpdateSounds(mobj_t *listener) {
   int cnum;
 
   //jff 1/22/98 return if sound is not enabled
@@ -393,8 +392,10 @@ void S_UpdateSounds(void *listener_p) {
 
         // check non-local sounds for distance clipping
         // or modify their params
-        if (c->origin && listener_p != c->origin) { // killough 3/20/98
-          if (!S_AdjustSoundParams(listener, c->origin, &volume, &sep, &pitch))
+        if (c->origin_id && listener->id != c->origin_id) { // killough 3/20/98
+          mobj_t *source = P_IdentLookup(c->origin_id);
+
+          if (!S_AdjustSoundParams(listener, source, &volume, &sep, &pitch))
             S_StopChannel(cnum);
           else
             I_UpdateSoundParams(c->handle, volume, sep, pitch);
@@ -568,8 +569,6 @@ void S_StopMusic(void) {
   }
 }
 
-
-
 void S_StopChannel(int cnum) {
   channel_t *c = &channels[cnum];
 
@@ -682,7 +681,7 @@ int S_AdjustSoundParams(mobj_t *listener, mobj_t *source,
 //
 // killough 4/25/98: made static, added is_pickup argument
 
-static int S_getChannel(void *origin, sfxinfo_t *sfxinfo, int is_pickup) {
+static int S_getChannel(mobj_t *mobj, sfxinfo_t *sfxinfo, int is_pickup) {
   int cnum;
   channel_t *c;
 
@@ -692,7 +691,7 @@ static int S_getChannel(void *origin, sfxinfo_t *sfxinfo, int is_pickup) {
 
   // Find an open channel
   for (cnum = 0; cnum < numChannels && channels[cnum].sfxinfo; cnum++) {
-    if (origin && channels[cnum].origin == origin &&
+    if (mobj && channels[cnum].origin_id == mobj->id &&
         channels[cnum].is_pickup == is_pickup) {
       S_StopChannel(cnum);
       break;
@@ -709,39 +708,41 @@ static int S_getChannel(void *origin, sfxinfo_t *sfxinfo, int is_pickup) {
 
     if (cnum == numChannels)
       return -1;                  // No lower priority.  Sorry, Charlie.
-    else
-      S_StopChannel(cnum);        // Otherwise, kick out lower priority.
+
+    S_StopChannel(cnum);          // Otherwise, kick out lower priority.
   }
 
   c = &channels[cnum];              // channel is decided to be cnum.
   c->sfxinfo = sfxinfo;
-  c->origin = origin;
+  c->origin = mobj;
+  c->origin_id = mobj->id;
   c->is_pickup = is_pickup;         // killough 4/25/98
 
   return cnum;
 }
 
-void S_SaveChannelOrigins(buf_t *origin_ids) {
+void S_ReloadChannelOrigins(void) {
   for (int cnum = 0; cnum < numChannels; cnum++) {
-    mobj_t *origin = (mobj_t *)channels[cnum].origin;
+    channel_t *c = &channels[cnum];
+    uint32_t origin_id = c->origin_id;
 
-    if (origin)
-      M_BufferWriteUInt(origin_ids, origin->id);
-    else
-      M_BufferWriteUInt(origin_ids, 0);
-  }
-}
+    if (origin_id) {
+      mobj_t *mobj = P_IdentLookup(origin_id);
 
-void S_LoadChannelOrigins(buf_t *origin_ids) {
-  for (int cnum = 0; cnum < numChannels; cnum++) {
-    unsigned int origin_index = 0;
-
-    M_BufferReadUInt(origin_ids, &origin_index);
-
-    if (origin_index)
-      channels[cnum].origin = P_IdentLookup(origin_index);
-    else
-      channels[cnum].origin = NULL;
+      if (mobj) {
+        c->origin = mobj;
+      }
+      else {
+        c->origin = NULL;
+        c->origin_id = 0;
+        S_StopChannel(cnum);
+      }
+    }
+    else {
+      c->origin = NULL;
+      c->origin_id = 0;
+      S_StopChannel(cnum);
+    }
   }
 }
 

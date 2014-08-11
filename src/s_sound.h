@@ -49,16 +49,16 @@ void S_Start(void);
 // Start sound for thing at <origin>
 //  using <sound_id> from sounds.h
 //
-void S_StartSound(void *origin, int sound_id);
+void S_StartSound(mobj_t *origin, int sound_id);
 
 // Will start a sound at a given volume.
-void S_StartSoundAtVolume(void *origin, int sound_id, int volume);
+void S_StartSoundAtVolume(mobj_t *origin, int sound_id, int volume);
 
 // killough 4/25/98: mask used to indicate sound origin is player item pickup
 #define PICKUP_SOUND (0x8000)
 
 // Stop sound for thing at <origin>
-void S_StopSound(void* origin);
+void S_StopSound(mobj_t *origin);
 
 // Start music using <music_id> from sounds.h
 void S_StartMusic(int music_id);
@@ -78,15 +78,14 @@ void S_ResumeSound(void);
 //
 // Updates music & sounds
 //
-void S_UpdateSounds(void *listener);
+void S_UpdateSounds(mobj_t *listener);
 void S_SetMusicVolume(int volume);
 void S_SetSfxVolume(int volume);
 
 //
 // Serialization routines
 //
-void S_SaveChannelOrigins(buf_t *origin_ids);
-void S_LoadChannelOrigins(buf_t *origin_ids);
+void S_ReloadChannelOrigins(void);
 
 // machine-independent sound params
 extern int default_numChannels;

@@ -53,7 +53,7 @@
 
 #define DEBUG_NET 0
 #define DEBUG_SYNC 0
-#define DEBUG_SAVE 1
+#define DEBUG_SAVE 0
 #define PRINT_BANDWIDTH_STATS 0
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20

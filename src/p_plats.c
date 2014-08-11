@@ -212,7 +212,7 @@ manual_plat://e6y
 
     // Create a thinker
     rtn = 1;
-    plat = Z_Malloc( sizeof(*plat), PU_LEVSPEC, 0);
+    plat = Z_Malloc(sizeof(*plat), PU_LEVSPEC, 0);
     memset(plat, 0, sizeof(*plat));
     P_AddThinker(&plat->thinker);
 
@@ -385,14 +385,17 @@ int EV_StopPlat(line_t* line)
 // Passed a pointer to the plat to add
 // Returns nothing
 //
-void P_AddActivePlat(plat_t* plat)
-{
+void P_AddActivePlat(plat_t *plat) {
   platlist_t *list = malloc(sizeof *list);
+
   list->plat = plat;
   plat->list = list;
+
   if ((list->next = activeplats))
     list->next->prev = &list->next;
+
   list->prev = &activeplats;
+
   activeplats = list;
 }
 
@@ -404,13 +407,16 @@ void P_AddActivePlat(plat_t* plat)
 // Passed a pointer to the plat to remove
 // Returns nothing
 //
-void P_RemoveActivePlat(plat_t* plat)
-{
+void P_RemoveActivePlat(plat_t *plat) {
   platlist_t *list = plat->list;
+
   plat->sector->floordata = NULL; //jff 2/23/98 multiple thinkers
+
   P_RemoveThinker(&plat->thinker);
+
   if ((*list->prev = list->next))
     list->next->prev = list->prev;
+
   free(list);
 }
 

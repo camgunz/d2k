@@ -189,10 +189,7 @@ void Z_DumpHistory(char *);
 
 void Z_ZoneHistory(char *);
 
-/*
- * CG: Include the basic data structures so other stuff (like player_t) can use
- *     them
- */
+/* CG: Include the basic data structures so other stuff can use them */
 
 #include "cmp.h"
 

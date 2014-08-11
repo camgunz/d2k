@@ -27,19 +27,16 @@
 #include "z_zone.h"
 
 #include "doomdef.h"
-#include "memio.h"
-#include "mus2mid.h"
-
+#include "lprintf.h"
 #include "m_misc.h"
+#include "memio.h"
+#include "midifile.h"
+#include "mus2mid.h"
+#include "musicplayer.h"
+#include "opl.h"
+#include "p_mobj.h"
 #include "s_sound.h"
 #include "w_wad.h"
-
-#include "opl.h"
-#include "midifile.h"
-
-#include "musicplayer.h"
-
-#include "lprintf.h"
 
 // #define OPL_MIDI_DEBUG
 

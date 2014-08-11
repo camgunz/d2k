@@ -113,26 +113,30 @@ void T_VerticalDoor (vldoor_t* door)
 
     case -1:
       // Door is moving down
-      res = T_MovePlane
-            (
-              door->sector,
-              door->speed,
-              door->sector->floorheight,
-              false,
-              1,
-              door->direction
-            );
+      res = T_MovePlane(
+        door->sector,
+        door->speed,
+        door->sector->floorheight,
+        false,
+        1,
+        door->direction
+      );
 
       /* killough 10/98: implement gradual lighting effects */
       // e6y: "Tagged doors don't trigger special lighting" handled wrong
       // http://sourceforge.net/tracker/index.php?func=detail&aid=1411400&group_id=148658&atid=772943
       // Old code: if (door->lighttag && door->topheight - door->sector->floorheight)
-      if (door->lighttag && door->topheight - door->sector->floorheight && compatibility_level >= mbf_compatibility)
-        EV_LightTurnOnPartway(door->line,
-                              FixedDiv(door->sector->ceilingheight -
-                                       door->sector->floorheight,
-                                       door->topheight -
-                                       door->sector->floorheight));
+      if (door->lighttag &&
+          door->topheight - door->sector->floorheight &&
+          compatibility_level >= mbf_compatibility) {
+        EV_LightTurnOnPartway(
+          door->line,
+          FixedDiv(
+            door->sector->ceilingheight - door->sector->floorheight,
+            door->topheight - door->sector->floorheight
+          )
+        );
+      }
 
       // handle door reaching bottom
       if (res == pastdest)
@@ -145,7 +149,7 @@ void T_VerticalDoor (vldoor_t* door)
           case genBlazeRaise:
           case genBlazeClose:
             door->sector->ceilingdata = NULL;  //jff 2/22/98
-            P_RemoveThinker (&door->thinker);  // unlink and free
+            P_RemoveThinker(&door->thinker);  // unlink and free
             // killough 4/15/98: remove double-closing sound of blazing doors
             if (comp[comp_blazing])
               S_StartSound((mobj_t *)&door->sector->soundorg, sfx_bdcls);
@@ -156,13 +160,13 @@ void T_VerticalDoor (vldoor_t* door)
           case genRaise:
           case genClose:
             door->sector->ceilingdata = NULL; //jff 2/22/98
-            P_RemoveThinker (&door->thinker);  // unlink and free
+            P_RemoveThinker(&door->thinker);  // unlink and free
             break;
 
           // close then open doors start waiting
           case close30ThenOpen:
             door->direction = 0;
-            door->topcountdown = TICRATE*30;
+            door->topcountdown = TICRATE * 30;
             break;
 
           case genCdO:
@@ -176,8 +180,11 @@ void T_VerticalDoor (vldoor_t* door)
         }
         // e6y: "Tagged doors don't trigger special lighting" handled wrong
         // http://sourceforge.net/tracker/index.php?func=detail&aid=1411400&group_id=148658&atid=772943
-        if (door->lighttag && door->topheight - door->sector->floorheight && compatibility_level < mbf_compatibility)
+        if (door->lighttag &&
+            door->topheight - door->sector->floorheight &&
+            compatibility_level < mbf_compatibility) {
           EV_LightTurnOnPartway(door->line,0);
+        }
       }
       /* jff 1/31/98 turn lighting off in tagged sectors of manual doors
        * killough 10/98: replaced with gradual lighting code
@@ -252,7 +259,7 @@ void T_VerticalDoor (vldoor_t* door)
           case genCdO:
           case genBlazeCdO:
             door->sector->ceilingdata = NULL; //jff 2/22/98
-            P_RemoveThinker (&door->thinker); // unlink and free
+            P_RemoveThinker(&door->thinker); // unlink and free
             break;
 
           default:

@@ -1219,6 +1219,8 @@ void G_Ticker(void) {
         continue;
 
       cmd = &players[i].cmd;
+
+      memset(cmd, 0, sizeof(ticcmd_t));
       
       //e6y
       if (demoplayback) {
@@ -1236,6 +1238,17 @@ void G_Ticker(void) {
 
           if (ncmd->tic == gametic) {
             memcpy(cmd, &ncmd->cmd, sizeof(ticcmd_t));
+
+            printf("Copying a command {%d, %d, %d, %d, %d, %d} (%d)\n",
+              cmd->forwardmove,
+              cmd->sidemove,
+              cmd->angleturn,
+              cmd->consistancy,
+              cmd->chatchar,
+              cmd->buttons,
+              gamestate
+            );
+
             found_command = true;
           }
 

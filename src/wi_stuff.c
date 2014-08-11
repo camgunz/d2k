@@ -1470,7 +1470,8 @@ void WI_updateNetgameStats(void)
   }
   else if (ng_state == 10)
   {
-    if (DELTASERVER || acceleratestage)
+    // if (DELTASERVER || acceleratestage)
+    if (acceleratestage)
     {
       S_StartSound(0, sfx_sgcock);
       if (gamemode == commercial)

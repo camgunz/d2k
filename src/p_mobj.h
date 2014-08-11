@@ -256,6 +256,8 @@ typedef struct mobj_s {
     fixed_t             y;
     fixed_t             z;
 
+    uint32_t            id;
+
     // More list: links in sector (if needed)
     struct mobj_s*      snext;
     struct mobj_s**     sprev; // killough 8/10/98: change to ptr-to-ptr
@@ -360,8 +362,6 @@ typedef struct mobj_s {
     int iden_nums;		// hi word stores thing num, low word identifier num
 
     fixed_t             pad; // cph - needed so I can get the size unambiguously on amd64
-
-    uint32_t            id;
 
     // SEE WARNING ABOVE ABOUT POINTER FIELDS!!!
 } mobj_t;
