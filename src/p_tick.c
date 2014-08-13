@@ -254,14 +254,17 @@ static void P_RunThinkers(void) {
     if (!currentthinker->function)
       continue;
 
-    if (!(DELTACLIENT || DELTASERVER)) {
-      currentthinker->function(currentthinker);
+    if (DELTASYNC) {
+      if (currentthinker->function != P_MobjThinker)
+        currentthinker->function(currentthinker);
+      else if (((mobj_t *)currentthinker)->player == NULL)
+        currentthinker->function(currentthinker);
+      continue;
     }
-    else if ((currentthinker->function != P_MobjThinker) ||
-             (((mobj_t *)currentthinker)->player == NULL)) {
-      currentthinker->function(currentthinker);
-    }
+
+    currentthinker->function(currentthinker);
   }
+
   newthinkerpresent = false;
 
   // Dedicated thinkers
@@ -304,12 +307,6 @@ static void run_regular_tic(void) {
   }
 }
 
-/*
- * CG: TODO: Fix skipping caused by running a shit-ton of commands in a single
- *           TIC.  This is gonna end up being some kind of vector function
- *           combined with a time limit which, if exceeded, disconnects the
- *           player.
- */
 static void run_thinkers_and_specials(void) {
   P_RunThinkers();
   P_UpdateSpecials();

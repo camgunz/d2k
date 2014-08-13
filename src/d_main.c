@@ -547,6 +547,7 @@ static void D_Wipe(void) {
     wipestart = nowtime;
     done = wipe_ScreenWipe(tics);
     I_UpdateNoBlit();
+    N_ServiceNetwork();
     M_Drawer();                   // menu is drawn even on top of wipes
     I_FinishUpdate();             // page flip or blit buffer
   } while (!done);

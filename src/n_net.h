@@ -79,7 +79,6 @@ dboolean    N_GetPortFromAddressString(const char *address,
                                        unsigned short *port);
 size_t      N_ParseAddressString(const char *address, char **host,
                                  unsigned short *port);
-
 void        N_Init(void);
 void        N_Disconnect(void);
 void        N_Shutdown(void);

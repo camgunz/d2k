@@ -28,6 +28,9 @@
 #pragma interface
 #endif
 
+#define SOUND_DISABLED (!snd_card || nosfxparm)
+#define MUSIC_DISABLED (!mus_card || nomusicparm)
+
 //
 // Initializes sound stuff, including volume
 // Sets channels, SFX and music volume,

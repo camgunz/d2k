@@ -557,7 +557,14 @@ void P_RunPlayerCommands(player_t *player) {
   }
   
   if (M_CBufGetObjectCount(&player->commands) == 0) {
-    /* [CG] Vector prediction... take 1 */
+    /*
+     * CG: 08/13/2014: TODO:
+     *     Fix skipping caused by running a shit-ton of commands in a single
+     *     TIC.  This is gonna end up being some kind of vector function
+     *     combined with a time limit which, if exceeded, disconnects the
+     *     player.  For now though, just keep thinking on the player so their
+     *     momentum keeps moving them.
+     */
     if (DELTACLIENT && player_index != consoleplayer && player->mo) {
       P_MobjThinker(player->mo);
       if (player_index != 0) {

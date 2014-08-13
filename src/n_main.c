@@ -54,6 +54,7 @@
 #define DEBUG_NET 0
 #define DEBUG_SYNC 0
 #define DEBUG_SAVE 0
+#define ENABLE_PREDICTION 1
 #define PRINT_BANDWIDTH_STATS 0
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
@@ -111,7 +112,12 @@ static void run_tic(void) {
     D_DoAdvanceDemo();
 
   I_GetTime_SaveMS();
+#ifdef ENABLE_PREDICTION
   G_Ticker();
+#else
+  if (SERVER)
+    G_Ticker();
+#endif
   P_Checksum(gametic);
 
   if (DELTASERVER) {

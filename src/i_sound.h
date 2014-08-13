@@ -85,7 +85,7 @@ void I_ResampleStream (void *dest, unsigned nsamp, void (*proc) (void *dest, uns
 //
 extern const char *snd_soundfont;
 extern const char *snd_mididev;
-extern char music_player_order[][200];
+extern const char *music_player_order[];
 
 void I_InitMusic(void);
 void I_ShutdownMusic(void);

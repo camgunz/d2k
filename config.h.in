@@ -49,6 +49,7 @@
 
 #cmakedefine HAVE_LIBSDL_IMAGE
 #cmakedefine HAVE_LIBSDL_MIXER
+#cmakedefine HAVE_MIXER
 #cmakedefine HAVE_LIBFLUIDSYNTH
 #cmakedefine HAVE_LIBPORTMIDI
 #cmakedefine HAVE_OGG

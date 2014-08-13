@@ -844,15 +844,12 @@ static dboolean P_CrossBSPNode(int bspnum)
 //
 // killough 4/20/98: cleaned up, made to use new LOS struct
 
-dboolean P_CheckSight(mobj_t *t1, mobj_t *t2)
-{
+dboolean P_CheckSight(mobj_t *t1, mobj_t *t2) {
   const sector_t *s1, *s2;
   int pnum;
 
   if (compatibility_level == doom_12_compatibility)
-  {
     return P_CheckSight_12(t1, t2);
-  }
 
   s1 = t1->subsector->sector;
   s2 = t2->subsector->sector;
@@ -863,7 +860,7 @@ dboolean P_CheckSight(mobj_t *t1, mobj_t *t2)
   //
   // Check in REJECT table.
 
-  if (rejectmatrix[pnum>>3] & (1 << (pnum&7)))   // can't possibly be connected
+  if (rejectmatrix[pnum>>3] & (1 << (pnum & 7))) // can't possibly be connected
     return false;
 
   // killough 4/19/98: make fake floors and ceilings block monster view
@@ -878,15 +875,17 @@ dboolean P_CheckSight(mobj_t *t1, mobj_t *t2)
        ((t2->z + t2->height <= sectors[s2->heightsec].floorheight &&
          t1->z >= sectors[s2->heightsec].floorheight) ||
         (t2->z >= sectors[s2->heightsec].ceilingheight &&
-         t1->z + t2->height <= sectors[s2->heightsec].ceilingheight))))
+         t1->z + t2->height <= sectors[s2->heightsec].ceilingheight)))) {
     return false;
+  }
 
   /* killough 11/98: shortcut for melee situations
    * same subsector? obviously visible
    * cph - compatibility optioned for demo sync, cf HR06-UV.LMP */
   if ((t1->subsector == t2->subsector) &&
-      (compatibility_level >= mbf_compatibility))
+      (compatibility_level >= mbf_compatibility)) {
     return true;
+  }
 
   // An unobstructed LOS is possible.
   // Now look from eyes of t1 to any part of t2.
@@ -912,19 +911,24 @@ dboolean P_CheckSight(mobj_t *t1, mobj_t *t2)
   /* cph - calculate min and max z of the potential line of sight
    * For old demos, we disable this optimisation by setting them to
    * the extremes */
-  if (compatibility_level == lxdoom_1_compatibility || prboom_comp[PC_FORCE_LXDOOM_DEMO_COMPATIBILITY].state)
-  {
+  if (compatibility_level == lxdoom_1_compatibility ||
+      prboom_comp[PC_FORCE_LXDOOM_DEMO_COMPATIBILITY].state) {
     if (los.sightzstart < t2->z) {
-      los.maxz = t2->z + t2->height; los.minz = los.sightzstart;
-    } else if (los.sightzstart > t2->z + t2->height) {
-      los.maxz = los.sightzstart; los.minz = t2->z;
-    } else {
-      los.maxz = t2->z + t2->height; los.minz = t2->z;
+      los.maxz = t2->z + t2->height;
+      los.minz = los.sightzstart;
+    }
+    else if (los.sightzstart > t2->z + t2->height) {
+      los.maxz = los.sightzstart;
+      los.minz = t2->z;
+    }
+    else {
+      los.maxz = t2->z + t2->height;
+      los.minz = t2->z;
     }
   }
-  else
-  {
-    los.maxz = INT_MAX; los.minz = INT_MIN;
+  else {
+    los.maxz = INT_MAX;
+    los.minz = INT_MIN;
   }
 
   // the head node is the last node output

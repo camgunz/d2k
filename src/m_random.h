@@ -137,6 +137,9 @@ int P_Random(pr_class_t DA(const char *, int));
 // Returns a number from 0 to 255,
 #define M_Random() P_Random(pr_misc)
 
+/* CG: 08/13/2014: A non-sync-critical RNG */
+int D_Random(void);
+
 // Fix randoms for demos.
 void M_ClearRandom(void);
 

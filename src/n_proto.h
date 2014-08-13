@@ -38,10 +38,9 @@
 #define nm_rconcommand            8
 #define nm_voterequest            9
 
-void   N_InitProtocol(void);
-buf_t* N_GetMessageRecipientBuffer(void);
-void   N_HandlePacket(int peernum, void *data, size_t data_size);
-void   N_UpdateSync(void);
+void N_InitProtocol(void);
+void N_HandlePacket(int peernum, void *data, size_t data_size);
+void N_UpdateSync(void);
 
 void SV_SetupNewPeer(int peernum);
 void SV_SendSetup(short playernum);

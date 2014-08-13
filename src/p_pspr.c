@@ -298,8 +298,7 @@ static void P_FireWeapon(player_t *player)
 // Player died, so put the weapon away.
 //
 
-void P_DropWeapon(player_t *player)
-{
+void P_DropWeapon(player_t *player) {
   P_SetPsprite(player, ps_weapon, weaponinfo[player->readyweapon].downstate);
 }
 

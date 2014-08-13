@@ -164,19 +164,16 @@ const char *nm_names[9] = {
   "vote request"
 };
 
-buf_t* N_GetMessageRecipientBuffer(void) {
-  static buf_t message_recipients;
-  static dboolean initialized = false;
+static buf_t* get_message_recipient_buffer(void) {
+  static buf_t *recipients = NULL;
 
-  if (!initialized)
-    M_BufferInit(&message_recipients);
+  if (!recipients)
+    recipients = M_BufferNew();
 
-  M_BufferEnsureCapacity(
-    &message_recipients, MAXPLAYERS * sizeof(unsigned short)
-  );
-  M_BufferClear(&message_recipients);
+  M_BufferEnsureCapacity(recipients, MAXPLAYERS * sizeof(unsigned short));
+  M_BufferClear(recipients);
 
-  return &message_recipients;
+  return recipients;
 }
 
 static void handle_setup(netpeer_t *np) {
@@ -273,7 +270,7 @@ static void handle_player_message(netpeer_t *np) {
 
   short sender = 0;
   dboolean unpacked_successfully = false;
-  buf_t *message_recipients = N_GetMessageRecipientBuffer();
+  buf_t *message_recipients = get_message_recipient_buffer();
 
   if (!initialized_buffer) {
     M_BufferInit(&player_message_buffer);
@@ -574,7 +571,7 @@ void CL_SendMessageToServer(char *message) {
 }
 
 void CL_SendMessageToPlayer(short recipient, char *message) {
-  buf_t *recipients = N_GetMessageRecipientBuffer();
+  buf_t *recipients = get_message_recipient_buffer();
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
@@ -587,7 +584,7 @@ void CL_SendMessageToPlayer(short recipient, char *message) {
 }
 
 void CL_SendMessageToTeam(byte team, char *message) {
-  buf_t *recipients = N_GetMessageRecipientBuffer();
+  buf_t *recipients = get_message_recipient_buffer();
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
@@ -605,7 +602,7 @@ void CL_SendMessageToCurrentTeam(char *message) {
 }
 
 void CL_SendMessage(char *message) {
-  buf_t *recipients = N_GetMessageRecipientBuffer();
+  buf_t *recipients = get_message_recipient_buffer();
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 

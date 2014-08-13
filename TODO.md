@@ -3,12 +3,15 @@
 ## Prototype
 
 1. Fix problems
-  * Monsters freaking out randomly
-    * Dump the game options array to check
+  * When loading a new map, the client loads deltas for the previous map,
+    which don't work because they presume the wrong number of sectors and
+    lines (etc.)
   * Fix intermission (single-player is busted too)
     * Handle player input during intermission
+  * 2nd button in the blue room doesn't work
   * Test quitting and rejoining
   * Test sounds with more than 1 player
+    * They don't work
 
 1. Fix messaging
   * Walking over stuff prints 5000 messages to the console

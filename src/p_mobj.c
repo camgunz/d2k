@@ -788,8 +788,9 @@ void P_MobjThinker(mobj_t* mobj) {
 
     // Only apply torque to objects contacting dropoff and fall, but not in old
     // demos
-    if (mobj->z > mobj->dropoffz && !(mobj->flags & MF_NOGRAVITY) &&
-                                    !comp[comp_falloff]) {
+    if (mobj->z > mobj->dropoffz &&
+        !(mobj->flags & MF_NOGRAVITY) &&
+        !comp[comp_falloff]) {
       P_ApplyTorque(mobj);
     }
     else { // Reset torque
@@ -807,7 +808,7 @@ void P_MobjThinker(mobj_t* mobj) {
     // you can cycle through multiple states in a tic
 
     if (!mobj->tics) {
-      if (!P_SetMobjState (mobj, mobj->state->nextstate)) {
+      if (!P_SetMobjState(mobj, mobj->state->nextstate)) {
         return;     // freed itself
       }
     }

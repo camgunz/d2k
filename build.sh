@@ -1,5 +1,7 @@
 #!/bin/sh
 
+BUILD_TYPE=Debug
+
 if [ ! -d cbuild ]
 then
   mkdir cbuild
@@ -11,7 +13,7 @@ CC=`which clang` \
 CXX=`which clang++` \
 cmake .. \
     -DPROFILE=1 \
-    -DCMAKE_BUILD_TYPE=Debug \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     || exit 1
 
 make

@@ -634,17 +634,19 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
 // KillMobj
 //
 // killough 11/98: make static
-static void P_KillMobj(mobj_t *source, mobj_t *target)
-{
+static void P_KillMobj(mobj_t *source, mobj_t *target) {
   mobjtype_t item;
   mobj_t     *mo;
   dboolean   e6y = false;
   
   if (target->player && source && target->health < -target->info->spawnhealth &&
-    !demorecording && !demoplayback)
-  {
-    angle_t ang = R_PointToAngle2(target->x, target->y, source->x, source->y) - target->angle;
-    e6y = (ang > (unsigned)(ANG180 - ANG45) && ang < (unsigned)(ANG180 + ANG45));
+    !demorecording && !demoplayback) {
+    angle_t ang = R_PointToAngle2(
+      target->x, target->y, source->x, source->y
+    ) - target->angle;
+    e6y = (
+      ang > (unsigned)(ANG180 - ANG45) && ang < (unsigned)(ANG180 + ANG45)
+    );
   }
 
   target->flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY);
@@ -656,8 +658,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
   target->height >>= 2;
 
   if (compatibility_level == mbf_compatibility && 
-      !prboom_comp[PC_MBF_REMOVE_THINKER_IN_KILLMOBJ].state)
-  {
+      !prboom_comp[PC_MBF_REMOVE_THINKER_IN_KILLMOBJ].state) {
     // killough 8/29/98: remove from threaded list
     P_UpdateThinker(&target->thinker);
   }
@@ -665,165 +666,150 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
   if (!((target->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
     totallive--;
 
-  if (source && source->player)
-    {
-      // count for intermission
-      if (target->flags & MF_COUNTKILL)
-      {
-        source->player->killcount++;
-        
-        if (target->flags & MF_RESSURECTED)
-          source->player->resurectedkillcount++;
-      }
-      if (target->player)
-        source->player->frags[target->player-players]++;
-    }
-    else
-      if (target->flags & MF_COUNTKILL) { /* Add to kills tally */
-  if ((compatibility_level < lxdoom_1_compatibility) || !netgame) {
-    if (!netgame)
-    {
-      // count all monster deaths,
-      // even those caused by other monsters
-      players[0].killcount++;
-
+  if (source && source->player) {
+    // count for intermission
+    if (target->flags & MF_COUNTKILL) {
+      source->player->killcount++;
+      
       if (target->flags & MF_RESSURECTED)
-        players[0].resurectedkillcount++;
+        source->player->resurectedkillcount++;
     }
-    else
-    {
-      if (!deathmatch) {
-        if (target->lastenemy && target->lastenemy->health > 0 && target->lastenemy->player)
-        {
-          target->lastenemy->player->killcount++;
-          if (target->flags & MF_RESSURECTED)
-            target->lastenemy->player->resurectedkillcount++;
-        }
-        else
-        {
-          unsigned int player;
-          for (player = 0; player<MAXPLAYERS; player++)
-          {
-            if (playeringame[player])
-            {
-              players[player].killcount++;
-              if (target->flags & MF_RESSURECTED)
-                players[player].resurectedkillcount++;
-              break;
+
+    if (target->player)
+      source->player->frags[target->player-players]++;
+  }
+  else if (target->flags & MF_COUNTKILL) { /* Add to kills tally */
+    if ((compatibility_level < lxdoom_1_compatibility) || !netgame) {
+      if (!netgame) {
+        // count all monster deaths,
+        // even those caused by other monsters
+        players[0].killcount++;
+
+        if (target->flags & MF_RESSURECTED)
+          players[0].resurectedkillcount++;
+      }
+      else {
+        if (!deathmatch) {
+          if (target->lastenemy && target->lastenemy->health > 0 &&
+              target->lastenemy->player) {
+            target->lastenemy->player->killcount++;
+            if (target->flags & MF_RESSURECTED)
+              target->lastenemy->player->resurectedkillcount++;
+          }
+          else {
+            unsigned int player;
+
+            for (player = 0; player<MAXPLAYERS; player++) {
+              if (playeringame[player]) {
+                players[player].killcount++;
+
+                if (target->flags & MF_RESSURECTED)
+                  players[player].resurectedkillcount++;
+
+                break;
+              }
             }
           }
         }
       }
     }
-
-  } else
-    if (!deathmatch) {
+    else if (!deathmatch) {
       // try and find a player to give the kill to, otherwise give the
       // kill to a random player.  this fixes the missing monsters bug
       // in coop - rain
       // CPhipps - not a bug as such, but certainly an inconsistency.
-      if (target->lastenemy && target->lastenemy->health > 0
-    && target->lastenemy->player) // Fighting a player
-        {
-          target->lastenemy->player->killcount++;
+      if (target->lastenemy && target->lastenemy->health > 0 &&
+          target->lastenemy->player) { // Fighting a player
+        target->lastenemy->player->killcount++;
 
-          if (target->flags & MF_RESSURECTED)
-            target->lastenemy->player->resurectedkillcount++;
-        }
-        else {
+        if (target->flags & MF_RESSURECTED)
+          target->lastenemy->player->resurectedkillcount++;
+      }
+      else {
         // cph - randomely choose a player in the game to be credited
         //  and do it uniformly between the active players
         unsigned int activeplayers = 0, player, i;
 
-        for (player = 0; player<MAXPLAYERS; player++)
-    if (playeringame[player])
-      activeplayers++;
+        for (player = 0; player<MAXPLAYERS; player++) {
+          if (playeringame[player])
+            activeplayers++;
+        }
 
         if (activeplayers) {
-    player = P_Random(pr_friends) % activeplayers;
+          player = P_Random(pr_friends) % activeplayers;
 
-    for (i=0; i<MAXPLAYERS; i++)
-      if (playeringame[i])
-        if (!player--)
-        {
-          players[i].killcount++;
+          for (i = 0; i < MAXPLAYERS; i++) {
+            if (playeringame[i]) {
+              if (!player--) {
+                players[i].killcount++;
 
-          if (target->flags & MF_RESSURECTED)
-            players[i].resurectedkillcount++;
-        }
+                if (target->flags & MF_RESSURECTED)
+                  players[i].resurectedkillcount++;
+              }
+            }
+          }
         }
       }
     }
-      }
-
-  if (target->player)
-    {
-      // count environment kills against you
-      if (!source)
-        target->player->frags[target->player-players]++;
-
-      target->flags &= ~MF_SOLID;
-      target->player->playerstate = PST_DEAD;
-      P_DropWeapon (target->player);
-
-      if (target->player == &players[consoleplayer] && (automapmode & am_active))
-        AM_Stop();    // don't die in auto map; switch view prior to dying
-    }
-
-  if (e6y)
-  {
-    P_SetMobjState (target, S_PLAY_GDIE1);
   }
-  else
-  {
+
+  if (target->player) {
+    // count environment kills against you
+    if (!source)
+      target->player->frags[target->player-players]++;
+
+    target->flags &= ~MF_SOLID;
+    target->player->playerstate = PST_DEAD;
+    P_DropWeapon(target->player);
+
+    if (target->player == &players[consoleplayer] && (automapmode & am_active))
+      AM_Stop();    // don't die in auto map; switch view prior to dying
+  }
+
+  if (e6y) {
+    P_SetMobjState(target, S_PLAY_GDIE1);
+  }
+  else {
     if (target->health < -target->info->spawnhealth && target->info->xdeathstate)
-      P_SetMobjState (target, target->info->xdeathstate);
+      P_SetMobjState(target, target->info->xdeathstate);
     else
-      P_SetMobjState (target, target->info->deathstate);
+      P_SetMobjState(target, target->info->deathstate);
   }
 
-  target->tics -= P_Random(pr_killtics)&3;
+  target->tics -= P_Random(pr_killtics) & 3;
 
   if (target->tics < 1)
     target->tics = 1;
 
   // In Chex Quest, monsters don't drop items.
   if (gamemission == chex)
-  {
     return;
-  }
 
   // Drop stuff.
   // This determines the kind of object spawned
   // during the death frame of a thing.
 
-  switch (target->type)
-    {
+  switch (target->type) {
     case MT_WOLFSS:
     case MT_POSSESSED:
       item = MT_CLIP;
-      break;
-
+    break;
     case MT_SHOTGUY:
       item = MT_SHOTGUN;
-      break;
-
+    break;
     case MT_CHAINGUY:
       item = MT_CHAINGUN;
-      break;
-
+    break;
     default:
       return;
-    }
+  }
 
-  mo = P_SpawnMobj (target->x,target->y,ONFLOORZ, item);
+  mo = P_SpawnMobj (target->x, target->y, ONFLOORZ, item);
   mo->flags |= MF_DROPPED;    // special versions of items
 
 #ifdef GL_DOOM
   if (target->momx == 0 && target->momy == 0)
-  {
     target->flags |= MF_FOREGROUND;
-  }
 #endif
 }
 

@@ -67,6 +67,7 @@
 
 #include "c_main.h"
 #include "n_net.h"
+#include "n_main.h"
 #include "n_proto.h"
 #include "n_state.h"
 
@@ -1129,8 +1130,6 @@ dboolean G_Responder(event_t *ev) {
 // Make ticcmd_ts for the players.
 //
 
-void M_LogRandom(void);
-
 void G_Ticker(void) {
   int i;
   static gamestate_t prevgamestate;
@@ -1231,7 +1230,9 @@ void G_Ticker(void) {
       }
       else if (gamestate != GS_LEVEL || ((!MULTINET) || CMDSYNC)) {
         dboolean found_command = false;
-        cbuf_t *commands = &players[i].commands;
+        cbuf_t *commands;
+        
+        commands = &players[i].commands;
 
         CBUF_FOR_EACH(commands, entry) {
           netticcmd_t *ncmd = entry.obj;
@@ -1372,8 +1373,6 @@ void G_Ticker(void) {
     case GS_BAD:
     break;
   }
-
-  M_LogRandom();
 }
 
 //
@@ -2481,7 +2480,6 @@ void G_WriteOptions(byte game_options[]) {
   game_options[i++] = (byte)((rngseed >>  8) & 0xff);
   game_options[i++] = (byte)( rngseed        & 0xff);
 
-
   // Options new to v2.03 begin here
   if (mbf_features) {
     game_options[i++] = monster_infighting;
@@ -2589,7 +2587,7 @@ void G_ReadOptions(byte game_options[]) {
     forceOldBsp = game_options[i++]; // cph 2002/07/20
   }
 
-  G_Compatibility();
+  // G_Compatibility();
 }
 
 void G_BeginRecording(void) {

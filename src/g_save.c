@@ -286,7 +286,7 @@ void G_WriteSaveData(pbuf_t *savebuffer) {
   M_PBufWriteInt(savebuffer, leveltime);
   M_PBufWriteInt(savebuffer, totalleveltimes);
   // killough 11/98: save revenant tracer state
-  M_PBufWriteUChar(savebuffer, (gametic - basetic) & 255);
+  M_PBufWriteInt(savebuffer, basetic);
 
   P_ArchiveWorld(savebuffer);
   P_ArchivePlayers(savebuffer);
@@ -310,7 +310,6 @@ dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
   unsigned char save_version[VERSIONSIZE];
   byte game_options[GAME_OPTION_SIZE];
   unsigned int game_option_count;
-  unsigned char tic_delta;
   unsigned char safety_byte;
   buf_t byte_buf;
 
@@ -456,9 +455,7 @@ dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
   M_PBufReadInt(savebuffer, &totalleveltimes);
 
   // killough 11/98: load revenant tracer state
-  M_PBufReadUChar(savebuffer, &tic_delta);
-
-  basetic = gametic - tic_delta;
+  M_PBufReadInt(savebuffer, &basetic);
 
   // dearchive all the modifications
   P_MapStart();

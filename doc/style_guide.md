@@ -214,6 +214,33 @@ write:
 
     else if
 
+## Blocks after `return`, `continue`, etc.
+
+There is no need for an `else` or an `else if` after a `return` or `continue`
+statement; their existence serves only to confuse, and removing them helps to
+save on indentation levels.  For example:
+
+Don't do this:
+
+    if (error) {
+      C_Echo("Error!");
+      return;
+    }
+    else {
+      C_Echo("No problem!");
+    }
+
+Do this:
+
+    if (error) {
+      C_Echo("Error!");
+      return;
+    }
+
+    C_Echo("No problem!");
+
+Keep this in mind as a general rule (it can apply to `I_Error`, etc., as well).
+
 ## Line Breaks
 
 Line breaking is a last resort; do not break lines without a reason.  Here are
@@ -276,7 +303,7 @@ For example:
     );
 
 Some functions have what amounts to "boilerplate" for their initial
-arguments--printf is a good example of this--and therefore you can justify
+arguments--`printf` is a good example of this--and therefore you can justify
 keeping them on the same line as the function call:
 
     printf("This is a long format string with many arguments: %d, %d, %d.\n",
@@ -334,7 +361,7 @@ for example:
       return EXIT_SUCCESS;
     }
 
-I sympathize with those who disagree, `char` is not the same type as `char*`,
+I sympathize with those who disagree; `char` is not the same type as `char*`,
 but this is to avoid inconsistency when declaring a variable list of pointer
 types.
 

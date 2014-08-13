@@ -42,6 +42,8 @@
 #include "s_advsound.h"
 #include "e6y.h"//e6y
 
+extern int numspechit;
+
 #define MAX_PLAYER_MESSAGE_SIZE 256
 #define MAX_COMMAND_COUNT 10000
 
@@ -384,6 +386,7 @@ static void P_ArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
   M_PBufWriteUInt(savebuffer, tracer_id);
   M_PBufWriteUInt(savebuffer, lastenemy_id);
 
+  /*
   D_Log(LOG_SAVE, "  Actor %u: {%d, %d, %d, %d, %d, %d, %d}\n",
     mobj->id,
     mobj->validcount,
@@ -394,6 +397,7 @@ static void P_ArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
     mobj->threshold,
     mobj->pursuecount
   );
+  */
 }
 
 static void P_UnArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
@@ -461,6 +465,7 @@ static void P_UnArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
     mobj->player->mo = mobj;
   }
 
+  /*
   D_Log(LOG_SAVE, "  Actor %u: {%d, %d, %d, %d, %d, %d, %d}\n",
     mobj->id,
     mobj->validcount,
@@ -471,6 +476,7 @@ static void P_UnArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
     mobj->threshold,
     mobj->pursuecount
   );
+  */
 }
 
 static void P_ArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
@@ -597,6 +603,8 @@ void P_UnArchivePlayers(pbuf_t *savebuffer) {
 // P_ArchiveWorld
 //
 void P_ArchiveWorld(pbuf_t *savebuffer) {
+  M_PBufWriteInt(savebuffer, numspechit);
+
   // do sectors
   for (sector_t *sec = sectors; (sec - sectors) < numsectors; sec++) {
     // killough 10/98: save full floor & ceiling heights, including fraction
@@ -652,6 +660,8 @@ void P_ArchiveWorld(pbuf_t *savebuffer) {
 // P_UnArchiveWorld
 //
 void P_UnArchiveWorld(pbuf_t *savebuffer) {
+  M_PBufReadInt(savebuffer, &numspechit);
+
   // do sectors
   for (sector_t *sec = sectors; (sec - sectors) < numsectors; sec++) {
     // killough 10/98: load full floor & ceiling heights, including fractions
@@ -724,8 +734,6 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
     }
   }
 
-  D_Log(LOG_SAVE, "(%d) %u thinkers\n", gametic, thinker_count);
-
   M_PBufWriteUInt(savebuffer, thinker_count);
 
   for (thinker_t *th = thinkercap.next; th != &thinkercap; th = th->next) {
@@ -737,8 +745,6 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
     if (th->function == P_MobjThinker)
       P_ArchiveActorPointers(savebuffer, (mobj_t *)th);
   }
-
-  D_Log(LOG_SAVE, "\n");
 
   // killough 9/14/98: save soundtargets
   for (int i = 0; i < numsectors; i++) {
@@ -795,8 +801,6 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
 
   M_PBufReadUInt(savebuffer, &current_thinker_count);
 
-  D_Log(LOG_SAVE, "(%d) %u thinkers\n", gametic, current_thinker_count);
-
   for (int i = 0; i < current_thinker_count; i++) {
     mobj_t *mo = Z_Malloc(sizeof(mobj_t), PU_LEVEL, NULL); // killough 2/14/98
 
@@ -833,8 +837,6 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
     if (mo)
       P_UnArchiveActorPointers(savebuffer, mo);
   }
-
-  D_Log(LOG_SAVE, "\n");
 
   // killough 9/14/98: restore soundtargets
   for (int i = 0; i < numsectors; i++) {
@@ -1500,12 +1502,6 @@ void P_ArchiveRNG(pbuf_t *savebuffer) {
 
   M_PBufWriteInt(savebuffer, rng.rndindex);
   M_PBufWriteInt(savebuffer, rng.prndindex);
-
-  D_Log(LOG_SAVE, "(%d) ArchiveRNG: rndindex, prndindex: %d, %d\n",
-    gametic,
-    rng.rndindex,
-    rng.prndindex
-  );
 }
 
 void P_UnArchiveRNG(pbuf_t *savebuffer) {
@@ -1524,12 +1520,6 @@ void P_UnArchiveRNG(pbuf_t *savebuffer) {
 
   M_PBufReadInt(savebuffer, &rng.rndindex);
   M_PBufReadInt(savebuffer, &rng.prndindex);
-
-  D_Log(LOG_SAVE, "(%d) ArchiveRNG: rndindex, prndindex: %d, %d\n",
-    gametic,
-    rng.rndindex,
-    rng.prndindex
-  );
 }
 
 // killough 2/22/98: Save/restore automap state
