@@ -604,6 +604,8 @@ void P_UnArchivePlayers(pbuf_t *savebuffer) {
 //
 void P_ArchiveWorld(pbuf_t *savebuffer) {
   M_PBufWriteInt(savebuffer, numspechit);
+  M_PBufWriteUInt(savebuffer, numsectors);
+  M_PBufWriteUInt(savebuffer, numlines);
 
   // do sectors
   for (sector_t *sec = sectors; (sec - sectors) < numsectors; sec++) {
@@ -634,9 +636,15 @@ void P_ArchiveWorld(pbuf_t *savebuffer) {
     M_PBufWriteShort(savebuffer, li->tag);
 
     for (int j = 0; j < 2; j++) {
-      if (li->sidenum[j] != NO_INDEX) {
+      M_PBufWriteUChar(savebuffer, j);
+
+      if (li->sidenum[j] == NO_INDEX) {
+        M_PBufWriteBool(savebuffer, false);
+      }
+      else {
         side_t *si = &sides[li->sidenum[j]];
 
+        M_PBufWriteBool(savebuffer, true);
         // killough 10/98: save full sidedef offsets,
         // preserving fractional scroll offsets
         M_PBufWriteInt(savebuffer, si->textureoffset);
@@ -660,55 +668,130 @@ void P_ArchiveWorld(pbuf_t *savebuffer) {
 // P_UnArchiveWorld
 //
 void P_UnArchiveWorld(pbuf_t *savebuffer) {
+  uint32_t sector_count;
+  uint32_t line_count;
+
   M_PBufReadInt(savebuffer, &numspechit);
+  M_PBufReadUInt(savebuffer, &sector_count);
+  M_PBufReadUInt(savebuffer, &line_count);
 
-  // do sectors
-  for (sector_t *sec = sectors; (sec - sectors) < numsectors; sec++) {
-    // killough 10/98: load full floor & ceiling heights, including fractions
-    M_PBufReadInt(savebuffer, &sec->floorheight);
-    M_PBufReadInt(savebuffer, &sec->ceilingheight);
-    M_PBufReadShort(savebuffer, &sec->floorpic);
-    M_PBufReadShort(savebuffer, &sec->ceilingpic);
-    M_PBufReadShort(savebuffer, &sec->lightlevel);
-    M_PBufReadShort(savebuffer, &sec->special);
-    M_PBufReadShort(savebuffer, &sec->tag);
+  if (sector_count != numsectors) {
+    int32_t junk_int;
+    int16_t junk_short;
+    uint32_t junk_uint;
 
-    M_PBufReadInt(savebuffer, &sec->soundorg.x);
-    M_PBufReadInt(savebuffer, &sec->soundorg.y);
-    M_PBufReadInt(savebuffer, &sec->soundorg.z);
-    M_PBufReadUInt(savebuffer, &sec->soundorg.id);
-    P_IdentAssignID(&sec->soundorg, sec->soundorg.id);
+    while (sector_count--) {
+      M_PBufReadInt(savebuffer, &junk_int);
+      M_PBufReadInt(savebuffer, &junk_int);
+      M_PBufReadShort(savebuffer, &junk_short);
+      M_PBufReadShort(savebuffer, &junk_short);
+      M_PBufReadShort(savebuffer, &junk_short);
+      M_PBufReadShort(savebuffer, &junk_short);
+      M_PBufReadShort(savebuffer, &junk_short);
 
-    sec->ceilingdata = 0; //jff 2/22/98 now three thinker fields, not two
-    sec->floordata = 0;
-    sec->lightingdata = 0;
-    sec->soundtarget = 0;
+      M_PBufReadInt(savebuffer, &junk_int);
+      M_PBufReadInt(savebuffer, &junk_int);
+      M_PBufReadInt(savebuffer, &junk_int);
+      M_PBufReadUInt(savebuffer, &junk_uint);
+    }
+  }
+  else {
+    for (sector_t *sec = sectors; (sec - sectors) < numsectors; sec++) {
+      // killough 10/98: load full floor & ceiling heights, including fractions
+      M_PBufReadInt(savebuffer, &sec->floorheight);
+      M_PBufReadInt(savebuffer, &sec->ceilingheight);
+      M_PBufReadShort(savebuffer, &sec->floorpic);
+      M_PBufReadShort(savebuffer, &sec->ceilingpic);
+      M_PBufReadShort(savebuffer, &sec->lightlevel);
+      M_PBufReadShort(savebuffer, &sec->special);
+      M_PBufReadShort(savebuffer, &sec->tag);
+
+      M_PBufReadInt(savebuffer, &sec->soundorg.x);
+      M_PBufReadInt(savebuffer, &sec->soundorg.y);
+      M_PBufReadInt(savebuffer, &sec->soundorg.z);
+      M_PBufReadUInt(savebuffer, &sec->soundorg.id);
+      P_IdentAssignID(&sec->soundorg, sec->soundorg.id);
+
+      sec->ceilingdata = 0; //jff 2/22/98 now three thinker fields, not two
+      sec->floordata = 0;
+      sec->lightingdata = 0;
+      sec->soundtarget = 0;
+    }
   }
 
-  // do lines
-  for (line_t *li = lines; (li - lines) < numlines; li++) {
-    M_PBufReadShort(savebuffer, (short *)&li->flags);
-    M_PBufReadShort(savebuffer, &li->special);
-    M_PBufReadShort(savebuffer, &li->tag);
+  if (line_count != numlines) {
+    while (line_count--) {
+      line_t junk_line;
+      side_t junk_side;
+      line_t *li = &junk_line;
+      side_t *si = &junk_side;
 
-    for (int j = 0; j < 2; j++) {
-      if (li->sidenum[j] != NO_INDEX) {
-        side_t *si = &sides[li->sidenum[j]];
+      M_PBufReadShort(savebuffer, (short *)&li->flags);
+      M_PBufReadShort(savebuffer, &li->special);
+      M_PBufReadShort(savebuffer, &li->tag);
 
-        // killough 10/98: load full sidedef offsets, including fractions
-        M_PBufReadInt(savebuffer, &si->textureoffset);
-        M_PBufReadInt(savebuffer, &si->rowoffset);
-        M_PBufReadShort(savebuffer, &si->toptexture);
-        M_PBufReadShort(savebuffer, &si->bottomtexture);
-        M_PBufReadShort(savebuffer, &si->midtexture);
+      for (int j = 0; j < 2; j++) {
+        unsigned char sidenum_index;
+        dboolean sidenum_index_valid;
+
+        M_PBufReadUChar(savebuffer, &sidenum_index);
+
+        if (sidenum_index != j)
+          I_Error("P_UnArchiveWorld: side index %d != %d\n", sidenum_index, j);
+
+        M_PBufReadBool(savebuffer, &sidenum_index_valid);
+
+        if (sidenum_index_valid) {
+          // killough 10/98: load full sidedef offsets, including fractions
+          M_PBufReadInt(savebuffer, &si->textureoffset);
+          M_PBufReadInt(savebuffer, &si->rowoffset);
+          M_PBufReadShort(savebuffer, &si->toptexture);
+          M_PBufReadShort(savebuffer, &si->bottomtexture);
+          M_PBufReadShort(savebuffer, &si->midtexture);
+        }
       }
-    }
 
-    M_PBufReadInt(savebuffer, &li->soundorg.x);
-    M_PBufReadInt(savebuffer, &li->soundorg.y);
-    M_PBufReadInt(savebuffer, &li->soundorg.z);
-    M_PBufReadUInt(savebuffer, &li->soundorg.id);
-    P_IdentAssignID(&li->soundorg, li->soundorg.id);
+      M_PBufReadInt(savebuffer, &li->soundorg.x);
+      M_PBufReadInt(savebuffer, &li->soundorg.y);
+      M_PBufReadInt(savebuffer, &li->soundorg.z);
+      M_PBufReadUInt(savebuffer, &li->soundorg.id);
+    }
+  }
+  else {
+    for (line_t *li = lines; (li - lines) < numlines; li++) {
+      M_PBufReadShort(savebuffer, (short *)&li->flags);
+      M_PBufReadShort(savebuffer, &li->special);
+      M_PBufReadShort(savebuffer, &li->tag);
+
+      for (int j = 0; j < 2; j++) {
+        unsigned char sidenum_index;
+        dboolean sidenum_index_valid;
+
+        M_PBufReadUChar(savebuffer, &sidenum_index);
+
+        if (sidenum_index != j)
+          I_Error("P_UnArchiveWorld: side index %d != %d\n", sidenum_index, j);
+
+        M_PBufReadBool(savebuffer, &sidenum_index_valid);
+
+        if (sidenum_index_valid) {
+          side_t *si = &sides[li->sidenum[j]];
+
+          // killough 10/98: load full sidedef offsets, including fractions
+          M_PBufReadInt(savebuffer, &si->textureoffset);
+          M_PBufReadInt(savebuffer, &si->rowoffset);
+          M_PBufReadShort(savebuffer, &si->toptexture);
+          M_PBufReadShort(savebuffer, &si->bottomtexture);
+          M_PBufReadShort(savebuffer, &si->midtexture);
+        }
+      }
+
+      M_PBufReadInt(savebuffer, &li->soundorg.x);
+      M_PBufReadInt(savebuffer, &li->soundorg.y);
+      M_PBufReadInt(savebuffer, &li->soundorg.z);
+      M_PBufReadUInt(savebuffer, &li->soundorg.id);
+      P_IdentAssignID(&li->soundorg, li->soundorg.id);
+    }
   }
 
   M_PBufReadInt(savebuffer, &musinfo.current_item);

@@ -327,7 +327,7 @@ static int currentsector; // the sector which is currently tesselated
 
 static void CALLBACK ntessBegin( GLenum type )
 {
-#ifdef PRBOOM_DEBUG
+#ifdef LEVELINFO_DEBUG
   if (levelinfo)
   {
     if (type==GL_TRIANGLES)
@@ -361,7 +361,7 @@ static void CALLBACK ntessBegin( GLenum type )
 
 static void CALLBACK ntessError(GLenum error)
 {
-#ifdef PRBOOM_DEBUG
+#ifdef LEVELINFO_DEBUG
   const GLubyte *estring;
   estring = gluErrorString(error);
   fprintf(levelinfo, "\t\tTessellation Error: %s\n", estring);
@@ -374,7 +374,7 @@ static void CALLBACK ntessError(GLenum error)
 
 static void CALLBACK ntessCombine( GLdouble coords[3], vertex_t *vert[4], GLfloat w[4], void **dataOut )
 {
-#ifdef PRBOOM_DEBUG
+#ifdef LEVELINFO_DEBUG
   if (levelinfo)
   {
     fprintf(levelinfo, "\t\tVertexCombine Coords: x %10.5f, y %10.5f z %10.5f\n", coords[0], coords[1], coords[2]);
@@ -394,7 +394,7 @@ static void CALLBACK ntessCombine( GLdouble coords[3], vertex_t *vert[4], GLfloa
 
 static void CALLBACK ntessVertex( vertex_t *vert )
 {
-#ifdef PRBOOM_DEBUG
+#ifdef LEVELINFO_DEBUG
   if (levelinfo)
     fprintf(levelinfo, "\t\tVertex : x %10i, y %10i\n", vert->x>>FRACBITS, vert->y>>FRACBITS);
 #endif
@@ -418,7 +418,7 @@ static void CALLBACK ntessVertex( vertex_t *vert )
 
 static void CALLBACK ntessEnd( void )
 {
-#ifdef PRBOOM_DEBUG
+#ifdef LEVELINFO_DEBUG
   if (levelinfo)
     fprintf(levelinfo, "\t\tEnd loopcount %i vertexcount %i\n", sectorloops[currentsector].loopcount, sectorloops[ currentsector ].loops[ sectorloops[currentsector].loopcount-1 ].vertexcount);
 #endif
@@ -848,8 +848,8 @@ static void gld_PreprocessSectors(void)
   int j;
 #endif
 
-#ifdef PRBOOM_DEBUG
-  levelinfo=fopen("levelinfo.txt","a");
+#ifdef LEVELINFO_DEBUG
+  // levelinfo = fopen("levelinfo.txt","a");
   if (levelinfo)
   {
     if (gamemode==commercial)
@@ -942,10 +942,18 @@ static void gld_PreprocessSectors(void)
     }
     if (sectors[i].linecount<3)
     {
-#ifdef PRBOOM_DEBUG
-      lprintf(LO_ERROR, "sector %i is not closed! %i lines in sector\n", i, sectors[i].linecount);
+#ifdef DEBUG
+      lprintf(LO_ERROR, "sector %i is not closed! %i lines in sector\n",
+        i, sectors[i].linecount
+      );
 #endif
-      if (levelinfo) fprintf(levelinfo, "sector %i is not closed! %i lines in sector\n", i, sectors[i].linecount);
+#ifdef LEVELINFO_DEBUG
+      if (levelinfo) {
+        fprintf(levelinfo, "sector %i is not closed! %i lines in sector\n",
+          i, sectors[i].linecount
+        );
+      }
+#endif
       sectors[i].flags &= ~SECTOR_IS_CLOSED;
     }
     else
@@ -955,10 +963,20 @@ static void gld_PreprocessSectors(void)
       {
         if ((vertexcheck[j]==1) || (vertexcheck[j]==2))
         {
-#ifdef PRBOOM_DEBUG
-          lprintf(LO_ERROR, "sector %i is not closed at vertex %i ! %i lines in sector\n", i, j, sectors[i].linecount);
+#ifdef DEBUG
+          lprintf(LO_ERROR,
+            "sector %i is not closed at vertex %i ! %i lines in sector\n",
+            i, j, sectors[i].linecount
+          );
 #endif
-          if (levelinfo) fprintf(levelinfo, "sector %i is not closed at vertex %i ! %i lines in sector\n", i, j, sectors[i].linecount);
+#ifdef LEVELINFO_DEBUG
+          if (levelinfo) {
+            fprintf(levelinfo,
+              "sector %i is not closed at vertex %i ! %i lines in sector\n",
+              i, j, sectors[i].linecount
+            );
+          }
+#endif
           sectors[i].flags &= ~SECTOR_IS_CLOSED;
         }
       }

@@ -28,6 +28,9 @@
 #cmakedefine USE_GLU_TESS
 #cmakedefine DOGS
 #cmakedefine HIGHRES
+#cmakedefine DEBUG
+#cmakedefine LEVELINFO_DEBUG
+#cmakedefine DEBUG_WEAPON_CODEPOINTERS
 
 #cmakedefine HAVE_ASM_BYTEORDER_H @HAVE_ASM_BYTEORDER_H@
 #cmakedefine HAVE_STDBOOL_H @HAVE_STDBOOL_H@

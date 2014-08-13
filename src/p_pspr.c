@@ -47,7 +47,7 @@
 
 // Checking correctness of input parameters for weapon codepointers
 // for avoiding crashes when they are used with player/monster states.
-#ifdef PRBOOM_DEBUG
+#ifdef DEBUG_WEAPON_CODEPOINTERS
   #define CHECK_WEAPON_CODEPOINTER(codepointer, player)\
     if (!player->mo->player) {\
       I_Error("%s: Weapon codepointers cannot be used with player/monster states (incorrect DEH).", codepointer);\

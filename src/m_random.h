@@ -139,6 +139,7 @@ int P_Random(pr_class_t DA(const char *, int));
 
 /* CG: 08/13/2014: A non-sync-critical RNG */
 int D_Random(void);
+int D_RandomRange(int begin, int end);
 
 // Fix randoms for demos.
 void M_ClearRandom(void);

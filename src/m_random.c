@@ -129,10 +129,14 @@ int (P_Random)(pr_class_t pr_class
 }
 
 int D_Random(void) {
-  if (g_rand == NULL)
+  if (!g_rand)
     g_rand = g_rand_new();
 
-  return g_rand_int(g_rand);
+  return g_random_int();
+}
+
+int D_RandomRange(int begin, int end) {
+  return g_random_int_range(begin, end);
 }
 
 // Initialize all the seeds

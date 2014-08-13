@@ -130,6 +130,7 @@ void I_Init2(void)
 
 /* cleanup handling -- killough:
  */
+#ifndef DEBUG
 static void I_SignalHandler(int s)
 {
   char buf[2048];
@@ -149,6 +150,7 @@ static void I_SignalHandler(int s)
 
   I_Error("I_SignalHandler: %s", buf);
 }
+#endif
 
 //
 // e6y: exeptions handling
@@ -665,7 +667,7 @@ int main(int argc, char **argv)
   Z_Init();                  /* 1/18/98 killough: start up memory stuff first */
 
   atexit(I_Quit);
-#ifndef PRBOOM_DEBUG
+#ifndef DEBUG
   if (!M_CheckParm("-devparm"))
     signal(SIGSEGV, I_SignalHandler);
 

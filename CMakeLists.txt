@@ -320,7 +320,6 @@ OPTION(
   "Perform ID checks on zone blocks to detect corrupted and illegally freed blocks"
   OFF
 )
-OPTION(PROFILE "Enable profiling" OFF)
 OPTION(GL_DOOM "Build with OpenGL support" ON)
 CMAKE_DEPENDENT_OPTION(USE_GLU_IMAGESCALE "Use gluImageScale" OFF USE_GLU OFF)
 CMAKE_DEPENDENT_OPTION(USE_GLU_MIPMAP "Use gluBuild2DMipmaps" OFF USE_GLU OFF)
@@ -330,6 +329,9 @@ OPTION(HIGHRES "Enable high resolution support" ON)
 OPTION(
   ONLY_FREE_GRAPHICS "Build prboom.wad without non-free menu text lumps" ON
 )
+OPTION(PROFILE "Enable profiling; requires a debug build" OFF)
+OPTION(LEVELINFO_DEBUG "Debug using level info" OFF)
+OPTION(DEBUG_WEAPON_CODEPOINTERS "Debug weapon codepointers" OFF)
 
 IF(NOT DOOMWADDIR)
   SET(DOOMWADDIR "${CMAKE_INSTALL_PREFIX}/share/games/doom")
@@ -368,6 +370,7 @@ ENDIF()
 ################################################# Compiler: Hardening ##########
 #===============================================================================
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  ADD_DEFINITIONS(-DDEBUG)
   IF(CLANG)
     # SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
     # SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
@@ -1068,10 +1071,6 @@ IF(WIN32)
     usp10
   )
 ENDIF()
-
-# IF(CMAKE_BUILD_TYPE EQUALS Debug)
-#   ADD_DEFINITIONS(-DINSTRUMENTED)
-# ENDIF()
 
 ADD_EXECUTABLE(doom2k ${DOOM2K_CLIENT_SOURCES})
 TARGET_LINK_LIBRARIES(doom2k ${DOOM2K_LIBRARIES})

@@ -1088,7 +1088,7 @@ void gld_Clear(void)
 {
   int clearbits = 0;
 
-#ifndef PRBOOM_DEBUG
+#ifndef DEBUG
   if (gl_clear)
 #endif
     clearbits |= GL_COLOR_BUFFER_BIT;

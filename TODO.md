@@ -7,7 +7,10 @@
     which don't work because they presume the wrong number of sectors and
     lines (etc.)
   * Fix intermission (single-player is busted too)
-    * Handle player input during intermission
+    * You don't really want a player to be able to skip intermission, so
+      ignore player commands serverside during it. (still send them I guess...
+      who cares?)
+    * Client crash
   * 2nd button in the blue room doesn't work
   * Test quitting and rejoining
   * Test sounds with more than 1 player

@@ -248,11 +248,28 @@ void S_StartSoundAtVolume(mobj_t *origin, int sfx_id, int volume) {
     sep = NORM_SEP;
   }
 
+  /*
+   * CG: Not totally sure about D_RandomRange here.  I think it's necessary
+   *     because differences in displayplayer between clients & server will
+   *     cause volumes to be different, which will cause S_AdjustSoundParams to
+   *     exit sometimes and not others, which will desync the RNG.  On the
+   *     other hand, this desyncs old demos, so you can't watch them together
+   *     as a netgame.  Needs more research to resolve fully.
+   */
+
   // hacks to vary the sfx pitches
-  if (sfx_id >= sfx_sawup && sfx_id <= sfx_sawhit)
-    pitch += 8 - (D_Random() & 15);
-  else if (sfx_id != sfx_itemup && sfx_id != sfx_tink)
-    pitch += 16 - (D_Random() & 31);
+  if (sfx_id >= sfx_sawup && sfx_id <= sfx_sawhit) {
+    if (DELTASYNC)
+      pitch += 8 - D_RandomRange(0, 15);
+    else
+      pitch += 8 - (M_Random() & 15);
+  }
+  else if (sfx_id != sfx_itemup && sfx_id != sfx_tink) {
+    if (DELTASYNC)
+      pitch += 16 - D_RandomRange(0, 31);
+    else
+      pitch += 16 - (M_Random() & 31);
+  }
 
   if (pitch < 0)
     pitch = 0;
@@ -262,8 +279,21 @@ void S_StartSoundAtVolume(mobj_t *origin, int sfx_id, int volume) {
 
   // kill old sound
   for (cnum = 0; cnum < numChannels; cnum++) {
-    if (channels[cnum].sfxinfo && channels[cnum].origin_id == origin->id &&
-        (comp[comp_sound] || channels[cnum].is_pickup == is_pickup)) {
+    if (!channels[cnum].sfxinfo)
+      continue;
+
+    if (origin == NULL && channels[cnum].origin == NULL) {
+      S_StopChannel(cnum);
+      break;
+    }
+
+    if (!origin)
+      continue;
+
+    if (channels[cnum].origin_id != origin->id)
+      continue;
+
+    if (comp[comp_sound] || channels[cnum].is_pickup == is_pickup) {
       S_StopChannel(cnum);
       break;
     }

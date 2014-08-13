@@ -1457,7 +1457,7 @@ void IdentifyVersion(void) {
   // locate the IWAD and determine game mode from it
   iwad = FindIWADFile();
 
-#if (defined(GL_DOOM) && defined(PRBOOM_DEBUG))
+#if (defined(GL_DOOM) && defined(LEVELINFO_DEBUG))
   // proff 11/99: used for debugging
   FILE *f = fopen("levelinfo.txt", "w");
 

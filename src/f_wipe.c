@@ -32,6 +32,7 @@
 #include "gl_struct.h"
 #endif
 #include "e6y.h"//e6y
+#include "n_net.h"
 
 //
 // SCREEN WIPE PACKAGE
@@ -52,38 +53,47 @@ static screeninfo_t wipe_scr;
 static int *y_lookup = NULL;
 
 // e6y: resolution limitation is removed
-void R_InitMeltRes(void)
-{
-  if (y_lookup) free(y_lookup);
+void R_InitMeltRes(void) {
+  if (y_lookup)
+    free(y_lookup);
 
   y_lookup = calloc(1, SCREENWIDTH * sizeof(*y_lookup));
 }
 
-static int wipe_initMelt(int ticks)
-{
-  int i;
-
-  if (V_GetMode() != VID_MODEGL)
-  {
+static int wipe_initMelt(int ticks) {
+  if (V_GetMode() != VID_MODEGL) {
     // copy start screen to main screen
-    for(i=0;i<SCREENHEIGHT;i++)
-    memcpy(wipe_scr.data+i*wipe_scr.byte_pitch,
-           wipe_scr_start.data+i*wipe_scr_start.byte_pitch,
-           SCREENWIDTH*V_GetPixelDepth());
+    for (int i = 0; i < SCREENHEIGHT; i++) {
+      memcpy(
+        wipe_scr.data + i * wipe_scr.byte_pitch,
+        wipe_scr_start.data + i * wipe_scr_start.byte_pitch,
+         SCREENWIDTH * V_GetPixelDepth()
+      );
+    }
   }
 
   // setup initial column positions (y<0 => not ready to scroll yet)
-  y_lookup[0] = -(M_Random()%16);
-  for (i=1;i<SCREENWIDTH;i++)
-    {
-      int r = (M_Random()%3) - 1;
-      y_lookup[i] = y_lookup[i-1] + r;
-      if (y_lookup[i] > 0)
-        y_lookup[i] = 0;
-      else
-        if (y_lookup[i] == -16)
-          y_lookup[i] = -15;
-    }
+  if (DELTASYNC)
+    y_lookup[0] = -(D_RandomRange(0, 16));
+  else
+    y_lookup[0] = -(M_Random() % 16);
+
+  for (int i = 1; i < SCREENWIDTH; i++) {
+    int r;
+
+    if (DELTASYNC)
+      r = D_RandomRange(-1, 2);
+    else
+      r = (M_Random() % 3) - 1;
+
+    y_lookup[i] = y_lookup[i - 1] + r;
+
+    if (y_lookup[i] > 0)
+      y_lookup[i] = 0;
+    else if (y_lookup[i] == -16)
+      y_lookup[i] = -15;
+  }
+
   return 0;
 }
 
