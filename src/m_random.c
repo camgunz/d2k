@@ -132,11 +132,14 @@ int D_Random(void) {
   if (!g_rand)
     g_rand = g_rand_new();
 
-  return g_random_int();
+  return g_rand_int(g_rand);
 }
 
 int D_RandomRange(int begin, int end) {
-  return g_random_int_range(begin, end);
+  if (!g_rand)
+    g_rand = g_rand_new();
+
+  return g_rand_int_range(g_rand, begin, end);
 }
 
 // Initialize all the seeds
