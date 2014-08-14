@@ -1240,20 +1240,10 @@ void G_Ticker(void) {
           if (ncmd->tic == gametic) {
             memcpy(cmd, &ncmd->cmd, sizeof(ticcmd_t));
 
-            printf("Copying a command {%d, %d, %d, %d, %d, %d} (%d)\n",
-              cmd->forwardmove,
-              cmd->sidemove,
-              cmd->angleturn,
-              cmd->consistancy,
-              cmd->chatchar,
-              cmd->buttons,
-              gamestate
-            );
-
             found_command = true;
           }
 
-          if (ncmd->tic <= gametic) {
+          if (gamestate != GS_LEVEL || ncmd->tic <= gametic) {
             M_CBufRemove(commands, entry.index);
             entry.index--;
           }

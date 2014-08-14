@@ -1787,33 +1787,31 @@ void WI_drawStats(void)
 // Args:    none
 // Returns: void
 //
-void WI_checkForAccelerate(void)
-{
-  int   i;
-  player_t  *player;
-
+void WI_checkForAccelerate(void) {
   // check for button presses to skip delays
-  for (i=0, player = players ; i<MAXPLAYERS ; i++, player++)
-  {
-    if (playeringame[i])
-    {
-      if (player->cmd.buttons & BT_ATTACK)
-      {
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    player_t *player = &players[i];
+
+    if (playeringame[i]) {
+      if (player->cmd.buttons & BT_ATTACK) {
         if (!player->attackdown)
           acceleratestage = 1;
+
         player->attackdown = true;
       }
-      else
+      else {
         player->attackdown = false;
+      }
 
-      if (player->cmd.buttons & BT_USE)
-      {
+      if (player->cmd.buttons & BT_USE) {
         if (!player->usedown)
           acceleratestage = 1;
+
         player->usedown = true;
       }
-      else
+      else {
         player->usedown = false;
+      }
     }
   }
 }

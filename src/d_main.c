@@ -510,9 +510,6 @@ void D_PostEvent(event_t *ev) {
   if (D_Responder(ev))
     return;
 
-  if (gamestate != GS_LEVEL)
-    return;
-
   if (ST_Responder(ev))
     return;
 
