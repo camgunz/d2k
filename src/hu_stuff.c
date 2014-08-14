@@ -2496,8 +2496,6 @@ void HU_Ticker(void) {
   int center_message_count = 0;
   char *center_message = NULL;
 
-  return;
-
   HU_MessageWidgetClear(w_centermsg);
   HU_MessageWidgetClear(w_messages);
 
@@ -2512,8 +2510,6 @@ void HU_Ticker(void) {
       continue;
 
     M_OBufConsolidate(&player->messages);
-
-    printf("HU_Ticker: Processing %d messages for %d\n", player_message_count, i);
 
     OBUF_FOR_EACH(&player->messages, entry) {
       player_message_t *msg = (player_message_t *)entry.obj;
