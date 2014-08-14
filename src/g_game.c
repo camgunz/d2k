@@ -1210,7 +1210,7 @@ void G_Ticker(void) {
   if (paused & 2 || (!demoplayback && menuactive && !netgame)) {
     basetic++;  // For revenant tracers and RNG -- we must maintain sync
   }
-  else if (gamestate != GS_LEVEL || (!(MULTINET && DELTASYNC))) {
+  else if (!(MULTINET && DELTASYNC)) {
     for (i = 0; i < MAXPLAYERS; i++) {
       ticcmd_t *cmd = NULL;
 
@@ -1228,7 +1228,7 @@ void G_Ticker(void) {
       else if (democontinue) {
         G_ReadDemoContinueTiccmd(cmd);
       }
-      else if (gamestate != GS_LEVEL || ((!MULTINET) || CMDSYNC)) {
+      else if ((!MULTINET) || CMDSYNC) {
         dboolean found_command = false;
         cbuf_t *commands;
         

@@ -249,10 +249,6 @@ void G_WriteSaveData(pbuf_t *savebuffer) {
   else
     M_PBufWriteLong(savebuffer, G_Signature());
 
-  /*-----------------*/
-  /* CG: TODO: PWADs */
-  /*-----------------*/
-
   M_PBufWriteUInt(savebuffer, packageversion);
   M_PBufWriteInt(savebuffer, compatibility_level);
   M_PBufWriteInt(savebuffer, gameskill);
@@ -303,6 +299,10 @@ dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
                                             dboolean init_new) {
   int i;
   int savegame_compatibility = -1;
+  complevel_t m_compatibility_level;
+  skill_t m_gameskill;
+  int m_gameepisode;
+  int m_gamemap;
   //e6y: numeric version number of package should be zero before initializing
   //     from savegame
   unsigned int packageversion = 0;
@@ -406,10 +406,55 @@ dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
   /*-----------------*/
 
   M_PBufReadUInt(savebuffer, &packageversion);
-  M_PBufReadInt(savebuffer, &compatibility_level);
-  M_PBufReadInt(savebuffer, &gameskill);
-  M_PBufReadInt(savebuffer, &gameepisode);
-  M_PBufReadInt(savebuffer, &gamemap);
+
+  M_PBufReadInt(savebuffer, &m_compatibility_level);
+  M_PBufReadInt(savebuffer, &m_gameskill);
+  M_PBufReadInt(savebuffer, &m_gameepisode);
+  M_PBufReadInt(savebuffer, &m_gamemap);
+
+  if (!init_new) {
+    if (m_compatibility_level != compatibility_level) {
+      if (bail_on_errors) {
+        fprintf(stderr, "MCL\n");
+        return false;
+      }
+
+      I_Error("G_ReadSaveData: Mismatched compatibility level");
+    }
+
+    if (m_gameskill != gameskill) {
+      if (bail_on_errors) {
+        fprintf(stderr, "MGS\n");
+        return false;
+      }
+
+      I_Error("G_ReadSaveData: Mismatched game skill");
+    }
+
+    if (m_gameepisode != gameepisode) {
+      if (bail_on_errors) {
+        fprintf(stderr, "ME\n");
+        return false;
+      }
+
+      I_Error("G_ReadSaveData: Mismatched episode");
+    }
+
+    if (m_gamemap != gamemap) {
+      if (bail_on_errors) {
+        fprintf(stderr, "MM\n");
+        return false;
+      }
+
+      I_Error("G_ReadSaveData: Mismatched map");
+    }
+  }
+
+  compatibility_level = m_compatibility_level;
+  gameskill = m_gameskill;
+  gameepisode = m_gameepisode;
+  gamemap = m_gamemap;
+
   M_PBufReadInt(savebuffer, &gametic);
 
   for (i = 0; i < MAXPLAYERS; i++)

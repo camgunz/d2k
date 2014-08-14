@@ -2396,9 +2396,7 @@ void P_InitSubsectorsLines(void)
   }
 
   for (num = 0; num < numlines; num++)
-  {
     lines[num].validcount = 0;
-  }
 }
 
 //
