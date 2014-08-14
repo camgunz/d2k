@@ -2549,8 +2549,7 @@ void A_SpawnSound(mobj_t *mo)
   A_SpawnFly(mo);
 }
 
-void A_SpawnFly(mobj_t *mo)
-{
+void A_SpawnFly(mobj_t *mo) {
   mobj_t *newmobj;
   mobj_t *fog;
   mobj_t *targ;

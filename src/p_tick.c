@@ -193,7 +193,7 @@ thinker_t* P_NextThinker(thinker_t* th, th_class cl) {
   if (cl == th_all)
     th = th->next;
   else
-    th = th->next;
+    th = th->cnext;
 
   if (th == top)
     return NULL;
