@@ -11,10 +11,8 @@
     * New map load problems might also be due to this; a backlog might build up
       during intermission
   * Initial rocket sounds don't work (explosions are fine)
-  * Fix sounds with more than 1 player
 
 1. Fix messaging
-  * Walking over stuff prints 5000 messages to the console
   * Add more scripting commands
     * `say`
     * `say_team`
@@ -24,6 +22,10 @@
   * Probably need stuff like fraglimit or whatever
 
 ## ZDDL
+
+1. Fix problems
+  * When switching to a different interface (menu, HUD, console, etc.), all
+    key presses should be cleared
 
 1. New widgets
   * Framerate

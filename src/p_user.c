@@ -728,6 +728,10 @@ void P_Echo(int playernum, const char *message) {
   M_OBufConsolidate(&players[playernum].messages);
   M_OBufAppend(&players[playernum].messages, msg);
 
+  printf("P_Echo: Appended message [%s] (%d) to player %d's messages\n",
+    message, HU_MSGTIMEOUT, playernum
+  );
+
   if (playernum == consoleplayer)
     C_Write(msg->content);
 }

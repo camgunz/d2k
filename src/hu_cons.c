@@ -269,7 +269,7 @@ void HU_ConsoleWidgetSetFullScreen(console_widget_t *cons) {
 }
 
 bool HU_ConsoleWidgetActive(console_widget_t *cons) {
-  return (cons->height > 0.0);
+  return ((cons->scroll_rate >= 0.0) && (cons->height > 0.0));
 }
 
 char* HU_ConsoleWidgetGetInputText(console_widget_t *cons) {

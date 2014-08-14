@@ -325,6 +325,9 @@ bool C_Active(void) {
 void C_Printf(const char *fmt, ...) {
   va_list args;
 
+  if (CL_Predicting())
+    return;
+
   va_start(args, fmt);
   if (cons)
     HU_ConsoleWidgetVPrintf(cons, fmt, args);
@@ -334,6 +337,9 @@ void C_Printf(const char *fmt, ...) {
 }
 
 void C_VPrintf(const char *fmt, va_list args) {
+  if (CL_Predicting())
+    return;
+
   if (cons)
     HU_ConsoleWidgetVPrintf(cons, fmt, args);
   else
@@ -342,6 +348,9 @@ void C_VPrintf(const char *fmt, va_list args) {
 
 void C_MPrintf(const char *fmt, ...) {
   va_list args;
+
+  if (CL_Predicting())
+    return;
 
   va_start(args, fmt);
   if (cons)
@@ -352,6 +361,9 @@ void C_MPrintf(const char *fmt, ...) {
 }
 
 void C_MVPrintf(const char *fmt, va_list args) {
+  if (CL_Predicting())
+    return;
+
   if (cons)
     HU_ConsoleWidgetMVPrintf(cons, fmt, args);
   else
@@ -359,6 +371,9 @@ void C_MVPrintf(const char *fmt, va_list args) {
 }
 
 void C_Echo(const char *message) {
+  if (CL_Predicting())
+    return;
+
   if (cons)
     HU_ConsoleWidgetEcho(cons, message);
   else
@@ -366,6 +381,9 @@ void C_Echo(const char *message) {
 }
 
 void C_MEcho(const char *message) {
+  if (CL_Predicting())
+    return;
+
   if (cons)
     HU_ConsoleWidgetMEcho(cons, message);
   else
@@ -373,6 +391,9 @@ void C_MEcho(const char *message) {
 }
 
 void C_Write(const char *message) {
+  if (CL_Predicting())
+    return;
+
   if (cons)
     HU_ConsoleWidgetWrite(cons, message);
   else
@@ -380,6 +401,9 @@ void C_Write(const char *message) {
 }
 
 void C_MWrite(const char *message) {
+  if (CL_Predicting())
+    return;
+
   if (cons)
     HU_ConsoleWidgetMWrite(cons, message);
   else
