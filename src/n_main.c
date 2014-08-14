@@ -189,6 +189,8 @@ static int process_tics(int tics_elapsed) {
   if (!MULTINET)
     return run_tics(tics_elapsed);
 
+  D_Log(LOG_SYNC, "(%d) %d tics elapsed\n", gametic, tics_elapsed);
+
   p = N_PeerGet(0);
 
   if (p != NULL) {
@@ -661,10 +663,13 @@ void N_TryRunTics(void) {
     render_fast = true;
 #endif
 
-  if ((!render_fast) && (tics_elapsed <= 0))
+  if ((!render_fast) && (tics_elapsed <= 0)) {
+    D_Log(LOG_SYNC, "Sleeping\n");
     I_uSleep(ms_to_next_tick * 1000);
+  }
 
   if (tics_elapsed > 0) {
+    D_Log(LOG_SYNC, "%d tics elapsed (2)\n", tics_elapsed);
     if (DELTACLIENT) {
       loading_state = true;
       deltaclient_service_network();
@@ -683,8 +688,12 @@ void N_TryRunTics(void) {
 
     render_menu(MAX(menu_renderer_calls - tics_run, 0));
   }
+  else {
+    D_Log(LOG_SYNC, "Zero tics elapsed\n");
+  }
 
   C_Ticker();
+
   cleanup_old_commands_and_states();
 
   if (CLIENT && gametic > 0 && N_PeerGet(0) == NULL)

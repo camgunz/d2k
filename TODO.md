@@ -3,14 +3,9 @@
 ## Prototype
 
 1. Fix problems
-  * It looks like the server doesn't handle big command backlogs well
-    * Maybe if there are something like more than 20 commands, the server can
-      just run all of them?
-    * For now, just print out player command count stats
-    * Note: weird flashes are due to the command backlog
-    * New map load problems might also be due to this; a backlog might build up
-      during intermission
   * Initial rocket sounds don't work (explosions are fine)
+  * Teleporter lines don't work
+  * Messages disappear too quickly
 
 1. Fix messaging
   * Add more scripting commands
@@ -24,6 +19,7 @@
 ## ZDDL
 
 1. Fix problems
+  * It looks like the server doesn't handle big command backlogs well
   * When switching to a different interface (menu, HUD, console, etc.), all
     key presses should be cleared
 

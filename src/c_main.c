@@ -42,6 +42,8 @@
 #include "i_system.h"
 #include "i_video.h"
 #include "lprintf.h"
+#include "n_net.h"
+#include "n_main.h"
 #include "v_video.h"
 #include "x_main.h"
 

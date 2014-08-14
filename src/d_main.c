@@ -528,26 +528,35 @@ void D_PostEvent(event_t *ev) {
 //
 static void D_Wipe(void) {
   dboolean done;
-  int wipestart = I_GetTime() - 1;
-
+  int wipestart;
+  
   if (!render_wipescreen)
     return; //e6y
+
+  wipestart = I_GetTime() - 1;
 
   do {
     int nowtime;
     int tics;
+
     do {
       I_uSleep(5000); // CPhipps - don't thrash cpu in this loop
       nowtime = I_GetTime();
       tics = nowtime - wipestart;
     } while (!tics);
+
     wipestart = nowtime;
+
     done = wipe_ScreenWipe(tics);
+
     I_UpdateNoBlit();
+
     if (MULTINET)
-      N_ServiceNetwork();
-    M_Drawer();                   // menu is drawn even on top of wipes
-    I_FinishUpdate();             // page flip or blit buffer
+      N_TryRunTics();
+    else
+      M_Drawer(); // menu is drawn even on top of wipes
+
+    I_FinishUpdate(); // page flip or blit buffer
   } while (!done);
 }
 

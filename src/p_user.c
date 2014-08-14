@@ -579,6 +579,10 @@ void P_RunPlayerCommands(player_t *player) {
   if (DELTASERVER) {
     int saved_leveltime;
 
+    D_Log(LOG_SYNC, "(%d) Player %d has %d commands\n",
+      gametic, player_index, M_CBufGetObjectCount(&player->commands)
+    );
+
     CBUF_FOR_EACH(&player->commands, entry) {
       netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
 
