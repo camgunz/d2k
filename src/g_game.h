@@ -72,6 +72,7 @@ int G_SaveGameName(char *name, size_t size, int slot, dboolean demoplayback);
 
 dboolean G_Responder(event_t *ev);
 dboolean G_CheckDemoStatus(void);
+void G_ClearCorpses(void);
 void G_DeathMatchSpawnPlayer(int playernum);
 void G_InitNew(skill_t skill, int episode, int map);
 void G_DeferedInitNew(skill_t skill, int episode, int map);
@@ -130,7 +131,8 @@ extern dboolean graphics_initialized;
 extern int  defaultskill;      //jff 3/24/98 default skill
 extern dboolean haswolflevels;  //jff 4/18/98 wolf levels present
 
-extern int  bodyquesize;       // killough 2/8/98: adustable corpse limit
+extern obuf_t *corpse_queue;
+extern int corpse_queue_size;       // killough 2/8/98: adustable corpse limit
 
 // killough 5/2/98: moved from d_deh.c:
 // Par times (new item with BOOM) - from g_game.c

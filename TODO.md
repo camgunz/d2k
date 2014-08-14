@@ -3,8 +3,14 @@
 ## Prototype
 
 1. Fix problems
-  * Singleplayer intermission doesn't work
-  * Test quitting and rejoining
+  * It looks like the server doesn't handle big command backlogs well
+    * Maybe if there are something like more than 20 commands, the server can
+      just run all of them?
+    * For now, just print out player command count stats
+    * Note: weird flashes are due to the command backlog
+    * New map load problems might also be due to this; a backlog might build up
+      during intermission
+  * Initial rocket sounds don't work (explosions are fine)
   * Fix sounds with more than 1 player
 
 1. Fix messaging
@@ -13,57 +19,62 @@
     * `say`
     * `say_team`
     * `alias`
-    * `idrate` (make a widget for this?)
 
 1. Make playing a game possible in general
   * Probably need stuff like fraglimit or whatever
 
 ## ZDDL
 
+1. New widgets
+  * Framerate
+  * Network stats
+
 1. Add latency mitigation
-  - projectile nudging
-  - skip correction
-  - unlagged
-    - Save attacking player position
-    - Save current game state
-    - Restore game state that player was viewing during the attack
-      - This is contained in the command
-    - Restore attacking player position (if possible)
-    - Run hit detection and damage calculation
-      - For every impacted actor:
-        - Save momx/momy/momz values
-    - Restore saved state
-    - For every impacted actor:
-      - Add new momx/momy/momz values to the current momx/momy/momz
+  * projectile nudging
+  * skip correction
+  * unlagged
+    * Save attacking player position
+    * Save current game state
+    * Restore game state that player was viewing during the attack
+      * This is contained in the command
+    * Restore attacking player position (if possible)
+    * Run hit detection and damage calculation
+      * For every impacted actor:
+        * Save momx/momy/momz values
+    * Restore saved state
+    * For every impacted actor:
+      * Add new momx/momy/momz values to the current momx/momy/momz
+
+1. Remove 4 player restriction
 
 1. Add spectators
 
 1. Add a scoreboard
 
 1. Better configuration file and configuration variable system
-  - Ties into scripting and console
+  * Ties into scripting and console
 
 1. Improve console
-  - Command history
-    - Do this yourself
-  - Tab-completion
-  - Clipboard (cut/copy/paste)
-  - Selection
-    - Mouse
+  * Command history
+    * Do this yourself
+  * Tab-completion
+  * Clipboard (cut/copy/paste)
+  * Selection
+    * Mouse
 
 1. Add HTTP and JSON (cURL and Jansson)
-  - Have client download missing WADs
-    - the client should do this between frames in case it needs to download a
+  * Have client download missing WADs
+    * the client should do this between frames in case it needs to download a
       huge file (or a file from a slow server); libcurl ought to make this
       pretty easy
-  - Create a server description specification in JSON
+  * Create a server description specification in JSON
 
 1. 3D physics
 
 1. SNDCURVE
 
 1. ZDoom physics
-  - ZDoom SSG spread
+  * ZDoom SSG spread
 
 1. PWO
 
@@ -75,7 +86,7 @@
 
 1. Scripted game modes
 
-## Version 1.0
+## Version 0.9
 
 1. Make Windows compilation possible
   * Need to build a libXDiff DLL in mingw64-builds
@@ -86,39 +97,46 @@
   * See about implementing Doom lighting and 8-bit color using shaders
 
 1. Setup testing framework
-  - Demos
-  - Multiplayer command injection
+  * Demos
+  * Multiplayer command injection
 
-## Miscellaneous
+## Version 1.0
 
 1. Settle on types for:
-    - Player indices
-    - TICs
+  * Player indices
+  * TICs
 
 1. Cleanup #includes
 
 1. Update renderer
 
 1. Update `players`:
-  - `players` will become an `obuf_t`
-  - `playeringame` becomes `dboolean playeringame(unsigned short playernum)`
-  - `MAXPLAYERS` becomes `VANILLA_MAXPLAYERS` for compat
-  - Anything defined using `MAXPLAYERS` will be refactored
-  - Servers aren't players
-    - Use a camera in non-headless mode
-    - All playernums should be unsigned shorts
-    - Sending a message to the server can use a bool `to_server` instead of the
+  * `players` will become an `obuf_t`
+  * `playeringame` becomes `dboolean playeringame(unsigned short playernum)`
+  * `MAXPLAYERS` becomes `VANILLA_MAXPLAYERS` for compat
+  * Anything defined using `MAXPLAYERS` will be refactored
+  * Servers aren't players
+    * Use a camera in non-headless mode
+    * All playernums should be unsigned shorts
+    * Sending a message to the server can use a bool `to_server` instead of the
       `-1` recipient (which is a hack)
-  - Player names are hardcoded for DeHackEd; the way this should work is:
-    - Keep a private array of the default names ("Green", "Indigo", etc.)
-    - After initialization, check if the names have been modified, by a
+  * Player names are hardcoded for DeHackEd; the way this should work is:
+    * Keep a private array of the default names ("Green", "Indigo", etc.)
+    * After initialization, check if the names have been modified, by a
       DeHackEd patch or anything
-    - If so, set each player's name accordingly
-    - Of course, this only works for the 1st 4 players; after that, fuck it
+    * If so, set each player's name accordingly
+    * Of course, this only works for the 1st 4 players; after that, fuck it
+      * Maybe assign more colors
 
 1. Refactor the HUD to use cairo
 
 1. Reimplement the HUD entirely in scripting
+
+1. UDMF
+
+1. Cameras
+
+1. ZIP/PK3 resource files
 
 ## Features
 
@@ -145,12 +163,6 @@
 1. Ambient Sounds
 
 1. Support for other ID Tech 1 games (Heretic, Hexen, etc.)
-
-1. Cameras
-
-1. UDMF
-
-1. ZIP/PK3 resource files
 
 <!-- vi: set et ts=4 sw=4 tw=79: -->
 

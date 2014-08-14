@@ -208,8 +208,14 @@ dboolean graphics_initialized = false;
 int defaultskill;               //note 1-based
 
 // killough 2/8/98: make corpse queue variable in size
-int    bodyqueslot, bodyquesize;        // killough 2/8/98
-mobj_t **bodyque = 0;                   // phares 8/10/98
+/*
+ * CG 08/14/2014: Use an obuf_t for this instead
+ *
+ * int    bodyqueslot, bodyquesize;        // killough 2/8/98
+ * mobj_t **bodyque = 0;                   // phares 8/10/98
+ */
+int corpse_queue_size; // killough 2/8/98
+obuf_t *corpse_queue = NULL;
 
 //e6y: save/restore all data which could be changed by G_ReadDemoHeader
 static void G_SaveRestoreGameOptions(int save);
@@ -1391,19 +1397,17 @@ static void G_PlayerFinishLevel(int player) {
 //
 // G_SetPlayerColour
 
-#include "r_draw.h"
-
 void G_ChangedPlayerColour(int pn, int cl) {
-  int i;
-
-  if (!netgame) return;
+  if (!netgame)
+    return;
 
   mapcolor_plyr[pn] = cl;
 
   // Rebuild colour translation tables accordingly
   R_InitTranslationTables();
+
   // Change translations on existing player mobj's
-  for (i=0; i<MAXPLAYERS; i++) {
+  for (int i = 0; i < MAXPLAYERS; i++) {
     if ((gamestate == GS_LEVEL) && playeringame[i] && (players[i].mo != NULL)) {
       players[i].mo->flags &= ~MF_TRANSLATION;
       players[i].mo->flags |= ((uint_64_t)playernumtotrans[i]) << MF_TRANSSHIFT;
@@ -1467,6 +1471,26 @@ void G_PlayerReborn(int player) {
 }
 
 //
+// G_ClearCorpses
+//
+// Clears queued player corpses, if that option is enabled
+//
+// CG: TODO: Put in p_something, this doesn't belong in g_.  I'm thinking
+//           p_user.  Same with stuff like G_DoReborn, G_DeathMatchSpawnPlayer,
+//           etc.
+//
+void G_ClearCorpses(void) {
+  if (corpse_queue_size == 0)
+    return;
+
+  if (corpse_queue_size < 0)
+    I_Error("G_ClearCorpses: corpse_queue_size < 0 (%d)", corpse_queue_size);
+
+  if (corpse_queue == NULL)
+    corpse_queue = M_OBufNewWithCapacity(corpse_queue_size);
+}
+
+//
 // G_CheckSpot
 // Returns false if the player cannot be respawned
 // at the given mapthing_t spot
@@ -1474,19 +1498,25 @@ void G_PlayerReborn(int player) {
 //
 
 static dboolean G_CheckSpot(int playernum, mapthing_t *mthing) {
-  fixed_t     x,y;
+  fixed_t       x;
+  fixed_t       y;
+  fixed_t      xa;
+  fixed_t      ya;
   subsector_t *ss;
-  int         i;
+  int           i;
+  int          an;
+  mobj_t      *mo; 
 
-  if (!players[playernum].mo)
-    {
-      // first spawn of level, before corpses
-      for (i=0 ; i<playernum ; i++)
-        if (players[i].mo->x == mthing->x << FRACBITS
-            && players[i].mo->y == mthing->y << FRACBITS)
-          return false;
-      return true;
+  if (!players[playernum].mo) {
+    // first spawn of level, before corpses
+    for (i = 0; i < playernum; i++) {
+      if (players[i].mo->x == mthing->x << FRACBITS &&
+          players[i].mo->y == mthing->y << FRACBITS) {
+        return false;
+      }
     }
+    return true;
+  }
 
   x = mthing->x << FRACBITS;
   y = mthing->y << FRACBITS;
@@ -1498,7 +1528,7 @@ static dboolean G_CheckSpot(int playernum, mapthing_t *mthing) {
   // if (!P_CheckPosition (players[playernum].mo, x, y))
   //    return false;
 
-  players[playernum].mo->flags |=  MF_SOLID;
+  players[playernum].mo->flags |= MF_SOLID;
   i = P_CheckPosition(players[playernum].mo, x, y);
   players[playernum].mo->flags &= ~MF_SOLID;
   if (!i)
@@ -1508,65 +1538,68 @@ static dboolean G_CheckSpot(int playernum, mapthing_t *mthing) {
   // killough 2/8/98: make corpse queue have an adjustable limit
   // killough 8/1/98: Fix bugs causing strange crashes
 
-  if (bodyquesize > 0)
-    {
-      static int queuesize;
-      if (queuesize < bodyquesize)
-	{
-	  bodyque = realloc(bodyque, bodyquesize*sizeof*bodyque);
-	  memset(bodyque+queuesize, 0,
-		 (bodyquesize-queuesize)*sizeof*bodyque);
-	  queuesize = bodyquesize;
-	}
-      if (bodyqueslot >= bodyquesize)
-	P_RemoveMobj(bodyque[bodyqueslot % bodyquesize]);
-      bodyque[bodyqueslot++ % bodyquesize] = players[playernum].mo;
+  if (corpse_queue_size > 0) {
+    if (corpse_queue == NULL)
+      corpse_queue = M_OBufNewWithCapacity(corpse_queue_size);
+
+    if (M_OBufGetObjectCount(corpse_queue) == corpse_queue_size) {
+      P_RemoveMobj(M_OBufGet(corpse_queue, 0));
+      M_OBufRemove(corpse_queue, 0);
     }
-  else
-    if (!bodyquesize)
-      P_RemoveMobj(players[playernum].mo);
+
+    M_OBufConsolidate(corpse_queue);
+
+    M_OBufAppend(corpse_queue, players[playernum].mo);
+  }
+  else if (!corpse_queue_size) {
+    P_RemoveMobj(players[playernum].mo);
+  }
+  else if (corpse_queue_size < 0) {
+    I_Error("G_CheckSpot: corpse_queue_size < 0 (%d)", corpse_queue_size);
+  }
 
   // spawn a teleport fog
-  ss = R_PointInSubsector (x,y);
-  { // Teleport fog at respawn point
-    fixed_t xa,ya;
-    int an;
-    mobj_t      *mo;
+  ss = R_PointInSubsector(x, y);
 
-/* BUG: an can end up negative, because mthing->angle is (signed) short.
- * We have to emulate original Doom's behaviour, deferencing past the start
- * of the array, into the previous array (finetangent) */
-    an = ( ANG45 * ((signed)mthing->angle/45) ) >> ANGLETOFINESHIFT;
-    xa = finecosine[an];
-    ya = finesine[an];
+  // Teleport fog at respawn point
 
-    if (compatibility_level <= finaldoom_compatibility || compatibility_level == prboom_4_compatibility)
-      switch (an) {
-      case -4096: xa = finetangent[2048];   // finecosine[-4096]
-          	ya = finetangent[0];      // finesine[-4096]
-          	break;
-      case -3072: xa = finetangent[3072];   // finecosine[-3072]
-          	ya = finetangent[1024];   // finesine[-3072]
-          	break;
-      case -2048: xa = finesine[0];   // finecosine[-2048]
-          	ya = finetangent[2048];   // finesine[-2048]
-          	break;
-      case -1024:	xa = finesine[1024];     // finecosine[-1024]
-          	ya = finetangent[3072];  // finesine[-1024]
-          	break;
+  /* BUG: an can end up negative, because mthing->angle is (signed) short.
+   * We have to emulate original Doom's behaviour, deferencing past the start
+   * of the array, into the previous array (finetangent) */
+  an = (ANG45 * ((signed int)mthing->angle / 45)) >> ANGLETOFINESHIFT;
+  xa = finecosine[an];
+  ya = finesine[an];
+
+  if (compatibility_level <= finaldoom_compatibility ||
+      compatibility_level == prboom_4_compatibility) {
+    switch (an) {
+      case -4096: xa = finetangent[2048]; // finecosine[-4096]
+        ya = finetangent[0];              // finesine[-4096]
+      break;
+      case -3072: xa = finetangent[3072]; // finecosine[-3072]
+        ya = finetangent[1024];           // finesine[-3072]
+      break;
+      case -2048: xa = finesine[0];       // finecosine[-2048]
+        ya = finetangent[2048];           // finesine[-2048]
+      break;
+      case -1024:	xa = finesine[1024];    // finecosine[-1024]
+        ya = finetangent[3072];           // finesine[-1024]
+      break;
       case 1024:
       case 2048:
       case 3072:
       case 4096:
-      case 0:	break; /* correct angles set above */
-      default:	I_Error("G_CheckSpot: unexpected angle %d\n",an);
-      }
-
-    mo = P_SpawnMobj(x+20*xa, y+20*ya, ss->sector->floorheight, MT_TFOG);
-
-    if (players[consoleplayer].viewz != 1)
-      S_StartSound(mo, sfx_telept);  // don't start sound on first frame
+      case 0:
+      break; /* correct angles set above */
+      default:
+        I_Error("G_CheckSpot: unexpected angle %d\n",an);
+    }
   }
+
+  mo = P_SpawnMobj(x + 20 * xa, y + 20 * ya, ss->sector->floorheight, MT_TFOG);
+
+  if (players[consoleplayer].viewz != 1)
+    S_StartSound(mo, sfx_telept);  // don't start sound on first frame
 
   return true;
 }

@@ -170,7 +170,7 @@ default_t defaults[] =
    def_int,ss_none}, // percentage of normal speed (35 fps) realtic clock runs at
   {"menu_background", {(int*)&menu_background}, {1}, 0, 1,
    def_bool,ss_none}, // do Boom fullscreen menus have backgrounds?
-  {"max_player_corpse", {&bodyquesize}, {32},-1,UL,   // killough 2/8/98
+  {"max_player_corpse", {&corpse_queue_size}, {32}, -1, UL, // killough 2/8/98
    def_int,ss_none}, // number of dead bodies in view supported (-1 = no limit)
   {"flashing_hom",{&flashing_hom},{0},0,1,
    def_bool,ss_none}, // killough 10/98 - enable flashing HOM indicator

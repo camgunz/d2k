@@ -2575,13 +2575,14 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
   // e6y
   // Correction of desync on dv04-423.lmp/dv.wad
   // http://www.doomworld.com/vb/showthread.php?s=&postid=627257#post627257
-  if (compatibility_level>=lxdoom_1_compatibility || prboom_comp[PC_REMOVE_SLIME_TRAILS].state)
+  if (compatibility_level>=lxdoom_1_compatibility ||
+      prboom_comp[PC_REMOVE_SLIME_TRAILS].state) {
     P_RemoveSlimeTrails();    // killough 10/98: remove slime trails from wad
+  }
 
   // Note: you don't need to clear player queue slots --
   // a much simpler fix is in g_game.c -- killough 10/98
-
-  bodyqueslot = 0;
+  G_ClearCorpses();
 
   /* cph - reset all multiplayer starts */
   memset(playerstarts, 0, sizeof(playerstarts));

@@ -838,6 +838,21 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
     else
       M_PBufWriteUInt(savebuffer, 0);
   }
+
+  if (corpse_queue) {
+    M_OBufConsolidate(corpse_queue);
+    M_PBufWriteInt(savebuffer, corpse_queue_size);
+    M_PBufWriteInt(savebuffer, M_OBufGetObjectCount(corpse_queue));
+    OBUF_FOR_EACH(corpse_queue, entry) {
+      mobj_t *mo = (mobj_t *)entry.obj;
+
+      M_PBufWriteUInt(savebuffer, mo->id);
+    }
+  }
+  else {
+    M_PBufWriteInt(savebuffer, 0);
+  }
+
 }
 
 //
@@ -940,6 +955,44 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
       I_Error("P_UnArchiveThinkers: Invalid soundtarget index %u", st_id);
 
     P_SetTarget(&sectors[i].soundtarget, sound_target);
+  }
+
+  G_ClearCorpses();
+  M_PBufReadInt(savebuffer, &corpse_queue_size);
+
+  if (corpse_queue_size < 0) {
+    I_Error(
+      "P_UnArchiveThinkers: corpse_queue_size < 0 (%d)", corpse_queue_size
+    );
+  }
+
+  if (corpse_queue_size > 0) {
+    int corpse_count;
+
+    M_PBufReadInt(savebuffer, &corpse_count);
+
+    if (corpse_count > corpse_queue_size) {
+      I_Error("P_UnArchiveThinkers: corpse count > %d (%d)",
+        corpse_count, corpse_queue_size
+      );
+    }
+
+    for (int i = 0; i < corpse_count; i++) {
+      mobj_t *mo;
+      uint32_t corpse_id;
+
+      M_PBufReadUInt(savebuffer, &corpse_id);
+
+      mo = P_IdentLookup(corpse_id);
+
+      if (mo == NULL)
+        I_Error("P_UnArchiveThinkers: Invalid corpse ID %d", corpse_id);
+
+      M_OBufAppend(corpse_queue, mo);
+    }
+  }
+  else {
+    M_PBufWriteInt(savebuffer, 0);
   }
 
   // killough 3/26/98: Spawn icon landings:
