@@ -2334,7 +2334,7 @@ void A_BossDeath(mobj_t *mo)
       }
 
   // victory!
-  if ( gamemode == commercial)
+  if (gamemode == commercial)
     {
       if (gamemap == 7)
         {
@@ -2570,25 +2570,25 @@ void A_SpawnFly(mobj_t *mo)
   r = P_Random(pr_spawnfly);
 
   // Probability distribution (kind of :), decreasing likelihood.
-  if ( r<50 )
+  if (r < 50)
     type = MT_TROOP;
-  else if (r<90)
+  else if (r < 90)
     type = MT_SERGEANT;
-  else if (r<120)
+  else if (r < 120)
     type = MT_SHADOWS;
-  else if (r<130)
+  else if (r < 130)
     type = MT_PAIN;
-  else if (r<160)
+  else if (r < 160)
     type = MT_HEAD;
-  else if (r<162)
+  else if (r < 162)
     type = MT_VILE;
-  else if (r<172)
+  else if (r < 172)
     type = MT_UNDEAD;
-  else if (r<192)
+  else if (r < 192)
     type = MT_BABY;
-  else if (r<222)
+  else if (r < 222)
     type = MT_FATSO;
-  else if (r<246)
+  else if (r < 246)
     type = MT_KNIGHT;
   else
     type = MT_BRUISER;
@@ -2604,7 +2604,7 @@ void A_SpawnFly(mobj_t *mo)
   /* killough 8/29/98: add to appropriate thread */
   P_UpdateThinker(&newmobj->thinker);
 
-  if (P_LookForTargets(newmobj,true))      /* killough 9/4/98 */
+  if (P_LookForTargets(newmobj, true))      /* killough 9/4/98 */
     P_SetMobjState(newmobj, newmobj->info->seestate);
 
     // telefrag anything in this spot
