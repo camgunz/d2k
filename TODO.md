@@ -4,7 +4,6 @@
 
 1. Fix problems
   * Initial rocket sounds don't work (explosions are fine)
-  * Teleporter lines don't work
   * Messages disappear too quickly
 
 1. Fix messaging
