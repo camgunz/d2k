@@ -3,10 +3,9 @@
 ## Prototype
 
 1. Fix problems
-  * 2nd button in the blue room doesn't work
+  * Singleplayer intermission doesn't work
   * Test quitting and rejoining
-  * Test sounds with more than 1 player
-    * They don't work
+  * Fix sounds with more than 1 player
 
 1. Fix messaging
   * Walking over stuff prints 5000 messages to the console

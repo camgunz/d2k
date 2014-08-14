@@ -250,18 +250,12 @@ int GetPairForSwitchTexture(side_t *side)
 // Passed the thing using the line, the line being used, and the side used
 // Returns true if a thinker was created
 //
-dboolean
-P_UseSpecialLine
-( mobj_t*       thing,
-  line_t*       line,
-  int           side )
-{
-
+dboolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side) {
   // e6y
   // b.m. side test was broken in boom201
   if ((demoplayback ? (demover != 201) : (compatibility_level != boom_201_compatibility)))
-  if (side) //jff 6/1/98 fix inadvertent deletion of side test
-    return false;
+    if (side) //jff 6/1/98 fix inadvertent deletion of side test
+      return false;
 
   //jff 02/04/98 add check here for generalized floor/ceil mover
   if (!demo_compatibility)

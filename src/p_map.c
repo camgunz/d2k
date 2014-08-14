@@ -1749,35 +1749,31 @@ void P_LineAttack
 // USE LINES
 //
 
-mobj_t*   usething;
+mobj_t *usething;
 
-dboolean PTR_UseTraverse (intercept_t* in)
-{
+dboolean PTR_UseTraverse (intercept_t *in) {
   int side;
 
-  if (!in->d.line->special)
-    {
+  if (!in->d.line->special) {
     P_LineOpening (in->d.line);
-    if (openrange <= 0)
-      {
+
+    if (openrange <= 0) {
       S_StartSound (usething, sfx_noway);
 
-      // can't use through a wall
-      return false;
-      }
-
-    // not a special line, but keep checking
-
-    return true;
+      return false; // can't use through a wall
     }
 
+    return true; // not a special line, but keep checking
+  }
+
   side = 0;
-  if (P_PointOnLineSide (usething->x, usething->y, in->d.line) == 1)
+
+  if (P_PointOnLineSide(usething->x, usething->y, in->d.line) == 1)
     side = 1;
 
   //  return false;   // don't use back side
 
-  P_UseSpecialLine (usething, in->d.line, side);
+  P_UseSpecialLine(usething, in->d.line, side);
 
   //WAS can't use for than one special line in a row
   //jff 3/21/98 NOW multiple use allowed with enabling line flag
@@ -1814,8 +1810,7 @@ dboolean PTR_NoWayTraverse(intercept_t* in)
 // P_UseLines
 // Looks for special lines in front of the player to activate.
 //
-void P_UseLines (player_t*  player)
-{
+void P_UseLines(player_t*  player) {
   int     angle;
   fixed_t x1;
   fixed_t y1;
@@ -1828,8 +1823,8 @@ void P_UseLines (player_t*  player)
 
   x1 = player->mo->x;
   y1 = player->mo->y;
-  x2 = x1 + (USERANGE>>FRACBITS)*finecosine[angle];
-  y2 = y1 + (USERANGE>>FRACBITS)*finesine[angle];
+  x2 = x1 + (USERANGE >> FRACBITS) * finecosine[angle];
+  y2 = y1 + (USERANGE >> FRACBITS) * finesine[angle];
 
   // old code:
   //
@@ -1837,9 +1832,13 @@ void P_UseLines (player_t*  player)
   //
   // This added test makes the "oof" sound work on 2s lines -- killough:
 
-  if (P_PathTraverse ( x1, y1, x2, y2, PT_ADDLINES, PTR_UseTraverse ))
-    if (!comp[comp_sound] && !P_PathTraverse ( x1, y1, x2, y2, PT_ADDLINES, PTR_NoWayTraverse ))
-      S_StartSound (usething, sfx_noway);
+  if (P_PathTraverse(x1, y1, x2, y2, PT_ADDLINES, PTR_UseTraverse)) {
+    if (comp[comp_sound])
+      return;
+
+    if (!P_PathTraverse(x1, y1, x2, y2, PT_ADDLINES, PTR_NoWayTraverse))
+      S_StartSound(usething, sfx_noway);
+  }
 }
 
 

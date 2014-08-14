@@ -434,7 +434,7 @@ void T_MoveElevator(elevator_t* elevator)
 // Returns true if a thinker was created.
 //
 int EV_DoFloor(line_t *line, floor_e floortype) {
-  int          secnum = 1;
+  int          secnum = -1;
   int          rtn = 0;
   int          i;
   sector_t    *sec;
@@ -446,6 +446,7 @@ int EV_DoFloor(line_t *line, floor_e floortype) {
     else
       return rtn;
   }//e6y
+
   // move all floors with the same tag as the linedef
   while ((secnum = P_FindSectorFromLineTag(line, secnum)) >= 0) {
     sec = &sectors[secnum];
