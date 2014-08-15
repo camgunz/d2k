@@ -616,7 +616,7 @@ dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
   return true;
 }
 
-void N_PackServerMessage(netpeer_t *np, char *message) {
+void N_PackServerMessage(netpeer_t *np, const char *message) {
   pbuf_t *pbuf = N_PeerBeginMessage(
     np->peernum, NET_CHANNEL_RELIABLE, nm_servermessage
   );
@@ -871,7 +871,7 @@ dboolean N_UnpackDeltaSync(netpeer_t *np) {
 }
 
 void N_PackPlayerMessage(netpeer_t *np, short sender, buf_t *recipients,
-                                        char *message) {
+                                        const char *message) {
   pbuf_t *pbuf = N_PeerBeginMessage(
     np->peernum, NET_CHANNEL_RELIABLE, nm_playermessage
   );
@@ -926,7 +926,7 @@ dboolean N_UnpackPlayerPreferenceName(netpeer_t *np, buf_t *buf) {
   return true;
 }
 
-void N_PackNameChange(netpeer_t *np, short playernum, char *new_name) {
+void N_PackNameChange(netpeer_t *np, short playernum, const char *new_name) {
   pack_player_preference_change(pbuf, gametic, playernum, "name", 4);
 
   M_PBufWriteShort(pbuf, playernum);
@@ -1127,7 +1127,7 @@ dboolean N_UnpackSkinChange(netpeer_t *np, short *playernum) {
   return false; /* CG: TODO */
 }
 
-void N_PackAuthRequest(netpeer_t *np, char *password) {
+void N_PackAuthRequest(netpeer_t *np, const char *password) {
   pbuf_t *pbuf = N_PeerBeginMessage(
     np->peernum, NET_CHANNEL_RELIABLE, nm_authrequest
   );
@@ -1147,7 +1147,7 @@ dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
   return true;
 }
 
-void N_PackRCONCommand(netpeer_t *np, char *command) {
+void N_PackRCONCommand(netpeer_t *np, const char *command) {
   pbuf_t *pbuf = N_PeerBeginMessage(
     np->peernum, NET_CHANNEL_RELIABLE, nm_rconcommand
   );
@@ -1165,7 +1165,7 @@ dboolean N_UnpackRCONCommand(netpeer_t *np, buf_t *buf) {
   return true;
 }
 
-void N_PackVoteRequest(netpeer_t *np, char *command) {
+void N_PackVoteRequest(netpeer_t *np, const char *command) {
   pbuf_t *pbuf = N_PeerBeginMessage(
     np->peernum, NET_CHANNEL_RELIABLE, nm_voterequest
   );

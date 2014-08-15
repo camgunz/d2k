@@ -43,6 +43,7 @@
 #include "p_checksum.h"
 #include "p_user.h"
 #include "r_fps.h"
+#include "s_sound.h"
 #include "e6y.h"
 
 #include "n_net.h"
@@ -450,10 +451,22 @@ void N_InitNetGame(void) {
   }
 
   for (int i = 0; i < MAXPLAYERS; i++) {
+    char *name;
+    size_t name_length;
+
     M_CBufInitWithCapacity(
       &players[i].commands, sizeof(netticcmd_t), BACKUPTICS
     );
+
     M_OBufInit(&players[i].messages);
+
+    players[i].name = NULL;
+
+    name_length = snprintf(NULL, 0, "Player %d", i);
+    name = calloc(name_length + 1, sizeof(char));
+    snprintf(name, name_length + 1, "Player %d", i);
+
+    P_SetName(i, name);
   }
 
   M_CBufInitWithCapacity(&local_commands, sizeof(netticcmd_t), BACKUPTICS);
@@ -495,16 +508,19 @@ bool CL_LoadState(void) {
   delta = &server->sync.delta;
 
   predicting = true;
+  S_MuteSound();
 
   if (!N_ApplyStateDelta(delta)) {
     P_Echo(consoleplayer, "Error applying state delta");
     predicting = false;
+    S_UnMuteSound();
     return false;
   }
 
   if (!N_LoadLatestState(false)) {
     P_Echo(consoleplayer, "Error loading state");
     predicting = false;
+    S_UnMuteSound();
     return false;
   }
 
@@ -528,6 +544,7 @@ bool CL_LoadState(void) {
 
   if (M_CBufGetObjectCount(&local_commands) <= 0) {
     predicting = false;
+    S_UnMuteSound();
     return true;
   }
 
@@ -573,6 +590,7 @@ bool CL_LoadState(void) {
   }
 
   predicting = false;
+  S_UnMuteSound();
   return true;
 }
 

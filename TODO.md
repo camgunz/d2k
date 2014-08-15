@@ -2,22 +2,23 @@
 
 ## Prototype
 
-1. Fix problems
-  * Initial rocket sounds don't work (explosions are fine)
-  * Messages disappear too quickly
-
 1. Fix messaging
+  * Messages disappear too quickly
   * Add more scripting commands
     * `say`
     * `say_team`
     * `alias`
+    * `name`
+    * `team`
 
-1. Make playing a game possible in general
-  * Probably need stuff like fraglimit or whatever
+1. Add fraglimit
 
 ## ZDDL
 
-1. Fix problems
+1. Fix sound problems
+  * Rocket spawn sounds don't cut off when they explode
+
+1. Fix server command backlog problems
   * It looks like the server doesn't handle big command backlogs well
   * When switching to a different interface (menu, HUD, console, etc.), all
     key presses should be cleared

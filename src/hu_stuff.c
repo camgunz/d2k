@@ -297,16 +297,7 @@ static void HU_SetLumpTrans(const char *name)
 }
 
 static void send_chat_message(chat_widget_t *cw) {
-  char *msg = HU_ChatWidgetGetInputText(cw);
-
-  if (CLIENT)
-    CL_SendMessage(msg);
-  else if (SERVER)
-    SV_BroadcastMessage(msg);
-  else if (players[consoleplayer].name != NULL)
-    P_Printf(consoleplayer, "<%s>: %s\n", players[consoleplayer].name, msg);
-  else
-    P_Printf(consoleplayer, "<Player %d>: %s\n", consoleplayer, msg);
+  P_SendMessage(HU_ChatWidgetGetInputText(cw));
 }
 
 //

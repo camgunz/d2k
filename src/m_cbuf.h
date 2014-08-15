@@ -41,6 +41,8 @@ typedef struct cbufiternode_s {
   void *obj;
 } cbufiternode_t;
 
+cbuf_t*  M_CBufNew(size_t obj_sz);
+cbuf_t*  M_CBufNewWithCapacity(size_t obj_sz, int capacity);
 void     M_CBufInit(cbuf_t *cbuf, size_t obj_sz);
 void     M_CBufInitWithCapacity(cbuf_t *cbuf, size_t obj_sz, int capacity);
 dboolean M_CBufIsValidIndex(cbuf_t *cbuf, int index);

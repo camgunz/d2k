@@ -36,7 +36,7 @@ buf_t* M_BufferNew(void) {
   buf_t *buf = calloc(1, sizeof(buf_t));
 
   if (buf == NULL)
-    I_Error("M_BufferNew: Calloc returned NULL.\n");
+    I_Error("M_BufferNew: Calloc returned NULL.");
 
   M_BufferInit(buf);
 
@@ -47,7 +47,7 @@ buf_t* M_BufferNewWithCapacity(size_t capacity) {
   buf_t *buf = calloc(1, sizeof(buf_t));
 
   if (buf == NULL)
-    I_Error("M_BufferNew: calloc returned NULL\n");
+    I_Error("M_BufferNew: calloc returned NULL");
 
   M_BufferInitWithCapacity(buf, capacity);
 

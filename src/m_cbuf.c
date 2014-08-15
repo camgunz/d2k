@@ -27,15 +27,37 @@
 #include "lprintf.h"
 #include "m_cbuf.h"
 
-void M_CBufInit(cbuf_t *cbuf, size_t obj_size) {
+cbuf_t* M_CBufNew(size_t obj_sz) {
+  cbuf_t *cbuf = calloc(1, sizeof(cbuf_t));
+
+  if (cbuf == NULL)
+    I_Error("M_CBufNew: Calloc returned NULL.");
+
+  M_CBufInit(cbuf, obj_sz);
+
+  return cbuf;
+}
+
+cbuf_t* M_CBufNewWithCapacity(size_t obj_sz, int capacity) {
+  cbuf_t *cbuf = calloc(1, sizeof(cbuf_t));
+
+  if (cbuf == NULL)
+    I_Error("M_CBufNewWithCapacity: Calloc returned NULL.");
+
+  M_CBufInitWithCapacity(cbuf, obj_sz, capacity);
+
+  return cbuf;
+}
+
+void M_CBufInit(cbuf_t *cbuf, size_t obj_sz) {
   cbuf->capacity = 0;
   cbuf->size     = 0;
-  cbuf->obj_size = obj_size;
+  cbuf->obj_size = obj_sz;
   cbuf->nodes    = NULL;
 }
 
-void M_CBufInitWithCapacity(cbuf_t *cbuf, size_t obj_size, int capacity) {
-  M_CBufInit(cbuf, obj_size);
+void M_CBufInitWithCapacity(cbuf_t *cbuf, size_t obj_sz, int capacity) {
+  M_CBufInit(cbuf, obj_sz);
   M_CBufEnsureCapacity(cbuf, capacity);
 }
 

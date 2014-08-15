@@ -28,6 +28,16 @@
 #pragma interface
 #endif
 
+// The number of internal mixing channels, the samples calculated for each
+// mixing step, the size of the 16bit, 2 hardware channel (stereo) mixing
+// buffer, and the samplerate of the raw data.
+// CG 08/15/2014: This used to be the number of internal mixing channels, but
+//                it is tightly linked to the number of "external" mixing
+//                channels, so now it is "MAX_SOUND_CHANNELS" instead of
+//                "MAX_CHANNELS", it lives in s_sound.h instead of i_sound.c,
+//                and m_misc.c uses it to configure "snd_channels".
+#define MAX_SOUND_CHANNELS 32
+
 #define SOUND_DISABLED (!snd_card || nosfxparm)
 #define MUSIC_DISABLED (!mus_card || nomusicparm)
 
@@ -77,6 +87,8 @@ void S_StopMusic(void);
 // Stop and resume music, during game PAUSE.
 void S_PauseSound(void);
 void S_ResumeSound(void);
+void S_MuteSound(void);
+void S_UnMuteSound(void);
 
 //
 // Updates music & sounds

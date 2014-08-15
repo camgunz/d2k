@@ -41,6 +41,7 @@ void P_MovePlayer(player_t *player);
 void P_Thrust(player_t *player, angle_t angle, fixed_t move);
 void P_SetPitch(player_t *player);
 void P_RunPlayerCommands(player_t *player);
+void P_SetName(int playernum, char *name);
 void P_Printf(int playernum, const char *fmt, ...) PRINTF_DECL(2, 3);
 void P_Echo(int playernum, const char *message);
 void P_Write(int playernum, const char *message);
@@ -52,6 +53,7 @@ void P_CenterQPrintf(int playernum, int sfx, const char *fmt, ...)
     PRINTF_DECL(3, 4);
 void P_CenterQEcho(int playernum, int sfx,const char *message);
 void P_CenterQWrite(int playernum, int sfx, const char *message);
+void P_SendMessage(const char *message);
 void P_ClearMessages(int playernum);
 
 #endif  /* P_USER__ */

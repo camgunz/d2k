@@ -672,6 +672,15 @@ void P_RunPlayerCommands(player_t *player) {
 
 }
 
+void P_SetName(int playernum, char *name) {
+  player_t *player = &players[playernum];
+
+  if (player->name)
+    free(player->name);
+
+  player->name = name;
+}
+
 void P_Printf(int playernum, const char *fmt, ...) {
   gchar *gcontent;
   va_list args;
@@ -933,6 +942,17 @@ void P_CenterSWrite(int playernum, int sfx, const char *message) {
 
   if (playernum == consoleplayer)
     C_Write(msg->content);
+}
+
+void P_SendMessage(const char *message) {
+  if (CLIENT)
+    CL_SendMessage(message);
+  else if (SERVER)
+    SV_BroadcastMessage(message);
+  else if (players[consoleplayer].name != NULL)
+    P_Printf(consoleplayer, "<%s>: %s\n", players[consoleplayer].name, message);
+  else
+    P_Printf(consoleplayer, "<Player %d>: %s\n", consoleplayer, message);
 }
 
 void P_ClearMessages(int playernum) {

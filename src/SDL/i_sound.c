@@ -60,11 +60,6 @@ void PCSound_Mix_Callback(void *udata, Uint8 *stream, int len);
 void Exp_UpdateMusic(void *buff, unsigned nsamp);
 #endif
 
-// The number of internal mixing channels, the samples calculated for each
-// mixing step, the size of the 16bit, 2 hardware channel (stereo) mixing
-// buffer, and the samplerate of the raw data.
-#define MAX_CHANNELS    32
-
 typedef struct {
   int id;                       // SFX id of the playing sound effect.  Used to
                                 // catch duplicates (like chainsaw).
@@ -95,7 +90,9 @@ int audio_fd;               // The actual output device.
 int steptable[256];         // Pitch to stepping lookup, unused.
 SDL_mutex *sfxmutex;        // lock for updating any params related to sfx
 SDL_mutex *musmutex;        // lock for updating any params related to music
-channel_info_t channelinfo[MAX_CHANNELS];
+
+// CG TODO: Use a cbuf_t
+channel_info_t channelinfo[MAX_SOUND_CHANNELS];
 
 #ifndef HAVE_OWN_MUSIC
 int use_experimental_music = -1;
@@ -158,7 +155,7 @@ static void update_sound_params(int handle, int volume, int separation, int pitc
   int step = steptable[pitch];
 
 #ifdef RANGECHECK
-  if ((handle < 0) || (handle >= MAX_CHANNELS))
+  if ((handle < 0) || (handle >= MAX_SOUND_CHANNELS))
     I_Error("update_sound_params: handle out of range");
 #endif
 
@@ -378,7 +375,7 @@ void I_SetChannels(void) {
   int *steptablemid = steptable + 128;
 
   // Okay, reset internal mixing channels to zero.
-  for (i = 0; i < MAX_CHANNELS; i++)
+  for (i = 0; i < MAX_SOUND_CHANNELS; i++)
     memset(&channelinfo[i], 0, sizeof(channel_info_t));
 
   // This table provides step widths for pitch parameters.
@@ -438,7 +435,7 @@ int I_StartSound(int id, int channel, int vol, int sep, int pitch, int priority)
   int lump;
   size_t len;
 
-  if ((channel < 0) || (channel >= MAX_CHANNELS))
+  if ((channel < 0) || (channel >= MAX_SOUND_CHANNELS))
 #ifdef RANGECHECK
     I_Error("I_StartSound: handle out of range");
 #else
@@ -480,7 +477,7 @@ int I_StartSound(int id, int channel, int vol, int sep, int pitch, int priority)
 
 void I_StopSound (int handle) {
 #ifdef RANGECHECK
-  if ((handle < 0) || (handle >= MAX_CHANNELS))
+  if ((handle < 0) || (handle >= MAX_SOUND_CHANNELS))
     I_Error("I_StopSound: handle out of range");
 #endif
 
@@ -499,7 +496,7 @@ void I_StopSound (int handle) {
 
 dboolean I_SoundIsPlaying(int handle) {
 #ifdef RANGECHECK
-  if ((handle < 0) || (handle >= MAX_CHANNELS))
+  if ((handle < 0) || (handle >= MAX_SOUND_CHANNELS))
     I_Error("I_SoundIsPlaying: handle out of range");
 #endif
 
@@ -521,7 +518,7 @@ dboolean I_AnySoundStillPlaying(void) {
   if (snd_pcspeaker)
     return false;
 
-  for (i = 0; i < MAX_CHANNELS; i++) {
+  for (i = 0; i < MAX_SOUND_CHANNELS; i++) {
     if (channelinfo[i].data != NULL)
       return true;
   }

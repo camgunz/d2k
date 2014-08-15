@@ -300,7 +300,7 @@ static void handle_player_message(netpeer_t *np) {
   }
   else {
     P_Printf(consoleplayer,
-      "%s: %s\n", players[sender].name, player_message_buffer.data
+      "<%s>: %s\n", players[sender].name, player_message_buffer.data
     );
   }
 }
@@ -550,14 +550,14 @@ void SV_SendAuthResponse(short playernum, auth_level_e auth_level) {
   N_PackAuthResponse(np, auth_level);
 }
 
-void SV_SendMessage(short playernum, char *message) {
+void SV_SendMessage(short playernum, const char *message) {
   netpeer_t *np = NULL;
   CHECK_VALID_PLAYER(np, playernum);
 
   N_PackServerMessage(np, message);
 }
 
-void SV_BroadcastMessage(char *message) {
+void SV_BroadcastMessage(const char *message) {
   for (int i = 0; i < N_PeerGetCount(); i++) {
     netpeer_t *np = N_PeerGet(i);
 
@@ -566,11 +566,11 @@ void SV_BroadcastMessage(char *message) {
   }
 }
 
-void CL_SendMessageToServer(char *message) {
+void CL_SendMessageToServer(const char *message) {
   CL_SendMessageToPlayer(-1, message);
 }
 
-void CL_SendMessageToPlayer(short recipient, char *message) {
+void CL_SendMessageToPlayer(short recipient, const char *message) {
   buf_t *recipients = get_message_recipient_buffer();
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
@@ -583,7 +583,7 @@ void CL_SendMessageToPlayer(short recipient, char *message) {
   N_PackPlayerMessage(np, consoleplayer, recipients, message);
 }
 
-void CL_SendMessageToTeam(byte team, char *message) {
+void CL_SendMessageToTeam(byte team, const char *message) {
   buf_t *recipients = get_message_recipient_buffer();
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
@@ -597,11 +597,11 @@ void CL_SendMessageToTeam(byte team, char *message) {
   N_PackPlayerMessage(np, consoleplayer, recipients, message);
 }
 
-void CL_SendMessageToCurrentTeam(char *message) {
+void CL_SendMessageToCurrentTeam(const char *message) {
   CL_SendMessageToTeam(players[consoleplayer].team, message);
 }
 
-void CL_SendMessage(char *message) {
+void CL_SendMessage(const char *message) {
   buf_t *recipients = get_message_recipient_buffer();
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
@@ -614,14 +614,14 @@ void CL_SendMessage(char *message) {
   N_PackPlayerMessage(np, consoleplayer, recipients, message);
 }
 
-void CL_SendNameChange(char *new_name) {
+void CL_SendNameChange(const char *new_name) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
   N_PackNameChange(np, consoleplayer, new_name);
 }
 
-void SV_BroadcastPlayerNameChanged(short playernum, char *new_name) {
+void SV_BroadcastPlayerNameChanged(short playernum, const char *new_name) {
   for (int i = 0; i < N_PeerGetCount(); i++) {
     netpeer_t *np = N_PeerGet(i);
 
@@ -778,21 +778,21 @@ void SV_ResyncPeers(void) {
   }
 }
 
-void CL_SendAuthRequest(char *password) {
+void CL_SendAuthRequest(const char *password) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
   N_PackAuthRequest(np, password);
 }
 
-void CL_SendRCONCommand(char *command) {
+void CL_SendRCONCommand(const char *command) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
   N_PackRCONCommand(np, command);
 }
 
-void CL_SendVoteRequest(char *command) {
+void CL_SendVoteRequest(const char *command) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 

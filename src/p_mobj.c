@@ -1550,41 +1550,39 @@ void P_CheckMissileSpawn (mobj_t* th)
 // P_SpawnMissile
 //
 
-mobj_t* P_SpawnMissile(mobj_t* source,mobj_t* dest,mobjtype_t type)
-{
-  mobj_t* th;
-  angle_t an;
-  int     dist;
+mobj_t* P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type) {
+  mobj_t  *th;
+  angle_t  an;
+  int      dist;
 
-  th = P_SpawnMobj (source->x,source->y,source->z + 4*8*FRACUNIT,type);
+  th = P_SpawnMobj(source->x, source->y, source->z + 4 * 8 * FRACUNIT, type);
 
   if (th->info->seesound)
-    S_StartSound (th, th->info->seesound);
+    S_StartSound(th, th->info->seesound);
 
-  P_SetTarget(&th->target, source);    // where it came from
-  an = R_PointToAngle2 (source->x, source->y, dest->x, dest->y);
+  P_SetTarget(&th->target, source); // where it came from
+  an = R_PointToAngle2(source->x, source->y, dest->x, dest->y);
 
   // fuzzy player
-
-  if (dest->flags & MF_SHADOW)
-    {  // killough 5/5/98: remove dependence on order of evaluation:
+  if (dest->flags & MF_SHADOW) {
+    // killough 5/5/98: remove dependence on order of evaluation:
     int t = P_Random(pr_shadow);
     an += (t - P_Random(pr_shadow))<<20;
-    }
+  }
 
   th->angle = an;
   an >>= ANGLETOFINESHIFT;
-  th->momx = FixedMul (th->info->speed, finecosine[an]);
-  th->momy = FixedMul (th->info->speed, finesine[an]);
+  th->momx = FixedMul(th->info->speed, finecosine[an]);
+  th->momy = FixedMul(th->info->speed, finesine[an]);
 
-  dist = P_AproxDistance (dest->x - source->x, dest->y - source->y);
+  dist = P_AproxDistance(dest->x - source->x, dest->y - source->y);
   dist = dist / th->info->speed;
 
   if (dist < 1)
     dist = 1;
 
   th->momz = (dest->z - source->z) / dist;
-  P_CheckMissileSpawn (th);
+  P_CheckMissileSpawn(th);
 
   return th;
 }
@@ -1595,8 +1593,7 @@ mobj_t* P_SpawnMissile(mobj_t* source,mobj_t* dest,mobjtype_t type)
 // Tries to aim at a nearby monster
 //
 
-void P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
-{
+void P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type) {
   mobj_t *th;
   fixed_t x, y, z, slope = 0;
 
@@ -1605,37 +1602,45 @@ void P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   angle_t an = source->angle;
 
   // killough 7/19/98: autoaiming was not in original beta
-    {
-      // killough 8/2/98: prefer autoaiming at enemies
-      uint_64_t mask = mbf_features ? MF_FRIEND : 0;
 
-      do
-  {
-    slope = P_AimLineAttack(source, an, 16*64*FRACUNIT, mask);
+  // killough 8/2/98: prefer autoaiming at enemies
+  uint_64_t mask;
+  
+  if (mbf_features)
+    mask = MF_FRIEND;
+  else
+    mask = 0;
+
+  do {
+    slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT, mask);
+
     if (!linetarget)
-      slope = P_AimLineAttack(source, an += 1<<26, 16*64*FRACUNIT, mask);
+      slope = P_AimLineAttack(source, an += 1 << 26, 16 * 64 * FRACUNIT, mask);
+
     if (!linetarget)
-      slope = P_AimLineAttack(source, an -= 2<<26, 16*64*FRACUNIT, mask);
-    if (!linetarget)
-      an = source->angle, slope = 0;
-  }
-      while (mask && (mask=0, !linetarget));  // killough 8/2/98
+      slope = P_AimLineAttack(source, an -= 2 << 26, 16 * 64 * FRACUNIT, mask);
+
+    if (!linetarget) {
+      an = source->angle;
+      slope = 0;
     }
+
+  } while (mask && (mask = 0, !linetarget));  // killough 8/2/98
 
   x = source->x;
   y = source->y;
-  z = source->z + 4*8*FRACUNIT;
+  z = source->z + 4 * 8 * FRACUNIT;
 
-  th = P_SpawnMobj (x,y,z, type);
+  th = P_SpawnMobj(x, y, z, type);
 
   if (th->info->seesound)
-    S_StartSound (th, th->info->seesound);
+    S_StartSound(th, th->info->seesound);
 
   P_SetTarget(&th->target, source);
   th->angle = an;
-  th->momx = FixedMul(th->info->speed,finecosine[an>>ANGLETOFINESHIFT]);
-  th->momy = FixedMul(th->info->speed,finesine[an>>ANGLETOFINESHIFT]);
-  th->momz = FixedMul(th->info->speed,slope);
+  th->momx = FixedMul(th->info->speed, finecosine[an >> ANGLETOFINESHIFT]);
+  th->momy = FixedMul(th->info->speed, finesine[an >> ANGLETOFINESHIFT]);
+  th->momz = FixedMul(th->info->speed, slope);
 
   P_CheckMissileSpawn(th);
 }
