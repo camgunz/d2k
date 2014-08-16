@@ -33,6 +33,8 @@
 #include "g_game.h"
 #include "lprintf.h"
 #include "p_user.h"
+#include "s_sound.h"
+#include "sounds.h"
 #include "w_wad.h"
 
 #include "n_net.h"
@@ -265,42 +267,42 @@ static void handle_sync(netpeer_t *np) {
 }
 
 static void handle_player_message(netpeer_t *np) {
-  static buf_t player_message_buffer;
-  static dboolean initialized_buffer = false;
+  static buf_t *player_message_buffer = NULL;
 
   short sender = 0;
   dboolean unpacked_successfully = false;
   buf_t *message_recipients = get_message_recipient_buffer();
+  int sfx;
+  size_t recipient_count;
 
-  if (!initialized_buffer) {
-    M_BufferInit(&player_message_buffer);
-    initialized_buffer = true;
-  }
+  if (!player_message_buffer)
+    player_message_buffer = M_BufferNew();
 
   unpacked_successfully = N_UnpackPlayerMessage(
-    np, &sender, message_recipients, &player_message_buffer
+    np, &sender, message_recipients, player_message_buffer
   );
 
   if (!unpacked_successfully)
     return;
 
-  if (SERVER) {
-    for (int i = 0; i < N_PeerGetCount(); i++) {
-      netpeer_t *np = N_PeerGet(i);
+  if (gamemode == commercial)
+    sfx = sfx_radio;
+  else
+    sfx = sfx_tink;
 
-      if (np != NULL) {
-        N_PackPlayerMessage(
-          np, sender, message_recipients, player_message_buffer.data
-        );
-      }
-    }
-  }
-  else if (sender == -1) {
-    P_Printf(consoleplayer, "[SERVER]: %s\n", player_message_buffer.data);
-  }
-  else {
-    P_Printf(consoleplayer,
-      "<%s>: %s\n", players[sender].name, player_message_buffer.data
+  recipient_count = M_BufferGetSize(message_recipients) / sizeof(unsigned short);
+  M_BufferSeek(message_recipients, 0);
+
+  while (recipient_count--) {
+    unsigned short recipient;
+    
+    M_BufferReadUShort(message_recipients, &recipient);
+
+    printf("Recipient, sfx: %u, %d\n", recipient, sfx);
+
+    P_SPrintf(recipient, sfx, "<%s>: %s\n",
+      players[sender].name,
+      M_BufferGetData(player_message_buffer)
     );
   }
 }
@@ -550,6 +552,7 @@ void SV_SendAuthResponse(short playernum, auth_level_e auth_level) {
   N_PackAuthResponse(np, auth_level);
 }
 
+/*
 void SV_SendMessage(short playernum, const char *message) {
   netpeer_t *np = NULL;
   CHECK_VALID_PLAYER(np, playernum);
@@ -565,6 +568,7 @@ void SV_BroadcastMessage(const char *message) {
       N_PackServerMessage(np, message);
   }
 }
+*/
 
 void CL_SendMessageToServer(const char *message) {
   CL_SendMessageToPlayer(-1, message);

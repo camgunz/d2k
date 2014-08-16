@@ -2486,7 +2486,6 @@ void HU_Erase(void) {
 void HU_Ticker(void) {
   int message_count = 0;
   int center_message_count = 0;
-  char *center_message = NULL;
 
   if (CL_Predicting())
     return;
@@ -2537,6 +2536,8 @@ void HU_Ticker(void) {
 
       if (message_count > HU_MSGHEIGHT) {
         M_OBufRemove(&player->messages, entry.index);
+        free(msg->content);
+        free(msg);
         entry.index--;
       }
 
@@ -2557,35 +2558,28 @@ void HU_Ticker(void) {
         if (!msg->centered)
           continue;
 
-        if (center_message_count == 1) {
-          if (i == displayplayer)
-            center_message = msg->content;
-
-          break;
+        if (center_message_count > 1) {
+          M_OBufRemove(&player->messages, entry.index);
+          free(msg->content);
+          free(msg);
+          entry.index--;
         }
 
         center_message_count--;
-        M_OBufRemove(&player->messages, entry.index);
-        free(msg->content);
-        free(msg);
-        entry.index--;
       }
     }
   }
 
-  if (center_message != NULL)
-    HU_MessageWidgetMWrite(w_centermsg, center_message);
-
   OBUF_FOR_EACH(&players[displayplayer].messages, entry) {
     player_message_t *msg = (player_message_t *)entry.obj;
 
-    if (!msg->centered) {
-      HU_MessageWidgetWrite(w_messages, msg->content);
-      continue;
+    if (msg->centered) {
+      HU_MessageWidgetClear(w_centermsg);
+      HU_MessageWidgetMWrite(w_centermsg, msg->content);
     }
-
-    HU_MessageWidgetClear(w_centermsg);
-    HU_MessageWidgetMWrite(w_centermsg, msg->content);
+    else {
+      HU_MessageWidgetWrite(w_messages, msg->content);
+    }
 
     if (!msg->processed) {
       if (msg->sfx > 0 && msg->sfx < NUMSFX)

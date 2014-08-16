@@ -2,21 +2,26 @@
 
 ## Prototype
 
-1. Fix messaging
-  * Player messages ought to make a sound
-  * Add more scripting commands
-    * `say`
-    * `say_team`
-    * `alias`
-    * `name`
-    * `team`
+1. Add more scripting commands
+  * `say`
+  * `say_team`
+  * `alias`
+  * `name`
+  * `team`
 
 1. Add fraglimit
 
 ## ZDDL
 
+1. Messaging is a mess
+  * Really needs to be a central messages thing that isn't edited
+  * The console either copies or has a pointer to messages
+  * Same with the messages widget
+  * This way it can be synchronized
+
 1. Fix sound problems
   * Rocket spawn sounds don't cut off when they explode
+  * No server message sound (just use radio/tink?)
 
 1. Fix server command backlog problems
   * It looks like the server doesn't handle big command backlogs well
@@ -85,12 +90,6 @@
 1. Scripted game modes
 
 ## Version 0.9
-
-1. Messaging is a mess
-  * Really needs to be a central messages thing that isn't edited
-  * The console either copies or has a pointer to messages
-  * Same with the messages widget
-  * This way it can be synchronized
 
 1. Make Windows compilation possible
   * Need to build a libXDiff DLL in mingw64-builds

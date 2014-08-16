@@ -43,6 +43,8 @@
 #include "r_demo.h"
 #include "r_fps.h"
 #include "r_main.h"
+#include "s_sound.h"
+#include "sounds.h"
 
 //
 // Movement.
@@ -769,6 +771,94 @@ void P_Write(int playernum, const char *message) {
     C_Write(msg->content);
 }
 
+void P_SPrintf(int playernum, int sfx, const char *fmt, ...) {
+  gchar *gcontent;
+  va_list args;
+  player_message_t *msg;
+
+  if (strlen(fmt) <= 0)
+    return;
+
+  msg = malloc(sizeof(player_message_t));
+
+  if (msg == NULL)
+    I_Error("P_Printf: malloc failed");
+
+  va_start(args, fmt);
+  gcontent = g_strdup_vprintf(fmt, args);
+  va_end(args);
+
+  msg->content = strdup(gcontent);
+  msg->tics = HU_MSGTIMEOUT;
+  msg->centered = false;
+  msg->processed = true;
+  msg->sfx = sfx;
+
+  g_free(gcontent);
+
+  M_OBufConsolidate(&players[playernum].messages);
+  M_OBufAppend(&players[playernum].messages, msg);
+
+  if (playernum == consoleplayer)
+    C_Write(msg->content);
+}
+
+void P_SEcho(int playernum, int sfx, const char *message) {
+  gchar *gcontent;
+  player_message_t *msg;
+
+  if (!message)
+    return;
+  
+  if (strlen(message) <= 0)
+    return;
+
+  msg = malloc(sizeof(player_message_t));
+
+  if (msg == NULL)
+    I_Error("P_Echo: malloc failed");
+
+  gcontent = g_strdup_printf("%s\n", message);
+
+  msg->content = strdup(gcontent);
+  msg->tics = HU_MSGTIMEOUT;
+  msg->centered = false;
+  msg->processed = true;
+  msg->sfx = sfx;
+
+  g_free(gcontent);
+
+  M_OBufConsolidate(&players[playernum].messages);
+  M_OBufAppend(&players[playernum].messages, msg);
+
+  if (playernum == consoleplayer)
+    C_Write(msg->content);
+}
+
+void P_SWrite(int playernum, int sfx, const char *message) {
+  player_message_t *msg;
+  
+  if (strlen(message) <= 0)
+    return;
+
+  msg = malloc(sizeof(player_message_t));
+
+  if (msg == NULL)
+    I_Error("P_Write: malloc failed");
+
+  msg->content = strdup(message);
+  msg->tics = HU_MSGTIMEOUT;
+  msg->centered = false;
+  msg->processed = true;
+  msg->sfx = sfx;
+
+  M_OBufConsolidate(&players[playernum].messages);
+  M_OBufAppend(&players[playernum].messages, msg);
+
+  if (playernum == consoleplayer)
+    C_Write(msg->content);
+}
+
 void P_CenterPrintf(int playernum, int sfx, const char *fmt, ...) {
   gchar *gcontent;
   va_list args;
@@ -859,7 +949,7 @@ void P_CenterWrite(int playernum, int sfx, const char *message) {
     C_Write(msg->content);
 }
 
-void P_CenterSPrintf(int playernum, int sfx, const char *fmt, ...) {
+void P_CenterQPrintf(int playernum, int sfx, const char *fmt, ...) {
   gchar *gcontent;
   va_list args;
   player_message_t *msg;
@@ -891,7 +981,7 @@ void P_CenterSPrintf(int playernum, int sfx, const char *fmt, ...) {
     C_Write(msg->content);
 }
 
-void P_CenterSEcho(int playernum, int sfx, const char *message) {
+void P_CenterQEcho(int playernum, int sfx, const char *message) {
   gchar *gcontent;
   player_message_t *msg;
   
@@ -920,7 +1010,7 @@ void P_CenterSEcho(int playernum, int sfx, const char *message) {
     C_Write(msg->content);
 }
 
-void P_CenterSWrite(int playernum, int sfx, const char *message) {
+void P_CenterQWrite(int playernum, int sfx, const char *message) {
   player_message_t *msg;
   
   if (strlen(message) <= 0)
@@ -950,14 +1040,30 @@ void P_AddMessage(int playernum, player_message_t *message) {
 }
 
 void P_SendMessage(const char *message) {
-  if (CLIENT)
-    CL_SendMessage(message);
-  else if (SERVER)
-    SV_BroadcastMessage(message);
-  else if (players[consoleplayer].name != NULL)
-    P_Printf(consoleplayer, "<%s>: %s\n", players[consoleplayer].name, message);
+  int sfx;
+
+  if (gamemode == commercial)
+    sfx = sfx_radio;
   else
+    sfx = sfx_tink;
+
+  if (CLIENT) {
+    CL_SendMessage(message);
+  }
+  else if (SERVER) {
+    for (int i = 0; i < MAXPLAYERS; i++) {
+      P_Printf(i, "[SERVER]: %s\n", message);
+    }
+    S_StartSound(NULL, sfx);
+  }
+  else if (players[consoleplayer].name != NULL) {
+    P_Printf(consoleplayer, "<%s>: %s\n", players[consoleplayer].name, message);
+    S_StartSound(NULL, sfx);
+  }
+  else {
     P_Printf(consoleplayer, "<Player %d>: %s\n", consoleplayer, message);
+    S_StartSound(NULL, sfx);
+  }
 }
 
 void P_ClearMessages(int playernum) {

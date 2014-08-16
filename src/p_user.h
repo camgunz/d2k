@@ -45,13 +45,16 @@ void P_SetName(int playernum, char *name);
 void P_Printf(int playernum, const char *fmt, ...) PRINTF_DECL(2, 3);
 void P_Echo(int playernum, const char *message);
 void P_Write(int playernum, const char *message);
+void P_SPrintf(int playernum, int sfx, const char *fmt, ...) PRINTF_DECL(3, 4);
+void P_SEcho(int playernum, int sfx, const char *message);
+void P_SWrite(int playernum, int sfx, const char *message);
 void P_CenterPrintf(int playernum, int sfx, const char *fmt, ...)
     PRINTF_DECL(3, 4);
-void P_CenterEcho(int playernum, int sfx,const char *message);
+void P_CenterEcho(int playernum, int sfx, const char *message);
 void P_CenterWrite(int playernum, int sfx, const char *message);
 void P_CenterQPrintf(int playernum, int sfx, const char *fmt, ...)
     PRINTF_DECL(3, 4);
-void P_CenterQEcho(int playernum, int sfx,const char *message);
+void P_CenterQEcho(int playernum, int sfx, const char *message);
 void P_CenterQWrite(int playernum, int sfx, const char *message);
 void P_AddMessage(int playernum, player_message_t *message);
 void P_SendMessage(const char *message);
