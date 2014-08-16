@@ -53,6 +53,7 @@ void P_CenterQPrintf(int playernum, int sfx, const char *fmt, ...)
     PRINTF_DECL(3, 4);
 void P_CenterQEcho(int playernum, int sfx,const char *message);
 void P_CenterQWrite(int playernum, int sfx, const char *message);
+void P_AddMessage(int playernum, player_message_t *message);
 void P_SendMessage(const char *message);
 void P_ClearMessages(int playernum);
 

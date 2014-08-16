@@ -31,6 +31,7 @@
 #include "hu_tracers.h"
 #include "lprintf.h"
 #include "m_random.h"
+#include "n_net.h"
 #include "p_enemy.h"
 #include "p_inter.h"
 #include "p_tick.h"
@@ -169,7 +170,7 @@ static dboolean P_GiveWeapon(player_t *player, weapontype_t weapon, dboolean dro
   dboolean gaveammo;
   dboolean gaveweapon;
 
-  if (netgame && deathmatch!=2 && !dropped)
+  if (netgame && deathmatch != 2 && !dropped)
     {
       // leave placed weapons forever on net games
       if (player->weaponowned[weapon])
@@ -186,6 +187,10 @@ static dboolean P_GiveWeapon(player_t *player, weapontype_t weapon, dboolean dro
       // displayplayer, not consoleplayer, for viewing multiplayer demos
       if (!comp[comp_sound] || player == &players[displayplayer])
         S_StartSound (player->mo, sfx_wpnup|PICKUP_SOUND); // killough 4/25/98
+
+      if (MULTINET)
+        return true;
+
       return false;
     }
 

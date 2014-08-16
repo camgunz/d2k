@@ -263,6 +263,8 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
     M_PBufReadBool(savebuffer, &msg->centered);
     M_PBufReadBool(savebuffer, &msg->processed);
     M_PBufReadInt(savebuffer, &msg->sfx);
+
+    P_AddMessage(player - players, msg);
   }
   M_PBufReadInt(savebuffer, &player->damagecount);
   M_PBufReadInt(savebuffer, &player->bonuscount);

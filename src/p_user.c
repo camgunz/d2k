@@ -34,15 +34,15 @@
 #include "i_main.h"
 #include "i_system.h"
 #include "lprintf.h"
+#include "n_net.h"
+#include "n_main.h"
+#include "n_proto.h"
 #include "p_map.h"
 #include "p_spec.h"
 #include "p_user.h"
 #include "r_demo.h"
 #include "r_fps.h"
 #include "r_main.h"
-
-#include "n_net.h"
-#include "n_main.h"
 
 //
 // Movement.
@@ -942,6 +942,11 @@ void P_CenterSWrite(int playernum, int sfx, const char *message) {
 
   if (playernum == consoleplayer)
     C_Write(msg->content);
+}
+
+void P_AddMessage(int playernum, player_message_t *message) {
+  M_OBufConsolidate(&players[playernum].messages);
+  M_OBufAppend(&players[playernum].messages, message);
 }
 
 void P_SendMessage(const char *message) {

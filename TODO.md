@@ -3,7 +3,7 @@
 ## Prototype
 
 1. Fix messaging
-  * Messages disappear too quickly
+  * Player messages ought to make a sound
   * Add more scripting commands
     * `say`
     * `say_team`
@@ -85,6 +85,12 @@
 1. Scripted game modes
 
 ## Version 0.9
+
+1. Messaging is a mess
+  * Really needs to be a central messages thing that isn't edited
+  * The console either copies or has a pointer to messages
+  * Same with the messages widget
+  * This way it can be synchronized
 
 1. Make Windows compilation possible
   * Need to build a libXDiff DLL in mingw64-builds

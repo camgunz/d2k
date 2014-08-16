@@ -49,6 +49,7 @@
 #include "m_file.h"
 #include "m_misc.h"
 #include "n_net.h"
+#include "n_main.h"
 #include "n_proto.h"
 #include "p_inter.h"
 #include "p_map.h"
@@ -2487,6 +2488,9 @@ void HU_Ticker(void) {
   int center_message_count = 0;
   char *center_message = NULL;
 
+  if (CL_Predicting())
+    return;
+
   HU_MessageWidgetClear(w_centermsg);
   HU_MessageWidgetClear(w_messages);
 
@@ -2575,19 +2579,20 @@ void HU_Ticker(void) {
   OBUF_FOR_EACH(&players[displayplayer].messages, entry) {
     player_message_t *msg = (player_message_t *)entry.obj;
 
-    if (msg->centered) {
-      HU_MessageWidgetClear(w_centermsg);
-      HU_MessageWidgetMWrite(w_centermsg, msg->content);
-      if (!msg->processed) {
-        if (msg->sfx > 0 && msg->sfx < NUMSFX)
-          S_StartSound(NULL, msg->sfx);
-
-        msg->processed = true;
-      }
+    if (!msg->centered) {
+      HU_MessageWidgetWrite(w_messages, msg->content);
       continue;
     }
 
-    HU_MessageWidgetWrite(w_messages, msg->content);
+    HU_MessageWidgetClear(w_centermsg);
+    HU_MessageWidgetMWrite(w_centermsg, msg->content);
+
+    if (!msg->processed) {
+      if (msg->sfx > 0 && msg->sfx < NUMSFX)
+        S_StartSound(NULL, msg->sfx);
+
+      msg->processed = true;
+    }
   }
 }
 
