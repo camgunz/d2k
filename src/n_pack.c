@@ -616,7 +616,6 @@ dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
   return true;
 }
 
-/*
 void N_PackServerMessage(netpeer_t *np, const char *message) {
   pbuf_t *pbuf = N_PeerBeginMessage(
     np->peernum, NET_CHANNEL_RELIABLE, nm_servermessage
@@ -625,7 +624,6 @@ void N_PackServerMessage(netpeer_t *np, const char *message) {
   printf("Packing server message\n");
   M_PBufWriteString(pbuf, message, strlen(message));
 }
-*/
 
 dboolean N_UnpackServerMessage(netpeer_t *np, buf_t *buf) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;

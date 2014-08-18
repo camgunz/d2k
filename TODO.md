@@ -7,9 +7,8 @@
 
 1. Message synchronization
   * `P_Printf`, etc.:
-    * Does not send messages to players
-    * Entirely predicted, never sync'd
-    * Who cares?
+    * Do not send messages to players
+    * Entirely predicted, never sync'd (who cares?)
   * `SV_SendMessage`, `SV_BroadcastMessage`, `CL_SendMessage`, etc.
     * These do (obviously) send messages over the network
 

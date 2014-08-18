@@ -106,15 +106,6 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufWriteInt(savebuffer, player->killcount);
   M_PBufWriteInt(savebuffer, player->itemcount);
   M_PBufWriteInt(savebuffer, player->secretcount);
-  M_PBufWriteInt(savebuffer, M_OBufGetObjectCount(&player->messages));
-  OBUF_FOR_EACH(&player->messages, entry) {
-    player_message_t *msg = (player_message_t *)entry.obj;
-
-    M_PBufWriteString(savebuffer, msg->content, strlen(msg->content));
-    M_PBufWriteBool(savebuffer, msg->centered);
-    M_PBufWriteULong(savebuffer, msg->processed);
-    M_PBufWriteInt(savebuffer, msg->sfx);
-  }
   M_PBufWriteInt(savebuffer, player->damagecount);
   M_PBufWriteInt(savebuffer, player->bonuscount);
   M_PBufWriteInt(savebuffer, player->extralight);
@@ -247,23 +238,6 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufReadInt(savebuffer, &player->killcount);
   M_PBufReadInt(savebuffer, &player->itemcount);
   M_PBufReadInt(savebuffer, &player->secretcount);
-  M_PBufReadInt(savebuffer, &message_count);
-  for (int i = 0; i < message_count; i++) {
-    player_message_t *msg = malloc(sizeof(player_message_t));
-
-    if (msg == NULL)
-      I_Error("P_UnArchivePlayer: Allocating new player message failed");
-
-    M_BufferClear(&player_message_buf);
-    M_PBufReadString(savebuffer, &player_message_buf, 0);
-    M_BufferSeek(&player_message_buf, 0);
-    M_BufferReadStringDup(&player_message_buf, &msg->content);
-    M_PBufReadBool(savebuffer, &msg->centered);
-    M_PBufReadULong(savebuffer, &msg->processed);
-    M_PBufReadInt(savebuffer, &msg->sfx);
-
-    P_AddMessage(player - players, msg);
-  }
   M_PBufReadInt(savebuffer, &player->damagecount);
   M_PBufReadInt(savebuffer, &player->bonuscount);
   M_PBufReadInt(savebuffer, &player->extralight);

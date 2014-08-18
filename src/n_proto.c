@@ -552,7 +552,6 @@ void SV_SendAuthResponse(short playernum, auth_level_e auth_level) {
   N_PackAuthResponse(np, auth_level);
 }
 
-/*
 void SV_SendMessage(short playernum, const char *message) {
   netpeer_t *np = NULL;
   CHECK_VALID_PLAYER(np, playernum);
@@ -568,7 +567,6 @@ void SV_BroadcastMessage(const char *message) {
       N_PackServerMessage(np, message);
   }
 }
-*/
 
 void CL_SendMessageToServer(const char *message) {
   CL_SendMessageToPlayer(-1, message);
