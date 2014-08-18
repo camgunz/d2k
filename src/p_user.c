@@ -701,9 +701,8 @@ void P_Printf(int playernum, const char *fmt, ...) {
   va_end(args);
 
   msg->content = strdup(gcontent);
-  msg->tics = HU_MSGTIMEOUT;
   msg->centered = false;
-  msg->processed = true;
+  msg->processed = 0;
   msg->sfx = 0;
 
   g_free(gcontent);
@@ -733,9 +732,8 @@ void P_Echo(int playernum, const char *message) {
   gcontent = g_strdup_printf("%s\n", message);
 
   msg->content = strdup(gcontent);
-  msg->tics = HU_MSGTIMEOUT;
   msg->centered = false;
-  msg->processed = true;
+  msg->processed = 0;
   msg->sfx = 0;
 
   g_free(gcontent);
@@ -759,9 +757,8 @@ void P_Write(int playernum, const char *message) {
     I_Error("P_Write: malloc failed");
 
   msg->content = strdup(message);
-  msg->tics = HU_MSGTIMEOUT;
   msg->centered = false;
-  msg->processed = true;
+  msg->processed = 0;
   msg->sfx = 0;
 
   M_OBufConsolidate(&players[playernum].messages);
@@ -789,9 +786,8 @@ void P_SPrintf(int playernum, int sfx, const char *fmt, ...) {
   va_end(args);
 
   msg->content = strdup(gcontent);
-  msg->tics = HU_MSGTIMEOUT;
   msg->centered = false;
-  msg->processed = true;
+  msg->processed = 0;
   msg->sfx = sfx;
 
   g_free(gcontent);
@@ -821,9 +817,8 @@ void P_SEcho(int playernum, int sfx, const char *message) {
   gcontent = g_strdup_printf("%s\n", message);
 
   msg->content = strdup(gcontent);
-  msg->tics = HU_MSGTIMEOUT;
   msg->centered = false;
-  msg->processed = true;
+  msg->processed = 0;
   msg->sfx = sfx;
 
   g_free(gcontent);
@@ -847,9 +842,8 @@ void P_SWrite(int playernum, int sfx, const char *message) {
     I_Error("P_Write: malloc failed");
 
   msg->content = strdup(message);
-  msg->tics = HU_MSGTIMEOUT;
   msg->centered = false;
-  msg->processed = true;
+  msg->processed = 0;
   msg->sfx = sfx;
 
   M_OBufConsolidate(&players[playernum].messages);
@@ -877,9 +871,8 @@ void P_CenterPrintf(int playernum, int sfx, const char *fmt, ...) {
   va_end(args);
 
   msg->content = strdup(gcontent);
-  msg->tics = HU_MSGTIMEOUT;
   msg->centered = true;
-  msg->processed = true;
+  msg->processed = 0;
   msg->sfx = sfx;
 
   g_free(gcontent);
@@ -906,9 +899,8 @@ void P_CenterEcho(int playernum, int sfx, const char *message) {
   gcontent = g_strdup_printf("%s\n", message);
 
   msg->content = strdup(gcontent);
-  msg->tics = HU_MSGTIMEOUT;
   msg->centered = true;
-  msg->processed = true;
+  msg->processed = 0;
   msg->sfx = sfx;
 
   g_free(gcontent);
@@ -935,9 +927,8 @@ void P_CenterWrite(int playernum, int sfx, const char *message) {
   gcontent = g_strdup(message);
 
   msg->content = strdup(gcontent);
-  msg->tics = HU_MSGTIMEOUT;
   msg->centered = true;
-  msg->processed = true;
+  msg->processed = 0;
   msg->sfx = sfx;
 
   g_free(gcontent);
@@ -967,9 +958,8 @@ void P_CenterQPrintf(int playernum, int sfx, const char *fmt, ...) {
   va_end(args);
 
   msg->content = strdup(gcontent);
-  msg->tics = 0;
   msg->centered = true;
-  msg->processed = true;
+  msg->processed = 0;
   msg->sfx = sfx;
 
   g_free(gcontent);
@@ -996,9 +986,8 @@ void P_CenterQEcho(int playernum, int sfx, const char *message) {
   gcontent = g_strdup_printf("%s\n", message);
 
   msg->content = strdup(gcontent);
-  msg->tics = 0;
   msg->centered = true;
-  msg->processed = true;
+  msg->processed = 0;
   msg->sfx = sfx;
 
   g_free(gcontent);
@@ -1022,9 +1011,8 @@ void P_CenterQWrite(int playernum, int sfx, const char *message) {
     I_Error("P_Write: malloc failed");
 
   msg->content = strdup(message);
-  msg->tics = 0;
   msg->centered = true;
-  msg->processed = true;
+  msg->processed = 0;
   msg->sfx = sfx;
 
   M_OBufConsolidate(&players[playernum].messages);

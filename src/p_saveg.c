@@ -111,9 +111,8 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
     player_message_t *msg = (player_message_t *)entry.obj;
 
     M_PBufWriteString(savebuffer, msg->content, strlen(msg->content));
-    M_PBufWriteLong(savebuffer, msg->tics);
     M_PBufWriteBool(savebuffer, msg->centered);
-    M_PBufWriteBool(savebuffer, msg->processed);
+    M_PBufWriteULong(savebuffer, msg->processed);
     M_PBufWriteInt(savebuffer, msg->sfx);
   }
   M_PBufWriteInt(savebuffer, player->damagecount);
@@ -259,9 +258,8 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
     M_PBufReadString(savebuffer, &player_message_buf, 0);
     M_BufferSeek(&player_message_buf, 0);
     M_BufferReadStringDup(&player_message_buf, &msg->content);
-    M_PBufReadLong(savebuffer, &msg->tics);
     M_PBufReadBool(savebuffer, &msg->centered);
-    M_PBufReadBool(savebuffer, &msg->processed);
+    M_PBufReadULong(savebuffer, &msg->processed);
     M_PBufReadInt(savebuffer, &msg->sfx);
 
     P_AddMessage(player - players, msg);

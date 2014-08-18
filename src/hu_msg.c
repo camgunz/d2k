@@ -33,12 +33,20 @@
 #include "hu_lib.h"
 #include "hu_msg.h"
 #include "hu_stuff.h"
+#include "i_system.h"
+#include "i_video.h"
 #include "lprintf.h"
+
+#define RETRACTION_TIME     666
+#define RETRACTION_TIMEOUT 2000
 
 struct message_widget_s {
   GString *buf;
   PangoContext *layout_context;
   PangoLayout *layout;
+  int base_line_height;
+  int base_layout_width;
+  int base_layout_height;
   const char *font_description;
   int x;
   int y;
@@ -49,9 +57,16 @@ struct message_widget_s {
   int layout_width;
   int layout_height;
   bool needs_rebuilding;
-  int offset;
-  int scroll_amount;
   int align_bottom;
+  double offset;
+  int line_count;
+  bool scrollable;
+  int scroll_amount;
+  bool retractable;
+  double retraction_rate;
+  uint64_t last_retraction;
+  int retraction_timeout;
+  double retraction_target;
 };
 
 static void scroll_up(message_widget_t *mw) {
@@ -65,9 +80,78 @@ static void scroll_down(message_widget_t *mw) {
     mw->offset = 0;
 }
 
+static unsigned int get_line_count(message_widget_t *mw) {
+  HU_MessageWidgetRebuild(mw, I_GetRenderContext());
+
+  return pango_layout_get_line_count(mw->layout);
+}
+
+static float get_average_line_height(message_widget_t *mw) {
+  int layout_width;
+  int layout_height;
+  bool was_blank = false;
+  float line_height;
+
+  if (mw->line_count == 0) {
+    g_string_append(mw->buf, "Doom");
+    mw->line_count++;
+    was_blank = true;
+  }
+
+  HU_MessageWidgetGetLayoutSize(mw, &layout_width, &layout_height);
+
+  line_height = ((float)layout_height / (float)mw->line_count);
+
+  if (was_blank) {
+    g_string_erase(mw->buf, 0, -1);
+    mw->line_count--;
+  }
+
+  return line_height;
+}
+
+static int get_last_line_height(message_widget_t *mw) {
+  PangoLayoutIter *it = pango_layout_get_iter(mw->layout);
+  PangoRectangle ext_rect;
+  int baseline1;
+  int baseline2;
+
+  while (!pango_layout_iter_at_last_line(it)) {
+    ext_rect.y = pango_layout_iter_get_baseline(it);
+    pango_layout_iter_next_line(it);
+  }
+
+  pango_extents_to_pixels(&ext_rect, NULL);
+  baseline1 = ext_rect.y;
+
+  ext_rect.y = pango_layout_iter_get_baseline(it);
+  pango_extents_to_pixels(&ext_rect, NULL);
+  baseline2 = ext_rect.y;
+
+  return baseline2 - baseline1;
+}
+
+static void set_new_retraction_target(message_widget_t *mw, float target) {
+  if (target < 0.0f)
+    target = 0.0f;
+
+  mw->last_retraction = 0;
+  mw->retraction_timeout = RETRACTION_TIMEOUT;
+  mw->retraction_target = target;
+}
+
 message_widget_t* HU_MessageWidgetNew(void *render_context, int x, int y,
                                                             int w, int h,
                                                             int scroll_amount) {
+  return HU_MessageWidgetNewBuf(
+    render_context, g_string_new(""), x, y, w, h, scroll_amount
+  );
+}
+
+message_widget_t* HU_MessageWidgetNewBuf(void *render_context, void *buf,
+                                         int x, int y,
+                                         int w, int h,
+                                         int scroll_amount) {
   hu_color_t clear = {0.0f, 0.0f, 0.0f, 0.0f};
   hu_color_t white = {1.0f, 1.0f, 1.0f, 1.0f};
   message_widget_t *mw = calloc(1, sizeof(message_widget_t));
@@ -75,7 +159,7 @@ message_widget_t* HU_MessageWidgetNew(void *render_context, int x, int y,
   if (mw == NULL)
     I_Error("HU_MessageWidgetNew: calloc failed");
 
-  mw->buf = g_string_new("");
+  mw->buf = (GString *)buf;
   mw->layout_context = NULL;
   mw->layout = NULL;
   mw->font_description = HU_FONT;
@@ -87,12 +171,47 @@ message_widget_t* HU_MessageWidgetNew(void *render_context, int x, int y,
   mw->bg_color = clear;
   mw->layout_width = 0;
   mw->layout_height = 0;
-  mw->offset = 0;
   mw->scroll_amount = scroll_amount;
+  mw->retractable = false;
+  mw->scrollable = false;
+  mw->retraction_rate = 0.0;
+  mw->last_retraction = 0;
+  mw->retraction_timeout = 0;
+  mw->retraction_target = 0;
+  mw->line_count = 0;
 
   HU_MessageWidgetReset(mw, render_context);
 
   return mw;
+}
+
+static void calculate_line_height(gpointer data, gpointer user_data) {
+  PangoLayoutLine *line = (PangoLayoutLine *)data;
+  int *line_height = (int *)user_data;
+  PangoRectangle rect;
+
+  pango_layout_line_get_pixel_extents(line, NULL, &rect);
+  *line_height = rect.height;
+}
+
+static void calculate_base_layout_dimensions(message_widget_t *mw) {
+  GString *buf = mw->buf;
+  GSList *lines = pango_layout_get_lines_readonly(mw->layout);
+
+  mw->buf = g_string_new("");
+
+  HU_MessageWidgetGetLayoutSize(
+    mw, &mw->base_layout_width, &mw->base_layout_height
+  );
+
+  g_slist_foreach(lines, calculate_line_height, &mw->base_line_height);
+
+  g_string_free(mw->buf, true);
+
+  mw->buf = buf;
+
+  if (mw->offset <= 0.0)
+    mw->offset = mw->base_line_height;
 }
 
 void HU_MessageWidgetReset(message_widget_t *mw, void *render_context) {
@@ -119,6 +238,12 @@ void HU_MessageWidgetReset(message_widget_t *mw, void *render_context) {
   pango_cairo_update_context(render_context, mw->layout_context);
 
   mw->layout = pango_layout_new(mw->layout_context);
+
+  mw->base_line_height = -1;
+  mw->base_layout_width = -1;
+  mw->base_layout_height = -1;
+
+  mw->offset = -1;
 
   mw->needs_rebuilding = true;
 }
@@ -176,37 +301,15 @@ void HU_MessageWidgetSetScrollAmount(message_widget_t *mw, int scroll_amount) {
 }
 
 void HU_MessageWidgetSetHeightByLines(message_widget_t *mw, int lines) {
-  int layout_width;
-  int layout_height;
   int widget_width;
   int widget_height;
-  guint line_count = g_slist_length(pango_layout_get_lines_readonly(
-    mw->layout
-  ));
-  bool was_blank = false;
+  float line_height = get_average_line_height(mw);
 
-  if (line_count == 0) {
-    g_string_append(mw->buf, "Doom");
-    line_count = 1;
-    was_blank = true;
-  }
-
-  HU_MessageWidgetGetLayoutSize(mw, &layout_width, &layout_height);
   HU_MessageWidgetGetSize(mw, &widget_width, &widget_height);
-  HU_MessageWidgetSetSize(
-    mw,
-    widget_width,
-    ((float)layout_height / (float)line_count) * lines
-  );
-
-  if (was_blank)
-    g_string_erase(mw->buf, 0, -1);
+  HU_MessageWidgetSetSize(mw, widget_width, line_height * lines);
 }
 
 bool HU_MessageWidgetHasContent(message_widget_t *mw) {
-  if (mw->buf->len > 0)
-    puts("MW has content");
-
   return mw->buf->len > 0;
 }
 
@@ -235,6 +338,9 @@ void HU_MessageWidgetDrawer(message_widget_t *mw, void *render_context) {
   if (mw->needs_rebuilding)
     HU_MessageWidgetRebuild(mw, cr);
 
+  if (mw->base_line_height == -1)
+    calculate_base_layout_dimensions(mw);
+
   cairo_save(cr);
 
   cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
@@ -250,10 +356,13 @@ void HU_MessageWidgetDrawer(message_widget_t *mw, void *render_context) {
   cairo_set_source_rgba(cr, fg->r, fg->g, fg->b, fg->a);
   HU_MessageWidgetGetLayoutSize(mw, &width, &height);
 
-  mw->offset = MIN(mw->offset, height);
+  if (mw->scrollable)
+    mw->offset = MIN(mw->offset, height);
 
   if (mw->align_bottom)
     cairo_move_to(cr, mw->x, mw->y + mw->height - height + mw->offset);
+  else if (mw->retractable)
+    cairo_move_to(cr, mw->x, mw->y + mw->offset - height);
   else
     cairo_move_to(cr, mw->x, mw->y - mw->offset);
 
@@ -262,7 +371,87 @@ void HU_MessageWidgetDrawer(message_widget_t *mw, void *render_context) {
   cairo_restore(cr);
 }
 
+void HU_MessageWidgetSetScrollable(message_widget_t *mw, bool scrollable) {
+  if (mw->scrollable == scrollable)
+    return;
+
+  mw->scrollable = scrollable;
+
+  if (scrollable && mw->retractable)
+    HU_MessageWidgetSetRetractable(mw, false);
+}
+
+void HU_MessageWidgetSetRetractable(message_widget_t *mw, bool retractable) {
+  if (mw->retractable == retractable)
+    return;
+
+  mw->retractable = retractable;
+
+  if (retractable) {
+    if (mw->scrollable)
+      HU_MessageWidgetSetScrollable(mw, false);
+
+    mw->retraction_rate = get_average_line_height(mw) / RETRACTION_TIME;
+    mw->offset = mw->base_line_height;
+  }
+  else {
+    mw->retraction_rate = 0.0;
+  }
+}
+
+void HU_MessageWidgetRetract(message_widget_t *mw) {
+  mw->offset = mw->base_line_height;
+}
+
+void HU_MessageWidgetTicker(message_widget_t *mw) {
+  uint64_t current_time;
+  uint64_t time_elapsed;
+
+  mw->line_count = get_line_count(mw);
+
+  if (!mw->retractable)
+    return;
+
+  if (mw->offset == mw->base_line_height)
+    return;
+
+  current_time = I_GetTicks();
+
+  if (mw->last_retraction == 0)
+    mw->last_retraction = current_time;
+
+  time_elapsed = current_time - mw->last_retraction;
+
+  mw->last_retraction = current_time;
+
+  if (mw->retraction_timeout)
+    mw->retraction_timeout -= time_elapsed;
+
+  if (mw->retraction_timeout < 0)
+    mw->retraction_timeout = 0;
+
+  if (mw->retraction_timeout != 0)
+    return;
+
+  mw->offset -= (mw->retraction_rate * time_elapsed);
+
+  if (mw->offset > mw->retraction_target)
+    return;
+
+  mw->offset = mw->retraction_target;
+
+  if (mw->offset <= mw->base_line_height) {
+    mw->offset = mw->base_line_height;
+    return;
+  }
+
+  set_new_retraction_target(mw, mw->offset - get_last_line_height(mw));
+}
+
 bool HU_MessageWidgetResponder(message_widget_t *mw, event_t *ev) {
+  if (!mw->scrollable)
+    return false;
+
   if (!((ev->type == ev_keydown) || (ev->type == ev_mouse)))
     return false;
 
@@ -279,10 +468,47 @@ bool HU_MessageWidgetResponder(message_widget_t *mw, event_t *ev) {
   return false;
 }
 
+void HU_MessageWidgetTextAppended(message_widget_t *mw) {
+  int line_count;
+  int last_line_height = 0;
+  int total_line_height = 0;
+  int widget_width;
+  int widget_height;
+  PangoLayoutLine *line;
+  PangoRectangle rect;
+  
+  if (!mw->retractable)
+    return;
+
+  line_count = get_line_count(mw);
+
+  if (line_count == mw->line_count)
+    return;
+
+  HU_MessageWidgetGetSize(mw, &widget_width, &widget_height);
+
+  for (int i = mw->line_count; i < line_count; i++) {
+    line = pango_layout_get_line_readonly(mw->layout, i);
+    pango_layout_line_get_pixel_extents(line, NULL, &rect);
+    total_line_height += rect.height;
+    last_line_height = rect.height;
+  }
+
+  mw->offset += total_line_height;
+  mw->offset = MIN(mw->offset, widget_height);
+
+  if (mw->offset == widget_height)
+    mw->offset += mw->y;
+
+  mw->line_count = line_count;
+
+  set_new_retraction_target(mw, mw->offset - last_line_height);
+}
+
 void HU_MessageWidgetPrintf(message_widget_t *mw, const char *fmt, ...) {
   gchar *markup_string;
   va_list args;
-
+  
   if (fmt == NULL)
     return;
 
@@ -294,6 +520,8 @@ void HU_MessageWidgetPrintf(message_widget_t *mw, const char *fmt, ...) {
   g_free(markup_string);
 
   va_end(args);
+
+  HU_MessageWidgetTextAppended(mw);
 
   mw->needs_rebuilding = true;
 }
@@ -310,6 +538,8 @@ void HU_MessageWidgetVPrintf(message_widget_t *mw, const char *fmt,
   g_string_append(mw->buf, markup_string);
   g_free(markup_string);
 
+  HU_MessageWidgetTextAppended(mw);
+
   mw->needs_rebuilding = true;
 }
 
@@ -325,6 +555,8 @@ void HU_MessageWidgetMPrintf(message_widget_t *mw, const char *fmt, ...) {
 
   va_end(args);
 
+  HU_MessageWidgetTextAppended(mw);
+
   mw->needs_rebuilding = true;
 }
 
@@ -334,6 +566,8 @@ void HU_MessageWidgetMVPrintf(message_widget_t *mw, const char *fmt,
     return;
 
   g_string_append_vprintf(mw->buf, fmt, args);
+
+  HU_MessageWidgetTextAppended(mw);
 
   mw->needs_rebuilding = true;
 }
@@ -351,6 +585,8 @@ void HU_MessageWidgetEcho(message_widget_t *mw, const char *message) {
 
   g_free(markup_message);
 
+  HU_MessageWidgetTextAppended(mw);
+
   mw->needs_rebuilding = true;
 }
 
@@ -360,6 +596,8 @@ void HU_MessageWidgetMEcho(message_widget_t *mw, const char *message) {
 
   g_string_append(mw->buf, message);
   g_string_append(mw->buf, "\n");
+
+  HU_MessageWidgetTextAppended(mw);
 
   mw->needs_rebuilding = true;
 }
@@ -376,6 +614,8 @@ void HU_MessageWidgetWrite(message_widget_t *mw, const char *message) {
 
   g_free(markup_message);
 
+  HU_MessageWidgetTextAppended(mw);
+
   mw->needs_rebuilding = true;
 }
 
@@ -384,6 +624,8 @@ void HU_MessageWidgetMWrite(message_widget_t *mw, const char *message) {
     return;
 
   g_string_append(mw->buf, message);
+
+  HU_MessageWidgetTextAppended(mw);
 
   mw->needs_rebuilding = true;
 }

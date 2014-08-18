@@ -65,6 +65,14 @@
 
 extern SDL_Surface *screen;
 
+static GString *player_message_buffers[MAXPLAYERS] = {
+  NULL, NULL, NULL, NULL
+};
+
+static GString *player_center_message_buffers[MAXPLAYERS] = {
+  NULL, NULL, NULL, NULL
+};
+
 // global heads up display controls
 
 int hud_displayed;    //jff 2/23/98 turns heads-up display on/off
@@ -315,6 +323,11 @@ void HU_Init(void) {
   hu_color_t white = {1.0f, 1.0f, 1.0f, 1.0f};
   hu_color_t grey  = {0.0f, 0.0f, 0.0f, 0.9f};
 
+  for (i = 0; i < MAXPLAYERS; i++) {
+    player_message_buffers[i] = g_string_new("");
+    player_center_message_buffers[i] = g_string_new("");
+  }
+
   shiftxform = english_shiftxform;
 
   // load the heads-up font
@@ -421,10 +434,17 @@ void HU_Init(void) {
 
   // create the message widget
   // messages to player in upper-left of screen
-  w_messages = HU_MessageWidgetNew(
-    I_GetRenderContext(), HU_MSGX, HU_MSGY, REAL_SCREENWIDTH, 0, 0
+  w_messages = HU_MessageWidgetNewBuf(
+    I_GetRenderContext(),
+    player_message_buffers[displayplayer],
+    HU_MSGX,
+    HU_MSGY,
+    REAL_SCREENWIDTH,
+    0,
+    0
   );
   HU_MessageWidgetSetHeightByLines(w_messages, HU_MSGHEIGHT);
+  HU_MessageWidgetSetRetractable(w_messages, true);
 
   w_centermsg = HU_MessageWidgetNew(
     I_GetRenderContext(), HU_CENTERMSGX, HU_CENTERMSGY, REAL_SCREENWIDTH, 0, 0
@@ -466,7 +486,7 @@ static void HU_Stop(void) {
 //
 void HU_Start(void) {
   int   i;
-  const char* s; /* cph - const */
+  const char *s; /* cph - const */
 
   if (headsupactive)                    // stop before starting
     HU_Stop();
@@ -2484,6 +2504,39 @@ void HU_Erase(void) {
 // Passed nothing, returns nothing
 //
 void HU_Ticker(void) {
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    player_t *player = &players[i];
+
+    if (!playeringame[i])
+      continue;
+
+    OBUF_FOR_EACH(&player->messages, entry) {
+      player_message_t *msg = (player_message_t *)entry.obj;
+
+      if (msg->processed)
+        continue;
+
+      if (msg->centered) {
+        g_string_append(player_center_message_buffers[i], msg->content);
+        HU_MessageWidgetTextAppended(w_centermsg);
+      }
+      else {
+        g_string_append(player_message_buffers[i], msg->content);
+        HU_MessageWidgetTextAppended(w_messages);
+      }
+
+      if (i == displayplayer && msg->sfx > 0 && msg->sfx < NUMSFX)
+        S_StartSound(NULL, msg->sfx);
+
+      msg->processed = gametic;
+    }
+  }
+
+  HU_MessageWidgetTicker(w_messages);
+}
+
+#if 0
+void HU_OldTicker(void) {
   int message_count = 0;
   int center_message_count = 0;
 
@@ -2582,13 +2635,22 @@ void HU_Ticker(void) {
     }
 
     if (!msg->processed) {
-      if (msg->sfx > 0 && msg->sfx < NUMSFX)
+      if (msg->sfx > 0 && msg->sfx < NUMSFX) {
+        printf("Starting sound %d\n", msg->sfx);
         S_StartSound(NULL, msg->sfx);
+      }
+    }
+  }
+
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    OBUF_FOR_EACH(&players[i].messages, entry) {
+      player_message_t *msg = (player_message_t *)entry.obj;
 
       msg->processed = true;
     }
   }
 }
+#endif
 
 //
 // HU_Responder()

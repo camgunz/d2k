@@ -28,9 +28,8 @@
 
 typedef struct player_message_s {
   char *content;
-  int64_t tics;
   dboolean centered;
-  dboolean processed;
+  uint64_t processed;
   int sfx;
 } player_message_t;
 

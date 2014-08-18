@@ -86,6 +86,7 @@ console_widget_t* HU_ConsoleWidgetNew(void *render_context,
     cons->max_height,
     CONSOLE_SCROLLBACK_AMOUNT
   );
+
   cons->input = HU_InputWidgetNew(
     render_context,
     x + CONSOLE_MARGIN,
@@ -103,6 +104,7 @@ console_widget_t* HU_ConsoleWidgetNew(void *render_context,
     input_height
   );
 
+  HU_MessageWidgetSetScrollable(cons->scrollback, true);
   HU_MessageWidgetSetFont(cons->scrollback, HU_FONT);
   HU_MessageWidgetSetSize(
     cons->scrollback,
@@ -124,7 +126,6 @@ void HU_ConsoleWidgetReset(console_widget_t *cons, void *render_context) {
   int input_height;
   hu_color_t white = {1.0f, 1.0f, 1.0f, 1.0f};
   hu_color_t clear = {0.0f, 0.0f, 0.0f, 0.0f};
-  // hu_color_t grey  = {0.0f, 0.0f, 0.0f, 0.8f};
 
   cons->scroll_rate = 0.0;
   cons->height = 0.0;

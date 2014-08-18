@@ -30,6 +30,10 @@ typedef struct message_widget_s message_widget_t;
 message_widget_t* HU_MessageWidgetNew(void *render_context,
                                       int x, int y, int w, int h,
                                       int scroll_amount);
+message_widget_t* HU_MessageWidgetNewBuf(void *render_context, void *buf,
+                                         int x, int y,
+                                         int w, int h,
+                                         int scroll_amount);
 void HU_MessageWidgetReset(message_widget_t *mw, void *render_context);
 void HU_MessageWidgetSetAlignBottom(message_widget_t *mw, bool align_bottom);
 void HU_MessageWidgetGetSize(message_widget_t *mw, int *width, int *height);
@@ -46,7 +50,11 @@ void HU_MessageWidgetSetHeightByLines(message_widget_t *mw, int lines);
 bool HU_MessageWidgetHasContent(message_widget_t *mw);
 void HU_MessageWidgetRebuild(message_widget_t *mw, void *render_context);
 void HU_MessageWidgetDrawer(message_widget_t *mw, void *render_context);
+void HU_MessageWidgetSetScrollable(message_widget_t *mw, bool scrollable);
+void HU_MessageWidgetSetRetractable(message_widget_t *mw, bool retractable);
+void HU_MessageWidgetTicker(message_widget_t *mw);
 bool HU_MessageWidgetResponder(message_widget_t *mw, event_t *ev);
+void HU_MessageWidgetTextAppended(message_widget_t *mw);
 void HU_MessageWidgetPrintf(message_widget_t *mw, const char *fmt, ...)
   PRINTF_DECL(2, 3);
 void HU_MessageWidgetVPrintf(message_widget_t *mw, const char *fmt,

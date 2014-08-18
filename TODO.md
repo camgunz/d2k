@@ -2,6 +2,17 @@
 
 ## Prototype
 
+1. Fix message widgets
+  * Player messages are added as markup
+
+1. Message synchronization
+  * `P_Printf`, etc.:
+    * Does not send messages to players
+    * Entirely predicted, never sync'd
+    * Who cares?
+  * `SV_SendMessage`, `SV_BroadcastMessage`, `CL_SendMessage`, etc.
+    * These do (obviously) send messages over the network
+
 1. Add more scripting commands
   * `say`
   * `say_team`
@@ -12,12 +23,6 @@
 1. Add fraglimit
 
 ## ZDDL
-
-1. Messaging is a mess
-  * Really needs to be a central messages thing that isn't edited
-  * The console either copies or has a pointer to messages
-  * Same with the messages widget
-  * This way it can be synchronized
 
 1. Fix sound problems
   * Rocket spawn sounds don't cut off when they explode

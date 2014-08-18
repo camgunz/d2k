@@ -33,7 +33,7 @@
 #define HU_FONT_FILE    "Monkirta Pursuit NC.ttf"
 #define HU_UNIFONT_FILE "unifont-7.0.03.ttf"
 
-#define HU_FONT         "Monkirta Pursuit NC 10"
+#define HU_FONT         "Monkirta Pursuit NC 11"
 #define HU_UNIFONT      "unifont 12"
 
 #define HU_FONTSTART    '!'     /* the first font characters */
