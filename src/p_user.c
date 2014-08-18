@@ -64,6 +64,9 @@ static void add_player_vmessage(int pn, bool is_markup, bool centered, int sfx,
 
   gcontent = g_strdup_vprintf(fmt, args);
 
+  if (pn == consoleplayer)
+    C_Write(gcontent);
+
   if (!is_markup) {
     gchar *escaped_gcontent = g_markup_escape_text(gcontent, -1);
 
@@ -79,9 +82,6 @@ static void add_player_vmessage(int pn, bool is_markup, bool centered, int sfx,
   g_free(gcontent);
 
   P_AddMessage(pn, msg);
-
-  if (pn == consoleplayer)
-    C_Write(msg->content);
 }
 
 static void add_player_message(int pn, bool is_markup, bool centered, int sfx,
@@ -907,19 +907,15 @@ void P_SendMessage(const char *message) {
     CL_SendMessage(message);
   }
   else if (SERVER) {
-    for (int i = 0; i < MAXPLAYERS; i++) {
-      P_Printf(i, "[SERVER]: %s\n", message);
-    }
-    S_StartSound(NULL, sfx);
+    SV_BroadcastMessage(message);
   }
-  else if (players[consoleplayer].name != NULL) {
+
+  if (players[consoleplayer].name != NULL)
     P_Printf(consoleplayer, "<%s>: %s\n", players[consoleplayer].name, message);
-    S_StartSound(NULL, sfx);
-  }
-  else {
+  else
     P_Printf(consoleplayer, "<Player %d>: %s\n", consoleplayer, message);
-    S_StartSound(NULL, sfx);
-  }
+
+  S_StartSound(NULL, sfx);
 }
 
 void P_ClearMessages(int playernum) {

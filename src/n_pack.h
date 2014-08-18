@@ -41,6 +41,9 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync);
 void     N_PackDeltaSync(netpeer_t *np);
 dboolean N_UnpackDeltaSync(netpeer_t *np);
 
+void     N_PackRelayedPlayerMessage(netpeer_t *np, short sender,
+                                                   short recipient,
+                                                   const char *message);
 void     N_PackPlayerMessage(netpeer_t *np, short sender, buf_t *recipients,
                                             const char *message);
 dboolean N_UnpackPlayerMessage(netpeer_t *np, short *sender, buf_t *recipients,

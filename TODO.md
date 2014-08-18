@@ -2,16 +2,6 @@
 
 ## Prototype
 
-1. Fix message widgets
-  * Player messages are added as markup
-
-1. Message synchronization
-  * `P_Printf`, etc.:
-    * Do not send messages to players
-    * Entirely predicted, never sync'd (who cares?)
-  * `SV_SendMessage`, `SV_BroadcastMessage`, `CL_SendMessage`, etc.
-    * These do (obviously) send messages over the network
-
 1. Add more scripting commands
   * `say`
   * `say_team`

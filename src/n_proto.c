@@ -273,7 +273,6 @@ static void handle_player_message(netpeer_t *np) {
   dboolean unpacked_successfully = false;
   buf_t *message_recipients = get_message_recipient_buffer();
   int sfx;
-  size_t recipient_count;
 
   if (!player_message_buffer)
     player_message_buffer = M_BufferNew();
@@ -290,17 +289,32 @@ static void handle_player_message(netpeer_t *np) {
   else
     sfx = sfx_tink;
 
-  recipient_count = M_BufferGetSize(message_recipients) / sizeof(unsigned short);
-  M_BufferSeek(message_recipients, 0);
 
-  while (recipient_count--) {
-    unsigned short recipient;
-    
-    M_BufferReadUShort(message_recipients, &recipient);
+  if (SERVER) {
+    size_t recipient_count =
+      M_BufferGetSize(message_recipients) / sizeof(unsigned short);
 
-    printf("Recipient, sfx: %u, %d\n", recipient, sfx);
+    M_BufferSeek(message_recipients, 0);
 
-    P_SPrintf(recipient, sfx, "<%s>: %s\n",
+    while (recipient_count--) {
+      netpeer_t *np;
+      unsigned short recipient;
+
+      M_BufferReadUShort(message_recipients, &recipient);
+
+      np = N_PeerForPlayer(recipient);
+
+      if (np == NULL)
+        continue;
+
+      N_PackRelayedPlayerMessage(
+        np, sender, recipient, M_BufferGetData(player_message_buffer)
+      );
+    }
+  }
+
+  if (sender != consoleplayer) {
+    P_SPrintf(displayplayer, sfx, "<%s>: %s\n",
       players[sender].name,
       M_BufferGetData(player_message_buffer)
     );

@@ -870,6 +870,18 @@ dboolean N_UnpackDeltaSync(netpeer_t *np) {
   return true;
 }
 
+void N_PackRelayedPlayerMessage(netpeer_t *np, short sender, short recipient,
+                                               const char *message) {
+  pbuf_t *pbuf = N_PeerBeginMessage(
+    np->peernum, NET_CHANNEL_RELIABLE, nm_playermessage
+  );
+
+  M_PBufWriteUShort(pbuf, sender);
+  M_PBufWriteString(pbuf, message, strlen(message));
+
+  printf("Relayed player message\n");
+}
+
 void N_PackPlayerMessage(netpeer_t *np, short sender, buf_t *recipients,
                                         const char *message) {
   pbuf_t *pbuf = N_PeerBeginMessage(
@@ -877,8 +889,8 @@ void N_PackPlayerMessage(netpeer_t *np, short sender, buf_t *recipients,
   );
 
   M_PBufWriteUShort(pbuf, sender);
-  M_PBufWriteShortArray(pbuf, recipients);
   M_PBufWriteString(pbuf, message, strlen(message));
+  M_PBufWriteShortArray(pbuf, recipients);
 
   printf("Packed player message\n");
 }
@@ -889,8 +901,13 @@ dboolean N_UnpackPlayerMessage(netpeer_t *np, short *sender, buf_t *recipients,
   short m_sender = 0;
 
   read_player(pbuf, m_sender);
-  read_recipient_array(pbuf, recipients, "message recipients", MAXPLAYERS + 1);
   read_string(pbuf, buf, "player message content", MAX_PLAYER_MESSAGE_SIZE);
+
+  if (SERVER) {
+    read_recipient_array(
+      pbuf, recipients, "message recipients", MAXPLAYERS + 1
+    );
+  }
 
   *sender = m_sender;
 
