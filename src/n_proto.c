@@ -23,6 +23,7 @@
 
 #include "z_zone.h"
 
+#include <glib.h>
 #include <enet/enet.h>
 
 #include "doomdef.h"
@@ -237,7 +238,7 @@ static void handle_server_message(netpeer_t *np) {
   }
 
   if (N_UnpackServerMessage(np, &server_message_buffer))
-    P_Printf(consoleplayer, "[SERVER]: %s\n", server_message_buffer.data);
+    P_Printf(consoleplayer, "[SERVER]: %s", server_message_buffer.data);
 }
 
 static void handle_sync(netpeer_t *np) {
@@ -322,20 +323,19 @@ static void handle_player_message(netpeer_t *np) {
 }
 
 static void handle_player_preference_change(netpeer_t *np) {
-  static buf_t pref_key_name;
-  static buf_t pref_key_value;
-  static dboolean initialized_buffers = false;
+  static buf_t *pref_key_name = NULL;
+  static buf_t *pref_key_value = NULL;
 
   short playernum = 0;
   int tic = 0;
   unsigned int pref_count = 0;
   player_t *player = &players[np->playernum];
 
-  if (!initialized_buffers) {
-    M_BufferInit(&pref_key_name);
-    M_BufferInit(&pref_key_value);
-    initialized_buffers = true;
-  }
+  if (!pref_key_name)
+    pref_key_name = M_BufferNew();
+
+  if (!pref_key_value)
+    pref_key_value = M_BufferNew();
 
   if (!N_UnpackPlayerPreferenceChange(np, &tic, &playernum, &pref_count))
     return;
@@ -349,14 +349,14 @@ static void handle_player_preference_change(netpeer_t *np) {
   }
 
   for (size_t i = 0; i < pref_count; i++) {
-    if (!N_UnpackPlayerPreferenceName(np, &pref_key_name)) {
+    if (!N_UnpackPlayerPreferenceName(np, pref_key_name)) {
       P_Echo(consoleplayer,
         "N_HandlePacket: Error unpacking client preference change"
       );
       return;
     }
 
-    if (pref_key_name.size > MAX_PREF_NAME_SIZE) {
+    if (pref_key_name->size > MAX_PREF_NAME_SIZE) {
       P_Echo(consoleplayer,
         "N_HandlePacket: Invalid client preference change message: preference "
         "name exceeds maximum length"
@@ -364,22 +364,14 @@ static void handle_player_preference_change(netpeer_t *np) {
       return;
     }
 
-    M_BufferSeek(&pref_key_name, 0);
+    M_BufferSeek(pref_key_name, 0);
 
-    if (M_BufferEqualsString(&pref_key_name, "name")) {
-      N_UnpackNameChange(np, &pref_key_value);
+    if (M_BufferEqualsString(pref_key_name, "name")) {
+      N_UnpackNameChange(np, pref_key_value);
 
-      if (player->name != NULL) {
-        P_Printf(consoleplayer,
-          "%s is now %s.\n",
-          player->name, pref_key_value.data
-        );
-        free(player->name);
-      }
-
-      player->name = strdup(pref_key_value.data);
+      P_SetPlayerName(playernum, pref_key_value->data);
     }
-    else if (M_BufferEqualsString(&pref_key_name, "team")) {
+    else if (M_BufferEqualsString(pref_key_name, "team")) {
       byte new_team = 0;
 
       if (!N_UnpackTeamChange(np, &new_team))
@@ -387,29 +379,29 @@ static void handle_player_preference_change(netpeer_t *np) {
 
       player->team = new_team;
     }
-    else if (M_BufferEqualsString(&pref_key_name, "pwo")) {
+    else if (M_BufferEqualsString(pref_key_name, "pwo")) {
     }
-    else if (M_BufferEqualsString(&pref_key_name, "wsop")) {
+    else if (M_BufferEqualsString(pref_key_name, "wsop")) {
     }
-    else if (M_BufferEqualsString(&pref_key_name, "bobbing")) {
+    else if (M_BufferEqualsString(pref_key_name, "bobbing")) {
     }
-    else if (M_BufferEqualsString(&pref_key_name, "autoaim")) {
+    else if (M_BufferEqualsString(pref_key_name, "autoaim")) {
     }
-    else if (M_BufferEqualsString(&pref_key_name, "weapon speed")) {
+    else if (M_BufferEqualsString(pref_key_name, "weapon speed")) {
     }
-    else if (M_BufferEqualsString(&pref_key_name, "color")) {
+    else if (M_BufferEqualsString(pref_key_name, "color")) {
     }
-    else if (M_BufferEqualsString(&pref_key_name, "color index")) {
+    else if (M_BufferEqualsString(pref_key_name, "color index")) {
       int new_color;
 
       if (N_UnpackColorIndexChange(np, &new_color))
         G_ChangedPlayerColour(np->playernum, new_color);
     }
-    else if (M_BufferEqualsString(&pref_key_name, "skin name")) {
+    else if (M_BufferEqualsString(pref_key_name, "skin name")) {
     }
     else {
       P_Printf(consoleplayer,
-        "Unsupported player preference %s.\n", pref_key_name.data
+        "Unsupported player preference %s.\n", pref_key_name->data
       );
     }
   }
@@ -580,6 +572,18 @@ void SV_BroadcastMessage(const char *message) {
     if (np != NULL)
       N_PackServerMessage(np, message);
   }
+}
+
+void SV_BroadcastPrintf(const char *fmt, ...) {
+  gchar *gmessage;
+  va_list args;
+
+  va_start(args, fmt);
+  gmessage = g_strdup_vprintf(fmt, args);
+  va_end(args);
+
+  SV_BroadcastMessage(gmessage);
+  g_free(gmessage);
 }
 
 void CL_SendMessageToServer(const char *message) {

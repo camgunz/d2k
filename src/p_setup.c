@@ -36,6 +36,7 @@
 #include "p_setup.h"
 #include "p_spec.h"
 #include "p_tick.h"
+#include "p_user.h"
 #include "p_enemy.h"
 #include "s_sound.h"
 #include "s_advsound.h"
@@ -2658,11 +2659,11 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill)
 //
 // P_Init
 //
-void P_Init (void)
-{
+void P_Init(void) {
   P_InitSwitchList();
   P_InitPicAnims();
   R_InitSprites(sprnames);
+  P_RegisterFunctions();
 }
 
 /* vi: set et ts=2 sw=2: */

@@ -79,6 +79,10 @@ void P_CenterMSWrite(int playernum, int sfx, const char *message);
 void P_SendMessage(const char *message);
 void P_ClearMessages(int playernum);
 
+void P_SetPlayerName(int playernum, const char *name);
+
+void P_RegisterFunctions(void);
+
 #endif  /* P_USER__ */
 
 /* vi: set et ts=2 sw=2: */

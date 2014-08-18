@@ -946,10 +946,9 @@ dboolean N_UnpackPlayerPreferenceName(netpeer_t *np, buf_t *buf) {
 void N_PackNameChange(netpeer_t *np, short playernum, const char *new_name) {
   pack_player_preference_change(pbuf, gametic, playernum, "name", 4);
 
-  M_PBufWriteShort(pbuf, playernum);
   M_PBufWriteString(pbuf, new_name, strlen(new_name));
 
-  printf("Packed name change\n");
+  printf("Packed name change [%s]\n", new_name);
 }
 
 dboolean N_UnpackNameChange(netpeer_t *np, buf_t *buf) {
@@ -957,13 +956,14 @@ dboolean N_UnpackNameChange(netpeer_t *np, buf_t *buf) {
 
   read_string(pbuf, buf, "new name", MAX_PLAYER_NAME_SIZE);
 
+  printf("Unpacked name change [%s]\n", M_BufferGetData(buf));
+
   return true;
 }
 
 void N_PackTeamChange(netpeer_t *np, short playernum, byte new_team) {
   pack_player_preference_change(pbuf, gametic, playernum, "team", 4);
 
-  M_PBufWriteShort(pbuf, playernum);
   M_PBufWriteUChar(pbuf, new_team);
 
   printf("Packed team change\n");
@@ -986,7 +986,6 @@ dboolean N_UnpackTeamChange(netpeer_t *np, byte *new_team) {
 void N_PackPWOChange(netpeer_t *np, short playernum) {
   pack_player_preference_change(pbuf, gametic, playernum, "pwo", 3);
 
-  M_PBufWriteShort(pbuf, playernum);
   M_PBufWriteUChar(pbuf, 0); /* CG: TODO */
 
   printf("Packed PWO change\n");
@@ -999,7 +998,6 @@ dboolean N_UnpackPWOChange(netpeer_t *np) {
 void N_PackWSOPChange(netpeer_t *np, short playernum, byte new_wsop_flags) {
   pack_player_preference_change(pbuf, gametic, playernum, "wsop", 4);
 
-  M_PBufWriteShort(pbuf, playernum);
   M_PBufWriteUChar(pbuf, new_wsop_flags);
 
   printf("Packed WSOP change\n");
@@ -1022,7 +1020,6 @@ void N_PackBobbingChange(netpeer_t *np, short playernum,
                                         double new_bobbing_amount) {
   pack_player_preference_change(pbuf, gametic, playernum, "bobbing", 7);
 
-  M_PBufWriteShort(pbuf, playernum);
   M_PBufWriteDouble(pbuf, new_bobbing_amount);
 
   printf("Packed bobbing change\n");
@@ -1045,7 +1042,6 @@ void N_PackAutoaimChange(netpeer_t *np, short playernum,
                                         dboolean new_autoaim_enabled) {
   pack_player_preference_change(pbuf, gametic, playernum, "autoaim", 7);
 
-  M_PBufWriteShort(pbuf, playernum);
   M_PBufWriteBool(pbuf, new_autoaim_enabled);
 
   printf("Packed autoaim change\n");
@@ -1066,7 +1062,6 @@ void N_PackWeaponSpeedChange(netpeer_t *np, short playernum,
                                             byte new_weapon_speed) {
   pack_player_preference_change(pbuf, gametic, playernum, "weapon speed", 12);
 
-  M_PBufWriteShort(pbuf, playernum);
   M_PBufWriteUChar(pbuf, new_weapon_speed);
 
   printf("Packed weapon speed change\n");
@@ -1088,7 +1083,6 @@ void N_PackColorChange(netpeer_t *np, short playernum, byte new_red,
                                                        byte new_blue) {
   pack_player_preference_change(pbuf, gametic, playernum, "color", 5);
 
-  M_PBufWriteShort(pbuf, playernum);
   M_PBufWriteUInt(pbuf, (new_red << 24) | (new_green << 16) | (new_blue << 8));
 
   printf("Packed color change\n");
@@ -1113,7 +1107,6 @@ void N_PackColorIndexChange(netpeer_t *np, short playernum,
                                            int new_color_index) {
   pack_player_preference_change(pbuf, gametic, playernum, "color index", 11);
 
-  M_PBufWriteShort(pbuf, playernum);
   M_PBufWriteInt(pbuf, new_color_index);
 
   printf("Packed color index change\n");
@@ -1134,7 +1127,6 @@ dboolean N_UnpackColorIndexChange(netpeer_t *np, int *new_color_index) {
 void N_PackSkinChange(netpeer_t *np, short playernum) {
   pack_player_preference_change(pbuf, gametic, playernum, "skin name", 9);
 
-  M_PBufWriteShort(pbuf, playernum);
   M_PBufWriteUChar(pbuf, 0); /* CG: TODO */
 
   printf("Packed skin change\n");

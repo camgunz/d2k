@@ -49,6 +49,7 @@ void SV_SendFullState(short playernum);
 void SV_SendAuthResponse(short playernum, auth_level_e auth_level);
 void SV_SendMessage(short playernum, const char *message);
 void SV_BroadcastMessage(const char *message);
+void SV_BroadcastPrintf(const char *fmt, ...) PRINTF_DECL(1, 2);
 void SV_BroadcastPlayerNameChanged(short playernum, const char *new_name);
 void SV_BroadcastPlayerTeamChanged(short playernum, byte new_team);
 void SV_BroadcastPlayerPWOChanged(short playernum);

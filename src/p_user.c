@@ -45,6 +45,7 @@
 #include "r_main.h"
 #include "s_sound.h"
 #include "sounds.h"
+#include "x_main.h"
 
 static void add_player_vmessage(int pn, bool is_markup, bool centered, int sfx,
                                 const char *fmt, va_list args) {
@@ -926,6 +927,58 @@ void P_ClearMessages(int playernum) {
   }
 
   M_OBufFreeEntriesAndClear(&players[playernum].messages);
+}
+
+void P_SetPlayerName(int playernum, const char *name) {
+  if (!name)
+    return;
+
+  if (!strlen(name))
+    return;
+
+  P_Printf(consoleplayer, "%s is now %s.\n", players[playernum].name, name);
+
+  if (SERVER)
+    SV_BroadcastPrintf("%s is now %s.\n", players[playernum].name, name);
+
+  if (players[playernum].name)
+    free(players[playernum].name);
+
+  players[playernum].name = strdup(name);
+
+  if (playernum != consoleplayer)
+    return;
+
+  if (CLIENT)
+    CL_SendNameChange(players[playernum].name);
+
+  if (SERVER)
+    SV_BroadcastPlayerNameChanged(playernum, players[playernum].name);
+}
+
+int XF_Name(lua_State *L) {
+  const char *name = luaL_checkstring(L, 1);
+
+  if (name)
+    P_SetPlayerName(consoleplayer, name);
+
+  return 0;
+}
+
+int XF_Say(lua_State *L) {
+  const char *message = luaL_checkstring(L, 1);
+
+  if (!message)
+    return 0;
+
+  P_SendMessage(message);
+
+  return 0;
+}
+
+void P_RegisterFunctions(void) {
+  X_RegisterFunc("name", XF_Name);
+  X_RegisterFunc("say", XF_Say);
 }
 
 /* vi: set et ts=2 sw=2: */

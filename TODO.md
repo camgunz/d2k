@@ -2,13 +2,6 @@
 
 ## Prototype
 
-1. Add more scripting commands
-  * `say`
-  * `say_team`
-  * `alias`
-  * `name`
-  * `team`
-
 ## ZDDL
 
 1. Fix sound problems
@@ -78,9 +71,15 @@
 
 ## CTF
 
+1. Flesh out teams
+
 1. Hexen map support
 
 1. Scripted game modes
+
+1. Add more scripting commands
+  * `say_team`
+  * `team`
 
 ## Version 0.9
 
