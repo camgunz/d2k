@@ -46,6 +46,53 @@
 #include "s_sound.h"
 #include "sounds.h"
 
+static void add_player_vmessage(int pn, bool is_markup, bool centered, int sfx,
+                                const char *fmt, va_list args) {
+  gchar *gcontent;
+  player_message_t *msg;
+
+  if (CL_RePredicting())
+    return;
+
+  if (strlen(fmt) <= 0)
+    return;
+
+  msg = malloc(sizeof(player_message_t));
+
+  if (msg == NULL)
+    I_Error("P_Printf: malloc failed");
+
+  gcontent = g_strdup_vprintf(fmt, args);
+
+  if (!is_markup) {
+    gchar *escaped_gcontent = g_markup_escape_text(gcontent, -1);
+
+    g_free(gcontent);
+    gcontent = escaped_gcontent;
+  }
+
+  msg->content = strdup(gcontent);
+  msg->centered = centered;
+  msg->processed = false;
+  msg->sfx = sfx;
+
+  g_free(gcontent);
+
+  P_AddMessage(pn, msg);
+
+  if (pn == consoleplayer)
+    C_Write(msg->content);
+}
+
+static void add_player_message(int pn, bool is_markup, bool centered, int sfx,
+                               const char *fmt, ...) {
+  va_list args;
+
+  va_start(args, fmt);
+  add_player_vmessage(pn, is_markup, centered, sfx, fmt, args);
+  va_end(args);
+}
+
 //
 // Movement.
 //
@@ -683,384 +730,169 @@ void P_SetName(int playernum, char *name) {
   player->name = name;
 }
 
-void P_Printf(int playernum, const char *fmt, ...) {
-  gchar *gcontent;
-  va_list args;
-  player_message_t *msg;
-
-  if (CL_RePredicting())
-    return;
-
-  if (strlen(fmt) <= 0)
-    return;
-
-  msg = malloc(sizeof(player_message_t));
-
-  if (msg == NULL)
-    I_Error("P_Printf: malloc failed");
-
-  va_start(args, fmt);
-  gcontent = g_strdup_vprintf(fmt, args);
-  va_end(args);
-
-  msg->content = strdup(gcontent);
-  msg->centered = false;
-  msg->processed = false;
-  msg->sfx = 0;
-
-  g_free(gcontent);
-
-  M_OBufConsolidate(&players[playernum].messages);
-  M_OBufAppend(&players[playernum].messages, msg);
-
-  if (playernum == consoleplayer)
-    C_Write(msg->content);
-}
-
-void P_Echo(int playernum, const char *message) {
-  gchar *gcontent;
-  player_message_t *msg;
-
-  if (CL_RePredicting())
-    return;
-
-  if (!message)
-    return;
-  
-  if (strlen(message) <= 0)
-    return;
-
-  msg = malloc(sizeof(player_message_t));
-
-  if (msg == NULL)
-    I_Error("P_Echo: malloc failed");
-
-  gcontent = g_strdup_printf("%s\n", message);
-
-  msg->content = strdup(gcontent);
-  msg->centered = false;
-  msg->processed = false;
-  msg->sfx = 0;
-
-  g_free(gcontent);
-
-  M_OBufConsolidate(&players[playernum].messages);
-  M_OBufAppend(&players[playernum].messages, msg);
-
-  if (playernum == consoleplayer)
-    C_Write(msg->content);
-}
-
-void P_Write(int playernum, const char *message) {
-  player_message_t *msg;
-  
-  if (CL_RePredicting())
-    return;
-
-  if (strlen(message) <= 0)
-    return;
-
-  msg = malloc(sizeof(player_message_t));
-
-  if (msg == NULL)
-    I_Error("P_Write: malloc failed");
-
-  msg->content = strdup(message);
-  msg->centered = false;
-  msg->processed = false;
-  msg->sfx = 0;
-
-  M_OBufConsolidate(&players[playernum].messages);
-  M_OBufAppend(&players[playernum].messages, msg);
-
-  if (playernum == consoleplayer)
-    C_Write(msg->content);
-}
-
-void P_SPrintf(int playernum, int sfx, const char *fmt, ...) {
-  gchar *gcontent;
-  va_list args;
-  player_message_t *msg;
-
-  if (CL_RePredicting())
-    return;
-
-  if (strlen(fmt) <= 0)
-    return;
-
-  msg = malloc(sizeof(player_message_t));
-
-  if (msg == NULL)
-    I_Error("P_Printf: malloc failed");
-
-  va_start(args, fmt);
-  gcontent = g_strdup_vprintf(fmt, args);
-  va_end(args);
-
-  msg->content = strdup(gcontent);
-  msg->centered = false;
-  msg->processed = false;
-  msg->sfx = sfx;
-
-  g_free(gcontent);
-
-  M_OBufConsolidate(&players[playernum].messages);
-  M_OBufAppend(&players[playernum].messages, msg);
-
-  if (playernum == consoleplayer)
-    C_Write(msg->content);
-}
-
-void P_SEcho(int playernum, int sfx, const char *message) {
-  gchar *gcontent;
-  player_message_t *msg;
-
-  if (CL_RePredicting())
-    return;
-
-  if (!message)
-    return;
-  
-  if (strlen(message) <= 0)
-    return;
-
-  msg = malloc(sizeof(player_message_t));
-
-  if (msg == NULL)
-    I_Error("P_Echo: malloc failed");
-
-  gcontent = g_strdup_printf("%s\n", message);
-
-  msg->content = strdup(gcontent);
-  msg->centered = false;
-  msg->processed = false;
-  msg->sfx = sfx;
-
-  g_free(gcontent);
-
-  M_OBufConsolidate(&players[playernum].messages);
-  M_OBufAppend(&players[playernum].messages, msg);
-
-  if (playernum == consoleplayer)
-    C_Write(msg->content);
-}
-
-void P_SWrite(int playernum, int sfx, const char *message) {
-  player_message_t *msg;
-  
-  if (CL_RePredicting())
-    return;
-
-  if (strlen(message) <= 0)
-    return;
-
-  msg = malloc(sizeof(player_message_t));
-
-  if (msg == NULL)
-    I_Error("P_Write: malloc failed");
-
-  msg->content = strdup(message);
-  msg->centered = false;
-  msg->processed = false;
-  msg->sfx = sfx;
-
-  M_OBufConsolidate(&players[playernum].messages);
-  M_OBufAppend(&players[playernum].messages, msg);
-
-  if (playernum == consoleplayer)
-    C_Write(msg->content);
-}
-
-void P_CenterPrintf(int playernum, int sfx, const char *fmt, ...) {
-  gchar *gcontent;
-  va_list args;
-  player_message_t *msg;
-  
-  if (CL_RePredicting())
-    return;
-
-  if (strlen(fmt) <= 0)
-    return;
-
-  msg = malloc(sizeof(player_message_t));
-
-  if (msg == NULL)
-    I_Error("P_Printf: malloc failed");
-
-  va_start(args, fmt);
-  gcontent = g_strdup_vprintf(fmt, args);
-  va_end(args);
-
-  msg->content = strdup(gcontent);
-  msg->centered = true;
-  msg->processed = false;
-  msg->sfx = sfx;
-
-  g_free(gcontent);
-
-  M_OBufConsolidate(&players[playernum].messages);
-  M_OBufAppend(&players[playernum].messages, msg);
-
-  if (playernum == consoleplayer)
-    C_Write(msg->content);
-}
-
-void P_CenterEcho(int playernum, int sfx, const char *message) {
-  gchar *gcontent;
-  player_message_t *msg;
-  
-  if (CL_RePredicting())
-    return;
-
-  if (strlen(message) <= 0)
-    return;
-
-  msg = malloc(sizeof(player_message_t));
-
-  if (msg == NULL)
-    I_Error("P_Echo: malloc failed");
-
-  gcontent = g_strdup_printf("%s\n", message);
-
-  msg->content = strdup(gcontent);
-  msg->centered = true;
-  msg->processed = false;
-  msg->sfx = sfx;
-
-  g_free(gcontent);
-
-  M_OBufConsolidate(&players[playernum].messages);
-  M_OBufAppend(&players[playernum].messages, msg);
-
-  if (playernum == consoleplayer)
-    C_Write(msg->content);
-}
-
-void P_CenterWrite(int playernum, int sfx, const char *message) {
-  gchar *gcontent;
-  player_message_t *msg;
-  
-  if (CL_RePredicting())
-    return;
-
-  if (strlen(message) <= 0)
-    return;
-
-  msg = malloc(sizeof(player_message_t));
-
-  if (msg == NULL)
-    I_Error("P_Write: malloc failed");
-
-  gcontent = g_strdup(message);
-
-  msg->content = strdup(gcontent);
-  msg->centered = true;
-  msg->processed = false;
-  msg->sfx = sfx;
-
-  g_free(gcontent);
-
-  M_OBufConsolidate(&players[playernum].messages);
-  M_OBufAppend(&players[playernum].messages, msg);
-
-  if (playernum == consoleplayer)
-    C_Write(msg->content);
-}
-
-void P_CenterQPrintf(int playernum, int sfx, const char *fmt, ...) {
-  gchar *gcontent;
-  va_list args;
-  player_message_t *msg;
-  
-  if (CL_RePredicting())
-    return;
-
-  if (strlen(fmt) <= 0)
-    return;
-
-  msg = malloc(sizeof(player_message_t));
-
-  if (msg == NULL)
-    I_Error("P_Printf: malloc failed");
-
-  va_start(args, fmt);
-  gcontent = g_strdup_vprintf(fmt, args);
-  va_end(args);
-
-  msg->content = strdup(gcontent);
-  msg->centered = true;
-  msg->processed = false;
-  msg->sfx = sfx;
-
-  g_free(gcontent);
-
-  M_OBufConsolidate(&players[playernum].messages);
-  M_OBufAppend(&players[playernum].messages, msg);
-
-  if (playernum == consoleplayer)
-    C_Write(msg->content);
-}
-
-void P_CenterQEcho(int playernum, int sfx, const char *message) {
-  gchar *gcontent;
-  player_message_t *msg;
-  
-  if (CL_RePredicting())
-    return;
-
-  if (strlen(message) <= 0)
-    return;
-
-  msg = malloc(sizeof(player_message_t));
-
-  if (msg == NULL)
-    I_Error("P_Echo: malloc failed");
-
-  gcontent = g_strdup_printf("%s\n", message);
-
-  msg->content = strdup(gcontent);
-  msg->centered = true;
-  msg->processed = false;
-  msg->sfx = sfx;
-
-  g_free(gcontent);
-
-  M_OBufConsolidate(&players[playernum].messages);
-  M_OBufAppend(&players[playernum].messages, msg);
-
-  if (playernum == consoleplayer)
-    C_Write(msg->content);
-}
-
-void P_CenterQWrite(int playernum, int sfx, const char *message) {
-  player_message_t *msg;
-  
-  if (CL_RePredicting())
-    return;
-
-  if (strlen(message) <= 0)
-    return;
-
-  msg = malloc(sizeof(player_message_t));
-
-  if (msg == NULL)
-    I_Error("P_Write: malloc failed");
-
-  msg->content = strdup(message);
-  msg->centered = true;
-  msg->processed = false;
-  msg->sfx = sfx;
-
-  M_OBufConsolidate(&players[playernum].messages);
-  M_OBufAppend(&players[playernum].messages, msg);
-
-  if (playernum == consoleplayer)
-    C_Write(msg->content);
-}
-
 void P_AddMessage(int playernum, player_message_t *message) {
   M_OBufConsolidate(&players[playernum].messages);
   M_OBufAppend(&players[playernum].messages, message);
+}
+
+void P_Printf(int playernum, const char *fmt, ...) {
+  va_list args;
+
+  va_start(args, fmt);
+  add_player_vmessage(playernum, false, false, 0, fmt, args);
+  va_end(args);
+}
+
+void P_VPrintf(int playernum, const char *fmt, va_list args) {
+  add_player_vmessage(playernum, false, false, 0, fmt, args);
+}
+
+void P_Echo(int playernum, const char *message) {
+  add_player_message(playernum, false, false, 0, "%s\n", message);
+}
+
+void P_Write(int playernum, const char *message) {
+  add_player_message(playernum, false, false, 0, "%s", message);
+}
+
+void P_MPrintf(int playernum, const char *fmt, ...) {
+  va_list args;
+
+  va_start(args, fmt);
+  add_player_vmessage(playernum, true, false, 0, fmt, args);
+  va_end(args);
+}
+
+void P_MVPrintf(int playernum, const char *fmt, va_list args) {
+  add_player_vmessage(playernum, true, false, 0, fmt, args);
+}
+
+void P_MEcho(int playernum, const char *message) {
+  add_player_message(playernum, true, false, 0, "%s\n", message);
+}
+
+void P_MWrite(int playernum, const char *message) {
+  add_player_message(playernum, true, false, 0, "%s", message);
+}
+
+void P_SPrintf(int playernum, int sfx, const char *fmt, ...) {
+  va_list args;
+
+  va_start(args, fmt);
+  add_player_vmessage(playernum, false, false, sfx, fmt, args);
+  va_end(args);
+}
+
+void P_SVPrintf(int playernum, int sfx, const char *fmt, va_list args) {
+  add_player_vmessage(playernum, false, false, sfx, fmt, args);
+}
+
+void P_SEcho(int playernum, int sfx, const char *message) {
+  add_player_message(playernum, false, false, sfx, "%s\n", message);
+}
+
+void P_SWrite(int playernum, int sfx, const char *message) {
+  add_player_message(playernum, false, false, sfx, "%s", message);
+}
+
+void P_MSPrintf(int playernum, int sfx, const char *fmt, ...) {
+  va_list args;
+
+  va_start(args, fmt);
+  add_player_vmessage(playernum, true, false, sfx, fmt, args);
+  va_end(args);
+}
+
+void P_MSVPrintf(int playernum, int sfx, const char *fmt, va_list args) {
+  add_player_vmessage(playernum, true, false, sfx, fmt, args);
+}
+
+void P_MSEcho(int playernum, int sfx, const char *message) {
+  add_player_message(playernum, true, false, sfx, "%s\n", message);
+}
+
+void P_MSWrite(int playernum, int sfx, const char *message) {
+  add_player_message(playernum, true, false, sfx, "%s", message);
+}
+
+void P_CenterPrintf(int playernum, const char *fmt, ...) {
+  va_list args;
+
+  va_start(args, fmt);
+  add_player_vmessage(playernum, false, true, 0, fmt, args);
+  va_end(args);
+}
+
+void P_CenterVPrintf(int playernum, const char *fmt, va_list args) {
+  add_player_vmessage(playernum, false, true, 0, fmt, args);
+}
+
+void P_CenterEcho(int playernum, const char *message) {
+  add_player_message(playernum, false, true, 0, "%s\n", message);
+}
+
+void P_CenterWrite(int playernum, const char *message) {
+  add_player_message(playernum, false, true, 0, "%s", message);
+}
+
+void P_CenterMPrintf(int playernum, const char *fmt, ...) {
+  va_list args;
+
+  va_start(args, fmt);
+  add_player_vmessage(playernum, true, true, 0, fmt, args);
+  va_end(args);
+}
+
+void P_CenterMVPrintf(int playernum, const char *fmt, va_list args) {
+  add_player_vmessage(playernum, true, true, 0, fmt, args);
+}
+
+void P_CenterMEcho(int playernum, const char *message) {
+  add_player_message(playernum, true, true, 0, "%s\n", message);
+}
+
+void P_CenterMWrite(int playernum, const char *message) {
+  add_player_message(playernum, true, true, 0, "%s", message);
+}
+
+void P_CenterSPrintf(int playernum, int sfx, const char *fmt, ...) {
+  va_list args;
+
+  va_start(args, fmt);
+  add_player_vmessage(playernum, false, true, sfx, fmt, args);
+  va_end(args);
+}
+
+void P_CenterSVPrintf(int playernum, int sfx, const char *fmt, va_list args) {
+  add_player_vmessage(playernum, false, true, sfx, fmt, args);
+}
+
+void P_CenterSEcho(int playernum, int sfx, const char *message) {
+  add_player_message(playernum, false, true, sfx, "%s\n", message);
+}
+
+void P_CenterSWrite(int playernum, int sfx, const char *message) {
+  add_player_message(playernum, false, true, sfx, "%s", message);
+}
+
+void P_CenterMSPrintf(int playernum, int sfx, const char *fmt, ...) {
+  va_list args;
+
+  va_start(args, fmt);
+  add_player_vmessage(playernum, true, true, sfx, fmt, args);
+  va_end(args);
+}
+
+void P_CenterMSVPrintf(int playernum, int sfx, const char *fmt, va_list args) {
+  add_player_vmessage(playernum, true, true, sfx, fmt, args);
+}
+
+void P_CenterMSEcho(int playernum, int sfx, const char *message) {
+  add_player_message(playernum, true, true, sfx, "%s\n", message);
+}
+
+void P_CenterMSWrite(int playernum, int sfx, const char *message) {
+  add_player_message(playernum, true, true, sfx, "%s", message);
 }
 
 void P_SendMessage(const char *message) {

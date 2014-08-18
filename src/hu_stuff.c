@@ -439,7 +439,7 @@ void HU_Init(void) {
     player_message_buffers[displayplayer],
     HU_MSGX,
     HU_MSGY,
-    REAL_SCREENWIDTH,
+    REAL_SCREENWIDTH - HU_MSGX,
     0,
     0
   );

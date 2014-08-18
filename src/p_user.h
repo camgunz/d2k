@@ -41,21 +41,41 @@ void P_Thrust(player_t *player, angle_t angle, fixed_t move);
 void P_SetPitch(player_t *player);
 void P_RunPlayerCommands(player_t *player);
 void P_SetName(int playernum, char *name);
+void P_AddMessage(int playernum, player_message_t *message);
+
 void P_Printf(int playernum, const char *fmt, ...) PRINTF_DECL(2, 3);
+void P_VPrintf(int playernum, const char *fmt, va_list args);
 void P_Echo(int playernum, const char *message);
 void P_Write(int playernum, const char *message);
+void P_MPrintf(int playernum, const char *fmt, ...) PRINTF_DECL(2, 3);
+void P_MVPrintf(int playernum, const char *fmt, va_list args);
+void P_MEcho(int playernum, const char *message);
+void P_MWrite(int playernum, const char *message);
 void P_SPrintf(int playernum, int sfx, const char *fmt, ...) PRINTF_DECL(3, 4);
+void P_SVPrintf(int playernum, int sfx, const char *fmt, va_list args);
 void P_SEcho(int playernum, int sfx, const char *message);
 void P_SWrite(int playernum, int sfx, const char *message);
-void P_CenterPrintf(int playernum, int sfx, const char *fmt, ...)
-    PRINTF_DECL(3, 4);
-void P_CenterEcho(int playernum, int sfx, const char *message);
-void P_CenterWrite(int playernum, int sfx, const char *message);
-void P_CenterQPrintf(int playernum, int sfx, const char *fmt, ...)
-    PRINTF_DECL(3, 4);
-void P_CenterQEcho(int playernum, int sfx, const char *message);
-void P_CenterQWrite(int playernum, int sfx, const char *message);
-void P_AddMessage(int playernum, player_message_t *message);
+void P_MSPrintf(int playernum, int sfx, const char *fmt, ...) PRINTF_DECL(3, 4);
+void P_MSVPrintf(int playernum, int sfx, const char *fmt, va_list args);
+void P_MSEcho(int playernum, int sfx, const char *message);
+void P_MSWrite(int playernum, int sfx, const char *message);
+void P_CenterPrintf(int playernum, const char *fmt, ...) PRINTF_DECL(2, 3);
+void P_CenterVPrintf(int playernum, const char *fmt, va_list args);
+void P_CenterEcho(int playernum, const char *message);
+void P_CenterWrite(int playernum, const char *message);
+void P_CenterMPrintf(int playernum, const char *fmt, ...) PRINTF_DECL(2, 3);
+void P_CenterMVPrintf(int playernum, const char *fmt, va_list args);
+void P_CenterMEcho(int playernum, const char *message);
+void P_CenterMWrite(int playernum, const char *message);
+void P_CenterSPrintf(int playernum, int sfx, const char *fmt, ...) PRINTF_DECL(3, 4);
+void P_CenterSVPrintf(int playernum, int sfx, const char *fmt, va_list args);
+void P_CenterSEcho(int playernum, int sfx, const char *message);
+void P_CenterSWrite(int playernum, int sfx, const char *message);
+void P_CenterMSPrintf(int playernum, int sfx, const char *fmt, ...) PRINTF_DECL(3, 4);
+void P_CenterMSVPrintf(int playernum, int sfx, const char *fmt, va_list args);
+void P_CenterMSEcho(int playernum, int sfx, const char *message);
+void P_CenterMSWrite(int playernum, int sfx, const char *message);
+
 void P_SendMessage(const char *message);
 void P_ClearMessages(int playernum);
 
