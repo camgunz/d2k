@@ -184,7 +184,6 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   static bool name_buf_initialized = false;
 
   int command_count = 0;
-  int message_count = 0;
 
   if (!player_message_buf_initialized) {
     M_BufferInit(&player_message_buf);
