@@ -319,8 +319,10 @@ void P_Ticker(void) {
   if (!setup_tic())
     return;
 
-  if (gamestate != GS_LEVEL)
+  if (gamestate != GS_LEVEL) {
+    P_MapEnd();
     return; // not if this is an intermission screen
+  }
 
   run_regular_tic();
 

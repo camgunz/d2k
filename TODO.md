@@ -9,8 +9,6 @@
   * `name`
   * `team`
 
-1. Add fraglimit
-
 ## ZDDL
 
 1. Fix sound problems
@@ -19,8 +17,9 @@
 
 1. Fix server command backlog problems
   * It looks like the server doesn't handle big command backlogs well
-  * When switching to a different interface (menu, HUD, console, etc.), all
-    key presses should be cleared
+
+1. When switching to a different interface (menu, HUD, console, etc.), all
+   key presses should be cleared and spurious key releases ignored
 
 1. New widgets
   * Framerate

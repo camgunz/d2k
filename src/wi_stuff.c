@@ -1145,7 +1145,7 @@ void WI_updateDeathmatchStats(void)
   }
   else if (dm_state == 4)
   {
-    if (acceleratestage)
+    if (DELTASERVER || acceleratestage)
     {
       S_StartSound(0, sfx_slop);
 

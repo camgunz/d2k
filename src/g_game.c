@@ -1748,12 +1748,14 @@ void G_DoCompleted(void) {
 
   // wminfo.next is 0 biased, unlike gamemap
   if (gamemode == commercial) {
-    if (secretexit)
+    if (secretexit) {
       switch(gamemap) {
         case 15:
-          wminfo.next = 30; break;
+          wminfo.next = 30;
+        break;
         case 31:
-          wminfo.next = 31; break;
+          wminfo.next = 31;
+        break;
         case 2:
           if (bfgedition && singleplayer)
             wminfo.next = 32;
@@ -1763,11 +1765,13 @@ void G_DoCompleted(void) {
             wminfo.next = 8;
         break;
       }
-    else
-      switch(gamemap) {
+    }
+    else {
+      switch (gamemap) {
         case 31:
         case 32:
-          wminfo.next = 15; break;
+          wminfo.next = 15;
+        break;
         case 33:
           if (bfgedition && singleplayer) {
             wminfo.next = 2;
@@ -1776,33 +1780,32 @@ void G_DoCompleted(void) {
         default:
           wminfo.next = gamemap;
       }
-      if (gamemission == pack_nerve && singleplayer && gamemap == 9)
-        wminfo.next = 4;
+    }
+    if (gamemission == pack_nerve && singleplayer && gamemap == 9)
+      wminfo.next = 4;
+  }
+  else if (secretexit) {
+    wminfo.next = 8;  // go to secret level
+  }
+  else if (gamemap == 9) {
+    // returning from secret level
+    switch (gameepisode) {
+      case 1:
+        wminfo.next = 3;
+      break;
+      case 2:
+        wminfo.next = 5;
+      break;
+      case 3:
+        wminfo.next = 6;
+      break;
+      case 4:
+        wminfo.next = 2;
+      break;
+    }
   }
   else {
-    if (secretexit) {
-      wminfo.next = 8;  // go to secret level
-    }
-    else if (gamemap == 9) {
-      // returning from secret level
-      switch (gameepisode) {
-        case 1:
-          wminfo.next = 3;
-        break;
-        case 2:
-          wminfo.next = 5;
-        break;
-        case 3:
-          wminfo.next = 6;
-        break;
-        case 4:
-          wminfo.next = 2;
-        break;
-      }
-    }
-    else {
-      wminfo.next = gamemap;          // go to next level
-    }
+    wminfo.next = gamemap;          // go to next level
   }
 
   wminfo.maxkills = totalkills;

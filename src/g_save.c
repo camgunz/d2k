@@ -34,6 +34,7 @@
 #include "p_ident.h"
 #include "p_map.h"
 #include "p_saveg.h"
+#include "p_spec.h"
 #include "r_demo.h"
 #include "r_defs.h"
 #include "r_fps.h"
@@ -256,6 +257,11 @@ void G_WriteSaveData(pbuf_t *savebuffer) {
   M_PBufWriteInt(savebuffer, gamemap);
   M_PBufWriteInt(savebuffer, gametic);
 
+  M_PBufWriteBool(savebuffer, levelTimer);
+  M_PBufWriteInt(savebuffer, levelTimeCount);
+  M_PBufWriteBool(savebuffer, levelFragLimit);
+  M_PBufWriteInt(savebuffer, levelFragLimitCount);
+
   for (i = 0; i < MAXPLAYERS; i++)
     M_PBufWriteBool(savebuffer, playeringame[i]);
 
@@ -414,37 +420,29 @@ dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
 
   if (!init_new) {
     if (m_compatibility_level != compatibility_level) {
-      if (bail_on_errors) {
-        fprintf(stderr, "MCL\n");
+      if (bail_on_errors)
         return false;
-      }
 
       I_Error("G_ReadSaveData: Mismatched compatibility level");
     }
 
     if (m_gameskill != gameskill) {
-      if (bail_on_errors) {
-        fprintf(stderr, "MGS\n");
+      if (bail_on_errors)
         return false;
-      }
 
       I_Error("G_ReadSaveData: Mismatched game skill");
     }
 
     if (m_gameepisode != gameepisode) {
-      if (bail_on_errors) {
-        fprintf(stderr, "ME\n");
+      if (bail_on_errors)
         return false;
-      }
 
       I_Error("G_ReadSaveData: Mismatched episode");
     }
 
     if (m_gamemap != gamemap) {
-      if (bail_on_errors) {
-        fprintf(stderr, "MM\n");
+      if (bail_on_errors)
         return false;
-      }
 
       I_Error("G_ReadSaveData: Mismatched map");
     }
@@ -456,6 +454,11 @@ dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
   gamemap = m_gamemap;
 
   M_PBufReadInt(savebuffer, &gametic);
+
+  M_PBufReadBool(savebuffer, &levelTimer);
+  M_PBufReadInt(savebuffer, &levelTimeCount);
+  M_PBufReadBool(savebuffer, &levelFragLimit);
+  M_PBufReadInt(savebuffer, &levelFragLimitCount);
 
   for (i = 0; i < MAXPLAYERS; i++)
     M_PBufReadBool(savebuffer, &playeringame[i]);

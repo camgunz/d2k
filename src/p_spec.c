@@ -2428,20 +2428,26 @@ void P_PlayerInSpecialSector (player_t* player)
 //  levelFragLimit, levelFragLimitCount
 //
 
-static dboolean  levelTimer;
-static int      levelTimeCount;
-dboolean         levelFragLimit;      // Ty 03/18/98 Added -frags support
-int             levelFragLimitCount; // Ty 03/18/98 Added -frags support
+dboolean levelTimer;
+int      levelTimeCount;
+dboolean levelFragLimit;      // Ty 03/18/98 Added -frags support
+int      levelFragLimitCount; // Ty 03/18/98 Added -frags support
 
-void P_UpdateSpecials (void)
-{
-  anim_t*     anim;
-  int         pic;
-  int         i;
+void P_UpdateSpecials(void) {
+  int i;
+  int pic;
+  int k;
+  int m;
+  int fragcount;
+  int exitflag = false;
+  mobj_t *so;
+  anim_t *anim;
+  side_t *side;
+
   // Downcount level timer, exit level if elapsed
-  if (levelTimer == true)
-  {
+  if (levelTimer == true) {
     levelTimeCount--;
+
     if (!levelTimeCount)
       G_ExitLevel();
   }
@@ -2449,31 +2455,39 @@ void P_UpdateSpecials (void)
   // Check frag counters, if frag limit reached, exit level // Ty 03/18/98
   //  Seems like the total frags should be kept in a simple
   //  array somewhere, but until they are...
-  if (levelFragLimit == true)  // we used -frags so compare count
-  {
-    int k,m,fragcount,exitflag=false;
-    for (k=0;k<MAXPLAYERS;k++)
-    {
-      if (!playeringame[k]) continue;
+  if (levelFragLimit == true) { // we used -frags so compare count
+    for (k = 0; k < MAXPLAYERS; k++) {
+      if (!playeringame[k])
+        continue;
+
       fragcount = 0;
-      for (m=0;m<MAXPLAYERS;m++)
-      {
-        if (!playeringame[m]) continue;
-          fragcount += (m!=k)?  players[k].frags[m] : -players[k].frags[m];
+
+      for (m = 0; m < MAXPLAYERS; m++) {
+        if (!playeringame[m])
+          continue;
+
+        if (m == k)
+          fragcount -= players[k].frags[m];
+        else
+          fragcount += players[k].frags[m];
       }
-      if (fragcount >= levelFragLimitCount) exitflag = true;
-      if (exitflag == true) break; // skip out of the loop--we're done
+
+      if (fragcount >= levelFragLimitCount)
+        exitflag = true;
+
+      if (exitflag == true)
+        break; // skip out of the loop--we're done
     }
+
     if (exitflag == true)
       G_ExitLevel();
   }
 
   // Animate flats and textures globally
-  for (anim = anims ; anim < lastanim ; anim++)
-  {
-    for (i=anim->basepic ; i<anim->basepic+anim->numpics ; i++)
-    {
-      pic = anim->basepic + ( (leveltime/anim->speed + i)%anim->numpics );
+  for (anim = anims; anim < lastanim; anim++) {
+    for (i = anim->basepic; i < anim->basepic + anim->numpics; i++) {
+      pic = anim->basepic + ((leveltime / anim->speed + i) % anim->numpics);
+
       if (anim->istexture)
         texturetranslation[i] = pic;
       else
@@ -2482,42 +2496,45 @@ void P_UpdateSpecials (void)
   }
 
   // Check buttons (retriggerable switches) and change texture on timeout
-  for (i = 0; i < MAXBUTTONS; i++)
+  for (i = 0; i < MAXBUTTONS; i++) {
+    if (!buttonlist[i].btimer)
+      continue;
+
+    buttonlist[i].btimer--;
+
     if (buttonlist[i].btimer)
-    {
-      buttonlist[i].btimer--;
-      if (!buttonlist[i].btimer)
-      {
-        switch(buttonlist[i].where)
-        {
-          case top:
-            sides[buttonlist[i].line->sidenum[0]].toptexture =
-              buttonlist[i].btexture;
-            break;
+      continue;
 
-          case middle:
-            sides[buttonlist[i].line->sidenum[0]].midtexture =
-              buttonlist[i].btexture;
-            break;
+    side = &sides[buttonlist[i].line->sidenum[0]];
 
-          case bottom:
-            sides[buttonlist[i].line->sidenum[0]].bottomtexture =
-              buttonlist[i].btexture;
-            break;
-        }
-        {
-          /* don't take the address of the switch's sound origin,
-           * unless in a compatibility mode. */
-          mobj_t *so = (mobj_t *)buttonlist[i].soundorg;
-          if (comp[comp_sound] || compatibility_level < prboom_6_compatibility)
-            /* since the buttonlist array is usually zeroed out,
-             * button popouts generally appear to come from (0,0) */
-            so = (mobj_t *)&buttonlist[i].soundorg;
-          S_StartSound(so, sfx_swtchn);
-        }
-        memset(&buttonlist[i],0,sizeof(button_t));
-      }
+    switch(buttonlist[i].where) {
+      case top:
+        side->toptexture = buttonlist[i].btexture;
+      break;
+      case middle:
+        side->midtexture = buttonlist[i].btexture;
+      break;
+      case bottom:
+        side->bottomtexture = buttonlist[i].btexture;
+      break;
     }
+    /*
+     * don't take the address of the switch's sound origin, unless in a
+     * compatibility mode.
+     */
+    so = (mobj_t *)buttonlist[i].soundorg;
+
+    /*
+     * since the buttonlist array is usually zeroed out, button popouts
+     * generally appear to come from (0,0)
+     */
+    if (comp[comp_sound] || compatibility_level < prboom_6_compatibility)
+      so = (mobj_t *)&buttonlist[i].soundorg;
+
+    S_StartSound(so, sfx_swtchn);
+
+    memset(&buttonlist[i], 0, sizeof(button_t));
+  }
 }
 
 //////////////////////////////////////////////////////////////////////
