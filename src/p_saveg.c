@@ -197,8 +197,6 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
 
   M_BufferClear(&name_buf);
 
-  P_ClearMessages(player - players);
-
   player->mo = NULL;
 
   M_PBufReadInt(savebuffer, (int *)&player->playerstate);

@@ -327,7 +327,7 @@ bool C_Active(void) {
 void C_Printf(const char *fmt, ...) {
   va_list args;
 
-  if (CL_Predicting())
+  if (CL_RePredicting())
     return;
 
   va_start(args, fmt);
@@ -339,7 +339,7 @@ void C_Printf(const char *fmt, ...) {
 }
 
 void C_VPrintf(const char *fmt, va_list args) {
-  if (CL_Predicting())
+  if (CL_RePredicting())
     return;
 
   if (cons)
@@ -351,7 +351,7 @@ void C_VPrintf(const char *fmt, va_list args) {
 void C_MPrintf(const char *fmt, ...) {
   va_list args;
 
-  if (CL_Predicting())
+  if (CL_RePredicting())
     return;
 
   va_start(args, fmt);
@@ -363,7 +363,7 @@ void C_MPrintf(const char *fmt, ...) {
 }
 
 void C_MVPrintf(const char *fmt, va_list args) {
-  if (CL_Predicting())
+  if (CL_RePredicting())
     return;
 
   if (cons)
@@ -373,7 +373,7 @@ void C_MVPrintf(const char *fmt, va_list args) {
 }
 
 void C_Echo(const char *message) {
-  if (CL_Predicting())
+  if (CL_RePredicting())
     return;
 
   if (cons)
@@ -383,7 +383,7 @@ void C_Echo(const char *message) {
 }
 
 void C_MEcho(const char *message) {
-  if (CL_Predicting())
+  if (CL_RePredicting())
     return;
 
   if (cons)
@@ -393,7 +393,7 @@ void C_MEcho(const char *message) {
 }
 
 void C_Write(const char *message) {
-  if (CL_Predicting())
+  if (CL_RePredicting())
     return;
 
   if (cons)
@@ -403,7 +403,7 @@ void C_Write(const char *message) {
 }
 
 void C_MWrite(const char *message) {
-  if (CL_Predicting())
+  if (CL_RePredicting())
     return;
 
   if (cons)

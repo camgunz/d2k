@@ -191,7 +191,7 @@ static void stop_channel(channel_t *c) {
   if (!c->sfxinfo)
     return;
 
-  if (CL_Predicting())
+  if (CL_RePredicting())
     return;
 
   // stop the sound playing

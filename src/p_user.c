@@ -688,6 +688,9 @@ void P_Printf(int playernum, const char *fmt, ...) {
   va_list args;
   player_message_t *msg;
 
+  if (CL_RePredicting())
+    return;
+
   if (strlen(fmt) <= 0)
     return;
 
@@ -702,7 +705,7 @@ void P_Printf(int playernum, const char *fmt, ...) {
 
   msg->content = strdup(gcontent);
   msg->centered = false;
-  msg->processed = 0;
+  msg->processed = false;
   msg->sfx = 0;
 
   g_free(gcontent);
@@ -718,6 +721,9 @@ void P_Echo(int playernum, const char *message) {
   gchar *gcontent;
   player_message_t *msg;
 
+  if (CL_RePredicting())
+    return;
+
   if (!message)
     return;
   
@@ -733,7 +739,7 @@ void P_Echo(int playernum, const char *message) {
 
   msg->content = strdup(gcontent);
   msg->centered = false;
-  msg->processed = 0;
+  msg->processed = false;
   msg->sfx = 0;
 
   g_free(gcontent);
@@ -748,6 +754,9 @@ void P_Echo(int playernum, const char *message) {
 void P_Write(int playernum, const char *message) {
   player_message_t *msg;
   
+  if (CL_RePredicting())
+    return;
+
   if (strlen(message) <= 0)
     return;
 
@@ -758,7 +767,7 @@ void P_Write(int playernum, const char *message) {
 
   msg->content = strdup(message);
   msg->centered = false;
-  msg->processed = 0;
+  msg->processed = false;
   msg->sfx = 0;
 
   M_OBufConsolidate(&players[playernum].messages);
@@ -772,6 +781,9 @@ void P_SPrintf(int playernum, int sfx, const char *fmt, ...) {
   gchar *gcontent;
   va_list args;
   player_message_t *msg;
+
+  if (CL_RePredicting())
+    return;
 
   if (strlen(fmt) <= 0)
     return;
@@ -787,7 +799,7 @@ void P_SPrintf(int playernum, int sfx, const char *fmt, ...) {
 
   msg->content = strdup(gcontent);
   msg->centered = false;
-  msg->processed = 0;
+  msg->processed = false;
   msg->sfx = sfx;
 
   g_free(gcontent);
@@ -803,6 +815,9 @@ void P_SEcho(int playernum, int sfx, const char *message) {
   gchar *gcontent;
   player_message_t *msg;
 
+  if (CL_RePredicting())
+    return;
+
   if (!message)
     return;
   
@@ -818,7 +833,7 @@ void P_SEcho(int playernum, int sfx, const char *message) {
 
   msg->content = strdup(gcontent);
   msg->centered = false;
-  msg->processed = 0;
+  msg->processed = false;
   msg->sfx = sfx;
 
   g_free(gcontent);
@@ -833,6 +848,9 @@ void P_SEcho(int playernum, int sfx, const char *message) {
 void P_SWrite(int playernum, int sfx, const char *message) {
   player_message_t *msg;
   
+  if (CL_RePredicting())
+    return;
+
   if (strlen(message) <= 0)
     return;
 
@@ -843,7 +861,7 @@ void P_SWrite(int playernum, int sfx, const char *message) {
 
   msg->content = strdup(message);
   msg->centered = false;
-  msg->processed = 0;
+  msg->processed = false;
   msg->sfx = sfx;
 
   M_OBufConsolidate(&players[playernum].messages);
@@ -858,6 +876,9 @@ void P_CenterPrintf(int playernum, int sfx, const char *fmt, ...) {
   va_list args;
   player_message_t *msg;
   
+  if (CL_RePredicting())
+    return;
+
   if (strlen(fmt) <= 0)
     return;
 
@@ -872,7 +893,7 @@ void P_CenterPrintf(int playernum, int sfx, const char *fmt, ...) {
 
   msg->content = strdup(gcontent);
   msg->centered = true;
-  msg->processed = 0;
+  msg->processed = false;
   msg->sfx = sfx;
 
   g_free(gcontent);
@@ -888,6 +909,9 @@ void P_CenterEcho(int playernum, int sfx, const char *message) {
   gchar *gcontent;
   player_message_t *msg;
   
+  if (CL_RePredicting())
+    return;
+
   if (strlen(message) <= 0)
     return;
 
@@ -900,7 +924,7 @@ void P_CenterEcho(int playernum, int sfx, const char *message) {
 
   msg->content = strdup(gcontent);
   msg->centered = true;
-  msg->processed = 0;
+  msg->processed = false;
   msg->sfx = sfx;
 
   g_free(gcontent);
@@ -916,6 +940,9 @@ void P_CenterWrite(int playernum, int sfx, const char *message) {
   gchar *gcontent;
   player_message_t *msg;
   
+  if (CL_RePredicting())
+    return;
+
   if (strlen(message) <= 0)
     return;
 
@@ -928,7 +955,7 @@ void P_CenterWrite(int playernum, int sfx, const char *message) {
 
   msg->content = strdup(gcontent);
   msg->centered = true;
-  msg->processed = 0;
+  msg->processed = false;
   msg->sfx = sfx;
 
   g_free(gcontent);
@@ -945,6 +972,9 @@ void P_CenterQPrintf(int playernum, int sfx, const char *fmt, ...) {
   va_list args;
   player_message_t *msg;
   
+  if (CL_RePredicting())
+    return;
+
   if (strlen(fmt) <= 0)
     return;
 
@@ -959,7 +989,7 @@ void P_CenterQPrintf(int playernum, int sfx, const char *fmt, ...) {
 
   msg->content = strdup(gcontent);
   msg->centered = true;
-  msg->processed = 0;
+  msg->processed = false;
   msg->sfx = sfx;
 
   g_free(gcontent);
@@ -975,6 +1005,9 @@ void P_CenterQEcho(int playernum, int sfx, const char *message) {
   gchar *gcontent;
   player_message_t *msg;
   
+  if (CL_RePredicting())
+    return;
+
   if (strlen(message) <= 0)
     return;
 
@@ -987,7 +1020,7 @@ void P_CenterQEcho(int playernum, int sfx, const char *message) {
 
   msg->content = strdup(gcontent);
   msg->centered = true;
-  msg->processed = 0;
+  msg->processed = false;
   msg->sfx = sfx;
 
   g_free(gcontent);
@@ -1002,6 +1035,9 @@ void P_CenterQEcho(int playernum, int sfx, const char *message) {
 void P_CenterQWrite(int playernum, int sfx, const char *message) {
   player_message_t *msg;
   
+  if (CL_RePredicting())
+    return;
+
   if (strlen(message) <= 0)
     return;
 
@@ -1012,7 +1048,7 @@ void P_CenterQWrite(int playernum, int sfx, const char *message) {
 
   msg->content = strdup(message);
   msg->centered = true;
-  msg->processed = 0;
+  msg->processed = false;
   msg->sfx = sfx;
 
   M_OBufConsolidate(&players[playernum].messages);

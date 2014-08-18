@@ -70,7 +70,7 @@ static bool received_setup = false;
 static auth_level_e authorization_level = AUTH_LEVEL_NONE;
 static cbuf_t local_commands;
 static int local_command_index = 0;
-static bool predicting = false;
+static bool repredicting = false;
 static bool loading_state = false;
 
 static void build_command(void) {
@@ -480,8 +480,8 @@ bool CL_LoadingState(void) {
   return loading_state;
 }
 
-bool CL_Predicting(void) {
-  return predicting;
+bool CL_RePredicting(void) {
+  return repredicting;
 }
 
 bool CL_ReceivedSetup(void) {
@@ -507,19 +507,19 @@ bool CL_LoadState(void) {
 
   delta = &server->sync.delta;
 
-  predicting = true;
+  repredicting = true;
   S_MuteSound();
 
   if (!N_ApplyStateDelta(delta)) {
     P_Echo(consoleplayer, "Error applying state delta");
-    predicting = false;
+    repredicting = false;
     S_UnMuteSound();
     return false;
   }
 
   if (!N_LoadLatestState(false)) {
     P_Echo(consoleplayer, "Error loading state");
-    predicting = false;
+    repredicting = false;
     S_UnMuteSound();
     return false;
   }
@@ -543,7 +543,7 @@ bool CL_LoadState(void) {
   gametic++;
 
   if (M_CBufGetObjectCount(&local_commands) <= 0) {
-    predicting = false;
+    repredicting = false;
     S_UnMuteSound();
     return true;
   }
@@ -589,7 +589,7 @@ bool CL_LoadState(void) {
     is_extra_ddisplay = false;
   }
 
-  predicting = false;
+  repredicting = false;
   S_UnMuteSound();
   return true;
 }

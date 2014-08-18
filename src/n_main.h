@@ -30,7 +30,7 @@ void N_InitNetGame(void);
 bool N_GetWad(const char *name);
 
 bool CL_LoadingState(void);
-bool CL_Predicting(void);
+bool CL_RePredicting(void);
 bool CL_ReceivedSetup(void);
 void CL_SetReceivedSetup(dboolean new_received_setup);
 void CL_SetAuthorizationLevel(auth_level_e level);

@@ -499,8 +499,13 @@ void HU_Start(void) {
   message_dontfuckwithme = false;
   message_nottobefuckedwith = false;
 
-  HU_MessageWidgetClear(w_messages);
+  HU_MessageWidgetSetBuf(w_messages, player_message_buffers[displayplayer]);
+  HU_MessageWidgetSetBuf(
+    w_centermsg, player_center_message_buffers[displayplayer]
+  );
+
   HU_MessageWidgetRebuild(w_messages, I_GetRenderContext());
+  HU_MessageWidgetRebuild(w_centermsg, I_GetRenderContext());
 
   //jff 2/16/98 added some HUD widgets
   // create the map title widget - map title display in lower left of automap
@@ -881,9 +886,6 @@ void HU_Start(void) {
     CR_GRAY,
     VPT_NONE
   );
-
-  HU_MessageWidgetClear(w_centermsg);
-  HU_MessageWidgetRebuild(w_centermsg, I_GetRenderContext());
 
   HUlib_initTextLine
   (
@@ -2504,6 +2506,9 @@ void HU_Erase(void) {
 // Passed nothing, returns nothing
 //
 void HU_Ticker(void) {
+  if (CL_RePredicting())
+    return;
+
   for (int i = 0; i < MAXPLAYERS; i++) {
     player_t *player = &players[i];
 
@@ -2528,129 +2533,12 @@ void HU_Ticker(void) {
       if (i == displayplayer && msg->sfx > 0 && msg->sfx < NUMSFX)
         S_StartSound(NULL, msg->sfx);
 
-      msg->processed = gametic;
+      msg->processed = true;
     }
   }
 
   HU_MessageWidgetTicker(w_messages);
 }
-
-#if 0
-void HU_OldTicker(void) {
-  int message_count = 0;
-  int center_message_count = 0;
-
-  if (CL_Predicting())
-    return;
-
-  HU_MessageWidgetClear(w_centermsg);
-  HU_MessageWidgetClear(w_messages);
-
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    player_t *player = &players[i];
-    int player_message_count = M_OBufGetObjectCount(&player->messages);
-
-    if (!playeringame)
-      continue;
-
-    if (player_message_count <= 0)
-      continue;
-
-    M_OBufConsolidate(&player->messages);
-
-    OBUF_FOR_EACH(&player->messages, entry) {
-      player_message_t *msg = (player_message_t *)entry.obj;
-
-      if (msg->tics == 0)
-        continue;
-
-      msg->tics--;
-
-      if (msg->tics == 0) {
-        M_OBufRemove(&player->messages, entry.index);
-        free(msg->content);
-        free(msg);
-        entry.index--;
-      }
-    }
-
-    OBUF_FOR_EACH(&player->messages, entry) {
-      player_message_t *msg = (player_message_t *)entry.obj;
-
-      if (!msg->centered)
-        message_count++;
-    }
-
-    OBUF_FOR_EACH(&player->messages, entry) {
-      player_message_t *msg = (player_message_t *)entry.obj;
-
-      if (msg->centered)
-        continue;
-
-      if (message_count > HU_MSGHEIGHT) {
-        M_OBufRemove(&player->messages, entry.index);
-        free(msg->content);
-        free(msg);
-        entry.index--;
-      }
-
-      message_count--;
-    }
-
-    OBUF_FOR_EACH(&player->messages, entry) {
-      player_message_t *msg = (player_message_t *)entry.obj;
-
-      if (msg->centered)
-        center_message_count++;
-    }
-
-    if (center_message_count > 1) {
-      OBUF_FOR_EACH(&player->messages, entry) {
-        player_message_t *msg = (player_message_t *)entry.obj;
-
-        if (!msg->centered)
-          continue;
-
-        if (center_message_count > 1) {
-          M_OBufRemove(&player->messages, entry.index);
-          free(msg->content);
-          free(msg);
-          entry.index--;
-        }
-
-        center_message_count--;
-      }
-    }
-  }
-
-  OBUF_FOR_EACH(&players[displayplayer].messages, entry) {
-    player_message_t *msg = (player_message_t *)entry.obj;
-
-    if (msg->centered) {
-      HU_MessageWidgetClear(w_centermsg);
-      HU_MessageWidgetMWrite(w_centermsg, msg->content);
-    }
-    else {
-      HU_MessageWidgetWrite(w_messages, msg->content);
-    }
-
-    if (!msg->processed) {
-      if (msg->sfx > 0 && msg->sfx < NUMSFX) {
-        printf("Starting sound %d\n", msg->sfx);
-        S_StartSound(NULL, msg->sfx);
-      }
-    }
-  }
-
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    OBUF_FOR_EACH(&players[i].messages, entry) {
-      player_message_t *msg = (player_message_t *)entry.obj;
-
-      msg->processed = true;
-    }
-  }
-}
-#endif
 
 //
 // HU_Responder()

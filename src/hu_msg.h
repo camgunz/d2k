@@ -34,6 +34,7 @@ message_widget_t* HU_MessageWidgetNewBuf(void *render_context, void *buf,
                                          int x, int y,
                                          int w, int h,
                                          int scroll_amount);
+void HU_MessageWidgetSetBuf(message_widget_t *mw, void *buf);
 void HU_MessageWidgetReset(message_widget_t *mw, void *render_context);
 void HU_MessageWidgetSetAlignBottom(message_widget_t *mw, bool align_bottom);
 void HU_MessageWidgetGetSize(message_widget_t *mw, int *width, int *height);

@@ -140,6 +140,35 @@ static void set_new_retraction_target(message_widget_t *mw, float target) {
   mw->retraction_target = target;
 }
 
+static void calculate_line_height(gpointer data, gpointer user_data) {
+  PangoLayoutLine *line = (PangoLayoutLine *)data;
+  int *line_height = (int *)user_data;
+  PangoRectangle rect;
+
+  pango_layout_line_get_pixel_extents(line, NULL, &rect);
+  *line_height = rect.height;
+}
+
+static void calculate_base_layout_dimensions(message_widget_t *mw) {
+  GString *buf = mw->buf;
+  GSList *lines = pango_layout_get_lines_readonly(mw->layout);
+
+  mw->buf = g_string_new("");
+
+  HU_MessageWidgetGetLayoutSize(
+    mw, &mw->base_layout_width, &mw->base_layout_height
+  );
+
+  g_slist_foreach(lines, calculate_line_height, &mw->base_line_height);
+
+  g_string_free(mw->buf, true);
+
+  mw->buf = buf;
+
+  if (mw->offset <= 0.0)
+    mw->offset = mw->base_line_height;
+}
+
 message_widget_t* HU_MessageWidgetNew(void *render_context, int x, int y,
                                                             int w, int h,
                                                             int scroll_amount) {
@@ -185,33 +214,8 @@ message_widget_t* HU_MessageWidgetNewBuf(void *render_context, void *buf,
   return mw;
 }
 
-static void calculate_line_height(gpointer data, gpointer user_data) {
-  PangoLayoutLine *line = (PangoLayoutLine *)data;
-  int *line_height = (int *)user_data;
-  PangoRectangle rect;
-
-  pango_layout_line_get_pixel_extents(line, NULL, &rect);
-  *line_height = rect.height;
-}
-
-static void calculate_base_layout_dimensions(message_widget_t *mw) {
-  GString *buf = mw->buf;
-  GSList *lines = pango_layout_get_lines_readonly(mw->layout);
-
-  mw->buf = g_string_new("");
-
-  HU_MessageWidgetGetLayoutSize(
-    mw, &mw->base_layout_width, &mw->base_layout_height
-  );
-
-  g_slist_foreach(lines, calculate_line_height, &mw->base_line_height);
-
-  g_string_free(mw->buf, true);
-
-  mw->buf = buf;
-
-  if (mw->offset <= 0.0)
-    mw->offset = mw->base_line_height;
+void HU_MessageWidgetSetBuf(message_widget_t *mw, void *buf) {
+  mw->buf = (GString *)buf;
 }
 
 void HU_MessageWidgetReset(message_widget_t *mw, void *render_context) {
@@ -476,7 +480,7 @@ void HU_MessageWidgetTextAppended(message_widget_t *mw) {
   int widget_height;
   PangoLayoutLine *line;
   PangoRectangle rect;
-  
+
   if (!mw->retractable)
     return;
 
