@@ -293,8 +293,10 @@ void C_Drawer(void) {
 }
 
 bool C_Responder(event_t *ev) {
-  if (!nodrawers)
-    return HU_ConsoleWidgetResponder(cons, ev);
+  if (nodrawers)
+    return false;
+
+  return HU_ConsoleWidgetResponder(cons, ev);
 }
 
 void C_ScrollDown(void) {
