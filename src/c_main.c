@@ -227,6 +227,44 @@ static void tempbuf_mwrite(const char *message) {
   g_string_append(tempbuf, message);
 }
 
+static void command_line_vprintf(const char *fmt, va_list args) {
+  gchar *message = g_strdup_vprintf(fmt, args);
+  gchar *escaped_message = g_markup_escape_text(message, -1);
+
+  printf("%s", escaped_message);
+
+  g_free(escaped_message);
+  g_free(message);
+}
+
+static void command_line_mvprintf(const char *fmt, va_list args) {
+  vprintf(fmt, args);
+}
+
+static void command_line_echo(const char *message) {
+  gchar *escaped_message = g_markup_escape_text(message, -1);
+
+  printf("%s", escaped_message);
+
+  g_free(escaped_message);
+}
+
+static void command_line_mecho(const char *message) {
+  puts(message);
+}
+
+static void command_line_write(const char *message) {
+  gchar *escaped_message = g_markup_escape_text(message, -1);
+
+  printf("%s", escaped_message);
+
+  g_free(escaped_message);
+}
+
+static void command_line_mwrite(const char *message) {
+  printf("%s", message);
+}
+
 int XF_Echo(lua_State *L) {
   const char *message = luaL_checkstring(L, 1);
 
@@ -348,7 +386,9 @@ void C_Printf(const char *fmt, ...) {
     return;
 
   va_start(args, fmt);
-  if (cons)
+  if (nodrawers)
+    command_line_vprintf(fmt, args);
+  else if (cons)
     HU_ConsoleWidgetVPrintf(cons, fmt, args);
   else
     tempbuf_vprintf(fmt, args);
@@ -359,7 +399,9 @@ void C_VPrintf(const char *fmt, va_list args) {
   if (CL_RePredicting())
     return;
 
-  if (cons)
+  if (nodrawers)
+    command_line_vprintf(fmt, args);
+  else if (cons)
     HU_ConsoleWidgetVPrintf(cons, fmt, args);
   else
     tempbuf_vprintf(fmt, args);
@@ -372,7 +414,9 @@ void C_MPrintf(const char *fmt, ...) {
     return;
 
   va_start(args, fmt);
-  if (cons)
+  if (nodrawers)
+    command_line_mvprintf(fmt, args);
+  else if (cons)
     HU_ConsoleWidgetMVPrintf(cons, fmt, args);
   else
     tempbuf_mvprintf(fmt, args);
@@ -383,7 +427,9 @@ void C_MVPrintf(const char *fmt, va_list args) {
   if (CL_RePredicting())
     return;
 
-  if (cons)
+  if (nodrawers)
+    command_line_mvprintf(fmt, args);
+  else if (cons)
     HU_ConsoleWidgetMVPrintf(cons, fmt, args);
   else
     tempbuf_mvprintf(fmt, args);
@@ -393,7 +439,9 @@ void C_Echo(const char *message) {
   if (CL_RePredicting())
     return;
 
-  if (cons)
+  if (nodrawers)
+    command_line_echo(message);
+  else if (cons)
     HU_ConsoleWidgetEcho(cons, message);
   else
     tempbuf_echo(message);
@@ -403,7 +451,9 @@ void C_MEcho(const char *message) {
   if (CL_RePredicting())
     return;
 
-  if (cons)
+  if (nodrawers)
+    command_line_mecho(message);
+  else if (cons)
     HU_ConsoleWidgetMEcho(cons, message);
   else
     tempbuf_mecho(message);
@@ -413,7 +463,9 @@ void C_Write(const char *message) {
   if (CL_RePredicting())
     return;
 
-  if (cons)
+  if (nodrawers)
+    command_line_write(message);
+  else if (cons)
     HU_ConsoleWidgetWrite(cons, message);
   else
     tempbuf_write(message);
@@ -423,7 +475,9 @@ void C_MWrite(const char *message) {
   if (CL_RePredicting())
     return;
 
-  if (cons)
+  if (nodrawers)
+    command_line_mwrite(message);
+  else if (cons)
     HU_ConsoleWidgetMWrite(cons, message);
   else
     tempbuf_mwrite(message);
