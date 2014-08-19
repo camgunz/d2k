@@ -390,7 +390,7 @@ void N_WaitForPacket(int ms) {
 
 dboolean N_ConnectToServer(const char *address) {
   char *host = NULL;
-  unsigned short port;
+  unsigned short port = 0;
   dboolean connected = false;
 
   N_ParseAddressString(address, &host, &port);

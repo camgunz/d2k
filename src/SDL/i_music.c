@@ -115,7 +115,9 @@ void I_ShutdownMusic(void) {
 }
 
 void I_InitMusic(void) {
+#ifndef _WIN32
   int fd;
+#endif
 
   if (MUSIC_DISABLED)
     return;

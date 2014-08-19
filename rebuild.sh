@@ -5,5 +5,5 @@ then
     rm -rf cbuild
 fi
 
-./build.sh
+./build_release.sh
 
