@@ -460,6 +460,7 @@ default_t defaults[] =
   KEYBIND("key_up", key_up, 'w'),
   KEYBIND("key_down", key_down, 's'),
   KEYBIND("key_mlook", key_mlook, '\\'),
+  KEYBIND("key_help", key_help, SDLK_F1),
   KEYBIND("key_menu_toggle", key_menu_toggle, SDLK_ESCAPE),
   KEYBIND("key_menu_right", key_menu_right, SDLK_RIGHT),
   KEYBIND("key_menu_left", key_menu_left, SDLK_LEFT),
