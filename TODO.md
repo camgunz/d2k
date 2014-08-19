@@ -4,14 +4,9 @@
 
 1. Hitscan sounds cut off (actually, probably just sounds with NULL origin)
 
-1. HUD scaling responds to both `key_up` and `key_down` events; should only be
-   `key_down`.
-
 1. Windows problems
   * Resolutions aren't enumerated
   * Client can't connect
-
-1. Add weaponstay configuration option (and flag?)
 
 1. Don't reset `retraction_timeout`; just keep scrolling
 

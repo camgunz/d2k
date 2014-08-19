@@ -277,7 +277,7 @@ bool D_Responder(event_t *ev) {
     }
 
 
-    if (ev->data1 == key_zoomout) {
+    if (ev->type == ev_keydown && ev->data1 == key_zoomout) {
       if (automapmode & am_active)
         return false;
 
@@ -287,7 +287,7 @@ bool D_Responder(event_t *ev) {
     }
 
     // jff 2/23/98 allow key_hud == key_zoomin
-    if (ev->data1 == key_zoomin) {
+    if (ev->type == ev_keydown && ev->data1 == key_zoomin) {
       if (automapmode & am_active)
         return false;
 
