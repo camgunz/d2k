@@ -323,6 +323,9 @@ void HU_Init(void) {
   hu_color_t white = {1.0f, 1.0f, 1.0f, 1.0f};
   hu_color_t grey  = {0.0f, 0.0f, 0.0f, 0.9f};
 
+  if (nodrawers)
+    return;
+
   for (i = 0; i < MAXPLAYERS; i++) {
     player_message_buffers[i] = g_string_new("");
     player_center_message_buffers[i] = g_string_new("");
@@ -474,7 +477,7 @@ static void HU_Stop(void) {
 }
 
 //
-// HU_Start(void)
+// HU_Start
 //
 // Create and initialize the heads-up widgets, software machines to
 // maintain, update, and display information over the primary display
@@ -487,6 +490,9 @@ static void HU_Stop(void) {
 void HU_Start(void) {
   int   i;
   const char *s; /* cph - const */
+
+  if (nodrawers)
+    return;
 
   if (headsupactive)                    // stop before starting
     HU_Stop();
@@ -509,8 +515,7 @@ void HU_Start(void) {
 
   //jff 2/16/98 added some HUD widgets
   // create the map title widget - map title display in lower left of automap
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_title,
     HU_TITLEX,
     HU_TITLEY,
@@ -523,8 +528,7 @@ void HU_Start(void) {
   // create the hud health widget
   // bargraph and number for amount of health,
   // lower left or upper right of screen
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_health,
     0, 0,
     hu_font2,
@@ -533,8 +537,7 @@ void HU_Start(void) {
     VPT_NONE
   );
 
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_health_big,
     0, 0,
     hu_font_hud,
@@ -543,8 +546,7 @@ void HU_Start(void) {
     VPT_NONE
   );
 
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_medict_icon_big,
     0, 0,
     hu_font_hud,
@@ -553,8 +555,7 @@ void HU_Start(void) {
     VPT_NONE
   );
 
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_medict_icon_small,
     0, 0,
     hu_font_hud,
@@ -563,8 +564,7 @@ void HU_Start(void) {
     VPT_NONE
   );
 
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_medict_icon_custom,
     0, 0,
     hu_font_hud,
@@ -576,8 +576,7 @@ void HU_Start(void) {
   // create the hud armor widget
   // bargraph and number for amount of armor,
   // lower left or upper right of screen
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_armor,
     0, 0,
     hu_font2,
@@ -586,8 +585,7 @@ void HU_Start(void) {
     VPT_NONE
   );
 
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_armor_big,
     0, 0,
     hu_font_hud,
@@ -596,8 +594,7 @@ void HU_Start(void) {
     VPT_NONE
   );
 
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_armor_icon_big,
     0, 0,
     hu_font_hud,
@@ -606,8 +603,7 @@ void HU_Start(void) {
     VPT_NONE
   );
 
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_armor_icon_small,
     0, 0,
     hu_font_hud,
@@ -616,8 +612,7 @@ void HU_Start(void) {
     VPT_NONE
   );
 
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_armor_icon_custom,
     0, 0,
     hu_font_hud,
@@ -629,8 +624,7 @@ void HU_Start(void) {
   // create the hud ammo widget
   // bargraph and number for amount of ammo for current weapon,
   // lower left or lower right of screen
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_ammo,
     0, 0,
     hu_font2,
@@ -642,8 +636,7 @@ void HU_Start(void) {
   // create the hud weapons widget
   // list of numbers of weapons possessed
   // lower left or lower right of screen
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_weapon,
     0, 0,
     hu_font2,
@@ -655,8 +648,7 @@ void HU_Start(void) {
   // create the hud keys widget
   // display of key letters possessed
   // lower left of screen
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_keys,
     0, 0,
     hu_font2,
@@ -668,8 +660,7 @@ void HU_Start(void) {
   // create the hud graphic keys widget
   // display of key graphics possessed
   // lower left of screen
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_gkeys,
     0, 0,
     hu_fontk,
@@ -681,8 +672,7 @@ void HU_Start(void) {
   // create the hud monster/secret widget
   // totals and current values for kills, items, secrets
   // lower left of screen
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_monsec,
     0, 0,
     hu_font2,
@@ -691,8 +681,7 @@ void HU_Start(void) {
     VPT_NONE
   );
 
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_medict_percent,
     0, 0,
     hu_font_hud,
@@ -701,8 +690,7 @@ void HU_Start(void) {
     VPT_NONE
   );
 
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_armor_percent,
     0, 0,
     hu_font_hud,
@@ -711,8 +699,7 @@ void HU_Start(void) {
     VPT_NONE
   );
 
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_ammo_big,
     0, 0,
     hu_font_hud,
@@ -721,8 +708,7 @@ void HU_Start(void) {
     VPT_NONE
   );
 
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_ammo_icon,
     0, 0,
     hu_font_hud,
@@ -731,8 +717,7 @@ void HU_Start(void) {
     VPT_NONE
   );
 
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_keys_icon,
     0, 0,
     hu_fontk,
@@ -745,24 +730,9 @@ void HU_Start(void) {
   // scrolling display of last hud_msg_lines messages received
   if (hud_msg_lines > HU_MAXMESSAGES)
     hud_msg_lines = HU_MAXMESSAGES;
+
   //jff 4/21/98 if setup has disabled message list while active, turn it off
   message_list = hud_msg_lines > 1; //jff 8/8/98 initialize both ways
-  //jff 2/26/98 add the text refresh widget initialization
-  /*
-  HUlib_initMText(
-    &w_rtext,
-    0,
-    0,
-    320, // SCREENWIDTH,
-    (hud_msg_lines+2)*HU_REFRESHSPACING,
-    hu_font,
-    HU_FONTSTART,
-    hudcolor_list,
-    hu_msgbg,
-    VPT_ALIGN_LEFT_TOP,
-    &message_list
-  );
-  */
 
   // initialize the automap's level title widget
   // e6y: stop SEGV here when gamemap is not initialized
@@ -776,8 +746,12 @@ void HU_Start(void) {
       break;
       case commercial:
       default:  // Ty 08/27/98 - modified to check mission for TNT/Plutonia
-        s = (gamemission==pack_tnt)  ? HU_TITLET :
-            (gamemission==pack_plut) ? HU_TITLEP : HU_TITLE2;
+        if (gamemission == pack_tnt)
+          s = HU_TITLET;
+        else if (gamemission == pack_plut)
+          s = HU_TITLEP;
+        else
+          s = HU_TITLE2;
       break;
     }
   }
@@ -796,8 +770,7 @@ void HU_Start(void) {
   // create the automaps coordinate widget
   // jff 3/3/98 split coord widget into three lines: x,y,z
   // jff 2/16/98 added
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_coordx,
     HU_COORDX,
     HU_COORDX_Y,
@@ -806,8 +779,8 @@ void HU_Start(void) {
     hudcolor_xyco,
     VPT_ALIGN_RIGHT_TOP
   );
-  HUlib_initTextLine
-  (
+
+  HUlib_initTextLine(
     &w_coordy,
     HU_COORDX,
     HU_COORDY_Y,
@@ -816,8 +789,8 @@ void HU_Start(void) {
     hudcolor_xyco,
     VPT_ALIGN_RIGHT_TOP
   );
-  HUlib_initTextLine
-  (
+
+  HUlib_initTextLine(
     &w_coordz,
     HU_COORDX,
     HU_COORDZ_Y,
@@ -826,9 +799,9 @@ void HU_Start(void) {
     hudcolor_xyco,
     VPT_ALIGN_RIGHT_TOP
   );
+
 //e6y
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_map_monsters,
     HU_MAP_STAT_X,
     HU_MAP_MONSTERS_Y,
@@ -837,8 +810,8 @@ void HU_Start(void) {
     hudcolor_mapstat_title,
     VPT_ALIGN_LEFT_TOP
   );
-  HUlib_initTextLine
-  (
+
+  HUlib_initTextLine(
     &w_map_secrets,
     HU_MAP_STAT_X,
     HU_MAP_SECRETS_Y,
@@ -847,8 +820,8 @@ void HU_Start(void) {
     hudcolor_mapstat_title,
     VPT_ALIGN_LEFT_TOP
   );
-  HUlib_initTextLine
-  (
+
+  HUlib_initTextLine(
     &w_map_items,
     HU_MAP_STAT_X,
     HU_MAP_ITEMS_Y,
@@ -857,8 +830,8 @@ void HU_Start(void) {
     hudcolor_mapstat_title,
     VPT_ALIGN_LEFT_TOP
   );
-  HUlib_initTextLine
-  (
+
+  HUlib_initTextLine(
     &w_map_time,
     HU_MAP_STAT_X,
     HU_MAP_TIME_Y,
@@ -867,8 +840,8 @@ void HU_Start(void) {
     hudcolor_mapstat_time,
     VPT_ALIGN_LEFT_TOP
   );
-  HUlib_initTextLine
-  (
+
+  HUlib_initTextLine(
     &w_map_totaltime,
     HU_MAP_STAT_X,
     HU_MAP_TOTALTIME_Y,
@@ -877,8 +850,8 @@ void HU_Start(void) {
     hudcolor_mapstat_time,
     VPT_ALIGN_LEFT_TOP
   );
-  HUlib_initTextLine
-  (
+
+  HUlib_initTextLine(
     &w_hudadd,
     0, 0,
     hu_font2,
@@ -887,8 +860,7 @@ void HU_Start(void) {
     VPT_NONE
   );
 
-  HUlib_initTextLine
-  (
+  HUlib_initTextLine(
     &w_precache,
     16,
     186,
@@ -897,17 +869,17 @@ void HU_Start(void) {
     CR_RED,
     VPT_ALIGN_LEFT_BOTTOM
   );
+
   strcpy(hud_add,"");
   s = hud_add;
   while (*s)
     HUlib_addCharToTextLine(&w_hudadd, *(s++));
 
-  for(i = 0; i < NUMTRACES; i++)
-  {
+  for (i = 0; i < NUMTRACES; i++) {
     HUlib_initTextLine(
       &w_traces[i],
       HU_TRACERX,
-      HU_TRACERY+i*HU_GAPY,
+      HU_TRACERY + i * HU_GAPY,
       hu_font2,
       HU_FONTSTART,
       CR_GRAY,
@@ -918,25 +890,28 @@ void HU_Start(void) {
     s = traces[i].hudstr;
     while (*s)
       HUlib_addCharToTextLine(&w_traces[i], *(s++));
+
     HUlib_drawTextLine(&w_traces[i], false);
   }
 
-
   //jff 2/16/98 initialize ammo widget
-  strcpy(hud_ammostr,"AMM ");
+  strcpy(hud_ammostr, "AMM ");
 
   //jff 2/16/98 initialize health widget
-  strcpy(hud_healthstr,"HEL ");
+  strcpy(hud_healthstr, "HEL ");
 
   //jff 2/16/98 initialize armor widget
-  strcpy(hud_armorstr,"ARM ");
+  strcpy(hud_armorstr, "ARM ");
 
   //jff 2/17/98 initialize weapons widget
   strcpy(hud_weapstr, "WEA ");
 
   //jff 2/17/98 initialize keys widget
   //jff 3/17/98 show frags in deathmatch mode
-  strcpy(hud_keysstr, (deathmatch ? "FRG " : "KEY "));
+  if (deathmatch)
+    strcpy(hud_keysstr, "FRG ");
+  else
+    strcpy(hud_keysstr, "KEY ");
 
   //jff 2/17/98 initialize graphic keys widget
   strcpy(hud_gkeysstr, " ");
@@ -957,6 +932,9 @@ void HU_Start(void) {
 }
 
 void HU_NextHud(void) {
+  if (nodrawers)
+    return;
+
   if (huds_count > 0)
     hud_num = (hud_num + 1) % huds_count;    // cycle hud_active
 }
@@ -964,15 +942,13 @@ void HU_NextHud(void) {
 typedef void (*HU_widget_build_func)(void);
 typedef void (*HU_widget_draw_func)(void);
 
-typedef struct hud_cfg_item_s
-{
+typedef struct hud_cfg_item_s {
   char name[80];
   int x;
   int y;
 } hud_cfg_item_t;
 
-typedef struct hud_widget_s
-{
+typedef struct hud_widget_s {
   hu_textline_t *hu_textline;
   int x;
   int y;
@@ -982,8 +958,7 @@ typedef struct hud_widget_s
   const char *name;
 } hud_widget_t;
 
-typedef struct hud_widgets_list_s
-{
+typedef struct hud_widgets_list_s {
   int count;
   hud_widget_t *items;
 } hud_widgets_list_t;
@@ -1040,8 +1015,7 @@ void HU_widget_draw_ammo_icon(void);
 void HU_widget_build_gkeys(void);
 void HU_widget_draw_gkeys(void);
 
-static hud_widget_t hud_name_widget[] =
-{
+static hud_widget_t hud_name_widget[] = {
   {&w_ammo,   0, 0, 0, HU_widget_build_ammo,   HU_widget_draw_ammo,   "ammo"},
   {&w_weapon, 0, 0, 0, HU_widget_build_weapon, HU_widget_draw_weapon, "weapon"},
   {&w_keys,   0, 0, 0, HU_widget_build_keys,   HU_widget_draw_keys,   "keys"},
@@ -1085,6 +1059,9 @@ void HU_LoadHUDDefs(void)
   hud_cfg_item_t cfg_item;
   hud_widgets_list_t *list = NULL;
   char st[200];
+
+  if (nodrawers)
+    return;
 
   if (init)
     return;
@@ -1190,6 +1167,9 @@ void HU_LoadHUDDefs(void)
 void HU_MoveHud(int force)
 {
   static int ohud_num = -1;
+
+  if (nodrawers)
+    return;
 
   //jff 3/4/98 move displays around on F5 changing hud_distributed
   if ((huds_count > 0) && (force || hud_num != ohud_num))
@@ -2297,6 +2277,9 @@ void HU_Drawer(void) {
   char *s;
   player_t *plr;
 
+  if (nodrawers)
+    return;
+
   // don't draw anything if there's a fullscreen menu up
   if (menuactive == mnact_full)
     return;
@@ -2506,6 +2489,9 @@ void HU_Erase(void) {
 // Passed nothing, returns nothing
 //
 void HU_Ticker(void) {
+  if (nodrawers)
+    return;
+
   if (CL_RePredicting())
     return;
 

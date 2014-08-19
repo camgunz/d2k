@@ -468,6 +468,11 @@ void D_PostEvent(event_t *ev) {
     }
   }
 
+  if (nodrawers) {
+    G_Responder(ev);
+    return;
+  }
+
   /*
    * killough 2/22/98: add support for screenshot key:
    * cph 2001/02/04: no need for this to be a gameaction, just do it
@@ -700,14 +705,11 @@ void D_Display(void) {
 
     if (V_GetMode() != VID_MODEGL)
       R_DrawViewBorder();
-
-    // HU_Drawer();
   }
 
-  // C_Drawer();
   HU_Drawer();
 
-  isborderstate      = isborder;
+  isborderstate = isborder;
   oldgamestate = wipegamestate = gamestate;
 
   // draw pause pic
@@ -760,7 +762,8 @@ static void D_DoomLoop(void) {
   for (;;) {
     WasRenderedInTryRunTics = false;
     // frame syncronous IO operations
-    I_StartFrame();
+    if (!nodrawers)
+      I_StartFrame();
 
     if (ffmap == gamemap)
       ffmap = 0;
@@ -787,6 +790,9 @@ static void D_DoomLoop(void) {
     if (players[displayplayer].mo) // cph 2002/08/10
       S_UpdateSounds(players[displayplayer].mo);// move positional sounds
 
+    if (nodrawers)
+      continue;
+
     if (!movement_smooth || !WasRenderedInTryRunTics || gamestate != wipegamestate) {
       // Update display, next frame, with current state.
       D_Display();
@@ -805,11 +811,12 @@ static void D_DoomLoop(void) {
 
       avi_shot_num++;
       len = snprintf(NULL, 0, "%s%06d.tga", avi_shot_fname, avi_shot_num);
-      avi_shot_curr_fname = malloc(len+1);
+      avi_shot_curr_fname = malloc(len + 1);
       sprintf(avi_shot_curr_fname, "%s%06d.tga", avi_shot_fname, avi_shot_num);
       M_DoScreenShot(avi_shot_curr_fname);
       free(avi_shot_curr_fname);
     }
+
     // NSM
     if (capturing_video && !doSkip)
       I_CaptureFrame();

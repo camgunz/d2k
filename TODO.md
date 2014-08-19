@@ -1,22 +1,6 @@
 # To Do
 
-## Prototype
-
 ## ZDDL
-
-1. Fix sound problems
-  * Rocket spawn sounds don't cut off when they explode
-  * No server message sound (just use radio/tink?)
-
-1. Fix server command backlog problems
-  * It looks like the server doesn't handle big command backlogs well
-
-1. When switching to a different interface (menu, HUD, console, etc.), all
-   key presses should be cleared and spurious key releases ignored
-
-1. New widgets
-  * Framerate
-  * Network stats
 
 1. Add latency mitigation
   * projectile nudging
@@ -40,6 +24,15 @@
 
 1. Add a scoreboard
 
+1. 3D physics
+
+1. SNDCURVE
+
+1. ZDoom physics
+  * ZDoom SSG spread
+
+1. PWO
+
 1. Better configuration file and configuration variable system
   * Ties into scripting and console
 
@@ -58,18 +51,23 @@
       pretty easy
   * Create a server description specification in JSON
 
-1. 3D physics
+1. New widgets
+  * Framerate
+  * Network stats
 
-1. SNDCURVE
+1. Fix sound problems
+  * Rocket spawn sounds don't cut off when they explode
+  * No server message sound (just use radio/tink?)
 
-1. ZDoom physics
-  * ZDoom SSG spread
+1. Fix server command backlog problems
+  * It looks like the server doesn't handle big command backlogs well
 
-1. PWO
-
-1. Slopes
+1. When switching to a different interface (menu, HUD, console, etc.), all
+   key presses should be cleared and spurious key releases ignored
 
 ## CTF
+
+1. Slopes
 
 1. Flesh out teams
 

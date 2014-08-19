@@ -248,13 +248,15 @@ int XF_MEcho(lua_State *L) {
 void C_Init(void) {
   GError *error = NULL;
 
-  cons = HU_ConsoleWidgetNew(
-    I_GetRenderContext(),
-    0,
-    0,
-    REAL_SCREENWIDTH, REAL_SCREENHEIGHT >> 1,
-    process_console_input
-  );
+  if (!nodrawers) {
+    cons = HU_ConsoleWidgetNew(
+      I_GetRenderContext(),
+      0,
+      0,
+      REAL_SCREENWIDTH, REAL_SCREENHEIGHT >> 1,
+      process_console_input
+    );
+  }
 
   shorthand_regex = g_regex_new(
     "([^\"]\\S*|\".+?\"|'.+?'|)\\s*",
@@ -276,47 +278,60 @@ void C_Init(void) {
 }
 
 void C_Reset(void) {
-  HU_ConsoleWidgetReset(cons, I_GetRenderContext());
+  if (!nodrawers)
+    HU_ConsoleWidgetReset(cons, I_GetRenderContext());
 }
 
 void C_Ticker(void) {
-  HU_ConsoleWidgetTicker(cons);
+  if (!nodrawers)
+    HU_ConsoleWidgetTicker(cons);
 }
 
 void C_Drawer(void) {
-  HU_ConsoleWidgetDrawer(cons, I_GetRenderContext());
+  if (!nodrawers)
+    HU_ConsoleWidgetDrawer(cons, I_GetRenderContext());
 }
 
 bool C_Responder(event_t *ev) {
-  return HU_ConsoleWidgetResponder(cons, ev);
+  if (!nodrawers)
+    return HU_ConsoleWidgetResponder(cons, ev);
 }
 
 void C_ScrollDown(void) {
-  HU_ConsoleWidgetScrollDown(cons);
+  if (!nodrawers)
+    HU_ConsoleWidgetScrollDown(cons);
 }
 
 void C_ScrollUp(void) {
-  HU_ConsoleWidgetScrollUp(cons);
+  if (!nodrawers)
+    HU_ConsoleWidgetScrollUp(cons);
 }
 
 void C_ToggleScroll(void) {
-  HU_ConsoleWidgetToggleScroll(cons);
+  if (!nodrawers)
+    HU_ConsoleWidgetToggleScroll(cons);
 }
 
 void C_Summon(void) {
-  HU_ConsoleWidgetSummon(cons);
+  if (!nodrawers)
+    HU_ConsoleWidgetSummon(cons);
 }
 
 void C_Banish(void) {
-  HU_ConsoleWidgetBanish(cons);
+  if (!nodrawers)
+    HU_ConsoleWidgetBanish(cons);
 }
 
 void C_SetFullScreen(void) {
-  HU_ConsoleWidgetSetFullScreen(cons);
+  if (!nodrawers)
+    HU_ConsoleWidgetSetFullScreen(cons);
 }
 
 bool C_Active(void) {
-  return HU_ConsoleWidgetActive(cons);
+  if (!nodrawers)
+    return HU_ConsoleWidgetActive(cons);
+
+  return false;
 }
 
 /*

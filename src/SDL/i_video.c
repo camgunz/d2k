@@ -340,6 +340,9 @@ void* I_GetRenderContext(void) {
   cairo_status_t status;
   SDL_SysWMinfo wm_info;
 
+  if (nodrawers)
+    return NULL;
+
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
     if (render_surface && render_context && overlay_tex_id)
@@ -486,6 +489,9 @@ void* I_GetRenderContext(void) {
 }
 
 void I_ResetRenderContext(void) {
+  if (nodrawers)
+    return;
+
   if (render_surface) {
     cairo_surface_destroy(render_surface);
     render_surface = NULL;

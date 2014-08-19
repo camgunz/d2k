@@ -330,8 +330,6 @@ static int my_popen3 (pipeinfo_t *p)
   if (!puser)
     return 0;
 
-
-
   // make the pipes
   if (pipe (scratch))
     goto fail;
