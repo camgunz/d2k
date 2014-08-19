@@ -311,6 +311,9 @@ extern int default_weapon_recoil;
 extern int player_bobbing;  // whether player bobs or not   // phares 2/25/98
 extern int default_player_bobbing;  // killough 3/1/98: make local to each game
 
+extern int leave_weapons;         // leave picked-up weapons behind?
+extern int default_leave_weapons; // CG 08/19/2014
+
 #ifdef DOGS
 extern int dogs, default_dogs;     // killough 7/19/98: Marine's best friend :)
 extern int dog_jumping, default_dog_jumping;   // killough 10/98

@@ -202,6 +202,8 @@ default_t defaults[] =
    def_bool, ss_weap },
   {"player_bobbing",{&default_player_bobbing},{1},0,1,         // phares 2/25/98
    def_bool,ss_weap, &player_bobbing},
+  {"leave_weapons",{&default_leave_weapons},{0},0,1,
+   def_bool,ss_weap, &leave_weapons},
   {"monsters_remember",{&default_monsters_remember},{1},0,1,   // killough 3/1/98
    def_bool,ss_enem, &monsters_remember},
    /* MBF AI enhancement options */

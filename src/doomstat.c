@@ -72,6 +72,9 @@ int  default_weapon_recoil;      // killough 3/1/98: make local to each game
 int player_bobbing;  // whether player bobs or not          // phares 2/25/98
 int default_player_bobbing;  // killough 3/1/98: make local to each game
 
+int leave_weapons;         // leave picked-up weapons behind?
+int default_leave_weapons; // CG 08/19/2014
+
 int monsters_remember;          // killough 3/1/98
 int default_monsters_remember;
 

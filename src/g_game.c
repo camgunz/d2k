@@ -2076,6 +2076,8 @@ void G_ReloadDefaults(void) {
 
   player_bobbing = default_player_bobbing;  // whether player bobs or not
 
+  leave_weapons = default_leave_weapons;
+
   /*
    * cph 2007/06/31 - for some reason, the default_* of the next 2 vars was
    * never implemented
@@ -2489,7 +2491,7 @@ void G_WriteOptions(byte game_options[]) {
   game_options[i++] = weapon_recoil;     // weapon recoil
   game_options[i++] = allow_pushers;     // MT_PUSH Things
 
-  i++;
+  game_options[i++] = leave_weapons;
 
   game_options[i++] = player_bobbing;    // whether player bobs or not
 
@@ -2560,7 +2562,7 @@ void G_ReadOptions(byte game_options[]) {
   weapon_recoil = game_options[i++];     // weapon recoil
   allow_pushers = game_options[i++];     // MT_PUSH Things
 
-  i++;
+  leave_weapons = game_options[i++];
 
   player_bobbing = game_options[i++];    // Whether player bobs or not
   // killough 3/6/98: add parameters to savegame, move from demo
