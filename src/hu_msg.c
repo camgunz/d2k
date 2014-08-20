@@ -110,34 +110,14 @@ static float get_average_line_height(message_widget_t *mw) {
   return line_height;
 }
 
-static int get_last_line_height(message_widget_t *mw) {
-  PangoLayoutIter *it = pango_layout_get_iter(mw->layout);
-  PangoRectangle ext_rect;
-  int baseline1;
-  int baseline2;
-
-  while (!pango_layout_iter_at_last_line(it)) {
-    ext_rect.y = pango_layout_iter_get_baseline(it);
-    pango_layout_iter_next_line(it);
-  }
-
-  pango_extents_to_pixels(&ext_rect, NULL);
-  baseline1 = ext_rect.y;
-
-  ext_rect.y = pango_layout_iter_get_baseline(it);
-  pango_extents_to_pixels(&ext_rect, NULL);
-  baseline2 = ext_rect.y;
-
-  return baseline2 - baseline1;
-}
-
-static void set_new_retraction_target(message_widget_t *mw, float target) {
-  if (target < 0.0f)
-    target = 0.0f;
-
+static void reset_retraction_target(message_widget_t *mw, bool reset_timeout) {
   mw->last_retraction = 0;
-  mw->retraction_timeout = RETRACTION_TIMEOUT;
-  mw->retraction_target = target;
+  mw->retraction_target = 0.0;
+
+  if (reset_timeout)
+    mw->retraction_timeout = RETRACTION_TIMEOUT;
+  else
+    mw->retraction_timeout = 0;
 }
 
 static void calculate_line_height(gpointer data, gpointer user_data) {
@@ -449,7 +429,7 @@ void HU_MessageWidgetTicker(message_widget_t *mw) {
     return;
   }
 
-  set_new_retraction_target(mw, mw->offset - get_last_line_height(mw));
+  reset_retraction_target(mw, false);
 }
 
 bool HU_MessageWidgetResponder(message_widget_t *mw, event_t *ev) {
@@ -506,7 +486,7 @@ void HU_MessageWidgetTextAppended(message_widget_t *mw) {
 
   mw->line_count = line_count;
 
-  set_new_retraction_target(mw, mw->offset - last_line_height);
+  reset_retraction_target(mw, true);
 }
 
 void HU_MessageWidgetPrintf(message_widget_t *mw, const char *fmt, ...) {

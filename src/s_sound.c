@@ -482,6 +482,9 @@ void S_Start(void) {
 }
 
 void S_StartSound(mobj_t *mobj, int sfx_id) {
+  if (CL_RePredicting())
+    return;
+
   start_sound_at_volume(mobj, sfx_id, snd_SfxVolume);
 }
 
@@ -536,8 +539,8 @@ void S_UpdateSounds(mobj_t *listener) {
     if (!sfx)
       continue;
 
+    // if channel is allocated but sound has stopped, free it
     if (!I_SoundIsPlaying(channel->handle)) {
-      // if channel is allocated but sound has stopped, free it
       stop_channel(channel);
       continue;
     }
@@ -717,9 +720,9 @@ void S_ReloadChannelOrigins(void) {
         c->origin = mobj;
       }
       else {
+        stop_channel(c);
         c->origin = NULL;
         c->origin_id = 0;
-        stop_channel(c);
       }
     }
   }

@@ -978,18 +978,7 @@ static void I_FillScreenResolutionsList(void) {
 
         if (modes[i]->w == desired_screenwidth &&
             modes[i]->h == desired_screenheight) {
-          printf("%dx%d == %dx%d\n",
-            modes[i]->w, modes[i]->h,
-            desired_screenwidth, desired_screenheight
-          );
-
           current_resolution_index = list_size;
-        }
-        else {
-          printf("%dx%d != %dx%d\n",
-            modes[i]->w, modes[i]->h,
-            desired_screenwidth, desired_screenheight
-          );
         }
 
         list_size++;
@@ -1857,8 +1846,6 @@ static void ApplyWindowResize(SDL_Event *resize_event) {
       return;
     }
   }
-
-  printf("Adding custom resolution [%s]\n", mode);
 
   // custom resolution
   if (screen_resolution_lowest &&
