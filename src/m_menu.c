@@ -4611,6 +4611,14 @@ dboolean M_Responder(event_t* ev) {
             old_value = M_IndexInChoices(
               *ptr1->var.def->location.ppsz, ptr1->selectstrings
             );
+
+            if (strcmp(ptr1->m_text, "Screen Resolution") == 0) {
+              for (int a = 0; ptr1->selectstrings[a]; a++) {
+                printf("Resolution %d: %s\n", a, ptr1->selectstrings[a]);
+              }
+              puts("");
+            }
+
             value = old_value - 1;
 
             if (value < 0)

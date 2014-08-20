@@ -4,11 +4,9 @@
 
 1. Hitscan sounds cut off (actually, probably just sounds with NULL origin)
 
-1. Windows problems
-  * Resolutions aren't enumerated
-  * Client can't connect
+1. Client connection problems
 
-1. Don't reset `retraction_timeout`; just keep scrolling
+1. Don't reset `retraction_timeout`, just keep scrolling
 
 ## ZDDL
 

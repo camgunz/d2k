@@ -3,7 +3,7 @@
 CROSSDEPS="`pwd`/crossdeps"
 CROSSLIBS="$CROSSDEPS/bin"
 BUILD_DIR="crossbuild"
-BUILD_TYPE="Release"
+BUILD_TYPE="Debug"
 
 cd $BUILD_DIR && \
     CPPFLAGS="-I$CROSSDEPS/include" \

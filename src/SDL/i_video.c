@@ -837,16 +837,13 @@ void I_PreInitGraphics(void)
     strncat(buf, video_driver, sizeof(buf) - sizeof(buf[0]) - strlen(buf));
     putenv(buf);
   }
-  else
-  {
 #ifdef _WIN32
-    if ((int)GetVersion() < 0 && V_GetMode() != VID_MODEGL ) { // win9x
-      free(video_driver);
-      video_driver = strdup("directx");
-      putenv("SDL_VIDEODRIVER=directx");
-    }
-#endif
+  else if ((int)GetVersion() < 0 && V_GetMode() != VID_MODEGL ) { // win9x
+    free(video_driver);
+    video_driver = strdup("directx");
+    putenv("SDL_VIDEODRIVER=directx");
   }
+#endif
 
   p = SDL_Init(flags);
 
@@ -921,23 +918,22 @@ void I_GetScreenResolution(void)
 // Get all the supported screen resolutions
 // and fill the list with them
 //
-static void I_FillScreenResolutionsList(void)
-{
+static void I_FillScreenResolutionsList(void) {
   SDL_Rect **modes;
-  int i, j, list_size, current_resolution_index, count;
+  int i;
+  int j;
+  int list_size;
+  int current_resolution_index;
+  int count;
   char mode[256];
   Uint32 flags;
 
   // do it only once
   if (screen_resolutions_list[0])
-  {
     return;
-  }
 
   if (desired_screenwidth == 0 || desired_screenheight == 0)
-  {
     I_GetScreenResolution();
-  }
 
   flags = SDL_FULLSCREEN;
 #ifdef GL_DOOM
@@ -945,51 +941,55 @@ static void I_FillScreenResolutionsList(void)
 #endif
 
   // Don't call SDL_ListModes if SDL has not been initialized
-  if (!nodrawers)
-    modes = SDL_ListModes(NULL, flags);
-  else
+  if (nodrawers)
     modes = NULL;
+  else
+    modes = SDL_ListModes(NULL, flags);
 
   list_size = 0;
   current_resolution_index = -1;
 
-  if (modes)
-  {
+  if (modes) {
     count = 0;
-    for(i = 0; modes[i]; i++)
-    {
+
+    for (i = 0; modes[i]; i++)
       count++;
-    }
+
     // (-2) is for NULL at the end of list and for custom resolution
     count = MIN(count, MAX_RESOLUTIONS_COUNT - 2);
 
-    for(i = count - 1; i >= 0; i--)
-    {
+    for (i = count - 1; i >= 0; i--) {
       int in_list = false;
 
       doom_snprintf(mode, sizeof(mode), "%dx%d", modes[i]->w, modes[i]->h);
 
       if (i == count - 1)
-      {
         screen_resolution_lowest = strdup(mode);
-      }
       
-      for(j = 0; j < list_size; j++)
-      {
-        if (!strcmp(mode, screen_resolutions_list[j]))
-        {
+      for (j = 0; j < list_size; j++) {
+        if (!strcmp(mode, screen_resolutions_list[j])) {
           in_list = true;
           break;
         }
       }
 
-      if (!in_list)
-      {
+      if (!in_list) {
         screen_resolutions_list[list_size] = strdup(mode);
 
-        if (modes[i]->w == desired_screenwidth && modes[i]->h == desired_screenheight)
-        {
+        if (modes[i]->w == desired_screenwidth &&
+            modes[i]->h == desired_screenheight) {
+          printf("%dx%d == %dx%d\n",
+            modes[i]->w, modes[i]->h,
+            desired_screenwidth, desired_screenheight
+          );
+
           current_resolution_index = list_size;
+        }
+        else {
+          printf("%dx%d != %dx%d\n",
+            modes[i]->w, modes[i]->h,
+            desired_screenwidth, desired_screenheight
+          );
         }
 
         list_size++;
@@ -998,24 +998,24 @@ static void I_FillScreenResolutionsList(void)
     screen_resolutions_list[list_size] = NULL;
   }
   
-  if (list_size == 0)
-  {
-    doom_snprintf(mode, sizeof(mode), "%dx%d", desired_screenwidth, desired_screenheight);
+  if (list_size == 0) {
+    doom_snprintf(
+      mode, sizeof(mode), "%dx%d", desired_screenwidth, desired_screenheight
+    );
     screen_resolutions_list[0] = strdup(mode);
     current_resolution_index = 0;
     list_size = 1;
   }
 
-  if (current_resolution_index == -1)
-  {
-    doom_snprintf(mode, sizeof(mode), "%dx%d", desired_screenwidth, desired_screenheight);
+  if (current_resolution_index == -1) {
+    doom_snprintf(
+      mode, sizeof(mode), "%dx%d", desired_screenwidth, desired_screenheight
+    );
 
     // make it first
     list_size++;
-    for(i = list_size - 1; i > 0; i--)
-    {
+    for (i = list_size - 1; i > 0; i--)
       screen_resolutions_list[i] = screen_resolutions_list[i - 1];
-    }
     screen_resolutions_list[0] = strdup(mode);
     current_resolution_index = 0;
   }
@@ -1368,32 +1368,16 @@ void I_InitGraphics(void)
 
 int I_GetModeFromString(const char *modestr)
 {
-  /*
-  video_mode_t mode;
-
-  if (!stricmp(modestr,"15"))
-    return VID_MODE15;
-
-  if (!stricmp(modestr,"15bit"))
-    return VID_MODE15;
-
-  if (!stricmp(modestr,"16"))
-    return VID_MODE16;
-
-  if (!stricmp(modestr,"16bit"))
-    return VID_MODE16;
-  */
-
-  if (!stricmp(modestr,"32"))
+  if (!stricmp(modestr, "32"))
     return VID_MODE32;
 
-  if (!stricmp(modestr,"32bit"))
+  if (!stricmp(modestr, "32bit"))
     return VID_MODE32;
 
-  if (!stricmp(modestr,"gl"))
+  if (!stricmp(modestr, "gl"))
     return VID_MODEGL;
 
-  if (!stricmp(modestr,"OpenGL"))
+  if (!stricmp(modestr, "opengl"))
     return VID_MODEGL;
 
   return VID_MODE32;
@@ -1819,96 +1803,79 @@ static void UpdateFocus(void)
   //    screenvisible = (state & SDL_APPACTIVE) != 0;
 }
 
-void UpdateGrab(void)
-{
+void UpdateGrab(void) {
   static dboolean currently_grabbed = false;
   dboolean grab;
 
   grab = MouseShouldBeGrabbed();
 
   if (grab && !currently_grabbed)
-  {
     ActivateMouse();
-  }
 
   if (!grab && currently_grabbed)
-  {
     DeactivateMouse();
-  }
 
   currently_grabbed = grab;
 }
 
-static void ApplyWindowResize(SDL_Event *resize_event)
-{
+static void ApplyWindowResize(SDL_Event *resize_event) {
   int i, k;
   char mode[80];
+
+  memset(mode, 0, 80);
 
   int w = MAX(320, resize_event->resize.w);
   int h = MAX(200, resize_event->resize.h);
 
-  if (screen_resolution)
-  {
-    if (!(SDL_GetModState() & KMOD_SHIFT))
-    {
-      // Find the biggest screen mode that will fall within these
-      // dimensions, falling back to the smallest mode possible if
-      // none is found.
+  if (!screen_resolution)
+    return;
 
-      Uint32 flags = SDL_FULLSCREEN;
+  if (!(SDL_GetModState() & KMOD_SHIFT)) {
+    // Find the biggest screen mode that will fall within these
+    // dimensions, falling back to the smallest mode possible if
+    // none is found.
 
-      if (V_GetMode() == VID_MODEGL)
-        flags |= SDL_OPENGL;
+    Uint32 flags = SDL_FULLSCREEN;
 
-      I_ClosestResolution(&w, &h, flags);
-    }
+    if (V_GetMode() == VID_MODEGL)
+      flags |= SDL_OPENGL;
 
-    w = MAX(320, w);
-    h = MAX(200, h);
-
-    sprintf(mode, "%dx%d", w, h);
-    screen_resolution = screen_resolutions_list[0];
-    for (i = 0; i < MAX_RESOLUTIONS_COUNT; i++)
-    {
-      if (screen_resolutions_list[i])
-      {
-        if (!strcmp(mode, screen_resolutions_list[i]))
-        {
-          screen_resolution = screen_resolutions_list[i];
-          break;
-        }
-      }
-    }
-
-    // custom resolution
-    if (screen_resolution == screen_resolutions_list[0])
-    {
-      if (screen_resolution_lowest &&
-          !strcmp(screen_resolution_lowest, screen_resolutions_list[0]))
-      {
-        // there is no "custom resolution" entry in the list
-        for(k = MAX_RESOLUTIONS_COUNT - 1; k > 0; k--)
-        {
-          screen_resolutions_list[k] = screen_resolutions_list[k - 1];
-        }
-        // add it
-        screen_resolutions_list[0] = strdup(mode);
-        screen_resolution = screen_resolutions_list[0];
-      }
-      else
-      {
-        union { const char *c; char *s; } u; // type punning via unions
-        u.c = screen_resolutions_list[0];
-        free(u.s);
-        screen_resolutions_list[0] = strdup(mode);
-        screen_resolution = screen_resolutions_list[0];
-      }
-    }
-
-    V_ChangeScreenResolution();
-
-    P_Printf(consoleplayer, "%dx%d\n", w, h);
+    I_ClosestResolution(&w, &h, flags);
   }
+
+  w = MAX(320, w);
+  h = MAX(200, h);
+  snprintf(mode, 80, "%dx%d", w, h);
+
+  for (i = 0; i < MAX_RESOLUTIONS_COUNT; i++) {
+    if (screen_resolutions_list[i] == NULL)
+      break;
+
+    if (!strcmp(mode, screen_resolutions_list[i])) {
+      screen_resolution = screen_resolutions_list[i];
+      V_ChangeScreenResolution();
+      return;
+    }
+  }
+
+  printf("Adding custom resolution [%s]\n", mode);
+
+  // custom resolution
+  if (screen_resolution_lowest &&
+      !strcmp(screen_resolution_lowest, screen_resolutions_list[0])) {
+    // there is no "custom resolution" entry in the list
+    for(k = MAX_RESOLUTIONS_COUNT - 1; k > 0; k--)
+      screen_resolutions_list[k] = screen_resolutions_list[k - 1];
+  }
+  else {
+    free((char *)screen_resolutions_list[0]);
+  }
+
+  // add it
+  screen_resolutions_list[0] = strdup(mode);
+  screen_resolution = screen_resolutions_list[0];
+
+  V_ChangeScreenResolution();
 }
 
 /* vi: set et ts=2 sw=2: */

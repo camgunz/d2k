@@ -1,7 +1,7 @@
 #!/bin/sh
 
 export LIBGL_ALWAYS_SOFTWARE=1
-CMD="cbuild/doom2k -iwad freedoom2.wad -file freedm.wad -warp 1 -nomonsters"
+CMD="cbuild/doom2k -nomonsters -nomouse"
 
 gdb -ex run --args $CMD
 # CPUPROFILE=cpu.prof cbuild/doom2k

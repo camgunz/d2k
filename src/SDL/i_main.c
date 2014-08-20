@@ -258,9 +258,7 @@ static void I_EndDoom(void)
 #endif
 
   if (!showendoom || demorecording)
-  {
     return;
-  }
 
   /* CPhipps - ENDOOM/ENDBOOM selection */
   lump_eb = W_CheckNumForName("ENDBOOM");/* jff 4/1/98 sign our work    */
@@ -633,14 +631,6 @@ int main(int argc, char **argv)
   //jff 9/3/98 use logical output routine
   lprintf(LO_INFO, "M_LoadDefaults: Load system defaults.\n");
   M_LoadDefaults();              // load before initing other systems
-
-#ifdef _WIN32
-  if (!M_CheckParm("-nodraw")) {
-    /* initialize the console window */
-    //Init_ConsoleWin();
-    //atexit(Done_ConsoleWin);
-  }
-#endif
 
   /* Version info */
   lprintf(LO_INFO, "\n");
