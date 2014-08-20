@@ -1510,6 +1510,9 @@ static dboolean G_CheckSpot(int playernum, mapthing_t *mthing) {
   if (!players[playernum].mo) {
     // first spawn of level, before corpses
     for (i = 0; i < playernum; i++) {
+      if (players[i].mo == NULL)
+        continue;
+
       if (players[i].mo->x == mthing->x << FRACBITS &&
           players[i].mo->y == mthing->y << FRACBITS) {
         return false;
@@ -1645,7 +1648,7 @@ void G_DoReborn(int playernum) {
 
     // spawn at random spot if in death match
     if (deathmatch) {
-      G_DeathMatchSpawnPlayer (playernum);
+      G_DeathMatchSpawnPlayer(playernum);
       return;
     }
 

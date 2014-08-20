@@ -1182,19 +1182,20 @@ void I_InitScreenResolution(void)
 
   I_GetScreenResolution();
 
-  if (init)
-  {
+  if (init) {
     //e6y: ability to change screen resolution from GUI
     I_FillScreenResolutionsList();
 
     // Video stuff
-    if ((p = M_CheckParm("-width")))
+    if ((p = M_CheckParm("-width"))) {
       if (myargv[p+1])
-        desired_screenwidth = atoi(myargv[p+1]);
+        desired_screenwidth = atoi(myargv[p + 1]);
+    }
 
-    if ((p = M_CheckParm("-height")))
+    if ((p = M_CheckParm("-height"))) {
       if (myargv[p+1])
-        desired_screenheight = atoi(myargv[p+1]);
+        desired_screenheight = atoi(myargv[p + 1]);
+    }
 
     if ((p = M_CheckParm("-fullscreen")))
       use_fullscreen = 1;
@@ -1223,40 +1224,31 @@ void I_InitScreenResolution(void)
     if (!(p = M_CheckParm("-geom")))
       p = M_CheckParm("-geometry");
 
-    if (p && p + 1 < myargc)
-    {
+    if (p && p + 1 < myargc) {
       int count = sscanf(myargv[p+1], "%d%c%d%c", &w, &x, &h, &c);
 
       // at least width and height must be specified
       // restoring original values if not
-      if (count < 3 || tolower(x) != 'x')
-      {
+      if (count < 3 || tolower(x) != 'x') {
         w = desired_screenwidth;
         h = desired_screenheight;
       }
-      else
-      {
-        if (count >= 4)
-        {
-          if (tolower(c) == 'w')
-            desired_fullscreen = 0;
-          if (tolower(c) == 'f')
-            desired_fullscreen = 1;
-        }
+      else if (count >= 4) {
+        if (tolower(c) == 'w')
+          desired_fullscreen = 0;
+        if (tolower(c) == 'f')
+          desired_fullscreen = 1;
       }
     }
   }
-  else
-  {
+  else {
     w = desired_screenwidth;
     h = desired_screenheight;
   }
 
   mode = I_GetModeFromString(default_videomode);
-  if ((i=M_CheckParm("-vidmode")) && i<myargc-1)
-  {
-    mode = I_GetModeFromString(myargv[i+1]);
-  }
+  if ((i = M_CheckParm("-vidmode")) && i < myargc - 1)
+    mode = I_GetModeFromString(myargv[i + 1]);
   
   V_InitMode(mode);
 
@@ -1265,7 +1257,7 @@ void I_InitScreenResolution(void)
   V_FreeScreens();
 
   // set first three to standard values
-  for (i=0; i<3; i++) {
+  for (i = 0; i < 3; i++) {
     screens[i].width = REAL_SCREENWIDTH;
     screens[i].height = REAL_SCREENHEIGHT;
     screens[i].byte_pitch = REAL_SCREENPITCH;
@@ -1280,15 +1272,16 @@ void I_InitScreenResolution(void)
 
   I_InitBuffersRes();
 
-  lprintf(LO_INFO,"I_InitScreenResolution: Using resolution %dx%d\n", REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
+  lprintf(LO_INFO, "I_InitScreenResolution: Using resolution %dx%d\n",
+    REAL_SCREENWIDTH, REAL_SCREENHEIGHT
+  );
 }
 
 // 
 // Set the window caption
 //
 
-void I_SetWindowCaption(void)
-{
+void I_SetWindowCaption(void) {
   size_t len = strlen(PACKAGE_NAME) + strlen(PACKAGE_VERSION) + 3;
   char *buf = calloc(len, sizeof(char));
 
@@ -1375,17 +1368,14 @@ int I_GetModeFromString(const char *modestr)
 void I_UpdateVideoMode(void) {
   int init_flags;
 
-  if(screen)
-  {
+  if (screen) {
     // video capturing cannot be continued with new screen settings
     I_CaptureFinish();
 
 #ifdef GL_DOOM
-    if (V_GetMode() == VID_MODEGL)
-    {
+    if (V_GetMode() == VID_MODEGL) {
       gld_CleanMemory();
-      // hires patches
-      gld_CleanStaticMemory();
+      gld_CleanStaticMemory(); // hires patches
     }
 #endif
 
@@ -1395,8 +1385,7 @@ void I_UpdateVideoMode(void) {
     screen = NULL;
 
 #ifdef GL_DOOM
-    if (vid_8ingl.surface)
-    {
+    if (vid_8ingl.surface) {
       SDL_FreeSurface(vid_8ingl.surface);
       vid_8ingl.surface = NULL;
     }
@@ -1409,9 +1398,13 @@ void I_UpdateVideoMode(void) {
   screen_multiply = render_screen_multiply;
 
   // Initialize SDL with this graphics mode
+#ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
     init_flags = SDL_OPENGL;
-  } else {
+  }
+  else
+#endif
+  {
     if (use_doublebuffer)
       init_flags = SDL_DOUBLEBUF;
     else
@@ -1432,8 +1425,7 @@ void I_UpdateVideoMode(void) {
     init_flags |= SDL_RESIZABLE;
 #endif
 
-  if (sdl_video_window_pos && sdl_video_window_pos[0])
-  {
+  if (sdl_video_window_pos && sdl_video_window_pos[0]) {
     char buf[80];
     strcpy(buf, "SDL_VIDEO_WINDOW_POS=");
     strncat(buf, sdl_video_window_pos, sizeof(buf) - sizeof(buf[0]) - strlen(buf));
@@ -1444,9 +1436,9 @@ void I_UpdateVideoMode(void) {
   vid_8ingl.enabled = false;
 #endif
 
+#ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL)
   {
-#ifdef GL_DOOM
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 0);
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 0);
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 0);
@@ -1535,8 +1527,10 @@ void I_UpdateVideoMode(void) {
     }
   }
 
-  if(screen == NULL) {
-    I_Error("Couldn't set %dx%d video mode [%s]", REAL_SCREENWIDTH, REAL_SCREENHEIGHT, SDL_GetError());
+  if (screen == NULL) {
+    I_Error("Couldn't set %dx%d video mode [%s]",
+      REAL_SCREENWIDTH, REAL_SCREENHEIGHT, SDL_GetError()
+    );
   }
 
   SMP_Init();
@@ -1544,9 +1538,7 @@ void I_UpdateVideoMode(void) {
 #if SDL_VERSION_ATLEAST(1, 3, 0)
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL)
-  {
     SDL_GL_SetSwapInterval((gl_vsync ? 1 : 0));
-  }
 #endif
 #endif
 
@@ -1555,18 +1547,20 @@ void I_UpdateVideoMode(void) {
     gld_MultisamplingCheck();*/
 #endif
 
-  lprintf(LO_INFO, "I_UpdateVideoMode: 0x%x, %s, %s\n", init_flags, screen->pixels ? "SDL buffer" : "own buffer", SDL_MUSTLOCK(screen) ? "lock-and-copy": "direct access");
+  lprintf(LO_INFO, "I_UpdateVideoMode: 0x%x, %s, %s\n",
+    init_flags,
+    screen->pixels ? "SDL buffer" : "own buffer",
+    SDL_MUSTLOCK(screen) ? "lock-and-copy": "direct access"
+  );
 
   // Get the info needed to render to the display
-  if (screen_multiply==1 && !SDL_MUSTLOCK(screen))
-  {
+  if (screen_multiply == 1 && !SDL_MUSTLOCK(screen)) {
     screens[0].not_on_heap = true;
     screens[0].data = (unsigned char *) (screen->pixels);
     screens[0].byte_pitch = screen->pitch;
     screens[0].int_pitch = screen->pitch / V_GetModePixelDepth(VID_MODE32);
   }
-  else
-  {
+  else {
     screens[0].not_on_heap = false;
   }
 

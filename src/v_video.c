@@ -298,8 +298,7 @@ static void FUNC_V_FillPatch(int lump, int scrn, int x, int y, int width, int he
  * cphipps - used to have M_DrawBackground, but that was used the framebuffer
  * directly, so this is my code from the equivalent function in f_finale.c
  */
-static void FUNC_V_DrawBackground(const char* flatname, int scrn)
-{
+static void FUNC_V_DrawBackground(const char *flatname, int scrn) {
   V_FillFlatName(flatname, scrn, 0, 0, SCREENWIDTH, SCREENHEIGHT, VPT_NONE);
 }
 
@@ -310,12 +309,8 @@ static void FUNC_V_DrawBackground(const char* flatname, int scrn)
 // No return
 //
 
-void V_Init (void)
-{
-  int  i;
-
-  // reset the all
-  for (i = 0; i<NUM_SCREENS; i++) {
+void V_Init (void) {
+  for (int i = 0; i < NUM_SCREENS; i++) {
     screens[i].data = NULL;
     screens[i].not_on_heap = false;
     screens[i].width = 0;
@@ -338,19 +333,17 @@ void V_Init (void)
 //  means that their inner loops weren't so well optimised, so merging code may even speed them).
 //
 static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
-        int cm, enum patch_translation_e flags)
-{
+                           int cm, enum patch_translation_e flags) {
   const byte *trans;
 
   stretch_param_t *params;
 
-  if (cm<CR_LIMIT)
-    trans=colrngs[cm];
+  if (cm < CR_LIMIT)
+    trans = colrngs[cm];
   else
-    trans=translationtables + 256*((cm-CR_LIMIT)-1);
+    trans = translationtables + 256 * ((cm - CR_LIMIT) - 1);
   
-  if (!(flags & VPT_NOOFFSET))
-  {
+  if (!(flags & VPT_NOOFFSET)) {
     y -= patch->topoffset;
     x -= patch->leftoffset;
   }
@@ -370,10 +363,10 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
     // CPhipps - move stretched patch drawing code here
     //         - reformat initialisers, move variables into inner blocks
 
-    int   col;
-    int   w = (patch->width << 16) - 1; // CPhipps - -1 for faster flipping
-    int   left, right, top, bottom;
-    int   DXI, DYI;
+    int col;
+    int w = (patch->width << 16) - 1; // CPhipps - -1 for faster flipping
+    int left, right, top, bottom;
+    int DXI, DYI;
     R_DrawColumn_f colfunc;
     draw_column_vars_t dcvars;
     draw_vars_t olddrawvars = drawvars;
@@ -386,15 +379,19 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
     drawvars.int_pitch = screens[scrn].int_pitch;
 
     if (flags & VPT_TRANS) {
-      colfunc = R_GetDrawColumnFunc(RDC_PIPELINE_TRANSLATED, drawvars.filterpatch, RDRAW_FILTER_NONE);
+      colfunc = R_GetDrawColumnFunc(
+        RDC_PIPELINE_TRANSLATED, drawvars.filterpatch, RDRAW_FILTER_NONE
+      );
       dcvars.translation = trans;
-    } else {
-      colfunc = R_GetDrawColumnFunc(RDC_PIPELINE_STANDARD, drawvars.filterpatch, RDRAW_FILTER_NONE);
+    }
+    else {
+      colfunc = R_GetDrawColumnFunc(
+        RDC_PIPELINE_STANDARD, drawvars.filterpatch, RDRAW_FILTER_NONE
+      );
     }
 
     //e6y: predefined arrays are used
-    if (!(flags & VPT_STRETCH_MASK))
-    {
+    if (!(flags & VPT_STRETCH_MASK)) {
       DXI = 1 << 16;
       DYI = 1 << 16;
 
@@ -403,23 +400,26 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
       right = x + patch->width - 1;
       bottom = y + patch->height;
     }
-    else
-    {
+    else {
       DXI = params->video->xstep;
       DYI = params->video->ystep;
 
       //FIXME: Is it needed only for F_BunnyScroll?
 
-      left = (x < 0 || x > 320 ? (x * params->video->width) / 320 : params->video->x1lookup[x]);
-      top =  (y < 0 || y > 200 ? (y * params->video->height) / 200 : params->video->y1lookup[y]);
+      left = (x < 0 || x > 320 ?
+             (x * params->video->width) / 320 :
+             params->video->x1lookup[x]);
+      top =  (y < 0 || y > 200 ?
+             (y * params->video->height) / 200 :
+             params->video->y1lookup[y]);
 
       if (x + patch->width < 0 || x + patch->width > 320)
-        right = ( ((x + patch->width - 1) * params->video->width) / 320 );
+        right = (((x + patch->width - 1) * params->video->width) / 320);
       else
         right = params->video->x2lookup[x + patch->width - 1];
 
       if (y + patch->height < 0 || y + patch->height > 200)
-        bottom = ( ((y + patch->height - 0) * params->video->height) / 200 );
+        bottom = (((y + patch->height - 0) * params->video->height) / 200);
       else
         bottom = params->video->y2lookup[y + patch->height - 1];
 
@@ -445,12 +445,12 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
       col = 0;
     }
 
-    for (dcvars.x=left; dcvars.x<=right; dcvars.x++, col+=DXI) {
+    for (dcvars.x = left; dcvars.x <= right; dcvars.x++, col += DXI) {
       int i;
-      const int colindex = (flags & VPT_FLIP) ? ((w - col)>>16): (col>>16);
+      const int colindex = (flags & VPT_FLIP) ? ((w - col) >> 16): (col >> 16);
       const rcolumn_t *column = R_GetPatchColumn(patch, colindex);
-      const rcolumn_t *prevcolumn = R_GetPatchColumn(patch, colindex-1);
-      const rcolumn_t *nextcolumn = R_GetPatchColumn(patch, colindex+1);
+      const rcolumn_t *prevcolumn = R_GetPatchColumn(patch, colindex - 1);
+      const rcolumn_t *nextcolumn = R_GetPatchColumn(patch, colindex + 1);
 
       // ignore this column if it's to the left of our clampRect
       if (dcvars.x < 0)
@@ -458,21 +458,24 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
       if (dcvars.x >= SCREENWIDTH)
         break;
 
-      dcvars.texu = ((flags & VPT_FLIP) ? ((patch->width<<FRACBITS)-col) : col) % (patch->width<<FRACBITS);
+      dcvars.texu = ((flags & VPT_FLIP) ?
+                      ((patch->width << FRACBITS) - col) :
+                      col
+                    ) % (patch->width << FRACBITS);
 
       // step through the posts in a column
-      for (i=0; i<column->numPosts; i++) {
+      for (i = 0; i < column->numPosts; i++) {
         const rpost_t *post = &column->posts[i];
         int yoffset = 0;
 
         //e6y
-        if (!(flags & VPT_STRETCH_MASK))
-        {
+        if (!(flags & VPT_STRETCH_MASK)) {
           dcvars.yl = y + post->topdelta;
-          dcvars.yh = ((((y + post->topdelta + post->length) << 16) - (FRACUNIT>>1))>>FRACBITS);
+          dcvars.yh = ((
+            ((y + post->topdelta + post->length) << 16) - (FRACUNIT >> 1)
+          ) >> FRACBITS);
         }
-        else
-        {
+        else {
           // e6y
           // More accurate patch drawing from Eternity.
           // Predefined arrays are used instead of dynamic calculation 
@@ -504,26 +507,30 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
           dcvars.edgeslope &= ~RDRAW_EDGESLOPE_BOT_MASK;
         }
         if (dcvars.yh >= SCREENHEIGHT) {
-          dcvars.yh = SCREENHEIGHT-1;
+          dcvars.yh = SCREENHEIGHT - 1;
           dcvars.edgeslope &= ~RDRAW_EDGESLOPE_BOT_MASK;
         }
 
         if (dcvars.yl < 0) {
-          yoffset = 0-dcvars.yl;
+          yoffset = 0 - dcvars.yl;
           dcvars.yl = 0;
           dcvars.edgeslope &= ~RDRAW_EDGESLOPE_TOP_MASK;
         }
         if (dcvars.yl < top) {
-          yoffset = top-dcvars.yl;
+          yoffset = top - dcvars.yl;
           dcvars.yl = top;
           dcvars.edgeslope &= ~RDRAW_EDGESLOPE_TOP_MASK;
         }
 
         dcvars.source = column->pixels + post->topdelta + yoffset;
-        dcvars.prevsource = prevcolumn ? prevcolumn->pixels + post->topdelta + yoffset: dcvars.source;
-        dcvars.nextsource = nextcolumn ? nextcolumn->pixels + post->topdelta + yoffset: dcvars.source;
+        dcvars.prevsource = prevcolumn ?
+                            prevcolumn->pixels + post->topdelta + yoffset :
+                            dcvars.source;
+        dcvars.nextsource = nextcolumn ?
+                            nextcolumn->pixels + post->topdelta + yoffset :
+                            dcvars.source;
 
-        dcvars.texturemid = -((dcvars.yl-centery)*dcvars.iscale);
+        dcvars.texturemid = -((dcvars.yl - centery) * dcvars.iscale);
 
         //e6y
         dcvars.dy = params->deltay1;

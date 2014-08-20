@@ -2,11 +2,11 @@
 
 ## Prototype
 
-1. Hitscan sounds cut off (actually, probably just sounds with NULL origin)
+1. Weird crash on Windows (heap corruption on the status bar's screen's data)
 
-1. Client connection problems
+1. Missing game state server crash
 
-1. Don't reset `retraction_timeout`, just keep scrolling
+1. Super-fast doomguy face
 
 ## ZDDL
 
@@ -37,7 +37,7 @@
 1. SNDCURVE
 
 1. ZDoom physics
-  * ZDoom SSG spread
+  * Including ZDoom SSG spread
 
 1. PWO
 
