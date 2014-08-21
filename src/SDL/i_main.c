@@ -686,8 +686,6 @@ int main(int argc, char **argv)
 
   I_LoadCustomFonts();
 
-  g_on_error_stack_trace(g_get_prgname());
-
   D_DoomMain();
 
   return 0;

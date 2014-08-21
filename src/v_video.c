@@ -1443,16 +1443,19 @@ int V_BestColor(const unsigned char *palette, int r, int g, int b)
 }
 
 // Alt-Enter: fullscreen <-> windowed
-void V_ToggleFullscreen(void)
-{
-  if (desired_fullscreen == use_fullscreen)
-  {
-    use_fullscreen = (use_fullscreen ? 0 : 1);
+void V_ToggleFullscreen(void) {
+  if (desired_fullscreen == use_fullscreen) {
+    if (use_fullscreen)
+      use_fullscreen = false;
+    else
+      use_fullscreen = true;
     desired_fullscreen = use_fullscreen;
   }
-  else
-  {
-    desired_fullscreen = (desired_fullscreen ? 0 : 1);
+  else {
+    if (desired_fullscreen)
+      desired_fullscreen = false;
+    else
+      desired_fullscreen = true;
   }
 
   I_UpdateVideoMode();
@@ -1461,23 +1464,18 @@ void V_ToggleFullscreen(void)
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL)
-  {
     gld_PreprocessLevel();
-  }
 #endif
 }
 
-void V_ChangeScreenResolution(void)
-{
+void V_ChangeScreenResolution(void) {
   I_UpdateVideoMode();
 
   C_Reset();
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL)
-  {
     gld_PreprocessLevel();
-  }
 #endif
 }
 

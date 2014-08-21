@@ -243,7 +243,7 @@ static void I_GetEvent(void) {
         UpdateFocus();
       break;
       case SDL_VIDEORESIZE:
-        ApplyWindowResize(Event);
+        // ApplyWindowResize(Event);
       break;
       case SDL_QUIT:
         S_StartSound(NULL, sfx_swtchn);
@@ -869,9 +869,7 @@ void I_PreInitGraphics(void)
   free(video_driver);
 
   if (p < 0)
-  {
     I_Error("Could not initialize SDL [%s]", SDL_GetError());
-  }
 
   atexit(I_ShutdownSDL);
 }

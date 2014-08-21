@@ -32,6 +32,7 @@
 #include "d_player.h"
 #include "g_game.h"
 #include "lprintf.h"
+#include "i_main.h"
 #include "i_system.h"
 #include "m_swap.h"
 #include "p_user.h"
