@@ -297,15 +297,12 @@ void Done_ConsoleWin(void)
 #endif
 
 void lprintf(OutputLevels pri, const char *s, ...) {
-  va_list args, console_args, error_args;
+  va_list args;
 
   va_start(args, s);
 
-  va_copy(console_args, args);
-  va_copy(error_args, args);
-
   if (pri & cons_output_mask)
-    C_VPrintf(s, console_args);
+    C_VPrintf(s, args);
 
   /* CG: TODO: Removed error mask handling, re-add it? */
 
@@ -321,13 +318,14 @@ void lprintf(OutputLevels pri, const char *s, ...) {
  * killough 3/20/98: add const
  */
 
-void I_Error(const char *error, ...)
-{
+void I_Error(const char *error, ...) {
   char errmsg[MAX_MESSAGE_LENGTH];
   va_list argptr;
+
   va_start(argptr,error);
-  doom_vsnprintf(errmsg,sizeof(errmsg),error,argptr);
+  doom_vsnprintf(errmsg, sizeof(errmsg), error, argptr);
   va_end(argptr);
+
   lprintf(LO_ERROR, "%s\n", errmsg);
 #ifdef _MSC_VER
   if (!M_CheckParm ("-nodraw")) {

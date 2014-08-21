@@ -227,20 +227,14 @@ void N_Init(void) {
 
 void N_Disconnect(void) {
   int res = 0;
-  netpeer_t *np = NULL;
   ENetEvent net_event;
 
   if (net_host == NULL)
     return;
 
-  for (int i = 0; i < N_PeerGetCount(); i++) {
-    np = N_PeerGet(i);
-
-    if (np == NULL)
-      continue;
-
-    printf("N_Disconnect: Disconnecting peer %d\n", i);
-    enet_peer_disconnect(np->peer, 0);
+  NETPEER_FOR_EACH(entry) {
+    P_Printf(consoleplayer, "Disconnecting peer %d\n", entry.np->peernum);
+    enet_peer_disconnect(entry.np->peer, 0);
   }
 
   if (CLIENT)
@@ -250,9 +244,9 @@ void N_Disconnect(void) {
     res = enet_host_service(net_host, &net_event, DISCONNECT_TIMEOUT * 1000);
 
     if (res > 0) {
-      int peernum = N_PeerGetNum(net_event.peer);
+      int peernum = N_PeerForPeer(net_event.peer);
 
-      if (peernum == -1) {
+      if (!peernum) {
         P_Printf(consoleplayer,
           "N_Disconnect: Received network event from unknown peer %s:%u\n",
           N_IPToConstString(doom_b32(net_event.peer->address.host)),
@@ -274,13 +268,9 @@ void N_Disconnect(void) {
     }
   }
 
-  for (int i = 0; i < N_PeerGetCount(); i++) {
-    np = N_PeerGet(i);
-
-    if (np != NULL) {
-      enet_peer_reset(np->peer);
-      N_PeerRemove(np);
-    }
+  NETPEER_FOR_EACH(entry) {
+    enet_peer_reset(entry.np->peer);
+    N_PeerIterRemove(entry.it, entry.np);
   }
 
   memset(&net_event, 0, sizeof(ENetEvent));
@@ -290,7 +280,7 @@ void N_Disconnect(void) {
 }
 
 void N_Shutdown(void) {
-  printf("N_Shutdown: shutting down\n");
+  P_Echo(consoleplayer, "N_Shutdown: shutting down");
   N_Disconnect();
 
   enet_deinitialize();
@@ -425,8 +415,6 @@ void N_DisconnectPeer(int peernum) {
   P_Printf(consoleplayer, "N_DisconnectPeer: Disconnecting peer %d\n",
     peernum
   );
-  printf("N_DisconnectPeer: Disconnecting peer %d\n", peernum);
-  enet_peer_disconnect(np->peer, 0);
   N_PeerSetDisconnected(peernum);
 }
 
@@ -443,32 +431,32 @@ void N_DisconnectPlayer(short playernum) {
 }
 
 void N_ServiceNetworkTimeout(int timeout_ms) {
+  netpeer_t *np;
   int status = 0;
   int peernum = -1;
-  netpeer_t *np = NULL;
   ENetEvent net_event;
 
-  for (int i = 0; i < N_PeerGetCount(); i++) {
-    netpeer_t *np = N_PeerGet(i);
+  if (net_host == NULL)
+    return;
 
-    if (np == NULL)
-      continue;
+  NETPEER_FOR_EACH(entry) {
+    np = entry.np;
 
-    if (N_PeerCheckTimeout(i)) {
+    if (N_PeerCheckTimeout(np->peernum)) {
       P_Printf(consoleplayer, "Peer %s:%u timed out.\n",
         N_IPToConstString(doom_b32(np->peer->address.host)),
         np->peer->address.port
       );
 
       enet_peer_reset(np->peer);
-      N_PeerRemove(np);
+      N_PeerIterRemove(entry.it, np);
       continue;
     }
 
-    N_PeerFlushBuffers(i);
+    N_PeerFlushBuffers(np->peernum);
   }
 
-  while (true) {
+  while (net_host != NULL) {
     status = enet_host_service(net_host, &net_event, timeout_ms);
 
     /*
@@ -491,7 +479,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     if (net_event.type == ENET_EVENT_TYPE_CONNECT) {
       if (SERVER) {
         peernum = N_PeerAdd();
-        netpeer_t *np = N_PeerGet(peernum);
+        np = N_PeerGet(peernum);
 
         if (np == NULL) {
           P_Echo(consoleplayer, "N_ServiceNetwork: Getting new peer failed");
@@ -502,26 +490,26 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
           net_event.peer, 0, NET_TIMEOUT * 1000, NET_TIMEOUT * 1000
         );
 
-        N_PeerSetConnected(peernum, net_event.peer);
+        N_PeerSetConnected(np->peernum, net_event.peer);
 
         SV_SetupNewPeer(peernum);
       }
       else {
-        np = N_PeerGet(0);
+        np = CL_GetServerPeer();
 
         if (np == NULL) {
-          C_Echo(
+          P_Echo(consoleplayer,
             "N_ServiceNetwork: Received a 'connect' event but no connection "
             "was requested."
           );
           continue;
         }
 
-        N_PeerSetConnected(0, net_event.peer);
+        N_PeerSetConnected(np->peernum, net_event.peer);
       }
     }
     else if (net_event.type == ENET_EVENT_TYPE_DISCONNECT) {
-      if ((peernum = N_PeerGetNum(net_event.peer)) == -1) {
+      if (!(peernum = N_PeerForPeer(net_event.peer))) {
         P_Printf(consoleplayer,
           "N_ServiceNetwork: Received 'disconnect' event from unknown "
           "peer %s:%u.\n",
@@ -530,10 +518,15 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
         );
         continue;
       }
+      if (CLIENT) {
+        N_Disconnect();
+        I_SafeExit(0);
+      }
+
       N_PeerRemove(N_PeerGet(peernum));
     }
     else if (net_event.type == ENET_EVENT_TYPE_RECEIVE) {
-      if ((peernum = N_PeerGetNum(net_event.peer)) == -1) {
+      if (!(peernum = N_PeerForPeer(net_event.peer))) {
         P_Printf(consoleplayer,
           "N_ServiceNetwork: Received 'packet' event from unknown peer %s:%u.\n",
           N_IPToConstString(doom_b32(net_event.peer->address.host)),
@@ -580,7 +573,7 @@ uint32_t N_GetUploadBandwidth(void) {
   uint32_t ms;
   uint32_t bytes_sent;
   uint32_t time_elapsed;
-  netpeer_t *np = N_PeerGet(0);
+  netpeer_t *np = CL_GetServerPeer();
 
   if (np == NULL)
     return 0;
@@ -614,7 +607,7 @@ uint32_t N_GetDownloadBandwidth(void) {
   uint32_t ms;
   uint32_t bytes_received;
   uint32_t time_elapsed;
-  netpeer_t *np = N_PeerGet(0);
+  netpeer_t *np = CL_GetServerPeer();
 
   if (np == NULL)
     return 0;

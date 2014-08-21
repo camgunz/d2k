@@ -96,7 +96,7 @@ static void build_command(void) {
   local_command_index++;
 
   if (CLIENT) {
-    netpeer_t *server = N_PeerGet(0);
+    netpeer_t *server = CL_GetServerPeer();
 
     if (server != NULL)
       server->sync.outdated = true;
@@ -124,16 +124,11 @@ static void run_tic(void) {
   if (DELTASERVER) {
     N_SaveState();
 
-    for (int i = 0; i < N_PeerGetCount(); i++) {
-      netpeer_t *client = N_PeerGet(i);
-
-      if (client == NULL)
-        continue;
-
-      if (client->sync.initialized)
-        client->sync.outdated = true;
-      else if (gametic > client->sync.tic)
-        SV_SendSetup(client->playernum);
+    NETPEER_FOR_EACH(entry) {
+      if (entry.np->sync.initialized)
+        entry.np->sync.outdated = true;
+      else if (gametic > entry.np->sync.tic)
+        SV_SendSetup(entry.np->playernum);
     }
 
     N_UpdateSync();
@@ -172,7 +167,7 @@ static int run_commandsync_tics(int command_count) {
     run_tics(tic_count);
 
   if (CMDCLIENT && (command_count > 0)) {
-    netpeer_t *server = N_PeerGet(0);
+    netpeer_t *server = CL_GetServerPeer();
 
     if (server != NULL)
       server->sync.outdated = true;
@@ -182,8 +177,6 @@ static int run_commandsync_tics(int command_count) {
 }
 
 static int process_tics(int tics_elapsed) {
-  netpeer_t *p;
-
   if (tics_elapsed <= 0)
     return 0;
 
@@ -191,17 +184,6 @@ static int process_tics(int tics_elapsed) {
     return run_tics(tics_elapsed);
 
   D_Log(LOG_SYNC, "(%d) %d tics elapsed\n", gametic, tics_elapsed);
-
-  p = N_PeerGet(0);
-
-  if (p != NULL) {
-    if (SERVER)
-      D_Log(LOG_SYNC, "\n");
-
-    D_Log(LOG_SYNC, "(%d) === Running %d TICs (%d/%d)\n",
-      gametic, tics_elapsed, p->sync.tic, p->sync.cmd
-    );
-  }
 
   if (CMDSYNC)
     return run_commandsync_tics(tics_elapsed);
@@ -243,7 +225,7 @@ static void deltaclient_service_network(void) {
   if (!DELTACLIENT)
     return;
 
-  server = N_PeerGet(0);
+  server = CL_GetServerPeer();
 
   if (gametic <= 0) {
     service_network();
@@ -377,7 +359,7 @@ void N_InitNetGame(void) {
 
       P_Echo(consoleplayer, "N_InitNetGame: Connected!");
 
-      if (N_PeerGet(0) == NULL)
+      if (CL_GetServerPeer() == NULL)
         I_Error("N_InitNetGame: Server peer was NULL");
 
       connect_time = time(NULL);
@@ -498,7 +480,7 @@ void CL_SetAuthorizationLevel(auth_level_e level) {
 }
 
 bool CL_LoadState(void) {
-  netpeer_t *server = N_PeerGet(0);
+  netpeer_t *server = CL_GetServerPeer();
   game_state_delta_t *delta = NULL;
   cbuf_t *player_commands = &players[consoleplayer].commands;
 
@@ -611,19 +593,16 @@ void SV_RemoveOldCommands(void) {
   if (!CMDSYNC)
     return;
 
-  for (int i = 0; i < N_PeerGetCount(); i++) {
-    netpeer_t *client = N_PeerGet(i);
+  NETPEER_FOR_EACH(entry) {
+    netpeer_t *client = entry.np;
 
-    if (client != NULL && client->sync.tic)
+    if (client->sync.tic != 0)
       oldest_gametic = MIN(oldest_gametic, client->sync.tic);
   }
 
-  for (int i = 0; i < N_PeerGetCount(); i++) {
+  NETPEER_FOR_EACH(entry) {
+    netpeer_t *client = entry.np;
     cbuf_t *commands = NULL;
-    netpeer_t *client = N_PeerGet(i);
-
-    if (client == NULL)
-      continue;
 
     commands = &players[client->playernum].commands;
 
@@ -645,10 +624,10 @@ void SV_RemoveOldCommands(void) {
 void SV_RemoveOldStates(void) {
   int oldest_gametic = gametic;
 
-  for (int i = 0; i < N_PeerGetCount(); i++) {
-    netpeer_t *np = N_PeerGet(i);
+  NETPEER_FOR_EACH(entry) {
+    netpeer_t *np = entry.np;
 
-    if (np != NULL && np->sync.tic > 0)
+    if (np->sync.tic > 0)
       oldest_gametic = MIN(oldest_gametic, np->sync.tic);
   }
 
@@ -714,7 +693,7 @@ void N_TryRunTics(void) {
 
   cleanup_old_commands_and_states();
 
-  if (CLIENT && gametic > 0 && N_PeerGet(0) == NULL)
+  if (CLIENT && gametic > 0 && CL_GetServerPeer() == NULL)
     I_Error("Server disconnected.\n");
 
   if ((!SERVER) && render_fast)

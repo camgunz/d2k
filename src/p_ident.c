@@ -31,7 +31,7 @@ static GHashTable *id_hash = NULL;
 static uint32_t max_id = 0;
 
 void P_IdentInit(void) {
-  id_hash = g_hash_table_new(g_direct_hash, g_direct_equal);
+  id_hash = g_hash_table_new(NULL, NULL);
 }
 
 void P_IdentGetID(void *obj, uint32_t *obj_id) {

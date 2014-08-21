@@ -2,10 +2,10 @@
 export SDL_AUDIODRIVER="pulse"
 
 PORT=10666
-HOST=127.0.0.1
 HOST=totaltrash.org
+HOST=127.0.0.1
 
-CMD="cbuild/doom2k -net $HOST:$PORT"
+CMD="cbuild/doom2k -nomouse -net $HOST:$PORT"
 
 # gdb -ex "source gdbclient.txt" --args $CMD
 # gdb --args $CMD

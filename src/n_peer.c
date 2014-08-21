@@ -23,6 +23,7 @@
 
 #include "z_zone.h"
 
+#include <glib.h>
 #include <enet/enet.h>
 
 #include "doomstat.h"
@@ -48,7 +49,13 @@ typedef struct tocentry_s {
   unsigned char type;
 } tocentry_t;
 
-static obuf_t net_peers;
+typedef struct packet_buf_s {
+  unsigned char *data;
+  unsigned int size;
+  unsigned int cursor;
+} packet_buf_t;
+
+static GHashTable *net_peers = NULL;
 
 static void init_channel(netchan_t *nc) {
   M_CBufInit(&nc->toc, sizeof(tocentry_t));
@@ -85,12 +92,6 @@ static void serialize_toc(netchan_t *chan) {
       I_Error("Error writing UChar: %s\n", cmp_strerror(&chan->packed_toc.cmp));
   }
 }
-
-typedef struct packet_buf_s {
-  unsigned char *data;
-  unsigned int size;
-  unsigned int cursor;
-} packet_buf_t;
 
 static bool packet_read(cmp_ctx_t *ctx, void *data, size_t limit) {
   packet_buf_t *packet_data = (packet_buf_t *)ctx->buf;
@@ -130,12 +131,16 @@ static dboolean deserialize_toc(cbuf_t *toc, unsigned char *data,
     tocentry_t *message = (tocentry_t *)M_CBufGetFirstFreeOrNewSlot(toc);
 
     if (!cmp_read_uint(&cmp, &message->index)) {
-      printf("Error reading message index: %s\n", cmp_strerror(&cmp));
+      P_Printf(consoleplayer,
+        "Error reading message index: %s\n", cmp_strerror(&cmp)
+      );
       return false;
     }
 
     if (!cmp_read_uchar(&cmp, &message->type)) {
-      printf("Error reading message type: %s\n", cmp_strerror(&cmp));
+      P_Printf(consoleplayer, "Error reading message type: %s\n",
+        cmp_strerror(&cmp)
+      );
       return false;
     }
   }
@@ -182,11 +187,24 @@ static void free_netsync(netsync_t *ns) {
   M_BufferFree(&ns->delta.data);
 }
 
-void N_InitPeers(void) {
-  M_OBufInit(&net_peers);
+static void free_peer(netpeer_t *np) {
+  P_Printf(consoleplayer, "Removing peer %u %s:%u\n",
+    np->peernum,
+    N_IPToConstString((doom_b32(np->peer->address.host))),
+    np->peer->address.port
+  );
+
+  players[np->playernum].playerstate = PST_DISCONNECTED;
+  free_netcom(&np->netcom);
+  free_netsync(&np->sync);
+  free(np);
 }
 
-int N_PeerAdd(void) {
+void N_InitPeers(void) {
+  net_peers = g_hash_table_new(NULL, NULL);
+}
+
+unsigned int N_PeerAdd(void) {
   netpeer_t *np = calloc(1, sizeof(netpeer_t));
 
   /* CG: TODO: Add some kind of check for MAXCLIENTS */
@@ -194,12 +212,16 @@ int N_PeerAdd(void) {
   init_netcom(&np->netcom);
   init_netsync(&np->sync);
 
+  np->peernum = 1;
+  while (g_hash_table_contains(net_peers, GUINT_TO_POINTER(np->peernum)))
+    np->peernum++;
+
   np->playernum       = 0;
   np->peer            = NULL;
   np->connect_time    = time(NULL);
   np->disconnect_time = 0;
 
-  np->peernum = M_OBufInsertAtFirstFreeSlotOrAppend(&net_peers, np);
+  g_hash_table_insert(net_peers, GUINT_TO_POINTER(np->peernum), np);
 
   return np->peernum;
 }
@@ -227,75 +249,94 @@ void N_PeerSetDisconnected(int peernum) {
     I_Error("N_PeerSetConnected: Invalid peer %d.\n", peernum);
 
   np->disconnect_time = time(NULL);
+  enet_peer_disconnect(np->peer, 0);
 }
 
 void N_PeerRemove(netpeer_t *np) {
-  int peernum = N_PeerGetNum(np->peer);
-
-  P_Printf(consoleplayer, "Removing peer %s:%u\n",
-    N_IPToConstString((doom_b32(np->peer->address.host))),
-    np->peer->address.port
-  );
-
-  players[np->playernum].playerstate = PST_DISCONNECTED;
-
-  free_netcom(&np->netcom);
-  free_netsync(&np->sync);
-
-  np->peernum         = 0;
-  np->playernum       = 0;
-  np->peer            = NULL;
-  np->connect_time    = 0;
-  np->disconnect_time = 0;
-
-  M_OBufRemove(&net_peers, peernum);
+  g_hash_table_remove(net_peers, GUINT_TO_POINTER(np->peernum));
+  free_peer(np);
 }
 
-int N_PeerGetCount(void) {
-  return M_OBufGetObjectCount(&net_peers);
+void N_PeerIterRemove(netpeer_iter_t *it, netpeer_t *np) {
+  g_hash_table_iter_remove(it);
+  free_peer(np);
+}
+
+unsigned int N_PeerGetCount(void) {
+  return g_hash_table_size(net_peers);
 }
 
 netpeer_t* N_PeerGet(int peernum) {
-  return M_OBufGet(&net_peers, peernum);
+  return g_hash_table_lookup(net_peers, GUINT_TO_POINTER(peernum));
 }
 
-int N_PeerGetNum(ENetPeer *peer) {
-  int index = -1;
-  netpeer_t *np = NULL;
+netpeer_t* CL_GetServerPeer(void) {
+  return N_PeerGet(1);
+}
 
-  while (M_OBufIter(&net_peers, &index, (void **)&np)) {
-    if (np->peer->connectID == peer->connectID) {
-      return index;
-    }
+unsigned int N_PeerForPeer(ENetPeer *peer) {
+  GHashTableIter it;
+  gpointer key, value;
+
+  g_hash_table_iter_init(&it, net_peers);
+
+  while (g_hash_table_iter_next(&it, &key, &value)) {
+    netpeer_t *np = (netpeer_t *)value;
+
+    if (np->peer->connectID == peer->connectID)
+      return np->peernum;
   }
 
-  return -1;
+  return 0;
 }
 
 netpeer_t* N_PeerForPlayer(short playernum) {
-  int index = -1;
-  netpeer_t *np = NULL;
+  GHashTableIter it;
+  gpointer key, value;
 
-  while (M_OBufIter(&net_peers, &index, (void **)&np)) {
-    if (np->playernum == playernum) {
+  g_hash_table_iter_init(&it, net_peers);
+
+  while (g_hash_table_iter_next(&it, &key, &value)) {
+    netpeer_t *np = (netpeer_t *)value;
+
+    if (np->playernum == playernum)
       return np;
-    }
   }
 
   return NULL;
 }
 
-int N_PeerGetNumForPlayer(short playernum) {
-  int index = -1;
-  netpeer_t *np = NULL;
+unsigned int N_PeerGetNumForPlayer(short playernum) {
+  GHashTableIter it;
+  gpointer key, value;
 
-  while (M_OBufIter(&net_peers, &index, (void **)&np)) {
-    if (np->playernum == playernum) {
-      return index;
-    }
+  g_hash_table_iter_init(&it, net_peers);
+
+  while (g_hash_table_iter_next(&it, &key, &value)) {
+    netpeer_t *np = (netpeer_t *)value;
+
+    if (np->playernum == playernum)
+      return np->peernum;
   }
 
-  return -1;
+  return 0;
+}
+
+bool N_PeerIter(netpeer_iter_t **it, netpeer_t **np) {
+  gpointer key, value;
+
+  if (*it == NULL) {
+    *it = malloc(sizeof(GHashTableIter));
+    g_hash_table_iter_init(*it, net_peers);
+  }
+
+  if (g_hash_table_iter_next(*it, &key, &value)) {
+    *np = (netpeer_t *)value;
+    return true;
+  }
+
+  free(*it);
+  return false;
 }
 
 dboolean N_PeerCheckTimeout(int peernum) {

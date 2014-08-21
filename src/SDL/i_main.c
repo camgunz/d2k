@@ -453,13 +453,14 @@ static int has_exited;
  * Prevent infinitely recursive exits -- killough
  */
 
-void I_SafeExit(int rc)
-{
-  if (!has_exited)    /* If it hasn't exited yet, exit now -- killough */
-    {
-      has_exited=rc ? 2 : 1;
-      exit(rc);
-    }
+void I_SafeExit(int rc) {
+  if (!has_exited) {  /* If it hasn't exited yet, exit now -- killough */
+    if (rc)
+      has_exited = 2;
+    else
+      has_exited = 1;
+    exit(rc);
+  }
 }
 
 static void I_Quit (void)
@@ -684,6 +685,8 @@ int main(int argc, char **argv)
   SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
   I_LoadCustomFonts();
+
+  g_on_error_stack_trace(g_get_prgname());
 
   D_DoomMain();
 

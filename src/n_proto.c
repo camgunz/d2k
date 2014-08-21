@@ -150,7 +150,7 @@ const char *D_dehout(void); /* CG: from d_main.c */
     I_Error("%s: Invalid player %d.\n", __func__, np->playernum);
 
 #define CHECK_CONNECTION(np)                                                  \
-  if (((np) = N_PeerGet(0)) == NULL) {                                        \
+  if (((np) = CL_GetServerPeer()) == NULL) {                                  \
     P_Printf(consoleplayer, "%s: Not connected\n", __func__);                 \
     return;                                                                   \
   }
@@ -180,7 +180,7 @@ static buf_t* get_message_recipient_buffer(void) {
 }
 
 static void handle_setup(netpeer_t *np) {
-  netpeer_t *server = N_PeerGet(0);
+  netpeer_t *server = CL_GetServerPeer();
   net_sync_type_e net_sync = NET_SYNC_TYPE_NONE;
   unsigned short player_count = 0;
   unsigned short playernum = 0;
@@ -254,11 +254,8 @@ static void handle_sync(netpeer_t *np) {
 
   if (update_sync) {
     if (SERVER) {
-      for (int i = 0; i < N_PeerGetCount(); i++) {
-        netpeer_t *client = N_PeerGet(i);
-
-        if (client != NULL)
-          client->sync.outdated = true;
+      NETPEER_FOR_EACH(entry) {
+        entry.np->sync.outdated = true;
       }
     }
     else {
@@ -488,7 +485,7 @@ void N_UpdateSync(void) {
   netpeer_t *np = NULL;
 
   if (CLIENT) {
-    np = N_PeerGet(0);
+    np = CL_GetServerPeer();
 
     if (np != NULL && np->sync.outdated) {
       N_PeerClearUnreliable(np->peernum);
@@ -497,23 +494,21 @@ void N_UpdateSync(void) {
     }
   }
   else {
-    for (int i = 0; i < N_PeerGetCount(); i++) {
-      np = N_PeerGet(i);
-
-      if (np != NULL && np->sync.outdated && np->sync.tic != 0) {
-        N_PeerClearUnreliable(np->peernum);
+    NETPEER_FOR_EACH(entry) {
+      if (entry.np->sync.outdated && entry.np->sync.tic != 0) {
+        N_PeerClearUnreliable(entry.np->peernum);
 
         if (DELTASERVER) {
-          if (np->sync.tic < N_GetLatestState()->tic)
-            N_BuildStateDelta(np->sync.tic, &np->sync.delta);
+          if (entry.np->sync.tic < N_GetLatestState()->tic)
+            N_BuildStateDelta(entry.np->sync.tic, &entry.np->sync.delta);
 
-          N_PackDeltaSync(np);
+          N_PackDeltaSync(entry.np);
         }
         else {
-          N_PackSync(np);
+          N_PackSync(entry.np);
         }
 
-        np->sync.outdated = false;
+        entry.np->sync.outdated = false;
       }
     }
   }
@@ -527,9 +522,11 @@ void SV_SetupNewPeer(int peernum) {
     I_Error("SV_SetupNewPlayer: invalid peer %d.\n", peernum);
 
   for (playernum = 0; playernum < MAXPLAYERS; playernum++) {
-    if (!playeringame[playernum]) {
+    if (players[playernum].playerstate == PST_DISCONNECTED)
+      continue;
+
+    if (!playeringame[playernum])
       break;
-    }
   }
 
   if (playernum == MAXPLAYERS) {
@@ -566,11 +563,8 @@ void SV_SendMessage(short playernum, const char *message) {
 }
 
 void SV_BroadcastMessage(const char *message) {
-  for (int i = 0; i < N_PeerGetCount(); i++) {
-    netpeer_t *np = N_PeerGet(i);
-
-    if (np != NULL)
-      N_PackServerMessage(np, message);
+  NETPEER_FOR_EACH(entry) {
+    N_PackServerMessage(entry.np, message);
   }
 }
 
@@ -642,11 +636,9 @@ void CL_SendNameChange(const char *new_name) {
 }
 
 void SV_BroadcastPlayerNameChanged(short playernum, const char *new_name) {
-  for (int i = 0; i < N_PeerGetCount(); i++) {
-    netpeer_t *np = N_PeerGet(i);
-
-    if (np != NULL && np->playernum != playernum)
-      N_PackNameChange(np, playernum, new_name);
+  NETPEER_FOR_EACH(entry) {
+    if (entry.np->playernum != playernum)
+      N_PackNameChange(entry.np, playernum, new_name);
   }
 }
 
@@ -658,11 +650,9 @@ void CL_SendTeamChange(byte new_team) {
 }
 
 void SV_BroadcastPlayerTeamChanged(short playernum, byte new_team) {
-  for (int i = 0; i < N_PeerGetCount(); i++) {
-    netpeer_t *np = N_PeerGet(i);
-
-    if (np != NULL && np->playernum != playernum)
-      N_PackTeamChange(np, playernum, new_team);
+  NETPEER_FOR_EACH(entry) {
+    if (entry.np->playernum != playernum)
+      N_PackTeamChange(entry.np, playernum, new_team);
   }
 }
 
@@ -684,11 +674,9 @@ void CL_SendWSOPChange(byte new_wsop_flags) {
 }
 
 void SV_BroadcastPlayerWSOPChanged(short playernum, byte new_wsop_flags) {
-  for (int i = 0; i < N_PeerGetCount(); i++) {
-    netpeer_t *np = N_PeerGet(i);
-
-    if (np != NULL && np->playernum != playernum)
-      N_PackWSOPChange(np, playernum, new_wsop_flags);
+  NETPEER_FOR_EACH(entry) {
+    if (entry.np->playernum != playernum)
+      N_PackWSOPChange(entry.np, playernum, new_wsop_flags);
   }
 }
 
@@ -701,11 +689,9 @@ void CL_SendBobbingChange(double new_bobbing_amount) {
 
 void SV_BroadcastPlayerBobbingChanged(short playernum,
                                       double new_bobbing_amount) {
-  for (int i = 0; i < N_PeerGetCount(); i++) {
-    netpeer_t *np = N_PeerGet(i);
-
-    if (np != NULL && np->playernum != playernum)
-      N_PackBobbingChange(np, playernum, new_bobbing_amount);
+  NETPEER_FOR_EACH(entry) {
+    if (entry.np->playernum != playernum)
+      N_PackBobbingChange(entry.np, playernum, new_bobbing_amount);
   }
 }
 
@@ -718,11 +704,9 @@ void CL_SendAutoaimChange(dboolean new_autoaim_enabled) {
 
 void SV_BroadcastPlayerAutoaimChanged(short playernum,
                                       dboolean new_autoaim_enabled) {
-  for (int i = 0; i < N_PeerGetCount(); i++) {
-    netpeer_t *np = N_PeerGet(i);
-
-    if (np != NULL && np->playernum != playernum)
-      N_PackAutoaimChange(np, playernum, new_autoaim_enabled);
+  NETPEER_FOR_EACH(entry) {
+    if (entry.np->playernum != playernum)
+      N_PackAutoaimChange(entry.np, playernum, new_autoaim_enabled);
   }
 }
 
@@ -735,11 +719,9 @@ void CL_SendWeaponSpeedChange(byte new_weapon_speed) {
 
 void SV_BroadcastPlayerWeaponSpeedChanged(short playernum,
                                           byte new_weapon_speed) {
-  for (int i = 0; i < N_PeerGetCount(); i++) {
-    netpeer_t *np = N_PeerGet(i);
-
-    if (np != NULL && np->playernum != playernum)
-      N_PackWeaponSpeedChange(np, playernum, new_weapon_speed);
+  NETPEER_FOR_EACH(entry) {
+    if (entry.np->playernum != playernum)
+      N_PackWeaponSpeedChange(entry.np, playernum, new_weapon_speed);
   }
 }
 
@@ -753,11 +735,9 @@ void CL_SendColorChange(byte new_red, byte new_green, byte new_blue) {
 void SV_BroadcastPlayerColorChanged(short playernum, byte new_red,
                                                      byte new_green,
                                                      byte new_blue) {
-  for (int i = 0; i < N_PeerGetCount(); i++) {
-    netpeer_t *np = N_PeerGet(i);
-
-    if (np != NULL && np->playernum != playernum)
-      N_PackColorChange(np, playernum, new_red, new_green, new_blue);
+  NETPEER_FOR_EACH(entry) {
+    if (entry.np->playernum != playernum)
+      N_PackColorChange(entry.np, playernum, new_red, new_green, new_blue);
   }
 }
 
@@ -769,11 +749,9 @@ void CL_SendColorIndexChange(int new_color) {
 }
 
 void SV_BroadcastPlayerColorIndexChanged(short playernum, int new_color) {
-  for (int i = 0; i < N_PeerGetCount(); i++) {
-    netpeer_t *np = N_PeerGet(i);
-
-    if (np != NULL && np->playernum != playernum)
-      N_PackColorIndexChange(np, consoleplayer, new_color);
+  NETPEER_FOR_EACH(entry) {
+    if (entry.np->playernum != playernum)
+      N_PackColorIndexChange(entry.np, consoleplayer, new_color);
   }
 }
 
@@ -788,13 +766,8 @@ void SV_BroadcastPlayerSkinChanged(short playernum) {
 }
 
 void SV_ResyncPeers(void) {
-  for (int i = 1; i < MAXPLAYERS; i++) {
-    netpeer_t *np = N_PeerForPlayer(i);
-
-    if (np == NULL)
-      continue;
-
-    N_PeerResetSync(np->peernum);
+  NETPEER_FOR_EACH(entry) {
+    N_PeerResetSync(entry.np->peernum);
   }
 }
 

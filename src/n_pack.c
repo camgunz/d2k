@@ -414,7 +414,6 @@ void N_PackSetup(netpeer_t *np) {
   M_PBufWriteInt(pbuf, gs->tic);
   M_PBufWriteBytes(pbuf, M_PBufGetData(&gs->data), M_PBufGetSize(&gs->data));
   np->sync.tic = gs->tic;
-  printf("Sync TIC 4: %d\n", np->sync.tic);
 
   /*
   D_Log(LOG_SYNC, "Resources:");
@@ -568,7 +567,6 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   N_SetLatestState(gs);
 
   np->sync.tic = gs->tic;
-  printf("Sync TIC 1: %d\n", np->sync.tic);
 
   if (gamestate == GS_INTERMISSION)
     N_LoadLatestState(true);
@@ -648,25 +646,16 @@ void N_PackSync(netpeer_t *np) {
 
   M_PBufWriteInt(pbuf, np->sync.tic);
 
-  if (SERVER) {
-    for (int i = 0; i < N_PeerGetCount(); i++) {
-      if (N_PeerGet(i) != NULL) {
-        player_count++;
-      }
-    }
-  }
-  else {
+  if (SERVER)
+    player_count = N_PeerGetCount();
+  else
     player_count = 1;
-  }
 
   M_PBufWriteUShort(pbuf, player_count);
 
   if (SERVER) {
-    for (int i = 0; i < N_PeerGetCount(); i++) {
-      netpeer_t *cnp = N_PeerGet(i);
-
-      if (cnp != NULL)
-        pack_commands(pbuf, np, cnp->playernum);
+    NETPEER_FOR_EACH(entry) {
+      pack_commands(pbuf, np, entry.np->playernum);
     }
   }
   else {
@@ -790,7 +779,6 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
 
   if (m_update_sync) {
     np->sync.tic = m_sync_tic;
-    printf("Sync TIC 2: %d\n", np->sync.tic);
     np->sync.cmd = m_command_index;
     *update_sync = m_update_sync;
   }
@@ -854,7 +842,6 @@ dboolean N_UnpackDeltaSync(netpeer_t *np) {
   }
 
   np->sync.tic = m_sync_tic;
-  printf("Sync TIC 3: %d\n", np->sync.tic);
   np->sync.cmd = m_command_index;
   np->sync.delta.from_tic = m_delta_from_tic;
   np->sync.delta.to_tic = m_delta_to_tic;

@@ -4,8 +4,6 @@
 
 1. Weird crash on Windows (heap corruption on the status bar's screen's data)
 
-1. Missing game state server crash
-
 1. Super-fast doomguy face
 
 ## ZDDL
@@ -72,6 +70,8 @@
 
 1. When switching to a different interface (menu, HUD, console, etc.), all
    key presses should be cleared and spurious key releases ignored
+
+1. No message if the server is full; looks like a crash
 
 ## CTF
 
