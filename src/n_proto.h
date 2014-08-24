@@ -28,15 +28,16 @@
 #define GAME_OPTIONS_SIZE 64
 #endif
 
-#define nm_setup                  1
-#define nm_authresponse           2
-#define nm_servermessage          3
-#define nm_sync                   4
-#define nm_playermessage          5
-#define nm_playerpreferencechange 6
-#define nm_authrequest            7
-#define nm_rconcommand            8
-#define nm_voterequest            9
+#define nm_setup                   1
+#define nm_authresponse            2
+#define nm_servermessage           3
+#define nm_sync                    4
+#define nm_playermessage           5
+#define nm_playerpreferencechange  6
+#define nm_authrequest             7
+#define nm_rconcommand             8
+#define nm_voterequest             9
+#define nm_soundstarted           10
 
 void N_InitProtocol(void);
 void N_HandlePacket(int peernum, void *data, size_t data_size);
@@ -66,6 +67,7 @@ void SV_BroadcastPlayerColorChanged(short playernum, byte new_red,
 void SV_BroadcastPlayerColorIndexChanged(short playernum, int new_color);
 void SV_BroadcastPlayerSkinChanged(short playernum);
 void SV_BroadcastStateUpdates(void);
+void SV_BroadcastSoundStarted(uint32_t actor_id, int sfx);
 void SV_ResyncPeers(void);
 
 void CL_SendMessageToServer(const char *message);

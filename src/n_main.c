@@ -23,6 +23,7 @@
 
 #include "z_zone.h"
 
+#include <glib.h>
 #include <enet/enet.h>
 
 #include "doomstat.h"
@@ -41,6 +42,7 @@
 #include "m_delta.h"
 #include "m_menu.h"
 #include "p_checksum.h"
+#include "p_ident.h"
 #include "p_user.h"
 #include "r_fps.h"
 #include "s_sound.h"
@@ -61,6 +63,12 @@
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
 #define SERVER_SLEEP_TIMEOUT 1
 
+typedef struct queued_sound_s {
+  int tic;
+  uint32_t actor_id;
+  int sfx;
+} queued_sound_t;
+
 /* CG: TODO: Add WAD fetching (waiting on libcurl) */
 
 static dboolean is_extra_ddisplay = false;
@@ -72,6 +80,8 @@ static cbuf_t local_commands;
 static int local_command_index = 0;
 static bool repredicting = false;
 static bool loading_state = false;
+static GList *serverside_sounds = NULL;
+static GList *local_sounds = NULL;
 
 static void build_command(void) {
   cbuf_t *commands = NULL;
@@ -119,6 +129,10 @@ static void run_tic(void) {
   if (SERVER)
     G_Ticker();
 #endif
+
+  if (CLIENT)
+    CL_CheckSounds();
+
   P_Checksum(gametic);
 
   if (DELTASERVER) {
@@ -280,6 +294,35 @@ static void cleanup_old_commands_and_states(void) {
 
   SV_RemoveOldStates();
   SV_RemoveOldCommands();
+}
+
+queued_sound_t* cl_get_queued_sound(int gametic, uint32_t actor_id, int sfx) {
+  queued_sound_t *qs = malloc(sizeof(queued_sound_t));
+
+  if (qs == NULL)
+    I_Error("cl_get_queued_sound: malloc failed");
+
+  qs->tic = gametic;
+  qs->actor_id = actor_id;
+  qs->sfx = sfx;
+
+  return qs;
+}
+
+static void cl_remove_old_sounds(GList **sounds) {
+  GList *node = *sounds;
+
+  while (node != NULL) {
+    GList *next = node->next;
+    queued_sound_t *qs = (queued_sound_t *)node->data;
+
+    if (qs->tic < gametic) {
+      free(qs);
+      *sounds = g_list_delete_link(*sounds, node);
+    }
+
+    node = next;
+  }
 }
 
 void N_LogPlayerPosition(player_t *player) {
@@ -576,10 +619,48 @@ bool CL_LoadState(void) {
   return true;
 }
 
-static bool catching_up;
+void CL_AddClientSound(uint32_t actor_id, int sfx) {
+  local_sounds = g_list_append(
+    local_sounds, cl_get_queued_sound(gametic, actor_id, sfx)
+  );
+}
 
-bool CL_IsCatchingUp(void) {
-  return catching_up;
+void CL_AddServerSound(int gametic, uint32_t actor_id, int sfx) {
+  serverside_sounds = g_list_append(
+    serverside_sounds, cl_get_queued_sound(gametic, actor_id, sfx)
+  );
+}
+
+void CL_CheckSounds(void) {
+  cl_remove_old_sounds(&local_sounds);
+  cl_remove_old_sounds(&serverside_sounds);
+
+  for (GList *ssn = serverside_sounds; ssn != NULL; ssn = ssn->next) {
+    queued_sound_t *ss = (queued_sound_t *)ssn->data;
+    bool found_local_sound = false;
+    mobj_t *origin;
+
+    if (ss->tic != gametic)
+      continue;
+
+    for (GList *lsn = local_sounds; lsn != NULL; lsn = lsn->next) {
+      queued_sound_t *ls = (queued_sound_t *)lsn->data;
+
+      if (ls->tic == ss->tic &&
+          ls->actor_id == ss->actor_id &&
+          ls->sfx == ss->sfx) {
+        found_local_sound = true;
+        break;
+      }
+    }
+
+    if (!found_local_sound) {
+      origin = P_IdentLookup(ss->actor_id);
+
+      if (origin)
+        S_StartSound(origin, ss->sfx);
+    }
+  }
 }
 
 void SV_RemoveOldCommands(void) {

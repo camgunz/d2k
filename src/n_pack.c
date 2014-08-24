@@ -36,6 +36,7 @@
 #include "m_file.h"
 #include "p_pspr.h"
 #include "p_user.h"
+#include "sounds.h"
 #include "w_wad.h"
 
 #include "n_net.h"
@@ -578,7 +579,7 @@ void N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level) {
   pbuf_t *pbuf = N_PeerBeginMessage(
     np->peernum, NET_CHANNEL_RELIABLE, nm_authresponse
   );
-  printf("Packing auth response\n");
+  puts("Packing auth response");
 
   M_PBufWriteUChar(pbuf, auth_level);
 }
@@ -621,7 +622,7 @@ void N_PackServerMessage(netpeer_t *np, const char *message) {
     np->peernum, NET_CHANNEL_RELIABLE, nm_servermessage
   );
 
-  printf("Packing server message\n");
+  puts("Packing server message");
   M_PBufWriteString(pbuf, message, strlen(message));
 }
 
@@ -870,7 +871,7 @@ void N_PackRelayedPlayerMessage(netpeer_t *np, short sender, short recipient,
   M_PBufWriteUShort(pbuf, sender);
   M_PBufWriteString(pbuf, message, strlen(message));
 
-  printf("Relayed player message\n");
+  puts("Relayed player message");
 }
 
 void N_PackPlayerMessage(netpeer_t *np, short sender, buf_t *recipients,
@@ -883,7 +884,7 @@ void N_PackPlayerMessage(netpeer_t *np, short sender, buf_t *recipients,
   M_PBufWriteString(pbuf, message, strlen(message));
   M_PBufWriteShortArray(pbuf, recipients);
 
-  printf("Packed player message\n");
+  puts("Packed player message");
 }
 
 dboolean N_UnpackPlayerMessage(netpeer_t *np, short *sender, buf_t *recipients,
@@ -957,7 +958,7 @@ void N_PackTeamChange(netpeer_t *np, short playernum, byte new_team) {
 
   M_PBufWriteUChar(pbuf, new_team);
 
-  printf("Packed team change\n");
+  puts("Packed team change");
 }
 
 dboolean N_UnpackTeamChange(netpeer_t *np, byte *new_team) {
@@ -979,7 +980,7 @@ void N_PackPWOChange(netpeer_t *np, short playernum) {
 
   M_PBufWriteUChar(pbuf, 0); /* CG: TODO */
 
-  printf("Packed PWO change\n");
+  puts("Packed PWO change");
 }
 
 dboolean N_UnpackPWOChange(netpeer_t *np) {
@@ -991,7 +992,7 @@ void N_PackWSOPChange(netpeer_t *np, short playernum, byte new_wsop_flags) {
 
   M_PBufWriteUChar(pbuf, new_wsop_flags);
 
-  printf("Packed WSOP change\n");
+  puts("Packed WSOP change");
 }
 
 dboolean N_UnpackWSOPChange(netpeer_t *np, byte *new_wsop_flags) {
@@ -1013,7 +1014,7 @@ void N_PackBobbingChange(netpeer_t *np, short playernum,
 
   M_PBufWriteDouble(pbuf, new_bobbing_amount);
 
-  printf("Packed bobbing change\n");
+  puts("Packed bobbing change");
 }
 
 dboolean N_UnpackBobbingChanged(netpeer_t *np, double *new_bobbing_amount) {
@@ -1035,7 +1036,7 @@ void N_PackAutoaimChange(netpeer_t *np, short playernum,
 
   M_PBufWriteBool(pbuf, new_autoaim_enabled);
 
-  printf("Packed autoaim change\n");
+  puts("Packed autoaim change");
 }
 
 dboolean N_UnpackAutoaimChange(netpeer_t *np, dboolean *new_autoaim_enabled) {
@@ -1055,7 +1056,7 @@ void N_PackWeaponSpeedChange(netpeer_t *np, short playernum,
 
   M_PBufWriteUChar(pbuf, new_weapon_speed);
 
-  printf("Packed weapon speed change\n");
+  puts("Packed weapon speed change");
 }
 
 dboolean N_UnpackWeaponSpeedChange(netpeer_t *np, byte *new_weapon_speed) {
@@ -1076,7 +1077,7 @@ void N_PackColorChange(netpeer_t *np, short playernum, byte new_red,
 
   M_PBufWriteUInt(pbuf, (new_red << 24) | (new_green << 16) | (new_blue << 8));
 
-  printf("Packed color change\n");
+  puts("Packed color change");
 }
 
 dboolean N_UnpackColorChange(netpeer_t *np, byte *new_red,
@@ -1100,7 +1101,7 @@ void N_PackColorIndexChange(netpeer_t *np, short playernum,
 
   M_PBufWriteInt(pbuf, new_color_index);
 
-  printf("Packed color index change\n");
+  puts("Packed color index change");
 }
 
 dboolean N_UnpackColorIndexChange(netpeer_t *np, int *new_color_index) {
@@ -1120,7 +1121,7 @@ void N_PackSkinChange(netpeer_t *np, short playernum) {
 
   M_PBufWriteUChar(pbuf, 0); /* CG: TODO */
 
-  printf("Packed skin change\n");
+  puts("Packed skin change");
 }
 
 dboolean N_UnpackSkinChange(netpeer_t *np, short *playernum) {
@@ -1134,7 +1135,7 @@ void N_PackAuthRequest(netpeer_t *np, const char *password) {
 
   M_PBufWriteString(pbuf, password, strlen(password));
 
-  printf("Packed auth request\n");
+  puts("Packed auth request");
 }
 
 dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
@@ -1154,7 +1155,7 @@ void N_PackRCONCommand(netpeer_t *np, const char *command) {
 
   M_PBufWriteString(pbuf, command, strlen(command));
 
-  printf("Packed RCON command\n");
+  puts("Packed RCON command");
 }
 
 dboolean N_UnpackRCONCommand(netpeer_t *np, buf_t *buf) {
@@ -1172,13 +1173,41 @@ void N_PackVoteRequest(netpeer_t *np, const char *command) {
 
   M_PBufWriteString(pbuf, command, strlen(command));
 
-  printf("Packed vote request\n");
+  puts("Packed vote request");
 }
 
 dboolean N_UnpackVoteRequest(netpeer_t *np, buf_t *buf) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
 
   read_string(pbuf, buf, "vote command", MAX_COMMAND_LENGTH);
+
+  return true;
+}
+
+void N_PackSoundStarted(netpeer_t *np, uint32_t actor_id, int sfx) {
+  pbuf_t *pbuf = N_PeerBeginMessage(
+    np->peernum, NET_CHANNEL_RELIABLE, nm_soundstarted
+  );
+
+  M_PBufWriteInt(pbuf, gametic);
+  M_PBufWriteUInt(pbuf, actor_id);
+  M_PBufWriteInt(pbuf, sfx);
+}
+
+dboolean N_UnpackSoundStarted(netpeer_t *np, int *gametic, uint32_t *actor_id,
+                                             int *sfx) {
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  int m_gametic;
+  uint32_t m_actor_id;
+  int m_sfx;
+
+  read_int(pbuf, m_gametic, "sound TIC");
+  read_uint(pbuf, m_actor_id, "actor ID");
+  read_ranged_int(pbuf, m_sfx, "sound ID", 1, NUMSFX - 1);
+
+  *gametic  = m_gametic;
+  *actor_id = m_actor_id;
+  *sfx      = m_sfx;
 
   return true;
 }

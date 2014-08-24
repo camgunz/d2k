@@ -417,6 +417,17 @@ static void handle_rcon(netpeer_t *np) {
 static void handle_vote_request(netpeer_t *np) {
 }
 
+static void handle_sound_started(netpeer_t *np) {
+  int gametic;
+  uint32_t actor_id;
+  int sfx;
+
+  if (!N_UnpackSoundStarted(np, &gametic, &actor_id, &sfx))
+    return;
+
+  CL_AddServerSound(gametic, actor_id, sfx);
+}
+
 void N_HandlePacket(int peernum, void *data, size_t data_size) {
   netpeer_t *np = N_PeerGet(peernum);
   unsigned char message_type = 0;
@@ -468,6 +479,10 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
       case nm_voterequest:
         SERVER_ONLY("vote request");
         handle_vote_request(np);
+      break;
+      case nm_soundstarted:
+        CLIENT_ONLY("sound started");
+        handle_sound_started(np);
       break;
       default:
         P_Printf(consoleplayer,
@@ -763,6 +778,12 @@ void CL_SendSkinChange(void) {
 
 void SV_BroadcastPlayerSkinChanged(short playernum) {
   /* CG: TODO */
+}
+
+void SV_BroadcastSoundStarted(uint32_t actor_id, int sfx) {
+  NETPEER_FOR_EACH(entry) {
+    N_PackSoundStarted(entry.np, actor_id, sfx);
+  }
 }
 
 void SV_ResyncPeers(void) {

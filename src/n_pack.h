@@ -102,6 +102,10 @@ dboolean N_UnpackRCONCommand(netpeer_t *np, buf_t *buf);
 void     N_PackVoteRequest(netpeer_t *np, const char *command);
 dboolean N_UnpackVoteRequest(netpeer_t *np, buf_t *buf);
 
+void     N_PackSoundStarted(netpeer_t *np, uint32_t actor_id, int sfx);
+dboolean N_UnpackSoundStarted(netpeer_t *np, int *gametic, uint32_t *actor_id,
+                                             int *sfx);
+
 #endif
 
 /* vi: set et ts=2 sw=2: */

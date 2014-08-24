@@ -504,6 +504,8 @@ dboolean N_PeerLoadNextMessage(int peernum, unsigned char *message_type) {
   if (M_CBufGetObjectCount(&incoming->toc) == 0)
     return false;
 
+  M_CBufConsolidate(&incoming->toc);
+
   toc_entry = M_CBufGet(&incoming->toc, 0);
 
   if (toc_entry->index >= M_PBufGetSize(&incoming->messages)) {

@@ -35,6 +35,9 @@ bool CL_ReceivedSetup(void);
 void CL_SetReceivedSetup(dboolean new_received_setup);
 void CL_SetAuthorizationLevel(auth_level_e level);
 bool CL_LoadState(void);
+void CL_AddClientSound(uint32_t actor_id, int sfx);
+void CL_AddServerSound(int gametic, uint32_t actor_id, int sfx);
+void CL_CheckSounds(void);
 
 void SV_RemoveOldCommands(void);
 void SV_RemoveOldStates(void);

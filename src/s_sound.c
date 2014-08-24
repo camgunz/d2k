@@ -27,21 +27,22 @@
 #include "z_zone.h"
 
 #include "doomstat.h"
-#include "s_sound.h"
-#include "s_advsound.h"
+
+#include "d_main.h"
+#include "e6y.h"
 #include "i_sound.h"
 #include "i_system.h"
-#include "d_main.h"
-#include "r_main.h"
-#include "m_random.h"
-#include "w_wad.h"
 #include "lprintf.h"
-#include "sc_man.h"
-#include "p_ident.h"
-#include "e6y.h"
-
+#include "m_random.h"
 #include "n_net.h"
 #include "n_main.h"
+#include "n_proto.h"
+#include "p_ident.h"
+#include "r_main.h"
+#include "s_advsound.h"
+#include "s_sound.h"
+#include "sc_man.h"
+#include "w_wad.h"
 
 // when to clip out sounds
 // Does not fit the large outdoor areas.
@@ -458,7 +459,7 @@ void S_Start(void) {
     mnum = idmusnum; //jff 3/17/98 reload IDMUS music if not -1
   }
   else if (gamemode == commercial) {
-      mnum = mus_runnin + gamemap - 1;
+    mnum = mus_runnin + gamemap - 1;
   }
   else {
     static const int spmus[] = {   // Song - Who? - Where?
@@ -474,9 +475,9 @@ void S_Start(void) {
     };
 
     if (gameepisode < 4)
-      mnum = mus_e1m1 + (gameepisode-1)*9 + gamemap-1;
+      mnum = mus_e1m1 + (gameepisode - 1) * 9 + gamemap - 1;
     else
-      mnum = spmus[gamemap-1];
+      mnum = spmus[gamemap - 1];
   }
   S_ChangeMusic(mnum, true);
 }
@@ -486,6 +487,14 @@ void S_StartSound(mobj_t *mobj, int sfx_id) {
     return;
 
   start_sound_at_volume(mobj, sfx_id, snd_SfxVolume);
+
+  if (mobj) {
+    if (CLIENT)
+      CL_AddClientSound(mobj->id, sfx_id);
+
+    if (SERVER)
+      SV_BroadcastSoundStarted(mobj->id, sfx_id);
+  }
 }
 
 void S_StopSound(mobj_t *mobj) {
