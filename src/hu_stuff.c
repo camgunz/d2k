@@ -2462,11 +2462,15 @@ void HU_Drawer(void) {
 
 main_widgets:
 
+  return;
+
+  /*
   HU_MessageWidgetDrawer(w_messages, I_GetRenderContext());
   HU_MessageWidgetDrawer(w_centermsg, I_GetRenderContext());
   C_Drawer();
   if (HU_ChatWidgetActive(w_chat))
     HU_ChatWidgetDrawer(w_chat, I_GetRenderContext());
+  */
 }
 
 //
@@ -2489,6 +2493,8 @@ void HU_Erase(void) {
 // Passed nothing, returns nothing
 //
 void HU_Ticker(void) {
+  return;
+
   if (nodrawers)
     return;
 
@@ -2533,7 +2539,10 @@ void HU_Ticker(void) {
 //
 // Passed the event to respond to, returns true if the event was handled
 //
+
 dboolean HU_Responder(event_t *ev) {
+  return false;
+
   if (!((ev->type == ev_keydown) || (ev->type == ev_mouse)))
     return false;
 

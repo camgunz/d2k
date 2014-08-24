@@ -391,6 +391,8 @@ void HU_MessageWidgetTicker(message_widget_t *mw) {
   uint64_t current_time;
   uint64_t time_elapsed;
 
+  return;
+
   mw->line_count = get_line_count(mw);
 
   if (!mw->retractable)
@@ -454,37 +456,32 @@ bool HU_MessageWidgetResponder(message_widget_t *mw, event_t *ev) {
 
 void HU_MessageWidgetTextAppended(message_widget_t *mw) {
   int line_count;
-  int last_line_height = 0;
   int total_line_height = 0;
   int widget_width;
   int widget_height;
-  PangoLayoutLine *line;
+  PangoLayoutIter *it;
   PangoRectangle rect;
 
   if (!mw->retractable)
     return;
 
-  line_count = get_line_count(mw);
-
-  if (line_count == mw->line_count)
-    return;
-
   HU_MessageWidgetGetSize(mw, &widget_width, &widget_height);
 
-  for (int i = mw->line_count; i < line_count; i++) {
-    line = pango_layout_get_line_readonly(mw->layout, i);
+  it = pango_layout_get_iter(mw->layout);
+
+  do {
+    PangoLayoutLine *line = pango_layout_iter_get_line_readonly(it);
+    PangoRectangle rect;
+
     pango_layout_line_get_pixel_extents(line, NULL, &rect);
     total_line_height += rect.height;
-    last_line_height = rect.height;
-  }
+  } while (pango_layout_iter_next_line(it));
 
   mw->offset += total_line_height;
   mw->offset = MIN(mw->offset, widget_height);
 
   if (mw->offset == widget_height)
     mw->offset += mw->y;
-
-  mw->line_count = line_count;
 
   reset_retraction_target(mw, true);
 }

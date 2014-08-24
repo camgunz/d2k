@@ -87,6 +87,8 @@ static bool move_cursor_left(input_widget_t *iw) {
 
   activate_cursor(iw);
 
+  iw->needs_rebuilding = true;
+
   return true;
 }
 
@@ -104,6 +106,8 @@ static bool move_cursor_right(input_widget_t *iw) {
   iw->cursor = n_char - iw->buf->str;
 
   activate_cursor(iw);
+
+  iw->needs_rebuilding = true;
 
   return true;
 }

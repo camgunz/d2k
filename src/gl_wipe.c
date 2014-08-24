@@ -89,7 +89,7 @@ int gld_wipe_doMelt(int ticks, int *y_lookup)
   
   glBegin(GL_QUAD_STRIP);
   
-  for (i=0; i <= SCREENWIDTH; i++)
+  for (i=0; i < SCREENWIDTH; i++)
   {
     int yoffs = MAX(0, y_lookup[i]);
     

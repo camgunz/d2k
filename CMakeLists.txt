@@ -332,6 +332,7 @@ OPTION(
 OPTION(PROFILE "Enable profiling; requires a debug build" OFF)
 OPTION(LEVELINFO_DEBUG "Debug using level info" OFF)
 OPTION(DEBUG_WEAPON_CODEPOINTERS "Debug weapon codepointers" OFF)
+OPTION(SANITIZE_ADDRESSES "Use Clang's address sanitizer, requires clang" OFF)
 
 IF(NOT DOOMWADDIR)
   SET(DOOMWADDIR "${CMAKE_INSTALL_PREFIX}/share/games/doom")
@@ -371,7 +372,7 @@ ENDIF()
 #===============================================================================
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
   ADD_DEFINITIONS(-DDEBUG)
-  IF(CLANG)
+  IF(CLANG AND SANITIZE_ADDRESSES)
     SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
     TRY_C_COMPILER_FLAG(-fno-omit-frame-pointer FLAG_C_NO_OMIT_FRAME_POINTER)

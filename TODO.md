@@ -1,11 +1,5 @@
 # To Do
 
-## Prototype
-
-1. Weird crash on Windows (heap corruption on the status bar's screen's data)
-
-1. Super-fast doomguy face
-
 ## ZDDL
 
 1. Add latency mitigation
@@ -28,7 +22,8 @@
 
 1. Add spectators
 
-1. Add a scoreboard
+1. Better configuration file and configuration variable system
+  * Ties into scripting and console
 
 1. 3D physics
 
@@ -38,9 +33,6 @@
   * Including ZDoom SSG spread
 
 1. PWO
-
-1. Better configuration file and configuration variable system
-  * Ties into scripting and console
 
 1. Improve console
   * Command history
@@ -60,6 +52,7 @@
 1. New widgets
   * Framerate
   * Network stats
+  * Add a scoreboard
 
 1. Fix sound problems
   * Rocket spawn sounds don't cut off when they explode
@@ -72,6 +65,8 @@
    key presses should be cleared and spurious key releases ignored
 
 1. No message if the server is full; looks like a crash
+
+1. Super-fast doomguy face
 
 ## CTF
 

@@ -197,7 +197,7 @@
 #define MF_UNUSED2      (uint_64_t)(0x0000000010000000)
 #define MF_UNUSED3      (uint_64_t)(0x0000000020000000)
 
-    // Translucent sprite?                                          // phares
+// Translucent sprite?                                          // phares
 #define MF_TRANSLUCENT  (uint_64_t)(0x0000000040000000)
 
 // this is free            LONGLONG(0x0000000100000000)

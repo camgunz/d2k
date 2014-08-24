@@ -331,6 +331,8 @@ void C_Drawer(void) {
 }
 
 bool C_Responder(event_t *ev) {
+  return false;
+
   if (nodrawers)
     return false;
 
