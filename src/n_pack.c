@@ -826,8 +826,13 @@ dboolean N_UnpackDeltaSync(netpeer_t *np) {
    * CG: Don't load a delta in the very near future; give ourselves time to
    * catch up
    */
-  if ((m_delta_to_tic >= gametic) && (m_delta_to_tic < gametic + 1))
-    return true;
+
+  /* CG: Let's see how we do w/o this
+   *
+   * if ((m_delta_to_tic >= gametic) && (m_delta_to_tic < gametic + 1))
+   *   return true;
+   *
+   */
 
   if (m_delta_to_tic > gametic) {
     D_Log(

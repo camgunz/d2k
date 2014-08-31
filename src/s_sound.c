@@ -375,6 +375,8 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
   if (sfx->usefulness++ < 0)
     sfx->usefulness = 1;
 
+  printf("(%d) Starting sound %d\n", gametic, sfx_id);
+
   // Assigns the handle to one of the channels in the mix/output buffer.
   // e6y: [Fix] Crash with zero-length sounds.
   int h = I_StartSound(sfx_id, cnum, volume, sep, pitch, priority);

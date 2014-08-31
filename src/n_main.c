@@ -216,32 +216,41 @@ static void service_network(void) {
 }
 
 static void deltaclient_service_network(void) {
+  /*
   netpeer_t *server;
   int latest_sync_tic;
   int latest_command_index;
   int latest_delta_from_tic;
   int latest_delta_to_tic;
+  */
 
   if (!DELTACLIENT)
     return;
 
+  /*
   server = CL_GetServerPeer();
+  */
 
   if (gametic <= 0) {
     service_network();
     return;
   }
 
+  /*
   if (server == NULL)
     I_Error("Server disconnected");
+  */
 
+  /*
   latest_sync_tic = server->sync.tic;
   latest_command_index = server->sync.cmd;
   latest_delta_from_tic = server->sync.delta.from_tic;
   latest_delta_to_tic = server->sync.delta.to_tic;
+  */
 
   service_network();
 
+  /*
   if (server->sync.delta.to_tic != latest_delta_to_tic) {
     if (CL_LoadState()) {
       server->sync.outdated = true;
@@ -253,6 +262,7 @@ static void deltaclient_service_network(void) {
       server->sync.delta.to_tic = latest_delta_to_tic;
     }
   }
+  */
 }
 
 static void render_extra_frame(void) {

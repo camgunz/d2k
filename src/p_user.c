@@ -513,6 +513,19 @@ static void run_player_command(player_t *player) {
   ticcmd_t *cmd = &player->cmd;
   weapontype_t newweapon;
 
+  /*
+  printf("(%d) %td: %d, %d, %d, %d, %u, %u\n",
+    gametic,
+    player - players,
+    cmd->forwardmove,
+    cmd->sidemove,
+    cmd->angleturn,
+    cmd->consistancy,
+    cmd->chatchar,
+    cmd->buttons
+  );
+  */
+
   // chain saw run forward
   if (player->mo->flags & MF_JUSTATTACKED) {
     cmd->angleturn = 0;
@@ -626,12 +639,14 @@ void P_RunPlayerCommands(player_t *player) {
     return;
   }
 
-  if (DELTASERVER) {
+  if (DELTASERVER || player_index != consoleplayer) {
     int saved_leveltime;
 
     D_Log(LOG_SYNC, "(%d) Player %d has %d commands\n",
       gametic, player_index, M_CBufGetObjectCount(&player->commands)
     );
+
+    M_CBufConsolidate(&player->commands);
 
     CBUF_FOR_EACH(&player->commands, entry) {
       netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
@@ -668,24 +683,6 @@ void P_RunPlayerCommands(player_t *player) {
       M_CBufRemove(&player->commands, entry.index);
       entry.index--;
     }
-
-    return;
-  }
-
-  if (player_index != consoleplayer) {
-    netticcmd_t *ncmd = NULL;
-
-    if (M_CBufGetObjectCount(&player->commands) <= 0)
-      return;
-
-    M_CBufConsolidate(&player->commands);
-    ncmd = M_CBufGet(&player->commands, 0);
-    memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
-    run_player_command(player);
-    if (player->mo)
-      P_MobjThinker(player->mo);
-    M_CBufRemove(&player->commands, 0);
-    M_CBufConsolidate(&player->commands);
 
     return;
   }

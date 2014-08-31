@@ -310,14 +310,14 @@ void P_DropWeapon(player_t *player) {
 // or after previous attack/fire sequence.
 //
 
-void A_WeaponReady(player_t *player, pspdef_t *psp)
-{
+void A_WeaponReady(player_t *player, pspdef_t *psp) {
   CHECK_WEAPON_CODEPOINTER("A_WeaponReady", player);
 
   // get out of attack state
-  if (player->mo->state == &states[S_PLAY_ATK1]
-      || player->mo->state == &states[S_PLAY_ATK2] )
+  if (player->mo->state == &states[S_PLAY_ATK1] ||
+      player->mo->state == &states[S_PLAY_ATK2]) {
     P_SetMobjState(player->mo, S_PLAY);
+  }
 
   if (player->readyweapon == wp_chainsaw && psp->state == &states[S_SAW])
     S_StartSound(player->mo, sfx_sawidl);
@@ -325,37 +325,39 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
   // check for change
   //  if player is dead, put the weapon away
 
-  if (player->pendingweapon != wp_nochange || !player->health)
-    {
-      // change weapon (pending weapon should already be validated)
-      statenum_t newstate = weaponinfo[player->readyweapon].downstate;
-      P_SetPsprite(player, ps_weapon, newstate);
-      return;
-    }
+  if (player->pendingweapon != wp_nochange || !player->health) {
+    // change weapon (pending weapon should already be validated)
+    statenum_t newstate = weaponinfo[player->readyweapon].downstate;
+    P_SetPsprite(player, ps_weapon, newstate);
+
+    return;
+  }
 
   // check for fire
   //  the missile launcher and bfg do not auto fire
 
-  if (player->cmd.buttons & BT_ATTACK)
-    {
-      if (!player->attackdown || (player->readyweapon != wp_missile &&
-                                  player->readyweapon != wp_bfg))
-        {
-          player->attackdown = true;
-          P_FireWeapon(player);
-          return;
-        }
+  if (player->cmd.buttons & BT_ATTACK) {
+    printf("(%d) %td attacking!\n", gametic, player - players);
+
+    if (!player->attackdown || (player->readyweapon != wp_missile &&
+                                player->readyweapon != wp_bfg)) {
+      player->attackdown = true;
+      P_FireWeapon(player);
+
+      return;
     }
-  else
+  }
+  else {
+    printf("(%d) %td not attacking!\n", gametic, player - players);
     player->attackdown = false;
+  }
 
   // bob the weapon based on movement speed
-  {
-    int angle = (128*leveltime) & FINEMASK;
-    psp->sx = FRACUNIT + FixedMul(player->bob, finecosine[angle]);
-    angle &= FINEANGLES/2-1;
-    psp->sy = WEAPONTOP + FixedMul(player->bob, finesine[angle]);
-  }
+  int angle = (128 * leveltime) & FINEMASK;
+
+  psp->sx = FRACUNIT + FixedMul(player->bob, finecosine[angle]);
+  angle &= FINEANGLES / 2 - 1;
+  psp->sy = WEAPONTOP + FixedMul(player->bob, finesine[angle]);
 }
 
 //

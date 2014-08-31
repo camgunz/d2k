@@ -245,7 +245,36 @@ static void handle_sync(netpeer_t *np) {
   dboolean update_sync = false;
 
   if (DELTACLIENT) {
-    N_UnpackDeltaSync(np);
+    netpeer_t *server = CL_GetServerPeer();
+    int latest_sync_tic;
+    int latest_command_index;
+    int latest_delta_from_tic;
+    int latest_delta_to_tic;
+
+    if (!server)
+      return;
+
+    latest_sync_tic = server->sync.tic;
+    latest_command_index = server->sync.cmd;
+    latest_delta_from_tic = server->sync.delta.from_tic;
+    latest_delta_to_tic = server->sync.delta.to_tic;
+
+    if (!N_UnpackDeltaSync(np))
+      return;
+
+    if (server->sync.delta.to_tic == latest_delta_to_tic)
+      return;
+
+    if (CL_LoadState()) {
+      server->sync.outdated = true;
+    }
+    else {
+      server->sync.tic = latest_sync_tic;
+      server->sync.cmd = latest_command_index;
+      server->sync.delta.from_tic = latest_delta_from_tic;
+      server->sync.delta.to_tic = latest_delta_to_tic;
+    }
+
     return;
   }
 
