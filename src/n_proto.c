@@ -23,7 +23,6 @@
 
 #include "z_zone.h"
 
-#include <glib.h>
 #include <enet/enet.h>
 
 #include "doomdef.h"
@@ -192,7 +191,6 @@ static void handle_setup(netpeer_t *np) {
     return;
 
   N_ClearStates();
-  // N_ResetLocalCommandIndex();
 
   if (!N_UnpackSetup(np, &net_sync, &player_count, &playernum)) {
     M_CBufFree(&resource_files_buf);

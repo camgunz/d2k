@@ -41,6 +41,7 @@
 #include "m_delta.h"
 #include "m_menu.h"
 #include "p_checksum.h"
+#include "p_cmd.h"
 #include "p_user.h"
 #include "r_fps.h"
 #include "s_sound.h"
@@ -68,45 +69,9 @@ static dboolean is_extra_ddisplay = false;
 /* CG: Client only */
 static bool received_setup = false;
 static auth_level_e authorization_level = AUTH_LEVEL_NONE;
-static cbuf_t local_commands;
-static int local_command_index = 0;
 static bool repredicting = false;
 static bool loading_state = false;
-
-static void build_command(void) {
-  cbuf_t *commands = NULL;
-  netticcmd_t *ncmd = NULL;
-
-  if (DELTASERVER)
-    return;
-
-  if (DELTASYNC)
-    commands = &local_commands;
-  else
-    commands = &players[consoleplayer].commands;
-
-  M_CBufConsolidate(commands);
-  ncmd = M_CBufGetFirstFreeOrNewSlot(commands);
-
-  I_StartTic();
-  G_BuildTiccmd(ncmd);
-  ncmd->index = local_command_index;
-  if (DELTACLIENT)
-    D_Log(LOG_SYNC, "Built command (%d, %d)\n", ncmd->index, ncmd->tic);
-  local_command_index++;
-
-  if (CLIENT) {
-    netpeer_t *server = CL_GetServerPeer();
-
-    if (server != NULL)
-      server->sync.outdated = true;
-
-    N_UpdateSync();
-  }
-
-  if (DELTACLIENT)
-    M_CBufAppend(&players[consoleplayer].commands, ncmd);
-}
+static bool catching_up;
 
 static void run_tic(void) {
   if (advancedemo)
@@ -141,7 +106,7 @@ static int run_tics(int tic_count) {
   int out = tic_count;
 
   while (tic_count--) {
-    build_command();
+    P_BuildCommand();
     run_tic();
   }
 
@@ -155,11 +120,11 @@ static int run_commandsync_tics(int command_count) {
   int tic_count = command_count;
 
   for (int i = 0; i < command_count; i++)
-    build_command();
+    P_BuildCommand();
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
-      tic_count = MIN(tic_count, M_CBufGetObjectCount(&players[i].commands));
+      tic_count = MIN(tic_count, P_GetPlayerCommandCount(&players[i]));
     }
   }
 
@@ -300,18 +265,6 @@ void N_LogPlayerPosition(player_t *player) {
   );
 }
 
-void N_PrintPlayerCommands(cbuf_t *commands) {
-  D_Log(LOG_SYNC, "[ ");
-
-  CBUF_FOR_EACH(commands, entry) {
-    netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
-
-    D_Log(LOG_SYNC, "%d/%d ", ncmd->index, ncmd->tic);
-  }
-
-  D_Log(LOG_SYNC, "]\n");
-}
-
 void N_InitNetGame(void) {
   int i;
 
@@ -436,11 +389,9 @@ void N_InitNetGame(void) {
     char *name;
     size_t name_length;
 
-    M_CBufInitWithCapacity(
-      &players[i].commands, sizeof(netticcmd_t), BACKUPTICS
-    );
+    P_InitPlayerCommands(&players[i]);
 
-    M_OBufInit(&players[i].messages);
+    players[i].messages = g_ptr_array_new_with_free_func(P_DestroyMessage);
 
     players[i].name = NULL;
 
@@ -451,7 +402,7 @@ void N_InitNetGame(void) {
     P_SetName(i, name);
   }
 
-  M_CBufInitWithCapacity(&local_commands, sizeof(netticcmd_t), BACKUPTICS);
+  P_InitLocalCommands();
 }
 
 bool N_GetWad(const char *name) {
@@ -482,7 +433,6 @@ void CL_SetAuthorizationLevel(auth_level_e level) {
 bool CL_LoadState(void) {
   netpeer_t *server = CL_GetServerPeer();
   game_state_delta_t *delta = NULL;
-  cbuf_t *player_commands = &players[consoleplayer].commands;
 
   if (server == NULL)
     return false;
@@ -510,62 +460,25 @@ bool CL_LoadState(void) {
 
   server->sync.tic = delta->to_tic;
 
-  // D_Log(LOG_SYNC, "Local commands: ");
-  // N_PrintPlayerCommands(&local_commands);
-
-  CBUF_FOR_EACH(&local_commands, entry) {
-    netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
-
-    if (ncmd->index <= server->sync.cmd && ncmd->tic <= server->sync.tic) {
-      M_CBufRemove(&local_commands, entry.index);
-      entry.index--;
-    }
-  }
+  P_RemoveSyncedCommands();
 
   gametic++;
 
-  if (M_CBufGetObjectCount(&local_commands) <= 0) {
+  if (P_GetLocalCommandCount() <= 0) {
     repredicting = false;
     S_UnMuteSound();
     return true;
   }
 
-  M_CBufClear(player_commands);
-  M_CBufEnsureCapacity(player_commands, M_CBufGetObjectCount(&local_commands));
-  CBUF_FOR_EACH(&local_commands, entry) {
-    netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+  P_UpdateConsoleplayerCommands();
 
-    if (ncmd->tic > gametic)
-      break;
-
-    M_CBufAppend(player_commands, entry.obj);
-  }
-
-  // D_Log(LOG_SYNC, "First command batch: ");
-  // N_PrintPlayerCommands(player_commands);
   is_extra_ddisplay = true;
   run_tic();
   is_extra_ddisplay = false;
 
-  M_CBufClear(player_commands);
-  while (1) {
-    dboolean found_command = false;
+  P_ClearPlayerCommands(&players[consoleplayer]);
 
-    CBUF_FOR_EACH(&local_commands, entry) {
-      netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
-
-      if (ncmd->tic == gametic) {
-        found_command = true;
-        M_CBufAppend(player_commands, entry.obj);
-      }
-    }
-
-    if (!found_command)
-      break;
-
-    // D_Log(LOG_SYNC, "Second command batch: ");
-    // N_PrintPlayerCommands(player_commands);
-
+  while (P_LoadLocalCommandForTic(gametic)) {
     is_extra_ddisplay = true;
     run_tic();
     is_extra_ddisplay = false;
@@ -576,7 +489,36 @@ bool CL_LoadState(void) {
   return true;
 }
 
-static bool catching_up;
+void CL_MarkServerOutdated(void) {
+  netpeer_t *server;
+
+  if (!CLIENT)
+    return;
+  
+  server = CL_GetServerPeer();
+
+  if (server != NULL)
+    server->sync.outdated = true;
+
+  N_UpdateSync();
+}
+
+bool CL_GetServerSync(int *command_index, int *sync_tic) {
+  netpeer_t *server;
+
+  if (!CLIENT)
+    return false;
+
+  server = CL_GetServerPeer();
+
+  if (server == NULL)
+    return false;
+
+  *command_index = server->sync.cmd;
+  *sync_tic = server->sync.tic;
+
+  return true;
+}
 
 bool CL_IsCatchingUp(void) {
   return catching_up;
@@ -588,7 +530,7 @@ void SV_RemoveOldCommands(void) {
   if (DELTASERVER)
     return;
 
-  M_CBufClear(&local_commands);
+  P_ClearLocalCommands();
 
   if (!CMDSYNC)
     return;
@@ -602,22 +544,7 @@ void SV_RemoveOldCommands(void) {
 
   NETPEER_FOR_EACH(entry) {
     netpeer_t *client = entry.np;
-    cbuf_t *commands = NULL;
-
-    commands = &players[client->playernum].commands;
-
-    CBUF_FOR_EACH(commands, entry) {
-      netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
-
-      if (ncmd->tic < oldest_gametic) {
-        D_Log(LOG_SYNC, 
-          "SV_RemoveOldCommands: (%d: %d) Removing old command %d (< %d).\n",
-          gametic, client->playernum, ncmd->tic, oldest_gametic
-        );
-        M_CBufRemove(commands, entry.index);
-        entry.index--;
-      }
-    }
+    P_RemoveOldCommands(&players[client->playernum], oldest_gametic);
   }
 }
 
@@ -632,15 +559,6 @@ void SV_RemoveOldStates(void) {
   }
 
   N_RemoveOldStates(oldest_gametic);
-}
-
-cbuf_t* N_GetLocalCommands(void) {
-  M_CBufConsolidate(&local_commands);
-  return &local_commands;
-}
-
-void N_ResetLocalCommandIndex(void) {
-  local_command_index = 0;
 }
 
 void N_TryRunTics(void) {

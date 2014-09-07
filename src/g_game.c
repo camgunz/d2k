@@ -32,6 +32,7 @@
 #include "m_misc.h"
 #include "m_menu.h"
 #include "m_random.h"
+#include "p_cmd.h"
 #include "p_ident.h"
 #include "p_setup.h"
 #include "p_tick.h"
@@ -1235,30 +1236,7 @@ void G_Ticker(void) {
         G_ReadDemoContinueTiccmd(cmd);
       }
       else if ((!MULTINET) || CMDSYNC) {
-        dboolean found_command = false;
-        cbuf_t *commands;
-        
-        commands = &players[i].commands;
-
-        CBUF_FOR_EACH(commands, entry) {
-          netticcmd_t *ncmd = entry.obj;
-
-          if (ncmd->tic == gametic) {
-            memcpy(cmd, &ncmd->cmd, sizeof(ticcmd_t));
-
-            found_command = true;
-          }
-
-          if (gamestate != GS_LEVEL || ncmd->tic <= gametic) {
-            M_CBufRemove(commands, entry.index);
-            entry.index--;
-          }
-
-          if (found_command)
-            break;
-        }
-
-        if (!found_command)
+        if (!P_LoadCommandForTic(&players[i], gametic))
           continue;
       }
 

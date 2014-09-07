@@ -144,7 +144,7 @@ typedef struct player_s
   // CPhipps - const
   // const char         *message;
 
-  obuf_t              messages;
+  GPtrArray          *messages;
 
   // For screen flashing (red or bright).
   int                 damagecount;

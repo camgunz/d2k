@@ -24,7 +24,6 @@
 #include "z_zone.h"
 
 #include <pango/pangocairo.h>
-#include <glib.h>
 
 #include "doomdef.h"
 #include "doomstat.h"

@@ -24,7 +24,6 @@
 #include "z_zone.h"
 
 #include <wchar.h>
-#include <glib.h>
 #include <fontconfig/fontconfig.h>
 
 #include "d_event.h"

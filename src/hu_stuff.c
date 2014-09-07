@@ -2507,8 +2507,8 @@ void HU_Ticker(void) {
     if (!playeringame[i])
       continue;
 
-    OBUF_FOR_EACH(&player->messages, entry) {
-      player_message_t *msg = (player_message_t *)entry.obj;
+    for (unsigned int i = 0; i < player->messages->len; i++) {
+      player_message_t *msg = player->messages->pdata[i];
 
       if (msg->processed)
         continue;

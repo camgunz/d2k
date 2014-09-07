@@ -87,7 +87,7 @@ SET(PACKAGE "Doom2K")
 SET(PACKAGE_NAME "Doom2K")
 SET(PACKAGE_VERSION "${VERSION}")
 # SET(PACKAGE_BUGREPORT "huh")
-SET(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
+SET(PACKAGE_STRING "${PACKAGE_NAME} v${PACKAGE_VERSION}")
 SET(PACKAGE_TARNAME "doom2k")
 SET(PACKAGE_URL "http://github.com/camgunz/d2k")
 
@@ -828,6 +828,7 @@ SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/n_state.c
   ${CMAKE_SOURCE_DIR}/src/p_ceilng.c
   ${CMAKE_SOURCE_DIR}/src/p_checksum.c
+  ${CMAKE_SOURCE_DIR}/src/p_cmd.c
   ${CMAKE_SOURCE_DIR}/src/p_doors.c
   ${CMAKE_SOURCE_DIR}/src/p_enemy.c
   ${CMAKE_SOURCE_DIR}/src/p_floor.c

@@ -23,8 +23,6 @@
 
 #include "z_zone.h"
 
-#include <glib.h>
-
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);

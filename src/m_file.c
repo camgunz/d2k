@@ -23,7 +23,6 @@
 
 #include "z_zone.h"
 
-#include <glib.h>
 #include <glib/gstdio.h>
 
 #include "lprintf.h"

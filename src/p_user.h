@@ -75,6 +75,7 @@ void P_CenterMSPrintf(int playernum, int sfx, const char *fmt, ...) PRINTF_DECL(
 void P_CenterMSVPrintf(int playernum, int sfx, const char *fmt, va_list args);
 void P_CenterMSEcho(int playernum, int sfx, const char *message);
 void P_CenterMSWrite(int playernum, int sfx, const char *message);
+void P_DestroyMessage(gpointer data);
 
 void P_SendMessage(const char *message);
 void P_ClearMessages(int playernum);

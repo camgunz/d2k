@@ -34,6 +34,7 @@
 #include "i_system.h"
 #include "lprintf.h"
 #include "m_file.h"
+#include "p_cmd.h"
 #include "p_pspr.h"
 #include "p_user.h"
 #include "w_wad.h"
@@ -302,7 +303,7 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   M_PBufWriteShort(pbuf, playernum);
 
   if (DELTACLIENT && playernum == consoleplayer)
-    commands = N_GetLocalCommands();
+    commands = P_GetLocalCommands();
   else
     commands = &players[playernum].commands;
 
@@ -708,8 +709,8 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
    * CG: TODO: Add a limit to the number of commands accepted here.  uchar
    *           limits this to 255 commands, but in reality that's > 7 seconds,
    *           which is still far too long.  Quake has an "sv_maxlag" setting
-   *           (or something), that may be preferable to a static limit... but
-   *           I think having an upper bound on that setting is still prudent.
+   *           (or something); that may be preferable to a static limit... but
+   *           I still think having an upper bound on that setting is prudent.
    */
     read_uchar(pbuf, command_count, "command count");
 
@@ -770,7 +771,7 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
 
     if (n != NULL) {
       D_Log(LOG_SYNC, "Commands after sync: ");
-      N_PrintPlayerCommands(commands);
+      P_PrintPlayerCommands(commands);
     }
   }
 

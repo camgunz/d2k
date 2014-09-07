@@ -23,8 +23,6 @@
 
 #include "z_zone.h"
 
-#include <glib.h>
-
 #include "lprintf.h"
 
 static GHashTable *id_hash = NULL;
