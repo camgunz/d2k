@@ -79,7 +79,7 @@ ANG1	src/tables.h	40;"	d
 ANG180	src/tables.h	38;"	d
 ANG270	src/tables.h	39;"	d
 ANG45	src/tables.h	36;"	d
-ANG5	src/p_user.c	322;"	d	file:
+ANG5	src/p_user.c	368;"	d	file:
 ANG90	src/tables.h	37;"	d
 ANGLETOFINESHIFT	src/tables.h	33;"	d
 ANGLETOSKYSHIFT	src/r_sky.h	37;"	d
@@ -219,7 +219,7 @@ Anchor	src/PCRELIB/pcrecpp.h	/^  enum Anchor {$/;"	g	class:pcrecpp::RE
 AnyKey	src/p_spec.h	/^  AnyKey,$/;"	e	enum:__anon248
 ApplyFunc	src/hu_tracers.h	/^  TRACERFUNC ApplyFunc;$/;"	m	struct:traceslist_s
 ApplyFunc	src/hu_tracers.h	/^  TRACERFUNC ApplyFunc;$/;"	m	struct:traceslistinit_s
-ApplyWindowResize	src/SDL/i_video.c	/^static void ApplyWindowResize(SDL_Event *resize_event)$/;"	f	file:
+ApplyWindowResize	src/SDL/i_video.c	/^static void ApplyWindowResize(SDL_Event *resize_event) {$/;"	f	file:
 AttackSamplesTable	src/MUSIC/dbopl.c	/^static const Bit8u AttackSamplesTable[13] = {$/;"	v	file:
 Attribs	src/e6y.h	/^	unsigned int Attribs;$/;"	m	struct:__anon66
 AutoMapDef	src/m_menu.c	/^menu_t AutoMapDef =$/;"	v
@@ -235,7 +235,7 @@ BASETHRESHOLD	src/p_inter.h	38;"	d
 BASEYCENTER	src/r_things.c	38;"	d	file:
 BASE_WIDTH	src/doomdef.h	86;"	d
 BCard	src/p_spec.h	/^  BCard,$/;"	e	enum:__anon248
-BETWEEN	src/doomtype.h	55;"	d
+BETWEEN	src/doomtype.h	49;"	d
 BFGCELLS	src/p_pspr.c	46;"	d	file:
 BFGDELAY	src/info.c	1138;"	d	file:
 BG	src/st_lib.h	34;"	d
@@ -306,7 +306,7 @@ CALC_Y_VALUES	src/gl_main.c	1542;"	d	file:
 CALC_Y_VALUES	src/gl_main.c	1963;"	d	file:
 CALLBACK	src/gl_preprocess.c	27;"	d	file:
 CALLBACK	src/gl_texture.c	27;"	d	file:
-CARRYFACTOR	src/p_spec.c	2887;"	d	file:
+CARRYFACTOR	src/p_spec.c	2904;"	d	file:
 CASELESS	src/PCRELIB/pcrecpp.h	/^static inline RE_Options CASELESS() {$/;"	f	namespace:pcrecpp
 CBUF_FOR_EACH	src/m_cbuf.h	27;"	d
 CC_ARACH	src/d_englsh.h	689;"	d
@@ -333,7 +333,7 @@ CDoor	src/p_spec.h	/^  CDoor,$/;"	e	enum:__anon247
 CEILSPEED	src/p_spec.h	40;"	d
 CEILWAIT	src/p_spec.h	41;"	d
 CENTERY	src/v_video.h	95;"	d
-CFG_BUFFERMAX	src/m_misc.c	1259;"	d	file:
+CFG_BUFFERMAX	src/m_misc.c	1262;"	d	file:
 CF_FLY	src/d_player.h	/^  CF_FLY              = 16,$/;"	e	enum:__anon59
 CF_GODMODE	src/d_player.h	/^  CF_GODMODE          = 2,$/;"	e	enum:__anon59
 CF_NOCLIP	src/d_player.h	/^  CF_NOCLIP           = 1,$/;"	e	enum:__anon59
@@ -365,10 +365,13 @@ CLIENT	src/n_net.h	35;"	d
 CLIENT_ONLY	src/n_proto.c	80;"	d	file:
 CLOCKS_PER_SEC	src/PCRELIB/pcretest.c	123;"	d	file:
 CLOCKS_PER_SEC	src/PCRELIB/pcretest.c	125;"	d	file:
+CL_GetServerPeer	src/n_peer.c	/^netpeer_t* CL_GetServerPeer(void) {$/;"	f
+CL_GetServerSync	src/n_main.c	/^bool CL_GetServerSync(int *command_index, int *sync_tic) {$/;"	f
 CL_IsCatchingUp	src/n_main.c	/^bool CL_IsCatchingUp(void) {$/;"	f
 CL_LoadState	src/n_main.c	/^bool CL_LoadState(void) {$/;"	f
 CL_LoadingState	src/n_main.c	/^bool CL_LoadingState(void) {$/;"	f
-CL_Predicting	src/n_main.c	/^bool CL_Predicting(void) {$/;"	f
+CL_MarkServerOutdated	src/n_main.c	/^void CL_MarkServerOutdated(void) {$/;"	f
+CL_RePredicting	src/n_main.c	/^bool CL_RePredicting(void) {$/;"	f
 CL_ReceivedSetup	src/n_main.c	/^bool CL_ReceivedSetup(void) {$/;"	f
 CL_SendAuthRequest	src/n_proto.c	/^void CL_SendAuthRequest(const char *password) {$/;"	f
 CL_SendAutoaimChange	src/n_proto.c	/^void CL_SendAutoaimChange(dboolean new_autoaim_enabled) {$/;"	f
@@ -454,17 +457,17 @@ COMP_SPC	src/m_menu.c	3361;"	d	file:
 COMP_TOTAL	src/doomstat.h	/^  COMP_TOTAL=32  \/\/ Some extra room for additional variables$/;"	e	enum:__anon54
 CONNECT_TIMEOUT	src/n_net.h	29;"	d
 CONSOLE_DEVICE	src/PCSOUND/pcsound_linux.c	47;"	d	file:
-CONSOLE_MARGIN	src/hu_cons.c	52;"	d	file:
-CONSOLE_MAXHEIGHT	src/hu_cons.c	46;"	d	file:
-CONSOLE_MAXWIDTH	src/hu_cons.c	47;"	d	file:
-CONSOLE_SCROLLBACK_AMOUNT	src/hu_cons.c	53;"	d	file:
-CONSOLE_SCROLL_DOWN_RATE	src/hu_cons.c	50;"	d	file:
-CONSOLE_SCROLL_DOWN_TIME	src/hu_cons.c	48;"	d	file:
-CONSOLE_SCROLL_UP_RATE	src/hu_cons.c	51;"	d	file:
-CONSOLE_SCROLL_UP_TIME	src/hu_cons.c	49;"	d	file:
-CONSOLE_SHORTHAND_MARKER	src/c_main.c	50;"	d	file:
-CONSTFUNC	src/doomtype.h	84;"	d
-CONSTFUNC	src/doomtype.h	88;"	d
+CONSOLE_MARGIN	src/hu_cons.c	51;"	d	file:
+CONSOLE_MAXHEIGHT	src/hu_cons.c	45;"	d	file:
+CONSOLE_MAXWIDTH	src/hu_cons.c	46;"	d	file:
+CONSOLE_SCROLLBACK_AMOUNT	src/hu_cons.c	52;"	d	file:
+CONSOLE_SCROLL_DOWN_RATE	src/hu_cons.c	49;"	d	file:
+CONSOLE_SCROLL_DOWN_TIME	src/hu_cons.c	47;"	d	file:
+CONSOLE_SCROLL_UP_RATE	src/hu_cons.c	50;"	d	file:
+CONSOLE_SCROLL_UP_TIME	src/hu_cons.c	48;"	d	file:
+CONSOLE_SHORTHAND_MARKER	src/c_main.c	49;"	d	file:
+CONSTFUNC	src/doomtype.h	78;"	d
+CONSTFUNC	src/doomtype.h	82;"	d
 CORRECT_TABLE_ENDIAN	src/tables.c	93;"	d	file:
 CPSProcessSerNum	src/MAC/SDLMain.h	/^typedef struct CPSProcessSerNum$/;"	s
 CPSProcessSerNum	src/MAC/SDLMain.h	/^} CPSProcessSerNum;$/;"	t	typeref:struct:CPSProcessSerNum
@@ -502,8 +505,8 @@ CYMTOF	src/am_map.c	130;"	d	file:
 CYMTOF_F	src/am_map.c	134;"	d	file:
 C_Active	src/c_main.c	/^bool C_Active(void) {$/;"	f
 C_Banish	src/c_main.c	/^void C_Banish(void) {$/;"	f
-C_DECL	src/doomtype.h	94;"	d
-C_DECL	src/doomtype.h	96;"	d
+C_DECL	src/doomtype.h	88;"	d
+C_DECL	src/doomtype.h	90;"	d
 C_Drawer	src/c_main.c	/^void C_Drawer(void) {$/;"	f
 C_Echo	src/c_main.c	/^void C_Echo(const char *message) {$/;"	f
 C_Init	src/c_main.c	/^void C_Init(void) {$/;"	f
@@ -646,10 +649,10 @@ DDRAW_H_FOURCC_DXT3	src/gl_hires.c	179;"	d	file:
 DDRAW_H_FOURCC_DXT4	src/gl_hires.c	180;"	d	file:
 DDRAW_H_FOURCC_DXT5	src/gl_hires.c	181;"	d	file:
 DDRAW_H_MAKEFOURCC	src/gl_hires.c	170;"	d	file:
-DEBUG_NET	src/n_main.c	55;"	d	file:
-DEBUG_SAVE	src/n_main.c	57;"	d	file:
+DEBUG_NET	src/n_main.c	56;"	d	file:
+DEBUG_SAVE	src/n_main.c	58;"	d	file:
 DEBUG_STATES	src/n_state.c	24;"	d	file:
-DEBUG_SYNC	src/n_main.c	56;"	d	file:
+DEBUG_SYNC	src/n_main.c	57;"	d	file:
 DECAY	src/MUSIC/dbopl.h	/^        DECAY,$/;"	e	enum:__anon202
 DECLARE_BLOCK_MEMORY_ALLOC_ZONE	src/z_bmalloc.h	35;"	d
 DEE_READ	src/PCRELIB/pcregrep.c	/^enum { DEE_READ, DEE_SKIP };$/;"	e	enum:__anon215	file:
@@ -661,7 +664,9 @@ DEFAULT_SPECHIT_MAGIC	src/g_overflow.h	92;"	d
 DEFINE_INTEGER_PARSERS	src/PCRELIB/pcrecpp.cc	798;"	d	file:
 DEFINE_INTEGER_PARSERS	src/PCRELIB/pcrecpp.cc	821;"	d	file:
 DEG2RAD	src/r_main.h	163;"	d
+DEHFALSE	src/d_deh.c	49;"	d	file:
 DEHFILE	src/d_deh.c	/^} DEHFILE;$/;"	t	typeref:struct:__anon9	file:
+DEHTRUE	src/d_deh.c	48;"	d	file:
 DEH_BLOCKMAX	src/d_deh.c	1028;"	d	file:
 DEH_BUFFERMAX	src/d_deh.c	1026;"	d	file:
 DEH_MAXKEYLEN	src/d_deh.c	1029;"	d	file:
@@ -820,7 +825,7 @@ ELEVATORSPEED	src/p_spec.h	35;"	d
 EMPTYSTRING	src/d_englsh.h	69;"	d
 EMSG	src/d_server.c	101;"	d	file:
 EMULATE	src/g_overflow.h	56;"	d
-ENABLE_PREDICTION	src/n_main.c	58;"	d	file:
+ENABLE_PREDICTION	src/n_main.c	59;"	d	file:
 ENDGAME	src/d_englsh.h	57;"	d
 ENV_BITS	src/MUSIC/dbopl.c	95;"	d	file:
 ENV_BITS	src/MUSIC/dbopl.c	98;"	d	file:
@@ -988,7 +993,6 @@ F4	src/md5.c	165;"	d	file:
 FALSE	src/MUSIC/dbopl.c	60;"	d	file:
 FALSE	src/PCRELIB/pcre_internal.h	468;"	d
 FALSE	src/PCRELIB/pcregrep.c	77;"	d	file:
-FALSE	src/d_deh.c	49;"	d	file:
 FALSE_MARKER	src/cmp.c	/^  FALSE_MARKER           = 0xC2,$/;"	e	enum:__anon5	file:
 FASTDARK	src/p_spec.h	66;"	d
 FATSPREAD	src/p_enemy.c	1873;"	d	file:
@@ -1049,7 +1053,7 @@ FTOM	src/am_map.c	124;"	d	file:
 FTriggerModel	src/p_spec.h	/^  FTriggerModel,$/;"	e	enum:__anon242
 FUDGEFACTOR	src/p_telept.c	209;"	d	file:
 FUNC_V_CopyRect	src/v_video.c	/^static void FUNC_V_CopyRect(int srcscrn, int destscrn,$/;"	f	file:
-FUNC_V_DrawBackground	src/v_video.c	/^static void FUNC_V_DrawBackground(const char* flatname, int scrn)$/;"	f	file:
+FUNC_V_DrawBackground	src/v_video.c	/^static void FUNC_V_DrawBackground(const char *flatname, int scrn) {$/;"	f	file:
 FUNC_V_DrawNumPatch	src/v_video.c	/^static void FUNC_V_DrawNumPatch(int x, int y, int scrn, int lump,$/;"	f	file:
 FUNC_V_DrawNumPatchPrecise	src/v_video.c	/^static void FUNC_V_DrawNumPatchPrecise(float x, float y, int scrn, int lump,$/;"	f	file:
 FUNC_V_FillFlat	src/v_video.c	/^static void FUNC_V_FillFlat(int lump, int scrn, int x, int y, int width, int height, enum patch_translation_e flags)$/;"	f	file:
@@ -1149,7 +1153,7 @@ GETCHARLEN	src/PCRELIB/pcre_internal.h	294;"	d
 GETCHARLEN	src/PCRELIB/pcre_internal.h	371;"	d
 GETCHARTEST	src/PCRELIB/pcre_internal.h	291;"	d
 GETCHARTEST	src/PCRELIB/pcre_internal.h	320;"	d
-GETXY	src/p_setup.c	1241;"	d	file:
+GETXY	src/p_setup.c	1242;"	d	file:
 GF_X	src/m_menu.c	3022;"	d	file:
 GGSAVED	src/d_englsh.h	133;"	d
 GLDIT_ACEILING	src/gl_intern.h	/^  GLDIT_ACEILING, \/\/ animated ceiling$/;"	e	enum:__anon103
@@ -1279,7 +1283,7 @@ GL_INTERN_H__	src/gl_intern.h	25;"	d
 GL_OPENGL_H__	src/gl_opengl.h	25;"	d
 GL_RGB_SCALE_ARB	src/e6y.h	46;"	d
 GL_STRUCT_H__	src/gl_struct.h	25;"	d
-GL_VERT_OFFSET	src/p_setup.c	90;"	d	file:
+GL_VERT_OFFSET	src/p_setup.c	91;"	d	file:
 GOTARMBONUS	src/d_englsh.h	75;"	d
 GOTARMOR	src/d_englsh.h	72;"	d
 GOTBACKPACK	src/d_englsh.h	104;"	d
@@ -1690,6 +1694,7 @@ HU_MessageWidgetResponder	src/hu_msg.c	/^bool HU_MessageWidgetResponder(message_
 HU_MessageWidgetRetract	src/hu_msg.c	/^void HU_MessageWidgetRetract(message_widget_t *mw) {$/;"	f
 HU_MessageWidgetSetAlignBottom	src/hu_msg.c	/^void HU_MessageWidgetSetAlignBottom(message_widget_t *mw, bool align_bottom) {$/;"	f
 HU_MessageWidgetSetBGColor	src/hu_msg.c	/^void HU_MessageWidgetSetBGColor(message_widget_t *mw, hu_color_t bg_color) {$/;"	f
+HU_MessageWidgetSetBuf	src/hu_msg.c	/^void HU_MessageWidgetSetBuf(message_widget_t *mw, void *buf) {$/;"	f
 HU_MessageWidgetSetFGColor	src/hu_msg.c	/^void HU_MessageWidgetSetFGColor(message_widget_t *mw, hu_color_t fg_color) {$/;"	f
 HU_MessageWidgetSetFont	src/hu_msg.c	/^void HU_MessageWidgetSetFont(message_widget_t *mw, const char *font) { $/;"	f
 HU_MessageWidgetSetHeightByLines	src/hu_msg.c	/^void HU_MessageWidgetSetHeightByLines(message_widget_t *mw, int lines) {$/;"	f
@@ -1808,10 +1813,10 @@ INFRATICS	src/doomdef.h	/^  INFRATICS   = (120 * TICRATE),$/;"	e	enum:__anon52
 INITSCALEMTOF	src/am_map.c	110;"	d	file:
 INIT_DATA_DEST_2X	src/r_screenmultiply.c	38;"	d	file:
 INIT_DATA_DEST_2X	src/r_screenmultiply.c	40;"	d	file:
-INLINE	src/doomtype.h	100;"	d
-INLINE	src/doomtype.h	102;"	d
-INPUT_CURSOR_THICKNESS	src/hu_input.c	37;"	d	file:
-INPUT_PROMPT_THICKNESS	src/hu_input.c	38;"	d	file:
+INLINE	src/doomtype.h	94;"	d
+INLINE	src/doomtype.h	96;"	d
+INPUT_CURSOR_THICKNESS	src/hu_input.c	36;"	d	file:
+INPUT_PROMPT_THICKNESS	src/hu_input.c	37;"	d	file:
 INPUT_VALUE_TOO_LARGE_ERROR	src/cmp.c	/^  INPUT_VALUE_TOO_LARGE_ERROR,$/;"	e	enum:__anon7	file:
 INSTRUMENTED	src/MAC/config.h	42;"	d
 INTERP_CeilingPanning	src/r_defs.h	/^  int INTERP_CeilingPanning;$/;"	m	struct:__anon283
@@ -1861,12 +1866,12 @@ I_EndDoom	src/SDL/i_main.c	/^static void I_EndDoom(void)$/;"	f	file:
 I_EndJoystick	src/SDL/i_joy.c	/^static void I_EndJoystick(void) {$/;"	f	file:
 I_EndRead	src/m_file.c	/^static inline void I_EndRead(void) {}$/;"	f	file:
 I_Error	src/d_server.c	/^void NORETURN I_Error(const char *error, ...) \/\/ killough 3\/20\/98: add const$/;"	f
-I_Error	src/lprintf.c	/^void I_Error(const char *error, ...)$/;"	f
+I_Error	src/lprintf.c	/^void I_Error(const char *error, ...) {$/;"	f
 I_ExeptionBegin	src/SDL/i_main.c	/^void I_ExeptionBegin(ExeptionsList_t exception_index)$/;"	f
 I_ExeptionEnd	src/SDL/i_main.c	/^void I_ExeptionEnd(void)$/;"	f
 I_ExeptionProcess	src/SDL/i_main.c	/^void I_ExeptionProcess(void)$/;"	f
 I_FONT_H__	src/i_font.h	24;"	d
-I_FillScreenResolutionsList	src/SDL/i_video.c	/^static void I_FillScreenResolutionsList(void)$/;"	f	file:
+I_FillScreenResolutionsList	src/SDL/i_video.c	/^static void I_FillScreenResolutionsList(void) {$/;"	f	file:
 I_FindAttr	src/e6y.h	292;"	d
 I_FindClose	src/e6y_launcher.c	/^int I_FindClose (void *handle)$/;"	f
 I_FindFile	src/SDL/i_system.c	/^char* I_FindFile(const char* wfname, const char* ext) {$/;"	f
@@ -1955,7 +1960,7 @@ I_SDLtoDoomMouseState	src/SDL/i_video.c	/^int I_SDLtoDoomMouseState(Uint8 button
 I_SMP_H__	src/i_smp.h	25;"	d
 I_SOUND_H__	src/i_sound.h	25;"	d
 I_SYSTEM_H__	src/i_system.h	25;"	d
-I_SafeExit	src/SDL/i_main.c	/^void I_SafeExit(int rc)$/;"	f
+I_SafeExit	src/SDL/i_main.c	/^void I_SafeExit(int rc) {$/;"	f
 I_ScreenShot	src/SDL/i_sshot.c	/^int I_ScreenShot (const char *fname)$/;"	f
 I_SendPacket	src/SDL/i_network.c	/^void I_SendPacket(packet_header_t* packet, size_t len) {$/;"	f
 I_SendPacketTo	src/SDL/i_network.c	/^void I_SendPacketTo(packet_header_t* packet, size_t len, UDP_CHANNEL *to) {$/;"	f
@@ -1965,7 +1970,7 @@ I_SetMusicVolume	src/SDL/i_music.c	/^void I_SetMusicVolume(int volume) {$/;"	f
 I_SetPalette	src/SDL/i_video.c	/^void I_SetPalette (int pal)$/;"	f
 I_SetProcessPriority	src/SDL/i_main.c	/^void I_SetProcessPriority(void)$/;"	f
 I_SetSoundCap	src/SDL/i_sound.c	/^void I_SetSoundCap(void) {$/;"	f
-I_SetWindowCaption	src/SDL/i_video.c	/^void I_SetWindowCaption(void)$/;"	f
+I_SetWindowCaption	src/SDL/i_video.c	/^void I_SetWindowCaption(void) {$/;"	f
 I_SetWindowIcon	src/SDL/i_video.c	/^void I_SetWindowIcon(void)$/;"	f
 I_ShutdownGraphics	src/SDL/i_video.c	/^void I_ShutdownGraphics(void) {$/;"	f
 I_ShutdownMusic	src/SDL/i_music.c	/^void I_ShutdownMusic(void) {$/;"	f
@@ -2117,8 +2122,8 @@ LOG_NET	src/d_log.h	/^  LOG_NET,$/;"	e	enum:__anon20
 LOG_SAVE	src/d_log.h	/^  LOG_SAVE,$/;"	e	enum:__anon20
 LOG_STATE	src/d_log.h	/^  LOG_STATE,$/;"	e	enum:__anon20
 LOG_SYNC	src/d_log.h	/^  LOG_SYNC,$/;"	e	enum:__anon20
-LONGLONG	src/doomtype.h	70;"	d
-LONGLONG	src/doomtype.h	75;"	d
+LONGLONG	src/doomtype.h	64;"	d
+LONGLONG	src/doomtype.h	69;"	d
 LOOPREPEAT	src/PCRELIB/pcretest.c	129;"	d	file:
 LOWERSPEED	src/p_pspr.c	41;"	d	file:
 LO_ALWAYS	src/lprintf.h	/^  LO_ALWAYS=64,$/;"	e	enum:__anon142
@@ -2130,7 +2135,7 @@ LO_INFO	src/lprintf.h	/^  LO_INFO=1,                \/* One of these is used in 
 LO_WARN	src/lprintf.h	/^  LO_WARN=4,                \/* if output redirected is determined by the       *\/$/;"	e	enum:__anon142
 LPRINTF_H__	src/lprintf.h	25;"	d
 LUMP_CM2RGB	src/w_wad.h	120;"	d
-LUMP_IS_NEW	src/SDL/i_main.c	275;"	d	file:
+LUMP_IS_NEW	src/SDL/i_main.c	271;"	d	file:
 LUMP_PRBOOM	src/w_wad.h	121;"	d
 LUMP_STATIC	src/w_wad.h	119;"	d
 L_AddItemToCache	src/e6y_launcher.c	/^static void L_AddItemToCache(fileitem_t *item)$/;"	f	file:
@@ -2215,9 +2220,8 @@ MATCH_LIMIT	src/PCRELIB/config.h	133;"	d
 MATCH_LIMIT_RECURSION	src/PCRELIB/config.h	146;"	d
 MATCH_MATCH	src/PCRELIB/pcre_exec.c	91;"	d	file:
 MATCH_NOMATCH	src/PCRELIB/pcre_exec.c	92;"	d	file:
-MAX	src/doomtype.h	49;"	d
 MAXANIMS	src/p_spec.c	79;"	d	file:
-MAXBOB	src/p_user.c	55;"	d	file:
+MAXBOB	src/p_user.c	101;"	d	file:
 MAXBUTTONS	src/p_spec.h	57;"	d
 MAXCHATWIDTH	src/m_menu.c	1745;"	d	file:
 MAXCOORD	src/gl_intern.h	29;"	d
@@ -2235,22 +2239,22 @@ MAXMOVE	src/p_mobj.h	374;"	d
 MAXNETNODES	src/d_net.h	46;"	d
 MAXPLAYERS	src/d_server.c	188;"	d	file:
 MAXPLAYERS	src/doomdef.h	118;"	d
-MAXPLMOVE	src/g_game.c	78;"	d	file:
+MAXPLMOVE	src/g_game.c	79;"	d	file:
 MAXRADIUS	src/p_map.h	36;"	d
 MAXTRACEITEMS	src/hu_tracers.h	29;"	d
 MAXTRANS	src/r_draw.c	559;"	d	file:
 MAXVISPLANES	src/r_plane.c	38;"	d	file:
 MAXWINDOWS	src/TEXTSCREEN/txt_desktop.c	35;"	d	file:
-MAX_ADDRESS_LENGTH	src/n_net.c	50;"	d	file:
+MAX_ADDRESS_LENGTH	src/n_net.c	51;"	d	file:
 MAX_BUFFER_SIZE	src/MUSIC/midifile.c	44;"	d	file:
 MAX_CC_SIDES	src/gl_preprocess.c	74;"	d	file:
 MAX_COMMAND_COUNT	src/p_saveg.c	48;"	d	file:
-MAX_COMMAND_LENGTH	src/n_pack.c	56;"	d	file:
+MAX_COMMAND_LENGTH	src/n_pack.c	57;"	d	file:
 MAX_COMPATIBILITY_LEVEL	src/doomtype.h	/^  MAX_COMPATIBILITY_LEVEL,               \/* Must be last entry *\/$/;"	e	enum:__anon57
-MAX_DOWNLOAD	src/n_net.c	47;"	d	file:
+MAX_DOWNLOAD	src/n_net.c	48;"	d	file:
 MAX_DUPLENGTH	src/PCRELIB/config.h	162;"	d
 MAX_GLGAMMA	src/gl_struct.h	50;"	d
-MAX_IWAD_NAME_LENGTH	src/n_pack.c	48;"	d	file:
+MAX_IWAD_NAME_LENGTH	src/n_pack.c	49;"	d	file:
 MAX_KEY	src/m_misc.h	98;"	d
 MAX_MESSAGE_LENGTH	src/lprintf.h	30;"	d
 MAX_MOUSEB	src/m_misc.h	99;"	d
@@ -2259,25 +2263,25 @@ MAX_NAME_COUNT	src/PCRELIB/config.h	158;"	d
 MAX_NAME_LENGTH	src/g_game.h	71;"	d
 MAX_NAME_SIZE	src/PCRELIB/config.h	154;"	d
 MAX_OPL_QUEUE	src/MUSIC/opl_queue.c	32;"	d	file:
-MAX_PASSWORD_LENGTH	src/n_pack.c	55;"	d	file:
+MAX_PASSWORD_LENGTH	src/n_pack.c	56;"	d	file:
 MAX_PATTERN_COUNT	src/PCRELIB/pcregrep.c	83;"	d	file:
 MAX_PATTERN_SIZE	src/PCRELIB/pcre_internal.h	231;"	d
 MAX_PATTERN_SIZE	src/PCRELIB/pcre_internal.h	244;"	d
 MAX_PATTERN_SIZE	src/PCRELIB/pcre_internal.h	258;"	d
-MAX_PLAYER_MESSAGE_SIZE	src/n_pack.c	52;"	d	file:
+MAX_PLAYER_MESSAGE_SIZE	src/n_pack.c	53;"	d	file:
 MAX_PLAYER_MESSAGE_SIZE	src/p_saveg.c	47;"	d	file:
-MAX_PLAYER_NAME_SIZE	src/n_pack.c	54;"	d	file:
-MAX_PLAYER_PREFERENCE_NAME_SIZE	src/n_pack.c	53;"	d	file:
+MAX_PLAYER_NAME_SIZE	src/n_pack.c	55;"	d	file:
+MAX_PLAYER_PREFERENCE_NAME_SIZE	src/n_pack.c	54;"	d	file:
 MAX_PREF_NAME_SIZE	src/n_proto.c	49;"	d	file:
-MAX_RESOLUTIONS_COUNT	src/SDL/i_video.c	886;"	d	file:
-MAX_RESOURCE_NAMES	src/n_pack.c	49;"	d	file:
-MAX_RESOURCE_NAME_LENGTH	src/n_pack.c	50;"	d	file:
-MAX_SERVER_MESSAGE_SIZE	src/n_pack.c	51;"	d	file:
+MAX_RESOLUTIONS_COUNT	src/SDL/i_video.c	887;"	d	file:
+MAX_RESOURCE_NAMES	src/n_pack.c	50;"	d	file:
+MAX_RESOURCE_NAME_LENGTH	src/n_pack.c	51;"	d	file:
+MAX_SERVER_MESSAGE_SIZE	src/n_pack.c	52;"	d	file:
 MAX_SOUND_CHANNELS	src/s_sound.h	39;"	d
 MAX_SOUND_SLICE_TIME	src/MUSIC/opl.c	40;"	d	file:
 MAX_SPRITE_FRAMES	src/r_things.c	105;"	d	file:
 MAX_STRING_SIZE	src/sc_man.c	48;"	d	file:
-MAX_UPLOAD	src/n_net.c	48;"	d	file:
+MAX_UPLOAD	src/n_net.c	49;"	d	file:
 MBUFTHIRD	src/PCRELIB/pcregrep.c	86;"	d	file:
 MBUFTHIRD	src/PCRELIB/pcregrep.c	88;"	d	file:
 MD5Context	src/md5.h	/^struct MD5Context {$/;"	s
@@ -2387,7 +2391,6 @@ MIDI_RestartIterator	src/MUSIC/midifile.c	/^void MIDI_RestartIterator(midi_track
 MIDI_spmc	src/MUSIC/midifile.c	/^double MIDI_spmc (const midi_file_t *file, const midi_event_t *ev, unsigned sndrate)$/;"	f
 MIF_ARMED	src/p_mobj.h	/^  MIF_ARMED = 2,        \/\/ Object is armed (for MF_TOUCHY objects)$/;"	e	enum:__anon224
 MIF_FALLING	src/p_mobj.h	/^  MIF_FALLING = 1,      \/\/ Object is falling$/;"	e	enum:__anon224
-MIN	src/doomtype.h	52;"	d
 MINZ	src/r_things.h	33;"	d
 MIN_BLOCK_SPLIT	src/z_zone.c	47;"	d	file:
 MIN_MAXPLAYERS	src/g_game.h	64;"	d
@@ -2835,7 +2838,7 @@ M_ExtHelp	src/m_menu.c	/^void M_ExtHelp(int choice)$/;"	f
 M_ExtHelpNextScreen	src/m_menu.c	/^void M_ExtHelpNextScreen(int choice)$/;"	f
 M_ExtractFileBase	src/m_file.c	/^void M_ExtractFileBase(const char *path, char *dest) {$/;"	f
 M_FDLength	src/m_file.c	/^uint32_t M_FDLength(int fd) {$/;"	f
-M_FILE_ERROR	src/m_file.c	33;"	d	file:
+M_FILE_ERROR	src/m_file.c	32;"	d	file:
 M_FILE_H__	src/m_file.h	25;"	d
 M_FIXED_H__	src/m_fixed.h	25;"	d
 M_FileLength	src/m_file.c	/^uint32_t M_FileLength(FILE *f) {$/;"	f
@@ -3095,6 +3098,7 @@ NCMD_RETRANSMIT	src/d_ipxgate.c	40;"	d	file:
 NCMD_SETUP	src/d_ipxgate.c	41;"	d	file:
 NEGATIVE_FIXNUM_MARKER	src/cmp.c	/^  NEGATIVE_FIXNUM_MARKER = 0xE0$/;"	e	enum:__anon5	file:
 NETEND	src/d_englsh.h	56;"	d
+NETPEER_FOR_EACH	src/n_peer.h	60;"	d
 NET_CHANNEL_MAX	src/n_net.h	/^  NET_CHANNEL_MAX$/;"	e	enum:__anon204
 NET_CHANNEL_RELIABLE	src/n_net.h	/^  NET_CHANNEL_RELIABLE,$/;"	e	enum:__anon204
 NET_CHANNEL_UNRELIABLE	src/n_net.h	/^  NET_CHANNEL_UNRELIABLE,$/;"	e	enum:__anon204
@@ -3116,8 +3120,8 @@ NIL_MARKER	src/cmp.c	/^  NIL_MARKER             = 0xC0,$/;"	e	enum:__anon5	file:
 NLBLOCK	src/PCRELIB/pcre_compile.c	68;"	d	file:
 NLBLOCK	src/PCRELIB/pcre_dfa_exec.c	69;"	d	file:
 NLBLOCK	src/PCRELIB/pcre_exec.c	68;"	d	file:
-NORETURN	src/doomtype.h	86;"	d
-NORETURN	src/doomtype.h	90;"	d
+NORETURN	src/doomtype.h	80;"	d
+NORETURN	src/doomtype.h	84;"	d
 NORMALIZE_PLANE	src/gl_clipper.c	361;"	d	file:
 NORM_PITCH	src/s_sound.c	59;"	d	file:
 NORM_PRIORITY	src/s_sound.c	60;"	d	file:
@@ -3128,7 +3132,7 @@ NOT_DELTA_CLIENT	src/n_proto.c	98;"	d	file:
 NOT_DELTA_SERVER	src/n_proto.c	89;"	d	file:
 NO_BOTTOMTEXTURES	src/r_defs.h	87;"	d
 NO_INDEX	src/doomdata.h	88;"	d
-NO_PALETTE_CHANGE	src/SDL/i_video.c	706;"	d	file:
+NO_PALETTE_CHANGE	src/SDL/i_video.c	712;"	d	file:
 NO_TEXTURE	src/r_data.h	82;"	d
 NO_TOPTEXTURES	src/r_defs.h	86;"	d
 NULL_BLOCK_MEMORY_ALLOC_ZONE	src/z_bmalloc.h	38;"	d
@@ -3150,7 +3154,7 @@ NUMAMMO	src/doomdef.h	/^  NUMAMMO,$/;"	e	enum:__anon50
 NUMANIMS	src/wi_stuff.c	/^static int NUMANIMS[NUMEPISODES] =$/;"	v	file:
 NUMBONUSPALS	src/st_stuff.c	55;"	d	file:
 NUMCARDS	src/doomdef.h	/^  NUMCARDS$/;"	e	enum:__anon48
-NUMCHATSTRINGS	src/m_misc.c	1257;"	d	file:
+NUMCHATSTRINGS	src/m_misc.c	1260;"	d	file:
 NUMCHEATPLYRLINES	src/am_map.c	179;"	d	file:
 NUMCOLORMAPS	src/r_main.h	122;"	d
 NUMCROSSMARKLINES	src/am_map.c	189;"	d	file:
@@ -3191,7 +3195,6 @@ N_EXCLUDE	src/PCRELIB/pcregrep.c	186;"	d	file:
 N_GetDownloadBandwidth	src/n_net.c	/^uint32_t N_GetDownloadBandwidth(void) {$/;"	f
 N_GetHostFromAddressString	src/n_net.c	/^size_t N_GetHostFromAddressString(const char *address, char **host) {$/;"	f
 N_GetLatestState	src/n_state.c	/^game_state_t* N_GetLatestState(void) {$/;"	f
-N_GetLocalCommands	src/n_main.c	/^cbuf_t* N_GetLocalCommands(void) {$/;"	f
 N_GetNewState	src/n_state.c	/^game_state_t* N_GetNewState(void) {$/;"	f
 N_GetPortFromAddressString	src/n_net.c	/^dboolean N_GetPortFromAddressString(const char *address, uint16_t *port) {$/;"	f
 N_GetUploadBandwidth	src/n_net.c	/^uint32_t N_GetUploadBandwidth(void) {$/;"	f
@@ -3230,6 +3233,7 @@ N_PackNameChange	src/n_pack.c	/^void N_PackNameChange(netpeer_t *np, short playe
 N_PackPWOChange	src/n_pack.c	/^void N_PackPWOChange(netpeer_t *np, short playernum) {$/;"	f
 N_PackPlayerMessage	src/n_pack.c	/^void N_PackPlayerMessage(netpeer_t *np, short sender, buf_t *recipients,$/;"	f
 N_PackRCONCommand	src/n_pack.c	/^void N_PackRCONCommand(netpeer_t *np, const char *command) {$/;"	f
+N_PackRelayedPlayerMessage	src/n_pack.c	/^void N_PackRelayedPlayerMessage(netpeer_t *np, short sender, short recipient,$/;"	f
 N_PackServerMessage	src/n_pack.c	/^void N_PackServerMessage(netpeer_t *np, const char *message) {$/;"	f
 N_PackSetup	src/n_pack.c	/^void N_PackSetup(netpeer_t *np) {$/;"	f
 N_PackSkinChange	src/n_pack.c	/^void N_PackSkinChange(netpeer_t *np, short playernum) {$/;"	f
@@ -3239,18 +3243,20 @@ N_PackVoteRequest	src/n_pack.c	/^void N_PackVoteRequest(netpeer_t *np, const cha
 N_PackWSOPChange	src/n_pack.c	/^void N_PackWSOPChange(netpeer_t *np, short playernum, byte new_wsop_flags) {$/;"	f
 N_PackWeaponSpeedChange	src/n_pack.c	/^void N_PackWeaponSpeedChange(netpeer_t *np, short playernum,$/;"	f
 N_ParseAddressString	src/n_net.c	/^size_t N_ParseAddressString(const char *address, char **host, uint16_t *port) {$/;"	f
-N_PeerAdd	src/n_peer.c	/^int N_PeerAdd(void) {$/;"	f
+N_PeerAdd	src/n_peer.c	/^unsigned int N_PeerAdd(void) {$/;"	f
 N_PeerBeginMessage	src/n_peer.c	/^pbuf_t* N_PeerBeginMessage(int peernum, net_channel_e chan_type,$/;"	f
 N_PeerCheckTimeout	src/n_peer.c	/^dboolean N_PeerCheckTimeout(int peernum) {$/;"	f
 N_PeerClearReliable	src/n_peer.c	/^void N_PeerClearReliable(int peernum) {$/;"	f
 N_PeerClearUnreliable	src/n_peer.c	/^void N_PeerClearUnreliable(int peernum) {$/;"	f
 N_PeerFlushBuffers	src/n_peer.c	/^void N_PeerFlushBuffers(int peernum) {$/;"	f
+N_PeerForPeer	src/n_peer.c	/^unsigned int N_PeerForPeer(ENetPeer *peer) {$/;"	f
 N_PeerForPlayer	src/n_peer.c	/^netpeer_t* N_PeerForPlayer(short playernum) {$/;"	f
 N_PeerGet	src/n_peer.c	/^netpeer_t* N_PeerGet(int peernum) {$/;"	f
-N_PeerGetCount	src/n_peer.c	/^int N_PeerGetCount(void) {$/;"	f
-N_PeerGetNum	src/n_peer.c	/^int N_PeerGetNum(ENetPeer *peer) {$/;"	f
-N_PeerGetNumForPlayer	src/n_peer.c	/^int N_PeerGetNumForPlayer(short playernum) {$/;"	f
+N_PeerGetCount	src/n_peer.c	/^unsigned int N_PeerGetCount(void) {$/;"	f
+N_PeerGetNumForPlayer	src/n_peer.c	/^unsigned int N_PeerGetNumForPlayer(short playernum) {$/;"	f
 N_PeerGetPacket	src/n_peer.c	/^ENetPacket* N_PeerGetPacket(int peernum, net_channel_e chan_type) {$/;"	f
+N_PeerIter	src/n_peer.c	/^bool N_PeerIter(netpeer_iter_t **it, netpeer_t **np) {$/;"	f
+N_PeerIterRemove	src/n_peer.c	/^void N_PeerIterRemove(netpeer_iter_t *it, netpeer_t *np) {$/;"	f
 N_PeerLoadIncoming	src/n_peer.c	/^dboolean N_PeerLoadIncoming(int peernum, unsigned char *data, size_t size) {$/;"	f
 N_PeerLoadNextMessage	src/n_peer.c	/^dboolean N_PeerLoadNextMessage(int peernum, unsigned char *message_type) {$/;"	f
 N_PeerRemove	src/n_peer.c	/^void N_PeerRemove(netpeer_t *np) {$/;"	f
@@ -3258,10 +3264,8 @@ N_PeerResetSync	src/n_peer.c	/^void N_PeerResetSync(int peernum) {$/;"	f
 N_PeerSetConnected	src/n_peer.c	/^void N_PeerSetConnected(int peernum, ENetPeer *peer) {$/;"	f
 N_PeerSetDisconnected	src/n_peer.c	/^void N_PeerSetDisconnected(int peernum) {$/;"	f
 N_PrintAddress	src/n_net.c	/^void N_PrintAddress(FILE *fp, int peernum) {$/;"	f
-N_PrintPlayerCommands	src/n_main.c	/^void N_PrintPlayerCommands(cbuf_t *commands) {$/;"	f
 N_Reconnect	src/n_net.c	/^dboolean N_Reconnect(void) {$/;"	f
 N_RemoveOldStates	src/n_state.c	/^void N_RemoveOldStates(int tic) {$/;"	f
-N_ResetLocalCommandIndex	src/n_main.c	/^void N_ResetLocalCommandIndex(void) {$/;"	f
 N_STATE_H__	src/n_state.h	25;"	d
 N_SaveState	src/n_state.c	/^void N_SaveState(void) {$/;"	f
 N_ServiceNetwork	src/n_net.c	/^void N_ServiceNetwork(void) {$/;"	f
@@ -3537,8 +3541,8 @@ PAL_WHITE	src/m_menu.c	1737;"	d	file:
 PATCH_HASHOLES	src/r_patch.h	/^  PATCH_HASHOLES        = 0x00000004,$/;"	e	enum:__anon308
 PATCH_ISNOTTILEABLE	src/r_patch.h	/^  PATCH_ISNOTTILEABLE   = 0x00000001,$/;"	e	enum:__anon308
 PATCH_REPEAT	src/r_patch.h	/^  PATCH_REPEAT          = 0x00000002,$/;"	e	enum:__anon308
-PATH_MAX	src/doomtype.h	76;"	d
-PATH_MAX	src/doomtype.h	77;"	d
+PATH_MAX	src/doomtype.h	70;"	d
+PATH_MAX	src/doomtype.h	71;"	d
 PCRE_ANCHORED	src/PCRELIB/pcre.h	125;"	d
 PCRE_AUTO_CALLOUT	src/PCRELIB/pcre.h	135;"	d
 PCRE_CASELESS	src/PCRELIB/pcre.h	121;"	d
@@ -3793,7 +3797,7 @@ PRESSYN	src/d_englsh.h	33;"	d
 PRINTF_DECL	src/z_zone.h	30;"	d
 PRINTF_DECL	src/z_zone.h	32;"	d
 PRINTF_DECL	src/z_zone.h	36;"	d
-PRINT_BANDWIDTH_STATS	src/n_main.c	59;"	d	file:
+PRINT_BANDWIDTH_STATS	src/n_main.c	60;"	d	file:
 PROCESS	src/g_overflow.h	57;"	d
 PROCESS_LINE_2X_1	src/r_screenmultiply.c	43;"	d	file:
 PROCESS_LINE_2X_2	src/r_screenmultiply.c	56;"	d	file:
@@ -3827,9 +3831,9 @@ PUBLIC_DFA_EXEC_OPTIONS	src/PCRELIB/pcre_internal.h	436;"	d
 PUBLIC_EXEC_OPTIONS	src/PCRELIB/pcre_internal.h	432;"	d
 PUBLIC_OPTIONS	src/PCRELIB/pcre_internal.h	426;"	d
 PUBLIC_STUDY_OPTIONS	src/PCRELIB/pcre_internal.h	441;"	d
-PUREFUNC	src/doomtype.h	85;"	d
-PUREFUNC	src/doomtype.h	89;"	d
-PUSH_FACTOR	src/p_spec.c	3215;"	d	file:
+PUREFUNC	src/doomtype.h	79;"	d
+PUREFUNC	src/doomtype.h	83;"	d
+PUSH_FACTOR	src/p_spec.c	3232;"	d	file:
 PUSH_MASK	src/p_spec.h	77;"	d
 PUSH_SHIFT	src/p_spec.h	78;"	d
 PUT	src/PCRELIB/pcre_internal.h	224;"	d
@@ -3837,7 +3841,7 @@ PUT	src/PCRELIB/pcre_internal.h	236;"	d
 PUT	src/PCRELIB/pcre_internal.h	249;"	d
 PUT2	src/PCRELIB/pcre_internal.h	275;"	d
 PUT2INC	src/PCRELIB/pcre_internal.h	282;"	d
-PUTDOT	src/v_video.c	910;"	d	file:
+PUTDOT	src/v_video.c	917;"	d	file:
 PUTINC	src/PCRELIB/pcre_internal.h	268;"	d
 PU_CACHE	src/z_zone.h	/^enum {PU_FREE, PU_STATIC, PU_SOUND, PU_MUSIC, PU_LEVEL, PU_LEVSPEC, PU_CACHE,$/;"	e	enum:__anon361
 PU_FREE	src/z_zone.h	/^enum {PU_FREE, PU_STATIC, PU_SOUND, PU_MUSIC, PU_LEVEL, PU_LEVSPEC, PU_CACHE,$/;"	e	enum:__anon361
@@ -3888,16 +3892,28 @@ P_BlockThingsIterator	src/p_maputl.c	/^dboolean P_BlockThingsIterator(int x, int
 P_Bob	src/p_user.c	/^static void P_Bob(player_t *player, angle_t angle, fixed_t move) {$/;"	f	file:
 P_BoxOnLineSide	src/p_maputl.c	/^int PUREFUNC P_BoxOnLineSide(const fixed_t *tmbox, const line_t *ld)$/;"	f
 P_BringUpWeapon	src/p_pspr.c	/^static void P_BringUpWeapon(player_t *player)$/;"	f	file:
+P_BuildCommand	src/p_cmd.c	/^void P_BuildCommand(void) {$/;"	f
 P_BulletSlope	src/p_pspr.c	/^static void P_BulletSlope(mobj_t *mo)$/;"	f	file:
 P_CHECKSUM_H__	src/p_checksum.h	25;"	d
+P_CMD_H__	src/p_cmd.h	25;"	d
 P_CalcHeight	src/p_user.c	/^void P_CalcHeight(player_t *player) {$/;"	f
 P_CanUnlockGenDoor	src/p_spec.c	/^dboolean P_CanUnlockGenDoor$/;"	f
-P_CenterEcho	src/p_user.c	/^void P_CenterEcho(int playernum, int sfx, const char *message) {$/;"	f
-P_CenterPrintf	src/p_user.c	/^void P_CenterPrintf(int playernum, int sfx, const char *fmt, ...) {$/;"	f
-P_CenterQEcho	src/p_user.c	/^void P_CenterQEcho(int playernum, int sfx, const char *message) {$/;"	f
-P_CenterQPrintf	src/p_user.c	/^void P_CenterQPrintf(int playernum, int sfx, const char *fmt, ...) {$/;"	f
-P_CenterQWrite	src/p_user.c	/^void P_CenterQWrite(int playernum, int sfx, const char *message) {$/;"	f
-P_CenterWrite	src/p_user.c	/^void P_CenterWrite(int playernum, int sfx, const char *message) {$/;"	f
+P_CenterEcho	src/p_user.c	/^void P_CenterEcho(int playernum, const char *message) {$/;"	f
+P_CenterMEcho	src/p_user.c	/^void P_CenterMEcho(int playernum, const char *message) {$/;"	f
+P_CenterMPrintf	src/p_user.c	/^void P_CenterMPrintf(int playernum, const char *fmt, ...) {$/;"	f
+P_CenterMSEcho	src/p_user.c	/^void P_CenterMSEcho(int playernum, int sfx, const char *message) {$/;"	f
+P_CenterMSPrintf	src/p_user.c	/^void P_CenterMSPrintf(int playernum, int sfx, const char *fmt, ...) {$/;"	f
+P_CenterMSVPrintf	src/p_user.c	/^void P_CenterMSVPrintf(int playernum, int sfx, const char *fmt, va_list args) {$/;"	f
+P_CenterMSWrite	src/p_user.c	/^void P_CenterMSWrite(int playernum, int sfx, const char *message) {$/;"	f
+P_CenterMVPrintf	src/p_user.c	/^void P_CenterMVPrintf(int playernum, const char *fmt, va_list args) {$/;"	f
+P_CenterMWrite	src/p_user.c	/^void P_CenterMWrite(int playernum, const char *message) {$/;"	f
+P_CenterPrintf	src/p_user.c	/^void P_CenterPrintf(int playernum, const char *fmt, ...) {$/;"	f
+P_CenterSEcho	src/p_user.c	/^void P_CenterSEcho(int playernum, int sfx, const char *message) {$/;"	f
+P_CenterSPrintf	src/p_user.c	/^void P_CenterSPrintf(int playernum, int sfx, const char *fmt, ...) {$/;"	f
+P_CenterSVPrintf	src/p_user.c	/^void P_CenterSVPrintf(int playernum, int sfx, const char *fmt, va_list args) {$/;"	f
+P_CenterSWrite	src/p_user.c	/^void P_CenterSWrite(int playernum, int sfx, const char *message) {$/;"	f
+P_CenterVPrintf	src/p_user.c	/^void P_CenterVPrintf(int playernum, const char *fmt, va_list args) {$/;"	f
+P_CenterWrite	src/p_user.c	/^void P_CenterWrite(int playernum, const char *message) {$/;"	f
 P_ChangeSector	src/p_map.c	/^dboolean P_ChangeSector(sector_t* sector,dboolean crunch)$/;"	f
 P_ChangeSwitchTexture	src/p_switch.c	/^void P_ChangeSwitchTexture$/;"	f
 P_CheckAmmo	src/p_pspr.c	/^dboolean P_CheckAmmo(player_t *player)$/;"	f
@@ -3916,7 +3932,9 @@ P_CheckSight_12	src/p_sight.c	/^dboolean P_CheckSight_12(mobj_t *t1, mobj_t *t2)
 P_CheckTag	src/p_spec.c	/^int P_CheckTag(line_t *line)$/;"	f
 P_Checksum	src/p_checksum.c	/^void (*P_Checksum)(int) = p_checksum_nop;$/;"	v
 P_ChecksumFinal	src/p_checksum.c	/^void P_ChecksumFinal(void) {$/;"	f
+P_ClearLocalCommands	src/p_cmd.c	/^void P_ClearLocalCommands(void) {$/;"	f
 P_ClearMessages	src/p_user.c	/^void P_ClearMessages(int playernum) {$/;"	f
+P_ClearPlayerCommands	src/p_cmd.c	/^void P_ClearPlayerCommands(player_t *player) {$/;"	f
 P_CreateBlockMap	src/p_setup.c	/^static void P_CreateBlockMap(void)$/;"	f	file:
 P_CreateSecNodeList	src/p_map.c	/^void P_CreateSecNodeList(mobj_t* thing, fixed_t x, fixed_t y) {$/;"	f
 P_CrossBSPNode	src/p_sight.c	/^static dboolean P_CrossBSPNode(int bspnum)$/;"	f	file:
@@ -3931,6 +3949,7 @@ P_DamageMobj	src/p_inter.c	/^void P_DamageMobj(mobj_t *target,mobj_t *inflictor,
 P_DeathThink	src/p_user.c	/^void P_DeathThink(player_t *player) {$/;"	f
 P_DelSeclist	src/p_map.c	/^void P_DelSeclist(msecnode_t* node) {$/;"	f
 P_DelSecnode	src/p_map.c	/^msecnode_t* P_DelSecnode(msecnode_t* node) {$/;"	f
+P_DestroyMessage	src/p_user.c	/^void P_DestroyMessage(gpointer data) {$/;"	f
 P_DivlineCrossed	src/p_sight.c	/^INLINE static int P_DivlineCrossed(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, divline_t *node)$/;"	f	file:
 P_DivlineSide	src/p_sight.c	/^INLINE static int P_DivlineSide(fixed_t x, fixed_t y, const divline_t *node)$/;"	f	file:
 P_DoNewChaseDir	src/p_enemy.c	/^static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay) {$/;"	f	file:
@@ -3958,8 +3977,11 @@ P_FindShortestUpperAround	src/p_spec.c	/^fixed_t P_FindShortestUpperAround(int s
 P_FireWeapon	src/p_pspr.c	/^static void P_FireWeapon(player_t *player)$/;"	f	file:
 P_FreeSecNodeList	src/p_map.c	/^void P_FreeSecNodeList(void)$/;"	f
 P_GetFriction	src/p_map.c	/^int P_GetFriction(const mobj_t *mo, int *frictionfactor) {$/;"	f
+P_GetLocalCommandCount	src/p_cmd.c	/^unsigned int P_GetLocalCommandCount(void) {$/;"	f
+P_GetLocalCommands	src/p_cmd.c	/^cbuf_t* P_GetLocalCommands(void) {$/;"	f
 P_GetMoveFactor	src/p_map.c	/^int P_GetMoveFactor(mobj_t *mo, int *frictionp)$/;"	f
 P_GetNodesVersion	src/p_setup.c	/^static void P_GetNodesVersion(int lumpnum, int gl_lumpnum)$/;"	f	file:
+P_GetPlayerCommandCount	src/p_cmd.c	/^unsigned int P_GetPlayerCommandCount(player_t *player) {$/;"	f
 P_GetPushThing	src/p_spec.c	/^mobj_t* P_GetPushThing(int s)$/;"	f
 P_GetSafeBlockX	src/p_maputl.c	/^int P_GetSafeBlockX(int coord)$/;"	f
 P_GetSafeBlockY	src/p_maputl.c	/^int P_GetSafeBlockY(int coord)$/;"	f
@@ -3984,8 +4006,10 @@ P_IdentInit	src/p_ident.c	/^void P_IdentInit(void) {$/;"	f
 P_IdentLookup	src/p_ident.c	/^void* P_IdentLookup(uint32_t id) {$/;"	f
 P_IdentReleaseID	src/p_ident.c	/^void P_IdentReleaseID(uint32_t *obj_id) {$/;"	f
 P_IdentReset	src/p_ident.c	/^void P_IdentReset(void) {$/;"	f
-P_Init	src/p_setup.c	/^void P_Init (void)$/;"	f
+P_Init	src/p_setup.c	/^void P_Init(void) {$/;"	f
+P_InitLocalCommands	src/p_cmd.c	/^void P_InitLocalCommands(void) {$/;"	f
 P_InitPicAnims	src/p_spec.c	/^void P_InitPicAnims(void) {$/;"	f
+P_InitPlayerCommands	src/p_cmd.c	/^void P_InitPlayerCommands(player_t *player) {$/;"	f
 P_InitSubsectorsLines	src/p_setup.c	/^void P_InitSubsectorsLines(void)$/;"	f
 P_InitSwitchList	src/p_switch.c	/^void P_InitSwitchList(void)$/;"	f
 P_InitTagLists	src/p_spec.c	/^static void P_InitTagLists(void)$/;"	f	file:
@@ -4001,9 +4025,11 @@ P_KillMobj	src/p_inter.c	/^static void P_KillMobj(mobj_t *source, mobj_t *target
 P_LineAttack	src/p_map.c	/^void P_LineAttack$/;"	f
 P_LineOpening	src/p_maputl.c	/^void P_LineOpening(const line_t *linedef)$/;"	f
 P_LoadBlockMap	src/p_setup.c	/^static void P_LoadBlockMap (int lump)$/;"	f	file:
+P_LoadCommandForTic	src/p_cmd.c	/^bool P_LoadCommandForTic(player_t *player, int tic) {$/;"	f
 P_LoadGLSegs	src/p_setup.c	/^static void P_LoadGLSegs(int lump)$/;"	f	file:
 P_LoadLineDefs	src/p_setup.c	/^static void P_LoadLineDefs (int lump)$/;"	f	file:
 P_LoadLineDefs2	src/p_setup.c	/^static void P_LoadLineDefs2(int lump)$/;"	f	file:
+P_LoadLocalCommandForTic	src/p_cmd.c	/^bool P_LoadLocalCommandForTic(int tic) {$/;"	f
 P_LoadNodes	src/p_setup.c	/^static void P_LoadNodes (int lump)$/;"	f	file:
 P_LoadNodes_V4	src/p_setup.c	/^static void P_LoadNodes_V4(int lump)$/;"	f	file:
 P_LoadReject	src/p_setup.c	/^static void P_LoadReject(int lumpnum, int totallines)$/;"	f	file:
@@ -4024,7 +4050,15 @@ P_LookForPlayers	src/p_enemy.c	/^static dboolean P_LookForPlayers(mobj_t *actor,
 P_LookForTargets	src/p_enemy.c	/^static dboolean P_LookForTargets(mobj_t *actor, int allaround) {$/;"	f	file:
 P_MAPUTL_H__	src/p_maputl.h	25;"	d
 P_MAP_H__	src/p_map.h	25;"	d
+P_MEcho	src/p_user.c	/^void P_MEcho(int playernum, const char *message) {$/;"	f
 P_MOBJ_H__	src/p_mobj.h	25;"	d
+P_MPrintf	src/p_user.c	/^void P_MPrintf(int playernum, const char *fmt, ...) {$/;"	f
+P_MSEcho	src/p_user.c	/^void P_MSEcho(int playernum, int sfx, const char *message) {$/;"	f
+P_MSPrintf	src/p_user.c	/^void P_MSPrintf(int playernum, int sfx, const char *fmt, ...) {$/;"	f
+P_MSVPrintf	src/p_user.c	/^void P_MSVPrintf(int playernum, int sfx, const char *fmt, va_list args) {$/;"	f
+P_MSWrite	src/p_user.c	/^void P_MSWrite(int playernum, int sfx, const char *message) {$/;"	f
+P_MVPrintf	src/p_user.c	/^void P_MVPrintf(int playernum, const char *fmt, va_list args) {$/;"	f
+P_MWrite	src/p_user.c	/^void P_MWrite(int playernum, const char *message) {$/;"	f
 P_MakeDivline	src/p_maputl.c	/^void P_MakeDivline(const line_t *li, divline_t *dl)$/;"	f
 P_MapEnd	src/p_map.c	/^void P_MapEnd(void) {$/;"	f
 P_MapStart	src/p_map.c	/^void P_MapStart(void) {$/;"	f
@@ -4042,6 +4076,8 @@ P_PlayerInSpecialSector	src/p_spec.c	/^void P_PlayerInSpecialSector (player_t* p
 P_PlayerThink	src/p_user.c	/^void P_PlayerThink(player_t *player) {$/;"	f
 P_PointOnDivlineSide	src/p_maputl.c	/^int PUREFUNC P_PointOnDivlineSide(fixed_t x, fixed_t y, const divline_t *line)$/;"	f
 P_PointOnLineSide	src/p_maputl.c	/^int PUREFUNC P_PointOnLineSide(fixed_t x, fixed_t y, const line_t *line)$/;"	f
+P_PredictPlayerPosition	src/p_cmd.c	/^void P_PredictPlayerPosition(player_t *player) {$/;"	f
+P_PrintPlayerCommands	src/p_cmd.c	/^void P_PrintPlayerCommands(cbuf_t *commands) {$/;"	f
 P_Printf	src/p_user.c	/^void P_Printf(int playernum, const char *fmt, ...) {$/;"	f
 P_PutSecnode	src/p_map.c	/^inline static void P_PutSecnode(msecnode_t* node)$/;"	f	file:
 P_PutSecnode	src/p_map.c	/^static void P_PutSecnode(msecnode_t *node)$/;"	f	file:
@@ -4050,29 +4086,37 @@ P_Random	src/m_random.c	/^int (P_Random)(pr_class_t pr_class$/;"	f
 P_Random	src/m_random.h	134;"	d
 P_RecordChecksum	src/p_checksum.c	/^void P_RecordChecksum(const char *file) {$/;"	f
 P_RecursiveSound	src/p_enemy.c	/^static void P_RecursiveSound(sector_t *sec, int soundblocks,$/;"	f	file:
+P_RegisterFunctions	src/p_user.c	/^void P_RegisterFunctions(void) {$/;"	f
 P_RemoveActiveCeiling	src/p_ceilng.c	/^void P_RemoveActiveCeiling(ceiling_t *ceiling) {$/;"	f
 P_RemoveActivePlat	src/p_plats.c	/^void P_RemoveActivePlat(plat_t *plat) {$/;"	f
 P_RemoveAllActiveCeilings	src/p_ceilng.c	/^void P_RemoveAllActiveCeilings(void)$/;"	f
 P_RemoveAllActivePlats	src/p_plats.c	/^void P_RemoveAllActivePlats(void)$/;"	f
 P_RemoveMobj	src/p_mobj.c	/^void P_RemoveMobj(mobj_t* mobj) {$/;"	f
+P_RemoveOldCommands	src/p_cmd.c	/^void P_RemoveOldCommands(player_t *player, int tic) {$/;"	f
 P_RemoveSlimeTrails	src/p_setup.c	/^static void P_RemoveSlimeTrails(void)         \/\/ killough 10\/98$/;"	f	file:
+P_RemoveSyncedCommands	src/p_cmd.c	/^void P_RemoveSyncedCommands(void) {$/;"	f
 P_RemoveThinker	src/p_tick.c	/^void P_RemoveThinker(thinker_t *thinker) {$/;"	f
 P_RemoveThinkerDelayed	src/p_tick.c	/^void P_RemoveThinkerDelayed(thinker_t *thinker) {$/;"	f
 P_ResetWalkcam	src/g_game.c	/^void P_ResetWalkcam(void) {$/;"	f
 P_RespawnSpecials	src/p_mobj.c	/^void P_RespawnSpecials (void)$/;"	f
-P_RunPlayerCommands	src/p_user.c	/^void P_RunPlayerCommands(player_t *player) {$/;"	f
+P_RunAllPlayerCommands	src/p_cmd.c	/^void P_RunAllPlayerCommands(player_t *player) {$/;"	f
+P_RunBufferedCommands	src/p_cmd.c	/^void P_RunBufferedCommands(player_t *player) {$/;"	f
+P_RunNextCommand	src/p_cmd.c	/^void P_RunNextCommand(player_t *player) {$/;"	f
+P_RunPlayerCommands	src/p_cmd.c	/^void P_RunPlayerCommands(player_t *player) {$/;"	f
 P_RunThinkers	src/p_tick.c	/^static void P_RunThinkers(void) {$/;"	f	file:
 P_SAVEG_H__	src/p_saveg.h	25;"	d
 P_SETUP_H__	src/p_setup.h	25;"	d
 P_SEcho	src/p_user.c	/^void P_SEcho(int playernum, int sfx, const char *message) {$/;"	f
 P_SPEC_H__	src/p_spec.h	25;"	d
 P_SPrintf	src/p_user.c	/^void P_SPrintf(int playernum, int sfx, const char *fmt, ...) {$/;"	f
+P_SVPrintf	src/p_user.c	/^void P_SVPrintf(int playernum, int sfx, const char *fmt, va_list args) {$/;"	f
 P_SWrite	src/p_user.c	/^void P_SWrite(int playernum, int sfx, const char *message) {$/;"	f
 P_SectorActive	src/p_spec.c	/^dboolean PUREFUNC P_SectorActive(special_e t, const sector_t *sec)$/;"	f
 P_SendMessage	src/p_user.c	/^void P_SendMessage(const char *message) {$/;"	f
 P_SetMobjState	src/p_mobj.c	/^dboolean P_SetMobjState(mobj_t *mobj, statenum_t state) {$/;"	f
 P_SetName	src/p_user.c	/^void P_SetName(int playernum, char *name) {$/;"	f
 P_SetPitch	src/p_user.c	/^void P_SetPitch(player_t *player) {$/;"	f
+P_SetPlayerName	src/p_user.c	/^void P_SetPlayerName(int playernum, const char *name) {$/;"	f
 P_SetPsprite	src/p_pspr.c	/^static void P_SetPsprite(player_t *player, int position, statenum_t stnum)$/;"	f	file:
 P_SetTarget	src/p_tick.c	/^void P_SetTarget(mobj_t **mop, mobj_t *targ) {$/;"	f
 P_SetThingPosition	src/p_maputl.c	/^void P_SetThingPosition(mobj_t *thing) { \/\/ link into subsector$/;"	f
@@ -4113,7 +4157,7 @@ P_TeleportMove	src/p_map.c	/^dboolean P_TeleportMove (mobj_t* thing,fixed_t x,fi
 P_ThingHeightClip	src/p_map.c	/^dboolean P_ThingHeightClip (mobj_t* thing)$/;"	f
 P_Thrust	src/p_user.c	/^void P_Thrust(player_t* player,angle_t angle,fixed_t move) {$/;"	f
 P_Ticker	src/p_tick.c	/^void P_Ticker(void) {$/;"	f
-P_TouchSpecialThing	src/p_inter.c	/^void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)$/;"	f
+P_TouchSpecialThing	src/p_inter.c	/^void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher) {$/;"	f
 P_TraverseIntercepts	src/p_maputl.c	/^dboolean P_TraverseIntercepts(traverser_t func, fixed_t maxfrac)$/;"	f
 P_TryMove	src/p_map.c	/^dboolean P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,$/;"	f
 P_TryWalk	src/p_enemy.c	/^static dboolean P_TryWalk(mobj_t *actor) {$/;"	f	file:
@@ -4141,10 +4185,12 @@ P_UnArchiveStrobe	src/p_saveg.c	/^void P_UnArchiveStrobe(pbuf_t *savebuffer, str
 P_UnArchiveThinkers	src/p_saveg.c	/^void P_UnArchiveThinkers(pbuf_t *savebuffer) {$/;"	f
 P_UnArchiveWorld	src/p_saveg.c	/^void P_UnArchiveWorld(pbuf_t *savebuffer) {$/;"	f
 P_UnsetThingPosition	src/p_maputl.c	/^void P_UnsetThingPosition(mobj_t *thing) {$/;"	f
-P_UpdateSpecials	src/p_spec.c	/^void P_UpdateSpecials (void)$/;"	f
+P_UpdateConsoleplayerCommands	src/p_cmd.c	/^void P_UpdateConsoleplayerCommands(void) {$/;"	f
+P_UpdateSpecials	src/p_spec.c	/^void P_UpdateSpecials(void) {$/;"	f
 P_UpdateThinker	src/p_tick.c	/^void P_UpdateThinker(thinker_t *thinker) {$/;"	f
 P_UseLines	src/p_map.c	/^void P_UseLines(player_t*  player) {$/;"	f
 P_UseSpecialLine	src/p_switch.c	/^dboolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side) {$/;"	f
+P_VPrintf	src/p_user.c	/^void P_VPrintf(int playernum, const char *fmt, va_list args) {$/;"	f
 P_VerifyBlockMap	src/p_setup.c	/^static dboolean P_VerifyBlockMap(int count)$/;"	f	file:
 P_WalkTicker	src/g_game.c	/^void P_WalkTicker() {$/;"	f
 P_WasSecret	src/p_spec.c	/^dboolean PUREFUNC P_WasSecret(const sector_t *sec)$/;"	f
@@ -4189,7 +4235,7 @@ QLOADNET	src/d_englsh.h	36;"	d
 QLPROMPT	src/d_englsh.h	40;"	d
 QSAVESPOT	src/d_englsh.h	37;"	d
 QSPROMPT	src/d_englsh.h	39;"	d
-QUICKREVERSE	src/g_game.c	81;"	d	file:
+QUICKREVERSE	src/g_game.c	82;"	d	file:
 QUITMSG	src/d_englsh.h	34;"	d
 R	src/am_map.c	146;"	d	file:
 R	src/am_map.c	157;"	d	file:
@@ -4282,8 +4328,8 @@ REQ_NONE	src/PCRELIB/pcre_internal.h	451;"	d
 REQ_UNSET	src/PCRELIB/pcre_internal.h	450;"	d
 REQ_VARY	src/PCRELIB/pcre_internal.h	462;"	d
 RESTARTLEVEL	src/d_englsh.h	58;"	d
-RETRACTION_TIME	src/hu_msg.c	40;"	d	file:
-RETRACTION_TIMEOUT	src/hu_msg.c	41;"	d	file:
+RETRACTION_TIME	src/hu_msg.c	39;"	d	file:
+RETRACTION_TIMEOUT	src/hu_msg.c	40;"	d	file:
 RETRY_AMOUNT	src/z_zone.c	53;"	d	file:
 RE_Options	src/PCRELIB/pcrecpp.h	/^  RE_Options() : match_limit_(0), match_limit_recursion_(0), all_options_(0) {}$/;"	f	class:pcrecpp::RE_Options
 RE_Options	src/PCRELIB/pcrecpp.h	/^  RE_Options(int option_flags) : match_limit_(0), match_limit_recursion_(0),$/;"	f	class:pcrecpp::RE_Options
@@ -4294,7 +4340,7 @@ RF_IGNORE	src/r_defs.h	/^    RF_IGNORE   = 8,     \/\/ Renderer can skip this li
 RF_ISOLATED	src/r_defs.h	/^    RF_ISOLATED =32,     \/\/ Isolated line$/;"	e	enum:line_s::__anon286
 RF_MID_TILE	src/r_defs.h	/^    RF_MID_TILE = 2,     \/\/ Mid texture needs tiling$/;"	e	enum:line_s::__anon286
 RF_TOP_TILE	src/r_defs.h	/^    RF_TOP_TILE  = 1,     \/\/ Upper texture needs tiling$/;"	e	enum:line_s::__anon286
-RGB2COLOR	src/v_video.c	997;"	d	file:
+RGB2COLOR	src/v_video.c	1004;"	d	file:
 RGB2PAL	src/gl_hires.c	/^static byte* RGB2PAL = NULL;$/;"	v	file:
 RGB2PAL_NAME	src/gl_hires.c	897;"	d	file:
 RGB32k	src/v_video.c	/^byte RGB32k[32][32][32];$/;"	v
@@ -4597,16 +4643,16 @@ S8_MARKER	src/cmp.c	/^  S8_MARKER              = 0xD0,$/;"	e	enum:__anon5	file:
 SAMPLECOUNT	src/SDL/i_sound.c	/^static int SAMPLECOUNT =   512; \/\/ Needed for calling the actual sound output.$/;"	v	file:
 SAVEDEAD	src/d_englsh.h	38;"	d
 SAVEDESCLEN	src/g_game.h	38;"	d
-SAVESTRINGSIZE	src/g_save.c	51;"	d	file:
+SAVESTRINGSIZE	src/g_save.c	52;"	d	file:
 SAVESTRINGSIZE	src/m_menu.c	92;"	d	file:
 SB_X	src/m_menu.c	2568;"	d	file:
 SB_Y	src/m_menu.c	2569;"	d	file:
 SCREENHEIGHT	src/doomdef.c	/^int SCREENHEIGHT=200;$/;"	v
 SCREENPITCH	src/doomdef.c	/^int SCREENPITCH=320;$/;"	v
 SCREENSHOT_DIR	src/MAC/config.h	138;"	d
-SCREENSHOT_DIR	src/m_misc.c	1478;"	d	file:
-SCREENSHOT_EXT	src/m_misc.c	1482;"	d	file:
-SCREENSHOT_EXT	src/m_misc.c	1484;"	d	file:
+SCREENSHOT_DIR	src/m_misc.c	1481;"	d	file:
+SCREENSHOT_EXT	src/m_misc.c	1485;"	d	file:
+SCREENSHOT_EXT	src/m_misc.c	1487;"	d	file:
 SCREENSHOT_SDL_HICOLOR	src/SDL/i_sshot.c	/^  SCREENSHOT_SDL_HICOLOR,$/;"	e	enum:__anon314	file:
 SCREENSHOT_SDL_INDEXED	src/SDL/i_sshot.c	/^  SCREENSHOT_SDL_INDEXED,$/;"	e	enum:__anon314	file:
 SCREENSHOT_SDL_MODES	src/SDL/i_sshot.c	/^  SCREENSHOT_SDL_MODES$/;"	e	enum:__anon314	file:
@@ -4614,7 +4660,7 @@ SCREENWIDTH	src/doomdef.c	/^int SCREENWIDTH=320;$/;"	v
 SCREEN_320x200	src/doomdef.c	/^int SCREEN_320x200;$/;"	v
 SCROLLBAR_HORIZONTAL	src/TEXTSCREEN/txt_scrollpane.c	37;"	d	file:
 SCROLLBAR_VERTICAL	src/TEXTSCREEN/txt_scrollpane.c	36;"	d	file:
-SCROLL_SHIFT	src/p_spec.c	2883;"	d	file:
+SCROLL_SHIFT	src/p_spec.c	2900;"	d	file:
 SC_Check	src/sc_man.c	/^dboolean SC_Check(void)$/;"	f
 SC_Close	src/sc_man.c	/^void SC_Close(void)$/;"	f
 SC_Compare	src/sc_man.c	/^dboolean SC_Compare(const char *text)$/;"	f
@@ -4636,9 +4682,9 @@ SECRET_SHIFT	src/p_spec.h	74;"	d
 SECTOR_CLAMPXY	src/gl_intern.h	169;"	d
 SECTOR_IS_CLOSED	src/r_defs.h	88;"	d
 SERVER	src/n_net.h	36;"	d
-SERVER_NO_PEER_SLEEP_TIMEOUT	src/n_main.c	61;"	d	file:
+SERVER_NO_PEER_SLEEP_TIMEOUT	src/n_main.c	62;"	d	file:
 SERVER_ONLY	src/n_proto.c	71;"	d	file:
-SERVER_SLEEP_TIMEOUT	src/n_main.c	62;"	d	file:
+SERVER_SLEEP_TIMEOUT	src/n_main.c	63;"	d	file:
 SHIFT_KEYCODE	src/MUSIC/dbopl.h	/^  SHIFT_KEYCODE = 24,$/;"	e	enum:__anon200
 SHIFT_KSLBASE	src/MUSIC/dbopl.h	/^  SHIFT_KSLBASE = 16,$/;"	e	enum:__anon200
 SHOWNEXTLOCDELAY	src/wi_stuff.c	291;"	d	file:
@@ -4657,7 +4703,7 @@ SKY_NONE	src/gl_intern.h	461;"	d
 SLOPEBITS	src/tables.h	47;"	d
 SLOPERANGE	src/tables.h	46;"	d
 SLOWDARK	src/p_spec.h	67;"	d
-SLOWTURNTICS	src/g_game.c	80;"	d	file:
+SLOWTURNTICS	src/g_game.c	81;"	d	file:
 SMALLDELTA	src/gl_intern.h	31;"	d
 SMOOTH_PLAYING_MAXFACTOR	src/r_demo.h	37;"	d
 SMP_CheckSize	src/i_smp.c	/^static inline void SMP_CheckSize(smp_item_t *item, int size)$/;"	f	file:
@@ -5003,6 +5049,7 @@ SV_BroadcastPlayerSkinChanged	src/n_proto.c	/^void SV_BroadcastPlayerSkinChanged
 SV_BroadcastPlayerTeamChanged	src/n_proto.c	/^void SV_BroadcastPlayerTeamChanged(short playernum, byte new_team) {$/;"	f
 SV_BroadcastPlayerWSOPChanged	src/n_proto.c	/^void SV_BroadcastPlayerWSOPChanged(short playernum, byte new_wsop_flags) {$/;"	f
 SV_BroadcastPlayerWeaponSpeedChanged	src/n_proto.c	/^void SV_BroadcastPlayerWeaponSpeedChanged(short playernum,$/;"	f
+SV_BroadcastPrintf	src/n_proto.c	/^void SV_BroadcastPrintf(const char *fmt, ...) {$/;"	f
 SV_RemoveOldCommands	src/n_main.c	/^void SV_RemoveOldCommands(void) {$/;"	f
 SV_RemoveOldStates	src/n_main.c	/^void SV_RemoveOldStates(void) {$/;"	f
 SV_ResyncPeers	src/n_proto.c	/^void SV_ResyncPeers(void) {$/;"	f
@@ -5522,7 +5569,7 @@ S_IFOG2	src/info.h	/^  S_IFOG2,$/;"	e	enum:__anon135
 S_IFOG3	src/info.h	/^  S_IFOG3,$/;"	e	enum:__anon135
 S_IFOG4	src/info.h	/^  S_IFOG4,$/;"	e	enum:__anon135
 S_IFOG5	src/info.h	/^  S_IFOG5,$/;"	e	enum:__anon135
-S_ISDIR	src/doomtype.h	80;"	d
+S_ISDIR	src/doomtype.h	74;"	d
 S_Init	src/s_sound.c	/^void S_Init(int sfxVolume, int musicVolume) {$/;"	f
 S_KEENPAIN	src/info.h	/^  S_KEENPAIN,$/;"	e	enum:__anon135
 S_KEENPAIN2	src/info.h	/^  S_KEENPAIN2,$/;"	e	enum:__anon135
@@ -6272,7 +6319,6 @@ TREMOLO_TABLE	src/MUSIC/dbopl.c	67;"	d	file:
 TRUE	src/MUSIC/dbopl.c	59;"	d	file:
 TRUE	src/PCRELIB/pcre_internal.h	469;"	d
 TRUE	src/PCRELIB/pcregrep.c	78;"	d	file:
-TRUE	src/d_deh.c	48;"	d	file:
 TRUE_MARKER	src/cmp.c	/^  TRUE_MARKER            = 0xC3,$/;"	e	enum:__anon5	file:
 TSC	src/r_data.c	415;"	d	file:
 TT_ALLITEM	src/e6y.h	/^  TT_ALLITEM,$/;"	e	enum:__anon65
@@ -6284,7 +6330,7 @@ TT_TOTALITEM	src/e6y.h	/^  TT_TOTALITEM,$/;"	e	enum:__anon65
 TT_TOTALKILL	src/e6y.h	/^  TT_TOTALKILL,$/;"	e	enum:__anon65
 TT_TOTALSECRET	src/e6y.h	/^  TT_TOTALSECRET,$/;"	e	enum:__anon65
 TT_TOTALTIME	src/e6y.h	/^  TT_TOTALTIME,$/;"	e	enum:__anon65
-TURBOTHRESHOLD	src/g_game.c	79;"	d	file:
+TURBOTHRESHOLD	src/g_game.c	80;"	d	file:
 TXT_AddDesktopWindow	src/TEXTSCREEN/txt_desktop.c	/^void TXT_AddDesktopWindow(txt_window_t *win)$/;"	f
 TXT_BGColor	src/TEXTSCREEN/txt_io.c	/^void TXT_BGColor(int color, int blinking)$/;"	f
 TXT_BUTTON_H	src/TEXTSCREEN/txt_button.h	23;"	d
@@ -6564,7 +6610,7 @@ USE_GLU_MIPMAP	src/MAC/config.h	94;"	d
 USE_GLU_MIPMAP	src/gl_opengl.h	41;"	d
 USE_GLU_TESS	src/MAC/config.h	92;"	d
 USE_GLU_TESS	src/gl_opengl.h	42;"	d
-USE_RANGE_CODER	src/n_net.c	46;"	d	file:
+USE_RANGE_CODER	src/n_net.c	47;"	d	file:
 USE_RWOPS	src/SDL/i_emusic.c	47;"	d	file:
 USE_RWOPS	src/SDL/i_music.c	45;"	d	file:
 USE_RWOPS	src/SDL/i_sound.c	39;"	d	file:
@@ -6580,7 +6626,7 @@ UWORD32	src/md5.h	52;"	d
 UWORD32	src/md5.h	55;"	d
 UpdateCharacter	src/TEXTSCREEN/txt_sdl.c	/^static inline void UpdateCharacter(int x, int y)$/;"	f	file:
 UpdateFocus	src/SDL/i_video.c	/^static void UpdateFocus(void)$/;"	f	file:
-UpdateGrab	src/SDL/i_video.c	/^void UpdateGrab(void)$/;"	f
+UpdateGrab	src/SDL/i_video.c	/^void UpdateGrab(void) {$/;"	f
 UpdateInputBox	src/TEXTSCREEN/examples/calculator.c	/^void UpdateInputBox(void)$/;"	f
 UpdatePixels	src/gl_soft2gl.c	/^void UpdatePixels(unsigned char* dst)$/;"	f
 UpdateVoiceFrequency	src/MUSIC/oplplayer.c	/^static void UpdateVoiceFrequency(opl_voice_t *voice)$/;"	f	file:
@@ -6592,7 +6638,7 @@ VERBOSE_TEST	src/PCRELIB/pcrecpp_unittest.cc	/^static bool VERBOSE_TEST  = false
 VERIFYBOXXORG	src/m_menu.c	2064;"	d	file:
 VERIFYBOXYORG	src/m_menu.c	2065;"	d	file:
 VERSION	src/PCRELIB/pcregrep.c	82;"	d	file:
-VERSIONSIZE	src/g_save.c	50;"	d	file:
+VERSIONSIZE	src/g_save.c	51;"	d	file:
 VERSION_H___	src/version.h	25;"	d
 VID_COLORWEIGHTBITS	src/v_video.h	145;"	d
 VID_COLORWEIGHTMASK	src/v_video.h	144;"	d
@@ -6609,7 +6655,7 @@ VPT_ALIGN_BOTTOM	src/doomtype.h	/^  VPT_ALIGN_BOTTOM       = 6,$/;"	e	enum:patch
 VPT_ALIGN_LEFT	src/doomtype.h	/^  VPT_ALIGN_LEFT         = 1,$/;"	e	enum:patch_translation_e
 VPT_ALIGN_LEFT_BOTTOM	src/doomtype.h	/^  VPT_ALIGN_LEFT_BOTTOM  = 8,$/;"	e	enum:patch_translation_e
 VPT_ALIGN_LEFT_TOP	src/doomtype.h	/^  VPT_ALIGN_LEFT_TOP     = 4,$/;"	e	enum:patch_translation_e
-VPT_ALIGN_MASK	src/doomtype.h	133;"	d
+VPT_ALIGN_MASK	src/doomtype.h	127;"	d
 VPT_ALIGN_MAX	src/doomtype.h	/^  VPT_ALIGN_MAX          = 10,$/;"	e	enum:patch_translation_e
 VPT_ALIGN_RIGHT	src/doomtype.h	/^  VPT_ALIGN_RIGHT        = 2,$/;"	e	enum:patch_translation_e
 VPT_ALIGN_RIGHT_BOTTOM	src/doomtype.h	/^  VPT_ALIGN_RIGHT_BOTTOM = 9,$/;"	e	enum:patch_translation_e
@@ -6620,12 +6666,12 @@ VPT_FLIP	src/doomtype.h	/^  VPT_FLIP    = 256, \/\/ Flip image horizontally$/;"	
 VPT_NONE	src/doomtype.h	/^  VPT_NONE    = 128, \/\/ Normal$/;"	e	enum:patch_translation_e
 VPT_NOOFFSET	src/doomtype.h	/^  VPT_NOOFFSET = 1024,$/;"	e	enum:patch_translation_e
 VPT_STRETCH	src/doomtype.h	/^  VPT_STRETCH            = 16, \/\/ Stretch to compensate for high-res$/;"	e	enum:patch_translation_e
-VPT_STRETCH_MASK	src/doomtype.h	134;"	d
+VPT_STRETCH_MASK	src/doomtype.h	128;"	d
 VPT_TRANS	src/doomtype.h	/^  VPT_TRANS   = 512, \/\/ Translate image via a translation table$/;"	e	enum:patch_translation_e
 V_AllocScreen	src/v_video.c	/^void V_AllocScreen(screeninfo_t *scrn) {$/;"	f
 V_AllocScreens	src/v_video.c	/^void V_AllocScreens(void) {$/;"	f
 V_BestColor	src/v_video.c	/^int V_BestColor(const unsigned char *palette, int r, int g, int b)$/;"	f
-V_ChangeScreenResolution	src/v_video.c	/^void V_ChangeScreenResolution(void)$/;"	f
+V_ChangeScreenResolution	src/v_video.c	/^void V_ChangeScreenResolution(void) {$/;"	f
 V_CopyRect	src/v_video.c	/^V_CopyRect_f V_CopyRect = NULL_CopyRect;$/;"	v
 V_CopyRect_f	src/v_video.h	/^typedef void (*V_CopyRect_f)(int srcscrn, int destscrn,$/;"	t
 V_DestroyTrueColorPalette	src/v_video.c	/^static void V_DestroyTrueColorPalette(video_mode_t mode) {$/;"	f	file:
@@ -6662,7 +6708,7 @@ V_GetNumPixelBits	src/v_video.c	/^int V_GetNumPixelBits(void) {$/;"	f
 V_GetPixelDepth	src/v_video.c	/^int V_GetPixelDepth(void) {$/;"	f
 V_GetPlaypal	src/v_video.c	/^const unsigned char* V_GetPlaypal(void)$/;"	f
 V_GetWideRect	src/v_video.c	/^void V_GetWideRect(int *x, int *y, int *w, int *h, enum patch_translation_e flags)$/;"	f
-V_Init	src/v_video.c	/^void V_Init (void)$/;"	f
+V_Init	src/v_video.c	/^void V_Init (void) {$/;"	f
 V_InitColorTranslation	src/v_video.c	/^void V_InitColorTranslation(void)$/;"	f
 V_InitFlexTranTable	src/v_video.c	/^void V_InitFlexTranTable(void)$/;"	f
 V_InitMode	src/v_video.c	/^void V_InitMode(video_mode_t mode) {$/;"	f
@@ -6680,7 +6726,7 @@ V_PlotPixelWuGL	src/v_video.c	/^static void V_PlotPixelWuGL(int scrn, int x, int
 V_PlotPixelWu_f	src/v_video.h	/^typedef void (*V_PlotPixelWu_f)(int scrn, int x, int y, byte color, int weight);$/;"	t
 V_PlotPixel_f	src/v_video.h	/^typedef void (*V_PlotPixel_f)(int,int,int,byte);$/;"	t
 V_SetPalette	src/v_video.c	/^void V_SetPalette(int pal)$/;"	f
-V_ToggleFullscreen	src/v_video.c	/^void V_ToggleFullscreen(void)$/;"	f
+V_ToggleFullscreen	src/v_video.c	/^void V_ToggleFullscreen(void) {$/;"	f
 V_UpdateTrueColorPalette	src/v_video.c	/^void V_UpdateTrueColorPalette(video_mode_t mode) {$/;"	f
 V_VIDEO_H__	src/v_video.h	25;"	d
 ValidSelection	src/TEXTSCREEN/txt_dropdown.c	/^static int ValidSelection(txt_dropdown_list_t *list)$/;"	f	file:
@@ -6704,7 +6750,7 @@ WIN32_GetHWND	src/e6y.c	/^HWND WIN32_GetHWND(void)$/;"	f
 WIN32_LEAN_AND_MEAN	src/MUSIC/vorbisplayer.c	217;"	d	file:
 WIN32_LEAN_AND_MEAN	src/PCRELIB/pcregrep.c	333;"	d	file:
 WIN32_LEAN_AND_MEAN	src/SDL/SDL_win32_main.c	27;"	d	file:
-WIN32_LEAN_AND_MEAN	src/SDL/i_main.c	29;"	d	file:
+WIN32_LEAN_AND_MEAN	src/SDL/i_main.c	27;"	d	file:
 WIN32_LEAN_AND_MEAN	src/i_capture.c	131;"	d	file:
 WIN32_LEAN_AND_MEAN	src/i_system.h	28;"	d
 WIN32_LEAN_AND_MEAN	src/md5.h	50;"	d
@@ -6854,7 +6900,9 @@ XCL_RANGE	src/PCRELIB/pcre_internal.h	514;"	d
 XCL_SINGLE	src/PCRELIB/pcre_internal.h	513;"	d
 XF_Echo	src/c_main.c	/^int XF_Echo(lua_State *L) {$/;"	f
 XF_MEcho	src/c_main.c	/^int XF_MEcho(lua_State *L) {$/;"	f
+XF_Name	src/p_user.c	/^int XF_Name(lua_State *L) {$/;"	f
 XF_Quit	src/x_main.c	/^int XF_Quit(lua_State *L) {$/;"	f
+XF_Say	src/p_user.c	/^int XF_Say(lua_State *L) {$/;"	f
 XSTRING	src/PCRELIB/pcre_version.c	76;"	d	file:
 X_BUTTON	src/m_menu.c	2162;"	d	file:
 X_Close	src/x_main.c	/^static void X_Close(void) {$/;"	f	file:
@@ -6913,8 +6961,8 @@ YCard	src/p_spec.h	/^  YCard,$/;"	e	enum:__anon248
 YSkull	src/p_spec.h	/^  YSkull,$/;"	e	enum:__anon248
 Y_BUTTON	src/m_menu.c	2163;"	d	file:
 ZDOOM_AUDIO_LOOP	src/MUSIC/vorbisplayer.c	70;"	d	file:
-ZGLN	src/p_setup.c	89;"	d	file:
-ZNOD	src/p_setup.c	88;"	d	file:
+ZGLN	src/p_setup.c	90;"	d	file:
+ZNOD	src/p_setup.c	89;"	d	file:
 ZONEID	src/z_zone.c	56;"	d	file:
 ZONEIDCHECK	src/MAC/config.h	58;"	d
 ZONE_HISTORY	src/z_zone.c	59;"	d	file:
@@ -7019,6 +7067,8 @@ activeceilings	src/p_ceilng.c	/^ceilinglist_t *activeceilings;$/;"	v
 activeplats	src/p_plats.c	/^platlist_t *activeplats;       \/\/ killough 2\/14\/98: made global again$/;"	v
 activesound	src/info.h	/^  int activesound;  \/* What sound it makes wandering around, once$/;"	m	struct:__anon138
 adcr	src/m_menu.c	/^  adcr$/;"	e	enum:__anon163	file:
+add_player_message	src/p_user.c	/^static void add_player_message(int pn, bool is_markup, bool centered, int sfx,$/;"	f	file:
+add_player_vmessage	src/p_user.c	/^static void add_player_vmessage(int pn, bool is_markup, bool centered, int sfx,$/;"	f	file:
 add_sfx	src/SDL/i_sound.c	/^static int add_sfx(int sfxid, int channel, const unsigned char *data, size_t len) {$/;"	f	file:
 addr	src/g_overflow.h	/^    void *addr;$/;"	m	struct:__anon119
 address	src/r_fps.c	/^  void *address;$/;"	m	struct:__anon301	file:
@@ -7243,9 +7293,9 @@ blazeClose	src/p_spec.h	/^  blazeClose,$/;"	e	enum:__anon253
 blazeDWUS	src/p_spec.h	/^  blazeDWUS,$/;"	e	enum:__anon252
 blazeOpen	src/p_spec.h	/^  blazeOpen,$/;"	e	enum:__anon253
 blazeRaise	src/p_spec.h	/^  blazeRaise,$/;"	e	enum:__anon253
-blkmargin	src/p_setup.c	1580;"	d	file:
-blkmask	src/p_setup.c	1579;"	d	file:
-blkshift	src/p_setup.c	1578;"	d	file:
+blkmargin	src/p_setup.c	1581;"	d	file:
+blkmask	src/p_setup.c	1580;"	d	file:
+blkshift	src/p_setup.c	1579;"	d	file:
 block_memory_alloc_s	src/z_bmalloc.h	/^struct block_memory_alloc_s {$/;"	s
 blockbox	src/r_defs.h	/^  int blockbox[4];       \/\/ mapblock bounding box for height changes$/;"	m	struct:__anon283
 blockbytag	src/z_zone.c	/^static memblock_t *blockbytag[PU_MAX];$/;"	v	file:
@@ -7338,7 +7388,6 @@ build	src/hu_stuff.c	/^  HU_widget_build_func build;$/;"	m	struct:hud_widget_s	f
 build8	src/p_spec.h	/^  build8, \/\/ slowly build by 8$/;"	e	enum:__anon256
 buildBinary	src/MAC/macsupport.rb	/^def buildBinary(task, path, file, sources)$/;"	f
 buildStair	src/p_spec.h	/^  buildStair,$/;"	e	enum:__anon255
-build_command	src/n_main.c	/^static void build_command(void) {$/;"	f	file:
 build_mmfile	src/m_delta.c	/^static void build_mmfile(mmfile_t *mmf, char *data, size_t size) {$/;"	f	file:
 bulletslope	src/p_pspr.c	/^fixed_t bulletslope;$/;"	v
 bundleDir	src/MAC/macsupport.rb	/^def bundleDir(dir)$/;"	f	class:installTask
@@ -7472,7 +7521,7 @@ ceilingpic	src/r_defs.h	/^  short ceilingpic;$/;"	m	struct:__anon283
 ceilingplane	src/r_plane.c	/^visplane_t *floorplane, *ceilingplane;$/;"	v
 ceilingtarget_e	src/p_spec.h	/^} ceilingtarget_e;$/;"	t	typeref:enum:__anon243
 ceilingz	src/p_mobj.h	/^    fixed_t             ceilingz;$/;"	m	struct:mobj_s
-centered	src/p_user.h	/^  dboolean centered;$/;"	m	struct:player_message_s
+centered	src/p_user.h	/^  bool centered;$/;"	m	struct:player_message_s
 centermessage	src/d_player.h	/^  const char*         centermessage;$/;"	m	struct:player_s
 centerx	src/am_map.h	/^  fixed_t centerx, centery;$/;"	m	struct:am_frame_s
 centerx	src/r_main.c	/^int      centerx, centery;$/;"	v
@@ -7560,7 +7609,7 @@ check_match_limit	src/PCRELIB/pcretest.c	/^check_match_limit(pcre *re, pcre_extr
 check_newline	src/PCRELIB/pcretest.c	/^check_newline(uschar *p, FILE *f)$/;"	f	file:
 check_posix_name	src/PCRELIB/pcre_compile.c	/^check_posix_name(const uschar *ptr, int len)$/;"	f	file:
 check_posix_syntax	src/PCRELIB/pcre_compile.c	/^check_posix_syntax(const uschar *ptr, const uschar **endptr, compile_data *cd)$/;"	f	file:
-check_range	src/n_pack.c	58;"	d	file:
+check_range	src/n_pack.c	59;"	d	file:
 check_x_funcs	src/x_main.c	/^static void check_x_funcs(void) {$/;"	f	file:
 checkcoord	src/r_bsp.c	/^static const int checkcoord[12][4] = \/\/ killough -- static const$/;"	v	file:
 checksum	src/d_ipxgate.c	/^    unsigned            checksum;$/;"	m	struct:a	file:
@@ -7799,6 +7848,12 @@ columntype_e	src/r_draw.c	/^} columntype_e;$/;"	t	typeref:enum:__anon296	file:
 command	src/d_net.h	/^    short               command;$/;"	m	struct:__anon27
 command	src/i_capture.c	/^  char command[PATH_MAX];$/;"	m	struct:__anon128	file:
 command_is_shorthand	src/c_main.c	/^static bool command_is_shorthand(const char *command) {$/;"	f	file:
+command_line_echo	src/c_main.c	/^static void command_line_echo(const char *message) {$/;"	f	file:
+command_line_mecho	src/c_main.c	/^static void command_line_mecho(const char *message) {$/;"	f	file:
+command_line_mvprintf	src/c_main.c	/^static void command_line_mvprintf(const char *fmt, va_list args) {$/;"	f	file:
+command_line_mwrite	src/c_main.c	/^static void command_line_mwrite(const char *message) {$/;"	f	file:
+command_line_vprintf	src/c_main.c	/^static void command_line_vprintf(const char *fmt, va_list args) {$/;"	f	file:
+command_line_write	src/c_main.c	/^static void command_line_write(const char *message) {$/;"	f	file:
 command_loadgame	src/g_game.c	/^dboolean        command_loadgame = false;$/;"	v
 command_t	src/d_net.h	/^} command_t;$/;"	t	typeref:enum:__anon22
 commands	src/d_player.h	/^  cbuf_t commands;$/;"	m	struct:player_s
@@ -7898,7 +7953,7 @@ compute_spmc_smpte	src/MUSIC/midifile.c	/^static double compute_spmc_smpte (unsi
 con_hWnd	src/lprintf.c	/^HWND con_hWnd=0;$/;"	v
 condition	src/PCRELIB/pcre_exec.c	3436;"	d	file:
 condition	src/PCRELIB/pcre_exec.c	459;"	d	file:
-connect_time	src/n_peer.h	/^  time_t              connect_time;$/;"	m	struct:netpeer_s
+connect_time	src/n_peer.h	/^  time_t        connect_time;$/;"	m	struct:netpeer_s
 connected	src/d_ipxgate.c	/^int connected;$/;"	v
 cons	src/c_main.c	/^static console_widget_t *cons;$/;"	v	file:
 cons_error_mask	src/lprintf.c	/^int cons_error_mask = -1-LO_INFO; \/* all but LO_INFO when redir'd *\/$/;"	v
@@ -8157,6 +8212,7 @@ default_distfriend	src/doomstat.c	/^int distfriend = 128, default_distfriend = 1
 default_dog_jumping	src/doomstat.c	/^int dog_jumping, default_dog_jumping;   \/\/ killough 10\/98$/;"	v
 default_dogs	src/doomstat.c	/^int dogs, default_dogs;         \/\/ killough 7\/19\/98: Marine's best friend :)$/;"	v
 default_help_friends	src/doomstat.c	/^int help_friends, default_help_friends;$/;"	v
+default_leave_weapons	src/doomstat.c	/^int default_leave_weapons; \/\/ CG 08\/19\/2014$/;"	v
 default_monkeys	src/doomstat.c	/^int monkeys, default_monkeys;$/;"	v
 default_monster_avoid_hazards	src/doomstat.c	/^int monster_avoid_hazards, default_monster_avoid_hazards;$/;"	v
 default_monster_backing	src/doomstat.c	/^int monster_backing, default_monster_backing;$/;"	v
@@ -8206,7 +8262,7 @@ deh_mobjinfo	src/d_deh.c	/^static const char *deh_mobjinfo[DEH_MOBJINFOMAX] =$/;
 deh_musicnames	src/d_deh.c	/^char *deh_musicnames[NUMMUSIC + 1];$/;"	v
 deh_newlevel	src/d_deh.c	/^const char *deh_newlevel = "NEWLEVEL"; \/\/ CPhipps - const$/;"	v
 deh_numstrlookup	src/d_deh.c	/^static int deh_numstrlookup =$/;"	v	file:
-deh_pars	src/d_deh.c	/^dboolean deh_pars = FALSE; \/\/ in wi_stuff to allow pars in modified games$/;"	v
+deh_pars	src/d_deh.c	/^dboolean deh_pars = DEHFALSE; \/\/ in wi_stuff to allow pars in modified games$/;"	v
 deh_procAmmo	src/d_deh.c	/^static void deh_procAmmo(DEHFILE *fpin, FILE* fpout, char *line)$/;"	f	file:
 deh_procBexCodePointers	src/d_deh.c	/^static void deh_procBexCodePointers(DEHFILE *fpin, FILE* fpout, char *line)$/;"	f	file:
 deh_procBexMusic	src/d_deh.c	/^static void deh_procBexMusic(DEHFILE *fpin, FILE *fpout, char *line)$/;"	f	file:
@@ -8333,7 +8389,7 @@ directory_type	src/PCRELIB/pcregrep.c	/^typedef void directory_type;$/;"	t	file:
 directory_type	src/PCRELIB/pcregrep.c	/^} directory_type;$/;"	t	typeref:struct:directory_type	file:
 dirtype_e	src/p_enemy.c	/^} dirtype_e;$/;"	t	typeref:enum:__anon220	file:
 dirtype_t	src/p_enemy.c	/^typedef int dirtype_t;$/;"	t	file:
-disconnect_time	src/n_peer.h	/^  time_t              disconnect_time;$/;"	m	struct:netpeer_s
+disconnect_time	src/n_peer.h	/^  time_t        disconnect_time;$/;"	m	struct:netpeer_s
 displaycounter	src/d_server.c	/^int displaycounter;$/;"	v
 displayplayer	src/g_game.c	/^int             displayplayer; \/\/ view being displayed$/;"	v
 displaytime	src/SDL/i_system.c	/^static unsigned int displaytime;$/;"	v	file:
@@ -8901,6 +8957,7 @@ free_history	src/z_zone.c	/^enum {malloc_history, free_history, NUM_HISTORY_TYPE
 free_memory	src/z_zone.c	/^static int free_memory = 0;$/;"	v	file:
 free_netcom	src/n_peer.c	/^static void free_netcom(netcom_t *nc) {$/;"	f	file:
 free_netsync	src/n_peer.c	/^static void free_netsync(netsync_t *ns) {$/;"	f	file:
+free_peer	src/n_peer.c	/^static void free_peer(netpeer_t *np) {$/;"	f	file:
 freehead	src/r_plane.c	/^static visplane_t **freehead = &freetail;     \/\/ killough$/;"	v	file:
 freelist	src/gl_clipper.c	/^clipnode_t *freelist;$/;"	v
 freelookviewheight	src/r_sky.c	/^fixed_t freelookviewheight;$/;"	v
@@ -8952,10 +9009,10 @@ gArgc	src/MAC/SDLMain.h	/^static int gArgc;$/;"	v
 gArgv	src/MAC/SDLMain.h	/^static char **gArgv;$/;"	v
 gCalledAppMainline	src/MAC/SDLMain.h	/^static BOOL gCalledAppMainline = FALSE;$/;"	v
 gFinderLaunch	src/MAC/SDLMain.h	/^static BOOL gFinderLaunch;$/;"	v
-gNd2	src/p_setup.c	84;"	d	file:
-gNd3	src/p_setup.c	85;"	d	file:
-gNd4	src/p_setup.c	86;"	d	file:
-gNd5	src/p_setup.c	87;"	d	file:
+gNd2	src/p_setup.c	85;"	d	file:
+gNd3	src/p_setup.c	86;"	d	file:
+gNd4	src/p_setup.c	87;"	d	file:
+gNd5	src/p_setup.c	88;"	d	file:
 g_hhk	src/e6y_launcher.c	/^HHOOK g_hhk;$/;"	v
 g_hwndTT	src/e6y_launcher.c	/^HWND g_hwndTT;$/;"	v
 g_rand	src/m_random.c	/^static GRand *g_rand = NULL;$/;"	v	file:
@@ -9050,7 +9107,6 @@ getSide	src/p_spec.c	/^side_t* getSide$/;"	f
 get_average_line_height	src/hu_msg.c	/^static float get_average_line_height(message_widget_t *mw) {$/;"	f	file:
 get_channel	src/s_sound.c	/^static int get_channel(mobj_t *mobj, sfxinfo_t *sfxinfo, int is_pickup) {$/;"	f	file:
 get_first_set	src/PCRELIB/pcre_get.c	/^get_first_set(const pcre *code, const char *stringname, int *ovector)$/;"	f	file:
-get_last_line_height	src/hu_msg.c	/^static int get_last_line_height(message_widget_t *mw) {$/;"	f	file:
 get_line_count	src/hu_msg.c	/^static unsigned int get_line_count(message_widget_t *mw) {$/;"	f	file:
 get_message_recipient_buffer	src/n_proto.c	/^static buf_t* get_message_recipient_buffer(void) {$/;"	f	file:
 get_netchan	src/n_peer.c	38;"	d	file:
@@ -9562,7 +9618,7 @@ hud_add	src/e6y.c	/^char hud_add[80];$/;"	v
 hud_ammostr	src/hu_stuff.c	/^static char hud_ammostr[80];$/;"	v	file:
 hud_armorstr	src/hu_stuff.c	/^static char hud_armorstr[80];$/;"	v	file:
 hud_centermsg	src/e6y.c	/^char hud_centermsg[80];$/;"	v
-hud_cfg_item_s	src/hu_stuff.c	/^typedef struct hud_cfg_item_s$/;"	s	file:
+hud_cfg_item_s	src/hu_stuff.c	/^typedef struct hud_cfg_item_s {$/;"	s	file:
 hud_cfg_item_t	src/hu_stuff.c	/^} hud_cfg_item_t;$/;"	t	typeref:struct:hud_cfg_item_s	file:
 hud_coordstrx	src/hu_stuff.c	/^static char hud_coordstrx[32];$/;"	v	file:
 hud_coordstry	src/hu_stuff.c	/^static char hud_coordstry[32];$/;"	v	file:
@@ -9575,12 +9631,12 @@ hud_keysstr	src/hu_stuff.c	/^static char hud_keysstr[80];$/;"	v	file:
 hud_list_bgon	src/hu_stuff.c	/^int hud_list_bgon;  \/\/ enable for solid window background for message list$/;"	v
 hud_monsecstr	src/hu_stuff.c	/^static char hud_monsecstr[80];$/;"	v	file:
 hud_msg_lines	src/hu_stuff.c	/^int hud_msg_lines;  \/\/ number of message lines in window$/;"	v
-hud_name_widget	src/hu_stuff.c	/^static hud_widget_t hud_name_widget[] =$/;"	v	file:
+hud_name_widget	src/hu_stuff.c	/^static hud_widget_t hud_name_widget[] = {$/;"	v	file:
 hud_num	src/hu_stuff.c	/^int hud_num;$/;"	v
 hud_weapstr	src/hu_stuff.c	/^static char hud_weapstr[80];$/;"	v	file:
-hud_widget_s	src/hu_stuff.c	/^typedef struct hud_widget_s$/;"	s	file:
+hud_widget_s	src/hu_stuff.c	/^typedef struct hud_widget_s {$/;"	s	file:
 hud_widget_t	src/hu_stuff.c	/^} hud_widget_t;$/;"	t	typeref:struct:hud_widget_s	file:
-hud_widgets_list_s	src/hu_stuff.c	/^typedef struct hud_widgets_list_s$/;"	s	file:
+hud_widgets_list_s	src/hu_stuff.c	/^typedef struct hud_widgets_list_s {$/;"	s	file:
 hud_widgets_list_t	src/hu_stuff.c	/^} hud_widgets_list_t;$/;"	t	typeref:struct:hud_widgets_list_s	file:
 hudadd_crosshair	src/e6y.c	/^int hudadd_crosshair;$/;"	v
 hudadd_crosshair_color	src/e6y.c	/^int hudadd_crosshair_color;$/;"	v
@@ -9749,6 +9805,7 @@ isregfile	src/PCRELIB/pcregrep.c	/^isregfile(char *filename)$/;"	f	file:
 isspace	src/SDL/SDL_win32_main.c	99;"	d	file:
 istexture	src/p_spec.c	/^  signed char istexture; \/\/jff 3\/23\/98 make char for comparison \/\/ cph - make signed$/;"	m	struct:__anon235	file:
 istexture	src/p_spec.h	/^    dboolean     istexture;$/;"	m	struct:__anon236
+it	src/n_peer.h	/^  netpeer_iter_t *it;$/;"	m	struct:netpeeriternode_s
 it_bluecard	src/doomdef.h	/^  it_bluecard,$/;"	e	enum:__anon48
 it_blueskull	src/doomdef.h	/^  it_blueskull,$/;"	e	enum:__anon48
 it_redcard	src/doomdef.h	/^  it_redcard,$/;"	e	enum:__anon48
@@ -9976,6 +10033,7 @@ layout_width	src/hu_msg.c	/^  int layout_width;$/;"	m	struct:message_widget_s	fi
 lcc	src/PCRELIB/pcre_internal.h	/^  const uschar *lcc;            \/* Points to lower casing table *\/$/;"	m	struct:compile_data
 lcc	src/PCRELIB/pcre_internal.h	/^  const uschar *lcc;            \/* Points to lower casing table *\/$/;"	m	struct:match_data
 lcc_offset	src/PCRELIB/pcre_internal.h	923;"	d
+leave_weapons	src/doomstat.c	/^int leave_weapons;         \/\/ leave picked-up weapons behind?$/;"	v
 leds_always_off	src/SDL/i_video.c	/^int             leds_always_off = 0; \/\/ Expected by m_misc, not relevant$/;"	v
 leftoffset	src/gl_intern.h	/^  int leftoffset,topoffset;$/;"	m	struct:__anon89
 leftoffset	src/r_defs.h	/^  int leftoffset,topoffset;$/;"	m	struct:__anon289
@@ -9994,10 +10052,14 @@ length	src/r_patch.c	/^  byte length;   \/\/ length data bytes follows$/;"	m	str
 length	src/r_patch.h	/^  int length;$/;"	m	struct:__anon309
 level	src/MUSIC/oplplayer.c	/^    byte level;$/;"	m	struct:__anon194	file:
 level	src/protocol.h	/^  byte players, yourplayer, skill, episode, level, deathmatch, complevel, ticdup, extratic;$/;"	m	struct:setup_packet_s
-levelFragLimit	src/p_spec.c	/^dboolean         levelFragLimit;      \/\/ Ty 03\/18\/98 Added -frags support$/;"	v
-levelFragLimitCount	src/p_spec.c	/^int             levelFragLimitCount; \/\/ Ty 03\/18\/98 Added -frags support$/;"	v
-levelTimeCount	src/p_spec.c	/^static int      levelTimeCount;$/;"	v	file:
-levelTimer	src/p_spec.c	/^static dboolean  levelTimer;$/;"	v	file:
+levelFragLimit	src/p_spec.c	/^dboolean levelFragLimit;      \/\/ Ty 03\/18\/98 Added -frags support$/;"	v
+levelFragLimit	src/p_spec.h	/^dboolean levelFragLimit;      \/\/ Ty 03\/18\/98 Added -frags support$/;"	v
+levelFragLimitCount	src/p_spec.c	/^int      levelFragLimitCount; \/\/ Ty 03\/18\/98 Added -frags support$/;"	v
+levelFragLimitCount	src/p_spec.h	/^int      levelFragLimitCount; \/\/ Ty 03\/18\/98 Added -frags support$/;"	v
+levelTimeCount	src/p_spec.c	/^int      levelTimeCount;$/;"	v
+levelTimeCount	src/p_spec.h	/^int      levelTimeCount;$/;"	v
+levelTimer	src/p_spec.c	/^dboolean levelTimer;$/;"	v
+levelTimer	src/p_spec.h	/^dboolean levelTimer;$/;"	v
 levelinfo	src/gl_preprocess.c	/^static FILE *levelinfo;$/;"	v	file:
 leveljuststarted	src/am_map.c	/^static int leveljuststarted = 1;       \/\/ kluge until AM_LevelInit() is called$/;"	v	file:
 levels_max	src/e6y.c	/^int levels_max = 0;$/;"	v
@@ -10086,8 +10148,8 @@ loaded	src/gl_struct.h	/^  int loaded;$/;"	m	struct:shadow_params_s
 loadgame	src/m_menu.c	/^  loadgame,$/;"	e	enum:__anon148	file:
 loading_state	src/n_main.c	/^static bool loading_state = false;$/;"	v	file:
 loc	src/wi_stuff.c	/^  point_t loc;$/;"	m	struct:__anon348	file:
-local_command_index	src/n_main.c	/^static int local_command_index = 0;$/;"	v	file:
-local_commands	src/n_main.c	/^static cbuf_t local_commands;$/;"	v	file:
+local_command_index	src/p_cmd.c	/^static int local_command_index = 0;$/;"	v	file:
+local_commands	src/p_cmd.c	/^static cbuf_t local_commands;$/;"	v	file:
 local_pixels	src/SDL/i_video.c	/^static unsigned char *local_pixels = NULL;$/;"	v	file:
 locale	src/PCRELIB/pcregrep.c	/^static char *locale = NULL;$/;"	v	file:
 location	src/m_misc.h	/^  } location;$/;"	m	struct:default_s	typeref:struct:default_s::__anon169
@@ -10424,7 +10486,7 @@ message_thinker_s	src/hu_stuff.h	/^typedef struct message_thinker_s$/;"	s
 message_thinker_t	src/hu_stuff.h	/^} message_thinker_t;$/;"	t	typeref:struct:message_thinker_s
 message_widget_s	src/hu_msg.c	/^struct message_widget_s {$/;"	s	file:
 message_widget_t	src/hu_msg.h	/^typedef struct message_widget_s message_widget_t;$/;"	t	typeref:struct:message_widget_s
-messages	src/d_player.h	/^  obuf_t              messages;$/;"	m	struct:player_s
+messages	src/d_player.h	/^  GPtrArray          *messages;$/;"	m	struct:player_s
 messages	src/m_menu.c	/^  messages,$/;"	e	enum:__anon155	file:
 messages	src/n_peer.h	/^  pbuf_t messages;$/;"	m	struct:netchan_s
 messx	src/m_menu.c	/^int     messx;$/;"	v
@@ -10776,20 +10838,23 @@ needsupdate	src/hu_lib.h	/^  int   needsupdate;$/;"	m	struct:__anon121
 negonearray	src/r_things.c	/^int *negonearray;        \/\/ killough 2\/8\/98: \/\/ dropoff overflow$/;"	v
 net_channel_e	src/n_net.h	/^} net_channel_e;$/;"	t	typeref:enum:__anon204
 net_host	src/n_net.c	/^static ENetHost    *net_host = NULL;$/;"	v	file:
-net_peers	src/n_peer.c	/^static obuf_t net_peers;$/;"	v	file:
+net_peers	src/n_peer.c	/^static GHashTable *net_peers = NULL;$/;"	v	file:
 net_sync_type_e	src/n_net.h	/^} net_sync_type_e;$/;"	t	typeref:enum:__anon205
 netchan_s	src/n_peer.h	/^typedef struct netchan_s {$/;"	s
 netchan_t	src/n_peer.h	/^} netchan_t;$/;"	t	typeref:struct:netchan_s
 netcmds	src/d_client.c	/^ticcmd_t         netcmds[MAXPLAYERS][BACKUPTICS];$/;"	v
-netcom	src/n_peer.h	/^  netcom_t            netcom;$/;"	m	struct:netpeer_s
+netcom	src/n_peer.h	/^  netcom_t      netcom;$/;"	m	struct:netpeer_s
 netcom_s	src/n_peer.h	/^typedef struct netcom_s {$/;"	s
 netcom_t	src/n_peer.h	/^} netcom_t;$/;"	t	typeref:struct:netcom_s
 netdemo	src/g_game.c	/^static dboolean    netdemo;$/;"	v	file:
 netgame	src/n_net.c	/^dboolean        netgame   = false;$/;"	v
 netmisc_t	src/d_net.h	/^} netmisc_t;$/;"	t	typeref:struct:__anon26
 netmisctype_t	src/d_net.h	/^} netmisctype_t;$/;"	t	typeref:enum:__anon25
+netpeer_iter_t	src/n_peer.h	/^typedef void netpeer_iter_t;$/;"	t
 netpeer_s	src/n_peer.h	/^typedef struct netpeer_s {$/;"	s
 netpeer_t	src/n_peer.h	/^} netpeer_t;$/;"	t	typeref:struct:netpeer_s
+netpeeriternode_s	src/n_peer.h	/^typedef struct netpeeriternode_s {$/;"	s
+netpeeriternode_t	src/n_peer.h	/^} netpeeriternode_t;$/;"	t	typeref:struct:netpeeriternode_s
 netserver	src/n_net.c	/^dboolean        netserver = false;$/;"	v
 netsync	src/n_net.c	/^net_sync_type_e netsync   = NET_SYNC_TYPE_NONE;$/;"	v
 netsync_s	src/n_peer.h	/^typedef struct netsync_s {$/;"	s
@@ -10899,6 +10964,7 @@ note	src/MUSIC/oplplayer.c	/^    unsigned int note;$/;"	m	struct:opl_voice_s	fil
 note_volume	src/MUSIC/oplplayer.c	/^    unsigned int note_volume;$/;"	m	struct:opl_voice_s	file:
 notempty	src/PCRELIB/pcre_internal.h	/^  BOOL   notempty;              \/* Empty string match not wanted *\/$/;"	m	struct:match_data
 noteol	src/PCRELIB/pcre_internal.h	/^  BOOL   noteol;                \/* NOTEOL flag *\/$/;"	m	struct:match_data
+np	src/n_peer.h	/^  netpeer_t *np;$/;"	m	struct:netpeeriternode_s
 nr	src/hu_lib.h	/^  int     nr;                          \/\/ total height in rows$/;"	m	struct:__anon123
 ns_colormaps	src/w_wad.h	/^  ns_colormaps,$/;"	e	enum:__anon357
 ns_demos	src/w_wad.h	/^  ns_demos,$/;"	e	enum:__anon357
@@ -11130,7 +11196,7 @@ p_push	src/p_spec.h	/^    p_push,$/;"	e	enum:__anon274::__anon275
 p_wind	src/p_spec.h	/^    p_wind,$/;"	e	enum:__anon274::__anon275
 pack_commands	src/n_pack.c	/^static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {$/;"	f	file:
 pack_nerve	src/doomdef.h	/^  pack_nerve,   \/\/ No Rest For The Living$/;"	e	enum:__anon44
-pack_player_preference_change	src/n_pack.c	288;"	d	file:
+pack_player_preference_change	src/n_pack.c	289;"	d	file:
 pack_plut	src/doomdef.h	/^  pack_plut,    \/\/ Plutonia pack$/;"	e	enum:__anon44
 pack_tnt	src/doomdef.h	/^  pack_tnt,     \/\/ TNT mission pack$/;"	e	enum:__anon44
 packed_toc	src/n_peer.h	/^  pbuf_t packed_toc;$/;"	m	struct:netchan_s
@@ -11300,8 +11366,8 @@ pcsound_win32_driver	src/PCSOUND/pcsound_win32.c	/^pcsound_driver_t pcsound_win3
 pdraw_column_vars_s	src/r_draw.h	/^typedef struct draw_column_vars_s* pdraw_column_vars_s;$/;"	t	typeref:struct:draw_column_vars_s
 pe_x	src/p_map.c	/^static int pe_x; \/\/ Pain Elemental position for Lost Soul checks \/\/ phares$/;"	v	file:
 pe_y	src/p_map.c	/^static int pe_y; \/\/ Pain Elemental position for Lost Soul checks \/\/ phares$/;"	v	file:
-peer	src/n_peer.h	/^  ENetPeer           *peer;$/;"	m	struct:netpeer_s
-peernum	src/n_peer.h	/^  unsigned short      peernum;$/;"	m	struct:netpeer_s
+peer	src/n_peer.h	/^  ENetPeer     *peer;$/;"	m	struct:netpeer_s
+peernum	src/n_peer.h	/^  unsigned int  peernum;$/;"	m	struct:netpeer_s
 pendingweapon	src/d_player.h	/^  weapontype_t        pendingweapon;$/;"	m	struct:player_s
 percent	src/wi_stuff.c	/^static const char percent[] = {"WIPCNT"};$/;"	v	file:
 percussion_instrs	src/MUSIC/oplplayer.c	/^static const genmidi_instr_t *percussion_instrs;$/;"	v	file:
@@ -11356,7 +11422,7 @@ player_t	src/d_player.h	/^} player_t;$/;"	t	typeref:struct:player_s
 playeringame	src/g_game.c	/^dboolean        playeringame[MAXPLAYERS];$/;"	v
 playerjoingame	src/d_server.c	/^int playerjoingame[MAXPLAYERS], playerleftgame[MAXPLAYERS];$/;"	v
 playerleftgame	src/d_server.c	/^int playerjoingame[MAXPLAYERS], playerleftgame[MAXPLAYERS];$/;"	v
-playernum	src/n_peer.h	/^  unsigned short      playernum;$/;"	m	struct:netpeer_s
+playernum	src/n_peer.h	/^  unsigned int  playernum;$/;"	m	struct:netpeer_s
 playernumtotrans	src/r_draw.c	/^byte playernumtotrans[MAXPLAYERS];$/;"	v
 players	src/g_game.c	/^player_t        players[MAXPLAYERS];$/;"	v
 players	src/protocol.h	/^  byte players, yourplayer, skill, episode, level, deathmatch, complevel, ticdup, extratic;$/;"	m	struct:setup_packet_s
@@ -11499,7 +11565,6 @@ prboom_dir	src/SDL/i_system.c	/^static const char prboom_dir[] = {"\/." PACKAGE_
 precache	src/m_misc.c	/^dboolean    precache = true; \/* if true, load all graphics at start *\/$/;"	v
 precache_lump	src/r_data.c	/^static inline void precache_lump(int l)$/;"	f	file:
 precise	src/am_map.h	/^  int precise;$/;"	m	struct:am_frame_s
-predicting	src/n_main.c	/^static bool predicting = false;$/;"	v	file:
 prefix	src/PCRELIB/pcregrep.c	/^static const char *prefix[] = {$/;"	v	file:
 prefix	src/hu_tracers.h	/^  char prefix[32];$/;"	m	struct:traceslist_s
 prefix	src/hu_tracers.h	/^  char prefix[32];$/;"	m	struct:traceslistinit_s
@@ -11536,7 +11601,7 @@ process_console_input	src/c_main.c	/^static void process_console_input(input_wid
 process_options	src/PCRELIB/pcregrep.c	/^static int process_options = 0;$/;"	v	file:
 process_priority	src/SDL/i_video.c	/^int process_priority;$/;"	v
 process_tics	src/n_main.c	/^static int process_tics(int tics_elapsed) {$/;"	f	file:
-processed	src/p_user.h	/^  uint64_t processed;$/;"	m	struct:player_message_s
+processed	src/p_user.h	/^  bool processed;$/;"	m	struct:player_message_s
 prog	src/m_menu.c	/^  prog,$/;"	e	enum:__anon163	file:
 prog_stub	src/m_menu.c	/^  prog_stub,$/;"	e	enum:__anon163	file:
 prog_stub1	src/m_menu.c	/^  prog_stub1,$/;"	e	enum:__anon163	file:
@@ -11636,40 +11701,40 @@ reactiontime	src/p_mobj.h	/^    short               reactiontime;$/;"	m	struct:m
 read	src/cmp.h	/^  cmp_reader  read;$/;"	m	struct:cmp_ctx_s
 read1_end	src/m_menu.c	/^  read1_end$/;"	e	enum:__anon149	file:
 read2_end	src/m_menu.c	/^  read2_end$/;"	e	enum:__anon150	file:
-read_array	src/n_pack.c	193;"	d	file:
-read_bool	src/n_pack.c	184;"	d	file:
+read_array	src/n_pack.c	194;"	d	file:
+read_bool	src/n_pack.c	185;"	d	file:
 read_byte	src/cmp.c	/^static bool read_byte(cmp_ctx_t *ctx, uint8_t *x) {$/;"	f	file:
-read_bytes	src/n_pack.c	211;"	d	file:
-read_char	src/n_pack.c	66;"	d	file:
+read_bytes	src/n_pack.c	212;"	d	file:
+read_char	src/n_pack.c	67;"	d	file:
 read_config_file	src/d_server.c	/^void read_config_file(FILE* fp, struct setup_packet_s* sp)$/;"	f
-read_double	src/n_pack.c	171;"	d	file:
+read_double	src/n_pack.c	172;"	d	file:
 read_e	src/m_menu.c	/^} read_e;$/;"	v	typeref:enum:__anon149
 read_e2	src/m_menu.c	/^} read_e2;$/;"	v	typeref:enum:__anon150
-read_int	src/n_pack.c	118;"	d	file:
-read_long	src/n_pack.c	145;"	d	file:
-read_map	src/n_pack.c	202;"	d	file:
-read_message_recipient	src/n_pack.c	273;"	d	file:
-read_packed_bytes	src/n_pack.c	221;"	d	file:
-read_player	src/n_pack.c	259;"	d	file:
-read_ranged_char	src/n_pack.c	75;"	d	file:
-read_ranged_double	src/n_pack.c	180;"	d	file:
-read_ranged_int	src/n_pack.c	128;"	d	file:
-read_ranged_long	src/n_pack.c	154;"	d	file:
-read_ranged_short	src/n_pack.c	101;"	d	file:
-read_ranged_uchar	src/n_pack.c	88;"	d	file:
-read_ranged_uint	src/n_pack.c	141;"	d	file:
-read_ranged_ulong	src/n_pack.c	167;"	d	file:
-read_ranged_ushort	src/n_pack.c	114;"	d	file:
-read_recipient_array	src/n_pack.c	250;"	d	file:
+read_int	src/n_pack.c	119;"	d	file:
+read_long	src/n_pack.c	146;"	d	file:
+read_map	src/n_pack.c	203;"	d	file:
+read_message_recipient	src/n_pack.c	274;"	d	file:
+read_packed_bytes	src/n_pack.c	222;"	d	file:
+read_player	src/n_pack.c	260;"	d	file:
+read_ranged_char	src/n_pack.c	76;"	d	file:
+read_ranged_double	src/n_pack.c	181;"	d	file:
+read_ranged_int	src/n_pack.c	129;"	d	file:
+read_ranged_long	src/n_pack.c	155;"	d	file:
+read_ranged_short	src/n_pack.c	102;"	d	file:
+read_ranged_uchar	src/n_pack.c	89;"	d	file:
+read_ranged_uint	src/n_pack.c	142;"	d	file:
+read_ranged_ulong	src/n_pack.c	168;"	d	file:
+read_ranged_ushort	src/n_pack.c	115;"	d	file:
+read_recipient_array	src/n_pack.c	251;"	d	file:
 read_repeat_counts	src/PCRELIB/pcre_compile.c	/^read_repeat_counts(const uschar *p, int *minp, int *maxp, int *errorcodeptr)$/;"	f	file:
-read_short	src/n_pack.c	92;"	d	file:
-read_string	src/n_pack.c	231;"	d	file:
-read_string_array	src/n_pack.c	241;"	d	file:
+read_short	src/n_pack.c	93;"	d	file:
+read_string	src/n_pack.c	232;"	d	file:
+read_string_array	src/n_pack.c	242;"	d	file:
 read_type_marker	src/cmp.c	/^static bool read_type_marker(cmp_ctx_t *ctx, uint8_t *marker) {$/;"	f	file:
-read_uchar	src/n_pack.c	79;"	d	file:
-read_uint	src/n_pack.c	132;"	d	file:
-read_ulong	src/n_pack.c	158;"	d	file:
-read_ushort	src/n_pack.c	105;"	d	file:
+read_uchar	src/n_pack.c	80;"	d	file:
+read_uint	src/n_pack.c	133;"	d	file:
+read_ulong	src/n_pack.c	159;"	d	file:
+read_ushort	src/n_pack.c	106;"	d	file:
 readdirectory	src/PCRELIB/pcregrep.c	/^char *readdirectory(directory_type *dir) {}$/;"	f
 readdirectory	src/PCRELIB/pcregrep.c	/^readdirectory(directory_type *dir)$/;"	f	file:
 readdirectory	src/PCRELIB/pcregrep.c	/^readdirectory(directory_type *dir)$/;"	f
@@ -11768,9 +11833,11 @@ rendering_stats	src/r_main.c	/^dboolean rendering_stats;$/;"	v
 rendermarker	src/gl_main.c	/^byte rendermarker=0;$/;"	v
 rep_max	src/PCRELIB/pcre_exec.c	/^static const char rep_max[] = { 0, 0, 0, 0, 1, 1 };$/;"	v	file:
 rep_min	src/PCRELIB/pcre_exec.c	/^static const char rep_min[] = { 0, 0, 1, 1, 0, 0 };$/;"	v	file:
+repredicting	src/n_main.c	/^static bool repredicting = false;$/;"	v	file:
 req_byte	src/PCRELIB/pcre_internal.h	/^  pcre_uint16 req_byte;$/;"	m	struct:real_pcre
 req_varyopt	src/PCRELIB/pcre_internal.h	/^  int  req_varyopt;             \/* "After variable item" flag for reqbyte *\/$/;"	m	struct:compile_data
 reserved	src/protocol.h	/^  byte reserved[2];	\/* Was random in prboom <=2.2.4, now 0 *\/$/;"	m	struct:__anon228
+reset_retraction_target	src/hu_msg.c	/^static void reset_retraction_target(message_widget_t *mw, bool reset_timeout) {$/;"	f	file:
 resolutions	src/MAC/ResolutionDataSource.h	/^+ (NSArray *)resolutions;$/;"	v
 resource_files_buf	src/d_main.c	/^cbuf_t resource_files_buf;$/;"	v
 respawnmonsters	src/g_game.c	/^dboolean        respawnmonsters;$/;"	v
@@ -11808,7 +11875,7 @@ rpost_t	src/r_patch.h	/^} rpost_t;$/;"	t	typeref:struct:__anon309
 rstrip	src/d_deh.c	/^void rstrip(char *s)  \/\/ strip trailing whitespace$/;"	f
 rsuperdown	src/d_main.h	/^  bool rsuperdown;$/;"	m	struct:keybindings_s
 run_commandsync_tics	src/n_main.c	/^static int run_commandsync_tics(int command_count) {$/;"	f	file:
-run_player_command	src/p_user.c	/^static void run_player_command(player_t *player) {$/;"	f	file:
+run_player_command	src/p_cmd.c	/^static void run_player_command(player_t *player) {$/;"	f	file:
 run_regular_tic	src/p_tick.c	/^static void run_regular_tic(void) {$/;"	f	file:
 run_thinkers_and_specials	src/p_tick.c	/^static void run_thinkers_and_specials(void) {$/;"	f	file:
 run_tic	src/n_main.c	/^static void run_tic(void) {$/;"	f	file:
@@ -12319,7 +12386,6 @@ set_menu_itemon	src/m_menu.c	/^static int set_menu_itemon; \/\/ which setup item
 set_mess_active	src/m_menu.c	/^dboolean set_mess_active   = false; \/\/ in messages setup screen$/;"	v
 set_messages	src/m_menu.c	/^  set_messages,$/;"	e	enum:__anon157	file:
 set_multiline	src/PCRELIB/pcrecpp.h	/^  RE_Options &set_multiline(bool x) {$/;"	f	class:pcrecpp::RE_Options
-set_new_retraction_target	src/hu_msg.c	/^static void set_new_retraction_target(message_widget_t *mw, float target) {$/;"	f	file:
 set_no_auto_capture	src/PCRELIB/pcrecpp.h	/^  RE_Options &set_no_auto_capture(bool x) {$/;"	f	class:pcrecpp::RE_Options
 set_save_comments	src/PCRELIB/pcre_scanner.h	/^  void set_save_comments(bool comments) {$/;"	f	class:pcrecpp::Scanner
 set_setup_end	src/m_menu.c	/^  set_setup_end$/;"	e	enum:__anon157	file:
@@ -12860,7 +12926,7 @@ str_min_speed	src/gl_struct.h	/^  const char *str_min_speed;$/;"	m	struct:motion
 str_size	src/cmp.h	/^  uint32_t  str_size;$/;"	m	union:cmp_object_data_u
 strace	src/p_sight.c	/^  divline_t strace;                \/\/ from t1 to t2$/;"	m	struct:__anon234	file:
 strafecount	src/p_mobj.h	/^    short               strafecount;    \/\/ killough 9\/8\/98: monster strafing$/;"	m	struct:mobj_s
-strcasecmp	src/doomtype.h	78;"	d
+strcasecmp	src/doomtype.h	72;"	d
 strdup	src/z_zone.h	174;"	d
 strdup	src/z_zone.h	180;"	d
 strerror	src/PCRELIB/pcregrep.c	/^strerror(int n)$/;"	f
@@ -12869,12 +12935,12 @@ stretch_param_t	src/v_video.h	/^} stretch_param_t;$/;"	t	typeref:struct:stretch_
 stretch_params	src/v_video.c	/^stretch_param_t *stretch_params;$/;"	v
 stretch_params_table	src/v_video.c	/^stretch_param_t stretch_params_table[3][VPT_ALIGN_MAX];$/;"	v
 stricmp	src/MAC/config.h	100;"	d
-string_to_byte	src/n_net.c	54;"	d	file:
-string_to_short	src/n_net.c	55;"	d	file:
+string_to_byte	src/n_net.c	55;"	d	file:
+string_to_short	src/n_net.c	56;"	d	file:
 strip_shorthand_marker	src/c_main.c	/^static const char* strip_shorthand_marker(const char *command) {$/;"	f	file:
 strlcat	src/SDL/SDL_win32_main.c	/^size_t strlcat(char *dst, const char *src, size_t maxlen)$/;"	f
 strlcpy	src/SDL/SDL_win32_main.c	/^size_t strlcpy(char *dst, const char *src, size_t maxlen)$/;"	f
-strncasecmp	src/doomtype.h	79;"	d
+strncasecmp	src/doomtype.h	73;"	d
 strncmp	src/PCRELIB/pcre_internal.h	176;"	d
 strnicmp	src/MAC/config.h	101;"	d
 strobe_t	src/p_spec.h	/^} strobe_t;$/;"	t	typeref:struct:__anon264
@@ -12902,7 +12968,7 @@ switchlist	src/p_switch.c	/^static int *switchlist;                           \/
 switchlist_t	src/p_spec.h	/^} PACKEDATTR switchlist_t; \/\/jff 3\/23\/98 pack to read from memory$/;"	t	typeref:struct:__anon260
 sx	src/p_pspr.h	/^  fixed_t sx;$/;"	m	struct:__anon226
 sy	src/p_pspr.h	/^  fixed_t sy;$/;"	m	struct:__anon226
-sync	src/n_peer.h	/^  netsync_t           sync;$/;"	m	struct:netpeer_s
+sync	src/n_peer.h	/^  netsync_t     sync;$/;"	m	struct:netpeer_s
 synthHandler	src/MUSIC/dbopl.h	/^  SynthHandler synthHandler;$/;"	m	struct:_Channel
 sysex	src/MUSIC/midifile.h	/^        midi_sysex_event_data_t sysex;$/;"	m	union:__anon191::__anon192
 sysexbuff	src/MUSIC/flplayer.c	/^static unsigned char sysexbuff[SYSEX_BUFF_SIZE];$/;"	v	file:
@@ -13083,8 +13149,8 @@ tmx	src/p_map.c	/^static fixed_t   tmx;$/;"	v	file:
 tmxmove	src/p_map.c	/^static fixed_t   tmxmove;$/;"	v	file:
 tmy	src/p_map.c	/^static fixed_t   tmy;$/;"	v	file:
 tmymove	src/p_map.c	/^static fixed_t   tmymove;$/;"	v	file:
-to_byte	src/n_net.c	52;"	d	file:
-to_short	src/n_net.c	53;"	d	file:
+to_byte	src/n_net.c	53;"	d	file:
+to_short	src/n_net.c	54;"	d	file:
 to_tic	src/n_state.h	/^  int   to_tic;$/;"	m	struct:game_state_delta_s
 toc	src/n_peer.h	/^  cbuf_t toc;$/;"	m	struct:netchan_s
 tocentry_s	src/n_peer.c	/^typedef struct tocentry_s {$/;"	s	file:
@@ -13449,8 +13515,8 @@ v2	src/doomdata.h	/^  unsigned short v2;$/;"	m	struct:__anon36
 v2	src/p_setup.c	/^  unsigned short  v2;    \/\/ end vertex      (16 bit)$/;"	m	struct:__anon231	file:
 v2	src/r_defs.h	/^  vertex_t *v1, *v2;     \/\/ Vertices, from v1 to v2.$/;"	m	struct:line_s
 v2	src/r_defs.h	/^  vertex_t *v1, *v2;$/;"	m	struct:__anon287
+va_copy	src/lprintf.c	342;"	d	file:
 va_copy	src/lprintf.c	344;"	d	file:
-va_copy	src/lprintf.c	346;"	d	file:
 val	src/hu_lib.h	/^  int   val;$/;"	m	struct:__anon121
 val	src/st_lib.h	/^  dboolean*    val;$/;"	m	struct:__anon323
 validcount	src/gl_missingtexture.c	/^  int validcount;   \/\/ finding of the best sector in the group only once in tic$/;"	m	struct:__anon108	file:
@@ -13811,9 +13877,9 @@ writeevent	src/MUSIC/portmidiplayer.c	/^static void writeevent (unsigned long wh
 writesysex	src/MUSIC/flplayer.c	/^static void writesysex (unsigned char *data, int len)$/;"	f	file:
 writesysex	src/MUSIC/portmidiplayer.c	/^static void writesysex (unsigned long when, int etype, unsigned char *data, int len)$/;"	f	file:
 wsop_e	src/p_pspr.h	/^} wsop_e;$/;"	t	typeref:enum:__anon227
-wu_fineshift	src/v_video.c	1005;"	d	file:
-wu_fixedshift	src/v_video.c	1010;"	d	file:
-wu_weightbits	src/v_video.c	1007;"	d	file:
+wu_fineshift	src/v_video.c	1012;"	d	file:
+wu_fixedshift	src/v_video.c	1017;"	d	file:
+wu_weightbits	src/v_video.c	1014;"	d	file:
 x	src/TEXTSCREEN/txt_button.c	/^static void TXT_ButtonMousePress(TXT_UNCAST_ARG(button), int x, int y, int b)$/;"	v	file:
 x	src/TEXTSCREEN/txt_checkbox.c	/^static void TXT_CheckBoxMousePress(TXT_UNCAST_ARG(checkbox), int x, int y, int b)$/;"	v	file:
 x	src/TEXTSCREEN/txt_dropdown.c	/^                                       int x, int y, int b)$/;"	v	file:
