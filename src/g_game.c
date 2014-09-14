@@ -24,6 +24,8 @@
 #include "z_zone.h"
 
 #include "doomstat.h"
+#include "d_event.h"
+#include "c_main.h"
 #include "d_net.h"
 #include "f_finale.h"
 #include "m_argv.h"
@@ -32,6 +34,10 @@
 #include "m_misc.h"
 #include "m_menu.h"
 #include "m_random.h"
+#include "n_net.h"
+#include "n_main.h"
+#include "n_proto.h"
+#include "n_state.h"
 #include "p_cmd.h"
 #include "p_ident.h"
 #include "p_setup.h"
@@ -65,12 +71,6 @@
 #include "r_demo.h"
 #include "r_fps.h"
 #include "e6y.h"//e6y
-
-#include "c_main.h"
-#include "n_net.h"
-#include "n_main.h"
-#include "n_proto.h"
-#include "n_state.h"
 
 extern int forceOldBsp;
 extern char *player_names[];
@@ -546,15 +546,15 @@ static int G_NextWeapon(int direction) {
   return weapon_order_table[i].weapon_num;
 }
 
-void G_BuildTiccmd(netticcmd_t *ncmd) {
+void G_BuildTiccmd(player_t *player) {
   int strafe = false;
   int bstrafe;
   int speed = autorun;
   int tspeed;
   int forward;
   int side;
-  int newweapon;                                          // phares
-
+  int newweapon; // phares
+  netticcmd_t *ncmd = P_GetNewBlankCommand(player);
   ticcmd_t *cmd = &ncmd->cmd;
 
   ncmd->tic = gametic;

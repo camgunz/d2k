@@ -34,16 +34,15 @@
 #include "i_system.h"
 #include "lprintf.h"
 #include "m_file.h"
-#include "p_cmd.h"
-#include "p_pspr.h"
-#include "p_user.h"
-#include "w_wad.h"
-
 #include "n_net.h"
 #include "n_main.h"
 #include "n_state.h"
 #include "n_peer.h"
 #include "n_proto.h"
+#include "p_cmd.h"
+#include "p_pspr.h"
+#include "p_user.h"
+#include "w_wad.h"
 
 /* CG: FIXME: Most of these should be more than just defines tucked here */
 #define MAX_IWAD_NAME_LENGTH 20
@@ -298,17 +297,25 @@
 static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   netticcmd_t *n = NULL;
   byte command_count = 0;
-  cbuf_t *commands = NULL;
+  GArray *commands = NULL;
+  unsigned int command_array_size;
 
   M_PBufWriteShort(pbuf, playernum);
 
-  if (DELTACLIENT && playernum == consoleplayer)
+  if (DELTACLIENT && playernum == consoleplayer) {
     commands = P_GetLocalCommands();
-  else
-    commands = &players[playernum].commands;
+    command_array_size = P_GetLocalCommandCount();
+  }
+  else {
+    commands = players[playernum].commands;
+    command_array_size = P_GetPlayerCommandCount(&players[playernum]);
+  }
 
-  CBUF_FOR_EACH(commands, entry) {
-    netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+  D_Log(LOG_SYNC, "%d, %d, %u: ", DELTACLIENT, playernum == consoleplayer, command_array_size);
+  P_PrintPlayerCommands(commands);
+
+  for (unsigned int i = 0; i < command_array_size; i++) {
+    netticcmd_t *ncmd = &g_array_index(commands, netticcmd_t, i);
 
     if (ncmd->index > np->sync.cmd)
       command_count++;
@@ -321,8 +328,8 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
     return;
   }
 
-  CBUF_FOR_EACH(commands, entry) {
-    netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+  for (unsigned int i = 0; i < command_array_size; i++) {
+    netticcmd_t *ncmd = &g_array_index(commands, netticcmd_t, i);
 
     if (ncmd->index <= np->sync.cmd)
       continue;
@@ -343,7 +350,7 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   }
 
   if (n != NULL)
-    D_Log(LOG_SYNC, "%d/%d]\n", n->index, n->tic);
+    D_Log(LOG_SYNC, "%d/%d] (%d)\n", n->index, n->tic, command_count);
 }
 
 void N_PackSetup(netpeer_t *np) {
@@ -640,7 +647,6 @@ void N_PackSync(netpeer_t *np) {
   );
   unsigned short player_count = 0;
 
-
   D_Log(LOG_SYNC, "(%d) Sending sync: ST/CT: (%d/%d) ",
     gametic, np->sync.tic, np->sync.cmd
   );
@@ -688,9 +694,10 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
   read_ushort(pbuf, m_player_count, "player count");
 
   for (int i = 0; i < m_player_count; i++) {
+    netticcmd_t ncmd;
     short m_playernum = 0;
     byte command_count = 0;
-    cbuf_t *commands = NULL;
+    GArray *commands = NULL;
 
     read_player(pbuf, m_playernum);
 
@@ -714,15 +721,13 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
    */
     read_uchar(pbuf, command_count, "command count");
 
-    commands = &players[m_playernum].commands;
-
-    M_CBufEnsureCapacity(commands, command_count);
+    commands = players[m_playernum].commands;
 
     netticcmd_t *n = NULL;
 
     D_Log(LOG_SYNC, "Unpacking %d commands.\n", command_count);
 
-    while (command_count--) {
+    for (unsigned int i = 0; i < command_count; i++) {
       int command_index = -1;
       int tic = -1;
 
@@ -733,24 +738,25 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
         m_command_index = command_index - 1;
 
       if (command_index > m_command_index) {
-        netticcmd_t *ncmd = M_CBufGetFirstFreeOrNewSlot(commands);
 
         m_command_index = command_index;
 
-        ncmd->index = command_index;
-        ncmd->tic = tic;
+        ncmd.index = command_index;
+        ncmd.tic = tic;
 
         if (n == NULL)
-          D_Log(LOG_SYNC, " [%d/%d => ", ncmd->index, ncmd->tic);
+          D_Log(LOG_SYNC, " [%d/%d => ", ncmd.index, ncmd.tic);
 
-        n = ncmd;
+        n = &ncmd;
 
-        read_char(pbuf, ncmd->cmd.forwardmove, "command forward value");
-        read_char(pbuf, ncmd->cmd.sidemove, "command side value");
-        read_short(pbuf, ncmd->cmd.angleturn, "command angle value");
-        read_short(pbuf, ncmd->cmd.consistancy, "command consistancy value");
-        read_uchar(pbuf, ncmd->cmd.chatchar, "comand chatchar value");
-        read_uchar(pbuf, ncmd->cmd.buttons, "command buttons value");
+        read_char(pbuf, ncmd.cmd.forwardmove, "command forward value");
+        read_char(pbuf, ncmd.cmd.sidemove, "command side value");
+        read_short(pbuf, ncmd.cmd.angleturn, "command angle value");
+        read_short(pbuf, ncmd.cmd.consistancy, "command consistancy value");
+        read_uchar(pbuf, ncmd.cmd.chatchar, "comand chatchar value");
+        read_uchar(pbuf, ncmd.cmd.buttons, "command buttons value");
+
+        g_array_append_val(players[m_playernum].commands, ncmd);
       }
       else {
         ticcmd_t cmd;
@@ -849,7 +855,8 @@ dboolean N_UnpackDeltaSync(netpeer_t *np) {
   read_bytes(pbuf, np->sync.delta.data, "delta data");
 
   D_Log(LOG_SYNC,
-    "(%d) Received new sync: ST/CT: (%d/%d) Delta: [%d => %d (%d)] (%zu)\n",
+    "(%d) Received new sync: ST/CT: (%d/%d) Delta: [%d => %d (%d)] "
+    "(%zu bytes)\n",
     gametic,
     np->sync.tic,
     np->sync.cmd,

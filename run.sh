@@ -1,7 +1,7 @@
 #!/bin/sh
 
-export LIBGL_ALWAYS_SOFTWARE=1
-CMD="cbuild/doom2k -nomonsters -nomouse"
+# export LIBGL_ALWAYS_SOFTWARE=1
+CMD="cbuild/doom2k -nomouse"
 
 gdb -ex run --args $CMD
 # CPUPROFILE=cpu.prof cbuild/doom2k

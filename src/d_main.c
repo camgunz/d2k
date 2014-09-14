@@ -771,9 +771,7 @@ static void D_DoomLoop(void) {
     // process one or more tics
     if (singletics) {
       I_StartTic();
-      G_BuildTiccmd(
-        M_CBufGetFirstFreeOrNewSlot(&players[consoleplayer].commands)
-      );
+      G_BuildTiccmd(&players[consoleplayer]);
       if (advancedemo)
         D_DoAdvanceDemo();
       M_Ticker();

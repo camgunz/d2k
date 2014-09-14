@@ -485,29 +485,34 @@ void N_UpdateSync(void) {
   if (CLIENT) {
     np = CL_GetServerPeer();
 
-    if (np != NULL && np->sync.outdated) {
-      N_PeerClearUnreliable(np->peernum);
-      N_PackSync(np);
-      np->sync.outdated = false;
-    }
+    if (np == NULL)
+      return;
+
+    if (!np->sync.outdated)
+      return;
+
+    N_PeerClearUnreliable(np->peernum);
+    N_PackSync(np);
+    np->sync.outdated = false;
+
+    return;
   }
-  else {
-    NETPEER_FOR_EACH(entry) {
-      if (entry.np->sync.outdated && entry.np->sync.tic != 0) {
-        N_PeerClearUnreliable(entry.np->peernum);
 
-        if (DELTASERVER) {
-          if (entry.np->sync.tic < N_GetLatestState()->tic)
-            N_BuildStateDelta(entry.np->sync.tic, &entry.np->sync.delta);
+  NETPEER_FOR_EACH(entry) {
+    if (entry.np->sync.outdated && entry.np->sync.tic != 0) {
+      N_PeerClearUnreliable(entry.np->peernum);
 
-          N_PackDeltaSync(entry.np);
-        }
-        else {
-          N_PackSync(entry.np);
-        }
+      if (DELTASERVER) {
+        if (entry.np->sync.tic < N_GetLatestState()->tic)
+          N_BuildStateDelta(entry.np->sync.tic, &entry.np->sync.delta);
 
-        entry.np->sync.outdated = false;
+        N_PackDeltaSync(entry.np);
       }
+      else {
+        N_PackSync(entry.np);
+      }
+
+      entry.np->sync.outdated = false;
     }
   }
 }

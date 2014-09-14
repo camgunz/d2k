@@ -40,6 +40,11 @@
 #include "m_argv.h"
 #include "m_delta.h"
 #include "m_menu.h"
+#include "n_net.h"
+#include "n_main.h"
+#include "n_state.h"
+#include "n_peer.h"
+#include "n_proto.h"
 #include "p_checksum.h"
 #include "p_cmd.h"
 #include "p_user.h"
@@ -47,14 +52,8 @@
 #include "s_sound.h"
 #include "e6y.h"
 
-#include "n_net.h"
-#include "n_main.h"
-#include "n_state.h"
-#include "n_peer.h"
-#include "n_proto.h"
-
 #define DEBUG_NET 0
-#define DEBUG_SYNC 0
+#define DEBUG_SYNC 1
 #define DEBUG_SAVE 0
 #define ENABLE_PREDICTION 1
 #define PRINT_BANDWIDTH_STATS 0
@@ -278,6 +277,24 @@ void N_InitNetGame(void) {
 
   M_InitDeltas();
 
+  for (i = 0; i < MAXPLAYERS; i++) {
+    char *name;
+    size_t name_length;
+
+    P_InitPlayerCommands(&players[i]);
+
+    players[i].messages = g_ptr_array_new_with_free_func(P_DestroyMessage);
+
+    players[i].name = NULL;
+
+    name_length = snprintf(NULL, 0, "Player %d", i);
+    name = calloc(name_length + 1, sizeof(char));
+    snprintf(name, name_length + 1, "Player %d", i);
+
+    P_SetName(i, name);
+  }
+
+  P_InitLocalCommands();
   if ((i = M_CheckParm("-solo-net"))) {
     netgame = true;
     solonet = true;
@@ -384,25 +401,6 @@ void N_InitNetGame(void) {
         D_EnableLogChannel(LOG_SYNC, "server-sync.log");
     }
   }
-
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    char *name;
-    size_t name_length;
-
-    P_InitPlayerCommands(&players[i]);
-
-    players[i].messages = g_ptr_array_new_with_free_func(P_DestroyMessage);
-
-    players[i].name = NULL;
-
-    name_length = snprintf(NULL, 0, "Player %d", i);
-    name = calloc(name_length + 1, sizeof(char));
-    snprintf(name, name_length + 1, "Player %d", i);
-
-    P_SetName(i, name);
-  }
-
-  P_InitLocalCommands();
 }
 
 bool N_GetWad(const char *name) {

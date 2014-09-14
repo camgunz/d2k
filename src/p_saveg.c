@@ -29,6 +29,7 @@
 #include "lprintf.h"
 #include "m_random.h"
 #include "n_net.h"
+#include "p_cmd.h"
 #include "p_enemy.h"
 #include "p_ident.h"
 #include "p_map.h"
@@ -70,6 +71,8 @@ enum {
 } specials_e;
 
 static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
+  unsigned int command_count = P_GetPlayerCommandCount(player);
+
   M_PBufWriteInt(savebuffer, player->playerstate);
   M_PBufWriteChar(savebuffer, player->cmd.forwardmove);
   M_PBufWriteChar(savebuffer, player->cmd.sidemove);
@@ -157,14 +160,9 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   else
     M_PBufWriteString(savebuffer, "", 0);
   M_PBufWriteUChar(savebuffer, player->team);
-  /*
-   * CG: Don't use P_GetPlayerCommands here; that would overwrite the local
-   *     command buffer.
-   */
-  M_CBufConsolidate(&player->commands);
-  M_PBufWriteInt(savebuffer, M_CBufGetObjectCount(&player->commands));
-  CBUF_FOR_EACH(&player->commands, entry) {
-    netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+  M_PBufWriteUInt(savebuffer, command_count);
+  for (unsigned int i = 0; i < command_count; i++) {
+    netticcmd_t *ncmd = &g_array_index(player->commands, netticcmd_t, i);
 
     M_PBufWriteInt(savebuffer, ncmd->index);
     M_PBufWriteInt(savebuffer, ncmd->tic);
@@ -283,11 +281,11 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   if (command_count > MAX_COMMAND_COUNT)
     I_Error("Command count too high (%d)\n", command_count);
 
-  M_CBufClear(&player->commands);
-  M_CBufEnsureCapacity(&player->commands, command_count);
+  P_ClearPlayerCommands(player);
+  P_EnsurePlayerCommandsSize(player, command_count);
 
-  while (command_count--) {
-    netticcmd_t *ncmd = M_CBufGetFirstFreeOrNewSlot(&player->commands);
+  for (unsigned int i = 0; i < command_count; i++) {
+    netticcmd_t *ncmd = &g_array_index(player->commands, netticcmd_t, i);
 
     M_PBufReadInt(savebuffer, &ncmd->index);
     M_PBufReadInt(savebuffer, &ncmd->tic);

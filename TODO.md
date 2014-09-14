@@ -1,5 +1,23 @@
 # To Do
 
+## Prototype
+
+1. Fix missed sounds
+  * This looks like a consequence of loading only the most recent state delta.
+    I added this behavior in order to resolve "lag spiral of death" problems
+    when initially connecting: if a client had a screenwipe enabled, it
+    wouldn't service the network until after the wipe had finished, and loading
+    all the intermediate states took a long time, and more and more lag piled
+    up until the client disconnected - after burning CPU for several seconds.
+    Since clients are now much more proactive about servicing the network,
+    there is no need for the "only load the most recent state delta" fix, so I
+    can remove it.  However, it seems as though some invalid assumptions have
+    found their way into the state/command handling code, because when I
+    removed the fix, said handling broke.  I suspect faulty data structures,
+    and am now endeavoring to replace `cbuf_t` and `obuf_t` with GLib data
+    structures.  Eventually I plan to remove them entirely, along with `list_t`
+    and `queue_t`.
+
 ## ZDDL
 
 1. Add latency mitigation
