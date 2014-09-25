@@ -194,7 +194,7 @@ typedef struct player_s
   /* CG 4/3/2014: New fields for netcode */
   char   *name;
   byte    team;
-  GArray *commands;
+  GQueue *commands;
 } player_t;
 
 

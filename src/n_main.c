@@ -291,12 +291,9 @@ void N_InitNetGame(void) {
     char *name;
     size_t name_length;
 
-    P_InitPlayerCommands(&players[i]);
-
     players[i].messages = g_ptr_array_new_with_free_func(P_DestroyMessage);
 
     players[i].name = NULL;
-
     name_length = snprintf(NULL, 0, "Player %d", i);
     name = calloc(name_length + 1, sizeof(char));
     snprintf(name, name_length + 1, "Player %d", i);
@@ -304,7 +301,8 @@ void N_InitNetGame(void) {
     P_SetName(i, name);
   }
 
-  P_InitLocalCommands();
+  P_InitCommands();
+
   if ((i = M_CheckParm("-solo-net"))) {
     netgame = true;
     solonet = true;

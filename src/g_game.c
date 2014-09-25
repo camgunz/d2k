@@ -546,7 +546,7 @@ static int G_NextWeapon(int direction) {
   return weapon_order_table[i].weapon_num;
 }
 
-void G_BuildTiccmd(player_t *player) {
+void G_BuildTiccmd(void) {
   int strafe = false;
   int bstrafe;
   int speed = autorun;
@@ -554,13 +554,20 @@ void G_BuildTiccmd(player_t *player) {
   int forward;
   int side;
   int newweapon; // phares
-  netticcmd_t *ncmd = P_GetNewBlankCommand(player);
+  player_t *player = &players[consoleplayer];
+  netticcmd_t *ncmd = P_GetNewIndexedLocalCommand();
   ticcmd_t *cmd = &ncmd->cmd;
-
+  
   ncmd->tic = gametic;
 
   /* cphipps - remove needless I_BaseTiccmd call, just set the ticcmd to zero */
-  memset(cmd, 0, sizeof(ticcmd_t));
+
+  /*
+   * CG: This is done elsewhere now
+   *
+   * memset(cmd, 0, sizeof(ticcmd_t));
+   *
+   */
 
   if (gamekeydown[key_strafe])
     strafe = true;
@@ -670,10 +677,10 @@ void G_BuildTiccmd(player_t *player) {
   //
   // killough 3/26/98, 4/2/98: fix autoswitch when no weapons are left
 
-  if ((!demo_compatibility && players[consoleplayer].attackdown && // killough
-       !P_CheckAmmo(&players[consoleplayer])) ||
+  if ((!demo_compatibility && player->attackdown && // killough
+       !P_CheckAmmo(player)) ||
       gamekeydown[key_weapontoggle]) {
-    newweapon = P_SwitchWeapon(&players[consoleplayer]);           // phares
+    newweapon = P_SwitchWeapon(player);           // phares
   }
   else {                                 // phares 02/26/98: Added gamemode checks
     if (next_weapon) {
@@ -719,8 +726,6 @@ void G_BuildTiccmd(player_t *player) {
     // Switch to shotgun or SSG based on preferences.
 
     if (!demo_compatibility) {
-      const player_t *player = &players[consoleplayer];
-
       // only select chainsaw from '1' if it's owned, it's
       // not already in use, and the player prefers it or
       // the fist is already in use, or the player does not

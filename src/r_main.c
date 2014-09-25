@@ -1089,7 +1089,6 @@ void R_ShowStats(void) {
           renderer_fps, rendered_segs, rendered_visplanes, rendered_vissprites
         );
       }
-      P_Echo(consoleplayer, "開発メモ 技術系の作業メモおよびアイデアの記録");
     }
 
     saved_tic = tic;

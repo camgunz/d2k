@@ -337,8 +337,6 @@ void A_WeaponReady(player_t *player, pspdef_t *psp) {
   //  the missile launcher and bfg do not auto fire
 
   if (player->cmd.buttons & BT_ATTACK) {
-    printf("(%d) %td attacking!\n", gametic, player - players);
-
     if (!player->attackdown || (player->readyweapon != wp_missile &&
                                 player->readyweapon != wp_bfg)) {
       player->attackdown = true;
@@ -348,7 +346,6 @@ void A_WeaponReady(player_t *player, pspdef_t *psp) {
     }
   }
   else {
-    printf("(%d) %td not attacking!\n", gametic, player - players);
     player->attackdown = false;
   }
 

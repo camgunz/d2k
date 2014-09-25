@@ -301,7 +301,7 @@ static void free_string(gpointer data) {
 static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   netticcmd_t *n = NULL;
   byte command_count = 0;
-  GArray *commands = NULL;
+  GQueue *commands = NULL;
   unsigned int command_array_size;
 
   M_PBufWriteShort(pbuf, playernum);
@@ -315,11 +315,15 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
     command_array_size = P_GetPlayerCommandCount(&players[playernum]);
   }
 
-  D_Log(LOG_SYNC, "%d, %d, %u: ", DELTACLIENT, playernum == consoleplayer, command_array_size);
+  D_Log(LOG_SYNC, "%d, %d, %u: ",
+    DELTACLIENT,
+    playernum == consoleplayer,
+    command_array_size
+  );
   P_PrintPlayerCommands(commands);
 
   for (unsigned int i = 0; i < command_array_size; i++) {
-    netticcmd_t *ncmd = &g_array_index(commands, netticcmd_t, i);
+    netticcmd_t *ncmd = g_queue_peek_nth(commands, i);
 
     if (ncmd->index > np->sync.cmd)
       command_count++;
@@ -333,7 +337,7 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   }
 
   for (unsigned int i = 0; i < command_array_size; i++) {
-    netticcmd_t *ncmd = &g_array_index(commands, netticcmd_t, i);
+    netticcmd_t *ncmd = g_queue_peek_nth(commands, i);
 
     if (ncmd->index <= np->sync.cmd)
       continue;
@@ -342,6 +346,9 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
       D_Log(LOG_SYNC, "[%d/%d => ", ncmd->index, ncmd->tic);
 
     n = ncmd;
+
+    if (ncmd->index == 0 && ncmd->tic == 0)
+      puts("[!!!] SENDING BLANK COMMAND!");
 
     M_PBufWriteInt(pbuf, ncmd->index);
     M_PBufWriteInt(pbuf, ncmd->tic);
@@ -656,6 +663,11 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
   int m_sync_tic = -1;
   int m_command_index = np->sync.cmd;
   dboolean m_update_sync = false;
+  bool found_new_command;
+  int start_index;
+  int start_tic;
+  int end_index;
+  int end_tic;
 
   *update_sync = false;
 
@@ -674,10 +686,9 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
   read_ushort(pbuf, m_player_count, "player count");
 
   for (int i = 0; i < m_player_count; i++) {
-    netticcmd_t ncmd;
     short m_playernum = 0;
     byte command_count = 0;
-    GArray *commands = NULL;
+    GQueue *commands = NULL;
 
     read_player(pbuf, m_playernum);
 
@@ -692,18 +703,18 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
       return false;
     }
 
-  /*
-   * CG: TODO: Add a limit to the number of commands accepted here.  uchar
-   *           limits this to 255 commands, but in reality that's > 7 seconds,
-   *           which is still far too long.  Quake has an "sv_maxlag" setting
-   *           (or something); that may be preferable to a static limit... but
-   *           I still think having an upper bound on that setting is prudent.
-   */
+    /*
+     * CG: TODO: Add a limit to the number of commands accepted here.  uchar
+     *           limits this to 255 commands, but in reality that's > 7
+     *           seconds, which is still far too long.  Quake has an
+     *           "sv_maxlag" setting (or something); that may be preferable to
+     *           a static limit... but I still think having an upper bound on
+     *           that setting is prudent.
+     */
+
     read_uchar(pbuf, command_count, "command count");
 
     commands = players[m_playernum].commands;
-
-    netticcmd_t *n = NULL;
 
     D_Log(LOG_SYNC, "Unpacking %d commands.\n", command_count);
 
@@ -718,46 +729,53 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
         m_command_index = command_index - 1;
 
       if (command_index > m_command_index) {
+        netticcmd_t *ncmd = P_GetNewBlankPlayerCommand(&players[m_playernum]);
 
         m_command_index = command_index;
 
-        ncmd.index = command_index;
-        ncmd.tic = tic;
+        ncmd->index = command_index;
+        ncmd->tic = tic;
 
-        if (n == NULL)
-          D_Log(LOG_SYNC, " [%d/%d => ", ncmd.index, ncmd.tic);
+        if (ncmd->index == 0 && ncmd->tic == 0)
+          puts("[!!!] RECEIVED BLANK COMMAND!");
 
-        n = &ncmd;
+        if (!found_new_command) {
+          found_new_command = true;
+          start_index = ncmd->index;
+          start_tic = ncmd->tic;
+        }
+        else {
+          end_index = ncmd->index;
+          end_tic = ncmd->tic;
+        }
 
-        read_char(pbuf, ncmd.cmd.forwardmove, "command forward value");
-        read_char(pbuf, ncmd.cmd.sidemove, "command side value");
-        read_short(pbuf, ncmd.cmd.angleturn, "command angle value");
-        read_short(pbuf, ncmd.cmd.consistancy, "command consistancy value");
-        read_uchar(pbuf, ncmd.cmd.chatchar, "comand chatchar value");
-        read_uchar(pbuf, ncmd.cmd.buttons, "command buttons value");
-
-        g_array_append_val(players[m_playernum].commands, ncmd);
+        read_char(pbuf,  ncmd->cmd.forwardmove, "command forward value");
+        read_char(pbuf,  ncmd->cmd.sidemove,    "command side value");
+        read_short(pbuf, ncmd->cmd.angleturn,   "command angle value");
+        read_short(pbuf, ncmd->cmd.consistancy, "command consistancy value");
+        read_uchar(pbuf, ncmd->cmd.chatchar,    "comand chatchar value");
+        read_uchar(pbuf, ncmd->cmd.buttons,     "command buttons value");
       }
       else {
         ticcmd_t cmd;
 
-        read_char(pbuf, cmd.forwardmove, "command forward value");
-        read_char(pbuf, cmd.sidemove, "command side value");
-        read_short(pbuf, cmd.angleturn, "command angle value");
+        read_char(pbuf,  cmd.forwardmove, "command forward value");
+        read_char(pbuf,  cmd.sidemove,    "command side value");
+        read_short(pbuf, cmd.angleturn,   "command angle value");
         read_short(pbuf, cmd.consistancy, "command consistancy value");
-        read_uchar(pbuf, cmd.chatchar, "comand chatchar value");
-        read_uchar(pbuf, cmd.buttons, "command buttons value");
+        read_uchar(pbuf, cmd.chatchar,    "command chatchar value");
+        read_uchar(pbuf, cmd.buttons,     "command buttons value");
       }
     }
 
-    if (n != NULL)
-      D_Log(LOG_SYNC, "%d/%d]\n", n->index, n->tic);
-    else
-      D_Log(LOG_SYNC, "[...]\n");
-
-    if (n != NULL) {
-      D_Log(LOG_SYNC, "Commands after sync: ");
+    if (found_new_command) {
+      D_Log(LOG_SYNC, "[%d/%d => %d/%d]\nCommands after sync: ",
+        start_index, start_tic, end_index, end_tic
+      );
       P_PrintPlayerCommands(commands);
+    }
+    else {
+      D_Log(LOG_SYNC, "[...]\n");
     }
   }
 
