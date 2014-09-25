@@ -812,7 +812,6 @@ SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/m_cheat.c
   ${CMAKE_SOURCE_DIR}/src/m_delta.c
   ${CMAKE_SOURCE_DIR}/src/m_file.c
-  ${CMAKE_SOURCE_DIR}/src/m_list.c
   ${CMAKE_SOURCE_DIR}/src/m_menu.c
   ${CMAKE_SOURCE_DIR}/src/m_misc.c
   ${CMAKE_SOURCE_DIR}/src/m_pbuf.c
