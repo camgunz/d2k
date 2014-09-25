@@ -69,15 +69,15 @@ int        numlumps;         // killough
 // proff - changed using pointer to wadfile_info_t
 // killough 1/31/98: static, const
 static void W_AddFile(size_t wadfile_index) {
-  wadfile_info_t *wadfile = M_CBufGet(&resource_files_buf, wadfile_index);
-  wadinfo_t   header;
-  lumpinfo_t* lump_p;
-  unsigned    i;
-  int         length;
-  int         startlump;
-  filelump_t  *fileinfo, *fileinfo2free = NULL; //killough
-  filelump_t  singleinfo;
-  int         flags = 0;
+  wadfile_info_t *wadfile = g_ptr_array_index(resource_files, wadfile_index);
+  wadinfo_t       header;
+  lumpinfo_t     *lump_p;
+  unsigned        i;
+  int             length;
+  int             startlump;
+  filelump_t     *fileinfo, *fileinfo2free = NULL; //killough
+  filelump_t      singleinfo;
+  int             flags = 0;
 
   if (wadfile == NULL)
     I_Error("W_AddFile: Invalid wadfile index %zu\n", wadfile_index);
@@ -446,8 +446,8 @@ void W_Init(void) {
 
   // CPhipps - new wadfiles array used 
   // open all the files, load headers, and count lumps
-  CBUF_FOR_EACH(&resource_files_buf, entry)
-    W_AddFile(entry.index);
+  for (unsigned int i = 0; i < resource_files->len; i++)
+    W_AddFile(i);
 
   if (!numlumps)
     I_Error("W_Init: No files found");
@@ -476,17 +476,7 @@ void W_Init(void) {
 
 void W_ReleaseAllWads(void) {
   W_DoneCache();
-
-  CBUF_FOR_EACH(&resource_files_buf, entry) {
-    wadfile_info_t *wf = (wadfile_info_t *)entry.obj;
-
-    if (wf->handle > 0) {
-      M_Close(wf->handle);
-      wf->handle = 0;
-    }
-  }
-
-  M_CBufClear(&resource_files_buf);
+  D_ClearResourceFiles();
 
   numlumps = 0;
   free(lumpinfo);
@@ -525,7 +515,7 @@ void W_ReadLump(int lump, void *dest) {
   if (l->wadfile == -1)
     return;
 
-  wadfile = M_CBufGet(&resource_files_buf, l->wadfile);
+  wadfile = g_ptr_array_index(resource_files, l->wadfile);
 
   if (wadfile == NULL)
     return;

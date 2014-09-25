@@ -128,8 +128,8 @@ char    *basesavegame;             // killough 2/16/98: savegame directory
  *     potentially send them to a client on request, or save them in a
  *     savegame, or whatever.
  */
-cbuf_t resource_files_buf;
-cbuf_t deh_files_buf;
+GPtrArray *resource_files = NULL;
+GPtrArray *deh_files = NULL;
 
 /* CG 7/24/2014: D_Responder changes */
 keybindings_t keybindings;
@@ -1026,12 +1026,13 @@ void D_AddFile(const char *path, wad_source_t source) {
   char *gwa_ext_path;
   char *gwa_filepath;
   int len;
-  wadfile_info_t wadfile;
+  wadfile_info_t *wadfile;
+  wadfile_info_t *gwafile;
 
   wad_ext_path = M_AddDefaultExtension(path, "wad");
 
-  CBUF_FOR_EACH(&resource_files_buf, entry) {
-    wadfile_info_t *wf = (wadfile_info_t *)entry.obj;
+  for (unsigned int i = 0; i < resource_files->len; i++) {
+    wadfile_info_t *wf = g_ptr_array_index(resource_files, i);
 
     if (strcmp(wad_ext_path, wf->name) == 0) {
       lprintf(LO_INFO, "D_AddFile: Skipping %s (already added).\n", path);
@@ -1047,15 +1048,20 @@ void D_AddFile(const char *path, wad_source_t source) {
   if (wad_path == NULL)
     I_Error(" %s missing (original path: %s)\n", wad_ext_path, path);
 
-  wadfile.name = wad_path;
-  wadfile.src = source; // Ty 08/29/98
-  wadfile.handle = 0;
+  wadfile = malloc(sizeof(wadfile_info_t));
 
-  M_CBufAppend(&resource_files_buf, &wadfile);
+  if (wadfile == NULL)
+    I_Error("D_AddFile: Allocating WAD file info failed");
+
+  wadfile->name = wad_path;
+  wadfile->src = source; // Ty 08/29/98
+  wadfile->handle = 0;
+
+  g_ptr_array_add(resource_files, wadfile);
 
   // No Rest For The Living
-  len = strlen(wadfile.name);
-  if (len >= 9 && !strnicmp(wadfile.name + len - 9, "nerve.wad", 9)) {
+  len = strlen(wadfile->name);
+  if (len >= 9 && !strnicmp(wadfile->name + len - 9, "nerve.wad", 9)) {
     if (bfgedition)
       gamemission = pack_nerve;
   }
@@ -1071,11 +1077,16 @@ void D_AddFile(const char *path, wad_source_t source) {
   free(gwa_ext_path);
 
   if (gwa_filepath != NULL) {
-    wadfile.name = gwa_filepath;
-    wadfile.src = source; // Ty 08/29/98
-    wadfile.handle = 0;
+    gwafile = malloc(sizeof(wadfile_info_t));
 
-    M_CBufAppend(&resource_files_buf, &wadfile);
+    if (gwafile == NULL)
+      I_Error("D_AddFile: Allocating GWA file info failed");
+     
+    wadfile->name = gwa_filepath;
+    wadfile->src = source; // Ty 08/29/98
+    wadfile->handle = 0;
+
+    g_ptr_array_add(resource_files, wadfile);
   }
 
   free(gwa_filepath);
@@ -1086,7 +1097,7 @@ void D_AddFile(const char *path, wad_source_t source) {
 //
 void D_AddDEH(const char *filename, int lumpnum) {
   char *deh_path;
-  deh_file_t dehfile;
+  deh_file_t *dehfile;
   const char *deh_out = D_dehout();
 
   if (filename == NULL && lumpnum == 0)
@@ -1105,10 +1116,10 @@ void D_AddDEH(const char *filename, int lumpnum) {
   if (deh_path == NULL)
     I_Error("D_AddDEH: Couldn't find %s\n", filename);
 
-  CBUF_FOR_EACH(&deh_files_buf, entry) {
-    char *stored_deh = (char *)entry.obj;
+  for (unsigned int i = 0; i < deh_files->len; i++) {
+    deh_file_t *stored_deh_file = g_ptr_array_index(deh_files, i);
 
-    if (strcmp(deh_path, stored_deh) == 0) {
+    if (strcmp(deh_path, stored_deh_file->filename) == 0) {
       lprintf(LO_INFO, "D_AddDEH: Skipping %s (already added).\n", deh_path);
       return;
     }
@@ -1116,14 +1127,19 @@ void D_AddDEH(const char *filename, int lumpnum) {
 
   lprintf(LO_INFO, "D_AddDEH: Adding %s.\n", deh_path);
 
-  dehfile.filename = deh_path;
-  if (deh_out != NULL)
-    dehfile.outfilename = strdup(deh_out);
-  else
-    dehfile.outfilename = NULL;
-  dehfile.lumpnum = lumpnum;
+  dehfile = malloc(sizeof(deh_file_t));
 
-  M_CBufAppend(&deh_files_buf, &dehfile);
+  if (dehfile == NULL)
+    I_Error("D_AddDEH: Error allocating DEH file info");
+
+  dehfile->filename = deh_path;
+  if (deh_out != NULL)
+    dehfile->outfilename = strdup(deh_out);
+  else
+    dehfile->outfilename = NULL;
+  dehfile->lumpnum = lumpnum;
+
+  g_ptr_array_add(deh_files, dehfile);
 }
 
 //
@@ -1217,14 +1233,16 @@ void D_ClearIWAD(void) {
 // D_ClearResourceFiles
 //
 void D_ClearResourceFiles(void) {
-  M_CBufClear(&resource_files_buf);
+  for (unsigned int i = resource_files->len; i > 0; i--)
+    g_ptr_array_remove_index_fast(resource_files, i - 1);
 }
 
 //
 // D_ClearDEHFiles
 //
 void D_ClearDEHFiles(void) {
-  M_CBufClear(&deh_files_buf);
+  for (unsigned int i = deh_files->len; i > 0; i--)
+    g_ptr_array_remove_index_fast(deh_files, i - 1);
 }
 
 //
@@ -1790,7 +1808,7 @@ static void DoLooseFiles(void)
 }
 
 /* cph - MBF-like wad/deh/bex autoload code */
-const char *wad_files[MAXLOADFILES], *deh_files[MAXLOADFILES];
+const char *wad_file_names[MAXLOADFILES], *deh_file_names[MAXLOADFILES];
 
 // CPhipps - misc screen stuff
 unsigned int desired_screenwidth, desired_screenheight;
@@ -1825,6 +1843,27 @@ static void L_SetupConsoleMasks(void) {
   }
 }
 
+static void D_destroyDEHFile(gpointer data) {
+  deh_file_t *df = (deh_file_t *)data;
+
+  free(df->filename);
+  if (df->outfilename != NULL)
+    free(df->outfilename);
+  free(df);
+}
+
+static void D_destroyWADFile(gpointer data) {
+  wadfile_info_t *wf = (wadfile_info_t *)data;
+
+  if (wf->handle > 0) {
+    M_Close(wf->handle);
+    wf->handle = 0;
+  }
+
+  free(wf->name);
+  free(wf);
+}
+
 //
 // D_DoomMainSetup
 //
@@ -1853,8 +1892,8 @@ static void D_DoomMainSetup(void) {
     FindResponseFile();
   } while (rsp_found == true);
 
-  M_CBufInit(&resource_files_buf, sizeof(wadfile_info_t));
-  M_CBufInit(&deh_files_buf, sizeof(deh_file_t));
+  resource_files = g_ptr_array_new_with_free_func(D_destroyWADFile);
+  deh_files = g_ptr_array_new_with_free_func(D_destroyDEHFile);
 
   // e6y: moved to main()
   /*
@@ -2110,7 +2149,7 @@ static void D_DoomMainSetup(void) {
     int i;
 
     for (i = 0; i < MAXLOADFILES; i++) {
-      const char *fname = wad_files[i];
+      const char *fname = wad_file_names[i];
       char *fpath;
 
       if (!(fname && *fname))
@@ -2267,7 +2306,7 @@ static void D_DoomMainSetup(void) {
   // now do autoloaded dehacked patches, after IWAD patches but before PWAD
   if ((!CLIENT) && !M_CheckParm("-noload")) {
     for (int i = 0; i < MAXLOADFILES; i++) {
-      const char *fname = deh_files[i];
+      const char *fname = deh_file_names[i];
       char *fpath;
 
       if (!(fname && *fname))

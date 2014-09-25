@@ -77,8 +77,8 @@ typedef struct {
   int handle;
 } wadfile_info_t;
 
-extern cbuf_t resource_files_buf;
-extern cbuf_t deh_files_buf;
+extern GPtrArray *resource_files;
+extern GPtrArray *deh_files;
 
 void W_Init(void); // CPhipps - uses the above array
 void W_ReleaseAllWads(void); // Proff - Added for iwad switching

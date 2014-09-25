@@ -1525,8 +1525,15 @@ void ProcessDehFile(const char *filename, const char *outfilename, int lumpnum)
     }
   else  // DEH file comes from lump indicated by third argument
     {
-      wadfile_info_t *wf = M_CBufGet(
-        &resource_files_buf, lumpinfo[lumpnum].wadfile
+      if (lumpinfo[lumpnum].wadfile < 0 ||
+          lumpinfo[lumpnum].wadfile >= resource_files->len) {
+        I_Error("ProcessDehFile: Out of range wadfile index in lump %d (%d)\n",
+          lumpnum, lumpinfo[lumpnum].wadfile
+        );
+      }
+
+      wadfile_info_t *wf = g_ptr_array_index(
+        resource_files, lumpinfo[lumpnum].wadfile
       );
 
       if (wf == NULL) {

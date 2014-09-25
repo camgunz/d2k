@@ -193,8 +193,8 @@ static void handle_setup(netpeer_t *np) {
   N_ClearStates();
 
   if (!N_UnpackSetup(np, &net_sync, &player_count, &playernum)) {
-    M_CBufFree(&resource_files_buf);
-    M_CBufFree(&deh_files_buf);
+    D_ClearResourceFiles();
+    D_ClearDEHFiles();
     N_ClearStates();
     N_Disconnect();
     return;

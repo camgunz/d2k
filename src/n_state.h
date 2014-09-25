@@ -25,8 +25,8 @@
 #define N_STATE_H__
 
 typedef struct game_state_s {
-  int   tic;
-  pbuf_t data;
+  int     tic;
+  pbuf_t *data;
 } game_state_t;
 
 typedef struct game_state_delta_s {
@@ -37,14 +37,14 @@ typedef struct game_state_delta_s {
 
 void          N_InitStates(void);
 void          N_SaveState(void);
-dboolean      N_LoadState(int tic, dboolean call_init_new);
+bool          N_LoadState(int tic, bool call_init_new);
 void          N_RemoveOldStates(int tic);
 void          N_ClearStates(void);
-game_state_t* N_GetNewState(void);
+game_state_t* N_ReadNewStateFromPackedBuffer(int tic, pbuf_t *pbuf);
 game_state_t* N_GetLatestState(void);
 void          N_SetLatestState(game_state_t *state);
-dboolean      N_LoadLatestState(dboolean call_init_new);
-dboolean      N_ApplyStateDelta(game_state_delta_t *delta);
+bool          N_LoadLatestState(bool call_init_new);
+bool          N_ApplyStateDelta(game_state_delta_t *delta);
 void          N_BuildStateDelta(int tic, game_state_delta_t *delta);
 
 #endif

@@ -218,9 +218,9 @@
     return false;                                                             \
   }
 
-#define read_packed_bytes(pbuf, var, name)                                    \
-  M_PBufClear(&var);                                                          \
-  if (!M_PBufReadBytes(pbuf, M_PBufGetBuffer(&var))) {                        \
+#define read_packed_game_state(pbuf, var, tic, name)                          \
+  var = N_ReadNewStateFromPackedBuffer(tic, pbuf);                            \
+  if (var == NULL) {                                                          \
     P_Printf(consoleplayer,                                                   \
       "%s: Error reading %s: %s.\n",                                          \
       __func__, name, M_PBufGetError(pbuf)                                    \
@@ -294,6 +294,10 @@
   M_PBufWriteMap(pbuf, 1);                                                    \
   M_PBufWriteString(pbuf, pn, pnsz)
 
+static void free_string(gpointer data) {
+  free(data);
+}
+
 static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   netticcmd_t *n = NULL;
   byte command_count = 0;
@@ -358,7 +362,7 @@ void N_PackSetup(netpeer_t *np) {
   unsigned short player_count = 0;
   pbuf_t *pbuf = NULL;
   size_t resource_count = 0;
-  size_t deh_count = M_CBufGetObjectCount(&deh_files_buf);
+  size_t deh_count = deh_files->len;
   const char *iwad = D_GetIWAD();
 
   for (int i = 0; i < MAXPLAYERS; i++) {
@@ -374,8 +378,8 @@ void N_PackSetup(netpeer_t *np) {
   M_PBufWriteShort(pbuf, np->playernum);
   M_PBufWriteString(pbuf, iwad, strlen(iwad));
 
-  CBUF_FOR_EACH(&resource_files_buf, entry) {
-    wadfile_info_t *wf = (wadfile_info_t *)entry.obj;
+  for (unsigned int i = 0; i < resource_files->len; i++) {
+    wadfile_info_t *wf = g_ptr_array_index(resource_files, i);
 
     if (wf->src != source_iwad && wf->src != source_auto_load)
       resource_count++;
@@ -385,8 +389,8 @@ void N_PackSetup(netpeer_t *np) {
   if (resource_count > 0) {
     M_PBufWriteArray(pbuf, resource_count);
 
-    CBUF_FOR_EACH(&resource_files_buf, entry) {
-      wadfile_info_t *wf = (wadfile_info_t *)entry.obj;
+    for (unsigned int i = 0; i < resource_files->len; i++) {
+      wadfile_info_t *wf = g_ptr_array_index(resource_files, i);
       char *wad_name;
 
       if (wf->src == source_iwad || wf->src == source_auto_load)
@@ -405,10 +409,10 @@ void N_PackSetup(netpeer_t *np) {
 
   M_PBufWriteBool(pbuf, deh_count > 0);
   if (deh_count > 0) {
-    M_PBufWriteArray(pbuf, M_CBufGetObjectCount(&deh_files_buf));
+    M_PBufWriteArray(pbuf, deh_files->len);
 
-    CBUF_FOR_EACH(&deh_files_buf, entry) {
-      deh_file_t *df = (deh_file_t *)entry.obj;
+    for (unsigned int i = 0; i < deh_files->len; i++) {
+      deh_file_t *df = g_ptr_array_index(deh_files, i);
       char *deh_name = M_Basename(df->filename);
 
       if (!deh_name)
@@ -420,28 +424,8 @@ void N_PackSetup(netpeer_t *np) {
   }
 
   M_PBufWriteInt(pbuf, gs->tic);
-  M_PBufWriteBytes(pbuf, M_PBufGetData(&gs->data), M_PBufGetSize(&gs->data));
+  M_PBufWriteBytes(pbuf, M_PBufGetData(gs->data), M_PBufGetSize(gs->data));
   np->sync.tic = gs->tic;
-
-  /*
-  D_Log(LOG_SYNC, "Resources:");
-  OBUF_FOR_EACH(&resource_files_buf, entry) {
-    D_Log(LOG_SYNC, "  %s\n", (char *)entry.obj);
-  }
-
-  D_Log(LOG_SYNC, "DeH/BEX files:");
-  OBUF_FOR_EACH(&deh_files_buf, entry) {
-    D_Log(LOG_SYNC, "  %s\n", (char *)entry.obj);
-  }
-
-  D_Log(LOG_SYNC, "N_PackSetup: Game State: %d %d %d %d %d %d %zu\n",
-    netsync, player_count, np->playernum,
-    M_OBufGetObjectCount(&resource_files_buf),
-    M_OBufGetObjectCount(&deh_files_buf),
-    gs->tic,
-    gs->data.size
-  );
-  */
 
   D_Log(LOG_SYNC, "N_PackSetup: Sent game state at %d (player count: %d).\n",
     gs->tic, player_count
@@ -455,12 +439,13 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   int m_sync_type = 0;
   unsigned short m_player_count = 0;
   short m_playernum = 0;
-  game_state_t *gs = NULL;
+  int m_state_tic;
+  game_state_t *gs;
   dboolean has_resources;
   dboolean has_deh_files;
   buf_t iwad_buf;
-  obuf_t resource_files;
-  obuf_t deh_files;
+  GPtrArray *rf_list;
+  GPtrArray *df_list;
 
   read_ranged_int(
     pbuf, m_sync_type, "netsync", NET_SYNC_TYPE_COMMAND, NET_SYNC_TYPE_DELTA
@@ -494,46 +479,43 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
 
   read_bool(pbuf, has_resources, "has resources");
   if (has_resources) {
-    M_OBufInit(&resource_files);
+    rf_list = g_ptr_array_new_with_free_func(free_string);
     read_string_array(
       pbuf,
-      &resource_files,
+      rf_list,
       "resource names",
       MAX_RESOURCE_NAMES,
       MAX_RESOURCE_NAME_LENGTH
     );
-    D_Log(LOG_SYNC,
-      "Loaded %d resource files\n", M_OBufGetObjectCount(&resource_files)
-    );
-    OBUF_FOR_EACH(&resource_files, entry) {
-      int resource_index = entry.index;
-      char *resource_name = (char *)entry.obj;
+    D_Log(LOG_SYNC, "Loaded %d resource files\n", rf_list->len);
+    for (unsigned int i = 0; i < rf_list->len; i++) {
+      char *resource_name = g_ptr_array_index(rf_list, i);
 
       D_AddFile(resource_name, source_net);
-      D_Log(LOG_SYNC, " %d: %s\n", resource_index, resource_name);
+      D_Log(LOG_SYNC, " %d: %s\n", i, resource_name);
     }
+    g_ptr_array_free(rf_list, true);
   }
+
 
   read_bool(pbuf, has_deh_files, "has DeH/BEX file");
   if (has_deh_files) {
-    M_OBufInit(&deh_files);
+    df_list = g_ptr_array_new_with_free_func(free_string);
     read_string_array(
       pbuf,
-      &deh_files,
+      df_list,
       "DeH/BEX names",
       MAX_RESOURCE_NAMES,
       MAX_RESOURCE_NAME_LENGTH
     );
-    D_Log(LOG_SYNC,
-      "Loaded %d DeH/BEX files", M_OBufGetObjectCount(&deh_files)
-    );
-    OBUF_FOR_EACH(&deh_files, entry) {
-      int deh_index = entry.index;
-      char *deh_name = (char *)entry.obj;
+    D_Log(LOG_SYNC, "Loaded %d DeH/BEX files", df_list->len);
+    for (unsigned int i = 0; i < df_list->len; i++) {
+      char *deh_name = g_ptr_array_index(df_list, i);
 
       D_AddDEH(deh_name, 0);
-      D_Log(LOG_SYNC, "DeH/BEX %d: %s\n", deh_index, deh_name);
+      D_Log(LOG_SYNC, "DeH/BEX %d: %s\n", i, deh_name);
     }
+    g_ptr_array_free(df_list, true);
   }
 
   //jff 9/3/98 use logical output routine
@@ -542,19 +524,17 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   // killough 3/6/98: add a newline, by popular demand :)
   lprintf(LO_INFO, "\n");
 
-  gs = N_GetNewState();
-
-  read_int(pbuf, gs->tic, "game state tic");
-  D_Log(LOG_SYNC, "Game State TIC: %d\n", gs->tic);
+  read_int(pbuf, m_state_tic, "game state tic");
+  D_Log(LOG_SYNC, "Game State TIC: %d\n", m_state_tic);
 
   D_Log(LOG_SYNC, "N_UnpackSetup: Game State: %d %d %d %d %d %d\n",
     m_sync_type, m_player_count, m_playernum,
-    M_CBufGetObjectCount(&resource_files_buf),
-    M_CBufGetObjectCount(&deh_files_buf),
-    gs->tic
+    resource_files->len,
+    deh_files->len,
+    m_state_tic
   );
 
-  read_packed_bytes(pbuf, gs->data, "game state data");
+  read_packed_game_state(pbuf, gs, m_state_tic, "game state data");
 
   switch (m_sync_type) {
     case NET_SYNC_TYPE_COMMAND:

@@ -314,8 +314,8 @@ void G_DoLoadGame(void) {
   seconds = leveltime / TICRATE;
   total_seconds = (totalleveltimes + leveltime) / TICRATE;
 
-  wadfile_info_t *wf = M_CBufGet(
-    &resource_files_buf, 
+  wadfile_info_t *wf = g_ptr_array_index(
+    resource_files,
     W_GetLumpInfoByNum(W_GetNumForName(maplump))->wadfile
   );
 
@@ -419,8 +419,8 @@ void G_DoSaveGame(dboolean menu) {
   seconds = leveltime / TICRATE;
   total_seconds = (totalleveltimes + leveltime) / TICRATE;
 
-  wadfile_info_t *wf = M_CBufGet(
-    &resource_files_buf, 
+  wadfile_info_t *wf = g_ptr_array_index(
+    resource_files,
     W_GetLumpInfoByNum(W_GetNumForName(maplump))->wadfile
   );
 

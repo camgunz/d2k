@@ -518,6 +518,7 @@ void P_SetName(int playernum, char *name) {
 
 void P_AddMessage(int playernum, player_message_t *message) {
   g_ptr_array_add(players[playernum].messages, message);
+  printf("%s", message->content);
 }
 
 void P_Printf(int playernum, const char *fmt, ...) {

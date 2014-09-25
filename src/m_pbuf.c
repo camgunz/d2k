@@ -58,6 +58,28 @@ void M_PBufInitWithCapacity(pbuf_t *pbuf, size_t capacity) {
   cmp_init(&pbuf->cmp, &pbuf->buf, &buf_read, &buf_write);
 }
 
+pbuf_t* M_PBufNew(void) {
+  pbuf_t *pbuf = malloc(sizeof(pbuf_t));
+
+  if (pbuf == NULL)
+    I_Error("M_PBufNew: Error allocating new pbuf");
+
+  M_PBufInit(pbuf);
+
+  return pbuf;
+}
+
+pbuf_t* M_PBufNewWithCapacity(size_t capacity) {
+  pbuf_t *pbuf = malloc(sizeof(pbuf_t));
+
+  if (pbuf == NULL)
+    I_Error("M_PBufNewWithCapacity: Error allocating new pbuf");
+
+  M_PBufInitWithCapacity(pbuf, capacity);
+
+  return pbuf;
+}
+
 size_t M_PBufGetCapacity(pbuf_t *pbuf) {
   return M_BufferGetCapacity(&pbuf->buf);
 }
@@ -335,12 +357,12 @@ dboolean M_PBufWriteString(pbuf_t *pbuf, const char *data, size_t length) {
   return cmp_write_str(&pbuf->cmp, data, length);
 }
 
-dboolean M_PBufWriteStringArray(pbuf_t *pbuf, obuf_t *obuf) {
-  if (!M_PBufWriteArray(pbuf, M_OBufGetObjectCount(obuf)))
+dboolean M_PBufWriteStringArray(pbuf_t *pbuf, GPtrArray *strings) {
+  if (!M_PBufWriteArray(pbuf, strings->len))
     return false;
 
-  OBUF_FOR_EACH(obuf, entry) {
-    char *s = (char *)entry.obj;
+  for (unsigned int i = 0; i < strings->len; i++) {
+    char *s = g_ptr_array_index(strings, i);
     size_t length = strlen(s);
 
     if (!M_PBufWriteString(pbuf, s, length))
@@ -715,7 +737,7 @@ dboolean M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit) {
   return true;
 }
 
-dboolean M_PBufReadStringArray(pbuf_t *pbuf, obuf_t *obuf,
+dboolean M_PBufReadStringArray(pbuf_t *pbuf, GPtrArray *strings,
                                              size_t string_count_limit,
                                              size_t string_size_limit) {
   uint32_t string_count = 0;
@@ -728,10 +750,13 @@ dboolean M_PBufReadStringArray(pbuf_t *pbuf, obuf_t *obuf,
     return false;
   }
 
-  M_OBufClear(obuf);
-  M_OBufEnsureCapacity(obuf, string_count);
+  for (unsigned int i = strings->len; i > 0; i--)
+    g_ptr_array_remove_index_fast(strings, i - 1);
 
-  for (int i = 0; i < string_count; i++) {
+  if (strings->len < string_count)
+    g_ptr_array_set_size(strings, string_count);
+
+  for (unsigned int i = 0; i < string_count; i++) {
     cmp_object_t obj;
     char *s = NULL;
 
@@ -756,7 +781,7 @@ dboolean M_PBufReadStringArray(pbuf_t *pbuf, obuf_t *obuf,
       return false;
     }
 
-    M_OBufAppend(obuf, s);
+    g_ptr_array_add(strings, s);
   }
 
   return true;

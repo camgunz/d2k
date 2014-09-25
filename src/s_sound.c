@@ -142,8 +142,8 @@ static int adjust_sound_params(mobj_t *listener, mobj_t *source,
   // calculate the distance to sound origin
   //  and clip it if necessary
   if (walkcamera.type > 1) {
-    adx = D_abs(walkcamera.x - source->x);
-    ady = D_abs(walkcamera.y - source->y);
+    adx = walkcamera.x - source->x;
+    ady = walkcamera.y - source->y;
   }
   else {
     adx = D_abs(listener->x - source->x);

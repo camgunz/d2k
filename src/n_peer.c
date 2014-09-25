@@ -199,8 +199,16 @@ static void free_peer(netpeer_t *np) {
   free(np);
 }
 
+static void peer_destroy_func(gpointer data) {
+  netpeer_t *np = data;
+
+  printf("Freeing peer %u\n", np->peernum);
+
+  free_peer(data);
+}
+
 void N_InitPeers(void) {
-  net_peers = g_hash_table_new(NULL, NULL);
+  net_peers = g_hash_table_new_full(NULL, NULL, NULL, peer_destroy_func);
 }
 
 unsigned int N_PeerAdd(void) {
@@ -221,6 +229,8 @@ unsigned int N_PeerAdd(void) {
   np->disconnect_time = 0;
 
   g_hash_table_insert(net_peers, GUINT_TO_POINTER(np->peernum), np);
+
+  printf("N_PeerAdd: Added peer %u\n", np->peernum);
 
   return np->peernum;
 }
@@ -253,12 +263,10 @@ void N_PeerSetDisconnected(int peernum) {
 
 void N_PeerRemove(netpeer_t *np) {
   g_hash_table_remove(net_peers, GUINT_TO_POINTER(np->peernum));
-  free_peer(np);
 }
 
 void N_PeerIterRemove(netpeer_iter_t *it, netpeer_t *np) {
   g_hash_table_iter_remove(it);
-  free_peer(np);
 }
 
 unsigned int N_PeerGetCount(void) {

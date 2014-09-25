@@ -29,8 +29,10 @@ typedef struct pbuf_s {
   cmp_ctx_t cmp;
 } pbuf_t;
 
-void M_PBufInit(pbuf_t *pbuf);
-void M_PBufInitWithCapacity(pbuf_t *pbuf, size_t capacity);
+void    M_PBufInit(pbuf_t *pbuf);
+void    M_PBufInitWithCapacity(pbuf_t *pbuf, size_t capacity);
+pbuf_t* M_PBufNew(void);
+pbuf_t* M_PBufNewWithCapacity(size_t capacity);
 
 size_t M_PBufGetCapacity(pbuf_t *pbuf);
 size_t M_PBufGetSize(pbuf_t *pbuf);
@@ -75,7 +77,7 @@ dboolean M_PBufWriteArray(pbuf_t *pbuf, unsigned int array_size);
 dboolean M_PBufWriteMap(pbuf_t *pbuf, unsigned int map_size);
 dboolean M_PBufWriteBytes(pbuf_t *pbuf, const void *data, size_t size);
 dboolean M_PBufWriteString(pbuf_t *pbuf, const char *data, size_t length);
-dboolean M_PBufWriteStringArray(pbuf_t *pbuf, obuf_t *obuf);
+dboolean M_PBufWriteStringArray(pbuf_t *pbuf, GPtrArray *strings);
 
 dboolean M_PBufReadChar(pbuf_t *pbuf, char *c);
 dboolean M_PBufReadCharArray(pbuf_t *pbuf, buf_t *chars, size_t limit);
@@ -104,7 +106,7 @@ dboolean M_PBufReadArray(pbuf_t *pbuf, unsigned int *array_size);
 dboolean M_PBufReadMap(pbuf_t *pbuf, unsigned int *map_size);
 dboolean M_PBufReadBytes(pbuf_t *pbuf, buf_t *buf);
 dboolean M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit);
-dboolean M_PBufReadStringArray(pbuf_t *pbuf, obuf_t *obuf,
+dboolean M_PBufReadStringArray(pbuf_t *pbuf, GPtrArray *strings,
                                              size_t string_count_limit,
                                              size_t string_size_limit);
 dboolean M_PBufAtEOF(pbuf_t *pbuf);
