@@ -25,10 +25,10 @@
 #define N_PEER_H__
 
 typedef struct netchan_s {
-  cbuf_t toc;
-  pbuf_t messages;
-  pbuf_t packet_data;
-  pbuf_t packed_toc;
+  GArray *toc;
+  pbuf_t  messages;
+  pbuf_t  packet_data;
+  pbuf_t  packed_toc;
 } netchan_t;
 
 typedef struct netcom_s {
@@ -38,8 +38,8 @@ typedef struct netcom_s {
 } netcom_t;
 
 typedef struct netsync_s {
-  dboolean           initialized;
-  dboolean           outdated;
+  bool               initialized;
+  bool               outdated;
   int                tic;
   int                cmd;
   game_state_delta_t delta;
@@ -78,13 +78,13 @@ unsigned int N_PeerForPeer(ENetPeer *peer);
 netpeer_t*   N_PeerForPlayer(short playernum);
 unsigned int N_PeerGetNumForPlayer(short playernum);
 bool         N_PeerIter(netpeer_iter_t **it, netpeer_t **np);
-dboolean     N_PeerCheckTimeout(int peernum);
+bool         N_PeerCheckTimeout(int peernum);
 void         N_PeerFlushBuffers(int peernum);
 pbuf_t*      N_PeerBeginMessage(int peernum, net_channel_e chan_type,
                                             unsigned char type);
 ENetPacket*  N_PeerGetPacket(int peernum, net_channel_e chan_type);
-dboolean     N_PeerLoadIncoming(int peernum, unsigned char *data, size_t size);
-dboolean     N_PeerLoadNextMessage(int peernum, unsigned char *message_type);
+bool         N_PeerLoadIncoming(int peernum, unsigned char *data, size_t size);
+bool         N_PeerLoadNextMessage(int peernum, unsigned char *message_type);
 void         N_PeerClearReliable(int peernum);
 void         N_PeerClearUnreliable(int peernum);
 void         N_PeerResetSync(int peernum);

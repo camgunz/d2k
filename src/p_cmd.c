@@ -413,21 +413,21 @@ bool P_LoadCommandForTic(player_t *player, int tic) {
   unsigned int i;
   unsigned int command_count = P_GetPlayerCommandCount(player);
 
-  for (i = 0; i < command_count; i++) {
-    netticcmd_t *ncmd = &g_array_index(player->commands, netticcmd_t, i);
+  for (i = 1; i <= command_count; i++) {
+    netticcmd_t *ncmd = &g_array_index(player->commands, netticcmd_t, i - 1);
 
     if (ncmd->tic >= gametic)
       break;
   }
 
-  if (i == command_count)
+  if (i == command_count + 1)
     return false;
 
   g_array_remove_range(player->commands, 0, i);
 
   command_count = P_GetPlayerCommandCount(player);
 
-  for (unsigned int i = 0; i < command_count; i++) {
+  for (i = 0; i < command_count; i++) {
     netticcmd_t *ncmd = &g_array_index(player->commands, netticcmd_t, i);
 
     if (ncmd->tic == gametic) {
@@ -465,14 +465,15 @@ void P_RemoveOldCommands(player_t *player, int tic) {
   if (command_count == 0)
     return;
 
-  for (i = 0; i < command_count; i++) {
-    netticcmd_t *ncmd = &g_array_index(player->commands, netticcmd_t, i);
+  for (i = 1; i <= command_count; i++) {
+    netticcmd_t *ncmd = &g_array_index(player->commands, netticcmd_t, i - 1);
 
     if (ncmd->tic >= tic)
       break;
   }
 
-  g_array_remove_range(player->commands, 0, i + 1);
+  if (i != 0)
+    g_array_remove_range(player->commands, 0, i);
 }
 
 GArray* P_GetLocalCommands(void) {

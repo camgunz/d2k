@@ -425,7 +425,6 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
   }
 
   while (N_PeerLoadNextMessage(peernum, &message_type)) {
-
     if (message_type >= 1 &&
         message_type != nm_sync &&
         message_type <= sizeof(nm_names)) {
