@@ -70,6 +70,13 @@ enum {
   tc_endspecials
 } specials_e;
 
+static void serialize_corpse(gpointer data, gpointer user_data) {
+  mobj_t *corpse = (mobj_t *)data;
+  pbuf_t *savebuffer = (pbuf_t *)user_data;
+
+  M_PBufWriteUInt(savebuffer, corpse->id);
+}
+
 static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   unsigned int command_count = P_GetPlayerCommandCount(player);
 
@@ -809,14 +816,9 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
   }
 
   if (corpse_queue) {
-    M_OBufConsolidate(corpse_queue);
     M_PBufWriteInt(savebuffer, corpse_queue_size);
-    M_PBufWriteInt(savebuffer, M_OBufGetObjectCount(corpse_queue));
-    OBUF_FOR_EACH(corpse_queue, entry) {
-      mobj_t *mo = (mobj_t *)entry.obj;
-
-      M_PBufWriteUInt(savebuffer, mo->id);
-    }
+    M_PBufWriteUInt(savebuffer, g_queue_get_length(corpse_queue));
+    g_queue_foreach(corpse_queue, serialize_corpse, savebuffer);
   }
   else {
     M_PBufWriteInt(savebuffer, 0);
@@ -936,9 +938,9 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
   }
 
   if (corpse_queue_size > 0) {
-    int corpse_count;
+    unsigned int corpse_count;
 
-    M_PBufReadInt(savebuffer, &corpse_count);
+    M_PBufReadUInt(savebuffer, &corpse_count);
 
     if (corpse_count > corpse_queue_size) {
       I_Error("P_UnArchiveThinkers: corpse count > %d (%d)",
@@ -957,7 +959,7 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
       if (mo == NULL)
         I_Error("P_UnArchiveThinkers: Invalid corpse ID %d", corpse_id);
 
-      M_OBufAppend(corpse_queue, mo);
+      g_queue_push_tail(corpse_queue, mo);
     }
   }
   else {

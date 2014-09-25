@@ -131,7 +131,7 @@ extern dboolean graphics_initialized;
 extern int  defaultskill;      //jff 3/24/98 default skill
 extern dboolean haswolflevels;  //jff 4/18/98 wolf levels present
 
-extern obuf_t *corpse_queue;
+extern GQueue *corpse_queue;
 extern int corpse_queue_size;       // killough 2/8/98: adustable corpse limit
 
 // killough 5/2/98: moved from d_deh.c:

@@ -2,6 +2,8 @@
 
 ## Prototype
 
+1. Commands are not processed in singleplayer
+
 1. Fix missed sounds
   * This looks like a consequence of loading only the most recent state delta.
     I added this behavior in order to resolve "lag spiral of death" problems

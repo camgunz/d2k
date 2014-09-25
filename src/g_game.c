@@ -210,13 +210,13 @@ int defaultskill;               //note 1-based
 
 // killough 2/8/98: make corpse queue variable in size
 /*
- * CG 08/14/2014: Use an obuf_t for this instead
+ * CG 09/25/2014: Use a GQueue for this instead
  *
  * int    bodyqueslot, bodyquesize;        // killough 2/8/98
  * mobj_t **bodyque = 0;                   // phares 8/10/98
  */
 int corpse_queue_size; // killough 2/8/98
-obuf_t *corpse_queue = NULL;
+GQueue *corpse_queue = NULL;
 
 //e6y: save/restore all data which could be changed by G_ReadDemoHeader
 static void G_SaveRestoreGameOptions(int save);
@@ -1448,24 +1448,22 @@ void G_PlayerReborn(int player) {
     p->maxammo[i] = maxammo[i];
 }
 
-//
-// G_ClearCorpses
-//
-// Clears queued player corpses, if that option is enabled
-//
-// CG: TODO: Put in p_something, this doesn't belong in g_.  I'm thinking
-//           p_user.  Same with stuff like G_DoReborn, G_DeathMatchSpawnPlayer,
-//           etc.
-//
 void G_ClearCorpses(void) {
-  if (corpse_queue_size == 0)
-    return;
-
+  /*
+   * CG: This is only called when loading a new state or map, therefore the
+   *     queued corpses don't leak.  This is why the call to P_RemoveMobj or
+   *     free is omitted.
+   */
   if (corpse_queue_size < 0)
-    I_Error("G_ClearCorpses: corpse_queue_size < 0 (%d)", corpse_queue_size);
+    I_Error("clear_corpses: corpse_queue_size < 0 (%d)", corpse_queue_size);
 
-  if (corpse_queue == NULL)
-    corpse_queue = M_OBufNewWithCapacity(corpse_queue_size);
+  if (corpse_queue) {
+    g_queue_free(corpse_queue);
+    corpse_queue = NULL;
+  }
+
+  if (corpse_queue_size > 0)
+    corpse_queue = g_queue_new();
 }
 
 //
@@ -1518,25 +1516,20 @@ static dboolean G_CheckSpot(int playernum, mapthing_t *mthing) {
   // flush an old corpse if needed
   // killough 2/8/98: make corpse queue have an adjustable limit
   // killough 8/1/98: Fix bugs causing strange crashes
+  if (corpse_queue_size < 0)
+    I_Error("G_CheckSpot: corpse_queue_size < 0 (%d)", corpse_queue_size);
 
-  if (corpse_queue_size > 0) {
-    if (corpse_queue == NULL)
-      corpse_queue = M_OBufNewWithCapacity(corpse_queue_size);
-
-    if (M_OBufGetObjectCount(corpse_queue) == corpse_queue_size) {
-      P_RemoveMobj(M_OBufGet(corpse_queue, 0));
-      M_OBufRemove(corpse_queue, 0);
-    }
-
-    M_OBufConsolidate(corpse_queue);
-
-    M_OBufAppend(corpse_queue, players[playernum].mo);
-  }
-  else if (!corpse_queue_size) {
+  if (corpse_queue_size == 0) {
     P_RemoveMobj(players[playernum].mo);
   }
-  else if (corpse_queue_size < 0) {
-    I_Error("G_CheckSpot: corpse_queue_size < 0 (%d)", corpse_queue_size);
+  else {
+    if (corpse_queue == NULL)
+      corpse_queue = g_queue_new();
+
+    if (g_queue_get_length(corpse_queue) == corpse_queue_size)
+      P_RemoveMobj(g_queue_pop_head(corpse_queue));
+
+    g_queue_push_tail(corpse_queue, players[playernum].mo);
   }
 
   // spawn a teleport fog
