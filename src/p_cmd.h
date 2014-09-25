@@ -21,47 +21,31 @@
 /*****************************************************************************/
 
 
-#ifndef M_CBUF_H__
-#define M_CBUF_H__
+#ifndef P_CMD_H__
+#define P_CMD_H__
 
-#define CBUF_FOR_EACH(cb, cin) for (                                         \
-  cbufiternode_t (cin) = {-1, NULL}; M_CBufIter((cb), &cin.index, &cin.obj); \
-)
-
-typedef struct cobjbuf_s {
-  int capacity;
-  int size;
-  size_t obj_size;
-  bool *used;
-  void **nodes;
-} cbuf_t;
-
-typedef struct cbufiternode_s {
-  int index;
-  void *obj;
-} cbufiternode_t;
-
-cbuf_t*  M_CBufNew(size_t obj_sz);
-cbuf_t*  M_CBufNewWithCapacity(size_t obj_sz, int capacity);
-void     M_CBufInit(cbuf_t *cbuf, size_t obj_sz);
-void     M_CBufInitWithCapacity(cbuf_t *cbuf, size_t obj_sz, int capacity);
-dboolean M_CBufIsValidIndex(cbuf_t *cbuf, int index);
-int      M_CBufGetObjectCount(cbuf_t *cbuf);
-void     M_CBufEnsureCapacity(cbuf_t *cbuf, int capacity);
-int      M_CBufAppend(cbuf_t *cbuf, void *obj);
-int      M_CBufAppendNew(cbuf_t *cbuf, void *obj);
-int      M_CBufInsert(cbuf_t *cbuf, int index, void *obj);
-int      M_CBufInsertAtFirstFreeSlot(cbuf_t *cbuf, void *obj);
-dboolean M_CBufIter(cbuf_t *cbuf, int *index, void **obj);
-void*    M_CBufGet(cbuf_t *cbuf, int index);
-dboolean M_CBufPop(cbuf_t *cbuf, void *obj);
-void*    M_CBufGetFirstFreeSlot(cbuf_t *cbuf);
-void*    M_CBufGetNewSlot(cbuf_t *cbuf);
-void*    M_CBufGetFirstFreeOrNewSlot(cbuf_t *cbuf);
-void     M_CBufRemove(cbuf_t *cbuf, int index);
-void     M_CBufConsolidate(cbuf_t *cbuf);
-void     M_CBufClear(cbuf_t *cbuf);
-void     M_CBufFree(cbuf_t *cbuf);
+void         P_InitLocalCommands(void);
+void         P_InitPlayerCommands(player_t *player);
+unsigned int P_GetLocalCommandCount(void);
+unsigned int P_GetPlayerCommandCount(player_t *player);
+void         P_UpdateConsoleplayerCommands(void);
+void         P_ClearPlayerCommands(player_t *player);
+void         P_ClearLocalCommands(void);
+void         P_RemoveSyncedCommands(void);
+void         P_PrintPlayerCommands(GArray *commands);
+void         P_BuildCommand(void);
+void         P_RunAllPlayerCommands(player_t *player);
+void         P_RunBufferedCommands(player_t *player);
+void         P_RunNextCommand(player_t *player);
+void         P_PredictPlayerPosition(player_t *player);
+void         P_RunPlayerCommand(player_t *player);
+void         P_RunPlayerCommands(player_t *player);
+bool         P_LoadCommandForTic(player_t *player, int tic);
+bool         P_LoadLocalCommandForTic(int tic);
+void         P_RemoveOldCommands(player_t *player, int tic);
+GArray*      P_GetLocalCommands(void);
+netticcmd_t *P_GetNewBlankCommand(player_t *player);
+void         P_EnsurePlayerCommandsSize(player_t *player, unsigned int min_sz);
 
 #endif
 

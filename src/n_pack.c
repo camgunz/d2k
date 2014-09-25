@@ -34,15 +34,15 @@
 #include "i_system.h"
 #include "lprintf.h"
 #include "m_file.h"
-#include "p_pspr.h"
-#include "p_user.h"
-#include "w_wad.h"
-
 #include "n_net.h"
 #include "n_main.h"
 #include "n_state.h"
 #include "n_peer.h"
 #include "n_proto.h"
+#include "p_cmd.h"
+#include "p_pspr.h"
+#include "p_user.h"
+#include "w_wad.h"
 
 /* CG: FIXME: Most of these should be more than just defines tucked here */
 #define MAX_IWAD_NAME_LENGTH 20
@@ -218,9 +218,9 @@
     return false;                                                             \
   }
 
-#define read_packed_bytes(pbuf, var, name)                                    \
-  M_PBufClear(&var);                                                          \
-  if (!M_PBufReadBytes(pbuf, M_PBufGetBuffer(&var))) {                        \
+#define read_packed_game_state(pbuf, var, tic, name)                          \
+  var = N_ReadNewStateFromPackedBuffer(tic, pbuf);                            \
+  if (var == NULL) {                                                          \
     P_Printf(consoleplayer,                                                   \
       "%s: Error reading %s: %s.\n",                                          \
       __func__, name, M_PBufGetError(pbuf)                                    \
@@ -294,20 +294,32 @@
   M_PBufWriteMap(pbuf, 1);                                                    \
   M_PBufWriteString(pbuf, pn, pnsz)
 
+static void free_string(gpointer data) {
+  free(data);
+}
+
 static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   netticcmd_t *n = NULL;
   byte command_count = 0;
-  cbuf_t *commands = NULL;
+  GArray *commands = NULL;
+  unsigned int command_array_size;
 
   M_PBufWriteShort(pbuf, playernum);
 
-  if (DELTACLIENT && playernum == consoleplayer)
-    commands = N_GetLocalCommands();
-  else
-    commands = &players[playernum].commands;
+  if (DELTACLIENT && playernum == consoleplayer) {
+    commands = P_GetLocalCommands();
+    command_array_size = P_GetLocalCommandCount();
+  }
+  else {
+    commands = players[playernum].commands;
+    command_array_size = P_GetPlayerCommandCount(&players[playernum]);
+  }
 
-  CBUF_FOR_EACH(commands, entry) {
-    netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+  D_Log(LOG_SYNC, "%d, %d, %u: ", DELTACLIENT, playernum == consoleplayer, command_array_size);
+  P_PrintPlayerCommands(commands);
+
+  for (unsigned int i = 0; i < command_array_size; i++) {
+    netticcmd_t *ncmd = &g_array_index(commands, netticcmd_t, i);
 
     if (ncmd->index > np->sync.cmd)
       command_count++;
@@ -320,8 +332,8 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
     return;
   }
 
-  CBUF_FOR_EACH(commands, entry) {
-    netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
+  for (unsigned int i = 0; i < command_array_size; i++) {
+    netticcmd_t *ncmd = &g_array_index(commands, netticcmd_t, i);
 
     if (ncmd->index <= np->sync.cmd)
       continue;
@@ -342,7 +354,7 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
   }
 
   if (n != NULL)
-    D_Log(LOG_SYNC, "%d/%d]\n", n->index, n->tic);
+    D_Log(LOG_SYNC, "%d/%d] (%d)\n", n->index, n->tic, command_count);
 }
 
 void N_PackSetup(netpeer_t *np) {
@@ -350,7 +362,7 @@ void N_PackSetup(netpeer_t *np) {
   unsigned short player_count = 0;
   pbuf_t *pbuf = NULL;
   size_t resource_count = 0;
-  size_t deh_count = M_CBufGetObjectCount(&deh_files_buf);
+  size_t deh_count = deh_files->len;
   const char *iwad = D_GetIWAD();
 
   for (int i = 0; i < MAXPLAYERS; i++) {
@@ -366,8 +378,8 @@ void N_PackSetup(netpeer_t *np) {
   M_PBufWriteShort(pbuf, np->playernum);
   M_PBufWriteString(pbuf, iwad, strlen(iwad));
 
-  CBUF_FOR_EACH(&resource_files_buf, entry) {
-    wadfile_info_t *wf = (wadfile_info_t *)entry.obj;
+  for (unsigned int i = 0; i < resource_files->len; i++) {
+    wadfile_info_t *wf = g_ptr_array_index(resource_files, i);
 
     if (wf->src != source_iwad && wf->src != source_auto_load)
       resource_count++;
@@ -377,8 +389,8 @@ void N_PackSetup(netpeer_t *np) {
   if (resource_count > 0) {
     M_PBufWriteArray(pbuf, resource_count);
 
-    CBUF_FOR_EACH(&resource_files_buf, entry) {
-      wadfile_info_t *wf = (wadfile_info_t *)entry.obj;
+    for (unsigned int i = 0; i < resource_files->len; i++) {
+      wadfile_info_t *wf = g_ptr_array_index(resource_files, i);
       char *wad_name;
 
       if (wf->src == source_iwad || wf->src == source_auto_load)
@@ -397,10 +409,10 @@ void N_PackSetup(netpeer_t *np) {
 
   M_PBufWriteBool(pbuf, deh_count > 0);
   if (deh_count > 0) {
-    M_PBufWriteArray(pbuf, M_CBufGetObjectCount(&deh_files_buf));
+    M_PBufWriteArray(pbuf, deh_files->len);
 
-    CBUF_FOR_EACH(&deh_files_buf, entry) {
-      deh_file_t *df = (deh_file_t *)entry.obj;
+    for (unsigned int i = 0; i < deh_files->len; i++) {
+      deh_file_t *df = g_ptr_array_index(deh_files, i);
       char *deh_name = M_Basename(df->filename);
 
       if (!deh_name)
@@ -412,28 +424,8 @@ void N_PackSetup(netpeer_t *np) {
   }
 
   M_PBufWriteInt(pbuf, gs->tic);
-  M_PBufWriteBytes(pbuf, M_PBufGetData(&gs->data), M_PBufGetSize(&gs->data));
+  M_PBufWriteBytes(pbuf, M_PBufGetData(gs->data), M_PBufGetSize(gs->data));
   np->sync.tic = gs->tic;
-
-  /*
-  D_Log(LOG_SYNC, "Resources:");
-  OBUF_FOR_EACH(&resource_files_buf, entry) {
-    D_Log(LOG_SYNC, "  %s\n", (char *)entry.obj);
-  }
-
-  D_Log(LOG_SYNC, "DeH/BEX files:");
-  OBUF_FOR_EACH(&deh_files_buf, entry) {
-    D_Log(LOG_SYNC, "  %s\n", (char *)entry.obj);
-  }
-
-  D_Log(LOG_SYNC, "N_PackSetup: Game State: %d %d %d %d %d %d %zu\n",
-    netsync, player_count, np->playernum,
-    M_OBufGetObjectCount(&resource_files_buf),
-    M_OBufGetObjectCount(&deh_files_buf),
-    gs->tic,
-    gs->data.size
-  );
-  */
 
   D_Log(LOG_SYNC, "N_PackSetup: Sent game state at %d (player count: %d).\n",
     gs->tic, player_count
@@ -447,12 +439,13 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   int m_sync_type = 0;
   unsigned short m_player_count = 0;
   short m_playernum = 0;
-  game_state_t *gs = NULL;
+  int m_state_tic;
+  game_state_t *gs;
   dboolean has_resources;
   dboolean has_deh_files;
   buf_t iwad_buf;
-  obuf_t resource_files;
-  obuf_t deh_files;
+  GPtrArray *rf_list;
+  GPtrArray *df_list;
 
   read_ranged_int(
     pbuf, m_sync_type, "netsync", NET_SYNC_TYPE_COMMAND, NET_SYNC_TYPE_DELTA
@@ -486,46 +479,43 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
 
   read_bool(pbuf, has_resources, "has resources");
   if (has_resources) {
-    M_OBufInit(&resource_files);
+    rf_list = g_ptr_array_new_with_free_func(free_string);
     read_string_array(
       pbuf,
-      &resource_files,
+      rf_list,
       "resource names",
       MAX_RESOURCE_NAMES,
       MAX_RESOURCE_NAME_LENGTH
     );
-    D_Log(LOG_SYNC,
-      "Loaded %d resource files\n", M_OBufGetObjectCount(&resource_files)
-    );
-    OBUF_FOR_EACH(&resource_files, entry) {
-      int resource_index = entry.index;
-      char *resource_name = (char *)entry.obj;
+    D_Log(LOG_SYNC, "Loaded %d resource files\n", rf_list->len);
+    for (unsigned int i = 0; i < rf_list->len; i++) {
+      char *resource_name = g_ptr_array_index(rf_list, i);
 
       D_AddFile(resource_name, source_net);
-      D_Log(LOG_SYNC, " %d: %s\n", resource_index, resource_name);
+      D_Log(LOG_SYNC, " %d: %s\n", i, resource_name);
     }
+    g_ptr_array_free(rf_list, true);
   }
+
 
   read_bool(pbuf, has_deh_files, "has DeH/BEX file");
   if (has_deh_files) {
-    M_OBufInit(&deh_files);
+    df_list = g_ptr_array_new_with_free_func(free_string);
     read_string_array(
       pbuf,
-      &deh_files,
+      df_list,
       "DeH/BEX names",
       MAX_RESOURCE_NAMES,
       MAX_RESOURCE_NAME_LENGTH
     );
-    D_Log(LOG_SYNC,
-      "Loaded %d DeH/BEX files", M_OBufGetObjectCount(&deh_files)
-    );
-    OBUF_FOR_EACH(&deh_files, entry) {
-      int deh_index = entry.index;
-      char *deh_name = (char *)entry.obj;
+    D_Log(LOG_SYNC, "Loaded %d DeH/BEX files", df_list->len);
+    for (unsigned int i = 0; i < df_list->len; i++) {
+      char *deh_name = g_ptr_array_index(df_list, i);
 
       D_AddDEH(deh_name, 0);
-      D_Log(LOG_SYNC, "DeH/BEX %d: %s\n", deh_index, deh_name);
+      D_Log(LOG_SYNC, "DeH/BEX %d: %s\n", i, deh_name);
     }
+    g_ptr_array_free(df_list, true);
   }
 
   //jff 9/3/98 use logical output routine
@@ -534,19 +524,17 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   // killough 3/6/98: add a newline, by popular demand :)
   lprintf(LO_INFO, "\n");
 
-  gs = N_GetNewState();
-
-  read_int(pbuf, gs->tic, "game state tic");
-  D_Log(LOG_SYNC, "Game State TIC: %d\n", gs->tic);
+  read_int(pbuf, m_state_tic, "game state tic");
+  D_Log(LOG_SYNC, "Game State TIC: %d\n", m_state_tic);
 
   D_Log(LOG_SYNC, "N_UnpackSetup: Game State: %d %d %d %d %d %d\n",
     m_sync_type, m_player_count, m_playernum,
-    M_CBufGetObjectCount(&resource_files_buf),
-    M_CBufGetObjectCount(&deh_files_buf),
-    gs->tic
+    resource_files->len,
+    deh_files->len,
+    m_state_tic
   );
 
-  read_packed_bytes(pbuf, gs->data, "game state data");
+  read_packed_game_state(pbuf, gs, m_state_tic, "game state data");
 
   switch (m_sync_type) {
     case NET_SYNC_TYPE_COMMAND:
@@ -639,7 +627,6 @@ void N_PackSync(netpeer_t *np) {
   );
   unsigned short player_count = 0;
 
-
   D_Log(LOG_SYNC, "(%d) Sending sync: ST/CT: (%d/%d) ",
     gametic, np->sync.tic, np->sync.cmd
   );
@@ -687,9 +674,10 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
   read_ushort(pbuf, m_player_count, "player count");
 
   for (int i = 0; i < m_player_count; i++) {
+    netticcmd_t ncmd;
     short m_playernum = 0;
     byte command_count = 0;
-    cbuf_t *commands = NULL;
+    GArray *commands = NULL;
 
     read_player(pbuf, m_playernum);
 
@@ -708,20 +696,18 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
    * CG: TODO: Add a limit to the number of commands accepted here.  uchar
    *           limits this to 255 commands, but in reality that's > 7 seconds,
    *           which is still far too long.  Quake has an "sv_maxlag" setting
-   *           (or something), that may be preferable to a static limit... but
-   *           I think having an upper bound on that setting is still prudent.
+   *           (or something); that may be preferable to a static limit... but
+   *           I still think having an upper bound on that setting is prudent.
    */
     read_uchar(pbuf, command_count, "command count");
 
-    commands = &players[m_playernum].commands;
-
-    M_CBufEnsureCapacity(commands, command_count);
+    commands = players[m_playernum].commands;
 
     netticcmd_t *n = NULL;
 
     D_Log(LOG_SYNC, "Unpacking %d commands.\n", command_count);
 
-    while (command_count--) {
+    for (unsigned int i = 0; i < command_count; i++) {
       int command_index = -1;
       int tic = -1;
 
@@ -732,24 +718,25 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
         m_command_index = command_index - 1;
 
       if (command_index > m_command_index) {
-        netticcmd_t *ncmd = M_CBufGetFirstFreeOrNewSlot(commands);
 
         m_command_index = command_index;
 
-        ncmd->index = command_index;
-        ncmd->tic = tic;
+        ncmd.index = command_index;
+        ncmd.tic = tic;
 
         if (n == NULL)
-          D_Log(LOG_SYNC, " [%d/%d => ", ncmd->index, ncmd->tic);
+          D_Log(LOG_SYNC, " [%d/%d => ", ncmd.index, ncmd.tic);
 
-        n = ncmd;
+        n = &ncmd;
 
-        read_char(pbuf, ncmd->cmd.forwardmove, "command forward value");
-        read_char(pbuf, ncmd->cmd.sidemove, "command side value");
-        read_short(pbuf, ncmd->cmd.angleturn, "command angle value");
-        read_short(pbuf, ncmd->cmd.consistancy, "command consistancy value");
-        read_uchar(pbuf, ncmd->cmd.chatchar, "comand chatchar value");
-        read_uchar(pbuf, ncmd->cmd.buttons, "command buttons value");
+        read_char(pbuf, ncmd.cmd.forwardmove, "command forward value");
+        read_char(pbuf, ncmd.cmd.sidemove, "command side value");
+        read_short(pbuf, ncmd.cmd.angleturn, "command angle value");
+        read_short(pbuf, ncmd.cmd.consistancy, "command consistancy value");
+        read_uchar(pbuf, ncmd.cmd.chatchar, "comand chatchar value");
+        read_uchar(pbuf, ncmd.cmd.buttons, "command buttons value");
+
+        g_array_append_val(players[m_playernum].commands, ncmd);
       }
       else {
         ticcmd_t cmd;
@@ -770,7 +757,7 @@ dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
 
     if (n != NULL) {
       D_Log(LOG_SYNC, "Commands after sync: ");
-      N_PrintPlayerCommands(commands);
+      P_PrintPlayerCommands(commands);
     }
   }
 
@@ -853,7 +840,8 @@ dboolean N_UnpackDeltaSync(netpeer_t *np) {
   read_bytes(pbuf, np->sync.delta.data, "delta data");
 
   D_Log(LOG_SYNC,
-    "(%d) Received new sync: ST/CT: (%d/%d) Delta: [%d => %d (%d)] (%zu)\n",
+    "(%d) Received new sync: ST/CT: (%d/%d) Delta: [%d => %d (%d)] "
+    "(%zu bytes)\n",
     gametic,
     np->sync.tic,
     np->sync.cmd,

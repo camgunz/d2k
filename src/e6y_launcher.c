@@ -613,13 +613,13 @@ static dboolean L_PrepareToLaunch(void)
   size_t new_numwadfiles = 0;
   int *selection = NULL;
   int selectioncount = 0;
-  size_t wadfiles_count = M_CBufGetObjectCount(&resource_files_buf);
+  size_t wadfiles_count = resource_files->len;
 
   new_numwadfiles = wadfiles_count;
   new_wadfiles = malloc(sizeof(*wadfiles) * wadfiles_count);
   memcpy(new_wadfiles, wadfiles, sizeof(*wadfiles) * wadfiles_count);
-  M_CBufClear(&resource_files_buf);
-  
+  D_ClearResourceFiles();
+
   listPWADCount = (int)SendMessage(launcher.listPWAD, LB_GETCOUNT, 0, 0);
   
   index = (int)SendMessage(launcher.listIWAD, CB_GETCURSEL, 0, 0);
@@ -635,19 +635,22 @@ static dboolean L_PrepareToLaunch(void)
     }
   }
 
-  if (M_CBufGetObjectCount(&resource_files_buf) == 0)
+  if (resource_files->len == 0)
     return false;
 
   for (i = 0; (size_t)i < new_numwadfiles; i++) {
     if (new_wadfiles[i].src == source_auto_load ||
         new_wadfiles[i].src == source_pre) {
-      wadfile_info_t wadfile;
+      wadfile_info_t *wadfile = malloc(sizeof(wadfile_info_t));
 
-      wadfile.name = strdup(new_wadfiles[i].name);
-      wadfile.src = new_wadfiles[i].src;
-      wadfile.handle = new_wadfiles[i].handle;
+      if (wadfile == NULL)
+        I_Error("L_PrepareToLaunch: Allocating wadfile info failed");
 
-      M_CBufAppend(&resource_files_buf, &wadfile);
+      wadfile->name = strdup(new_wadfiles[i].name);
+      wadfile->src = new_wadfiles[i].src;
+      wadfile->handle = new_wadfiles[i].handle;
+
+      g_ptr_array_add(resource_files, wadfile);
     }
   }
 
@@ -1158,8 +1161,8 @@ BOOL CALLBACK LauncherClientCallback (HWND hDlg, UINT message, WPARAM wParam, LP
         L_GUISelect(&data);
       }
       else {
-        CBUF_FOR_EACH(&resource_files_buf, entry) {
-          wadfile_info_t *wadfile = (wadfile_info_t *)entry.obj;
+        for (unsigned int i = 0; i < resource_files; i++) {
+          wadfile_info_t *wadfile = g_ptr_array_index(resource_files, i);
 
           if (wadfile->src == source_lmp) {
             patterndata_t patterndata;
@@ -1449,8 +1452,8 @@ static dboolean L_LauncherIsNeeded(void)
   if (i && (++i < myargc))
     iwad = I_FindFile(myargv[i], ".wad");
 
-  CBUF_FOR_EACH(&resource_files_buf, entry) {
-    wadfile_info_t *wadfile = (wadfile_info_t *)entry.obj;
+  for (unsigned int j = 0; j < resource_files->len; j++) {
+    wadfile_info_t *wadfile = g_ptr_array_index(resource_files, j);
 
     if (wadfile->src == source_pwad) {
       pwad = true;

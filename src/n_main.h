@@ -25,7 +25,6 @@
 #define N_MAIN_H__
 
 void N_LogPlayerPosition(player_t *player);
-void N_PrintPlayerCommands(cbuf_t *commands);
 void N_InitNetGame(void);
 bool N_GetWad(const char *name);
 
@@ -35,12 +34,12 @@ bool CL_ReceivedSetup(void);
 void CL_SetReceivedSetup(dboolean new_received_setup);
 void CL_SetAuthorizationLevel(auth_level_e level);
 bool CL_LoadState(void);
+void CL_MarkServerOutdated(void);
+bool CL_GetServerSync(int *command_index, int *sync_tic);
 
 void SV_RemoveOldCommands(void);
 void SV_RemoveOldStates(void);
 
-cbuf_t* N_GetLocalCommands(void);
-void    N_ResetLocalCommandIndex(void);
 void    N_TryRunTics(void);
 
 #endif

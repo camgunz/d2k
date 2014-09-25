@@ -191,14 +191,13 @@ void Z_ZoneHistory(char *);
 
 /* CG: Include the basic data structures so other stuff can use them */
 
+#include <glib.h>
+
 #include "cmp.h"
 
 #include "doomtype.h"
 #include "d_log.h"
 #include "m_buf.h"
-#include "m_cbuf.h"
-#include "m_list.h"
-#include "m_obuf.h"
 #include "m_pbuf.h"
 
 #endif

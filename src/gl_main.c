@@ -30,7 +30,6 @@
 #include "m_argv.h"
 #include "d_event.h"
 #include "v_video.h"
-#include "m_cbuf.h"
 #include "doomstat.h"
 #include "r_bsp.h"
 #include "r_main.h"

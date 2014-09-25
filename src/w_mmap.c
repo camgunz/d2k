@@ -86,7 +86,7 @@ typedef struct {
 mmap_info_t *mapped_wad;
 
 void W_DoneCache(void) {
-  size_t wadfile_count = M_CBufGetObjectCount(&resource_files_buf);
+  size_t wadfile_count = resource_files->len;
 
   if (cachelump) {
     free(cachelump);
@@ -118,7 +118,7 @@ void W_DoneCache(void) {
 }
 
 void W_InitCache(void) {
-  size_t wadfile_count = M_CBufGetObjectCount(&resource_files_buf);
+  size_t wadfile_count = resource_files->len;
 
   // set up caching
   cachelump = calloc(numlumps, sizeof(*cachelump));
@@ -140,7 +140,7 @@ void W_InitCache(void) {
     if (lumpinfo[i].wadfile == -1)
       continue;
 
-    wadfile = M_CBufGet(&resource_files_buf, wad_index);
+    wadfile = g_ptr_array_index(resource_files, wad_index);
 
 #ifdef RANGECHECK
     if ((wad_index < 0) || ((size_t)wad_index >= wadfile_count))
@@ -211,7 +211,7 @@ const void* W_CacheLumpNum(int lump) {
   int wad_index = (int)(lumpinfo[lump].wadfile);
 
 #ifdef RANGECHECK
-  size_t wadfile_count = M_CBufGetObjectCount(&resource_files_buf);
+  size_t wadfile_count = resource_files->len;
 
   if ((wad_index < 0)||((size_t)wad_index >= wadfile_count))
     I_Error("W_CacheLumpNum: wad_index out of range");
@@ -251,7 +251,7 @@ void W_InitCache(void) {
     if (lumpinfo[i].wadfile == -1)
       continue;
 
-    wf = M_CBufGet(&resource_files_buf, lumpinfo[i].wadfile);
+    wf = g_ptr_array_index(resource_files, lumpinfo[i].wadfile);
 
     if (wf == NULL) {
       I_Error(
@@ -278,7 +278,7 @@ void W_InitCache(void) {
     if (lumpinfo[i].wadfile == -1)
       continue;
 
-    wf = M_CBufGet(&resource_files_buf, lumpinfo[i].wadfile);
+    wf = g_ptr_array_index(resource_files, lumpinfo[i].wadfile);
 
     if (wf == NULL) {
       I_Error(
@@ -310,7 +310,7 @@ void W_DoneCache(void) {
     if (lumpinfo[i].wadfile == -1)
       continue;
 
-    wf = M_CBufGet(&resource_files_buf, lumpinfo[i].wadfile);
+    wf = g_ptr_array_index(resource_files, lumpinfo[i].wadfile);
 
     if (wf == NULL)
       continue;

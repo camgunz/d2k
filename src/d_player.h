@@ -144,7 +144,7 @@ typedef struct player_s
   // CPhipps - const
   // const char         *message;
 
-  obuf_t              messages;
+  GPtrArray          *messages;
 
   // For screen flashing (red or bright).
   int                 damagecount;
@@ -192,9 +192,9 @@ typedef struct player_s
   fixed_t jumpTics;      // delay the next jump for a moment
 
   /* CG 4/3/2014: New fields for netcode */
-  char *name;
-  byte  team;
-  cbuf_t commands;
+  char   *name;
+  byte    team;
+  GArray *commands;
 } player_t;
 
 

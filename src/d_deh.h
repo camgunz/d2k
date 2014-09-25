@@ -27,8 +27,8 @@
 extern int deh_apply_cheats;
 
 typedef struct deh_file_s {
-  const char *filename;
-  const char *outfilename;
+  char *filename;
+  char *outfilename;
   int lumpnum;
 } deh_file_t;
 

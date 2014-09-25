@@ -101,7 +101,7 @@ void G_WriteOptions(byte game_options[]);
 void G_PlayerReborn(int player);
 void G_RestartLevel(void); // CPhipps - menu involked level restart
 void G_DoVictory(void);
-void G_BuildTiccmd (struct netticcmd_s *ncmd); // CPhipps - move decl to header
+void G_BuildTiccmd(player_t *player);         // CPhipps - move decl to header
 void G_ChangedPlayerColour(int pn, int cl); // CPhipps - On-the-fly player colour changing
 void G_MakeSpecialEvent(buttoncode_t bc, ...); /* cph - new event stuff */
 
@@ -131,7 +131,7 @@ extern dboolean graphics_initialized;
 extern int  defaultskill;      //jff 3/24/98 default skill
 extern dboolean haswolflevels;  //jff 4/18/98 wolf levels present
 
-extern obuf_t *corpse_queue;
+extern GQueue *corpse_queue;
 extern int corpse_queue_size;       // killough 2/8/98: adustable corpse limit
 
 // killough 5/2/98: moved from d_deh.c:

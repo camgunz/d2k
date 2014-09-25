@@ -45,8 +45,8 @@
 // CPhipps - modify to use logical output routine
 #include "lprintf.h"
 
-#define TRUE 1
-#define FALSE 0
+#define DEHTRUE 1
+#define DEHFALSE 0
 
 // e6y: for compatibility with BOOM deh parser
 int deh_strcasecmp(const char *str1, const char *str2)
@@ -128,7 +128,7 @@ static int dehfgetc(DEHFILE *fp)
 int HelperThing = -1;     // in P_SpawnMapThing to substitute helper thing
 
 // variables used in other routines
-dboolean deh_pars = FALSE; // in wi_stuff to allow pars in modified games
+dboolean deh_pars = DEHFALSE; // in wi_stuff to allow pars in modified games
 
 // #include "d_deh.h" -- we don't do that here but we declare the
 // variables.  This externalizes everything that there is a string
@@ -1525,8 +1525,15 @@ void ProcessDehFile(const char *filename, const char *outfilename, int lumpnum)
     }
   else  // DEH file comes from lump indicated by third argument
     {
-      wadfile_info_t *wf = M_CBufGet(
-        &resource_files_buf, lumpinfo[lumpnum].wadfile
+      if (lumpinfo[lumpnum].wadfile < 0 ||
+          lumpinfo[lumpnum].wadfile >= resource_files->len) {
+        I_Error("ProcessDehFile: Out of range wadfile index in lump %d (%d)\n",
+          lumpnum, lumpinfo[lumpnum].wadfile
+        );
+      }
+
+      wadfile_info_t *wf = g_ptr_array_index(
+        resource_files, lumpinfo[lumpnum].wadfile
       );
 
       if (wf == NULL) {
@@ -1694,7 +1701,7 @@ static void deh_procBexCodePointers(DEHFILE *fpin, FILE* fpout, char *line)
       strcpy(key,"A_");  // reusing the key area to prefix the mnemonic
       strcat(key,ptr_lstrip(mnemonic));
 
-      found = FALSE;
+      found = DEHFALSE;
       i= -1; // incremented to start at zero at the top of the loop
       do  // Ty 05/16/98 - fix loop logic to look for null ending entry
         {
@@ -1705,7 +1712,7 @@ static void deh_procBexCodePointers(DEHFILE *fpin, FILE* fpout, char *line)
               if (fpout) fprintf(fpout,
                                  " - applied %s from codeptr[%d] to states[%d]\n",
                                  deh_bexptrs[i].lookup,i,indexnum);
-              found = TRUE;
+              found = DEHTRUE;
             }
         } while (!found && (deh_bexptrs[i].cptr != NULL));
 
@@ -1875,7 +1882,7 @@ static void deh_procThing(DEHFILE *fpin, FILE* fpout, char *line)
       // No more desync on HACX demos.
       bGetData = deh_GetData(inbuffer,key,&value,&strval,fpout);
       if (!bGetData)
-      // Old code: if (!deh_GetData(inbuffer,key,&value,&strval,fpout)) // returns TRUE if ok
+      // Old code: if (!deh_GetData(inbuffer,key,&value,&strval,fpout)) // returns DEHTRUE if ok
         {
           if (fpout) fprintf(fpout,"Bad data pair in '%s'\n",inbuffer);
           continue;
@@ -1984,7 +1991,7 @@ static void deh_procFrame(DEHFILE *fpin, FILE* fpout, char *line)
       if (!dehfgets(inbuffer, sizeof(inbuffer), fpin)) break;
       lfstrip(inbuffer);
       if (!*inbuffer) break;         // killough 11/98
-      if (!deh_GetData(inbuffer,key,&value,NULL,fpout)) // returns TRUE if ok
+      if (!deh_GetData(inbuffer,key,&value,NULL,fpout)) // returns DEHTRUE if ok
         {
           if (fpout) fprintf(fpout,"Bad data pair in '%s'\n",inbuffer);
           continue;
@@ -2075,7 +2082,7 @@ static void deh_procPointer(DEHFILE *fpin, FILE* fpout, char *line) // done
       if (!dehfgets(inbuffer, sizeof(inbuffer), fpin)) break;
       lfstrip(inbuffer);
       if (!*inbuffer) break;       // killough 11/98
-      if (!deh_GetData(inbuffer,key,&value,NULL,fpout)) // returns TRUE if ok
+      if (!deh_GetData(inbuffer,key,&value,NULL,fpout)) // returns DEHTRUE if ok
         {
           if (fpout) fprintf(fpout,"Bad data pair in '%s'\n",inbuffer);
           continue;
@@ -2144,7 +2151,7 @@ static void deh_procSounds(DEHFILE *fpin, FILE* fpout, char *line)
       if (!dehfgets(inbuffer, sizeof(inbuffer), fpin)) break;
       lfstrip(inbuffer);
       if (!*inbuffer) break;         // killough 11/98
-      if (!deh_GetData(inbuffer,key,&value,NULL,fpout)) // returns TRUE if ok
+      if (!deh_GetData(inbuffer,key,&value,NULL,fpout)) // returns DEHTRUE if ok
         {
           if (fpout) fprintf(fpout,"Bad data pair in '%s'\n",inbuffer);
           continue;
@@ -2214,7 +2221,7 @@ static void deh_procAmmo(DEHFILE *fpin, FILE* fpout, char *line)
       if (!dehfgets(inbuffer, sizeof(inbuffer), fpin)) break;
       lfstrip(inbuffer);
       if (!*inbuffer) break;       // killough 11/98
-      if (!deh_GetData(inbuffer,key,&value,NULL,fpout)) // returns TRUE if ok
+      if (!deh_GetData(inbuffer,key,&value,NULL,fpout)) // returns DEHTRUE if ok
         {
           if (fpout) fprintf(fpout,"Bad data pair in '%s'\n",inbuffer);
           continue;
@@ -2260,7 +2267,7 @@ static void deh_procWeapon(DEHFILE *fpin, FILE* fpout, char *line)
       if (!dehfgets(inbuffer, sizeof(inbuffer), fpin)) break;
       lfstrip(inbuffer);
       if (!*inbuffer) break;       // killough 11/98
-      if (!deh_GetData(inbuffer,key,&value,NULL,fpout)) // returns TRUE if ok
+      if (!deh_GetData(inbuffer,key,&value,NULL,fpout)) // returns DEHTRUE if ok
         {
           if (fpout) fprintf(fpout,"Bad data pair in '%s'\n",inbuffer);
           continue;
@@ -2378,7 +2385,7 @@ static void deh_procPars(DEHFILE *fpin, FILE* fpout, char *line) // extension
                   oldpar = cpars[level-1];
                   if (fpout) fprintf(fpout,"Changed par time for MAP%02d from %d to %d\n",level,oldpar,partime);
                   cpars[level-1] = partime;
-                  deh_pars = TRUE;
+                  deh_pars = DEHTRUE;
                 }
             }
         }
@@ -2401,7 +2408,7 @@ static void deh_procPars(DEHFILE *fpin, FILE* fpout, char *line) // extension
               if (fpout) fprintf(fpout,
                                  "Changed par time for E%dM%d from %d to %d\n",
                                  episode,level,oldpar,partime);
-              deh_pars = TRUE;
+              deh_pars = DEHTRUE;
             }
         }
     }
@@ -2434,7 +2441,7 @@ static void deh_procCheat(DEHFILE *fpin, FILE* fpout, char *line) // done
       if (!dehfgets(inbuffer, sizeof(inbuffer), fpin)) break;
       lfstrip(inbuffer);
       if (!*inbuffer) break;       // killough 11/98
-      if (!deh_GetData(inbuffer,key,&value,&strval,fpout)) // returns TRUE if ok
+      if (!deh_GetData(inbuffer,key,&value,&strval,fpout)) // returns DEHTRUE if ok
         {
           if (fpout) fprintf(fpout,"Bad data pair in '%s'\n",inbuffer);
           continue;
@@ -2510,7 +2517,7 @@ static void deh_procMisc(DEHFILE *fpin, FILE* fpout, char *line) // done
       if (!dehfgets(inbuffer, sizeof(inbuffer), fpin)) break;
       lfstrip(inbuffer);
       if (!*inbuffer) break;    // killough 11/98
-      if (!deh_GetData(inbuffer,key,&value,NULL,fpout)) // returns TRUE if ok
+      if (!deh_GetData(inbuffer,key,&value,NULL,fpout)) // returns DEHTRUE if ok
         {
           if (fpout) fprintf(fpout,"Bad data pair in '%s'\n",inbuffer);
           continue;
@@ -2596,7 +2603,7 @@ static void deh_procText(DEHFILE *fpin, FILE* fpout, char *line)
   int i; // loop variable
   int fromlen, tolen;  // as specified on the text block line
   int usedlen;  // shorter of fromlen and tolen if not matched
-  dboolean found = FALSE;  // to allow early exit once found
+  dboolean found = DEHFALSE;  // to allow early exit once found
   char* line2 = NULL;   // duplicate line for rerouting
 
   // e6y
@@ -2664,7 +2671,7 @@ static void deh_procText(DEHFILE *fpin, FILE* fpout, char *line)
 
     strncpy(s,&inbuffer[fromlen],tolen);
         }
-              found = TRUE;
+              found = DEHTRUE;
               break;  // only one will match--quit early
             }
           ++i;  // next array element
@@ -2694,7 +2701,7 @@ static void deh_procText(DEHFILE *fpin, FILE* fpout, char *line)
                 //e6y: flag the SFX as changed
                 S_sfx_state[i] = true;
 
-                found = TRUE;
+                found = DEHTRUE;
                 break;  // only one matches, quit early
               }
           }
@@ -2716,7 +2723,7 @@ static void deh_procText(DEHFILE *fpin, FILE* fpout, char *line)
                     //e6y: flag the music as changed
                     S_music_state[i] = true;
 
-                    found = TRUE;
+                    found = DEHTRUE;
                     break;  // only one matches, quit early
                   }
               }
@@ -2783,7 +2790,7 @@ static void deh_procStrings(DEHFILE *fpin, FILE* fpout, char *line)
       if (!*inbuffer && !*holdstring) break;  // killough 11/98
       if (!*holdstring) // first one--get the key
         {
-          if (!deh_GetData(inbuffer,key,&value,&strval,fpout)) // returns TRUE if ok
+          if (!deh_GetData(inbuffer,key,&value,&strval,fpout)) // returns DEHTRUE if ok
             {
               if (fpout) fprintf(fpout,"Bad data pair in '%s'\n",inbuffer);
               continue;
@@ -2922,7 +2929,7 @@ static void deh_procHelperThing(DEHFILE *fpin, FILE *fpout, char *line)
       if (!dehfgets(inbuffer, sizeof(inbuffer), fpin)) break;
       lfstrip(inbuffer);
       if (!*inbuffer) break;    
-      if (!deh_GetData(inbuffer,key,&value,NULL,fpout)) // returns TRUE if ok
+      if (!deh_GetData(inbuffer,key,&value,NULL,fpout)) // returns DEHTRUE if ok
       {
           if (fpout) fprintf(fpout,"Bad data pair in '%s'\n",inbuffer);
           continue;
@@ -2968,7 +2975,7 @@ static void deh_procBexSprites(DEHFILE *fpin, FILE *fpout, char *line)
       lfstrip(inbuffer);
       if(!*inbuffer) 
         break;  // killough 11/98
-      if(!deh_GetData(inbuffer,key,&value,&strval,fpout)) // returns TRUE if ok
+      if(!deh_GetData(inbuffer,key,&value,&strval,fpout)) // returns DEHTRUE if ok
       {
         if(fpout)
           fprintf(fpout,"Bad data pair in '%s'\n",inbuffer);
@@ -3027,7 +3034,7 @@ static void deh_procBexSounds(DEHFILE *fpin, FILE *fpout, char *line)
       lfstrip(inbuffer);
       if(!*inbuffer) 
 	 break;  // killough 11/98
-      if(!deh_GetData(inbuffer,key,&value,&strval,fpout)) // returns TRUE if ok
+      if(!deh_GetData(inbuffer,key,&value,&strval,fpout)) // returns DEHTRUE if ok
       {
 	 if(fpout)
 	    fprintf(fpout,"Bad data pair in '%s'\n",inbuffer);
@@ -3087,7 +3094,7 @@ static void deh_procBexMusic(DEHFILE *fpin, FILE *fpout, char *line)
       lfstrip(inbuffer);
       if(!*inbuffer) 
 	 break;  // killough 11/98
-      if(!deh_GetData(inbuffer,key,&value,&strval,fpout)) // returns TRUE if ok
+      if(!deh_GetData(inbuffer,key,&value,&strval,fpout)) // returns DEHTRUE if ok
       {
 	 if(fpout)
 	    fprintf(fpout,"Bad data pair in '%s'\n",inbuffer);
@@ -3230,14 +3237,14 @@ dboolean deh_GetData(char *s, char *k, uint_64_t *l, char **strval, FILE *fpout)
   buffer[--i] = '\0';  // terminate the key before the '='
   if (!*t)  // end of string with no equal sign
     {
-      okrc = FALSE;
+      okrc = DEHFALSE;
     }
   else
     {
       if (!*++t)
         {
           val = 0;  // in case "thiskey =" with no value
-          okrc = FALSE;
+          okrc = DEHFALSE;
         }
       // we've incremented t
       // e6y: Correction of wrong processing of Bits parameter if its value is equal to zero

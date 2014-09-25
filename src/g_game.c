@@ -24,6 +24,8 @@
 #include "z_zone.h"
 
 #include "doomstat.h"
+#include "d_event.h"
+#include "c_main.h"
 #include "d_net.h"
 #include "f_finale.h"
 #include "m_argv.h"
@@ -32,6 +34,11 @@
 #include "m_misc.h"
 #include "m_menu.h"
 #include "m_random.h"
+#include "n_net.h"
+#include "n_main.h"
+#include "n_proto.h"
+#include "n_state.h"
+#include "p_cmd.h"
 #include "p_ident.h"
 #include "p_setup.h"
 #include "p_tick.h"
@@ -64,12 +71,6 @@
 #include "r_demo.h"
 #include "r_fps.h"
 #include "e6y.h"//e6y
-
-#include "c_main.h"
-#include "n_net.h"
-#include "n_main.h"
-#include "n_proto.h"
-#include "n_state.h"
 
 extern int forceOldBsp;
 extern char *player_names[];
@@ -209,13 +210,13 @@ int defaultskill;               //note 1-based
 
 // killough 2/8/98: make corpse queue variable in size
 /*
- * CG 08/14/2014: Use an obuf_t for this instead
+ * CG 09/25/2014: Use a GQueue for this instead
  *
  * int    bodyqueslot, bodyquesize;        // killough 2/8/98
  * mobj_t **bodyque = 0;                   // phares 8/10/98
  */
 int corpse_queue_size; // killough 2/8/98
-obuf_t *corpse_queue = NULL;
+GQueue *corpse_queue = NULL;
 
 //e6y: save/restore all data which could be changed by G_ReadDemoHeader
 static void G_SaveRestoreGameOptions(int save);
@@ -313,8 +314,8 @@ void G_DoLoadGame(void) {
   seconds = leveltime / TICRATE;
   total_seconds = (totalleveltimes + leveltime) / TICRATE;
 
-  wadfile_info_t *wf = M_CBufGet(
-    &resource_files_buf, 
+  wadfile_info_t *wf = g_ptr_array_index(
+    resource_files,
     W_GetLumpInfoByNum(W_GetNumForName(maplump))->wadfile
   );
 
@@ -418,8 +419,8 @@ void G_DoSaveGame(dboolean menu) {
   seconds = leveltime / TICRATE;
   total_seconds = (totalleveltimes + leveltime) / TICRATE;
 
-  wadfile_info_t *wf = M_CBufGet(
-    &resource_files_buf, 
+  wadfile_info_t *wf = g_ptr_array_index(
+    resource_files,
     W_GetLumpInfoByNum(W_GetNumForName(maplump))->wadfile
   );
 
@@ -545,15 +546,15 @@ static int G_NextWeapon(int direction) {
   return weapon_order_table[i].weapon_num;
 }
 
-void G_BuildTiccmd(netticcmd_t *ncmd) {
+void G_BuildTiccmd(player_t *player) {
   int strafe = false;
   int bstrafe;
   int speed = autorun;
   int tspeed;
   int forward;
   int side;
-  int newweapon;                                          // phares
-
+  int newweapon; // phares
+  netticcmd_t *ncmd = P_GetNewBlankCommand(player);
   ticcmd_t *cmd = &ncmd->cmd;
 
   ncmd->tic = gametic;
@@ -1235,30 +1236,7 @@ void G_Ticker(void) {
         G_ReadDemoContinueTiccmd(cmd);
       }
       else if ((!MULTINET) || CMDSYNC) {
-        dboolean found_command = false;
-        cbuf_t *commands;
-        
-        commands = &players[i].commands;
-
-        CBUF_FOR_EACH(commands, entry) {
-          netticcmd_t *ncmd = entry.obj;
-
-          if (ncmd->tic == gametic) {
-            memcpy(cmd, &ncmd->cmd, sizeof(ticcmd_t));
-
-            found_command = true;
-          }
-
-          if (gamestate != GS_LEVEL || ncmd->tic <= gametic) {
-            M_CBufRemove(commands, entry.index);
-            entry.index--;
-          }
-
-          if (found_command)
-            break;
-        }
-
-        if (!found_command)
+        if (!P_LoadCommandForTic(&players[i], gametic))
           continue;
       }
 
@@ -1470,24 +1448,22 @@ void G_PlayerReborn(int player) {
     p->maxammo[i] = maxammo[i];
 }
 
-//
-// G_ClearCorpses
-//
-// Clears queued player corpses, if that option is enabled
-//
-// CG: TODO: Put in p_something, this doesn't belong in g_.  I'm thinking
-//           p_user.  Same with stuff like G_DoReborn, G_DeathMatchSpawnPlayer,
-//           etc.
-//
 void G_ClearCorpses(void) {
-  if (corpse_queue_size == 0)
-    return;
-
+  /*
+   * CG: This is only called when loading a new state or map, therefore the
+   *     queued corpses don't leak.  This is why the call to P_RemoveMobj or
+   *     free is omitted.
+   */
   if (corpse_queue_size < 0)
-    I_Error("G_ClearCorpses: corpse_queue_size < 0 (%d)", corpse_queue_size);
+    I_Error("clear_corpses: corpse_queue_size < 0 (%d)", corpse_queue_size);
 
-  if (corpse_queue == NULL)
-    corpse_queue = M_OBufNewWithCapacity(corpse_queue_size);
+  if (corpse_queue) {
+    g_queue_free(corpse_queue);
+    corpse_queue = NULL;
+  }
+
+  if (corpse_queue_size > 0)
+    corpse_queue = g_queue_new();
 }
 
 //
@@ -1540,25 +1516,20 @@ static dboolean G_CheckSpot(int playernum, mapthing_t *mthing) {
   // flush an old corpse if needed
   // killough 2/8/98: make corpse queue have an adjustable limit
   // killough 8/1/98: Fix bugs causing strange crashes
+  if (corpse_queue_size < 0)
+    I_Error("G_CheckSpot: corpse_queue_size < 0 (%d)", corpse_queue_size);
 
-  if (corpse_queue_size > 0) {
-    if (corpse_queue == NULL)
-      corpse_queue = M_OBufNewWithCapacity(corpse_queue_size);
-
-    if (M_OBufGetObjectCount(corpse_queue) == corpse_queue_size) {
-      P_RemoveMobj(M_OBufGet(corpse_queue, 0));
-      M_OBufRemove(corpse_queue, 0);
-    }
-
-    M_OBufConsolidate(corpse_queue);
-
-    M_OBufAppend(corpse_queue, players[playernum].mo);
-  }
-  else if (!corpse_queue_size) {
+  if (corpse_queue_size == 0) {
     P_RemoveMobj(players[playernum].mo);
   }
-  else if (corpse_queue_size < 0) {
-    I_Error("G_CheckSpot: corpse_queue_size < 0 (%d)", corpse_queue_size);
+  else {
+    if (corpse_queue == NULL)
+      corpse_queue = g_queue_new();
+
+    if (g_queue_get_length(corpse_queue) == corpse_queue_size)
+      P_RemoveMobj(g_queue_pop_head(corpse_queue));
+
+    g_queue_push_tail(corpse_queue, players[playernum].mo);
   }
 
   // spawn a teleport fog

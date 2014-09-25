@@ -26,7 +26,6 @@
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
-#include <glib.h>
 
 #include "d_event.h"
 #include "c_main.h"

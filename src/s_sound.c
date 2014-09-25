@@ -84,7 +84,7 @@ static musicinfo_t *mus_playing;
 static int musicnum_current;
 
 // the set of channels available
-static cbuf_t *channels;
+static GArray *channels;
 
 // These are not used, but should be (menu).
 // Maximum volume of a sound effect.
@@ -142,8 +142,8 @@ static int adjust_sound_params(mobj_t *listener, mobj_t *source,
   // calculate the distance to sound origin
   //  and clip it if necessary
   if (walkcamera.type > 1) {
-    adx = D_abs(walkcamera.x - source->x);
-    ady = D_abs(walkcamera.y - source->y);
+    adx = walkcamera.x - source->x;
+    ady = walkcamera.y - source->y;
   }
   else {
     adx = D_abs(listener->x - source->x);
@@ -220,36 +220,34 @@ static void init_channel(channel_t *c, mobj_t *mo, sfxinfo_t *sfx, int pu) {
 // killough 4/25/98: made static, added is_pickup argument
 //
 static int get_channel(mobj_t *mobj, sfxinfo_t *sfxinfo, int is_pickup) {
-  int channel_count = M_CBufGetObjectCount(channels);
+  if (channels->len < numChannels)
+    g_array_set_size(channels, numChannels);
 
-  if (channel_count < numChannels) {
-    channel_t dummy;
+  /*
+   * CG: TODO: Truncate channel array when numChannels is decreased.  I think
+   *           using numChannels instead of channels->len in the below loops
+   *           would do it (eventually), but I need to think it through.
+   */
 
-    init_channel(&dummy, mobj, sfxinfo, is_pickup);
-    M_CBufConsolidate(channels);
-    M_CBufAppend(channels, &dummy);
-
-    return channel_count;
-  }
-
-  CBUF_FOR_EACH(channels, entry) {
-    channel_t *c = (channel_t *)entry.obj;
+  for (unsigned int i = 0; i < channels->len; i++) {
+    channel_t *c = &g_array_index(channels, channel_t, i);
 
     if ((c->sfxinfo == NULL) ||
         ((mobj && c->origin_id == mobj->id) && c->is_pickup == is_pickup)) {
       stop_channel(c);
       init_channel(c, mobj, sfxinfo, is_pickup);
-      return entry.index;
+
+      return i;
     }
   }
 
-  CBUF_FOR_EACH(channels, entry) {
-    channel_t *c = (channel_t *)entry.obj;
+  for (unsigned int i = 0; i < channels->len; i++) {
+    channel_t *c = &g_array_index(channels, channel_t, i);
 
     if (c->sfxinfo->priority < sfxinfo->priority) {
       stop_channel(c);
       init_channel(c, mobj, sfxinfo, is_pickup);
-      return entry.index;
+      return i;
     }
   }
 
@@ -337,8 +335,8 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
     pitch = 255;
 
   // kill old sound
-  CBUF_FOR_EACH(channels, entry) {
-    channel = (channel_t *)entry.obj;
+  for (unsigned int i = 0; i < channels->len; i++) {
+    channel_t *channel = &g_array_index(channels, channel_t, i);
 
     if (!channel->sfxinfo)
       continue;
@@ -382,10 +380,7 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
   int h = I_StartSound(sfx_id, cnum, volume, sep, pitch, priority);
 
   if (h != -1) {
-    channel = M_CBufGet(channels, cnum);
-
-    if (!channel)
-      return;
+    channel = &g_array_index(channels, channel_t, cnum);
 
     channel->handle = h;
     channel->pitch = pitch;
@@ -416,7 +411,7 @@ void S_Init(int sfxVolume, int musicVolume) {
   // (the maximum numer of sounds rendered
   // simultaneously) within zone memory.
   // CPhipps - calloc
-  channels = M_CBufNewWithCapacity(numChannels, sizeof(channel_t));
+  channels = g_array_sized_new(false, true, sizeof(channel_t), numChannels);
 
   // Note that sounds have not been cached (yet).
   for (int i = 1; i < NUMSFX; i++)
@@ -430,8 +425,8 @@ void S_Init(int sfxVolume, int musicVolume) {
 
 void S_Stop(void) {
   //jff 1/22/98 skip sound init if sound not enabled
-  CBUF_FOR_EACH(channels, entry) {
-    channel_t *channel = (channel_t *)entry.obj;
+  for (unsigned int i = 0; i < channels->len; i++) {
+    channel_t *channel = &g_array_index(channels, channel_t, i);
 
     if (channel->sfxinfo)
       stop_channel(channel);
@@ -491,8 +486,8 @@ void S_StartSound(mobj_t *mobj, int sfx_id) {
 }
 
 void S_StopSound(mobj_t *mobj) {
-  CBUF_FOR_EACH(channels, entry) {
-    channel_t *channel = (channel_t *)entry.obj;
+  for (unsigned int i = 0; i < channels->len; i++) {
+    channel_t *channel = &g_array_index(channels, channel_t, i);
 
     if (channel->sfxinfo && channel->origin_id == mobj->id) {
       stop_channel(channel);
@@ -534,8 +529,8 @@ void S_UpdateSounds(mobj_t *listener) {
   I_UpdateMusic();
 #endif
 
-  CBUF_FOR_EACH(channels, entry) {
-    channel_t *channel = (channel_t *)entry.obj;
+  for (unsigned int i = 0; i < channels->len; i++) {
+    channel_t *channel = &g_array_index(channels, channel_t, i);
     sfxinfo_t *sfx = channel->sfxinfo;
 
     if (!sfx)
@@ -711,20 +706,20 @@ void S_StopMusic(void) {
 }
 
 void S_ReloadChannelOrigins(void) {
-  CBUF_FOR_EACH(channels, entry) {
-    channel_t *c = (channel_t *)entry.obj;
-    uint32_t origin_id = c->origin_id;
+  for (unsigned int i = 0; i < channels->len; i++) {
+    channel_t *channel = &g_array_index(channels, channel_t, i);
+    uint32_t origin_id = channel->origin_id;
 
     if (origin_id) {
       mobj_t *mobj = P_IdentLookup(origin_id);
 
       if (mobj) {
-        c->origin = mobj;
+        channel->origin = mobj;
       }
       else {
-        stop_channel(c);
-        c->origin = NULL;
-        c->origin_id = 0;
+        stop_channel(channel);
+        channel->origin = NULL;
+        channel->origin_id = 0;
       }
     }
   }

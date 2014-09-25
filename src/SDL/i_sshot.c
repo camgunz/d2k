@@ -29,7 +29,6 @@
 #include <png.h>
 #endif
 
-#include "m_cbuf.h"
 #include "doomstat.h"
 #include "doomdef.h"
 #include "v_video.h"

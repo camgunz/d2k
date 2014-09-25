@@ -88,7 +88,7 @@ void        IdentifyVersion(void);
 /* proff 2001/7/1 - added prboom.wad as last entry so it's always loaded and
    doesn't overlap with the cfg settings */
 #define MAXLOADFILES 3
-extern const char *wad_files[MAXLOADFILES], *deh_files[MAXLOADFILES];
+extern const char *wad_file_names[MAXLOADFILES], *deh_file_names[MAXLOADFILES];
 
 #endif
 
