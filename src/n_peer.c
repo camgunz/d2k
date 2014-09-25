@@ -202,8 +202,6 @@ static void free_peer(netpeer_t *np) {
 static void peer_destroy_func(gpointer data) {
   netpeer_t *np = data;
 
-  printf("Freeing peer %u\n", np->peernum);
-
   free_peer(data);
 }
 
@@ -229,8 +227,6 @@ unsigned int N_PeerAdd(void) {
   np->disconnect_time = 0;
 
   g_hash_table_insert(net_peers, GUINT_TO_POINTER(np->peernum), np);
-
-  printf("N_PeerAdd: Added peer %u\n", np->peernum);
 
   return np->peernum;
 }
