@@ -41,6 +41,10 @@ static GError *file_error = NULL;
 static inline void I_BeginRead(void) {}
 static inline void I_EndRead(void) {}
 
+static void free_string(gpointer data) {
+  free(data);
+}
+
 static void clear_file_error(void) {
   if (file_error)
     g_clear_error(&file_error);
@@ -351,9 +355,9 @@ bool M_DeleteFileInFolder(const char *folder, const char *file) {
   return ret;
 }
 
-obuf_t* M_ListFiles(const char *path) {
+GPtrArray* M_ListFiles(const char *path) {
   GDir *dir;
-  obuf_t *obuf;
+  GPtrArray *files;
   const char *entry_name;
   
   errno = 0;
@@ -364,28 +368,27 @@ obuf_t* M_ListFiles(const char *path) {
   if (dir == NULL)
     return NULL;
 
-  obuf = M_OBufNew();
+  files = g_ptr_array_new_with_free_func(free_string);
 
   while ((entry_name = g_dir_read_name(dir))) {
     char *entry_path = M_PathJoin(path, entry_name);
 
     if (M_IsFile(entry_path))
-      M_OBufAppend(obuf, entry_path);
+      g_ptr_array_add(files, entry_path);
   }
 
   if (errno) {
     set_file_error_from_errno();
-    M_OBufFreeEntriesAndClear(obuf);
-    free(obuf);
-    obuf = NULL;
+    g_ptr_array_free(files, true);
+    files = NULL;
   }
 
   g_dir_close(dir);
 
-  return obuf;
+  return files;
 }
 
-bool M_ListFilesBuf(const char *path, obuf_t *obuf) {
+bool M_ListFilesBuf(const char *path, GPtrArray *files) {
   GDir *dir;
   const char *entry_name;
   
@@ -401,7 +404,7 @@ bool M_ListFilesBuf(const char *path, obuf_t *obuf) {
     char *entry_path = M_PathJoin(path, entry_name);
 
     if (M_IsFile(entry_path))
-      M_OBufAppend(obuf, entry_path);
+      g_ptr_array_add(files, entry_path);
   }
 
   if (errno) {
@@ -415,9 +418,9 @@ bool M_ListFilesBuf(const char *path, obuf_t *obuf) {
   return true;
 }
 
-obuf_t* M_ListFolders(const char *path) {
+GPtrArray* M_ListFolders(const char *path) {
   GDir *dir;
-  obuf_t *obuf;
+  GPtrArray *folders;
   const char *entry_name;
   
   errno = 0;
@@ -428,28 +431,27 @@ obuf_t* M_ListFolders(const char *path) {
   if (dir == NULL)
     return NULL;
 
-  obuf = M_OBufNew();
+  folders = g_ptr_array_new_with_free_func(free_string);
 
   while ((entry_name = g_dir_read_name(dir))) {
     char *entry_path = M_PathJoin(path, entry_name);
 
     if (M_IsFolder(entry_path))
-      M_OBufAppend(obuf, entry_path);
+      g_ptr_array_add(folders, entry_path);
   }
 
   if (errno) {
     set_file_error_from_errno();
-    M_OBufFreeEntriesAndClear(obuf);
-    free(obuf);
-    obuf = NULL;
+    g_ptr_array_free(folders, true);
+    folders = NULL;
   }
 
   g_dir_close(dir);
 
-  return obuf;
+  return folders;
 }
 
-bool M_ListFoldersBuf(const char *path, obuf_t *obuf) {
+bool M_ListFoldersBuf(const char *path, GPtrArray *folders) {
   GDir *dir;
   const char *entry_name;
   
@@ -465,7 +467,7 @@ bool M_ListFoldersBuf(const char *path, obuf_t *obuf) {
     char *entry_path = M_PathJoin(path, entry_name);
 
     if (M_IsFolder(entry_path))
-      M_OBufAppend(obuf, entry_path);
+      g_ptr_array_add(folders, entry_path);
   }
 
   if (errno) {
@@ -479,9 +481,9 @@ bool M_ListFoldersBuf(const char *path, obuf_t *obuf) {
   return true;
 }
 
-obuf_t* M_ListFilesAndFolders(const char *path) {
+GPtrArray* M_ListFilesAndFolders(const char *path) {
   GDir *dir;
-  obuf_t *obuf;
+  GPtrArray *files_and_folders;
   const char *entry_name;
   
   errno = 0;
@@ -492,24 +494,23 @@ obuf_t* M_ListFilesAndFolders(const char *path) {
   if (dir == NULL)
     return NULL;
 
-  obuf = M_OBufNew();
+  files_and_folders = g_ptr_array_new_with_free_func(free_string);
 
   while ((entry_name = g_dir_read_name(dir)))
-    M_OBufAppend(obuf, M_PathJoin(path, entry_name));
+    g_ptr_array_add(files_and_folders, M_PathJoin(path, entry_name));
 
   if (errno) {
     set_file_error_from_errno();
-    M_OBufFreeEntriesAndClear(obuf);
-    free(obuf);
-    obuf = NULL;
+    g_ptr_array_free(files_and_folders, true);
+    files_and_folders = NULL;
   }
 
   g_dir_close(dir);
 
-  return obuf;
+  return files_and_folders;
 }
 
-bool M_ListFilesAndFoldersBuf(const char *path, obuf_t *obuf) {
+bool M_ListFilesAndFoldersBuf(const char *path, GPtrArray *files_and_folders) {
   GDir *dir;
   const char *entry_name;
   
@@ -522,7 +523,7 @@ bool M_ListFilesAndFoldersBuf(const char *path, obuf_t *obuf) {
     return false;
 
   while ((entry_name = g_dir_read_name(dir)))
-    M_OBufAppend(obuf, M_PathJoin(path, entry_name));
+    g_ptr_array_add(files_and_folders, M_PathJoin(path, entry_name));
 
   if (errno) {
     set_file_error_from_errno();

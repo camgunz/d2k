@@ -52,7 +52,6 @@ void D_EnableLogChannel(log_channel_e channel, const char *filename) {
   if (fh == NULL)
     I_Error("Error opening log file %s: %s.\n", filename, strerror(errno));
 
-  printf("Inserting %p at %u (%u, %u)\n", fh, channel, log_files->len, LOG_MAX);
   g_ptr_array_insert(log_files, channel, fh);
 }
 

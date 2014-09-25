@@ -61,12 +61,13 @@ bool        M_DeleteFolder(const char *path);
 bool        M_DeleteFile(const char *path);
 bool        M_DeleteFileInFolder(const char *folder, const char *file);
 
-obuf_t*     M_ListFiles(const char *path);
-bool        M_ListFilesBuf(const char *path, obuf_t *obuf);
-obuf_t*     M_ListFolders(const char *path);
-bool        M_ListFoldersBuf(const char *path, obuf_t *obuf);
-obuf_t*     M_ListFilesAndFolders(const char *path);
-bool        M_ListFilesAndFoldersBuf(const char *path, obuf_t *obuf);
+GPtrArray*  M_ListFiles(const char *path);
+bool        M_ListFilesBuf(const char *path, GPtrArray *files);
+GPtrArray*  M_ListFolders(const char *path);
+bool        M_ListFoldersBuf(const char *path, GPtrArray *folders);
+GPtrArray*  M_ListFilesAndFolders(const char *path);
+bool        M_ListFilesAndFoldersBuf(const char *path,
+                                     GPtrArray *files_and_folders);
 
 #if 0
 bool        M_IterateFiles(const char *path, file_iterator iterator);

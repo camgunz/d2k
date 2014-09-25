@@ -815,7 +815,6 @@ SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/m_list.c
   ${CMAKE_SOURCE_DIR}/src/m_menu.c
   ${CMAKE_SOURCE_DIR}/src/m_misc.c
-  ${CMAKE_SOURCE_DIR}/src/m_obuf.c
   ${CMAKE_SOURCE_DIR}/src/m_pbuf.c
   ${CMAKE_SOURCE_DIR}/src/m_random.c
   ${CMAKE_SOURCE_DIR}/src/md5.c

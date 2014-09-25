@@ -39,7 +39,7 @@ void I_LoadCustomFonts(void) {
   lprintf(LO_INFO, "I_LoadCustomFonts: Loading custom fonts\n");
 
 #ifdef _WIN32
-  obuf_t *font_files = M_ListFiles(font_folder);
+  GPtrArray *font_files = M_ListFiles(font_folder);
 
   if (font_files == NULL) {
     I_Error("  Error reading font folder '%s' (%s)",
@@ -48,16 +48,14 @@ void I_LoadCustomFonts(void) {
     );
   }
 
-  OBUF_FOR_EACH(font_files, entry) {
-    char *font_path = M_LocalizePath((char *)entry.obj);
+  for (unsigned int i = 0; i < font_files->len; i++) {
+    char *font_path = M_LocalizePath((char *)g_ptr_array_index(font_files, i));
     int res = AddFontResourceEx(font_path, FR_PRIVATE, 0);
 
     if (res == 0)
       wprintf(L"  Failed to load font %ls\n", font_path);
     else
       wprintf(L"  Loaded %d fonts from %ls\n", res, font_path);
-
-    free(font_path);
   }
 
   if (!g_setenv("FONTCONFIG_PATH", font_folder, true)) {
@@ -66,8 +64,7 @@ void I_LoadCustomFonts(void) {
     );
   }
 
-  M_OBufFreeEntriesAndClear(font_files);
-  M_OBufFree(font_files);
+  g_ptr_array_free(font_files);
 #endif
   FcConfig *config = FcInitLoadConfigAndFonts();
 
