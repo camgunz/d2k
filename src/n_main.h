@@ -40,7 +40,6 @@ bool CL_GetServerSync(int *command_index, int *sync_tic);
 void SV_RemoveOldCommands(void);
 void SV_RemoveOldStates(void);
 
-cbuf_t* N_GetLocalCommands(void);
 void    N_TryRunTics(void);
 
 #endif

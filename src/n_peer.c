@@ -489,12 +489,7 @@ bool N_PeerLoadIncoming(int peernum, unsigned char *data, size_t size) {
   M_BufferFree(&buf);
 
   if (message_start_point >= size) {
-    P_Printf(
-      consoleplayer,
-      "N_PeerLoadIncoming: Received empty packet (%d, %d).\n",
-      message_start_point,
-      size
-    );
+    P_Printf(consoleplayer, "N_PeerLoadIncoming: Received empty packet.\n");
     return false;
   }
 
