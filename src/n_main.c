@@ -63,20 +63,33 @@
 
 /* CG: TODO: Add WAD fetching (waiting on libcurl) */
 
-static dboolean is_extra_ddisplay = false;
+static bool is_extra_ddisplay = false;
 
 /* CG: Client only */
 static bool received_setup = false;
 static auth_level_e authorization_level = AUTH_LEVEL_NONE;
 static bool repredicting = false;
 static bool loading_state = false;
-static bool catching_up;
 
 static void run_tic(void) {
   if (advancedemo)
     D_DoAdvanceDemo();
 
   I_GetTime_SaveMS();
+
+  if (DELTASERVER && gametic > 0) {
+    N_SaveState();
+
+    NETPEER_FOR_EACH(iter) {
+      if (iter.np->sync.initialized)
+        iter.np->sync.outdated = true;
+      else if (gametic > iter.np->sync.tic)
+        SV_SendSetup(iter.np->playernum);
+    }
+
+    N_UpdateSync();
+  }
+
 #ifdef ENABLE_PREDICTION
   G_Ticker();
 #else
@@ -85,56 +98,40 @@ static void run_tic(void) {
 #endif
   P_Checksum(gametic);
 
-  if (DELTASERVER) {
-    N_SaveState();
-
-    NETPEER_FOR_EACH(entry) {
-      if (entry.np->sync.initialized)
-        entry.np->sync.outdated = true;
-      else if (gametic > entry.np->sync.tic)
-        SV_SendSetup(entry.np->playernum);
-    }
-
-    N_UpdateSync();
-  }
-
   gametic++;
 }
 
 static int run_tics(int tic_count) {
-  int out = tic_count;
+  int saved_tic_count = tic_count;
 
   while (tic_count--) {
-    P_BuildCommand();
+    if (MULTINET)
+      P_BuildCommand();
+    else
+      G_BuildTiccmd(&players[consoleplayer].cmd);
     run_tic();
   }
 
-  if (CLIENT)
-    D_Log(LOG_SYNC, "\n");
-
-  return out;
+  return saved_tic_count;
 }
 
 static int run_commandsync_tics(int command_count) {
   int tic_count = command_count;
 
-  for (int i = 0; i < command_count; i++)
+  while (command_count--)
     P_BuildCommand();
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
-      tic_count = MIN(tic_count, P_GetPlayerCommandCount(&players[i]));
+      tic_count = MIN(tic_count, P_GetPlayerCommandCount(i));
     }
   }
 
-  if (tic_count)
+  if (tic_count > 0)
     run_tics(tic_count);
 
-  if (CMDCLIENT && (command_count > 0)) {
-    netpeer_t *server = CL_GetServerPeer();
-
-    if (server != NULL)
-      server->sync.outdated = true;
+  NETPEER_FOR_EACH(iter) {
+    iter.np->sync.outdated = true;
   }
 
   return tic_count;
@@ -143,11 +140,6 @@ static int run_commandsync_tics(int command_count) {
 static int process_tics(int tics_elapsed) {
   if (tics_elapsed <= 0)
     return 0;
-
-  if (!MULTINET)
-    return run_tics(tics_elapsed);
-
-  D_Log(LOG_SYNC, "(%d) %d tics elapsed\n", gametic, tics_elapsed);
 
   if (CMDSYNC)
     return run_commandsync_tics(tics_elapsed);
@@ -158,6 +150,85 @@ static int process_tics(int tics_elapsed) {
 static void render_menu(int menu_renderer_calls) {
   while (menu_renderer_calls--)
     M_Ticker();
+}
+
+static void cl_remove_old_commands(void) {
+  netpeer_t *server = CL_GetServerPeer();
+  
+  if (server == NULL) {
+    P_Echo(consoleplayer, "Server disconnected");
+    N_Disconnect();
+    return;
+  }
+
+  P_RemoveOldCommands(
+    server->sync.commands[consoleplayer].sync_index,
+    server->sync.commands[consoleplayer].sync_queue
+  );
+}
+
+static bool cl_load_state(void) {
+  netpeer_t *server = CL_GetServerPeer();
+  game_state_delta_t *delta;
+  GQueue *run_commands;
+  GQueue *sync_commands;
+  unsigned int sync_command_count;
+
+  if (server == NULL)
+    return false;
+
+  delta = &server->sync.delta;
+
+  if (!N_ApplyStateDelta(delta)) {
+    P_Echo(consoleplayer, "Error applying state delta");
+    return false;
+  }
+
+  if (!N_LoadLatestState(false)) {
+    P_Echo(consoleplayer, "Error loading state");
+    return false;
+  }
+
+  N_RemoveOldStates(delta->from_tic);
+
+  /*
+   * CG: At this point, we have loaded the state for the previous TIC and
+   *     queued all the commands received from the server so far.  We are now
+   *     ready to run the current TIC with all queued commands (which is what
+   *     the server will do as well).
+   */
+
+  is_extra_ddisplay = true;
+  run_tic();
+  is_extra_ddisplay = false;
+
+  /*
+   * CG: Now, for each command the server has yet to acknowledge, load it and
+   *     run it individually in a new TIC.
+   */
+
+  cl_remove_old_commands();
+  run_commands = server->sync.commands[consoleplayer].run_queue;
+  sync_commands = server->sync.commands[consoleplayer].sync_queue;
+  sync_command_count = g_queue_get_length(sync_commands);
+
+  repredicting = true;
+  S_MuteSound();
+  for (unsigned int i = 0; i < sync_command_count; i++) {
+    netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+    netticcmd_t *run_ncmd = P_GetNewBlankCommand();
+
+    memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
+    g_queue_push_tail(run_commands, run_ncmd);
+
+    is_extra_ddisplay = true;
+    run_tic();
+    is_extra_ddisplay = false;
+  }
+  repredicting = false;
+  S_UnMuteSound();
+
+  return true;
 }
 
 static void service_network(void) {
@@ -174,63 +245,53 @@ static void service_network(void) {
   else
     N_ServiceNetworkTimeout(SERVER_NO_PEER_SLEEP_TIMEOUT);
 #endif
-
-  if (DELTASERVER)
-    SV_RemoveOldStates();
 }
 
 static void deltaclient_service_network(void) {
-  /*
   netpeer_t *server;
   int latest_sync_tic;
-  int latest_command_index;
   int latest_delta_from_tic;
   int latest_delta_to_tic;
-  */
-
+  
   if (!DELTACLIENT)
     return;
 
-  /*
   server = CL_GetServerPeer();
-  */
 
+  if (server == NULL) {
+    P_Echo(consoleplayer, "Server disconnected");
+    N_Disconnect();
+    return;
+  }
+
+  latest_sync_tic = server->sync.tic;
+  latest_delta_from_tic = server->sync.delta.from_tic;
+  latest_delta_to_tic = server->sync.delta.to_tic;
+
+  /* CG: [XXX] What is this here for? */
+  /*
   if (gametic <= 0) {
     service_network();
     return;
   }
-
-  /*
-  if (server == NULL)
-    I_Error("Server disconnected");
-  */
-
-  /*
-  latest_sync_tic = server->sync.tic;
-  latest_command_index = server->sync.cmd;
-  latest_delta_from_tic = server->sync.delta.from_tic;
-  latest_delta_to_tic = server->sync.delta.to_tic;
   */
 
   service_network();
 
-  /*
   if (server->sync.delta.to_tic != latest_delta_to_tic) {
-    if (CL_LoadState()) {
+    if (cl_load_state()) {
       server->sync.outdated = true;
     }
     else {
       server->sync.tic = latest_sync_tic;
-      server->sync.cmd = latest_command_index;
       server->sync.delta.from_tic = latest_delta_from_tic;
       server->sync.delta.to_tic = latest_delta_to_tic;
     }
   }
-  */
 }
 
 static void render_extra_frame(void) {
-  dboolean should_render = false;
+  bool should_render = false;
 
   WasRenderedInTryRunTics = true;
 
@@ -248,12 +309,41 @@ static void render_extra_frame(void) {
   }
 }
 
+static void sv_remove_old_commands(void) {
+  NETPEER_FOR_EACH(iter) {
+    netpeer_t *np = iter.np;
+
+    for (int i = 0; i < MAXPLAYERS; i++) {
+      if (i == np->playernum)
+        continue;
+
+      P_RemoveOldCommands(
+        np->sync.commands[i].sync_index, np->sync.commands[i].sync_queue
+      );
+    }
+  }
+}
+
+static void sv_remove_old_states(void) {
+  int oldest_gametic = gametic;
+
+  NETPEER_FOR_EACH(entry) {
+    netpeer_t *np = entry.np;
+
+    if (np->sync.tic > 0)
+      oldest_gametic = MIN(oldest_gametic, np->sync.tic);
+  }
+
+  N_RemoveOldStates(oldest_gametic);
+}
+
 static void cleanup_old_commands_and_states(void) {
-  if (!DELTASERVER)
+  if (!SERVER)
     return;
 
-  SV_RemoveOldStates();
-  SV_RemoveOldCommands();
+  sv_remove_old_commands();
+  if (DELTASERVER)
+    sv_remove_old_states();
 }
 
 void N_LogPlayerPosition(player_t *player) {
@@ -427,72 +517,13 @@ bool CL_ReceivedSetup(void) {
   return received_setup;
 }
 
-void CL_SetReceivedSetup(dboolean new_received_setup) {
+void CL_SetReceivedSetup(bool new_received_setup) {
   received_setup = new_received_setup;
 }
 
 void CL_SetAuthorizationLevel(auth_level_e level) {
   if (level > authorization_level)
     authorization_level = level;
-}
-
-bool CL_LoadState(void) {
-  netpeer_t *server = CL_GetServerPeer();
-  game_state_delta_t *delta = NULL;
-
-  if (server == NULL)
-    return false;
-
-  delta = &server->sync.delta;
-
-  repredicting = true;
-  S_MuteSound();
-
-  if (!N_ApplyStateDelta(delta)) {
-    P_Echo(consoleplayer, "Error applying state delta");
-    repredicting = false;
-    S_UnMuteSound();
-    return false;
-  }
-
-  if (!N_LoadLatestState(false)) {
-    P_Echo(consoleplayer, "Error loading state");
-    repredicting = false;
-    S_UnMuteSound();
-    return false;
-  }
-
-  N_RemoveOldStates(delta->from_tic);
-
-  server->sync.tic = delta->to_tic;
-
-  P_RemoveSyncedCommands();
-
-  gametic++;
-
-  if (P_GetLocalCommandCount() <= 0) {
-    repredicting = false;
-    S_UnMuteSound();
-    return true;
-  }
-
-  P_UpdateConsoleplayerCommands();
-
-  is_extra_ddisplay = true;
-  run_tic();
-  is_extra_ddisplay = false;
-
-  P_ClearPlayerCommands(&players[consoleplayer]);
-
-  while (P_LoadLocalCommandForTic(gametic)) {
-    is_extra_ddisplay = true;
-    run_tic();
-    is_extra_ddisplay = false;
-  }
-
-  repredicting = false;
-  S_UnMuteSound();
-  return true;
 }
 
 void CL_MarkServerOutdated(void) {
@@ -509,64 +540,6 @@ void CL_MarkServerOutdated(void) {
   N_UpdateSync();
 }
 
-bool CL_GetServerSync(int *command_index, int *sync_tic) {
-  netpeer_t *server;
-
-  if (!CLIENT)
-    return false;
-
-  server = CL_GetServerPeer();
-
-  if (server == NULL)
-    return false;
-
-  *command_index = server->sync.cmd;
-  *sync_tic = server->sync.tic;
-
-  return true;
-}
-
-bool CL_IsCatchingUp(void) {
-  return catching_up;
-}
-
-void SV_RemoveOldCommands(void) {
-  int oldest_gametic = gametic;
-
-  if (DELTASERVER)
-    return;
-
-  P_ClearLocalCommands();
-
-  if (!CMDSYNC)
-    return;
-
-  NETPEER_FOR_EACH(entry) {
-    netpeer_t *client = entry.np;
-
-    if (client->sync.tic != 0)
-      oldest_gametic = MIN(oldest_gametic, client->sync.tic);
-  }
-
-  NETPEER_FOR_EACH(entry) {
-    netpeer_t *client = entry.np;
-    P_RemoveOldCommands(&players[client->playernum], oldest_gametic);
-  }
-}
-
-void SV_RemoveOldStates(void) {
-  int oldest_gametic = gametic;
-
-  NETPEER_FOR_EACH(entry) {
-    netpeer_t *np = entry.np;
-
-    if (np->sync.tic > 0)
-      oldest_gametic = MIN(oldest_gametic, np->sync.tic);
-  }
-
-  N_RemoveOldStates(oldest_gametic);
-}
-
 void N_TryRunTics(void) {
   static int tics_built = 0;
 
@@ -574,7 +547,7 @@ void N_TryRunTics(void) {
   int menu_renderer_calls = tics_elapsed * 3;
 
   int tics_run = 0;
-  dboolean render_fast = false;
+  bool render_fast = false;
   
   if (!SERVER)
     render_fast = movement_smooth && window_focused && (gametic > 0);
@@ -585,12 +558,10 @@ void N_TryRunTics(void) {
 #endif
 
   if ((!render_fast) && (tics_elapsed <= 0)) {
-    D_Log(LOG_SYNC, "Sleeping\n");
     I_uSleep(ms_to_next_tick * 1000);
   }
 
   if (tics_elapsed > 0) {
-    D_Log(LOG_SYNC, "%d tics elapsed (2)\n", tics_elapsed);
     if (DELTACLIENT) {
       loading_state = true;
       deltaclient_service_network();
@@ -609,16 +580,15 @@ void N_TryRunTics(void) {
 
     render_menu(MAX(menu_renderer_calls - tics_run, 0));
   }
-  else {
-    D_Log(LOG_SYNC, "Zero tics elapsed\n");
-  }
 
   C_Ticker();
 
   cleanup_old_commands_and_states();
 
-  if (CLIENT && gametic > 0 && CL_GetServerPeer() == NULL)
-    I_Error("Server disconnected.\n");
+  if (CLIENT && gametic > 0 && CL_GetServerPeer() == NULL) {
+    P_Echo(consoleplayer, "Server disconnected.");
+    N_Disconnect();
+  }
 
   if ((!SERVER) && render_fast)
     render_extra_frame();

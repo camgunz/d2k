@@ -77,35 +77,7 @@ static void serialize_corpse(gpointer data, gpointer user_data) {
   M_PBufWriteUInt(savebuffer, corpse->id);
 }
 
-static void serialize_command(gpointer data, gpointer user_data) {
-  netticcmd_t *ncmd = data;
-  pbuf_t *savebuffer = user_data;
-
-  M_PBufWriteInt(savebuffer, ncmd->index);
-  M_PBufWriteInt(savebuffer, ncmd->tic);
-  M_PBufWriteChar(savebuffer, ncmd->cmd.forwardmove);
-  M_PBufWriteChar(savebuffer, ncmd->cmd.sidemove);
-  M_PBufWriteShort(savebuffer, ncmd->cmd.angleturn);
-  M_PBufWriteShort(savebuffer, ncmd->cmd.consistancy);
-  M_PBufWriteUChar(savebuffer, ncmd->cmd.chatchar);
-  M_PBufWriteUChar(savebuffer, ncmd->cmd.buttons);
-
-  D_Log(LOG_SYNC,
-    "P_ArchivePlayer: NCMD: %u/%u, %d, %d, %d, %d, %d, %d\n",
-    ncmd->index,
-    ncmd->tic,
-    ncmd->cmd.forwardmove,
-    ncmd->cmd.sidemove,
-    ncmd->cmd.angleturn,
-    ncmd->cmd.consistancy,
-    ncmd->cmd.chatchar,
-    ncmd->cmd.buttons
-  );
-}
-
 static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
-  unsigned int command_count = P_GetPlayerCommandCount(player);
-
   M_PBufWriteInt(savebuffer, player->playerstate);
   M_PBufWriteChar(savebuffer, player->cmd.forwardmove);
   M_PBufWriteChar(savebuffer, player->cmd.sidemove);
@@ -193,8 +165,6 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   else
     M_PBufWriteString(savebuffer, "", 0);
   M_PBufWriteUChar(savebuffer, player->team);
-  M_PBufWriteUInt(savebuffer, command_count);
-  g_queue_foreach(player->commands, serialize_command, savebuffer);
 }
 
 static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
@@ -202,8 +172,6 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   static buf_t name_buf;
   static bool player_message_buf_initialized = false;
   static bool name_buf_initialized = false;
-
-  int command_count = 0;
 
   if (!player_message_buf_initialized) {
     M_BufferInit(&player_message_buf);
@@ -299,37 +267,6 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
     M_BufferReadStringDup(&name_buf, &player->name);
   }
   M_PBufReadUChar(savebuffer, &player->team);
-  M_PBufReadInt(savebuffer, &command_count);
-  if (command_count > MAX_COMMAND_COUNT)
-    I_Error("Command count too high (%d)\n", command_count);
-
-  P_ClearPlayerCommands(player);
-
-  for (unsigned int i = 0; i < command_count; i++) {
-    netticcmd_t *ncmd = P_GetNewBlankPlayerCommand(player);
-
-    M_PBufReadInt(savebuffer, &ncmd->index);
-    M_PBufReadInt(savebuffer, &ncmd->tic);
-    M_PBufReadChar(savebuffer, &ncmd->cmd.forwardmove);
-    M_PBufReadChar(savebuffer, &ncmd->cmd.sidemove);
-    M_PBufReadShort(savebuffer, &ncmd->cmd.angleturn);
-    M_PBufReadShort(savebuffer, &ncmd->cmd.consistancy);
-    M_PBufReadUChar(savebuffer, &ncmd->cmd.chatchar);
-    M_PBufReadUChar(savebuffer, &ncmd->cmd.buttons);
-
-    D_Log(LOG_SYNC,
-      "P_UnArchivePlayer: NCMD %u: %u/%u, %d, %d, %d, %d, %d, %d\n",
-      i,
-      ncmd->index,
-      ncmd->tic,
-      ncmd->cmd.forwardmove,
-      ncmd->cmd.sidemove,
-      ncmd->cmd.angleturn,
-      ncmd->cmd.consistancy,
-      ncmd->cmd.chatchar,
-      ncmd->cmd.buttons
-    );
-  }
 }
 
 static void P_ArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {

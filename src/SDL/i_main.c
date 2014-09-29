@@ -128,22 +128,27 @@ void I_Init2(void)
 
 /* cleanup handling -- killough:
  */
-#ifndef DEBUG
-static void I_SignalHandler(int s)
-{
+#ifdef DEBUG
+static void I_DebugSignalHandler(int s) {
+  fprintf(stderr, "Exiting on signal %d\n", s);
+  fflush(stderr);
+  exit(-1);
+}
+#else
+static void I_SignalHandler(int s) {
   char buf[2048];
 
-  signal(s,SIG_IGN);  /* Ignore future instances of this signal.*/
+  signal(s, SIG_IGN);  /* Ignore future instances of this signal.*/
 
   I_ExeptionProcess(); //e6y
 
-  strcpy(buf,"Exiting on signal: ");
-  I_SigString(buf+strlen(buf),2000-strlen(buf),s);
+  strcpy(buf, "Exiting on signal: ");
+  I_SigString(buf + strlen(buf), 2000 - strlen(buf), s);
 
   /* If corrupted memory could cause crash, dump memory
    * allocation history, which points out probable causes
    */
-  if (s==SIGSEGV || s==SIGILL || s==SIGFPE)
+  if (s == SIGSEGV || s == SIGILL || s == SIGFPE)
     Z_DumpHistory(buf);
 
   I_Error("I_SignalHandler: %s", buf);
@@ -656,7 +661,15 @@ int main(int argc, char **argv)
   Z_Init();                  /* 1/18/98 killough: start up memory stuff first */
 
   atexit(I_Quit);
-#ifndef DEBUG
+#ifdef DEBUG
+  signal(SIGSEGV, I_DebugSignalHandler);
+  signal(SIGTERM, I_DebugSignalHandler);
+  signal(SIGFPE,  I_DebugSignalHandler);
+  signal(SIGILL,  I_DebugSignalHandler);
+  signal(SIGINT,  I_DebugSignalHandler);  /* killough 3/6/98: allow CTRL-BRK during init */
+  signal(SIGABRT, I_DebugSignalHandler);
+#else
+#if 0 /* CG: There's really no need to parachute these */
   if (!M_CheckParm("-devparm"))
     signal(SIGSEGV, I_SignalHandler);
 
@@ -665,6 +678,7 @@ int main(int argc, char **argv)
   signal(SIGILL,  I_SignalHandler);
   signal(SIGINT,  I_SignalHandler);  /* killough 3/6/98: allow CTRL-BRK during init */
   signal(SIGABRT, I_SignalHandler);
+#endif
 #endif
 
   // Ability to use only the allowed CPUs

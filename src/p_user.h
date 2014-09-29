@@ -33,13 +33,12 @@ typedef struct player_message_s {
   int sfx;
 } player_message_t;
 
-void P_PlayerThink(player_t *player);
+void P_PlayerThink(int playernum);
 void P_CalcHeight(player_t *player);
 void P_DeathThink(player_t *player);
 void P_MovePlayer(player_t *player);
 void P_Thrust(player_t *player, angle_t angle, fixed_t move);
 void P_SetPitch(player_t *player);
-void P_RunPlayerCommands(player_t *player);
 void P_SetName(int playernum, char *name);
 void P_AddMessage(int playernum, player_message_t *message);
 

@@ -771,7 +771,7 @@ static void D_DoomLoop(void) {
     // process one or more tics
     if (singletics) {
       I_StartTic();
-      G_BuildTiccmd();
+      G_BuildTiccmd(&players[consoleplayer].cmd);
       if (advancedemo)
         D_DoAdvanceDemo();
       M_Ticker();

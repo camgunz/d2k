@@ -35,6 +35,7 @@
 #include "n_net.h"
 #include "n_main.h"
 #include "n_proto.h"
+#include "p_cmd.h"
 #include "p_map.h"
 #include "p_spec.h"
 #include "p_user.h"
@@ -439,7 +440,9 @@ void P_DeathThink(player_t *player) {
 // P_PlayerThink
 //
 
-void P_PlayerThink(player_t *player) {
+void P_PlayerThink(int playernum) {
+  player_t *player = &players[playernum];
+
   if (movement_smooth) {
     player->prev_viewz = player->viewz;
     player->prev_viewangle = R_SmoothPlaying_Get(player) + viewangleoffset;
@@ -455,7 +458,7 @@ void P_PlayerThink(player_t *player) {
   else
     player->mo->flags &= ~MF_NOCLIP;
 
-  P_RunPlayerCommands(player);
+  P_RunPlayerCommands(playernum);
 
   if (player->playerstate == PST_DEAD) {
     P_DeathThink(player);

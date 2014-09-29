@@ -43,6 +43,8 @@
 #include "n_net.h"
 #include "n_main.h"
 
+#define DEBUG_SOUND 1
+
 // when to clip out sounds
 // Does not fit the large outdoor areas.
 #define S_CLIPPING_DIST (1200 << FRACBITS)
@@ -188,6 +190,8 @@ static int adjust_sound_params(mobj_t *listener, mobj_t *source,
 }
 
 static void stop_channel(channel_t *c) {
+  D_Log(LOG_SOUND, "stop_channel\n");
+
   if (!c->sfxinfo)
     return;
 
@@ -373,7 +377,7 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
   if (sfx->usefulness++ < 0)
     sfx->usefulness = 1;
 
-  printf("(%d) Starting sound %d\n", gametic, sfx_id);
+  D_Log(LOG_SOUND, "(%d) Starting sound %d\n", gametic, sfx_id);
 
   // Assigns the handle to one of the channels in the mix/output buffer.
   // e6y: [Fix] Crash with zero-length sounds.
@@ -395,6 +399,16 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
 //  allocates channel buffer, sets S_sfx lookup.
 //
 void S_Init(int sfxVolume, int musicVolume) {
+
+#if DEBUG_SOUND
+  if (!MULTINET)
+    D_EnableLogChannel(LOG_SOUND, "sound.log");
+  else if (CLIENT)
+    D_EnableLogChannel(LOG_SOUND, "client-sound.log");
+  else if (SERVER)
+    D_EnableLogChannel(LOG_SOUND, "server-sound.log");
+#endif
+
   idmusnum = -1; //jff 3/17/98 insure idmus number is blank
 
   //jff 1/22/98 skip sound init if sound not enabled
@@ -479,6 +493,11 @@ void S_Start(void) {
 }
 
 void S_StartSound(mobj_t *mobj, int sfx_id) {
+  if (mobj)
+    D_Log(LOG_SOUND, "S_StartSound: %u, %d\n", mobj->id, sfx_id);
+  else
+    D_Log(LOG_SOUND, "S_StartSound: %p, %d\n", mobj, sfx_id);
+
   if (CL_RePredicting())
     return;
 
@@ -486,6 +505,8 @@ void S_StartSound(mobj_t *mobj, int sfx_id) {
 }
 
 void S_StopSound(mobj_t *mobj) {
+  D_Log(LOG_SOUND, "S_StopSound: %u\n", mobj->id);
+
   for (unsigned int i = 0; i < channels->len; i++) {
     channel_t *channel = &g_array_index(channels, channel_t, i);
 

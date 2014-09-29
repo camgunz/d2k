@@ -37,11 +37,18 @@ typedef struct netcom_s {
   netchan_t unreliable;
 } netcom_t;
 
+typedef struct command_queue_s {
+  int     sync_index;
+  GQueue *sync_queue;
+  GQueue *run_queue;
+} command_queue_t;
+
 typedef struct netsync_s {
   bool               initialized;
   bool               outdated;
   int                tic;
-  int                cmd;
+  /* CG: TODO: This ought to be a hash table */
+  command_queue_t    commands[MAXPLAYERS];
   game_state_delta_t delta;
 } netsync_t;
 

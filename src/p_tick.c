@@ -303,7 +303,7 @@ static dboolean setup_tic(void) {
 static void run_regular_tic(void) {
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i])
-      P_PlayerThink(&players[i]);
+      P_PlayerThink(i);
   }
 }
 

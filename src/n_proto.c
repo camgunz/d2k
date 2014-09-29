@@ -240,55 +240,7 @@ static void handle_server_message(netpeer_t *np) {
 }
 
 static void handle_sync(netpeer_t *np) {
-  dboolean update_sync = false;
-
-  if (DELTACLIENT) {
-    netpeer_t *server = CL_GetServerPeer();
-    int latest_sync_tic;
-    int latest_command_index;
-    int latest_delta_from_tic;
-    int latest_delta_to_tic;
-
-    if (!server)
-      return;
-
-    latest_sync_tic = server->sync.tic;
-    latest_command_index = server->sync.cmd;
-    latest_delta_from_tic = server->sync.delta.from_tic;
-    latest_delta_to_tic = server->sync.delta.to_tic;
-
-    if (!N_UnpackDeltaSync(np))
-      return;
-
-    if (server->sync.delta.to_tic == latest_delta_to_tic)
-      return;
-
-    if (CL_LoadState()) {
-      server->sync.outdated = true;
-    }
-    else {
-      server->sync.tic = latest_sync_tic;
-      server->sync.cmd = latest_command_index;
-      server->sync.delta.from_tic = latest_delta_from_tic;
-      server->sync.delta.to_tic = latest_delta_to_tic;
-    }
-
-    return;
-  }
-
-  if ((!DELTACLIENT) && (!N_UnpackSync(np, &update_sync)))
-    return;
-
-  if (update_sync) {
-    if (SERVER) {
-      NETPEER_FOR_EACH(entry) {
-        entry.np->sync.outdated = true;
-      }
-    }
-    else {
-      np->sync.outdated = true;
-    }
-  }
+  N_UnpackSync(np);
 }
 
 static void handle_player_message(netpeer_t *np) {
@@ -526,21 +478,18 @@ void N_UpdateSync(void) {
     return;
   }
 
-  NETPEER_FOR_EACH(entry) {
-    if (entry.np->sync.outdated && entry.np->sync.tic != 0) {
-      N_PeerClearUnreliable(entry.np->peernum);
+  NETPEER_FOR_EACH(iter) {
+    if (iter.np->sync.outdated && iter.np->sync.tic != 0) {
+      N_PeerClearUnreliable(iter.np->peernum);
 
       if (DELTASERVER) {
-        if (entry.np->sync.tic < N_GetLatestState()->tic)
-          N_BuildStateDelta(entry.np->sync.tic, &entry.np->sync.delta);
-
-        N_PackDeltaSync(entry.np);
-      }
-      else {
-        N_PackSync(entry.np);
+        if (iter.np->sync.tic < N_GetLatestState()->tic)
+          N_BuildStateDelta(iter.np->sync.tic, &iter.np->sync.delta);
       }
 
-      entry.np->sync.outdated = false;
+      N_PackSync(iter.np);
+
+      iter.np->sync.outdated = false;
     }
   }
 }
@@ -802,6 +751,26 @@ void SV_ResyncPeers(void) {
   }
 }
 
+bool SV_GetCommandSync(int playernum1, int playernum2, int *sync_index,
+                                                       GQueue **sync_commands,
+                                                       GQueue **run_commands) {
+  netpeer_t *np = N_PeerForPlayer(playernum1);
+
+  if (np == NULL)
+    return false;
+
+  if (sync_index != NULL)
+    *sync_index = np->sync.commands[playernum2].sync_index;
+
+  if (sync_commands != NULL)
+    *sync_commands = np->sync.commands[playernum2].sync_queue;
+
+  if (run_commands != NULL)
+    *run_commands = np->sync.commands[playernum2].run_queue;
+
+  return true;
+}
+
 void CL_SendAuthRequest(const char *password) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
@@ -821,6 +790,25 @@ void CL_SendVoteRequest(const char *command) {
   CHECK_CONNECTION(np);
 
   N_PackVoteRequest(np, command);
+}
+
+bool CL_GetCommandSync(int playernum, int *sync_index, GQueue **sync_commands,
+                                                       GQueue **run_commands) {
+  netpeer_t *server = CL_GetServerPeer();
+
+  if (server == NULL)
+    return false;
+
+  if (sync_index != NULL)
+    *sync_index = server->sync.commands[playernum].sync_index;
+
+  if (sync_commands != NULL)
+    *sync_commands = server->sync.commands[playernum].sync_queue;
+
+  if (run_commands != NULL)
+    *run_commands = server->sync.commands[playernum].run_queue;
+
+  return true;
 }
 
 /* vi: set et ts=2 sw=2: */

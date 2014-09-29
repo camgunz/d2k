@@ -25,29 +25,12 @@
 #define P_CMD_H__
 
 void         P_InitCommands(void);
-void         P_InitLocalCommands(void);
-void         P_InitPlayerCommands(player_t *player);
-unsigned int P_GetLocalCommandCount(void);
-unsigned int P_GetPlayerCommandCount(player_t *player);
-void         P_UpdateConsoleplayerCommands(void);
-void         P_ClearPlayerCommands(player_t *player);
-void         P_ClearLocalCommands(void);
-void         P_RemoveSyncedCommands(void);
-void         P_PrintPlayerCommands(GQueue *commands);
+netticcmd_t* P_GetNewBlankCommand(void);
 void         P_BuildCommand(void);
-void         P_RunAllPlayerCommands(player_t *player);
-void         P_RunBufferedCommands(player_t *player);
-void         P_RunNextCommand(player_t *player);
-void         P_PredictPlayerPosition(player_t *player);
-void         P_RunPlayerCommand(player_t *player);
-void         P_RunPlayerCommands(player_t *player);
-bool         P_LoadCommandForTic(player_t *player, int tic);
-bool         P_LoadLocalCommandForTic(int tic);
-void         P_RemoveOldCommands(player_t *player, int tic);
-GQueue*      P_GetLocalCommands(void);
-netticcmd_t* P_GetNewIndexedLocalCommand(void);
-netticcmd_t* P_GetNewBlankPlayerCommand(player_t *player);
-void         P_EnsurePlayerCommandsSize(player_t *player, unsigned int min_sz);
+void         P_RunPlayerCommands(int playernum);
+unsigned int P_GetPlayerCommandCount(int playernum);
+void         P_RemoveOldCommands(int sync_index, GQueue *commands);
+void         P_RecycleCommand(netticcmd_t *ncmd);
 
 #endif
 

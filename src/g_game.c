@@ -546,7 +546,7 @@ static int G_NextWeapon(int direction) {
   return weapon_order_table[i].weapon_num;
 }
 
-void G_BuildTiccmd(void) {
+void G_BuildTiccmd(ticcmd_t *cmd) {
   int strafe = false;
   int bstrafe;
   int speed = autorun;
@@ -555,20 +555,7 @@ void G_BuildTiccmd(void) {
   int side;
   int newweapon; // phares
   player_t *player = &players[consoleplayer];
-  netticcmd_t *ncmd = P_GetNewIndexedLocalCommand();
-  ticcmd_t *cmd = &ncmd->cmd;
   
-  ncmd->tic = gametic;
-
-  /* cphipps - remove needless I_BaseTiccmd call, just set the ticcmd to zero */
-
-  /*
-   * CG: This is done elsewhere now
-   *
-   * memset(cmd, 0, sizeof(ticcmd_t));
-   *
-   */
-
   if (gamekeydown[key_strafe])
     strafe = true;
   else if (mousebuttons[mousebstrafe])
@@ -1231,18 +1218,14 @@ void G_Ticker(void) {
 
       cmd = &players[i].cmd;
 
-      memset(cmd, 0, sizeof(ticcmd_t));
-      
       //e6y
       if (demoplayback) {
+        memset(cmd, 0, sizeof(ticcmd_t));
         G_ReadDemoTiccmd(cmd);
       }
       else if (democontinue) {
+        memset(cmd, 0, sizeof(ticcmd_t));
         G_ReadDemoContinueTiccmd(cmd);
-      }
-      else if ((!MULTINET) || CMDSYNC) {
-        if (!P_LoadCommandForTic(&players[i], gametic))
-          continue;
       }
 
       if (demorecording)

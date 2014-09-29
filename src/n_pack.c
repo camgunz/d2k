@@ -298,70 +298,101 @@ static void free_string(gpointer data) {
   free(data);
 }
 
-static void pack_commands(pbuf_t *pbuf, netpeer_t *np, short playernum) {
-  netticcmd_t *n = NULL;
-  byte command_count = 0;
-  GQueue *commands = NULL;
-  unsigned int command_array_size;
+static void pack_commands(pbuf_t *pbuf, netpeer_t *np, int playernum) {
+  GQueue *commands = np->sync.commands[playernum].sync_queue;
+  unsigned int command_count = g_queue_get_length(commands);
 
   M_PBufWriteShort(pbuf, playernum);
 
-  if (DELTACLIENT && playernum == consoleplayer) {
-    commands = P_GetLocalCommands();
-    command_array_size = P_GetLocalCommandCount();
+  if ((CLIENT && playernum == consoleplayer) ||
+      (SERVER && playernum != np->playernum)) {
+    /* CG: TODO: Add limit on command_count */
+    M_PBufWriteUChar(pbuf, command_count);
+
+    D_Log(LOG_SYNC, "pack_commands: Packing %u commands for %d\n",
+      command_count, playernum
+    );
+
+    for (unsigned int i = 0; i < command_count; i++) {
+      netticcmd_t *ncmd = g_queue_peek_nth(commands, i);
+
+      M_PBufWriteInt(pbuf, ncmd->index);
+      M_PBufWriteInt(pbuf, ncmd->tic);
+      M_PBufWriteChar(pbuf, ncmd->cmd.forwardmove);
+      M_PBufWriteChar(pbuf, ncmd->cmd.sidemove);
+      M_PBufWriteShort(pbuf, ncmd->cmd.angleturn);
+      M_PBufWriteShort(pbuf, ncmd->cmd.consistancy);
+      M_PBufWriteUChar(pbuf, ncmd->cmd.chatchar);
+      M_PBufWriteUChar(pbuf, ncmd->cmd.buttons);
+    }
   }
   else {
-    commands = players[playernum].commands;
-    command_array_size = P_GetPlayerCommandCount(&players[playernum]);
+    M_PBufWriteInt(pbuf, np->sync.commands[playernum].sync_index);
+
+    D_Log(LOG_SYNC, "unpack_commands: Acknowledging command %d from %d\n",
+      np->sync.commands[playernum].sync_index, playernum
+    );
+  }
+}
+
+bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
+  short playernum;
+
+  read_player(pbuf, playernum);
+
+  if ((CLIENT && playernum != consoleplayer) ||
+      (SERVER && playernum == np->playernum)) {
+    unsigned char command_count;
+
+    read_uchar(pbuf, command_count, "command count");
+
+    D_Log(LOG_SYNC, "unpack_commands: Unpacking %u commands for %d\n",
+      command_count, playernum
+    );
+
+    /*
+     * CG: TODO: Add a limit to the number of commands accepted here.  uchar
+     *           limits this to 255 commands, but in reality that's > 7
+     *           seconds, which is still far too long.  Quake has an
+     *           "sv_maxlag" setting (or something); that may be preferable to
+     *           a static limit... but I still think having an upper bound on
+     *           that setting is prudent.
+     */
+
+    for (unsigned int i = 0; i < command_count; i++) {
+      netticcmd_t ncmd;
+      
+      read_int(pbuf,   ncmd.index,           "command index");
+      read_int(pbuf,   ncmd.tic,             "command TIC");
+      read_char(pbuf,  ncmd.cmd.forwardmove, "command forward value");
+      read_char(pbuf,  ncmd.cmd.sidemove,    "command side value");
+      read_short(pbuf, ncmd.cmd.angleturn,   "command angle value");
+      read_short(pbuf, ncmd.cmd.consistancy, "command consistancy value");
+      read_uchar(pbuf, ncmd.cmd.chatchar,    "comand chatchar value");
+      read_uchar(pbuf, ncmd.cmd.buttons,     "command buttons value");
+
+      if (ncmd.index > np->sync.commands[playernum].sync_index) {
+        netticcmd_t *run_ncmd = P_GetNewBlankCommand();
+
+        memcpy(run_ncmd, &ncmd, sizeof(netticcmd_t));
+        g_queue_push_tail(np->sync.commands[playernum].run_queue, run_ncmd);
+        np->sync.commands[playernum].sync_index = ncmd.index;
+      }
+    }
+  }
+  else {
+    int sync_index;
+
+    read_int(pbuf, sync_index, "command sync index");
+    np->sync.commands[playernum].sync_index = sync_index;
+
+    D_Log(LOG_SYNC, "unpack_commands: Command %d from %d acknowledged by %d\n",
+      sync_index, playernum, np->playernum
+    );
+
   }
 
-  D_Log(LOG_SYNC, "%d, %d, %u: ",
-    DELTACLIENT,
-    playernum == consoleplayer,
-    command_array_size
-  );
-  P_PrintPlayerCommands(commands);
-
-  for (unsigned int i = 0; i < command_array_size; i++) {
-    netticcmd_t *ncmd = g_queue_peek_nth(commands, i);
-
-    if (ncmd->index > np->sync.cmd)
-      command_count++;
-  }
-
-  M_PBufWriteUChar(pbuf, command_count);
-
-  if (command_count == 0) {
-    D_Log(LOG_SYNC, "[...]\n");
-    return;
-  }
-
-  for (unsigned int i = 0; i < command_array_size; i++) {
-    netticcmd_t *ncmd = g_queue_peek_nth(commands, i);
-
-    if (ncmd->index <= np->sync.cmd)
-      continue;
-
-    if (n == NULL)
-      D_Log(LOG_SYNC, "[%d/%d => ", ncmd->index, ncmd->tic);
-
-    n = ncmd;
-
-    if (ncmd->index == 0 && ncmd->tic == 0)
-      puts("[!!!] SENDING BLANK COMMAND!");
-
-    M_PBufWriteInt(pbuf, ncmd->index);
-    M_PBufWriteInt(pbuf, ncmd->tic);
-    M_PBufWriteChar(pbuf, ncmd->cmd.forwardmove);
-    M_PBufWriteChar(pbuf, ncmd->cmd.sidemove);
-    M_PBufWriteShort(pbuf, ncmd->cmd.angleturn);
-    M_PBufWriteShort(pbuf, ncmd->cmd.consistancy);
-    M_PBufWriteUChar(pbuf, ncmd->cmd.chatchar);
-    M_PBufWriteUChar(pbuf, ncmd->cmd.buttons);
-  }
-
-  if (n != NULL)
-    D_Log(LOG_SYNC, "%d/%d] (%d)\n", n->index, n->tic, command_count);
+  return true;
 }
 
 void N_PackSetup(netpeer_t *np) {
@@ -632,242 +663,63 @@ void N_PackSync(netpeer_t *np) {
   pbuf_t *pbuf = N_PeerBeginMessage(
     np->peernum, NET_CHANNEL_UNRELIABLE, nm_sync
   );
-  unsigned short player_count = 0;
 
-  D_Log(LOG_SYNC, "(%d) Sending sync: ST/CT: (%d/%d) ",
-    gametic, np->sync.tic, np->sync.cmd
-  );
+  if (CLIENT) {
+    M_PBufWriteInt(pbuf, MAXPLAYERS);
 
-  M_PBufWriteInt(pbuf, np->sync.tic);
-
-  if (SERVER)
-    player_count = N_PeerGetCount();
-  else
-    player_count = 1;
-
-  M_PBufWriteUShort(pbuf, player_count);
-
-  if (SERVER) {
-    NETPEER_FOR_EACH(entry) {
-      pack_commands(pbuf, np, entry.np->playernum);
-    }
+    for (int i = 0; i < MAXPLAYERS; i++)
+      pack_commands(pbuf, np, i);
   }
   else {
-    pack_commands(pbuf, np, consoleplayer);
-  }
-}
+    M_PBufWriteInt(pbuf, N_PeerGetCount());
 
-dboolean N_UnpackSync(netpeer_t *np, dboolean *update_sync) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
-  unsigned short m_player_count = 0;
-  int m_sync_tic = -1;
-  int m_command_index = np->sync.cmd;
-  dboolean m_update_sync = false;
-  bool found_new_command;
-  int start_index;
-  int start_tic;
-  int end_index;
-  int end_tic;
-
-  *update_sync = false;
-
-  read_int(pbuf, m_sync_tic, "sync tic");
-
-  if (m_sync_tic <= np->sync.tic)
-    return true;
-
-  D_Log(LOG_SYNC, "(%d) Received sync ", gametic);
-
-  if ((np->sync.tic != m_sync_tic))
-    m_update_sync = true;
-
-  D_Log(LOG_SYNC, "ST/CT: (%d/%d) ", m_sync_tic, m_command_index);
-
-  read_ushort(pbuf, m_player_count, "player count");
-
-  for (int i = 0; i < m_player_count; i++) {
-    short m_playernum = 0;
-    byte command_count = 0;
-    GQueue *commands = NULL;
-
-    read_player(pbuf, m_playernum);
-
-    if (SERVER && np->playernum != m_playernum) {
-      D_Log(
-        LOG_SYNC, 
-        "N_UnpackPlayerCommands: Erroneously received player commands for %d "
-        "from player %d\n",
-        m_playernum,
-        np->playernum
-      );
-      return false;
-    }
-
-    /*
-     * CG: TODO: Add a limit to the number of commands accepted here.  uchar
-     *           limits this to 255 commands, but in reality that's > 7
-     *           seconds, which is still far too long.  Quake has an
-     *           "sv_maxlag" setting (or something); that may be preferable to
-     *           a static limit... but I still think having an upper bound on
-     *           that setting is prudent.
-     */
-
-    read_uchar(pbuf, command_count, "command count");
-
-    commands = players[m_playernum].commands;
-
-    D_Log(LOG_SYNC, "Unpacking %d commands.\n", command_count);
-
-    for (unsigned int i = 0; i < command_count; i++) {
-      int command_index = -1;
-      int tic = -1;
-
-      read_int(pbuf, command_index, "command index");
-      read_int(pbuf, tic, "command tic");
-      
-      if (m_command_index == 0)
-        m_command_index = command_index - 1;
-
-      if (command_index > m_command_index) {
-        netticcmd_t *ncmd = P_GetNewBlankPlayerCommand(&players[m_playernum]);
-
-        m_command_index = command_index;
-
-        ncmd->index = command_index;
-        ncmd->tic = tic;
-
-        if (ncmd->index == 0 && ncmd->tic == 0)
-          puts("[!!!] RECEIVED BLANK COMMAND!");
-
-        if (!found_new_command) {
-          found_new_command = true;
-          start_index = ncmd->index;
-          start_tic = ncmd->tic;
-        }
-        else {
-          end_index = ncmd->index;
-          end_tic = ncmd->tic;
-        }
-
-        read_char(pbuf,  ncmd->cmd.forwardmove, "command forward value");
-        read_char(pbuf,  ncmd->cmd.sidemove,    "command side value");
-        read_short(pbuf, ncmd->cmd.angleturn,   "command angle value");
-        read_short(pbuf, ncmd->cmd.consistancy, "command consistancy value");
-        read_uchar(pbuf, ncmd->cmd.chatchar,    "comand chatchar value");
-        read_uchar(pbuf, ncmd->cmd.buttons,     "command buttons value");
-      }
-      else {
-        ticcmd_t cmd;
-
-        read_char(pbuf,  cmd.forwardmove, "command forward value");
-        read_char(pbuf,  cmd.sidemove,    "command side value");
-        read_short(pbuf, cmd.angleturn,   "command angle value");
-        read_short(pbuf, cmd.consistancy, "command consistancy value");
-        read_uchar(pbuf, cmd.chatchar,    "command chatchar value");
-        read_uchar(pbuf, cmd.buttons,     "command buttons value");
-      }
-    }
-
-    if (found_new_command) {
-      D_Log(LOG_SYNC, "[%d/%d => %d/%d]\nCommands after sync: ",
-        start_index, start_tic, end_index, end_tic
-      );
-      P_PrintPlayerCommands(commands);
-    }
-    else {
-      D_Log(LOG_SYNC, "[...]\n");
+    NETPEER_FOR_EACH(iter) {
+      pack_commands(pbuf, np, iter.np->playernum);
     }
   }
 
-  if (np->sync.cmd != m_command_index)
-    m_update_sync = true;
-
-  if (m_update_sync) {
-    np->sync.tic = m_sync_tic;
-    np->sync.cmd = m_command_index;
-    *update_sync = m_update_sync;
-  }
-
-  return true;
-}
-
-void N_PackDeltaSync(netpeer_t *np) {
-  pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_UNRELIABLE, nm_sync
-  );
-
-  D_Log(LOG_SYNC, "(%d) Sending sync: ST/CT: (%d/%d) Delta: [%d => %d] (%zu)\n",
-    gametic,
-    np->sync.tic,
-    np->sync.cmd,
-    np->sync.delta.from_tic,
-    np->sync.delta.to_tic,
-    np->sync.delta.data.size
-  );
-
-  M_PBufWriteInt(pbuf, np->sync.tic);
-  M_PBufWriteInt(pbuf, np->sync.cmd);
-  M_PBufWriteInt(pbuf, np->sync.delta.from_tic);
-  M_PBufWriteInt(pbuf, np->sync.delta.to_tic);
-  M_PBufWriteBytes(pbuf, np->sync.delta.data.data, np->sync.delta.data.size);
-}
-
-dboolean N_UnpackDeltaSync(netpeer_t *np) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
-  int m_sync_tic = 0;
-  int m_command_index = 0;
-  int m_delta_from_tic = 0;
-  int m_delta_to_tic = 0;
-
-  read_int(pbuf, m_sync_tic, "delta tic");
-  read_int(pbuf, m_command_index, "delta command index");
-  read_int(pbuf, m_delta_from_tic, "delta from tic");
-  read_int(pbuf, m_delta_to_tic, "delta to tic");
-
-  if (m_delta_to_tic <= np->sync.tic)
-    return true;
-
-  /*
-   * CG: Don't load a delta in the very near future; give ourselves time to
-   * catch up
-   */
-
-  /* CG: Let's see how we do w/o this
-   *
-   * if ((m_delta_to_tic >= gametic) && (m_delta_to_tic < gametic + 1))
-   *   return true;
-   *
-   */
-
-  if (m_delta_to_tic > gametic) {
-    D_Log(
-      LOG_SYNC, 
-      "(%d) [!!!] Received future sync! -- Delta: [%d => %d] -- %d, %d.\n",
-      gametic,
-      m_delta_from_tic,
-      m_delta_to_tic,
-      m_delta_to_tic - gametic,
-      m_delta_to_tic > gametic
+  if (DELTASERVER) {
+    D_Log(LOG_SYNC, "N_PackSync: %d, %d, %d\n",
+      np->sync.tic, np->sync.delta.from_tic, np->sync.delta.to_tic
     );
+    M_PBufWriteInt(pbuf, np->sync.tic);
+    M_PBufWriteInt(pbuf, np->sync.delta.from_tic);
+    M_PBufWriteInt(pbuf, np->sync.delta.to_tic);
+    M_PBufWriteBytes(pbuf, np->sync.delta.data.data, np->sync.delta.data.size);
+  }
+}
+
+dboolean N_UnpackSync(netpeer_t *np) {
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  int m_peer_count = -1;
+
+  read_int(pbuf, m_peer_count, "peer count");
+
+  while (m_peer_count-- > 0) {
+    if (!unpack_commands(pbuf, np))
+      return false;
   }
 
-  np->sync.tic = m_sync_tic;
-  np->sync.cmd = m_command_index;
-  np->sync.delta.from_tic = m_delta_from_tic;
-  np->sync.delta.to_tic = m_delta_to_tic;
-  read_bytes(pbuf, np->sync.delta.data, "delta data");
+  if (DELTACLIENT) {
+    int m_sync_tic;
+    int m_delta_from_tic;
+    int m_delta_to_tic;
 
-  D_Log(LOG_SYNC,
-    "(%d) Received new sync: ST/CT: (%d/%d) Delta: [%d => %d (%d)] "
-    "(%zu bytes)\n",
-    gametic,
-    np->sync.tic,
-    np->sync.cmd,
-    np->sync.delta.from_tic,
-    np->sync.delta.to_tic,
-    np->sync.delta.to_tic - np->sync.delta.from_tic,
-    np->sync.delta.data.size
-  );
+    read_int(pbuf, m_sync_tic,       "delta tic");
+    read_int(pbuf, m_delta_from_tic, "delta from tic");
+    read_int(pbuf, m_delta_to_tic,   "delta to tic");
+
+    D_Log(LOG_SYNC, "N_UnpackSync: %d, %d, %d\n",
+      m_sync_tic, m_delta_from_tic, m_delta_to_tic
+    );
+
+    if (m_delta_to_tic > np->sync.tic) {
+      np->sync.tic = m_sync_tic;
+      np->sync.delta.from_tic = m_delta_from_tic;
+      np->sync.delta.to_tic = m_delta_to_tic;
+      read_bytes(pbuf, np->sync.delta.data, "delta data");
+    }
+  }
 
   return true;
 }
