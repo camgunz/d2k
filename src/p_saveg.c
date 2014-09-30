@@ -746,6 +746,8 @@ void P_UnArchiveWorld(pbuf_t *savebuffer) {
 void P_ArchiveThinkers(pbuf_t *savebuffer) {
   unsigned int thinker_count = 0;
 
+  M_PBufWriteUInt(savebuffer, P_IdentGetMaxID());
+
   // killough 3/26/98: Save boss brain state
   M_PBufWriteInt(savebuffer, brain.easy);
   M_PBufWriteInt(savebuffer, brain.targeton);
@@ -798,6 +800,10 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
 
 void P_UnArchiveThinkers(pbuf_t *savebuffer) {
   totallive = 0; /* CG: This is a global that lives in g_game.c, just FYI */
+  uint32_t new_max_id;
+
+  M_PBufReadUInt(savebuffer, &new_max_id);
+  P_IdentSetMaxID(new_max_id);
 
   // killough 3/26/98: Load boss brain state
   M_PBufReadInt(savebuffer, &brain.easy);

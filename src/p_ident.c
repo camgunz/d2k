@@ -23,7 +23,9 @@
 
 #include "z_zone.h"
 
+#include "d_ticcmd.h"
 #include "lprintf.h"
+#include "n_net.h"
 
 static GHashTable *id_hash = NULL;
 static uint32_t max_id = 0;
@@ -46,6 +48,8 @@ void P_IdentGetID(void *obj, uint32_t *obj_id) {
     I_Error("P_IdentGetID: ID %d already assigned", id);
 
   *obj_id = id;
+
+  D_Log(LOG_SOUND, "Got ID %u\n", id);
 }
 
 void P_IdentAssignID(void *obj, uint32_t obj_id) {
@@ -67,6 +71,9 @@ void P_IdentReleaseID(uint32_t *obj_id) {
   g_hash_table_remove(id_hash, GUINT_TO_POINTER(id));
 
   *obj_id = 0;
+
+  if (!CLIENT)
+    D_Log(LOG_SOUND, "Released ID %u\n", id);
 }
 
 void* P_IdentLookup(uint32_t id) {
@@ -76,6 +83,14 @@ void* P_IdentLookup(uint32_t id) {
 void P_IdentReset(void) {
   g_hash_table_remove_all(id_hash);
   max_id = 0;
+}
+
+uint32_t P_IdentGetMaxID(void) {
+  return max_id;
+}
+
+void P_IdentSetMaxID(uint32_t new_max_id) {
+  max_id = new_max_id;
 }
 
 /* vi: set et ts=2 sw=2: */

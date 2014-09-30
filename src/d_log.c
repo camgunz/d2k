@@ -58,6 +58,7 @@ void D_EnableLogChannel(log_channel_e channel, const char *filename) {
 void D_Log(log_channel_e channel, const char *fmt, ...) {
   FILE *fh;
   va_list args;
+  va_list args2;
 
   if (channel >= LOG_MAX)
     I_Error("D_Log: Invalid channel %d (valid: 0 - %d)", channel, LOG_MAX);
@@ -67,9 +68,16 @@ void D_Log(log_channel_e channel, const char *fmt, ...) {
   if (fh == NULL)
     return;
 
+  va_copy(args2, args);
+
   va_start(args, fmt);
   vfprintf(fh, fmt, args);
   va_end(args);
+
+  va_start(args2, fmt);
+  if (channel == LOG_SOUND)
+    vfprintf(stderr, fmt, args2);
+  va_end(args2);
 }
 
 /* vi: set et ts=2 sw=2: */

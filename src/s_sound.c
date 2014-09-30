@@ -190,13 +190,13 @@ static int adjust_sound_params(mobj_t *listener, mobj_t *source,
 }
 
 static void stop_channel(channel_t *c) {
-  D_Log(LOG_SOUND, "stop_channel\n");
-
   if (!c->sfxinfo)
     return;
 
   if (CL_RePredicting())
     return;
+
+  D_Log(LOG_SOUND, "stop_channel\n");
 
   // stop the sound playing
   if (I_SoundIsPlaying(c->handle))
@@ -493,13 +493,13 @@ void S_Start(void) {
 }
 
 void S_StartSound(mobj_t *mobj, int sfx_id) {
+  if (CL_RePredicting())
+    return;
+
   if (mobj)
     D_Log(LOG_SOUND, "S_StartSound: %u, %d\n", mobj->id, sfx_id);
   else
     D_Log(LOG_SOUND, "S_StartSound: %p, %d\n", mobj, sfx_id);
-
-  if (CL_RePredicting())
-    return;
 
   start_sound_at_volume(mobj, sfx_id, snd_SfxVolume);
 }
@@ -738,6 +738,15 @@ void S_ReloadChannelOrigins(void) {
         channel->origin = mobj;
       }
       else {
+        if (channel->sfxinfo) {
+          D_Log(LOG_SOUND, "No actor for ID %u (sound: %s)\n",
+            origin_id,
+            channel->sfxinfo->name
+          );
+        }
+        else {
+          D_Log(LOG_SOUND, "No actor for ID %u (null sound?)\n", origin_id);
+        }
         stop_channel(channel);
         channel->origin = NULL;
         channel->origin_id = 0;
