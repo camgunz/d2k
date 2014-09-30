@@ -154,46 +154,32 @@ static void render_menu(int menu_renderer_calls) {
 }
 
 static void cl_remove_old_commands(void) {
-  netpeer_t *server = CL_GetServerPeer();
-  
-  if (server == NULL) {
+  int sync_index;
+  GQueue *sync_commands;
+
+  if (!CL_GetCommandSync(consoleplayer, &sync_index, &sync_commands, NULL)) {
     P_Echo(consoleplayer, "Server disconnected");
     N_Disconnect();
     return;
   }
 
-  P_RemoveOldCommands(
-    server->sync.commands[consoleplayer].sync_index,
-    server->sync.commands[consoleplayer].sync_queue
-  );
-}
-
-static void log_consoleplayer_position(void) {
-  player_t *player = &players[consoleplayer];
-
-  D_Log(LOG_SYNC, "(%5d/%5d): %d: {%4d/%4d/%4d %4d/%4d/%4d %4d/%4d/%4d/%4d}\n", 
-    gametic,
-    leveltime,
-    consoleplayer,
-    player->mo->x           >> FRACBITS,
-    player->mo->y           >> FRACBITS,
-    player->mo->z           >> FRACBITS,
-    player->mo->momx        >> FRACBITS,
-    player->mo->momy        >> FRACBITS,
-    player->mo->momz        >> FRACBITS,
-    player->viewz           >> FRACBITS,
-    player->viewheight      >> FRACBITS,
-    player->deltaviewheight >> FRACBITS,
-    player->bob             >> FRACBITS
-  );
+  P_RemoveOldCommands(sync_index, sync_commands);
 }
 
 static bool cl_load_state(void) {
   netpeer_t *server = CL_GetServerPeer();
   game_state_delta_t *delta;
+  int sync_index;
   GQueue *run_commands;
   GQueue *sync_commands;
   unsigned int sync_command_count;
+
+  if (!CL_GetCommandSync(consoleplayer, &sync_index, &sync_commands,
+                                                     &run_commands)) {
+    P_Echo(consoleplayer, "Server disconnected");
+    N_Disconnect();
+    return false;
+  }
 
   if (server == NULL)
     return false;
@@ -218,35 +204,11 @@ static bool cl_load_state(void) {
 
   N_RemoveOldStates(delta->from_tic);
 
-  run_commands = server->sync.commands[consoleplayer].run_queue;
-  sync_commands = server->sync.commands[consoleplayer].sync_queue;
-  sync_command_count = g_queue_get_length(sync_commands);
-
-  for (unsigned int i = 0; i < sync_command_count; i++) {
-    netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
-    netticcmd_t *run_ncmd;
-
-    if (sync_ncmd->index >= server->sync.commands[consoleplayer].sync_index)
-      break;
-
-    run_ncmd = P_GetNewBlankCommand();
-    memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
-    g_queue_push_tail(run_commands, run_ncmd);
-  }
-
-  /*
-  is_extra_ddisplay = true;
-  run_tic();
-  is_extra_ddisplay = false;
-
-  log_consoleplayer_position();
-  */
-
   cl_remove_old_commands();
   sync_command_count = g_queue_get_length(sync_commands);
 
   repredicting = true;
-  S_MuteSound();
+  // S_MuteSound();
   D_Log(LOG_SYNC, "(%d) Repredicting %d TICs...\n",
     gametic, sync_command_count
   );
@@ -263,7 +225,7 @@ static bool cl_load_state(void) {
     is_extra_ddisplay = false;
   }
   repredicting = false;
-  S_UnMuteSound();
+  // S_UnMuteSound();
 
   D_Log(LOG_SYNC, "(%d) Finished repredicting\n", gametic);
 
@@ -307,14 +269,6 @@ static void deltaclient_service_network(void) {
   latest_delta_from_tic = server->sync.delta.from_tic;
   latest_delta_to_tic = server->sync.delta.to_tic;
 
-  /* CG: [XXX] What is this here for? */
-  /*
-  if (gametic <= 0) {
-    service_network();
-    return;
-  }
-  */
-
   service_network();
 
   if (server->sync.tic != latest_sync_tic) {
@@ -350,15 +304,13 @@ static void render_extra_frame(void) {
 
 static void sv_remove_old_commands(void) {
   NETPEER_FOR_EACH(iter) {
-    netpeer_t *np = iter.np;
-
     for (int i = 0; i < MAXPLAYERS; i++) {
-      if (i == np->playernum)
-        continue;
-
-      P_RemoveOldCommands(
-        np->sync.commands[i].sync_index, np->sync.commands[i].sync_queue
-      );
+      if (i != iter.np->playernum) {
+        P_RemoveOldCommands(
+          iter.np->sync.commands[i].sync_index,
+          iter.np->sync.commands[i].sync_queue
+        );
+      }
     }
   }
 }

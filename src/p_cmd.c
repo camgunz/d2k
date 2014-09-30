@@ -226,11 +226,6 @@ void run_queued_player_commands(int playernum) {
     int saved_leveltime = leveltime;
     netticcmd_t *ncmd = g_queue_peek_head(commands);
 
-    /*
-    if (ncmd->tic > gametic)
-      break;
-    */
-
     memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
     leveltime = ncmd->tic;
     log_command(ncmd);
@@ -287,15 +282,13 @@ void P_BuildCommand(void) {
   g_queue_push_tail(run_commands, run_ncmd);
   g_queue_push_tail(sync_commands, sync_ncmd);
 
-  D_Log(LOG_SYNC, "(%d) P_BuildCommand: Built command %d: ",
-    gametic, run_ncmd->index
-  );
+  local_command_index++;
+
+  D_Log(LOG_SYNC, "(%d) P_BuildCommand: ", gametic);
   log_command(run_ncmd);
 
   if (CLIENT)
     CL_MarkServerOutdated();
-
-  local_command_index++;
 }
 
 unsigned int P_GetPlayerCommandCount(int playernum) {
@@ -342,10 +335,16 @@ void P_RemoveOldCommands(int sync_index, GQueue *commands) {
   while (!g_queue_is_empty(commands)) {
     netticcmd_t *ncmd = g_queue_peek_head(commands);
 
-    if (ncmd->index <= sync_index)
+    if (ncmd->index <= sync_index) {
+      D_Log(LOG_SYNC, "P_RemoveOldCommands: Removing command %d\n",
+        ncmd->index
+      );
+
       P_RecycleCommand(g_queue_pop_head(commands));
-    else
+    }
+    else {
       break;
+    }
   }
 }
 

@@ -309,9 +309,11 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, int playernum) {
     /* CG: TODO: Add limit on command_count */
     M_PBufWriteUChar(pbuf, command_count);
 
+    /*
     D_Log(LOG_SYNC, "pack_commands: %d packing %u commands\n",
       playernum, command_count
     );
+    */
 
     for (unsigned int i = 0; i < command_count; i++) {
       netticcmd_t *ncmd = g_queue_peek_nth(commands, i);
@@ -329,10 +331,12 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, int playernum) {
   else {
     M_PBufWriteInt(pbuf, np->sync.commands[playernum].sync_index);
 
+    /*
     D_Log(LOG_SYNC,
-      "pack_commands: %d acknowledging command receipt for %d: %d\n",
-      consoleplayer, playernum, np->sync.commands[playernum].sync_index
+      "pack_commands: acknowledging %d's commands: %d\n",
+      playernum, np->sync.commands[playernum].sync_index
     );
+    */
   }
 }
 
@@ -369,15 +373,36 @@ bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
       read_uchar(pbuf, ncmd.cmd.buttons,     "command buttons value");
 
       if (ncmd.index > np->sync.commands[playernum].sync_index) {
-        netticcmd_t *run_ncmd = P_GetNewBlankCommand();
-
+        /*
         D_Log(LOG_SYNC, "unpack_commands: Got new command %d from %d\n",
-          ncmd.index, np->playernum
+          ncmd.index, playernum
         );
+        */
 
-        memcpy(run_ncmd, &ncmd, sizeof(netticcmd_t));
-        g_queue_push_tail(np->sync.commands[playernum].run_queue, run_ncmd);
-        np->sync.commands[playernum].sync_index = ncmd.index;
+        if (CLIENT) {
+          netticcmd_t *new_ncmd = P_GetNewBlankCommand();
+
+          memcpy(new_ncmd, &ncmd, sizeof(netticcmd_t));
+          g_queue_push_tail(np->sync.commands[playernum].run_queue, new_ncmd);
+          np->sync.commands[playernum].sync_index = ncmd.index;
+        }
+        else {
+          NETPEER_FOR_EACH(iter) {
+            GQueue *commands;
+            netpeer_t *np2 = iter.np;
+            netticcmd_t *new_ncmd = P_GetNewBlankCommand();
+
+            memcpy(new_ncmd, &ncmd, sizeof(netticcmd_t));
+
+            if (np2 == np)
+              commands = np2->sync.commands[playernum].run_queue;
+            else
+              commands = np2->sync.commands[playernum].sync_queue;
+
+            g_queue_push_tail(commands, new_ncmd);
+            np2->sync.commands[playernum].sync_index = ncmd.index;
+          }
+        }
       }
     }
   }
@@ -389,8 +414,8 @@ bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
 
     if (sync_index > 0) {
       D_Log(LOG_SYNC,
-        "unpack_commands: %d has received commands through %d for %d\n",
-        np->playernum, np->sync.commands[playernum].sync_index, playernum
+        "unpack_commands: %d received %d's commands: %d\n",
+        np->playernum, playernum, np->sync.commands[playernum].sync_index
       );
     }
   }
