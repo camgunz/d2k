@@ -1249,9 +1249,6 @@ void G_Ticker(void) {
       if (!playeringame[i])
         continue;
 
-      if (MULTINET)
-        continue;
-
       if (players[i].cmd.buttons & BT_SPECIAL) {
         switch (players[i].cmd.buttons & BT_SPECIALMASK) {
           case BTS_PAUSE:

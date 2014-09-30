@@ -309,8 +309,8 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, int playernum) {
     /* CG: TODO: Add limit on command_count */
     M_PBufWriteUChar(pbuf, command_count);
 
-    D_Log(LOG_SYNC, "pack_commands: Packing %u commands for %d\n",
-      command_count, playernum
+    D_Log(LOG_SYNC, "pack_commands: %d packing %u commands\n",
+      playernum, command_count
     );
 
     for (unsigned int i = 0; i < command_count; i++) {
@@ -329,8 +329,9 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, int playernum) {
   else {
     M_PBufWriteInt(pbuf, np->sync.commands[playernum].sync_index);
 
-    D_Log(LOG_SYNC, "unpack_commands: Acknowledging command %d from %d\n",
-      np->sync.commands[playernum].sync_index, playernum
+    D_Log(LOG_SYNC,
+      "pack_commands: %d acknowledging command receipt for %d: %d\n",
+      consoleplayer, playernum, np->sync.commands[playernum].sync_index
     );
   }
 }
@@ -345,10 +346,6 @@ bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
     unsigned char command_count;
 
     read_uchar(pbuf, command_count, "command count");
-
-    D_Log(LOG_SYNC, "unpack_commands: Unpacking %u commands for %d\n",
-      command_count, playernum
-    );
 
     /*
      * CG: TODO: Add a limit to the number of commands accepted here.  uchar
@@ -374,6 +371,10 @@ bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
       if (ncmd.index > np->sync.commands[playernum].sync_index) {
         netticcmd_t *run_ncmd = P_GetNewBlankCommand();
 
+        D_Log(LOG_SYNC, "unpack_commands: Got new command %d from %d\n",
+          ncmd.index, np->playernum
+        );
+
         memcpy(run_ncmd, &ncmd, sizeof(netticcmd_t));
         g_queue_push_tail(np->sync.commands[playernum].run_queue, run_ncmd);
         np->sync.commands[playernum].sync_index = ncmd.index;
@@ -386,10 +387,12 @@ bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
     read_int(pbuf, sync_index, "command sync index");
     np->sync.commands[playernum].sync_index = sync_index;
 
-    D_Log(LOG_SYNC, "unpack_commands: Command %d from %d acknowledged by %d\n",
-      sync_index, playernum, np->playernum
-    );
-
+    if (sync_index > 0) {
+      D_Log(LOG_SYNC,
+        "unpack_commands: %d has received commands through %d for %d\n",
+        np->playernum, np->sync.commands[playernum].sync_index, playernum
+      );
+    }
   }
 
   return true;
@@ -464,10 +467,6 @@ void N_PackSetup(netpeer_t *np) {
   M_PBufWriteInt(pbuf, gs->tic);
   M_PBufWriteBytes(pbuf, M_PBufGetData(gs->data), M_PBufGetSize(gs->data));
   np->sync.tic = gs->tic;
-
-  D_Log(LOG_SYNC, "N_PackSetup: Sent game state at %d (player count: %d).\n",
-    gs->tic, player_count
-  );
 }
 
 dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
@@ -488,11 +487,8 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   read_ranged_int(
     pbuf, m_sync_type, "netsync", NET_SYNC_TYPE_COMMAND, NET_SYNC_TYPE_DELTA
   );
-  D_Log(LOG_SYNC, "netsync: %d\n", m_sync_type);
   read_ushort(pbuf, m_player_count, "player count");
-  D_Log(LOG_SYNC, "player count: %d\n", m_player_count);
   read_short(pbuf, m_playernum, "consoleplayer");
-  D_Log(LOG_SYNC, "consoleplayer: %d\n", m_playernum);
 
   W_ReleaseAllWads();
   D_ClearIWAD();
@@ -525,12 +521,10 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
       MAX_RESOURCE_NAMES,
       MAX_RESOURCE_NAME_LENGTH
     );
-    D_Log(LOG_SYNC, "Loaded %d resource files\n", rf_list->len);
     for (unsigned int i = 0; i < rf_list->len; i++) {
       char *resource_name = g_ptr_array_index(rf_list, i);
 
       D_AddFile(resource_name, source_net);
-      D_Log(LOG_SYNC, " %d: %s\n", i, resource_name);
     }
     g_ptr_array_free(rf_list, true);
   }
@@ -546,12 +540,10 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
       MAX_RESOURCE_NAMES,
       MAX_RESOURCE_NAME_LENGTH
     );
-    D_Log(LOG_SYNC, "Loaded %d DeH/BEX files", df_list->len);
     for (unsigned int i = 0; i < df_list->len; i++) {
       char *deh_name = g_ptr_array_index(df_list, i);
 
       D_AddDEH(deh_name, 0);
-      D_Log(LOG_SYNC, "DeH/BEX %d: %s\n", i, deh_name);
     }
     g_ptr_array_free(df_list, true);
   }
@@ -563,15 +555,6 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   lprintf(LO_INFO, "\n");
 
   read_int(pbuf, m_state_tic, "game state tic");
-  D_Log(LOG_SYNC, "Game State TIC: %d\n", m_state_tic);
-
-  D_Log(LOG_SYNC, "N_UnpackSetup: Game State: %d %d %d %d %d %d\n",
-    m_sync_type, m_player_count, m_playernum,
-    resource_files->len,
-    deh_files->len,
-    m_state_tic
-  );
-
   read_packed_game_state(pbuf, gs, m_state_tic, "game state data");
 
   switch (m_sync_type) {
@@ -678,11 +661,10 @@ void N_PackSync(netpeer_t *np) {
     }
   }
 
-  if (DELTASERVER) {
-    D_Log(LOG_SYNC, "N_PackSync: %d, %d, %d\n",
-      np->sync.tic, np->sync.delta.from_tic, np->sync.delta.to_tic
-    );
+  if (DELTACLIENT)
     M_PBufWriteInt(pbuf, np->sync.tic);
+
+  if (DELTASERVER) {
     M_PBufWriteInt(pbuf, np->sync.delta.from_tic);
     M_PBufWriteInt(pbuf, np->sync.delta.to_tic);
     M_PBufWriteBytes(pbuf, np->sync.delta.data.data, np->sync.delta.data.size);
@@ -701,24 +683,27 @@ dboolean N_UnpackSync(netpeer_t *np) {
   }
 
   if (DELTACLIENT) {
-    int m_sync_tic;
     int m_delta_from_tic;
     int m_delta_to_tic;
 
-    read_int(pbuf, m_sync_tic,       "delta tic");
     read_int(pbuf, m_delta_from_tic, "delta from tic");
     read_int(pbuf, m_delta_to_tic,   "delta to tic");
 
-    D_Log(LOG_SYNC, "N_UnpackSync: %d, %d, %d\n",
-      m_sync_tic, m_delta_from_tic, m_delta_to_tic
-    );
-
     if (m_delta_to_tic > np->sync.tic) {
-      np->sync.tic = m_sync_tic;
+      np->sync.tic = m_delta_to_tic;
       np->sync.delta.from_tic = m_delta_from_tic;
       np->sync.delta.to_tic = m_delta_to_tic;
       read_bytes(pbuf, np->sync.delta.data, "delta data");
     }
+  }
+
+  if (DELTASERVER) {
+    int m_sync_tic;
+
+    read_int(pbuf, m_sync_tic, "sync tic");
+
+    if (m_sync_tic > np->sync.tic)
+      np->sync.tic = m_sync_tic;
   }
 
   return true;

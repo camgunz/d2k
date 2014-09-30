@@ -24,7 +24,6 @@
 #ifndef N_MAIN_H__
 #define N_MAIN_H__
 
-void N_LogPlayerPosition(player_t *player);
 void N_InitNetGame(void);
 bool N_GetWad(const char *name);
 

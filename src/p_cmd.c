@@ -45,6 +45,38 @@
 static GQueue *blank_command_queue;
 static int local_command_index = 0;
 
+static void log_command(netticcmd_t *ncmd) {
+  D_Log(LOG_SYNC, "(%d): {%d/%d %d %d %d %d %u %u}\n",
+    gametic,
+    ncmd->index,
+    ncmd->tic,
+    ncmd->cmd.forwardmove,
+    ncmd->cmd.sidemove,
+    ncmd->cmd.angleturn,
+    ncmd->cmd.consistancy,
+    ncmd->cmd.chatchar,
+    ncmd->cmd.buttons
+  );
+}
+
+static void log_player_position(player_t *player) {
+  D_Log(LOG_SYNC, "(%5d/%5d): %td: {%4d/%4d/%4d %4d/%4d/%4d %4d/%4d/%4d/%4d}\n", 
+    gametic,
+    leveltime,
+    player - players,
+    player->mo->x           >> FRACBITS,
+    player->mo->y           >> FRACBITS,
+    player->mo->z           >> FRACBITS,
+    player->mo->momx        >> FRACBITS,
+    player->mo->momy        >> FRACBITS,
+    player->mo->momz        >> FRACBITS,
+    player->viewz           >> FRACBITS,
+    player->viewheight      >> FRACBITS,
+    player->deltaviewheight >> FRACBITS,
+    player->bob             >> FRACBITS
+  );
+}
+
 static void run_player_command(player_t *player) {
   ticcmd_t *cmd = &player->cmd;
   weapontype_t newweapon;
@@ -194,19 +226,21 @@ void run_queued_player_commands(int playernum) {
     int saved_leveltime = leveltime;
     netticcmd_t *ncmd = g_queue_peek_head(commands);
 
+    /*
     if (ncmd->tic > gametic)
       break;
+    */
 
     memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
     leveltime = ncmd->tic;
+    log_command(ncmd);
     run_player_command(player);
-    N_LogPlayerPosition(player);
 
     if (player->mo) {
       P_MobjThinker(player->mo);
-      D_Log(LOG_SYNC, "After P_MobjThinker:\n");
-      N_LogPlayerPosition(player);
+      log_player_position(player);
     }
+
     leveltime = saved_leveltime;
 
     P_RecycleCommand(g_queue_pop_head(commands));
@@ -252,6 +286,11 @@ void P_BuildCommand(void) {
 
   g_queue_push_tail(run_commands, run_ncmd);
   g_queue_push_tail(sync_commands, sync_ncmd);
+
+  D_Log(LOG_SYNC, "(%d) P_BuildCommand: Built command %d: ",
+    gametic, run_ncmd->index
+  );
+  log_command(run_ncmd);
 
   if (CLIENT)
     CL_MarkServerOutdated();

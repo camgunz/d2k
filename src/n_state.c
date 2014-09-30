@@ -111,6 +111,10 @@ void N_InitStates(void) {
 void N_SaveState(void) {
   game_state_t *gs = latest_game_state = get_new_state(gametic);
 
+  D_Log(LOG_SYNC, "N_SaveState: gametic/leveltime: %d/%d\n",
+    gametic, leveltime
+  );
+
   M_PBufClear(gs->data);
   G_WriteSaveData(gs->data);
 

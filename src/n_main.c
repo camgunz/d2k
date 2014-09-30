@@ -77,7 +77,16 @@ static void run_tic(void) {
 
   I_GetTime_SaveMS();
 
+#ifdef ENABLE_PREDICTION
+  G_Ticker();
+#else
+  if (SERVER)
+    G_Ticker();
+#endif
+  P_Checksum(gametic);
+
   if (DELTASERVER && gametic > 0) {
+    /* CG: TODO: Don't save states if there are no peers; saves resources */
     N_SaveState();
 
     NETPEER_FOR_EACH(iter) {
@@ -89,14 +98,6 @@ static void run_tic(void) {
 
     N_UpdateSync();
   }
-
-#ifdef ENABLE_PREDICTION
-  G_Ticker();
-#else
-  if (SERVER)
-    G_Ticker();
-#endif
-  P_Checksum(gametic);
 
   gametic++;
 }
@@ -167,6 +168,26 @@ static void cl_remove_old_commands(void) {
   );
 }
 
+static void log_consoleplayer_position(void) {
+  player_t *player = &players[consoleplayer];
+
+  D_Log(LOG_SYNC, "(%5d/%5d): %d: {%4d/%4d/%4d %4d/%4d/%4d %4d/%4d/%4d/%4d}\n", 
+    gametic,
+    leveltime,
+    consoleplayer,
+    player->mo->x           >> FRACBITS,
+    player->mo->y           >> FRACBITS,
+    player->mo->z           >> FRACBITS,
+    player->mo->momx        >> FRACBITS,
+    player->mo->momy        >> FRACBITS,
+    player->mo->momz        >> FRACBITS,
+    player->viewz           >> FRACBITS,
+    player->viewheight      >> FRACBITS,
+    player->deltaviewheight >> FRACBITS,
+    player->bob             >> FRACBITS
+  );
+}
+
 static bool cl_load_state(void) {
   netpeer_t *server = CL_GetServerPeer();
   game_state_delta_t *delta;
@@ -176,6 +197,12 @@ static bool cl_load_state(void) {
 
   if (server == NULL)
     return false;
+
+  D_Log(LOG_SYNC, "Loading state %d => %d (%d)\n",
+    server->sync.delta.from_tic,
+    server->sync.delta.to_tic,
+    server->sync.tic
+  );
 
   delta = &server->sync.delta;
 
@@ -191,29 +218,39 @@ static bool cl_load_state(void) {
 
   N_RemoveOldStates(delta->from_tic);
 
-  /*
-   * CG: At this point, we have loaded the state for the previous TIC and
-   *     queued all the commands received from the server so far.  We are now
-   *     ready to run the current TIC with all queued commands (which is what
-   *     the server will do as well).
-   */
-
-  is_extra_ddisplay = true;
-  run_tic();
-  is_extra_ddisplay = false;
-
-  /*
-   * CG: Now, for each command the server has yet to acknowledge, load it and
-   *     run it individually in a new TIC.
-   */
-
-  cl_remove_old_commands();
   run_commands = server->sync.commands[consoleplayer].run_queue;
   sync_commands = server->sync.commands[consoleplayer].sync_queue;
   sync_command_count = g_queue_get_length(sync_commands);
 
+  for (unsigned int i = 0; i < sync_command_count; i++) {
+    netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+    netticcmd_t *run_ncmd;
+
+    if (sync_ncmd->index >= server->sync.commands[consoleplayer].sync_index)
+      break;
+
+    run_ncmd = P_GetNewBlankCommand();
+    memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
+    g_queue_push_tail(run_commands, run_ncmd);
+  }
+
+  /*
+  is_extra_ddisplay = true;
+  run_tic();
+  is_extra_ddisplay = false;
+
+  log_consoleplayer_position();
+  */
+
+  cl_remove_old_commands();
+  sync_command_count = g_queue_get_length(sync_commands);
+
   repredicting = true;
   S_MuteSound();
+  D_Log(LOG_SYNC, "(%d) Repredicting %d TICs...\n",
+    gametic, sync_command_count
+  );
+
   for (unsigned int i = 0; i < sync_command_count; i++) {
     netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
     netticcmd_t *run_ncmd = P_GetNewBlankCommand();
@@ -227,6 +264,8 @@ static bool cl_load_state(void) {
   }
   repredicting = false;
   S_UnMuteSound();
+
+  D_Log(LOG_SYNC, "(%d) Finished repredicting\n", gametic);
 
   return true;
 }
@@ -278,7 +317,7 @@ static void deltaclient_service_network(void) {
 
   service_network();
 
-  if (server->sync.delta.to_tic != latest_delta_to_tic) {
+  if (server->sync.tic != latest_sync_tic) {
     if (cl_load_state()) {
       server->sync.outdated = true;
     }
@@ -344,24 +383,6 @@ static void cleanup_old_commands_and_states(void) {
   sv_remove_old_commands();
   if (DELTASERVER)
     sv_remove_old_states();
-}
-
-void N_LogPlayerPosition(player_t *player) {
-  D_Log(LOG_SYNC, "(%5d/%5d): %td: {%4d/%4d/%4d %4d/%4d/%4d %4d/%4d/%4d/%4d}\n", 
-    gametic,
-    leveltime,
-    player - players,
-    player->mo->x           >> FRACBITS,
-    player->mo->y           >> FRACBITS,
-    player->mo->z           >> FRACBITS,
-    player->mo->momx        >> FRACBITS,
-    player->mo->momy        >> FRACBITS,
-    player->mo->momz        >> FRACBITS,
-    player->viewz           >> FRACBITS,
-    player->viewheight      >> FRACBITS,
-    player->deltaviewheight >> FRACBITS,
-    player->bob             >> FRACBITS
-  );
 }
 
 void N_InitNetGame(void) {
