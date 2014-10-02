@@ -119,11 +119,6 @@ void N_SaveState(void) {
   M_AverageUpdate(
     &average_state_size, M_PBufGetCapacity(gs->data)
   );
-
-  if (SERVER && playeringame[1]) {
-    N_LogPlayerPosition(&players[1]);
-    // D_Log(LOG_SYNC, "(%d) Saved state %d\n\n", gametic, gs->tic);
-  }
 }
 
 bool N_LoadState(int tic, bool call_init_new) {

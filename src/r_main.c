@@ -34,8 +34,6 @@
 #include "i_system.h"
 #include "lprintf.h"
 #include "m_bbox.h"
-#include "n_net.h"
-#include "n_main.h"
 #include "p_user.h"
 #include "r_bsp.h"
 #include "r_demo.h"
@@ -1111,11 +1109,6 @@ void R_ClearStats(void)
 void R_RenderPlayerView (player_t* player)
 {
   dboolean automap = (automapmode & am_active) && !(automapmode & am_overlay);
-
-  /*
-  if (CLIENT)
-    N_LogPlayerPosition(player);
-  */
 
   r_frame_count++;
 
