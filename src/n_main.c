@@ -165,6 +165,7 @@ static void cl_load_latest_state(void) {
   int command_index;
   GQueue *sync_commands;
   GQueue *run_commands;
+  int saved_gametic;
 
   if (!DELTACLIENT)
     return;
@@ -203,14 +204,16 @@ static void cl_load_latest_state(void) {
 
     current_command_index = command_index;
 
-    D_Log(LOG_SYNC, "\n(%d) Loading new state [%d => %d] {%d}\n",
+    D_Log(LOG_SYNC, "(%d) Loading new state [%d => %d] {%d (%d)}\n",
       gametic,
       delta->from_tic,
       delta->to_tic,
-      command_index
+      command_index,
+      local_command_index - 1
     );
 
     loading_state = true;
+    saved_gametic = gametic;
     state_loaded = N_LoadLatestState(false);
     loading_state = false;
 
@@ -230,10 +233,7 @@ static void cl_load_latest_state(void) {
 
 #if ENABLE_PREDICTION
     unsigned int sync_command_count = g_queue_get_length(sync_commands);
-
-    D_Log(LOG_SYNC, "(%d) Repredicting %d TICs...\n",
-      gametic, sync_command_count
-    );
+    unsigned int sync_command_index = 0;
 
     for (unsigned int i = 0; i < sync_command_count; i++) {
       netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
@@ -241,9 +241,14 @@ static void cl_load_latest_state(void) {
 
       memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
       g_queue_push_tail(run_commands, run_ncmd);
-
-      run_tic();
     }
+
+    D_Log(LOG_SYNC, "(%d) Repredicting %d TICs...\n",
+      gametic, saved_gametic - gametic
+    );
+
+    while (gametic < saved_gametic)
+      run_tic();
 
     D_Log(LOG_SYNC, "(%d) Finished repredicting\n", gametic);
 #endif
@@ -253,19 +258,17 @@ static void cl_load_latest_state(void) {
 }
 
 static void render_extra_frame(void) {
-  bool should_render = false;
-
-  WasRenderedInTryRunTics = true;
-
-  should_render = movement_smooth && gamestate == wipegamestate;
-
 #ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL)
-    should_render = true;
-#endif
-
-  if (should_render)
+  if (V_GetMode() == VID_MODEGL) {
     D_Display();
+    WasRenderedInTryRunTics = true;
+  }
+#else
+  if (movement_smooth && gamestate == wipegamestate) {
+    D_Display();
+    WasRenderedInTryRunTics = true;
+  }
+#endif
 }
 
 static void sv_remove_old_commands(void) {
@@ -546,7 +549,7 @@ void CL_MarkServerOutdated(void) {
   N_UpdateSync();
 }
 
-void N_TryRunTics(void) {
+bool N_TryRunTics(void) {
   static int tics_built = 0;
 
   int tics_elapsed = I_GetTime() - tics_built;
@@ -563,11 +566,10 @@ void N_TryRunTics(void) {
     render_fast = true;
 #endif
 
-  N_ServiceNetwork();
-
   if (tics_elapsed <= 0 && !render_fast) {
+    N_ServiceNetwork();
     I_Sleep(1);
-    return;
+    return false;
   }
 
   if (tics_elapsed > 0) {
@@ -606,6 +608,10 @@ void N_TryRunTics(void) {
     );
   }
 #endif
+
+  N_ServiceNetwork();
+
+  return true;
 }
 
 /* vi: set et ts=2 sw=2: */

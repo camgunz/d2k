@@ -569,7 +569,7 @@ void R_StoreWallRange(const int start, const int stop)
 
   offsetangle = rw_normalangle-rw_angle1;
 
-  if (offsetangle > ANG90)
+  if (D_abs(offsetangle) > ANG90)
     offsetangle = ANG90;
 
   hyp = (viewx==curline->v1->x && viewy==curline->v1->y)?

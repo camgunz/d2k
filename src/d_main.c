@@ -759,6 +759,8 @@ static const char *auto_shot_fname;
 //
 
 static void D_DoomLoop(void) {
+  bool tic_elapsed;
+
   for (;;) {
     WasRenderedInTryRunTics = false;
     // frame syncronous IO operations
@@ -779,17 +781,21 @@ static void D_DoomLoop(void) {
       C_Ticker();
       P_Checksum(gametic);
       gametic++;
+      tic_elapsed = true;
     }
     else {
-      N_TryRunTics(); // will run at least one tic
+      tic_elapsed = N_TryRunTics(); // Returns true if a TIC was run
     }
+
+    if (nodrawers)
+      continue;
+
+    if (!tic_elapsed)
+      continue;
 
     // killough 3/16/98: change consoleplayer to displayplayer
     if (players[displayplayer].mo) // cph 2002/08/10
       S_UpdateSounds(players[displayplayer].mo);// move positional sounds
-
-    if (nodrawers)
-      continue;
 
     if (!movement_smooth || !WasRenderedInTryRunTics || gamestate != wipegamestate) {
       // Update display, next frame, with current state.

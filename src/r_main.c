@@ -27,12 +27,15 @@
 
 #include "doomstat.h"
 #include "d_net.h"
+#include "e6y.h"//e6y
 #include "g_game.h"
 #include "i_main.h"
 #include "i_smp.h"
 #include "i_system.h"
 #include "lprintf.h"
 #include "m_bbox.h"
+#include "n_net.h"
+#include "n_main.h"
 #include "p_user.h"
 #include "r_bsp.h"
 #include "r_demo.h"
@@ -45,7 +48,6 @@
 #include "st_stuff.h"
 #include "v_video.h"
 #include "w_wad.h"
-#include "e6y.h"//e6y
 
 // e6y
 // Now they are variables. Depends from render_doom_lightmaps variable.
@@ -1109,6 +1111,11 @@ void R_ClearStats(void)
 void R_RenderPlayerView (player_t* player)
 {
   dboolean automap = (automapmode & am_active) && !(automapmode & am_overlay);
+
+  /*
+  if (CLIENT)
+    N_LogPlayerPosition(player);
+  */
 
   r_frame_count++;
 

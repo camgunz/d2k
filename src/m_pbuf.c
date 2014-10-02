@@ -753,9 +753,6 @@ dboolean M_PBufReadStringArray(pbuf_t *pbuf, GPtrArray *strings,
   for (unsigned int i = strings->len; i > 0; i--)
     g_ptr_array_remove_index_fast(strings, i - 1);
 
-  if (strings->len < string_count)
-    g_ptr_array_set_size(strings, string_count);
-
   for (unsigned int i = 0; i < string_count; i++) {
     cmp_object_t obj;
     char *s = NULL;

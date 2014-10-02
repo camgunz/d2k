@@ -198,18 +198,15 @@ void run_queued_player_commands(int playernum) {
 
     memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
     leveltime = ncmd->tic;
-    /*
-    N_LogCommand(ncmd);
-    */
+    if (CLIENT)
+      N_LogCommand(ncmd);
     run_player_command(player);
 
     if (player->mo)
       P_MobjThinker(player->mo);
 
-    /*
     if (CLIENT)
       N_LogPlayerPosition(player);
-    */
 
     CL_ShutdownCommandState();
 
