@@ -24,11 +24,18 @@
 #ifndef N_MAIN_H__
 #define N_MAIN_H__
 
+void N_LogCommand(netticcmd_t *ncmd);
+void N_LogPlayerPosition(player_t *player);
 void N_InitNetGame(void);
 bool N_GetWad(const char *name);
 
 bool CL_LoadingState(void);
 bool CL_RePredicting(void);
+void CL_SetupCommandState(int playernum, netticcmd_t *ncmd);
+void CL_ShutdownCommandState(void);
+int  CL_GetCurrentCommandIndex(void);
+int  CL_GetCurrentCommandIndex(void);
+int  CL_GetNextCommandIndex(void);
 bool CL_ReceivedSetup(void);
 void CL_SetReceivedSetup(bool new_received_setup);
 void CL_SetAuthorizationLevel(auth_level_e level);

@@ -413,10 +413,12 @@ bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
     np->sync.commands[playernum].sync_index = sync_index;
 
     if (sync_index > 0) {
+      /*
       D_Log(LOG_SYNC,
         "unpack_commands: %d received %d's commands: %d\n",
         np->playernum, playernum, np->sync.commands[playernum].sync_index
       );
+      */
     }
   }
 

@@ -48,8 +48,6 @@ void P_IdentGetID(void *obj, uint32_t *obj_id) {
     I_Error("P_IdentGetID: ID %d already assigned", id);
 
   *obj_id = id;
-
-  D_Log(LOG_SOUND, "Got ID %u\n", id);
 }
 
 void P_IdentAssignID(void *obj, uint32_t obj_id) {
@@ -71,9 +69,6 @@ void P_IdentReleaseID(uint32_t *obj_id) {
   g_hash_table_remove(id_hash, GUINT_TO_POINTER(id));
 
   *obj_id = 0;
-
-  if (!CLIENT)
-    D_Log(LOG_SOUND, "Released ID %u\n", id);
 }
 
 void* P_IdentLookup(uint32_t id) {

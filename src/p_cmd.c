@@ -41,41 +41,9 @@
 #include "p_mobj.h"
 #include "p_pspr.h"
 #include "p_user.h"
+#include "s_sound.h"
 
 static GQueue *blank_command_queue;
-static int local_command_index = 0;
-
-static void log_command(netticcmd_t *ncmd) {
-  D_Log(LOG_SYNC, "(%d): {%d/%d %d %d %d %d %u %u}\n",
-    gametic,
-    ncmd->index,
-    ncmd->tic,
-    ncmd->cmd.forwardmove,
-    ncmd->cmd.sidemove,
-    ncmd->cmd.angleturn,
-    ncmd->cmd.consistancy,
-    ncmd->cmd.chatchar,
-    ncmd->cmd.buttons
-  );
-}
-
-static void log_player_position(player_t *player) {
-  D_Log(LOG_SYNC, "(%5d/%5d): %td: {%4d/%4d/%4d %4d/%4d/%4d %4d/%4d/%4d/%4d}\n", 
-    gametic,
-    leveltime,
-    player - players,
-    player->mo->x           >> FRACBITS,
-    player->mo->y           >> FRACBITS,
-    player->mo->z           >> FRACBITS,
-    player->mo->momx        >> FRACBITS,
-    player->mo->momy        >> FRACBITS,
-    player->mo->momz        >> FRACBITS,
-    player->viewz           >> FRACBITS,
-    player->viewheight      >> FRACBITS,
-    player->deltaviewheight >> FRACBITS,
-    player->bob             >> FRACBITS
-  );
-}
 
 static void run_player_command(player_t *player) {
   ticcmd_t *cmd = &player->cmd;
@@ -226,15 +194,24 @@ void run_queued_player_commands(int playernum) {
     int saved_leveltime = leveltime;
     netticcmd_t *ncmd = g_queue_peek_head(commands);
 
+    CL_SetupCommandState(playernum, ncmd);
+
     memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
     leveltime = ncmd->tic;
-    log_command(ncmd);
+    /*
+    N_LogCommand(ncmd);
+    */
     run_player_command(player);
 
-    if (player->mo) {
+    if (player->mo)
       P_MobjThinker(player->mo);
-      log_player_position(player);
-    }
+
+    /*
+    if (CLIENT)
+      N_LogPlayerPosition(player);
+    */
+
+    CL_ShutdownCommandState();
 
     leveltime = saved_leveltime;
 
@@ -275,17 +252,17 @@ void P_BuildCommand(void) {
 
   I_StartTic();
   G_BuildTiccmd(&run_ncmd->cmd);
-  run_ncmd->index = local_command_index;
+  run_ncmd->index = CL_GetNextCommandIndex();
   run_ncmd->tic = gametic;
   memcpy(sync_ncmd, run_ncmd, sizeof(netticcmd_t));
 
   g_queue_push_tail(run_commands, run_ncmd);
   g_queue_push_tail(sync_commands, sync_ncmd);
 
-  local_command_index++;
-
+  /*
   D_Log(LOG_SYNC, "(%d) P_BuildCommand: ", gametic);
-  log_command(run_ncmd);
+  N_LogCommand(run_ncmd);
+  */
 
   if (CLIENT)
     CL_MarkServerOutdated();
@@ -320,13 +297,21 @@ void P_RunPlayerCommands(int playernum) {
     return;
   }
   
-  if (DELTACLIENT &&
-      playernum != consoleplayer &&
+  if (playernum != consoleplayer && P_GetPlayerCommandCount(playernum) == 0)
+    return;
+
+  /*
+  if (playernum != consoleplayer &&
       player->mo &&
       P_GetPlayerCommandCount(playernum) == 0) {
-    predict_player_position(player);
+    if (DELTACLIENT)
+      predict_player_position(player);
+    else
+      P_MobjThinker(player->mo);
+
     return;
   }
+  */
 
   run_queued_player_commands(playernum);
 }
@@ -336,9 +321,11 @@ void P_RemoveOldCommands(int sync_index, GQueue *commands) {
     netticcmd_t *ncmd = g_queue_peek_head(commands);
 
     if (ncmd->index <= sync_index) {
+      /*
       D_Log(LOG_SYNC, "P_RemoveOldCommands: Removing command %d\n",
         ncmd->index
       );
+      */
 
       P_RecycleCommand(g_queue_pop_head(commands));
     }

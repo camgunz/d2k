@@ -786,7 +786,7 @@ int I_MessageBox(const char* text, unsigned int type)
       result = -1;
       do
       {
-        I_uSleep(1000);
+        I_Sleep(1);
 
         c = tolower(getchar());
 

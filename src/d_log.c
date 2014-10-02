@@ -41,24 +41,31 @@ static void close_logs(void) {
 }
 
 void D_InitLogging(void) {
+#ifdef DEBUG
   log_files = g_ptr_array_new_full(LOG_MAX, close_log);
   g_ptr_array_set_size(log_files, LOG_MAX);
   atexit(close_logs);
+#endif
 }
 
 void D_EnableLogChannel(log_channel_e channel, const char *filename) {
+#ifdef DEBUG
   FILE *fh = fopen(filename, "w");
 
   if (fh == NULL)
     I_Error("Error opening log file %s: %s.\n", filename, strerror(errno));
 
   g_ptr_array_insert(log_files, channel, fh);
+#endif
 }
 
 void D_Log(log_channel_e channel, const char *fmt, ...) {
+#ifdef DEBUG
   FILE *fh;
   va_list args;
-  va_list args2;
+
+  if (log_files == NULL)
+    return;
 
   if (channel >= LOG_MAX)
     I_Error("D_Log: Invalid channel %d (valid: 0 - %d)", channel, LOG_MAX);
@@ -68,16 +75,10 @@ void D_Log(log_channel_e channel, const char *fmt, ...) {
   if (fh == NULL)
     return;
 
-  va_copy(args2, args);
-
   va_start(args, fmt);
   vfprintf(fh, fmt, args);
   va_end(args);
-
-  va_start(args2, fmt);
-  if (channel == LOG_SOUND)
-    vfprintf(stderr, fmt, args2);
-  va_end(args2);
+#endif
 }
 
 /* vi: set et ts=2 sw=2: */

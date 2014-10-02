@@ -27,21 +27,21 @@
 #include "z_zone.h"
 
 #include "doomstat.h"
-#include "s_sound.h"
-#include "s_advsound.h"
+#include "d_main.h"
+#include "e6y.h"
 #include "i_sound.h"
 #include "i_system.h"
-#include "d_main.h"
-#include "r_main.h"
-#include "m_random.h"
-#include "w_wad.h"
 #include "lprintf.h"
-#include "sc_man.h"
-#include "p_ident.h"
-#include "e6y.h"
-
+#include "m_random.h"
 #include "n_net.h"
 #include "n_main.h"
+#include "p_cmd.h"
+#include "p_ident.h"
+#include "r_main.h"
+#include "s_advsound.h"
+#include "s_sound.h"
+#include "sc_man.h"
+#include "w_wad.h"
 
 #define DEBUG_SOUND 1
 
@@ -49,7 +49,7 @@
 // Does not fit the large outdoor areas.
 #define S_CLIPPING_DIST (1200 << FRACBITS)
 
-// Distance tp origin when sounds should be maxed out.
+// Distance to origin when sounds should be maxed out.
 // This should relate to movement clipping resolution
 // (see BLOCKMAP handling).
 // Originally: (200*0x10000).
@@ -70,6 +70,7 @@ typedef struct {
   mobj_t *origin;      // origin of sound
   uint32_t origin_id;  // sound origin ID
   int handle;          // handle of the sound being played
+  int command_index;   // Command index at which this sound was started
   int is_pickup;       // killough 4/25/98: whether sound is a player's weapon
   int pitch;
 } channel_t;
@@ -190,13 +191,13 @@ static int adjust_sound_params(mobj_t *listener, mobj_t *source,
 }
 
 static void stop_channel(channel_t *c) {
-  if (!c->sfxinfo)
-    return;
-
   if (CL_RePredicting())
     return;
 
-  D_Log(LOG_SOUND, "stop_channel\n");
+  if (!c->sfxinfo)
+    return;
+
+  D_Log(LOG_SYNC, "stop_channel\n");
 
   // stop the sound playing
   if (I_SoundIsPlaying(c->handle))
@@ -210,10 +211,17 @@ static void stop_channel(channel_t *c) {
 static void init_channel(channel_t *c, mobj_t *mo, sfxinfo_t *sfx, int pu) {
   c->sfxinfo = sfx;
   c->origin = mo;
-  if (mo)
+  if (mo) {
     c->origin_id = mo->id;
-  else
+    c->command_index = CL_GetCurrentCommandIndex();
+    D_Log(LOG_SYNC, "init_channel: Started channel at %d\n",
+      c->command_index
+    );
+  }
+  else {
     c->origin_id = 0;
+    c->command_index = 0;
+  }
   c->is_pickup = pu;         // killough 4/25/98
 }
 
@@ -232,6 +240,46 @@ static int get_channel(mobj_t *mobj, sfxinfo_t *sfxinfo, int is_pickup) {
    *           using numChannels instead of channels->len in the below loops
    *           would do it (eventually), but I need to think it through.
    */
+
+  if (DELTACLIENT && mobj && !is_pickup) {
+    for (unsigned int i = 0; i < channels->len; i++) {
+      channel_t *c = &g_array_index(channels, channel_t, i);
+
+      if (c->origin != NULL)
+        continue;
+
+      if (c->origin_id == 0)
+        continue;
+
+      if (c->sfxinfo == NULL)
+        continue;
+
+      D_Log(LOG_SYNC, "get_channel: %u, %p, %u, %u, %d, %d, %p\n",
+        i,
+        c->origin,
+        c->origin_id,
+        mobj->id,
+        c->command_index,
+        CL_GetCurrentCommandIndex(),
+        c->sfxinfo
+      );
+
+      if (c->command_index != CL_GetCurrentCommandIndex())
+        continue;
+
+      if (c->origin_id != mobj->id)
+        continue;
+
+      D_Log(LOG_SYNC, "Claiming orphaned sound (%u, %d, %d)\n",
+        c->origin_id, c->command_index, CL_GetCurrentCommandIndex()
+      );
+
+      c->origin = mobj;
+      c->is_pickup = false;
+
+      return i;
+    }
+  }
 
   for (unsigned int i = 0; i < channels->len; i++) {
     channel_t *c = &g_array_index(channels, channel_t, i);
@@ -377,7 +425,9 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
   if (sfx->usefulness++ < 0)
     sfx->usefulness = 1;
 
-  D_Log(LOG_SOUND, "(%d) Starting sound %d\n", gametic, sfx_id);
+  D_Log(LOG_SYNC, "(%d) Starting sound %d\n",
+    CL_GetCurrentCommandIndex(), sfx_id
+  );
 
   // Assigns the handle to one of the channels in the mix/output buffer.
   // e6y: [Fix] Crash with zero-length sounds.
@@ -497,15 +547,15 @@ void S_StartSound(mobj_t *mobj, int sfx_id) {
     return;
 
   if (mobj)
-    D_Log(LOG_SOUND, "S_StartSound: %u, %d\n", mobj->id, sfx_id);
+    D_Log(LOG_SYNC, "S_StartSound: %u, %d\n", mobj->id, sfx_id);
   else
-    D_Log(LOG_SOUND, "S_StartSound: %p, %d\n", mobj, sfx_id);
+    D_Log(LOG_SYNC, "S_StartSound: %p, %d\n", mobj, sfx_id);
 
   start_sound_at_volume(mobj, sfx_id, snd_SfxVolume);
 }
 
 void S_StopSound(mobj_t *mobj) {
-  D_Log(LOG_SOUND, "S_StopSound: %u\n", mobj->id);
+  D_Log(LOG_SYNC, "S_StopSound: %u\n", mobj->id);
 
   for (unsigned int i = 0; i < channels->len; i++) {
     channel_t *channel = &g_array_index(channels, channel_t, i);
@@ -583,6 +633,9 @@ void S_UpdateSounds(mobj_t *listener) {
     // killough 3/20/98
     if (channel->origin_id && listener->id != channel->origin_id) {
       mobj_t *source = P_IdentLookup(channel->origin_id);
+
+      if (!source)
+        continue;
 
       if (!adjust_sound_params(listener, source, &volume, &sep, &pitch))
         stop_channel(channel);
@@ -739,17 +792,33 @@ void S_ReloadChannelOrigins(void) {
       }
       else {
         if (channel->sfxinfo) {
-          D_Log(LOG_SOUND, "No actor for ID %u (sound: %s)\n",
+          D_Log(LOG_SYNC, "No actor for ID %u (sound: %s)\n",
             origin_id,
             channel->sfxinfo->name
           );
         }
         else {
-          D_Log(LOG_SOUND, "No actor for ID %u (null sound?)\n", origin_id);
+          D_Log(LOG_SYNC, "No actor for ID %u (null sound?)\n", origin_id);
         }
-        stop_channel(channel);
+
         channel->origin = NULL;
-        channel->origin_id = 0;
+
+        if (channel->command_index <= CL_GetCurrentCommandIndex()) {
+          D_Log(LOG_SYNC, "Removing orphaned sound (%u, %d, %d)\n",
+            channel->origin_id,
+            channel->command_index,
+            CL_GetCurrentCommandIndex()
+          );
+          stop_channel(channel);
+          channel->origin_id = 0;
+        }
+        else {
+          D_Log(LOG_SYNC, "Saving orphaned sound (%u, %d, %d)\n",
+            channel->origin_id,
+            channel->command_index,
+            CL_GetCurrentCommandIndex()
+          );
+        }
       }
     }
   }

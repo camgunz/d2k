@@ -55,8 +55,8 @@ uint32_t I_GetTicks(void) {
   return SDL_GetTicks();
 }
 
-void I_uSleep(unsigned long usecs) {
-  SDL_Delay(usecs / 1000);
+void I_Sleep(unsigned long ms) {
+  SDL_Delay(ms);
 }
 
 int I_GetTime_RealTime(void) {

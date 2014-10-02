@@ -2,6 +2,7 @@
 export SDL_AUDIODRIVER="pulse"
 
 PORT=10666
+PORT=10667
 HOST=totaltrash.org
 HOST=127.0.0.1
 

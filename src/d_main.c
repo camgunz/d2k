@@ -545,7 +545,7 @@ static void D_Wipe(void) {
     int tics;
 
     do {
-      I_uSleep(5000); // CPhipps - don't thrash cpu in this loop
+      I_Sleep(5); // CPhipps - don't thrash cpu in this loop
       nowtime = I_GetTime();
       tics = nowtime - wipestart;
     } while (!tics);
@@ -680,7 +680,7 @@ void D_Display(void) {
 
     // Now do the drawing
     if (viewactive || map_always_updates)
-      R_RenderPlayerView (&players[displayplayer]);
+      R_RenderPlayerView(&players[displayplayer]);
 
     // IDRATE cheat
     R_ShowStats();
@@ -736,7 +736,7 @@ void D_Display(void) {
   // e6y
   // Don't thrash cpu during pausing or if the window doesnt have focus
   if ( (paused && !walkcamera.type) || (!window_focused) ) {
-    I_uSleep(5000);
+    I_Sleep(5);
   }
 
   I_EndDisplay();

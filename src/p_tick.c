@@ -301,8 +301,11 @@ static dboolean setup_tic(void) {
 }
 
 static void run_regular_tic(void) {
+  if (playeringame[consoleplayer])
+    P_PlayerThink(consoleplayer);
+
   for (int i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i])
+    if (i != consoleplayer && playeringame[i])
       P_PlayerThink(i);
   }
 }

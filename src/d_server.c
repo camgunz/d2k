@@ -503,7 +503,7 @@ int main(int argc, char** argv)
       }
       I_SendPacketTo(packet, sizeof *packet + sizeof setupinfo + extrabytes,
          remoteaddr+n);
-      I_uSleep(10000);
+      I_Sleep(10);
       I_SendPacketTo(packet, sizeof *packet + sizeof setupinfo + extrabytes,
          remoteaddr+n);
     }
@@ -630,9 +630,9 @@ int main(int argc, char** argv)
     }
     packet_set(packet, PKT_GO, 0);
     BroadcastPacket(packet, sizeof *packet);
-    I_uSleep(10000);
+    I_Sleep(10);
     BroadcastPacket(packet, sizeof *packet);
-    I_uSleep(10000);
+    I_Sleep(10);
   }
   if (confirming && !--confirming && !ingame) {
     int i;

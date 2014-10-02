@@ -437,6 +437,8 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
   int peernum = -1;
   ENetEvent net_event;
 
+  // printf("N_ServiceNetworkTimeout: %d\n", timeout_ms);
+
   if (net_host == NULL)
     return;
 

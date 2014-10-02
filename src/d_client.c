@@ -183,7 +183,7 @@ void D_CheckNetGame(void)
         packet_set(packet, PKT_GO, 0);
 	*(byte*)(packet+1) = consoleplayer;
 	I_SendPacket(packet, sizeof(packet_header_t)+1);
-	I_uSleep(100000);
+	I_Sleep(100);
       }
     } while (packet->type != PKT_GO);
   }
@@ -207,7 +207,7 @@ dboolean N_GetWad(const char* name)
     strcpy(1+(byte*)(packet+1), name);
     I_SendPacket(packet, sizeof(packet_header_t) + strlen(name) + 2);
 
-    I_uSleep(10000);
+    I_Sleep(10);
   } while (!I_GetPacket(packet, psize) || (packet->type != PKT_WAD));
   Z_Free(packet);
 
@@ -469,7 +469,7 @@ void N_TryRunTics(void)
           I_WaitForPacket(ms_to_next_tick);
         else
 #endif
-          I_uSleep(ms_to_next_tick*1000);
+          I_Sleep(ms_to_next_tick);
       }
       if (I_GetTime() - entertime > 10) {
 #ifdef HAVE_NET
@@ -527,7 +527,7 @@ static void D_QuitNetGame (void)
 
   for (i=0; i<4; i++) {
     I_SendPacket(packet, 1 + sizeof(packet_header_t));
-    I_uSleep(10000);
+    I_Sleep(10);
   }
 }
 #endif
