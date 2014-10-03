@@ -78,6 +78,8 @@ void D_Log(log_channel_e channel, const char *fmt, ...) {
   va_start(args, fmt);
   vfprintf(fh, fmt, args);
   va_end(args);
+
+  fflush(fh);
 #endif
 }
 

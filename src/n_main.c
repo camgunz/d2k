@@ -204,6 +204,7 @@ static void cl_load_latest_state(void) {
 
     current_command_index = command_index;
 
+    /*
     D_Log(LOG_SYNC, "(%d) Loading new state [%d => %d] {%d (%d)}\n",
       gametic,
       delta->from_tic,
@@ -211,6 +212,7 @@ static void cl_load_latest_state(void) {
       command_index,
       local_command_index - 1
     );
+    */
 
     loading_state = true;
     saved_gametic = gametic;
@@ -233,7 +235,6 @@ static void cl_load_latest_state(void) {
 
 #if ENABLE_PREDICTION
     unsigned int sync_command_count = g_queue_get_length(sync_commands);
-    unsigned int sync_command_index = 0;
 
     for (unsigned int i = 0; i < sync_command_count; i++) {
       netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
@@ -243,14 +244,18 @@ static void cl_load_latest_state(void) {
       g_queue_push_tail(run_commands, run_ncmd);
     }
 
+    /*
     D_Log(LOG_SYNC, "(%d) Repredicting %d TICs...\n",
       gametic, saved_gametic - gametic
     );
+    */
 
     while (gametic < saved_gametic)
       run_tic();
 
+    /*
     D_Log(LOG_SYNC, "(%d) Finished repredicting\n", gametic);
+    */
 #endif
 
     server->sync.outdated = true;
@@ -506,6 +511,8 @@ void CL_SetupCommandState(int playernum, netticcmd_t *ncmd) {
 }
 
 void CL_ShutdownCommandState(void) {
+  running_consoleplayer_commands = false;
+
   if (current_command_index > latest_command_run)
     latest_command_run = current_command_index;
 }
@@ -574,9 +581,6 @@ bool N_TryRunTics(void) {
 
   if (tics_elapsed > 0) {
     tics_built += tics_elapsed;
-
-    if (tics_elapsed > 1)
-      D_Log(LOG_SYNC, "%d TICs elapsed!!!\n", tics_elapsed);
 
     if (ffmap)
       tics_elapsed++;

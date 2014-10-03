@@ -70,7 +70,8 @@ typedef struct {
   mobj_t *origin;      // origin of sound
   uint32_t origin_id;  // sound origin ID
   int handle;          // handle of the sound being played
-  int command_index;   // Command index at which this sound was started
+  int tic;             // TIC at which this sound was started
+  int command_index;   // command index at which this sound was started
   int is_pickup;       // killough 4/25/98: whether sound is a player's weapon
   int pitch;
 } channel_t;
@@ -197,8 +198,6 @@ static void stop_channel(channel_t *c) {
   if (!c->sfxinfo)
     return;
 
-  D_Log(LOG_SYNC, "stop_channel\n");
-
   // stop the sound playing
   if (I_SoundIsPlaying(c->handle))
     I_StopSound(c->handle);
@@ -210,13 +209,11 @@ static void stop_channel(channel_t *c) {
 
 static void init_channel(channel_t *c, mobj_t *mo, sfxinfo_t *sfx, int pu) {
   c->sfxinfo = sfx;
+  c->tic = gametic;
   c->origin = mo;
   if (mo) {
     c->origin_id = mo->id;
     c->command_index = CL_GetCurrentCommandIndex();
-    D_Log(LOG_SYNC, "init_channel: Started channel at %d\n",
-      c->command_index
-    );
   }
   else {
     c->origin_id = 0;
@@ -254,25 +251,11 @@ static int get_channel(mobj_t *mobj, sfxinfo_t *sfxinfo, int is_pickup) {
       if (c->sfxinfo == NULL)
         continue;
 
-      D_Log(LOG_SYNC, "get_channel: %u, %p, %u, %u, %d, %d, %p\n",
-        i,
-        c->origin,
-        c->origin_id,
-        mobj->id,
-        c->command_index,
-        CL_GetCurrentCommandIndex(),
-        c->sfxinfo
-      );
-
       if (c->command_index != CL_GetCurrentCommandIndex())
         continue;
 
       if (c->origin_id != mobj->id)
         continue;
-
-      D_Log(LOG_SYNC, "Claiming orphaned sound (%u, %d, %d)\n",
-        c->origin_id, c->command_index, CL_GetCurrentCommandIndex()
-      );
 
       c->origin = mobj;
       c->is_pickup = false;
@@ -323,6 +306,34 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
     I_Error("start_sound_at_volume: Bad sfx #: %d", sfx_id);
 
   sfx = &S_sfx[sfx_id];
+
+  if (DELTACLIENT) {
+    for (unsigned int i = 0; i < channels->len; i++) {
+      channel_t *c = &g_array_index(channels, channel_t, i);
+
+      if (origin == NULL && c->origin != NULL)
+        continue;
+
+      if (origin != NULL) {
+        if (c->origin == NULL)
+          continue;
+
+        if (c->origin_id != origin->id)
+          continue;
+      }
+
+      if (c->sfxinfo != sfx)
+        continue;
+
+      if (c->is_pickup != is_pickup)
+        continue;
+
+      if (c->tic != gametic)
+        continue;
+
+      return;
+    }
+  }
 
   // Initialize sound parameters
   if (sfx->link) {
@@ -425,10 +436,6 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
   if (sfx->usefulness++ < 0)
     sfx->usefulness = 1;
 
-  D_Log(LOG_SYNC, "(%d) Starting sound %d\n",
-    CL_GetCurrentCommandIndex(), sfx_id
-  );
-
   // Assigns the handle to one of the channels in the mix/output buffer.
   // e6y: [Fix] Crash with zero-length sounds.
   int h = I_StartSound(sfx_id, cnum, volume, sep, pitch, priority);
@@ -488,7 +495,6 @@ void S_Init(int sfxVolume, int musicVolume) {
 }
 
 void S_Stop(void) {
-  //jff 1/22/98 skip sound init if sound not enabled
   for (unsigned int i = 0; i < channels->len; i++) {
     channel_t *channel = &g_array_index(channels, channel_t, i);
 
@@ -546,17 +552,10 @@ void S_StartSound(mobj_t *mobj, int sfx_id) {
   if (CL_RePredicting())
     return;
 
-  if (mobj)
-    D_Log(LOG_SYNC, "S_StartSound: %u, %d\n", mobj->id, sfx_id);
-  else
-    D_Log(LOG_SYNC, "S_StartSound: %p, %d\n", mobj, sfx_id);
-
   start_sound_at_volume(mobj, sfx_id, snd_SfxVolume);
 }
 
 void S_StopSound(mobj_t *mobj) {
-  D_Log(LOG_SYNC, "S_StopSound: %u\n", mobj->id);
-
   for (unsigned int i = 0; i < channels->len; i++) {
     channel_t *channel = &g_array_index(channels, channel_t, i);
 
@@ -620,13 +619,14 @@ void S_UpdateSounds(mobj_t *listener) {
     if (sfx->link) {
       pitch = sfx->pitch;
       volume += sfx->volume;
+
       if (volume < 1) {
         stop_channel(channel);
         continue;
       }
-      else if (volume > snd_SfxVolume) {
+
+      if (volume > snd_SfxVolume)
         volume = snd_SfxVolume;
-      }
     }
 
     // check non-local sounds for distance clipping or modify their params
@@ -791,33 +791,11 @@ void S_ReloadChannelOrigins(void) {
         channel->origin = mobj;
       }
       else {
-        if (channel->sfxinfo) {
-          D_Log(LOG_SYNC, "No actor for ID %u (sound: %s)\n",
-            origin_id,
-            channel->sfxinfo->name
-          );
-        }
-        else {
-          D_Log(LOG_SYNC, "No actor for ID %u (null sound?)\n", origin_id);
-        }
-
         channel->origin = NULL;
 
         if (channel->command_index <= CL_GetCurrentCommandIndex()) {
-          D_Log(LOG_SYNC, "Removing orphaned sound (%u, %d, %d)\n",
-            channel->origin_id,
-            channel->command_index,
-            CL_GetCurrentCommandIndex()
-          );
           stop_channel(channel);
           channel->origin_id = 0;
-        }
-        else {
-          D_Log(LOG_SYNC, "Saving orphaned sound (%u, %d, %d)\n",
-            channel->origin_id,
-            channel->command_index,
-            CL_GetCurrentCommandIndex()
-          );
         }
       }
     }

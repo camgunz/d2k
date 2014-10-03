@@ -969,7 +969,6 @@ void P_RemoveMobj(mobj_t* mobj) {
   }
 
   // stop any playing sound
-
   if (!CL_LoadingState())
     S_StopSound(mobj);
 
