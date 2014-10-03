@@ -301,18 +301,12 @@ void P_RunPlayerCommands(int playernum) {
   if (playernum != consoleplayer && P_GetPlayerCommandCount(playernum) == 0)
     return;
 
-  /*
-  if (playernum != consoleplayer &&
-      player->mo &&
+  if (DELTACLIENT &&
+      playernum != consoleplayer &&
       P_GetPlayerCommandCount(playernum) == 0) {
-    if (DELTACLIENT)
-      predict_player_position(player);
-    else
-      P_MobjThinker(player->mo);
-
+    predict_player_position(player);
     return;
   }
-  */
 
   run_queued_player_commands(playernum);
 }
