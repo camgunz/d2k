@@ -294,7 +294,6 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
   sfxinfo_t *sfx;
   channel_t *channel;
 
-  //jff 1/22/98 return if sound is not enabled
   is_pickup = sfx_id & PICKUP_SOUND ||
               sfx_id == sfx_oof ||
               (compatibility_level >= prboom_2_compatibility &&
@@ -468,7 +467,6 @@ void S_Init(int sfxVolume, int musicVolume) {
 
   idmusnum = -1; //jff 3/17/98 insure idmus number is blank
 
-  //jff 1/22/98 skip sound init if sound not enabled
   numChannels = default_numChannels;
 
   lprintf(LO_CONFIRM, "S_Init: default sfx volume %d\n", sfxVolume);

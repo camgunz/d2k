@@ -49,6 +49,13 @@ static void run_player_command(player_t *player) {
   ticcmd_t *cmd = &player->cmd;
   weapontype_t newweapon;
 
+  if (CLIENT && player != &players[consoleplayer]) {
+    D_Log(LOG_SYNC, "(%d) run_player_command: Running command for %td\n",
+      gametic,
+      player - players
+    );
+  }
+
   // chain saw run forward
   if (player->mo->flags & MF_JUSTATTACKED) {
     cmd->angleturn = 0;
@@ -93,15 +100,16 @@ static void run_player_command(player_t *player) {
       if (!prboom_comp[PC_ALLOW_SSG_DIRECT].state)
         newweapon = (cmd->buttons & BT_WEAPONMASK_OLD) >> BT_WEAPONSHIFT;
 
-      if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] && (
-            player->readyweapon != wp_chainsaw ||
-            !player->powers[pw_strength])) {
+      if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
+          (player->readyweapon != wp_chainsaw ||
+           !player->powers[pw_strength])) {
         newweapon = wp_chainsaw;
       }
 
-      if (gamemode == commercial && newweapon == wp_shotgun &&
-                                    player->weaponowned[wp_supershotgun] &&
-                                    player->readyweapon != wp_supershotgun) {
+      if (gamemode == commercial &&
+          newweapon == wp_shotgun &&
+          player->weaponowned[wp_supershotgun] &&
+          player->readyweapon != wp_supershotgun) {
         newweapon = wp_supershotgun;
       }
     }
@@ -110,9 +118,9 @@ static void run_player_command(player_t *player) {
 
     // Do not go to plasma or BFG in shareware, even if cheated.
     if (player->weaponowned[newweapon] &&
-        newweapon != player->readyweapon && (
-          (newweapon != wp_plasma && newweapon != wp_bfg) ||
-          (gamemode != shareware))) {
+        newweapon != player->readyweapon &&
+        ((newweapon != wp_plasma && newweapon != wp_bfg) ||
+         (gamemode != shareware))) {
       player->pendingweapon = newweapon;
     }
   }
@@ -298,12 +306,10 @@ void P_RunPlayerCommands(int playernum) {
     return;
   }
   
-  if (playernum != consoleplayer && P_GetPlayerCommandCount(playernum) == 0)
-    return;
-
   if (DELTACLIENT &&
       playernum != consoleplayer &&
       P_GetPlayerCommandCount(playernum) == 0) {
+    D_Log(LOG_SYNC, "P_RunPlayerCommands: No commands for %d\n", playernum);
     predict_player_position(player);
     return;
   }
