@@ -2,10 +2,9 @@
 
 ## Prototype
 
-1. Revamp sync (see sync.md)
+1. Fix multiplayer sounds
 
-1. Still jittery?
-  * I'm starting to think there's a bug in state loading and catching up
+1. Ensure singleplayer still works
 
 ---
 
