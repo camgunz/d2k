@@ -310,8 +310,8 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, int playernum) {
     M_PBufWriteUChar(pbuf, command_count);
 
     /*
-    D_Log(LOG_SYNC, "pack_commands: %d packing %u commands\n",
-      playernum, command_count
+    D_Log(LOG_SYNC, "pack_commands: %d sending %u commands for %d to %d\n",
+      consoleplayer, command_count, playernum, np->playernum
     );
     */
 
@@ -412,14 +412,14 @@ bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
     read_int(pbuf, sync_index, "command sync index");
     np->sync.commands[playernum].sync_index = sync_index;
 
+    /*
     if (sync_index > 0) {
-      /*
       D_Log(LOG_SYNC,
         "unpack_commands: %d received %d's commands: %d\n",
         np->playernum, playernum, np->sync.commands[playernum].sync_index
       );
-      */
     }
+    */
   }
 
   return true;

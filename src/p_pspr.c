@@ -82,16 +82,6 @@ static const int recoil_values[] = {    // phares
 static void P_SetPsprite(player_t *player, int position, statenum_t stnum) {
   pspdef_t *psp = &player->psprites[position];
 
-  if (CLIENT && player != &players[consoleplayer]) {
-    D_Log(LOG_SYNC, "(%d | %d) P_SetPsprite: %td, %d, %d\n",
-      gametic,
-      CL_GetCurrentCommandIndex(),
-      player - players,
-      position,
-      stnum
-    );
-  }
-
   do {
     state_t *state;
 
@@ -936,8 +926,7 @@ void P_SetupPsprites(player_t *player)
 // Called every tic by player thinking routine.
 //
 
-void P_MovePsprites(player_t *player)
-{
+void P_MovePsprites(player_t *player) {
   pspdef_t *psp = player->psprites;
 
   // a null state means not active

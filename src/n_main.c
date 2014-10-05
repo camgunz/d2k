@@ -83,14 +83,6 @@ static void run_tic(void) {
 
   I_GetTime_SaveMS();
 
-#if ENABLE_PREDICTION
-  G_Ticker();
-#else
-  if (SERVER)
-    G_Ticker();
-#endif
-  P_Checksum(gametic);
-
   if (DELTASERVER && gametic > 0) {
     /* CG: TODO: Don't save states if there are no peers, saves resources */
     N_SaveState();
@@ -104,6 +96,14 @@ static void run_tic(void) {
 
     N_UpdateSync();
   }
+
+#if ENABLE_PREDICTION
+  G_Ticker();
+#else
+  if (SERVER)
+    G_Ticker();
+#endif
+  P_Checksum(gametic);
 
   gametic++;
 }
@@ -161,7 +161,6 @@ static void render_menu(int menu_renderer_calls) {
 
 static void cl_load_latest_state(void) {
   netpeer_t *server;
-  int state_tic;
   int command_index;
   GQueue *sync_commands;
   GQueue *run_commands;
@@ -185,17 +184,18 @@ static void cl_load_latest_state(void) {
     return;
   }
 
-  state_tic = server->sync.tic;
-
-  if (command_index > cl_command_index) {
-    P_RemoveOldCommands(command_index, sync_commands);
-    cl_command_index = command_index;
-    server->sync.outdated = true;
-  }
+  /*
+   * load_new_state()
+   * run_synchronized_tic()
+   * remove_synchronized_commands()
+   * load_unsynchronized_commands()
+   * run_unsynchronized_tics()
+   */
 
   if (server->sync.tic != cl_state_tic) {
     game_state_delta_t *delta = &server->sync.delta;
     bool state_loaded;
+    unsigned int sync_command_count = g_queue_get_length(sync_commands);
 
     if (!N_ApplyStateDelta(delta)) {
       P_Echo(consoleplayer, "Error applying state delta");
@@ -204,7 +204,6 @@ static void cl_load_latest_state(void) {
 
     current_command_index = command_index;
 
-    /*
     D_Log(LOG_SYNC, "(%d) Loading new state [%d => %d] {%d (%d)}\n",
       gametic,
       delta->from_tic,
@@ -212,7 +211,6 @@ static void cl_load_latest_state(void) {
       command_index,
       local_command_index - 1
     );
-    */
 
     loading_state = true;
     saved_gametic = gametic;
@@ -233,15 +231,30 @@ static void cl_load_latest_state(void) {
     cl_delta_from_tic = delta->from_tic;
     cl_delta_to_tic = delta->to_tic;
 
-#if ENABLE_PREDICTION
-    unsigned int sync_command_count = g_queue_get_length(sync_commands);
-
     for (unsigned int i = 0; i < sync_command_count; i++) {
       netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
-      netticcmd_t *run_ncmd = P_GetNewBlankCommand();
+      netticcmd_t *run_ncmd;
+      
+      if (sync_ncmd->index > command_index)
+        break;
 
+      run_ncmd = P_GetNewBlankCommand();
       memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
       g_queue_push_tail(run_commands, run_ncmd);
+    }
+
+    run_tic();
+
+#if ENABLE_PREDICTION
+    for (unsigned int i = 0; i < sync_command_count; i++) {
+      netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+      
+      if (sync_ncmd->index > command_index) {
+        netticcmd_t *run_ncmd = P_GetNewBlankCommand();
+
+        memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
+        g_queue_push_tail(run_commands, run_ncmd);
+      }
     }
 
     /*
@@ -258,6 +271,12 @@ static void cl_load_latest_state(void) {
     */
 #endif
 
+    server->sync.outdated = true;
+  }
+
+  if (command_index > cl_command_index) {
+    P_RemoveOldCommands(command_index, sync_commands);
+    cl_command_index = command_index;
     server->sync.outdated = true;
   }
 }

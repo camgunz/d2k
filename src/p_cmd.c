@@ -49,12 +49,14 @@ static void run_player_command(player_t *player) {
   ticcmd_t *cmd = &player->cmd;
   weapontype_t newweapon;
 
+  /*
   if (CLIENT && player != &players[consoleplayer]) {
     D_Log(LOG_SYNC, "(%d) run_player_command: Running command for %td\n",
       gametic,
       player - players
     );
   }
+  */
 
   // chain saw run forward
   if (player->mo->flags & MF_JUSTATTACKED) {
@@ -206,10 +208,7 @@ void run_queued_player_commands(int playernum) {
 
     memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
     leveltime = ncmd->tic;
-    /*
-    if (CLIENT)
-      N_LogCommand(ncmd);
-    */
+    N_LogCommand(ncmd);
     run_player_command(player);
 
     if (player->mo)
@@ -281,7 +280,7 @@ unsigned int P_GetPlayerCommandCount(int playernum) {
   GQueue *commands;
 
   if (CLIENT) {
-    if (!CL_GetCommandSync(consoleplayer, NULL, NULL, &commands)) {
+    if (!CL_GetCommandSync(playernum, NULL, NULL, &commands)) {
       P_Echo(consoleplayer, "Server disconnected");
       return 0;
     }
@@ -309,7 +308,6 @@ void P_RunPlayerCommands(int playernum) {
   if (DELTACLIENT &&
       playernum != consoleplayer &&
       P_GetPlayerCommandCount(playernum) == 0) {
-    D_Log(LOG_SYNC, "P_RunPlayerCommands: No commands for %d\n", playernum);
     predict_player_position(player);
     return;
   }
