@@ -33,6 +33,7 @@ void         P_RemoveOldCommands(int sync_index, GQueue *commands);
 void         P_RecycleCommand(netticcmd_t *ncmd);
 int          P_GetCurrentCommandIndex(void);
 void         P_SetCurrentCommandIndex(int new_current_command_index);
+void         P_PrintCommands(GQueue *commands);
 
 #endif
 

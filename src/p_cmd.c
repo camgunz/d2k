@@ -45,6 +45,12 @@
 
 static GQueue *blank_command_queue;
 
+static void print_command(gpointer data, gpointer user_data) {
+  netticcmd_t *ncmd = data;
+
+  D_Log(LOG_SYNC, " %u/%u", ncmd->index, ncmd->tic);
+}
+
 static void run_player_command(player_t *player) {
   ticcmd_t *cmd = &player->cmd;
   weapontype_t newweapon;
@@ -337,6 +343,12 @@ void P_RemoveOldCommands(int sync_index, GQueue *commands) {
 void P_RecycleCommand(netticcmd_t *ncmd) {
   memset(ncmd, 0, sizeof(netticcmd_t));
   g_queue_push_tail(blank_command_queue, ncmd);
+}
+
+void P_PrintCommands(GQueue *commands) {
+  D_Log(LOG_SYNC, "{");
+  g_queue_foreach(commands, print_command, NULL);
+  D_Log(LOG_SYNC, " }");
 }
 
 /* vi: set et ts=2 sw=2: */
