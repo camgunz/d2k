@@ -111,6 +111,19 @@ int idmusnum;
 // Internals.
 //
 
+static void log_channel(int channel_num) {
+  channel_t *c = &g_array_index(channels, channel_t, channel_num);
+
+  D_Log(LOG_SYNC, "%d, %s, %u/%u, %d, %d\n", 
+    channel_num,
+    c->sfxinfo != NULL ? c->sfxinfo->name : "(nil)",
+    c->origin != NULL ? c->origin->id : 0,
+    c->origin_id,
+    c->tic,
+    c->command_index
+  );
+}
+
 //
 // adjust_sound_params
 //
@@ -310,6 +323,11 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
     for (unsigned int i = 0; i < channels->len; i++) {
       channel_t *c = &g_array_index(channels, channel_t, i);
 
+      D_Log(LOG_SYNC, "(%d | %d) Checking for duplicate sound: ",
+        gametic, CL_GetCurrentCommandIndex()
+      );
+      log_channel(i);
+
       if (origin == NULL && c->origin != NULL)
         continue;
 
@@ -330,6 +348,10 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
       if (c->tic != gametic)
         continue;
 
+      D_Log(LOG_SYNC, "(%d | %d) Skipping duplicate sound: ",
+        gametic, CL_GetCurrentCommandIndex()
+      );
+      log_channel(i);
       return;
     }
   }
@@ -434,6 +456,11 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
   // increase the usefulness
   if (sfx->usefulness++ < 0)
     sfx->usefulness = 1;
+
+  D_Log(LOG_SYNC, "(%d | %d) Starting sound: ",
+    gametic, CL_GetCurrentCommandIndex()
+  );
+  log_channel(cnum);
 
   // Assigns the handle to one of the channels in the mix/output buffer.
   // e6y: [Fix] Crash with zero-length sounds.
@@ -791,9 +818,19 @@ void S_ReloadChannelOrigins(void) {
       else {
         channel->origin = NULL;
 
-        if (channel->command_index <= CL_GetCurrentCommandIndex()) {
+        if (channel->command_index < CL_GetCurrentCommandIndex()) {
+          D_Log(LOG_SYNC, "(%d | %d) Stopping orphaned sound: ",
+            gametic, CL_GetCurrentCommandIndex()
+          );
+          log_channel(i);
           stop_channel(channel);
           channel->origin_id = 0;
+        }
+        else {
+          D_Log(LOG_SYNC, "(%d | %d) Saving orphaned sound: ",
+            gametic, CL_GetCurrentCommandIndex()
+          );
+          log_channel(i);
         }
       }
     }
