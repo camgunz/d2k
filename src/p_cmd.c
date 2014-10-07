@@ -222,8 +222,8 @@ void run_queued_player_commands(int playernum) {
 
     /*
     if (CLIENT)
-      N_LogPlayerPosition(player);
     */
+    N_LogPlayerPosition(player);
 
     CL_ShutdownCommandState();
 
@@ -326,11 +326,9 @@ void P_RemoveOldCommands(int sync_index, GQueue *commands) {
     netticcmd_t *ncmd = g_queue_peek_head(commands);
 
     if (ncmd->index <= sync_index) {
-      /*
       D_Log(LOG_SYNC, "P_RemoveOldCommands: Removing command %d\n",
         ncmd->index
       );
-      */
 
       P_RecycleCommand(g_queue_pop_head(commands));
     }
@@ -348,7 +346,7 @@ void P_RecycleCommand(netticcmd_t *ncmd) {
 void P_PrintCommands(GQueue *commands) {
   D_Log(LOG_SYNC, "{");
   g_queue_foreach(commands, print_command, NULL);
-  D_Log(LOG_SYNC, " }");
+  D_Log(LOG_SYNC, " }\n");
 }
 
 /* vi: set et ts=2 sw=2: */

@@ -83,22 +83,27 @@ static void run_tic(void) {
 
   I_GetTime_SaveMS();
 
+  G_Ticker();
+  P_Checksum(gametic);
+
   if (DELTASERVER && gametic > 0) {
     /* CG: TODO: Don't save states if there are no peers, saves resources */
+    D_Log(LOG_SYNC, "(%d) Saving state\n", gametic);
     N_SaveState();
 
     NETPEER_FOR_EACH(iter) {
-      if (iter.np->sync.initialized)
+      if (iter.np->sync.initialized) {
         iter.np->sync.outdated = true;
-      else if (gametic > iter.np->sync.tic)
+        if (playeringame[iter.np->playernum])
+          N_LogPlayerPosition(&players[iter.np->playernum]);
+      }
+      else if (gametic > iter.np->sync.tic) {
         SV_SendSetup(iter.np->playernum);
+      }
     }
 
     N_UpdateSync();
   }
-
-  G_Ticker();
-  P_Checksum(gametic);
 
   gametic++;
 }
@@ -159,7 +164,6 @@ static void cl_load_latest_state(void) {
   int command_index;
   GQueue *sync_commands;
   GQueue *run_commands;
-  int saved_gametic;
 
   if (!DELTACLIENT)
     return;
@@ -183,13 +187,43 @@ static void cl_load_latest_state(void) {
     game_state_delta_t *delta = &server->sync.delta;
     bool state_loaded;
     unsigned int sync_command_count = g_queue_get_length(sync_commands);
+    int saved_gametic = gametic;
+    unsigned int tic_delta;
 
-    if (!N_ApplyStateDelta(delta)) {
-      P_Echo(consoleplayer, "Error applying state delta");
+    loading_state = true;
+    state_loaded = N_LoadLatestState(false);
+    loading_state = false;
+
+    if (!state_loaded) {
+      P_Echo(consoleplayer, "Error loading last state");
+      server->sync.tic = cl_state_tic;
+      delta->from_tic = cl_delta_from_tic;
+      delta->to_tic = cl_delta_to_tic;
       return;
     }
 
-    current_command_index = command_index;
+    if (!N_ApplyStateDelta(delta)) {
+      P_Echo(consoleplayer, "Error applying state delta");
+      server->sync.tic = cl_state_tic;
+      delta->from_tic = cl_delta_from_tic;
+      delta->to_tic = cl_delta_to_tic;
+      return;
+    }
+
+    for (unsigned int i = 0; i < sync_command_count; i++) {
+      netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+
+      if (sync_ncmd->index > cl_command_index &&
+          sync_ncmd->index <= command_index) {
+        netticcmd_t *run_ncmd = P_GetNewBlankCommand();
+
+        memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
+        g_queue_push_tail(run_commands, run_ncmd);
+      }
+    }
+
+    while (gametic < server->sync.tic)
+      run_tic();
 
     D_Log(LOG_SYNC, "(%d) Loading new state [%d => %d] {%d (%d)}\n",
       gametic,
@@ -200,12 +234,11 @@ static void cl_load_latest_state(void) {
     );
 
     loading_state = true;
-    saved_gametic = gametic;
     state_loaded = N_LoadLatestState(false);
     loading_state = false;
 
     if (!state_loaded) {
-      P_Echo(consoleplayer, "Error loading state");
+      P_Echo(consoleplayer, "Error loading latest state");
       server->sync.tic = cl_state_tic;
       delta->from_tic = cl_delta_from_tic;
       delta->to_tic = cl_delta_to_tic;
@@ -215,82 +248,36 @@ static void cl_load_latest_state(void) {
     N_RemoveOldStates(delta->from_tic);
 
     cl_state_tic = server->sync.tic;
-    cl_delta_from_tic = delta->from_tic;
-    cl_delta_to_tic = delta->to_tic;
+    if (saved_gametic >= gametic)
+      tic_delta = saved_gametic - gametic;
+    else
+      tic_delta = 0;
+
+    N_LogPlayerPosition(&players[consoleplayer]);
 
 #if ENABLE_PREDICTION
-    D_Log(LOG_SYNC, "(%d) Catching up to %d\n", gametic, saved_gametic);
+    D_Log(LOG_SYNC, "(%d) Commands: ", gametic);
+    P_PrintCommands(sync_commands);
 
-    if (gametic >= saved_gametic - 1) {
-      D_Log(LOG_SYNC, "(%d) Running all commands in 1 TIC\n", gametic);
-
-      for (unsigned int i = 0; i < sync_command_count; i++) {
-        netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
-        netticcmd_t *run_ncmd = P_GetNewBlankCommand();
-        
-        memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
-        g_queue_push_tail(run_commands, run_ncmd);
-      }
-
-      run_tic();
-    }
-    else {
-      D_Log(LOG_SYNC, "(%d) Commands: ", gametic);
-
-      P_PrintCommands(sync_commands);
-
-      D_Log(LOG_SYNC, "(%d) Running sync'd TIC...\n", gametic);
-
-      for (unsigned int i = 0; i < sync_command_count; i++) {
-        netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
-        netticcmd_t *run_ncmd;
-        
-        if (sync_ncmd->index > command_index)
-          break;
-
-        run_ncmd = P_GetNewBlankCommand();
-        memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
-        g_queue_push_tail(run_commands, run_ncmd);
-      }
-
-      run_tic();
-
-      D_Log(LOG_SYNC, "(%d) Finished running sync'd TIC\n", gametic);
-
-      for (unsigned int i = 0; i < sync_command_count; i++) {
-        netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
-        
-        if (sync_ncmd->index > command_index) {
-          netticcmd_t *run_ncmd = P_GetNewBlankCommand();
-
-          memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
-          g_queue_push_tail(run_commands, run_ncmd);
-        }
-      }
-
-      D_Log(LOG_SYNC, "(%d) Repredicting %d TICs...\n",
-        gametic, saved_gametic - gametic
-      );
-
-      while (gametic < saved_gametic)
-        run_tic();
-
-      D_Log(LOG_SYNC, "(%d) Finished repredicting\n", gametic);
-    }
-#else
     for (unsigned int i = 0; i < sync_command_count; i++) {
       netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
-      netticcmd_t *run_ncmd;
-      
-      if (sync_ncmd->index > command_index)
-        break;
 
-      run_ncmd = P_GetNewBlankCommand();
-      memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
-      g_queue_push_tail(run_commands, run_ncmd);
+      if (sync_ncmd->index > command_index) {
+        netticcmd_t *run_ncmd = P_GetNewBlankCommand();
+
+        memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
+        g_queue_push_tail(run_commands, run_ncmd);
+      }
     }
 
-    run_tic();
+    D_Log(LOG_SYNC, "(%d) Repredicting %d TICs...\n",
+      gametic,
+      saved_gametic > gametic ? saved_gametic - gametic : 1
+    );
+    do {
+      run_tic();
+    } while (gametic < saved_gametic);
+    D_Log(LOG_SYNC, "(%d) Finished repredicting\n", gametic);
 #endif
 
     server->sync.outdated = true;
@@ -322,7 +309,7 @@ static void sv_remove_old_commands(void) {
     for (int i = 0; i < MAXPLAYERS; i++) {
       if (i != iter.np->playernum) {
         P_RemoveOldCommands(
-          iter.np->sync.commands[i].sync_index,
+          iter.np->sync.commands[i].index,
           iter.np->sync.commands[i].sync_queue
         );
       }

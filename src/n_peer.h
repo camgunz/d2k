@@ -38,7 +38,7 @@ typedef struct netcom_s {
 } netcom_t;
 
 typedef struct command_queue_s {
-  int     sync_index;
+  int     index;
   GQueue *sync_queue;
   GQueue *run_queue;
 } command_queue_t;

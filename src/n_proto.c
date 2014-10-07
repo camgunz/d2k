@@ -240,7 +240,8 @@ static void handle_server_message(netpeer_t *np) {
 }
 
 static void handle_sync(netpeer_t *np) {
-  N_UnpackSync(np);
+  if (SERVER || CL_ReceivedSetup())
+    N_UnpackSync(np);
 }
 
 static void handle_player_message(netpeer_t *np) {
@@ -760,7 +761,7 @@ bool SV_GetCommandSync(int playernum1, int playernum2, int *sync_index,
     return false;
 
   if (sync_index != NULL)
-    *sync_index = np->sync.commands[playernum2].sync_index;
+    *sync_index = np->sync.commands[playernum2].index;
 
   if (sync_commands != NULL)
     *sync_commands = np->sync.commands[playernum2].sync_queue;
@@ -800,7 +801,7 @@ bool CL_GetCommandSync(int playernum, int *sync_index, GQueue **sync_commands,
     return false;
 
   if (sync_index != NULL)
-    *sync_index = server->sync.commands[playernum].sync_index;
+    *sync_index = server->sync.commands[playernum].index;
 
   if (sync_commands != NULL)
     *sync_commands = server->sync.commands[playernum].sync_queue;

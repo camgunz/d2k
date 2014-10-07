@@ -329,12 +329,12 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, int playernum) {
     }
   }
   else {
-    M_PBufWriteInt(pbuf, np->sync.commands[playernum].sync_index);
+    M_PBufWriteInt(pbuf, np->sync.commands[playernum].index);
 
     /*
     D_Log(LOG_SYNC,
-      "pack_commands: acknowledging %d's commands: %d\n",
-      playernum, np->sync.commands[playernum].sync_index
+      "(%d) pack_commands: acknowledging %d's commands: %d\n",
+      gametic, playernum, np->sync.commands[playernum].index
     );
     */
   }
@@ -372,7 +372,7 @@ bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
       read_uchar(pbuf, ncmd.cmd.chatchar,    "comand chatchar value");
       read_uchar(pbuf, ncmd.cmd.buttons,     "command buttons value");
 
-      if (ncmd.index > np->sync.commands[playernum].sync_index) {
+      if (ncmd.index > np->sync.commands[playernum].index) {
         /*
         D_Log(LOG_SYNC, "unpack_commands: Got new command %d from %d\n",
           ncmd.index, playernum
@@ -384,7 +384,7 @@ bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
 
           memcpy(new_ncmd, &ncmd, sizeof(netticcmd_t));
           g_queue_push_tail(np->sync.commands[playernum].run_queue, new_ncmd);
-          np->sync.commands[playernum].sync_index = ncmd.index;
+          np->sync.commands[playernum].index = ncmd.index;
         }
         else {
           NETPEER_FOR_EACH(iter) {
@@ -400,24 +400,37 @@ bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
               commands = np2->sync.commands[playernum].sync_queue;
 
             g_queue_push_tail(commands, new_ncmd);
-            np2->sync.commands[playernum].sync_index = ncmd.index;
+            np2->sync.commands[playernum].index = ncmd.index;
           }
         }
       }
     }
   }
   else {
-    int sync_index;
+    int command_index;
 
-    read_int(pbuf, sync_index, "command sync index");
-    np->sync.commands[playernum].sync_index = sync_index;
+    read_int(pbuf, command_index, "command sync index");
+
+    np->sync.commands[playernum].index = command_index;
 
     /*
-    if (sync_index > 0) {
-      D_Log(LOG_SYNC,
-        "unpack_commands: %d received %d's commands: %d\n",
-        np->playernum, playernum, np->sync.commands[playernum].sync_index
-      );
+    D_Log(LOG_SYNC,
+      "unpack_commands: %d received %d's commands: %d, %d\n",
+      np->playernum, playernum, first_command_index, command_index
+    );
+    if (command_index > 0) {
+      if (CLIENT) {
+        D_Log(LOG_SYNC,
+          "unpack_commands: %d received %d's commands: %d, %d\n",
+          np->playernum, playernum, first_command_index, command_index
+        );
+      }
+      else {
+        D_Log(LOG_SYNC,
+          "unpack_commands: %d received %d's commands: %d\n",
+          np->playernum, playernum, command_index
+        );
+      }
     }
     */
   }

@@ -177,13 +177,13 @@ static void free_netcom(netcom_t *nc) {
 }
 
 static void init_command_queue(command_queue_t *cq) {
-  cq->sync_index = 0;
+  cq->index = 0;
   cq->sync_queue = g_queue_new();
   cq->run_queue = g_queue_new();
 }
 
 static void free_command_queue(command_queue_t *cq) {
-  cq->sync_index = 0;
+  cq->index = 0;
   g_queue_free_full(cq->sync_queue, destroy_netticcmd);
   g_queue_free_full(cq->run_queue, destroy_netticcmd);
 }
