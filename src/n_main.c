@@ -190,6 +190,16 @@ static void cl_load_latest_state(void) {
     int saved_gametic = gametic;
     unsigned int tic_delta;
 
+    D_Log(LOG_SYNC, "(%d) Loading new state [%d => %d] [%d => %d]\n",
+      gametic,
+      delta->from_tic,
+      delta->to_tic,
+      cl_command_index,
+      command_index
+    );
+
+    current_command_index = cl_command_index;
+
     loading_state = true;
     state_loaded = N_LoadLatestState(false);
     loading_state = false;
@@ -225,14 +235,6 @@ static void cl_load_latest_state(void) {
     while (gametic < server->sync.tic)
       run_tic();
 
-    D_Log(LOG_SYNC, "(%d) Loading new state [%d => %d] {%d (%d)}\n",
-      gametic,
-      delta->from_tic,
-      delta->to_tic,
-      command_index,
-      local_command_index - 1
-    );
-
     loading_state = true;
     state_loaded = N_LoadLatestState(false);
     loading_state = false;
@@ -267,17 +269,9 @@ static void cl_load_latest_state(void) {
 
         memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
         g_queue_push_tail(run_commands, run_ncmd);
+        run_tic();
       }
     }
-
-    D_Log(LOG_SYNC, "(%d) Repredicting %d TICs...\n",
-      gametic,
-      saved_gametic > gametic ? saved_gametic - gametic : 1
-    );
-    do {
-      run_tic();
-    } while (gametic < saved_gametic);
-    D_Log(LOG_SYNC, "(%d) Finished repredicting\n", gametic);
 #endif
 
     server->sync.outdated = true;
