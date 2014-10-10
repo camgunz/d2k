@@ -71,11 +71,14 @@ static bool         loading_state = false;
 static int          local_command_index = 0;
 static int          current_command_index = 0;
 static int          latest_command_run = 0;
-static bool         running_consoleplayer_commands = false;
+static bool         cl_running_consoleplayer_commands = false;
+static bool         cl_running_nonconsoleplayer_commands = false;
 static int          cl_state_tic = -1;
 static int          cl_command_index = -1;
 static int          cl_delta_from_tic = -1;
 static int          cl_delta_to_tic = -1;
+static bool         cl_synchronizing = false;
+static bool         cl_repredicting = false;
 
 static void run_tic(void) {
   if (advancedemo)
@@ -185,10 +188,13 @@ static void cl_load_latest_state(void) {
 
   if (server->sync.tic != cl_state_tic) {
     game_state_delta_t *delta = &server->sync.delta;
-    bool state_loaded;
     unsigned int sync_command_count = g_queue_get_length(sync_commands);
     int saved_gametic = gametic;
+    int commands_found = 0;
+    unsigned int commands_to_predict = 0;
+    bool state_loaded;
     unsigned int tic_delta;
+    int extra_commands;
 
     D_Log(LOG_SYNC, "(%d) Loading new state [%d => %d] [%d => %d]\n",
       gametic,
@@ -232,8 +238,10 @@ static void cl_load_latest_state(void) {
       }
     }
 
+    cl_synchronizing = true;
     while (gametic < server->sync.tic)
       run_tic();
+    cl_synchronizing = false;
 
     loading_state = true;
     state_loaded = N_LoadLatestState(false);
@@ -258,8 +266,46 @@ static void cl_load_latest_state(void) {
     N_LogPlayerPosition(&players[consoleplayer]);
 
 #if ENABLE_PREDICTION
-    D_Log(LOG_SYNC, "(%d) Commands: ", gametic);
-    P_PrintCommands(sync_commands);
+    for (unsigned int i = 0; i < sync_command_count; i++) {
+      netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+
+      if (sync_ncmd->index > command_index)
+        commands_to_predict++;
+    }
+
+    if (commands_to_predict == 0)
+      extra_commands = 0;
+    else if (commands_to_predict >= tic_delta)
+      extra_commands = commands_to_predict - tic_delta;
+    else
+      extra_commands = 0;
+
+    for (unsigned int i = 0; i < sync_command_count; i++) {
+      netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+      netticcmd_t *run_ncmd;
+
+      if (extra_commands == 0)
+        break;
+
+      if (sync_ncmd->index <= command_index)
+        continue;
+
+      run_ncmd = P_GetNewBlankCommand();
+      memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
+      g_queue_push_tail(run_commands, run_ncmd);
+      command_index = sync_ncmd->index;
+      commands_found++;
+
+      extra_commands--;
+    }
+
+    if (commands_found) {
+      cl_repredicting = true;
+      run_tic();
+      cl_repredicting = false;
+    }
+
+    commands_found = 0;
 
     for (unsigned int i = 0; i < sync_command_count; i++) {
       netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
@@ -269,7 +315,10 @@ static void cl_load_latest_state(void) {
 
         memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
         g_queue_push_tail(run_commands, run_ncmd);
+        commands_found++;
+        cl_repredicting = true;
         run_tic();
+        cl_repredicting = false;
       }
     }
 #endif
@@ -509,31 +558,50 @@ bool CL_LoadingState(void) {
   return loading_state;
 }
 
-bool CL_RePredicting(void) {
-  if (CLIENT &&
-      running_consoleplayer_commands &&
-      current_command_index <= latest_command_run) {
+bool CL_SoundAllowed(void) {
+  if (!MULTINET)
     return true;
-  }
+
+  if (!CLIENT)
+    return true;
+
+  if (cl_running_nonconsoleplayer_commands)
+    return true;
+
+  if ((!cl_synchronizing) && (!cl_repredicting))
+    return true;
 
   return false;
+}
+
+bool CL_Synchronizing(void) {
+  return (CLIENT && cl_synchronizing);
+}
+
+bool CL_RePredicting(void) {
+  return (CLIENT && cl_repredicting);
 }
 
 void CL_SetupCommandState(int playernum, netticcmd_t *ncmd) {
   if (!CLIENT)
     return;
 
-  if (playernum == consoleplayer)
-    running_consoleplayer_commands = true;
-  else
-    running_consoleplayer_commands = false;
+  if (playernum == consoleplayer) {
+    cl_running_consoleplayer_commands = true;
+    cl_running_nonconsoleplayer_commands = false;
+  }
+  else {
+    cl_running_consoleplayer_commands = false;
+    cl_running_nonconsoleplayer_commands = true;
+  }
 
-  if (running_consoleplayer_commands)
+  if (cl_running_consoleplayer_commands)
     current_command_index = ncmd->index;
 }
 
 void CL_ShutdownCommandState(void) {
-  running_consoleplayer_commands = false;
+  cl_running_consoleplayer_commands = false;
+  cl_running_nonconsoleplayer_commands = false;
 
   if (current_command_index > latest_command_run)
     latest_command_run = current_command_index;

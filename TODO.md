@@ -2,8 +2,6 @@
 
 ## Prototype
 
-1. Fix orphaned sounds
-
 1. Ensure singleplayer still works
 
 1. Fix jitter with uncapped framerate

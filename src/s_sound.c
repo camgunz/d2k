@@ -205,7 +205,7 @@ static int adjust_sound_params(mobj_t *listener, mobj_t *source,
 }
 
 static void stop_channel(channel_t *c) {
-  if (CL_RePredicting())
+  if (!CL_SoundAllowed())
     return;
 
   if (!c->sfxinfo)
@@ -343,6 +343,9 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
         continue;
 
       if (c->is_pickup != is_pickup)
+        continue;
+
+      if (c->command_index != CL_GetCurrentCommandIndex())
         continue;
 
       if (c->tic != gametic)
@@ -566,15 +569,22 @@ void S_Start(void) {
     };
 
     if (gameepisode < 4)
-      mnum = mus_e1m1 + (gameepisode-1)*9 + gamemap-1;
+      mnum = mus_e1m1 + (gameepisode - 1) * 9 + gamemap - 1;
     else
-      mnum = spmus[gamemap-1];
+      mnum = spmus[gamemap - 1];
   }
   S_ChangeMusic(mnum, true);
 }
 
 void S_StartSound(mobj_t *mobj, int sfx_id) {
-  if (CL_RePredicting())
+  D_Log(LOG_SYNC, "(%d | %d) S_StartSound(%u, %s)\n",
+    gametic,
+    CL_GetCurrentCommandIndex(),
+    mobj != NULL ? mobj->id : 0,
+    S_sfx[sfx_id].name
+  );
+
+  if (!CL_SoundAllowed())
     return;
 
   start_sound_at_volume(mobj, sfx_id, snd_SfxVolume);

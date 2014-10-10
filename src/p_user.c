@@ -51,7 +51,7 @@ static void add_player_vmessage(int pn, bool is_markup, bool centered, int sfx,
   gchar *gcontent;
   player_message_t *msg;
 
-  if (CL_RePredicting())
+  if (CL_Synchronizing() || CL_RePredicting())
     return;
 
   if (strlen(fmt) <= 0)

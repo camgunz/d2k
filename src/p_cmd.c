@@ -313,6 +313,7 @@ void P_RunPlayerCommands(int playernum) {
   
   if (DELTACLIENT &&
       playernum != consoleplayer &&
+      (!CL_RePredicting()) &&
       P_GetPlayerCommandCount(playernum) == 0) {
     predict_player_position(player);
     return;
