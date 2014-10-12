@@ -603,7 +603,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher) {
   if (special->flags & MF_COUNTITEM)
     player->itemcount++;
 
-  if (!was_weapon || !leave_weapons)
+  if (!MULTINET || !was_weapon || !leave_weapons || was_dropped)
     P_RemoveMobj(special);
 
   player->bonuscount += BONUSADD;
