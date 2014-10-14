@@ -28,6 +28,7 @@
 #include "c_main.h"
 #include "d_net.h"
 #include "f_finale.h"
+#include "i_video.h"
 #include "m_argv.h"
 #include "m_avg.h"
 #include "m_file.h"
@@ -555,6 +556,8 @@ void G_BuildTiccmd(ticcmd_t *cmd) {
   int side;
   int newweapon; // phares
   player_t *player = &players[consoleplayer];
+
+  I_StartTic();
   
   if (gamekeydown[key_strafe])
     strafe = true;

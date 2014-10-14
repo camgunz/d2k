@@ -264,7 +264,6 @@ void P_BuildCommand(void) {
   run_ncmd = P_GetNewBlankCommand();
   sync_ncmd = P_GetNewBlankCommand();
 
-  I_StartTic();
   G_BuildTiccmd(&run_ncmd->cmd);
   run_ncmd->index = CL_GetNextCommandIndex();
   run_ncmd->tic = gametic;
