@@ -115,10 +115,13 @@ static int run_tics(int tic_count) {
   int saved_tic_count = tic_count;
 
   while (tic_count--) {
-    if (MULTINET)
+    if (MULTINET) {
       P_BuildCommand();
-    else
+    }
+    else {
+      memset(&players[consoleplayer].cmd, 0, sizeof(ticcmd_t));
       G_BuildTiccmd(&players[consoleplayer].cmd);
+    }
     run_tic();
   }
 
