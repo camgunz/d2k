@@ -48,7 +48,7 @@ void R_InterpolateView(player_t *player);
 
 extern dboolean WasRenderedInTryRunTics;
 
-void R_ResetViewInterpolation ();
+void R_ResetViewInterpolation();
 void R_UpdateInterpolations();
 void R_StopAllInterpolations(void);
 void R_RestoreInterpolations();

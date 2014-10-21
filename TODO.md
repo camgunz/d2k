@@ -2,10 +2,9 @@
 
 ## Prototype
 
-1. Ensure singleplayer still works
-  - Input is never handled
-
 1. Fix jitter with uncapped framerate
+
+1. Fix continuing sync problems
 
 ---
 
@@ -68,29 +67,25 @@
   - Network stats
   - Add a scoreboard
 
-1. Fix sound problems
-  - Rocket spawn sounds don't cut off when they explode
-  - No server message sound (just use radio/tink?)
-
-1. Fix server command backlog problems
-  - It looks like the server doesn't handle big command backlogs well
+1. Add a server message sound (just use radio/tink?)
 
 1. When switching to a different interface (menu, HUD, console, etc.), all
    key presses should be cleared and spurious key releases ignored
 
-1. No message if the server is full; looks like a crash
+1. Add a message indicating that the server is full; currently it looks like a
+   crash
 
-1. Super-fast doomguy face
+1. Slow down the super fast doomguy face
 
 ## CTF
 
-1. Slopes
+1. Add slopes
 
 1. Flesh out teams
 
-1. Hexen map support
+1. Add Hexen map support
 
-1. Scripted game modes
+1. Add scripted game modes
 
 1. Add more scripting commands
   - `say_team`

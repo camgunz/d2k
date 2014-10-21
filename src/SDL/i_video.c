@@ -282,8 +282,10 @@ void I_StartTic(void) {
 // I_StartFrame
 //
 void I_StartFrame(void) {
+#ifdef ENABLE_OVERLAY
   cairo_set_operator(render_context, CAIRO_OPERATOR_CLEAR);
   cairo_paint(render_context);
+#endif
 }
 
 //
@@ -337,6 +339,7 @@ inline static dboolean I_SkipFrame(void)
 #endif
 
 void* I_GetRenderContext(void) {
+#ifdef ENABLE_OVERLAY
   cairo_status_t status;
   SDL_SysWMinfo wm_info;
 
@@ -486,9 +489,13 @@ void* I_GetRenderContext(void) {
 #endif
 
   return render_context;
+#else
+  return NULL;
+#endif
 }
 
 void I_ResetRenderContext(void) {
+#ifdef ENABLE_OVERLAY
   if (nodrawers)
     return;
 
@@ -507,6 +514,7 @@ void I_ResetRenderContext(void) {
     glDeleteTextures(1, &overlay_tex_id);
     overlay_tex_id = 0;
   }
+#endif
 #endif
 }
 
@@ -603,6 +611,7 @@ void I_UpdateNoBlit(void) {
 }
 
 void I_ReadOverlay(void) {
+#ifdef ENABLE_OVERLAY
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
     glBindTexture(GL_TEXTURE_2D, overlay_tex_id);
@@ -674,9 +683,11 @@ void I_ReadOverlay(void) {
 
   if (SDL_MUSTLOCK(screen))
     SDL_UnlockSurface(screen);
+#endif
 }
 
 void I_RenderOverlay(void) {
+#ifdef ENABLE_OVERLAY
   if (render_context == NULL || render_surface == NULL)
     I_GetRenderContext();
 
@@ -702,6 +713,7 @@ void I_RenderOverlay(void) {
     glVertex2f(REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
     glEnd();
   }
+#endif
 #endif
 }
 

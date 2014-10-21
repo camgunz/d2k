@@ -168,8 +168,10 @@ bool D_Responder(event_t *ev) {
   if (menuactive)
     return false;
 
+#ifdef ENABLE_OVERLAY
   if (C_Active())
     return false;
+#endif
 
   if (!menuactive) {                                           // phares
     if (ev->data1 == key_autorun) {                            //  |
@@ -488,20 +490,24 @@ void D_PostEvent(event_t *ev) {
   }
   */
 
+#ifdef ENABLE_OVERLAY
   if (HU_ChatActive()) {
     HU_Responder(ev);
     return;
   }
+#endif
 
   if (menuactive) {
     M_Responder(ev);
     return;
   }
 
+#ifdef ENABLE_OVERLAY
   if (C_Active()) {
     C_Responder(ev);
     return;
   }
+#endif
 
   if (HU_Responder(ev))
     return;
@@ -509,8 +515,10 @@ void D_PostEvent(event_t *ev) {
   if (M_Responder(ev))
     return;
 
+#ifdef ENABLE_OVERLAY
   if (C_Responder(ev))
     return;
+#endif
 
   if (D_Responder(ev))
     return;
@@ -772,7 +780,6 @@ static void D_DoomLoop(void) {
 
     // process one or more tics
     if (singletics) {
-      I_StartTic();
       G_BuildTiccmd(&players[consoleplayer].cmd);
       if (advancedemo)
         D_DoAdvanceDemo();
@@ -2434,9 +2441,11 @@ static void D_DoomMainSetup(void) {
   lprintf(LO_INFO, "ST_Init: Init status bar.\n");
   ST_Init();
 
+#ifdef ENABLE_OVERLAY
   // CG 07/09/2014: Console
   lprintf(LO_INFO, "C_Init: Init console.\n");
   C_Init();
+#endif
 
   // CG 07/22/2014: Scripting
   lprintf(LO_INFO, "X_Init: Init script engine.\n");

@@ -156,9 +156,11 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufWriteInt(savebuffer, player->momx);
   M_PBufWriteInt(savebuffer, player->momy);
   M_PBufWriteInt(savebuffer, player->resurectedkillcount);
+  /*
   M_PBufWriteInt(savebuffer, player->prev_viewz);
   M_PBufWriteInt(savebuffer, player->prev_viewangle);
   M_PBufWriteInt(savebuffer, player->prev_viewpitch);
+  */
   M_PBufWriteInt(savebuffer, player->jumpTics);
   if (player->name)
     M_PBufWriteString(savebuffer, player->name, strlen(player->name));
@@ -254,9 +256,11 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufReadInt(savebuffer, &player->momx);
   M_PBufReadInt(savebuffer, &player->momy);
   M_PBufReadInt(savebuffer, &player->resurectedkillcount);
+  /*
   M_PBufReadInt(savebuffer, &player->prev_viewz);
   M_PBufReadInt(savebuffer, (int *)&player->prev_viewangle);
   M_PBufReadInt(savebuffer, (int *)&player->prev_viewpitch);
+  */
   M_PBufReadInt(savebuffer, &player->jumpTics);
   M_PBufReadString(savebuffer, &name_buf, MAX_NAME_LENGTH);
   if (M_BufferGetSize(&name_buf) > 0) {

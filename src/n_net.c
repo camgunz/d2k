@@ -44,7 +44,7 @@
 #include "n_pack.h"
 #include "n_proto.h"
 
-#define USE_RANGE_CODER 1
+#define USE_RANGE_CODER 0
 #define MAX_DOWNLOAD 0
 #define MAX_UPLOAD 0
 
@@ -55,13 +55,10 @@
 #define string_to_byte(x) (to_byte(strtol(x, NULL, 10)))
 #define string_to_short(x) (to_short(strtol(x, NULL, 10)))
 
-/* CG: General networking */
-
 static ENetHost    *net_host = NULL;
 static const char  *previous_host = NULL;
 static short        previous_port = 0;
 
-/* CG: Externally viewable */
 dboolean        netgame   = false;
 dboolean        solonet   = false;
 dboolean        netserver = false;

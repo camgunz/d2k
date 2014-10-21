@@ -333,6 +333,7 @@ OPTION(PROFILE "Enable profiling; requires a debug build" OFF)
 OPTION(LEVELINFO_DEBUG "Debug using level info" OFF)
 OPTION(DEBUG_WEAPON_CODEPOINTERS "Debug weapon codepointers" OFF)
 OPTION(SANITIZE_ADDRESSES "Use Clang's address sanitizer, requires clang" OFF)
+OPTION(ENABLE_OVERLAY "Enable new HUD widget overlay" OFF)
 
 IF(NOT DOOMWADDIR)
   SET(DOOMWADDIR "${CMAKE_INSTALL_PREFIX}/share/games/doom")

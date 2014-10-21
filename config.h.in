@@ -31,6 +31,7 @@
 #cmakedefine DEBUG
 #cmakedefine LEVELINFO_DEBUG
 #cmakedefine DEBUG_WEAPON_CODEPOINTERS
+#cmakedefine ENABLE_OVERLAY
 
 #cmakedefine HAVE_ASM_BYTEORDER_H @HAVE_ASM_BYTEORDER_H@
 #cmakedefine HAVE_STDBOOL_H @HAVE_STDBOOL_H@

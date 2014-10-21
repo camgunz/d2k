@@ -433,6 +433,7 @@ void HU_Init(void) {
   R_SetSpriteByName(&hu_font_hud[42], "CELLA0");
   R_SetSpriteByName(&hu_font_hud[43], "ROCKA0");
 
+#ifdef ENABLE_OVERLAY
   I_ResetRenderContext();
 
   // create the message widget
@@ -461,6 +462,7 @@ void HU_Init(void) {
   HU_ChatWidgetSetHeightByLines(w_chat, 1);
   HU_ChatWidgetSetFGColor(w_chat, white);
   HU_ChatWidgetSetBGColor(w_chat, grey);
+#endif
 
   HU_Start();
 }
@@ -505,6 +507,7 @@ void HU_Start(void) {
   message_dontfuckwithme = false;
   message_nottobefuckedwith = false;
 
+#ifdef ENABLE_OVERLAY
   HU_MessageWidgetSetBuf(w_messages, player_message_buffers[displayplayer]);
   HU_MessageWidgetSetBuf(
     w_centermsg, player_center_message_buffers[displayplayer]
@@ -512,6 +515,7 @@ void HU_Start(void) {
 
   HU_MessageWidgetRebuild(w_messages, I_GetRenderContext());
   HU_MessageWidgetRebuild(w_centermsg, I_GetRenderContext());
+#endif
 
   //jff 2/16/98 added some HUD widgets
   // create the map title widget - map title display in lower left of automap
@@ -919,7 +923,9 @@ void HU_Start(void) {
   //jff 2/17/98 initialize kills/items/secret widget
   strcpy(hud_monsecstr, "STS ");
 
+#ifdef ENABLE_OVERLAY
   HU_ChatWidgetClear(w_chat);
+#endif
 
   HU_init_crosshair();
 

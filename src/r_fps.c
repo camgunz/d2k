@@ -31,6 +31,7 @@
 #include "r_fps.h"
 #include "i_system.h"
 #include "e6y.h"
+#include "n_net.h"
 
 int movement_smooth_default;
 int movement_smooth;
