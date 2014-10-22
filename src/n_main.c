@@ -54,10 +54,11 @@
 #define DEBUG_NET 0
 #define DEBUG_SYNC 1
 #define DEBUG_SAVE 0
-#define ENABLE_PREDICTION 1
 #define LOAD_PREVIOUS_STATE 1
+#define ENABLE_PREDICTION 1
 #define PREDICT_LOST_TICS 1
 #define PRINT_BANDWIDTH_STATS 0
+#define FIX_INTERP 1
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
 #define SERVER_SLEEP_TIMEOUT 1
@@ -65,13 +66,12 @@
 /* CG: TODO: Add WAD fetching (waiting on libcurl) */
 
 /* CG: Client only */
-/* CG: TODO: Prefix all these with cl_ */
-static bool         received_setup = false;
-static auth_level_e authorization_level = AUTH_LEVEL_NONE;
-static bool         loading_state = false;
-static int          local_command_index = 0;
-static int          current_command_index = 0;
-static int          latest_command_run = 0;
+static bool         cl_received_setup = false;
+static auth_level_e cl_authorization_level = AUTH_LEVEL_NONE;
+static bool         cl_loading_state = false;
+static int          cl_local_command_index = 0;
+static int          cl_current_command_index = 0;
+static int          cl_latest_command_run = 0;
 static bool         cl_running_consoleplayer_commands = false;
 static bool         cl_running_nonconsoleplayer_commands = false;
 static int          cl_state_tic = -1;
@@ -85,7 +85,8 @@ static void run_tic(void) {
   if (advancedemo)
     D_DoAdvanceDemo();
 
-  I_GetTime_SaveMS();
+  if ((!cl_repredicting) && (!cl_synchronizing))
+    I_GetTime_SaveMS();
 
 #if !ENABLE_PREDICTION
   if (SERVER || !MULTINET)
@@ -193,12 +194,12 @@ static bool cl_load_new_state(netpeer_t *server,
 
   P_PrintCommands(sync_commands);
 
-  current_command_index = previous_synchronized_command_index;
+  cl_current_command_index = previous_synchronized_command_index;
 
 #if LOAD_PREVIOUS_STATE
-  loading_state = true;
+  cl_loading_state = true;
   state_loaded = N_LoadLatestState(false);
-  loading_state = false;
+  cl_loading_state = false;
 
   if (!state_loaded) {
     P_Echo(consoleplayer, "Error loading previous state");
@@ -242,9 +243,9 @@ static bool cl_load_new_state(netpeer_t *server,
 
   D_Log(LOG_SYNC, "Ran sync'd commands, loading latest state\n");
 
-  loading_state = true;
+  cl_loading_state = true;
   state_loaded = N_LoadLatestState(false);
-  loading_state = false;
+  cl_loading_state = false;
 
   if (!state_loaded)
     P_Echo(consoleplayer, "Error loading latest state");
@@ -280,8 +281,6 @@ static void cl_predict(int saved_gametic,
 
 #if PREDICT_LOST_TICS
   while (gametic < saved_gametic) {
-    printf("(%d) Predicting lost TIC\n", gametic);
-
     cl_repredicting = true;
     run_tic();
     cl_repredicting = false;
@@ -292,6 +291,7 @@ static void cl_predict(int saved_gametic,
 #endif
 
 static void cl_check_for_state_updates(void) {
+  player_t *dplayer = &players[displayplayer];
   netpeer_t *server;
   int previous_synchronized_command_index = cl_synchronized_command_index;
   int latest_synchronized_command_index;
@@ -316,6 +316,30 @@ static void cl_check_for_state_updates(void) {
 
   if (server->sync.tic == cl_state_tic)
     return;
+
+#if FIX_INTERP
+  fixed_t saved_prev_viewz = dplayer->prev_viewz;
+  angle_t saved_prev_viewangle = dplayer->prev_viewangle;
+  angle_t saved_prev_viewpitch = dplayer->prev_viewpitch;
+
+  /*
+  printf("(%d) %d/%d, %d/%d, %d/%d\n",
+    gametic,
+    players[displayplayer].prev_viewz                    >> FRACBITS,
+    players[displayplayer].viewz                         >> FRACBITS,
+    players[displayplayer].prev_viewangle                /  ANG1,
+    (players[displayplayer].mo->angle + viewangleoffset) /  ANG1,
+    players[displayplayer].prev_viewpitch                /  ANG1,
+    players[displayplayer].mo->pitch                     /  ANG1
+  );
+  */
+
+  /*
+  R_StopAllInterpolations();
+  R_InitInterpolation();
+  R_ResetViewInterpolation();
+  */
+#endif
 
   cl_state_tic = server->sync.tic;
 
@@ -359,7 +383,25 @@ static void cl_check_for_state_updates(void) {
   );
 #endif
 
-  R_ResetViewInterpolation();
+#if FIX_INTERP
+  dplayer->prev_viewz = saved_prev_viewz;
+  dplayer->prev_viewangle = saved_prev_viewangle;
+  dplayer->prev_viewpitch = saved_prev_viewpitch;
+
+  /*
+  printf("(%d) %d/%d, %d/%d, %d/%d\n",
+    gametic,
+    players[displayplayer].prev_viewz                    >> FRACBITS,
+    players[displayplayer].viewz                         >> FRACBITS,
+    players[displayplayer].prev_viewangle                /  ANG1,
+    (players[displayplayer].mo->angle + viewangleoffset) /  ANG1,
+    players[displayplayer].prev_viewpitch                /  ANG1,
+    players[displayplayer].mo->pitch                     /  ANG1
+  );
+
+  puts("");
+  */
+#endif
 
   server->sync.outdated = true;
 
@@ -402,6 +444,34 @@ static void sv_cleanup_old_commands_and_states(void) {
   sv_remove_old_commands();
   if (DELTASERVER)
     sv_remove_old_states();
+}
+
+static void render_extra_frame(void) {
+  if (!window_focused)
+    return;
+
+  if (nodrawers)
+    return;
+
+  if (gametic <= 0)
+    return;
+
+  WasRenderedInTryRunTics = true;
+
+#ifdef GL_DOOM
+  if (V_GetMode() == VID_MODEGL) {
+    D_Display();
+    return;
+  }
+#endif
+
+  if (!movement_smooth)
+    return;
+
+  if (gamestate != wipegamestate)
+    return;
+
+  D_Display();
 }
 
 #if PRINT_BANDWIDTH_STATS
@@ -529,7 +599,7 @@ void N_InitNetGame(void) {
 
         N_ServiceNetwork();
 
-        if (received_setup)
+        if (cl_received_setup)
           break;
 
         if (difftime(now, connect_time) > (CONNECT_TIMEOUT * 1000))
@@ -594,7 +664,7 @@ bool N_GetWad(const char *name) {
 }
 
 bool CL_LoadingState(void) {
-  return loading_state;
+  return cl_loading_state;
 }
 
 bool CL_SoundAllowed(void) {
@@ -635,40 +705,40 @@ void CL_SetupCommandState(int playernum, netticcmd_t *ncmd) {
   }
 
   if (cl_running_consoleplayer_commands)
-    current_command_index = ncmd->index;
+    cl_current_command_index = ncmd->index;
 }
 
 void CL_ShutdownCommandState(void) {
   cl_running_consoleplayer_commands = false;
   cl_running_nonconsoleplayer_commands = false;
 
-  if (current_command_index > latest_command_run)
-    latest_command_run = current_command_index;
+  if (cl_current_command_index > cl_latest_command_run)
+    cl_latest_command_run = cl_current_command_index;
 }
 
 int CL_GetCurrentCommandIndex(void) {
-  return current_command_index;
+  return cl_current_command_index;
 }
 
 int CL_GetNextCommandIndex(void) {
-  int out = local_command_index;
+  int out = cl_local_command_index;
 
-  local_command_index++;
+  cl_local_command_index++;
 
   return out;
 }
 
 bool CL_ReceivedSetup(void) {
-  return received_setup;
+  return cl_received_setup;
 }
 
 void CL_SetReceivedSetup(bool new_received_setup) {
-  received_setup = new_received_setup;
+  cl_received_setup = new_received_setup;
 }
 
 void CL_SetAuthorizationLevel(auth_level_e level) {
-  if (level > authorization_level)
-    authorization_level = level;
+  if (level > cl_authorization_level)
+    cl_authorization_level = level;
 }
 
 void CL_MarkServerOutdated(void) {
@@ -689,16 +759,12 @@ bool N_TryRunTics(void) {
   static int tics_built = 0;
 
   int tics_elapsed = I_GetTime() - tics_built;
-  int menu_renderer_calls = tics_elapsed * 3;
-  int tics_run = 0;
   bool render_fast = false;
-  
-  if (!SERVER)
-    render_fast = movement_smooth && window_focused && (gametic > 0);
 
 #ifdef GL_DOOM
-  if ((!SERVER) && (V_GetMode() == VID_MODEGL))
-    render_fast = true;
+  render_fast = (!SERVER) && (V_GetMode() == VID_MODEGL) && (gametic > 0);
+#else
+  render_fast = (!SERVER) && movement_smooth && window_focused && (gametic > 0);
 #endif
 
   if (tics_elapsed <= 0 && !render_fast) {
@@ -715,9 +781,11 @@ bool N_TryRunTics(void) {
 
     cl_check_for_state_updates();
 
-    tics_run = process_tics(tics_elapsed);
+    // I_GetTime_SaveMS();
 
-    render_menu(MAX(menu_renderer_calls - tics_run, 0));
+    process_tics(tics_elapsed);
+
+    M_Ticker();
 
     sv_cleanup_old_commands_and_states();
 
@@ -733,14 +801,11 @@ bool N_TryRunTics(void) {
     N_ServiceNetwork();
   }
 
+  render_extra_frame();
+
 #ifdef ENABLE_OVERLAY
   C_Ticker();
 #endif
-
-  if (render_fast) {
-    D_Display();
-    WasRenderedInTryRunTics = true;
-  }
 
   return tics_elapsed > 0;
 }

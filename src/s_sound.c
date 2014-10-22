@@ -577,6 +577,7 @@ void S_Start(void) {
 }
 
 void S_StartSound(mobj_t *mobj, int sfx_id) {
+  printf("S_StartSound(%d)\n", sfx_id);
   if (sfx_id & PICKUP_SOUND) {
     D_Log(LOG_SOUND, "(%d | %d) S_StartSound(%u, %s)\n",
       gametic,

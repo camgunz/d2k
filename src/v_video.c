@@ -1471,7 +1471,9 @@ void V_ToggleFullscreen(void) {
 void V_ChangeScreenResolution(void) {
   I_UpdateVideoMode();
 
+#ifdef ENABLE_OVERLAY
   C_Reset();
+#endif
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL)
