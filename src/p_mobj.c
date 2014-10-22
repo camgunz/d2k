@@ -513,10 +513,8 @@ static void P_ZMovement(mobj_t *mo) {
   mo->z += mo->momz;
 
 floater:
-  if ((mo->flags & MF_FLOAT) && mo->target)
-
-    // float down towards target if too close
-
+  // float down towards target if too close
+  if ((mo->flags & MF_FLOAT) && mo->target) {
     if (!((mo->flags ^ MF_FLOAT) & (MF_FLOAT | MF_SKULLFLY | MF_INFLOAT)) &&
         mo->target) {   /* killough 11/98: simplify */
       fixed_t delta;
@@ -525,11 +523,12 @@ floater:
         mo->z += delta < 0 ? -FLOATSPEED : FLOATSPEED;
       }
     }
+  }
 
-    if (mo->player && (mo->flags & MF_FLY) && (mo->z > mo->floorz)) {
-      mo->z += finesine[(FINEANGLES / 80 * gametic) & FINEMASK] / 8;
-      mo->momz = FixedMul(mo->momz, FRICTION_FLY);
-    }
+  if (mo->player && (mo->flags & MF_FLY) && (mo->z > mo->floorz)) {
+    mo->z += finesine[(FINEANGLES / 80 * gametic) & FINEMASK] / 8;
+    mo->momz = FixedMul(mo->momz, FRICTION_FLY);
+  }
 
   // clip movement
 

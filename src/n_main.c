@@ -170,11 +170,6 @@ static int process_tics(int tics_elapsed) {
   return run_tics(tics_elapsed);
 }
 
-static void render_menu(int menu_renderer_calls) {
-  while (menu_renderer_calls--)
-    M_Ticker();
-}
-
 static bool cl_load_new_state(netpeer_t *server,
                               int previous_synchronized_command_index,
                               int latest_synchronized_command_index,
@@ -268,6 +263,25 @@ static void cl_predict(int saved_gametic,
   unsigned int sync_command_count = g_queue_get_length(sync_commands);
   int command_index = latest_synchronized_command_index;
 
+#if PREDICT_IN_ONE_TIC
+  for (unsigned int i = 0; i < sync_command_count; i++) {
+    netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+    netticcmd_t *run_ncmd;
+
+    if (sync_ncmd->index <= command_index)
+      continue;
+
+    run_ncmd = P_GetNewBlankCommand();
+    memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
+    g_queue_push_tail(run_commands, run_ncmd);
+  }
+
+  cl_repredicting = true;
+  run_tic();
+  R_InterpolateView(&players[displayplayer]);
+  R_RestoreInterpolations();
+  cl_repredicting = false;
+#else
   for (unsigned int i = 0; i < sync_command_count; i++) {
     netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
     netticcmd_t *run_ncmd;
@@ -284,6 +298,7 @@ static void cl_predict(int saved_gametic,
     R_RestoreInterpolations();
     cl_repredicting = false;
   }
+#endif
 
 #if PREDICT_LOST_TICS
   while (gametic < saved_gametic) {
@@ -299,7 +314,6 @@ static void cl_predict(int saved_gametic,
 #endif
 
 static void cl_check_for_state_updates(void) {
-  player_t *dplayer = &players[displayplayer];
   netpeer_t *server;
   int previous_synchronized_command_index = cl_synchronized_command_index;
   int latest_synchronized_command_index;

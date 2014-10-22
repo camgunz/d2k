@@ -85,10 +85,12 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufWriteShort(savebuffer, player->cmd.consistancy);
   M_PBufWriteUChar(savebuffer, player->cmd.chatchar);
   M_PBufWriteUChar(savebuffer, player->cmd.buttons);
+  /*
   M_PBufWriteInt(savebuffer, player->viewz);
   M_PBufWriteInt(savebuffer, player->viewheight);
   M_PBufWriteInt(savebuffer, player->deltaviewheight);
   M_PBufWriteInt(savebuffer, player->bob);
+  */
   M_PBufWriteInt(savebuffer, player->health);
   M_PBufWriteInt(savebuffer, player->armorpoints);
   M_PBufWriteInt(savebuffer, player->armortype);
@@ -196,10 +198,12 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufReadShort(savebuffer, &player->cmd.consistancy);
   M_PBufReadUChar(savebuffer, &player->cmd.chatchar);
   M_PBufReadUChar(savebuffer, &player->cmd.buttons);
+  /*
   M_PBufReadInt(savebuffer, &player->viewz);
   M_PBufReadInt(savebuffer, &player->viewheight);
   M_PBufReadInt(savebuffer, &player->deltaviewheight);
   M_PBufReadInt(savebuffer, &player->bob);
+  */
   M_PBufReadInt(savebuffer, &player->health);
   M_PBufReadInt(savebuffer, &player->armorpoints);
   M_PBufReadInt(savebuffer, &player->armortype);
