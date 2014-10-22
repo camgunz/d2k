@@ -320,6 +320,9 @@ static void cl_check_for_state_updates(void) {
   GQueue *sync_commands;
   GQueue *run_commands;
   bool state_loaded;
+  fixed_t saved_prev_viewz = players[displayplayer].prev_viewz;
+  fixed_t saved_viewz = players[displayplayer].viewz;
+
 
 #if ENABLE_PREDICTION
   int saved_gametic = gametic;
@@ -380,6 +383,9 @@ static void cl_check_for_state_updates(void) {
     run_commands
   );
 #endif
+
+  players[displayplayer].prev_viewz = saved_prev_viewz;
+  players[displayplayer].viewz = saved_viewz;
 
   server->sync.outdated = true;
 

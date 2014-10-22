@@ -85,12 +85,10 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufWriteShort(savebuffer, player->cmd.consistancy);
   M_PBufWriteUChar(savebuffer, player->cmd.chatchar);
   M_PBufWriteUChar(savebuffer, player->cmd.buttons);
-  /*
   M_PBufWriteInt(savebuffer, player->viewz);
   M_PBufWriteInt(savebuffer, player->viewheight);
   M_PBufWriteInt(savebuffer, player->deltaviewheight);
   M_PBufWriteInt(savebuffer, player->bob);
-  */
   M_PBufWriteInt(savebuffer, player->health);
   M_PBufWriteInt(savebuffer, player->armorpoints);
   M_PBufWriteInt(savebuffer, player->armortype);
@@ -158,11 +156,6 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufWriteInt(savebuffer, player->momx);
   M_PBufWriteInt(savebuffer, player->momy);
   M_PBufWriteInt(savebuffer, player->resurectedkillcount);
-  /*
-  M_PBufWriteInt(savebuffer, player->prev_viewz);
-  M_PBufWriteInt(savebuffer, player->prev_viewangle);
-  M_PBufWriteInt(savebuffer, player->prev_viewpitch);
-  */
   M_PBufWriteInt(savebuffer, player->jumpTics);
   if (player->name)
     M_PBufWriteString(savebuffer, player->name, strlen(player->name));
@@ -198,12 +191,10 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufReadShort(savebuffer, &player->cmd.consistancy);
   M_PBufReadUChar(savebuffer, &player->cmd.chatchar);
   M_PBufReadUChar(savebuffer, &player->cmd.buttons);
-  /*
   M_PBufReadInt(savebuffer, &player->viewz);
   M_PBufReadInt(savebuffer, &player->viewheight);
   M_PBufReadInt(savebuffer, &player->deltaviewheight);
   M_PBufReadInt(savebuffer, &player->bob);
-  */
   M_PBufReadInt(savebuffer, &player->health);
   M_PBufReadInt(savebuffer, &player->armorpoints);
   M_PBufReadInt(savebuffer, &player->armortype);
@@ -260,11 +251,6 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufReadInt(savebuffer, &player->momx);
   M_PBufReadInt(savebuffer, &player->momy);
   M_PBufReadInt(savebuffer, &player->resurectedkillcount);
-  /*
-  M_PBufReadInt(savebuffer, &player->prev_viewz);
-  M_PBufReadInt(savebuffer, (int *)&player->prev_viewangle);
-  M_PBufReadInt(savebuffer, (int *)&player->prev_viewpitch);
-  */
   M_PBufReadInt(savebuffer, &player->jumpTics);
   M_PBufReadString(savebuffer, &name_buf, MAX_NAME_LENGTH);
   if (M_BufferGetSize(&name_buf) > 0) {
@@ -333,36 +319,23 @@ static void P_ArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
   M_PBufWriteUInt(savebuffer, player_index);
   M_PBufWriteUInt(savebuffer, tracer_id);
   M_PBufWriteUInt(savebuffer, lastenemy_id);
-
-  /*
-  D_Log(LOG_SAVE, "  Actor %u: {%d, %d, %d, %d, %d, %d, %d}\n",
-    mobj->id,
-    mobj->validcount,
-    mobj->movedir,
-    mobj->movecount,
-    mobj->strafecount,
-    mobj->reactiontime,
-    mobj->threshold,
-    mobj->pursuecount
-  );
-  */
 }
 
 static void P_UnArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
-  unsigned int target_id = 0;
-  unsigned int tracer_id = 0;
+  unsigned int target_id    = 0;
+  unsigned int tracer_id    = 0;
   unsigned int lastenemy_id = 0;
-  uint_64_t    state_index = 0;
+  uint_64_t    state_index  = 0;
   unsigned int player_index = 0;
-  mobj_t *target = NULL;
-  mobj_t *tracer = NULL;
+  mobj_t *target    = NULL;
+  mobj_t *tracer    = NULL;
   mobj_t *lastenemy = NULL;
 
-  mobj->target = NULL;
-  mobj->tracer = NULL;
+  mobj->target    = NULL;
+  mobj->tracer    = NULL;
   mobj->lastenemy = NULL;
-  mobj->state = NULL;
-  mobj->player = NULL;
+  mobj->state     = NULL;
+  mobj->player    = NULL;
 
   M_PBufReadULong(savebuffer, &state_index);
   M_PBufReadUInt(savebuffer, &target_id);
@@ -412,19 +385,6 @@ static void P_UnArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
     mobj->player = &players[player_index - 1];
     mobj->player->mo = mobj;
   }
-
-  /*
-  D_Log(LOG_SAVE, "  Actor %u: {%d, %d, %d, %d, %d, %d, %d}\n",
-    mobj->id,
-    mobj->validcount,
-    mobj->movedir,
-    mobj->movecount,
-    mobj->strafecount,
-    mobj->reactiontime,
-    mobj->threshold,
-    mobj->pursuecount
-  );
-  */
 }
 
 static void P_ArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
