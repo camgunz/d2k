@@ -55,10 +55,10 @@
 #define DEBUG_SYNC 1
 #define DEBUG_SAVE 0
 #define LOAD_PREVIOUS_STATE 1
+#define FIX_INTERP 1
 #define ENABLE_PREDICTION 1
 #define PREDICT_LOST_TICS 1
 #define PRINT_BANDWIDTH_STATS 0
-#define FIX_INTERP 1
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
 #define SERVER_SLEEP_TIMEOUT 1
@@ -84,6 +84,8 @@ static bool         cl_repredicting = false;
 static void run_tic(void) {
   if (advancedemo)
     D_DoAdvanceDemo();
+
+  M_Ticker();
 
   if ((!cl_repredicting) && (!cl_synchronizing))
     I_GetTime_SaveMS();
@@ -318,11 +320,11 @@ static void cl_check_for_state_updates(void) {
     return;
 
 #if FIX_INTERP
+  /*
   fixed_t saved_prev_viewz = dplayer->prev_viewz;
   angle_t saved_prev_viewangle = dplayer->prev_viewangle;
   angle_t saved_prev_viewpitch = dplayer->prev_viewpitch;
 
-  /*
   printf("(%d) %d/%d, %d/%d, %d/%d\n",
     gametic,
     players[displayplayer].prev_viewz                    >> FRACBITS,
@@ -339,6 +341,9 @@ static void cl_check_for_state_updates(void) {
   R_InitInterpolation();
   R_ResetViewInterpolation();
   */
+
+  R_StopAllInterpolations();
+
 #endif
 
   cl_state_tic = server->sync.tic;
@@ -384,9 +389,15 @@ static void cl_check_for_state_updates(void) {
 #endif
 
 #if FIX_INTERP
+  /*
   dplayer->prev_viewz = saved_prev_viewz;
   dplayer->prev_viewangle = saved_prev_viewangle;
   dplayer->prev_viewpitch = saved_prev_viewpitch;
+
+  R_StopAllInterpolations();
+  R_InitInterpolation();
+  R_ResetViewInterpolation();
+  */
 
   /*
   printf("(%d) %d/%d, %d/%d, %d/%d\n",
@@ -781,11 +792,7 @@ bool N_TryRunTics(void) {
 
     cl_check_for_state_updates();
 
-    // I_GetTime_SaveMS();
-
     process_tics(tics_elapsed);
-
-    M_Ticker();
 
     sv_cleanup_old_commands_and_states();
 
