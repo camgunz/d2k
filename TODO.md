@@ -2,22 +2,15 @@
 
 ## Prototype
 
-1. Fix jitter with uncapped framerate
+1. Check singleplayer (coop)
 
-1. Fix continuing sync problems
+1. Duplicate opponent weapon pickups?
 
 ---
 
 ## ZDDL
 
 1. Add latency mitigation
-  - projectile nudging
-    - right now, projectiles are predicted, and they therefore usually appear
-      ahead of where they would normally spawn
-    - projectile nudging would spawn the projectile normally (i.e., right in
-      front of the firing player), and adjust the projectile's velocity based
-      on the client's lag and a preselected function
-  - player movement smoothing
   - unlagged
     - Save attacking player position
     - Save current game state
@@ -30,24 +23,32 @@
     - Restore saved state
     - For every impacted actor:
       - Add new momx/momy/momz values to the current momx/momy/momz
+  - projectile nudging
+    - right now, projectiles are predicted, and they therefore usually appear
+      ahead of where they would normally spawn
+    - projectile nudging would spawn the projectile normally (i.e., right in
+      front of the firing player), and adjust the projectile's velocity based
+      on the client's current lag and a preselected function (curve)
+  - player movement smoothing
 
 1. Remove 4 player restriction
 
 1. Add spectators
 
-1. Better configuration file and configuration variable system
+1. Improve the configuration file and configuration variable system
   - Ties into scripting and console
 
-1. 3D physics
+1. Add 3D physics
 
-1. SNDCURVE
+1. Add SNDCURVE lump support
 
-1. ZDoom physics
+1. Add ZDoom physics
   - Including ZDoom SSG spread
 
-1. PWO
+1. Improve PWO
 
 1. Improve console
+  - Serverside console input
   - Command history
     - Do this yourself
   - Tab-completion
@@ -116,13 +117,13 @@
 1. Update renderer
 
 1. Update `players`:
-  - `players` will become an `obuf_t`
-  - `playeringame` becomes `dboolean playeringame(unsigned short playernum)`
+  - All playernums should be unsigned shorts
+  - `players` will become a `GArray`
+  - `playeringame` becomes `bool D_PlayerInGame(unsigned short playernum)`
   - `MAXPLAYERS` becomes `VANILLA_MAXPLAYERS` for compat
   - Anything defined using `MAXPLAYERS` will be refactored
   - Servers aren't players
-    - Use a camera in non-headless mode
-    - All playernums should be unsigned shorts
+    - Use a camera in non-headless mode (add non-headless mode???)
     - Sending a message to the server can use a bool `to_server` instead of the
       `-1` recipient (which is a hack)
   - Player names are hardcoded for DeHackEd; the way this should work is:

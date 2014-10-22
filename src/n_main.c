@@ -55,9 +55,8 @@
 #define DEBUG_SYNC 1
 #define DEBUG_SAVE 0
 #define LOAD_PREVIOUS_STATE 1
-#define ENABLE_PREDICTION 1
 #define PREDICT_LOST_TICS 1
-#define PRINT_BANDWIDTH_STATS 0
+#define PRINT_BANDWIDTH_STATS 1
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
 #define SERVER_SLEEP_TIMEOUT 1
@@ -89,10 +88,7 @@ static void run_tic(void) {
   if ((!cl_repredicting) && (!cl_synchronizing))
     I_GetTime_SaveMS();
 
-#if !ENABLE_PREDICTION
-  if (SERVER || !MULTINET)
-#endif
-    G_Ticker();
+  G_Ticker();
 
   P_Checksum(gametic);
 
@@ -254,7 +250,6 @@ static bool cl_load_new_state(netpeer_t *server,
   return state_loaded;
 }
 
-#if ENABLE_PREDICTION
 static void cl_predict(int saved_gametic,
                        int previous_synchronized_command_index,
                        int latest_synchronized_command_index,
@@ -263,25 +258,6 @@ static void cl_predict(int saved_gametic,
   unsigned int sync_command_count = g_queue_get_length(sync_commands);
   int command_index = latest_synchronized_command_index;
 
-#if PREDICT_IN_ONE_TIC
-  for (unsigned int i = 0; i < sync_command_count; i++) {
-    netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
-    netticcmd_t *run_ncmd;
-
-    if (sync_ncmd->index <= command_index)
-      continue;
-
-    run_ncmd = P_GetNewBlankCommand();
-    memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
-    g_queue_push_tail(run_commands, run_ncmd);
-  }
-
-  cl_repredicting = true;
-  run_tic();
-  R_InterpolateView(&players[displayplayer]);
-  R_RestoreInterpolations();
-  cl_repredicting = false;
-#else
   for (unsigned int i = 0; i < sync_command_count; i++) {
     netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
     netticcmd_t *run_ncmd;
@@ -298,7 +274,6 @@ static void cl_predict(int saved_gametic,
     R_RestoreInterpolations();
     cl_repredicting = false;
   }
-#endif
 
 #if PREDICT_LOST_TICS
   while (gametic < saved_gametic) {
@@ -309,9 +284,7 @@ static void cl_predict(int saved_gametic,
     cl_repredicting = false;
   }
 #endif
-
 }
-#endif
 
 static void cl_check_for_state_updates(void) {
   netpeer_t *server;
@@ -324,9 +297,7 @@ static void cl_check_for_state_updates(void) {
   fixed_t saved_viewz = players[displayplayer].viewz;
 
 
-#if ENABLE_PREDICTION
   int saved_gametic = gametic;
-#endif
 
   if (!DELTACLIENT)
     return;
@@ -374,7 +345,6 @@ static void cl_check_for_state_updates(void) {
   cl_delta_from_tic = server->sync.delta.from_tic;
   cl_delta_to_tic = server->sync.delta.to_tic;
 
-#if ENABLE_PREDICTION
   cl_predict(
     saved_gametic,
     previous_synchronized_command_index,
@@ -382,7 +352,6 @@ static void cl_check_for_state_updates(void) {
     sync_commands,
     run_commands
   );
-#endif
 
   players[displayplayer].prev_viewz = saved_prev_viewz;
   players[displayplayer].viewz = saved_viewz;
