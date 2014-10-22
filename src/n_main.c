@@ -55,7 +55,6 @@
 #define DEBUG_SYNC 1
 #define DEBUG_SAVE 0
 #define LOAD_PREVIOUS_STATE 1
-#define FIX_INTERP 1
 #define ENABLE_PREDICTION 1
 #define PREDICT_LOST_TICS 1
 #define PRINT_BANDWIDTH_STATS 0
@@ -238,8 +237,11 @@ static bool cl_load_new_state(netpeer_t *server,
   );
 
   cl_synchronizing = true;
-  while (gametic < server->sync.tic)
+  while (gametic < server->sync.tic) {
     run_tic();
+    R_InterpolateView(&players[displayplayer]);
+    R_RestoreInterpolations();
+  }
   cl_synchronizing = false;
 #endif
 
@@ -278,6 +280,8 @@ static void cl_predict(int saved_gametic,
     g_queue_push_tail(run_commands, run_ncmd);
     cl_repredicting = true;
     run_tic();
+    R_InterpolateView(&players[displayplayer]);
+    R_RestoreInterpolations();
     cl_repredicting = false;
   }
 
@@ -285,6 +289,8 @@ static void cl_predict(int saved_gametic,
   while (gametic < saved_gametic) {
     cl_repredicting = true;
     run_tic();
+    R_InterpolateView(&players[displayplayer]);
+    R_RestoreInterpolations();
     cl_repredicting = false;
   }
 #endif
@@ -318,33 +324,6 @@ static void cl_check_for_state_updates(void) {
 
   if (server->sync.tic == cl_state_tic)
     return;
-
-#if FIX_INTERP
-  /*
-  fixed_t saved_prev_viewz = dplayer->prev_viewz;
-  angle_t saved_prev_viewangle = dplayer->prev_viewangle;
-  angle_t saved_prev_viewpitch = dplayer->prev_viewpitch;
-
-  printf("(%d) %d/%d, %d/%d, %d/%d\n",
-    gametic,
-    players[displayplayer].prev_viewz                    >> FRACBITS,
-    players[displayplayer].viewz                         >> FRACBITS,
-    players[displayplayer].prev_viewangle                /  ANG1,
-    (players[displayplayer].mo->angle + viewangleoffset) /  ANG1,
-    players[displayplayer].prev_viewpitch                /  ANG1,
-    players[displayplayer].mo->pitch                     /  ANG1
-  );
-  */
-
-  /*
-  R_StopAllInterpolations();
-  R_InitInterpolation();
-  R_ResetViewInterpolation();
-  */
-
-  R_StopAllInterpolations();
-
-#endif
 
   cl_state_tic = server->sync.tic;
 
@@ -386,32 +365,6 @@ static void cl_check_for_state_updates(void) {
     sync_commands,
     run_commands
   );
-#endif
-
-#if FIX_INTERP
-  /*
-  dplayer->prev_viewz = saved_prev_viewz;
-  dplayer->prev_viewangle = saved_prev_viewangle;
-  dplayer->prev_viewpitch = saved_prev_viewpitch;
-
-  R_StopAllInterpolations();
-  R_InitInterpolation();
-  R_ResetViewInterpolation();
-  */
-
-  /*
-  printf("(%d) %d/%d, %d/%d, %d/%d\n",
-    gametic,
-    players[displayplayer].prev_viewz                    >> FRACBITS,
-    players[displayplayer].viewz                         >> FRACBITS,
-    players[displayplayer].prev_viewangle                /  ANG1,
-    (players[displayplayer].mo->angle + viewangleoffset) /  ANG1,
-    players[displayplayer].prev_viewpitch                /  ANG1,
-    players[displayplayer].mo->pitch                     /  ANG1
-  );
-
-  puts("");
-  */
 #endif
 
   server->sync.outdated = true;
@@ -457,32 +410,28 @@ static void sv_cleanup_old_commands_and_states(void) {
     sv_remove_old_states();
 }
 
-static void render_extra_frame(void) {
-  if (!window_focused)
-    return;
-
+static bool should_render(void) {
   if (nodrawers)
-    return;
+    return false;
+
+  if (!window_focused)
+    return false;
 
   if (gametic <= 0)
-    return;
-
-  WasRenderedInTryRunTics = true;
+    return false;
 
 #ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL) {
-    D_Display();
-    return;
-  }
+  if (V_GetMode() == VID_MODEGL)
+    return true;
 #endif
 
   if (!movement_smooth)
-    return;
+    return false;
 
   if (gamestate != wipegamestate)
-    return;
+    return false;
 
-  D_Display();
+  return true;
 }
 
 #if PRINT_BANDWIDTH_STATS
@@ -770,15 +719,9 @@ bool N_TryRunTics(void) {
   static int tics_built = 0;
 
   int tics_elapsed = I_GetTime() - tics_built;
-  bool render_fast = false;
+  bool needs_rendering = should_render();
 
-#ifdef GL_DOOM
-  render_fast = (!SERVER) && (V_GetMode() == VID_MODEGL) && (gametic > 0);
-#else
-  render_fast = (!SERVER) && movement_smooth && window_focused && (gametic > 0);
-#endif
-
-  if (tics_elapsed <= 0 && !render_fast) {
+  if (tics_elapsed <= 0 && !needs_rendering) {
     N_ServiceNetwork();
     I_Sleep(1);
     return false;
@@ -808,7 +751,8 @@ bool N_TryRunTics(void) {
     N_ServiceNetwork();
   }
 
-  render_extra_frame();
+  if ((tics_elapsed > 0) || needs_rendering)
+    D_Display();
 
 #ifdef ENABLE_OVERLAY
   C_Ticker();

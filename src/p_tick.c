@@ -295,6 +295,7 @@ static dboolean setup_tic(void) {
   }
 
   R_UpdateInterpolations();
+
   P_MapStart();
 
   return true;

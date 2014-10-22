@@ -80,7 +80,6 @@ static interpolation_t *curipos;
 
 static dboolean NoInterpolateView;
 static dboolean didInterp;
-dboolean WasRenderedInTryRunTics;
 
 void R_InterpolateView(player_t *player)
 {
