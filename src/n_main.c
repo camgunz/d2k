@@ -56,7 +56,7 @@
 #define DEBUG_SAVE 0
 #define LOAD_PREVIOUS_STATE 1
 #define PREDICT_LOST_TICS 1
-#define PRINT_BANDWIDTH_STATS 1
+#define PRINT_BANDWIDTH_STATS 0
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
 #define SERVER_SLEEP_TIMEOUT 1
@@ -230,8 +230,10 @@ static bool cl_load_new_state(netpeer_t *server,
   cl_synchronizing = true;
   while (gametic < server->sync.tic) {
     run_tic();
-    R_InterpolateView(&players[displayplayer]);
-    R_RestoreInterpolations();
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
+      R_RestoreInterpolations();
+    }
   }
   cl_synchronizing = false;
 #endif
@@ -270,8 +272,10 @@ static void cl_predict(int saved_gametic,
     g_queue_push_tail(run_commands, run_ncmd);
     cl_repredicting = true;
     run_tic();
-    R_InterpolateView(&players[displayplayer]);
-    R_RestoreInterpolations();
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
+      R_RestoreInterpolations();
+    }
     cl_repredicting = false;
   }
 
@@ -279,8 +283,10 @@ static void cl_predict(int saved_gametic,
   while (gametic < saved_gametic) {
     cl_repredicting = true;
     run_tic();
-    R_InterpolateView(&players[displayplayer]);
-    R_RestoreInterpolations();
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
+      R_RestoreInterpolations();
+    }
     cl_repredicting = false;
   }
 #endif
@@ -340,7 +346,6 @@ static void cl_check_for_state_updates(void) {
   }
 
   N_LogPlayerPosition(&players[consoleplayer]);
-
   cl_state_tic = server->sync.tic;
   cl_delta_from_tic = server->sync.delta.from_tic;
   cl_delta_to_tic = server->sync.delta.to_tic;
@@ -450,6 +455,9 @@ void N_LogCommand(netticcmd_t *ncmd) {
 }
 
 void N_LogPlayerPosition(player_t *player) {
+  if (player->mo == NULL)
+    return;
+
   D_Log(LOG_SYNC,
     "(%d): %td: {%4d/%4d/%4d %4d/%4d/%4d %4d %4d/%4d/%4d/%4d %4d/%4u/%4u}\n", 
     gametic,

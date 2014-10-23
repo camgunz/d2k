@@ -411,7 +411,9 @@ bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
 
     read_int(pbuf, command_index, "command sync index");
 
-    np->sync.commands[playernum].index = command_index;
+    np->sync.commands[playernum].index = MAX(
+      np->sync.commands[playernum].index, command_index
+    );
 
     /*
     D_Log(LOG_SYNC,

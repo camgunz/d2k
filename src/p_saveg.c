@@ -423,9 +423,11 @@ static void P_ArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
   M_PBufWriteShort(savebuffer, mobj->spawnpoint.options);
   M_PBufWriteInt(savebuffer, mobj->friction);
   M_PBufWriteInt(savebuffer, mobj->movefactor);
+  /*
   M_PBufWriteInt(savebuffer, mobj->PrevX);
   M_PBufWriteInt(savebuffer, mobj->PrevY);
   M_PBufWriteInt(savebuffer, mobj->PrevZ);
+  */
   M_PBufWriteUInt(savebuffer, mobj->pitch);
   M_PBufWriteInt(savebuffer, mobj->index);
   M_PBufWriteShort(savebuffer, mobj->patch_width);
@@ -469,9 +471,11 @@ static void P_UnArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
   M_PBufReadShort(savebuffer, &mobj->spawnpoint.options);
   M_PBufReadInt(savebuffer, &mobj->friction);
   M_PBufReadInt(savebuffer, &mobj->movefactor);
+  /*
   M_PBufReadInt(savebuffer, &mobj->PrevX);
   M_PBufReadInt(savebuffer, &mobj->PrevY);
   M_PBufReadInt(savebuffer, &mobj->PrevZ);
+  */
   M_PBufReadUInt(savebuffer, &mobj->pitch);
   M_PBufReadInt(savebuffer, &mobj->index);
   M_PBufReadShort(savebuffer, &mobj->patch_width);

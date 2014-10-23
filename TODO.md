@@ -2,6 +2,9 @@
 
 ## Prototype
 
+1. Actor ID problems?
+  - (De)Serialization issues?
+
 1. Check singleplayer (coop)
 
 1. Duplicate opponent weapon pickups?
