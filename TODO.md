@@ -2,12 +2,10 @@
 
 ## Prototype
 
-1. Actor ID problems?
-  - (De)Serialization issues?
+1. Fix going to new map
 
-1. Check singleplayer (coop)
-
-1. Duplicate opponent weapon pickups?
+1. Explore running extra TICs before running commands with TICs
+  - Might solve problem where projectiles spawn far away
 
 ---
 

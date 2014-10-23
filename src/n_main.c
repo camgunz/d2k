@@ -560,7 +560,7 @@ void N_InitNetGame(void) {
         if (cl_received_setup)
           break;
 
-        if (difftime(now, connect_time) > (CONNECT_TIMEOUT * 1000))
+        if (difftime(now, connect_time) > (NET_SETUP_TIMEOUT * 1000))
           I_Error("N_InitNetGame: Timed out waiting for setup information");
       }
 

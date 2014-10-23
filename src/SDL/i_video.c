@@ -80,17 +80,24 @@
 //e6y: new mouse code
 static SDL_Cursor* cursors[2] = {NULL, NULL};
 
+#ifdef ENABLE_OVERLAY
 static unsigned char *local_pixels = NULL;
 static cairo_t *render_context = NULL;
 static cairo_surface_t *render_surface = NULL;
+
 #ifdef GL_DOOM
 static GLuint overlay_tex_id = 0;
 #endif
 
+#endif
+
+
 dboolean window_focused;
 
 // Window resize state.
+#if 0
 static void ApplyWindowResize(SDL_Event *resize_event);
+#endif
 
 const char *sdl_videodriver;
 const char *sdl_video_window_pos;
@@ -243,7 +250,9 @@ static void I_GetEvent(void) {
         UpdateFocus();
       break;
       case SDL_VIDEORESIZE:
-        // ApplyWindowResize(Event);
+#if 0
+        ApplyWindowResize(Event);
+#endif
       break;
       case SDL_QUIT:
         S_StartSound(NULL, sfx_swtchn);
@@ -1811,6 +1820,7 @@ void UpdateGrab(void) {
   currently_grabbed = grab;
 }
 
+#if 0
 static void ApplyWindowResize(SDL_Event *resize_event) {
   int i, k;
   char mode[80];
@@ -1868,6 +1878,7 @@ static void ApplyWindowResize(SDL_Event *resize_event) {
 
   V_ChangeScreenResolution();
 }
+#endif
 
 /* vi: set et ts=2 sw=2: */
 

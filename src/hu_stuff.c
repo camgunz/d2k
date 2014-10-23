@@ -296,18 +296,18 @@ const char english_shiftxform[] =
   '{', '|', '}', '~', 127
 };
 
-static void HU_SetLumpTrans(const char *name)
-{
+static void HU_SetLumpTrans(const char *name) {
   int lump = W_CheckNumForName(name);
+
   if (lump > 0)
-  {
     lumpinfo[lump].flags |= LUMP_CM2RGB;
-  }
 }
 
+#ifdef ENABLE_OVERLAY
 static void send_chat_message(chat_widget_t *cw) {
   P_SendMessage(HU_ChatWidgetGetInputText(cw));
 }
+#endif
 
 //
 // HU_Init()
@@ -320,8 +320,10 @@ void HU_Init(void) {
   int   i;
   int   j;
   char  buffer[9];
+#ifdef ENABLE_OVERLAY
   hu_color_t white = {1.0f, 1.0f, 1.0f, 1.0f};
   hu_color_t grey  = {0.0f, 0.0f, 0.0f, 0.9f};
+#endif
 
   if (nodrawers)
     return;

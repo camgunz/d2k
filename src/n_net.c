@@ -239,7 +239,9 @@ void N_Disconnect(void) {
     CL_SetReceivedSetup(false);
 
   while (true) {
-    res = enet_host_service(net_host, &net_event, DISCONNECT_TIMEOUT * 1000);
+    res = enet_host_service(
+      net_host, &net_event, NET_DISCONNECT_TIMEOUT * 1000
+    );
 
     if (res > 0) {
       int peernum = N_PeerForPeer(net_event.peer);
@@ -487,7 +489,10 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
         }
 
         enet_peer_timeout(
-          net_event.peer, 0, NET_TIMEOUT * 1000, NET_TIMEOUT * 1000
+          net_event.peer,
+          0,
+          NET_PEER_MINIMUM_TIMEOUT * 1000,
+          NET_PEER_MAXIMUM_TIMEOUT * 1000
         );
 
         N_PeerSetConnected(np->peernum, net_event.peer);

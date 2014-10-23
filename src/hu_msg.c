@@ -454,12 +454,10 @@ bool HU_MessageWidgetResponder(message_widget_t *mw, event_t *ev) {
 }
 
 void HU_MessageWidgetTextAppended(message_widget_t *mw) {
-  int line_count;
   int total_line_height = 0;
   int widget_width;
   int widget_height;
   PangoLayoutIter *it;
-  PangoRectangle rect;
 
   if (!mw->retractable)
     return;

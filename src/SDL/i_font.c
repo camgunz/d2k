@@ -64,7 +64,7 @@ void I_LoadCustomFonts(void) {
     );
   }
 
-  g_ptr_array_free(font_files);
+  g_ptr_array_free(font_files, true);
 #endif
   FcConfig *config = FcInitLoadConfigAndFonts();
 

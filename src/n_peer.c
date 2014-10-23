@@ -369,12 +369,12 @@ bool N_PeerCheckTimeout(int peernum) {
     return false;
 
   if ((np->connect_time != 0) &&
-      (difftime(t, np->connect_time) > (CONNECT_TIMEOUT * 1000))) {
+      (difftime(t, np->connect_time) > (NET_CONNECT_TIMEOUT * 1000))) {
     return true;
   }
 
   if ((np->disconnect_time != 0) &&
-      (difftime(t, np->disconnect_time) > (DISCONNECT_TIMEOUT * 1000))) {
+      (difftime(t, np->disconnect_time) > (NET_DISCONNECT_TIMEOUT * 1000))) {
     return true;
   }
 
