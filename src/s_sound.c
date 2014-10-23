@@ -43,7 +43,7 @@
 #include "sc_man.h"
 #include "w_wad.h"
 
-#define DEBUG_SOUND 1
+#define DEBUG_SOUND 0
 
 // when to clip out sounds
 // Does not fit the large outdoor areas.

@@ -52,7 +52,7 @@
 #include "e6y.h"
 
 #define DEBUG_NET 0
-#define DEBUG_SYNC 1
+#define DEBUG_SYNC 0
 #define DEBUG_SAVE 0
 #define LOAD_PREVIOUS_STATE 1
 #define PREDICT_LOST_TICS 1
