@@ -57,6 +57,8 @@
 #define DEBUG_SAVE 0
 #define LOAD_PREVIOUS_STATE 1
 #define PREDICT_LOST_TICS 1
+#define USE_NEW_PREDICTION 1
+#define PREDICT_IN_ONE_TIC 0
 #define PRINT_BANDWIDTH_STATS 0
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
@@ -259,13 +261,12 @@ static void cl_predict(int saved_gametic,
                        GQueue *sync_commands,
                        GQueue *run_commands) {
   unsigned int sync_command_count = g_queue_get_length(sync_commands);
-  int command_index = latest_synchronized_command_index;
 
   for (unsigned int i = 0; i < sync_command_count; i++) {
     netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
     netticcmd_t *run_ncmd;
 
-    if (sync_ncmd->index <= command_index)
+    if (sync_ncmd->index <= latest_synchronized_command_index)
       continue;
 
     run_ncmd = P_GetNewBlankCommand();
@@ -279,18 +280,6 @@ static void cl_predict(int saved_gametic,
     }
     cl_repredicting = false;
   }
-
-#if PREDICT_LOST_TICS
-  while (gametic < saved_gametic) {
-    cl_repredicting = true;
-    run_tic();
-    if (players[displayplayer].mo != NULL) {
-      R_InterpolateView(&players[displayplayer]);
-      R_RestoreInterpolations();
-    }
-    cl_repredicting = false;
-  }
-#endif
 }
 
 static void cl_check_for_state_updates(void) {
@@ -302,8 +291,6 @@ static void cl_check_for_state_updates(void) {
   bool state_loaded;
   fixed_t saved_prev_viewz = players[displayplayer].prev_viewz;
   fixed_t saved_viewz = players[displayplayer].viewz;
-
-
   int saved_gametic = gametic;
 
   if (!DELTACLIENT)
