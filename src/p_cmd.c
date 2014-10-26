@@ -43,10 +43,11 @@
 #include "p_user.h"
 #include "s_sound.h"
 
+#define NOPREDICTION 0
 #define PMOBJTHINKER 1
 #define COPIED_COMMAND 2
 #define OPPONENT_PREDICTION PMOBJTHINKER
-#define MISSED_COMMAND_MAX 5
+#define MISSED_COMMAND_MAX 3
 
 static GQueue *blank_command_queue;
 

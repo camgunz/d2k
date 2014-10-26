@@ -258,12 +258,15 @@ void N_PeerSetConnected(int peernum, ENetPeer *peer) {
 
   np->peer = peer;
   np->connect_time = 0;
+  /*
   enet_peer_throttle_configure(
     peer,
     ENET_PEER_PACKET_THROTTLE_INTERVAL,
     ENET_PEER_PACKET_THROTTLE_SCALE,
     ENET_PEER_PACKET_THROTTLE_SCALE
   );
+  */
+  enet_peer_throttle_configure(peer, ENET_PEER_PACKET_THROTTLE_INTERVAL, 1, 1);
 }
 
 void N_PeerSetDisconnected(int peernum) {
