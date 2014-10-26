@@ -3,8 +3,8 @@ export SDL_AUDIODRIVER="pulse"
 
 PORT=10667
 PORT=10666
-HOST=127.0.0.1
 HOST=totaltrash.org
+HOST=127.0.0.1
 
 EXE="/home/charlie/code/d2k/cbuild/doom2k"
 CMD="$EXE -nomouse -net $HOST:$PORT"

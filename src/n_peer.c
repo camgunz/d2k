@@ -35,6 +35,9 @@
 #include "p_cmd.h"
 #include "p_user.h"
 
+#define NET_THROTTLE_ACCEL 1
+#define NET_THROTTLE_DECEL 2
+
 #define get_netchan(netchan, netcom, chan_type)                               \
   if (chan_type == NET_CHANNEL_RELIABLE)                                      \
     netchan = &netcom->reliable;                                              \
@@ -266,7 +269,15 @@ void N_PeerSetConnected(int peernum, ENetPeer *peer) {
     ENET_PEER_PACKET_THROTTLE_SCALE
   );
   */
-  enet_peer_throttle_configure(peer, ENET_PEER_PACKET_THROTTLE_INTERVAL, 1, 1);
+
+  if (CLIENT) {
+    enet_peer_throttle_configure(
+      peer,
+      ENET_PEER_PACKET_THROTTLE_INTERVAL,
+      NET_THROTTLE_ACCEL,
+      NET_THROTTLE_DECEL
+    );
+  }
 }
 
 void N_PeerSetDisconnected(int peernum) {
