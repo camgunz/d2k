@@ -23,18 +23,20 @@
 
 #include "z_zone.h"
 
-#include <glib.h>
 #include <enet/enet.h>
 
 #include "doomstat.h"
 #include "d_ticcmd.h"
 #include "g_game.h"
 #include "lprintf.h"
-#include "p_user.h"
-
 #include "n_net.h"
 #include "n_state.h"
 #include "n_peer.h"
+#include "p_cmd.h"
+#include "p_user.h"
+
+#define NET_THROTTLE_ACCEL 1
+#define NET_THROTTLE_DECEL 2
 
 #define get_netchan(netchan, netcom, chan_type)                               \
   if (chan_type == NET_CHANNEL_RELIABLE)                                      \
@@ -57,15 +59,20 @@ typedef struct packet_buf_s {
 
 static GHashTable *net_peers = NULL;
 
+static void destroy_netticcmd(gpointer data) {
+  P_RecycleCommand((netticcmd_t *)data);
+}
+
 static void init_channel(netchan_t *nc) {
-  M_CBufInit(&nc->toc, sizeof(tocentry_t));
+  nc->toc = g_array_new(false, true, sizeof(tocentry_t));
   M_PBufInit(&nc->messages);
   M_PBufInit(&nc->packet_data);
   M_PBufInit(&nc->packed_toc);
 }
 
 static void clear_channel(netchan_t *nc) {
-  M_CBufClear(&nc->toc);
+  if (nc->toc->len > 0)
+    g_array_remove_range(nc->toc, 0, nc->toc->len);
   M_PBufClear(&nc->messages);
   M_PBufClear(&nc->packet_data);
   M_PBufClear(&nc->packed_toc);
@@ -74,7 +81,7 @@ static void clear_channel(netchan_t *nc) {
 static void serialize_toc(netchan_t *chan) {
   M_PBufClear(&chan->packed_toc);
 
-  if (!M_PBufWriteMap(&chan->packed_toc, M_CBufGetObjectCount(&chan->toc)))
+  if (!M_PBufWriteMap(&chan->packed_toc, chan->toc->len))
     I_Error("Error writing map: %s.\n", cmp_strerror(&chan->packed_toc.cmp));
 
   D_Log(LOG_MEM, "serialize_toc: Buffer cursor, size, capacity: %zu/%zu/%zu\n",
@@ -83,8 +90,8 @@ static void serialize_toc(netchan_t *chan) {
     M_PBufGetCapacity(&chan->packed_toc)
   );
 
-  CBUF_FOR_EACH(&chan->toc, entry) {
-    tocentry_t *message = (tocentry_t *)entry.obj;
+  for (unsigned int i = 0; i < chan->toc->len; i++) {
+    tocentry_t *message = &g_array_index(chan->toc, tocentry_t, i);
 
     if (!M_PBufWriteUInt(&chan->packed_toc, message->index))
       I_Error("Error writing UInt: %s.\n", cmp_strerror(&chan->packed_toc.cmp));
@@ -102,9 +109,9 @@ static bool packet_read(cmp_ctx_t *ctx, void *data, size_t limit) {
   return true;
 }
 
-static dboolean deserialize_toc(cbuf_t *toc, unsigned char *data,
-                                             unsigned int size,
-                                             size_t *message_start_point) {
+static bool deserialize_toc(GArray *toc, unsigned char *data,
+                                         unsigned int size,
+                                         size_t *message_start_point) {
   cmp_ctx_t cmp;
   packet_buf_t packet_data;
   unsigned int toc_size = 0;
@@ -124,20 +131,21 @@ static dboolean deserialize_toc(cbuf_t *toc, unsigned char *data,
     return false;
   }
 
-  M_CBufClear(toc);
-  M_CBufEnsureCapacity(toc, toc_size);
+  if (toc->len > 0)
+    g_array_remove_range(toc, 0, toc->len);
+  g_array_set_size(toc, toc_size);
 
-  for (int i = 0; i < toc_size; i++) {
-    tocentry_t *message = (tocentry_t *)M_CBufGetFirstFreeOrNewSlot(toc);
+  for (unsigned int i = 0; i < toc_size; i++) {
+    tocentry_t *toc_entry = &g_array_index(toc, tocentry_t, i);
 
-    if (!cmp_read_uint(&cmp, &message->index)) {
+    if (!cmp_read_uint(&cmp, &toc_entry->index)) {
       P_Printf(consoleplayer,
         "Error reading message index: %s\n", cmp_strerror(&cmp)
       );
       return false;
     }
 
-    if (!cmp_read_uchar(&cmp, &message->type)) {
+    if (!cmp_read_uchar(&cmp, &toc_entry->type)) {
       P_Printf(consoleplayer, "Error reading message type: %s\n",
         cmp_strerror(&cmp)
       );
@@ -149,8 +157,8 @@ static dboolean deserialize_toc(cbuf_t *toc, unsigned char *data,
   return true;
 }
 
-static dboolean channel_empty(netchan_t *nc) {
-  return M_CBufGetObjectCount(&nc->toc) <= 0;
+static bool channel_empty(netchan_t *nc) {
+  return nc->toc->len == 0;
 }
 
 static void init_netcom(netcom_t *nc) {
@@ -160,22 +168,36 @@ static void init_netcom(netcom_t *nc) {
 }
 
 static void free_netcom(netcom_t *nc) {
-  M_CBufFree(&nc->incoming.toc);
+  g_array_free(nc->incoming.toc, true);
   M_PBufFree(&nc->incoming.messages);
   M_PBufFree(&nc->incoming.packet_data);
-  M_CBufFree(&nc->reliable.toc);
+  g_array_free(nc->reliable.toc, true);
   M_PBufFree(&nc->reliable.messages);
   M_PBufFree(&nc->reliable.packet_data);
-  M_CBufFree(&nc->unreliable.toc);
+  g_array_free(nc->unreliable.toc, true);
   M_PBufFree(&nc->unreliable.messages);
   M_PBufFree(&nc->unreliable.packet_data);
+}
+
+static void init_command_queue(command_queue_t *cq) {
+  cq->index = 0;
+  cq->sync_queue = g_queue_new();
+  cq->run_queue = g_queue_new();
+}
+
+static void free_command_queue(command_queue_t *cq) {
+  cq->index = 0;
+  g_queue_free_full(cq->sync_queue, destroy_netticcmd);
+  g_queue_free_full(cq->run_queue, destroy_netticcmd);
 }
 
 static void init_netsync(netsync_t *ns) {
   ns->initialized = false;
   ns->outdated = false;
   ns->tic = 0;
-  ns->cmd = 0;
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    init_command_queue(&ns->commands[i]);
+  }
   M_BufferInit(&ns->delta.data);
 }
 
@@ -183,14 +205,15 @@ static void free_netsync(netsync_t *ns) {
   ns->initialized = false;
   ns->outdated = false;
   ns->tic = 0;
-  ns->cmd = 0;
+  for (int i = 0; i < MAXPLAYERS; i++)
+    free_command_queue(&ns->commands[i]);
   M_BufferFree(&ns->delta.data);
 }
 
 static void free_peer(netpeer_t *np) {
   P_Printf(consoleplayer, "Removing peer %u %s:%u\n",
     np->peernum,
-    N_IPToConstString((doom_b32(np->peer->address.host))),
+    N_IPToConstString((ENET_NET_TO_HOST_32(np->peer->address.host))),
     np->peer->address.port
   );
 
@@ -200,8 +223,12 @@ static void free_peer(netpeer_t *np) {
   free(np);
 }
 
+static void peer_destroy_func(gpointer data) {
+  free_peer((netpeer_t *)data);
+}
+
 void N_InitPeers(void) {
-  net_peers = g_hash_table_new(NULL, NULL);
+  net_peers = g_hash_table_new_full(NULL, NULL, NULL, peer_destroy_func);
 }
 
 unsigned int N_PeerAdd(void) {
@@ -234,12 +261,23 @@ void N_PeerSetConnected(int peernum, ENetPeer *peer) {
 
   np->peer = peer;
   np->connect_time = 0;
+  /*
   enet_peer_throttle_configure(
     peer,
     ENET_PEER_PACKET_THROTTLE_INTERVAL,
     ENET_PEER_PACKET_THROTTLE_SCALE,
     ENET_PEER_PACKET_THROTTLE_SCALE
   );
+  */
+
+  if (CLIENT) {
+    enet_peer_throttle_configure(
+      peer,
+      ENET_PEER_PACKET_THROTTLE_INTERVAL,
+      NET_THROTTLE_ACCEL,
+      NET_THROTTLE_DECEL
+    );
+  }
 }
 
 void N_PeerSetDisconnected(int peernum) {
@@ -254,12 +292,10 @@ void N_PeerSetDisconnected(int peernum) {
 
 void N_PeerRemove(netpeer_t *np) {
   g_hash_table_remove(net_peers, GUINT_TO_POINTER(np->peernum));
-  free_peer(np);
 }
 
 void N_PeerIterRemove(netpeer_iter_t *it, netpeer_t *np) {
   g_hash_table_iter_remove(it);
-  free_peer(np);
 }
 
 unsigned int N_PeerGetCount(void) {
@@ -339,7 +375,7 @@ bool N_PeerIter(netpeer_iter_t **it, netpeer_t **np) {
   return false;
 }
 
-dboolean N_PeerCheckTimeout(int peernum) {
+bool N_PeerCheckTimeout(int peernum) {
   time_t t = time(NULL);
   netpeer_t *np = N_PeerGet(peernum);
 
@@ -347,12 +383,12 @@ dboolean N_PeerCheckTimeout(int peernum) {
     return false;
 
   if ((np->connect_time != 0) &&
-      (difftime(t, np->connect_time) > (CONNECT_TIMEOUT * 1000))) {
+      (difftime(t, np->connect_time) > (NET_CONNECT_TIMEOUT * 1000))) {
     return true;
   }
 
   if ((np->disconnect_time != 0) &&
-      (difftime(t, np->disconnect_time) > (DISCONNECT_TIMEOUT * 1000))) {
+      (difftime(t, np->disconnect_time) > (NET_DISCONNECT_TIMEOUT * 1000))) {
     return true;
   }
 
@@ -388,7 +424,7 @@ pbuf_t* N_PeerBeginMessage(int peernum, net_channel_e chan_type,
   netpeer_t *np = N_PeerGet(peernum);
   netcom_t *nc = NULL;
   netchan_t *chan = NULL;
-  tocentry_t *message = NULL;
+  tocentry_t *toc_entry = NULL;
 
   if (np == NULL)
     I_Error("N_PeerBeginMessage: Invalid peer number %d.\n", peernum);
@@ -396,9 +432,22 @@ pbuf_t* N_PeerBeginMessage(int peernum, net_channel_e chan_type,
   nc = &np->netcom;
   get_netchan(chan, nc, chan_type);
 
-  message = M_CBufGetFirstFreeOrNewSlot(&chan->toc);
-  message->index = M_PBufGetCursor(&chan->messages);
-  message->type = type;
+  for (unsigned int i = 0; i < chan->toc->len; i++) {
+    toc_entry = &g_array_index(chan->toc, tocentry_t, i);
+
+    if (toc_entry->index == 0 && toc_entry->type == 0)
+      break;
+
+    toc_entry = NULL;
+  }
+
+  if (toc_entry == NULL) {
+    g_array_set_size(chan->toc, chan->toc->len + 1);
+    toc_entry = &g_array_index(chan->toc, tocentry_t, chan->toc->len - 1);
+  }
+
+  toc_entry->index = M_PBufGetCursor(&chan->messages);
+  toc_entry->type = type;
 
   return &chan->messages;
 }
@@ -447,7 +496,7 @@ ENetPacket* N_PeerGetPacket(int peernum, net_channel_e chan_type) {
   return packet;
 }
 
-dboolean N_PeerLoadIncoming(int peernum, unsigned char *data, size_t size) {
+bool N_PeerLoadIncoming(int peernum, unsigned char *data, size_t size) {
   netpeer_t *np = N_PeerGet(peernum);
   netchan_t *incoming = NULL;
   size_t message_start_point = 0;
@@ -461,7 +510,7 @@ dboolean N_PeerLoadIncoming(int peernum, unsigned char *data, size_t size) {
   M_BufferInitWithCapacity(&buf, size);
   M_BufferWrite(&buf, data, size);
 
-  if (!deserialize_toc(&incoming->toc, data, size, &message_start_point)) {
+  if (!deserialize_toc(incoming->toc, data, size, &message_start_point)) {
     for (size_t i = 0; i < size; i++)
       printf("%02X ", data[i] & 0xFF);
     printf("\n");
@@ -473,7 +522,7 @@ dboolean N_PeerLoadIncoming(int peernum, unsigned char *data, size_t size) {
   M_BufferFree(&buf);
 
   if (message_start_point >= size) {
-    P_Echo(consoleplayer, "N_PeerLoadIncoming: Received empty packet.");
+    P_Printf(consoleplayer, "N_PeerLoadIncoming: Received empty packet.\n");
     return false;
   }
 
@@ -491,35 +540,42 @@ dboolean N_PeerLoadIncoming(int peernum, unsigned char *data, size_t size) {
   return true;
 }
 
-dboolean N_PeerLoadNextMessage(int peernum, unsigned char *message_type) {
+bool N_PeerLoadNextMessage(int peernum, unsigned char *message_type) {
   netpeer_t *np = N_PeerGet(peernum);
   tocentry_t *toc_entry = NULL;
   netchan_t *incoming = NULL;
+  bool valid_message = true;
+  unsigned int i = 0;
 
   if (np == NULL)
     I_Error("N_PeerLoadNextMessage: Invalid peer number %d.\n", peernum);
 
   incoming = &np->netcom.incoming;
 
-  if (M_CBufGetObjectCount(&incoming->toc) == 0)
+  if (incoming->toc->len == 0)
     return false;
 
-  toc_entry = M_CBufGet(&incoming->toc, 0);
+  while (i < incoming->toc->len) {
+    toc_entry = &g_array_index(incoming->toc, tocentry_t, i);
 
-  if (toc_entry->index >= M_PBufGetSize(&incoming->messages)) {
-    P_Printf(consoleplayer,
-      "N_PeerLoadNextMessage: Invalid message index (%u >= %zu).\n",
-      toc_entry->index, M_PBufGetSize(&incoming->messages)
-    );
-    M_CBufRemove(&incoming->toc, 0);
-    return false;
+    if (toc_entry->index >= M_PBufGetSize(&incoming->messages)) {
+      P_Printf(consoleplayer,
+        "N_PeerLoadNextMessage: Invalid message index (%u >= %zu).\n",
+        toc_entry->index, M_PBufGetSize(&incoming->messages)
+      );
+      valid_message = false;
+      break;
+    }
+
+    *message_type = toc_entry->type;
+    M_PBufSeek(&incoming->messages, toc_entry->index);
+    i++;
   }
 
-  *message_type = toc_entry->type;
-  M_PBufSeek(&incoming->messages, toc_entry->index);
+  if (incoming->toc->len > 0)
+    g_array_remove_range(incoming->toc, 0, i);
 
-  M_CBufRemove(&incoming->toc, 0);
-  return true;
+  return valid_message;
 }
 
 void N_PeerClearReliable(int peernum) {

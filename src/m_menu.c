@@ -1072,7 +1072,7 @@ static void M_QuitResponse(int ch)
     // wait till all sounds stopped or 3 seconds are over
     i = 30;
     while (i>0) {
-      I_uSleep(100000); // CPhipps - don't thrash cpu in this loop
+      I_Sleep(100); // CPhipps - don't thrash cpu in this loop
       if (!I_AnySoundStillPlaying())
         break;
       i--;

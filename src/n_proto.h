@@ -67,6 +67,9 @@ void SV_BroadcastPlayerColorIndexChanged(short playernum, int new_color);
 void SV_BroadcastPlayerSkinChanged(short playernum);
 void SV_BroadcastStateUpdates(void);
 void SV_ResyncPeers(void);
+bool SV_GetCommandSync(int playernum1, int playernum2, int *sync_index,
+                                                       GQueue **sync_commands,
+                                                       GQueue **run_commands);
 
 void CL_SendMessageToServer(const char *message);
 void CL_SendMessageToPlayer(short recipient, const char *message);
@@ -89,6 +92,8 @@ void CL_SendStateReceived(void);
 void CL_SendAuthRequest(const char *password);
 void CL_SendRCONCommand(const char *command);
 void CL_SendVoteRequest(const char *command);
+bool CL_GetCommandSync(int playernum, int *sync_index, GQueue **sync_commands,
+                                                       GQueue **run_commands);
 
 #endif
 

@@ -25,9 +25,11 @@
 #define NET_H__
 
 #define DEFAULT_PORT 10666
-#define NET_TIMEOUT 1
-#define CONNECT_TIMEOUT NET_TIMEOUT
-#define DISCONNECT_TIMEOUT NET_TIMEOUT
+#define NET_SETUP_TIMEOUT 1
+#define NET_PEER_MINIMUM_TIMEOUT 1
+#define NET_PEER_MAXIMUM_TIMEOUT 10
+#define NET_CONNECT_TIMEOUT 1
+#define NET_DISCONNECT_TIMEOUT 1
 
 #define MULTINET    (netgame && (!solonet))
 #define CMDSYNC     (netsync == NET_SYNC_TYPE_COMMAND)
@@ -61,8 +63,8 @@ typedef enum {
 } net_sync_type_e;
 
 typedef struct netticcmd_s {
-  int index;
-  int tic;
+  int      index;
+  int      tic;
   ticcmd_t cmd;
 } netticcmd_t;
 

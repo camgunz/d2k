@@ -53,7 +53,7 @@ fixed_t       I_GetTimeFrac (void);
 #endif
 void          I_GetTime_SaveMS(void);
 unsigned long I_GetRandomTimeSeed(void); /* cphipps */
-void          I_uSleep(unsigned long usecs);
+void          I_Sleep(unsigned long ms);
 /*
  * cphipps - I_GetVersionString
  * Returns a version string in the given buffer

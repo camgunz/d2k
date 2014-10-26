@@ -33,13 +33,12 @@ typedef struct player_message_s {
   int sfx;
 } player_message_t;
 
-void P_PlayerThink(player_t *player);
+void P_PlayerThink(int playernum);
 void P_CalcHeight(player_t *player);
 void P_DeathThink(player_t *player);
 void P_MovePlayer(player_t *player);
 void P_Thrust(player_t *player, angle_t angle, fixed_t move);
 void P_SetPitch(player_t *player);
-void P_RunPlayerCommands(player_t *player);
 void P_SetName(int playernum, char *name);
 void P_AddMessage(int playernum, player_message_t *message);
 
@@ -75,6 +74,7 @@ void P_CenterMSPrintf(int playernum, int sfx, const char *fmt, ...) PRINTF_DECL(
 void P_CenterMSVPrintf(int playernum, int sfx, const char *fmt, va_list args);
 void P_CenterMSEcho(int playernum, int sfx, const char *message);
 void P_CenterMSWrite(int playernum, int sfx, const char *message);
+void P_DestroyMessage(gpointer data);
 
 void P_SendMessage(const char *message);
 void P_ClearMessages(int playernum);

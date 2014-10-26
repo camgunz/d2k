@@ -87,7 +87,7 @@ SET(PACKAGE "Doom2K")
 SET(PACKAGE_NAME "Doom2K")
 SET(PACKAGE_VERSION "${VERSION}")
 # SET(PACKAGE_BUGREPORT "huh")
-SET(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
+SET(PACKAGE_STRING "${PACKAGE_NAME} v${PACKAGE_VERSION}")
 SET(PACKAGE_TARNAME "doom2k")
 SET(PACKAGE_URL "http://github.com/camgunz/d2k")
 
@@ -333,6 +333,7 @@ OPTION(PROFILE "Enable profiling; requires a debug build" OFF)
 OPTION(LEVELINFO_DEBUG "Debug using level info" OFF)
 OPTION(DEBUG_WEAPON_CODEPOINTERS "Debug weapon codepointers" OFF)
 OPTION(SANITIZE_ADDRESSES "Use Clang's address sanitizer, requires clang" OFF)
+OPTION(ENABLE_OVERLAY "Enable new HUD widget overlay" OFF)
 
 IF(NOT DOOMWADDIR)
   SET(DOOMWADDIR "${CMAKE_INSTALL_PREFIX}/share/games/doom")
@@ -849,14 +850,11 @@ SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/m_avg.c
   ${CMAKE_SOURCE_DIR}/src/m_bbox.c
   ${CMAKE_SOURCE_DIR}/src/m_buf.c
-  ${CMAKE_SOURCE_DIR}/src/m_cbuf.c
   ${CMAKE_SOURCE_DIR}/src/m_cheat.c
   ${CMAKE_SOURCE_DIR}/src/m_delta.c
   ${CMAKE_SOURCE_DIR}/src/m_file.c
-  ${CMAKE_SOURCE_DIR}/src/m_list.c
   ${CMAKE_SOURCE_DIR}/src/m_menu.c
   ${CMAKE_SOURCE_DIR}/src/m_misc.c
-  ${CMAKE_SOURCE_DIR}/src/m_obuf.c
   ${CMAKE_SOURCE_DIR}/src/m_pbuf.c
   ${CMAKE_SOURCE_DIR}/src/m_random.c
   ${CMAKE_SOURCE_DIR}/src/md5.c
@@ -868,6 +866,7 @@ SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/n_state.c
   ${CMAKE_SOURCE_DIR}/src/p_ceilng.c
   ${CMAKE_SOURCE_DIR}/src/p_checksum.c
+  ${CMAKE_SOURCE_DIR}/src/p_cmd.c
   ${CMAKE_SOURCE_DIR}/src/p_doors.c
   ${CMAKE_SOURCE_DIR}/src/p_enemy.c
   ${CMAKE_SOURCE_DIR}/src/p_floor.c

@@ -187,10 +187,10 @@ default_t defaults[] =
    
   {"Files",{NULL},{0},UL,UL,def_none,ss_none},
   /* cph - MBF-like wad/deh/bex autoload code */
-  {"wadfile_1",{NULL,&wad_files[0]},{0,""},UL,UL,def_str,ss_none},
-  {"wadfile_2",{NULL,&wad_files[1]},{0,""},UL,UL,def_str,ss_none},
-  {"dehfile_1",{NULL,&deh_files[0]},{0,""},UL,UL,def_str,ss_none},
-  {"dehfile_2",{NULL,&deh_files[1]},{0,""},UL,UL,def_str,ss_none},
+  {"wadfile_1",{NULL,&wad_file_names[0]},{0,""},UL,UL,def_str,ss_none},
+  {"wadfile_2",{NULL,&wad_file_names[1]},{0,""},UL,UL,def_str,ss_none},
+  {"dehfile_1",{NULL,&deh_file_names[0]},{0,""},UL,UL,def_str,ss_none},
+  {"dehfile_2",{NULL,&deh_file_names[1]},{0,""},UL,UL,def_str,ss_none},
 
   {"Game settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"default_skill",{&defaultskill},{3},1,5, // jff 3/24/98 allow default skill setting

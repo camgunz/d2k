@@ -674,8 +674,8 @@ static void R_DemoEx_AddParams(wadtbl_t *wadtbl) {
   char  *dehs  = NULL;
 
   // IWAD and PWADs
-  CBUF_FOR_EACH(&resource_files_buf, entry) {
-    wadfile_info_t *wf = (wadfile_info_t *)entry.obj;
+  for (unsigned int i = 0; i < resource_files->len; i++) {
+    wadfile_info_t *wf = g_ptr_array_index(resource_files, i);
 
     filename_p = PathFindFileName(wf->name);
     fileext_p = filename_p + strlen(filename_p) - 1;
@@ -1113,8 +1113,8 @@ static int G_ReadDemoFooter(const char *filename) {
         WadDataInit(&waddata);
 
         //enumerate and save all auto-loaded files and demo for future use
-        CBUF_FOR_EACH(&resource_files_buf, entry) {
-          wadfile_info_t *wf = (wadfile_info_t *)entry.obj;
+        for (unsigned int i = 0; i < resource_files->len; i++) {
+          wadfile_info_t *wf = g_ptr_array_index(resource_files, i);
 
           if (wf->src == source_auto_load ||
               wf->src == source_pre ||
@@ -1400,7 +1400,7 @@ int DemoNameToWadData(const char * demoname, waddata_t *waddata, patterndata_t *
 #endif // HAVE_LIBPCREPOSIX
 
 void WadDataToWadFiles(waddata_t *waddata) {
-  size_t wadfile_count = M_CBufGetObjectCount(&resource_files_buf);
+  size_t wadfile_count = resource_files->len;
 
   int i = 0;
   int iwadindex = -1;
@@ -1411,12 +1411,15 @@ void WadDataToWadFiles(waddata_t *waddata) {
   old_numwadfiles = wadfile_count;
   old_wadfiles = malloc(sizeof(wadfile_info_t) * wadfile_count);
 
-  CBUF_FOR_EACH(&resource_files_buf, entry) {
-    memcpy(&old_wadfiles[i], entry.obj, sizeof(wadfile_info_t));
-    i++;
+  for (unsigned int j = 0; j < resource_files->len; i++, j++) {
+    memcpy(
+      &old_wadfiles[i],
+      g_ptr_array_index(resource_files, j),
+      sizeof(wadfile_info_t)
+    );
   }
 
-  M_CBufClear(&resource_files_buf);
+  D_ClearResourceFiles();
 
   for (i = 0; (size_t)i < waddata->numwadfiles; i++) {
     if (waddata->wadfiles[i].src == source_iwad) {
@@ -1427,30 +1430,36 @@ void WadDataToWadFiles(waddata_t *waddata) {
   }
 
   if (iwadindex == -1)
-    I_Error("WadDataToWadFiles: IWAD not found\n");
+    I_Error("WadDataToWadFiles: IWAD not found");
 
   for (i = 0; (size_t)i < old_numwadfiles; i++) {
     if (old_wadfiles[i].src == source_auto_load ||
         old_wadfiles[i].src == source_pre) {
-      wadfile_info_t wadfile;
+      wadfile_info_t *wadfile = malloc(sizeof(wadfile_info_t));
 
-      wadfile.name = strdup(old_wadfiles[i].name);
-      wadfile.src = old_wadfiles[i].src;
-      wadfile.handle = old_wadfiles[i].handle;
+      if (wadfile == NULL)
+        I_Error("WadDataToWadFiles: Allocating WAD file info failed");
 
-      M_CBufAppend(&resource_files_buf, &wadfile);
+      wadfile->name = strdup(old_wadfiles[i].name);
+      wadfile->src = old_wadfiles[i].src;
+      wadfile->handle = old_wadfiles[i].handle;
+
+      g_ptr_array_add(resource_files, wadfile);
     }
   }
 
   for (i = 0; (size_t)i < waddata->numwadfiles; i++) {
     if (waddata->wadfiles[i].src == source_auto_load) {
-      wadfile_info_t wadfile;
+      wadfile_info_t *wadfile = malloc(sizeof(wadfile_info_t));
 
-      wadfile.name = strdup(waddata->wadfiles[i].name);
-      wadfile.src = waddata->wadfiles[i].src;
-      wadfile.handle = waddata->wadfiles[i].handle;
+      if (wadfile == NULL)
+        I_Error("WadDataToWadFiles: Allocating WAD file info failed");
 
-      M_CBufAppend(&resource_files_buf, &wadfile);
+      wadfile->name = strdup(waddata->wadfiles[i].name);
+      wadfile->src = waddata->wadfiles[i].src;
+      wadfile->handle = waddata->wadfiles[i].handle;
+
+      g_ptr_array_add(resource_files, wadfile);
     }
   }
 
@@ -1459,6 +1468,7 @@ void WadDataToWadFiles(waddata_t *waddata) {
       D_AddFile(waddata->wadfiles[i].name, source_pwad);
       modifiedgame = true;
     }
+
     if (waddata->wadfiles[i].src == source_pwad) {
       const char *file = I_FindFile2(waddata->wadfiles[i].name, ".wad");
       if (!file && N_GetWad(waddata->wadfiles[i].name)) {
@@ -1468,11 +1478,13 @@ void WadDataToWadFiles(waddata_t *waddata) {
           waddata->wadfiles[i].name = strdup(file); 
         }
       }
+
       if (file) {
         D_AddFile(waddata->wadfiles[i].name, source_pwad);
         modifiedgame = true;
       }
     }
+
     if (waddata->wadfiles[i].src == source_deh)
       D_AddDEH(waddata->wadfiles[i].name, 0);
   }
@@ -1491,8 +1503,8 @@ void WadFilesToWadData(waddata_t *waddata) {
   if (!waddata)
     return;
 
-  CBUF_FOR_EACH(&resource_files_buf, entry) {
-    wadfile_info_t *wf = (wadfile_info_t *)entry.obj;
+  for (unsigned int i = 0; i < resource_files->len; i++) {
+    wadfile_info_t *wf = g_ptr_array_index(resource_files, i);
 
     WadDataAddItem(waddata, wf->name, wf->src, wf->handle);
   }
@@ -1535,8 +1547,8 @@ int CheckAutoDemo(void) {
   I_Error("Can't process -auto - " PACKAGE_NAME " was compiled w/o LIBPCRE");
 #else
 
-  CBUF_FOR_EACH(&resource_files_buf, entry) {
-    wadfile_info_t *wf = (wadfile_info_t *)entry.obj;
+  for (unsigned int i = 0; i < resource_files->len; i++) {
+    wadfile_info_t *wf = g_ptr_array_index(resource_files, i);
 
     if (wf->src == source_lmp) {
       int numwadfiles_required;

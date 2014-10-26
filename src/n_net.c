@@ -55,13 +55,10 @@
 #define string_to_byte(x) (to_byte(strtol(x, NULL, 10)))
 #define string_to_short(x) (to_short(strtol(x, NULL, 10)))
 
-/* CG: General networking */
-
 static ENetHost    *net_host = NULL;
 static const char  *previous_host = NULL;
 static short        previous_port = 0;
 
-/* CG: Externally viewable */
 dboolean        netgame   = false;
 dboolean        solonet   = false;
 dboolean        netserver = false;
@@ -242,7 +239,9 @@ void N_Disconnect(void) {
     CL_SetReceivedSetup(false);
 
   while (true) {
-    res = enet_host_service(net_host, &net_event, DISCONNECT_TIMEOUT * 1000);
+    res = enet_host_service(
+      net_host, &net_event, NET_DISCONNECT_TIMEOUT * 1000
+    );
 
     if (res > 0) {
       int peernum = N_PeerForPeer(net_event.peer);
@@ -250,7 +249,7 @@ void N_Disconnect(void) {
       if (!peernum) {
         P_Printf(consoleplayer,
           "N_Disconnect: Received network event from unknown peer %s:%u\n",
-          N_IPToConstString(doom_b32(net_event.peer->address.host)),
+          N_IPToConstString(ENET_NET_TO_HOST_32(net_event.peer->address.host)),
           net_event.peer->address.port
         );
         continue;
@@ -403,7 +402,8 @@ void N_PrintAddress(FILE *fp, int peernum) {
     I_Error("N_PrintAddress: Invalid peer %d.\n", peernum);
 
   fprintf(fp, "%s:%u",
-    N_IPToConstString(doom_b32(np->peer->address.host)), np->peer->address.port
+    N_IPToConstString(ENET_NET_TO_HOST_32(np->peer->address.host)),
+    np->peer->address.port
   );
 }
 
@@ -437,6 +437,8 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
   int peernum = -1;
   ENetEvent net_event;
 
+  // printf("N_ServiceNetworkTimeout: %d\n", timeout_ms);
+
   if (net_host == NULL)
     return;
 
@@ -445,7 +447,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
 
     if (N_PeerCheckTimeout(np->peernum)) {
       P_Printf(consoleplayer, "Peer %s:%u timed out.\n",
-        N_IPToConstString(doom_b32(np->peer->address.host)),
+        N_IPToConstString(ENET_NET_TO_HOST_32(np->peer->address.host)),
         np->peer->address.port
       );
 
@@ -487,9 +489,14 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
           continue;
         }
 
+        /*
         enet_peer_timeout(
-          net_event.peer, 0, NET_TIMEOUT * 1000, NET_TIMEOUT * 1000
+          net_event.peer,
+          0,
+          NET_PEER_MINIMUM_TIMEOUT * 1000,
+          NET_PEER_MAXIMUM_TIMEOUT * 1000
         );
+        */
 
         N_PeerSetConnected(np->peernum, net_event.peer);
 
@@ -514,7 +521,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
         P_Printf(consoleplayer,
           "N_ServiceNetwork: Received 'disconnect' event from unknown "
           "peer %s:%u.\n",
-          N_IPToConstString(doom_b32(net_event.peer->address.host)),
+          N_IPToConstString(ENET_NET_TO_HOST_32(net_event.peer->address.host)),
           net_event.peer->address.port
         );
         continue;
@@ -530,7 +537,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       if (!(peernum = N_PeerForPeer(net_event.peer))) {
         P_Printf(consoleplayer,
           "N_ServiceNetwork: Received 'packet' event from unknown peer %s:%u.\n",
-          N_IPToConstString(doom_b32(net_event.peer->address.host)),
+          N_IPToConstString(ENET_NET_TO_HOST_32(net_event.peer->address.host)),
           net_event.peer->address.port
         );
         continue;
@@ -554,7 +561,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     else if (net_event.type != ENET_EVENT_TYPE_NONE) {
       P_Printf(consoleplayer,
         "N_ServiceNetwork: Received unknown event from peer %s:%u.\n",
-        N_IPToConstString(doom_b32(net_event.peer->address.host)),
+        N_IPToConstString(ENET_NET_TO_HOST_32(net_event.peer->address.host)),
         net_event.peer->address.port
       );
     }
@@ -574,9 +581,11 @@ uint32_t N_GetUploadBandwidth(void) {
   uint32_t ms;
   uint32_t bytes_sent;
   uint32_t time_elapsed;
-  netpeer_t *np = CL_GetServerPeer();
 
-  if (np == NULL)
+  if (net_host == NULL)
+    return 0;
+
+  if (CL_GetServerPeer() == NULL)
     return 0;
 
   ms = I_GetTicks();
@@ -608,9 +617,11 @@ uint32_t N_GetDownloadBandwidth(void) {
   uint32_t ms;
   uint32_t bytes_received;
   uint32_t time_elapsed;
-  netpeer_t *np = CL_GetServerPeer();
 
-  if (np == NULL)
+  if (net_host == NULL)
+    return 0;
+
+  if (CL_GetServerPeer() == NULL)
     return 0;
 
   ms = I_GetTicks();

@@ -25,41 +25,62 @@
 
 #include "lprintf.h"
 
-static obuf_t log_files;
+static GPtrArray *log_files;
 
-static void close_logs(void) {
-  OBUF_FOR_EACH(&log_files, entry) {
-    FILE *fh = (FILE *)entry.obj;
+static void close_log(gpointer data) {
+  FILE *fh = data;
 
+  if (fh != NULL) {
+    fflush(fh);
     fclose(fh);
   }
 }
 
+static void close_logs(void) {
+  g_ptr_array_free(log_files, true);
+}
+
 void D_InitLogging(void) {
-  M_OBufInitWithCapacity(&log_files, LOG_MAX);
+#ifdef DEBUG
+  log_files = g_ptr_array_new_full(LOG_MAX, close_log);
+  g_ptr_array_set_size(log_files, LOG_MAX);
   atexit(close_logs);
+#endif
 }
 
 void D_EnableLogChannel(log_channel_e channel, const char *filename) {
+#ifdef DEBUG
   FILE *fh = fopen(filename, "w");
 
   if (fh == NULL)
     I_Error("Error opening log file %s: %s.\n", filename, strerror(errno));
 
-  M_OBufInsert(&log_files, channel, fh);
+  g_ptr_array_insert(log_files, channel, fh);
+#endif
 }
 
 void D_Log(log_channel_e channel, const char *fmt, ...) {
-  FILE *fh = M_OBufGet(&log_files, channel);
+#ifdef DEBUG
+  FILE *fh;
   va_list args;
 
-  if (fh != NULL) {
-    va_start(args, fmt);
-    vfprintf(fh, fmt, args);
-    va_end(args);
-  }
+  if (log_files == NULL)
+    return;
+
+  if (channel >= LOG_MAX)
+    I_Error("D_Log: Invalid channel %d (valid: 0 - %d)", channel, LOG_MAX);
+  
+  fh = (FILE *)g_ptr_array_index(log_files, channel);
+
+  if (fh == NULL)
+    return;
+
+  va_start(args, fmt);
+  vfprintf(fh, fmt, args);
+  va_end(args);
 
   fflush(fh);
+#endif
 }
 
 /* vi: set et ts=2 sw=2: */

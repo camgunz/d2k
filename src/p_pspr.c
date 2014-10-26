@@ -23,21 +23,23 @@
 
 #include "z_zone.h"
 
+
 #include "doomstat.h"
-#include "r_main.h"
-#include "p_map.h"
-#include "p_inter.h"
-#include "p_pspr.h"
-#include "p_enemy.h"
-#include "p_tick.h"
+#include "d_event.h"
+#include "e6y.h"//e6y
+#include "lprintf.h"
 #include "m_random.h"
+#include "n_net.h"
+#include "n_main.h"
+#include "p_enemy.h"
+#include "p_inter.h"
+#include "p_map.h"
+#include "p_pspr.h"
+#include "p_tick.h"
+#include "r_demo.h"
+#include "r_main.h"
 #include "s_sound.h"
 #include "sounds.h"
-#include "d_event.h"
-#include "r_demo.h"
-#include "lprintf.h"
-#include "e6y.h"//e6y
-
 #define LOWERSPEED   (FRACUNIT*6)
 #define RAISESPEED   (FRACUNIT*6)
 #define WEAPONBOTTOM (FRACUNIT*128)
@@ -77,43 +79,35 @@ static const int recoil_values[] = {    // phares
 // P_SetPsprite
 //
 
-static void P_SetPsprite(player_t *player, int position, statenum_t stnum)
-{
+static void P_SetPsprite(player_t *player, int position, statenum_t stnum) {
   pspdef_t *psp = &player->psprites[position];
 
-  do
-    {
-      state_t *state;
+  do {
+    state_t *state;
 
-      if (!stnum)
-        {
-          // object removed itself
-          psp->state = NULL;
-          break;
-        }
-
-      state = &states[stnum];
-      psp->state = state;
-      psp->tics = state->tics;        // could be 0
-
-      if (state->misc1)
-        {
-          // coordinate set
-          psp->sx = state->misc1 << FRACBITS;
-          psp->sy = state->misc2 << FRACBITS;
-        }
-
-      // Call action routine.
-      // Modified handling.
-      if (state->action)
-        {
-          state->action(player, psp);
-          if (!psp->state)
-            break;
-        }
-      stnum = psp->state->nextstate;
+    if (!stnum) { // object removed itself
+      psp->state = NULL;
+      break;
     }
-  while (!psp->tics);     // an initial state of 0 could cycle through
+
+    state = &states[stnum];
+    psp->state = state;
+    psp->tics = state->tics; // could be 0
+
+    if (state->misc1) { // coordinate set
+      psp->sx = state->misc1 << FRACBITS;
+      psp->sy = state->misc2 << FRACBITS;
+    }
+
+    // Call action routine.
+    // Modified handling.
+    if (state->action) {
+      state->action(player, psp);
+      if (!psp->state)
+        break;
+    }
+    stnum = psp->state->nextstate;
+  } while (!psp->tics); // an initial state of 0 could cycle through
 }
 
 //
@@ -310,14 +304,14 @@ void P_DropWeapon(player_t *player) {
 // or after previous attack/fire sequence.
 //
 
-void A_WeaponReady(player_t *player, pspdef_t *psp)
-{
+void A_WeaponReady(player_t *player, pspdef_t *psp) {
   CHECK_WEAPON_CODEPOINTER("A_WeaponReady", player);
 
   // get out of attack state
-  if (player->mo->state == &states[S_PLAY_ATK1]
-      || player->mo->state == &states[S_PLAY_ATK2] )
+  if (player->mo->state == &states[S_PLAY_ATK1] ||
+      player->mo->state == &states[S_PLAY_ATK2]) {
     P_SetMobjState(player->mo, S_PLAY);
+  }
 
   if (player->readyweapon == wp_chainsaw && psp->state == &states[S_SAW])
     S_StartSound(player->mo, sfx_sawidl);
@@ -325,37 +319,36 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
   // check for change
   //  if player is dead, put the weapon away
 
-  if (player->pendingweapon != wp_nochange || !player->health)
-    {
-      // change weapon (pending weapon should already be validated)
-      statenum_t newstate = weaponinfo[player->readyweapon].downstate;
-      P_SetPsprite(player, ps_weapon, newstate);
-      return;
-    }
+  if (player->pendingweapon != wp_nochange || !player->health) {
+    // change weapon (pending weapon should already be validated)
+    statenum_t newstate = weaponinfo[player->readyweapon].downstate;
+    P_SetPsprite(player, ps_weapon, newstate);
+
+    return;
+  }
 
   // check for fire
   //  the missile launcher and bfg do not auto fire
 
-  if (player->cmd.buttons & BT_ATTACK)
-    {
-      if (!player->attackdown || (player->readyweapon != wp_missile &&
-                                  player->readyweapon != wp_bfg))
-        {
-          player->attackdown = true;
-          P_FireWeapon(player);
-          return;
-        }
+  if (player->cmd.buttons & BT_ATTACK) {
+    if (!player->attackdown || (player->readyweapon != wp_missile &&
+                                player->readyweapon != wp_bfg)) {
+      player->attackdown = true;
+      P_FireWeapon(player);
+
+      return;
     }
-  else
+  }
+  else {
     player->attackdown = false;
+  }
 
   // bob the weapon based on movement speed
-  {
-    int angle = (128*leveltime) & FINEMASK;
-    psp->sx = FRACUNIT + FixedMul(player->bob, finecosine[angle]);
-    angle &= FINEANGLES/2-1;
-    psp->sy = WEAPONTOP + FixedMul(player->bob, finesine[angle]);
-  }
+  int angle = (128 * leveltime) & FINEMASK;
+
+  psp->sx = FRACUNIT + FixedMul(player->bob, finecosine[angle]);
+  angle &= FINEANGLES / 2 - 1;
+  psp->sy = WEAPONTOP + FixedMul(player->bob, finesine[angle]);
 }
 
 //
@@ -933,18 +926,18 @@ void P_SetupPsprites(player_t *player)
 // Called every tic by player thinking routine.
 //
 
-void P_MovePsprites(player_t *player)
-{
+void P_MovePsprites(player_t *player) {
   pspdef_t *psp = player->psprites;
-  int i;
 
   // a null state means not active
   // drop tic count and possibly change state
   // a -1 tic count never changes
 
-  for (i=0; i<NUMPSPRITES; i++, psp++)
-    if (psp->state && psp->tics != -1 && !--psp->tics)
+  for (int i = 0; i < NUMPSPRITES; i++, psp++) {
+    if (psp->state && psp->tics != -1 && !--psp->tics) {
       P_SetPsprite(player, i, psp->state->nextstate);
+    }
+  }
 
   player->psprites[ps_flash].sx = player->psprites[ps_weapon].sx;
   player->psprites[ps_flash].sy = player->psprites[ps_weapon].sy;

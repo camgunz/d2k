@@ -27,6 +27,7 @@
 
 #include "doomstat.h"
 #include "d_net.h"
+#include "e6y.h"//e6y
 #include "g_game.h"
 #include "i_main.h"
 #include "i_smp.h"
@@ -45,7 +46,6 @@
 #include "st_stuff.h"
 #include "v_video.h"
 #include "w_wad.h"
-#include "e6y.h"//e6y
 
 // e6y
 // Now they are variables. Depends from render_doom_lightmaps variable.
@@ -1089,7 +1089,6 @@ void R_ShowStats(void) {
           renderer_fps, rendered_segs, rendered_visplanes, rendered_vissprites
         );
       }
-      P_Echo(consoleplayer, "開発メモ 技術系の作業メモおよびアイデアの記録");
     }
 
     saved_tic = tic;

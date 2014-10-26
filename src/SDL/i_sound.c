@@ -91,7 +91,7 @@ int steptable[256];         // Pitch to stepping lookup, unused.
 SDL_mutex *sfxmutex;        // lock for updating any params related to sfx
 SDL_mutex *musmutex;        // lock for updating any params related to music
 
-// CG TODO: Use a cbuf_t
+/* CG TODO: Use a GArray */
 channel_info_t channelinfo[MAX_SOUND_CHANNELS];
 
 #ifndef HAVE_OWN_MUSIC

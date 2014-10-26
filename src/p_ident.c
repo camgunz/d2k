@@ -23,9 +23,9 @@
 
 #include "z_zone.h"
 
-#include <glib.h>
-
+#include "d_ticcmd.h"
 #include "lprintf.h"
+#include "n_net.h"
 
 static GHashTable *id_hash = NULL;
 static uint32_t max_id = 0;
@@ -78,6 +78,14 @@ void* P_IdentLookup(uint32_t id) {
 void P_IdentReset(void) {
   g_hash_table_remove_all(id_hash);
   max_id = 0;
+}
+
+uint32_t P_IdentGetMaxID(void) {
+  return max_id;
+}
+
+void P_IdentSetMaxID(uint32_t new_max_id) {
+  max_id = new_max_id;
 }
 
 /* vi: set et ts=2 sw=2: */

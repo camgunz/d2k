@@ -295,15 +295,19 @@ static dboolean setup_tic(void) {
   }
 
   R_UpdateInterpolations();
+
   P_MapStart();
 
   return true;
 }
 
 static void run_regular_tic(void) {
+  if (playeringame[consoleplayer])
+    P_PlayerThink(consoleplayer);
+
   for (int i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i])
-      P_PlayerThink(&players[i]);
+    if (playeringame[i] && i != consoleplayer)
+      P_PlayerThink(i);
   }
 }
 

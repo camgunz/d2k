@@ -281,7 +281,7 @@ static void R_InitTextures (void)
   if (errors)
   {
     const lumpinfo_t* info = W_GetLumpInfoByNum(names_lump);
-    wadfile_info_t *wf = M_CBufGet(&resource_files_buf, info->wadfile);
+    wadfile_info_t *wf = g_ptr_array_index(resource_files, info->wadfile);
 
     if (wf == NULL) {
       I_Error(
@@ -609,7 +609,7 @@ int PUREFUNC R_TextureNumForName(const char *name)  // const added -- killough
   {
     int lump = W_GetNumForName("TEXTURE1");
     const lumpinfo_t* info = W_GetLumpInfoByNum(lump);
-    wadfile_info_t *wf = M_CBufGet(&resource_files_buf, info->wadfile);
+    wadfile_info_t *wf = g_ptr_array_index(resource_files, info->wadfile);
 
     if (wf == NULL) {
       I_Error(

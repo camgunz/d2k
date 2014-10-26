@@ -23,8 +23,6 @@
 
 #include "z_zone.h"
 
-#include <glib.h>
-
 #include "doomstat.h"
 #include "m_random.h"
 #include "lprintf.h"

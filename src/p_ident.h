@@ -24,12 +24,14 @@
 #ifndef P_IDENT_H__
 #define P_IDENT_H__
 
-void  P_IdentInit(void);
-void  P_IdentGetID(void *obj, uint32_t *obj_id);
-void  P_IdentAssignID(void *obj, uint32_t obj_id);
-void  P_IdentReleaseID(uint32_t *obj_id);
-void* P_IdentLookup(uint32_t id);
-void  P_IdentReset(void);
+void     P_IdentInit(void);
+void     P_IdentGetID(void *obj, uint32_t *obj_id);
+void     P_IdentAssignID(void *obj, uint32_t obj_id);
+void     P_IdentReleaseID(uint32_t *obj_id);
+void*    P_IdentLookup(uint32_t id);
+void     P_IdentReset(void);
+uint32_t P_IdentGetMaxID(void);
+void     P_IdentSetMaxID(uint32_t new_max_id);
 
 #endif
 

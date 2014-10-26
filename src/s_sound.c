@@ -27,27 +27,30 @@
 #include "z_zone.h"
 
 #include "doomstat.h"
-#include "s_sound.h"
-#include "s_advsound.h"
+#include "d_main.h"
+#include "e6y.h"
 #include "i_sound.h"
 #include "i_system.h"
-#include "d_main.h"
-#include "r_main.h"
-#include "m_random.h"
-#include "w_wad.h"
 #include "lprintf.h"
-#include "sc_man.h"
-#include "p_ident.h"
-#include "e6y.h"
-
+#include "m_random.h"
 #include "n_net.h"
 #include "n_main.h"
+#include "p_cmd.h"
+#include "p_ident.h"
+#include "r_main.h"
+#include "s_advsound.h"
+#include "s_sound.h"
+#include "sc_man.h"
+#include "w_wad.h"
+
+#define DEBUG_SOUND 0
+#define SOUND_LOG LOG_SOUND
 
 // when to clip out sounds
 // Does not fit the large outdoor areas.
 #define S_CLIPPING_DIST (1200 << FRACBITS)
 
-// Distance tp origin when sounds should be maxed out.
+// Distance to origin when sounds should be maxed out.
 // This should relate to movement clipping resolution
 // (see BLOCKMAP handling).
 // Originally: (200*0x10000).
@@ -68,6 +71,8 @@ typedef struct {
   mobj_t *origin;      // origin of sound
   uint32_t origin_id;  // sound origin ID
   int handle;          // handle of the sound being played
+  int tic;             // TIC at which this sound was started
+  int command_index;   // command index at which this sound was started
   int is_pickup;       // killough 4/25/98: whether sound is a player's weapon
   int pitch;
 } channel_t;
@@ -84,7 +89,7 @@ static musicinfo_t *mus_playing;
 static int musicnum_current;
 
 // the set of channels available
-static cbuf_t *channels;
+static GArray *channels;
 
 // These are not used, but should be (menu).
 // Maximum volume of a sound effect.
@@ -106,6 +111,19 @@ int idmusnum;
 //
 // Internals.
 //
+
+static void log_channel(int channel_num) {
+  channel_t *c = &g_array_index(channels, channel_t, channel_num);
+
+  D_Log(SOUND_LOG, "%d, %s, %u/%u, %d, %d\n", 
+    channel_num,
+    c->sfxinfo != NULL ? c->sfxinfo->name : "(nil)",
+    c->origin != NULL ? c->origin->id : 0,
+    c->origin_id,
+    c->tic,
+    c->command_index
+  );
+}
 
 //
 // adjust_sound_params
@@ -142,8 +160,8 @@ static int adjust_sound_params(mobj_t *listener, mobj_t *source,
   // calculate the distance to sound origin
   //  and clip it if necessary
   if (walkcamera.type > 1) {
-    adx = D_abs(walkcamera.x - source->x);
-    ady = D_abs(walkcamera.y - source->y);
+    adx = walkcamera.x - source->x;
+    ady = walkcamera.y - source->y;
   }
   else {
     adx = D_abs(listener->x - source->x);
@@ -188,10 +206,10 @@ static int adjust_sound_params(mobj_t *listener, mobj_t *source,
 }
 
 static void stop_channel(channel_t *c) {
-  if (!c->sfxinfo)
+  if (!CL_SoundAllowed())
     return;
 
-  if (CL_RePredicting())
+  if (!c->sfxinfo)
     return;
 
   // stop the sound playing
@@ -205,11 +223,16 @@ static void stop_channel(channel_t *c) {
 
 static void init_channel(channel_t *c, mobj_t *mo, sfxinfo_t *sfx, int pu) {
   c->sfxinfo = sfx;
+  c->tic = gametic;
   c->origin = mo;
-  if (mo)
+  if (mo) {
     c->origin_id = mo->id;
-  else
+    c->command_index = CL_GetCurrentCommandIndex();
+  }
+  else {
     c->origin_id = 0;
+    c->command_index = 0;
+  }
   c->is_pickup = pu;         // killough 4/25/98
 }
 
@@ -220,36 +243,60 @@ static void init_channel(channel_t *c, mobj_t *mo, sfxinfo_t *sfx, int pu) {
 // killough 4/25/98: made static, added is_pickup argument
 //
 static int get_channel(mobj_t *mobj, sfxinfo_t *sfxinfo, int is_pickup) {
-  int channel_count = M_CBufGetObjectCount(channels);
+  if (channels->len < numChannels)
+    g_array_set_size(channels, numChannels);
 
-  if (channel_count < numChannels) {
-    channel_t dummy;
+  /*
+   * CG: TODO: Truncate channel array when numChannels is decreased.  I think
+   *           using numChannels instead of channels->len in the below loops
+   *           would do it (eventually), but I need to think it through.
+   */
 
-    init_channel(&dummy, mobj, sfxinfo, is_pickup);
-    M_CBufConsolidate(channels);
-    M_CBufAppend(channels, &dummy);
+  if (DELTACLIENT && mobj && !is_pickup) {
+    for (unsigned int i = 0; i < channels->len; i++) {
+      channel_t *c = &g_array_index(channels, channel_t, i);
 
-    return channel_count;
+      if (c->origin != NULL)
+        continue;
+
+      if (c->origin_id == 0)
+        continue;
+
+      if (c->sfxinfo == NULL)
+        continue;
+
+      if (c->command_index != CL_GetCurrentCommandIndex())
+        continue;
+
+      if (c->origin_id != mobj->id)
+        continue;
+
+      c->origin = mobj;
+      c->is_pickup = false;
+
+      return i;
+    }
   }
 
-  CBUF_FOR_EACH(channels, entry) {
-    channel_t *c = (channel_t *)entry.obj;
+  for (unsigned int i = 0; i < channels->len; i++) {
+    channel_t *c = &g_array_index(channels, channel_t, i);
 
     if ((c->sfxinfo == NULL) ||
         ((mobj && c->origin_id == mobj->id) && c->is_pickup == is_pickup)) {
       stop_channel(c);
       init_channel(c, mobj, sfxinfo, is_pickup);
-      return entry.index;
+
+      return i;
     }
   }
 
-  CBUF_FOR_EACH(channels, entry) {
-    channel_t *c = (channel_t *)entry.obj;
+  for (unsigned int i = 0; i < channels->len; i++) {
+    channel_t *c = &g_array_index(channels, channel_t, i);
 
     if (c->sfxinfo->priority < sfxinfo->priority) {
       stop_channel(c);
       init_channel(c, mobj, sfxinfo, is_pickup);
-      return entry.index;
+      return i;
     }
   }
 
@@ -261,7 +308,6 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
   sfxinfo_t *sfx;
   channel_t *channel;
 
-  //jff 1/22/98 return if sound is not enabled
   is_pickup = sfx_id & PICKUP_SOUND ||
               sfx_id == sfx_oof ||
               (compatibility_level >= prboom_2_compatibility &&
@@ -273,6 +319,46 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
     I_Error("start_sound_at_volume: Bad sfx #: %d", sfx_id);
 
   sfx = &S_sfx[sfx_id];
+
+  if (DELTACLIENT) {
+    for (unsigned int i = 0; i < channels->len; i++) {
+      channel_t *c = &g_array_index(channels, channel_t, i);
+
+      D_Log(SOUND_LOG, "(%d | %d) Checking for duplicate sound: ",
+        gametic, CL_GetCurrentCommandIndex()
+      );
+      log_channel(i);
+
+      if (origin == NULL && c->origin != NULL)
+        continue;
+
+      if (origin != NULL) {
+        if (c->origin == NULL)
+          continue;
+
+        if (c->origin_id != origin->id)
+          continue;
+      }
+
+      if (c->sfxinfo != sfx)
+        continue;
+
+      if (c->is_pickup != is_pickup)
+        continue;
+
+      if (c->command_index != CL_GetCurrentCommandIndex())
+        continue;
+
+      if (c->tic != gametic)
+        continue;
+
+      D_Log(SOUND_LOG, "(%d | %d) Skipping duplicate sound: ",
+        gametic, CL_GetCurrentCommandIndex()
+      );
+      log_channel(i);
+      return;
+    }
+  }
 
   // Initialize sound parameters
   if (sfx->link) {
@@ -337,8 +423,8 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
     pitch = 255;
 
   // kill old sound
-  CBUF_FOR_EACH(channels, entry) {
-    channel = (channel_t *)entry.obj;
+  for (unsigned int i = 0; i < channels->len; i++) {
+    channel_t *channel = &g_array_index(channels, channel_t, i);
 
     if (!channel->sfxinfo)
       continue;
@@ -375,15 +461,17 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
   if (sfx->usefulness++ < 0)
     sfx->usefulness = 1;
 
+  D_Log(SOUND_LOG, "(%d | %d) Starting sound: ",
+    gametic, CL_GetCurrentCommandIndex()
+  );
+  log_channel(cnum);
+
   // Assigns the handle to one of the channels in the mix/output buffer.
   // e6y: [Fix] Crash with zero-length sounds.
   int h = I_StartSound(sfx_id, cnum, volume, sep, pitch, priority);
 
   if (h != -1) {
-    channel = M_CBufGet(channels, cnum);
-
-    if (!channel)
-      return;
+    channel = &g_array_index(channels, channel_t, cnum);
 
     channel->handle = h;
     channel->pitch = pitch;
@@ -398,9 +486,18 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
 //  allocates channel buffer, sets S_sfx lookup.
 //
 void S_Init(int sfxVolume, int musicVolume) {
+
+#if DEBUG_SOUND
+  if (!MULTINET)
+    D_EnableLogChannel(SOUND_LOG, "sound.log");
+  else if (CLIENT)
+    D_EnableLogChannel(SOUND_LOG, "client-sound.log");
+  else if (SERVER)
+    D_EnableLogChannel(SOUND_LOG, "server-sound.log");
+#endif
+
   idmusnum = -1; //jff 3/17/98 insure idmus number is blank
 
-  //jff 1/22/98 skip sound init if sound not enabled
   numChannels = default_numChannels;
 
   lprintf(LO_CONFIRM, "S_Init: default sfx volume %d\n", sfxVolume);
@@ -414,7 +511,7 @@ void S_Init(int sfxVolume, int musicVolume) {
   // (the maximum numer of sounds rendered
   // simultaneously) within zone memory.
   // CPhipps - calloc
-  channels = M_CBufNewWithCapacity(numChannels, sizeof(channel_t));
+  channels = g_array_sized_new(false, true, sizeof(channel_t), numChannels);
 
   // Note that sounds have not been cached (yet).
   for (int i = 1; i < NUMSFX; i++)
@@ -427,9 +524,8 @@ void S_Init(int sfxVolume, int musicVolume) {
 }
 
 void S_Stop(void) {
-  //jff 1/22/98 skip sound init if sound not enabled
-  CBUF_FOR_EACH(channels, entry) {
-    channel_t *channel = (channel_t *)entry.obj;
+  for (unsigned int i = 0; i < channels->len; i++) {
+    channel_t *channel = &g_array_index(channels, channel_t, i);
 
     if (channel->sfxinfo)
       stop_channel(channel);
@@ -474,23 +570,40 @@ void S_Start(void) {
     };
 
     if (gameepisode < 4)
-      mnum = mus_e1m1 + (gameepisode-1)*9 + gamemap-1;
+      mnum = mus_e1m1 + (gameepisode - 1) * 9 + gamemap - 1;
     else
-      mnum = spmus[gamemap-1];
+      mnum = spmus[gamemap - 1];
   }
   S_ChangeMusic(mnum, true);
 }
 
 void S_StartSound(mobj_t *mobj, int sfx_id) {
-  if (CL_RePredicting())
+  if (sfx_id & PICKUP_SOUND) {
+    D_Log(SOUND_LOG, "(%d | %d) S_StartSound(%u, %s)\n",
+      gametic,
+      CL_GetCurrentCommandIndex(),
+      mobj != NULL ? mobj->id : 0,
+      S_sfx[sfx_id - PICKUP_SOUND].name
+    );
+  }
+  else {
+    D_Log(SOUND_LOG, "(%d | %d) S_StartSound(%u, %s)\n",
+      gametic,
+      CL_GetCurrentCommandIndex(),
+      mobj != NULL ? mobj->id : 0,
+      S_sfx[sfx_id].name
+    );
+  }
+
+  if (!CL_SoundAllowed())
     return;
 
   start_sound_at_volume(mobj, sfx_id, snd_SfxVolume);
 }
 
 void S_StopSound(mobj_t *mobj) {
-  CBUF_FOR_EACH(channels, entry) {
-    channel_t *channel = (channel_t *)entry.obj;
+  for (unsigned int i = 0; i < channels->len; i++) {
+    channel_t *channel = &g_array_index(channels, channel_t, i);
 
     if (channel->sfxinfo && channel->origin_id == mobj->id) {
       stop_channel(channel);
@@ -532,8 +645,8 @@ void S_UpdateSounds(mobj_t *listener) {
   I_UpdateMusic();
 #endif
 
-  CBUF_FOR_EACH(channels, entry) {
-    channel_t *channel = (channel_t *)entry.obj;
+  for (unsigned int i = 0; i < channels->len; i++) {
+    channel_t *channel = &g_array_index(channels, channel_t, i);
     sfxinfo_t *sfx = channel->sfxinfo;
 
     if (!sfx)
@@ -552,19 +665,23 @@ void S_UpdateSounds(mobj_t *listener) {
     if (sfx->link) {
       pitch = sfx->pitch;
       volume += sfx->volume;
+
       if (volume < 1) {
         stop_channel(channel);
         continue;
       }
-      else if (volume > snd_SfxVolume) {
+
+      if (volume > snd_SfxVolume)
         volume = snd_SfxVolume;
-      }
     }
 
     // check non-local sounds for distance clipping or modify their params
     // killough 3/20/98
     if (channel->origin_id && listener->id != channel->origin_id) {
       mobj_t *source = P_IdentLookup(channel->origin_id);
+
+      if (!source)
+        continue;
 
       if (!adjust_sound_params(listener, source, &volume, &sep, &pitch))
         stop_channel(channel);
@@ -709,20 +826,33 @@ void S_StopMusic(void) {
 }
 
 void S_ReloadChannelOrigins(void) {
-  CBUF_FOR_EACH(channels, entry) {
-    channel_t *c = (channel_t *)entry.obj;
-    uint32_t origin_id = c->origin_id;
+  for (unsigned int i = 0; i < channels->len; i++) {
+    channel_t *channel = &g_array_index(channels, channel_t, i);
+    uint32_t origin_id = channel->origin_id;
 
     if (origin_id) {
       mobj_t *mobj = P_IdentLookup(origin_id);
 
       if (mobj) {
-        c->origin = mobj;
+        channel->origin = mobj;
       }
       else {
-        stop_channel(c);
-        c->origin = NULL;
-        c->origin_id = 0;
+        channel->origin = NULL;
+
+        if (channel->command_index < CL_GetCurrentCommandIndex()) {
+          D_Log(SOUND_LOG, "(%d | %d) Stopping orphaned sound: ",
+            gametic, CL_GetCurrentCommandIndex()
+          );
+          log_channel(i);
+          stop_channel(channel);
+          channel->origin_id = 0;
+        }
+        else {
+          D_Log(SOUND_LOG, "(%d | %d) Saving orphaned sound: ",
+            gametic, CL_GetCurrentCommandIndex()
+          );
+          log_channel(i);
+        }
       }
     }
   }

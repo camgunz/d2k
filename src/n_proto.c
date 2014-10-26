@@ -23,7 +23,6 @@
 
 #include "z_zone.h"
 
-#include <glib.h>
 #include <enet/enet.h>
 
 #include "doomdef.h"
@@ -192,11 +191,10 @@ static void handle_setup(netpeer_t *np) {
     return;
 
   N_ClearStates();
-  // N_ResetLocalCommandIndex();
 
   if (!N_UnpackSetup(np, &net_sync, &player_count, &playernum)) {
-    M_CBufFree(&resource_files_buf);
-    M_CBufFree(&deh_files_buf);
+    D_ClearResourceFiles();
+    D_ClearDEHFiles();
     N_ClearStates();
     N_Disconnect();
     return;
@@ -242,26 +240,8 @@ static void handle_server_message(netpeer_t *np) {
 }
 
 static void handle_sync(netpeer_t *np) {
-  dboolean update_sync = false;
-
-  if (DELTACLIENT) {
-    N_UnpackDeltaSync(np);
-    return;
-  }
-
-  if ((!DELTACLIENT) && (!N_UnpackSync(np, &update_sync)))
-    return;
-
-  if (update_sync) {
-    if (SERVER) {
-      NETPEER_FOR_EACH(entry) {
-        entry.np->sync.outdated = true;
-      }
-    }
-    else {
-      np->sync.outdated = true;
-    }
-  }
+  if (SERVER || CL_ReceivedSetup())
+    N_UnpackSync(np);
 }
 
 static void handle_player_message(netpeer_t *np) {
@@ -427,7 +407,6 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
   }
 
   while (N_PeerLoadNextMessage(peernum, &message_type)) {
-
     if (message_type >= 1 &&
         message_type != nm_sync &&
         message_type <= sizeof(nm_names)) {
@@ -473,7 +452,7 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
         P_Printf(consoleplayer,
           "Received unknown message type %u from peer %s:%u.\n",
           message_type,
-          N_IPToConstString(doom_b32(np->peer->address.host)),
+          N_IPToConstString(ENET_NET_TO_HOST_32(np->peer->address.host)),
           np->peer->address.port
         );
       break;
@@ -487,29 +466,31 @@ void N_UpdateSync(void) {
   if (CLIENT) {
     np = CL_GetServerPeer();
 
-    if (np != NULL && np->sync.outdated) {
-      N_PeerClearUnreliable(np->peernum);
-      N_PackSync(np);
-      np->sync.outdated = false;
-    }
+    if (np == NULL)
+      return;
+
+    if (!np->sync.outdated)
+      return;
+
+    N_PeerClearUnreliable(np->peernum);
+    N_PackSync(np);
+    np->sync.outdated = false;
+
+    return;
   }
-  else {
-    NETPEER_FOR_EACH(entry) {
-      if (entry.np->sync.outdated && entry.np->sync.tic != 0) {
-        N_PeerClearUnreliable(entry.np->peernum);
 
-        if (DELTASERVER) {
-          if (entry.np->sync.tic < N_GetLatestState()->tic)
-            N_BuildStateDelta(entry.np->sync.tic, &entry.np->sync.delta);
+  NETPEER_FOR_EACH(iter) {
+    if (iter.np->sync.outdated && iter.np->sync.tic != 0) {
+      N_PeerClearUnreliable(iter.np->peernum);
 
-          N_PackDeltaSync(entry.np);
-        }
-        else {
-          N_PackSync(entry.np);
-        }
-
-        entry.np->sync.outdated = false;
+      if (DELTASERVER) {
+        if (iter.np->sync.tic < N_GetLatestState()->tic)
+          N_BuildStateDelta(iter.np->sync.tic, &iter.np->sync.delta);
       }
+
+      N_PackSync(iter.np);
+
+      iter.np->sync.outdated = false;
     }
   }
 }
@@ -771,6 +752,26 @@ void SV_ResyncPeers(void) {
   }
 }
 
+bool SV_GetCommandSync(int playernum1, int playernum2, int *sync_index,
+                                                       GQueue **sync_commands,
+                                                       GQueue **run_commands) {
+  netpeer_t *np = N_PeerForPlayer(playernum1);
+
+  if (np == NULL)
+    return false;
+
+  if (sync_index != NULL)
+    *sync_index = np->sync.commands[playernum2].index;
+
+  if (sync_commands != NULL)
+    *sync_commands = np->sync.commands[playernum2].sync_queue;
+
+  if (run_commands != NULL)
+    *run_commands = np->sync.commands[playernum2].run_queue;
+
+  return true;
+}
+
 void CL_SendAuthRequest(const char *password) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
@@ -790,6 +791,25 @@ void CL_SendVoteRequest(const char *command) {
   CHECK_CONNECTION(np);
 
   N_PackVoteRequest(np, command);
+}
+
+bool CL_GetCommandSync(int playernum, int *sync_index, GQueue **sync_commands,
+                                                       GQueue **run_commands) {
+  netpeer_t *server = CL_GetServerPeer();
+
+  if (server == NULL)
+    return false;
+
+  if (sync_index != NULL)
+    *sync_index = server->sync.commands[playernum].index;
+
+  if (sync_commands != NULL)
+    *sync_commands = server->sync.commands[playernum].sync_queue;
+
+  if (run_commands != NULL)
+    *run_commands = server->sync.commands[playernum].run_queue;
+
+  return true;
 }
 
 /* vi: set et ts=2 sw=2: */

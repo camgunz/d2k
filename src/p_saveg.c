@@ -29,6 +29,7 @@
 #include "lprintf.h"
 #include "m_random.h"
 #include "n_net.h"
+#include "p_cmd.h"
 #include "p_enemy.h"
 #include "p_ident.h"
 #include "p_map.h"
@@ -68,6 +69,13 @@ enum {
   tc_flicker,     // killough 10/4/98
   tc_endspecials
 } specials_e;
+
+static void serialize_corpse(gpointer data, gpointer user_data) {
+  mobj_t *corpse = (mobj_t *)data;
+  pbuf_t *savebuffer = (pbuf_t *)user_data;
+
+  M_PBufWriteUInt(savebuffer, corpse->id);
+}
 
 static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufWriteInt(savebuffer, player->playerstate);
@@ -148,33 +156,12 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufWriteInt(savebuffer, player->momx);
   M_PBufWriteInt(savebuffer, player->momy);
   M_PBufWriteInt(savebuffer, player->resurectedkillcount);
-  M_PBufWriteInt(savebuffer, player->prev_viewz);
-  M_PBufWriteInt(savebuffer, player->prev_viewangle);
-  M_PBufWriteInt(savebuffer, player->prev_viewpitch);
   M_PBufWriteInt(savebuffer, player->jumpTics);
   if (player->name)
     M_PBufWriteString(savebuffer, player->name, strlen(player->name));
   else
     M_PBufWriteString(savebuffer, "", 0);
   M_PBufWriteUChar(savebuffer, player->team);
-  /*
-   * CG: Don't use P_GetPlayerCommands here; that would overwrite the local
-   *     command buffer.
-   */
-  M_CBufConsolidate(&player->commands);
-  M_PBufWriteInt(savebuffer, M_CBufGetObjectCount(&player->commands));
-  CBUF_FOR_EACH(&player->commands, entry) {
-    netticcmd_t *ncmd = (netticcmd_t *)entry.obj;
-
-    M_PBufWriteInt(savebuffer, ncmd->index);
-    M_PBufWriteInt(savebuffer, ncmd->tic);
-    M_PBufWriteChar(savebuffer, ncmd->cmd.forwardmove);
-    M_PBufWriteChar(savebuffer, ncmd->cmd.sidemove);
-    M_PBufWriteShort(savebuffer, ncmd->cmd.angleturn);
-    M_PBufWriteShort(savebuffer, ncmd->cmd.consistancy);
-    M_PBufWriteUChar(savebuffer, ncmd->cmd.chatchar);
-    M_PBufWriteUChar(savebuffer, ncmd->cmd.buttons);
-  }
 }
 
 static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
@@ -182,8 +169,6 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   static buf_t name_buf;
   static bool player_message_buf_initialized = false;
   static bool name_buf_initialized = false;
-
-  int command_count = 0;
 
   if (!player_message_buf_initialized) {
     M_BufferInit(&player_message_buf);
@@ -266,9 +251,6 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufReadInt(savebuffer, &player->momx);
   M_PBufReadInt(savebuffer, &player->momy);
   M_PBufReadInt(savebuffer, &player->resurectedkillcount);
-  M_PBufReadInt(savebuffer, &player->prev_viewz);
-  M_PBufReadInt(savebuffer, (int *)&player->prev_viewangle);
-  M_PBufReadInt(savebuffer, (int *)&player->prev_viewpitch);
   M_PBufReadInt(savebuffer, &player->jumpTics);
   M_PBufReadString(savebuffer, &name_buf, MAX_NAME_LENGTH);
   if (M_BufferGetSize(&name_buf) > 0) {
@@ -279,25 +261,6 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
     M_BufferReadStringDup(&name_buf, &player->name);
   }
   M_PBufReadUChar(savebuffer, &player->team);
-  M_PBufReadInt(savebuffer, &command_count);
-  if (command_count > MAX_COMMAND_COUNT)
-    I_Error("Command count too high (%d)\n", command_count);
-
-  M_CBufClear(&player->commands);
-  M_CBufEnsureCapacity(&player->commands, command_count);
-
-  while (command_count--) {
-    netticcmd_t *ncmd = M_CBufGetFirstFreeOrNewSlot(&player->commands);
-
-    M_PBufReadInt(savebuffer, &ncmd->index);
-    M_PBufReadInt(savebuffer, &ncmd->tic);
-    M_PBufReadChar(savebuffer, &ncmd->cmd.forwardmove);
-    M_PBufReadChar(savebuffer, &ncmd->cmd.sidemove);
-    M_PBufReadShort(savebuffer, &ncmd->cmd.angleturn);
-    M_PBufReadShort(savebuffer, &ncmd->cmd.consistancy);
-    M_PBufReadUChar(savebuffer, &ncmd->cmd.chatchar);
-    M_PBufReadUChar(savebuffer, &ncmd->cmd.buttons);
-  }
 }
 
 static void P_ArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
@@ -356,36 +319,23 @@ static void P_ArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
   M_PBufWriteUInt(savebuffer, player_index);
   M_PBufWriteUInt(savebuffer, tracer_id);
   M_PBufWriteUInt(savebuffer, lastenemy_id);
-
-  /*
-  D_Log(LOG_SAVE, "  Actor %u: {%d, %d, %d, %d, %d, %d, %d}\n",
-    mobj->id,
-    mobj->validcount,
-    mobj->movedir,
-    mobj->movecount,
-    mobj->strafecount,
-    mobj->reactiontime,
-    mobj->threshold,
-    mobj->pursuecount
-  );
-  */
 }
 
 static void P_UnArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
-  unsigned int target_id = 0;
-  unsigned int tracer_id = 0;
+  unsigned int target_id    = 0;
+  unsigned int tracer_id    = 0;
   unsigned int lastenemy_id = 0;
-  uint_64_t    state_index = 0;
+  uint_64_t    state_index  = 0;
   unsigned int player_index = 0;
-  mobj_t *target = NULL;
-  mobj_t *tracer = NULL;
+  mobj_t *target    = NULL;
+  mobj_t *tracer    = NULL;
   mobj_t *lastenemy = NULL;
 
-  mobj->target = NULL;
-  mobj->tracer = NULL;
+  mobj->target    = NULL;
+  mobj->tracer    = NULL;
   mobj->lastenemy = NULL;
-  mobj->state = NULL;
-  mobj->player = NULL;
+  mobj->state     = NULL;
+  mobj->player    = NULL;
 
   M_PBufReadULong(savebuffer, &state_index);
   M_PBufReadUInt(savebuffer, &target_id);
@@ -435,19 +385,6 @@ static void P_UnArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
     mobj->player = &players[player_index - 1];
     mobj->player->mo = mobj;
   }
-
-  /*
-  D_Log(LOG_SAVE, "  Actor %u: {%d, %d, %d, %d, %d, %d, %d}\n",
-    mobj->id,
-    mobj->validcount,
-    mobj->movedir,
-    mobj->movecount,
-    mobj->strafecount,
-    mobj->reactiontime,
-    mobj->threshold,
-    mobj->pursuecount
-  );
-  */
 }
 
 static void P_ArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
@@ -486,9 +423,11 @@ static void P_ArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
   M_PBufWriteShort(savebuffer, mobj->spawnpoint.options);
   M_PBufWriteInt(savebuffer, mobj->friction);
   M_PBufWriteInt(savebuffer, mobj->movefactor);
+  /*
   M_PBufWriteInt(savebuffer, mobj->PrevX);
   M_PBufWriteInt(savebuffer, mobj->PrevY);
   M_PBufWriteInt(savebuffer, mobj->PrevZ);
+  */
   M_PBufWriteUInt(savebuffer, mobj->pitch);
   M_PBufWriteInt(savebuffer, mobj->index);
   M_PBufWriteShort(savebuffer, mobj->patch_width);
@@ -532,9 +471,11 @@ static void P_UnArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
   M_PBufReadShort(savebuffer, &mobj->spawnpoint.options);
   M_PBufReadInt(savebuffer, &mobj->friction);
   M_PBufReadInt(savebuffer, &mobj->movefactor);
+  /*
   M_PBufReadInt(savebuffer, &mobj->PrevX);
   M_PBufReadInt(savebuffer, &mobj->PrevY);
   M_PBufReadInt(savebuffer, &mobj->PrevZ);
+  */
   M_PBufReadUInt(savebuffer, &mobj->pitch);
   M_PBufReadInt(savebuffer, &mobj->index);
   M_PBufReadShort(savebuffer, &mobj->patch_width);
@@ -777,6 +718,8 @@ void P_UnArchiveWorld(pbuf_t *savebuffer) {
 void P_ArchiveThinkers(pbuf_t *savebuffer) {
   unsigned int thinker_count = 0;
 
+  M_PBufWriteUInt(savebuffer, P_IdentGetMaxID());
+
   // killough 3/26/98: Save boss brain state
   M_PBufWriteInt(savebuffer, brain.easy);
   M_PBufWriteInt(savebuffer, brain.targeton);
@@ -811,14 +754,9 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
   }
 
   if (corpse_queue) {
-    M_OBufConsolidate(corpse_queue);
     M_PBufWriteInt(savebuffer, corpse_queue_size);
-    M_PBufWriteInt(savebuffer, M_OBufGetObjectCount(corpse_queue));
-    OBUF_FOR_EACH(corpse_queue, entry) {
-      mobj_t *mo = (mobj_t *)entry.obj;
-
-      M_PBufWriteUInt(savebuffer, mo->id);
-    }
+    M_PBufWriteUInt(savebuffer, g_queue_get_length(corpse_queue));
+    g_queue_foreach(corpse_queue, serialize_corpse, savebuffer);
   }
   else {
     M_PBufWriteInt(savebuffer, 0);
@@ -834,6 +772,10 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
 
 void P_UnArchiveThinkers(pbuf_t *savebuffer) {
   totallive = 0; /* CG: This is a global that lives in g_game.c, just FYI */
+  uint32_t new_max_id;
+
+  M_PBufReadUInt(savebuffer, &new_max_id);
+  P_IdentSetMaxID(new_max_id);
 
   // killough 3/26/98: Load boss brain state
   M_PBufReadInt(savebuffer, &brain.easy);
@@ -938,9 +880,9 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
   }
 
   if (corpse_queue_size > 0) {
-    int corpse_count;
+    unsigned int corpse_count;
 
-    M_PBufReadInt(savebuffer, &corpse_count);
+    M_PBufReadUInt(savebuffer, &corpse_count);
 
     if (corpse_count > corpse_queue_size) {
       I_Error("P_UnArchiveThinkers: corpse count > %d (%d)",
@@ -959,7 +901,7 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
       if (mo == NULL)
         I_Error("P_UnArchiveThinkers: Invalid corpse ID %d", corpse_id);
 
-      M_OBufAppend(corpse_queue, mo);
+      g_queue_push_tail(corpse_queue, mo);
     }
   }
   else {
