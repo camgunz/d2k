@@ -29,6 +29,7 @@ netticcmd_t* P_GetNewBlankCommand(void);
 void         P_BuildCommand(void);
 void         P_RunPlayerCommands(int playernum);
 unsigned int P_GetPlayerCommandCount(int playernum);
+unsigned int P_GetPlayerSyncCommandCount(int playernum);
 void         P_RemoveOldCommands(int sync_index, GQueue *commands);
 void         P_RecycleCommand(netticcmd_t *ncmd);
 int          P_GetCurrentCommandIndex(void);

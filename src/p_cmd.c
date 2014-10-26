@@ -43,6 +43,11 @@
 #include "p_user.h"
 #include "s_sound.h"
 
+#define PMOBJTHINKER 1
+#define COPIED_COMMAND 2
+#define OPPONENT_PREDICTION PMOBJTHINKER
+#define MISSED_COMMAND_MAX 5
+
 static GQueue *blank_command_queue;
 
 static void print_command(gpointer data, gpointer user_data) {
@@ -150,36 +155,81 @@ static void run_player_command(player_t *player) {
   P_MovePsprites(player);
 }
 
-void predict_player_position(player_t *player) {
+/*
+ * CG 09/28/2014: It is not guaranteed that servers or players will receive
+ *                player commands on a timely basis, rather, it is likely
+ *                commands will be spread out and then later bunched together.
+ *                My current understanding of the issue leads me to believe
+ *                that the only remedy is to predict the player's ultimate
+ *                position in the absence of commands, in hopes that when their
+ *                commands are received and subsequently run, the predicted
+ *                position will be close to the ultimate position.
+ *
+ *                For now, this prediction consists of simply running
+ *                P_MobjThinker on the player, continuing to simulate their
+ *                momentum (and other attributes).  This will work for very
+ *                small gaps (1-5 TICs).
+ *
+ *                A better solution is to predict a player's position base on
+ *                their recent movement.  Essentially, this would mean saving
+ *                their momx/y/z values and continuing to apply them inside
+ *                command gaps.
+ *
+ *                Of course, this is a clientside enhancement only.  Were
+ *                servers to apply something like this, it would irrevocably
+ *                break clientside prediction.
+ */
+
+bool predict_player_position(player_t *player) {
   if ((!DELTACLIENT) || (player == &players[consoleplayer]) || (!player->mo))
-    return;
+    return false;
 
-  /*
-   * CG 09/28/2014: It is not guaranteed that servers or players will receive
-   *                player commands on a timely basis, rather, it is likely
-   *                commands will be spread out and then later bunched
-   *                together.  My current understanding of the issue leads me
-   *                to believe that the only remedy is to predict the player's
-   *                ultimate position in the absence of commands, in hopes that
-   *                when their commands are received and subsequently run, the
-   *                predicted position will be close to the ultimate position.
-   *
-   *                For now, this prediction consists of simply running
-   *                P_MobjThinker on the player, continuing to simulate their
-   *                momentum (and other attributes).  This will work for very
-   *                small gaps (1-5 TICs).
-   *
-   *                A better solution is to predict a player's position based
-   *                on their recent movement.  Essentially, this would mean
-   *                saving their momx/y/z values and continuing to apply them
-   *                inside command gaps.
-   *
-   *                Of course, this is a clientside enhancement only.  Were
-   *                servers to apply something like this, it would irrevocably
-   *                break clientside prediction.
-   */
-
+#if PREDICTION == PMOBJTHINKER
   P_MobjThinker(player->mo);
+  return false;
+#elif PREDICTION == COPIED_COMMAND
+  GQueue *commands;
+  netticcmd_t *ncmd;
+
+  if (player->missed_command_count > MISSED_COMMAND_MAX) {
+    printf("(%d) %td over missed command limit\n", gametic, player - players);
+    return false;
+  }
+
+  /* CG: [XXX] Should be in netsync_t? */
+  player->missed_command_count++;
+
+  if (!CL_GetCommandSync(player - players, NULL, NULL, &commands)) {
+    P_Echo(consoleplayer, "Server disconnected");
+    return false;
+  }
+  
+  ncmd = P_GetNewBlankCommand();
+
+  ncmd->cmd.forwardmove = player->cmd.forwardmove;
+  ncmd->cmd.sidemove    = player->cmd.sidemove;
+  ncmd->cmd.angleturn   = player->cmd.angleturn;
+  ncmd->cmd.consistancy = 0;
+  ncmd->cmd.chatchar    = 0;
+  ncmd->cmd.buttons     = 0;
+
+  if (player != &players[0] &&
+      ncmd->cmd.forwardmove != 0 &&
+      ncmd->cmd.sidemove != 0 &&
+      ncmd->cmd.angleturn != 0) {
+    printf("(%d) Re-running command: {%d, %d, %d}\n",
+      gametic,
+      ncmd->cmd.forwardmove,
+      ncmd->cmd.sidemove,
+      ncmd->cmd.angleturn
+    );
+  }
+
+  g_queue_push_tail(commands, ncmd);
+
+  return true;
+#endif
+  return false;
 }
 
 void run_queued_player_commands(int playernum) {
@@ -302,20 +352,49 @@ unsigned int P_GetPlayerCommandCount(int playernum) {
   return g_queue_get_length(commands);
 }
 
+unsigned int P_GetPlayerSyncCommandCount(int playernum) {
+  GQueue *commands;
+
+  if (CLIENT) {
+    if (!CL_GetCommandSync(playernum, NULL, &commands, NULL)) {
+      P_Echo(consoleplayer, "Server disconnected");
+      return 0;
+    }
+  }
+  else {
+    if (!SV_GetCommandSync(playernum, playernum, NULL, &commands, NULL)) {
+      P_Printf(consoleplayer,
+        "P_GetPlayerCommandCount: No peer for player #%d\n", playernum
+      );
+      return 0;
+    }
+  }
+
+  return g_queue_get_length(commands);
+}
+
 void P_RunPlayerCommands(int playernum) {
   player_t *player = &players[playernum];
-
   if (!(DELTACLIENT || DELTASERVER)) {
     run_player_command(player);
     return;
   }
   
-  if (DELTACLIENT &&
-      playernum != consoleplayer &&
-      (!CL_RePredicting()) &&
-      P_GetPlayerCommandCount(playernum) == 0) {
-    predict_player_position(player);
-    return;
+  if (DELTACLIENT && playernum != consoleplayer && playernum != 0) {
+    int command_count = P_GetPlayerCommandCount(playernum);
+
+    if (command_count == 0) {
+      if (!predict_player_position(player))
+        return;
+    }
+    else {
+      player->missed_command_count = 0;
+      /*
+      printf("(%d) Got (%d) command(s) for %d\n",
+        gametic, command_count, playernum
+      );
+      */
+    }
   }
 
   run_queued_player_commands(playernum);

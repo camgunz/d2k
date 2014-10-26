@@ -2,10 +2,10 @@
 
 ## Prototype
 
-1. Fix going to new map
+1. Bad networking re: plasma
 
-1. Explore running extra TICs before running commands with TICs
-  - Might solve problem where projectiles spawn far away
+1. Running missed TICs builds up lag... need to get them back somehow
+  - Probably bunch commands together...
 
 ---
 

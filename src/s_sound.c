@@ -44,6 +44,7 @@
 #include "w_wad.h"
 
 #define DEBUG_SOUND 0
+#define SOUND_LOG LOG_SOUND
 
 // when to clip out sounds
 // Does not fit the large outdoor areas.
@@ -114,7 +115,7 @@ int idmusnum;
 static void log_channel(int channel_num) {
   channel_t *c = &g_array_index(channels, channel_t, channel_num);
 
-  D_Log(LOG_SOUND, "%d, %s, %u/%u, %d, %d\n", 
+  D_Log(SOUND_LOG, "%d, %s, %u/%u, %d, %d\n", 
     channel_num,
     c->sfxinfo != NULL ? c->sfxinfo->name : "(nil)",
     c->origin != NULL ? c->origin->id : 0,
@@ -323,7 +324,7 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
     for (unsigned int i = 0; i < channels->len; i++) {
       channel_t *c = &g_array_index(channels, channel_t, i);
 
-      D_Log(LOG_SOUND, "(%d | %d) Checking for duplicate sound: ",
+      D_Log(SOUND_LOG, "(%d | %d) Checking for duplicate sound: ",
         gametic, CL_GetCurrentCommandIndex()
       );
       log_channel(i);
@@ -351,7 +352,7 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
       if (c->tic != gametic)
         continue;
 
-      D_Log(LOG_SOUND, "(%d | %d) Skipping duplicate sound: ",
+      D_Log(SOUND_LOG, "(%d | %d) Skipping duplicate sound: ",
         gametic, CL_GetCurrentCommandIndex()
       );
       log_channel(i);
@@ -460,7 +461,7 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
   if (sfx->usefulness++ < 0)
     sfx->usefulness = 1;
 
-  D_Log(LOG_SOUND, "(%d | %d) Starting sound: ",
+  D_Log(SOUND_LOG, "(%d | %d) Starting sound: ",
     gametic, CL_GetCurrentCommandIndex()
   );
   log_channel(cnum);
@@ -488,11 +489,11 @@ void S_Init(int sfxVolume, int musicVolume) {
 
 #if DEBUG_SOUND
   if (!MULTINET)
-    D_EnableLogChannel(LOG_SOUND, "sound.log");
+    D_EnableLogChannel(SOUND_LOG, "sound.log");
   else if (CLIENT)
-    D_EnableLogChannel(LOG_SOUND, "client-sound.log");
+    D_EnableLogChannel(SOUND_LOG, "client-sound.log");
   else if (SERVER)
-    D_EnableLogChannel(LOG_SOUND, "server-sound.log");
+    D_EnableLogChannel(SOUND_LOG, "server-sound.log");
 #endif
 
   idmusnum = -1; //jff 3/17/98 insure idmus number is blank
@@ -578,7 +579,7 @@ void S_Start(void) {
 
 void S_StartSound(mobj_t *mobj, int sfx_id) {
   if (sfx_id & PICKUP_SOUND) {
-    D_Log(LOG_SOUND, "(%d | %d) S_StartSound(%u, %s)\n",
+    D_Log(SOUND_LOG, "(%d | %d) S_StartSound(%u, %s)\n",
       gametic,
       CL_GetCurrentCommandIndex(),
       mobj != NULL ? mobj->id : 0,
@@ -586,7 +587,7 @@ void S_StartSound(mobj_t *mobj, int sfx_id) {
     );
   }
   else {
-    D_Log(LOG_SOUND, "(%d | %d) S_StartSound(%u, %s)\n",
+    D_Log(SOUND_LOG, "(%d | %d) S_StartSound(%u, %s)\n",
       gametic,
       CL_GetCurrentCommandIndex(),
       mobj != NULL ? mobj->id : 0,
@@ -839,7 +840,7 @@ void S_ReloadChannelOrigins(void) {
         channel->origin = NULL;
 
         if (channel->command_index < CL_GetCurrentCommandIndex()) {
-          D_Log(LOG_SOUND, "(%d | %d) Stopping orphaned sound: ",
+          D_Log(SOUND_LOG, "(%d | %d) Stopping orphaned sound: ",
             gametic, CL_GetCurrentCommandIndex()
           );
           log_channel(i);
@@ -847,7 +848,7 @@ void S_ReloadChannelOrigins(void) {
           channel->origin_id = 0;
         }
         else {
-          D_Log(LOG_SOUND, "(%d | %d) Saving orphaned sound: ",
+          D_Log(SOUND_LOG, "(%d | %d) Saving orphaned sound: ",
             gametic, CL_GetCurrentCommandIndex()
           );
           log_channel(i);

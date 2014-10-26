@@ -452,7 +452,7 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
         P_Printf(consoleplayer,
           "Received unknown message type %u from peer %s:%u.\n",
           message_type,
-          N_IPToConstString(doom_b32(np->peer->address.host)),
+          N_IPToConstString(ENET_NET_TO_HOST_32(np->peer->address.host)),
           np->peer->address.port
         );
       break;

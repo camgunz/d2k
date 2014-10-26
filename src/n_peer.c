@@ -210,7 +210,7 @@ static void free_netsync(netsync_t *ns) {
 static void free_peer(netpeer_t *np) {
   P_Printf(consoleplayer, "Removing peer %u %s:%u\n",
     np->peernum,
-    N_IPToConstString((doom_b32(np->peer->address.host))),
+    N_IPToConstString((ENET_NET_TO_HOST_32(np->peer->address.host))),
     np->peer->address.port
   );
 

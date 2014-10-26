@@ -53,13 +53,13 @@
 #include "e6y.h"
 
 #define DEBUG_NET 0
-#define DEBUG_SYNC 0
+#define DEBUG_SYNC 1
 #define DEBUG_SAVE 0
 #define LOAD_PREVIOUS_STATE 1
 #define PREDICT_LOST_TICS 1
 #define USE_NEW_PREDICTION 1
 #define PREDICT_IN_ONE_TIC 0
-#define PRINT_BANDWIDTH_STATS 0
+#define PRINT_NETWORK_STATS 1
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
 #define SERVER_SLEEP_TIMEOUT 1
@@ -256,11 +256,64 @@ static bool cl_load_new_state(netpeer_t *server,
 }
 
 static void cl_predict(int saved_gametic,
-                       int previous_synchronized_command_index,
                        int latest_synchronized_command_index,
                        GQueue *sync_commands,
                        GQueue *run_commands) {
+  int command_index = latest_synchronized_command_index;
   unsigned int sync_command_count = g_queue_get_length(sync_commands);
+  unsigned int command_count = 0;
+  int tic_count = saved_gametic - gametic;
+  int extra_tics;
+
+  for (unsigned int i = 0; i < sync_command_count; i++) {
+    netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+
+    if (sync_ncmd->index > latest_synchronized_command_index)
+      command_count++;
+  }
+
+  extra_tics = tic_count - command_count;
+
+  /*
+   * CG: Server ran >= 1 TIC without a command from us, which means at some
+   *     point it will run a TIC with > 1 commands from us, in other words, it
+   *     will bunch > 1 commands together in a single TIC.  So we must bunch
+   *     some commands here to maintain clientside prediction's accuracy.
+   */
+  while (extra_tics < 0) {
+    int found_command = false;
+
+    for (unsigned int i = 0; i < sync_command_count; i++) {
+      netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+      netticcmd_t *run_ncmd;
+
+      if (sync_ncmd->index <= command_index)
+        continue;
+
+      run_ncmd = P_GetNewBlankCommand();
+      memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
+      g_queue_push_tail(run_commands, run_ncmd);
+      command_index = sync_ncmd->index;
+      found_command = true;
+    }
+
+    if (!found_command)
+      break;
+
+    extra_tics++;
+  }
+
+  /*
+   * CG: Server bunched > 1 command(s) together from us, which means at some
+   *     point it will run > 1 TIC without a command from us.  So we must run
+   *     these TICs here to maintain clientside prediction's accuracy.
+   */
+  while (extra_tics > 0) {
+    cl_repredicting = true;
+    run_tic();
+    cl_repredicting = false;
+    extra_tics--;
+  }
 
   for (unsigned int i = 0; i < sync_command_count; i++) {
     netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
@@ -280,6 +333,14 @@ static void cl_predict(int saved_gametic,
     }
     cl_repredicting = false;
   }
+
+#if 0
+  while (gametic < saved_gametic) {
+    cl_repredicting = true;
+    run_tic();
+    cl_repredicting = false;
+  }
+#endif
 }
 
 static void cl_check_for_state_updates(void) {
@@ -340,7 +401,6 @@ static void cl_check_for_state_updates(void) {
 
   cl_predict(
     saved_gametic,
-    previous_synchronized_command_index,
     latest_synchronized_command_index,
     sync_commands,
     run_commands
@@ -416,14 +476,50 @@ static bool should_render(void) {
   return true;
 }
 
-#if PRINT_BANDWIDTH_STATS
-static void print_bandwidth_stats(void) {
+#if PRINT_NETWORK_STATS
+static void print_network_stats(void) {
+  static float frequency_factor = .5;
   static uint64_t loop_count = 0;
 
-  if (((loop_count++ % 70) == 0) && MULTINET && N_PeerGetCount() > 0) {
-    printf("(%d) U/D: %d/%d b/s\n",
-      gametic, N_GetUploadBandwidth(), N_GetDownloadBandwidth()
+  int frequency = TICRATE * frequency_factor;
+
+  if ((loop_count++ % frequency) != 0)
+    return;
+
+  if (N_PeerGetCount() <= 0)
+    return;
+
+  NETPEER_FOR_EACH(iter) {
+    puts("------------------------------------------------------------------------------");
+    puts("|  TIC  |      D/U      | Max/Last/Avg RTT | Max/Last/Avg RTTv |  Commands   |");
+    puts("------------------------------------------------------------------------------");
+    printf("| %5d | %4d/%4d b/s | %3d/%3d/%3d ms   | %3d/%3d/%3d ms    |       %5d |\n",
+      gametic,
+      N_GetUploadBandwidth(),
+      N_GetDownloadBandwidth(),
+      iter.np->peer->lowestRoundTripTime,
+      iter.np->peer->lastRoundTripTime,
+      iter.np->peer->roundTripTime,
+      iter.np->peer->highestRoundTripTimeVariance,
+      iter.np->peer->lastRoundTripTimeVariance,
+      iter.np->peer->roundTripTimeVariance,
+      CLIENT ? P_GetPlayerSyncCommandCount(consoleplayer) : 0
     );
+    puts("------------------------------------------------------------------------------");
+    puts("| Packet Loss | Throttle | Accel | Counter | Decel | Interval | Limit |  #   |");
+    puts("------------------------------------------------------------------------------");
+    printf("| %4.1f%%/%4.1f%% |    %5d | %5d |   %5d | %5d |    %5d | %5d |   %2d |\n",
+      (iter.np->peer->packetLoss / (float)ENET_PEER_PACKET_LOSS_SCALE) * 100.f,
+      (iter.np->peer->packetLossVariance / (float)ENET_PEER_PACKET_LOSS_SCALE) * 100.f,
+      iter.np->peer->packetThrottle,
+      iter.np->peer->packetThrottleAcceleration,
+      iter.np->peer->packetThrottleCounter,
+      iter.np->peer->packetThrottleDeceleration,
+      iter.np->peer->packetThrottleInterval,
+      iter.np->peer->packetThrottleLimit,
+      iter.np->playernum
+    );
+    puts("------------------------------------------------------------------------------");
   }
 }
 #endif
@@ -729,8 +825,8 @@ bool N_TryRunTics(void) {
       N_Disconnect();
     }
 
-#if PRINT_BANDWIDTH_STATS
-    print_bandwidth_stats();
+#if PRINT_NETWORK_STATS
+    print_network_stats();
 #endif
 
     N_ServiceNetwork();
