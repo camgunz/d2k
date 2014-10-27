@@ -27,22 +27,23 @@
 
 #include "doomstat.h"
 #include "d_event.h"
+
 #include "c_main.h"
-#include "d_ticcmd.h"
 #include "d_player.h"
+#include "d_ticcmd.h"
 #include "g_game.h"
-#include "lprintf.h"
 #include "i_main.h"
 #include "i_system.h"
+#include "lprintf.h"
 #include "m_swap.h"
-#include "p_user.h"
-
 #include "n_net.h"
 #include "n_main.h"
 #include "n_state.h"
 #include "n_peer.h"
 #include "n_pack.h"
 #include "n_proto.h"
+#include "cl_main.h"
+#include "p_user.h"
 
 #define USE_RANGE_CODER 1
 #define MAX_DOWNLOAD 0

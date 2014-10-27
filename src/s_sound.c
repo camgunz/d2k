@@ -35,6 +35,7 @@
 #include "m_random.h"
 #include "n_net.h"
 #include "n_main.h"
+#include "cl_main.h"
 #include "p_cmd.h"
 #include "p_ident.h"
 #include "r_main.h"

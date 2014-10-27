@@ -1,35 +1,10 @@
-/*****************************************************************************/
-/* D2K: A Doom Source Port for the 21st Century                              */
-/*                                                                           */
-/* Copyright (C) 2014: See COPYRIGHT file                                    */
-/*                                                                           */
-/* This file is part of D2K.                                                 */
-/*                                                                           */
-/* D2K is free software: you can redistribute it and/or modify it under the  */
-/* terms of the GNU General Public License as published by the Free Software */
-/* Foundation, either version 2 of the License, or (at your option) any      */
-/* later version.                                                            */
-/*                                                                           */
-/* D2K is distributed in the hope that it will be useful, but WITHOUT ANY    */
-/* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS */
-/* FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more    */
-/* details.                                                                  */
-/*                                                                           */
-/* You should have received a copy of the GNU General Public License along   */
-/* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
-/*                                                                           */
-/*****************************************************************************/
-
-
-#include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #include "cmp.h"
 
-static const uint32_t version = 3;
+static const uint32_t version = 5;
 static const uint32_t mp_version = 5;
 
 enum {
@@ -458,6 +433,9 @@ bool cmp_write_fixstr(cmp_ctx_t *ctx, const char *data, uint8_t size) {
   if (!cmp_write_fixstr_marker(ctx, size))
     return false;
 
+  if (size == 0)
+    return true;
+
   if (ctx->write(ctx, data, size))
     return true;
 
@@ -479,6 +457,9 @@ bool cmp_write_str8_marker(cmp_ctx_t *ctx, uint8_t size) {
 bool cmp_write_str8(cmp_ctx_t *ctx, const char *data, uint8_t size) {
   if (!cmp_write_str8_marker(ctx, size))
     return false;
+
+  if (size == 0)
+    return true;
 
   if (ctx->write(ctx, data, size))
     return true;
@@ -504,6 +485,9 @@ bool cmp_write_str16(cmp_ctx_t *ctx, const char *data, uint16_t size) {
   if (!cmp_write_str16_marker(ctx, size))
     return false;
 
+  if (size == 0)
+    return true;
+
   if (ctx->write(ctx, data, size))
     return true;
 
@@ -527,6 +511,9 @@ bool cmp_write_str32_marker(cmp_ctx_t *ctx, uint32_t size) {
 bool cmp_write_str32(cmp_ctx_t *ctx, const char *data, uint32_t size) {
   if (!cmp_write_str32_marker(ctx, size))
     return false;
+
+  if (size == 0)
+    return true;
 
   if (ctx->write(ctx, data, size))
     return true;
@@ -572,6 +559,9 @@ bool cmp_write_bin8(cmp_ctx_t *ctx, const void *data, uint8_t size) {
   if (!cmp_write_bin8_marker(ctx, size))
     return false;
 
+  if (size == 0)
+    return true;
+
   if (ctx->write(ctx, data, size))
     return true;
 
@@ -596,6 +586,9 @@ bool cmp_write_bin16(cmp_ctx_t *ctx, const void *data, uint16_t size) {
   if (!cmp_write_bin16_marker(ctx, size))
     return false;
 
+  if (size == 0)
+    return true;
+
   if (ctx->write(ctx, data, size))
     return true;
 
@@ -619,6 +612,9 @@ bool cmp_write_bin32_marker(cmp_ctx_t *ctx, uint32_t size) {
 bool cmp_write_bin32(cmp_ctx_t *ctx, const void *data, uint32_t size) {
   if (!cmp_write_bin32_marker(ctx, size))
     return false;
+
+  if (size == 0)
+    return true;
 
   if (ctx->write(ctx, data, size))
     return true;
@@ -845,15 +841,15 @@ bool cmp_write_ext8_marker(cmp_ctx_t *ctx, int8_t type, uint8_t size) {
   if (!write_type_marker(ctx, EXT8_MARKER))
     return false;
 
-  if (!ctx->write(ctx, &type, sizeof(int8_t))) {
-    ctx->error = EXT_TYPE_WRITING_ERROR;
+  if (!ctx->write(ctx, &size, sizeof(uint8_t))) {
+    ctx->error = LENGTH_WRITING_ERROR;
     return false;
   }
 
-  if (ctx->write(ctx, &size, sizeof(uint8_t)))
+  if (ctx->write(ctx, &type, sizeof(int8_t)))
     return true;
 
-  ctx->error = LENGTH_WRITING_ERROR;
+  ctx->error = EXT_TYPE_WRITING_ERROR;
   return false;
 }
 
@@ -872,17 +868,17 @@ bool cmp_write_ext16_marker(cmp_ctx_t *ctx, int8_t type, uint16_t size) {
   if (!write_type_marker(ctx, EXT16_MARKER))
     return false;
 
-  if (!ctx->write(ctx, &type, sizeof(int8_t))) {
-    ctx->error = EXT_TYPE_WRITING_ERROR;
+  size = be16(size);
+
+  if (!ctx->write(ctx, &size, sizeof(uint16_t))) {
+    ctx->error = LENGTH_WRITING_ERROR;
     return false;
   }
 
-  size = be16(size);
-
-  if (ctx->write(ctx, &size, sizeof(uint16_t)))
+  if (ctx->write(ctx, &type, sizeof(int8_t)))
     return true;
 
-  ctx->error = LENGTH_WRITING_ERROR;
+  ctx->error = EXT_TYPE_WRITING_ERROR;
   return false;
 }
 
@@ -901,17 +897,17 @@ bool cmp_write_ext32_marker(cmp_ctx_t *ctx, int8_t type, uint32_t size) {
   if (!write_type_marker(ctx, EXT32_MARKER))
     return false;
 
-  if (!ctx->write(ctx, &type, sizeof(int8_t))) {
-    ctx->error = EXT_TYPE_WRITING_ERROR;
+  size = be32(size);
+
+  if (!ctx->write(ctx, &size, sizeof(uint32_t))) {
+    ctx->error = LENGTH_WRITING_ERROR;
     return false;
   }
 
-  size = be32(size);
-
-  if (ctx->write(ctx, &size, sizeof(uint32_t)))
+  if (ctx->write(ctx, &type, sizeof(int8_t)))
     return true;
 
-  ctx->error = LENGTH_WRITING_ERROR;
+  ctx->error = EXT_TYPE_WRITING_ERROR;
   return false;
 }
 
@@ -979,7 +975,6 @@ bool cmp_write_object(cmp_ctx_t *ctx, cmp_object_t *obj) {
     case CMP_TYPE_BOOLEAN:
       if (obj->as.boolean)
         return cmp_write_true(ctx);
-
       return cmp_write_false(ctx);
     case CMP_TYPE_BIN8:
       return cmp_write_bin8_marker(ctx, obj->as.bin_size);
@@ -1956,52 +1951,52 @@ bool cmp_read_object(cmp_ctx_t *ctx, cmp_object_t *obj) {
     obj->as.bin_size = be32(obj->as.u32);
   }
   else if (type_marker == EXT8_MARKER) {
-    int8_t ext_type;
     uint8_t ext_size;
+    int8_t ext_type;
 
     obj->type = CMP_TYPE_EXT8;
-    if (!ctx->read(ctx, &ext_type, sizeof(int8_t))) {
-      ctx->error = EXT_TYPE_READING_ERROR;
-      return false;
-    }
     if (!ctx->read(ctx, &ext_size, sizeof(uint8_t))) {
       ctx->error = LENGTH_READING_ERROR;
       return false;
     }
-    obj->as.ext.type = ext_type;
+    if (!ctx->read(ctx, &ext_type, sizeof(int8_t))) {
+      ctx->error = EXT_TYPE_READING_ERROR;
+      return false;
+    }
     obj->as.ext.size = ext_size;
+    obj->as.ext.type = ext_type;
   }
   else if (type_marker == EXT16_MARKER) {
     int8_t ext_type;
     uint16_t ext_size;
 
     obj->type = CMP_TYPE_EXT16;
-    if (!ctx->read(ctx, &ext_type, sizeof(int8_t))) {
-      ctx->error = EXT_TYPE_READING_ERROR;
-      return false;
-    }
     if (!ctx->read(ctx, &ext_size, sizeof(uint16_t))) {
       ctx->error = LENGTH_READING_ERROR;
       return false;
     }
-    obj->as.ext.type = ext_type;
+    if (!ctx->read(ctx, &ext_type, sizeof(int8_t))) {
+      ctx->error = EXT_TYPE_READING_ERROR;
+      return false;
+    }
     obj->as.ext.size = be16(ext_size);
+    obj->as.ext.type = ext_type;
   }
   else if (type_marker == EXT32_MARKER) {
     int8_t ext_type;
     uint32_t ext_size;
 
     obj->type = CMP_TYPE_EXT32;
-    if (!ctx->read(ctx, &ext_type, sizeof(int8_t))) {
-      ctx->error = EXT_TYPE_READING_ERROR;
-      return false;
-    }
     if (!ctx->read(ctx, &ext_size, sizeof(uint32_t))) {
       ctx->error = LENGTH_READING_ERROR;
       return false;
     }
-    obj->as.ext.type = ext_type;
+    if (!ctx->read(ctx, &ext_type, sizeof(int8_t))) {
+      ctx->error = EXT_TYPE_READING_ERROR;
+      return false;
+    }
     obj->as.ext.size = be32(ext_size);
+    obj->as.ext.type = ext_type;
   }
   else if (type_marker == FLOAT_MARKER) {
     obj->type = CMP_TYPE_FLOAT;
@@ -2187,6 +2182,470 @@ bool cmp_read_object(cmp_ctx_t *ctx, cmp_object_t *obj) {
   }
 
   return true;
+}
+
+bool cmp_object_is_char(cmp_object_t *obj) {
+  switch (obj->type) {
+    case CMP_TYPE_NEGATIVE_FIXNUM:
+    case CMP_TYPE_SINT8:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool cmp_object_is_short(cmp_object_t *obj) {
+  switch (obj->type) {
+    case CMP_TYPE_NEGATIVE_FIXNUM:
+    case CMP_TYPE_SINT8:
+    case CMP_TYPE_SINT16:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool cmp_object_is_int(cmp_object_t *obj) {
+  switch (obj->type) {
+    case CMP_TYPE_NEGATIVE_FIXNUM:
+    case CMP_TYPE_SINT8:
+    case CMP_TYPE_SINT16:
+    case CMP_TYPE_SINT32:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool cmp_object_is_long(cmp_object_t *obj) {
+  switch (obj->type) {
+    case CMP_TYPE_NEGATIVE_FIXNUM:
+    case CMP_TYPE_SINT8:
+    case CMP_TYPE_SINT16:
+    case CMP_TYPE_SINT32:
+    case CMP_TYPE_SINT64:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool cmp_object_is_sinteger(cmp_object_t *obj) {
+  return cmp_object_is_long(obj);
+}
+
+bool cmp_object_is_uchar(cmp_object_t *obj) {
+  switch (obj->type) {
+    case CMP_TYPE_POSITIVE_FIXNUM:
+    case CMP_TYPE_UINT8:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool cmp_object_is_ushort(cmp_object_t *obj) {
+  switch (obj->type) {
+    case CMP_TYPE_POSITIVE_FIXNUM:
+    case CMP_TYPE_UINT8:
+      return true;
+    case CMP_TYPE_UINT16:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool cmp_object_is_uint(cmp_object_t *obj) {
+  switch (obj->type) {
+    case CMP_TYPE_POSITIVE_FIXNUM:
+    case CMP_TYPE_UINT8:
+    case CMP_TYPE_UINT16:
+    case CMP_TYPE_UINT32:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool cmp_object_is_ulong(cmp_object_t *obj) {
+  switch (obj->type) {
+    case CMP_TYPE_POSITIVE_FIXNUM:
+    case CMP_TYPE_UINT8:
+    case CMP_TYPE_UINT16:
+    case CMP_TYPE_UINT32:
+    case CMP_TYPE_UINT64:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool cmp_object_is_uinteger(cmp_object_t *obj) {
+  return cmp_object_is_ulong(obj);
+}
+
+bool cmp_object_is_float(cmp_object_t *obj) {
+  if (obj->type == CMP_TYPE_FLOAT)
+    return true;
+
+  return false;
+}
+
+bool cmp_object_is_double(cmp_object_t *obj) {
+  if (obj->type == CMP_TYPE_DOUBLE)
+    return true;
+
+  return false;
+}
+
+bool cmp_object_is_nil(cmp_object_t *obj) {
+  if (obj->type == CMP_TYPE_NIL)
+    return true;
+
+  return false;
+}
+
+bool cmp_object_is_bool(cmp_object_t *obj) {
+  if (obj->type == CMP_TYPE_BOOLEAN)
+    return true;
+
+  return false;
+}
+
+bool cmp_object_is_str(cmp_object_t *obj) {
+  switch (obj->type) {
+    case CMP_TYPE_FIXSTR:
+    case CMP_TYPE_STR8:
+    case CMP_TYPE_STR16:
+    case CMP_TYPE_STR32:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool cmp_object_is_bin(cmp_object_t *obj) {
+  switch (obj->type) {
+    case CMP_TYPE_BIN8:
+    case CMP_TYPE_BIN16:
+    case CMP_TYPE_BIN32:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool cmp_object_is_array(cmp_object_t *obj) {
+  switch (obj->type) {
+    case CMP_TYPE_FIXARRAY:
+    case CMP_TYPE_ARRAY16:
+    case CMP_TYPE_ARRAY32:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool cmp_object_is_map(cmp_object_t *obj) {
+  switch (obj->type) {
+    case CMP_TYPE_FIXMAP:
+    case CMP_TYPE_MAP16:
+    case CMP_TYPE_MAP32:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool cmp_object_is_ext(cmp_object_t *obj) {
+  switch (obj->type) {
+    case CMP_TYPE_FIXEXT1:
+    case CMP_TYPE_FIXEXT2:
+    case CMP_TYPE_FIXEXT4:
+    case CMP_TYPE_FIXEXT8:
+    case CMP_TYPE_FIXEXT16:
+    case CMP_TYPE_EXT8:
+    case CMP_TYPE_EXT16:
+    case CMP_TYPE_EXT32:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool cmp_object_as_char(cmp_object_t *obj, int8_t *c) {
+  switch (obj->type) {
+    case CMP_TYPE_POSITIVE_FIXNUM:
+    case CMP_TYPE_NEGATIVE_FIXNUM:
+    case CMP_TYPE_SINT8:
+      *c = obj->as.s8;
+      return true;
+    case CMP_TYPE_UINT8:
+      if (obj->as.u8 <= 127) {
+        *c = obj->as.s8;
+        return true;
+      }
+  }
+
+  return false;
+}
+
+bool cmp_object_as_short(cmp_object_t *obj, int16_t *s) {
+  switch (obj->type) {
+    case CMP_TYPE_POSITIVE_FIXNUM:
+    case CMP_TYPE_NEGATIVE_FIXNUM:
+    case CMP_TYPE_SINT8:
+      *s = obj->as.s8;
+      return true;
+    case CMP_TYPE_UINT8:
+      *s = obj->as.u8;
+      return true;
+    case CMP_TYPE_SINT16:
+      *s = obj->as.s16;
+      return true;
+    case CMP_TYPE_UINT16:
+      if (obj->as.u16 <= 32767) {
+        *s = obj->as.u16;
+        return true;
+      }
+  }
+
+  return false;
+}
+
+bool cmp_object_as_int(cmp_object_t *obj, int32_t *i) {
+  switch (obj->type) {
+    case CMP_TYPE_POSITIVE_FIXNUM:
+    case CMP_TYPE_NEGATIVE_FIXNUM:
+    case CMP_TYPE_SINT8:
+      *i = obj->as.s8;
+      return true;
+    case CMP_TYPE_UINT8:
+      *i = obj->as.u8;
+      return true;
+    case CMP_TYPE_SINT16:
+      *i = obj->as.s16;
+      return true;
+    case CMP_TYPE_UINT16:
+      *i = obj->as.u16;
+      return true;
+    case CMP_TYPE_SINT32:
+      *i = obj->as.s32;
+      return true;
+    case CMP_TYPE_UINT32:
+      if (obj->as.u32 <= 2147483647) {
+        *i = obj->as.u32;
+        return true;
+      }
+  }
+
+  return false;
+}
+
+bool cmp_object_as_long(cmp_object_t *obj, int64_t *d) {
+  switch (obj->type) {
+    case CMP_TYPE_POSITIVE_FIXNUM:
+    case CMP_TYPE_NEGATIVE_FIXNUM:
+    case CMP_TYPE_SINT8:
+      *d = obj->as.s8;
+      return true;
+    case CMP_TYPE_UINT8:
+      *d = obj->as.u8;
+      return true;
+    case CMP_TYPE_SINT16:
+      *d = obj->as.s16;
+      return true;
+    case CMP_TYPE_UINT16:
+      *d = obj->as.u16;
+      return true;
+    case CMP_TYPE_SINT32:
+      *d = obj->as.s32;
+      return true;
+    case CMP_TYPE_UINT32:
+      *d = obj->as.u32;
+      return true;
+    case CMP_TYPE_SINT64:
+      *d = obj->as.s64;
+      return true;
+    case CMP_TYPE_UINT64:
+      if (obj->as.u64 <= 9223372036854775807) {
+        *d = obj->as.u64;
+        return true;
+      }
+  }
+
+  return false;
+}
+
+bool cmp_object_as_sinteger(cmp_object_t *obj, int64_t *d) {
+  return cmp_object_as_long(obj, d);
+}
+
+bool cmp_object_as_uchar(cmp_object_t *obj, uint8_t *c) {
+  switch (obj->type) {
+    case CMP_TYPE_POSITIVE_FIXNUM:
+    case CMP_TYPE_UINT8:
+      *c = obj->as.u8;
+      return true;
+  }
+
+  return false;
+}
+
+bool cmp_object_as_ushort(cmp_object_t *obj, uint16_t *s) {
+  switch (obj->type) {
+    case CMP_TYPE_POSITIVE_FIXNUM:
+    case CMP_TYPE_UINT8:
+      *s = obj->as.u8;
+      return true;
+    case CMP_TYPE_UINT16:
+      *s = obj->as.u16;
+      return true;
+  }
+
+  return false;
+}
+
+bool cmp_object_as_uint(cmp_object_t *obj, uint32_t *i) {
+  switch (obj->type) {
+    case CMP_TYPE_POSITIVE_FIXNUM:
+    case CMP_TYPE_NEGATIVE_FIXNUM:
+    case CMP_TYPE_UINT8:
+      *i = obj->as.u8;
+      return true;
+    case CMP_TYPE_UINT16:
+      *i = obj->as.u16;
+      return true;
+    case CMP_TYPE_UINT32:
+      *i = obj->as.u32;
+      return true;
+  }
+
+  return false;
+}
+
+bool cmp_object_as_ulong(cmp_object_t *obj, uint64_t *u) {
+  switch (obj->type) {
+    case CMP_TYPE_POSITIVE_FIXNUM:
+    case CMP_TYPE_NEGATIVE_FIXNUM:
+    case CMP_TYPE_UINT8:
+      *u = obj->as.u8;
+      return true;
+    case CMP_TYPE_UINT16:
+      *u = obj->as.u16;
+      return true;
+    case CMP_TYPE_UINT32:
+      *u = obj->as.u32;
+      return true;
+    case CMP_TYPE_UINT64:
+      *u = obj->as.u64;
+      return true;
+  }
+
+  return false;
+}
+
+bool cmp_object_as_uinteger(cmp_object_t *obj, uint64_t *d) {
+  return cmp_object_as_ulong(obj, d);
+}
+
+bool cmp_object_as_float(cmp_object_t *obj, float *f) {
+  if (obj->type == CMP_TYPE_FLOAT) {
+    *f = obj->as.flt;
+    return true;
+  }
+
+  return false;
+}
+
+bool cmp_object_as_double(cmp_object_t *obj, double *d) {
+  if (obj->type == CMP_TYPE_DOUBLE) {
+    *d = obj->as.dbl;
+    return true;
+  }
+
+  return false;
+}
+
+bool cmp_object_as_bool(cmp_object_t *obj, bool *b) {
+  if (obj->type == CMP_TYPE_BOOLEAN) {
+    if (obj->as.boolean)
+      *b = true;
+    else
+      *b = false;
+
+    return true;
+  }
+
+  return false;
+}
+
+bool cmp_object_as_str(cmp_object_t *obj, uint32_t *size) {
+  switch (obj->type) {
+    case CMP_TYPE_FIXSTR:
+    case CMP_TYPE_STR8:
+    case CMP_TYPE_STR16:
+    case CMP_TYPE_STR32:
+      *size = obj->as.str_size;
+      return true;
+  }
+
+  return false;
+}
+
+bool cmp_object_as_bin(cmp_object_t *obj, uint32_t *size) {
+  switch (obj->type) {
+    case CMP_TYPE_BIN8:
+    case CMP_TYPE_BIN16:
+    case CMP_TYPE_BIN32:
+      *size = obj->as.bin_size;
+      return true;
+  }
+
+  return false;
+}
+
+bool cmp_object_as_array(cmp_object_t *obj, uint32_t *size) {
+  switch (obj->type) {
+    case CMP_TYPE_FIXARRAY:
+    case CMP_TYPE_ARRAY16:
+    case CMP_TYPE_ARRAY32:
+      *size = obj->as.array_size;
+      return true;
+  }
+
+  return false;
+}
+
+bool cmp_object_as_map(cmp_object_t *obj, uint32_t *size) {
+  switch (obj->type) {
+    case CMP_TYPE_FIXMAP:
+    case CMP_TYPE_MAP16:
+    case CMP_TYPE_MAP32:
+      *size = obj->as.map_size;
+      return true;
+  }
+
+  return false;
+}
+
+bool cmp_object_as_ext(cmp_object_t *obj, int8_t *type, uint32_t *size) {
+  switch (obj->type) {
+    case CMP_TYPE_FIXEXT1:
+    case CMP_TYPE_FIXEXT2:
+    case CMP_TYPE_FIXEXT4:
+    case CMP_TYPE_FIXEXT8:
+    case CMP_TYPE_FIXEXT16:
+    case CMP_TYPE_EXT8:
+    case CMP_TYPE_EXT16:
+    case CMP_TYPE_EXT32:
+      *type = obj->as.ext.type;
+      *size = obj->as.ext.size;
+      return true;
+  }
+
+  return false;
 }
 
 /* vi: set et ts=2 sw=2: */

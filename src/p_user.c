@@ -35,6 +35,7 @@
 #include "n_net.h"
 #include "n_main.h"
 #include "n_proto.h"
+#include "cl_main.h"
 #include "p_cmd.h"
 #include "p_map.h"
 #include "p_spec.h"

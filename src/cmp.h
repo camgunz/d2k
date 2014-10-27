@@ -1,26 +1,3 @@
-/*****************************************************************************/
-/* D2K: A Doom Source Port for the 21st Century                              */
-/*                                                                           */
-/* Copyright (C) 2014: See COPYRIGHT file                                    */
-/*                                                                           */
-/* This file is part of D2K.                                                 */
-/*                                                                           */
-/* D2K is free software: you can redistribute it and/or modify it under the  */
-/* terms of the GNU General Public License as published by the Free Software */
-/* Foundation, either version 2 of the License, or (at your option) any      */
-/* later version.                                                            */
-/*                                                                           */
-/* D2K is distributed in the hope that it will be useful, but WITHOUT ANY    */
-/* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS */
-/* FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more    */
-/* details.                                                                  */
-/*                                                                           */
-/* You should have received a copy of the GNU General Public License along   */
-/* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
-/*                                                                           */
-/*****************************************************************************/
-
-
 #ifndef CMP_H__
 #define CMP_H__
 
@@ -103,6 +80,10 @@ typedef struct cmp_object_s {
   uint8_t type;
   union cmp_object_data_u as;
 } cmp_object_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * ============================================================================
@@ -369,7 +350,56 @@ bool cmp_read_ext16(cmp_ctx_t *ctx, int8_t *type, uint16_t *size, void *data);
 bool cmp_read_ext32_marker(cmp_ctx_t *ctx, int8_t *type, uint32_t *size);
 bool cmp_read_ext32(cmp_ctx_t *ctx, int8_t *type, uint32_t *size, void *data);
 
+/*
+ * ============================================================================
+ * === Object API
+ * ============================================================================
+ */
+
+bool cmp_object_is_char(cmp_object_t *obj);
+bool cmp_object_is_short(cmp_object_t *obj);
+bool cmp_object_is_int(cmp_object_t *obj);
+bool cmp_object_is_long(cmp_object_t *obj);
+bool cmp_object_is_sinteger(cmp_object_t *obj);
+bool cmp_object_is_uchar(cmp_object_t *obj);
+bool cmp_object_is_ushort(cmp_object_t *obj);
+bool cmp_object_is_uint(cmp_object_t *obj);
+bool cmp_object_is_ulong(cmp_object_t *obj);
+bool cmp_object_is_uinteger(cmp_object_t *obj);
+bool cmp_object_is_float(cmp_object_t *obj);
+bool cmp_object_is_double(cmp_object_t *obj);
+bool cmp_object_is_nil(cmp_object_t *obj);
+bool cmp_object_is_bool(cmp_object_t *obj);
+bool cmp_object_is_str(cmp_object_t *obj);
+bool cmp_object_is_bin(cmp_object_t *obj);
+bool cmp_object_is_array(cmp_object_t *obj);
+bool cmp_object_is_map(cmp_object_t *obj);
+bool cmp_object_is_ext(cmp_object_t *obj);
+
+bool cmp_object_as_char(cmp_object_t *obj, int8_t *c);
+bool cmp_object_as_short(cmp_object_t *obj, int16_t *s);
+bool cmp_object_as_int(cmp_object_t *obj, int32_t *i);
+bool cmp_object_as_long(cmp_object_t *obj, int64_t *d);
+bool cmp_object_as_sinteger(cmp_object_t *obj, int64_t *d);
+bool cmp_object_as_uchar(cmp_object_t *obj, uint8_t *c);
+bool cmp_object_as_ushort(cmp_object_t *obj, uint16_t *s);
+bool cmp_object_as_uint(cmp_object_t *obj, uint32_t *i);
+bool cmp_object_as_ulong(cmp_object_t *obj, uint64_t *u);
+bool cmp_object_as_uinteger(cmp_object_t *obj, uint64_t *u);
+bool cmp_object_as_float(cmp_object_t *obj, float *f);
+bool cmp_object_as_double(cmp_object_t *obj, double *d);
+bool cmp_object_as_bool(cmp_object_t *obj, bool *b);
+bool cmp_object_as_str(cmp_object_t *obj, uint32_t *size);
+bool cmp_object_as_bin(cmp_object_t *obj, uint32_t *size);
+bool cmp_object_as_array(cmp_object_t *obj, uint32_t *size);
+bool cmp_object_as_map(cmp_object_t *obj, uint32_t *size);
+bool cmp_object_as_ext(cmp_object_t *obj, int8_t *type, uint32_t *size);
+
+#ifdef __cplusplus
+} /* extern "C" */
 #endif
+
+#endif /* CMP_H__ */
 
 /* vi: set et ts=2 sw=2: */
 

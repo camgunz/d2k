@@ -43,6 +43,7 @@
 #include "lprintf.h"
 #include "n_net.h"
 #include "n_main.h"
+#include "cl_main.h"
 #include "v_video.h"
 #include "x_main.h"
 

@@ -820,6 +820,7 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src)
 SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/am_map.c
   ${CMAKE_SOURCE_DIR}/src/c_main.c
+  ${CMAKE_SOURCE_DIR}/src/cl_main.c
   ${CMAKE_SOURCE_DIR}/src/cmp.c
   ${CMAKE_SOURCE_DIR}/src/d_deh.c
   ${CMAKE_SOURCE_DIR}/src/d_items.c
@@ -906,6 +907,7 @@ SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/sounds.c
   ${CMAKE_SOURCE_DIR}/src/st_lib.c
   ${CMAKE_SOURCE_DIR}/src/st_stuff.c
+  ${CMAKE_SOURCE_DIR}/src/sv_main.c
   ${CMAKE_SOURCE_DIR}/src/tables.c
   ${CMAKE_SOURCE_DIR}/src/v_video.c
   ${CMAKE_SOURCE_DIR}/src/version.c

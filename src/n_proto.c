@@ -27,22 +27,23 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
+
 #include "d_deh.h"
 #include "d_main.h"
 #include "d_ticcmd.h"
 #include "g_game.h"
 #include "lprintf.h"
-#include "p_user.h"
-#include "s_sound.h"
-#include "sounds.h"
-#include "w_wad.h"
-
 #include "n_net.h"
 #include "n_main.h"
 #include "n_state.h"
 #include "n_peer.h"
 #include "n_pack.h"
 #include "n_proto.h"
+#include "cl_main.h"
+#include "p_user.h"
+#include "s_sound.h"
+#include "sounds.h"
+#include "w_wad.h"
 
 const char *D_dehout(void); /* CG: from d_main.c */
 

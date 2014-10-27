@@ -25,29 +25,30 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
-#include "m_random.h"
-#include "r_main.h"
-#include "p_ident.h"
-#include "p_maputl.h"
-#include "p_map.h"
-#include "p_tick.h"
-#include "sounds.h"
-#include "st_stuff.h"
+
+#include "e6y.h"//e6y
+#include "g_game.h"
+#include "g_overflow.h"
 #include "hu_stuff.h"
 #include "hu_tracers.h"
-#include "s_sound.h"
-#include "s_advsound.h"
 #include "info.h"
-#include "g_game.h"
-#include "p_inter.h"
 #include "lprintf.h"
-#include "r_demo.h"
-#include "g_overflow.h"
-#include "p_user.h"
-#include "e6y.h"//e6y
-
+#include "m_random.h"
 #include "n_net.h"
 #include "n_main.h"
+#include "cl_main.h"
+#include "p_ident.h"
+#include "p_inter.h"
+#include "p_map.h"
+#include "p_maputl.h"
+#include "p_tick.h"
+#include "p_user.h"
+#include "r_demo.h"
+#include "r_main.h"
+#include "s_advsound.h"
+#include "s_sound.h"
+#include "sounds.h"
+#include "st_stuff.h"
 
 //
 // P_SetMobjState
