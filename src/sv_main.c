@@ -48,8 +48,8 @@ static void sv_remove_old_commands(void) {
 static void sv_remove_old_states(void) {
   int oldest_gametic = gametic;
 
-  NETPEER_FOR_EACH(entry) {
-    netpeer_t *np = entry.np;
+  NETPEER_FOR_EACH(iter) {
+    netpeer_t *np = iter.np;
 
     if (np->sync.tic > 0)
       oldest_gametic = MIN(oldest_gametic, np->sync.tic);

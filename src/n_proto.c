@@ -545,8 +545,8 @@ void SV_SendMessage(short playernum, const char *message) {
 }
 
 void SV_BroadcastMessage(const char *message) {
-  NETPEER_FOR_EACH(entry) {
-    N_PackServerMessage(entry.np, message);
+  NETPEER_FOR_EACH(iter) {
+    N_PackServerMessage(iter.np, message);
   }
 }
 
@@ -618,9 +618,9 @@ void CL_SendNameChange(const char *new_name) {
 }
 
 void SV_BroadcastPlayerNameChanged(short playernum, const char *new_name) {
-  NETPEER_FOR_EACH(entry) {
-    if (entry.np->playernum != playernum)
-      N_PackNameChange(entry.np, playernum, new_name);
+  NETPEER_FOR_EACH(iter) {
+    if (iter.np->playernum != playernum)
+      N_PackNameChange(iter.np, playernum, new_name);
   }
 }
 
@@ -632,9 +632,9 @@ void CL_SendTeamChange(byte new_team) {
 }
 
 void SV_BroadcastPlayerTeamChanged(short playernum, byte new_team) {
-  NETPEER_FOR_EACH(entry) {
-    if (entry.np->playernum != playernum)
-      N_PackTeamChange(entry.np, playernum, new_team);
+  NETPEER_FOR_EACH(iter) {
+    if (iter.np->playernum != playernum)
+      N_PackTeamChange(iter.np, playernum, new_team);
   }
 }
 
@@ -656,9 +656,9 @@ void CL_SendWSOPChange(byte new_wsop_flags) {
 }
 
 void SV_BroadcastPlayerWSOPChanged(short playernum, byte new_wsop_flags) {
-  NETPEER_FOR_EACH(entry) {
-    if (entry.np->playernum != playernum)
-      N_PackWSOPChange(entry.np, playernum, new_wsop_flags);
+  NETPEER_FOR_EACH(iter) {
+    if (iter.np->playernum != playernum)
+      N_PackWSOPChange(iter.np, playernum, new_wsop_flags);
   }
 }
 
@@ -671,9 +671,9 @@ void CL_SendBobbingChange(double new_bobbing_amount) {
 
 void SV_BroadcastPlayerBobbingChanged(short playernum,
                                       double new_bobbing_amount) {
-  NETPEER_FOR_EACH(entry) {
-    if (entry.np->playernum != playernum)
-      N_PackBobbingChange(entry.np, playernum, new_bobbing_amount);
+  NETPEER_FOR_EACH(iter) {
+    if (iter.np->playernum != playernum)
+      N_PackBobbingChange(iter.np, playernum, new_bobbing_amount);
   }
 }
 
@@ -686,9 +686,9 @@ void CL_SendAutoaimChange(dboolean new_autoaim_enabled) {
 
 void SV_BroadcastPlayerAutoaimChanged(short playernum,
                                       dboolean new_autoaim_enabled) {
-  NETPEER_FOR_EACH(entry) {
-    if (entry.np->playernum != playernum)
-      N_PackAutoaimChange(entry.np, playernum, new_autoaim_enabled);
+  NETPEER_FOR_EACH(iter) {
+    if (iter.np->playernum != playernum)
+      N_PackAutoaimChange(iter.np, playernum, new_autoaim_enabled);
   }
 }
 
@@ -701,9 +701,9 @@ void CL_SendWeaponSpeedChange(byte new_weapon_speed) {
 
 void SV_BroadcastPlayerWeaponSpeedChanged(short playernum,
                                           byte new_weapon_speed) {
-  NETPEER_FOR_EACH(entry) {
-    if (entry.np->playernum != playernum)
-      N_PackWeaponSpeedChange(entry.np, playernum, new_weapon_speed);
+  NETPEER_FOR_EACH(iter) {
+    if (iter.np->playernum != playernum)
+      N_PackWeaponSpeedChange(iter.np, playernum, new_weapon_speed);
   }
 }
 
@@ -717,9 +717,9 @@ void CL_SendColorChange(byte new_red, byte new_green, byte new_blue) {
 void SV_BroadcastPlayerColorChanged(short playernum, byte new_red,
                                                      byte new_green,
                                                      byte new_blue) {
-  NETPEER_FOR_EACH(entry) {
-    if (entry.np->playernum != playernum)
-      N_PackColorChange(entry.np, playernum, new_red, new_green, new_blue);
+  NETPEER_FOR_EACH(iter) {
+    if (iter.np->playernum != playernum)
+      N_PackColorChange(iter.np, playernum, new_red, new_green, new_blue);
   }
 }
 
@@ -731,9 +731,9 @@ void CL_SendColorIndexChange(int new_color) {
 }
 
 void SV_BroadcastPlayerColorIndexChanged(short playernum, int new_color) {
-  NETPEER_FOR_EACH(entry) {
-    if (entry.np->playernum != playernum)
-      N_PackColorIndexChange(entry.np, consoleplayer, new_color);
+  NETPEER_FOR_EACH(iter) {
+    if (iter.np->playernum != playernum)
+      N_PackColorIndexChange(iter.np, consoleplayer, new_color);
   }
 }
 
@@ -748,8 +748,8 @@ void SV_BroadcastPlayerSkinChanged(short playernum) {
 }
 
 void SV_ResyncPeers(void) {
-  NETPEER_FOR_EACH(entry) {
-    N_PeerResetSync(entry.np->peernum);
+  NETPEER_FOR_EACH(iter) {
+    N_PeerResetSync(iter.np->peernum);
   }
 }
 

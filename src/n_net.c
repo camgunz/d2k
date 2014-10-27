@@ -231,9 +231,9 @@ void N_Disconnect(void) {
   if (net_host == NULL)
     return;
 
-  NETPEER_FOR_EACH(entry) {
-    P_Printf(consoleplayer, "Disconnecting peer %d\n", entry.np->peernum);
-    enet_peer_disconnect(entry.np->peer, 0);
+  NETPEER_FOR_EACH(iter) {
+    P_Printf(consoleplayer, "Disconnecting peer %d\n", iter.np->peernum);
+    enet_peer_disconnect(iter.np->peer, 0);
   }
 
   if (CLIENT)
@@ -269,9 +269,9 @@ void N_Disconnect(void) {
     }
   }
 
-  NETPEER_FOR_EACH(entry) {
-    enet_peer_reset(entry.np->peer);
-    N_PeerIterRemove(entry.it, entry.np);
+  NETPEER_FOR_EACH(iter) {
+    enet_peer_reset(iter.np->peer);
+    N_PeerIterRemove(iter.it, iter.np);
   }
 
   memset(&net_event, 0, sizeof(ENetEvent));
@@ -443,8 +443,8 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
   if (net_host == NULL)
     return;
 
-  NETPEER_FOR_EACH(entry) {
-    np = entry.np;
+  NETPEER_FOR_EACH(iter) {
+    np = iter.np;
 
     if (N_PeerCheckTimeout(np->peernum)) {
       P_Printf(consoleplayer, "Peer %s:%u timed out.\n",
@@ -453,7 +453,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       );
 
       enet_peer_reset(np->peer);
-      N_PeerIterRemove(entry.it, np);
+      N_PeerIterRemove(iter.it, np);
       continue;
     }
 
