@@ -53,6 +53,7 @@
 #include "r_things.h"
 #include "r_sky.h"
 #include "p_user.h"
+#include "sv_tbuf.h"
 
 //e6y
 #ifdef GL_DOOM
@@ -1167,6 +1168,13 @@ default_t defaults[] =
    def_str,ss_none},
   {"mus_dm2int", {0,&S_music_files[mus_dm2int]}, {0,"dm2int.mp3"},UL,UL,
    def_str,ss_none},
+
+  /* CG: Server options */
+  {"Server", {NULL}, {0}, UL, UL, def_none, ss_none},
+  {
+    "limit_player_commands",
+    {&sv_limit_player_commands}, {1}, 0, 1, def_bool, ss_none
+  },
 };
 
 int numdefaults;

@@ -155,7 +155,7 @@ static void cl_predict(int saved_gametic,
   for (unsigned int i = 0; i < sync_command_count; i++) {
     netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
 
-    if (sync_ncmd->index > latest_synchronized_command_index)
+    if (sync_ncmd->index > command_index)
       command_count++;
   }
 
@@ -206,7 +206,7 @@ static void cl_predict(int saved_gametic,
     netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
     netticcmd_t *run_ncmd;
 
-    if (sync_ncmd->index <= latest_synchronized_command_index)
+    if (sync_ncmd->index <= command_index)
       continue;
 
     run_ncmd = P_GetNewBlankCommand();
@@ -258,6 +258,7 @@ void CL_CheckForStateUpdates(void) {
   cl_state_tic = server->sync.tic;
 
   if (!CL_GetCommandSync(consoleplayer,
+                         NULL,
                          &latest_synchronized_command_index,
                          &sync_commands,
                          &run_commands)) {

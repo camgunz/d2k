@@ -300,12 +300,20 @@ static void free_string(gpointer data) {
 
 static void pack_commands(pbuf_t *pbuf, netpeer_t *np, int playernum) {
   GQueue *commands = np->sync.commands[playernum].sync_queue;
-  unsigned int command_count = g_queue_get_length(commands);
+  unsigned int queue_size = g_queue_get_length(commands);
+  unsigned int command_count = 0;
 
   M_PBufWriteShort(pbuf, playernum);
 
   if ((CLIENT && playernum == consoleplayer) ||
       (SERVER && playernum != np->playernum)) {
+    for (unsigned int i = 0; i < queue_size; i++) {
+      netticcmd_t *ncmd = g_queue_peek_nth(commands, i);
+
+      if (ncmd->index > np->sync.commands[playernum].received)
+        command_count++;
+    }
+
     /* CG: TODO: Add limit on command_count */
     M_PBufWriteUChar(pbuf, command_count);
 
@@ -315,8 +323,11 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, int playernum) {
     );
     */
 
-    for (unsigned int i = 0; i < command_count; i++) {
+    for (unsigned int i = 0; i < queue_size; i++) {
       netticcmd_t *ncmd = g_queue_peek_nth(commands, i);
+
+      if (ncmd->index <= np->sync.commands[playernum].received)
+        continue;
 
       M_PBufWriteInt(pbuf, ncmd->index);
       M_PBufWriteInt(pbuf, ncmd->tic);
@@ -329,14 +340,8 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, int playernum) {
     }
   }
   else {
-    M_PBufWriteInt(pbuf, np->sync.commands[playernum].index);
-
-    /*
-    D_Log(LOG_SYNC,
-      "(%d) pack_commands: acknowledging %d's commands: %d\n",
-      gametic, playernum, np->sync.commands[playernum].index
-    );
-    */
+    M_PBufWriteInt(pbuf, np->sync.commands[playernum].received);
+    M_PBufWriteInt(pbuf, np->sync.commands[playernum].run);
   }
 }
 
@@ -372,7 +377,7 @@ bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
       read_uchar(pbuf, ncmd.cmd.chatchar,    "comand chatchar value");
       read_uchar(pbuf, ncmd.cmd.buttons,     "command buttons value");
 
-      if (ncmd.index > np->sync.commands[playernum].index) {
+      if (ncmd.index > np->sync.commands[playernum].received) {
         /*
         D_Log(LOG_SYNC, "unpack_commands: Got new command %d from %d\n",
           ncmd.index, playernum
@@ -384,7 +389,7 @@ bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
 
           memcpy(new_ncmd, &ncmd, sizeof(netticcmd_t));
           g_queue_push_tail(np->sync.commands[playernum].run_queue, new_ncmd);
-          np->sync.commands[playernum].index = ncmd.index;
+          np->sync.commands[playernum].received = ncmd.index;
         }
         else {
           NETPEER_FOR_EACH(iter) {
@@ -400,41 +405,26 @@ bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
               commands = np2->sync.commands[playernum].sync_queue;
 
             g_queue_push_tail(commands, new_ncmd);
-            np2->sync.commands[playernum].index = ncmd.index;
+            np2->sync.commands[playernum].received = ncmd.index;
           }
         }
       }
     }
   }
   else {
-    int command_index;
+    int command_index_received;
+    int command_index_run;
 
-    read_int(pbuf, command_index, "command sync index");
+    read_int(pbuf, command_index_received, "commands received");
+    read_int(pbuf, command_index_run, "commands run");
 
-    np->sync.commands[playernum].index = MAX(
-      np->sync.commands[playernum].index, command_index
+    np->sync.commands[playernum].received = MAX(
+      np->sync.commands[playernum].received, command_index_received
     );
 
-    /*
-    D_Log(LOG_SYNC,
-      "unpack_commands: %d received %d's commands: %d, %d\n",
-      np->playernum, playernum, first_command_index, command_index
+    np->sync.commands[playernum].run = MAX(
+      np->sync.commands[playernum].run, command_index_run
     );
-    if (command_index > 0) {
-      if (CLIENT) {
-        D_Log(LOG_SYNC,
-          "unpack_commands: %d received %d's commands: %d, %d\n",
-          np->playernum, playernum, first_command_index, command_index
-        );
-      }
-      else {
-        D_Log(LOG_SYNC,
-          "unpack_commands: %d received %d's commands: %d\n",
-          np->playernum, playernum, command_index
-        );
-      }
-    }
-    */
   }
 
   return true;

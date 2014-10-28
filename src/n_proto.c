@@ -753,7 +753,7 @@ void SV_ResyncPeers(void) {
   }
 }
 
-bool SV_GetCommandSync(int playernum1, int playernum2, int *sync_index,
+bool SV_GetCommandSync(int playernum1, int playernum2, int *command_received,
                                                        GQueue **sync_commands,
                                                        GQueue **run_commands) {
   netpeer_t *np = N_PeerForPlayer(playernum1);
@@ -761,8 +761,8 @@ bool SV_GetCommandSync(int playernum1, int playernum2, int *sync_index,
   if (np == NULL)
     return false;
 
-  if (sync_index != NULL)
-    *sync_index = np->sync.commands[playernum2].index;
+  if (command_received != NULL)
+    *command_received = np->sync.commands[playernum2].received;
 
   if (sync_commands != NULL)
     *sync_commands = np->sync.commands[playernum2].sync_queue;
@@ -771,6 +771,13 @@ bool SV_GetCommandSync(int playernum1, int playernum2, int *sync_index,
     *run_commands = np->sync.commands[playernum2].run_queue;
 
   return true;
+}
+
+void SV_UpdateCommandSync(int playernum1, int playernum2, int commands_run) {
+  netpeer_t *np = N_PeerForPlayer(playernum1);
+
+  if (np != NULL)
+    np->sync.commands[playernum2].run = commands_run;
 }
 
 void CL_SendAuthRequest(const char *password) {
@@ -794,15 +801,20 @@ void CL_SendVoteRequest(const char *command) {
   N_PackVoteRequest(np, command);
 }
 
-bool CL_GetCommandSync(int playernum, int *sync_index, GQueue **sync_commands,
-                                                       GQueue **run_commands) {
+bool CL_GetCommandSync(int playernum, int *commands_received,
+                                      int *commands_run,
+                                      GQueue **sync_commands,
+                                      GQueue **run_commands) {
   netpeer_t *server = CL_GetServerPeer();
 
   if (server == NULL)
     return false;
 
-  if (sync_index != NULL)
-    *sync_index = server->sync.commands[playernum].index;
+  if (commands_received != NULL)
+    *commands_received = server->sync.commands[playernum].received;
+
+  if (commands_run != NULL)
+    *commands_run = server->sync.commands[playernum].run;
 
   if (sync_commands != NULL)
     *sync_commands = server->sync.commands[playernum].sync_queue;
@@ -811,6 +823,13 @@ bool CL_GetCommandSync(int playernum, int *sync_index, GQueue **sync_commands,
     *run_commands = server->sync.commands[playernum].run_queue;
 
   return true;
+}
+
+void CL_UpdateCommandSync(int playernum, int commands_run) {
+  netpeer_t *server = CL_GetServerPeer();
+
+  if (server != NULL)
+    server->sync.commands[playernum].run = commands_run;
 }
 
 /* vi: set et ts=2 sw=2: */

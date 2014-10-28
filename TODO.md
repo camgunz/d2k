@@ -1,17 +1,15 @@
 # To Do
 
-## Prototype
-
-1. Bad networking re: plasma
-
-1. Running missed TICs builds up lag... need to get them back somehow
-  - Probably bunch commands together...
-
----
-
 ## ZDDL
 
+1. Bugs
+  - Jittery 2nd player?
+
 1. Add latency mitigation
+  - player movement smoothing
+    - Working on serverside player command limit
+    - Make player position extrapolation optional (makes unlagged less
+      accurate)
   - unlagged
     - Save attacking player position
     - Save current game state
@@ -21,16 +19,17 @@
     - Run hit detection and damage calculation
       - For every impacted actor:
         - Save momx/momy/momz values
+        - Save damagecount
     - Restore saved state
     - For every impacted actor:
       - Add new momx/momy/momz values to the current momx/momy/momz
+      - Restore damagecount (MAX(old, new))
   - projectile nudging
     - right now, projectiles are predicted, and they therefore usually appear
       ahead of where they would normally spawn
     - projectile nudging would spawn the projectile normally (i.e., right in
       front of the firing player), and adjust the projectile's velocity based
       on the client's current lag and a preselected function (curve)
-  - player movement smoothing
 
 1. Remove 4 player restriction
 

@@ -21,49 +21,14 @@
 /*****************************************************************************/
 
 
-#include "z_zone.h"
+#ifndef SV_TBUF_H__
+#define SV_TBUF_H__
 
-#include <enet/enet.h>
+extern int sv_limit_player_commands;
 
-#include "doomstat.h"
-#include "n_net.h"
-#include "n_main.h"
-#include "n_state.h"
-#include "n_peer.h"
-#include "p_cmd.h"
+unsigned int SV_GetPlayerCommandLimit(int playernum);
 
-static void sv_remove_old_commands(void) {
-  NETPEER_FOR_EACH(iter) {
-    for (int i = 0; i < MAXPLAYERS; i++) {
-      if (i != iter.np->playernum) {
-        P_RemoveOldCommands(
-          iter.np->sync.commands[i].run,
-          iter.np->sync.commands[i].sync_queue
-        );
-      }
-    }
-  }
-}
+#endif
 
-static void sv_remove_old_states(void) {
-  int oldest_gametic = gametic;
-
-  NETPEER_FOR_EACH(iter) {
-    netpeer_t *np = iter.np;
-
-    if (np->sync.tic > 0)
-      oldest_gametic = MIN(oldest_gametic, np->sync.tic);
-  }
-
-  N_RemoveOldStates(oldest_gametic);
-}
-
-void SV_CleanupOldCommandsAndStates(void) {
-  if (!SERVER)
-    return;
-
-  sv_remove_old_commands();
-  if (DELTASERVER)
-    sv_remove_old_states();
-}
+/* vi: set et ts=2 sw=2: */
 

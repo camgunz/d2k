@@ -43,6 +43,7 @@
 #include "p_pspr.h"
 #include "p_user.h"
 #include "s_sound.h"
+#include "sv_tbuf.h"
 
 #define NOPREDICTION 0
 #define PMOBJTHINKER 1
@@ -201,7 +202,7 @@ bool predict_player_position(player_t *player) {
   /* CG: [XXX] Should be in netsync_t? */
   player->missed_command_count++;
 
-  if (!CL_GetCommandSync(player - players, NULL, NULL, &commands)) {
+  if (!CL_GetCommandSync(player - players, NULL, NULL, NULL, &commands)) {
     P_Echo(consoleplayer, "Server disconnected");
     return false;
   }
@@ -237,9 +238,11 @@ bool predict_player_position(player_t *player) {
 void run_queued_player_commands(int playernum) {
   GQueue *commands;
   player_t *player = &players[playernum];
+  unsigned int command_limit;
+  unsigned int commands_run = 0;
 
   if (CLIENT) {
-    if (!CL_GetCommandSync(playernum, NULL, NULL, &commands)) {
+    if (!CL_GetCommandSync(playernum, NULL, NULL, NULL, &commands)) {
       P_Printf(consoleplayer,
         "run_queued_player_commands: No peer for player #%d\n", playernum
       );
@@ -258,9 +261,19 @@ void run_queued_player_commands(int playernum) {
     }
   }
 
+  if (SERVER && sv_limit_player_commands)
+    command_limit = SV_GetPlayerCommandLimit(playernum);
+
   while (!g_queue_is_empty(commands)) {
     int saved_leveltime = leveltime;
     netticcmd_t *ncmd = g_queue_peek_head(commands);
+
+    if (SERVER && sv_limit_player_commands && commands_run >= command_limit) {
+      printf("(%d) Command limit (%d) hit for %d (%d)\n",
+        gametic, command_limit, playernum, g_queue_get_length(commands)
+      );
+      break;
+    }
 
     CL_SetupCommandState(playernum, ncmd);
 
@@ -280,6 +293,16 @@ void run_queued_player_commands(int playernum) {
     CL_ShutdownCommandState();
 
     leveltime = saved_leveltime;
+
+    if (CLIENT) {
+      CL_UpdateCommandSync(playernum, ncmd->index);
+    }
+    else if (SERVER) {
+      SV_UpdateCommandSync(playernum, playernum, ncmd->index);
+
+      if (sv_limit_player_commands)
+        commands_run++;
+    }
 
     P_RecycleCommand(g_queue_pop_head(commands));
   }
@@ -308,7 +331,11 @@ void P_BuildCommand(void) {
   if (!CLIENT)
     return;
 
-  if (!CL_GetCommandSync(consoleplayer, NULL, &sync_commands, &run_commands)) {
+  if (!CL_GetCommandSync(consoleplayer,
+                         NULL,
+                         NULL,
+                         &sync_commands,
+                         &run_commands)) {
     P_Echo(consoleplayer, "Server disconnected");
     return;
   }
@@ -337,7 +364,7 @@ unsigned int P_GetPlayerCommandCount(int playernum) {
   GQueue *commands;
 
   if (CLIENT) {
-    if (!CL_GetCommandSync(playernum, NULL, NULL, &commands)) {
+    if (!CL_GetCommandSync(playernum, NULL, NULL, NULL, &commands)) {
       P_Echo(consoleplayer, "Server disconnected");
       return 0;
     }
@@ -358,7 +385,7 @@ unsigned int P_GetPlayerSyncCommandCount(int playernum) {
   GQueue *commands;
 
   if (CLIENT) {
-    if (!CL_GetCommandSync(playernum, NULL, &commands, NULL)) {
+    if (!CL_GetCommandSync(playernum, NULL, NULL, &commands, NULL)) {
       P_Echo(consoleplayer, "Server disconnected");
       return 0;
     }

@@ -55,7 +55,7 @@
 #include "e6y.h"
 
 #define DEBUG_NET 0
-#define DEBUG_SYNC 0
+#define DEBUG_SYNC 1
 #define DEBUG_SAVE 0
 #define PRINT_NETWORK_STATS 0
 
