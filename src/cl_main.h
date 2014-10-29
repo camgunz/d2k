@@ -24,6 +24,8 @@
 #ifndef CL_MAIN_H__
 #define CL_MAIN_H__
 
+extern int cl_extrapolate_player_positions;
+
 bool CL_LoadingState(void);
 bool CL_Synchronizing(void);
 bool CL_RePredicting(void);

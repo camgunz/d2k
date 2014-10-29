@@ -57,6 +57,8 @@ static int          cl_delta_to_tic = -1;
 static bool         cl_synchronizing = false;
 static bool         cl_repredicting = false;
 
+int cl_extrapolate_player_positions = false;
+
 static bool cl_load_new_state(netpeer_t *server,
                               int previous_synchronized_command_index,
                               int latest_synchronized_command_index,
@@ -149,8 +151,6 @@ static void cl_predict(int saved_gametic,
   int command_index = latest_synchronized_command_index;
   unsigned int sync_command_count = g_queue_get_length(sync_commands);
   unsigned int command_count = 0;
-  int tic_count = saved_gametic - gametic;
-  int extra_tics;
 
   for (unsigned int i = 0; i < sync_command_count; i++) {
     netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
@@ -158,54 +158,6 @@ static void cl_predict(int saved_gametic,
     if (sync_ncmd->index > command_index)
       command_count++;
   }
-
-#if 0
-  extra_tics = tic_count - command_count;
-  D_Log(LOG_SYNC, "(%d) Extra TICs: %d\n", gametic, extra_tics);
-
-  /*
-   * CG: Server ran >= 1 TIC without a command from us, which means at some
-   *     point it will run a TIC with > 1 commands from us, in other words, it
-   *     will bunch > 1 commands together in a single TIC.  So we must bunch
-   *     some commands here to maintain clientside prediction's accuracy.
-   */
-  while (extra_tics < 0) {
-    int found_command = false;
-
-    for (unsigned int i = 0; i < sync_command_count; i++) {
-      netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
-      netticcmd_t *run_ncmd;
-
-      if (sync_ncmd->index <= command_index)
-        continue;
-
-      run_ncmd = P_GetNewBlankCommand();
-      memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
-      g_queue_push_tail(run_commands, run_ncmd);
-      command_index = sync_ncmd->index;
-      found_command = true;
-    }
-
-    if (!found_command)
-      break;
-
-    extra_tics++;
-  }
-
-  /*
-   * CG: Server bunched > 1 command(s) together from us, which means at some
-   *     point it will run > 1 TIC without a command from us.  So we must run
-   *     these TICs here to maintain clientside prediction's accuracy.
-   */
-  while (extra_tics > 0) {
-    cl_repredicting = true;
-    N_RunTic();
-    cl_repredicting = false;
-    extra_tics--;
-  }
-#endif
-
-  D_Log(LOG_SYNC, "(%d) Command index: %d\n", gametic, command_index);
 
   for (unsigned int i = 0; i < sync_command_count; i++) {
     netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
@@ -225,14 +177,6 @@ static void cl_predict(int saved_gametic,
     }
     cl_repredicting = false;
   }
-
-#if 0
-  while (gametic < saved_gametic) {
-    cl_repredicting = true;
-    N_RunTic();
-    cl_repredicting = false;
-  }
-#endif
 }
 
 void CL_CheckForStateUpdates(void) {

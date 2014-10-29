@@ -45,10 +45,10 @@
 #include "s_sound.h"
 #include "sv_tbuf.h"
 
-#define NOPREDICTION 0
+#define NOEXTRAPOLATION 0
 #define PMOBJTHINKER 1
 #define COPIED_COMMAND 2
-#define OPPONENT_PREDICTION PMOBJTHINKER
+#define EXTRAPOLATION PMOBJTHINKER
 #define MISSED_COMMAND_MAX 3
 
 static GQueue *blank_command_queue;
@@ -183,14 +183,17 @@ static void run_player_command(player_t *player) {
  *                break clientside prediction.
  */
 
-bool predict_player_position(player_t *player) {
+bool extrapolate_player_position(player_t *player) {
   if ((!DELTACLIENT) || (player == &players[consoleplayer]) || (!player->mo))
     return false;
 
-#if PREDICTION == PMOBJTHINKER
+  if (!cl_extrapolate_player_positions)
+    return false;
+
+#if EXTRAPOLATION == PMOBJTHINKER
   P_MobjThinker(player->mo);
   return false;
-#elif PREDICTION == COPIED_COMMAND
+#elif EXTRAPOLATION == COPIED_COMMAND
   GQueue *commands;
   netticcmd_t *ncmd;
 
@@ -412,7 +415,7 @@ void P_RunPlayerCommands(int playernum) {
     int command_count = P_GetPlayerRunCommandCount(playernum);
 
     if (command_count == 0) {
-      if (!predict_player_position(player))
+      if (!extrapolate_player_position(player))
         return;
     }
     else {

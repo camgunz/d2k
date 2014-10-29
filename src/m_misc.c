@@ -53,6 +53,8 @@
 #include "r_things.h"
 #include "r_sky.h"
 #include "p_user.h"
+#include "n_net.h"
+#include "cl_main.h"
 #include "sv_tbuf.h"
 
 //e6y
@@ -1174,6 +1176,13 @@ default_t defaults[] =
   {
     "limit_player_commands",
     {&sv_limit_player_commands}, {1}, 0, 1, def_bool, ss_none
+  },
+
+  /* CG: Client options */
+  {"Client", {NULL}, {0}, UL, UL, def_none, ss_none},
+  {
+    "extrapolate_player_positions",
+    {&cl_extrapolate_player_positions}, {1}, 0, 1, def_bool, ss_none
   },
 };
 
