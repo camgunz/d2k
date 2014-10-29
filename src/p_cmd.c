@@ -253,7 +253,7 @@ void run_queued_player_commands(int playernum) {
     return;
   }
   else {
-    if (!SV_GetCommandSync(playernum, playernum, NULL, NULL, &commands)) {
+    if (!SV_GetCommandSync(playernum, playernum, NULL, NULL, NULL, &commands)) {
       P_Printf(consoleplayer,
         "run_queued_player_commands: No peer for player #%d\n", playernum
       );
@@ -264,16 +264,15 @@ void run_queued_player_commands(int playernum) {
   if (SERVER && sv_limit_player_commands)
     command_limit = SV_GetPlayerCommandLimit(playernum);
 
+  if (CLIENT && playernum == consoleplayer)
+    P_PrintCommands(commands);
+
   while (!g_queue_is_empty(commands)) {
     int saved_leveltime = leveltime;
     netticcmd_t *ncmd = g_queue_peek_head(commands);
 
-    if (SERVER && sv_limit_player_commands && commands_run >= command_limit) {
-      printf("(%d) Command limit (%d) hit for %d (%d)\n",
-        gametic, command_limit, playernum, g_queue_get_length(commands)
-      );
+    if (SERVER && sv_limit_player_commands && commands_run >= command_limit)
       break;
-    }
 
     CL_SetupCommandState(playernum, ncmd);
 
@@ -295,10 +294,10 @@ void run_queued_player_commands(int playernum) {
     leveltime = saved_leveltime;
 
     if (CLIENT) {
-      CL_UpdateCommandSync(playernum, ncmd->index);
+      CL_UpdateCommandsRunSync(playernum, ncmd->index);
     }
     else if (SERVER) {
-      SV_UpdateCommandSync(playernum, playernum, ncmd->index);
+      SV_UpdateCommandsRunSync(playernum, playernum, ncmd->index);
 
       if (sv_limit_player_commands)
         commands_run++;
@@ -360,7 +359,7 @@ void P_BuildCommand(void) {
     CL_MarkServerOutdated();
 }
 
-unsigned int P_GetPlayerCommandCount(int playernum) {
+unsigned int P_GetPlayerRunCommandCount(int playernum) {
   GQueue *commands;
 
   if (CLIENT) {
@@ -370,9 +369,9 @@ unsigned int P_GetPlayerCommandCount(int playernum) {
     }
   }
   else {
-    if (!SV_GetCommandSync(playernum, playernum, NULL, NULL, &commands)) {
+    if (!SV_GetCommandSync(playernum, playernum, NULL, NULL, NULL, &commands)) {
       P_Printf(consoleplayer,
-        "P_GetPlayerCommandCount: No peer for player #%d\n", playernum
+        "P_GetPlayerRunCommandCount: No peer for player #%d\n", playernum
       );
       return 0;
     }
@@ -391,9 +390,9 @@ unsigned int P_GetPlayerSyncCommandCount(int playernum) {
     }
   }
   else {
-    if (!SV_GetCommandSync(playernum, playernum, NULL, &commands, NULL)) {
+    if (!SV_GetCommandSync(playernum, playernum, NULL, NULL, &commands, NULL)) {
       P_Printf(consoleplayer,
-        "P_GetPlayerCommandCount: No peer for player #%d\n", playernum
+        "P_GetPlayerRunCommandCount: No peer for player #%d\n", playernum
       );
       return 0;
     }
@@ -410,7 +409,7 @@ void P_RunPlayerCommands(int playernum) {
   }
   
   if (DELTACLIENT && playernum != consoleplayer && playernum != 0) {
-    int command_count = P_GetPlayerCommandCount(playernum);
+    int command_count = P_GetPlayerRunCommandCount(playernum);
 
     if (command_count == 0) {
       if (!predict_player_position(player))
@@ -427,6 +426,20 @@ void P_RunPlayerCommands(int playernum) {
   }
 
   run_queued_player_commands(playernum);
+}
+
+void P_ClearRunCommands(int playernum) {
+  GQueue *commands;
+
+  if (!CL_GetCommandSync(playernum, NULL, NULL, NULL, &commands)) {
+    P_Printf(consoleplayer,
+      "run_queued_player_commands: No peer for player #%d\n", playernum
+    );
+    return;
+  }
+
+  while (!g_queue_is_empty(commands))
+    P_RecycleCommand(g_queue_pop_head(commands));
 }
 
 void P_RemoveOldCommands(int sync_index, GQueue *commands) {

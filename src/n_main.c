@@ -70,6 +70,8 @@ static int run_tics(int tic_count) {
 
   while (tic_count--) {
     if (MULTINET) {
+      if (CLIENT)
+        P_ClearRunCommands(consoleplayer);
       P_BuildCommand();
     }
     else {
@@ -90,7 +92,7 @@ static int run_commandsync_tics(int command_count) {
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
-      tic_count = MIN(tic_count, P_GetPlayerCommandCount(i));
+      tic_count = MIN(tic_count, P_GetPlayerRunCommandCount(i));
     }
   }
 
@@ -155,7 +157,7 @@ static void print_network_stats(void) {
     puts("------------------------------------------------------------------------------");
     puts("|  TIC  |      D/U      | Max/Last/Avg RTT | Max/Last/Avg RTTv |  Commands   |");
     puts("------------------------------------------------------------------------------");
-    printf("| %5d | %4d/%4d b/s | %3d/%3d/%3d ms   | %3d/%3d/%3d ms    |       %5d |\n",
+    printf("| %5d | %4d/%4d b/s | %3d/%3d/%3d ms   | %3d/%3d/%3d ms    |     %3d %3d |\n",
       gametic,
       N_GetUploadBandwidth(),
       N_GetDownloadBandwidth(),
@@ -165,7 +167,10 @@ static void print_network_stats(void) {
       iter.np->peer->highestRoundTripTimeVariance,
       iter.np->peer->lastRoundTripTimeVariance,
       iter.np->peer->roundTripTimeVariance,
-      CLIENT ? P_GetPlayerSyncCommandCount(consoleplayer) : 0
+      CLIENT ? P_GetPlayerSyncCommandCount(consoleplayer)
+             : P_GetPlayerSyncCommandCount(iter.np->playernum),
+      CLIENT ? P_GetPlayerRunCommandCount(consoleplayer)
+             : P_GetPlayerRunCommandCount(iter.np->playernum)
     );
     puts("------------------------------------------------------------------------------");
     puts("| Packet Loss | Throttle | Accel | Counter | Decel | Interval | Limit |  #   |");

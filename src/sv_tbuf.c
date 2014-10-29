@@ -52,7 +52,7 @@ unsigned int SV_GetPlayerCommandLimit(int playernum) {
   if (player->mo == NULL)
     return 0;
   
-  if (!SV_GetCommandSync(playernum, playernum, NULL, NULL, &commands)) {
+  if (!SV_GetCommandSync(playernum, playernum, NULL, NULL, NULL, &commands)) {
     P_Printf(consoleplayer,
       "SV_GetPlayerCommandLimit: Player %d disconnected\n", playernum
     );

@@ -159,7 +159,9 @@ static void cl_predict(int saved_gametic,
       command_count++;
   }
 
+#if 0
   extra_tics = tic_count - command_count;
+  D_Log(LOG_SYNC, "(%d) Extra TICs: %d\n", gametic, extra_tics);
 
   /*
    * CG: Server ran >= 1 TIC without a command from us, which means at some
@@ -201,6 +203,9 @@ static void cl_predict(int saved_gametic,
     cl_repredicting = false;
     extra_tics--;
   }
+#endif
+
+  D_Log(LOG_SYNC, "(%d) Command index: %d\n", gametic, command_index);
 
   for (unsigned int i = 0; i < sync_command_count; i++) {
     netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
@@ -396,4 +401,6 @@ void CL_MarkServerOutdated(void) {
 
   N_UpdateSync();
 }
+
+/* vi: set et ts=2 sw=2: */
 

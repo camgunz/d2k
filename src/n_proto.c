@@ -753,7 +753,8 @@ void SV_ResyncPeers(void) {
   }
 }
 
-bool SV_GetCommandSync(int playernum1, int playernum2, int *command_received,
+bool SV_GetCommandSync(int playernum1, int playernum2, int *commands_received,
+                                                       int *commands_run,
                                                        GQueue **sync_commands,
                                                        GQueue **run_commands) {
   netpeer_t *np = N_PeerForPlayer(playernum1);
@@ -761,8 +762,11 @@ bool SV_GetCommandSync(int playernum1, int playernum2, int *command_received,
   if (np == NULL)
     return false;
 
-  if (command_received != NULL)
-    *command_received = np->sync.commands[playernum2].received;
+  if (commands_received != NULL)
+    *commands_received = np->sync.commands[playernum2].received;
+
+  if (commands_run != NULL)
+    *commands_run = np->sync.commands[playernum2].run;
 
   if (sync_commands != NULL)
     *sync_commands = np->sync.commands[playernum2].sync_queue;
@@ -773,11 +777,26 @@ bool SV_GetCommandSync(int playernum1, int playernum2, int *command_received,
   return true;
 }
 
-void SV_UpdateCommandSync(int playernum1, int playernum2, int commands_run) {
+bool SV_UpdateCommandsReceivedSync(int playernum1, int playernum2,
+                                                   int commands_received) {
   netpeer_t *np = N_PeerForPlayer(playernum1);
 
-  if (np != NULL)
-    np->sync.commands[playernum2].run = commands_run;
+  if (np == NULL)
+    return false;
+
+  np->sync.commands[playernum2].received = commands_received;
+  return true;
+}
+
+bool SV_UpdateCommandsRunSync(int playernum1, int playernum2,
+                                              int commands_run) {
+  netpeer_t *np = N_PeerForPlayer(playernum1);
+
+  if (np == NULL)
+    return false;
+
+  np->sync.commands[playernum2].run = commands_run;
+  return true;
 }
 
 void CL_SendAuthRequest(const char *password) {
@@ -825,11 +844,26 @@ bool CL_GetCommandSync(int playernum, int *commands_received,
   return true;
 }
 
-void CL_UpdateCommandSync(int playernum, int commands_run) {
+bool CL_UpdateCommandsReceivedSync(int playernum, int commands_received) {
   netpeer_t *server = CL_GetServerPeer();
 
-  if (server != NULL)
-    server->sync.commands[playernum].run = commands_run;
+  if (server == NULL)
+    return false;
+
+  server->sync.commands[playernum].received = commands_received;
+
+  return true;
+}
+
+bool CL_UpdateCommandsRunSync(int playernum, int commands_run) {
+  netpeer_t *server = CL_GetServerPeer();
+
+  if (server == NULL)
+    return false;
+
+  server->sync.commands[playernum].run = commands_run;
+
+  return true;
 }
 
 /* vi: set et ts=2 sw=2: */

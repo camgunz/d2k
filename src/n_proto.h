@@ -67,10 +67,14 @@ void SV_BroadcastPlayerColorIndexChanged(short playernum, int new_color);
 void SV_BroadcastPlayerSkinChanged(short playernum);
 void SV_BroadcastStateUpdates(void);
 void SV_ResyncPeers(void);
-bool SV_GetCommandSync(int playernum1, int playernum2, int *sync_index,
+bool SV_GetCommandSync(int playernum1, int playernum2, int *commands_received,
+                                                       int *commands_run,
                                                        GQueue **sync_commands,
                                                        GQueue **run_commands);
-void SV_UpdateCommandSync(int playernum1, int playernum2, int commands_run);
+bool SV_UpdateCommandsReceivedSync(int playernum1, int playernum2,
+                                                   int commands_received);
+bool SV_UpdateCommandsRunSync(int playernum1, int playernum2,
+                                              int commands_run);
 
 void CL_SendMessageToServer(const char *message);
 void CL_SendMessageToPlayer(short recipient, const char *message);
@@ -97,7 +101,8 @@ bool CL_GetCommandSync(int playernum, int *commands_received,
                                       int *commands_run,
                                       GQueue **sync_commands,
                                       GQueue **run_commands);
-void CL_UpdateCommandSync(int playernum, int commands_run);
+bool CL_UpdateCommandsReceivedSync(int playernum, int commands_received);
+bool CL_UpdateCommandsRunSync(int playernum, int commands_run);
 
 #endif
 

@@ -339,13 +339,14 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, int playernum) {
       M_PBufWriteUChar(pbuf, ncmd->cmd.buttons);
     }
   }
-  else {
+  else if ((CLIENT && playernum != consoleplayer) ||
+           (SERVER && playernum == np->playernum)) {
     M_PBufWriteInt(pbuf, np->sync.commands[playernum].received);
     M_PBufWriteInt(pbuf, np->sync.commands[playernum].run);
   }
 }
 
-bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
+static bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
   short playernum;
 
   read_player(pbuf, playernum);
@@ -367,7 +368,7 @@ bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
 
     for (unsigned int i = 0; i < command_count; i++) {
       netticcmd_t ncmd;
-      
+
       read_int(pbuf,   ncmd.index,           "command index");
       read_int(pbuf,   ncmd.tic,             "command TIC");
       read_char(pbuf,  ncmd.cmd.forwardmove, "command forward value");
@@ -377,41 +378,37 @@ bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
       read_uchar(pbuf, ncmd.cmd.chatchar,    "comand chatchar value");
       read_uchar(pbuf, ncmd.cmd.buttons,     "command buttons value");
 
-      if (ncmd.index > np->sync.commands[playernum].received) {
-        /*
-        D_Log(LOG_SYNC, "unpack_commands: Got new command %d from %d\n",
-          ncmd.index, playernum
-        );
-        */
+      if (ncmd.index <= np->sync.commands[playernum].received)
+        continue;
 
-        if (CLIENT) {
+      np->sync.commands[playernum].received = ncmd.index;
+
+      if (CLIENT) {
+        netticcmd_t *run_ncmd = P_GetNewBlankCommand();
+
+        memcpy(run_ncmd, &ncmd, sizeof(netticcmd_t));
+        g_queue_push_tail(np->sync.commands[playernum].run_queue, run_ncmd);
+      }
+      else {
+        NETPEER_FOR_EACH(iter) {
+          GQueue *commands;
+          netpeer_t *np2 = iter.np;
           netticcmd_t *new_ncmd = P_GetNewBlankCommand();
 
           memcpy(new_ncmd, &ncmd, sizeof(netticcmd_t));
-          g_queue_push_tail(np->sync.commands[playernum].run_queue, new_ncmd);
-          np->sync.commands[playernum].received = ncmd.index;
-        }
-        else {
-          NETPEER_FOR_EACH(iter) {
-            GQueue *commands;
-            netpeer_t *np2 = iter.np;
-            netticcmd_t *new_ncmd = P_GetNewBlankCommand();
 
-            memcpy(new_ncmd, &ncmd, sizeof(netticcmd_t));
+          if (np2 == np)
+            commands = np->sync.commands[playernum].run_queue;
+          else
+            commands = np2->sync.commands[playernum].sync_queue;
 
-            if (np2 == np)
-              commands = np2->sync.commands[playernum].run_queue;
-            else
-              commands = np2->sync.commands[playernum].sync_queue;
-
-            g_queue_push_tail(commands, new_ncmd);
-            np2->sync.commands[playernum].received = ncmd.index;
-          }
+          g_queue_push_tail(commands, new_ncmd);
         }
       }
     }
   }
-  else {
+  else if ((CLIENT && playernum == consoleplayer) ||
+           (SERVER && playernum != np->playernum)) {
     int command_index_received;
     int command_index_run;
 
@@ -422,8 +419,28 @@ bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
       np->sync.commands[playernum].received, command_index_received
     );
 
+    /*
+     * CG: Because this has to line up with the received delta, i.e. "the
+     *     server had [these] commands at [this] TIC", using the latest value
+     *     for run can cause inconsistencies
+     */
+
+    /*
     np->sync.commands[playernum].run = MAX(
       np->sync.commands[playernum].run, command_index_run
+    );
+    */
+
+    np->sync.commands[playernum].run = command_index_run;
+
+    D_Log(LOG_SYNC, "(%d) Commands received/run for %d => %d: %d, %d (%d, %d)\n",
+      gametic,
+      np->playernum,
+      playernum,
+      np->sync.commands[playernum].received,
+      np->sync.commands[playernum].run,
+      command_index_received,
+      command_index_run
     );
   }
 
@@ -468,7 +485,7 @@ void N_PackSetup(netpeer_t *np) {
 
       if (wf->src == source_iwad || wf->src == source_auto_load)
         continue;
-      
+
       wad_name = M_Basename(wf->name);
 
       if (!wad_name)
@@ -806,7 +823,7 @@ dboolean N_UnpackPlayerPreferenceChange(netpeer_t *np, int *tic,
 
 dboolean N_UnpackPlayerPreferenceName(netpeer_t *np, buf_t *buf) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
-  
+
   read_string(
     pbuf, buf, "player preference name", MAX_PLAYER_PREFERENCE_NAME_SIZE
   );

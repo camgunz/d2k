@@ -44,8 +44,8 @@
 #include "sc_man.h"
 #include "w_wad.h"
 
-#define DEBUG_SOUND 0
-#define SOUND_LOG LOG_SOUND
+#define DEBUG_SOUND 1
+#define SOUND_LOG LOG_SYNC
 
 // when to clip out sounds
 // Does not fit the large outdoor areas.

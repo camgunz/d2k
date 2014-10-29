@@ -3,7 +3,9 @@
 ## ZDDL
 
 1. Bugs
-  - Jittery 2nd player?
+  - Fix sound
+    - I think this is due to the received/run split, clients aren't getting the
+      right commands from other clients
 
 1. Add latency mitigation
   - player movement smoothing
