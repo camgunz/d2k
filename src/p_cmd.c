@@ -43,7 +43,7 @@
 #include "p_pspr.h"
 #include "p_user.h"
 #include "s_sound.h"
-#include "sv_tbuf.h"
+#include "sv_main.h"
 
 #define NOEXTRAPOLATION 0
 #define PMOBJTHINKER 1

@@ -24,7 +24,10 @@
 #ifndef SV_MAIN_H__
 #define SV_MAIN_H__
 
-void SV_CleanupOldCommandsAndStates(void);
+extern int sv_limit_player_commands;
+
+void         SV_CleanupOldCommandsAndStates(void);
+unsigned int SV_GetPlayerCommandLimit(int playernum);
 
 #endif
 

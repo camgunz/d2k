@@ -55,7 +55,7 @@
 #include "p_user.h"
 #include "n_net.h"
 #include "cl_main.h"
-#include "sv_tbuf.h"
+#include "sv_main.h"
 
 //e6y
 #ifdef GL_DOOM
