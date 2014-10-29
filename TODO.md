@@ -2,14 +2,8 @@
 
 ## ZDDL
 
-1. Bugs
-  - Fix sound
-    - I think this is due to the received/run split, clients aren't getting the
-      right commands from other clients
-
 1. Add latency mitigation
   - player movement smoothing
-    - Working on serverside player command limit
     - Make player position extrapolation optional (makes unlagged less
       accurate)
   - unlagged
