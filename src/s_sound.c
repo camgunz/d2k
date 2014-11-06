@@ -45,7 +45,7 @@
 #include "w_wad.h"
 
 #define DEBUG_SOUND 0
-#define SOUND_LOG LOG_SYNC
+#define SOUND_LOG LOG_SOUND
 
 // when to clip out sounds
 // Does not fit the large outdoor areas.
@@ -1021,7 +1021,7 @@ void S_TrimSoundLog(int tic, int command_index) {
   while (played_sounds != NULL) {
     played_sound_t *sound = (played_sound_t *)played_sounds->data;
 
-    if (sound->tic > tic || sound->command_index > command_index)
+    if (sound->tic >= tic || sound->command_index >= command_index)
       break;
 
     D_Log(SOUND_LOG, "(%d) Removing played sound ", gametic);

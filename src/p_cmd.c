@@ -449,7 +449,7 @@ void P_RemoveOldCommands(int sync_index, GQueue *commands) {
   while (!g_queue_is_empty(commands)) {
     netticcmd_t *ncmd = g_queue_peek_head(commands);
 
-    if (ncmd->index <= sync_index) {
+    if (ncmd->index < sync_index) {
       D_Log(LOG_SYNC, "P_RemoveOldCommands: Removing command %d\n",
         ncmd->index
       );

@@ -43,7 +43,7 @@ static void sv_remove_old_commands(void) {
     for (int i = 0; i < MAXPLAYERS; i++) {
       if (i != iter.np->playernum) {
         P_RemoveOldCommands(
-          iter.np->sync.commands[i].received,
+          iter.np->sync.commands[i].received + 1,
           iter.np->sync.commands[i].sync_queue
         );
       }

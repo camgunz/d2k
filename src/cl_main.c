@@ -46,8 +46,8 @@
 static bool         cl_received_setup = false;
 static auth_level_e cl_authorization_level = AUTH_LEVEL_NONE;
 static bool         cl_loading_state = false;
-static int          cl_local_command_index = 0;
-static int          cl_current_command_index = 0;
+static int          cl_local_command_index = 1;
+static int          cl_current_command_index = 1;
 static int          cl_latest_command_run = 0;
 static int          cl_latest_tic_run = 0;
 static bool         cl_running_consoleplayer_commands = false;
@@ -108,7 +108,7 @@ static bool cl_load_new_state(netpeer_t *server,
   for (unsigned int i = 0; i < sync_command_count; i++) {
     netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
 
-    if (sync_ncmd->index > previous_synchronized_command_index &&
+    if (sync_ncmd->index >= previous_synchronized_command_index &&
         sync_ncmd->index <= latest_synchronized_command_index) {
       netticcmd_t *run_ncmd = P_GetNewBlankCommand();
 
@@ -138,12 +138,13 @@ static bool cl_load_new_state(netpeer_t *server,
   state_loaded = N_LoadLatestState(false);
   cl_loading_state = false;
 
-  if (!state_loaded)
+  if (!state_loaded) {
     P_Echo(consoleplayer, "Error loading latest state");
-  else
-    N_RemoveOldStates(delta->from_tic);
+    return false;
+  }
 
-  return state_loaded;
+  N_RemoveOldStates(delta->from_tic);
+  return true;
 }
 
 static void cl_predict(int saved_gametic,
@@ -253,7 +254,7 @@ void CL_CheckForStateUpdates(void) {
   server->sync.outdated = true;
 
   if (latest_synchronized_command_index > previous_synchronized_command_index) {
-    P_RemoveOldCommands(latest_synchronized_command_index, sync_commands);
+    P_RemoveOldCommands(previous_synchronized_command_index, sync_commands);
     cl_synchronized_command_index = latest_synchronized_command_index;
   }
 
