@@ -36,6 +36,7 @@
 #include "p_cmd.h"
 #include "p_user.h"
 #include "r_fps.h"
+#include "s_sound.h"
 
 #define LOAD_PREVIOUS_STATE 1
 #define PREDICT_LOST_TICS 1
@@ -48,6 +49,7 @@ static bool         cl_loading_state = false;
 static int          cl_local_command_index = 0;
 static int          cl_current_command_index = 0;
 static int          cl_latest_command_run = 0;
+static int          cl_latest_tic_run = 0;
 static bool         cl_running_consoleplayer_commands = false;
 static bool         cl_running_nonconsoleplayer_commands = false;
 static int          cl_state_tic = -1;
@@ -204,6 +206,8 @@ void CL_CheckForStateUpdates(void) {
   if (server->sync.tic == cl_state_tic)
     return;
 
+  S_ResetSoundLog();
+
   cl_state_tic = server->sync.tic;
 
   if (!CL_GetCommandSync(consoleplayer,
@@ -252,6 +256,8 @@ void CL_CheckForStateUpdates(void) {
     P_RemoveOldCommands(latest_synchronized_command_index, sync_commands);
     cl_synchronized_command_index = latest_synchronized_command_index;
   }
+
+  S_TrimSoundLog(cl_delta_from_tic, cl_synchronized_command_index);
 }
 
 bool CL_LoadingState(void) {
@@ -266,20 +272,12 @@ bool CL_RePredicting(void) {
   return (CLIENT && cl_repredicting);
 }
 
-bool CL_SoundAllowed(void) {
-  if (!MULTINET)
-    return true;
+bool CL_RunningConsoleplayerCommands(void) {
+  return cl_running_consoleplayer_commands;
+}
 
-  if (!CLIENT)
-    return true;
-
-  if (cl_running_nonconsoleplayer_commands)
-    return true;
-
-  if ((!cl_synchronizing) && (!cl_repredicting))
-    return true;
-
-  return false;
+bool CL_RunningNonConsoleplayerCommands(void) {
+  return cl_running_nonconsoleplayer_commands;
 }
 
 void CL_SetupCommandState(int playernum, netticcmd_t *ncmd) {
@@ -305,6 +303,14 @@ void CL_ShutdownCommandState(void) {
 
   if (cl_current_command_index > cl_latest_command_run)
     cl_latest_command_run = cl_current_command_index;
+}
+
+void CL_UpdateLatestTic(void) {
+  if (!CLIENT)
+    return;
+
+  if (gametic > cl_latest_tic_run)
+    cl_latest_tic_run = gametic;
 }
 
 int CL_GetCurrentCommandIndex(void) {

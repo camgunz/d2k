@@ -68,7 +68,7 @@ void D_Log(log_channel_e channel, const char *fmt, ...) {
     return;
 
   if (channel >= LOG_MAX)
-    I_Error("D_Log: Invalid channel %d (valid: 0 - %d)", channel, LOG_MAX);
+    I_Error("D_Log: Invalid channel %d (valid: 0 - %d)", channel, LOG_MAX - 1);
   
   fh = (FILE *)g_ptr_array_index(log_files, channel);
 

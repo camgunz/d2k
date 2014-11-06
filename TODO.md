@@ -3,9 +3,7 @@
 ## ZDDL
 
 1. Add latency mitigation
-  - player movement smoothing
-    - Make player position extrapolation optional (makes unlagged less
-      accurate)
+  - Make player position extrapolation optional (makes unlagged less accurate)
   - unlagged
     - Save attacking player position
     - Save current game state
@@ -28,6 +26,7 @@
       on the client's current lag and a preselected function (curve)
 
 1. Remove 4 player restriction
+  - `players` becomes a GArray
 
 1. Add spectators
 

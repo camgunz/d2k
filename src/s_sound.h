@@ -102,6 +102,12 @@ void S_SetSfxVolume(int volume);
 //
 void S_ReloadChannelOrigins(void);
 
+//
+// Sound Log routines
+//
+void S_ResetSoundLog(void);
+void S_TrimSoundLog(int tic, int command_index);
+
 // machine-independent sound params
 extern int default_numChannels;
 extern int numChannels;

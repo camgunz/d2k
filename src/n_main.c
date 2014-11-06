@@ -404,6 +404,7 @@ void N_RunTic(void) {
     N_UpdateSync();
   }
 
+  CL_UpdateLatestTic();
   gametic++;
 }
 
