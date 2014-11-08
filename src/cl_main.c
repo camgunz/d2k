@@ -38,28 +38,36 @@
 #include "r_fps.h"
 #include "s_sound.h"
 
-#define LOAD_PREVIOUS_STATE 1
-#define PREDICT_LOST_TICS 1
-#define USE_NEW_PREDICTION 1
-#define PREDICT_IN_ONE_TIC 0
+#define MATCH_TICS 0
+#define BUNCH_TICS 0
+#define RUN_EXTRA_TICS 1
 
-static bool         cl_received_setup = false;
-static auth_level_e cl_authorization_level = AUTH_LEVEL_NONE;
-static bool         cl_loading_state = false;
-static int          cl_local_command_index = 1;
-static int          cl_current_command_index = 1;
-static int          cl_latest_command_run = 0;
-static int          cl_latest_tic_run = 0;
-static bool         cl_running_consoleplayer_commands = false;
-static bool         cl_running_nonconsoleplayer_commands = false;
-static int          cl_state_tic = -1;
-static int          cl_synchronized_command_index = -1;
-static int          cl_delta_from_tic = -1;
-static int          cl_delta_to_tic = -1;
-static bool         cl_synchronizing = false;
-static bool         cl_repredicting = false;
+static bool          cl_received_setup = false;
+static auth_level_e  cl_authorization_level = AUTH_LEVEL_NONE;
+static bool          cl_loading_state = false;
+static int           cl_local_command_index = 1;
+static int           cl_current_command_index = 1;
+static int           cl_latest_command_run = 0;
+static int           cl_latest_tic_run = 0;
+static bool          cl_running_consoleplayer_commands = false;
+static bool          cl_running_nonconsoleplayer_commands = false;
+static int           cl_state_tic = -1;
+static int           cl_synchronized_command_index = -1;
+static int           cl_delta_from_tic = -1;
+static int           cl_delta_to_tic = -1;
+static bool          cl_synchronizing = false;
+static bool          cl_repredicting = false;
+static GHashTable   *cl_delta_commands;
 
 int cl_extrapolate_player_positions = false;
+
+static gboolean remove_old_delta_commands(gpointer key, gpointer value,
+                                          gpointer user_data) {
+  int tic = GPOINTER_TO_INT(key);
+  int tic_cutoff = GPOINTER_TO_INT(user_data);
+
+  return tic < tic_cutoff;
+}
 
 static bool cl_load_new_state(netpeer_t *server,
                               int previous_synchronized_command_index,
@@ -69,20 +77,37 @@ static bool cl_load_new_state(netpeer_t *server,
   game_state_delta_t *delta = &server->sync.delta;
   unsigned int sync_command_count = g_queue_get_length(sync_commands);
   bool state_loaded;
+  int start_command_index;
+  int end_command_index;
 
-  D_Log(LOG_SYNC, "(%d) Loading new state [%d => %d] [%d => %d]\n",
+  if (delta != NULL) {
+    start_command_index = GPOINTER_TO_INT(g_hash_table_lookup(
+      cl_delta_commands,
+      GINT_TO_POINTER(delta->from_tic)
+    ));
+  }
+  else {
+    start_command_index = 0;
+  }
+  end_command_index = latest_synchronized_command_index;
+
+  if (start_command_index == 0)
+    start_command_index = previous_synchronized_command_index;
+
+  cl_current_command_index = start_command_index;
+
+  D_Log(LOG_SYNC, "(%d) Loading new state [%d => %d] [%d/%d => %d/%d]\n",
     gametic,
     delta->from_tic,
     delta->to_tic,
     previous_synchronized_command_index,
-    latest_synchronized_command_index
+    start_command_index,
+    latest_synchronized_command_index,
+    end_command_index
   );
 
   P_PrintCommands(sync_commands);
 
-  cl_current_command_index = previous_synchronized_command_index;
-
-#if LOAD_PREVIOUS_STATE
   cl_loading_state = true;
   state_loaded = N_LoadLatestState(false);
   cl_loading_state = false;
@@ -94,7 +119,6 @@ static bool cl_load_new_state(netpeer_t *server,
     delta->to_tic = cl_delta_to_tic;
     return false;
   }
-#endif
 
   if (!N_ApplyStateDelta(delta)) {
     P_Echo(consoleplayer, "Error applying state delta");
@@ -104,12 +128,11 @@ static bool cl_load_new_state(netpeer_t *server,
     return false;
   }
 
-#if LOAD_PREVIOUS_STATE
   for (unsigned int i = 0; i < sync_command_count; i++) {
     netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
 
-    if (sync_ncmd->index >= previous_synchronized_command_index &&
-        sync_ncmd->index <= latest_synchronized_command_index) {
+    if (sync_ncmd->index >= start_command_index &&
+        sync_ncmd->index <= end_command_index) {
       netticcmd_t *run_ncmd = P_GetNewBlankCommand();
 
       memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
@@ -130,7 +153,6 @@ static bool cl_load_new_state(netpeer_t *server,
     }
   }
   cl_synchronizing = false;
-#endif
 
   D_Log(LOG_SYNC, "Ran sync'd commands, loading latest state\n");
 
@@ -144,6 +166,11 @@ static bool cl_load_new_state(netpeer_t *server,
   }
 
   N_RemoveOldStates(delta->from_tic);
+  g_hash_table_foreach_remove(
+    cl_delta_commands,
+    remove_old_delta_commands,
+    GINT_TO_POINTER(delta->from_tic)
+  );
   return true;
 }
 
@@ -153,7 +180,11 @@ static void cl_predict(int saved_gametic,
                        GQueue *run_commands) {
   int command_index = latest_synchronized_command_index;
   unsigned int sync_command_count = g_queue_get_length(sync_commands);
+
+#if MATCH_TICS
   unsigned int command_count = 0;
+  int tic_count = saved_gametic - gametic;
+  int extra_tics;
 
   for (unsigned int i = 0; i < sync_command_count; i++) {
     netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
@@ -161,6 +192,62 @@ static void cl_predict(int saved_gametic,
     if (sync_ncmd->index > command_index)
       command_count++;
   }
+
+  extra_tics = tic_count - command_count;
+  D_Log(LOG_SYNC, "(%d) Extra TICs: %d\n", gametic, extra_tics);
+
+  /*
+   * CG: Server ran >= 1 TIC without a command from us, which means at some
+   * point it will run a TIC with > 1 commands from us, in other words, it
+   * will bunch > 1 commands together in a single TIC. So we must bunch
+   * some commands here to maintain clientside prediction's accuracy.
+   */
+
+#if BUNCH_TICS
+  while (extra_tics < 0) {
+    int found_command = false;
+
+    for (unsigned int i = 0; i < sync_command_count; i++) {
+      netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+      netticcmd_t *run_ncmd;
+
+      if (sync_ncmd->index <= command_index)
+        continue;
+
+      run_ncmd = P_GetNewBlankCommand();
+      memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
+      g_queue_push_tail(run_commands, run_ncmd);
+      command_index = sync_ncmd->index;
+      found_command = true;
+    }
+
+    if (!found_command)
+      break;
+
+    extra_tics++;
+  }
+#endif
+
+  /*
+   * CG: Server bunched > 1 command(s) together from us, which means at some
+   * point it will run > 1 TIC without a command from us. So we must run
+   * these TICs here to maintain clientside prediction's accuracy.
+   */
+
+#if RUN_EXTRA_TICS
+  while (extra_tics > 0) {
+    cl_repredicting = true;
+    N_RunTic();
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
+      R_RestoreInterpolations();
+    }
+    cl_repredicting = false;
+    extra_tics--;
+  }
+#endif
+
+#endif
 
   for (unsigned int i = 0; i < sync_command_count; i++) {
     netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
@@ -180,6 +267,30 @@ static void cl_predict(int saved_gametic,
     }
     cl_repredicting = false;
   }
+
+#if MATCH_TICS
+  if (!g_queue_is_empty(run_commands)) {
+    cl_repredicting = true;
+    N_RunTic();
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
+      R_RestoreInterpolations();
+    }
+    cl_repredicting = false;
+  }
+#endif
+
+#if 0
+  while (gametic < saved_gametic) {
+    cl_repredicting = true;
+    N_RunTic();
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
+      R_RestoreInterpolations();
+    }
+    cl_repredicting = false;
+  }
+#endif
 }
 
 void CL_CheckForStateUpdates(void) {
@@ -192,6 +303,7 @@ void CL_CheckForStateUpdates(void) {
   fixed_t saved_prev_viewz = players[displayplayer].prev_viewz;
   fixed_t saved_viewz = players[displayplayer].viewz;
   int saved_gametic = gametic;
+  int old_delta_command_index;
 
   if (!DELTACLIENT)
     return;
@@ -220,6 +332,11 @@ void CL_CheckForStateUpdates(void) {
     N_Disconnect();
     return;
   }
+
+  old_delta_command_index = GPOINTER_TO_INT(g_hash_table_lookup(
+    cl_delta_commands,
+    GINT_TO_POINTER(server->sync.delta.from_tic)
+  ));
 
   state_loaded = cl_load_new_state(
     server,
@@ -253,10 +370,26 @@ void CL_CheckForStateUpdates(void) {
 
   server->sync.outdated = true;
 
-  if (latest_synchronized_command_index > previous_synchronized_command_index) {
-    P_RemoveOldCommands(previous_synchronized_command_index, sync_commands);
+  /*
+  g_hash_table_insert(
+    cl_delta_commands,
+    GINT_TO_POINTER(delta->to_tic),
+    GINT_TO_POINTER(latest_synchronized_command_index)
+  );
+  */
+
+  if (latest_synchronized_command_index >
+      previous_synchronized_command_index) {
+    // P_RemoveOldCommands(previous_synchronized_command_index, sync_commands);
+    P_RemoveOldCommands(old_delta_command_index, sync_commands);
     cl_synchronized_command_index = latest_synchronized_command_index;
   }
+
+  g_hash_table_insert(
+    cl_delta_commands,
+    GINT_TO_POINTER(server->sync.delta.from_tic),
+    GINT_TO_POINTER(previous_synchronized_command_index)
+  );
 
   S_TrimSoundLog(cl_delta_from_tic, cl_synchronized_command_index);
 }
@@ -351,6 +484,10 @@ void CL_MarkServerOutdated(void) {
     server->sync.outdated = true;
 
   N_UpdateSync();
+}
+
+void CL_Init(void) {
+  cl_delta_commands = g_hash_table_new(NULL, NULL);
 }
 
 /* vi: set et ts=2 sw=2: */

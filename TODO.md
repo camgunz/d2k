@@ -1,9 +1,14 @@
 # To Do
 
+## Prototype
+
+1. Fix stuttery lifts
+
+1. Fix plasma lag
+
 ## ZDDL
 
 1. Add latency mitigation
-  - Make player position extrapolation optional (makes unlagged less accurate)
   - unlagged
     - Save attacking player position
     - Save current game state

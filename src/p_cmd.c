@@ -446,6 +446,8 @@ void P_ClearRunCommands(int playernum) {
 }
 
 void P_RemoveOldCommands(int sync_index, GQueue *commands) {
+  D_Log(LOG_SYNC, "(%d) P_RemoveOldCommands(%d)\n", gametic, sync_index);
+
   while (!g_queue_is_empty(commands)) {
     netticcmd_t *ncmd = g_queue_peek_head(commands);
 

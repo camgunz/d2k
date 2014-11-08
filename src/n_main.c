@@ -55,9 +55,10 @@
 #include "e6y.h"
 
 #define DEBUG_NET 0
-#define DEBUG_SYNC 0
+#define DEBUG_SYNC 1
 #define DEBUG_SAVE 0
 #define PRINT_NETWORK_STATS 0
+#define LOG_SECTOR 43
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
 #define SERVER_SLEEP_TIMEOUT 1
@@ -282,6 +283,8 @@ void N_InitNetGame(void) {
       if (DEBUG_SYNC && CLIENT)
         D_EnableLogChannel(LOG_SYNC, "client-sync.log");
 
+      CL_Init();
+
       N_ParseAddressString(myargv[i + 1], &host, &port);
 
       P_Printf(consoleplayer,
@@ -382,6 +385,17 @@ void N_RunTic(void) {
     I_GetTime_SaveMS();
 
   G_Ticker();
+
+#ifdef LOG_SECTOR
+  if (LOG_SECTOR < numsectors) {
+    D_Log(LOG_SYNC, "(%d) Sector %d: %d/%d\n",
+      gametic,
+      LOG_SECTOR,
+      sectors[LOG_SECTOR].floorheight >> FRACBITS,
+      sectors[LOG_SECTOR].ceilingheight >> FRACBITS
+    );
+  }
+#endif
 
   P_Checksum(gametic);
 

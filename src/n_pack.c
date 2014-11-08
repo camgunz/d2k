@@ -301,7 +301,7 @@ static void free_string(gpointer data) {
 static void pack_commands(pbuf_t *pbuf, netpeer_t *np, int playernum) {
   GQueue *commands = np->sync.commands[playernum].sync_queue;
   unsigned int queue_size = g_queue_get_length(commands);
-  unsigned int command_count = 0;
+  unsigned short command_count = 0;
 
   M_PBufWriteShort(pbuf, playernum);
 
@@ -315,7 +315,7 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, int playernum) {
     }
 
     /* CG: TODO: Add limit on command_count */
-    M_PBufWriteUChar(pbuf, command_count);
+    M_PBufWriteUShort(pbuf, command_count);
 
     /*
     D_Log(LOG_SYNC, "pack_commands: %d sending %u commands for %d to %d\n",
@@ -353,17 +353,18 @@ static bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
 
   if ((CLIENT && playernum != consoleplayer) ||
       (SERVER && playernum == np->playernum)) {
-    unsigned char command_count;
+    unsigned short command_count;
 
-    read_uchar(pbuf, command_count, "command count");
+    read_ushort(pbuf, command_count, "command count");
 
     /*
-     * CG: TODO: Add a limit to the number of commands accepted here.  uchar
-     *           limits this to 255 commands, but in reality that's > 7
-     *           seconds, which is still far too long.  Quake has an
-     *           "sv_maxlag" setting (or something); that may be preferable to
-     *           a static limit... but I still think having an upper bound on
-     *           that setting is prudent.
+     * CG: TODO: Add a limit to the number of commands accepted here.  Quake
+     *           has an "sv_maxlag" setting (or something); that may be
+     *           preferable to a static limit... but I still think having an
+     *           upper bound on that setting is prudent.
+     *
+     * UPDATE:   Here may not be the place for a command count limit, because
+     *           it's so low-level.
      */
 
     for (unsigned int i = 0; i < command_count; i++) {
