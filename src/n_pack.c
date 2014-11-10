@@ -434,6 +434,7 @@ static bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
 
     np->sync.commands[playernum].run = command_index_run;
 
+    /*
     D_Log(LOG_SYNC, "(%d) Commands received/run for %d => %d: %d, %d (%d, %d)\n",
       gametic,
       np->playernum,
@@ -443,6 +444,7 @@ static bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
       command_index_received,
       command_index_run
     );
+    */
   }
 
   return true;

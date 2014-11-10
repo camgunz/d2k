@@ -387,7 +387,11 @@ void N_RunTic(void) {
   G_Ticker();
 
 #ifdef LOG_SECTOR
-  if (LOG_SECTOR < numsectors) {
+  if ((LOG_SECTOR < numsectors) &&
+      (!CL_RePredicting()) &&
+      (!CL_Synchronizing()) &&
+      (sectors[LOG_SECTOR].floorheight != (168 << FRACBITS)) &&
+      (sectors[LOG_SECTOR].floorheight != (40 << FRACBITS))) {
     D_Log(LOG_SYNC, "(%d) Sector %d: %d/%d\n",
       gametic,
       LOG_SECTOR,

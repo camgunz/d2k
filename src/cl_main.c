@@ -36,27 +36,122 @@
 #include "p_cmd.h"
 #include "p_user.h"
 #include "r_fps.h"
+#include "r_state.h"
 #include "s_sound.h"
 
-#define MATCH_TICS 0
-#define BUNCH_TICS 0
+#define PREDICT_EXTRAS 1
+#define LOG_EXTRAS 1
 #define RUN_EXTRA_TICS 1
+#define LOG_EXTRA_TICS 1
+#define RUN_EXTRA_COMMANDS 1
+#define LOG_EXTRA_COMMANDS 1
+#define USE_NEW_PREDICTION 1
 
-static bool          cl_received_setup = false;
-static auth_level_e  cl_authorization_level = AUTH_LEVEL_NONE;
-static bool          cl_loading_state = false;
-static int           cl_local_command_index = 1;
-static int           cl_current_command_index = 1;
-static int           cl_latest_command_run = 0;
-static int           cl_latest_tic_run = 0;
-static bool          cl_running_consoleplayer_commands = false;
-static bool          cl_running_nonconsoleplayer_commands = false;
-static int           cl_state_tic = -1;
-static int           cl_synchronized_command_index = -1;
-static int           cl_delta_from_tic = -1;
-static int           cl_delta_to_tic = -1;
-static bool          cl_synchronizing = false;
-static bool          cl_repredicting = false;
+// #define LOG_SECTOR 43
+
+#define CL_PREDICT_ORIG     1
+#define CL_PREDICT_EXTRA    2
+#define CL_PREDICT_COMMAND1 3
+#define CL_PREDICT_COMMAND2 4
+#define CL_PREDICT_COMMAND3 5
+
+#define CL_PREDICT CL_PREDICT_COMMAND3
+
+#if CL_PREDICT == CL_PREDICT_ORIG
+#define cl_predict cl_predict_command2
+#elif CL_PREDICT == CL_PREDICT_EXTRA
+#define cl_predict cl_predict_extra
+#elif CL_PREDICT == CL_PREDICT_COMMAND1
+#define cl_predict cl_predict_command1
+#elif CL_PREDICT == CL_PREDICT_COMMAND2
+#define cl_predict cl_predict_command2
+#elif CL_PREDICT == CL_PREDICT_COMMAND3
+#define cl_predict cl_predict_command3
+#else
+#error "Invalid value for CL_PREDICT"
+#endif
+
+/*
+ * Marked true when the client has received the setup message from the server
+ */
+static bool cl_received_setup = false;
+
+/*
+ * Set when the client receives an authorization message from the server
+ * NOTE: Currently unimplemented.
+ */
+static auth_level_e cl_authorization_level = AUTH_LEVEL_NONE;
+
+/*
+ * The current command index, used for generating new commands
+ */
+static int cl_local_command_index = 1;
+
+/*
+ * Index of the currently running command
+ */
+static int cl_current_command_index = 1;
+
+/*
+ * Index of the latest command run
+ */
+static int cl_latest_command_run = 0;
+
+/*
+ * TIC of the latest command run
+ */
+static int cl_latest_tic_run = 0;
+
+/*
+ * Marked true when the client is loading a state
+ * NOTE: Currently used to avoid stopping orphaned sounds
+ */
+static bool cl_loading_state = false;
+
+/*
+ * Marked true when the client is running consoleplayer's commands
+ */
+static bool cl_running_consoleplayer_commands = false;
+
+/*
+ * Marked true when the client is running commands for a non-consoleplayer
+ * player
+ */
+static bool cl_running_nonconsoleplayer_commands = false;
+
+/*
+ * Marked true when the client is synchronizing
+ */
+static bool cl_synchronizing = false;
+
+/*
+ * Marked true when the client is re-predicting
+ */
+static bool cl_repredicting = false;
+
+/*
+ * The TIC of the last state received from the server
+ */
+static int cl_state_tic = -1;
+
+/*
+ * The start TIC of the latest delta received
+ */
+static int cl_delta_from_tic = -1;
+
+/*
+ * The end TIC of the latest delta received
+ */
+static int cl_delta_to_tic = -1;
+
+/*
+ * The index of the latest command synchronized with the server
+ */
+static int cl_synchronized_command_index = -1;
+
+/*
+ * Maps server state TICs to the latest commands they had
+ */
 static GHashTable   *cl_delta_commands;
 
 int cl_extrapolate_player_positions = false;
@@ -114,17 +209,11 @@ static bool cl_load_new_state(netpeer_t *server,
 
   if (!state_loaded) {
     P_Echo(consoleplayer, "Error loading previous state");
-    server->sync.tic = cl_state_tic;
-    delta->from_tic = cl_delta_from_tic;
-    delta->to_tic = cl_delta_to_tic;
     return false;
   }
 
   if (!N_ApplyStateDelta(delta)) {
     P_Echo(consoleplayer, "Error applying state delta");
-    server->sync.tic = cl_state_tic;
-    delta->from_tic = cl_delta_from_tic;
-    delta->to_tic = cl_delta_to_tic;
     return false;
   }
 
@@ -145,7 +234,7 @@ static bool cl_load_new_state(netpeer_t *server,
   );
 
   cl_synchronizing = true;
-  while (gametic < server->sync.tic) {
+  while (gametic <= server->sync.tic) {
     N_RunTic();
     if (players[displayplayer].mo != NULL) {
       R_InterpolateView(&players[displayplayer]);
@@ -174,14 +263,134 @@ static bool cl_load_new_state(netpeer_t *server,
   return true;
 }
 
-static void cl_predict(int saved_gametic,
-                       int latest_synchronized_command_index,
-                       GQueue *sync_commands,
-                       GQueue *run_commands) {
+#if CL_PREDICT == CL_PREDICT_EXTRA
+static void cl_predict_extra(int saved_gametic,
+                             int latest_synchronized_command_index,
+                             GQueue *sync_commands,
+                             GQueue *run_commands) {
   int command_index = latest_synchronized_command_index;
   unsigned int sync_command_count = g_queue_get_length(sync_commands);
 
-#if MATCH_TICS
+  int tics_run = gametic - cl_state_tic;
+  int commands_run = command_index - cl_synchronized_command_index;
+  int extra_tics = tics_run - commands_run;
+  int extra_commands = commands_run - tics_run;
+
+  if (cl_state_tic == -1)
+    return;
+
+  D_Log(LOG_SYNC,
+    "(%d) Predicting: (%d/%d, %d/%d) => %d/%d (%d, %d, %d, %d)\n",
+    gametic,
+    cl_state_tic,
+    cl_synchronized_command_index,
+    gametic,
+    command_index,
+    saved_gametic,
+    cl_latest_command_run,
+    tics_run,
+    commands_run,
+    extra_tics,
+    extra_commands
+  );
+
+#ifdef LOG_SECTOR
+  if (LOG_SECTOR < numsectors) {
+    D_Log(LOG_SYNC, "(%d) Sector %d: %d/%d\n",
+      gametic,
+      LOG_SECTOR,
+      sectors[LOG_SECTOR].floorheight >> FRACBITS,
+      sectors[LOG_SECTOR].ceilingheight >> FRACBITS
+    );
+  }
+#endif
+
+  while (extra_tics > 0) {
+    cl_repredicting = true;
+    N_RunTic();
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
+      R_RestoreInterpolations();
+    }
+    cl_repredicting = false;
+    extra_tics--;
+  }
+
+  while (extra_commands > 0)  {
+    bool found_command = false;
+
+    for (unsigned int i = 0; i < sync_command_count; i++) {
+      netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+      netticcmd_t *run_ncmd;
+
+      if (sync_ncmd->index <= command_index)
+        continue;
+
+      run_ncmd = P_GetNewBlankCommand();
+      memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
+      g_queue_push_tail(run_commands, run_ncmd);
+      command_index = sync_ncmd->index;
+      found_command = true;
+      break;
+    }
+
+    if (!found_command)
+      break;
+
+    extra_commands--;
+  }
+
+  for (unsigned int i = 0; i < sync_command_count; i++) {
+    netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+    netticcmd_t *run_ncmd;
+
+    if (sync_ncmd->index <= command_index)
+      continue;
+
+    run_ncmd = P_GetNewBlankCommand();
+    memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
+    g_queue_push_tail(run_commands, run_ncmd);
+    cl_repredicting = true;
+    N_RunTic();
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
+      R_RestoreInterpolations();
+    }
+    cl_repredicting = false;
+  }
+
+  if (!g_queue_is_empty(run_commands)) {
+    D_Log(LOG_SYNC, "(%d) What in the fuck: %d/%d, %u\n",
+      gametic,
+      command_index,
+      latest_synchronized_command_index,
+      g_queue_get_length(run_commands)
+    );
+    cl_repredicting = true;
+    N_RunTic();
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
+      R_RestoreInterpolations();
+    }
+    cl_repredicting = false;
+  }
+}
+#endif
+
+#if CL_PREDICT == CL_PREDICT_ORIG
+static void cl_predict_orig(int saved_gametic,
+                            int latest_synchronized_command_index,
+                            GQueue *sync_commands,
+                            GQueue *run_commands) {
+  int command_index = latest_synchronized_command_index;
+  unsigned int sync_command_count = g_queue_get_length(sync_commands);
+
+#if PREDICT_EXTRAS
+  /*
+   * CG: A bunched command is where more than 1 command was run per TIC.
+   *     A bunched TIC is where more than one TIC was run per command.
+   *     Pretty straightforward :)
+   */
   unsigned int command_count = 0;
   int tic_count = saved_gametic - gametic;
   int extra_tics;
@@ -194,16 +403,19 @@ static void cl_predict(int saved_gametic,
   }
 
   extra_tics = tic_count - command_count;
-  D_Log(LOG_SYNC, "(%d) Extra TICs: %d\n", gametic, extra_tics);
+  // D_Log(LOG_SYNC, "(%d) Extra TICs: %d\n", gametic, extra_tics);
 
   /*
-   * CG: Server ran >= 1 TIC without a command from us, which means at some
-   * point it will run a TIC with > 1 commands from us, in other words, it
-   * will bunch > 1 commands together in a single TIC. So we must bunch
-   * some commands here to maintain clientside prediction's accuracy.
+   * CG: Server bunched a command, so we must bunch some commands here to
+   *     maintain clienside prediction's accuracy.
    */
 
-#if BUNCH_TICS
+#if LOG_EXTRA_COMMANDS
+  if (extra_tics < 0)
+    D_Log(LOG_SYNC, "(%d) Bunching %d commands\n", gametic, -extra_tics);
+#endif
+
+#if RUN_EXTRA_COMMANDS
   while (extra_tics < 0) {
     int found_command = false;
 
@@ -229,10 +441,14 @@ static void cl_predict(int saved_gametic,
 #endif
 
   /*
-   * CG: Server bunched > 1 command(s) together from us, which means at some
-   * point it will run > 1 TIC without a command from us. So we must run
-   * these TICs here to maintain clientside prediction's accuracy.
+   * CG: Server bunched a TIC, so we must bunch some TICs here to maintain
+   *     clientside prediction's accuracy.
    */
+
+#if LOG_EXTRA_TICS
+  if (extra_tics > 0)
+    D_Log(LOG_SYNC, "(%d) Bunching %d TICs\n", gametic, extra_tics);
+#endif
 
 #if RUN_EXTRA_TICS
   while (extra_tics > 0) {
@@ -268,7 +484,7 @@ static void cl_predict(int saved_gametic,
     cl_repredicting = false;
   }
 
-#if MATCH_TICS
+#if PREDICT_EXTRAS && RUN_EXTRA_COMMANDS
   if (!g_queue_is_empty(run_commands)) {
     cl_repredicting = true;
     N_RunTic();
@@ -284,14 +500,314 @@ static void cl_predict(int saved_gametic,
   while (gametic < saved_gametic) {
     cl_repredicting = true;
     N_RunTic();
-    if (players[displayplayer].mo != NULL) {
-      R_InterpolateView(&players[displayplayer]);
+    if (players[displayplayer].mo != NULL) { R_InterpolateView(&players[displayplayer]);
       R_RestoreInterpolations();
     }
     cl_repredicting = false;
   }
 #endif
 }
+#endif
+
+#if CL_PREDICT == CL_PREDICT_COMMAND1
+static void cl_predict_command1(int saved_gametic,
+                                int latest_synchronized_command_index,
+                                GQueue *sync_commands,
+                                GQueue *run_commands) {
+  int command_index = latest_synchronized_command_index;
+  unsigned int sync_command_count = g_queue_get_length(sync_commands);
+  netticcmd_t *first_ncmd = NULL;
+  int first_tic;
+
+  for (unsigned int i = 0; i < sync_command_count; i++) {
+    netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+
+    if (sync_ncmd->index > command_index) {
+      first_ncmd = sync_ncmd;
+      break;
+    }
+  }
+
+  if (first_ncmd == NULL)
+    return;
+
+  first_tic = first_ncmd->tic;
+
+  D_Log(LOG_SYNC, "(%d) Predicting: %d/%d (%d)\n",
+    gametic,
+    gametic,
+    first_tic,
+    gametic - first_tic
+  );
+
+  while (gametic < first_tic) {
+    cl_repredicting = true;
+    N_RunTic();
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
+      R_RestoreInterpolations();
+    }
+    cl_repredicting = false;
+  }
+
+  while (first_tic < gametic) {
+    bool found_command = false;
+
+    for (unsigned int i = 0; i < sync_command_count; i++) {
+      netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+      netticcmd_t *run_ncmd;
+
+      if (sync_ncmd->index <= command_index)
+        continue;
+
+      if (sync_ncmd->tic >= gametic)
+        break;
+
+      run_ncmd = P_GetNewBlankCommand();
+      memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
+      g_queue_push_tail(run_commands, run_ncmd);
+      command_index = sync_ncmd->index;
+      found_command = true;
+      break;
+    }
+
+    if (!found_command)
+      break;
+
+    first_tic++;
+  }
+
+  for (unsigned int i = 0; i < sync_command_count; i++) {
+    netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+    netticcmd_t *run_ncmd;
+
+    if (sync_ncmd->index <= command_index)
+      continue;
+
+    run_ncmd = P_GetNewBlankCommand();
+    memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
+    g_queue_push_tail(run_commands, run_ncmd);
+    cl_repredicting = true;
+    N_RunTic();
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
+      R_RestoreInterpolations();
+    }
+    cl_repredicting = false;
+  }
+
+  if (!g_queue_is_empty(run_commands)) {
+    D_Log(LOG_SYNC, "(%d) What in the fuck: %d/%d, %u\n",
+      gametic,
+      command_index,
+      latest_synchronized_command_index,
+      g_queue_get_length(run_commands)
+    );
+    cl_repredicting = true;
+    N_RunTic();
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
+      R_RestoreInterpolations();
+    }
+    cl_repredicting = false;
+  }
+}
+#endif
+
+#if CL_PREDICT == CL_PREDICT_COMMAND2
+static void cl_predict_command2(int saved_gametic,
+                                int latest_synchronized_command_index,
+                                GQueue *sync_commands,
+                                GQueue *run_commands) {
+  int command_index = latest_synchronized_command_index;
+  unsigned int sync_command_count = g_queue_get_length(sync_commands);
+
+  for (unsigned int i = 0; i < sync_command_count; i++) {
+    netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+    netticcmd_t *run_ncmd;
+
+    if (sync_ncmd->index <= command_index)
+      continue;
+
+    run_ncmd = P_GetNewBlankCommand();
+    memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
+    g_queue_push_tail(run_commands, run_ncmd);
+    cl_repredicting = true;
+    N_RunTic();
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
+      R_RestoreInterpolations();
+    }
+    cl_repredicting = false;
+  }
+}
+#endif
+
+#if CL_PREDICT == CL_PREDICT_COMMAND3
+static void cl_predict_command3(int saved_gametic,
+                                int latest_synchronized_command_index,
+                                GQueue *sync_commands,
+                                GQueue *run_commands) {
+  static int total_extra_tics = 0;
+
+  int command_index = latest_synchronized_command_index;
+  unsigned int sync_command_count = g_queue_get_length(sync_commands);
+  int tic_latency;
+  int cmd_latency;
+  int extra_tics;
+  netticcmd_t *syncd_ncmd = NULL;
+  netticcmd_t *first_ncmd = NULL;
+
+  if (gametic == -1)
+    return;
+
+  gametic++;
+
+  for (unsigned int i = 0; i < sync_command_count; i++) {
+    netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+
+    if (sync_ncmd->index == latest_synchronized_command_index) {
+      syncd_ncmd = sync_ncmd;
+      break;
+    }
+  }
+
+  if (syncd_ncmd == NULL)
+    return;
+
+  for (unsigned int i = 0; i < sync_command_count; i++) {
+    netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+
+    if (sync_ncmd->index > command_index) {
+      first_ncmd = sync_ncmd;
+      break;
+    }
+  }
+
+  if (first_ncmd == NULL)
+    return;
+
+#ifdef LOG_SECTOR
+  if (LOG_SECTOR < numsectors) {
+    if (sectors[LOG_SECTOR].floorheight != (168 << FRACBITS) &&
+        sectors[LOG_SECTOR].floorheight != (40 << FRACBITS)) {
+      D_Log(LOG_SYNC, "(%d) Sector %d: %d/%d\n",
+        gametic,
+        LOG_SECTOR,
+        sectors[LOG_SECTOR].floorheight >> FRACBITS,
+        sectors[LOG_SECTOR].ceilingheight >> FRACBITS
+      );
+      printf("(%d) Sector %d: %d/%d\n",
+        gametic,
+        LOG_SECTOR,
+        sectors[LOG_SECTOR].floorheight >> FRACBITS,
+        sectors[LOG_SECTOR].ceilingheight >> FRACBITS
+      );
+    }
+  }
+#endif
+
+  /*
+  tic_latency = saved_gametic - syncd_ncmd->tic;
+  cmd_latency = cl_local_command_index - latest_synchronized_command_index;
+  extra_tics = tic_latency - cmd_latency;
+  total_extra_tics += extra_tics;
+
+  D_Log(LOG_SYNC, "(%d) Extra TICs: %d/%d, %d/%d, %d/%d\n",
+    gametic,
+    extra_tics,
+    total_extra_tics,
+    syncd_ncmd->tic,
+    latest_synchronized_command_index,
+    saved_gametic,
+    cl_local_command_index
+  );
+  */
+
+  extra_tics = first_ncmd->tic - gametic;
+
+  D_Log(LOG_SYNC, "(%d) Extra TICs: %d (%d/%d)\n",
+    gametic,
+    extra_tics,
+    first_ncmd->tic,
+    first_ncmd->index
+  );
+
+  while (extra_tics > 0) {
+    cl_repredicting = true;
+    N_RunTic();
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
+      R_RestoreInterpolations();
+    }
+    cl_repredicting = false;
+    extra_tics--;
+  }
+
+  /*
+  while (extra_tics < 0)  {
+    bool found_command = false;
+
+    for (unsigned int i = 0; i < sync_command_count; i++) {
+      netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+      netticcmd_t *run_ncmd;
+
+      if (sync_ncmd->index <= command_index)
+        continue;
+
+      run_ncmd = P_GetNewBlankCommand();
+      memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
+      g_queue_push_tail(run_commands, run_ncmd);
+      command_index = sync_ncmd->index;
+      found_command = true;
+      break;
+    }
+
+    if (!found_command)
+      break;
+
+    extra_tics++;
+  }
+  */
+
+  for (unsigned int i = 0; i < sync_command_count; i++) {
+    netticcmd_t *sync_ncmd = g_queue_peek_nth(sync_commands, i);
+    netticcmd_t *run_ncmd;
+
+    if (sync_ncmd->index <= command_index)
+      continue;
+
+    run_ncmd = P_GetNewBlankCommand();
+    memcpy(run_ncmd, sync_ncmd, sizeof(netticcmd_t));
+    g_queue_push_tail(run_commands, run_ncmd);
+    cl_repredicting = true;
+    N_RunTic();
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
+      R_RestoreInterpolations();
+    }
+    cl_repredicting = false;
+  }
+
+  /*
+  if (!g_queue_is_empty(run_commands)) {
+    D_Log(LOG_SYNC, "(%d) What in the fuck: %d/%d, %u\n",
+      gametic,
+      command_index,
+      latest_synchronized_command_index,
+      g_queue_get_length(run_commands)
+    );
+    cl_repredicting = true;
+    N_RunTic();
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
+      R_RestoreInterpolations();
+    }
+    cl_repredicting = false;
+  }
+  */
+}
+#endif
 
 void CL_CheckForStateUpdates(void) {
   netpeer_t *server;
@@ -320,8 +836,6 @@ void CL_CheckForStateUpdates(void) {
     return;
 
   S_ResetSoundLog();
-
-  cl_state_tic = server->sync.tic;
 
   if (!CL_GetCommandSync(consoleplayer,
                          NULL,
@@ -354,9 +868,6 @@ void CL_CheckForStateUpdates(void) {
   }
 
   N_LogPlayerPosition(&players[consoleplayer]);
-  cl_state_tic = server->sync.tic;
-  cl_delta_from_tic = server->sync.delta.from_tic;
-  cl_delta_to_tic = server->sync.delta.to_tic;
 
   cl_predict(
     saved_gametic,
@@ -364,6 +875,10 @@ void CL_CheckForStateUpdates(void) {
     sync_commands,
     run_commands
   );
+
+  cl_state_tic = server->sync.tic;
+  cl_delta_from_tic = server->sync.delta.from_tic;
+  cl_delta_to_tic = server->sync.delta.to_tic;
 
   players[displayplayer].prev_viewz = saved_prev_viewz;
   players[displayplayer].viewz = saved_viewz;
@@ -380,7 +895,9 @@ void CL_CheckForStateUpdates(void) {
 
   if (latest_synchronized_command_index >
       previous_synchronized_command_index) {
-    // P_RemoveOldCommands(previous_synchronized_command_index, sync_commands);
+    /*
+    P_RemoveOldCommands(previous_synchronized_command_index, sync_commands);
+    */
     P_RemoveOldCommands(old_delta_command_index, sync_commands);
     cl_synchronized_command_index = latest_synchronized_command_index;
   }
