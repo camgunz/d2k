@@ -648,12 +648,8 @@ static void cl_predict_command3(int saved_gametic,
                                 int latest_synchronized_command_index,
                                 GQueue *sync_commands,
                                 GQueue *run_commands) {
-  static int total_extra_tics = 0;
-
   int command_index = latest_synchronized_command_index;
   unsigned int sync_command_count = g_queue_get_length(sync_commands);
-  int tic_latency;
-  int cmd_latency;
   int extra_tics;
   netticcmd_t *syncd_ncmd = NULL;
   netticcmd_t *first_ncmd = NULL;
@@ -708,9 +704,12 @@ static void cl_predict_command3(int saved_gametic,
 #endif
 
   /*
-  tic_latency = saved_gametic - syncd_ncmd->tic;
-  cmd_latency = cl_local_command_index - latest_synchronized_command_index;
-  extra_tics = tic_latency - cmd_latency;
+  static int total_extra_tics = 0;
+
+  int tic_latency = saved_gametic - syncd_ncmd->tic;
+  int cmd_latency = cl_local_command_index - latest_synchronized_command_index;
+  int extra_tics = tic_latency - cmd_latency;
+
   total_extra_tics += extra_tics;
 
   D_Log(LOG_SYNC, "(%d) Extra TICs: %d/%d, %d/%d, %d/%d\n",

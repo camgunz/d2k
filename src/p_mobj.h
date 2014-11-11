@@ -256,6 +256,7 @@ typedef struct mobj_s {
     fixed_t             y;
     fixed_t             z;
 
+    // CG: Actor ID
     uint32_t            id;
 
     // More list: links in sector (if needed)

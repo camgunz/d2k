@@ -1,11 +1,5 @@
 # To Do
 
-## Prototype
-
-1. Fix stuttery lifts
-
-1. Fix plasma lag
-
 ## ZDDL
 
 1. Add latency mitigation

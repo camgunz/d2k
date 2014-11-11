@@ -354,6 +354,9 @@ static void P_UnArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
   else
     mobj->state = (state_t *)S_NULL;
 
+  mobj->sprite = mobj->state->sprite;
+  mobj->frame = mobj->state->frame;
+
   if (target_id) {
     target = P_IdentLookup(target_id);
 
@@ -387,25 +390,90 @@ static void P_UnArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
   }
 }
 
+static bool actor_type_frequently_spawns(mobjtype_t type) {
+  switch (type) {
+    case MT_PLASMA:
+    case MT_ARACHPLAZ:
+    case MT_PUFF:
+    case MT_BLOOD:
+      return true;
+    default:
+      return false;
+  }
+}
+
+static void save_actor_specific_fields(pbuf_t *savebuffer, mobj_t *mobj) {
+  switch (mobj->type) {
+    case MT_PLASMA:
+      M_PBufWriteInt(savebuffer, mobj->momz);
+      break;
+    case MT_ARACHPLAZ:
+      M_PBufWriteInt(savebuffer, mobj->momz);
+      break;
+    default:
+      break;
+  }
+}
+
+static void fill_in_actor_fields(pbuf_t *savebuffer, mobj_t *mobj) {
+  switch (mobj->type) {
+    case MT_PLASMA:
+      mobj->momx = FixedMul(
+        mobj->info->speed, finecosine[mobj->angle >> ANGLETOFINESHIFT]
+      );
+      mobj->momy = FixedMul(
+        mobj->info->speed, finesine[mobj->angle >> ANGLETOFINESHIFT]
+      );
+      M_PBufReadInt(savebuffer, &mobj->momz);
+    break;
+    case MT_ARACHPLAZ:
+      M_PBufReadInt(savebuffer, &mobj->momz);
+    break;
+    case MT_PUFF:
+      mobj->momz = FRACUNIT;
+    break;
+    case MT_BLOOD:
+      mobj->momz = FRACUNIT * 2;
+    break;
+    default:
+      I_Error("fill_in_actor_fields: unknown actor type %d\n", mobj->type);
+  }
+
+  P_IdentAssignID(mobj, mobj->id);
+}
+
 static void P_ArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
+  M_PBufWriteInt(savebuffer, mobj->type);
+  M_PBufWriteUInt(savebuffer, mobj->id);
+  M_PBufWriteInt(savebuffer, mobj->index);
   M_PBufWriteInt(savebuffer, mobj->x);
   M_PBufWriteInt(savebuffer, mobj->y);
   M_PBufWriteInt(savebuffer, mobj->z);
   M_PBufWriteUInt(savebuffer, mobj->angle);
+  M_PBufWriteInt(savebuffer, mobj->tics);
+  M_PBufWriteUInt(savebuffer, mobj->pitch);
+  M_PBufWriteULong(savebuffer, mobj->flags);
+
+  if (actor_type_frequently_spawns(mobj->type)) {
+    save_actor_specific_fields(savebuffer, mobj);
+    return;
+  }
+
+  /*
   M_PBufWriteInt(savebuffer, mobj->sprite);
   M_PBufWriteInt(savebuffer, mobj->frame);
+  */
   M_PBufWriteInt(savebuffer, mobj->floorz);
   M_PBufWriteInt(savebuffer, mobj->ceilingz);
   M_PBufWriteInt(savebuffer, mobj->dropoffz);
+  /*
   M_PBufWriteInt(savebuffer, mobj->radius);
   M_PBufWriteInt(savebuffer, mobj->height);
+  */
   M_PBufWriteInt(savebuffer, mobj->momx);
   M_PBufWriteInt(savebuffer, mobj->momy);
   M_PBufWriteInt(savebuffer, mobj->momz);
   M_PBufWriteInt(savebuffer, mobj->validcount);
-  M_PBufWriteInt(savebuffer, mobj->type);
-  M_PBufWriteInt(savebuffer, mobj->tics);
-  M_PBufWriteULong(savebuffer, mobj->flags);
   M_PBufWriteInt(savebuffer, mobj->intflags);
   M_PBufWriteInt(savebuffer, mobj->health);
   M_PBufWriteShort(savebuffer, mobj->movedir);
@@ -428,32 +496,52 @@ static void P_ArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
   M_PBufWriteInt(savebuffer, mobj->PrevY);
   M_PBufWriteInt(savebuffer, mobj->PrevZ);
   */
-  M_PBufWriteUInt(savebuffer, mobj->pitch);
-  M_PBufWriteInt(savebuffer, mobj->index);
   M_PBufWriteShort(savebuffer, mobj->patch_width);
   M_PBufWriteInt(savebuffer, mobj->iden_nums);
-  M_PBufWriteUInt(savebuffer, mobj->id);
 }
 
 static void P_UnArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
+  M_PBufReadInt(savebuffer, (int *)&mobj->type);
+
+  if (mobj->type >= NUMMOBJTYPES)
+    I_Error("P_UnArchiveActor: Invalid actor type %d\n", mobj->type);
+
+  M_PBufReadUInt(savebuffer, &mobj->id);
+  M_PBufReadInt(savebuffer, &mobj->index);
   M_PBufReadInt(savebuffer, &mobj->x);
   M_PBufReadInt(savebuffer, &mobj->y);
   M_PBufReadInt(savebuffer, &mobj->z);
   M_PBufReadUInt(savebuffer, &mobj->angle);
+  M_PBufReadInt(savebuffer, &mobj->tics);
+  M_PBufReadUInt(savebuffer, &mobj->pitch);
+  M_PBufReadULong(savebuffer, &mobj->flags);
+
+  mobj->info = &mobjinfo[mobj->type];
+  mobj->radius = mobj->info->radius;
+  mobj->height = mobj->info->height;
+
+  if (actor_type_frequently_spawns(mobj->type)) {
+    fill_in_actor_fields(savebuffer, mobj);
+    return;
+  }
+
+  /*
   M_PBufReadInt(savebuffer, (int *)&mobj->sprite);
   M_PBufReadInt(savebuffer, &mobj->frame);
+  */
   M_PBufReadInt(savebuffer, &mobj->floorz);
   M_PBufReadInt(savebuffer, &mobj->ceilingz);
   M_PBufReadInt(savebuffer, &mobj->dropoffz);
+  /*
   M_PBufReadInt(savebuffer, &mobj->radius);
   M_PBufReadInt(savebuffer, &mobj->height);
+  */
   M_PBufReadInt(savebuffer, &mobj->momx);
   M_PBufReadInt(savebuffer, &mobj->momy);
   M_PBufReadInt(savebuffer, &mobj->momz);
   M_PBufReadInt(savebuffer, &mobj->validcount);
-  M_PBufReadInt(savebuffer, (int *)&mobj->type);
-  M_PBufReadInt(savebuffer, &mobj->tics);
-  M_PBufReadULong(savebuffer, &mobj->flags);
+  /*
+  */
   M_PBufReadInt(savebuffer, &mobj->intflags);
   M_PBufReadInt(savebuffer, &mobj->health);
   M_PBufReadShort(savebuffer, &mobj->movedir);
@@ -476,11 +564,8 @@ static void P_UnArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
   M_PBufReadInt(savebuffer, &mobj->PrevY);
   M_PBufReadInt(savebuffer, &mobj->PrevZ);
   */
-  M_PBufReadUInt(savebuffer, &mobj->pitch);
-  M_PBufReadInt(savebuffer, &mobj->index);
   M_PBufReadShort(savebuffer, &mobj->patch_width);
   M_PBufReadInt(savebuffer, &mobj->iden_nums);
-  M_PBufReadUInt(savebuffer, &mobj->id);
 
   P_IdentAssignID(mobj, mobj->id);
 }
