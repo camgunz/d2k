@@ -33,6 +33,7 @@
 #include "n_state.h"
 #include "n_peer.h"
 #include "n_proto.h"
+#include "cl_main.h"
 #include "p_cmd.h"
 #include "p_user.h"
 #include "r_fps.h"
@@ -1000,6 +1001,36 @@ void CL_MarkServerOutdated(void) {
     server->sync.outdated = true;
 
   N_UpdateSync();
+}
+
+bool CL_PlayerCanMissCommand(int playernum, unsigned int max_missed_commands) {
+  netpeer_t *np = N_PeerForPlayer(playernum);
+
+  /* CG: [XXX] Error message? */
+  if (np == NULL)
+    return false;
+
+  return np->sync.commands[playernum].missed < max_missed_commands;
+}
+
+void CL_PlayerMissedCommand(int playernum) {
+  netpeer_t *np = N_PeerForPlayer(playernum);
+
+  /* CG: [XXX] Error message? */
+  if (np == NULL)
+    return;
+
+  np->sync.commands[playernum].missed++;
+}
+
+void CL_PlayerResetMissedCommands(int playernum) {
+  netpeer_t *np = N_PeerForPlayer(playernum);
+
+  /* CG: [XXX] Error message? */
+  if (np == NULL)
+    return;
+
+  np->sync.commands[playernum].missed = 0;
 }
 
 void CL_Init(void) {

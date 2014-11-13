@@ -194,7 +194,6 @@ typedef struct player_s
   /* CG 4/3/2014: New fields for netcode */
   char   *name;
   byte    team;
-  int     missed_command_count;
 } player_t;
 
 //

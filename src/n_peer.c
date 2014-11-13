@@ -179,18 +179,20 @@ static void free_netcom(netcom_t *nc) {
   M_PBufFree(&nc->unreliable.packet_data);
 }
 
-static void init_command_queue(command_queue_t *cq) {
-  cq->received = 0;
-  cq->run = 0;
-  cq->sync_queue = g_queue_new();
-  cq->run_queue = g_queue_new();
+static void init_command_queue(command_sync_t *cs) {
+  cs->received = 0;
+  cs->run = 0;
+  cs->missed = 0;
+  cs->sync_queue = g_queue_new();
+  cs->run_queue = g_queue_new();
 }
 
-static void free_command_queue(command_queue_t *cq) {
-  cq->received = 0;
-  cq->run = 0;
-  g_queue_free_full(cq->sync_queue, destroy_netticcmd);
-  g_queue_free_full(cq->run_queue, destroy_netticcmd);
+static void free_command_queue(command_sync_t *cs) {
+  cs->received = 0;
+  cs->run = 0;
+  cs->missed = 0;
+  g_queue_free_full(cs->sync_queue, destroy_netticcmd);
+  g_queue_free_full(cs->run_queue, destroy_netticcmd);
 }
 
 static void init_netsync(netsync_t *ns) {

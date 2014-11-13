@@ -40,16 +40,17 @@ typedef struct netcom_s {
 typedef struct command_queue_s {
   int     received;
   int     run;
+  int     missed;
   GQueue *sync_queue;
   GQueue *run_queue;
-} command_queue_t;
+} command_sync_t;
 
 typedef struct netsync_s {
   bool               initialized;
   bool               outdated;
   int                tic;
   /* CG: TODO: This ought to be a hash table */
-  command_queue_t    commands[MAXPLAYERS];
+  command_sync_t     commands[MAXPLAYERS];
   game_state_delta_t delta;
 } netsync_t;
 
@@ -96,6 +97,10 @@ bool         N_PeerLoadNextMessage(int peernum, unsigned char *message_type);
 void         N_PeerClearReliable(int peernum);
 void         N_PeerClearUnreliable(int peernum);
 void         N_PeerResetSync(int peernum);
+bool         N_PeerCanMissCommand(int playernum,
+                                  unsigned int max_missed_commands);
+void         N_PeerMissedCommand(int playernum);
+void         N_PeerResetMissedCommands(int playernum);
 
 #endif
 

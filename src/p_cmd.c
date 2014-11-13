@@ -183,7 +183,9 @@ static void run_player_command(player_t *player) {
  *                break clientside prediction.
  */
 
-bool extrapolate_player_position(player_t *player) {
+bool extrapolate_player_position(int playernum) {
+  player_t *player = &players[playernum];
+
   if ((!DELTACLIENT) || (player == &players[consoleplayer]) || (!player->mo))
     return false;
 
@@ -197,19 +199,18 @@ bool extrapolate_player_position(player_t *player) {
   GQueue *commands;
   netticcmd_t *ncmd;
 
-  if (player->missed_command_count > MISSED_COMMAND_MAX) {
+  if (!CL_PlayerCanMissCommand(playernum, MISSED_COMMAND_MAX)) {
     printf("(%d) %td over missed command limit\n", gametic, player - players);
     return false;
   }
-
-  /* CG: [XXX] Should be in netsync_t? */
-  player->missed_command_count++;
 
   if (!CL_GetCommandSync(player - players, NULL, NULL, NULL, &commands)) {
     P_Echo(consoleplayer, "Server disconnected");
     return false;
   }
-  
+
+  CL_PlayerMissedCommand(playernum);
+
   ncmd = P_GetNewBlankCommand();
 
   ncmd->cmd.forwardmove = player->cmd.forwardmove;
@@ -406,6 +407,7 @@ unsigned int P_GetPlayerSyncCommandCount(int playernum) {
 
 void P_RunPlayerCommands(int playernum) {
   player_t *player = &players[playernum];
+
   if (!(DELTACLIENT || DELTASERVER)) {
     run_player_command(player);
     return;
@@ -415,17 +417,20 @@ void P_RunPlayerCommands(int playernum) {
     int command_count = P_GetPlayerRunCommandCount(playernum);
 
     if (command_count == 0) {
-      if (!extrapolate_player_position(player))
+      if (!extrapolate_player_position(playernum))
         return;
     }
+#if EXTRAPOLATION == COPIED_COMMAND
     else {
-      player->missed_command_count = 0;
+      CL_PlayerResetMissedCommands(playernum);
+
       /*
       printf("(%d) Got (%d) command(s) for %d\n",
         gametic, command_count, playernum
       );
       */
     }
+#endif
   }
 
   run_queued_player_commands(playernum);
