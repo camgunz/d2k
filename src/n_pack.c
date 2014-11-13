@@ -331,12 +331,10 @@ static void pack_commands(pbuf_t *pbuf, netpeer_t *np, int playernum) {
 
       M_PBufWriteInt(pbuf, ncmd->index);
       M_PBufWriteInt(pbuf, ncmd->tic);
-      M_PBufWriteChar(pbuf, ncmd->cmd.forwardmove);
-      M_PBufWriteChar(pbuf, ncmd->cmd.sidemove);
-      M_PBufWriteShort(pbuf, ncmd->cmd.angleturn);
-      M_PBufWriteShort(pbuf, ncmd->cmd.consistancy);
-      M_PBufWriteUChar(pbuf, ncmd->cmd.chatchar);
-      M_PBufWriteUChar(pbuf, ncmd->cmd.buttons);
+      M_PBufWriteChar(pbuf, ncmd->forward);
+      M_PBufWriteChar(pbuf, ncmd->side);
+      M_PBufWriteShort(pbuf, ncmd->angle);
+      M_PBufWriteUChar(pbuf, ncmd->buttons);
     }
   }
   else if ((CLIENT && playernum != consoleplayer) ||
@@ -370,14 +368,12 @@ static bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
     for (unsigned int i = 0; i < command_count; i++) {
       netticcmd_t ncmd;
 
-      read_int(pbuf,   ncmd.index,           "command index");
-      read_int(pbuf,   ncmd.tic,             "command TIC");
-      read_char(pbuf,  ncmd.cmd.forwardmove, "command forward value");
-      read_char(pbuf,  ncmd.cmd.sidemove,    "command side value");
-      read_short(pbuf, ncmd.cmd.angleturn,   "command angle value");
-      read_short(pbuf, ncmd.cmd.consistancy, "command consistancy value");
-      read_uchar(pbuf, ncmd.cmd.chatchar,    "comand chatchar value");
-      read_uchar(pbuf, ncmd.cmd.buttons,     "command buttons value");
+      read_int(pbuf,   ncmd.index,   "command index");
+      read_int(pbuf,   ncmd.tic,     "command TIC");
+      read_char(pbuf,  ncmd.forward, "command forward value");
+      read_char(pbuf,  ncmd.side,    "command side value");
+      read_short(pbuf, ncmd.angle,   "command angle value");
+      read_uchar(pbuf, ncmd.buttons, "command buttons value");
 
       if (ncmd.index <= np->sync.commands[playernum].received)
         continue;

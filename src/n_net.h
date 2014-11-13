@@ -63,9 +63,13 @@ typedef enum {
 } net_sync_type_e;
 
 typedef struct netticcmd_s {
-  int      index;
-  int      tic;
-  ticcmd_t cmd;
+  int   index;
+  int   tic;
+  int   server_tic;
+  char  forward;
+  char  side;
+  short angle;
+  byte  buttons;
 } netticcmd_t;
 
 extern dboolean        netgame;

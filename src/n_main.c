@@ -193,16 +193,14 @@ static void print_network_stats(void) {
 #endif
 
 void N_LogCommand(netticcmd_t *ncmd) {
-  D_Log(LOG_SYNC, "(%d): {%d/%d %d %d %d %d %u %u}\n",
+  D_Log(LOG_SYNC, "(%d): {%d/%d %d %d %d %u}\n",
     gametic,
     ncmd->index,
     ncmd->tic,
-    ncmd->cmd.forwardmove,
-    ncmd->cmd.sidemove,
-    ncmd->cmd.angleturn,
-    ncmd->cmd.consistancy,
-    ncmd->cmd.chatchar,
-    ncmd->cmd.buttons
+    ncmd->forward,
+    ncmd->side,
+    ncmd->angle,
+    ncmd->buttons
   );
 }
 

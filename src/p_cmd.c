@@ -213,22 +213,20 @@ bool extrapolate_player_position(int playernum) {
 
   ncmd = P_GetNewBlankCommand();
 
-  ncmd->cmd.forwardmove = player->cmd.forwardmove;
-  ncmd->cmd.sidemove    = player->cmd.sidemove;
-  ncmd->cmd.angleturn   = player->cmd.angleturn;
-  ncmd->cmd.consistancy = 0;
-  ncmd->cmd.chatchar    = 0;
-  ncmd->cmd.buttons     = 0;
+  ncmd->forward = player->cmd.forwardmove;
+  ncmd->side    = player->cmd.sidemove;
+  ncmd->angle   = player->cmd.angleturn;
+  ncmd->buttons = 0;
 
   if (player != &players[0] &&
-      ncmd->cmd.forwardmove != 0 &&
-      ncmd->cmd.sidemove != 0 &&
-      ncmd->cmd.angleturn != 0) {
+      ncmd->forward != 0 &&
+      ncmd->side != 0 &&
+      ncmd->angle != 0) {
     printf("(%d) Re-running command: {%d, %d, %d}\n",
       gametic,
-      ncmd->cmd.forwardmove,
-      ncmd->cmd.sidemove,
-      ncmd->cmd.angleturn
+      ncmd->forward,
+      ncmd->side,
+      ncmd->angle
     );
   }
 
@@ -257,7 +255,12 @@ void run_queued_player_commands(int playernum) {
     return;
   }
   else {
-    if (!SV_GetCommandSync(playernum, playernum, NULL, NULL, NULL, &commands)) {
+    if (!SV_GetCommandSync(playernum,
+                           playernum,
+                           NULL,
+                           NULL,
+                           NULL,
+                           &commands)) {
       P_Printf(consoleplayer,
         "run_queued_player_commands: No peer for player #%d\n", playernum
       );
@@ -280,17 +283,22 @@ void run_queued_player_commands(int playernum) {
 
     CL_SetupCommandState(playernum, ncmd);
 
-    memcpy(&player->cmd, &ncmd->cmd, sizeof(ticcmd_t));
+    player->cmd.forwardmove = ncmd->forward;
+    player->cmd.sidemove    = ncmd->side;
+    player->cmd.angleturn   = ncmd->angle;
+    player->cmd.consistancy = 0;
+    player->cmd.chatchar    = 0;
+    player->cmd.buttons     = ncmd->buttons;
+
     leveltime = ncmd->tic;
+
     N_LogCommand(ncmd);
+
     run_player_command(player);
 
     if (player->mo)
       P_MobjThinker(player->mo);
 
-    /*
-    if (CLIENT)
-    */
     N_LogPlayerPosition(player);
 
     CL_ShutdownCommandState();
@@ -326,6 +334,7 @@ netticcmd_t* P_GetNewBlankCommand(void) {
 }
 
 void P_BuildCommand(void) {
+  ticcmd_t cmd;
   GQueue *run_commands;
   GQueue *sync_commands;
   netticcmd_t *run_ncmd;
@@ -346,9 +355,15 @@ void P_BuildCommand(void) {
   run_ncmd = P_GetNewBlankCommand();
   sync_ncmd = P_GetNewBlankCommand();
 
-  G_BuildTiccmd(&run_ncmd->cmd);
-  run_ncmd->index = CL_GetNextCommandIndex();
-  run_ncmd->tic = gametic;
+  memset(&cmd, 0, sizeof(ticcmd_t));
+  G_BuildTiccmd(&cmd);
+
+  run_ncmd->index   = CL_GetNextCommandIndex();
+  run_ncmd->tic     = gametic;
+  run_ncmd->forward = cmd.forwardmove;
+  run_ncmd->side    = cmd.sidemove;
+  run_ncmd->angle   = cmd.angleturn;
+  run_ncmd->buttons = cmd.buttons;
   memcpy(sync_ncmd, run_ncmd, sizeof(netticcmd_t));
 
   g_queue_push_tail(run_commands, run_ncmd);
