@@ -55,9 +55,9 @@
 #include "e6y.h"
 
 #define DEBUG_NET 0
-#define DEBUG_SYNC 0
+#define DEBUG_SYNC 1
 #define DEBUG_SAVE 0
-#define PRINT_NETWORK_STATS 0
+#define PRINT_NETWORK_STATS 1
 // #define LOG_SECTOR 43
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
@@ -71,8 +71,10 @@ static int run_tics(int tic_count) {
 
   while (tic_count--) {
     if (MULTINET) {
+      /*
       if (CLIENT)
-        P_ClearRunCommands(consoleplayer);
+        P_ClearPlayerCommands(consoleplayer);
+      */
       P_BuildCommand();
     }
     else {
@@ -93,7 +95,7 @@ static int run_commandsync_tics(int command_count) {
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
-      tic_count = MIN(tic_count, P_GetPlayerRunCommandCount(i));
+      tic_count = MIN(tic_count, g_queue_get_length(players[i].commands));
     }
   }
 
@@ -168,10 +170,8 @@ static void print_network_stats(void) {
       iter.np->peer->highestRoundTripTimeVariance,
       iter.np->peer->lastRoundTripTimeVariance,
       iter.np->peer->roundTripTimeVariance,
-      CLIENT ? P_GetPlayerSyncCommandCount(consoleplayer)
-             : P_GetPlayerSyncCommandCount(iter.np->playernum),
-      CLIENT ? P_GetPlayerRunCommandCount(consoleplayer)
-             : P_GetPlayerRunCommandCount(iter.np->playernum)
+      CLIENT ? CL_GetUnsynchronizedCommandCount() : 0,
+      g_queue_get_length(players[iter.np->playernum].commands)
     );
     puts("------------------------------------------------------------------------------");
     puts("| Packet Loss | Throttle | Accel | Counter | Decel | Interval | Limit |  #   |");
@@ -193,10 +193,11 @@ static void print_network_stats(void) {
 #endif
 
 void N_LogCommand(netticcmd_t *ncmd) {
-  D_Log(LOG_SYNC, "(%d): {%d/%d %d %d %d %u}\n",
+  D_Log(LOG_SYNC, "(%d): {%d/%d/%d %d %d %d %u}\n",
     gametic,
     ncmd->index,
     ncmd->tic,
+    ncmd->server_tic,
     ncmd->forward,
     ncmd->side,
     ncmd->angle,
@@ -246,14 +247,15 @@ void N_InitNetGame(void) {
     char *name;
     size_t name_length;
 
-    players[i].messages = g_ptr_array_new_with_free_func(P_DestroyMessage);
-
     players[i].name = NULL;
     name_length = snprintf(NULL, 0, "Player %d", i);
     name = calloc(name_length + 1, sizeof(char));
     snprintf(name, name_length + 1, "Player %d", i);
 
     P_SetName(i, name);
+
+    players[i].messages = g_ptr_array_new_with_free_func(P_DestroyMessage);
+    players[i].commands = g_queue_new();
   }
 
   P_InitCommands();
@@ -420,7 +422,6 @@ void N_RunTic(void) {
     N_UpdateSync();
   }
 
-  CL_UpdateLatestTic();
   gametic++;
 }
 

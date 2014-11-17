@@ -39,16 +39,17 @@
 int sv_limit_player_commands;
 
 static void sv_remove_old_commands(void) {
+  int oldest_sync_tic = INT_MAX;
+
   NETPEER_FOR_EACH(iter) {
-    for (int i = 0; i < MAXPLAYERS; i++) {
-      if (i != iter.np->playernum) {
-        P_RemoveOldCommands(
-          iter.np->sync.commands[i].received + 1,
-          iter.np->sync.commands[i].sync_queue
-        );
-      }
-    }
+    oldest_sync_tic = MIN(oldest_sync_tic, iter.np->sync.tic);
   }
+
+  if (oldest_sync_tic == INT_MAX)
+    return;
+
+  for (int i = 0; i < MAXPLAYERS; i++)
+    P_RemoveOldCommandsByTic(i, oldest_sync_tic);
 }
 
 static void sv_remove_old_states(void) {
@@ -81,21 +82,12 @@ unsigned int SV_GetPlayerCommandLimit(int playernum) {
   static int catchup_playernum = 0;
 
   player_t *player = &players[playernum];
-  GQueue *commands;
-  unsigned int command_count;
+  GQueue *commands = player->commands;
+  unsigned int command_count = g_queue_get_length(commands);
 
   if (player->mo == NULL)
     return 0;
   
-  if (!SV_GetCommandSync(playernum, playernum, NULL, NULL, NULL, &commands)) {
-    P_Printf(consoleplayer,
-      "SV_GetPlayerCommandLimit: Player %d disconnected\n", playernum
-    );
-    return 0;
-  }
-
-  command_count = g_queue_get_length(commands);
-
   if (command_count == 0)
     return 0;
 

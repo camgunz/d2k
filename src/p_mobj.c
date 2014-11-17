@@ -37,6 +37,7 @@
 #include "n_net.h"
 #include "n_main.h"
 #include "cl_main.h"
+#include "p_cmd.h"
 #include "p_ident.h"
 #include "p_inter.h"
 #include "p_map.h"
@@ -1199,6 +1200,8 @@ void P_SpawnPlayer(int playernum, const mapthing_t* mthing) {
     ST_Start(); // wake up the status bar
     HU_Start(); // wake up the heads up text
   }
+
+  P_ClearPlayerCommands(playernum);
 
   R_SmoothPlaying_Reset(p); // e6y
 }

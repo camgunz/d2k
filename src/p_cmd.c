@@ -32,6 +32,7 @@
 #include "e6y.h"
 #include "g_game.h"
 #include "i_video.h"
+#include "lprintf.h"
 #include "n_net.h"
 #include "n_main.h"
 #include "n_state.h"
@@ -56,7 +57,7 @@ static GQueue *blank_command_queue;
 static void print_command(gpointer data, gpointer user_data) {
   netticcmd_t *ncmd = data;
 
-  D_Log(LOG_SYNC, " %u/%u", ncmd->index, ncmd->tic);
+  D_Log(LOG_SYNC, " %d/%d/%d", ncmd->index, ncmd->tic, ncmd->server_tic);
 }
 
 static void run_player_command(player_t *player) {
@@ -196,20 +197,14 @@ bool extrapolate_player_position(int playernum) {
   P_MobjThinker(player->mo);
   return false;
 #elif EXTRAPOLATION == COPIED_COMMAND
-  GQueue *commands;
   netticcmd_t *ncmd;
 
-  if (!CL_PlayerCanMissCommand(playernum, MISSED_COMMAND_MAX)) {
+  if (player->missed_commands >= MISSED_COMMAND_MAX) {
     printf("(%d) %td over missed command limit\n", gametic, player - players);
     return false;
   }
 
-  if (!CL_GetCommandSync(player - players, NULL, NULL, NULL, &commands)) {
-    P_Echo(consoleplayer, "Server disconnected");
-    return false;
-  }
-
-  CL_PlayerMissedCommand(playernum);
+  player->missed_commands++;
 
   ncmd = P_GetNewBlankCommand();
 
@@ -230,7 +225,10 @@ bool extrapolate_player_position(int playernum) {
     );
   }
 
-  g_queue_push_tail(commands, ncmd);
+  if (ncmd == NULL)
+    puts("extrapolate_player_position: Pushing NULL netticcmd");
+
+  g_queue_push_tail(player->commands, ncmd);
 
   return true;
 #endif
@@ -238,48 +236,49 @@ bool extrapolate_player_position(int playernum) {
 }
 
 void run_queued_player_commands(int playernum) {
-  GQueue *commands;
   player_t *player = &players[playernum];
   unsigned int command_limit;
+  unsigned int command_count = g_queue_get_length(player->commands);
   unsigned int commands_run = 0;
 
-  if (CLIENT) {
-    if (!CL_GetCommandSync(playernum, NULL, NULL, NULL, &commands)) {
-      P_Printf(consoleplayer,
-        "run_queued_player_commands: No peer for player #%d\n", playernum
-      );
-      return;
-    }
-  }
-  else if (playernum == consoleplayer) {
+  if (SERVER && playernum == consoleplayer)
     return;
-  }
-  else {
-    if (!SV_GetCommandSync(playernum,
-                           playernum,
-                           NULL,
-                           NULL,
-                           NULL,
-                           &commands)) {
-      P_Printf(consoleplayer,
-        "run_queued_player_commands: No peer for player #%d\n", playernum
-      );
-      return;
-    }
-  }
 
   if (SERVER && sv_limit_player_commands)
     command_limit = SV_GetPlayerCommandLimit(playernum);
 
   if (CLIENT && playernum == consoleplayer)
-    P_PrintCommands(commands);
+    P_PrintCommands(player->commands);
 
-  while (!g_queue_is_empty(commands)) {
+  for (unsigned int i = 0; i < command_count; i++) {
     int saved_leveltime = leveltime;
-    netticcmd_t *ncmd = g_queue_peek_head(commands);
+    netticcmd_t *ncmd = g_queue_peek_nth(player->commands, i);
 
-    if (SERVER && sv_limit_player_commands && commands_run >= command_limit)
-      break;
+    if (ncmd->index <= player->latest_command_run_index)
+      continue;
+
+    if (CLIENT) {
+      if (CL_Synchronizing()) {
+        if (ncmd->server_tic == 0)
+          continue;
+
+        if (ncmd->server_tic != gametic)
+          continue;
+      }
+
+      if (CL_RePredicting()) {
+        if (ncmd->server_tic != 0)
+          continue;
+
+        if (ncmd->tic > gametic)
+          continue;
+      }
+
+      if (CL_Predicting()) {
+        if (ncmd->tic != gametic)
+          continue;
+      }
+    }
 
     CL_SetupCommandState(playernum, ncmd);
 
@@ -305,23 +304,30 @@ void run_queued_player_commands(int playernum) {
 
     leveltime = saved_leveltime;
 
-    if (CLIENT) {
-      CL_UpdateCommandsRunSync(playernum, ncmd->index);
-    }
-    else if (SERVER) {
-      SV_UpdateCommandsRunSync(playernum, playernum, ncmd->index);
+    player->latest_command_run_index = ncmd->index;
 
-      if (sv_limit_player_commands)
+    if (CLIENT && !CL_Synchronizing())
+      break;
+
+    if (SERVER) {
+      ncmd->server_tic = gametic;
+
+      if (sv_limit_player_commands) {
         commands_run++;
-    }
 
-    P_RecycleCommand(g_queue_pop_head(commands));
+        if (commands_run >= command_limit)
+          break;
+      }
+    }
   }
 }
 
 void P_InitCommands(void) {
   if (blank_command_queue == NULL)
     blank_command_queue = g_queue_new();
+
+  for (int i = 0; i < MAXPLAYERS; i++)
+    players[i].commands = g_queue_new();
 }
 
 netticcmd_t* P_GetNewBlankCommand(void) {
@@ -330,30 +336,20 @@ netticcmd_t* P_GetNewBlankCommand(void) {
   if (ncmd == NULL)
     ncmd = calloc(1, sizeof(netticcmd_t));
 
+  if (ncmd == NULL)
+    I_Error("P_GetNewBlankCommand: Error allocating new netticcmd");
+
   return ncmd;
 }
 
 void P_BuildCommand(void) {
   ticcmd_t cmd;
-  GQueue *run_commands;
-  GQueue *sync_commands;
   netticcmd_t *run_ncmd;
-  netticcmd_t *sync_ncmd;
 
   if (!CLIENT)
     return;
 
-  if (!CL_GetCommandSync(consoleplayer,
-                         NULL,
-                         NULL,
-                         &sync_commands,
-                         &run_commands)) {
-    P_Echo(consoleplayer, "Server disconnected");
-    return;
-  }
-
   run_ncmd = P_GetNewBlankCommand();
-  sync_ncmd = P_GetNewBlankCommand();
 
   memset(&cmd, 0, sizeof(ticcmd_t));
   G_BuildTiccmd(&cmd);
@@ -364,60 +360,19 @@ void P_BuildCommand(void) {
   run_ncmd->side    = cmd.sidemove;
   run_ncmd->angle   = cmd.angleturn;
   run_ncmd->buttons = cmd.buttons;
-  memcpy(sync_ncmd, run_ncmd, sizeof(netticcmd_t));
-
-  g_queue_push_tail(run_commands, run_ncmd);
-  g_queue_push_tail(sync_commands, sync_ncmd);
 
   /*
   D_Log(LOG_SYNC, "(%d) P_BuildCommand: ", gametic);
   N_LogCommand(run_ncmd);
   */
 
+  if (run_ncmd == NULL)
+    puts("P_BuildCommand: Pushing NULL netticcmd");
+
+  g_queue_push_tail(players[consoleplayer].commands, run_ncmd);
+
   if (CLIENT)
     CL_MarkServerOutdated();
-}
-
-unsigned int P_GetPlayerRunCommandCount(int playernum) {
-  GQueue *commands;
-
-  if (CLIENT) {
-    if (!CL_GetCommandSync(playernum, NULL, NULL, NULL, &commands)) {
-      P_Echo(consoleplayer, "Server disconnected");
-      return 0;
-    }
-  }
-  else {
-    if (!SV_GetCommandSync(playernum, playernum, NULL, NULL, NULL, &commands)) {
-      P_Printf(consoleplayer,
-        "P_GetPlayerRunCommandCount: No peer for player #%d\n", playernum
-      );
-      return 0;
-    }
-  }
-
-  return g_queue_get_length(commands);
-}
-
-unsigned int P_GetPlayerSyncCommandCount(int playernum) {
-  GQueue *commands;
-
-  if (CLIENT) {
-    if (!CL_GetCommandSync(playernum, NULL, NULL, &commands, NULL)) {
-      P_Echo(consoleplayer, "Server disconnected");
-      return 0;
-    }
-  }
-  else {
-    if (!SV_GetCommandSync(playernum, playernum, NULL, NULL, &commands, NULL)) {
-      P_Printf(consoleplayer,
-        "P_GetPlayerRunCommandCount: No peer for player #%d\n", playernum
-      );
-      return 0;
-    }
-  }
-
-  return g_queue_get_length(commands);
 }
 
 void P_RunPlayerCommands(int playernum) {
@@ -429,7 +384,7 @@ void P_RunPlayerCommands(int playernum) {
   }
   
   if (DELTACLIENT && playernum != consoleplayer && playernum != 0) {
-    int command_count = P_GetPlayerRunCommandCount(playernum);
+    int command_count = g_queue_get_length(players[playernum].commands);
 
     if (command_count == 0) {
       if (!extrapolate_player_position(playernum))
@@ -437,7 +392,7 @@ void P_RunPlayerCommands(int playernum) {
     }
 #if EXTRAPOLATION == COPIED_COMMAND
     else {
-      CL_PlayerResetMissedCommands(playernum);
+      player->missed_commands = 0;
 
       /*
       printf("(%d) Got (%d) command(s) for %d\n",
@@ -451,41 +406,62 @@ void P_RunPlayerCommands(int playernum) {
   run_queued_player_commands(playernum);
 }
 
-void P_ClearRunCommands(int playernum) {
-  GQueue *commands;
-
-  if (!CL_GetCommandSync(playernum, NULL, NULL, NULL, &commands)) {
-    P_Printf(consoleplayer,
-      "run_queued_player_commands: No peer for player #%d\n", playernum
-    );
-    return;
-  }
-
-  while (!g_queue_is_empty(commands))
-    P_RecycleCommand(g_queue_pop_head(commands));
+void P_ClearPlayerCommands(int playernum) {
+  D_Log(LOG_SYNC, "P_ClearPlayerCommands: Clearing commands for %d\n",
+    playernum
+  );
+  while (!g_queue_is_empty(players[playernum].commands))
+    P_RecycleCommand(g_queue_pop_head(players[playernum].commands));
 }
 
-void P_RemoveOldCommands(int sync_index, GQueue *commands) {
-  D_Log(LOG_SYNC, "(%d) P_RemoveOldCommands(%d)\n", gametic, sync_index);
+void P_RemoveOldCommands(int playernum, int command_index) {
+  GQueue *commands = players[playernum].commands;
+
+  D_Log(LOG_SYNC, "(%d) P_RemoveOldCommands(%d)\n", gametic, command_index);
 
   while (!g_queue_is_empty(commands)) {
     netticcmd_t *ncmd = g_queue_peek_head(commands);
 
-    if (ncmd->index < sync_index) {
-      D_Log(LOG_SYNC, "P_RemoveOldCommands: Removing command %d\n",
-        ncmd->index
-      );
-
-      P_RecycleCommand(g_queue_pop_head(commands));
-    }
-    else {
+    if (ncmd->index > command_index)
       break;
-    }
+
+    D_Log(LOG_SYNC, "P_RemoveOldCommands: Removing command %d/%d\n",
+      ncmd->index,
+      ncmd->tic
+    );
+
+    P_RecycleCommand(g_queue_pop_head(commands));
+  }
+}
+
+void P_RemoveOldCommandsByTic(int playernum, int tic) {
+  GQueue *commands = players[playernum].commands;
+
+  D_Log(LOG_SYNC, "(%d) P_RemoveOldCommandsByTic(%d)\n", gametic, tic);
+
+  while (!g_queue_is_empty(commands)) {
+    netticcmd_t *ncmd = g_queue_peek_head(commands);
+
+    if (ncmd->tic > tic)
+      break;
+
+    D_Log(LOG_SYNC, "P_RemoveOldCommandsByTic: Removing command %d/%d\n",
+      ncmd->index,
+      ncmd->tic
+    );
+
+    P_RecycleCommand(g_queue_pop_head(commands));
   }
 }
 
 void P_RecycleCommand(netticcmd_t *ncmd) {
+  D_Log(LOG_SYNC, "P_RecycleCommand: Recycling command %d/%d\n",
+    ncmd->index,
+    ncmd->tic
+  );
+
   memset(ncmd, 0, sizeof(netticcmd_t));
+
   g_queue_push_tail(blank_command_queue, ncmd);
 }
 

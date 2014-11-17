@@ -26,25 +26,24 @@
 
 extern int cl_extrapolate_player_positions;
 
-bool CL_LoadingState(void);
-bool CL_Synchronizing(void);
-bool CL_RePredicting(void);
-bool CL_RunningConsoleplayerCommands(void);
-bool CL_RunningNonConsoleplayerCommands(void);
-void CL_SetupCommandState(int playernum, netticcmd_t *ncmd);
-void CL_ShutdownCommandState(void);
-void CL_UpdateLatestTic(void);
-int  CL_GetCurrentCommandIndex(void);
-int  CL_GetNextCommandIndex(void);
-bool CL_ReceivedSetup(void);
-void CL_SetReceivedSetup(bool new_received_setup);
-void CL_SetAuthorizationLevel(auth_level_e level);
-void CL_MarkServerOutdated(void);
-void CL_CheckForStateUpdates(void);
-bool CL_PlayerCanMissCommand(int playernum, unsigned int max_missed_commands);
-void CL_PlayerMissedCommand(int playernum);
-void CL_PlayerResetMissedCommands(int playernum);
-void CL_Init(void);
+bool         CL_LoadingState(void);
+bool         CL_Synchronizing(void);
+bool         CL_RePredicting(void);
+bool         CL_Predicting(void);
+bool         CL_RunningConsoleplayerCommands(void);
+bool         CL_RunningNonConsoleplayerCommands(void);
+void         CL_SetupCommandState(int playernum, netticcmd_t *ncmd);
+void         CL_ShutdownCommandState(void);
+int          CL_GetCurrentCommandIndex(void);
+int          CL_GetNextCommandIndex(void);
+bool         CL_ReceivedSetup(void);
+void         CL_SetReceivedSetup(bool new_received_setup);
+void         CL_SetAuthorizationLevel(auth_level_e level);
+void         CL_MarkServerOutdated(void);
+void         CL_CheckForStateUpdates(void);
+void         CL_UpdateReceivedCommandIndex(int command_index);
+unsigned int CL_GetUnsynchronizedCommandCount(void);
+void         CL_Init(void);
 
 #endif
 
