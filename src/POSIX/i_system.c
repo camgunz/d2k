@@ -43,8 +43,8 @@ void I_uSleep(unsigned long usecs) {
 }
 
 /*
- * CPhipps - believe it or not, it is possible with consecutive calls to 
- * gettimeofday to receive times out of order, e.g you query the time twice and 
+ * CPhipps - believe it or not, it is possible with consecutive calls to
+ * gettimeofday to receive times out of order, e.g you query the time twice and
  * the second time is earlier than the first. Cheap'n'cheerful fix here.
  * NOTE: only occurs with bad kernel drivers loaded, e.g. pc speaker drv
  */
@@ -73,7 +73,7 @@ int I_GetTime_RealTime(void) {
   if (thistimereply < lasttimereply)
     thistimereply = lasttimereply;
 
-  lasttimereply = thietimereply;
+  lasttimereply = thistimereply;
 
   return lasttimereply;
 }
@@ -83,8 +83,8 @@ int I_GetTime_RealTime(void) {
  *
  * CPhipps - extracted from G_ReloadDefaults because it is O/S based
  */
-unsigned long I_GetRandomTimeSeed(void) {                            
-  /* killough 3/26/98: shuffle random seed, use the clock */ 
+unsigned long I_GetRandomTimeSeed(void) {
+  /* killough 3/26/98: shuffle random seed, use the clock */
   struct timeval tv;
   struct timezone tz;
 
@@ -94,7 +94,7 @@ unsigned long I_GetRandomTimeSeed(void) {
 }
 
 /* cphipps - I_GetVersionString
- * Returns a version string in the given buffer 
+ * Returns a version string in the given buffer
  */
 const char* I_GetVersionString(char *buf, size_t sz) {
   snprintf(buf, sz, "%s v%s (%s)", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_URL);
