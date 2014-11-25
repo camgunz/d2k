@@ -7,8 +7,8 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="codeblocks/bin/Debug/doom2k" prefix_auto="1" extension_auto="1" />
-				<Option object_output="codeblocks/obj/Debug/" />
+				<Option output="Debug/bin/doom2k" prefix_auto="1" extension_auto="1" />
+				<Option object_output="Debug/obj/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -17,8 +17,8 @@
 				</Compiler>
 			</Target>
 			<Target title="Release">
-				<Option output="codeblocks/bin/Release/doom2k" prefix_auto="1" extension_auto="1" />
-				<Option object_output="codeblocks/obj/Release/" />
+				<Option output="Release/bin/doom2k" prefix_auto="1" extension_auto="1" />
+				<Option object_output="Release/obj/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
