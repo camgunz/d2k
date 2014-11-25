@@ -78,42 +78,21 @@ static void serialize_corpse(gpointer data, gpointer user_data) {
   M_PBufWriteUInt(savebuffer, corpse->id);
 }
 
-static gint compare_commands(gconstpointer a, gconstpointer b,
-                             gpointer user_data) {
-  netticcmd_t *ncmd_one = (netticcmd_t *)a;
-  netticcmd_t *ncmd_two = (netticcmd_t *)b;
+static void serialize_command(gpointer data, gpointer user_data) {
+  netticcmd_t *ncmd = (netticcmd_t *)data;
+  pbuf_t *savebuffer = (pbuf_t *)user_data;
 
-  if (ncmd_one->index < ncmd_two->index)
-    return -1;
-
-  if (ncmd_one->index > ncmd_two->index)
-    return 1;
-
-  if (ncmd_one->tic < ncmd_two->index)
-    return -1;
-
-  if (ncmd_one->tic > ncmd_two->index)
-    return 1;
-
-  if (ncmd_one->server_tic != 0 && ncmd_two->server_tic == 0)
-    return -1;
-
-  if (ncmd_one->server_tic == 0 && ncmd_two->server_tic != 0)
-    return 1;
-
-  if (ncmd_one->server_tic == 0 && ncmd_two->server_tic != 0)
-    return 1;
-
-  if (ncmd_one->server_tic < ncmd_two->server_tic)
-    return -1;
-
-  if (ncmd_one->server_tic > ncmd_two->server_tic)
-    return 1;
-
-  return 0;
+  M_PBufWriteInt(savebuffer, ncmd->index);
+  M_PBufWriteInt(savebuffer, ncmd->tic);
+  M_PBufWriteInt(savebuffer, ncmd->server_tic);
+  M_PBufWriteChar(savebuffer, ncmd->forward);
+  M_PBufWriteChar(savebuffer, ncmd->side);
+  M_PBufWriteShort(savebuffer, ncmd->angle);
+  M_PBufWriteUChar(savebuffer, ncmd->buttons);
 }
 
-static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
+static void P_ArchivePlayer(pbuf_t *savebuffer, int playernum) {
+  player_t *player = &players[playernum];
   unsigned int command_count;
 
   M_PBufWriteInt(savebuffer, player->playerstate);
@@ -199,30 +178,20 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   else
     M_PBufWriteString(savebuffer, "", 0);
   M_PBufWriteUChar(savebuffer, player->team);
-  command_count = g_queue_get_length(player->commands);
+  command_count = P_GetCommandCount(playernum);
   M_PBufWriteUInt(savebuffer, command_count);
-  for (unsigned int i = 0; i < command_count; i++) {
-    netticcmd_t *ncmd = g_queue_peek_nth(player->commands, i);
-
-    M_PBufWriteInt(savebuffer, ncmd->index);
-    M_PBufWriteInt(savebuffer, ncmd->tic);
-    M_PBufWriteInt(savebuffer, ncmd->server_tic);
-    M_PBufWriteChar(savebuffer, ncmd->forward);
-    M_PBufWriteChar(savebuffer, ncmd->side);
-    M_PBufWriteShort(savebuffer, ncmd->angle);
-    M_PBufWriteUChar(savebuffer, ncmd->buttons);
-  }
+  P_ForEachCommand(playernum, serialize_command, savebuffer);
   M_PBufWriteInt(savebuffer, player->latest_command_run_index);
 }
 
-static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
+static void P_UnArchivePlayer(pbuf_t *savebuffer, int playernum) {
   static buf_t player_message_buf;
   static buf_t name_buf;
   static bool player_message_buf_initialized = false;
   static bool name_buf_initialized = false;
 
+  player_t *player = &players[playernum];
   unsigned int command_count;
-  int playernum = player - players;
 
   if (!player_message_buf_initialized) {
     M_BufferInit(&player_message_buf);
@@ -319,8 +288,6 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   M_PBufReadUInt(savebuffer, &command_count);
   for (unsigned int i = 0; i < command_count; i++) {
     netticcmd_t tmp_ncmd;
-    bool found_command = false;
-    unsigned int current_command_count = g_queue_get_length(player->commands);
 
     M_PBufReadInt(savebuffer, &tmp_ncmd.index);
     M_PBufReadInt(savebuffer, &tmp_ncmd.tic);
@@ -333,48 +300,7 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
     if (CLIENT && playernum == consoleplayer)
       CL_UpdateReceivedCommandIndex(tmp_ncmd.index);
 
-    for (unsigned int j = 0; j < current_command_count; j++) {
-      netticcmd_t *ncmd = g_queue_peek_nth(player->commands, j);
-
-      if (ncmd->index != tmp_ncmd.index)
-        continue;
-
-      found_command = true;
-
-      if (ncmd->tic     != tmp_ncmd.tic     ||
-          ncmd->forward != tmp_ncmd.forward ||
-          ncmd->side    != tmp_ncmd.side    ||
-          ncmd->angle   != tmp_ncmd.angle   ||
-          ncmd->buttons != tmp_ncmd.buttons) {
-        P_Printf(consoleplayer,
-          "P_UnArchivePlayer: command mismatch: "
-          "{%d, %d, %d, %d, %d, %d, %u} != {%d, %d, %d, %d, %d, %d, %u}\n",
-          ncmd->index,
-          ncmd->tic,
-          ncmd->server_tic,
-          ncmd->forward,
-          ncmd->side,
-          ncmd->angle,
-          ncmd->buttons,
-          tmp_ncmd.index,
-          tmp_ncmd.tic,
-          tmp_ncmd.server_tic,
-          tmp_ncmd.forward,
-          tmp_ncmd.side,
-          tmp_ncmd.angle,
-          tmp_ncmd.buttons
-        );
-      }
-
-      ncmd->server_tic = tmp_ncmd.server_tic;
-    }
-
-    if (!found_command) {
-      netticcmd_t *ncmd = P_GetNewBlankCommand();
-
-      memcpy(ncmd, &tmp_ncmd, sizeof(netticcmd_t));
-      g_queue_insert_sorted(player->commands, ncmd, compare_commands, NULL);
-    }
+    P_InsertCommandSorted(playernum, &tmp_ncmd);
   }
 
   M_PBufReadInt(savebuffer, &player->latest_command_run_index);
@@ -693,7 +619,7 @@ static void P_UnArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
 void P_ArchivePlayers(pbuf_t *savebuffer) {
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i])
-      P_ArchivePlayer(savebuffer, &players[i]);
+      P_ArchivePlayer(savebuffer, i);
   }
 }
 
@@ -705,7 +631,7 @@ void P_UnArchivePlayers(pbuf_t *savebuffer) {
     if (!playeringame[i])
       continue;
 
-    P_UnArchivePlayer(savebuffer, &players[i]);
+    P_UnArchivePlayer(savebuffer, i);
 
     // will be set when unarc thinker
     players[i].mo = NULL;

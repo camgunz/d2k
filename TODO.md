@@ -1,5 +1,15 @@
 # To Do
 
+## Sync
+
+1. Convert `player->commands` to a `GPtrArray` (`GArray`?)
+  - I thought there wouldn't be very much indexing.  I was wrong.
+
+1. Test multiple players
+
+1. Fix duplicate sounds
+  - Consider trying to emulate the model from WET
+
 ## ZDDL
 
 1. Add unlagged

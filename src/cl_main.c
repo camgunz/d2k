@@ -33,6 +33,7 @@
 #include "n_state.h"
 #include "n_peer.h"
 #include "n_proto.h"
+#include "cl_cmd.h"
 #include "cl_main.h"
 #include "p_cmd.h"
 #include "p_user.h"
@@ -162,17 +163,18 @@ static bool cl_load_new_state(netpeer_t *server) {
 }
 
 static void cl_predict(int saved_gametic) {
-  netticcmd_t *last_ncmd;
+  int latest_command_index;
   
   if (gametic == -1)
     return;
 
-  last_ncmd = g_queue_peek_tail(players[consoleplayer].commands);
+  latest_command_index = P_GetLatestCommandIndex(consoleplayer);
 
-  if (last_ncmd == NULL)
+  if (latest_command_index == -1)
     return;
 
-  while (players[consoleplayer].latest_command_run_index < last_ncmd->index) {
+  while (players[consoleplayer].latest_command_run_index <
+         latest_command_index) {
     cl_repredicting = true;
     N_RunTic();
     if (players[displayplayer].mo != NULL) {
@@ -225,30 +227,7 @@ void CL_CheckForStateUpdates(void) {
 
   gametic++;
 
-  while (!g_queue_is_empty(players[consoleplayer].commands)) {
-    bool found_old_command = false;
-    unsigned int command_count = g_queue_get_length(
-      players[consoleplayer].commands
-    );
-
-    for (unsigned int i = 0; i < command_count; i++) {
-      netticcmd_t *ncmd = g_queue_peek_nth(players[consoleplayer].commands, i);
-
-      if (ncmd->server_tic == 0)
-        continue;
-
-      D_Log(LOG_SYNC, "CL_CheckForStateUpdates: Removing old command %d/%d\n",
-        ncmd->index,
-        ncmd->tic
-      );
-      P_RecycleCommand(g_queue_pop_nth(players[consoleplayer].commands, i));
-      found_old_command = true;
-      break;
-    }
-
-    if (!found_old_command)
-      break;
-  }
+  CL_ClearSynchronizedCommands(consoleplayer);
 
   N_LogPlayerPosition(&players[consoleplayer]);
 
@@ -385,26 +364,6 @@ void CL_UpdateReceivedCommandIndex(int command_index) {
     return;
 
   server->sync.command_index = MAX(server->sync.command_index, command_index);
-}
-
-unsigned int CL_GetUnsynchronizedCommandCount(void) {
-  netpeer_t *server = CL_GetServerPeer();
-  unsigned int command_count = 0;
-  unsigned int queue_length;
-
-  if (server == NULL)
-    return 0;
-  
-  queue_length = g_queue_get_length(players[consoleplayer].commands);
-
-  for (unsigned int i = 0; i < queue_length; i++) {
-    netticcmd_t *ncmd = g_queue_peek_nth(players[consoleplayer].commands, i);
-
-    if (ncmd->index > server->sync.command_index)
-      command_count++;
-  }
-
-  return command_count;
 }
 
 void CL_Init(void) {

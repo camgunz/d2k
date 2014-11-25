@@ -82,8 +82,7 @@ unsigned int SV_GetPlayerCommandLimit(int playernum) {
   static int catchup_playernum = 0;
 
   player_t *player = &players[playernum];
-  GQueue *commands = player->commands;
-  unsigned int command_count = g_queue_get_length(commands);
+  unsigned int command_count = P_GetCommandCount(playernum);
 
   if (player->mo == NULL)
     return 0;

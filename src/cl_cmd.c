@@ -21,32 +21,74 @@
 /*****************************************************************************/
 
 
-#ifndef P_CMD_H__
-#define P_CMD_H__
+#include "z_zone.h"
 
-typedef bool (*TrimFunc)(gpointer data, gpointer user_data);
+#include <enet/enet.h>
 
-void         P_InitCommands(void);
-bool         P_HasCommands(int playernum);
-unsigned int P_GetCommandCount(int playernum);
-netticcmd_t* P_GetCommand(int playernum, unsigned int index);
-netticcmd_t* P_PopCommand(int playernum, unsigned int index);
-void         P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd);
-void         P_AppendNewCommand(int playernum, netticcmd_t *tmp_ncmd);
-int          P_GetLatestCommandIndex(int playernum);
-void         P_ForEachCommand(int playernum, GFunc func, gpointer user_data);
-void         P_ClearPlayerCommands(int playernum);
-void         P_TrimCommands(int playernum, TrimFunc should_trim,
-                                           gpointer user_data);
-void         P_RemoveOldCommands(int playernum, int command_index);
-void         P_RemoveOldCommandsByTic(int playernum, int tic);
-netticcmd_t* P_GetNewBlankCommand(void);
-void         P_BuildCommand(void);
-void         P_RunPlayerCommands(int playernum);
-void         P_RecycleCommand(netticcmd_t *ncmd);
-void         P_PrintCommands(GQueue *commands);
+#include "doomstat.h"
+#include "n_net.h"
+#include "n_state.h"
+#include "n_peer.h"
+#include "cl_cmd.h"
+#include "p_cmd.h"
 
-#endif
+void CL_ClearSynchronizedCommands(int playernum) {
+  if (!playeringame[playernum])
+    return;
+
+  while (P_HasCommands(playernum)) {
+    bool found_old_command = false;
+    unsigned int command_count = P_GetCommandCount(playernum);
+
+    for (unsigned int i = 0; i < command_count; i++) {
+      netticcmd_t *ncmd = P_GetCommand(playernum, i);
+
+      if (ncmd->server_tic == 0)
+        continue;
+
+      D_Log(LOG_SYNC,
+        "CL_ClearSynchronizedCommands: Removing old command %d/%d\n",
+        ncmd->index,
+        ncmd->tic
+      );
+      P_RecycleCommand(P_PopCommand(playernum, i));
+      found_old_command = true;
+      break;
+    }
+
+    if (!found_old_command)
+      break;
+  }
+}
+
+unsigned int CL_GetUnsynchronizedCommandCount(int playernum) {
+  netpeer_t *server;
+  unsigned int command_count = 0;
+  unsigned int queue_length;
+  
+  if (!CLIENT)
+    return 0;
+  
+  if (!playeringame[playernum])
+    return 0;
+
+  server = CL_GetServerPeer();
+
+  if (server == NULL)
+    return 0;
+
+  queue_length = P_GetCommandCount(playernum);
+
+  for (unsigned int i = 0; i < queue_length; i++) {
+    netticcmd_t *ncmd = P_GetCommand(playernum, i);
+
+    if (ncmd->index > server->sync.command_index)
+      command_count++;
+  }
+
+  return command_count;
+}
+
 
 /* vi: set et ts=2 sw=2: */
 

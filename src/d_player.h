@@ -196,6 +196,8 @@ typedef struct player_s
   byte    team;
   GQueue *commands;
   int     commands_missed;
+  int     command_limit;
+  int     commands_run_this_tic;
   int     latest_command_run_index;
 } player_t;
 

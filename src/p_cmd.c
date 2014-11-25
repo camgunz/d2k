@@ -159,6 +159,72 @@ static void run_player_command(player_t *player) {
   P_MovePsprites(player);
 }
 
+static void process_queued_command(gpointer data, gpointer user_data) {
+  netticcmd_t *ncmd = (netticcmd_t *)data;
+  player_t *player = (player_t *)user_data;
+  int playernum = player - players;
+
+  if (ncmd->index <= player->latest_command_run_index)
+    return;
+
+  if (player->command_limit &&
+      player->commands_run_this_tic >= player->command_limit) {
+    return;
+  }
+
+  if (CLIENT) {
+    if (CL_Synchronizing()) {
+      if (ncmd->server_tic == 0)
+        return;
+
+      if (ncmd->server_tic != gametic)
+        return;
+    }
+
+    if (CL_RePredicting()) {
+      if (ncmd->server_tic != 0)
+        return;
+
+      if (ncmd->tic > gametic)
+        return;
+    }
+
+    if (CL_Predicting()) {
+      if (ncmd->tic != gametic)
+        return;
+    }
+  }
+
+  CL_SetupCommandState(playernum, ncmd);
+
+  player->cmd.forwardmove = ncmd->forward;
+  player->cmd.sidemove    = ncmd->side;
+  player->cmd.angleturn   = ncmd->angle;
+  player->cmd.consistancy = 0;
+  player->cmd.chatchar    = 0;
+  player->cmd.buttons     = ncmd->buttons;
+
+  leveltime = ncmd->tic;
+
+  N_LogCommand(ncmd);
+
+  run_player_command(player);
+
+  player->commands_run_this_tic++;
+
+  if (player->mo)
+    P_MobjThinker(player->mo);
+
+  N_LogPlayerPosition(player);
+
+  CL_ShutdownCommandState();
+
+  player->latest_command_run_index = ncmd->index;
+
+  if (SERVER)
+    ncmd->server_tic = gametic;
+}
+
 /*
  * CG 09/28/2014: It is not guaranteed that servers or players will receive
  *                player commands on a timely basis, rather, it is likely
@@ -184,10 +250,10 @@ static void run_player_command(player_t *player) {
  *                break clientside prediction.
  */
 
-bool extrapolate_player_position(int playernum) {
+static bool extrapolate_player_position(int playernum) {
   player_t *player = &players[playernum];
 
-  if ((!DELTACLIENT) || (player == &players[consoleplayer]) || (!player->mo))
+  if ((!DELTACLIENT) || (playernum == consoleplayer) || (!player->mo))
     return false;
 
   if (!cl_extrapolate_player_positions)
@@ -197,7 +263,7 @@ bool extrapolate_player_position(int playernum) {
   P_MobjThinker(player->mo);
   return false;
 #elif EXTRAPOLATION == COPIED_COMMAND
-  netticcmd_t *ncmd;
+  netticcmd_t ncmd;
 
   if (player->missed_commands >= MISSED_COMMAND_MAX) {
     printf("(%d) %td over missed command limit\n", gametic, player - players);
@@ -206,120 +272,101 @@ bool extrapolate_player_position(int playernum) {
 
   player->missed_commands++;
 
-  ncmd = P_GetNewBlankCommand();
-
-  ncmd->forward = player->cmd.forwardmove;
-  ncmd->side    = player->cmd.sidemove;
-  ncmd->angle   = player->cmd.angleturn;
-  ncmd->buttons = 0;
+  ncmd.forward = player->cmd.forwardmove;
+  ncmd.side    = player->cmd.sidemove;
+  ncmd.angle   = player->cmd.angleturn;
+  ncmd.buttons = 0;
 
   if (player != &players[0] &&
-      ncmd->forward != 0 &&
-      ncmd->side != 0 &&
-      ncmd->angle != 0) {
+      ncmd.forward != 0 &&
+      ncmd.side != 0 &&
+      ncmd.angle != 0) {
     printf("(%d) Re-running command: {%d, %d, %d}\n",
       gametic,
-      ncmd->forward,
-      ncmd->side,
-      ncmd->angle
+      ncmd.forward,
+      ncmd.side,
+      ncmd.angle
     );
   }
 
-  if (ncmd == NULL)
-    puts("extrapolate_player_position: Pushing NULL netticcmd");
-
-  g_queue_push_tail(player->commands, ncmd);
+  P_AppendNewCommand(playernum, &ncmd);
 
   return true;
 #endif
   return false;
 }
 
-void run_queued_player_commands(int playernum) {
+static void run_queued_player_commands(int playernum) {
+  int saved_leveltime = leveltime;
   player_t *player = &players[playernum];
-  unsigned int command_limit;
-  unsigned int command_count = g_queue_get_length(player->commands);
-  unsigned int commands_run = 0;
 
   if (SERVER && playernum == consoleplayer)
     return;
 
-  if (SERVER && sv_limit_player_commands)
-    command_limit = SV_GetPlayerCommandLimit(playernum);
-
   if (CLIENT && playernum == consoleplayer)
     P_PrintCommands(player->commands);
 
-  for (unsigned int i = 0; i < command_count; i++) {
-    int saved_leveltime = leveltime;
-    netticcmd_t *ncmd = g_queue_peek_nth(player->commands, i);
+  if (CLIENT && !CL_Synchronizing())
+    player->command_limit = 1;
+  else if (SERVER && sv_limit_player_commands)
+    player->command_limit = SV_GetPlayerCommandLimit(playernum);
+  else
+    player->command_limit = 0;
 
-    if (ncmd->index <= player->latest_command_run_index)
-      continue;
+  player->commands_run_this_tic = 0;
 
-    if (CLIENT) {
-      if (CL_Synchronizing()) {
-        if (ncmd->server_tic == 0)
-          continue;
+  P_ForEachCommand(playernum, process_queued_command, player);
 
-        if (ncmd->server_tic != gametic)
-          continue;
-      }
+  leveltime = saved_leveltime;
+}
 
-      if (CL_RePredicting()) {
-        if (ncmd->server_tic != 0)
-          continue;
+static bool command_index_is_old(gpointer data, gpointer user_data) {
+  netticcmd_t *ncmd = (netticcmd_t *)data;
+  int command_index = GPOINTER_TO_INT(user_data);
 
-        if (ncmd->tic > gametic)
-          continue;
-      }
+  return ncmd->index <= command_index;
+}
 
-      if (CL_Predicting()) {
-        if (ncmd->tic != gametic)
-          continue;
-      }
-    }
+static bool command_tic_is_old(gpointer data, gpointer user_data) {
+  netticcmd_t *ncmd = (netticcmd_t *)data;
+  int tic = GPOINTER_TO_INT(user_data);
 
-    CL_SetupCommandState(playernum, ncmd);
+  return ncmd->tic <= tic;
+}
 
-    player->cmd.forwardmove = ncmd->forward;
-    player->cmd.sidemove    = ncmd->side;
-    player->cmd.angleturn   = ncmd->angle;
-    player->cmd.consistancy = 0;
-    player->cmd.chatchar    = 0;
-    player->cmd.buttons     = ncmd->buttons;
+static gint compare_commands(gconstpointer a, gconstpointer b,
+                             gpointer user_data) {
+  netticcmd_t *ncmd_one = (netticcmd_t *)a;
+  netticcmd_t *ncmd_two = (netticcmd_t *)b;
 
-    leveltime = ncmd->tic;
+  if (ncmd_one->index < ncmd_two->index)
+    return -1;
 
-    N_LogCommand(ncmd);
+  if (ncmd_one->index > ncmd_two->index)
+    return 1;
 
-    run_player_command(player);
+  if (ncmd_one->tic < ncmd_two->index)
+    return -1;
 
-    if (player->mo)
-      P_MobjThinker(player->mo);
+  if (ncmd_one->tic > ncmd_two->index)
+    return 1;
 
-    N_LogPlayerPosition(player);
+  if (ncmd_one->server_tic != 0 && ncmd_two->server_tic == 0)
+    return -1;
 
-    CL_ShutdownCommandState();
+  if (ncmd_one->server_tic == 0 && ncmd_two->server_tic != 0)
+    return 1;
 
-    leveltime = saved_leveltime;
+  if (ncmd_one->server_tic == 0 && ncmd_two->server_tic != 0)
+    return 1;
 
-    player->latest_command_run_index = ncmd->index;
+  if (ncmd_one->server_tic < ncmd_two->server_tic)
+    return -1;
 
-    if (CLIENT && !CL_Synchronizing())
-      break;
+  if (ncmd_one->server_tic > ncmd_two->server_tic)
+    return 1;
 
-    if (SERVER) {
-      ncmd->server_tic = gametic;
-
-      if (sv_limit_player_commands) {
-        commands_run++;
-
-        if (commands_run >= command_limit)
-          break;
-      }
-    }
-  }
+  return 0;
 }
 
 void P_InitCommands(void) {
@@ -328,6 +375,159 @@ void P_InitCommands(void) {
 
   for (int i = 0; i < MAXPLAYERS; i++)
     players[i].commands = g_queue_new();
+}
+
+bool P_HasCommands(int playernum) {
+  if (!playeringame[playernum])
+    return false;
+
+  return !g_queue_is_empty(players[playernum].commands);
+}
+
+unsigned int P_GetCommandCount(int playernum) {
+  if (!playeringame[playernum])
+    return 0;
+
+  return g_queue_get_length(players[playernum].commands);
+}
+
+netticcmd_t* P_GetCommand(int playernum, unsigned int index) {
+  if (!playeringame[playernum])
+    return NULL;
+
+  return g_queue_peek_nth(players[playernum].commands, index);
+}
+
+netticcmd_t* P_PopCommand(int playernum, unsigned int index) {
+  if (!playeringame[playernum])
+    return NULL;
+
+  return g_queue_pop_nth(players[playernum].commands, index);
+}
+
+void P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd) {
+  unsigned int current_command_count;
+  bool found_command = false;
+  
+  if (!playeringame[playernum])
+    return;
+
+  current_command_count = P_GetCommandCount(playernum);
+
+  for (unsigned int j = 0; j < current_command_count; j++) {
+    netticcmd_t *ncmd = g_queue_peek_nth(players[playernum].commands, j);
+
+    if (ncmd->index != tmp_ncmd->index)
+      continue;
+
+    found_command = true;
+
+    if (ncmd->tic     != tmp_ncmd->tic     ||
+        ncmd->forward != tmp_ncmd->forward ||
+        ncmd->side    != tmp_ncmd->side    ||
+        ncmd->angle   != tmp_ncmd->angle   ||
+        ncmd->buttons != tmp_ncmd->buttons) {
+      P_Printf(consoleplayer,
+        "P_UnArchivePlayer: command mismatch: "
+        "{%d, %d, %d, %d, %d, %d, %u} != {%d, %d, %d, %d, %d, %d, %u}\n",
+        ncmd->index,
+        ncmd->tic,
+        ncmd->server_tic,
+        ncmd->forward,
+        ncmd->side,
+        ncmd->angle,
+        ncmd->buttons,
+        tmp_ncmd->index,
+        tmp_ncmd->tic,
+        tmp_ncmd->server_tic,
+        tmp_ncmd->forward,
+        tmp_ncmd->side,
+        tmp_ncmd->angle,
+        tmp_ncmd->buttons
+      );
+    }
+
+    ncmd->server_tic = tmp_ncmd->server_tic;
+  }
+
+  if (!found_command) {
+    netticcmd_t *ncmd = P_GetNewBlankCommand();
+
+    memcpy(ncmd, tmp_ncmd, sizeof(netticcmd_t));
+    g_queue_insert_sorted(
+      players[playernum].commands, ncmd, compare_commands, NULL
+    );
+  }
+}
+
+void P_AppendNewCommand(int playernum, netticcmd_t *tmp_ncmd) {
+  netticcmd_t *ncmd;
+
+  if (!playeringame[playernum])
+    return;
+  
+  ncmd = P_GetNewBlankCommand();
+
+  memcpy(ncmd, tmp_ncmd, sizeof(netticcmd_t));
+
+  g_queue_push_tail(players[playernum].commands, ncmd);
+}
+
+int P_GetLatestCommandIndex(int playernum) {
+  netticcmd_t *ncmd;
+
+  if (!playeringame[playernum])
+    return -1;
+  
+  ncmd = g_queue_peek_tail(players[playernum].commands);
+
+  if (ncmd == NULL)
+    return -1;
+
+  return ncmd->index;
+}
+
+void P_ForEachCommand(int playernum, GFunc func, gpointer user_data) {
+  if (playeringame[playernum])
+    g_queue_foreach(players[playernum].commands, func, user_data);
+}
+
+void P_ClearPlayerCommands(int playernum) {
+  D_Log(LOG_SYNC, "P_ClearPlayerCommands: Clearing commands for %d\n",
+    playernum
+  );
+  while (P_HasCommands(playernum))
+    P_RecycleCommand(P_PopCommand(playernum, 0));
+}
+
+void P_TrimCommands(int playernum, TrimFunc should_trim, gpointer user_data) {
+  while (P_HasCommands(playernum)) {
+    netticcmd_t *ncmd = P_GetCommand(playernum, 0);
+
+    if (!should_trim(ncmd, user_data))
+      break;
+
+    D_Log(LOG_SYNC, "P_TrimCommands: Removing command %d/%d\n",
+      ncmd->index,
+      ncmd->tic
+    );
+
+    P_RecycleCommand(P_PopCommand(playernum, 0));
+  }
+}
+
+void P_RemoveOldCommands(int playernum, int command_index) {
+  D_Log(LOG_SYNC, "(%d) P_RemoveOldCommands(%d)\n", gametic, command_index);
+
+  P_TrimCommands(
+    playernum, command_index_is_old, GINT_TO_POINTER(command_index)
+  );
+}
+
+void P_RemoveOldCommandsByTic(int playernum, int tic) {
+  D_Log(LOG_SYNC, "(%d) P_RemoveOldCommandsByTic(%d)\n", gametic, tic);
+
+  P_TrimCommands(playernum, command_tic_is_old, GINT_TO_POINTER(tic));
 }
 
 netticcmd_t* P_GetNewBlankCommand(void) {
@@ -344,32 +544,28 @@ netticcmd_t* P_GetNewBlankCommand(void) {
 
 void P_BuildCommand(void) {
   ticcmd_t cmd;
-  netticcmd_t *run_ncmd;
+  netticcmd_t ncmd;
 
   if (!CLIENT)
     return;
 
-  run_ncmd = P_GetNewBlankCommand();
-
   memset(&cmd, 0, sizeof(ticcmd_t));
   G_BuildTiccmd(&cmd);
 
-  run_ncmd->index   = CL_GetNextCommandIndex();
-  run_ncmd->tic     = gametic;
-  run_ncmd->forward = cmd.forwardmove;
-  run_ncmd->side    = cmd.sidemove;
-  run_ncmd->angle   = cmd.angleturn;
-  run_ncmd->buttons = cmd.buttons;
+  ncmd.index      = CL_GetNextCommandIndex();
+  ncmd.tic        = gametic;
+  ncmd.server_tic = 0;
+  ncmd.forward    = cmd.forwardmove;
+  ncmd.side       = cmd.sidemove;
+  ncmd.angle      = cmd.angleturn;
+  ncmd.buttons    = cmd.buttons;
 
   /*
   D_Log(LOG_SYNC, "(%d) P_BuildCommand: ", gametic);
   N_LogCommand(run_ncmd);
   */
 
-  if (run_ncmd == NULL)
-    puts("P_BuildCommand: Pushing NULL netticcmd");
-
-  g_queue_push_tail(players[consoleplayer].commands, run_ncmd);
+  P_AppendNewCommand(consoleplayer, &ncmd);
 
   if (CLIENT)
     CL_MarkServerOutdated();
@@ -384,7 +580,7 @@ void P_RunPlayerCommands(int playernum) {
   }
   
   if (DELTACLIENT && playernum != consoleplayer && playernum != 0) {
-    int command_count = g_queue_get_length(players[playernum].commands);
+    unsigned int command_count = P_GetCommandCount(playernum);
 
     if (command_count == 0) {
       if (!extrapolate_player_position(playernum))
@@ -404,54 +600,6 @@ void P_RunPlayerCommands(int playernum) {
   }
 
   run_queued_player_commands(playernum);
-}
-
-void P_ClearPlayerCommands(int playernum) {
-  D_Log(LOG_SYNC, "P_ClearPlayerCommands: Clearing commands for %d\n",
-    playernum
-  );
-  while (!g_queue_is_empty(players[playernum].commands))
-    P_RecycleCommand(g_queue_pop_head(players[playernum].commands));
-}
-
-void P_RemoveOldCommands(int playernum, int command_index) {
-  GQueue *commands = players[playernum].commands;
-
-  D_Log(LOG_SYNC, "(%d) P_RemoveOldCommands(%d)\n", gametic, command_index);
-
-  while (!g_queue_is_empty(commands)) {
-    netticcmd_t *ncmd = g_queue_peek_head(commands);
-
-    if (ncmd->index > command_index)
-      break;
-
-    D_Log(LOG_SYNC, "P_RemoveOldCommands: Removing command %d/%d\n",
-      ncmd->index,
-      ncmd->tic
-    );
-
-    P_RecycleCommand(g_queue_pop_head(commands));
-  }
-}
-
-void P_RemoveOldCommandsByTic(int playernum, int tic) {
-  GQueue *commands = players[playernum].commands;
-
-  D_Log(LOG_SYNC, "(%d) P_RemoveOldCommandsByTic(%d)\n", gametic, tic);
-
-  while (!g_queue_is_empty(commands)) {
-    netticcmd_t *ncmd = g_queue_peek_head(commands);
-
-    if (ncmd->tic > tic)
-      break;
-
-    D_Log(LOG_SYNC, "P_RemoveOldCommandsByTic: Removing command %d/%d\n",
-      ncmd->index,
-      ncmd->tic
-    );
-
-    P_RecycleCommand(g_queue_pop_head(commands));
-  }
 }
 
 void P_RecycleCommand(netticcmd_t *ncmd) {

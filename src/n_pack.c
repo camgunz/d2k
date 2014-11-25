@@ -39,6 +39,7 @@
 #include "n_state.h"
 #include "n_peer.h"
 #include "n_proto.h"
+#include "cl_cmd.h"
 #include "cl_main.h"
 #include "p_cmd.h"
 #include "p_pspr.h"
@@ -299,6 +300,25 @@ static void free_string(gpointer data) {
   free(data);
 }
 
+static void pack_unsynchronized_command(gpointer data, gpointer user_data) {
+  netticcmd_t *ncmd = (netticcmd_t *)data;
+  pbuf_t *pbuf = (pbuf_t *)user_data;
+  netpeer_t *server = CL_GetServerPeer();
+
+  if (server == NULL)
+    return;
+
+  if (ncmd->index <= server->sync.command_index)
+    return;
+
+  M_PBufWriteInt(pbuf, ncmd->index);
+  M_PBufWriteInt(pbuf, ncmd->tic);
+  M_PBufWriteChar(pbuf, ncmd->forward);
+  M_PBufWriteChar(pbuf, ncmd->side);
+  M_PBufWriteShort(pbuf, ncmd->angle);
+  M_PBufWriteUChar(pbuf, ncmd->buttons);
+}
+
 void N_PackSetup(netpeer_t *np) {
   game_state_t *gs = N_GetLatestState();
   unsigned short player_count = 0;
@@ -549,30 +569,14 @@ void N_PackSync(netpeer_t *np) {
   );
 
   if (CLIENT) {
-    unsigned int queue_length = g_queue_get_length(
-      players[consoleplayer].commands
-    );
-    unsigned int command_count = CL_GetUnsynchronizedCommandCount();
+    unsigned int command_count =
+      CL_GetUnsynchronizedCommandCount(consoleplayer);
 
     M_PBufWriteInt(pbuf, np->sync.tic);
     M_PBufWriteUInt(pbuf, command_count);
 
-    if (command_count == 0)
-      return;
-
-    for (unsigned int i = 0; i < queue_length; i++) {
-      netticcmd_t *ncmd = g_queue_peek_nth(players[consoleplayer].commands, i);
-
-      if (ncmd->index <= np->sync.command_index)
-        continue;
-
-      M_PBufWriteInt(pbuf, ncmd->index);
-      M_PBufWriteInt(pbuf, ncmd->tic);
-      M_PBufWriteChar(pbuf, ncmd->forward);
-      M_PBufWriteChar(pbuf, ncmd->side);
-      M_PBufWriteShort(pbuf, ncmd->angle);
-      M_PBufWriteUChar(pbuf, ncmd->buttons);
-    }
+    if (command_count > 0)
+      P_ForEachCommand(consoleplayer, pack_unsynchronized_command, pbuf);
   }
   else if (DELTASERVER) {
     M_PBufWriteInt(pbuf, np->sync.delta.from_tic);
@@ -610,7 +614,6 @@ dboolean N_UnpackSync(netpeer_t *np) {
 
     for (unsigned int i = 0; i < m_command_count; i++) {
       netticcmd_t ncmd;
-      netticcmd_t *run_ncmd;
 
       read_int(pbuf,   ncmd.index,   "command index");
       read_int(pbuf,   ncmd.tic,     "command TIC");
@@ -623,15 +626,8 @@ dboolean N_UnpackSync(netpeer_t *np) {
         continue;
 
       ncmd.server_tic = 0;
-
       np->sync.command_index = ncmd.index;
-
-      run_ncmd = P_GetNewBlankCommand();
-
-      memcpy(run_ncmd, &ncmd, sizeof(netticcmd_t));
-      if (run_ncmd == NULL)
-        puts("N_UnpackSync: Pushing NULL netticcmd");
-      g_queue_push_tail(players[np->playernum].commands, run_ncmd);
+      P_AppendNewCommand(np->playernum, &ncmd);
     }
   }
 

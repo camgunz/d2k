@@ -1,10 +1,10 @@
-#===============================================================================
-############################################################# License ##########
-#===============================================================================
+#==============================================================================
+############################################################# License #########
+#==============================================================================
 #
 #  Copyright (c) 2010 Jamie Jones <jamie_jones_au@yahoo.com.au>
 #  Copyright (C) 2013 David Hill
-#  Copyright (C) 2014 Charles Gunyon <ladna@totaltrash.org>
+#  Copyright (C) 2014 Charles Gunyon <charles.gunyon@gmail.com>
 #
 #  This software is free software; you can redistribute it and/or modify it
 #  under the terms of the GNU General Public License as published by the Free
@@ -20,11 +20,11 @@
 #  this program; if not, write to the Free Software Foundation, Inc., 51
 #  Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
-#===============================================================================
+#==============================================================================
 
-#===============================================================================
-################################################# CMake Configuration ##########
-#===============================================================================
+#==============================================================================
+################################################# CMake Configuration #########
+#==============================================================================
 PROJECT("Doom2K" C)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.0 FATAL_ERROR)
 IF(${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
@@ -39,10 +39,12 @@ IF(WIN32)
   INCLUDE(InstallRequiredSystemLibraries)
 ENDIF()
 
+###
 # Supported Build Types are:
 #  * Debug (CMAKE_C_FLAGS_DEBUG)
 #  * Release (CMAKE_C_FLAGS_RELEASE)
 # If no build type requested, default to Release
+###
 IF(NOT DEFINED CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
 ENDIF()
@@ -69,9 +71,9 @@ INCLUDE(CMakeDependentOption)
 SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-#===============================================================================
-########################################################### Functions ##########
-#===============================================================================
+#==============================================================================
+########################################################### Functions #########
+#==============================================================================
 FUNCTION(TRY_C_COMPILER_FLAG flag name)
   CHECK_C_COMPILER_FLAG("${flag}" ${name})
   IF(${name})
@@ -79,9 +81,9 @@ FUNCTION(TRY_C_COMPILER_FLAG flag name)
   ENDIF()
 ENDFUNCTION(TRY_C_COMPILER_FLAG flag name)
 
-#===============================================================================
-##################################################### Package Details ##########
-#===============================================================================
+#==============================================================================
+##################################################### Package Details #########
+#==============================================================================
 SET(VERSION "0")
 SET(PACKAGE "Doom2K")
 SET(PACKAGE_NAME "Doom2K")
@@ -168,9 +170,9 @@ ELSE()
   SET(GCC_OR_CLANG FALSE)
 ENDIF()
 
-#===============================================================================
-##################################################### Platform Checks ##########
-#===============================================================================
+#==============================================================================
+##################################################### Platform Checks #########
+#==============================================================================
 
 IF(MINGW)
   SET(CMAKE_REQUIRED_DEFINITIONS
@@ -291,9 +293,9 @@ ELSE()
   ENDIF()
 ENDIF()
 
-#===============================================================================
-############################################################# Options ##########
-#===============================================================================
+#==============================================================================
+############################################################# Options #########
+#==============================================================================
 OPTION(DOOMWADDIR, "The path where Doom WADs are stored" "")
 OPTION(
   CHECK_HEAP "Exhaustively run memory checks while the game is running" OFF
@@ -339,9 +341,9 @@ IF(NOT DOOMWADDIR)
   SET(DOOMWADDIR "${CMAKE_INSTALL_PREFIX}/share/games/doom")
 ENDIF()
 
-#===============================================================================
-################################################## Compiler: Features ##########
-#===============================================================================
+#==============================================================================
+################################################## Compiler: Features #########
+#==============================================================================
 IF(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   TRY_C_COMPILER_FLAG(--std=c99 FLAG_C_stdc99)
   IF(PROFILE)
@@ -349,9 +351,9 @@ IF(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   ENDIF()
 ENDIF()
 
-#===============================================================================
-################################################## Compiler: Warnings ##########
-#===============================================================================
+#==============================================================================
+################################################## Compiler: Warnings #########
+#==============================================================================
 IF(GCC_OR_CLANG)
   TRY_C_COMPILER_FLAG(-Wall   FLAG_C_Wall)
 ENDIF()
@@ -368,9 +370,9 @@ IF(MSVC)
   ADD_DEFINITIONS(-D_CRT_NONSTDC_NO_WARNINGS)
 ENDIF()
 
-#===============================================================================
-################################################# Compiler: Hardening ##########
-#===============================================================================
+#==============================================================================
+################################################# Compiler: Hardening #########
+#==============================================================================
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
   ADD_DEFINITIONS(-DDEBUG)
   IF(CLANG AND SANITIZE_ADDRESSES)
@@ -384,14 +386,12 @@ ELSE()
     TRY_C_COMPILER_FLAG(-O3 FLAG_C_optimizations)
 
     IF(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    ###
-    #   TRY_C_COMPILER_FLAG(-fPIC              FLAG_C_fPIC)
-    #   TRY_C_COMPILER_FLAG(-pie               FLAG_C_pie)
-    #   TRY_C_COMPILER_FLAG(-Wl,-z,relro       FLAG_C_Wl_z_relro)
-    #   TRY_C_COMPILER_FLAG(-Wl,-z,now         FLAG_C_Wl_z_now)
-    #   TRY_C_COMPILER_FLAG(-Wl,--as-needed    FLAG_C_Wl_as_needed)
-    #   TRY_C_COMPILER_FLAG(-Wl,-z,noexecstack FLAG_C_Wl_z_noexecstack)
-    ###
+      # TRY_C_COMPILER_FLAG(-fPIC              FLAG_C_fPIC)
+      # TRY_C_COMPILER_FLAG(-pie               FLAG_C_pie)
+      # TRY_C_COMPILER_FLAG(-Wl,-z,relro       FLAG_C_Wl_z_relro)
+      # TRY_C_COMPILER_FLAG(-Wl,-z,now         FLAG_C_Wl_z_now)
+      # TRY_C_COMPILER_FLAG(-Wl,--as-needed    FLAG_C_Wl_as_needed)
+      # TRY_C_COMPILER_FLAG(-Wl,-z,noexecstack FLAG_C_Wl_z_noexecstack)
     ENDIF()
   ENDIF()
 
@@ -410,10 +410,11 @@ ELSE()
   ENDIF()
 ENDIF()
 
-#===============================================================================
-############################################## Compiler: Optimization ##########
-#===============================================================================
-IF(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel" OR CMAKE_BUILD_TYPE STREQUAL "Release")
+#==============================================================================
+############################################## Compiler: Optimization #########
+#==============================================================================
+IF(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel" OR
+   CMAKE_BUILD_TYPE STREQUAL "Release")
   IF(GCC_OR_CLANG)
     TRY_C_COMPILER_FLAG(-fomit-frame-pointer FLAG_C_fomit_frame_pointer)
   ENDIF()
@@ -425,10 +426,10 @@ IF(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel" OR CMAKE_BUILD_TYPE STREQUAL "Release"
 
 ENDIF()
 
-#===============================================================================
-################################################## Build Dependencies ##########
-#===============================================================================
-# cg: Don't really need to do this just yet
+#==============================================================================
+################################################## Build Dependencies #########
+#==============================================================================
+# CG: Don't really need to do this just yet
 
 # SET(DEPS_PREFIX "${CMAKE_BINARY_DIR/deps}")
 # SET(ENET_FOLDER "enet-1.3.11")
@@ -479,9 +480,9 @@ SET(LUA_SOURCES
 INCLUDE_DIRECTORIES(${LUA_SOURCE_DIRECTORY})
 ADD_LIBRARY(${LUA_LIBRARY} STATIC ${LUA_SOURCES})
 
-#===============================================================================
-################################################### Find Dependencies ##########
-#===============================================================================
+#==============================================================================
+################################################### Find Dependencies #########
+#==============================================================================
 IF(ICONV_LIBRARIES)
   SET(SAVED_ICONV_LIBRARIES ${ICONV_LIBRARIES})
 ENDIF()
@@ -739,11 +740,13 @@ CONFIGURE_FILE(
   ${CMAKE_CURRENT_BINARY_DIR}/config.h
 )
 
-## FIXME: This is an inelegant hack to find, and grab all needed
-## .dll support files on windows. It works by looking for SDL.dll
-## then taking every .dll file found in that directory from your SDK.
-## This ensures you get sdl and all of it's needed .dll files, but may
-## also grab unneeded .dll files.
+###
+# FIXME: This is an inelegant hack to find and grab all needed DLL support
+#        files on windows. It works by looking for SDL.dll then taking every
+#        DLL file found in that directory from your SDK.  This ensures you get
+#        SDL and all of it's needed DLL files, but may also grab unneeded DLL
+#        files.
+###
 IF(WIN32)
   FIND_PATH(
     SDL_SUPPORT_LIBS_DIR SDL.dll
@@ -755,9 +758,9 @@ IF(WIN32)
   FILE(GLOB SDL_SUPPORT_LIBS ${SDL_SUPPORT_LIBS_DIR}/*.dll)
 ENDIF()
 
-#===============================================================================
-################################################## Set Project Source ##########
-#===============================================================================
+#==============================================================================
+################################################## Set Project Source #########
+#==============================================================================
 
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
@@ -820,6 +823,7 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src)
 SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/am_map.c
   ${CMAKE_SOURCE_DIR}/src/c_main.c
+  ${CMAKE_SOURCE_DIR}/src/cl_cmd.c
   ${CMAKE_SOURCE_DIR}/src/cl_main.c
   ${CMAKE_SOURCE_DIR}/src/cmp.c
   ${CMAKE_SOURCE_DIR}/src/d_deh.c
@@ -921,7 +925,7 @@ SET(DOOM2K_SOURCES
 SET(CLIENT_SOURCES
   ${CMAKE_SOURCE_DIR}/src/SDL/i_main.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_system.c
-  ## ${CMAKE_SOURCE_DIR}/src/d_client.c
+  # ${CMAKE_SOURCE_DIR}/src/d_client.c
   ${CMAKE_SOURCE_DIR}/src/lprintf.c
   ${CMAKE_SOURCE_DIR}/src/m_argv.c
 )
@@ -1118,18 +1122,18 @@ ENDIF()
 ADD_EXECUTABLE(doom2k ${DOOM2K_CLIENT_SOURCES})
 TARGET_LINK_LIBRARIES(doom2k ${DOOM2K_LIBRARIES})
 
-## INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/unittests)
-## INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/cutest)
-## ADD_DEFINITIONS(-DRUNNING_UNIT_TESTS)
-## ADD_EXECUTABLE(test-doom2k ${DOOM2K_TESTING_SOURCES})
-## TARGET_LINK_LIBRARIES(test-doom2k ${DOOM2K_LIBRARIES})
+# INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/unittests)
+# INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/cutest)
+# ADD_DEFINITIONS(-DRUNNING_UNIT_TESTS)
+# ADD_EXECUTABLE(test-doom2k ${DOOM2K_TESTING_SOURCES})
+# TARGET_LINK_LIBRARIES(test-doom2k ${DOOM2K_LIBRARIES})
 
 SET(BIN_DIR "${PREFIX}/bin")
 SET(LIB_DIR "${PREFIX}/lib")
 SET(INCLUDE_DIR "${PREFIX}/include")
 SET(SHARE_DIR "${PREFIX}/share")
 
-## TODO: Need to run test-doom2k and use deutex to build the WAD here
+# TODO: Need to run test-doom2k and use deutex to build the WAD here
 
 INSTALL(
   TARGETS doom2k
@@ -1138,8 +1142,8 @@ INSTALL(
   ARCHIVE DESTINATION ${LIB_DIR}
 )
 
-## FIXME: This is a continuation of the Windows SDL inelegant hack. This does
-## the actual installation of those support libraries.
+# FIXME: This is a continuation of the Windows SDL inelegant hack. This does
+#        the actual installation of those support libraries.
 IF(WIN32)
   INSTALL(PROGRAMS ${SDL_SUPPORT_LIBS} DESTINATION ${LIB_DIR})
 ENDIF()

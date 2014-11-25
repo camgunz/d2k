@@ -45,6 +45,7 @@
 #include "n_state.h"
 #include "n_peer.h"
 #include "n_proto.h"
+#include "cl_cmd.h"
 #include "cl_main.h"
 #include "sv_main.h"
 #include "p_checksum.h"
@@ -57,6 +58,7 @@
 #define DEBUG_NET 0
 #define DEBUG_SYNC 1
 #define DEBUG_SAVE 0
+#define LOG_COMMANDS 1
 #define PRINT_NETWORK_STATS 1
 // #define LOG_SECTOR 43
 
@@ -95,7 +97,7 @@ static int run_commandsync_tics(int command_count) {
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
-      tic_count = MIN(tic_count, g_queue_get_length(players[i].commands));
+      tic_count = MIN(tic_count, P_GetCommandCount(i));
     }
   }
 
@@ -170,8 +172,8 @@ static void print_network_stats(void) {
       iter.np->peer->highestRoundTripTimeVariance,
       iter.np->peer->lastRoundTripTimeVariance,
       iter.np->peer->roundTripTimeVariance,
-      CLIENT ? CL_GetUnsynchronizedCommandCount() : 0,
-      g_queue_get_length(players[iter.np->playernum].commands)
+      CLIENT ? CL_GetUnsynchronizedCommandCount(iter.np->playernum) : 0,
+      P_GetCommandCount(iter.np->playernum)
     );
     puts("------------------------------------------------------------------------------");
     puts("| Packet Loss | Throttle | Accel | Counter | Decel | Interval | Limit |  #   |");
@@ -193,6 +195,7 @@ static void print_network_stats(void) {
 #endif
 
 void N_LogCommand(netticcmd_t *ncmd) {
+#if LOG_COMMANDS
   D_Log(LOG_SYNC, "(%d): {%d/%d/%d %d %d %d %u}\n",
     gametic,
     ncmd->index,
@@ -203,6 +206,7 @@ void N_LogCommand(netticcmd_t *ncmd) {
     ncmd->angle,
     ncmd->buttons
   );
+#endif
 }
 
 void N_LogPlayerPosition(player_t *player) {
@@ -255,7 +259,6 @@ void N_InitNetGame(void) {
     P_SetName(i, name);
 
     players[i].messages = g_ptr_array_new_with_free_func(P_DestroyMessage);
-    players[i].commands = g_queue_new();
   }
 
   P_InitCommands();

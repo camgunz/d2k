@@ -45,7 +45,7 @@
 #include "cl_main.h"
 #include "p_user.h"
 
-#define USE_RANGE_CODER 1
+#define USE_RANGE_CODER 0
 #define MAX_DOWNLOAD 0
 #define MAX_UPLOAD 0
 
