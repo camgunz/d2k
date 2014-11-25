@@ -192,13 +192,13 @@ typedef struct player_s
   fixed_t jumpTics;      // delay the next jump for a moment
 
   /* CG 4/3/2014: New fields for netcode */
-  char   *name;
-  byte    team;
-  GQueue *commands;
-  int     commands_missed;
-  int     command_limit;
-  int     commands_run_this_tic;
-  int     latest_command_run_index;
+  char      *name;
+  byte       team;
+  GPtrArray *commands;
+  int        commands_missed;
+  int        command_limit;
+  int        commands_run_this_tic;
+  int        latest_command_run_index;
 } player_t;
 
 //

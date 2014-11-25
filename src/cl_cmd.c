@@ -32,39 +32,33 @@
 #include "cl_cmd.h"
 #include "p_cmd.h"
 
-void CL_ClearSynchronizedCommands(int playernum) {
-  if (!playeringame[playernum])
+static bool command_is_synchronized(gpointer data, gpointer user_data) {
+  netticcmd_t *ncmd = (netticcmd_t *)data;
+
+  return ncmd->server_tic != 0;
+}
+
+static void count_command(gpointer data, gpointer user_data) {
+  netpeer_t *server = CL_GetServerPeer();
+  netticcmd_t *ncmd = (netticcmd_t *)data;
+  unsigned int command_count = GPOINTER_TO_UINT(user_data);
+
+  if (server == NULL)
     return;
 
-  while (P_HasCommands(playernum)) {
-    bool found_old_command = false;
-    unsigned int command_count = P_GetCommandCount(playernum);
+  if (ncmd->index > server->sync.command_index)
+    command_count++;
+}
 
-    for (unsigned int i = 0; i < command_count; i++) {
-      netticcmd_t *ncmd = P_GetCommand(playernum, i);
+void CL_TrimSynchronizedCommands(int playernum) {
+  D_Log(LOG_SYNC, "CL_TrimSynchronizedCommands\n");
 
-      if (ncmd->server_tic == 0)
-        continue;
-
-      D_Log(LOG_SYNC,
-        "CL_ClearSynchronizedCommands: Removing old command %d/%d\n",
-        ncmd->index,
-        ncmd->tic
-      );
-      P_RecycleCommand(P_PopCommand(playernum, i));
-      found_old_command = true;
-      break;
-    }
-
-    if (!found_old_command)
-      break;
-  }
+  P_TrimCommands(playernum, command_is_synchronized, NULL);
 }
 
 unsigned int CL_GetUnsynchronizedCommandCount(int playernum) {
   netpeer_t *server;
   unsigned int command_count = 0;
-  unsigned int queue_length;
   
   if (!CLIENT)
     return 0;
@@ -77,14 +71,7 @@ unsigned int CL_GetUnsynchronizedCommandCount(int playernum) {
   if (server == NULL)
     return 0;
 
-  queue_length = P_GetCommandCount(playernum);
-
-  for (unsigned int i = 0; i < queue_length; i++) {
-    netticcmd_t *ncmd = P_GetCommand(playernum, i);
-
-    if (ncmd->index > server->sync.command_index)
-      command_count++;
-  }
+  P_ForEachCommand(playernum, count_command, GUINT_TO_POINTER(command_count));
 
   return command_count;
 }

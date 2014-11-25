@@ -304,7 +304,7 @@ static void run_queued_player_commands(int playernum) {
     return;
 
   if (CLIENT && playernum == consoleplayer)
-    P_PrintCommands(player->commands);
+    P_PrintCommands(playernum);
 
   if (CLIENT && !CL_Synchronizing())
     player->command_limit = 1;
@@ -334,10 +334,9 @@ static bool command_tic_is_old(gpointer data, gpointer user_data) {
   return ncmd->tic <= tic;
 }
 
-static gint compare_commands(gconstpointer a, gconstpointer b,
-                             gpointer user_data) {
-  netticcmd_t *ncmd_one = (netticcmd_t *)a;
-  netticcmd_t *ncmd_two = (netticcmd_t *)b;
+static gint compare_commands(gconstpointer a, gconstpointer b) {
+  netticcmd_t *ncmd_one = *(netticcmd_t **)a;
+  netticcmd_t *ncmd_two = *(netticcmd_t **)b;
 
   if (ncmd_one->index < ncmd_two->index)
     return -1;
@@ -369,40 +368,61 @@ static gint compare_commands(gconstpointer a, gconstpointer b,
   return 0;
 }
 
+static void recycle_command(gpointer data) {
+  netticcmd_t *ncmd = (netticcmd_t *)data;
+
+  D_Log(LOG_SYNC, "recycle_command: Recycling command %d/%d\n",
+    ncmd->index,
+    ncmd->tic
+  );
+
+  memset(ncmd, 0, sizeof(netticcmd_t));
+
+  g_queue_push_tail(blank_command_queue, ncmd);
+}
+
+static netticcmd_t* get_new_blank_command(void) {
+  netticcmd_t *ncmd = g_queue_pop_head(blank_command_queue);
+
+  if (ncmd == NULL)
+    ncmd = calloc(1, sizeof(netticcmd_t));
+
+  if (ncmd == NULL)
+    I_Error("get_new_blank_command: Error allocating new netticcmd");
+
+  return ncmd;
+}
+
 void P_InitCommands(void) {
   if (blank_command_queue == NULL)
     blank_command_queue = g_queue_new();
 
   for (int i = 0; i < MAXPLAYERS; i++)
-    players[i].commands = g_queue_new();
+    players[i].commands = g_ptr_array_new_with_free_func(recycle_command);
 }
 
 bool P_HasCommands(int playernum) {
   if (!playeringame[playernum])
     return false;
 
-  return !g_queue_is_empty(players[playernum].commands);
+  return P_GetCommandCount(playernum) > 0;
 }
 
 unsigned int P_GetCommandCount(int playernum) {
   if (!playeringame[playernum])
     return 0;
 
-  return g_queue_get_length(players[playernum].commands);
+  return players[playernum].commands->len;
 }
 
 netticcmd_t* P_GetCommand(int playernum, unsigned int index) {
   if (!playeringame[playernum])
     return NULL;
 
-  return g_queue_peek_nth(players[playernum].commands, index);
-}
-
-netticcmd_t* P_PopCommand(int playernum, unsigned int index) {
-  if (!playeringame[playernum])
+  if (index >= P_GetCommandCount(playernum))
     return NULL;
 
-  return g_queue_pop_nth(players[playernum].commands, index);
+  return g_ptr_array_index(players[playernum].commands, index);
 }
 
 void P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd) {
@@ -415,7 +435,7 @@ void P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd) {
   current_command_count = P_GetCommandCount(playernum);
 
   for (unsigned int j = 0; j < current_command_count; j++) {
-    netticcmd_t *ncmd = g_queue_peek_nth(players[playernum].commands, j);
+    netticcmd_t *ncmd = P_GetCommand(playernum, j);
 
     if (ncmd->index != tmp_ncmd->index)
       continue;
@@ -451,12 +471,8 @@ void P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd) {
   }
 
   if (!found_command) {
-    netticcmd_t *ncmd = P_GetNewBlankCommand();
-
-    memcpy(ncmd, tmp_ncmd, sizeof(netticcmd_t));
-    g_queue_insert_sorted(
-      players[playernum].commands, ncmd, compare_commands, NULL
-    );
+    P_AppendNewCommand(playernum, tmp_ncmd);
+    g_ptr_array_sort(players[playernum].commands, compare_commands);
   }
 }
 
@@ -466,22 +482,24 @@ void P_AppendNewCommand(int playernum, netticcmd_t *tmp_ncmd) {
   if (!playeringame[playernum])
     return;
   
-  ncmd = P_GetNewBlankCommand();
+  ncmd = get_new_blank_command();
 
   memcpy(ncmd, tmp_ncmd, sizeof(netticcmd_t));
 
-  g_queue_push_tail(players[playernum].commands, ncmd);
+  g_ptr_array_add(players[playernum].commands, ncmd);
+}
+
+netticcmd_t* P_GetLatestCommand(int playernum) {
+  if (!playeringame[playernum])
+    return NULL;
+
+  return P_GetCommand(playernum, P_GetCommandCount(playernum) - 1);
 }
 
 int P_GetLatestCommandIndex(int playernum) {
-  netticcmd_t *ncmd;
+  netticcmd_t *ncmd = P_GetLatestCommand(playernum);
 
-  if (!playeringame[playernum])
-    return -1;
-  
-  ncmd = g_queue_peek_tail(players[playernum].commands);
-
-  if (ncmd == NULL)
+  if (!ncmd)
     return -1;
 
   return ncmd->index;
@@ -489,20 +507,36 @@ int P_GetLatestCommandIndex(int playernum) {
 
 void P_ForEachCommand(int playernum, GFunc func, gpointer user_data) {
   if (playeringame[playernum])
-    g_queue_foreach(players[playernum].commands, func, user_data);
+    g_ptr_array_foreach(players[playernum].commands, func, user_data);
 }
 
 void P_ClearPlayerCommands(int playernum) {
-  D_Log(LOG_SYNC, "P_ClearPlayerCommands: Clearing commands for %d\n",
-    playernum
+  unsigned int command_count;
+
+  if (!playeringame[playernum])
+    return;
+
+  D_Log(LOG_SYNC,
+    "P_ClearPlayerCommands: Clearing commands for %d\n", playernum
   );
-  while (P_HasCommands(playernum))
-    P_RecycleCommand(P_PopCommand(playernum, 0));
+
+  command_count = P_GetCommandCount(playernum);
+
+  if (command_count > 0)
+    g_ptr_array_remove_range(players[playernum].commands, 0, command_count);
 }
 
 void P_TrimCommands(int playernum, TrimFunc should_trim, gpointer user_data) {
-  while (P_HasCommands(playernum)) {
-    netticcmd_t *ncmd = P_GetCommand(playernum, 0);
+  unsigned int total_command_count;
+  unsigned int command_count = 0;
+
+  if (!playeringame[playernum])
+    return;
+
+  total_command_count = P_GetCommandCount(playernum);
+
+  for (unsigned int i = 0; i < total_command_count; i++) {
+    netticcmd_t *ncmd = P_GetCommand(playernum, i);
 
     if (!should_trim(ncmd, user_data))
       break;
@@ -512,34 +546,24 @@ void P_TrimCommands(int playernum, TrimFunc should_trim, gpointer user_data) {
       ncmd->tic
     );
 
-    P_RecycleCommand(P_PopCommand(playernum, 0));
+    command_count++;
   }
+
+  g_ptr_array_remove_range(players[playernum].commands, 0, command_count);
 }
 
-void P_RemoveOldCommands(int playernum, int command_index) {
-  D_Log(LOG_SYNC, "(%d) P_RemoveOldCommands(%d)\n", gametic, command_index);
-
-  P_TrimCommands(
-    playernum, command_index_is_old, GINT_TO_POINTER(command_index)
-  );
-}
-
-void P_RemoveOldCommandsByTic(int playernum, int tic) {
-  D_Log(LOG_SYNC, "(%d) P_RemoveOldCommandsByTic(%d)\n", gametic, tic);
+void P_TrimCommandsByTic(int playernum, int tic) {
+  D_Log(LOG_SYNC, "(%d) P_TrimCommandsByTic(%d)\n", gametic, tic);
 
   P_TrimCommands(playernum, command_tic_is_old, GINT_TO_POINTER(tic));
 }
 
-netticcmd_t* P_GetNewBlankCommand(void) {
-  netticcmd_t *ncmd = g_queue_pop_head(blank_command_queue);
+void P_TrimCommandsByIndex(int playernum, int command_index) {
+  D_Log(LOG_SYNC, "(%d) P_TrimCommandsByIndex(%d)\n", gametic, command_index);
 
-  if (ncmd == NULL)
-    ncmd = calloc(1, sizeof(netticcmd_t));
-
-  if (ncmd == NULL)
-    I_Error("P_GetNewBlankCommand: Error allocating new netticcmd");
-
-  return ncmd;
+  P_TrimCommands(
+    playernum, command_index_is_old, GINT_TO_POINTER(command_index)
+  );
 }
 
 void P_BuildCommand(void) {
@@ -602,20 +626,9 @@ void P_RunPlayerCommands(int playernum) {
   run_queued_player_commands(playernum);
 }
 
-void P_RecycleCommand(netticcmd_t *ncmd) {
-  D_Log(LOG_SYNC, "P_RecycleCommand: Recycling command %d/%d\n",
-    ncmd->index,
-    ncmd->tic
-  );
-
-  memset(ncmd, 0, sizeof(netticcmd_t));
-
-  g_queue_push_tail(blank_command_queue, ncmd);
-}
-
-void P_PrintCommands(GQueue *commands) {
+void P_PrintCommands(int playernum) {
   D_Log(LOG_SYNC, "{");
-  g_queue_foreach(commands, print_command, NULL);
+  P_ForEachCommand(playernum, print_command, NULL);
   D_Log(LOG_SYNC, " }\n");
 }
 

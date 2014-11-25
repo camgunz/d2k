@@ -49,7 +49,7 @@ static void sv_remove_old_commands(void) {
     return;
 
   for (int i = 0; i < MAXPLAYERS; i++)
-    P_RemoveOldCommandsByTic(i, oldest_sync_tic);
+    P_TrimCommandsByTic(i, oldest_sync_tic);
 }
 
 static void sv_remove_old_states(void) {

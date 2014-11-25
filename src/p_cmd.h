@@ -30,21 +30,19 @@ void         P_InitCommands(void);
 bool         P_HasCommands(int playernum);
 unsigned int P_GetCommandCount(int playernum);
 netticcmd_t* P_GetCommand(int playernum, unsigned int index);
-netticcmd_t* P_PopCommand(int playernum, unsigned int index);
 void         P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd);
 void         P_AppendNewCommand(int playernum, netticcmd_t *tmp_ncmd);
+netticcmd_t* P_GetLatestCommand(int playernum);
 int          P_GetLatestCommandIndex(int playernum);
 void         P_ForEachCommand(int playernum, GFunc func, gpointer user_data);
 void         P_ClearPlayerCommands(int playernum);
 void         P_TrimCommands(int playernum, TrimFunc should_trim,
                                            gpointer user_data);
-void         P_RemoveOldCommands(int playernum, int command_index);
-void         P_RemoveOldCommandsByTic(int playernum, int tic);
-netticcmd_t* P_GetNewBlankCommand(void);
+void         P_TrimCommandsByTic(int playernum, int tic);
+void         P_TrimCommandsByIndex(int playernum, int command_index);
 void         P_BuildCommand(void);
 void         P_RunPlayerCommands(int playernum);
-void         P_RecycleCommand(netticcmd_t *ncmd);
-void         P_PrintCommands(GQueue *commands);
+void         P_PrintCommands(int playernum);
 
 #endif
 
