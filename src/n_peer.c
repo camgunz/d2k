@@ -280,6 +280,9 @@ void N_PeerIterRemove(netpeer_iter_t *it, netpeer_t *np) {
 }
 
 unsigned int N_PeerGetCount(void) {
+  if (net_peers == NULL)
+    return 0;
+
   return g_hash_table_size(net_peers);
 }
 

@@ -439,7 +439,7 @@ ENDIF()
 
 # Build Lua Static library
 SET(LUA_LIBRARY lua53)
-SET(LUA_SOURCE_DIRECTORY deps/lua-5.3.0-alpha/src)
+SET(LUA_SOURCE_DIRECTORY src/lua-5.3.0-alpha/src)
 SET(LUA_SOURCES
   # Base
   ${LUA_SOURCE_DIRECTORY}/lapi.c
