@@ -41,6 +41,23 @@
 #define SOUND_DISABLED (!snd_card || nosfxparm)
 #define MUSIC_DISABLED (!mus_card || nomusicparm)
 
+// killough 4/25/98: mask used to indicate sound origin is player item pickup
+#define PICKUP_SOUND (0x8000)
+
+typedef struct sound_engine_s {
+  void (stop_sounds)(void);                                   // S_Stop
+  void (start_sound)(mobj_t *origin, int sfx_id, int volume); // S_StartSoundAtVolume
+  void (silence_actor)(mobj_t *origin);                       // S_StopSound
+  void (reposition_sounds)(mobj_t *listener);                 // S_UpdateSounds
+  void (set_music)(int musicnum, bool looping);               // S_ChangeMusic
+  void (restart_music)(void);                                 // S_RestartMusic
+  void (set_musinfo_music)(int lumpnum, bool looping);        // S_ChangeMusInfoMusic
+  void (stop_music)                                           // S_StopMusic
+  void (pause_music)(void);                                   // S_PauseSound
+  void (resume_music)(void);                                  // S_ResumeSound
+  void (handle_level_start)(void);                            // S_Start
+} sound_engine_t;
+
 //
 // Initializes sound stuff, including volume
 // Sets channels, SFX and music volume,
@@ -67,9 +84,6 @@ void S_StartSound(mobj_t *origin, int sound_id);
 // Will start a sound at a given volume.
 void S_StartSoundAtVolume(mobj_t *origin, int sound_id, int volume);
 
-// killough 4/25/98: mask used to indicate sound origin is player item pickup
-#define PICKUP_SOUND (0x8000)
-
 // Stop sound for thing at <origin>
 void S_StopSound(mobj_t *origin);
 
@@ -77,8 +91,8 @@ void S_StopSound(mobj_t *origin);
 void S_StartMusic(int music_id);
 
 // Start music using <music_id> from sounds.h, and set whether looping
-void S_ChangeMusic(int music_id, int looping);
-void S_ChangeMusInfoMusic(int lumpnum, int looping);
+void S_ChangeMusic(int music_id, bool looping);
+void S_ChangeMusInfoMusic(int lumpnum, bool looping);
 void S_RestartMusic(void);
 
 // Stops the music fer sure.

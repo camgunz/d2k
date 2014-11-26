@@ -160,7 +160,7 @@ void I_InitMusic(void) {
   );
 }
 
-void I_PlaySong(int handle, int looping) {
+void I_PlaySong(int handle, bool looping) {
   if (MUSIC_DISABLED)
     return;
 

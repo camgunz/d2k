@@ -1,9 +1,19 @@
 # To Do
 
-## Sync
+## Sound
 
-1. Convert `player->commands` to a `GPtrArray` (`GArray`?)
-  - I thought there wouldn't be very much indexing.  I was wrong.
+  - `s_sndold.c` exports `sound_engine_t* S_GetOldSoundEngine(void)`
+  - `s_sndnew.c` exports `sound_engine_t* S_GetNewSoundEngine(void)`
+  - Create an internal `sound_engine_t *SoundEngine` in `s_sound.c`
+  - `S_Init` sets up the sound engine
+    - For now:
+      - singleplayer always uses the old sound engine
+      - multiplayer always uses the new sound engine
+  - `S_Start`, `S_Stop`, etc. are defined in `s_sound.c` and are simply
+    wrappers around the internal `SoundEngine`
+    - Don't use `#define` because it complicates debugging
+
+## Sync
 
 1. Test multiple players
 
