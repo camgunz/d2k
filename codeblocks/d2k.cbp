@@ -6,8 +6,9 @@
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
-			<Target title="Debug">
+			<Target title="Windows Debug">
 				<Option output="Debug/bin/doom2k" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="Debug/bin/" />
 				<Option object_output="Debug/obj/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -16,8 +17,9 @@
 					<Add option="-DDEBUG=1" />
 				</Compiler>
 			</Target>
-			<Target title="Release">
+			<Target title="Windows Release">
 				<Option output="Release/bin/doom2k" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="Release/bin/" />
 				<Option object_output="Release/obj/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -31,7 +33,7 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
-			<Add option="-std=c99" />
+			<Add option="-std=c99 -mno-ms-bitfields" />
 			<Add option='-DIS_GNUG=&quot;(defined(__GNUC__) || defined(__GNUG__)) &amp;&amp; !(defined(__clang__) || defined(__INTEL_COMPILER))&quot;' />
 			<Add option='-DVERSION=&quot;\&quot;0\&quot;&quot;' />
 			<Add option='-DPACKAGE=&quot;\&quot;Doom2K\&quot;&quot;' />
@@ -40,7 +42,7 @@
 			<Add option='-DPACKAGE_STRING=&quot;\&quot;${PACKAGE_NAME} v${PACKAGE_VERSION}\&quot;&quot;' />
 			<Add option='-DPACKAGE_TARNAME=&quot;\&quot;doom2k\&quot;&quot;' />
 			<Add option='-DPACKAGE_URL=&quot;\&quot;http://github.com/camgunz/d2k\&quot;&quot;' />
-			<Add option='-DDOOMWADDIR=&quot;\&quot;\&quot;&quot;' />
+			<Add option='-DDOOMWADDIR=&quot;\&quot;C:\wads\&quot;&quot;' />
 			<Add option="-DGL_DOOM=1" />
 			<Add option="-DDOGS=1" />
 			<Add option="-DHIGHRES=1" />
@@ -67,72 +69,74 @@
 			<Add option="-DHAVE_LIBMAD=1" />
 			<Add option="-DHAVE_LIBPCREPOSIX=1" />
 			<Add option="-DHAVE_LIBPNG=1" />
-			<Add directory="../../../../../mingw-w64/include" />
-			<Add directory="../../../../../mingw-w64/include/glib-2.0" />
-			<Add directory="../../../../../mingw-w64/lib/glib-2.0/include" />
-			<Add directory="../../../../../mingw-w64/include/pango-1.0" />
-			<Add directory="../../../../../mingw-w64/include/SDL" />
-			<Add directory="../../../../../mingw-w64/include/cairo" />
+			<Add directory="../deps/include" />
+			<Add directory="../deps/include/glib-2.0" />
+			<Add directory="../deps/lib/glib-2.0/include" />
+			<Add directory="../deps/include/pango-1.0" />
+			<Add directory="../deps/include/SDL" />
+			<Add directory="../deps/include/cairo" />
 			<Add directory="../src/lua-5.3.0-alpha/src" />
 			<Add directory="../src" />
 		</Compiler>
 		<Linker>
-			<Add library="..\..\..\..\..\mingw-w64\lib\libcairo.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libcairo-gobject.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libcairo-script-interpreter.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libcharset.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libdumb.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libenet.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libexpat.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libffi.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libFLAC.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libfluidsynth.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libfontconfig.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libfreetype.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libgettextlib.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libgettextpo.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libgettextsrc.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libgio-2.0.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libglib-2.0.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libgmodule-2.0.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libgobject-2.0.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libgthread-2.0.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libharfbuzz.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libiconv.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libintl.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libjpeg.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\liblzma.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libmad.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libmangle.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libmikmod.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libogg.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libopcodes.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libpango-1.0.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libpangocairo-1.0.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libpangoft2-1.0.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libpangowin32-1.0.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libpcre.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libpcreposix.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libpixman-1.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libpng15.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libportmidi.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libSDL.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libSDL_image.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libSDL_mixer.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libtiff.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libvorbis.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libvorbisenc.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libvorbisfile.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libwebp.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libxdiff.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libxml2.dll.a" />
-			<Add library="..\..\..\..\..\mingw-w64\lib\libz.dll.a" />
+			<Add library="..\deps\lib\libcairo.dll.a" />
+			<Add library="..\deps\lib\libcairo-gobject.dll.a" />
+			<Add library="..\deps\lib\libcairo-script-interpreter.dll.a" />
+			<Add library="..\deps\lib\libcharset.dll.a" />
+			<Add library="..\deps\lib\libdumb.a" />
+			<Add library="..\deps\lib\libenet.a" />
+			<Add library="..\deps\lib\libexpat.dll.a" />
+			<Add library="..\deps\lib\libffi.dll.a" />
+			<Add library="..\deps\lib\libFLAC.dll.a" />
+			<Add library="..\deps\lib\libfluidsynth.dll.a" />
+			<Add library="..\deps\lib\libfontconfig.dll.a" />
+			<Add library="..\deps\lib\libfreetype.dll.a" />
+			<Add library="..\deps\lib\libgettextlib.dll.a" />
+			<Add library="..\deps\lib\libgettextpo.dll.a" />
+			<Add library="..\deps\lib\libgettextsrc.dll.a" />
+			<Add library="..\deps\lib\libgio-2.0.dll.a" />
+			<Add library="..\deps\lib\libglib-2.0.dll.a" />
+			<Add library="..\deps\lib\libgmodule-2.0.dll.a" />
+			<Add library="..\deps\lib\libgobject-2.0.dll.a" />
+			<Add library="..\deps\lib\libgthread-2.0.dll.a" />
+			<Add library="..\deps\lib\libharfbuzz.dll.a" />
+			<Add library="..\deps\lib\libiconv.dll.a" />
+			<Add library="..\deps\lib\libintl.dll.a" />
+			<Add library="..\deps\lib\libjpeg.dll.a" />
+			<Add library="..\deps\lib\liblzma.dll.a" />
+			<Add library="..\deps\lib\libmad.a" />
+			<Add library="..\deps\lib\libmikmod.dll.a" />
+			<Add library="..\deps\lib\libogg.dll.a" />
+			<Add library="..\deps\lib\libpango-1.0.dll.a" />
+			<Add library="..\deps\lib\libpangocairo-1.0.dll.a" />
+			<Add library="..\deps\lib\libpangoft2-1.0.dll.a" />
+			<Add library="..\deps\lib\libpangowin32-1.0.dll.a" />
+			<Add library="..\deps\lib\libpcre.dll.a" />
+			<Add library="..\deps\lib\libpcrecpp.dll.a" />
+			<Add library="..\deps\lib\libpcreposix.dll.a" />
+			<Add library="..\deps\lib\libpixman-1.dll.a" />
+			<Add library="..\deps\lib\libpng.dll.a" />
+			<Add library="..\deps\lib\libpng15.dll.a" />
+			<Add library="..\deps\lib\libportmidi.dll.a" />
+			<Add library="..\deps\lib\libSDL.dll.a" />
+			<Add library="..\deps\lib\libSDL_image.dll.a" />
+			<Add library="..\deps\lib\libSDL_mixer.dll.a" />
+			<Add library="..\deps\lib\libSDLmain.a" />
+			<Add library="..\deps\lib\libtiff.dll.a" />
+			<Add library="..\deps\lib\libtiffxx.dll.a" />
+			<Add library="..\deps\lib\libvorbis.dll.a" />
+			<Add library="..\deps\lib\libvorbisenc.dll.a" />
+			<Add library="..\deps\lib\libvorbisfile.dll.a" />
+			<Add library="..\deps\lib\libwebp.dll.a" />
+			<Add library="..\deps\lib\libxdiff.a" />
+			<Add library="..\deps\lib\libxml2.dll.a" />
+			<Add library="..\deps\lib\libz.dll.a" />
 			<Add library="OpenGL32" />
 			<Add library="Ws2_32" />
 			<Add library="Gdi32" />
 			<Add library="Winmm" />
-			<Add directory="../../../../../mingw-w64/bin" />
-			<Add directory="../../../../../mingw-w64/lib" />
+			<Add directory="../deps/bin" />
+			<Add directory="../deps/lib" />
 		</Linker>
 		<Unit filename="../src/MUSIC/dbopl.c">
 			<Option compilerVar="CC" />
