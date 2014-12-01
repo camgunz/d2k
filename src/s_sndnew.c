@@ -40,32 +40,13 @@
 #include "p_ident.h"
 #include "r_main.h"
 #include "s_advsound.h"
+#include "sounds.h"
 #include "s_sound.h"
 #include "sc_man.h"
 #include "w_wad.h"
 
 #define DEBUG_SOUND 0
 #define SOUND_LOG LOG_SOUND
-
-// when to clip out sounds
-// Does not fit the large outdoor areas.
-#define S_CLIPPING_DIST (1200 << FRACBITS)
-
-// Distance to origin when sounds should be maxed out.
-// This should relate to movement clipping resolution
-// (see BLOCKMAP handling).
-// Originally: (200*0x10000).
-
-#define S_CLOSE_DIST (160 << FRACBITS)
-#define S_ATTENUATOR ((S_CLIPPING_DIST - S_CLOSE_DIST) >> FRACBITS)
-
-// Adjustable by menu.
-#define NORM_PITCH 128
-#define NORM_PRIORITY 64
-#define NORM_SEP 128
-#define S_STEREO_SWING (96 << FRACBITS)
-
-const char* S_music_files[NUMMUSIC]; // cournia - stores music file names
 
 typedef struct {
   sfxinfo_t *sfxinfo;  // sound information (if null, channel avail.)
@@ -87,42 +68,12 @@ typedef struct played_sound_s {
   bool     found;
 } played_sound_t;
 
-static GList *played_sounds = NULL;
-
-static int saved_sfx_volume;
-
-// whether songs are mus_paused
 static dboolean mus_paused;
-
-// music currently being played
 static musicinfo_t *mus_playing;
-
-// music currently should play
 static int musicnum_current;
 
-// the set of channels available
 static GArray *channels;
-
-// These are not used, but should be (menu).
-// Maximum volume of a sound effect.
-// Internal default is max out of 0-15.
-int snd_SfxVolume = 15;
-
-// Maximum volume of music. Useless so far.
-int snd_MusicVolume = 15;
-
-// following is set
-//  by the defaults code in M_misc:
-// number of channels available
-int default_numChannels;
-int numChannels;
-
-//jff 3/17/98 to keep track of last IDMUS specified music num
-int idmusnum;
-
-//
-// Internals.
-//
+static GList *played_sounds = NULL;
 
 static void log_channel(int channel_num) {
   channel_t *c = &g_array_index(channels, channel_t, channel_num);
@@ -154,14 +105,6 @@ static void log_played_sounds(void) {
   }
 }
 
-//
-// adjust_sound_params
-//
-// Changes volume, stereo-separation, and pitch variables
-//  from the norm of a sound effect to be played.
-// If the sound is not audible, returns a 0.
-// Otherwise, modifies parameters and returns 1.
-//
 static int adjust_sound_params(mobj_t *listener, mobj_t *source,
                                int *vol, int *sep, int *pitch) {
   fixed_t adx, ady, approx_dist;
@@ -282,7 +225,7 @@ static void init_channel(channel_t *c, mobj_t *mo, sfxinfo_t *sfx, int pu) {
     c->origin_id = 0;
 }
 
-static bool sound_is_duplicate(mobj_t *origin, sfxinfo_t *sfx, bool is_pickup) {
+static bool is_duplicate(mobj_t *origin, sfxinfo_t *sfx, bool is_pickup) {
   for (unsigned int i = 0; i < channels->len; i++) {
     channel_t *c = &g_array_index(channels, channel_t, i);
 
@@ -312,7 +255,7 @@ static bool sound_is_duplicate(mobj_t *origin, sfxinfo_t *sfx, bool is_pickup) {
   return 0;
 }
 
-static bool sound_already_played(mobj_t *origin, sfxinfo_t *sfx, bool is_pickup) {
+static bool already_played(mobj_t *origin, sfxinfo_t *sfx, bool is_pickup) {
   for (GList *node = played_sounds; node != NULL; node = node->next) {
     played_sound_t *sound = (played_sound_t *)node->data;
 
@@ -348,12 +291,6 @@ static bool sound_already_played(mobj_t *origin, sfxinfo_t *sfx, bool is_pickup)
   return false;
 }
 
-//
-// get_channel :
-//   If none available, return -1.  Otherwise channel #.
-//
-// killough 4/25/98: made static, added is_pickup argument
-//
 static int get_channel(mobj_t *mobj, sfxinfo_t *sfxinfo, int is_pickup) {
 
   if (channels->len < numChannels)
@@ -435,16 +372,49 @@ static void add_to_sound_log(uint32_t origin_id, int sfx_id, bool is_pickup,
   );
 }
 
-static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
-  int sep, pitch, priority, cnum, is_pickup;
+static void init(int sfxVolume, int musicVolume) {
+#if DEBUG_SOUND
+  if (!MULTINET)
+    D_EnableLogChannel(LOG_SOUND, "sound.log");
+  else if (CLIENT)
+    D_EnableLogChannel(LOG_SOUND, "client-sound.log");
+  else if (SERVER)
+    D_EnableLogChannel(LOG_SOUND, "server-sound.log");
+#endif
+
+  channels = g_array_sized_new(false, true, sizeof(channel_t), numChannels);
+
+  // CPhipps - music init reformatted
+  if (!MUSIC_DISABLED) {
+    S_SetMusicVolume(musicVolume);
+
+    // no sounds are playing, and they are not mus_paused
+    mus_paused = 0;
+  }
+}
+
+static void start_sound(mobj_t *origin, int sfx_id, int volume) {
   sfxinfo_t *sfx;
   channel_t *channel;
+  int sep;
+  int pitch;
+  int priority;
+  int cnum;
+  int is_pickup;
 
   is_pickup = sfx_id & PICKUP_SOUND ||
               sfx_id == sfx_oof ||
               (compatibility_level >= prboom_2_compatibility &&
                sfx_id == sfx_noway); // killough 4/25/98
   sfx_id &= ~PICKUP_SOUND;
+
+  D_Log(SOUND_LOG, "(%d | %d) start_sound_at_volume(%u, %s, %d)\n",
+    gametic,
+    CL_GetCurrentCommandIndex(),
+    mobj != NULL ? mobj->id : 0,
+    S_sfx[sfx_id].name,
+    volume
+  );
 
   // check for bogus sound #
   if (sfx_id < 1 || sfx_id > NUMSFX)
@@ -455,7 +425,7 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
   if (DELTACLIENT) {
     if (CL_Synchronizing() || CL_RePredicting()) {
       if ((!CL_RunningNonConsoleplayerCommands()) &&
-           sound_already_played(origin, sfx, is_pickup)) {
+           already_played(origin, sfx, is_pickup)) {
         D_Log(SOUND_LOG,
           "(%d) start_sound_at_volume: skipping found sound\n\n",
           gametic
@@ -464,7 +434,7 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
       }
     }
     else {
-      if (sound_is_duplicate(origin, sfx, is_pickup)) {
+      if (is_duplicate(origin, sfx, is_pickup)) {
         D_Log(SOUND_LOG,
           "(%d) start_sound_at_volume: skipping duplicate sound\n\n",
           gametic
@@ -613,52 +583,20 @@ static void start_sound_at_volume(mobj_t *origin, int sfx_id, int volume) {
   }
 }
 
-//
-// S_Init
-//
-// Initializes sound stuff, including volume
-// Sets channels, SFX and music volume,
-//  allocates channel buffer, sets S_sfx lookup.
-//
-void S_Init(int sfxVolume, int musicVolume) {
+static void silence_actor(mobj_t *mobj) {
+  for (unsigned int i = 0; i < channels->len; i++) {
+    channel_t *channel = &g_array_index(channels, channel_t, i);
 
-#if DEBUG_SOUND
-  if (!MULTINET)
-    D_EnableLogChannel(LOG_SOUND, "sound.log");
-  else if (CLIENT)
-    D_EnableLogChannel(LOG_SOUND, "client-sound.log");
-  else if (SERVER)
-    D_EnableLogChannel(LOG_SOUND, "server-sound.log");
-#endif
-
-  idmusnum = -1; //jff 3/17/98 insure idmus number is blank
-
-  numChannels = default_numChannels;
-
-  lprintf(LO_CONFIRM, "S_Init: default sfx volume %d\n", sfxVolume);
-
-  // Whatever these did with DMX, these are rather dummies now.
-  I_SetChannels();
-
-  S_SetSfxVolume(sfxVolume);
-
-  // Allocating the internal channels for mixing
-  // (the maximum numer of sounds rendered
-  // simultaneously) within zone memory.
-  // CPhipps - calloc
-  channels = g_array_sized_new(false, true, sizeof(channel_t), numChannels);
-
-  // Note that sounds have not been cached (yet).
-  for (int i = 1; i < NUMSFX; i++)
-    S_sfx[i].lumpnum = S_sfx[i].usefulness = -1;
-
-  S_SetMusicVolume(musicVolume);
-
-  // no sounds are playing, and they are not mus_paused
-  mus_paused = 0;
+    if (channel->sfxinfo && channel->origin_id == mobj->id) {
+      D_Log(SOUND_LOG, "(%d) %s: calling stop_channel\n", gametic, __func__);
+      log_channel(i);
+      stop_channel(channel);
+      break;
+    }
+  }
 }
 
-void S_Stop(void) {
+static void stop_sounds(void) {
   for (unsigned int i = 0; i < channels->len; i++) {
     channel_t *channel = &g_array_index(channels, channel_t, i);
 
@@ -670,14 +608,135 @@ void S_Stop(void) {
   }
 }
 
-//
-// S_Start
-//
-// Per level startup code.
-// Kills playing sounds at start of level,
-//  determines music if any, changes music.
-//
-void S_Start(void) {
+static void set_music(int musicnum, bool looping) {
+  musicinfo_t *music;
+  int music_file_failed; // cournia - if true load the default MIDI music
+  char* music_filename;  // cournia
+
+  // current music which should play
+  musicnum_current = musicnum;
+  musinfo.current_item = -1;
+
+  if (musicnum <= mus_None || musicnum >= NUMMUSIC)
+    I_Error("S_ChangeMusic: Bad music number %d", musicnum);
+
+  music = &S_music[musicnum];
+
+  if (mus_playing == music)
+    return;
+
+  // shutdown old music
+  S_StopMusic();
+
+  // get lumpnum if neccessary
+  if (!music->lumpnum) {
+    char namebuf[9];
+    sprintf(namebuf, "d_%s", music->name);
+    music->lumpnum = W_GetNumForName(namebuf);
+  }
+
+  music_file_failed = 1;
+
+  // proff_fs - only load when from IWAD
+  if (lumpinfo[music->lumpnum].source == source_iwad) {
+    // cournia - check to see if we can play a higher quality music file
+    //           rather than the default MIDI
+    music_filename = I_FindFile(S_music_files[musicnum], "");
+
+    if (music_filename) {
+      music_file_failed = I_RegisterMusic(music_filename, music);
+      free(music_filename);
+    }
+  }
+
+  if (music_file_failed) {
+    //cournia - could not load music file, play default MIDI music
+
+    // load & register it
+    music->data = W_CacheLumpNum(music->lumpnum);
+    music->handle = I_RegisterSong(music->data, W_LumpLength(music->lumpnum));
+  }
+
+  // play it
+  I_PlaySong(music->handle, looping);
+
+  mus_playing = music;
+
+  musinfo.current_item = -1;
+}
+
+static void set_musinfo_music(int lumpnum, bool looping) {
+  musicinfo_t *music;
+
+  if (doSkip) {
+    musinfo.current_item = lumpnum;
+    return;
+  }
+
+  if (mus_playing && mus_playing->lumpnum == lumpnum)
+    return;
+
+  music = &S_music[NUMMUSIC];
+
+  if (music->lumpnum == lumpnum)
+    return;
+
+  // shutdown old music
+  S_StopMusic();
+
+  // save lumpnum
+  music->lumpnum = lumpnum;
+
+  // load & register it
+  music->data = W_CacheLumpNum(music->lumpnum);
+  music->handle = I_RegisterSong(music->data, W_LumpLength(music->lumpnum));
+
+  // play it
+  I_PlaySong(music->handle, looping);
+
+  mus_playing = music;
+
+  musinfo.current_item = lumpnum;
+}
+
+static void stop_music(void) {
+  if (mus_playing) {
+    if (mus_paused)
+      I_ResumeSong(mus_playing->handle);
+
+    I_StopSong(mus_playing->handle);
+    I_UnRegisterSong(mus_playing->handle);
+
+    if (mus_playing->lumpnum >= 0)
+      W_UnlockLumpNum(mus_playing->lumpnum); // cph - release the music data
+
+    mus_playing->data = 0;
+    mus_playing = 0;
+  }
+}
+
+static void restart_music(void) {
+  if (musinfo.current_item != -1)
+    S_ChangeMusInfoMusic(musinfo.current_item, true);
+  else if (musicnum_current > mus_None && musicnum_current < NUMMUSIC)
+    S_ChangeMusic(musicnum_current, true);
+}
+
+static void pause_music(void) {
+  if (mus_playing && !mus_paused) {
+    I_PauseSong(mus_playing->handle);
+    mus_paused = true;
+  }
+}
+
+static void resume_music(void) {
+  if (mus_playing && mus_paused) {
+    I_ResumeSong(mus_playing->handle);
+    mus_paused = false;
+  }
+}
+
+static void handle_level_start(void) {
   int mnum;
 
   // kill all playing sounds at start of level
@@ -715,61 +774,7 @@ void S_Start(void) {
   S_ChangeMusic(mnum, true);
 }
 
-void S_StartSound(mobj_t *mobj, int sfx_id) {
-  if (sfx_id & PICKUP_SOUND) {
-    D_Log(SOUND_LOG, "(%d | %d) S_StartSound(%u, %s)\n",
-      gametic,
-      CL_GetCurrentCommandIndex(),
-      mobj != NULL ? mobj->id : 0,
-      S_sfx[sfx_id - PICKUP_SOUND].name
-    );
-  }
-  else {
-    D_Log(SOUND_LOG, "(%d | %d) S_StartSound(%u, %s)\n",
-      gametic,
-      CL_GetCurrentCommandIndex(),
-      mobj != NULL ? mobj->id : 0,
-      S_sfx[sfx_id].name
-    );
-  }
-
-  start_sound_at_volume(mobj, sfx_id, snd_SfxVolume);
-}
-
-void S_StopSound(mobj_t *mobj) {
-  for (unsigned int i = 0; i < channels->len; i++) {
-    channel_t *channel = &g_array_index(channels, channel_t, i);
-
-    if (channel->sfxinfo && channel->origin_id == mobj->id) {
-      D_Log(SOUND_LOG, "(%d) %s: calling stop_channel\n", gametic, __func__);
-      log_channel(i);
-      stop_channel(channel);
-      break;
-    }
-  }
-}
-
-//
-// Stop and resume music, during game PAUSE.
-//
-void S_PauseSound(void) {
-  if (mus_playing && !mus_paused) {
-    I_PauseSong(mus_playing->handle);
-    mus_paused = true;
-  }
-}
-
-void S_ResumeSound(void) {
-  if (mus_playing && mus_paused) {
-    I_ResumeSong(mus_playing->handle);
-    mus_paused = false;
-  }
-}
-
-//
-// Updates music & sounds
-//
-void S_UpdateSounds(mobj_t *listener) {
+static void reposition_sounds(mobj_t *listener) {
   int volume;
   int pitch;
   int sep;
@@ -842,141 +847,6 @@ void S_UpdateSounds(mobj_t *listener) {
   }
 }
 
-void S_SetMusicVolume(int volume) {
-  if (volume < 0 || volume > 15)
-    I_Error("S_SetMusicVolume: Attempt to set music volume at %d", volume);
-
-  I_SetMusicVolume(volume);
-  snd_MusicVolume = volume;
-}
-
-void S_SetSfxVolume(int volume) {
-  if (volume < 0 || volume > 127)
-    I_Error("S_SetSfxVolume: Attempt to set sfx volume at %d", volume);
-
-  snd_SfxVolume = volume;
-  saved_sfx_volume = snd_SfxVolume;
-}
-
-// Starts some music with the music id found in sounds.h.
-void S_StartMusic(int m_id) {
-  S_ChangeMusic(m_id, false);
-}
-
-void S_ChangeMusic(int musicnum, int looping) {
-  musicinfo_t *music;
-  int music_file_failed; // cournia - if true load the default MIDI music
-  char* music_filename;  // cournia
-
-  // current music which should play
-  musicnum_current = musicnum;
-  musinfo.current_item = -1;
-
-  if (musicnum <= mus_None || musicnum >= NUMMUSIC)
-    I_Error("S_ChangeMusic: Bad music number %d", musicnum);
-
-  music = &S_music[musicnum];
-
-  if (mus_playing == music)
-    return;
-
-  // shutdown old music
-  S_StopMusic();
-
-  // get lumpnum if neccessary
-  if (!music->lumpnum) {
-    char namebuf[9];
-    sprintf(namebuf, "d_%s", music->name);
-    music->lumpnum = W_GetNumForName(namebuf);
-  }
-
-  music_file_failed = 1;
-
-  // proff_fs - only load when from IWAD
-  if (lumpinfo[music->lumpnum].source == source_iwad) {
-    // cournia - check to see if we can play a higher quality music file
-    //           rather than the default MIDI
-    music_filename = I_FindFile(S_music_files[musicnum], "");
-
-    if (music_filename) {
-      music_file_failed = I_RegisterMusic(music_filename, music);
-      free(music_filename);
-    }
-  }
-
-  if (music_file_failed) {
-    //cournia - could not load music file, play default MIDI music
-
-    // load & register it
-    music->data = W_CacheLumpNum(music->lumpnum);
-    music->handle = I_RegisterSong(music->data, W_LumpLength(music->lumpnum));
-  }
-
-  // play it
-  I_PlaySong(music->handle, looping);
-
-  mus_playing = music;
-
-  musinfo.current_item = -1;
-}
-
-void S_RestartMusic(void) {
-  if (musinfo.current_item != -1)
-    S_ChangeMusInfoMusic(musinfo.current_item, true);
-  else if (musicnum_current > mus_None && musicnum_current < NUMMUSIC)
-    S_ChangeMusic(musicnum_current, true);
-}
-
-void S_ChangeMusInfoMusic(int lumpnum, int looping) {
-  musicinfo_t *music;
-
-  if (doSkip) {
-    musinfo.current_item = lumpnum;
-    return;
-  }
-
-  if (mus_playing && mus_playing->lumpnum == lumpnum)
-    return;
-
-  music = &S_music[NUMMUSIC];
-
-  if (music->lumpnum == lumpnum)
-    return;
-
-  // shutdown old music
-  S_StopMusic();
-
-  // save lumpnum
-  music->lumpnum = lumpnum;
-
-  // load & register it
-  music->data = W_CacheLumpNum(music->lumpnum);
-  music->handle = I_RegisterSong(music->data, W_LumpLength(music->lumpnum));
-
-  // play it
-  I_PlaySong(music->handle, looping);
-
-  mus_playing = music;
-
-  musinfo.current_item = lumpnum;
-}
-
-void S_StopMusic(void) {
-  if (mus_playing) {
-    if (mus_paused)
-      I_ResumeSong(mus_playing->handle);
-
-    I_StopSong(mus_playing->handle);
-    I_UnRegisterSong(mus_playing->handle);
-
-    if (mus_playing->lumpnum >= 0)
-      W_UnlockLumpNum(mus_playing->lumpnum); // cph - release the music data
-
-    mus_playing->data = 0;
-    mus_playing = 0;
-  }
-}
-
 void S_ReloadChannelOrigins(void) {
   for (unsigned int i = 0; i < channels->len; i++) {
     channel_t *c = &g_array_index(channels, channel_t, i);
@@ -998,15 +868,6 @@ void S_ReloadChannelOrigins(void) {
         stop_channel(c);
     }
   }
-}
-
-void S_MuteSound(void) {
-  saved_sfx_volume = snd_SfxVolume;
-  snd_SfxVolume = 0;
-}
-
-void S_UnMuteSound(void) {
-  snd_SfxVolume = saved_sfx_volume;
 }
 
 void S_ResetSoundLog(void) {
@@ -1031,6 +892,28 @@ void S_TrimSoundLog(int tic, int command_index) {
     played_sounds = g_list_delete_link(played_sounds, played_sounds);
     free(sound);
   }
+}
+
+sound_engine_t* S_GetNewSoundEngine(void) {
+  sound_engine_t *se = calloc(1, sizeof(sound_engine_t));
+
+  if (se == NULL)
+    I_Error("S_GetNewSoundEngine: Error allocating new sound engine\n");
+
+  se->init = init;
+  se->start_sound = start_sound;
+  se->silence_actor = silence_actor;
+  se->stop_sounds = stop_sounds;
+  se->set_music = set_music;
+  se->set_musinfo_music = set_musinfo_music;
+  se->stop_music = stop_music;
+  se->restart_music = restart_music;
+  se->pause_music = pause_music;
+  se->resume_music = resume_music;
+  se->handle_level_start = handle_level_start;
+  se->reposition_sounds = reposition_sounds;
+
+  return se;
 }
 
 /* vi: set et ts=2 sw=2: */

@@ -906,6 +906,8 @@ SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/r_sky.c
   ${CMAKE_SOURCE_DIR}/src/r_things.c
   ${CMAKE_SOURCE_DIR}/src/s_advsound.c
+  ${CMAKE_SOURCE_DIR}/src/s_sndnew.c
+  ${CMAKE_SOURCE_DIR}/src/s_sndold.c
   ${CMAKE_SOURCE_DIR}/src/s_sound.c
   ${CMAKE_SOURCE_DIR}/src/sc_man.c
   ${CMAKE_SOURCE_DIR}/src/sounds.c

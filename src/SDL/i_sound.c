@@ -229,6 +229,9 @@ static void update_sound(void *unused, Uint8 *stream, int len) {
   // Mixing channel index.
   int       chan;
 
+  // Number of channels.
+  int channel_count;
+
   if (SOUND_DISABLED)
     return;
 
@@ -273,10 +276,11 @@ static void update_sound(void *unused, Uint8 *stream, int len) {
     dl = *leftout;
     dr = *rightout;
 
-    // Love thy L2 chache - made this a loop.
+    // Love thy L2 cache - made this a loop.
     // Now more channels could be set at compile time
-    //  as well. Thus loop those  channels.
-    for (chan = 0; chan < numChannels; chan++) {
+    //  as well. Thus loop those channels.
+    channel_count = S_GetChannelCount();
+    for (chan = 0; chan < channel_count; chan++) {
       // Check channel, if active.
       if (channelinfo[chan].data) {
         // Get the raw data from the channel.
