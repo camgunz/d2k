@@ -5531,7 +5531,7 @@
 
 1417008426 c:\users\cagunyon\documents\code\d2k\src\n_proto.h
 
-1417008382 c:\users\cagunyon\documents\code\d2k\src\s_sound.h
+1417457968 c:\users\cagunyon\documents\code\d2k\src\s_sound.h
 
 1417008382 source:c:\users\cagunyon\documents\code\d2k\src\cmp.c
 	<stdbool.h>
@@ -5664,7 +5664,7 @@
 
 1417008382 c:\users\cagunyon\documents\code\d2k\src\p_ident.h
 
-1417008382 c:\users\cagunyon\documents\code\d2k\src\i_sound.h
+1417033567 c:\users\cagunyon\documents\code\d2k\src\i_sound.h
 	"sounds.h"
 	"doomtype.h"
 	"l_soundgen.h"
@@ -7778,7 +7778,7 @@
 
 1417008382 c:\users\cagunyon\documents\code\d2k\src\r_segs.h
 
-1417008382 source:c:\users\cagunyon\documents\code\d2k\src\r_data.c
+1417019151 source:c:\users\cagunyon\documents\code\d2k\src\r_data.c
 	"z_zone.h"
 	"doomstat.h"
 	"w_wad.h"

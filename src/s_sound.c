@@ -56,14 +56,10 @@ void S_Init(int sfxVolume, int musicVolume) {
 
   idmusnum = -1; //jff 3/17/98 insure idmus number is blank
 
-  if (DELTASYNC)
-    SoundEngine = S_GetNewSoundEngine();
-  else
-    SoundEngine = S_GetOldSoundEngine();
-
-  SoundEngine->init();
-
   numChannels = default_numChannels;
+
+  if (!MUSIC_DISABLED)
+    S_SetMusicVolume(musicVolume);
 
   //jff 1/22/98 skip sound init if sound not enabled
   if (!SOUND_DISABLED) {
@@ -84,6 +80,12 @@ void S_Init(int sfxVolume, int musicVolume) {
       S_sfx[i].lumpnum = S_sfx[i].usefulness = -1;
   }
 
+  if (DELTASYNC)
+    SoundEngine = S_GetNewSoundEngine();
+  else
+    SoundEngine = S_GetOldSoundEngine();
+
+  SoundEngine->init();
 }
 
 int S_GetChannelCount(void) {

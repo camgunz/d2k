@@ -77,6 +77,7 @@ extern int snd_SfxVolume;
 extern int snd_MusicVolume;
 extern int default_numChannels;
 extern int idmusnum; //jff 3/17/98 holds last IDMUS number, or -1
+extern const char *S_music_files[]; // cournia - stores music file names
 
 void S_Init(int sfxVolume, int musicVolume);
 int  S_GetChannelCount(void);

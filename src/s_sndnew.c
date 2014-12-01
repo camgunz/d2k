@@ -68,6 +68,9 @@ typedef struct played_sound_s {
   bool     found;
 } played_sound_t;
 
+extern int numChannels;
+extern int idmusnum;
+
 static dboolean mus_paused;
 static musicinfo_t *mus_playing;
 static int musicnum_current;
@@ -372,7 +375,7 @@ static void add_to_sound_log(uint32_t origin_id, int sfx_id, bool is_pickup,
   );
 }
 
-static void init(int sfxVolume, int musicVolume) {
+static void init(void) {
 #if DEBUG_SOUND
   if (!MULTINET)
     D_EnableLogChannel(LOG_SOUND, "sound.log");
@@ -385,12 +388,8 @@ static void init(int sfxVolume, int musicVolume) {
   channels = g_array_sized_new(false, true, sizeof(channel_t), numChannels);
 
   // CPhipps - music init reformatted
-  if (!MUSIC_DISABLED) {
-    S_SetMusicVolume(musicVolume);
-
-    // no sounds are playing, and they are not mus_paused
-    mus_paused = 0;
-  }
+  if (!MUSIC_DISABLED)
+    mus_paused = 0; // no sounds are playing, and they are not mus_paused
 }
 
 static void start_sound(mobj_t *origin, int sfx_id, int volume) {
@@ -411,7 +410,7 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
   D_Log(SOUND_LOG, "(%d | %d) start_sound_at_volume(%u, %s, %d)\n",
     gametic,
     CL_GetCurrentCommandIndex(),
-    mobj != NULL ? mobj->id : 0,
+    origin != NULL ? origin->id : 0,
     S_sfx[sfx_id].name,
     volume
   );
