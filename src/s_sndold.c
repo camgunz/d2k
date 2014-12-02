@@ -41,6 +41,10 @@
 #include "w_wad.h"
 
 extern int numChannels;
+extern int idmusnum;
+extern bool mus_paused;
+extern musicinfo_t *mus_playing;
+extern int musicnum_current;
 
 typedef struct {
   sfxinfo_t *sfxinfo;  // sound information (if null, channel avail.)
@@ -49,10 +53,6 @@ typedef struct {
   int is_pickup;       // killough 4/25/98: whether sound is a player's weapon
   int pitch;
 } channel_t;
-
-static dboolean mus_paused;
-static musicinfo_t *mus_playing;
-static int musicnum_current;
 
 static channel_t *channels;      // the set of channels available
 
@@ -216,9 +216,8 @@ static int adjust_sound_params(mobj_t *listener, mobj_t *source,
 static void init(void) {
   channels = calloc(numChannels, sizeof(channel_t));
 
-  // CPhipps - music init reformatted
-  if (!MUSIC_DISABLED)
-    mus_paused = 0; // no sounds are playing, and they are not mus_paused
+  if (channels == NULL)
+    I_Error("old sound engine init: error allocating channels");
 }
 
 static void start_sound(mobj_t *origin, int sfx_id, int volume) {

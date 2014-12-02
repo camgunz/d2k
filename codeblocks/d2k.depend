@@ -5531,7 +5531,7 @@
 
 1417008426 c:\users\cagunyon\documents\code\d2k\src\n_proto.h
 
-1417457968 c:\users\cagunyon\documents\code\d2k\src\s_sound.h
+1417556792 c:\users\cagunyon\documents\code\d2k\src\s_sound.h
 
 1417008382 source:c:\users\cagunyon\documents\code\d2k\src\cmp.c
 	<stdbool.h>
@@ -8032,25 +8032,16 @@
 	"lprintf.h"
 	"s_advsound.h"
 
-1417008382 source:c:\users\cagunyon\documents\code\d2k\src\s_sound.c
+1417556965 source:c:\users\cagunyon\documents\code\d2k\src\s_sound.c
 	"z_zone.h"
-	"doomstat.h"
+	"doomdef.h"
 	"d_main.h"
-	"e6y.h"
 	"i_sound.h"
-	"i_system.h"
 	"lprintf.h"
-	"m_random.h"
 	"n_net.h"
-	"n_main.h"
-	"cl_main.h"
-	"p_cmd.h"
-	"p_ident.h"
-	"r_main.h"
-	"s_advsound.h"
+	"p_mobj.h"
+	"sounds.h"
 	"s_sound.h"
-	"sc_man.h"
-	"w_wad.h"
 
 1417008382 source:c:\users\cagunyon\documents\code\d2k\src\sc_man.c
 	"z_zone.h"
@@ -8164,7 +8155,7 @@
 1417008382 c:\users\cagunyon\documents\code\d2k\src\textscreen\txt_sdl.h
 	"SDL.h"
 
-1417008382 source:c:\users\cagunyon\documents\code\d2k\src\sdl\i_music.c
+1417033594 source:c:\users\cagunyon\documents\code\d2k\src\sdl\i_music.c
 	"z_zone.h"
 	<SDL.h>
 	<SDL_audio.h>
@@ -8193,7 +8184,7 @@
 	"i_network.h"
 	"lprintf.h"
 
-1417008382 source:c:\users\cagunyon\documents\code\d2k\src\sdl\i_sound.c
+1417452535 source:c:\users\cagunyon\documents\code\d2k\src\sdl\i_sound.c
 	"z_zone.h"
 	<SDL.h>
 	<SDL_audio.h>
@@ -8687,4 +8678,41 @@
 	"g_game.h"
 	"lprintf.h"
 	<dpmi.h>
+
+1417556962 source:c:\users\cagunyon\documents\code\d2k\src\s_sndnew.c
+	"z_zone.h"
+	"doomstat.h"
+	"d_main.h"
+	"e6y.h"
+	"i_sound.h"
+	"i_system.h"
+	"lprintf.h"
+	"m_random.h"
+	"n_net.h"
+	"n_main.h"
+	"cl_main.h"
+	"p_cmd.h"
+	"p_ident.h"
+	"r_main.h"
+	"s_advsound.h"
+	"sounds.h"
+	"s_sound.h"
+	"sc_man.h"
+	"w_wad.h"
+
+1417556961 source:c:\users\cagunyon\documents\code\d2k\src\s_sndold.c
+	"z_zone.h"
+	"doomstat.h"
+	"d_main.h"
+	"e6y.h"
+	"i_sound.h"
+	"i_system.h"
+	"lprintf.h"
+	"m_random.h"
+	"r_main.h"
+	"s_advsound.h"
+	"sounds.h"
+	"s_sound.h"
+	"sc_man.h"
+	"w_wad.h"
 

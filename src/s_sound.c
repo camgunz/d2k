@@ -32,15 +32,19 @@
 #include "sounds.h"
 #include "s_sound.h"
 
+#define DEBUG_SOUND 0
+
 static int saved_sfx_volume;
 
 // Internal volumes are 0-15.
 int snd_SfxVolume = 15;   // Maximum volume of a sound effect.
 int snd_MusicVolume = 15; // Maximum volume of music.
 int default_numChannels;
-
 int numChannels;
 int idmusnum; //jff 3/17/98 to keep track of last IDMUS specified music num
+bool mus_paused;
+musicinfo_t *mus_playing;
+int musicnum_current;
 
 sound_engine_t *SoundEngine = NULL;
 
@@ -54,12 +58,18 @@ const char *S_music_files[NUMMUSIC]; // cournia - stores music file names
 void S_Init(int sfxVolume, int musicVolume) {
   int i;
 
+#if DEBUG_SOUND
+  if (!MULTINET)
+    D_EnableLogChannel(LOG_SOUND, "sound.log");
+  else if (CLIENT)
+    D_EnableLogChannel(LOG_SOUND, "client-sound.log");
+  else if (SERVER)
+    D_EnableLogChannel(LOG_SOUND, "server-sound.log");
+#endif
+
   idmusnum = -1; //jff 3/17/98 insure idmus number is blank
 
   numChannels = default_numChannels;
-
-  if (!MUSIC_DISABLED)
-    S_SetMusicVolume(musicVolume);
 
   //jff 1/22/98 skip sound init if sound not enabled
   if (!SOUND_DISABLED) {
@@ -78,6 +88,12 @@ void S_Init(int sfxVolume, int musicVolume) {
     // Note that sounds have not been cached (yet).
     for (i = 1; i < NUMSFX; i++)
       S_sfx[i].lumpnum = S_sfx[i].usefulness = -1;
+  }
+
+  // CPhipps - music init reformatted
+  if (!MUSIC_DISABLED) {
+    S_SetMusicVolume(musicVolume);
+    mus_paused = 0; // no sounds are playing, and they are not mus_paused
   }
 
   if (DELTASYNC)

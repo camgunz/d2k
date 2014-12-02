@@ -1,9 +1,39 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Windows Debug" />
+	<File name="..\src\SDL\i_font.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2191" topLine="23" />
+		</Cursor>
+	</File>
+	<File name="..\src\p_spec.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2771" topLine="59" />
+		</Cursor>
+	</File>
+	<File name="..\src\w_mmap.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="117" />
+		</Cursor>
+	</File>
 	<File name="..\src\doomdata.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="1797" topLine="18" />
+		</Cursor>
+	</File>
+	<File name="..\src\c_main.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1728" topLine="16" />
+		</Cursor>
+	</File>
+	<File name="..\src\MUSIC\dumbplayer.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1705" topLine="14" />
+		</Cursor>
+	</File>
+	<File name="..\src\gl_preprocess.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="16393" topLine="466" />
 		</Cursor>
 	</File>
 	<File name="..\src\p_setup.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -16,36 +46,6 @@
 			<Cursor1 position="61305" topLine="2257" />
 		</Cursor>
 	</File>
-	<File name="..\src\s_sndnew.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="8659" topLine="278" />
-		</Cursor>
-	</File>
-	<File name="..\src\MUSIC\flplayer.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="3281" topLine="98" />
-		</Cursor>
-	</File>
-	<File name="..\src\w_mmap.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="0" topLine="117" />
-		</Cursor>
-	</File>
-	<File name="..\src\gl_preprocess.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="16393" topLine="466" />
-		</Cursor>
-	</File>
-	<File name="..\src\SDL\i_main.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="12092" topLine="451" />
-		</Cursor>
-	</File>
-	<File name="..\src\MUSIC\dumbplayer.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="1705" topLine="14" />
-		</Cursor>
-	</File>
 	<File name="..\src\w_wad.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="6803" topLine="98" />
@@ -56,27 +56,17 @@
 			<Cursor1 position="2767" topLine="50" />
 		</Cursor>
 	</File>
-	<File name="..\src\f_wipe.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="..\src\s_sound.c" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2636" topLine="56" />
+			<Cursor1 position="3597" topLine="75" />
 		</Cursor>
 	</File>
-	<File name="..\src\r_data.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="..\src\SDL\i_main.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="19901" topLine="576" />
+			<Cursor1 position="12092" topLine="451" />
 		</Cursor>
 	</File>
-	<File name="..\src\SDL\i_system.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="13096" topLine="529" />
-		</Cursor>
-	</File>
-	<File name="..\src\p_spec.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2771" topLine="59" />
-		</Cursor>
-	</File>
-	<File name="..\src\s_sound.h" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="..\src\s_sound.h" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="4278" topLine="61" />
 		</Cursor>
@@ -86,14 +76,29 @@
 			<Cursor1 position="6168" topLine="184" />
 		</Cursor>
 	</File>
-	<File name="..\src\c_main.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="..\src\f_wipe.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="1728" topLine="16" />
+			<Cursor1 position="2636" topLine="56" />
 		</Cursor>
 	</File>
-	<File name="..\src\SDL\i_font.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="..\src\SDL\i_system.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2191" topLine="23" />
+			<Cursor1 position="13096" topLine="529" />
+		</Cursor>
+	</File>
+	<File name="..\src\s_sndnew.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="8659" topLine="278" />
+		</Cursor>
+	</File>
+	<File name="..\src\MUSIC\flplayer.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="3281" topLine="98" />
+		</Cursor>
+	</File>
+	<File name="..\src\r_data.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="19901" topLine="576" />
 		</Cursor>
 	</File>
 </CodeBlocks_layout_file>
