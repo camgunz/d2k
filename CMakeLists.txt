@@ -429,17 +429,10 @@ ENDIF()
 #==============================================================================
 ################################################## Build Dependencies #########
 #==============================================================================
-# CG: Don't really need to do this just yet
-
-# SET(DEPS_PREFIX "${CMAKE_BINARY_DIR/deps}")
-# SET(ENET_FOLDER "enet-1.3.11")
-
-# INCLUDE_DIRECTORIES("deps/${ENET_FOLDER}/include")
-# ADD_SUBDIRECTORY(deps/enet-1.3.11)
 
 # Build Lua Static library
-SET(LUA_LIBRARY lua53)
-SET(LUA_SOURCE_DIRECTORY src/lua-5.3.0-alpha/src)
+SET(LUA_LIBRARY lua)
+SET(LUA_SOURCE_DIRECTORY src/lua/src)
 SET(LUA_SOURCES
   # Base
   ${LUA_SOURCE_DIRECTORY}/lapi.c
@@ -473,7 +466,6 @@ SET(LUA_SOURCES
   ${LUA_SOURCE_DIRECTORY}/loslib.c
   ${LUA_SOURCE_DIRECTORY}/lstrlib.c
   ${LUA_SOURCE_DIRECTORY}/ltablib.c
-  ${LUA_SOURCE_DIRECTORY}/lutf8lib.c
   ${LUA_SOURCE_DIRECTORY}/loadlib.c
   ${LUA_SOURCE_DIRECTORY}/linit.c)
 
