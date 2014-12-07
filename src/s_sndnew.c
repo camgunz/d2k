@@ -305,8 +305,7 @@ static int get_channel(mobj_t *mobj, sfxinfo_t *sfxinfo, int is_pickup) {
   for (unsigned int i = 0; i < channels->len; i++) {
     channel_t *c = &g_array_index(channels, channel_t, i);
 
-    if ((c->sfxinfo == NULL) ||
-        ((mobj && c->origin_id == mobj->id) && c->is_pickup == is_pickup)) {
+    if (c->sfxinfo == NULL) {
       D_Log(SOUND_LOG, "(%d) %s: calling stop_channel (1)\n",
         gametic, __func__
       );
@@ -316,20 +315,48 @@ static int get_channel(mobj_t *mobj, sfxinfo_t *sfxinfo, int is_pickup) {
 
       return i;
     }
+
+    /*
+     * CG: The channel is currently in use, but we can reuse it if it is
+     *     playing a sound for this actor (actors only make a single sound at a
+     *     time).
+     */
+
+    if (mobj == NULL)
+      continue;
+
+    if (c->origin_id != mobj->id)
+      continue;
+
+    if ((c->is_pickup != is_pickup) && (!comp[comp_sound]))
+      continue;
+
+    D_Log(SOUND_LOG, "(%d) %s: calling stop_channel (1)\n",
+      gametic, __func__
+    );
+
+    log_channel(i);
+    stop_channel(c);
+    init_channel(c, mobj, sfxinfo, is_pickup);
+
+    return i;
   }
 
   for (unsigned int i = 0; i < channels->len; i++) {
     channel_t *c = &g_array_index(channels, channel_t, i);
 
-    if (c->sfxinfo->priority < sfxinfo->priority) {
-      D_Log(SOUND_LOG, "(%d) %s: calling stop_channel (2)\n",
-        gametic, __func__
-      );
-      log_channel(i);
-      stop_channel(c);
-      init_channel(c, mobj, sfxinfo, is_pickup);
-      return i;
-    }
+    if (c->sfxinfo->priority >= sfxinfo->priority)
+      continue;
+
+    D_Log(SOUND_LOG, "(%d) %s: calling stop_channel (2)\n",
+      gametic, __func__
+    );
+
+    log_channel(i);
+    stop_channel(c);
+    init_channel(c, mobj, sfxinfo, is_pickup);
+
+    return i;
   }
 
   return -1;
@@ -433,14 +460,12 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
         return;
       }
     }
-    else {
-      if (is_duplicate(origin, sfx, is_pickup)) {
-        D_Log(SOUND_LOG,
-          "(%d) start_sound_at_volume: skipping duplicate sound\n\n",
-          gametic
-        );
-        return;
-      }
+    else if (is_duplicate(origin, sfx, is_pickup)) {
+      D_Log(SOUND_LOG,
+        "(%d) start_sound_at_volume: skipping duplicate sound\n\n",
+        gametic
+      );
+      return;
     }
     log_played_sounds();
   }
@@ -508,31 +533,24 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
     pitch = 255;
 
   // kill old sound
-  for (unsigned int i = 0; i < channels->len; i++) {
-    channel_t *channel = &g_array_index(channels, channel_t, i);
+  /*
+   * CG: Can't just use silence_actor here because it doesn't handle BOOM-style
+   *     pickup sounds.
+   */
+  if (origin) {
+    for (unsigned int i = 0; i < channels->len; i++) {
+      channel_t *channel = &g_array_index(channels, channel_t, i);
 
-    if (!channel->sfxinfo)
-      continue;
+      if (channel->sfxinfo == NULL)
+        continue;
 
-    if (origin == NULL && channel->origin == NULL) {
-      D_Log(SOUND_LOG, "(%d) %s: calling stop_channel (1)\n",
-        gametic, __func__
-      );
-      log_channel(i);
-      stop_channel(channel);
-      break;
-    }
+      if (channel->origin_id != origin->id)
+        continue;
 
-    if (!origin)
-      continue;
+      if ((channel->is_pickup != is_pickup) && (!comp[comp_sound]))
+        continue;
 
-    if (channel->origin_id != origin->id)
-      continue;
-
-    if (comp[comp_sound] || channel->is_pickup == is_pickup) {
-      D_Log(SOUND_LOG, "(%d) %s: calling stop_channel (2)\n",
-        gametic, __func__
-      );
+      D_Log(SOUND_LOG, "(%d) %s: calling stop_channel\n", gametic, __func__);
       log_channel(i);
       stop_channel(channel);
       break;
