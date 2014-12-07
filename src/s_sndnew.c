@@ -125,7 +125,7 @@ static int adjust_sound_params(mobj_t *listener, mobj_t *source,
   //   - P_SetupPsprites()
   //   - P_BringUpWeapon()
   //   - S_StartSound(players[0]->mo, sfx_sawup)
-  //   - start_sound_at_volume()
+  //   - start_sound()
   //   - adjust_sound_params(players[displayplayer]->mo, ...);
   //   - players[displayplayer]->mo is NULL
   //
@@ -258,9 +258,11 @@ static bool already_played(mobj_t *origin, sfxinfo_t *sfx, bool is_pickup) {
   for (GList *node = played_sounds; node != NULL; node = node->next) {
     played_sound_t *sound = (played_sound_t *)node->data;
 
-    D_Log(LOG_SOUND, "Checking {%u, %td, %d} against ",
-      origin != NULL ? origin->id : 0,
+    D_Log(LOG_SOUND, "Checking {%td, %u, %d, %d, %d} against ",
       sfx - S_sfx,
+      origin != NULL ? origin->id : 0,
+      gametic,
+      CL_GetCurrentCommandIndex(),
       is_pickup
     );
 
@@ -281,6 +283,11 @@ static bool already_played(mobj_t *origin, sfxinfo_t *sfx, bool is_pickup) {
 
     if (sound->is_pickup != is_pickup)
       continue;
+
+    if (sound->tic != gametic &&
+        sound->command_index != CL_GetCurrentCommandIndex()) {
+      continue;
+    }
 
     sound->found = true;
 
@@ -418,34 +425,36 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
                sfx_id == sfx_noway); // killough 4/25/98
   sfx_id &= ~PICKUP_SOUND;
 
-  D_Log(LOG_SOUND, "(%d | %d) start_sound_at_volume(%u, %s, %d)\n",
+  D_Log(LOG_SOUND, "(%d | %d) start_sound(%u, %s, %d, %d/%d/%d)\n",
     gametic,
     CL_GetCurrentCommandIndex(),
     origin != NULL ? origin->id : 0,
     S_sfx[sfx_id].name,
-    volume
+    volume,
+    CL_Synchronizing(),
+    CL_RePredicting(),
+    CL_Predicting()
   );
 
   // check for bogus sound #
   if (sfx_id < 1 || sfx_id > NUMSFX)
-    I_Error("start_sound_at_volume: Bad sfx #: %d", sfx_id);
+    I_Error("start_sound: Bad sfx #: %d", sfx_id);
 
   sfx = &S_sfx[sfx_id];
 
   if (DELTACLIENT) {
-    if (CL_Synchronizing() || CL_RePredicting()) {
-      if ((!CL_RunningNonConsoleplayerCommands()) &&
-           already_played(origin, sfx, is_pickup)) {
-        D_Log(LOG_SOUND,
-          "(%d) start_sound_at_volume: skipping found sound\n\n",
-          gametic
-        );
-        return;
-      }
-    }
-    else if (is_duplicate(origin, sfx, is_pickup)) {
+    if ((CL_Synchronizing() || CL_RePredicting()) &&
+        is_duplicate(origin, sfx, is_pickup)) {
       D_Log(LOG_SOUND,
-        "(%d) start_sound_at_volume: skipping duplicate sound\n\n",
+        "(%d) start_sound: skipping sound (duplicate)\n\n",
+        gametic
+      );
+
+      return;
+    }
+    else if (origin != NULL && already_played(origin, sfx, is_pickup)) {
+      D_Log(LOG_SOUND,
+        "(%d) start_sound: skipping sound (already played)\n\n",
         gametic
       );
       return;
@@ -496,18 +505,10 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
    */
 
   // hacks to vary the sfx pitches
-  if (sfx_id >= sfx_sawup && sfx_id <= sfx_sawhit) {
-    if (DELTASYNC)
-      pitch += 8 - D_RandomRange(0, 15);
-    else
-      pitch += 8 - (M_Random() & 15);
-  }
-  else if (sfx_id != sfx_itemup && sfx_id != sfx_tink) {
-    if (DELTASYNC)
-      pitch += 16 - D_RandomRange(0, 31);
-    else
-      pitch += 16 - (M_Random() & 31);
-  }
+  if (sfx_id >= sfx_sawup && sfx_id <= sfx_sawhit)
+    pitch += 8 - D_RandomRange(0, 15);
+  else if (sfx_id != sfx_itemup && sfx_id != sfx_tink)
+    pitch += 16 - D_RandomRange(0, 31);
 
   if (pitch < 0)
     pitch = 0;

@@ -1,13 +1,14 @@
 # To Do
 
-## Sync
+## Base
 
-1. Test multiple players
-
-1. Fix duplicate sounds
-  - Consider trying to emulate the model from WET
+1. Reconnecting doesn't work
 
 ## ZDDL
+
+1. Disconnect clients if their sync TIC is too far in the past
+
+1. Delta compress commands (serverside and clientside)
 
 1. Add unlagged
   - Save attacking player position

@@ -49,7 +49,7 @@
 #define NOEXTRAPOLATION 0
 #define PMOBJTHINKER 1
 #define COPIED_COMMAND 2
-#define EXTRAPOLATION PMOBJTHINKER
+#define EXTRAPOLATION COPIED_COMMAND
 #define MISSED_COMMAND_MAX 3
 #define LOG_COMMANDS 0
 
@@ -268,12 +268,12 @@ static bool extrapolate_player_position(int playernum) {
 #elif EXTRAPOLATION == COPIED_COMMAND
   netticcmd_t ncmd;
 
-  if (player->missed_commands >= MISSED_COMMAND_MAX) {
+  if (player->commands_missed >= MISSED_COMMAND_MAX) {
     printf("(%d) %td over missed command limit\n", gametic, player - players);
     return false;
   }
 
-  player->missed_commands++;
+  player->commands_missed++;
 
   ncmd.forward = player->cmd.forwardmove;
   ncmd.side    = player->cmd.sidemove;
@@ -622,7 +622,7 @@ void P_RunPlayerCommands(int playernum) {
     }
 #if EXTRAPOLATION == COPIED_COMMAND
     else {
-      player->missed_commands = 0;
+      player->commands_missed = 0;
 
       /*
       printf("(%d) Got (%d) command(s) for %d\n",

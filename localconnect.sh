@@ -13,6 +13,6 @@ CMD="$EXE -nomouse -net $HOST:$PORT"
 # gdb -ex run --args $CMD
 # gdb --args $CMD
 # valgrind --track-origins=yes --leak-check=yes $CMD
-CPUPROFILE=cpu.prof $CMD
-# $CMD
+# CPUPROFILE=cpu.prof $CMD
+$CMD
 
