@@ -40,8 +40,11 @@
 #include "sc_man.h"
 #include "w_wad.h"
 
-extern musicinfo_t *mus_playing; // music currently being played
-extern int musicnum_current;     // music currently should play
+extern int numChannels;
+extern int idmusnum;
+extern bool mus_paused;
+extern musicinfo_t *mus_playing;
+extern int musicnum_current;
 
 typedef struct {
   sfxinfo_t *sfxinfo;  // sound information (if null, channel avail.)
@@ -51,11 +54,34 @@ typedef struct {
   int pitch;
 } channel_t;
 
-static dboolean mus_paused;
-static musicinfo_t *mus_playing;
-static int musicnum_current;
-
 static channel_t *channels;      // the set of channels available
+
+static void stop_channel(int cnum) {
+  int i;
+  channel_t *c = &channels[cnum];
+
+  //jff 1/22/98 return if sound is not enabled
+  if (SOUND_DISABLED)
+    return;
+
+  if (c->sfxinfo) {
+    // stop the sound playing
+    if (I_SoundIsPlaying(c->handle))
+      I_StopSound(c->handle);
+
+    // check to see
+    //  if other channels are playing the sound
+    for (i = 0; i < numChannels; i++) {
+      if (cnum != i && c->sfxinfo == channels[i].sfxinfo) {
+        break;
+      }
+    }
+
+    // degrade usefulness of sound data
+    c->sfxinfo->usefulness--;
+    c->sfxinfo = 0;
+  }
+}
 
 //
 // get_channel:
@@ -102,33 +128,6 @@ static int get_channel(mobj_t *origin, sfxinfo_t *sfxinfo, int is_pickup) {
   c->is_pickup = is_pickup;         // killough 4/25/98
 
   return cnum;
-}
-
-static void stop_channel(int cnum) {
-  int i;
-  channel_t *c = &channels[cnum];
-
-  //jff 1/22/98 return if sound is not enabled
-  if (SOUND_DISABLED)
-    return;
-
-  if (c->sfxinfo) {
-    // stop the sound playing
-    if (I_SoundIsPlaying(c->handle))
-      I_StopSound(c->handle);
-
-    // check to see
-    //  if other channels are playing the sound
-    for (i = 0; i < numChannels; i++) {
-      if (cnum != i && c->sfxinfo == channels[i].sfxinfo) {
-        break;
-      }
-    }
-
-    // degrade usefulness of sound data
-    c->sfxinfo->usefulness--;
-    c->sfxinfo = 0;
-  }
 }
 
 static int adjust_sound_params(mobj_t *listener, mobj_t *source,
@@ -217,13 +216,8 @@ static int adjust_sound_params(mobj_t *listener, mobj_t *source,
 static void init(void) {
   channels = calloc(numChannels, sizeof(channel_t));
 
-  // CPhipps - music init reformatted
-  if (!MUSIC_DISABLED) {
-    S_SetMusicVolume(musicVolume);
-
-    // no sounds are playing, and they are not mus_paused
-    mus_paused = 0;
-  }
+  if (channels == NULL)
+    I_Error("old sound engine init: error allocating channels");
 }
 
 static void start_sound(mobj_t *origin, int sfx_id, int volume) {
@@ -322,7 +316,7 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
   // e6y: [Fix] Crash with zero-length sounds.
   handle = I_StartSound(sfx_id, cnum, volume, sep, pitch, priority);
   if (handle != -1) {
-    channels[cnum].handle = h;
+    channels[cnum].handle = handle;
     channels[cnum].pitch = pitch;
   }
 }

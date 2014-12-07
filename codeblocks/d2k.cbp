@@ -853,6 +853,12 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/s_advsound.h" />
+		<Unit filename="../src/s_sndnew.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/s_sndold.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="../src/s_sound.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -45,9 +45,6 @@
 #include "sc_man.h"
 #include "w_wad.h"
 
-#define DEBUG_SOUND 0
-#define SOUND_LOG LOG_SOUND
-
 typedef struct {
   sfxinfo_t *sfxinfo;  // sound information (if null, channel avail.)
   mobj_t *origin;      // origin of sound
@@ -68,9 +65,11 @@ typedef struct played_sound_s {
   bool     found;
 } played_sound_t;
 
-static dboolean mus_paused;
-static musicinfo_t *mus_playing;
-static int musicnum_current;
+extern int numChannels;
+extern int idmusnum;
+extern bool mus_paused;
+extern musicinfo_t *mus_playing;
+extern int musicnum_current;
 
 static GArray *channels;
 static GList *played_sounds = NULL;
@@ -78,7 +77,7 @@ static GList *played_sounds = NULL;
 static void log_channel(int channel_num) {
   channel_t *c = &g_array_index(channels, channel_t, channel_num);
 
-  D_Log(SOUND_LOG, "%d, %s, %u/%u, %d, %d\n", 
+  D_Log(LOG_SOUND, "%d, %s, %u/%u, %d, %d\n", 
     channel_num,
     c->sfxinfo != NULL ? c->sfxinfo->name : "(nil)",
     c->origin != NULL ? c->origin->id : 0,
@@ -89,7 +88,7 @@ static void log_channel(int channel_num) {
 }
 
 static void log_played_sound(played_sound_t *ps) {
-  D_Log(SOUND_LOG, "{%d, %u, %d, %d}", 
+  D_Log(LOG_SOUND, "{%d, %u, %d, %d}", 
     ps->sfx_id,
     ps->origin_id,
     ps->tic,
@@ -204,9 +203,9 @@ static void stop_channel(channel_t *c) {
   if (I_SoundIsPlaying(c->handle))
     I_StopSound(c->handle);
 
-  D_Log(SOUND_LOG, "(%d) stopped channel, sfxinfo => NULL: ", gametic);
+  D_Log(LOG_SOUND, "(%d) stopped channel, sfxinfo => NULL: ", gametic);
   log_channel(get_channel_index(c));
-  D_Log(SOUND_LOG, "\n");
+  D_Log(LOG_SOUND, "\n");
 
   // degrade usefulness of sound data
   c->sfxinfo->usefulness--;
@@ -259,14 +258,14 @@ static bool already_played(mobj_t *origin, sfxinfo_t *sfx, bool is_pickup) {
   for (GList *node = played_sounds; node != NULL; node = node->next) {
     played_sound_t *sound = (played_sound_t *)node->data;
 
-    D_Log(SOUND_LOG, "Checking {%u, %td, %d} against ",
+    D_Log(LOG_SOUND, "Checking {%u, %td, %d} against ",
       origin != NULL ? origin->id : 0,
       sfx - S_sfx,
       is_pickup
     );
 
     log_played_sound(sound);
-    D_Log(SOUND_LOG, "\n");
+    D_Log(LOG_SOUND, "\n");
 
     if (sound->origin_id == 0 && origin != NULL)
       continue;
@@ -309,6 +308,7 @@ static int get_channel(mobj_t *mobj, sfxinfo_t *sfxinfo, int is_pickup) {
       D_Log(SOUND_LOG, "(%d) %s: calling stop_channel (1)\n",
         gametic, __func__
       );
+
       log_channel(i);
       stop_channel(c);
       init_channel(c, mobj, sfxinfo, is_pickup);
@@ -399,25 +399,8 @@ static void add_to_sound_log(uint32_t origin_id, int sfx_id, bool is_pickup,
   );
 }
 
-static void init(int sfxVolume, int musicVolume) {
-#if DEBUG_SOUND
-  if (!MULTINET)
-    D_EnableLogChannel(LOG_SOUND, "sound.log");
-  else if (CLIENT)
-    D_EnableLogChannel(LOG_SOUND, "client-sound.log");
-  else if (SERVER)
-    D_EnableLogChannel(LOG_SOUND, "server-sound.log");
-#endif
-
+static void init(void) {
   channels = g_array_sized_new(false, true, sizeof(channel_t), numChannels);
-
-  // CPhipps - music init reformatted
-  if (!MUSIC_DISABLED) {
-    S_SetMusicVolume(musicVolume);
-
-    // no sounds are playing, and they are not mus_paused
-    mus_paused = 0;
-  }
 }
 
 static void start_sound(mobj_t *origin, int sfx_id, int volume) {
@@ -435,10 +418,10 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
                sfx_id == sfx_noway); // killough 4/25/98
   sfx_id &= ~PICKUP_SOUND;
 
-  D_Log(SOUND_LOG, "(%d | %d) start_sound_at_volume(%u, %s, %d)\n",
+  D_Log(LOG_SOUND, "(%d | %d) start_sound_at_volume(%u, %s, %d)\n",
     gametic,
     CL_GetCurrentCommandIndex(),
-    mobj != NULL ? mobj->id : 0,
+    origin != NULL ? origin->id : 0,
     S_sfx[sfx_id].name,
     volume
   );
@@ -453,7 +436,7 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
     if (CL_Synchronizing() || CL_RePredicting()) {
       if ((!CL_RunningNonConsoleplayerCommands()) &&
            already_played(origin, sfx, is_pickup)) {
-        D_Log(SOUND_LOG,
+        D_Log(LOG_SOUND,
           "(%d) start_sound_at_volume: skipping found sound\n\n",
           gametic
         );
@@ -551,8 +534,10 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
         continue;
 
       D_Log(SOUND_LOG, "(%d) %s: calling stop_channel\n", gametic, __func__);
+
       log_channel(i);
       stop_channel(channel);
+
       break;
     }
   }
@@ -572,11 +557,11 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
   if (sfx->usefulness++ < 0)
     sfx->usefulness = 1;
 
-  D_Log(SOUND_LOG, "(%d | %d) Starting sound: ",
+  D_Log(LOG_SOUND, "(%d | %d) Starting sound: ",
     gametic, CL_GetCurrentCommandIndex()
   );
   log_channel(cnum);
-  D_Log(SOUND_LOG, "\n");
+  D_Log(LOG_SOUND, "\n");
 
   // Assigns the handle to one of the channels in the mix/output buffer.
   // e6y: [Fix] Crash with zero-length sounds.
@@ -606,7 +591,7 @@ static void silence_actor(mobj_t *mobj) {
     channel_t *channel = &g_array_index(channels, channel_t, i);
 
     if (channel->sfxinfo && channel->origin_id == mobj->id) {
-      D_Log(SOUND_LOG, "(%d) %s: calling stop_channel\n", gametic, __func__);
+      D_Log(LOG_SOUND, "(%d) %s: calling stop_channel\n", gametic, __func__);
       log_channel(i);
       stop_channel(channel);
       break;
@@ -619,7 +604,7 @@ static void stop_sounds(void) {
     channel_t *channel = &g_array_index(channels, channel_t, i);
 
     if (channel->sfxinfo) {
-      D_Log(SOUND_LOG, "(%d) %s: calling stop_channel\n", gametic, __func__);
+      D_Log(LOG_SOUND, "(%d) %s: calling stop_channel\n", gametic, __func__);
       log_channel(i);
       stop_channel(channel);
     }
@@ -814,7 +799,7 @@ static void reposition_sounds(mobj_t *listener) {
 
     // if channel is allocated but sound has stopped, free it
     if (!I_SoundIsPlaying(channel->handle)) {
-      D_Log(SOUND_LOG, "(%d) %s: calling stop_channel (1)\n",
+      D_Log(LOG_SOUND, "(%d) %s: calling stop_channel (1)\n",
         gametic, __func__
       );
       log_channel(i);
@@ -831,7 +816,7 @@ static void reposition_sounds(mobj_t *listener) {
       volume += sfx->volume;
 
       if (volume < 1) {
-        D_Log(SOUND_LOG, "(%d) %s: calling stop_channel (2)\n",
+        D_Log(LOG_SOUND, "(%d) %s: calling stop_channel (2)\n",
           gametic, __func__
         );
         log_channel(i);
@@ -852,7 +837,7 @@ static void reposition_sounds(mobj_t *listener) {
         continue;
 
       if (!adjust_sound_params(listener, source, &volume, &sep, &pitch)) {
-        D_Log(SOUND_LOG, "(%d) %s: calling stop_channel (3)\n",
+        D_Log(LOG_SOUND, "(%d) %s: calling stop_channel (3)\n",
           gametic, __func__
         );
         log_channel(i);
@@ -866,6 +851,9 @@ static void reposition_sounds(mobj_t *listener) {
 }
 
 void S_ReloadChannelOrigins(void) {
+  if (!DELTACLIENT)
+    return;
+
   for (unsigned int i = 0; i < channels->len; i++) {
     channel_t *c = &g_array_index(channels, channel_t, i);
     uint32_t origin_id = c->origin_id;
@@ -889,6 +877,9 @@ void S_ReloadChannelOrigins(void) {
 }
 
 void S_ResetSoundLog(void) {
+  if (!DELTACLIENT)
+    return;
+
   for (GList *node = played_sounds; node != NULL; node = node->next) {
     played_sound_t *sound = (played_sound_t *)node->data;
 
@@ -897,15 +888,18 @@ void S_ResetSoundLog(void) {
 }
 
 void S_TrimSoundLog(int tic, int command_index) {
+  if (!DELTACLIENT)
+    return;
+
   while (played_sounds != NULL) {
     played_sound_t *sound = (played_sound_t *)played_sounds->data;
 
     if (sound->tic >= tic || sound->command_index >= command_index)
       break;
 
-    D_Log(SOUND_LOG, "(%d) Removing played sound ", gametic);
+    D_Log(LOG_SOUND, "(%d) Removing played sound ", gametic);
     log_played_sound(sound);
-    D_Log(SOUND_LOG, "\n");
+    D_Log(LOG_SOUND, "\n");
 
     played_sounds = g_list_delete_link(played_sounds, played_sounds);
     free(sound);

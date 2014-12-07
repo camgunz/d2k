@@ -56,10 +56,10 @@
 #include "e6y.h"
 
 #define DEBUG_NET 0
-#define DEBUG_SYNC 1
+#define DEBUG_SYNC 0
 #define DEBUG_SAVE 0
 #define LOG_COMMANDS 1
-#define PRINT_NETWORK_STATS 1
+#define PRINT_NETWORK_STATS 0
 // #define LOG_SECTOR 43
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
