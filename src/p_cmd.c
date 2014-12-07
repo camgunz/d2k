@@ -51,14 +51,17 @@
 #define COPIED_COMMAND 2
 #define EXTRAPOLATION PMOBJTHINKER
 #define MISSED_COMMAND_MAX 3
+#define LOG_COMMANDS 0
 
 static GQueue *blank_command_queue;
 
+#if LOG_COMMANDS
 static void print_command(gpointer data, gpointer user_data) {
   netticcmd_t *ncmd = data;
 
   D_Log(LOG_SYNC, " %d/%d/%d", ncmd->index, ncmd->tic, ncmd->server_tic);
 }
+#endif
 
 static void run_player_command(player_t *player) {
   ticcmd_t *cmd = &player->cmd;
@@ -522,8 +525,11 @@ void P_ClearPlayerCommands(int playernum) {
 
   command_count = P_GetCommandCount(playernum);
 
-  if (command_count > 0)
-    g_ptr_array_remove_range(players[playernum].commands, 0, command_count);
+  if (command_count > 0) {
+    g_ptr_array_remove_range(
+      players[playernum].commands, 0, command_count - 1
+    );
+  }
 }
 
 void P_TrimCommands(int playernum, TrimFunc should_trim, gpointer user_data) {
@@ -549,7 +555,11 @@ void P_TrimCommands(int playernum, TrimFunc should_trim, gpointer user_data) {
     command_count++;
   }
 
-  g_ptr_array_remove_range(players[playernum].commands, 0, command_count);
+  if (command_count > 0) {
+    g_ptr_array_remove_range(
+      players[playernum].commands, 0, command_count - 1
+    );
+  }
 }
 
 void P_TrimCommandsByTic(int playernum, int tic) {
@@ -627,9 +637,11 @@ void P_RunPlayerCommands(int playernum) {
 }
 
 void P_PrintCommands(int playernum) {
+#if LOG_COMMANDS
   D_Log(LOG_SYNC, "{");
   P_ForEachCommand(playernum, print_command, NULL);
   D_Log(LOG_SYNC, " }\n");
+#endif
 }
 
 /* vi: set et ts=2 sw=2: */

@@ -188,8 +188,6 @@ static void cl_predict(int saved_gametic) {
 void CL_CheckForStateUpdates(void) {
   netpeer_t *server;
   bool state_loaded;
-  fixed_t saved_prev_viewz = players[displayplayer].prev_viewz;
-  fixed_t saved_viewz = players[displayplayer].viewz;
   int saved_gametic = gametic;
 
   if (!DELTACLIENT)
@@ -263,9 +261,6 @@ void CL_CheckForStateUpdates(void) {
   cl_state_tic = server->sync.tic;
   cl_delta_from_tic = server->sync.delta.from_tic;
   cl_delta_to_tic = server->sync.delta.to_tic;
-
-  players[displayplayer].prev_viewz = saved_prev_viewz;
-  players[displayplayer].viewz = saved_viewz;
 
   server->sync.outdated = true;
 

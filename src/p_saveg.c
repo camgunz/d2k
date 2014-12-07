@@ -180,7 +180,8 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, int playernum) {
   M_PBufWriteUChar(savebuffer, player->team);
   command_count = P_GetCommandCount(playernum);
   M_PBufWriteUInt(savebuffer, command_count);
-  P_ForEachCommand(playernum, serialize_command, savebuffer);
+  if (command_count > 0)
+    P_ForEachCommand(playernum, serialize_command, savebuffer);
   M_PBufWriteInt(savebuffer, player->latest_command_run_index);
 }
 
@@ -286,6 +287,7 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, int playernum) {
   M_PBufReadUChar(savebuffer, &player->team);
 
   M_PBufReadUInt(savebuffer, &command_count);
+
   for (unsigned int i = 0; i < command_count; i++) {
     netticcmd_t tmp_ncmd;
 

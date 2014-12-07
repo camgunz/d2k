@@ -41,13 +41,13 @@ static bool command_is_synchronized(gpointer data, gpointer user_data) {
 static void count_command(gpointer data, gpointer user_data) {
   netpeer_t *server = CL_GetServerPeer();
   netticcmd_t *ncmd = (netticcmd_t *)data;
-  unsigned int command_count = GPOINTER_TO_UINT(user_data);
+  unsigned int *command_count = (unsigned int *)user_data;
 
   if (server == NULL)
     return;
 
   if (ncmd->index > server->sync.command_index)
-    command_count++;
+    (*command_count)++;
 }
 
 void CL_TrimSynchronizedCommands(int playernum) {
@@ -71,7 +71,7 @@ unsigned int CL_GetUnsynchronizedCommandCount(int playernum) {
   if (server == NULL)
     return 0;
 
-  P_ForEachCommand(playernum, count_command, GUINT_TO_POINTER(command_count));
+  P_ForEachCommand(playernum, count_command, &command_count);
 
   return command_count;
 }

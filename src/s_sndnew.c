@@ -305,7 +305,7 @@ static int get_channel(mobj_t *mobj, sfxinfo_t *sfxinfo, int is_pickup) {
     channel_t *c = &g_array_index(channels, channel_t, i);
 
     if (c->sfxinfo == NULL) {
-      D_Log(SOUND_LOG, "(%d) %s: calling stop_channel (1)\n",
+      D_Log(LOG_SOUND, "(%d) %s: calling stop_channel (1)\n",
         gametic, __func__
       );
 
@@ -331,7 +331,7 @@ static int get_channel(mobj_t *mobj, sfxinfo_t *sfxinfo, int is_pickup) {
     if ((c->is_pickup != is_pickup) && (!comp[comp_sound]))
       continue;
 
-    D_Log(SOUND_LOG, "(%d) %s: calling stop_channel (1)\n",
+    D_Log(LOG_SOUND, "(%d) %s: calling stop_channel (1)\n",
       gametic, __func__
     );
 
@@ -348,7 +348,7 @@ static int get_channel(mobj_t *mobj, sfxinfo_t *sfxinfo, int is_pickup) {
     if (c->sfxinfo->priority >= sfxinfo->priority)
       continue;
 
-    D_Log(SOUND_LOG, "(%d) %s: calling stop_channel (2)\n",
+    D_Log(LOG_SOUND, "(%d) %s: calling stop_channel (2)\n",
       gametic, __func__
     );
 
@@ -444,7 +444,7 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
       }
     }
     else if (is_duplicate(origin, sfx, is_pickup)) {
-      D_Log(SOUND_LOG,
+      D_Log(LOG_SOUND,
         "(%d) start_sound_at_volume: skipping duplicate sound\n\n",
         gametic
       );
@@ -533,7 +533,7 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
       if ((channel->is_pickup != is_pickup) && (!comp[comp_sound]))
         continue;
 
-      D_Log(SOUND_LOG, "(%d) %s: calling stop_channel\n", gametic, __func__);
+      D_Log(LOG_SOUND, "(%d) %s: calling stop_channel\n", gametic, __func__);
 
       log_channel(i);
       stop_channel(channel);

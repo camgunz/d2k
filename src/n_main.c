@@ -196,6 +196,7 @@ static void print_network_stats(void) {
 
 void N_LogCommand(netticcmd_t *ncmd) {
 #if LOG_COMMANDS
+#if LOG_SYNC
   D_Log(LOG_SYNC, "(%d): {%d/%d/%d %d %d %d %u}\n",
     gametic,
     ncmd->index,
@@ -206,6 +207,7 @@ void N_LogCommand(netticcmd_t *ncmd) {
     ncmd->angle,
     ncmd->buttons
   );
+#endif
 #endif
 }
 
