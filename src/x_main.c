@@ -112,6 +112,14 @@ void X_Init(void) {
   lua_setglobal(L, X_NAMESPACE);
   lua_getglobal(L, X_NAMESPACE);
   g_hash_table_foreach(x_funcs, load_x_func, NULL);
+
+  bool script_failed = luaL_dofile(L, "test.lua");
+
+  if (script_failed) {
+    set_error(lua_tostring(L, -1));
+    printf("Script error: %s\n", X_GetError());
+    I_Error("Script error: %s\n", X_GetError());
+  }
 }
 
 /* vi: set et ts=2 sw=2: */

@@ -427,6 +427,23 @@ IF(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel" OR
 ENDIF()
 
 #==============================================================================
+################################################### Lua Configuration #########
+#==============================================================================
+IF(WIN32)
+  ADD_DEFINITIONS(-DLUA_WIN)
+ELSEIF(APPLE)
+  IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    ADD_DEFINITIONS(-DLUA_USE_MACOSX)
+  ENDIF()
+ELSEIF(UNIX)
+  IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    ADD_DEFINITIONS(-DLUA_USE_LINUX)
+  ENDIF()
+  ADD_DEFINITIONS(-DLUA_USE_POSIX)
+  ADD_DEFINITIONS(-DLUA_USE_DLOPEN)
+ENDIF()
+
+#==============================================================================
 ################################################## Build Dependencies #########
 #==============================================================================
 
@@ -566,6 +583,9 @@ ELSE()
   )
 ENDIF()
 INCLUDE_DIRECTORIES(${PANGO_INCLUDE_DIR})
+
+FIND_PACKAGE(GObjectIntrospection REQUIRED)
+INCLUDE_DIRECTORIES(${GOBJECT_INTROSPECTION_INCLUDE_DIR})
 
 FIND_PACKAGE(XDiff REQUIRED)
 INCLUDE_DIRECTORIES(${XDIFF_INCLUDE_DIR})
@@ -1076,6 +1096,7 @@ SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES}
   ${GLIB_GMODULE_LIBRARIES}
   ${GLIB_GIO_LIBRARIES}
   ${GLIB_LIBRARIES}
+  ${GOBJECT_INTROSPECTION_LIBRARIES}
   ${PCRE_LIBRARIES}
   ${EXPAT_LIBRARIES}
 )
@@ -1097,6 +1118,10 @@ IF(ICONV_STANDALONE)
 ENDIF()
 
 SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${LUA_LIBRARY})
+
+IF(UNIX)
+  SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} dl)
+ENDIF()
 
 IF(WIN32)
   SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} 
