@@ -439,8 +439,6 @@ ELSEIF(UNIX)
   IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     ADD_DEFINITIONS(-DLUA_USE_LINUX)
   ENDIF()
-  ADD_DEFINITIONS(-DLUA_USE_POSIX)
-  ADD_DEFINITIONS(-DLUA_USE_DLOPEN)
 ENDIF()
 
 #==============================================================================
