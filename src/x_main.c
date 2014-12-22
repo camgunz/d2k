@@ -98,10 +98,11 @@ void X_RegisterFunc(const char *name, lua_CFunction func) {
 
 int XF_Quit(lua_State *L) {
   I_SafeExit(0);
+
   return 0;
 }
 
-void X_LoadScripts(void) {
+void X_Init(void) {
   bool script_load_failed;
   char *script_folder = M_PathJoin(I_DoomExeDir(), "scripts");
   char *script_path = M_PathJoin(script_folder, "?.lua");
@@ -112,6 +113,19 @@ void X_LoadScripts(void) {
 
   if (!M_IsFile(init_script_file))
     I_Error("Initialization script [%s] is missing", init_script_file);
+
+  X_RegisterFunc("quit", XF_Quit);
+  X_RegisterFunc("exit", XF_Quit);
+
+  L = luaL_newstate();
+  luaL_openlibs(L);
+
+  atexit(X_Close);
+
+  lua_createtable(L, g_hash_table_size(x_funcs), 0);
+  lua_setglobal(L, X_NAMESPACE);
+  lua_getglobal(L, X_NAMESPACE);
+  g_hash_table_foreach(x_funcs, load_x_func, NULL);
 
   lua_getglobal(L, X_NAMESPACE);
   lua_pushstring(L, script_path);
@@ -129,23 +143,6 @@ void X_LoadScripts(void) {
 
   free(script_folder);
   free(init_script_file);
-}
-
-void X_Init(void) {
-  X_RegisterFunc("quit", XF_Quit);
-  X_RegisterFunc("exit", XF_Quit);
-
-  L = luaL_newstate();
-  luaL_openlibs(L);
-
-  atexit(X_Close);
-
-  lua_createtable(L, g_hash_table_size(x_funcs), 0);
-  lua_setglobal(L, X_NAMESPACE);
-  lua_getglobal(L, X_NAMESPACE);
-  g_hash_table_foreach(x_funcs, load_x_func, NULL);
-
-  X_LoadScripts();
 }
 
 /* vi: set et ts=2 sw=2: */
