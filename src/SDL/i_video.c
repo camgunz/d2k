@@ -44,43 +44,42 @@
 #include <SDL.h>
 #include <SDL_syswm.h>
 
-#include "m_argv.h"
-#include "doomstat.h"
 #include "doomdef.h"
-#include "v_video.h"
-#include "r_draw.h"
-#include "r_things.h"
-#include "r_plane.h"
-#include "r_main.h"
-#include "f_wipe.h"
-#include "d_main.h"
-#include "d_event.h"
+#include "doomstat.h"
+#include "am_map.h"
 #include "d_deh.h"
-#include "i_joy.h"
-#include "i_video.h"
-#include "i_smp.h"
+#include "d_event.h"
+#include "d_main.h"
+#include "e6y.h"//e6y
+#include "f_wipe.h"
+#include "g_game.h"
 #include "i_capture.h"
+#include "i_joy.h"
+#include "i_smp.h"
+#include "i_main.h"
+#include "i_video.h"
+#include "lprintf.h"
+#include "m_argv.h"
+#include "p_user.h"
+#include "r_draw.h"
+#include "r_main.h"
+#include "r_plane.h"
+#include "r_screenmultiply.h"
+#include "r_things.h"
 #include "s_sound.h"
 #include "sounds.h"
-#include "w_wad.h"
 #include "st_stuff.h"
-#include "am_map.h"
-#include "g_game.h"
-#include "lprintf.h"
-#include "p_user.h"
+#include "v_video.h"
+#include "w_wad.h"
+#include "x_main.h"
 
 #ifdef GL_DOOM
 #include "gl_struct.h"
 #endif
 
-#include "r_screenmultiply.h"
-#include "e6y.h"//e6y
-#include "i_main.h"
-
 //e6y: new mouse code
 static SDL_Cursor* cursors[2] = {NULL, NULL};
 
-#ifdef ENABLE_OVERLAY
 static unsigned char *local_pixels = NULL;
 static cairo_t *render_context = NULL;
 static cairo_surface_t *render_surface = NULL;
@@ -88,9 +87,6 @@ static cairo_surface_t *render_surface = NULL;
 #ifdef GL_DOOM
 static GLuint overlay_tex_id = 0;
 #endif
-
-#endif
-
 
 dboolean window_focused;
 
@@ -291,10 +287,8 @@ void I_StartTic(void) {
 // I_StartFrame
 //
 void I_StartFrame(void) {
-#ifdef ENABLE_OVERLAY
   cairo_set_operator(render_context, CAIRO_OPERATOR_CLEAR);
   cairo_paint(render_context);
-#endif
 }
 
 //
@@ -348,7 +342,6 @@ inline static dboolean I_SkipFrame(void)
 #endif
 
 void* I_GetRenderContext(void) {
-#ifdef ENABLE_OVERLAY
   cairo_status_t status;
   SDL_SysWMinfo wm_info;
 
@@ -498,13 +491,9 @@ void* I_GetRenderContext(void) {
 #endif
 
   return render_context;
-#else
-  return NULL;
-#endif
 }
 
 void I_ResetRenderContext(void) {
-#ifdef ENABLE_OVERLAY
   if (nodrawers)
     return;
 
@@ -523,7 +512,6 @@ void I_ResetRenderContext(void) {
     glDeleteTextures(1, &overlay_tex_id);
     overlay_tex_id = 0;
   }
-#endif
 #endif
 }
 
@@ -619,8 +607,7 @@ void I_ShutdownGraphics(void) {
 void I_UpdateNoBlit(void) {
 }
 
-void I_ReadOverlay(void) {
-#ifdef ENABLE_OVERLAY
+static void I_ReadOverlay(void) {
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
     glBindTexture(GL_TEXTURE_2D, overlay_tex_id);
@@ -692,11 +679,9 @@ void I_ReadOverlay(void) {
 
   if (SDL_MUSTLOCK(screen))
     SDL_UnlockSurface(screen);
-#endif
 }
 
 void I_RenderOverlay(void) {
-#ifdef ENABLE_OVERLAY
   if (render_context == NULL || render_surface == NULL)
     I_GetRenderContext();
 
@@ -722,7 +707,6 @@ void I_RenderOverlay(void) {
     glVertex2f(REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
     glEnd();
   }
-#endif
 #endif
 }
 
@@ -1878,6 +1862,18 @@ static void ApplyWindowResize(SDL_Event *resize_event) {
   V_ChangeScreenResolution();
 }
 #endif
+
+int XF_GetRenderContext(lua_State *L) {
+  lua_pushlightuserdata(L, I_GetRenderContext());
+
+  return 1;
+}
+
+int XF_ResetRenderContext(lua_State *L) {
+  I_ResetRenderContext();
+
+  return 0;
+}
 
 /* vi: set et ts=2 sw=2: */
 

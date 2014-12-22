@@ -502,7 +502,9 @@ void HU_Start(void) {
   if (headsupactive)                    // stop before starting
     HU_Stop();
 
+#if ENABLE_OVERLAY
   I_ResetRenderContext();
+#endif
 
   plr = &players[displayplayer];        // killough 3/7/98
   custom_message_p = &custom_message[displayplayer];

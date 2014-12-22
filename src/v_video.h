@@ -291,6 +291,8 @@ void V_GetWideRect(int *x, int *y, int *w, int *h, enum patch_translation_e flag
 
 int V_BestColor(const unsigned char *palette, int r, int g, int b);
 
+void V_RegisterFunctions(void);
+
 #ifdef GL_DOOM
 #include "gl_struct.h"
 #endif
