@@ -63,78 +63,88 @@
 			<Add option="-DHAVE_MIXER=1" />
 			<Add option="-DHAVE_LIBFLUIDSYNTH=1" />
 			<Add option="-DHAVE_LIBPORTMIDI=1" />
+			<Add option="-DHAVE_LIBMAD=1" />
 			<Add option="-DHAVE_OGG=1" />
 			<Add option="-DHAVE_LIBVORBISFILE=1" />
 			<Add option="-DHAVE_LIBDUMB=1" />
-			<Add option="-DHAVE_LIBMAD=1" />
 			<Add option="-DHAVE_LIBPCREPOSIX=1" />
 			<Add option="-DHAVE_LIBPNG=1" />
+			<Add option="-DPCRE_STATIC=1" />
+			<Add option="-DFLUIDSYNTH_NOT_A_DLL=1" />
+			<Add option="-DGLIB_STATIC_COMPILATION=1" />
+			<Add option="-DGOBJECT_STATIC_COMPILATION=1" />
 			<Add directory="../deps/include" />
 			<Add directory="../deps/include/glib-2.0" />
 			<Add directory="../deps/lib/glib-2.0/include" />
 			<Add directory="../deps/include/pango-1.0" />
 			<Add directory="../deps/include/SDL" />
 			<Add directory="../deps/include/cairo" />
-			<Add directory="../src/lua-5.3.0-alpha/src" />
 			<Add directory="../src" />
 		</Compiler>
 		<Linker>
-			<Add library="..\deps\lib\libcairo.dll.a" />
-			<Add library="..\deps\lib\libcairo-gobject.dll.a" />
-			<Add library="..\deps\lib\libcairo-script-interpreter.dll.a" />
-			<Add library="..\deps\lib\libcharset.dll.a" />
-			<Add library="..\deps\lib\libdumb.a" />
-			<Add library="..\deps\lib\libenet.a" />
-			<Add library="..\deps\lib\libexpat.dll.a" />
-			<Add library="..\deps\lib\libffi.dll.a" />
-			<Add library="..\deps\lib\libFLAC.dll.a" />
-			<Add library="..\deps\lib\libfluidsynth.dll.a" />
-			<Add library="..\deps\lib\libfontconfig.dll.a" />
-			<Add library="..\deps\lib\libfreetype.dll.a" />
-			<Add library="..\deps\lib\libgettextlib.dll.a" />
-			<Add library="..\deps\lib\libgettextpo.dll.a" />
-			<Add library="..\deps\lib\libgettextsrc.dll.a" />
-			<Add library="..\deps\lib\libgio-2.0.dll.a" />
-			<Add library="..\deps\lib\libglib-2.0.dll.a" />
-			<Add library="..\deps\lib\libgmodule-2.0.dll.a" />
-			<Add library="..\deps\lib\libgobject-2.0.dll.a" />
-			<Add library="..\deps\lib\libgthread-2.0.dll.a" />
-			<Add library="..\deps\lib\libharfbuzz.dll.a" />
-			<Add library="..\deps\lib\libiconv.dll.a" />
-			<Add library="..\deps\lib\libintl.dll.a" />
-			<Add library="..\deps\lib\libjpeg.dll.a" />
-			<Add library="..\deps\lib\liblzma.dll.a" />
-			<Add library="..\deps\lib\libmad.a" />
-			<Add library="..\deps\lib\libmikmod.dll.a" />
-			<Add library="..\deps\lib\libogg.dll.a" />
-			<Add library="..\deps\lib\libpango-1.0.dll.a" />
-			<Add library="..\deps\lib\libpangocairo-1.0.dll.a" />
-			<Add library="..\deps\lib\libpangoft2-1.0.dll.a" />
-			<Add library="..\deps\lib\libpangowin32-1.0.dll.a" />
-			<Add library="..\deps\lib\libpcre.dll.a" />
-			<Add library="..\deps\lib\libpcrecpp.dll.a" />
-			<Add library="..\deps\lib\libpcreposix.dll.a" />
-			<Add library="..\deps\lib\libpixman-1.dll.a" />
-			<Add library="..\deps\lib\libpng.dll.a" />
-			<Add library="..\deps\lib\libpng15.dll.a" />
-			<Add library="..\deps\lib\libportmidi.dll.a" />
-			<Add library="..\deps\lib\libSDL.dll.a" />
-			<Add library="..\deps\lib\libSDL_image.dll.a" />
-			<Add library="..\deps\lib\libSDL_mixer.dll.a" />
 			<Add library="..\deps\lib\libSDLmain.a" />
-			<Add library="..\deps\lib\libtiff.dll.a" />
-			<Add library="..\deps\lib\libtiffxx.dll.a" />
-			<Add library="..\deps\lib\libvorbis.dll.a" />
-			<Add library="..\deps\lib\libvorbisenc.dll.a" />
-			<Add library="..\deps\lib\libvorbisfile.dll.a" />
-			<Add library="..\deps\lib\libwebp.dll.a" />
+			<Add library="..\deps\lib\libSDL_image.a" />
+			<Add library="..\deps\lib\libSDL_mixer.a" />
+			<Add library="..\deps\lib\libSDL.a" />
+			<Add library="..\deps\lib\libfluidsynth.a" />
+			<Add library="..\deps\lib\libdumb.a" />
+			<Add library="..\deps\lib\libmikmod.a" />
+			<Add library="..\deps\lib\libportmidi_s.a" />
+			<Add library="..\deps\lib\libFLAC.a" />
+			<Add library="..\deps\lib\libmad.a" />
+			<Add library="..\deps\lib\libvorbisenc.a" />
+			<Add library="..\deps\lib\libvorbisfile.a" />
+			<Add library="..\deps\lib\libvorbis.a" />
+			<Add library="..\deps\lib\libogg.a" />
+			<Add library="..\deps\lib\libjpeg.a" />
+			<Add library="..\deps\lib\libpng.a" />
+			<Add library="..\deps\lib\libtiff.a" />
+			<Add library="..\deps\lib\libwebp.a" />
+			<Add library="..\deps\lib\pangocairo-1.0.lib" />
+			<Add library="..\deps\lib\pangoft2-1.0.lib" />
+			<Add library="..\deps\lib\pangowin32-1.0.lib" />
+			<Add library="..\deps\lib\pango-1.0.lib" />
+			<Add library="..\deps\lib\libcairo.a" />
+			<Add library="..\deps\lib\libcairo-gobject.a" />
+			<Add library="..\deps\lib\libcairo-script-interpreter.a" />
+			<Add library="..\deps\lib\libfontconfig.a" />
+			<Add library="..\deps\lib\libfreetype.a" />
+			<Add library="..\deps\lib\libharfbuzz-gobject.a" />
+			<Add library="..\deps\lib\libharfbuzz-icu.a" />
+			<Add library="..\deps\lib\libharfbuzz.a" />
+			<Add library="..\deps\lib\libpixman-1.a" />
+			<Add library="..\deps\lib\liblua.a" />
 			<Add library="..\deps\lib\libxdiff.a" />
-			<Add library="..\deps\lib\libxml2.dll.a" />
-			<Add library="..\deps\lib\libz.dll.a" />
-			<Add library="OpenGL32" />
-			<Add library="Ws2_32" />
-			<Add library="Gdi32" />
-			<Add library="Winmm" />
+			<Add library="..\deps\lib\libenet.a" />
+			<Add library="..\deps\lib\libgirepository-1.0.a" />
+			<Add library="..\deps\lib\libgio-2.0.a" />
+			<Add library="..\deps\lib\libgmodule-2.0.a" />
+			<Add library="..\deps\lib\libgobject-2.0.a" />
+			<Add library="..\deps\lib\libgthread-2.0.a" />
+			<Add library="..\deps\lib\libglib-2.0.a" />
+			<Add library="..\deps\lib\libexpat.a" />
+			<Add library="..\deps\lib\libxml2.a" />
+			<Add library="..\deps\lib\libpcre.a" />
+			<Add library="..\deps\lib\libpcreposix.a" />
+			<Add library="..\deps\lib\libffi.a" />
+			<Add library="..\deps\lib\libgettextpo.a" />
+			<Add library="..\deps\lib\libgettextsrc.dll.a" />
+			<Add library="..\deps\lib\libintl.a" />
+			<Add library="..\deps\lib\libcharset.a" />
+			<Add library="..\deps\lib\libiconv.a" />
+			<Add library="..\deps\lib\libbz2.a" />
+			<Add library="..\deps\lib\libz.a" />
+			<Add library="C:\Program Files (x86)\CodeBlocks\MinGW\lib\libmingw32.a" />
+			<Add library="dsound" />
+			<Add library="ddraw" />
+			<Add library="dinput" />
+			<Add library="dxguid" />
+			<Add library="gdi32" />
+			<Add library="ole32" />
+			<Add library="opengl32" />
+			<Add library="usp10" />
+			<Add library="winmm" />
+>>>>>>> master
 			<Add directory="../deps/bin" />
 			<Add directory="../deps/lib" />
 		</Linker>
@@ -502,129 +512,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/lprintf.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lapi.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lapi.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lauxlib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lauxlib.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lbaselib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lbitlib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lcode.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lcode.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lcorolib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lctype.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lctype.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/ldblib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/ldebug.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/ldebug.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/ldo.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/ldo.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/ldump.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lfunc.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lfunc.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lgc.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lgc.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/linit.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/liolib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/llex.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/llex.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/llimits.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lmathlib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lmem.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lmem.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/loadlib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lobject.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lobject.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lopcodes.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lopcodes.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/loslib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lparser.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lparser.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lstate.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lstate.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lstring.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lstring.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lstrlib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/ltable.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/ltable.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/ltablib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/ltm.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/ltm.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lua.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/luaconf.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lualib.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lundump.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lundump.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lutf8lib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lvm.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lvm.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lzio.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/lua-5.3.0-alpha/src/lzio.h" />
 		<Unit filename="../src/m_argv.c">
 			<Option compilerVar="CC" />
 		</Unit>
