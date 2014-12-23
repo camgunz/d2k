@@ -943,7 +943,6 @@ static void I_FillScreenResolutionsList(void) {
   int j;
   int list_size;
   int current_resolution_index;
-  int count;
   char mode[256];
   Uint32 flags;
 
@@ -969,7 +968,7 @@ static void I_FillScreenResolutionsList(void) {
   current_resolution_index = -1;
 
   if (modes) {
-    count = 0;
+    int count = 0;
 
     for (i = 0; modes[i]; i++)
       count++;

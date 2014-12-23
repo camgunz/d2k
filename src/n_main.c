@@ -45,6 +45,7 @@
 #include "n_state.h"
 #include "n_peer.h"
 #include "n_proto.h"
+#include "cl_cmd.h"
 #include "cl_main.h"
 #include "sv_main.h"
 #include "p_checksum.h"
@@ -57,6 +58,7 @@
 #define DEBUG_NET 0
 #define DEBUG_SYNC 0
 #define DEBUG_SAVE 0
+#define LOG_COMMANDS 1
 #define PRINT_NETWORK_STATS 0
 // #define LOG_SECTOR 43
 
@@ -71,8 +73,10 @@ static int run_tics(int tic_count) {
 
   while (tic_count--) {
     if (MULTINET) {
+      /*
       if (CLIENT)
-        P_ClearRunCommands(consoleplayer);
+        P_ClearPlayerCommands(consoleplayer);
+      */
       P_BuildCommand();
     }
     else {
@@ -93,7 +97,7 @@ static int run_commandsync_tics(int command_count) {
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
-      tic_count = MIN(tic_count, P_GetPlayerRunCommandCount(i));
+      tic_count = MIN(tic_count, P_GetCommandCount(i));
     }
   }
 
@@ -168,10 +172,8 @@ static void print_network_stats(void) {
       iter.np->peer->highestRoundTripTimeVariance,
       iter.np->peer->lastRoundTripTimeVariance,
       iter.np->peer->roundTripTimeVariance,
-      CLIENT ? P_GetPlayerSyncCommandCount(consoleplayer)
-             : P_GetPlayerSyncCommandCount(iter.np->playernum),
-      CLIENT ? P_GetPlayerRunCommandCount(consoleplayer)
-             : P_GetPlayerRunCommandCount(iter.np->playernum)
+      CLIENT ? CL_GetUnsynchronizedCommandCount(iter.np->playernum) : 0,
+      P_GetCommandCount(iter.np->playernum)
     );
     puts("------------------------------------------------------------------------------");
     puts("| Packet Loss | Throttle | Accel | Counter | Decel | Interval | Limit |  #   |");
@@ -193,17 +195,20 @@ static void print_network_stats(void) {
 #endif
 
 void N_LogCommand(netticcmd_t *ncmd) {
-  D_Log(LOG_SYNC, "(%d): {%d/%d %d %d %d %d %u %u}\n",
+#if LOG_COMMANDS
+#if LOG_SYNC
+  D_Log(LOG_SYNC, "(%d): {%d/%d/%d %d %d %d %u}\n",
     gametic,
     ncmd->index,
     ncmd->tic,
-    ncmd->cmd.forwardmove,
-    ncmd->cmd.sidemove,
-    ncmd->cmd.angleturn,
-    ncmd->cmd.consistancy,
-    ncmd->cmd.chatchar,
-    ncmd->cmd.buttons
+    ncmd->server_tic,
+    ncmd->forward,
+    ncmd->side,
+    ncmd->angle,
+    ncmd->buttons
   );
+#endif
+#endif
 }
 
 void N_LogPlayerPosition(player_t *player) {
@@ -248,14 +253,14 @@ void N_InitNetGame(void) {
     char *name;
     size_t name_length;
 
-    players[i].messages = g_ptr_array_new_with_free_func(P_DestroyMessage);
-
     players[i].name = NULL;
     name_length = snprintf(NULL, 0, "Player %d", i);
     name = calloc(name_length + 1, sizeof(char));
     snprintf(name, name_length + 1, "Player %d", i);
 
     P_SetName(i, name);
+
+    players[i].messages = g_ptr_array_new_with_free_func(P_DestroyMessage);
   }
 
   P_InitCommands();
@@ -422,7 +427,6 @@ void N_RunTic(void) {
     N_UpdateSync();
   }
 
-  CL_UpdateLatestTic();
   gametic++;
 }
 

@@ -107,7 +107,7 @@ int I_RegisterMusic( const char* filename, musicinfo_t *music );
 //  plays a song, and when the song is done,
 //  starts playing it again in an endless loop.
 // Horrible thing to do, considering.
-void I_PlaySong(int handle, int looping);
+void I_PlaySong(int handle, bool looping);
 
 // Stops a song over 3 seconds.
 void I_StopSong(int handle);

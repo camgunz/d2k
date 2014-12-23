@@ -24,10 +24,6 @@
 #ifndef S_SOUND_H__
 #define S_SOUND_H__
 
-#ifdef __GNUG__
-#pragma interface
-#endif
-
 // The number of internal mixing channels, the samples calculated for each
 // mixing step, the size of the 16bit, 2 hardware channel (stereo) mixing
 // buffer, and the samplerate of the raw data.
@@ -41,58 +37,64 @@
 #define SOUND_DISABLED (!snd_card || nosfxparm)
 #define MUSIC_DISABLED (!mus_card || nomusicparm)
 
-//
-// Initializes sound stuff, including volume
-// Sets channels, SFX and music volume,
-//  allocates channel buffer, sets S_sfx lookup.
-//
-void S_Init(int sfxVolume, int musicVolume);
-
-// Kills all sounds
-void S_Stop(void);
-
-//
-// Per level startup code.
-// Kills playing sounds at start of level,
-//  determines music if any, changes music.
-//
-void S_Start(void);
-
-//
-// Start sound for thing at <origin>
-//  using <sound_id> from sounds.h
-//
-void S_StartSound(mobj_t *origin, int sound_id);
-
-// Will start a sound at a given volume.
-void S_StartSoundAtVolume(mobj_t *origin, int sound_id, int volume);
-
 // killough 4/25/98: mask used to indicate sound origin is player item pickup
 #define PICKUP_SOUND (0x8000)
 
-// Stop sound for thing at <origin>
+// when to clip out sounds
+// Does not fit the large outdoor areas.
+#define S_CLIPPING_DIST (1200 << FRACBITS)
+
+// Distance to origin when sounds should be maxed out.
+// This should relate to movement clipping resolution
+// (see BLOCKMAP handling).
+// Originally: (200*0x10000).
+
+#define S_CLOSE_DIST (160 << FRACBITS)
+#define S_ATTENUATOR ((S_CLIPPING_DIST - S_CLOSE_DIST) >> FRACBITS)
+
+// Adjustable by menu.
+#define NORM_PITCH 128
+#define NORM_PRIORITY 64
+#define NORM_SEP 128
+#define S_STEREO_SWING (96 << FRACBITS)
+
+typedef struct sound_engine_s {
+  void (*init)(void);
+  void (*start_sound)(mobj_t *origin, int sfx_id, int volume); // S_StartSoundAtVolume
+  void (*silence_actor)(mobj_t *origin);                       // S_StopSound
+  void (*stop_sounds)(void);                                   // S_Stop
+  void (*set_music)(int musicnum, bool looping);               // S_ChangeMusic
+  void (*set_musinfo_music)(int lumpnum, bool looping);        // S_ChangeMusInfoMusic
+  void (*stop_music)(void);                                    // S_StopMusic
+  void (*restart_music)(void);                                 // S_RestartMusic
+  void (*pause_music)(void);                                   // S_PauseSound
+  void (*resume_music)(void);                                  // S_ResumeSound
+  void (*handle_level_start)(void);                            // S_Start
+  void (*reposition_sounds)(mobj_t *listener);                 // S_UpdateSounds
+} sound_engine_t;
+
+extern int snd_SfxVolume;
+extern int snd_MusicVolume;
+extern int default_numChannels;
+extern int idmusnum; //jff 3/17/98 holds last IDMUS number, or -1
+extern const char *S_music_files[]; // cournia - stores music file names
+
+void S_Init(int sfxVolume, int musicVolume);
+int  S_GetChannelCount(void);
+void S_Stop(void);
+void S_Start(void);
+void S_StartSound(mobj_t *origin, int sfx_id);
+void S_StartSoundAtVolume(mobj_t *origin, int sfx_id, int volume);
 void S_StopSound(mobj_t *origin);
-
-// Start music using <music_id> from sounds.h
 void S_StartMusic(int music_id);
-
-// Start music using <music_id> from sounds.h, and set whether looping
-void S_ChangeMusic(int music_id, int looping);
-void S_ChangeMusInfoMusic(int lumpnum, int looping);
+void S_ChangeMusic(int music_id, bool looping);
+void S_ChangeMusInfoMusic(int lumpnum, bool looping);
 void S_RestartMusic(void);
-
-// Stops the music fer sure.
 void S_StopMusic(void);
-
-// Stop and resume music, during game PAUSE.
 void S_PauseSound(void);
 void S_ResumeSound(void);
 void S_MuteSound(void);
 void S_UnMuteSound(void);
-
-//
-// Updates music & sounds
-//
 void S_UpdateSounds(mobj_t *listener);
 void S_SetMusicVolume(int volume);
 void S_SetSfxVolume(int volume);
@@ -108,12 +110,11 @@ void S_ReloadChannelOrigins(void);
 void S_ResetSoundLog(void);
 void S_TrimSoundLog(int tic, int command_index);
 
-// machine-independent sound params
-extern int default_numChannels;
-extern int numChannels;
-
-//jff 3/17/98 holds last IDMUS number, or -1
-extern int idmusnum;
+//
+// Sound Engines
+//
+sound_engine_t* S_GetOldSoundEngine(void);
+sound_engine_t* S_GetNewSoundEngine(void);
 
 #endif
 

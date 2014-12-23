@@ -35,8 +35,8 @@
 #include "p_cmd.h"
 #include "p_user.h"
 
-#define NET_THROTTLE_ACCEL 1
-#define NET_THROTTLE_DECEL 2
+#define NET_THROTTLE_ACCEL 2
+#define NET_THROTTLE_DECEL 1
 
 #define get_netchan(netchan, netcom, chan_type)                               \
   if (chan_type == NET_CHANNEL_RELIABLE)                                      \
@@ -58,10 +58,6 @@ typedef struct packet_buf_s {
 } packet_buf_t;
 
 static GHashTable *net_peers = NULL;
-
-static void destroy_netticcmd(gpointer data) {
-  P_RecycleCommand((netticcmd_t *)data);
-}
 
 static void init_channel(netchan_t *nc) {
   nc->toc = g_array_new(false, true, sizeof(tocentry_t));
@@ -179,27 +175,11 @@ static void free_netcom(netcom_t *nc) {
   M_PBufFree(&nc->unreliable.packet_data);
 }
 
-static void init_command_queue(command_queue_t *cq) {
-  cq->received = 0;
-  cq->run = 0;
-  cq->sync_queue = g_queue_new();
-  cq->run_queue = g_queue_new();
-}
-
-static void free_command_queue(command_queue_t *cq) {
-  cq->received = 0;
-  cq->run = 0;
-  g_queue_free_full(cq->sync_queue, destroy_netticcmd);
-  g_queue_free_full(cq->run_queue, destroy_netticcmd);
-}
-
 static void init_netsync(netsync_t *ns) {
   ns->initialized = false;
   ns->outdated = false;
   ns->tic = 0;
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    init_command_queue(&ns->commands[i]);
-  }
+  ns->command_index = 0;
   M_BufferInit(&ns->delta.data);
 }
 
@@ -207,8 +187,7 @@ static void free_netsync(netsync_t *ns) {
   ns->initialized = false;
   ns->outdated = false;
   ns->tic = 0;
-  for (int i = 0; i < MAXPLAYERS; i++)
-    free_command_queue(&ns->commands[i]);
+  ns->command_index = 0;
   M_BufferFree(&ns->delta.data);
 }
 
@@ -272,10 +251,10 @@ void N_PeerSetConnected(int peernum, ENetPeer *peer) {
   );
   */
 
-  if (CLIENT) {
+  if (SERVER) {
     enet_peer_throttle_configure(
       peer,
-      ENET_PEER_PACKET_THROTTLE_INTERVAL,
+      300,
       NET_THROTTLE_ACCEL,
       NET_THROTTLE_DECEL
     );
@@ -301,6 +280,9 @@ void N_PeerIterRemove(netpeer_iter_t *it, netpeer_t *np) {
 }
 
 unsigned int N_PeerGetCount(void) {
+  if (net_peers == NULL)
+    return 0;
+
   return g_hash_table_size(net_peers);
 }
 

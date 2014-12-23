@@ -29,11 +29,11 @@ extern int cl_extrapolate_player_positions;
 bool CL_LoadingState(void);
 bool CL_Synchronizing(void);
 bool CL_RePredicting(void);
+bool CL_Predicting(void);
 bool CL_RunningConsoleplayerCommands(void);
 bool CL_RunningNonConsoleplayerCommands(void);
 void CL_SetupCommandState(int playernum, netticcmd_t *ncmd);
 void CL_ShutdownCommandState(void);
-void CL_UpdateLatestTic(void);
 int  CL_GetCurrentCommandIndex(void);
 int  CL_GetNextCommandIndex(void);
 bool CL_ReceivedSetup(void);
@@ -41,6 +41,7 @@ void CL_SetReceivedSetup(bool new_received_setup);
 void CL_SetAuthorizationLevel(auth_level_e level);
 void CL_MarkServerOutdated(void);
 void CL_CheckForStateUpdates(void);
+void CL_UpdateReceivedCommandIndex(int command_index);
 void CL_Init(void);
 
 #endif

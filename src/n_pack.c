@@ -39,6 +39,8 @@
 #include "n_state.h"
 #include "n_peer.h"
 #include "n_proto.h"
+#include "cl_cmd.h"
+#include "cl_main.h"
 #include "p_cmd.h"
 #include "p_pspr.h"
 #include "p_user.h"
@@ -298,156 +300,23 @@ static void free_string(gpointer data) {
   free(data);
 }
 
-static void pack_commands(pbuf_t *pbuf, netpeer_t *np, int playernum) {
-  GQueue *commands = np->sync.commands[playernum].sync_queue;
-  unsigned int queue_size = g_queue_get_length(commands);
-  unsigned short command_count = 0;
+static void pack_unsynchronized_command(gpointer data, gpointer user_data) {
+  netticcmd_t *ncmd = (netticcmd_t *)data;
+  pbuf_t *pbuf = (pbuf_t *)user_data;
+  netpeer_t *server = CL_GetServerPeer();
 
-  M_PBufWriteShort(pbuf, playernum);
+  if (server == NULL)
+    return;
 
-  if ((CLIENT && playernum == consoleplayer) ||
-      (SERVER && playernum != np->playernum)) {
-    for (unsigned int i = 0; i < queue_size; i++) {
-      netticcmd_t *ncmd = g_queue_peek_nth(commands, i);
+  if (ncmd->index <= server->sync.command_index)
+    return;
 
-      if (ncmd->index > np->sync.commands[playernum].received)
-        command_count++;
-    }
-
-    /* CG: TODO: Add limit on command_count */
-    M_PBufWriteUShort(pbuf, command_count);
-
-    /*
-    D_Log(LOG_SYNC, "pack_commands: %d sending %u commands for %d to %d\n",
-      consoleplayer, command_count, playernum, np->playernum
-    );
-    */
-
-    for (unsigned int i = 0; i < queue_size; i++) {
-      netticcmd_t *ncmd = g_queue_peek_nth(commands, i);
-
-      if (ncmd->index <= np->sync.commands[playernum].received)
-        continue;
-
-      M_PBufWriteInt(pbuf, ncmd->index);
-      M_PBufWriteInt(pbuf, ncmd->tic);
-      M_PBufWriteChar(pbuf, ncmd->cmd.forwardmove);
-      M_PBufWriteChar(pbuf, ncmd->cmd.sidemove);
-      M_PBufWriteShort(pbuf, ncmd->cmd.angleturn);
-      M_PBufWriteShort(pbuf, ncmd->cmd.consistancy);
-      M_PBufWriteUChar(pbuf, ncmd->cmd.chatchar);
-      M_PBufWriteUChar(pbuf, ncmd->cmd.buttons);
-    }
-  }
-  else if ((CLIENT && playernum != consoleplayer) ||
-           (SERVER && playernum == np->playernum)) {
-    M_PBufWriteInt(pbuf, np->sync.commands[playernum].received);
-    M_PBufWriteInt(pbuf, np->sync.commands[playernum].run);
-  }
-}
-
-static bool unpack_commands(pbuf_t *pbuf, netpeer_t *np) {
-  short playernum;
-
-  read_player(pbuf, playernum);
-
-  if ((CLIENT && playernum != consoleplayer) ||
-      (SERVER && playernum == np->playernum)) {
-    unsigned short command_count;
-
-    read_ushort(pbuf, command_count, "command count");
-
-    /*
-     * CG: TODO: Add a limit to the number of commands accepted here.  Quake
-     *           has an "sv_maxlag" setting (or something); that may be
-     *           preferable to a static limit... but I still think having an
-     *           upper bound on that setting is prudent.
-     *
-     * UPDATE:   Here may not be the place for a command count limit, because
-     *           it's so low-level.
-     */
-
-    for (unsigned int i = 0; i < command_count; i++) {
-      netticcmd_t ncmd;
-
-      read_int(pbuf,   ncmd.index,           "command index");
-      read_int(pbuf,   ncmd.tic,             "command TIC");
-      read_char(pbuf,  ncmd.cmd.forwardmove, "command forward value");
-      read_char(pbuf,  ncmd.cmd.sidemove,    "command side value");
-      read_short(pbuf, ncmd.cmd.angleturn,   "command angle value");
-      read_short(pbuf, ncmd.cmd.consistancy, "command consistancy value");
-      read_uchar(pbuf, ncmd.cmd.chatchar,    "comand chatchar value");
-      read_uchar(pbuf, ncmd.cmd.buttons,     "command buttons value");
-
-      if (ncmd.index <= np->sync.commands[playernum].received)
-        continue;
-
-      np->sync.commands[playernum].received = ncmd.index;
-
-      if (CLIENT) {
-        netticcmd_t *run_ncmd = P_GetNewBlankCommand();
-
-        memcpy(run_ncmd, &ncmd, sizeof(netticcmd_t));
-        g_queue_push_tail(np->sync.commands[playernum].run_queue, run_ncmd);
-      }
-      else {
-        NETPEER_FOR_EACH(iter) {
-          GQueue *commands;
-          netpeer_t *np2 = iter.np;
-          netticcmd_t *new_ncmd = P_GetNewBlankCommand();
-
-          memcpy(new_ncmd, &ncmd, sizeof(netticcmd_t));
-
-          if (np2 == np)
-            commands = np->sync.commands[playernum].run_queue;
-          else
-            commands = np2->sync.commands[playernum].sync_queue;
-
-          g_queue_push_tail(commands, new_ncmd);
-        }
-      }
-    }
-  }
-  else if ((CLIENT && playernum == consoleplayer) ||
-           (SERVER && playernum != np->playernum)) {
-    int command_index_received;
-    int command_index_run;
-
-    read_int(pbuf, command_index_received, "commands received");
-    read_int(pbuf, command_index_run, "commands run");
-
-    np->sync.commands[playernum].received = MAX(
-      np->sync.commands[playernum].received, command_index_received
-    );
-
-    /*
-     * CG: Because this has to line up with the received delta, i.e. "the
-     *     server had [these] commands at [this] TIC", using the latest value
-     *     for run can cause inconsistencies
-     */
-
-    /*
-    np->sync.commands[playernum].run = MAX(
-      np->sync.commands[playernum].run, command_index_run
-    );
-    */
-
-    np->sync.commands[playernum].run = command_index_run;
-
-    /*
-    D_Log(LOG_SYNC, "(%d) Commands received/run for %d => %d: %d, %d (%d, %d)\n",
-      gametic,
-      np->playernum,
-      playernum,
-      np->sync.commands[playernum].received,
-      np->sync.commands[playernum].run,
-      command_index_received,
-      command_index_run
-    );
-    */
-  }
-
-  return true;
+  M_PBufWriteInt(pbuf, ncmd->index);
+  M_PBufWriteInt(pbuf, ncmd->tic);
+  M_PBufWriteChar(pbuf, ncmd->forward);
+  M_PBufWriteChar(pbuf, ncmd->side);
+  M_PBufWriteShort(pbuf, ncmd->angle);
+  M_PBufWriteUChar(pbuf, ncmd->buttons);
 }
 
 void N_PackSetup(netpeer_t *np) {
@@ -700,23 +569,16 @@ void N_PackSync(netpeer_t *np) {
   );
 
   if (CLIENT) {
-    M_PBufWriteInt(pbuf, MAXPLAYERS);
+    unsigned int command_count =
+      CL_GetUnsynchronizedCommandCount(consoleplayer);
 
-    for (int i = 0; i < MAXPLAYERS; i++)
-      pack_commands(pbuf, np, i);
-  }
-  else {
-    M_PBufWriteInt(pbuf, N_PeerGetCount());
-
-    NETPEER_FOR_EACH(iter) {
-      pack_commands(pbuf, np, iter.np->playernum);
-    }
-  }
-
-  if (DELTACLIENT)
     M_PBufWriteInt(pbuf, np->sync.tic);
+    M_PBufWriteUInt(pbuf, command_count);
 
-  if (DELTASERVER) {
+    if (command_count > 0)
+      P_ForEachCommand(consoleplayer, pack_unsynchronized_command, pbuf);
+  }
+  else if (DELTASERVER) {
     M_PBufWriteInt(pbuf, np->sync.delta.from_tic);
     M_PBufWriteInt(pbuf, np->sync.delta.to_tic);
     M_PBufWriteBytes(pbuf, np->sync.delta.data.data, np->sync.delta.data.size);
@@ -725,16 +587,8 @@ void N_PackSync(netpeer_t *np) {
 
 dboolean N_UnpackSync(netpeer_t *np) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
-  int m_peer_count = -1;
 
-  read_int(pbuf, m_peer_count, "peer count");
-
-  while (m_peer_count-- > 0) {
-    if (!unpack_commands(pbuf, np))
-      return false;
-  }
-
-  if (DELTACLIENT) {
+  if (CLIENT) {
     int m_delta_from_tic;
     int m_delta_to_tic;
 
@@ -748,14 +602,33 @@ dboolean N_UnpackSync(netpeer_t *np) {
       read_bytes(pbuf, np->sync.delta.data, "delta data");
     }
   }
-
-  if (DELTASERVER) {
+  else if (SERVER) {
     int m_sync_tic;
+    unsigned int m_command_count;
 
     read_int(pbuf, m_sync_tic, "sync tic");
+    read_uint(pbuf, m_command_count, "command count");
 
     if (m_sync_tic > np->sync.tic)
       np->sync.tic = m_sync_tic;
+
+    for (unsigned int i = 0; i < m_command_count; i++) {
+      netticcmd_t ncmd;
+
+      read_int(pbuf,   ncmd.index,   "command index");
+      read_int(pbuf,   ncmd.tic,     "command TIC");
+      read_char(pbuf,  ncmd.forward, "command forward value");
+      read_char(pbuf,  ncmd.side,    "command side value");
+      read_short(pbuf, ncmd.angle,   "command angle value");
+      read_uchar(pbuf, ncmd.buttons, "command buttons value");
+
+      if (ncmd.index <= np->sync.command_index)
+        continue;
+
+      ncmd.server_tic = 0;
+      np->sync.command_index = ncmd.index;
+      P_AppendNewCommand(np->playernum, &ncmd);
+    }
   }
 
   return true;

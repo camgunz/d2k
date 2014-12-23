@@ -29,6 +29,7 @@
 #include "lprintf.h"
 #include "m_random.h"
 #include "n_net.h"
+#include "cl_main.h"
 #include "p_cmd.h"
 #include "p_enemy.h"
 #include "p_ident.h"
@@ -77,7 +78,23 @@ static void serialize_corpse(gpointer data, gpointer user_data) {
   M_PBufWriteUInt(savebuffer, corpse->id);
 }
 
-static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
+static void serialize_command(gpointer data, gpointer user_data) {
+  netticcmd_t *ncmd = (netticcmd_t *)data;
+  pbuf_t *savebuffer = (pbuf_t *)user_data;
+
+  M_PBufWriteInt(savebuffer, ncmd->index);
+  M_PBufWriteInt(savebuffer, ncmd->tic);
+  M_PBufWriteInt(savebuffer, ncmd->server_tic);
+  M_PBufWriteChar(savebuffer, ncmd->forward);
+  M_PBufWriteChar(savebuffer, ncmd->side);
+  M_PBufWriteShort(savebuffer, ncmd->angle);
+  M_PBufWriteUChar(savebuffer, ncmd->buttons);
+}
+
+static void P_ArchivePlayer(pbuf_t *savebuffer, int playernum) {
+  player_t *player = &players[playernum];
+  unsigned int command_count;
+
   M_PBufWriteInt(savebuffer, player->playerstate);
   M_PBufWriteChar(savebuffer, player->cmd.forwardmove);
   M_PBufWriteChar(savebuffer, player->cmd.sidemove);
@@ -151,7 +168,6 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
       M_PBufWriteInt(savebuffer, 0);
     }
   }
-
   M_PBufWriteInt(savebuffer, player->didsecret);
   M_PBufWriteInt(savebuffer, player->momx);
   M_PBufWriteInt(savebuffer, player->momy);
@@ -162,13 +178,21 @@ static void P_ArchivePlayer(pbuf_t *savebuffer, player_t *player) {
   else
     M_PBufWriteString(savebuffer, "", 0);
   M_PBufWriteUChar(savebuffer, player->team);
+  command_count = P_GetCommandCount(playernum);
+  M_PBufWriteUInt(savebuffer, command_count);
+  if (command_count > 0)
+    P_ForEachCommand(playernum, serialize_command, savebuffer);
+  M_PBufWriteInt(savebuffer, player->latest_command_run_index);
 }
 
-static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
+static void P_UnArchivePlayer(pbuf_t *savebuffer, int playernum) {
   static buf_t player_message_buf;
   static buf_t name_buf;
   static bool player_message_buf_initialized = false;
   static bool name_buf_initialized = false;
+
+  player_t *player = &players[playernum];
+  unsigned int command_count;
 
   if (!player_message_buf_initialized) {
     M_BufferInit(&player_message_buf);
@@ -261,6 +285,27 @@ static void P_UnArchivePlayer(pbuf_t *savebuffer, player_t *player) {
     M_BufferReadStringDup(&name_buf, &player->name);
   }
   M_PBufReadUChar(savebuffer, &player->team);
+
+  M_PBufReadUInt(savebuffer, &command_count);
+
+  for (unsigned int i = 0; i < command_count; i++) {
+    netticcmd_t tmp_ncmd;
+
+    M_PBufReadInt(savebuffer, &tmp_ncmd.index);
+    M_PBufReadInt(savebuffer, &tmp_ncmd.tic);
+    M_PBufReadInt(savebuffer, &tmp_ncmd.server_tic);
+    M_PBufReadChar(savebuffer, &tmp_ncmd.forward);
+    M_PBufReadChar(savebuffer, &tmp_ncmd.side);
+    M_PBufReadShort(savebuffer, &tmp_ncmd.angle);
+    M_PBufReadUChar(savebuffer, &tmp_ncmd.buttons);
+
+    if (CLIENT && playernum == consoleplayer)
+      CL_UpdateReceivedCommandIndex(tmp_ncmd.index);
+
+    P_InsertCommandSorted(playernum, &tmp_ncmd);
+  }
+
+  M_PBufReadInt(savebuffer, &player->latest_command_run_index);
 }
 
 static void P_ArchiveActorPointers(pbuf_t *savebuffer, mobj_t *mobj) {
@@ -576,7 +621,7 @@ static void P_UnArchiveActor(pbuf_t *savebuffer, mobj_t *mobj) {
 void P_ArchivePlayers(pbuf_t *savebuffer) {
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i])
-      P_ArchivePlayer(savebuffer, &players[i]);
+      P_ArchivePlayer(savebuffer, i);
   }
 }
 
@@ -588,7 +633,7 @@ void P_UnArchivePlayers(pbuf_t *savebuffer) {
     if (!playeringame[i])
       continue;
 
-    P_UnArchivePlayer(savebuffer, &players[i]);
+    P_UnArchivePlayer(savebuffer, i);
 
     // will be set when unarc thinker
     players[i].mo = NULL;

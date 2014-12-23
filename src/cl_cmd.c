@@ -21,30 +21,61 @@
 /*****************************************************************************/
 
 
-#ifndef P_CMD_H__
-#define P_CMD_H__
+#include "z_zone.h"
 
-typedef bool (*TrimFunc)(gpointer data, gpointer user_data);
+#include <enet/enet.h>
 
-void         P_InitCommands(void);
-bool         P_HasCommands(int playernum);
-unsigned int P_GetCommandCount(int playernum);
-netticcmd_t* P_GetCommand(int playernum, unsigned int index);
-void         P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd);
-void         P_AppendNewCommand(int playernum, netticcmd_t *tmp_ncmd);
-netticcmd_t* P_GetLatestCommand(int playernum);
-int          P_GetLatestCommandIndex(int playernum);
-void         P_ForEachCommand(int playernum, GFunc func, gpointer user_data);
-void         P_ClearPlayerCommands(int playernum);
-void         P_TrimCommands(int playernum, TrimFunc should_trim,
-                                           gpointer user_data);
-void         P_TrimCommandsByTic(int playernum, int tic);
-void         P_TrimCommandsByIndex(int playernum, int command_index);
-void         P_BuildCommand(void);
-void         P_RunPlayerCommands(int playernum);
-void         P_PrintCommands(int playernum);
+#include "doomstat.h"
+#include "n_net.h"
+#include "n_state.h"
+#include "n_peer.h"
+#include "cl_cmd.h"
+#include "p_cmd.h"
 
-#endif
+static bool command_is_synchronized(gpointer data, gpointer user_data) {
+  netticcmd_t *ncmd = (netticcmd_t *)data;
+
+  return ncmd->server_tic != 0;
+}
+
+static void count_command(gpointer data, gpointer user_data) {
+  netpeer_t *server = CL_GetServerPeer();
+  netticcmd_t *ncmd = (netticcmd_t *)data;
+  unsigned int *command_count = (unsigned int *)user_data;
+
+  if (server == NULL)
+    return;
+
+  if (ncmd->index > server->sync.command_index)
+    (*command_count)++;
+}
+
+void CL_TrimSynchronizedCommands(int playernum) {
+  D_Log(LOG_SYNC, "CL_TrimSynchronizedCommands\n");
+
+  P_TrimCommands(playernum, command_is_synchronized, NULL);
+}
+
+unsigned int CL_GetUnsynchronizedCommandCount(int playernum) {
+  netpeer_t *server;
+  unsigned int command_count = 0;
+  
+  if (!CLIENT)
+    return 0;
+  
+  if (!playeringame[playernum])
+    return 0;
+
+  server = CL_GetServerPeer();
+
+  if (server == NULL)
+    return 0;
+
+  P_ForEachCommand(playernum, count_command, &command_count);
+
+  return command_count;
+}
+
 
 /* vi: set et ts=2 sw=2: */
 
