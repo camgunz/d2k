@@ -82,6 +82,7 @@
 			<Add directory="../src" />
 		</Compiler>
 		<Linker>
+			<Add option="-static -static-libgcc" />
 			<Add library="..\deps\lib\libSDLmain.a" />
 			<Add library="..\deps\lib\libSDL_image.a" />
 			<Add library="..\deps\lib\libSDL_mixer.a" />
@@ -100,10 +101,10 @@
 			<Add library="..\deps\lib\libpng.a" />
 			<Add library="..\deps\lib\libtiff.a" />
 			<Add library="..\deps\lib\libwebp.a" />
-			<Add library="..\deps\lib\pangocairo-1.0.lib" />
-			<Add library="..\deps\lib\pangoft2-1.0.lib" />
-			<Add library="..\deps\lib\pangowin32-1.0.lib" />
-			<Add library="..\deps\lib\pango-1.0.lib" />
+			<Add library="..\deps\lib\libpangocairo-1.0.a" />
+			<Add library="..\deps\lib\libpangoft2-1.0.a" />
+			<Add library="..\deps\lib\libpangowin32-1.0.a" />
+			<Add library="..\deps\lib\libpango-1.0.a" />
 			<Add library="..\deps\lib\libcairo.a" />
 			<Add library="..\deps\lib\libcairo-gobject.a" />
 			<Add library="..\deps\lib\libcairo-script-interpreter.a" />
@@ -511,30 +512,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/lprintf.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lapi.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lauxlib.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lcode.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lctype.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/ldebug.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/ldo.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lfunc.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lgc.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/llex.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/llimits.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lmem.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lobject.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lopcodes.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lparser.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lstate.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lstring.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/ltable.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/ltm.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lua.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/luaconf.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lualib.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lundump.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lvm.h" />
-		<Unit filename="../src/lua-5.3.0-alpha/src/lzio.h" />
 		<Unit filename="../src/m_argv.c">
 			<Option compilerVar="CC" />
 		</Unit>
