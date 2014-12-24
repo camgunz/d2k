@@ -584,7 +584,6 @@ int main(int argc, char **argv) {
       fprintf(stderr, "Revoked uid %d\n", stored_euid);
   }
 #endif
-
   myargc = argc;
   myargv = malloc(sizeof(myargv[0]) * myargc);
   memcpy(myargv, argv, sizeof(myargv[0]) * myargc);
@@ -627,12 +626,14 @@ int main(int argc, char **argv) {
 
   atexit(I_Quit);
 #ifdef DEBUG
+#if 0
   signal(SIGSEGV, I_DebugSignalHandler);
   signal(SIGTERM, I_DebugSignalHandler);
   signal(SIGFPE,  I_DebugSignalHandler);
   signal(SIGILL,  I_DebugSignalHandler);
   signal(SIGINT,  I_DebugSignalHandler);  /* killough 3/6/98: allow CTRL-BRK during init */
   signal(SIGABRT, I_DebugSignalHandler);
+#endif
 #else
 #if 0 /* CG: There's really no need to parachute these */
   if (!M_CheckParm("-devparm"))
