@@ -1498,9 +1498,24 @@ int XF_GetScreenHeight(lua_State *L) {
   return 1;
 }
 
+int XF_UsingOpenGL(lua_State *L) {
+  bool using_opengl;
+
+#ifdef GL_DOOM
+  using_opengl = V_GetMode() == VID_MODEGL;
+#else
+  using_opengl = false;
+#endif
+
+  lua_pushboolean(L, using_opengl);
+
+  return 1;
+}
+
 void V_RegisterFunctions(void) {
   X_RegisterFunc("get_screen_width", XF_GetScreenWidth);
   X_RegisterFunc("get_screen_height", XF_GetScreenHeight);
+  X_RegisterFunc("using_opengl", XF_UsingOpenGL);
 }
 
 /* vi: set et ts=2 sw=2: */

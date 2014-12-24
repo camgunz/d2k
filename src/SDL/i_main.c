@@ -50,8 +50,9 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 
 #undef main
 
-extern int XF_GetRenderContext(lua_State *L);
-extern int XF_ResetRenderContext(lua_State *L);
+extern int XF_GetRenderSurface(lua_State *L);
+extern int XF_ResetRenderSurface(lua_State *L);
+extern int XF_BlitOverlay(lua_State *L);
 
 /* Most of the following has been rewritten by Lee Killough
  *
@@ -668,8 +669,9 @@ int main(int argc, char **argv) {
 #endif
 
 void I_RegisterFunctions(void) {
-  X_RegisterFunc("get_render_context", XF_GetRenderContext);
-  X_RegisterFunc("reset_render_context", XF_ResetRenderContext);
+  X_RegisterFunc("get_render_surface", XF_GetRenderSurface);
+  X_RegisterFunc("reset_render_surface", XF_ResetRenderSurface);
+  X_RegisterFunc("blit_overlay", XF_BlitOverlay);
 }
 
 /* vi: set et ts=2 sw=2: */
