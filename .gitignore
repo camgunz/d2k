@@ -58,3 +58,4 @@ src/prboom-plus
 src/prboom-plus-game-server
 stamp-h1
 deps/
+codeblocks/Debug/
