@@ -9852,3 +9852,5020 @@
 	<_timeval.h>
 	<sys/timeb.h>
 
+1419426868 source:c:\users\cagunyon\documents\d2k\src\am_map.c
+	"z_zone.h"
+	<SDL.h>
+	"gl_opengl.h"
+	"doomstat.h"
+	"st_stuff.h"
+	"r_main.h"
+	"p_setup.h"
+	"p_maputl.h"
+	"w_wad.h"
+	"v_video.h"
+	"p_spec.h"
+	"am_map.h"
+	"d_deh.h"
+	"lprintf.h"
+	"g_game.h"
+	"g_keys.h"
+	"r_fps.h"
+	"r_demo.h"
+	"m_misc.h"
+	"m_bbox.h"
+	"p_user.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\z_zone.h
+	"config.h"
+	<windows.h>
+	<direct.h>
+	<commctrl.h>
+	<io.h>
+	<process.h>
+	<stddef.h>
+	<winreg.h>
+	<delayimp.h>
+	<dirent.h>
+	<libgen.h>
+	<assert.h>
+	<ctype.h>
+	<errno.h>
+	<fcntl.h>
+	<float.h>
+	<iconv.h>
+	<limits.h>
+	<math.h>
+	<memory.h>
+	<sched.h>
+	<signal.h>
+	<stdarg.h>
+	<stddef.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<strings.h>
+	<sys/stat.h>
+	<time.h>
+	<asm/byteorder.h>
+	<stdbool.h>
+	<inttypes.h>
+	<stdint.h>
+	<sys/mman.h>
+	<sys/types.h>
+	<sys/wait.h>
+	<unistd.h>
+	<dmalloc.h>
+	<glib.h>
+	"cmp.h"
+	"doomtype.h"
+	"d_log.h"
+	"m_buf.h"
+	"m_pbuf.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\windows.h
+	<_mingw.h>
+	<sdkddkver.h>
+	<winresrc.h>
+	<excpt.h>
+	<stdarg.h>
+	<windef.h>
+	<winbase.h>
+	<wingdi.h>
+	<winuser.h>
+	<winnls.h>
+	<wincon.h>
+	<winver.h>
+	<winreg.h>
+	<winnetwk.h>
+	<virtdisk.h>
+	<cderr.h>
+	<dde.h>
+	<ddeml.h>
+	<dlgs.h>
+	<lzexpand.h>
+	<mmsystem.h>
+	<nb30.h>
+	<rpc.h>
+	<shellapi.h>
+	<winperf.h>
+	<winsock.h>
+	<wincrypt.h>
+	<winefs.h>
+	<winscard.h>
+	<winspool.h>
+	<ole.h>
+	<ole2.h>
+	<commdlg.h>
+	<stralign.h>
+	<ole2.h>
+	<winsvc.h>
+	<mcx.h>
+	<imm.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw.h
+	"_mingw_mac.h"
+	"_mingw_secapi.h"
+	"_cygwin.h"
+	<vadefs.h>
+	"sdks/_mingw_directx.h"
+	"sdks/_mingw_ddk.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw_mac.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw_secapi.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\_cygwin.h
+	<stddef.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\stddef.h
+	<crtdefs.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\crtdefs.h
+	<_mingw.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\vadefs.h
+	<_mingw.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdks\_mingw_directx.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdks\_mingw_ddk.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdkddkver.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winresrc.h
+	<winuser.rh>
+	<commctrl.rh>
+	<dde.rh>
+	<winnt.rh>
+	<dlgs.h>
+	<winver.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winuser.rh
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\commctrl.rh
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\dde.rh
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winnt.rh
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\dlgs.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winver.h
+	<_mingw.h>
+	<_mingw_unicode.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw_unicode.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\excpt.h
+	<crtdefs.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\stdarg.h
+	<_mingw_stdarg.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw_stdarg.h
+	<vadefs.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\windef.h
+	<minwindef.h>
+	<winnt.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\minwindef.h
+	<_mingw.h>
+	<winapifamily.h>
+	<specstrings.h>
+	<winnt.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winapifamily.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\specstrings.h
+	<sal.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sal.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winnt.h
+	<_mingw_unicode.h>
+	<_mingw.h>
+	<ctype.h>
+	<excpt.h>
+	<winapifamily.h>
+	<apiset.h>
+	<specstrings.h>
+	<psdk_inc/intrin-impl.h>
+	<sdkddkver.h>
+	<basetsd.h>
+	<guiddef.h>
+	<x86intrin.h>
+	<pshpack4.h>
+	<poppack.h>
+	"pshpack4.h"
+	"pshpack2.h"
+	"poppack.h"
+	"pshpack2.h"
+	<pshpack2.h>
+	<poppack.h>
+	"poppack.h"
+	"pshpack8.h"
+	"poppack.h"
+	"poppack.h"
+	<string.h>
+	<pshpack8.h>
+	<poppack.h>
+	<ktmtypes.h>
+	"pshpack4.h"
+	"poppack.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\ctype.h
+	<crtdefs.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\apiset.h
+	<_mingw.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\intrin-impl.h
+	<intrin.h>
+	<psdk_inc/intrin-impl.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\intrin.h
+	<crtdefs.h>
+	<setjmp.h>
+	<stddef.h>
+	<psdk_inc/intrin-impl.h>
+	<stdlib.h>
+	<errno.h>
+	<malloc.h>
+	<x86intrin.h>
+	<mmintrin.h>
+	<mm3dnow.h>
+	<xmmintrin.h>
+	<emmintrin.h>
+	<pmmintrin.h>
+	<mm3dnow.h>
+	<dvec.h>
+	<fvec.h>
+	<ivec.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\setjmp.h
+	<crtdefs.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\stdlib.h
+	<crtdefs.h>
+	<limits.h>
+	<sec_api/stdlib_s.h>
+	<malloc.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\limits.h
+	<crtdefs.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\stdlib_s.h
+	<stdlib.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\malloc.h
+	<crtdefs.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\errno.h
+	<crtdefs.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\dvec.h
+	<intrin.h>
+	<assert.h>
+	<fvec.h>
+	<crtdefs.h>
+	<iostream>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\assert.h
+	<crtdefs.h>
+	<stdlib.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\fvec.h
+	<intrin.h>
+	<assert.h>
+	<ivec.h>
+	<crtdefs.h>
+	<iostream>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\ivec.h
+	<intrin.h>
+	<assert.h>
+	<dvec.h>
+	<crtdefs.h>
+	<iostream>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\basetsd.h
+	<_mingw.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\guiddef.h
+	<_mingw.h>
+	<string.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\string.h
+	<crtdefs.h>
+	<sec_api/string_s.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\string_s.h
+	<string.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\pshpack4.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\poppack.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\pshpack2.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\pshpack8.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\ktmtypes.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winbase.h
+	<_mingw_unicode.h>
+	<apisetcconv.h>
+	<winapifamily.h>
+	<minwinbase.h>
+	<bemapiset.h>
+	<debugapi.h>
+	<errhandlingapi.h>
+	<fibersapi.h>
+	<fileapi.h>
+	<handleapi.h>
+	<heapapi.h>
+	<ioapiset.h>
+	<interlockedapi.h>
+	<jobapi.h>
+	<libloaderapi.h>
+	<memoryapi.h>
+	<namedpipeapi.h>
+	<namespaceapi.h>
+	<processenv.h>
+	<processthreadsapi.h>
+	<processtopologyapi.h>
+	<profileapi.h>
+	<realtimeapiset.h>
+	<securityappcontainer.h>
+	<securitybaseapi.h>
+	<synchapi.h>
+	<sysinfoapi.h>
+	<systemtopologyapi.h>
+	<threadpoolapiset.h>
+	<threadpoollegacyapiset.h>
+	<utilapiset.h>
+	<wow64apiset.h>
+	<psdk_inc/intrin-impl.h>
+	<winerror.h>
+	<timezoneapi.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\apisetcconv.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\minwinbase.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\bemapiset.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\debugapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\errhandlingapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\fibersapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\fileapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\handleapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\heapapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\ioapiset.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\interlockedapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\jobapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\libloaderapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\memoryapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\namedpipeapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\namespaceapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\processenv.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\processthreadsapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\processtopologyapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\profileapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\realtimeapiset.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\securityappcontainer.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\securitybaseapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\synchapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sysinfoapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\systemtopologyapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\threadpoolapiset.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\threadpoollegacyapiset.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\utilapiset.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\wow64apiset.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winerror.h
+	<fltwinerror.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\fltwinerror.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\timezoneapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\wingdi.h
+	<winapifamily.h>
+	<_mingw_unicode.h>
+	<pshpack1.h>
+	<poppack.h>
+	<pshpack2.h>
+	<poppack.h>
+	<pshpack2.h>
+	<poppack.h>
+	<pshpack4.h>
+	<poppack.h>
+	<pshpack4.h>
+	<poppack.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\pshpack1.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winuser.h
+	<_mingw_unicode.h>
+	<apisetcconv.h>
+	<_mingw.h>
+	<stdarg.h>
+	<guiddef.h>
+	<pshpack2.h>
+	<poppack.h>
+	<tvout.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\tvout.h
+	<guiddef.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winnls.h
+	<winapifamily.h>
+	<datetimeapi.h>
+	<libloaderapi.h>
+	<stringapiset.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\datetimeapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\stringapiset.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<winnls.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\wincon.h
+	<_mingw_unicode.h>
+	<winapifamily.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winreg.h
+	<_mingw_unicode.h>
+	<reason.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\reason.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winnetwk.h
+	<winapifamily.h>
+	<_mingw_unicode.h>
+	<wnnc.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\wnnc.h
+	<winapifamily.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\virtdisk.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\cderr.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\dde.h
+	<windef.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\ddeml.h
+	<_mingw_unicode.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\lzexpand.h
+	<_mingw_unicode.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\mmsystem.h
+	<_mingw_unicode.h>
+	<pshpack1.h>
+	<poppack.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\nb30.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpc.h
+	<_mingw.h>
+	<windows.h>
+	<basetsd.h>
+	<pshpack8.h>
+	<rpcdce.h>
+	<rpcnsi.h>
+	<rpcnterr.h>
+	<excpt.h>
+	<winerror.h>
+	<rpcasync.h>
+	<poppack.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpcdce.h
+	<_mingw_unicode.h>
+	<specstrings.h>
+	<guiddef.h>
+	<rpcdcep.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpcdcep.h
+	<_mingw_unicode.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpcnsi.h
+	<_mingw_unicode.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpcnterr.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpcasync.h
+	<_mingw_unicode.h>
+	<pshpack8.h>
+	<poppack.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\shellapi.h
+	<winapifamily.h>
+	<_mingw_unicode.h>
+	<specstrings.h>
+	<pshpack1.h>
+	<poppack.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winperf.h
+	<pshpack8.h>
+	<poppack.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winsock.h
+	<windows.h>
+	<_timeval.h>
+	<_bsd_types.h>
+	<inaddr.h>
+	<psdk_inc/_socket_types.h>
+	<psdk_inc/_fd_types.h>
+	<psdk_inc/_ip_types.h>
+	<psdk_inc/_ip_mreq1.h>
+	<psdk_inc/_wsadata.h>
+	<psdk_inc/_xmitfile.h>
+	<psdk_inc/_wsa_errnos.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\_timeval.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\_bsd_types.h
+	<_mingw.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\inaddr.h
+	<_bsd_types.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_socket_types.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_fd_types.h
+	<psdk_inc/_socket_types.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_ip_types.h
+	<_bsd_types.h>
+	<inaddr.h>
+	<_timeval.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_ip_mreq1.h
+	<inaddr.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_wsadata.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_xmitfile.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_wsa_errnos.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\wincrypt.h
+	<_mingw.h>
+	<_mingw_unicode.h>
+	<guiddef.h>
+	<bcrypt.h>
+	<ncrypt.h>
+	<winapifamily.h>
+	<apisetcconv.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\bcrypt.h
+	<winapifamily.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\ncrypt.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winefs.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winscard.h
+	<_mingw_unicode.h>
+	<wtypes.h>
+	<winioctl.h>
+	"winsmcrd.h"
+	"SCardErr.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\wtypes.h
+	<rpc.h>
+	<rpcndr.h>
+	<windows.h>
+	<ole2.h>
+	<wtypesbase.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpcndr.h
+	<pshpack8.h>
+	<basetsd.h>
+	<rpcnsip.h>
+	<rpcsal.h>
+	<poppack.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpcnsip.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpcsal.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\ole2.h
+	<winapifamily.h>
+	<pshpack8.h>
+	<winerror.h>
+	<objbase.h>
+	<oleauto.h>
+	<oleidl.h>
+	<poppack.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\objbase.h
+	<winapifamily.h>
+	<rpc.h>
+	<rpcndr.h>
+	<pshpack8.h>
+	<combaseapi.h>
+	<objidl.h>
+	<urlmon.h>
+	<propidl.h>
+	<poppack.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\combaseapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<rpc.h>
+	<rpcndr.h>
+	<pshpack8.h>
+	<stdlib.h>
+	<wtypesbase.h>
+	<unknwnbase.h>
+	<objidlbase.h>
+	<guiddef.h>
+	<cguid.h>
+	<poppack.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\wtypesbase.h
+	<rpc.h>
+	<rpcndr.h>
+	<windows.h>
+	<ole2.h>
+	<basetsd.h>
+	<guiddef.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\unknwnbase.h
+	<rpc.h>
+	<rpcndr.h>
+	<windows.h>
+	<ole2.h>
+	<wtypesbase.h>
+	<winapifamily.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\objidlbase.h
+	<rpc.h>
+	<rpcndr.h>
+	<windows.h>
+	<ole2.h>
+	<unknwnbase.h>
+	<wtypesbase.h>
+	<winapifamily.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\cguid.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\objidl.h
+	<rpc.h>
+	<rpcndr.h>
+	<windows.h>
+	<ole2.h>
+	<unknwn.h>
+	<wtypes.h>
+	<winapifamily.h>
+	<winapifamily.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\unknwn.h
+	<rpc.h>
+	<rpcndr.h>
+	<windows.h>
+	<ole2.h>
+	<wtypes.h>
+	<winapifamily.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\urlmon.h
+	<rpc.h>
+	<rpcndr.h>
+	<windows.h>
+	<ole2.h>
+	<objidl.h>
+	<oleidl.h>
+	<servprov.h>
+	<msxml.h>
+	<winapifamily.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\oleidl.h
+	<rpc.h>
+	<rpcndr.h>
+	<windows.h>
+	<ole2.h>
+	<objidl.h>
+	<winapifamily.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\servprov.h
+	<rpc.h>
+	<rpcndr.h>
+	<windows.h>
+	<ole2.h>
+	<objidl.h>
+	<winapifamily.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\msxml.h
+	<rpc.h>
+	<rpcndr.h>
+	<windows.h>
+	<ole2.h>
+	<unknwn.h>
+	<objidl.h>
+	<oaidl.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\oaidl.h
+	<rpc.h>
+	<rpcndr.h>
+	<windows.h>
+	<ole2.h>
+	<objidl.h>
+	<winapifamily.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\propidl.h
+	<rpc.h>
+	<rpcndr.h>
+	<windows.h>
+	<ole2.h>
+	<wtypes.h>
+	<objidl.h>
+	<oaidl.h>
+	<winapifamily.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\oleauto.h
+	<pshpack8.h>
+	<oaidl.h>
+	<poppack.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winioctl.h
+	<pshpack1.h>
+	<poppack.h>
+	<pshpack1.h>
+	<poppack.h>
+	<pshpack1.h>
+	<poppack.h>
+	<pshpack1.h>
+	<poppack.h>
+	<pshpack1.h>
+	<poppack.h>
+	<pshpack1.h>
+	<poppack.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winsmcrd.h
+	<_mingw_unicode.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\scarderr.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winspool.h
+	<_mingw_unicode.h>
+	<prsht.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\prsht.h
+	<_mingw_unicode.h>
+	<pshpack8.h>
+	<pshpack4.h>
+	<poppack.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\ole.h
+	<winapifamily.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\commdlg.h
+	<_mingw_unicode.h>
+	<prsht.h>
+	<pshpack1.h>
+	<poppack.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\stralign.h
+	<sec_api/stralign_s.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\stralign_s.h
+	<stralign.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winsvc.h
+	<_mingw.h>
+	<_mingw_unicode.h>
+	<apisetcconv.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\mcx.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\imm.h
+	<_mingw_unicode.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\direct.h
+	<crtdefs.h>
+	<io.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\io.h
+	<crtdefs.h>
+	<string.h>
+	<_mingw_off_t.h>
+	<string.h>
+	<sec_api/io_s.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw_off_t.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\io_s.h
+	<io.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\commctrl.h
+	<_mingw_unicode.h>
+	<prsht.h>
+	<pshpack1.h>
+	<poppack.h>
+	<pshpack1.h>
+	<poppack.h>
+	<pshpack1.h>
+	<poppack.h>
+	<pshpack1.h>
+	<poppack.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\process.h
+	<crtdefs.h>
+	<sys/types.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sys\types.h
+	<crtdefs.h>
+	<_mingw_off_t.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\delayimp.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\dirent.h
+	<crtdefs.h>
+	<io.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\libgen.h
+	<crtdefs.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\fcntl.h
+	<crtdefs.h>
+	<io.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\float.h
+	<crtdefs.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\iconv.h
+	"iconv.h"
+	<stddef.h>
+	<errno.h>
+	<stddef.h>
+	<stdio.h>
+	<time.h>
+	<wchar.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\stdio.h
+	<crtdefs.h>
+	<_mingw_print_push.h>
+	<_mingw_off_t.h>
+	<swprintf.inl>
+	<sec_api/stdio_s.h>
+	<_mingw_print_pop.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw_print_push.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\swprintf.inl
+	<vadefs.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\stdio_s.h
+	<stdio.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw_print_pop.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\time.h
+	<crtdefs.h>
+	<_timeval.h>
+	<sec_api/time_s.h>
+	<sys/timeb.h>
+	<pthread_time.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\time_s.h
+	<time.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sys\timeb.h
+	<crtdefs.h>
+	<sec_api/sys/timeb_s.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\sys\timeb_s.h
+	<sys/timeb.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\pthread_time.h
+	<sys/timeb.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\wchar.h
+	<crtdefs.h>
+	<_mingw_print_push.h>
+	<_mingw_off_t.h>
+	<_mingw_stat64.h>
+	<swprintf.inl>
+	<sec_api/wchar_s.h>
+	<_mingw_print_pop.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw_stat64.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\wchar_s.h
+	<wchar.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\math.h
+	<crtdefs.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\memory.h
+	<crtdefs.h>
+	<sec_api/memory_s.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\memory_s.h
+	<memory.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sched.h
+	<stddef.h>
+	<errno.h>
+	<sys/types.h>
+	<process.h>
+	<limits.h>
+	<signal.h>
+	<sys/timeb.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\signal.h
+	<crtdefs.h>
+	<pthread_signal.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\pthread_signal.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\strings.h
+	<string.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sys\stat.h
+	<crtdefs.h>
+	<io.h>
+	<sys/types.h>
+	<_mingw_stat64.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\inttypes.h
+	<crtdefs.h>
+	<stdint.h>
+	<stddef.h>
+	<_mingw_print_push.h>
+	<_mingw_print_pop.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\stdint.h
+	<crtdefs.h>
+	<stddef.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\unistd.h
+	<io.h>
+	<process.h>
+	<getopt.h>
+	<sys/types.h>
+	<pthread_unistd.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\getopt.h
+	<crtdefs.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\pthread_unistd.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib.h
+	<glib/galloca.h>
+	<glib/garray.h>
+	<glib/gasyncqueue.h>
+	<glib/gatomic.h>
+	<glib/gbacktrace.h>
+	<glib/gbase64.h>
+	<glib/gbitlock.h>
+	<glib/gbookmarkfile.h>
+	<glib/gbytes.h>
+	<glib/gcharset.h>
+	<glib/gchecksum.h>
+	<glib/gconvert.h>
+	<glib/gdataset.h>
+	<glib/gdate.h>
+	<glib/gdatetime.h>
+	<glib/gdir.h>
+	<glib/genviron.h>
+	<glib/gerror.h>
+	<glib/gfileutils.h>
+	<glib/ggettext.h>
+	<glib/ghash.h>
+	<glib/ghmac.h>
+	<glib/ghook.h>
+	<glib/ghostutils.h>
+	<glib/giochannel.h>
+	<glib/gkeyfile.h>
+	<glib/glist.h>
+	<glib/gmacros.h>
+	<glib/gmain.h>
+	<glib/gmappedfile.h>
+	<glib/gmarkup.h>
+	<glib/gmem.h>
+	<glib/gmessages.h>
+	<glib/gnode.h>
+	<glib/goption.h>
+	<glib/gpattern.h>
+	<glib/gpoll.h>
+	<glib/gprimes.h>
+	<glib/gqsort.h>
+	<glib/gquark.h>
+	<glib/gqueue.h>
+	<glib/grand.h>
+	<glib/gregex.h>
+	<glib/gscanner.h>
+	<glib/gsequence.h>
+	<glib/gshell.h>
+	<glib/gslice.h>
+	<glib/gslist.h>
+	<glib/gspawn.h>
+	<glib/gstrfuncs.h>
+	<glib/gstring.h>
+	<glib/gstringchunk.h>
+	<glib/gtestutils.h>
+	<glib/gthread.h>
+	<glib/gthreadpool.h>
+	<glib/gtimer.h>
+	<glib/gtimezone.h>
+	<glib/gtrashstack.h>
+	<glib/gtree.h>
+	<glib/gtypes.h>
+	<glib/gunicode.h>
+	<glib/gurifuncs.h>
+	<glib/gutils.h>
+	<glib/gvarianttype.h>
+	<glib/gvariant.h>
+	<glib/gversion.h>
+	<glib/gversionmacros.h>
+	<glib/gwin32.h>
+	<glib/deprecated/gallocator.h>
+	<glib/deprecated/gcache.h>
+	<glib/deprecated/gcompletion.h>
+	<glib/deprecated/gmain.h>
+	<glib/deprecated/grel.h>
+	<glib/deprecated/gthread.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\galloca.h
+	<glib/gtypes.h>
+	<alloca.h>
+	<alloca.h>
+	<malloc.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtypes.h
+	<glibconfig.h>
+	<glib/gmacros.h>
+	<glib/gversionmacros.h>
+	<time.h>
+
+1419371347 c:\users\cagunyon\documents\d2k\deps\lib\glib-2.0\include\glibconfig.h
+	<glib/gmacros.h>
+	<limits.h>
+	<float.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmacros.h
+	<stddef.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gversionmacros.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\garray.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gasyncqueue.h
+	<glib/gthread.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gthread.h
+	<glib/gatomic.h>
+	<glib/gerror.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gatomic.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gerror.h
+	<stdarg.h>
+	<glib/gquark.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gquark.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gbacktrace.h
+	<glib/gtypes.h>
+	<signal.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gbase64.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gbitlock.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gbookmarkfile.h
+	<glib/gerror.h>
+	<time.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gbytes.h
+	<glib/gtypes.h>
+	<glib/garray.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gcharset.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gchecksum.h
+	<glib/gtypes.h>
+	<glib/gbytes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gconvert.h
+	<glib/gerror.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gdataset.h
+	<glib/gquark.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gdate.h
+	<time.h>
+	<glib/gtypes.h>
+	<glib/gquark.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gdatetime.h
+	<glib/gtimezone.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtimezone.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gdir.h
+	<glib/gerror.h>
+	<dirent.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\genviron.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gfileutils.h
+	<glib/gerror.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\ggettext.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\ghash.h
+	<glib/gtypes.h>
+	<glib/glist.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\glist.h
+	<glib/gmem.h>
+	<glib/gnode.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmem.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gnode.h
+	<glib/gmem.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\ghmac.h
+	<glib/gtypes.h>
+	"gchecksum.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\ghook.h
+	<glib/gmem.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\ghostutils.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\giochannel.h
+	<glib/gconvert.h>
+	<glib/gmain.h>
+	<glib/gstring.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmain.h
+	<glib/gpoll.h>
+	<glib/gslist.h>
+	<glib/gthread.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gpoll.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gslist.h
+	<glib/gmem.h>
+	<glib/gnode.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gstring.h
+	<glib/gtypes.h>
+	<glib/gunicode.h>
+	<glib/gbytes.h>
+	<glib/gutils.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gunicode.h
+	<glib/gerror.h>
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gutils.h
+	<glib/gtypes.h>
+	<stdarg.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gkeyfile.h
+	<glib/gerror.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmappedfile.h
+	<glib/gbytes.h>
+	<glib/gerror.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmarkup.h
+	<stdarg.h>
+	<glib/gerror.h>
+	<glib/gslist.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmessages.h
+	<stdarg.h>
+	<glib/gtypes.h>
+	<glib/gmacros.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\goption.h
+	<glib/gerror.h>
+	<glib/gquark.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gpattern.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gprimes.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gqsort.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gqueue.h
+	<glib/glist.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\grand.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gregex.h
+	<glib/gerror.h>
+	<glib/gstring.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gscanner.h
+	<glib/gdataset.h>
+	<glib/ghash.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gsequence.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gshell.h
+	<glib/gerror.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gslice.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gspawn.h
+	<glib/gerror.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gstrfuncs.h
+	<stdarg.h>
+	<glib/gmacros.h>
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gstringchunk.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtestutils.h
+	<glib/gmessages.h>
+	<glib/gstring.h>
+	<glib/gerror.h>
+	<glib/gslist.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gthreadpool.h
+	<glib/gthread.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtimer.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtrashstack.h
+	<glib/gutils.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtree.h
+	<glib/gnode.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gurifuncs.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gvarianttype.h
+	<glib/gmessages.h>
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gvariant.h
+	<glib/gvarianttype.h>
+	<glib/gstring.h>
+	<glib/gbytes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gversion.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gwin32.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\gallocator.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\gcache.h
+	<glib/glist.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\gcompletion.h
+	<glib/glist.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\gmain.h
+	<glib/gmain.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\grel.h
+	<glib/gtypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\gthread.h
+	<glib/gthread.h>
+	<sys/types.h>
+	<pthread.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\pthread.h
+	<stddef.h>
+	<errno.h>
+	<sys/types.h>
+	<process.h>
+	<limits.h>
+	<signal.h>
+	<sys/timeb.h>
+	"pthread_compat.h"
+	<pthread_unistd.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\pthread_compat.h
+	"pthread_time.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\cmp.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\doomtype.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\d_log.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\m_buf.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\m_pbuf.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl.h
+	"SDL_main.h"
+	"SDL_stdinc.h"
+	"SDL_audio.h"
+	"SDL_cdrom.h"
+	"SDL_cpuinfo.h"
+	"SDL_endian.h"
+	"SDL_error.h"
+	"SDL_events.h"
+	"SDL_loadso.h"
+	"SDL_mutex.h"
+	"SDL_rwops.h"
+	"SDL_thread.h"
+	"SDL_timer.h"
+	"SDL_video.h"
+	"SDL_version.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_main.h
+	"SDL_stdinc.h"
+	"begin_code.h"
+	"close_code.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_stdinc.h
+	"SDL_config.h"
+	<sys/types.h>
+	<stdio.h>
+	<stdlib.h>
+	<stddef.h>
+	<stdarg.h>
+	<stdlib.h>
+	<malloc.h>
+	<stddef.h>
+	<stdarg.h>
+	<memory.h>
+	<string.h>
+	<strings.h>
+	<inttypes.h>
+	<stdint.h>
+	<ctype.h>
+	<iconv.h>
+	"begin_code.h"
+	<alloca.h>
+	<malloc.h>
+	<malloc.h>
+	<malloc.h>
+	<stdlib.h>
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_config.h
+	"SDL_platform.h"
+	<stdarg.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_platform.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\begin_code.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\close_code.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_audio.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"SDL_endian.h"
+	"SDL_mutex.h"
+	"SDL_thread.h"
+	"SDL_rwops.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_error.h
+	"SDL_stdinc.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_endian.h
+	"SDL_stdinc.h"
+	<endian.h>
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_mutex.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_thread.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"SDL_mutex.h"
+	"begin_code.h"
+	<process.h>
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_rwops.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_cdrom.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_cpuinfo.h
+	"SDL_stdinc.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_events.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"SDL_active.h"
+	"SDL_keyboard.h"
+	"SDL_mouse.h"
+	"SDL_joystick.h"
+	"SDL_quit.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_active.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_keyboard.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"SDL_keysym.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_keysym.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_mouse.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"SDL_video.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_video.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"SDL_rwops.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_joystick.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_quit.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_loadso.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_timer.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_version.h
+	"SDL_stdinc.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\gl_opengl.h
+	"config.h"
+	<SDL.h>
+	<GLES2/gl2.h>
+	<GL/glext.h>
+	<SDL_opengl.h>
+	"doomtype.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\gl\glext.h
+	<windows.h>
+	<stddef.h>
+	<inttypes.h>
+	<inttypes.h>
+	<inttypes.h>
+	<stdint.h>
+	<stdint.h>
+	<inttypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_opengl.h
+	"SDL_config.h"
+	<windows.h>
+	<OpenGL/gl.h>
+	<OpenGL/glu.h>
+	<gl.h>
+	<glu.h>
+	<GL/gl.h>
+	<GL/glu.h>
+	<windows.h>
+	<stddef.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\gl\gl.h
+	<windows.h>
+	<stddef.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\gl\glu.h
+	<GL/gl.h>
+
+1419426868 c:\users\cagunyon\documents\d2k\src\doomstat.h
+	"d_player.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\d_player.h
+	"d_items.h"
+	"p_pspr.h"
+	"p_mobj.h"
+	"d_ticcmd.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\d_items.h
+	"doomdef.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\doomdef.h
+	"config.h"
+	"z_zone.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<ctype.h>
+	<limits.h>
+	"m_swap.h"
+	"version.h"
+	"doomtype.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\m_swap.h
+	"config.h"
+	<asm/byteorder.h>
+	<libkern/OSByteOrder.h>
+
+1419426869 c:\users\cagunyon\documents\d2k\src\version.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\p_pspr.h
+	"m_fixed.h"
+	"tables.h"
+	"info.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\m_fixed.h
+	"config.h"
+	<stdlib.h>
+	"doomtype.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\tables.h
+	"m_fixed.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\info.h
+	"d_think.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\d_think.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\p_mobj.h
+	"tables.h"
+	"m_fixed.h"
+	"d_think.h"
+	"doomdata.h"
+	"info.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\doomdata.h
+	"doomtype.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\d_ticcmd.h
+	"doomtype.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\st_stuff.h
+	"doomtype.h"
+	"d_event.h"
+	"r_defs.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\d_event.h
+	"doomtype.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_defs.h
+	"doomdef.h"
+	"m_fixed.h"
+	"d_think.h"
+	"p_mobj.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_main.h
+	"d_player.h"
+	"r_data.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_data.h
+	"r_defs.h"
+	"r_state.h"
+	"r_patch.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_state.h
+	"d_player.h"
+	"r_data.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_patch.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\p_setup.h
+	"p_mobj.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\p_maputl.h
+	"r_defs.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\w_wad.h
+
+1419427556 c:\users\cagunyon\documents\d2k\src\v_video.h
+	"doomtype.h"
+	"doomdef.h"
+	"r_data.h"
+	"gl_opengl.h"
+	"gl_struct.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\gl_struct.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\p_spec.h
+	"r_defs.h"
+	"d_player.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\am_map.h
+	"config.h"
+	"d_event.h"
+	"m_misc.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\m_misc.h
+	"doomtype.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\d_deh.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\lprintf.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\g_game.h
+	"doomdef.h"
+	"d_event.h"
+	"d_ticcmd.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\g_keys.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_fps.h
+	"doomstat.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_demo.h
+	"doomdef.h"
+	"doomtype.h"
+	"tables.h"
+	"d_player.h"
+	"w_wad.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\m_bbox.h
+	<limits.h>
+	"m_fixed.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\p_user.h
+	"d_player.h"
+
+1419427556 source:c:\users\cagunyon\documents\d2k\src\c_main.c
+	"z_zone.h"
+	<pango/pangocairo.h>
+	"doomdef.h"
+	"doomstat.h"
+	"d_event.h"
+	"c_main.h"
+	"d_main.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"hu_lib.h"
+	"hu_input.h"
+	"hu_cons.h"
+	"hu_msg.h"
+	"hu_stuff.h"
+	"i_main.h"
+	"i_system.h"
+	"i_video.h"
+	"lprintf.h"
+	"n_net.h"
+	"n_main.h"
+	"cl_main.h"
+	"v_video.h"
+	"x_main.h"
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pangocairo.h
+	<pango/pango.h>
+	<cairo.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango.h
+	<pango/pango-attributes.h>
+	<pango/pango-bidi-type.h>
+	<pango/pango-break.h>
+	<pango/pango-context.h>
+	<pango/pango-coverage.h>
+	<pango/pango-engine.h>
+	<pango/pango-enum-types.h>
+	<pango/pango-features.h>
+	<pango/pango-font.h>
+	<pango/pango-fontmap.h>
+	<pango/pango-fontset.h>
+	<pango/pango-glyph.h>
+	<pango/pango-glyph-item.h>
+	<pango/pango-gravity.h>
+	<pango/pango-item.h>
+	<pango/pango-layout.h>
+	<pango/pango-matrix.h>
+	<pango/pango-renderer.h>
+	<pango/pango-script.h>
+	<pango/pango-tabs.h>
+	<pango/pango-types.h>
+	<pango/pango-utils.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-attributes.h
+	<pango/pango-font.h>
+	<glib-object.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-font.h
+	<pango/pango-coverage.h>
+	<pango/pango-types.h>
+	<glib-object.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-coverage.h
+	<glib.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-types.h
+	<glib.h>
+	<glib-object.h>
+	<pango/pango-gravity.h>
+	<pango/pango-language.h>
+	<pango/pango-matrix.h>
+	<pango/pango-script.h>
+	<pango/pango-bidi-type.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib-object.h
+	<gobject/gbinding.h>
+	<gobject/gboxed.h>
+	<gobject/genums.h>
+	<gobject/gobject.h>
+	<gobject/gparam.h>
+	<gobject/gparamspecs.h>
+	<gobject/gsignal.h>
+	<gobject/gsourceclosure.h>
+	<gobject/gtype.h>
+	<gobject/gtypemodule.h>
+	<gobject/gtypeplugin.h>
+	<gobject/gvalue.h>
+	<gobject/gvaluearray.h>
+	<gobject/gvaluetypes.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gbinding.h
+	<glib.h>
+	<gobject/gobject.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gobject.h
+	<gobject/gtype.h>
+	<gobject/gvalue.h>
+	<gobject/gparam.h>
+	<gobject/gclosure.h>
+	<gobject/gsignal.h>
+	<gobject/gboxed.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gtype.h
+	<glib.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gvalue.h
+	<gobject/gtype.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gparam.h
+	<gobject/gvalue.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gclosure.h
+	<gobject/gtype.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gsignal.h
+	<gobject/gclosure.h>
+	<gobject/gvalue.h>
+	<gobject/gparam.h>
+	<gobject/gmarshal.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gmarshal.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gboxed.h
+	<gobject/gtype.h>
+	<gobject/glib-types.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\glib-types.h
+	<glib.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\genums.h
+	<gobject/gtype.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gparamspecs.h
+	<gobject/gvalue.h>
+	<gobject/genums.h>
+	<gobject/gboxed.h>
+	<gobject/gobject.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gsourceclosure.h
+	<gobject/gclosure.h>
+	<gobject/glib-types.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gtypemodule.h
+	<gobject/gobject.h>
+	<gobject/genums.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gtypeplugin.h
+	<gobject/gtype.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gvaluearray.h
+	<gobject/gvalue.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gvaluetypes.h
+	<gobject/gvalue.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-gravity.h
+	<glib.h>
+	<pango/pango-matrix.h>
+	<pango/pango-script.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-matrix.h
+	<glib.h>
+	<glib-object.h>
+	<pango/pango-types.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-script.h
+	<glib.h>
+	<pango/pango-language.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-language.h
+	<glib.h>
+	<glib-object.h>
+	<pango/pango-script.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-bidi-type.h
+	<glib.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-break.h
+	<glib.h>
+	<pango/pango-item.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-item.h
+	<pango/pango-types.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-context.h
+	<pango/pango-font.h>
+	<pango/pango-fontmap.h>
+	<pango/pango-attributes.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-fontmap.h
+	<pango/pango-font.h>
+	<pango/pango-fontset.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-fontset.h
+	<pango/pango-coverage.h>
+	<pango/pango-types.h>
+	<glib-object.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-engine.h
+	<pango/pango-types.h>
+	<pango/pango-item.h>
+	<pango/pango-font.h>
+	<pango/pango-glyph.h>
+	<pango/pango-script.h>
+	<gmodule.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-glyph.h
+	<pango/pango-types.h>
+	<pango/pango-item.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gmodule.h
+	<glib.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-enum-types.h
+	<glib-object.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-features.h
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-glyph-item.h
+	<pango/pango-attributes.h>
+	<pango/pango-break.h>
+	<pango/pango-item.h>
+	<pango/pango-glyph.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-layout.h
+	<pango/pango-attributes.h>
+	<pango/pango-context.h>
+	<pango/pango-glyph-item.h>
+	<pango/pango-tabs.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-tabs.h
+	<pango/pango-types.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-renderer.h
+	<pango/pango-layout.h>
+
+1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-utils.h
+	<stdio.h>
+	<glib.h>
+	<pango/pango-font.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\cairo\cairo.h
+	"cairo-version.h"
+	"cairo-features.h"
+	"cairo-deprecated.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\cairo\cairo-version.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\cairo\cairo-features.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\cairo\cairo-deprecated.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\c_main.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\d_main.h
+	"d_event.h"
+	"w_wad.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\gl_intern.h
+	"v_video.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\hu_lib.h
+	"r_defs.h"
+	"v_video.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\hu_input.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\hu_cons.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\hu_msg.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\hu_stuff.h
+	"d_event.h"
+
+1419427556 c:\users\cagunyon\documents\d2k\src\i_main.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\i_system.h
+	<windows.h>
+	"m_fixed.h"
+
+1419427556 c:\users\cagunyon\documents\d2k\src\i_video.h
+	"config.h"
+	"doomtype.h"
+	"v_video.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\n_net.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\n_main.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\cl_main.h
+
+1419427556 c:\users\cagunyon\documents\d2k\src\x_main.h
+	<lua.h>
+	<lualib.h>
+	<lauxlib.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\lua.h
+	<stdarg.h>
+	<stddef.h>
+	"luaconf.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\luaconf.h
+	<limits.h>
+	<stddef.h>
+	<stdio.h>
+	<math.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\lualib.h
+	"lua.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\lauxlib.h
+	<stddef.h>
+	<stdio.h>
+	"lua.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\cl_cmd.c
+	"z_zone.h"
+	<enet/enet.h>
+	"doomstat.h"
+	"n_net.h"
+	"n_state.h"
+	"n_peer.h"
+	"cl_cmd.h"
+	"p_cmd.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\enet\enet.h
+	<stdlib.h>
+	"enet/win32.h"
+	"enet/unix.h"
+	"enet/types.h"
+	"enet/protocol.h"
+	"enet/list.h"
+	"enet/callbacks.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\enet\win32.h
+	<stdlib.h>
+	<winsock2.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\winsock2.h
+	<_mingw_unicode.h>
+	<windows.h>
+	<psdk_inc/_ws1_undef.h>
+	<_timeval.h>
+	<_bsd_types.h>
+	<inaddr.h>
+	<psdk_inc/_socket_types.h>
+	<psdk_inc/_fd_types.h>
+	<psdk_inc/_ip_types.h>
+	<psdk_inc/_wsadata.h>
+	<ws2def.h>
+	<psdk_inc/_wsa_errnos.h>
+	<qos.h>
+	<guiddef.h>
+	<poppack.h>
+	<wsipv6ok.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_ws1_undef.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\ws2def.h
+	<_mingw.h>
+	<winapifamily.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\qos.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\wsipv6ok.h
+	<ws2tcpip.h>
+	<wspiapi.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\ws2tcpip.h
+	<_mingw_unicode.h>
+	<winsock2.h>
+	<psdk_inc/_ip_mreq1.h>
+	<winapifamily.h>
+	<ws2ipdef.h>
+	<mstcpip.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\ws2ipdef.h
+	<winapifamily.h>
+	<in6addr.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\in6addr.h
+	<_bsd_types.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\mstcpip.h
+	<_mingw_unicode.h>
+	<winapifamily.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\wspiapi.h
+	<stdio.h>
+	<stdlib.h>
+	<malloc.h>
+	<string.h>
+	<ws2tcpip.h>
+	<_mingw_print_push.h>
+	<_mingw_print_pop.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\enet\unix.h
+	<stdlib.h>
+	<sys/time.h>
+	<sys/types.h>
+	<sys/socket.h>
+	<netinet/in.h>
+	<unistd.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sys\time.h
+	<time.h>
+	<_timeval.h>
+	<sys/timeb.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\enet\types.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\enet\protocol.h
+	"enet/types.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\enet\list.h
+	<stdlib.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\enet\callbacks.h
+	<stdlib.h>
+
+1419426869 c:\users\cagunyon\documents\d2k\src\n_state.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\n_peer.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\cl_cmd.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\p_cmd.h
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\cl_main.c
+	"z_zone.h"
+	<enet/enet.h>
+	"doomdef.h"
+	"d_ticcmd.h"
+	"d_player.h"
+	"n_net.h"
+	"n_main.h"
+	"n_state.h"
+	"n_peer.h"
+	"n_proto.h"
+	"cl_cmd.h"
+	"cl_main.h"
+	"p_cmd.h"
+	"p_user.h"
+	"r_fps.h"
+	"r_state.h"
+	"s_sound.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\n_proto.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\s_sound.h
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\cmp.c
+	<stdbool.h>
+	<stddef.h>
+	<stdint.h>
+	"cmp.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\d_deh.c
+	"z_zone.h"
+	"doomdef.h"
+	"doomstat.h"
+	"doomtype.h"
+	"d_deh.h"
+	"d_main.h"
+	"d_think.h"
+	"g_game.h"
+	"info.h"
+	"m_argv.h"
+	"m_cheat.h"
+	"m_misc.h"
+	"p_enemy.h"
+	"p_inter.h"
+	"sounds.h"
+	"w_wad.h"
+	"e6y.h"
+	"lprintf.h"
+	"dstrings.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\m_argv.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\m_cheat.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\p_enemy.h
+	"p_mobj.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\p_inter.h
+	"d_player.h"
+	"p_mobj.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\sounds.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\e6y.h
+	<stdarg.h>
+	"hu_lib.h"
+	"r_demo.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\dstrings.h
+	"d_french.h"
+	"d_englsh.h"
+	<stddef.h>
+
+1419426868 c:\users\cagunyon\documents\d2k\src\d_englsh.h
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\d_items.c
+	"z_zone.h"
+	"doomdef.h"
+	"d_main.h"
+	"info.h"
+	"d_items.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\d_log.c
+	"z_zone.h"
+	"lprintf.h"
+
+1419447453 source:c:\users\cagunyon\documents\d2k\src\d_main.c
+	"z_zone.h"
+	"doomdef.h"
+	"doomstat.h"
+	"d_event.h"
+	"c_main.h"
+	"d_net.h"
+	"dstrings.h"
+	"sounds.h"
+	"z_zone.h"
+	"w_wad.h"
+	"s_sound.h"
+	"v_video.h"
+	"f_finale.h"
+	"f_wipe.h"
+	"m_argv.h"
+	"m_file.h"
+	"m_misc.h"
+	"m_menu.h"
+	"p_checksum.h"
+	"p_ident.h"
+	"p_user.h"
+	"i_main.h"
+	"i_system.h"
+	"i_sound.h"
+	"i_video.h"
+	"g_game.h"
+	"g_keys.h"
+	"hu_stuff.h"
+	"wi_stuff.h"
+	"st_stuff.h"
+	"am_map.h"
+	"p_setup.h"
+	"r_draw.h"
+	"r_main.h"
+	"r_fps.h"
+	"d_main.h"
+	"d_deh.h"
+	"lprintf.h"
+	"am_map.h"
+	"sounds.h"
+	"r_demo.h"
+	"e6y.h"
+	"e6y_launcher.h"
+	"i_capture.h"
+	"n_net.h"
+	"n_main.h"
+	"n_state.h"
+	"x_main.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\d_net.h
+	"d_player.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\f_finale.h
+	"doomtype.h"
+	"d_event.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\f_wipe.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\m_file.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\m_menu.h
+	"d_event.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\p_checksum.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\p_ident.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\i_sound.h
+	"sounds.h"
+	"doomtype.h"
+	"l_soundgen.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\wi_stuff.h
+	"doomdef.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_draw.h
+	"r_defs.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\e6y_launcher.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\i_capture.h
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\doomdef.c
+	"doomdef.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\doomstat.c
+	"z_zone.h"
+	"doomstat.h"
+	"p_user.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\dstrings.c
+	"dstrings.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\e6y.c
+	"z_zone.h"
+	<SDL.h>
+	<SDL_syswm.h>
+	"hu_lib.h"
+	"doomstat.h"
+	"d_main.h"
+	"s_sound.h"
+	"i_system.h"
+	"i_main.h"
+	"i_sound.h"
+	"m_menu.h"
+	"lprintf.h"
+	"m_argv.h"
+	"m_misc.h"
+	"i_system.h"
+	"p_maputl.h"
+	"p_map.h"
+	"i_video.h"
+	"info.h"
+	"r_screenmultiply.h"
+	"r_main.h"
+	"r_things.h"
+	"r_sky.h"
+	"am_map.h"
+	"hu_tracers.h"
+	"gl_opengl.h"
+	"gl_struct.h"
+	"gl_intern.h"
+	"g_game.h"
+	"r_demo.h"
+	"d_deh.h"
+	"e6y.h"
+	<mmsystem.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_syswm.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"SDL_version.h"
+	"begin_code.h"
+	<X11/Xlib.h>
+	<X11/Xatom.h>
+	<microwin/nano-X.h>
+	<windows.h>
+	<sys/neutrino.h>
+	<Ph.h>
+	"close_code.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\p_map.h
+	"r_defs.h"
+	"d_player.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_screenmultiply.h
+	"doomtype.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_things.h
+	"r_draw.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_sky.h
+	"m_fixed.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\hu_tracers.h
+	"hu_lib.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\e6y_launcher.c
+	"z_zone.h"
+	"pcreposix.h"
+	"doomtype.h"
+	"w_wad.h"
+	"doomstat.h"
+	"lprintf.h"
+	"d_main.h"
+	"m_misc.h"
+	"i_system.h"
+	"m_argv.h"
+	"i_main.h"
+	"resource.h"
+	"r_demo.h"
+	"e6y.h"
+	"e6y_launcher.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\pcreposix.h
+	<stdlib.h>
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\f_finale.c
+	"z_zone.h"
+	"doomstat.h"
+	"d_event.h"
+	"g_game.h"
+	"v_video.h"
+	"w_wad.h"
+	"s_sound.h"
+	"sounds.h"
+	"d_deh.h"
+	"f_finale.h"
+	"hu_stuff.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\f_wipe.c
+	"z_zone.h"
+	"doomdef.h"
+	"i_video.h"
+	"v_video.h"
+	"m_random.h"
+	"f_wipe.h"
+	"gl_struct.h"
+	"e6y.h"
+	"n_net.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\m_random.h
+	"doomtype.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\g_game.c
+	"z_zone.h"
+	"doomstat.h"
+	"d_event.h"
+	"c_main.h"
+	"d_net.h"
+	"f_finale.h"
+	"i_video.h"
+	"m_argv.h"
+	"m_avg.h"
+	"m_file.h"
+	"m_misc.h"
+	"m_menu.h"
+	"m_random.h"
+	"n_net.h"
+	"n_main.h"
+	"n_proto.h"
+	"n_state.h"
+	"p_cmd.h"
+	"p_ident.h"
+	"p_setup.h"
+	"p_tick.h"
+	"p_map.h"
+	"p_checksum.h"
+	"p_user.h"
+	"d_main.h"
+	"wi_stuff.h"
+	"hu_stuff.h"
+	"st_stuff.h"
+	"am_map.h"
+	"w_wad.h"
+	"r_main.h"
+	"r_draw.h"
+	"p_map.h"
+	"s_sound.h"
+	"s_advsound.h"
+	"dstrings.h"
+	"sounds.h"
+	"r_data.h"
+	"r_sky.h"
+	"d_deh.h"
+	"p_inter.h"
+	"g_game.h"
+	"g_keys.h"
+	"g_save.h"
+	"lprintf.h"
+	"i_main.h"
+	"i_system.h"
+	"r_demo.h"
+	"r_fps.h"
+	"e6y.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\m_avg.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\p_tick.h
+	"d_think.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\s_advsound.h
+	"p_mobj.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\g_save.h
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\g_keys.c
+	"z_zone.h"
+	"doomdef.h"
+	"g_keys.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\g_overflow.c
+	"z_zone.h"
+	"doomstat.h"
+	"g_overflow.h"
+	"lprintf.h"
+	"m_argv.h"
+	"m_misc.h"
+	"e6y.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\g_overflow.h
+	"doomtype.h"
+	"doomdata.h"
+	"p_maputl.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\g_save.c
+	"z_zone.h"
+	"doomstat.h"
+	"m_avg.h"
+	"d_main.h"
+	"g_game.h"
+	"g_save.h"
+	"lprintf.h"
+	"m_menu.h"
+	"n_net.h"
+	"p_ident.h"
+	"p_map.h"
+	"p_saveg.h"
+	"p_spec.h"
+	"r_demo.h"
+	"r_defs.h"
+	"r_fps.h"
+	"r_state.h"
+	"s_advsound.h"
+	"s_sound.h"
+	"p_tick.h"
+	"gl_intern.h"
+	"gl_struct.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\p_saveg.h
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_clipper.c
+	"z_zone.h"
+	"v_video.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"r_main.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_detail.c
+	"z_zone.h"
+	"gl_opengl.h"
+	<SDL.h>
+	<SDL_image.h>
+	"v_video.h"
+	"r_main.h"
+	"gl_intern.h"
+	"w_wad.h"
+	"lprintf.h"
+	"p_spec.h"
+	"m_misc.h"
+	"sc_man.h"
+	"e6y.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_image.h
+	"SDL.h"
+	"SDL_version.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\sc_man.h
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_drawinfo.c
+	"z_zone.h"
+	"doomtype.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"lprintf.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_fbo.c
+	"z_zone.h"
+	"gl_opengl.h"
+	<SDL.h>
+	"gl_opengl.h"
+	"gl_intern.h"
+	"i_main.h"
+	"lprintf.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_gamma.c
+	"z_zone.h"
+	<SDL.h>
+	"doomstat.h"
+	"v_video.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"doomtype.h"
+	"i_video.h"
+	"m_argv.h"
+	"lprintf.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_hires.c
+	"z_zone.h"
+	<SDL.h>
+	<SDL_image.h>
+	"doomstat.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"v_video.h"
+	"i_system.h"
+	"w_wad.h"
+	"lprintf.h"
+	"i_video.h"
+	"hu_lib.h"
+	"hu_stuff.h"
+	"r_main.h"
+	"r_sky.h"
+	"m_argv.h"
+	"m_file.h"
+	"m_misc.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_hqresize.c
+	"z_zone.h"
+	<SDL.h>
+	"doomstat.h"
+	"v_video.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_light.c
+	"z_zone.h"
+	<SDL.h>
+	"doomstat.h"
+	"lprintf.h"
+	"v_video.h"
+	"r_main.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_main.c
+	"z_zone.h"
+	<SDL.h>
+	"doomtype.h"
+	"w_wad.h"
+	"m_argv.h"
+	"d_event.h"
+	"v_video.h"
+	"doomstat.h"
+	"r_bsp.h"
+	"r_main.h"
+	"r_draw.h"
+	"r_sky.h"
+	"r_plane.h"
+	"r_data.h"
+	"r_things.h"
+	"r_fps.h"
+	"p_maputl.h"
+	"m_bbox.h"
+	"lprintf.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"gl_struct.h"
+	"p_spec.h"
+	"i_system.h"
+	"m_argv.h"
+	"i_video.h"
+	"i_main.h"
+	"am_map.h"
+	"sc_man.h"
+	"st_stuff.h"
+	"hu_stuff.h"
+	"e6y.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_bsp.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_plane.h
+	"r_data.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_map.c
+	"z_zone.h"
+	<SDL.h>
+	<SDL_image.h>
+	"gl_opengl.h"
+	"gl_intern.h"
+	"w_wad.h"
+	"m_misc.h"
+	"am_map.h"
+	"lprintf.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_missingtexture.c
+	"z_zone.h"
+	<SDL.h>
+	<SDL_image.h>
+	"doomstat.h"
+	"v_video.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"i_system.h"
+	"lprintf.h"
+	"i_video.h"
+	"hu_lib.h"
+	"hu_stuff.h"
+	"r_main.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_opengl.c
+	"z_zone.h"
+	<SDL.h>
+	"gl_opengl.h"
+	"doomtype.h"
+	"lprintf.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_preprocess.c
+	"z_zone.h"
+	"doomstat.h"
+	"p_maputl.h"
+	"r_main.h"
+	"am_map.h"
+	"lprintf.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"gl_struct.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_shader.c
+	"z_zone.h"
+	<SDL.h>
+	"doomstat.h"
+	"v_video.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"r_main.h"
+	"w_wad.h"
+	"i_system.h"
+	"r_bsp.h"
+	"lprintf.h"
+	"e6y.h"
+	"r_things.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_shadow.c
+	"z_zone.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"doomstat.h"
+	"p_maputl.h"
+	"w_wad.h"
+	"r_fps.h"
+	"r_bsp.h"
+	"r_sky.h"
+	"r_main.h"
+	"lprintf.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_sky.c
+	"z_zone.h"
+	<SDL.h>
+	"doomstat.h"
+	"v_video.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"r_plane.h"
+	"r_sky.h"
+	"r_main.h"
+	"sc_man.h"
+	"m_misc.h"
+	"lprintf.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_soft2gl.c
+	"z_zone.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"gl_struct.h"
+	"i_video.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_texture.c
+	"z_zone.h"
+	<SDL.h>
+	"doomtype.h"
+	"w_wad.h"
+	"m_argv.h"
+	"d_event.h"
+	"v_video.h"
+	"doomstat.h"
+	"r_bsp.h"
+	"r_main.h"
+	"r_draw.h"
+	"r_sky.h"
+	"r_plane.h"
+	"r_data.h"
+	"p_maputl.h"
+	"p_tick.h"
+	"m_bbox.h"
+	"lprintf.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"gl_struct.h"
+	"p_spec.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_vertex.c
+	"z_zone.h"
+	"v_video.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"r_main.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\gl_wipe.c
+	"z_zone.h"
+	"v_video.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"m_random.h"
+	"lprintf.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\hu_chat.c
+	"z_zone.h"
+	<pango/pangocairo.h>
+	<SDL.h>
+	"doomdef.h"
+	"doomstat.h"
+	"d_event.h"
+	"c_main.h"
+	"d_main.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"hu_lib.h"
+	"hu_input.h"
+	"hu_chat.h"
+	"hu_stuff.h"
+	"i_main.h"
+	"i_system.h"
+	"lprintf.h"
+	"n_net.h"
+	"n_proto.h"
+	"v_video.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\hu_chat.h
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\hu_cons.c
+	"z_zone.h"
+	<pango/pangocairo.h>
+	"doomdef.h"
+	"doomstat.h"
+	"d_event.h"
+	"c_main.h"
+	"d_main.h"
+	"gl_opengl.h"
+	"gl_intern.h"
+	"hu_lib.h"
+	"hu_input.h"
+	"hu_cons.h"
+	"hu_msg.h"
+	"hu_stuff.h"
+	"i_main.h"
+	"i_system.h"
+	"lprintf.h"
+	"v_video.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\hu_input.c
+	"z_zone.h"
+	<pango/pangocairo.h>
+	<SDL.h>
+	"d_event.h"
+	"hu_lib.h"
+	"hu_input.h"
+	"hu_stuff.h"
+	"i_main.h"
+	"lprintf.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\hu_lib.c
+	"doomdef.h"
+	"doomstat.h"
+	"v_video.h"
+	"hu_lib.h"
+	"hu_stuff.h"
+	"r_main.h"
+	"r_draw.h"
+
+1419427556 source:c:\users\cagunyon\documents\d2k\src\hu_msg.c
+	"z_zone.h"
+	<pango/pangocairo.h>
+	<SDL.h>
+	"doomstat.h"
+	"d_event.h"
+	"d_main.h"
+	"hu_lib.h"
+	"hu_msg.h"
+	"hu_stuff.h"
+	"i_system.h"
+	"i_video.h"
+	"lprintf.h"
+
+1419427556 source:c:\users\cagunyon\documents\d2k\src\hu_stuff.c
+	"z_zone.h"
+	<fontconfig/fontconfig.h>
+	<pango/pangocairo.h>
+	"doomstat.h"
+	"d_deh.h"
+	"d_event.h"
+	"d_main.h"
+	"dstrings.h"
+	"c_main.h"
+	"e6y.h"
+	"g_game.h"
+	"g_keys.h"
+	"hu_lib.h"
+	"hu_input.h"
+	"hu_chat.h"
+	"hu_msg.h"
+	"hu_stuff.h"
+	"hu_tracers.h"
+	"i_main.h"
+	"i_system.h"
+	"i_video.h"
+	"lprintf.h"
+	"m_file.h"
+	"m_misc.h"
+	"n_net.h"
+	"n_main.h"
+	"n_proto.h"
+	"cl_main.h"
+	"p_inter.h"
+	"p_map.h"
+	"p_tick.h"
+	"p_user.h"
+	"r_main.h"
+	"r_main.h"
+	"s_sound.h"
+	"sc_man.h"
+	"sounds.h"
+	"st_stuff.h"
+	"x_main.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\fontconfig\fontconfig.h
+	<sys/types.h>
+	<sys/stat.h>
+	<stdarg.h>
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\hu_tracers.c
+	"z_zone.h"
+	"doomdef.h"
+	"doomstat.h"
+	"m_argv.h"
+	"m_misc.h"
+	"lprintf.h"
+	"hu_tracers.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\i_capture.c
+	"z_zone.h"
+	<SDL.h>
+	<SDL_thread.h>
+	"i_sound.h"
+	"i_video.h"
+	"lprintf.h"
+	"i_capture.h"
+	<windows.h>
+	<io.h>
+	<unistd.h>
+	<sys/types.h>
+	<sys/wait.h>
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\i_pcsound.c
+	<SDL.h>
+	"doomdef.h"
+	"doomtype.h"
+	"i_pcsound.h"
+	"i_sound.h"
+	"sounds.h"
+	"w_wad.h"
+	"PCSOUND/pcsound.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\i_pcsound.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\pcsound\pcsound.h
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\i_smp.c
+	"z_zone.h"
+	<SDL.h>
+	"i_video.h"
+	"i_sound.h"
+	"v_video.h"
+	"r_draw.h"
+	"lprintf.h"
+	"i_smp.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\i_smp.h
+	"SDL.h"
+	"r_draw.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\icon.c
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\info.c
+	"doomdef.h"
+	"sounds.h"
+	"m_fixed.h"
+	"p_mobj.h"
+	"p_enemy.h"
+	"p_pspr.h"
+	"info.h"
+
+1419427556 source:c:\users\cagunyon\documents\d2k\src\lprintf.c
+	"z_zone.h"
+	"doomtype.h"
+	"d_event.h"
+	"c_main.h"
+	"lprintf.h"
+	"i_main.h"
+	"i_system.h"
+	"m_argv.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\m_argv.c
+	"z_zone.h"
+	"doomtype.h"
+	"m_argv.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\m_avg.c
+	"z_zone.h"
+	"lprintf.h"
+	"m_avg.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\m_bbox.c
+	"z_zone.h"
+	"m_bbox.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\m_buf.c
+	"z_zone.h"
+	"lprintf.h"
+	"m_file.h"
+	"m_swap.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\m_cheat.c
+	"z_zone.h"
+	"doomstat.h"
+	"g_game.h"
+	"r_data.h"
+	"p_inter.h"
+	"p_tick.h"
+	"m_cheat.h"
+	"m_argv.h"
+	"s_sound.h"
+	"sounds.h"
+	"dstrings.h"
+	"r_main.h"
+	"p_map.h"
+	"d_deh.h"
+	"p_tick.h"
+	"p_user.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\m_delta.c
+	"config.h"
+	"z_zone.h"
+	<xdiff.h>
+	"doomdef.h"
+	"doomtype.h"
+	"lprintf.h"
+	"m_delta.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\xdiff.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\m_delta.h
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\m_file.c
+	"z_zone.h"
+	<glib/gstdio.h>
+	"lprintf.h"
+	"m_buf.h"
+	"m_file.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gstdio.h
+	<glib/gprintf.h>
+	<sys/stat.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gprintf.h
+	<glib.h>
+	<stdio.h>
+	<stdarg.h>
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\m_menu.c
+	"z_zone.h"
+	"doomdef.h"
+	"doomstat.h"
+	"dstrings.h"
+	"d_main.h"
+	"v_video.h"
+	"w_wad.h"
+	"r_main.h"
+	"hu_stuff.h"
+	"st_stuff.h"
+	"g_game.h"
+	"g_keys.h"
+	"s_sound.h"
+	"sounds.h"
+	"m_menu.h"
+	"d_deh.h"
+	"m_misc.h"
+	"lprintf.h"
+	"am_map.h"
+	"i_main.h"
+	"i_system.h"
+	"i_video.h"
+	"i_sound.h"
+	"r_demo.h"
+	"r_fps.h"
+	"p_user.h"
+	"e6y.h"
+	"e6y_launcher.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\m_misc.c
+	"z_zone.h"
+	"i_smp.h"
+	"doomstat.h"
+	"m_argv.h"
+	"g_game.h"
+	"g_keys.h"
+	"m_menu.h"
+	"am_map.h"
+	"w_wad.h"
+	"i_system.h"
+	"i_sound.h"
+	"i_video.h"
+	"v_video.h"
+	"hu_stuff.h"
+	"st_stuff.h"
+	"dstrings.h"
+	"m_misc.h"
+	"s_sound.h"
+	"sounds.h"
+	"i_joy.h"
+	"lprintf.h"
+	"d_main.h"
+	"d_deh.h"
+	"r_draw.h"
+	"r_demo.h"
+	"r_fps.h"
+	"r_main.h"
+	"r_things.h"
+	"r_sky.h"
+	"p_user.h"
+	"n_net.h"
+	"cl_main.h"
+	"sv_main.h"
+	"gl_struct.h"
+	"g_overflow.h"
+	"r_screenmultiply.h"
+	"e6y.h"
+	"e6y_launcher.h"
+	"i_capture.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\i_joy.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\sv_main.h
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\m_pbuf.c
+	"z_zone.h"
+	"doomstat.h"
+	"g_game.h"
+	"lprintf.h"
+	"p_user.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\m_random.c
+	"z_zone.h"
+	"doomstat.h"
+	"m_random.h"
+	"lprintf.h"
+	"n_net.h"
+	"n_main.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\md5.c
+	"z_zone.h"
+	"md5.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\md5.h
+	<windows.h>
+	<inttypes.h>
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\memio.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"memio.h"
+	"z_zone.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\memio.h
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\mus2mid.c
+	"z_zone.h"
+	"doomtype.h"
+	"m_swap.h"
+	"memio.h"
+	"mus2mid.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\mus2mid.h
+	"doomtype.h"
+	"memio.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\music\dbopl.c
+	<math.h>
+	<stdlib.h>
+	<string.h>
+	"dbopl.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\music\dbopl.h
+	"SDL_stdinc.h"
+	<BaseTsd.h>
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\music\dumbplayer.c
+	"z_zone.h"
+	"musicplayer.h"
+	<dumb.h>
+	<string.h>
+	"lprintf.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\music\musicplayer.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\dumb.h
+	<stdlib.h>
+	<stdio.h>
+	<assert.h>
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\music\flplayer.c
+	"z_zone.h"
+	"musicplayer.h"
+	<fluidsynth.h>
+	"i_sound.h"
+	"lprintf.h"
+	"midifile.h"
+
+1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth.h
+	<stdio.h>
+	"fluidsynth/types.h"
+	"fluidsynth/settings.h"
+	"fluidsynth/synth.h"
+	"fluidsynth/shell.h"
+	"fluidsynth/sfont.h"
+	"fluidsynth/ramsfont.h"
+	"fluidsynth/audio.h"
+	"fluidsynth/event.h"
+	"fluidsynth/midi.h"
+	"fluidsynth/seq.h"
+	"fluidsynth/seqbind.h"
+	"fluidsynth/log.h"
+	"fluidsynth/misc.h"
+	"fluidsynth/mod.h"
+	"fluidsynth/gen.h"
+	"fluidsynth/voice.h"
+	"fluidsynth/version.h"
+
+1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\types.h
+
+1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\settings.h
+
+1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\synth.h
+
+1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\shell.h
+
+1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\sfont.h
+
+1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\ramsfont.h
+
+1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\audio.h
+
+1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\event.h
+
+1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\midi.h
+
+1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\seq.h
+
+1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\seqbind.h
+	"seq.h"
+
+1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\log.h
+
+1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\misc.h
+
+1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\mod.h
+
+1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\gen.h
+
+1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\voice.h
+
+1419371236 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\version.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\music\midifile.h
+	"doomtype.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\music\madplayer.c
+	"z_zone.h"
+	"musicplayer.h"
+	<stdlib.h>
+	<string.h>
+	"lprintf.h"
+	<mad.h>
+	"i_sound.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\mad.h
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\music\midifile.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<assert.h>
+	"doomdef.h"
+	"doomtype.h"
+	"lprintf.h"
+	"midifile.h"
+	"config.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\music\opl.c
+	"z_zone.h"
+	"opl.h"
+	"opl_queue.h"
+	"dbopl.h"
+	"i_sound.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\music\opl.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\music\opl_queue.h
+	"opl.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\music\opl_queue.c
+	"z_zone.h"
+	"lprintf.h"
+	"opl_queue.h"
+	<assert.h>
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\music\oplplayer.c
+	"z_zone.h"
+	"doomdef.h"
+	"lprintf.h"
+	"m_misc.h"
+	"memio.h"
+	"midifile.h"
+	"mus2mid.h"
+	"musicplayer.h"
+	"opl.h"
+	"p_mobj.h"
+	"s_sound.h"
+	"w_wad.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\music\portmidiplayer.c
+	"z_zone.h"
+	"musicplayer.h"
+	<portmidi.h>
+	<porttime.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"lprintf.h"
+	"midifile.h"
+	"i_sound.h"
+
+1419371306 c:\users\cagunyon\documents\d2k\deps\include\portmidi.h
+	<stdint.h>
+
+1419371306 c:\users\cagunyon\documents\d2k\deps\include\porttime.h
+	<stdint.h>
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\music\vorbisplayer.c
+	"z_zone.h"
+	"musicplayer.h"
+	<stdlib.h>
+	<string.h>
+	"lprintf.h"
+	<vorbis/vorbisfile.h>
+	<vorbis/codec.h>
+	"i_sound.h"
+	<windows.h>
+	<delayimp.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\vorbis\vorbisfile.h
+	<stdio.h>
+	"codec.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\vorbis\codec.h
+	<ogg/ogg.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\ogg\ogg.h
+	<stddef.h>
+	<ogg/os_types.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\ogg\os_types.h
+	<stdint.h>
+	<sys/types.h>
+	<sys/types.h>
+	<inttypes.h>
+	<sys/types.h>
+	<inttypes.h>
+	<ogg/config_types.h>
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\ogg\config_types.h
+	<inttypes.h>
+	<stdint.h>
+	<sys/types.h>
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\n_main.c
+	"z_zone.h"
+	<enet/enet.h>
+	"doomstat.h"
+	"protocol.h"
+	"d_event.h"
+	"c_main.h"
+	"d_main.h"
+	"g_game.h"
+	"i_network.h"
+	"i_system.h"
+	"i_main.h"
+	"i_video.h"
+	"lprintf.h"
+	"m_argv.h"
+	"m_delta.h"
+	"m_menu.h"
+	"n_net.h"
+	"n_main.h"
+	"n_state.h"
+	"n_peer.h"
+	"n_proto.h"
+	"cl_cmd.h"
+	"cl_main.h"
+	"sv_main.h"
+	"p_checksum.h"
+	"p_cmd.h"
+	"p_user.h"
+	"r_fps.h"
+	"s_sound.h"
+	"e6y.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\protocol.h
+	"doomtype.h"
+	"d_ticcmd.h"
+	"m_swap.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\i_network.h
+	"config.h"
+	"SDL_net.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\n_net.c
+	"z_zone.h"
+	<enet/enet.h>
+	"doomstat.h"
+	"d_event.h"
+	"c_main.h"
+	"d_player.h"
+	"d_ticcmd.h"
+	"g_game.h"
+	"i_main.h"
+	"i_system.h"
+	"lprintf.h"
+	"m_swap.h"
+	"n_net.h"
+	"n_main.h"
+	"n_state.h"
+	"n_peer.h"
+	"n_pack.h"
+	"n_proto.h"
+	"cl_main.h"
+	"p_user.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\n_pack.h
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\n_pack.c
+	"z_zone.h"
+	<enet/enet.h>
+	"doomdef.h"
+	"d_deh.h"
+	"d_main.h"
+	"d_ticcmd.h"
+	"doomstat.h"
+	"g_game.h"
+	"i_system.h"
+	"lprintf.h"
+	"m_file.h"
+	"n_net.h"
+	"n_main.h"
+	"n_state.h"
+	"n_peer.h"
+	"n_proto.h"
+	"cl_cmd.h"
+	"cl_main.h"
+	"p_cmd.h"
+	"p_pspr.h"
+	"p_user.h"
+	"w_wad.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\n_peer.c
+	"z_zone.h"
+	<enet/enet.h>
+	"doomstat.h"
+	"d_ticcmd.h"
+	"g_game.h"
+	"lprintf.h"
+	"n_net.h"
+	"n_state.h"
+	"n_peer.h"
+	"p_cmd.h"
+	"p_user.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\n_proto.c
+	"z_zone.h"
+	<enet/enet.h>
+	"doomdef.h"
+	"doomstat.h"
+	"d_deh.h"
+	"d_main.h"
+	"d_ticcmd.h"
+	"g_game.h"
+	"lprintf.h"
+	"n_net.h"
+	"n_main.h"
+	"n_state.h"
+	"n_peer.h"
+	"n_pack.h"
+	"n_proto.h"
+	"cl_main.h"
+	"p_user.h"
+	"s_sound.h"
+	"sounds.h"
+	"w_wad.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\n_state.c
+	"z_zone.h"
+	<enet/enet.h>
+	"doomstat.h"
+	"m_avg.h"
+	"m_delta.h"
+	"g_game.h"
+	"g_save.h"
+	"lprintf.h"
+	"n_net.h"
+	"n_state.h"
+	"n_peer.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_ceilng.c
+	"z_zone.h"
+	"doomstat.h"
+	"r_main.h"
+	"p_spec.h"
+	"p_tick.h"
+	"s_sound.h"
+	"sounds.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_checksum.c
+	"z_zone.h"
+	"p_checksum.h"
+	"md5.h"
+	"doomstat.h"
+	"lprintf.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_cmd.c
+	"z_zone.h"
+	"doomdef.h"
+	"doomstat.h"
+	"d_event.h"
+	"d_log.h"
+	"d_player.h"
+	"d_ticcmd.h"
+	"e6y.h"
+	"g_game.h"
+	"i_video.h"
+	"lprintf.h"
+	"n_net.h"
+	"n_main.h"
+	"n_state.h"
+	"n_proto.h"
+	"cl_main.h"
+	"p_cmd.h"
+	"p_map.h"
+	"p_mobj.h"
+	"p_pspr.h"
+	"p_user.h"
+	"s_sound.h"
+	"sv_main.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_doors.c
+	"z_zone.h"
+	"doomstat.h"
+	"d_deh.h"
+	"dstrings.h"
+	"e6y.h"
+	"lprintf.h"
+	"p_spec.h"
+	"p_tick.h"
+	"p_user.h"
+	"r_main.h"
+	"s_sound.h"
+	"sounds.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_enemy.c
+	"z_zone.h"
+	"doomstat.h"
+	"m_random.h"
+	"r_main.h"
+	"p_maputl.h"
+	"p_map.h"
+	"p_setup.h"
+	"p_spec.h"
+	"s_sound.h"
+	"sounds.h"
+	"p_inter.h"
+	"g_game.h"
+	"p_enemy.h"
+	"p_tick.h"
+	"i_sound.h"
+	"m_bbox.h"
+	"hu_stuff.h"
+	"lprintf.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_floor.c
+	"z_zone.h"
+	"doomstat.h"
+	"r_main.h"
+	"p_map.h"
+	"p_spec.h"
+	"p_tick.h"
+	"s_sound.h"
+	"sounds.h"
+	"lprintf.h"
+	"g_overflow.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_genlin.c
+	"z_zone.h"
+	"doomstat.h"
+	"r_main.h"
+	"p_spec.h"
+	"p_tick.h"
+	"m_random.h"
+	"s_sound.h"
+	"sounds.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_ident.c
+	"z_zone.h"
+	"d_ticcmd.h"
+	"lprintf.h"
+	"n_net.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_inter.c
+	"z_zone.h"
+	"doomstat.h"
+	"am_map.h"
+	"d_deh.h"
+	"dstrings.h"
+	"hu_tracers.h"
+	"lprintf.h"
+	"m_random.h"
+	"n_net.h"
+	"p_enemy.h"
+	"p_inter.h"
+	"p_tick.h"
+	"p_user.h"
+	"r_main.h"
+	"s_sound.h"
+	"sounds.h"
+	"p_inter.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_lights.c
+	"z_zone.h"
+	"doomstat.h"
+	"doomdef.h"
+	"m_random.h"
+	"r_main.h"
+	"p_spec.h"
+	"p_tick.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_map.c
+	"z_zone.h"
+	"doomstat.h"
+	"r_main.h"
+	"p_mobj.h"
+	"p_maputl.h"
+	"p_map.h"
+	"p_setup.h"
+	"p_spec.h"
+	"s_sound.h"
+	"sounds.h"
+	"p_inter.h"
+	"m_random.h"
+	"m_bbox.h"
+	"lprintf.h"
+	"m_argv.h"
+	"g_game.h"
+	"g_overflow.h"
+	"hu_tracers.h"
+	"e6y.h"
+	"z_bmalloc.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\z_bmalloc.h
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_maputl.c
+	"z_zone.h"
+	"doomstat.h"
+	"m_bbox.h"
+	"r_main.h"
+	"p_maputl.h"
+	"p_map.h"
+	"p_setup.h"
+	"lprintf.h"
+	"g_game.h"
+	"g_overflow.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_mobj.c
+	"z_zone.h"
+	"doomdef.h"
+	"doomstat.h"
+	"e6y.h"
+	"g_game.h"
+	"g_overflow.h"
+	"hu_stuff.h"
+	"hu_tracers.h"
+	"info.h"
+	"lprintf.h"
+	"m_random.h"
+	"n_net.h"
+	"n_main.h"
+	"cl_main.h"
+	"p_cmd.h"
+	"p_ident.h"
+	"p_inter.h"
+	"p_map.h"
+	"p_maputl.h"
+	"p_tick.h"
+	"p_user.h"
+	"r_demo.h"
+	"r_main.h"
+	"s_advsound.h"
+	"s_sound.h"
+	"sounds.h"
+	"st_stuff.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_plats.c
+	"z_zone.h"
+	"doomstat.h"
+	"m_random.h"
+	"r_main.h"
+	"p_spec.h"
+	"p_tick.h"
+	"s_sound.h"
+	"sounds.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_pspr.c
+	"z_zone.h"
+	"doomstat.h"
+	"d_event.h"
+	"e6y.h"
+	"lprintf.h"
+	"m_random.h"
+	"n_net.h"
+	"n_main.h"
+	"p_enemy.h"
+	"p_inter.h"
+	"p_map.h"
+	"p_pspr.h"
+	"p_tick.h"
+	"r_demo.h"
+	"r_main.h"
+	"s_sound.h"
+	"sounds.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_saveg.c
+	"z_zone.h"
+	"doomstat.h"
+	"am_map.h"
+	"g_game.h"
+	"lprintf.h"
+	"m_random.h"
+	"n_net.h"
+	"cl_main.h"
+	"p_cmd.h"
+	"p_enemy.h"
+	"p_ident.h"
+	"p_map.h"
+	"p_maputl.h"
+	"p_setup.h"
+	"p_spec.h"
+	"p_tick.h"
+	"p_saveg.h"
+	"p_user.h"
+	"r_main.h"
+	"s_advsound.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_setup.c
+	"z_zone.h"
+	"doomstat.h"
+	"m_bbox.h"
+	"m_argv.h"
+	"g_game.h"
+	"w_wad.h"
+	"r_main.h"
+	"r_things.h"
+	"p_ident.h"
+	"p_maputl.h"
+	"p_map.h"
+	"p_setup.h"
+	"p_spec.h"
+	"p_tick.h"
+	"p_user.h"
+	"p_enemy.h"
+	"s_sound.h"
+	"s_advsound.h"
+	"lprintf.h"
+	"v_video.h"
+	"r_demo.h"
+	"r_fps.h"
+	"hu_tracers.h"
+	"g_overflow.h"
+	"am_map.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_sight.c
+	"z_zone.h"
+	"doomstat.h"
+	"doomtype.h"
+	"r_main.h"
+	"p_map.h"
+	"p_maputl.h"
+	"p_setup.h"
+	"m_bbox.h"
+	"lprintf.h"
+	"g_overflow.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_spec.c
+	"z_zone.h"
+	"doomstat.h"
+	"p_spec.h"
+	"p_tick.h"
+	"p_setup.h"
+	"m_random.h"
+	"d_englsh.h"
+	"m_argv.h"
+	"w_wad.h"
+	"r_main.h"
+	"p_maputl.h"
+	"p_map.h"
+	"g_game.h"
+	"p_inter.h"
+	"s_sound.h"
+	"sounds.h"
+	"i_sound.h"
+	"m_bbox.h"
+	"d_deh.h"
+	"r_plane.h"
+	"hu_stuff.h"
+	"lprintf.h"
+	"p_user.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_switch.c
+	"z_zone.h"
+	"doomstat.h"
+	"w_wad.h"
+	"r_main.h"
+	"p_spec.h"
+	"g_game.h"
+	"s_sound.h"
+	"sounds.h"
+	"lprintf.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_telept.c
+	"z_zone.h"
+	"doomdef.h"
+	"doomstat.h"
+	"p_spec.h"
+	"p_maputl.h"
+	"p_map.h"
+	"r_main.h"
+	"p_tick.h"
+	"s_sound.h"
+	"sounds.h"
+	"p_user.h"
+	"r_demo.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_tick.c
+	"z_zone.h"
+	<enet/enet.h>
+	"doomstat.h"
+	"p_user.h"
+	"p_spec.h"
+	"p_tick.h"
+	"p_map.h"
+	"r_fps.h"
+	"e6y.h"
+	"s_advsound.h"
+	"n_net.h"
+	"n_main.h"
+	"n_state.h"
+	"n_peer.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\p_user.c
+	"z_zone.h"
+	"doomstat.h"
+	"d_event.h"
+	"c_main.h"
+	"e6y.h"
+	"g_game.h"
+	"hu_stuff.h"
+	"i_main.h"
+	"i_system.h"
+	"lprintf.h"
+	"n_net.h"
+	"n_main.h"
+	"n_proto.h"
+	"cl_main.h"
+	"p_cmd.h"
+	"p_map.h"
+	"p_spec.h"
+	"p_user.h"
+	"r_demo.h"
+	"r_fps.h"
+	"r_main.h"
+	"s_sound.h"
+	"sounds.h"
+	"x_main.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\pcsound\pcsound.c
+	"z_zone.h"
+	"pcsound.h"
+	"doomtype.h"
+	"lprintf.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\pcsound\pcsound_sdl.c
+	"z_zone.h"
+	<SDL.h>
+	"pcsound.h"
+	"lprintf.h"
+	"i_sound.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\r_bsp.c
+	"z_zone.h"
+	"doomstat.h"
+	"m_bbox.h"
+	"r_main.h"
+	"r_segs.h"
+	"r_plane.h"
+	"r_things.h"
+	"r_bsp.h"
+	"v_video.h"
+	"lprintf.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_segs.h
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\r_data.c
+	"z_zone.h"
+	"doomstat.h"
+	"w_wad.h"
+	"r_draw.h"
+	"r_main.h"
+	"r_sky.h"
+	"i_system.h"
+	"r_bsp.h"
+	"r_things.h"
+	"p_tick.h"
+	"lprintf.h"
+	"p_tick.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\r_demo.c
+	"z_zone.h"
+	"doomdef.h"
+	"doomtype.h"
+	"doomstat.h"
+	"r_demo.h"
+	"r_fps.h"
+	"lprintf.h"
+	"i_system.h"
+	"i_video.h"
+	"m_file.h"
+	"m_misc.h"
+	"m_argv.h"
+	"w_wad.h"
+	"d_main.h"
+	"d_deh.h"
+	"g_game.h"
+	"p_map.h"
+	"hu_stuff.h"
+	"g_overflow.h"
+	"e6y.h"
+	"n_net.h"
+	"n_main.h"
+	"pcreposix.h"
+	"pcreposix.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\r_draw.c
+	"z_zone.h"
+	"doomstat.h"
+	"w_wad.h"
+	"r_main.h"
+	"r_draw.h"
+	"r_filter.h"
+	"v_video.h"
+	"st_stuff.h"
+	"g_game.h"
+	"am_map.h"
+	"lprintf.h"
+	"r_drawflush.inl"
+	"r_drawflush.inl"
+	"r_drawflush.inl"
+	"r_drawflush.inl"
+	"r_drawflush.inl"
+	"r_drawflush.inl"
+	"r_drawflush.inl"
+	"r_drawflush.inl"
+	"r_drawflush.inl"
+	"r_drawflush.inl"
+	"r_drawflush.inl"
+	"r_drawflush.inl"
+	"r_drawcolpipeline.inl"
+	"r_drawcolpipeline.inl"
+	"r_drawcolpipeline.inl"
+	"r_drawcolpipeline.inl"
+	"r_drawcolpipeline.inl"
+	"r_drawcolpipeline.inl"
+	"r_drawcolpipeline.inl"
+	"r_drawcolpipeline.inl"
+	"r_drawcolpipeline.inl"
+	"r_drawcolpipeline.inl"
+	"r_drawcolpipeline.inl"
+	"r_drawcolpipeline.inl"
+	"r_drawcolpipeline.inl"
+	"r_drawcolpipeline.inl"
+	"r_drawcolpipeline.inl"
+	"r_drawcolpipeline.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+	"r_drawspan.inl"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_filter.h
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_drawflush.inl
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_drawcolpipeline.inl
+	"r_drawcolumn.inl"
+	"r_drawcolumn.inl"
+	"r_drawcolumn.inl"
+	"r_drawcolumn.inl"
+	"r_drawcolumn.inl"
+	"r_drawcolumn.inl"
+	"r_drawcolumn.inl"
+	"r_drawcolumn.inl"
+	"r_drawcolumn.inl"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_drawcolumn.inl
+
+1419426869 c:\users\cagunyon\documents\d2k\src\r_drawspan.inl
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\r_filter.c
+	"z_zone.h"
+	"doomtype.h"
+	"r_filter.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\r_fps.c
+	"z_zone.h"
+	"doomstat.h"
+	"r_defs.h"
+	"r_state.h"
+	"p_spec.h"
+	"r_demo.h"
+	"r_fps.h"
+	"i_system.h"
+	"e6y.h"
+	"n_net.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\r_main.c
+	"z_zone.h"
+	<SDL.h>
+	"doomstat.h"
+	"d_net.h"
+	"e6y.h"
+	"g_game.h"
+	"i_main.h"
+	"i_smp.h"
+	"i_system.h"
+	"lprintf.h"
+	"m_bbox.h"
+	"p_user.h"
+	"r_bsp.h"
+	"r_demo.h"
+	"r_draw.h"
+	"r_fps.h"
+	"r_main.h"
+	"r_plane.h"
+	"r_sky.h"
+	"r_things.h"
+	"st_stuff.h"
+	"v_video.h"
+	"w_wad.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\r_patch.c
+	"z_zone.h"
+	"doomstat.h"
+	"w_wad.h"
+	"r_main.h"
+	"r_sky.h"
+	"r_bsp.h"
+	"r_things.h"
+	"p_tick.h"
+	"i_system.h"
+	"r_draw.h"
+	"lprintf.h"
+	"r_patch.h"
+	"v_video.h"
+	<assert.h>
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\r_plane.c
+	"z_zone.h"
+	"i_smp.h"
+	"doomstat.h"
+	"w_wad.h"
+	"r_main.h"
+	"r_draw.h"
+	"r_things.h"
+	"r_sky.h"
+	"r_plane.h"
+	"r_main.h"
+	"v_video.h"
+	"lprintf.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\r_screenmultiply.c
+	"z_zone.h"
+	"doomtype.h"
+	"doomdef.h"
+	"lprintf.h"
+	"r_screenmultiply.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\r_segs.c
+	"z_zone.h"
+	<SDL.h>
+	"doomstat.h"
+	"r_main.h"
+	"r_bsp.h"
+	"r_segs.h"
+	"r_plane.h"
+	"r_things.h"
+	"r_draw.h"
+	"w_wad.h"
+	"v_video.h"
+	"i_smp.h"
+	"lprintf.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\r_sky.c
+	"z_zone.h"
+	"doomtype.h"
+	"r_sky.h"
+	"r_main.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\r_things.c
+	"z_zone.h"
+	"doomstat.h"
+	"w_wad.h"
+	"r_main.h"
+	"r_bsp.h"
+	"r_segs.h"
+	"r_draw.h"
+	"r_things.h"
+	"r_fps.h"
+	"v_video.h"
+	"lprintf.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\s_advsound.c
+	"z_zone.h"
+	"doomstat.h"
+	"d_main.h"
+	"p_mobj.h"
+	"m_misc.h"
+	"sounds.h"
+	"s_sound.h"
+	"i_sound.h"
+	"r_defs.h"
+	"sc_man.h"
+	"w_wad.h"
+	"lprintf.h"
+	"s_advsound.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\s_sndnew.c
+	"z_zone.h"
+	"doomstat.h"
+	"d_main.h"
+	"e6y.h"
+	"i_sound.h"
+	"i_system.h"
+	"lprintf.h"
+	"m_random.h"
+	"n_net.h"
+	"n_main.h"
+	"cl_main.h"
+	"p_cmd.h"
+	"p_ident.h"
+	"r_main.h"
+	"s_advsound.h"
+	"sounds.h"
+	"s_sound.h"
+	"sc_man.h"
+	"w_wad.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\s_sndold.c
+	"z_zone.h"
+	"doomstat.h"
+	"d_main.h"
+	"e6y.h"
+	"i_sound.h"
+	"i_system.h"
+	"lprintf.h"
+	"m_random.h"
+	"r_main.h"
+	"s_advsound.h"
+	"sounds.h"
+	"s_sound.h"
+	"sc_man.h"
+	"w_wad.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\s_sound.c
+	"z_zone.h"
+	"doomdef.h"
+	"d_main.h"
+	"i_sound.h"
+	"lprintf.h"
+	"n_net.h"
+	"p_mobj.h"
+	"sounds.h"
+	"s_sound.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\sc_man.c
+	"z_zone.h"
+	"doomtype.h"
+	"w_wad.h"
+	"m_misc.h"
+	"lprintf.h"
+	"sc_man.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\sdl\i_emusic.c
+	"z_zone.h"
+	<SDL.h>
+	<SDL_audio.h>
+	<SDL_mutex.h>
+	<SDL_endian.h>
+	<SDL_byteorder.h>
+	<SDL_version.h>
+	<SDL_thread.h>
+	<SDL_mixer.h>
+	"doomdef.h"
+	"doomstat.h"
+	"d_main.h"
+	"i_sound.h"
+	"lprintf.h"
+	"m_file.h"
+	"p_mobj.h"
+	"s_sound.h"
+	"mus2mid.h"
+	"MUSIC/musicplayer.h"
+	"MUSIC/oplplayer.h"
+	"MUSIC/madplayer.h"
+	"MUSIC/dumbplayer.h"
+	"MUSIC/flplayer.h"
+	"MUSIC/vorbisplayer.h"
+	"MUSIC/portmidiplayer.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_byteorder.h
+	"SDL_endian.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_mixer.h
+	"SDL_types.h"
+	"SDL_rwops.h"
+	"SDL_audio.h"
+	"SDL_endian.h"
+	"SDL_version.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_types.h
+	"SDL_stdinc.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\music\oplplayer.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\music\madplayer.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\music\dumbplayer.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\music\flplayer.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\music\vorbisplayer.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\music\portmidiplayer.h
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\sdl\i_font.c
+	"z_zone.h"
+	<wchar.h>
+	<fontconfig/fontconfig.h>
+	"d_event.h"
+	"c_main.h"
+	"i_font.h"
+	"lprintf.h"
+	"m_file.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\i_font.h
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\sdl\i_joy.c
+	"z_zone.h"
+	<SDL.h>
+	"doomdef.h"
+	"m_argv.h"
+	"d_event.h"
+	"d_main.h"
+	"i_joy.h"
+	"lprintf.h"
+
+1419448613 source:c:\users\cagunyon\documents\d2k\src\sdl\i_main.c
+	"z_zone.h"
+	"TEXTSCREEN/txt_main.h"
+	"doomdef.h"
+	"doomstat.h"
+	"d_main.h"
+	"e6y.h"
+	"g_game.h"
+	"i_font.h"
+	"i_main.h"
+	"i_sound.h"
+	"i_system.h"
+	"i_video.h"
+	"lprintf.h"
+	"m_argv.h"
+	"m_fixed.h"
+	"m_misc.h"
+	"m_random.h"
+	"r_fps.h"
+	"x_main.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_main.h
+	"txt_sdl.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_sdl.h
+	"SDL.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\sdl\i_music.c
+	"z_zone.h"
+	<SDL.h>
+	<SDL_audio.h>
+	<SDL_mutex.h>
+	<SDL_endian.h>
+	<SDL_byteorder.h>
+	<SDL_version.h>
+	<SDL_thread.h>
+	<SDL_mixer.h>
+	"doomdef.h"
+	"doomstat.h"
+	"d_main.h"
+	"i_pcsound.h"
+	"i_sound.h"
+	"lprintf.h"
+	"m_file.h"
+	"p_mobj.h"
+	"s_sound.h"
+	"mus2mid.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\sdl\i_network.c
+	"z_zone.h"
+	<SDL.h>
+	<SDL_net.h>
+	"protocol.h"
+	"i_network.h"
+	"lprintf.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\sdl\i_sound.c
+	"z_zone.h"
+	<SDL.h>
+	<SDL_audio.h>
+	<SDL_mutex.h>
+	<SDL_endian.h>
+	<SDL_byteorder.h>
+	<SDL_version.h>
+	<SDL_thread.h>
+	<SDL_mixer.h>
+	"doomdef.h"
+	"doomstat.h"
+	"d_main.h"
+	"i_pcsound.h"
+	"i_sound.h"
+	"lprintf.h"
+	"m_argv.h"
+	"m_swap.h"
+	"p_mobj.h"
+	"s_sound.h"
+	"w_wad.h"
+	"e6y.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\sdl\i_sshot.c
+	"z_zone.h"
+	<SDL.h>
+	<png.h>
+	"doomstat.h"
+	"doomdef.h"
+	"v_video.h"
+	"i_video.h"
+	"z_zone.h"
+	"lprintf.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\png.h
+	"pnglibconf.h"
+	"pngconf.h"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\pnglibconf.h
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\pngconf.h
+	<limits.h>
+	<stddef.h>
+	<stdio.h>
+	<setjmp.h>
+	<time.h>
+
+1419427556 source:c:\users\cagunyon\documents\d2k\src\sdl\i_system.c
+	"z_zone.h"
+	<SDL.h>
+	"m_argv.h"
+	"lprintf.h"
+	"doomtype.h"
+	"doomdef.h"
+	"m_file.h"
+	"d_player.h"
+	"m_fixed.h"
+	"r_fps.h"
+	"e6y.h"
+	"i_system.h"
+
+1419427556 source:c:\users\cagunyon\documents\d2k\src\sdl\i_video.c
+	"z_zone.h"
+	<cairo/cairo.h>
+	<cairo/cairo-xlib.h>
+	<cairo/cairo-xlib-xrender.h>
+	<cairo/cairo-quartz.h>
+	<cairo/cairo-win32.h>
+	<SDL.h>
+	<SDL_syswm.h>
+	"doomdef.h"
+	"doomstat.h"
+	"am_map.h"
+	"d_deh.h"
+	"d_event.h"
+	"d_main.h"
+	"e6y.h"
+	"f_wipe.h"
+	"g_game.h"
+	"i_capture.h"
+	"i_joy.h"
+	"i_smp.h"
+	"i_main.h"
+	"i_video.h"
+	"lprintf.h"
+	"m_argv.h"
+	"p_user.h"
+	"r_draw.h"
+	"r_main.h"
+	"r_plane.h"
+	"r_screenmultiply.h"
+	"r_things.h"
+	"s_sound.h"
+	"sounds.h"
+	"st_stuff.h"
+	"v_video.h"
+	"w_wad.h"
+	"x_main.h"
+	"gl_struct.h"
+	"icon.c"
+
+1419371346 c:\users\cagunyon\documents\d2k\deps\include\cairo\cairo-win32.h
+	"cairo.h"
+	<windows.h>
+
+1419426869 c:\users\cagunyon\documents\d2k\src\icon.c
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\sounds.c
+	"z_zone.h"
+	"doomtype.h"
+	"sounds.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\st_lib.c
+	"z_zone.h"
+	"doomdef.h"
+	"doomstat.h"
+	"v_video.h"
+	"w_wad.h"
+	"st_stuff.h"
+	"st_lib.h"
+	"r_main.h"
+	"lprintf.h"
+
+1419426869 c:\users\cagunyon\documents\d2k\src\st_lib.h
+	"r_defs.h"
+	"v_video.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\st_stuff.c
+	"z_zone.h"
+	"doomdef.h"
+	"doomstat.h"
+	"m_random.h"
+	"i_video.h"
+	"w_wad.h"
+	"st_stuff.h"
+	"st_lib.h"
+	"r_main.h"
+	"am_map.h"
+	"m_cheat.h"
+	"s_sound.h"
+	"sounds.h"
+	"dstrings.h"
+	"r_draw.h"
+	"e6y.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\sv_main.c
+	"z_zone.h"
+	<enet/enet.h>
+	"doomstat.h"
+	"n_net.h"
+	"n_main.h"
+	"n_state.h"
+	"n_peer.h"
+	"n_proto.h"
+	"p_cmd.h"
+	"p_user.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\tables.c
+	"z_zone.h"
+	"w_wad.h"
+	"tables.h"
+	"m_swap.h"
+	"lprintf.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_button.c
+	<stdlib.h>
+	<string.h>
+	"doomkeys.h"
+	"txt_button.h"
+	"txt_gui.h"
+	"txt_io.h"
+	"txt_main.h"
+	"txt_window.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\doomkeys.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_button.h
+	"txt_widget.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_widget.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_gui.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_io.h
+	"txt_main.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_window.h
+	"txt_widget.h"
+	"txt_table.h"
+	"txt_window_action.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_table.h
+	"txt_widget.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_window_action.h
+	"txt_widget.h"
+	"txt_window.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_checkbox.c
+	<stdlib.h>
+	<string.h>
+	"doomkeys.h"
+	"txt_checkbox.h"
+	"txt_gui.h"
+	"txt_io.h"
+	"txt_main.h"
+	"txt_window.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_checkbox.h
+	"txt_widget.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_desktop.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"doomkeys.h"
+	"txt_desktop.h"
+	"txt_gui.h"
+	"txt_io.h"
+	"txt_main.h"
+	"txt_separator.h"
+	"txt_window.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_desktop.h
+	"txt_window.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_separator.h
+	"txt_widget.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_dropdown.c
+	<stdlib.h>
+	<string.h>
+	"doomkeys.h"
+	"txt_button.h"
+	"txt_dropdown.h"
+	"txt_gui.h"
+	"txt_io.h"
+	"txt_main.h"
+	"txt_window.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_dropdown.h
+	"txt_widget.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_gui.c
+	<stdlib.h>
+	<string.h>
+	"txt_gui.h"
+	"txt_io.h"
+	"txt_main.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_inputbox.c
+	<ctype.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"doomkeys.h"
+	"txt_inputbox.h"
+	"txt_gui.h"
+	"txt_io.h"
+	"txt_main.h"
+	"txt_window.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_inputbox.h
+	"txt_widget.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_io.c
+	<stdlib.h>
+	<string.h>
+	"txt_io.h"
+	"txt_main.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_label.c
+	<stdlib.h>
+	<string.h>
+	"txt_label.h"
+	"txt_gui.h"
+	"txt_io.h"
+	"txt_main.h"
+	"txt_window.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_label.h
+	"txt_main.h"
+	"txt_widget.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_radiobutton.c
+	<stdlib.h>
+	<string.h>
+	"doomkeys.h"
+	"txt_radiobutton.h"
+	"txt_gui.h"
+	"txt_io.h"
+	"txt_main.h"
+	"txt_window.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_radiobutton.h
+	"txt_widget.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_scrollpane.c
+	<ctype.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<math.h>
+	"txt_scrollpane.h"
+	"txt_gui.h"
+	"txt_io.h"
+	"txt_main.h"
+	"txt_table.h"
+	"doomkeys.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_scrollpane.h
+	"txt_widget.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_sdl.c
+	"SDL.h"
+	<ctype.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"doomkeys.h"
+	"txt_main.h"
+	"txt_sdl.h"
+	"txt_font.h"
+	"txt_smallfont.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_font.h
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_smallfont.h
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_separator.c
+	<stdlib.h>
+	<string.h>
+	"txt_separator.h"
+	"txt_gui.h"
+	"txt_io.h"
+	"txt_main.h"
+	"txt_window.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_spinctrl.c
+	<ctype.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<math.h>
+	"doomkeys.h"
+	"txt_spinctrl.h"
+	"txt_gui.h"
+	"txt_io.h"
+	"txt_main.h"
+	"txt_window.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_spinctrl.h
+	"txt_widget.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_strut.c
+	<stdlib.h>
+	<string.h>
+	"doomkeys.h"
+	"txt_strut.h"
+	"txt_io.h"
+	"txt_main.h"
+	"txt_window.h"
+
+1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_strut.h
+	"txt_widget.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_table.c
+	<stdarg.h>
+	<stdlib.h>
+	<string.h>
+	"doomkeys.h"
+	"txt_desktop.h"
+	"txt_gui.h"
+	"txt_io.h"
+	"txt_main.h"
+	"txt_separator.h"
+	"txt_strut.h"
+	"txt_table.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_widget.c
+	<stdlib.h>
+	<string.h>
+	"txt_io.h"
+	"txt_widget.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_window.c
+	<stdlib.h>
+	<string.h>
+	"doomkeys.h"
+	"txt_desktop.h"
+	"txt_gui.h"
+	"txt_main.h"
+	"txt_separator.h"
+	"txt_window.h"
+
+1419426868 source:c:\users\cagunyon\documents\d2k\src\textscreen\txt_window_action.c
+	<stdlib.h>
+	<string.h>
+	"doomkeys.h"
+	"txt_window_action.h"
+	"txt_gui.h"
+	"txt_io.h"
+	"txt_main.h"
+	"txt_window.h"
+
+1419427556 source:c:\users\cagunyon\documents\d2k\src\v_video.c
+	"z_zone.h"
+	<SDL.h>
+	"doomdef.h"
+	"d_event.h"
+	"c_main.h"
+	"e6y.h"
+	"r_main.h"
+	"r_draw.h"
+	"m_bbox.h"
+	"w_wad.h"
+	"v_video.h"
+	"i_video.h"
+	"r_filter.h"
+	"lprintf.h"
+	"st_stuff.h"
+	"x_main.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\version.c
+	"version.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\w_mmap.c
+	"z_zone.h"
+	"w_wad.h"
+	"z_zone.h"
+	"lprintf.h"
+	"i_system.h"
+	"m_file.h"
+	"e6y.h"
+	"wchar.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\w_wad.c
+	"z_zone.h"
+	"doomstat.h"
+	"d_main.h"
+	"d_net.h"
+	"doomtype.h"
+	"e6y.h"
+	"i_system.h"
+	"lprintf.h"
+	"m_file.h"
+	"r_demo.h"
+	"r_main.h"
+	"w_wad.h"
+	"n_net.h"
+	"n_main.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\wi_stuff.c
+	"z_zone.h"
+	"doomstat.h"
+	"m_random.h"
+	"w_wad.h"
+	"g_game.h"
+	"r_main.h"
+	"v_video.h"
+	"wi_stuff.h"
+	"s_sound.h"
+	"sounds.h"
+	"lprintf.h"
+	"r_draw.h"
+	"n_net.h"
+
+1419427556 source:c:\users\cagunyon\documents\d2k\src\x_main.c
+	"z_zone.h"
+	<lua.h>
+	<lualib.h>
+	<lauxlib.h>
+	"d_event.h"
+	"c_main.h"
+	"i_main.h"
+	"i_system.h"
+	"lprintf.h"
+	"m_file.h"
+	"x_main.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\z_bmalloc.c
+	"z_zone.h"
+	"doomtype.h"
+	"z_bmalloc.h"
+	"lprintf.h"
+
+1419426869 source:c:\users\cagunyon\documents\d2k\src\z_zone.c
+	"z_zone.h"
+	"d_event.h"
+	"c_main.h"
+	"doomstat.h"
+	"m_argv.h"
+	"v_video.h"
+	"g_game.h"
+	"lprintf.h"
+	<dpmi.h>
+

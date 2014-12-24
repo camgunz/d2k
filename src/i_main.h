@@ -57,6 +57,7 @@ void I_Warning(const char *message, ...);
 
 void I_Init(void);
 void I_SafeExit(int rc);
+void I_RegisterFunctions(void);
 
 extern int (*I_GetTime)(void);
 

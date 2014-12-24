@@ -44,53 +44,48 @@
 #include <SDL.h>
 #include <SDL_syswm.h>
 
-#include "m_argv.h"
-#include "doomstat.h"
 #include "doomdef.h"
-#include "v_video.h"
-#include "r_draw.h"
-#include "r_things.h"
-#include "r_plane.h"
-#include "r_main.h"
-#include "f_wipe.h"
-#include "d_main.h"
-#include "d_event.h"
+#include "doomstat.h"
+#include "am_map.h"
 #include "d_deh.h"
-#include "i_joy.h"
-#include "i_video.h"
-#include "i_smp.h"
+#include "d_event.h"
+#include "d_main.h"
+#include "e6y.h"//e6y
+#include "f_wipe.h"
+#include "g_game.h"
 #include "i_capture.h"
+#include "i_joy.h"
+#include "i_smp.h"
+#include "i_main.h"
+#include "i_video.h"
+#include "lprintf.h"
+#include "m_argv.h"
+#include "p_user.h"
+#include "r_draw.h"
+#include "r_main.h"
+#include "r_plane.h"
+#include "r_screenmultiply.h"
+#include "r_things.h"
 #include "s_sound.h"
 #include "sounds.h"
-#include "w_wad.h"
 #include "st_stuff.h"
-#include "am_map.h"
-#include "g_game.h"
-#include "lprintf.h"
-#include "p_user.h"
+#include "v_video.h"
+#include "w_wad.h"
+#include "x_main.h"
 
 #ifdef GL_DOOM
 #include "gl_struct.h"
 #endif
 
-#include "r_screenmultiply.h"
-#include "e6y.h"//e6y
-#include "i_main.h"
-
 //e6y: new mouse code
 static SDL_Cursor* cursors[2] = {NULL, NULL};
 
-#ifdef ENABLE_OVERLAY
 static unsigned char *local_pixels = NULL;
-static cairo_t *render_context = NULL;
 static cairo_surface_t *render_surface = NULL;
 
 #ifdef GL_DOOM
 static GLuint overlay_tex_id = 0;
 #endif
-
-#endif
-
 
 dboolean window_focused;
 
@@ -291,10 +286,10 @@ void I_StartTic(void) {
 // I_StartFrame
 //
 void I_StartFrame(void) {
-#ifdef ENABLE_OVERLAY
+  /*
   cairo_set_operator(render_context, CAIRO_OPERATOR_CLEAR);
   cairo_paint(render_context);
-#endif
+  */
 }
 
 //
@@ -347,23 +342,22 @@ inline static dboolean I_SkipFrame(void)
 }
 #endif
 
-void* I_GetRenderContext(void) {
-#ifdef ENABLE_OVERLAY
+void* I_GetRenderSurface(void) {
   cairo_status_t status;
   SDL_SysWMinfo wm_info;
 
-  if (nodrawers)
-    return NULL;
-
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
-    if (render_surface && render_context && overlay_tex_id)
-      return render_context;
+    if (render_surface && overlay_tex_id)
+      return render_surface;
   }
-  else
+  else if (render_surface) {
+    return render_surface;
+  }
+#else
+  if (render_surface)
+    return render_surface;
 #endif
-  if (render_surface && render_context)
-    return render_context;
 
   SDL_VERSION(&wm_info.version);
   SDL_GetWMInfo(&wm_info);
@@ -379,7 +373,7 @@ void* I_GetRenderContext(void) {
       );
 
       if (local_pixels == NULL)
-        I_Error("I_GetRenderContext: malloc'ing pixels failed");
+        I_Error("I_GetRenderSurface: malloc'ing pixels failed");
 
       render_surface = cairo_image_surface_create_for_data(
         local_pixels,
@@ -418,7 +412,7 @@ void* I_GetRenderContext(void) {
     status = cairo_surface_status(render_surface);
 
     if (status != CAIRO_STATUS_SUCCESS) {
-      I_Error("I_GetRenderContext: Error creating cairo surface (%s)",
+      I_Error("I_GetRenderSurface: Error creating cairo surface (%s)",
         cairo_status_to_string(status)
       );
     }
@@ -456,7 +450,7 @@ void* I_GetRenderContext(void) {
     );
 
     if (local_pixels == NULL)
-      I_Error("I_GetRenderContext: malloc'ing pixels failed");
+      I_Error("I_GetRenderSurface: malloc'ing pixels failed");
 
     render_surface = cairo_image_surface_create_for_data(
       local_pixels,
@@ -470,15 +464,10 @@ void* I_GetRenderContext(void) {
   status = cairo_surface_status(render_surface);
 
   if (status != CAIRO_STATUS_SUCCESS) {
-    I_Error("I_GetRenderContext: Error creating cairo surface (%s)",
+    I_Error("I_GetRenderSurface: Error creating cairo surface (%s)",
       cairo_status_to_string(status)
     );
   }
-
-  if (render_context)
-    cairo_set_source_surface(render_context, render_surface, 0.0, 0.0);
-  else
-    render_context = cairo_create(render_surface);
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL && !overlay_tex_id) {
@@ -497,25 +486,13 @@ void* I_GetRenderContext(void) {
   }
 #endif
 
-  return render_context;
-#else
-  return NULL;
-#endif
+  return render_surface;
 }
 
-void I_ResetRenderContext(void) {
-#ifdef ENABLE_OVERLAY
-  if (nodrawers)
-    return;
-
+void I_ResetRenderSurface(void) {
   if (render_surface) {
     cairo_surface_destroy(render_surface);
     render_surface = NULL;
-  }
-
-  if (render_context) {
-    cairo_destroy(render_context);
-    render_context = NULL;
   }
 
 #ifdef GL_DOOM
@@ -523,7 +500,6 @@ void I_ResetRenderContext(void) {
     glDeleteTextures(1, &overlay_tex_id);
     overlay_tex_id = 0;
   }
-#endif
 #endif
 }
 
@@ -619,8 +595,7 @@ void I_ShutdownGraphics(void) {
 void I_UpdateNoBlit(void) {
 }
 
-void I_ReadOverlay(void) {
-#ifdef ENABLE_OVERLAY
+static void I_BlitOverlay(void) {
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
     glBindTexture(GL_TEXTURE_2D, overlay_tex_id);
@@ -642,7 +617,7 @@ void I_ReadOverlay(void) {
 
   if (SDL_MUSTLOCK(screen)) {
     if (SDL_LockSurface(screen) < 0) {
-      lprintf(LO_INFO, "I_ReadOverlay: %s\n", SDL_GetError());
+      lprintf(LO_INFO, "I_BlitOverlay: %s\n", SDL_GetError());
       return;
     }
   }
@@ -652,10 +627,10 @@ void I_ReadOverlay(void) {
   SDL_Surface *sdl_surf;
   
   if (csurf == NULL)
-    I_Error("I_ReadOverlay: Error getting cairo image surface");
+    I_Error("I_BlitOverlay: Error getting cairo image surface");
 
   if (screen_surf == NULL) {
-    I_Error("I_ReadOverlay: Error getting current SDL display surface (%s)",
+    I_Error("I_BlitOverlay: Error getting current SDL display surface (%s)",
       SDL_GetError()
     );
   }
@@ -673,7 +648,7 @@ void I_ReadOverlay(void) {
   );
 
   if (sdl_surf == NULL) {
-    I_Error("I_ReadOverlay: Error getting SDL surface (%s)",
+    I_Error("I_BlitOverlay: Error getting SDL surface (%s)",
       SDL_GetError()
     );
   }
@@ -692,23 +667,9 @@ void I_ReadOverlay(void) {
 
   if (SDL_MUSTLOCK(screen))
     SDL_UnlockSurface(screen);
-#endif
-}
-
-void I_RenderOverlay(void) {
-#ifdef ENABLE_OVERLAY
-  if (render_context == NULL || render_surface == NULL)
-    I_GetRenderContext();
-
-  cairo_set_operator(render_context, CAIRO_OPERATOR_SOURCE);
-
-  I_ReadOverlay();
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
-    cairo_set_operator(render_context, CAIRO_OPERATOR_OVER);
-    cairo_surface_flush(render_surface);
-
     glBindTexture(GL_TEXTURE_2D, overlay_tex_id);
 
     glBegin(GL_TRIANGLE_STRIP);
@@ -722,7 +683,6 @@ void I_RenderOverlay(void) {
     glVertex2f(REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
     glEnd();
   }
-#endif
 #endif
 }
 
@@ -741,12 +701,11 @@ void I_FinishUpdate(void) {
   // if (I_SkipFrame())return;
 
 #ifdef MONITOR_VISIBILITY
-  if (!(SDL_GetAppState() & SDL_APPACTIVE)) {
+  if (!(SDL_GetAppState() & SDL_APPACTIVE))
     return;
-  }
 #endif
 
-  I_RenderOverlay();
+  I_BlitOverlay();
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
@@ -1646,8 +1605,8 @@ void I_UpdateVideoMode(void) {
   }
 #endif
 
-  I_ResetRenderContext();
-  I_GetRenderContext();
+  I_ResetRenderSurface();
+  I_GetRenderSurface();
 }
 
 static void ActivateMouse(void)
@@ -1878,6 +1837,31 @@ static void ApplyWindowResize(SDL_Event *resize_event) {
   V_ChangeScreenResolution();
 }
 #endif
+
+int XF_GetRenderSurface(lua_State *L) {
+  lua_pushlightuserdata(L, I_GetRenderSurface());
+
+  return 1;
+}
+
+int XF_FlushRenderSurface(lua_State *L) {
+  if (render_surface)
+    cairo_surface_flush(render_surface);
+
+  return 0;
+}
+
+int XF_ResetRenderSurface(lua_State *L) {
+  I_ResetRenderSurface();
+
+  return 0;
+}
+
+int XF_BlitOverlay(lua_State *L) {
+  I_BlitOverlay();
+
+  return 0;
+}
 
 /* vi: set et ts=2 sw=2: */
 

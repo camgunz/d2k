@@ -28,6 +28,7 @@
 #include "doomdef.h"
 #include "d_event.h"
 #include "c_main.h"
+#include "e6y.h"
 #include "r_main.h"
 #include "r_draw.h"
 #include "m_bbox.h"
@@ -37,7 +38,7 @@
 #include "r_filter.h"
 #include "lprintf.h"
 #include "st_stuff.h"
-#include "e6y.h"
+#include "x_main.h"
 
 // DWF 2012-05-10
 // SetRatio sets the following global variables based on window geometry and
@@ -318,6 +319,8 @@ void V_Init (void) {
     screens[i].byte_pitch = 0;
     screens[i].int_pitch = 0;
   }
+
+  V_RegisterFunctions();
 }
 
 //
@@ -1481,6 +1484,38 @@ void V_ChangeScreenResolution(void) {
   if (V_GetMode() == VID_MODEGL)
     gld_PreprocessLevel();
 #endif
+}
+
+int XF_GetScreenWidth(lua_State *L) {
+  lua_pushnumber(L, REAL_SCREENWIDTH);
+
+  return 1;
+}
+
+int XF_GetScreenHeight(lua_State *L) {
+  lua_pushnumber(L, REAL_SCREENHEIGHT);
+
+  return 1;
+}
+
+int XF_UsingOpenGL(lua_State *L) {
+  bool using_opengl;
+
+#ifdef GL_DOOM
+  using_opengl = V_GetMode() == VID_MODEGL;
+#else
+  using_opengl = false;
+#endif
+
+  lua_pushboolean(L, using_opengl);
+
+  return 1;
+}
+
+void V_RegisterFunctions(void) {
+  X_RegisterFunc("get_screen_width", XF_GetScreenWidth);
+  X_RegisterFunc("get_screen_height", XF_GetScreenHeight);
+  X_RegisterFunc("using_opengl", XF_UsingOpenGL);
 }
 
 /* vi: set et ts=2 sw=2: */

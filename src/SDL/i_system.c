@@ -297,51 +297,66 @@ void I_SwitchToWindow(HWND hwnd)
   }
 }
 
-const char *I_DoomExeDir(void)
-{
+const char* I_DoomExeDir(void) {
   static const char current_dir_dummy[] = {"."}; // proff - rem extra slash 8/21/03
   static char *base;
-  if (!base)        // cache multiple requests
-    {
-      size_t len = strlen(*myargv);
-      char *p = (base = malloc(len+1)) + len - 1;
-      strcpy(base,*myargv);
-      while (p > base && *p!='/' && *p!='\\')
-        *p--=0;
-      if (*p=='/' || *p=='\\')
-        *p--=0;
-      if (strlen(base)<2)
-      {
-        free(base);
-        base = malloc(1024);
-        if (!getcwd(base,1024))
-          strcpy(base, current_dir_dummy);
+
+  if (!base) {      // cache multiple requests
+    char res;
+    size_t len = strlen(myargv[0]);
+    char *p;
+
+    base = malloc(len + 1);
+    p = base + len - 1;
+
+    strcpy(base, myargv[0]);
+
+    while (p > base && (*p) != '/' && (*p) != '\\')
+      *p-- = 0;
+
+    if (*p=='/' || *p=='\\')
+      *p-- = 0;
+
+    if (strlen(base) < 2) {
+      size_t base_size = 1024;
+
+      base = realloc(base, base_size);
+      while (true) {
+        if (getcwd(base, base_size) == NULL) {
+          if (errno == ERANGE) {
+            base_size *= 2;
+            base = realloc(base, base_size);
+          }
+          else {
+            I_Error(
+              "I_DoomExeDir: Error getting current working folder: %s",
+              strerror(errno)
+            );
+          }
+        }
       }
     }
+  }
+
   return base;
 }
 
-const char* I_GetTempDir(void)
-{
+const char* I_GetTempDir(void) {
   static char tmp_path[PATH_MAX] = {0};
 
   if (tmp_path[0] == 0)
-  {
     GetTempPath(sizeof(tmp_path), tmp_path);
-  }
 
   return tmp_path;
 }
 
 #elif defined(AMIGA)
 
-const char *I_DoomExeDir(void)
-{
+const char* I_DoomExeDir(void) {
   return "PROGDIR:";
 }
 
-const char* I_GetTempDir(void)
-{
+const char* I_GetTempDir(void) {
   return "PROGDIR:";
 }
 
@@ -349,33 +364,34 @@ const char* I_GetTempDir(void)
 
 /* Defined elsewhere */
 
-#else
+#else /* POSIX */
 // cph - V.Aguilar (5/30/99) suggested return ~/.lxdoom/, creating
 //  if non-existant
 // cph 2006/07/23 - give prboom+ its own dir
 // Mead rem extra slash 8/21/03
-static const char prboom_dir[] = {"/." PACKAGE_TARNAME};
 
-const char *I_DoomExeDir(void)
-{
+const char* I_DoomExeDir(void) {
+  static const char doom2k_dir[] = {"/." PACKAGE_TARNAME};
   static char *base;
-  if (!base)        // cache multiple requests
-    {
-      char *home = getenv("HOME");
-      size_t len = strlen(home);
 
-      base = malloc(len + strlen(prboom_dir) + 1);
-      strcpy(base, home);
-      // I've had trouble with trailing slashes before...
-      if (base[len-1] == '/') base[len-1] = 0;
-      strcat(base, prboom_dir);
-      mkdir(base, S_IRUSR | S_IWUSR | S_IXUSR); // Make sure it exists
-    }
+  if (!base) { // cache multiple requests
+    char *home = getenv("HOME");
+    size_t len = strlen(home);
+
+    base = malloc(len + strlen(doom2k_dir) + 1);
+    strcpy(base, home);
+    // I've had trouble with trailing slashes before...
+    if (base[len - 1] == '/')
+      base[len - 1] = 0;
+
+    strcat(base, doom2k_dir);
+    mkdir(base, S_IRUSR | S_IWUSR | S_IXUSR); // Make sure it exists
+  }
+
   return base;
 }
 
-const char *I_GetTempDir(void)
-{
+const char* I_GetTempDir(void) {
   return "/tmp";
 }
 
