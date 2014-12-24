@@ -276,16 +276,14 @@ int I_Filelength(int handle)
 // proff_fs 2002-07-04 - moved to i_system
 #ifdef _WIN32
 
-void I_SwitchToWindow(HWND hwnd)
-{
+void I_SwitchToWindow(HWND hwnd) {
   typedef BOOL (WINAPI *TSwitchToThisWindow) (HWND wnd, BOOL restore);
   static TSwitchToThisWindow SwitchToThisWindow = NULL;
 
   if (!SwitchToThisWindow)
     SwitchToThisWindow = (TSwitchToThisWindow)GetProcAddress(GetModuleHandle("user32.dll"), "SwitchToThisWindow");
 
-  if (SwitchToThisWindow)
-  {
+  if (SwitchToThisWindow) {
     HWND hwndLastActive = GetLastActivePopup(hwnd);
 
     if (IsWindowVisible(hwndLastActive))
@@ -298,43 +296,23 @@ void I_SwitchToWindow(HWND hwnd)
 }
 
 const char* I_DoomExeDir(void) {
-  static const char current_dir_dummy[] = {"."}; // proff - rem extra slash 8/21/03
   static char *base;
 
-  if (!base) {      // cache multiple requests
-    char res;
-    size_t len = strlen(myargv[0]);
-    char *p;
+  /*
+   * CG: This code is largely from GLib, released under the GPLv2 (or any later
+   *     version)
+   */
 
-    base = malloc(len + 1);
-    p = base + len - 1;
+  char *utf8_buf = NULL;
+  wchar_t buf[MAX_PATH + 1];
 
-    strcpy(base, myargv[0]);
+  if (!base) { // cache multiple requests
+    if (GetModuleFileNameW(GetModuleHandle(NULL), buf, G_N_ELEMENTS(buf)) > 0)
+      utf8_buf = g_utf16_to_utf8(buf, -1, NULL, NULL, NULL);
 
-    while (p > base && (*p) != '/' && (*p) != '\\')
-      *p-- = 0;
-
-    if (*p=='/' || *p=='\\')
-      *p-- = 0;
-
-    if (strlen(base) < 2) {
-      size_t base_size = 1024;
-
-      base = realloc(base, base_size);
-      while (true) {
-        if (getcwd(base, base_size) == NULL) {
-          if (errno == ERANGE) {
-            base_size *= 2;
-            base = realloc(base, base_size);
-          }
-          else {
-            I_Error(
-              "I_DoomExeDir: Error getting current working folder: %s",
-              strerror(errno)
-            );
-          }
-        }
-      }
+    if (utf8_buf) {
+      base = g_path_get_dirname(utf8_buf);
+      g_free(utf8_buf);
     }
   }
 

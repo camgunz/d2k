@@ -42,7 +42,7 @@
 			<Add option='-DPACKAGE_STRING=&quot;\&quot;${PACKAGE_NAME} v${PACKAGE_VERSION}\&quot;&quot;' />
 			<Add option='-DPACKAGE_TARNAME=&quot;\&quot;doom2k\&quot;&quot;' />
 			<Add option='-DPACKAGE_URL=&quot;\&quot;http://github.com/camgunz/d2k\&quot;&quot;' />
-			<Add option='-DDOOMWADDIR=&quot;\&quot;C:\wads\&quot;&quot;' />
+			<Add option='-DDOOMWADDIR=&quot;\&quot;C:\\wads\&quot;&quot;' />
 			<Add option="-DGL_DOOM=1" />
 			<Add option="-DDOGS=1" />
 			<Add option="-DHIGHRES=1" />
@@ -73,6 +73,9 @@
 			<Add option="-DFLUIDSYNTH_NOT_A_DLL=1" />
 			<Add option="-DGLIB_STATIC_COMPILATION=1" />
 			<Add option="-DGOBJECT_STATIC_COMPILATION=1" />
+			<Add option="-D__USE_MINGW_ANSI_STDIO=1" />
+			<Add option="-D_GNU_SOURCE=1" />
+			<Add option="-DMIKMOD_STATIC=1" />
 			<Add directory="../deps/include" />
 			<Add directory="../deps/include/glib-2.0" />
 			<Add directory="../deps/lib/glib-2.0/include" />
@@ -83,7 +86,6 @@
 		</Compiler>
 		<Linker>
 			<Add option="-static -static-libgcc" />
-			<Add library="..\deps\lib\libSDLmain.a" />
 			<Add library="..\deps\lib\libSDL_image.a" />
 			<Add library="..\deps\lib\libSDL_mixer.a" />
 			<Add library="..\deps\lib\libSDL.a" />
@@ -124,7 +126,6 @@
 			<Add library="..\deps\lib\libgthread-2.0.a" />
 			<Add library="..\deps\lib\libglib-2.0.a" />
 			<Add library="..\deps\lib\libexpat.a" />
-			<Add library="..\deps\lib\libxml2.a" />
 			<Add library="..\deps\lib\libpcre.a" />
 			<Add library="..\deps\lib\libpcreposix.a" />
 			<Add library="..\deps\lib\libffi.a" />
@@ -145,6 +146,7 @@
 			<Add library="opengl32" />
 			<Add library="usp10" />
 			<Add library="winmm" />
+			<Add library="ws2_32" />
 			<Add directory="../deps/bin" />
 			<Add directory="../deps/lib" />
 		</Linker>
