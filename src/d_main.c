@@ -157,7 +157,7 @@ const char *const standard_iwads[]=
   "bfgdoom.wad",
 };
 
-//e6y static 
+//e6y static
 const int nstandard_iwads = sizeof(standard_iwads) / sizeof(*standard_iwads);
 
 /*
@@ -336,7 +336,7 @@ bool D_Responder(event_t *ev) {
 
     if (ev->data1 == key_level_restart && G_ReloadLevel())
       return true;
- 
+
     if (ev->data1 == key_demo_endlevel) {
       if (demoplayback && !doSkip && singledemo) {
         demo_stoponend = true;
@@ -424,7 +424,7 @@ bool D_Responder(event_t *ev) {
  *
  * Called by I/O functions when an event is received.
  * Try event handlers for each code area in turn.
- * cph - in the true spirit of the Boom source, let the 
+ * cph - in the true spirit of the Boom source, let the
  *  short ciruit operator madness begin!
  * CG - not so much with the madness anymore
  */
@@ -542,7 +542,7 @@ void D_PostEvent(event_t *ev) {
 static void D_Wipe(void) {
   dboolean done;
   int wipestart;
-  
+
   if (!render_wipescreen)
     return; //e6y
 
@@ -604,7 +604,7 @@ void D_Display(void) {
       gld_PreprocessLevel();
 #endif
   }
-  
+
   if (!doSkip || !gamekeydown[key_use])
 
   if (nodrawers)                    // for comparative timing / profiling
@@ -672,7 +672,7 @@ void D_Display(void) {
       // e6y
       // I should do it because I call R_RenderPlayerView in all cases,
       // not only if viewactive is true
-      borderwillneedredraw = (borderwillneedredraw) || 
+      borderwillneedredraw = (borderwillneedredraw) ||
         (((automapmode & am_active) && !(automapmode & am_overlay)));
     }
     if (redrawborderstuff || (V_GetMode() == VID_MODEGL))
@@ -1005,7 +1005,7 @@ void D_StartTitle (void) {
 
 // killough 10/98: support -dehout filename
 // cph - made const, don't cache results
-//e6y static 
+//e6y static
 static const char* D_dehout(void) {
   int p = M_CheckParm("-dehout");
 
@@ -1088,7 +1088,7 @@ void D_AddFile(const char *path, wad_source_t source) {
 
     if (gwafile == NULL)
       I_Error("D_AddFile: Allocating GWA file info failed");
-     
+
     wadfile->name = gwa_filepath;
     wadfile->src = source; // Ty 08/29/98
     wadfile->handle = 0;
@@ -1265,7 +1265,7 @@ void D_ClearDEHFiles(void) {
 // jff 4/19/98 Add routine to test IWAD for validity and determine
 // the gamemode from it. Also note if DOOM II, whether secret levels exist
 // CPhipps - const char* for iwadname, made static
-//e6y static 
+//e6y static
 void CheckIWAD(const char *iwadname, GameMode_t *gmode, dboolean *hassec) {
   int ud = 0;
   int rg = 0;
@@ -1504,7 +1504,7 @@ void IdentifyVersion(void) {
   }
 #endif
 
-  if (!iwad && !(*iwad))
+  if (!iwad || !(*iwad))
     I_Error("IdentifyVersion: IWAD not found\n");
 
   AddIWAD(iwad);
@@ -1602,7 +1602,7 @@ static void FindResponseFile (void)
           if (size > 0) {
             char *s = malloc(size + 1);
             char *p = s;
-            int quoted = 0; 
+            int quoted = 0;
 
             while (size > 0) {
               // Whitespace terminates the token unless quoted
@@ -1613,7 +1613,7 @@ static void FindResponseFile (void)
                 // Quotes are removed but remembered
                 infile++;
                 size--;
-                quoted ^= 1; 
+                quoted ^= 1;
               }
               else {
                 *p++ = *infile++;
@@ -1735,7 +1735,7 @@ static void DoLooseFiles(void)
 
     // so now we must have a loose file.  Find out what kind and store it.
     arglen = strlen(myargv[i]);
-    
+
     k = 0;
     while (looses[k].ext)
     {
@@ -2275,7 +2275,7 @@ static void D_DoomMainSetup(void) {
     lprintf(LO_INFO, "\n");
   }
 
-  // e6y 
+  // e6y
   // option to disable automatic loading of dehacked-in-wad lump
   if (!M_CheckParm ("-nodeh")) {
     // MBF-style DeHackEd in wad support: load all lumps, not just the last one
