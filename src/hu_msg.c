@@ -80,7 +80,7 @@ static void scroll_down(message_widget_t *mw) {
 }
 
 static unsigned int get_line_count(message_widget_t *mw) {
-  HU_MessageWidgetRebuild(mw, I_GetRenderContext());
+  HU_MessageWidgetRebuild(mw, NULL);
 
   return pango_layout_get_line_count(mw->layout);
 }

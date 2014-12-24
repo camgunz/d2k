@@ -81,7 +81,6 @@
 static SDL_Cursor* cursors[2] = {NULL, NULL};
 
 static unsigned char *local_pixels = NULL;
-static cairo_t *render_context = NULL;
 static cairo_surface_t *render_surface = NULL;
 
 #ifdef GL_DOOM
@@ -287,8 +286,10 @@ void I_StartTic(void) {
 // I_StartFrame
 //
 void I_StartFrame(void) {
+  /*
   cairo_set_operator(render_context, CAIRO_OPERATOR_CLEAR);
   cairo_paint(render_context);
+  */
 }
 
 //
@@ -372,7 +373,7 @@ void* I_GetRenderSurface(void) {
       );
 
       if (local_pixels == NULL)
-        I_Error("I_GetRenderContext: malloc'ing pixels failed");
+        I_Error("I_GetRenderSurface: malloc'ing pixels failed");
 
       render_surface = cairo_image_surface_create_for_data(
         local_pixels,
@@ -411,7 +412,7 @@ void* I_GetRenderSurface(void) {
     status = cairo_surface_status(render_surface);
 
     if (status != CAIRO_STATUS_SUCCESS) {
-      I_Error("I_GetRenderContext: Error creating cairo surface (%s)",
+      I_Error("I_GetRenderSurface: Error creating cairo surface (%s)",
         cairo_status_to_string(status)
       );
     }
@@ -449,7 +450,7 @@ void* I_GetRenderSurface(void) {
     );
 
     if (local_pixels == NULL)
-      I_Error("I_GetRenderContext: malloc'ing pixels failed");
+      I_Error("I_GetRenderSurface: malloc'ing pixels failed");
 
     render_surface = cairo_image_surface_create_for_data(
       local_pixels,
@@ -463,7 +464,7 @@ void* I_GetRenderSurface(void) {
   status = cairo_surface_status(render_surface);
 
   if (status != CAIRO_STATUS_SUCCESS) {
-    I_Error("I_GetRenderContext: Error creating cairo surface (%s)",
+    I_Error("I_GetRenderSurface: Error creating cairo surface (%s)",
       cairo_status_to_string(status)
     );
   }
@@ -1604,8 +1605,8 @@ void I_UpdateVideoMode(void) {
   }
 #endif
 
-  I_ResetRenderContext();
-  I_GetRenderContext();
+  I_ResetRenderSurface();
+  I_GetRenderSurface();
 }
 
 static void ActivateMouse(void)
@@ -1837,14 +1838,21 @@ static void ApplyWindowResize(SDL_Event *resize_event) {
 }
 #endif
 
-int XF_GetRenderContext(lua_State *L) {
-  lua_pushlightuserdata(L, I_GetRenderContext());
+int XF_GetRenderSurface(lua_State *L) {
+  lua_pushlightuserdata(L, I_GetRenderSurface());
 
   return 1;
 }
 
-int XF_ResetRenderContext(lua_State *L) {
-  I_ResetRenderContext();
+int XF_FlushRenderSurface(lua_State *L) {
+  if (render_surface)
+    cairo_surface_flush(render_surface);
+
+  return 0;
+}
+
+int XF_ResetRenderSurface(lua_State *L) {
+  I_ResetRenderSurface();
 
   return 0;
 }

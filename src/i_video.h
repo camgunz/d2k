@@ -49,8 +49,8 @@ void I_InitGraphics (void);
 void I_UpdateVideoMode(void);
 void I_ShutdownGraphics(void);
 
-void* I_GetRenderContext(void);
-void  I_ResetRenderContext(void);
+void* I_GetRenderSurface(void);
+void  I_ResetRenderSurface(void);
 void  I_RenderOverlay(void);
 
 /* Takes full 8 bit values. */

@@ -33,7 +33,9 @@
 void        X_RegisterFunc(const char *name, lua_CFunction func);
 void        X_Init(void);
 const char* X_GetError(void);
+const char* X_StrError(void);
 bool        X_RunCode(const char *code);
+lua_State*  X_GetState(void);
 
 #endif
 

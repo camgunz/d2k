@@ -34,6 +34,7 @@
 #include "d_main.h"
 #include "dstrings.h"
 #include "c_main.h"
+#include "e6y.h" //e6y
 #include "g_game.h"
 #include "g_keys.h"
 #include "hu_lib.h"
@@ -62,7 +63,7 @@
 #include "sc_man.h"
 #include "sounds.h"
 #include "st_stuff.h" /* jff 2/16/98 need loc of status bar */
-#include "e6y.h" //e6y
+#include "x_main.h"
 
 extern SDL_Surface *screen;
 
@@ -336,6 +337,20 @@ void HU_Init(void) {
 
   shiftxform = english_shiftxform;
 
+  lua_State *L = X_GetState();
+
+  if (nodrawers)
+    return;
+
+  lua_getglobal(L, X_NAMESPACE);
+  lua_getfield(L, -1, "hud");
+  lua_getfield(L, -1, "init");
+  if (lua_pcall(L, 0, 0, 0) != LUA_OK)
+    I_Error("Error initializing HUD: %s", X_StrError());
+  lua_pop(L, 2);
+
+
+#if 0
   // load the heads-up font
   j = HU_FONTSTART;
   for (i = 0; i < HU_FONTSIZE; i++, j++) {
@@ -437,12 +452,12 @@ void HU_Init(void) {
   R_SetSpriteByName(&hu_font_hud[43], "ROCKA0");
 
 #ifdef ENABLE_OVERLAY
-  I_ResetRenderContext();
+  I_ResetRenderSurface();
 
   // create the message widget
   // messages to player in upper-left of screen
   w_messages = HU_MessageWidgetNewBuf(
-    I_GetRenderContext(),
+    NULL,
     player_message_buffers[displayplayer],
     HU_MSGX,
     HU_MSGY,
@@ -454,17 +469,19 @@ void HU_Init(void) {
   HU_MessageWidgetSetRetractable(w_messages, true);
 
   w_centermsg = HU_MessageWidgetNew(
-    I_GetRenderContext(), HU_CENTERMSGX, HU_CENTERMSGY, REAL_SCREENWIDTH, 0, 0
+    NULL, HU_CENTERMSGX, HU_CENTERMSGY, REAL_SCREENWIDTH, 0, 0
   );
   HU_MessageWidgetSetHeightByLines(w_centermsg, 2);
 
   w_chat = HU_ChatWidgetNew(
-    I_GetRenderContext(), 0, 0, REAL_SCREENWIDTH, 0, send_chat_message
+    NULL, 0, 0, REAL_SCREENWIDTH, 0, send_chat_message
   );
   HU_ChatWidgetMoveToBottom(w_chat, REAL_SCREENHEIGHT);
   HU_ChatWidgetSetHeightByLines(w_chat, 1);
   HU_ChatWidgetSetFGColor(w_chat, white);
   HU_ChatWidgetSetBGColor(w_chat, grey);
+#endif
+
 #endif
 
   HU_Start();
@@ -493,17 +510,29 @@ static void HU_Stop(void) {
 // Passed nothing, returns nothing
 //
 void HU_Start(void) {
+#if 0
   int   i;
   const char *s; /* cph - const */
+#endif
+
+  lua_State *L = X_GetState();
 
   if (nodrawers)
     return;
 
+  lua_getglobal(L, X_NAMESPACE);
+  lua_getfield(L, -1, "hud");
+  lua_getfield(L, -1, "start");
+  if (lua_pcall(L, 0, 0, 0) != LUA_OK)
+    I_Error("Error starting HUD: %s", X_StrError());
+  lua_pop(L, 1);
+
+#if 0
   if (headsupactive)                    // stop before starting
     HU_Stop();
 
 #if ENABLE_OVERLAY
-  I_ResetRenderContext();
+  I_ResetRenderSurface();
 #endif
 
   plr = &players[displayplayer];        // killough 3/7/98
@@ -518,8 +547,8 @@ void HU_Start(void) {
     w_centermsg, player_center_message_buffers[displayplayer]
   );
 
-  HU_MessageWidgetRebuild(w_messages, I_GetRenderContext());
-  HU_MessageWidgetRebuild(w_centermsg, I_GetRenderContext());
+  HU_MessageWidgetRebuild(w_messages, NULL);
+  HU_MessageWidgetRebuild(w_centermsg, NULL);
 #endif
 
   //jff 2/16/98 added some HUD widgets
@@ -940,6 +969,7 @@ void HU_Start(void) {
   HU_LoadHUDDefs();
 
   HU_MoveHud(true);
+#endif
 }
 
 void HU_NextHud(void) {
@@ -2476,11 +2506,11 @@ main_widgets:
   return;
 
   /*
-  HU_MessageWidgetDrawer(w_messages, I_GetRenderContext());
-  HU_MessageWidgetDrawer(w_centermsg, I_GetRenderContext());
+  HU_MessageWidgetDrawer(w_messages, NULL);
+  HU_MessageWidgetDrawer(w_centermsg, NULL);
   C_Drawer();
   if (HU_ChatWidgetActive(w_chat))
-    HU_ChatWidgetDrawer(w_chat, I_GetRenderContext());
+    HU_ChatWidgetDrawer(w_chat, NULL);
   */
 }
 

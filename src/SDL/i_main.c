@@ -51,6 +51,7 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 #undef main
 
 extern int XF_GetRenderSurface(lua_State *L);
+extern int XF_FlushRenderSurface(lua_State *L);
 extern int XF_ResetRenderSurface(lua_State *L);
 extern int XF_BlitOverlay(lua_State *L);
 

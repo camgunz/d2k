@@ -2423,6 +2423,10 @@ static void D_DoomMainSetup(void) {
 
   graphics_initialized = true;
 
+  // CG 07/22/2014: Scripting
+  lprintf(LO_INFO, "X_Init: Init script engine.\n");
+  X_Init();
+
   //jff 9/3/98 use logical output routine
   lprintf(LO_INFO, "HU_Init: Setting up heads up display.\n");
   HU_Init();
@@ -2440,10 +2444,6 @@ static void D_DoomMainSetup(void) {
   lprintf(LO_INFO, "C_Init: Init console.\n");
   C_Init();
 #endif
-
-  // CG 07/22/2014: Scripting
-  lprintf(LO_INFO, "X_Init: Init script engine.\n");
-  X_Init();
 
   // CPhipps - auto screenshots
   if ((p = M_CheckParm("-autoshot")) && (p < myargc - 2))

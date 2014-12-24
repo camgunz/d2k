@@ -63,6 +63,12 @@ static void set_error(const char *message) {
   error_message = strdup(message);
 }
 
+const char* X_StrError(void) {
+  set_error(lua_tostring(L, -1));
+
+  return error_message;
+}
+
 const char* X_GetError(void) {
   if (error_message)
     return error_message;
@@ -79,6 +85,10 @@ bool X_RunCode(const char *code) {
   }
 
   return true;
+}
+
+lua_State* X_GetState(void) {
+  return L;
 }
 
 static void X_Close(void) {

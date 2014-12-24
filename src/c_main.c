@@ -288,7 +288,7 @@ void C_Init(void) {
 
   if (!nodrawers) {
     cons = HU_ConsoleWidgetNew(
-      I_GetRenderContext(),
+      NULL,
       0,
       0,
       REAL_SCREENWIDTH, REAL_SCREENHEIGHT >> 1,
@@ -317,7 +317,7 @@ void C_Init(void) {
 
 void C_Reset(void) {
   if (!nodrawers)
-    HU_ConsoleWidgetReset(cons, I_GetRenderContext());
+    HU_ConsoleWidgetReset(cons, NULL);
 }
 
 void C_Ticker(void) {
@@ -327,7 +327,7 @@ void C_Ticker(void) {
 
 void C_Drawer(void) {
   if (!nodrawers)
-    HU_ConsoleWidgetDrawer(cons, I_GetRenderContext());
+    HU_ConsoleWidgetDrawer(cons, NULL);
 }
 
 bool C_Responder(event_t *ev) {
