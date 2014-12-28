@@ -344,13 +344,15 @@ void HU_Init(void) {
 
   lua_getglobal(L, X_NAMESPACE);
   lua_getfield(L, -1, "hud");
+  lua_remove(L, -2);
   lua_getfield(L, -1, "init");
-  if (lua_pcall(L, 0, 0, 0) != LUA_OK)
+  lua_remove(L, -2);
+  lua_getglobal(L, X_NAMESPACE);
+  lua_getfield(L, -1, "hud");
+  lua_remove(L, -2);
+  if (lua_pcall(L, 1, 0, 0) != LUA_OK)
     I_Error("Error initializing HUD: %s", X_StrError());
-  lua_pop(L, 2);
 
-
-#if 0
   // load the heads-up font
   j = HU_FONTSTART;
   for (i = 0; i < HU_FONTSIZE; i++, j++) {
@@ -452,7 +454,6 @@ void HU_Init(void) {
   R_SetSpriteByName(&hu_font_hud[43], "ROCKA0");
 
 #ifdef ENABLE_OVERLAY
-  I_ResetRenderSurface();
 
   // create the message widget
   // messages to player in upper-left of screen
@@ -482,8 +483,6 @@ void HU_Init(void) {
   HU_ChatWidgetSetBGColor(w_chat, grey);
 #endif
 
-#endif
-
   HU_Start();
 }
 
@@ -510,10 +509,8 @@ static void HU_Stop(void) {
 // Passed nothing, returns nothing
 //
 void HU_Start(void) {
-#if 0
   int   i;
   const char *s; /* cph - const */
-#endif
 
   lua_State *L = X_GetState();
 
@@ -522,14 +519,19 @@ void HU_Start(void) {
 
   lua_getglobal(L, X_NAMESPACE);
   lua_getfield(L, -1, "hud");
+  lua_remove(L, -2);
   lua_getfield(L, -1, "start");
-  if (lua_pcall(L, 0, 0, 0) != LUA_OK)
+  lua_remove(L, -2);
+  lua_getglobal(L, X_NAMESPACE);
+  lua_getfield(L, -1, "hud");
+  lua_remove(L, -2);
+  if (lua_pcall(L, 1, 0, 0) != LUA_OK)
     I_Error("Error starting HUD: %s", X_StrError());
-  lua_pop(L, 1);
 
 #if 0
   if (headsupactive)                    // stop before starting
     HU_Stop();
+#endif
 
 #if ENABLE_OVERLAY
   I_ResetRenderSurface();
@@ -969,7 +971,6 @@ void HU_Start(void) {
   HU_LoadHUDDefs();
 
   HU_MoveHud(true);
-#endif
 }
 
 void HU_NextHud(void) {
@@ -2317,6 +2318,7 @@ void HU_draw_crosshair(void)
 void HU_Drawer(void) {
   char *s;
   player_t *plr;
+  lua_State *L = X_GetState();
 
   if (nodrawers)
     return;
@@ -2324,6 +2326,21 @@ void HU_Drawer(void) {
   // don't draw anything if there's a fullscreen menu up
   if (menuactive == mnact_full)
     return;
+
+  lua_getglobal(L, X_NAMESPACE);
+  lua_getfield(L, -1, "hud");
+  lua_remove(L, -2);
+  lua_getfield(L, -1, "update");
+  lua_remove(L, -2);
+  lua_getglobal(L, X_NAMESPACE);
+  lua_getfield(L, -1, "hud");
+  lua_remove(L, -2);
+  if (lua_pcall(L, 1, 0, 0) != LUA_OK)
+    I_Error("Error updating HUD: %s", X_StrError());
+
+  /*
+  return;
+  */
 
   plr = &players[displayplayer];         // killough 3/7/98
 

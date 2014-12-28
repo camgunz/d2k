@@ -21,56 +21,25 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-local lgi = require 'lgi'
-local cairo = lgi.cairo
-local pango = lgi.Pango
-local hud_widget = require 'hud_widget'
+HUDWidget = {}
 
-Console = {}
-setmetatable(Console, {__index = hud_widget.HUDWidget})
-
-function Console:get_name()
-  return 'console'
+function HUDWidget:get_name()
 end
 
-function Console:reset()
+function HUDWidget:reset()
 end
 
-function Console:tick()
+function HUDWidget:tick()
 end
 
-function Console:draw()
-  local xc = 128
-  local yc = 128
-  local radius = 100
-  local angle1 = math.rad(45)
-  local angle2 = math.rad(180)
-
-  self.hud.cr:set_source_rgba(0, 0, 0, 0.6)
-  self.hud.cr.line_width = 10
-  self.hud.cr:arc(xc, yc, radius, angle1, angle2)
-  self.hud.cr:stroke()
-  self.hud.cr:set_source_rgba(1, 0.2, 0.2, 0.6)
-  self.hud.cr.line_width = 6
-  self.hud.cr:arc(xc, yc, 10, 0, math.rad(360))
-  self.hud.cr:fill()
-  self.hud.cr:arc(xc, yc, radius, angle1, angle1)
-  self.hud.cr:line_to(xc, yc)
-  self.hud.cr:arc(xc, yc, radius, angle2, angle2)
-  self.hud.cr:line_to(xc, yc)
-  self.hud.cr:stroke()
+function HUDWidget:draw()
 end
 
-function Console:was_updated()
-  if self.should_update == nil then
-    self.should_update = false
-    return true
-  end
-
+function HUDWidget:was_updated()
   return false
 end
 
-return {Console = Console}
+return {HUDWidget = HUDWidget}
 
 -- vi: et ts=2 sw=2
 

@@ -1,11 +1,12 @@
-# Doom2K Style Guide
+# D2K Style Guide
 
 Code style is important; it improves readability thus enhancing the ability of
-maintainers, developers and contributors to add features and fix bugs.  While
-many argue that consistency, rather than a specific style, is the real goal, I
-disagree: consistently unreadable and confusing is still unreadable and
+maintainers, developers and contributors to add features and fix bugs.  More
+crucially, code style can also be used to help guard against dangerous code.
+While many argue that consistency, rather than a specific style, is the real
+goal, I disagree: consistently unreadable and confusing is still unreadable and
 confusing.  Therefore, I provide these style guidelines which set out the
-format in which Doom2K source is to be formatted.
+format in which D2k source is to be formatted.
 
 ## General Guidelines
 
@@ -13,7 +14,7 @@ First, some general guidelines.
 
 ### Reformatting
 
-As a derivative of PrBoom+, Doom2K has accepted contributions from numerous
+As a derivative of PrBoom+, D2K has accepted contributions from numerous
 contributors over its storied lifespan, many of which have different code
 styles.  Going forward, contributions should be formatted according to this
 style guide, but existing code should be properly reformatted whenever it is
@@ -22,7 +23,7 @@ of them.
 
 ### Indenting
 
-Doom2K uses an indent-width of 2 spaces.  **Never use tabs for any reason**.
+D2K uses an indent-width of 2 spaces.  **Never use tabs for any reason**.
 
 ### Tabs vs. Spaces
 
@@ -59,9 +60,9 @@ Furthermore, it is becoming more common to view code on mobile devices, and
 longer lines there mean smaller, less readable characters.
 
 It's also worth saying that high-resolution displays are uncommon in the
-developing world.  You ought to be able to edit the source code of Doom2K
-without ugly wrapping or painful scrolling no matter where you are, and a
-minimum 640x480 resolution is entirely reasonable.
+developing world.  You ought to be able to edit the source code of D2K without
+ugly wrapping or painful scrolling no matter where you are, and a minimum
+640x480 resolution is entirely reasonable.
 
 Finally, it is much easier to scan through code when it is only 80 characters
 wide.
@@ -425,12 +426,12 @@ write:
 
   1. `z_zone.h`
   2. Library header files (`<SDL.h>`, `<enet/enet.h>`, etc.)
-  3. Doom2K headers
+  3. D2K headers
 
 Include `z_zone.h` first, so that anything afterwards uses its configuration
 information and redefinitions.
 
-Include library headers next so that Doom2K headers can use their definitions.
+Include library headers next so that D2K headers can use their definitions.
 
 ### Local Headers
 
@@ -471,4 +472,8 @@ Functions that take no arguments should be declared as:
 not:
 
     void M_GreatFunction();
+
+The latter indicates that the function takes any number of of arguments
+(unknown arity), whereas the former indicates that the function takes no
+arguments (0 arity).  If you want to leave the arity unspecified use varargs.
 

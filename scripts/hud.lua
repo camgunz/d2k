@@ -23,14 +23,18 @@
 
 HUD = {}
 
-function HUD:main()
-  print('Main!')
-end
+local lgi = require 'lgi'
+local cairo = lgi.cairo
 
 function HUD:init()
-  print('Initializing HUD')
+  print('HUD: Initializing')
 
-  self.render_context = xf.get_render_context()
+  self.render_surface = cairo.ImageSurface.create(
+    'ARGB32', 
+    xf.get_screen_width(),
+    xf.get_screen_height()
+  )
+  self.cr = cairo.Context.create(self.render_surface)
   self.active = false
 end
 
@@ -56,8 +60,9 @@ function HUD:remove_widget(widget)
 end
 
 function HUD:start()
+  print('HUD: Starting')
   if self.active then
-    self.stop()
+    self:stop()
   end
 
   self.active = true
@@ -65,6 +70,8 @@ function HUD:start()
   for i, w in pairs(self.widgets) do
     w:reset()
   end
+
+  xf.reset_overlay()
 end
 
 function HUD:stop()
@@ -77,10 +84,47 @@ function HUD:tick()
   end
 end
 
-function HUD:draw()
+function HUD:clear()
+  self.cr.operator = 'CLEAR'
+  self.cr:paint()
+end
+
+
+function HUD:update()
+  updated = false
+
   for i, w in pairs(self.widgets) do
-    w:draw()
+    if w:was_updated() then
+      if not updated then
+        self:clear()
+        self.cr.operator = 'SOURCE'
+        updated = true
+      end
+      w:draw()
+    end
   end
+
+  if updated then
+    if xf.using_opengl() then
+      self.cr.operator = 'OVER'
+    end
+    self.render_surface:flush()
+  end
+end
+
+function HUD:render()
+  self:update()
+
+  -- self:clear()
+
+  self.cr.operator = 'SOURCE'
+
+  xf.blit_overlay(
+    self.render_surface:get_data(),
+    self.render_surface:get_width(),
+    self.render_surface:get_height()
+  )
+
 end
 
 return {HUD = HUD}

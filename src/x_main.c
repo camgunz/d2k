@@ -137,7 +137,6 @@ void X_Init(void) {
   lua_getglobal(L, X_NAMESPACE);
   g_hash_table_foreach(x_funcs, load_x_func, NULL);
 
-  lua_getglobal(L, X_NAMESPACE);
   lua_pushstring(L, script_path);
   lua_setfield(L, -2, "script_path");
   lua_pop(L, 1);

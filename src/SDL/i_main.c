@@ -50,10 +50,7 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 
 #undef main
 
-extern int XF_GetRenderSurface(lua_State *L);
-extern int XF_FlushRenderSurface(lua_State *L);
-extern int XF_ResetRenderSurface(lua_State *L);
-extern int XF_BlitOverlay(lua_State *L);
+extern int XF_ResetOverlay(lua_State *L);
 
 /* Most of the following has been rewritten by Lee Killough
  *
@@ -228,6 +225,37 @@ static void PrintVer(void) {
   char vbuf[200];
 
   lprintf(LO_INFO, "%s\n", I_GetVersionString(vbuf, 200));
+}
+
+#include "icon.c"
+
+void I_SetWindowIcon(void) {
+  static SDL_Surface *surface = NULL;
+
+  // do it only once, because of crash in SDL_InitVideoMode in SDL 1.3
+  if (!surface)
+  {
+    surface = SDL_CreateRGBSurfaceFrom(icon_data,
+      icon_w, icon_h, 32, icon_w * 4,
+      0xff << 0, 0xff << 8, 0xff << 16, 0xff << 24);
+  }
+
+  if (surface)
+    SDL_WM_SetIcon(surface, NULL);
+}
+
+void I_SetWindowCaption(void) {
+  size_t len = strlen(PACKAGE_NAME) + strlen(PACKAGE_VERSION) + 3;
+  char *buf = calloc(len, sizeof(char));
+
+  if (buf == NULL)
+    I_Error("I_SetWindowCaption: calloc failed\n");
+
+  snprintf(buf, len, "%s v%s", PACKAGE_NAME, PACKAGE_VERSION);
+
+  SDL_WM_SetCaption(buf, NULL);
+
+  free(buf);
 }
 
 //
@@ -671,9 +699,7 @@ int main(int argc, char **argv) {
 #endif
 
 void I_RegisterFunctions(void) {
-  X_RegisterFunc("get_render_surface", XF_GetRenderSurface);
-  X_RegisterFunc("reset_render_surface", XF_ResetRenderSurface);
-  X_RegisterFunc("blit_overlay", XF_BlitOverlay);
+  X_RegisterFunc("reset_overlay", XF_ResetOverlay);
 }
 
 /* vi: set et ts=2 sw=2: */

@@ -29,11 +29,10 @@ local console = require 'console'
 xf.hud = {}
 xf.console = {}
 
-print(hud)
-print(console)
-
 setmetatable(xf.hud, {__index = hud.HUD})
 setmetatable(xf.console, {__index = console.Console})
 
 xf.hud:add_widget(xf.console)
+
+-- vi: et ts=2 sw=2
 
