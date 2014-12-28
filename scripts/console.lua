@@ -67,7 +67,7 @@ function Console:was_updated()
     return true
   end
 
-  return false
+  return true
 end
 
 return {Console = Console}

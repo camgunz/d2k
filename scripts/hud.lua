@@ -30,7 +30,7 @@ function HUD:init()
   print('HUD: Initializing')
 
   self.render_surface = cairo.ImageSurface.create(
-    'ARGB32', 
+    'ARGB32',
     xf.get_screen_width(),
     xf.get_screen_height()
   )

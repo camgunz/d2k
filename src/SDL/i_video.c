@@ -85,8 +85,6 @@ extern void M_QuitDOOM(int choice);
 //e6y: new mouse code
 static SDL_Cursor* cursors[2] = {NULL, NULL};
 
-static unsigned char *local_pixels = NULL;
-static cairo_surface_t *render_surface = NULL;
 static int newpal = 0;
 
 #ifdef GL_DOOM
@@ -151,6 +149,19 @@ static void reset_overlay(void) {
     glDeleteTextures(1, &overlay_tex_id);
     overlay_tex_id = 0;
   }
+
+  if (V_GetMode() == VID_MODEGL && !overlay_tex_id) {
+    puts("Building overlay texture");
+    glGenTextures(1, &overlay_tex_id);
+    glBindTexture(GL_TEXTURE_2D, overlay_tex_id);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GLEXT_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GLEXT_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+  }
 #endif
 }
 
@@ -187,10 +198,20 @@ static void render_overlay(void) {
       REAL_SCREENWIDTH,
       REAL_SCREENHEIGHT,
       0,
-      GL_RGBA,
+      GL_BGRA,
       GL_UNSIGNED_BYTE,
       overlay_pixels
     );
+    glBegin(GL_TRIANGLE_STRIP);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex2f(0.0f, 0.0f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex2f(0.0f, REAL_SCREENHEIGHT);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex2f(REAL_SCREENWIDTH, 0.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex2f(REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
+    glEnd();
 
     return;
   }
@@ -240,18 +261,6 @@ static void render_overlay(void) {
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
-    glBindTexture(GL_TEXTURE_2D, overlay_tex_id);
-
-    glBegin(GL_TRIANGLE_STRIP);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(0.0f, 0.0f);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(0.0f, REAL_SCREENHEIGHT);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(REAL_SCREENWIDTH, 0.0f);
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
-    glEnd();
   }
 #endif
 }
