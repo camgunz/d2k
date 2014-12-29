@@ -84,24 +84,24 @@ static void W_AddFile(size_t wadfile_index) {
 
   // open the file and add to directory
 
-  wadfile->handle = M_Open(wadfile->name, O_RDONLY | O_BINARY, S_IRUSR);
+  wadfile->handle = M_Open(wadfile->name, O_RDONLY | _O_BINARY, S_IRUSR);
 
   if (wadfile->handle == -1 && N_GetWad(wadfile->name)) // CPhipps
-    wadfile->handle = M_Open(wadfile->name, O_RDONLY | O_BINARY, S_IRUSR);
+    wadfile->handle = M_Open(wadfile->name, O_RDONLY | _O_BINARY, S_IRUSR);
 
   if (wadfile->handle == -1 &&
       strlen(wadfile->name) > 4 &&
       wadfile->src == source_pwad &&
       !strcasecmp(wadfile->name + strlen(wadfile->name) - 4 , ".wad") &&
       N_GetWad(wadfile->name)) {
-    wadfile->handle = M_Open(wadfile->name, O_RDONLY | O_BINARY, S_IRUSR);
+    wadfile->handle = M_Open(wadfile->name, O_RDONLY | _O_BINARY, S_IRUSR);
   }
 
   if (wadfile->handle == -1) {
     if (strlen(wadfile->name) <= 4 ||      // add error check -- killough
         (strcasecmp(wadfile->name + strlen(wadfile->name) - 4, ".lmp") &&
          strcasecmp(wadfile->name + strlen(wadfile->name) - 4, ".gwa"))) {
-      I_Error("W_AddFile: couldn't open %s",wadfile->name);
+      I_Error("W_AddFile: couldn't open %s", wadfile->name);
     }
     return;
   }

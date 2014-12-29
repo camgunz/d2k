@@ -28,7 +28,9 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
-#define X_NAMESPACE "xf"
+#define X_NAMESPACE "d2k"
+#define X_FOLDER_NAME "scripts"
+#define X_INIT_SCRIPT_NAME "init.lua"
 
 void        X_RegisterFunc(const char *name, lua_CFunction func);
 void        X_Init(void);

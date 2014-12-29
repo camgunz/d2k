@@ -350,7 +350,7 @@ void HU_Init(void) {
   lua_getglobal(L, X_NAMESPACE);
   lua_getfield(L, -1, "hud");
   lua_remove(L, -2);
-  if (lua_pcall(L, 1, 0, 0) != LUA_OK)
+  if (lua_pcall(L, 1, 0, 0) != 0)
     I_Error("Error initializing HUD: %s", X_StrError());
 
   // load the heads-up font
@@ -525,7 +525,7 @@ void HU_Start(void) {
   lua_getglobal(L, X_NAMESPACE);
   lua_getfield(L, -1, "hud");
   lua_remove(L, -2);
-  if (lua_pcall(L, 1, 0, 0) != LUA_OK)
+  if (lua_pcall(L, 1, 0, 0) != 0)
     I_Error("Error starting HUD: %s", X_StrError());
 
 #if 0
@@ -2335,7 +2335,7 @@ void HU_Drawer(void) {
   lua_getglobal(L, X_NAMESPACE);
   lua_getfield(L, -1, "hud");
   lua_remove(L, -2);
-  if (lua_pcall(L, 1, 0, 0) != LUA_OK)
+  if (lua_pcall(L, 1, 0, 0) != 0)
     I_Error("Error updating HUD: %s", X_StrError());
 
   /*

@@ -21,18 +21,18 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-package.path = package.path .. ';' .. xf.script_path
+package.path = package.path .. ';' .. d2k.script_path
 
 local hud = require 'hud'
 local console = require 'console'
 
-xf.hud = {}
-xf.console = {}
+d2k.hud = {}
+d2k.console = {}
 
-setmetatable(xf.hud, {__index = hud.HUD})
-setmetatable(xf.console, {__index = console.Console})
+setmetatable(d2k.hud, {__index = hud.HUD})
+setmetatable(d2k.console, {__index = console.Console})
 
-xf.hud:add_widget(xf.console)
+d2k.hud:add_widget(d2k.console)
 
 -- vi: et ts=2 sw=2
 

@@ -182,7 +182,7 @@ static void render_overlay(void) {
   lua_remove(L, -2);
   lua_getfield(L, -1, "render_surface");
   lua_remove(L, -2);
-  if (lua_pcall(L, 1, 1, 0) != LUA_OK)
+  if (lua_pcall(L, 1, 1, 0) != 0)
     I_Error("Error getting overlay data: %s", X_StrError());
   if (!lua_islightuserdata(L, -1))
     I_Error("xf.hud.render_surface:get_data did not return light userdata");
@@ -226,7 +226,7 @@ static void render_overlay(void) {
 
   SDL_Surface *screen_surf = SDL_GetVideoSurface();
   SDL_Surface *sdl_surf;
-  
+
   if (screen_surf == NULL) {
     I_Error("I_BlitOverlay: Error getting current SDL display surface (%s)",
       SDL_GetError()
@@ -272,7 +272,7 @@ static void init_inputs(void) {
 
   // check if the user wants to use the mouse
   mouse_enabled = usemouse && !nomouse_parm;
-  
+
   SDL_PumpEvents();
 
   // Save the default cursor so it can be recalled later
@@ -429,7 +429,7 @@ static void fill_screen_resolution_list(void) {
 
       if (i == count - 1)
         screen_resolution_lowest = strdup(mode);
-      
+
       for (j = 0; j < list_size; j++) {
         if (!strcmp(mode, screen_resolutions_list[j])) {
           in_list = true;
@@ -450,7 +450,7 @@ static void fill_screen_resolution_list(void) {
     }
     screen_resolutions_list[list_size] = NULL;
   }
-  
+
   if (list_size == 0) {
     doom_snprintf(
       mode, sizeof(mode), "%dx%d", desired_screenwidth, desired_screenheight
@@ -517,7 +517,7 @@ static void get_closest_resolution(int *width, int *height, int flags) {
     //if (iteration == 0 && (twidth < *width || theight < *height))
     //  continue;
 
-    dist = (twidth  - *width)  * (twidth  - *width) + 
+    dist = (twidth  - *width)  * (twidth  - *width) +
            (theight - *height) * (theight - *height);
 
     if (dist < closest) {
@@ -534,7 +534,7 @@ static void get_closest_resolution(int *width, int *height, int flags) {
   }
 
   puts("7");
-}  
+}
 
 static void activate_mouse(void) {
   SDL_WM_GrabInput(SDL_GRAB_ON);
@@ -625,7 +625,7 @@ static bool mouse_should_be_grabbed() {
   if (!window_focused)
     return false;
 
-  // always grab the mouse when full screen (dont want to 
+  // always grab the mouse when full screen (dont want to
   // see the mouse pointer)
   if (desired_fullscreen)
     return true;
@@ -634,12 +634,12 @@ static bool mouse_should_be_grabbed() {
   if (!mouse_enabled)
     return false;
 
-  // always grab the mouse in camera mode when playing levels 
+  // always grab the mouse in camera mode when playing levels
   // and menu is not active
   if (walkcamera.type)
     return (demoplayback && gamestate == GS_LEVEL && !menuactive);
 
-  // when menu is active or game is paused, release the mouse 
+  // when menu is active or game is paused, release the mouse
   if (menuactive || paused)
     return false;
 
@@ -994,7 +994,7 @@ unsigned int I_TestCPUCacheMisses(int width, int height, unsigned int mintime) {
   char *ps;
   char *pd;
   unsigned int tickStart = SDL_GetTicks();
-  
+
   do {
     pd = d;
     ps = s;
@@ -1114,7 +1114,7 @@ void I_InitScreenResolution(void) {
       use_fullscreen = 0;
 
     // e6y
-    // New command-line options for setting a window (-window) 
+    // New command-line options for setting a window (-window)
     // or fullscreen (-nowindow) mode temporarily which is not saved in cfg.
     // It works like "-geom" switch
     desired_fullscreen = use_fullscreen;
@@ -1159,7 +1159,7 @@ void I_InitScreenResolution(void) {
   mode = I_GetModeFromString(default_videomode);
   if ((i = M_CheckParm("-vidmode")) && i < myargc - 1)
     mode = I_GetModeFromString(myargv[i + 1]);
-  
+
   V_InitMode(mode);
 
   I_CalculateRes(w, h);

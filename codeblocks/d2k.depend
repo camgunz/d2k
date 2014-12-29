@@ -9922,7 +9922,7 @@
 	"m_buf.h"
 	"m_pbuf.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\windows.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\windows.h
 	<_mingw.h>
 	<sdkddkver.h>
 	<winresrc.h>
@@ -9962,7 +9962,7 @@
 	<mcx.h>
 	<imm.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\_mingw.h
 	"_mingw_mac.h"
 	"_mingw_secapi.h"
 	"_cygwin.h"
@@ -9970,29 +9970,29 @@
 	"sdks/_mingw_directx.h"
 	"sdks/_mingw_ddk.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw_mac.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\_mingw_mac.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw_secapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\_mingw_secapi.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\_cygwin.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\_cygwin.h
 	<stddef.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\stddef.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\stddef.h
 	<crtdefs.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\crtdefs.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\crtdefs.h
 	<_mingw.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\vadefs.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\vadefs.h
 	<_mingw.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdks\_mingw_directx.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdks\_mingw_directx.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdks\_mingw_ddk.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdks\_mingw_ddk.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdkddkver.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdkddkver.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winresrc.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winresrc.h
 	<winuser.rh>
 	<commctrl.rh>
 	<dde.rh>
@@ -10000,49 +10000,49 @@
 	<dlgs.h>
 	<winver.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winuser.rh
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winuser.rh
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\commctrl.rh
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\commctrl.rh
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\dde.rh
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\dde.rh
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winnt.rh
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winnt.rh
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\dlgs.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\dlgs.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winver.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winver.h
 	<_mingw.h>
 	<_mingw_unicode.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw_unicode.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\_mingw_unicode.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\excpt.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\excpt.h
 	<crtdefs.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\stdarg.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\stdarg.h
 	<_mingw_stdarg.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw_stdarg.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\_mingw_stdarg.h
 	<vadefs.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\windef.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\windef.h
 	<minwindef.h>
 	<winnt.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\minwindef.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\minwindef.h
 	<_mingw.h>
 	<winapifamily.h>
 	<specstrings.h>
 	<winnt.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winapifamily.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winapifamily.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\specstrings.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\specstrings.h
 	<sal.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sal.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sal.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winnt.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winnt.h
 	<_mingw_unicode.h>
 	<_mingw.h>
 	<ctype.h>
@@ -10074,17 +10074,17 @@
 	"pshpack4.h"
 	"poppack.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\ctype.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\ctype.h
 	<crtdefs.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\apiset.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\apiset.h
 	<_mingw.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\intrin-impl.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\intrin-impl.h
 	<intrin.h>
 	<psdk_inc/intrin-impl.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\intrin.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\intrin.h
 	<crtdefs.h>
 	<setjmp.h>
 	<stddef.h>
@@ -10103,77 +10103,77 @@
 	<fvec.h>
 	<ivec.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\setjmp.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\setjmp.h
 	<crtdefs.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\stdlib.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\stdlib.h
 	<crtdefs.h>
 	<limits.h>
 	<sec_api/stdlib_s.h>
 	<malloc.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\limits.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\limits.h
 	<crtdefs.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\stdlib_s.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sec_api\stdlib_s.h
 	<stdlib.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\malloc.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\malloc.h
 	<crtdefs.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\errno.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\errno.h
 	<crtdefs.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\dvec.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\dvec.h
 	<intrin.h>
 	<assert.h>
 	<fvec.h>
 	<crtdefs.h>
 	<iostream>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\assert.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\assert.h
 	<crtdefs.h>
 	<stdlib.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\fvec.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\fvec.h
 	<intrin.h>
 	<assert.h>
 	<ivec.h>
 	<crtdefs.h>
 	<iostream>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\ivec.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\ivec.h
 	<intrin.h>
 	<assert.h>
 	<dvec.h>
 	<crtdefs.h>
 	<iostream>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\basetsd.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\basetsd.h
 	<_mingw.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\guiddef.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\guiddef.h
 	<_mingw.h>
 	<string.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\string.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\string.h
 	<crtdefs.h>
 	<sec_api/string_s.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\string_s.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sec_api\string_s.h
 	<string.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\pshpack4.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\pshpack4.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\poppack.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\poppack.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\pshpack2.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\pshpack2.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\pshpack8.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\pshpack8.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\ktmtypes.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\ktmtypes.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winbase.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winbase.h
 	<_mingw_unicode.h>
 	<apisetcconv.h>
 	<winapifamily.h>
@@ -10210,182 +10210,182 @@
 	<winerror.h>
 	<timezoneapi.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\apisetcconv.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\apisetcconv.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\minwinbase.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\minwinbase.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\bemapiset.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\bemapiset.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\debugapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\debugapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\errhandlingapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\errhandlingapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\fibersapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\fibersapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\fileapi.h
-	<apiset.h>
-	<apisetcconv.h>
-	<minwindef.h>
-	<minwinbase.h>
-
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\handleapi.h
-	<apiset.h>
-	<apisetcconv.h>
-	<minwindef.h>
-
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\heapapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\fileapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\ioapiset.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\handleapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\heapapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\interlockedapi.h
-	<apiset.h>
-	<apisetcconv.h>
-	<minwindef.h>
-
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\jobapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\ioapiset.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\libloaderapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\interlockedapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\jobapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\memoryapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\libloaderapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\namedpipeapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\memoryapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\namespaceapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\namedpipeapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\processenv.h
-	<apiset.h>
-	<apisetcconv.h>
-	<minwindef.h>
-
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\processthreadsapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\namespaceapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\processtopologyapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\processenv.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\processthreadsapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\profileapi.h
-	<apiset.h>
-	<apisetcconv.h>
-	<minwindef.h>
-
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\realtimeapiset.h
-	<apiset.h>
-	<apisetcconv.h>
-	<minwindef.h>
-
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\securityappcontainer.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\processtopologyapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\securitybaseapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\profileapi.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\realtimeapiset.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\securityappcontainer.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\synchapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\securitybaseapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sysinfoapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\synchapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\systemtopologyapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sysinfoapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\threadpoolapiset.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\systemtopologyapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\threadpoollegacyapiset.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\threadpoolapiset.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\utilapiset.h
-	<apiset.h>
-	<apisetcconv.h>
-	<minwindef.h>
-
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\wow64apiset.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\threadpoollegacyapiset.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winerror.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\utilapiset.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\wow64apiset.h
+	<apiset.h>
+	<apisetcconv.h>
+	<minwindef.h>
+	<minwinbase.h>
+
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winerror.h
 	<fltwinerror.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\fltwinerror.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\fltwinerror.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\timezoneapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\timezoneapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\wingdi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\wingdi.h
 	<winapifamily.h>
 	<_mingw_unicode.h>
 	<pshpack1.h>
@@ -10399,9 +10399,9 @@
 	<pshpack4.h>
 	<poppack.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\pshpack1.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\pshpack1.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winuser.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winuser.h
 	<_mingw_unicode.h>
 	<apisetcconv.h>
 	<_mingw.h>
@@ -10411,66 +10411,66 @@
 	<poppack.h>
 	<tvout.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\tvout.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\tvout.h
 	<guiddef.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winnls.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winnls.h
 	<winapifamily.h>
 	<datetimeapi.h>
 	<libloaderapi.h>
 	<stringapiset.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\datetimeapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\datetimeapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<minwinbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\stringapiset.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\stringapiset.h
 	<apiset.h>
 	<apisetcconv.h>
 	<minwindef.h>
 	<winnls.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\wincon.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\wincon.h
 	<_mingw_unicode.h>
 	<winapifamily.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winreg.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winreg.h
 	<_mingw_unicode.h>
 	<reason.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\reason.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\reason.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winnetwk.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winnetwk.h
 	<winapifamily.h>
 	<_mingw_unicode.h>
 	<wnnc.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\wnnc.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\wnnc.h
 	<winapifamily.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\virtdisk.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\virtdisk.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\cderr.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\cderr.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\dde.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\dde.h
 	<windef.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\ddeml.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\ddeml.h
 	<_mingw_unicode.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\lzexpand.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\lzexpand.h
 	<_mingw_unicode.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\mmsystem.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\mmsystem.h
 	<_mingw_unicode.h>
 	<pshpack1.h>
 	<poppack.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\nb30.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\nb30.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpc.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\rpc.h
 	<_mingw.h>
 	<windows.h>
 	<basetsd.h>
@@ -10483,37 +10483,37 @@
 	<rpcasync.h>
 	<poppack.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpcdce.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\rpcdce.h
 	<_mingw_unicode.h>
 	<specstrings.h>
 	<guiddef.h>
 	<rpcdcep.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpcdcep.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\rpcdcep.h
 	<_mingw_unicode.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpcnsi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\rpcnsi.h
 	<_mingw_unicode.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpcnterr.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\rpcnterr.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpcasync.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\rpcasync.h
 	<_mingw_unicode.h>
 	<pshpack8.h>
 	<poppack.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\shellapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\shellapi.h
 	<winapifamily.h>
 	<_mingw_unicode.h>
 	<specstrings.h>
 	<pshpack1.h>
 	<poppack.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winperf.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winperf.h
 	<pshpack8.h>
 	<poppack.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winsock.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winsock.h
 	<windows.h>
 	<_timeval.h>
 	<_bsd_types.h>
@@ -10526,34 +10526,34 @@
 	<psdk_inc/_xmitfile.h>
 	<psdk_inc/_wsa_errnos.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\_timeval.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\_timeval.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\_bsd_types.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\_bsd_types.h
 	<_mingw.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\inaddr.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\inaddr.h
 	<_bsd_types.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_socket_types.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_socket_types.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_fd_types.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_fd_types.h
 	<psdk_inc/_socket_types.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_ip_types.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_ip_types.h
 	<_bsd_types.h>
 	<inaddr.h>
 	<_timeval.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_ip_mreq1.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_ip_mreq1.h
 	<inaddr.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_wsadata.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_wsadata.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_xmitfile.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_xmitfile.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_wsa_errnos.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_wsa_errnos.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\wincrypt.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\wincrypt.h
 	<_mingw.h>
 	<_mingw_unicode.h>
 	<guiddef.h>
@@ -10562,39 +10562,39 @@
 	<winapifamily.h>
 	<apisetcconv.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\bcrypt.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\bcrypt.h
 	<winapifamily.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\ncrypt.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\ncrypt.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winefs.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winefs.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winscard.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winscard.h
 	<_mingw_unicode.h>
 	<wtypes.h>
 	<winioctl.h>
 	"winsmcrd.h"
 	"SCardErr.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\wtypes.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\wtypes.h
 	<rpc.h>
 	<rpcndr.h>
 	<windows.h>
 	<ole2.h>
 	<wtypesbase.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpcndr.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\rpcndr.h
 	<pshpack8.h>
 	<basetsd.h>
 	<rpcnsip.h>
 	<rpcsal.h>
 	<poppack.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpcnsip.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\rpcnsip.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\rpcsal.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\rpcsal.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\ole2.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\ole2.h
 	<winapifamily.h>
 	<pshpack8.h>
 	<winerror.h>
@@ -10603,7 +10603,7 @@
 	<oleidl.h>
 	<poppack.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\objbase.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\objbase.h
 	<winapifamily.h>
 	<rpc.h>
 	<rpcndr.h>
@@ -10614,7 +10614,7 @@
 	<propidl.h>
 	<poppack.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\combaseapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\combaseapi.h
 	<apiset.h>
 	<apisetcconv.h>
 	<rpc.h>
@@ -10628,7 +10628,7 @@
 	<cguid.h>
 	<poppack.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\wtypesbase.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\wtypesbase.h
 	<rpc.h>
 	<rpcndr.h>
 	<windows.h>
@@ -10636,7 +10636,7 @@
 	<basetsd.h>
 	<guiddef.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\unknwnbase.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\unknwnbase.h
 	<rpc.h>
 	<rpcndr.h>
 	<windows.h>
@@ -10644,7 +10644,7 @@
 	<wtypesbase.h>
 	<winapifamily.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\objidlbase.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\objidlbase.h
 	<rpc.h>
 	<rpcndr.h>
 	<windows.h>
@@ -10653,9 +10653,9 @@
 	<wtypesbase.h>
 	<winapifamily.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\cguid.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\cguid.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\objidl.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\objidl.h
 	<rpc.h>
 	<rpcndr.h>
 	<windows.h>
@@ -10665,7 +10665,7 @@
 	<winapifamily.h>
 	<winapifamily.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\unknwn.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\unknwn.h
 	<rpc.h>
 	<rpcndr.h>
 	<windows.h>
@@ -10673,7 +10673,7 @@
 	<wtypes.h>
 	<winapifamily.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\urlmon.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\urlmon.h
 	<rpc.h>
 	<rpcndr.h>
 	<windows.h>
@@ -10684,7 +10684,7 @@
 	<msxml.h>
 	<winapifamily.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\oleidl.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\oleidl.h
 	<rpc.h>
 	<rpcndr.h>
 	<windows.h>
@@ -10692,7 +10692,7 @@
 	<objidl.h>
 	<winapifamily.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\servprov.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\servprov.h
 	<rpc.h>
 	<rpcndr.h>
 	<windows.h>
@@ -10700,7 +10700,7 @@
 	<objidl.h>
 	<winapifamily.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\msxml.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\msxml.h
 	<rpc.h>
 	<rpcndr.h>
 	<windows.h>
@@ -10709,7 +10709,7 @@
 	<objidl.h>
 	<oaidl.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\oaidl.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\oaidl.h
 	<rpc.h>
 	<rpcndr.h>
 	<windows.h>
@@ -10717,7 +10717,7 @@
 	<objidl.h>
 	<winapifamily.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\propidl.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\propidl.h
 	<rpc.h>
 	<rpcndr.h>
 	<windows.h>
@@ -10727,12 +10727,12 @@
 	<oaidl.h>
 	<winapifamily.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\oleauto.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\oleauto.h
 	<pshpack8.h>
 	<oaidl.h>
 	<poppack.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winioctl.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winioctl.h
 	<pshpack1.h>
 	<poppack.h>
 	<pshpack1.h>
@@ -10746,63 +10746,63 @@
 	<pshpack1.h>
 	<poppack.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winsmcrd.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winsmcrd.h
 	<_mingw_unicode.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\scarderr.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\scarderr.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winspool.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winspool.h
 	<_mingw_unicode.h>
 	<prsht.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\prsht.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\prsht.h
 	<_mingw_unicode.h>
 	<pshpack8.h>
 	<pshpack4.h>
 	<poppack.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\ole.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\ole.h
 	<winapifamily.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\commdlg.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\commdlg.h
 	<_mingw_unicode.h>
 	<prsht.h>
 	<pshpack1.h>
 	<poppack.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\stralign.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\stralign.h
 	<sec_api/stralign_s.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\stralign_s.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sec_api\stralign_s.h
 	<stralign.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winsvc.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winsvc.h
 	<_mingw.h>
 	<_mingw_unicode.h>
 	<apisetcconv.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\mcx.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\mcx.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\imm.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\imm.h
 	<_mingw_unicode.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\direct.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\direct.h
 	<crtdefs.h>
 	<io.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\io.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\io.h
 	<crtdefs.h>
 	<string.h>
 	<_mingw_off_t.h>
 	<string.h>
 	<sec_api/io_s.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw_off_t.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\_mingw_off_t.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\io_s.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sec_api\io_s.h
 	<io.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\commctrl.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\commctrl.h
 	<_mingw_unicode.h>
 	<prsht.h>
 	<pshpack1.h>
@@ -10814,31 +10814,31 @@
 	<pshpack1.h>
 	<poppack.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\process.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\process.h
 	<crtdefs.h>
 	<sys/types.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sys\types.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sys\types.h
 	<crtdefs.h>
 	<_mingw_off_t.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\delayimp.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\delayimp.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\dirent.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\dirent.h
 	<crtdefs.h>
 	<io.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\libgen.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\libgen.h
 	<crtdefs.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\fcntl.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\fcntl.h
 	<crtdefs.h>
 	<io.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\float.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\float.h
 	<crtdefs.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\iconv.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\iconv.h
 	"iconv.h"
 	<stddef.h>
 	<errno.h>
@@ -10847,7 +10847,7 @@
 	<time.h>
 	<wchar.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\stdio.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\stdio.h
 	<crtdefs.h>
 	<_mingw_print_push.h>
 	<_mingw_off_t.h>
@@ -10855,37 +10855,37 @@
 	<sec_api/stdio_s.h>
 	<_mingw_print_pop.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw_print_push.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\_mingw_print_push.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\swprintf.inl
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\swprintf.inl
 	<vadefs.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\stdio_s.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sec_api\stdio_s.h
 	<stdio.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw_print_pop.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\_mingw_print_pop.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\time.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\time.h
 	<crtdefs.h>
 	<_timeval.h>
 	<sec_api/time_s.h>
 	<sys/timeb.h>
 	<pthread_time.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\time_s.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sec_api\time_s.h
 	<time.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sys\timeb.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sys\timeb.h
 	<crtdefs.h>
 	<sec_api/sys/timeb_s.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\sys\timeb_s.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sec_api\sys\timeb_s.h
 	<sys/timeb.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\pthread_time.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\pthread_time.h
 	<sys/timeb.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\wchar.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\wchar.h
 	<crtdefs.h>
 	<_mingw_print_push.h>
 	<_mingw_off_t.h>
@@ -10894,22 +10894,22 @@
 	<sec_api/wchar_s.h>
 	<_mingw_print_pop.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\_mingw_stat64.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\_mingw_stat64.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\wchar_s.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sec_api\wchar_s.h
 	<wchar.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\math.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\math.h
 	<crtdefs.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\memory.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\memory.h
 	<crtdefs.h>
 	<sec_api/memory_s.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sec_api\memory_s.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sec_api\memory_s.h
 	<memory.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sched.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sched.h
 	<stddef.h>
 	<errno.h>
 	<sys/types.h>
@@ -10918,45 +10918,45 @@
 	<signal.h>
 	<sys/timeb.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\signal.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\signal.h
 	<crtdefs.h>
 	<pthread_signal.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\pthread_signal.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\pthread_signal.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\strings.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\strings.h
 	<string.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sys\stat.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sys\stat.h
 	<crtdefs.h>
 	<io.h>
 	<sys/types.h>
 	<_mingw_stat64.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\inttypes.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\inttypes.h
 	<crtdefs.h>
 	<stdint.h>
 	<stddef.h>
 	<_mingw_print_push.h>
 	<_mingw_print_pop.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\stdint.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\stdint.h
 	<crtdefs.h>
 	<stddef.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\unistd.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\unistd.h
 	<io.h>
 	<process.h>
 	<getopt.h>
 	<sys/types.h>
 	<pthread_unistd.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\getopt.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\getopt.h
 	<crtdefs.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\pthread_unistd.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\pthread_unistd.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib.h
 	<glib/galloca.h>
 	<glib/garray.h>
 	<glib/gasyncqueue.h>
@@ -11032,279 +11032,279 @@
 	<glib/deprecated/grel.h>
 	<glib/deprecated/gthread.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\galloca.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\galloca.h
 	<glib/gtypes.h>
 	<alloca.h>
 	<alloca.h>
 	<malloc.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtypes.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtypes.h
 	<glibconfig.h>
 	<glib/gmacros.h>
 	<glib/gversionmacros.h>
 	<time.h>
 
-1419371347 c:\users\cagunyon\documents\d2k\deps\lib\glib-2.0\include\glibconfig.h
+1419873439 c:\users\cagunyon\documents\d2k\deps\lib\glib-2.0\include\glibconfig.h
 	<glib/gmacros.h>
 	<limits.h>
 	<float.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmacros.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmacros.h
 	<stddef.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gversionmacros.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gversionmacros.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\garray.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\garray.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gasyncqueue.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gasyncqueue.h
 	<glib/gthread.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gthread.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gthread.h
 	<glib/gatomic.h>
 	<glib/gerror.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gatomic.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gatomic.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gerror.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gerror.h
 	<stdarg.h>
 	<glib/gquark.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gquark.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gquark.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gbacktrace.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gbacktrace.h
 	<glib/gtypes.h>
 	<signal.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gbase64.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gbase64.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gbitlock.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gbitlock.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gbookmarkfile.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gbookmarkfile.h
 	<glib/gerror.h>
 	<time.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gbytes.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gbytes.h
 	<glib/gtypes.h>
 	<glib/garray.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gcharset.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gcharset.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gchecksum.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gchecksum.h
 	<glib/gtypes.h>
 	<glib/gbytes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gconvert.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gconvert.h
 	<glib/gerror.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gdataset.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gdataset.h
 	<glib/gquark.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gdate.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gdate.h
 	<time.h>
 	<glib/gtypes.h>
 	<glib/gquark.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gdatetime.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gdatetime.h
 	<glib/gtimezone.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtimezone.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtimezone.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gdir.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gdir.h
 	<glib/gerror.h>
 	<dirent.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\genviron.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\genviron.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gfileutils.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gfileutils.h
 	<glib/gerror.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\ggettext.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\ggettext.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\ghash.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\ghash.h
 	<glib/gtypes.h>
 	<glib/glist.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\glist.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\glist.h
 	<glib/gmem.h>
 	<glib/gnode.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmem.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmem.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gnode.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gnode.h
 	<glib/gmem.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\ghmac.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\ghmac.h
 	<glib/gtypes.h>
 	"gchecksum.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\ghook.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\ghook.h
 	<glib/gmem.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\ghostutils.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\ghostutils.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\giochannel.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\giochannel.h
 	<glib/gconvert.h>
 	<glib/gmain.h>
 	<glib/gstring.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmain.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmain.h
 	<glib/gpoll.h>
 	<glib/gslist.h>
 	<glib/gthread.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gpoll.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gpoll.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gslist.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gslist.h
 	<glib/gmem.h>
 	<glib/gnode.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gstring.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gstring.h
 	<glib/gtypes.h>
 	<glib/gunicode.h>
 	<glib/gbytes.h>
 	<glib/gutils.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gunicode.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gunicode.h
 	<glib/gerror.h>
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gutils.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gutils.h
 	<glib/gtypes.h>
 	<stdarg.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gkeyfile.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gkeyfile.h
 	<glib/gerror.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmappedfile.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmappedfile.h
 	<glib/gbytes.h>
 	<glib/gerror.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmarkup.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmarkup.h
 	<stdarg.h>
 	<glib/gerror.h>
 	<glib/gslist.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmessages.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gmessages.h
 	<stdarg.h>
 	<glib/gtypes.h>
 	<glib/gmacros.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\goption.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\goption.h
 	<glib/gerror.h>
 	<glib/gquark.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gpattern.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gpattern.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gprimes.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gprimes.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gqsort.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gqsort.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gqueue.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gqueue.h
 	<glib/glist.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\grand.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\grand.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gregex.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gregex.h
 	<glib/gerror.h>
 	<glib/gstring.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gscanner.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gscanner.h
 	<glib/gdataset.h>
 	<glib/ghash.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gsequence.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gsequence.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gshell.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gshell.h
 	<glib/gerror.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gslice.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gslice.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gspawn.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gspawn.h
 	<glib/gerror.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gstrfuncs.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gstrfuncs.h
 	<stdarg.h>
 	<glib/gmacros.h>
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gstringchunk.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gstringchunk.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtestutils.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtestutils.h
 	<glib/gmessages.h>
 	<glib/gstring.h>
 	<glib/gerror.h>
 	<glib/gslist.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gthreadpool.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gthreadpool.h
 	<glib/gthread.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtimer.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtimer.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtrashstack.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtrashstack.h
 	<glib/gutils.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtree.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gtree.h
 	<glib/gnode.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gurifuncs.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gurifuncs.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gvarianttype.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gvarianttype.h
 	<glib/gmessages.h>
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gvariant.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gvariant.h
 	<glib/gvarianttype.h>
 	<glib/gstring.h>
 	<glib/gbytes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gversion.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gversion.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gwin32.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gwin32.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\gallocator.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\gallocator.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\gcache.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\gcache.h
 	<glib/glist.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\gcompletion.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\gcompletion.h
 	<glib/glist.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\gmain.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\gmain.h
 	<glib/gmain.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\grel.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\grel.h
 	<glib/gtypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\gthread.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\deprecated\gthread.h
 	<glib/gthread.h>
 	<sys/types.h>
 	<pthread.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\pthread.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\pthread.h
 	<stddef.h>
 	<errno.h>
 	<sys/types.h>
@@ -11315,7 +11315,7 @@
 	"pthread_compat.h"
 	<pthread_unistd.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\pthread_compat.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\pthread_compat.h
 	"pthread_time.h"
 
 1419426868 c:\users\cagunyon\documents\d2k\src\cmp.h
@@ -11328,7 +11328,7 @@
 
 1419426869 c:\users\cagunyon\documents\d2k\src\m_pbuf.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl.h
 	"SDL_main.h"
 	"SDL_stdinc.h"
 	"SDL_audio.h"
@@ -11347,14 +11347,14 @@
 	"begin_code.h"
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_main.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_main.h
 	"SDL_stdinc.h"
 	"begin_code.h"
 	"close_code.h"
 	"begin_code.h"
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_stdinc.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_stdinc.h
 	"SDL_config.h"
 	<sys/types.h>
 	<stdio.h>
@@ -11380,17 +11380,17 @@
 	<stdlib.h>
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_config.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_config.h
 	"SDL_platform.h"
 	<stdarg.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_platform.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_platform.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\begin_code.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\begin_code.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\close_code.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\close_code.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_audio.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_audio.h
 	"SDL_stdinc.h"
 	"SDL_error.h"
 	"SDL_endian.h"
@@ -11400,24 +11400,24 @@
 	"begin_code.h"
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_error.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_error.h
 	"SDL_stdinc.h"
 	"begin_code.h"
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_endian.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_endian.h
 	"SDL_stdinc.h"
 	<endian.h>
 	"begin_code.h"
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_mutex.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_mutex.h
 	"SDL_stdinc.h"
 	"SDL_error.h"
 	"begin_code.h"
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_thread.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_thread.h
 	"SDL_stdinc.h"
 	"SDL_error.h"
 	"SDL_mutex.h"
@@ -11425,24 +11425,24 @@
 	<process.h>
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_rwops.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_rwops.h
 	"SDL_stdinc.h"
 	"SDL_error.h"
 	"begin_code.h"
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_cdrom.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_cdrom.h
 	"SDL_stdinc.h"
 	"SDL_error.h"
 	"begin_code.h"
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_cpuinfo.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_cpuinfo.h
 	"SDL_stdinc.h"
 	"begin_code.h"
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_events.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_events.h
 	"SDL_stdinc.h"
 	"SDL_error.h"
 	"SDL_active.h"
@@ -11453,58 +11453,58 @@
 	"begin_code.h"
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_active.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_active.h
 	"SDL_stdinc.h"
 	"SDL_error.h"
 	"begin_code.h"
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_keyboard.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_keyboard.h
 	"SDL_stdinc.h"
 	"SDL_error.h"
 	"SDL_keysym.h"
 	"begin_code.h"
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_keysym.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_keysym.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_mouse.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_mouse.h
 	"SDL_stdinc.h"
 	"SDL_error.h"
 	"SDL_video.h"
 	"begin_code.h"
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_video.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_video.h
 	"SDL_stdinc.h"
 	"SDL_error.h"
 	"SDL_rwops.h"
 	"begin_code.h"
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_joystick.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_joystick.h
 	"SDL_stdinc.h"
 	"SDL_error.h"
 	"begin_code.h"
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_quit.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_quit.h
 	"SDL_stdinc.h"
 	"SDL_error.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_loadso.h
-	"SDL_stdinc.h"
-	"SDL_error.h"
-	"begin_code.h"
-	"close_code.h"
-
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_timer.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_loadso.h
 	"SDL_stdinc.h"
 	"SDL_error.h"
 	"begin_code.h"
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_version.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_timer.h
+	"SDL_stdinc.h"
+	"SDL_error.h"
+	"begin_code.h"
+	"close_code.h"
+
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_version.h
 	"SDL_stdinc.h"
 	"begin_code.h"
 	"close_code.h"
@@ -11517,7 +11517,7 @@
 	<SDL_opengl.h>
 	"doomtype.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\gl\glext.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\gl\glext.h
 	<windows.h>
 	<stddef.h>
 	<inttypes.h>
@@ -11527,7 +11527,7 @@
 	<stdint.h>
 	<inttypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_opengl.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_opengl.h
 	"SDL_config.h"
 	<windows.h>
 	<OpenGL/gl.h>
@@ -11539,11 +11539,11 @@
 	<windows.h>
 	<stddef.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\gl\gl.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\gl\gl.h
 	<windows.h>
 	<stddef.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\gl\glu.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\gl\glu.h
 	<GL/gl.h>
 
 1419426868 c:\users\cagunyon\documents\d2k\src\doomstat.h
@@ -11558,7 +11558,7 @@
 1419426868 c:\users\cagunyon\documents\d2k\src\d_items.h
 	"doomdef.h"
 
-1419426868 c:\users\cagunyon\documents\d2k\src\doomdef.h
+1419862096 c:\users\cagunyon\documents\d2k\src\doomdef.h
 	"config.h"
 	"z_zone.h"
 	<stdio.h>
@@ -11719,11 +11719,11 @@
 	"v_video.h"
 	"x_main.h"
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pangocairo.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pangocairo.h
 	<pango/pango.h>
 	<cairo.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango.h
 	<pango/pango-attributes.h>
 	<pango/pango-bidi-type.h>
 	<pango/pango-break.h>
@@ -11747,19 +11747,19 @@
 	<pango/pango-types.h>
 	<pango/pango-utils.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-attributes.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-attributes.h
 	<pango/pango-font.h>
 	<glib-object.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-font.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-font.h
 	<pango/pango-coverage.h>
 	<pango/pango-types.h>
 	<glib-object.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-coverage.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-coverage.h
 	<glib.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-types.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-types.h
 	<glib.h>
 	<glib-object.h>
 	<pango/pango-gravity.h>
@@ -11768,7 +11768,7 @@
 	<pango/pango-script.h>
 	<pango/pango-bidi-type.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib-object.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib-object.h
 	<gobject/gbinding.h>
 	<gobject/gboxed.h>
 	<gobject/genums.h>
@@ -11784,11 +11784,11 @@
 	<gobject/gvaluearray.h>
 	<gobject/gvaluetypes.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gbinding.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gbinding.h
 	<glib.h>
 	<gobject/gobject.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gobject.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gobject.h
 	<gobject/gtype.h>
 	<gobject/gvalue.h>
 	<gobject/gparam.h>
@@ -11796,103 +11796,103 @@
 	<gobject/gsignal.h>
 	<gobject/gboxed.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gtype.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gtype.h
 	<glib.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gvalue.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gvalue.h
 	<gobject/gtype.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gparam.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gparam.h
 	<gobject/gvalue.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gclosure.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gclosure.h
 	<gobject/gtype.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gsignal.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gsignal.h
 	<gobject/gclosure.h>
 	<gobject/gvalue.h>
 	<gobject/gparam.h>
 	<gobject/gmarshal.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gmarshal.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gmarshal.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gboxed.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gboxed.h
 	<gobject/gtype.h>
 	<gobject/glib-types.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\glib-types.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\glib-types.h
 	<glib.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\genums.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\genums.h
 	<gobject/gtype.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gparamspecs.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gparamspecs.h
 	<gobject/gvalue.h>
 	<gobject/genums.h>
 	<gobject/gboxed.h>
 	<gobject/gobject.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gsourceclosure.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gsourceclosure.h
 	<gobject/gclosure.h>
 	<gobject/glib-types.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gtypemodule.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gtypemodule.h
 	<gobject/gobject.h>
 	<gobject/genums.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gtypeplugin.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gtypeplugin.h
 	<gobject/gtype.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gvaluearray.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gvaluearray.h
 	<gobject/gvalue.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gvaluetypes.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gobject\gvaluetypes.h
 	<gobject/gvalue.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-gravity.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-gravity.h
 	<glib.h>
 	<pango/pango-matrix.h>
 	<pango/pango-script.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-matrix.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-matrix.h
 	<glib.h>
 	<glib-object.h>
 	<pango/pango-types.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-script.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-script.h
 	<glib.h>
 	<pango/pango-language.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-language.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-language.h
 	<glib.h>
 	<glib-object.h>
 	<pango/pango-script.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-bidi-type.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-bidi-type.h
 	<glib.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-break.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-break.h
 	<glib.h>
 	<pango/pango-item.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-item.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-item.h
 	<pango/pango-types.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-context.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-context.h
 	<pango/pango-font.h>
 	<pango/pango-fontmap.h>
 	<pango/pango-attributes.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-fontmap.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-fontmap.h
 	<pango/pango-font.h>
 	<pango/pango-fontset.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-fontset.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-fontset.h
 	<pango/pango-coverage.h>
 	<pango/pango-types.h>
 	<glib-object.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-engine.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-engine.h
 	<pango/pango-types.h>
 	<pango/pango-item.h>
 	<pango/pango-font.h>
@@ -11900,51 +11900,51 @@
 	<pango/pango-script.h>
 	<gmodule.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-glyph.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-glyph.h
 	<pango/pango-types.h>
 	<pango/pango-item.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gmodule.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\gmodule.h
 	<glib.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-enum-types.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-enum-types.h
 	<glib-object.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-features.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-features.h
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-glyph-item.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-glyph-item.h
 	<pango/pango-attributes.h>
 	<pango/pango-break.h>
 	<pango/pango-item.h>
 	<pango/pango-glyph.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-layout.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-layout.h
 	<pango/pango-attributes.h>
 	<pango/pango-context.h>
 	<pango/pango-glyph-item.h>
 	<pango/pango-tabs.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-tabs.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-tabs.h
 	<pango/pango-types.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-renderer.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-renderer.h
 	<pango/pango-layout.h>
 
-1419371228 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-utils.h
+1419873313 c:\users\cagunyon\documents\d2k\deps\include\pango-1.0\pango\pango-utils.h
 	<stdio.h>
 	<glib.h>
 	<pango/pango-font.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\cairo\cairo.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\cairo\cairo.h
 	"cairo-version.h"
 	"cairo-features.h"
 	"cairo-deprecated.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\cairo\cairo-version.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\cairo\cairo-version.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\cairo\cairo-features.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\cairo\cairo-features.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\cairo\cairo-deprecated.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\cairo\cairo-deprecated.h
 
 1419426868 c:\users\cagunyon\documents\d2k\src\c_main.h
 
@@ -11968,13 +11968,13 @@
 1419426869 c:\users\cagunyon\documents\d2k\src\hu_stuff.h
 	"d_event.h"
 
-1419448974 c:\users\cagunyon\documents\d2k\src\i_main.h
+1419861198 c:\users\cagunyon\documents\d2k\src\i_main.h
 
 1419426869 c:\users\cagunyon\documents\d2k\src\i_system.h
 	<windows.h>
 	"m_fixed.h"
 
-1419448974 c:\users\cagunyon\documents\d2k\src\i_video.h
+1419861198 c:\users\cagunyon\documents\d2k\src\i_video.h
 	"config.h"
 	"doomtype.h"
 	"v_video.h"
@@ -11985,7 +11985,7 @@
 
 1419426868 c:\users\cagunyon\documents\d2k\src\cl_main.h
 
-1419448974 c:\users\cagunyon\documents\d2k\src\x_main.h
+1419880446 c:\users\cagunyon\documents\d2k\src\x_main.h
 	<lua.h>
 	<lualib.h>
 	<lauxlib.h>
@@ -12019,7 +12019,7 @@
 	"cl_cmd.h"
 	"p_cmd.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\enet\enet.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\enet\enet.h
 	<stdlib.h>
 	"enet/win32.h"
 	"enet/unix.h"
@@ -12028,11 +12028,11 @@
 	"enet/list.h"
 	"enet/callbacks.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\enet\win32.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\enet\win32.h
 	<stdlib.h>
 	<winsock2.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\winsock2.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\winsock2.h
 	<_mingw_unicode.h>
 	<windows.h>
 	<psdk_inc/_ws1_undef.h>
@@ -12050,19 +12050,19 @@
 	<poppack.h>
 	<wsipv6ok.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_ws1_undef.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\psdk_inc\_ws1_undef.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\ws2def.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\ws2def.h
 	<_mingw.h>
 	<winapifamily.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\qos.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\qos.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\wsipv6ok.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\wsipv6ok.h
 	<ws2tcpip.h>
 	<wspiapi.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\ws2tcpip.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\ws2tcpip.h
 	<_mingw_unicode.h>
 	<winsock2.h>
 	<psdk_inc/_ip_mreq1.h>
@@ -12070,18 +12070,18 @@
 	<ws2ipdef.h>
 	<mstcpip.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\ws2ipdef.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\ws2ipdef.h
 	<winapifamily.h>
 	<in6addr.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\in6addr.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\in6addr.h
 	<_bsd_types.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\mstcpip.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\mstcpip.h
 	<_mingw_unicode.h>
 	<winapifamily.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\wspiapi.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\wspiapi.h
 	<stdio.h>
 	<stdlib.h>
 	<malloc.h>
@@ -12090,7 +12090,7 @@
 	<_mingw_print_push.h>
 	<_mingw_print_pop.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\enet\unix.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\enet\unix.h
 	<stdlib.h>
 	<sys/time.h>
 	<sys/types.h>
@@ -12098,20 +12098,20 @@
 	<netinet/in.h>
 	<unistd.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sys\time.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sys\time.h
 	<time.h>
 	<_timeval.h>
 	<sys/timeb.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\enet\types.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\enet\types.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\enet\protocol.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\enet\protocol.h
 	"enet/types.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\enet\list.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\enet\list.h
 	<stdlib.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\enet\callbacks.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\enet\callbacks.h
 	<stdlib.h>
 
 1419426869 c:\users\cagunyon\documents\d2k\src\n_state.h
@@ -12337,7 +12337,7 @@
 	"e6y.h"
 	<mmsystem.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_syswm.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_syswm.h
 	"SDL_stdinc.h"
 	"SDL_error.h"
 	"SDL_version.h"
@@ -12383,7 +12383,7 @@
 	"e6y.h"
 	"e6y_launcher.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\pcreposix.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\pcreposix.h
 	<stdlib.h>
 
 1419426869 source:c:\users\cagunyon\documents\d2k\src\f_finale.c
@@ -12543,7 +12543,7 @@
 	"sc_man.h"
 	"e6y.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_image.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_image.h
 	"SDL.h"
 	"SDL_version.h"
 	"begin_code.h"
@@ -12873,7 +12873,7 @@
 	"i_video.h"
 	"lprintf.h"
 
-1419448974 source:c:\users\cagunyon\documents\d2k\src\hu_stuff.c
+1419878177 source:c:\users\cagunyon\documents\d2k\src\hu_stuff.c
 	"z_zone.h"
 	<fontconfig/fontconfig.h>
 	<pango/pangocairo.h>
@@ -12914,7 +12914,7 @@
 	"st_stuff.h"
 	"x_main.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\fontconfig\fontconfig.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\fontconfig\fontconfig.h
 	<sys/types.h>
 	<sys/stat.h>
 	<stdarg.h>
@@ -13039,22 +13039,22 @@
 	"lprintf.h"
 	"m_delta.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\xdiff.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\xdiff.h
 
 1419426869 c:\users\cagunyon\documents\d2k\src\m_delta.h
 
-1419456584 source:c:\users\cagunyon\documents\d2k\src\m_file.c
+1419862045 source:c:\users\cagunyon\documents\d2k\src\m_file.c
 	"z_zone.h"
 	<glib/gstdio.h>
 	"lprintf.h"
 	"m_buf.h"
 	"m_file.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gstdio.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gstdio.h
 	<glib/gprintf.h>
 	<sys/stat.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gprintf.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\glib-2.0\glib\gprintf.h
 	<glib.h>
 	<stdio.h>
 	<stdarg.h>
@@ -13196,7 +13196,7 @@
 
 1419426868 c:\users\cagunyon\documents\d2k\src\music\musicplayer.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\dumb.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\dumb.h
 	<stdlib.h>
 	<stdio.h>
 	<assert.h>
@@ -13262,7 +13262,7 @@
 
 1345086073 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\voice.h
 
-1419371236 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\version.h
+1419873325 c:\users\cagunyon\documents\d2k\deps\include\fluidsynth\version.h
 
 1419426868 c:\users\cagunyon\documents\d2k\src\music\midifile.h
 	"doomtype.h"
@@ -13276,7 +13276,7 @@
 	<mad.h>
 	"i_sound.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\mad.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\mad.h
 
 1419426868 source:c:\users\cagunyon\documents\d2k\src\music\midifile.c
 	<stdio.h>
@@ -13333,10 +13333,10 @@
 	"midifile.h"
 	"i_sound.h"
 
-1419371306 c:\users\cagunyon\documents\d2k\deps\include\portmidi.h
+1419873396 c:\users\cagunyon\documents\d2k\deps\include\portmidi.h
 	<stdint.h>
 
-1419371306 c:\users\cagunyon\documents\d2k\deps\include\porttime.h
+1419873396 c:\users\cagunyon\documents\d2k\deps\include\porttime.h
 	<stdint.h>
 
 1419426868 source:c:\users\cagunyon\documents\d2k\src\music\vorbisplayer.c
@@ -13351,18 +13351,18 @@
 	<windows.h>
 	<delayimp.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\vorbis\vorbisfile.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\vorbis\vorbisfile.h
 	<stdio.h>
 	"codec.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\vorbis\codec.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\vorbis\codec.h
 	<ogg/ogg.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\ogg\ogg.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\ogg\ogg.h
 	<stddef.h>
 	<ogg/os_types.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\ogg\os_types.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\ogg\os_types.h
 	<stdint.h>
 	<sys/types.h>
 	<sys/types.h>
@@ -13371,7 +13371,7 @@
 	<inttypes.h>
 	<ogg/config_types.h>
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\ogg\config_types.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\ogg\config_types.h
 	<inttypes.h>
 	<stdint.h>
 	<sys/types.h>
@@ -14267,10 +14267,10 @@
 	"MUSIC/vorbisplayer.h"
 	"MUSIC/portmidiplayer.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_byteorder.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_byteorder.h
 	"SDL_endian.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_mixer.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_mixer.h
 	"SDL_types.h"
 	"SDL_rwops.h"
 	"SDL_audio.h"
@@ -14279,7 +14279,7 @@
 	"begin_code.h"
 	"close_code.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_types.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\sdl\sdl_types.h
 	"SDL_stdinc.h"
 
 1419426868 c:\users\cagunyon\documents\d2k\src\music\oplplayer.h
@@ -14316,7 +14316,7 @@
 	"i_joy.h"
 	"lprintf.h"
 
-1419448974 source:c:\users\cagunyon\documents\d2k\src\sdl\i_main.c
+1419862137 source:c:\users\cagunyon\documents\d2k\src\sdl\i_main.c
 	"z_zone.h"
 	"TEXTSCREEN/txt_main.h"
 	"doomdef.h"
@@ -14336,6 +14336,7 @@
 	"m_random.h"
 	"r_fps.h"
 	"x_main.h"
+	"icon.c"
 
 1419426868 c:\users\cagunyon\documents\d2k\src\textscreen\txt_main.h
 	"txt_sdl.h"
@@ -14406,13 +14407,13 @@
 	"z_zone.h"
 	"lprintf.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\png.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\png.h
 	"pnglibconf.h"
 	"pngconf.h"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\pnglibconf.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\pnglibconf.h
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\pngconf.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\pngconf.h
 	<limits.h>
 	<stddef.h>
 	<stdio.h>
@@ -14433,7 +14434,7 @@
 	"e6y.h"
 	"i_system.h"
 
-1419448974 source:c:\users\cagunyon\documents\d2k\src\sdl\i_video.c
+1419878188 source:c:\users\cagunyon\documents\d2k\src\sdl\i_video.c
 	"z_zone.h"
 	<cairo/cairo.h>
 	<cairo/cairo-xlib.h>
@@ -14471,9 +14472,8 @@
 	"w_wad.h"
 	"x_main.h"
 	"gl_struct.h"
-	"icon.c"
 
-1419371346 c:\users\cagunyon\documents\d2k\deps\include\cairo\cairo-win32.h
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\cairo\cairo-win32.h
 	"cairo.h"
 	<windows.h>
 
@@ -14808,7 +14808,7 @@
 	"e6y.h"
 	"wchar.h"
 
-1419456397 source:c:\users\cagunyon\documents\d2k\src\w_wad.c
+1419861426 source:c:\users\cagunyon\documents\d2k\src\w_wad.c
 	"z_zone.h"
 	"doomstat.h"
 	"d_main.h"
@@ -14839,7 +14839,7 @@
 	"r_draw.h"
 	"n_net.h"
 
-1419448974 source:c:\users\cagunyon\documents\d2k\src\x_main.c
+1419880445 source:c:\users\cagunyon\documents\d2k\src\x_main.c
 	"z_zone.h"
 	<lua.h>
 	<lualib.h>
@@ -14868,4 +14868,30 @@
 	"g_game.h"
 	"lprintf.h"
 	<dpmi.h>
+
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\lua5.1\lua.h
+	<stdarg.h>
+	<stddef.h>
+	"luaconf.h"
+
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\lua5.1\luaconf.h
+	<limits.h>
+	<stddef.h>
+	<unistd.h>
+	<io.h>
+	<stdio.h>
+	<stdio.h>
+	<readline/readline.h>
+	<readline/history.h>
+	<assert.h>
+	<math.h>
+	<unistd.h>
+
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\lua5.1\lualib.h
+	"lua.h"
+
+1419873438 c:\users\cagunyon\documents\d2k\deps\include\lua5.1\lauxlib.h
+	<stddef.h>
+	<stdio.h>
+	"lua.h"
 
