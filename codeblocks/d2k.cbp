@@ -73,19 +73,22 @@
 			<Add option="-DFLUIDSYNTH_NOT_A_DLL=1" />
 			<Add option="-DGLIB_STATIC_COMPILATION=1" />
 			<Add option="-DGOBJECT_STATIC_COMPILATION=1" />
-			<Add option="-D__USE_MINGW_ANSI_STDIO=1" />
-			<Add option="-D_GNU_SOURCE=1" />
+			<Add option="-D__USE_MINGW_ANSI_STDIO" />
+			<Add option="-D_GNU_SOURCE" />
 			<Add option="-DMIKMOD_STATIC=1" />
+			<Add option="-DNO_STDIO_REDIRECT" />
 			<Add directory="../deps/include" />
 			<Add directory="../deps/include/glib-2.0" />
 			<Add directory="../deps/lib/glib-2.0/include" />
 			<Add directory="../deps/include/pango-1.0" />
-			<Add directory="../deps/include/SDL" />
 			<Add directory="../deps/include/cairo" />
+			<Add directory="../deps/include/lua5.1" />
+			<Add directory="../deps/include/SDL" />
 			<Add directory="../src" />
 		</Compiler>
 		<Linker>
 			<Add option="-static -static-libgcc" />
+			<Add library="..\deps\lib\libSDLmain.a" />
 			<Add library="..\deps\lib\libSDL_image.a" />
 			<Add library="..\deps\lib\libSDL_mixer.a" />
 			<Add library="..\deps\lib\libSDL.a" />
@@ -116,7 +119,7 @@
 			<Add library="..\deps\lib\libharfbuzz-icu.a" />
 			<Add library="..\deps\lib\libharfbuzz.a" />
 			<Add library="..\deps\lib\libpixman-1.a" />
-			<Add library="..\deps\lib\liblua.a" />
+			<Add library="..\deps\lib\liblua5.1.a" />
 			<Add library="..\deps\lib\libxdiff.a" />
 			<Add library="..\deps\lib\libenet.a" />
 			<Add library="..\deps\lib\libgirepository-1.0.a" />

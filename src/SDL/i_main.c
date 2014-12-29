@@ -622,6 +622,14 @@ int main(int argc, char **argv) {
   // Example: glboom.exe -record mydemo -playdemo demoname
   ParamsMatchingCheck();
 
+#if __MINGW32__
+  _fmode = _O_BINARY;
+
+  _setmode(_fileno(stdin),  _O_BINARY);
+  _setmode(_fileno(stdout), _O_BINARY);
+  _setmode(_fileno(stderr), _O_BINARY);
+#endif
+
   // e6y: was moved from D_DoomMainSetup
   // init subsystems
   //jff 9/3/98 use logical output routine

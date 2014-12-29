@@ -21,18 +21,19 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-HUD = {}
+require('lgob.cairo')
+require('lgob.pango')
+require('lgob.pangocairo')
 
-local lgi = require 'lgi'
-local cairo = lgi.cairo
+HUD = {}
 
 function HUD:init()
   print('HUD: Initializing')
 
   self.render_surface = cairo.ImageSurface.create(
-    'ARGB32',
-    xf.get_screen_width(),
-    xf.get_screen_height()
+    cairo.FORMAT_ARGB32,
+    d2k.get_screen_width(),
+    d2k.get_screen_height()
   )
   self.cr = cairo.Context.create(self.render_surface)
   self.active = false
@@ -71,7 +72,7 @@ function HUD:start()
     w:reset()
   end
 
-  xf.reset_overlay()
+  d2k.reset_overlay()
 end
 
 function HUD:stop()
@@ -105,7 +106,7 @@ function HUD:update()
   end
 
   if updated then
-    if xf.using_opengl() then
+    if d2k.using_opengl() then
       self.cr.operator = 'OVER'
     end
     self.render_surface:flush()
@@ -119,7 +120,7 @@ function HUD:render()
 
   self.cr.operator = 'SOURCE'
 
-  xf.blit_overlay(
+  d2k.blit_overlay(
     self.render_surface:get_data(),
     self.render_surface:get_width(),
     self.render_surface:get_height()

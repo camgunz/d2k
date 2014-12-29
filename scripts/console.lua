@@ -21,10 +21,10 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-local lgi = require 'lgi'
-local cairo = lgi.cairo
-local pango = lgi.Pango
-local hud_widget = require 'hud_widget'
+require('lgob.cairo')
+require('lgob.pango')
+require('lgob.pangocairo')
+require('hud_widget')
 
 Console = {}
 setmetatable(Console, {__index = hud_widget.HUDWidget})
