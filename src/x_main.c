@@ -63,6 +63,10 @@ static void set_error(const char *message) {
   error_message = strdup(message);
 }
 
+static void close_lua_state(void) {
+  lua_close(L);
+}
+
 const char* X_StrError(void) {
   set_error(lua_tostring(L, -1));
 
@@ -76,6 +80,10 @@ const char* X_GetError(void) {
   return "";
 }
 
+lua_State* X_GetState(void) {
+  return L;
+}
+
 bool X_RunCode(const char *code) {
   bool errors = luaL_dostring(L, code);
 
@@ -87,12 +95,76 @@ bool X_RunCode(const char *code) {
   return true;
 }
 
-lua_State* X_GetState(void) {
-  return L;
-}
+bool X_CallFunc(const char *object, const char *fname, int arg_count,
+                                                       int res_count, ...) {
+  va_list args;
+  bool have_type;
+  x_type arg_type;
+  int args_remaining = arg_count;
 
-static void X_Close(void) {
-  lua_close(L);
+  if (arg_count < 0)
+    I_Error("X_CallFunc: arg_count < 0");
+
+  if (res_count < 0)
+    I_Error("X_CallFunc: res_count < 0");
+
+  if (fname == NULL)
+    I_Error("X_CallFunc: fname == NULL");
+
+  lua_getglobal(L, X_NAMESPACE);
+  if (object) {
+    lua_getfield(L, -1, object);
+    lua_remove(L, -2);
+  }
+  lua_getfield(L, -1, fname);
+  lua_remove(L, -2);
+  if (object) {
+    lua_getglobal(L, X_NAMESPACE);
+    lua_getfield(L, -1, "hud");
+    lua_remove(L, -2);
+  }
+
+  va_start(args, res_count);
+  if (args_remaining > 0) {
+    if (!have_type) {
+      arg_type = va_arg(args, x_type);
+      if (arg_type == X_NIL)
+        lua_pushnil(L);
+    }
+    else {
+      switch(arg_type) {
+        case X_BOOL:
+          lua_pushboolean(L, va_arg(args, bool));
+        break;
+        case X_NUM:
+          lua_pushnumber(L, va_arg(args, lua_Number));
+        break;
+        case X_STR:
+          lua_pushstring(L, va_arg(args, const char *));
+        break;
+        case X_BYTES:
+          /* CG: TODO: Probably need a GLib data structure here */
+          I_Error("X_CallFunc: X_BYTES argument type not yet implemented");
+        break;
+        case X_LUDATA:
+          lua_pushlightuserdata(L, va_arg(args, void *));
+        break;
+        case X_NIL:
+        break;
+        default:
+          I_Error("X_CallFunc: Invalid argument type %d\n", arg_type);
+        break;
+      }
+    }
+
+    args_remaining--;
+  }
+  va_end(args);
+
+  if (lua_pcall(L, arg_count, res_count, 0) != LUA_OK)
+    return false;
+
+  return true;
 }
 
 void X_RegisterFunc(const char *name, lua_CFunction func) {
@@ -130,7 +202,7 @@ void X_Init(void) {
   L = luaL_newstate();
   luaL_openlibs(L);
 
-  atexit(X_Close);
+  atexit(close_lua_state);
 
   lua_createtable(L, g_hash_table_size(x_funcs), 0);
   lua_setglobal(L, X_NAMESPACE);

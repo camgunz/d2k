@@ -21,34 +21,13 @@
 /*****************************************************************************/
 
 
-#ifndef X_MAIN_H__
-#define X_MAIN_H__
+#ifndef V_MAIN_H__
+#define V_MAIN_H__
 
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-
-#define X_NAMESPACE "xf"
-
-typedef enum {
-  X_BOOL,   // lua_pushboolean(L, int b);
-  X_NUM,    // lua_pushnumber(L, lua_Number n);
-  X_STR,    // lua_pushstring(L, const char *s);
-  X_BYTES,  // lua_pushlstring(L, const char *s, size_t len);
-  X_LUDATA, // lua_pushlightuserdata(L, void *p);
-  X_NIL     // lua_pushnil(L);
-} x_types;
-
-void        X_Init(void);
-const char* X_StrError(void);
-const char* X_GetError(void);
-lua_State*  X_GetState(void);
-bool        X_RunCode(const char *code);
-bool        X_CallFunc(const char *object, const char *fname,
-                       int arg_count, int res_count, ...);
-void        X_RegisterFunc(const char *name, lua_CFunction func);
-
-#endif
+void          V_InitOverlay(void);
+void          V_ClearOverlay(void);
+unsigned int* V_GetOverlayPixels(void);
+void          V_MarkOverlayDirty(void);
 
 /* vi: set et ts=2 sw=2: */
 

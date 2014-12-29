@@ -25,22 +25,6 @@
 
 #include <cairo/cairo.h>
 
-#if CAIRO_HAS_XLIB_SURFACE
-#include <cairo/cairo-xlib.h>
-
-#if CAIRO_HAS_XLIB_XRENDER_SURFACE
-#include <cairo/cairo-xlib-xrender.h>
-#endif
-#endif
-
-#if CAIRO_HAS_QUARTZ_SURFACE
-#include <cairo/cairo-quartz.h>
-#endif
-
-#if CAIRO_HAS_WIN32_SURFACE
-#include <cairo/cairo-win32.h>
-#endif
-
 #include <SDL.h>
 #include <SDL_syswm.h>
 
@@ -167,26 +151,7 @@ static void reset_overlay(void) {
 
 static void render_overlay(void) {
   int pixel_bits = V_GetNumPixelBits();
-  unsigned int *overlay_pixels;
-  lua_State *L = X_GetState();
-
-  lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "hud");
-  lua_remove(L, -2);
-  lua_getfield(L, -1, "render_surface");
-  lua_remove(L, -2);
-  lua_getfield(L, -1, "get_data");
-  lua_remove(L, -2);
-  lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "hud");
-  lua_remove(L, -2);
-  lua_getfield(L, -1, "render_surface");
-  lua_remove(L, -2);
-  if (lua_pcall(L, 1, 1, 0) != LUA_OK)
-    I_Error("Error getting overlay data: %s", X_StrError());
-  if (!lua_islightuserdata(L, -1))
-    I_Error("xf.hud.render_surface:get_data did not return light userdata");
-  overlay_pixels = (unsigned int *)lua_touserdata(L, -1);
+  unsigned int *overlay_pixels = V_GetOverlayPixels();
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {

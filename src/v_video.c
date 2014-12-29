@@ -196,6 +196,8 @@ static void FUNC_V_CopyRect(int srcscrn, int destscrn,
   byte *dest;
   int pixel_depth = V_GetPixelDepth();
 
+  printf("V_CopyRect %d => %d\n", srcscrn, destscrn);
+
   if (flags & VPT_STRETCH_MASK)
   {
     stretch_param_t *params;
