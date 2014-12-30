@@ -29,13 +29,6 @@ HUD = {}
 
 function HUD:init()
   print('HUD: Initializing')
-
-  self.render_surface = cairo.ImageSurface.create(
-    cairo.FORMAT_ARGB32,
-    d2k.get_screen_width(),
-    d2k.get_screen_height()
-  )
-  self.cr = cairo.Context.create(self.render_surface)
   self.active = false
 end
 
@@ -89,7 +82,6 @@ function HUD:clear()
   self.cr:set_operator(cairo.OPERATOR_CLEAR)
   self.cr:paint()
 end
-
 
 function HUD:update()
   updated = false

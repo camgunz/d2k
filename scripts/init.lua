@@ -23,12 +23,15 @@
 
 package.path = package.path .. ';' .. d2k.script_path
 
-local hud = require 'hud'
-local console = require 'console'
+local screen = require('screen')
+local hud = require('hud')
+local console = require('console')
 
+d2k.screen = {}
 d2k.hud = {}
 d2k.console = {}
 
+setmetatable(d2k.screen, {__index = screen.Screen})
 setmetatable(d2k.hud, {__index = hud.HUD})
 setmetatable(d2k.console, {__index = console.Console})
 

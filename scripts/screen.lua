@@ -23,14 +23,13 @@
 
 Screen = {}
 
-local lgi = require 'lgi'
-local cairo = lgi.cairo
+local cairo = require('lgob.cairo')
 
 function Screen:init()
   self.render_surface = cairo.ImageSurface.create(
-    'ARGB32',
-    xf.get_screen_width(),
-    xf.get_screen_height()
+    cairo.FORMAT_ARGB32,
+    d2k.get_screen_width(),
+    d2k.get_screen_height()
   )
   self.cr = cairo.Context.create(self.render_surface)
 end
@@ -45,7 +44,7 @@ function Screen:mark_dirty()
 end
 
 function Screen:clear()
-  self.cr.operator = 'CLEAR'
+  self.cr:set_operator(cairo.OPERATOR_CLEAR)
   self.cr:paint()
 end
 
