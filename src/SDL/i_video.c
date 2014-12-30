@@ -53,6 +53,7 @@
 #include "s_sound.h"
 #include "sounds.h"
 #include "st_stuff.h"
+#include "v_main.h"
 #include "v_video.h"
 #include "w_wad.h"
 #include "x_main.h"

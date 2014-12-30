@@ -23,10 +23,6 @@
 
 #include "z_zone.h"
 
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-
 #include "d_event.h"
 #include "c_main.h"
 #include "i_main.h"
@@ -142,8 +138,9 @@ bool X_RunCode(const char *code) {
 bool X_CallFunc(const char *object, const char *fname, int arg_count,
                                                        int res_count, ...) {
   va_list args;
-  bool have_type;
-  x_type arg_type;
+  bool have_type = false;
+  x_type_e arg_type = X_NONE;
+  int bool_arg;
   int args_remaining = arg_count;
 
   if (arg_count < 0)
@@ -168,17 +165,25 @@ bool X_CallFunc(const char *object, const char *fname, int arg_count,
     lua_remove(L, -2);
   }
 
+  if (object)
+    args_remaining--;
+
   va_start(args, res_count);
   if (args_remaining > 0) {
     if (!have_type) {
-      arg_type = va_arg(args, x_type);
+      arg_type = va_arg(args, x_type_e);
       if (arg_type == X_NIL)
         lua_pushnil(L);
     }
-    else {
+    else if (arg_type) {
       switch(arg_type) {
         case X_BOOL:
-          lua_pushboolean(L, va_arg(args, bool));
+          bool_arg = va_arg(args, int);
+
+          if (bool_arg)
+            lua_pushboolean(L, true);
+          else
+            lua_pushboolean(L, false);
         break;
         case X_NUM:
           lua_pushnumber(L, va_arg(args, lua_Number));
@@ -200,15 +205,18 @@ bool X_CallFunc(const char *object, const char *fname, int arg_count,
         break;
       }
     }
+    else {
+      I_Error("X_CallFunc: Invalid argument order");
+    }
 
     args_remaining--;
   }
   va_end(args);
 
-  if (lua_pcall(L, arg_count, res_count, 0) != LUA_OK)
-    return false;
+  if (object)
+    arg_count++;
 
-  return true;
+  return lua_pcall(L, arg_count, res_count, 0) == 0;
 }
 
 void X_RegisterFunc(const char *name, lua_CFunction func) {

@@ -21,10 +21,10 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-require('lgob.cairo')
-require('lgob.pango')
-require('lgob.pangocairo')
-require('hud_widget')
+local cairo = require('lgob.cairo')
+local pango = require('lgob.pango')
+local pangocairo = require('lgob.pangocairo')
+local hud_widget = require('hud_widget')
 
 Console = {}
 setmetatable(Console, {__index = hud_widget.HUDWidget})
@@ -47,11 +47,11 @@ function Console:draw()
   local angle2 = math.rad(180)
 
   self.hud.cr:set_source_rgba(0, 0, 0, 0.6)
-  self.hud.cr.line_width = 10
+  self.hud.cr:set_line_width(10)
   self.hud.cr:arc(xc, yc, radius, angle1, angle2)
   self.hud.cr:stroke()
   self.hud.cr:set_source_rgba(1, 0.2, 0.2, 0.6)
-  self.hud.cr.line_width = 6
+  self.hud.cr:set_line_width(6)
   self.hud.cr:arc(xc, yc, 10, 0, math.rad(360))
   self.hud.cr:fill()
   self.hud.cr:arc(xc, yc, radius, angle1, angle1)

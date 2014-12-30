@@ -29,5 +29,7 @@ void          V_ClearOverlay(void);
 unsigned int* V_GetOverlayPixels(void);
 void          V_MarkOverlayDirty(void);
 
+#endif
+
 /* vi: set et ts=2 sw=2: */
 

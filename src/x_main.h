@@ -33,13 +33,14 @@
 #define X_INIT_SCRIPT_NAME "init.lua"
 
 typedef enum {
+  X_NONE,   // ...
   X_BOOL,   // lua_pushboolean(L, int b);
   X_NUM,    // lua_pushnumber(L, lua_Number n);
   X_STR,    // lua_pushstring(L, const char *s);
   X_BYTES,  // lua_pushlstring(L, const char *s, size_t len);
   X_LUDATA, // lua_pushlightuserdata(L, void *p);
   X_NIL     // lua_pushnil(L);
-} x_types;
+} x_type_e;
 
 void        X_Init(void);
 const char* X_StrError(void);

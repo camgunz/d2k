@@ -31,6 +31,10 @@
 #include "x_main.h"
 
 void V_InitOverlay(void) {
+  if (!X_CallFunc("hud", "clear", 0, 0))
+    I_Error("Error clearing overlay: %s", X_StrError());
+
+#if 0
   lua_State *L = X_GetState();
 
   lua_getglobal(L, X_NAMESPACE);
@@ -41,10 +45,11 @@ void V_InitOverlay(void) {
   lua_getglobal(L, X_NAMESPACE);
   lua_getfield(L, -1, "hud");
   lua_remove(L, -2);
-  if (lua_pcall(L, 1, 0, 0) != LUA_OK)
+  if (lua_pcall(L, 1, 0, 0) != 0)
     I_Error("Error clearing overlay: %s", X_StrError());
 
   printf("V_ClearOverlay: Stack size: %d\n", lua_gettop(L));
+#endif
 }
 
 void V_ClearOverlay(void) {
@@ -58,7 +63,7 @@ void V_ClearOverlay(void) {
   lua_getglobal(L, X_NAMESPACE);
   lua_getfield(L, -1, "hud");
   lua_remove(L, -2);
-  if (lua_pcall(L, 1, 0, 0) != LUA_OK)
+  if (lua_pcall(L, 1, 0, 0) != 0)
     I_Error("Error clearing overlay: %s", X_StrError());
 
   printf("V_ClearOverlay: Stack size: %d\n", lua_gettop(L));
@@ -76,7 +81,7 @@ unsigned int* V_GetOverlayPixels(void) {
   lua_getglobal(L, X_NAMESPACE);
   lua_getfield(L, -1, "hud");
   lua_remove(L, -2);
-  if (lua_pcall(L, 1, 1, 0) != LUA_OK)
+  if (lua_pcall(L, 1, 1, 0) != 0)
     I_Error("Error getting overlay data: %s", X_StrError());
   if (!lua_islightuserdata(L, -1))
     I_Error("xf.hud.get_pixels did not return light userdata");
@@ -84,6 +89,8 @@ unsigned int* V_GetOverlayPixels(void) {
   overlay_pixels = lua_touserdata(L, -1);
   lua_pop(L, 1);
   printf("V_GetOverlayPixels: Stack size: %d\n", lua_gettop(L));
+
+  return overlay_pixels;
 }
 
 void V_MarkOverlayDirty(void) {
@@ -97,7 +104,7 @@ void V_MarkOverlayDirty(void) {
   lua_getglobal(L, X_NAMESPACE);
   lua_getfield(L, -1, "hud");
   lua_remove(L, -2);
-  if (lua_pcall(L, 1, 0, 0) != LUA_OK)
+  if (lua_pcall(L, 1, 0, 0) != 0)
     I_Error("Error marking overlay dirty: %s", X_StrError());
 
   printf("V_MarkOverlayDirty: Stack size: %d\n", lua_gettop(L));

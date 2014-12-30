@@ -2,6 +2,7 @@
 
 yaourt -S clang                 \
           cmake                 \
+          pkg-config            \
           mesa-libgl            \
           glu                   \
           enet                  \
@@ -17,6 +18,5 @@ yaourt -S clang                 \
           sdl_image             \
           pango                 \
           gobject-introspection \
-          lua51                 \
           lua51-lgob
 
