@@ -23,6 +23,13 @@
 
 HUDWidget = {}
 
+function HUDWidget:new(w)
+  w = w or {}
+  setmetatable(w, self)
+  self.__index = self
+  return w
+end
+
 function HUDWidget:get_name()
 end
 
@@ -33,10 +40,6 @@ function HUDWidget:tick()
 end
 
 function HUDWidget:draw()
-end
-
-function HUDWidget:was_updated()
-  return false
 end
 
 return {HUDWidget = HUDWidget}

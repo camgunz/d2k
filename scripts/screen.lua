@@ -25,17 +25,25 @@ Screen = {}
 
 local cairo = require('lgob.cairo')
 
-function Screen:init()
-  self.render_surface = cairo.ImageSurface.create(
+function Screen:new(s)
+  s = s or {}
+  setmetatable(s, self)
+  self.__index = self
+
+  s.render_surface = cairo.ImageSurface.create(
     cairo.FORMAT_ARGB32,
     d2k.get_screen_width(),
     d2k.get_screen_height()
   )
-  self.cr = cairo.Context.create(self.render_surface)
+
+  s.cr = cairo.Context.create(s.render_surface)
+
+  return s
 end
 
 function Screen:get_pixels()
   self.render_surface:flush()
+
   return self.render_surface:get_data()
 end
 

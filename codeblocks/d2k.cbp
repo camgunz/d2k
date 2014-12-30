@@ -6,7 +6,7 @@
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
-			<Target title="Windows Debug">
+			<Target title="Win Debug Static">
 				<Option output="Debug/bin/doom2k" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="Debug/bin/" />
 				<Option object_output="Debug/obj/" />
@@ -17,7 +17,7 @@
 					<Add option="-DDEBUG=1" />
 				</Compiler>
 			</Target>
-			<Target title="Windows Release">
+			<Target title="Win Release Static">
 				<Option output="Release/bin/doom2k" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="Release/bin/" />
 				<Option object_output="Release/obj/" />
@@ -29,6 +29,17 @@
 				<Linker>
 					<Add option="-s" />
 				</Linker>
+			</Target>
+			<Target title="Win Debug Dynamic">
+				<Option output="Debug/bin/doom2k" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="Debug/bin/" />
+				<Option object_output="Debug/obj/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-DDEBUG=1" />
+				</Compiler>
 			</Target>
 		</Build>
 		<Compiler>
@@ -71,8 +82,6 @@
 			<Add option="-DHAVE_LIBPNG=1" />
 			<Add option="-DPCRE_STATIC=1" />
 			<Add option="-DFLUIDSYNTH_NOT_A_DLL=1" />
-			<Add option="-DGLIB_STATIC_COMPILATION=1" />
-			<Add option="-DGOBJECT_STATIC_COMPILATION=1" />
 			<Add option="-D__USE_MINGW_ANSI_STDIO" />
 			<Add option="-D_GNU_SOURCE" />
 			<Add option="-DMIKMOD_STATIC=1" />
@@ -122,15 +131,14 @@
 			<Add library="..\deps\lib\liblua5.1.a" />
 			<Add library="..\deps\lib\libxdiff.a" />
 			<Add library="..\deps\lib\libenet.a" />
-			<Add library="..\deps\lib\libgirepository-1.0.a" />
 			<Add library="..\deps\lib\libgio-2.0.a" />
 			<Add library="..\deps\lib\libgmodule-2.0.a" />
 			<Add library="..\deps\lib\libgobject-2.0.a" />
 			<Add library="..\deps\lib\libgthread-2.0.a" />
 			<Add library="..\deps\lib\libglib-2.0.a" />
 			<Add library="..\deps\lib\libexpat.a" />
-			<Add library="..\deps\lib\libpcre.a" />
 			<Add library="..\deps\lib\libpcreposix.a" />
+			<Add library="..\deps\lib\libpcre.a" />
 			<Add library="..\deps\lib\libffi.a" />
 			<Add library="..\deps\lib\libgettextpo.a" />
 			<Add library="..\deps\lib\libgettextsrc.dll.a" />
@@ -779,6 +787,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/tables.h" />
+		<Unit filename="../src/v_main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/v_main.h" />
 		<Unit filename="../src/v_video.c">
 			<Option compilerVar="CC" />
 		</Unit>

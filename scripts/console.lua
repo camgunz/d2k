@@ -26,8 +26,7 @@ local pango = require('lgob.pango')
 local pangocairo = require('lgob.pangocairo')
 local hud_widget = require('hud_widget')
 
-Console = {}
-setmetatable(Console, {__index = hud_widget.HUDWidget})
+Console = hud_widget.HUDWidget:new()
 
 function Console:get_name()
   return 'console'
@@ -46,28 +45,19 @@ function Console:draw()
   local angle1 = math.rad(45)
   local angle2 = math.rad(180)
 
-  self.hud.cr:set_source_rgba(0, 0, 0, 0.6)
-  self.hud.cr:set_line_width(10)
-  self.hud.cr:arc(xc, yc, radius, angle1, angle2)
-  self.hud.cr:stroke()
-  self.hud.cr:set_source_rgba(1, 0.2, 0.2, 0.6)
-  self.hud.cr:set_line_width(6)
-  self.hud.cr:arc(xc, yc, 10, 0, math.rad(360))
-  self.hud.cr:fill()
-  self.hud.cr:arc(xc, yc, radius, angle1, angle1)
-  self.hud.cr:line_to(xc, yc)
-  self.hud.cr:arc(xc, yc, radius, angle2, angle2)
-  self.hud.cr:line_to(xc, yc)
-  self.hud.cr:stroke()
-end
-
-function Console:was_updated()
-  if self.should_update == nil then
-    self.should_update = false
-    return true
-  end
-
-  return true
+  d2k.screen.cr:set_source_rgba(0, 0, 0, 0.6)
+  d2k.screen.cr:set_line_width(10)
+  d2k.screen.cr:arc(xc, yc, radius, angle1, angle2)
+  d2k.screen.cr:stroke()
+  d2k.screen.cr:set_source_rgba(1, 0.2, 0.2, 0.6)
+  d2k.screen.cr:set_line_width(6)
+  d2k.screen.cr:arc(xc, yc, 10, 0, math.rad(360))
+  d2k.screen.cr:fill()
+  d2k.screen.cr:arc(xc, yc, radius, angle1, angle1)
+  d2k.screen.cr:line_to(xc, yc)
+  d2k.screen.cr:arc(xc, yc, radius, angle2, angle2)
+  d2k.screen.cr:line_to(xc, yc)
+  d2k.screen.cr:stroke()
 end
 
 return {Console = Console}

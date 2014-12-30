@@ -11985,7 +11985,7 @@
 
 1419426868 c:\users\cagunyon\documents\d2k\src\cl_main.h
 
-1419880446 c:\users\cagunyon\documents\d2k\src\x_main.h
+1419973693 c:\users\cagunyon\documents\d2k\src\x_main.h
 	<lua.h>
 	<lualib.h>
 	<lauxlib.h>
@@ -12208,7 +12208,7 @@
 	"z_zone.h"
 	"lprintf.h"
 
-1419448974 source:c:\users\cagunyon\documents\d2k\src\d_main.c
+1419977973 source:c:\users\cagunyon\documents\d2k\src\d_main.c
 	"z_zone.h"
 	"doomdef.h"
 	"doomstat.h"
@@ -12873,7 +12873,7 @@
 	"i_video.h"
 	"lprintf.h"
 
-1419878177 source:c:\users\cagunyon\documents\d2k\src\hu_stuff.c
+1419978013 source:c:\users\cagunyon\documents\d2k\src\hu_stuff.c
 	"z_zone.h"
 	<fontconfig/fontconfig.h>
 	<pango/pangocairo.h>
@@ -14316,7 +14316,7 @@
 	"i_joy.h"
 	"lprintf.h"
 
-1419862137 source:c:\users\cagunyon\documents\d2k\src\sdl\i_main.c
+1419973693 source:c:\users\cagunyon\documents\d2k\src\sdl\i_main.c
 	"z_zone.h"
 	"TEXTSCREEN/txt_main.h"
 	"doomdef.h"
@@ -14434,13 +14434,9 @@
 	"e6y.h"
 	"i_system.h"
 
-1419878188 source:c:\users\cagunyon\documents\d2k\src\sdl\i_video.c
+1419973693 source:c:\users\cagunyon\documents\d2k\src\sdl\i_video.c
 	"z_zone.h"
 	<cairo/cairo.h>
-	<cairo/cairo-xlib.h>
-	<cairo/cairo-xlib-xrender.h>
-	<cairo/cairo-quartz.h>
-	<cairo/cairo-win32.h>
 	<SDL.h>
 	<SDL_syswm.h>
 	"doomdef.h"
@@ -14468,6 +14464,7 @@
 	"s_sound.h"
 	"sounds.h"
 	"st_stuff.h"
+	"v_main.h"
 	"v_video.h"
 	"w_wad.h"
 	"x_main.h"
@@ -14777,7 +14774,7 @@
 	"txt_main.h"
 	"txt_window.h"
 
-1419448974 source:c:\users\cagunyon\documents\d2k\src\v_video.c
+1419973693 source:c:\users\cagunyon\documents\d2k\src\v_video.c
 	"z_zone.h"
 	<SDL.h>
 	"doomdef.h"
@@ -14808,7 +14805,7 @@
 	"e6y.h"
 	"wchar.h"
 
-1419861426 source:c:\users\cagunyon\documents\d2k\src\w_wad.c
+1419973693 source:c:\users\cagunyon\documents\d2k\src\w_wad.c
 	"z_zone.h"
 	"doomstat.h"
 	"d_main.h"
@@ -14839,11 +14836,8 @@
 	"r_draw.h"
 	"n_net.h"
 
-1419880445 source:c:\users\cagunyon\documents\d2k\src\x_main.c
+1419973693 source:c:\users\cagunyon\documents\d2k\src\x_main.c
 	"z_zone.h"
-	<lua.h>
-	<lualib.h>
-	<lauxlib.h>
 	"d_event.h"
 	"c_main.h"
 	"i_main.h"
@@ -14894,4 +14888,14 @@
 	<stddef.h>
 	<stdio.h>
 	"lua.h"
+
+1419973693 c:\users\cagunyon\documents\d2k\src\v_main.h
+
+1419978309 source:c:\users\cagunyon\documents\d2k\src\v_main.c
+	"z_zone.h"
+	<lua.h>
+	<lualib.h>
+	<lauxlib.h>
+	"lprintf.h"
+	"x_main.h"
 

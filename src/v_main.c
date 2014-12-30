@@ -74,17 +74,17 @@ unsigned int* V_GetOverlayPixels(void) {
   lua_State *L = X_GetState();
 
   lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "hud");
+  lua_getfield(L, -1, "screen");
   lua_remove(L, -2);
   lua_getfield(L, -1, "get_pixels");
   lua_remove(L, -2);
   lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "hud");
+  lua_getfield(L, -1, "screen");
   lua_remove(L, -2);
   if (lua_pcall(L, 1, 1, 0) != 0)
     I_Error("Error getting overlay data: %s", X_StrError());
   if (!lua_islightuserdata(L, -1))
-    I_Error("xf.hud.get_pixels did not return light userdata");
+    I_Error("d2k.screen.get_pixels did not return light userdata");
 
   overlay_pixels = lua_touserdata(L, -1);
   lua_pop(L, 1);

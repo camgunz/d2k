@@ -27,14 +27,16 @@ local screen = require('screen')
 local hud = require('hud')
 local console = require('console')
 
-d2k.screen = {}
-d2k.hud = {}
-d2k.console = {}
+print('X_Init: Init script engine.')
 
-setmetatable(d2k.screen, {__index = screen.Screen})
-setmetatable(d2k.hud, {__index = hud.HUD})
-setmetatable(d2k.console, {__index = console.Console})
+print('X_Init: Creating screen.')
+d2k.screen = screen.Screen:new()
+print('X_Init: Creating HUD')
+d2k.hud = hud.HUD:new()
+print('X_Init: Creating console')
+d2k.console = console.Console:new()
 
+print('X_Init: Adding console to HUD')
 d2k.hud:add_widget(d2k.console)
 
 -- vi: et ts=2 sw=2

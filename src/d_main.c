@@ -2424,7 +2424,6 @@ static void D_DoomMainSetup(void) {
   graphics_initialized = true;
 
   // CG 07/22/2014: Scripting
-  lprintf(LO_INFO, "X_Init: Init script engine.\n");
   X_Init();
 
   //jff 9/3/98 use logical output routine

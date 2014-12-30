@@ -27,17 +27,20 @@ require('lgob.pangocairo')
 
 HUD = {}
 
-function HUD:init()
-  print('HUD: Initializing')
+function HUD:new(h)
+  h = h or {}
+  setmetatable(h, self)
+  self.__index = self
+
+  self.widgets = {}
   self.active = false
+
+  return h
 end
 
 function HUD:add_widget(widget)
-  if self.widgets == nil then
-    self.widgets = {}
-  end
-
   table.insert(self.widgets, widget)
+
   widget.hud = self
 end
 
@@ -54,7 +57,6 @@ function HUD:remove_widget(widget)
 end
 
 function HUD:start()
-  print('HUD: Starting')
   if self.active then
     self:stop()
   end
@@ -73,51 +75,29 @@ function HUD:stop()
 end
 
 function HUD:tick()
+  if not self.active then
+    return
+  end
+
   for i, w in pairs(self.widgets) do
     w:tick()
   end
 end
 
 function HUD:clear()
-  self.cr:set_operator(cairo.OPERATOR_CLEAR)
-  self.cr:paint()
+  d2k.screen:clear()
 end
 
-function HUD:update()
-  updated = false
+function HUD:draw()
+  if not self.active then
+    return
+  end
+
+  d2k.screen.cr:set_operator(cairo.OPERATOR_OVER)
 
   for i, w in pairs(self.widgets) do
-    if w:was_updated() then
-      if not updated then
-        self:clear()
-        self.cr:set_operator(cairo.OPERATOR_SOURCE)
-        updated = true
-      end
-      w:draw()
-    end
+    w:draw()
   end
-
-  if updated then
-    if d2k.using_opengl() then
-      self.cr:set_operator(cairo.OPERATOR_OVER)
-    end
-    self.render_surface:flush()
-  end
-end
-
-function HUD:render()
-  self:update()
-
-  -- self:clear()
-
-  self.cr:set_operator(cairo.OPERATOR_SOURCE)
-
-  d2k.blit_overlay(
-    self.render_surface:get_data(),
-    self.render_surface:get_width(),
-    self.render_surface:get_height()
-  )
-
 end
 
 return {HUD = HUD}

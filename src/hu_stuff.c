@@ -337,21 +337,8 @@ void HU_Init(void) {
 
   shiftxform = english_shiftxform;
 
-  lua_State *L = X_GetState();
-
   if (nodrawers)
     return;
-
-  lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "hud");
-  lua_remove(L, -2);
-  lua_getfield(L, -1, "init");
-  lua_remove(L, -2);
-  lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "hud");
-  lua_remove(L, -2);
-  if (lua_pcall(L, 1, 0, 0) != 0)
-    I_Error("Error initializing HUD: %s", X_StrError());
 
   // load the heads-up font
   j = HU_FONTSTART;
@@ -493,9 +480,11 @@ void HU_Init(void) {
 //
 // Passed nothing, returns nothing
 //
+#if 0
 static void HU_Stop(void) {
   headsupactive = false;
 }
+#endif
 
 //
 // HU_Start
@@ -2318,7 +2307,6 @@ void HU_draw_crosshair(void)
 void HU_Drawer(void) {
   char *s;
   player_t *plr;
-  lua_State *L = X_GetState();
 
   if (nodrawers)
     return;
@@ -2327,16 +2315,8 @@ void HU_Drawer(void) {
   if (menuactive == mnact_full)
     return;
 
-  lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "hud");
-  lua_remove(L, -2);
-  lua_getfield(L, -1, "update");
-  lua_remove(L, -2);
-  lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "hud");
-  lua_remove(L, -2);
-  if (lua_pcall(L, 1, 0, 0) != 0)
-    I_Error("Error updating HUD: %s", X_StrError());
+  if (!X_CallFunc("hud", "draw", 0, 0))
+    I_Error("Error drawing HUD: %s", X_StrError());
 
   /*
   return;
