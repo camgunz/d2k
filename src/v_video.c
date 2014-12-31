@@ -905,7 +905,7 @@ void V_FreeScreen(screeninfo_t *scrn) {
 // V_FreeScreens
 //
 void V_FreeScreens(void) {
-  for (int i = 1; i < NUM_SCREENS; i++)
+  for (int i = 0; i < NUM_SCREENS; i++)
     V_FreeScreen(&screens[i]);
 }
 
