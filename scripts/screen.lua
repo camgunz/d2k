@@ -26,29 +26,17 @@ Screen = {}
 local cairo = require('lgob.cairo')
 
 function Screen:new(s)
+  local scale_value = d2k.get_screen_multiply_value()
+
   s = s or {}
   setmetatable(s, self)
   self.__index = self
 
-  s.render_surface = cairo.ImageSurface.create(
-    cairo.FORMAT_ARGB32,
-    d2k.get_screen_width(),
-    d2k.get_screen_height()
-  )
-
+  s.render_surface = d2k.get_render_surface()
   s.cr = cairo.Context.create(s.render_surface)
+  -- s.cr:scale(1, 1)
 
   return s
-end
-
-function Screen:get_pixels()
-  self.render_surface:flush()
-
-  return self.render_surface:get_data()
-end
-
-function Screen:mark_dirty()
-  self.render_surface:mark_dirty()
 end
 
 function Screen:clear()

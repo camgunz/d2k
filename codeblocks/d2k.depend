@@ -14126,7 +14126,7 @@
 	"v_video.h"
 	"lprintf.h"
 
-1419426869 source:c:\users\cagunyon\documents\d2k\src\r_screenmultiply.c
+1420058927 source:c:\users\cagunyon\documents\d2k\src\r_screenmultiply.c
 	"z_zone.h"
 	"doomtype.h"
 	"doomdef.h"
@@ -14434,13 +14434,9 @@
 	"e6y.h"
 	"i_system.h"
 
-1420055485 source:c:\users\cagunyon\documents\d2k\src\sdl\i_video.c
+1420062857 source:c:\users\cagunyon\documents\d2k\src\sdl\i_video.c
 	"z_zone.h"
 	<cairo/cairo.h>
-	<cairo/cairo-xlib.h>
-	<cairo/cairo-xlib-xrender.h>
-	<cairo/cairo-quartz.h>
-	<cairo/cairo-win32.h>
 	<SDL.h>
 	<SDL_syswm.h>
 	"doomdef.h"
@@ -14778,7 +14774,7 @@
 	"txt_main.h"
 	"txt_window.h"
 
-1420056611 source:c:\users\cagunyon\documents\d2k\src\v_video.c
+1420060436 source:c:\users\cagunyon\documents\d2k\src\v_video.c
 	"z_zone.h"
 	<SDL.h>
 	"doomdef.h"

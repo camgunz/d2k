@@ -39,9 +39,9 @@ function Console:tick()
 end
 
 function Console:draw()
-  local xc = 128
-  local yc = 128
-  local radius = 100
+  local xc = 80
+  local yc = 60
+  local radius = 30
   local angle1 = math.rad(45)
   local angle2 = math.rad(180)
 

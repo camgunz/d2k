@@ -1483,13 +1483,33 @@ void V_ChangeScreenResolution(void) {
 }
 
 int XF_GetScreenWidth(lua_State *L) {
-  lua_pushnumber(L, REAL_SCREENWIDTH);
+  lua_pushnumber(L, SCREENWIDTH);
 
   return 1;
 }
 
 int XF_GetScreenHeight(lua_State *L) {
+  lua_pushnumber(L, SCREENHEIGHT);
+
+  return 1;
+}
+
+int XF_GetRealScreenWidth(lua_State *L) {
+  lua_pushnumber(L, REAL_SCREENWIDTH);
+
+  return 1;
+}
+
+int XF_GetRealScreenHeight(lua_State *L) {
   lua_pushnumber(L, REAL_SCREENHEIGHT);
+
+  return 1;
+}
+
+extern int screen_multiply;
+
+int XF_GetScreenMultiplyValue(lua_State *L) {
+  lua_pushnumber(L, screen_multiply);
 
   return 1;
 }
@@ -1511,6 +1531,9 @@ int XF_UsingOpenGL(lua_State *L) {
 void V_RegisterFunctions(void) {
   X_RegisterFunc("get_screen_width", XF_GetScreenWidth);
   X_RegisterFunc("get_screen_height", XF_GetScreenHeight);
+  X_RegisterFunc("get_real_screen_width", XF_GetRealScreenWidth);
+  X_RegisterFunc("get_real_screen_height", XF_GetRealScreenHeight);
+  X_RegisterFunc("get_screen_multiply_value", XF_GetScreenMultiplyValue);
   X_RegisterFunc("using_opengl", XF_UsingOpenGL);
 }
 

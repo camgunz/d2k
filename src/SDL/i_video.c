@@ -153,89 +153,32 @@ static void reset_overlay(void) {
 }
 
 static void render_overlay(void) {
-  int pixel_bits = V_GetNumPixelBits();
-
 #ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL) {
-    glBindTexture(GL_TEXTURE_2D, overlay_tex_id);
-    glTexImage2D(
-      GL_TEXTURE_2D,
-      0,
-      GL_RGBA,
-      REAL_SCREENWIDTH,
-      REAL_SCREENHEIGHT,
-      0,
-      GL_BGRA,
-      GL_UNSIGNED_BYTE,
-      screens[0].data
-    );
-    glBegin(GL_TRIANGLE_STRIP);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(0.0f, 0.0f);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(0.0f, REAL_SCREENHEIGHT);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(REAL_SCREENWIDTH, 0.0f);
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
-    glEnd();
-
-    I_ReleaseRenderSurface();
+  if (V_GetMode() != VID_MODEGL)
     return;
-  }
-#endif
-
-  if (SDL_MUSTLOCK(screen)) {
-    if (SDL_LockSurface(screen) < 0) {
-      lprintf(LO_INFO, "I_BlitOverlay: %s\n", SDL_GetError());
-      I_ReleaseRenderSurface();
-      return;
-    }
-  }
-
-  SDL_Surface *screen_surf = SDL_GetVideoSurface();
-  SDL_Surface *sdl_surf;
-
-  if (screen_surf == NULL) {
-    I_Error("I_BlitOverlay: Error getting current SDL display surface (%s)",
-      SDL_GetError()
-    );
-  }
-
-  sdl_surf = SDL_CreateRGBSurfaceFrom(
-    screens[0].data,
+  glBindTexture(GL_TEXTURE_2D, overlay_tex_id);
+  glTexImage2D(
+    GL_TEXTURE_2D,
+    0,
+    GL_RGBA,
     REAL_SCREENWIDTH,
     REAL_SCREENHEIGHT,
-    pixel_bits,
-    REAL_SCREENWIDTH * (pixel_bits / 8),
-    0x00FF0000,
-    0x0000FF00,
-    0x000000FF,
-    0xFF000000
+    0,
+    GL_BGRA,
+    GL_UNSIGNED_BYTE,
+    screens[0].data
   );
-
-  if (sdl_surf == NULL) {
-    I_Error("I_BlitOverlay: Error getting SDL surface (%s)",
-      SDL_GetError()
-    );
-  }
-
-  SDL_SetAlpha(sdl_surf, SDL_SRCALPHA | SDL_RLEACCEL, SDL_ALPHA_TRANSPARENT);
-
-  if (SDL_BlitSurface(sdl_surf, NULL, screen_surf, NULL) < 0)
-    I_Error("Error blitting overlay: %s\n", SDL_GetError());
-
-  SDL_FreeSurface(sdl_surf);
-
-  if (SDL_MUSTLOCK(screen))
-    SDL_UnlockSurface(screen);
-
-#ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL) {
-  }
+  glBegin(GL_TRIANGLE_STRIP);
+  glTexCoord2f(0.0f, 0.0f);
+  glVertex2f(0.0f, 0.0f);
+  glTexCoord2f(0.0f, 1.0f);
+  glVertex2f(0.0f, REAL_SCREENHEIGHT);
+  glTexCoord2f(1.0f, 0.0f);
+  glVertex2f(REAL_SCREENWIDTH, 0.0f);
+  glTexCoord2f(1.0f, 1.0f);
+  glVertex2f(REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
+  glEnd();
 #endif
-
-  I_ReleaseRenderSurface();
 }
 
 static void init_inputs(void) {
@@ -784,6 +727,8 @@ cairo_surface_t* I_GetRenderSurface(void) {
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL)
     format = CAIRO_FORMAT_ARGB32;
+  else if (use_gl_surface)
+    format = CAIRO_FORMAT_ARGB32;
   else
     format = CAIRO_FORMAT_RGB24;
 #else
@@ -791,11 +736,11 @@ cairo_surface_t* I_GetRenderSurface(void) {
 #endif
 
   render_surface = cairo_image_surface_create_for_data(
-    screen->pixels,
-    CAIRO_FORMAT_ARGB32,
-    REAL_SCREENWIDTH,
-    REAL_SCREENHEIGHT,
-    cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, REAL_SCREENWIDTH)
+    screens[0].data,
+    format,
+    SCREENWIDTH,
+    SCREENHEIGHT,
+    cairo_format_stride_for_width(format, SCREENWIDTH)
   );
 
   status = cairo_surface_status(render_surface);
@@ -876,6 +821,7 @@ void I_FinishUpdate(void) {
       return;
     }
 
+    /*
     if (screen_multiply > 1) { // e6y: processing of screen_multiply
       R_ProcessScreenMultiply(
         screens[0].data,
@@ -884,7 +830,9 @@ void I_FinishUpdate(void) {
         screens[0].byte_pitch,
         screen->pitch);
     }
-    else {
+    else
+    */
+    {
       dest = screen->pixels;
       src = screens[0].data;
       h = screen->h;
@@ -1097,6 +1045,10 @@ void I_CalculateRes(int width, int height) {
   REAL_SCREENWIDTH  = SCREENWIDTH  * render_screen_multiply;
   REAL_SCREENHEIGHT = SCREENHEIGHT * render_screen_multiply;
   REAL_SCREENPITCH  = SCREENPITCH  * render_screen_multiply;
+
+  REAL_SCREENWIDTH  = SCREENWIDTH;
+  REAL_SCREENHEIGHT = SCREENHEIGHT;
+  REAL_SCREENPITCH  = SCREENPITCH;
 }
 
 // CPhipps -
