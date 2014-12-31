@@ -12208,7 +12208,7 @@
 	"z_zone.h"
 	"lprintf.h"
 
-1420051031 source:c:\users\cagunyon\documents\d2k\src\d_main.c
+1420056639 source:c:\users\cagunyon\documents\d2k\src\d_main.c
 	"z_zone.h"
 	"doomdef.h"
 	"doomstat.h"
@@ -14316,7 +14316,7 @@
 	"i_joy.h"
 	"lprintf.h"
 
-1420034738 source:c:\users\cagunyon\documents\d2k\src\sdl\i_main.c
+1420055513 source:c:\users\cagunyon\documents\d2k\src\sdl\i_main.c
 	"z_zone.h"
 	"TEXTSCREEN/txt_main.h"
 	"doomdef.h"
@@ -14434,7 +14434,7 @@
 	"e6y.h"
 	"i_system.h"
 
-1420046504 source:c:\users\cagunyon\documents\d2k\src\sdl\i_video.c
+1420055485 source:c:\users\cagunyon\documents\d2k\src\sdl\i_video.c
 	"z_zone.h"
 	<cairo/cairo.h>
 	<cairo/cairo-xlib.h>
@@ -14778,7 +14778,7 @@
 	"txt_main.h"
 	"txt_window.h"
 
-1420051106 source:c:\users\cagunyon\documents\d2k\src\v_video.c
+1420056611 source:c:\users\cagunyon\documents\d2k\src\v_video.c
 	"z_zone.h"
 	<SDL.h>
 	"doomdef.h"

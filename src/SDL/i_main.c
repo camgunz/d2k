@@ -51,6 +51,8 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 #undef main
 
 extern int XF_GetRenderSurface(lua_State *L);
+extern int XF_AcquireRenderSurface(lua_State *L);
+extern int XF_ReleaseRenderSurface(lua_State *L);
 extern int XF_ResetOverlay(lua_State *L);
 
 /* Most of the following has been rewritten by Lee Killough
@@ -683,6 +685,8 @@ int main(int argc, char **argv) {
 
 void I_RegisterFunctions(void) {
   X_RegisterFunc("get_render_surface", XF_GetRenderSurface);
+  X_RegisterFunc("acquire_render_surface", XF_AcquireRenderSurface);
+  X_RegisterFunc("release_render_surface", XF_ReleaseRenderSurface);
   X_RegisterFunc("reset_overlay", XF_ResetOverlay);
 }
 

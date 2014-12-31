@@ -616,8 +616,6 @@ void D_Display(void) {
 
   HU_Erase();
 
-  // I_AcquireRenderSurface();
-
   if (setsizeneeded) {               // change the view size if needed
     R_ExecuteSetViewSize();
     oldgamestate = GS_BAD;        // force background redraw
@@ -728,10 +726,8 @@ void D_Display(void) {
       R_DrawViewBorder();
   }
 
-  // I_ReleaseRenderSurface();
   HU_Drawer();
   HU_DrawDemoProgress(true); //e6y
-  // I_AcquireRenderSurface();
 
   isborderstate = isborder;
   oldgamestate = wipegamestate = gamestate;
@@ -755,8 +751,6 @@ void D_Display(void) {
     wipe_EndScreen();
     D_Wipe();
   }
-
-  // I_ReleaseRenderSurface();
 
   // e6y
   // Don't thrash cpu during pausing or if the window doesnt have focus

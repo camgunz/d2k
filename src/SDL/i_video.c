@@ -24,21 +24,6 @@
 
 #include <cairo/cairo.h>
 
-#if CAIRO_HAS_XLIB_SURFACE
-#include <cairo/cairo-xlib.h>
-#if CAIRO_HAS_XLIB_XRENDER_SURFACE
-#include <cairo/cairo-xlib-xrender.h>
-#endif
-#endif
-
-#if CAIRO_HAS_QUARTZ_SURFACE
-#include <cairo/cairo-quartz.h>
-#endif
-
-#if CAIRO_HAS_WIN32_SURFACE
-#include <cairo/cairo-win32.h>
-#endif
-
 #include <SDL.h>
 #include <SDL_syswm.h>
 
@@ -790,135 +775,23 @@ void I_DestroyRenderSurface(void) {
 }
 
 cairo_surface_t* I_GetRenderSurface(void) {
+  cairo_format_t format;
   cairo_status_t status;
 
   if (render_surface)
     return render_surface;
 
 #ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL) {
-    unsigned char *local_pixels = malloc(
-      REAL_SCREENWIDTH * REAL_SCREENHEIGHT * sizeof(unsigned int)
-    );
-
-    if (local_pixels == NULL)
-      I_Error("I_GetRenderSurface: malloc'ing pixels failed");
-
-    render_surface = cairo_image_surface_create_for_data(
-      local_pixels,
-      CAIRO_FORMAT_ARGB32,
-      REAL_SCREENWIDTH,
-      REAL_SCREENHEIGHT,
-      cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, REAL_SCREENWIDTH)
-    );
-
-    status = cairo_surface_status(render_surface);
-
-    if (status != CAIRO_STATUS_SUCCESS) {
-      I_Error("I_GetRenderSurface: Error creating cairo surface (%s)",
-        cairo_status_to_string(status)
-      );
-    }
-
-    return render_surface;
-  }
+  if (V_GetMode() == VID_MODEGL)
+    format = CAIRO_FORMAT_ARGB32;
+  else
+    format = CAIRO_FORMAT_RGB24;
+#else
+  format = CAIRO_FORMAT_RGB24;
 #endif
-
-#if CAIRO_HAS_WIN32_SURFACE
-  render_surface = cairo_win32_surface_create_with_dib(
-    CAIRO_FORMAT_RGB24,
-    REAL_SCREENWIDTH,
-    REAL_SCREENHEIGHT
-  );
-
-  status = cairo_surface_status(render_surface);
-
-  if (status != CAIRO_STATUS_SUCCESS) {
-    I_Error("I_GetRenderSurface: Error creating cairo surface (%s)",
-      cairo_status_to_string(status)
-    );
-  }
-
-  return render_surface;
-#endif
-
-#if CAIRO_HAS_XLIB_SURFACE
-  SDL_SysWMinfo wm_info;
-  Display *dpy;
-
-  SDL_VERSION(&wm_info.version);
-  SDL_GetWMInfo(&wm_info);
-
-  dpy = wm_info.info.x11.gfxdisplay;
-
-  render_surface = cairo_xlib_surface_create(
-    wm_info.info.x11.gfxdisplay,
-    (Drawable)wm_info.info.x11.window,
-    DefaultVisual(dpy, 0),
-    REAL_SCREENWIDTH,
-    REAL_SCREENHEIGHT
-  );
-
-  status = cairo_surface_status(render_surface);
-
-  if (status != CAIRO_STATUS_SUCCESS) {
-    I_Error("I_GetRenderSurface: Error creating cairo surface (%s)",
-      cairo_status_to_string(status)
-    );
-  }
-
-#if CAIRO_HAS_XLIB_XRENDER_SURFACE
-  cairo_surface_t *xrender_surface = cairo_xlib_surface_create_with_xrender_format(
-    wm_info.info.x11.gfxdisplay,
-    cairo_xlib_surface_get_drawable(render_surface),
-    cairo_xlib_surface_get_screen(render_surface),
-    cairo_xlib_surface_get_xrender_format(render_surface),
-    REAL_SCREENWIDTH,
-    REAL_SCREENHEIGHT
-  );
-
-  status = cairo_surface_status(xrender_surface);
-
-  if (status != CAIRO_STATUS_SUCCESS) {
-    I_Error("I_GetRenderSurface: Error creating cairo surface (%s)",
-      cairo_status_to_string(status)
-    );
-  }
-
-  cairo_surface_destroy(render_surface);
-  render_surface = xrender_surface;
-#endif
-
-  return xrender_surface;
-#endif
-
-#if CAIRO_HAS_QUARTZ_SURFACE
-  render_surface = cairo_quartz_surface_create(
-    CAIRO_FORMAT_ARGB32,
-    REAL_SCREENWIDTH,
-    REAL_SCREENHEIGHT
-  );
-
-  status = cairo_surface_status(render_surface);
-
-  if (status != CAIRO_STATUS_SUCCESS) {
-    I_Error("I_GetRenderSurface: Error creating cairo surface (%s)",
-      cairo_status_to_string(status)
-    );
-  }
-
-  return render_surface;
-#endif
-
-  unsigned char *local_pixels = malloc(
-    REAL_SCREENWIDTH * REAL_SCREENHEIGHT * sizeof(unsigned int)
-  );
-
-  if (local_pixels == NULL)
-    I_Error("I_GetRenderSurface: malloc'ing pixels failed");
 
   render_surface = cairo_image_surface_create_for_data(
-    local_pixels,
+    screen->pixels,
     CAIRO_FORMAT_ARGB32,
     REAL_SCREENWIDTH,
     REAL_SCREENHEIGHT,
@@ -939,41 +812,18 @@ cairo_surface_t* I_GetRenderSurface(void) {
 void I_AcquireRenderSurface(void) {
   cairo_status_t status;
 
-  return;
-
   if (render_surface == NULL)
     I_Error("I_AcquireRenderSurface: No render surface available");
 
-  if (render_surface_pixels != NULL)
-    I_Error("I_AcquireRenderSurface: Render surface already checked out");
-
-  cairo_surface_flush(render_surface);
-
-  render_surface_pixels = cairo_surface_map_to_image(render_surface, NULL);
-
-  status = cairo_surface_status(render_surface);
-  if (status != CAIRO_STATUS_SUCCESS) {
-    I_Error(
-      "I_AcquireRenderSurface: Error mapping render surface (%s)",
-      cairo_status_to_string(status)
-    );
+  if (SDL_MUSTLOCK(screen)) {
+    if (SDL_LockSurface(screen) < 0)
+      I_Error("I_AcquireRenderSurface: %s\n", SDL_GetError());
   }
-
-  screens[0].data = cairo_image_surface_get_data(render_surface_pixels);
 }
 
 void I_ReleaseRenderSurface(void) {
-  return;
-
-  if (render_surface == NULL)
-    I_Error("I_ReleaseRenderSurface: No render surface available");
-
-  if (render_surface_pixels == NULL)
-    I_Error("I_ReleaseRenderSurface: Render surface not checked out");
-
-  cairo_surface_unmap_image(render_surface, render_surface_pixels);
-  render_surface_pixels = NULL;
-  screens[0].data = NULL;
+  if (SDL_MUSTLOCK(screen))
+    SDL_UnlockSurface(screen);
 }
 
 const char* I_GetKeyString(int keycode) {
@@ -1738,10 +1588,22 @@ int XF_GetRenderSurface(lua_State *L) {
 
   xobj->pointer = render_surface;
   xobj->need_unref = 1;
-  luaL_getmetatable(L, "cairoSurfaceMT");
+  luaL_getmetatable(L, "cairoImageSurfaceMT");
   lua_setmetatable(L, -2);
 
   return 1;
+}
+
+int XF_AcquireRenderSurface(lua_State *L) {
+  I_AcquireRenderSurface();
+
+  return 0;
+}
+
+int XF_ReleaseRenderSurface(lua_State *L) {
+  I_ReleaseRenderSurface();
+
+  return 0;
 }
 
 int XF_ResetOverlay(lua_State *L) {
