@@ -31,19 +31,19 @@
 #include "x_main.h"
 
 void V_InitOverlay(void) {
-  if (!X_CallFunc("hud", "clear", 0, 0))
-    I_Error("Error clearing overlay: %s", X_StrError());
+  if (!X_CallFunc("screen", "clear", 0, 0))
+    I_Error("Error initializing overlay: %s", X_StrError());
 
 #if 0
   lua_State *L = X_GetState();
 
   lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "hud");
+  lua_getfield(L, -1, "screen");
   lua_remove(L, -2);
   lua_getfield(L, -1, "clear");
   lua_remove(L, -2);
   lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "hud");
+  lua_getfield(L, -1, "screen");
   lua_remove(L, -2);
   if (lua_pcall(L, 1, 0, 0) != 0)
     I_Error("Error clearing overlay: %s", X_StrError());
@@ -53,61 +53,25 @@ void V_InitOverlay(void) {
 }
 
 void V_ClearOverlay(void) {
+  if (!X_CallFunc("screen", "clear", 0, 0))
+    I_Error("Error clearing overlay: %s", X_StrError());
+
+#if 0
   lua_State *L = X_GetState();
 
   lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "hud");
+  lua_getfield(L, -1, "screen");
   lua_remove(L, -2);
   lua_getfield(L, -1, "clear");
   lua_remove(L, -2);
   lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "hud");
+  lua_getfield(L, -1, "screen");
   lua_remove(L, -2);
   if (lua_pcall(L, 1, 0, 0) != 0)
     I_Error("Error clearing overlay: %s", X_StrError());
 
   printf("V_ClearOverlay: Stack size: %d\n", lua_gettop(L));
-}
-
-unsigned int* V_GetOverlayPixels(void) {
-  unsigned int *overlay_pixels;
-  lua_State *L = X_GetState();
-
-  lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "screen");
-  lua_remove(L, -2);
-  lua_getfield(L, -1, "get_pixels");
-  lua_remove(L, -2);
-  lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "screen");
-  lua_remove(L, -2);
-  if (lua_pcall(L, 1, 1, 0) != 0)
-    I_Error("Error getting overlay data: %s", X_StrError());
-  if (!lua_islightuserdata(L, -1))
-    I_Error("d2k.screen.get_pixels did not return light userdata");
-
-  overlay_pixels = lua_touserdata(L, -1);
-  lua_pop(L, 1);
-  printf("V_GetOverlayPixels: Stack size: %d\n", lua_gettop(L));
-
-  return overlay_pixels;
-}
-
-void V_MarkOverlayDirty(void) {
-  lua_State *L = X_GetState();
-
-  lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "hud");
-  lua_remove(L, -2);
-  lua_getfield(L, -1, "mark_dirty");
-  lua_remove(L, -2);
-  lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "hud");
-  lua_remove(L, -2);
-  if (lua_pcall(L, 1, 0, 0) != 0)
-    I_Error("Error marking overlay dirty: %s", X_StrError());
-
-  printf("V_MarkOverlayDirty: Stack size: %d\n", lua_gettop(L));
+#endif
 }
 
 /* vi: set et ts=2 sw=2: */

@@ -196,8 +196,6 @@ static void FUNC_V_CopyRect(int srcscrn, int destscrn,
   byte *dest;
   int pixel_depth = V_GetPixelDepth();
 
-  printf("V_CopyRect %d => %d\n", srcscrn, destscrn);
-
   if (flags & VPT_STRETCH_MASK)
   {
     stretch_param_t *params;
@@ -879,19 +877,17 @@ int V_GetPixelDepth(void) {
 // V_AllocScreen
 //
 void V_AllocScreen(screeninfo_t *scrn) {
-  if (!scrn->not_on_heap)
-    if ((scrn->byte_pitch * scrn->height) > 0)
-      //e6y: Clear the screen to black.
-      scrn->data = calloc(scrn->byte_pitch*scrn->height, 1);
+  size_t size = scrn->byte_pitch * scrn->height;
+
+  if ((!scrn->not_on_heap) && (size > 0))
+    scrn->data = calloc(size, 1); //e6y: Clear the screen to black.
 }
 
 //
 // V_AllocScreens
 //
 void V_AllocScreens(void) {
-  int i;
-
-  for (i=0; i<NUM_SCREENS; i++)
+  for (int i = 0; i < NUM_SCREENS; i++)
     V_AllocScreen(&screens[i]);
 }
 
@@ -909,9 +905,7 @@ void V_FreeScreen(screeninfo_t *scrn) {
 // V_FreeScreens
 //
 void V_FreeScreens(void) {
-  int i;
-
-  for (i=0; i<NUM_SCREENS; i++)
+  for (int i = 1; i < NUM_SCREENS; i++)
     V_FreeScreen(&screens[i]);
 }
 

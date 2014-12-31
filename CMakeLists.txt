@@ -25,7 +25,7 @@
 #==============================================================================
 ################################################# CMake Configuration #########
 #==============================================================================
-PROJECT("Doom2K" C)
+PROJECT("D2K" C)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.0 FATAL_ERROR)
 IF(${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
   MESSAGE(${CMAKE_SOURCE_DIR})
@@ -85,21 +85,21 @@ ENDFUNCTION(TRY_C_COMPILER_FLAG flag name)
 ##################################################### Package Details #########
 #==============================================================================
 SET(VERSION "0")
-SET(PACKAGE "Doom2K")
-SET(PACKAGE_NAME "Doom2K")
+SET(PACKAGE "D2K")
+SET(PACKAGE_NAME "D2K")
 SET(PACKAGE_VERSION "${VERSION}")
 # SET(PACKAGE_BUGREPORT "huh")
 SET(PACKAGE_STRING "${PACKAGE_NAME} v${PACKAGE_VERSION}")
-SET(PACKAGE_TARNAME "doom2k")
+SET(PACKAGE_TARNAME "d2k")
 SET(PACKAGE_URL "http://github.com/camgunz/d2k")
 
 SET(CPACK_GENERATOR "DEB;RPM;STGZ;ZIP")
 SET(CPACK_PACKAGE_VENDOR "Team TotalTrash")
 SET(CPACK_PACKAGE_CONTACT "Team TotalTrash <ladna@totaltrash.org>")
 SET(CPACK_PACKAGE_VERSION "${VERSION}")
-SET(CPACK_PACKAGE_NAME "Doom2K")
+SET(CPACK_PACKAGE_NAME "D2K")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING")
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Doom2K is a fork of PrBoom+")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "D2K is a fork of PrBoom+")
 SET(CPACK_DEBIAN_PACKAGE_SECTION "games")
 SET(CPACK_DEBIAN_PACKAGE_DEPENDS
   "libc6 (>= 2.11.0),
@@ -1141,24 +1141,24 @@ IF(WIN32)
   )
 ENDIF()
 
-ADD_EXECUTABLE(doom2k ${DOOM2K_CLIENT_SOURCES})
-TARGET_LINK_LIBRARIES(doom2k ${DOOM2K_LIBRARIES})
+ADD_EXECUTABLE(d2k ${DOOM2K_CLIENT_SOURCES})
+TARGET_LINK_LIBRARIES(d2k ${DOOM2K_LIBRARIES})
 
 # INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/unittests)
 # INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/cutest)
 # ADD_DEFINITIONS(-DRUNNING_UNIT_TESTS)
-# ADD_EXECUTABLE(test-doom2k ${DOOM2K_TESTING_SOURCES})
-# TARGET_LINK_LIBRARIES(test-doom2k ${DOOM2K_LIBRARIES})
+# ADD_EXECUTABLE(test-d2k ${DOOM2K_TESTING_SOURCES})
+# TARGET_LINK_LIBRARIES(test-d2k ${DOOM2K_LIBRARIES})
 
 SET(BIN_DIR "${PREFIX}/bin")
 SET(LIB_DIR "${PREFIX}/lib")
 SET(INCLUDE_DIR "${PREFIX}/include")
 SET(SHARE_DIR "${PREFIX}/share")
 
-# TODO: Need to run test-doom2k and use deutex to build the WAD here
+# TODO: Need to run test-d2k and use deutex to build the WAD here
 
 INSTALL(
-  TARGETS doom2k
+  TARGETS d2k
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR}

@@ -26,8 +26,6 @@
 
 void          V_InitOverlay(void);
 void          V_ClearOverlay(void);
-unsigned int* V_GetOverlayPixels(void);
-void          V_MarkOverlayDirty(void);
 
 #endif
 

@@ -11974,7 +11974,7 @@
 	<windows.h>
 	"m_fixed.h"
 
-1419861198 c:\users\cagunyon\documents\d2k\src\i_video.h
+1420051499 c:\users\cagunyon\documents\d2k\src\i_video.h
 	"config.h"
 	"doomtype.h"
 	"v_video.h"
@@ -11985,7 +11985,7 @@
 
 1419426868 c:\users\cagunyon\documents\d2k\src\cl_main.h
 
-1419973693 c:\users\cagunyon\documents\d2k\src\x_main.h
+1420042499 c:\users\cagunyon\documents\d2k\src\x_main.h
 	<lua.h>
 	<lualib.h>
 	<lauxlib.h>
@@ -12208,7 +12208,7 @@
 	"z_zone.h"
 	"lprintf.h"
 
-1419977973 source:c:\users\cagunyon\documents\d2k\src\d_main.c
+1420051031 source:c:\users\cagunyon\documents\d2k\src\d_main.c
 	"z_zone.h"
 	"doomdef.h"
 	"doomstat.h"
@@ -14316,7 +14316,7 @@
 	"i_joy.h"
 	"lprintf.h"
 
-1419973693 source:c:\users\cagunyon\documents\d2k\src\sdl\i_main.c
+1420034738 source:c:\users\cagunyon\documents\d2k\src\sdl\i_main.c
 	"z_zone.h"
 	"TEXTSCREEN/txt_main.h"
 	"doomdef.h"
@@ -14420,7 +14420,7 @@
 	<setjmp.h>
 	<time.h>
 
-1419451801 source:c:\users\cagunyon\documents\d2k\src\sdl\i_system.c
+1420050759 source:c:\users\cagunyon\documents\d2k\src\sdl\i_system.c
 	"z_zone.h"
 	<SDL.h>
 	"m_argv.h"
@@ -14434,9 +14434,13 @@
 	"e6y.h"
 	"i_system.h"
 
-1419973693 source:c:\users\cagunyon\documents\d2k\src\sdl\i_video.c
+1420046504 source:c:\users\cagunyon\documents\d2k\src\sdl\i_video.c
 	"z_zone.h"
 	<cairo/cairo.h>
+	<cairo/cairo-xlib.h>
+	<cairo/cairo-xlib-xrender.h>
+	<cairo/cairo-quartz.h>
+	<cairo/cairo-win32.h>
 	<SDL.h>
 	<SDL_syswm.h>
 	"doomdef.h"
@@ -14774,7 +14778,7 @@
 	"txt_main.h"
 	"txt_window.h"
 
-1419973693 source:c:\users\cagunyon\documents\d2k\src\v_video.c
+1420051106 source:c:\users\cagunyon\documents\d2k\src\v_video.c
 	"z_zone.h"
 	<SDL.h>
 	"doomdef.h"
@@ -14836,7 +14840,7 @@
 	"r_draw.h"
 	"n_net.h"
 
-1419973693 source:c:\users\cagunyon\documents\d2k\src\x_main.c
+1420047205 source:c:\users\cagunyon\documents\d2k\src\x_main.c
 	"z_zone.h"
 	"d_event.h"
 	"c_main.h"
@@ -14889,9 +14893,9 @@
 	<stdio.h>
 	"lua.h"
 
-1419973693 c:\users\cagunyon\documents\d2k\src\v_main.h
+1420045969 c:\users\cagunyon\documents\d2k\src\v_main.h
 
-1419978309 source:c:\users\cagunyon\documents\d2k\src\v_main.c
+1420045965 source:c:\users\cagunyon\documents\d2k\src\v_main.c
 	"z_zone.h"
 	<lua.h>
 	<lualib.h>

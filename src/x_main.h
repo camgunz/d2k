@@ -33,14 +33,22 @@
 #define X_INIT_SCRIPT_NAME "init.lua"
 
 typedef enum {
-  X_NONE,   // ...
-  X_BOOL,   // lua_pushboolean(L, int b);
-  X_NUM,    // lua_pushnumber(L, lua_Number n);
-  X_STR,    // lua_pushstring(L, const char *s);
-  X_BYTES,  // lua_pushlstring(L, const char *s, size_t len);
-  X_LUDATA, // lua_pushlightuserdata(L, void *p);
-  X_NIL     // lua_pushnil(L);
+  X_NONE   = LUA_TNONE,          // ...
+  X_NIL    = LUA_TNIL,           // lua_pushnil
+  X_BOOL   = LUA_TBOOLEAN,       // lua_pushboolean
+  X_LUDATA = LUA_TLIGHTUSERDATA, // lua_pushlightuserdata
+  X_NUM    = LUA_TNUMBER,        // lua_pushnumber
+  X_STR    = LUA_TSTRING,        // lua_pushstring
+  X_TABLE  = LUA_TTABLE,         // ...
+  X_FUNC   = LUA_TFUNCTION,      // lua_pushcfunction
+  X_UDATA  = LUA_TUSERDATA,      // ...
+  X_THREAD = LUA_TTHREAD         // ...
 } x_type_e;
+
+typedef struct x_object_s {
+  void *pointer;
+  char need_unref;
+} x_object_t;
 
 void        X_Init(void);
 const char* X_StrError(void);

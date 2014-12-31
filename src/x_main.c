@@ -65,10 +65,6 @@ static void set_error(const char *message) {
   error_message = strdup(message);
 }
 
-static void close_lua_state(void) {
-  lua_close(L);
-}
-
 static void register_xfuncs(void) {
   GHashTableIter iter;
   gpointer key;
@@ -177,6 +173,8 @@ bool X_CallFunc(const char *object, const char *fname, int arg_count,
     }
     else if (arg_type) {
       switch(arg_type) {
+        case X_NIL:
+        break;
         case X_BOOL:
           bool_arg = va_arg(args, int);
 
@@ -185,20 +183,17 @@ bool X_CallFunc(const char *object, const char *fname, int arg_count,
           else
             lua_pushboolean(L, false);
         break;
+        case X_LUDATA:
+          lua_pushlightuserdata(L, va_arg(args, void *));
+        break;
         case X_NUM:
           lua_pushnumber(L, va_arg(args, lua_Number));
         break;
         case X_STR:
           lua_pushstring(L, va_arg(args, const char *));
         break;
-        case X_BYTES:
-          /* CG: TODO: Probably need a GLib data structure here */
-          I_Error("X_CallFunc: X_BYTES argument type not yet implemented");
-        break;
-        case X_LUDATA:
-          lua_pushlightuserdata(L, va_arg(args, void *));
-        break;
-        case X_NIL:
+        case X_FUNC:
+          lua_pushcfunction(L, va_arg(args, lua_CFunction));
         break;
         default:
           I_Error("X_CallFunc: Invalid argument type %d\n", arg_type);
@@ -253,8 +248,6 @@ void X_Init(void) {
 
   L = luaL_newstate();
   luaL_openlibs(L);
-
-  atexit(close_lua_state);
 
   register_xfuncs();
 

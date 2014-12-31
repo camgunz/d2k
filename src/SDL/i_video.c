@@ -20,10 +20,24 @@
 /*                                                                           */
 /*****************************************************************************/
 
-
 #include "z_zone.h"
 
 #include <cairo/cairo.h>
+
+#if CAIRO_HAS_XLIB_SURFACE
+#include <cairo/cairo-xlib.h>
+#if CAIRO_HAS_XLIB_XRENDER_SURFACE
+#include <cairo/cairo-xlib-xrender.h>
+#endif
+#endif
+
+#if CAIRO_HAS_QUARTZ_SURFACE
+#include <cairo/cairo-quartz.h>
+#endif
+
+#if CAIRO_HAS_WIN32_SURFACE
+#include <cairo/cairo-win32.h>
+#endif
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -75,6 +89,9 @@ static int newpal = 0;
 #ifdef GL_DOOM
 static GLuint overlay_tex_id = 0;
 #endif
+
+static cairo_surface_t *render_surface;
+static cairo_surface_t *render_surface_pixels;
 
 const char *screen_resolutions_list[MAX_RESOLUTIONS_COUNT] = {NULL};
 const char *screen_resolution_lowest;
@@ -152,7 +169,6 @@ static void reset_overlay(void) {
 
 static void render_overlay(void) {
   int pixel_bits = V_GetNumPixelBits();
-  unsigned int *overlay_pixels = V_GetOverlayPixels();
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
@@ -166,7 +182,7 @@ static void render_overlay(void) {
       0,
       GL_BGRA,
       GL_UNSIGNED_BYTE,
-      overlay_pixels
+      screens[0].data
     );
     glBegin(GL_TRIANGLE_STRIP);
     glTexCoord2f(0.0f, 0.0f);
@@ -179,6 +195,7 @@ static void render_overlay(void) {
     glVertex2f(REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
     glEnd();
 
+    I_ReleaseRenderSurface();
     return;
   }
 #endif
@@ -186,6 +203,7 @@ static void render_overlay(void) {
   if (SDL_MUSTLOCK(screen)) {
     if (SDL_LockSurface(screen) < 0) {
       lprintf(LO_INFO, "I_BlitOverlay: %s\n", SDL_GetError());
+      I_ReleaseRenderSurface();
       return;
     }
   }
@@ -200,7 +218,7 @@ static void render_overlay(void) {
   }
 
   sdl_surf = SDL_CreateRGBSurfaceFrom(
-    overlay_pixels,
+    screens[0].data,
     REAL_SCREENWIDTH,
     REAL_SCREENHEIGHT,
     pixel_bits,
@@ -218,8 +236,10 @@ static void render_overlay(void) {
   }
 
   SDL_SetAlpha(sdl_surf, SDL_SRCALPHA | SDL_RLEACCEL, SDL_ALPHA_TRANSPARENT);
+
   if (SDL_BlitSurface(sdl_surf, NULL, screen_surf, NULL) < 0)
     I_Error("Error blitting overlay: %s\n", SDL_GetError());
+
   SDL_FreeSurface(sdl_surf);
 
   if (SDL_MUSTLOCK(screen))
@@ -229,6 +249,8 @@ static void render_overlay(void) {
   if (V_GetMode() == VID_MODEGL) {
   }
 #endif
+
+  I_ReleaseRenderSurface();
 }
 
 static void init_inputs(void) {
@@ -452,26 +474,16 @@ static void get_closest_resolution(int *width, int *height, int flags) {
   unsigned int closest = UINT_MAX;
   unsigned int dist;
 
-  puts("1");
-
   if (!SDL_WasInit(SDL_INIT_VIDEO))
     return;
 
-  puts("2");
-
   modes = SDL_ListModes(NULL, flags);
-
-  puts("3");
 
   if (modes == (SDL_Rect **)-1) // any dimension is okay for the given format
     return;
 
-  puts("4");
-
   if (!modes)
     return;
-
-  puts("5");
 
   for (int i = 0; modes[i]; i++) {
     twidth = modes[i]->w;
@@ -493,13 +505,9 @@ static void get_closest_resolution(int *width, int *height, int flags) {
     }
   }
 
-  if (closest != 4294967295u) {
-    puts("6");
-    *width = cwidth;
+  if (closest != 4294967295u)
     *height = cheight;
-  }
 
-  puts("7");
 }
 
 static void activate_mouse(void) {
@@ -773,6 +781,201 @@ static void shutdown_graphics(void) {
   deactivate_mouse();
 }
 
+void I_DestroyRenderSurface(void) {
+  if (!render_surface)
+    return;
+
+  cairo_surface_destroy(render_surface);
+  render_surface = NULL;
+}
+
+cairo_surface_t* I_GetRenderSurface(void) {
+  cairo_status_t status;
+
+  if (render_surface)
+    return render_surface;
+
+#ifdef GL_DOOM
+  if (V_GetMode() == VID_MODEGL) {
+    unsigned char *local_pixels = malloc(
+      REAL_SCREENWIDTH * REAL_SCREENHEIGHT * sizeof(unsigned int)
+    );
+
+    if (local_pixels == NULL)
+      I_Error("I_GetRenderSurface: malloc'ing pixels failed");
+
+    render_surface = cairo_image_surface_create_for_data(
+      local_pixels,
+      CAIRO_FORMAT_ARGB32,
+      REAL_SCREENWIDTH,
+      REAL_SCREENHEIGHT,
+      cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, REAL_SCREENWIDTH)
+    );
+
+    status = cairo_surface_status(render_surface);
+
+    if (status != CAIRO_STATUS_SUCCESS) {
+      I_Error("I_GetRenderSurface: Error creating cairo surface (%s)",
+        cairo_status_to_string(status)
+      );
+    }
+
+    return render_surface;
+  }
+#endif
+
+#if CAIRO_HAS_WIN32_SURFACE
+  render_surface = cairo_win32_surface_create_with_dib(
+    CAIRO_FORMAT_RGB24,
+    REAL_SCREENWIDTH,
+    REAL_SCREENHEIGHT
+  );
+
+  status = cairo_surface_status(render_surface);
+
+  if (status != CAIRO_STATUS_SUCCESS) {
+    I_Error("I_GetRenderSurface: Error creating cairo surface (%s)",
+      cairo_status_to_string(status)
+    );
+  }
+
+  return render_surface;
+#endif
+
+#if CAIRO_HAS_XLIB_SURFACE
+  SDL_SysWMinfo wm_info;
+  Display *dpy;
+
+  SDL_VERSION(&wm_info.version);
+  SDL_GetWMInfo(&wm_info);
+
+  dpy = wm_info.info.x11.gfxdisplay;
+
+  render_surface = cairo_xlib_surface_create(
+    wm_info.info.x11.gfxdisplay,
+    (Drawable)wm_info.info.x11.window,
+    DefaultVisual(dpy, 0),
+    REAL_SCREENWIDTH,
+    REAL_SCREENHEIGHT
+  );
+
+  status = cairo_surface_status(render_surface);
+
+  if (status != CAIRO_STATUS_SUCCESS) {
+    I_Error("I_GetRenderSurface: Error creating cairo surface (%s)",
+      cairo_status_to_string(status)
+    );
+  }
+
+#if CAIRO_HAS_XLIB_XRENDER_SURFACE
+  cairo_surface_t *xrender_surface = cairo_xlib_surface_create_with_xrender_format(
+    wm_info.info.x11.gfxdisplay,
+    cairo_xlib_surface_get_drawable(render_surface),
+    cairo_xlib_surface_get_screen(render_surface),
+    cairo_xlib_surface_get_xrender_format(render_surface),
+    REAL_SCREENWIDTH,
+    REAL_SCREENHEIGHT
+  );
+
+  status = cairo_surface_status(xrender_surface);
+
+  if (status != CAIRO_STATUS_SUCCESS) {
+    I_Error("I_GetRenderSurface: Error creating cairo surface (%s)",
+      cairo_status_to_string(status)
+    );
+  }
+
+  cairo_surface_destroy(render_surface);
+  render_surface = xrender_surface;
+#endif
+
+  return xrender_surface;
+#endif
+
+#if CAIRO_HAS_QUARTZ_SURFACE
+  render_surface = cairo_quartz_surface_create(
+    CAIRO_FORMAT_ARGB32,
+    REAL_SCREENWIDTH,
+    REAL_SCREENHEIGHT
+  );
+
+  status = cairo_surface_status(render_surface);
+
+  if (status != CAIRO_STATUS_SUCCESS) {
+    I_Error("I_GetRenderSurface: Error creating cairo surface (%s)",
+      cairo_status_to_string(status)
+    );
+  }
+
+  return render_surface;
+#endif
+
+  unsigned char *local_pixels = malloc(
+    REAL_SCREENWIDTH * REAL_SCREENHEIGHT * sizeof(unsigned int)
+  );
+
+  if (local_pixels == NULL)
+    I_Error("I_GetRenderSurface: malloc'ing pixels failed");
+
+  render_surface = cairo_image_surface_create_for_data(
+    local_pixels,
+    CAIRO_FORMAT_ARGB32,
+    REAL_SCREENWIDTH,
+    REAL_SCREENHEIGHT,
+    cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, REAL_SCREENWIDTH)
+  );
+
+  status = cairo_surface_status(render_surface);
+
+  if (status != CAIRO_STATUS_SUCCESS) {
+    I_Error("I_GetRenderSurface: Error creating cairo surface (%s)",
+      cairo_status_to_string(status)
+    );
+  }
+
+  return render_surface;
+}
+
+void I_AcquireRenderSurface(void) {
+  cairo_status_t status;
+
+  return;
+
+  if (render_surface == NULL)
+    I_Error("I_AcquireRenderSurface: No render surface available");
+
+  if (render_surface_pixels != NULL)
+    I_Error("I_AcquireRenderSurface: Render surface already checked out");
+
+  cairo_surface_flush(render_surface);
+
+  render_surface_pixels = cairo_surface_map_to_image(render_surface, NULL);
+
+  status = cairo_surface_status(render_surface);
+  if (status != CAIRO_STATUS_SUCCESS) {
+    I_Error(
+      "I_AcquireRenderSurface: Error mapping render surface (%s)",
+      cairo_status_to_string(status)
+    );
+  }
+
+  screens[0].data = cairo_image_surface_get_data(render_surface_pixels);
+}
+
+void I_ReleaseRenderSurface(void) {
+  return;
+
+  if (render_surface == NULL)
+    I_Error("I_ReleaseRenderSurface: No render surface available");
+
+  if (render_surface_pixels == NULL)
+    I_Error("I_ReleaseRenderSurface: Render surface not checked out");
+
+  cairo_surface_unmap_image(render_surface, render_surface_pixels);
+  render_surface_pixels = NULL;
+  screens[0].data = NULL;
+}
+
 const char* I_GetKeyString(int keycode) {
   return SDL_GetKeyName(keycode);
 }
@@ -804,7 +1007,7 @@ void I_FinishUpdate(void) {
     return;
 #endif
 
-  render_overlay();
+  // render_overlay();
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
@@ -1133,7 +1336,7 @@ void I_InitScreenResolution(void) {
   V_FreeScreens();
 
   // set first three to standard values
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 5; i++) {
     screens[i].width = REAL_SCREENWIDTH;
     screens[i].height = REAL_SCREENHEIGHT;
     screens[i].byte_pitch = REAL_SCREENPITCH;
@@ -1141,10 +1344,12 @@ void I_InitScreenResolution(void) {
   }
 
   // statusbar
+  /*
   screens[4].width = REAL_SCREENWIDTH;
   screens[4].height = REAL_SCREENHEIGHT;
   screens[4].byte_pitch = REAL_SCREENPITCH;
   screens[4].int_pitch = REAL_SCREENPITCH / V_GetModePixelDepth(VID_MODE32);
+  */
 
   I_InitBuffersRes();
 
@@ -1526,6 +1731,18 @@ static void ApplyWindowResize(SDL_Event *resize_event) {
   V_ChangeScreenResolution();
 }
 #endif
+
+int XF_GetRenderSurface(lua_State *L) {
+  cairo_surface_t *render_surface = I_GetRenderSurface();
+  x_object_t *xobj = lua_newuserdata(L, sizeof(x_object_t));
+
+  xobj->pointer = render_surface;
+  xobj->need_unref = 1;
+  luaL_getmetatable(L, "cairoSurfaceMT");
+  lua_setmetatable(L, -2);
+
+  return 1;
+}
 
 int XF_ResetOverlay(lua_State *L) {
   reset_overlay();

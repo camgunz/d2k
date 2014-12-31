@@ -586,16 +586,16 @@ extern int     showMessages;
 void D_Display(void) {
   static dboolean isborderstate        = false;
   static dboolean borderwillneedredraw = false;
-  static gamestate_t oldgamestate = GS_BAD;
-  dboolean wipe;
-  dboolean viewactive = false, isborder = false;
+  static gamestate_t oldgamestate      = GS_BAD;
 
-  // e6y
-  extern dboolean gamekeydown[];
-  if (doSkip)
-  {
+  dboolean wipe;
+  dboolean viewactive = false;
+  dboolean isborder = false;
+
+  if (doSkip) {
     if (HU_DrawDemoProgress(false))
       I_FinishUpdate();
+
     if (!gamekeydown[key_use])
       return;
 
@@ -605,7 +605,8 @@ void D_Display(void) {
 #endif
   }
 
-  if (!doSkip || !gamekeydown[key_use])
+  /* CG: What is this? */
+  // if (!doSkip || !gamekeydown[key_use])
 
   if (nodrawers)                    // for comparative timing / profiling
     return;
@@ -613,38 +614,41 @@ void D_Display(void) {
   if (!I_StartDisplay())
     return;
 
+  HU_Erase();
+
+  // I_AcquireRenderSurface();
+
   if (setsizeneeded) {               // change the view size if needed
     R_ExecuteSetViewSize();
     oldgamestate = GS_BAD;        // force background redraw
   }
 
   // save the current screen if about to wipe
-  if ((wipe = (gamestate != wipegamestate)))
-  {
+  if ((wipe = (gamestate != wipegamestate))) {
     wipe_StartScreen();
     R_ResetViewInterpolation();
   }
 
   if (gamestate != GS_LEVEL) { // Not a level
     switch (oldgamestate) {
-    case GS_BAD:
-    case GS_LEVEL:
-      V_SetPalette(0); // cph - use default (basic) palette
-    default:
+      case GS_BAD:
+      case GS_LEVEL:
+        V_SetPalette(0); // cph - use default (basic) palette
+      default:
       break;
     }
 
     switch (gamestate) {
-    case GS_INTERMISSION:
-      WI_Drawer();
+      case GS_INTERMISSION:
+        WI_Drawer();
       break;
-    case GS_FINALE:
-      F_Drawer();
+      case GS_FINALE:
+        F_Drawer();
       break;
-    case GS_DEMOSCREEN:
-      D_PageDrawer();
+      case GS_DEMOSCREEN:
+        D_PageDrawer();
       break;
-    default:
+      default:
       break;
     }
   }
@@ -652,16 +656,19 @@ void D_Display(void) {
     // In a level
     dboolean redrawborderstuff;
 
-    HU_Erase();
-
     // Work out if the player view is visible, and if there is a border
-    viewactive = (!(automapmode & am_active) || (automapmode & am_overlay)) && !inhelpscreens;
-    isborder = viewactive ? (viewheight != SCREENHEIGHT) : (!inhelpscreens && (automapmode & am_active));
+    viewactive = (!(automapmode & am_active) || (automapmode & am_overlay)) &&
+                 !inhelpscreens;
+    if (viewactive)
+      isborder = viewheight != SCREENHEIGHT;
+    else
+      isborder = (!inhelpscreens && (automapmode & am_active));
 
     if (oldgamestate != GS_LEVEL) {
-      R_FillBackScreen ();    // draw the pattern into the back screen
+      R_FillBackScreen();    // draw the pattern into the back screen
       redrawborderstuff = isborder;
-    } else {
+    }
+    else {
       // CPhipps -
       // If there is a border, and either there was no border last time,
       // or the border might need refreshing, then redraw it.
@@ -672,15 +679,21 @@ void D_Display(void) {
       // e6y
       // I should do it because I call R_RenderPlayerView in all cases,
       // not only if viewactive is true
-      borderwillneedredraw = (borderwillneedredraw) ||
-        (((automapmode & am_active) && !(automapmode & am_overlay)));
+      borderwillneedredraw = (borderwillneedredraw) || (
+        (automapmode & am_active) && !(automapmode & am_overlay)
+      );
     }
+#ifdef GL_DOOM
     if (redrawborderstuff || (V_GetMode() == VID_MODEGL))
       R_DrawViewBorder();
+#else
+    if (redrawborderstuff)
+      R_DrawViewBorder();
+#endif
 
     // e6y
     // Boom colormaps should be applied for everything in R_RenderPlayerView
-    use_boom_cm=true;
+    use_boom_cm = true;
 
     R_InterpolateView(&players[displayplayer]);
 
@@ -695,7 +708,7 @@ void D_Display(void) {
 
     // e6y
     // but should NOT be applied for automap, statusbar and HUD
-    use_boom_cm=false;
+    use_boom_cm = false;
     frame_fixedcolormap = 0;
 
     if (automapmode & am_active)
@@ -715,7 +728,10 @@ void D_Display(void) {
       R_DrawViewBorder();
   }
 
+  // I_ReleaseRenderSurface();
   HU_Drawer();
+  HU_DrawDemoProgress(true); //e6y
+  // I_AcquireRenderSurface();
 
   isborderstate = isborder;
   oldgamestate = wipegamestate = gamestate;
@@ -730,22 +746,22 @@ void D_Display(void) {
   // menus go directly to the screen
   M_Drawer();          // menu is drawn even on top of everything
 
-  HU_DrawDemoProgress(true); //e6y
-
   // normal update
-  if (!wipe)
+  if (!wipe) {
     I_FinishUpdate();              // page flip or blit buffer
+  }
   else {
     // wipe update
     wipe_EndScreen();
     D_Wipe();
   }
 
+  // I_ReleaseRenderSurface();
+
   // e6y
   // Don't thrash cpu during pausing or if the window doesnt have focus
-  if ( (paused && !walkcamera.type) || (!window_focused) ) {
+  if ((paused && !walkcamera.type) || (!window_focused))
     I_Sleep(5);
-  }
 
   I_EndDisplay();
 }

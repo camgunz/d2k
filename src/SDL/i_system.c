@@ -97,6 +97,7 @@ dboolean I_StartDisplay(void)
 
   start_displaytime = SDL_GetTicks();
   InDisplay = true;
+
   return true;
 }
 
