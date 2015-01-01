@@ -1,15 +1,15 @@
-# Doom2K
+# D2K
 
 ---
 
-Doom2K is a fork of [PrBoom+](http://prboom-plus.sourceforge.net) with several
+D2K is a fork of [PrBoom+](http://prboom-plus.sourceforge.net) with several
 lofty goals.
 
 Maintain Compatibility
 ----------------------
 
 One of the many strengths of PrBoom+ is its compatibility with past versions of
-Doom and Boom.  Doom2K will maintain this compatibility insofar as its target
+Doom and Boom.  D2K will maintain this compatibility insofar as its target
 platforms (PNaCl, pepper.js) allow.  This will be achieved using a new
 compatibility testing framework.
 
@@ -21,7 +21,7 @@ implementation has several limitations: only 4 players may play together,
 players cannot join an in-progress game, game modes are hard-coded, and one
 player's lag lags the whole group.
 
-Doom2K will replace this implementation with new netcode based on game saves,
+D2K will replace this implementation with new netcode based on game saves,
 using delta compression to only send changes over the wire -- very similar to
 the Quake 3 architecture.
 
@@ -39,7 +39,7 @@ over the engine.  It is extremely likely that this language will be Lua.
 Add PNaCl Port
 --------------
 
-Doom2K will be playable using Google's [Portable Native
+D2K will be playable using Google's [Portable Native
 Client](http://gonacl.com).  The intent is to allow playing either via PNaCl
 itself, or in browsers that do not support PNaCl via
 [Emscripten](https://github.com/kripken/emscripten/wiki) and
@@ -50,11 +50,11 @@ Modernize Renderer
 
 PNaCl and pepper.js provide access to graphics acceleration via WebGL, which is
 similar (but not identical) to OpenGL ES 2.0, meaning the fixed-function
-pipeline is unavailable.  Doom2K will convert the renderer from the
-fixed-function pipeline to the programmable pipeline.  In addition, the fork
-will upgrade the baseline OpenGL support necessary to run, requiring support
-for OpenGL 2.0.  Deprecated features, such as paletted textures, will be
-removed and functionality dependent on them will be reimplemented.
+pipeline is unavailable.  D2K will convert the renderer from the fixed-function
+pipeline to the programmable pipeline.  In addition, the fork will upgrade the
+baseline OpenGL support necessary to run, requiring support for OpenGL 2.0.
+Deprecated features, such as paletted textures, will be removed and
+functionality dependent on them will be reimplemented.
 
 Add Modern Features and Compatibility
 -------------------------------------

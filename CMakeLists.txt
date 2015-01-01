@@ -104,15 +104,17 @@ SET(CPACK_DEBIAN_PACKAGE_SECTION "games")
 SET(CPACK_DEBIAN_PACKAGE_DEPENDS
   "libc6 (>= 2.11.0),
    libgcc1 (>= 1:4.4.3),
+   libglib2.0-0 (>= 2.32),
    libsdl1.2debian (>=1.2.14),
    libsdl-mixer1.2 (>=1.2.8),
    libsdl-net1.2 (>=1.2.7),
    libsdl-image1.2 (>=1.2.12),
-   libpcre3 (>= 1:8.30),
+   libpangocairo (>= 1.36),
    libportmidi0 (>= 1:184-2.1),
    libfluidsynth1 (>= 1.1.5-2),
    libdumb1 (>= 1:0.9.3-5.4),
    libgl1,
+   libxdiff (>= 0.23),
    libenet1a (>= 1.3.3-2),
    bash"
 )

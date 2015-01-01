@@ -156,6 +156,7 @@ static void render_overlay(void) {
 #ifdef GL_DOOM
   if (V_GetMode() != VID_MODEGL)
     return;
+
   glBindTexture(GL_TEXTURE_2D, overlay_tex_id);
   glTexImage2D(
     GL_TEXTURE_2D,
@@ -738,9 +739,9 @@ cairo_surface_t* I_GetRenderSurface(void) {
   render_surface = cairo_image_surface_create_for_data(
     screens[0].data,
     format,
-    SCREENWIDTH,
-    SCREENHEIGHT,
-    cairo_format_stride_for_width(format, SCREENWIDTH)
+    screens[0].width,
+    screens[0].height,
+    cairo_format_stride_for_width(format, screens[0].width)
   );
 
   status = cairo_surface_status(render_surface);

@@ -1,10 +1,5 @@
 # To Do
 
-## Overlay
-
-1. Start writing to the cairo surface instead of the SDL surface in software
-   mode.
-
 ## Base
 
 1. Reconnecting doesn't work
