@@ -848,8 +848,7 @@ dboolean bfgedition = 0;
 // D_PageTicker
 // Handles timing for warped projection
 //
-void D_PageTicker(void)
-{
+void D_PageTicker(void) {
   if (--pagetic < 0)
     D_AdvanceDemo();
 }
@@ -857,56 +856,52 @@ void D_PageTicker(void)
 //
 // D_PageDrawer
 //
-static void D_PageDrawer(void)
-{
+static void D_PageDrawer(void) {
   // proff/nicolas 09/14/98 -- now stretchs bitmaps to fullscreen!
   // CPhipps - updated for new patch drawing
   // proff - added M_DrawCredits
-  if (pagename)
-  {
+  if (pagename) {
     V_DrawNamePatch(0, 0, 0, pagename, CR_DEFAULT, VPT_STRETCH);
-    // e6y: wide-res
-    V_FillBorder(-1, 0);
+    V_FillBorder(-1, 0); // e6y: wide-res
   }
-  else
+  else {
     M_DrawCredits();
+  }
 }
 
 //
 // D_AdvanceDemo
 // Called after each demo or intro demosequence finishes
 //
-void D_AdvanceDemo (void)
-{
+void D_AdvanceDemo (void) {
   advancedemo = true;
 }
 
-/* killough 11/98: functions to perform demo sequences
+/*
+ * killough 11/98: functions to perform demo sequences
  * cphipps 10/99: constness fixes
  */
 
-static void D_SetPageName(const char *name)
-{
-  if ((bfgedition) && name && !strncmp(name,"TITLEPIC",8))
+static void D_SetPageName(const char *name) {
+  if ((bfgedition) && name && !strncmp(name, "TITLEPIC", 8))
     pagename = "DMENUPIC";
   else
     pagename = name;
 }
 
-static void D_DrawTitle1(const char *name)
-{
+static void D_DrawTitle1(const char *name) {
   S_StartMusic(mus_intro);
   pagetic = (TICRATE*170)/35;
   D_SetPageName(name);
 }
 
-static void D_DrawTitle2(const char *name)
-{
+static void D_DrawTitle2(const char *name) {
   S_StartMusic(mus_dm2ttl);
   D_SetPageName(name);
 }
 
-/* killough 11/98: tabulate demo sequences
+/*
+ * killough 11/98: tabulate demo sequences
  */
 
 static struct

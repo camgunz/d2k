@@ -1170,14 +1170,14 @@ void R_RenderPlayerView (player_t* player)
     R_ResetColumnBuffer();
   }
 
-  if (V_GetMode() == VID_MODEGL && !automap) {
 #ifdef GL_DOOM
+  if (V_GetMode() == VID_MODEGL && !automap) {
     // proff 11/99: draw the scene
     gld_DrawScene(player);
     // proff 11/99: finishing off
     gld_EndDrawScene();
-#endif
   }
+#endif
 }
 
 /* vi: set et ts=2 sw=2: */

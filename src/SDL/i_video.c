@@ -59,6 +59,8 @@
 
 #ifdef GL_DOOM
 #include "gl_struct.h"
+
+extern GLuint* last_glTexID;
 #endif
 
 extern void M_QuitDOOM(int choice);
@@ -225,6 +227,8 @@ static void build_overlay(void) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+    last_glTexID = &overlay.tex_id;
   }
 #endif
 
@@ -239,6 +243,13 @@ static void destroy_overlay(void) {
   cairo_destroy(overlay.context);
   overlay.context = NULL;
   overlay.surface = NULL;
+  if (overlay.pixels) {
+    free(overlay.pixels);
+    overlay.pixels = NULL;
+  }
+#ifdef GL_DOOM
+  overlay.tex_id  = 0;
+#endif
 }
 
 static void reset_overlay(void) {
@@ -849,6 +860,7 @@ void I_FinishUpdate(void) {
     glVertex2f(REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
     glEnd();
 
+    last_glTexID = &overlay.tex_id;
     gld_Finish(); // proff 04/05/2000: swap OpenGL buffers
 
     return;
