@@ -23,7 +23,7 @@
 
 package.path = package.path .. ';' .. d2k.script_path
 
-local overlay = require('screen')
+local overlay = require('overlay')
 local hud = require('hud')
 local console = require('console')
 
