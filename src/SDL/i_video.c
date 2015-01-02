@@ -820,6 +820,7 @@ void I_FinishUpdate(void) {
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
+    /*
     unsigned char *cairo_data = cairo_image_surface_get_data(overlay.surface);
 
     glBindTexture(GL_TEXTURE_2D, overlay.tex_id);
@@ -845,8 +846,8 @@ void I_FinishUpdate(void) {
     glVertex2f(SCREENWIDTH, SCREENHEIGHT);
     glEnd();
 
+    */
     gld_Finish(); // proff 04/05/2000: swap OpenGL buffers
-    SDL_Flip(screen);
 
     return;
   }
