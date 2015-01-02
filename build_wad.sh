@@ -6,5 +6,5 @@ then
     exit 1
 fi
 
-cd data && deutex -make doom2k.txt doom2k.wad
+cd data && deutex -make d2k.txt d2k.wad
 

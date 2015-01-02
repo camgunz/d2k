@@ -25,6 +25,7 @@
 #define C_MAIN_H__
 
 void C_Init(void);
+bool C_Initialized(void);
 void C_Reset(void);
 void C_Ticker(void);
 void C_Drawer(void);

@@ -315,6 +315,13 @@ void C_Init(void) {
   X_RegisterFunc("mecho", XF_MEcho);
 }
 
+bool C_Initialized(void) {
+  if (cons)
+    return true;
+
+  return false;
+}
+
 void C_Reset(void) {
   if (!nodrawers)
     HU_ConsoleWidgetReset(cons, NULL);

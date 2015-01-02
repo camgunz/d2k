@@ -72,7 +72,7 @@ static void ShowOverflowWarning(overrun_list_t overflow, int fatal, const char *
     sprintf(buffer,
       (fatal ? str1 : (EMULATE(overflow) ? str2 : str3)), 
       name[overflow],
-      "\nYou can change Doom2K behaviour for this overflow through in-game menu.",
+      "\nYou can change " PACKAGE_TARNAME " behaviour for this overflow through in-game menu.",
       params);
     
     va_start(argptr, params);

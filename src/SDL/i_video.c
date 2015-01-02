@@ -731,9 +731,9 @@ cairo_surface_t* I_GetRenderSurface(void) {
   else if (use_gl_surface)
     format = CAIRO_FORMAT_ARGB32;
   else
-    format = CAIRO_FORMAT_RGB24;
+    format = CAIRO_FORMAT_ARGB32;
 #else
-  format = CAIRO_FORMAT_RGB24;
+  format = CAIRO_FORMAT_ARGB32;
 #endif
 
   render_surface = cairo_image_surface_create_for_data(
@@ -741,7 +741,7 @@ cairo_surface_t* I_GetRenderSurface(void) {
     format,
     screens[0].width,
     screens[0].height,
-    cairo_format_stride_for_width(format, screens[0].width)
+    REAL_SCREENPITCH
   );
 
   status = cairo_surface_status(render_surface);
@@ -822,7 +822,6 @@ void I_FinishUpdate(void) {
       return;
     }
 
-    /*
     if (screen_multiply > 1) { // e6y: processing of screen_multiply
       R_ProcessScreenMultiply(
         screens[0].data,
@@ -832,7 +831,6 @@ void I_FinishUpdate(void) {
         screen->pitch);
     }
     else
-    */
     {
       dest = screen->pixels;
       src = screens[0].data;
@@ -1047,9 +1045,11 @@ void I_CalculateRes(int width, int height) {
   REAL_SCREENHEIGHT = SCREENHEIGHT * render_screen_multiply;
   REAL_SCREENPITCH  = SCREENPITCH  * render_screen_multiply;
 
+  /*
   REAL_SCREENWIDTH  = SCREENWIDTH;
   REAL_SCREENHEIGHT = SCREENHEIGHT;
   REAL_SCREENPITCH  = SCREENPITCH;
+  */
 }
 
 // CPhipps -
@@ -1377,16 +1377,13 @@ void I_UpdateVideoMode(void) {
 
   SMP_Init();
 
-#if SDL_VERSION_ATLEAST(1, 3, 0)
 #ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL)
+  if (V_GetMode() == VID_MODEGL) {
+#if SDL_VERSION_ATLEAST(1, 3, 0)
     SDL_GL_SetSwapInterval((gl_vsync ? 1 : 0));
 #endif
-#endif
-
-#ifdef GL_DOOM
-  /*if (V_GetMode() == VID_MODEGL)
-    gld_MultisamplingCheck();*/
+    // gld_MultisamplingCheck();
+  }
 #endif
 
   lprintf(LO_INFO, "I_UpdateVideoMode: 0x%x, %s, %s\n",
@@ -1423,8 +1420,7 @@ void I_UpdateVideoMode(void) {
   AM_SetResolution();
 
 #ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL)
-  {
+  if (V_GetMode() == VID_MODEGL) {
     int temp;
     lprintf(LO_INFO,"SDL OpenGL PixelFormat:\n");
     SDL_GL_GetAttribute( SDL_GL_RED_SIZE, &temp );
@@ -1460,9 +1456,7 @@ void I_UpdateVideoMode(void) {
   }
 
   if (vid_8ingl.enabled)
-  {
     gld_Init8InGLMode();
-  }
 
   if (V_GetMode() == VID_MODEGL)
   {

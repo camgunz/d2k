@@ -310,7 +310,7 @@ static void FUNC_V_DrawBackground(const char *flatname, int scrn) {
 // No return
 //
 
-void V_Init (void) {
+void V_Init(void) {
   for (int i = 0; i < NUM_SCREENS; i++) {
     screens[i].data = NULL;
     screens[i].not_on_heap = false;

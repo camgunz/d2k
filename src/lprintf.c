@@ -37,20 +37,13 @@ int cons_output_mask = -1;           /* all output enabled */
 
 void lprintf(OutputLevels pri, const char *s, ...) {
   va_list args;
-  va_list args2;
 
   va_start(args, s);
-  va_copy(args2, args);
 
-  if (pri & cons_output_mask)
+  if (!C_Initialized())
+    vprintf(s, args);
+  else if (pri & cons_output_mask)
     C_VPrintf(s, args);
-
-  if ((pri & LO_ERROR) ||
-      (pri & LO_FATAL) ||
-      (pri & LO_DEBUG) ||
-      (pri & LO_ALWAYS)) {
-    vprintf(s, args2);
-  }
 
   /* CG: TODO: Removed error mask handling, re-add it? */
 

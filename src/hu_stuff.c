@@ -327,6 +327,8 @@ void HU_Init(void) {
   hu_color_t grey  = {0.0f, 0.0f, 0.0f, 0.9f};
 #endif
 
+  shiftxform = english_shiftxform;
+
   if (nodrawers)
     return;
 
@@ -334,11 +336,6 @@ void HU_Init(void) {
     player_message_buffers[i] = g_string_new("");
     player_center_message_buffers[i] = g_string_new("");
   }
-
-  shiftxform = english_shiftxform;
-
-  if (nodrawers)
-    return;
 
   // load the heads-up font
   j = HU_FONTSTART;
@@ -441,7 +438,6 @@ void HU_Init(void) {
   R_SetSpriteByName(&hu_font_hud[43], "ROCKA0");
 
 #ifdef ENABLE_OVERLAY
-
   // create the message widget
   // messages to player in upper-left of screen
   w_messages = HU_MessageWidgetNewBuf(
@@ -469,8 +465,6 @@ void HU_Init(void) {
   HU_ChatWidgetSetFGColor(w_chat, white);
   HU_ChatWidgetSetBGColor(w_chat, grey);
 #endif
-
-  HU_Start();
 }
 
 //
