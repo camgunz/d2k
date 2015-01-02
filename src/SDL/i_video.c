@@ -152,6 +152,11 @@ static bool overlay_initialized(void) {
 }
 
 static void build_overlay(void) {
+  cairo_format_t format = CAIRO_FORMAT_RGB24;
+  int width;
+  int height;
+  int stride;
+  unsigned char *pixels;
   cairo_status_t status;
 
   if (overlay_initialized())
@@ -159,47 +164,47 @@ static void build_overlay(void) {
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
+    width = REAL_SCREENWIDTH;
+    height = REAL_SCREENHEIGHT;
+    stride = cairo_format_stride_for_width(format, width);
+
     if (overlay.pixels != NULL)
       free(overlay.pixels);
 
-    overlay.pixels = calloc(
-      SCREENWIDTH * SCREENHEIGHT * SCREENPITCH, sizeof(unsigned char)
-    );
+    overlay.pixels = calloc(width * height, sizeof(uint32_t));
 
     if (overlay.pixels == NULL)
       I_Error("build_overlay: Allocating overlay pixels failed");
 
-    overlay.surface = cairo_image_surface_create_for_data(
-      overlay.pixels,
-      CAIRO_FORMAT_RGB24,
-      REAL_SCREENWIDTH,
-      REAL_SCREENHEIGHT,
-      cairo_format_stride_for_width(CAIRO_FORMAT_RGB24, REAL_SCREENWIDTH)
-    );
+    pixels = overlay.pixels;
   }
   else {
-    overlay.surface = cairo_image_surface_create_for_data(
-      screens[0].data,
-      CAIRO_FORMAT_RGB24,
-      SCREENWIDTH,
-      SCREENHEIGHT,
-      REAL_SCREENPITCH
-    );
+    width = SCREENWIDTH;
+    height = SCREENHEIGHT;
+    if (try_to_reduce_cpu_cache_misses && render_screen_multiply > 1)
+      stride = REAL_SCREENPITCH;
+    else
+      stride = cairo_format_stride_for_width(format, width);
+    pixels = screens[0].data;
   }
 #else
-  overlay.surface = cairo_image_surface_create_for_data(
-    screens[0].data,
-    CAIRO_FORMAT_RGB24,
-    SCREENWIDTH,
-    SCREENHEIGHT,
-    SCREENPITCH
-  );
+  width = SCREENWIDTH;
+  height = SCREENHEIGHT;
+  if (try_to_reduce_cpu_cache_misses && render_screen_multiply > 1)
+    stride = REAL_SCREENPITCH;
+  else
+    stride = cairo_format_stride_for_width(format, width);
+  pixels = screens[0].data;
 #endif
+
+  overlay.surface = cairo_image_surface_create_for_data(
+    pixels, format, width, height, stride
+  );
 
   status = cairo_surface_status(overlay.surface);
 
   if (status != CAIRO_STATUS_SUCCESS) {
-    I_Error("build_overlay: Error creating cairo surface (%s)",
+    I_Error("build_overlay: Error creating overlay surface (%s)",
       cairo_status_to_string(status)
     );
   }
@@ -224,7 +229,6 @@ static void build_overlay(void) {
 #endif
 
   overlay.context = cairo_create(overlay.surface);
-  puts("destroying surface");
   cairo_surface_destroy(overlay.surface);
 }
 
@@ -820,7 +824,6 @@ void I_FinishUpdate(void) {
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
-    /*
     unsigned char *cairo_data = cairo_image_surface_get_data(overlay.surface);
 
     glBindTexture(GL_TEXTURE_2D, overlay.tex_id);
@@ -828,8 +831,8 @@ void I_FinishUpdate(void) {
       GL_TEXTURE_2D,
       0,
       GL_RGBA,
-      SCREENWIDTH,
-      SCREENHEIGHT,
+      REAL_SCREENWIDTH,
+      REAL_SCREENHEIGHT,
       0,
       GL_BGRA,
       GL_UNSIGNED_BYTE,
@@ -839,14 +842,13 @@ void I_FinishUpdate(void) {
     glTexCoord2f(0.0f, 0.0f);
     glVertex2f(0.0f, 0.0f);
     glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(0.0f, SCREENHEIGHT);
+    glVertex2f(0.0f, REAL_SCREENHEIGHT);
     glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(SCREENWIDTH, 0.0f);
+    glVertex2f(REAL_SCREENWIDTH, 0.0f);
     glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(SCREENWIDTH, SCREENHEIGHT);
+    glVertex2f(REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
     glEnd();
 
-    */
     gld_Finish(); // proff 04/05/2000: swap OpenGL buffers
 
     return;
@@ -871,13 +873,11 @@ void I_FinishUpdate(void) {
         screens[0].byte_pitch,
         screen->pitch);
     }
-    else
-    {
+    else {
       dest = screen->pixels;
       src = screens[0].data;
-      h = screen->h;
 
-      while (h-- > 0) {
+      for (h = screen->h; h > 0; h--) {
         memcpy(dest, src, SCREENWIDTH * V_GetPixelDepth()); //e6y
         dest += screen->pitch;
         src += screens[0].byte_pitch;
@@ -899,16 +899,14 @@ void I_FinishUpdate(void) {
 #endif
 
 #ifdef GL_DOOM
-  if (vid_8ingl.enabled) {
+  if (vid_8ingl.enabled)
     gld_Draw8InGL();
-    return;
-  }
 #endif
 
   SDL_Flip(screen);
 }
 
-void I_SetPalette (int pal) {
+void I_SetPalette(int pal) {
   newpal = pal;
 }
 
@@ -1087,12 +1085,6 @@ void I_CalculateRes(int width, int height) {
   REAL_SCREENWIDTH  = SCREENWIDTH  * render_screen_multiply;
   REAL_SCREENHEIGHT = SCREENHEIGHT * render_screen_multiply;
   REAL_SCREENPITCH  = SCREENPITCH  * render_screen_multiply;
-
-  /*
-  REAL_SCREENWIDTH  = SCREENWIDTH;
-  REAL_SCREENHEIGHT = SCREENHEIGHT;
-  REAL_SCREENPITCH  = SCREENPITCH;
-  */
 }
 
 // CPhipps -

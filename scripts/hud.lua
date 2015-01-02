@@ -89,7 +89,7 @@ function HUD:draw()
 
   d2k.overlay:lock()
 
-  if d2k.using_opengl then
+  if d2k.using_opengl() then
     d2k.overlay:clear()
   end
 
