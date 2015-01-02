@@ -38,8 +38,8 @@
 			<Add option='-DVERSION=&quot;\&quot;0\&quot;&quot;' />
 			<Add option='-DPACKAGE=&quot;\&quot;D2K\&quot;&quot;' />
 			<Add option='-DPACKAGE_NAME=&quot;\&quot;D2K\&quot;&quot;' />
-			<Add option='-DPACKAGE_VERSION=&quot;\&quot;${VERSION}\&quot;&quot;' />
-			<Add option='-DPACKAGE_STRING=&quot;\&quot;${PACKAGE_NAME} v${PACKAGE_VERSION}\&quot;&quot;' />
+			<Add option='-DPACKAGE_VERSION=&quot;\&quot;0\&quot;&quot;' />
+			<Add option='-DPACKAGE_STRING=&quot;\&quot;D2K v0\&quot;&quot;' />
 			<Add option='-DPACKAGE_TARNAME=&quot;\&quot;d2k\&quot;&quot;' />
 			<Add option='-DPACKAGE_URL=&quot;\&quot;http://github.com/camgunz/d2k\&quot;&quot;' />
 			<Add option='-DDOOMWADDIR=&quot;\&quot;C:\\wads\&quot;&quot;' />
