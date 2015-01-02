@@ -1471,6 +1471,7 @@ void I_UpdateVideoMode(void) {
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
+#if 0
     int temp;
     lprintf(LO_INFO,"SDL OpenGL PixelFormat:\n");
     SDL_GL_GetAttribute( SDL_GL_RED_SIZE, &temp );
@@ -1501,6 +1502,7 @@ void I_UpdateVideoMode(void) {
     lprintf(LO_INFO,"    SDL_GL_MULTISAMPLEBUFFERS: %i\n",temp);
     SDL_GL_GetAttribute( SDL_GL_STENCIL_SIZE, &temp );
     lprintf(LO_INFO,"    SDL_GL_STENCIL_SIZE: %i\n",temp);
+#endif
 
     reset_overlay();
 

@@ -6,8 +6,8 @@
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
-			<Target title="Win Debug Static">
-				<Option output="Debug/bin/doom2k" prefix_auto="1" extension_auto="1" />
+			<Target title="Win Debug">
+				<Option output="Debug/bin/d2k" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="Debug/bin/" />
 				<Option object_output="Debug/obj/" />
 				<Option type="1" />
@@ -17,8 +17,8 @@
 					<Add option="-DDEBUG=1" />
 				</Compiler>
 			</Target>
-			<Target title="Win Release Static">
-				<Option output="Release/bin/doom2k" prefix_auto="1" extension_auto="1" />
+			<Target title="Win Release">
+				<Option output="Release/bin/d2k" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="Release/bin/" />
 				<Option object_output="Release/obj/" />
 				<Option type="1" />
@@ -30,28 +30,17 @@
 					<Add option="-s" />
 				</Linker>
 			</Target>
-			<Target title="Win Debug Dynamic">
-				<Option output="Debug/bin/doom2k" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="Debug/bin/" />
-				<Option object_output="Debug/obj/" />
-				<Option type="1" />
-				<Option compiler="gcc" />
-				<Compiler>
-					<Add option="-g" />
-					<Add option="-DDEBUG=1" />
-				</Compiler>
-			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-std=c99 -mno-ms-bitfields" />
 			<Add option='-DIS_GNUG=&quot;(defined(__GNUC__) || defined(__GNUG__)) &amp;&amp; !(defined(__clang__) || defined(__INTEL_COMPILER))&quot;' />
 			<Add option='-DVERSION=&quot;\&quot;0\&quot;&quot;' />
-			<Add option='-DPACKAGE=&quot;\&quot;Doom2K\&quot;&quot;' />
-			<Add option='-DPACKAGE_NAME=&quot;\&quot;Doom2K\&quot;&quot;' />
+			<Add option='-DPACKAGE=&quot;\&quot;D2K\&quot;&quot;' />
+			<Add option='-DPACKAGE_NAME=&quot;\&quot;D2K\&quot;&quot;' />
 			<Add option='-DPACKAGE_VERSION=&quot;\&quot;${VERSION}\&quot;&quot;' />
 			<Add option='-DPACKAGE_STRING=&quot;\&quot;${PACKAGE_NAME} v${PACKAGE_VERSION}\&quot;&quot;' />
-			<Add option='-DPACKAGE_TARNAME=&quot;\&quot;doom2k\&quot;&quot;' />
+			<Add option='-DPACKAGE_TARNAME=&quot;\&quot;d2k\&quot;&quot;' />
 			<Add option='-DPACKAGE_URL=&quot;\&quot;http://github.com/camgunz/d2k\&quot;&quot;' />
 			<Add option='-DDOOMWADDIR=&quot;\&quot;C:\\wads\&quot;&quot;' />
 			<Add option="-DGL_DOOM=1" />
