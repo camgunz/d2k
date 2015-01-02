@@ -846,6 +846,8 @@ void I_FinishUpdate(void) {
     glEnd();
 
     gld_Finish(); // proff 04/05/2000: swap OpenGL buffers
+    SDL_Flip(screen);
+
     return;
   }
 #endif
@@ -896,13 +898,13 @@ void I_FinishUpdate(void) {
 #endif
 
 #ifdef GL_DOOM
-  if (vid_8ingl.enabled)
+  if (vid_8ingl.enabled) {
     gld_Draw8InGL();
-  else
-    SDL_Flip(screen);
-#else
-  SDL_Flip(screen);
+    return;
+  }
 #endif
+
+  SDL_Flip(screen);
 }
 
 void I_SetPalette (int pal) {
