@@ -50,10 +50,10 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 
 #undef main
 
-extern int XF_GetRenderSurface(lua_State *L);
-extern int XF_AcquireRenderSurface(lua_State *L);
-extern int XF_ReleaseRenderSurface(lua_State *L);
-extern int XF_ResetOverlay(lua_State *L);
+extern int XF_GetOverlayContext(lua_State *L);
+extern int XF_GetOverlaySurface(lua_State *L);
+extern int XF_LockOverlay(lua_State *L);
+extern int XF_UnlockOverlay(lua_State *L);
 
 /* Most of the following has been rewritten by Lee Killough
  *
@@ -684,10 +684,11 @@ int main(int argc, char **argv) {
 #endif
 
 void I_RegisterFunctions(void) {
-  X_RegisterFunc("get_render_surface", XF_GetRenderSurface);
-  X_RegisterFunc("acquire_render_surface", XF_AcquireRenderSurface);
-  X_RegisterFunc("release_render_surface", XF_ReleaseRenderSurface);
-  X_RegisterFunc("reset_overlay", XF_ResetOverlay);
+  X_RegisterFunc("get_overlay_context", XF_GetOverlayContext);
+  X_RegisterFunc("get_overlay_surface", XF_GetOverlaySurface);
+  X_RegisterFunc("lock_overlay", XF_LockOverlay);
+  X_RegisterFunc("unlock_overlay", XF_UnlockOverlay);
+  // X_RegisterFunc("reset_overlay", XF_ResetOverlay);
 }
 
 /* vi: set et ts=2 sw=2: */

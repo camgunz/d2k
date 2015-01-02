@@ -21,9 +21,9 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-local cairo = require('lgob.cairo')
-local pango = require('lgob.pango')
-local pangocairo = require('lgob.pangocairo')
+-- local cairo = require('lgob.cairo')
+-- local pango = require('lgob.pango')
+-- local pangocairo = require('lgob.pangocairo')
 local hud_widget = require('hud_widget')
 
 Console = hud_widget.HUDWidget:new()
@@ -45,19 +45,19 @@ function Console:draw()
   local angle1 = math.rad(45)
   local angle2 = math.rad(180)
 
-  d2k.screen.cr:set_source_rgba(0, 0, 0, 0.6)
-  d2k.screen.cr:set_line_width(10)
-  d2k.screen.cr:arc(xc, yc, radius, angle1, angle2)
-  d2k.screen.cr:stroke()
-  d2k.screen.cr:set_source_rgba(1, 0.2, 0.2, 0.6)
-  d2k.screen.cr:set_line_width(6)
-  d2k.screen.cr:arc(xc, yc, 10, 0, math.rad(360))
-  d2k.screen.cr:fill()
-  d2k.screen.cr:arc(xc, yc, radius, angle1, angle1)
-  d2k.screen.cr:line_to(xc, yc)
-  d2k.screen.cr:arc(xc, yc, radius, angle2, angle2)
-  d2k.screen.cr:line_to(xc, yc)
-  d2k.screen.cr:stroke()
+  d2k.overlay.context:set_source_rgba(0, 0, 0, 0.6)
+  d2k.overlay.context:set_line_width(10)
+  d2k.overlay.context:arc(xc, yc, radius, angle1, angle2)
+  d2k.overlay.context:stroke()
+  d2k.overlay.context:set_source_rgba(1, 0.2, 0.2, 0.6)
+  d2k.overlay.context:set_line_width(6)
+  d2k.overlay.context:arc(xc, yc, 10, 0, math.rad(360))
+  d2k.overlay.context:fill()
+  d2k.overlay.context:arc(xc, yc, radius, angle1, angle1)
+  d2k.overlay.context:line_to(xc, yc)
+  d2k.overlay.context:arc(xc, yc, radius, angle2, angle2)
+  d2k.overlay.context:line_to(xc, yc)
+  d2k.overlay.context:stroke()
 end
 
 return {Console = Console}

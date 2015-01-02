@@ -66,8 +66,6 @@ function HUD:start()
   for i, w in pairs(self.widgets) do
     w:reset()
   end
-
-  d2k.reset_overlay()
 end
 
 function HUD:stop()
@@ -84,20 +82,24 @@ function HUD:tick()
   end
 end
 
-function HUD:clear()
-  d2k.screen:clear()
-end
-
 function HUD:draw()
   if not self.active then
     return
   end
 
-  d2k.screen.cr:set_operator(cairo.OPERATOR_OVER)
+  d2k.overlay:lock()
+
+  if d2k.using_opengl then
+    d2k.overlay:clear()
+  end
+
+  d2k.overlay.context:set_operator(cairo.OPERATOR_OVER)
 
   for i, w in pairs(self.widgets) do
     w:draw()
   end
+
+  d2k.overlay:unlock()
 end
 
 return {HUD = HUD}

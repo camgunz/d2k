@@ -71,12 +71,17 @@ static SDL_Cursor* cursors[2] = {NULL, NULL};
 
 static int newpal = 0;
 
+typedef struct overlay_s {
+  cairo_t *context;
+  cairo_surface_t *surface;
+  unsigned char *pixels;
 #ifdef GL_DOOM
-static GLuint overlay_tex_id = 0;
+  GLuint tex_id;
 #endif
 
-static cairo_surface_t *render_surface;
-static cairo_surface_t *render_surface_pixels;
+} overlay_t;
+
+static overlay_t overlay;
 
 const char *screen_resolutions_list[MAX_RESOLUTIONS_COUNT] = {NULL};
 const char *screen_resolution_lowest;
@@ -128,19 +133,86 @@ int leds_always_off = 0; // Expected by m_misc, not relevant
 extern int usemouse;        // config file var
 static dboolean mouse_enabled; // usemouse, but can be overriden by -nomouse
 
-int I_GetModeFromString(const char *modestr);
+int  I_GetModeFromString(const char *modestr);
 
-static void reset_overlay(void) {
+static void initialize_overlay(void) {
+  overlay.context = NULL;
+  overlay.surface = NULL;
+  overlay.pixels  = NULL;
 #ifdef GL_DOOM
-  if (overlay_tex_id) {
-    glDeleteTextures(1, &overlay_tex_id);
-    overlay_tex_id = 0;
+  overlay.tex_id  = 0;
+#endif
+}
+
+static bool overlay_initialized(void) {
+  if (overlay.context != NULL && overlay.surface != NULL)
+    return true;
+
+  return false;
+}
+
+static void build_overlay(void) {
+  cairo_status_t status;
+
+  if (overlay_initialized())
+    I_Error("build_overlay: overlay already built");
+
+#ifdef GL_DOOM
+  if (V_GetMode() == VID_MODEGL) {
+    if (overlay.pixels != NULL)
+      free(overlay.pixels);
+
+    overlay.pixels = calloc(
+      SCREENWIDTH * SCREENHEIGHT * SCREENPITCH, sizeof(unsigned char)
+    );
+
+    if (overlay.pixels == NULL)
+      I_Error("build_overlay: Allocating overlay pixels failed");
+
+    overlay.surface = cairo_image_surface_create_for_data(
+      overlay.pixels,
+      CAIRO_FORMAT_RGB24,
+      REAL_SCREENWIDTH,
+      REAL_SCREENHEIGHT,
+      cairo_format_stride_for_width(CAIRO_FORMAT_RGB24, REAL_SCREENWIDTH)
+    );
+  }
+  else {
+    overlay.surface = cairo_image_surface_create_for_data(
+      screens[0].data,
+      CAIRO_FORMAT_RGB24,
+      SCREENWIDTH,
+      SCREENHEIGHT,
+      REAL_SCREENPITCH
+    );
+  }
+#else
+  overlay.surface = cairo_image_surface_create_for_data(
+    screens[0].data,
+    CAIRO_FORMAT_RGB24,
+    SCREENWIDTH,
+    SCREENHEIGHT,
+    SCREENPITCH
+  );
+#endif
+
+  status = cairo_surface_status(overlay.surface);
+
+  if (status != CAIRO_STATUS_SUCCESS) {
+    I_Error("build_overlay: Error creating cairo surface (%s)",
+      cairo_status_to_string(status)
+    );
   }
 
-  if (V_GetMode() == VID_MODEGL && !overlay_tex_id) {
-    puts("Building overlay texture");
-    glGenTextures(1, &overlay_tex_id);
-    glBindTexture(GL_TEXTURE_2D, overlay_tex_id);
+#ifdef GL_DOOM
+  if (V_GetMode() == VID_MODEGL) {
+    if (overlay.tex_id) {
+      glDeleteTextures(1, &overlay.tex_id);
+      overlay.tex_id = 0;
+    }
+
+    glGenTextures(1, &overlay.tex_id);
+    glBindTexture(GL_TEXTURE_2D, overlay.tex_id);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GLEXT_CLAMP_TO_EDGE);
@@ -150,36 +222,26 @@ static void reset_overlay(void) {
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
   }
 #endif
+
+  overlay.context = cairo_create(overlay.surface);
+  puts("destroying surface");
+  cairo_surface_destroy(overlay.surface);
 }
 
-static void render_overlay(void) {
-#ifdef GL_DOOM
-  if (V_GetMode() != VID_MODEGL)
-    return;
+static void destroy_overlay(void) {
+  if (!overlay_initialized())
+    I_Error("destroy_overlay: overlay already destroyed");
 
-  glBindTexture(GL_TEXTURE_2D, overlay_tex_id);
-  glTexImage2D(
-    GL_TEXTURE_2D,
-    0,
-    GL_RGBA,
-    REAL_SCREENWIDTH,
-    REAL_SCREENHEIGHT,
-    0,
-    GL_BGRA,
-    GL_UNSIGNED_BYTE,
-    screens[0].data
-  );
-  glBegin(GL_TRIANGLE_STRIP);
-  glTexCoord2f(0.0f, 0.0f);
-  glVertex2f(0.0f, 0.0f);
-  glTexCoord2f(0.0f, 1.0f);
-  glVertex2f(0.0f, REAL_SCREENHEIGHT);
-  glTexCoord2f(1.0f, 0.0f);
-  glVertex2f(REAL_SCREENWIDTH, 0.0f);
-  glTexCoord2f(1.0f, 1.0f);
-  glVertex2f(REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
-  glEnd();
-#endif
+  cairo_destroy(overlay.context);
+  overlay.context = NULL;
+  overlay.surface = NULL;
+}
+
+static void reset_overlay(void) {
+  if (overlay_initialized())
+    destroy_overlay();
+
+  build_overlay();
 }
 
 static void init_inputs(void) {
@@ -710,64 +772,17 @@ static void shutdown_graphics(void) {
   deactivate_mouse();
 }
 
-void I_DestroyRenderSurface(void) {
-  if (!render_surface)
-    return;
-
-  cairo_surface_destroy(render_surface);
-  render_surface = NULL;
-}
-
-cairo_surface_t* I_GetRenderSurface(void) {
-  cairo_format_t format;
-  cairo_status_t status;
-
-  if (render_surface)
-    return render_surface;
-
-#ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL)
-    format = CAIRO_FORMAT_ARGB32;
-  else if (use_gl_surface)
-    format = CAIRO_FORMAT_ARGB32;
-  else
-    format = CAIRO_FORMAT_ARGB32;
-#else
-  format = CAIRO_FORMAT_ARGB32;
-#endif
-
-  render_surface = cairo_image_surface_create_for_data(
-    screens[0].data,
-    format,
-    screens[0].width,
-    screens[0].height,
-    REAL_SCREENPITCH
-  );
-
-  status = cairo_surface_status(render_surface);
-
-  if (status != CAIRO_STATUS_SUCCESS) {
-    I_Error("I_GetRenderSurface: Error creating cairo surface (%s)",
-      cairo_status_to_string(status)
-    );
-  }
-
-  return render_surface;
-}
-
-void I_AcquireRenderSurface(void) {
-  cairo_status_t status;
-
-  if (render_surface == NULL)
-    I_Error("I_AcquireRenderSurface: No render surface available");
+void I_LockOverlaySurface(void) {
+  if (overlay.surface == NULL)
+    I_Error("I_AcquireOverlaySurface: No render surface available");
 
   if (SDL_MUSTLOCK(screen)) {
     if (SDL_LockSurface(screen) < 0)
-      I_Error("I_AcquireRenderSurface: %s\n", SDL_GetError());
+      I_Error("I_AcquireOverlaySurface: %s\n", SDL_GetError());
   }
 }
 
-void I_ReleaseRenderSurface(void) {
+void I_UnlockOverlaySurface(void) {
   if (SDL_MUSTLOCK(screen))
     SDL_UnlockSurface(screen);
 }
@@ -803,10 +818,33 @@ void I_FinishUpdate(void) {
     return;
 #endif
 
-  // render_overlay();
-
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
+    unsigned char *cairo_data = cairo_image_surface_get_data(overlay.surface);
+
+    glBindTexture(GL_TEXTURE_2D, overlay.tex_id);
+    glTexImage2D(
+      GL_TEXTURE_2D,
+      0,
+      GL_RGBA,
+      SCREENWIDTH,
+      SCREENHEIGHT,
+      0,
+      GL_BGRA,
+      GL_UNSIGNED_BYTE,
+      cairo_data
+    );
+    glBegin(GL_TRIANGLE_STRIP);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex2f(0.0f, 0.0f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex2f(0.0f, SCREENHEIGHT);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex2f(SCREENWIDTH, 0.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex2f(SCREENWIDTH, SCREENHEIGHT);
+    glEnd();
+
     gld_Finish(); // proff 04/05/2000: swap OpenGL buffers
     return;
   }
@@ -861,8 +899,10 @@ void I_FinishUpdate(void) {
   if (vid_8ingl.enabled)
     gld_Draw8InGL();
   else
-#endif
     SDL_Flip(screen);
+#else
+  SDL_Flip(screen);
+#endif
 }
 
 void I_SetPalette (int pal) {
@@ -1172,6 +1212,9 @@ void I_InitGraphics(void) {
   atexit(shutdown_graphics);
   lprintf(LO_INFO, "I_InitGraphics: %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
 
+  /* Initialize the overlay */
+  initialize_overlay();
+
   /* Set the video mode */
   I_UpdateVideoMode();
 
@@ -1452,6 +1495,8 @@ void I_UpdateVideoMode(void) {
     SDL_GL_GetAttribute( SDL_GL_STENCIL_SIZE, &temp );
     lprintf(LO_INFO,"    SDL_GL_STENCIL_SIZE: %i\n",temp);
 
+    reset_overlay();
+
     gld_Init(SCREENWIDTH, SCREENHEIGHT);
   }
 
@@ -1464,9 +1509,12 @@ void I_UpdateVideoMode(void) {
     M_ChangeRenderPrecise();
     deh_changeCompTranslucency();
   }
+  else {
+    reset_overlay();
+  }
+#else
+  reset_overlay();
 #endif
-
-  reset_overlay(); // CG [XXX] Is this still necessary
 }
 
 #if 0
@@ -1529,32 +1577,44 @@ static void ApplyWindowResize(SDL_Event *resize_event) {
 }
 #endif
 
-int XF_GetRenderSurface(lua_State *L) {
-  cairo_surface_t *render_surface = I_GetRenderSurface();
-  x_object_t *xobj = lua_newuserdata(L, sizeof(x_object_t));
+int XF_GetOverlayContext(lua_State *L) {
+  x_object_t *xobj;
 
-  xobj->pointer = render_surface;
-  xobj->need_unref = 1;
+  if (!overlay.context)
+    I_Error("XF_GetOverlayContext: overlay_context is NULL");
+
+  xobj = lua_newuserdata(L, sizeof(x_object_t));
+  xobj->pointer = overlay.context;
+  xobj->need_unref = 0;
+  luaL_getmetatable(L, "cairoContextMT");
+  lua_setmetatable(L, -2);
+
+  return 1;
+}
+
+int XF_GetOverlaySurface(lua_State *L) {
+  x_object_t *xobj;
+  
+  if (!overlay.surface)
+    I_Error("XF_GetOverlaySurface: overlay_surface is NULL");
+
+  xobj = lua_newuserdata(L, sizeof(x_object_t));
+  xobj->pointer = overlay.surface;
+  xobj->need_unref = 0;
   luaL_getmetatable(L, "cairoImageSurfaceMT");
   lua_setmetatable(L, -2);
 
   return 1;
 }
 
-int XF_AcquireRenderSurface(lua_State *L) {
-  I_AcquireRenderSurface();
+int XF_LockOverlay(lua_State *L) {
+  I_LockOverlaySurface();
 
   return 0;
 }
 
-int XF_ReleaseRenderSurface(lua_State *L) {
-  I_ReleaseRenderSurface();
-
-  return 0;
-}
-
-int XF_ResetOverlay(lua_State *L) {
-  reset_overlay();
+int XF_UnlockOverlay(lua_State *L) {
+  I_UnlockOverlaySurface();
 
   return 0;
 }

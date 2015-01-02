@@ -74,20 +74,20 @@ extern int process_priority;
 extern int try_to_reduce_cpu_cache_misses;
 extern dboolean window_focused;
 
-void           I_PreInitGraphics(void);
-void           I_InitScreenResolution(void);
-void           I_InitGraphics(void);
-void           I_UpdateVideoMode(void);
-void           I_ShutdownGraphics(void);
-void           I_SetPalette(int pal);
-void           I_UpdateNoBlit(void);
-void           I_FinishUpdate(void);
-int            I_ScreenShot(const char *fname);
-void           I_AcquireRenderSurface(void);
-void           I_ReleaseRenderSurface(void);
-void           I_StartTic (void);
-void           I_StartFrame (void);
-const char*    I_GetKeyString(int keycode);
+void        I_PreInitGraphics(void);
+void        I_InitScreenResolution(void);
+void        I_InitGraphics(void);
+void        I_UpdateVideoMode(void);
+void        I_ShutdownGraphics(void);
+void        I_SetPalette(int pal);
+void        I_UpdateNoBlit(void);
+void        I_FinishUpdate(void);
+int         I_ScreenShot(const char *fname);
+void        I_LockOverlaySurface(void);
+void        I_UnlockOverlaySurface(void);
+void        I_StartTic (void);
+void        I_StartFrame (void);
+const char* I_GetKeyString(int keycode);
 
 #endif
 

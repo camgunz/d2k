@@ -21,31 +21,34 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-Screen = {}
+Overlay = {}
 
 local cairo = require('lgob.cairo')
 
-function Screen:new(s)
-  local scale_value = d2k.get_screen_multiply_value()
-
+function Overlay:new(s)
   s = s or {}
   setmetatable(s, self)
   self.__index = self
 
-  s.render_surface = d2k.get_render_surface()
-  s.cr = cairo.Context.create(s.render_surface)
-  -- s.cr:scale(1, 1)
-
   return s
 end
 
-function Screen:clear()
-  self.cr:set_operator(cairo.OPERATOR_CLEAR)
-  self.cr:paint()
+function Overlay:lock()
+  self.surface = d2k.get_overlay_surface()
+  self.context = d2k.get_overlay_context()
+  d2k.lock_overlay()
 end
 
+function Overlay:unlock()
+  d2k.unlock_overlay()
+end
 
-return {Screen = Screen}
+function Overlay:clear()
+  self.context:set_operator(cairo.OPERATOR_CLEAR)
+  self.context:paint()
+end
+
+return {Overlay = Overlay}
 
 -- vi: et ts=2 sw=2
 
