@@ -21,9 +21,10 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-local cairo = require('lgob.cairo')
-local pango = require('lgob.pango')
-local pangocairo = require('lgob.pangocairo')
+local lgi = require('lgi')
+local Cairo = lgi.cairo
+local Pango = lgi.Pango
+local PangoCairo = lgi.PangoCairo
 local hud_widget = require('hud_widget')
 
 Console = hud_widget.HUDWidget:new()
@@ -61,26 +62,26 @@ function Console:old_draw()
 end
 
 function Console:draw()
-  local pango_context = pangocairo.create_context(d2k.overlay.context)
-  local pango_layout = pango.Layout.new(pango_context)
+  local pango_context = PangoCairo.create_context(d2k.overlay.context)
+  local pango_layout = Pango.Layout.new(pango_context)
 
-  -- local font_description = pango.FontDescription.from_string('Sans Bold 27')
+  -- local font_description = Pango.FontDescription.from_string('Sans Bold 27')
 
   -- layout:set_font_description(font_description)
-  -- pango_layout:set_text("x", 1)
-  pangocairo.update_context(d2k.overlay.context, pango_context)
-  pangocairo.update_layout(d2k.overlay.context, pango_layout)
+  pango_layout:set_text("Hey There", -1)
+  PangoCairo.update_context(d2k.overlay.context, pango_context)
+  PangoCairo.update_layout(d2k.overlay.context, pango_layout)
 
-  pangocairo.show_layout(d2k.overlay.context, pango_layout)
+  PangoCairo.show_layout(d2k.overlay.context, pango_layout)
 end
 
 function Console:new_draw()
   local word_count = 9
-  local font_description = pango.FontDescription.from_string('Sans Bold 27')
+  local font_description = Pango.FontDescription.from_string('Sans Bold 27')
   local width = d2k.get_screen_width()
   local height = d2k.get_screen_height()
   local radius = (width < height and width or height) / 2
-  local layout = pangocairo.create_layout(d2k.overlay.context)
+  local layout = PangoCairo.create_layout(d2k.overlay.context)
 
   layout:set_text("Text", -1)
   layout:set_font_description(font_description)
@@ -97,10 +98,10 @@ function Console:new_draw()
     d2k.overlay.context:rotate(angle * math.pi / 180)
 
     -- Inform Pango to re-layout the text with the new transformation
-    pangocairo.update_layout(d2k.overlay.context, layout)
+    PangoCairo.update_layout(d2k.overlay.context, layout)
     local width, height = layout:get_size()
-    d2k.overlay.context:move_to(-(width / pango.SCALE) / 2, -radius)
-    pangocairo.show_layout(d2k.overlay.context, layout)
+    d2k.overlay.context:move_to(-(width / Pango.SCALE) / 2, -radius)
+    PangoCairo.show_layout(d2k.overlay.context, layout)
 
     -- d2k.overlay.context:restore()
   end

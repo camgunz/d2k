@@ -500,16 +500,8 @@ void HU_Start(void) {
   if (nodrawers)
     return;
 
-  lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "hud");
-  lua_remove(L, -2);
-  lua_getfield(L, -1, "start");
-  lua_remove(L, -2);
-  lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "hud");
-  lua_remove(L, -2);
-  if (lua_pcall(L, 1, 0, 0) != 0)
-    I_Error("Error starting HUD: %s", X_StrError());
+  if (!X_CallFunc("hud", "start", 0, 0))
+    I_Error("HU_Start: Error starting hud (%s)", X_StrError());
 
 #if 0
   if (headsupactive)                    // stop before starting

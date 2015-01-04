@@ -50,12 +50,20 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 
 #undef main
 
-extern int XF_GetOverlayContext(lua_State *L);
-extern int XF_GetOverlaySurface(lua_State *L);
-extern int XF_LockOverlay(lua_State *L);
-extern int XF_UnlockOverlay(lua_State *L);
+extern int XF_GetScreenWidth(lua_State *L);
+extern int XF_GetScreenHeight(lua_State *L);
+extern int XF_GetScreenStride(lua_State *L);
+extern int XF_UsingOpenGL(lua_State *L);
+extern int XF_BuildOverlayPixels(lua_State *L);
+extern int XF_GetOverlayPixels(lua_State *L);
+extern int XF_DestroyOverlayPixels(lua_State *L);
+extern int XF_BuildOverlayTexture(lua_State *L);
+extern int XF_DestroyOverlayTexture(lua_State *L);
+extern int XF_LockScreen(lua_State *L);
+extern int XF_UnlockScreen(lua_State *L);
 
-/* Most of the following has been rewritten by Lee Killough
+/*
+ * Most of the following has been rewritten by Lee Killough
  *
  * I_GetTime
  * killough 4/13/98: Make clock rate adjustable by scale factor
@@ -684,11 +692,17 @@ int main(int argc, char **argv) {
 #endif
 
 void I_RegisterFunctions(void) {
-  X_RegisterFunc("get_overlay_context", XF_GetOverlayContext);
-  X_RegisterFunc("get_overlay_surface", XF_GetOverlaySurface);
-  X_RegisterFunc("lock_overlay", XF_LockOverlay);
-  X_RegisterFunc("unlock_overlay", XF_UnlockOverlay);
-  // X_RegisterFunc("reset_overlay", XF_ResetOverlay);
+  X_RegisterFunc("get_screen_width", XF_GetScreenWidth);
+  X_RegisterFunc("get_screen_height", XF_GetScreenHeight);
+  X_RegisterFunc("get_screen_stride", XF_GetScreenStride);
+  X_RegisterFunc("using_opengl", XF_UsingOpenGL);
+  X_RegisterFunc("build_overlay_pixels", XF_BuildOverlayPixels);
+  X_RegisterFunc("get_overlay_pixels", XF_GetOverlayPixels);
+  X_RegisterFunc("destroy_overlay_pixels", XF_DestroyOverlayPixels);
+  X_RegisterFunc("build_overlay_texture", XF_BuildOverlayTexture);
+  X_RegisterFunc("destroy_overlay_texture", XF_DestroyOverlayTexture);
+  X_RegisterFunc("lock_screen", XF_LockScreen);
+  X_RegisterFunc("unlock_screen", XF_UnlockScreen);
 }
 
 /* vi: set et ts=2 sw=2: */

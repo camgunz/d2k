@@ -23,28 +23,91 @@
 
 Overlay = {}
 
-local cairo = require('lgob.cairo')
+local lgi = require('lgi')
+local Cairo = lgi.cairo
 
-function Overlay:new(s)
-  s = s or {}
-  setmetatable(s, self)
+function Overlay:new(o)
+  o = o or {}
+  setmetatable(o, self)
   self.__index = self
 
-  return s
+  o.context = nil
+  o.surface = nil
+
+  return o
+end
+
+function Overlay:initialized()
+  if self.context and self.surface then
+    return true
+  end
+
+  return false
+end
+
+function Overlay:build()
+  assert(not self:initialized(), 'overlay already built')
+
+  d2k.build_overlay_pixels()
+
+  self.surface = Cairo.ImageSurface.create_for_data(
+    d2k.get_overlay_pixels(),
+    Cairo.Format.RGB24, -- CG: FIXME: This is duplicated in i_video.c
+    d2k.get_screen_width(),
+    d2k.get_screen_height(),
+    d2k.get_screen_stride()
+  )
+
+  local status = self.surface.status
+  if status == Cairo.Status.SUCCESS then
+    local cairo_error = Cairo.Status.to_string(status)
+    error(string.format('Error creating overlay surface (%s)', cairo_error))
+  end
+
+  self.context = Cairo.Context.create(self.surface)
+
+  local status = self.context.status
+  if status == Cairo.Status.SUCCESS then
+    local cairo_error = Cairo.Status.to_string(status)
+    error(string.format('Error creating overlay surface (%s)', cairo_error))
+  end
+
+  if d2k.using_opengl() then
+    d2k.build_overlay_texture()
+  end
+end
+
+function Overlay:destroy()
+  assert(self:initialized(), 'overlay already destroyed')
+
+  self.context = nil
+  self.surface = nil
+
+  d2k.destroy_overlay_pixels()
+  if d2k.using_opengl() then
+    d2k.destroy_overlay_texture()
+  end
+end
+
+function Overlay:reset()
+  if self:initialized() then
+    self:destroy()
+  end
+
+  self:build()
 end
 
 function Overlay:lock()
-  self.surface = d2k.get_overlay_surface()
-  self.context = d2k.get_overlay_context()
-  d2k.lock_overlay()
+  d2k.lock_screen()
 end
 
 function Overlay:unlock()
-  d2k.unlock_overlay()
+  self.surface:flush()
+  d2k.unlock_screen()
 end
 
 function Overlay:clear()
-  self.context:set_operator(cairo.OPERATOR_CLEAR)
+  self.context:set_operator(Cairo.OPERATOR_CLEAR)
   self.context:paint()
 end
 

@@ -21,9 +21,8 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-require('lgob.cairo')
-require('lgob.pango')
-require('lgob.pangocairo')
+local lgi = require('lgi')
+local Cairo = lgi.cairo
 
 HUD = {}
 
@@ -57,6 +56,11 @@ function HUD:remove_widget(widget)
 end
 
 function HUD:start()
+  -- CG: XXX: HACK
+  if not d2k.overlay:initialized() then
+    d2k.overlay:build()
+  end
+
   if self.active then
     self:stop()
   end
@@ -93,7 +97,7 @@ function HUD:draw()
     d2k.overlay:clear()
   end
 
-  d2k.overlay.context:set_operator(cairo.OPERATOR_OVER)
+  d2k.overlay.context:set_operator(Cairo.Operator.OVER)
 
   for i, w in pairs(self.widgets) do
     w:draw()

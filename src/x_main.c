@@ -48,7 +48,7 @@ static void check_x_funcs(void) {
  * CG: This worked for Lua 5.2, not so much for 5.1
  */
 
-#if 0
+#if LUA_VERSION_NUM > 501
 static void load_x_func(gpointer name, gpointer func, gpointer userdata) {
   luaL_Reg funcs[] = {
     {name, func},
@@ -66,20 +66,16 @@ static void set_error(const char *message) {
 }
 
 static void register_xfuncs(void) {
-  GHashTableIter iter;
-  gpointer key;
-  gpointer value;
-  int func_index = 0;
-
-  /*
-   * CG: This worked for Lua 5.2, not so much for 5.1
-   */
-#if 0
+#if LUA_VERSION_NUM > 501
   lua_createtable(L, g_hash_table_size(x_funcs), 0);
   lua_setglobal(L, X_NAMESPACE);
   lua_getglobal(L, X_NAMESPACE);
   g_hash_table_foreach(x_funcs, load_x_func, NULL);
-#endif
+#else
+  GHashTableIter iter;
+  gpointer key;
+  gpointer value;
+  int func_index = 0;
 
   g_hash_table_iter_init(&iter, x_funcs);
 
@@ -101,6 +97,7 @@ static void register_xfuncs(void) {
   library[func_index].func = NULL;
 
   luaL_register(L, X_NAMESPACE, library);
+#endif
 }
 
 const char* X_StrError(void) {

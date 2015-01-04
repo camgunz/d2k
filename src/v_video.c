@@ -29,15 +29,16 @@
 #include "d_event.h"
 #include "c_main.h"
 #include "e6y.h"
-#include "r_main.h"
-#include "r_draw.h"
-#include "m_bbox.h"
-#include "w_wad.h"   /* needed for color translation lump lookup */
-#include "v_video.h"
 #include "i_video.h"
-#include "r_filter.h"
 #include "lprintf.h"
+#include "m_bbox.h"
+#include "r_draw.h"
+#include "r_filter.h"
+#include "r_main.h"
+#include "r_screenmultiply.h"
 #include "st_stuff.h"
+#include "v_video.h"
+#include "w_wad.h"   /* needed for color translation lump lookup */
 #include "x_main.h"
 
 // DWF 2012-05-10
@@ -1482,59 +1483,7 @@ void V_ChangeScreenResolution(void) {
 #endif
 }
 
-int XF_GetScreenWidth(lua_State *L) {
-  lua_pushnumber(L, SCREENWIDTH);
-
-  return 1;
-}
-
-int XF_GetScreenHeight(lua_State *L) {
-  lua_pushnumber(L, SCREENHEIGHT);
-
-  return 1;
-}
-
-int XF_GetRealScreenWidth(lua_State *L) {
-  lua_pushnumber(L, REAL_SCREENWIDTH);
-
-  return 1;
-}
-
-int XF_GetRealScreenHeight(lua_State *L) {
-  lua_pushnumber(L, REAL_SCREENHEIGHT);
-
-  return 1;
-}
-
-extern int screen_multiply;
-
-int XF_GetScreenMultiplyValue(lua_State *L) {
-  lua_pushnumber(L, screen_multiply);
-
-  return 1;
-}
-
-int XF_UsingOpenGL(lua_State *L) {
-  bool using_opengl;
-
-#ifdef GL_DOOM
-  using_opengl = V_GetMode() == VID_MODEGL;
-#else
-  using_opengl = false;
-#endif
-
-  lua_pushboolean(L, using_opengl);
-
-  return 1;
-}
-
 void V_RegisterFunctions(void) {
-  X_RegisterFunc("get_screen_width", XF_GetScreenWidth);
-  X_RegisterFunc("get_screen_height", XF_GetScreenHeight);
-  X_RegisterFunc("get_real_screen_width", XF_GetRealScreenWidth);
-  X_RegisterFunc("get_real_screen_height", XF_GetRealScreenHeight);
-  X_RegisterFunc("get_screen_multiply_value", XF_GetScreenMultiplyValue);
-  X_RegisterFunc("using_opengl", XF_UsingOpenGL);
 }
 
 /* vi: set et ts=2 sw=2: */
