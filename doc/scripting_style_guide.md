@@ -1,8 +1,8 @@
 # D2K Scripting Style Guide
 
 This is the style guide for D2K scripting.  As I am still becoming familiar
-with Lua, this is a work in progress, and as such it may change as time goes
-on.
+with Lua, this is a work in progress, and I will likely update and modify it
+frequently.
 
 ## Indenting
 
@@ -28,14 +28,14 @@ bigger increase of productivity than not having to break a line.
     * Bad: `for i,w in pairs(self.widgets) do`
     * Good: `for i, w in pairs(self.widgets) do`
   * Do not pad parentheses
-    * Bad: `d2k.spawn_actor( x, y, z, d2k.MT_PLAYER ) ;`
-    * Good: `d2k.spawn_actor(x, y, z, d2k.MT_PLAYER);`
+    * Bad: `d2k.spawn_actor( x, y, z, d2k.Actor.Type.MT_PLAYER ) ;`
+    * Good: `d2k.spawn_actor(x, y, z, d2k.Actor.Type.MT_PLAYER);`
   * Pad function parameters
-    * Bad: `d2k.spawn_actor(x,y,z,MT_PLAYER);`
-    * Good: `d2k.spawn_actor(x, y, z, MT_PLAYER);`
+    * Bad: `d2k.spawn_actor(x,y,z,d2k.Actor.Type.MT_PLAYER);`
+    * Good: `d2k.spawn_actor(x, y, z, d2k.Actor.Type.MT_PLAYER);`
   * Do not pad function names
-    * Bad: `d2k.spawn_actor (x, y, z, MT_PLAYER);`
-    * Good: `d2k.spawn_actor(x, y, z, MT_PLAYER);`
+    * Bad: `d2k.spawn_actor (x, y, z, d2k.Actor.Type.MT_PLAYER);`
+    * Good: `d2k.spawn_actor(x, y, z, d2k.Actor.Type.MT_PLAYER);`
 
 ## Chunks, Blocks, etc.
 
@@ -55,16 +55,6 @@ Never put such things on a single line.
 When passing around functions, only use anonymous functions for the **absolute
 smallest** of functions.  When in doubt, define the function separately.
 
-## Function Naming
-
-Functions that are verbs ought to be named simply, i.e. `tick()` or `draw()`.
-Functions that return booleans ought to be named with a form of be prefixing
-them, for example, `was_updated()` or `is_dead()`.  Getters and setters should
-be prefixed with `get_` and `set_`, as in `get_name()` and
-`set_name('Doomguy')`.  Consistency in this regard is extremely important;
-scripters ought to be able to guess most of your API by following these basic
-rules.
-
 ## Function Parentheses
 
 Lua allows the programmer the option of using parentheses if the following conditions are
@@ -74,4 +64,30 @@ met:
   - That argument is either a string or a table
 
 **Always** use parentheses.  This also applies to `require`.
+
+## Strings
+
+Use single-quotes for strings whenever possible.
+
+## Naming
+
+What follows are guidelines for naming various things.
+
+### Functions
+
+Functions that are verbs ought to be named simply, i.e. `tick()` or `draw()`.
+Functions that return booleans ought to be named with a form of be prefixing
+them, for example, `was_updated()` or `is_dead()`.  Getters and setters should
+be prefixed with `get_` and `set_`, as in `get_name()` and
+`set_name('Doomguy')`.  Consistency in this regard is extremely important;
+scripters ought to be able to guess most of your API by following these basic
+rules.
+
+### Modules
+
+Modules should be capitalized and use `PascalCase`, i.e. `DeathLaser`.
+
+### Instances
+
+Instances should use lowercase and use `snake_case` i.e. `death_laser`.
 

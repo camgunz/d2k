@@ -64,10 +64,9 @@ end
 function Console:draw()
   local pango_context = PangoCairo.create_context(d2k.overlay.context)
   local pango_layout = Pango.Layout.new(pango_context)
+  local font_description = Pango.FontDescription.from_string('Sans Bold 27')
 
-  -- local font_description = Pango.FontDescription.from_string('Sans Bold 27')
-
-  -- layout:set_font_description(font_description)
+  pango_layout:set_font_description(font_description)
   pango_layout:set_text("Hey There", -1)
   PangoCairo.update_context(d2k.overlay.context, pango_context)
   PangoCairo.update_layout(d2k.overlay.context, pango_layout)
@@ -105,6 +104,10 @@ function Console:new_draw()
 
     -- d2k.overlay.context:restore()
   end
+end
+
+function Console:is_active()
+  return true
 end
 
 return {Console = Console}

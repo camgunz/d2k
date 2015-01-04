@@ -1,5 +1,20 @@
 # To Do
 
+## Scripting
+
+1. Scripting phases:
+  - `X_Init` creates Lua state
+  - Subsystems export functions
+    - i.e. `XV_ExportFunctions` for the video system
+  - `X_RegisterFunctions` registers all exported functions
+  - Subsystems initialize their scripting states
+    - i.e. `XV_Init` for the video system
+  - `X_Start` loads the initialization script
+
+## LGI
+
+1. Fix switching to vidingl
+
 ## Base
 
 1. Reconnecting doesn't work
@@ -9,6 +24,12 @@
 1. Disconnect clients if their sync TIC is too far in the past
 
 1. Delta compress commands (serverside and clientside)
+
+1. Implement actor vectors
+  - Send movement start TIC
+  - x/y/z represent the start position at time of last velocity change
+  - More amenable to delta compression
+  - Easier to nudge projectiles
 
 1. Add unlagged
   - Save attacking player position

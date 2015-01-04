@@ -106,6 +106,16 @@ function HUD:draw()
   d2k.overlay:unlock()
 end
 
+function HUD:handle_event(event)
+  for i, w in pairs(self.widgets) do
+    if w:is_active() and w:handle_event(event) then
+      return true
+    end
+  end
+
+  return false
+end
+
 return {HUD = HUD}
 
 -- vi: et ts=2 sw=2

@@ -23,6 +23,16 @@
 
 HUDWidget = {}
 
+--
+-- CG: TODO: "Fullscreen" HUD widget:
+--             - HUDWidget:handles_all_events()
+--             - HUDWidget:activate()
+--               - in hud, keep list of fs widgets in order of activation
+--             - HUDWidget:deactivate()
+--               - in hud, remove fs widget from list
+--             - HUDWidget:is_active()
+--
+
 function HUDWidget:new(w)
   w = w or {}
   setmetatable(w, self)
@@ -40,6 +50,10 @@ function HUDWidget:tick()
 end
 
 function HUDWidget:draw()
+end
+
+function HUDWidget:is_active()
+  return false
 end
 
 return {HUDWidget = HUDWidget}
