@@ -1395,8 +1395,13 @@ void I_UpdateVideoMode(void) {
     lprintf(LO_INFO,"    SDL_GL_STENCIL_SIZE: %i\n",temp);
 #endif
 
-    if (overlay.pixels)
-      X_CallFunc("overlay", "reset", 0, 0);
+    if (overlay.pixels) {
+      if (!X_CallFunc("overlay", "reset", 0, 0)) {
+        I_Error("I_UpdateVideoMode: Error resetting overlay (%s)",
+          X_StrError()
+        );
+      }
+    }
 
     gld_Init(SCREENWIDTH, SCREENHEIGHT);
   }
@@ -1411,12 +1416,22 @@ void I_UpdateVideoMode(void) {
     deh_changeCompTranslucency();
   }
   else {
-    if (overlay.pixels)
-      X_CallFunc("overlay", "reset", 0, 0);
+    if (overlay.pixels) {
+      if (!X_CallFunc("overlay", "reset", 0, 0)) {
+        I_Error("I_UpdateVideoMode: Error resetting overlay (%s)",
+          X_StrError()
+        );
+      }
+    }
   }
 #else
-  if (overlay.pixels)
-    X_CallFunc("overlay", "reset", 0, 0);
+  if (overlay.pixels) {
+    if (!X_CallFunc("overlay", "reset", 0, 0)) {
+      I_Error("I_UpdateVideoMode: Error resetting overlay (%s)",
+        X_StrError()
+      );
+    }
+  }
 #endif
 }
 
@@ -1546,7 +1561,7 @@ int XF_GetOverlaySurface(lua_State *L) {
 
 int XF_BuildOverlayPixels(lua_State *L) {
   if (overlay.pixels)
-    I_Error("build_overlay_pixels: Pixels already built");
+    I_Error("build_overlay_pixels: pixels already built");
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
@@ -1586,11 +1601,12 @@ int XF_DestroyOverlayPixels(lua_State *L) {
    * CG: Don't check for overlay.pixels here, so the overlay can be reset with
    *     impunity.
    */
-  if (overlay.pixels) {
+  if (overlay.pixels && overlay.owns_pixels) {
     free(overlay.pixels);
-    overlay.pixels = NULL;
     overlay.owns_pixels = false;
   }
+
+  overlay.pixels = NULL;
 
   return 0;
 }

@@ -31,19 +31,19 @@
 #include "x_main.h"
 
 void V_InitOverlay(void) {
-  if (!X_CallFunc("screen", "clear", 0, 0))
+  if (!X_CallFunc("overlay", "clear", 0, 0))
     I_Error("Error initializing overlay: %s", X_StrError());
 
 #if 0
   lua_State *L = X_GetState();
 
   lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "screen");
+  lua_getfield(L, -1, "overlay");
   lua_remove(L, -2);
   lua_getfield(L, -1, "clear");
   lua_remove(L, -2);
   lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "screen");
+  lua_getfield(L, -1, "overlay");
   lua_remove(L, -2);
   if (lua_pcall(L, 1, 0, 0) != 0)
     I_Error("Error clearing overlay: %s", X_StrError());
@@ -53,19 +53,19 @@ void V_InitOverlay(void) {
 }
 
 void V_ClearOverlay(void) {
-  if (!X_CallFunc("screen", "clear", 0, 0))
+  if (!X_CallFunc("overlay", "clear", 0, 0))
     I_Error("Error clearing overlay: %s", X_StrError());
 
 #if 0
   lua_State *L = X_GetState();
 
   lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "screen");
+  lua_getfield(L, -1, "overlay");
   lua_remove(L, -2);
   lua_getfield(L, -1, "clear");
   lua_remove(L, -2);
   lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "screen");
+  lua_getfield(L, -1, "overlay");
   lua_remove(L, -2);
   if (lua_pcall(L, 1, 0, 0) != 0)
     I_Error("Error clearing overlay: %s", X_StrError());

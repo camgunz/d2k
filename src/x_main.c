@@ -154,7 +154,7 @@ bool X_CallFunc(const char *object, const char *fname, int arg_count,
   lua_remove(L, -2);
   if (object) {
     lua_getglobal(L, X_NAMESPACE);
-    lua_getfield(L, -1, "hud");
+    lua_getfield(L, -1, object);
     lua_remove(L, -2);
   }
 
