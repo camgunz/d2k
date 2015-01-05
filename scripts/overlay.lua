@@ -27,18 +27,20 @@ local lgi = require('lgi')
 local Cairo = lgi.cairo
 
 function Overlay:new(o)
-  o = o or {}
+  o = o or {
+    render_context = nil,
+    render_surface = nil
+  }
   setmetatable(o, self)
   self.__index = self
 
-  o.context = nil
-  o.surface = nil
+  o:build()
 
   return o
 end
 
 function Overlay:initialized()
-  if self.context and self.surface then
+  if self.render_context and self.render_surface then
     return true
   end
 
@@ -46,11 +48,12 @@ function Overlay:initialized()
 end
 
 function Overlay:build()
+  print('[!!] Building overlay')
   assert(not self:initialized(), 'overlay already built')
 
   d2k.build_overlay_pixels()
 
-  self.surface = Cairo.ImageSurface.create_for_data(
+  self.render_surface = Cairo.ImageSurface.create_for_data(
     d2k.get_overlay_pixels(),
     Cairo.Format.RGB24, -- CG: FIXME: This is duplicated in i_video.c
     d2k.get_screen_width(),
@@ -58,15 +61,15 @@ function Overlay:build()
     d2k.get_screen_stride()
   )
 
-  local status = self.surface.status
+  local status = self.render_surface.status
   if status == Cairo.Status.SUCCESS then
     local cairo_error = Cairo.Status.to_string(status)
     error(string.format('Error creating overlay surface (%s)', cairo_error))
   end
 
-  self.context = Cairo.Context.create(self.surface)
+  self.render_context = Cairo.Context.create(self.render_surface)
 
-  local status = self.context.status
+  local status = self.render_context.status
   if status == Cairo.Status.SUCCESS then
     local cairo_error = Cairo.Status.to_string(status)
     error(string.format('Error creating overlay surface (%s)', cairo_error))
@@ -75,13 +78,16 @@ function Overlay:build()
   if d2k.using_opengl() then
     d2k.build_overlay_texture()
   end
+
+  d2k.clear_overlay_needs_resetting()
 end
 
 function Overlay:destroy()
+  print('[!!] Destroying overlay')
   assert(self:initialized(), 'overlay already destroyed')
 
-  self.context = nil
-  self.surface = nil
+  self.render_context = nil
+  self.render_surface = nil
 
   d2k.destroy_overlay_pixels()
   if d2k.using_opengl() then
@@ -98,17 +104,22 @@ function Overlay:reset()
 end
 
 function Overlay:lock()
+  if d2k.overlay_needs_resetting() then
+    print('[!!] overlay needs resetting')
+    self:reset()
+  end
+
   d2k.lock_screen()
 end
 
 function Overlay:unlock()
-  self.surface:flush()
+  self.render_surface:flush()
   d2k.unlock_screen()
 end
 
 function Overlay:clear()
-  self.context:set_operator(Cairo.OPERATOR_CLEAR)
-  self.context:paint()
+  self.render_context:set_operator(Cairo.OPERATOR_CLEAR)
+  self.render_context:paint()
 end
 
 return {Overlay = Overlay}

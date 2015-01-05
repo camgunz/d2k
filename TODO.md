@@ -1,17 +1,9 @@
 # To Do
 
-## Scripting
-
-1. Scripting phases:
-  - `X_Init` creates Lua state
-  - Subsystems export functions
-    - i.e. `XV_ExportFunctions` for the video system
-  - `X_RegisterFunctions` registers all exported functions
-  - Subsystems initialize their scripting states
-    - i.e. `XV_Init` for the video system
-  - `X_Start` loads the initialization script
-
 ## LGI
+
+1. Fix resetting logic
+  - add check in `overlay:lock`
 
 1. Fix switching to vidingl
 

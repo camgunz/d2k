@@ -310,9 +310,6 @@ void C_Init(void) {
     C_MWrite(tempbuf->str);
     g_string_free(tempbuf, true);
   }
-
-  X_RegisterFunc("echo", XF_Echo);
-  X_RegisterFunc("mecho", XF_MEcho);
 }
 
 bool C_Initialized(void) {
@@ -490,6 +487,11 @@ void C_MWrite(const char *message) {
     HU_ConsoleWidgetMWrite(cons, message);
   else
     tempbuf_mwrite(message);
+}
+
+void XC_ExportFunctions(void) {
+  X_RegisterFunc("echo", XF_Echo);
+  X_RegisterFunc("mecho", XF_MEcho);
 }
 
 /* vi: set et ts=2 sw=2: */

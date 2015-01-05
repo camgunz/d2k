@@ -31,8 +31,10 @@ print('X_Init: Init script engine.')
 
 print('X_Init: Creating overlay.')
 d2k.overlay = overlay.Overlay:new()
+
 print('X_Init: Creating HUD')
 d2k.hud = hud.HUD:new()
+
 print('X_Init: Creating console')
 d2k.console = console.Console:new()
 

@@ -41,6 +41,7 @@ function HUD:add_widget(widget)
   table.insert(self.widgets, widget)
 
   widget.hud = self
+  widget.render_context = d2k.overlay.render_context
 end
 
 function HUD:remove_widget(widget)
@@ -53,14 +54,10 @@ function HUD:remove_widget(widget)
   end
 
   widget.hud = nil
+  widget.render_context = nil
 end
 
 function HUD:start()
-  -- CG: XXX: HACK
-  if not d2k.overlay:initialized() then
-    d2k.overlay:build()
-  end
-
   if self.active then
     self:stop()
   end
@@ -97,7 +94,7 @@ function HUD:draw()
     d2k.overlay:clear()
   end
 
-  d2k.overlay.context:set_operator(Cairo.Operator.OVER)
+  d2k.overlay.render_context:set_operator(Cairo.Operator.OVER)
 
   for i, w in pairs(self.widgets) do
     w:draw()

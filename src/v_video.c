@@ -41,6 +41,20 @@
 #include "w_wad.h"   /* needed for color translation lump lookup */
 #include "x_main.h"
 
+extern int XF_GetScreenWidth(lua_State *L);
+extern int XF_GetScreenHeight(lua_State *L);
+extern int XF_GetScreenStride(lua_State *L);
+extern int XF_UsingOpenGL(lua_State *L);
+extern int XF_BuildOverlayPixels(lua_State *L);
+extern int XF_GetOverlayPixels(lua_State *L);
+extern int XF_DestroyOverlayPixels(lua_State *L);
+extern int XF_BuildOverlayTexture(lua_State *L);
+extern int XF_DestroyOverlayTexture(lua_State *L);
+extern int XF_OverlayNeedsResetting(lua_State *L);
+extern int XF_ClearOverlayNeedsResetting(lua_State *L);
+extern int XF_LockScreen(lua_State *L);
+extern int XF_UnlockScreen(lua_State *L);
+
 // DWF 2012-05-10
 // SetRatio sets the following global variables based on window geometry and
 // user preferences. The integer ratio is hardly used anymore, so further
@@ -320,8 +334,6 @@ void V_Init(void) {
     screens[i].byte_pitch = 0;
     screens[i].int_pitch = 0;
   }
-
-  V_RegisterFunctions();
 }
 
 //
@@ -1483,7 +1495,22 @@ void V_ChangeScreenResolution(void) {
 #endif
 }
 
-void V_RegisterFunctions(void) {
+void XV_ExportFunctions(void) {
+  X_RegisterFunc("get_screen_width", XF_GetScreenWidth);
+  X_RegisterFunc("get_screen_height", XF_GetScreenHeight);
+  X_RegisterFunc("get_screen_stride", XF_GetScreenStride);
+  X_RegisterFunc("using_opengl", XF_UsingOpenGL);
+  X_RegisterFunc("build_overlay_pixels", XF_BuildOverlayPixels);
+  X_RegisterFunc("get_overlay_pixels", XF_GetOverlayPixels);
+  X_RegisterFunc("destroy_overlay_pixels", XF_DestroyOverlayPixels);
+  X_RegisterFunc("build_overlay_texture", XF_BuildOverlayTexture);
+  X_RegisterFunc("destroy_overlay_texture", XF_DestroyOverlayTexture);
+  X_RegisterFunc("overlay_needs_resetting", XF_OverlayNeedsResetting);
+  X_RegisterFunc(
+    "clear_overlay_needs_resetting", XF_ClearOverlayNeedsResetting
+  );
+  X_RegisterFunc("lock_screen", XF_LockScreen);
+  X_RegisterFunc("unlock_screen", XF_UnlockScreen);
 }
 
 /* vi: set et ts=2 sw=2: */

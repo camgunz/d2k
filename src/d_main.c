@@ -1891,6 +1891,8 @@ static void D_DoomMainSetup(void) {
 
   setbuf(stdout, NULL);
 
+  X_Init(); /* CG 07/22/2014: Scripting */
+
   // proff 04/05/2000: Added support for include response files
   /* proff 2001/7/1 - Moved up, so -config can be in response files */
   dboolean rsp_found;
@@ -1921,8 +1923,7 @@ static void D_DoomMainSetup(void) {
 
   D_BuildBEXTables(); // haleyjd
 
-  // 05/09/14 CG: Enable logging
-  D_InitLogging();
+  D_InitLogging(); /* 05/09/14 CG: Enable logging */
 
   // 1/18/98 killough: Z_Init() call moved to i_main.c
 
@@ -2446,8 +2447,13 @@ static void D_DoomMainSetup(void) {
   C_Init();
 #endif
 
-  // CG 07/22/2014: Scripting
-  X_Init();
+  XV_ExportFunctions();
+  XP_ExportFunctions();
+  XC_ExportFunctions();
+
+  X_RegisterFunctions();
+
+  X_Start();
 
   // CPhipps - auto screenshots
   if ((p = M_CheckParm("-autoshot")) && (p < myargc - 2))

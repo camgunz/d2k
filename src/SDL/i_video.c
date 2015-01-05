@@ -25,7 +25,6 @@
 #include <cairo/cairo.h>
 
 #include <SDL.h>
-#include <SDL_syswm.h>
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -82,7 +81,7 @@ typedef struct overlay_s {
 #ifdef GL_DOOM
   GLuint tex_id;
 #endif
-
+  bool needs_resetting;
 } overlay_t;
 
 static overlay_t overlay;
@@ -137,14 +136,15 @@ int leds_always_off = 0; // Expected by m_misc, not relevant
 extern int usemouse;        // config file var
 static dboolean mouse_enabled; // usemouse, but can be overriden by -nomouse
 
-int  I_GetModeFromString(const char *modestr);
+int I_GetModeFromString(const char *modestr);
 
 static void initialize_overlay(void) {
-  overlay.pixels      = NULL;
-  overlay.owns_pixels = false;
+  overlay.pixels          = NULL;
+  overlay.owns_pixels     = false;
 #ifdef GL_DOOM
-  overlay.tex_id  = 0;
+  overlay.tex_id          = 0;
 #endif
+  overlay.needs_resetting = false;
 }
 
 static void init_inputs(void) {
@@ -728,30 +728,33 @@ void I_FinishUpdate(void) {
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
-    glBindTexture(GL_TEXTURE_2D, overlay.tex_id);
-    glTexImage2D(
-      GL_TEXTURE_2D,
-      0,
-      GL_RGBA,
-      REAL_SCREENWIDTH,
-      REAL_SCREENHEIGHT,
-      0,
-      GL_BGRA,
-      GL_UNSIGNED_BYTE,
-      overlay.pixels
-    );
-    glBegin(GL_TRIANGLE_STRIP);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(0.0f, 0.0f);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(0.0f, REAL_SCREENHEIGHT);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(REAL_SCREENWIDTH, 0.0f);
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
-    glEnd();
+    if (!overlay.needs_resetting) {
+      glBindTexture(GL_TEXTURE_2D, overlay.tex_id);
+      glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_RGBA,
+        REAL_SCREENWIDTH,
+        REAL_SCREENHEIGHT,
+        0,
+        GL_BGRA,
+        GL_UNSIGNED_BYTE,
+        overlay.pixels
+      );
+      glBegin(GL_TRIANGLE_STRIP);
+      glTexCoord2f(0.0f, 0.0f);
+      glVertex2f(0.0f, 0.0f);
+      glTexCoord2f(0.0f, 1.0f);
+      glVertex2f(0.0f, REAL_SCREENHEIGHT);
+      glTexCoord2f(1.0f, 0.0f);
+      glVertex2f(REAL_SCREENWIDTH, 0.0f);
+      glTexCoord2f(1.0f, 1.0f);
+      glVertex2f(REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
+      glEnd();
 
-    last_glTexID = &overlay.tex_id;
+      last_glTexID = &overlay.tex_id;
+    }
+
     gld_Finish(); // proff 04/05/2000: swap OpenGL buffers
 
     return;
@@ -1008,12 +1011,12 @@ void I_InitScreenResolution(void) {
 
     // Video stuff
     if ((p = M_CheckParm("-width"))) {
-      if (myargv[p+1])
+      if (myargv[p + 1])
         desired_screenwidth = atoi(myargv[p + 1]);
     }
 
     if ((p = M_CheckParm("-height"))) {
-      if (myargv[p+1])
+      if (myargv[p + 1])
         desired_screenheight = atoi(myargv[p + 1]);
     }
 
@@ -1130,19 +1133,20 @@ void I_InitGraphics(void) {
   update_grab();
 }
 
-int I_GetModeFromString(const char *modestr)
-{
+int I_GetModeFromString(const char *modestr) {
   if (!stricmp(modestr, "32"))
     return VID_MODE32;
 
   if (!stricmp(modestr, "32bit"))
     return VID_MODE32;
 
+#ifdef GL_DOOM
   if (!stricmp(modestr, "gl"))
     return VID_MODEGL;
 
   if (!stricmp(modestr, "opengl"))
     return VID_MODEGL;
+#endif
 
   return VID_MODE32;
 }
@@ -1181,20 +1185,24 @@ void I_UpdateVideoMode(void) {
 
   // Initialize SDL with this graphics mode
 #ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL) {
+  if (V_GetMode() == VID_MODEGL)
     init_flags = SDL_OPENGL;
-  }
+  else if (use_doublebuffer)
+    init_flags = SDL_DOUBLEBUF;
   else
-#endif
-  {
-    if (use_doublebuffer)
-      init_flags = SDL_DOUBLEBUF;
-    else
-      init_flags = SDL_SWSURFACE;
+    init_flags = SDL_SWSURFACE;
 #ifndef DEBUG
-    init_flags |= SDL_HWPALETTE;
+  init_flags |= SDL_HWPALETTE;
 #endif
-  }
+#else
+  if (use_doublebuffer)
+    init_flags = SDL_DOUBLEBUF;
+  else
+    init_flags = SDL_SWSURFACE;
+#ifndef DEBUG
+  init_flags |= SDL_HWPALETTE;
+#endif
+#endif
 
   if (desired_fullscreen)
     init_flags |= SDL_FULLSCREEN;
@@ -1217,11 +1225,8 @@ void I_UpdateVideoMode(void) {
 
 #ifdef GL_DOOM
   vid_8ingl.enabled = false;
-#endif
 
-#ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL)
-  {
+  if (V_GetMode() == VID_MODEGL) {
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 0);
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 0);
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 0);
@@ -1245,70 +1250,61 @@ void I_UpdateVideoMode(void) {
     gld_MultisamplingInit();
 
     screen = SDL_SetVideoMode(
-      REAL_SCREENWIDTH,
-      REAL_SCREENHEIGHT,
-      gl_colorbuffer_bits,
-      init_flags
+      REAL_SCREENWIDTH, REAL_SCREENHEIGHT, gl_colorbuffer_bits, init_flags
     );
 
     gld_CheckHardwareGamma();
-#endif
   }
-  else
-  {
-#ifdef GL_DOOM
-    if (use_gl_surface)
-    {
-      int flags = SDL_OPENGL;
+  else if (use_gl_surface) {
+    int flags = SDL_OPENGL;
 
-      if (desired_fullscreen)
-        flags |= SDL_FULLSCREEN;
+    if (desired_fullscreen)
+      flags |= SDL_FULLSCREEN;
 
-      SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-      SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, gl_colorbuffer_bits);
-      SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, gl_depthbuffer_bits);
-      //e6y: vertical sync
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, gl_colorbuffer_bits);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, gl_depthbuffer_bits);
+
+    //e6y: vertical sync
 #if !SDL_VERSION_ATLEAST(1, 3, 0)
-      SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, (gl_vsync ? 1 : 0));
+    SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, (gl_vsync ? 1 : 0));
 #endif
 
-      vid_8ingl.surface = SDL_SetVideoMode(
-        REAL_SCREENWIDTH, REAL_SCREENHEIGHT,
-        gl_colorbuffer_bits, flags
-      );
+    vid_8ingl.surface = SDL_SetVideoMode(
+      REAL_SCREENWIDTH, REAL_SCREENHEIGHT, gl_colorbuffer_bits, flags
+    );
 
-      if (vid_8ingl.surface == NULL) {
-        I_Error("Couldn't set %dx%d video mode [%s]",
-          REAL_SCREENWIDTH, REAL_SCREENHEIGHT, SDL_GetError()
-        );
-      }
-
-      screen = SDL_CreateRGBSurface(
-        init_flags & ~SDL_FULLSCREEN,
-        REAL_SCREENWIDTH,
-        REAL_SCREENHEIGHT,
-        V_GetNumPixelBits(),
-        0x00FF0000,
-        0x0000FF00,
-        0x000000FF,
-        0x00000000
-      );
-
-      vid_8ingl.screen = screen;
-
-      vid_8ingl.enabled = true;
-    }
-    else
-#endif
-    {
-      screen = SDL_SetVideoMode(
-        REAL_SCREENWIDTH,
-        REAL_SCREENHEIGHT,
-        V_GetNumPixelBits(),
-        init_flags
+    if (vid_8ingl.surface == NULL) {
+      I_Error("Couldn't set %dx%d video mode [%s]",
+        REAL_SCREENWIDTH, REAL_SCREENHEIGHT, SDL_GetError()
       );
     }
+
+    screen = SDL_CreateRGBSurface(
+      init_flags & ~SDL_FULLSCREEN,
+      REAL_SCREENWIDTH,
+      REAL_SCREENHEIGHT,
+      V_GetNumPixelBits(),
+      0x00FF0000,
+      0x0000FF00,
+      0x000000FF,
+      0x00000000
+    );
+
+    vid_8ingl.screen = screen;
+
+    vid_8ingl.enabled = true;
   }
+  else {
+    screen = SDL_SetVideoMode(
+      REAL_SCREENWIDTH, REAL_SCREENHEIGHT, V_GetNumPixelBits(), init_flags
+    );
+  }
+#else
+  screen = SDL_SetVideoMode(
+    REAL_SCREENWIDTH, REAL_SCREENHEIGHT, V_GetNumPixelBits(), init_flags
+  );
+#endif
 
   if (screen == NULL) {
     I_Error("Couldn't set %dx%d video mode [%s]",
@@ -1364,6 +1360,7 @@ void I_UpdateVideoMode(void) {
   if (V_GetMode() == VID_MODEGL) {
 #if 0
     int temp;
+
     lprintf(LO_INFO,"SDL OpenGL PixelFormat:\n");
     SDL_GL_GetAttribute( SDL_GL_RED_SIZE, &temp );
     lprintf(LO_INFO,"    SDL_GL_RED_SIZE: %i\n",temp);
@@ -1395,44 +1392,19 @@ void I_UpdateVideoMode(void) {
     lprintf(LO_INFO,"    SDL_GL_STENCIL_SIZE: %i\n",temp);
 #endif
 
-    if (overlay.pixels) {
-      if (!X_CallFunc("overlay", "reset", 0, 0)) {
-        I_Error("I_UpdateVideoMode: Error resetting overlay (%s)",
-          X_StrError()
-        );
-      }
-    }
-
     gld_Init(SCREENWIDTH, SCREENHEIGHT);
   }
 
   if (vid_8ingl.enabled)
     gld_Init8InGLMode();
 
-  if (V_GetMode() == VID_MODEGL)
-  {
+  if (V_GetMode() == VID_MODEGL) {
     M_ChangeFOV();
     M_ChangeRenderPrecise();
     deh_changeCompTranslucency();
   }
-  else {
-    if (overlay.pixels) {
-      if (!X_CallFunc("overlay", "reset", 0, 0)) {
-        I_Error("I_UpdateVideoMode: Error resetting overlay (%s)",
-          X_StrError()
-        );
-      }
-    }
-  }
-#else
-  if (overlay.pixels) {
-    if (!X_CallFunc("overlay", "reset", 0, 0)) {
-      I_Error("I_UpdateVideoMode: Error resetting overlay (%s)",
-        X_StrError()
-      );
-    }
-  }
 #endif
+  overlay.needs_resetting = true;
 }
 
 #if 0
@@ -1527,39 +1499,8 @@ int XF_UsingOpenGL(lua_State *L) {
   return 1;
 }
 
-#if 0
-int XF_GetOverlayContext(lua_State *L) {
-  x_object_t *xobj;
-
-  if (!overlay.context)
-    I_Error("XF_GetOverlayContext: overlay_context is NULL");
-
-  xobj = lua_newuserdata(L, sizeof(x_object_t));
-  xobj->pointer = overlay.context;
-  xobj->need_unref = 0;
-  luaL_getmetatable(L, "cairoContextMT");
-  lua_setmetatable(L, -2);
-
-  return 1;
-}
-
-int XF_GetOverlaySurface(lua_State *L) {
-  x_object_t *xobj;
-  
-  if (!overlay.surface)
-    I_Error("XF_GetOverlaySurface: overlay_surface is NULL");
-
-  xobj = lua_newuserdata(L, sizeof(x_object_t));
-  xobj->pointer = overlay.surface;
-  xobj->need_unref = 0;
-  luaL_getmetatable(L, "cairoImageSurfaceMT");
-  lua_setmetatable(L, -2);
-
-  return 1;
-}
-#endif
-
 int XF_BuildOverlayPixels(lua_State *L) {
+  puts("building overlay pixels");
   if (overlay.pixels)
     I_Error("build_overlay_pixels: pixels already built");
 
@@ -1574,6 +1515,10 @@ int XF_BuildOverlayPixels(lua_State *L) {
       I_Error("build_overlay_pixels: Allocating overlay pixels failed");
 
     overlay.owns_pixels = true;
+  }
+  else if (use_gl_surface) {
+    overlay.pixels = vid_8ingl.screen->pixels;
+    overlay.owns_pixels = false;
   }
   else {
     overlay.pixels = screens[0].data;
@@ -1606,6 +1551,7 @@ int XF_DestroyOverlayPixels(lua_State *L) {
     overlay.owns_pixels = false;
   }
 
+  puts("destroying overlay pixels");
   overlay.pixels = NULL;
 
   return 0;
@@ -1643,6 +1589,18 @@ int XF_DestroyOverlayTexture(lua_State *L) {
     overlay.tex_id = 0;
   }
 #endif
+
+  return 0;
+}
+
+int XF_OverlayNeedsResetting(lua_State *L) {
+  lua_pushboolean(L, overlay.needs_resetting);
+
+  return 1;
+}
+
+int XF_ClearOverlayNeedsResetting(lua_State *L) {
+  overlay.needs_resetting = false;
 
   return 0;
 }

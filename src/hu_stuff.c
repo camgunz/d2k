@@ -495,8 +495,6 @@ void HU_Start(void) {
   int   i;
   const char *s; /* cph - const */
 
-  lua_State *L = X_GetState();
-
   if (nodrawers)
     return;
 

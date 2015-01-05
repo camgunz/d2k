@@ -51,6 +51,8 @@ typedef struct x_object_s {
 } x_object_t;
 
 void        X_Init(void);
+void        X_RegisterFunctions(void);
+void        X_Start(void);
 const char* X_StrError(void);
 const char* X_GetError(void);
 lua_State*  X_GetState(void);

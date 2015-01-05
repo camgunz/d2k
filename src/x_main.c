@@ -229,6 +229,18 @@ int XF_Quit(lua_State *L) {
 }
 
 void X_Init(void) {
+  L = luaL_newstate();
+  luaL_openlibs(L); /* CG: TODO: Restrict clientside libs */
+}
+
+void X_RegisterFunctions(void) {
+  X_RegisterFunc("quit", XF_Quit);
+  X_RegisterFunc("exit", XF_Quit);
+
+  register_xfuncs();
+}
+
+void X_Start(void) {
   bool script_load_failed;
   char *script_folder = M_PathJoin(I_DoomExeDir(), X_FOLDER_NAME);
   char *script_path = M_PathJoin(script_folder, "?.lua");
@@ -240,14 +252,6 @@ void X_Init(void) {
   if (!M_IsFile(init_script_file))
     I_Error("Initialization script [%s] is missing", init_script_file);
 
-  X_RegisterFunc("quit", XF_Quit);
-  X_RegisterFunc("exit", XF_Quit);
-
-  L = luaL_newstate();
-  luaL_openlibs(L);
-
-  register_xfuncs();
-
   lua_pushstring(L, script_path);
   lua_setfield(L, -2, "script_path");
   lua_pop(L, 1);
@@ -255,13 +259,13 @@ void X_Init(void) {
   script_load_failed = luaL_dofile(L, init_script_file);
 
   if (script_load_failed) {
-    set_error(lua_tostring(L, -1));
     I_Error("Error loading initialization script [%s]: %s",
-      init_script_file, X_GetError()
+      init_script_file, X_StrError()
     );
   }
 
   free(script_folder);
+  free(script_path);
   free(init_script_file);
 }
 

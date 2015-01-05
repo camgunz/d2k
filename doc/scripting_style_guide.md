@@ -89,5 +89,9 @@ Modules should be capitalized and use `PascalCase`, i.e. `DeathLaser`.
 
 ### Instances
 
-Instances should use lowercase and use `snake_case` i.e. `death_laser`.
+Instances should use lowercase and use `snake_case`, i.e. `death_laser`.
+
+### Constants
+
+Constants should use `SHOUTING_SNAKE_CASE`, i.e. `DEATH_LASER_WATTAGE`.
 

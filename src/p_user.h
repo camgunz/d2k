@@ -81,7 +81,7 @@ void P_ClearMessages(int playernum);
 
 void P_SetPlayerName(int playernum, const char *name);
 
-void P_RegisterFunctions(void);
+void XP_ExportFunctions(void);
 
 #endif  /* P_USER__ */
 

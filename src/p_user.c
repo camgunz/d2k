@@ -767,7 +767,7 @@ int XF_Say(lua_State *L) {
   return 0;
 }
 
-void P_RegisterFunctions(void) {
+void XP_ExportFunctions(void) {
   X_RegisterFunc("name", XF_Name);
   X_RegisterFunc("say", XF_Say);
 }
