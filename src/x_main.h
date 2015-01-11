@@ -34,26 +34,28 @@
 #define X_RegisterObject(sn, n, t, d) X_RegisterObjects(sn, 1, n, t, d)
 
 typedef enum {
-  X_NONE   = LUA_TNONE,          // ...
-  X_NIL    = LUA_TNIL,           // lua_pushnil
-  X_BOOL   = LUA_TBOOLEAN,       // lua_pushboolean
-  X_LUDATA = LUA_TLIGHTUSERDATA, // lua_pushlightuserdata
-  X_NUM    = LUA_TNUMBER,        // lua_pushnumber
-  X_STR    = LUA_TSTRING,        // lua_pushstring
-  X_TABLE  = LUA_TTABLE,         // ...
-  X_FUNC   = LUA_TFUNCTION,      // lua_pushcfunction
-  X_UDATA  = LUA_TUSERDATA,      // ...
-  X_THREAD = LUA_TTHREAD         // ...
+  X_NONE = -1,
+  X_NIL,
+  X_BOOLEAN,
+  X_POINTER,
+  X_DECIMAL,
+  X_INTEGER,
+  X_UINTEGER,
+  X_STRING,
+  X_FUNCTION
 } x_type_e;
 
 union x_object_data_u {
   bool           boolean;
   void          *light_userdata;
-  lua_Number     number;
+  lua_Integer    integer;
+  lua_Unsigned   uinteger;
+  lua_Number     decimal;
   char          *string;
   lua_CFunction  function;
 };
 
+/* CG: [TODO] Add a member for metatable, in the case of light userdata */
 typedef struct x_object_s {
   x_type_e type;
   union x_object_data_u as;

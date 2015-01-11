@@ -48,8 +48,8 @@ static int XF_MEcho(lua_State *L) {
 
 void XC_RegisterInterface(void) {
   X_RegisterObjects(NULL, 2,
-    "echo",  X_FUNC, XF_Echo,
-    "mecho", X_FUNC, XF_MEcho
+    "echo",  X_FUNCTION, XF_Echo,
+    "mecho", X_FUNCTION, XF_MEcho
   );
 }
 

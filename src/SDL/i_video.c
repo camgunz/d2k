@@ -396,23 +396,37 @@ static void get_closest_resolution(int *width, int *height, int flags) {
 
 static void activate_mouse(void) {
   SDL_WM_GrabInput(SDL_GRAB_ON);
+  SDL_ShowCursor(SDL_DISABLE);
+#if 0
 #if SDL_VERSION_ATLEAST(1, 3, 0)
+  puts("Show Cursor = 0");
   SDL_ShowCursor(0);
 #else
+  puts("Show Cursor = 1");
   SDL_SetCursor(cursors[1]);
   SDL_ShowCursor(1);
+#endif
 #endif
 }
 
 static void deactivate_mouse(void) {
   SDL_WM_GrabInput(SDL_GRAB_OFF);
+  SDL_ShowCursor(SDL_ENABLE);
+  SDL_WarpMouse(
+    (unsigned short)(REAL_SCREENWIDTH  / 2),
+    (unsigned short)(REAL_SCREENHEIGHT / 2)
+  );
+#if 0
 #if !SDL_VERSION_ATLEAST(1, 3, 0)
   SDL_SetCursor(cursors[0]);
 #endif
+  puts("Show Cursor = 1");
   SDL_ShowCursor(1);
+#endif
 }
 
 static void center_mouse(void) {
+#if 0
   // Warp the the screen center
   SDL_WarpMouse(
     (unsigned short)(REAL_SCREENWIDTH  / 2),
@@ -422,6 +436,7 @@ static void center_mouse(void) {
   // Clear any relative movement caused by warping
   SDL_PumpEvents();
   SDL_GetRelativeMouseState(NULL, NULL);
+#endif
 }
 
 //
@@ -505,62 +520,37 @@ static void update_focus(void) {
 #endif
 }
 
+static void reset_event(event_t *ev) {
+  ev->device_id = -1;
+  ev->type      = ev_none;
+  ev->jstype    = ev_joystick_none;
+  ev->pressed   = false;
+  ev->key       = 0;
+  ev->value     = 0;
+  ev->xmove     = 0;
+  ev->ymove     = 0;
+  ev->wchar     = 0;
+}
+
 static void get_event(void) {
   event_t event;
-
-  event.device_id = -1;
-  event.type      = ev_none;
-  event.jstype    = ev_joystick_none;
-  event.pressed   = false;
-  event.key       = 0;
-  event.value     = 0;
-  event.xmove     = 0;
-  event.ymove     = 0;
-  event.wchar     = 0;
 
   SDL_Event SDLEvent;
   SDL_Event *Event = &SDLEvent;
 
   while (SDL_PollEvent(Event)) {
+    reset_event(&event);
+
     switch (Event->type) {
       case SDL_KEYDOWN:
-#ifdef MACOSX
-        if (Event->key.keysym.mod & KMOD_META) {
-          // Switch windowed<->fullscreen if pressed <Command-F>
-          if (Event->key.keysym.sym == SDLK_f) {
-            V_ToggleFullscreen();
-            break;
-          }
-        }
-#else
-        if (Event->key.keysym.mod & KMOD_LALT) {
-          // Prevent executing action on Alt-Tab
-          if (Event->key.keysym.sym == SDLK_TAB)
-            break;
-
-          // Switch windowed<->fullscreen if pressed Alt-Enter
-          if (Event->key.keysym.sym == SDLK_RETURN) {
-            V_ToggleFullscreen();
-            break;
-          }
-
-          // Immediately exit on Alt+F4 ("Boss Key")
-          if (Event->key.keysym.sym == SDLK_F4) {
-            I_SafeExit(0);
-            break;
-          }
-        }
-#endif
-        event.type = ev_key;
-        event.pressed = true;
-        event.key = Event->key.keysym.sym;
-        event.wchar = Event->key.keysym.unicode;
-
-        D_PostEvent(&event);
-      break;
       case SDL_KEYUP:
         event.type = ev_key;
         event.key = Event->key.keysym.sym;
+
+        if (Event->type == SDL_KEYDOWN) {
+          event.pressed = true;
+          event.wchar = Event->key.keysym.unicode;
+        }
 
         D_PostEvent(&event);
       break;
@@ -577,8 +567,8 @@ static void get_event(void) {
       case SDL_MOUSEMOTION:
         if (mouse_enabled && window_focused) {
           event.type = ev_mouse_movement;
-          event.xmove = Event->motion.xrel;
-          event.ymove = Event->motion.yrel;
+          event.xmove = Event->motion.xrel << 5;
+          event.ymove = -(Event->motion.yrel) << 5;
 
           D_PostEvent(&event);
         }

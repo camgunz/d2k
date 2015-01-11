@@ -459,6 +459,32 @@ void D_PostEvent(event_t *ev) {
   else if ((ev->type == ev_key && (!ev->pressed)) && ev->key == SDLK_RSUPER)
     keybindings.rsuperdown = false;
 
+  if (ev->type == ev_key && ev->pressed && keybindings.altdown) {
+#ifdef MACOSX
+    // Switch windowed<->fullscreen if pressed <Command-F>
+    if (ev->key == SDLK_f) {
+      V_ToggleFullscreen();
+      return;
+    }
+#else
+    // Prevent executing action on Alt-Tab
+    if (ev->key == SDLK_TAB)
+      return;
+
+    // Switch windowed<->fullscreen if pressed Alt-Enter
+    if (ev->key == SDLK_RETURN) {
+      V_ToggleFullscreen();
+      return;
+    }
+
+    // Immediately exit on Alt+F4 ("Boss Key")
+    if (ev->key == SDLK_F4) {
+      I_SafeExit(0);
+      return;
+    }
+#endif
+  }
+
   // Allow only sensible keys during skipping
   if (doSkip) {
     if (ev->type == ev_key) {

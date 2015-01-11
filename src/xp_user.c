@@ -49,8 +49,8 @@ static int XF_Say(lua_State *L) {
 
 void XP_UserRegisterInterface(void) {
   X_RegisterObjects(NULL, 2,
-    "name", X_FUNC, XF_Name,
-    "say",  X_FUNC, XF_Say
+    "name", X_FUNCTION, XF_Name,
+    "say",  X_FUNCTION, XF_Say
   );
 }
 

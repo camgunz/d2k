@@ -44,19 +44,25 @@ static bool push_x_object(lua_State *L, x_object_t *x_obj) {
     case X_NIL:
       lua_pushnil(L);
     break;
-    case X_BOOL:
+    case X_BOOLEAN:
       lua_pushboolean(L, x_obj->as.boolean);
     break;
-    case X_LUDATA:
+    case X_POINTER:
       lua_pushlightuserdata(L, x_obj->as.light_userdata);
     break;
-    case X_NUM:
-      lua_pushnumber(L, x_obj->as.number);
+    case X_DECIMAL:
+      lua_pushnumber(L, x_obj->as.decimal);
     break;
-    case X_STR:
+    case X_INTEGER:
+      lua_pushinteger(L, x_obj->as.integer);
+    break;
+    case X_UINTEGER:
+      lua_pushunsigned(L, x_obj->as.uinteger);
+    break;
+    case X_STRING:
       lua_pushstring(L, x_obj->as.string);
     break;
-    case X_FUNC:
+    case X_FUNCTION:
       lua_pushcfunction(L, x_obj->as.function);
     break;
     default:
@@ -87,6 +93,7 @@ void X_Start(void) {
   if (!M_IsFile(init_script_file))
     I_Error("Initialization script [%s] is missing", init_script_file);
 
+  lua_getglobal(x_main_interpreter, X_NAMESPACE);
   lua_pushstring(x_main_interpreter, script_path);
   lua_setfield(x_main_interpreter, -2, "script_path");
   lua_pop(x_main_interpreter, 1);
@@ -107,10 +114,6 @@ void X_Start(void) {
 void X_RegisterObjects(const char *scope_name, unsigned int count, ...) {
   va_list args;
   GHashTable *scope;
-  int bool_arg;
-  char *name = NULL;
-  x_object_t *x_obj;
-  bool already_exists;
 
   if (scope_name != NULL) {
     scope = g_hash_table_lookup(x_scopes, scope_name);
@@ -126,47 +129,57 @@ void X_RegisterObjects(const char *scope_name, unsigned int count, ...) {
 
   va_start(args, count);
   while (count--) {
+    char *name;
+    x_object_t *x_obj;
+    int bool_arg;
+    bool did_not_exist;
+
     x_obj = calloc(1, sizeof(x_object_t));
-    x_obj->type = X_NONE;
 
-    if (name == NULL)
-      name = va_arg(args, char*);
+    if (!x_obj)
+      I_Error("X_RegisterObjects: Error allocating new x_object_t");
 
-    if (x_obj->type == X_NONE)
-      x_obj->type = va_arg(args, x_type_e);
+    name = va_arg(args, char *);
+    x_obj->type = va_arg(args, x_type_e);
 
     switch (x_obj->type) {
       case X_NIL:
       break;
-      case X_BOOL:
+      case X_BOOLEAN:
         bool_arg = va_arg(args, int);
         if (bool_arg)
           x_obj->as.boolean = true;
         else
           x_obj->as.boolean = false;
       break;
-      case X_LUDATA:
+      case X_POINTER:
         x_obj->as.light_userdata = va_arg(args, void *);
       break;
-      case X_NUM:
-        x_obj->as.number = va_arg(args, lua_Number);
+      case X_DECIMAL:
+        x_obj->as.decimal = va_arg(args, lua_Number);
       break;
-      case X_STR:
+      case X_INTEGER:
+        x_obj->as.integer = va_arg(args, lua_Integer);
+      break;
+      case X_UINTEGER:
+        x_obj->as.uinteger = va_arg(args, lua_Unsigned);
+      break;
+      case X_STRING:
         x_obj->as.string = va_arg(args, char *);
       break;
-      case X_FUNC:
+      case X_FUNCTION:
         x_obj->as.function = va_arg(args, lua_CFunction);
       break;
       default:
-        I_Error("X_RegisterFunctions: Invalid type for %s: %d\n",
+        I_Error("X_RegisterObjects: Invalid type for %s: %d\n",
           name, x_obj->type
         );
       break;
     }
 
-    already_exists = g_hash_table_insert(scope, name, x_obj);
+    did_not_exist = g_hash_table_insert(scope, name, x_obj);
 
-    if (already_exists) {
+    if (!did_not_exist) {
       if (scope_name) {
         I_Error("X_RegisterObjects: Object %s.%s already registered",
           scope_name, name
@@ -310,7 +323,7 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
       switch(arg_type) {
         case X_NIL:
         break;
-        case X_BOOL:
+        case X_BOOLEAN:
           bool_arg = va_arg(args, int);
 
           if (bool_arg)
@@ -318,16 +331,22 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
           else
             lua_pushboolean(L, false);
         break;
-        case X_LUDATA:
+        case X_POINTER:
           lua_pushlightuserdata(L, va_arg(args, void *));
         break;
-        case X_NUM:
+        case X_DECIMAL:
           lua_pushnumber(L, va_arg(args, lua_Number));
         break;
-        case X_STR:
+        case X_INTEGER:
+          lua_pushinteger(L, va_arg(args, lua_Integer));
+        break;
+        case X_UINTEGER:
+          lua_pushunsigned(L, va_arg(args, lua_Unsigned));
+        break;
+        case X_STRING:
           lua_pushstring(L, va_arg(args, const char *));
         break;
-        case X_FUNC:
+        case X_FUNCTION:
           lua_pushcfunction(L, va_arg(args, lua_CFunction));
         break;
         default:

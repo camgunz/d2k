@@ -193,19 +193,19 @@ int XF_UnlockScreen(lua_State *L) {
 
 void XV_VideoRegisterInterface(void) {
   X_RegisterObjects(NULL, 13,
-    "get_screen_width",              X_FUNC, XF_GetScreenWidth,
-    "get_screen_height",             X_FUNC, XF_GetScreenHeight,
-    "get_screen_stride",             X_FUNC, XF_GetScreenStride,
-    "using_opengl",                  X_FUNC, XF_UsingOpenGL,
-    "build_overlay_pixels",          X_FUNC, XF_BuildOverlayPixels,
-    "get_overlay_pixels",            X_FUNC, XF_GetOverlayPixels,
-    "destroy_overlay_pixels",        X_FUNC, XF_DestroyOverlayPixels,
-    "build_overlay_texture",         X_FUNC, XF_BuildOverlayTexture,
-    "destroy_overlay_texture",       X_FUNC, XF_DestroyOverlayTexture,
-    "overlay_needs_resetting",       X_FUNC, XF_OverlayNeedsResetting,
-    "clear_overlay_needs_resetting", X_FUNC, XF_ClearOverlayNeedsResetting,
-    "lock_screen",                   X_FUNC, XF_LockScreen,
-    "unlock_screen",                 X_FUNC, XF_UnlockScreen
+    "get_screen_width",              X_FUNCTION, XF_GetScreenWidth,
+    "get_screen_height",             X_FUNCTION, XF_GetScreenHeight,
+    "get_screen_stride",             X_FUNCTION, XF_GetScreenStride,
+    "using_opengl",                  X_FUNCTION, XF_UsingOpenGL,
+    "build_overlay_pixels",          X_FUNCTION, XF_BuildOverlayPixels,
+    "get_overlay_pixels",            X_FUNCTION, XF_GetOverlayPixels,
+    "destroy_overlay_pixels",        X_FUNCTION, XF_DestroyOverlayPixels,
+    "build_overlay_texture",         X_FUNCTION, XF_BuildOverlayTexture,
+    "destroy_overlay_texture",       X_FUNCTION, XF_DestroyOverlayTexture,
+    "overlay_needs_resetting",       X_FUNCTION, XF_OverlayNeedsResetting,
+    "clear_overlay_needs_resetting", X_FUNCTION, XF_ClearOverlayNeedsResetting,
+    "lock_screen",                   X_FUNCTION, XF_LockScreen,
+    "unlock_screen",                 X_FUNCTION, XF_UnlockScreen
   );
 }
 
