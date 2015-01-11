@@ -414,29 +414,22 @@ static void ST_refreshBackground(void)
     }
 }
 
+void ST_SetAutomapEntered(void) {
+  st_gamestate = AutomapState;
+  st_firsttime = true;
+}
+
+void ST_SetAutomapExited(void) {
+  st_gamestate = FirstPersonState;
+}
 
 // Respond to keyboard input events,
 //  intercept cheats.
-dboolean ST_Responder(event_t *ev)
-{
-  // Filter automap on/off.
-  if (ev->type == ev_keyup && (ev->data1 & 0xffff0000) == AM_MSGHEADER)
-    {
-      switch(ev->data1)
-        {
-        case AM_MSGENTERED:
-          st_gamestate = AutomapState;
-          st_firsttime = true;
-          break;
+dboolean ST_Responder(event_t *ev) {
+  // if a user keypress...
+  if (ev->type == ev_key && ev->pressed) // Try cheat responder in m_cheat.c
+    return M_FindCheats(ev->key);        // killough 4/17/98, 5/2/98
 
-        case AM_MSGEXITED:
-          st_gamestate = FirstPersonState;
-          break;
-        }
-    }
-  else  // if a user keypress...
-    if (ev->type == ev_keydown)       // Try cheat responder in m_cheat.c
-      return M_FindCheats(ev->data1); // killough 4/17/98, 5/2/98
   return false;
 }
 

@@ -1,3 +1,4 @@
+
 /*****************************************************************************/
 /* D2K: A Doom Source Port for the 21st Century                              */
 /*                                                                           */
@@ -21,58 +22,36 @@
 /*****************************************************************************/
 
 
-#ifndef X_MAIN_H__
-#define X_MAIN_H__
+#include "z_zone.h"
 
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
+#include "d_event.h"
+#include "c_main.h"
+#include "x_main.h"
 
-#define X_NAMESPACE "d2k"
-#define X_FOLDER_NAME "scripts"
-#define X_INIT_SCRIPT_NAME "init.lua"
-#define X_RegisterObject(sn, n, t, d) X_RegisterObjects(sn, 1, n, t, d)
+static int XF_Echo(lua_State *L) {
+  const char *message = luaL_checkstring(L, 1);
 
-typedef enum {
-  X_NONE   = LUA_TNONE,          // ...
-  X_NIL    = LUA_TNIL,           // lua_pushnil
-  X_BOOL   = LUA_TBOOLEAN,       // lua_pushboolean
-  X_LUDATA = LUA_TLIGHTUSERDATA, // lua_pushlightuserdata
-  X_NUM    = LUA_TNUMBER,        // lua_pushnumber
-  X_STR    = LUA_TSTRING,        // lua_pushstring
-  X_TABLE  = LUA_TTABLE,         // ...
-  X_FUNC   = LUA_TFUNCTION,      // lua_pushcfunction
-  X_UDATA  = LUA_TUSERDATA,      // ...
-  X_THREAD = LUA_TTHREAD         // ...
-} x_type_e;
+  if (message)
+    C_Echo(message);
 
-union x_object_data_u {
-  bool           boolean;
-  void          *light_userdata;
-  lua_Number     number;
-  char          *string;
-  lua_CFunction  function;
-};
+  return 0;
+}
 
-typedef struct x_object_s {
-  x_type_e type;
-  union x_object_data_u as;
-} x_object_t;
+static int XF_MEcho(lua_State *L) {
+  const char *markup_message = luaL_checkstring(L, 1);
 
-void        X_Init(void);
-void        X_Start(void);
-void        X_RegisterObjects(const char *scope_name, unsigned int count, ...);
-lua_State*  X_GetState(void);
-lua_State*  X_NewState(void);
-lua_State*  X_NewRestrictedState(void);
+  if (markup_message)
+    C_MEcho(markup_message);
 
-void        X_ExposeInterfaces(lua_State *L);
-const char* X_GetError(lua_State *L);
-bool        X_Eval(lua_State *L, const char *code);
-bool        X_Call(lua_State *L, const char *object, const char *fname,
-                                 int arg_count, int res_count, ...);
+  return 0;
+}
 
-#endif
+void XC_RegisterInterface(void) {
+  X_RegisterObjects(NULL, 2,
+    "echo",  X_FUNC, XF_Echo,
+    "mecho", X_FUNC, XF_MEcho
+  );
+}
 
 /* vi: set et ts=2 sw=2: */
 

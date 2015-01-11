@@ -812,8 +812,12 @@ void G_BuildTiccmd(ticcmd_t *cmd) {
   else
     cmd->angleturn -= mousex; /* mead now have enough dynamic range 2-10-00 */
 
-  if (!walkcamera.type || menuactive) //e6y
-    mousex = mousey = 0;
+  if (!walkcamera.type || menuactive) { //e6y
+    mousex = 0;
+    mousey = 0;
+    joyxmove = 0;
+    joyymove = 0;
+  }
 
 #ifdef GL_DOOM
   motion_blur.curr_speed_pow2 = 0;
@@ -994,15 +998,15 @@ dboolean G_Responder(event_t *ev) {
   //
   // killough 11/98: don't autorepeat spy mode switch
 
-  if (ev->data1 == key_spy &&
+  if (ev->key == key_spy &&
       netgame &&
       (demoplayback || !deathmatch) &&
       gamestate == GS_LEVEL) {
 
-    if (ev->type == ev_keyup)
+    if (ev->type == ev_key && !ev->pressed)
       gamekeydown[key_spy] = false;
 
-    if (ev->type == ev_keydown && !gamekeydown[key_spy]) {
+    if (ev->type == ev_key && ev->pressed && !gamekeydown[key_spy]) {
       gamekeydown[key_spy] = true;
       do {                                        // spy mode
         if (++displayplayer >= MAXPLAYERS)
@@ -1028,7 +1032,7 @@ dboolean G_Responder(event_t *ev) {
 
   if (gameaction == ga_nothing && (demoplayback || gamestate == GS_DEMOSCREEN)) {
     // killough 9/29/98: allow user to pause demos during playback
-    if (ev->type == ev_keydown && ev->data1 == key_pause) {
+    if (ev->type == ev_key && ev->pressed && ev->key == key_pause) {
       if (paused ^= 2)
         S_PauseSound();
       else
@@ -1046,9 +1050,9 @@ dboolean G_Responder(event_t *ev) {
     /*
         return gamestate == GS_DEMOSCREEN &&
     !(paused & 2) && !(automapmode & am_active) &&
-    ((ev->type == ev_keydown) ||
-     (ev->type == ev_mouse && ev->data1) ||
-     (ev->type == ev_joystick && ev->data1)) ?
+    ((ev->type == ev_key && ev->pressed) ||
+     (ev->type == ev_mouse && ev->key) ||
+     (ev->type == ev_joystick && ev->key)) ?
     M_StartControlPanel(), true : false;
       */
   }
@@ -1058,30 +1062,45 @@ dboolean G_Responder(event_t *ev) {
 
   // If the next/previous weapon keys are pressed, set the next_weapon
   // variable to change weapons when the next ticcmd is generated.
-  if (ev->type == ev_keydown) {
-    if (ev->data1 == key_prevweapon)
+  if (ev->type == ev_key && ev->pressed) {
+    if (ev->key == key_prevweapon)
       next_weapon = -1;
-    else if (ev->data1 == key_nextweapon)
+    else if (ev->key == key_nextweapon)
       next_weapon = 1;
   }
 
   switch (ev->type) {
-    case ev_keydown:
-      if (ev->data1 == key_pause)           // phares
-        special_event = BT_SPECIAL | (BTS_PAUSE & BT_SPECIALMASK);
-      else if (ev->data1 < NUMKEYS)
-        gamekeydown[ev->data1] = true;
-      return true;    // eat key down events
-    case ev_keyup:
-      if (ev->data1 < NUMKEYS)
-        gamekeydown[ev->data1] = false;
-      return false;   // always let key up events filter down
+    case ev_key:
+      if (ev->pressed) {
+        if (ev->key == key_pause)           // phares
+          special_event = BT_SPECIAL | (BTS_PAUSE & BT_SPECIALMASK);
+        else if (ev->key < NUMKEYS)
+          gamekeydown[ev->key] = true;
+
+        return true;    // eat key down events
+      }
+      else {
+        if (ev->key < NUMKEYS)
+          gamekeydown[ev->key] = false;
+
+        return false;   // always let key up events filter down
+      }
+    break;
     case ev_mouse:
-      mousebuttons[0] = ev->data1 & 1;
-      mousebuttons[1] = ev->data1 & 2;
-      mousebuttons[2] = ev->data1 & 4;
-      mousebuttons[3] = ev->data1 & 8;
-      mousebuttons[4] = ev->data1 & 16;
+      if (ev->key == SDL_BUTTON_LEFT)
+        mousebuttons[0] = ev->pressed;
+      else if (ev->key == SDL_BUTTON_MIDDLE)
+        mousebuttons[1] = ev->pressed;
+      else if (ev->key == SDL_BUTTON_RIGHT)
+        mousebuttons[2] = ev->pressed;
+      else if (ev->key == SDL_BUTTON_X1)
+        mousebuttons[3] = ev->pressed;
+      else if (ev->key == SDL_BUTTON_X2)
+        mousebuttons[4] = ev->pressed;
+
+      return true;
+    break;
+    case ev_mouse_movement:
       /*
        * bmead@surfree.com
        * Modified by Barry Mead after adding vastly more resolution
@@ -1094,34 +1113,74 @@ dboolean G_Responder(event_t *ev) {
 
       /* killough */
       //e6y
-      mousex += (AccelerateMouse(ev->data2) * (mouseSensitivity_horiz)) / 10;
+      mousex += (AccelerateMouse(ev->xmove) * (mouseSensitivity_horiz)) / 10;
       if (GetMouseLook()) {
         if (movement_mouseinvert)
-          mlooky += (AccelerateMouse(ev->data3) * (mouseSensitivity_mlook)) / 10;
+          mlooky += (AccelerateMouse(ev->ymove) * (mouseSensitivity_mlook)) / 10;
         else
-          mlooky -= (AccelerateMouse(ev->data3) * (mouseSensitivity_mlook)) / 10;
+          mlooky -= (AccelerateMouse(ev->ymove) * (mouseSensitivity_mlook)) / 10;
       }
       else {
-        mousey += (AccelerateMouse(ev->data3) * (mouseSensitivity_vert)) / 40;
+        mousey += (AccelerateMouse(ev->ymove) * (mouseSensitivity_vert)) / 40;
       }
 
       return true;    // eat events
-
+    break;
     case ev_joystick:
-      joybuttons[0] = ev->data1 & 1;
-      joybuttons[1] = ev->data1 & 2;
-      joybuttons[2] = ev->data1 & 4;
-      joybuttons[3] = ev->data1 & 8;
-      joybuttons[4] = ev->data1 & 16;
-      joybuttons[5] = ev->data1 & 32;
-      joybuttons[6] = ev->data1 & 64;
-      joybuttons[7] = ev->data1 & 128;
-      joyxmove = ev->data2;
-      joyymove = ev->data3;
-      return true;    // eat events
+      if (ev->key >= 0 && ev->key <= 7)
+        joybuttons[ev->key] = ev->pressed;
 
+      return true;
+    break;
+    case ev_joystick_movement:
+      if (ev->jstype == ev_joystick_axis) {
+        if (ev->key == 0)
+          joyxmove = ev->value;
+        else if (ev->key == 1)
+          joyymove = ev->value;
+      }
+      else if (ev->jstype == ev_joystick_ball) {
+        joyxmove = ev->xmove;
+        joyymove = ev->ymove;
+      }
+      else if (ev->jstype == ev_joystick_hat) {
+        if (ev->value == SDL_HAT_CENTERED) {
+          joyxmove = 0;
+          joyymove = 0;
+        }
+        else if (ev->value == SDL_HAT_UP) {
+          joyymove = 1;
+        }
+        else if (ev->value == SDL_HAT_RIGHT) {
+          joyxmove = 1;
+        }
+        else if (ev->value == SDL_HAT_DOWN) {
+          joyymove = -1;
+        }
+        else if (ev->value == SDL_HAT_LEFT) {
+          joyxmove = -1;
+        }
+        else if (ev->value == SDL_HAT_RIGHTUP) {
+          joyxmove = 1;
+          joyymove = 1;
+        }
+        else if (ev->value == SDL_HAT_RIGHTDOWN) {
+          joyxmove = 1;
+          joyymove = -1;
+        }
+        else if (ev->value == SDL_HAT_LEFTUP) {
+          joyxmove = -1;
+          joyymove = 1;
+        }
+        else if (ev->value == SDL_HAT_LEFTDOWN) {
+          joyxmove = -1;
+          joyymove = -1;
+        }
+      }
+      return true;    // eat events
+    break;
     default:
-      break;
+    break;
   }
 
   return false;

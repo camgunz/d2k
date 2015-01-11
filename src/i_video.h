@@ -57,6 +57,17 @@ typedef struct vid_8ingl_s {
 } vid_8ingl_t;
 #endif
 
+typedef struct overlay_s {
+  unsigned char *pixels;
+  bool owns_pixels;
+#ifdef GL_DOOM
+  GLuint tex_id;
+#endif
+  bool needs_resetting;
+} overlay_t;
+
+extern SDL_Surface *screen;
+extern overlay_t overlay;
 extern vid_8ingl_t vid_8ingl;
 extern int use_gl_surface;
 extern const char *screen_resolutions_list[];
@@ -84,10 +95,11 @@ unsigned char* I_GrabScreen(void);
 void           I_UpdateNoBlit(void);
 void           I_FinishUpdate(void);
 int            I_ScreenShot(const char *fname);
+int            I_GetScreenStride(void);
 void           I_LockOverlaySurface(void);
 void           I_UnlockOverlaySurface(void);
-void           I_StartTic (void);
-void           I_StartFrame (void);
+void           I_StartTic(void);
+void           I_StartFrame(void);
 const char*    I_GetKeyString(int keycode);
 
 #endif

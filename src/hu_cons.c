@@ -217,7 +217,7 @@ void HU_ConsoleWidgetDrawer(console_widget_t *cons, void *render_context) {
 }
 
 bool HU_ConsoleWidgetResponder(console_widget_t *cons, event_t *ev) {
-  if (ev->type == ev_keydown && ev->data1 == SDLK_BACKQUOTE) {
+  if (ev->type == ev_key && ev->pressed && ev->key == SDLK_BACKQUOTE) {
     HU_ConsoleWidgetToggleScroll(cons);
     return true;
   }

@@ -31,10 +31,10 @@
 #include "x_main.h"
 
 void V_InitOverlay(void) {
+#if 0
   if (!X_CallFunc("overlay", "clear", 0, 0))
     I_Error("Error initializing overlay: %s", X_StrError());
 
-#if 0
   lua_State *L = X_GetState();
 
   lua_getglobal(L, X_NAMESPACE);
@@ -53,10 +53,10 @@ void V_InitOverlay(void) {
 }
 
 void V_ClearOverlay(void) {
+#if 0
   if (!X_CallFunc("overlay", "clear", 0, 0))
     I_Error("Error clearing overlay: %s", X_StrError());
 
-#if 0
   lua_State *L = X_GetState();
 
   lua_getglobal(L, X_NAMESPACE);

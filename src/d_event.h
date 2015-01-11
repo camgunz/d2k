@@ -31,28 +31,38 @@
 //
 
 // Input event types.
-typedef enum
-{
+typedef enum {
   ev_none,
-  ev_keydown,
-  ev_keyup,
+  ev_key,
   ev_mouse,
-  ev_joystick
+  ev_joystick,
+  ev_mouse_movement,
+  ev_joystick_movement
 } evtype_t;
 
+typedef enum {
+  ev_joystick_none,
+  ev_joystick_axis,
+  ev_joystick_ball,
+  ev_joystick_hat
+} jsevtype_e;
+
 // Event structure.
-typedef struct
-{
-  evtype_t     type;
-  int          data1;    // keys / mouse/joystick buttons
-  int          data2;    // mouse/joystick x move
-  int          data3;    // mouse/joystick y move
-  uint16_t     wchar;    // CG 07/15/14: SDL relays Unicode input as UTF-16
+// CG 01/10/15: Updated to be a little more explanatory
+typedef struct {
+  int        device_id; // generating device ID
+  evtype_t   type;      // event type
+  jsevtype_e jstype;    // type of joystick event, axis, ball or hat
+  bool       pressed;   // whether or not button/key was pressed
+  int        key;       // keys/buttons (kb, mouse, joystick)
+  int        value;     // generic value, used for joystick for example
+  int        xmove;     // mouse/joystick x move
+  int        ymove;     // mouse/joystick y move
+  uint16_t   wchar;     // CG 07/15/14: SDL relays Unicode input as UTF-16
 } event_t;
 
 
-typedef enum
-{
+typedef enum {
   ga_nothing,
   ga_loadlevel,
   ga_newgame,
@@ -63,8 +73,6 @@ typedef enum
   ga_victory,
   ga_worlddone,
 } gameaction_t;
-
-
 
 //
 // Button/action code definitions.

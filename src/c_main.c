@@ -137,10 +137,10 @@ static void process_console_input(input_widget_t *iw) {
   else
     command = input_text;
 
-  success = X_RunCode(command);
+  success = X_Eval(X_GetState(), command);
 
   if (!success) {
-    error_message = g_markup_escape_text(X_GetError(), -1);
+    error_message = g_markup_escape_text(X_GetError(X_GetState()), -1);
     C_MPrintf("<span color='red'>Error: %s</span>\n", error_message);
     g_free(error_message);
   }
@@ -263,24 +263,6 @@ static void command_line_write(const char *message) {
 
 static void command_line_mwrite(const char *message) {
   printf("%s", message);
-}
-
-int XF_Echo(lua_State *L) {
-  const char *message = luaL_checkstring(L, 1);
-
-  if (message)
-    C_Echo(message);
-
-  return 0;
-}
-
-int XF_MEcho(lua_State *L) {
-  const char *markup_message = luaL_checkstring(L, 1);
-
-  if (markup_message)
-    C_MEcho(markup_message);
-
-  return 0;
 }
 
 void C_Init(void) {
@@ -487,11 +469,6 @@ void C_MWrite(const char *message) {
     HU_ConsoleWidgetMWrite(cons, message);
   else
     tempbuf_mwrite(message);
-}
-
-void XC_ExportFunctions(void) {
-  X_RegisterFunc("echo", XF_Echo);
-  X_RegisterFunc("mecho", XF_MEcho);
 }
 
 /* vi: set et ts=2 sw=2: */

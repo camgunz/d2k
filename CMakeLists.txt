@@ -941,12 +941,16 @@ SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/x_main.c
   ${CMAKE_SOURCE_DIR}/src/z_bmalloc.c
   ${CMAKE_SOURCE_DIR}/src/z_zone.c
+  ${CMAKE_SOURCE_DIR}/src/xc_main.c
+  ${CMAKE_SOURCE_DIR}/src/xd_main.c
+  ${CMAKE_SOURCE_DIR}/src/xi_main.c
+  ${CMAKE_SOURCE_DIR}/src/xp_user.c
+  ${CMAKE_SOURCE_DIR}/src/xv_video.c
 )
 
 SET(CLIENT_SOURCES
   ${CMAKE_SOURCE_DIR}/src/SDL/i_main.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_system.c
-  # ${CMAKE_SOURCE_DIR}/src/d_client.c
   ${CMAKE_SOURCE_DIR}/src/lprintf.c
   ${CMAKE_SOURCE_DIR}/src/m_argv.c
 )

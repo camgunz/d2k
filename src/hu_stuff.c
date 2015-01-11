@@ -498,8 +498,8 @@ void HU_Start(void) {
   if (nodrawers)
     return;
 
-  if (!X_CallFunc("hud", "start", 0, 0))
-    I_Error("HU_Start: Error starting hud (%s)", X_StrError());
+  if (!X_Call(X_GetState(), "hud", "start", 0, 0))
+    I_Error("HU_Start: Error starting hud (%s)", X_GetError(X_GetState()));
 
 #if 0
   if (headsupactive)                    // stop before starting
@@ -2299,8 +2299,8 @@ void HU_Drawer(void) {
   if (menuactive == mnact_full)
     return;
 
-  if (!X_CallFunc("hud", "draw", 0, 0))
-    I_Error("Error drawing HUD: %s", X_StrError());
+  if (!X_Call(X_GetState(), "hud", "draw", 0, 0))
+    I_Error("Error drawing HUD: %s", X_GetError(X_GetState()));
 
   /*
   return;
@@ -2565,12 +2565,10 @@ void HU_Ticker(void) {
 dboolean HU_Responder(event_t *ev) {
   return false;
 
-  if (!((ev->type == ev_keydown) || (ev->type == ev_mouse)))
+  if (!(ev->type == ev_key && ev->pressed))
     return false;
 
-  if ((ev->type == ev_keydown) &&
-      (ev->data1 == key_chat) &&
-      (!HU_ChatWidgetActive(w_chat))) {
+  if (ev->key == key_chat && !HU_ChatWidgetActive(w_chat)) {
     HU_ChatWidgetActivate(w_chat);
     return true;
   }

@@ -469,52 +469,52 @@ bool HU_InputWidgetResponder(input_widget_t *iw, event_t *ev) {
   GError *error = NULL;
   bool unprintable = false;
 
-  if (!((ev->type == ev_keydown) || (ev->type == ev_mouse)))
+  if (!(ev->type == ev_key && ev->pressed))
     return false;
 
-  if (ev->data1 == SDLK_RETURN) {
+  if (ev->key == SDLK_RETURN) {
     iw->handleInput(iw);
     clear(iw);
     activate_cursor(iw);
     return true;
   }
 
-  if (ev->data1 == SDLK_DELETE) {
+  if (ev->key == SDLK_DELETE) {
     delete(iw);
     return true;
   }
 
-  if (ev->data1 == SDLK_BACKSPACE) {
+  if (ev->key == SDLK_BACKSPACE) {
     backspace(iw);
     return true;
   }
 
-  if (ev->data1 == SDLK_LEFT) {
+  if (ev->key == SDLK_LEFT) {
     move_cursor_left(iw);
     return true;
   }
 
-  if (ev->data1 == SDLK_RIGHT) {
+  if (ev->key == SDLK_RIGHT) {
     move_cursor_right(iw);
     return true;
   }
 
-  if (ev->data1 == SDLK_HOME) {
+  if (ev->key == SDLK_HOME) {
     iw->cursor = 0;
     return true;
   }
 
-  if (ev->data1 == SDLK_END) {
+  if (ev->key == SDLK_END) {
     iw->cursor = iw->buf->len;
     return true;
   }
 
-  if (ev->data1 == SDLK_UP) {
+  if (ev->key == SDLK_UP) {
     load_previous_history_line(iw);
     return true;
   }
 
-  if (ev->data1 == SDLK_DOWN) {
+  if (ev->key == SDLK_DOWN) {
     load_next_history_line(iw);
     return true;
   }

@@ -47,7 +47,12 @@ static void I_EndJoystick(void) {
   lprintf(LO_DEBUG, "I_EndJoystick : closing joystick\n");
 }
 
+bool I_JoystickEnabled(void) {
+  return usejoystick && joystick;
+}
+
 void I_PollJoystick(void) {
+#if 0
 #ifdef HAVE_SDL_JOYSTICKGETAXIS
   event_t ev;
   Sint16 axis_value;
@@ -56,7 +61,7 @@ void I_PollJoystick(void) {
       return;
 
   ev.type = ev_joystick;
-  ev.data1 = (SDL_JoystickGetButton(joystick, 0) << 0) |
+  ev.key =   (SDL_JoystickGetButton(joystick, 0) << 0) |
              (SDL_JoystickGetButton(joystick, 1) << 1) |
              (SDL_JoystickGetButton(joystick, 2) << 2) |
              (SDL_JoystickGetButton(joystick, 3) << 3) |
@@ -74,6 +79,7 @@ void I_PollJoystick(void) {
   ev.data3 = axis_value;
 
   D_PostEvent(&ev);
+#endif
 #endif
 }
 

@@ -25,43 +25,45 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
-#include "d_event.h"
+#include "am_map.h"
 #include "c_main.h"
+#include "d_deh.h"  // Ty 04/08/98 - Externalizations
+#include "d_event.h"
+#include "d_main.h"
 #include "d_net.h"
 #include "dstrings.h"
-#include "sounds.h"
-#include "z_zone.h"
-#include "w_wad.h"
-#include "s_sound.h"
-#include "v_video.h"
 #include "f_finale.h"
 #include "f_wipe.h"
-#include "m_argv.h"
-#include "m_file.h"
-#include "m_misc.h"
-#include "m_menu.h"
-#include "p_checksum.h"
-#include "p_ident.h"
-#include "p_user.h"
-#include "i_main.h"
-#include "i_system.h"
-#include "i_sound.h"
-#include "i_video.h"
 #include "g_game.h"
 #include "g_keys.h"
 #include "hu_stuff.h"
-#include "wi_stuff.h"
-#include "st_stuff.h"
-#include "am_map.h"
-#include "p_setup.h"
-#include "r_draw.h"
-#include "r_main.h"
-#include "r_fps.h"
-#include "d_main.h"
-#include "d_deh.h"  // Ty 04/08/98 - Externalizations
+#include "i_main.h"
+#include "i_sound.h"
+#include "i_system.h"
+#include "i_video.h"
 #include "lprintf.h"  // jff 08/03/98 - declaration of lprintf
-#include "am_map.h"
+#include "m_argv.h"
+#include "m_file.h"
+#include "m_menu.h"
+#include "m_misc.h"
+#include "p_checksum.h"
+#include "p_ident.h"
+#include "p_setup.h"
+#include "p_user.h"
+#include "r_draw.h"
+#include "r_fps.h"
+#include "r_main.h"
 #include "sounds.h"
+#include "s_sound.h"
+#include "st_stuff.h"
+#include "v_video.h"
+#include "w_wad.h"
+#include "wi_stuff.h"
+#include "xc_main.h"
+#include "xd_main.h"
+#include "xi_main.h"
+#include "xp_user.h"
+#include "xv_video.h"
 
 //e6y
 #include "r_demo.h"
@@ -174,12 +176,12 @@ bool D_Responder(event_t *ev) {
 #endif
 
   if (!menuactive) {                                           // phares
-    if (ev->data1 == key_autorun) {                            //  |
+    if (ev->key == key_autorun) {                              //  |
       autorun = !autorun;                                      //  V
       return true;
     }
 
-    if (ev->data1 == key_help) {
+    if (ev->key == key_help) {
       M_StartControlPanel();
 
       M_SetCurrentMenu(&HelpDef); // killough 10/98: new help screen
@@ -190,21 +192,21 @@ bool D_Responder(event_t *ev) {
       return true;
     }
 
-    if (ev->data1 == key_savegame) {
+    if (ev->key == key_savegame) {
       M_StartControlPanel();
       S_StartSound(NULL, sfx_swtchn);
       M_SaveGame(0);
       return true;
     }
 
-    if (ev->data1 == key_loadgame) {
+    if (ev->key == key_loadgame) {
       M_StartControlPanel();
       S_StartSound(NULL, sfx_swtchn);
       M_LoadGame(0);
       return true;
     }
 
-    if (ev->data1 == key_soundvolume) {
+    if (ev->key == key_soundvolume) {
       M_StartControlPanel();
       M_SetCurrentMenu(&SoundDef);
       itemOn = sfx_vol;
@@ -212,37 +214,37 @@ bool D_Responder(event_t *ev) {
       return true;
     }
 
-    if (ev->data1 == key_quicksave) {
+    if (ev->key == key_quicksave) {
       S_StartSound(NULL, sfx_swtchn);
       M_QuickSave();
       return true;
     }
 
-    if (ev->data1 == key_endgame) {
+    if (ev->key == key_endgame) {
       S_StartSound(NULL, sfx_swtchn);
       M_EndGame(0);
       return true;
     }
 
-    if (ev->data1 == key_messages) {
+    if (ev->key == key_messages) {
       M_ChangeMessages(0);
       S_StartSound(NULL, sfx_swtchn);
       return true;
     }
 
-    if (ev->data1 == key_quickload) {
+    if (ev->key == key_quickload) {
       S_StartSound(NULL, sfx_swtchn);
       M_QuickLoad();
       return true;
     }
 
-    if (ev->data1 == key_quit) {
+    if (ev->key == key_quit) {
       S_StartSound(NULL, sfx_swtchn);
       M_QuitDOOM(0);
       return true;
     }
 
-    if (ev->data1 == key_gamma) {
+    if (ev->key == key_gamma) {
 //e6y
 #ifdef GL_DOOM
       if (V_GetMode() == VID_MODEGL && gl_hardware_gamma) {
@@ -279,7 +281,7 @@ bool D_Responder(event_t *ev) {
     }
 
 
-    if (ev->type == ev_keydown && ev->data1 == key_zoomout) {
+    if ((ev->type == ev_key && ev->pressed) && ev->key == key_zoomout) {
       if (automapmode & am_active)
         return false;
 
@@ -289,7 +291,7 @@ bool D_Responder(event_t *ev) {
     }
 
     // jff 2/23/98 allow key_hud == key_zoomin
-    if (ev->type == ev_keydown && ev->data1 == key_zoomin) {
+    if ((ev->type == ev_key && ev->pressed) && ev->key == key_zoomin) {
       if (automapmode & am_active)
         return false;
 
@@ -299,7 +301,7 @@ bool D_Responder(event_t *ev) {
     }
 
     //e6y
-    if (ev->data1 == key_speed_default && (!netgame || demoplayback)) {
+    if (ev->key == key_speed_default && (!netgame || demoplayback)) {
       realtic_clock_rate = StepwiseSum(
         realtic_clock_rate, 0, speed_step, 3, 10000, 100
       );
@@ -307,7 +309,7 @@ bool D_Responder(event_t *ev) {
       return true;
     }
 
-    if (ev->data1 == key_speed_up && (!netgame || demoplayback)) {
+    if (ev->key == key_speed_up && (!netgame || demoplayback)) {
       realtic_clock_rate = StepwiseSum(
         realtic_clock_rate, 1, speed_step, 3, 10000, 100
       );
@@ -315,7 +317,7 @@ bool D_Responder(event_t *ev) {
       return true;
     }
 
-    if (ev->data1 == key_speed_down && (!netgame || demoplayback)) {
+    if (ev->key == key_speed_down && (!netgame || demoplayback)) {
       realtic_clock_rate = StepwiseSum(
         realtic_clock_rate, -1, speed_step, 3, 10000, 100
       );
@@ -323,7 +325,7 @@ bool D_Responder(event_t *ev) {
       return true;
     }
 
-    if (ev->data1 == key_nextlevel) {
+    if (ev->key == key_nextlevel) {
       if (demoplayback && !doSkip && singledemo) {
         demo_stoponnext = true;
         G_SkipDemoStart();
@@ -334,10 +336,10 @@ bool D_Responder(event_t *ev) {
         return true;
     }
 
-    if (ev->data1 == key_level_restart && G_ReloadLevel())
+    if (ev->key == key_level_restart && G_ReloadLevel())
       return true;
 
-    if (ev->data1 == key_demo_endlevel) {
+    if (ev->key == key_demo_endlevel) {
       if (demoplayback && !doSkip && singledemo) {
         demo_stoponend = true;
         G_SkipDemoStart();
@@ -345,7 +347,7 @@ bool D_Responder(event_t *ev) {
       }
     }
 
-    if (ev->data1 == key_demo_skip) {
+    if (ev->key == key_demo_skip) {
       if (demoplayback && singledemo) {
         if (doSkip)
           G_SkipDemoStop();
@@ -356,7 +358,7 @@ bool D_Responder(event_t *ev) {
       }
     }
 
-    if (ev->data1 == key_walkcamera) {
+    if (ev->key == key_walkcamera) {
       if (demoplayback && gamestate == GS_LEVEL) {
         walkcamera.type = (walkcamera.type + 1) % 3;
 
@@ -372,7 +374,7 @@ bool D_Responder(event_t *ev) {
 
 #ifdef GL_DOOM
     if (V_GetMode() == VID_MODEGL) {
-      if (ev->data1 == key_showalive) {
+      if (ev->key == key_showalive) {
         show_alive = (show_alive + 1) % 3;
         if (show_alive == 0)
           P_Echo(consoleplayer, "Show Alive Monsters off");
@@ -384,13 +386,13 @@ bool D_Responder(event_t *ev) {
     }
 #endif
 
-    if (ev->data1 == key_mlook) {
+    if (ev->key == key_mlook) {
       movement_mouselook = !movement_mouselook;
       M_ChangeMouseLook();
       return true;
     }
 
-    if (ev->data1 == key_hud) {
+    if (ev->key == key_hud) {
       // jff 2/22/98
       if (automapmode & am_active)
         return false; // HUD mode control
@@ -408,7 +410,7 @@ bool D_Responder(event_t *ev) {
     }
 
     /* killough 10/98: allow key shortcut into Setup menu */
-    if (ev->type == ev_keydown && ev->data1 == key_setup) {
+    if ((ev->type == ev_key && ev->pressed) && ev->key == key_setup) {
       M_StartControlPanel();
       S_StartSound(NULL, sfx_swtchn);
       M_SetupNextMenu(&SetupDef);
@@ -448,24 +450,24 @@ void D_PostEvent(event_t *ev) {
   if (mod_keys & KMOD_META)
     keybindings.metadown = true;
 
-  if (ev->type == ev_keydown && ev->data1 == SDLK_LSUPER)
+  if ((ev->type == ev_key && ev->pressed) && ev->key == SDLK_LSUPER)
     keybindings.lsuperdown = true;
-  else if (ev->type == ev_keydown && ev->data1 == SDLK_RSUPER)
+  else if ((ev->type == ev_key && ev->pressed) && ev->key == SDLK_RSUPER)
     keybindings.rsuperdown = true;
-  if (ev->type == ev_keyup && ev->data1 == SDLK_LSUPER)
+  if ((ev->type == ev_key && (!ev->pressed)) && ev->key == SDLK_LSUPER)
     keybindings.lsuperdown = false;
-  else if (ev->type == ev_keyup && ev->data1 == SDLK_RSUPER)
+  else if ((ev->type == ev_key && (!ev->pressed)) && ev->key == SDLK_RSUPER)
     keybindings.rsuperdown = false;
 
   // Allow only sensible keys during skipping
   if (doSkip) {
-    if (ev->type == ev_keydown || ev->type == ev_keyup) {
+    if (ev->type == ev_key) {
       // Immediate exit if key_quit is pressed in skip mode
-      if (ev->data1 == key_quit)
+      if (ev->key == key_quit)
         I_SafeExit(0);
 
       // key_use is used for seeing the current frame
-      if (ev->data1 != key_use && ev->data1 != key_demo_skip)
+      if (ev->key != key_use && ev->key != key_demo_skip)
         return;
     }
   }
@@ -479,12 +481,14 @@ void D_PostEvent(event_t *ev) {
    * killough 2/22/98: add support for screenshot key:
    * cph 2001/02/04: no need for this to be a gameaction, just do it
    */
-  if (ev->type == ev_keydown && ev->data1 == key_screenshot)
+  if ((ev->type == ev_key && ev->pressed) && ev->key == key_screenshot)
     M_ScreenShot(); /* Don't eat the keypress. See sf bug #1843280. */
 
   /* CG 7/30/2014: ESC ought to quit chat if it's active */
   /*
-  if (ev->type == ev_keydown && ev->data1 == SDLK_ESCAPE && HU_ChatActive()) {
+  if ((ev->type == ev_key && ev->pressed) &&
+      ev->key == SDLK_ESCAPE &&
+      HU_ChatActive()) {
     HU_DeactivateChat();
     return;
   }
@@ -2447,11 +2451,13 @@ static void D_DoomMainSetup(void) {
   C_Init();
 #endif
 
-  XV_ExportFunctions();
-  XP_ExportFunctions();
-  XC_ExportFunctions();
+  XI_RegisterInterface();
+  XD_RegisterInterface();
+  XV_VideoRegisterInterface();
+  XP_UserRegisterInterface();
+  XC_RegisterInterface();
 
-  X_RegisterFunctions();
+  X_ExposeInterfaces(X_GetState());
 
   X_Start();
 

@@ -747,30 +747,5 @@ void P_SetPlayerName(int playernum, const char *name) {
     SV_BroadcastPlayerNameChanged(playernum, players[playernum].name);
 }
 
-int XF_Name(lua_State *L) {
-  const char *name = luaL_checkstring(L, 1);
-
-  if (name)
-    P_SetPlayerName(consoleplayer, name);
-
-  return 0;
-}
-
-int XF_Say(lua_State *L) {
-  const char *message = luaL_checkstring(L, 1);
-
-  if (!message)
-    return 0;
-
-  P_SendMessage(message);
-
-  return 0;
-}
-
-void XP_ExportFunctions(void) {
-  X_RegisterFunc("name", XF_Name);
-  X_RegisterFunc("say", XF_Say);
-}
-
 /* vi: set et ts=2 sw=2: */
 

@@ -54,7 +54,6 @@
 #include "v_main.h"
 #include "v_video.h"
 #include "w_wad.h"
-#include "x_main.h"
 
 #ifdef GL_DOOM
 #include "gl_struct.h"
@@ -75,16 +74,7 @@ static SDL_Cursor* cursors[2] = {NULL, NULL};
 
 static int newpal = 0;
 
-typedef struct overlay_s {
-  unsigned char *pixels;
-  bool owns_pixels;
-#ifdef GL_DOOM
-  GLuint tex_id;
-#endif
-  bool needs_resetting;
-} overlay_t;
-
-static overlay_t overlay;
+overlay_t overlay;
 
 const char *screen_resolutions_list[MAX_RESOLUTIONS_COUNT] = {NULL};
 const char *screen_resolution_lowest;
@@ -105,7 +95,7 @@ static void activate_mouse(void);
 static void deactivate_mouse(void);
 //static int AccelerateMouse(int val);
 static void center_mouse(void);
-static void read_mouse(void);
+static void reset_mouse(void);
 static bool mouse_should_be_grabbed();
 static void update_focus(void);
 
@@ -434,27 +424,11 @@ static void center_mouse(void) {
   SDL_GetRelativeMouseState(NULL, NULL);
 }
 
-static int sdl_to_doom_mouse_state(Uint8 buttonstate) {
-  return 0 | (buttonstate & SDL_BUTTON(1) ? 1  : 0)
-           | (buttonstate & SDL_BUTTON(2) ? 2  : 0)
-           | (buttonstate & SDL_BUTTON(3) ? 4  : 0)
-#if SDL_VERSION_ATLEAST(1, 2, 14)
-           | (buttonstate & SDL_BUTTON(6) ? 8  : 0)
-           | (buttonstate & SDL_BUTTON(7) ? 16 : 0)
-#endif
-      ;
-}
-
 //
-// Read the change in mouse state to generate mouse motion events
+// Reset mouse state
 //
-// This is to combine all mouse movement for a tic into one mouse
-// motion event.
-static void read_mouse(void) {
+static void reset_mouse(void) {
   static int mouse_currently_grabbed = true;
-
-  int x, y;
-  event_t ev;
 
   if (!usemouse)
     return;
@@ -467,17 +441,6 @@ static void read_mouse(void) {
   if (!mouse_currently_grabbed && !desired_fullscreen) {
     center_mouse();
     mouse_currently_grabbed = true;
-  }
-
-  SDL_GetRelativeMouseState(&x, &y);
-
-  if (x != 0 || y != 0) {
-    ev.type = ev_mouse;
-    ev.data1 = sdl_to_doom_mouse_state(SDL_GetMouseState(NULL, NULL));
-    ev.data2 = x << 5;
-    ev.data3 = (-y) << 5;
-
-    D_PostEvent(&ev);
   }
 
   center_mouse();
@@ -543,16 +506,17 @@ static void update_focus(void) {
 }
 
 static void get_event(void) {
-  static int mwheeluptic = 0;
-  static int mwheeldowntic = 0;
-
   event_t event;
 
-  event.type  = ev_none;
-  event.data1 = 0;
-  event.data2 = 0;
-  event.data3 = 0;
-  event.wchar = 0;
+  event.device_id = -1;
+  event.type      = ev_none;
+  event.jstype    = ev_joystick_none;
+  event.pressed   = false;
+  event.key       = 0;
+  event.value     = 0;
+  event.xmove     = 0;
+  event.ymove     = 0;
+  event.wchar     = 0;
 
   SDL_Event SDLEvent;
   SDL_Event *Event = &SDLEvent;
@@ -587,71 +551,105 @@ static void get_event(void) {
           }
         }
 #endif
-        event.type = ev_keydown;
-        event.data1 = Event->key.keysym.sym;
+        event.type = ev_key;
+        event.pressed = true;
+        event.key = Event->key.keysym.sym;
         event.wchar = Event->key.keysym.unicode;
+
         D_PostEvent(&event);
       break;
-
       case SDL_KEYUP:
-        event.type = ev_keyup;
-        event.data1 = Event->key.keysym.sym;
+        event.type = ev_key;
+        event.key = Event->key.keysym.sym;
+
         D_PostEvent(&event);
       break;
       case SDL_MOUSEBUTTONDOWN:
       case SDL_MOUSEBUTTONUP:
         if (mouse_enabled && window_focused) {
           event.type = ev_mouse;
-          event.data1 = sdl_to_doom_mouse_state(SDL_GetMouseState(NULL, NULL));
-          event.data2 = event.data3 = 0;
-
-          if (Event->type == SDL_MOUSEBUTTONDOWN) {
-            switch(Event->button.button) {
-              case SDL_BUTTON_WHEELUP:
-                event.type = ev_keydown;
-                event.data1 = SDL_BUTTON_WHEELUP;
-                mwheeluptic = gametic;
-              break;
-              case SDL_BUTTON_WHEELDOWN:
-                event.type = ev_keydown;
-                event.data1 = SDL_BUTTON_WHEELDOWN;
-                mwheeldowntic = gametic;
-              break;
-            }
-          }
+          event.pressed = Event->type == SDL_MOUSEBUTTONDOWN;
+          event.key = Event->button.button;
 
           D_PostEvent(&event);
         }
       break;
-      //e6y: new mouse code
-      case SDL_ACTIVEEVENT:
+      case SDL_MOUSEMOTION:
+        if (mouse_enabled && window_focused) {
+          event.type = ev_mouse_movement;
+          event.xmove = Event->motion.xrel;
+          event.ymove = Event->motion.yrel;
+
+          D_PostEvent(&event);
+        }
+      break;
+      case SDL_JOYAXISMOTION:
+        if (I_JoystickEnabled()) {
+          event.device_id = Event->jaxis.which;
+          event.type = ev_joystick_movement;
+          event.jstype = ev_joystick_axis;
+          event.key = Event->jaxis.axis;
+          event.value = Event->jaxis.value;
+          
+          /*
+           * CG: [XXX] Below modifications to event.value were in original 
+           *           joystick code, not totally sure why though.
+           */
+
+          event.value /= 3000;
+          if (abs(event.value) < 10)
+            event.value = 0;
+
+          D_PostEvent(&event);
+        }
+      break;
+      case SDL_JOYBALLMOTION:
+        if (I_JoystickEnabled()) {
+          event.device_id = Event->jball.which;
+          event.type = ev_joystick_movement;
+          event.key = Event->jball.ball;
+          event.jstype = ev_joystick_ball;
+          event.xmove = Event->jball.xrel;
+          event.ymove = Event->jball.yrel;
+
+          D_PostEvent(&event);
+        }
+      break;
+      case SDL_JOYHATMOTION:
+        if (I_JoystickEnabled()) {
+          event.device_id = Event->jball.which;
+          event.type = ev_joystick_movement;
+          event.key = Event->jhat.hat;
+          event.jstype = ev_joystick_hat;
+          event.value = Event->jhat.value;
+
+          D_PostEvent(&event);
+        }
+      break;
+      case SDL_JOYBUTTONDOWN:
+      case SDL_JOYBUTTONUP:
+        if (I_JoystickEnabled()) {
+          event.device_id = Event->jbutton.which;
+          event.type = ev_joystick;
+          event.key = Event->jbutton.button;
+          event.pressed = Event->type == SDL_JOYBUTTONDOWN;
+
+          D_PostEvent(&event);
+        }
+      break;
+      case SDL_ACTIVEEVENT: //e6y: new mouse code
         update_focus();
       break;
       case SDL_VIDEORESIZE:
-#if 0
-        ApplyWindowResize(Event);
-#endif
+        /* ApplyWindowResize(Event); */
       break;
       case SDL_QUIT:
         S_StartSound(NULL, sfx_swtchn);
-      M_QuitDOOM(0);
+        M_QuitDOOM(0);
+      break;
       default:
       break;
     }
-  }
-
-  if (mwheeluptic && mwheeluptic + 1 < gametic) {
-    event.type = ev_keyup;
-    event.data1 = SDL_BUTTON_WHEELUP;
-    D_PostEvent(&event);
-    mwheeluptic = 0;
-  }
-
-  if (mwheeldowntic && mwheeldowntic + 1 < gametic) {
-    event.type = ev_keyup;
-    event.data1 = SDL_BUTTON_WHEELDOWN;
-    D_PostEvent(&event);
-    mwheeldowntic = 0;
   }
 }
 
@@ -701,8 +699,8 @@ const char* I_GetKeyString(int keycode) {
 
 void I_StartTic(void) {
   get_event();
-  read_mouse();
-  I_PollJoystick();
+  reset_mouse();
+  // I_PollJoystick();
 }
 
 //
@@ -1466,160 +1464,6 @@ static void ApplyWindowResize(SDL_Event *resize_event) {
   V_ChangeScreenResolution();
 }
 #endif
-
-int XF_GetScreenWidth(lua_State *L) {
-  lua_pushnumber(L, SCREENWIDTH);
-
-  return 1;
-}
-
-int XF_GetScreenHeight(lua_State *L) {
-  lua_pushnumber(L, SCREENHEIGHT);
-
-  return 1;
-}
-
-int XF_GetScreenStride(lua_State *L) {
-  lua_pushnumber(L, I_GetScreenStride());
-
-  return 1;
-}
-
-int XF_UsingOpenGL(lua_State *L) {
-  bool using_opengl;
-
-#ifdef GL_DOOM
-  using_opengl = V_GetMode() == VID_MODEGL;
-#else
-  using_opengl = false;
-#endif
-
-  lua_pushboolean(L, using_opengl);
-
-  return 1;
-}
-
-int XF_BuildOverlayPixels(lua_State *L) {
-  puts("building overlay pixels");
-  if (overlay.pixels)
-    I_Error("build_overlay_pixels: pixels already built");
-
-#ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL) {
-    if (overlay.pixels != NULL)
-      free(overlay.pixels);
-
-    overlay.pixels = calloc(SCREENWIDTH * SCREENHEIGHT, sizeof(uint32_t));
-
-    if (overlay.pixels == NULL)
-      I_Error("build_overlay_pixels: Allocating overlay pixels failed");
-
-    overlay.owns_pixels = true;
-  }
-  else if (use_gl_surface) {
-    overlay.pixels = vid_8ingl.screen->pixels;
-    overlay.owns_pixels = false;
-  }
-  else {
-    overlay.pixels = screens[0].data;
-    overlay.owns_pixels = false;
-  }
-#else
-  overlay.pixels = screens[0].data;
-  overlay.owns_pixels = false;
-#endif
-
-  return 0;
-}
-
-int XF_GetOverlayPixels(lua_State *L) {
-  if (overlay.pixels == NULL)
-    I_Error("XF_GetOverlayPixels: overlay.pixels is NULL");
-
-  lua_pushlightuserdata(L, overlay.pixels);
-
-  return 1;
-}
-
-int XF_DestroyOverlayPixels(lua_State *L) {
-  /*
-   * CG: Don't check for overlay.pixels here, so the overlay can be reset with
-   *     impunity.
-   */
-  if (overlay.pixels && overlay.owns_pixels) {
-    free(overlay.pixels);
-    overlay.owns_pixels = false;
-  }
-
-  puts("destroying overlay pixels");
-  overlay.pixels = NULL;
-
-  return 0;
-}
-
-int XF_BuildOverlayTexture(lua_State *L) {
-#ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL) {
-    if (overlay.tex_id) {
-      glDeleteTextures(1, &overlay.tex_id);
-      overlay.tex_id = 0;
-    }
-
-    glGenTextures(1, &overlay.tex_id);
-    glBindTexture(GL_TEXTURE_2D, overlay.tex_id);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GLEXT_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GLEXT_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-    last_glTexID = &overlay.tex_id;
-  }
-#endif
-
-  return 0;
-}
-
-int XF_DestroyOverlayTexture(lua_State *L) {
-#ifdef GL_DOOM
-  if (overlay.tex_id != 0) {
-    glDeleteTextures(1, &overlay.tex_id);
-    overlay.tex_id = 0;
-  }
-#endif
-
-  return 0;
-}
-
-int XF_OverlayNeedsResetting(lua_State *L) {
-  lua_pushboolean(L, overlay.needs_resetting);
-
-  return 1;
-}
-
-int XF_ClearOverlayNeedsResetting(lua_State *L) {
-  overlay.needs_resetting = false;
-
-  return 0;
-}
-
-int XF_LockScreen(lua_State *L) {
-  if (SDL_MUSTLOCK(screen)) {
-    if (SDL_LockSurface(screen) < 0)
-      I_Error("XF_LockScreen: %s\n", SDL_GetError());
-  }
-
-  return 0;
-}
-
-int XF_UnlockScreen(lua_State *L) {
-  if (SDL_MUSTLOCK(screen))
-    SDL_UnlockSurface(screen);
-
-  return 0;
-}
 
 /* vi: set et ts=2 sw=2: */
 

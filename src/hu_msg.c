@@ -437,15 +437,15 @@ bool HU_MessageWidgetResponder(message_widget_t *mw, event_t *ev) {
   if (!mw->scrollable)
     return false;
 
-  if (!((ev->type == ev_keydown) || (ev->type == ev_mouse)))
+  if (!(ev->type == ev_key && ev->pressed))
     return false;
 
-  if (ev->data1 == SDLK_PAGEUP && keybindings.shiftdown) {
+  if (ev->key == SDLK_PAGEUP && keybindings.shiftdown) {
     scroll_up(mw);
     return true;
   }
 
-  if (ev->data1 == SDLK_PAGEDOWN && keybindings.shiftdown) {
+  if (ev->key == SDLK_PAGEDOWN && keybindings.shiftdown) {
     scroll_down(mw);
     return true;
   }
