@@ -67,7 +67,7 @@ void HU_Start(void);
 bool HU_ChatActive(void);
 void HU_DeactivateChat(void);
 
-dboolean HU_Responder(event_t* ev);
+bool HU_Responder(event_t* ev);
 
 void  HU_Ticker(void);
 void  HU_Drawer(void);

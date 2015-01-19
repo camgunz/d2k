@@ -32,6 +32,7 @@
 #include "x_main.h"
 
 static lua_State *x_main_interpreter = NULL;
+static GHashTable *x_types = NULL;
 static GHashTable *x_global_scope = NULL;
 static GHashTable *x_scopes = NULL;
 
@@ -77,6 +78,7 @@ void X_Init(void) {
   x_main_interpreter = X_NewState();
   luaL_openlibs(x_main_interpreter); /* CG: [TODO] Restrict clientside libs */
 
+  x_types = g_hash_table_new(g_str_hash, x_objects_equal);
   x_global_scope = g_hash_table_new(g_str_hash, x_objects_equal);
   x_scopes = g_hash_table_new(g_str_hash, x_objects_equal);
 }
@@ -109,6 +111,28 @@ void X_Start(void) {
   free(script_folder);
   free(script_path);
   free(init_script_file);
+}
+
+void X_RegisterType(const char *type_name, unsigned int count, ...) {
+  luaL_Reg *methods;
+  va_list args;
+
+  methods = calloc(count + 1, sizeof(luaL_Reg));
+
+  if (!methods)
+    I_Error("X_RegisterType: Allocating methods for %s failed", type_name);
+
+  va_start(args, count);
+  for (unsigned int i = 0; i < count; i++) {
+    methods[i].name = va_arg(args, char *);
+    methods[i].func = va_arg(args, lua_CFunction);
+  }
+  methods[count].name = NULL;
+  methods[count].func = NULL;
+  va_end(args);
+
+  if (!g_hash_table_insert(x_types, (char *)type_name, methods))
+    I_Error("X_RegisterType: Type '%s' already registered", type_name);
 }
 
 void X_RegisterObjects(const char *scope_name, unsigned int count, ...) {
@@ -224,8 +248,20 @@ void X_ExposeInterfaces(lua_State *L) {
 
   lua_createtable(L, 0, g_hash_table_size(x_global_scope));
   lua_setglobal(L, X_NAMESPACE);
-
   lua_getglobal(L, X_NAMESPACE);
+
+  g_hash_table_iter_init(&iter, x_types);
+  while (g_hash_table_iter_next(&iter, &key, &value)) {
+    const char *type_name = (const char *)key;
+    const struct luaL_Reg *methods = (luaL_Reg *)value;
+
+    luaL_newmetatable(L, type_name);
+    luaL_setfuncs(L, methods, 0);
+    lua_pushvalue(L, -1);
+    lua_setfield(L, -1, "__index");
+    lua_setfield(L, -2, type_name);
+  }
+
   g_hash_table_iter_init(&iter, x_global_scope);
   while (g_hash_table_iter_next(&iter, &key, &value)) {
     const char *name = (const char *)key;
@@ -266,7 +302,6 @@ void X_ExposeInterfaces(lua_State *L) {
     }
     lua_pop(L, 1);
   }
-  lua_pop(L, 1);
 }
 
 const char* X_GetError(lua_State *L) {
@@ -282,9 +317,6 @@ bool X_Eval(lua_State *L, const char *code) {
 bool X_Call(lua_State *L, const char *object, const char *fname,
                           int arg_count, int res_count, ...) {
   va_list args;
-  bool have_type = false;
-  x_type_e arg_type = X_NONE;
-  int bool_arg;
   int args_remaining = arg_count;
 
   if (arg_count < 0)
@@ -313,52 +345,43 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
     args_remaining--;
 
   va_start(args, res_count);
-  if (args_remaining > 0) {
-    if (!have_type) {
-      arg_type = va_arg(args, x_type_e);
-      if (arg_type == X_NIL)
-        lua_pushnil(L);
-    }
-    else if (arg_type) {
-      switch(arg_type) {
-        case X_NIL:
-        break;
-        case X_BOOLEAN:
-          bool_arg = va_arg(args, int);
+  while (args_remaining-- > 0) {
+    int bool_arg;
+    x_type_e arg_type = va_arg(args, x_type_e);
 
-          if (bool_arg)
-            lua_pushboolean(L, true);
-          else
-            lua_pushboolean(L, false);
-        break;
-        case X_POINTER:
-          lua_pushlightuserdata(L, va_arg(args, void *));
-        break;
-        case X_DECIMAL:
-          lua_pushnumber(L, va_arg(args, lua_Number));
-        break;
-        case X_INTEGER:
-          lua_pushinteger(L, va_arg(args, lua_Integer));
-        break;
-        case X_UINTEGER:
-          lua_pushunsigned(L, va_arg(args, lua_Unsigned));
-        break;
-        case X_STRING:
-          lua_pushstring(L, va_arg(args, const char *));
-        break;
-        case X_FUNCTION:
-          lua_pushcfunction(L, va_arg(args, lua_CFunction));
-        break;
-        default:
-          I_Error("X_CallFunc: Invalid argument type %d\n", arg_type);
-        break;
-      }
-    }
-    else {
-      I_Error("X_CallFunc: Invalid argument order");
-    }
+    switch(arg_type) {
+      case X_NIL:
+      break;
+      case X_BOOLEAN:
+        bool_arg = va_arg(args, int);
 
-    args_remaining--;
+        if (bool_arg)
+          lua_pushboolean(L, true);
+        else
+          lua_pushboolean(L, false);
+      break;
+      case X_POINTER:
+        lua_pushlightuserdata(L, va_arg(args, void *));
+      break;
+      case X_DECIMAL:
+        lua_pushnumber(L, va_arg(args, lua_Number));
+      break;
+      case X_INTEGER:
+        lua_pushinteger(L, va_arg(args, lua_Integer));
+      break;
+      case X_UINTEGER:
+        lua_pushunsigned(L, va_arg(args, lua_Unsigned));
+      break;
+      case X_STRING:
+        lua_pushstring(L, va_arg(args, const char *));
+      break;
+      case X_FUNCTION:
+        lua_pushcfunction(L, va_arg(args, lua_CFunction));
+      break;
+      default:
+        I_Error("X_CallFunc: Invalid argument type %d\n", arg_type);
+      break;
+    }
   }
   va_end(args);
 

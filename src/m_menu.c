@@ -41,10 +41,11 @@
 #include "m_misc.h"
 #include "lprintf.h"
 #include "am_map.h"
+#include "i_input.h"
 #include "i_main.h"
+#include "i_sound.h"
 #include "i_system.h"
 #include "i_video.h"
-#include "i_sound.h"
 #include "r_demo.h"
 #include "r_fps.h"
 #include "p_user.h"
@@ -52,6 +53,7 @@
 #ifdef _WIN32
 #include "e6y_launcher.h"
 #endif
+#include "xd_main.h"
 
 extern patchnum_t hu_font[HU_FONTSIZE];
 extern dboolean  message_dontfuckwithme;
@@ -5049,7 +5051,7 @@ dboolean M_Responder(event_t* ev) {
         else if ((ch >= 32) && (ch <= 126)) {
           if ((chat_index+1) < CHAT_STRING_BFR_SIZE)
           {
-            if (keybindings.shiftdown)
+            if (key_states.shiftdown)
               ch = shiftxform[ch];
 
             if (chat_string_buffer[chat_index] == 0)

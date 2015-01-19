@@ -36,6 +36,7 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 #include "e6y.h"
 #include "g_game.h"
 #include "i_font.h"
+#include "i_input.h"
 #include "i_main.h"
 #include "i_sound.h"
 #include "i_system.h"
@@ -111,6 +112,10 @@ void I_Init2(void) {
   }
   R_InitInterpolation();
   force_singletics_to = gametic + BACKUPTICS;
+}
+
+void I_StartTic(void) {
+  I_InputHandle();
 }
 
 /* cleanup handling -- killough:

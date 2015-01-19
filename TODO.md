@@ -4,8 +4,6 @@
 
 1. Fix switching to vidingl
 
-1. Fix and test build
-
 1. Export colors to Lua
 
 1. Export gametic to Lua

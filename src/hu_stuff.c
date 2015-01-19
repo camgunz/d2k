@@ -2561,10 +2561,22 @@ void HU_Ticker(void) {
 //
 // Passed the event to respond to, returns true if the event was handled
 //
+bool HU_Responder(event_t *ev) {
+  bool event_consumed;
+  lua_State *L = X_GetState();
 
-dboolean HU_Responder(event_t *ev) {
+  if (!X_Call(L, "hud", "handle_event", 1, 1, X_POINTER, ev, "InputEvent"))
+    I_Error("HU_Responder: Error in hud.handle_event: %s\n", X_GetError(L));
+
+  event_consumed = lua_toboolean(L, -1);
+  lua_pop(L, 1);
+
+  if (event_consumed)
+    return true;
+
   return false;
 
+#if 0
   if (!(ev->type == ev_key && ev->pressed))
     return false;
 
@@ -2577,6 +2589,7 @@ dboolean HU_Responder(event_t *ev) {
     return true;
 
   return false;
+#endif
 }
 
 bool HU_ChatActive(void) {

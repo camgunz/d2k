@@ -31,17 +31,6 @@
 #pragma interface
 #endif
 
-typedef struct keybindings_s {
-  bool shiftdown;
-  bool ctrldown;
-  bool altdown;
-  bool metadown;
-  bool lsuperdown;
-  bool rsuperdown;
-} keybindings_t;
-
-extern keybindings_t keybindings;
-
 /* CPhipps - removed wadfiles[] stuff to w_wad.h */
 
 extern char *basesavegame;      // killough 2/16/98: savegame path
@@ -71,6 +60,7 @@ void D_DoAdvanceDemo (void);
 void        D_Display(void);
 void        D_PageTicker(void);
 void        D_StartTitle(void);
+bool        D_Responder(event_t *ev);
 void        D_DoomMain(void);
 void        D_AddFile(const char *file, wad_source_t source);
 void        D_AddDEH(const char *filename, int lumpnum);

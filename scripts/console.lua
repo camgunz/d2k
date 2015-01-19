@@ -42,8 +42,8 @@ function Console:new(c)
   c.layout = nil
   c.scroll_rate = 0.0
   c.height = 0.0
-  c.max_width = d2k.get_screen_width()
-  c.max_height = d2k.get_screen_height()
+  c.max_width = d2k.Video.get_screen_width()
+  c.max_height = d2k.Video.get_screen_height()
   c:build_layout()
 
   return c

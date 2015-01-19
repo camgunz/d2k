@@ -33,7 +33,6 @@ static int XF_Quit(lua_State *L) {
 }
 
 void XI_RegisterInterface(void) {
-  /* CG: [TODO] Add functions to return names for mouse & joystick buttons */
   X_RegisterObjects(NULL, 2,
     "quit", X_FUNCTION, XF_Quit,
     "exit", X_FUNCTION, XF_Quit

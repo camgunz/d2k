@@ -83,7 +83,7 @@ extern int desired_fullscreen;
 extern int process_affinity_mask;
 extern int process_priority;
 extern int try_to_reduce_cpu_cache_misses;
-extern dboolean window_focused;
+extern bool window_focused;
 
 void           I_PreInitGraphics(void);
 void           I_InitScreenResolution(void);
@@ -98,9 +98,7 @@ int            I_ScreenShot(const char *fname);
 int            I_GetScreenStride(void);
 void           I_LockOverlaySurface(void);
 void           I_UnlockOverlaySurface(void);
-void           I_StartTic(void);
-void           I_StartFrame(void);
-const char*    I_GetKeyString(int keycode);
+void           I_VideoUpdateFocus(void);
 
 #endif
 

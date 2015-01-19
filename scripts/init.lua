@@ -23,11 +23,15 @@
 
 package.path = package.path .. ';' .. d2k.script_path
 
+local input_handler = require('input_handler')
 local overlay = require('overlay')
 local hud = require('hud')
 local console = require('console')
 
 print('X_Init: Init script engine.')
+
+print('X_Init: Creating input handler.')
+d2k.input_handler = input_handler.InputHandler:new()
 
 print('X_Init: Creating overlay.')
 d2k.overlay = overlay.Overlay:new()

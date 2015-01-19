@@ -32,30 +32,40 @@
 #endif
 
 #include "doomdef.h"
+#include "doomstat.h"
 #include "i_video.h"
 #include "lprintf.h"
 #include "v_video.h"
 #include "x_main.h"
 
-int XF_GetScreenWidth(lua_State *L) {
+static int XV_IsEnabled(lua_State *L) {
+  if (nodrawers || noblit)
+    lua_pushboolean(L, false);
+  else
+    lua_pushboolean(L, true);
+
+  return 1;
+}
+
+static int XV_GetScreenWidth(lua_State *L) {
   lua_pushnumber(L, SCREENWIDTH);
 
   return 1;
 }
 
-int XF_GetScreenHeight(lua_State *L) {
+static int XV_GetScreenHeight(lua_State *L) {
   lua_pushnumber(L, SCREENHEIGHT);
 
   return 1;
 }
 
-int XF_GetScreenStride(lua_State *L) {
+static int XV_GetScreenStride(lua_State *L) {
   lua_pushnumber(L, I_GetScreenStride());
 
   return 1;
 }
 
-int XF_UsingOpenGL(lua_State *L) {
+static int XV_UsingOpenGL(lua_State *L) {
   bool using_opengl;
 
 #ifdef GL_DOOM
@@ -69,8 +79,7 @@ int XF_UsingOpenGL(lua_State *L) {
   return 1;
 }
 
-int XF_BuildOverlayPixels(lua_State *L) {
-  puts("building overlay pixels");
+static int XV_BuildOverlayPixels(lua_State *L) {
   if (overlay.pixels)
     I_Error("build_overlay_pixels: pixels already built");
 
@@ -102,16 +111,16 @@ int XF_BuildOverlayPixels(lua_State *L) {
   return 0;
 }
 
-int XF_GetOverlayPixels(lua_State *L) {
+static int XV_GetOverlayPixels(lua_State *L) {
   if (overlay.pixels == NULL)
-    I_Error("XF_GetOverlayPixels: overlay.pixels is NULL");
+    I_Error("XV_GetOverlayPixels: overlay.pixels is NULL");
 
   lua_pushlightuserdata(L, overlay.pixels);
 
   return 1;
 }
 
-int XF_DestroyOverlayPixels(lua_State *L) {
+static int XV_DestroyOverlayPixels(lua_State *L) {
   /*
    * CG: Don't check for overlay.pixels here, so the overlay can be reset with
    *     impunity.
@@ -127,7 +136,7 @@ int XF_DestroyOverlayPixels(lua_State *L) {
   return 0;
 }
 
-int XF_BuildOverlayTexture(lua_State *L) {
+static int XV_BuildOverlayTexture(lua_State *L) {
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
     if (overlay.tex_id) {
@@ -152,7 +161,7 @@ int XF_BuildOverlayTexture(lua_State *L) {
   return 0;
 }
 
-int XF_DestroyOverlayTexture(lua_State *L) {
+static int XV_DestroyOverlayTexture(lua_State *L) {
 #ifdef GL_DOOM
   if (overlay.tex_id != 0) {
     glDeleteTextures(1, &overlay.tex_id);
@@ -163,49 +172,50 @@ int XF_DestroyOverlayTexture(lua_State *L) {
   return 0;
 }
 
-int XF_OverlayNeedsResetting(lua_State *L) {
+static int XV_OverlayNeedsResetting(lua_State *L) {
   lua_pushboolean(L, overlay.needs_resetting);
 
   return 1;
 }
 
-int XF_ClearOverlayNeedsResetting(lua_State *L) {
+static int XV_ClearOverlayNeedsResetting(lua_State *L) {
   overlay.needs_resetting = false;
 
   return 0;
 }
 
-int XF_LockScreen(lua_State *L) {
+static int XV_LockScreen(lua_State *L) {
   if (SDL_MUSTLOCK(screen)) {
     if (SDL_LockSurface(screen) < 0)
-      I_Error("XF_LockScreen: %s\n", SDL_GetError());
+      I_Error("XV_LockScreen: %s\n", SDL_GetError());
   }
 
   return 0;
 }
 
-int XF_UnlockScreen(lua_State *L) {
+static int XV_UnlockScreen(lua_State *L) {
   if (SDL_MUSTLOCK(screen))
     SDL_UnlockSurface(screen);
 
   return 0;
 }
 
-void XV_VideoRegisterInterface(void) {
-  X_RegisterObjects(NULL, 13,
-    "get_screen_width",              X_FUNCTION, XF_GetScreenWidth,
-    "get_screen_height",             X_FUNCTION, XF_GetScreenHeight,
-    "get_screen_stride",             X_FUNCTION, XF_GetScreenStride,
-    "using_opengl",                  X_FUNCTION, XF_UsingOpenGL,
-    "build_overlay_pixels",          X_FUNCTION, XF_BuildOverlayPixels,
-    "get_overlay_pixels",            X_FUNCTION, XF_GetOverlayPixels,
-    "destroy_overlay_pixels",        X_FUNCTION, XF_DestroyOverlayPixels,
-    "build_overlay_texture",         X_FUNCTION, XF_BuildOverlayTexture,
-    "destroy_overlay_texture",       X_FUNCTION, XF_DestroyOverlayTexture,
-    "overlay_needs_resetting",       X_FUNCTION, XF_OverlayNeedsResetting,
-    "clear_overlay_needs_resetting", X_FUNCTION, XF_ClearOverlayNeedsResetting,
-    "lock_screen",                   X_FUNCTION, XF_LockScreen,
-    "unlock_screen",                 X_FUNCTION, XF_UnlockScreen
+void XV_RegisterInterface(void) {
+  X_RegisterObjects("Video", 14,
+    "is_enabled",                    X_FUNCTION, XV_IsEnabled,
+    "get_screen_width",              X_FUNCTION, XV_GetScreenWidth,
+    "get_screen_height",             X_FUNCTION, XV_GetScreenHeight,
+    "get_screen_stride",             X_FUNCTION, XV_GetScreenStride,
+    "using_opengl",                  X_FUNCTION, XV_UsingOpenGL,
+    "build_overlay_pixels",          X_FUNCTION, XV_BuildOverlayPixels,
+    "get_overlay_pixels",            X_FUNCTION, XV_GetOverlayPixels,
+    "destroy_overlay_pixels",        X_FUNCTION, XV_DestroyOverlayPixels,
+    "build_overlay_texture",         X_FUNCTION, XV_BuildOverlayTexture,
+    "destroy_overlay_texture",       X_FUNCTION, XV_DestroyOverlayTexture,
+    "overlay_needs_resetting",       X_FUNCTION, XV_OverlayNeedsResetting,
+    "clear_overlay_needs_resetting", X_FUNCTION, XV_ClearOverlayNeedsResetting,
+    "lock_screen",                   X_FUNCTION, XV_LockScreen,
+    "unlock_screen",                 X_FUNCTION, XV_UnlockScreen
   );
 }
 

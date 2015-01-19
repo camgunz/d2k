@@ -21,104 +21,81 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-local lgi = require('lgi')
-local Cairo = lgi.cairo
+InputHandler = {}
 
-HUD = {}
-
-function HUD:new(h)
-  h = h or {
-    widgets = {},
-    active = false
+function InputHandler:new(ih)
+  ih = ih or {
+    current_event = d2k.InputEvent:new(),
   }
 
-  setmetatable(h, self)
+  setmetatable(ih, self)
   self.__index = self
 
-  return h
+  return ih
 end
 
-function HUD:add_widget(widget)
-  table.insert(self.widgets, widget)
+function InputHandler:handle_event()
+  local ev = self.current_event
 
-  widget.hud = self
-  widget.render_context = d2k.overlay.render_context
-end
-
-function HUD:remove_widget(widget)
-  for i = #self.widgets, 1, -1 do
-    local w = self.widgets[i]
-
-    if w == widget then
-      table.remove(self.widgets, i)
-    end
-  end
-
-  widget.hud = nil
-  widget.render_context = nil
-end
-
-function HUD:start()
-  if self.active then
-    self:stop()
-  end
-
-  self.active = true
-
-  for i, w in pairs(self.widgets) do
-    w:reset()
-  end
-end
-
-function HUD:stop()
-  self.active = false
-end
-
-function HUD:tick()
-  if not self.active then
+  if d2k.System.handle_event(ev) then
     return
   end
 
-  for i, w in pairs(self.widgets) do
-    w:tick()
+  if not d2k.Video.is_enabled() then
+    if d2k.Game.handle_event(ev) then
+      return
+    end
   end
-end
 
-function HUD:draw()
-  if not self.active then
+  if ev:is_key_press(d2k.KeyBinds.get_screenshot()) then
+    d2k.Misc.take_screenshot()
+  end
+
+  if d2k.Menu.is_active() then
+    if d2k.Menu.handle_event(ev) then
+      return
+    end
+  end
+
+  if d2k.hud:handle_event(ev) then
     return
   end
 
-  d2k.overlay:lock()
-
-  if d2k.Video.using_opengl() then
-    d2k.overlay:clear()
+  if d2k.Menu.handle_event(ev) then
+    return
   end
 
-  d2k.overlay.render_context:set_operator(Cairo.Operator.OVER)
-
-  for i, w in pairs(self.widgets) do
-    w:draw()
+  if d2k.Main.handle_event(ev) then
+    return
   end
 
-  d2k.overlay:unlock()
+  if d2k.StatusBar.handle_event(ev) then
+    return
+  end
+
+  if d2k.AutoMap.handle_event(ev) then
+    return
+  end
+
+  d2k.Game.handle_event(ev)
 end
 
-function HUD:handle_event(event)
-  print('Hello from hud.handle_event')
+function InputHandler:handle_events()
+  while true do
+    self.current_event:reset()
+    event_received, event_populated = d2k.populate_event(self.current_event)
 
-  --[[
-  for i, w in pairs(self.widgets) do
-    if w:is_active() and w:handle_event(event) then
-      return true
+    if not event_received then
+      break
+    end
+
+    if event_populated then
+      self:handle_event()
     end
   end
-  --]]
-
-  return false
 end
 
-return {HUD = HUD}
+return {InputHandler = InputHandler}
 
 -- vi: et ts=2 sw=2
 

@@ -36,9 +36,11 @@
 #include "f_wipe.h"
 #include "g_game.h"
 #include "i_capture.h"
+#include "i_input.h"
 #include "i_joy.h"
-#include "i_smp.h"
 #include "i_main.h"
+#include "i_mouse.h"
+#include "i_smp.h"
 #include "i_video.h"
 #include "lprintf.h"
 #include "m_argv.h"
@@ -48,12 +50,11 @@
 #include "r_plane.h"
 #include "r_screenmultiply.h"
 #include "r_things.h"
-#include "s_sound.h"
-#include "sounds.h"
 #include "st_stuff.h"
 #include "v_main.h"
 #include "v_video.h"
 #include "w_wad.h"
+#include "xd_main.h"
 
 #ifdef GL_DOOM
 #include "gl_struct.h"
@@ -61,16 +62,11 @@
 extern GLuint* last_glTexID;
 #endif
 
-extern void M_QuitDOOM(int choice);
-
 #define MAX_RESOLUTIONS_COUNT 128
 #define NO_PALETTE_CHANGE 1000
 
 /* CG: FIXME: This is duplicated in overlay.lua */
 #define OVERLAY_FORMAT CAIRO_FORMAT_RGB24
-
-//e6y: new mouse code
-static SDL_Cursor* cursors[2] = {NULL, NULL};
 
 static int newpal = 0;
 
@@ -84,20 +80,12 @@ int process_affinity_mask;
 int process_priority;
 int try_to_reduce_cpu_cache_misses;
 
-dboolean window_focused;
+bool window_focused;
 
 // Window resize state.
 #if 0
 static void ApplyWindowResize(SDL_Event *resize_event);
 #endif
-
-static void activate_mouse(void);
-static void deactivate_mouse(void);
-//static int AccelerateMouse(int val);
-static void center_mouse(void);
-static void reset_mouse(void);
-static bool mouse_should_be_grabbed();
-static void update_focus(void);
 
 const char *sdl_videodriver;
 const char *sdl_video_window_pos;
@@ -122,10 +110,6 @@ int use_gl_surface;
 
 int leds_always_off = 0; // Expected by m_misc, not relevant
 
-// Mouse handling
-extern int usemouse;        // config file var
-static dboolean mouse_enabled; // usemouse, but can be overriden by -nomouse
-
 int I_GetModeFromString(const char *modestr);
 
 static void initialize_overlay(void) {
@@ -135,31 +119,6 @@ static void initialize_overlay(void) {
   overlay.tex_id          = 0;
 #endif
   overlay.needs_resetting = false;
-}
-
-static void init_inputs(void) {
-  static Uint8 empty_cursor_data = 0;
-
-  int nomouse_parm = M_CheckParm("-nomouse");
-
-  // check if the user wants to use the mouse
-  mouse_enabled = usemouse && !nomouse_parm;
-
-  SDL_PumpEvents();
-
-  // Save the default cursor so it can be recalled later
-  cursors[0] = SDL_GetCursor();
-  // Create an empty cursor
-  cursors[1] = SDL_CreateCursor(
-    &empty_cursor_data, &empty_cursor_data, 8, 1, 0, 0
-  );
-
-  if (mouse_enabled) {
-    center_mouse();
-    MouseAccelChanging();
-  }
-
-  I_InitJoystick();
 }
 
 void get_screen_resolution(void) {
@@ -175,85 +134,6 @@ void get_screen_resolution(void) {
     }
   }
 }
-
-#if 0
-static void upload_new_palette(int pal, int force) {
-  // This is used to replace the current 256 colour cmap with a new one
-  // Used by 256 colour PseudoColor modes
-
-  // Array of SDL_Color structs used for setting the 256-colour palette
-  static SDL_Color* colours;
-  static int cachedgamma;
-  static size_t num_pals;
-
-  if (V_GetMode() == VID_MODEGL)
-    return;
-
-  if ((colours == NULL) || (cachedgamma != usegamma) || force) {
-    int pplump = W_GetNumForName("PLAYPAL");
-    int gtlump = (W_CheckNumForName)("GAMMATBL",ns_prboom);
-    register const byte * palette = W_CacheLumpNum(pplump);
-    register const byte * const gtable =
-      (const byte *)W_CacheLumpNum(gtlump) + 256 * (cachedgamma = usegamma);
-    register int i;
-
-    num_pals = W_LumpLength(pplump) / (3 * 256);
-    num_pals *= 256;
-
-    if (!colours) {
-      // First call - allocate and prepare colour array
-      colours = malloc(sizeof(*colours)*num_pals);
-#ifdef GL_DOOM
-      vid_8ingl.colours = malloc(sizeof(vid_8ingl.colours[0]) * 4 * num_pals);
-#endif
-    }
-
-    // set the colormap entries
-    for (i = 0; (size_t)i < num_pals; i++) {
-#ifdef GL_DOOM
-      if (!vid_8ingl.enabled)
-#endif
-      {
-        colours[i].r = gtable[palette[0]];
-        colours[i].g = gtable[palette[1]];
-        colours[i].b = gtable[palette[2]];
-      }
-
-      palette += 3;
-    }
-
-    W_UnlockLumpNum(pplump);
-    W_UnlockLumpNum(gtlump);
-    num_pals /= 256;
-  }
-
-#ifdef RANGECHECK
-  if ((size_t)pal >= num_pals) {
-    I_Error("upload_new_palette: Palette number out of range (%d>=%d)",
-      pal, num_pals
-    );
-  }
-#endif
-
-  // store the colors to the current display
-  // SDL_SetColors(SDL_GetVideoSurface(), colours+256*pal, 0, 256);
-#ifdef GL_DOOM
-  if (vid_8ingl.enabled) {
-    vid_8ingl.palette = pal;
-  }
-  else
-#endif
-  {
-    SDL_SetPalette(
-      SDL_GetVideoSurface(),
-      SDL_LOGPAL | SDL_PHYSPAL,
-      colours + 256 * pal,
-      0,
-      256
-    );
-  }
-}
-#endif
 
 static void fill_screen_resolution_list(void) {
   SDL_Rect **modes;
@@ -394,106 +274,7 @@ static void get_closest_resolution(int *width, int *height, int flags) {
 
 }
 
-static void activate_mouse(void) {
-  SDL_WM_GrabInput(SDL_GRAB_ON);
-  SDL_ShowCursor(SDL_DISABLE);
-#if 0
-#if SDL_VERSION_ATLEAST(1, 3, 0)
-  puts("Show Cursor = 0");
-  SDL_ShowCursor(0);
-#else
-  puts("Show Cursor = 1");
-  SDL_SetCursor(cursors[1]);
-  SDL_ShowCursor(1);
-#endif
-#endif
-}
-
-static void deactivate_mouse(void) {
-  SDL_WM_GrabInput(SDL_GRAB_OFF);
-  SDL_ShowCursor(SDL_ENABLE);
-  SDL_WarpMouse(
-    (unsigned short)(REAL_SCREENWIDTH  / 2),
-    (unsigned short)(REAL_SCREENHEIGHT / 2)
-  );
-#if 0
-#if !SDL_VERSION_ATLEAST(1, 3, 0)
-  SDL_SetCursor(cursors[0]);
-#endif
-  puts("Show Cursor = 1");
-  SDL_ShowCursor(1);
-#endif
-}
-
-static void center_mouse(void) {
-#if 0
-  // Warp the the screen center
-  SDL_WarpMouse(
-    (unsigned short)(REAL_SCREENWIDTH  / 2),
-    (unsigned short)(REAL_SCREENHEIGHT / 2)
-  );
-
-  // Clear any relative movement caused by warping
-  SDL_PumpEvents();
-  SDL_GetRelativeMouseState(NULL, NULL);
-#endif
-}
-
-//
-// Reset mouse state
-//
-static void reset_mouse(void) {
-  static int mouse_currently_grabbed = true;
-
-  if (!usemouse)
-    return;
-
-  if (!mouse_should_be_grabbed()) {
-    mouse_currently_grabbed = false;
-    return;
-  }
-
-  if (!mouse_currently_grabbed && !desired_fullscreen) {
-    center_mouse();
-    mouse_currently_grabbed = true;
-  }
-
-  center_mouse();
-}
-
-static bool mouse_should_be_grabbed() {
-  // never grab the mouse when in screensaver mode
-
-  //if (screensaver_mode)
-  //    return false;
-
-  // if the window doesnt have focus, never grab it
-  if (!window_focused)
-    return false;
-
-  // always grab the mouse when full screen (dont want to
-  // see the mouse pointer)
-  if (desired_fullscreen)
-    return true;
-
-  // if we specify not to grab the mouse, never grab
-  if (!mouse_enabled)
-    return false;
-
-  // always grab the mouse in camera mode when playing levels
-  // and menu is not active
-  if (walkcamera.type)
-    return (demoplayback && gamestate == GS_LEVEL && !menuactive);
-
-  // when menu is active or game is paused, release the mouse
-  if (menuactive || paused)
-    return false;
-
-  // only grab mouse when playing levels (but not demos)
-  return (gamestate == GS_LEVEL) && !demoplayback;
-}
-
-static void update_focus(void) {
+void I_VideoUpdateFocus(void) {
   Uint8 state;
 
   state = SDL_GetAppState();
@@ -520,149 +301,6 @@ static void update_focus(void) {
 #endif
 }
 
-static void reset_event(event_t *ev) {
-  ev->device_id = -1;
-  ev->type      = ev_none;
-  ev->jstype    = ev_joystick_none;
-  ev->pressed   = false;
-  ev->key       = 0;
-  ev->value     = 0;
-  ev->xmove     = 0;
-  ev->ymove     = 0;
-  ev->wchar     = 0;
-}
-
-static void get_event(void) {
-  event_t event;
-
-  SDL_Event SDLEvent;
-  SDL_Event *Event = &SDLEvent;
-
-  while (SDL_PollEvent(Event)) {
-    reset_event(&event);
-
-    switch (Event->type) {
-      case SDL_KEYDOWN:
-      case SDL_KEYUP:
-        event.type = ev_key;
-        event.key = Event->key.keysym.sym;
-
-        if (Event->type == SDL_KEYDOWN) {
-          event.pressed = true;
-          event.wchar = Event->key.keysym.unicode;
-        }
-
-        D_PostEvent(&event);
-      break;
-      case SDL_MOUSEBUTTONDOWN:
-      case SDL_MOUSEBUTTONUP:
-        if (mouse_enabled && window_focused) {
-          event.type = ev_mouse;
-          event.pressed = Event->type == SDL_MOUSEBUTTONDOWN;
-          event.key = Event->button.button;
-
-          D_PostEvent(&event);
-        }
-      break;
-      case SDL_MOUSEMOTION:
-        if (mouse_enabled && window_focused) {
-          event.type = ev_mouse_movement;
-          event.xmove = Event->motion.xrel << 5;
-          event.ymove = -(Event->motion.yrel) << 5;
-
-          D_PostEvent(&event);
-        }
-      break;
-      case SDL_JOYAXISMOTION:
-        if (I_JoystickEnabled()) {
-          event.device_id = Event->jaxis.which;
-          event.type = ev_joystick_movement;
-          event.jstype = ev_joystick_axis;
-          event.key = Event->jaxis.axis;
-          event.value = Event->jaxis.value;
-          
-          /*
-           * CG: [XXX] Below modifications to event.value were in original 
-           *           joystick code, not totally sure why though.
-           */
-
-          event.value /= 3000;
-          if (abs(event.value) < 10)
-            event.value = 0;
-
-          D_PostEvent(&event);
-        }
-      break;
-      case SDL_JOYBALLMOTION:
-        if (I_JoystickEnabled()) {
-          event.device_id = Event->jball.which;
-          event.type = ev_joystick_movement;
-          event.key = Event->jball.ball;
-          event.jstype = ev_joystick_ball;
-          event.xmove = Event->jball.xrel;
-          event.ymove = Event->jball.yrel;
-
-          D_PostEvent(&event);
-        }
-      break;
-      case SDL_JOYHATMOTION:
-        if (I_JoystickEnabled()) {
-          event.device_id = Event->jball.which;
-          event.type = ev_joystick_movement;
-          event.key = Event->jhat.hat;
-          event.jstype = ev_joystick_hat;
-          event.value = Event->jhat.value;
-
-          D_PostEvent(&event);
-        }
-      break;
-      case SDL_JOYBUTTONDOWN:
-      case SDL_JOYBUTTONUP:
-        if (I_JoystickEnabled()) {
-          event.device_id = Event->jbutton.which;
-          event.type = ev_joystick;
-          event.key = Event->jbutton.button;
-          event.pressed = Event->type == SDL_JOYBUTTONDOWN;
-
-          D_PostEvent(&event);
-        }
-      break;
-      case SDL_ACTIVEEVENT: //e6y: new mouse code
-        update_focus();
-      break;
-      case SDL_VIDEORESIZE:
-        /* ApplyWindowResize(Event); */
-      break;
-      case SDL_QUIT:
-        S_StartSound(NULL, sfx_swtchn);
-        M_QuitDOOM(0);
-      break;
-      default:
-      break;
-    }
-  }
-}
-
-static void update_grab(void) {
-  static dboolean currently_grabbed = false;
-  dboolean grab;
-
-  grab = mouse_should_be_grabbed();
-
-  if (grab && !currently_grabbed)
-    activate_mouse();
-
-  if (!grab && currently_grabbed)
-    deactivate_mouse();
-
-  currently_grabbed = grab;
-}
-
-static void shutdown_graphics(void) {
-  SDL_FreeCursor(cursors[1]);
-  deactivate_mouse();
-}
-
 int I_GetScreenStride(void) {
   int stride;
 
@@ -683,31 +321,11 @@ int I_GetScreenStride(void) {
   return stride;
 }
 
-const char* I_GetKeyString(int keycode) {
-  return SDL_GetKeyName(keycode);
-}
-
-void I_StartTic(void) {
-  get_event();
-  reset_mouse();
-  // I_PollJoystick();
-}
-
-//
-// I_StartFrame
-//
-void I_StartFrame(void) {
-  /*
-  cairo_set_operator(render_context, CAIRO_OPERATOR_CLEAR);
-  cairo_paint(render_context);
-  */
-}
-
 void I_UpdateNoBlit(void) {
 }
 
 void I_FinishUpdate(void) {
-  update_grab(); //e6y: new mouse code
+  I_MouseUpdateGrab();
 
 #ifdef MONITOR_VISIBILITY
   if (!(SDL_GetAppState() & SDL_APPACTIVE))
@@ -743,7 +361,7 @@ void I_FinishUpdate(void) {
       last_glTexID = &overlay.tex_id;
     }
 
-    gld_Finish(); // proff 04/05/2000: swap OpenGL buffers
+    gld_Finish();
 
     return;
   }
@@ -759,7 +377,7 @@ void I_FinishUpdate(void) {
       return;
     }
 
-    if (screen_multiply > 1) { // e6y: processing of screen_multiply
+    if (screen_multiply > 1) {
       R_ProcessScreenMultiply(
         screens[0].data,
         screen->pixels,
@@ -772,7 +390,7 @@ void I_FinishUpdate(void) {
       src = screens[0].data;
 
       for (h = screen->h; h > 0; h--) {
-        memcpy(dest, src, SCREENWIDTH * V_GetPixelDepth()); //e6y
+        memcpy(dest, src, SCREENWIDTH * V_GetPixelDepth());
         dest += screen->pitch;
         src += screens[0].byte_pitch;
       }
@@ -780,17 +398,6 @@ void I_FinishUpdate(void) {
 
     SDL_UnlockSurface(screen);
   }
-
-  /*
-   * Update the display buffer (flipping video pages if supported). If we need
-   * to change palette, that implicitely does a flip
-   */
-#if 0
-  if (newpal != NO_PALETTE_CHANGE) {
-    upload_new_palette(newpal, false);
-    newpal = NO_PALETTE_CHANGE;
-  }
-#endif
 
 #ifdef GL_DOOM
   if (vid_8ingl.enabled)
@@ -888,8 +495,9 @@ void I_InitBuffersRes(void) {
 
 // e6y
 // It is a simple test of CPU cache misses.
-unsigned int I_TestCPUCacheMisses(int width, int height, unsigned int mintime) {
-  int k = 0;
+unsigned int I_TestCPUCacheMisses(int width, int height,
+                                             unsigned int mintime) {
+  int   k = 0;
   char *s = malloc(width * height);
   char *d = malloc(width * height);
   char *ps;
@@ -1098,27 +706,20 @@ void I_InitGraphics(void) {
 
   initialized = true;
 
-  atexit(shutdown_graphics);
   lprintf(LO_INFO, "I_InitGraphics: %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
 
-  /* Initialize the overlay */
   initialize_overlay();
 
-  /* Set the video mode */
   I_UpdateVideoMode();
 
-  //e6y: setup the window title
   I_SetWindowCaption();
 
-  //e6y: set the application icon
   I_SetWindowIcon();
 
-  /* Initialize the input system */
-  init_inputs();
+  I_InputInit();
 
-  //e6y: new mouse code
-  update_focus();
-  update_grab();
+  I_VideoUpdateFocus();
+  I_MouseUpdateGrab();
 }
 
 int I_GetModeFromString(const char *modestr) {

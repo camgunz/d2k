@@ -21,10 +21,16 @@
 /*****************************************************************************/
 
 
-#ifndef XV_VIDEO_H__
-#define XV_VIDEO_H__
+#ifndef I_MOUSE_H__
+#define I_MOUSE_H__
 
-void XV_VideoRegisterInterface(void);
+void I_MouseInit(void);
+bool I_MouseEnabled(void);
+void I_MouseShutdown(void);
+void I_MouseActivate(void);
+void I_MouseDeactivate(void);
+void I_MouseReset(void);
+void I_MouseUpdateGrab(void);
 
 #endif
 

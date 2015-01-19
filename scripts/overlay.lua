@@ -48,17 +48,16 @@ function Overlay:initialized()
 end
 
 function Overlay:build()
-  print('[!!] Building overlay')
   assert(not self:initialized(), 'overlay already built')
 
-  d2k.build_overlay_pixels()
+  d2k.Video.build_overlay_pixels()
 
   self.render_surface = Cairo.ImageSurface.create_for_data(
-    d2k.get_overlay_pixels(),
+    d2k.Video.get_overlay_pixels(),
     Cairo.Format.RGB24, -- CG: FIXME: This is duplicated in i_video.c
-    d2k.get_screen_width(),
-    d2k.get_screen_height(),
-    d2k.get_screen_stride()
+    d2k.Video.get_screen_width(),
+    d2k.Video.get_screen_height(),
+    d2k.Video.get_screen_stride()
   )
 
   local status = self.render_surface.status
@@ -75,23 +74,22 @@ function Overlay:build()
     error(string.format('Error creating overlay surface (%s)', cairo_error))
   end
 
-  if d2k.using_opengl() then
-    d2k.build_overlay_texture()
+  if d2k.Video.using_opengl() then
+    d2k.Video.build_overlay_texture()
   end
 
-  d2k.clear_overlay_needs_resetting()
+  d2k.Video.clear_overlay_needs_resetting()
 end
 
 function Overlay:destroy()
-  print('[!!] Destroying overlay')
   assert(self:initialized(), 'overlay already destroyed')
 
   self.render_context = nil
   self.render_surface = nil
 
-  d2k.destroy_overlay_pixels()
-  if d2k.using_opengl() then
-    d2k.destroy_overlay_texture()
+  d2k.Video.destroy_overlay_pixels()
+  if d2k.Video.using_opengl() then
+    d2k.Video.destroy_overlay_texture()
   end
 end
 
@@ -104,17 +102,16 @@ function Overlay:reset()
 end
 
 function Overlay:lock()
-  if d2k.overlay_needs_resetting() then
-    print('[!!] overlay needs resetting')
+  if d2k.Video.overlay_needs_resetting() then
     self:reset()
   end
 
-  d2k.lock_screen()
+  d2k.Video.lock_screen()
 end
 
 function Overlay:unlock()
   self.render_surface:flush()
-  d2k.unlock_screen()
+  d2k.Video.unlock_screen()
 end
 
 function Overlay:clear()

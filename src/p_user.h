@@ -81,8 +81,6 @@ void P_ClearMessages(int playernum);
 
 void P_SetPlayerName(int playernum, const char *name);
 
-void XP_ExportFunctions(void);
-
 #endif  /* P_USER__ */
 
 /* vi: set et ts=2 sw=2: */

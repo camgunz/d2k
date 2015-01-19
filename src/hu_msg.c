@@ -32,6 +32,7 @@
 #include "hu_lib.h"
 #include "hu_msg.h"
 #include "hu_stuff.h"
+#include "i_input.h"
 #include "i_system.h"
 #include "i_video.h"
 #include "lprintf.h"
@@ -440,12 +441,12 @@ bool HU_MessageWidgetResponder(message_widget_t *mw, event_t *ev) {
   if (!(ev->type == ev_key && ev->pressed))
     return false;
 
-  if (ev->key == SDLK_PAGEUP && keybindings.shiftdown) {
+  if (ev->key == SDLK_PAGEUP && key_states.shiftdown) {
     scroll_up(mw);
     return true;
   }
 
-  if (ev->key == SDLK_PAGEDOWN && keybindings.shiftdown) {
+  if (ev->key == SDLK_PAGEDOWN && key_states.shiftdown) {
     scroll_down(mw);
     return true;
   }

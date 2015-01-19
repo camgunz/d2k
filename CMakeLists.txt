@@ -800,8 +800,10 @@ ENDIF()
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/SDL)
 SET(SDL_SOURCES
   ${CMAKE_SOURCE_DIR}/src/SDL/i_font.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_input.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_joy.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_emusic.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_mouse.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_music.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_network.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_sound.c
@@ -941,11 +943,18 @@ SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/x_main.c
   ${CMAKE_SOURCE_DIR}/src/z_bmalloc.c
   ${CMAKE_SOURCE_DIR}/src/z_zone.c
+  ${CMAKE_SOURCE_DIR}/src/xam_main.c
   ${CMAKE_SOURCE_DIR}/src/xc_main.c
   ${CMAKE_SOURCE_DIR}/src/xd_main.c
+  ${CMAKE_SOURCE_DIR}/src/xg_game.c
+  ${CMAKE_SOURCE_DIR}/src/xg_keys.c
+  ${CMAKE_SOURCE_DIR}/src/xi_input.c
   ${CMAKE_SOURCE_DIR}/src/xi_main.c
+  ${CMAKE_SOURCE_DIR}/src/xm_menu.c
+  ${CMAKE_SOURCE_DIR}/src/xm_misc.c
   ${CMAKE_SOURCE_DIR}/src/xp_user.c
-  ${CMAKE_SOURCE_DIR}/src/xv_video.c
+  ${CMAKE_SOURCE_DIR}/src/xst_main.c
+  ${CMAKE_SOURCE_DIR}/src/xv_main.c
 )
 
 SET(CLIENT_SOURCES

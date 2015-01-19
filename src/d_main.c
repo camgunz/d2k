@@ -59,11 +59,18 @@
 #include "v_video.h"
 #include "w_wad.h"
 #include "wi_stuff.h"
+#include "xam_main.h"
 #include "xc_main.h"
 #include "xd_main.h"
+#include "xg_game.h"
+#include "xg_keys.h"
+#include "xi_input.h"
 #include "xi_main.h"
+#include "xm_menu.h"
+#include "xm_misc.h"
 #include "xp_user.h"
-#include "xv_video.h"
+#include "xst_main.h"
+#include "xv_main.h"
 
 //e6y
 #include "r_demo.h"
@@ -132,9 +139,6 @@ char    *basesavegame;             // killough 2/16/98: savegame directory
  */
 GPtrArray *resource_files = NULL;
 GPtrArray *deh_files = NULL;
-
-/* CG 7/24/2014: D_Responder changes */
-keybindings_t keybindings;
 
 //jff 4/19/98 list of standard IWAD names
 const char *const standard_iwads[]=
@@ -421,147 +425,6 @@ bool D_Responder(event_t *ev) {
   return false;
 }
 
-/*
- * D_PostEvent - Event handling
- *
- * Called by I/O functions when an event is received.
- * Try event handlers for each code area in turn.
- * cph - in the true spirit of the Boom source, let the
- *  short ciruit operator madness begin!
- * CG - not so much with the madness anymore
- */
-
-void D_PostEvent(event_t *ev) {
-  SDLMod mod_keys = SDL_GetModState();
-
-  keybindings.shiftdown  = false;
-  keybindings.ctrldown   = false;
-  keybindings.altdown    = false;
-  keybindings.metadown   = false;
-  keybindings.lsuperdown = false;
-  keybindings.rsuperdown = false;
-
-  if (mod_keys & KMOD_SHIFT)
-    keybindings.shiftdown = true;
-  if (mod_keys & KMOD_CTRL)
-    keybindings.ctrldown = true;
-  if (mod_keys & KMOD_ALT)
-    keybindings.altdown = true;
-  if (mod_keys & KMOD_META)
-    keybindings.metadown = true;
-
-  if ((ev->type == ev_key && ev->pressed) && ev->key == SDLK_LSUPER)
-    keybindings.lsuperdown = true;
-  else if ((ev->type == ev_key && ev->pressed) && ev->key == SDLK_RSUPER)
-    keybindings.rsuperdown = true;
-  if ((ev->type == ev_key && (!ev->pressed)) && ev->key == SDLK_LSUPER)
-    keybindings.lsuperdown = false;
-  else if ((ev->type == ev_key && (!ev->pressed)) && ev->key == SDLK_RSUPER)
-    keybindings.rsuperdown = false;
-
-  if (ev->type == ev_key && ev->pressed && keybindings.altdown) {
-#ifdef MACOSX
-    // Switch windowed<->fullscreen if pressed <Command-F>
-    if (ev->key == SDLK_f) {
-      V_ToggleFullscreen();
-      return;
-    }
-#else
-    // Prevent executing action on Alt-Tab
-    if (ev->key == SDLK_TAB)
-      return;
-
-    // Switch windowed<->fullscreen if pressed Alt-Enter
-    if (ev->key == SDLK_RETURN) {
-      V_ToggleFullscreen();
-      return;
-    }
-
-    // Immediately exit on Alt+F4 ("Boss Key")
-    if (ev->key == SDLK_F4) {
-      I_SafeExit(0);
-      return;
-    }
-#endif
-  }
-
-  // Allow only sensible keys during skipping
-  if (doSkip) {
-    if (ev->type == ev_key) {
-      // Immediate exit if key_quit is pressed in skip mode
-      if (ev->key == key_quit)
-        I_SafeExit(0);
-
-      // key_use is used for seeing the current frame
-      if (ev->key != key_use && ev->key != key_demo_skip)
-        return;
-    }
-  }
-
-  if (nodrawers) {
-    G_Responder(ev);
-    return;
-  }
-
-  /*
-   * killough 2/22/98: add support for screenshot key:
-   * cph 2001/02/04: no need for this to be a gameaction, just do it
-   */
-  if ((ev->type == ev_key && ev->pressed) && ev->key == key_screenshot)
-    M_ScreenShot(); /* Don't eat the keypress. See sf bug #1843280. */
-
-  /* CG 7/30/2014: ESC ought to quit chat if it's active */
-  /*
-  if ((ev->type == ev_key && ev->pressed) &&
-      ev->key == SDLK_ESCAPE &&
-      HU_ChatActive()) {
-    HU_DeactivateChat();
-    return;
-  }
-  */
-
-#ifdef ENABLE_OVERLAY
-  if (HU_ChatActive()) {
-    HU_Responder(ev);
-    return;
-  }
-#endif
-
-  if (menuactive) {
-    M_Responder(ev);
-    return;
-  }
-
-#ifdef ENABLE_OVERLAY
-  if (C_Active()) {
-    C_Responder(ev);
-    return;
-  }
-#endif
-
-  if (HU_Responder(ev))
-    return;
-
-  if (M_Responder(ev))
-    return;
-
-#ifdef ENABLE_OVERLAY
-  if (C_Responder(ev))
-    return;
-#endif
-
-  if (D_Responder(ev))
-    return;
-
-  if (ST_Responder(ev))
-    return;
-
-  if (AM_Responder(ev))
-    return;
-
-  G_Responder(ev);
-}
-
 //
 // D_Wipe
 //
@@ -803,7 +666,7 @@ static const char *auto_shot_fname;
 //  called by D_DoomMain, never exits.
 // Manages timing and IO,
 //  calls all ?_Responder, ?_Ticker, and ?_Drawer,
-//  calls I_GetTime, I_StartFrame, and I_StartTic
+//  calls I_GetTime and I_StartTic
 //
 
 static void D_DoomLoop(void) {
@@ -811,8 +674,6 @@ static void D_DoomLoop(void) {
 
   for (;;) {
     // frame syncronous IO operations
-    if (!nodrawers)
-      I_StartFrame();
 
     if (ffmap == gamemap)
       ffmap = 0;
@@ -2477,11 +2338,18 @@ static void D_DoomMainSetup(void) {
   C_Init();
 #endif
 
-  XI_RegisterInterface();
-  XD_RegisterInterface();
-  XV_VideoRegisterInterface();
-  XP_UserRegisterInterface();
+  XAM_RegisterInterface();
   XC_RegisterInterface();
+  XD_RegisterInterface();
+  XG_GameRegisterInterface();
+  XG_KeysRegisterInterface();
+  XI_RegisterInterface();
+  XI_InputRegisterInterface();
+  XM_MenuRegisterInterface();
+  XM_MiscRegisterInterface();
+  XP_UserRegisterInterface();
+  XST_RegisterInterface();
+  XV_RegisterInterface();
 
   X_ExposeInterfaces(X_GetState());
 
