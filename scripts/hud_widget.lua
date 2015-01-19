@@ -41,6 +41,7 @@ function HUDWidget:new(w)
 end
 
 function HUDWidget:get_name()
+  return 'HUD Widget'
 end
 
 function HUDWidget:reset()
@@ -54,6 +55,16 @@ end
 
 function HUDWidget:is_active()
   return false
+end
+
+function HUDWidget:on_add(hud)
+  self.render_context = d2k.overlay.render_context
+  self.text_context = d2k.overlay.text_context
+end
+
+function HUDWidget:on_remove(hud)
+  self.render_context = nil
+  self.text_context = nil
 end
 
 return {HUDWidget = HUDWidget}

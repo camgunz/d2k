@@ -23,9 +23,16 @@
 
 #include "z_zone.h"
 
+#include "doomstat.h"
 #include "d_event.h"
 #include "g_game.h"
 #include "x_main.h"
+
+static int XG_GameGetGametic(lua_State *L) {
+  lua_pushinteger(L, gametic);
+
+  return 1;
+}
 
 static int XG_GameHandleEvent(lua_State *L) {
   event_t *ev = luaL_checkudata(L, -1, "InputEvent");
@@ -37,7 +44,8 @@ static int XG_GameHandleEvent(lua_State *L) {
 }
 
 void XG_GameRegisterInterface(void) {
-  X_RegisterObjects("Game", 1,
+  X_RegisterObjects("Game", 2,
+    "get_gametic",  X_FUNCTION, XG_GameGetGametic,
     "handle_event", X_FUNCTION, XG_GameHandleEvent
   );
 }

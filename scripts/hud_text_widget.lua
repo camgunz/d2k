@@ -25,63 +25,87 @@ local lgi = require('lgi')
 local Cairo = lgi.cairo
 local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
-local hud_widget = require('hud_widget')
+local HUDWidget = require('hud_widget')
 
-Console = hud_widget.HUDWidget:new({
-  SCROLL_DOWN_TIME = 150.0,
-  SCROLL_UP_TIME   = 150.0,
-  MARGIN           = 8
-})
+TextWidget = HUDWidget.HUDWidget:new()
 
-function Console:new(c)
-  c = c or {}
-  setmetatable(c, self)
+function TextWidget:new(tw)
+  tw = tw or {}
+  
+  tw.x = tw.x or 0
+  tw.y = tw.y or 0
+  tw.width = tw.width or 0
+  tw.height = tw.height or 0
+  tw.text = tw.text or ''
+  tw.max_width = tw.max_width or d2k.Video.get_screen_width()
+  tw.max_height = tw.max_height or d2k.Video.get_screen_height()
+  tw.fg_color = tw.fg_color or {1.0, 1.0, 1.0, 1.0}
+  tw.bg_color = tw.bg_color or {0.0, 0.0, 0.0, 0.0}
+  tw.scrollable = tw.scrollable or false
+  tw.scroll_amount = tw.scroll_amount or 0
+  tw.retractable = tw.retractable or false
+  tw.retraction_rate = tw.retraction_rate or 0.0
+  tw.align_bottom = tw.align_bottom or false
+  tw.font_description_text = tw.font_description_text or 
+                             d2k.hud.font_description_text
+
+  tw.text_context = nil
+  tw.layout = nil
+  tw.base_line_height = -1
+  tw.base_layout_width = -1
+  tw.base_layout_height = -1
+  tw.layout_width = 0
+  tw.layout_height = 0
+  tw.text_changed = false
+  tw.offset = 0.0
+  tw.line_count = 0
+  tw.scroll_amount = 0
+  tw.last_retraction = 0
+  tw.retraction_timeout = 0
+  tw.retraction_target = 0
+
+  setmetatable(tw, self)
   self.__index = self
 
-  c.text_context = nil
-  c.layout = nil
-  c.scroll_rate = 0.0
-  c.height = 0.0
-  c.max_width = d2k.Video.get_screen_width()
-  c.max_height = d2k.Video.get_screen_height()
-  c:build_layout()
+  tw:build_layout()
 
-  return c
+  return tw
 end
 
-function Console:get_name()
-  return 'console'
+function TextWidget:get_name()
+  return 'Text Widget'
 end
 
-function Console:reset()
+function TextWidget:reset()
 end
 
-function Console:tick()
+function TextWidget:tick()
 end
 
-function Console:build_layout()
+function TextWidget:draw()
+  if self.text_changed then
+    self.layout:set_markup(self.text, -1)
+    PangoCairo.update_context(d2k.overlay.render_context, self.text_context)
+    PangoCairo.update_layout(d2k.overlay.render_context, self.layout)
+  end
+  PangoCairo.show_layout(d2k.overlay.render_context, self.layout)
+end
+
+function TextWidget:build_layout()
   self.render_context = d2k.overlay.render_context
   self.text_context = d2k.overlay.text_context
   self.layout = Pango.Layout.new(self.text_context)
   self.layout:set_font_description(Pango.FontDescription.from_string(
-    'Monkirta Pursuit NC 10'
+    self.font_description_text
   ))
 end
 
-function Console:draw()
-  if not self.render_context then
-    self:build_layout()
-  elseif d2k.overlay.render_context ~= self.render_context then
-    self:build_layout()
-  end
-
-  self.layout:set_text("Hey There", -1)
-  PangoCairo.update_context(d2k.overlay.render_context, self.text_context)
-  PangoCairo.update_layout(d2k.overlay.render_context, self.layout)
-  PangoCairo.show_layout(d2k.overlay.render_context, self.layout)
+function TextWidget:set_text(text)
+  self.text = text
+  self.text_changed = true
 end
 
-return {Console = Console}
+return {TextWidget = TextWidget}
 
 -- vi: et ts=2 sw=2
 

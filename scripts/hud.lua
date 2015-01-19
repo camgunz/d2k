@@ -29,7 +29,8 @@ HUD = {}
 function HUD:new(h)
   h = h or {
     widgets = {},
-    active = false
+    active = false,
+    font_description_text = 'Monkirta Pursuit NC 10'
   }
 
   setmetatable(h, self)
@@ -42,7 +43,7 @@ function HUD:add_widget(widget)
   table.insert(self.widgets, widget)
 
   widget.hud = self
-  widget.render_context = d2k.overlay.render_context
+  widget:on_add(self)
 end
 
 function HUD:remove_widget(widget)
@@ -55,7 +56,7 @@ function HUD:remove_widget(widget)
   end
 
   widget.hud = nil
-  widget.render_context = nil
+  widget:on_remove(self)
 end
 
 function HUD:start()

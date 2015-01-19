@@ -25,12 +25,16 @@ Overlay = {}
 
 local lgi = require('lgi')
 local Cairo = lgi.cairo
+local Pango = lgi.Pango
+local PangoCairo = lgi.PangoCairo
 
 function Overlay:new(o)
-  o = o or {
+  o = o or {}
+  --[[
     render_context = nil,
     render_surface = nil
   }
+  --]]
   setmetatable(o, self)
   self.__index = self
 
@@ -79,6 +83,17 @@ function Overlay:build()
   end
 
   d2k.Video.clear_overlay_needs_resetting()
+
+  local font_options = Cairo.FontOptions.create()
+  local font_map = PangoCairo.FontMap.get_default()
+
+  self.text_context = font_map:create_context()
+  self.text_context:set_resolution(96.0)
+  font_options:set_hint_style(Cairo.HINT_STYLE_FULL)
+  font_options:set_hint_metrics(Cairo.HINT_METRICS_ON)
+  font_options:set_antialias(Cairo.ANTIALIAS_SUBPIXEL)
+  self.text_context:set_font_options(font_options)
+  self.render_context:update_context(self.text_context)
 end
 
 function Overlay:destroy()
