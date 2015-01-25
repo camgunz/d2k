@@ -107,14 +107,11 @@ end
 
 function HUD:handle_event(event)
   print('Hello from hud.handle_event')
-
-  --[[
   for i, w in pairs(self.widgets) do
     if w:is_active() and w:handle_event(event) then
       return true
     end
   end
-  --]]
 
   return false
 end

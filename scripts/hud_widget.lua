@@ -35,13 +35,22 @@ HUDWidget = {}
 
 function HUDWidget:new(w)
   w = w or {}
+
   setmetatable(w, self)
   self.__index = self
+
+  w:set_name('HUD Widget')
+  w:deactivate()
+
   return w
 end
 
 function HUDWidget:get_name()
-  return 'HUD Widget'
+  return self.name
+end
+
+function HUDWidget:set_name(name)
+  self.name = name
 end
 
 function HUDWidget:reset()
@@ -53,18 +62,27 @@ end
 function HUDWidget:draw()
 end
 
+function HUDWidget:activate()
+  self.active = true
+end
+
+function HUDWidget:deactivate()
+  self.active = false
+end
+
 function HUDWidget:is_active()
-  return false
+  return self.active
 end
 
 function HUDWidget:on_add(hud)
-  self.render_context = d2k.overlay.render_context
-  self.text_context = d2k.overlay.text_context
+  self:activate()
 end
 
 function HUDWidget:on_remove(hud)
-  self.render_context = nil
-  self.text_context = nil
+  self:deactivate()
+end
+
+function HUDWidget:handle_event(event)
 end
 
 return {HUDWidget = HUDWidget}

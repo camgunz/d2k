@@ -24,6 +24,7 @@
 #include "z_zone.h"
 
 #include "i_main.h"
+#include "i_system.h"
 #include "x_main.h"
 
 static int XF_Quit(lua_State *L) {
@@ -32,10 +33,17 @@ static int XF_Quit(lua_State *L) {
   return 0;
 }
 
+static int XF_GetTicks(lua_State *L) {
+  lua_pushinteger(L, I_GetTicks());
+
+  return 1;
+}
+
 void XI_RegisterInterface(void) {
-  X_RegisterObjects(NULL, 2,
-    "quit", X_FUNCTION, XF_Quit,
-    "exit", X_FUNCTION, XF_Quit
+  X_RegisterObjects("System", 2,
+    "get_ticks", X_FUNCTION, XF_GetTicks,
+    "quit",      X_FUNCTION, XF_Quit,
+    "exit",      X_FUNCTION, XF_Quit
   );
 }
 

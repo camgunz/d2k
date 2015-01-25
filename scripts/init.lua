@@ -24,9 +24,9 @@
 package.path = package.path .. ';' .. d2k.script_path
 
 local input_handler = require('input_handler')
-local overlay = require('overlay')
-local hud = require('hud')
-local hud_text_widget = require('hud_text_widget')
+local Overlay = require('overlay')
+local HUD = require('hud')
+local Console = require('console')
 
 print('X_Init: Init script engine.')
 
@@ -34,18 +34,16 @@ print('X_Init: Creating input handler.')
 d2k.input_handler = input_handler.InputHandler:new()
 
 print('X_Init: Creating overlay.')
-d2k.overlay = overlay.Overlay:new()
+d2k.overlay = Overlay.Overlay:new()
 
 print('X_Init: Creating HUD')
-d2k.hud = hud.HUD:new()
+d2k.hud = HUD.HUD:new()
 
 print('X_Init: Creating console')
-d2k.console = hud_text_widget.TextWidget:new()
+d2k.console = Console.Console:new()
 
 print('X_Init: Adding console to HUD')
 d2k.hud:add_widget(d2k.console)
-
-d2k.console:set_text('Hey there')
 
 -- vi: et ts=2 sw=2
 
