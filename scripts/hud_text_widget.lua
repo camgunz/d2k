@@ -27,8 +27,6 @@ local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
 local HUDWidget = require('hud_widget')
 
-local DEFAULT_RETRACTION_TIME = 666
-local DEFAULT_RETRACTION_TIMEOUT = 2000
 local TextWidget = HUDWidget.HUDWidget:new()
 
 function TextWidget:new(tw)
@@ -48,28 +46,19 @@ function TextWidget:new(tw)
   tw.fg_color = tw.fg_color or {1.0, 1.0, 1.0, 1.0}
   tw.bg_color = tw.bg_color or {0.0, 0.0, 0.0, 0.0}
   tw.scrollable = tw.scrollable or false
-  tw.retractable = tw.retractable or false
-  tw.retraction_rate = tw.retraction_rate or 0.0
   tw.align_bottom = tw.align_bottom or false
   tw.font_description_text = tw.font_description_text or 
                              d2k.hud.font_description_text
+  tw.word_wrap = tw.word_wrap or false
+  tw.scroll_amount = tw.scroll_amount or false
 
   tw.text_context = nil
   tw.current_render_context = nil
   tw.layout = nil
-  tw.base_line_height = -1
-  tw.base_layout_width = -1
-  tw.base_layout_height = -1
   tw.layout_width = 0
   tw.layout_height = 0
-  tw.text_changed = false
-  tw.position_changed = false
+  tw.needs_updating = false
   tw.offset = 0.0
-  tw.scroll_amount = 0
-  tw.line_count = 0
-  tw.last_retraction = 0
-  tw.retraction_timeout = 0
-  tw.retraction_target = 0
 
   setmetatable(tw, self)
   self.__index = self
@@ -88,16 +77,27 @@ end
 
 function TextWidget:draw()
   local cr = d2k.overlay.render_context
+  local line_count = 0
 
   if not self.current_render_context or self.current_render_context ~= cr then
     self:build_layout()
   end
-    
-  if self.text_changed or self.position_changed then
+
+  if self.word_wrap then
+    self.layout:set_width(self.width * Pango.SCALE)
+  else
+    self.layout:set_width(-1)
+  end
+
+  -- self.layout:set_height(self.height * Pango.SCALE)
+
+  if self.needs_updating then
     self.layout:set_markup(self.text, -1)
     PangoCairo.update_context(cr, d2k.overlay.text_context)
     PangoCairo.update_layout(cr, self.layout)
   end
+
+  line_count = self.layout:get_line_count()
 
   cr:save()
 
@@ -116,6 +116,10 @@ function TextWidget:draw()
   )
   cr:paint()
 
+  if line_count <= 0 then
+    return
+  end
+
   cr:reset_clip()
   cr:new_path()
   cr:rectangle(
@@ -133,12 +137,39 @@ function TextWidget:draw()
     self.fg_color[4]
   )
 
-  cr:move_to(
-    self.x + self.left_margin,
-    self.y + self.top_margin
-  )
+  local x = self.x + self.left_margin
+  local y = self.y + self.top_margin
+  local text_height = self.height - (self.top_margin + self.bottom_margin)
+  local layout_width, layout_height = self.layout:get_pixel_size()
+  local layout_ink_extents, layout_logical_extents = self.layout:get_pixel_extents()
+  local layout_offset = (layout_height - text_height) - self.offset
 
-  PangoCairo.show_layout(cr, self.layout)
+  local iter = self.layout:get_iter()
+  local line_number = 0
+  local y_cutoff = layout_logical_extents.height - text_height
+
+  repeat
+    local line = iter:get_line_readonly()
+    local line_ink_extents, line_logical_extents = iter:get_line_extents()
+    local baseline = iter:get_baseline()
+    local baseline_pixels = baseline / Pango.SCALE
+    local line_x = x + (line_logical_extents.x / Pango.SCALE)
+    local line_y = y + (line_logical_extents.y / Pango.SCALE) - layout_offset
+
+    if baseline_pixels > y_cutoff or line_y < text_height then
+      cr:move_to(
+        x + (line_logical_extents.x / Pango.SCALE),
+        y + (line_logical_extents.y / Pango.SCALE) - layout_offset
+      )
+      PangoCairo.show_layout_line(cr, line)
+
+      if (baseline_pixels - layout_offset) > (self.height - self.bottom_margin) then
+        break
+      end
+    end
+
+    line_number = line_number + 1
+  until not iter:next_line()
 
   cr:restore()
 end
@@ -157,7 +188,29 @@ end
 
 function TextWidget:set_text(text)
   self.text = text
-  self.text_changed = true
+  self.needs_updating = true
+end
+
+function TextWidget:set_wrap_mode(mode)
+  self.layout:set_wrap(mode)
+end
+
+function TextWidget:set_width(width)
+  self.width = width
+  self.needs_updating = true
+end
+
+function TextWidget:set_height(height)
+  self.height = height
+  self.needs_updating = true
+end
+
+function TextWidget:increase_offset()
+  self.offset = math.min(self.height, self.offset + self.scroll_amount)
+end
+
+function TextWidget:decrease_offset()
+  self.offset = math.max(0, self.offset - self.scroll_amount)
 end
 
 return {TextWidget = TextWidget}

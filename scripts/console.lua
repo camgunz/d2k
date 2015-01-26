@@ -29,16 +29,16 @@ local HUDWidget = require('hud_widget')
 local TextWidget = require('hud_text_widget')
 
 Console = HUDWidget.HUDWidget:new({
-  SCROLL_DOWN_TIME = 1200.0,
-  SCROLL_UP_TIME   = 1200.0,
-  MARGIN           = 8
+  EXTENSION_TIME  = 1200.0,
+  RETRACTION_TIME = 1200.0,
+  MARGIN          = 8
 })
 
 function Console:new(c)
   c = c or {}
 
-  c.scroll_down_time = c.scroll_down_time or Console.SCROLL_DOWN_TIME
-  c.scroll_up_time = c.scroll_up_time or Console.SCROLL_UP_TIME
+  c.extension_time = c.extension_time or Console.EXTENSION_TIME
+  c.retraction_time = c.retraction_time or Console.RETRACTION_TIME
   c.max_height = c.max_height or d2k.Video.get_screen_height() / 2
 
   c.max_width = d2k.Video.get_screen_width()
@@ -50,20 +50,24 @@ function Console:new(c)
   c.output = TextWidget.TextWidget:new({
     x = 0,
     y = 0,
-    top_margin = c.top_margin or Console.MARGIN,
+    top_margin = c.top_margin or 0,
     bottom_margin = c.bottom_margin or Console.MARGIN,
     left_margin = c.left_margin or Console.MARGIN,
     right_margin = c.right_margin or Console.MARGIN,
+    align_bottom = true,
     width = c.max_width,
     height = c.max_height,
     fg_color = c.fg_color or {0.1, 0.8, 0.6, 1.0},
-    bg_color = c.bg_color or {  0,   0,   0, 0.6}
+    bg_color = c.bg_color or {  0,   0,   0, 0.6},
+    word_wrap = true,
+    scroll_amount = 12
   })
 
   setmetatable(c, self)
   self.__index = self
 
   c:set_name('Console Output')
+  c.output:set_wrap_mode(Pango.WrapMode.CHAR)
 
   return c
 end
@@ -95,17 +99,9 @@ function Console:tick()
       self.height = self.max_height
       self.scroll_rate = 0
     end
-
-    print(string.format('Scroll rate, height: %f, %d',
-      self.scroll_rate, self.height
-    ))
   end
 
-  self.output.height = self.height
-
-  self.output:set_text(string.format("[UD]Ladna: console height: %d",
-    self.height
-  ))
+  self.output:set_height(self.height)
   self.output:tick()
 end
 
@@ -121,17 +117,26 @@ function Console:handle_event(event)
   if event:is_key_press(d2k.Key.BACKQUOTE) then
     self:toggle_scroll()
   end
+
+  if d2k.KeyStates.shift_is_down() then
+    if event:is_key_press(d2k.Key.PAGEUP) then
+      self.output:increase_offset()
+    elseif event:is_key_press(d2k.Key.PAGEDOWN) then
+      self.output:decrease_offset()
+    end
+  end
+
 end
 
 function Console:toggle_scroll()
   if self.height == self.max_height then
-    self.scroll_rate = -(self.max_height / self.scroll_down_time)
+    self.scroll_rate = -(self.max_height / self.retraction_time)
   elseif self.height == 0 then
-    self.scroll_rate = self.max_height / self.scroll_down_time
-  elseif self.scroll_rate < 0 then
-    self.scroll_rate = self.max_height / self.scroll_down_time
+    self.scroll_rate = self.max_height / self.extension_time
   elseif self.scroll_rate > 0 then
-    self.scroll_rate = -(self.max_height / self.scroll_down_time)
+    self.scroll_rate = -(self.max_height / self.retraction_time)
+  elseif self.scroll_rate < 0 then
+    self.scroll_rate = self.max_height / self.extension_time
   end
 
   self.last_scroll_ms = d2k.System.get_ticks()
