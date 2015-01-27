@@ -25,10 +25,10 @@ local lgi = require('lgi')
 local Cairo = lgi.cairo
 local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
-local HUDWidget = require('hud_widget')
+local Widget = require('widget')
 local TextWidget = require('hud_text_widget')
 
-Console = HUDWidget.HUDWidget:new({
+Console = Widget.Widget:new({
   EXTENSION_TIME  = 1200.0,
   RETRACTION_TIME = 1200.0,
   MARGIN          = 8
@@ -102,6 +102,7 @@ function Console:tick()
   end
 
   self.output:set_height(self.height)
+  self.output:set_text('[UD]Ladna: Hey there')
   self.output:tick()
 end
 
