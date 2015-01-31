@@ -21,12 +21,12 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-Overlay = {}
-
 local lgi = require('lgi')
 local Cairo = lgi.cairo
 local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
+
+local Overlay = {}
 
 function Overlay:new(o)
   o = o or {}

@@ -21,19 +21,9 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-HUDWidget = {}
+local Widget = {}
 
---
--- CG: TODO: "Fullscreen" HUD widget:
---             - HUDWidget:handles_all_events()
---             - HUDWidget:activate()
---               - in hud, keep list of fs widgets in order of activation
---             - HUDWidget:deactivate()
---               - in hud, remove fs widget from list
---             - HUDWidget:is_active()
---
-
-function HUDWidget:new(w)
+function Widget:new(w)
   w = w or {}
 
   setmetatable(w, self)
@@ -45,47 +35,47 @@ function HUDWidget:new(w)
   return w
 end
 
-function HUDWidget:get_name()
+function Widget:get_name()
   return self.name
 end
 
-function HUDWidget:set_name(name)
+function Widget:set_name(name)
   self.name = name
 end
 
-function HUDWidget:reset()
+function Widget:reset()
 end
 
-function HUDWidget:tick()
+function Widget:tick()
 end
 
-function HUDWidget:draw()
+function Widget:draw()
 end
 
-function HUDWidget:activate()
+function Widget:activate()
   self.active = true
 end
 
-function HUDWidget:deactivate()
+function Widget:deactivate()
   self.active = false
 end
 
-function HUDWidget:is_active()
+function Widget:is_active()
   return self.active
 end
 
-function HUDWidget:on_add(hud)
+function Widget:on_add(hud)
   self:activate()
 end
 
-function HUDWidget:on_remove(hud)
+function Widget:on_remove(hud)
   self:deactivate()
 end
 
-function HUDWidget:handle_event(event)
+function Widget:handle_event(event)
 end
 
-return {HUDWidget = HUDWidget}
+return {Widget = Widget}
 
 -- vi: et ts=2 sw=2
 

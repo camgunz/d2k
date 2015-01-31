@@ -26,12 +26,14 @@ local Cairo = lgi.cairo
 local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
 local Widget = require('widget')
-local TextWidget = require('hud_text_widget')
+local TextWidget = require('text_widget')
 
-Console = Widget.Widget:new({
-  EXTENSION_TIME  = 1200.0,
-  RETRACTION_TIME = 1200.0,
-  MARGIN          = 8
+local Console = Widget.Widget:new({
+  EXTENSION_TIME           = 1200.0,
+  RETRACTION_TIME          = 1200.0,
+  MARGIN                   = 8,
+  HORIZONTAL_SCROLL_AMOUNT = 6,
+  VERTICAL_SCROLL_AMOUNT   = 12,
 })
 
 function Console:new(c)
@@ -54,20 +56,19 @@ function Console:new(c)
     bottom_margin = c.bottom_margin or Console.MARGIN,
     left_margin = c.left_margin or Console.MARGIN,
     right_margin = c.right_margin or Console.MARGIN,
-    align_bottom = true,
+    horizontal_alignment = TextWidget.ALIGN_LEFT,
+    vertical_alignment = TextWidget.ALIGN_BOTTOM,
     width = c.max_width,
     height = c.max_height,
-    fg_color = c.fg_color or {0.1, 0.8, 0.6, 1.0},
-    bg_color = c.bg_color or {  0,   0,   0, 0.6},
-    word_wrap = true,
-    scroll_amount = 12
+    fg_color = c.fg_color or {1.0, 1.0, 1.0, 1.0},
+    bg_color = c.bg_color or {  0,   0,   0, 0.85},
+    word_wrap = TextWidget.WRAP_WORD
   })
 
   setmetatable(c, self)
   self.__index = self
 
   c:set_name('Console Output')
-  c.output:set_wrap_mode(Pango.WrapMode.CHAR)
 
   return c
 end
@@ -102,7 +103,6 @@ function Console:tick()
   end
 
   self.output:set_height(self.height)
-  self.output:set_text('[UD]Ladna: Hey there')
   self.output:tick()
 end
 
@@ -120,13 +120,22 @@ function Console:handle_event(event)
   end
 
   if d2k.KeyStates.shift_is_down() then
-    if event:is_key_press(d2k.Key.PAGEUP) then
-      self.output:increase_offset()
-    elseif event:is_key_press(d2k.Key.PAGEDOWN) then
-      self.output:decrease_offset()
+    if event:is_key_press(d2k.Key.UP) then
+      self.output:scroll_up(Console.HORIZONTAL_SCROLL_AMOUNT)
+      return true
+    elseif event:is_key_press(d2k.Key.DOWN) then
+      self.output:scroll_down(Console.HORIZONTAL_SCROLL_AMOUNT)
+      return true
+    elseif event:is_key_press(d2k.Key.LEFT) then
+      self.output:scroll_left(Console.VERTICAL_SCROLL_AMOUNT)
+      return true
+    elseif event:is_key_press(d2k.Key.RIGHT) then
+      self.output:scroll_right(Console.VERTICAL_SCROLL_AMOUNT)
+      return true
     end
   end
 
+  return false
 end
 
 function Console:toggle_scroll()

@@ -24,7 +24,7 @@
 local lgi = require('lgi')
 local Cairo = lgi.cairo
 
-HUD = {}
+local HUD = {}
 
 function HUD:new(h)
   h = h or {
@@ -106,7 +106,6 @@ function HUD:draw()
 end
 
 function HUD:handle_event(event)
-  print('Hello from hud.handle_event')
   for i, w in pairs(self.widgets) do
     if w:is_active() and w:handle_event(event) then
       return true

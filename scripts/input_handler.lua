@@ -21,7 +21,7 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-InputHandler = {}
+local InputHandler = {}
 
 function InputHandler:new(ih)
   ih = ih or {
