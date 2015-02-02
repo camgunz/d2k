@@ -50,17 +50,13 @@ TextWidget.ELLIPSIZE_END    = 3
 function TextWidget:new(tw)
   tw = tw or {}
   
-  tw.x = tw.x or 0
-  tw.y = tw.y or 0
-  tw.width = tw.width or 0
-  tw.height = tw.height or 0
   tw.top_margin = tw.top_margin or 0
   tw.bottom_margin = tw.bottom_margin or 0
   tw.left_margin = tw.left_margin or 0
   tw.right_margin = tw.right_margin or 0
   tw.text = tw.text or ''
-  tw.max_width = tw.max_width or d2k.Video.get_screen_width()
-  tw.max_height = tw.max_height or d2k.Video.get_screen_height()
+  tw.max_width = tw.max_width or 0
+  tw.max_height = tw.max_height or 0
   tw.fg_color = tw.fg_color or {1.0, 1.0, 1.0, 1.0}
   tw.bg_color = tw.bg_color or {0.0, 0.0, 0.0, 0.0}
   tw.scrollable = tw.scrollable or false
@@ -70,7 +66,6 @@ function TextWidget:new(tw)
   tw.text_context = nil
   tw.current_render_context = nil
   tw.layout = nil
-  tw.needs_updating = false
   tw.horizontal_offset = 0.0
   tw.vertical_offset = 0.0
 
@@ -107,6 +102,17 @@ function TextWidget:new(tw)
   return tw
 end
 
+function TextWidget:update_layout_if_needed()
+  if self.needs_updating then
+    self.layout:set_markup(self.text, -1)
+    PangoCairo.update_context(
+      d2k.overlay.render_context, d2k.overlay.text_context
+    )
+    PangoCairo.update_layout(d2k.overlay.render_context, self.layout)
+    self:check_offsets()
+  end
+end
+
 function TextWidget:draw()
   local cr = d2k.overlay.render_context
   local line_count = 0
@@ -115,12 +121,7 @@ function TextWidget:draw()
     self:build_layout()
   end
 
-  if self.needs_updating then
-    self.layout:set_markup(self.text, -1)
-    PangoCairo.update_context(cr, d2k.overlay.text_context)
-    PangoCairo.update_layout(cr, self.layout)
-    self:check_offsets()
-  end
+  self:update_layout_if_needed()
 
   line_count = self.layout:get_line_count()
 
@@ -367,27 +368,14 @@ function TextWidget:check_offsets()
   end
 
   if layout_width <= text_width then
-    print('layout width fits in window')
     min_x = 0
     max_x = 0
   end
 
   if layout_height <= text_height then
-    print('layout height fits in window')
     min_y = 0
     max_y = 0
   end
-
-  print(string.format('text w/h: %d, %d', text_width, text_height))
-  print(string.format('layout w/h: %d, %d', layout_width, layout_height))
-  print(string.format('h/v offset: %d (%d, %d), %d (%d, %d)\n',
-    self.horizontal_offset,
-    min_x,
-    max_x,
-    self.vertical_offset,
-    min_y,
-    max_y
-  ))
 
   if self.horizontal_offset < min_x then
     self.horizontal_offset = min_x
@@ -398,46 +386,13 @@ function TextWidget:check_offsets()
   end
 
   if self.vertical_offset < min_y then
-    print(string.format('Ceiling: %d < %d', self.vertical_offset, min_y))
     self.vertical_offset = min_y
   end
 
   if self.vertical_offset > max_y then
-    print(string.format('Floor: %d > %d', self.vertical_offset, max_y))
     self.vertical_offset = max_y
   end
 
-  --[[
-  self.horizontal_offset = math.max(self.horizontal_offset, min_x)
-  self.horizontal_offset = math.min(self.horizontal_offset, max_x)
-  self.vertical_offset = math.max(self.vertical_offset, min_y)
-  self.vertical_offset = math.min(self.vertical_offset, max_y)
-
-  print(string.format('text w/h: %d, %d', text_width, text_height))
-  print(string.format('layout w/h: %d, %d', layout_width, layout_height))
-  print(string.format('min/max x: %d, %d', min_x, max_x))
-  print(string.format('min/max y: %d, %d', min_y, max_y))
-  --]]
-end
-
-function TextWidget:get_width()
-  return self.width
-end
-
-function TextWidget:set_width(width)
-  self.width = width
-  self.needs_updating = true
-  self:check_offsets()
-end
-
-function TextWidget:get_height()
-  return self.height
-end
-
-function TextWidget:set_height(height)
-  self.height = height
-  self.needs_updating = true
-  self:check_offsets()
 end
 
 function TextWidget:get_horizontal_offset()
@@ -445,19 +400,16 @@ function TextWidget:get_horizontal_offset()
 end
 
 function TextWidget:set_horizontal_offset(horizontal_offset)
-  print('tw:set_horizontal_offset')
   self.horizontal_offset = horizontal_offset
   self:check_offsets()
 end
 
 function TextWidget:scroll_left(pixels)
-  print('tw:scroll_left')
   self.horizontal_offset = self.horizontal_offset - pixels
   self:check_offsets()
 end
 
 function TextWidget:scroll_right(pixels)
-  print('tw:scroll_right')
   self.horizontal_offset = self.horizontal_offset + pixels
   self:check_offsets()
 end

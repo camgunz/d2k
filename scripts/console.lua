@@ -27,6 +27,7 @@ local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
 local Widget = require('widget')
 local TextWidget = require('text_widget')
+local InputWidget = require('input_widget')
 
 local Console = Widget.Widget:new({
   EXTENSION_TIME           = 1200.0,
@@ -34,6 +35,8 @@ local Console = Widget.Widget:new({
   MARGIN                   = 8,
   HORIZONTAL_SCROLL_AMOUNT = 6,
   VERTICAL_SCROLL_AMOUNT   = 12,
+  FG_COLOR                 = {1.0, 1.0, 1.0, 1.0},
+  BG_COLOR                 = {  0,   0,   0, 0.85},
 })
 
 function Console:new(c)
@@ -49,19 +52,34 @@ function Console:new(c)
   c.scroll_rate = 0.0
   c.last_scroll_ms = 0
 
+  c.input = InputWidget.InputWidget:new({
+    x = 0,
+    y = 0,
+    width = c.max_width,
+    height = 0,
+    top_margin = c.input_margin or Console.MARGIN,
+    bottom_margin = c.bottom_margin or Console.MARGIN,
+    left_margin = c.left_margin or Console.MARGIN,
+    right_margin = c.right_margin or Console.MARGIN,
+    horizontal_alignment = TextWidget.ALIGN_LEFT,
+    vertical_alignment = TextWidget.ALIGN_CENTER,
+    fg_color = c.fg_color or Console.FG_COLOR,
+    bg_color = c.bg_color or Console.BG_COLOR,
+  })
+
   c.output = TextWidget.TextWidget:new({
     x = 0,
     y = 0,
+    width = c.max_width,
+    height = c.max_height,
     top_margin = c.top_margin or 0,
     bottom_margin = c.bottom_margin or Console.MARGIN,
     left_margin = c.left_margin or Console.MARGIN,
     right_margin = c.right_margin or Console.MARGIN,
     horizontal_alignment = TextWidget.ALIGN_LEFT,
     vertical_alignment = TextWidget.ALIGN_BOTTOM,
-    width = c.max_width,
-    height = c.max_height,
-    fg_color = c.fg_color or {1.0, 1.0, 1.0, 1.0},
-    bg_color = c.bg_color or {  0,   0,   0, 0.85},
+    fg_color = c.fg_color or Console.FG_COLOR,
+    bg_color = c.bg_color or Console.BG_COLOR,
     word_wrap = TextWidget.WRAP_WORD
   })
 
@@ -102,7 +120,9 @@ function Console:tick()
     end
   end
 
-  self.output:set_height(self.height)
+  self.input.y = self.height - self.input:get_height()
+  self.output:set_height(self.input.y)
+  self.output:set_text(string.format('input_y: %d', self.input.y))
   self.output:tick()
 end
 
@@ -111,6 +131,7 @@ function Console:draw()
     return
   end
 
+  self.input:draw()
   self.output:draw()
 end
 

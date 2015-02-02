@@ -26,6 +26,13 @@ local Widget = {}
 function Widget:new(w)
   w = w or {}
 
+  w.x = w.x or 0
+  w.y = w.y or 0
+  w.width = w.width or 0
+  w.height = w.height or 0
+
+  w.needs_updating = false
+
   setmetatable(w, self)
   self.__index = self
 
@@ -41,6 +48,42 @@ end
 
 function Widget:set_name(name)
   self.name = name
+end
+
+function Widget:get_x()
+  return self.x
+end
+
+function Widget:set_x(x)
+  self.x = x
+end
+
+function Widget:get_y()
+  return self.y
+end
+
+function Widget:set_y(y)
+  self.y = y
+end
+
+function Widget:get_width()
+  return self.width
+end
+
+function Widget:set_width(width)
+  self.width = width
+  self.needs_updating = true
+  self:check_offsets()
+end
+
+function Widget:get_height()
+  return self.height
+end
+
+function Widget:set_height(height)
+  self.height = height
+  self.needs_updating = true
+  self:check_offsets()
 end
 
 function Widget:reset()
