@@ -30,6 +30,7 @@ local TextWidget = require('text_widget')
 local InputWidget = TextWidget.TextWidget:new()
 
 InputWidget.PROMPT_THICKNESS = 2
+InputWidget.CURSOR_THICKNESS = 2
 
 function InputWidget:new(iw)
   iw = iw or {}
@@ -71,10 +72,22 @@ end
 function InputWidget:tick()
   local layout_width, layout_height = self.layout:get_pixel_size()
   local new_height = self.top_margin + layout_height + self.bottom_margin
+  local strong, weak = self.layout:get_cursor_pos(self.cursor)
 
   if self.height ~= new_height then
     self:set_height(new_height)
   end
+
+  print(string.format('Cursor: %dx%d+%d+%d, %dx%d+%d+%d', 
+    strong.x / Pango.SCALE,
+    strong.y / Pango.SCALE,
+    strong.width / Pango.SCALE,
+    strong.height / Pango.SCALE,
+    weak.x / Pango.SCALE,
+    weak.y / Pango.SCALE,
+    weak.width / Pango.SCALE,
+    weak.height / Pango.SCALE
+  ))
 end
 
 function InputWidget:draw()
@@ -129,7 +142,30 @@ function InputWidget:draw()
   )
 
   cr:set_line_width(InputWidget.PROMPT_THICKNESS)
-  cr:stroke(cr);
+  cr:stroke();
+
+  local strong_cursor, weak_cursor = self.layout:get_cursor_pos(self.cursor)
+  local curs_x = strong_cursor.x / Pango.SCALE
+  local curs_y = strong_cursor.y / Pango.SCALE
+  local curs_width = strong_cursor.width / Pango.SCALE
+  local curs_height = strong_cursor.height / Pango.SCALE
+
+  cr:set_source_rgba(
+    self.cursor_color[1],
+    self.cursor_color[2],
+    self.cursor_color[3],
+    self.cursor_color[4]
+  )
+
+  cr:move_to(
+    self.x + self.left_margin + curs_x, self.y + self.top_margin + curs_y
+  )
+  cr:line_to(
+    self.x + self.left_margin + curs_x,
+    self.y + self.top_margin + curs_y + self.height - self.bottom_margin
+  )
+  cr:set_line_width(InputWidget.CURSOR_THICKNESS)
+  cr:stroke()
 
   cr:restore()
 end

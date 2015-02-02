@@ -120,10 +120,12 @@ function Console:tick()
     end
   end
 
-  self.input.y = self.height - self.input:get_height()
-  self.output:set_height(self.input.y)
-  self.output:set_text(string.format('input_y: %d', self.input.y))
+  self.input:tick()
+  self.input:set_y(self.height - self.input:get_height())
+
   self.output:tick()
+  self.output:set_height(self.input:get_y())
+  self.output:set_text(string.format('input_y: %d', self.input:get_y()))
 end
 
 function Console:draw()
