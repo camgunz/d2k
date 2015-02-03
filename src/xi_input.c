@@ -30,6 +30,7 @@
 #include "i_joy.h"
 #include "i_mouse.h"
 #include "i_video.h"
+#include "lprintf.h"
 #include "p_mobj.h"
 #include "sounds.h"
 #include "s_sound.h"
@@ -311,13 +312,29 @@ static int XI_InputEventGetYMove(lua_State *L) {
 }
 
 static int XI_InputEventGetChar(lua_State *L) {
-  /* CG: [TODO] Convert this to UTF-8 before sending to scripting */
   event_t *ev = (event_t *)luaL_checkudata(L, -1, "InputEvent");
+  gchar *s = NULL;
+  glong items_read;
+  glong items_written;
+  GError *error = NULL;
 
-  if (ev->type == ev_key && ev->pressed)
-    lua_pushnumber(L, ev->wchar);
-  else
-    lua_pushnumber(L, 0);
+  if (ev->type == ev_key && ev->pressed) {
+
+    s = g_utf16_to_utf8(
+      (const gunichar2 *)&ev->wchar, 1, &items_read, &items_written, &error
+    );
+
+    if (!s) {
+      I_Error(
+        "XI_InputEventGetChar: Error during conversion: %s", error->message
+      );
+    }
+  }
+
+  lua_pushstring(L, s);
+
+  if (s)
+    g_free(s);
 
   return 1;
 }

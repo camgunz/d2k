@@ -76,18 +76,10 @@ function InputWidget:tick()
 
   if self.height ~= new_height then
     self:set_height(new_height)
+    self.layout:set_width(
+      self.width - (self.left_margin + self.right_margin + (new_height / 2.0))
+    )
   end
-
-  print(string.format('Cursor: %dx%d+%d+%d, %dx%d+%d+%d', 
-    strong.x / Pango.SCALE,
-    strong.y / Pango.SCALE,
-    strong.width / Pango.SCALE,
-    strong.height / Pango.SCALE,
-    weak.x / Pango.SCALE,
-    weak.y / Pango.SCALE,
-    weak.width / Pango.SCALE,
-    weak.height / Pango.SCALE
-  ))
 end
 
 function InputWidget:draw()
@@ -149,6 +141,7 @@ function InputWidget:draw()
   local curs_y = strong_cursor.y / Pango.SCALE
   local curs_width = strong_cursor.width / Pango.SCALE
   local curs_height = strong_cursor.height / Pango.SCALE
+  local prompt_width = self.height / 2.0
 
   cr:set_source_rgba(
     self.cursor_color[1],
@@ -158,16 +151,33 @@ function InputWidget:draw()
   )
 
   cr:move_to(
-    self.x + self.left_margin + curs_x, self.y + self.top_margin + curs_y
+    self.x + self.left_margin + curs_x + prompt_width,
+    self.y + self.top_margin + curs_y
   )
   cr:line_to(
-    self.x + self.left_margin + curs_x,
+    self.x + self.left_margin + curs_x + prompt_width,
     self.y + self.top_margin + curs_y + self.height - self.bottom_margin
   )
   cr:set_line_width(InputWidget.CURSOR_THICKNESS)
   cr:stroke()
 
   cr:restore()
+end
+
+function InputWidget:show_previous_command()
+end
+
+function InputWidget:show_next_command()
+end
+
+function InputWidget:move_cursor_left()
+end
+
+function InputWidget:move_cursor_right()
+end
+
+function InputWidget:insert_text(text)
+  print(string.format('Inserting [%s] at [%d]', text, self.cursor))
 end
 
 return {InputWidget = InputWidget}

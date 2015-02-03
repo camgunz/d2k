@@ -142,20 +142,34 @@ function Console:handle_event(event)
     self:toggle_scroll()
   end
 
+  if self.scroll_rate < 0 or self.height == 0 then
+    return
+  end
+
   if d2k.KeyStates.shift_is_down() then
     if event:is_key_press(d2k.Key.UP) then
       self.output:scroll_up(Console.HORIZONTAL_SCROLL_AMOUNT)
       return true
+    elseif event:is_key_press(d2k.Key.PAGE_UP) then
+      self.output:scroll_up(Console.HORIZONTAL_SCROLL_AMOUNT * 10)
+      return true
     elseif event:is_key_press(d2k.Key.DOWN) then
       self.output:scroll_down(Console.HORIZONTAL_SCROLL_AMOUNT)
       return true
-    elseif event:is_key_press(d2k.Key.LEFT) then
-      self.output:scroll_left(Console.VERTICAL_SCROLL_AMOUNT)
-      return true
-    elseif event:is_key_press(d2k.Key.RIGHT) then
-      self.output:scroll_right(Console.VERTICAL_SCROLL_AMOUNT)
+    elseif event:is_key_press(d2k.Key.PAGE_DOWN) then
+      self.output:scroll_down(Console.HORIZONTAL_SCROLL_AMOUNT * 10)
       return true
     end
+  elseif event:is_key_press(d2k.Key.UP) then
+    self.input:show_previous_command()
+  elseif event:is_key_press(d2k.Key.DOWN) then
+    self.input:show_next_command()
+  elseif event:is_key_press(d2k.Key.LEFT) then
+    self.input:move_cursor_left()
+  elseif event:is_key_press(d2k.Key.RIGHT) then
+    self.input:move_cursor_right()
+  elseif event:is_key() and event:is_press() then
+    self.input:insert_text(event:get_char())
   end
 
   return false
