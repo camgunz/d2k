@@ -735,22 +735,17 @@ ELSE()
 ENDIF()
 
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  IF(PROFILE)
-    FIND_PACKAGE(GPerf REQUIRED)
-  ELSE()
-    FIND_PACKAGE(GPerf)
-  ENDIF()
+  FIND_PACKAGE(GPerf)
   # MESSAGE(STATUS "Looking for Google Performance Tools")
   # FIND_LIBRARY(GPERF_LIBRARIES profiler HINTS $ENV{GPERF_DIR})
-  # IF(${GPERF_LIBRARIES} STREQUAL "GPERF_LIBRARIES-NOTFOUND")
-  #   IF(PROFILE)
-  #     MESSAGE(FATAL_ERROR "Google Performance Tools not found")
-  #   ELSE()
-  #     MESSAGE(WARNING "Google Performance Tools not found")
-  #   ENDIF()
-  # ELSE()
-  #   MESSAGE(STATUS "Google Performance Tools found: ${GPERF_LIBRARIES}")
-  # ENDIF()
+  IF(${GPERF_LIBRARIES} STREQUAL "GPERF_LIBRARIES-NOTFOUND")
+    IF(PROFILE)
+      MESSAGE(
+        WARNING
+        "Google Performance Tools not found, profiling will not work"
+      )
+    ENDIF()
+  ENDIF()
 ENDIF()
 
 CONFIGURE_FILE(
