@@ -156,13 +156,16 @@ function InputWidget:draw()
   local layout_width, layout_height = self.layout:get_pixel_size()
   local layout_ink_extents, layout_logical_extents =
     self.layout:get_pixel_extents()
+
+  --[[
   local cursor_line_number, cursor_line_x = self.layout:index_to_line_x(
     self.cursor, self.cursor_trailing
   )
-  local cursor_position = self.layout:index_to_pos(self.cursor)
-  local strong_pos, weak_pos = self.layout:get_cursor_pos(self.cursor)
-
   cursor_line_x = cursor_line_x / Pango.SCALE
+  --]]
+
+  --[[
+  local strong_pos, weak_pos = self.layout:get_cursor_pos(self.cursor)
 
   print(string.format(
     'cursor, trailing: %d, %s', self.cursor, self.cursor_trailing
@@ -182,6 +185,7 @@ function InputWidget:draw()
     weak_pos.width / Pango.SCALE,
     weak_pos.height / Pango.SCALE
   ))
+  --]]
 
   if self.vertical_alignment == TextWidget.ALIGN_CENTER then
     ly = ly + (text_height / 2) - (layout_height / 2)
@@ -221,6 +225,7 @@ function InputWidget:draw()
       PangoCairo.show_layout_line(cr, line)
     end
 
+    --[[
     if line_number == cursor_line_number then
       cr:save()
 
@@ -240,6 +245,7 @@ function InputWidget:draw()
 
       cr:restore()
     end
+    --]]
 
     if line_start_y >= text_height then
       break
@@ -247,6 +253,35 @@ function InputWidget:draw()
 
     line_number = line_number + 1
   until not iter:next_line()
+
+  local cursor_pos = self.layout:index_to_pos(self.cursor)
+  cursor_pos.x = cursor_pos.x / Pango.SCALE
+  cursor_pos.y = cursor_pos.y / Pango.SCALE
+  cursor_pos.width = cursor_pos.width / Pango.SCALE
+  cursor_pos.height = cursor_pos.height / Pango.SCALE
+
+  if self.cursor_trailing then
+    cursor_pos.x = cursor_pos.x + (cursor_pos.width * self.cursor_trailing)
+  end
+
+  cr:set_source_rgba(
+    self.cursor_color[1],
+    self.cursor_color[2],
+    self.cursor_color[3],
+    self.cursor_color[4]
+  )
+
+  print(string.format('Cursor: %dx%d+%d+%d',
+    lx + cursor_pos.x,
+    ly + cursor_pos.y,
+    InputWidget.CURSOR_THICKNESS,
+    cursor_pos.height
+  ))
+
+  cr:move_to(lx + cursor_pos.x, ly + cursor_pos.y)
+  cr:line_to(lx + cursor_pos.x, ly + cursor_pos.y + cursor_pos.height)
+  cr:set_line_width(InputWidget.CURSOR_THICKNESS)
+  cr:stroke()
 
   cr:restore()
 end
@@ -257,109 +292,121 @@ end
 function InputWidget:show_next_command()
 end
 
+function InputWidget:print_cursor_stats(s)
+  local cursor_position = self.layout:index_to_pos(self.cursor)
+  local cursor_line_number, cursor_line_x = self.layout:index_to_line_x(
+    self.cursor, self.cursor_trailing
+  )
+
+  print(string.format('%s: cursor, trailing, text length, line #, line x, pos: %d, %d, %d, %d, %d, %dx%d+%d+%d',
+    s,
+    self.cursor,
+    self.cursor_trailing,
+    #self.text,
+    cursor_line_number,
+    cursor_line_x / Pango.SCALE,
+    cursor_position.x / Pango.SCALE,
+    cursor_position.y / Pango.SCALE,
+    cursor_position.width / Pango.SCALE,
+    cursor_position.height / Pango.SCALE
+  ))
+end
+
 function InputWidget:move_cursor_left()
+  self:print_cursor_stats('move_cursor_left (before)')
+
   if self.cursor == 0 then
     print('cursor is 0')
     return
   end
 
-  print(string.format('move_cursor_left: %d, %d',
-    self.cursor, self.cursor_trailing
-  ))
-
-  local text_length = #self.text
-  local cursor = self.cursor
-  local trailing = self.cursor_trailing
-
-  if cursor >= text_length then
-    cursor = text_length - 1
-    trailing = 0
+  self.cursor, self.cursor_trailing = self.layout:move_cursor_visually(
+    true, self.cursor, self.cursor_trailing, -1
+  )
+  
+  if self.cursor == GLib.MAXINT32 then
+    error('Cursor moved off the end of the layout')
+  elseif self.cursor < 0 then
+    error('Cursor moved off the beginning of the layout')
   end
 
-  local new_index, new_trailing = self.layout:move_cursor_visually(
-    true, cursor, trailing, -1
-  )
-
-  print(string.format('move_cursor_left: %d, %d', new_index, new_trailing))
-
-  self.cursor = new_index + new_trailing
-  self.cursor_trailing = new_trailing
+  self:print_cursor_stats('move_cursor_left (after)')
 end
 
 function InputWidget:move_cursor_right()
+  self:print_cursor_stats('move_cursor_right (before)')
+
   local text_length = #self.text
 
-  if self.cursor == text_length then
+  if (self.cursor + self.cursor_trailing) == text_length then
+    print(string.format('cursor is %d', text_length))
     return
   end
 
-  local new_index, new_trailing = self.layout:move_cursor_visually(
+  self.cursor, self.cursor_trailing = self.layout:move_cursor_visually(
     true, self.cursor, self.cursor_trailing, 1
   )
 
-  if new_index == GLib.MAXINT32 then
-    print('Cursor moved off the end of the layout')
-    new_index = text_length
-  elseif new_index < 0 then
-    print('Cursor moved off the beginning of the layout')
-    new_index = 0
+  if self.cursor == GLib.MAXINT32 then
+    error('Cursor moved off the end of the layout')
+  elseif self.cursor < 0 then
+    error('Cursor moved off the beginning of the layout')
   end
 
-  print(string.format('move_cursor_left: %d, %d', new_index, new_trailing))
-
-  self.cursor = new_index + new_trailing
-  self.cursor_trailing = new_trailing
+  self:print_cursor_stats('move_cursor_right (after)')
 end
 
-function InputWidget:remove_previous_character()
-  local old_pos = self.cursor
+function InputWidget:delete_previous_character()
+  local index = self.cursor + self.cursor_trailing
   local text_length = #self.text
 
   if self.cursor == 0 then
     return
   end
 
-  if self.cursor == (text_length - 1) then
+  self:move_cursor_left()
+
+  if index == text_length then
     self.text = self.text:sub(1, text_length - 1)
   else
-    self.text = self.text:sub(1, self.cursor - 1) ..
-                self.text:sub(self.cursor + 1)
+    self.text = self.text:sub(1, index - 1) .. self.text:sub(index + 1)
   end
 
   self.needs_updating = true
+  self:update_layout_if_needed()
 end
 
-function InputWidget:remove_next_character()
-  local old_pos = self.cursor
+function InputWidget:delete_next_character()
+  local index = self.cursor + self.cursor_trailing
   local text_length = #self.text
 
-  if self.cursor == (text_length - 1) then
+  if index == text_length then
     return
   end
 
-  if self.cursor == 0 then
-    self.text = self.text:sub(2)
+  if index == 0 then
+    self.text = self.text:sub(index + 2)
   else
-    self.text = self.text:sub(1, self.cursor - 2) ..
-                self.text:sub(self.cursor)
+    self.text = self.text:sub(1, index) .. self.text:sub(index + 2)
   end
 
   self.needs_updating = true
 end
 
 function InputWidget:insert_character(char)
+  self:print_cursor_stats('insert_character (before)')
+
   local old_pos = self.cursor
   local start_text = ''
   local text_length = #self.text
-  
-  if self.cursor == 0 then
+  local index = self.cursor + self.cursor_trailing
+
+  if index == 0 then
     self.text = char .. self.text
-  elseif self.cursor == (text_length - 1) then
+  elseif index == text_length then
     self.text = self.text .. char
   else
-    self.text = self.text:sub(1, self.cursor) ..
-                char ..
-                self.text:sub(self.cursor + 1)
+    self.text = self.text:sub(1, index) .. char .. self.text:sub(index + 1)
   end
 
   self.layout:set_text(self.text, -1)
@@ -367,30 +414,9 @@ function InputWidget:insert_character(char)
   self.needs_updating = true
   self:update_layout_if_needed()
 
-  local new_index, new_trailing = self.layout:move_cursor_visually(
-    true, self.cursor, self.cursor_trailing, 1
-  )
+  self:print_cursor_stats('insert_character (after)')
 
-  if new_index == GLib.MAXINT32 then
-    print('Cursor moved off the end of the layout')
-    new_index = #self.text
-  elseif new_index < 0 then
-    print('Cursor moved off the beginning of the layout')
-    new_index = 0
-  end
-
-  self.cursor = new_index + new_trailing
-  self.cursor_trailing = new_trailing
-
-  print(string.format('Inserting [%s] at [%d] (%s), (%s), new cursor: %d (%d)',
-    char,
-    old_pos,
-    self.text,
-    self.layout:get_text(),
-    self.cursor,
-    self.cursor_trailing
-  ))
-
+  self:move_cursor_right()
 end
 
 return {InputWidget = InputWidget}
