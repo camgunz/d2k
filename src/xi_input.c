@@ -311,27 +311,45 @@ static int XI_InputEventGetYMove(lua_State *L) {
   return 1;
 }
 
-static int XI_InputEventGetChar(lua_State *L) {
-  event_t *ev = (event_t *)luaL_checkudata(L, -1, "InputEvent");
+static gchar* convert_sdl_wchar(wchar_t wchar) {
   gchar *s = NULL;
   glong items_read;
   glong items_written;
   GError *error = NULL;
 
-  if (ev->type == ev_key && ev->pressed) {
+  s = g_utf16_to_utf8(
+    (const gunichar2 *)&wchar, 1, &items_read, &items_written, &error
+  );
 
-    s = g_utf16_to_utf8(
-      (const gunichar2 *)&ev->wchar, 1, &items_read, &items_written, &error
+  if (!s) {
+    I_Error(
+      "convert_sdl_wchar: Error during conversion: %s", error->message
     );
-
-    if (!s) {
-      I_Error(
-        "XI_InputEventGetChar: Error during conversion: %s", error->message
-      );
-    }
   }
 
-  lua_pushstring(L, s);
+  return s;
+}
+
+static bool is_printable(gchar *s) {
+  gunichar c = g_utf8_get_char_validated(s, -1);
+
+  if (c == ((gunichar)-1))
+    return false;
+
+  return g_unichar_isprint(c);
+}
+
+static int XI_InputEventGetChar(lua_State *L) {
+  event_t *ev = (event_t *)luaL_checkudata(L, -1, "InputEvent");
+  gchar *s = NULL;
+
+  if (ev->type == ev_key && ev->pressed)
+    s = convert_sdl_wchar(ev->wchar);
+
+  if (s && is_printable(s))
+    lua_pushstring(L, s);
+  else
+    lua_pushstring(L, NULL);
 
   if (s)
     g_free(s);

@@ -62,6 +62,7 @@ function TextWidget:new(tw)
   tw.scrollable = tw.scrollable or false
   tw.font_description_text = tw.font_description_text or 
                              d2k.hud.font_description_text
+  tw.use_markup = tw.use_markup or false
 
   tw.text_context = nil
   tw.current_render_context = nil
@@ -104,7 +105,11 @@ end
 
 function TextWidget:update_layout_if_needed()
   if self.needs_updating then
-    self.layout:set_markup(self.text, -1)
+    if self.use_markup then
+      self.layout:set_markup(self.text, -1)
+    else
+      self.layout:set_text(self.text, -1)
+    end
     PangoCairo.update_context(
       d2k.overlay.render_context, d2k.overlay.text_context
     )

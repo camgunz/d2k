@@ -189,6 +189,64 @@ static void L_GameOnChange(void)
   }
 }
 
+static void L_AbbreviateName(char* lpszCanon, int cchMax, int bAtLeastName)
+{
+  int cchFullPath, cchFileName, cchVolName;
+  const char* lpszCur;
+  const char* lpszBase;
+  const char* lpszFileName;
+  
+  lpszBase = lpszCanon;
+  cchFullPath = strlen(lpszCanon);
+  
+  cchFileName = AfxGetFileName(lpszCanon, NULL, 0) - 1;
+  lpszFileName = lpszBase + (cchFullPath-cchFileName);
+  
+  if (cchMax >= cchFullPath)
+    return;
+  
+  if (cchMax < cchFileName)
+  {
+    strcpy(lpszCanon, (bAtLeastName) ? lpszFileName : "");
+    return;
+  }
+  
+  lpszCur = lpszBase + 2;
+  
+  if (lpszBase[0] == '\\' && lpszBase[1] == '\\')
+  {
+    while (*lpszCur != '\\')
+      lpszCur++;
+  }
+  
+  if (cchFullPath - cchFileName > 3)
+  {
+    lpszCur++;
+    while (*lpszCur != '\\')
+      lpszCur++;
+  }
+  
+  cchVolName = (int)(lpszCur - lpszBase);
+  if (cchMax < cchVolName + 5 + cchFileName)
+  {
+    strcpy(lpszCanon, lpszFileName);
+    return;
+  }
+  
+  while (cchVolName + 4 + (int)strlen(lpszCur) > cchMax)
+  {
+    do
+    {
+      lpszCur++;
+    }
+    while (*lpszCur != '\\');
+  }
+  
+  lpszCanon[cchVolName] = '\0';
+  strcat(lpszCanon, "\\...");
+  strcat(lpszCanon, lpszCur);
+}
+
 static void L_FilesOnChange(void)
 {
   int index;
@@ -237,7 +295,7 @@ static void L_FilesOnChange(void)
         char tmppath[PATH_MAX];
         SIZE size = {0, 0};
         strcpy(tmppath, path);
-        AbbreviateName(tmppath, count, false);
+        L_AbbreviateName(tmppath, count, false);
         if (GetTextExtentPoint32(hdc, tmppath, count, &size))
         {
           if (size.cx < rect.right - rect.left)

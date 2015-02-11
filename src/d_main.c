@@ -1887,16 +1887,15 @@ static void D_DoomMainSetup(void) {
   if (bfgedition) {
     char *tempverstr;
     const char bfgverstr[] = " (BFG Edition)";
+    size_t tempverstrsize = strlen(doomverstr) + strlen(bfgverstr) + 1;
 
-    tempverstr = malloc(
-      sizeof(char) * (strlen(doomverstr) + strlen(bfgverstr) + 1)
-    );
+    tempverstr = malloc(tempverstrsize);
 
     if (tempverstr == NULL)
       I_Error("D_DoomMainSetup: Allocating temporary version string failed");
 
-    strcpy(tempverstr, doomverstr);
-    strcat(tempverstr, bfgverstr);
+    strncpy(tempverstr, doomverstr, tempverstrsize);
+    strncat(tempverstr, bfgverstr, tempverstrsize);
     doomverstr = strdup(tempverstr);
     free(tempverstr);
   }

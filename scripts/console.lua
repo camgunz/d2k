@@ -162,14 +162,30 @@ function Console:handle_event(event)
     end
   elseif event:is_key_press(d2k.Key.UP) then
     self.input:show_previous_command()
+    return true
   elseif event:is_key_press(d2k.Key.DOWN) then
     self.input:show_next_command()
+    return true
   elseif event:is_key_press(d2k.Key.LEFT) then
     self.input:move_cursor_left()
+    return true
   elseif event:is_key_press(d2k.Key.RIGHT) then
     self.input:move_cursor_right()
+    return true
+  elseif event:is_key_press(d2k.Key.DELETE) then
+    self.input:delete_next_character()
+    return true
+  elseif event:is_key_press(d2k.Key.BACKSPACE) then
+    self.input:delete_previous_character()
+    return true
   elseif event:is_key() and event:is_press() then
-    self.input:insert_text(event:get_char())
+    local char = event:get_char()
+
+    if char then
+      self.input:insert_character(event:get_char())
+    end
+
+    return true
   end
 
   return false

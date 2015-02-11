@@ -439,7 +439,7 @@ void I_PreInitGraphics(void) {
   if (strcasecmp(video_driver, "default")) { // videodriver != default
     char buf[80];
 
-    strcpy(buf, "SDL_VIDEODRIVER=");
+    strncpy(buf, "SDL_VIDEODRIVER=", 80);
     strncat(buf, video_driver, sizeof(buf) - sizeof(buf[0]) - strlen(buf));
     putenv(buf);
   }
@@ -807,7 +807,7 @@ void I_UpdateVideoMode(void) {
   if (sdl_video_window_pos && sdl_video_window_pos[0]) {
     char buf[80];
 
-    strcpy(buf, "SDL_VIDEO_WINDOW_POS=");
+    strncpy(buf, "SDL_VIDEO_WINDOW_POS=", 80);
     strncat(buf, sdl_video_window_pos, sizeof(buf) - sizeof(buf[0]) - strlen(buf));
     putenv(buf);
   }

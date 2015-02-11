@@ -43,12 +43,18 @@ int usejoystick;
 static SDL_Joystick *joystick;
 #endif
 
+#ifdef HAVE_SDL_JOYSTICKGETAXIS
 static void I_EndJoystick(void) {
   lprintf(LO_DEBUG, "I_EndJoystick : closing joystick\n");
 }
+#endif
 
 bool I_JoystickEnabled(void) {
+#ifdef HAVE_SDL_JOYSTICKGETAXIS
   return usejoystick && joystick;
+#else
+  return false;
+#endif
 }
 
 void I_PollJoystick(void) {

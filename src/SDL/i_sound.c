@@ -417,7 +417,7 @@ int I_GetSfxLumpNum(sfxinfo_t *sfx) {
   const char *prefix = (snd_pcspeaker ? "dp" : "ds");
 
   // Different prefix for PC speaker sound effects.
-  sprintf(namebuf, "%s%s", prefix, sfx->name);
+  snprintf(namebuf, 9, "%s%s", prefix, sfx->name);
 
   return W_SafeGetNumForName(namebuf); //e6y: make missing sounds non-fatal
 }

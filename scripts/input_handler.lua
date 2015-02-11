@@ -42,9 +42,11 @@ function InputHandler:handle_event()
   end
 
   if not d2k.Video.is_enabled() then
+    --[[
     if d2k.Game.handle_event(ev) then
       return
     end
+    --]]
   end
 
   if ev:is_key_press(d2k.KeyBinds.get_screenshot()) then

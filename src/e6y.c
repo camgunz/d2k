@@ -1145,64 +1145,6 @@ unsigned int AfxGetFileName(const char* lpszPathName, char* lpszTitle, unsigned 
   return 0;
 }
 
-void AbbreviateName(char* lpszCanon, int cchMax, int bAtLeastName)
-{
-  int cchFullPath, cchFileName, cchVolName;
-  const char* lpszCur;
-  const char* lpszBase;
-  const char* lpszFileName;
-  
-  lpszBase = lpszCanon;
-  cchFullPath = strlen(lpszCanon);
-  
-  cchFileName = AfxGetFileName(lpszCanon, NULL, 0) - 1;
-  lpszFileName = lpszBase + (cchFullPath-cchFileName);
-  
-  if (cchMax >= cchFullPath)
-    return;
-  
-  if (cchMax < cchFileName)
-  {
-    strcpy(lpszCanon, (bAtLeastName) ? lpszFileName : "");
-    return;
-  }
-  
-  lpszCur = lpszBase + 2;
-  
-  if (lpszBase[0] == '\\' && lpszBase[1] == '\\')
-  {
-    while (*lpszCur != '\\')
-      lpszCur++;
-  }
-  
-  if (cchFullPath - cchFileName > 3)
-  {
-    lpszCur++;
-    while (*lpszCur != '\\')
-      lpszCur++;
-  }
-  
-  cchVolName = (int)(lpszCur - lpszBase);
-  if (cchMax < cchVolName + 5 + cchFileName)
-  {
-    strcpy(lpszCanon, lpszFileName);
-    return;
-  }
-  
-  while (cchVolName + 4 + (int)strlen(lpszCur) > cchMax)
-  {
-    do
-    {
-      lpszCur++;
-    }
-    while (*lpszCur != '\\');
-  }
-  
-  lpszCanon[cchVolName] = '\0';
-  strcat(lpszCanon, "\\...");
-  strcat(lpszCanon, lpszCur);
-}
-
 int levelstarttic;
 
 int force_singletics_to = 0;
