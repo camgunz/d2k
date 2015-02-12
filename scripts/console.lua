@@ -137,6 +137,10 @@ function Console:draw()
   self.output:draw()
 end
 
+function Console:handle_input(input)
+  print(string.format('Got console input [%s]', input))
+end
+
 function Console:handle_event(event)
   if event:is_key_press(d2k.Key.BACKQUOTE) then
     self:toggle_scroll()
@@ -177,6 +181,17 @@ function Console:handle_event(event)
     return true
   elseif event:is_key_press(d2k.Key.BACKSPACE) then
     self.input:delete_previous_character()
+    return true
+  elseif event:is_key_press(d2k.Key.HOME) then
+    self.input:move_cursor_to_start()
+    return true
+  elseif event:is_key_press(d2k.Key.END) then
+    self.input:move_cursor_to_end()
+    return true
+  elseif event:is_key_press(d2k.Key.RETURN) or
+         event:is_key_press(d2k.Key.KP_ENTER) then
+    self:handle_input(self.input:get_text())
+    self.input:clear()
     return true
   elseif event:is_key() and event:is_press() then
     local char = event:get_char()

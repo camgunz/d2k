@@ -240,6 +240,10 @@ function TextWidget:set_text(text)
   self.needs_updating = true
 end
 
+function TextWidget:clear()
+  self:set_text('')
+end
+
 function TextWidget:get_ellipsize()
   return self.ellipsize
 end

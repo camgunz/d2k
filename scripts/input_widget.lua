@@ -55,6 +55,16 @@ function InputWidget:new(iw)
   return iw
 end
 
+function InputWidget:set_text(text)
+  self.text = text
+  self.needs_updating = true
+
+  if self.cursor >= #self.text - 1 then
+    self.cursor = 0
+    self.cursor_trailing = 0
+  end
+end
+
 function InputWidget:get_height()
   local input_text = self:get_text()
   local set_dummy_text = false
@@ -81,10 +91,6 @@ function InputWidget:tick()
 
   if self.height ~= new_height then
     self:set_height(new_height)
-    -- self.layout:set_width(
-    --   self.width -
-    --   (self.left_margin + self.right_margin + (new_height / 2.0))
-    -- )
   end
 end
 
@@ -348,6 +354,20 @@ function InputWidget:move_cursor_right()
   end
 
   self:print_cursor_stats('move_cursor_right (after)')
+end
+
+function InputWidget:move_cursor_to_start()
+  self.cursor = 0
+  self.cursor_trailing = 0
+end
+
+function InputWidget:move_cursor_to_end()
+  local text_length = #self.text
+
+  if text_length > 0 then
+    self.cursor = #self.text - 1
+    self.cursor_trailing = 1
+  end
 end
 
 function InputWidget:delete_previous_character()
