@@ -33,8 +33,8 @@ local InputWidget = TextWidget.TextWidget:new({
   use_markup = false
 })
 
-InputWidget.PROMPT_THICKNESS = 2
-InputWidget.CURSOR_THICKNESS = 2
+InputWidget.PROMPT_THICKNESS = 1.1
+InputWidget.CURSOR_THICKNESS = 1.1
 
 function InputWidget:new(iw)
   iw = iw or {}
@@ -59,7 +59,7 @@ function InputWidget:get_height()
   local input_text = self:get_text()
   local set_dummy_text = false
 
-  if not input_text then
+  if not #input_text == 0 then
     self.input:set_text('DOOM')
     set_dummy_text = true
   end
@@ -81,9 +81,10 @@ function InputWidget:tick()
 
   if self.height ~= new_height then
     self:set_height(new_height)
-    self.layout:set_width(
-      self.width - (self.left_margin + self.right_margin + (new_height / 2.0))
-    )
+    -- self.layout:set_width(
+    --   self.width -
+    --   (self.left_margin + self.right_margin + (new_height / 2.0))
+    -- )
   end
 end
 
@@ -270,13 +271,6 @@ function InputWidget:draw()
     self.cursor_color[3],
     self.cursor_color[4]
   )
-
-  print(string.format('Cursor: %dx%d+%d+%d',
-    lx + cursor_pos.x,
-    ly + cursor_pos.y,
-    InputWidget.CURSOR_THICKNESS,
-    cursor_pos.height
-  ))
 
   cr:move_to(lx + cursor_pos.x, ly + cursor_pos.y)
   cr:line_to(lx + cursor_pos.x, ly + cursor_pos.y + cursor_pos.height)
