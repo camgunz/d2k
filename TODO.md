@@ -4,15 +4,42 @@
 
 1. Fix switching to vidingl
 
+## Scripting
+
+1. Implement patch drawing functions
+
+1. Implement patch font drawing functions
+
+## HUD
+
+1. A few new widgets:
+  - messages
+  - chat
+  - netstats
+  - FPS
+
 ## Console
 
-1. Convert code from C to Lua
-  - Implement text display widget
-  - Implement text input widget
+1. Implement text input widget
+  - Cursor blinking
+  - Implement various configuration options (needs some thought)
+  - Implement UTF8 properly
+
+1. Implement input handling
+  - History
+  - Tab-completion
+    - How, though...?
+
+1. Implement printing to console
 
 ## Netcode
 
 1. Reconnecting doesn't work
+
+1. Manually delta compress some select actors (puffs, blood and plasma)
+  - Add an `owner_net_id` field to `mobj_t`
+  - For each of the select actors that share a type and `owner_net_id`:
+    - Delta compress based on the first actor, then on down the chain
 
 ## ZDDL
 

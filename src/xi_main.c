@@ -40,7 +40,7 @@ static int XF_GetTicks(lua_State *L) {
 }
 
 void XI_RegisterInterface(void) {
-  X_RegisterObjects("System", 2,
+  X_RegisterObjects("System", 3,
     "get_ticks", X_FUNCTION, XF_GetTicks,
     "quit",      X_FUNCTION, XF_Quit,
     "exit",      X_FUNCTION, XF_Quit

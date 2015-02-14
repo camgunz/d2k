@@ -22,6 +22,7 @@
 -------------------------------------------------------------------------------
 
 local lgi = require('lgi')
+local GLib = lgi.GLib
 local Cairo = lgi.cairo
 local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
@@ -37,6 +38,7 @@ local Console = Widget.Widget:new({
   VERTICAL_SCROLL_AMOUNT   = 12,
   FG_COLOR                 = {1.0, 1.0, 1.0, 1.0},
   BG_COLOR                 = {  0,   0,   0, 0.85},
+  SHORTHAND_MARKER         = '/',
 })
 
 function Console:new(c)
@@ -45,6 +47,7 @@ function Console:new(c)
   c.extension_time = c.extension_time or Console.EXTENSION_TIME
   c.retraction_time = c.retraction_time or Console.RETRACTION_TIME
   c.max_height = c.max_height or d2k.Video.get_screen_height() / 2
+  c.shorthand_marker = c.shorthand_marker or Console.SHORTHAND_MARKER
 
   c.max_width = d2k.Video.get_screen_width()
   c.width = c.max_width
@@ -82,6 +85,12 @@ function Console:new(c)
     bg_color = c.bg_color or Console.BG_COLOR,
     word_wrap = TextWidget.WRAP_WORD
   })
+
+  c.shorthand_regex = GLib.Regex.new(
+    '([^"]\\S*|".+?"|\'.+?\'|)\\s*',
+    GLib.RegexCompileFlags.OPTIMIZE,
+    GLib.RegexMatchFlags.NOTEMPTY
+  )
 
   setmetatable(c, self)
   self.__index = self
@@ -137,8 +146,56 @@ function Console:draw()
   self.output:draw()
 end
 
+function Console:parse_shorthand_command(short_command)
+    local wrote_function_name = false
+    local wrote_first_argument = false
+    local command = ''
+
+    if short_command:sub(1, 1) == self.shorthand_marker then
+        short_command = short_command:sub(2)
+    end
+
+    local tokens = self.shorthand_regex:split(short_command, 0)
+
+    for i, token in ipairs(tokens) do
+        if #token ~= 0 then
+            if not wrote_function_name then
+                command = command .. token .. '('
+                wrote_function_name = true
+            elseif not wrote_first_argument then
+                command = command .. token
+                wrote_first_argument = true
+            else
+                command = command .. ', ' .. token
+            end
+
+        end
+    end
+
+    command = command .. ')'
+
+    return command
+end
+
 function Console:handle_input(input)
-  print(string.format('Got console input [%s]', input))
+  local command = input
+
+  if input:sub(1, 1) == self.shorthand_marker then
+    command = 'd2k.Shorthand.' .. self:parse_shorthand_command(input)
+  end
+
+  local func, err = load(command, 'Console input', 't')
+
+  if not func then
+    print(string.format('Console:handle_input: Error: %s', err))
+    return
+  end
+
+  local worked, err = pcall(func)
+
+  if not worked then
+    print(string.format('Console:handle_input: Error: %s', err))
+  end
 end
 
 function Console:handle_event(event)
@@ -154,17 +211,19 @@ function Console:handle_event(event)
     if event:is_key_press(d2k.Key.UP) then
       self.output:scroll_up(Console.HORIZONTAL_SCROLL_AMOUNT)
       return true
-    elseif event:is_key_press(d2k.Key.PAGE_UP) then
+    elseif event:is_key_press(d2k.Key.PAGEUP) then
       self.output:scroll_up(Console.HORIZONTAL_SCROLL_AMOUNT * 10)
       return true
     elseif event:is_key_press(d2k.Key.DOWN) then
       self.output:scroll_down(Console.HORIZONTAL_SCROLL_AMOUNT)
       return true
-    elseif event:is_key_press(d2k.Key.PAGE_DOWN) then
+    elseif event:is_key_press(d2k.Key.PAGEDOWN) then
       self.output:scroll_down(Console.HORIZONTAL_SCROLL_AMOUNT * 10)
       return true
     end
-  elseif event:is_key_press(d2k.Key.UP) then
+  end
+
+  if event:is_key_press(d2k.Key.UP) then
     self.input:show_previous_command()
     return true
   elseif event:is_key_press(d2k.Key.DOWN) then
@@ -220,6 +279,20 @@ function Console:toggle_scroll()
   self.last_scroll_ms = d2k.System.get_ticks()
 end
 
+function Console:print(format, ...)
+  if not d2k.Video.is_enabled() then
+    print(string.format(s, arg))
+    return
+  end
+
+  for i, a in ipairs(arg) do
+    if type(a) == 'string' then
+      arg[i] = GLib.markup_escape_text(a, -1)
+    end
+  end
+
+  self.output:set_text(self.output:get_text() .. string.format(s, arg))
+end
 
 return {Console = Console}
 

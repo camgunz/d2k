@@ -293,6 +293,8 @@ function InputWidget:show_next_command()
 end
 
 function InputWidget:print_cursor_stats(s)
+  return
+  --[[
   local cursor_position = self.layout:index_to_pos(self.cursor)
   local cursor_line_number, cursor_line_x = self.layout:index_to_line_x(
     self.cursor, self.cursor_trailing
@@ -310,6 +312,7 @@ function InputWidget:print_cursor_stats(s)
     cursor_position.width / Pango.SCALE,
     cursor_position.height / Pango.SCALE
   ))
+  --]]
 end
 
 function InputWidget:move_cursor_left()
