@@ -92,7 +92,11 @@ function InputHandler:handle_events()
     end
 
     if event_populated then
-      self:handle_event()
+      local result, err = pcall(function() self:handle_event() end)
+
+      if err then
+        print(string.format('InputHandler:handle_events: error: %s', err))
+      end
     end
   end
 end

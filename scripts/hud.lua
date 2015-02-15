@@ -107,16 +107,8 @@ end
 
 function HUD:handle_event(event)
   for i, w in pairs(self.widgets) do
-    if w:is_enabled() then
-      local func = function()
-        w:handle_event(event)
-      end
-      local result, err = pcall(func)
-      if err then
-        print(string.format('HUD:handle_event: error: %s', err))
-      elseif result then
-        return result
-      end
+    if w:is_enabled() and w:handle_event(event) then
+      return true
     end
   end
 
