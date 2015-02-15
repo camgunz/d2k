@@ -21,109 +21,19 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-local lgi = require('lgi')
-local Cairo = lgi.cairo
+d2k.Shortcuts = {}
+d2k.Shortcuts.exit = d2k.System.exit
+d2k.Shortcuts.quit = d2k.System.quit
+d2k.Shortcuts.write = function(text) d2k.console:write(text) end
+d2k.Shortcuts.mwrite = function(markup) d2k.console:mwrite(markup) end
+d2k.Shortcuts.echo = function(text) d2k.console:echo(text) end
+d2k.Shortcuts.mecho = function(markup) d2k.console:mecho(markup) end
 
-local HUD = {}
+func, err = loadfile(d2k.script_folder .. '/local_console_shortcuts.lua', 't')
 
-function HUD:new(h)
-  h = h or {
-    widgets = {},
-    active = false,
-    font_description_text = 'Monkirta Pursuit NC 10'
-  }
-
-  setmetatable(h, self)
-  self.__index = self
-
-  return h
+if not func then
+  d2k.console:mecho(string.format('<span color="red">%s</span>', err))
 end
-
-function HUD:add_widget(widget)
-  table.insert(self.widgets, widget)
-
-  widget.hud = self
-  widget:on_add(self)
-end
-
-function HUD:remove_widget(widget)
-  for i = #self.widgets, 1, -1 do
-    local w = self.widgets[i]
-
-    if w == widget then
-      table.remove(self.widgets, i)
-    end
-  end
-
-  widget.hud = nil
-  widget:on_remove(self)
-end
-
-function HUD:start()
-  if self.active then
-    self:stop()
-  end
-
-  self.active = true
-
-  for i, w in pairs(self.widgets) do
-    w:reset()
-  end
-end
-
-function HUD:stop()
-  self.active = false
-end
-
-function HUD:tick()
-  if not self.active then
-    return
-  end
-
-  for i, w in pairs(self.widgets) do
-    w:tick()
-  end
-end
-
-function HUD:draw()
-  if not self.active then
-    return
-  end
-
-  d2k.overlay:lock()
-
-  if d2k.Video.using_opengl() then
-    d2k.overlay:clear()
-  end
-
-  d2k.overlay.render_context:set_operator(Cairo.Operator.OVER)
-
-  for i, w in pairs(self.widgets) do
-    w:draw()
-  end
-
-  d2k.overlay:unlock()
-end
-
-function HUD:handle_event(event)
-  for i, w in pairs(self.widgets) do
-    if w:is_enabled() then
-      local func = function()
-        w:handle_event(event)
-      end
-      local result, err = pcall(func)
-      if err then
-        print(string.format('HUD:handle_event: error: %s', err))
-      elseif result then
-        return result
-      end
-    end
-  end
-
-  return false
-end
-
-return {HUD = HUD}
 
 -- vi: et ts=2 sw=2
 

@@ -43,6 +43,7 @@ typedef enum                /* Logical output levels */
 extern int cons_output_mask;
 extern int cons_error_mask;
 
+void D_LoadStartupMessagesIntoConsole(void);
 void lprintf(OutputLevels pri, const char *fmt, ...) PRINTF_DECL(2, 3);
 
 /* killough 3/20/98: add const

@@ -86,7 +86,7 @@ void X_Init(void) {
 void X_Start(void) {
   bool script_load_failed;
   char *script_folder = M_PathJoin(I_DoomExeDir(), X_FOLDER_NAME);
-  char *script_path = M_PathJoin(script_folder, "?.lua");
+  char *script_search_path = M_PathJoin(script_folder, "?.lua");
   char *init_script_file = M_PathJoin(script_folder, X_INIT_SCRIPT_NAME);
 
   if (!M_IsFolder(script_folder))
@@ -96,8 +96,13 @@ void X_Start(void) {
     I_Error("Initialization script [%s] is missing", init_script_file);
 
   lua_getglobal(x_main_interpreter, X_NAMESPACE);
-  lua_pushstring(x_main_interpreter, script_path);
-  lua_setfield(x_main_interpreter, -2, "script_path");
+  lua_pushstring(x_main_interpreter, script_folder);
+  lua_setfield(x_main_interpreter, -2, "script_folder");
+  lua_pop(x_main_interpreter, 1);
+
+  lua_getglobal(x_main_interpreter, X_NAMESPACE);
+  lua_pushstring(x_main_interpreter, script_search_path);
+  lua_setfield(x_main_interpreter, -2, "script_search_path");
   lua_pop(x_main_interpreter, 1);
 
   script_load_failed = luaL_dofile(x_main_interpreter, init_script_file);
@@ -109,7 +114,7 @@ void X_Start(void) {
   }
 
   free(script_folder);
-  free(script_path);
+  free(script_search_path);
   free(init_script_file);
 }
 
@@ -340,9 +345,6 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
     lua_getfield(L, -1, object);
     lua_remove(L, -2);
   }
-
-  if (object)
-    args_remaining--;
 
   va_start(args, res_count);
   while (args_remaining-- > 0) {

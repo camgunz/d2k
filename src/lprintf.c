@@ -32,18 +32,47 @@
 #include "m_argv.h"
 #include "e6y.h"//e6y
 
+/*
+ * CG: [XXX] This is a hack, but I can't really think of a better solution
+ * right now
+ */
+static GString *startup_messages = NULL;
+static bool console_loaded = false;
+
 int cons_error_mask  = -1 - LO_INFO; /* all but LO_INFO when redir'd */
 int cons_output_mask = -1;           /* all output enabled */
 
-void lprintf(OutputLevels pri, const char *s, ...) {
-  va_list args;
+void D_LoadStartupMessagesIntoConsole(void) {
+  if (!startup_messages)
+    return;
 
-  va_start(args, s);
+  C_MWrite(startup_messages->str);
+  g_string_free(startup_messages, true);
+  console_loaded = true;
+}
 
-  if (!C_Initialized())
-    vprintf(s, args);
-  else if (pri & cons_output_mask)
-    C_VPrintf(s, args);
+void lprintf(OutputLevels pri, const char *fmt, ...) {
+  va_list args, args2;
+
+  if (!startup_messages)
+    startup_messages = g_string_new("");
+
+  if (!fmt)
+    return;
+
+  va_start(args, fmt);
+  va_copy(args2, args);
+
+  if (!console_loaded) {
+    gchar *markup_string = g_markup_vprintf_escaped(fmt, args);
+
+    g_string_append(startup_messages, markup_string);
+    g_free(markup_string);
+    vprintf(fmt, args2);
+  }
+  else /* if (pri & cons_output_mask) */ {
+    C_VPrintf(fmt, args);
+  }
 
   /* CG: TODO: Removed error mask handling, re-add it? */
 

@@ -23,6 +23,7 @@
 
 local lgi = require('lgi')
 local Cairo = lgi.cairo
+local GLib = lgi.GLib
 local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
 local Widget = require('widget')
@@ -63,6 +64,7 @@ function TextWidget:new(tw)
   tw.font_description_text = tw.font_description_text or 
                              d2k.hud.font_description_text
   tw.use_markup = tw.use_markup or false
+  tw.strip_ending_newline = tw.strip_ending_newline or false
 
   tw.text_context = nil
   tw.current_render_context = nil
@@ -104,11 +106,21 @@ function TextWidget:new(tw)
 end
 
 function TextWidget:update_layout_if_needed()
+  local text = self.text
+
+  if self.strip_ending_newline then
+    local text_length = #text
+
+    if text:sub(text_length, text_length) == '\n' then
+      text = text:sub(1, text_length - 1)
+    end
+  end
+
   if self.needs_updating then
     if self.use_markup then
-      self.layout:set_markup(self.text, -1)
+      self.layout:set_markup(text, -1)
     else
-      self.layout:set_text(self.text, -1)
+      self.layout:set_text(text, -1)
     end
     PangoCairo.update_context(
       d2k.overlay.render_context, d2k.overlay.text_context
@@ -440,6 +452,34 @@ end
 function TextWidget:scroll_down(pixels)
   self.vertical_offset = self.vertical_offset + pixels
   self:check_offsets()
+end
+
+function TextWidget:write(text)
+  if d2k.Video.is_enabled() then
+    self:set_text(self.text .. GLib.markup_escape_text(text, -1))
+  else
+    d2k.System.print(text)
+  end
+end
+
+function TextWidget:mwrite(markup)
+  if self.use_markup then
+    self:set_text(self.text .. markup)
+  else
+    self:write(markup)
+  end
+end
+
+function TextWidget:echo(text)
+  self:set_text(self.text .. GLib.markup_escape_text(text, -1) .. '\n')
+end
+
+function TextWidget:mecho(markup)
+  if self.use_markup then
+    self:set_text(self.text .. markup .. '\n')
+  else
+    self:echo(markup)
+  end
 end
 
 return {

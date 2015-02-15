@@ -21,7 +21,7 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-package.path = package.path .. ';' .. d2k.script_path
+package.path = package.path .. ';' .. d2k.script_search_path
 
 print('X_Init: Init script engine.')
 
@@ -45,9 +45,7 @@ print('X_Init: Adding console to HUD')
 d2k.hud:add_widget(d2k.console)
 
 print('X_Init: Loading console shortcuts')
-d2k.Shorthand = {}
-d2k.Shorthand.exit = d2k.System.exit
-d2k.Shorthand.quit = d2k.System.quit
+require('console_shortcuts')
 
 -- vi: et ts=2 sw=2
 

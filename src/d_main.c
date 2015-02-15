@@ -685,7 +685,6 @@ static void D_DoomLoop(void) {
         D_DoAdvanceDemo();
       M_Ticker();
       G_Ticker();
-      C_Ticker();
       P_Checksum(gametic);
       gametic++;
       tic_elapsed = true;
@@ -1719,29 +1718,34 @@ unsigned int desired_screenwidth, desired_screenheight;
 static void L_SetupConsoleMasks(void) {
   int p;
   int i;
-  const char *cena="ICWEFDA",*pos;  //jff 9/3/98 use this for parsing console masks // CPhipps - const char*'s
+  const char *cena = "ICWEFDA"; //jff 9/3/98 use this for parsing console masks
+  const char *pos;              // CPhipps - const char*'s
 
   //jff 9/3/98 get mask for console output filter
-  if ((p = M_CheckParm ("-cout"))) {
+  if ((p = M_CheckParm("-cout"))) {
     lprintf(LO_DEBUG, "mask for stdout console output: ");
-    if (++p != myargc && *myargv[p] != '-')
-      for (i=0,cons_output_mask=0;(size_t)i<strlen(myargv[p]);i++)
-        if ((pos = strchr(cena,toupper(myargv[p][i])))) {
-          cons_output_mask |= (1<<(pos-cena));
+    if (++p != myargc && *myargv[p] != '-') {
+      for (i = 0, cons_output_mask = 0; (size_t)i < strlen(myargv[p]); i++) {
+        if ((pos = strchr(cena, toupper(myargv[p][i])))) {
+          cons_output_mask |= (1 << (pos - cena));
           lprintf(LO_DEBUG, "%c", toupper(myargv[p][i]));
         }
+      }
+    }
     lprintf(LO_DEBUG, "\n");
   }
 
   //jff 9/3/98 get mask for redirected console error filter
   if ((p = M_CheckParm ("-cerr"))) {
     lprintf(LO_DEBUG, "mask for stderr console output: ");
-    if (++p != myargc && *myargv[p] != '-')
-      for (i=0,cons_error_mask=0;(size_t)i<strlen(myargv[p]);i++)
-        if ((pos = strchr(cena,toupper(myargv[p][i])))) {
-          cons_error_mask |= (1<<(pos-cena));
+    if (++p != myargc && *myargv[p] != '-') {
+      for (i = 0, cons_error_mask = 0; (size_t)i < strlen(myargv[p]); i++) {
+        if ((pos = strchr(cena, toupper(myargv[p][i])))) {
+          cons_error_mask |= (1 << (pos - cena));
           lprintf(LO_DEBUG, "%c", toupper(myargv[p][i]));
         }
+      }
+    }
     lprintf(LO_DEBUG, "\n");
   }
 }
@@ -2338,7 +2342,6 @@ static void D_DoomMainSetup(void) {
 #endif
 
   XAM_RegisterInterface();
-  XC_RegisterInterface();
   XD_RegisterInterface();
   XG_GameRegisterInterface();
   XG_KeysRegisterInterface();
@@ -2353,6 +2356,8 @@ static void D_DoomMainSetup(void) {
   X_ExposeInterfaces(X_GetState());
 
   X_Start();
+
+  D_LoadStartupMessagesIntoConsole();
 
   // CPhipps - auto screenshots
   if ((p = M_CheckParm("-autoshot")) && (p < myargc - 2))

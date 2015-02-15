@@ -41,10 +41,14 @@ function InputWidget:new(iw)
 
   iw.cursor_color = iw.cursor_color or {0.8, 0.8, 0.8, 1.0}
   iw.prompt_color = iw.prompt_color or {1.0, 1.0, 1.0, 1.0}
+  iw.cursor_blink_speed = iw.cursor_blink_speed or 500
 
   iw.cursor = 0
   iw.cursor_active = 0
   iw.cursor_trailing = 0
+  iw.cursor_timer = d2k.System.get_ticks()
+  iw.history = {}
+  iw.history_index = 0
 
   setmetatable(iw, self)
   self.__index = self
@@ -69,8 +73,8 @@ function InputWidget:get_height()
   local input_text = self:get_text()
   local set_dummy_text = false
 
-  if not #input_text == 0 then
-    self.input:set_text('DOOM')
+  if #input_text == 0 then
+    self.layout:set_text('DOOM')
     set_dummy_text = true
   end
 
@@ -79,7 +83,7 @@ function InputWidget:get_height()
   local layout_width, layout_height = self.layout:get_pixel_size()
 
   if set_dummy_text then
-    self.input:set_text('')
+    self.layout:set_text('')
   end
 
   return self.top_margin + layout_height + self.bottom_margin
@@ -88,9 +92,15 @@ end
 function InputWidget:tick()
   local layout_width, layout_height = self.layout:get_pixel_size()
   local new_height = self.top_margin + layout_height + self.bottom_margin
+  local ticks = d2k.System.get_ticks()
 
   if self.height ~= new_height then
     self:set_height(new_height)
+  end
+
+  if ticks > self.cursor_timer + self.cursor_blink_speed then
+    self.cursor_active = not self.cursor_active
+    self.cursor_timer = ticks
   end
 end
 
@@ -164,36 +174,6 @@ function InputWidget:draw()
   local layout_ink_extents, layout_logical_extents =
     self.layout:get_pixel_extents()
 
-  --[[
-  local cursor_line_number, cursor_line_x = self.layout:index_to_line_x(
-    self.cursor, self.cursor_trailing
-  )
-  cursor_line_x = cursor_line_x / Pango.SCALE
-  --]]
-
-  --[[
-  local strong_pos, weak_pos = self.layout:get_cursor_pos(self.cursor)
-
-  print(string.format(
-    'cursor, trailing: %d, %s', self.cursor, self.cursor_trailing
-  ))
-  print(string.format('index_to_line_x: line #, line X: %d, %s',
-    cursor_line_number, cursor_line_x
-  ))
-  print(string.format('strong position: %dx%d+%d+%d',
-    strong_pos.x / Pango.SCALE,
-    strong_pos.y / Pango.SCALE,
-    strong_pos.width / Pango.SCALE,
-    strong_pos.height / Pango.SCALE
-  ))
-  print(string.format('weak position: %dx%d+%d+%d',
-    weak_pos.x / Pango.SCALE,
-    weak_pos.y / Pango.SCALE,
-    weak_pos.width / Pango.SCALE,
-    weak_pos.height / Pango.SCALE
-  ))
-  --]]
-
   if self.vertical_alignment == TextWidget.ALIGN_CENTER then
     ly = ly + (text_height / 2) - (layout_height / 2)
   elseif self.vertical_alignment == TextWidget.ALIGN_BOTTOM then
@@ -232,28 +212,6 @@ function InputWidget:draw()
       PangoCairo.show_layout_line(cr, line)
     end
 
-    --[[
-    if line_number == cursor_line_number then
-      cr:save()
-
-      cr:set_source_rgba(
-        self.cursor_color[1],
-        self.cursor_color[2],
-        self.cursor_color[3],
-        self.cursor_color[4]
-      )
-
-      cr:move_to(line_start_x + cursor_line_x, line_start_y)
-      cr:line_to(
-        line_start_x + cursor_line_x, line_start_y + line_logical_height
-      )
-      cr:set_line_width(InputWidget.CURSOR_THICKNESS)
-      cr:stroke()
-
-      cr:restore()
-    end
-    --]]
-
     if line_start_y >= text_height then
       break
     end
@@ -261,35 +219,56 @@ function InputWidget:draw()
     line_number = line_number + 1
   until not iter:next_line()
 
-  local cursor_pos = self.layout:index_to_pos(self.cursor)
-  cursor_pos.x = cursor_pos.x / Pango.SCALE
-  cursor_pos.y = cursor_pos.y / Pango.SCALE
-  cursor_pos.width = cursor_pos.width / Pango.SCALE
-  cursor_pos.height = cursor_pos.height / Pango.SCALE
+  if self.cursor_active then
+    local cursor_pos = self.layout:index_to_pos(self.cursor)
+    cursor_pos.x = cursor_pos.x / Pango.SCALE
+    cursor_pos.y = cursor_pos.y / Pango.SCALE
+    cursor_pos.width = cursor_pos.width / Pango.SCALE
+    cursor_pos.height = cursor_pos.height / Pango.SCALE
 
-  if self.cursor_trailing then
-    cursor_pos.x = cursor_pos.x + (cursor_pos.width * self.cursor_trailing)
+    if self.cursor_trailing then
+      cursor_pos.x = cursor_pos.x + (cursor_pos.width * self.cursor_trailing)
+    end
+
+    cr:set_source_rgba(
+      self.cursor_color[1],
+      self.cursor_color[2],
+      self.cursor_color[3],
+      self.cursor_color[4]
+    )
+
+    cr:move_to(lx + cursor_pos.x, ly + cursor_pos.y)
+    cr:line_to(lx + cursor_pos.x, ly + cursor_pos.y + cursor_pos.height)
+    cr:set_line_width(InputWidget.CURSOR_THICKNESS)
+    cr:stroke()
   end
-
-  cr:set_source_rgba(
-    self.cursor_color[1],
-    self.cursor_color[2],
-    self.cursor_color[3],
-    self.cursor_color[4]
-  )
-
-  cr:move_to(lx + cursor_pos.x, ly + cursor_pos.y)
-  cr:line_to(lx + cursor_pos.x, ly + cursor_pos.y + cursor_pos.height)
-  cr:set_line_width(InputWidget.CURSOR_THICKNESS)
-  cr:stroke()
 
   cr:restore()
 end
 
+function InputWidget:save_text_as_command()
+  table.insert(self.history, self.text)
+  self.history_index = 0
+end
+
 function InputWidget:show_previous_command()
+  local command_count = #self.history
+
+  if self.history_index < command_count then
+    self.history_index = self.history_index + 1
+    self:set_text(self.history[command_count - (self.history_index - 1)])
+  end
 end
 
 function InputWidget:show_next_command()
+  local command_count = #self.history
+
+  if self.history_index == 0 then
+    self:set_text('')
+  else
+    self.history_index = self.history_index - 1
+    self:set_text(self.history[command_count - (self.history_index - 1)])
+  end
 end
 
 function InputWidget:print_cursor_stats(s)
@@ -318,8 +297,7 @@ end
 function InputWidget:move_cursor_left()
   self:print_cursor_stats('move_cursor_left (before)')
 
-  if self.cursor == 0 then
-    print('cursor is 0')
+  if self.cursor == 0 and self.cursor_trailing == 0 then
     return
   end
 
@@ -333,6 +311,8 @@ function InputWidget:move_cursor_left()
     error('Cursor moved off the beginning of the layout')
   end
 
+  self:activate_cursor()
+
   self:print_cursor_stats('move_cursor_left (after)')
 end
 
@@ -342,7 +322,6 @@ function InputWidget:move_cursor_right()
   local text_length = #self.text
 
   if (self.cursor + self.cursor_trailing) == text_length then
-    print(string.format('cursor is %d', text_length))
     return
   end
 
@@ -356,12 +335,16 @@ function InputWidget:move_cursor_right()
     error('Cursor moved off the beginning of the layout')
   end
 
+  self:activate_cursor()
+
   self:print_cursor_stats('move_cursor_right (after)')
 end
 
 function InputWidget:move_cursor_to_start()
   self.cursor = 0
   self.cursor_trailing = 0
+
+  self:activate_cursor()
 end
 
 function InputWidget:move_cursor_to_end()
@@ -371,6 +354,8 @@ function InputWidget:move_cursor_to_end()
     self.cursor = #self.text - 1
     self.cursor_trailing = 1
   end
+
+  self:activate_cursor()
 end
 
 function InputWidget:delete_previous_character()
@@ -391,6 +376,8 @@ function InputWidget:delete_previous_character()
 
   self.needs_updating = true
   self:update_layout_if_needed()
+
+  self:activate_cursor()
 end
 
 function InputWidget:delete_next_character()
@@ -408,6 +395,8 @@ function InputWidget:delete_next_character()
   end
 
   self.needs_updating = true
+
+  self:activate_cursor()
 end
 
 function InputWidget:insert_character(char)
@@ -434,6 +423,13 @@ function InputWidget:insert_character(char)
   self:print_cursor_stats('insert_character (after)')
 
   self:move_cursor_right()
+
+  self:activate_cursor()
+end
+
+function InputWidget:activate_cursor()
+  self.cursor_active = true
+  self.cursor_timer = d2k.System.get_ticks()
 end
 
 return {InputWidget = InputWidget}

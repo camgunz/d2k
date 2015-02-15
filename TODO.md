@@ -20,17 +20,12 @@
 
 ## Console
 
-1. Implement text input widget
-  - Cursor blinking
-  - Implement various configuration options (needs some thought)
-  - Implement UTF8 properly
+1. Implement various configuration options (needs some thought)
 
-1. Implement input handling
-  - History
-  - Tab-completion
-    - How, though...?
+1. Fix UTF8 problems
 
-1. Implement printing to console
+1. Tab-completion
+  - How, though...?
 
 ## Netcode
 

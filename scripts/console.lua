@@ -22,8 +22,8 @@
 -------------------------------------------------------------------------------
 
 local lgi = require('lgi')
-local GLib = lgi.GLib
 local Cairo = lgi.cairo
+local GLib = lgi.GLib
 local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
 local Widget = require('widget')
@@ -36,9 +36,9 @@ local Console = Widget.Widget:new({
   MARGIN                   = 8,
   HORIZONTAL_SCROLL_AMOUNT = 6,
   VERTICAL_SCROLL_AMOUNT   = 12,
-  FG_COLOR                 = {1.0, 1.0, 1.0, 1.0},
-  BG_COLOR                 = {  0,   0,   0, 0.85},
-  SHORTHAND_MARKER         = '/',
+  FG_COLOR                 = {1.0, 1.0, 1.0, 1.00},
+  BG_COLOR                 = {0.0, 0.0, 0.0, 0.85},
+  SHORTCUT_MARKER          = '/',
 })
 
 function Console:new(c)
@@ -47,11 +47,11 @@ function Console:new(c)
   c.extension_time = c.extension_time or Console.EXTENSION_TIME
   c.retraction_time = c.retraction_time or Console.RETRACTION_TIME
   c.max_height = c.max_height or d2k.Video.get_screen_height() / 2
-  c.shorthand_marker = c.shorthand_marker or Console.SHORTHAND_MARKER
+  c.shortcut_marker = c.shortcut_marker or Console.SHORTCUT_MARKER
 
   c.max_width = d2k.Video.get_screen_width()
   c.width = c.max_width
-  c.height = c.max_height
+  c.height = 0
   c.scroll_rate = 0.0
   c.last_scroll_ms = 0
 
@@ -83,10 +83,12 @@ function Console:new(c)
     vertical_alignment = TextWidget.ALIGN_BOTTOM,
     fg_color = c.fg_color or Console.FG_COLOR,
     bg_color = c.bg_color or Console.BG_COLOR,
-    word_wrap = TextWidget.WRAP_WORD
+    word_wrap = TextWidget.WRAP_WORD,
+    use_markup = true,
+    strip_ending_newline = true
   })
 
-  c.shorthand_regex = GLib.Regex.new(
+  c.shortcut_regex = GLib.Regex.new(
     '([^"]\\S*|".+?"|\'.+?\'|)\\s*',
     GLib.RegexCompileFlags.OPTIMIZE,
     GLib.RegexMatchFlags.NOTEMPTY
@@ -100,12 +102,17 @@ function Console:new(c)
   return c
 end
 
+function Console:is_active()
+  return self.height > 0 and self.scroll_rate >= 0.0
+end
+
 function Console:get_name()
   return 'Console'
 end
 
 function Console:reset()
   self.output:reset()
+  self.input:reset()
 end
 
 function Console:tick()
@@ -134,7 +141,6 @@ function Console:tick()
 
   self.output:tick()
   self.output:set_height(self.input:get_y())
-  self.output:set_text(string.format('input_y: %d', self.input:get_y()))
 end
 
 function Console:draw()
@@ -146,16 +152,16 @@ function Console:draw()
   self.output:draw()
 end
 
-function Console:parse_shorthand_command(short_command)
+function Console:parse_shortcut_command(short_command)
     local wrote_function_name = false
     local wrote_first_argument = false
     local command = ''
 
-    if short_command:sub(1, 1) == self.shorthand_marker then
+    if short_command:sub(1, 1) == self.shortcut_marker then
         short_command = short_command:sub(2)
     end
 
-    local tokens = self.shorthand_regex:split(short_command, 0)
+    local tokens = self.shortcut_regex:split(short_command, 0)
 
     for i, token in ipairs(tokens) do
         if #token ~= 0 then
@@ -180,21 +186,25 @@ end
 function Console:handle_input(input)
   local command = input
 
-  if input:sub(1, 1) == self.shorthand_marker then
-    command = 'd2k.Shorthand.' .. self:parse_shorthand_command(input)
+  if input:sub(1, 1) == self.shortcut_marker then
+    command = 'd2k.Shortcuts.' .. self:parse_shortcut_command(input)
   end
 
   local func, err = load(command, 'Console input', 't')
 
   if not func then
-    print(string.format('Console:handle_input: Error: %s', err))
+    self:mecho(string.format(
+      '<span color="red">Console:handle_input: Error: %s</span>', err
+    ))
     return
   end
 
   local worked, err = pcall(func)
 
   if not worked then
-    print(string.format('Console:handle_input: Error: %s', err))
+    self:mecho(string.format(
+      '<span color="red">Console:handle_input: Error: %s</span>', err
+    ))
   end
 end
 
@@ -250,6 +260,7 @@ function Console:handle_event(event)
   elseif event:is_key_press(d2k.Key.RETURN) or
          event:is_key_press(d2k.Key.KP_ENTER) then
     self:handle_input(self.input:get_text())
+    self.input:save_text_as_command()
     self.input:clear()
     return true
   elseif event:is_key() and event:is_press() then
@@ -265,33 +276,80 @@ function Console:handle_event(event)
   return false
 end
 
-function Console:toggle_scroll()
-  if self.height == self.max_height then
-    self.scroll_rate = -(self.max_height / self.retraction_time)
-  elseif self.height == 0 then
-    self.scroll_rate = self.max_height / self.extension_time
-  elseif self.scroll_rate > 0 then
-    self.scroll_rate = -(self.max_height / self.retraction_time)
-  elseif self.scroll_rate < 0 then
-    self.scroll_rate = self.max_height / self.extension_time
-  end
-
+function Console:scroll_down()
+  self.scroll_rate = self.max_height / self.extension_time
   self.last_scroll_ms = d2k.System.get_ticks()
 end
 
-function Console:print(format, ...)
-  if not d2k.Video.is_enabled() then
-    print(string.format(s, arg))
-    return
-  end
+function Console:scroll_up()
+  self.scroll_rate = -(self.max_height / self.retraction_time)
+  self.last_scroll_ms = d2k.System.get_ticks()
+end
 
-  for i, a in ipairs(arg) do
-    if type(a) == 'string' then
-      arg[i] = GLib.markup_escape_text(a, -1)
-    end
+function Console:toggle_scroll()
+  if self.height == self.max_height then
+    self:scroll_up()
+  elseif self.height == 0 then
+    self:scroll_down()
+  elseif self.scroll_rate < 0 then
+    self:scroll_up()
+  elseif self.scroll_rate > 0 then
+    self:scroll_down()
   end
+end
 
-  self.output:set_text(self.output:get_text() .. string.format(s, arg))
+function Console:summon()
+  self.height = self.max_height
+  self.scroll_rate = 0.0
+  self.last_scroll_ms = d2k.System.get_ticks()
+end
+
+function Console:banish()
+  self.height = 0
+  self.scroll_rate = 0.0
+  self.last_scroll_ms = d2k.System.get_ticks()
+end
+
+function Console:set_fullscreen()
+  self.height = d2k.Video.get_screen_height()
+  self.scroll_rate = 0.0
+  self.last_scroll_ms = d2k.System.get_ticks()
+end
+
+function Console:write(text)
+  -- CG: [TODO] Bail if repredicting
+  if d2k.Video.is_enabled() then
+    self.output:write(text)
+  else
+    d2k.System.print(text)
+  end
+end
+
+function Console:mwrite(markup)
+  -- CG: [TODO] Bail if repredicting
+  if d2k.Video.is_enabled() then
+    self.output:mwrite(markup)
+  else
+    d2k.System.print(markup) -- CG: [TODO] Strip markup if video is disabled
+  end
+end
+
+function Console:echo(text)
+  -- CG: [TODO] Bail if repredicting
+  if d2k.Video.is_enabled() then
+    self.output:echo(text)
+  else
+    print(text)
+  end
+end
+
+function Console:mecho(markup)
+  -- CG: [TODO] Bail if repredicting
+  if d2k.Video.is_enabled() then
+    self.output:mecho(markup)
+  else
+    print(markup) -- CG: [TODO] Strip markup if video is disabled
+  end
 end
 
 return {Console = Console}

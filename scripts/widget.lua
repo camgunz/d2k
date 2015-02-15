@@ -31,6 +31,8 @@ function Widget:new(w)
   w.width = w.width or 0
   w.height = w.height or 0
 
+  w.enabled = false
+  w.active = false
   w.needs_updating = false
 
   setmetatable(w, self)
@@ -95,6 +97,18 @@ end
 function Widget:draw()
 end
 
+function Widget:enable()
+  self.enabled = true
+end
+
+function Widget:disable()
+  self.enabled = false
+end
+
+function Widget:is_enabled()
+  return self.enabled
+end
+
 function Widget:activate()
   self.active = true
 end
@@ -108,11 +122,11 @@ function Widget:is_active()
 end
 
 function Widget:on_add(hud)
-  self:activate()
+  self:enable()
 end
 
 function Widget:on_remove(hud)
-  self:deactivate()
+  self:disable()
 end
 
 function Widget:handle_event(event)

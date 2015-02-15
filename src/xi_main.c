@@ -39,11 +39,20 @@ static int XF_GetTicks(lua_State *L) {
   return 1;
 }
 
+static int XF_Print(lua_State *L) {
+  char *s = luaL_checkstring(L, -1);
+
+  printf("%s", s);
+
+  return 0;
+}
+
 void XI_RegisterInterface(void) {
-  X_RegisterObjects("System", 3,
+  X_RegisterObjects("System", 4,
     "get_ticks", X_FUNCTION, XF_GetTicks,
     "quit",      X_FUNCTION, XF_Quit,
-    "exit",      X_FUNCTION, XF_Quit
+    "exit",      X_FUNCTION, XF_Quit,
+    "print",     X_FUNCTION, XF_Print
   );
 }
 
