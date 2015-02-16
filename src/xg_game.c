@@ -25,7 +25,9 @@
 
 #include "doomstat.h"
 #include "d_event.h"
+#include "d_player.h"
 #include "g_game.h"
+#include "p_user.h"
 #include "x_main.h"
 
 static int XG_GameGetGametic(lua_State *L) {
@@ -43,10 +45,48 @@ static int XG_GameHandleEvent(lua_State *L) {
   return 1;
 }
 
+static int XG_GameGetConsoleplayerMessages(lua_State *L) {
+  GPtrArray *cpms = players[consoleplayer].messages.messages;
+  GString *messages = g_string_new("");
+
+  for (guint i = 0; i < cpms->len; i++) {
+    player_message_t *pm = (player_message_t *)g_ptr_array_index(cpms, i);
+
+    if (!pm->centered)
+      g_string_append(messages, pm->content);
+  }
+
+  lua_pushstring(L, messages->str);
+
+  g_string_free(messages, true);
+
+  return 1;
+}
+
+static int XG_GameGetConsoleplayerMessagesUpdated(lua_State *L) {
+  if (players[consoleplayer].messages.updated)
+    lua_pushboolean(L, true);
+  else
+    lua_pushboolean(L, false);
+
+  return 1;
+}
+
+static int XG_GameClearConsoleplayerMessagesUpdated(lua_State *L) {
+  P_ClearMessagesUpdated(consoleplayer);
+
+  return 0;
+}
+
 void XG_GameRegisterInterface(void) {
-  X_RegisterObjects("Game", 2,
+  X_RegisterObjects("Game", 5,
     "get_gametic",  X_FUNCTION, XG_GameGetGametic,
-    "handle_event", X_FUNCTION, XG_GameHandleEvent
+    "handle_event", X_FUNCTION, XG_GameHandleEvent,
+    "get_consoleplayer_messages", X_FUNCTION, XG_GameGetConsoleplayerMessages,
+    "get_consoleplayer_messages_updated", X_FUNCTION,
+      XG_GameGetConsoleplayerMessagesUpdated,
+    "clear_consoleplayer_messages_updated", X_FUNCTION,
+      XG_GameClearConsoleplayerMessagesUpdated
   );
 }
 

@@ -47,5 +47,18 @@ d2k.hud:add_widget(d2k.console)
 print('X_Init: Loading console shortcuts')
 require('console_shortcuts')
 
+print('X_Init: Loading HUD widgets')
+func, err = loadfile(d2k.script_folder .. '/local_hud_widgets.lua', 't')
+if func then
+  local worked, err = pcall(func)
+  if not worked then
+    d2k.console:mecho(string.format('<span color="red">%s</span>', err))
+    print(err)
+  end
+else
+  d2k.console:mecho(string.format('<span color="red">%s</span>', err))
+  print(err)
+end
+
 -- vi: et ts=2 sw=2
 

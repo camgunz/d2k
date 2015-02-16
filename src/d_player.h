@@ -80,6 +80,17 @@ typedef enum
   CF_FLY              = 16,
 } cheat_t;
 
+typedef struct player_messages_s {
+  GPtrArray *messages;
+  bool updated;
+} player_messages_t;
+
+typedef struct player_message_s {
+  char *content;
+  bool centered;
+  bool processed;
+  int sfx;
+} player_message_t;
 
 //
 // Extended player object info: player_t
@@ -144,7 +155,7 @@ typedef struct player_s
   // CPhipps - const
   // const char         *message;
 
-  GPtrArray          *messages;
+  player_messages_t   messages;
 
   // For screen flashing (red or bright).
   int                 damagecount;

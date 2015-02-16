@@ -31,8 +31,15 @@ d2k.Shortcuts.mecho = function(markup) d2k.console:mecho(markup) end
 
 func, err = loadfile(d2k.script_folder .. '/local_console_shortcuts.lua', 't')
 
-if not func then
+if func then
+  local worked, err = pcall(func)
+  if not worked then
+    d2k.console:mecho(string.format('<span color="red">%s</span>', err))
+    print(err)
+  end
+else
   d2k.console:mecho(string.format('<span color="red">%s</span>', err))
+  print(err)
 end
 
 -- vi: et ts=2 sw=2

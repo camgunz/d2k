@@ -10,15 +10,39 @@
 
 1. Implement patch font drawing functions
 
-## HUD
+## GUI Widgets
+
+1. Resolution changes aren't propagated
+
+1. Add Z-Index sorting
+
+1. Add retraction to TextWidget
+
+1. Add/fix wrapping to/for InputWidget
+
+1. Fix backspace/delete bugs in InputWidget
 
 1. A few new widgets:
-  - messages
   - chat
   - netstats
   - FPS
+  - scoreboard
+
+1. Add auto-scroll to TextWidget
 
 ## Console
+
+1. Add serverside console input
+
+1. Add more scripting commands:
+  - `map`
+  - `wad`
+
+1. Add tab-completion
+
+1. Add clipboard (cut/copy/paste) support
+
+1. Add mouse selection support
 
 1. Implement various configuration options (needs some thought)
 
@@ -133,21 +157,6 @@
     - How to not send an arbitrary script to the server though...?
     - Does it make sense to have scripting contexts per-client serverside?
 
-1. Console:
-  - Reimplement the new HUD entirely in scripting
-  - Add serverside console input
-  - Add more scripting commands:
-    - `map`
-    - `wad`
-  - Add command history
-  - Add tab-completion
-  - Add clipboard (cut/copy/paste) support
-  - Add mouse selection support
-  - Add new widgets:
-    - Framerate
-    - Network stats
-    - Add a scoreboard
-
 1. Add HTTP and JSON (cURL and Jansson)
   - Have client download missing WADs
     - the client should do this between frames in case it needs to download a
@@ -162,7 +171,6 @@
   - Add a message indicating that the server is full; currently it looks like a
     crash
   - Slow down the super fast doomguy face
-
 
 ## CTF
 
@@ -198,8 +206,6 @@
 1. Cleanup #includes
 
 1. Update renderer
-
-1. Move the remaining (old) HUD widgets to the scripted HUD
 
 1. UDMF
 

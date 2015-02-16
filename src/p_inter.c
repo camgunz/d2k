@@ -165,52 +165,52 @@ static dboolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
 // The weapon name may have a MF_DROPPED flag ored in.
 //
 
-static dboolean P_GiveWeapon(player_t *player, weapontype_t weapon, dboolean dropped)
-{
+static dboolean P_GiveWeapon(player_t *player, weapontype_t weapon,
+                                               dboolean dropped) {
   dboolean gaveammo;
   dboolean gaveweapon;
 
-  if (netgame && deathmatch != 2 && !dropped)
-    {
-      // leave placed weapons forever on net games
-      if (player->weaponowned[weapon])
-        return false;
-
-      player->bonuscount += BONUSADD;
-      player->weaponowned[weapon] = true;
-
-      P_GiveAmmo(player, weaponinfo[weapon].ammo, deathmatch ? 5 : 2);
-
-      player->pendingweapon = weapon;
-      /* cph 20028/10 - for old-school DM addicts, allow old behavior
-       * where only consoleplayer's pickup sounds are heard */
-      // displayplayer, not consoleplayer, for viewing multiplayer demos
-      if (!comp[comp_sound] || player == &players[displayplayer])
-        S_StartSound (player->mo, sfx_wpnup|PICKUP_SOUND); // killough 4/25/98
-
-      if (MULTINET)
-        return true;
-
+  if (netgame && deathmatch != 2 && !dropped) {
+    // leave placed weapons forever on net games
+    if (player->weaponowned[weapon])
       return false;
-    }
 
-  if (weaponinfo[weapon].ammo != am_noammo)
-    {
-      // give one clip with a dropped weapon,
-      // two clips with a found weapon
-      gaveammo = P_GiveAmmo (player, weaponinfo[weapon].ammo, dropped ? 1 : 2);
-    }
-  else
+    player->bonuscount += BONUSADD;
+    player->weaponowned[weapon] = true;
+
+    P_GiveAmmo(player, weaponinfo[weapon].ammo, deathmatch ? 5 : 2);
+
+    player->pendingweapon = weapon;
+    /* cph 20028/10 - for old-school DM addicts, allow old behavior
+     * where only consoleplayer's pickup sounds are heard */
+    // displayplayer, not consoleplayer, for viewing multiplayer demos
+    if (!comp[comp_sound] || player == &players[displayplayer])
+      S_StartSound (player->mo, sfx_wpnup|PICKUP_SOUND); // killough 4/25/98
+
+    if (MULTINET)
+      return true;
+
+    return false;
+  }
+
+  if (weaponinfo[weapon].ammo != am_noammo) {
+    // give one clip with a dropped weapon,
+    // two clips with a found weapon
+    gaveammo = P_GiveAmmo(player, weaponinfo[weapon].ammo, dropped ? 1 : 2);
+  }
+  else {
     gaveammo = false;
+  }
 
-  if (player->weaponowned[weapon])
+  if (player->weaponowned[weapon]) {
     gaveweapon = false;
-  else
-    {
-      gaveweapon = true;
-      player->weaponowned[weapon] = true;
-      player->pendingweapon = weapon;
-    }
+  }
+  else {
+    gaveweapon = true;
+    player->weaponowned[weapon] = true;
+    player->pendingweapon = weapon;
+  }
+
   return gaveweapon || gaveammo;
 }
 

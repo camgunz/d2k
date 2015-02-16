@@ -31,6 +31,7 @@ local TextWidget = require('text_widget')
 local InputWidget = require('input_widget')
 
 local Console = Widget.Widget:new({
+  name                     = 'console',
   EXTENSION_TIME           = 1200.0,
   RETRACTION_TIME          = 1200.0,
   MARGIN                   = 8,
@@ -56,6 +57,7 @@ function Console:new(c)
   c.last_scroll_ms = 0
 
   c.input = InputWidget.InputWidget:new({
+    name = 'console input',
     x = 0,
     y = 0,
     width = c.max_width,
@@ -71,6 +73,7 @@ function Console:new(c)
   })
 
   c.output = TextWidget.TextWidget:new({
+    name = 'console output',
     x = 0,
     y = 0,
     width = c.max_width,

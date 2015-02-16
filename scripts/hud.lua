@@ -81,7 +81,13 @@ function HUD:tick()
   end
 
   for i, w in pairs(self.widgets) do
-    w:tick()
+    local func = function() w:tick() end
+
+    local worked, err = pcall(func)
+
+    if not worked then
+      print(err)
+    end
   end
 end
 

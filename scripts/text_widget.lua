@@ -50,32 +50,43 @@ TextWidget.ELLIPSIZE_END    = 3
 
 function TextWidget:new(tw)
   tw = tw or {}
-  
+
   tw.top_margin = tw.top_margin or 0
   tw.bottom_margin = tw.bottom_margin or 0
   tw.left_margin = tw.left_margin or 0
   tw.right_margin = tw.right_margin or 0
   tw.text = tw.text or ''
-  tw.max_width = tw.max_width or 0
-  tw.max_height = tw.max_height or 0
+  tw.max_width = tw.max_width or tw.width or 0
+  tw.max_height = tw.max_height or tw.height or 0
   tw.fg_color = tw.fg_color or {1.0, 1.0, 1.0, 1.0}
   tw.bg_color = tw.bg_color or {0.0, 0.0, 0.0, 0.0}
+  tw.outline_color = tw.outline_color or {0.0, 0.0, 0.0, 0.0}
+  tw.outline_text = tw.outline_text or false
+  tw.outline_width = tw.outline_width or 0
+  tw.line_height = tw.line_height or 0
   tw.scrollable = tw.scrollable or false
-  tw.font_description_text = tw.font_description_text or 
+  tw.font_description_text = tw.font_description_text or
                              d2k.hud.font_description_text
   tw.use_markup = tw.use_markup or false
   tw.strip_ending_newline = tw.strip_ending_newline or false
+  tw.retractable = tw.retractable or false
+  tw.retraction_time = tw.retraction_time or 0
+  tw.retraction_timeout = tw.retraction_timeout or 0
 
   tw.text_context = nil
   tw.current_render_context = nil
   tw.layout = nil
   tw.horizontal_offset = 0.0
   tw.vertical_offset = 0.0
+  tw.last_retraction = 0
+  tw.retraction_target = 0
+  tw.get_external_text = nil
+  tw.external_text_updated = nil
+  tw.clear_external_text_updated = nil
 
   setmetatable(tw, self)
   self.__index = self
 
-  tw:set_name('Text Widget')
   tw:build_layout()
 
   if tw.word_wrap then
@@ -87,7 +98,7 @@ function TextWidget:new(tw)
   if tw.horizontal_alignment then
     tw:set_horizontal_alignment(tw.horizontal_alignment)
   else
-    tw:set_horizontal_alignment(TextWidget.ALIGN_RIGHT)
+    tw:set_horizontal_alignment(TextWidget.ALIGN_LEFT)
   end
 
   if tw.vertical_alignment then
@@ -106,27 +117,50 @@ function TextWidget:new(tw)
 end
 
 function TextWidget:update_layout_if_needed()
-  local text = self.text
+  if not self.needs_updating then
+    return
+  end
+
+  local text = self:get_text()
 
   if self.strip_ending_newline then
-    local text_length = #text
+    while true do
+      local text_length = #text
 
-    if text:sub(text_length, text_length) == '\n' then
+      if text:sub(text_length, text_length) ~= '\n' then
+        break
+      end
+
       text = text:sub(1, text_length - 1)
     end
   end
 
-  if self.needs_updating then
-    if self.use_markup then
-      self.layout:set_markup(text, -1)
-    else
-      self.layout:set_text(text, -1)
-    end
-    PangoCairo.update_context(
-      d2k.overlay.render_context, d2k.overlay.text_context
-    )
-    PangoCairo.update_layout(d2k.overlay.render_context, self.layout)
-    self:check_offsets()
+  if self.use_markup then
+    self.layout:set_markup(text, -1)
+  else
+    self.layout:set_text(text, -1)
+  end
+
+  PangoCairo.update_context(
+    d2k.overlay.render_context, d2k.overlay.text_context
+  )
+  PangoCairo.update_layout(d2k.overlay.render_context, self.layout)
+  self:check_offsets()
+
+  if self.get_external_text then
+    local layout_width, layout_height = self.layout:get_pixel_size()
+
+    self:set_height(layout_height)
+  end
+
+  self.needs_updating = false
+end
+
+function TextWidget:tick()
+  if self.get_external_text and self.external_text_updated() then
+    self.text = self.get_external_text()
+    self.needs_updating = true
+    self.clear_external_text_updated()
   end
 end
 
@@ -139,6 +173,9 @@ function TextWidget:draw()
   end
 
   self:update_layout_if_needed()
+
+  local lw, lh = self.layout:get_pixel_size()
+  print(string.format('%s: %d, %d', self.name, lw, lh))
 
   line_count = self.layout:get_line_count()
 
@@ -163,6 +200,7 @@ function TextWidget:draw()
     return
   end
 
+  --[[
   cr:reset_clip()
   cr:new_path()
   cr:rectangle(
@@ -172,6 +210,7 @@ function TextWidget:draw()
     self.height - (self.top_margin + self.bottom_margin)
   )
   cr:clip()
+  --]]
 
   cr:set_source_rgba(
     self.fg_color[1],
@@ -210,23 +249,121 @@ function TextWidget:draw()
 
   local iter = self.layout:get_iter()
   local line_number = 1
-  repeat
-    local line = iter:get_line_readonly()
-    local line_ink_extents, line_logical_extents = iter:get_line_extents()
-    local line_logical_x = line_logical_extents.x / Pango.SCALE
-    local line_logical_y = line_logical_extents.y / Pango.SCALE
-    local line_baseline_pixels = iter:get_baseline() / Pango.SCALE
-    local line_start_x = line_logical_x + lx
-    local line_start_y = line_logical_y + ly
-    local line_end_y = line_baseline_pixels + ly
+  local min_line = 0
+  local max_line = 0
+  local start_y_offset = 0
+  local rendered_at_least_one_line = false
 
-    if line_end_y > 0 then
-      cr:move_to(line_start_x, line_baseline_pixels + ly)
-      PangoCairo.show_layout_line(cr, line)
+  if self.line_height > 0 then
+    if line_count <= self.line_height then
+      min_line = 1
+      max_line = line_count
+    elseif self.vertical_alignment == TextWidget.ALIGN_TOP then
+      min_line = 1
+      max_line = self.line_height
+    elseif self.vertical_alignment == TextWidget.ALIGN_CENTER then
+      local half_lines = line_count / 2
+      local half_line_height = self.line_height / 2
+
+      min_line = math.floor(half_lines - half_line_height)
+      max_line = math.floor(half_lines + half_line_height)
+
+      while ((max_line - min_line) + 1) < self.line_height do
+        max_line = max_line + 1
+      end
+    else
+      min_line = (line_count - self.line_height) + 1
+      max_line = line_count
     end
 
-    if line_start_y >= text_height then
-      break
+    print(string.format('min/max line: %d, %d', min_line, max_line))
+  end
+
+  repeat
+    local line_baseline_pixels = iter:get_baseline() / Pango.SCALE
+    local line_end_y = line_baseline_pixels + ly
+    local should_render_line = false
+    local should_quit_after_rendering = false
+
+    if self.line_height > 0 then
+      if line_number >= min_line and line_number <= max_line then
+        should_render_line = true
+      end
+    elseif line_end_y > 0 then
+      should_render_line = true
+    end
+
+    if should_render_line then
+      local line = iter:get_line_readonly()
+      local line_ink_extents, line_logical_extents = iter:get_line_extents()
+      local line_logical_x = line_logical_extents.x / Pango.SCALE
+      local line_logical_y = line_logical_extents.y / Pango.SCALE
+      local line_logical_height = line_logical_extents.height / Pango.SCALE
+      local line_start_x = line_logical_x + lx
+      local line_start_y = line_logical_y + ly
+
+      if self.line_height > 0 then
+        if line_number == max_line then
+          should_quit_after_rendering = true
+        end
+      elseif line_start_y >= text_height then
+        should_quit_after_rendering = true
+      end
+
+      if self.line_height > 0 and
+         (not rendered_at_least_one_line) and
+         line_logical_y > 0 then
+        start_y_offset = -line_logical_y
+      end
+
+      rendered_at_least_one_line = true
+
+      print(string.format('%s: Rendering line %d at %dx%d (%dx%d+%d+%d, %d)',
+        self.name,
+        line_number,
+        line_start_x,
+        line_baseline_pixels + ly,
+        line_logical_x,
+        line_logical_y,
+        line_logical_extents.width / Pango.SCALE,
+        line_logical_height,
+        start_y_offset
+      ))
+
+      cr:move_to(line_start_x, line_baseline_pixels + ly + start_y_offset)
+
+      if self.outline_text then
+        cr:save()
+
+        PangoCairo.layout_line_path(cr, line)
+
+        cr:save()
+        cr:set_line_width(self.outline_width)
+        cr:set_source_rgba(
+          self.outline_color[1],
+          self.outline_color[2],
+          self.outline_color[3],
+          self.outline_color[4]
+        )
+        cr:stroke_preserve()
+        cr:restore()
+
+        cr:set_source_rgba(
+          self.fg_color[1],
+          self.fg_color[2],
+          self.fg_color[3],
+          self.fg_color[4]
+        )
+        cr:fill_preserve()
+
+        cr:restore()
+      else
+        PangoCairo.show_layout_line(cr, line)
+      end
+
+      if should_quit_after_rendering then
+        break
+      end
     end
 
     line_number = line_number + 1
@@ -243,16 +380,42 @@ function TextWidget:build_layout()
   ))
 end
 
+function TextWidget:set_height_by_lines(line_count)
+  self.line_height = line_count
+end
+
+function TextWidget:set_external_text_source(get_text,
+                                             text_updated,
+                                             clear_text_updated)
+  self.get_external_text = get_text
+  self.external_text_updated = text_updated
+  self.clear_external_text_updated = clear_text_updated
+end
+
 function TextWidget:get_text()
-  return self.text
+  if self.get_external_text then
+    return self.get_external_text()
+  else
+    return self.text
+  end
 end
 
 function TextWidget:set_text(text)
+  if self.get_external_text then
+    error(string.format("%s: Can't set text when displaying external text",
+      self.name
+    ))
+  end
   self.text = text
   self.needs_updating = true
 end
 
 function TextWidget:clear()
+  if self.get_external_text then
+    error(string.format("%s: Can't clear text when displaying external text",
+      self.name
+    ))
+  end
   self:set_text('')
 end
 
@@ -455,28 +618,52 @@ function TextWidget:scroll_down(pixels)
 end
 
 function TextWidget:write(text)
+  if self.get_external_text then
+    error(string.format("%s: Can't write text when displaying external text",
+      self.name
+    ))
+  end
+
   if d2k.Video.is_enabled() then
-    self:set_text(self.text .. GLib.markup_escape_text(text, -1))
+    self:set_text(self:get_text() .. GLib.markup_escape_text(text, -1))
   else
     d2k.System.print(text)
   end
 end
 
 function TextWidget:mwrite(markup)
+  if self.get_external_text then
+    error(string.format("%s: Can't write markup when displaying external text",
+      self.name
+    ))
+  end
+
   if self.use_markup then
-    self:set_text(self.text .. markup)
+    self:set_text(self:get_text() .. markup)
   else
     self:write(markup)
   end
 end
 
 function TextWidget:echo(text)
-  self:set_text(self.text .. GLib.markup_escape_text(text, -1) .. '\n')
+  if self.get_external_text then
+    error(string.format("%s: Can't echo text when displaying external text",
+      self.name
+    ))
+  end
+
+  self:set_text(self:get_text() .. GLib.markup_escape_text(text, -1) .. '\n')
 end
 
 function TextWidget:mecho(markup)
+  if self.get_external_text then
+    error(string.format("%s: Can't echo markup when displaying external text",
+      self.name
+    ))
+  end
+
   if self.use_markup then
-    self:set_text(self.text .. markup .. '\n')
+    self:set_text(self:get_text() .. markup .. '\n')
   else
     self:echo(markup)
   end

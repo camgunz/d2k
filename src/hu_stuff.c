@@ -2532,8 +2532,8 @@ void HU_Ticker(void) {
     if (!playeringame[i])
       continue;
 
-    for (unsigned int i = 0; i < player->messages->len; i++) {
-      player_message_t *msg = player->messages->pdata[i];
+    for (unsigned int i = 0; i < player->messages.messages->len; i++) {
+      player_message_t *msg = player->messages.messages->pdata[i];
 
       if (msg->processed)
         continue;

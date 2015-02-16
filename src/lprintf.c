@@ -96,7 +96,7 @@ void I_Error(const char *error, ...) {
   doom_vsnprintf(errmsg, sizeof(errmsg), error, argptr);
   va_end(argptr);
 
-  lprintf(LO_ERROR, "%s\n", errmsg);
+  fprintf(stderr, "%s\n", errmsg);
   I_SafeExit(-1);
 }
 

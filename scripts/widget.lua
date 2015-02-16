@@ -38,7 +38,7 @@ function Widget:new(w)
   setmetatable(w, self)
   self.__index = self
 
-  w:set_name('HUD Widget')
+  w:set_name(w.name or 'Widget')
   w:deactivate()
 
   return w
@@ -73,6 +73,10 @@ function Widget:get_width()
 end
 
 function Widget:set_width(width)
+  if width == self.width then
+    return
+  end
+
   self.width = width
   self.needs_updating = true
   self:check_offsets()
@@ -83,6 +87,12 @@ function Widget:get_height()
 end
 
 function Widget:set_height(height)
+  if height == self.height then
+    return
+  end
+
+  print(string.format('%s: set_height(%d)', self.name, height))
+
   self.height = height
   self.needs_updating = true
   self:check_offsets()

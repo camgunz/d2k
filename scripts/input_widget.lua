@@ -53,17 +53,15 @@ function InputWidget:new(iw)
   setmetatable(iw, self)
   self.__index = self
 
-  iw:set_name('Input Widget')
   iw:build_layout()
 
   return iw
 end
 
 function InputWidget:set_text(text)
-  self.text = text
-  self.needs_updating = true
+  TextWidget.TextWidget.set_text(self, text)
 
-  if self.cursor >= #self.text - 1 then
+  if self.cursor >= #self:get_text() - 1 then
     self.cursor = 0
     self.cursor_trailing = 0
   end
@@ -247,7 +245,7 @@ function InputWidget:draw()
 end
 
 function InputWidget:save_text_as_command()
-  table.insert(self.history, self.text)
+  table.insert(self.history, self:get_text())
   self.history_index = 0
 end
 
@@ -283,7 +281,7 @@ function InputWidget:print_cursor_stats(s)
     s,
     self.cursor,
     self.cursor_trailing,
-    #self.text,
+    #self:get_text(),
     cursor_line_number,
     cursor_line_x / Pango.SCALE,
     cursor_position.x / Pango.SCALE,
@@ -304,7 +302,7 @@ function InputWidget:move_cursor_left()
   self.cursor, self.cursor_trailing = self.layout:move_cursor_visually(
     true, self.cursor, self.cursor_trailing, -1
   )
-  
+
   if self.cursor == GLib.MAXINT32 then
     error('Cursor moved off the end of the layout')
   elseif self.cursor < 0 then
@@ -319,7 +317,7 @@ end
 function InputWidget:move_cursor_right()
   self:print_cursor_stats('move_cursor_right (before)')
 
-  local text_length = #self.text
+  local text_length = #self:get_text()
 
   if (self.cursor + self.cursor_trailing) == text_length then
     return
@@ -348,19 +346,28 @@ function InputWidget:move_cursor_to_start()
 end
 
 function InputWidget:move_cursor_to_end()
-  local text_length = #self.text
+  local text_length = #self:get_text()
 
   if text_length > 0 then
-    self.cursor = #self.text - 1
+    self.cursor = text_length - 1
     self.cursor_trailing = 1
   end
 
   self:activate_cursor()
 end
 
+function InputWidget:set_external_text_source(get_text,
+                                              text_updated,
+                                              clear_text_updated)
+  error(string.format('%s: Cannot set external text source on input widgets',
+    self.name
+  ))
+end
+
 function InputWidget:delete_previous_character()
   local index = self.cursor + self.cursor_trailing
-  local text_length = #self.text
+  local text = self:get_text()
+  local text_length = #text
 
   if self.cursor == 0 then
     return
@@ -369,33 +376,31 @@ function InputWidget:delete_previous_character()
   self:move_cursor_left()
 
   if index == text_length then
-    self.text = self.text:sub(1, text_length - 1)
+    self:set_text(text:sub(1, text_length - 1))
   else
-    self.text = self.text:sub(1, index - 1) .. self.text:sub(index + 1)
+    self:set_text(text:sub(1, index - 1) .. text:sub(index + 1))
   end
 
-  self.needs_updating = true
   self:update_layout_if_needed()
-
   self:activate_cursor()
 end
 
 function InputWidget:delete_next_character()
   local index = self.cursor + self.cursor_trailing
-  local text_length = #self.text
+  local text = self:get_text()
+  local text_length = #text
 
   if index == text_length then
     return
   end
 
   if index == 0 then
-    self.text = self.text:sub(index + 2)
+    self:set_text(text:sub(index + 2))
   else
-    self.text = self.text:sub(1, index) .. self.text:sub(index + 2)
+    self:set_text(text:sub(1, index) .. text:sub(index + 2))
   end
 
   self.needs_updating = true
-
   self:activate_cursor()
 end
 
@@ -404,18 +409,19 @@ function InputWidget:insert_character(char)
 
   local old_pos = self.cursor
   local start_text = ''
-  local text_length = #self.text
+  local text = self:get_text()
+  local text_length = #text
   local index = self.cursor + self.cursor_trailing
 
   if index == 0 then
-    self.text = char .. self.text
+    self:set_text(char .. text)
   elseif index == text_length then
-    self.text = self.text .. char
+    self:set_text(text .. char)
   else
-    self.text = self.text:sub(1, index) .. char .. self.text:sub(index + 1)
+    self:set_text(text:sub(1, index) .. char .. text:sub(index + 1))
   end
 
-  self.layout:set_text(self.text, -1)
+  self.layout:set_text(self:get_text(), -1)
 
   self.needs_updating = true
   self:update_layout_if_needed()

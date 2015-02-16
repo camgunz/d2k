@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # export LIBGL_ALWAYS_SOFTWARE=1
-CMD="cbuild/d2k -solo-net -skill 5 -warp 1 -nomonsters -deathmatch -frags 5 -nomouse"
+CMD="cbuild/d2k -skill 5 -warp 1 -nomonsters -nomouse"
 
 mkdir -p ~/.d2k/scripts
 cp scripts/* ~/.d2k/scripts/

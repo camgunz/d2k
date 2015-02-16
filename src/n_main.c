@@ -260,7 +260,7 @@ void N_InitNetGame(void) {
 
     P_SetName(i, name);
 
-    players[i].messages = g_ptr_array_new_with_free_func(P_DestroyMessage);
+    P_InitPlayerMessages(i);
   }
 
   P_InitCommands();
