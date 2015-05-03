@@ -30,6 +30,7 @@
 
 #define X_NAMESPACE "d2k"
 #define X_FOLDER_NAME "scripts"
+#define X_TYPELIB_FOLDER_NAME "typelibs"
 #define X_INIT_SCRIPT_NAME "init.lua"
 #define X_RegisterObject(sn, n, t, d) X_RegisterObjects(sn, 1, n, t, d)
 

@@ -23,6 +23,8 @@
 
 #include "z_zone.h"
 
+#include <girepository.h>
+
 #include "d_event.h"
 #include "c_main.h"
 #include "i_main.h"
@@ -88,6 +90,33 @@ void X_Start(void) {
   char *script_folder = M_PathJoin(I_DoomExeDir(), X_FOLDER_NAME);
   char *script_search_path = M_PathJoin(script_folder, "?.lua");
   char *init_script_file = M_PathJoin(script_folder, X_INIT_SCRIPT_NAME);
+  GITypelib *typelib = g_irepository_require(NULL, "GObject", NULL, 0, NULL);
+
+  if (!typelib) {
+    char *typelib_folder = M_PathJoin(I_DoomExeDir(), X_TYPELIB_FOLDER_NAME);
+
+    if (!M_IsFolder(typelib_folder)) {
+      I_Error(
+        "X_Start: Could not locate typelib folder (%s) for scripting",
+        typelib_folder
+      );
+    }
+
+    g_irepository_prepend_search_path(typelib_folder);
+    typelib = g_irepository_require(NULL, "GObject", NULL, 0, NULL);
+  }
+
+  if (!typelib) {
+    GSList *typelib_search_paths = g_irepository_get_search_path();
+
+    puts("Typelib search path:");
+    while (typelib_search_paths) {
+      printf("  %s\n", (char *)typelib_search_paths->data);
+      typelib_search_paths = g_slist_next(typelib_search_paths);
+    }
+
+    I_Error("X_Start: Could not locate typelib files for scripting");
+  }
 
   if (!M_IsFolder(script_folder))
     I_Error("Script folder [%s] is missing", script_folder);
