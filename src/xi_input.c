@@ -423,9 +423,9 @@ static int XI_PopulateEvent(lua_State *L) {
         event->jstype = ev_joystick_axis;
         event->key = sdl_event.jaxis.axis;
         event->value = sdl_event.jaxis.value;
-        
+
         /*
-         * CG: [XXX] Below modifications to event->value were in original 
+         * CG: [XXX] Below modifications to event->value were in original
          *           joystick code, not totally sure why though.
          */
 
@@ -529,7 +529,7 @@ static int XI_HandleEvent(lua_State *L) {
 void XI_InputRegisterInterface(void) {
   /* CG: [TODO] Add functions to return names for mouse & joystick buttons */
 
-  X_RegisterType("InputEvent", 21, 
+  X_RegisterType("InputEvent", 21,
     "new",                  XI_InputEventNew,
     "reset",                XI_InputEventReset,
     "__tostring",           XI_InputEventToString,
@@ -722,7 +722,7 @@ void XI_InputRegisterInterface(void) {
     "populate_event", X_FUNCTION, XI_PopulateEvent
   );
 
-  X_RegisterObjects("System", 1,
+  X_RegisterObjects("Input", 1,
     "handle_event", X_FUNCTION, XI_HandleEvent
   );
 }

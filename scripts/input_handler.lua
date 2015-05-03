@@ -37,7 +37,7 @@ end
 function InputHandler:handle_event()
   local ev = self.current_event
 
-  if d2k.System.handle_event(ev) then
+  if d2k.Input.handle_event(ev) then
     return
   end
 

@@ -204,10 +204,16 @@
 		<Unit filename="../src/SDL/i_font.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../src/SDL/i_input.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="../src/SDL/i_joy.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/SDL/i_main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/SDL/i_mouse.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/SDL/i_music.c">
@@ -803,6 +809,42 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/x_main.h" />
+		<Unit filename="../src/xam_main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/xc_main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/xd_main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/xg_game.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/xg_keys.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/xi_input.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/xi_main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/xm_menu.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/xm_misc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/xp_user.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/xst_main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/xv_main.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="../src/z_bmalloc.c">
 			<Option compilerVar="CC" />
 		</Unit>
