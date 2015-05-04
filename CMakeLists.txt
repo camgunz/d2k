@@ -753,24 +753,6 @@ CONFIGURE_FILE(
   ${CMAKE_CURRENT_BINARY_DIR}/config.h
 )
 
-###
-# FIXME: This is an inelegant hack to find and grab all needed DLL support
-#        files on windows. It works by looking for SDL.dll then taking every
-#        DLL file found in that directory from your SDK.  This ensures you get
-#        SDL and all of it's needed DLL files, but may also grab unneeded DLL
-#        files.
-###
-IF(WIN32)
-  FIND_PATH(
-    SDL_SUPPORT_LIBS_DIR SDL.dll
-    HINTS
-    $ENV{SDLDIR}
-    PATH_SUFFIXES lib64 lib
-    PATHS
-  )
-  FILE(GLOB SDL_SUPPORT_LIBS ${SDL_SUPPORT_LIBS_DIR}/*.dll)
-ENDIF()
-
 #==============================================================================
 ################################################## Set Project Source #########
 #==============================================================================
@@ -821,7 +803,7 @@ ELSE()
       ${CMAKE_SOURCE_DIR}/src/PCSOUND/pcsound_linux.c
     )
   ELSE()
-    SET(ARCH_SPECIFIC_SOURCES ${CMAKE_SOURCE_DIR}/src/SDL/SDL_win32_main.c)
+    # SET(ARCH_SPECIFIC_SOURCES ${CMAKE_SOURCE_DIR}/src/SDL/SDL_win32_main.c)
     SET(ARCH_SPECIFIC_SOURCES ${ARCH_SPECIFIC_SOURCES}
       ${CMAKE_SOURCE_DIR}/src/PCSOUND/pcsound_win32.c
     )
@@ -1077,6 +1059,8 @@ ENDIF()
 
 SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${SDL_LIBRARY})
 
+MESSAGE(WARNING "${SDL_LIBRARY}")
+
 IF(GL_DOOM)
   SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${OPENGL_gl_LIBRARY})
   IF(USE_GLU_IMAGESCALE OR USE_GLU_MIPMAP OR USE_GLU_TESS)
@@ -1114,6 +1098,7 @@ SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES}
   ${GOBJECT_INTROSPECTION_LIBRARIES}
   ${PCRE_LIBRARIES}
   ${EXPAT_LIBRARIES}
+  ${ARCH_SPECIFIC_LIBRARIES}
 )
 
 IF(WIN32)
@@ -1175,12 +1160,6 @@ INSTALL(
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR}
 )
-
-# FIXME: This is a continuation of the Windows SDL inelegant hack. This does
-#        the actual installation of those support libraries.
-IF(WIN32)
-  INSTALL(PROGRAMS ${SDL_SUPPORT_LIBS} DESTINATION ${LIB_DIR})
-ENDIF()
 
 # vi: ai:ts=2:sw=2:et
 
