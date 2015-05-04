@@ -1,20 +1,16 @@
 # To Do
 
-## General
+## Proto
+
+### General
 
 1. Fix switching to vidingl
 
-## Scripting
+1. Fonts look a little off in Windows
 
-1. Implement patch drawing functions
-
-1. Implement patch font drawing functions
-
-## GUI Widgets
+### GUI Widgets
 
 1. Resolution changes aren't propagated
-
-1. Add Z-Index sorting
 
 1. Add retraction to TextWidget
 
@@ -30,13 +26,34 @@
 
 1. Add auto-scroll to TextWidget
 
-## Console
+### Console
 
 1. Add serverside console input
 
 1. Add more scripting commands:
   - `map`
   - `wad`
+
+### Netcode
+
+1. Reconnecting doesn't work
+
+1. Manually delta compress some select actors (puffs, blood and plasma)
+  - Add an `owner_net_id` field to `mobj_t`
+  - For each of the select actors that share a type and `owner_net_id`:
+    - Delta compress based on the first actor, then on down the chain
+
+## Scripting
+
+1. Implement patch drawing functions
+
+1. Implement patch font drawing functions
+
+## GUI Widgets
+
+1. Add Z-Index sorting
+
+## Console
 
 1. Add tab-completion
 
@@ -47,18 +64,6 @@
 1. Implement various configuration options (needs some thought)
 
 1. Fix UTF8 problems
-
-1. Tab-completion
-  - How, though...?
-
-## Netcode
-
-1. Reconnecting doesn't work
-
-1. Manually delta compress some select actors (puffs, blood and plasma)
-  - Add an `owner_net_id` field to `mobj_t`
-  - For each of the select actors that share a type and `owner_net_id`:
-    - Delta compress based on the first actor, then on down the chain
 
 ## ZDDL
 
