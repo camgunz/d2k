@@ -18,7 +18,7 @@
 
 1. Fix backspace/delete bugs in InputWidget
 
-1. A few new widgets:
+1. Add a few new widgets:
   - chat
   - netstats
   - FPS
