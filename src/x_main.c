@@ -87,9 +87,9 @@ void X_Init(void) {
 
 void X_Start(void) {
   bool script_load_failed;
+  char *init_script_file;
+  char *script_search_path;
   char *script_folder = M_PathJoin(I_DoomExeDir(), X_FOLDER_NAME);
-  char *script_search_path = M_PathJoin(script_folder, "?.lua");
-  char *init_script_file = M_PathJoin(script_folder, X_INIT_SCRIPT_NAME);
   GITypelib *typelib = g_irepository_require(NULL, "GObject", NULL, 0, NULL);
 
   if (!typelib) {
@@ -118,8 +118,16 @@ void X_Start(void) {
     I_Error("X_Start: Could not locate typelib files for scripting");
   }
 
-  if (!M_IsFolder(script_folder))
-    I_Error("Script folder [%s] is missing", script_folder);
+  if (!M_IsFolder(script_folder)) {
+    free(script_folder);
+    script_folder = strdup(X_FOLDER_NAME);
+
+    if (!M_IsFolder(script_folder))
+      I_Error("Script folder [%s] is missing", script_folder);
+  }
+
+  init_script_file = M_PathJoin(script_folder, X_INIT_SCRIPT_NAME);
+  script_search_path = M_PathJoin(script_folder, "?.lua");
 
   if (!M_IsFile(init_script_file))
     I_Error("Initialization script [%s] is missing", init_script_file);
