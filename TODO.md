@@ -1,8 +1,73 @@
 # To Do
 
-## Base
+## Proto
+
+### General
+
+1. Fix switching to vidingl
+
+1. Fonts look a little off in Windows
+
+### GUI Widgets
+
+1. Resolution changes aren't propagated
+
+1. Add retraction to TextWidget
+
+1. Add/fix wrapping to/for InputWidget
+
+1. Fix backspace/delete bugs in InputWidget
+
+1. Add a few new widgets:
+  - chat
+  - netstats
+  - FPS
+  - scoreboard
+
+1. Add auto-scroll to TextWidget
+
+1. Add Z-Index sorting
+
+### Console
+
+1. Add serverside console input
+
+1. Add more scripting commands:
+  - `map`
+  - `wad`
+
+### Netcode
 
 1. Reconnecting doesn't work
+
+1. Manually delta compress some select actors (puffs, blood and plasma)
+  - Add an `owner_net_id` field to `mobj_t`
+  - For each of the select actors that share a type and `owner_net_id`:
+    - Delta compress based on the first actor, then on down the chain
+
+Build frequently-spawning hashtable
+  `mobj->type => GPtrArray`
+Sort by ID
+  `g_ptr_array_sort(gpa, compare_func)`
+Delta compress
+
+## Scripting
+
+1. Implement patch drawing functions
+
+1. Implement patch font drawing functions
+
+## Console
+
+1. Add tab-completion
+
+1. Add clipboard (cut/copy/paste) support
+
+1. Add mouse selection support
+
+1. Implement various configuration options (needs some thought)
+
+1. Fix UTF8 problems
 
 ## ZDDL
 
