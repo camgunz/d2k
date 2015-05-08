@@ -25,7 +25,7 @@
 #==============================================================================
 ################################################# CMake Configuration #########
 #==============================================================================
-PROJECT("Doom2K" C)
+PROJECT("D2K" C)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.0 FATAL_ERROR)
 IF(${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
   MESSAGE(${CMAKE_SOURCE_DIR})
@@ -85,34 +85,38 @@ ENDFUNCTION(TRY_C_COMPILER_FLAG flag name)
 ##################################################### Package Details #########
 #==============================================================================
 SET(VERSION "0")
-SET(PACKAGE "Doom2K")
-SET(PACKAGE_NAME "Doom2K")
+SET(PACKAGE "D2K")
+SET(PACKAGE_NAME "D2K")
 SET(PACKAGE_VERSION "${VERSION}")
 # SET(PACKAGE_BUGREPORT "huh")
 SET(PACKAGE_STRING "${PACKAGE_NAME} v${PACKAGE_VERSION}")
-SET(PACKAGE_TARNAME "doom2k")
+SET(PACKAGE_TARNAME "d2k")
 SET(PACKAGE_URL "http://github.com/camgunz/d2k")
 
 SET(CPACK_GENERATOR "DEB;RPM;STGZ;ZIP")
 SET(CPACK_PACKAGE_VENDOR "Team TotalTrash")
 SET(CPACK_PACKAGE_CONTACT "Team TotalTrash <ladna@totaltrash.org>")
 SET(CPACK_PACKAGE_VERSION "${VERSION}")
-SET(CPACK_PACKAGE_NAME "Doom2K")
+SET(CPACK_PACKAGE_NAME "D2K")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING")
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Doom2K is a fork of PrBoom+")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY
+  "D2K is a Doom Source Port for the 21st Century"
+)
 SET(CPACK_DEBIAN_PACKAGE_SECTION "games")
 SET(CPACK_DEBIAN_PACKAGE_DEPENDS
   "libc6 (>= 2.11.0),
    libgcc1 (>= 1:4.4.3),
+   libglib2.0-0 (>= 2.32),
    libsdl1.2debian (>=1.2.14),
    libsdl-mixer1.2 (>=1.2.8),
    libsdl-net1.2 (>=1.2.7),
    libsdl-image1.2 (>=1.2.12),
-   libpcre3 (>= 1:8.30),
+   libpangocairo (>= 1.36),
    libportmidi0 (>= 1:184-2.1),
    libfluidsynth1 (>= 1.1.5-2),
    libdumb1 (>= 1:0.9.3-5.4),
    libgl1,
+   libxdiff (>= 0.23),
    libenet1a (>= 1.3.3-2),
    bash"
 )
@@ -427,58 +431,64 @@ IF(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel" OR
 ENDIF()
 
 #==============================================================================
+################################################### Lua Configuration #########
+#==============================================================================
+# IF(WIN32)
+#   ADD_DEFINITIONS(-DLUA_WIN)
+# ELSEIF(APPLE)
+#   IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+#     ADD_DEFINITIONS(-DLUA_USE_MACOSX)
+#   ENDIF()
+# ELSEIF(UNIX)
+#   IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+#     ADD_DEFINITIONS(-DLUA_USE_LINUX)
+#   ENDIF()
+# ENDIF()
+
+#==============================================================================
 ################################################## Build Dependencies #########
 #==============================================================================
-# CG: Don't really need to do this just yet
-
-# SET(DEPS_PREFIX "${CMAKE_BINARY_DIR/deps}")
-# SET(ENET_FOLDER "enet-1.3.11")
-
-# INCLUDE_DIRECTORIES("deps/${ENET_FOLDER}/include")
-# ADD_SUBDIRECTORY(deps/enet-1.3.11)
-
 # Build Lua Static library
-SET(LUA_LIBRARY lua53)
-SET(LUA_SOURCE_DIRECTORY src/lua-5.3.0-alpha/src)
-SET(LUA_SOURCES
-  # Base
-  ${LUA_SOURCE_DIRECTORY}/lapi.c
-  ${LUA_SOURCE_DIRECTORY}/lcode.c
-  ${LUA_SOURCE_DIRECTORY}/lctype.c
-  ${LUA_SOURCE_DIRECTORY}/ldebug.c
-  ${LUA_SOURCE_DIRECTORY}/ldo.c
-  ${LUA_SOURCE_DIRECTORY}/ldump.c
-  ${LUA_SOURCE_DIRECTORY}/lfunc.c
-  ${LUA_SOURCE_DIRECTORY}/lgc.c
-  ${LUA_SOURCE_DIRECTORY}/llex.c
-  ${LUA_SOURCE_DIRECTORY}/lmem.c
-  ${LUA_SOURCE_DIRECTORY}/lobject.c
-  ${LUA_SOURCE_DIRECTORY}/lopcodes.c
-  ${LUA_SOURCE_DIRECTORY}/lparser.c
-  ${LUA_SOURCE_DIRECTORY}/lstate.c
-  ${LUA_SOURCE_DIRECTORY}/lstring.c
-  ${LUA_SOURCE_DIRECTORY}/ltable.c
-  ${LUA_SOURCE_DIRECTORY}/ltm.c
-  ${LUA_SOURCE_DIRECTORY}/lundump.c
-  ${LUA_SOURCE_DIRECTORY}/lvm.c
-  ${LUA_SOURCE_DIRECTORY}/lzio.c
-  # Lib [AM] We might not need all this...
-  ${LUA_SOURCE_DIRECTORY}/lauxlib.c
-  ${LUA_SOURCE_DIRECTORY}/lbaselib.c
-  ${LUA_SOURCE_DIRECTORY}/lbitlib.c
-  ${LUA_SOURCE_DIRECTORY}/lcorolib.c
-  ${LUA_SOURCE_DIRECTORY}/ldblib.c
-  ${LUA_SOURCE_DIRECTORY}/liolib.c
-  ${LUA_SOURCE_DIRECTORY}/lmathlib.c
-  ${LUA_SOURCE_DIRECTORY}/loslib.c
-  ${LUA_SOURCE_DIRECTORY}/lstrlib.c
-  ${LUA_SOURCE_DIRECTORY}/ltablib.c
-  ${LUA_SOURCE_DIRECTORY}/lutf8lib.c
-  ${LUA_SOURCE_DIRECTORY}/loadlib.c
-  ${LUA_SOURCE_DIRECTORY}/linit.c)
-
-INCLUDE_DIRECTORIES(${LUA_SOURCE_DIRECTORY})
-ADD_LIBRARY(${LUA_LIBRARY} STATIC ${LUA_SOURCES})
+# SET(LUA_LIBRARY lua)
+# SET(LUA_SOURCE_DIRECTORY src/lua/src)
+# SET(LUA_SOURCES
+#   # Base
+#   ${LUA_SOURCE_DIRECTORY}/lapi.c
+#   ${LUA_SOURCE_DIRECTORY}/lcode.c
+#   ${LUA_SOURCE_DIRECTORY}/lctype.c
+#   ${LUA_SOURCE_DIRECTORY}/ldebug.c
+#   ${LUA_SOURCE_DIRECTORY}/ldo.c
+#   ${LUA_SOURCE_DIRECTORY}/ldump.c
+#   ${LUA_SOURCE_DIRECTORY}/lfunc.c
+#   ${LUA_SOURCE_DIRECTORY}/lgc.c
+#   ${LUA_SOURCE_DIRECTORY}/llex.c
+#   ${LUA_SOURCE_DIRECTORY}/lmem.c
+#   ${LUA_SOURCE_DIRECTORY}/lobject.c
+#   ${LUA_SOURCE_DIRECTORY}/lopcodes.c
+#   ${LUA_SOURCE_DIRECTORY}/lparser.c
+#   ${LUA_SOURCE_DIRECTORY}/lstate.c
+#   ${LUA_SOURCE_DIRECTORY}/lstring.c
+#   ${LUA_SOURCE_DIRECTORY}/ltable.c
+#   ${LUA_SOURCE_DIRECTORY}/ltm.c
+#   ${LUA_SOURCE_DIRECTORY}/lundump.c
+#   ${LUA_SOURCE_DIRECTORY}/lvm.c
+#   ${LUA_SOURCE_DIRECTORY}/lzio.c
+#   # Lib [AM] We might not need all this...
+#   ${LUA_SOURCE_DIRECTORY}/lauxlib.c
+#   ${LUA_SOURCE_DIRECTORY}/lbaselib.c
+#   ${LUA_SOURCE_DIRECTORY}/lbitlib.c
+#   ${LUA_SOURCE_DIRECTORY}/lcorolib.c
+#   ${LUA_SOURCE_DIRECTORY}/ldblib.c
+#   ${LUA_SOURCE_DIRECTORY}/liolib.c
+#   ${LUA_SOURCE_DIRECTORY}/lmathlib.c
+#   ${LUA_SOURCE_DIRECTORY}/loslib.c
+#   ${LUA_SOURCE_DIRECTORY}/lstrlib.c
+#   ${LUA_SOURCE_DIRECTORY}/ltablib.c
+#   ${LUA_SOURCE_DIRECTORY}/loadlib.c
+#   ${LUA_SOURCE_DIRECTORY}/linit.c)
+# 
+# INCLUDE_DIRECTORIES(${LUA_SOURCE_DIRECTORY})
+# ADD_LIBRARY(${LUA_LIBRARY} STATIC ${LUA_SOURCES})
 
 #==============================================================================
 ################################################### Find Dependencies #########
@@ -574,6 +584,14 @@ ELSE()
   )
 ENDIF()
 INCLUDE_DIRECTORIES(${PANGO_INCLUDE_DIR})
+
+FIND_PACKAGE(GObjectIntrospection REQUIRED)
+INCLUDE_DIRECTORIES(${GOBJECT_INTROSPECTION_INCLUDE_DIR})
+
+FIND_PACKAGE(Lua REQUIRED)
+INCLUDE_DIRECTORIES(${LUA_INCLUDE_DIR})
+
+FIND_PACKAGE(LGI REQUIRED)
 
 FIND_PACKAGE(XDiff REQUIRED)
 INCLUDE_DIRECTORIES(${XDIFF_INCLUDE_DIR})
@@ -717,46 +735,23 @@ ELSE()
 ENDIF()
 
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  IF(PROFILE)
-    FIND_PACKAGE(GPerf REQUIRED)
-  ELSE()
-    FIND_PACKAGE(GPerf)
-  ENDIF()
+  FIND_PACKAGE(GPerf)
   # MESSAGE(STATUS "Looking for Google Performance Tools")
   # FIND_LIBRARY(GPERF_LIBRARIES profiler HINTS $ENV{GPERF_DIR})
-  # IF(${GPERF_LIBRARIES} STREQUAL "GPERF_LIBRARIES-NOTFOUND")
-  #   IF(PROFILE)
-  #     MESSAGE(FATAL_ERROR "Google Performance Tools not found")
-  #   ELSE()
-  #     MESSAGE(WARNING "Google Performance Tools not found")
-  #   ENDIF()
-  # ELSE()
-  #   MESSAGE(STATUS "Google Performance Tools found: ${GPERF_LIBRARIES}")
-  # ENDIF()
+  IF(${GPERF_LIBRARIES} STREQUAL "GPERF_LIBRARIES-NOTFOUND")
+    IF(PROFILE)
+      MESSAGE(
+        WARNING
+        "Google Performance Tools not found, profiling will not work"
+      )
+    ENDIF()
+  ENDIF()
 ENDIF()
 
 CONFIGURE_FILE(
   ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/config.h
 )
-
-###
-# FIXME: This is an inelegant hack to find and grab all needed DLL support
-#        files on windows. It works by looking for SDL.dll then taking every
-#        DLL file found in that directory from your SDK.  This ensures you get
-#        SDL and all of it's needed DLL files, but may also grab unneeded DLL
-#        files.
-###
-IF(WIN32)
-  FIND_PATH(
-    SDL_SUPPORT_LIBS_DIR SDL.dll
-    HINTS
-    $ENV{SDLDIR}
-    PATH_SUFFIXES lib64 lib
-    PATHS
-  )
-  FILE(GLOB SDL_SUPPORT_LIBS ${SDL_SUPPORT_LIBS_DIR}/*.dll)
-ENDIF()
 
 #==============================================================================
 ################################################## Set Project Source #########
@@ -782,8 +777,10 @@ ENDIF()
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/SDL)
 SET(SDL_SOURCES
   ${CMAKE_SOURCE_DIR}/src/SDL/i_font.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_input.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_joy.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_emusic.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_mouse.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_music.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_network.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_sound.c
@@ -806,7 +803,7 @@ ELSE()
       ${CMAKE_SOURCE_DIR}/src/PCSOUND/pcsound_linux.c
     )
   ELSE()
-    SET(ARCH_SPECIFIC_SOURCES ${CMAKE_SOURCE_DIR}/src/SDL/SDL_win32_main.c)
+    # SET(ARCH_SPECIFIC_SOURCES ${CMAKE_SOURCE_DIR}/src/SDL/SDL_win32_main.c)
     SET(ARCH_SPECIFIC_SOURCES ${ARCH_SPECIFIC_SOURCES}
       ${CMAKE_SOURCE_DIR}/src/PCSOUND/pcsound_win32.c
     )
@@ -915,6 +912,7 @@ SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/st_stuff.c
   ${CMAKE_SOURCE_DIR}/src/sv_main.c
   ${CMAKE_SOURCE_DIR}/src/tables.c
+  ${CMAKE_SOURCE_DIR}/src/v_main.c
   ${CMAKE_SOURCE_DIR}/src/v_video.c
   ${CMAKE_SOURCE_DIR}/src/version.c
   ${CMAKE_SOURCE_DIR}/src/w_wad.c
@@ -922,12 +920,23 @@ SET(DOOM2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/x_main.c
   ${CMAKE_SOURCE_DIR}/src/z_bmalloc.c
   ${CMAKE_SOURCE_DIR}/src/z_zone.c
+  ${CMAKE_SOURCE_DIR}/src/xam_main.c
+  ${CMAKE_SOURCE_DIR}/src/xc_main.c
+  ${CMAKE_SOURCE_DIR}/src/xd_main.c
+  ${CMAKE_SOURCE_DIR}/src/xg_game.c
+  ${CMAKE_SOURCE_DIR}/src/xg_keys.c
+  ${CMAKE_SOURCE_DIR}/src/xi_input.c
+  ${CMAKE_SOURCE_DIR}/src/xi_main.c
+  ${CMAKE_SOURCE_DIR}/src/xm_menu.c
+  ${CMAKE_SOURCE_DIR}/src/xm_misc.c
+  ${CMAKE_SOURCE_DIR}/src/xp_user.c
+  ${CMAKE_SOURCE_DIR}/src/xst_main.c
+  ${CMAKE_SOURCE_DIR}/src/xv_main.c
 )
 
 SET(CLIENT_SOURCES
   ${CMAKE_SOURCE_DIR}/src/SDL/i_main.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_system.c
-  # ${CMAKE_SOURCE_DIR}/src/d_client.c
   ${CMAKE_SOURCE_DIR}/src/lprintf.c
   ${CMAKE_SOURCE_DIR}/src/m_argv.c
 )
@@ -1050,6 +1059,8 @@ ENDIF()
 
 SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${SDL_LIBRARY})
 
+MESSAGE(WARNING "${SDL_LIBRARY}")
+
 IF(GL_DOOM)
   SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${OPENGL_gl_LIBRARY})
   IF(USE_GLU_IMAGESCALE OR USE_GLU_MIPMAP OR USE_GLU_TESS)
@@ -1084,8 +1095,10 @@ SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES}
   ${GLIB_GMODULE_LIBRARIES}
   ${GLIB_GIO_LIBRARIES}
   ${GLIB_LIBRARIES}
+  ${GOBJECT_INTROSPECTION_LIBRARIES}
   ${PCRE_LIBRARIES}
   ${EXPAT_LIBRARIES}
+  ${ARCH_SPECIFIC_LIBRARIES}
 )
 
 IF(WIN32)
@@ -1104,7 +1117,11 @@ IF(ICONV_STANDALONE)
   SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${ICONV_LIBRARIES})
 ENDIF()
 
-SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${LUA_LIBRARY})
+SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} ${LUA_LIBRARIES})
+
+IF(LINUX)
+  SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} dl)
+ENDIF()
 
 IF(WIN32)
   SET(DOOM2K_LIBRARIES ${DOOM2K_LIBRARIES} 
@@ -1121,34 +1138,28 @@ IF(WIN32)
   )
 ENDIF()
 
-ADD_EXECUTABLE(doom2k ${DOOM2K_CLIENT_SOURCES})
-TARGET_LINK_LIBRARIES(doom2k ${DOOM2K_LIBRARIES})
+ADD_EXECUTABLE(d2k ${DOOM2K_CLIENT_SOURCES})
+TARGET_LINK_LIBRARIES(d2k ${DOOM2K_LIBRARIES})
 
 # INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/unittests)
 # INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/cutest)
 # ADD_DEFINITIONS(-DRUNNING_UNIT_TESTS)
-# ADD_EXECUTABLE(test-doom2k ${DOOM2K_TESTING_SOURCES})
-# TARGET_LINK_LIBRARIES(test-doom2k ${DOOM2K_LIBRARIES})
+# ADD_EXECUTABLE(test-d2k ${DOOM2K_TESTING_SOURCES})
+# TARGET_LINK_LIBRARIES(test-d2k ${DOOM2K_LIBRARIES})
 
 SET(BIN_DIR "${PREFIX}/bin")
 SET(LIB_DIR "${PREFIX}/lib")
 SET(INCLUDE_DIR "${PREFIX}/include")
 SET(SHARE_DIR "${PREFIX}/share")
 
-# TODO: Need to run test-doom2k and use deutex to build the WAD here
+# TODO: Need to run test-d2k and use deutex to build the WAD here
 
 INSTALL(
-  TARGETS doom2k
+  TARGETS d2k
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR}
 )
-
-# FIXME: This is a continuation of the Windows SDL inelegant hack. This does
-#        the actual installation of those support libraries.
-IF(WIN32)
-  INSTALL(PROGRAMS ${SDL_SUPPORT_LIBS} DESTINATION ${LIB_DIR})
-ENDIF()
 
 # vi: ai:ts=2:sw=2:et
 

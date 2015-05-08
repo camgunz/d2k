@@ -39,8 +39,10 @@
 #include <limits.h>
 
 // this should go here, not in makefile/configure.ac -- josh
+#if 0
 #ifndef O_BINARY
 #define O_BINARY 0
+#endif
 #endif
 
 #include "m_swap.h"

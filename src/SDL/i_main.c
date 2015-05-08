@@ -31,27 +31,28 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 #include "TEXTSCREEN/txt_main.h"
 
 #include "doomdef.h"
-#include "m_argv.h"
+#include "doomstat.h"
 #include "d_main.h"
-#include "m_fixed.h"
+#include "e6y.h"
+#include "g_game.h"
 #include "i_font.h"
+#include "i_input.h"
+#include "i_main.h"
+#include "i_sound.h"
 #include "i_system.h"
 #include "i_video.h"
-#include "z_zone.h"
 #include "lprintf.h"
-#include "m_random.h"
-#include "doomstat.h"
-#include "g_game.h"
+#include "m_argv.h"
+#include "m_fixed.h"
 #include "m_misc.h"
-#include "i_sound.h"
-#include "i_main.h"
+#include "m_random.h"
 #include "r_fps.h"
-#include "lprintf.h"
-#include "e6y.h"
+#include "x_main.h"
 
 #undef main
 
-/* Most of the following has been rewritten by Lee Killough
+/*
+ * Most of the following has been rewritten by Lee Killough
  *
  * I_GetTime
  * killough 4/13/98: Make clock rate adjustable by scale factor
@@ -61,101 +62,64 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 int realtic_clock_rate = 100;
 static int_64_t I_GetTime_Scale = 1<<24;
 
-static int I_GetTime_Scaled(void)
-{
+static int I_GetTime_Scaled(void) {
   return (int)( (int_64_t) I_GetTime_RealTime() * I_GetTime_Scale >> 24);
 }
 
-
-
-static int  I_GetTime_FastDemo(void)
-{
+static int  I_GetTime_FastDemo(void) {
   static int fasttic;
   return fasttic++;
 }
 
-
-
-static int I_GetTime_Error(void)
-{
+static int I_GetTime_Error(void) {
   I_Error("I_GetTime_Error: GetTime() used before initialization");
   return 0;
 }
 
-
-
 int (*I_GetTime)(void) = I_GetTime_Error;
 
-void I_Init(void)
-{
+void I_Init(void) {
   /* killough 4/14/98: Adjustable speedup based on realtic_clock_rate */
-  if (fastdemo)
+  if (fastdemo) {
     I_GetTime = I_GetTime_FastDemo;
-  else
-    if (realtic_clock_rate != 100)
-      {
-        I_GetTime_Scale = ((int_64_t) realtic_clock_rate << 24) / 100;
-        I_GetTime = I_GetTime_Scaled;
-      }
-    else
-      I_GetTime = I_GetTime_RealTime;
-
-  {
-    /* killough 2/21/98: avoid sound initialization if no sound & no music */
-    if (!(nomusicparm && nosfxparm))
-      I_InitSound();
   }
+  else if (realtic_clock_rate != 100) {
+    I_GetTime_Scale = ((int_64_t) realtic_clock_rate << 24) / 100;
+    I_GetTime = I_GetTime_Scaled;
+  }
+  else {
+    I_GetTime = I_GetTime_RealTime;
+  }
+
+  /* killough 2/21/98: avoid sound initialization if no sound & no music */
+  if (!(nomusicparm && nosfxparm))
+    I_InitSound();
 
   R_InitInterpolation();
 }
 
 //e6y
-void I_Init2(void)
-{
-  if (fastdemo)
+void I_Init2(void) {
+  if (fastdemo) {
     I_GetTime = I_GetTime_FastDemo;
-  else
-  {
-    if (realtic_clock_rate != 100)
-      {
-        I_GetTime_Scale = ((int_64_t) realtic_clock_rate << 24) / 100;
-        I_GetTime = I_GetTime_Scaled;
-      }
-    else
-      I_GetTime = I_GetTime_RealTime;
+  }
+  else if (realtic_clock_rate != 100) {
+    I_GetTime_Scale = ((int_64_t) realtic_clock_rate << 24) / 100;
+    I_GetTime = I_GetTime_Scaled;
+  }
+  else {
+    I_GetTime = I_GetTime_RealTime;
   }
   R_InitInterpolation();
   force_singletics_to = gametic + BACKUPTICS;
 }
 
+void I_StartTic(void) {
+  I_InputHandle();
+}
+
 /* cleanup handling -- killough:
  */
-#ifdef DEBUG
-static void I_DebugSignalHandler(int s) {
-  fprintf(stderr, "Exiting on signal %d\n", s);
-  fflush(stderr);
-  exit(-1);
-}
-#else
-static void I_SignalHandler(int s) {
-  char buf[2048];
-
-  signal(s, SIG_IGN);  /* Ignore future instances of this signal.*/
-
-  I_ExeptionProcess(); //e6y
-
-  strcpy(buf, "Exiting on signal: ");
-  I_SigString(buf + strlen(buf), 2000 - strlen(buf), s);
-
-  /* If corrupted memory could cause crash, dump memory
-   * allocation history, which points out probable causes
-   */
-  if (s == SIGSEGV || s == SIGILL || s == SIGFPE)
-    Z_DumpHistory(buf);
-
-  I_Error("I_SignalHandler: %s", buf);
-}
-#endif
 
 //
 // e6y: exeptions handling
@@ -172,29 +136,20 @@ ExeptionParam_t ExeptionsParams[EXEPTION_MAX + 1] =
   {NULL}
 };
 
-void I_ExeptionBegin(ExeptionsList_t exception_index)
-{
+void I_ExeptionBegin(ExeptionsList_t exception_index) {
   if (current_exception_index == EXEPTION_NONE)
-  {
     current_exception_index = exception_index;
-  }
   else
-  {
     I_Error("I_SignalStateSet: signal_state set!");
-  }
 }
 
-void I_ExeptionEnd(void)
-{
+void I_ExeptionEnd(void) {
   current_exception_index = EXEPTION_NONE;
 }
 
-void I_ExeptionProcess(void)
-{
+void I_ExeptionProcess(void) {
   if (current_exception_index > EXEPTION_NONE && current_exception_index < EXEPTION_MAX)
-  {
     I_Error("%s", ExeptionsParams[current_exception_index].error_message);
-  }
 }
 
 
@@ -242,17 +197,47 @@ enum {
 
 int endoom_mode;
 
-static void PrintVer(void)
-{
+static void PrintVer(void) {
   char vbuf[200];
-  lprintf(LO_INFO,"%s\n",I_GetVersionString(vbuf,200));
+
+  lprintf(LO_INFO, "%s\n", I_GetVersionString(vbuf, 200));
+}
+
+#include "icon.c"
+
+void I_SetWindowIcon(void) {
+  static SDL_Surface *surface = NULL;
+
+  // do it only once, because of crash in SDL_InitVideoMode in SDL 1.3
+  if (!surface)
+  {
+    surface = SDL_CreateRGBSurfaceFrom(icon_data,
+      icon_w, icon_h, 32, icon_w * 4,
+      0xff << 0, 0xff << 8, 0xff << 16, 0xff << 24);
+  }
+
+  if (surface)
+    SDL_WM_SetIcon(surface, NULL);
+}
+
+void I_SetWindowCaption(void) {
+  size_t len = strlen(PACKAGE_NAME) + strlen(PACKAGE_VERSION) + 3;
+  char *buf = calloc(len, sizeof(char));
+
+  if (buf == NULL)
+    I_Error("I_SetWindowCaption: calloc failed\n");
+
+  snprintf(buf, len, "%s v%s", PACKAGE_NAME, PACKAGE_VERSION);
+
+  SDL_WM_SetCaption(buf, NULL);
+
+  free(buf);
 }
 
 //
 // ENDOOM support using text mode emulation
 //
-static void I_EndDoom(void)
-{
+static void I_EndDoom(void) {
   int lump_eb, lump_ed, lump = -1;
 
   const unsigned char *endoom_data;
@@ -273,8 +258,8 @@ static void I_EndDoom(void)
     lump = lump_ed;
   else if (lump_ed == -1)
     lump = lump_eb;
-  else
-  { /* Both ENDOOM and ENDBOOM are present */
+  else {
+    /* Both ENDOOM and ENDBOOM are present */
 #define LUMP_IS_NEW(num) (!((lumpinfo[num].source == source_iwad) || (lumpinfo[num].source == source_auto_load)))
     switch ((LUMP_IS_NEW(lump_ed) ? 1 : 0 ) |
       (LUMP_IS_NEW(lump_eb) ? 2 : 0)) {
@@ -291,8 +276,7 @@ static void I_EndDoom(void)
     }
   }
 
-  if (lump != -1)
-  {
+  if (lump != -1) {
     endoom_data = W_CacheLumpNum(lump);
 
     // Set up text mode screen
@@ -307,14 +291,11 @@ static void I_EndDoom(void)
     memcpy(screendata, endoom_data, 4000);
 
     // Wait for a keypress
-    while (true)
-    {
+    while (true) {
       TXT_UpdateScreen();
 
       if (TXT_GetChar() > 0)
-      {
         break;
-      }
 
       TXT_Sleep(0);
     }
@@ -464,11 +445,12 @@ void I_SafeExit(int rc) {
       has_exited = 2;
     else
       has_exited = 1;
+
     exit(rc);
   }
 }
 
-static void I_Quit (void)
+static void I_Quit(void)
 {
   if (!has_exited)
     has_exited=1;   /* Prevent infinitely recursive exits -- killough */
@@ -476,8 +458,10 @@ static void I_Quit (void)
   if (has_exited == 1) {
     if (!demorecording)
       I_EndDoom();
+
     if (demorecording)
       G_CheckDemoStatus();
+
     M_SaveDefaults ();
     I_DemoExShutdown();
   }
@@ -491,20 +475,16 @@ uid_t stored_euid = -1;
 // Ability to use only the allowed CPUs
 //
 
-static void I_SetAffinityMask(void)
-{
+static void I_SetAffinityMask(void) {
   // Forcing single core only for "SDL MIDI Player"
   process_affinity_mask = 0;
   if (!strcasecmp(snd_midiplayer, midiplayers[midi_player_sdl]))
-  {
     process_affinity_mask = 1;
-  }
 
   // Set the process affinity mask so that all threads
   // run on the same processor.  This is a workaround for a bug in
   // SDL_mixer that causes occasional crashes.
-  if (process_affinity_mask)
-  {
+  if (process_affinity_mask) {
     const char *errbuf = NULL;
 #ifdef _WIN32
     HMODULE kernel32_dll;
@@ -514,8 +494,7 @@ static void I_SetAffinityMask(void)
     // Find the kernel interface DLL.
     kernel32_dll = LoadLibrary("kernel32.dll");
 
-    if (kernel32_dll)
-    {
+    if (kernel32_dll) {
       // Find the SetProcessAffinityMask function.
       SetAffinity = (SetAffinityFunc)GetProcAddress(kernel32_dll, "SetProcessAffinityMask");
 
@@ -524,44 +503,37 @@ static void I_SetAffinityMask(void)
       // those systems don't support SMP anyway.
 
       if (SetAffinity)
-      {
         ok = SetAffinity(GetCurrentProcess(), process_affinity_mask);
-      }
     }
 
     if (!ok)
-    {
       errbuf = WINError();
-    }
 #elif defined(HAVE_SCHED_SETAFFINITY)
     // POSIX version:
-    int i;
-    {
-      cpu_set_t set;
+    cpu_set_t set;
 
-      CPU_ZERO(&set);
+    CPU_ZERO(&set);
 
-      for(i = 0; i < 16; i++)
-      {
-        CPU_SET((process_affinity_mask>>i)&1, &set);
-      }
+    for(int i = 0; i < 16; i++)
+      CPU_SET((process_affinity_mask>>i)&1, &set);
 
-      if (sched_setaffinity(getpid(), sizeof(set), &set) == -1)
-      {
-        errbuf = strerror(errno);
-      }
-    }
+    if (sched_setaffinity(getpid(), sizeof(set), &set) == -1)
+      errbuf = strerror(errno);
 #else
     return;
 #endif
 
-    if (errbuf == NULL)
-    {
-      lprintf(LO_INFO, "I_SetAffinityMask: manual affinity mask is %d\n", process_affinity_mask);
+    if (errbuf == NULL) {
+      lprintf(LO_INFO, "I_SetAffinityMask: manual affinity mask is %d\n",
+        process_affinity_mask
+      );
     }
-    else
-    {
-      lprintf(LO_ERROR, "I_SetAffinityMask: failed to set process affinity mask (%s)\n", errbuf);
+    else {
+      lprintf(
+        LO_ERROR,
+        "I_SetAffinityMask: failed to set process affinity mask (%s)\n",
+        errbuf
+      );
     }
   }
 }
@@ -570,24 +542,20 @@ static void I_SetAffinityMask(void)
 // Sets the priority class for the prboom-plus process
 //
 
-void I_SetProcessPriority(void)
-{
-  if (process_priority)
-  {
+void I_SetProcessPriority(void) {
+  if (process_priority) {
     const char *errbuf = NULL;
 
 #ifdef _WIN32
-    {
-      DWORD dwPriorityClass = NORMAL_PRIORITY_CLASS;
+    DWORD dwPriorityClass = NORMAL_PRIORITY_CLASS;
 
-      if (process_priority == 1)
-        dwPriorityClass = HIGH_PRIORITY_CLASS;
-      else if (process_priority == 2)
-        dwPriorityClass = REALTIME_PRIORITY_CLASS;
+    if (process_priority == 1)
+      dwPriorityClass = HIGH_PRIORITY_CLASS;
+    else if (process_priority == 2)
+      dwPriorityClass = REALTIME_PRIORITY_CLASS;
 
-      if (SetPriorityClass(GetCurrentProcess(), dwPriorityClass) == 0)
-        errbuf = WINError();
-    }
+    if (SetPriorityClass(GetCurrentProcess(), dwPriorityClass) == 0)
+      errbuf = WINError();
 #else
     return;
 #endif
@@ -609,8 +577,7 @@ void I_SetProcessPriority(void)
 
 #ifndef RUNNING_UNIT_TESTS
 //int main(int argc, const char * const * argv)
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 #ifdef SECURE_UID
   /* First thing, revoke setuid status (if any) */
   stored_euid = geteuid();
@@ -621,7 +588,6 @@ int main(int argc, char **argv)
       fprintf(stderr, "Revoked uid %d\n", stored_euid);
   }
 #endif
-
   myargc = argc;
   myargv = malloc(sizeof(myargv[0]) * myargc);
   memcpy(myargv, argv, sizeof(myargv[0]) * myargc);
@@ -631,6 +597,14 @@ int main(int argc, char **argv)
   // in some cases. Added checks to prevent this.
   // Example: glboom.exe -record mydemo -playdemo demoname
   ParamsMatchingCheck();
+
+#if __MINGW32__
+  _fmode = _O_BINARY;
+
+  _setmode(_fileno(stdin),  _O_BINARY);
+  _setmode(_fileno(stdout), _O_BINARY);
+  _setmode(_fileno(stderr), _O_BINARY);
+#endif
 
   // e6y: was moved from D_DoomMainSetup
   // init subsystems
@@ -663,15 +637,17 @@ int main(int argc, char **argv)
   Z_Init();                  /* 1/18/98 killough: start up memory stuff first */
 
   atexit(I_Quit);
+  /* CG: There's really no need to parachute these */
+#if 0
 #ifdef DEBUG
   signal(SIGSEGV, I_DebugSignalHandler);
   signal(SIGTERM, I_DebugSignalHandler);
   signal(SIGFPE,  I_DebugSignalHandler);
   signal(SIGILL,  I_DebugSignalHandler);
-  signal(SIGINT,  I_DebugSignalHandler);  /* killough 3/6/98: allow CTRL-BRK during init */
+  /* killough 3/6/98: allow CTRL-BRK during init */
+  signal(SIGINT,  I_DebugSignalHandler);
   signal(SIGABRT, I_DebugSignalHandler);
 #else
-#if 0 /* CG: There's really no need to parachute these */
   if (!M_CheckParm("-devparm"))
     signal(SIGSEGV, I_SignalHandler);
 

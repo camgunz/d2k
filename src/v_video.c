@@ -28,16 +28,18 @@
 #include "doomdef.h"
 #include "d_event.h"
 #include "c_main.h"
-#include "r_main.h"
-#include "r_draw.h"
-#include "m_bbox.h"
-#include "w_wad.h"   /* needed for color translation lump lookup */
-#include "v_video.h"
-#include "i_video.h"
-#include "r_filter.h"
-#include "lprintf.h"
-#include "st_stuff.h"
 #include "e6y.h"
+#include "i_video.h"
+#include "lprintf.h"
+#include "m_bbox.h"
+#include "r_draw.h"
+#include "r_filter.h"
+#include "r_main.h"
+#include "r_screenmultiply.h"
+#include "st_stuff.h"
+#include "v_video.h"
+#include "w_wad.h"   /* needed for color translation lump lookup */
+#include "x_main.h"
 
 // DWF 2012-05-10
 // SetRatio sets the following global variables based on window geometry and
@@ -309,7 +311,7 @@ static void FUNC_V_DrawBackground(const char *flatname, int scrn) {
 // No return
 //
 
-void V_Init (void) {
+void V_Init(void) {
   for (int i = 0; i < NUM_SCREENS; i++) {
     screens[i].data = NULL;
     screens[i].not_on_heap = false;
@@ -874,19 +876,17 @@ int V_GetPixelDepth(void) {
 // V_AllocScreen
 //
 void V_AllocScreen(screeninfo_t *scrn) {
-  if (!scrn->not_on_heap)
-    if ((scrn->byte_pitch * scrn->height) > 0)
-      //e6y: Clear the screen to black.
-      scrn->data = calloc(scrn->byte_pitch*scrn->height, 1);
+  size_t size = scrn->byte_pitch * scrn->height;
+
+  if ((!scrn->not_on_heap) && (size > 0))
+    scrn->data = calloc(size, 1); //e6y: Clear the screen to black.
 }
 
 //
 // V_AllocScreens
 //
 void V_AllocScreens(void) {
-  int i;
-
-  for (i=0; i<NUM_SCREENS; i++)
+  for (int i = 0; i < NUM_SCREENS; i++)
     V_AllocScreen(&screens[i]);
 }
 
@@ -904,9 +904,7 @@ void V_FreeScreen(screeninfo_t *scrn) {
 // V_FreeScreens
 //
 void V_FreeScreens(void) {
-  int i;
-
-  for (i=0; i<NUM_SCREENS; i++)
+  for (int i = 0; i < NUM_SCREENS; i++)
     V_FreeScreen(&screens[i]);
 }
 

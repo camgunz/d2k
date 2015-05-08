@@ -25,43 +25,52 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
-#include "d_event.h"
+#include "am_map.h"
 #include "c_main.h"
+#include "d_deh.h"  // Ty 04/08/98 - Externalizations
+#include "d_event.h"
+#include "d_main.h"
 #include "d_net.h"
 #include "dstrings.h"
-#include "sounds.h"
-#include "z_zone.h"
-#include "w_wad.h"
-#include "s_sound.h"
-#include "v_video.h"
 #include "f_finale.h"
 #include "f_wipe.h"
-#include "m_argv.h"
-#include "m_file.h"
-#include "m_misc.h"
-#include "m_menu.h"
-#include "p_checksum.h"
-#include "p_ident.h"
-#include "p_user.h"
-#include "i_main.h"
-#include "i_system.h"
-#include "i_sound.h"
-#include "i_video.h"
 #include "g_game.h"
 #include "g_keys.h"
 #include "hu_stuff.h"
-#include "wi_stuff.h"
-#include "st_stuff.h"
-#include "am_map.h"
-#include "p_setup.h"
-#include "r_draw.h"
-#include "r_main.h"
-#include "r_fps.h"
-#include "d_main.h"
-#include "d_deh.h"  // Ty 04/08/98 - Externalizations
+#include "i_main.h"
+#include "i_sound.h"
+#include "i_system.h"
+#include "i_video.h"
 #include "lprintf.h"  // jff 08/03/98 - declaration of lprintf
-#include "am_map.h"
+#include "m_argv.h"
+#include "m_file.h"
+#include "m_menu.h"
+#include "m_misc.h"
+#include "p_checksum.h"
+#include "p_ident.h"
+#include "p_setup.h"
+#include "p_user.h"
+#include "r_draw.h"
+#include "r_fps.h"
+#include "r_main.h"
 #include "sounds.h"
+#include "s_sound.h"
+#include "st_stuff.h"
+#include "v_video.h"
+#include "w_wad.h"
+#include "wi_stuff.h"
+#include "xam_main.h"
+#include "xc_main.h"
+#include "xd_main.h"
+#include "xg_game.h"
+#include "xg_keys.h"
+#include "xi_input.h"
+#include "xi_main.h"
+#include "xm_menu.h"
+#include "xm_misc.h"
+#include "xp_user.h"
+#include "xst_main.h"
+#include "xv_main.h"
 
 //e6y
 #include "r_demo.h"
@@ -131,9 +140,6 @@ char    *basesavegame;             // killough 2/16/98: savegame directory
 GPtrArray *resource_files = NULL;
 GPtrArray *deh_files = NULL;
 
-/* CG 7/24/2014: D_Responder changes */
-keybindings_t keybindings;
-
 //jff 4/19/98 list of standard IWAD names
 const char *const standard_iwads[]=
 {
@@ -157,7 +163,7 @@ const char *const standard_iwads[]=
   "bfgdoom.wad",
 };
 
-//e6y static 
+//e6y static
 const int nstandard_iwads = sizeof(standard_iwads) / sizeof(*standard_iwads);
 
 /*
@@ -174,12 +180,12 @@ bool D_Responder(event_t *ev) {
 #endif
 
   if (!menuactive) {                                           // phares
-    if (ev->data1 == key_autorun) {                            //  |
+    if (ev->key == key_autorun) {                              //  |
       autorun = !autorun;                                      //  V
       return true;
     }
 
-    if (ev->data1 == key_help) {
+    if (ev->key == key_help) {
       M_StartControlPanel();
 
       M_SetCurrentMenu(&HelpDef); // killough 10/98: new help screen
@@ -190,21 +196,21 @@ bool D_Responder(event_t *ev) {
       return true;
     }
 
-    if (ev->data1 == key_savegame) {
+    if (ev->key == key_savegame) {
       M_StartControlPanel();
       S_StartSound(NULL, sfx_swtchn);
       M_SaveGame(0);
       return true;
     }
 
-    if (ev->data1 == key_loadgame) {
+    if (ev->key == key_loadgame) {
       M_StartControlPanel();
       S_StartSound(NULL, sfx_swtchn);
       M_LoadGame(0);
       return true;
     }
 
-    if (ev->data1 == key_soundvolume) {
+    if (ev->key == key_soundvolume) {
       M_StartControlPanel();
       M_SetCurrentMenu(&SoundDef);
       itemOn = sfx_vol;
@@ -212,37 +218,37 @@ bool D_Responder(event_t *ev) {
       return true;
     }
 
-    if (ev->data1 == key_quicksave) {
+    if (ev->key == key_quicksave) {
       S_StartSound(NULL, sfx_swtchn);
       M_QuickSave();
       return true;
     }
 
-    if (ev->data1 == key_endgame) {
+    if (ev->key == key_endgame) {
       S_StartSound(NULL, sfx_swtchn);
       M_EndGame(0);
       return true;
     }
 
-    if (ev->data1 == key_messages) {
+    if (ev->key == key_messages) {
       M_ChangeMessages(0);
       S_StartSound(NULL, sfx_swtchn);
       return true;
     }
 
-    if (ev->data1 == key_quickload) {
+    if (ev->key == key_quickload) {
       S_StartSound(NULL, sfx_swtchn);
       M_QuickLoad();
       return true;
     }
 
-    if (ev->data1 == key_quit) {
+    if (ev->key == key_quit) {
       S_StartSound(NULL, sfx_swtchn);
       M_QuitDOOM(0);
       return true;
     }
 
-    if (ev->data1 == key_gamma) {
+    if (ev->key == key_gamma) {
 //e6y
 #ifdef GL_DOOM
       if (V_GetMode() == VID_MODEGL && gl_hardware_gamma) {
@@ -279,7 +285,7 @@ bool D_Responder(event_t *ev) {
     }
 
 
-    if (ev->type == ev_keydown && ev->data1 == key_zoomout) {
+    if ((ev->type == ev_key && ev->pressed) && ev->key == key_zoomout) {
       if (automapmode & am_active)
         return false;
 
@@ -289,7 +295,7 @@ bool D_Responder(event_t *ev) {
     }
 
     // jff 2/23/98 allow key_hud == key_zoomin
-    if (ev->type == ev_keydown && ev->data1 == key_zoomin) {
+    if ((ev->type == ev_key && ev->pressed) && ev->key == key_zoomin) {
       if (automapmode & am_active)
         return false;
 
@@ -299,7 +305,7 @@ bool D_Responder(event_t *ev) {
     }
 
     //e6y
-    if (ev->data1 == key_speed_default && (!netgame || demoplayback)) {
+    if (ev->key == key_speed_default && (!netgame || demoplayback)) {
       realtic_clock_rate = StepwiseSum(
         realtic_clock_rate, 0, speed_step, 3, 10000, 100
       );
@@ -307,7 +313,7 @@ bool D_Responder(event_t *ev) {
       return true;
     }
 
-    if (ev->data1 == key_speed_up && (!netgame || demoplayback)) {
+    if (ev->key == key_speed_up && (!netgame || demoplayback)) {
       realtic_clock_rate = StepwiseSum(
         realtic_clock_rate, 1, speed_step, 3, 10000, 100
       );
@@ -315,7 +321,7 @@ bool D_Responder(event_t *ev) {
       return true;
     }
 
-    if (ev->data1 == key_speed_down && (!netgame || demoplayback)) {
+    if (ev->key == key_speed_down && (!netgame || demoplayback)) {
       realtic_clock_rate = StepwiseSum(
         realtic_clock_rate, -1, speed_step, 3, 10000, 100
       );
@@ -323,7 +329,7 @@ bool D_Responder(event_t *ev) {
       return true;
     }
 
-    if (ev->data1 == key_nextlevel) {
+    if (ev->key == key_nextlevel) {
       if (demoplayback && !doSkip && singledemo) {
         demo_stoponnext = true;
         G_SkipDemoStart();
@@ -334,10 +340,10 @@ bool D_Responder(event_t *ev) {
         return true;
     }
 
-    if (ev->data1 == key_level_restart && G_ReloadLevel())
+    if (ev->key == key_level_restart && G_ReloadLevel())
       return true;
- 
-    if (ev->data1 == key_demo_endlevel) {
+
+    if (ev->key == key_demo_endlevel) {
       if (demoplayback && !doSkip && singledemo) {
         demo_stoponend = true;
         G_SkipDemoStart();
@@ -345,7 +351,7 @@ bool D_Responder(event_t *ev) {
       }
     }
 
-    if (ev->data1 == key_demo_skip) {
+    if (ev->key == key_demo_skip) {
       if (demoplayback && singledemo) {
         if (doSkip)
           G_SkipDemoStop();
@@ -356,7 +362,7 @@ bool D_Responder(event_t *ev) {
       }
     }
 
-    if (ev->data1 == key_walkcamera) {
+    if (ev->key == key_walkcamera) {
       if (demoplayback && gamestate == GS_LEVEL) {
         walkcamera.type = (walkcamera.type + 1) % 3;
 
@@ -372,7 +378,7 @@ bool D_Responder(event_t *ev) {
 
 #ifdef GL_DOOM
     if (V_GetMode() == VID_MODEGL) {
-      if (ev->data1 == key_showalive) {
+      if (ev->key == key_showalive) {
         show_alive = (show_alive + 1) % 3;
         if (show_alive == 0)
           P_Echo(consoleplayer, "Show Alive Monsters off");
@@ -384,13 +390,13 @@ bool D_Responder(event_t *ev) {
     }
 #endif
 
-    if (ev->data1 == key_mlook) {
+    if (ev->key == key_mlook) {
       movement_mouselook = !movement_mouselook;
       M_ChangeMouseLook();
       return true;
     }
 
-    if (ev->data1 == key_hud) {
+    if (ev->key == key_hud) {
       // jff 2/22/98
       if (automapmode & am_active)
         return false; // HUD mode control
@@ -408,7 +414,7 @@ bool D_Responder(event_t *ev) {
     }
 
     /* killough 10/98: allow key shortcut into Setup menu */
-    if (ev->type == ev_keydown && ev->data1 == key_setup) {
+    if ((ev->type == ev_key && ev->pressed) && ev->key == key_setup) {
       M_StartControlPanel();
       S_StartSound(NULL, sfx_swtchn);
       M_SetupNextMenu(&SetupDef);
@@ -417,119 +423,6 @@ bool D_Responder(event_t *ev) {
   }
 
   return false;
-}
-
-/*
- * D_PostEvent - Event handling
- *
- * Called by I/O functions when an event is received.
- * Try event handlers for each code area in turn.
- * cph - in the true spirit of the Boom source, let the 
- *  short ciruit operator madness begin!
- * CG - not so much with the madness anymore
- */
-
-void D_PostEvent(event_t *ev) {
-  SDLMod mod_keys = SDL_GetModState();
-
-  keybindings.shiftdown  = false;
-  keybindings.ctrldown   = false;
-  keybindings.altdown    = false;
-  keybindings.metadown   = false;
-  keybindings.lsuperdown = false;
-  keybindings.rsuperdown = false;
-
-  if (mod_keys & KMOD_SHIFT)
-    keybindings.shiftdown = true;
-  if (mod_keys & KMOD_CTRL)
-    keybindings.ctrldown = true;
-  if (mod_keys & KMOD_ALT)
-    keybindings.altdown = true;
-  if (mod_keys & KMOD_META)
-    keybindings.metadown = true;
-
-  if (ev->type == ev_keydown && ev->data1 == SDLK_LSUPER)
-    keybindings.lsuperdown = true;
-  else if (ev->type == ev_keydown && ev->data1 == SDLK_RSUPER)
-    keybindings.rsuperdown = true;
-  if (ev->type == ev_keyup && ev->data1 == SDLK_LSUPER)
-    keybindings.lsuperdown = false;
-  else if (ev->type == ev_keyup && ev->data1 == SDLK_RSUPER)
-    keybindings.rsuperdown = false;
-
-  // Allow only sensible keys during skipping
-  if (doSkip) {
-    if (ev->type == ev_keydown || ev->type == ev_keyup) {
-      // Immediate exit if key_quit is pressed in skip mode
-      if (ev->data1 == key_quit)
-        I_SafeExit(0);
-
-      // key_use is used for seeing the current frame
-      if (ev->data1 != key_use && ev->data1 != key_demo_skip)
-        return;
-    }
-  }
-
-  if (nodrawers) {
-    G_Responder(ev);
-    return;
-  }
-
-  /*
-   * killough 2/22/98: add support for screenshot key:
-   * cph 2001/02/04: no need for this to be a gameaction, just do it
-   */
-  if (ev->type == ev_keydown && ev->data1 == key_screenshot)
-    M_ScreenShot(); /* Don't eat the keypress. See sf bug #1843280. */
-
-  /* CG 7/30/2014: ESC ought to quit chat if it's active */
-  /*
-  if (ev->type == ev_keydown && ev->data1 == SDLK_ESCAPE && HU_ChatActive()) {
-    HU_DeactivateChat();
-    return;
-  }
-  */
-
-#ifdef ENABLE_OVERLAY
-  if (HU_ChatActive()) {
-    HU_Responder(ev);
-    return;
-  }
-#endif
-
-  if (menuactive) {
-    M_Responder(ev);
-    return;
-  }
-
-#ifdef ENABLE_OVERLAY
-  if (C_Active()) {
-    C_Responder(ev);
-    return;
-  }
-#endif
-
-  if (HU_Responder(ev))
-    return;
-
-  if (M_Responder(ev))
-    return;
-
-#ifdef ENABLE_OVERLAY
-  if (C_Responder(ev))
-    return;
-#endif
-
-  if (D_Responder(ev))
-    return;
-
-  if (ST_Responder(ev))
-    return;
-
-  if (AM_Responder(ev))
-    return;
-
-  G_Responder(ev);
 }
 
 //
@@ -542,7 +435,7 @@ void D_PostEvent(event_t *ev) {
 static void D_Wipe(void) {
   dboolean done;
   int wipestart;
-  
+
   if (!render_wipescreen)
     return; //e6y
 
@@ -586,16 +479,16 @@ extern int     showMessages;
 void D_Display(void) {
   static dboolean isborderstate        = false;
   static dboolean borderwillneedredraw = false;
-  static gamestate_t oldgamestate = GS_BAD;
-  dboolean wipe;
-  dboolean viewactive = false, isborder = false;
+  static gamestate_t oldgamestate      = GS_BAD;
 
-  // e6y
-  extern dboolean gamekeydown[];
-  if (doSkip)
-  {
+  dboolean wipe;
+  dboolean viewactive = false;
+  dboolean isborder = false;
+
+  if (doSkip) {
     if (HU_DrawDemoProgress(false))
       I_FinishUpdate();
+
     if (!gamekeydown[key_use])
       return;
 
@@ -604,8 +497,9 @@ void D_Display(void) {
       gld_PreprocessLevel();
 #endif
   }
-  
-  if (!doSkip || !gamekeydown[key_use])
+
+  /* CG: What is this? */
+  // if (!doSkip || !gamekeydown[key_use])
 
   if (nodrawers)                    // for comparative timing / profiling
     return;
@@ -613,38 +507,39 @@ void D_Display(void) {
   if (!I_StartDisplay())
     return;
 
+  HU_Erase();
+
   if (setsizeneeded) {               // change the view size if needed
     R_ExecuteSetViewSize();
     oldgamestate = GS_BAD;        // force background redraw
   }
 
   // save the current screen if about to wipe
-  if ((wipe = (gamestate != wipegamestate)))
-  {
+  if ((wipe = (gamestate != wipegamestate))) {
     wipe_StartScreen();
     R_ResetViewInterpolation();
   }
 
   if (gamestate != GS_LEVEL) { // Not a level
     switch (oldgamestate) {
-    case GS_BAD:
-    case GS_LEVEL:
-      V_SetPalette(0); // cph - use default (basic) palette
-    default:
+      case GS_BAD:
+      case GS_LEVEL:
+        V_SetPalette(0); // cph - use default (basic) palette
+      default:
       break;
     }
 
     switch (gamestate) {
-    case GS_INTERMISSION:
-      WI_Drawer();
+      case GS_INTERMISSION:
+        WI_Drawer();
       break;
-    case GS_FINALE:
-      F_Drawer();
+      case GS_FINALE:
+        F_Drawer();
       break;
-    case GS_DEMOSCREEN:
-      D_PageDrawer();
+      case GS_DEMOSCREEN:
+        D_PageDrawer();
       break;
-    default:
+      default:
       break;
     }
   }
@@ -652,16 +547,19 @@ void D_Display(void) {
     // In a level
     dboolean redrawborderstuff;
 
-    HU_Erase();
-
     // Work out if the player view is visible, and if there is a border
-    viewactive = (!(automapmode & am_active) || (automapmode & am_overlay)) && !inhelpscreens;
-    isborder = viewactive ? (viewheight != SCREENHEIGHT) : (!inhelpscreens && (automapmode & am_active));
+    viewactive = (!(automapmode & am_active) || (automapmode & am_overlay)) &&
+                 !inhelpscreens;
+    if (viewactive)
+      isborder = viewheight != SCREENHEIGHT;
+    else
+      isborder = (!inhelpscreens && (automapmode & am_active));
 
     if (oldgamestate != GS_LEVEL) {
-      R_FillBackScreen ();    // draw the pattern into the back screen
+      R_FillBackScreen();    // draw the pattern into the back screen
       redrawborderstuff = isborder;
-    } else {
+    }
+    else {
       // CPhipps -
       // If there is a border, and either there was no border last time,
       // or the border might need refreshing, then redraw it.
@@ -672,15 +570,21 @@ void D_Display(void) {
       // e6y
       // I should do it because I call R_RenderPlayerView in all cases,
       // not only if viewactive is true
-      borderwillneedredraw = (borderwillneedredraw) || 
-        (((automapmode & am_active) && !(automapmode & am_overlay)));
+      borderwillneedredraw = (borderwillneedredraw) || (
+        (automapmode & am_active) && !(automapmode & am_overlay)
+      );
     }
+#ifdef GL_DOOM
     if (redrawborderstuff || (V_GetMode() == VID_MODEGL))
       R_DrawViewBorder();
+#else
+    if (redrawborderstuff)
+      R_DrawViewBorder();
+#endif
 
     // e6y
     // Boom colormaps should be applied for everything in R_RenderPlayerView
-    use_boom_cm=true;
+    use_boom_cm = true;
 
     R_InterpolateView(&players[displayplayer]);
 
@@ -695,7 +599,7 @@ void D_Display(void) {
 
     // e6y
     // but should NOT be applied for automap, statusbar and HUD
-    use_boom_cm=false;
+    use_boom_cm = false;
     frame_fixedcolormap = 0;
 
     if (automapmode & am_active)
@@ -716,6 +620,7 @@ void D_Display(void) {
   }
 
   HU_Drawer();
+  HU_DrawDemoProgress(true); //e6y
 
   isborderstate = isborder;
   oldgamestate = wipegamestate = gamestate;
@@ -730,11 +635,10 @@ void D_Display(void) {
   // menus go directly to the screen
   M_Drawer();          // menu is drawn even on top of everything
 
-  HU_DrawDemoProgress(true); //e6y
-
   // normal update
-  if (!wipe)
+  if (!wipe) {
     I_FinishUpdate();              // page flip or blit buffer
+  }
   else {
     // wipe update
     wipe_EndScreen();
@@ -743,9 +647,8 @@ void D_Display(void) {
 
   // e6y
   // Don't thrash cpu during pausing or if the window doesnt have focus
-  if ( (paused && !walkcamera.type) || (!window_focused) ) {
+  if ((paused && !walkcamera.type) || (!window_focused))
     I_Sleep(5);
-  }
 
   I_EndDisplay();
 }
@@ -763,7 +666,7 @@ static const char *auto_shot_fname;
 //  called by D_DoomMain, never exits.
 // Manages timing and IO,
 //  calls all ?_Responder, ?_Ticker, and ?_Drawer,
-//  calls I_GetTime, I_StartFrame, and I_StartTic
+//  calls I_GetTime and I_StartTic
 //
 
 static void D_DoomLoop(void) {
@@ -771,8 +674,6 @@ static void D_DoomLoop(void) {
 
   for (;;) {
     // frame syncronous IO operations
-    if (!nodrawers)
-      I_StartFrame();
 
     if (ffmap == gamemap)
       ffmap = 0;
@@ -784,7 +685,6 @@ static void D_DoomLoop(void) {
         D_DoAdvanceDemo();
       M_Ticker();
       G_Ticker();
-      C_Ticker();
       P_Checksum(gametic);
       gametic++;
       tic_elapsed = true;
@@ -838,8 +738,7 @@ dboolean bfgedition = 0;
 // D_PageTicker
 // Handles timing for warped projection
 //
-void D_PageTicker(void)
-{
+void D_PageTicker(void) {
   if (--pagetic < 0)
     D_AdvanceDemo();
 }
@@ -847,56 +746,52 @@ void D_PageTicker(void)
 //
 // D_PageDrawer
 //
-static void D_PageDrawer(void)
-{
+static void D_PageDrawer(void) {
   // proff/nicolas 09/14/98 -- now stretchs bitmaps to fullscreen!
   // CPhipps - updated for new patch drawing
   // proff - added M_DrawCredits
-  if (pagename)
-  {
+  if (pagename) {
     V_DrawNamePatch(0, 0, 0, pagename, CR_DEFAULT, VPT_STRETCH);
-    // e6y: wide-res
-    V_FillBorder(-1, 0);
+    V_FillBorder(-1, 0); // e6y: wide-res
   }
-  else
+  else {
     M_DrawCredits();
+  }
 }
 
 //
 // D_AdvanceDemo
 // Called after each demo or intro demosequence finishes
 //
-void D_AdvanceDemo (void)
-{
+void D_AdvanceDemo (void) {
   advancedemo = true;
 }
 
-/* killough 11/98: functions to perform demo sequences
+/*
+ * killough 11/98: functions to perform demo sequences
  * cphipps 10/99: constness fixes
  */
 
-static void D_SetPageName(const char *name)
-{
-  if ((bfgedition) && name && !strncmp(name,"TITLEPIC",8))
+static void D_SetPageName(const char *name) {
+  if ((bfgedition) && name && !strncmp(name, "TITLEPIC", 8))
     pagename = "DMENUPIC";
   else
     pagename = name;
 }
 
-static void D_DrawTitle1(const char *name)
-{
+static void D_DrawTitle1(const char *name) {
   S_StartMusic(mus_intro);
   pagetic = (TICRATE*170)/35;
   D_SetPageName(name);
 }
 
-static void D_DrawTitle2(const char *name)
-{
+static void D_DrawTitle2(const char *name) {
   S_StartMusic(mus_dm2ttl);
   D_SetPageName(name);
 }
 
-/* killough 11/98: tabulate demo sequences
+/*
+ * killough 11/98: tabulate demo sequences
  */
 
 static struct
@@ -1005,7 +900,7 @@ void D_StartTitle (void) {
 
 // killough 10/98: support -dehout filename
 // cph - made const, don't cache results
-//e6y static 
+//e6y static
 static const char* D_dehout(void) {
   int p = M_CheckParm("-dehout");
 
@@ -1088,7 +983,7 @@ void D_AddFile(const char *path, wad_source_t source) {
 
     if (gwafile == NULL)
       I_Error("D_AddFile: Allocating GWA file info failed");
-     
+
     wadfile->name = gwa_filepath;
     wadfile->src = source; // Ty 08/29/98
     wadfile->handle = 0;
@@ -1265,7 +1160,7 @@ void D_ClearDEHFiles(void) {
 // jff 4/19/98 Add routine to test IWAD for validity and determine
 // the gamemode from it. Also note if DOOM II, whether secret levels exist
 // CPhipps - const char* for iwadname, made static
-//e6y static 
+//e6y static
 void CheckIWAD(const char *iwadname, GameMode_t *gmode, dboolean *hassec) {
   int ud = 0;
   int rg = 0;
@@ -1504,7 +1399,7 @@ void IdentifyVersion(void) {
   }
 #endif
 
-  if (!iwad && !(*iwad))
+  if (!iwad || !(*iwad))
     I_Error("IdentifyVersion: IWAD not found\n");
 
   AddIWAD(iwad);
@@ -1602,7 +1497,7 @@ static void FindResponseFile (void)
           if (size > 0) {
             char *s = malloc(size + 1);
             char *p = s;
-            int quoted = 0; 
+            int quoted = 0;
 
             while (size > 0) {
               // Whitespace terminates the token unless quoted
@@ -1613,7 +1508,7 @@ static void FindResponseFile (void)
                 // Quotes are removed but remembered
                 infile++;
                 size--;
-                quoted ^= 1; 
+                quoted ^= 1;
               }
               else {
                 *p++ = *infile++;
@@ -1735,7 +1630,7 @@ static void DoLooseFiles(void)
 
     // so now we must have a loose file.  Find out what kind and store it.
     arglen = strlen(myargv[i]);
-    
+
     k = 0;
     while (looses[k].ext)
     {
@@ -1823,29 +1718,34 @@ unsigned int desired_screenwidth, desired_screenheight;
 static void L_SetupConsoleMasks(void) {
   int p;
   int i;
-  const char *cena="ICWEFDA",*pos;  //jff 9/3/98 use this for parsing console masks // CPhipps - const char*'s
+  const char *cena = "ICWEFDA"; //jff 9/3/98 use this for parsing console masks
+  const char *pos;              // CPhipps - const char*'s
 
   //jff 9/3/98 get mask for console output filter
-  if ((p = M_CheckParm ("-cout"))) {
+  if ((p = M_CheckParm("-cout"))) {
     lprintf(LO_DEBUG, "mask for stdout console output: ");
-    if (++p != myargc && *myargv[p] != '-')
-      for (i=0,cons_output_mask=0;(size_t)i<strlen(myargv[p]);i++)
-        if ((pos = strchr(cena,toupper(myargv[p][i])))) {
-          cons_output_mask |= (1<<(pos-cena));
+    if (++p != myargc && *myargv[p] != '-') {
+      for (i = 0, cons_output_mask = 0; (size_t)i < strlen(myargv[p]); i++) {
+        if ((pos = strchr(cena, toupper(myargv[p][i])))) {
+          cons_output_mask |= (1 << (pos - cena));
           lprintf(LO_DEBUG, "%c", toupper(myargv[p][i]));
         }
+      }
+    }
     lprintf(LO_DEBUG, "\n");
   }
 
   //jff 9/3/98 get mask for redirected console error filter
   if ((p = M_CheckParm ("-cerr"))) {
     lprintf(LO_DEBUG, "mask for stderr console output: ");
-    if (++p != myargc && *myargv[p] != '-')
-      for (i=0,cons_error_mask=0;(size_t)i<strlen(myargv[p]);i++)
-        if ((pos = strchr(cena,toupper(myargv[p][i])))) {
-          cons_error_mask |= (1<<(pos-cena));
+    if (++p != myargc && *myargv[p] != '-') {
+      for (i = 0, cons_error_mask = 0; (size_t)i < strlen(myargv[p]); i++) {
+        if ((pos = strchr(cena, toupper(myargv[p][i])))) {
+          cons_error_mask |= (1 << (pos - cena));
           lprintf(LO_DEBUG, "%c", toupper(myargv[p][i]));
         }
+      }
+    }
     lprintf(LO_DEBUG, "\n");
   }
 }
@@ -1886,6 +1786,8 @@ static void D_DoomMainSetup(void) {
 
   setbuf(stdout, NULL);
 
+  X_Init(); /* CG 07/22/2014: Scripting */
+
   // proff 04/05/2000: Added support for include response files
   /* proff 2001/7/1 - Moved up, so -config can be in response files */
   dboolean rsp_found;
@@ -1916,8 +1818,7 @@ static void D_DoomMainSetup(void) {
 
   D_BuildBEXTables(); // haleyjd
 
-  // 05/09/14 CG: Enable logging
-  D_InitLogging();
+  D_InitLogging(); /* 05/09/14 CG: Enable logging */
 
   // 1/18/98 killough: Z_Init() call moved to i_main.c
 
@@ -1990,16 +1891,15 @@ static void D_DoomMainSetup(void) {
   if (bfgedition) {
     char *tempverstr;
     const char bfgverstr[] = " (BFG Edition)";
+    size_t tempverstrsize = strlen(doomverstr) + strlen(bfgverstr) + 1;
 
-    tempverstr = malloc(
-      sizeof(char) * (strlen(doomverstr) + strlen(bfgverstr) + 1)
-    );
+    tempverstr = malloc(tempverstrsize);
 
     if (tempverstr == NULL)
       I_Error("D_DoomMainSetup: Allocating temporary version string failed");
 
-    strcpy(tempverstr, doomverstr);
-    strcat(tempverstr, bfgverstr);
+    strncpy(tempverstr, doomverstr, tempverstrsize);
+    strncat(tempverstr, bfgverstr, tempverstrsize);
     doomverstr = strdup(tempverstr);
     free(tempverstr);
   }
@@ -2275,7 +2175,7 @@ static void D_DoomMainSetup(void) {
     lprintf(LO_INFO, "\n");
   }
 
-  // e6y 
+  // e6y
   // option to disable automatic loading of dehacked-in-wad lump
   if (!M_CheckParm ("-nodeh")) {
     // MBF-style DeHackEd in wad support: load all lumps, not just the last one
@@ -2441,9 +2341,23 @@ static void D_DoomMainSetup(void) {
   C_Init();
 #endif
 
-  // CG 07/22/2014: Scripting
-  lprintf(LO_INFO, "X_Init: Init script engine.\n");
-  X_Init();
+  XAM_RegisterInterface();
+  XD_RegisterInterface();
+  XG_GameRegisterInterface();
+  XG_KeysRegisterInterface();
+  XI_RegisterInterface();
+  XI_InputRegisterInterface();
+  XM_MenuRegisterInterface();
+  XM_MiscRegisterInterface();
+  XP_UserRegisterInterface();
+  XST_RegisterInterface();
+  XV_RegisterInterface();
+
+  X_ExposeInterfaces(X_GetState());
+
+  X_Start();
+
+  D_LoadStartupMessagesIntoConsole();
 
   // CPhipps - auto screenshots
   if ((p = M_CheckParm("-autoshot")) && (p < myargc - 2))

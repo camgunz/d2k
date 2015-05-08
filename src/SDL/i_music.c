@@ -99,8 +99,10 @@ void I_ShutdownMusic(void) {
     S_StopMusic();
 
     for (int i = 0; i < MUSIC_TMP_EXT; i++) {
-      char *name = malloc(strlen(music_tmp) + strlen(music_tmp_ext[i]) + 1);
-      sprintf(name, "%s%s", music_tmp, music_tmp_ext[i]);
+      size_t name_size = strlen(music_tmp) + strlen(music_tmp_ext[i]) + 1;
+      char *name = malloc(name_size);
+
+      snprintf(name, name_size, "%s%s", music_tmp, music_tmp_ext[i]);
 
       if (!unlink(name))
         lprintf(LO_DEBUG, "I_ShutdownMusic: removed %s\n", name);
@@ -280,6 +282,7 @@ void I_UnRegisterSong(int handle) {
 int I_RegisterSong(const void *data, size_t len) {
   int i;
   char *name;
+  size_t name_size;
   dboolean io_errors = false;
 
   if (MUSIC_DISABLED)
@@ -305,8 +308,9 @@ int I_RegisterSong(const void *data, size_t len) {
     for (i = 0; i < MUSIC_TMP_EXT; i++) {
       // Current SDL_mixer (up to 1.2.8) cannot load some MP3 and OGG
       // without proper extension
-      name = malloc(strlen(music_tmp) + strlen(music_tmp_ext[i]) + 1);
-      sprintf(name, "%s%s", music_tmp, music_tmp_ext[i]);
+      name_size = strlen(music_tmp) + strlen(music_tmp_ext[i]) + 1;
+      name = malloc(name_size);
+      snprintf(name, name_size, "%s%s", music_tmp, music_tmp_ext[i]);
 
       if (strlen(music_tmp_ext[i]) == 0) {
         //midi

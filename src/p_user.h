@@ -26,13 +26,6 @@
 
 #include "d_player.h"
 
-typedef struct player_message_s {
-  char *content;
-  bool centered;
-  bool processed;
-  int sfx;
-} player_message_t;
-
 void P_PlayerThink(int playernum);
 void P_CalcHeight(player_t *player);
 void P_DeathThink(player_t *player);
@@ -40,7 +33,9 @@ void P_MovePlayer(player_t *player);
 void P_Thrust(player_t *player, angle_t angle, fixed_t move);
 void P_SetPitch(player_t *player);
 void P_SetName(int playernum, char *name);
+void P_InitPlayerMessages(int playernum);
 void P_AddMessage(int playernum, player_message_t *message);
+void P_ClearMessagesUpdated(int playernum);
 
 void P_Printf(int playernum, const char *fmt, ...) PRINTF_DECL(2, 3);
 void P_VPrintf(int playernum, const char *fmt, va_list args);
@@ -80,8 +75,6 @@ void P_SendMessage(const char *message);
 void P_ClearMessages(int playernum);
 
 void P_SetPlayerName(int playernum, const char *name);
-
-void P_RegisterFunctions(void);
 
 #endif  /* P_USER__ */
 

@@ -132,15 +132,15 @@ bool HU_ChatWidgetResponder(chat_widget_t *cw, event_t *ev) {
   if (!HU_ChatWidgetActive(cw))
     return false;
 
-  if (ev->type != ev_keydown)
+  if (!(ev->type == ev_key && ev->pressed))
       return false;
 
-  if (ev->data1 == SDLK_ESCAPE) {
+  if (ev->key == SDLK_ESCAPE) {
     HU_ChatWidgetDeactivate(cw);
     return true;
   }
 
-  if (ev->data1 == SDLK_RETURN) {
+  if (ev->key == SDLK_RETURN) {
     cw->handleInput(cw);
     HU_ChatWidgetDeactivate(cw);
     return true;

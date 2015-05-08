@@ -536,10 +536,8 @@ void AM_SetPosition(void)
 // Status bar is notified that the automap has been entered
 // Passed nothing, returns nothing
 //
-static void AM_initVariables(void)
-{
-  int pnum;
-  static event_t st_notify = { ev_keyup, AM_MSGENTERED, 0, 0 };
+static void AM_initVariables(void) {
+  int playernum;
 
   automapmode |= am_active;
 
@@ -551,14 +549,23 @@ static void AM_initVariables(void)
   m_h = FTOM(f_h);
 
   // find player to center on initially
-  if (!playeringame[pnum = consoleplayer])
-  for (pnum=0;pnum<MAXPLAYERS;pnum++)
-    if (playeringame[pnum])
-  break;
+  if (playeringame[consoleplayer]) {
+    playernum = consoleplayer;
+  }
+  else {
+    for (playernum = 0; playernum < MAXPLAYERS; playernum++) {
+      if (playeringame[playernum]) {
+        break;
+      }
+    }
+  }
 
-  plr = &players[pnum];
-  m_x = (plr->mo->x >> FRACTOMAPBITS) - m_w/2;//e6y
-  m_y = (plr->mo->y >> FRACTOMAPBITS) - m_h/2;//e6y
+  if (!playeringame[playernum])
+    I_Error("AM_initVariables: Couldn't find an in-game player");
+
+  plr = &players[playernum];
+  m_x = (plr->mo->x >> FRACTOMAPBITS) - m_w / 2; //e6y
+  m_y = (plr->mo->y >> FRACTOMAPBITS) - m_h / 2; //e6y
   AM_Ticker();
   AM_changeWindowLoc();
 
@@ -568,8 +575,7 @@ static void AM_initVariables(void)
   old_m_w = m_w;
   old_m_h = m_h;
 
-  // inform the status bar of the change
-  ST_Responder(&st_notify);
+  ST_SetAutomapEntered();
 }
 
 void AM_SetResolution(void)
@@ -638,13 +644,10 @@ static void AM_LevelInit(void)
 //
 // Passed nothing, returns nothing
 //
-void AM_Stop (void)
-{
-  static event_t st_notify = { 0, ev_keyup, AM_MSGEXITED, 0 };
-
+void AM_Stop (void) {
   AM_unloadPics();
   automapmode &= ~am_active;
-  ST_Responder(&st_notify);
+  ST_SetAutomapExited();
   stopped = true;
 }
 
@@ -712,20 +715,20 @@ static void AM_maxOutWindowScale(void)
 //
 dboolean AM_Responder(event_t *ev) {
   int rc;
-  static int bigstate=0;
+  static int bigstate = 0;
   int ch;                                                       // phares
 
   rc = false;
 
   if (!(automapmode & am_active)) {
-    if (ev->type == ev_keydown && ev->data1 == key_map) {       // phares
-      AM_Start ();
+    if (ev->type == ev_key && ev->pressed && ev->key == key_map) { // phares
+      AM_Start();
       rc = true;
     }
   }
-  else if (ev->type == ev_keydown) {
+  else if (ev->type == ev_key && ev->pressed) {
     rc = true;
-    ch = ev->data1;                                             // phares
+    ch = ev->key;                                               // phares
                                                                 //    |
     if (ch == key_map_right) {                                  //    V
       if (!(automapmode & am_follow))
@@ -835,9 +838,9 @@ dboolean AM_Responder(event_t *ev) {
       rc = false;
     }
   }
-  else if (ev->type == ev_keyup) {
+  else if (ev->type == ev_key && !ev->pressed) {
     rc = false;
-    ch = ev->data1;
+    ch = ev->key;
     if (ch == key_map_right) {
       if (!(automapmode & am_follow))
         m_paninc.x = 0;

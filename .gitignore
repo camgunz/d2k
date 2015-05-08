@@ -57,3 +57,8 @@ src/TEXTSCREEN/libtextscreen.a
 src/prboom-plus
 src/prboom-plus-game-server
 stamp-h1
+deps/
+codeblocks/Debug/
+codeblocks/Release/
+/codeblocks/d2k.depend
+/codeblocks/d2k.layout

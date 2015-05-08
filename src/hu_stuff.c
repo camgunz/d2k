@@ -34,6 +34,7 @@
 #include "d_main.h"
 #include "dstrings.h"
 #include "c_main.h"
+#include "e6y.h" //e6y
 #include "g_game.h"
 #include "g_keys.h"
 #include "hu_lib.h"
@@ -62,7 +63,7 @@
 #include "sc_man.h"
 #include "sounds.h"
 #include "st_stuff.h" /* jff 2/16/98 need loc of status bar */
-#include "e6y.h" //e6y
+#include "x_main.h"
 
 extern SDL_Surface *screen;
 
@@ -326,6 +327,8 @@ void HU_Init(void) {
   hu_color_t grey  = {0.0f, 0.0f, 0.0f, 0.9f};
 #endif
 
+  shiftxform = english_shiftxform;
+
   if (nodrawers)
     return;
 
@@ -333,8 +336,6 @@ void HU_Init(void) {
     player_message_buffers[i] = g_string_new("");
     player_center_message_buffers[i] = g_string_new("");
   }
-
-  shiftxform = english_shiftxform;
 
   // load the heads-up font
   j = HU_FONTSTART;
@@ -437,12 +438,10 @@ void HU_Init(void) {
   R_SetSpriteByName(&hu_font_hud[43], "ROCKA0");
 
 #ifdef ENABLE_OVERLAY
-  I_ResetRenderContext();
-
   // create the message widget
   // messages to player in upper-left of screen
   w_messages = HU_MessageWidgetNewBuf(
-    I_GetRenderContext(),
+    NULL,
     player_message_buffers[displayplayer],
     HU_MSGX,
     HU_MSGY,
@@ -454,20 +453,18 @@ void HU_Init(void) {
   HU_MessageWidgetSetRetractable(w_messages, true);
 
   w_centermsg = HU_MessageWidgetNew(
-    I_GetRenderContext(), HU_CENTERMSGX, HU_CENTERMSGY, REAL_SCREENWIDTH, 0, 0
+    NULL, HU_CENTERMSGX, HU_CENTERMSGY, REAL_SCREENWIDTH, 0, 0
   );
   HU_MessageWidgetSetHeightByLines(w_centermsg, 2);
 
   w_chat = HU_ChatWidgetNew(
-    I_GetRenderContext(), 0, 0, REAL_SCREENWIDTH, 0, send_chat_message
+    NULL, 0, 0, REAL_SCREENWIDTH, 0, send_chat_message
   );
   HU_ChatWidgetMoveToBottom(w_chat, REAL_SCREENHEIGHT);
   HU_ChatWidgetSetHeightByLines(w_chat, 1);
   HU_ChatWidgetSetFGColor(w_chat, white);
   HU_ChatWidgetSetBGColor(w_chat, grey);
 #endif
-
-  HU_Start();
 }
 
 //
@@ -477,9 +474,11 @@ void HU_Init(void) {
 //
 // Passed nothing, returns nothing
 //
+#if 0
 static void HU_Stop(void) {
   headsupactive = false;
 }
+#endif
 
 //
 // HU_Start
@@ -499,10 +498,17 @@ void HU_Start(void) {
   if (nodrawers)
     return;
 
+  if (!X_Call(X_GetState(), "hud", "start", 0, 0))
+    I_Error("HU_Start: Error starting hud (%s)", X_GetError(X_GetState()));
+
+#if 0
   if (headsupactive)                    // stop before starting
     HU_Stop();
+#endif
 
-  I_ResetRenderContext();
+#if ENABLE_OVERLAY
+  I_ResetRenderSurface();
+#endif
 
   plr = &players[displayplayer];        // killough 3/7/98
   custom_message_p = &custom_message[displayplayer];
@@ -516,8 +522,8 @@ void HU_Start(void) {
     w_centermsg, player_center_message_buffers[displayplayer]
   );
 
-  HU_MessageWidgetRebuild(w_messages, I_GetRenderContext());
-  HU_MessageWidgetRebuild(w_centermsg, I_GetRenderContext());
+  HU_MessageWidgetRebuild(w_messages, NULL);
+  HU_MessageWidgetRebuild(w_centermsg, NULL);
 #endif
 
   //jff 2/16/98 added some HUD widgets
@@ -2293,6 +2299,13 @@ void HU_Drawer(void) {
   if (menuactive == mnact_full)
     return;
 
+  if (!X_Call(X_GetState(), "hud", "draw", 0, 0))
+    I_Error("Error drawing HUD: %s", X_GetError(X_GetState()));
+
+  /*
+  return;
+  */
+
   plr = &players[displayplayer];         // killough 3/7/98
 
   if (gamestate != GS_LEVEL)
@@ -2474,11 +2487,11 @@ main_widgets:
   return;
 
   /*
-  HU_MessageWidgetDrawer(w_messages, I_GetRenderContext());
-  HU_MessageWidgetDrawer(w_centermsg, I_GetRenderContext());
+  HU_MessageWidgetDrawer(w_messages, NULL);
+  HU_MessageWidgetDrawer(w_centermsg, NULL);
   C_Drawer();
   if (HU_ChatWidgetActive(w_chat))
-    HU_ChatWidgetDrawer(w_chat, I_GetRenderContext());
+    HU_ChatWidgetDrawer(w_chat, NULL);
   */
 }
 
@@ -2502,6 +2515,9 @@ void HU_Erase(void) {
 // Passed nothing, returns nothing
 //
 void HU_Ticker(void) {
+  if (!X_Call(X_GetState(), "hud", "tick", 0, 0))
+    I_Error("HU_Ticker: Error ticking HUD (%s)", X_GetError(X_GetState()));
+
   return;
 
   if (nodrawers)
@@ -2516,8 +2532,8 @@ void HU_Ticker(void) {
     if (!playeringame[i])
       continue;
 
-    for (unsigned int i = 0; i < player->messages->len; i++) {
-      player_message_t *msg = player->messages->pdata[i];
+    for (unsigned int i = 0; i < player->messages.messages->len; i++) {
+      player_message_t *msg = player->messages.messages->pdata[i];
 
       if (msg->processed)
         continue;
@@ -2548,22 +2564,19 @@ void HU_Ticker(void) {
 //
 // Passed the event to respond to, returns true if the event was handled
 //
-
-dboolean HU_Responder(event_t *ev) {
-  return false;
-
-  if (!((ev->type == ev_keydown) || (ev->type == ev_mouse)))
+bool HU_Responder(event_t *ev) {
+#if 0
+  if (!(ev->type == ev_key && ev->pressed))
     return false;
 
-  if ((ev->type == ev_keydown) &&
-      (ev->data1 == key_chat) &&
-      (!HU_ChatWidgetActive(w_chat))) {
+  if (ev->key == key_chat && !HU_ChatWidgetActive(w_chat)) {
     HU_ChatWidgetActivate(w_chat);
     return true;
   }
 
   if (HU_ChatWidgetResponder(w_chat, ev))
     return true;
+#endif
 
   return false;
 }

@@ -520,9 +520,21 @@ void P_SetName(int playernum, char *name) {
   player->name = name;
 }
 
+void P_InitPlayerMessages(int playernum) {
+  GPtrArray *messages = g_ptr_array_new_with_free_func(P_DestroyMessage);
+
+  players[playernum].messages.messages = messages;
+  players[playernum].messages.updated = false;
+}
+
 void P_AddMessage(int playernum, player_message_t *message) {
-  g_ptr_array_add(players[playernum].messages, message);
+  g_ptr_array_add(players[playernum].messages.messages, message);
   printf("%s", message->content);
+  players[playernum].messages.updated = true;
+}
+
+void P_ClearMessagesUpdated(int playernum) {
+  players[playernum].messages.updated = false;
 }
 
 void P_Printf(int playernum, const char *fmt, ...) {
@@ -716,8 +728,10 @@ void P_DestroyMessage(gpointer data) {
 }
 
 void P_ClearMessages(int playernum) {
-  for (unsigned int i = players[playernum].messages->len; i > 0; i--)
-    g_ptr_array_remove_index(players[playernum].messages, i - 1);
+  for (unsigned int i = players[playernum].messages.messages->len; i > 0; i--)
+    g_ptr_array_remove_index(players[playernum].messages.messages, i - 1);
+
+  players[playernum].messages.updated = true;
 }
 
 void P_SetPlayerName(int playernum, const char *name) {
@@ -745,31 +759,6 @@ void P_SetPlayerName(int playernum, const char *name) {
 
   if (SERVER)
     SV_BroadcastPlayerNameChanged(playernum, players[playernum].name);
-}
-
-int XF_Name(lua_State *L) {
-  const char *name = luaL_checkstring(L, 1);
-
-  if (name)
-    P_SetPlayerName(consoleplayer, name);
-
-  return 0;
-}
-
-int XF_Say(lua_State *L) {
-  const char *message = luaL_checkstring(L, 1);
-
-  if (!message)
-    return 0;
-
-  P_SendMessage(message);
-
-  return 0;
-}
-
-void P_RegisterFunctions(void) {
-  X_RegisterFunc("name", XF_Name);
-  X_RegisterFunc("say", XF_Say);
 }
 
 /* vi: set et ts=2 sw=2: */

@@ -56,7 +56,10 @@ void I_Warning(const char *message, ...);
 #endif
 
 void I_Init(void);
+void I_SetWindowIcon(void);
+void I_SetWindowCaption(void);
 void I_SafeExit(int rc);
+void I_StartTic(void);
 
 extern int (*I_GetTime)(void);
 

@@ -84,24 +84,24 @@ static void W_AddFile(size_t wadfile_index) {
 
   // open the file and add to directory
 
-  wadfile->handle = M_Open(wadfile->name, O_RDONLY | O_BINARY, S_IRUSR);
+  wadfile->handle = M_Open(wadfile->name, O_RDONLY, S_IRUSR);
 
   if (wadfile->handle == -1 && N_GetWad(wadfile->name)) // CPhipps
-    wadfile->handle = M_Open(wadfile->name, O_RDONLY | O_BINARY, S_IRUSR);
+    wadfile->handle = M_Open(wadfile->name, O_RDONLY, S_IRUSR);
 
   if (wadfile->handle == -1 &&
       strlen(wadfile->name) > 4 &&
-      wadfile->src == source_pwad && 
+      wadfile->src == source_pwad &&
       !strcasecmp(wadfile->name + strlen(wadfile->name) - 4 , ".wad") &&
       N_GetWad(wadfile->name)) {
-    wadfile->handle = M_Open(wadfile->name, O_RDONLY | O_BINARY, S_IRUSR);
+    wadfile->handle = M_Open(wadfile->name, O_RDONLY, S_IRUSR);
   }
 
   if (wadfile->handle == -1) {
     if (strlen(wadfile->name) <= 4 ||      // add error check -- killough
         (strcasecmp(wadfile->name + strlen(wadfile->name) - 4, ".lmp") &&
          strcasecmp(wadfile->name + strlen(wadfile->name) - 4, ".gwa"))) {
-      I_Error("W_AddFile: couldn't open %s",wadfile->name);
+      I_Error("W_AddFile: couldn't open %s", wadfile->name);
     }
     return;
   }
@@ -122,8 +122,8 @@ static void W_AddFile(size_t wadfile_index) {
     }
   }
 
-  if (strlen(wadfile->name) <=4 || 
-	    (strcasecmp(wadfile->name + strlen(wadfile->name) - 4,".wad") && 
+  if (strlen(wadfile->name) <=4 ||
+	    (strcasecmp(wadfile->name + strlen(wadfile->name) - 4,".wad") &&
 	     strcasecmp(wadfile->name + strlen(wadfile->name) - 4,".gwa"))) {
       // single lump file
       fileinfo = &singleinfo;
@@ -444,7 +444,7 @@ void W_Init(void) {
   numlumps = 0;
   lumpinfo = NULL;
 
-  // CPhipps - new wadfiles array used 
+  // CPhipps - new wadfiles array used
   // open all the files, load headers, and count lumps
   for (unsigned int i = 0; i < resource_files->len; i++)
     W_AddFile(i);
@@ -504,7 +504,7 @@ int W_LumpLength (int lump) {
 
 void W_ReadLump(int lump, void *dest) {
   wadfile_info_t *wadfile;
-  
+
 #ifdef RANGECHECK
   if (lump >= numlumps)
     I_Error ("W_ReadLump: %i >= numlumps", lump);

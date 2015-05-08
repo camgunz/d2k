@@ -41,10 +41,11 @@
 #include "m_misc.h"
 #include "lprintf.h"
 #include "am_map.h"
+#include "i_input.h"
 #include "i_main.h"
+#include "i_sound.h"
 #include "i_system.h"
 #include "i_video.h"
-#include "i_sound.h"
 #include "r_demo.h"
 #include "r_fps.h"
 #include "p_user.h"
@@ -52,6 +53,7 @@
 #ifdef _WIN32
 #include "e6y_launcher.h"
 #endif
+#include "xd_main.h"
 
 extern patchnum_t hu_font[HU_FONTSIZE];
 extern dboolean  message_dontfuckwithme;
@@ -4270,40 +4272,112 @@ static int M_IndexInChoices(const char *str, const char **choices) {
 //
 
 dboolean M_Responder(event_t* ev) {
-  int    ch;
-  int    i;
   static int joywait   = 0;
   static int mousewait = 0;
+
+  int  ch;
+  int  i;
+  bool joy_moved = false;
+  bool joy_moved_up = false;
+  bool joy_moved_down = false;
+  bool joy_moved_left = false;
+  bool joy_moved_right = false;
 
   ch = -1; // will be changed to a legit char if we're going to use it here
 
   // Process joystick input
 
-  if (ev->type == ev_joystick && joywait < I_GetTime()) {
-    if (ev->data3 == -1) {
+  if (ev->type == ev_joystick_movement && joywait < I_GetTime()) {
+    if (ev->jstype == ev_joystick_axis) {
+      if (ev->value != 0 && (ev->key == 0 && ev->key == 1))
+        joy_moved = true;
+
+      if (ev->key == 0) {
+        if (ev->value < 0)
+          joy_moved_left = true;
+        if (ev->value > 0)
+          joy_moved_right = true;
+      }
+      else if (ev->key == 1) {
+        if (ev->value < 0)
+          joy_moved_down = true;
+        if (ev->value > 0)
+          joy_moved_up = true;
+      }
+    }
+    else if (ev->jstype == ev_joystick_ball) {
+      if (ev->xmove != 0 || ev->ymove != 0)
+        joy_moved = true;
+
+      if (ev->xmove < 0)
+        joy_moved_left = true;
+      if (ev->xmove > 0)
+        joy_moved_right = true;
+      if (ev->ymove < 0)
+        joy_moved_down = true;
+      if (ev->ymove > 0)
+        joy_moved_up = true;
+    }
+    else if (ev->jstype == ev_joystick_hat) {
+      if (ev->value != SDL_HAT_CENTERED)
+        joy_moved = true;
+
+      if (ev->value == SDL_HAT_UP) {
+        joy_moved_up = true;
+      }
+      else if (ev->value == SDL_HAT_RIGHT) {
+        joy_moved_right = true;
+      }
+      else if (ev->value == SDL_HAT_DOWN) {
+        joy_moved_down = true;
+      }
+      else if (ev->value == SDL_HAT_LEFT) {
+        joy_moved_left = true;
+      }
+      else if (ev->value == SDL_HAT_RIGHTUP) {
+        joy_moved_right = true;
+        joy_moved_up = true;
+      }
+      else if (ev->value == SDL_HAT_RIGHTDOWN) {
+        joy_moved_right = true;
+        joy_moved_down = true;
+      }
+      else if (ev->value == SDL_HAT_LEFTUP) {
+        joy_moved_left = true;
+        joy_moved_up = true;
+      }
+      else if (ev->value == SDL_HAT_LEFTDOWN) {
+        joy_moved_left = true;
+        joy_moved_down = true;
+      }
+    }
+  }
+
+  if (joy_moved) {
+    if (joy_moved_up) {
       ch = key_menu_up;                                // phares 3/7/98
       joywait = I_GetTime() + 5;
     }
-    else if (ev->data3 == 1) {
+    else if (joy_moved_down) {
       ch = key_menu_down;                              // phares 3/7/98
       joywait = I_GetTime() + 5;
     }
 
-    if (ev->data2 == -1) {
+    if (joy_moved_left) {
       ch = key_menu_left;                              // phares 3/7/98
       joywait = I_GetTime() + 2;
     }
-    else if (ev->data2 == 1) {
+    else if (joy_moved_right) {
       ch = key_menu_right;                             // phares 3/7/98
       joywait = I_GetTime() + 2;
     }
 
-    if (ev->data1 & 1) {
+    if (ev->key & 1) {
       ch = key_menu_enter;                             // phares 3/7/98
       joywait = I_GetTime() + 5;
     }
 
-    if (ev->data1 & 2) {
+    if (ev->key & 2) {
       ch = key_menu_backspace;                         // phares 3/7/98
       joywait = I_GetTime() + 5;
     }
@@ -4313,11 +4387,11 @@ dboolean M_Responder(event_t* ev) {
     // to where key binding can eat them.
 
     if (setup_active && set_keybnd_active) {
-      if (ev->data1 & 4) {
+      if (ev->key & 4) {
         ch = 0; // meaningless, just to get you past the check for -1
         joywait = I_GetTime() + 5;
       }
-      if (ev->data1 & 8) {
+      if (ev->key & 8) {
         ch = 0; // meaningless, just to get you past the check for -1
         joywait = I_GetTime() + 5;
       }
@@ -4327,12 +4401,12 @@ dboolean M_Responder(event_t* ev) {
   else if (ev->type == ev_mouse && mousewait < I_GetTime()) {
     // Process mouse input
 
-    if (ev->data1 & 1) {
+    if (ev->key & 1) {
       ch = key_menu_enter;                           // phares 3/7/98
       mousewait = I_GetTime() + 15;
     }
 
-    if (ev->data1 & 2) {
+    if (ev->key & 2) {
       ch = key_menu_backspace;                       // phares 3/7/98
       mousewait = I_GetTime() + 15;
     }
@@ -4342,14 +4416,14 @@ dboolean M_Responder(event_t* ev) {
     // to where key binding can eat it.
 
     if (setup_active && set_keybnd_active) {
-      if (ev->data1 & 4 || ev->data1 & 8 || ev->data1 & 16) {
+      if (ev->key & 4 || ev->key & 8 || ev->key & 16) {
         ch = 0; // meaningless, just to get you past the check for -1
         mousewait = I_GetTime() + 15;
       }
     }
   }
-  else if (ev->type == ev_keydown) {
-    ch = ev->data1;
+  else if (ev->type == ev_key && ev->pressed) {
+    ch = ev->key;
   }
 
   if (ch == -1)
@@ -4724,13 +4798,13 @@ dboolean M_Responder(event_t* ev) {
           oldbutton = *ptr1->m_joy;
           group  = ptr1->m_group;
 
-          if (ev->data1 & 1)
+          if (ev->key & 1)
             ch = 0;
-          else if (ev->data1 & 2)
+          else if (ev->key & 2)
             ch = 1;
-          else if (ev->data1 & 4)
+          else if (ev->key & 4)
             ch = 2;
-          else if (ev->data1 & 8)
+          else if (ev->key & 8)
             ch = 3;
           else
             return true;
@@ -4770,15 +4844,15 @@ dboolean M_Responder(event_t* ev) {
           oldbutton = *ptr1->m_mouse;
           group  = ptr1->m_group;
 
-          if (ev->data1 & 1)
+          if (ev->key & 1)
             ch = 0;
-          else if (ev->data1 & 2)
+          else if (ev->key & 2)
             ch = 1;
-          else if (ev->data1 & 4)
+          else if (ev->key & 4)
             ch = 2;
-          else if (ev->data1 & 8)
+          else if (ev->key & 8)
             ch = 3;
-          else if (ev->data1 & 16)
+          else if (ev->key & 16)
             ch = 4;
           else
             return true;
@@ -4977,7 +5051,7 @@ dboolean M_Responder(event_t* ev) {
         else if ((ch >= 32) && (ch <= 126)) {
           if ((chat_index+1) < CHAT_STRING_BFR_SIZE)
           {
-            if (keybindings.shiftdown)
+            if (key_states.shiftdown)
               ch = shiftxform[ch];
 
             if (chat_string_buffer[chat_index] == 0)

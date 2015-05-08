@@ -76,7 +76,7 @@ static gchar* localize_path(const char *path) {
   gchar *lp = g_convert(
     path, path_len, "wchar_t", "UTF-8", NULL, &sz, &file_error
   );
-  
+
   wprintf(L"localize_path: path_len, bytes_written, lp: %zu, %zu, %s\n",
     path_len, sz, lp
   );
@@ -132,7 +132,7 @@ char* M_LocalizePath(const char *path) {
   lp = g_filename_from_utf8(path, -1, NULL, &sz, &file_error);
   out = calloc(sz + 1, sizeof(char));
 #endif
-  
+
   if (!out)
     I_Error("M_LocalizePath: calloc failed");
 
@@ -158,7 +158,7 @@ char* M_UnLocalizePath(const char *local_path) {
 #else
   ulp = g_filename_to_utf8(local_path, -1, NULL, &sz, &file_error);
 #endif
-  
+
   out = calloc(sz + 1, sizeof(char));
 
   if (!out)
@@ -359,7 +359,7 @@ GPtrArray* M_ListFiles(const char *path) {
   GDir *dir;
   GPtrArray *files;
   const char *entry_name;
-  
+
   errno = 0;
   clear_file_error();
 
@@ -391,7 +391,7 @@ GPtrArray* M_ListFiles(const char *path) {
 bool M_ListFilesBuf(const char *path, GPtrArray *files) {
   GDir *dir;
   const char *entry_name;
-  
+
   errno = 0;
   clear_file_error();
 
@@ -422,7 +422,7 @@ GPtrArray* M_ListFolders(const char *path) {
   GDir *dir;
   GPtrArray *folders;
   const char *entry_name;
-  
+
   errno = 0;
   clear_file_error();
 
@@ -454,7 +454,7 @@ GPtrArray* M_ListFolders(const char *path) {
 bool M_ListFoldersBuf(const char *path, GPtrArray *folders) {
   GDir *dir;
   const char *entry_name;
-  
+
   errno = 0;
   clear_file_error();
 
@@ -485,7 +485,7 @@ GPtrArray* M_ListFilesAndFolders(const char *path) {
   GDir *dir;
   GPtrArray *files_and_folders;
   const char *entry_name;
-  
+
   errno = 0;
   clear_file_error();
 
@@ -513,7 +513,7 @@ GPtrArray* M_ListFilesAndFolders(const char *path) {
 bool M_ListFilesAndFoldersBuf(const char *path, GPtrArray *files_and_folders) {
   GDir *dir;
   const char *entry_name;
-  
+
   errno = 0;
   clear_file_error();
 

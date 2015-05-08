@@ -1698,8 +1698,9 @@ static void deh_procBexCodePointers(DEHFILE *fpin, FILE* fpout, char *line)
                              indexnum, NUMSTATES);
           return; // killough 10/98: fix SegViol
         }
-      strcpy(key,"A_");  // reusing the key area to prefix the mnemonic
-      strcat(key,ptr_lstrip(mnemonic));
+      // reusing the key area to prefix the mnemonic
+      strncpy(key, "A_", DEH_MAXKEYLEN);
+      strncat(key, ptr_lstrip(mnemonic), DEH_MAXKEYLEN);
 
       found = DEHFALSE;
       i= -1; // incremented to start at zero at the top of the loop
@@ -2621,7 +2622,7 @@ static void deh_procText(DEHFILE *fpin, FILE* fpout, char *line)
     {
       if (fpout) fprintf(fpout,
                          "Skipped text block because of notext directive\n");
-      strcpy(inbuffer,line);
+      strncpy(inbuffer,line, DEH_BUFFERMAX * 2);
       while (!dehfeof(fpin) && *inbuffer && (*inbuffer != ' '))
         dehfgets(inbuffer, sizeof(inbuffer), fpin);  // skip block
       // Ty 05/17/98 - don't care if this fails
@@ -2810,7 +2811,11 @@ static void deh_procStrings(DEHFILE *fpin, FILE* fpout, char *line)
           holdstring = realloc(holdstring,maxstrlen*sizeof(*holdstring));
         }
       // concatenate the whole buffer if continuation or the value iffirst
-      strcat(holdstring,ptr_lstrip(((*holdstring) ? inbuffer : strval)));
+      strncat(
+        holdstring,
+        ptr_lstrip(((*holdstring) ? inbuffer : strval)),
+        maxstrlen
+      );
       rstrip(holdstring);
       // delete any trailing blanks past the backslash
       // note that blanks before the backslash will be concatenated

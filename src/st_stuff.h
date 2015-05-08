@@ -45,6 +45,9 @@ extern int ST_SCALED_Y;
 // STATUS BAR
 //
 
+void ST_SetAutomapEntered(void);
+void ST_SetAutomapExited(void);
+
 // Called by main loop.
 dboolean ST_Responder(event_t* ev);
 

@@ -326,6 +326,7 @@ void gld_Init(int width, int height)
   lprintf(LO_INFO,"GL_VENDOR: %s\n",glGetString(GL_VENDOR));
   lprintf(LO_INFO,"GL_RENDERER: %s\n",glGetString(GL_RENDERER));
   lprintf(LO_INFO,"GL_VERSION: %s\n",glGetString(GL_VERSION));
+#if 0
   lprintf(LO_INFO,"GL_EXTENSIONS:\n");
   {
     char ext_name[256];
@@ -354,6 +355,7 @@ void gld_Init(int width, int height)
         rover++;
     }
   }
+#endif
 
   gld_InitOpenGL(gl_compatibility);
   gld_InitPalettedTextures();

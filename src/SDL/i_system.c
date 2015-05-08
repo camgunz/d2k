@@ -97,6 +97,7 @@ dboolean I_StartDisplay(void)
 
   start_displaytime = SDL_GetTicks();
   InDisplay = true;
+
   return true;
 }
 
@@ -276,16 +277,14 @@ int I_Filelength(int handle)
 // proff_fs 2002-07-04 - moved to i_system
 #ifdef _WIN32
 
-void I_SwitchToWindow(HWND hwnd)
-{
+void I_SwitchToWindow(HWND hwnd) {
   typedef BOOL (WINAPI *TSwitchToThisWindow) (HWND wnd, BOOL restore);
   static TSwitchToThisWindow SwitchToThisWindow = NULL;
 
   if (!SwitchToThisWindow)
     SwitchToThisWindow = (TSwitchToThisWindow)GetProcAddress(GetModuleHandle("user32.dll"), "SwitchToThisWindow");
 
-  if (SwitchToThisWindow)
-  {
+  if (SwitchToThisWindow) {
     HWND hwndLastActive = GetLastActivePopup(hwnd);
 
     if (IsWindowVisible(hwndLastActive))
@@ -297,51 +296,46 @@ void I_SwitchToWindow(HWND hwnd)
   }
 }
 
-const char *I_DoomExeDir(void)
-{
-  static const char current_dir_dummy[] = {"."}; // proff - rem extra slash 8/21/03
+const char* I_DoomExeDir(void) {
   static char *base;
-  if (!base)        // cache multiple requests
-    {
-      size_t len = strlen(*myargv);
-      char *p = (base = malloc(len+1)) + len - 1;
-      strcpy(base,*myargv);
-      while (p > base && *p!='/' && *p!='\\')
-        *p--=0;
-      if (*p=='/' || *p=='\\')
-        *p--=0;
-      if (strlen(base)<2)
-      {
-        free(base);
-        base = malloc(1024);
-        if (!getcwd(base,1024))
-          strcpy(base, current_dir_dummy);
-      }
+
+  /*
+   * CG: This code is largely from GLib, released under the GPLv2 (or any later
+   *     version)
+   */
+
+  char *utf8_buf = NULL;
+  wchar_t buf[MAX_PATH + 1];
+
+  if (!base) { // cache multiple requests
+    if (GetModuleFileNameW(GetModuleHandle(NULL), buf, G_N_ELEMENTS(buf)) > 0)
+      utf8_buf = g_utf16_to_utf8(buf, -1, NULL, NULL, NULL);
+
+    if (utf8_buf) {
+      base = g_path_get_dirname(utf8_buf);
+      g_free(utf8_buf);
     }
+  }
+
   return base;
 }
 
-const char* I_GetTempDir(void)
-{
+const char* I_GetTempDir(void) {
   static char tmp_path[PATH_MAX] = {0};
 
   if (tmp_path[0] == 0)
-  {
     GetTempPath(sizeof(tmp_path), tmp_path);
-  }
 
   return tmp_path;
 }
 
 #elif defined(AMIGA)
 
-const char *I_DoomExeDir(void)
-{
+const char* I_DoomExeDir(void) {
   return "PROGDIR:";
 }
 
-const char* I_GetTempDir(void)
-{
+const char* I_GetTempDir(void) {
   return "PROGDIR:";
 }
 
@@ -349,33 +343,34 @@ const char* I_GetTempDir(void)
 
 /* Defined elsewhere */
 
-#else
+#else /* POSIX */
 // cph - V.Aguilar (5/30/99) suggested return ~/.lxdoom/, creating
 //  if non-existant
 // cph 2006/07/23 - give prboom+ its own dir
 // Mead rem extra slash 8/21/03
-static const char prboom_dir[] = {"/." PACKAGE_TARNAME};
 
-const char *I_DoomExeDir(void)
-{
+const char* I_DoomExeDir(void) {
+  static const char doom2k_dir[] = {"/." PACKAGE_TARNAME};
   static char *base;
-  if (!base)        // cache multiple requests
-    {
-      char *home = getenv("HOME");
-      size_t len = strlen(home);
 
-      base = malloc(len + strlen(prboom_dir) + 1);
-      strcpy(base, home);
-      // I've had trouble with trailing slashes before...
-      if (base[len-1] == '/') base[len-1] = 0;
-      strcat(base, prboom_dir);
-      mkdir(base, S_IRUSR | S_IWUSR | S_IXUSR); // Make sure it exists
-    }
+  if (!base) { // cache multiple requests
+    char *home = getenv("HOME");
+    size_t len = strlen(home);
+
+    base = malloc(len + strlen(doom2k_dir) + 1);
+    strcpy(base, home);
+    // I've had trouble with trailing slashes before...
+    if (base[len - 1] == '/')
+      base[len - 1] = 0;
+
+    strcat(base, doom2k_dir);
+    mkdir(base, S_IRUSR | S_IWUSR | S_IXUSR); // Make sure it exists
+  }
+
   return base;
 }
 
-const char *I_GetTempDir(void)
-{
+const char* I_GetTempDir(void) {
   return "/tmp";
 }
 
