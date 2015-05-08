@@ -18,7 +18,9 @@ pushd "$PACKAGE_DIR" > /dev/null
 cp ../cbuild/d2k .
 curl -L -O "$FREEDOOM_URL"
 unzip -q "$FREEDOOM_PACKAGE"
-cp "${FREEDOOM_FOLDER}/freedoom1.wad" "${FREEDOOM_FOLDER}/freedoom2.wad" .
+cp "${FREEDOOM_FOLDER}/freedoom1.wad" \
+   "${FREEDOOM_FOLDER}/freedoom2.wad" \
+   "${FREEDOOM_FOLDER}/COPYING" .
 rm "$FREEDOOM_PACKAGE"
 rm -rf "$FREEDOOM_FOLDER"
 cp ../scripts . -R
