@@ -19,4 +19,5 @@ yaourt --noconfirm -S clang \
                       libffi \
                       libxdiff \
                       enet \
+                      gobject-introspection \
                       pango
