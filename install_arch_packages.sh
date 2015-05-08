@@ -1,11 +1,20 @@
-pacman -S clang \
-          cmake \
-          sdl \
-          mesa-libgl \
-          fluidsynth \
-          portmidi \
-          dumb \
-          libmad \
-          libwebp \
-          glu \
-          pango
+yaourt --noconfirm -S clang \
+                      binutils \
+                      make \
+                      cmake \
+                      gperftools \
+                      mesa-libgl \
+                      glu \
+                      sdl \
+                      sdl_mixer \
+                      sdl_image \
+                      fluidsynth \
+                      portmidi \
+                      dumb \
+                      lua \
+                      lua-lgi \
+                      pkg-config \
+                      libffi \
+                      libxdiff \
+                      enet \
+                      pango
