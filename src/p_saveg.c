@@ -44,7 +44,23 @@
 #include "s_advsound.h"
 #include "e6y.h"//e6y
 
+enum {
+  ACTOR_X,
+  ACTOR_Y,
+  ACTOR_Z,
+  ACTOR_MOMX,
+  ACTOR_MOMY,
+  ACTOR_MOMZ,
+  ACTOR_ANGLE,
+  ACTOR_TICS,
+  ACTOR_PITCH,
+  ACTOR_FLAGS
+};
+
+
 extern int numspechit;
+
+#define DEBUG_DELTA_COMPRESSED_ACTORS 1
 
 #define MAX_PLAYER_MESSAGE_SIZE 256
 #define MAX_COMMAND_COUNT 10000
@@ -449,134 +465,13 @@ static void deserialize_actor_pointers(pbuf_t *savebuffer, mobj_t *mobj) {
   }
 }
 
-static void save_actor_specific_fields(pbuf_t *savebuffer, mobj_t *mobj) {
-  switch (mobj->type) {
-    case MT_PLASMA:
-      M_PBufWriteInt(savebuffer, mobj->momz);
-      break;
-    case MT_ARACHPLAZ:
-      M_PBufWriteInt(savebuffer, mobj->momz);
-      break;
-    default:
-      break;
-  }
-}
-
-static void fill_in_actor_fields(pbuf_t *savebuffer, mobj_t *mobj) {
-  switch (mobj->type) {
-    case MT_PLASMA:
-      mobj->momx = FixedMul(
-        mobj->info->speed, finecosine[mobj->angle >> ANGLETOFINESHIFT]
-      );
-      mobj->momy = FixedMul(
-        mobj->info->speed, finesine[mobj->angle >> ANGLETOFINESHIFT]
-      );
-      M_PBufReadInt(savebuffer, &mobj->momz);
-    break;
-    case MT_ARACHPLAZ:
-      M_PBufReadInt(savebuffer, &mobj->momz);
-    break;
-    case MT_PUFF:
-      mobj->momz = FRACUNIT;
-    break;
-    case MT_BLOOD:
-      mobj->momz = FRACUNIT * 2;
-    break;
-    default:
-      I_Error("fill_in_actor_fields: unknown actor type %d\n", mobj->type);
-  }
-
-  P_IdentAssignID(mobj, mobj->id);
-}
-
-static void serialize_arachnotron_plasma(pbuf_t *savebuffer, mobj_t *mobj) {
-  static mobj_t last_actor;
-  static bool delta_compressing = false;
-
-  if ((!savebuffer) && (!mobj)) {
-    memset(&last_actor, 0, sizeof(mobj_t));
-    delta_compressing = false;
-    return;
-  }
-
-  if (!delta_compressing) {
-    last_actor.id = mobj->id;
-    last_actor.index = mobj->index;
-    last_actor.x = mobj->x
-    last_actor.y = mobj->y
-    last_actor.z = mobj->z
-    last_actor.angle = mobj->angle
-    last_actor.tics = mobj->tics
-    last_actor.pitch = mobj->pitch
-    last_actor.flags = mobj->flags
-
-    M_PBufWriteInt(savebuffer, mobj->type);
-    M_PBufWriteUInt(savebuffer, mobj->id);
-    M_PBufWriteInt(savebuffer, mobj->index);
-    M_PBufWriteInt(savebuffer, mobj->x);
-    M_PBufWriteInt(savebuffer, mobj->y);
-    M_PBufWriteInt(savebuffer, mobj->z);
-    M_PBufWriteUInt(savebuffer, mobj->angle);
-    M_PBufWriteInt(savebuffer, mobj->tics);
-    M_PBufWriteUInt(savebuffer, mobj->pitch);
-    M_PBufWriteULong(savebuffer, mobj->flags);
-
-    return;
-  }
-
-  M_PBufWriteLong(savebuffer,
-
-  last_actor.id = mobj->id;
-  last_actor.index = mobj->index;
-  last_actor.x = mobj->x
-  last_actor.y = mobj->y
-  last_actor.z = mobj->z
-  last_actor.angle = mobj->angle
-  last_actor.tics = mobj->tics
-  last_actor.pitch = mobj->pitch
-  last_actor.flags = mobj->flags
-
-}
-
-static void serialize_player_plasma(pbuf_t *savebuffer, mobj_t *mobj) {
-}
-
-static void serialize_bullet_puff(pbuf_t *savebuffer, mobj_t *mobj) {
-}
-
-static void serialize_blood(pbuf_t *savebuffer, mobj_t *mobj) {
-}
-
-static void save_frequently_spawning_actor(pbuf_t *savebuffer, mobj_t *mobj) {
-  switch (mobj->type) {
-    case MT_ARACHPLAZ:
-      serialize_arachnotron_plasma(savebuffer, mobj);
-    break;
-    case MT_PLASMA:
-      serialize_player_plasma(savebuffer, mobj);
-    break;
-    case MT_PUFF:
-      serialize_bullet_puff(savebuffer, mobj);
-    break;
-    case MT_BLOOD:
-      serialize_blood(savebuffer, mobj);
-    break;
-    default:
-      I_Error(
-        "save_frequently_spawning_actor: unknown actor tpye %d\n", mobj->type
-      );
-  }
-}
-
-static void save_actor_for_delta_compression(mobj_t *mobj) {
+static bool should_delta_compress_actor(mobj_t *mobj) {
+  return MULTINET && g_hash_table_contains(
+    delta_compressed_actors, GINT_TO_POINTER(mobj->type)
+  );
 }
 
 static void serialize_actor(pbuf_t *savebuffer, mobj_t *mobj) {
-  if (should_delta_compress_actor(mobj)) {
-    save_frequently_spawning_actor(savebuffer, mobj);
-    return;
-  }
-
   M_PBufWriteInt(savebuffer, mobj->type);
   M_PBufWriteUInt(savebuffer, mobj->id);
   M_PBufWriteInt(savebuffer, mobj->index);
@@ -629,11 +524,56 @@ static void serialize_actor(pbuf_t *savebuffer, mobj_t *mobj) {
   M_PBufWriteInt(savebuffer, mobj->iden_nums);
 }
 
-static void deserialize_actor(pbuf_t *savebuffer, mobj_t *mobj) {
-  M_PBufReadInt(savebuffer, (int *)&mobj->type);
+static mobj_t* build_actor(mobjtype_t actor_type) {
+  mobj_t *mobj;
+  
+  if (actor_type >= NUMMOBJTYPES)
+    I_Error("build_actor: Invalid actor type %d\n", actor_type);
 
-  if (mobj->type >= NUMMOBJTYPES)
-    I_Error("deserialize_actor: Invalid actor type %d\n", mobj->type);
+  mobj = Z_Malloc(sizeof(mobj_t), PU_LEVEL, NULL);
+  memset(mobj, 0, sizeof(mobj_t));
+  mobj->thinker.function = P_MobjThinker;
+  mobj->type = actor_type;
+
+  mobj->info = &mobjinfo[mobj->type];
+  mobj->radius = mobj->info->radius;
+  mobj->height = mobj->info->height;
+
+  return mobj;
+}
+
+static void setup_actor(mobj_t *mobj) {
+  mobj->info = &mobjinfo[mobj->type];
+  mobj->radius = mobj->info->radius;
+  mobj->height = mobj->info->height;
+}
+
+static void insert_actor(mobj_t *mobj) {
+  P_IdentAssignID(mobj, mobj->id);
+
+  P_AddThinker(&mobj->thinker);
+
+  mobj->sprev = NULL;
+  mobj->snext = NULL;
+  P_SetThingPosition(mobj);
+
+  mobj->info = &mobjinfo[mobj->type];
+
+  // killough 2/28/98:
+  // Fix for falling down into a wall after savegame loaded:
+  //      mobj->floorz = mobj->subsector->sector->floorheight;
+  //      mobj->ceilingz = mobj->subsector->sector->ceilingheight;
+  if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL | MF_CORPSE)))
+    totallive++;
+}
+
+static void deserialize_actor(pbuf_t *savebuffer) {
+  mobj_t *mobj;
+  mobjtype_t actor_type;
+
+  M_PBufReadInt(savebuffer, (int *)(&actor_type));
+
+  mobj = build_actor(actor_type);
 
   M_PBufReadUInt(savebuffer, &mobj->id);
   M_PBufReadInt(savebuffer, &mobj->index);
@@ -645,14 +585,7 @@ static void deserialize_actor(pbuf_t *savebuffer, mobj_t *mobj) {
   M_PBufReadUInt(savebuffer, &mobj->pitch);
   M_PBufReadULong(savebuffer, &mobj->flags);
 
-  mobj->info = &mobjinfo[mobj->type];
-  mobj->radius = mobj->info->radius;
-  mobj->height = mobj->info->height;
-
-  if (should_delta_compress_actor(mobj)) {
-    fill_in_actor_fields(savebuffer, mobj);
-    return;
-  }
+  setup_actor(mobj);
 
   /*
   M_PBufReadInt(savebuffer, (int *)&mobj->sprite);
@@ -696,16 +629,20 @@ static void deserialize_actor(pbuf_t *savebuffer, mobj_t *mobj) {
   M_PBufReadShort(savebuffer, &mobj->patch_width);
   M_PBufReadInt(savebuffer, &mobj->iden_nums);
 
-  P_IdentAssignID(mobj, mobj->id);
+  insert_actor(mobj);
 }
 
 /* [CG] TODO: Expose this to scripting */
 static void add_delta_compressable_actor_type(mobjtype_t mobjtype) {
   GPtrArray *actors = g_ptr_array_new();
+  bool inserted_new = g_hash_table_insert(delta_compressed_actors,
+    GINT_TO_POINTER(mobjtype),
+    actors
+  );
 
-  if (!g_hash_table_insert(delta_compressed_actors, mobjtype, actors)) {
+  if (!inserted_new) {
     I_Error(
-      "add_delta_compressable_actor: actor type %d already compressed\n",
+      "add_delta_compressable_actor: actor type %d already compressable\n",
       mobjtype
     );
   }
@@ -720,15 +657,9 @@ static void initialize_delta_compressed_actors(void) {
   add_delta_compressable_actor_type(MT_BLOOD);
 }
 
-static bool should_delta_compress_actor(mobj_t *mobj) {
-  return MULTINET && g_hash_table_contains(
-    delta_compressed_actors, mobj->type
-  );
-}
-
-static void delta_compress_actor(mobj_t *mobj) {
+static void store_actor_for_delta_compression(mobj_t *mobj) {
   GPtrArray *actor_array = g_hash_table_lookup(
-    delta_compressed_actors, mobj->type
+    delta_compressed_actors, GINT_TO_POINTER(mobj->type)
   );
 
   if (!actor_array) {
@@ -759,24 +690,33 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
   mobjtype_t actor_type = (mobjtype_t)key;
   GPtrArray *actors = (GPtrArray *)value;
   pbuf_t *savebuffer = (pbuf_t *)user_data;
-  unsigned int actor_count = actors->len;
   mobj_t *mobj;
   mobj_t last_actor;
 
-  if (actor_count == 0)
+#if DEBUG_DELTA_COMPRESSED_ACTORS
+  size_t start_position = M_PBufGetCursor(savebuffer);
+#endif
+
+  M_PBufWriteInt(savebuffer, actor_type);
+  M_PBufWriteUInt(savebuffer, actors->len);
+
+  if (actors->len == 0)
     return;
 
   memset(&last_actor, 0, sizeof(mobj_t));
 
   g_ptr_array_sort(actors, compare_actors_by_id);
 
-  M_PBufWriteInt(savebuffer, actor_type);
+  mobj = g_ptr_array_index(actors, 0);
 
   M_PBufWriteUInt(savebuffer, mobj->id);
   M_PBufWriteInt(savebuffer, mobj->index);
   M_PBufWriteInt(savebuffer, mobj->x);
   M_PBufWriteInt(savebuffer, mobj->y);
   M_PBufWriteInt(savebuffer, mobj->z);
+  M_PBufWriteInt(savebuffer, mobj->momx);
+  M_PBufWriteInt(savebuffer, mobj->momy);
+  M_PBufWriteInt(savebuffer, mobj->momz);
   M_PBufWriteUInt(savebuffer, mobj->angle);
   M_PBufWriteInt(savebuffer, mobj->tics);
   M_PBufWriteUInt(savebuffer, mobj->pitch);
@@ -784,9 +724,10 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
 
   memcpy(&last_actor, mobj, sizeof(mobj_t));
 
-  for (int i = 1; i < actor_count; i++) {
-    mobj_t *mobj = g_ptr_array_index(actors, i);
+  for (int i = 1; i < actors->len; i++) {
     uint32_t delta_flags = 0;
+
+    mobj = g_ptr_array_index(actors, i);
 
     if (mobj->x != last_actor.x)
       delta_flags |= ACTOR_X;
@@ -811,50 +752,37 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
 
     M_PBufWriteUInt(savebuffer, delta_flags);
 
-    if (delta_flags & ACTOR_X) {
+    if (delta_flags & ACTOR_X)
       M_PBufWriteInt(savebuffer, mobj->x - last_actor.x);
-    }
-
-    if (delta_flags & ACTOR_Y) {
+    if (delta_flags & ACTOR_Y)
       M_PBufWriteInt(savebuffer, mobj->y - last_actor.y);
-    }
-
-    if (delta_flags & ACTOR_Z) {
+    if (delta_flags & ACTOR_Z)
       M_PBufWriteInt(savebuffer, mobj->z - last_actor.z);
-    }
-
-    if (delta_flags & ACTOR_MOMX) {
+    if (delta_flags & ACTOR_MOMX)
       M_PBufWriteInt(savebuffer, mobj->momx - last_actor.momx);
-    }
-
-    if (delta_flags & ACTOR_MOMY) {
+    if (delta_flags & ACTOR_MOMY)
       M_PBufWriteInt(savebuffer, mobj->momy - last_actor.momy);
-    }
-
-    if (delta_flags & ACTOR_MOMZ) {
+    if (delta_flags & ACTOR_MOMZ)
       M_PBufWriteInt(savebuffer, mobj->momz - last_actor.momz);
-    }
-
-    if (delta_flags & ACTOR_ANGLE) {
+    if (delta_flags & ACTOR_ANGLE)
       M_PBufWriteLong(savebuffer, mobj->angle - last_actor.angle);
-    }
-
-    if (delta_flags & ACTOR_TICS) {
+    if (delta_flags & ACTOR_TICS)
       M_PBufWriteInt(savebuffer, mobj->tics - last_actor.tics);
-    }
-
-    if (delta_flags & ACTOR_PITCH) {
+    if (delta_flags & ACTOR_PITCH)
       M_PBufWriteLong(savebuffer, mobj->pitch - last_actor.pitch);
-    }
-
-    if (delta_flags & ACTOR_FLAGS) {
+    if (delta_flags & ACTOR_FLAGS)
       M_PBufWriteULong(savebuffer, mobj->flags ^ last_actor.flags);
-    }
 
     memcpy(&last_actor, mobj, sizeof(mobj_t));
   }
 
-  g_ptr_array_remove_range(actors, 0, actor_count - 1);
+  g_ptr_array_remove_range(actors, 0, actors->len - 1);
+
+#if DEBUG_DELTA_COMPRESSED_ACTORS
+  printf("%d: %lu bytes for %d\n",
+    gametic, M_PBufGetCursor(savebuffer) - start_position, actor_type
+  );
+#endif
 }
 
 static void commit_delta_compressed_actors(pbuf_t *savebuffer) {
@@ -863,6 +791,110 @@ static void commit_delta_compressed_actors(pbuf_t *savebuffer) {
     delta_compress_and_serialize_actor_list,
     (gpointer)savebuffer
   );
+}
+
+static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
+  unsigned int compressed_actor_count;
+  
+  compressed_actor_count = g_hash_table_size(delta_compressed_actors);
+
+  while (compressed_actor_count--) {
+    mobjtype_t actor_type;
+    unsigned int actor_count;
+    mobj_t last_actor;
+    mobj_t *mobj;
+
+    M_PBufReadInt(savebuffer, (int *)(&actor_type));
+
+    if (actor_type >= NUMMOBJTYPES)
+      I_Error("P_UnArchiveThinkers: Invalid actor type %d\n", actor_type);
+
+    M_PBufReadUInt(savebuffer, &actor_count);
+
+    if (actor_count == 0)
+      continue;
+
+    mobj = build_actor(actor_type);
+
+    M_PBufReadUInt(savebuffer, &mobj->id);
+    M_PBufReadInt(savebuffer, &mobj->index);
+    M_PBufReadInt(savebuffer, &mobj->x);
+    M_PBufReadInt(savebuffer, &mobj->y);
+    M_PBufReadInt(savebuffer, &mobj->z);
+    M_PBufReadInt(savebuffer, &mobj->momx);
+    M_PBufReadInt(savebuffer, &mobj->momy);
+    M_PBufReadInt(savebuffer, &mobj->momz);
+    M_PBufReadUInt(savebuffer, &mobj->angle);
+    M_PBufReadInt(savebuffer, &mobj->tics);
+    M_PBufReadUInt(savebuffer, &mobj->pitch);
+    M_PBufReadULong(savebuffer, &mobj->flags);
+
+    setup_actor(mobj);
+
+    memcpy(&last_actor, mobj, sizeof(mobj_t));
+
+    insert_actor(mobj);
+
+    actor_count--;
+
+    while (actor_count--) {
+      int32_t intval;
+      int64_t longval;
+      uint64_t ulongval;
+      uint32_t delta_flags;
+
+      mobj = build_actor(actor_type);
+
+      M_PBufReadUInt(savebuffer, &delta_flags);
+
+      if (delta_flags & ACTOR_X) {
+        M_PBufReadInt(savebuffer, &intval);
+        mobj->x = last_actor.x + intval;
+      }
+      if (delta_flags & ACTOR_Y) {
+        M_PBufReadInt(savebuffer, &intval);
+        mobj->y = last_actor.y + intval;
+      }
+      if (delta_flags & ACTOR_Z) {
+        M_PBufReadInt(savebuffer, &intval);
+        mobj->z = last_actor.z + intval;
+      }
+      if (delta_flags & ACTOR_MOMX) {
+        M_PBufReadInt(savebuffer, &intval);
+        mobj->momx = last_actor.momx + intval;
+      }
+      if (delta_flags & ACTOR_MOMY) {
+        M_PBufReadInt(savebuffer, &intval);
+        mobj->momy = last_actor.momy + intval;
+      }
+      if (delta_flags & ACTOR_MOMZ) {
+        M_PBufReadInt(savebuffer, &intval);
+        mobj->momz = last_actor.momz + intval;
+      }
+      if (delta_flags & ACTOR_ANGLE) {
+        M_PBufReadLong(savebuffer, &longval);
+        mobj->angle = last_actor.angle + intval;
+      }
+      if (delta_flags & ACTOR_TICS) {
+        M_PBufReadInt(savebuffer, &intval);
+        mobj->tics = last_actor.tics + intval;
+      }
+      if (delta_flags & ACTOR_PITCH) {
+        M_PBufReadLong(savebuffer, &longval);
+        mobj->pitch = last_actor.pitch + longval;
+      }
+      if (delta_flags & ACTOR_FLAGS) {
+        M_PBufReadULong(savebuffer, &ulongval);
+        mobj->flags = last_actor.flags ^ ulongval;
+      }
+
+      setup_actor(mobj);
+
+      memcpy(&last_actor, mobj, sizeof(mobj_t));
+
+      insert_actor(mobj);
+    }
+  }
 }
 
 //
@@ -1108,38 +1140,42 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
   M_PBufWriteInt(savebuffer, brain.easy);
   M_PBufWriteInt(savebuffer, brain.targeton);
 
-  // save off the current thinkers
   for (thinker_t *th = thinkercap.next; th != &thinkercap; th = th->next) {
-    if (th->function == P_MobjThinker && !should_delta_compress_actor(th)) {
+    mobj_t *mobj = (mobj_t *)th;
+
+    if (th->function == P_MobjThinker && !should_delta_compress_actor(mobj))
       thinker_count++;
-    }
   }
 
   M_PBufWriteUInt(savebuffer, thinker_count);
 
   for (thinker_t *th = thinkercap.next; th != &thinkercap; th = th->next) {
+    mobj_t *mobj;
+
     if (th->function != P_MobjThinker)
       continue;
 
-    mobj_t *mobj = (mobj_t *)th;
+    mobj = (mobj_t *)th;
 
     if (should_delta_compress_actor(mobj))
-      delta_compress_actor(mobj);
+      store_actor_for_delta_compression(mobj);
     else
       serialize_actor(savebuffer, mobj);
   }
 
   for (thinker_t *th = thinkercap.next; th != &thinkercap; th = th->next) {
+    mobj_t *mobj;
+
     if (th->function != P_MobjThinker)
       continue;
 
-    mobj_t *mobj = (mobj_t *)th;
+    mobj = (mobj_t *)th;
 
     if (!should_delta_compress_actor(mobj))
       serialize_actor_pointers(savebuffer, mobj);
   }
 
-  commit_delta_compressed_actors();
+  commit_delta_compressed_actors(savebuffer);
 
   // killough 9/14/98: save soundtargets
   for (int i = 0; i < numsectors; i++) {
@@ -1210,31 +1246,10 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
 
   M_PBufReadUInt(savebuffer, &current_thinker_count);
 
-  for (int i = 0; i < current_thinker_count; i++) {
-    mobj_t *mo = Z_Malloc(sizeof(mobj_t), PU_LEVEL, NULL); // killough 2/14/98
+  for (int i = 0; i < current_thinker_count; i++)
+    deserialize_actor(savebuffer);
 
-    memset(mo, 0, sizeof(mobj_t));
-
-    mo->thinker.function = P_MobjThinker;
-
-    deserialize_actor(savebuffer, mo);
-
-    P_AddThinker(&mo->thinker);
-
-    mo->sprev = NULL;
-    mo->snext = NULL;
-    P_SetThingPosition(mo);
-
-    mo->info = &mobjinfo[mo->type];
-
-    // killough 2/28/98:
-    // Fix for falling down into a wall after savegame loaded:
-    //      mobj->floorz = mobj->subsector->sector->floorheight;
-    //      mobj->ceilingz = mobj->subsector->sector->ceilingheight;
-
-    if (!((mo->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL | MF_CORPSE)))
-      totallive++;
-  }
+  deserialize_delta_compressed_actors(savebuffer);
 
   for (int i = 0; i < current_thinker_count; i++) {
     uint32_t mobj_id;

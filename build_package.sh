@@ -3,9 +3,10 @@
 set -e
 
 PACKAGE_DIR='d2k'
-FREEDOOM_URL='https://github.com/freedoom/freedoom/releases/download/v0.9/freedoom-0.9.zip'
+FREEDOOM_URL='http://static.totaltrash.org/freedoom/freedoom-0.9.tar.xz'
 FREEDOOM_PACKAGE=`basename "$FREEDOOM_URL"`
-FREEDOOM_FOLDER=`basename "$FREEDOOM_PACKAGE" .zip`
+FREEDOOM_TARBALL=`basename "$FREEDOOM_PACKAGE" .xz`
+FREEDOOM_FOLDER=`basename "$FREEDOOM_TARBALL" .tar`
 
 if [ -d "$PACKAGE_DIR" ]
 then
@@ -17,11 +18,12 @@ mkdir "$PACKAGE_DIR"
 pushd "$PACKAGE_DIR" > /dev/null
 cp ../cbuild/d2k .
 curl -L -O "$FREEDOOM_URL"
-unzip -q "$FREEDOOM_PACKAGE"
+xz -d "$FREEDOOM_PACKAGE"
+tar xf "$FREEDOOM_TARBALL"
+rm "$FREEDOOM_TARBALL"
 cp "${FREEDOOM_FOLDER}/freedoom1.wad" \
    "${FREEDOOM_FOLDER}/freedoom2.wad" \
    "${FREEDOOM_FOLDER}/COPYING" .
-rm "$FREEDOOM_PACKAGE"
 rm -rf "$FREEDOOM_FOLDER"
 cp ../scripts . -R
 cp ../fonts . -R
