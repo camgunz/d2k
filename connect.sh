@@ -6,7 +6,7 @@ PORT=10666
 HOST=127.0.0.1
 HOST=totaltrash.org
 
-EXE="/home/charlie/code/d2k/cbuild/doom2k"
+EXE="/home/charlie/code/d2k/cbuild/d2k"
 CMD="$EXE -nomouse -net $HOST:$PORT"
 
 # gdb -ex "source gdbclient.txt" --args $CMD
