@@ -3,10 +3,11 @@
 set -e
 
 PACKAGE_DIR='d2k'
-FREEDOOM_URL='http://static.totaltrash.org/freedoom/freedoom-0.9.tar.xz'
+FREEDOOM_URL='http://static.totaltrash.org/freedoom/freedoom_and_freedm-0.9.tar.xz'
 FREEDOOM_PACKAGE=`basename "$FREEDOOM_URL"`
 FREEDOOM_TARBALL=`basename "$FREEDOOM_PACKAGE" .xz`
-FREEDOOM_FOLDER=`basename "$FREEDOOM_TARBALL" .tar`
+FREEDOOM_FOLDER='freedoom-0.9'
+FREEDM_FOLDER='freedm-0.9'
 
 if [ -d "$PACKAGE_DIR" ]
 then
@@ -23,8 +24,10 @@ tar xf "$FREEDOOM_TARBALL"
 rm "$FREEDOOM_TARBALL"
 cp "${FREEDOOM_FOLDER}/freedoom1.wad" \
    "${FREEDOOM_FOLDER}/freedoom2.wad" \
+   "${FREEDM_FOLDER}/freedm.wad" \
    "${FREEDOOM_FOLDER}/COPYING" .
 rm -rf "$FREEDOOM_FOLDER"
+rm -rf "$FREEDM_FOLDER"
 cp ../scripts . -R
 cp ../fonts . -R
 cp ~/wads/d2k.wad .
