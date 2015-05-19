@@ -26,6 +26,14 @@ local Cairo = lgi.cairo
 
 local HUD = {}
 
+function compare_widgets(w1, w2)
+  if w1.z_index < w2.z_index then
+    return true
+  end
+
+  return false
+end
+
 function HUD:new(h)
   h = h or {
     widgets = {},
@@ -89,6 +97,10 @@ function HUD:tick()
       print(err)
     end
   end
+end
+
+function HUD:sort_widgets()
+  table.sort(self.widgets, compare_widgets)
 end
 
 function HUD:draw()

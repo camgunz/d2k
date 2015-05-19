@@ -30,6 +30,7 @@ function Widget:new(w)
   w.y = w.y or 0
   w.width = w.width or 0
   w.height = w.height or 0
+  w.z_index = 0
 
   w.enabled = false
   w.active = false
@@ -91,11 +92,18 @@ function Widget:set_height(height)
     return
   end
 
-  print(string.format('%s: set_height(%d)', self.name, height))
-
   self.height = height
   self.needs_updating = true
   self:check_offsets()
+end
+
+function Widget:get_z_index()
+  return self.z_index
+end
+
+function Widget:set_z_index(z_index)
+  self.z_index = z_index
+  d2k.hud:sort_widgets()
 end
 
 function Widget:reset()
@@ -133,6 +141,7 @@ end
 
 function Widget:on_add(hud)
   self:enable()
+  d2k.hud:sort_widgets()
 end
 
 function Widget:on_remove(hud)

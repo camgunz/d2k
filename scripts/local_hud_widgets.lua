@@ -10,6 +10,7 @@ local TextWidget = require('text_widget')
 
 local messages_widget = TextWidget.TextWidget:new({
   name = 'messages',
+  z_index = 1,
   top_margin = 0,
   bottom_margin = 0,
   left_margin = 8,

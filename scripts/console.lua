@@ -53,6 +53,7 @@ function Console:new(c)
   c.max_width = d2k.Video.get_screen_width()
   c.width = c.max_width
   c.height = 0
+  c.z_index = 2
   c.scroll_rate = 0.0
   c.last_scroll_ms = 0
 
@@ -62,6 +63,7 @@ function Console:new(c)
     y = 0,
     width = c.max_width,
     height = 0,
+    z_index = c.z_index,
     top_margin = c.input_margin or Console.MARGIN,
     bottom_margin = c.bottom_margin or Console.MARGIN,
     left_margin = c.left_margin or Console.MARGIN,
@@ -78,6 +80,7 @@ function Console:new(c)
     y = 0,
     width = c.max_width,
     height = c.max_height,
+    z_index = c.z_index,
     top_margin = c.top_margin or 0,
     bottom_margin = c.bottom_margin or Console.MARGIN,
     left_margin = c.left_margin or Console.MARGIN,
@@ -100,7 +103,7 @@ function Console:new(c)
   setmetatable(c, self)
   self.__index = self
 
-  c:set_name('Console Output')
+  c:set_name('console')
 
   return c
 end
