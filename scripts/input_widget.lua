@@ -137,10 +137,12 @@ end
 function InputWidget:set_text(text)
   TextWidget.TextWidget.set_text(self, text)
 
-  if self:get_cursor() >= #self:get_text() - 1 then
-    self:set_cursor(0)
-    self.cursor_trailing = 0
-  end
+  local text_length = #self:get_text()
+
+  -- if self:get_cursor() >= text_length - 1 then
+  --   self:set_cursor(text_length - 2)
+  --   self.cursor_trailing = 0
+  -- end
 end
 
 function InputWidget:calculate_height()

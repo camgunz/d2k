@@ -31,6 +31,9 @@ local Overlay = {}
 function Overlay:new(o)
   o = o or {}
 
+  o.width = 0
+  o.height = 0
+
   o.build_listeners = {}
   o.destroy_listeners = {}
 
@@ -53,13 +56,16 @@ end
 function Overlay:build()
   assert(not self:initialized(), 'overlay already built')
 
+  self.width = d2k.Video.get_screen_width()
+  self.height = d2k.Video.get_screen_height()
+
   d2k.Video.build_overlay_pixels()
 
   self.render_surface = Cairo.ImageSurface.create_for_data(
     d2k.Video.get_overlay_pixels(),
     Cairo.Format.RGB24, -- CG: FIXME: This is duplicated in i_video.c
-    d2k.Video.get_screen_width(),
-    d2k.Video.get_screen_height(),
+    self.width,
+    self.height,
     d2k.Video.get_screen_stride()
   )
 
