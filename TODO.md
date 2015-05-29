@@ -20,10 +20,6 @@
 
 1. Add/fix wrapping to/for InputWidget
 
-1. Fix backspace/delete bugs in InputWidget
-  - These mostly have to do with index misunderstandings
-     (`cursor_trailing`, etc.)
-
 1. Add a few new widgets:
   - chat
   - netstats
