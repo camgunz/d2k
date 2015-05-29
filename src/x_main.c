@@ -428,7 +428,7 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
   if (object)
     arg_count++;
 
-  return lua_pcall(L, arg_count, res_count, lua_gettop(L)) == 0;
+  return lua_pcall(L, arg_count, res_count, 0) == 0;
 }
 
 /* vi: set et ts=2 sw=2: */
