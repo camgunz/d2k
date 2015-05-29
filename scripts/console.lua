@@ -46,7 +46,7 @@ function Console:new(c)
 
   c.extension_time = c.extension_time or Console.EXTENSION_TIME
   c.retraction_time = c.retraction_time or Console.RETRACTION_TIME
-  c.max_width = c.max_width or -1
+  c.max_width = c.max_width or 1
   c.max_height = c.max_height or .5
   c.shortcut_marker = c.shortcut_marker or Console.SHORTCUT_MARKER
   c.z_index = c.z_index or 2
@@ -194,22 +194,30 @@ function Console:tick()
 
     local ms_elapsed = current_ms - self:get_last_scroll_ms()
 
-    self:set_height(self:get_height() + (self:get_scroll_rate() * ms_elapsed))
+    self:set_height_in_pixels(math.max(
+      0, self:get_height_in_pixels() + (self:get_scroll_rate() * ms_elapsed)
+    ))
 
     if self:get_height() < 0 then
       self:set_height(0)
       self:set_scroll_rate(0)
     elseif self:get_height() > self:get_max_height() then
-      self:set_height(self:get_max_height())
+      self:set_height_in_pixels(self:get_max_height_in_pixels())
       self:set_scroll_rate(0)
     end
   end
 
   self:get_input():tick()
-  self:get_input():set_y(self:get_height() - self:get_input():get_height())
+  print(string.format("height, input height: %d, %d\n",
+    self:get_height_in_pixels(),
+    self:get_input():get_height_in_pixels()
+  ))
+  self:get_input():set_y(
+    self:get_height_in_pixels() - self:get_input():get_height_in_pixels()
+  )
 
   self:get_output():tick()
-  self:get_output():set_height(self:get_input():get_y())
+  self:get_output():set_height(math.max(self:get_input():get_y(), 0))
 end
 
 function Console:draw()

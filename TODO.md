@@ -16,24 +16,13 @@
 
 ### Widgets
 
-1. Backspacing at the end of the console input pushes the cursor to the
-   beginning.
-
-1. Propagate resolution changes
-  - This is hard because things might not scale correctly.  Just because the
-    console is 1280 pixels wide at 1280x800 resolution doesn't mean that it'll
-    be 1920 pixels wide at 1920x1080.  Floating point can be dumb that way.
-    Solutions:
-    - Special-case some markers (1/8, 1/6, 1)
-    - Implement proportional size
-      - Might require a separate field...
-      - ...OR could do widths/heights < 1 are proportional... where '0' is full
-
 1. Add retraction to TextWidget
 
 1. Add/fix wrapping to/for InputWidget
 
 1. Fix backspace/delete bugs in InputWidget
+  - These mostly have to do with index misunderstandings
+     (`cursor_trailing`, etc.)
 
 1. Add a few new widgets:
   - chat
@@ -42,8 +31,6 @@
   - scoreboard
 
 1. Add auto-scroll to TextWidget
-
-1. Add Z-Index sorting
 
 ### Console
 
