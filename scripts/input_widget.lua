@@ -139,10 +139,13 @@ function InputWidget:set_text(text)
 
   local text_length = #self:get_text()
 
-  -- if self:get_cursor() >= text_length - 1 then
-  --   self:set_cursor(text_length - 2)
-  --   self.cursor_trailing = 0
-  -- end
+  if text_length == 0 then
+    self:set_cursor(0)
+    self:set_cursor_trailing(0)
+  elseif self:get_cursor() > text_length - 1 then
+    self:set_cursor(text_length - 1)
+    self:set_cursor_trailing(1)
+  end
 end
 
 function InputWidget:calculate_height()
@@ -361,7 +364,6 @@ function InputWidget:show_next_command()
 end
 
 function InputWidget:print_cursor_stats(s)
-  --[[
   local cursor_position = self:get_layout():index_to_pos(self:get_cursor())
   local cursor_line_number, cursor_line_x = self:get_layout():index_to_line_x(
     self:get_cursor(), self:get_cursor_trailing()
@@ -381,7 +383,6 @@ function InputWidget:print_cursor_stats(s)
     cursor_position.width / Pango.SCALE,
     cursor_position.height / Pango.SCALE
   ))
-  --]]
   return
 end
 
@@ -467,7 +468,7 @@ function InputWidget:delete_previous_character()
   local text = self:get_text()
   local text_length = #text
 
-  if self:get_cursor() == 0 then
+  if index == 0 then
     return
   end
 
