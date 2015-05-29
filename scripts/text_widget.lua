@@ -116,6 +116,222 @@ function TextWidget:new(tw)
   return tw
 end
 
+function get_top_margin()
+  return self.top_margin
+end
+
+function set_top_margin(top_margin)
+  self.top_margin = top_margin
+end
+
+function get_bottom_margin()
+  return self.bottom_margin
+end
+
+function set_bottom_margin(bottom_margin)
+  self.bottom_margin = bottom_margin
+end
+
+function get_left_margin()
+  return self.left_margin
+end
+
+function set_left_margin(left_margin)
+  self.left_margin = left_margin
+end
+
+function get_right_margin()
+  return self.right_margin
+end
+
+function set_right_margin(right_margin)
+  self.right_margin = right_margin
+end
+
+function get_text()
+  return self.text
+end
+
+function set_text(text)
+  self.text = text
+end
+
+function get_max_width()
+  return self.max_width
+end
+
+function set_max_width(max_width)
+  self.max_width = max_width
+end
+
+function get_max_height()
+  return self.max_height
+end
+
+function set_max_height(max_height)
+  self.max_height = max_height
+end
+
+function get_fg_color()
+  return self.fg_color
+end
+
+function set_fg_color(fg_color)
+  self.fg_color = fg_color
+end
+
+function get_bg_color()
+  return self.bg_color
+end
+
+function set_bg_color(bg_color)
+  self.bg_color = bg_color
+end
+
+function get_outline_color()
+  return self.outline_color
+end
+
+function set_outline_color(outline_color)
+  self.outline_color = outline_color
+end
+
+function get_outline_text()
+  return self.outline_text
+end
+
+function set_outline_text(outline_text)
+  self.outline_text = outline_text
+end
+
+function get_outline_width()
+  return self.outline_width
+end
+
+function set_outline_width(outline_width)
+  self.outline_width = outline_width
+end
+
+function get_line_height()
+  return self.line_height
+end
+
+function set_line_height(line_height)
+  self.line_height = line_height
+end
+
+function get_scrollable()
+  return self.scrollable
+end
+
+function set_scrollable(scrollable)
+  self.scrollable = scrollable
+end
+
+function get_font_description_text()
+  return self.font_description_text
+end
+
+function set_font_description_text(font_description_text)
+  self.font_description_text = font_description_text
+end
+
+function get_use_markup()
+  return self.use_markup
+end
+
+function set_use_markup(use_markup)
+  self.use_markup = use_markup
+end
+
+function get_strip_ending_newline()
+  return self.strip_ending_newline
+end
+
+function set_strip_ending_newline(strip_ending_newline)
+  self.strip_ending_newline = strip_ending_newline
+end
+
+function get_retractable()
+  return self.retractable
+end
+
+function set_retractable(retractable)
+  self.retractable = retractable
+end
+
+function get_retraction_time()
+  return self.retraction_time
+end
+
+function set_retraction_time(retraction_time)
+  self.retraction_time = retraction_time
+end
+
+function get_retraction_timeout()
+  return self.retraction_timeout
+end
+
+function set_retraction_timeout(retraction_timeout)
+  self.retraction_timeout = retraction_timeout
+end
+
+function get_text_context()
+  return self.text_context
+end
+
+function set_text_context(text_context)
+  self.text_context = text_context
+end
+
+function get_current_render_context()
+  return self.current_render_context
+end
+
+function set_current_render_context(current_render_context)
+  self.current_render_context = current_render_context
+end
+
+function get_layout()
+  return eslf.layout
+end
+
+function set_layout(layout)
+  self.layout = layout
+end
+
+function get_horizontal_offset()
+  return self.horizontal_offset
+end
+
+function set_horizontal_offset(horizontal_offset)
+  self.horizontal_offset = horizontal_offset
+end
+
+function get_vertical_offset()
+  return self.vertical_offset
+end
+
+function set_vertical_offset(vertical_offset)
+  self.vertical_offset = vertical_offset
+end
+
+function get_last_retraction()
+  return self.last_retraction
+end
+
+function set_last_retraction(last_retraction)
+  self.last_retraction = last_retraction
+end
+
+function get_retraction_target()
+  return self.retraction_target
+end
+
+function set_retraction_target(retraction_target)
+  self.retraction_target = retraction_target
+end
+
 function TextWidget:update_layout_if_needed()
   if not self.needs_updating then
     return
@@ -175,7 +391,6 @@ function TextWidget:draw()
   self:update_layout_if_needed()
 
   local lw, lh = self.layout:get_pixel_size()
-  print(string.format('%s: %d, %d', self.name, lw, lh))
 
   line_count = self.layout:get_line_count()
 
@@ -275,8 +490,6 @@ function TextWidget:draw()
       min_line = (line_count - self.line_height) + 1
       max_line = line_count
     end
-
-    print(string.format('min/max line: %d, %d', min_line, max_line))
   end
 
   repeat
@@ -317,18 +530,6 @@ function TextWidget:draw()
       end
 
       rendered_at_least_one_line = true
-
-      print(string.format('%s: Rendering line %d at %dx%d (%dx%d+%d+%d, %d)',
-        self.name,
-        line_number,
-        line_start_x,
-        line_baseline_pixels + ly,
-        line_logical_x,
-        line_logical_y,
-        line_logical_extents.width / Pango.SCALE,
-        line_logical_height,
-        start_y_offset
-      ))
 
       cr:move_to(line_start_x, line_baseline_pixels + ly + start_y_offset)
 
