@@ -79,8 +79,7 @@ function Widget:set_width(width)
   end
 
   self.width = width
-  self.needs_updating = true
-  self:check_offsets()
+  self:set_needs_updating(true)
 end
 
 function Widget:get_height()
@@ -93,8 +92,7 @@ function Widget:set_height(height)
   end
 
   self.height = height
-  self.needs_updating = true
-  self:check_offsets()
+  self:set_needs_updating(true)
 end
 
 function Widget:get_z_index()

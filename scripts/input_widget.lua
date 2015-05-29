@@ -67,7 +67,7 @@ function InputWidget:set_text(text)
   end
 end
 
-function InputWidget:get_height()
+function InputWidget:calculate_height()
   local input_text = self:get_text()
   local set_dummy_text = false
 
@@ -92,7 +92,7 @@ function InputWidget:tick()
   local new_height = self.top_margin + layout_height + self.bottom_margin
   local ticks = d2k.System.get_ticks()
 
-  if self.height ~= new_height then
+  if self:get_height() ~= new_height then
     self:set_height(new_height)
   end
 
@@ -108,8 +108,8 @@ function InputWidget:draw()
   local lh_fracunit = 4.0
   local lh_frac = layout_height / lh_fracunit
   local lh_half = layout_height / 2.0
-  local prompt_width = self.height / 2.0
-  local height = self:get_height()
+  local prompt_width = self:get_height() / 2.0
+  local height = self:calculate_height()
 
   cr:save()
 
@@ -117,7 +117,7 @@ function InputWidget:draw()
 
   cr:reset_clip()
   cr:new_path()
-  cr:rectangle(self.x, self.y, self.width, self:get_height())
+  cr:rectangle(self:get_x(), self:get_y(), self:get_width(), height)
   cr:clip()
 
   cr:set_source_rgba(
@@ -131,9 +131,9 @@ function InputWidget:draw()
   cr:reset_clip()
   cr:new_path()
   cr:rectangle(
-    self.x + self.left_margin,
-    self.y + self.top_margin,
-    self.width - (self.left_margin + self.right_margin),
+    self:get_x() + self.left_margin,
+    self:get_y() + self.top_margin,
+    self:get_width() - (self.left_margin + self.right_margin),
     height - (self.top_margin + self.bottom_margin)
   )
   cr:clip()
@@ -145,13 +145,13 @@ function InputWidget:draw()
     self.prompt_color[4]
   )
 
-  cr:move_to(self.x + self.left_margin, self.y + self.top_margin + lh_frac)
+  cr:move_to(self:get_x() + self.left_margin, self:get_y() + self.top_margin + lh_frac)
   cr:line_to(
-    self.x + self.left_margin + lh_half, self.y + self.top_margin + lh_half
+    self:get_x() + self.left_margin + lh_half, self:get_y() + self.top_margin + lh_half
   )
   cr:line_to(
-    self.x + self.left_margin,
-    self.y + self.top_margin + (layout_height - lh_frac)
+    self:get_x() + self.left_margin,
+    self:get_y() + self.top_margin + (layout_height - lh_frac)
   )
 
   cr:set_line_width(InputWidget.PROMPT_THICKNESS)
@@ -164,10 +164,10 @@ function InputWidget:draw()
     self.fg_color[4]
   )
 
-  local lx = self.x + self.left_margin + prompt_width
-  local ly = self.y + self.top_margin
-  local text_width = self.width - (self.left_margin + self.right_margin)
-  local text_height = self.height - (self.top_margin + self.bottom_margin)
+  local lx = self:get_x() + self.left_margin + prompt_width
+  local ly = self:get_y() + self.top_margin
+  local text_width = self:get_width() - (self.left_margin + self.right_margin)
+  local text_height = self:get_height() - (self.top_margin + self.bottom_margin)
   local layout_width, layout_height = self.layout:get_pixel_size()
   local layout_ink_extents, layout_logical_extents =
     self.layout:get_pixel_extents()

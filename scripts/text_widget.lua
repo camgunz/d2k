@@ -116,207 +116,217 @@ function TextWidget:new(tw)
   return tw
 end
 
-function get_top_margin()
+-- function TextWidget:set_width(width)
+--   Widget.Widget.set_width(self, width)
+--   self:check_offsets()
+-- end
+-- 
+-- function TextWidget:set_height(height)
+--   Widget.Widget.set_height(self, height)
+--   self:check_offsets()
+-- end
+
+function TextWidget:get_top_margin()
   return self.top_margin
 end
 
-function set_top_margin(top_margin)
+function TextWidget:set_top_margin(top_margin)
   self.top_margin = top_margin
 end
 
-function get_bottom_margin()
+function TextWidget:get_bottom_margin()
   return self.bottom_margin
 end
 
-function set_bottom_margin(bottom_margin)
+function TextWidget:set_bottom_margin(bottom_margin)
   self.bottom_margin = bottom_margin
 end
 
-function get_left_margin()
+function TextWidget:get_left_margin()
   return self.left_margin
 end
 
-function set_left_margin(left_margin)
+function TextWidget:set_left_margin(left_margin)
   self.left_margin = left_margin
 end
 
-function get_right_margin()
+function TextWidget:get_right_margin()
   return self.right_margin
 end
 
-function set_right_margin(right_margin)
+function TextWidget:set_right_margin(right_margin)
   self.right_margin = right_margin
 end
 
-function get_text()
+function TextWidget:get_text()
   return self.text
 end
 
-function set_text(text)
+function TextWidget:set_text(text)
   self.text = text
 end
 
-function get_max_width()
+function TextWidget:get_max_width()
   return self.max_width
 end
 
-function set_max_width(max_width)
+function TextWidget:set_max_width(max_width)
   self.max_width = max_width
 end
 
-function get_max_height()
+function TextWidget:get_max_height()
   return self.max_height
 end
 
-function set_max_height(max_height)
+function TextWidget:set_max_height(max_height)
   self.max_height = max_height
 end
 
-function get_fg_color()
+function TextWidget:get_fg_color()
   return self.fg_color
 end
 
-function set_fg_color(fg_color)
+function TextWidget:set_fg_color(fg_color)
   self.fg_color = fg_color
 end
 
-function get_bg_color()
+function TextWidget:get_bg_color()
   return self.bg_color
 end
 
-function set_bg_color(bg_color)
+function TextWidget:set_bg_color(bg_color)
   self.bg_color = bg_color
 end
 
-function get_outline_color()
+function TextWidget:get_outline_color()
   return self.outline_color
 end
 
-function set_outline_color(outline_color)
+function TextWidget:set_outline_color(outline_color)
   self.outline_color = outline_color
 end
 
-function get_outline_text()
+function TextWidget:get_outline_text()
   return self.outline_text
 end
 
-function set_outline_text(outline_text)
+function TextWidget:set_outline_text(outline_text)
   self.outline_text = outline_text
 end
 
-function get_outline_width()
+function TextWidget:get_outline_width()
   return self.outline_width
 end
 
-function set_outline_width(outline_width)
+function TextWidget:set_outline_width(outline_width)
   self.outline_width = outline_width
 end
 
-function get_line_height()
+function TextWidget:get_line_height()
   return self.line_height
 end
 
-function set_line_height(line_height)
+function TextWidget:set_line_height(line_height)
   self.line_height = line_height
 end
 
-function get_scrollable()
+function TextWidget:get_scrollable()
   return self.scrollable
 end
 
-function set_scrollable(scrollable)
+function TextWidget:set_scrollable(scrollable)
   self.scrollable = scrollable
 end
 
-function get_font_description_text()
+function TextWidget:get_font_description_text()
   return self.font_description_text
 end
 
-function set_font_description_text(font_description_text)
+function TextWidget:set_font_description_text(font_description_text)
   self.font_description_text = font_description_text
 end
 
-function get_use_markup()
+function TextWidget:get_use_markup()
   return self.use_markup
 end
 
-function set_use_markup(use_markup)
+function TextWidget:set_use_markup(use_markup)
   self.use_markup = use_markup
 end
 
-function get_strip_ending_newline()
+function TextWidget:get_strip_ending_newline()
   return self.strip_ending_newline
 end
 
-function set_strip_ending_newline(strip_ending_newline)
+function TextWidget:set_strip_ending_newline(strip_ending_newline)
   self.strip_ending_newline = strip_ending_newline
 end
 
-function get_retractable()
+function TextWidget:get_retractable()
   return self.retractable
 end
 
-function set_retractable(retractable)
+function TextWidget:set_retractable(retractable)
   self.retractable = retractable
 end
 
-function get_retraction_time()
+function TextWidget:get_retraction_time()
   return self.retraction_time
 end
 
-function set_retraction_time(retraction_time)
+function TextWidget:set_retraction_time(retraction_time)
   self.retraction_time = retraction_time
 end
 
-function get_retraction_timeout()
+function TextWidget:get_retraction_timeout()
   return self.retraction_timeout
 end
 
-function set_retraction_timeout(retraction_timeout)
+function TextWidget:set_retraction_timeout(retraction_timeout)
   self.retraction_timeout = retraction_timeout
 end
 
-function get_text_context()
+function TextWidget:get_text_context()
   return self.text_context
 end
 
-function set_text_context(text_context)
+function TextWidget:set_text_context(text_context)
   self.text_context = text_context
 end
 
-function get_current_render_context()
+function TextWidget:get_current_render_context()
   return self.current_render_context
 end
 
-function set_current_render_context(current_render_context)
+function TextWidget:set_current_render_context(current_render_context)
   self.current_render_context = current_render_context
 end
 
-function get_layout()
+function TextWidget:get_layout()
   return eslf.layout
 end
 
-function set_layout(layout)
+function TextWidget:set_layout(layout)
   self.layout = layout
 end
 
-function get_horizontal_offset()
+function TextWidget:get_horizontal_offset()
   return self.horizontal_offset
 end
 
-function set_horizontal_offset(horizontal_offset)
+function TextWidget:set_horizontal_offset(horizontal_offset)
   self.horizontal_offset = horizontal_offset
 end
 
-function get_vertical_offset()
+function TextWidget:get_vertical_offset()
   return self.vertical_offset
 end
 
-function set_vertical_offset(vertical_offset)
+function TextWidget:set_vertical_offset(vertical_offset)
   self.vertical_offset = vertical_offset
 end
 
-function get_last_retraction()
+function TextWidget:get_last_retraction()
   return self.last_retraction
 end
 
@@ -324,11 +334,11 @@ function set_last_retraction(last_retraction)
   self.last_retraction = last_retraction
 end
 
-function get_retraction_target()
+function TextWidget:get_retraction_target()
   return self.retraction_target
 end
 
-function set_retraction_target(retraction_target)
+function TextWidget:set_retraction_target(retraction_target)
   self.retraction_target = retraction_target
 end
 
@@ -400,7 +410,7 @@ function TextWidget:draw()
 
   cr:reset_clip()
   cr:new_path()
-  cr:rectangle(self.x, self.y, self.width, self.height)
+  cr:rectangle(self:get_x(), self:get_y(), self:get_width(), self:get_height())
   cr:clip()
 
   cr:set_source_rgba(
@@ -419,10 +429,10 @@ function TextWidget:draw()
   cr:reset_clip()
   cr:new_path()
   cr:rectangle(
-    self.x + self.left_margin,
-    self.y + self.top_margin,
-    self.width - (self.left_margin + self.right_margin),
-    self.height - (self.top_margin + self.bottom_margin)
+    self:get_x() + self.left_margin,
+    self:get_y() + self.top_margin,
+    self:get_width() - (self.left_margin + self.right_margin),
+    self:get_height() - (self.top_margin + self.bottom_margin)
   )
   cr:clip()
   --]]
@@ -434,10 +444,10 @@ function TextWidget:draw()
     self.fg_color[4]
   )
 
-  local lx = self.x + self.left_margin
-  local ly = self.y + self.top_margin
-  local text_width = self.width - (self.left_margin + self.right_margin)
-  local text_height = self.height - (self.top_margin + self.bottom_margin)
+  local lx = self:get_x() + self.left_margin
+  local ly = self:get_y() + self.top_margin
+  local text_width = self:get_width() - (self.left_margin + self.right_margin)
+  local text_height = self:get_height() - (self.top_margin + self.bottom_margin)
   local layout_width, layout_height = self.layout:get_pixel_size()
   local layout_ink_extents, layout_logical_extents =
     self.layout:get_pixel_extents()
@@ -659,15 +669,15 @@ function TextWidget:set_word_wrap(word_wrap)
     self.layout:set_width(-1)
   elseif word_wrap == TextWidget.WRAP_WORD then
     self.word_wrap = TextWidget.WRAP_WORD
-    self.layout:set_width(self.width * Pango.SCALE)
+    self.layout:set_width(self:get_width() * Pango.SCALE)
     self.layout:set_wrap(Pango.WrapMode.WORD)
   elseif word_wrap == TextWidget.WRAP_CHAR then
     self.word_wrap = TextWidget.WRAP_CHAR
-    self.layout:set_width(self.width * Pango.SCALE)
+    self.layout:set_width(self:get_width() * Pango.SCALE)
     self.layout:set_wrap(Pango.WrapMode.CHAR)
   elseif word_wrap == TextWidget.WRAP_WORD_CHAR then
     self.word_wrap = TextWidget.WRAP_WORD_CHAR
-    self.layout:set_width(self.width * Pango.SCALE)
+    self.layout:set_width(self:get_width() * Pango.SCALE)
     self.layout:set_wrap(Pango.WrapMode.WORD_CHAR)
   else
     s = 'TextWidget:set_word_wrap: Invalid word wrap value %d'
@@ -726,8 +736,8 @@ function TextWidget:set_vertical_alignment(vertical_alignment)
 end
 
 function TextWidget:check_offsets()
-  local text_width = self.width - (self.left_margin + self.right_margin)
-  local text_height = self.height - (self.top_margin + self.bottom_margin)
+  local text_width = self:get_width() - (self.left_margin + self.right_margin)
+  local text_height = self:get_height() - (self.top_margin + self.bottom_margin)
   local layout_width, layout_height = self.layout:get_pixel_size()
   local min_x = 0
   local max_x = layout_width - text_width

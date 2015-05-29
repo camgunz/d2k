@@ -16,6 +16,9 @@
 
 ### Widgets
 
+1. Backspacing at the end of the console input pushes the cursor to the
+   beginning.
+
 1. Propagate resolution changes
   - This is hard because things might not scale correctly.  Just because the
     console is 1280 pixels wide at 1280x800 resolution doesn't mean that it'll
