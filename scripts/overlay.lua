@@ -30,6 +30,11 @@ local Overlay = {}
 
 function Overlay:new(o)
   o = o or {}
+  --[[
+    render_context = nil,
+    render_surface = nil
+  }
+  --]]
   setmetatable(o, self)
   self.__index = self
 
@@ -49,16 +54,13 @@ end
 function Overlay:build()
   assert(not self:initialized(), 'overlay already built')
 
-  self.width = d2k.Video.get_screen_width()
-  self.height = d2k.Video.get_screen_height()
-
   d2k.Video.build_overlay_pixels()
 
   self.render_surface = Cairo.ImageSurface.create_for_data(
     d2k.Video.get_overlay_pixels(),
     Cairo.Format.RGB24, -- CG: FIXME: This is duplicated in i_video.c
-    self.width,
-    self.height,
+    d2k.Video.get_screen_width(),
+    d2k.Video.get_screen_height(),
     d2k.Video.get_screen_stride()
   )
 
@@ -86,7 +88,6 @@ function Overlay:build()
   local font_map = PangoCairo.FontMap.get_default()
 
   self.text_context = font_map:create_context()
-  -- CG: FIXME: DPI should be part of a config file
   self.text_context:set_resolution(96.0)
   font_options:set_hint_style(Cairo.HINT_STYLE_FULL)
   font_options:set_hint_metrics(Cairo.HINT_METRICS_ON)
@@ -131,14 +132,6 @@ end
 function Overlay:clear()
   self.render_context:set_operator(Cairo.OPERATOR_CLEAR)
   self.render_context:paint()
-end
-
-function Overlay:get_width()
-  return self.width
-end
-
-function Overlay:get_height()
-  return self.height
 end
 
 return {Overlay = Overlay}

@@ -148,9 +148,6 @@ function Widget:on_remove(hud)
   self:disable()
 end
 
-function Widget:on_size_change()
-end
-
 function Widget:handle_event(event)
 end
 

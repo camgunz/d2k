@@ -47,10 +47,10 @@ function Console:new(c)
 
   c.extension_time = c.extension_time or Console.EXTENSION_TIME
   c.retraction_time = c.retraction_time or Console.RETRACTION_TIME
-  c.max_height = c.max_height or d2k.overlay:get_height() / 2
+  c.max_height = c.max_height or d2k.Video.get_screen_height() / 2
   c.shortcut_marker = c.shortcut_marker or Console.SHORTCUT_MARKER
 
-  c.max_width = d2k.overlay:get_width()
+  c.max_width = d2k.Video.get_screen_width()
   c.width = c.max_width
   c.height = 0
   c.z_index = 2
@@ -317,7 +317,7 @@ function Console:banish()
 end
 
 function Console:set_fullscreen()
-  self.height = d2k.overlay:get_height()
+  self.height = d2k.Video.get_screen_height()
   self.scroll_rate = 0.0
   self.last_scroll_ms = d2k.System.get_ticks()
 end

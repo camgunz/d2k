@@ -8,23 +8,9 @@
 
 1. Fonts look a little off in Windows
 
-### Netcode
+### GUI Widgets
 
-1. Reconnecting doesn't work
-
-1. Test delta compression of frequently-spawned actors
-
-### Widgets
-
-1. Propagate resolution changes
-  - This is hard because things might not scale correctly.  Just because the
-    console is 1280 pixels wide at 1280x800 resolution doesn't mean that it'll
-    be 1920 pixels wide at 1920x1080.  Floating point can be dumb that way.
-    Solutions:
-    - Special-case some markers (1/8, 1/6, 1)
-    - Implement proportional size
-      - Might require a separate field...
-      - ...OR could do widths/heights < 1 are proportional... where '0' is full
+1. Resolution changes aren't propagated
 
 1. Add retraction to TextWidget
 
@@ -44,20 +30,40 @@
 
 ### Console
 
-1. Server bombs trying to print to console before it's ready
-  - Really needs a failover....  This happens before scripting is even
-    initialized, so I wonder if in C I can just print things out until
-    scripting is ready.
-
 1. Add serverside console input
 
 1. Add more scripting commands:
   - `map`
   - `wad`
 
-## ZDDL
-
 ### Netcode
+
+1. Reconnecting doesn't work
+
+1. Manually delta compress some select actors (puffs, blood and plasma)
+  - Add an `owner_net_id` field to `mobj_t`
+  - For each of the select actors that share a type and `owner_net_id`:
+    - Delta compress based on the first actor, then on down the chain
+
+## Scripting
+
+1. Implement patch drawing functions
+
+1. Implement patch font drawing functions
+
+## Console
+
+1. Add tab-completion
+
+1. Add clipboard (cut/copy/paste) support
+
+1. Add mouse selection support
+
+1. Implement various configuration options (needs some thought)
+
+1. Fix UTF8 problems
+
+## ZDDL
 
 1. Disconnect clients if their sync TIC is too far in the past
 
@@ -119,28 +125,6 @@
     adjust the velocity downwards based on the client's lag and a preselected
     function (curve).
 
-1. Add spectators
-
-### Scripting
-
-1. Implement patch drawing functions
-
-1. Implement patch font drawing functions
-
-### Console
-
-1. Add tab-completion
-
-1. Add clipboard (cut/copy/paste) support
-
-1. Add mouse selection support
-
-1. Implement various configuration options (needs some thought)
-
-1. Fix UTF8 problems
-
-### General
-
 1. Remove 4 player restriction
   - All playernums should be `unsigned int`s
   - `players` becomes a GArray
@@ -158,6 +142,8 @@
     - If so, set each player's name accordingly
     - Of course, this only works for the 1st 4 players; after that, fuck it
       - Maybe assign more colors
+
+1. Add spectators
 
 1. Improve the configuration file and configuration variable system
   - Ties into scripting and console
