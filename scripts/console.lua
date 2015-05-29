@@ -108,8 +108,80 @@ function Console:new(c)
   return c
 end
 
+function Console:get_extension_time()
+  return self.extension_time
+end
+
+function Console:set_extension_time(extension_time)
+  self.extension_time = extension_time
+end
+
+function Console:get_retraction_time()
+  return self.retraction_time
+end
+
+function Console:set_retraction_time(retraction_time)
+  self.retraction_time = retraction_time
+end
+
+function Console:get_max_height()
+  return self.max_height
+end
+
+function Console:set_max_height(max_height)
+  self.max_height = max_height
+end
+
+function Console:get_shortcut_marker()
+  return self.shortcut_marker
+end
+
+function Console:set_shortcut_marker(shortcut_marker)
+  self.shortcut_marker = shortcut_marker
+end
+
+function Console:get_scroll_rate()
+  return self.scroll_rate
+end
+
+function Console:set_scroll_rate(scroll_rate)
+  self.scroll_rate = scroll_rate
+end
+
+function Console:get_last_scroll_ms()
+  return self.last_scroll_ms
+end
+
+function Console:set_last_scroll_ms(last_scroll_ms)
+  self.last_scroll_ms = last_scroll_ms
+end
+
+function Console:get_input()
+  return self.input
+end
+
+function Console:set_input(input)
+  self.input = input
+end
+
+function Console:get_output()
+  return self.output
+end
+
+function Console:set_output(output)
+  self.output = output
+end
+
+function Console:get_shortcut_regex()
+  return self.shortcut_regex
+end
+
+function Console:set_shortcut_regex(shortcut_regex)
+  self.shortcut_regex = shortcut_regex
+end
+
 function Console:is_active()
-  return self.height > 0 and self.scroll_rate >= 0.0
+  return self:get_height() > 0 and self:get_scroll_rate() >= 0.0
 end
 
 function Console:get_name()
@@ -117,45 +189,45 @@ function Console:get_name()
 end
 
 function Console:reset()
-  self.output:reset()
-  self.input:reset()
+  self:get_output():reset()
+  self:get_input():reset()
 end
 
 function Console:tick()
-  if self.scroll_rate ~= 0 then
+  if self:get_scroll_rate() ~= 0 then
     local current_ms = d2k.System.get_ticks()
 
-    if self.last_scroll_ms == 0 then
-      self.last_scroll_ms = current_ms
+    if self:get_last_scroll_ms() == 0 then
+      self:set_last_scroll_ms(current_ms)
     end
 
-    local ms_elapsed = current_ms - self.last_scroll_ms
+    local ms_elapsed = current_ms - self:get_last_scroll_ms()
 
-    self.height = self.height + (self.scroll_rate * ms_elapsed)
+    self:set_height(self:get_height() + (self:get_scroll_rate() * ms_elapsed))
 
-    if self.height < 0 then
-      self.height = 0
-      self.scroll_rate = 0
-    elseif self.height > self.max_height then
-      self.height = self.max_height
-      self.scroll_rate = 0
+    if self:get_height() < 0 then
+      self:set_height(0)
+      self:set_scroll_rate(0)
+    elseif self:get_height() > self:get_max_height() then
+      self:set_height(self:get_max_height())
+      self:set_scroll_rate(0)
     end
   end
 
-  self.input:tick()
-  self.input:set_y(self.height - self.input:get_height())
+  self:get_input():tick()
+  self:get_input():set_y(self:get_height() - self:get_input():get_height())
 
-  self.output:tick()
-  self.output:set_height(self.input:get_y())
+  self:get_output():tick()
+  self:get_output():set_height(self:get_input():get_y())
 end
 
 function Console:draw()
-  if self.height <= 0 then
+  if self:get_height() <= 0 then
     return
   end
 
-  self.input:draw()
-  self.output:draw()
+  self:get_input():draw()
+  self:get_output():draw()
 end
 
 function Console:parse_shortcut_command(short_command)
@@ -163,11 +235,11 @@ function Console:parse_shortcut_command(short_command)
     local wrote_first_argument = false
     local command = ''
 
-    if short_command:sub(1, 1) == self.shortcut_marker then
+    if short_command:sub(1, 1) == self:get_shortcut_marker() then
         short_command = short_command:sub(2)
     end
 
-    local tokens = self.shortcut_regex:split(short_command, 0)
+    local tokens = self:get_shortcut_regex():split(short_command, 0)
 
     for i, token in ipairs(tokens) do
         if #token ~= 0 then
@@ -192,7 +264,7 @@ end
 function Console:handle_input(input)
   local command = input
 
-  if input:sub(1, 1) == self.shortcut_marker then
+  if input:sub(1, 1) == self:get_shortcut_marker() then
     command = 'd2k.Shortcuts.' .. self:parse_shortcut_command(input)
   end
 
@@ -219,61 +291,61 @@ function Console:handle_event(event)
     self:toggle_scroll()
   end
 
-  if self.scroll_rate < 0 or self.height == 0 then
+  if self:get_scroll_rate() < 0 or self:get_height() == 0 then
     return
   end
 
   if d2k.KeyStates.shift_is_down() then
     if event:is_key_press(d2k.Key.UP) then
-      self.output:scroll_up(Console.HORIZONTAL_SCROLL_AMOUNT)
+      self:get_output():scroll_up(Console.HORIZONTAL_SCROLL_AMOUNT)
       return true
     elseif event:is_key_press(d2k.Key.PAGEUP) then
-      self.output:scroll_up(Console.HORIZONTAL_SCROLL_AMOUNT * 10)
+      self:get_output():scroll_up(Console.HORIZONTAL_SCROLL_AMOUNT * 10)
       return true
     elseif event:is_key_press(d2k.Key.DOWN) then
-      self.output:scroll_down(Console.HORIZONTAL_SCROLL_AMOUNT)
+      self:get_output():scroll_down(Console.HORIZONTAL_SCROLL_AMOUNT)
       return true
     elseif event:is_key_press(d2k.Key.PAGEDOWN) then
-      self.output:scroll_down(Console.HORIZONTAL_SCROLL_AMOUNT * 10)
+      self:get_output():scroll_down(Console.HORIZONTAL_SCROLL_AMOUNT * 10)
       return true
     end
   end
 
   if event:is_key_press(d2k.Key.UP) then
-    self.input:show_previous_command()
+    self:get_input():show_previous_command()
     return true
   elseif event:is_key_press(d2k.Key.DOWN) then
-    self.input:show_next_command()
+    self:get_input():show_next_command()
     return true
   elseif event:is_key_press(d2k.Key.LEFT) then
-    self.input:move_cursor_left()
+    self:get_input():move_cursor_left()
     return true
   elseif event:is_key_press(d2k.Key.RIGHT) then
-    self.input:move_cursor_right()
+    self:get_input():move_cursor_right()
     return true
   elseif event:is_key_press(d2k.Key.DELETE) then
-    self.input:delete_next_character()
+    self:get_input():delete_next_character()
     return true
   elseif event:is_key_press(d2k.Key.BACKSPACE) then
-    self.input:delete_previous_character()
+    self:get_input():delete_previous_character()
     return true
   elseif event:is_key_press(d2k.Key.HOME) then
-    self.input:move_cursor_to_start()
+    self:get_input():move_cursor_to_start()
     return true
   elseif event:is_key_press(d2k.Key.END) then
-    self.input:move_cursor_to_end()
+    self:get_input():move_cursor_to_end()
     return true
   elseif event:is_key_press(d2k.Key.RETURN) or
          event:is_key_press(d2k.Key.KP_ENTER) then
-    self:handle_input(self.input:get_text())
-    self.input:save_text_as_command()
-    self.input:clear()
+    self:handle_input(self:get_input():get_text())
+    self:get_input():save_text_as_command()
+    self:get_input():clear()
     return true
   elseif event:is_key() and event:is_press() then
     local char = event:get_char()
 
     if char then
-      self.input:insert_character(event:get_char())
+      self:get_input():insert_character(event:get_char())
     end
 
     return true
@@ -283,49 +355,49 @@ function Console:handle_event(event)
 end
 
 function Console:scroll_down()
-  self.scroll_rate = self.max_height / self.extension_time
-  self.last_scroll_ms = d2k.System.get_ticks()
+  self:set_scroll_rate(self:get_max_height() / self:get_extension_time())
+  self:set_last_scroll_ms(d2k.System.get_ticks())
 end
 
 function Console:scroll_up()
-  self.scroll_rate = -(self.max_height / self.retraction_time)
-  self.last_scroll_ms = d2k.System.get_ticks()
+  self:set_scroll_rate(-(self:get_max_height() / self:get_retraction_time()))
+  self:set_last_scroll_ms(d2k.System.get_ticks())
 end
 
 function Console:toggle_scroll()
-  if self.height == self.max_height then
+  if self:get_height() == self:get_max_height() then
     self:scroll_up()
-  elseif self.height == 0 then
+  elseif self:get_height() == 0 then
     self:scroll_down()
-  elseif self.scroll_rate < 0 then
+  elseif self:get_scroll_rate() < 0 then
     self:scroll_up()
-  elseif self.scroll_rate > 0 then
+  elseif self:get_scroll_rate() > 0 then
     self:scroll_down()
   end
 end
 
 function Console:summon()
-  self.height = self.max_height
-  self.scroll_rate = 0.0
-  self.last_scroll_ms = d2k.System.get_ticks()
+  self:set_height(self:get_max_height())
+  self:set_scroll_rate(0.0)
+  self:set_last_scroll_ms(d2k.System.get_ticks())
 end
 
 function Console:banish()
-  self.height = 0
-  self.scroll_rate = 0.0
-  self.last_scroll_ms = d2k.System.get_ticks()
+  self:set_height(0)
+  self:set_scroll_rate(0.0)
+  self:set_last_scroll_ms(d2k.System.get_ticks())
 end
 
 function Console:set_fullscreen()
-  self.height = d2k.overlay:get_height()
-  self.scroll_rate = 0.0
-  self.last_scroll_ms = d2k.System.get_ticks()
+  self:set_height(d2k.overlay:get_height())
+  self:set_scroll_rate(0.0)
+  self:set_last_scroll_ms(d2k.System.get_ticks())
 end
 
 function Console:write(text)
   -- CG: [TODO] Bail if repredicting
   if d2k.Video.is_enabled() then
-    self.output:write(text)
+    self:get_output():write(text)
   else
     d2k.System.print(text)
   end
@@ -334,7 +406,7 @@ end
 function Console:mwrite(markup)
   -- CG: [TODO] Bail if repredicting
   if d2k.Video.is_enabled() then
-    self.output:mwrite(markup)
+    self:get_output():mwrite(markup)
   else
     d2k.System.print(markup) -- CG: [TODO] Strip markup if video is disabled
   end
@@ -343,7 +415,7 @@ end
 function Console:echo(text)
   -- CG: [TODO] Bail if repredicting
   if d2k.Video.is_enabled() then
-    self.output:echo(text)
+    self:get_output():echo(text)
   else
     print(text)
   end
@@ -352,7 +424,7 @@ end
 function Console:mecho(markup)
   -- CG: [TODO] Bail if repredicting
   if d2k.Video.is_enabled() then
-    self.output:mecho(markup)
+    self:get_output():mecho(markup)
   else
     print(markup) -- CG: [TODO] Strip markup if video is disabled
   end
