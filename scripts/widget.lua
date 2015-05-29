@@ -139,6 +139,14 @@ function Widget:is_active()
   return self.active
 end
 
+function Widget:get_needs_updating()
+  return self.needs_updating
+end
+
+function Widget:set_needs_updating(needs_updating)
+  self.needs_updating = needs_updating
+end
+
 function Widget:on_add(hud)
   self:enable()
   d2k.hud:sort_widgets()
