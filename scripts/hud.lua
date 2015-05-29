@@ -47,11 +47,31 @@ function HUD:new(h)
   return h
 end
 
+function HUD:handle_overlay_built(overlay)
+  if not self.active then
+    self:start()
+  end
+
+  for w in self.widgets do
+    w:handle_overlay_built()
+  end
+end
+
+function HUD:handle_overlay_destroyed(overlay)
+  if self.active then
+    self:stop()
+  end
+
+  for w in self.widgets do
+    w:handle_overlay_destroyed()
+  end
+end
+
 function HUD:add_widget(widget)
   table.insert(self.widgets, widget)
 
-  widget.hud = self
-  widget:on_add(self)
+  widget:set_hud(self)
+  widget:handle_add(self)
 end
 
 function HUD:remove_widget(widget)
@@ -63,8 +83,8 @@ function HUD:remove_widget(widget)
     end
   end
 
-  widget.hud = nil
-  widget:on_remove(self)
+  widget:set_hud(nil)
+  widget:handle_remove(self)
 end
 
 function HUD:start()

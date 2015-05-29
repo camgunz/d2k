@@ -130,7 +130,6 @@ static int XV_DestroyOverlayPixels(lua_State *L) {
     overlay.owns_pixels = false;
   }
 
-  puts("destroying overlay pixels");
   overlay.pixels = NULL;
 
   return 0;

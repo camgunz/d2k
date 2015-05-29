@@ -360,6 +360,7 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
                           int arg_count, int res_count, ...) {
   va_list args;
   int args_remaining = arg_count;
+  int result;
 
   if (arg_count < 0)
     I_Error("X_CallFunc: arg_count < 0");
