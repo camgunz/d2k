@@ -31,7 +31,6 @@ local TextWidget = require('text_widget')
 local InputWidget = require('input_widget')
 
 local Console = Widget.Widget:new({
-  name                     = 'console',
   EXTENSION_TIME           = 1200.0,
   RETRACTION_TIME          = 1200.0,
   MARGIN                   = 8,
@@ -47,13 +46,13 @@ function Console:new(c)
 
   c.extension_time = c.extension_time or Console.EXTENSION_TIME
   c.retraction_time = c.retraction_time or Console.RETRACTION_TIME
-  c.max_height = c.max_height or d2k.overlay:get_height() / 2
+  c.max_width = c.max_width or -1
+  c.max_height = c.max_height or .5
   c.shortcut_marker = c.shortcut_marker or Console.SHORTCUT_MARKER
+  c.z_index = c.z_index or 2
 
-  c.max_width = d2k.overlay:get_width()
   c.width = c.max_width
   c.height = 0
-  c.z_index = 2
   c.scroll_rate = 0.0
   c.last_scroll_ms = 0
 
@@ -124,14 +123,6 @@ function Console:set_retraction_time(retraction_time)
   self.retraction_time = retraction_time
 end
 
-function Console:get_max_height()
-  return self.max_height
-end
-
-function Console:set_max_height(max_height)
-  self.max_height = max_height
-end
-
 function Console:get_shortcut_marker()
   return self.shortcut_marker
 end
@@ -185,7 +176,7 @@ function Console:is_active()
 end
 
 function Console:get_name()
-  return 'Console'
+  return self.name
 end
 
 function Console:reset()

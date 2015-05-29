@@ -360,6 +360,7 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
                           int arg_count, int res_count, ...) {
   va_list args;
   int args_remaining = arg_count;
+  int result;
 
   if (arg_count < 0)
     I_Error("X_CallFunc: arg_count < 0");
@@ -427,7 +428,7 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
   if (object)
     arg_count++;
 
-  return lua_pcall(L, arg_count, res_count, 0) == 0;
+  return lua_pcall(L, arg_count, res_count, lua_gettop(L)) == 0;
 }
 
 /* vi: set et ts=2 sw=2: */
