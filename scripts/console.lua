@@ -208,10 +208,6 @@ function Console:tick()
   end
 
   self:get_input():tick()
-  print(string.format("height, input height: %d, %d\n",
-    self:get_height_in_pixels(),
-    self:get_input():get_height_in_pixels()
-  ))
   self:get_input():set_y(
     self:get_height_in_pixels() - self:get_input():get_height_in_pixels()
   )

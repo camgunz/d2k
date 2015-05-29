@@ -139,7 +139,6 @@ function Widget:get_height()
   end
 
   if self.height < 0 or self.height > 1 then
-    print(debug.traceback())
     error(string.format('%s: Invalid height %f\n',
       self:get_name(), self.height
     ))
@@ -155,13 +154,11 @@ function Widget:set_height(height)
 
   if not self:get_use_proportional_dimensions() then
     self.height = height
-    print(string.format("%d: height: %f\n", 1, self.height))
     self:set_needs_updating(true)
     return
   end
 
   if self.height < 0 or self.height > 1 then
-    print(debug.traceback())
     error(string.format('%s: Invalid height %d\n',
       self:get_name(), self.height
     ))
@@ -174,8 +171,6 @@ function Widget:set_height(height)
   else
     self.height = height
   end
-
-  print(string.format("%d: height: %f\n", 2, self.height))
 
   self:set_needs_updating(true)
 end
@@ -193,11 +188,6 @@ function Widget:set_height_in_pixels(height)
     self.height = height / d2k.overlay:get_height()
   else
     self.height = height
-  end
-
-  if height < 0 then
-    print(debug.traceback())
-    error("negative height")
   end
 
   self:set_needs_updating(true)
