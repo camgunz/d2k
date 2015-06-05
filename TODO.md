@@ -8,11 +8,13 @@
 
 1. Fonts look a little off in Windows
 
-### GUI Widgets
+### Netcode
+
+1. Reconnecting doesn't work
+
+1. Test delta compression of frequently-spawned actors
 
 ### Widgets
-
-#### Retraction
 
 1. Add/fix wrapping to/for InputWidget
 
@@ -22,9 +24,12 @@
   - FPS
   - scoreboard
 
-1. Add auto-scroll to TextWidget
-
 ### Console
+
+1. Server bombs trying to print to console before it's ready
+  - Really needs a failover....  This happens before scripting is even
+    initialized, so I wonder if in C I can just print things out until
+    scripting is ready.
 
 1. Add serverside console input
 
@@ -32,40 +37,16 @@
   - `map`
   - `wad`
 
-### Netcode
-
-1. Reconnecting doesn't work
-
-1. Manually delta compress some select actors (puffs, blood and plasma)
-  - Add an `owner_net_id` field to `mobj_t`
-  - For each of the select actors that share a type and `owner_net_id`:
-    - Delta compress based on the first actor, then on down the chain
-
-## Scripting
-
-1. Implement patch drawing functions
-
-1. Implement patch font drawing functions
-
-## Console
-
-1. Add tab-completion
-
-1. Add clipboard (cut/copy/paste) support
-
-1. Add mouse selection support
-
-1. Implement various configuration options (needs some thought)
-
-1. Fix UTF8 problems
-
 ## ZDDL
 
-1. Messages retraction
+1. Implement retractable text widget
   - Set benchmarks:
     - At time X, vertical offset should be at least Y, otherwise move
       incrementally
     - Once `vertical_offset >= Y`, then that benchmark can be removed
+  - The benchmark system is really retraction, rename from "extendable"
+
+1. Add auto-scroll to TextWidget
 
 1. Disconnect clients if their sync TIC is too far in the past
 
