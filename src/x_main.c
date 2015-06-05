@@ -155,6 +155,13 @@ void X_Start(void) {
   free(init_script_file);
 }
 
+bool X_Available(void) {
+  if (x_main_interpreter)
+    return true;
+
+  return false;
+}
+
 void X_RegisterType(const char *type_name, unsigned int count, ...) {
   luaL_Reg *methods;
   va_list args;
