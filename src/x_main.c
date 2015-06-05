@@ -60,7 +60,7 @@ static bool push_x_object(lua_State *L, x_object_t *x_obj) {
       lua_pushinteger(L, x_obj->as.integer);
     break;
     case X_UINTEGER:
-      lua_pushunsigned(L, x_obj->as.uinteger);
+      lua_pushinteger(L, (lua_Integer)x_obj->as.uinteger);
     break;
     case X_STRING:
       lua_pushstring(L, x_obj->as.string);
@@ -360,7 +360,6 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
                           int arg_count, int res_count, ...) {
   va_list args;
   int args_remaining = arg_count;
-  int result;
 
   if (arg_count < 0)
     I_Error("X_CallFunc: arg_count < 0");
@@ -410,7 +409,7 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
         lua_pushinteger(L, va_arg(args, lua_Integer));
       break;
       case X_UINTEGER:
-        lua_pushunsigned(L, va_arg(args, lua_Unsigned));
+        lua_pushinteger(L, va_arg(args, lua_Integer));
       break;
       case X_STRING:
         lua_pushstring(L, va_arg(args, const char *));

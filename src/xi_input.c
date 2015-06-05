@@ -359,7 +359,7 @@ static int XI_InputEventGetChar(lua_State *L) {
 
 static int XI_InputEventIsKeyPress(lua_State *L) {
   event_t *ev = (event_t *)luaL_checkudata(L, 1, "InputEvent");
-  int key = luaL_checkint(L, 2);
+  int key = luaL_checkinteger(L, 2);
 
   if (ev->type == ev_key && ev->pressed && ev->key == key)
     lua_pushboolean(L, true);

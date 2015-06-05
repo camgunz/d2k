@@ -12,7 +12,7 @@
 
 ### Widgets
 
-1. Add retraction to TextWidget
+#### Retraction
 
 1. Add/fix wrapping to/for InputWidget
 
@@ -60,6 +60,12 @@
 1. Fix UTF8 problems
 
 ## ZDDL
+
+1. Messages retraction
+  - Set benchmarks:
+    - At time X, vertical offset should be at least Y, otherwise move
+      incrementally
+    - Once `vertical_offset >= Y`, then that benchmark can be removed
 
 1. Disconnect clients if their sync TIC is too far in the past
 

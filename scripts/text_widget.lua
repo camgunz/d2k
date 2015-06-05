@@ -69,17 +69,13 @@ function TextWidget:new(tw)
                              d2k.hud.font_description_text
   tw.use_markup = tw.use_markup or false
   tw.strip_ending_newline = tw.strip_ending_newline or false
-  tw.retractable = tw.retractable or false
-  tw.retraction_time = tw.retraction_time or 0
-  tw.retraction_timeout = tw.retraction_timeout or 0
 
   tw.text_context = nil
   tw.current_render_context = nil
   tw.layout = nil
+
   tw.horizontal_offset = 0.0
   tw.vertical_offset = 0.0
-  tw.last_retraction = 0
-  tw.retraction_target = 0
 
   tw.get_external_text = nil
   tw.external_text_updated = nil
@@ -116,16 +112,6 @@ function TextWidget:new(tw)
 
   return tw
 end
-
--- function TextWidget:set_width(width)
---   Widget.Widget.set_width(self, width)
---   self:check_offsets()
--- end
--- 
--- function TextWidget:set_height(height)
---   Widget.Widget.set_height(self, height)
---   self:check_offsets()
--- end
 
 function TextWidget:get_top_margin()
   return self.top_margin
@@ -263,30 +249,6 @@ function TextWidget:set_strip_ending_newline(strip_ending_newline)
   self.strip_ending_newline = strip_ending_newline
 end
 
-function TextWidget:get_retractable()
-  return self.retractable
-end
-
-function TextWidget:set_retractable(retractable)
-  self.retractable = retractable
-end
-
-function TextWidget:get_retraction_time()
-  return self.retraction_time
-end
-
-function TextWidget:set_retraction_time(retraction_time)
-  self.retraction_time = retraction_time
-end
-
-function TextWidget:get_retraction_timeout()
-  return self.retraction_timeout
-end
-
-function TextWidget:set_retraction_timeout(retraction_timeout)
-  self.retraction_timeout = retraction_timeout
-end
-
 function TextWidget:get_text_context()
   return self.text_context
 end
@@ -329,22 +291,6 @@ function TextWidget:set_vertical_offset(vertical_offset)
   self:check_offsets()
 end
 
-function TextWidget:get_last_retraction()
-  return self.last_retraction
-end
-
-function set_last_retraction(last_retraction)
-  self.last_retraction = last_retraction
-end
-
-function TextWidget:get_retraction_target()
-  return self.retraction_target
-end
-
-function TextWidget:set_retraction_target(retraction_target)
-  self.retraction_target = retraction_target
-end
-
 function TextWidget:update_layout_if_needed()
   if not self.needs_updating then
     return
@@ -385,7 +331,34 @@ function TextWidget:update_layout_if_needed()
   self.needs_updating = false
 end
 
+function get_line_y(layout_rect, line_rect)
+  return layout_rect.height + line_rect.y
+end
+
+function TextWidget:print_lines()
+  local iter = self:get_layout():get_iter()
+
+  repeat
+    local line = iter:get_line_readonly()
+    local ink_rect, line_rect = iter:get_line_extents()
+
+    line_rect.x      = line_rect.x / Pango.SCALE
+    line_rect.y      = line_rect.y / Pango.SCALE
+    line_rect.width  = line_rect.width / Pango.SCALE
+    line_rect.height = line_rect.height / Pango.SCALE
+
+    print(string.format('{%s, %s, %s, %s}',
+      line_rect.x,
+      line_rect.y,
+      line_rect.width,
+      line_rect.height
+    ))
+  until not iter:next_line()
+end
+
 function TextWidget:tick()
+  local current_ms = d2k.System.get_ticks()
+
   if self.get_external_text and self.external_text_updated() then
     self.text = self.get_external_text()
     self.needs_updating = true
@@ -427,18 +400,6 @@ function TextWidget:draw()
     return
   end
 
-  --[[
-  cr:reset_clip()
-  cr:new_path()
-  cr:rectangle(
-    self:get_x() + self:get_left_margin(),
-    self:get_y() + self:get_top_margin(),
-    self:get_width() - (self:get_left_margin() + self:get_right_margin()),
-    self:get_height() - (self:get_top_margin() + self:get_bottom_margin())
-  )
-  cr:clip()
-  --]]
-
   cr:set_source_rgba(fg_color[1], fg_color[2], fg_color[3], fg_color[4])
 
   local lx = self:get_x() + self:get_left_margin()
@@ -463,14 +424,6 @@ function TextWidget:draw()
     lx = (text_width / 2) - (layout_width / 2)
   elseif self.horizontal_alignment == TextWidget.ALIGN_RIGHT then
     lx = lx + text_width - layout_width
-  end
-
-  if layout_width > text_width then
-    lx = lx - self:get_horizontal_offset()
-  end
-
-  if layout_height > text_height then
-    ly = ly - self:get_vertical_offset()
   end
 
   local iter = self:get_layout():get_iter()
@@ -503,6 +456,10 @@ function TextWidget:draw()
       max_line = line_count
     end
   end
+
+  -- if self:get_name() == 'messages' then
+  --   print(string.format('Drawing messages at %s/%s', lx, ly))
+  -- end
 
   repeat
     local line_baseline_pixels = iter:get_baseline() / Pango.SCALE
@@ -572,6 +529,12 @@ function TextWidget:draw()
       if should_quit_after_rendering then
         break
       end
+    elseif self:get_name() == 'messages' then
+      local line = iter:get_line_readonly()
+
+      print(string.format('Not rendering line [%s]',
+        self.text:sub(line.start_index + 1, line.length + 1)
+      ))
     end
 
     line_number = line_number + 1
@@ -583,9 +546,14 @@ end
 function TextWidget:build_layout()
   self:set_current_render_context(d2k.overlay.render_context)
   self:set_layout(Pango.Layout.new(d2k.overlay.text_context))
+
+  local layout = self:get_layout()
+
   self:get_layout():set_font_description(Pango.FontDescription.from_string(
     self:get_font_description_text()
   ))
+
+  local layout_ink_extents, layout_logical_extents = layout:get_pixel_extents()
 end
 
 function TextWidget:set_height_by_lines(line_count)
@@ -647,7 +615,7 @@ function TextWidget:set_ellipsize(ellipsize)
     self.ellipsize = TextWidget.ELLIPSIZE_END
     layout:set_ellipsize(Pango.EllipsizeMode.END)
   else
-    s = 'TextWidget:set_ellipsize: Invalid ellipsization value %d'
+    s = 'TextWidget:set_ellipsize: Invalid ellipsization value %s'
     error(s:format(ellipsize))
   end
 
@@ -681,7 +649,7 @@ function TextWidget:set_word_wrap(word_wrap)
     layout:set_width(self:get_width() * Pango.SCALE)
     layout:set_wrap(Pango.WrapMode.WORD_CHAR)
   else
-    s = 'TextWidget:set_word_wrap: Invalid word wrap value %d'
+    s = 'TextWidget:set_word_wrap: Invalid word wrap value %s'
     error(s:format(word_wrap))
   end
 
@@ -712,7 +680,7 @@ function TextWidget:set_horizontal_alignment(horizontal_alignment)
     self.horizontal_alignment = TextWidget.ALIGN_JUSTIFY
     layout:set_alignment(Pango.Alignment.JUSTIFY)
   else
-    s = 'TextWidget:set_horizontal_alignment: Invalid horizontal alignment %d'
+    s = 'TextWidget:set_horizontal_alignment: Invalid horizontal alignment %s'
     error(s:format(horizontal_alignment))
   end
 
@@ -731,7 +699,7 @@ function TextWidget:set_vertical_alignment(vertical_alignment)
   elseif vertical_alignment == TextWidget.ALIGN_BOTTOM then
     self.vertical_alignment = TextWidget.ALIGN_BOTTOM
   else
-    s = 'TextWidget:set_vertical_alignment: Invalid vertical alignment %d'
+    s = 'TextWidget:set_vertical_alignment: Invalid vertical alignment %s'
     error(s:format(vertical_alignment))
   end
 
@@ -750,7 +718,8 @@ function TextWidget:check_offsets()
   local max_x = layout_width - text_width
   local x_delta = max_x - min_x
   local min_y = 0
-  local max_y = layout_height - text_height
+  -- local max_y = layout_height - text_height
+  local max_y = text_height - self:get_top_margin()
   local y_delta = max_y - min_y
 
   if self.horizontal_alignment == TextWidget.ALIGN_CENTER then
@@ -779,22 +748,39 @@ function TextWidget:check_offsets()
     max_y = 0
   end
 
+  -- if self:get_name() == 'messages' then
+  --   print(string.format('check_offsets: min_y/max_y/vertical_offset/lh/th: %s, %s, %s, %s, %s',
+  --     min_y,
+  --     max_y,
+  --     self:get_vertical_offset(),
+  --     layout_height,
+  --     text_height
+  --   ))
+  -- end
+
   if self:get_horizontal_offset() < min_x then
-    self:set_horizontal_offset(min_x)
+    self.horizontal_offset = min_x
   end
 
   if self:get_horizontal_offset() > max_x then
-    self:set_horizontal_offset(max_x)
+    self.horizontal_offset = max_x
   end
 
   if self:get_vertical_offset() < min_y then
-    self:set_vertical_offset(min_y)
+    self.vertical_offset = min_y
   end
 
   if self:get_vertical_offset() > max_y then
-    self:set_vertical_offset(max_y)
+    self.vertical_offset = max_y
   end
 
+  if self:get_name() == 'messages' then
+    print(string.format('check_offsets 2: min_y/max_y/vertical_offset: %s, %s, %s',
+      min_y,
+      max_y,
+      self:get_vertical_offset()
+    ))
+  end
 end
 
 function TextWidget:scroll_left(pixels)
@@ -809,12 +795,10 @@ end
 
 function TextWidget:scroll_up(pixels)
   self:set_vertical_offset(self:get_vertical_offset() - pixels)
-  self:check_offsets()
 end
 
 function TextWidget:scroll_down(pixels)
   self:set_vertical_offset(self:get_vertical_offset() + pixels)
-  self:check_offsets()
 end
 
 function TextWidget:write(text)
@@ -870,21 +854,21 @@ function TextWidget:mecho(markup)
 end
 
 return {
-  TextWidget       = TextWidget,
-  ALIGN_LEFT       = TextWidget.ALIGN_LEFT,
-  ALIGN_CENTER     = TextWidget.ALIGN_CENTER,
-  ALIGN_RIGHT      = TextWidget.ALIGN_RIGHT,
-  ALIGN_JUSTIFY    = TextWidget.ALIGN_JUSTIFY,
-  ALIGN_TOP        = TextWidget.ALIGN_TOP,
-  ALIGN_BOTTOM     = TextWidget.ALIGN_BOTTOM,
-  WRAP_NONE        = TextWidget.WRAP_NONE,
-  WRAP_WORD        = TextWidget.WRAP_WORD,
-  WRAP_CHAR        = TextWidget.WRAP_CHAR,
-  WRAP_WORD_CHAR   = TextWidget.WRAP_WORD_CHAR,
-  ELLIPSIZE_NONE   = TextWidget.ELLIPSIZE_NONE,
-  ELLIPSIZE_START  = TextWidget.ELLIPSIZE_START,
-  ELLIPSIZE_MIDDLE = TextWidget.ELLIPSIZE_MIDDLE,
-  ELLIPSIZE_END    = TextWidget.ELLIPSIZE_END,
+  TextWidget         = TextWidget,
+  ALIGN_LEFT         = TextWidget.ALIGN_LEFT,
+  ALIGN_CENTER       = TextWidget.ALIGN_CENTER,
+  ALIGN_RIGHT        = TextWidget.ALIGN_RIGHT,
+  ALIGN_JUSTIFY      = TextWidget.ALIGN_JUSTIFY,
+  ALIGN_TOP          = TextWidget.ALIGN_TOP,
+  ALIGN_BOTTOM       = TextWidget.ALIGN_BOTTOM,
+  WRAP_NONE          = TextWidget.WRAP_NONE,
+  WRAP_WORD          = TextWidget.WRAP_WORD,
+  WRAP_CHAR          = TextWidget.WRAP_CHAR,
+  WRAP_WORD_CHAR     = TextWidget.WRAP_WORD_CHAR,
+  ELLIPSIZE_NONE     = TextWidget.ELLIPSIZE_NONE,
+  ELLIPSIZE_START    = TextWidget.ELLIPSIZE_START,
+  ELLIPSIZE_MIDDLE   = TextWidget.ELLIPSIZE_MIDDLE,
+  ELLIPSIZE_END      = TextWidget.ELLIPSIZE_END,
 }
 
 -- vi: et ts=2 sw=2
