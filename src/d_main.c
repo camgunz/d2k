@@ -2353,7 +2353,7 @@ static void D_DoomMainSetup(void) {
   XST_RegisterInterface();
   XV_RegisterInterface();
 
-  X_ExposeInterfaces(X_GetState());
+  X_ExposeInterfaces(NULL);
 
   X_Start();
 

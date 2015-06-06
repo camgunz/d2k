@@ -33,10 +33,11 @@
 #include "m_file.h"
 #include "x_main.h"
 
-static lua_State *x_main_interpreter = NULL;
+static lua_State  *x_main_interpreter = NULL;
 static GHashTable *x_types = NULL;
 static GHashTable *x_global_scope = NULL;
 static GHashTable *x_scopes = NULL;
+static bool        x_started = false;
 
 static gboolean x_objects_equal(gconstpointer a, gconstpointer b) {
   return a == b;
@@ -153,13 +154,12 @@ void X_Start(void) {
   free(script_folder);
   free(script_search_path);
   free(init_script_file);
+
+  x_started = true;
 }
 
 bool X_Available(void) {
-  if (x_main_interpreter)
-    return true;
-
-  return false;
+  return x_started;
 }
 
 void X_RegisterType(const char *type_name, unsigned int count, ...) {
@@ -269,6 +269,9 @@ void X_RegisterObjects(const char *scope_name, unsigned int count, ...) {
 
 
 lua_State* X_GetState(void) {
+  if (!X_Available())
+    I_Error("X_GetState: scripting is unavailable");
+
   return x_main_interpreter;
 }
 
@@ -294,6 +297,9 @@ void X_ExposeInterfaces(lua_State *L) {
   GHashTableIter iter;
   gpointer key;
   gpointer value;
+
+  if (!L)
+    L = x_main_interpreter;
 
   lua_createtable(L, 0, g_hash_table_size(x_global_scope));
   lua_setglobal(L, X_NAMESPACE);
@@ -358,7 +364,9 @@ const char* X_GetError(lua_State *L) {
 }
 
 bool X_Eval(lua_State *L, const char *code) {
-  bool errors_occurred = luaL_dostring(L, code);
+  bool errors_occurred;
+  
+  errors_occurred = luaL_dostring(L, code);
 
   return !errors_occurred;
 }
