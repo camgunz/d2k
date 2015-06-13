@@ -16,5 +16,5 @@ cmake .. \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     || exit 1
 
-make
+make -j 3
 

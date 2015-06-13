@@ -38,7 +38,6 @@ local Console = Widget.Widget:new({
   VERTICAL_SCROLL_AMOUNT   = 12,
   FG_COLOR                 = {1.0, 1.0, 1.0, 1.00},
   BG_COLOR                 = {0.0, 0.0, 0.0, 0.85},
-  SHORTCUT_MARKER          = '/',
 })
 
 function Console:new(c)
@@ -48,7 +47,6 @@ function Console:new(c)
   c.retraction_time = c.retraction_time or Console.RETRACTION_TIME
   c.max_width = c.max_width or 1
   c.max_height = c.max_height or .5
-  c.shortcut_marker = c.shortcut_marker or Console.SHORTCUT_MARKER
   c.z_index = c.z_index or 2
 
   c.width = c.max_width
@@ -93,12 +91,6 @@ function Console:new(c)
     strip_ending_newline = true
   })
 
-  c.shortcut_regex = GLib.Regex.new(
-    '([^"]\\S*|".+?"|\'.+?\'|)\\s*',
-    GLib.RegexCompileFlags.OPTIMIZE,
-    GLib.RegexMatchFlags.NOTEMPTY
-  )
-
   setmetatable(c, self)
   self.__index = self
 
@@ -121,14 +113,6 @@ end
 
 function Console:set_retraction_time(retraction_time)
   self.retraction_time = retraction_time
-end
-
-function Console:get_shortcut_marker()
-  return self.shortcut_marker
-end
-
-function Console:set_shortcut_marker(shortcut_marker)
-  self.shortcut_marker = shortcut_marker
 end
 
 function Console:get_scroll_rate()
@@ -161,14 +145,6 @@ end
 
 function Console:set_output(output)
   self.output = output
-end
-
-function Console:get_shortcut_regex()
-  return self.shortcut_regex
-end
-
-function Console:set_shortcut_regex(shortcut_regex)
-  self.shortcut_regex = shortcut_regex
 end
 
 function Console:is_active()
@@ -225,62 +201,8 @@ function Console:draw()
   self:get_output():draw()
 end
 
-function Console:parse_shortcut_command(short_command)
-    local wrote_function_name = false
-    local wrote_first_argument = false
-    local command = ''
-
-    if short_command:sub(1, 1) == self:get_shortcut_marker() then
-        short_command = short_command:sub(2)
-    end
-
-    local tokens = self:get_shortcut_regex():split(short_command, 0)
-
-    for i, token in ipairs(tokens) do
-        if #token ~= 0 then
-            if not wrote_function_name then
-                command = command .. token .. '('
-                wrote_function_name = true
-            elseif not wrote_first_argument then
-                command = command .. token
-                wrote_first_argument = true
-            else
-                command = command .. ', ' .. token
-            end
-
-        end
-    end
-
-    command = command .. ')'
-
-    return command
-end
-
 function Console:handle_input(input)
-  local command = input
-
-  if input:sub(1, 1) == self:get_shortcut_marker() then
-    command = 'd2k.Shortcuts.' .. self:parse_shortcut_command(input)
-  end
-
-  local func, err = load(command, 'Console input', 't')
-
-  if not func then
-    self:mecho(string.format(
-      '<span color="red">Console:handle_input: Error: %s</span>',
-      GLib.markup_escape_text(err, -1)
-    ))
-    return
-  end
-
-  local worked, err = pcall(func)
-
-  if not worked then
-    self:mecho(string.format(
-      '<span color="red">Console:handle_input: Error: %s</span>',
-      GLib.markup_escape_text(err, -1)
-    ))
-  end
+  d2k.CommandInterface.handle_input(input);
 end
 
 function Console:handle_event(event)
