@@ -150,7 +150,13 @@ function TextWidget:get_text()
 end
 
 function TextWidget:set_text(text)
+  if self.get_external_text then
+    error(string.format("%s: Can't set text when displaying external text",
+      self.name
+    ))
+  end
   self.text = text
+  self.needs_updating = true
 end
 
 function TextWidget:get_max_width()
@@ -574,16 +580,6 @@ function TextWidget:get_text()
   else
     return self.text
   end
-end
-
-function TextWidget:set_text(text)
-  if self.get_external_text then
-    error(string.format("%s: Can't set text when displaying external text",
-      self.name
-    ))
-  end
-  self.text = text
-  self.needs_updating = true
 end
 
 function TextWidget:clear()
