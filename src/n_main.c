@@ -29,6 +29,7 @@
 #include "protocol.h"
 
 #include "d_event.h"
+#include "c_extern.h"
 #include "c_main.h"
 #include "d_main.h"
 #include "g_game.h"
@@ -438,6 +439,10 @@ bool N_TryRunTics(void) {
 
   if (tics_elapsed <= 0 && !needs_rendering) {
     N_ServiceNetwork();
+#ifdef G_OS_UNIX
+    if (SERVER)
+      C_ServiceExternalCommandInterface();
+#endif
     I_Sleep(1);
     return false;
   }
@@ -464,6 +469,10 @@ bool N_TryRunTics(void) {
 #endif
 
     N_ServiceNetwork();
+#ifdef G_OS_UNIX
+    if (SERVER)
+      C_ServiceExternalCommandInterface();
+#endif
   }
 
   if ((tics_elapsed > 0) || needs_rendering)

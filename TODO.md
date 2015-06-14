@@ -14,7 +14,15 @@
 
 1. Test delta compression of frequently-spawned actors
 
+1. Disconnect clients if their sync TIC is too far in the past
+
 ### Widgets
+
+1. Implement retractable text widget
+  - Every time a line is added, set a timer.
+  - When timer expires, start retracting.
+  - When retraction finishes and`if vertical_offset != layout_height`:
+    - reset timer
 
 1. Add/fix wrapping to/for InputWidget
 
@@ -24,14 +32,21 @@
   - FPS
   - scoreboard
 
-### Console
+### Server Console
 
-1. Server bombs trying to print to console before it's ready
-  - Really needs a failover....  This happens before scripting is even
-    initialized, so I wonder if in C I can just print things out until
-    scripting is ready.
+1. Add a basic server console
+  - Lua?  Python?
+  - Would be kind of cool to do it in C
+    - GLib, Readline, NCurses
 
-1. Add serverside console input
+1. Send server output to all connected clients
+  - Probably part of `C_Write`/`C_MWrite`.
+  - Just keep separate buffers for each client, fuck it
+
+1. Add the `ECI_REQ_IDLE` state for clients that are still connected but not
+   waiting on request results
+
+### Scripting
 
 1. Add more scripting commands:
   - `map`
@@ -39,16 +54,30 @@
 
 ## ZDDL
 
-1. Implement retractable text widget
-  - Set benchmarks:
-    - At time X, vertical offset should be at least Y, otherwise move
-      incrementally
-    - Once `vertical_offset >= Y`, then that benchmark can be removed
-  - The benchmark system is really retraction, rename from "extendable"
+1. Remove 4 player restriction
+  - All playernums should be `unsigned int`s
+  - `players` becomes a GArray
+  - `playeringame` becomes `bool D_PlayerInGame(unsigned int playernum)`
+  - `MAXPLAYERS` becomes `VANILLA_MAXPLAYERS` for compat
+  - Anything defined using `MAXPLAYERS` will be refactored
+  - Servers aren't players
+    - Use a camera in non-headless mode (add non-headless mode???)
+    - Sending a message to the server can use a bool `to_server` instead of the
+      `-1` recipient (which is a hack)
+  - Player names are hardcoded for DeHackEd; the way this should work is:
+    - Keep a private array of the default names ("Green", "Indigo", etc.)
+    - After initialization, check if the names have been modified, by a
+      DeHackEd patch or anything
+    - If so, set each player's name accordingly
+    - Of course, this only works for the 1st 4 players; after that, fuck it
+      - Maybe assign more colors
+
+1. Add spectators
+
+1. Improve the configuration file and configuration variable system
+  - Ties into scripting and console
 
 1. Add auto-scroll to TextWidget
-
-1. Disconnect clients if their sync TIC is too far in the past
 
 1. Manually delta compress commands (serverside and clientside)
   - bitmap:
@@ -107,29 +136,6 @@
     front of the firing player) with a higher-than-normal velocity, and then
     adjust the velocity downwards based on the client's lag and a preselected
     function (curve).
-
-1. Remove 4 player restriction
-  - All playernums should be `unsigned int`s
-  - `players` becomes a GArray
-  - `playeringame` becomes `bool D_PlayerInGame(unsigned int playernum)`
-  - `MAXPLAYERS` becomes `VANILLA_MAXPLAYERS` for compat
-  - Anything defined using `MAXPLAYERS` will be refactored
-  - Servers aren't players
-    - Use a camera in non-headless mode (add non-headless mode???)
-    - Sending a message to the server can use a bool `to_server` instead of the
-      `-1` recipient (which is a hack)
-  - Player names are hardcoded for DeHackEd; the way this should work is:
-    - Keep a private array of the default names ("Green", "Indigo", etc.)
-    - After initialization, check if the names have been modified, by a
-      DeHackEd patch or anything
-    - If so, set each player's name accordingly
-    - Of course, this only works for the 1st 4 players; after that, fuck it
-      - Maybe assign more colors
-
-1. Add spectators
-
-1. Improve the configuration file and configuration variable system
-  - Ties into scripting and console
 
 1. Add 3D physics
 

@@ -23,14 +23,11 @@
 
 #include "z_zone.h"
 
-#include <pango/pangocairo.h>
-#include <readline/readline.h>
-#include <readline/history.h>
-
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
 #include "c_main.h"
+#include "c_extern.h"
 #include "d_main.h"
 #include "gl_opengl.h"
 #include "gl_intern.h"
@@ -58,8 +55,8 @@ typedef struct buffered_console_message_s {
   GString *contents;
 } buffered_console_message_t;
 
-static GRegex *shorthand_regex = NULL;
-static GPtrArray *buffered_console_messages = NULL;
+static GRegex                       *shorthand_regex = NULL;
+static GPtrArray                    *buffered_console_messages = NULL;
 
 static void free_buffered_message(gpointer data) {
   buffered_console_message_t *message = (buffered_console_message_t *)data;
@@ -188,8 +185,10 @@ void C_Init(void) {
   if (error)
     I_Error("C_Init: Error compiling shorthand regex: %s", error->message);
 
-  if (nodrawers)
-    rl_callback_handler_install(CONSOLE_TEXT_PROMPT, C_HandleInput);
+#ifdef G_OS_UNIX
+  if (SERVER)
+    C_InitExternalCommandInterface();
+#endif
 }
 
 void C_Reset(void) {

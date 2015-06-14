@@ -246,7 +246,20 @@ bool M_IsFolder(const char *path) {
 }
 
 bool M_IsFile(const char *path) {
-  return g_file_test(path, G_FILE_TEST_IS_REGULAR);
+  return g_file_test(path, G_FILE_TEST_EXISTS);
+}
+
+bool M_IsRegularFile(const char *path) {
+  if (!g_file_test(path, G_FILE_TEST_EXISTS))
+    return false;
+
+  if (g_file_test(path, G_FILE_TEST_IS_DIR))
+    return false;
+
+  if (g_file_test(path, G_FILE_TEST_IS_SYMLINK))
+    return false;
+
+  return true;
 }
 
 bool M_IsFileInFolder(const char *folder, const char *file) {
