@@ -2,21 +2,13 @@
 
 ## Proto
 
-### General
-
-1. Fix switching to vidingl
-
-1. Fonts look a little off in Windows
-
-### Netcode
-
 1. Reconnecting doesn't work
 
 1. Test delta compression of frequently-spawned actors
 
 1. Disconnect clients if their sync TIC is too far in the past
 
-### Widgets
+1. Fonts look a little off in Windows
 
 1. Implement retractable text widget
   - Every time a line is added, set a timer.
@@ -32,27 +24,24 @@
   - FPS
   - scoreboard
 
-### Server Console
-
 1. Add a basic server console
-  - Lua?  Python?
-  - Would be kind of cool to do it in C
-    - GLib, Readline, NCurses
 
-1. Send server output to all connected clients
-  - Probably part of `C_Write`/`C_MWrite`.
-  - Just keep separate buffers for each client, fuck it
+1. Finish up server console
+  - Add a basic server console client app
+    - Lua?  Python?
+    - Would be kind of cool to do it in C (GLib, Readline, NCurses/CDK)
+  - Send server output to all connected clients
+    - Probably part of `C_Write`/`C_MWrite`.
+    - Just keep separate buffers for each client, fuck it
 
-1. Add the `ECI_REQ_IDLE` state for clients that are still connected but not
-   waiting on request results
+  - Add the `ECI_REQ_IDLE` state for clients that are still connected but not
+    waiting on request results
 
-### Scripting
-
-1. Add more scripting commands:
-  - `map`
-  - `wad`
+1. Add `map` command
 
 ## ZDDL
+
+1. Fix switching to vidingl
 
 1. Remove 4 player restriction
   - All playernums should be `unsigned int`s
@@ -102,12 +91,6 @@
     { 3, 1, 1}                           //  3 bytes
                                          // Total: 20, saved: 14
 
-1. Implement actor vectors
-  - Send movement start TIC
-  - x/y/z represent the start position at time of last velocity change
-  - More amenable to delta compression
-  - Easier to nudge projectiles
-
 1. Add unlagged
   - Save attacking player position
   - Save current game state
@@ -129,6 +112,12 @@
       loaded from the server, which only the client can know reliably
     - `world_tic` is probably the cleanest way to handle this
 
+1. Implement actor vectors
+  - Send movement start TIC
+  - x/y/z represent the start position at time of last velocity change
+  - More amenable to delta compression
+  - Easier to nudge projectiles
+
 1. Add projectile nudging
   - Projectiles are currently predicted, thus they usually appear ahead of
     where they normally would
@@ -139,10 +128,10 @@
 
 1. Add 3D physics
 
-1. Add SNDCURVE lump support
-
 1. Add ZDoom physics
   - Including ZDoom SSG spread
+
+1. Add SNDCURVE lump support
 
 1. Improve PWO
   - Probably this is just gonna be a script
@@ -155,6 +144,12 @@
       huge file (or a file from a slow server); libcurl ought to make this
       pretty easy
   - Create a server description specification in JSON
+
+1. Add authorization framework
+
+1. Add RCON
+
+1. Add maplist support
 
 1. Little bugs:
   - Add a server message sound (just use radio/tink?)
