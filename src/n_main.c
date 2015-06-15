@@ -29,7 +29,7 @@
 #include "protocol.h"
 
 #include "d_event.h"
-#include "c_extern.h"
+#include "c_eci.h"
 #include "c_main.h"
 #include "d_main.h"
 #include "g_game.h"

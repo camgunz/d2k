@@ -27,7 +27,7 @@
 #include "doomstat.h"
 #include "d_event.h"
 #include "c_main.h"
-#include "c_extern.h"
+#include "c_eci.h"
 #include "d_main.h"
 #include "gl_opengl.h"
 #include "gl_intern.h"
