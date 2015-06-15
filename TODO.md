@@ -162,7 +162,7 @@
     - How to not send an arbitrary script to the server though...?
     - Does it make sense to have scripting contexts per-client serverside?
 
-1. Add HTTP and JSON (cURL and Jansson)
+1. Add HTTP and JSON (cURL and json-c)
   - Have client download missing WADs
     - the client should do this between frames in case it needs to download a
       huge file (or a file from a slow server); libcurl ought to make this
@@ -204,21 +204,19 @@
 
 ## Version 1.0
 
-1. Settle on types for:
-  - Player indices
-  - TICs
+1. Move TICs to `unsigned int` everywhere
 
 1. Cleanup #includes
 
-1. Update renderer
+1. Move renderer to OpenGL 2.0
 
-1. UDMF
+1. Implement UDMF
 
-1. Cameras
+1. Add cameras
 
-1. ZIP/PK3 resource files
+1. Add support for ZIP/PK3 resource files
 
-## Features
+## Extra Features
 
 1. Bots
 

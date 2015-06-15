@@ -110,7 +110,23 @@ int use_gl_surface;
 
 int leds_always_off = 0; // Expected by m_misc, not relevant
 
-int I_GetModeFromString(const char *modestr);
+static int get_mode_from_string(const char *modestr) {
+  if (!stricmp(modestr, "32"))
+    return VID_MODE32;
+
+  if (!stricmp(modestr, "32bit"))
+    return VID_MODE32;
+
+#ifdef GL_DOOM
+  if (!stricmp(modestr, "gl"))
+    return VID_MODEGL;
+
+  if (!stricmp(modestr, "opengl"))
+    return VID_MODEGL;
+#endif
+
+  return VID_MODE32;
+}
 
 static void initialize_overlay(void) {
   overlay.pixels          = NULL;
@@ -665,9 +681,9 @@ void I_InitScreenResolution(void) {
     h = desired_screenheight;
   }
 
-  mode = I_GetModeFromString(default_videomode);
+  mode = get_mode_from_string(default_videomode);
   if ((i = M_CheckParm("-vidmode")) && i < myargc - 1)
-    mode = I_GetModeFromString(myargv[i + 1]);
+    mode = get_mode_from_string(myargv[i + 1]);
 
   V_InitMode(mode);
 
@@ -720,24 +736,6 @@ void I_InitGraphics(void) {
 
   I_VideoUpdateFocus();
   I_MouseUpdateGrab();
-}
-
-int I_GetModeFromString(const char *modestr) {
-  if (!stricmp(modestr, "32"))
-    return VID_MODE32;
-
-  if (!stricmp(modestr, "32bit"))
-    return VID_MODE32;
-
-#ifdef GL_DOOM
-  if (!stricmp(modestr, "gl"))
-    return VID_MODEGL;
-
-  if (!stricmp(modestr, "opengl"))
-    return VID_MODEGL;
-#endif
-
-  return VID_MODE32;
 }
 
 void I_UpdateVideoMode(void) {
