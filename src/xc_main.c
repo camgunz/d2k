@@ -24,6 +24,7 @@
 
 #include "z_zone.h"
 
+#include "c_eci.h"
 #include "c_main.h"
 #include "x_main.h"
 

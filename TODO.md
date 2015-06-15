@@ -24,18 +24,8 @@
   - FPS
   - scoreboard
 
-1. Add a basic server console
-
-1. Finish up server console
-  - Add a basic server console client app
-    - Lua?  Python?
-    - Would be kind of cool to do it in C (GLib, Readline, NCurses/CDK)
-  - Send server output to all connected clients
-    - Probably part of `C_Write`/`C_MWrite`.
-    - Just keep separate buffers for each client, fuck it
-
-  - Add the `ECI_REQ_IDLE` state for clients that are still connected but not
-    waiting on request results
+1. Add a basic server console client app
+  - Python + Urwid to start
 
 1. Add `map` command
 

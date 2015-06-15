@@ -32,31 +32,27 @@
 #include "x_main.h"
 
 #define D2K_SERVER_SOCKET_NAME "d2k.sock"
+#define D2K_ECI_CLIENT_ANNOUNCE "HAIL SATAN"
 
-typedef enum {
-  ECI_REQ_NONE,
-  ECI_REQ_READING,
-  ECI_REQ_EXECUTING,
-  ECI_REQ_RESPONDING,
-  ECI_REQ_FINISHED,
-  ECI_REQ_MAX
-} eci_req_state_e;
-
-typedef struct eci_request_s {
-  eci_req_state_e  state;
-  GSocketAddress  *address;
-  GString         *input;
-  GString         *output;
-} eci_request_t;
+typedef struct eci_client_s {
+  GSocketAddress *address;
+  GString        *output;
+  bool            disconnected;
+} eci_client_t;
 
 typedef struct external_command_interface_s {
-  char      *socket_path;
-  GSocket   *socket;
-  GPtrArray *requests;
-  GString   *exception;
+  char       *socket_path;
+  GSocket    *socket;
+  GHashTable *clients;
+  GString    *input;
+  GString    *exception;
 } external_command_interface_t;
 
 static external_command_interface_t *eci = NULL;
+
+static char* socket_address_to_string(GSocketAddress *addr) {
+  return strdup(g_unix_socket_address_get_path(G_UNIX_SOCKET_ADDRESS(addr)));
+}
 
 static void check_eci_socket_condition(GIOCondition condition) {
   if ((condition & G_IO_ERR) == G_IO_ERR)
@@ -88,21 +84,19 @@ static bool can_write_eci(void) {
   return (cond & G_IO_OUT) == G_IO_OUT;
 }
 
-static void add_eci_request(void) {
-  eci_request_t *req = malloc(sizeof(eci_request_t));
-
-  req->state   = ECI_REQ_READING;
-  req->address = NULL;
-  req->input   = g_string_new("");
-  req->output  = g_string_new("");
-
-  g_ptr_array_add(eci->requests, req);
+static void free_eci_client(eci_client_t *client) {
+  g_object_unref(client->address);
+  g_string_free(client->output, true);
+  free(client);
 }
 
 static void read_eci_exception(void) {
   gssize bytes_read;
   GError *error = NULL;
   gssize exception_size;
+
+  if (!eci_has_urgent_data())
+    return;
 
   exception_size = g_socket_get_available_bytes(eci->socket);
 
@@ -123,100 +117,118 @@ static void read_eci_exception(void) {
   if (bytes_read == -1)
     I_Error("Error getting exception from ECI socket: %s", error->message);
 
-  *(eci->exception->str + bytes_read) = 0;
+  g_string_set_size(eci->exception, bytes_read);
+
+  C_Printf("Exceptional data received from ECI: %s\n", eci->exception->str);
 }
 
-static void read_eci_request(eci_request_t *req) {
-  gssize bytes_read;
-  GError *error = NULL;
+static void service_eci(void) {
+  GSocketAddress *address;
+  eci_client_t *client;
   gssize message_size;
+  gssize bytes_read;
+  int starting_stack_size;
+  char *address_string;
+  GError *error = NULL;
+  bool added_client = false;
 
   if (!can_read_eci())
     return;
+
+  g_string_erase(eci->input, 0, -1);
 
   message_size = g_socket_get_available_bytes(eci->socket);
 
   if (message_size == -1)
     I_Error("Error getting message size from ECI socket");
 
-  if (req->input->len <= message_size)
-    g_string_set_size(req->input, message_size + 1);
+  if (eci->input->len <= message_size)
+    g_string_set_size(eci->input, message_size + 1);
 
   bytes_read = g_socket_receive_from(
-    eci->socket,
-    &req->address,
-    req->input->str,
-    req->input->len,
-    NULL,
-    &error
+    eci->socket, &address, eci->input->str, eci->input->len, NULL, &error
   );
+
+  if (!address) {
+    C_Echo("Client socket not bound");
+    return;
+  }
 
   if (bytes_read == -1) {
     C_Printf("Error getting message from ECI socket: %s\n", error->message);
-    req->state = ECI_REQ_FINISHED;
     return;
   }
 
   if (bytes_read == 0) {
     C_Echo("Connection closed");
-    req->state = ECI_REQ_FINISHED;
     return;
   }
 
-  *(req->input->str + bytes_read) = 0;
+  g_string_set_size(eci->input, bytes_read);
 
-  if (!req->address) {
-    C_Echo("Client socket not bound");
-    req->state = ECI_REQ_FINISHED;
-    return;
+  address_string = socket_address_to_string(address);
+  client = g_hash_table_lookup(eci->clients, address_string);
+
+  if (!client) {
+    /*
+     * CG: If a client sends no data, it cannot get an address.  Therefore, we
+     *     use a pre-configured announce.  If the announce isn't what we
+     *     expect, just ignore the client.
+     */
+
+    if (strcmp(D2K_ECI_CLIENT_ANNOUNCE, eci->input->str) != 0)
+      return;
+
+    client = malloc(sizeof(eci_client_t));
+
+    if (!client)
+      I_Error("Error allocating ECI client");
+
+    client->address      = address;
+    client->output       = g_string_new("");
+    client->disconnected = false;
+
+    if (!g_hash_table_insert(eci->clients, address_string, client)) {
+      C_Printf("Client at %s already exists!\n", address_string);
+      free_eci_client(client);
+
+      return;
+    }
+
+    added_client = true;
   }
 
-  req->state = ECI_REQ_EXECUTING;
-}
+  starting_stack_size = X_GetStackSize(X_GetState());
 
-static void execute_eci_request(eci_request_t *req) {
-  int starting_stack_size = X_GetStackSize(X_GetState());
-
-  if (!X_Eval(X_GetState(), req->input->str)) {
-    g_string_assign(req->output, X_GetError(X_GetState()));
-  }
-  else {
+  if (C_HandleInput(eci->input->str)) {
     int result_count = X_GetStackSize(X_GetState()) - starting_stack_size;
-
-    printf("Got %d results\n", result_count);
-
-    g_string_erase(req->output, 0, -1);
 
     for (int i = -1; -i <= result_count; i--) {
       char *stack_member = X_ToString(X_GetState(), i);
 
-      g_string_append_printf(req->output, "%s\n", stack_member);
+      g_string_append_printf(client->output, "%s\n", stack_member);
       free(stack_member);
     }
   }
 
-  printf("Results:\n%s", req->output->str);
-
-  req->state = ECI_REQ_RESPONDING;
+  g_string_erase(eci->input, 0, -1);
 }
 
-static void write_eci_request_response(eci_request_t *req) {
+static void send_eci_client_data(eci_client_t *client) {
   GError *error = NULL;
   gssize bytes_written;
 
-  if (!req->output->len) {
-    req->state = ECI_REQ_FINISHED;
+  if (!client->output->len)
     return;
-  }
 
   if (!can_write_eci())
     return;
 
   bytes_written = g_socket_send_to(
     eci->socket,
-    req->address,
-    req->output->str,
-    req->output->len,
+    client->address,
+    client->output->str,
+    client->output->len,
     NULL,
     &error
   );
@@ -224,76 +236,79 @@ static void write_eci_request_response(eci_request_t *req) {
   if (bytes_written == -1 && error->code != G_IO_ERROR_WOULD_BLOCK)
     C_Printf("Error sending ECI request response: %s\n", error->message);
 
-  g_string_erase(req->output, 0, bytes_written);
-
-  if (!req->output->len)
-    req->state = ECI_REQ_FINISHED;
+  if (bytes_written > 0)
+    g_string_erase(client->output, 0, bytes_written);
 }
 
-static void handle_eci_request(gpointer data, gpointer user_data) {
-  eci_request_t *req = (eci_request_t *)data;
-
-  switch (req->state) {
-    case ECI_REQ_READING:
-      read_eci_request(req);
-    break;
-    case ECI_REQ_EXECUTING:
-      execute_eci_request(req);
-    break;
-    case ECI_REQ_RESPONDING:
-      write_eci_request_response(req);
-    break;
-    case ECI_REQ_FINISHED:
-    break;
-    default:
-      I_Error("handle_eci_request: Unknown request state %d\n", req->state);
-    break;
-  }
+static void service_eci_client_cb(gpointer key, gpointer value,
+                                                gpointer user_data) {
+  send_eci_client_data((eci_client_t *)value);
 }
 
-static void free_eci_request(gpointer data) {
-  eci_request_t *req = (eci_request_t *)data;
+static gboolean eci_client_disconnected_cb(gpointer key, gpointer value,
+                                                         gpointer user_data) {
+  eci_client_t *client = (eci_client_t *)value;
 
-  g_object_unref(req->address);
-  g_string_free(req->input, true);
-  g_string_free(req->output, true);
+  return client->disconnected;
+}
 
-  free(req);
+static void eci_client_write_cb(gpointer key, gpointer value, gpointer user_data) {
+  eci_client_t *client = (eci_client_t *)value;
+  const char *output = (const char *)user_data;
+
+  g_string_append(client->output, output);
+}
+
+static void free_eci_client_address_cb(gpointer data) {
+  char *client_address = (char *)data;
+
+  free(client_address);
+}
+
+static void free_eci_client_cb(gpointer data) {
+  free_eci_client((eci_client_t *)data);
 }
 
 static void cleanup_eci(void) {
   GError *error = NULL;
 
-  if (!g_socket_close(eci->socket, &error)) {
+  if (!g_socket_close(eci->socket, &error))
     C_Printf("Error closing ECI socket: %s\n", error->message);
-  }
 
-  puts("Unref'ing socket");
   g_object_unref(eci->socket);
 
   if (!M_DeleteFile(eci->socket_path))
     C_Printf("Error removing ECI socket file: %s\n", M_GetFileError());
 
-  if (eci->requests)
-    g_ptr_array_free(eci->requests, true);
+  if (eci->clients)
+    g_hash_table_destroy(eci->clients);
+
+  if (eci->input)
+    g_string_free(eci->input, true);
 
   if (eci->exception)
     g_string_free(eci->exception, true);
 
   free(eci);
+
+  eci = NULL;
 }
 
-void C_InitExternalCommandInterface(void) {
-  char *current_folder = M_GetCurrentFolder();
+void C_ECIInit(void) {
+  char *current_folder;
   GSocketAddress *socket_address;
   GError *error = NULL;
   bool bound;
 
-  free(current_folder);
-
   eci = calloc(1, sizeof(external_command_interface_t));
 
+  if (!eci)
+    I_Error("C_ECIInit: Error allocating eci");
+
+  current_folder = M_GetCurrentFolder();
   eci->socket_path = M_PathJoin(current_folder, D2K_SERVER_SOCKET_NAME);
+
+  free(current_folder);
 
   eci->socket = g_socket_new(
     G_SOCKET_FAMILY_UNIX,
@@ -302,37 +317,26 @@ void C_InitExternalCommandInterface(void) {
     &error
   );
 
-  if (!eci->socket) {
-    I_Error("C_InitExternalCommandInterface: Error creating ECI socket: %s\n",
-      error->message
-    );
-  }
+  if (!eci->socket)
+    I_Error("C_ECIInit: Error creating ECI socket: %s", error->message);
 
   if (M_PathExists(eci->socket_path)) {
-    if (M_IsFile(eci->socket_path)) {
-      C_Printf("Removing stale socket file %s\n", eci->socket_path);
+    if (!M_IsFile(eci->socket_path))
+      I_Error("ECI socket file [%s] exists, but isn't a file", eci->socket_path);
 
-      if (!M_DeleteFile(eci->socket_path)) {
-        I_Error("Error removing stale socket %s: %s",
-          eci->socket_path, M_GetFileError()
-        );
-      }
-    }
-    else {
-      I_Error("ECI socket file %s exists, but is not a file",
-        eci->socket_path
+    if (!M_DeleteFile(eci->socket_path)) {
+      I_Error("Error removing stale socket %s: %s",
+        eci->socket_path, M_GetFileError()
       );
     }
+
+    C_Printf("Removed stale socket file %s\n", eci->socket_path);
   }
 
   error = NULL;
 
-  if (!g_initable_init((GInitable *)eci->socket, NULL, &error)) {
-    I_Error(
-      "C_InitExternalCommandInterface: Error initializing ECI socket: %s\n",
-      error->message
-    );
-  }
+  if (!g_initable_init((GInitable *)eci->socket, NULL, &error))
+    I_Error("C_ECIInit: Error initializing ECI socket: %s", error->message);
 
   socket_address = g_unix_socket_address_new(eci->socket_path);
 
@@ -342,39 +346,39 @@ void C_InitExternalCommandInterface(void) {
 
   atexit(cleanup_eci);
 
-  if (!bound) {
-    I_Error("C_InitExternalCommandInterface: Error binding ECI socket: %s\n",
-      error->message
-    );
-  }
+  if (!bound)
+    I_Error("C_ECIInit: Error binding ECI socket: %s", error->message);
 
   g_socket_set_blocking(eci->socket, false);
 
-  eci->requests = g_ptr_array_new_with_free_func(free_eci_request);
+  eci->clients = g_hash_table_new_full(
+    g_str_hash, g_str_equal, free_eci_client_address_cb, free_eci_client_cb
+  );
+  eci->input = g_string_new("");
   eci->exception = g_string_new("");
 }
 
-void C_ServiceExternalCommandInterface(void) {
-  int i = 0;
+void C_ECIService(void) {
+  if (!eci)
+    return;
 
-  if (eci_has_urgent_data()) {
-    read_eci_exception();
-    C_Printf("Exceptional data received from ECI: %s\n", eci->exception->str);
-  }
+  if (!eci->clients)
+    return;
 
-  if (can_read_eci())
-    add_eci_request();
+  read_eci_exception();
+  service_eci();
+  g_hash_table_foreach(eci->clients, service_eci_client_cb, NULL);
+  g_hash_table_foreach_remove(eci->clients, eci_client_disconnected_cb, NULL);
+}
 
-  g_ptr_array_foreach(eci->requests, handle_eci_request, NULL);
+void C_ECIWrite(const char *output) {
+  if (!eci)
+    return;
 
-  while (i < eci->requests->len) {
-    eci_request_t *req = (eci_request_t *)g_ptr_array_index(eci->requests, i);
+  if (!eci->clients)
+    return;
 
-    if (req->state == ECI_REQ_FINISHED)
-      g_ptr_array_remove_index_fast(eci->requests, i);
-    else
-      i++;
-  }
+  g_hash_table_foreach(eci->clients, eci_client_write_cb, (gpointer)output);
 }
 
 /* vi: set et ts=2 sw=2: */
