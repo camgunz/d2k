@@ -7,14 +7,16 @@
 -------------------------------------------------------------------------------
 
 local TextWidget = require('text_widget')
+local ExtendableTextWidget = require('extendable_text_widget')
 
-local messages_widget = TextWidget.TextWidget:new({
+local messages_widget = ExtendableTextWidget.ExtendableTextWidget:new({
   name = 'messages',
+  z_index = 1,
   top_margin = 0,
   bottom_margin = 0,
   left_margin = 8,
   right_margin = 8,
-  width = d2k.Video.get_screen_width(),
+  width = 1,
   bg_color = {0.0, 0.0, 0.0, 0.0},
   vertical_alignment = TextWidget.ALIGN_BOTTOM,
   outline_color = {0.0, 0.0, 0.0, 1.0},
@@ -23,9 +25,10 @@ local messages_widget = TextWidget.TextWidget:new({
   line_height = 4,
   use_markup = true,
   strip_ending_newline = true,
-  retractable = true,
-  retraction_time = 666,
-  retraction_timeout = 2000
+  retractable = TextWidget.RETRACT_UP,
+  retraction_time = 500,
+  retraction_timeout = 2000,
+  font_description_text = 'Monkirta Pursuit NC 10'
 })
 
 messages_widget:set_external_text_source(

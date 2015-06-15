@@ -5,7 +5,7 @@ PORT=10666
 PORT=10667
 HOST=127.0.0.1
 
-EXE="/home/charlie/code/d2k/cbuild/doom2k"
+EXE="/home/charlie/code/d2k/cbuild/d2k"
 CMD="$EXE -net $HOST:$PORT"
 CMD="$EXE -nomouse -net $HOST:$PORT"
 

@@ -33,10 +33,11 @@
 #include "m_file.h"
 #include "x_main.h"
 
-static lua_State *x_main_interpreter = NULL;
+static lua_State  *x_main_interpreter = NULL;
 static GHashTable *x_types = NULL;
 static GHashTable *x_global_scope = NULL;
 static GHashTable *x_scopes = NULL;
+static bool        x_started = false;
 
 static gboolean x_objects_equal(gconstpointer a, gconstpointer b) {
   return a == b;
@@ -60,7 +61,7 @@ static bool push_x_object(lua_State *L, x_object_t *x_obj) {
       lua_pushinteger(L, x_obj->as.integer);
     break;
     case X_UINTEGER:
-      lua_pushunsigned(L, x_obj->as.uinteger);
+      lua_pushinteger(L, (lua_Integer)x_obj->as.uinteger);
     break;
     case X_STRING:
       lua_pushstring(L, x_obj->as.string);
@@ -87,9 +88,9 @@ void X_Init(void) {
 
 void X_Start(void) {
   bool script_load_failed;
+  char *init_script_file;
+  char *script_search_path;
   char *script_folder = M_PathJoin(I_DoomExeDir(), X_FOLDER_NAME);
-  char *script_search_path = M_PathJoin(script_folder, "?.lua");
-  char *init_script_file = M_PathJoin(script_folder, X_INIT_SCRIPT_NAME);
   GITypelib *typelib = g_irepository_require(NULL, "GObject", NULL, 0, NULL);
 
   if (!typelib) {
@@ -118,8 +119,16 @@ void X_Start(void) {
     I_Error("X_Start: Could not locate typelib files for scripting");
   }
 
-  if (!M_IsFolder(script_folder))
-    I_Error("Script folder [%s] is missing", script_folder);
+  if (!M_IsFolder(script_folder)) {
+    free(script_folder);
+    script_folder = strdup(X_FOLDER_NAME);
+
+    if (!M_IsFolder(script_folder))
+      I_Error("Script folder [%s] is missing", script_folder);
+  }
+
+  init_script_file = M_PathJoin(script_folder, X_INIT_SCRIPT_NAME);
+  script_search_path = M_PathJoin(script_folder, "?.lua");
 
   if (!M_IsFile(init_script_file))
     I_Error("Initialization script [%s] is missing", init_script_file);
@@ -145,6 +154,12 @@ void X_Start(void) {
   free(script_folder);
   free(script_search_path);
   free(init_script_file);
+
+  x_started = true;
+}
+
+bool X_Available(void) {
+  return x_started;
 }
 
 void X_RegisterType(const char *type_name, unsigned int count, ...) {
@@ -254,6 +269,9 @@ void X_RegisterObjects(const char *scope_name, unsigned int count, ...) {
 
 
 lua_State* X_GetState(void) {
+  if (!X_Available())
+    I_Error("X_GetState: scripting is unavailable");
+
   return x_main_interpreter;
 }
 
@@ -279,6 +297,9 @@ void X_ExposeInterfaces(lua_State *L) {
   GHashTableIter iter;
   gpointer key;
   gpointer value;
+
+  if (!L)
+    L = x_main_interpreter;
 
   lua_createtable(L, 0, g_hash_table_size(x_global_scope));
   lua_setglobal(L, X_NAMESPACE);
@@ -343,7 +364,9 @@ const char* X_GetError(lua_State *L) {
 }
 
 bool X_Eval(lua_State *L, const char *code) {
-  bool errors_occurred = luaL_dostring(L, code);
+  bool errors_occurred;
+  
+  errors_occurred = luaL_dostring(L, code);
 
   return !errors_occurred;
 }
@@ -401,7 +424,7 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
         lua_pushinteger(L, va_arg(args, lua_Integer));
       break;
       case X_UINTEGER:
-        lua_pushunsigned(L, va_arg(args, lua_Unsigned));
+        lua_pushinteger(L, va_arg(args, lua_Integer));
       break;
       case X_STRING:
         lua_pushstring(L, va_arg(args, const char *));

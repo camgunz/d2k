@@ -29,20 +29,27 @@ print('X_Init: Creating input handler.')
 local input_handler = require('input_handler')
 d2k.input_handler = input_handler.InputHandler:new()
 
-print('X_Init: Creating overlay.')
-local Overlay = require('overlay')
-d2k.overlay = Overlay.Overlay:new()
+if d2k.Video.is_enabled() then
+  print('X_Init: Creating overlay.')
+  local Overlay = require('overlay')
+  d2k.overlay = Overlay.Overlay:new()
 
-print('X_Init: Creating HUD')
-local HUD = require('hud')
-d2k.hud = HUD.HUD:new()
+  print('X_Init: Creating HUD')
+  local HUD = require('hud')
+  d2k.hud = HUD.HUD:new()
+else
+  d2k.overlay = nil
+  d2k.hud = nil
+end
 
 print('X_Init: Creating console')
 local Console = require('console')
 d2k.console = Console.Console:new()
 
-print('X_Init: Adding console to HUD')
-d2k.hud:add_widget(d2k.console)
+if d2k.hud then
+  print('X_Init: Adding console to HUD')
+  d2k.hud:add_widget(d2k.console)
+end
 
 print('X_Init: Loading console shortcuts')
 require('console_shortcuts')

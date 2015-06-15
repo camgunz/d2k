@@ -350,20 +350,20 @@ const char* I_GetTempDir(void) {
 // Mead rem extra slash 8/21/03
 
 const char* I_DoomExeDir(void) {
-  static const char doom2k_dir[] = {"/." PACKAGE_TARNAME};
+  static const char d2k_dir[] = {"/." PACKAGE_TARNAME};
   static char *base;
 
   if (!base) { // cache multiple requests
     char *home = getenv("HOME");
     size_t len = strlen(home);
 
-    base = malloc(len + strlen(doom2k_dir) + 1);
+    base = malloc(len + strlen(d2k_dir) + 1);
     strcpy(base, home);
     // I've had trouble with trailing slashes before...
     if (base[len - 1] == '/')
       base[len - 1] = 0;
 
-    strcat(base, doom2k_dir);
+    strcat(base, d2k_dir);
     mkdir(base, S_IRUSR | S_IWUSR | S_IXUSR); // Make sure it exists
   }
 

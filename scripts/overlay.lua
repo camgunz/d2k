@@ -30,11 +30,13 @@ local Overlay = {}
 
 function Overlay:new(o)
   o = o or {}
-  --[[
-    render_context = nil,
-    render_surface = nil
-  }
-  --]]
+
+  o.width = 0
+  o.height = 0
+
+  o.build_listeners = {}
+  o.destroy_listeners = {}
+
   setmetatable(o, self)
   self.__index = self
 
@@ -54,13 +56,16 @@ end
 function Overlay:build()
   assert(not self:initialized(), 'overlay already built')
 
+  self.width = d2k.Video.get_screen_width()
+  self.height = d2k.Video.get_screen_height()
+
   d2k.Video.build_overlay_pixels()
 
   self.render_surface = Cairo.ImageSurface.create_for_data(
     d2k.Video.get_overlay_pixels(),
     Cairo.Format.RGB24, -- CG: FIXME: This is duplicated in i_video.c
-    d2k.Video.get_screen_width(),
-    d2k.Video.get_screen_height(),
+    self.width,
+    self.height,
     d2k.Video.get_screen_stride()
   )
 
@@ -94,6 +99,10 @@ function Overlay:build()
   font_options:set_antialias(Cairo.ANTIALIAS_SUBPIXEL)
   self.text_context:set_font_options(font_options)
   self.render_context:update_context(self.text_context)
+
+  for i, l in pairs(self.build_listeners) do
+    l.handle_overlay_built(self)
+  end
 end
 
 function Overlay:destroy()
@@ -105,6 +114,10 @@ function Overlay:destroy()
   d2k.Video.destroy_overlay_pixels()
   if d2k.Video.using_opengl() then
     d2k.Video.destroy_overlay_texture()
+  end
+
+  for i, l in pairs(self.destroy_listeners) do
+    l.handle_overlay_destroyed(self)
   end
 end
 
@@ -132,6 +145,22 @@ end
 function Overlay:clear()
   self.render_context:set_operator(Cairo.OPERATOR_CLEAR)
   self.render_context:paint()
+end
+
+function Overlay:get_width()
+  return self.width
+end
+
+function Overlay:get_height()
+  return self.height
+end
+
+function Overlay:add_build_listener(listener)
+  table.insert(self.build_listeners, listener)
+end
+
+function Overlay:add_destroy_listener(listener)
+  table.insert(self.destroy_listeners, listener)
 end
 
 return {Overlay = Overlay}

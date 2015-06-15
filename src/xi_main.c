@@ -40,7 +40,7 @@ static int XF_GetTicks(lua_State *L) {
 }
 
 static int XF_Print(lua_State *L) {
-  char *s = luaL_checkstring(L, -1);
+  const char *s = luaL_checkstring(L, -1);
 
   printf("%s", s);
 

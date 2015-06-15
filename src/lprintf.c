@@ -88,16 +88,16 @@ void lprintf(OutputLevels pri, const char *fmt, ...) {
  * killough 3/20/98: add const
  */
 
-void I_Error(const char *error, ...) {
-  char errmsg[MAX_MESSAGE_LENGTH];
-  va_list argptr;
+void I_Error(const char *format, ...) {
+  va_list args;
 
-  va_start(argptr,error);
-  doom_vsnprintf(errmsg, sizeof(errmsg), error, argptr);
-  va_end(argptr);
+  va_start(args, format);
+  vfprintf(stderr, format, args);
+  va_end(args);
 
-  fprintf(stderr, "%s\n", errmsg);
-  I_SafeExit(-1);
+  puts("");
+
+  exit(-1);
 }
 
 // Wrapper to handle non-standard stdio implementations
