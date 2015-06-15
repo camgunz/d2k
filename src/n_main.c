@@ -439,10 +439,8 @@ bool N_TryRunTics(void) {
 
   if (tics_elapsed <= 0 && !needs_rendering) {
     N_ServiceNetwork();
-#ifdef G_OS_UNIX
-    if (SERVER)
-      C_ServiceExternalCommandInterface();
-#endif
+    if (C_ECIAvailable())
+      C_ECIService();
     I_Sleep(1);
     return false;
   }
@@ -469,10 +467,8 @@ bool N_TryRunTics(void) {
 #endif
 
     N_ServiceNetwork();
-#ifdef G_OS_UNIX
-    if (SERVER)
-      C_ServiceExternalCommandInterface();
-#endif
+    if (C_ECIAvailable())
+      C_ECIService();
   }
 
   if ((tics_elapsed > 0) || needs_rendering)

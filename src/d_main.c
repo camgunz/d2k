@@ -1135,6 +1135,9 @@ void D_ClearIWAD(void) {
 // D_ClearResourceFiles
 //
 void D_ClearResourceFiles(void) {
+  if (!resource_files)
+    return;
+
   for (unsigned int i = resource_files->len; i > 0; i--)
     g_ptr_array_remove_index_fast(resource_files, i - 1);
 }
@@ -1143,6 +1146,9 @@ void D_ClearResourceFiles(void) {
 // D_ClearDEHFiles
 //
 void D_ClearDEHFiles(void) {
+  if (!deh_files)
+    return;
+
   for (unsigned int i = deh_files->len; i > 0; i--)
     g_ptr_array_remove_index_fast(deh_files, i - 1);
 }

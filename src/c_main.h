@@ -25,6 +25,7 @@
 #define C_MAIN_H__
 
 void C_Init(void);
+bool C_ECIAvailable(void);
 void C_Reset(void);
 void C_ScrollDown(void);
 void C_ScrollUp(void);
@@ -32,7 +33,7 @@ void C_ToggleScroll(void);
 void C_Banish(void);
 void C_SetFullscreen(void);
 bool C_Active(void);
-void C_HandleInput(char *input_text);
+bool C_HandleInput(char *input_text);
 void C_Printf(const char *fmt, ...) PRINTF_DECL(1, 2);
 void C_VPrintf(const char *fmt, va_list args);
 void C_MPrintf(const char *fmt, ...) PRINTF_DECL(1, 2);

@@ -33,7 +33,6 @@
   - Send server output to all connected clients
     - Probably part of `C_Write`/`C_MWrite`.
     - Just keep separate buffers for each client, fuck it
-
   - Add the `ECI_REQ_IDLE` state for clients that are still connected but not
     waiting on request results
 

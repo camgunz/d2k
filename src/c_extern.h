@@ -24,8 +24,9 @@
 #ifndef C_EXTERN_H__
 #define C_EXTERN_H__
 
-void C_InitExternalCommandInterface(void);
-void C_ServiceExternalCommandInterface(void);
+void C_ECIInit(void);
+void C_ECIService(void);
+void C_ECIWrite(const char *output);
 
 #endif
 

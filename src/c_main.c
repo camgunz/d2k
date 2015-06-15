@@ -187,8 +187,16 @@ void C_Init(void) {
 
 #ifdef G_OS_UNIX
   if (SERVER)
-    C_InitExternalCommandInterface();
+    C_ECIInit();
 #endif
+}
+
+bool C_ECIAvailable(void) {
+#ifdef G_OS_UNIX
+  if (SERVER)
+    return true;
+#endif
+  return false;
 }
 
 void C_Reset(void) {
@@ -241,7 +249,7 @@ bool C_Active(void) {
   return is_active;
 }
 
-void C_HandleInput(char *input_text) {
+bool C_HandleInput(char *input_text) {
   bool success;
   const char *command;
 
@@ -264,6 +272,8 @@ void C_HandleInput(char *input_text) {
       g_free(error_message);
     }
   }
+
+  return success;
 }
 
 /* CG: TODO: Add D_Log logging */
@@ -331,30 +341,45 @@ void C_MEcho(const char *message) {
   g_free(message_with_newline);
 }
 
-void C_Write(const char *message) {
-  gchar *escaped_message;
+void C_Write(const char *msg) {
+  gchar *emsg;
+  bool success = true;
 
-  if (!message)
+  if (!msg)
     return;
   
-  escaped_message = g_markup_escape_text(message, -1);
+  emsg = g_markup_escape_text(msg, -1);
+
+  if (C_ECIAvailable())
+    C_ECIWrite(emsg);
 
   if (nodrawers)
-    printf("%s", escaped_message);
-  else if (!save_output_if_scripting_unavailable(escaped_message, false))
-    X_Call(X_GetState(), "console", "write", 1, 0, X_STRING, escaped_message);
+    printf("%s", emsg);
+  else if (!save_output_if_scripting_unavailable(emsg, false))
+    success = X_Call(X_GetState(), "console", "write", 1, 0, X_STRING, emsg);
 
-  g_free(escaped_message);
+  if (!success)
+    I_Error("C_Write: Error writing to console: %s", X_GetError(X_GetState()));
+
+  g_free(emsg);
 }
 
-void C_MWrite(const char *message) {
-  if (!message)
+void C_MWrite(const char *msg) {
+  bool success = true;
+
+  if (!msg)
     return;
 
+  if (C_ECIAvailable())
+    C_ECIWrite(msg);
+
   if (nodrawers)
-    printf("%s", message);
-  else if (!save_output_if_scripting_unavailable(message, true))
-    X_Call(X_GetState(), "console", "mwrite", 1, 0, X_STRING, message);
+    printf("%s", msg);
+  else if (!save_output_if_scripting_unavailable(msg, true))
+    success = X_Call(X_GetState(), "console", "mwrite", 1, 0, X_STRING, msg);
+
+  if (!success)
+    I_Error("C_MWrite: Error writing to console: %s", X_GetError(X_GetState()));
 }
 
 /* vi: set et ts=2 sw=2: */
