@@ -295,7 +295,7 @@ static void cleanup_eci(void) {
 }
 
 void C_ECIInit(void) {
-  char *current_folder = M_GetCurrentFolder();
+  char *current_folder;
   GSocketAddress *socket_address;
   GError *error = NULL;
   bool bound;
