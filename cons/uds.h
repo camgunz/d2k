@@ -3,7 +3,6 @@
 
 #define CLIENT_SOCKET_NAME "client.sock"
 #define SERVER_SOCKET_NAME "server.sock"
-#define UDS_CLIENT_ANNOUNCE "HAIL SATAN"
 
 struct uds_s;
 struct uds_peer_s;

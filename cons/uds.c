@@ -164,7 +164,7 @@ static uds_peer_t* uds_add_peer(uds_t *uds, GSocketAddress *address) {
 
   g_hash_table_insert(uds->peers, address_string, peer);
 
-  g_print("Added peer at %s\n", address_string);
+  // g_print("Added peer at %s\n", address_string);
 
   return peer;
 }
@@ -355,7 +355,7 @@ void uds_init(uds_t *uds, const gchar *socket_path,
       exit(EXIT_FAILURE);
     }
 
-    g_print("Removed stale socket file %s\n", uds->socket_path);
+    // g_print("Removed stale socket file %s\n", uds->socket_path);
   }
 
   error = NULL;
