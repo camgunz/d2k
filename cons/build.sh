@@ -15,4 +15,5 @@ $CC -o uds_server uds.c uds_server.c $GIO_LIBS $GIO_CFLAGS $FLAGS
 rm -f uds_client
 $CC -o uds_client uds.c uds_client.c $GIO_LIBS $GIO_CFLAGS $NCURSES_LIBS \
                                      $NCURSES_CFLAGS $FLAGS
+                                    
 

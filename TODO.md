@@ -2,13 +2,8 @@
 
 ## Proto
 
-1. Reconnecting doesn't work
-
-1. Test delta compression of frequently-spawned actors
-
-1. Disconnect clients if their sync TIC is too far in the past
-
-1. Fonts look a little off in Windows
+1. Add a basic server console client app
+  - C, GLib and ncurses
 
 1. Implement retractable text widget
   - Every time a line is added, set a timer.
@@ -18,14 +13,19 @@
 
 1. Add/fix wrapping to/for InputWidget
 
+1. Reconnecting doesn't work
+
+1. Fonts look a little off in Windows
+
+1. Test delta compression of frequently-spawned actors
+
+1. Disconnect clients if their sync TIC is too far in the past
+
 1. Add a few new widgets:
   - chat
   - netstats
   - FPS
   - scoreboard
-
-1. Add a basic server console client app
-  - Python + Urwid to start
 
 1. Add `map` command
 

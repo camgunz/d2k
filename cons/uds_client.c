@@ -19,18 +19,20 @@ typedef struct display_s {
 
 static uds_t uds;
 
-static void handle_new_data(uds_t *uds, uds_peer_t *peer) {
-  /*
+static void handle_data(uds_t *uds, uds_peer_t *peer) {
   g_print("Got [%s] from %s\n",
     uds->input->str,
     socket_address_to_string(peer->address)
   );
-  */
+}
+
+static void handle_exception(uds_t *uds) {
+  g_printerr("Got exception [%s]\n", uds->exception->str);
 }
 
 static void cleanup(void) {
   uds_free(&uds);
-  endwin();
+  // endwin();
 }
 
 static gboolean task_service_uds(gpointer user_data) {
@@ -57,7 +59,7 @@ static gboolean task_send_data(gpointer user_data) {
   }
 
   g_string_printf(s, "Message %u\n", counter);
-  uds_sendto(uds, server, s->str);
+  uds_peer_sendto(server, s->str);
 
   counter++;
 
@@ -102,16 +104,19 @@ int main(int argc, char **argv) {
   GMainContext *mc;
   GMainLoop *loop;
 
+  /*
   initscr();
   cbreak();
   keypad(stdscr, TRUE);
   refresh();
+  */
 
   output_width = COLS - 1;
   output_height = LINES - 3;
   input_width = COLS - 1;
   input_height = 3;
 
+  /*
   display.server_output = add_window(0, 0, output_width, output_height);
   display.console_input = add_window(
     0, output_height, input_width, input_height
@@ -120,10 +125,13 @@ int main(int argc, char **argv) {
   wrefresh(display.server_output);
   wrefresh(display.console_input);
   refresh();
+  */
 
   memset(&uds, 0, sizeof(uds_t));
 
-  uds_init(&uds, CLIENT_SOCKET_NAME, handle_new_data);
+  uds_init(
+    &uds, CLIENT_SOCKET_NAME, handle_data, handle_exception
+  );
 
   atexit(cleanup);
 
@@ -132,9 +140,12 @@ int main(int argc, char **argv) {
   mc = g_main_context_default();
   loop = g_main_loop_new(mc, FALSE);
 
-  g_idle_add(task_service_uds, &uds);
+  // g_idle_add(task_service_uds, &uds);
   // g_idle_add(task_refresh, &display);
   g_timeout_add(MESSAGE_INTERVAL, task_send_data, &uds);
+  g_source_attach(uds_get_read_source(&uds), mc);
+  g_source_attach(uds_get_write_source(&uds), mc);
+  g_source_attach(uds_get_exception_source(&uds), mc);
 
   g_main_loop_run(loop);
 

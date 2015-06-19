@@ -7,15 +7,21 @@
 struct uds_s;
 struct uds_peer_s;
 
-typedef void (*uds_handle_new_data)(struct uds_s *uds, struct uds_peer_s *peer);
+typedef void (*uds_handle_data)(struct uds_s *uds, struct uds_peer_s *peer);
+typedef void (*uds_handle_exception)(struct uds_s *uds);
+
+/* CG: TODO: Add error handler */
 
 typedef struct uds_s {
   gchar               *socket_path;
   GSocket             *socket;
-  GHashTable          *peers;
+  GIOCondition         condition;
+  GPtrArray           *peers;
+  GHashTable          *peer_directory;
   GString             *input;
   GString             *exception;
-  uds_handle_new_data  handle_new_data;
+  uds_handle_data      handle_data;
+  uds_handle_exception handle_exception;
   gboolean             waiting_for_connection;
 } uds_t;
 
@@ -27,14 +33,17 @@ typedef struct uds_peer_s {
 
 gchar*      socket_address_to_string(GSocketAddress *addr);
 void        uds_init(uds_t *uds, const gchar *socket_path,
-                                 uds_handle_new_data handle_new_data);
+                                 uds_handle_data handle_data,
+                                 uds_handle_exception handle_exception);
 void        uds_free(uds_t *uds);
-void        uds_peer_free(uds_peer_t *peer);
 void        uds_connect(uds_t *uds, const gchar *socket_path);
 void        uds_service(uds_t *uds);
 uds_peer_t* uds_get_peer(uds_t *uds, const gchar *peer_address);
-void        uds_sendto(uds_t *uds, uds_peer_t *peer, const gchar *data);
+GIOChannel* uds_get_iochannel(uds_t *uds);
 void        uds_broadcast(uds_t *uds, const gchar *data);
+gboolean    uds_sendto(uds_t *uds, const gchar *peer_address,
+                                   const gchar *data);
+void        uds_peer_sendto(uds_t *uds, uds_peer_t *peer, const gchar *data);
 
 #endif
 
