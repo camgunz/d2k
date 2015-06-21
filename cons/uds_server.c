@@ -31,6 +31,7 @@ static gboolean task_broadcast_data(gpointer user_data) {
     s = g_string_new("");
 
   g_string_printf(s, "Server message %u", counter);
+  g_print("%s\n", s->str);
   uds_broadcast(uds, s->str);
 
   counter++;
