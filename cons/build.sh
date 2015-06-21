@@ -5,8 +5,8 @@ set -e
 CC=gcc
 GIO_LIBS=$(pkg-config --libs gio-unix-2.0)
 GIO_CFLAGS=$(pkg-config --cflags gio-unix-2.0)
-NCURSES_LIBS=$(pkg-config --libs ncurses)
-NCURSES_CFLAGS=$(pkg-config --cflags ncurses)
+NCURSES_LIBS=$(pkg-config --libs ncursesw)
+NCURSES_CFLAGS=$(pkg-config --cflags ncursesw)
 LINEBREAK_LIBS=$(pkg-config --libs libunibreak)
 LINEBREAK_CFLAGS=$(pkg-config --cflags libunibreak)
 FLAGS='-g'

@@ -1,5 +1,9 @@
+#define _XOPEN_SOURCE_EXTENDED
+
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wctype.h>
 
 #include <glib.h>
 #include <glib/gstdio.h>
@@ -7,7 +11,7 @@
 #include <gio/gio.h>
 #include <gio/gunixsocketaddress.h>
 
-#include <ncurses.h>
+#include <curses.h>
 
 #include <linebreak.h>
 
@@ -329,15 +333,96 @@ static gboolean task_send_data(gpointer user_data) {
   return G_SOURCE_CONTINUE;
 }
 
-static void sc_handle_key(server_console_t *server_console, int key) {
+static void sc_handle_key(server_console_t *server_console, wint_t key) {
+  static GString *buf = NULL;
+
+  if (!buf)
+    buf = g_string_new("");
+
+  if (key == '\n') {
+    g_string_printf(buf, "<<Pressed enter>>");
+    sc_add_output(server_console, buf);
+    return;
+  }
+
+  g_string_append_unichar(server_console->input, key);
+
+  sc_clear_input(server_console);
+  mvwprintw(
+    server_console->input_window,
+    TOP_MARGIN,
+    LEFT_MARGIN,
+    "%s",
+    server_console->input->str
+  );
+  sc_refresh_input(server_console);
+  refresh();
+}
+
+static void sc_handle_function_key(server_console_t *server_console,
+                                   wint_t key) {
+  static GString *buf = NULL;
+
+  if (!buf)
+    buf = g_string_new("");
+
+  switch (key) {
+    case KEY_UP:
+      g_string_printf(buf, "<<Pressed up>>");
+    break;
+    case KEY_DOWN:
+      g_string_printf(buf, "<<Pressed down>>");
+    break;
+    case KEY_LEFT:
+      g_string_printf(buf, "<<Pressed left>>");
+    break;
+    case KEY_RIGHT:
+      g_string_printf(buf, "<<Pressed right>>");
+    break;
+    case KEY_HOME:
+      g_string_printf(buf, "<<Pressed home>>");
+    break;
+    case KEY_END:
+      g_string_printf(buf, "<<Pressed end>>");
+    break;
+    case KEY_BACKSPACE:
+      g_string_printf(buf, "<<Pressed backspace>>");
+    break;
+    case KEY_DC:
+      g_string_printf(buf, "<<Pressed delete>>");
+    break;
+    case KEY_PPAGE:
+      g_string_printf(buf, "<<Pressed page up>>");
+    break;
+    case KEY_NPAGE:
+      g_string_printf(buf, "<<Pressed page down>>");
+    break;
+    case KEY_ENTER:
+      g_string_printf(buf, "<<Pressed enter>>");
+    break;
+    default:
+      g_string_printf(buf, "<<Pressed unknown key %d>>", key);
+    break;
+  }
+
+  sc_add_output(server_console, buf);
 }
 
 static gboolean task_read_input(gpointer user_data) {
   server_console_t *server_console = (server_console_t *)user_data;
-  int key = getch();
+  wint_t wch;
+  int status = get_wch(&wch);
 
-  if (key != ERR)
-    sc_handle_key(server_console, key);
+  switch (status) {
+    case OK:
+      sc_handle_key(server_console, wch);
+    break;
+    case KEY_CODE_YES:
+      sc_handle_function_key(server_console, wch);
+    break;
+    default:
+    break;
+  }
 
   return G_SOURCE_CONTINUE;
 }
@@ -364,7 +449,6 @@ int main(int argc, char **argv) {
   cbreak();
   noecho();
   timeout(INPUT_TIMEOUT);
-  // nodelay(stdscr, TRUE);
   keypad(stdscr, TRUE);
   refresh();
 #endif

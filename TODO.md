@@ -2,8 +2,13 @@
 
 ## Proto
 
-1. Add a basic server console client app
-  - C, GLib and ncurses
+1. Finish a basic server console client app
+  - Add keybindings
+  - Add history
+  - Add some simple commands
+    - `quit`
+    - `connect`
+  - Handle resizing
 
 1. Implement retractable text widget
   - Every time a line is added, set a timer.
@@ -27,7 +32,16 @@
   - FPS
   - scoreboard
 
+1. Add a few new commands:
+  - `map`
+  - `reconnect`
+  - `say`
+  - `say_to/sayto`
+  - `name`
+
 1. Add `map` command
+
+1. Have server fork and redirect its output to a log file
 
 ## ZDDL
 
