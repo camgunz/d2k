@@ -268,9 +268,7 @@ static void sc_display_output(server_console_t *server_console) {
       server_console->output_window,
       TOP_MARGIN + i,
       LEFT_MARGIN,
-      "Line %d/%d: %s\n",
-      i,
-      rows,
+      "%s\n",
       buf->str
     );
 

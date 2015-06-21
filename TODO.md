@@ -37,8 +37,6 @@
   - `say_to/sayto`
   - `name`
 
-1. Add `map` command
-
 1. Have server fork and redirect its output to a log file
 
 1. Fix bug where you can type the backtick into the console
