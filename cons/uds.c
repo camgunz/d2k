@@ -9,65 +9,31 @@
 
 #include "uds.h"
 
-static uds_peer_t* uds_add_peer(uds_t *uds, GSocketAddress *address) {
-  uds_peer_t *peer;
-  gchar *address_string = socket_address_to_string(address);
-
-  if (g_hash_table_contains(uds->peer_directory, address_string)) {
-    g_print("Peer at %s already exists!\n", address_string);
-    g_free(address_string);
-    return NULL;
-  }
-
-  peer = g_malloc(sizeof(uds_peer_t));
-
-  if (!peer) {
-    g_printerr("Error allocating UDS peer\n");
-    exit(EXIT_FAILURE);
-  }
-
-  peer->address      = address;
-  peer->output       = g_string_new("");
-  peer->disconnected = FALSE;
-
-  g_hash_table_insert(uds->peer_directory, address_string, peer);
-
-  // g_print("Added peer at %s\n", address_string);
-
-  return peer;
-}
-
-static void uds_peer_free(uds_peer_t *peer) {
-  g_object_unref(peer->address);
-  g_string_free(peer->output, TRUE);
-  g_free(peer);
-}
-
-gboolean uds_readable(uds_t *uds) {
+static gboolean uds_readable(uds_t *uds) {
   return (uds->condition & G_IO_IN) == G_IO_IN;
 }
 
-gboolean uds_writable(uds_t *uds) {
+static gboolean uds_writable(uds_t *uds) {
   return (uds->condition & G_IO_OUT) == G_IO_OUT;
 }
 
-gboolean uds_has_exception(uds_t *uds) {
+static gboolean uds_has_exception(uds_t *uds) {
   return (uds->condition & G_IO_PRI) == G_IO_PRI;
 }
 
-gboolean uds_has_error(uds_t *uds) {
+static gboolean uds_has_error(uds_t *uds) {
   return (uds->condition & G_IO_ERR) == G_IO_ERR;
 }
 
-gboolean uds_hungup(uds_t *uds) {
+static gboolean uds_hungup(uds_t *uds) {
   return (uds->condition & G_IO_HUP) == G_IO_HUP;
 }
 
-gboolean uds_closed(uds_t *uds) {
+static gboolean uds_closed(uds_t *uds) {
   return (uds->condition & G_IO_NVAL) == G_IO_NVAL;
 }
 
-void check_uds_condition(uds_t *uds) {
+static void check_uds_condition(uds_t *uds) {
   if (uds_has_error(uds)) {
     g_printerr("External command interface socket returned an error\n");
     exit(EXIT_FAILURE);
@@ -80,6 +46,42 @@ void check_uds_condition(uds_t *uds) {
     g_printerr("External command interface socket closed\n");
     exit(EXIT_FAILURE);
   }
+}
+
+static uds_peer_t* uds_add_peer(uds_t *uds, GSocketAddress *address) {
+  uds_peer_t *peer;
+  gchar *address_string = socket_address_to_string(address);
+
+  if (g_hash_table_contains(uds->peer_directory, address_string)) {
+    g_print("Peer at %s already exists!\n", address_string);
+    g_free(address_string);
+    return NULL;
+  }
+
+  peer = g_malloc0(sizeof(uds_peer_t));
+
+  if (!peer) {
+    g_printerr("Error allocating UDS peer\n");
+    exit(EXIT_FAILURE);
+  }
+
+  peer->uds          = uds;
+  peer->address      = address;
+  peer->output       = g_string_new("");
+  peer->disconnected = FALSE;
+
+  g_hash_table_insert(uds->peer_directory, address_string, peer);
+  g_ptr_array_add(uds->peers, peer);
+
+  // g_print("Added peer at %s\n", address_string);
+
+  return peer;
+}
+
+static void uds_peer_free(uds_peer_t *peer) {
+  g_object_unref(peer->address);
+  g_string_free(peer->output, TRUE);
+  g_free(peer);
 }
 
 static void uds_check_for_connection(uds_t *uds) {
@@ -147,13 +149,13 @@ static gboolean uds_read_data(uds_t *uds) {
   }
 
   g_string_set_size(uds->input, bytes_read);
-  uds->handle_new_data(uds, peer);
+  uds->handle_data(uds, peer);
   g_string_erase(uds->input, 0, -1);
 
   return TRUE;
 }
 
-static gboolean uds_write_data(uds_t *uds, uds_peer_t *peer) {
+static gboolean uds_write_data(uds_peer_t *peer) {
   GError *error = NULL;
   gssize bytes_written;
 
@@ -161,7 +163,7 @@ static gboolean uds_write_data(uds_t *uds, uds_peer_t *peer) {
     return FALSE;
 
   bytes_written = g_socket_send_to(
-    uds->socket,
+    peer->uds->socket,
     peer->address,
     peer->output->str,
     peer->output->len,
@@ -170,20 +172,30 @@ static gboolean uds_write_data(uds_t *uds, uds_peer_t *peer) {
   );
 
   if (bytes_written < 0) {
-    if (error->code != G_IO_ERROR_WOULD_BLOCK)
-      g_print("Error sending UDS request response: %s\n", error->message);
+    if (error->code != G_IO_ERROR_WOULD_BLOCK) {
+      g_print("Disconnecting client: %s\n", error->message);
+      peer->disconnected = TRUE;
+      return FALSE;
+    }
 
+    peer->uds->has_pending_data = TRUE;
     return FALSE;
   }
 
-  if (bytes_written == 0)
+  if (bytes_written == 0) {
+    peer->uds->has_pending_data = TRUE;
     return FALSE;
+  }
 
   g_string_erase(peer->output, 0, bytes_written);
+
+  if (peer->output->len)
+    peer->uds->has_pending_data = TRUE;
+
   return TRUE;
 }
 
-static void uds_read_exception(uds_t *uds) {
+static gboolean uds_read_exception(uds_t *uds) {
   gssize bytes_read;
   GError *error = NULL;
   gssize exception_size;
@@ -229,7 +241,9 @@ static gboolean uds_peer_disconnected_cb(gpointer key, gpointer value,
 
 static void uds_peer_sendto_cb(gpointer key, gpointer value,
                                              gpointer user_data) {
-  uds_peer_sendto((uds_peer_t *)value, (const gchar *)user_data);
+  uds_peer_t *peer = (uds_peer_t *)value;
+
+  uds_peer_sendto(peer, (const gchar *)user_data);
 }
 
 static void uds_peer_free_address_cb(gpointer data) {
@@ -246,11 +260,11 @@ static void uds_remove_disconnected_peers(uds_t *uds) {
   if (!uds->peers->len)
     return;
 
-  for (int i = uds->peers->len - 1; i; i--) {
+  for (int i = uds->peers->len - 1; i >= 0; i--) {
     uds_peer_t *peer = (uds_peer_t *)g_ptr_array_index(uds->peers, i);
 
     if (peer->disconnected)
-      g_ptr_array_remove_index_fast(uds->peers, index);
+      g_ptr_array_remove_index_fast(uds->peers, i);
   }
 
   g_hash_table_foreach_remove(
@@ -258,12 +272,71 @@ static void uds_remove_disconnected_peers(uds_t *uds) {
   );
 }
 
+static void uds_write_data_cb(gpointer data, gpointer user_data) {
+  uds_write_data((uds_peer_t *)data);
+}
+
+static void uds_update_condition(uds_t *uds) {
+  uds->condition = g_socket_condition_check(uds->socket,
+    G_IO_IN   |
+    G_IO_OUT  |
+    G_IO_PRI  |
+    G_IO_ERR  |
+    G_IO_HUP  |
+    G_IO_NVAL
+  );
+}
+
+static void uds_read_data_check(uds_t *uds) {
+  if (!uds_readable(uds))
+    return;
+
+  uds_read_data(uds);
+}
+
+static void uds_flush_output(uds_t *uds) {
+  uds->has_pending_data = FALSE;
+  g_ptr_array_foreach(uds->peers, uds_write_data_cb, uds);
+  uds_remove_disconnected_peers(uds);
+}
+
+static void uds_flush_output_check(uds_t *uds) {
+  if (!uds_writable(uds))
+    return;
+
+  uds_flush_output(uds);
+}
+
+static gboolean uds_flush_output_cb(GIOChannel *source, GIOCondition condition,
+                                                        gpointer data) {
+  uds_t *uds = (uds_t *)data;
+
+  uds_flush_output(uds);
+
+  return uds->has_pending_data;
+}
+
+static gboolean uds_handle_input_cb(GIOChannel *source, GIOCondition condition,
+                                                        gpointer data) {
+  uds_read_data((uds_t *)data);
+  return TRUE;
+}
+
+static gboolean uds_handle_exception_cb(GIOChannel *source,
+                                        GIOCondition condition,
+                                        gpointer data) {
+  uds_read_exception((uds_t *)data);
+  return TRUE;
+}
+
 gchar* socket_address_to_string(GSocketAddress *addr) {
   return g_strdup(g_unix_socket_address_get_path(G_UNIX_SOCKET_ADDRESS(addr)));
 }
 
 void uds_init(uds_t *uds, const gchar *socket_path,
-                          uds_handle_new_data handle_new_data) {
+                          uds_handle_data handle_data,
+                          uds_handle_exception handle_exception,
+                          gboolean service_manually) {
   GSocketAddress *socket_address;
   GError *error = NULL;
   gboolean bound;
@@ -323,13 +396,30 @@ void uds_init(uds_t *uds, const gchar *socket_path,
   g_socket_set_blocking(uds->socket, FALSE);
 
   uds->peers = g_ptr_array_new_with_free_func(uds_peer_free_cb);
-  uds->peer_directory = g_hash_table_new(
-    g_str_hash, g_str_equal, uds_peer_free_address_cb
+  uds->peer_directory = g_hash_table_new_full(
+    g_str_hash, g_str_equal, uds_peer_free_address_cb, NULL
   );
   uds->input = g_string_new("");
   uds->exception = g_string_new("");
-  uds->handle_new_data = handle_new_data;
+  uds->handle_data = handle_data;
   uds->waiting_for_connection = FALSE;
+  uds->has_pending_data = FALSE;
+  uds->service_manually = service_manually;
+
+  if (!uds->service_manually) {
+    g_io_add_watch(
+      uds_get_iochannel(uds),
+      G_IO_IN,
+      uds_handle_input_cb,
+      uds
+    );
+    g_io_add_watch(
+      uds_get_iochannel(uds),
+      G_IO_PRI,
+      uds_handle_exception_cb,
+      uds
+    );
+  }
 }
 
 void uds_free(uds_t *uds) {
@@ -372,15 +462,17 @@ void uds_connect(uds_t *uds, const gchar *socket_path) {
 }
 
 void uds_service(uds_t *uds) {
+  uds_update_condition(uds);
+
   uds_read_exception(uds);
 
   if (uds->waiting_for_connection) {
-    uds_check_connection(uds);
+    uds_check_for_connection(uds);
     return;
   }
 
   uds_read_data_check(uds);
-  g_ptr_array_foreach(uds->peer_directory, uds_write_data_check_cb, uds);
+  uds_flush_output_check(uds);
 }
 
 uds_peer_t* uds_get_peer(uds_t *uds, const gchar *peer_address) {
@@ -404,12 +496,22 @@ gboolean uds_sendto(uds_t *uds, const gchar *peer_address, const gchar *data) {
     return FALSE;
 
   uds_peer_sendto(peer, data);
+  return TRUE;
 }
 
-void uds_peer_sendto(uds_t *uds, uds_peer_t *peer, const gchar *data) {
+void uds_peer_sendto(uds_peer_t *peer, const gchar *data) {
   g_string_append(peer->output, data);
 
-  uds->has_pending_data = true;
+  peer->uds->has_pending_data = TRUE;
+
+  if (!peer->uds->service_manually) {
+    g_io_add_watch(
+      uds_get_iochannel(peer->uds),
+      G_IO_OUT,
+      uds_flush_output_cb,
+      peer->uds
+    );
+  }
 }
 
 /* vi: set et ts=2 sw=2: */

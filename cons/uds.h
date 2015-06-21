@@ -23,9 +23,12 @@ typedef struct uds_s {
   uds_handle_data      handle_data;
   uds_handle_exception handle_exception;
   gboolean             waiting_for_connection;
+  gboolean             has_pending_data;
+  gboolean             service_manually;
 } uds_t;
 
 typedef struct uds_peer_s {
+  uds_t          *uds;
   GSocketAddress *address;
   GString        *output;
   gboolean        disconnected;
@@ -34,7 +37,8 @@ typedef struct uds_peer_s {
 gchar*      socket_address_to_string(GSocketAddress *addr);
 void        uds_init(uds_t *uds, const gchar *socket_path,
                                  uds_handle_data handle_data,
-                                 uds_handle_exception handle_exception);
+                                 uds_handle_exception handle_exception,
+                                 gboolean service_manually);
 void        uds_free(uds_t *uds);
 void        uds_connect(uds_t *uds, const gchar *socket_path);
 void        uds_service(uds_t *uds);
@@ -43,7 +47,7 @@ GIOChannel* uds_get_iochannel(uds_t *uds);
 void        uds_broadcast(uds_t *uds, const gchar *data);
 gboolean    uds_sendto(uds_t *uds, const gchar *peer_address,
                                    const gchar *data);
-void        uds_peer_sendto(uds_t *uds, uds_peer_t *peer, const gchar *data);
+void        uds_peer_sendto(uds_peer_t *peer, const gchar *data);
 
 #endif
 
