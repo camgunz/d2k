@@ -21,7 +21,7 @@
 
 #define MESSAGE_INTERVAL 1000
 
-#define INPUT_TIMEOUT 10
+#define INPUT_TIMEOUT 15
 
 #define INPUT_LINE_HEIGHT  1
 #define TOP_MARGIN    1
@@ -177,12 +177,17 @@ static void sc_display_input(server_console_t *server_console) {
 }
 
 static void sc_display_output(server_console_t *server_console) {
+  static GString *buf = NULL;
+
   int     cx;
   int     cy;
   int     cols;
   int     rows;
   gchar  *first_line;
   gchar **lines;
+
+  if (!buf)
+    buf = g_string_new("");
 
   sc_clear_output(server_console);
   sc_get_output_dimensions(server_console, &cols, &rows);
@@ -240,27 +245,45 @@ static void sc_display_output(server_console_t *server_console) {
   else
     first_line = server_console->line_broken_output->str;
 
-  lines = g_strsplit(first_line, "\n", (rows - TOP_MARGIN) + 1);
-
   for (int i = 0; i < rows; i++) {
-    if (!lines[i])
+    gchar *next_line;
+
+    if (!first_line)
       break;
 
-    if (!*lines[i])
-      continue;
+    next_line = g_utf8_strchr(first_line, -1, '\n');
+
+    if (!*first_line)
+      goto load_next_line;
+
+    if (next_line) {
+      g_string_erase(buf, 0, -1);
+      g_string_insert_len(buf, 0, first_line, (next_line - first_line) + 1);
+    }
+    else {
+      g_string_printf(buf, "%s\n", first_line);
+    }
 
     mvwprintw(
       server_console->output_window,
       TOP_MARGIN + i,
       LEFT_MARGIN,
-      "Line %u/%d: %s\n",
+      "Line %d/%d: %s\n",
       i,
       rows,
-      lines[i]
+      buf->str
     );
-  }
 
-  g_strfreev(lines);
+load_next_line:
+
+    if (!next_line)
+      break;
+
+    first_line = g_utf8_next_char(next_line);
+
+    if (!first_line)
+      break;
+  }
 
 refresh:
 
