@@ -41,6 +41,8 @@
 
 1. Have server fork and redirect its output to a log file
 
+1. Fix bug where you can type the backtick into the console
+
 ## ZDDL
 
 1. Fix switching to vidingl
