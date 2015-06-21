@@ -43,6 +43,18 @@ typedef struct server_console_s {
 
 static server_console_t server_console;
 
+static void sc_clear_output(server_console_t *server_console) {
+  werase(server_console->output_window);
+  box(server_console->output_window, 0, 0);
+  wrefresh(server_console->output_window);
+}
+
+static void sc_clear_input(server_console_t *server_console) {
+  werase(server_console->input_window);
+  box(server_console->input_window, 0, 0);
+  wrefresh(server_console->input_window);
+}
+
 static void sc_refresh_output(server_console_t *server_console) {
   box(server_console->output_window, 0, 0);
   wrefresh(server_console->output_window);
@@ -61,6 +73,7 @@ static void sc_refresh(server_console_t *server_console) {
 
 static void sc_get_output_dimensions(server_console_t *server_console,
                                      int *cols, int *rows) {
+#if ENABLE_CURSES
   int startx;
   int starty;
   int endx;
@@ -71,6 +84,10 @@ static void sc_get_output_dimensions(server_console_t *server_console,
 
   *cols = endx - startx;
   *rows = endy - starty;
+#else
+  *cols = 78;
+  *rows = 20;
+#endif
 }
 
 static void sc_layout_output(server_console_t *server_console) {
@@ -79,7 +96,13 @@ static void sc_layout_output(server_console_t *server_console) {
   gchar  *first_line;
   gchar **lines;
 
+#if ENABLE_CURSES
+  sc_clear_output(server_console);
+#endif
   sc_get_output_dimensions(server_console, &cols, &rows);
+
+  rows -= (TOP_MARGIN + 1) + (BOTTOM_MARGIN + 1);
+
   first_line = g_strrstr(server_console->line_broken_output->str, "\n");
 
   if (!first_line) {
@@ -89,6 +112,7 @@ static void sc_layout_output(server_console_t *server_console) {
     if (server_console->line_broken_output->len > total_window_size)
       offset = server_console->line_broken_output->len - total_window_size;
 
+#if ENABLE_CURSES
     mvwprintw(
       server_console->output_window,
       TOP_MARGIN,
@@ -96,47 +120,64 @@ static void sc_layout_output(server_console_t *server_console) {
       "%s",
       server_console->line_broken_output->str + offset
     );
+#else
+    g_print("%s\n", server_console->line_broken_output->str + offset);
+#endif
 
     goto refresh;
   }
 
   for (int i = 0; i < server_console->scroll; i++) {
+    if (!first_line)
+      break;
+
     first_line = g_strrstr_len(
       server_console->line_broken_output->str,
-      first_line - server_console->line_broken_output->str,
+      (first_line - server_console->line_broken_output->str) - 1,
       "\n"
     );
-
-    if (!first_line) {
-      first_line = server_console->line_broken_output->str;
-      break;
-    }
   }
 
-  while (rows--) {
+  for (int i = 0; i < rows; i++) {
+    if (!first_line)
+      break;
+
     first_line = g_strrstr_len(
       server_console->line_broken_output->str,
-      first_line - server_console->line_broken_output->str,
+      (first_line - server_console->line_broken_output->str) - 1,
       "\n"
     );
-
-    if (!first_line) {
-      first_line = server_console->line_broken_output->str;
-      break;
-    }
   }
 
-  lines = g_strsplit(first_line, "\n", rows - TOP_MARGIN);
+  if (first_line)
+    first_line = g_utf8_next_char(first_line);
+  else
+    first_line = server_console->line_broken_output->str;
 
-  for (gchar **line = lines; *line; line++) {
+  lines = g_strsplit(first_line, "\n", (rows - TOP_MARGIN) + 1);
+
+  for (int i = 0; i < rows; i++) {
+    if (!lines[i])
+      break;
+
+    if (!*lines[i])
+      continue;
+
+#if ENABLE_CURSES
     mvwprintw(
       server_console->output_window,
-      TOP_MARGIN + (line - lines),
+      TOP_MARGIN + i,
       LEFT_MARGIN,
-      "%s",
-      *line
+      "Line %u/%d: %s\n",
+      i,
+      rows,
+      lines[i]
     );
+#else
+    g_print("Line %u: %s\n", i, lines[i]);
+#endif
   }
+  g_print("\n");
 
   g_strfreev(lines);
 
@@ -172,13 +213,6 @@ static void sc_update_layout(server_console_t *server_console, gsize offset) {
     LANGUAGE,
     server_console->line_breaks + offset
   );
-
-#if ENABLE_CURSES
-  sc_get_output_dimensions(server_console, &cols, &rows);
-#else
-  rows = 20;
-  cols = 78;
-#endif
 
   os = server_console->output->str;
   ss = server_console->output->str + offset;
@@ -317,12 +351,6 @@ static WINDOW* add_window(int x, int y, int width, int height) {
   return w;
 }
 
-static void remove_window(WINDOW *w) {
-  wborder(w, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
-  wrefresh(w);
-  delwin(w);
-}
-
 int main(int argc, char **argv) {
   int output_width;
   int output_height;
@@ -387,8 +415,9 @@ int main(int argc, char **argv) {
   mc = g_main_context_default();
   loop = g_main_loop_new(mc, FALSE);
 
+#if ENABLE_CURSES
   g_idle_add(task_read_input, &server_console);
-  // g_timeout_add(INPUT_TIMEOUT, task_read_input, &server_console);
+#endif
   g_timeout_add(MESSAGE_INTERVAL, task_send_data, &server_console);
 
   g_main_loop_run(loop);
