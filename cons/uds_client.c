@@ -1,5 +1,6 @@
 #define _XOPEN_SOURCE_EXTENDED
 
+#include <signal.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,7 +12,7 @@
 #include <gio/gio.h>
 #include <gio/gunixsocketaddress.h>
 
-#include <curses.h>
+#include <ncurses.h>
 
 #include <linebreak.h>
 
@@ -51,6 +52,19 @@ typedef struct server_console_s {
 } server_console_t;
 
 static server_console_t server_console;
+
+static void sc_get_dimensions(int *cols, int *rows) {
+  int startx;
+  int starty;
+  int endx;
+  int endy;
+
+  getbegyx(stdscr, starty, startx);
+  getmaxyx(stdscr, endy, endx);
+
+  *cols = endx - startx;
+  *rows = endy - starty;
+}
 
 static void sc_refresh_input(server_console_t *server_console) {
   box(server_console->input_window, 0, 0);
@@ -375,19 +389,28 @@ static void sc_reformat_output(server_console_t *server_console) {
   sc_format_output(server_console, 0);
 }
 
-static void sc_add_output(server_console_t *server_console, GString *data) {
+static void sc_add_output_manual(server_console_t *server_console,
+                                 const gchar *str,
+                                 const gsize len) {
   gsize starting_length = server_console->output->len;
 
-  if (!data->len)
+  if (!str)
     return;
 
-  if (!g_utf8_validate(data->str, data->len, NULL))
-    g_string_printf(data, "<Invalid UTF-8 data>");
+  if (!len)
+    return;
 
-  g_string_append(server_console->output, data->str);
+  if (!g_utf8_validate(str, len, NULL))
+    g_string_append(server_console->output, "<Invalid UTF-8 data>\n");
+  else
+    g_string_append(server_console->output, str);
 
   sc_format_output(server_console, starting_length);
   sc_display_output(server_console);
+}
+
+static void sc_add_output(server_console_t *server_console, GString *data) {
+  sc_add_output_manual(server_console, data->str, data->len);
 }
 
 static void handle_data(uds_t *uds, uds_peer_t *peer) {
@@ -402,6 +425,8 @@ static void handle_exception(uds_t *uds) {
 
 static void cleanup(void) {
   uds_free(&server_console.uds);
+  clear();
+  refresh();
   endwin();
 }
 
@@ -457,9 +482,6 @@ static void sc_scroll_output_up(server_console_t *server_console) {
 }
 
 static void sc_scroll_output_down(server_console_t *server_console) {
-}
-
-static void resize_console(void) {
 }
 
 static void sc_handle_command(server_console_t *server_console) {
@@ -524,14 +546,62 @@ static void sc_handle_function_key(server_console_t *server_console,
   }
 }
 
+static WINDOW* add_window(int x, int y, int width, int height) {
+  WINDOW *w = newwin(height, width, y, x);
+
+  box(w, 0, 0);
+  wrefresh(w);
+
+  return w;
+}
+
+static void delete_window(WINDOW *w) {
+  werase(w);
+  wborder(w, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
+  refresh();
+  delwin(w);
+  refresh();
+}
+
+static void init_curses(void) {
+  initscr();
+  cbreak();
+  noecho();
+  timeout(INPUT_TIMEOUT);
+  keypad(stdscr, TRUE);
+  refresh();
+}
+
 static gboolean task_resize_console(gpointer user_data) {
   server_console_t *server_console = (server_console_t *)user_data;
 
   sc_clear_input(server_console);
   sc_clear_output(server_console);
+
+  delete_window(server_console->input_window);
+  delete_window(server_console->output_window);
+
+  endwin();
+  initscr();
+  refresh();
+  clear();
+
+  server_console->input_window = add_window(
+    0, OUTPUT_HEIGHT, INPUT_WIDTH, INPUT_HEIGHT
+  );
+  server_console->output_window = add_window(
+    0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT
+  );
+
+  wrefresh(server_console->input_window);
+  wrefresh(server_console->output_window);
+
   sc_reformat_output(server_console);
+
   sc_display_input(server_console);
   sc_display_output(server_console);
+
+  sc_refresh(server_console);
 
   return G_SOURCE_REMOVE;
 }
@@ -559,26 +629,19 @@ static gboolean task_read_input(gpointer user_data) {
   return G_SOURCE_CONTINUE;
 }
 
-static WINDOW* add_window(int x, int y, int width, int height) {
-  WINDOW *w = newwin(height, width, y, x);
-
-  box(w, 0, 0);
-  wrefresh(w);
-
-  return w;
-}
-
 int main(int argc, char **argv) {
   signal(SIGWINCH, handle_resize);
 
-  initscr();
-  cbreak();
-  noecho();
-  timeout(INPUT_TIMEOUT);
-  keypad(stdscr, TRUE);
-  refresh();
+  if (argc != 2) {
+    g_printerr("\nUsage: %s [ socket_path ]\n\n",
+      g_path_get_basename(argv[0])
+    );
+    exit(EXIT_FAILURE);
+  }
 
   memset(&server_console, 0, sizeof(server_console_t));
+
+  init_curses();
 
   uds_init(
     &server_console.uds,
@@ -611,7 +674,7 @@ int main(int argc, char **argv) {
   sc_update_cursor(&server_console);
   refresh();
 
-  uds_connect(&server_console.uds, SERVER_SOCKET_NAME);
+  uds_connect(&server_console.uds, argv[1]);
 
   server_console.mc = g_main_context_default();
   server_console.loop = g_main_loop_new(server_console.mc, FALSE);

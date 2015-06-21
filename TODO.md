@@ -6,7 +6,6 @@
   - Add keybindings
   - Add history
   - Handle resizing
-  - Add socket command-line argument
 
 1. Implement retractable text widget
   - Every time a line is added, set a timer.
