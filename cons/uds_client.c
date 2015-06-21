@@ -333,15 +333,46 @@ static gboolean task_send_data(gpointer user_data) {
   return G_SOURCE_CONTINUE;
 }
 
+static void sc_show_history_previous(server_console_t *server_console) {
+}
+
+static void sc_show_history_next(server_console_t *server_console) {
+}
+
+static void sc_move_cursor_left(server_console_t *server_console) {
+}
+
+static void sc_move_cursor_right(server_console_t *server_console) {
+}
+
+static void sc_move_cursor_home(server_console_t *server_console) {
+}
+
+static void sc_move_cursor_to_end(server_console_t *server_console) {
+}
+
+static void sc_delete_previous_char(server_console_t *server_console) {
+}
+
+static void sc_delete_next_char(server_console_t *server_console) {
+}
+
+static void sc_scroll_output_up(server_console_t *server_console) {
+}
+
+static void sc_scroll_output_down(server_console_t *server_console) {
+}
+
+static void sc_handle_command(server_console_t *server_console) {
+  if (g_strcmp0(server_console->input->str, ":q"))
+    exit(EXIT_SUCCESS);
+  if (g_strcmp0(server_console->input->str, ":quit"))
+    exit(EXIT_SUCCESS);
+}
+
 static void sc_handle_key(server_console_t *server_console, wint_t key) {
-  static GString *buf = NULL;
-
-  if (!buf)
-    buf = g_string_new("");
-
   if (key == '\n') {
-    g_string_printf(buf, "<<Pressed enter>>");
-    sc_add_output(server_console, buf);
+    sc_handle_command(server_console);
     return;
   }
 
@@ -361,51 +392,43 @@ static void sc_handle_key(server_console_t *server_console, wint_t key) {
 
 static void sc_handle_function_key(server_console_t *server_console,
                                    wint_t key) {
-  static GString *buf = NULL;
-
-  if (!buf)
-    buf = g_string_new("");
-
   switch (key) {
     case KEY_UP:
-      g_string_printf(buf, "<<Pressed up>>");
+      sc_show_history_previous(server_console);
     break;
     case KEY_DOWN:
-      g_string_printf(buf, "<<Pressed down>>");
+      sc_show_history_next(server_console);
     break;
     case KEY_LEFT:
-      g_string_printf(buf, "<<Pressed left>>");
+      sc_move_cursor_left(server_console);
     break;
     case KEY_RIGHT:
-      g_string_printf(buf, "<<Pressed right>>");
+      sc_move_cursor_right(server_console);
     break;
     case KEY_HOME:
-      g_string_printf(buf, "<<Pressed home>>");
+      sc_move_cursor_home(server_console);
     break;
     case KEY_END:
-      g_string_printf(buf, "<<Pressed end>>");
+      sc_move_cursor_to_end(server_console);
     break;
     case KEY_BACKSPACE:
-      g_string_printf(buf, "<<Pressed backspace>>");
+      sc_delete_previous_char(server_console);
     break;
     case KEY_DC:
-      g_string_printf(buf, "<<Pressed delete>>");
+      sc_delete_next_char(server_console);
     break;
     case KEY_PPAGE:
-      g_string_printf(buf, "<<Pressed page up>>");
+      sc_scroll_output_up(server_console);
     break;
     case KEY_NPAGE:
-      g_string_printf(buf, "<<Pressed page down>>");
+      sc_scroll_output_down(server_console);
     break;
     case KEY_ENTER:
-      g_string_printf(buf, "<<Pressed enter>>");
+      sc_handle_command(server_console);
     break;
     default:
-      g_string_printf(buf, "<<Pressed unknown key %d>>", key);
     break;
   }
-
-  sc_add_output(server_console, buf);
 }
 
 static gboolean task_read_input(gpointer user_data) {

@@ -5,10 +5,8 @@
 1. Finish a basic server console client app
   - Add keybindings
   - Add history
-  - Add some simple commands
-    - `quit`
-    - `connect`
   - Handle resizing
+  - Add socket command-line argument
 
 1. Implement retractable text widget
   - Every time a line is added, set a timer.
