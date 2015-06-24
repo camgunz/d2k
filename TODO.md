@@ -3,14 +3,14 @@
 ## Proto
 
 1. Finish a basic server console client app
-  - Add keybindings
+  - Add scroll up/down
   - Add history
-  - Handle resizing
+  - Fix output formatting on resize
 
 1. Implement retractable text widget
   - Every time a line is added, set a timer.
   - When timer expires, start retracting.
-  - When retraction finishes and`if vertical_offset != layout_height`:
+  - When retraction finishes and `vertical_offset != layout_height`:
     - reset timer
 
 1. Add/fix wrapping to/for InputWidget

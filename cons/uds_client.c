@@ -39,6 +39,7 @@
 typedef struct server_console_s {
   GMainContext *mc;
   GMainLoop    *loop;
+  const gchar  *server_socket_name;
   uds_t         uds;
   WINDOW       *input_window;
   WINDOW       *output_window;
@@ -46,12 +47,34 @@ typedef struct server_console_s {
   GString      *output;
   GString      *line_broken_output;
   gchar        *line_breaks;
+  gssize        input_index;
   gsize         input_scroll;
   gsize         output_scroll;
   gsize         line_count;
 } server_console_t;
 
 static server_console_t server_console;
+
+static void sc_move_cursor_home(server_console_t *server_console);
+
+static void sc_to_server(server_console_t *server_console, const gchar *format,
+                                                           ...) {
+  static GString *buf = NULL;
+
+  uds_peer_t *server = uds_get_peer(
+    &server_console->uds, server_console->server_socket_name
+  );
+  va_list args;
+
+  if (!buf)
+    buf = g_string_new("");
+
+  va_start(args, format);
+  g_string_vprintf(buf, format, args);
+  va_end(args);
+
+  uds_peer_sendto(server, buf->str);
+}
 
 static void sc_get_dimensions(int *cols, int *rows) {
   int startx;
@@ -66,24 +89,33 @@ static void sc_get_dimensions(int *cols, int *rows) {
   *rows = endy - starty;
 }
 
-static void sc_refresh_input(server_console_t *server_console) {
+static void sc_refresh_input_window(server_console_t *server_console) {
   box(server_console->input_window, 0, 0);
   wrefresh(server_console->input_window);
 }
 
-static void sc_refresh_output(server_console_t *server_console) {
+static void sc_refresh_output_window(server_console_t *server_console) {
   box(server_console->output_window, 0, 0);
   wrefresh(server_console->output_window);
 }
 
-static void sc_clear_input(server_console_t *server_console) {
+static void sc_clear_input_window(server_console_t *server_console) {
   werase(server_console->input_window);
-  sc_refresh_input(server_console);
+  sc_refresh_input_window(server_console);
 }
 
-static void sc_clear_output(server_console_t *server_console) {
+static void sc_clear_output_window(server_console_t *server_console) {
   werase(server_console->output_window);
-  sc_refresh_output(server_console);
+  sc_refresh_output_window(server_console);
+}
+
+static void sc_clear_input(server_console_t *server_console) {
+  server_console->input_index = 0;
+  server_console->input_scroll = 0;
+  g_string_erase(server_console->input, 0, -1);
+  sc_move_cursor_home(server_console);
+  sc_clear_input_window(server_console);
+  refresh();
 }
 
 static void sc_get_cursor_position(server_console_t *server_console, int *x,
@@ -113,8 +145,8 @@ static void sc_update_cursor(server_console_t *server_console) {
   if (curx < LEFT_MARGIN)
     newx = LEFT_MARGIN;
 
-  if (curx > INPUT_WIDTH)
-    newx = INPUT_WIDTH;
+  if (curx > (INPUT_WIDTH - LEFT_MARGIN))
+    newx = (INPUT_WIDTH - LEFT_MARGIN);
 
   if (cury != INPUT_Y)
     newy = INPUT_Y;
@@ -129,9 +161,25 @@ static void sc_update_cursor(server_console_t *server_console) {
   }
 }
 
+static gssize sc_get_input_index(server_console_t *server_console) {
+  int    x;
+  int    y;
+  gssize pos;
+
+  sc_get_cursor_position(server_console, &x, &y);
+
+  if (x <= 0)
+    return 0;
+
+  if (x == (server_console->input->len + 1))
+    return -1;
+
+  return x - 1;
+}
+
 static void sc_refresh(server_console_t *server_console) {
-  sc_refresh_input(server_console);
-  sc_refresh_output(server_console);
+  sc_refresh_input_window(server_console);
+  sc_refresh_output_window(server_console);
   sc_update_cursor(server_console);
   refresh();
 }
@@ -150,11 +198,23 @@ static void sc_get_output_dimensions(server_console_t *server_console,
   *rows = endy - starty;
 }
 
+static gsize get_char_count(void) {
+  return (INPUT_WIDTH - (LEFT_MARGIN + RIGHT_MARGIN)) - 1;
+}
+
+static gsize sc_get_max_scroll(server_console_t *server_console) {
+  gsize char_count = get_char_count();
+
+  if (server_console->input->len > char_count)
+    return server_console->input->len - char_count;
+
+  return 0;
+}
+
 static void sc_display_input(server_console_t *server_console) {
   static GString *buf;
 
-  gsize  cols = INPUT_WIDTH;
-  gsize  max_scroll;
+  gsize  char_count = get_char_count();
   gsize  input_length;
   gchar *input_line;
 
@@ -163,20 +223,19 @@ static void sc_display_input(server_console_t *server_console) {
   else
     g_string_erase(buf, 0, -1);
 
-  if (cols <= server_console->input->len) {
-    max_scroll = server_console->input->len - cols;
-    input_length = cols;
-  }
-  else {
-    max_scroll = 0;
-    input_length = server_console->input->len;
-  }
+  sc_to_server(server_console, "SCDI: input_scroll: %u\n",
+    server_console->input_scroll
+  );
 
-  server_console->input_scroll = MIN(server_console->input_scroll, max_scroll);
   input_line = server_console->input->str + server_console->input_scroll;
+  input_length = MIN(
+    char_count + 1,
+    server_console->input->len - server_console->input_scroll
+  );
+
   g_string_insert_len(buf, 0, input_line, input_length);
 
-  sc_clear_input(server_console);
+  sc_clear_input_window(server_console);
   mvwprintw(
     server_console->input_window,
     TOP_MARGIN,
@@ -185,8 +244,7 @@ static void sc_display_input(server_console_t *server_console) {
     buf->str
   );
 
-  move(INPUT_Y, buf->len + 1);
-  sc_refresh_input(server_console);
+  sc_refresh_input_window(server_console);
   refresh();
 }
 
@@ -203,7 +261,7 @@ static void sc_display_output(server_console_t *server_console) {
   if (!buf)
     buf = g_string_new("");
 
-  sc_clear_output(server_console);
+  sc_clear_output_window(server_console);
   sc_get_output_dimensions(server_console, &cols, &rows);
 
   sc_get_cursor_position(server_console, &cx, &cy);
@@ -299,7 +357,7 @@ load_next_line:
 
 refresh:
 
-  sc_refresh_output(server_console);
+  sc_refresh_output_window(server_console);
   sc_set_cursor_position(server_console, cx, cy);
   refresh();
 }
@@ -436,7 +494,7 @@ static gboolean task_send_data(gpointer user_data) {
 
   server_console_t *server_console = (server_console_t *)user_data;
   uds_t *uds = &server_console->uds;
-  uds_peer_t *server = uds_get_peer(uds, SERVER_SOCKET_NAME);
+  uds_peer_t *server = uds_get_peer(uds, server_console->server_socket_name);
 
   if (!s)
     s = g_string_new("");
@@ -460,22 +518,122 @@ static void sc_show_history_previous(server_console_t *server_console) {
 static void sc_show_history_next(server_console_t *server_console) {
 }
 
+static void sc_scroll_input_right(server_console_t *server_console) {
+  if (server_console->input_scroll > 0)
+    server_console->input_scroll--;
+
+  sc_to_server(
+    server_console, "Scroll right: %u\n", server_console->input_scroll
+  );
+}
+
+static void sc_scroll_input_left(server_console_t *server_console) {
+  gsize ms = sc_get_max_scroll(server_console);
+
+  server_console->input_scroll = MIN(server_console->input_scroll + 1, ms);
+  sc_to_server(
+    server_console, "MS, Scroll left: %u, %u\n", ms, server_console->input_scroll
+  );
+}
+
 static void sc_move_cursor_left(server_console_t *server_console) {
+  int x;
+  int y;
+
+  sc_get_cursor_position(server_console, &x, &y);
+
+  if (x <= LEFT_MARGIN)
+    sc_scroll_input_right(server_console);
+
+  x = MAX(x - 1, LEFT_MARGIN);
+
+  sc_set_cursor_position(server_console, x, y);
+
+  if (server_console->input_index == -1)
+    server_console->input_index = server_console->input->len - 1;
+  else if (server_console->input_index > 0)
+    server_console->input_index--;
+
+  sc_display_input(server_console);
 }
 
 static void sc_move_cursor_right(server_console_t *server_console) {
+  int   x;
+  int   y;
+  gsize ms = sc_get_max_scroll(server_console);
+  gsize char_count = get_char_count();
+
+  sc_get_cursor_position(server_console, &x, &y);
+
+  sc_to_server(server_console,
+    "cc, x, INPUT_WIDTH, LM, RM, len: %d, %d, %d, %d, %d, %d\n",
+    char_count,
+    x,
+    INPUT_WIDTH,
+    LEFT_MARGIN,
+    RIGHT_MARGIN,
+    server_console->input->len
+  );
+
+  if (x > char_count)
+    sc_scroll_input_left(server_console);
+
+  x = MIN(x + 1, MIN(
+    server_console->input->len + LEFT_MARGIN,
+    char_count + LEFT_MARGIN
+  ));
+
+  sc_set_cursor_position(server_console, x, y);
+
+  if (server_console->input_index == server_console->input->len - 1)
+    server_console->input_index = -1;
+  else if (server_console->input_index < server_console->input->len - 1)
+    server_console->input_index++;
+
+  sc_display_input(server_console);
 }
 
 static void sc_move_cursor_home(server_console_t *server_console) {
+  int x;
+  int y;
+
+  sc_get_cursor_position(server_console, &x, &y);
+  sc_set_cursor_position(server_console, LEFT_MARGIN, y);
+  server_console->input_index = 0;
+  server_console->input_scroll = 0;
+  sc_display_input(server_console);
 }
 
 static void sc_move_cursor_to_end(server_console_t *server_console) {
-}
+  int   x;
+  int   y;
+  gsize char_count = get_char_count();
 
-static void sc_delete_previous_char(server_console_t *server_console) {
+  sc_get_cursor_position(server_console, &x, &y);
+  x = MIN(server_console->input->len + LEFT_MARGIN, char_count + LEFT_MARGIN);
+  sc_set_cursor_position(server_console, x, y);
+  server_console->input_index = -1;
+  server_console->input_scroll = sc_get_max_scroll(server_console);
+  sc_display_input(server_console);
 }
 
 static void sc_delete_next_char(server_console_t *server_console) {
+  if (server_console->input_index < 0)
+    return;
+
+  if (!server_console->input->len)
+    return;
+
+  if (server_console->input_index >= server_console->input->len)
+    return;
+
+  g_string_erase(server_console->input, server_console->input_index, 1);
+  sc_display_input(server_console);
+}
+
+static void sc_delete_previous_char(server_console_t *server_console) {
+  sc_move_cursor_left(server_console);
+  sc_delete_next_char(server_console);
 }
 
 static void sc_scroll_output_up(server_console_t *server_console) {
@@ -489,19 +647,30 @@ static void sc_handle_command(server_console_t *server_console) {
     exit(EXIT_SUCCESS);
   if (g_strcmp0(server_console->input->str, ":quit") == 0)
     exit(EXIT_SUCCESS);
-
-  g_string_erase(server_console->input, 0, -1);
-  sc_display_input(server_console);
 }
 
 static void sc_handle_key(server_console_t *server_console, wint_t key) {
   if (key == '\n') {
     sc_handle_command(server_console);
+    sc_clear_input(server_console);
+
     return;
   }
 
-  g_string_append_unichar(server_console->input, key);
+  if (key == 127) {
+    sc_delete_previous_char(server_console);
+    return;
+  }
 
+  sc_to_server(server_console, "Inserting at %d/%u\n",
+    server_console->input_index, server_console->input->len
+  );
+
+  g_string_insert_unichar(
+    server_console->input, server_console->input_index, key
+  );
+
+  sc_move_cursor_right(server_console);
   sc_display_input(server_console);
 }
 
@@ -575,8 +744,8 @@ static void init_curses(void) {
 static gboolean task_resize_console(gpointer user_data) {
   server_console_t *server_console = (server_console_t *)user_data;
 
-  sc_clear_input(server_console);
-  sc_clear_output(server_console);
+  sc_clear_input_window(server_console);
+  sc_clear_output_window(server_console);
 
   delete_window(server_console->input_window);
   delete_window(server_console->output_window);
@@ -641,6 +810,8 @@ int main(int argc, char **argv) {
 
   memset(&server_console, 0, sizeof(server_console_t));
 
+  server_console.server_socket_name = argv[1];
+
   init_curses();
 
   uds_init(
@@ -674,7 +845,7 @@ int main(int argc, char **argv) {
   sc_update_cursor(&server_console);
   refresh();
 
-  uds_connect(&server_console.uds, argv[1]);
+  uds_connect(&server_console.uds, server_console.server_socket_name);
 
   server_console.mc = g_main_context_default();
   server_console.loop = g_main_loop_new(server_console.mc, FALSE);
