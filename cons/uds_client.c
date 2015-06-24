@@ -19,6 +19,7 @@
 #include "uds.h"
 
 #define LANGUAGE "en"
+#define LOCAL_COMMAND_MARKER ":"
 
 #define MESSAGE_INTERVAL 1000
 
@@ -44,6 +45,7 @@ typedef struct server_console_s {
   WINDOW       *input_window;
   WINDOW       *output_window;
   GString      *input;
+  GPtrArray    *history;
   GString      *output;
   GString      *line_broken_output;
   gchar        *line_breaks;
@@ -642,11 +644,46 @@ static void sc_scroll_output_up(server_console_t *server_console) {
 static void sc_scroll_output_down(server_console_t *server_console) {
 }
 
-static void sc_handle_command(server_console_t *server_console) {
+static void sc_handle_local_command(server_console_t *server_console) {
   if (g_strcmp0(server_console->input->str, ":q") == 0)
     exit(EXIT_SUCCESS);
   if (g_strcmp0(server_console->input->str, ":quit") == 0)
     exit(EXIT_SUCCESS);
+}
+
+static void sc_handle_command(server_console_t *server_console) {
+  static GString *buf = NULL;
+
+  uds_peer_t *server;
+
+  if (!server_console->input->len)
+    return;
+
+  if (strncmp(server_console->input->str, LOCAL_COMMAND_MARKER, 1) == 0) {
+    sc_handle_local_command(server_console);
+    return;
+  }
+
+  server = uds_get_peer(
+    &server_console->uds, server_console->server_socket_name
+  );
+
+  if (!server) {
+    g_printerr("No server!\n");
+    return;
+  }
+
+  if (!buf)
+    buf = g_string_new("");
+
+  g_string_assign(buf, server_console->input->str);
+  g_string_append_unichar(buf, '\n');
+
+  uds_peer_sendto(server, server_console->input->str);
+  g_ptr_array_add(server_console->history,
+    g_strdup(server_console->input->str)
+  );
+  sc_add_output(server_console, buf);
 }
 
 static void sc_handle_key(server_console_t *server_console, wint_t key) {
@@ -798,6 +835,10 @@ static gboolean task_read_input(gpointer user_data) {
   return G_SOURCE_CONTINUE;
 }
 
+static void free_history_entry(gpointer data) {
+  g_free(data);
+}
+
 int main(int argc, char **argv) {
   signal(SIGWINCH, handle_resize);
 
@@ -832,6 +873,7 @@ int main(int argc, char **argv) {
   );
 
   server_console.input = g_string_new("");
+  server_console.history = g_ptr_array_new_with_free_func(free_history_entry);
   server_console.output = g_string_new("");
   server_console.line_broken_output = g_string_new("");
   server_console.line_breaks = NULL;
