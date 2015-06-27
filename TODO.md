@@ -4,8 +4,9 @@
 
 1. Finish a basic server console client app
   - Add scroll up/down
-  - Add history
+  - Add history scroll
   - Fix output formatting on resize
+  - Remove all the debugging stuff
 
 1. Implement retractable text widget
   - Every time a line is added, set a timer.

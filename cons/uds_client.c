@@ -1,3 +1,12 @@
+/*
+1. Finish a basic server console client app
+  - Add scroll up/down
+  - Fix cursor on history scroll
+  - Fix output formatting on resize
+  - Remove all the debugging stuff
+  - Segfault when server disconnects first
+*/
+
 #define _XOPEN_SOURCE_EXTENDED
 
 #include <signal.h>
@@ -45,6 +54,7 @@ typedef struct server_console_s {
   WINDOW       *input_window;
   WINDOW       *output_window;
   GString      *input;
+  GString      *saved_input;
   GPtrArray    *history;
   GString      *output;
   GString      *line_broken_output;
@@ -52,6 +62,7 @@ typedef struct server_console_s {
   gssize        input_index;
   gsize         input_scroll;
   gsize         output_scroll;
+  gsize         history_index;
   gsize         line_count;
 } server_console_t;
 
@@ -514,12 +525,6 @@ static gboolean task_send_data(gpointer user_data) {
   return G_SOURCE_CONTINUE;
 }
 
-static void sc_show_history_previous(server_console_t *server_console) {
-}
-
-static void sc_show_history_next(server_console_t *server_console) {
-}
-
 static void sc_scroll_input_right(server_console_t *server_console) {
   if (server_console->input_scroll > 0)
     server_console->input_scroll--;
@@ -619,6 +624,42 @@ static void sc_move_cursor_to_end(server_console_t *server_console) {
   sc_display_input(server_console);
 }
 
+static void sc_show_history_previous(server_console_t *server_console) {
+  if (server_console->history_index == server_console->history->len)
+    return;
+
+  if (server_console->history_index == 0)
+    g_string_assign(server_console->saved_input, server_console->input->str);
+
+  server_console->history_index++;
+
+  g_string_assign(server_console->input, g_ptr_array_index(
+    server_console->history,
+    (server_console->history->len - 1) - (server_console->history_index - 1)
+  ));
+
+  sc_move_cursor_to_end(server_console);
+}
+
+static void sc_show_history_next(server_console_t *server_console) {
+  if (server_console->history_index == 0)
+    return;
+
+  server_console->history_index--;
+
+  if (server_console->history_index == 0) {
+    g_string_assign(server_console->input, server_console->saved_input->str);
+  }
+  else {
+    g_string_assign(server_console->input, g_ptr_array_index(
+      server_console->history,
+      (server_console->history->len - 1) - (server_console->history_index - 1)
+    ));
+  }
+
+  sc_move_cursor_to_end(server_console);
+}
+
 static void sc_delete_next_char(server_console_t *server_console) {
   if (server_console->input_index < 0)
     return;
@@ -661,6 +702,7 @@ static void sc_handle_command(server_console_t *server_console) {
 
   if (strncmp(server_console->input->str, LOCAL_COMMAND_MARKER, 1) == 0) {
     sc_handle_local_command(server_console);
+    server_console->history_index = 0;
     return;
   }
 
@@ -684,6 +726,8 @@ static void sc_handle_command(server_console_t *server_console) {
     g_strdup(server_console->input->str)
   );
   sc_add_output(server_console, buf);
+
+  server_console->history_index = 0;
 }
 
 static void sc_handle_key(server_console_t *server_console, wint_t key) {
@@ -873,6 +917,7 @@ int main(int argc, char **argv) {
   );
 
   server_console.input = g_string_new("");
+  server_console.saved_input = g_string_new("");
   server_console.history = g_ptr_array_new_with_free_func(free_history_entry);
   server_console.output = g_string_new("");
   server_console.line_broken_output = g_string_new("");
@@ -880,6 +925,7 @@ int main(int argc, char **argv) {
 
   server_console.input_scroll = 0;
   server_console.output_scroll = 0;
+  server_console.history_index = 0;
   server_console.line_count = 0;
 
   wrefresh(server_console.input_window);

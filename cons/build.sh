@@ -18,8 +18,4 @@ rm -f uds_client
 $CC -o uds_client uds.c uds_client.c $GIO_LIBS $GIO_CFLAGS $NCURSES_LIBS \
                                      $NCURSES_CFLAGS $LINEBREAK_LIBS \
                                      $LINEBREAK_CFLAGS $FLAGS
-                                    
-rm -f test_ncurses
-$CC -o test_ncurses test_ncurses.c $GIO_LIBS $GIO_CFLAGS $NCURSES_LIBS \
-                                   $NCURSES_CFLAGS $LINEBREAK_LIBS \
-                                   $LINEBREAK_CFLAGS $FLAGS
+
