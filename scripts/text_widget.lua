@@ -65,7 +65,6 @@ function TextWidget:new(tw)
   tw.outline_width = tw.outline_width or 0
   tw.line_height = tw.line_height or 0
   tw.scrollable = tw.scrollable or false
-  print(debug.traceback())
   tw.font_description_text = tw.font_description_text or
                              d2k.hud.font_description_text
   tw.use_markup = tw.use_markup or false
@@ -558,14 +557,9 @@ end
 function TextWidget:build_layout()
   self:set_current_render_context(d2k.overlay.render_context)
   self:set_layout(Pango.Layout.new(d2k.overlay.text_context))
-
-  local layout = self:get_layout()
-
   self:get_layout():set_font_description(Pango.FontDescription.from_string(
     self:get_font_description_text()
   ))
-
-  local layout_ink_extents, layout_logical_extents = layout:get_pixel_extents()
 end
 
 function TextWidget:set_height_by_lines(line_count)
