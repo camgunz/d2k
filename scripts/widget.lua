@@ -158,7 +158,7 @@ function Widget:set_height(height)
     return
   end
 
-  if self.height < 0 or self.height > 1 then
+  if height < 0 or height > 1 then
     error(string.format('%s: Invalid height %d\n',
       self:get_name(), self.height
     ))
