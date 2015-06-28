@@ -9,7 +9,6 @@
 1. Finish retractable text widget
   - Throw an error during initialization if `vertical_align` isn't `ALIGN_TOP`
     or `ALIGN_BOTTOM`
-  - Rename to `RetractableTextWidget`
   - Inherit from TextWidget; save 100s of lines of code
 
 1. Add/fix wrapping to/for InputWidget
