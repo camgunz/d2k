@@ -148,7 +148,7 @@ function Console:set_output(output)
 end
 
 function Console:is_active()
-  return self:get_height() > 0 and self:get_scroll_rate() >= 0.0
+  return self:get_height_in_pixels() > 0 and self:get_scroll_rate() >= 0.0
 end
 
 function Console:get_name()
@@ -174,10 +174,10 @@ function Console:tick()
       0, self:get_height_in_pixels() + (self:get_scroll_rate() * ms_elapsed)
     ))
 
-    if self:get_height() < 0 then
+    if self:get_height_in_pixels() < 0 then
       self:set_height(0)
       self:set_scroll_rate(0)
-    elseif self:get_height() > self:get_max_height() then
+    elseif self:get_height_in_pixels() > self:get_max_height() then
       self:set_height_in_pixels(self:get_max_height_in_pixels())
       self:set_scroll_rate(0)
     end
@@ -189,11 +189,11 @@ function Console:tick()
   )
 
   self:get_output():tick()
-  self:get_output():set_height(math.max(self:get_input():get_y(), 0))
+  self:get_output():set_height_in_pixels(math.max(self:get_input():get_y(), 0))
 end
 
 function Console:draw()
-  if self:get_height() <= 0 then
+  if self:get_height_in_pixels() <= 0 then
     return
   end
 
@@ -210,7 +210,7 @@ function Console:handle_event(event)
     self:toggle_scroll()
   end
 
-  if self:get_scroll_rate() < 0 or self:get_height() == 0 then
+  if self:get_scroll_rate() < 0 or self:get_height_in_pixels() == 0 then
     return
   end
 
@@ -284,9 +284,9 @@ function Console:scroll_up()
 end
 
 function Console:toggle_scroll()
-  if self:get_height() == self:get_max_height() then
+  if self:get_height_in_pixels() == self:get_max_height() then
     self:scroll_up()
-  elseif self:get_height() == 0 then
+  elseif self:get_height_in_pixels() == 0 then
     self:scroll_down()
   elseif self:get_scroll_rate() < 0 then
     self:scroll_up()
@@ -308,7 +308,7 @@ function Console:banish()
 end
 
 function Console:set_fullscreen()
-  self:set_height(d2k.overlay:get_height())
+  self:set_height(d2k.overlay:get_height_in_pixels())
   self:set_scroll_rate(0.0)
   self:set_last_scroll_ms(d2k.System.get_ticks())
 end

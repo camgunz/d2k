@@ -174,8 +174,8 @@ function InputWidget:tick()
     self:get_top_margin() + layout_height + self:get_bottom_margin()
   local ticks = d2k.System.get_ticks()
 
-  if self:get_height() ~= new_height then
-    self:set_height(new_height)
+  if self:get_height_in_pixels() ~= new_height then
+    self:set_height_in_pixels(new_height)
   end
 
   if ticks > self:get_cursor_timer() + self:get_cursor_blink_speed() then
@@ -190,7 +190,7 @@ function InputWidget:draw()
   local lh_fracunit = 4.0
   local lh_frac = layout_height / lh_fracunit
   local lh_half = layout_height / 2.0
-  local prompt_width = self:get_height() / 2.0
+  local prompt_width = self:get_height_in_pixels() / 2.0
   local height = self:calculate_height()
   local fg_color = self:get_fg_color()
   local bg_color = self:get_bg_color()
@@ -203,7 +203,7 @@ function InputWidget:draw()
 
   cr:reset_clip()
   cr:new_path()
-  cr:rectangle(self:get_x(), self:get_y(), self:get_width(), height)
+  cr:rectangle(self:get_x(), self:get_y(), self:get_width_in_pixels(), height)
   cr:clip()
 
   cr:set_source_rgba(bg_color[1], bg_color[2], bg_color[3], bg_color[4])
@@ -214,7 +214,9 @@ function InputWidget:draw()
   cr:rectangle(
     self:get_x() + self:get_left_margin(),
     self:get_y() + self:get_top_margin(),
-    self:get_width() - (self:get_left_margin() + self:get_right_margin()),
+    self:get_width_in_pixels() - (
+      self:get_left_margin() + self:get_right_margin()
+    ),
     height - (self:get_top_margin() + self:get_bottom_margin())
   )
   cr:clip()
@@ -246,10 +248,10 @@ function InputWidget:draw()
 
   local lx = self:get_x() + self:get_left_margin() + prompt_width
   local ly = self:get_y() + self:get_top_margin()
-  local text_width = self:get_width() - (
+  local text_width = self:get_width_in_pixels() - (
     self:get_left_margin() + self:get_right_margin()
   )
-  local text_height = self:get_height() - (
+  local text_height = self:get_height_in_pixels() - (
     self:get_top_margin() + self:get_bottom_margin()
   )
   local layout_width, layout_height = self:get_layout():get_pixel_size()

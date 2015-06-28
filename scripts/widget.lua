@@ -74,20 +74,12 @@ function Widget:set_y(y)
 end
 
 function Widget:get_width()
-  if not self:get_use_proportional_dimensions() then
-    return self.width
-  end
-
-  if self.width > 1 or self.width < 0 then
+  if self.width < 0 or self.width > 1 then
     print(debug.traceback())
-    error(string.format('%s: Invalid width %d\n', self:get_name(), self.width))
+    error(string.format('%s: Invalid width %s\n', self:get_name(), self.width))
   end
 
-  if self.width == 1 then
-    return d2k.overlay:get_width()
-  end
-
-  return d2k.overlay:get_width() * self.width
+  return self.width
 end
 
 function Widget:set_width(width)
@@ -103,23 +95,16 @@ function Widget:set_width(width)
 
   if width < 0 or width > 1 then
     print(debug.traceback())
-    error(string.format('%s: Invalid width %d\n', self:get_name(), width))
+    error(string.format('%s: Invalid width %s\n', self:get_name(), width))
   end
 
-  if width == 1 then
-    self.width = dk2.overlay:get_width()
-  elseif width > 1 then
-    self.width = width / d2k.overlay:get_width()
-  else
-    self.width = width
-  end
-
+  self.width = width
   self:set_needs_updating(true)
 end
 
 function Widget:get_width_in_pixels()
   if self:get_use_proportional_dimensions() then
-    return self.width * d2k.overlay:get_width()
+    return math.floor(self.width * d2k.overlay:get_width())
   end
 
   return self.width
@@ -136,18 +121,14 @@ function Widget:set_width_in_pixels(width)
 end
 
 function Widget:get_height()
-  if not self:get_use_proportional_dimensions() then
-    return self.height
-  end
-
   if self.height < 0 or self.height > 1 then
     print(debug.traceback())
-    error(string.format('%s: Invalid height %f\n',
+    error(string.format('%s: Invalid height %s\n',
       self:get_name(), self.height
     ))
   end
 
-  return d2k.overlay:get_height() * self.height
+  return self.height
 end
 
 function Widget:set_height(height)
@@ -163,25 +144,18 @@ function Widget:set_height(height)
 
   if height < 0 or height > 1 then
     print(debug.traceback())
-    error(string.format('%s: Invalid height %d\n',
-      self:get_name(), self.height
+    error(string.format('%s: Invalid height %s\n',
+      self:get_name(), height
     ))
   end
 
-  if height == 1 then
-    self.height = d2k.overlay:get_height()
-  elseif height > 1 then
-    self.height = height / d2k.overlay:get_height()
-  else
-    self.height = height
-  end
-
+  self.height = height
   self:set_needs_updating(true)
 end
 
 function Widget:get_height_in_pixels()
   if self:get_use_proportional_dimensions() then
-    return self.height * d2k.overlay:get_height()
+    return math.floor(self.height * d2k.overlay:get_height())
   end
 
   return self.height
@@ -203,7 +177,7 @@ function Widget:get_max_width()
   end
 
   if self.max_width < 0 or self.max_width > 1 then
-    error(string.format('%s: Invalid max width %d\n',
+    error(string.format('%s: Invalid max width %s\n',
       self:get_name(), self.max_width
     ))
   end
@@ -226,7 +200,7 @@ function Widget:set_max_width(max_width)
   end
 
   if max_width < 0 or max_width > 1 then
-    error(string.format('%s: Invalid max_width %d\n',
+    error(string.format('%s: Invalid max_width %s\n',
       self:get_name(), max_width
     ))
   end
@@ -266,7 +240,7 @@ function Widget:get_max_height()
   end
 
   if self.max_height < 0 or self.max_height > 1 then
-    error(string.format('%s: Invalid max height %d\n',
+    error(string.format('%s: Invalid max height %s\n',
       self:get_name(), self.max_height
     ))
   end
@@ -289,7 +263,7 @@ function Widget:set_max_height(max_height)
   end
 
   if max_height < 0 or max_height > 1 then
-    error(string.format('%s: Invalid max_height %d\n',
+    error(string.format('%s: Invalid max_height %s\n',
       self:get_name(), max_height
     ))
   end

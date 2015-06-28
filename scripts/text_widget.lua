@@ -397,7 +397,12 @@ function TextWidget:draw()
 
   cr:reset_clip()
   cr:new_path()
-  cr:rectangle(self:get_x(), self:get_y(), self:get_width(), self:get_height())
+  cr:rectangle(
+    self:get_x(),
+    self:get_y(),
+    self:get_width_in_pixels(),
+    self:get_height_in_pixels()
+  )
   cr:clip()
 
   cr:set_source_rgba(bg_color[1], bg_color[2], bg_color[3], bg_color[4])
@@ -411,10 +416,10 @@ function TextWidget:draw()
 
   local lx = self:get_x() + self:get_left_margin()
   local ly = self:get_y() + self:get_top_margin()
-  local text_width = self:get_width() - (
+  local text_width = self:get_width_in_pixels() - (
     self:get_left_margin() + self:get_right_margin()
   )
-  local text_height = self:get_height() - (
+  local text_height = self:get_height_in_pixels() - (
     self:get_top_margin() + self:get_bottom_margin()
   )
   local layout_width, layout_height = self:get_layout():get_pixel_size()
@@ -635,15 +640,15 @@ function TextWidget:set_word_wrap(word_wrap)
     layout:set_width(-1)
   elseif word_wrap == TextWidget.WRAP_WORD then
     self.word_wrap = TextWidget.WRAP_WORD
-    layout:set_width(self:get_width() * Pango.SCALE)
+    layout:set_width(self:get_width_in_pixels() * Pango.SCALE)
     layout:set_wrap(Pango.WrapMode.WORD)
   elseif word_wrap == TextWidget.WRAP_CHAR then
     self.word_wrap = TextWidget.WRAP_CHAR
-    layout:set_width(self:get_width() * Pango.SCALE)
+    layout:set_width(self:get_width_in_pixels() * Pango.SCALE)
     layout:set_wrap(Pango.WrapMode.CHAR)
   elseif word_wrap == TextWidget.WRAP_WORD_CHAR then
     self.word_wrap = TextWidget.WRAP_WORD_CHAR
-    layout:set_width(self:get_width() * Pango.SCALE)
+    layout:set_width(self:get_width_in_pixels() * Pango.SCALE)
     layout:set_wrap(Pango.WrapMode.WORD_CHAR)
   else
     s = 'TextWidget:set_word_wrap: Invalid word wrap value %s'
@@ -704,10 +709,10 @@ function TextWidget:set_vertical_alignment(vertical_alignment)
 end
 
 function TextWidget:check_offsets()
-  local text_width = self:get_width() - (
+  local text_width = self:get_width_in_pixels() - (
     self:get_left_margin() + self:get_right_margin()
   )
-  local text_height = self:get_height() - (
+  local text_height = self:get_height_in_pixels() - (
     self:get_top_margin() + self:get_bottom_margin()
   )
   local layout_width, layout_height = self:get_layout():get_pixel_size()

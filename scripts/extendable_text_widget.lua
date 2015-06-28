@@ -410,7 +410,7 @@ function ExtendableTextWidget:update_layout_if_needed()
   if self.get_external_text then
     local layout_width, layout_height = self:get_layout():get_pixel_size()
 
-    self:set_height(layout_height)
+    self:set_height_in_pixels(layout_height)
   end
 
   self.needs_updating = false
@@ -434,21 +434,25 @@ function ExtendableTextWidget:get_first_retractable_line()
   if horizontal_alignment == ExtendableTextWidget.ALIGN_LEFT then
     line_x = line_x + self:get_left_margin()
   elseif horizontal_alignment == ExtendableTextWidget.ALIGN_CENTER then
-    line_x = line_x + (
-      (self:get_width() + self:get_left_margin() - self:get_right_margin()) / 2
-    )
+    line_x = line_x + ((
+      self:get_width_in_pixels() +
+      self:get_left_margin() -
+      self:get_right_margin()
+    ) / 2)
   elseif horizontal_alignment == ExtendableTextWidget.ALIGN_RIGHT then
-    line_x = line_x + (self:get_width() - self:get_right_margin())
+    line_x = line_x + (self:get_width_in_pixels() - self:get_right_margin())
   end
 
   if vertical_alignment == ExtendableTextWidget.ALIGN_UP then
     line_y = line_y + self:get_top_margin()
   elseif vertical_alignment == ExtendableTextWidget.ALIGN_CENTER then
-    line_y = line_y + (
-      (self:get_height() + self:get_top_margin() - self:get_bottom_margin()) / 2
-    )
+    line_y = line_y + ((
+      self:get_height_in_pixels() +
+      self:get_top_margin() -
+      self:get_bottom_margin()
+    ) / 2)
   elseif vertical_alignment == ExtendableTextWidget.ALIGN_BOTTOM then
-    line_y = line_y + (self:get_height() - self:get_bottom_margin())
+    line_y = line_y + (self:get_height_in_pixels() - self:get_bottom_margin())
   end
 
   if retractable == ExtendableTextWidget.RETRACT_UP then
@@ -630,7 +634,12 @@ function ExtendableTextWidget:draw()
 
   cr:reset_clip()
   cr:new_path()
-  cr:rectangle(self:get_x(), self:get_y(), self:get_width(), self:get_height())
+  cr:rectangle(
+    self:get_x(),
+    self:get_y(),
+    self:get_width_in_pixels(),
+    self:get_height_in_pixels()
+  )
   cr:clip()
 
   cr:set_source_rgba(bg_color[1], bg_color[2], bg_color[3], bg_color[4])
@@ -644,10 +653,10 @@ function ExtendableTextWidget:draw()
 
   local lx = self:get_x() + self:get_left_margin()
   local ly = self:get_y() + self:get_top_margin()
-  local text_width = self:get_width() - (
+  local text_width = self:get_width_in_pixels() - (
     self:get_left_margin() + self:get_right_margin()
   )
-  local text_height = self:get_height() - (
+  local text_height = self:get_height_in_pixels() - (
     self:get_top_margin() + self:get_bottom_margin()
   )
   local layout_width, layout_height = self:get_layout():get_pixel_size()
@@ -887,15 +896,15 @@ function ExtendableTextWidget:set_word_wrap(word_wrap)
     layout:set_width(-1)
   elseif word_wrap == ExtendableTextWidget.WRAP_WORD then
     self.word_wrap = ExtendableTextWidget.WRAP_WORD
-    layout:set_width(self:get_width() * Pango.SCALE)
+    layout:set_width(self:get_width_in_pixels() * Pango.SCALE)
     layout:set_wrap(Pango.WrapMode.WORD)
   elseif word_wrap == ExtendableTextWidget.WRAP_CHAR then
     self.word_wrap = ExtendableTextWidget.WRAP_CHAR
-    layout:set_width(self:get_width() * Pango.SCALE)
+    layout:set_width(self:get_width_in_pixels() * Pango.SCALE)
     layout:set_wrap(Pango.WrapMode.CHAR)
   elseif word_wrap == ExtendableTextWidget.WRAP_WORD_CHAR then
     self.word_wrap = ExtendableTextWidget.WRAP_WORD_CHAR
-    layout:set_width(self:get_width() * Pango.SCALE)
+    layout:set_width(self:get_width_in_pixels() * Pango.SCALE)
     layout:set_wrap(Pango.WrapMode.WORD_CHAR)
   else
     s = 'ExtendableTextWidget:set_word_wrap: Invalid word wrap value %s'
@@ -960,10 +969,10 @@ function ExtendableTextWidget:check_offsets()
     return
   end
 
-  local text_width = self:get_width() - (
+  local text_width = self:get_width_in_pixels() - (
     self:get_left_margin() + self:get_right_margin()
   )
-  local text_height = self:get_height() - (
+  local text_height = self:get_height_in_pixels() - (
     self:get_top_margin() + self:get_bottom_margin()
   )
   local layout_width, layout_height = self:get_layout():get_pixel_size()
