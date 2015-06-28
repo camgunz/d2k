@@ -137,9 +137,14 @@ end
 function InputWidget:set_text(text)
   TextWidget.TextWidget.set_text(self, text)
 
-  if self:get_cursor() >= #self:get_text() - 1 then
+  local text_length = #self:get_text()
+
+  if text_length == 0 then
     self:set_cursor(0)
-    self.cursor_trailing = 0
+    self:set_cursor_trailing(0)
+  elseif self:get_cursor() > text_length - 1 then
+    self:set_cursor(text_length - 1)
+    self:set_cursor_trailing(1)
   end
 end
 
@@ -380,6 +385,7 @@ function InputWidget:print_cursor_stats(s)
     cursor_position.height / Pango.SCALE
   ))
   --]]
+
   return
 end
 
@@ -465,7 +471,7 @@ function InputWidget:delete_previous_character()
   local text = self:get_text()
   local text_length = #text
 
-  if self:get_cursor() == 0 then
+  if index == 0 then
     return
   end
 

@@ -267,7 +267,8 @@ function Console:handle_input(input)
 
   if not func then
     self:mecho(string.format(
-      '<span color="red">Console:handle_input: Error: %s</span>', err
+      '<span color="red">Console:handle_input: Error: %s</span>',
+      GLib.markup_escape_text(err, -1)
     ))
     return
   end
@@ -276,7 +277,8 @@ function Console:handle_input(input)
 
   if not worked then
     self:mecho(string.format(
-      '<span color="red">Console:handle_input: Error: %s</span>', err
+      '<span color="red">Console:handle_input: Error: %s</span>',
+      GLib.markup_escape_text(err, -1)
     ))
   end
 end

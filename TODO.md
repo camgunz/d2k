@@ -16,8 +16,6 @@
 
 ### Widgets
 
-1. Add retraction to TextWidget
-
 1. Add/fix wrapping to/for InputWidget
 
 1. Add a few new widgets:
@@ -25,8 +23,6 @@
   - netstats
   - FPS
   - scoreboard
-
-1. Add auto-scroll to TextWidget
 
 ### Console
 
@@ -43,7 +39,14 @@
 
 ## ZDDL
 
-### Netcode
+1. Implement retractable text widget
+  - Set benchmarks:
+    - At time X, vertical offset should be at least Y, otherwise move
+      incrementally
+    - Once `vertical_offset >= Y`, then that benchmark can be removed
+  - The benchmark system is really retraction, rename from "extendable"
+
+1. Add auto-scroll to TextWidget
 
 1. Disconnect clients if their sync TIC is too far in the past
 
@@ -105,28 +108,6 @@
     adjust the velocity downwards based on the client's lag and a preselected
     function (curve).
 
-1. Add spectators
-
-### Scripting
-
-1. Implement patch drawing functions
-
-1. Implement patch font drawing functions
-
-### Console
-
-1. Add tab-completion
-
-1. Add clipboard (cut/copy/paste) support
-
-1. Add mouse selection support
-
-1. Implement various configuration options (needs some thought)
-
-1. Fix UTF8 problems
-
-### General
-
 1. Remove 4 player restriction
   - All playernums should be `unsigned int`s
   - `players` becomes a GArray
@@ -144,6 +125,8 @@
     - If so, set each player's name accordingly
     - Of course, this only works for the 1st 4 players; after that, fuck it
       - Maybe assign more colors
+
+1. Add spectators
 
 1. Improve the configuration file and configuration variable system
   - Ties into scripting and console

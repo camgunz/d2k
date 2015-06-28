@@ -47,6 +47,63 @@
 #include "v_video.h"
 #include "x_main.h"
 
+typedef struct buffered_console_message_s {
+  bool is_markup;
+  GString *contents;
+} buffered_console_message_t;
+
+static GPtrArray *buffered_console_messages = NULL;
+
+static void free_buffered_message(gpointer data) {
+  buffered_console_message_t *message = (buffered_console_message_t *)data;
+
+  g_string_free(message->contents, true);
+
+  free(data);
+}
+
+static void print_buffered_message(gpointer data, gpointer user_data) {
+  buffered_console_message_t *msg = (buffered_console_message_t *)data;
+
+  if (msg->is_markup)
+    X_Call(X_GetState(), "console", "mwrite", 1, 0, X_STRING, msg->contents);
+  else
+    X_Call(X_GetState(), "console", "write", 1, 0, X_STRING, msg->contents);
+}
+
+static bool save_output_if_scripting_unavailable(const char *message,
+                                                 bool is_markup) {
+  buffered_console_message_t *msg;
+
+  if (X_Available()) {
+    if (buffered_console_messages) {
+      g_ptr_array_foreach(
+        buffered_console_messages, print_buffered_message, NULL
+      );
+
+      g_ptr_array_free(buffered_console_messages, true);
+
+      buffered_console_messages = NULL;
+    }
+
+    return false;
+  }
+
+  if (!buffered_console_messages) {
+    buffered_console_messages = g_ptr_array_new_with_free_func(
+      free_buffered_message
+    );
+  }
+
+  msg = calloc(1, sizeof(buffered_console_message_t));
+  msg->is_markup = is_markup;
+  msg->contents = g_string_new(message);
+
+  g_ptr_array_add(buffered_console_messages, msg);
+
+  return true;
+}
+
 void C_Reset(void) {
   if (!nodrawers)
     X_Call(X_GetState(), "console", "reset", 0, 0);
@@ -97,10 +154,7 @@ bool C_Active(void) {
   return is_active;
 }
 
-/*
- * CG: TODO: Move printing to stdout from hu_msg to here
- *     TODO: Add D_Log logging
- */
+/* CG: TODO: Add D_Log logging */
 
 void C_Printf(const char *fmt, ...) {
   va_list args;
@@ -144,20 +198,25 @@ void C_MVPrintf(const char *fmt, va_list args) {
 }
 
 void C_Echo(const char *message) {
-  gchar *escaped_message;
+  gchar *message_with_newline;
 
   if (!message)
     return;
-  
-  escaped_message = g_markup_escape_text(message, -1);
 
-  X_Call(X_GetState(), "console", "echo", 1, 0, X_STRING, escaped_message);
-  g_free(escaped_message);
+  message_with_newline = g_strdup_printf("%s\n", message);
+  C_Write(message_with_newline);
+  g_free(message_with_newline);
 }
 
 void C_MEcho(const char *message) {
-  if (message)
-    X_Call(X_GetState(), "console", "mecho", 1, 0, X_STRING, message);
+  gchar *message_with_newline;
+
+  if (!message)
+    return;
+
+  message_with_newline = g_strdup_printf("%s\n", message);
+  C_MWrite(message_with_newline);
+  g_free(message_with_newline);
 }
 
 void C_Write(const char *message) {
@@ -168,7 +227,9 @@ void C_Write(const char *message) {
   
   escaped_message = g_markup_escape_text(message, -1);
 
-  X_Call(X_GetState(), "console", "write", 1, 0, X_STRING, escaped_message);
+  if (!save_output_if_scripting_unavailable(escaped_message, false))
+    X_Call(X_GetState(), "console", "write", 1, 0, X_STRING, escaped_message);
+
   g_free(escaped_message);
 }
 
@@ -176,7 +237,8 @@ void C_MWrite(const char *message) {
   if (!message)
     return;
 
-  X_Call(X_GetState(), "console", "mwrite", 1, 0, X_STRING, message);
+  if (!save_output_if_scripting_unavailable(message, true))
+    X_Call(X_GetState(), "console", "mwrite", 1, 0, X_STRING, message);
 }
 
 /* vi: set et ts=2 sw=2: */

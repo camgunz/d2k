@@ -79,6 +79,7 @@ function Widget:get_width()
   end
 
   if self.width > 1 or self.width < 0 then
+    print(debug.traceback())
     error(string.format('%s: Invalid width %d\n', self:get_name(), self.width))
   end
 
@@ -101,6 +102,7 @@ function Widget:set_width(width)
   end
 
   if width < 0 or width > 1 then
+    print(debug.traceback())
     error(string.format('%s: Invalid width %d\n', self:get_name(), width))
   end
 
@@ -139,6 +141,7 @@ function Widget:get_height()
   end
 
   if self.height < 0 or self.height > 1 then
+    print(debug.traceback())
     error(string.format('%s: Invalid height %f\n',
       self:get_name(), self.height
     ))
@@ -159,6 +162,7 @@ function Widget:set_height(height)
   end
 
   if height < 0 or height > 1 then
+    print(debug.traceback())
     error(string.format('%s: Invalid height %d\n',
       self:get_name(), self.height
     ))

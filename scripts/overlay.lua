@@ -31,6 +31,9 @@ local Overlay = {}
 function Overlay:new(o)
   o = o or {}
 
+  o.width = 0
+  o.height = 0
+
   o.build_listeners = {}
   o.destroy_listeners = {}
 
@@ -90,7 +93,6 @@ function Overlay:build()
   local font_map = PangoCairo.FontMap.get_default()
 
   self.text_context = font_map:create_context()
-  -- CG: FIXME: DPI should be part of a config file
   self.text_context:set_resolution(96.0)
   font_options:set_hint_style(Cairo.HINT_STYLE_FULL)
   font_options:set_hint_metrics(Cairo.HINT_METRICS_ON)
