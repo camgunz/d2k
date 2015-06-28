@@ -2,15 +2,6 @@
 
 ## Proto
 
-1. Finish a basic server console client app
-  - Add scroll up/down
-  - Remove all the debugging stuff
-
-1. Finish retractable text widget
-  - Adding lines while full and retracting causes a kind of flicker
-    - Probably have to check in `set_text` if the widget's full, and cancel
-      the retraction if it is... although I thought `tick` already did that...
-
 1. Add/fix wrapping to/for InputWidget
 
 1. Reconnecting doesn't work
@@ -39,6 +30,11 @@
 1. Fix bug where you can type the backtick into the console
 
 ## ZDDL
+
+1. Finish retractable text widget
+  - Adding lines while full and retracting causes a kind of flicker
+    - Probably have to check in `set_text` if the widget's full, and cancel
+      the retraction if it is... although I thought `tick` already did that...
 
 1. Fix switching to vidingl
 
