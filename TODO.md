@@ -6,11 +6,11 @@
   - Add scroll up/down
   - Remove all the debugging stuff
 
-1. Implement retractable text widget
-  - Every time a line is added, set a timer.
-  - When timer expires, start retracting.
-  - When retraction finishes and `vertical_offset != layout_height`:
-    - reset timer
+1. Finish retractable text widget
+  - Throw an error during initialization if `vertical_align` isn't `ALIGN_TOP`
+    or `ALIGN_BOTTOM`
+  - Rename to `RetractableTextWidget`
+  - Inherit from TextWidget; save 100s of lines of code
 
 1. Add/fix wrapping to/for InputWidget
 

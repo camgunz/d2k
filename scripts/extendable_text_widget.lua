@@ -576,6 +576,19 @@ function ExtendableTextWidget:get_visible_line_dimensions(start_line, end_line)
   return lines
 end
 
+function ExtendableTextWidget:reset()
+  local layout = self:get_layout()
+  local layout_width, layout_height = layout:get_pixel_size()
+  local line_count = layout:get_line_count()
+
+  self:set_retracting(false)
+  self:set_retracting_line_number(0)
+  self:set_last_retracted_line_number(line_count)
+  self:set_retraction_target(0)
+  self:set_retraction_start_time(0)
+  self:set_vertical_offset(layout_height)
+end
+
 function ExtendableTextWidget:tick()
   local current_ms = d2k.System.get_ticks()
 
