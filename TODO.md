@@ -2,21 +2,25 @@
 
 ## Proto
 
-### General
+1. Finish a basic server console client app
+  - Add scroll up/down
+  - Remove all the debugging stuff
 
-1. Fix switching to vidingl
+1. Implement retractable text widget
+  - Every time a line is added, set a timer.
+  - When timer expires, start retracting.
+  - When retraction finishes and `vertical_offset != layout_height`:
+    - reset timer
 
-1. Fonts look a little off in Windows
-
-### Netcode
+1. Add/fix wrapping to/for InputWidget
 
 1. Reconnecting doesn't work
 
+1. Fonts look a little off in Windows
+
 1. Test delta compression of frequently-spawned actors
 
-### Widgets
-
-1. Add/fix wrapping to/for InputWidget
+1. Disconnect clients if their sync TIC is too far in the past
 
 1. Add a few new widgets:
   - chat
@@ -24,89 +28,20 @@
   - FPS
   - scoreboard
 
-### Console
-
-1. Server bombs trying to print to console before it's ready
-  - Really needs a failover....  This happens before scripting is even
-    initialized, so I wonder if in C I can just print things out until
-    scripting is ready.
-
-1. Add serverside console input
-
-1. Add more scripting commands:
+1. Add a few new commands:
   - `map`
-  - `wad`
+  - `reconnect`
+  - `say`
+  - `say_to/sayto`
+  - `name`
+
+1. Have server fork and redirect its output to a log file
+
+1. Fix bug where you can type the backtick into the console
 
 ## ZDDL
 
-1. Implement retractable text widget
-  - Set benchmarks:
-    - At time X, vertical offset should be at least Y, otherwise move
-      incrementally
-    - Once `vertical_offset >= Y`, then that benchmark can be removed
-  - The benchmark system is really retraction, rename from "extendable"
-
-1. Add auto-scroll to TextWidget
-
-1. Disconnect clients if their sync TIC is too far in the past
-
-1. Manually delta compress commands (serverside and clientside)
-  - bitmap:
-    - `index` changed      = 1
-    - `tic` changed        = 2
-    - `server_tic` changed = 4
-    - `forward` changed    = 8
-    - `side` changed       = 16
-    - `angle` changed      = 32
-    - `buttons` changed    = 64
-  - then deltas:
-    - All diffs are `char` except for `angle`, which is a `short`
-    - Effectively limits lag to 255 commands, which is way more than enough
-
-  Hypothetically:
-    { 4096, 4012, 4008, 50, 50, 180, 1 } // 17 bytes
-    { 4097, 4013, 4008, 50, 50, 180, 1 } // 17 bytes
-                                         // Total: 34
-
-  Becomes:
-    { 4096, 4012, 4008, 50, 50, 180, 1 } // 17 bytes
-    { 3, 1, 1}                           //  3 bytes
-                                         // Total: 20, saved: 14
-
-1. Implement actor vectors
-  - Send movement start TIC
-  - x/y/z represent the start position at time of last velocity change
-  - More amenable to delta compression
-  - Easier to nudge projectiles
-
-1. Add unlagged
-  - Save attacking player position
-  - Save current game state
-  - Restore game state that player was viewing during the attack
-    - This is contained in the command
-  - Restore attacking player position (if possible)
-  - Run hit detection and damage calculation
-    - For every impacted actor:
-      - Save momx/momy/momz values
-      - Save damagecount
-  - Restore saved state
-  - For every impacted actor:
-    - Add new momx/momy/momz values to the current momx/momy/momz
-    - Restore damagecount (MAX(old, new))
-  - Might require adding a new field to `netticcmd_t`: `world_tic`
-    - Denotes the world the client was looking at when the command was made
-    - If the client's enabled extrapolation, unlagged can just use `tic`
-    - Otherwise, the client has to stamp the command with the last world it
-      loaded from the server, which only the client can know reliably
-    - `world_tic` is probably the cleanest way to handle this
-
-1. Add projectile nudging
-  - Projectiles are currently predicted, thus they usually appear ahead of
-    where they normally would
-  - Projectile nudging would spawn the projectile normally (i.e., right in
-    front of the firing player) with a higher-than-normal velocity, and then
-    adjust the velocity downwards based on the client's lag and a preselected
-    function (curve).
+1. Fix switching to vidingl
 
 1. Remove 4 player restriction
   - All playernums should be `unsigned int`s
@@ -131,12 +66,72 @@
 1. Improve the configuration file and configuration variable system
   - Ties into scripting and console
 
-1. Add 3D physics
+1. Add auto-scroll to TextWidget
 
-1. Add SNDCURVE lump support
+1. Manually delta compress commands (serverside and clientside)
+  - bitmap:
+    - `index` changed      = 1
+    - `tic` changed        = 2
+    - `server_tic` changed = 4
+    - `forward` changed    = 8
+    - `side` changed       = 16
+    - `angle` changed      = 32
+    - `buttons` changed    = 64
+  - then deltas:
+    - All diffs are `char` except for `angle`, which is a `short`
+    - Effectively limits lag to 255 commands, which is way more than enough
+
+  Hypothetically:
+    { 4096, 4012, 4008, 50, 50, 180, 1 } // 17 bytes
+    { 4097, 4013, 4008, 50, 50, 180, 1 } // 17 bytes
+                                         // Total: 34
+
+  Becomes:
+    { 4096, 4012, 4008, 50, 50, 180, 1 } // 17 bytes
+    { 3, 1, 1}                           //  3 bytes
+                                         // Total: 20, saved: 14
+
+1. Add unlagged
+  - Save attacking player position
+  - Save current game state
+  - Restore game state that player was viewing during the attack
+    - This is contained in the command
+  - Restore attacking player position (if possible)
+  - Run hit detection and damage calculation
+    - For every impacted actor:
+      - Save momx/momy/momz values
+      - Save damagecount
+  - Restore saved state
+  - For every impacted actor:
+    - Add new momx/momy/momz values to the current momx/momy/momz
+    - Restore damagecount (MAX(old, new))
+  - Might require adding a new field to `netticcmd_t`: `world_tic`
+    - Denotes the world the client was looking at when the command was made
+    - If the client's enabled extrapolation, unlagged can just use `tic`
+    - Otherwise, the client has to stamp the command with the last world it
+      loaded from the server, which only the client can know reliably
+    - `world_tic` is probably the cleanest way to handle this
+
+1. Implement actor vectors
+  - Send movement start TIC
+  - x/y/z represent the start position at time of last velocity change
+  - More amenable to delta compression
+  - Easier to nudge projectiles
+
+1. Add projectile nudging
+  - Projectiles are currently predicted, thus they usually appear ahead of
+    where they normally would
+  - Projectile nudging would spawn the projectile normally (i.e., right in
+    front of the firing player) with a higher-than-normal velocity, and then
+    adjust the velocity downwards based on the client's lag and a preselected
+    function (curve).
+
+1. Add 3D physics
 
 1. Add ZDoom physics
   - Including ZDoom SSG spread
+
+1. Add SNDCURVE lump support
 
 1. Improve PWO
   - Probably this is just gonna be a script
@@ -149,6 +144,12 @@
       huge file (or a file from a slow server); libcurl ought to make this
       pretty easy
   - Create a server description specification in JSON
+
+1. Add authorization framework
+
+1. Add RCON
+
+1. Add maplist support
 
 1. Little bugs:
   - Add a server message sound (just use radio/tink?)

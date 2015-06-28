@@ -77,6 +77,27 @@ static bool push_x_object(lua_State *L, x_object_t *x_obj) {
   return true;
 }
 
+/*
+ * CG: This function is from the Lua source code, licensed under the MIT
+ *     license.
+ */
+static int error_handler(lua_State *L) {
+  const char *error_message = lua_tostring(L, -1);
+
+  if (!error_message) {
+    if (luaL_callmeta(L, 1, "__tostring") && lua_type(L, -1) == LUA_TSTRING)
+      return 1;
+
+    error_message = lua_pushfstring(L, "(error object is a %s value)",
+      luaL_typename(L, 1)
+    );
+  }
+
+  luaL_traceback(L, L, error_message, 1);
+
+  return 1;
+}
+
 void X_Init(void) {
   x_main_interpreter = X_NewState();
   luaL_openlibs(x_main_interpreter); /* CG: [TODO] Restrict clientside libs */
@@ -263,10 +284,9 @@ void X_RegisterObjects(const char *scope_name, unsigned int count, ...) {
       }
     }
   }
-  va_end(args);
-  
-}
 
+  va_end(args);
+}
 
 lua_State* X_GetState(void) {
   if (!X_Available())
@@ -359,22 +379,28 @@ void X_ExposeInterfaces(lua_State *L) {
   }
 }
 
-const char* X_GetError(lua_State *L) {
-  return lua_tostring(L, -1);
+/*
+ * CG: This function is from the Lua source code, licensed under the MIT
+ *     license.
+ */
+char* X_GetError(lua_State *L) {
+  char *error_message = strdup(lua_tostring(L, -1));
+
+  lua_pop(L, -1);
+
+  return error_message;
 }
 
 bool X_Eval(lua_State *L, const char *code) {
-  bool errors_occurred;
-  
-  errors_occurred = luaL_dostring(L, code);
-
-  return !errors_occurred;
+  return !luaL_dostring(L, code);
 }
 
 bool X_Call(lua_State *L, const char *object, const char *fname,
                           int arg_count, int res_count, ...) {
   va_list args;
   int args_remaining = arg_count;
+  int error_handler_index = X_GetStackSize(L) - arg_count;
+  int status;
 
   if (arg_count < 0)
     I_Error("X_CallFunc: arg_count < 0");
@@ -384,6 +410,9 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
 
   if (fname == NULL)
     I_Error("X_CallFunc: fname == NULL");
+
+  lua_pushcfunction(L, error_handler);
+  lua_insert(L, error_handler_index);
 
   lua_getglobal(L, X_NAMESPACE);
   if (object) {
@@ -442,7 +471,138 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
   if (object)
     arg_count++;
 
-  return lua_pcall(L, arg_count, res_count, 0) == 0;
+  status = lua_pcall(L, arg_count, res_count, 0);
+
+  lua_remove(L, error_handler_index);
+
+  return status == 0;
+}
+
+int X_GetStackSize(lua_State *L) {
+  return lua_gettop(L);
+}
+
+char* X_ToString(lua_State *L, int index) {
+  GString *s = g_string_new("");
+  char *out;
+
+  if (lua_isboolean(L, index)) {
+    bool bool_value = lua_toboolean(L, index);
+
+    if (bool_value)
+      g_string_printf(s, "true");
+    else
+      g_string_printf(s, "false");
+  }
+  else if (lua_iscfunction(L, index) || lua_isfunction(L, index)) {
+    lua_Debug debug_info;
+    int success;
+
+    memset(&debug_info, 0, sizeof(lua_Debug));
+
+    lua_rotate(L, index, index);
+    success = lua_getinfo(L, ">n", &debug_info);
+
+    if (!success)
+      I_Error("X_ToString: Error getting debug information");
+
+    if (debug_info.what && *debug_info.what)
+      g_string_printf(s, "%s ", debug_info.what);
+    else
+      g_string_printf(s, "[unknown type] ");
+
+    if (debug_info.namewhat && *debug_info.namewhat)
+      g_string_append_printf(s, "%s ", debug_info.namewhat);
+    else
+      g_string_append_printf(s, "[unknown name type] ");
+
+    if (debug_info.name && *debug_info.name)
+      g_string_append_printf(s, "%s", debug_info.name);
+    else
+      g_string_append_printf(s, "[unknown function name]");
+
+    lua_rotate(L, index, -index);
+  }
+  else if (lua_isinteger(L, index)) {
+    g_string_printf(s, LUA_INTEGER_FMT, lua_tointeger(L, index));
+  }
+  else if (lua_islightuserdata(L, index)) {
+    if (luaL_callmeta(L, index, "__tostring") &&
+        lua_type(L, -1) == LUA_TSTRING) {
+      g_string_printf(s, "%s", lua_tostring(L, 1));
+      lua_pop(L, 1);
+    }
+    else {
+      g_string_printf(s, "Light userdata: %p", lua_topointer(L, index));
+    }
+  }
+  else if (lua_isnoneornil(L, index)) {
+    g_string_printf(s, "nil");
+  }
+  else if (lua_isnumber(L, index)) {
+    g_string_printf(s, LUA_NUMBER_FMT, lua_tonumber(L, index));
+  }
+  else if (lua_isstring(L, index)) {
+    g_string_printf(s, "%s", lua_tostring(L, index));
+  }
+  else if (lua_istable(L, index)) {
+    if (luaL_callmeta(L, index, "__tostring") &&
+        lua_type(L, -1) == LUA_TSTRING) {
+      g_string_printf(s, "%s", lua_tostring(L, 1));
+      lua_pop(L, 1);
+    }
+    else {
+      g_string_printf(s, "Table: %p", lua_topointer(L, index));
+    }
+  }
+  else if (lua_isthread(L, index)) {
+    if (luaL_callmeta(L, index, "__tostring") &&
+        lua_type(L, -1) == LUA_TSTRING) {
+      g_string_printf(s, "%s", lua_tostring(L, 1));
+      lua_pop(L, 1);
+    }
+    else {
+      g_string_printf(s, "Thread: %p", lua_topointer(L, index));
+    }
+  }
+  else if (lua_isuserdata(L, index)) {
+    if (luaL_callmeta(L, index, "__tostring") &&
+        lua_type(L, -1) == LUA_TSTRING) {
+      g_string_printf(s, "%s", lua_tostring(L, 1));
+      lua_pop(L, 1);
+    }
+    else {
+      g_string_printf(s, "Userdata: %p", lua_topointer(L, index));
+    }
+  }
+  else {
+    int type = lua_type(L, index);
+
+    I_Error("X_ToString: Unknown type %s [%d]\n", lua_typename(L, type), type);
+  }
+
+  out = strdup(s->str);
+
+  g_string_free(s, true);
+
+  return out;
+}
+
+void X_PrintStack(lua_State *L) {
+  int stack_size = X_GetStackSize(L);
+
+  for (int i = -1; -i <= stack_size; i--) {
+    char *stack_member = X_ToString(L, i);
+
+    if (stack_member) {
+      printf("%s\n", stack_member);
+      free(stack_member);
+    }
+  }
+}
+
+void X_PopStackMembers(lua_State *L, int count) {
+  lua_pop(L, count);
 }
 
 /* vi: set et ts=2 sw=2: */

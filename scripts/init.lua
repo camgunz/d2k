@@ -42,9 +42,11 @@ else
   d2k.hud = nil
 end
 
-print('X_Init: Creating console')
-local Console = require('console')
-d2k.console = Console.Console:new()
+if d2k.Video.is_enabled() then
+  print('X_Init: Creating console')
+  local Console = require('console')
+  d2k.console = Console.Console:new()
+end
 
 if d2k.hud then
   print('X_Init: Adding console to HUD')

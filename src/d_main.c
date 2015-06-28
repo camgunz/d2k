@@ -1135,6 +1135,9 @@ void D_ClearIWAD(void) {
 // D_ClearResourceFiles
 //
 void D_ClearResourceFiles(void) {
+  if (!resource_files)
+    return;
+
   for (unsigned int i = resource_files->len; i > 0; i--)
     g_ptr_array_remove_index_fast(resource_files, i - 1);
 }
@@ -1143,6 +1146,9 @@ void D_ClearResourceFiles(void) {
 // D_ClearDEHFiles
 //
 void D_ClearDEHFiles(void) {
+  if (!deh_files)
+    return;
+
   for (unsigned int i = deh_files->len; i > 0; i--)
     g_ptr_array_remove_index_fast(deh_files, i - 1);
 }
@@ -2295,6 +2301,9 @@ static void D_DoomMainSetup(void) {
     lprintf(LO_INFO, "%s", startup5);
   // End new startup strings
 
+  // CG 6/13/2015 Return of C_Init
+  C_Init();
+
   //jff 9/3/98 use logical output routine
   lprintf(LO_INFO, "M_Init: Init miscellaneous info.\n");
   M_Init();
@@ -2342,6 +2351,7 @@ static void D_DoomMainSetup(void) {
 #endif
 
   XAM_RegisterInterface();
+  XC_RegisterInterface();
   XD_RegisterInterface();
   XG_GameRegisterInterface();
   XG_KeysRegisterInterface();

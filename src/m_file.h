@@ -48,6 +48,8 @@ bool        M_PathJoinBuf(buf_t *buf, const char *one, const char *two);
 char*       M_PathJoin(const char *one, const char *two);
 bool        M_IsFolder(const char *path);
 bool        M_IsFile(const char *path);
+bool        M_IsRegularFile(const char *path);
+bool        M_IsSymlink(const char *path);
 bool        M_IsFileInFolder(const char *folder, const char *file);
 bool        M_IsRootFolder(const char *path);
 bool        M_IsAbsolutePath(const char *path);

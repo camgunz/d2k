@@ -65,6 +65,7 @@ function TextWidget:new(tw)
   tw.outline_width = tw.outline_width or 0
   tw.line_height = tw.line_height or 0
   tw.scrollable = tw.scrollable or false
+  print(debug.traceback())
   tw.font_description_text = tw.font_description_text or
                              d2k.hud.font_description_text
   tw.use_markup = tw.use_markup or false

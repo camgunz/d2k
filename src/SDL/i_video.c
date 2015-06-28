@@ -416,8 +416,10 @@ void I_PreInitGraphics(void) {
   char *video_driver = strdup(sdl_videodriver);
   unsigned int flags = 0;
 
-  if (!(M_CheckParm("-nodraw") && M_CheckParm("-nosound")))
+  if (!((M_CheckParm("-nodraw") && M_CheckParm("-nosound")) ||
+        M_CheckParm("-deltaserve"))) {
     flags = SDL_INIT_VIDEO;
+  }
 
 #ifdef DEBUG
   flags |= SDL_INIT_NOPARACHUTE;

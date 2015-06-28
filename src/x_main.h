@@ -72,10 +72,14 @@ lua_State*  X_NewState(void);
 lua_State*  X_NewRestrictedState(void);
 
 void        X_ExposeInterfaces(lua_State *L);
-const char* X_GetError(lua_State *L);
+char*       X_GetError(lua_State *L);
 bool        X_Eval(lua_State *L, const char *code);
 bool        X_Call(lua_State *L, const char *object, const char *fname,
                                  int arg_count, int res_count, ...);
+int         X_GetStackSize(lua_State *L);
+char*       X_ToString(lua_State *L, int index);
+void        X_PrintStack(lua_State *L);
+void        X_PopStackMembers(lua_State *L, int count);
 
 #endif
 

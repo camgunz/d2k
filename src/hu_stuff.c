@@ -2515,6 +2515,9 @@ void HU_Erase(void) {
 // Passed nothing, returns nothing
 //
 void HU_Ticker(void) {
+  if (nodrawers)
+    return;
+
   if (!X_Call(X_GetState(), "hud", "tick", 0, 0))
     I_Error("HU_Ticker: Error ticking HUD (%s)", X_GetError(X_GetState()));
 
