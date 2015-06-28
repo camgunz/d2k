@@ -1,10 +1,3 @@
-/*
-1. Finish a basic server console client app
-  - Fix the problem with deciding what lines to display
-  - Add scroll up/down
-  - Remove all the debugging stuff
-*/
-
 #define _XOPEN_SOURCE_EXTENDED
 
 #include <signal.h>
@@ -67,16 +60,6 @@ typedef struct server_console_s {
 static server_console_t server_console;
 
 static void sc_move_cursor_home(server_console_t *server_console);
-
-static void sc_log(server_console_t *server_console, const gchar *fmt, ...) {
-  va_list args;
-
-  g_string_append_printf(server_console->input, "<< ");
-  va_start(args, fmt);
-  g_string_append_vprintf(server_console->input, fmt, args);
-  va_end(args);
-  g_string_append_printf(server_console->input, " >>\n");
-}
 
 static void sc_get_dimensions(int *cols, int *rows) {
   int startx;
@@ -196,8 +179,8 @@ static void sc_get_output_dimensions(server_console_t *server_console,
   getbegyx(server_console->output_window, starty, startx);
   getmaxyx(server_console->output_window, endy, endx);
 
-  *cols = endx - startx;
-  *rows = endy - starty;
+  *cols = (endx - startx) - (LEFT_MARGIN + RIGHT_MARGIN);
+  *rows = (endy - starty) - (TOP_MARGIN - BOTTOM_MARGIN);
 }
 
 static gsize get_char_count(void) {
@@ -253,7 +236,8 @@ static void sc_display_output(server_console_t *server_console) {
   int     cy;
   int     cols;
   int     rows;
-  gchar  *first_line;
+  int     first_line_index = 0;
+  gchar  *line;
   gchar **lines;
 
   if (!buf)
@@ -266,73 +250,51 @@ static void sc_display_output(server_console_t *server_console) {
 
   rows -= TOP_MARGIN + BOTTOM_MARGIN;
 
-  first_line = g_utf8_strrchr(
-    server_console->line_broken_output->str, -1, '\n'
-  );
+  first_line_index  = server_console->line_count - 1;
+  first_line_index -= (rows - 1);
+  first_line_index -= server_console->output_scroll;
+  first_line_index  = MAX(first_line_index, 0);
 
-  if (!first_line) {
-    gsize total_window_size = rows * cols;
-    gsize offset = 0;
+  line = server_console->line_broken_output->str;
 
-    if (server_console->line_broken_output->len > total_window_size)
-      offset = server_console->line_broken_output->len - total_window_size;
+  for (int i = 0; i < first_line_index; i++) {
+    gchar *next_line = g_utf8_strchr(line, -1, '\n');
 
-    mvwprintw(
-      server_console->output_window,
-      TOP_MARGIN,
-      LEFT_MARGIN,
-      "%s",
-      server_console->line_broken_output->str + offset
-    );
-
-    goto refresh;
-  }
-
-  for (int i = 0; i < server_console->output_scroll; i++) {
-    if (!first_line)
+    if (!next_line)
       break;
 
-    first_line = g_utf8_strrchr(
-      server_console->line_broken_output->str,
-      (first_line - server_console->line_broken_output->str) - 1,
-      '\n'
-    );
-  }
+    next_line = g_utf8_next_char(next_line);
 
-  for (int i = 0; i < rows; i++) {
-    if (!first_line)
+    if (!next_line)
       break;
 
-    first_line = g_utf8_strrchr(
-      server_console->line_broken_output->str,
-      (first_line - server_console->line_broken_output->str) - 1,
-      '\n'
-    );
+    line = next_line;
   }
-
-  if (first_line)
-    first_line = g_utf8_next_char(first_line);
-  else
-    first_line = server_console->line_broken_output->str;
 
   for (int i = 0; i < rows; i++) {
     gchar *next_line;
 
-    if (!first_line)
+    if (!line)
       break;
 
-    next_line = g_utf8_strchr(first_line, -1, '\n');
-
-    if (!*first_line)
-      goto load_next_line;
+    next_line = g_utf8_strchr(line, -1, '\n');
 
     if (next_line) {
-      g_string_erase(buf, 0, -1);
-      g_string_insert_len(buf, 0, first_line, (next_line - first_line) + 1);
+      next_line = g_utf8_next_char(next_line);
+
+      if (next_line) {
+        g_string_erase(buf, 0, -1);
+        g_string_insert_len(buf, 0, line, next_line - line);
+      }
+      else {
+        g_string_assign(buf, line);
+      }
     }
     else {
-      g_string_printf(buf, "%s\n", first_line);
+      g_string_assign(buf, line);
     }
+
+print_line:
 
     mvwprintw(
       server_console->output_window,
@@ -342,14 +304,9 @@ static void sc_display_output(server_console_t *server_console) {
       buf->str
     );
 
-load_next_line:
+    line = next_line;
 
-    if (!next_line)
-      break;
-
-    first_line = g_utf8_next_char(next_line);
-
-    if (!first_line)
+    if (!line)
       break;
   }
 
@@ -361,13 +318,14 @@ refresh:
 }
 
 static void sc_format_output(server_console_t *server_console, gsize offset) {
-  int    cols;
-  int    rows;
-  gsize  col;
-  gchar *os;
-  gchar *ss;
-  gchar *cs;
-  gchar *last_line_break;
+  int       cols;
+  int       rows;
+  gsize     col;
+  gchar    *os;
+  gchar    *ss;
+  gchar    *cs;
+  gchar    *last_line_break;
+  gboolean  ended_on_linebreak;
 
   if (!server_console->line_breaks) {
     server_console->line_breaks = g_malloc0_n(
@@ -394,8 +352,10 @@ static void sc_format_output(server_console_t *server_console, gsize offset) {
 
   sc_get_output_dimensions(server_console, &cols, &rows);
 
+  /*
   if (cols)
     cols--;
+  */
 
   os = server_console->output->str;
   ss = server_console->output->str + offset;
@@ -407,14 +367,18 @@ static void sc_format_output(server_console_t *server_console, gsize offset) {
     glong lb_index = g_utf8_pointer_to_offset(os, cs);
     char lb = server_console->line_breaks[lb_index];
 
+    ended_on_linebreak = false;
+
     if (lb == LINEBREAK_MUSTBREAK) {
       if (cs > ss) {
         g_string_insert_len(
-          server_console->line_broken_output, -1, ss, (cs - ss) + 1
+          server_console->line_broken_output, -1, ss, (cs - ss)
         );
       }
 
       g_string_append_unichar(server_console->line_broken_output, '\n');
+      server_console->line_count++;
+      ended_on_linebreak = true;
 
       last_line_break = NULL;
       cs = g_utf8_next_char(cs);
@@ -440,6 +404,8 @@ static void sc_format_output(server_console_t *server_console, gsize offset) {
       );
 
       g_string_append_unichar(server_console->line_broken_output, '\n');
+      server_console->line_count++;
+      ended_on_linebreak = true;
 
       ss = g_utf8_next_char(cs);
 
@@ -448,10 +414,14 @@ static void sc_format_output(server_console_t *server_console, gsize offset) {
 
     cs = g_utf8_next_char(cs);
   }
+
+  if (!ended_on_linebreak)
+    server_console->line_count++;
 }
 
 static void sc_reformat_output(server_console_t *server_console) {
   g_string_erase(server_console->line_broken_output, 0, -1);
+  server_console->line_count = 0;
   sc_format_output(server_console, 0);
 }
 
@@ -588,8 +558,7 @@ static void sc_move_cursor_home(server_console_t *server_console) {
   sc_display_input(server_console);
 }
 
-static void sc_move_cursor_to_end(server_console_t *server_console) {
-  int   x;
+static void sc_move_cursor_to_end(server_console_t *server_console) { int   x;
   int   y;
   gsize char_count = get_char_count();
 
@@ -657,9 +626,41 @@ static void sc_delete_previous_char(server_console_t *server_console) {
 }
 
 static void sc_scroll_output_up(server_console_t *server_console) {
+  int cols;
+  int rows;
+
+  sc_get_output_dimensions(server_console, &cols, &rows);
+
+  rows -= (TOP_MARGIN + BOTTOM_MARGIN);
+
+  if (server_console->output_scroll < server_console->line_count - rows) {
+    server_console->output_scroll++;
+    sc_display_output(server_console);
+  }
 }
 
 static void sc_scroll_output_down(server_console_t *server_console) {
+  if (server_console->output_scroll > 0) {
+    server_console->output_scroll--;
+    sc_display_output(server_console);
+  }
+}
+
+static void sc_dump_output(server_console_t *server_console) {
+  GError *error = NULL;
+  gboolean success;
+
+  success = g_file_set_contents(
+    "output.log",
+    server_console->output->str,
+    server_console->output->len,
+    &error
+  );
+
+  if (!success) {
+    g_printerr("Error dumping output: %s\n", error->message);
+    exit(EXIT_FAILURE);
+  }
 }
 
 static void sc_handle_local_command(server_console_t *server_console) {
@@ -667,6 +668,8 @@ static void sc_handle_local_command(server_console_t *server_console) {
     exit(EXIT_SUCCESS);
   if (g_strcmp0(server_console->input->str, ":quit") == 0)
     exit(EXIT_SUCCESS);
+  if (g_strcmp0(server_console->input->str, ":dumpout") == 0)
+    sc_dump_output(server_console);
 }
 
 static void sc_handle_command(server_console_t *server_console) {
