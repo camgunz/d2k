@@ -1,10 +1,8 @@
 /*
 1. Finish a basic server console client app
+  - Fix the problem with deciding what lines to display
   - Add scroll up/down
-  - Fix cursor on history scroll
-  - Fix output formatting on resize
   - Remove all the debugging stuff
-  - Segfault when server disconnects first
 */
 
 #define _XOPEN_SOURCE_EXTENDED
@@ -70,23 +68,14 @@ static server_console_t server_console;
 
 static void sc_move_cursor_home(server_console_t *server_console);
 
-static void sc_to_server(server_console_t *server_console, const gchar *format,
-                                                           ...) {
-  static GString *buf = NULL;
-
-  uds_peer_t *server = uds_get_peer(
-    &server_console->uds, server_console->server_socket_name
-  );
+static void sc_log(server_console_t *server_console, const gchar *fmt, ...) {
   va_list args;
 
-  if (!buf)
-    buf = g_string_new("");
-
-  va_start(args, format);
-  g_string_vprintf(buf, format, args);
+  g_string_append_printf(server_console->input, "<< ");
+  va_start(args, fmt);
+  g_string_append_vprintf(server_console->input, fmt, args);
   va_end(args);
-
-  uds_peer_sendto(server, buf->str);
+  g_string_append_printf(server_console->input, " >>\n");
 }
 
 static void sc_get_dimensions(int *cols, int *rows) {
@@ -235,10 +224,6 @@ static void sc_display_input(server_console_t *server_console) {
     buf = g_string_new("");
   else
     g_string_erase(buf, 0, -1);
-
-  sc_to_server(server_console, "SCDI: input_scroll: %u\n",
-    server_console->input_scroll
-  );
 
   input_line = server_console->input->str + server_console->input_scroll;
   input_length = MIN(
@@ -393,6 +378,11 @@ static void sc_format_output(server_console_t *server_console, gsize offset) {
     server_console->line_breaks = g_realloc_n(
       server_console->line_breaks, server_console->output->len, sizeof(gchar)
     );
+    memset(
+      server_console->line_breaks + offset,
+      0,
+      server_console->output->len - offset
+    );
   }
 
   set_linebreaks_utf8(
@@ -401,6 +391,11 @@ static void sc_format_output(server_console_t *server_console, gsize offset) {
     LANGUAGE,
     server_console->line_breaks + offset
   );
+
+  sc_get_output_dimensions(server_console, &cols, &rows);
+
+  if (cols)
+    cols--;
 
   os = server_console->output->str;
   ss = server_console->output->str + offset;
@@ -419,7 +414,7 @@ static void sc_format_output(server_console_t *server_console, gsize offset) {
         );
       }
 
-      g_string_append_c(server_console->line_broken_output, '\n');
+      g_string_append_unichar(server_console->line_broken_output, '\n');
 
       last_line_break = NULL;
       cs = g_utf8_next_char(cs);
@@ -435,16 +430,16 @@ static void sc_format_output(server_console_t *server_console, gsize offset) {
     col++;
 
     if (col == cols) {
-      if (cs > ss) {
-        g_string_insert_len(
-          server_console->line_broken_output, -1, ss, (cs - ss) + 1
-        );
+      if (last_line_break) {
+        cs = last_line_break;
+        last_line_break = NULL;
       }
 
-      g_string_append_c(server_console->line_broken_output, '\n');
+      g_string_insert_len(
+        server_console->line_broken_output, -1, ss, (cs - ss) + 1
+      );
 
-      if (last_line_break)
-        cs = last_line_break;
+      g_string_append_unichar(server_console->line_broken_output, '\n');
 
       ss = g_utf8_next_char(cs);
 
@@ -526,20 +521,12 @@ static gboolean task_send_data(gpointer user_data) {
 }
 
 static void sc_scroll_input_right(server_console_t *server_console) {
-  if (server_console->input_scroll > 0)
-    server_console->input_scroll--;
-
-  sc_to_server(
-    server_console, "Scroll right: %u\n", server_console->input_scroll
-  );
+  server_console->input_scroll = MAX(server_console->input_scroll - 1, 0);
 }
 
 static void sc_scroll_input_left(server_console_t *server_console) {
-  gsize ms = sc_get_max_scroll(server_console);
-
-  server_console->input_scroll = MIN(server_console->input_scroll + 1, ms);
-  sc_to_server(
-    server_console, "MS, Scroll left: %u, %u\n", ms, server_console->input_scroll
+  server_console->input_scroll = MIN(
+    server_console->input_scroll + 1, sc_get_max_scroll(server_console)
   );
 }
 
@@ -571,16 +558,6 @@ static void sc_move_cursor_right(server_console_t *server_console) {
   gsize char_count = get_char_count();
 
   sc_get_cursor_position(server_console, &x, &y);
-
-  sc_to_server(server_console,
-    "cc, x, INPUT_WIDTH, LM, RM, len: %d, %d, %d, %d, %d, %d\n",
-    char_count,
-    x,
-    INPUT_WIDTH,
-    LEFT_MARGIN,
-    RIGHT_MARGIN,
-    server_console->input->len
-  );
 
   if (x > char_count)
     sc_scroll_input_left(server_console);
@@ -742,10 +719,6 @@ static void sc_handle_key(server_console_t *server_console, wint_t key) {
     sc_delete_previous_char(server_console);
     return;
   }
-
-  sc_to_server(server_console, "Inserting at %d/%u\n",
-    server_console->input_index, server_console->input->len
-  );
 
   g_string_insert_unichar(
     server_console->input, server_console->input_index, key
@@ -939,7 +912,7 @@ int main(int argc, char **argv) {
   server_console.loop = g_main_loop_new(server_console.mc, FALSE);
 
   g_idle_add(task_read_input, &server_console);
-  g_timeout_add(MESSAGE_INTERVAL, task_send_data, &server_console);
+  // g_timeout_add(MESSAGE_INTERVAL, task_send_data, &server_console);
 
   g_main_loop_run(server_console.loop);
 
