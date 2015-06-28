@@ -25,10 +25,10 @@ local messages_widget = ExtendableTextWidget.ExtendableTextWidget:new({
   line_height = 4,
   use_markup = true,
   strip_ending_newline = true,
-  retractable = TextWidget.RETRACT_UP,
+  retractable = ExtendableTextWidget.RETRACT_UP,
   retraction_time = 500,
   retraction_timeout = 2000,
-  font_description_text = 'Monkirta Pursuit NC 10'
+  font_description_text = 'Monkirta Pursuit NC 11'
 })
 
 messages_widget:set_external_text_source(

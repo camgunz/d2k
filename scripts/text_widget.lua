@@ -332,7 +332,7 @@ function TextWidget:update_layout_if_needed()
   if self.get_external_text then
     local layout_width, layout_height = self:get_layout():get_pixel_size()
 
-    self:set_height(layout_height)
+    self:set_height_in_pixels(layout_height)
   end
 
   self.needs_updating = false

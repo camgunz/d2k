@@ -57,6 +57,18 @@ ExtendableTextWidget.RETRACT_RIGHT = 4
 ExtendableTextWidget.RETRACTION_TIME = 2000
 ExtendableTextWidget.RETRACTION_TIMEOUT = 2000
 
+--
+-- [TODO]
+--
+-- - Throw an error during initialization if vertical_align isn't ALIGN_TOP or
+--   ALIGN_BOTTOM.
+-- - Rename to RetractableTextWidget
+-- - Only override methods that are actually different from TextWidget
+-- - Pre-set fields properly, and only either new fields or fields whose
+--   default value differs from TextWidget's default values
+-- - On resize, we need to set the last retraction target to the last line
+--
+
 function ExtendableTextWidget:new(tw)
   tw = tw or {}
 
@@ -82,15 +94,18 @@ function ExtendableTextWidget:new(tw)
   tw.retraction_time = tw.retraction_time or ExtendableTextWidget.RETRACTION_TIME
   tw.retraction_timeout = tw.retraction_timeout or ExtendableTextWidget.RETRACTION_TIMEOUT
 
+  tw.retracting = false
+  tw.retracting_line_number = 0
+  tw.last_retracted_line_number = 0
+  tw.retraction_target = 0
+  tw.retraction_start_time = 0
+
   tw.text_context = nil
   tw.current_render_context = nil
   tw.layout = nil
 
   tw.horizontal_offset = 0.0
   tw.vertical_offset = 0.0
-
-  tw.last_retraction_time = 0
-  tw.currently_retracting = false
 
   tw.get_external_text = nil
   tw.external_text_updated = nil
@@ -164,30 +179,8 @@ function ExtendableTextWidget:get_text()
   return self.text
 end
 
-function ExtendableTextWidget:reset_retraction()
-  if not self:get_retractable() then
-    return
-  end
-
-  self:set_last_retraction_time(d2k.System.get_ticks())
-  self:set_currently_retracting(false)
-end
-
 function ExtendableTextWidget:set_text(text)
   self.text = text
-
-  if self:currently_retracting() then
-    local line = self:get_first_retractable_line()
-    local retraction_direction = self:get_retracting()
-
-    if retraction_direction == ExtendableTextWidget.RETRACT_UP then
-      self:set_vertical_offset(line.y)
-    elseif retraction_direction == ExtendableTextWidget.RETRACT_DOWN then
-      self:set_vertical_offset(line.y - line.height)
-    end
-  end
-
-  self:reset_retraction()
 end
 
 function ExtendableTextWidget:get_max_width()
@@ -318,6 +311,50 @@ function ExtendableTextWidget:set_retraction_timeout(retraction_timeout)
   self.retraction_timeout = retraction_timeout
 end
 
+function ExtendableTextWidget:get_retracting()
+  return self.retracting
+end
+
+function ExtendableTextWidget:set_retracting(retracting)
+  self.retracting = retracting
+end
+
+function ExtendableTextWidget:get_retracting_line_number()
+  return self.retracting_line_number
+end
+
+function ExtendableTextWidget:set_retracting_line_number(
+  retracting_line_number
+)
+  self.retracting_line_number = retracting_line_number
+end
+
+function ExtendableTextWidget:get_last_retracted_line_number()
+  return self.last_retracted_line_number
+end
+
+function ExtendableTextWidget:set_last_retracted_line_number(
+  last_retracted_line_number
+)
+  self.last_retracted_line_number = last_retracted_line_number
+end
+
+function ExtendableTextWidget:get_retraction_target()
+  return self.retraction_target
+end
+
+function ExtendableTextWidget:set_retraction_target(retraction_target)
+  self.retraction_target = retraction_target
+end
+
+function ExtendableTextWidget:get_retraction_start_time()
+  return self.retraction_start_time
+end
+
+function ExtendableTextWidget:set_retraction_start_time(retraction_start_time)
+  self.retraction_start_time = retraction_start_time
+end
+
 function ExtendableTextWidget:get_text_context()
   return self.text_context
 end
@@ -360,28 +397,13 @@ function ExtendableTextWidget:set_vertical_offset(vertical_offset)
   self:check_offsets()
 end
 
-function ExtendableTextWidget:get_last_retraction_time()
-  return self.last_retraction_time
-end
-
-function ExtendableTextWidget:set_last_retraction_time(last_retraction_time)
-  self.last_retraction_time = last_retraction_time
-end
-
-function ExtendableTextWidget:get_currently_retracting()
-  return self.currently_retracting
-end
-
-function ExtendableTextWidget:set_currently_retracting(currently_retracting)
-  self.currently_retracting = currently_retracting
-end
-
 function ExtendableTextWidget:update_layout_if_needed()
   if not self.needs_updating then
     return
   end
 
   local text = self:get_text()
+  local layout = self:get_layout()
 
   if self:get_strip_ending_newline() then
     while true do
@@ -404,157 +426,158 @@ function ExtendableTextWidget:update_layout_if_needed()
   PangoCairo.update_context(
     d2k.overlay.render_context, d2k.overlay.text_context
   )
-  PangoCairo.update_layout(d2k.overlay.render_context, self:get_layout())
+  PangoCairo.update_layout(d2k.overlay.render_context, layout)
   self:check_offsets()
 
   if self.get_external_text then
-    local layout_width, layout_height = self:get_layout():get_pixel_size()
+    local line_count = layout:get_line_count()
+    local start_line, end_line = self:get_min_max_line_numbers(line_count)
+    local lines = self:get_visible_line_dimensions(start_line, end_line)
+    local visible_line_count = #lines
 
-    self:set_height_in_pixels(layout_height)
+    if visible_line_count == 0 then
+      self:set_height_in_pixels(0)
+      return
+    end
+
+    self:set_height_in_pixels(
+      self:get_top_margin() +
+      lines[1].y +
+      lines[visible_line_count].y +
+      lines[visible_line_count].height +
+      self:get_bottom_margin()
+    )
   end
 
   self.needs_updating = false
 end
 
-function get_line_y(layout_rect, line_rect)
-  return layout_rect.height + line_rect.y
-end
-
-function ExtendableTextWidget:get_first_retractable_line()
-  local layout = self:get_layout()
-  local horizontal_alignment = self:get_horizontal_alignment()
-  local vertical_alignment = self:get_vertical_alignment()
-  local line_x = self:get_x()
-  local line_y = self:get_y()
-
-  if #self.text == 0 then
-    return nil
-  end
-
-  if horizontal_alignment == ExtendableTextWidget.ALIGN_LEFT then
-    line_x = line_x + self:get_left_margin()
-  elseif horizontal_alignment == ExtendableTextWidget.ALIGN_CENTER then
-    line_x = line_x + ((
-      self:get_width_in_pixels() +
-      self:get_left_margin() -
-      self:get_right_margin()
-    ) / 2)
-  elseif horizontal_alignment == ExtendableTextWidget.ALIGN_RIGHT then
-    line_x = line_x + (self:get_width_in_pixels() - self:get_right_margin())
-  end
-
-  if vertical_alignment == ExtendableTextWidget.ALIGN_UP then
-    line_y = line_y + self:get_top_margin()
-  elseif vertical_alignment == ExtendableTextWidget.ALIGN_CENTER then
-    line_y = line_y + ((
-      self:get_height_in_pixels() +
-      self:get_top_margin() -
-      self:get_bottom_margin()
-    ) / 2)
-  elseif vertical_alignment == ExtendableTextWidget.ALIGN_BOTTOM then
-    line_y = line_y + (self:get_height_in_pixels() - self:get_bottom_margin())
-  end
-
-  if retractable == ExtendableTextWidget.RETRACT_UP then
-    line_y = line_y + self:get_vertical_offset()
-  elseif retractable == ExtendableTextWidget.RETRACT_DOWN then
-    line_y = line_y - self:get_vertical_offset()
-  elseif retractable == ExtendableTextWidget.RETRACT_LEFT then
-    line_x = line_x + self:get_horizontal_offset()
-  elseif retractable == ExtendableTextWidget.RETRACT_RIGHT then
-    line_x = line_x - self:get_horizontal_offset()
-  end
-
-  local iter = self:get_layout():get_iter()
-
-  repeat
-    local line = iter:get_line_readonly()
-    local ink_rect, line_rect = iter:get_line_extents()
-
-    line_rect.x      = line_rect.x / Pango.SCALE
-    line_rect.y      = line_rect.y / Pango.SCALE
-    line_rect.width  = line_rect.width / Pango.SCALE
-    line_rect.height = line_rect.height / Pango.SCALE
-
-    if line_x >= line_rect.x and line_x <= (line_rect.x + line_rect.width) and
-       line_y >= line_rect.y and line_y <= (line_rect.y + line_rect.height) and
-       line_rect.y + line_rect.height > self:get_vertical_offset() then
-      -- print(string.format('HO, VO, TM, BM: %s, %s, %s, %s',
-      --   self:get_horizontal_offset(),
-      --   self:get_vertical_offset(),
-      --   self:get_top_margin(),
-      --   self:get_bottom_margin()
-      -- ))
-      -- print(string.format('First retractable line {%s, %s, %s, %s} (%sx%s)',
-      --   line_rect.x,
-      --   line_rect.y,
-      --   line_rect.width,
-      --   line_rect.height,
-      --   line_x,
-      --   line_y
-      -- ))
-
-      return line_rect
+function ExtendableTextWidget:get_min_max_line_numbers(line_count)
+  local line_height = self:get_line_height()
+  local last_retracted_line_number = self:get_last_retracted_line_number()
+  local line_count = line_count or self:get_layout():get_line_count()
+  local min_line = 1
+  local max_line = line_count
+  
+  if (not line_height) or line_count < line_height then
+    if last_retracted_line_number == 0 then
+      return min_line, max_line
     end
 
-  until not iter:next_line()
+    min_line = last_retracted_line_number + 1
+
+    if min_line > max_line then
+      return 0, 0
+    end
+
+    return min_line, max_line
+  end
+
+  min_line = line_count - (line_height - 1)
+
+  if min_line <= last_retracted_line_number then
+    min_line = last_retracted_line_number + 1
+  end
+
+  max_line = math.min(min_line + (line_height - 1), line_count)
+
+  return min_line, max_line
 end
 
-function ExtendableTextWidget:print_lines()
-  local iter = self:get_layout():get_iter()
+function ExtendableTextWidget:get_visible_lines(start_line, end_line)
+  local last_retracted_line_number = self:get_last_retracted_line_number()
+  local line_height = self:get_line_height()
+  local layout = self:get_layout()
+  local line_count = layout:get_line_count()
+  local line_number = 1
+  local lines = {}
 
-  repeat
-    local line = iter:get_line_readonly()
-    local ink_rect, line_rect = iter:get_line_extents()
+  if start_line == 0 or end_line == 0 then
+    return lines
+  end
 
-    line_rect.x      = line_rect.x / Pango.SCALE
-    line_rect.y      = line_rect.y / Pango.SCALE
-    line_rect.width  = line_rect.width / Pango.SCALE
-    line_rect.height = line_rect.height / Pango.SCALE
+  local line_count = layout:get_line_count()
+  local iter = layout:get_iter()
 
-    print(string.format('{%s, %s, %s, %s}',
-      line_rect.x,
-      line_rect.y,
-      line_rect.width,
-      line_rect.height
-    ))
-  until not iter:next_line()
+  if start_line == nil or end_line == nil then
+    start_line, end_line = self:get_min_max_line_numbers(line_count)
+  end
+
+  while line_number < start_line do
+    iter:next_line()
+    line_number = line_number + 1
+  end
+
+  while line_number <= end_line do
+    local ink_rect, logical_rect = iter:get_line_extents()
+
+    table.insert(lines, {
+      number     = line_number,
+      x          = logical_rect.x      / Pango.SCALE,
+      y          = logical_rect.y      / Pango.SCALE,
+      width      = logical_rect.width  / Pango.SCALE,
+      height     = logical_rect.height / Pango.SCALE,
+      baseline   = iter:get_baseline() / Pango.SCALE,
+      pango_line = iter:get_line_readonly()
+    })
+
+    if not iter:next_line() then
+      break
+    end
+
+    line_number = line_number + 1
+  end
+
+  return lines
 end
 
-function ExtendableTextWidget:get_retracting()
-  if not self:get_retractable() then
-    return false
+function ExtendableTextWidget:get_visible_line_dimensions(start_line, end_line)
+  local last_retracted_line_number = self:get_last_retracted_line_number()
+  local line_height = self:get_line_height()
+  local layout = self:get_layout()
+  local line_count = layout:get_line_count()
+  local line_number = 1
+  local lines = {}
+
+  if start_line == 0 or end_line == 0 then
+    return lines
   end
 
-  if #self.text == 0 then
-    return false
+  local line_count = layout:get_line_count()
+  local iter = layout:get_iter()
+
+  if start_line == nil or end_line == nil then
+    start_line, end_line = self:get_min_max_line_numbers(line_count)
   end
 
-  local line = self:get_first_retractable_line()
-
-  if line == nil then
-    return false
+  while line_number < start_line do
+    iter:next_line()
+    line_number = line_number + 1
   end
 
-  local last_retraction_time = self:get_last_retraction_time()
+  while line_number <= end_line do
+    local ink_rect, logical_rect = iter:get_line_extents()
 
-  if last_retraction_time == 0 then
-    return false
+    table.insert(lines, {
+      number = line_number,
+      x      = logical_rect.x      / Pango.SCALE,
+      y      = logical_rect.y      / Pango.SCALE,
+      width  = logical_rect.width  / Pango.SCALE,
+      height = logical_rect.height / Pango.SCALE
+    })
+
+    if not iter:next_line() then
+      break
+    end
+
+    line_number = line_number + 1
   end
 
-  local retraction_ms_elapsed = current_ms - self:get_last_retraction_time()
-  local retraction_timeout = self:get_retraction_timeout()
-
-  if retraction_ms_elapsed < retraction_timeout then
-    return false
-  end
-
-  return true
+  return lines
 end
 
 function ExtendableTextWidget:tick()
   local current_ms = d2k.System.get_ticks()
-  local retractable = self:get_retractable()
 
   if self.get_external_text and self.external_text_updated() then
     self.text = self.get_external_text()
@@ -562,11 +585,7 @@ function ExtendableTextWidget:tick()
     self.clear_external_text_updated()
   end
 
-  if not retractable then
-    return
-  end
-
-  if true then
+  if not self:get_retractable() then
     return
   end
 
@@ -574,40 +593,84 @@ function ExtendableTextWidget:tick()
     return
   end
 
-  local line = self:get_first_retractable_line()
+  local start_line, end_line = self:get_min_max_line_numbers()
 
-  if line == nil then
-    self:set_last_retraction_time(current_ms)
+  if start_line == 0 or end_lie == 0 then
     return
   end
 
-  local last_retraction_time = self:get_last_retraction_time()
+  local visible_lines = self:get_visible_line_dimensions(start_line, end_line)
+  local visible_line_count = #visible_lines
 
-  if last_retraction_time == 0 then
-    self:set_last_retraction_time(current_ms)
+  if visible_line_count == 0 then
     return
   end
 
-  local retraction_ms_elapsed = current_ms - self:get_last_retraction_time()
-  local retraction_timeout = self:get_retraction_timeout()
+  local layout_width, layout_height = self:get_layout():get_pixel_size()
 
-  if retraction_ms_elapsed < retraction_timeout then
+  self:set_height_in_pixels(
+    (layout_height - visible_lines[1].y) +
+    self:get_top_margin() +
+    self:get_bottom_margin()
+  )
+
+  if self:get_retracting() then
+    local retracting_line_number = self:get_retracting_line_number()
+
+    if retracting_line_number < start_line or
+       retracting_line_number > end_line or
+       not self:retract(current_ms, visible_lines[1].y) then
+      self:set_vertical_offset(self:get_retraction_target())
+      self:set_retracting(false)
+      self:set_last_retracted_line_number(retracting_line_number)
+      self:set_retracting_line_number(0)
+      self:set_retraction_target(0)
+      self:set_retraction_start_time(0)
+    end
+
     return
   end
 
-  local ms_retracted = retraction_ms_elapsed - retraction_timeout
-  local height_fraction = ms_retracted / self:get_retraction_time()
-  local y_delta = (ms_retracted / self:get_retraction_time()) * line.height
+  local retraction_start_time = self:get_retraction_start_time()
 
-  self:set_currently_retracting(true)
-
-  y_delta = math.min(y_delta, line.height + .1)
-
-  self:set_vertical_offset(line.y + y_delta)
-
-  if y_delta >= line.height then
-    self:reset_retraction()
+  if retraction_start_time == 0 then
+    self:set_retraction_start_time(current_ms + self:get_retraction_timeout())
+    return
   end
+
+  if current_ms > self:get_retraction_time() then
+    self:set_retracting_line_number(visible_lines[1].number)
+    if visible_line_count > 1 then
+      self:set_retraction_target(visible_lines[2].y)
+    else
+      self:set_retraction_target(layout_height)
+    end
+    self:set_retracting(true)
+  end
+end
+
+function ExtendableTextWidget:retract(current_ms, top)
+  local current_ms = current_ms or d2k.System.get_ticks()
+  local retraction_start_time = self:get_retraction_start_time()
+  local retraction_ms_elapsed = current_ms - retraction_start_time
+  local ms_retracted = retraction_ms_elapsed - self:get_retraction_timeout()
+
+  if ms_retracted <= 0 then
+    return true
+  end
+
+  local retraction_time = self:get_retraction_time()
+  local height_fraction = ms_retracted / retraction_time
+  local target = self:get_retraction_target()
+  local retraction_distance = target - top
+  local y_delta = (ms_retracted / retraction_time) * retraction_distance
+
+  if y_delta < retraction_distance then
+    self:set_vertical_offset(top + y_delta)
+    return true
+  end
+
+  return false
 end
 
 function ExtendableTextWidget:draw()
@@ -663,16 +726,8 @@ function ExtendableTextWidget:draw()
   local layout_ink_extents, layout_logical_extents =
     self:get_layout():get_pixel_extents()
   local retractable = self:get_retractable()
-  local horizontally_retractable = retractable == (
-    ExtendableTextWidget.RETRACT_LEFT or ExtendableTextWidget.RETRACT_RIGHT
-  )
-  local vertically_retractable = retractable == (
-    ExtendableTextWidget.RETRACT_UP or ExtendableTextWidget.RETRACT_DOWN
-  )
 
-  if self.vertical_alignment == ExtendableTextWidget.ALIGN_CENTER then
-    ly = ly + (text_height / 2) - (layout_height / 2)
-  elseif self.vertical_alignment == ExtendableTextWidget.ALIGN_BOTTOM then
+  if self.vertical_alignment == ExtendableTextWidget.ALIGN_BOTTOM then
     ly = ly + text_height - layout_height
   end
 
@@ -682,121 +737,50 @@ function ExtendableTextWidget:draw()
     lx = lx + text_width - layout_width
   end
 
-  if horizontally_retractable or layout_width > text_width then
-    lx = lx - self:get_horizontal_offset()
-  end
-
-  if vertically_retractable or layout_height > text_height then
+  if retractable or layout_height > text_height then
     ly = ly - self:get_vertical_offset()
   end
 
-  local iter = self:get_layout():get_iter()
-  local line_number = 1
-  local min_line = 0
-  local max_line = 0
+  local min_line, max_line = self:get_min_max_line_numbers(line_count)
+  local visible_lines = self:get_visible_lines(min_line, max_line)
   local start_y_offset = 0
   local rendered_at_least_one_line = false
   local line_height = self:get_line_height()
 
-  if line_height > 0 then
-    if line_count <= line_height then
-      min_line = 1
-      max_line = line_count
-    elseif self.vertical_alignment == ExtendableTextWidget.ALIGN_TOP then
-      min_line = 1
-      max_line = line_height
-    elseif self.vertical_alignment == ExtendableTextWidget.ALIGN_CENTER then
-      local half_lines = line_count / 2
-      local half_line_height = line_height / 2
+  for i, line in ipairs(visible_lines) do
+    local line_start_x = line.x + lx
+    local line_start_y = line.y + ly
 
-      min_line = math.floor(half_lines - half_line_height)
-      max_line = math.floor(half_lines + half_line_height)
+    if line_height > 0 and i == 1 and line.y > 0 then
+      start_y_offset = -line.y
+    end
 
-      while ((max_line - min_line) + 1) < line_height do
-        max_line = max_line + 1
-      end
+    cr:move_to(line_start_x, line.baseline + ly + start_y_offset)
+
+    if self:get_outline_text() then
+      cr:save()
+
+      PangoCairo.layout_line_path(cr, line.pango_line)
+
+      cr:save()
+      cr:set_line_width(self:get_outline_width())
+      cr:set_source_rgba(
+        outline_color[1],
+        outline_color[2],
+        outline_color[3],
+        outline_color[4]
+      )
+      cr:stroke_preserve()
+      cr:restore()
+
+      cr:set_source_rgba(fg_color[1], fg_color[2], fg_color[3], fg_color[4])
+      cr:fill_preserve()
+
+      cr:restore()
     else
-      min_line = (line_count - line_height) + 1
-      max_line = line_count
+      PangoCairo.show_layout_line(cr, line.pango_line)
     end
   end
-
-  -- if self:get_name() == 'messages' then
-  --   print(string.format('Drawing messages at %s/%s', lx, ly))
-  -- end
-
-  repeat
-    local line_baseline_pixels = iter:get_baseline() / Pango.SCALE
-    local line_end_y = line_baseline_pixels + ly
-    local should_render_line = false
-    local should_quit_after_rendering = false
-
-    if line_height > 0 then
-      if line_number >= min_line and line_number <= max_line then
-        should_render_line = true
-      end
-    elseif line_end_y > 0 then
-      should_render_line = true
-    end
-
-    if should_render_line then
-      local line = iter:get_line_readonly()
-      local line_ink_extents, line_logical_extents = iter:get_line_extents()
-      local line_logical_x = line_logical_extents.x / Pango.SCALE
-      local line_logical_y = line_logical_extents.y / Pango.SCALE
-      local line_logical_height = line_logical_extents.height / Pango.SCALE
-      local line_start_x = line_logical_x + lx
-      local line_start_y = line_logical_y + ly
-
-      if line_height > 0 then
-        if line_number == max_line then
-          should_quit_after_rendering = true
-        end
-      elseif line_start_y >= text_height then
-        should_quit_after_rendering = true
-      end
-
-      if line_height > 0 and
-         (not rendered_at_least_one_line) and
-         line_logical_y > 0 then
-        start_y_offset = -line_logical_y
-      end
-
-      rendered_at_least_one_line = true
-
-      cr:move_to(line_start_x, line_baseline_pixels + ly + start_y_offset)
-
-      if self:get_outline_text() then
-        cr:save()
-
-        PangoCairo.layout_line_path(cr, line)
-
-        cr:save()
-        cr:set_line_width(self:get_outline_width())
-        cr:set_source_rgba(
-          outline_color[1],
-          outline_color[2],
-          outline_color[3],
-          outline_color[4]
-        )
-        cr:stroke_preserve()
-        cr:restore()
-
-        cr:set_source_rgba(fg_color[1], fg_color[2], fg_color[3], fg_color[4])
-        cr:fill_preserve()
-
-        cr:restore()
-      else
-        PangoCairo.show_layout_line(cr, line)
-      end
-
-      if should_quit_after_rendering then
-        break
-      end
-    end
-
-    line_number = line_number + 1
-  until not iter:next_line()
 
   cr:restore()
 end
@@ -1012,16 +996,6 @@ function ExtendableTextWidget:check_offsets()
     end
   end
 
-  -- if self:get_name() == 'messages' then
-  --   print(string.format('check_offsets: min_y/max_y/vertical_offset/lh/th: %s, %s, %s, %s, %s',
-  --     min_y,
-  --     max_y,
-  --     self:get_vertical_offset(),
-  --     layout_height,
-  --     text_height
-  --   ))
-  -- end
-
   if self:get_horizontal_offset() < min_x then
     self.horizontal_offset = min_x
   end
@@ -1036,14 +1010,6 @@ function ExtendableTextWidget:check_offsets()
 
   if self:get_vertical_offset() > max_y then
     self.vertical_offset = max_y
-  end
-
-  if self:get_name() == 'messages' then
-    print(string.format('check_offsets 2: min_y/max_y/vertical_offset: %s, %s, %s',
-      min_y,
-      max_y,
-      self:get_vertical_offset()
-    ))
   end
 end
 
