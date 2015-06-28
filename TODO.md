@@ -7,9 +7,9 @@
   - Remove all the debugging stuff
 
 1. Finish retractable text widget
-  - Throw an error during initialization if `vertical_align` isn't `ALIGN_TOP`
-    or `ALIGN_BOTTOM`
-  - Inherit from TextWidget; save 100s of lines of code
+  - Adding lines while full and retracting causes a kind of flicker
+    - Probably have to check in `set_text` if the widget's full, and cancel
+      the retraction if it is... although I thought `tick` already did that...
 
 1. Add/fix wrapping to/for InputWidget
 

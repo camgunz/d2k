@@ -611,8 +611,10 @@ function TextWidget:set_ellipsize(ellipsize)
     self.ellipsize = TextWidget.ELLIPSIZE_END
     layout:set_ellipsize(Pango.EllipsizeMode.END)
   else
-    s = 'TextWidget:set_ellipsize: Invalid ellipsization value %s'
-    error(s:format(ellipsize))
+    error(string.format(
+      'TextWidget:set_ellipsize: Invalid ellipsization value %s'
+      ellipsize
+    ))
   end
 
   self.needs_updating = true
@@ -645,8 +647,9 @@ function TextWidget:set_word_wrap(word_wrap)
     layout:set_width(self:get_width_in_pixels() * Pango.SCALE)
     layout:set_wrap(Pango.WrapMode.WORD_CHAR)
   else
-    s = 'TextWidget:set_word_wrap: Invalid word wrap value %s'
-    error(s:format(word_wrap))
+    error(string.format('TextWidget:set_word_wrap: Invalid word wrap value %s',
+      word_wrap
+    ))
   end
 
   self.needs_updating = true
@@ -676,8 +679,10 @@ function TextWidget:set_horizontal_alignment(horizontal_alignment)
     self.horizontal_alignment = TextWidget.ALIGN_JUSTIFY
     layout:set_alignment(Pango.Alignment.JUSTIFY)
   else
-    s = 'TextWidget:set_horizontal_alignment: Invalid horizontal alignment %s'
-    error(s:format(horizontal_alignment))
+    error(string.format(
+      'TextWidget:set_horizontal_alignment: Invalid horizontal alignment %s',
+      horizontal_alignment
+    ))
   end
 
   self.needs_updating = true
@@ -695,8 +700,10 @@ function TextWidget:set_vertical_alignment(vertical_alignment)
   elseif vertical_alignment == TextWidget.ALIGN_BOTTOM then
     self.vertical_alignment = TextWidget.ALIGN_BOTTOM
   else
-    s = 'TextWidget:set_vertical_alignment: Invalid vertical alignment %s'
-    error(s:format(vertical_alignment))
+    error(string.format(
+      'TextWidget:set_vertical_alignment: Invalid vertical alignment %s',
+      vertical_alignment
+    ))
   end
 
   self.needs_updating = true
@@ -714,7 +721,6 @@ function TextWidget:check_offsets()
   local max_x = layout_width - text_width
   local x_delta = max_x - min_x
   local min_y = 0
-  -- local max_y = layout_height - text_height
   local max_y = text_height - self:get_top_margin()
   local y_delta = max_y - min_y
 

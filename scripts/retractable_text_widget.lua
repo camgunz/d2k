@@ -82,6 +82,12 @@ function RetractableTextWidget:new(rtw)
   end
 
   if rtw.vertical_alignment then
+    if not (rtw.vertical_alignment == TextWidget.ALIGN_TOP or
+            rtw.vertical_alignment == TextWidget.ALIGN_BOTTOM) then
+      s = 'Invalid vertical alignment; retractable text widgets must ' ..
+          'align to either top or bottom'
+      error(s)
+    end
     rtw:set_vertical_alignment(rtw.vertical_alignment)
   else
     rtw:set_vertical_alignment(TextWidget.ALIGN_TOP)
