@@ -1006,20 +1006,33 @@ void D_AddDEH(const char *filename, int lumpnum) {
     I_Error("D_AddDEH: No filename or lumpnum given\n");
 
   if (!filename) {
+    /*
     if (lumpnum > numlumps)
       I_Error("D_AddDEH: lumpnum out of range (%d/%d)\n", lumpnum, numlumps);
 
     deh_path = strdup(lumpinfo[lumpnum].name);
+    */
+    deh_path = NULL;
   }
   else {
     deh_path = I_FindFile(filename, NULL);
-  }
 
-  if (deh_path == NULL)
-    I_Error("D_AddDEH: Couldn't find %s\n", filename);
+    if (deh_path == NULL)
+      I_Error("D_AddDEH: Couldn't find %s\n", filename);
+  }
 
   for (unsigned int i = 0; i < deh_files->len; i++) {
     deh_file_t *stored_deh_file = g_ptr_array_index(deh_files, i);
+
+    if (!filename) {
+      if (lumpnum == stored_deh_file->lumpnum) {
+        lprintf(LO_INFO,
+          "D_AddDEH: Skipping duplicate DeH/BEX (%d)\n", lumpnum
+        );
+        return;
+      }
+      continue;
+    }
 
     if (strcmp(deh_path, stored_deh_file->filename) == 0) {
       lprintf(LO_INFO, "D_AddDEH: Skipping %s (already added).\n", deh_path);
@@ -1027,7 +1040,8 @@ void D_AddDEH(const char *filename, int lumpnum) {
     }
   }
 
-  lprintf(LO_INFO, "D_AddDEH: Adding %s.\n", deh_path);
+  if (deh_path)
+    lprintf(LO_INFO, "D_AddDEH: Adding %s.\n", deh_path);
 
   dehfile = malloc(sizeof(deh_file_t));
 
@@ -1759,7 +1773,8 @@ static void L_SetupConsoleMasks(void) {
 static void D_destroyDEHFile(gpointer data) {
   deh_file_t *df = (deh_file_t *)data;
 
-  free(df->filename);
+  if (df->filename != NULL)
+    free(df->filename);
   if (df->outfilename != NULL)
     free(df->outfilename);
   free(df);

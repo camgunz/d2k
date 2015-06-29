@@ -369,13 +369,19 @@ void N_PackSetup(netpeer_t *np) {
     }
   }
 
-  M_PBufWriteBool(pbuf, deh_count > 0);
+  M_PBufWriteUInt(pbuf, deh_count);
   if (deh_count > 0) {
-    M_PBufWriteArray(pbuf, deh_files->len);
-
     for (unsigned int i = 0; i < deh_files->len; i++) {
       deh_file_t *df = g_ptr_array_index(deh_files, i);
-      char *deh_name = M_Basename(df->filename);
+      char *deh_name;
+
+      if (df->lumpnum) {
+        M_PBufWriteBool(pbuf, true);
+        M_PBufWriteInt(pbuf, df->lumpnum);
+        continue;
+      }
+
+      deh_name = M_Basename(df->filename);
 
       if (!deh_name)
         I_Error("N_PackSetup: Error getting basename of %s\n", df->filename);
@@ -400,10 +406,9 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   int m_state_tic;
   game_state_t *gs;
   dboolean has_resources;
-  dboolean has_deh_files;
+  unsigned int deh_file_count;
   buf_t iwad_buf;
   GPtrArray *rf_list;
-  GPtrArray *df_list;
 
   read_ranged_int(
     pbuf, m_sync_type, "netsync", NET_SYNC_TYPE_COMMAND, NET_SYNC_TYPE_DELTA
@@ -450,23 +455,29 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
     g_ptr_array_free(rf_list, true);
   }
 
+  read_uint(pbuf, deh_file_count, "DeH/BEX file count");
 
-  read_bool(pbuf, has_deh_files, "has DeH/BEX file");
-  if (has_deh_files) {
-    df_list = g_ptr_array_new_with_free_func(free_string);
-    read_string_array(
-      pbuf,
-      df_list,
-      "DeH/BEX names",
-      MAX_RESOURCE_NAMES,
-      MAX_RESOURCE_NAME_LENGTH
-    );
-    for (unsigned int i = 0; i < df_list->len; i++) {
-      char *deh_name = g_ptr_array_index(df_list, i);
+  if (deh_file_count) {
+    buf_t deh_name;
+    int deh_lumpnum;
+    dboolean is_lump;
 
-      D_AddDEH(deh_name, 0);
+    M_BufferInitWithCapacity(&deh_name, MAX_RESOURCE_NAME_LENGTH);
+
+    for (unsigned int i = 0; i < deh_file_count; i++) {
+      read_bool(pbuf, is_lump, "DeH/BEX is lump");
+
+      if (is_lump) {
+        read_int(pbuf, deh_lumpnum, "DeH/BEX lumpnum");
+        printf("DeH/BEX: NULL/%d\n", deh_lumpnum);
+        D_AddDEH(NULL, deh_lumpnum);
+        continue;
+      }
+
+      read_string(pbuf, &deh_name, "DeH/BEX name", MAX_RESOURCE_NAME_LENGTH);
+      printf("DeH/BEX: %s/0\n", M_BufferGetData(&deh_name));
+      D_AddDEH(M_BufferGetData(&deh_name), deh_lumpnum);
     }
-    g_ptr_array_free(df_list, true);
   }
 
   //jff 9/3/98 use logical output routine

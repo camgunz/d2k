@@ -1205,8 +1205,13 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
 //
 
 void P_UnArchiveThinkers(pbuf_t *savebuffer) {
-  totallive = 0; /* CG: This is a global that lives in g_game.c, just FYI */
   uint32_t new_max_id;
+
+  if (MULTINET && !delta_compressed_actors) {
+    initialize_delta_compressed_actors();
+  }
+
+  totallive = 0; /* CG: This is a global that lives in g_game.c, just FYI */
 
   M_PBufReadUInt(savebuffer, &new_max_id);
   P_IdentSetMaxID(new_max_id);
