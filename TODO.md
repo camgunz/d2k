@@ -2,8 +2,6 @@
 
 ## Proto
 
-1. Add/fix wrapping to/for InputWidget
-
 1. Reconnecting doesn't work
 
 1. Fonts look a little off in Windows
