@@ -278,6 +278,27 @@ function InputWidget:draw()
     ly = ly - self:get_vertical_offset()
   end
 
+  local cursor_pos = self:get_layout():index_to_pos(self:get_cursor())
+  cursor_pos.x = cursor_pos.x / Pango.SCALE
+  cursor_pos.y = cursor_pos.y / Pango.SCALE
+  cursor_pos.width = cursor_pos.width / Pango.SCALE
+  cursor_pos.height = cursor_pos.height / Pango.SCALE
+
+  if self:get_cursor_trailing() then
+    cursor_pos.x = cursor_pos.x + (cursor_pos.width * self:get_cursor_trailing())
+  end
+
+  if self:get_cursor_active() then
+    cr:set_source_rgba(
+      cursor_color[1], cursor_color[2], cursor_color[3], cursor_color[4]
+    )
+
+    cr:move_to(lx + cursor_pos.x, ly + cursor_pos.y)
+    cr:line_to(lx + cursor_pos.x, ly + cursor_pos.y + cursor_pos.height)
+    cr:set_line_width(InputWidget.CURSOR_THICKNESS)
+    cr:stroke()
+  end
+
   local iter = self:get_layout():get_iter()
   local line_number = 0
   repeat
@@ -302,27 +323,6 @@ function InputWidget:draw()
 
     line_number = line_number + 1
   until not iter:next_line()
-
-  if self:get_cursor_active() then
-    local cursor_pos = self:get_layout():index_to_pos(self:get_cursor())
-    cursor_pos.x = cursor_pos.x / Pango.SCALE
-    cursor_pos.y = cursor_pos.y / Pango.SCALE
-    cursor_pos.width = cursor_pos.width / Pango.SCALE
-    cursor_pos.height = cursor_pos.height / Pango.SCALE
-
-    if self:get_cursor_trailing() then
-      cursor_pos.x = cursor_pos.x + (cursor_pos.width * self:get_cursor_trailing())
-    end
-
-    cr:set_source_rgba(
-      cursor_color[1], cursor_color[2], cursor_color[3], cursor_color[4]
-    )
-
-    cr:move_to(lx + cursor_pos.x, ly + cursor_pos.y)
-    cr:line_to(lx + cursor_pos.x, ly + cursor_pos.y + cursor_pos.height)
-    cr:set_line_width(InputWidget.CURSOR_THICKNESS)
-    cr:stroke()
-  end
 
   cr:restore()
 end

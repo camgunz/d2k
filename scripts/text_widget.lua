@@ -612,7 +612,7 @@ function TextWidget:set_ellipsize(ellipsize)
     layout:set_ellipsize(Pango.EllipsizeMode.END)
   else
     error(string.format(
-      'TextWidget:set_ellipsize: Invalid ellipsization value %s'
+      'TextWidget:set_ellipsize: Invalid ellipsization value %s',
       ellipsize
     ))
   end
