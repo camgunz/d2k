@@ -49,6 +49,7 @@ function InputWidget:new(iw)
   iw.cursor_timer = d2k.System.get_ticks()
   iw.history = {}
   iw.history_index = 0
+  iw.scroll_offset = 0
 
   setmetatable(iw, self)
   self.__index = self
@@ -132,6 +133,14 @@ end
 
 function InputWidget:set_history_index(history_index)
   self.history_index = history_index
+end
+
+function InputWidget:get_scroll_offset()
+  return self.scroll_offset
+end
+
+function InputWidget:set_scroll_offset(scroll_offset)
+  self.scroll_offset = scroll_offset
 end
 
 function InputWidget:set_text(text)
@@ -244,8 +253,6 @@ function InputWidget:draw()
   cr:set_line_width(InputWidget.PROMPT_THICKNESS)
   cr:stroke();
 
-  cr:set_source_rgba(fg_color[1], fg_color[2], fg_color[3], fg_color[4])
-
   local lx = self:get_x() + self:get_left_margin() + prompt_width
   local ly = self:get_y() + self:get_top_margin()
   local text_width = self:get_width_in_pixels() - (
@@ -288,6 +295,26 @@ function InputWidget:draw()
     cursor_pos.x = cursor_pos.x + (cursor_pos.width * self:get_cursor_trailing())
   end
 
+  if cursor_pos.x > (text_width - prompt_width) + self:get_scroll_offset() then
+    self:set_scroll_offset(
+      cursor_pos.x - (text_width - prompt_width)
+    )
+  elseif cursor_pos.x < self:get_scroll_offset() then
+    self:set_scroll_offset(cursor_pos.x)
+  end
+
+  lx = lx - self:get_scroll_offset()
+
+  cr:reset_clip()
+  cr:new_path()
+  cr:rectangle(
+    self:get_x() + self:get_left_margin() + prompt_width,
+    self:get_y(),
+    text_width - prompt_width,
+    height
+  )
+  cr:clip()
+
   if self:get_cursor_active() then
     cr:set_source_rgba(
       cursor_color[1], cursor_color[2], cursor_color[3], cursor_color[4]
@@ -298,6 +325,8 @@ function InputWidget:draw()
     cr:set_line_width(InputWidget.CURSOR_THICKNESS)
     cr:stroke()
   end
+
+  cr:set_source_rgba(fg_color[1], fg_color[2], fg_color[3], fg_color[4])
 
   local iter = self:get_layout():get_iter()
   local line_number = 0
