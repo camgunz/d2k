@@ -2,7 +2,11 @@
 
 ## Proto
 
-1. Delta compression of frequently-spawned actors messed up serialization, fix
+1. `g_ptr_array_remove_range` ought to take the array's len as a parameter, but
+   `p_cmd.c` often passes `len - 1`; warrants investigation
+
+1. Console output doesn't work in multiplayer; buffer is uninitialized or
+   something
 
 1. Reconnecting doesn't work
 

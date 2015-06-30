@@ -1484,16 +1484,16 @@ spawnit:
 
 extern fixed_t attackrange;
 
-void P_SpawnPuff(fixed_t x,fixed_t y,fixed_t z)
-{
-  mobj_t* th;
+void P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z) {
+  mobj_t *th;
   // killough 5/5/98: remove dependence on order of evaluation:
   int t = P_Random(pr_spawnpuff);
-  z += (t - P_Random(pr_spawnpuff))<<10;
 
-  th = P_SpawnMobj (x,y,z, MT_PUFF);
+  z += (t - P_Random(pr_spawnpuff)) << 10;
+
+  th = P_SpawnMobj(x, y, z, MT_PUFF);
   th->momz = FRACUNIT;
-  th->tics -= P_Random(pr_spawnpuff)&3;
+  th->tics -= P_Random(pr_spawnpuff) & 3;
 
   if (th->tics < 1)
     th->tics = 1;
@@ -1501,30 +1501,30 @@ void P_SpawnPuff(fixed_t x,fixed_t y,fixed_t z)
   // don't make punches spark on the wall
 
   if (attackrange == MELEERANGE)
-    P_SetMobjState (th, S_PUFF3);
+    P_SetMobjState(th, S_PUFF3);
 }
-
 
 //
 // P_SpawnBlood
 //
-void P_SpawnBlood(fixed_t x,fixed_t y,fixed_t z,int damage)
-{
-  mobj_t* th;
+void P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage) {
+  mobj_t *th;
   // killough 5/5/98: remove dependence on order of evaluation:
   int t = P_Random(pr_spawnblood);
-  z += (t - P_Random(pr_spawnblood))<<10;
-  th = P_SpawnMobj(x,y,z, MT_BLOOD);
-  th->momz = FRACUNIT*2;
-  th->tics -= P_Random(pr_spawnblood)&3;
+
+  z += (t - P_Random(pr_spawnblood)) << 10;
+
+  th = P_SpawnMobj(x, y, z, MT_BLOOD);
+  th->momz = FRACUNIT * 2;
+  th->tics -= P_Random(pr_spawnblood) & 3;
 
   if (th->tics < 1)
     th->tics = 1;
 
   if (damage <= 12 && damage >= 9)
-    P_SetMobjState (th,S_BLOOD2);
+    P_SetMobjState(th, S_BLOOD2);
   else if (damage < 9)
-    P_SetMobjState (th,S_BLOOD3);
+    P_SetMobjState(th, S_BLOOD3);
 }
 
 

@@ -45,18 +45,17 @@
 #include "e6y.h"//e6y
 
 enum {
-  ACTOR_X,
-  ACTOR_Y,
-  ACTOR_Z,
-  ACTOR_MOMX,
-  ACTOR_MOMY,
-  ACTOR_MOMZ,
-  ACTOR_ANGLE,
-  ACTOR_TICS,
-  ACTOR_PITCH,
-  ACTOR_FLAGS
+  ACTOR_X     = 1 << 0,
+  ACTOR_Y     = 1 << 1,
+  ACTOR_Z     = 1 << 2,
+  ACTOR_MOMX  = 1 << 3,
+  ACTOR_MOMY  = 1 << 4,
+  ACTOR_MOMZ  = 1 << 5,
+  ACTOR_ANGLE = 1 << 6,
+  ACTOR_TICS  = 1 << 7,
+  ACTOR_PITCH = 1 << 8,
+  ACTOR_FLAGS = 1 << 9,
 };
-
 
 extern int numspechit;
 
@@ -541,9 +540,14 @@ static mobj_t* build_actor(mobjtype_t actor_type) {
 }
 
 static void setup_actor(mobj_t *mobj) {
-  mobj->info = &mobjinfo[mobj->type];
-  mobj->radius = mobj->info->radius;
-  mobj->height = mobj->info->height;
+  mobj->info     = &mobjinfo[mobj->type];
+  mobj->radius   = mobj->info->radius;
+  mobj->height   = mobj->info->height;
+  if (mobj->subsector && mobj->subsector->sector) {
+    mobj->dropoffz = mobj->subsector->sector->floorheight;
+    mobj->floorz   = mobj->subsector->sector->floorheight;
+    mobj->ceilingz = mobj->subsector->sector->ceilingheight;
+  }
 }
 
 static void insert_actor(mobj_t *mobj) {
@@ -705,15 +709,14 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
   mobj = g_ptr_array_index(actors, 0);
 
   M_PBufWriteUInt(savebuffer, mobj->id);
-  M_PBufWriteInt(savebuffer, mobj->index);
 
   if (mobj->state < states)
-    I_Error("(3) Invalid mobj state %p (%td, %d, %u)", mobj->state, mobj->state - states, mobj->type, mobj->id);
+    I_Error("Invalid mobj state %p (%td, %d, %u)", mobj->state, mobj->state - states, mobj->type, mobj->id);
 
   state_index = (uint_64_t)(mobj->state - states);
 
   if (state_index >= NUMSTATES) 
-    I_Error("(4) Invalid mobj state %p", mobj->state);
+    I_Error("Invalid mobj state %p", mobj->state);
 
   state_index++;
 
@@ -759,17 +762,18 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
       delta_flags |= ACTOR_FLAGS;
 
     M_PBufWriteUInt(savebuffer, mobj->id);
-    M_PBufWriteInt(savebuffer, mobj->index);
 
     if (mobj->state < states)
-      I_Error("(1) Invalid mobj state %p", mobj->state);
+      I_Error("Invalid mobj state %p", mobj->state);
 
     state_index = (uint_64_t)(mobj->state - states);
 
     if (state_index >= NUMSTATES) 
-      I_Error("(2) Invalid mobj state %p", mobj->state);
+      I_Error("Invalid mobj state %p", mobj->state);
 
     state_index++;
+
+    M_PBufWriteULong(savebuffer, state_index);
 
     M_PBufWriteUInt(savebuffer, delta_flags);
 
@@ -830,12 +834,9 @@ static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
     if (actor_count == 0)
       continue;
 
-    printf("Deserializing %u actors\n", actor_count);
-
     mobj = build_actor(actor_type);
 
     M_PBufReadUInt(savebuffer, &mobj->id);
-    M_PBufReadInt(savebuffer, &mobj->index);
     M_PBufReadULong(savebuffer, &state_index);
     M_PBufReadInt(savebuffer, &mobj->x);
     M_PBufReadInt(savebuffer, &mobj->y);
@@ -863,11 +864,11 @@ static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
     mobj->sprite = mobj->state->sprite;
     mobj->frame = mobj->state->frame;
 
-    setup_actor(mobj);
-
     memcpy(&last_actor, mobj, sizeof(mobj_t));
 
     insert_actor(mobj);
+
+    setup_actor(mobj);
 
     actor_count--;
 
@@ -880,7 +881,6 @@ static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
       mobj = build_actor(actor_type);
 
       M_PBufReadUInt(savebuffer, &mobj->id);
-      M_PBufReadInt(savebuffer, &mobj->index);
       M_PBufReadULong(savebuffer, &state_index);
 
       if (state_index > NUMSTATES) {
@@ -906,48 +906,87 @@ static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
         M_PBufReadInt(savebuffer, &intval);
         mobj->x = last_actor.x + intval;
       }
+      else {
+        mobj->x = last_actor.x;
+      }
+
       if (delta_flags & ACTOR_Y) {
         M_PBufReadInt(savebuffer, &intval);
         mobj->y = last_actor.y + intval;
       }
+      else {
+        mobj->y = last_actor.y;
+      }
+
       if (delta_flags & ACTOR_Z) {
         M_PBufReadInt(savebuffer, &intval);
         mobj->z = last_actor.z + intval;
       }
+      else {
+        mobj->z = last_actor.z;
+      }
+
       if (delta_flags & ACTOR_MOMX) {
         M_PBufReadInt(savebuffer, &intval);
         mobj->momx = last_actor.momx + intval;
       }
+      else {
+        mobj->momx = last_actor.momx;
+      }
+
       if (delta_flags & ACTOR_MOMY) {
         M_PBufReadInt(savebuffer, &intval);
         mobj->momy = last_actor.momy + intval;
       }
+      else {
+        mobj->momy = last_actor.momy;
+      }
+
       if (delta_flags & ACTOR_MOMZ) {
         M_PBufReadInt(savebuffer, &intval);
         mobj->momz = last_actor.momz + intval;
       }
+      else {
+        mobj->momz = last_actor.momz;
+      }
+
       if (delta_flags & ACTOR_ANGLE) {
         M_PBufReadLong(savebuffer, &longval);
-        mobj->angle = last_actor.angle + intval;
+        mobj->angle = last_actor.angle + longval;
       }
+      else {
+        mobj->angle = last_actor.angle;
+      }
+
       if (delta_flags & ACTOR_TICS) {
         M_PBufReadInt(savebuffer, &intval);
         mobj->tics = last_actor.tics + intval;
       }
+      else {
+        mobj->tics = last_actor.tics;
+      }
+
       if (delta_flags & ACTOR_PITCH) {
         M_PBufReadLong(savebuffer, &longval);
         mobj->pitch = last_actor.pitch + longval;
       }
+      else {
+        mobj->pitch = last_actor.pitch;
+      }
+
       if (delta_flags & ACTOR_FLAGS) {
         M_PBufReadULong(savebuffer, &ulongval);
         mobj->flags = last_actor.flags ^ ulongval;
       }
-
-      setup_actor(mobj);
+      else {
+        mobj->flags = last_actor.flags;
+      }
 
       memcpy(&last_actor, mobj, sizeof(mobj_t));
 
       insert_actor(mobj);
+
+      setup_actor(mobj);
     }
   }
 }
