@@ -60,8 +60,6 @@ enum {
 
 extern int numspechit;
 
-#define DEBUG_DELTA_COMPRESSED_ACTORS 1
-
 #define MAX_PLAYER_MESSAGE_SIZE 256
 #define MAX_COMMAND_COUNT 10000
 
@@ -649,7 +647,7 @@ static void add_delta_compressable_actor_type(mobjtype_t mobjtype) {
 }
 
 static void initialize_delta_compressed_actors(void) {
-  delta_compressed_actors = g_hash_table_new(g_direct_hash, g_int_equal);
+  delta_compressed_actors = g_hash_table_new(g_direct_hash, NULL);
 
   add_delta_compressable_actor_type(MT_ARACHPLAZ);
   add_delta_compressable_actor_type(MT_PLASMA);
@@ -692,10 +690,7 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
   pbuf_t *savebuffer = (pbuf_t *)user_data;
   mobj_t *mobj;
   mobj_t last_actor;
-
-#if DEBUG_DELTA_COMPRESSED_ACTORS
-  size_t start_position = M_PBufGetCursor(savebuffer);
-#endif
+  uint_64_t state_index;
 
   M_PBufWriteInt(savebuffer, actor_type);
   M_PBufWriteUInt(savebuffer, actors->len);
@@ -705,12 +700,25 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
 
   memset(&last_actor, 0, sizeof(mobj_t));
 
-  g_ptr_array_sort(actors, compare_actors_by_id);
+  // g_ptr_array_sort(actors, compare_actors_by_id);
 
   mobj = g_ptr_array_index(actors, 0);
 
   M_PBufWriteUInt(savebuffer, mobj->id);
   M_PBufWriteInt(savebuffer, mobj->index);
+
+  if (mobj->state < states)
+    I_Error("(3) Invalid mobj state %p (%td, %d, %u)", mobj->state, mobj->state - states, mobj->type, mobj->id);
+
+  state_index = (uint_64_t)(mobj->state - states);
+
+  if (state_index >= NUMSTATES) 
+    I_Error("(4) Invalid mobj state %p", mobj->state);
+
+  state_index++;
+
+  M_PBufWriteULong(savebuffer, state_index);
+
   M_PBufWriteInt(savebuffer, mobj->x);
   M_PBufWriteInt(savebuffer, mobj->y);
   M_PBufWriteInt(savebuffer, mobj->z);
@@ -750,6 +758,19 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
     if (mobj->flags != last_actor.flags)
       delta_flags |= ACTOR_FLAGS;
 
+    M_PBufWriteUInt(savebuffer, mobj->id);
+    M_PBufWriteInt(savebuffer, mobj->index);
+
+    if (mobj->state < states)
+      I_Error("(1) Invalid mobj state %p", mobj->state);
+
+    state_index = (uint_64_t)(mobj->state - states);
+
+    if (state_index >= NUMSTATES) 
+      I_Error("(2) Invalid mobj state %p", mobj->state);
+
+    state_index++;
+
     M_PBufWriteUInt(savebuffer, delta_flags);
 
     if (delta_flags & ACTOR_X)
@@ -776,13 +797,7 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
     memcpy(&last_actor, mobj, sizeof(mobj_t));
   }
 
-  g_ptr_array_remove_range(actors, 0, actors->len - 1);
-
-#if DEBUG_DELTA_COMPRESSED_ACTORS
-  printf("%d: %lu bytes for %d\n",
-    gametic, M_PBufGetCursor(savebuffer) - start_position, actor_type
-  );
-#endif
+  g_ptr_array_remove_range(actors, 0, actors->len);
 }
 
 static void commit_delta_compressed_actors(pbuf_t *savebuffer) {
@@ -794,15 +809,16 @@ static void commit_delta_compressed_actors(pbuf_t *savebuffer) {
 }
 
 static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
-  unsigned int compressed_actor_count;
-  
-  compressed_actor_count = g_hash_table_size(delta_compressed_actors);
+  unsigned int compressed_actor_count = g_hash_table_size(
+    delta_compressed_actors
+  );
 
   while (compressed_actor_count--) {
     mobjtype_t actor_type;
     unsigned int actor_count;
     mobj_t last_actor;
     mobj_t *mobj;
+    uint_64_t state_index;
 
     M_PBufReadInt(savebuffer, (int *)(&actor_type));
 
@@ -814,10 +830,13 @@ static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
     if (actor_count == 0)
       continue;
 
+    printf("Deserializing %u actors\n", actor_count);
+
     mobj = build_actor(actor_type);
 
     M_PBufReadUInt(savebuffer, &mobj->id);
     M_PBufReadInt(savebuffer, &mobj->index);
+    M_PBufReadULong(savebuffer, &state_index);
     M_PBufReadInt(savebuffer, &mobj->x);
     M_PBufReadInt(savebuffer, &mobj->y);
     M_PBufReadInt(savebuffer, &mobj->z);
@@ -828,6 +847,21 @@ static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
     M_PBufReadInt(savebuffer, &mobj->tics);
     M_PBufReadUInt(savebuffer, &mobj->pitch);
     M_PBufReadULong(savebuffer, &mobj->flags);
+
+    if (state_index > NUMSTATES) {
+      I_Error(
+        "deserialize_delta_compressed_actors: Invalid mobj state %" PRIu64,
+        state_index
+      );
+    }
+
+    if (state_index)
+      mobj->state = &states[state_index - 1];
+    else
+      mobj->state = (state_t *)S_NULL;
+
+    mobj->sprite = mobj->state->sprite;
+    mobj->frame = mobj->state->frame;
 
     setup_actor(mobj);
 
@@ -844,6 +878,27 @@ static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
       uint32_t delta_flags;
 
       mobj = build_actor(actor_type);
+
+      M_PBufReadUInt(savebuffer, &mobj->id);
+      M_PBufReadInt(savebuffer, &mobj->index);
+      M_PBufReadULong(savebuffer, &state_index);
+
+      if (state_index > NUMSTATES) {
+        I_Error(
+          "deserialize_delta_compressed_actors: Invalid mobj state %" PRIu64,
+          state_index
+        );
+      }
+
+      if (state_index)
+        mobj->state = &states[state_index - 1];
+      else
+        mobj->state = (state_t *)S_NULL;
+
+      if (mobj->state) {
+        mobj->sprite = mobj->state->sprite;
+        mobj->frame = mobj->state->frame;
+      }
 
       M_PBufReadUInt(savebuffer, &delta_flags);
 
@@ -1163,6 +1218,8 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
       serialize_actor(savebuffer, mobj);
   }
 
+  commit_delta_compressed_actors(savebuffer);
+
   for (thinker_t *th = thinkercap.next; th != &thinkercap; th = th->next) {
     mobj_t *mobj;
 
@@ -1174,8 +1231,6 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
     if (!should_delta_compress_actor(mobj))
       serialize_actor_pointers(savebuffer, mobj);
   }
-
-  commit_delta_compressed_actors(savebuffer);
 
   // killough 9/14/98: save soundtargets
   for (int i = 0; i < numsectors; i++) {
@@ -1263,7 +1318,7 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
     M_PBufReadUInt(savebuffer, &mobj_id);
     mo = P_IdentLookup(mobj_id);
 
-    if (mo)
+    if (mo && !should_delta_compress_actor(mo))
       deserialize_actor_pointers(savebuffer, mo);
   }
 

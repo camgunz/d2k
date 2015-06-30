@@ -2,11 +2,11 @@
 
 ## Proto
 
+1. Delta compression of frequently-spawned actors messed up serialization, fix
+
 1. Reconnecting doesn't work
 
 1. Fonts look a little off in Windows
-
-1. Test delta compression of frequently-spawned actors
 
 1. Disconnect clients if their sync TIC is too far in the past
 
