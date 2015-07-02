@@ -521,9 +521,9 @@ void P_SetName(int playernum, char *name) {
 }
 
 void P_InitPlayerMessages(int playernum) {
-  GPtrArray *messages = g_ptr_array_new_with_free_func(P_DestroyMessage);
-
-  players[playernum].messages.messages = messages;
+  players[playernum].messages.messages = g_ptr_array_new_with_free_func(
+    P_DestroyMessage
+  );
   players[playernum].messages.updated = false;
 }
 
@@ -728,10 +728,14 @@ void P_DestroyMessage(gpointer data) {
 }
 
 void P_ClearMessages(int playernum) {
-  for (unsigned int i = players[playernum].messages.messages->len; i > 0; i--)
-    g_ptr_array_remove_index(players[playernum].messages.messages, i - 1);
+  if (players[playernum].messages.messages->len == 0)
+    return;
 
-  players[playernum].messages.updated = true;
+  g_ptr_array_remove_range(
+    players[playernum].messages.messages,
+    0,
+    players[playernum].messages.messages->len
+  );
 }
 
 void P_SetPlayerName(int playernum, const char *name) {

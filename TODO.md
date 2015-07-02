@@ -2,17 +2,19 @@
 
 ## Proto
 
-1. `g_ptr_array_remove_range` ought to take the array's len as a parameter, but
-   `p_cmd.c` often passes `len - 1`; warrants investigation
-
 1. Console output doesn't work in multiplayer; buffer is uninitialized or
    something
 
 1. Reconnecting doesn't work
+  - The current symptom is spinning around like crazy
 
 1. Fonts look a little off in Windows
 
 1. Disconnect clients if their sync TIC is too far in the past
+
+1. Have server fork and redirect its output to a log file
+
+1. Fix bug where you can type the backtick into the console
 
 1. Add a few new widgets:
   - chat
@@ -26,10 +28,6 @@
   - `say`
   - `say_to/sayto`
   - `name`
-
-1. Have server fork and redirect its output to a log file
-
-1. Fix bug where you can type the backtick into the console
 
 ## ZDDL
 
