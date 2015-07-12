@@ -47,16 +47,25 @@ static int XG_GameHandleEvent(lua_State *L) {
 
 static int XG_GameGetConsoleplayerMessages(lua_State *L) {
   GPtrArray *cpms = players[consoleplayer].messages.messages;
-  GString *messages = g_string_new("");
+  GString *messages;
+
+  if (!cpms->len) {
+    lua_pushnil(L);
+    return 1;
+  }
+
+  messages = g_string_new("");
 
   for (guint i = 0; i < cpms->len; i++) {
     player_message_t *pm = (player_message_t *)g_ptr_array_index(cpms, i);
 
-    if (!pm->centered)
-      g_string_append(messages, pm->content);
+    if (pm->centered)
+      continue;
+
+    g_string_append(messages, pm->content);
   }
 
-  lua_pushstring(L, messages->str);
+  lua_pushlstring(L, messages->str, messages->len);
 
   g_string_free(messages, true);
 

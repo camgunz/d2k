@@ -529,7 +529,6 @@ void P_InitPlayerMessages(int playernum) {
 
 void P_AddMessage(int playernum, player_message_t *message) {
   g_ptr_array_add(players[playernum].messages.messages, message);
-  printf("%s", message->content);
   players[playernum].messages.updated = true;
 }
 

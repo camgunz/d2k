@@ -55,8 +55,8 @@ typedef struct buffered_console_message_s {
   GString *contents;
 } buffered_console_message_t;
 
-static GRegex                       *shorthand_regex = NULL;
-static GPtrArray                    *buffered_console_messages = NULL;
+static GRegex    *shorthand_regex = NULL;
+static GPtrArray *buffered_console_messages = NULL;
 
 static void free_buffered_message(gpointer data) {
   buffered_console_message_t *message = (buffered_console_message_t *)data;
@@ -70,9 +70,9 @@ static void print_buffered_message(gpointer data, gpointer user_data) {
   buffered_console_message_t *msg = (buffered_console_message_t *)data;
 
   if (msg->is_markup)
-    X_Call(X_GetState(), "console", "mwrite", 1, 0, X_STRING, msg->contents);
+    X_Call(X_GetState(), "console", "mwrite", 1, 0, X_STRING, msg->contents->str);
   else
-    X_Call(X_GetState(), "console", "write", 1, 0, X_STRING, msg->contents);
+    X_Call(X_GetState(), "console", "write", 1, 0, X_STRING, msg->contents->str);
 }
 
 static bool save_output_if_scripting_unavailable(const char *message,
@@ -373,7 +373,12 @@ void C_MWrite(const char *msg) {
   if (C_ECIAvailable())
     C_ECIWrite(msg);
 
-  if (nodrawers)
+  if (!g_utf8_validate(msg, -1, NULL)) {
+    printf("Invalid message [%s]\n", msg);
+    return;
+  }
+
+  if (nodrawers || true)
     printf("%s", msg);
   else if (!save_output_if_scripting_unavailable(msg, true))
     success = X_Call(X_GetState(), "console", "mwrite", 1, 0, X_STRING, msg);

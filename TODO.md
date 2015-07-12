@@ -2,8 +2,7 @@
 
 ## Proto
 
-1. Console output doesn't work in multiplayer; buffer is uninitialized or
-   something
+1. Fix messaging
 
 1. Reconnecting doesn't work
   - The current symptom is spinning around like crazy
@@ -32,7 +31,7 @@
 ## ZDDL
 
 1. Finish retractable text widget
-  - Adding lines while full and retracting causes a kind of flicker
+  - Adding lines while full causes a kind of flicker
     - Probably have to check in `set_text` if the widget's full, and cancel
       the retraction if it is... although I thought `tick` already did that...
 

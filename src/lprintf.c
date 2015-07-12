@@ -46,8 +46,14 @@ void D_LoadStartupMessagesIntoConsole(void) {
   if (!startup_messages)
     return;
 
+  if (!g_utf8_validate(startup_messages->str, -1, NULL)) {
+    printf("Invalid message [%s]\n", startup_messages->str);
+    return;
+  }
+
   C_MWrite(startup_messages->str);
   g_string_free(startup_messages, true);
+  startup_messages = NULL;
   console_loaded = true;
 }
 
@@ -61,20 +67,30 @@ void lprintf(OutputLevels pri, const char *fmt, ...) {
     return;
 
   va_start(args, fmt);
-  va_copy(args2, args);
 
   if (!console_loaded) {
-    gchar *markup_string = g_markup_vprintf_escaped(fmt, args);
+    gchar *markup_string;
+
+    va_copy(args2, args);
+    markup_string = g_markup_vprintf_escaped(fmt, args2);
+    va_end(args2);
+
+    if (!g_utf8_validate(markup_string, -1, NULL)) {
+      printf("Invalid message [%s]\n", markup_string);
+      goto end;
+    }
 
     g_string_append(startup_messages, markup_string);
     g_free(markup_string);
-    vprintf(fmt, args2);
+    vprintf(fmt, args);
   }
   else /* if (pri & cons_output_mask) */ {
     C_VPrintf(fmt, args);
   }
 
   /* CG: TODO: Removed error mask handling, re-add it? */
+
+end:
 
   va_end(args);
 }

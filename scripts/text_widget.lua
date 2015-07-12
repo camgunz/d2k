@@ -146,7 +146,15 @@ function TextWidget:set_right_margin(right_margin)
 end
 
 function TextWidget:get_text()
-  return self.text
+  if self.get_external_text then
+    out = self.get_external_text()
+    if not out then
+      return ""
+    end
+    return out
+  else
+    return self.text
+  end
 end
 
 function TextWidget:set_text(text)
@@ -154,6 +162,11 @@ function TextWidget:set_text(text)
     error(string.format("%s: Can't set text when displaying external text",
       self.name
     ))
+  end
+  if not GLib.utf8_validate(text) then
+    print(debug.traceback())
+    print("bad text passed to text widget");
+    return
   end
   self.text = text
   self.needs_updating = true
@@ -572,14 +585,6 @@ function TextWidget:set_external_text_source(get_text,
   self.get_external_text = get_text
   self.external_text_updated = text_updated
   self.clear_external_text_updated = clear_text_updated
-end
-
-function TextWidget:get_text()
-  if self.get_external_text then
-    return self.get_external_text()
-  else
-    return self.text
-  end
 end
 
 function TextWidget:clear()

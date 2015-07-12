@@ -1197,10 +1197,12 @@ void G_Ticker(void) {
 
   // CPhipps - player colour changing
   if (!demoplayback && mapcolor_plyr[consoleplayer] != mapcolor_me) {
+#if 0
     if (CLIENT) // Changed my multiplayer colour - Inform the whole game
       CL_SendColorIndexChange(mapcolor_me);
 
     G_ChangedPlayerColour(consoleplayer, mapcolor_me);
+#endif
   }
 
   P_MapStart();
