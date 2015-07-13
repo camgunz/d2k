@@ -934,7 +934,6 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/st_stuff.c
   ${CMAKE_SOURCE_DIR}/src/sv_main.c
   ${CMAKE_SOURCE_DIR}/src/tables.c
-  ${CMAKE_SOURCE_DIR}/src/v_main.c
   ${CMAKE_SOURCE_DIR}/src/v_video.c
   ${CMAKE_SOURCE_DIR}/src/version.c
   ${CMAKE_SOURCE_DIR}/src/w_wad.c
