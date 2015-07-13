@@ -32,7 +32,6 @@
 #include "wi_stuff.h"
 #include "s_sound.h"
 #include "sounds.h"
-#include "lprintf.h"  // jff 08/03/98 - declaration of lprintf
 #include "r_draw.h"
 
 #include "n_net.h"
@@ -539,9 +538,7 @@ WI_drawOnLnode  // draw stuff at a location by episode/map#
   }
   else
   {
-    // DEBUG
-    //jff 8/3/98 use logical output routine
-    lprintf(LO_DEBUG,"Could not place patch on level %d\n", n+1);
+    D_Msg(MSG_DEBUG, "Could not place patch on level %d\n", n + 1);
   }
 }
 

@@ -32,7 +32,6 @@
 #include "hu_stuff.h"
 #include "hu_tracers.h"
 #include "info.h"
-#include "lprintf.h"
 #include "m_random.h"
 #include "n_net.h"
 #include "n_main.h"
@@ -757,7 +756,7 @@ void P_MobjThinker(mobj_t* mobj) {
   }
 
   if (mobj->type == MT_ROCKET) {
-    D_Log(LOG_SYNC, "(%d) Rocket %u position: %d, %d, %d\n",
+    D_Msg(MSG_SYNC, "(%d) Rocket %u position: %d, %d, %d\n",
       gametic,
       mobj->id,
       mobj->x >> FRACBITS,
@@ -1276,9 +1275,13 @@ mobj_t* P_SpawnMapThing (const mapthing_t* mthing, int index)
   if (demo_compatibility ||
       (compatibility_level >= lxdoom_1_compatibility  &&
        options & MTF_RESERVED)) {
-    if (!demo_compatibility) // cph - Add warning about bad thing flags
-      lprintf(LO_WARN, "P_SpawnMapThing: correcting bad flags (%u) (thing type %d)\n",
-        options, thingtype);
+    if (!demo_compatibility) { // cph - Add warning about bad thing flags
+      D_Msg(MSG_WARN,
+        "P_SpawnMapThing: correcting bad flags (%u) (thing type %d)\n",
+        options,
+        thingtype
+      );
+    }
     options &= MTF_EASY|MTF_NORMAL|MTF_HARD|MTF_AMBUSH|MTF_NOTSINGLE;
   }
 
@@ -1405,7 +1408,12 @@ mobj_t* P_SpawnMapThing (const mapthing_t* mthing, int index)
 
   if (i == NUMMOBJTYPES)
   {
-    lprintf(LO_INFO, "P_SpawnMapThing: Unknown Thing type %i at (%i, %i)\n", thingtype, mthing->x, mthing->y);
+    D_Msg(MSG_INFO,
+      "P_SpawnMapThing: Unknown Thing type %i at (%i, %i)\n",
+      thingtype,
+      mthing->x,
+      mthing->y
+    );
     return NULL;
   }
 
@@ -1467,8 +1475,10 @@ spawnit:
       && mobj->floorz + mobjinfo[MT_PLAYER].height <= mobj->z) // head <= base
       // player under body's head height <= bottom of body
   {
-    lprintf(LO_WARN, "P_SpawnMapThing: solid hanging body in tall sector at "
-        "%d,%d (type=%d)\n", mthing->x, mthing->y, thingtype);
+    D_Msg(MSG_WARN,
+      "P_SpawnMapThing: solid hanging body in tall sector at %d,%d (type=%d)\n",
+      mthing->x, mthing->y, thingtype
+    );
   }
 
   return mobj;

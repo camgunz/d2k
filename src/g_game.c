@@ -66,7 +66,6 @@
 #include "g_game.h"
 #include "g_keys.h"
 #include "g_save.h"
-#include "lprintf.h"
 #include "i_main.h"
 #include "i_system.h"
 #include "r_demo.h"
@@ -266,7 +265,7 @@ int G_SaveGameName(char *name, size_t size, int slot, dboolean demoplayback) {
   else
     sgn = savegamename;
 
-  return doom_snprintf(name, size, "%s/%s%d.dsg", basesavegame, sgn, slot);
+  return snprintf(name, size, "%s/%s%d.dsg", basesavegame, sgn, slot);
 }
 
 //
@@ -323,7 +322,7 @@ void G_DoLoadGame(void) {
   if (wf == NULL)
     I_Error("G_DoLoadGame: Couldn't find wadfile for %s\n", maplump);
 
-  lprintf(LO_INFO,
+  D_Msg(MSG_INFO,
     "G_DoLoadGame: [%d] %s (%s), Skill %d, Level Time %02d:%02d:%02d, "
     "Total Time %02d:%02d:%02d\n",
     savegameslot + 1,
@@ -428,7 +427,7 @@ void G_DoSaveGame(dboolean menu) {
   if (wf == NULL)
     I_Error("G_DoSaveGame: Couldn't find wadfile for %s\n", maplump);
 
-  lprintf(LO_INFO,
+  D_Msg(MSG_INFO,
     "G_DoSaveGame: [%d] %s (%s), Skill %d, Level Time %02d:%02d:%02d, "
     "Total Time %02d:%02d:%02d\n",
     savegameslot + 1,
@@ -494,8 +493,7 @@ void G_SetSpeed(void) {
 
     scale = BETWEEN(10, 400, scale);
 
-    //jff 9/3/98 use logical output routine
-    lprintf (LO_CONFIRM, "turbo scale: %i%%\n", scale);
+    D_Msg(MSG_INFO, "turbo scale: %i%%\n", scale);
 
     forwardmove[0] = forwardmove_normal[0] * scale / 100;
     forwardmove[1] = forwardmove_normal[1] * scale / 100;
@@ -1872,9 +1870,9 @@ void G_DoCompleted(void) {
   // print "FINISHED: <mapname>" when the player exits the current map
   if (nodrawers && (demoplayback || timingdemo)) {
     if (gamemode == commercial)
-      lprintf(LO_INFO, "FINISHED: MAP%02d\n", gamemap);
+      D_Msg(MSG_INFO, "FINISHED: MAP%02d\n", gamemap);
     else
-      lprintf(LO_INFO, "FINISHED: E%dM%d\n", gameepisode, gamemap);
+      D_Msg(MSG_INFO, "FINISHED: E%dM%d\n", gameepisode, gamemap);
   }
 
   e6y_G_DoCompleted();//e6y
@@ -2352,7 +2350,7 @@ void G_ReadDemoTiccmd (ticcmd_t *cmd) {
     G_CheckDemoStatus();      // end of demo data stream
   }
   else if (demoplayback && demo_p + bytes_per_tic > demobuffer + demolength) {
-    lprintf(LO_WARN, "G_ReadDemoTiccmd: missing DEMOMARKER\n");
+    D_Msg(MSG_WARN, "G_ReadDemoTiccmd: missing DEMOMARKER\n");
     G_CheckDemoStatus();
   }
   else {
@@ -3173,7 +3171,7 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size,
   if (sizeof(comp_lev_str) / sizeof(comp_lev_str[0]) != MAX_COMPATIBILITY_LEVEL)
     I_Error("G_ReadDemoHeader: compatibility level strings incomplete");
 
-  lprintf(LO_INFO, "G_DoPlayDemo: playing demo with %s compatibility\n",
+  D_Msg(MSG_INFO, "G_DoPlayDemo: playing demo with %s compatibility\n",
     comp_lev_str[compatibility_level]
   );
 
@@ -3298,7 +3296,7 @@ dboolean G_CheckDemoStatus(void) {
     //e6y
     G_WriteDemoFooter(demofp);
 
-    lprintf(LO_INFO, "G_CheckDemoStatus: Demo recorded\n");
+    D_Msg(MSG_INFO, "G_CheckDemoStatus: Demo recorded\n");
     return false;  // killough
   }
 

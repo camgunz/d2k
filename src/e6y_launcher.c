@@ -30,7 +30,6 @@
 #include "doomtype.h"
 #include "w_wad.h"
 #include "doomstat.h"
-#include "lprintf.h"
 #include "d_main.h"
 #include "m_misc.h"
 #include "i_system.h"

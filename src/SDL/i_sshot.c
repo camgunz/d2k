@@ -34,7 +34,6 @@
 #include "v_video.h"
 #include "i_video.h"
 #include "z_zone.h"
-#include "lprintf.h"
 
 #ifdef HAVE_LIBPNG
 
@@ -51,14 +50,12 @@
 // Error functions needed by libpng
 //
 
-static void error_fn(png_structp p, png_const_charp s)
-{
-  lprintf(LO_ERROR, "I_ScreenShot: %s\n", s);
+static void error_fn(png_structp p, png_const_charp s) {
+  D_Msg(MSG_ERROR, "I_ScreenShot: %s\n", s);
 }
 
-static void warning_fn(png_structp p, png_const_charp s)
-{
-  lprintf(LO_WARN, "I_ScreenShot: %s\n", s);
+static void warning_fn(png_structp p, png_const_charp s) {
+  D_Msg(MSG_WARN, "I_ScreenShot: %s\n", s);
 }
 
 //

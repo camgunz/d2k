@@ -33,7 +33,6 @@
 #include "w_wad.h"
 #include "m_misc.h"
 #include "am_map.h"
-#include "lprintf.h"
 
 am_icon_t am_icons[am_icon_count + 1] = 
 {

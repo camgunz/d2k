@@ -28,7 +28,6 @@
 #include "doomstat.h"
 #include "d_ticcmd.h"
 #include "g_game.h"
-#include "lprintf.h"
 #include "n_net.h"
 #include "n_state.h"
 #include "n_peer.h"
@@ -80,7 +79,7 @@ static void serialize_toc(netchan_t *chan) {
   if (!M_PBufWriteMap(&chan->packed_toc, chan->toc->len))
     I_Error("Error writing map: %s.\n", cmp_strerror(&chan->packed_toc.cmp));
 
-  D_Log(LOG_MEM, "serialize_toc: Buffer cursor, size, capacity: %zu/%zu/%zu\n",
+  D_Msg(MSG_MEM, "serialize_toc: Buffer cursor, size, capacity: %zu/%zu/%zu\n",
     M_PBufGetCursor(&chan->packed_toc),
     M_PBufGetSize(&chan->packed_toc),
     M_PBufGetCapacity(&chan->packed_toc)
@@ -469,12 +468,12 @@ ENetPacket* N_PeerGetPacket(int peernum, net_channel_e chan_type) {
   memcpy(packet->data + toc_size, M_PBufGetData(&chan->messages), msg_size);
 
   if (packet->data[2] != 4) {
-    D_Log(LOG_NET,
+    D_Msg(MSG_NET,
       "Sending packet (packet size %zu):\n", packet->dataLength
     );
     for (int i = 0; i < MIN(26, packet->dataLength); i++)
-      D_Log(LOG_NET, "%02X ", packet->data[i] & 0xFF);
-    D_Log(LOG_NET, "\n");
+      D_Msg(MSG_NET, "%02X ", packet->data[i] & 0xFF);
+    D_Msg(MSG_NET, "\n");
   }
 
   return packet;
@@ -515,10 +514,10 @@ bool N_PeerLoadIncoming(int peernum, unsigned char *data, size_t size) {
   );
 
   if (data[2] != 4) {
-    D_Log(LOG_NET, "Received packet (packet size %zu):\n", size);
+    D_Msg(MSG_NET, "Received packet (packet size %zu):\n", size);
     for (int i = 0; i < MIN(26, size); i++)
-      D_Log(LOG_NET, "%02X ", data[i] & 0xFF);
-    D_Log(LOG_NET, "\n");
+      D_Msg(MSG_NET, "%02X ", data[i] & 0xFF);
+    D_Msg(MSG_NET, "\n");
   }
 
   return true;

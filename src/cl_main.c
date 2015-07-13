@@ -41,8 +41,6 @@
 #include "r_state.h"
 #include "s_sound.h"
 
-// #define LOG_SECTOR 43
-
 /*
  * Marked true when the client has received the setup message from the server
  */
@@ -147,7 +145,7 @@ static bool cl_load_new_state(netpeer_t *server) {
   }
   cl_synchronizing = false;
 
-  D_Log(LOG_SYNC, "Ran sync'd commands, loading latest state\n");
+  D_Msg(MSG_SYNC, "Ran sync'd commands, loading latest state\n");
 
   cl_loading_state = true;
   state_loaded = N_LoadLatestState(false);
@@ -204,7 +202,7 @@ void CL_CheckForStateUpdates(void) {
   if (server->sync.tic == cl_state_tic)
     return;
 
-  D_Log(LOG_SYNC, "(%d) Loading new state [%d, %d => %d] (%d)\n",
+  D_Msg(MSG_SYNC, "(%d) Loading new state [%d, %d => %d] (%d)\n",
     gametic,
     server->sync.command_index,
     server->sync.delta.from_tic,
@@ -229,7 +227,7 @@ void CL_CheckForStateUpdates(void) {
 
   N_LogPlayerPosition(&players[consoleplayer]);
 
-  D_Log(LOG_SYNC, "(%d) Loaded new state [%d, %d => %d] (%d)\n",
+  D_Msg(MSG_SYNC, "(%d) Loaded new state [%d, %d => %d] (%d)\n",
     gametic,
     server->sync.command_index,
     server->sync.delta.from_tic,
@@ -241,13 +239,7 @@ void CL_CheckForStateUpdates(void) {
   if (LOG_SECTOR < numsectors) {
     if (sectors[LOG_SECTOR].floorheight != (168 << FRACBITS) &&
         sectors[LOG_SECTOR].floorheight != (40 << FRACBITS)) {
-      D_Log(LOG_SYNC, "(%d) Sector %d: %d/%d\n",
-        gametic,
-        LOG_SECTOR,
-        sectors[LOG_SECTOR].floorheight >> FRACBITS,
-        sectors[LOG_SECTOR].ceilingheight >> FRACBITS
-      );
-      printf("(%d) Sector %d: %d/%d\n",
+      D_Msg(MSG_SYNC, "(%d) Sector %d: %d/%d\n",
         gametic,
         LOG_SECTOR,
         sectors[LOG_SECTOR].floorheight >> FRACBITS,

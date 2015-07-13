@@ -30,7 +30,6 @@
 #include "g_game.h"
 #include "s_sound.h"
 #include "sounds.h"
-#include "lprintf.h"
 #include "e6y.h"//e6y
 
 // killough 2/8/98: Remove switch limit
@@ -86,13 +85,17 @@ void P_InitSwitchList(void)
       // Ignore switches referencing unknown texture names, instead of exiting.
       // Warn if either one is missing, but only add if both are valid.
       texture1 = R_CheckTextureNumForName(alphSwitchList[i].name1);
-      if (texture1 == -1)
-        lprintf(LO_WARN, "P_InitSwitchList: unknown texture %s\n",
-            alphSwitchList[i].name1);
+      if (texture1 == -1) {
+        D_Msg(MSG_WARN, "P_InitSwitchList: unknown texture %s\n",
+          alphSwitchList[i].name1
+        );
+      }
       texture2 = R_CheckTextureNumForName(alphSwitchList[i].name2);
-      if (texture2 == -1)
-        lprintf(LO_WARN, "P_InitSwitchList: unknown texture %s\n",
-            alphSwitchList[i].name2);
+      if (texture2 == -1) {
+        D_Msg(MSG_WARN, "P_InitSwitchList: unknown texture %s\n",
+          alphSwitchList[i].name2
+        );
+      }
       if (texture1 != -1 && texture2 != -1) {
         switchlist[index++] = texture1;
         switchlist[index++] = texture2;

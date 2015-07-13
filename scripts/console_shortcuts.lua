@@ -24,22 +24,20 @@
 d2k.Shortcuts = {}
 d2k.Shortcuts.exit = d2k.System.exit
 d2k.Shortcuts.quit = d2k.System.quit
-d2k.Shortcuts.write = function(text) d2k.console:write(text) end
-d2k.Shortcuts.mwrite = function(markup) d2k.console:mwrite(markup) end
-d2k.Shortcuts.echo = function(text) d2k.console:echo(text) end
-d2k.Shortcuts.mecho = function(markup) d2k.console:mecho(markup) end
+d2k.Shortcuts.write = d2k.Messaging.write
+d2k.Shortcuts.mwrite = d2k.Messaging.mwrite
+d2k.Shortcuts.echo = d2k.Messaging.echo
+d2k.Shortcuts.mecho = d2k.Messaging.mecho
 
 func, err = loadfile(d2k.script_folder .. '/local_console_shortcuts.lua', 't')
 
-if func then
+if not func then
+  d2k.Messaging.mecho(string.format('<span color="red">%s</span>', err))
+else
   local worked, err = pcall(func)
   if not worked then
-    d2k.console:mecho(string.format('<span color="red">%s</span>', err))
-    print(err)
+    d2k.Messaging.mecho(string.format('<span color="red">%s</span>', err))
   end
-else
-  d2k.console:mecho(string.format('<span color="red">%s</span>', err))
-  print(err)
 end
 
 -- vi: et ts=2 sw=2

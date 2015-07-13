@@ -31,7 +31,6 @@
 #include "gl_intern.h"
 
 #include "i_main.h"
-#include "lprintf.h"
 
 dboolean gl_use_FBO = false;
 
@@ -125,13 +124,15 @@ static dboolean gld_CreateScreenSizeFBO(void)
   }
   PRBOOM_EXCEPT(EXEPTION_glFramebufferTexture2DEXT)
 
-  if (status == GL_FRAMEBUFFER_COMPLETE_EXT)
-  {
+  if (status == GL_FRAMEBUFFER_COMPLETE_EXT) {
     GLEXT_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
   }
-  else
-  {
-    lprintf(LO_ERROR, "gld_CreateScreenSizeFBO: Cannot create framebuffer object (error code: %d)\n", status);
+  else {
+    D_Msg(MSG_ERROR,
+      "gld_CreateScreenSizeFBO: Cannot create framebuffer object "
+      "(error code: %d)\n",
+      status
+    );
   }
 
   return (status == GL_FRAMEBUFFER_COMPLETE_EXT);

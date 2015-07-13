@@ -25,7 +25,6 @@
 
 #include <glib/gstdio.h>
 
-#include "lprintf.h"
 #include "m_buf.h"
 #include "m_file.h"
 

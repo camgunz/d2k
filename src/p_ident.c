@@ -24,7 +24,6 @@
 #include "z_zone.h"
 
 #include "d_ticcmd.h"
-#include "lprintf.h"
 #include "n_net.h"
 
 static GHashTable *id_hash = NULL;

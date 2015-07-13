@@ -26,7 +26,6 @@
 #include "doomstat.h"
 #include "am_map.h"
 #include "g_game.h"
-#include "lprintf.h"
 #include "m_random.h"
 #include "n_net.h"
 #include "cl_main.h"
@@ -673,19 +672,6 @@ static void store_actor_for_delta_compression(mobj_t *mobj) {
   g_ptr_array_add(actor_array, mobj);
 }
 
-static gint compare_actors_by_id(gconstpointer a1, gconstpointer a2) {
-  mobj_t *actor1 = (mobj_t *)a1;
-  mobj_t *actor2 = (mobj_t *)a2;
-
-  if (actor1->id < actor2->id)
-    return -1;
-
-  if (actor1->id > actor2->id)
-    return 1;
-
-  return 0;
-}
-
 static void delta_compress_and_serialize_actor_list(gpointer key,
                                                     gpointer value,
                                                     gpointer user_data) {
@@ -703,8 +689,6 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
     return;
 
   memset(&last_actor, 0, sizeof(mobj_t));
-
-  // g_ptr_array_sort(actors, compare_actors_by_id);
 
   mobj = g_ptr_array_index(actors, 0);
 

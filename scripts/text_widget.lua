@@ -146,15 +146,7 @@ function TextWidget:set_right_margin(right_margin)
 end
 
 function TextWidget:get_text()
-  if self.get_external_text then
-    out = self.get_external_text()
-    if not out then
-      return ""
-    end
-    return out
-  else
-    return self.text
-  end
+  return self.text
 end
 
 function TextWidget:set_text(text)
@@ -341,11 +333,11 @@ function TextWidget:update_layout_if_needed()
   PangoCairo.update_layout(d2k.overlay.render_context, self:get_layout())
   self:check_offsets()
 
-  if self.get_external_text then
-    local layout_width, layout_height = self:get_layout():get_pixel_size()
+  -- if self.get_external_text then
+  --   local layout_width, layout_height = self:get_layout():get_pixel_size()
 
-    self:set_height_in_pixels(layout_height)
-  end
+  --   self:set_height_in_pixels(layout_height)
+  -- end
 
   self.needs_updating = false
 end
@@ -379,7 +371,7 @@ function TextWidget:tick()
   local current_ms = d2k.System.get_ticks()
 
   if self.get_external_text and self.external_text_updated() then
-    self.text = self.get_external_text()
+    self.text = self.text .. self.get_external_text()
     self.needs_updating = true
     self.clear_external_text_updated()
   end

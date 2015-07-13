@@ -23,7 +23,6 @@
 
 #include "z_zone.h"
 
-#include "lprintf.h"
 #include "m_avg.h" 
 
 avg_t* M_AverageNew(void) {

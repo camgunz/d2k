@@ -42,7 +42,6 @@
 #include "i_video.h"
 #include "m_argv.h"
 #include "r_fps.h"
-#include "lprintf.h"
 #include "e6y.h"
 
 static dboolean   server;
@@ -120,8 +119,10 @@ void N_InitNetGame (void)
     xtratics = sinfo->extratic;
     G_ReadOptions(sinfo->game_options);
 
-    lprintf(LO_INFO, "\tjoined game as player %d/%d; %d WADs specified\n",
-      consoleplayer+1, numplayers = sinfo->players, sinfo->numwads);
+    D_Msg(MSG_INFO, "\tjoined game as player %d/%d; %d WADs specified\n",
+      consoleplayer + 1, numplayers = sinfo->players, sinfo->numwads
+    );
+
     {
       char *p = sinfo->wadnames;
       int i = sinfo->numwads;
@@ -177,7 +178,7 @@ void D_CheckNetGame(void)
   packet_header_t *packet = Z_Malloc(sizeof(packet_header_t)+1, PU_STATIC, NULL);
 
   if (server) {
-    lprintf(LO_INFO, "D_CheckNetGame: waiting for server to signal game start\n");
+    D_Msg(MSG_INFO, "D_CheckNetGame: waiting for server to signal game start\n");
     do {
       while (!I_GetPacket(packet, sizeof(packet_header_t)+1)) {
         packet_set(packet, PKT_GO, 0);

@@ -42,8 +42,6 @@
 #include "pcsound.h"
 
 //e6y
-#include "lprintf.h"
-
 #define CONSOLE_DEVICE "/dev/console"
 
 static int console_handle;
@@ -51,78 +49,70 @@ static pcsound_callback_func callback;
 static int sound_thread_running = 0;
 static SDL_Thread *sound_thread_handle;
 
-static int SoundThread(void *unused)
-{
-    int frequency;
-    int duration;
-    int cycles;
-    
-    while (sound_thread_running)
-    {
-        callback(&duration, &frequency);
+static int SoundThread(void *unused) {
+  int frequency;
+  int duration;
+  int cycles;
+  
+  while (sound_thread_running) {
+    callback(&duration, &frequency);
 
-        if (frequency != 0) 
-        {
-            cycles = PCSOUND_8253_FREQUENCY / frequency;
-        }
-        else
-        {
-            cycles = 0;
-        }
-
-        ioctl(console_handle, KIOCSOUND, cycles);
-
-        usleep(duration * 1000);
+    if (frequency != 0) {
+      cycles = PCSOUND_8253_FREQUENCY / frequency;
     }
+    else {
+      cycles = 0;
+    }
+
+    ioctl(console_handle, KIOCSOUND, cycles);
+
+    usleep(duration * 1000);
+  }
+
+  return 0;
+}
+
+static int PCSound_Linux_Init(pcsound_callback_func callback_func) {
+  console_handle = open(CONSOLE_DEVICE, O_WRONLY);
+
+  if (console_handle == -1) {
+    // Don't have permissions for the console device?
+
+    D_Msg(MSG_WARN, "PCSound_Linux_Init: Failed to open '%s': %s\n",
+      CONSOLE_DEVICE,
+      strerror(errno)
+    );
 
     return 0;
-}
+  }
 
-static int PCSound_Linux_Init(pcsound_callback_func callback_func)
-{
-    // Try to open the console
+  if (ioctl(console_handle, KIOCSOUND, 0) < 0) {
+    // KIOCSOUND not supported: non-PC linux?
 
-    console_handle = open(CONSOLE_DEVICE, O_WRONLY);
-
-    if (console_handle == -1)
-    {
-        // Don't have permissions for the console device?
-
-        lprintf(LO_WARN, "PCSound_Linux_Init: Failed to open '%s': %s\n",
-                CONSOLE_DEVICE, strerror(errno));
-        return 0;
-    }
-
-    if (ioctl(console_handle, KIOCSOUND, 0) < 0)
-    {
-        // KIOCSOUND not supported: non-PC linux?
-
-        close(console_handle);
-        return 0;
-    }
-
-    // Start a thread up to generate PC speaker output
-    
-    callback = callback_func;
-    sound_thread_running = 1;
-
-    sound_thread_handle = SDL_CreateThread(SoundThread, NULL);
-    
-    return 1;
-}
-
-static void PCSound_Linux_Shutdown(void)
-{
-    sound_thread_running = 0;
-    SDL_WaitThread(sound_thread_handle, NULL);
     close(console_handle);
+    return 0;
+  }
+
+  // Start a thread up to generate PC speaker output
+  
+  callback = callback_func;
+  sound_thread_running = 1;
+
+  sound_thread_handle = SDL_CreateThread(SoundThread, NULL);
+  
+  return 1;
 }
 
-pcsound_driver_t pcsound_linux_driver =
-{
-    "Linux",
-    PCSound_Linux_Init,
-    PCSound_Linux_Shutdown,
+static void PCSound_Linux_Shutdown(void) {
+  sound_thread_running = 0;
+  SDL_WaitThread(sound_thread_handle, NULL);
+  close(console_handle);
+}
+
+pcsound_driver_t pcsound_linux_driver = {
+  "Linux",
+  PCSound_Linux_Init,
+  PCSound_Linux_Shutdown,
 };
 
 #endif /* #ifdef HAVE_LINUX_KD_H */

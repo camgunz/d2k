@@ -91,6 +91,12 @@ function Console:new(c)
     strip_ending_newline = true
   })
 
+  c.output:set_external_text_source(
+    d2k.Messaging.get_console_messages,
+    d2k.Messaging.get_console_messages_updated,
+    d2k.Messaging.clear_console_messages_updated
+  )
+
   setmetatable(c, self)
   self.__index = self
 

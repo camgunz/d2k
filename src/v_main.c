@@ -27,52 +27,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
-#include "lprintf.h"
 #include "x_main.h"
-
-void V_InitOverlay(void) {
-#if 0
-  if (!X_CallFunc("overlay", "clear", 0, 0))
-    I_Error("Error initializing overlay: %s", X_StrError());
-
-  lua_State *L = X_GetState();
-
-  lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "overlay");
-  lua_remove(L, -2);
-  lua_getfield(L, -1, "clear");
-  lua_remove(L, -2);
-  lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "overlay");
-  lua_remove(L, -2);
-  if (lua_pcall(L, 1, 0, 0) != 0)
-    I_Error("Error clearing overlay: %s", X_StrError());
-
-  printf("V_ClearOverlay: Stack size: %d\n", lua_gettop(L));
-#endif
-}
-
-void V_ClearOverlay(void) {
-#if 0
-  if (!X_CallFunc("overlay", "clear", 0, 0))
-    I_Error("Error clearing overlay: %s", X_StrError());
-
-  lua_State *L = X_GetState();
-
-  lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "overlay");
-  lua_remove(L, -2);
-  lua_getfield(L, -1, "clear");
-  lua_remove(L, -2);
-  lua_getglobal(L, X_NAMESPACE);
-  lua_getfield(L, -1, "overlay");
-  lua_remove(L, -2);
-  if (lua_pcall(L, 1, 0, 0) != 0)
-    I_Error("Error clearing overlay: %s", X_StrError());
-
-  printf("V_ClearOverlay: Stack size: %d\n", lua_gettop(L));
-#endif
-}
 
 /* vi: set et ts=2 sw=2: */
 

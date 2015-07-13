@@ -43,7 +43,6 @@
 #include "d_deh.h"
 #include "r_plane.h"
 #include "hu_stuff.h"
-#include "lprintf.h"
 #include "p_user.h"
 #include "e6y.h"//e6y
 
@@ -60,10 +59,10 @@
 #pragma options align=packed
 #endif
 
-typedef struct
-{
-  signed char istexture; //jff 3/23/98 make char for comparison // cph - make signed
-  char        endname[9];           //  if false, it is a flat
+typedef struct {
+  signed char istexture;     //jff 3/23/98 make char for comparison
+                             // cph - make signed
+  char        endname[9];    //  if false, it is a flat
   char        startname[9];
   int         speed;
 } PACKEDATTR animdef_t; //jff 3/23/98 pack to read from memory
@@ -78,9 +77,9 @@ typedef struct
 
 #define MAXANIMS 32                   // no longer a strict limit -- killough
 
-static anim_t*  lastanim;
-static anim_t*  anims;                // new structure w/o limits -- killough
-static size_t maxanims;
+static anim_t *lastanim;
+static anim_t *anims;                // new structure w/o limits -- killough
+static size_t  maxanims;
 
 // killough 3/7/98: Initialize generalized scrolling
 static void P_SpawnScrollers(void);
@@ -89,26 +88,22 @@ static void P_SpawnFriction(void);    // phares 3/16/98
 static void P_SpawnPushers(void);     // phares 3/20/98
 
 //e6y
-void MarkAnimatedTextures(void)
-{
+void MarkAnimatedTextures(void) {
 #ifdef GL_DOOM
   anim_t* anim;
 
   anim_textures = calloc(numtextures, sizeof(TAnimItemParam));
   anim_flats = calloc(numflats, sizeof(TAnimItemParam));
 
-  for (anim = anims ; anim < lastanim ; anim++)
-  {
+  for (anim = anims; anim < lastanim; anim++) {
     int i;
-    for (i = 0; i < anim->numpics ; i++)
-    {
-      if (anim->istexture)
-      {
+
+    for (i = 0; i < anim->numpics; i++) {
+      if (anim->istexture) {
         anim_textures[anim->basepic + i].anim = anim;
         anim_textures[anim->basepic + i].index = i + 1;
       }
-      else
-      {
+      else {
         anim_flats[anim->basepic + i].anim = anim;
         anim_flats[anim->basepic + i].index = i + 1;
       }
@@ -211,12 +206,8 @@ void P_InitPicAnims(void) {
 //
 // Note: if side=1 is specified, it must exist or results undefined
 //
-side_t* getSide
-( int           currentSector,
-  int           line,
-  int           side )
-{
-  return &sides[ (sectors[currentSector].lines[line])->sidenum[side] ];
+side_t* getSide(int currentSector, int line, int side ) {
+  return &sides[(sectors[currentSector].lines[line])->sidenum[side]];
 }
 
 
@@ -229,14 +220,9 @@ side_t* getSide
 //
 // Note: if side=1 is specified, it must exist or results undefined
 //
-sector_t* getSector
-( int           currentSector,
-  int           line,
-  int           side )
-{
-  return sides[ (sectors[currentSector].lines[line])->sidenum[side] ].sector;
+sector_t* getSector(int currentSector, int line, int side) {
+  return sides[(sectors[currentSector].lines[line])->sidenum[side]].sector;
 }
-
 
 //
 // twoSided()
@@ -247,19 +233,15 @@ sector_t* getSector
 // modified to return actual two-sidedness rather than presence
 // of 2S flag unless compatibility optioned
 //
-int twoSided
-( int   sector,
-  int   line )
-{
+int twoSided(int sector, int line) {
   //jff 1/26/98 return what is actually needed, whether the line
   //has two sidedefs, rather than whether the 2S flag is set
 
-  return comp[comp_model] ?
-    (sectors[sector].lines[line])->flags & ML_TWOSIDED
-    :
-    (sectors[sector].lines[line])->sidenum[1] != NO_INDEX;
-}
+  if (comp[comp_model])
+    return (sectors[sector].lines[line])->flags & ML_TWOSIDED;
 
+  return (sectors[sector].lines[line])->sidenum[1] != NO_INDEX;
+}
 
 //
 // getNextSector()
@@ -268,16 +250,12 @@ int twoSided
 //
 // Note: returns NULL if not two-sided line, or both sides refer to sector
 //
-sector_t* getNextSector
-( line_t*       line,
-  sector_t*     sec )
-{
+sector_t* getNextSector(line_t *line, sector_t *sec) {
   //jff 1/26/98 check unneeded since line->backsector already
   //returns NULL if the line is not two sided, and does so from
   //the actual two-sidedness of the line, rather than its 2S flag
 
-  if (comp[comp_model])
-  {
+  if (comp[comp_model]) {
     if (!(line->flags & ML_TWOSIDED))
       return NULL;
   }
@@ -288,9 +266,9 @@ sector_t* getNextSector
     else                       // fixes an intra-sector line breaking functions
       return NULL;             // like floor->highest floor
   }
+
   return line->frontsector;
 }
-
 
 //
 // P_FindLowestFloorSurrounding()
@@ -298,8 +276,7 @@ sector_t* getNextSector
 // Returns the fixed point value of the lowest floor height
 // in the sector passed or its surrounding sectors.
 //
-fixed_t P_FindLowestFloorSurrounding(sector_t* sec)
-{
+fixed_t P_FindLowestFloorSurrounding(sector_t *sec) {
   int                 i;
   line_t*             check;
   sector_t*           other;
@@ -415,18 +392,18 @@ fixed_t P_FindNextHighestFloor(sector_t *sec, int currentheight)
         // 27: overflow affects return address - crash with high probability;
         if (compatibility_level < dosdoom_compatibility && h >= MAX_ADJOINING_SECTORS)
         {
-          lprintf(LO_WARN, "P_FindNextHighestFloor: Overflow of heightlist[%d] array is detected.\n", MAX_ADJOINING_SECTORS);
-          lprintf(LO_WARN, " Sector %d, line %d, heightlist index %d: ", sec->iSectorID, sec->lines[i]->iLineID, h);
+          D_Msg(MSG_WARN, "P_FindNextHighestFloor: Overflow of heightlist[%d] array is detected.\n", MAX_ADJOINING_SECTORS);
+          D_Msg(MSG_WARN, " Sector %d, line %d, heightlist index %d: ", sec->iSectorID, sec->lines[i]->iLineID, h);
 
           if (h == MAX_ADJOINING_SECTORS + 1)
             height = other->floorheight;
 
           if (h <= MAX_ADJOINING_SECTORS + 1)
-            lprintf(LO_WARN, "successfully emulated.\n");
+            D_Msg(MSG_WARN, "successfully emulated.\n");
           else if (h <= MAX_ADJOINING_SECTORS + 6)
-            lprintf(LO_WARN, "cannot be emulated - unpredictable behaviour.\n");
+            D_Msg(MSG_WARN, "cannot be emulated - unpredictable behaviour.\n");
           else
-            lprintf(LO_WARN, "cannot be emulated - crash with high probability.\n");
+            D_Msg(MSG_WARN, "cannot be emulated - crash with high probability.\n");
         }
         heightlist[h++] = other->floorheight;
       }
@@ -434,7 +411,7 @@ fixed_t P_FindNextHighestFloor(sector_t *sec, int currentheight)
       // Check for overflow. Warning.
       if ( compatibility_level >= dosdoom_compatibility && h >= MAX_ADJOINING_SECTORS )
       {
-        lprintf( LO_WARN, "Sector with more than 20 adjoining sectors\n" );
+        D_Msg(MSG_WARN, "Sector with more than 20 adjoining sectors\n" );
         break;
       }
     }

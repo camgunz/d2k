@@ -58,7 +58,6 @@ const music_player_t fl_player =
 #include <fluidsynth.h>
 
 #include "i_sound.h" // for snd_soundfont, mus_fluidsynth_gain
-#include "lprintf.h"
 #include "midifile.h"
 
 static fluid_settings_t *f_set;
@@ -90,7 +89,7 @@ static int fl_init (int samplerate)
 #ifdef _WIN32
   if ((int)GetVersion() < 0) // win9x
   {
-    lprintf (LO_INFO, "Fluidplayer: Win9x is not supported\n");
+    D_Msg(MSG_INFO, "Fluidplayer: Win9x is not supported\n");
     return 0;
   }
 #endif // _WIN32
@@ -106,14 +105,14 @@ static int fl_init (int samplerate)
     int minor;
     int micro;
     fluid_version (&major, &minor, &micro);
-    lprintf (LO_INFO, "Fluidplayer: Fluidsynth version %i.%i.%i\n", major, minor, micro);
+    D_Msg(MSG_INFO, "Fluidplayer: Fluidsynth version %i.%i.%i\n", major, minor, micro);
     if (major >= 1 && minor >=1 && micro >= 4)
       sratemin = 8000;
     else
       sratemin = 22050;
     if (f_soundrate < sratemin)
     {
-      lprintf (LO_INFO, "Fluidplayer: samplerates under %i are not supported\n", sratemin);
+      D_Msg(MSG_INFO, "Fluidplayer: samplerates under %i are not supported\n", sratemin);
       return 0;
     }
   }
@@ -122,7 +121,7 @@ static int fl_init (int samplerate)
   f_set = new_fluid_settings ();
 
   #define FSET(a,b,c) if (!fluid_settings_set##a(f_set,b,c))\
-    lprintf (LO_INFO, "fl_init: Couldn't set " b "\n")
+    D_Msg(MSG_INFO, "fl_init: Couldn't set " b "\n")
 
   FSET (num, "synth.sample-rate", f_soundrate);
 
@@ -146,7 +145,7 @@ static int fl_init (int samplerate)
   f_syn = new_fluid_synth (f_set);
   if (!f_syn)
   {
-    lprintf (LO_WARN, "fl_init: error creating fluidsynth object\n");
+    D_Msg(MSG_WARN, "fl_init: error creating fluidsynth object\n");
     delete_fluid_settings (f_set);
     return 0;
   }
@@ -155,7 +154,7 @@ static int fl_init (int samplerate)
 
   if (f_font == FLUID_FAILED)
   {
-    lprintf (LO_WARN, "fl_init: error loading soundfont %s\n", snd_soundfont);
+    D_Msg(MSG_WARN, "fl_init: error loading soundfont %s\n", snd_soundfont);
     delete_fluid_synth (f_syn);
     delete_fluid_settings (f_set);
     return 0;
@@ -197,7 +196,7 @@ static const void *fl_registersong (const void *data, unsigned len)
 
   if (!midifile)
   {
-    lprintf (LO_WARN, "fl_registersong: Failed to load MIDI.\n");
+    D_Msg(MSG_WARN, "fl_registersong: Failed to load MIDI.\n");
     return NULL;
   }
   
@@ -309,7 +308,7 @@ static void writesysex (unsigned char *data, int len)
   
   if (len + sysexbufflen > SYSEX_BUFF_SIZE)
   {
-    lprintf (LO_WARN, "fluidplayer: ignoring large or malformed sysex message\n");
+    D_Msg(MSG_WARN, "fluidplayer: ignoring large or malformed sysex message\n");
     sysexbufflen = 0;
     return;
   }
@@ -323,8 +322,8 @@ static void writesysex (unsigned char *data, int len)
 
   if (!didrespond)
   {
-    lprintf(
-      LO_WARN, "fluidplayer: SYSEX message received but not understood\n"
+    D_Msg(
+      MSG_WARN, "fluidplayer: SYSEX message received but not understood\n"
     );
   }
 }  

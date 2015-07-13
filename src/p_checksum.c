@@ -26,7 +26,6 @@
 #include "p_checksum.h"
 #include "md5.h"
 #include "doomstat.h" /* players{,ingame} */
-#include "lprintf.h"
 
 /* forward decls */
 static void p_checksum_cleanup(void);
@@ -101,7 +100,7 @@ void checksum_gamestate(int tic) {
     for (i=0 ; i<MAXPLAYERS ; i++) {
         if (!playeringame[i]) continue;
 
-        doom_snprintf (buffer, sizeof(buffer), "%d", players[i].health);
+        snprintf(buffer, sizeof(buffer), "%d", players[i].health);
         buffer[sizeof(buffer)-1] = 0;
 
         MD5Update(&md5ctx, (md5byte const *)&buffer, strlen(buffer));

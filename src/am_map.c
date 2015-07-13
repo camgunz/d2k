@@ -39,7 +39,6 @@
 #include "p_spec.h"
 #include "am_map.h"
 #include "d_deh.h"    // Ty 03/27/98 - externalizations
-#include "lprintf.h"  // jff 08/03/98 - declaration of lprintf
 #include "g_game.h"
 #include "g_keys.h"
 #include "r_fps.h"
@@ -350,17 +349,16 @@ static void AM_restoreScaleAndLoc(void)
   scale_ftom = FixedDiv(FRACUNIT, scale_mtof);
 }
 
-void AM_setMarkParams(int num)
-{
+void AM_setMarkParams(int num) {
   int i;
   static char namebuf[16] = "AMMNUM0";
 
   markpoints[num].w = 0;
   markpoints[num].h = 0;
 
-  doom_snprintf(markpoints[num].label, sizeof(markpoints[num].label), "%d", num);
-  for (i = 0; i < (int)strlen(markpoints[num].label); i++)
-  {
+  snprintf(markpoints[num].label, sizeof(markpoints[num].label), "%d", num);
+
+  for (i = 0; i < (int)strlen(markpoints[num].label); i++) {
     namebuf[6] = markpoints[num].label[i];
     markpoints[num].widths[i] = V_NamePatchWidth(namebuf);
     markpoints[num].w += markpoints[num].widths[i] + 1;

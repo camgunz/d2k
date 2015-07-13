@@ -31,7 +31,6 @@
 #include "r_things.h"
 #include "r_bsp.h" // cph - sanity checking
 #include "v_video.h"
-#include "lprintf.h"
 
 int currentsubsectornum;
 

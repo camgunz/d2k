@@ -33,7 +33,6 @@
 #include "w_wad.h"
 #include "i_system.h"
 #include "r_bsp.h"
-#include "lprintf.h"
 #include "e6y.h"
 #include "r_things.h"
 
@@ -46,7 +45,7 @@ static GLShader* gld_LoadShader(const char *vpname, const char *fpname);
 
 int glsl_Init(void) {
   if (!gl_arb_shader_objects)
-    lprintf(LO_WARN, "glsl_Init: shaders expects OpenGL 2.0\n");
+    D_Msg(MSG_WARN, "glsl_Init: shaders expects OpenGL 2.0\n");
   else
     sh_main = gld_LoadShader("glvp", "glfp");
 
@@ -113,8 +112,8 @@ static GLShader* gld_LoadShader(const char *vpname, const char *fpname)
   char *filename = NULL;
   GLShader* shader = NULL;
 
-  vp_fnlen = doom_snprintf(NULL, 0, "%s/shaders/%s.txt", I_DoomExeDir(), vpname);
-  fp_fnlen = doom_snprintf(NULL, 0, "%s/shaders/%s.txt", I_DoomExeDir(), fpname);
+  vp_fnlen = snprintf(NULL, 0, "%s/shaders/%s.txt", I_DoomExeDir(), vpname);
+  fp_fnlen = snprintf(NULL, 0, "%s/shaders/%s.txt", I_DoomExeDir(), fpname);
   filename = malloc(MAX(vp_fnlen, fp_fnlen) + 1);
 
   sprintf(filename, "%s/shaders/%s.txt", I_DoomExeDir(), vpname);
@@ -149,9 +148,14 @@ static GLShader* gld_LoadShader(const char *vpname, const char *fpname)
 
     if (linked)
     {
-      lprintf(LO_INFO, "gld_LoadShader: Shader \"%s+%s\" compiled OK: %s\n", vpname, fpname, buffer);
+      D_Msg(MSG_INFO,
+        "gld_LoadShader: Shader \"%s+%s\" compiled OK: %s\n",
+        vpname, fpname, buffer
+      );
 
-      shader->lightlevel_index = GLEXT_glGetUniformLocationARB(shader->hShader, "lightlevel");
+      shader->lightlevel_index = GLEXT_glGetUniformLocationARB(
+        shader->hShader, "lightlevel"
+      );
 
       GLEXT_glUseProgramObjectARB(shader->hShader);
 
@@ -162,7 +166,10 @@ static GLShader* gld_LoadShader(const char *vpname, const char *fpname)
     }
     else
     {
-      lprintf(LO_ERROR, "gld_LoadShader: Error compiling shader \"%s+%s\": %s\n", vpname, fpname, buffer);
+      D_Msg(MSG_ERROR,
+        "gld_LoadShader: Error compiling shader \"%s+%s\": %s\n",
+        vpname, fpname, buffer
+      );
       free(shader);
       shader = NULL;
     }

@@ -28,7 +28,6 @@
 
 #include "i_sound.h"
 #include "i_video.h"
-#include "lprintf.h"
 #include "i_capture.h"
 
 int capturing_video = 0;
@@ -78,19 +77,19 @@ static int parsecommand (char *out, const char *in, int len)
       switch (in[1])
       {
         case 'w':
-          i = doom_snprintf (out, len, "%u", REAL_SCREENWIDTH);
+          i = snprintf(out, len, "%u", REAL_SCREENWIDTH);
           break;
         case 'h':
-          i = doom_snprintf (out, len, "%u", REAL_SCREENHEIGHT);
+          i = snprintf(out, len, "%u", REAL_SCREENHEIGHT);
           break;
         case 's':
-          i = doom_snprintf (out, len, "%u", snd_samplerate);
+          i = snprintf(out, len, "%u", snd_samplerate);
           break;
         case 'f':
-          i = doom_snprintf (out, len, "%s", vid_fname);
+          i = snprintf(out, len, "%s", vid_fname);
           break;
         case '%':
-          i = doom_snprintf (out, len, "%%");
+          i = snprintf(out, len, "%%");
           break;
         default:
           return 0;
@@ -481,40 +480,40 @@ void I_CapturePrep (const char *fn)
 
   if (!parsecommand (soundpipe.command, cap_soundcommand, sizeof(soundpipe.command)))
   {
-    lprintf (LO_ERROR, "I_CapturePrep: malformed command %s\n", cap_soundcommand);
+    D_Msg(MSG_ERROR, "I_CapturePrep: malformed command %s\n", cap_soundcommand);
     capturing_video = 0;
     return;
   }
   if (!parsecommand (videopipe.command, cap_videocommand, sizeof(videopipe.command)))
   {
-    lprintf (LO_ERROR, "I_CapturePrep: malformed command %s\n", cap_videocommand);
+    D_Msg(MSG_ERROR, "I_CapturePrep: malformed command %s\n", cap_videocommand);
     capturing_video = 0;
     return;
   }
   if (!parsecommand (muxpipe.command, cap_muxcommand, sizeof(muxpipe.command)))
   {
-    lprintf (LO_ERROR, "I_CapturePrep: malformed command %s\n", cap_muxcommand);
+    D_Msg(MSG_ERROR, "I_CapturePrep: malformed command %s\n", cap_muxcommand);
     capturing_video = 0;
     return;
   }
 
-  lprintf (LO_INFO, "I_CapturePrep: opening pipe \"%s\"\n", soundpipe.command);
+  D_Msg(MSG_INFO, "I_CapturePrep: opening pipe \"%s\"\n", soundpipe.command);
   if (!my_popen3 (&soundpipe))
   {
-    lprintf (LO_ERROR, "I_CapturePrep: sound pipe failed\n");
+    D_Msg(MSG_ERROR, "I_CapturePrep: sound pipe failed\n");
     capturing_video = 0;
     return;
   }
-  lprintf (LO_INFO, "I_CapturePrep: opening pipe \"%s\"\n", videopipe.command);
+  D_Msg(MSG_INFO, "I_CapturePrep: opening pipe \"%s\"\n", videopipe.command);
   if (!my_popen3 (&videopipe))
   {
-    lprintf (LO_ERROR, "I_CapturePrep: video pipe failed\n");
+    D_Msg(MSG_ERROR, "I_CapturePrep: video pipe failed\n");
     my_pclose3 (&soundpipe);
     capturing_video = 0;
     return;
   }
   I_SetSoundCap ();
-  lprintf (LO_INFO, "I_CapturePrep: video capture started\n");
+  D_Msg(MSG_INFO, "I_CapturePrep: video capture started\n");
   capturing_video = 1;
 
   // start reader threads
@@ -556,14 +555,14 @@ void I_CaptureFrame (void)
   if (snd)
   {
     if (fwrite (snd, nsampreq * 4, 1, soundpipe.f_stdin) != 1)
-      lprintf(LO_WARN, "I_CaptureFrame: error writing soundpipe.\n");
+      D_Msg(MSG_WARN, "I_CaptureFrame: error writing soundpipe.\n");
     //free (snd); // static buffer
   }
   vid = I_GrabScreen ();
   if (vid)
   {
     if (fwrite (vid, REAL_SCREENWIDTH * REAL_SCREENHEIGHT * 3, 1, videopipe.f_stdin) != 1)
-      lprintf(LO_WARN, "I_CaptureFrame: error writing videopipe.\n");
+      D_Msg(MSG_WARN, "I_CaptureFrame: error writing videopipe.\n");
     //free (vid); // static buffer
   }
 
@@ -594,11 +593,11 @@ void I_CaptureFinish (void)
 
   // muxing and temp file cleanup
 
-  lprintf (LO_INFO, "I_CaptureFinish: opening pipe \"%s\"\n", muxpipe.command);
+  D_Msg(MSG_INFO, "I_CaptureFinish: opening pipe \"%s\"\n", muxpipe.command);
 
   if (!my_popen3 (&muxpipe))
   {
-    lprintf (LO_ERROR, "I_CaptureFinish: finalize pipe failed\n");
+    D_Msg(MSG_ERROR, "I_CaptureFinish: finalize pipe failed\n");
     return;
   }
 

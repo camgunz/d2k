@@ -32,7 +32,6 @@
 #include "doomtype.h"
 #include "i_video.h"
 #include "m_argv.h"
-#include "lprintf.h"
 
 #ifndef HIBYTE
 #define HIBYTE(W) (((W) >> 8) & 0xFF)
@@ -116,7 +115,10 @@ void gld_CheckHardwareGamma(void)
     {
       int g;
 
-      lprintf(LO_WARN, "gld_CheckHardwareGamma: suspicious gamma tables, using linear ramp for restoration\n");
+      D_Msg(MSG_WARN,
+        "gld_CheckHardwareGamma: suspicious gamma tables, using linear ramp "
+        "for restoration\n"
+      );
 
       for ( g = 0; g < 255; g++ )
       {
@@ -128,9 +130,10 @@ void gld_CheckHardwareGamma(void)
 
   }
 
-  if (!gl_DeviceSupportsGamma)
-  {
-    lprintf(LO_WARN, "gld_CheckHardwareGamma: device has broken gamma support\n");
+  if (!gl_DeviceSupportsGamma) {
+    D_Msg(MSG_WARN,
+      "gld_CheckHardwareGamma: device has broken gamma support\n"
+    );
   }
 }
 
@@ -179,7 +182,9 @@ int gld_SetGammaRamp(int gamma)
     succeeded = (SDL_SetGammaRamp(gammatable, gammatable, gammatable) != -1);
     if (!succeeded)
     {
-      lprintf(LO_WARN, "gld_SetGammaRamp: hardware gamma adjustment is not supported\n");
+      D_Msg(MSG_WARN,
+        "gld_SetGammaRamp: hardware gamma adjustment is not supported\n"
+      );
       gl_lightmode = gl_lightmode_glboom;
     }
   }
@@ -195,7 +200,11 @@ void gld_ResetGammaRamp(void)
   {
     if (gld_SetGammaRamp(1))
     {
-      lprintf(LO_WARN, "gld_ResetGammaRamp: suspicious gamma tables, using linear ramp for restoration\n");
+      D_Msg(MSG_WARN,
+        "gld_ResetGammaRamp: suspicious gamma tables, using linear ramp for "
+        "restoration\n"
+      );
+      /* CG: [FIXME] What? */
       _exit(0);
     }
   }

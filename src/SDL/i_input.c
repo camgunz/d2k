@@ -31,7 +31,6 @@
 #include "i_joy.h"
 #include "i_main.h"
 #include "i_mouse.h"
-#include "lprintf.h"
 #include "x_main.h"
 
 key_states_t key_states;

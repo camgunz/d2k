@@ -21,22 +21,34 @@
 /*****************************************************************************/
 
 
-#ifndef D_LOG_H__
-#define D_LOG_H__
+#ifndef D_MSG_H__
+#define D_MSG_H__
+
+#define MSG_MIN MSG_DEBUG
 
 typedef enum {
-  LOG_NET,
-  LOG_SYNC,
-  LOG_STATE,
-  LOG_MEM,
-  LOG_SAVE,
-  LOG_SOUND,
-  LOG_MAX
-} log_channel_e;
+  MSG_DEBUG,
+  MSG_INFO,
+  MSG_WARN,
+  MSG_ERROR,
+  MSG_DEH,
+  MSG_GAME,
+  MSG_NET,
+  MSG_SYNC,
+  MSG_STATE,
+  MSG_MEM,
+  MSG_SAVE,
+  MSG_SOUND,
+  MSG_MAX
+} msg_channel_e;
 
-void D_InitLogging(void);
-void D_EnableLogChannel(log_channel_e channel, const char *filename);
-void D_Log(log_channel_e channel, const char *fmt, ...) PRINTF_DECL(2, 3);
+void D_InitMessaging(void);
+bool D_MsgActive(msg_channel_e chan);
+void D_MsgActivate(msg_channel_e chan);
+bool D_MsgActivateWithFile(msg_channel_e chan, const char *file_path);
+void D_MsgDeactivate(msg_channel_e chan);
+void D_Msg(msg_channel_e chan, const char *fmt, ...) PRINTF_DECL(2, 3);
+bool D_LogToFile(msg_channel_e chan, const char *file_path);
 
 #endif
 

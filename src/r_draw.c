@@ -32,7 +32,6 @@
 #include "st_stuff.h"
 #include "g_game.h"
 #include "am_map.h"
-#include "lprintf.h"
 
 //
 // All drawing to the view buffer is accomplished in this file.

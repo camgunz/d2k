@@ -39,7 +39,6 @@
 #include "i_main.h"
 #include "i_system.h"
 #include "i_video.h"
-#include "lprintf.h"
 #include "n_net.h"
 #include "n_main.h"
 #include "cl_main.h"
@@ -50,63 +49,9 @@
 #define CONSOLE_SHORTHAND_MARKER "/"
 #define CONSOLE_TEXT_PROMPT "> "
 
-typedef struct buffered_console_message_s {
-  bool is_markup;
-  GString *contents;
-} buffered_console_message_t;
-
-static GRegex    *shorthand_regex = NULL;
-static GPtrArray *buffered_console_messages = NULL;
-
-static void free_buffered_message(gpointer data) {
-  buffered_console_message_t *message = (buffered_console_message_t *)data;
-
-  g_string_free(message->contents, true);
-
-  free(data);
-}
-
-static void print_buffered_message(gpointer data, gpointer user_data) {
-  buffered_console_message_t *msg = (buffered_console_message_t *)data;
-
-  if (msg->is_markup)
-    X_Call(X_GetState(), "console", "mwrite", 1, 0, X_STRING, msg->contents->str);
-  else
-    X_Call(X_GetState(), "console", "write", 1, 0, X_STRING, msg->contents->str);
-}
-
-static bool save_output_if_scripting_unavailable(const char *message,
-                                                 bool is_markup) {
-  buffered_console_message_t *msg;
-
-  if (X_Available()) {
-    if (buffered_console_messages) {
-      g_ptr_array_foreach(
-        buffered_console_messages, print_buffered_message, NULL
-      );
-
-      g_ptr_array_free(buffered_console_messages, true);
-
-      buffered_console_messages = NULL;
-    }
-
-    return false;
-  }
-
-  if (!buffered_console_messages) {
-    buffered_console_messages = g_ptr_array_new_with_free_func(
-      free_buffered_message
-    );
-  }
-
-  msg = calloc(1, sizeof(buffered_console_message_t));
-  msg->is_markup = is_markup;
-  msg->contents = g_string_new(message);
-
-  g_ptr_array_add(buffered_console_messages, msg);
-
-  return true;
-}
+static GRegex  *shorthand_regex = NULL;
+static GString *buffered_console_messages = NULL;
+static bool     buffered_console_messages_updated = false;
 
 static bool command_is_shorthand(const char *command) {
   return strncmp(
@@ -276,8 +221,6 @@ bool C_HandleInput(char *input_text) {
   return success;
 }
 
-/* CG: TODO: Add D_Log logging */
-
 void C_Printf(const char *fmt, ...) {
   va_list args;
 
@@ -343,7 +286,6 @@ void C_MEcho(const char *message) {
 
 void C_Write(const char *msg) {
   gchar *emsg;
-  bool success = true;
 
   if (!msg)
     return;
@@ -353,38 +295,42 @@ void C_Write(const char *msg) {
   if (C_ECIAvailable())
     C_ECIWrite(emsg);
 
-  if (nodrawers)
-    printf("%s", emsg);
-  else if (!save_output_if_scripting_unavailable(emsg, false))
-    success = X_Call(X_GetState(), "console", "write", 1, 0, X_STRING, emsg);
+  if (!buffered_console_messages)
+    buffered_console_messages = g_string_new(emsg);
+  else
+    g_string_append(buffered_console_messages, emsg);
 
-  if (!success)
-    I_Error("C_Write: Error writing to console: %s", X_GetError(X_GetState()));
+  buffered_console_messages_updated = true;
 
   g_free(emsg);
 }
 
 void C_MWrite(const char *msg) {
-  bool success = true;
-
   if (!msg)
     return;
 
   if (C_ECIAvailable())
     C_ECIWrite(msg);
 
-  if (!g_utf8_validate(msg, -1, NULL)) {
-    printf("Invalid message [%s]\n", msg);
-    return;
-  }
+  if (!buffered_console_messages)
+    buffered_console_messages = g_string_new(msg);
+  else
+    g_string_append(buffered_console_messages, msg);
 
-  if (nodrawers || true)
-    printf("%s", msg);
-  else if (!save_output_if_scripting_unavailable(msg, true))
-    success = X_Call(X_GetState(), "console", "mwrite", 1, 0, X_STRING, msg);
+  buffered_console_messages_updated = true;
+}
 
-  if (!success)
-    I_Error("C_MWrite: Error writing to console: %s", X_GetError(X_GetState()));
+GString* C_GetMessages(void) {
+  return buffered_console_messages;
+}
+
+bool C_MessagesUpdated(void) {
+  return buffered_console_messages_updated;
+}
+
+void C_ClearMessagesUpdated(void) {
+  buffered_console_messages_updated = false;
+  g_string_erase(buffered_console_messages, 0, -1);
 }
 
 /* vi: set et ts=2 sw=2: */

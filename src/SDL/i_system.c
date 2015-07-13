@@ -29,7 +29,6 @@
 #include "m_argv.h"
 #endif
 
-#include "lprintf.h"
 #include "doomtype.h"
 #include "doomdef.h"
 #include "m_file.h"
@@ -474,7 +473,7 @@ char* I_FindFileInternal(const char* wfname, const char* ext) {
     }
     else if (d != NULL && s != NULL) {
       if (!M_PathJoinBuf(&buf, d, s)) {
-        lprintf(LO_WARN, " Error looking for %s: %s.\n",
+        D_Msg(MSG_WARN, " Error looking for %s: %s.\n",
           wfname, M_GetFileError()
         );
         continue;
@@ -483,7 +482,7 @@ char* I_FindFileInternal(const char* wfname, const char* ext) {
       M_BufferSeekBackward(&buf, 1);
 
       if (!M_PathJoinBuf(&buf, M_BufferGetData(&buf), wfname)) {
-        lprintf(LO_WARN, " Error looking for %s: %s.\n",
+        D_Msg(MSG_WARN, " Error looking for %s: %s.\n",
           wfname, M_GetFileError()
         );
         continue;
@@ -492,7 +491,7 @@ char* I_FindFileInternal(const char* wfname, const char* ext) {
     }
     else if (d == NULL) {
       if (!M_PathJoinBuf(&buf, s, wfname)) {
-        lprintf(LO_WARN, " Error looking for %s: %s.\n",
+        D_Msg(MSG_WARN, " Error looking for %s: %s.\n",
           wfname, M_GetFileError()
         );
         continue;
@@ -500,7 +499,7 @@ char* I_FindFileInternal(const char* wfname, const char* ext) {
     }
     else if (s == NULL) {
       if (!M_PathJoinBuf(&buf, d, wfname)) {
-        lprintf(LO_WARN, " Error looking for %s: %s.\n",
+        D_Msg(MSG_WARN, " Error looking for %s: %s.\n",
           wfname, M_GetFileError()
         );
         continue;
@@ -516,7 +515,7 @@ char* I_FindFileInternal(const char* wfname, const char* ext) {
       char *out = strdup(M_BufferGetData(&buf));
 
       M_BufferFree(&buf);
-      lprintf(LO_INFO, " found %s\n", out);
+      D_Msg(MSG_INFO, " found %s\n", out);
       return out;
     }
 
@@ -538,5 +537,27 @@ const char* I_FindFile2(const char* wfname, const char* ext) {
 #endif
 
 #endif // PRBOOM_SERVER
+
+/*
+ * I_Error
+ *
+ * cphipps - moved out of i_* headers, to minimise source files that depend on
+ * the low-level headers. All this does is print the error, then call the
+ * low-level safe exit function.
+ * killough 3/20/98: add const
+ */
+
+void I_Error(const char *format, ...) {
+  va_list args;
+
+  va_start(args, format);
+  vfprintf(stderr, format, args);
+  va_end(args);
+
+  puts("");
+
+  exit(-1);
+}
+
 
 /* vi: set et ts=2 sw=2: */

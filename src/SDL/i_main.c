@@ -41,7 +41,6 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 #include "i_sound.h"
 #include "i_system.h"
 #include "i_video.h"
-#include "lprintf.h"
 #include "m_argv.h"
 #include "m_fixed.h"
 #include "m_misc.h"
@@ -200,7 +199,7 @@ int endoom_mode;
 static void PrintVer(void) {
   char vbuf[200];
 
-  lprintf(LO_INFO, "%s\n", I_GetVersionString(vbuf, 200));
+  D_Msg(MSG_INFO, "%s\n", I_GetVersionString(vbuf, 200));
 }
 
 #include "icon.c"
@@ -317,7 +316,10 @@ static void I_EndDoom2(void)
   //e6y
   if (!showendoom)
   {
-    lprintf(LO_INFO,"I_EndDoom: All following output is skipped because of \"Fast Exit\" option\n");
+    D_Msg(MSG_INFO,
+      "I_EndDoom: All following output is skipped because of "
+      "\"Fast Exit\" option\n"
+    );
     return;
   }
 
@@ -363,7 +365,7 @@ static void I_EndDoom2(void)
     /* cph - optionally drop the last line, so everything fits on one screen */
     if (endoom_mode & endoom_droplastline)
       l -= 80;
-    lprintf(LO_INFO,"\n");
+    D_Msg(MSG_INFO, "\n");
     for (i=0; i<l; i++)
     {
 #ifdef _WIN32
@@ -411,13 +413,13 @@ static void I_EndDoom2(void)
 #endif
       /* cph - portable ascii printout if requested */
       if (isascii(endoom[i][0]) || (endoom_mode & endoom_nonasciichars))
-        lprintf(LO_INFO,"%c",endoom[i][0]);
+        D_Msg(MSG_INFO, "%c", endoom[i][0]);
       else /* Probably a box character, so do #'s */
-        lprintf(LO_INFO,"#");
+        D_Msg(MSG_INFO, "#");
     }
 #ifndef _WIN32
-    lprintf(LO_INFO,"\b"); /* hack workaround for extra newline at bottom of screen */
-    lprintf(LO_INFO,"\r");
+    D_Msg(MSG_INFO, "\b"); /* hack workaround for extra newline at bottom of screen */
+    D_Msg(MSG_INFO, "\r");
     if (endoom_mode & endoom_nonasciichars)
       printf("%c",'\017'); /* restore primary charset */
 #endif /* _WIN32 */
@@ -524,13 +526,13 @@ static void I_SetAffinityMask(void) {
 #endif
 
     if (errbuf == NULL) {
-      lprintf(LO_INFO, "I_SetAffinityMask: manual affinity mask is %d\n",
+      D_Msg(MSG_INFO, "I_SetAffinityMask: manual affinity mask is %d\n",
         process_affinity_mask
       );
     }
     else {
-      lprintf(
-        LO_ERROR,
+      D_Msg(
+        MSG_ERROR,
         "I_SetAffinityMask: failed to set process affinity mask (%s)\n",
         errbuf
       );
@@ -561,13 +563,13 @@ void I_SetProcessPriority(void) {
 #endif
 
     if (errbuf == NULL) {
-      lprintf(LO_INFO,
+      D_Msg(MSG_INFO,
         "I_SetProcessPriority: priority for the process is %d\n",
         process_priority
       );
     }
     else {
-      lprintf(LO_ERROR,
+      D_Msg(MSG_ERROR,
         "I_SetProcessPriority: failed to set priority for the process (%s)\n",
         errbuf
       );
@@ -578,6 +580,8 @@ void I_SetProcessPriority(void) {
 #ifndef RUNNING_UNIT_TESTS
 //int main(int argc, const char * const * argv)
 int main(int argc, char **argv) {
+  int p;
+
 #ifdef SECURE_UID
   /* First thing, revoke setuid status (if any) */
   stored_euid = geteuid();
@@ -606,14 +610,45 @@ int main(int argc, char **argv) {
   _setmode(_fileno(stderr), _O_BINARY);
 #endif
 
+  D_InitMessaging(); /* 05/09/14 CG: Enable messaging */
+
+  if ((p = M_CheckParm("-log"))) {
+    const char *log_file = myargv[p + 1];
+
+    if (D_MsgActivateWithFile(MSG_INFO, log_file)) {
+#ifdef DEBUG
+      D_MsgActivateWithFile(MSG_DEBUG, log_file);
+#endif
+      D_MsgActivateWithFile(MSG_INFO, log_file);
+      D_MsgActivateWithFile(MSG_WARN, log_file);
+      D_MsgActivateWithFile(MSG_ERROR, log_file);
+      D_MsgActivateWithFile(MSG_DEH, log_file);
+      D_MsgActivateWithFile(MSG_GAME, log_file);
+    }
+    else {
+      fprintf(stderr, "Error logging to file %s\n", log_file);
+      D_MsgActivate(MSG_INFO);
+#ifdef DEBUG
+      D_MsgActivate(MSG_DEBUG);
+#endif
+      D_MsgActivate(MSG_INFO);
+      D_MsgActivate(MSG_WARN);
+      D_MsgActivate(MSG_ERROR);
+      D_MsgActivate(MSG_DEH);
+      D_MsgActivate(MSG_GAME);
+    }
+  }
+  else {
+    D_MsgActivate(MSG_INFO);
+  }
+
   // e6y: was moved from D_DoomMainSetup
   // init subsystems
-  //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO, "M_LoadDefaults: Load system defaults.\n");
+  D_Msg(MSG_INFO, "M_LoadDefaults: Load system defaults.\n");
   M_LoadDefaults();              // load before initing other systems
 
   /* Version info */
-  lprintf(LO_INFO, "\n");
+  D_Msg(MSG_INFO, "\n");
   PrintVer();
 
   /* cph - Z_Close must be done after I_Quit, so we register it first. */

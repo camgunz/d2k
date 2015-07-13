@@ -42,7 +42,6 @@
 #include "i_mouse.h"
 #include "i_smp.h"
 #include "i_video.h"
-#include "lprintf.h"
 #include "m_argv.h"
 #include "p_user.h"
 #include "r_draw.h"
@@ -177,7 +176,7 @@ static void fill_screen_resolution_list(void) {
     for (i = count - 1; i >= 0; i--) {
       int in_list = false;
 
-      doom_snprintf(mode, sizeof(mode), "%dx%d", modes[i]->w, modes[i]->h);
+      snprintf(mode, sizeof(mode), "%dx%d", modes[i]->w, modes[i]->h);
 
       if (i == count - 1)
         screen_resolution_lowest = strdup(mode);
@@ -204,7 +203,7 @@ static void fill_screen_resolution_list(void) {
   }
 
   if (list_size == 0) {
-    doom_snprintf(
+    snprintf(
       mode, sizeof(mode), "%dx%d", desired_screenwidth, desired_screenheight
     );
     screen_resolutions_list[0] = strdup(mode);
@@ -213,7 +212,7 @@ static void fill_screen_resolution_list(void) {
   }
 
   if (current_resolution_index == -1) {
-    doom_snprintf(
+    snprintf(
       mode, sizeof(mode), "%dx%d", desired_screenwidth, desired_screenheight
     );
 
@@ -373,7 +372,7 @@ void I_FinishUpdate(void) {
     byte *dest;
 
     if (SDL_LockSurface(screen) < 0) {
-      lprintf(LO_INFO,"I_FinishUpdate: %s\n", SDL_GetError());
+      D_Msg(MSG_INFO, "I_FinishUpdate: %s\n", SDL_GetError());
       return;
     }
 
@@ -466,8 +465,8 @@ void I_PreInitGraphics(void) {
     } u = { "SDL_VIDEODRIVER=" };
 
     //e6y: wrong videodriver?
-    lprintf(
-      LO_ERROR,
+    D_Msg(
+      MSG_ERROR,
       "Could not initialize SDL with SDL_VIDEODRIVER=%s [%s]\n",
       video_driver,
       SDL_GetError()
@@ -567,19 +566,19 @@ void I_CalculateRes(int width, int height) {
     count1 = I_TestCPUCacheMisses(pitch1, SCREENHEIGHT, mintime);
     count2 = I_TestCPUCacheMisses(pitch2, SCREENHEIGHT, mintime);
 
-    lprintf(LO_INFO, "I_CalculateRes: trying to optimize screen pitch\n");
-    lprintf(LO_INFO,
+    D_Msg(MSG_INFO, "I_CalculateRes: trying to optimize screen pitch\n");
+    D_Msg(MSG_INFO,
       " test case for pitch=%d is processed %d times for %d msec\n",
       pitch1, count1, mintime
     );
-    lprintf(LO_INFO,
+    D_Msg(MSG_INFO,
       " test case for pitch=%d is processed %d times for %d msec\n",
       pitch2, count2, mintime
     );
 
     SCREENPITCH = (count2 > count1 ? pitch2 : pitch1);
 
-    lprintf(LO_INFO, " optimized screen pitch is %d\n", SCREENPITCH);
+    D_Msg(MSG_INFO, " optimized screen pitch is %d\n", SCREENPITCH);
   }
   else {
     SCREENPITCH = SCREENWIDTH * V_GetPixelDepth();
@@ -695,7 +694,7 @@ void I_InitScreenResolution(void) {
 
   I_InitBuffersRes();
 
-  lprintf(LO_INFO, "I_InitScreenResolution: Using resolution %dx%d\n",
+  D_Msg(MSG_INFO, "I_InitScreenResolution: Using resolution %dx%d\n",
     REAL_SCREENWIDTH, REAL_SCREENHEIGHT
   );
 }
@@ -708,7 +707,7 @@ void I_InitGraphics(void) {
 
   initialized = true;
 
-  lprintf(LO_INFO, "I_InitGraphics: %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
+  D_Msg(MSG_INFO, "I_InitGraphics: %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
 
   initialize_overlay();
 
@@ -914,7 +913,7 @@ void I_UpdateVideoMode(void) {
   }
 #endif
 
-  lprintf(LO_INFO, "I_UpdateVideoMode: 0x%x, %s, %s\n",
+  D_Msg(MSG_INFO, "I_UpdateVideoMode: 0x%x, %s, %s\n",
     init_flags,
     screen->pixels ? "SDL buffer" : "own buffer",
     SDL_MUSTLOCK(screen) ? "lock-and-copy": "direct access"
@@ -952,35 +951,35 @@ void I_UpdateVideoMode(void) {
 #if 0
     int temp;
 
-    lprintf(LO_INFO,"SDL OpenGL PixelFormat:\n");
+    D_Msg(MSG_INFO,"SDL OpenGL PixelFormat:\n");
     SDL_GL_GetAttribute( SDL_GL_RED_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_RED_SIZE: %i\n",temp);
+    D_Msg(MSG_INFO,"    SDL_GL_RED_SIZE: %i\n",temp);
     SDL_GL_GetAttribute( SDL_GL_GREEN_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_GREEN_SIZE: %i\n",temp);
+    D_Msg(MSG_INFO,"    SDL_GL_GREEN_SIZE: %i\n",temp);
     SDL_GL_GetAttribute( SDL_GL_BLUE_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_BLUE_SIZE: %i\n",temp);
+    D_Msg(MSG_INFO,"    SDL_GL_BLUE_SIZE: %i\n",temp);
     SDL_GL_GetAttribute( SDL_GL_STENCIL_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_STENCIL_SIZE: %i\n",temp);
+    D_Msg(MSG_INFO,"    SDL_GL_STENCIL_SIZE: %i\n",temp);
     SDL_GL_GetAttribute( SDL_GL_ACCUM_RED_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_ACCUM_RED_SIZE: %i\n",temp);
+    D_Msg(MSG_INFO,"    SDL_GL_ACCUM_RED_SIZE: %i\n",temp);
     SDL_GL_GetAttribute( SDL_GL_ACCUM_GREEN_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_ACCUM_GREEN_SIZE: %i\n",temp);
+    D_Msg(MSG_INFO,"    SDL_GL_ACCUM_GREEN_SIZE: %i\n",temp);
     SDL_GL_GetAttribute( SDL_GL_ACCUM_BLUE_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_ACCUM_BLUE_SIZE: %i\n",temp);
+    D_Msg(MSG_INFO,"    SDL_GL_ACCUM_BLUE_SIZE: %i\n",temp);
     SDL_GL_GetAttribute( SDL_GL_ACCUM_ALPHA_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_ACCUM_ALPHA_SIZE: %i\n",temp);
+    D_Msg(MSG_INFO,"    SDL_GL_ACCUM_ALPHA_SIZE: %i\n",temp);
     SDL_GL_GetAttribute( SDL_GL_DOUBLEBUFFER, &temp );
-    lprintf(LO_INFO,"    SDL_GL_DOUBLEBUFFER: %i\n",temp);
+    D_Msg(MSG_INFO,"    SDL_GL_DOUBLEBUFFER: %i\n",temp);
     SDL_GL_GetAttribute( SDL_GL_BUFFER_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_BUFFER_SIZE: %i\n",temp);
+    D_Msg(MSG_INFO,"    SDL_GL_BUFFER_SIZE: %i\n",temp);
     SDL_GL_GetAttribute( SDL_GL_DEPTH_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_DEPTH_SIZE: %i\n",temp);
+    D_Msg(MSG_INFO,"    SDL_GL_DEPTH_SIZE: %i\n",temp);
     SDL_GL_GetAttribute( SDL_GL_MULTISAMPLESAMPLES, &temp );
-    lprintf(LO_INFO,"    SDL_GL_MULTISAMPLESAMPLES: %i\n",temp);
+    D_Msg(MSG_INFO,"    SDL_GL_MULTISAMPLESAMPLES: %i\n",temp);
     SDL_GL_GetAttribute( SDL_GL_MULTISAMPLEBUFFERS, &temp );
-    lprintf(LO_INFO,"    SDL_GL_MULTISAMPLEBUFFERS: %i\n",temp);
+    D_Msg(MSG_INFO,"    SDL_GL_MULTISAMPLEBUFFERS: %i\n",temp);
     SDL_GL_GetAttribute( SDL_GL_STENCIL_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_STENCIL_SIZE: %i\n",temp);
+    D_Msg(MSG_INFO,"    SDL_GL_STENCIL_SIZE: %i\n",temp);
 #endif
 
     gld_Init(SCREENWIDTH, SCREENHEIGHT);

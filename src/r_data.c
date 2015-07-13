@@ -32,7 +32,6 @@
 #include "r_bsp.h"
 #include "r_things.h"
 #include "p_tick.h"
-#include "lprintf.h"  // jff 08/03/98 - declaration of lprintf
 #include "p_tick.h"
 
 //
@@ -52,8 +51,7 @@
 // and possibly other attributes.
 //
 
-typedef struct
-{
+typedef struct {
   short originx;
   short originy;
   short patch;
@@ -61,9 +59,7 @@ typedef struct
   short colormap;        // unused in Doom but might be used in Phase 2 Boom
 } PACKEDATTR mappatch_t;
 
-
-typedef struct
-{
+typedef struct {
   char       name[8];
   char       pad2[4];      // unused
   short      width;
@@ -105,8 +101,7 @@ const byte *R_GetTextureColumn(const rpatch_t *texpatch, int col) {
 //  with the textures from the world map.
 //
 
-static void R_InitTextures (void)
-{
+static void R_InitTextures(void) {
   const maptexture_t *mtexture;
   texture_t    *texture;
   const mappatch_t   *mpatch;
@@ -150,9 +145,11 @@ static void R_InitTextures (void)
 
           patchlookup[i] = (W_CheckNumForName)(name, ns_sprites);
 
-          if (patchlookup[i] == -1 && devparm)
-            //jff 8/3/98 use logical output routine
-            lprintf(LO_WARN,"\nWarning: patch %.8s, index %d does not exist",name,i);
+          if (patchlookup[i] == -1 && devparm) {
+            D_Msg(MSG_WARN, "\nWarning: patch %.8s, index %d does not exist", 
+              name, i
+            );
+          }
         }
     }
   W_UnlockLumpNum(names_lump); // cph - release the lump
@@ -166,18 +163,16 @@ static void R_InitTextures (void)
   maxoff = W_LumpLength(maptex_lump[0]);
   directory = maptex+1;
 
-  if (W_CheckNumForName("TEXTURE2") != -1)
-    {
-      maptex2 = W_CacheLumpNum(maptex_lump[1] = W_GetNumForName("TEXTURE2"));
-      numtextures2 = LittleLong(*maptex2);
-      maxoff2 = W_LumpLength(maptex_lump[1]);
-    }
-  else
-    {
-      maptex2 = NULL;
-      numtextures2 = 0;
-      maxoff2 = 0;
-    }
+  if (W_CheckNumForName("TEXTURE2") != -1) {
+    maptex2 = W_CacheLumpNum(maptex_lump[1] = W_GetNumForName("TEXTURE2"));
+    numtextures2 = LittleLong(*maptex2);
+    maxoff2 = W_LumpLength(maptex_lump[1]);
+  }
+  else {
+    maptex2 = NULL;
+    numtextures2 = 0;
+    maxoff2 = 0;
+  }
   numtextures = numtextures1 + numtextures2;
 
   // killough 4/9/98: make column offsets 32-bit;
@@ -186,91 +181,90 @@ static void R_InitTextures (void)
   textures = Z_Malloc(numtextures*sizeof*textures, PU_STATIC, 0);
   textureheight = Z_Malloc(numtextures*sizeof*textureheight, PU_STATIC, 0);
 
-  for (i=0 ; i<numtextures ; i++, directory++)
-    {
-      if (i == numtextures1)
-        {
-          // Start looking in second texture file.
-          maptex = maptex2;
-          maxoff = maxoff2;
-          directory = maptex+1;
-        }
+  for (i = 0; i < numtextures; i++, directory++) {
+    if (i == numtextures1) {
+      // Start looking in second texture file.
+      maptex = maptex2;
+      maxoff = maxoff2;
+      directory = maptex+1;
+    }
 
-      offset = LittleLong(*directory);
+    offset = LittleLong(*directory);
 
-      if (offset > maxoff)
-        I_Error("R_InitTextures: Bad texture directory");
+    if (offset > maxoff)
+      I_Error("R_InitTextures: Bad texture directory");
 
-      mtexture = (const maptexture_t *) ( (const byte *)maptex + offset);
+    mtexture = (const maptexture_t *) ((const byte *)maptex + offset);
 
-      texture = textures[i] =
-        Z_Malloc(sizeof(texture_t) +
-                 sizeof(texpatch_t)*(LittleShort(mtexture->patchcount)-1),
-                 PU_STATIC, 0);
+    texture = textures[i] = Z_Malloc(
+      sizeof(texture_t) +
+      sizeof(texpatch_t)*(LittleShort(mtexture->patchcount) - 1),
+      PU_STATIC,
+      0
+    );
 
-      texture->width = LittleShort(mtexture->width);
-      texture->height = LittleShort(mtexture->height);
-      texture->patchcount = LittleShort(mtexture->patchcount);
+    texture->width = LittleShort(mtexture->width);
+    texture->height = LittleShort(mtexture->height);
+    texture->patchcount = LittleShort(mtexture->patchcount);
 
-        /* Mattias Engdegård emailed me of the following explenation of
-         * why memcpy doesnt work on some systems:
-         * "I suppose it is the mad unaligned allocation
-         * going on (and which gcc in some way manages to cope with
-         * through the __attribute__ ((packed))), and which it forgets
-         * when optimizing memcpy (to a single word move) since it appears
-         * to be aligned. Technically a gcc bug, but I can't blame it when
-         * it's stressed with that amount of
-         * non-standard nonsense."
-   * So in short the unaligned struct confuses gcc's optimizer so
-   * i took the memcpy out alltogether to avoid future problems-Jess
-         */
-      /* The above was #ifndef SPARC, but i got a mail from
-       * Putera Joseph F NPRI <PuteraJF@Npt.NUWC.Navy.Mil> containing:
-       *   I had to use the memcpy function on a sparc machine.  The
-       *   other one would give me a core dump.
-       * cph - I find it hard to believe that sparc memcpy is broken,
-       * but I don't believe the pointers to memcpy have to be aligned
-       * either. Use fast memcpy on other machines anyway.
-       */
+    /* Mattias Engdegård emailed me of the following explenation of
+     * why memcpy doesnt work on some systems:
+     * "I suppose it is the mad unaligned allocation
+     * going on (and which gcc in some way manages to cope with
+     * through the __attribute__ ((packed))), and which it forgets
+     * when optimizing memcpy (to a single word move) since it appears
+     * to be aligned. Technically a gcc bug, but I can't blame it when
+     * it's stressed with that amount of
+     * non-standard nonsense."
+     * So in short the unaligned struct confuses gcc's optimizer so
+     * i took the memcpy out alltogether to avoid future problems-Jess
+     */
+
+    /* The above was #ifndef SPARC, but i got a mail from
+     * Putera Joseph F NPRI <PuteraJF@Npt.NUWC.Navy.Mil> containing:
+     *   I had to use the memcpy function on a sparc machine.  The
+     *   other one would give me a core dump.
+     * cph - I find it hard to believe that sparc memcpy is broken,
+     * but I don't believe the pointers to memcpy have to be aligned
+     * either. Use fast memcpy on other machines anyway.
+     */
 /*
-  proff - I took this out, because Oli Kraus (olikraus@yahoo.com) told
-  me the memcpy produced a buserror. Since this function isn't time-
-  critical I'm using the for loop now.
+proff - I took this out, because Oli Kraus (olikraus@yahoo.com) told
+me the memcpy produced a buserror. Since this function isn't time-
+critical I'm using the for loop now.
 */
 /*
 #ifndef GCC
-      memcpy(texture->name, mtexture->name, sizeof(texture->name));
+    memcpy(texture->name, mtexture->name, sizeof(texture->name));
 #else
 */
-      {
-        size_t j;
-        for(j=0;j<sizeof(texture->name);j++)
-          texture->name[j]=mtexture->name[j];
-      }
+    for (size_t j = 0; j < sizeof(texture->name); j++)
+      texture->name[j] = mtexture->name[j];
 /* #endif */
 
-      mpatch = mtexture->patches;
-      patch = texture->patches;
+    mpatch = mtexture->patches;
+    patch = texture->patches;
 
-      for (j=0 ; j<texture->patchcount ; j++, mpatch++, patch++)
-        {
-          patch->originx = LittleShort(mpatch->originx);
-          patch->originy = LittleShort(mpatch->originy);
-          patch->patch = patchlookup[LittleShort(mpatch->patch)];
-          if (patch->patch == -1)
-            {
-              //jff 8/3/98 use logical output routine
-              lprintf(LO_ERROR,"\nR_InitTextures: Missing patch %d in texture %.8s",
-                     LittleShort(mpatch->patch), texture->name); // killough 4/17/98
-              ++errors;
-            }
+    for (j=0 ; j<texture->patchcount ; j++, mpatch++, patch++)
+      {
+        patch->originx = LittleShort(mpatch->originx);
+        patch->originy = LittleShort(mpatch->originy);
+        patch->patch = patchlookup[LittleShort(mpatch->patch)];
+        if (patch->patch == -1) {
+          D_Msg(MSG_ERROR,
+            "\nR_InitTextures: Missing patch %d in texture %.8s",
+            LittleShort(mpatch->patch),
+            texture->name
+          ); // killough 4/17/98
+          ++errors;
         }
+      }
 
-      for (j=1; j*2 <= texture->width; j<<=1)
-        ;
-      texture->widthmask = j-1;
-      textureheight[i] = texture->height<<FRACBITS;
-    }
+    for (j=1; j*2 <= texture->width; j<<=1)
+      ;
+    texture->widthmask = j-1;
+    textureheight[i] = texture->height<<FRACBITS;
+  }
 
   free(patchlookup);         // killough
 
@@ -289,7 +283,7 @@ static void R_InitTextures (void)
       );
     }
 
-    lprintf(LO_INFO,
+    D_Msg(MSG_INFO,
       "\nR_InitTextures: The file %s seems to be incompatible with \"%s\".\n",
       wf->name,
       (doomverstr ? doomverstr : "DOOM"));
@@ -435,9 +429,9 @@ void R_InitTranMap(int progress)
       } cache;
       FILE *cachefp;
 
-      fnlen = doom_snprintf(NULL, 0, "%s/tranmap.dat", I_DoomExeDir());
+      fnlen = snprintf(NULL, 0, "%s/tranmap.dat", I_DoomExeDir());
       fname = malloc(fnlen+1);
-      doom_snprintf(fname, fnlen+1, "%s/tranmap.dat", I_DoomExeDir());
+      snprintf(fname, fnlen+1, "%s/tranmap.dat", I_DoomExeDir());
       cachefp = fopen(fname, "rb");
 
       main_tranmap = my_tranmap = Z_Malloc(256*256, PU_STATIC, 0);  // killough 4/11/98
@@ -454,8 +448,11 @@ void R_InitTranMap(int progress)
           long w1 = ((unsigned long) tran_filter_pct<<TSC)/100;
           long w2 = (1l<<TSC)-w1;
 
-          if (progress)
-            lprintf(LO_INFO, "Tranmap build [        ]\x08\x08\x08\x08\x08\x08\x08\x08\x08");
+          if (progress) {
+            D_Msg(MSG_INFO,
+              "Tranmap build [        ]\x08\x08\x08\x08\x08\x08\x08\x08\x08"
+            );
+          }
 
           // First, convert playpal into long int type, and transpose array,
           // for fast inner-loop calculations. Precompute tot array.
@@ -489,8 +486,8 @@ void R_InitTranMap(int progress)
                 long g1 = pal[1][i] * w2;
                 long b1 = pal[2][i] * w2;
                 if (!(i & 31) && progress)
-                  //jff 8/3/98 use logical output routine
-                  lprintf(LO_INFO,".");
+                  D_Msg(MSG_INFO, ".");
+
                 for (j=0;j<256;j++,tp++)
                   {
                     register int color = 255;
@@ -536,11 +533,11 @@ void R_InitTranMap(int progress)
 
 void R_InitData(void)
 {
-  lprintf(LO_INFO, "Textures ");
+  D_Msg(MSG_INFO, "Textures ");
   R_InitTextures();
-  lprintf(LO_INFO, "Flats ");
+  D_Msg(MSG_INFO, "Flats ");
   R_InitFlats();
-  lprintf(LO_INFO, "Sprites ");
+  D_Msg(MSG_INFO, "Sprites ");
   R_InitSpriteLumps();
   if (default_translucency)             // killough 3/1/98
     R_InitTranMap(1);                   // killough 2/21/98, 3/6/98
@@ -562,7 +559,7 @@ int R_FlatNumForName(const char *name)    // killough -- const added
     // e6y
     // Ability to play wads with wrong flat names
     // Unknown flats will be replaced with "NO TEXTURE" preset from prboom-plus.wad
-    lprintf(LO_DEBUG, "R_FlatNumForName: %.8s not found\n", name);
+    D_Msg(MSG_DEBUG, "R_FlatNumForName: %.8s not found\n", name);
     i = (W_CheckNumForName)("-N0_TEX-", ns_flats);
     if (i == -1)
     {
@@ -617,7 +614,7 @@ int PUREFUNC R_TextureNumForName(const char *name)  // const added -- killough
       );
     }
 
-    lprintf(LO_INFO,
+    D_Msg(MSG_INFO,
       "R_TextureNumForName: The file %s seems incompatible with \"%s\".\n",
       wf->name,
       (doomverstr ? doomverstr : "DOOM")
@@ -635,7 +632,7 @@ int PUREFUNC R_SafeTextureNumForName(const char *name, int snum)
   int i = R_CheckTextureNumForName(name);
   if (i == -1) {
     i = NO_TEXTURE; // e6y - return "no texture"
-    lprintf(LO_DEBUG,"bad texture '%s' in sidedef %d\n",name,snum);
+    D_Msg(MSG_DEBUG,"bad texture '%s' in sidedef %d\n",name,snum);
   }
   return i;
 }

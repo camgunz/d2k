@@ -28,7 +28,6 @@
 #include "doomstat.h"
 #include "r_demo.h"
 #include "r_fps.h"
-#include "lprintf.h"
 #include "i_system.h"
 #include "i_video.h"
 #include "m_file.h"
@@ -829,10 +828,10 @@ void I_DemoExShutdown(void)
 
   if (demoex_filename[0] && !(demo_demoex_filename && *demo_demoex_filename))
   {
-    lprintf(LO_DEBUG, "I_DemoExShutdown: removing %s\n", demoex_filename);
+    D_Msg(MSG_DEBUG, "I_DemoExShutdown: removing %s\n", demoex_filename);
     if (unlink(demoex_filename) != 0)
     {
-      lprintf(LO_DEBUG, "I_DemoExShutdown: %s\n", strerror(errno));
+      D_Msg(MSG_DEBUG, "I_DemoExShutdown: %s\n", strerror(errno));
     }
   }
 }
@@ -1064,7 +1063,7 @@ static int G_ReadDemoFooter(const char *filename) {
         strcat(tmp_path, "/");
       }
 
-      doom_snprintf(demoex_filename, sizeof(demoex_filename), template_format, tmp_path);
+      snprintf(demoex_filename, sizeof(demoex_filename), template_format, tmp_path);
       mktemp(demoex_filename);
 
       free(tmp_path);
@@ -1073,7 +1072,7 @@ static int G_ReadDemoFooter(const char *filename) {
 
   if (!demoex_filename[0])
   {
-    lprintf(LO_ERROR, "G_ReadDemoFooter: failed to create demoex temp file");
+    D_Msg(MSG_ERROR, "G_ReadDemoFooter: failed to create demoex temp file");
   }
   else
   {
@@ -1095,12 +1094,12 @@ static int G_ReadDemoFooter(const char *filename) {
 
       if (!CheckWadBufIntegrity((const char *)demoex_p, size))
       {
-        lprintf(LO_ERROR, "G_ReadDemoFooter: demo footer is corrupted\n");
+        D_Msg(MSG_ERROR, "G_ReadDemoFooter: demo footer is corrupted\n");
       }
       else if (!M_WriteFile(demoex_filename, (const char *)demoex_p, size))
       {
         // write an additional info from a demo to demoex.wad
-        lprintf(LO_ERROR, "G_ReadDemoFooter: failed to create demoex temp file %s\n", demoex_filename);
+        D_Msg(MSG_ERROR, "G_ReadDemoFooter: failed to create demoex temp file %s\n", demoex_filename);
       }
       else
       {
@@ -1349,7 +1348,7 @@ int DemoNameToWadData(const char * demoname, waddata_t *waddata, patterndata_t *
 
     if (result != 0)
     {
-      lprintf(LO_WARN, "Incorrect format of the <%s%d = \"%s\"> config entry\n", demo_patterns_mask, i, buf);
+      D_Msg(MSG_WARN, "Incorrect format of the <%s%d = \"%s\"> config entry\n", demo_patterns_mask, i, buf);
     }
     else
     {
@@ -1362,7 +1361,7 @@ int DemoNameToWadData(const char * demoname, waddata_t *waddata, patterndata_t *
       if (result != 0)
       {
         regerror(result, &preg, errbuf, sizeof(errbuf));
-        lprintf(LO_WARN, "Incorrect regular expressions in the <%s%d = \"%s\"> config entry - %s\n", demo_patterns_mask, i, buf, errbuf);
+        D_Msg(MSG_WARN, "Incorrect regular expressions in the <%s%d = \"%s\"> config entry - %s\n", demo_patterns_mask, i, buf, errbuf);
       }
       else
       {
@@ -1569,7 +1568,7 @@ int CheckAutoDemo(void) {
           );
         }
         else {
-          lprintf(LO_WARN,
+          D_Msg(MSG_WARN,
             "DataAutoload: pattern #%i is used\n", patterndata.pattern_num
           );
         }
@@ -1630,20 +1629,20 @@ dboolean D_TryGetWad(const char* name)
   {
     int ret;
 
-    lprintf(LO_INFO, "D_TryGetWad: Trying to get %s from somewhere\n", name);
+    D_Msg(MSG_INFO, "D_TryGetWad: Trying to get %s from somewhere\n", name);
 
     ret = system(cmdline);
 
     if (ret != 0)
     {
-      lprintf(LO_ERROR, "D_TryGetWad: Execution failed - %s\n", strerror(errno));
+      D_Msg(MSG_ERROR, "D_TryGetWad: Execution failed - %s\n", strerror(errno));
     }
     else
     {
       char *str = I_FindFile(name, ".wad");
       if (str)
       {
-        lprintf(LO_INFO, "D_TryGetWad: Successfully received\n");
+        D_Msg(MSG_INFO, "D_TryGetWad: Successfully received\n");
         free(str);
         result = true;
       }

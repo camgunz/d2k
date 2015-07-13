@@ -41,7 +41,6 @@
 #include "r_fps.h"
 #include "p_maputl.h"
 #include "m_bbox.h"
-#include "lprintf.h"
 #include "gl_opengl.h"
 #include "gl_intern.h"
 #include "gl_struct.h"
@@ -218,7 +217,9 @@ void gld_InitTextureParams(void)
     if (!strcasecmp(gl_tex_format_string, tex_formats[i].tex_format_name))
     {
       gl_tex_format = tex_formats[i].tex_format;
-      lprintf(LO_INFO,"Using texture format %s.\n", tex_formats[i].tex_format_name);
+      D_Msg(MSG_INFO,"Using texture format %s.\n",
+        tex_formats[i].tex_format_name
+      );
       break;
     }
     i++;
@@ -323,11 +324,11 @@ void gld_Init(int width, int height)
 {
   GLfloat params[4]={0.0f,0.0f,1.0f,0.0f};
 
-  lprintf(LO_INFO,"GL_VENDOR: %s\n",glGetString(GL_VENDOR));
-  lprintf(LO_INFO,"GL_RENDERER: %s\n",glGetString(GL_RENDERER));
-  lprintf(LO_INFO,"GL_VERSION: %s\n",glGetString(GL_VERSION));
+  D_Msg(MSG_INFO, "GL_VENDOR: %s\n", glGetString(GL_VENDOR));
+  D_Msg(MSG_INFO, "GL_RENDERER: %s\n", glGetString(GL_RENDERER));
+  D_Msg(MSG_INFO, "GL_VERSION: %s\n", glGetString(GL_VERSION));
 #if 0
-  lprintf(LO_INFO,"GL_EXTENSIONS:\n");
+  D_Msg(MSG_INFO, "GL_EXTENSIONS:\n");
   {
     char ext_name[256];
     const char *extensions = (const char*)glGetString(GL_EXTENSIONS);
@@ -348,7 +349,7 @@ void gld_Init(int width, int height)
         len = MIN(len, sizeof(ext_name)-1);
         memset(ext_name, 0, sizeof(ext_name));
         strncpy(ext_name, rover, len);
-        lprintf(LO_INFO,"\t%s\n", ext_name);
+        D_Msg(MSG_INFO, "\t%s\n", ext_name);
       }
       rover = p;
       while (*rover && *rover == ' ')

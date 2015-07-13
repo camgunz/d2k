@@ -847,8 +847,8 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/cmp.c
   ${CMAKE_SOURCE_DIR}/src/d_deh.c
   ${CMAKE_SOURCE_DIR}/src/d_items.c
-  ${CMAKE_SOURCE_DIR}/src/d_log.c
   ${CMAKE_SOURCE_DIR}/src/d_main.c
+  ${CMAKE_SOURCE_DIR}/src/d_msg.c
   ${CMAKE_SOURCE_DIR}/src/doomdef.c
   ${CMAKE_SOURCE_DIR}/src/doomstat.c
   ${CMAKE_SOURCE_DIR}/src/dstrings.c
@@ -944,6 +944,7 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/z_zone.c
   ${CMAKE_SOURCE_DIR}/src/xam_main.c
   ${CMAKE_SOURCE_DIR}/src/xc_main.c
+  ${CMAKE_SOURCE_DIR}/src/xd_msg.c
   ${CMAKE_SOURCE_DIR}/src/xd_main.c
   ${CMAKE_SOURCE_DIR}/src/xg_game.c
   ${CMAKE_SOURCE_DIR}/src/xg_keys.c
@@ -959,7 +960,6 @@ SET(D2K_SOURCES
 SET(CLIENT_SOURCES
   ${CMAKE_SOURCE_DIR}/src/SDL/i_main.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_system.c
-  ${CMAKE_SOURCE_DIR}/src/lprintf.c
   ${CMAKE_SOURCE_DIR}/src/m_argv.c
 )
 

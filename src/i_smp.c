@@ -29,7 +29,6 @@
 #include "i_sound.h"
 #include "v_video.h"
 #include "r_draw.h"
-#include "lprintf.h"
 
 #include "i_smp.h"
 
@@ -222,16 +221,19 @@ void SMP_Init(void)
   {
     if (process_affinity_mask)
     {
-      lprintf(LO_WARN,
-        "SMP_Init: Unable to init SMP if 'process_affinity_mask' is not a zero\n");
+      D_Msg(MSG_WARN,
+        "SMP_Init: Unable to init SMP if 'process_affinity_mask' is not a "
+        "zero\n"
+      );
       return;
     }
 
     if (!strcasecmp(snd_midiplayer, midiplayers[midi_player_sdl]))
     {
-      lprintf(LO_WARN,
+      D_Msg(MSG_WARN,
         "SMP_Init: Unable to init SMP if 'Preffered MIDI Player' is '%s'\n",
-        midiplayers[midi_player_sdl]);
+        midiplayers[midi_player_sdl]
+      );
       return;
     }
   }
@@ -272,7 +274,7 @@ void SMP_Init(void)
       }
       else
       {
-        lprintf(LO_WARN, "SMP_Init: Unable to init SMP: %s\n", SDL_GetError());
+        D_Msg(MSG_WARN, "SMP_Init: Unable to init SMP: %s\n", SDL_GetError());
         SMP_Free();
       }
     }

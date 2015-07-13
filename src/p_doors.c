@@ -28,7 +28,6 @@
 #include "d_deh.h"  // Ty 03/27/98 - externalized
 #include "dstrings.h"
 #include "e6y.h"//e6y
-#include "lprintf.h"
 #include "p_spec.h"
 #include "p_tick.h"
 #include "p_user.h"
@@ -559,7 +558,7 @@ int EV_VerticalDoor(line_t *line, mobj_t *thing) {
           p->wait = outval;
         }
         else {
-          lprintf(LO_DEBUG,
+          D_Msg(MSG_DEBUG,
             "EV_VerticalDoor: unknown thinker.function in thinker corruption "
             "emulation"
           );

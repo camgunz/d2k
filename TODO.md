@@ -2,7 +2,18 @@
 
 ## Proto
 
-1. Fix messaging
+1. Messaging
+  - Modify external messaging API to only serve updates
+  - Convert console output to use the external messaging API
+
+1. Test ECI
+
+1. Clean up
+  - Use GLib for (v)snprintf if it doesn't exist
+  - `v_main.c` is empty.
+  - Figure out the `s_sndold/s_sndnew` thing
+  - Remove old C HUD widget code
+  - Remove autotools stuff
 
 1. Reconnecting doesn't work
   - The current symptom is spinning around like crazy
@@ -30,10 +41,9 @@
 
 ## ZDDL
 
-1. Finish retractable text widget
-  - Adding lines while full causes a kind of flicker
-    - Probably have to check in `set_text` if the widget's full, and cancel
-      the retraction if it is... although I thought `tick` already did that...
+- Adding lines to messages when full flickers
+  - Probably have to check in `set_text` if the widget's full, and cancel
+    the retraction if it is... although I thought `tick` already did that...
 
 1. Fix switching to vidingl
 

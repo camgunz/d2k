@@ -52,7 +52,6 @@ experimental music API
 #include "doomstat.h"
 #include "d_main.h"
 #include "i_sound.h"
-#include "lprintf.h"
 #include "m_file.h"
 #include "p_mobj.h"
 #include "s_sound.h"
@@ -292,14 +291,14 @@ int Exp_RegisterSongEx (const void *data, size_t len, int try_mus2mid) {
               current_player = i;
               music_handle = temp_handle;
               SDL_UnlockMutex(musmutex);
-              lprintf(LO_INFO,
+              D_Msg(MSG_INFO,
                 "Exp_RegisterSongEx: Using player %s\n", music_players[i]->name()
               );
               return 1;
             }
           }
           else {
-            lprintf(LO_INFO,
+            D_Msg(MSG_INFO,
               "Exp_RegisterSongEx: Music player %s on preferred list but it "
               "failed to init\n",
               music_players[i]-> name()
@@ -308,7 +307,7 @@ int Exp_RegisterSongEx (const void *data, size_t len, int try_mus2mid) {
         }
       }
       if (!found) {
-        lprintf(LO_INFO,
+        D_Msg(MSG_INFO,
           "Exp_RegisterSongEx: Couldn't find preferred music player %s in "
           "list\n  (typo or support not included at compile time)\n",
           music_player_order[j]
@@ -366,7 +365,7 @@ int Exp_RegisterSongEx (const void *data, size_t len, int try_mus2mid) {
     }
   }
 
-  lprintf (LO_ERROR, "Exp_RegisterSongEx: Failed\n");
+  D_Msg(MSG_ERROR, "Exp_RegisterSongEx: Failed\n");
   return 0;
 }
 
@@ -388,7 +387,7 @@ int Exp_RegisterMusic(const char *filename, musicinfo_t *song) {
     return 0;
 
   if (!M_ReadFile(filename, (char **)&song_data, &len)) {
-    lprintf(LO_WARN,
+    D_Msg(MSG_WARN,
       "Couldn't read %s\nAttempting to load default MIDI music.\n", filename
     );
     return 1;
@@ -398,7 +397,7 @@ int Exp_RegisterMusic(const char *filename, musicinfo_t *song) {
     free (song_data);
     song_data = NULL;
 
-    lprintf(LO_WARN,
+    D_Msg(MSG_WARN,
       "Couldn't load music from %s\nAttempting to load default MIDI music.\n",
       filename
     );

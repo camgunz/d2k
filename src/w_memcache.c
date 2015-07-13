@@ -30,7 +30,6 @@
 #endif
 #include "w_wad.h"
 #include "z_zone.h"
-#include "lprintf.h"
 
 static struct {
   void *cache;
@@ -54,14 +53,19 @@ void W_PrintLump(FILE* fp, void* p) {
 #endif
 
 #ifdef TIMEDIAG
-static void W_ReportLocks(void)
-{
+static void W_ReportLocks(void) {
   int i;
-  lprintf(LO_DEBUG, "W_ReportLocks:\nLump     Size   Locks  Tics\n");
-  for (i=0; i<numlumps; i++) {
-    if (cachelump[i].locks)
-      lprintf(LO_DEBUG, "%8.8s %6u %2d   %6d\n", lumpinfo[i].name,
-	      W_LumpLength(i), cachelump[i].locks, gametic - cachelump[i].locktic);
+
+  D_Msg(MSG_DEBUG, "W_ReportLocks:\nLump     Size   Locks  Tics\n");
+  for (i =0; i < numlumps; i++) {
+    if (cachelump[i].locks) {
+      D_Msg(MSG_DEBUG, "%8.8s %6u %2d   %6d\n",
+        lumpinfo[i].name,
+	      W_LumpLength(i),
+        cachelump[i].locks,
+        gametic - cachelump[i].locktic
+      );
+    }
   }
 }
 #endif
@@ -113,9 +117,11 @@ const void *W_CacheLumpNum(int lump)
   cachelump[lump].locks += locks;
 
 #ifdef SIMPLECHECKS
-  if (!((cachelump[lump].locks+1) & 0xf))
-    lprintf(LO_DEBUG, "W_CacheLumpNum: High lock on %8s (%d)\n",
-	    lumpinfo[lump].name, cachelump[lump].locks);
+  if (!((cachelump[lump].locks+1) & 0xf)) {
+    D_Msg(MSG_DEBUG, "W_CacheLumpNum: High lock on %8s (%d)\n",
+	    lumpinfo[lump].name, cachelump[lump].locks
+    );
+  }
 #endif
 
   return cachelump[lump].cache;
@@ -136,9 +142,11 @@ void W_UnlockLumpNum(int lump)
 {
   const int unlocks = 1;
 #ifdef SIMPLECHECKS
-  if ((signed short)cachelump[lump].locks < unlocks)
-    lprintf(LO_DEBUG, "W_UnlockLumpNum: Excess unlocks on %8s (%d-%d)\n",
-	    lumpinfo[lump].name, cachelump[lump].locks, unlocks);
+  if ((signed short)cachelump[lump].locks < unlocks) {
+    D_Msg(MSG_DEBUG, "W_UnlockLumpNum: Excess unlocks on %8s (%d-%d)\n",
+	    lumpinfo[lump].name, cachelump[lump].locks, unlocks
+    );
+  }
 #endif
   cachelump[lump].locks -= unlocks;
   /* cph - Note: must only tell z_zone to make purgeable if currently locked,

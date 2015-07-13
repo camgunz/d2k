@@ -33,7 +33,6 @@
 
 #include "g_game.h"
 #include "g_save.h"
-#include "lprintf.h"
 #include "n_net.h"
 #include "n_state.h"
 #include "n_peer.h"
@@ -65,7 +64,7 @@ static gboolean state_is_old(gpointer key, gpointer value, gpointer user_data) {
   game_state_t *gs = (game_state_t *)value;
 
   if (gs->tic < tic) {
-    D_Log(LOG_STATE, "Removing state %d (< %d)\n", gs->tic, tic);
+    D_Msg(MSG_STATE, "Removing state %d (< %d)\n", gs->tic, tic);
     return true;
   }
 

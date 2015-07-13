@@ -29,7 +29,6 @@
 
 #include "w_wad.h"
 #include "z_zone.h"
-#include "lprintf.h"
 #include "i_system.h"
 #include "m_file.h"
 
@@ -60,12 +59,16 @@ void W_PrintLump(FILE *fp, void *p) {
 
 #ifdef TIMEDIAG
 static void W_ReportLocks(void) {
-  lprintf(LO_DEBUG, "W_ReportLocks:\nLump     Size   Locks  Tics\n");
+  D_Msg(MSG_DEBUG, "W_ReportLocks:\nLump     Size   Locks  Tics\n");
   if (cachelump) {
     for (int i = 0; i < numlumps; i++) {
       if (cachelump[i].locks > 0) {
-        lprintf(LO_DEBUG, "%8.8s %6u %2d   %6d\n", lumpinfo[i].name,
-        W_LumpLength(i), cachelump[i].locks, gametic - cachelump[i].locktic);
+        D_Msg(MSG_DEBUG, "%8.8s %6u %2d   %6d\n",
+          lumpinfo[i].name,
+          W_LumpLength(i),
+          cachelump[i].locks,
+          gametic - cachelump[i].locktic
+        );
       }
     }
   }
@@ -150,7 +153,7 @@ void W_InitCache(void) {
     if (mapped_wad[wad_index].data)
       continue;
 
-    lprintf(LO_INFO, "Mapping %s (%d/%d)\n",
+    D_Msg(MSG_INFO, "Mapping %s (%d/%d)\n",
       wadfile->name, wad_index, wadfile_count
     );
 
@@ -201,7 +204,7 @@ void W_InitCache(void) {
       );
     }
 
-    lprintf(LO_INFO, "W_InitCache: Mapped %s.\n", wadfile->name);
+    D_Msg(MSG_INFO, "W_InitCache: Mapped %s.\n", wadfile->name);
 
     free(local_path);
   }
@@ -236,7 +239,7 @@ void W_InitCache(void) {
   int maxfd = 0;
   cachelump = calloc(numlumps, sizeof(*cachelump)); // set up caching
 
-  lprintf(LO_INFO, "W_InitCache\n");
+  D_Msg(MSG_INFO, "W_InitCache\n");
 
   if (!cachelump)
     I_Error("W_InitCache: Couldn't allocate lumpcache");
@@ -298,7 +301,7 @@ void W_InitCache(void) {
       I_Error("W_InitCache: failed to mmap [%s]", wf->name);
 
     mapped_wad[lumpinfo[i].wadfile] = map;
-    lprintf(LO_INFO, " Mapped %s\n", wf->name);
+    D_Msg(MSG_INFO, " Mapped %s\n", wf->name);
   }
 }
 
@@ -378,7 +381,7 @@ const void* W_LockLumpNum(int lump) {
 
 #ifdef SIMPLECHECKS
   if (!((cachelump[lump].locks + 1) & 0xf)) {
-    lprintf(LO_DEBUG, "W_CacheLumpNum: High lock on %8s (%d)\n",
+    D_Msg(MSG_DEBUG, "W_CacheLumpNum: High lock on %8s (%d)\n",
       lumpinfo[lump].name, cachelump[lump].locks
     );
   }
@@ -393,7 +396,7 @@ void W_UnlockLumpNum(int lump) {
 
 #ifdef SIMPLECHECKS
   if (cachelump[lump].locks == 0) {
-    lprintf(LO_DEBUG, "W_UnlockLumpNum: Excess unlocks on %8s\n",
+    D_Msg(MSG_DEBUG, "W_UnlockLumpNum: Excess unlocks on %8s\n",
       lumpinfo[lump].name
     );
   }

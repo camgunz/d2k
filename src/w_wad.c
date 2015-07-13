@@ -33,7 +33,6 @@
 #include "doomtype.h"
 #include "e6y.h"
 #include "i_system.h"
-#include "lprintf.h"
 #include "m_file.h"
 #include "r_demo.h"
 #include "r_main.h"
@@ -106,8 +105,7 @@ static void W_AddFile(size_t wadfile_index) {
     return;
   }
 
-  //jff 8/3/98 use logical output routine
-  lprintf(LO_INFO, " adding %s\n", wadfile->name);
+  D_Msg(MSG_INFO, " adding %s\n", wadfile->name);
   startlump = numlumps;
 
   // mark lumps from internal resource
@@ -383,7 +381,7 @@ int W_SafeGetNumForName(const char *name) {
   int i = W_CheckNumForName (name);
 
   if (i == -1)
-    lprintf(LO_DEBUG, "W_GetNumForName: %.8s not found\n", name);
+    D_Msg(MSG_DEBUG, "W_GetNumForName: %.8s not found\n", name);
 
   return i;
 }
@@ -441,6 +439,8 @@ int W_ListNumFromName(const char *name, int lump) {
 void W_Init(void) {
   // CPhipps - start with nothing
 
+  D_Msg(MSG_INFO, "W_Init: Init WADfiles.\n");
+
   numlumps = 0;
   lumpinfo = NULL;
 
@@ -472,6 +472,9 @@ void W_Init(void) {
   W_InitCache();
 
   V_FreePlaypal();
+
+  // killough 3/6/98: add a newline, by popular demand :)
+  D_Msg(MSG_INFO, "\n");
 }
 
 void W_ReleaseAllWads(void) {

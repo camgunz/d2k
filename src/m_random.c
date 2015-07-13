@@ -25,7 +25,6 @@
 
 #include "doomstat.h"
 #include "m_random.h"
-#include "lprintf.h"
 #include "n_net.h"
 #include "n_main.h"
 
@@ -78,7 +77,7 @@ int (P_Random)(pr_class_t pr_class
   // it's like playing with explosives :) Lee
 
 #ifdef INSTRUMENTED
-  //lprintf(LO_DEBUG, "%.10d: %.10d - %s:%.5d\n", gametic, pr_class, file, line);
+  D_Msg(MSG_DEBUG, "%.10d: %.10d - %s:%.5d\n", gametic, pr_class, file, line);
 #endif
   
   int compat;

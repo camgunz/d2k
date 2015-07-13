@@ -58,7 +58,6 @@ const music_player_t vorb_player =
 
 #include <stdlib.h>
 #include <string.h>
-#include "lprintf.h"
 
 #include <vorbis/vorbisfile.h>
 #include <vorbis/codec.h>
@@ -248,14 +247,14 @@ static const void *vorb_registersong (const void *data, unsigned len)
 
   if (i != 0)
   {
-    lprintf (LO_WARN, "vorb_registersong: failed\n");
+    D_Msg(MSG_WARN, "vorb_registersong: failed\n");
     return NULL;
   }
   i = ov_test_open (&vf);
   
   if (i != 0)
   {
-    lprintf (LO_WARN, "vorb_registersong: failed\n");
+    D_Msg(MSG_WARN, "vorb_registersong: failed\n");
     ov_clear (&vf);
     return NULL;
   }
@@ -370,7 +369,7 @@ static void vorb_render_ex (void *dest, unsigned nsamp)
       localerrors++;
       if (localerrors == 10)
       {
-        lprintf (LO_WARN, "vorb_render: many errors.  aborting\n");
+        D_Msg(MSG_WARN, "vorb_render: many errors.  aborting\n");
         vorb_playing = 0;
         memset (sout, 0, nsamp * 4);
         return;
@@ -398,7 +397,7 @@ static void vorb_render_ex (void *dest, unsigned nsamp)
     }
     else if (numread < 0)
     { // unrecoverable errror
-      lprintf (LO_WARN, "vorb_render: unrecoverable error\n");
+      D_Msg(MSG_WARN, "vorb_render: unrecoverable error\n");
       vorb_playing = 0;
       memset (sout, 0, nsamp * 4);
       return;

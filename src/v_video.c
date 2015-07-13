@@ -30,7 +30,6 @@
 #include "c_main.h"
 #include "e6y.h"
 #include "i_video.h"
-#include "lprintf.h"
 #include "m_bbox.h"
 #include "r_draw.h"
 #include "r_filter.h"
@@ -801,7 +800,7 @@ void V_InitMode(video_mode_t mode) {
 #endif
   switch (mode) {
     case VID_MODE32:
-      lprintf(LO_INFO, "V_InitMode: using 32 bit video mode\n");
+      D_Msg(MSG_INFO, "V_InitMode: using 32 bit video mode\n");
       V_CopyRect = FUNC_V_CopyRect;
       V_FillRect = V_FillRect32;
       V_DrawNumPatch = FUNC_V_DrawNumPatch;
@@ -817,7 +816,7 @@ void V_InitMode(video_mode_t mode) {
       break;
 #ifdef GL_DOOM
     case VID_MODEGL:
-      lprintf(LO_INFO, "V_InitMode: using OpenGL video mode\n");
+      D_Msg(MSG_INFO, "V_InitMode: using OpenGL video mode\n");
       V_CopyRect = WRAP_gld_CopyRect;
       V_FillRect = WRAP_gld_FillRect;
       V_DrawNumPatch = WRAP_gld_DrawNumPatch;
@@ -947,8 +946,7 @@ static void WRAP_V_DrawLine(fline_t* fl, int color)
     || fl->b.y < 0 || fl->b.y >= SCREENHEIGHT
   )
   {
-    //jff 8/3/98 use logical output routine
-    lprintf(LO_DEBUG, "fuck %d \r", fuck++);
+    D_Msg(MSG_DEBUG, "fuck %d \r", fuck++);
     return;
   }
 #endif
@@ -1232,7 +1230,7 @@ static void swap(unsigned int *num1, unsigned int *num2)
 // Set global variables for video scaling.
 void SetRatio(int width, int height)
 {
-  lprintf(LO_INFO, "SetRatio: width/height parameters %dx%d\n", width, height);
+  D_Msg(MSG_INFO, "SetRatio: width/height parameters %dx%d\n", width, height);
 
   ratio_multiplier = width;
   ratio_scale = height;
@@ -1240,18 +1238,22 @@ void SetRatio(int width, int height)
 
   // The terms storage aspect ratio, pixel aspect ratio, and display aspect
   // ratio came from Wikipedia.  SAR x PAR = DAR
-  lprintf(LO_INFO, "SetRatio: storage aspect ratio %u:%u\n", ratio_multiplier, ratio_scale);
+  D_Msg(MSG_INFO,
+    "SetRatio: storage aspect ratio %u:%u\n", ratio_multiplier, ratio_scale
+  );
   if ((width == 320 && height == 200) || (width == 640 && height == 400))
   {
-    lprintf(LO_INFO, "SetRatio: recognized VGA mode with pixel aspect ratio 5:6\n");
+    D_Msg(MSG_INFO, "SetRatio: recognized VGA mode with pixel aspect ratio 5:6\n");
     ratio_multiplier = 4;
     ratio_scale = 3;
   }
   else
   {
-    lprintf(LO_INFO, "SetRatio: assuming square pixels\n");
+    D_Msg(MSG_INFO, "SetRatio: assuming square pixels\n");
   }
-  lprintf(LO_INFO, "SetRatio: display aspect ratio %u:%u\n", ratio_multiplier, ratio_scale);
+  D_Msg(MSG_INFO,
+    "SetRatio: display aspect ratio %u:%u\n", ratio_multiplier, ratio_scale
+  );
 
   // If user wants to force aspect ratio, let them.
   {
@@ -1279,20 +1281,26 @@ void SetRatio(int width, int height)
       new_scale = 4;
       break;
     default:
-      lprintf(LO_ERROR, "SetRatio: render_aspect has invalid value %d\n", render_aspect);
+      D_Msg(MSG_ERROR,
+        "SetRatio: render_aspect has invalid value %d\n", render_aspect
+      );
     }
 
     if (ratio_multiplier != new_multiplier || ratio_scale != new_scale)
     {
-      lprintf(LO_INFO, "SetRatio: overruled by user configuration setting\n");
+      D_Msg(MSG_INFO, "SetRatio: overruled by user configuration setting\n");
       ratio_multiplier = new_multiplier;
       ratio_scale = new_scale;
-      lprintf(LO_INFO, "SetRatio: revised display aspect ratio %u:%u\n", ratio_multiplier, ratio_scale);
+      D_Msg(MSG_INFO,
+        "SetRatio: revised display aspect ratio %u:%u\n",
+        ratio_multiplier,
+        ratio_scale
+      );
     }
   }
   
   gl_ratio = RMUL * ratio_multiplier / ratio_scale;
-  lprintf(LO_INFO, "SetRatio: gl_ratio %f\n", gl_ratio);
+  D_Msg(MSG_INFO, "SetRatio: gl_ratio %f\n", gl_ratio);
 
   // Calculate modified multiplier following the pattern of the old
   // BaseRatioSizes table in PrBoom-Plus 2.5.1.3.
@@ -1304,7 +1312,9 @@ void SetRatio(int width, int height)
   tallscreen = (ratio_scale < ratio_multiplier);
   if (tallscreen)
   {
-    lprintf(LO_INFO, "SetRatio: tallscreen aspect recognized; flipping multiplier\n");
+    D_Msg(MSG_INFO,
+      "SetRatio: tallscreen aspect recognized; flipping multiplier\n"
+    );
     swap(&ratio_multiplier, &ratio_scale);
     psprite_offset = (int)(6.5*FRACUNIT);
   }
@@ -1312,7 +1322,10 @@ void SetRatio(int width, int height)
   {
     psprite_offset = 0;
   }
-  lprintf(LO_INFO, "SetRatio: multiplier %u/%u\n", ratio_multiplier, ratio_scale);
+
+  D_Msg(MSG_INFO,
+    "SetRatio: multiplier %u/%u\n", ratio_multiplier, ratio_scale
+  );
 
   // The rest is carried over from CheckRatio in PrBoom-Plus 2.5.1.3.
   if (tallscreen)

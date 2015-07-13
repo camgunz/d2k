@@ -27,7 +27,6 @@
 #include "doomstat.h"
 #include "m_argv.h"
 #include "m_misc.h"
-#include "lprintf.h"
 
 #include "hu_tracers.h"
 

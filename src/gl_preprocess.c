@@ -31,7 +31,6 @@
 #include "p_maputl.h"
 #include "r_main.h"
 #include "am_map.h"
-#include "lprintf.h"
 #include "gl_opengl.h"
 #include "gl_intern.h"
 #include "gl_struct.h"
@@ -942,11 +941,9 @@ static void gld_PreprocessSectors(void)
     }
     if (sectors[i].linecount<3)
     {
-#ifdef DEBUG
-      lprintf(LO_ERROR, "sector %i is not closed! %i lines in sector\n",
+      D_Msg(MSG_DEBUG, "sector %i is not closed! %i lines in sector\n",
         i, sectors[i].linecount
       );
-#endif
 #ifdef LEVELINFO_DEBUG
       if (levelinfo) {
         fprintf(levelinfo, "sector %i is not closed! %i lines in sector\n",
@@ -963,12 +960,10 @@ static void gld_PreprocessSectors(void)
       {
         if ((vertexcheck[j]==1) || (vertexcheck[j]==2))
         {
-#ifdef DEBUG
-          lprintf(LO_ERROR,
+          D_Msg(MSG_DEBUG
             "sector %i is not closed at vertex %i ! %i lines in sector\n",
             i, j, sectors[i].linecount
           );
-#endif
 #ifdef LEVELINFO_DEBUG
           if (levelinfo) {
             fprintf(levelinfo,

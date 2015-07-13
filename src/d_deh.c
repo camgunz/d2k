@@ -42,9 +42,6 @@
 
 #include "e6y.h"//e6y
 
-// CPhipps - modify to use logical output routine
-#include "lprintf.h"
-
 #define DEHTRUE 1
 #define DEHFALSE 0
 
@@ -1497,19 +1494,20 @@ void ProcessDehFile(const char *filename, const char *outfilename, int lumpnum)
 
   // Open output file if we're writing output
   if (outfilename && *outfilename && !fileout)
-    {
-      static dboolean firstfile = true; // to allow append to output log
-      if (!strcmp(outfilename, "-"))
-        fileout = stdout;
-      else
-        if (!(fileout=fopen(outfilename, firstfile ? "wt" : "at")))
-          {
-            lprintf(LO_WARN, "Could not open -dehout file %s\n... using stdout.\n",
-                   outfilename);
-            fileout = stdout;
-          }
-      firstfile = false;
+  {
+    static dboolean firstfile = true; // to allow append to output log
+
+    if (!strcmp(outfilename, "-")) {
+      fileout = stdout;
     }
+    else if (!(fileout=fopen(outfilename, firstfile ? "wt" : "at"))) {
+      D_Msg(MSG_DEH, "Could not open -dehout file %s\n... using stdout.\n",
+        outfilename
+      );
+      fileout = stdout;
+    }
+    firstfile = false;
+  }
 
   // killough 10/98: allow DEH files to come from wad lumps
 
@@ -1517,7 +1515,7 @@ void ProcessDehFile(const char *filename, const char *outfilename, int lumpnum)
     {
       if (!(infile.f = fopen(filename,"rt")))
         {
-          lprintf(LO_WARN, "-deh file %s not found\n",filename);
+          D_Msg(MSG_DEH, "-deh file %s not found\n",filename);
           return;  // should be checked up front anyway
         }
       infile.lump = NULL;
@@ -1548,7 +1546,7 @@ void ProcessDehFile(const char *filename, const char *outfilename, int lumpnum)
       file_or_lump = "lump from";
     }
 
-  lprintf(LO_INFO, "Loading DEH %s %s\n", file_or_lump, filename);
+  D_Msg(MSG_DEH, "Loading DEH %s %s\n", file_or_lump, filename);
   if (fileout)
     fprintf(fileout, "\nLoading DEH %s %s\n\n", file_or_lump, filename);
 

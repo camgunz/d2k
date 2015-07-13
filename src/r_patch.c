@@ -62,7 +62,6 @@
 #include "p_tick.h"
 #include "i_system.h"
 #include "r_draw.h"
-#include "lprintf.h"
 #include "r_patch.h"
 #include "v_video.h"
 #include <assert.h>
@@ -835,7 +834,7 @@ const rpatch_t *R_CachePatchNum(int id) {
 
 #ifdef SIMPLECHECKS
   if (!((patches[id].locks+1) & 0xf))
-    lprintf(LO_DEBUG, "R_CachePatchNum: High lock on %8s (%d)\n", 
+    D_Msg(MSG_DEBUG, "R_CachePatchNum: High lock on %8s (%d)\n", 
 	    lumpinfo[id].name, patches[id].locks);
 #endif
 
@@ -847,7 +846,7 @@ void R_UnlockPatchNum(int id)
   const int unlocks = 1;
 #ifdef SIMPLECHECKS
   if ((signed short)patches[id].locks < unlocks)
-    lprintf(LO_DEBUG, "R_UnlockPatchNum: Excess unlocks on %8s (%d-%d)\n", 
+    D_Msg(MSG_DEBUG, "R_UnlockPatchNum: Excess unlocks on %8s (%d-%d)\n", 
 	    lumpinfo[id].name, patches[id].locks, unlocks);
 #endif
   patches[id].locks -= unlocks;
@@ -884,7 +883,7 @@ const rpatch_t *R_CacheTextureCompositePatchNum(int id) {
 
 #ifdef SIMPLECHECKS
   if (!((texture_composites[id].locks+1) & 0xf))
-    lprintf(LO_DEBUG, "R_CacheTextureCompositePatchNum: High lock on %8s (%d)\n", 
+    D_Msg(MSG_DEBUG, "R_CacheTextureCompositePatchNum: High lock on %8s (%d)\n", 
 	    textures[id]->name, texture_composites[id].locks);
 #endif
 
@@ -897,7 +896,7 @@ void R_UnlockTextureCompositePatchNum(int id)
   const int unlocks = 1;
 #ifdef SIMPLECHECKS
   if ((signed short)texture_composites[id].locks < unlocks)
-    lprintf(LO_DEBUG, "R_UnlockTextureCompositePatchNum: Excess unlocks on %8s (%d-%d)\n", 
+    D_Msg(MSG_DEBUG, "R_UnlockTextureCompositePatchNum: Excess unlocks on %8s (%d-%d)\n", 
 	    textures[id]->name, texture_composites[id].locks, unlocks);
 #endif
   texture_composites[id].locks -= unlocks;

@@ -51,7 +51,7 @@ static void count_command(gpointer data, gpointer user_data) {
 }
 
 void CL_TrimSynchronizedCommands(int playernum) {
-  D_Log(LOG_SYNC, "CL_TrimSynchronizedCommands\n");
+  D_Msg(MSG_SYNC, "CL_TrimSynchronizedCommands\n");
 
   P_TrimCommands(playernum, command_is_synchronized, NULL);
 }

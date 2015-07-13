@@ -32,7 +32,6 @@
 #include "d_main.h"
 #include "d_ticcmd.h"
 #include "g_game.h"
-#include "lprintf.h"
 #include "n_net.h"
 #include "n_main.h"
 #include "n_state.h"
@@ -186,7 +185,7 @@ static void handle_setup(netpeer_t *np) {
   unsigned short playernum = 0;
   int i;
 
-  D_Log(LOG_NET, "Handling setup.\n");
+  D_Msg(MSG_NET, "Handling setup.\n");
 
   if (server == NULL)
     return;
@@ -403,7 +402,7 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
   unsigned char message_type = 0;
 
   if (!N_PeerLoadIncoming(peernum, data, data_size)) {
-    D_Log(LOG_NET, "N_HandlePacket: Ignoring packet with malformed TOC.\n");
+    D_Msg(MSG_NET, "N_HandlePacket: Ignoring packet with malformed TOC.\n");
     return;
   }
 
@@ -411,7 +410,7 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
     if (message_type >= 1 &&
         message_type != nm_sync &&
         message_type <= sizeof(nm_names)) {
-      D_Log(LOG_NET, "Handling [%s] message.\n", nm_names[message_type - 1]);
+      D_Msg(MSG_NET, "Handling [%s] message.\n", nm_names[message_type - 1]);
     }
 
     switch (message_type) {

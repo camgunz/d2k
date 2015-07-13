@@ -31,7 +31,6 @@
 #include "hu_stuff.h"
 #include "i_main.h"
 #include "i_system.h"
-#include "lprintf.h"
 #include "n_net.h"
 #include "n_main.h"
 #include "n_proto.h"
@@ -66,7 +65,7 @@ static void add_player_vmessage(int pn, bool is_markup, bool centered, int sfx,
   gcontent = g_strdup_vprintf(fmt, args);
 
   if (pn == consoleplayer)
-    C_Write(gcontent);
+    D_Msg(MSG_GAME, "%s", gcontent);
 
   if (!is_markup) {
     gchar *escaped_gcontent = g_markup_escape_text(gcontent, -1);
@@ -534,6 +533,7 @@ void P_AddMessage(int playernum, player_message_t *message) {
 
 void P_ClearMessagesUpdated(int playernum) {
   players[playernum].messages.updated = false;
+  P_ClearMessages(playernum);
 }
 
 void P_Printf(int playernum, const char *fmt, ...) {

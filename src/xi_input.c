@@ -30,7 +30,6 @@
 #include "i_joy.h"
 #include "i_mouse.h"
 #include "i_video.h"
-#include "lprintf.h"
 #include "p_mobj.h"
 #include "sounds.h"
 #include "s_sound.h"

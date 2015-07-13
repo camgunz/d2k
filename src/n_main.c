@@ -32,12 +32,12 @@
 #include "c_eci.h"
 #include "c_main.h"
 #include "d_main.h"
+#include "d_msg.h"
 #include "g_game.h"
 #include "i_network.h"
 #include "i_system.h"
 #include "i_main.h"
 #include "i_video.h"
-#include "lprintf.h"
 #include "m_argv.h"
 #include "m_delta.h"
 #include "m_menu.h"
@@ -70,7 +70,7 @@ static int run_tics(int tic_count) {
   int saved_tic_count = tic_count;
 
   if (CLIENT)
-    D_Log(LOG_SYNC, "Building %d commands\n", tic_count);
+    D_Msg(MSG_SYNC, "Building %d commands\n", tic_count);
 
   while (tic_count--) {
     if (MULTINET) {
@@ -198,7 +198,7 @@ static void print_network_stats(void) {
 void N_LogCommand(netticcmd_t *ncmd) {
 #if LOG_COMMANDS
 #if LOG_SYNC
-  D_Log(LOG_SYNC, "(%d): {%d/%d/%d %d %d %d %u}\n",
+  D_Msg(MSG_SYNC, "(%d): {%d/%d/%d %d %d %d %u}\n",
     gametic,
     ncmd->index,
     ncmd->tic,
@@ -216,7 +216,7 @@ void N_LogPlayerPosition(player_t *player) {
   if (player->mo == NULL)
     return;
 
-  D_Log(LOG_SYNC,
+  D_Msg(MSG_SYNC,
     "(%d): %td: {%4d/%4d/%4d %4d/%4d/%4d %4d %4d/%4d/%4d/%4d %4d/%4u/%4u}\n", 
     gametic,
     player - players,
@@ -280,14 +280,16 @@ void N_InitNetGame(void) {
 
       N_Init();
 
+      /* CG [FIXME] Should these use the ~/.d2k path? */
+
       if (DEBUG_NET && CLIENT)
-        D_EnableLogChannel(LOG_NET, "client-net.log");
+        D_MsgActivateWithFile(MSG_NET, "client-net.log");
 
       if (DEBUG_SAVE && CLIENT)
-        D_EnableLogChannel(LOG_SAVE, "client-save.log");
+        D_MsgActivateWithFile(MSG_SAVE, "client-save.log");
 
       if (DEBUG_SYNC && CLIENT)
-        D_EnableLogChannel(LOG_SYNC, "client-sync.log");
+        D_MsgActivateWithFile(MSG_SYNC, "client-sync.log");
 
       CL_Init();
 
@@ -365,13 +367,13 @@ void N_InitNetGame(void) {
       );
 
       if (DEBUG_NET && SERVER)
-        D_EnableLogChannel(LOG_NET, "server-net.log");
+        D_MsgActivateWithFile(MSG_NET, "server-net.log");
 
       if (DEBUG_SAVE && SERVER)
-        D_EnableLogChannel(LOG_SAVE, "server-save.log");
+        D_MsgActivateWithFile(MSG_SAVE, "server-save.log");
 
       if (DEBUG_SYNC && SERVER)
-        D_EnableLogChannel(LOG_SYNC, "server-sync.log");
+        D_MsgActivateWithFile(MSG_SYNC, "server-sync.log");
     }
   }
 }
@@ -398,7 +400,7 @@ void N_RunTic(void) {
       (!CL_Synchronizing()) &&
       (sectors[LOG_SECTOR].floorheight != (168 << FRACBITS)) &&
       (sectors[LOG_SECTOR].floorheight != (40 << FRACBITS))) {
-    D_Log(LOG_SYNC, "(%d) Sector %d: %d/%d\n",
+    D_Msg(MSG_SYNC, "(%d) Sector %d: %d/%d\n",
       gametic,
       LOG_SECTOR,
       sectors[LOG_SECTOR].floorheight >> FRACBITS,
@@ -411,7 +413,7 @@ void N_RunTic(void) {
 
   if (DELTASERVER && gametic > 0) {
     /* CG: TODO: Don't save states if there are no peers, saves resources */
-    D_Log(LOG_SYNC, "(%d) Saving state\n", gametic);
+    D_Msg(MSG_SYNC, "(%d) Saving state\n", gametic);
     N_SaveState();
 
     NETPEER_FOR_EACH(iter) {

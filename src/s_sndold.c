@@ -31,7 +31,6 @@
 #include "e6y.h"
 #include "i_sound.h"
 #include "i_system.h"
-#include "lprintf.h"
 #include "m_random.h"
 #include "r_main.h"
 #include "s_advsound.h"

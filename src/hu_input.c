@@ -31,7 +31,6 @@
 #include "hu_input.h"
 #include "hu_stuff.h"
 #include "i_main.h"
-#include "lprintf.h"
 
 #define INPUT_CURSOR_THICKNESS 2
 #define INPUT_PROMPT_THICKNESS 1
@@ -541,7 +540,7 @@ bool HU_InputWidgetResponder(input_widget_t *iw, event_t *ev) {
   g_free(ucss);
 
   if (unprintable)
-    lprintf(LO_WARN, "Unprintable text in console input\n");
+    D_Msg(MSG_WARN, "Unprintable text in console input\n");
   else
     insert_text(iw, us);
 

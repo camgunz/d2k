@@ -34,7 +34,6 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "i_video.h"
-#include "lprintf.h"
 #include "v_video.h"
 #include "x_main.h"
 

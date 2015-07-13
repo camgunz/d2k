@@ -35,7 +35,6 @@
 #include "r_main.h"
 #include "gl_intern.h"
 #include "w_wad.h"
-#include "lprintf.h"
 #include "p_spec.h"
 #include "m_misc.h"
 #include "sc_man.h"

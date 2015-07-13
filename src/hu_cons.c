@@ -39,7 +39,6 @@
 #include "hu_stuff.h"
 #include "i_main.h"
 #include "i_system.h"
-#include "lprintf.h"
 #include "v_video.h"
 
 #define CONSOLE_MAXHEIGHT (REAL_SCREENHEIGHT / 2)

@@ -36,7 +36,6 @@
 #include "i_main.h"
 #include "i_sound.h"
 #include "m_menu.h"
-#include "lprintf.h"
 #include "m_argv.h"
 #include "m_misc.h"
 #include "i_system.h"
@@ -714,100 +713,40 @@ int StepwiseSum(int value, int direction, int step, int minval, int maxval, int 
   return newvalue;
 }
 
-void I_vWarning(const char *message, va_list argList)
-{
+void I_vWarning(const char *message, va_list argList) {
   char msg[1024];
-  doom_vsnprintf(msg,sizeof(msg),message,argList);
-  lprintf(LO_ERROR, "%s\n", msg);
+
+  vsnprintf(msg, sizeof(msg), message, argList);
+
+  D_Msg(MSG_ERROR, "%s\n", msg);
+
 #ifdef _MSC_VER
   I_MessageBox(msg, PRB_MB_OK);
 #endif
 }
 
-void I_Warning(const char *message, ...)
-{
+void I_Warning(const char *message, ...) {
   va_list argptr;
-  va_start(argptr,message);
+
+  va_start(argptr, message);
   I_vWarning(message, argptr);
   va_end(argptr);
 }
 
-int I_MessageBox(const char* text, unsigned int type)
-{
+int I_MessageBox(const char *text, unsigned int type) {
 #ifdef _WIN32
-  {
-    int result = PRB_IDCANCEL;
+  int result = PRB_IDCANCEL;
 
-    HWND current_hwnd = GetForegroundWindow();
-    result = MessageBox(GetDesktopWindow(), text, PACKAGE_NAME, type|MB_TASKMODAL|MB_TOPMOST);
-    I_SwitchToWindow(current_hwnd);
-    return result;
-  }
+  HWND current_hwnd = GetForegroundWindow();
+  result = MessageBox(
+    GetDesktopWindow(), text, PACKAGE_NAME, type | MB_TASKMODAL | MB_TOPMOST
+  );
+  I_SwitchToWindow(current_hwnd);
+
+  return result;
 #endif
 
-#if 0
-  {
-    typedef struct mb_hotkeys_s
-    {
-      int type;
-      char *hotkeys_str;
-    } mb_hotkeys_t;
-
-    mb_hotkeys_t mb_hotkeys[] = {
-      {PRB_MB_OK               , "(press <enter> to continue)"},
-      {PRB_MB_OKCANCEL         , "(press <enter> to continue or <esc> to cancel)"},
-      {PRB_MB_ABORTRETRYIGNORE , "(a - abort, r - retry, i - ignore)"},
-      {PRB_MB_YESNOCANCEL      , "(y - yes, n - no, esc - cancel"},
-      {PRB_MB_YESNO            , "(y - yes, n - no)"},
-      {PRB_MB_RETRYCANCEL      , "(r - retry, <esc> - cancel)"},
-      {0, NULL}
-    };
-
-    int i, c;
-    char* hotkeys_str = NULL;
-    
-    type &= 0x000000ff;
-
-    i = 0;
-    while (mb_hotkeys[i].hotkeys_str)
-    {
-      if (mb_hotkeys[i].type == type)
-      {
-        hotkeys_str = mb_hotkeys[i].hotkeys_str;
-        break;
-      }
-      i++;
-    }
-
-    if (hotkeys_str)
-    {
-      lprintf(LO_CONFIRM, "%s\n%s\n", text, hotkeys_str);
-
-      result = -1;
-      do
-      {
-        I_Sleep(1);
-
-        c = tolower(getchar());
-
-        if (c == 'y') result = PRB_IDYES;
-        else if (c == 'n') result = PRB_IDNO;
-        else if (c == 'a') result = PRB_IDABORT;
-        else if (c == 'r') result = PRB_IDRETRY;
-        else if (c == 'i') result = PRB_IDIGNORE;
-        else if (c == 'o' || c == 13) result = PRB_IDOK;
-        else if (c == 'c' || c == 27) result = PRB_IDCANCEL;
-      }
-      while (result == EOF);
-
-      return result;
-    }
-
-    return result;
-  }
-#else
   return PRB_IDCANCEL;
-#endif
 }
 
 int stats_level;
@@ -899,13 +838,13 @@ void e6y_WriteStats(void)
         char strtmp[200];
         strcpy(str, tmp.kill[0] == '\0' ? "%s%d" : "%s+%d");
 
-        doom_snprintf(strtmp, sizeof(strtmp), str, tmp.kill, stats[level].kill[i]);
+        snprintf(strtmp, sizeof(strtmp), str, tmp.kill, stats[level].kill[i]);
         strcpy(tmp.kill, strtmp);
         
-        doom_snprintf(strtmp, sizeof(strtmp), str, tmp.item, stats[level].item[i]);
+        snprintf(strtmp, sizeof(strtmp), str, tmp.item, stats[level].item[i]);
         strcpy(tmp.item, strtmp);
         
-        doom_snprintf(strtmp, sizeof(strtmp), str, tmp.secret, stats[level].secret[i]);
+        snprintf(strtmp, sizeof(strtmp), str, tmp.secret, stats[level].secret[i]);
         strcpy(tmp.secret, strtmp);
       }
     }
@@ -933,7 +872,7 @@ void e6y_WriteStats(void)
   max.stat[TT_TOTALTIME] = max.stat[TT_TOTALTIME]/TICRATE/60;
   
   for(i=0; i<TT_MAX; i++) {
-    doom_snprintf(str, 200, "%d", max.stat[i]);
+    snprintf(str, 200, "%d", max.stat[i]);
     max.stat[i] = strlen(str);
   }
 

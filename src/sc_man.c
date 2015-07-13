@@ -39,7 +39,6 @@
 #include "doomtype.h"
 #include "w_wad.h"
 #include "m_misc.h"
-#include "lprintf.h"
 
 #include "sc_man.h"
 

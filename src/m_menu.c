@@ -39,7 +39,6 @@
 #include "m_menu.h"
 #include "d_deh.h"
 #include "m_misc.h"
-#include "lprintf.h"
 #include "am_map.h"
 #include "i_input.h"
 #include "i_main.h"
@@ -516,27 +515,23 @@ menu_t EpiDef =
 //
 int epi;
 
-void M_DrawEpisode(void)
-{
+void M_DrawEpisode(void) {
   // CPhipps - patch drawing updated
   V_DrawNamePatch(54, 38, 0, "M_EPISOD", CR_DEFAULT, VPT_STRETCH);
 }
 
-void M_Episode(int choice)
-{
-  if ( (gamemode == shareware) && choice) {
-    M_StartMessage(s_SWSTRING,NULL,false); // Ty 03/27/98 - externalized
+void M_Episode(int choice) {
+  if ((gamemode == shareware) && choice) {
+    M_StartMessage(s_SWSTRING, NULL, false); // Ty 03/27/98 - externalized
     M_SetupNextMenu(&ReadDef1);
     return;
   }
 
   // Yet another hack...
-  if ( (gamemode == registered) && (choice > 2))
-    {
-    lprintf( LO_WARN,
-     "M_Episode: 4th episode requires UltimateDOOM\n");
+  if ((gamemode == registered) && (choice > 2)) {
+    D_Msg(MSG_WARN, "M_Episode: 4th episode requires Ultimate DOOM\n");
     choice = 0;
-    }
+  }
 
   epi = choice;
   M_SetupNextMenu(&NewDef);
@@ -2136,7 +2131,7 @@ static void M_DrawInstructions(void)
       break;
 #ifdef SIMPLECHECKS
     default:
-      lprintf(LO_WARN,"Unrecognised menu item type %d", flags);
+      D_Msg(MSG_WARN, "Unrecognized menu item type %d", flags);
 #endif
     }
   } else {

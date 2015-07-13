@@ -63,7 +63,6 @@ const music_player_t pm_player =
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "lprintf.h"
 #include "midifile.h"
 #include "i_sound.h" // for snd_mididev
 
@@ -109,7 +108,7 @@ static int pm_init (int samplerate)
 
   if (Pm_Initialize () != pmNoError)
   {
-    lprintf (LO_WARN, "portmidiplayer: Pm_Initialize () failed\n");
+    D_Msg(MSG_WARN, "portmidiplayer: Pm_Initialize () failed\n");
     return 0;
   }
 
@@ -117,39 +116,43 @@ static int pm_init (int samplerate)
 
   if (outputdevice == pmNoDevice)
   {
-    lprintf (LO_WARN, "portmidiplayer: No output devices available\n");
+    D_Msg(MSG_WARN, "portmidiplayer: No output devices available\n");
     Pm_Terminate ();
     return 0;
   }
 
   // look for a device that matches the user preference
 
-  lprintf (LO_INFO, "portmidiplayer device list:\n");
+  D_Msg(MSG_INFO, "portmidiplayer device list:\n");
   for (i = 0; i < Pm_CountDevices (); i++)
   {
     oinfo = Pm_GetDeviceInfo (i);
     if (!oinfo || !oinfo->output)
       continue;
-    doom_snprintf (devname, 64, "%s:%s", oinfo->interf, oinfo->name);
-    if (strlen (snd_mididev) && strstr (devname, snd_mididev))
+    snprintf(devname, 64, "%s:%s", oinfo->interf, oinfo->name);
+    if (strlen(snd_mididev) && strstr(devname, snd_mididev))
     {
       outputdevice = i;
-      lprintf (LO_INFO, ">>%s\n", devname);
+      D_Msg(MSG_INFO, ">>%s\n", devname);
     }
     else
     {
-      lprintf (LO_INFO, "  %s\n", devname);
+      D_Msg(MSG_INFO, "  %s\n", devname);
     }
   }
 
 
   oinfo = Pm_GetDeviceInfo (outputdevice);
 
-  lprintf (LO_INFO, "portmidiplayer: Opening device %s:%s for output\n", oinfo->interf, oinfo->name);
+  D_Msg(MSG_INFO,
+    "portmidiplayer: Opening device %s:%s for output\n",
+    oinfo->interf,
+    oinfo->name
+  );
 
   if (Pm_OpenOutput(&pm_stream, outputdevice, NULL, DRIVER_BUFFER, NULL, NULL, DRIVER_LATENCY) != pmNoError)
   {
-    lprintf (LO_WARN, "portmidiplayer: Pm_OpenOutput () failed\n");
+    D_Msg(MSG_WARN, "portmidiplayer: Pm_OpenOutput () failed\n");
     Pm_Terminate ();
     return 0;
   }
@@ -208,7 +211,7 @@ static const void *pm_registersong (const void *data, unsigned len)
 
   if (!midifile)
   {
-    lprintf (LO_WARN, "pm_registersong: Failed to load MIDI.\n");
+    D_Msg(MSG_WARN, "pm_registersong: Failed to load MIDI.\n");
     return NULL;
   }
   
@@ -348,7 +351,9 @@ static void writesysex (unsigned long when, int etype, unsigned char *data, int 
   // until it hits an 0xf7 terminator)
   if (len + sysexbufflen > SYSEX_BUFF_SIZE)
   {
-    lprintf (LO_WARN, "portmidiplayer: ignoring large or malformed sysex message\n");
+    D_Msg(MSG_WARN,
+      "portmidiplayer: ignoring large or malformed sysex message\n"
+    );
     sysexbufflen = 0;
     return;
   }

@@ -26,7 +26,6 @@
 
 #include "z_zone.h"
 
-#include "lprintf.h"
 #include "opl_queue.h"
 
 #define MAX_OPL_QUEUE 64
@@ -78,7 +77,7 @@ void OPL_Queue_Push(opl_callback_queue_t *queue,
 
     if (queue->num_entries >= MAX_OPL_QUEUE)
     {
-        lprintf (LO_WARN, "OPL_Queue_Push: Exceeded maximum callbacks\n");
+        D_Msg(MSG_WARN, "OPL_Queue_Push: Exceeded maximum callbacks\n");
         return;
     }
 

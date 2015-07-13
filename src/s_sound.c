@@ -26,7 +26,6 @@
 #include "doomdef.h"
 #include "d_main.h"
 #include "i_sound.h"
-#include "lprintf.h"
 #include "n_net.h"
 #include "p_mobj.h"
 #include "sounds.h"
@@ -73,7 +72,7 @@ void S_Init(int sfxVolume, int musicVolume) {
 
   //jff 1/22/98 skip sound init if sound not enabled
   if (!SOUND_DISABLED) {
-    lprintf(LO_CONFIRM, "S_Init: default sfx volume %d\n", sfxVolume);
+    D_Msg(MSG_INFO, "S_Init: default sfx volume %d\n", sfxVolume);
 
     // Whatever these did with DMX, these are rather dummies now.
     I_SetChannels();

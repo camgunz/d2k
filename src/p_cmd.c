@@ -32,7 +32,6 @@
 #include "e6y.h"
 #include "g_game.h"
 #include "i_video.h"
-#include "lprintf.h"
 #include "n_net.h"
 #include "n_main.h"
 #include "n_state.h"
@@ -59,7 +58,7 @@ static GQueue *blank_command_queue;
 static void print_command(gpointer data, gpointer user_data) {
   netticcmd_t *ncmd = data;
 
-  D_Log(LOG_SYNC, " %d/%d/%d", ncmd->index, ncmd->tic, ncmd->server_tic);
+  D_Msg(MSG_SYNC, " %d/%d/%d", ncmd->index, ncmd->tic, ncmd->server_tic);
 }
 #endif
 
@@ -69,7 +68,7 @@ static void run_player_command(player_t *player) {
 
   /*
   if (CLIENT && player != &players[consoleplayer]) {
-    D_Log(LOG_SYNC, "(%d) run_player_command: Running command for %td\n",
+    D_Msg(MSG_SYNC, "(%d) run_player_command: Running command for %td\n",
       gametic,
       player - players
     );
@@ -374,7 +373,7 @@ static gint compare_commands(gconstpointer a, gconstpointer b) {
 static void recycle_command(gpointer data) {
   netticcmd_t *ncmd = (netticcmd_t *)data;
 
-  D_Log(LOG_SYNC, "recycle_command: Recycling command %d/%d\n",
+  D_Msg(MSG_SYNC, "recycle_command: Recycling command %d/%d\n",
     ncmd->index,
     ncmd->tic
   );
@@ -519,7 +518,7 @@ void P_ClearPlayerCommands(int playernum) {
   if (!playeringame[playernum])
     return;
 
-  D_Log(LOG_SYNC,
+  D_Msg(MSG_SYNC,
     "P_ClearPlayerCommands: Clearing commands for %d\n", playernum
   );
 
@@ -547,7 +546,7 @@ void P_TrimCommands(int playernum, TrimFunc should_trim, gpointer user_data) {
     if (!should_trim(ncmd, user_data))
       break;
 
-    D_Log(LOG_SYNC, "P_TrimCommands: Removing command %d/%d\n",
+    D_Msg(MSG_SYNC, "P_TrimCommands: Removing command %d/%d\n",
       ncmd->index,
       ncmd->tic
     );
@@ -563,13 +562,13 @@ void P_TrimCommands(int playernum, TrimFunc should_trim, gpointer user_data) {
 }
 
 void P_TrimCommandsByTic(int playernum, int tic) {
-  D_Log(LOG_SYNC, "(%d) P_TrimCommandsByTic(%d)\n", gametic, tic);
+  D_Msg(MSG_SYNC, "(%d) P_TrimCommandsByTic(%d)\n", gametic, tic);
 
   P_TrimCommands(playernum, command_tic_is_old, GINT_TO_POINTER(tic));
 }
 
 void P_TrimCommandsByIndex(int playernum, int command_index) {
-  D_Log(LOG_SYNC, "(%d) P_TrimCommandsByIndex(%d)\n", gametic, command_index);
+  D_Msg(MSG_SYNC, "(%d) P_TrimCommandsByIndex(%d)\n", gametic, command_index);
 
   P_TrimCommands(
     playernum, command_index_is_old, GINT_TO_POINTER(command_index)
@@ -595,7 +594,7 @@ void P_BuildCommand(void) {
   ncmd.buttons    = cmd.buttons;
 
   /*
-  D_Log(LOG_SYNC, "(%d) P_BuildCommand: ", gametic);
+  D_Msg(MSG_SYNC, "(%d) P_BuildCommand: ", gametic);
   N_LogCommand(run_ncmd);
   */
 
@@ -638,9 +637,9 @@ void P_RunPlayerCommands(int playernum) {
 
 void P_PrintCommands(int playernum) {
 #if LOG_COMMANDS
-  D_Log(LOG_SYNC, "{");
+  D_Msg(MSG_SYNC, "{");
   P_ForEachCommand(playernum, print_command, NULL);
-  D_Log(LOG_SYNC, " }\n");
+  D_Msg(MSG_SYNC, " }\n");
 #endif
 }
 

@@ -25,7 +25,6 @@
 
 #include "doomtype.h"
 #include "doomdef.h"
-#include "lprintf.h"
 
 #include "r_screenmultiply.h"
 

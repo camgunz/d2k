@@ -25,7 +25,6 @@
 
 #include "doomstat.h"
 #include "g_overflow.h"
-#include "lprintf.h"
 #include "m_argv.h"
 #include "m_misc.h"
 #include "e6y.h"
@@ -260,9 +259,11 @@ void SpechitOverrun(spechit_overrun_param_t *params)
           break;
           
         default:
-          fprintf(stderr, "SpechitOverrun: Warning: unable to emulate"
-                          "an overrun where numspechit=%i\n",
-                           numspechit);
+          fprintf(stderr,
+            "SpechitOverrun: Warning: unable to emulatean overrun where "
+            "numspechit=%i\n",
+            numspechit
+          );
           break;
         }
       }
@@ -284,9 +285,11 @@ void SpechitOverrun(spechit_overrun_param_t *params)
           break;
 
         default:
-          lprintf(LO_ERROR, "SpechitOverrun: Warning: unable to emulate"
-                            " an overrun where numspechit=%i\n",
-                            numspechit);
+          D_Msg(MSG_ERROR,
+            "SpechitOverrun: Warning: unable to emulate an overrun where "
+            "numspechit=%i\n",
+            numspechit
+          );
           break;
         }
       }
@@ -365,7 +368,9 @@ void RejectOverrun(int rejectlump, const byte **rejectmatrix, int totallines)
       }
     }
 
-    lprintf(LO_WARN, "P_LoadReject: REJECT too short (%u<%u) - padded\n", length, required);
+    D_Msg(MSG_WARN,
+      "P_LoadReject: REJECT too short (%u<%u) - padded\n", length, required
+    );
   }
 }
 

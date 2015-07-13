@@ -32,7 +32,6 @@
 #include "r_bsp.h"
 #include "r_sky.h"
 #include "r_main.h"
-#include "lprintf.h"
 
 int gl_shadows_maxdist;
 int gl_shadows_factor;
@@ -102,7 +101,7 @@ void gld_InitShadows(void)
 
   if (simple_shadows.enable && !simple_shadows.loaded)
   {
-    lprintf(LO_INFO, "gld_InitShadows: failed to initialise shadow texture");
+    D_Msg(MSG_INFO, "gld_InitShadows: failed to initialise shadow texture");
   }
 }
 

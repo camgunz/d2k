@@ -39,7 +39,6 @@
 #include "i_sound.h"
 #include "m_bbox.h"
 #include "hu_stuff.h"
-#include "lprintf.h"
 #include "e6y.h"//e6y
 
 static mobj_t *current_actor;

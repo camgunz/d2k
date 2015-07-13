@@ -35,7 +35,6 @@
 #include "v_video.h"
 #include "i_system.h"
 #include "w_wad.h"
-#include "lprintf.h"
 #include "i_video.h"
 #include "hu_lib.h"
 #include "hu_stuff.h"
@@ -714,7 +713,7 @@ static int gld_HiRes_GetExternalName(GLTexture *gltexture, char *img_path, char 
     
     if (checklist->exists == -1)
     {
-      doom_snprintf(checkName, sizeof(checkName), checklist->path, hiresdir, "", "");
+      snprintf(checkName, sizeof(checkName), checklist->path, hiresdir, "", "");
       if (!access(checkName, F_OK))
         checklist->exists = 1;
       else
@@ -729,7 +728,7 @@ static int gld_HiRes_GetExternalName(GLTexture *gltexture, char *img_path, char 
 
       if (GLEXT_glCompressedTexImage2DARB && dds_path[0] == '\0')
       {
-        doom_snprintf(checkName, sizeof(checkName), checklist->path, hiresdir, texname, "dds");
+        snprintf(checkName, sizeof(checkName), checklist->path, hiresdir, texname, "dds");
         if (!access(checkName, F_OK))
         {
           strcpy(dds_path, checkName);
@@ -738,7 +737,7 @@ static int gld_HiRes_GetExternalName(GLTexture *gltexture, char *img_path, char 
       
       for (extp = extensions; *extp; extp++)
       {
-        doom_snprintf(checkName, sizeof(checkName), checklist->path, hiresdir, texname, *extp);
+        snprintf(checkName, sizeof(checkName), checklist->path, hiresdir, texname, *extp);
 
         if (!access(checkName, F_OK))
         {
@@ -958,7 +957,7 @@ int gld_HiRes_BuildTables(void)
 
     if (gl_hires_24bit_colormap)
     {
-      doom_snprintf(fname, sizeof(fname), "%s/"RGB2PAL_NAME".dat", I_DoomExeDir());
+      snprintf(fname, sizeof(fname), "%s/"RGB2PAL_NAME".dat", I_DoomExeDir());
       RGB2PAL_fp = fopen(fname, "wb");
       ok = RGB2PAL_fp != NULL;
     }
@@ -1173,8 +1172,8 @@ static int gld_HiRes_LoadFromCache(GLTexture* gltexture, GLuint* texid, const ch
   return result;
 }
 
-static int gld_HiRes_WriteCache(GLTexture* gltexture, GLuint* texid, const char* img_path)
-{
+static int gld_HiRes_WriteCache(GLTexture *gltexture, GLuint *texid,
+                                const char *img_path) {
   int result = false;
   int w, h;
   unsigned char *buf;
@@ -1182,19 +1181,19 @@ static int gld_HiRes_WriteCache(GLTexture* gltexture, GLuint* texid, const char*
   struct stat tex_stat;
   FILE *cachefp;
 
-  doom_snprintf(
+  snprintf(
     (char *)cache_filename, sizeof(cache_filename), "%s.cache", img_path
   );
-  if (access((char *)cache_filename, F_OK))
-  {
+
+  if (access((char *)cache_filename, F_OK)) {
     buf = gld_GetTextureBuffer(*texid, 0, &w, &h);
-    if (buf)
-    {
+
+    if (buf) {
       memset(&tex_stat, 0, sizeof(tex_stat));
       stat(img_path, &tex_stat);
       cachefp = fopen((char *)cache_filename, "wb");
-      if (cachefp)
-      {
+
+      if (cachefp) {
         result =
           (fwrite(&w, sizeof(w), 1, cachefp) == 1) &&
           (fwrite(&h, sizeof(h), 1, cachefp) == 1) &&
@@ -1206,100 +1205,92 @@ static int gld_HiRes_WriteCache(GLTexture* gltexture, GLuint* texid, const char*
     }
   }
 
-  if (!result)
-  {
-    lprintf(LO_WARN, "gld_HiRes_WriteCache: error writing '%s'.\n", cache_filename);
+  if (!result) {
+    D_Msg(MSG_WARN,
+      "gld_HiRes_WriteCache: error writing '%s'.\n", cache_filename
+    );
   }
 
   return result;
 }
 
-static int gld_HiRes_LoadFromFile(GLTexture* gltexture, GLuint* texid, const char* img_path)
-{
+static int gld_HiRes_LoadFromFile(GLTexture *gltexture, GLuint *texid,
+                                  const char *img_path) {
   int result = false;
   SDL_Surface *surf = NULL;
   SDL_Surface *surf_tmp = NULL;
 
   surf_tmp = IMG_Load(img_path);
 
-  if (!surf_tmp)
-  {
-    lprintf(LO_WARN, "gld_HiRes_LoadExternal: %s\n", SDL_GetError());
+  if (!surf_tmp) {
+    D_Msg(MSG_WARN, "gld_HiRes_LoadExternal: %s\n", SDL_GetError());
+    return false;
   }
-  else
-  {
-    surf = SDL_ConvertSurface(surf_tmp, &RGBAFormat, SDL_SRCALPHA);
-    SDL_FreeSurface(surf_tmp);
 
-    if (surf)
-    {
-      if (SDL_LockSurface(surf) >= 0)
-      {
-        if (SmoothEdges(surf->pixels, surf->pitch / 4, surf->h))
-          gltexture->flags |= GLTEXTURE_HASHOLES;
-        else
-          gltexture->flags &= ~GLTEXTURE_HASHOLES;
-        SDL_UnlockSurface(surf);
-      }
-      gld_HiRes_Bind(gltexture, texid);
-      result = gld_BuildTexture(gltexture, surf->pixels, true, surf->w, surf->h);
+  surf = SDL_ConvertSurface(surf_tmp, &RGBAFormat, SDL_SRCALPHA);
+  SDL_FreeSurface(surf_tmp);
 
-      SDL_FreeSurface(surf);
+  if (surf) {
+    if (SDL_LockSurface(surf) >= 0) {
+      if (SmoothEdges(surf->pixels, surf->pitch / 4, surf->h))
+        gltexture->flags |= GLTEXTURE_HASHOLES;
+      else
+        gltexture->flags &= ~GLTEXTURE_HASHOLES;
+      SDL_UnlockSurface(surf);
     }
+    gld_HiRes_Bind(gltexture, texid);
+    result = gld_BuildTexture(
+      gltexture, surf->pixels, true, surf->w, surf->h
+    );
+
+    SDL_FreeSurface(surf);
   }
 
   return result;
 }
 
-int gld_LoadHiresTex(GLTexture *gltexture, int cm)
-{
+int gld_LoadHiresTex(GLTexture *gltexture, int cm) {
   int result = false;
   GLuint *texid;
 
   // do we need it?
   if ((gl_texture_external_hires || gl_texture_internal_hires) &&
-    !(gltexture->flags & GLTEXTURE_HASNOHIRES))
-  {
+      !(gltexture->flags & GLTEXTURE_HASNOHIRES)) {
     // default buffer
     texid = &gltexture->glTexExID[CR_DEFAULT][0][0];
 
     // do not try to load hires twice
-    if ((*texid == 0) || (gltexture->flags & GLTEXTURE_HIRES))
-    {
+    if ((*texid == 0) || (gltexture->flags & GLTEXTURE_HIRES)) {
       // try to load in-wad texture
-      if (*texid == 0 && gl_texture_internal_hires)
-      {
+      if (*texid == 0 && gl_texture_internal_hires) {
         const char *lumpname = gld_HiRes_GetInternalName(gltexture);
 
-        if (lumpname)
-        {
+        if (lumpname) {
           int lump = (W_CheckNumForName)(lumpname, ns_hires);
-          if (lump != -1)
-          {
-            SDL_RWops *rw_data = SDL_RWFromConstMem(W_CacheLumpNum(lump), W_LumpLength(lump));
+
+          if (lump != -1) {
+            SDL_RWops *rw_data = SDL_RWFromConstMem(
+              W_CacheLumpNum(lump), W_LumpLength(lump)
+            );
             SDL_Surface *surf_tmp = IMG_Load_RW(rw_data, false);
             
             // SDL can't load some TGA with common method
             if (!surf_tmp)
-            {
               surf_tmp = IMG_LoadTyped_RW(rw_data, false, "TGA");
-            }
 
             SDL_FreeRW(rw_data);
 
-            if (!surf_tmp)
-            {
-              lprintf(LO_WARN, "gld_LoadHiresTex: %s\n", SDL_GetError());
+            if (!surf_tmp) {
+              D_Msg(MSG_WARN, "gld_LoadHiresTex: %s\n", SDL_GetError());
             }
-            else
-            {
-              SDL_Surface *surf = SDL_ConvertSurface(surf_tmp, &RGBAFormat, SDL_SRCALPHA);
+            else {
+              SDL_Surface *surf = SDL_ConvertSurface(
+                surf_tmp, &RGBAFormat, SDL_SRCALPHA
+              );
               SDL_FreeSurface(surf_tmp);
 
-              if (surf)
-              {
-                if (SDL_LockSurface(surf) >= 0)
-                {
+              if (surf) {
+                if (SDL_LockSurface(surf) >= 0) {
                   if (SmoothEdges(surf->pixels, surf->pitch / 4, surf->h))
                     gltexture->flags |= GLTEXTURE_HASHOLES;
                   else
@@ -1317,71 +1308,53 @@ int gld_LoadHiresTex(GLTexture *gltexture, int cm)
       }
 
       // then external
-      if (*texid == 0 && gl_texture_external_hires)
-      {
+      if (*texid == 0 && gl_texture_external_hires) {
         char img_path[PATH_MAX];
         char dds_path[PATH_MAX];
-        if (gld_HiRes_GetExternalName(gltexture, img_path, dds_path))
-        {
-          if (!gld_HiRes_LoadDDSTexture(gltexture, texid, dds_path))
-          {
-            if (!gld_HiRes_LoadFromCache(gltexture, texid, img_path))
-            {
-              if (gld_HiRes_LoadFromFile(gltexture, texid, img_path))
-              {
-                if ((gltexture->realtexwidth != gltexture->tex_width) ||
-                  (gltexture->realtexheight != gltexture->tex_height))
-                {
-                  gld_HiRes_WriteCache(gltexture, texid, img_path);
-                }
-              }
-            }
-          }
+
+        if (gld_HiRes_GetExternalName(gltexture, img_path, dds_path) &&
+            (!gld_HiRes_LoadDDSTexture(gltexture, texid, dds_path)) &&
+            (!gld_HiRes_LoadFromCache(gltexture, texid, img_path)) &&
+            (gld_HiRes_LoadFromFile(gltexture, texid, img_path)) &&
+            ((gltexture->realtexwidth != gltexture->tex_width) ||
+             (gltexture->realtexheight != gltexture->tex_height))) {
+          gld_HiRes_WriteCache(gltexture, texid, img_path);
         }
       }
 
-      if (*texid)
-      {
+      if (*texid) {
         gld_GetTextureTexID(gltexture, cm);
 
-        if (last_glTexID == gltexture->texid_p)
-        {
+        if (last_glTexID == gltexture->texid_p) {
           result = true;
         }
-        else
-        {
-          if (texid == gltexture->texid_p)
-          {
+        else {
+          if (texid == gltexture->texid_p) {
             glBindTexture(GL_TEXTURE_2D, *gltexture->texid_p);
             result = true;
           }
-          else
-          {
+          else {
             //if (gl_boom_colormaps && use_boom_cm &&
             //  !(comp[comp_skymap] && (gltexture->flags&GLTEXTURE_SKY)))
-            if (boom_cm && use_boom_cm && gl_boom_colormaps)
-            {
+            if (boom_cm && use_boom_cm && gl_boom_colormaps) {
               int w, h;
               unsigned char *buf;
 
-              if (*gltexture->texid_p == 0)
-              {
+              if (*gltexture->texid_p == 0) {
                 buf = gld_GetTextureBuffer(*texid, 0, &w, &h);
                 gld_HiRes_Bind(gltexture, gltexture->texid_p);
                 gld_HiRes_ProcessColormap(buf, w * h * 4);
-                if (gld_BuildTexture(gltexture, buf, true, w, h))
-                {
+
+                if (gld_BuildTexture(gltexture, buf, true, w, h)) {
                   result = true;
                 }
               }
-              else
-              {
+              else {
                 gld_HiRes_Bind(gltexture, gltexture->texid_p);
                 result = true;
               }
             }
-            else
-            {
+            else {
               *gltexture->texid_p = *texid;
               gld_HiRes_Bind(gltexture, gltexture->texid_p);
               result = true;
@@ -1393,20 +1366,14 @@ int gld_LoadHiresTex(GLTexture *gltexture, int cm)
   }
 
   if (result)
-  {
     last_glTexID = gltexture->texid_p;
-  }
-  else
-  {
-    // there is no corresponding hires
+  else // there is no corresponding hires
     gltexture->flags |= GLTEXTURE_HASNOHIRES;
-  }
 
   return result;
 }
 
-int gld_PrecacheGUIPatches(void)
-{
+int gld_PrecacheGUIPatches(void) {
   static const char * staticpatches[] = {
     "INTERPIC",// "TITLEPIC",
 
@@ -1448,22 +1415,20 @@ int gld_PrecacheGUIPatches(void)
   for (patch_p = staticpatches; *patch_p; patch_p++)
     total++;
 
-  for (patch_p = staticpatches; *patch_p; patch_p++)
-  {
+  for (patch_p = staticpatches; *patch_p; patch_p++) {
     int lump = W_CheckNumForName(*patch_p);
-    if (lump > 0)
-    {
+
+    if (lump > 0) {
       GLTexture *gltexture;
       
       lumpinfo[lump].flags |= LUMP_STATIC;
       gltexture = gld_RegisterPatch(lump, CR_DEFAULT);
-      if (gltexture)
-      {
+
+      if (gltexture) {
         gld_BindPatch(gltexture, CR_DEFAULT);
+
         if (gltexture && (gltexture->flags & GLTEXTURE_HIRES))
-        {
           gld_ProgressUpdate("Loading GUI Patches...", ++count, total);
-        }
       }
     }
   }

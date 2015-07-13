@@ -41,7 +41,6 @@
 #include "i_sound.h"
 #include "i_system.h"
 #include "i_video.h"
-#include "lprintf.h"  // jff 08/03/98 - declaration of lprintf
 #include "m_argv.h"
 #include "m_file.h"
 #include "m_menu.h"
@@ -61,6 +60,7 @@
 #include "wi_stuff.h"
 #include "xam_main.h"
 #include "xc_main.h"
+#include "xd_msg.h"
 #include "xd_main.h"
 #include "xg_game.h"
 #include "xg_keys.h"
@@ -937,13 +937,13 @@ void D_AddFile(const char *path, wad_source_t source) {
     wadfile_info_t *wf = g_ptr_array_index(resource_files, i);
 
     if (strcmp(wad_ext_path, wf->name) == 0) {
-      lprintf(LO_INFO, "D_AddFile: Skipping %s (already added).\n", path);
+      D_Msg(MSG_INFO, "D_AddFile: Skipping %s (already added).\n", path);
       free(wad_ext_path);
       return;
     }
   }
 
-  lprintf(LO_INFO, "D_AddFile: Searching for %s...\n", wad_ext_path);
+  D_Msg(MSG_INFO, "D_AddFile: Searching for %s...\n", wad_ext_path);
 
   wad_path = I_FindFile(wad_ext_path, NULL);
 
@@ -1026,7 +1026,7 @@ void D_AddDEH(const char *filename, int lumpnum) {
 
     if (!filename) {
       if (lumpnum == stored_deh_file->lumpnum) {
-        lprintf(LO_INFO,
+        D_Msg(MSG_INFO,
           "D_AddDEH: Skipping duplicate DeH/BEX (%d)\n", lumpnum
         );
         return;
@@ -1035,13 +1035,13 @@ void D_AddDEH(const char *filename, int lumpnum) {
     }
 
     if (strcmp(deh_path, stored_deh_file->filename) == 0) {
-      lprintf(LO_INFO, "D_AddDEH: Skipping %s (already added).\n", deh_path);
+      D_Msg(MSG_INFO, "D_AddDEH: Skipping %s (already added).\n", deh_path);
       return;
     }
   }
 
   if (deh_path)
-    lprintf(LO_INFO, "D_AddDEH: Adding %s.\n", deh_path);
+    D_Msg(MSG_INFO, "D_AddDEH: Adding %s.\n", deh_path);
 
   dehfile = malloc(sizeof(deh_file_t));
 
@@ -1067,8 +1067,7 @@ void AddIWAD(const char *iwad) {
   if (!(iwad && *iwad))
     return;
 
-  //jff 9/3/98 use logical output routine
-  lprintf(LO_CONFIRM, "IWAD found: %s\n", iwad); //jff 4/20/98 print only if found
+  D_Msg(MSG_INFO, "IWAD found: %s\n", iwad); //jff 4/20/98 print only if found
   CheckIWAD(iwad, &gamemode, &haswolflevels);
 
   /*
@@ -1101,8 +1100,8 @@ void AddIWAD(const char *iwad) {
     break;
   }
 
-  if (gamemode == indetermined) //jff 9/3/98 use logical output routine
-    lprintf(LO_WARN, "Unknown Game Version, may not work\n");
+  if (gamemode == indetermined)
+    D_Msg(MSG_INFO, "Unknown Game Version, may not work\n");
 }
 
 void D_SetIWAD(const char *iwad) {
@@ -1328,20 +1327,20 @@ static char* FindIWADFile(void) {
   char *iwad;
 
   if (CLIENT) {
-    lprintf(LO_INFO, "FindIWADFile: Looking for IWAD %s\n", D_GetIWAD());
+    D_Msg(MSG_INFO, "FindIWADFile: Looking for IWAD %s\n", D_GetIWAD());
     return I_FindFile(D_GetIWAD(), NULL);
   }
 
   pi = M_CheckParm("-iwad");
 
   if (pi && (++pi < myargc)) {
-    lprintf(LO_INFO, "FindIWADFile: Searching for IWAD %s\n", myargv[pi]);
+    D_Msg(MSG_INFO, "FindIWADFile: Searching for IWAD %s\n", myargv[pi]);
     return I_FindFile(myargv[pi], ".wad");
   }
 
   for (int i = 0; i < nstandard_iwads; i++) {
-    lprintf(
-      LO_INFO, "FindIWADFile: Searching for IWAD %s\n", standard_iwads[i]
+    D_Msg(MSG_INFO, "FindIWADFile: Searching for IWAD %s\n",
+      standard_iwads[i]
     );
     iwad = I_FindFile(standard_iwads[i], ".wad");
 
@@ -1398,9 +1397,8 @@ void IdentifyVersion(void) {
       basesavegame = strdup(myargv[i + 1]); //jff 3/24/98 use that for savegame
       NormalizeSlashes(basesavegame);       //jff 9/22/98 fix c:\ not working
     }
-    //jff 9/3/98 use logical output routine
     else {
-      lprintf(LO_ERROR, "Error: -save path does not exist, using %s\n",
+      D_Msg(MSG_INFO, "Error: -save path does not exist, using %s\n",
         basesavegame
       );
     }
@@ -1471,14 +1469,13 @@ static void FindResponseFile (void)
       }
 
 
-      //jff 9/3/98 use logical output routine
-      lprintf(LO_CONFIRM,"Found response file %s\n", fname);
+      D_Msg(MSG_INFO, "Found response file %s\n", fname);
       free(fname);
 
       // proff 04/05/2000: Added check for empty rsp file
       if (size <= 0) {
         int k;
-        lprintf(LO_ERROR,"\nResponse file empty!\n");
+        D_Msg(MSG_ERROR, "\nResponse file empty!\n");
 
         newargv = calloc(sizeof(newargv[0]), myargc);
         newargv[0] = myargv[0];
@@ -1557,11 +1554,9 @@ static void FindResponseFile (void)
       myargv = newargv;
 
       // DISPLAY ARGS
-      //jff 9/3/98 use logical output routine
-      lprintf(LO_CONFIRM, "%d command-line args:\n", myargc);
-      //jff 9/3/98 use logical output routine
+      D_Msg(MSG_INFO, "%d command-line args:\n", myargc);
       for (index = 1; index < myargc; index++)
-        lprintf(LO_CONFIRM, "%s\n",myargv[index]);
+        D_Msg(MSG_INFO, "%s\n", myargv[index]);
 
       break;
     }
@@ -1735,41 +1730,6 @@ const char *wad_file_names[MAXLOADFILES], *deh_file_names[MAXLOADFILES];
 // CPhipps - misc screen stuff
 unsigned int desired_screenwidth, desired_screenheight;
 
-static void L_SetupConsoleMasks(void) {
-  int p;
-  int i;
-  const char *cena = "ICWEFDA"; //jff 9/3/98 use this for parsing console masks
-  const char *pos;              // CPhipps - const char*'s
-
-  //jff 9/3/98 get mask for console output filter
-  if ((p = M_CheckParm("-cout"))) {
-    lprintf(LO_DEBUG, "mask for stdout console output: ");
-    if (++p != myargc && *myargv[p] != '-') {
-      for (i = 0, cons_output_mask = 0; (size_t)i < strlen(myargv[p]); i++) {
-        if ((pos = strchr(cena, toupper(myargv[p][i])))) {
-          cons_output_mask |= (1 << (pos - cena));
-          lprintf(LO_DEBUG, "%c", toupper(myargv[p][i]));
-        }
-      }
-    }
-    lprintf(LO_DEBUG, "\n");
-  }
-
-  //jff 9/3/98 get mask for redirected console error filter
-  if ((p = M_CheckParm ("-cerr"))) {
-    lprintf(LO_DEBUG, "mask for stderr console output: ");
-    if (++p != myargc && *myargv[p] != '-') {
-      for (i = 0, cons_error_mask = 0; (size_t)i < strlen(myargv[p]); i++) {
-        if ((pos = strchr(cena, toupper(myargv[p][i])))) {
-          cons_error_mask |= (1 << (pos - cena));
-          lprintf(LO_DEBUG, "%c", toupper(myargv[p][i]));
-        }
-      }
-    }
-    lprintf(LO_DEBUG, "\n");
-  }
-}
-
 static void D_destroyDEHFile(gpointer data) {
   deh_file_t *df = (deh_file_t *)data;
 
@@ -1803,8 +1763,6 @@ static void D_DoomMainSetup(void) {
   int p;
   int slot;
 
-  L_SetupConsoleMasks();
-
   setbuf(stdout, NULL);
 
   X_Init(); /* CG 07/22/2014: Scripting */
@@ -1827,7 +1785,7 @@ static void D_DoomMainSetup(void) {
 
   // e6y: moved to main()
   /*
-  lprintf(LO_INFO,"M_LoadDefaults: Load system defaults.\n");
+  D_Msg(MSG_INFO,"M_LoadDefaults: Load system defaults.\n");
   M_LoadDefaults();              // load before initing other systems
   */
 
@@ -1839,13 +1797,10 @@ static void D_DoomMainSetup(void) {
 
   D_BuildBEXTables(); // haleyjd
 
-  D_InitLogging(); /* 05/09/14 CG: Enable logging */
-
   // 1/18/98 killough: Z_Init() call moved to i_main.c
 
   // CPhipps - move up netgame init
-  //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO, "N_InitNetGame: Checking for network game.\n");
+  D_Msg(MSG_INFO, "N_InitNetGame: Checking for network game.\n");
   N_InitNetGame();
 
   if (!CLIENT) {
@@ -1926,15 +1881,15 @@ static void D_DoomMainSetup(void) {
   }
 
   /* cphipps - the main display. This shows the build date, copyright, and game type */
-  lprintf(LO_ALWAYS, PACKAGE_NAME" (built %s), playing: %s\n"
+  D_Msg(MSG_INFO, PACKAGE_NAME" (built %s), playing: %s\n"
     PACKAGE_NAME" is released under the GNU General Public license v2.0.\n"
     "You are welcome to redistribute it under certain conditions.\n"
     "It comes with ABSOLUTELY NO WARRANTY. See the file COPYING for details.\n",
     version_date, doomverstr);
 
   if (!CLIENT) {
-    if (devparm) //jff 9/3/98 use logical output routine
-      lprintf(LO_CONFIRM, "%s", D_DEVSTR);
+    if (devparm)
+      D_Msg(MSG_INFO, "%s", D_DEVSTR);
 
     // turbo option
     if ((p = M_CheckParm("-turbo"))) {
@@ -1948,8 +1903,8 @@ static void D_DoomMainSetup(void) {
         scale = 10;
       if (scale > 400)
         scale = 400;
-      //jff 9/3/98 use logical output routine
-      lprintf (LO_CONFIRM, "turbo scale: %i%%\n", scale);
+
+      D_Msg(MSG_INFO, "turbo scale: %i%%\n", scale);
       forwardmove[0] = forwardmove[0] * scale / 100;
       forwardmove[1] = forwardmove[1] * scale / 100;
       sidemove[0] = sidemove[0] * scale / 100;
@@ -1980,15 +1935,15 @@ static void D_DoomMainSetup(void) {
 
     if ((p = M_CheckParm("-timer")) && p < myargc - 1 && deathmatch) {
       int time = atoi(myargv[p + 1]);
-      //jff 9/3/98 use logical output routine
-      lprintf(LO_CONFIRM,
+
+      D_Msg(MSG_INFO,
         "Levels will end after %d minute%s.\n", time, time > 1 ? "s" : ""
       );
     }
 
     if ((p = M_CheckParm ("-avg")) && p < myargc - 1 && deathmatch) {
-      //jff 9/3/98 use logical output routine
-      lprintf(LO_CONFIRM,
+
+      D_Msg(MSG_INFO,
         "Austin Virtual Gaming: Levels will end after 20 minutes\n"
       );
     }
@@ -2057,8 +2012,7 @@ static void D_DoomMainSetup(void) {
   gld_InitCommandLine();
 #endif
 
-  //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO,"V_Init: allocate screens.\n");
+  D_Msg(MSG_INFO, "V_Init: allocate screens.\n");
   V_Init();
 
   //e6y: Calculate the screen resolution and init all buffers
@@ -2086,7 +2040,7 @@ static void D_DoomMainSetup(void) {
       // Filename is now stored as a zero terminated string
       fpath = I_FindFile(fname, ".wad");
       if (!fpath) {
-        lprintf(LO_WARN, "Failed to autoload %s\n", fname);
+        D_Msg(MSG_INFO, "Failed to autoload %s\n", fname);
       }
       else {
         D_AddFile(fpath, source_auto_load);
@@ -2158,12 +2112,11 @@ static void D_DoomMainSetup(void) {
     char *file_path = I_FindFile(file, NULL);
 
     if (file_path) {
-      //jff 9/3/98 use logical output routine
-      lprintf(LO_CONFIRM, "Playing demo %s\n", file);
+      D_Msg(MSG_INFO, "Playing demo %s\n", file);
       D_AddFile(file, source_lmp);
     }
     else {
-      lprintf(LO_CONFIRM,
+      D_Msg(MSG_INFO,
         "Demo file %s not found, assuming %s is a lump name\n",
         file, myargv[p + 1]
       );
@@ -2188,13 +2141,8 @@ static void D_DoomMainSetup(void) {
 #endif
   }
 
-  //jff 9/3/98 use logical output routine
-  if (!DELTACLIENT) {
-    lprintf(LO_INFO, "W_Init: Init WADfiles.\n");
+  if (!DELTACLIENT)
     W_Init(); // CPhipps - handling of wadfiles init changed
-    // killough 3/6/98: add a newline, by popular demand :)
-    lprintf(LO_INFO, "\n");
-  }
 
   // e6y
   // option to disable automatic loading of dehacked-in-wad lump
@@ -2244,7 +2192,7 @@ static void D_DoomMainSetup(void) {
       fpath = I_FindFile(fname, ".bex");
 
       if (!fpath) {
-        lprintf(LO_WARN, "Failed to autoload %s\n", fname);
+        D_Msg(MSG_INFO, "Failed to autoload %s\n", fname);
       }
       else {
         D_AddDEH(fpath, 0);
@@ -2303,43 +2251,37 @@ static void D_DoomMainSetup(void) {
 
   // Ty 04/08/98 - Add 5 lines of misc. data, only if nonblank
   // The expectation is that these will be set in a .bex file
-  //jff 9/3/98 use logical output routine
   if (*startup1)
-    lprintf(LO_INFO, "%s", startup1);
+    D_Msg(MSG_INFO, "%s", startup1);
   if (*startup2)
-    lprintf(LO_INFO, "%s", startup2);
+    D_Msg(MSG_INFO, "%s", startup2);
   if (*startup3)
-    lprintf(LO_INFO, "%s", startup3);
+    D_Msg(MSG_INFO, "%s", startup3);
   if (*startup4)
-    lprintf(LO_INFO, "%s", startup4);
+    D_Msg(MSG_INFO, "%s", startup4);
   if (*startup5)
-    lprintf(LO_INFO, "%s", startup5);
+    D_Msg(MSG_INFO, "%s", startup5);
   // End new startup strings
 
   // CG 6/13/2015 Return of C_Init
   C_Init();
 
-  //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO, "M_Init: Init miscellaneous info.\n");
+  D_Msg(MSG_INFO, "M_Init: Init miscellaneous info.\n");
   M_Init();
 
-  //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO, "R_Init: Init DOOM refresh daemon - ");
+  D_Msg(MSG_INFO, "R_Init: Init DOOM refresh daemon - ");
   R_Init();
 
-  lprintf(LO_INFO, "\nP_IdentInit: Init actor IDs.\n");
+  D_Msg(MSG_INFO, "\nP_IdentInit: Init actor IDs.\n");
   P_IdentInit();
 
-  //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO,"P_Init: Init Playloop state.\n");
+  D_Msg(MSG_INFO,"P_Init: Init Playloop state.\n");
   P_Init();
 
-  //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO, "I_Init: Setting up machine state.\n");
+  D_Msg(MSG_INFO, "I_Init: Setting up machine state.\n");
   I_Init();
 
-  //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO, "S_Init: Setting up sound.\n");
+  D_Msg(MSG_INFO, "S_Init: Setting up sound.\n");
   S_Init(snd_SfxVolume /* *8 */, snd_MusicVolume /* *8*/ );
 
   if ((!SERVER) && !(M_CheckParm("-nodraw") && M_CheckParm("-nosound")))
@@ -2347,27 +2289,26 @@ static void D_DoomMainSetup(void) {
 
   graphics_initialized = true;
 
-  //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO, "HU_Init: Setting up heads up display.\n");
+  D_Msg(MSG_INFO, "HU_Init: Setting up heads up display.\n");
   HU_Init();
 
   // NSM
   if ((p = M_CheckParm("-viddump")) && (p < myargc - 1))
     I_CapturePrep(myargv[p + 1]);
 
-  //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO, "ST_Init: Init status bar.\n");
+  D_Msg(MSG_INFO, "ST_Init: Init status bar.\n");
   ST_Init();
 
 #ifdef ENABLE_OVERLAY
   // CG 07/09/2014: Console
-  lprintf(LO_INFO, "C_Init: Init console.\n");
+  D_Msg(MSG_INFO, "C_Init: Init console.\n");
   C_Init();
 #endif
 
   XAM_RegisterInterface();
   XC_RegisterInterface();
   XD_RegisterInterface();
+  XD_MsgRegisterInterface();
   XG_GameRegisterInterface();
   XG_KeysRegisterInterface();
   XI_RegisterInterface();
@@ -2381,8 +2322,6 @@ static void D_DoomMainSetup(void) {
   X_ExposeInterfaces(NULL);
 
   X_Start();
-
-  D_LoadStartupMessagesIntoConsole();
 
   // CPhipps - auto screenshots
   if ((p = M_CheckParm("-autoshot")) && (p < myargc - 2))
@@ -2540,9 +2479,9 @@ void GetFirstMap(int *ep, int *map)
         }
       }
     }
-    //jff 9/3/98 use logical output routine
-    lprintf(LO_CONFIRM,"Auto-warping to first %slevel: %s\n",
-      newlevel ? "new " : "", name);  // Ty 10/04/98 - new level test
+    D_Msg(MSG_INFO, "Auto-warping to first %slevel: %s\n",
+      newlevel ? "new " : "", name
+    );  // Ty 10/04/98 - new level test
   }
 }
 

@@ -32,7 +32,6 @@
 #include "doomstat.h"
 #include "g_game.h"
 #include "i_system.h"
-#include "lprintf.h"
 #include "m_file.h"
 #include "n_net.h"
 #include "n_main.h"
@@ -479,12 +478,6 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
       D_AddDEH(M_BufferGetData(&deh_name), deh_lumpnum);
     }
   }
-
-  //jff 9/3/98 use logical output routine
-  lprintf(LO_INFO, "W_Init: Init WADfiles.\n");
-  W_Init();
-  // killough 3/6/98: add a newline, by popular demand :)
-  lprintf(LO_INFO, "\n");
 
   read_int(pbuf, m_state_tic, "game state tic");
   read_packed_game_state(pbuf, gs, m_state_tic, "game state data");

@@ -25,7 +25,6 @@
 
 #include "doomtype.h"
 #include "z_bmalloc.h"
-#include "lprintf.h"
 
 typedef struct bmalpool_s {
   struct bmalpool_s *nextpool;

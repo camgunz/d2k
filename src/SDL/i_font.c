@@ -29,14 +29,13 @@
 #include "d_event.h"
 #include "c_main.h"
 #include "i_font.h"
-#include "lprintf.h"
 #include "m_file.h"
 
 void I_LoadCustomFonts(void) {
   gchar *cwd = g_get_current_dir();
   char *font_folder = M_PathJoin(cwd, FONT_FOLDER_NAME);
 
-  lprintf(LO_INFO, "I_LoadCustomFonts: Loading custom fonts\n");
+  D_Msg(MSG_INFO, "I_LoadCustomFonts: Loading custom fonts\n");
 
 #ifdef _WIN32
   GPtrArray *font_files = M_ListFiles(font_folder);

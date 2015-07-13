@@ -4,7 +4,7 @@ WAD="-file dwango5.wad"
 CMD="cbuild/d2k $WAD -skill 5 -warp 1 -nomonsters -deltaserve"
 CMD="cbuild/d2k $WAD -skill 5 -warp 1 -deathmatch -frags 5 -deltaserve"
 CMD="cbuild/d2k $WAD -skill 4 -warp 1 -deltaserve"
-CMD="cbuild/d2k $WAD -skill 5 -warp 1 -nomonsters -deathmatch -frags 5 -deltaserve"
+CMD="cbuild/d2k $WAD -skill 5 -warp 1 -nomonsters -deathmatch -frags 5 -log /home/charlie/.d2k/log.txt -deltaserve"
 
 cp scripts/* ~/.d2k/scripts/
 

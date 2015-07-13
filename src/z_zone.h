@@ -196,9 +196,11 @@ void Z_ZoneHistory(char *);
 #include "cmp.h"
 
 #include "doomtype.h"
-#include "d_log.h"
+#include "d_msg.h"
 #include "m_buf.h"
 #include "m_pbuf.h"
+
+void I_Error(const char *error, ...) PRINTF_DECL(1, 2);
 
 #endif
 

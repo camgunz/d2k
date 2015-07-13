@@ -37,7 +37,6 @@
 #include "w_wad.h"
 #include "v_video.h"
 #include "i_smp.h"
-#include "lprintf.h"
 
 // OPTIMIZE: closed two sided lines as single sided
 

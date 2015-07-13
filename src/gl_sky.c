@@ -72,7 +72,6 @@
 #include "r_main.h"
 #include "sc_man.h"
 #include "m_misc.h"
-#include "lprintf.h"
 
 #include "e6y.h"
 

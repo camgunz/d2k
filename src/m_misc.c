@@ -43,7 +43,6 @@
 #include "s_sound.h"
 #include "sounds.h"
 #include "i_joy.h"
-#include "lprintf.h"
 #include "d_main.h"
 #include "d_deh.h"
 #include "r_draw.h"
@@ -79,7 +78,7 @@
   {name, {&keyloc}, {keyval}, 0, MAX_KEY, def_key, ss_keys}
 
 int usemouse;
-dboolean    precache = true; /* if true, load all graphics at start */
+dboolean precache = true; /* if true, load all graphics at start */
 
 // The available anisotropic
 typedef enum {
@@ -1193,10 +1192,9 @@ static char* defaultfile; // CPhipps - static, const
 // M_SaveDefaults
 //
 
-void M_SaveDefaults (void)
-{
+void M_SaveDefaults (void) {
   int   i;
-  FILE* f;
+  FILE *f;
 
   f = fopen (defaultfile, "w");
   if (!f)
@@ -1204,49 +1202,44 @@ void M_SaveDefaults (void)
 
   // 3/3/98 explain format of file
 
-  fprintf(f,"# Doom config file\n");
-  fprintf(f,"# Format:\n");
-  fprintf(f,"# variable   value\n");
+  fprintf(f, "# Doom config file\n");
+  fprintf(f, "# Format:\n");
+  fprintf(f, "# variable   value\n");
 
   for (i = 0 ; i < numdefaults ; i++) {
     if (defaults[i].type == def_none) {
       // CPhipps - pure headers
       fprintf(f, "\n# %s\n", defaults[i].name);
-    } else
-      // e6y: arrays
-      if (defaults[i].type == def_arr)
-      {
-        int k;
-        fprintf (f,"%-25s \"%s\"\n",defaults[i].name,*(defaults[i].location.ppsz));
-        for (k = 0; k < *(defaults[i].location.array_size); k++)
-        {
-          char ***arr = defaults[i].location.array_data;
-          if ((*arr)[k])
-          {
-            char def[80];
-            sprintf(def, "%s%d", *(defaults[i].location.ppsz), k);
-            fprintf (f,"%-25s \"%s\"\n",def, (*arr)[k]);
-          }
-        }
-        i += defaults[i].defaultvalue.array_size;
-      }
-      else
-
-    // CPhipps - modified for new default_t form
-    if (!IS_STRING(defaults[i])) //jff 4/10/98 kill super-hack on pointer value
-      {
-      // CPhipps - remove keycode hack
-      // killough 3/6/98: use spaces instead of tabs for uniform justification
-      if (defaults[i].type == def_hex)
-  fprintf (f,"%-25s 0x%x\n",defaults[i].name,*(defaults[i].location.pi));
-      else
-  fprintf (f,"%-25s %5i\n",defaults[i].name,*(defaults[i].location.pi));
-      }
-    else
-      {
+    }
+    else if (defaults[i].type == def_arr) { // e6y: arrays
+      int k;
       fprintf (f,"%-25s \"%s\"\n",defaults[i].name,*(defaults[i].location.ppsz));
+      for (k = 0; k < *(defaults[i].location.array_size); k++) {
+        char ***arr = defaults[i].location.array_data;
+        if ((*arr)[k]) {
+          char def[80];
+          sprintf(def, "%s%d", *(defaults[i].location.ppsz), k);
+          fprintf (f,"%-25s \"%s\"\n",def, (*arr)[k]);
+        }
+      }
+      i += defaults[i].defaultvalue.array_size;
+    }
+    else {
+      // CPhipps - modified for new default_t form
+      //jff 4/10/98 kill super-hack on pointer value
+      if (!IS_STRING(defaults[i])) {
+        // CPhipps - remove keycode hack
+        // killough 3/6/98: use spaces instead of tabs for uniform justification
+        if (defaults[i].type == def_hex)
+          fprintf (f,"%-25s 0x%x\n",defaults[i].name,*(defaults[i].location.pi));
+        else
+          fprintf (f,"%-25s %5i\n",defaults[i].name,*(defaults[i].location.pi));
+      }
+      else {
+        fprintf (f,"%-25s \"%s\"\n",defaults[i].name,*(defaults[i].location.ppsz));
       }
     }
+  }
 
   fclose (f);
 }
@@ -1304,29 +1297,29 @@ void M_LoadDefaults (void)
 
   //e6y: arrays
   for (i = 0 ; i < numdefaults ; i++) {
-    if (defaults[i].type == def_arr)
-    {
+    if (defaults[i].type == def_arr) {
       int k;
       default_t *item = &defaults[i];
       char ***arr = (char***)(item->location.array_data);
+
       // free memory
-      for (k = 0; k < *(item->location.array_size); k++)
-      {
-        if ((*arr)[k])
-        {
+      for (k = 0; k < *(item->location.array_size); k++) {
+        if ((*arr)[k]) {
           free((*arr)[k]);
           (*arr)[k] = NULL;
         }
       }
+
       free(*arr);
       *arr = NULL;
       *(item->location.array_size) = 0;
+
       // load predefined data
       *arr = realloc(*arr, sizeof(char*) * item->defaultvalue.array_size);
       *(item->location.array_size) = item->defaultvalue.array_size;
       item->location.array_index = 0;
-      for (k = 0; k < item->defaultvalue.array_size; k++)
-      {
+
+      for (k = 0; k < item->defaultvalue.array_size; k++) {
         if (item->defaultvalue.array_data[k])
           (*arr)[k] = strdup(item->defaultvalue.array_data[k]);
         else
@@ -1347,20 +1340,18 @@ void M_LoadDefaults (void)
     snprintf(defaultfile, len + 1, "%s/%s.cfg", exedir, PACKAGE_TARNAME);
   }
 
-  lprintf (LO_CONFIRM, " default file: %s\n",defaultfile);
+  D_Msg(MSG_INFO, " default file: %s\n",defaultfile);
 
   // read the file in, overriding any set defaults
 
   f = fopen (defaultfile, "r");
-  if (f)
-    {
-    while (!feof(f))
-      {
+  if (f) {
+    while (!feof(f)) {
       isstring = false;
       parm = 0;
       fgets(cfgline, CFG_BUFFERMAX, f);
-      if (sscanf (cfgline, "%79s %[^\n]\n", def, strparm) == 2)
-        {
+
+      if (sscanf(cfgline, "%79s %[^\n]\n", def, strparm) == 2) {
 
         //jff 3/3/98 skip lines not starting with an alphanum
 
@@ -1375,91 +1366,88 @@ void M_LoadDefaults (void)
           newstring = malloc(len);
           strparm[len-1] = 0; // clears trailing double-quote mark
           strcpy(newstring, strparm+1); // clears leading double-quote mark
-  } else if ((strparm[0] == '0') && (strparm[1] == 'x')) {
-    // CPhipps - allow ints to be specified in hex
-    sscanf(strparm+2, "%x", &parm);
-  } else {
+        }
+        else if ((strparm[0] == '0') && (strparm[1] == 'x')) {
+          // CPhipps - allow ints to be specified in hex
+          sscanf(strparm+2, "%x", &parm);
+        }
+        else {
           sscanf(strparm, "%i", &parm);
-    // Keycode hack removed
-  }
+          // Keycode hack removed
+        }
 
         // e6y: arrays
-        if (item)
-        {
+        if (item) {
           int *pcount = item->location.array_size;
           int *index = &item->location.array_index;
           char ***arr = (char***)(item->location.array_data);
-          if (!strncmp(def, *(item->location.ppsz), strlen(*(item->location.ppsz))) 
-              && ((item->maxvalue == UL) || *(item->location.array_size) < item->maxvalue) )
-          {
-            if ((*index) + 1 > *pcount)
-            {
+          if (!strncmp(def, *(item->location.ppsz), strlen(*(item->location.ppsz))) &&
+              ((item->maxvalue == UL) || *(item->location.array_size) < item->maxvalue)) {
+            if ((*index) + 1 > *pcount) {
               *arr = realloc(*arr, sizeof(char*) * ((*index) + 1));
               (*pcount)++;
             }
-            else
-            {
-              if ((*arr)[(*index)])
-              {
-                free((*arr)[(*index)]);
-                (*arr)[(*index)] = NULL;
-              }
+            else if ((*arr)[(*index)]) {
+              free((*arr)[(*index)]);
+              (*arr)[(*index)] = NULL;
             }
+
             (*arr)[(*index)] = newstring;
             (*index)++;
             continue;
           }
-          else
-          {
+          else {
             item = NULL;
           }
         }
 
-        for (i = 0 ; i < numdefaults ; i++)
-          if ((defaults[i].type != def_none) && !strcmp(def, defaults[i].name))
+        for (i = 0 ; i < numdefaults ; i++) {
+          if ((defaults[i].type != def_none) && !strcmp(def, defaults[i].name)) {
+            // e6y: arrays
+            if (defaults[i].type == def_arr)
             {
-              // e6y: arrays
-              if (defaults[i].type == def_arr)
-              {
-                union { const char **c; char **s; } u; // type punning via unions
+              union { const char **c; char **s; } u; // type punning via unions
 
-                u.c = defaults[i].location.ppsz;
-                free(*(u.s));
-                *(u.s) = newstring;
+              u.c = defaults[i].location.ppsz;
+              free(*(u.s));
+              *(u.s) = newstring;
 
-                item = &defaults[i];
-                continue;
-              }
+              item = &defaults[i];
+              continue;
+            }
 
-      // CPhipps - safety check
+            // CPhipps - safety check
             if (isstring != IS_STRING(defaults[i])) {
-        lprintf(LO_WARN, "M_LoadDefaults: Type mismatch reading %s\n", defaults[i].name);
-        continue;
-      }
+              D_Msg(MSG_WARN, "M_LoadDefaults: Type mismatch reading %s\n",
+                defaults[i].name
+              );
+              continue;
+            }
             if (!isstring)
-              {
+            {
 
               //jff 3/4/98 range check numeric parameters
 
               if ((defaults[i].minvalue==UL || defaults[i].minvalue<=parm) &&
                   (defaults[i].maxvalue==UL || defaults[i].maxvalue>=parm))
                 *(defaults[i].location.pi) = parm;
-              }
-            else
-              {
-                union { const char **c; char **s; } u; // type punning via unions
-
-                u.c = defaults[i].location.ppsz;
-                free(*(u.s));
-                *(u.s) = newstring;
-              }
-            break;
             }
+            else
+            {
+              union { const char **c; char **s; } u; // type punning via unions
+
+              u.c = defaults[i].location.ppsz;
+              free(*(u.s));
+              *(u.s) = newstring;
+            }
+            break;
+          }
         }
       }
+    }
 
     fclose (f);
-    }
+  }
 
   free(strparm);
   free(cfgline);
@@ -1557,10 +1545,10 @@ void M_ScreenShot(void) {
     startshot = shot; // CPhipps - prevent infinite loop
 
     do {
-      int size = doom_snprintf(NULL, 0, "%s/doom%02d" SCREENSHOT_EXT, shot_dir, shot);
+      int size = snprintf(NULL, 0, "%s/doom%02d" SCREENSHOT_EXT, shot_dir, shot);
 
       lbmname = realloc(lbmname, size+1);
-      doom_snprintf(lbmname, size+1, "%s/doom%02d" SCREENSHOT_EXT, shot_dir, shot);
+      snprintf(lbmname, size+1, "%s/doom%02d" SCREENSHOT_EXT, shot_dir, shot);
       shot++;
     } while (!access(lbmname,0) && (shot != startshot) && (shot < 10000));
 

@@ -390,7 +390,7 @@ function RetractableTextWidget:tick()
   local current_ms = d2k.System.get_ticks()
 
   if self.get_external_text and self.external_text_updated() then
-    self.text = self.get_external_text()
+    self.text = self.text .. self.get_external_text()
     self.needs_updating = true
     self.clear_external_text_updated()
   end

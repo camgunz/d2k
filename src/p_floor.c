@@ -30,7 +30,6 @@
 #include "p_tick.h"
 #include "s_sound.h"
 #include "sounds.h"
-#include "lprintf.h"
 #include "g_overflow.h"
 #include "e6y.h"//e6y
 
@@ -148,8 +147,12 @@ result_e T_MovePlane
                 //e6y: warning about potential desynch
                 if (crush == STAIRS_UNINITIALIZED_CRUSH_FIELD_VALUE)
                 {
-                  lprintf(LO_WARN, "T_MovePlane: Stairs which can potentially crush may lead to desynch in compatibility mode.\n");
-                  lprintf(LO_WARN, " gametic: %d, sector: %d, complevel: %d\n", gametic, sector->iSectorID, compatibility_level);
+                  D_Msg(MSG_WARN,
+                    "T_MovePlane: Stairs which can potentially crush may lead "
+                    "to desynch in compatibility mode.\n"
+                    " gametic: %d, sector: %d, complevel: %d\n",
+                    gametic, sector->iSectorID, compatibility_level
+                  );
                 }
 
                 if (crush == true)
@@ -970,17 +973,16 @@ int EV_DoDonut(line_t*  line)
     {
       if (demo_compatibility)
       {
-        lprintf(LO_ERROR,
+        D_Msg(MSG_ERROR,
           "EV_DoDonut: lowest numbered line (linedef: %d) "
           "around pillar (sector: %d) must be two-sided. "
           "Unexpected behavior may occur in Vanilla Doom.\n",
-          s1->lines[0]->iLineID, s1->iSectorID);
-        continue;
+          s1->lines[0]->iLineID,
+          s1->iSectorID
+        );
       }
-      else
-      {
-        continue;
-      }
+
+      continue;
     }
 
     /* do not start the donut if the pool is already moving
@@ -1015,18 +1017,21 @@ int EV_DoDonut(line_t*  line)
         // s3->floorheight is an int at 0000:0000
         // s3->floorpic is a short at 0000:0008
         // Trying to emulate
-        lprintf(LO_ERROR,
+        D_Msg(MSG_ERROR,
           "EV_DoDonut: Access violation at linedef %d, sector %d. "
           "Unexpected behavior may occur in Vanilla Doom.\n",
-          line->iLineID, s1->iSectorID);
-        if (DonutOverrun(&s3_floorheight, &s3_floorpic))
-        {
-          lprintf(LO_WARN, "EV_DoDonut: Emulated with floorheight %d, floor pic %d.\n",
-            s3_floorheight >> 16, s3_floorpic);
+          line->iLineID,
+          s1->iSectorID
+        );
+        if (DonutOverrun(&s3_floorheight, &s3_floorpic)) {
+          D_Msg(MSG_WARN,
+            "EV_DoDonut: Emulated with floorheight %d, floor pic %d.\n",
+            s3_floorheight >> 16,
+            s3_floorpic
+          );
         }
-        else
-        {
-          lprintf(LO_WARN, "EV_DoDonut: Not emulated.\n");
+        else {
+          D_Msg(MSG_WARN, "EV_DoDonut: Not emulated.\n");
           break;
         }
       }

@@ -35,7 +35,6 @@
 #include "i_input.h"
 #include "i_system.h"
 #include "i_video.h"
-#include "lprintf.h"
 
 #define RETRACTION_TIME     666
 #define RETRACTION_TIMEOUT 2000

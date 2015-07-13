@@ -27,7 +27,6 @@
 #include "gl_opengl.h"
 #include "gl_intern.h"
 #include "m_random.h"
-#include "lprintf.h"
 #include "e6y.h"
 
 static GLuint wipe_scr_start_tex = 0;

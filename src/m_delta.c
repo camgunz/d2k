@@ -31,7 +31,6 @@
 
 #include "doomdef.h"
 #include "doomtype.h"
-#include "lprintf.h"
 #include "m_delta.h"
 
 #define BLKSIZE 1024

@@ -44,7 +44,6 @@
 #include "p_maputl.h"
 #include "p_tick.h"
 #include "m_bbox.h"
-#include "lprintf.h"
 #include "gl_opengl.h"
 #include "gl_intern.h"
 #include "gl_struct.h"
@@ -305,7 +304,11 @@ static void gld_AddPatchToTexture_UnTranslated(GLTexture *gltexture, unsigned ch
 #ifdef RANGECHECK
     if (x>=patch->width)
     {
-      lprintf(LO_ERROR,"gld_AddPatchToTexture_UnTranslated x>=patch->width (%i >= %i)\n",x,patch->width);
+      D_Msg(MSG_ERROR,
+        "gld_AddPatchToTexture_UnTranslated x>=patch->width (%i >= %i)\n",
+        x,
+        patch->width
+      );
       return;
     }
 #endif
@@ -331,20 +334,29 @@ static void gld_AddPatchToTexture_UnTranslated(GLTexture *gltexture, unsigned ch
 #ifdef RANGECHECK
           if (pos>=gltexture->buffer_size)
           {
-            lprintf(LO_ERROR,"gld_AddPatchToTexture_UnTranslated pos>=size (%i >= %i)\n",pos+3,gltexture->buffer_size);
+            D_Msg(MSG_ERROR,
+              "gld_AddPatchToTexture_UnTranslated pos>=size (%i >= %i)\n",
+              pos + 3,
+              gltexture->buffer_size
+            );
             return;
           }
 #endif
-          buffer[pos]=gld_palmap[source[j]];
+          buffer[pos] = gld_palmap[source[j]];
         }
-      } else {
+      }
+      else {
         pos=4*(((js+y)*gltexture->buffer_width)+x+originx);
         for (j=js;j<je;j++,pos+=(4*gltexture->buffer_width))
         {
 #ifdef RANGECHECK
           if ((pos+3)>=gltexture->buffer_size)
           {
-            lprintf(LO_ERROR,"gld_AddPatchToTexture_UnTranslated pos+3>=size (%i >= %i)\n",pos+3,gltexture->buffer_size);
+            D_Msg(MSG_ERROR,
+              "gld_AddPatchToTexture_UnTranslated pos+3>=size (%i >= %i)\n",
+              pos + 3,
+              gltexture->buffer_size
+            );
             return;
           }
 #endif
@@ -414,7 +426,9 @@ void gld_AddPatchToTexture(GLTexture *gltexture, unsigned char *buffer, const rp
 #ifdef RANGECHECK
     if (x>=patch->width)
     {
-      lprintf(LO_ERROR,"gld_AddPatchToTexture x>=patch->width (%i >= %i)\n",x,patch->width);
+      D_Msg(MSG_ERROR,
+        "gld_AddPatchToTexture x>=patch->width (%i >= %i)\n", x, patch->width
+      );
       return;
     }
 #endif
@@ -440,7 +454,11 @@ void gld_AddPatchToTexture(GLTexture *gltexture, unsigned char *buffer, const rp
 #ifdef RANGECHECK
           if (pos>=gltexture->buffer_size)
           {
-            lprintf(LO_ERROR,"gld_AddPatchToTexture_UnTranslated pos>=size (%i >= %i)\n",pos+3,gltexture->buffer_size);
+            D_Msg(MSG_ERROR,
+              "gld_AddPatchToTexture_UnTranslated pos>=size (%i >= %i)\n",
+              pos + 3,
+              gltexture->buffer_size
+            );
             return;
           }
 #endif
@@ -453,7 +471,11 @@ void gld_AddPatchToTexture(GLTexture *gltexture, unsigned char *buffer, const rp
 #ifdef RANGECHECK
           if ((pos+3)>=gltexture->buffer_size)
           {
-            lprintf(LO_ERROR,"gld_AddPatchToTexture pos+3>=size (%i >= %i)\n",pos+3,gltexture->buffer_size);
+            D_Msg(MSG_ERROR,
+              "gld_AddPatchToTexture pos+3>=size (%i >= %i)\n",
+              pos + 3,
+              gltexture->buffer_size
+            );
             return;
           }
 #endif
@@ -496,7 +518,11 @@ static void gld_AddFlatToTexture(GLTexture *gltexture, unsigned char *buffer, co
 #ifdef RANGECHECK
         if (pos>=gltexture->buffer_size)
         {
-          lprintf(LO_ERROR,"gld_AddFlatToTexture pos>=size (%i >= %i)\n",pos,gltexture->buffer_size);
+          D_Msg(MSG_ERROR,
+            "gld_AddFlatToTexture pos>=size (%i >= %i)\n",
+            pos,
+            gltexture->buffer_size
+          );
           return;
         }
 #endif
@@ -513,7 +539,11 @@ static void gld_AddFlatToTexture(GLTexture *gltexture, unsigned char *buffer, co
 #ifdef RANGECHECK
         if ((pos+3)>=gltexture->buffer_size)
         {
-          lprintf(LO_ERROR,"gld_AddFlatToTexture pos+3>=size (%i >= %i)\n",pos+3,gltexture->buffer_size);
+          D_Msg(MSG_ERROR,
+            "gld_AddFlatToTexture pos+3>=size (%i >= %i)\n",
+            pos + 3,
+            gltexture->buffer_size
+          );
           return;
         }
 #endif
@@ -1647,7 +1677,7 @@ void gld_Precache(void)
     else
       sprintf(map, "E%iM%i", gameepisode, gamemap);
     
-    lprintf(LO_INFO, "gld_Precache: %s done in %d ms\n", map, SDL_GetTicks() - tics);
+    D_Msg(MSG_INFO, "gld_Precache: %s done in %d ms\n", map, SDL_GetTicks() - tics);
   }
 }
 

@@ -32,7 +32,6 @@
 #include "r_things.h"
 #include "r_fps.h"
 #include "v_video.h"
-#include "lprintf.h"
 #include "e6y.h"//e6y
 
 #define BASEYCENTER 100

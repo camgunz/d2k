@@ -28,7 +28,6 @@
 #include "d_main.h"
 #include "g_game.h"
 #include "g_save.h"
-#include "lprintf.h"
 #include "m_menu.h"
 #include "n_net.h"
 #include "p_ident.h"
@@ -402,7 +401,7 @@ dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
         return false;
       }
       else {
-        lprintf(LO_WARN, "G_DoLoadGame: Incompatible savegame\n");
+        D_Msg(MSG_WARN, "G_DoLoadGame: Incompatible savegame\n");
       }
     }
   }

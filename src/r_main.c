@@ -32,7 +32,6 @@
 #include "i_main.h"
 #include "i_smp.h"
 #include "i_system.h"
-#include "lprintf.h"
 #include "m_bbox.h"
 #include "p_user.h"
 #include "r_bsp.h"
@@ -893,20 +892,20 @@ void R_Init (void)
   // CPhipps - R_DrawColumn isn't constant anymore, so must
   //  initialise in code
   // current column draw function
-  lprintf(LO_INFO, "\nR_LoadTrigTables: ");
+  D_Msg(MSG_INFO, "\nR_LoadTrigTables: ");
   R_LoadTrigTables();
-  lprintf(LO_INFO, "\nR_InitData: ");
+  D_Msg(MSG_INFO, "\nR_InitData: ");
   R_InitData();
   R_SetViewSize(screenblocks);
-  lprintf(LO_INFO, "\nR_Init: R_InitPlanes ");
+  D_Msg(MSG_INFO, "\nR_Init: R_InitPlanes ");
   R_InitPlanes();
-  lprintf(LO_INFO, "R_InitLightTables ");
+  D_Msg(MSG_INFO, "R_InitLightTables ");
   R_InitLightTables();
-  lprintf(LO_INFO, "R_InitSkyMap ");
+  D_Msg(MSG_INFO, "R_InitSkyMap ");
   R_InitSkyMap();
-  lprintf(LO_INFO, "R_InitTranslationsTables ");
+  D_Msg(MSG_INFO, "R_InitTranslationsTables ");
   R_InitTranslationTables();
-  lprintf(LO_INFO, "R_InitPatches ");
+  D_Msg(MSG_INFO, "R_InitPatches ");
   R_InitPatches();
 }
 

@@ -33,7 +33,6 @@
 #include "r_plane.h"
 #include "r_main.h"
 #include "v_video.h"
-#include "lprintf.h"
 
 #define MAXVISPLANES 128    /* must be a power of 2 */
 

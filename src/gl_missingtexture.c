@@ -33,7 +33,6 @@
 #include "gl_opengl.h"
 #include "gl_intern.h"
 #include "i_system.h"
-#include "lprintf.h"
 #include "i_video.h"
 #include "hu_lib.h"
 #include "hu_stuff.h"
@@ -90,12 +89,10 @@ static void gld_PrepareSectorSpecialEffects(void)
         sectors[num].flags &= ~NO_BOTTOMTEXTURES;
       }
     }
-#ifdef DEBUG
     if (sectors[num].flags & NO_TOPTEXTURES)
-      lprintf(LO_INFO,"Sector %i has no toptextures\n",num);
+      D_Msg(MSG_DEBUG, "Sector %i has no toptextures\n", num);
     if (sectors[num].flags & NO_BOTTOMTEXTURES)
-      lprintf(LO_INFO,"Sector %i has no bottomtextures\n",num);
-#endif
+      D_Msg(MSG_DEBUG, "Sector %i has no bottomtextures\n", num);
   }
 }
 

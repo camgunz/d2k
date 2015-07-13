@@ -29,7 +29,6 @@
 #include "m_argv.h"
 #include "v_video.h"
 #include "g_game.h"
-#include "lprintf.h"
 
 #ifdef DJGPP
 #include <dpmi.h>
@@ -278,8 +277,9 @@ void Z_Init(void)
   if (!zonebase)
     I_Error("Z_Init: Failed on allocation of %lu bytes", (unsigned long)size);
 
-  lprintf(LO_INFO,"Z_Init : Allocated %lukb zone memory\n",
-      (long unsigned)size / 1000);
+  D_Msg(MSG_INFO, "Z_Init : Allocated %lukb zone memory\n",
+    (long unsigned)size / 1000
+  );
 
   // Align on cache boundary
 

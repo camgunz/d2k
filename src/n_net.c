@@ -34,7 +34,6 @@
 #include "g_game.h"
 #include "i_main.h"
 #include "i_system.h"
-#include "lprintf.h"
 #include "m_swap.h"
 #include "n_net.h"
 #include "n_main.h"

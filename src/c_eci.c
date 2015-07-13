@@ -27,7 +27,6 @@
 #include <gio/gunixsocketaddress.h>
 
 #include "c_main.h"
-#include "lprintf.h"
 #include "m_file.h"
 #include "x_main.h"
 

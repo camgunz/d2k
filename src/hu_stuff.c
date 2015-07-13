@@ -46,7 +46,6 @@
 #include "i_main.h"
 #include "i_system.h"
 #include "i_video.h"
-#include "lprintf.h"
 #include "m_file.h"
 #include "m_misc.h"
 #include "n_net.h"

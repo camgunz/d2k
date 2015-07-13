@@ -30,7 +30,6 @@
 #include "d_event.h"
 #include "d_main.h"
 #include "i_joy.h"
-#include "lprintf.h"
 
 int joyleft;
 int joyright;
@@ -45,7 +44,7 @@ static SDL_Joystick *joystick;
 
 #ifdef HAVE_SDL_JOYSTICKGETAXIS
 static void I_EndJoystick(void) {
-  lprintf(LO_DEBUG, "I_EndJoystick : closing joystick\n");
+  D_Msg(MSG_DEBUG, "I_EndJoystick : closing joystick\n");
 }
 #endif
 
@@ -103,9 +102,9 @@ void I_InitJoystick(void) {
   if (M_CheckParm("-nojoy") ||
       (usejoystick > num_joysticks) | (usejoystick < 0)) {
     if ((usejoystick > num_joysticks) || (usejoystick < 0))
-      lprintf(LO_WARN, "%sinvalid joystick %d\n", fname, usejoystick);
+      D_Msg(MSG_WARN, "%sinvalid joystick %d\n", fname, usejoystick);
     else
-      lprintf(LO_INFO, "%suser disabled\n", fname);
+      D_Msg(MSG_INFO, "%suser disabled\n", fname);
 
     return;
   }
@@ -113,13 +112,13 @@ void I_InitJoystick(void) {
   joystick = SDL_JoystickOpen(usejoystick - 1);
 
   if (!joystick) {
-    lprintf(LO_ERROR, "%serror opening joystick %s\n",
+    D_Msg(MSG_ERROR, "%serror opening joystick %s\n",
       fname, SDL_JoystickName(usejoystick - 1)
     );
   }
   else {
     atexit(I_EndJoystick);
-    lprintf(LO_INFO, "%sopened %s\n",
+    D_Msg(MSG_INFO, "%sopened %s\n",
       fname, SDL_JoystickName(usejoystick - 1)
     );
     joyup    =  32767;

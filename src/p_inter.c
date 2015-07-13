@@ -29,7 +29,6 @@
 #include "d_deh.h"  // Ty 03/22/98 - externalized strings
 #include "dstrings.h"
 #include "hu_tracers.h"
-#include "lprintf.h"
 #include "m_random.h"
 #include "n_net.h"
 #include "p_enemy.h"

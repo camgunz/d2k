@@ -65,7 +65,6 @@
 
 #include "protocol.h"
 #include "i_network.h"
-#include "lprintf.h"
 
 /* cph -
  * Each client will either use the IPv4 socket or the IPv6 socket

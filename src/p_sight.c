@@ -30,7 +30,6 @@
 #include "p_maputl.h"
 #include "p_setup.h"
 #include "m_bbox.h"
-#include "lprintf.h"
 #include "g_overflow.h"
 #include "e6y.h" //e6y
 
