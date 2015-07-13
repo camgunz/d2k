@@ -2,16 +2,9 @@
 
 ## Proto
 
-1. Messaging
-  - Modify external messaging API to only serve updates
-  - Convert console output to use the external messaging API
-
 1. Test ECI
 
 1. Clean up
-  - Use GLib for (v)snprintf if it doesn't exist
-  - `v_main.c` is empty.
-  - Figure out the `s_sndold/s_sndnew` thing
   - Remove old C HUD widget code
   - Remove autotools stuff
 
