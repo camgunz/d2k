@@ -136,14 +136,6 @@ void C_Init(void) {
 #endif
 }
 
-bool C_ECIAvailable(void) {
-#ifdef G_OS_UNIX
-  if (SERVER)
-    return true;
-#endif
-  return false;
-}
-
 void C_Reset(void) {
   if (!nodrawers)
     X_Call(X_GetState(), "console", "reset", 0, 0);

@@ -27,6 +27,7 @@
 #include <gio/gunixsocketaddress.h>
 
 #include "c_main.h"
+#include "n_net.h"
 #include "n_uds.h"
 #include "x_main.h"
 
@@ -47,7 +48,18 @@ static void eci_cleanup(void) {
   N_UDSFree(&uds);
 }
 
+bool eci_available(void) {
+#ifdef G_OS_UNIX
+  if (SERVER)
+    return true;
+#endif
+  return false;
+}
+
 void C_ECIInit(void) {
+  if (!eci_available())
+    return;
+
   memset(&uds, 0, sizeof(uds_t));
 
   N_UDSInit(
@@ -62,6 +74,9 @@ void C_ECIInit(void) {
 }
 
 void C_ECIService(void) {
+  if (!eci_available())
+    return;
+
   if (C_MessagesUpdated()) {
     GString *messages = C_GetMessages();
 
