@@ -26,7 +26,6 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
-#include "d_log.h"
 #include "d_player.h"
 #include "d_ticcmd.h"
 #include "e6y.h"

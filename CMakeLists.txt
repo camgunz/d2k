@@ -888,6 +888,7 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/n_peer.c
   ${CMAKE_SOURCE_DIR}/src/n_proto.c
   ${CMAKE_SOURCE_DIR}/src/n_state.c
+  ${CMAKE_SOURCE_DIR}/src/n_uds.c
   ${CMAKE_SOURCE_DIR}/src/p_ceilng.c
   ${CMAKE_SOURCE_DIR}/src/p_checksum.c
   ${CMAKE_SOURCE_DIR}/src/p_cmd.c

@@ -38,7 +38,7 @@ function HUD:new(h)
   h = h or {
     widgets = {},
     active = false,
-    font_description_text = 'Monkirta Pursuit NC 10'
+    font_description_text = 'Monkirta Pursuit NC 11'
   }
 
   setmetatable(h, self)

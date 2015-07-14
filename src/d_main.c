@@ -174,11 +174,6 @@ bool D_Responder(event_t *ev) {
   if (menuactive)
     return false;
 
-#ifdef ENABLE_OVERLAY
-  if (C_Active())
-    return false;
-#endif
-
   if (!menuactive) {                                           // phares
     if (ev->key == key_autorun) {                              //  |
       autorun = !autorun;                                      //  V
@@ -2298,12 +2293,6 @@ static void D_DoomMainSetup(void) {
 
   D_Msg(MSG_INFO, "ST_Init: Init status bar.\n");
   ST_Init();
-
-#ifdef ENABLE_OVERLAY
-  // CG 07/09/2014: Console
-  D_Msg(MSG_INFO, "C_Init: Init console.\n");
-  C_Init();
-#endif
 
   XAM_RegisterInterface();
   XC_RegisterInterface();

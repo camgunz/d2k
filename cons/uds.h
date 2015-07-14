@@ -1,8 +1,8 @@
 #ifndef UDS_H__
 #define UDS_H__
 
-#define CLIENT_SOCKET_NAME "client.sock"
-#define SERVER_SOCKET_NAME "server.sock"
+#define CLIENT_SOCKET_NAME "/tmp/d2k_client.sock"
+#define SERVER_SOCKET_NAME "/tmp/d2k_server.sock"
 
 struct uds_s;
 struct uds_peer_s;

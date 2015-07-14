@@ -21,12 +21,11 @@
 /*****************************************************************************/
 
 
-#ifndef C_EXTERN_H__
-#define C_EXTERN_H__
+#ifndef C_ECI_H__
+#define C_ECI_H__
 
 void C_ECIInit(void);
 void C_ECIService(void);
-void C_ECIWrite(const char *output);
 
 #endif
 

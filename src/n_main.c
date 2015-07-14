@@ -476,10 +476,6 @@ bool N_TryRunTics(void) {
   if ((tics_elapsed > 0) || needs_rendering)
     D_Display();
 
-#ifdef ENABLE_OVERLAY
-  C_Ticker();
-#endif
-
   return tics_elapsed > 0;
 }
 

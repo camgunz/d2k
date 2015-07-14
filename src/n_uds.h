@@ -21,83 +21,54 @@
 /*****************************************************************************/
 
 
-#include "z_zone.h"
+#ifndef N_UDS_H__
+#define N_UDS_H__
 
-#include <SDL.h>
+struct uds_s;
+struct uds_peer_s;
 
-#include "doomstat.h"
-#include "d_event.h"
-#include "am_map.h"
-#include "d_main.h"
-#include "g_game.h"
-#include "g_keys.h"
-#include "hu_stuff.h"
-#include "i_input.h"
-#include "m_menu.h"
-#include "m_misc.h"
-#include "st_stuff.h"
-#include "x_main.h"
-#include "xd_main.h"
+typedef void (*uds_handle_data)(struct uds_s *uds, struct uds_peer_s *peer);
+typedef void (*uds_handle_oob)(struct uds_s *uds);
 
-static int XD_HandleEvent(lua_State *L) {
-  event_t *ev = luaL_checkudata(L, -1, "InputEvent");
-  bool event_handled = D_Responder(ev);
+/* CG: TODO: Add error handler */
 
-  lua_pushboolean(L, event_handled);
+typedef struct uds_s {
+  gchar               *socket_path;
+  GSocket             *socket;
+  GIOCondition         condition;
+  GPtrArray           *peers;
+  GHashTable          *peer_directory;
+  GString             *input;
+  GString             *oob;
+  uds_handle_data      handle_data;
+  uds_handle_oob       handle_oob;
+  gboolean             waiting_for_connection;
+  gboolean             has_pending_data;
+  gboolean             service_manually;
+} uds_t;
 
-  return 1;
-}
+typedef struct uds_peer_s {
+  uds_t          *uds;
+  GSocketAddress *address;
+  GString        *output;
+  gboolean        disconnected;
+} uds_peer_t;
 
-#if 0
-static int XI_ResponderDispatch(lua_State *L) {
-  event_t *ev = (event_t *)luaL_checkudata(L, -1, "InputEvent");
+void        N_UDSInit(uds_t *uds, const gchar *socket_path,
+                                  uds_handle_data handle_data,
+                                  uds_handle_oob handle_oob,
+                                  gboolean service_manually);
+void        N_UDSFree(uds_t *uds);
+void        N_UDSConnect(uds_t *uds, const gchar *socket_path);
+void        N_UDSService(uds_t *uds);
+uds_peer_t* N_UDSGetPeer(uds_t *uds, const gchar *peer_address);
+GIOChannel* N_UDSGetIOChannel(uds_t *uds);
+void        N_UDSBroadcast(uds_t *uds, const gchar *data);
+gboolean    N_UDSSendTo(uds_t *uds, const gchar *peer_address,
+                                    const gchar *data);
+void        N_UDSPeerSendTo(uds_peer_t *peer, const gchar *data);
 
-  if (I_Responder(ev))
-    return 0;
-
-  if (nodrawers) {
-    G_Responder(ev);
-    return 0;
-  }
-
-  /*
-   * killough 2/22/98: add support for screenshot key:
-   * cph 2001/02/04: no need for this to be a gameaction, just do it
-   */
-  if ((ev->type == ev_key && ev->pressed) && ev->key == key_screenshot)
-    M_ScreenShot(); /* Don't eat the keypress. See sf bug #1843280. */
-
-  if (menuactive) {
-    M_Responder(ev);
-    return 0;
-  }
-
-  if (HU_Responder(ev))
-    return 0;
-
-  if (M_Responder(ev))
-    return 0;
-
-  if (D_Responder(ev))
-    return 0;
-
-  if (ST_Responder(ev))
-    return 0;
-
-  if (AM_Responder(ev))
-    return 0;
-
-  G_Responder(ev);
-
-  return 0;
-}
 #endif
-
-void XD_RegisterInterface(void) {
-  X_RegisterObjects("Main", 1,
-    "handle_event", X_FUNCTION, XD_HandleEvent
-  );
-}
 
 /* vi: set et ts=2 sw=2: */
 

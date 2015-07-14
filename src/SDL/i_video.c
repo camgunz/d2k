@@ -50,7 +50,6 @@
 #include "r_screenmultiply.h"
 #include "r_things.h"
 #include "st_stuff.h"
-#include "v_main.h"
 #include "v_video.h"
 #include "w_wad.h"
 #include "xd_main.h"

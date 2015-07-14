@@ -19,8 +19,3 @@ $CC -o uds_client uds.c uds_client.c $GIO_LIBS $GIO_CFLAGS $NCURSES_LIBS \
                                      $NCURSES_CFLAGS $LINEBREAK_LIBS \
                                      $LINEBREAK_CFLAGS $FLAGS
 
-rm -f wrap_lines
-$CC -o wrap_lines wrap_lines.c $GIO_LIBS $GIO_CFLAGS \
-                               $LINEBREAK_LIBS $LINEBREAK_CFLAGS \
-                               $FLAGS
-

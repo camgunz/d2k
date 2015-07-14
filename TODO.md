@@ -2,11 +2,12 @@
 
 ## Proto
 
-1. Test ECI
-
 1. Clean up
   - Remove old C HUD widget code
   - Remove autotools stuff
+  - Not using readline
+
+1. Console scrolling doesn't work?
 
 1. Reconnecting doesn't work
   - The current symptom is spinning around like crazy
@@ -15,7 +16,7 @@
 
 1. Disconnect clients if their sync TIC is too far in the past
 
-1. Have server fork and redirect its output to a log file
+1. Have server fork
 
 1. Fix bug where you can type the backtick into the console
 
@@ -33,6 +34,12 @@
   - `name`
 
 ## ZDDL
+
+- Add some way for scripting to tell whether it's a client or server (or not
+  networked).
+
+- Servers shouldn't `quit`, they should `shutdown`; also prevents accidentally
+  running `/quit` in the console instead of `:quit` and closing the server....
 
 - Adding lines to messages when full flickers
   - Probably have to check in `set_text` if the widget's full, and cancel

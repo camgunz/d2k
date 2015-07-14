@@ -292,9 +292,6 @@ void C_Write(const char *msg) {
   
   emsg = g_markup_escape_text(msg, -1);
 
-  if (C_ECIAvailable())
-    C_ECIWrite(emsg);
-
   if (!buffered_console_messages)
     buffered_console_messages = g_string_new(emsg);
   else
@@ -308,9 +305,6 @@ void C_Write(const char *msg) {
 void C_MWrite(const char *msg) {
   if (!msg)
     return;
-
-  if (C_ECIAvailable())
-    C_ECIWrite(msg);
 
   if (!buffered_console_messages)
     buffered_console_messages = g_string_new(msg);

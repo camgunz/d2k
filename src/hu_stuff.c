@@ -304,12 +304,6 @@ static void HU_SetLumpTrans(const char *name) {
     lumpinfo[lump].flags |= LUMP_CM2RGB;
 }
 
-#ifdef ENABLE_OVERLAY
-static void send_chat_message(chat_widget_t *cw) {
-  P_SendMessage(HU_ChatWidgetGetInputText(cw));
-}
-#endif
-
 //
 // HU_Init()
 //
@@ -321,10 +315,6 @@ void HU_Init(void) {
   int   i;
   int   j;
   char  buffer[9];
-#ifdef ENABLE_OVERLAY
-  hu_color_t white = {1.0f, 1.0f, 1.0f, 1.0f};
-  hu_color_t grey  = {0.0f, 0.0f, 0.0f, 0.9f};
-#endif
 
   shiftxform = english_shiftxform;
 
@@ -435,35 +425,6 @@ void HU_Init(void) {
   R_SetSpriteByName(&hu_font_hud[41], "SHELA0");
   R_SetSpriteByName(&hu_font_hud[42], "CELLA0");
   R_SetSpriteByName(&hu_font_hud[43], "ROCKA0");
-
-#ifdef ENABLE_OVERLAY
-  // create the message widget
-  // messages to player in upper-left of screen
-  w_messages = HU_MessageWidgetNewBuf(
-    NULL,
-    player_message_buffers[displayplayer],
-    HU_MSGX,
-    HU_MSGY,
-    REAL_SCREENWIDTH - HU_MSGX,
-    0,
-    0
-  );
-  HU_MessageWidgetSetHeightByLines(w_messages, HU_MSGHEIGHT);
-  HU_MessageWidgetSetRetractable(w_messages, true);
-
-  w_centermsg = HU_MessageWidgetNew(
-    NULL, HU_CENTERMSGX, HU_CENTERMSGY, REAL_SCREENWIDTH, 0, 0
-  );
-  HU_MessageWidgetSetHeightByLines(w_centermsg, 2);
-
-  w_chat = HU_ChatWidgetNew(
-    NULL, 0, 0, REAL_SCREENWIDTH, 0, send_chat_message
-  );
-  HU_ChatWidgetMoveToBottom(w_chat, REAL_SCREENHEIGHT);
-  HU_ChatWidgetSetHeightByLines(w_chat, 1);
-  HU_ChatWidgetSetFGColor(w_chat, white);
-  HU_ChatWidgetSetBGColor(w_chat, grey);
-#endif
 }
 
 //
@@ -505,25 +466,11 @@ void HU_Start(void) {
     HU_Stop();
 #endif
 
-#if ENABLE_OVERLAY
-  I_ResetRenderSurface();
-#endif
-
   plr = &players[displayplayer];        // killough 3/7/98
   custom_message_p = &custom_message[displayplayer];
   message_on = false;
   message_dontfuckwithme = false;
   message_nottobefuckedwith = false;
-
-#ifdef ENABLE_OVERLAY
-  HU_MessageWidgetSetBuf(w_messages, player_message_buffers[displayplayer]);
-  HU_MessageWidgetSetBuf(
-    w_centermsg, player_center_message_buffers[displayplayer]
-  );
-
-  HU_MessageWidgetRebuild(w_messages, NULL);
-  HU_MessageWidgetRebuild(w_centermsg, NULL);
-#endif
 
   //jff 2/16/98 added some HUD widgets
   // create the map title widget - map title display in lower left of automap
@@ -930,10 +877,6 @@ void HU_Start(void) {
 
   //jff 2/17/98 initialize kills/items/secret widget
   strcpy(hud_monsecstr, "STS ");
-
-#ifdef ENABLE_OVERLAY
-  HU_ChatWidgetClear(w_chat);
-#endif
 
   HU_init_crosshair();
 
