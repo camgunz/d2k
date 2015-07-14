@@ -2,12 +2,12 @@
 
 ## Proto
 
+1. Why is CRBRICK error happening (again?)
+
 1. Reconnecting doesn't work
   - The current symptom is spinning around like crazy
 
 1. Fonts look a little off in Windows
-
-1. Disconnect clients if their sync TIC is too far in the past
 
 1. Have server fork
 

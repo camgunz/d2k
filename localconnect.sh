@@ -7,7 +7,7 @@ HOST=127.0.0.1
 
 EXE="/home/charlie/code/d2k/cbuild/d2k"
 CMD="$EXE -net $HOST:$PORT"
-CMD="$EXE -nomouse -net $HOST:$PORT"
+CMD="$EXE -file freedm.wad -nomouse -net $HOST:$PORT"
 
 # gdb -ex "source gdbclient.txt" --args $CMD
 gdb -ex run --args $CMD

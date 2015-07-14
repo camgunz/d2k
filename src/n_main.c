@@ -65,6 +65,7 @@
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
 #define SERVER_SLEEP_TIMEOUT 1
+#define SERVER_MAX_PEER_LAG 70
 
 static int run_tics(int tic_count) {
   int saved_tic_count = tic_count;
@@ -433,6 +434,16 @@ void N_RunTic(void) {
   gametic++;
 }
 
+void SV_DisconnectLaggedClients(void) {
+  NETPEER_FOR_EACH(iter) {
+    if (!iter.np->sync.initialized)
+      continue;
+
+    if ((gametic - iter.np->sync.tic) > SERVER_MAX_PEER_LAG)
+      N_DisconnectPeer(iter.np->peernum);
+  }
+}
+
 bool N_TryRunTics(void) {
   static int tics_built = 0;
 
@@ -457,6 +468,7 @@ bool N_TryRunTics(void) {
     process_tics(tics_elapsed);
 
     SV_CleanupOldCommandsAndStates();
+    SV_DisconnectLaggedClients();
 
     if (CLIENT && gametic > 0 && CL_GetServerPeer() == NULL) {
       P_Echo(consoleplayer, "Server disconnected.");

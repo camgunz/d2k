@@ -128,6 +128,7 @@ static bool deserialize_toc(GArray *toc, unsigned char *data,
 
   if (toc->len > 0)
     g_array_remove_range(toc, 0, toc->len);
+
   g_array_set_size(toc, toc_size);
 
   for (unsigned int i = 0; i < toc_size; i++) {
