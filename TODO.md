@@ -2,13 +2,6 @@
 
 ## Proto
 
-1. Clean up
-  - Remove old C HUD widget code
-  - Remove autotools stuff
-  - Not using readline
-
-1. Console scrolling doesn't work?
-
 1. Reconnecting doesn't work
   - The current symptom is spinning around like crazy
 
@@ -32,6 +25,10 @@
   - `say`
   - `say_to/sayto`
   - `name`
+
+1. Clean up
+  - Remove old C HUD widget code
+  - Remove autotools stuff
 
 ## ZDDL
 

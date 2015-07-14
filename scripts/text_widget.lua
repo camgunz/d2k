@@ -333,12 +333,6 @@ function TextWidget:update_layout_if_needed()
   PangoCairo.update_layout(d2k.overlay.render_context, self:get_layout())
   self:check_offsets()
 
-  -- if self.get_external_text then
-  --   local layout_width, layout_height = self:get_layout():get_pixel_size()
-
-  --   self:set_height_in_pixels(layout_height)
-  -- end
-
   self.needs_updating = false
 end
 
@@ -436,6 +430,9 @@ function TextWidget:draw()
     ly = ly + text_height - layout_height
   end
 
+  lx = lx - self:get_horizontal_offset()
+  ly = ly - self:get_vertical_offset()
+
   if self.horizontal_alignment == TextWidget.ALIGN_CENTER then
     lx = (text_width / 2) - (layout_width / 2)
   elseif self.horizontal_alignment == TextWidget.ALIGN_RIGHT then
@@ -472,10 +469,6 @@ function TextWidget:draw()
       max_line = line_count
     end
   end
-
-  -- if self:get_name() == 'messages' then
-  --   print(string.format('Drawing messages at %s/%s', lx, ly))
-  -- end
 
   repeat
     local line_baseline_pixels = iter:get_baseline() / Pango.SCALE
@@ -747,16 +740,6 @@ function TextWidget:check_offsets()
     max_y = 0
   end
 
-  -- if self:get_name() == 'messages' then
-  --   print(string.format('check_offsets: min_y/max_y/vertical_offset/lh/th: %s, %s, %s, %s, %s',
-  --     min_y,
-  --     max_y,
-  --     self:get_vertical_offset(),
-  --     layout_height,
-  --     text_height
-  --   ))
-  -- end
-
   if self:get_horizontal_offset() < min_x then
     self.horizontal_offset = min_x
   end
@@ -771,14 +754,6 @@ function TextWidget:check_offsets()
 
   if self:get_vertical_offset() > max_y then
     self.vertical_offset = max_y
-  end
-
-  if self:get_name() == 'messages' then
-    print(string.format('check_offsets 2: min_y/max_y/vertical_offset: %s, %s, %s',
-      min_y,
-      max_y,
-      self:get_vertical_offset()
-    ))
   end
 end
 
