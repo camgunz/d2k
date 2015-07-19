@@ -35,6 +35,11 @@
  *            each others' logs.
  */
 
+/*
+ * CG [TODO]: Add an API to disable flushing a message channel's log file after
+ *            writing every message.
+ */
+
 typedef struct message_channel_s {
   bool  active;
   FILE *fobj;
@@ -89,8 +94,38 @@ void D_MsgDeactivate(msg_channel_e chan) {
   mc->fobj = NULL;
 }
 
+void D_VMsg(msg_channel_e chan, const char *fmt, va_list args) {
+  va_list log_args;
+  va_list console_args;
+  message_channel_t *mc;
+
+  if (!message_channels_initialized)
+    I_Error("D_VMsg: Messaging has not yet been initialized!");
+
+  if (chan >= MSG_MAX)
+    I_Error("D_VMsg: Invalid channel %d (valid: 0 - %d)", chan, MSG_MAX - 1);
+  
+  mc = &message_channels[chan];
+
+  if (!mc->active)
+    return;
+
+  va_copy(console_args, args);
+  C_MVPrintf(fmt, console_args);
+  va_end(console_args);
+
+  if (mc->fobj) {
+    va_copy(log_args, args);
+    vfprintf(mc->fobj, fmt, log_args);
+    va_end(log_args);
+    fflush(mc->fobj);
+  }
+}
+
 void D_Msg(msg_channel_e chan, const char *fmt, ...) {
-  va_list args, log_args, console_args;
+  va_list args;
+  va_list log_args;
+  va_list console_args;
   message_channel_t *mc;
 
   if (!message_channels_initialized)

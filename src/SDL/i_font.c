@@ -49,7 +49,7 @@ void I_LoadCustomFonts(void) {
 
   for (unsigned int i = 0; i < font_files->len; i++) {
     char *font_path = M_LocalizePath((char *)g_ptr_array_index(font_files, i));
-    int res = AddFontResourceEx(font_path, FR_PRIVATE, 0);
+    int res = AddFontResourceEx((LPCWSTR)font_path, FR_PRIVATE, 0);
 
     if (res == 0)
       wprintf(L"  Failed to load font %ls\n", font_path);

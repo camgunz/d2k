@@ -494,7 +494,7 @@ static void I_SetAffinityMask(void) {
     int ok = false;
 
     // Find the kernel interface DLL.
-    kernel32_dll = LoadLibrary("kernel32.dll");
+    kernel32_dll = LoadLibrary((LPCWSTR)"kernel32.dll");
 
     if (kernel32_dll) {
       // Find the SetProcessAffinityMask function.

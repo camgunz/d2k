@@ -714,11 +714,7 @@ int StepwiseSum(int value, int direction, int step, int minval, int maxval, int 
 }
 
 void I_vWarning(const char *message, va_list argList) {
-  char msg[1024];
-
-  vsnprintf(msg, sizeof(msg), message, argList);
-
-  D_Msg(MSG_ERROR, "%s\n", msg);
+  D_VMsg(MSG_WARN, message, argList);
 
 #ifdef _MSC_VER
   I_MessageBox(msg, PRB_MB_OK);
@@ -739,7 +735,10 @@ int I_MessageBox(const char *text, unsigned int type) {
 
   HWND current_hwnd = GetForegroundWindow();
   result = MessageBox(
-    GetDesktopWindow(), text, PACKAGE_NAME, type | MB_TASKMODAL | MB_TOPMOST
+    GetDesktopWindow(),
+    (LPCWSTR)text,
+    (LPCWSTR)PACKAGE_NAME,
+    type | MB_TASKMODAL | MB_TOPMOST
   );
   I_SwitchToWindow(current_hwnd);
 
@@ -1152,7 +1151,15 @@ int GetFullPath(const char* FileName, const char* ext, char *Buffer, size_t Buff
       break;
     }
 
-    Result = SearchPath(dir,FileName,ext,BufferLength,Buffer,&p);
+    Result = SearchPath(
+      (LPCWSTR)dir,
+      (LPCWSTR)FileName,
+      (LPCWSTR)ext,
+      BufferLength,
+      (LPWSTR)Buffer,
+      (WCHAR **)&p
+    );
+
     if (Result)
       return Result;
   }

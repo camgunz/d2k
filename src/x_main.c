@@ -523,7 +523,11 @@ char* X_ToString(lua_State *L, int index) {
     lua_rotate(L, index, -index);
   }
   else if (lua_isinteger(L, index)) {
-    g_string_printf(s, LUA_INTEGER_FMT, lua_tointeger(L, index));
+#ifdef _WIN32
+    g_string_printf(s, "%I64d", lua_tointeger(L, index));
+#else
+    g_string_printf(s, "%lld", lua_tointeger(L, index));
+#endif
   }
   else if (lua_islightuserdata(L, index)) {
     if (luaL_callmeta(L, index, "__tostring") &&

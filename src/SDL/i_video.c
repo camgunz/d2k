@@ -231,7 +231,6 @@ static void get_closest_resolution(int *width, int *height, int flags) {
   SDL_Rect **modes;
   int twidth;
   int theight;
-  int cwidth = 0;
   int cheight = 0;
   unsigned int closest = UINT_MAX;
   unsigned int dist;
@@ -262,14 +261,12 @@ static void get_closest_resolution(int *width, int *height, int flags) {
 
     if (dist < closest) {
       closest = dist;
-      cwidth = twidth;
       cheight = theight;
     }
   }
 
   if (closest != 4294967295u)
     *height = cheight;
-
 }
 
 void I_VideoUpdateFocus(void) {

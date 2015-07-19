@@ -119,8 +119,8 @@ Format switch blocks accordingly:
       break;
     }
 
-The `break` is indented at the same level as the `case` because ugliness
-ensures otherwise if one creates a block:
+The `break` is indented at the same level as the `case` because if one creates
+a block, ugliness ensues:
 
     switch (x) {
       case 0:
@@ -173,7 +173,7 @@ or:
       }
     }
 
-The preferred form is the 2nd form.
+The preferred form is the 1st form.
 
 Furthermore, if any of your if/else if/else blocks are not single-line blocks,
 use braces for all of them.  For example, instead of:
@@ -382,6 +382,10 @@ Declare static functions using lowercase and underscores, i.e.:
 
     static void try_harder(void);
 
+Put all static functions at the top of the file, before non-static functions,
+and order them so as to avoid the need for forward declarations.  If this is
+impossible, it's likely that you need to refactor.
+
 ## Non-Static Functions
 
 Declare non-static functions with their prefix, an underscore, then a capital
@@ -389,8 +393,8 @@ camel case name:
 
     void M_GoodFunctionName(void);
 
-This is, admittedly, not the norm for C, but the majority of the Doom source
-was originally written in this style, and when dealing with developers familiar
+Admittedly, this is not the norm for C, but the majority of the Doom source was
+originally written in this style, and when dealing with developers familiar
 with Doom, the function names (`P_SpawnMobj`, `P_Move`, etc.) are important
 touchstones of communication.  Therefore, editing for style is not entirely
 justified.  Besides, the prefix can hold useful information: M is for "misc" or
@@ -404,7 +408,7 @@ Don't `#include` headers in header files.  If you like, you can write a comment
 indicating what headers an including C source file should include before it.
 If you need something declared in a different header file, forward declare it.
 If you need to modify the original header file to do so, feel free to.  This
-cuts down on compilation time and avoids complicated dependency problems.
+cuts down on compilation time and avoids complicated dependency issues.
 
 ### Header Guards
 
@@ -476,4 +480,52 @@ not:
 The latter indicates that the function takes any number of of arguments
 (unknown arity), whereas the former indicates that the function takes no
 arguments (0 arity).  If you want to leave the arity unspecified use varargs.
+
+## Pre/Post-Increment/Decrement
+
+D2K is written in C, not C++, and the convention in C is to default to
+post-increment/decrement.  Do not use pre-increment/decrement unless it is
+vital to the algorithm.
+
+Do not tuck increments and decrements in other calls or array accesses.
+
+Bad:
+
+    *result = mf->data[mf->pos++];
+
+Good:
+
+    *result = mf->data[mf->pos];
+    mf->pos++;
+
+This is because it is hard to find them, especially when looking for problems.
+
+## Assignment Value
+
+In C, assignment returns a value, i.e.
+
+    if (!(super_struct = malloc(sizeof(super_struct_t)))
+      I_Error("Error allocating super struct\n");
+
+Do not use this.  I sympathize because it's often great shorthand, but in
+practice, it creates cluttered and hard to read conditionals.  Rarely does
+something like this fit on a single line.
+
+Do not use multiple assignment.  The extra couple lines saved are not worth the
+loss of readability or grep-ability.  If you are searching for `id = 0`, you
+won't find it if it's tucked in a `id = tag = 0`.
+
+## Checks against NULL/false/0
+
+When checking for `NULL`, `false`, or `0`, just use the bang (`if (!blah)`).  C
+compilers handle pointers specially in conditional checks, so there's no need
+to worry about conflating `NULL` with `0`, and `false` is defined in the
+standard to fail conditional checks as well.  Explicitly checking against the
+constant seems like good programming practice, especially because it can give
+some implicit type information (pointer vs. boolean vs. integer), but in
+general the shorthand is worth it, because the vast majority of these checks
+are error cases and you don't care what the tested operand is afterwards
+anyway.
+
+<!-- vi: set et ts=2 sw=2 tw=79: -->
 

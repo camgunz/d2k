@@ -47,6 +47,7 @@ bool D_MsgActive(msg_channel_e chan);
 void D_MsgActivate(msg_channel_e chan);
 bool D_MsgActivateWithFile(msg_channel_e chan, const char *file_path);
 void D_MsgDeactivate(msg_channel_e chan);
+void D_VMsg(msg_channel_e chan, const char *fmt, va_list args);
 void D_Msg(msg_channel_e chan, const char *fmt, ...) PRINTF_DECL(2, 3);
 bool D_LogToFile(msg_channel_e chan, const char *file_path);
 

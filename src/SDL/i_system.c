@@ -280,8 +280,11 @@ void I_SwitchToWindow(HWND hwnd) {
   typedef BOOL (WINAPI *TSwitchToThisWindow) (HWND wnd, BOOL restore);
   static TSwitchToThisWindow SwitchToThisWindow = NULL;
 
-  if (!SwitchToThisWindow)
-    SwitchToThisWindow = (TSwitchToThisWindow)GetProcAddress(GetModuleHandle("user32.dll"), "SwitchToThisWindow");
+  if (!SwitchToThisWindow) {
+    SwitchToThisWindow = (TSwitchToThisWindow)GetProcAddress(
+      GetModuleHandle((LPCWSTR)"user32.dll"), "SwitchToThisWindow"
+    );
+  }
 
   if (SwitchToThisWindow) {
     HWND hwndLastActive = GetLastActivePopup(hwnd);
@@ -323,7 +326,7 @@ const char* I_GetTempDir(void) {
   static char tmp_path[PATH_MAX] = {0};
 
   if (tmp_path[0] == 0)
-    GetTempPath(sizeof(tmp_path), tmp_path);
+    GetTempPath(sizeof(tmp_path), (LPWSTR)tmp_path);
 
   return tmp_path;
 }

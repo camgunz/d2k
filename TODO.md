@@ -2,6 +2,12 @@
 
 ## Proto
 
+1. Messaging
+  - `I_vWarning` and `I_Warning` are obsolete, replace with `D_Msg(MSG_WARN`
+
+1. Build a small pacman mirror for all dependencies
+  - Mirror source tarballs/etc.
+
 1. Why is CRBRICK error happening (again?)
 
 1. Reconnecting doesn't work
