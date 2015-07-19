@@ -78,5 +78,7 @@ void C_ECIService(void) {
     N_UDSService(&uds);
 }
 
+#endif
+
 /* vi: set et ts=2 sw=2: */
 
