@@ -18,11 +18,12 @@ cd "$BUILD_DIR"
 CPPFLAGS="-I${CROSSDEPS}/include" \
 LDFLAGS="-L${CROSSDEPS}/lib" \
 SDLDIR="$CROSSDEPS" \
-PKG_CONFIG_PATH="/usr/i686-w64-mingw32/lib/pkgconfig" \
+PKG_CONFIG_PATH="${CROSSDEPS}/lib/pkgconfig" \
 cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-         -DLGI_LIBRARIES="${CROSSDEPS}/usr/locallib/lua/5.3/lgi/corelgilua51.dll" \
+         -DLUA_LIBRARIES="${CROSSDEPS}/bin/lua53.dll" \
+         -DLGI_LIBRARIES="${CROSSDEPS}/lib/lua/5.3/lgi/corelgilua51.dll" \
          -DCMAKE_TOOLCHAIN_FILE=mingw32-toolchain.cmake
 
 clear
-make
+make VERBOSE=1 -j 5
 

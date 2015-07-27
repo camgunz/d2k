@@ -249,13 +249,13 @@ void X_RegisterObjects(const char *scope_name, unsigned int count, ...) {
         x_obj->as.light_userdata = va_arg(args, void *);
       break;
       case X_DECIMAL:
-        x_obj->as.decimal = va_arg(args, lua_Number);
+        x_obj->as.decimal = va_arg(args, double);
       break;
       case X_INTEGER:
-        x_obj->as.integer = va_arg(args, lua_Integer);
+        x_obj->as.integer = va_arg(args, int);
       break;
       case X_UINTEGER:
-        x_obj->as.uinteger = va_arg(args, lua_Unsigned);
+        x_obj->as.uinteger = va_arg(args, unsigned int);
       break;
       case X_STRING:
         x_obj->as.string = va_arg(args, char *);
@@ -273,13 +273,19 @@ void X_RegisterObjects(const char *scope_name, unsigned int count, ...) {
     did_not_exist = g_hash_table_insert(scope, name, x_obj);
 
     if (!did_not_exist) {
-      if (scope_name) {
+      if (scope_name && name) {
         I_Error("X_RegisterObjects: Object %s.%s already registered",
           scope_name, name
         );
       }
-      else {
+      else if (scope_name) {
+        I_Error("X_RegisterObjects: Scope %s already registered", scope_name);
+      }
+      else if (name) {
         I_Error("X_RegisterObjects: Object %s already registered", name);
+      }
+      else {
+        I_Error("X_RegisterObjects: Object already registered");
       }
     }
   }

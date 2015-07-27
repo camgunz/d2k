@@ -72,6 +72,7 @@ static int XD_MsgGetMessages(lua_State *L) {
 
   if (!messages->len) {
     lua_pushnil(L);
+
     return 1;
   }
 

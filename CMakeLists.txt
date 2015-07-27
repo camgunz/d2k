@@ -359,7 +359,7 @@ ENDIF()
 ################################################## Compiler: Warnings #########
 #==============================================================================
 IF(GCC_OR_CLANG)
-  TRY_C_COMPILER_FLAG(-Wall   FLAG_C_Wall)
+  TRY_C_COMPILER_FLAG(-Wall FLAG_C_Wall)
 ENDIF()
 
 IF(CMAKE_C_COMPILER_ID STREQUAL "Intel")
@@ -386,6 +386,8 @@ IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer")
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-optimize-sibling-calls")
     TRY_C_COMPILER_FLAG(-fno-omit-frame-pointer FLAG_C_NO_OMIT_FRAME_POINTER)
+  ELSEIF(GCC)
+    TRY_C_COMPILER_FLAG(-fstack-protector-strong FLAG_C_fstackprotector)
   ENDIF()
 ELSE()
   IF(GCC_OR_CLANG)
