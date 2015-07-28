@@ -500,6 +500,7 @@ char* X_ToString(lua_State *L, int index) {
       g_string_printf(s, "false");
   }
   else if (lua_iscfunction(L, index) || lua_isfunction(L, index)) {
+#if LUA_VERSION_NUM >= 503
     lua_Debug debug_info;
     int success;
 
@@ -527,14 +528,21 @@ char* X_ToString(lua_State *L, int index) {
       g_string_append_printf(s, "[unknown function name]");
 
     lua_rotate(L, index, -index);
-  }
-  else if (lua_isinteger(L, index)) {
-#ifdef _WIN32
-    g_string_printf(s, "%I64d", lua_tointeger(L, index));
 #else
-    g_string_printf(s, "%lld", lua_tointeger(L, index));
+    g_string_printf(s, "<function>");
 #endif
   }
+#if LUA_VERSION_NUM >= 503
+  else if (lua_isinteger(L, index)) {
+#ifdef _WIN32
+    // g_string_printf(s, "%I64d", lua_tointeger(L, index));
+    g_string_printf(s, LUA_INTEGER_FMT, lua_tointeger(L, index));
+#else
+    // g_string_printf(s, "%lld", lua_tointeger(L, index));
+    g_string_printf(s, LUA_INTEGER_FMT, lua_tointeger(L, index));
+#endif
+  }
+#endif
   else if (lua_islightuserdata(L, index)) {
     if (luaL_callmeta(L, index, "__tostring") &&
         lua_type(L, -1) == LUA_TSTRING) {
