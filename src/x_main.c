@@ -389,8 +389,13 @@ void X_ExposeInterfaces(lua_State *L) {
  *     license.
  */
 char* X_GetError(lua_State *L) {
-  char *error_message = strdup(lua_tostring(L, -1));
+  const char *lua_error_msg = lua_tostring(L, -1);
+  char *error_message;
 
+  if (!lua_error_msg)
+    return strdup("");
+
+  error_message = strdup(lua_error_msg);
   lua_pop(L, -1);
 
   return error_message;
@@ -452,13 +457,13 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
         lua_pushlightuserdata(L, va_arg(args, void *));
       break;
       case X_DECIMAL:
-        lua_pushnumber(L, va_arg(args, lua_Number));
+        lua_pushnumber(L, va_arg(args, double));
       break;
       case X_INTEGER:
-        lua_pushinteger(L, va_arg(args, lua_Integer));
+        lua_pushinteger(L, va_arg(args, int));
       break;
       case X_UINTEGER:
-        lua_pushinteger(L, va_arg(args, lua_Integer));
+        lua_pushinteger(L, va_arg(args, int));
       break;
       case X_STRING:
         lua_pushstring(L, va_arg(args, const char *));
