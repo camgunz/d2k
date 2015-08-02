@@ -28,7 +28,7 @@ local messages_widget = RetractableTextWidget.RetractableTextWidget:new({
   retractable = RetractableTextWidget.RETRACT_UP,
   retraction_time = 500,
   retraction_timeout = 2000,
-  font_description_text = 'Monkirta Pursuit NC 11'
+  font_description_text = 'Zeroes Two 12'
 })
 
 messages_widget:set_external_text_source(

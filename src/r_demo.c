@@ -1561,7 +1561,7 @@ int CheckAutoDemo(void) {
         result = true;
         if ((size_t)numwadfiles_required + 1 != waddata.numwadfiles &&
             patterndata.missed) {
-          I_Warning(
+          D_Msg(MSG_WARN,
             "DataAutoload: pattern #%i is used\n"
             "%s not all required files are found, may not work\n",
             patterndata.pattern_num, patterndata.missed
@@ -1587,74 +1587,6 @@ int CheckAutoDemo(void) {
 }
 
 const char *getwad_cmdline;
-
-#if 0
-dboolean D_TryGetWad(const char* name)
-{
-  dboolean result = false;
-
-  char wadname[PATH_MAX];
-  char* cmdline = NULL;
-  char* wadname_p = NULL;
-  char* msg = NULL;
-  const char* format =
-    "The necessary wad has not been found\n"
-    "Do you want to search for \'%s\'?\n\n"
-    "Command line:\n%s\n\n"
-    "Be careful! Execution of an unknown program is unsafe.";
-
-  if (!getwad_cmdline || !name || !(*getwad_cmdline) || !(*name))
-    return false;
-
-  strncpy(wadname, PathFindFileName(name), sizeof(wadname) - 4);
-  AddDefaultExtension(wadname, ".wad");
-
-  cmdline = malloc(strlen(getwad_cmdline) + strlen(wadname) + 2);
-  wadname_p = strstr(getwad_cmdline, "%wadname%");
-  if (wadname_p)
-  {
-    strncpy(cmdline, getwad_cmdline, wadname_p - getwad_cmdline);
-    strcat(cmdline, wadname);
-    strcat(cmdline, wadname_p + strlen("%wadname%"));
-  }
-  else
-  {
-    sprintf(cmdline, "%s %s", getwad_cmdline, wadname);
-  }
-
-  msg = malloc(strlen(format) + strlen(wadname) + strlen(cmdline));
-  sprintf(msg, format, wadname, cmdline);
-
-  if (PRB_IDYES == I_MessageBox(msg, PRB_MB_DEFBUTTON2 | PRB_MB_YESNO))
-  {
-    int ret;
-
-    D_Msg(MSG_INFO, "D_TryGetWad: Trying to get %s from somewhere\n", name);
-
-    ret = system(cmdline);
-
-    if (ret != 0)
-    {
-      D_Msg(MSG_ERROR, "D_TryGetWad: Execution failed - %s\n", strerror(errno));
-    }
-    else
-    {
-      char *str = I_FindFile(name, ".wad");
-      if (str)
-      {
-        D_Msg(MSG_INFO, "D_TryGetWad: Successfully received\n");
-        free(str);
-        result = true;
-      }
-    }
-  }
-
-  free(msg);
-  free(cmdline);
-
-  return result;
-}
-#endif
 
 /* vi: set et ts=2 sw=2: */
 

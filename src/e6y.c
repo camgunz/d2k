@@ -713,41 +713,6 @@ int StepwiseSum(int value, int direction, int step, int minval, int maxval, int 
   return newvalue;
 }
 
-void I_vWarning(const char *message, va_list argList) {
-  D_VMsg(MSG_WARN, message, argList);
-
-#ifdef _MSC_VER
-  I_MessageBox(msg, PRB_MB_OK);
-#endif
-}
-
-void I_Warning(const char *message, ...) {
-  va_list argptr;
-
-  va_start(argptr, message);
-  I_vWarning(message, argptr);
-  va_end(argptr);
-}
-
-int I_MessageBox(const char *text, unsigned int type) {
-#ifdef _WIN32
-  int result = PRB_IDCANCEL;
-
-  HWND current_hwnd = GetForegroundWindow();
-  result = MessageBox(
-    GetDesktopWindow(),
-    (LPCWSTR)text,
-    (LPCWSTR)PACKAGE_NAME,
-    type | MB_TASKMODAL | MB_TOPMOST
-  );
-  I_SwitchToWindow(current_hwnd);
-
-  return result;
-#endif
-
-  return PRB_IDCANCEL;
-}
-
 int stats_level;
 int numlevels = 0;
 int levels_max = 0;

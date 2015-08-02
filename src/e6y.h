@@ -318,9 +318,6 @@ int HU_DrawDemoProgress(int force);
 int GetFullPath(const char* FileName, const char* ext, char *Buffer, size_t BufferLength);
 #endif
 
-void I_vWarning(const char *message, va_list argList);
-void I_Warning(const char *message, ...);
-
 #define PRB_MB_OK                       0x00000000
 #define PRB_MB_OKCANCEL                 0x00000001
 #define PRB_MB_ABORTRETRYIGNORE         0x00000002
@@ -337,7 +334,6 @@ void I_Warning(const char *message, ...);
 #define PRB_IDIGNORE            5
 #define PRB_IDYES               6
 #define PRB_IDNO                7
-int I_MessageBox(const char* text, unsigned int type);
 
 dboolean SmoothEdges(unsigned char * buffer,int w, int h);
 

@@ -75,7 +75,7 @@ static void ShowOverflowWarning(overrun_list_t overflow, int fatal, const char *
       params);
     
     va_start(argptr, params);
-    I_vWarning(buffer, argptr);
+    D_VMsg(MSG_WARN, buffer, argptr);
     va_end(argptr);
   }
 }
