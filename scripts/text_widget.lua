@@ -556,7 +556,7 @@ function TextWidget:build_layout()
   self:set_current_render_context(d2k.overlay.render_context)
   self:set_layout(Pango.Layout.new(d2k.overlay.text_context))
   self:get_layout():set_font_description(Pango.FontDescription.from_string(
-    self:get_font_description_text()
+      self:get_font_description_text()
   ))
 end
 

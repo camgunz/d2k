@@ -75,9 +75,9 @@ function Overlay:build()
     error(string.format('Error creating overlay surface (%s)', cairo_error))
   end
 
-  self.render_context = Cairo.Context.create(self.render_surface)
+  local cairo_context = Cairo.Context.create(self.render_surface)
 
-  local status = self.render_context.status
+  local status = cairo_context.status
   if status == Cairo.Status.SUCCESS then
     local cairo_error = Cairo.Status.to_string(status)
     error(string.format('Error creating overlay surface (%s)', cairo_error))
@@ -89,16 +89,30 @@ function Overlay:build()
 
   d2k.Video.clear_overlay_needs_resetting()
 
-  local font_options = Cairo.FontOptions.create()
-  local font_map = PangoCairo.FontMap.get_default()
+  local pango_context = Pango.Context.new()
+  local pango_cairo_font_map = PangoCairo.FontMap.get_default()
+  local font_options = pango_context:get_font_options()
 
-  self.text_context = font_map:create_context()
-  self.text_context:set_resolution(96.0)
+  if (not font_options) then
+    pango_context:set_font_options(Cairo.FontOptions.create())
+    font_options = pango_context:get_font_options()
+  end
+
+  pango_context:set_font_map(pango_cairo_font_map)
+  pango_context:set_resolution(96.0)
+
+  font_options:set_antialias(Cairo.ANTIALIAS_BEST)
+  font_options:set_subpixel_order(Cairo.SUBPIXEL_ORDER_RGB)
   font_options:set_hint_style(Cairo.HINT_STYLE_FULL)
   font_options:set_hint_metrics(Cairo.HINT_METRICS_ON)
-  font_options:set_antialias(Cairo.ANTIALIAS_SUBPIXEL)
-  self.text_context:set_font_options(font_options)
-  self.render_context:update_context(self.text_context)
+
+  pango_context:set_font_options(font_options)
+  font_options = pango_context:get_font_options()
+
+  cairo_context:update_context(pango_context)
+
+  self.render_context = cairo_context
+  self.text_context = pango_context
 
   for i, l in pairs(self.build_listeners) do
     l.handle_overlay_built(self)
@@ -161,6 +175,14 @@ end
 
 function Overlay:add_destroy_listener(listener)
   table.insert(self.destroy_listeners, listener)
+end
+
+function Overlay:list_fonts()
+  local font_families = self.text_context:get_font_map():list_families()
+
+  for _, font_family in pairs(font_families) do
+    print(font_family:get_name())
+  end
 end
 
 return {Overlay = Overlay}

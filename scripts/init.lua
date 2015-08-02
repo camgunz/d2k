@@ -49,7 +49,9 @@ end
 if d2k.Video.is_enabled() then
   print('X_Init: Creating console')
   local Console = require('console')
-  d2k.console = Console.Console:new()
+  d2k.console = Console.Console:new({
+    font_description_text = 'ascsys,Arial Unicode MS,Unifont 11'
+  })
 end
 
 if d2k.hud then

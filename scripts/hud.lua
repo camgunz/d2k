@@ -38,7 +38,7 @@ function HUD:new(h)
   h = h or {
     widgets = {},
     active = false,
-    font_description_text = 'ascsys 11'
+    font_description_text = 'Noto Sans,Arial Unicode MS,Unifont 11'
   }
 
   setmetatable(h, self)

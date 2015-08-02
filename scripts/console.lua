@@ -54,6 +54,9 @@ function Console:new(c)
   c.scroll_rate = 0.0
   c.last_scroll_ms = 0
 
+  c.font_description_text = c.font_description_text or
+                            d2k.hud.font_description_text
+
   c.input = InputWidget.InputWidget:new({
     name = 'console input',
     x = 0,
@@ -69,6 +72,7 @@ function Console:new(c)
     vertical_alignment = TextWidget.ALIGN_CENTER,
     fg_color = c.fg_color or Console.FG_COLOR,
     bg_color = c.bg_color or Console.BG_COLOR,
+    font_description_text = c.font_description_text
   })
 
   c.output = TextWidget.TextWidget:new({
@@ -86,6 +90,7 @@ function Console:new(c)
     vertical_alignment = TextWidget.ALIGN_BOTTOM,
     fg_color = c.fg_color or Console.FG_COLOR,
     bg_color = c.bg_color or Console.BG_COLOR,
+    font_description_text = c.font_description_text,
     word_wrap = TextWidget.WRAP_WORD,
     use_markup = true,
     strip_ending_newline = true

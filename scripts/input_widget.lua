@@ -157,30 +157,16 @@ function InputWidget:set_text(text)
   end
 end
 
-function InputWidget:calculate_height()
-  local input_text = self:get_text()
-  local set_dummy_text = false
-
-  if #input_text == 0 then
-    self:get_layout():set_text('DOOM')
-    set_dummy_text = true
-  end
-
-  self:update_layout_if_needed()
-
-  local layout_width, layout_height = self:get_layout():get_pixel_size()
-
-  if set_dummy_text then
-    self:get_layout():set_text('')
-  end
-
-  return self:get_top_margin() + layout_height + self:get_bottom_margin()
-end
-
 function InputWidget:tick()
+  local font_metrics = d2k.overlay.text_context:get_metrics(
+    self:get_layout():get_font_description()
+  )
+  local ascent = font_metrics:get_ascent() / Pango.SCALE
+  local descent = font_metrics:get_descent() / Pango.SCALE
+  local line_height = ascent + descent
   local layout_width, layout_height = self:get_layout():get_pixel_size()
-  local new_height =
-    self:get_top_margin() + layout_height + self:get_bottom_margin()
+  local height = math.max(line_height, layout_height)
+  local new_height = self:get_top_margin() + height + self:get_bottom_margin()
   local ticks = d2k.System.get_ticks()
 
   if self:get_height_in_pixels() ~= new_height then
@@ -191,20 +177,28 @@ function InputWidget:tick()
     self:toggle_cursor_active()
     self:set_cursor_timer(ticks)
   end
+
+  self:update_layout_if_needed()
 end
 
 function InputWidget:draw()
   local cr = d2k.overlay.render_context
+  local font_metrics = d2k.overlay.text_context:get_metrics(
+    self:get_layout():get_font_description()
+  )
+  local ascent = font_metrics:get_ascent() / Pango.SCALE
+  local descent = font_metrics:get_descent() / Pango.SCALE
+  local line_height = ascent + descent
   local layout_width, layout_height = self:get_layout():get_pixel_size()
-  local lh_fracunit = 4.0
-  local lh_frac = layout_height / lh_fracunit
-  local lh_half = layout_height / 2.0
-  local prompt_width = self:get_height_in_pixels() / 2.0
-  local height = self:calculate_height()
+  local text_height = math.max(line_height, layout_height)
+  local height = self:get_top_margin() + text_height + self:get_bottom_margin()
+  local h_quart = text_height / 4.0
+  local h_half = h_quart * 2.0
   local fg_color = self:get_fg_color()
   local bg_color = self:get_bg_color()
   local cursor_color = self:get_cursor_color()
   local prompt_color = self:get_prompt_color()
+  local prompt_width = text_height
 
   cr:save()
 
@@ -239,15 +233,15 @@ function InputWidget:draw()
 
   cr:move_to(
     self:get_x() + self:get_left_margin(),
-    self:get_y() + self:get_top_margin() + lh_frac
+    self:get_y() + self:get_top_margin() + h_quart
   )
   cr:line_to(
-    self:get_x() + self:get_left_margin() + lh_half,
-    self:get_y() + self:get_top_margin() + lh_half
+    self:get_x() + self:get_left_margin() + h_half,
+    self:get_y() + self:get_top_margin() + h_half
   )
   cr:line_to(
     self:get_x() + self:get_left_margin(),
-    self:get_y() + self:get_top_margin() + (layout_height - lh_frac)
+    self:get_y() + self:get_top_margin() + h_half + h_quart
   )
 
   cr:set_line_width(InputWidget.PROMPT_THICKNESS)
@@ -258,21 +252,15 @@ function InputWidget:draw()
   local text_width = self:get_width_in_pixels() - (
     self:get_left_margin() + self:get_right_margin()
   )
-  local text_height = self:get_height_in_pixels() - (
-    self:get_top_margin() + self:get_bottom_margin()
-  )
-  local layout_width, layout_height = self:get_layout():get_pixel_size()
-  local layout_ink_extents, layout_logical_extents =
-    self:get_layout():get_pixel_extents()
 
   if self:get_vertical_alignment() == TextWidget.ALIGN_CENTER then
-    ly = ly + (text_height / 2) - (layout_height / 2)
+    ly = ly + (text_height / 2) - h_half
   elseif self:get_vertical_alignment() == TextWidget.ALIGN_BOTTOM then
-    ly = ly + text_height - layout_height
+    ly = ly + text_height - height
   end
 
   if self:get_horizontal_alignment() == TextWidget.ALIGN_CENTER then
-    lx = (text_width / 2) - (layout_width / 2)
+    lx = (text_width / 2) - h_half
   elseif self:get_horizontal_alignment() == TextWidget.ALIGN_RIGHT then
     lx = lx + text_width - layout_width
   end
@@ -292,7 +280,8 @@ function InputWidget:draw()
   cursor_pos.height = cursor_pos.height / Pango.SCALE
 
   if self:get_cursor_trailing() then
-    cursor_pos.x = cursor_pos.x + (cursor_pos.width * self:get_cursor_trailing())
+    cursor_pos.x =
+      cursor_pos.x + (cursor_pos.width * self:get_cursor_trailing())
   end
 
   if cursor_pos.x > (text_width - prompt_width) + self:get_scroll_offset() then
@@ -319,6 +308,10 @@ function InputWidget:draw()
     cr:set_source_rgba(
       cursor_color[1], cursor_color[2], cursor_color[3], cursor_color[4]
     )
+
+    cursor_pos.width  = math.max(cursor_pos.width, 4)
+    cursor_pos.height = math.max(cursor_pos.height, text_height)
+    cursor_pos.x      = math.max(cursor_pos.x, cursor_pos.width / 2)
 
     cr:move_to(lx + cursor_pos.x, ly + cursor_pos.y)
     cr:line_to(lx + cursor_pos.x, ly + cursor_pos.y + cursor_pos.height)

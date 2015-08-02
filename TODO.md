@@ -2,10 +2,6 @@
 
 ## Proto
 
-1. Messaging
-  - `I_vWarning` and `I_Warning` are obsolete, replace with `D_Msg(MSG_WARN`
-  - No messages in singleplayer again
-
 1. Build a small pacman mirror for all dependencies
   - Mirror source tarballs/etc.
 
@@ -13,8 +9,6 @@
 
 1. Reconnecting doesn't work
   - The current symptom is spinning around like crazy
-
-1. Fonts look a little off in Windows
 
 1. Have server fork
 

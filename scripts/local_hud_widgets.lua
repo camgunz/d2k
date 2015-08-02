@@ -12,7 +12,7 @@ local RetractableTextWidget = require('retractable_text_widget')
 local messages_widget = RetractableTextWidget.RetractableTextWidget:new({
   name = 'messages',
   z_index = 1,
-  top_margin = 0,
+  top_margin = 4,
   bottom_margin = 0,
   left_margin = 8,
   right_margin = 8,
@@ -24,11 +24,11 @@ local messages_widget = RetractableTextWidget.RetractableTextWidget:new({
   outline_width = 1,
   line_height = 4,
   use_markup = true,
+  font_description_text = 'Zeroes Two 12',
   strip_ending_newline = true,
   retractable = RetractableTextWidget.RETRACT_UP,
   retraction_time = 500,
   retraction_timeout = 2000,
-  font_description_text = 'Zeroes Two 12'
 })
 
 messages_widget:set_external_text_source(
