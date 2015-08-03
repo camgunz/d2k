@@ -2,8 +2,9 @@
 
 ## Proto
 
-1. Build a small pacman mirror for all dependencies
-  - Mirror source tarballs/etc.
+1. Switching to OpenGL mode breaks the overlay
+
+1. The overlay isn't flushed properly in OpenGL mode
 
 1. Why is CRBRICK error happening (again?)
 
@@ -26,6 +27,10 @@
   - `say`
   - `say_to/sayto`
   - `name`
+
+1. Update/Mirror dependencies somewhere
+  - It would be really cool to use the pacman/pkgbuild system and mirror source
+    also
 
 1. Clean up
   - Remove old C HUD widget code

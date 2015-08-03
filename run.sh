@@ -1,17 +1,19 @@
 #!/bin/sh
 
-# export LIBGL_ALWAYS_SOFTWARE=1
-CMD="cbuild/d2k -skill 5 -warp 1 -nomonsters -nomouse"
+BASE_DIR="$(pwd)"
+
+CMD="${BASE_DIR}/cbuild/d2k -skill 5 -warp 1 -nomonsters -nomouse"
 
 mkdir -p ~/.d2k/scripts
-cp scripts/* ~/.d2k/scripts/
+mkdir -p ~/.d2k/fonts
 
-# ltrace $CMD 2> ltrace.log
+cp "${BASE_DIR}/scripts/*" "~/.d2k/scripts/"
+cp "${BASE_DIR}/fonts/*" "~/.d2k/fonts/"
+
+# gdb -ex 'source gdbserver.txt' --args $CMD
+gdb -ex run --args $CMD
 # gdb --args $CMD
-# gdb -ex run --args $CMD
 # CPUPROFILE=cpu.prof $CMD
-# cbuild/d2k -skill 4 -warp 1 -file sunder.wad -warp 6
-# cbuild/d2k -playdemo DEMO1
-$CMD
-# cbuild/d2k -playdemo DEMO1
+# valgrind --leak-check=full --show-leak-kinds=all $CMD
+# $CMD
 

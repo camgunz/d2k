@@ -6,7 +6,7 @@ BASE_DIR="`pwd`"
 CROSSDEPS="${BASE_DIR}/crossdeps"
 CROSSLIBS="${CROSSDEPS}/bin"
 BUILD_DIR="crossbuild"
-BUILD_TYPE="Debug"
+BUILD_TYPE="Release"
 
 if [ ! -d "$BUILD_DIR" ]
 then
@@ -21,9 +21,10 @@ SDLDIR="$CROSSDEPS" \
 PKG_CONFIG_PATH="${CROSSDEPS}/lib/pkgconfig" \
 cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
          -DLUA_LIBRARIES="${CROSSDEPS}/bin/lua52.dll" \
-         -DLGI_LIBRARIES="${CROSSDEPS}/usr/local/lib/lua/5.2/lgi/corelgilua51.dll" \
+         -DLGI_LIBRARIES="${CROSSDEPS}/lib/lua/5.2/lgi/corelgilua51.dll" \
          -DCMAKE_TOOLCHAIN_FILE=mingw32-toolchain.cmake
 
 clear
-make VERBOSE=1 -j 5
+
+make
 
