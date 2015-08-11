@@ -50,70 +50,56 @@
 
 #define MAX_ADDRESS_LENGTH 500
 
-#define to_byte(x)  ((byte)((x) & 0xFF))
-#define to_short(x) ((unsigned short)((x) & 0xFFFF))
-#define string_to_byte(x) (to_byte(strtol(x, NULL, 10)))
-#define string_to_short(x) (to_short(strtol(x, NULL, 10)))
+#define to_uchar(x)  ((byte)((x) & 0xFF))
+#define to_ushort(x) ((unsigned short)((x) & 0xFFFF))
+#define string_to_uchar(x) (to_uchar(strtol(x, NULL, 10)))
+#define string_to_ushort(x) (to_ushort(strtol(x, NULL, 10)))
 
-static ENetHost    *net_host = NULL;
-static const char  *previous_host = NULL;
-static short        previous_port = 0;
+static ENetHost   *net_host = NULL;
+static const char *previous_host = NULL;
+static uint16_t    previous_port = 0;
 
-dboolean        netgame   = false;
-dboolean        solonet   = false;
-dboolean        netserver = false;
+bool            netgame   = false;
+bool            solonet   = false;
+bool            netserver = false;
 net_sync_type_e netsync   = NET_SYNC_TYPE_NONE;
 
-size_t N_IPToString(int address, char *buffer) {
+size_t N_IPToString(uint32_t address, char *buffer) {
   return snprintf(buffer, 16, "%u.%u.%u.%u",
-    to_byte(address >> 24),
-    to_byte(address >> 16),
-    to_byte(address >>  8),
-    to_byte(address      )
+    to_uchar(address >> 24),
+    to_uchar(address >> 16),
+    to_uchar(address >>  8),
+    to_uchar(address      )
   );
 }
 
-const char* N_IPToConstString(int address) {
+const char* N_IPToConstString(uint32_t address) {
   static char buf[16];
 
-  snprintf(buf, 16, "%u.%u.%u.%u",
-    to_byte(address >> 24),
-    to_byte(address >> 16),
-    to_byte(address >>  8),
-    to_byte(address      )
-  );
+  N_IPToString(address, &buf[0]);
 
-  return buf;
+  return &buf[0];
 }
 
-int N_IPToInt(const char *address) {
-  int i;
+bool N_IPToInt(const char *address_string, uint32_t *address_int) {
   int ip = 0;
-  char addr[16];
-  char *p = NULL;
-  char *octets[4];
-  size_t address_length = strlen(address);
+  int arg_count;
+  unsigned char *octets[4];
 
-  if (address_length > 16 || address_length < 7) {
-    P_Printf(consoleplayer, "Malformed IP address %s.\n", address);
-    return 0;
+  arg_count = sscanf(address_string, "%hhu.%hhu.%hhu.%hhu",
+    &octets[0],
+    &octets[1],
+    &octets[2],
+    &octets[3]
+  );
+
+  if (arg_count != 4) {
+    D_Msg(MSG_ERROR, "Malformed IP address %s.\n", address_string);
+    return false;
   }
 
-  strncpy(addr, address, 16);
-
-  octets[0] = addr;
-  for (i = 1; i < 4; i++) {
-    if ((p = strchr(octets[i - 1], '.')) == NULL) {
-      P_Printf(consoleplayer, "Malformed IP address %s.\n", address);
-      return 0;
-    }
-
-    *p = '\0';
-    octets[i] = p + 1;
-  }
-
-  for (i = 0; i < 4; i++)
-    ip += string_to_byte(octets[i]) << (8 * (3 - i));
+  for (int i = 0; i < 4; i++)
+    ip += string_to_uchar(octets[i]) << (8 * (3 - i));
 
   return ip;
 }
@@ -122,7 +108,7 @@ size_t N_GetHostFromAddressString(const char *address, char **host) {
   char *sep = NULL;
   size_t host_length = 0;
   size_t address_length = strlen(address);
-  
+
   if (address_length > MAX_ADDRESS_LENGTH)
     return 0;
 
@@ -150,7 +136,7 @@ size_t N_GetHostFromAddressString(const char *address, char **host) {
   return host_length;
 }
 
-dboolean N_GetPortFromAddressString(const char *address, uint16_t *port) {
+bool N_GetPortFromAddressString(const char *address, uint16_t *port) {
   char *p = NULL;
 
   *port = 0;
@@ -159,7 +145,7 @@ dboolean N_GetPortFromAddressString(const char *address, uint16_t *port) {
     return false;
 
   if ((p = strchr(address, ':')) && strlen(p++)) {
-    *port = string_to_short(p);
+    *port = string_to_ushort(p);
     return true;
   }
 
@@ -209,7 +195,7 @@ size_t N_ParseAddressString(const char *address, char **host, uint16_t *port) {
   }
 
   if (sep && strlen(++sep))
-    *port = string_to_short(sep);
+    *port = string_to_ushort(sep);
 
   return host_length;
 }
@@ -231,7 +217,7 @@ void N_Disconnect(void) {
     return;
 
   NETPEER_FOR_EACH(iter) {
-    P_Printf(consoleplayer, "Disconnecting peer %d\n", iter.np->peernum);
+    D_Msg(MSG_INFO, "Disconnecting peer %d\n", iter.np->peernum);
     enet_peer_disconnect(iter.np->peer, 0);
   }
 
@@ -247,7 +233,7 @@ void N_Disconnect(void) {
       int peernum = N_PeerForPeer(net_event.peer);
 
       if (!peernum) {
-        P_Printf(consoleplayer,
+        D_Msg(MSG_WARN,
           "N_Disconnect: Received network event from unknown peer %s:%u\n",
           N_IPToConstString(ENET_NET_TO_HOST_32(net_event.peer->address.host)),
           net_event.peer->address.port
@@ -260,7 +246,7 @@ void N_Disconnect(void) {
 
     }
     else if (res < 0) {
-      P_Echo(consoleplayer, "N_Disconnect: Unknown error disconnecting");
+      D_Msg(MSG_WARN, "N_Disconnect: Unknown error disconnecting\n");
       break;
     }
     else if (res == 0) {
@@ -280,13 +266,13 @@ void N_Disconnect(void) {
 }
 
 void N_Shutdown(void) {
-  P_Echo(consoleplayer, "N_Shutdown: shutting down");
+  D_Msg(MSG_INFO, "N_Shutdown: shutting down\n");
   N_Disconnect();
 
   enet_deinitialize();
 }
 
-dboolean N_Listen(const char *host, unsigned short port) {
+bool N_Listen(const char *host, uint16_t port) {
   ENetAddress address;
 
   if (host != NULL)
@@ -304,7 +290,7 @@ dboolean N_Listen(const char *host, unsigned short port) {
   );
   
   if (net_host == NULL) {
-    P_Printf(consoleplayer, "N_Listen: Error creating host on %s:%u\n",
+    D_Msg(MSG_ERROR, "N_Listen: Error creating host on %s:%u\n",
       host, port
     );
     return false;
@@ -312,7 +298,7 @@ dboolean N_Listen(const char *host, unsigned short port) {
 
 #if USE_RANGE_CODER
   if (enet_host_compress_with_range_coder(net_host) < 0) {
-    P_Echo(consoleplayer, "N_Listen: Error activating range coder");
+    D_Msg(MSG_ERROR, "N_Listen: Error activating range coder\n");
     return false;
   }
 #endif
@@ -320,7 +306,7 @@ dboolean N_Listen(const char *host, unsigned short port) {
   return true;
 }
 
-dboolean N_Connect(const char *host, unsigned short port) {
+bool N_Connect(const char *host, uint16_t port) {
   int peernum = -1;
   ENetPeer *server = NULL;
   ENetAddress address;
@@ -328,13 +314,13 @@ dboolean N_Connect(const char *host, unsigned short port) {
   net_host = enet_host_create(NULL, 1, NET_CHANNEL_MAX, 0, 0);
 
   if (net_host == NULL) {
-    P_Echo(consoleplayer, "N_Connect: Error creating host");
+    D_Msg(MSG_ERROR, "N_Connect: Error creating host\n");
     return false;
   }
 
 #if USE_RANGE_CODER
   if (enet_host_compress_with_range_coder(net_host) < 0) {
-    P_Echo(consoleplayer, "N_Connect: Error activating range coder");
+    D_Msg(MSG_ERROR, "N_Connect: Error activating range coder\n");
     return false;
   }
 #endif
@@ -351,7 +337,7 @@ dboolean N_Connect(const char *host, unsigned short port) {
   server = enet_host_connect(net_host, &address, NET_CHANNEL_MAX, 0);
 
   if (server == NULL) {
-    P_Echo(consoleplayer, "N_Connect: Error connecting to server");
+    D_Msg(MSG_ERROR, "N_Connect: Error connecting to server\n");
     N_Disconnect();
     return false;
   }
@@ -364,11 +350,11 @@ dboolean N_Connect(const char *host, unsigned short port) {
   return true;
 }
 
-dboolean N_Reconnect(void) {
+bool N_Reconnect(void) {
   if ((previous_host != NULL) && (previous_port != 0))
     return N_Connect(previous_host, previous_port);
 
-  P_Echo(consoleplayer, "No previous connection");
+  D_Msg(MSG_INFO, "No previous connection\n");
   return false;
 }
 
@@ -378,10 +364,10 @@ void N_WaitForPacket(int ms) {
   enet_host_service(net_host, &net_event, ms);
 }
 
-dboolean N_ConnectToServer(const char *address) {
+bool N_ConnectToServer(const char *address) {
   char *host = NULL;
-  unsigned short port = 0;
-  dboolean connected = false;
+  uint16_t port = 0;
+  bool connected = false;
 
   N_ParseAddressString(address, &host, &port);
 
@@ -413,9 +399,7 @@ void N_DisconnectPeer(int peernum) {
   if (np == NULL)
     I_Error("N_DisconnectPeer: Invalid peer %d.\n", peernum);
 
-  P_Printf(consoleplayer, "N_DisconnectPeer: Disconnecting peer %d\n",
-    peernum
-  );
+  D_Msg(MSG_INFO, "N_DisconnectPeer: Disconnecting peer %d\n", peernum);
   N_PeerSetDisconnected(peernum);
 }
 
@@ -425,9 +409,7 @@ void N_DisconnectPlayer(short playernum) {
   if (peernum == -1)
     I_Error("N_DisconnectPlayer: Invalid player %d.\n", playernum);
   
-  P_Printf(consoleplayer, "N_DisconnectPlayer: Disconnecting player %d\n",
-    playernum
-  );
+  D_Msg(MSG_INFO, "N_DisconnectPlayer: Disconnecting player %d\n", playernum);
   N_DisconnectPeer(peernum);
 }
 
@@ -446,7 +428,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     np = iter.np;
 
     if (N_PeerCheckTimeout(np->peernum)) {
-      P_Printf(consoleplayer, "Peer %s:%u timed out.\n",
+      D_Msg(MSG_INFO, "Peer %s:%u timed out.\n",
         N_IPToConstString(ENET_NET_TO_HOST_32(np->peer->address.host)),
         np->peer->address.port
       );
@@ -473,8 +455,8 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       break;
 
     if (status < 0) {
-      P_Echo(consoleplayer,
-        "N_ServiceNetwork: Unknown error occurred while servicing host"
+      D_Msg(MSG_INFO,
+        "N_ServiceNetwork: Unknown error occurred while servicing host\n"
       );
       break;
     }
@@ -485,7 +467,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
         np = N_PeerGet(peernum);
 
         if (np == NULL) {
-          P_Echo(consoleplayer, "N_ServiceNetwork: Getting new peer failed");
+          D_Msg(MSG_ERROR, "N_ServiceNetwork: Getting new peer failed\n");
           continue;
         }
 
@@ -506,9 +488,9 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
         np = CL_GetServerPeer();
 
         if (np == NULL) {
-          P_Echo(consoleplayer,
+          D_Msg(MSG_WARN,
             "N_ServiceNetwork: Received a 'connect' event but no connection "
-            "was requested."
+            "was requested.\n"
           );
           continue;
         }
@@ -518,7 +500,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     }
     else if (net_event.type == ENET_EVENT_TYPE_DISCONNECT) {
       if (!(peernum = N_PeerForPeer(net_event.peer))) {
-        P_Printf(consoleplayer,
+        D_Msg(MSG_WARN,
           "N_ServiceNetwork: Received 'disconnect' event from unknown "
           "peer %s:%u.\n",
           N_IPToConstString(ENET_NET_TO_HOST_32(net_event.peer->address.host)),
@@ -535,7 +517,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     }
     else if (net_event.type == ENET_EVENT_TYPE_RECEIVE) {
       if (!(peernum = N_PeerForPeer(net_event.peer))) {
-        P_Printf(consoleplayer,
+        D_Msg(MSG_WARN,
           "N_ServiceNetwork: Received 'packet' event from unknown peer %s:%u.\n",
           N_IPToConstString(ENET_NET_TO_HOST_32(net_event.peer->address.host)),
           net_event.peer->address.port
@@ -545,8 +527,8 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       netpeer_t *np = N_PeerGet(peernum);
 
       if (np == NULL) {
-        P_Echo(consoleplayer,
-          "N_ServiceNetwork: Error getting peer that just sent data"
+        D_Msg(MSG_ERROR,
+          "N_ServiceNetwork: Error getting peer that just sent data\n"
         );
         continue;
       }
@@ -559,7 +541,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       enet_packet_destroy(net_event.packet);
     }
     else if (net_event.type != ENET_EVENT_TYPE_NONE) {
-      P_Printf(consoleplayer,
+      D_Msg(MSG_WARN,
         "N_ServiceNetwork: Received unknown event from peer %s:%u.\n",
         N_IPToConstString(ENET_NET_TO_HOST_32(net_event.peer->address.host)),
         net_event.peer->address.port
