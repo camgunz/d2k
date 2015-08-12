@@ -50,6 +50,7 @@
 #include "r_screenmultiply.h"
 #include "r_things.h"
 #include "st_stuff.h"
+#include "v_overlay.h"
 #include "v_video.h"
 #include "w_wad.h"
 #include "xd_main.h"
@@ -63,12 +64,7 @@ extern GLuint* last_glTexID;
 #define MAX_RESOLUTIONS_COUNT 128
 #define NO_PALETTE_CHANGE 1000
 
-/* CG: FIXME: This is duplicated in overlay.lua */
-#define OVERLAY_FORMAT CAIRO_FORMAT_RGB24
-
 static int newpal = 0;
-
-overlay_t overlay;
 
 const char *screen_resolutions_list[MAX_RESOLUTIONS_COUNT] = {NULL};
 const char *screen_resolution_lowest;
@@ -109,15 +105,6 @@ int use_gl_surface;
 int leds_always_off = 0; // Expected by m_misc, not relevant
 
 int I_GetModeFromString(const char *modestr);
-
-static void initialize_overlay(void) {
-  overlay.pixels          = NULL;
-  overlay.owns_pixels     = false;
-#ifdef GL_DOOM
-  overlay.tex_id          = 0;
-#endif
-  overlay.needs_resetting = false;
-}
 
 void get_screen_resolution(void) {
   int width, height;
@@ -329,8 +316,8 @@ void I_FinishUpdate(void) {
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
-    if (!overlay.needs_resetting) {
-      glBindTexture(GL_TEXTURE_2D, overlay.tex_id);
+    if (!V_OverlayNeedsResetting()) {
+      glBindTexture(GL_TEXTURE_2D, V_OverlayGetTexID());
       glTexImage2D(
         GL_TEXTURE_2D,
         0,
@@ -340,7 +327,7 @@ void I_FinishUpdate(void) {
         0,
         GL_BGRA,
         GL_UNSIGNED_BYTE,
-        overlay.pixels
+        V_OverlayGetPixels()
       );
       glBegin(GL_TRIANGLE_STRIP);
       glTexCoord2f(0.0f, 0.0f);
@@ -353,7 +340,7 @@ void I_FinishUpdate(void) {
       glVertex2f(REAL_SCREENWIDTH, REAL_SCREENHEIGHT);
       glEnd();
 
-      last_glTexID = &overlay.tex_id;
+      last_glTexID = V_OverlayGetTexIDPointer();
     }
 
     gld_Finish();
@@ -705,7 +692,7 @@ void I_InitGraphics(void) {
 
   D_Msg(MSG_INFO, "I_InitGraphics: %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
 
-  initialize_overlay();
+  V_OverlayInit();
 
   I_UpdateVideoMode();
 
@@ -939,6 +926,8 @@ void I_UpdateVideoMode(void) {
   upload_new_palette(0, true);
 #endif
 
+  V_OverlayDestroyPixels();
+  V_OverlayBuildPixels();
   ST_SetResolution();
   AM_SetResolution();
 
@@ -990,7 +979,7 @@ void I_UpdateVideoMode(void) {
     deh_changeCompTranslucency();
   }
 #endif
-  overlay.needs_resetting = true;
+  V_OverlaySetNeedsResetting();
 }
 
 #if 0

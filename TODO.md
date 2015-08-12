@@ -2,8 +2,6 @@
 
 ## Proto
 
-1. Switching to OpenGL mode breaks the overlay
-
 1. Why is CRBRICK error happening (again?)
 
 1. Reconnecting doesn't work

@@ -34,6 +34,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "i_video.h"
+#include "v_overlay.h"
 #include "v_video.h"
 #include "x_main.h"
 
@@ -79,81 +80,26 @@ static int XV_UsingOpenGL(lua_State *L) {
 }
 
 static int XV_BuildOverlayPixels(lua_State *L) {
-  if (overlay.pixels)
-    I_Error("build_overlay_pixels: pixels already built");
-
-#ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL) {
-    if (overlay.pixels != NULL)
-      free(overlay.pixels);
-
-    overlay.pixels = calloc(SCREENWIDTH * SCREENHEIGHT, sizeof(uint32_t));
-
-    if (overlay.pixels == NULL)
-      I_Error("build_overlay_pixels: Allocating overlay pixels failed");
-
-    overlay.owns_pixels = true;
-  }
-  else if (use_gl_surface) {
-    overlay.pixels = vid_8ingl.screen->pixels;
-    overlay.owns_pixels = false;
-  }
-  else {
-    overlay.pixels = screens[0].data;
-    overlay.owns_pixels = false;
-  }
-#else
-  overlay.pixels = screens[0].data;
-  overlay.owns_pixels = false;
-#endif
+  V_OverlayBuildPixels();
 
   return 0;
 }
 
 static int XV_GetOverlayPixels(lua_State *L) {
-  if (overlay.pixels == NULL)
-    I_Error("XV_GetOverlayPixels: overlay.pixels is NULL");
-
-  lua_pushlightuserdata(L, overlay.pixels);
+  lua_pushlightuserdata(L, V_OverlayGetPixels());
 
   return 1;
 }
 
 static int XV_DestroyOverlayPixels(lua_State *L) {
-  /*
-   * CG: Don't check for overlay.pixels here, so the overlay can be reset with
-   *     impunity.
-   */
-  if (overlay.pixels && overlay.owns_pixels) {
-    free(overlay.pixels);
-    overlay.owns_pixels = false;
-  }
-
-  overlay.pixels = NULL;
+  V_OverlayDestroyPixels();
 
   return 0;
 }
 
 static int XV_BuildOverlayTexture(lua_State *L) {
 #ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL) {
-    if (overlay.tex_id) {
-      glDeleteTextures(1, &overlay.tex_id);
-      overlay.tex_id = 0;
-    }
-
-    glGenTextures(1, &overlay.tex_id);
-    glBindTexture(GL_TEXTURE_2D, overlay.tex_id);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GLEXT_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GLEXT_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-    last_glTexID = &overlay.tex_id;
-  }
+  V_OverlayBuildTexture();
 #endif
 
   return 0;
@@ -161,23 +107,20 @@ static int XV_BuildOverlayTexture(lua_State *L) {
 
 static int XV_DestroyOverlayTexture(lua_State *L) {
 #ifdef GL_DOOM
-  if (overlay.tex_id != 0) {
-    glDeleteTextures(1, &overlay.tex_id);
-    overlay.tex_id = 0;
-  }
+  V_OverlayDestroyTexture();
 #endif
 
   return 0;
 }
 
 static int XV_OverlayNeedsResetting(lua_State *L) {
-  lua_pushboolean(L, overlay.needs_resetting);
+  lua_pushboolean(L, V_OverlayNeedsResetting());
 
   return 1;
 }
 
 static int XV_ClearOverlayNeedsResetting(lua_State *L) {
-  overlay.needs_resetting = false;
+  V_OverlayClearNeedsResetting();
 
   return 0;
 }

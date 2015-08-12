@@ -59,8 +59,6 @@ function Overlay:build()
   self.width = d2k.Video.get_screen_width()
   self.height = d2k.Video.get_screen_height()
 
-  d2k.Video.build_overlay_pixels()
-
   self.render_surface = Cairo.ImageSurface.create_for_data(
     d2k.Video.get_overlay_pixels(),
     Cairo.Format.RGB24, -- CG: FIXME: This is duplicated in i_video.c
@@ -125,7 +123,6 @@ function Overlay:destroy()
   self.render_context = nil
   self.render_surface = nil
 
-  d2k.Video.destroy_overlay_pixels()
   if d2k.Video.using_opengl() then
     d2k.Video.destroy_overlay_texture()
   end
