@@ -335,7 +335,13 @@ void N_PackSetup(netpeer_t *np) {
   pbuf = N_PeerBeginMessage(np->peernum, NET_CHANNEL_RELIABLE, nm_setup);
 
   M_PBufWriteInt(pbuf, netsync);
-  M_PBufWriteUShort(pbuf, player_count);
+  M_PBufWriteUShort(pbuf, MAXPLAYERS);
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    if (playeringame[i])
+      M_PBufWriteBool(pbuf, true);
+    else
+      M_PBufWriteBool(pbuf, false);
+  }
   M_PBufWriteShort(pbuf, np->playernum);
   M_PBufWriteString(pbuf, iwad, strlen(iwad));
 
@@ -409,10 +415,23 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   buf_t iwad_buf;
   GPtrArray *rf_list;
 
+  for (int i = 0; i < MAXPLAYERS; i++)
+    playeringame[i] = false;
+
   read_ranged_int(
     pbuf, m_sync_type, "netsync", NET_SYNC_TYPE_COMMAND, NET_SYNC_TYPE_DELTA
   );
+
   read_ushort(pbuf, m_player_count, "player count");
+
+  for (int i = 0; i < m_player_count; i++) {
+    dboolean m_ingame;
+
+    read_bool(pbuf, m_ingame, "player in game");
+
+    playeringame[i] = m_ingame;
+  }
+
   read_short(pbuf, m_playernum, "consoleplayer");
 
   W_ReleaseAllWads();
