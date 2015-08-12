@@ -72,26 +72,25 @@ typedef struct netticcmd_s {
   byte  buttons;
 } netticcmd_t;
 
-extern dboolean        netgame;
-extern dboolean        solonet;
-extern dboolean        netserver;
+extern bool            netgame;
+extern bool            solonet;
+extern bool            netserver;
 extern net_sync_type_e netsync;
 
-size_t      N_IPToString(int address, char *buffer);
-const char* N_IPToConstString(int address);
-int         N_IPToInt(const char *address);
+size_t      N_IPToString(uint32_t address, char *buffer);
+const char* N_IPToConstString(uint32_t address);
+bool        N_IPToInt(const char *address_string, uint32_t *address_int);
 size_t      N_GetHostFromAddressString(const char *address, char **host);
-dboolean    N_GetPortFromAddressString(const char *address,
-                                       unsigned short *port);
+bool        N_GetPortFromAddressString(const char *address, uint16_t *port);
 size_t      N_ParseAddressString(const char *address, char **host,
-                                 unsigned short *port);
+                                                      uint16_t *port);
 void        N_Init(void);
 void        N_Disconnect(void);
 void        N_Shutdown(void);
-dboolean    N_Listen(const char *host, unsigned short port);
-dboolean    N_Connect(const char *host, unsigned short port);
-dboolean    N_Reconnect(void);
-dboolean    N_ConnectToServer(const char *address);
+bool        N_Listen(const char *host, uint16_t port);
+bool        N_Connect(const char *host, uint16_t port);
+bool        N_Reconnect(void);
+bool        N_ConnectToServer(const char *address);
 void        N_PrintAddress(FILE *fp, int peernum);
 void        N_DisconnectPeer(int peernum);
 void        N_DisconnectPlayer(short playernum);
