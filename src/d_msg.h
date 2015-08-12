@@ -25,13 +25,10 @@
 #define D_MSG_H__
 
 #define MSG_MIN MSG_DEBUG
-#define MSG_MAX MSG_SOUND
+#define MSG_MAX MSG_ERROR
 
 typedef enum {
   MSG_DEBUG,
-  MSG_INFO,
-  MSG_WARN,
-  MSG_ERROR,
   MSG_DEH,
   MSG_GAME,
   MSG_NET,
@@ -39,7 +36,10 @@ typedef enum {
   MSG_STATE,
   MSG_MEM,
   MSG_SAVE,
-  MSG_SOUND
+  MSG_SOUND,
+  MSG_INFO,
+  MSG_WARN,
+  MSG_ERROR
 } msg_channel_e;
 
 void D_InitMessaging(void);

@@ -2,8 +2,8 @@
 
 ## Proto
 
-1. Reconnecting doesn't work
-  - The current symptom is spinning around like crazy
+1. `playeringame` needs to be sent over the wire properly, currently it just
+   uses a player count as the max index
 
 1. Fix bug where you can type the backtick into the console
 

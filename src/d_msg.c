@@ -52,7 +52,7 @@ static void check_message_channel(msg_channel_e c) {
 }
 
 static void deactivate_message_channels(void) {
-  for (msg_channel_e chan = MSG_MIN; chan < MSG_MAX; chan++)
+  for (msg_channel_e chan = MSG_MIN; chan <= MSG_MAX; chan++)
     D_MsgDeactivate(chan);
 }
 

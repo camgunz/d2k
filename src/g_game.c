@@ -1493,6 +1493,12 @@ void G_PlayerReborn(int player) {
 
   for (int i = 0; i < NUMAMMO; i++)
     p->maxammo[i] = maxammo[i];
+
+  P_ClearPlayerCommands(player);
+  p->commands_missed = 0;
+  p->command_limit = 0;
+  p->commands_run_this_tic = 0;
+  p->latest_command_run_index = 0;
 }
 
 void G_ClearCorpses(void) {

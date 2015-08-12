@@ -165,6 +165,19 @@ static void process_queued_command(gpointer data, gpointer user_data) {
   player_t *player = (player_t *)user_data;
   int playernum = player - players;
 
+  /*
+  printf("(%d) Command: %d/%d/%d, %d/%d/%d/%d\n",
+    gametic,
+    ncmd->index,
+    ncmd->tic,
+    ncmd->server_tic,
+    ncmd->forward,
+    ncmd->side,
+    ncmd->angle,
+    ncmd->buttons
+  );
+  */
+
   if (ncmd->index <= player->latest_command_run_index)
     return;
 
@@ -521,13 +534,8 @@ void P_ClearPlayerCommands(int playernum) {
     "P_ClearPlayerCommands: Clearing commands for %d\n", playernum
   );
 
-  command_count = P_GetCommandCount(playernum);
-
-  if (command_count > 0) {
-    g_ptr_array_remove_range(
-      players[playernum].commands, 0, command_count - 1
-    );
-  }
+  g_ptr_array_free(players[playernum].commands, true);
+  players[playernum].commands = g_ptr_array_new_with_free_func(recycle_command);
 }
 
 void P_TrimCommands(int playernum, TrimFunc should_trim, gpointer user_data) {
@@ -610,7 +618,7 @@ void P_RunPlayerCommands(int playernum) {
     run_player_command(player);
     return;
   }
-  
+
   if (DELTACLIENT && playernum != consoleplayer && playernum != 0) {
     unsigned int command_count = P_GetCommandCount(playernum);
 
