@@ -468,14 +468,12 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
 
       if (is_lump) {
         read_int(pbuf, deh_lumpnum, "DeH/BEX lumpnum");
-        printf("DeH/BEX: NULL/%d\n", deh_lumpnum);
         D_AddDEH(NULL, deh_lumpnum);
-        continue;
       }
-
-      read_string(pbuf, &deh_name, "DeH/BEX name", MAX_RESOURCE_NAME_LENGTH);
-      printf("DeH/BEX: %s/0\n", M_BufferGetData(&deh_name));
-      D_AddDEH(M_BufferGetData(&deh_name), deh_lumpnum);
+      else {
+        read_string(pbuf, &deh_name, "DeH/BEX name", MAX_RESOURCE_NAME_LENGTH);
+        D_AddDEH(M_BufferGetData(&deh_name), deh_lumpnum);
+      }
     }
   }
 

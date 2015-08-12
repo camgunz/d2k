@@ -2,8 +2,6 @@
 
 ## Proto
 
-1. Why is CRBRICK error happening (again?)
-
 1. Reconnecting doesn't work
   - The current symptom is spinning around like crazy
 
@@ -43,6 +41,7 @@
     the retraction if it is... although I thought `tick` already did that...
 
 1. Fix switching to vidingl
+  - Currently nothing clears or renders when you switch to vidingl from OpenGL
 
 1. Remove 4 player restriction
   - All playernums should be `unsigned int`s

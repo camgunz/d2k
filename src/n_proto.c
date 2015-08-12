@@ -200,6 +200,8 @@ static void handle_setup(netpeer_t *np) {
     return;
   }
 
+  W_Init();
+
   netsync = net_sync;
 
   for (i = 0; i < MAXPLAYERS; i++)

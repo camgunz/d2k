@@ -72,9 +72,9 @@ typedef enum {
 // We _must_ have the wadfiles[] the same as those actually loaded, so there 
 // is no point having these separate entities. This belongs here.
 typedef struct {
-  char* name;
-  wad_source_t src;
-  int handle;
+  char         *name;
+  wad_source_t  src;
+  int           handle;
 } wadfile_info_t;
 
 extern GPtrArray *resource_files;
