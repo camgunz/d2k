@@ -24,6 +24,9 @@
 #ifndef I_MAIN_H__
 #define I_MAIN_H__
 
+#define DEFAULT_LOG_FILE_NAME "d2k.log"
+#define DEFAULT_PID_FILE_NAME "d2k.pid"
+
 //
 // e6y: exeptions handling
 //

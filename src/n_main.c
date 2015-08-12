@@ -272,62 +272,69 @@ void N_InitNetGame(void) {
     solonet = true;
   }
   else if ((i = M_CheckParm("-net"))) {
-    if (i < myargc - 1) {
-      char *host = NULL;
-      unsigned short port = 0;
-      time_t connect_time;
+    if (i >= myargc)
+      I_Error("-net requires an address");
 
-      netgame = true;
+    char *host = NULL;
+    unsigned short port = 0;
+    time_t connect_time;
 
-      N_Init();
+    netgame = true;
 
-      /* CG [FIXME] Should these use the ~/.d2k path? */
+    N_Init();
 
-      if (DEBUG_NET && CLIENT)
-        D_MsgActivateWithFile(MSG_NET, "client-net.log");
+    /* CG [FIXME] Should these use the ~/.d2k path? */
 
-      if (DEBUG_SAVE && CLIENT)
-        D_MsgActivateWithFile(MSG_SAVE, "client-save.log");
+    if (DEBUG_NET && CLIENT)
+      D_MsgActivateWithFile(MSG_NET, "client-net.log");
 
-      if (DEBUG_SYNC && CLIENT)
-        D_MsgActivateWithFile(MSG_SYNC, "client-sync.log");
+    if (DEBUG_SAVE && CLIENT)
+      D_MsgActivateWithFile(MSG_SAVE, "client-save.log");
 
-      CL_Init();
+    if (DEBUG_SYNC && CLIENT)
+      D_MsgActivateWithFile(MSG_SYNC, "client-sync.log");
 
+    CL_Init();
+
+    if (i < (myargc - 1)) {
       N_ParseAddressString(myargv[i + 1], &host, &port);
-
-      P_Printf(consoleplayer,
-        "N_InitNetGame: Connecting to server %s:%u...\n", host, port
-      );
-
-      if (!N_Connect(host, port))
-        I_Error("N_InitNetGame: Connection refused");
-
-      P_Echo(consoleplayer, "N_InitNetGame: Connected!");
-
-      if (CL_GetServerPeer() == NULL)
-        I_Error("N_InitNetGame: Server peer was NULL");
-
-      connect_time = time(NULL);
-
-      G_ReloadDefaults();
-
-      P_Echo(consoleplayer, "N_InitNetGame: Waiting for setup information...");
-
-      while (true) {
-        time_t now = time(NULL);
-
-        N_ServiceNetwork();
-
-        if (CL_ReceivedSetup())
-          break;
-
-        if (difftime(now, connect_time) > (NET_SETUP_TIMEOUT * 1000))
-          I_Error("N_InitNetGame: Timed out waiting for setup information");
-      }
-
-      P_Echo(consoleplayer, "N_InitNetGame: Setup information received!");
     }
+    else {
+      host = strdup("0.0.0.0");
+      port = DEFAULT_PORT;
+    }
+
+    D_Msg(MSG_INFO,
+      "N_InitNetGame: Connecting to server %s:%u...\n", host, port
+    );
+
+    if (!N_Connect(host, port))
+      I_Error("N_InitNetGame: Connection refused");
+
+    D_Msg(MSG_INFO, "N_InitNetGame: Connected!\n");
+
+    if (CL_GetServerPeer() == NULL)
+      I_Error("N_InitNetGame: Server peer was NULL");
+
+    connect_time = time(NULL);
+
+    G_ReloadDefaults();
+
+    D_Msg(MSG_INFO, "N_InitNetGame: Waiting for setup information...\n");
+
+    while (true) {
+      time_t now = time(NULL);
+
+      N_ServiceNetwork();
+
+      if (CL_ReceivedSetup())
+        break;
+
+      if (difftime(now, connect_time) > (NET_SETUP_TIMEOUT * 1000))
+        I_Error("N_InitNetGame: Timed out waiting for setup information");
+    }
+
+    D_Msg(MSG_INFO, "N_InitNetGame: Setup information received!\n");
   }
   else {
     if ((i = M_CheckParm("-serve")))
@@ -346,7 +353,7 @@ void N_InitNetGame(void) {
 
       N_Init();
 
-      if (i < myargc) {
+      if (i < (myargc - 1)) {
         size_t host_length = N_ParseAddressString(myargv[i + 1], &host, &port);
 
         if (host_length == 0)
@@ -357,7 +364,7 @@ void N_InitNetGame(void) {
       }
 
       if (!N_Listen(host, port))
-        I_Error("Startup aborted");
+        I_Error("Error listning on %s:%d\n", host, port);
 
       D_Msg(MSG_INFO, "N_InitNetGame: Listening on %s:%u.\n", host, port);
 

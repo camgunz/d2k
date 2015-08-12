@@ -177,8 +177,7 @@ bool D_LogToFile(msg_channel_e chan, const char *file_path) {
   return D_MsgActive(chan);
 }
 
-int D_MsgGetFD(msg_channel_e chan) {
-  int fd;
+bool D_LogToFD(msg_channel_e chan, int fd) {
   message_channel_t *mc;
 
   check_message_channel(chan);
@@ -186,15 +185,58 @@ int D_MsgGetFD(msg_channel_e chan) {
   mc = &message_channels[chan];
 
   if (!mc->active)
-    return -1;
+    return false;
 
   if (!mc->fobj)
+    return false;
+
+  if (!M_CloseFile(mc->fobj)) {
+    I_Error("Error closing log file for channel %d: %s\n",
+      chan,
+      M_GetFileError()
+    );
+  }
+
+  mc->fobj = M_OpenFD(fd, "w");
+
+  if (!mc->fobj) {
+    I_Error("Error logging channel %d to FD %d: %s\n",
+      chan,
+      fd,
+      M_GetFileError()
+    );
+  }
+
+  return true;
+}
+
+FILE* D_MsgGetFile(msg_channel_e chan) {
+  message_channel_t *mc;
+
+  check_message_channel(chan);
+
+  mc = &message_channels[chan];
+
+  if (!mc->active)
+    return NULL;
+
+  return mc->fobj;
+}
+
+int D_MsgGetFD(msg_channel_e chan) {
+  int fd;
+  FILE *fobj;
+
+  fobj = D_MsgGetFile(chan);
+
+  if (!fobj)
     return -1;
 
-  fd = fileno(mc->fobj);
+  fd = fileno(fobj);
 
   if (fd == -1) {
-    I_Error("Error retrieving file descriptor from log file: %s\n",
+    I_Error("Error retrieving file descriptor from log channel %d: %s\n",
+      chan,
       strerror(errno)
     );
   }

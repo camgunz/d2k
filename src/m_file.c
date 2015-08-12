@@ -676,6 +676,15 @@ FILE* M_OpenFile(const char *path, const char *mode) {
   return f;
 }
 
+FILE* M_OpenFD(int fd, const char *mode) {
+  FILE *f = fdopen(fd, mode);
+
+  if (!f)
+    set_file_error_from_errno();
+
+  return f;
+}
+
 bool M_ReadFile(const char *path, char **data, size_t *size) {
   gboolean res;
 
@@ -766,7 +775,9 @@ bool M_FlushFile(FILE *f) {
 }
 
 bool M_CloseFile(FILE *f) {
-  if (fclose(f) != 0) {
+  clear_file_error();
+
+  if (!g_close(f, &file_error)) {
     set_file_error_from_errno();
     return false;
   }

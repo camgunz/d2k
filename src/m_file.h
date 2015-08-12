@@ -84,6 +84,7 @@ bool        M_Seek(int fd, off_t offset, int origin);
 bool        M_Read(int fd, void *vbuf, size_t sz);
 uint32_t    M_FDLength(int fd);
 FILE*       M_OpenFile(const char *path, const char *mode);
+FILE*       M_OpenFD(int fd, const char *mode);
 bool        M_ReadFile(const char *path, char **data, size_t *size);
 bool        M_ReadFileBuf(buf_t *buf, const char *path);
 bool        M_WriteFile(const char* name, const char* source, size_t size);

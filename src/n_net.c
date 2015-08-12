@@ -99,7 +99,7 @@ bool N_IPToInt(const char *address_string, uint32_t *address_int) {
   }
 
   for (int i = 0; i < 4; i++)
-    ip += string_to_uchar(octets[i]) << (8 * (3 - i));
+    ip += octets[i] << (8 * (3 - i));
 
   return ip;
 }
@@ -153,6 +153,57 @@ bool N_GetPortFromAddressString(const char *address, uint16_t *port) {
 }
 
 size_t N_ParseAddressString(const char *address, char **host, uint16_t *port) {
+  unsigned char octets[4];
+  uint16_t      tmp_port;
+  int           parsed_tokens;
+  size_t        address_length;
+  size_t        bytes_written;
+
+  parsed_tokens = sscanf(address, "%hhu.%hhu.%hhu.%hhu:%hu",
+    &octets[0],
+    &octets[1],
+    &octets[2],
+    &octets[3],
+    &tmp_port
+  );
+
+  if (parsed_tokens != 5) {
+    D_Msg(MSG_WARN, "Invalid IP address %s\n", address);
+    return 0;
+  }
+
+  address_length = snprintf(NULL, 0, "%hhu.%hhu.%hhu.%hhu",
+    octets[0],
+    octets[1],
+    octets[2],
+    octets[3]
+  );
+
+  if (!*host) {
+    *host = calloc(address_length + 1, sizeof(char));
+
+    if (!*host)
+      I_Error("Calloc failed");
+  }
+
+  bytes_written = snprintf(*host, address_length + 1, "%hhu.%hhu.%hhu.%hhu",
+    octets[0],
+    octets[1],
+    octets[2],
+    octets[3]
+  );
+
+  if (bytes_written != address_length) {
+    D_Msg(MSG_ERROR, "Error copying host: %s\n", strerror(errno));
+    return 0;
+  }
+
+  *port = tmp_port;
+
+  return bytes_written;
+}
+
+size_t N_OldParseAddressString(const char *address, char **host, uint16_t *port) {
   char *sep = NULL;
   size_t host_length = 0;
   size_t address_length = strlen(address);
@@ -426,8 +477,6 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
   int status = 0;
   int peernum = -1;
   ENetEvent net_event;
-
-  // printf("N_ServiceNetworkTimeout: %d\n", timeout_ms);
 
   if (net_host == NULL)
     return;

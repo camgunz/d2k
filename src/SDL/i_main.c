@@ -49,83 +49,22 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 #include "r_fps.h"
 #include "x_main.h"
 
+#include "icon.c"
+
 #undef main
 
-/*
- * Most of the following has been rewritten by Lee Killough
- *
- * I_GetTime
- * killough 4/13/98: Make clock rate adjustable by scale factor
- * cphipps - much made static
- */
-
-int realtic_clock_rate = 100;
-static int_64_t I_GetTime_Scale = 1 << 24;
-
-static int I_GetTime_Scaled(void) {
-  return (int)( (int_64_t) I_GetTime_RealTime() * I_GetTime_Scale >> 24);
-}
-
-static int  I_GetTime_FastDemo(void) {
-  static int fasttic;
-  return fasttic++;
-}
-
-static int I_GetTime_Error(void) {
-  I_Error("I_GetTime_Error: GetTime() used before initialization");
-  return 0;
-}
-
-int (*I_GetTime)(void) = I_GetTime_Error;
-
-void I_Init(void) {
-  /* killough 4/14/98: Adjustable speedup based on realtic_clock_rate */
-  if (fastdemo) {
-    I_GetTime = I_GetTime_FastDemo;
-  }
-  else if (realtic_clock_rate != 100) {
-    I_GetTime_Scale = ((int_64_t) realtic_clock_rate << 24) / 100;
-    I_GetTime = I_GetTime_Scaled;
-  }
-  else {
-    I_GetTime = I_GetTime_RealTime;
-  }
-
-  /* killough 2/21/98: avoid sound initialization if no sound & no music */
-  if (!(nomusicparm && nosfxparm))
-    I_InitSound();
-
-  R_InitInterpolation();
-}
-
-//e6y
-void I_Init2(void) {
-  if (fastdemo) {
-    I_GetTime = I_GetTime_FastDemo;
-  }
-  else if (realtic_clock_rate != 100) {
-    I_GetTime_Scale = ((int_64_t) realtic_clock_rate << 24) / 100;
-    I_GetTime = I_GetTime_Scaled;
-  }
-  else {
-    I_GetTime = I_GetTime_RealTime;
-  }
-  R_InitInterpolation();
-  force_singletics_to = gametic + BACKUPTICS;
-}
-
-void I_StartTic(void) {
-  I_InputHandle();
-}
-
-/* cleanup handling -- killough:
- */
-
-//
-// e6y: exeptions handling
-//
+/* CPhipps - flags controlling ENDOOM behaviour */
+enum {
+  endoom_colours       = 1,
+  endoom_nonasciichars = 2,
+  endoom_droplastline  = 4
+};
 
 static ExeptionsList_t current_exception_index;
+
+static int has_exited;
+
+static int_64_t get_time_scale = 1 << 24;
 
 ExeptionParam_t ExeptionsParams[EXEPTION_MAX + 1] =
 {
@@ -136,22 +75,31 @@ ExeptionParam_t ExeptionsParams[EXEPTION_MAX + 1] =
   {NULL}
 };
 
-void I_ExeptionBegin(ExeptionsList_t exception_index) {
-  if (current_exception_index == EXEPTION_NONE)
-    current_exception_index = exception_index;
-  else
-    I_Error("I_SignalStateSet: signal_state set!");
+int realtic_clock_rate = 100;
+int (*I_GetTime)(void) = NULL;
+int endoom_mode;
+
+/*
+ * Most of the following has been rewritten by Lee Killough
+ *
+ * I_GetTime
+ * killough 4/13/98: Make clock rate adjustable by scale factor
+ * cphipps - much made static
+ */
+
+static int get_time_scaled(void) {
+  return (int)( (int_64_t) I_GetTime_RealTime() * get_time_scale >> 24);
 }
 
-void I_ExeptionEnd(void) {
-  current_exception_index = EXEPTION_NONE;
+static int get_time_fast_demo(void) {
+  static int fasttic;
+  return fasttic++;
 }
 
-void I_ExeptionProcess(void) {
-  if (current_exception_index > EXEPTION_NONE && current_exception_index < EXEPTION_MAX)
-    I_Error("%s", ExeptionsParams[current_exception_index].error_message);
+static int get_time_error(void) {
+  I_Error("get_time_error: GetTime() used before initialization");
+  return 0;
 }
-
 
 /* killough 2/22/98: Add support for ENDBOOM, which is PC-specific
  *
@@ -188,71 +136,23 @@ inline static int convert(int color, int *bold)
 }
 #endif
 
-/* CPhipps - flags controlling ENDOOM behaviour */
-enum {
-  endoom_colours = 1,
-  endoom_nonasciichars = 2,
-  endoom_droplastline = 4
-};
-
-int endoom_mode;
-
-static void PrintVer(void) {
+static void print_version(void) {
   char vbuf[200];
 
   D_Msg(MSG_INFO, "%s\n", I_GetVersionString(vbuf, 200));
 }
 
-#include "icon.c"
-
-void I_SetWindowIcon(void) {
-  static SDL_Surface *surface = NULL;
-
-  // do it only once, because of crash in SDL_InitVideoMode in SDL 1.3
-  if (!surface)
-  {
-    surface = SDL_CreateRGBSurfaceFrom(
-      icon_data,
-      icon_w,
-      icon_h,
-      32,
-      icon_w * 4,
-      0xff << 0,
-      0xff << 8,
-      0xff << 16,
-      0xff << 24
-    );
-  }
-
-  if (surface)
-    SDL_WM_SetIcon(surface, NULL);
-}
-
-void I_SetWindowCaption(void) {
-  size_t len = strlen(PACKAGE_NAME) + strlen(PACKAGE_VERSION) + 3;
-  char *buf = calloc(len, sizeof(char));
-
-  if (buf == NULL)
-    I_Error("I_SetWindowCaption: calloc failed");
-
-  snprintf(buf, len, "%s v%s", PACKAGE_NAME, PACKAGE_VERSION);
-
-  SDL_WM_SetCaption(buf, NULL);
-
-  free(buf);
-}
-
 //
 // ENDOOM support using text mode emulation
 //
-static void I_EndDoom(void) {
+static void end_doom(void) {
   int lump_eb, lump_ed, lump = -1;
 
   const unsigned char *endoom_data;
   unsigned char *screendata;
 
 #ifndef _WIN32
-  PrintVer();
+  print_version();
 #endif
 
   if (!showendoom || demorecording)
@@ -439,43 +339,24 @@ static void I_EndDoom2(void)
 #ifndef _WIN32
   if (endoom_mode & endoom_colours)
     puts("\e[0m"); /* cph - reset colours */
-  PrintVer();
+  print_version();
 #endif /* _WIN32 */
 }
 #endif
 
-static int has_exited;
-
-/* I_SafeExit
- * This function is called instead of exit() by functions that might be called
- * during the exit process (i.e. after exit() has already been called)
- * Prevent infinitely recursive exits -- killough
- */
-
-void I_SafeExit(int rc) {
-  if (!has_exited) {  /* If it hasn't exited yet, exit now -- killough */
-    if (rc)
-      has_exited = 2;
-    else
-      has_exited = 1;
-
-    exit(rc);
-  }
-}
-
-static void I_Quit(void)
+static void quit(void)
 {
   if (!has_exited)
     has_exited=1;   /* Prevent infinitely recursive exits -- killough */
 
   if (has_exited == 1) {
     if (!demorecording)
-      I_EndDoom();
+      end_doom();
 
     if (demorecording)
       G_CheckDemoStatus();
 
-    M_SaveDefaults ();
+    M_SaveDefaults();
     I_DemoExShutdown();
   }
 }
@@ -488,7 +369,7 @@ uid_t stored_euid = -1;
 // Ability to use only the allowed CPUs
 //
 
-static void I_SetAffinityMask(void) {
+static void set_affinity_mask(void) {
   // Forcing single core only for "SDL MIDI Player"
   process_affinity_mask = 0;
   if (!strcasecmp(snd_midiplayer, midiplayers[midi_player_sdl]))
@@ -550,43 +431,6 @@ static void I_SetAffinityMask(void) {
   }
 }
 
-//
-// Sets the priority class for the prboom-plus process
-//
-
-void I_SetProcessPriority(void) {
-  if (process_priority) {
-    const char *errbuf = NULL;
-
-#ifdef _WIN32
-    DWORD dwPriorityClass = NORMAL_PRIORITY_CLASS;
-
-    if (process_priority == 1)
-      dwPriorityClass = HIGH_PRIORITY_CLASS;
-    else if (process_priority == 2)
-      dwPriorityClass = REALTIME_PRIORITY_CLASS;
-
-    if (SetPriorityClass(GetCurrentProcess(), dwPriorityClass) == 0)
-      errbuf = WINError();
-#else
-    return;
-#endif
-
-    if (errbuf == NULL) {
-      D_Msg(MSG_INFO,
-        "I_SetProcessPriority: priority for the process is %d\n",
-        process_priority
-      );
-    }
-    else {
-      D_Msg(MSG_ERROR,
-        "I_SetProcessPriority: failed to set priority for the process (%s)\n",
-        errbuf
-      );
-    }
-  }
-}
-
 static void initialize_messaging(const char *log_file) {
   if (log_file) {
     if (!D_MsgActivateWithFile(MSG_INFO, log_file))
@@ -622,6 +466,41 @@ static void initialize_messaging(const char *log_file) {
   }
 }
 
+static void cleanup_pid_file(void) {
+  int p;
+  char *pid_file;
+
+  puts("Cleaning up PID file");
+
+  if ((p = M_CheckParm("-pid")))
+    pid_file = myargv[p + 1];
+  else
+    pid_file = M_PathJoin(I_DoomExeDir(), DEFAULT_PID_FILE_NAME);
+
+  if (!M_DeleteFile(pid_file)) {
+    fprintf(stderr, "Error deleting PID file %s: %s\n",
+      pid_file,
+      M_GetFileError()
+    );
+  }
+}
+
+static void exit_gracefully(void) {
+  cleanup_pid_file();
+
+  for (msg_channel_e chan = MSG_MIN; chan <= MSG_MAX; chan++) {
+    D_MsgDeactivate(chan);
+  }
+}
+
+static void handle_sigint(int signum) {
+  exit_gracefully();
+}
+
+static void handle_sigterm(int signum) {
+  exit_gracefully();
+}
+
 static void daemonize(void) {
   char *log_file;
   char *pid_file;
@@ -631,17 +510,16 @@ static void daemonize(void) {
   int infofd;
   int errorfd;
   int p;
-  int pid_size;
 
   if ((p = M_CheckParm("-log")))
     log_file = myargv[p + 1];
   else
-    log_file = M_PathJoin(I_DoomExeDir(), "server.log");
+    log_file = M_PathJoin(I_DoomExeDir(), DEFAULT_LOG_FILE_NAME);
 
   if ((p = M_CheckParm("-pid")))
     pid_file = myargv[p + 1];
   else
-    pid_file = M_PathJoin(I_DoomExeDir(), "d2k.pid");
+    pid_file = M_PathJoin(I_DoomExeDir(), DEFAULT_PID_FILE_NAME);
 
   pid = fork();
 
@@ -651,31 +529,49 @@ static void daemonize(void) {
   if (pid > 0)
     exit(EXIT_SUCCESS);
 
+  pid = getpid();
+
   umask(0);
 
+  for (int fd = 0; fd < 1024; fd++)
+    close(fd);
+
   initialize_messaging(log_file);
+
+  infofd = D_MsgGetFD(MSG_INFO);
+
+  if (infofd < 0)
+    I_Error("Error getting file descriptor of info log");
+
+  if (dup2(infofd, STDOUT_FILENO) == -1)
+    I_Error("Error duplicating STDOUT_FILENO: %s", strerror(errno));
+
+  errorfd = D_MsgGetFD(MSG_ERROR);
+
+  if (errorfd < 0)
+    I_Error("Error getting file descriptor of error log");
+
+  dup2(errorfd, STDERR_FILENO);
+
+  if (dup2(errorfd, STDERR_FILENO) == -1)
+    I_Error("Error duplicating STDERR_FILENO: %s", strerror(errno));
 
   sid = setsid();
 
   if (sid < 0)
-    I_Error("Error setting session ID: %s\n", strerror(errno));
+    I_Error("Error setting session ID: %s", strerror(errno));
 
-  pid_size = snprintf(NULL, 0, "%d", pid);
-  pid_string = calloc(pid_size + 1, sizeof(char));
+  pid_string = g_strdup_printf("%d\n", pid);
 
-  if (snprintf(pid_string, pid_size + 1, "%d", pid) != pid_size)
-    I_Error("Error converting PID to a string: %s", strerror(errno));
-
-  if (!M_WriteFile(pid_file, pid_string, pid_size))
+  if (!M_WriteFile(pid_file, pid_string, strlen(pid_string)))
     I_Error("Error writing PID to a file: %s", M_GetFileError());
 
-  free(pid_string);
+  atexit(cleanup_pid_file);
+
+  g_free(pid_string);
 
   if (chdir("/") < 0)
-    I_Error("Error changing directory to \"/\": %s\n", strerror(errno));
-
-  for (int fd = 0; fd < 1024; fd++)
-    close(fd);
+    I_Error("Error changing directory to \"/\": %s", strerror(errno));
 
   infofd = D_MsgGetFD(MSG_INFO);
 
@@ -686,13 +582,156 @@ static void daemonize(void) {
 
   if (errorfd < 0)
     I_Error("Error getting error log file descriptor: %s", strerror(errno));
+}
 
-  dup2(infofd, 1);
-  dup2(errorfd, 2);
+//
+// Sets the priority class for the prboom-plus process
+//
+
+void I_Init(void) {
+  /* killough 4/14/98: Adjustable speedup based on realtic_clock_rate */
+  if (fastdemo) {
+    I_GetTime = get_time_fast_demo;
+  }
+  else if (realtic_clock_rate != 100) {
+    get_time_scale = ((int_64_t) realtic_clock_rate << 24) / 100;
+    I_GetTime = get_time_scaled;
+  }
+  else {
+    I_GetTime = I_GetTime_RealTime;
+  }
+
+  /* killough 2/21/98: avoid sound initialization if no sound & no music */
+  if (!(nomusicparm && nosfxparm))
+    I_InitSound();
+
+  R_InitInterpolation();
+}
+
+//e6y
+void I_Init2(void) {
+  if (fastdemo) {
+    I_GetTime = get_time_fast_demo;
+  }
+  else if (realtic_clock_rate != 100) {
+    get_time_scale = ((int_64_t) realtic_clock_rate << 24) / 100;
+    I_GetTime = get_time_scaled;
+  }
+  else {
+    I_GetTime = I_GetTime_RealTime;
+  }
+  R_InitInterpolation();
+  force_singletics_to = gametic + BACKUPTICS;
+}
+
+void I_StartTic(void) {
+  I_InputHandle();
+}
+
+void I_ExeptionBegin(ExeptionsList_t exception_index) {
+  if (current_exception_index == EXEPTION_NONE)
+    current_exception_index = exception_index;
+  else
+    I_Error("I_SignalStateSet: signal_state set!");
+}
+
+void I_ExeptionEnd(void) {
+  current_exception_index = EXEPTION_NONE;
+}
+
+void I_ExeptionProcess(void) {
+  if (current_exception_index > EXEPTION_NONE && current_exception_index < EXEPTION_MAX)
+    I_Error("%s", ExeptionsParams[current_exception_index].error_message);
+}
+
+void I_SetWindowIcon(void) {
+  static SDL_Surface *surface = NULL;
+
+  // do it only once, because of crash in SDL_InitVideoMode in SDL 1.3
+  if (!surface)
+  {
+    surface = SDL_CreateRGBSurfaceFrom(
+      icon_data,
+      icon_w,
+      icon_h,
+      32,
+      icon_w * 4,
+      0xff << 0,
+      0xff << 8,
+      0xff << 16,
+      0xff << 24
+    );
+  }
+
+  if (surface)
+    SDL_WM_SetIcon(surface, NULL);
+}
+
+void I_SetWindowCaption(void) {
+  size_t len = strlen(PACKAGE_NAME) + strlen(PACKAGE_VERSION) + 3;
+  char *buf = calloc(len, sizeof(char));
+
+  if (buf == NULL)
+    I_Error("I_SetWindowCaption: calloc failed");
+
+  snprintf(buf, len, "%s v%s", PACKAGE_NAME, PACKAGE_VERSION);
+
+  SDL_WM_SetCaption(buf, NULL);
+
+  free(buf);
+}
+
+/* I_SafeExit
+ * This function is called instead of exit() by functions that might be called
+ * during the exit process (i.e. after exit() has already been called)
+ * Prevent infinitely recursive exits -- killough
+ */
+
+void I_SafeExit(int rc) {
+  if (!has_exited) {  /* If it hasn't exited yet, exit now -- killough */
+    if (rc)
+      has_exited = 2;
+    else
+      has_exited = 1;
+
+    exit(rc);
+  }
+}
+
+void I_SetProcessPriority(void) {
+  if (process_priority) {
+    const char *errbuf = NULL;
+
+#ifdef _WIN32
+    DWORD dwPriorityClass = NORMAL_PRIORITY_CLASS;
+
+    if (process_priority == 1)
+      dwPriorityClass = HIGH_PRIORITY_CLASS;
+    else if (process_priority == 2)
+      dwPriorityClass = REALTIME_PRIORITY_CLASS;
+
+    if (SetPriorityClass(GetCurrentProcess(), dwPriorityClass) == 0)
+      errbuf = WINError();
+#else
+    return;
+#endif
+
+    if (errbuf == NULL) {
+      D_Msg(MSG_INFO,
+        "I_SetProcessPriority: priority for the process is %d\n",
+        process_priority
+      );
+    }
+    else {
+      D_Msg(MSG_ERROR,
+        "I_SetProcessPriority: failed to set priority for the process (%s)\n",
+        errbuf
+      );
+    }
+  }
 }
 
 #ifndef RUNNING_UNIT_TESTS
-//int main(int argc, const char * const * argv)
 int main(int argc, char **argv) {
   int p;
 
@@ -706,6 +745,8 @@ int main(int argc, char **argv) {
       fprintf(stderr, "Revoked uid %d\n", stored_euid);
   }
 #endif
+
+  I_GetTime = get_time_error;
 
   myargc = argc;
   myargv = malloc(sizeof(myargv[0]) * myargc);
@@ -755,9 +796,9 @@ int main(int argc, char **argv) {
 
   /* Version info */
   D_Msg(MSG_INFO, "\n");
-  PrintVer();
+  print_version();
 
-  /* cph - Z_Close must be done after I_Quit, so we register it first. */
+  /* cph - Z_Close must be done after quit, so we register it first. */
   atexit(Z_Close);
   /*
      killough 1/98:
@@ -765,8 +806,8 @@ int main(int argc, char **argv) {
      This fixes some problems with exit handling
      during abnormal situations.
 
-     The old code called I_Quit() to end program,
-     while now I_Quit() is installed as an exit
+     The old code called quit() to end program,
+     while now quit() is installed as an exit
      handler and exit() is called to exit, either
      normally or abnormally. Seg faults are caught
      and the error handler is used, to prevent
@@ -777,7 +818,7 @@ int main(int argc, char **argv) {
 
   Z_Init();                  /* 1/18/98 killough: start up memory stuff first */
 
-  atexit(I_Quit);
+  atexit(quit);
   /* CG: There's really no need to parachute these */
 #if 0
 #ifdef DEBUG
@@ -800,8 +841,11 @@ int main(int argc, char **argv) {
 #endif
 #endif
 
+  signal(SIGINT, handle_sigint);
+  signal(SIGTERM, handle_sigterm);
+
   // Ability to use only the allowed CPUs
-  I_SetAffinityMask();
+  set_affinity_mask();
 
   // Priority class for the prboom-plus process
   I_SetProcessPriority();

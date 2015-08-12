@@ -10,8 +10,8 @@ EXE="/home/charlie/code/d2k/cbuild/d2k"
 CMD="$EXE -nomouse -net $HOST:$PORT"
 
 # gdb -ex "source gdbclient.txt" --args $CMD
-# gdb -ex run --args $CMD
+gdb -ex run --args $CMD
 # valgrind --track-origins=yes --leak-check=yes $CMD
 # CPUPROFILE=cpu.prof $CMD
-$CMD
+# $CMD
 
