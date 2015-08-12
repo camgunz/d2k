@@ -24,27 +24,28 @@
 #include "z_zone.h"
 
 #include "doomstat.h"
+#include "d_deh.h"
+#include "d_englsh.h"
+#include "e6y.h"//e6y
+#include "g_game.h"
+#include "hu_stuff.h"
+#include "i_sound.h"
+#include "m_argv.h"
+#include "m_bbox.h"                                         // phares 3/20/98
+#include "m_random.h"
+#include "n_net.h"
+#include "p_inter.h"
+#include "p_map.h"
+#include "p_maputl.h"
+#include "p_setup.h"
 #include "p_spec.h"
 #include "p_tick.h"
-#include "p_setup.h"
-#include "m_random.h"
-#include "d_englsh.h"
-#include "m_argv.h"
-#include "w_wad.h"
+#include "p_user.h"
 #include "r_main.h"
-#include "p_maputl.h"
-#include "p_map.h"
-#include "g_game.h"
-#include "p_inter.h"
+#include "r_plane.h"
 #include "s_sound.h"
 #include "sounds.h"
-#include "i_sound.h"
-#include "m_bbox.h"                                         // phares 3/20/98
-#include "d_deh.h"
-#include "r_plane.h"
-#include "hu_stuff.h"
-#include "p_user.h"
-#include "e6y.h"//e6y
+#include "w_wad.h"
 
 //
 //      source animation definition

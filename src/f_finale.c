@@ -23,15 +23,16 @@
 
 #include "z_zone.h"
 
-#include "doomstat.h"
+#include "d_deh.h"  // Ty 03/22/98 - externalizations
 #include "d_event.h"
+#include "doomstat.h"
+#include "f_finale.h" // CPhipps - hmm...
 #include "g_game.h"
-#include "v_video.h"
-#include "w_wad.h"
+#include "n_net.h"
 #include "s_sound.h"
 #include "sounds.h"
-#include "d_deh.h"  // Ty 03/22/98 - externalizations
-#include "f_finale.h" // CPhipps - hmm...
+#include "v_video.h"
+#include "w_wad.h"
 
 // Stage of animation:
 //  0 = text, 1 = art screen, 2 = character cast
@@ -242,7 +243,7 @@ void F_Ticker(void)
           if (!demo_compatibility && midstage)
             {
             next_level:
-              if (gamemap == 30 || (gamemission == pack_nerve && singleplayer && gamemap == 8))
+              if (gamemap == 30 || (gamemission == pack_nerve && SINGLEPLAYER && gamemap == 8))
                 F_StartCast();              // cast of Doom 2 characters
               else
                 gameaction = ga_worlddone;  // next level, e.g. MAP07

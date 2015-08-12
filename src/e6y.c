@@ -38,6 +38,7 @@
 #include "m_menu.h"
 #include "m_argv.h"
 #include "m_misc.h"
+#include "n_net.h"
 #include "i_system.h"
 #include "p_maputl.h"
 #include "p_map.h"
@@ -362,7 +363,7 @@ int G_GotoNextLevel(void)
   // secret level
   doom2_next[14] = (haswolflevels ? 31 : 16);
   
-  if (bfgedition && singleplayer) {
+  if (bfgedition && SINGLEPLAYER) {
     if (gamemission == pack_nerve) {
       doom2_next[3] = 9;
       doom2_next[7] = 1;

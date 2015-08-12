@@ -45,6 +45,7 @@
 #include "r_demo.h"
 #include "m_misc.h"
 #include "m_bbox.h"
+#include "n_net.h"
 #include "p_user.h"
 
 extern dboolean gamekeydown[];

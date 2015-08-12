@@ -25,19 +25,20 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
-#include "m_random.h"
-#include "i_video.h"
-#include "w_wad.h"
-#include "st_stuff.h"
-#include "st_lib.h"
-#include "r_main.h"
+#include "dstrings.h"
 #include "am_map.h"
+#include "e6y.h"//e6y
+#include "i_video.h"
 #include "m_cheat.h"
+#include "m_random.h"
+#include "n_net.h"
+#include "r_draw.h"
+#include "r_main.h"
 #include "s_sound.h"
 #include "sounds.h"
-#include "dstrings.h"
-#include "r_draw.h"
-#include "e6y.h"//e6y
+#include "st_lib.h"
+#include "st_stuff.h"
+#include "w_wad.h"
 
 //
 // STATUS BAR DATA

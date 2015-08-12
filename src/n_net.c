@@ -84,7 +84,7 @@ const char* N_IPToConstString(uint32_t address) {
 bool N_IPToInt(const char *address_string, uint32_t *address_int) {
   int ip = 0;
   int arg_count;
-  unsigned char *octets[4];
+  unsigned char octets[4];
 
   arg_count = sscanf(address_string, "%hhu.%hhu.%hhu.%hhu",
     &octets[0],

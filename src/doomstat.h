@@ -128,22 +128,19 @@ extern  Language_t   language;
 //
 
 // Defaults for menu, methinks.
-extern  skill_t   startskill;
-extern  int             startepisode;
-extern  int   startmap;
+extern  skill_t startskill;
+extern  int     startepisode;
+extern  int     startmap;
 
-extern  dboolean   autostart;
+extern  dboolean autostart;
 
 // Selected by user.
-extern  skill_t         gameskill;
-extern  int   gameepisode;
-extern  int   gamemap;
+extern  skill_t gameskill;
+extern  int     gameepisode;
+extern  int     gamemap;
 
 // Nightmare mode flag, single player.
-extern  dboolean         respawnmonsters;
-
-// Netgame? Only true if >1 player.
-extern  dboolean netgame;
+extern  dboolean respawnmonsters;
 
 // Flag: true only if started as net deathmatch.
 // An enum might handle altdeath/cooperative better.

@@ -24,22 +24,23 @@
 #include "z_zone.h"
 
 #include "doomstat.h"
-#include "m_random.h"
-#include "r_main.h"
-#include "p_maputl.h"
-#include "p_map.h"
-#include "p_setup.h"
-#include "p_spec.h"
-#include "s_sound.h"
-#include "sounds.h"
-#include "p_inter.h"
+#include "e6y.h"//e6y
 #include "g_game.h"
-#include "p_enemy.h"
-#include "p_tick.h"
+#include "hu_stuff.h"
 #include "i_sound.h"
 #include "m_bbox.h"
-#include "hu_stuff.h"
-#include "e6y.h"//e6y
+#include "m_random.h"
+#include "n_net.h"
+#include "p_enemy.h"
+#include "p_inter.h"
+#include "p_map.h"
+#include "p_maputl.h"
+#include "p_setup.h"
+#include "p_spec.h"
+#include "p_tick.h"
+#include "r_main.h"
+#include "s_sound.h"
+#include "sounds.h"
 
 static mobj_t *current_actor;
 

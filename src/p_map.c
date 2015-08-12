@@ -24,22 +24,23 @@
 #include "z_zone.h"
 
 #include "doomstat.h"
-#include "r_main.h"
-#include "p_mobj.h"
-#include "p_maputl.h"
-#include "p_map.h"
-#include "p_setup.h"
-#include "p_spec.h"
-#include "s_sound.h"
-#include "sounds.h"
-#include "p_inter.h"
-#include "m_random.h"
-#include "m_bbox.h"
-#include "m_argv.h"
+#include "e6y.h"//e6y
 #include "g_game.h"
 #include "g_overflow.h"
 #include "hu_tracers.h"
-#include "e6y.h"//e6y
+#include "m_argv.h"
+#include "m_bbox.h"
+#include "m_random.h"
+#include "n_net.h"
+#include "p_inter.h"
+#include "p_map.h"
+#include "p_maputl.h"
+#include "p_mobj.h"
+#include "p_setup.h"
+#include "p_spec.h"
+#include "r_main.h"
+#include "s_sound.h"
+#include "sounds.h"
 
 static mobj_t    *tmthing;
 static fixed_t   tmx;

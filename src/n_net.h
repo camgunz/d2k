@@ -31,15 +31,22 @@
 #define NET_CONNECT_TIMEOUT 1
 #define NET_DISCONNECT_TIMEOUT 1
 
-#define MULTINET    (netgame && (!solonet))
-#define CMDSYNC     (netsync == NET_SYNC_TYPE_COMMAND)
-#define DELTASYNC   (netsync == NET_SYNC_TYPE_DELTA)
-#define CLIENT      (MULTINET && (!netserver))
-#define SERVER      (MULTINET && netserver)
-#define CMDCLIENT   (CLIENT && CMDSYNC)
-#define CMDSERVER   (SERVER && CMDSYNC)
-#define DELTACLIENT (CLIENT && DELTASYNC)
-#define DELTASERVER (SERVER && DELTASYNC)
+#define MULTINET     (netgame && (!solonet))
+#define CMDSYNC      (netsync == NET_SYNC_TYPE_COMMAND)
+#define DELTASYNC    (netsync == NET_SYNC_TYPE_DELTA)
+#define CLIENT       (MULTINET && (!netserver))
+#define SERVER       (MULTINET && netserver)
+#define CMDCLIENT    (CLIENT && CMDSYNC)
+#define CMDSERVER    (SERVER && CMDSYNC)
+#define DELTACLIENT  (CLIENT && DELTASYNC)
+#define DELTASERVER  (SERVER && DELTASYNC)
+#define SINGLEPLAYER (!demorecording && !demoplayback && !democontinue && !netgame)
+#define comperr(i)   (default_comperr[i] && \
+                      !demorecording && \
+                      !demoplayback && \
+                      !democontinue && \
+                      !netgame)
+
 
 typedef enum {
   AUTH_LEVEL_NONE,

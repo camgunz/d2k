@@ -663,10 +663,8 @@ static void daemonize(void) {
   pid_size = snprintf(NULL, 0, "%d", pid);
   pid_string = calloc(pid_size + 1, sizeof(char));
 
-  if (snprintf(pid_string, pid_size, "%d", pid) != pid_size)
+  if (snprintf(pid_string, pid_size + 1, "%d", pid) != pid_size)
     I_Error("Error converting PID to a string: %s", strerror(errno));
-
-  printf("PID: %u\n", pid);
 
   if (!M_WriteFile(pid_file, pid_string, pid_size))
     I_Error("Error writing PID to a file: %s", M_GetFileError());

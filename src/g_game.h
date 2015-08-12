@@ -157,9 +157,6 @@ extern int bytes_per_tic;
 extern int speed_step;
 extern int autorun;           // always running?                   // phares
 
-#define singleplayer (!demorecording && !demoplayback && !democontinue && !netgame)
-#define comperr(i) (default_comperr[i] && !demorecording && !demoplayback && !democontinue && !netgame)
-
 #endif
 
 /* vi: set et ts=2 sw=2: */

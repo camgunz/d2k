@@ -24,14 +24,15 @@
 #include "z_zone.h"
 
 #include "doomstat.h"
-#include "m_bbox.h"
-#include "r_main.h"
-#include "p_maputl.h"
-#include "p_map.h"
-#include "p_setup.h"
+#include "e6y.h"//e6y
 #include "g_game.h"
 #include "g_overflow.h"
-#include "e6y.h"//e6y
+#include "m_bbox.h"
+#include "n_net.h"
+#include "p_map.h"
+#include "p_maputl.h"
+#include "p_setup.h"
+#include "r_main.h"
 
 //
 // P_AproxDistance
