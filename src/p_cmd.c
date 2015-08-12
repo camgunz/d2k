@@ -534,8 +534,10 @@ void P_ClearPlayerCommands(int playernum) {
     "P_ClearPlayerCommands: Clearing commands for %d\n", playernum
   );
 
-  g_ptr_array_free(players[playernum].commands, true);
-  players[playernum].commands = g_ptr_array_new_with_free_func(recycle_command);
+  command_count = P_GetCommandCount(playernum);
+
+  if (command_count > 0)
+    g_ptr_array_remove_range(players[playernum].commands, 0, command_count);
 }
 
 void P_TrimCommands(int playernum, TrimFunc should_trim, gpointer user_data) {
@@ -563,7 +565,7 @@ void P_TrimCommands(int playernum, TrimFunc should_trim, gpointer user_data) {
 
   if (command_count > 0) {
     g_ptr_array_remove_range(
-      players[playernum].commands, 0, command_count - 1
+      players[playernum].commands, 0, command_count
     );
   }
 }
