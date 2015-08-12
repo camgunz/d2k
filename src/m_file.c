@@ -775,9 +775,7 @@ bool M_FlushFile(FILE *f) {
 }
 
 bool M_CloseFile(FILE *f) {
-  clear_file_error();
-
-  if (!g_close(f, &file_error)) {
+  if (fclose(f)) {
     set_file_error_from_errno();
     return false;
   }

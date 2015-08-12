@@ -4,8 +4,6 @@
 
 1. Switching to OpenGL mode breaks the overlay
 
-1. The overlay isn't flushed properly in OpenGL mode
-
 1. Why is CRBRICK error happening (again?)
 
 1. Reconnecting doesn't work

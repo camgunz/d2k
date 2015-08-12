@@ -519,6 +519,7 @@ function RetractableTextWidget:draw()
   cr:paint()
 
   if line_count <= 0 then
+    cr:restore()
     return
   end
 
