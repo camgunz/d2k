@@ -412,7 +412,7 @@ void I_PreInitGraphics(void) {
   unsigned int flags = 0;
 
   if (!((M_CheckParm("-nodraw") && M_CheckParm("-nosound")) ||
-        M_CheckParm("-deltaserve"))) {
+        M_CheckParm("-serve"))) {
     flags = SDL_INIT_VIDEO;
   }
 

@@ -387,7 +387,7 @@ GPtrArray* M_ListFiles(const char *path) {
 
   dir = g_dir_open(path, 0, &file_error);
 
-  if (dir == NULL)
+  if (!dir)
     return NULL;
 
   files = g_ptr_array_new_with_free_func(free_string);
@@ -419,7 +419,7 @@ bool M_ListFilesBuf(const char *path, GPtrArray *files) {
 
   dir = g_dir_open(path, 0, &file_error);
 
-  if (dir == NULL)
+  if (!dir)
     return false;
 
   while ((entry_name = g_dir_read_name(dir))) {
@@ -450,7 +450,7 @@ GPtrArray* M_ListFolders(const char *path) {
 
   dir = g_dir_open(path, 0, &file_error);
 
-  if (dir == NULL)
+  if (!dir)
     return NULL;
 
   folders = g_ptr_array_new_with_free_func(free_string);
@@ -482,7 +482,7 @@ bool M_ListFoldersBuf(const char *path, GPtrArray *folders) {
 
   dir = g_dir_open(path, 0, &file_error);
 
-  if (dir == NULL)
+  if (!dir)
     return false;
 
   while ((entry_name = g_dir_read_name(dir))) {
@@ -513,7 +513,7 @@ GPtrArray* M_ListFilesAndFolders(const char *path) {
 
   dir = g_dir_open(path, 0, &file_error);
 
-  if (dir == NULL)
+  if (!dir)
     return NULL;
 
   files_and_folders = g_ptr_array_new_with_free_func(free_string);
@@ -541,7 +541,7 @@ bool M_ListFilesAndFoldersBuf(const char *path, GPtrArray *files_and_folders) {
 
   dir = g_dir_open(path, 0, &file_error);
 
-  if (dir == NULL)
+  if (!dir)
     return false;
 
   while ((entry_name = g_dir_read_name(dir)))
@@ -677,10 +677,12 @@ FILE* M_OpenFile(const char *path, const char *mode) {
 }
 
 bool M_ReadFile(const char *path, char **data, size_t *size) {
+  gboolean res;
+
   clear_file_error();
 
   I_BeginRead();
-  gboolean res = g_file_get_contents(path, data, size, &file_error);
+  res = g_file_get_contents(path, data, size, &file_error);
   I_EndRead();
 
   return res;
@@ -689,11 +691,12 @@ bool M_ReadFile(const char *path, char **data, size_t *size) {
 bool M_ReadFileBuf(buf_t *buf, const char *path) {
   char *data = NULL;
   gsize size;
+  gboolean res;
 
   clear_file_error();
 
   I_BeginRead();
-  gboolean res = g_file_get_contents(path, &data, &size, &file_error);
+  res = g_file_get_contents(path, &data, &size, &file_error);
   I_EndRead();
 
   if (!res)
@@ -705,10 +708,12 @@ bool M_ReadFileBuf(buf_t *buf, const char *path) {
 }
 
 bool M_WriteFile(const char *path, const char *contents, size_t size) {
+  gboolean res;
+
   clear_file_error();
 
   I_BeginRead();
-  gboolean res = g_file_set_contents(path, contents, size, &file_error);
+  res = g_file_set_contents(path, contents, size, &file_error);
   I_EndRead();
 
   return res;
@@ -726,6 +731,7 @@ long M_GetFilePosition(FILE *f) {
 bool M_SeekFile(FILE *f, long int offset, int origin) {
   if (fseek(f, offset, origin) != 0) {
     set_file_error_from_errno();
+
     return false;
   }
 
@@ -806,7 +812,7 @@ char* M_AddDefaultExtension(const char *path, const char *ext) {
 
   basename = M_Basename(path);
 
-  if (basename == NULL) {
+  if (!basename) {
     I_Error("M_AddDefaultExtension: Error getting basename of %s (%s)",
       path, M_GetFileError()
     );
@@ -814,7 +820,7 @@ char* M_AddDefaultExtension(const char *path, const char *ext) {
 
   dirname = M_Dirname(path);
 
-  if (dirname == NULL) {
+  if (!dirname) {
     I_Error("M_AddDefaultExtension: Error getting dirname of %s (%s)",
       path, M_GetFileError()
     );
@@ -859,7 +865,7 @@ char* M_SetFileExtension(const char *path, const char *ext) {
 
   basename = M_Basename(path);
 
-  if (basename == NULL) {
+  if (!basename) {
     I_Error("M_SetFileExtension: Error getting basename of %s (%s)",
       path, M_GetFileError()
     );
@@ -867,7 +873,7 @@ char* M_SetFileExtension(const char *path, const char *ext) {
 
   dirname = M_Dirname(path);
 
-  if (dirname == NULL) {
+  if (!dirname) {
     I_Error("M_SetFileExtension: Error getting dirname of %s (%s)",
       path, M_GetFileError()
     );

@@ -559,7 +559,7 @@ void I_Error(const char *format, ...) {
 
   puts("");
 
-  exit(-1);
+  exit(EXIT_FAILURE);
 }
 
 

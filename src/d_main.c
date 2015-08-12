@@ -1757,14 +1757,12 @@ const char* doomverstr = NULL;
 static void D_DoomMainSetup(void) {
   int p;
   int slot;
-
-  setbuf(stdout, NULL);
+  dboolean rsp_found;
 
   X_Init(); /* CG 07/22/2014: Scripting */
 
   // proff 04/05/2000: Added support for include response files
   /* proff 2001/7/1 - Moved up, so -config can be in response files */
-  dboolean rsp_found;
 
   do {
     rsp_found = false;

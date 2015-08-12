@@ -25,6 +25,7 @@
 #define D_MSG_H__
 
 #define MSG_MIN MSG_DEBUG
+#define MSG_MAX MSG_SOUND
 
 typedef enum {
   MSG_DEBUG,
@@ -38,8 +39,7 @@ typedef enum {
   MSG_STATE,
   MSG_MEM,
   MSG_SAVE,
-  MSG_SOUND,
-  MSG_MAX
+  MSG_SOUND
 } msg_channel_e;
 
 void D_InitMessaging(void);
@@ -50,6 +50,7 @@ void D_MsgDeactivate(msg_channel_e chan);
 void D_VMsg(msg_channel_e chan, const char *fmt, va_list args);
 void D_Msg(msg_channel_e chan, const char *fmt, ...) PRINTF_DECL(2, 3);
 bool D_LogToFile(msg_channel_e chan, const char *file_path);
+int  D_MsgGetFD(msg_channel_e chan);
 
 #endif
 

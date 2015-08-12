@@ -11,8 +11,6 @@
 1. Reconnecting doesn't work
   - The current symptom is spinning around like crazy
 
-1. Have server fork
-
 1. Fix bug where you can type the backtick into the console
 
 1. Add a few new widgets:

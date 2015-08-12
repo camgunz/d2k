@@ -28,14 +28,6 @@
 #include "m_file.h"
 
 /*
- * CG [TODO]: Need to keep a registry of all opened files and how many message
- *            channels are using them.  When a channel is closed, decrement
- *            the refcount on the file object, and when it gets to zero, flush
- *            and close it.  Should prevent channels from stepping all over
- *            each others' logs.
- */
-
-/*
  * CG [TODO]: Add an API to disable flushing a message channel's log file after
  *            writing every message.
  */
@@ -48,14 +40,25 @@ typedef struct message_channel_s {
 static bool message_channels_initialized = false;
 static message_channel_t message_channels[MSG_MAX];
 
+static void check_message_channel(msg_channel_e c) {
+  if (!message_channels_initialized)
+    I_Error("Messaging has not yet been initialized!");
+
+  if (c < MSG_MIN)
+    I_Error("Invalid message channel %d (valid: %d - %d)", c, MSG_MIN, MSG_MAX);
+
+  if (c > MSG_MAX)
+    I_Error("Invalid message channel %d (valid: %d - %d)", c, MSG_MIN, MSG_MAX);
+}
+
 static void deactivate_message_channels(void) {
   for (msg_channel_e chan = MSG_MIN; chan < MSG_MAX; chan++)
     D_MsgDeactivate(chan);
 }
 
 void D_InitMessaging(void) {
-  for (int i = 0; i < MSG_MAX; i++) {
-    message_channel_t *mc = &message_channels[i];
+  for (msg_channel_e chan = MSG_MIN; chan <= MSG_MAX; chan++) {
+    message_channel_t *mc = &message_channels[chan];
 
     mc->active = false;
     mc->fobj = NULL;
@@ -66,14 +69,20 @@ void D_InitMessaging(void) {
 }
 
 bool D_MsgActive(msg_channel_e chan) {
+  check_message_channel(chan);
+
   return message_channels[chan].active;
 }
 
 void D_MsgActivate(msg_channel_e chan) {
+  check_message_channel(chan);
+
   message_channels[chan].active = true;
 }
 
 bool D_MsgActivateWithFile(msg_channel_e chan, const char *file_path) {
+  check_message_channel(chan);
+
   if (!D_LogToFile(chan, file_path))
     return false;
 
@@ -83,7 +92,11 @@ bool D_MsgActivateWithFile(msg_channel_e chan, const char *file_path) {
 }
 
 void D_MsgDeactivate(msg_channel_e chan) {
-  message_channel_t *mc = &message_channels[chan];
+  message_channel_t *mc;
+
+  check_message_channel(chan);
+
+  mc = &message_channels[chan];
 
   if (mc->fobj != NULL) {
     fflush(mc->fobj);
@@ -99,16 +112,9 @@ void D_VMsg(msg_channel_e chan, const char *fmt, va_list args) {
   va_list console_args;
   message_channel_t *mc;
 
-  if (!message_channels_initialized)
-    I_Error("D_VMsg: Messaging has not yet been initialized!");
+  check_message_channel(chan);
 
-  if (chan >= MSG_MAX)
-    I_Error("D_VMsg: Invalid channel %d (valid: 0 - %d)", chan, MSG_MAX - 1);
-  
   mc = &message_channels[chan];
-
-  if (!mc->active)
-    return;
 
   va_copy(console_args, args);
   C_MVPrintf(fmt, console_args);
@@ -128,12 +134,8 @@ void D_Msg(msg_channel_e chan, const char *fmt, ...) {
   va_list console_args;
   message_channel_t *mc;
 
-  if (!message_channels_initialized)
-    I_Error("D_Msg: Messaging has not yet been initialized!");
+  check_message_channel(chan);
 
-  if (chan >= MSG_MAX)
-    I_Error("D_Msg: Invalid channel %d (valid: 0 - %d)", chan, MSG_MAX - 1);
-  
   mc = &message_channels[chan];
 
   if (!mc->active)
@@ -156,6 +158,8 @@ void D_Msg(msg_channel_e chan, const char *fmt, ...) {
 }
 
 bool D_LogToFile(msg_channel_e chan, const char *file_path) {
+  check_message_channel(chan);
+
   if (message_channels[chan].fobj) {
     if (!M_CloseFile(message_channels[chan].fobj)) {
       D_MsgDeactivate(chan);
@@ -171,6 +175,31 @@ bool D_LogToFile(msg_channel_e chan, const char *file_path) {
     D_MsgDeactivate(chan);
 
   return D_MsgActive(chan);
+}
+
+int D_MsgGetFD(msg_channel_e chan) {
+  int fd;
+  message_channel_t *mc;
+
+  check_message_channel(chan);
+
+  mc = &message_channels[chan];
+
+  if (!mc->active)
+    return -1;
+
+  if (!mc->fobj)
+    return -1;
+
+  fd = fileno(mc->fobj);
+
+  if (fd == -1) {
+    I_Error("Error retrieving file descriptor from log file: %s\n",
+      strerror(errno)
+    );
+  }
+
+  return fd;
 }
 
 /* vi: set et ts=2 sw=2: */

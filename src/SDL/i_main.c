@@ -42,6 +42,7 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 #include "i_system.h"
 #include "i_video.h"
 #include "m_argv.h"
+#include "m_file.h"
 #include "m_fixed.h"
 #include "m_misc.h"
 #include "m_random.h"
@@ -59,7 +60,7 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
  */
 
 int realtic_clock_rate = 100;
-static int_64_t I_GetTime_Scale = 1<<24;
+static int_64_t I_GetTime_Scale = 1 << 24;
 
 static int I_GetTime_Scaled(void) {
   return (int)( (int_64_t) I_GetTime_RealTime() * I_GetTime_Scale >> 24);
@@ -210,9 +211,17 @@ void I_SetWindowIcon(void) {
   // do it only once, because of crash in SDL_InitVideoMode in SDL 1.3
   if (!surface)
   {
-    surface = SDL_CreateRGBSurfaceFrom(icon_data,
-      icon_w, icon_h, 32, icon_w * 4,
-      0xff << 0, 0xff << 8, 0xff << 16, 0xff << 24);
+    surface = SDL_CreateRGBSurfaceFrom(
+      icon_data,
+      icon_w,
+      icon_h,
+      32,
+      icon_w * 4,
+      0xff << 0,
+      0xff << 8,
+      0xff << 16,
+      0xff << 24
+    );
   }
 
   if (surface)
@@ -224,7 +233,7 @@ void I_SetWindowCaption(void) {
   char *buf = calloc(len, sizeof(char));
 
   if (buf == NULL)
-    I_Error("I_SetWindowCaption: calloc failed\n");
+    I_Error("I_SetWindowCaption: calloc failed");
 
   snprintf(buf, len, "%s v%s", PACKAGE_NAME, PACKAGE_VERSION);
 
@@ -253,10 +262,12 @@ static void I_EndDoom(void) {
   lump_eb = W_CheckNumForName("ENDBOOM");/* jff 4/1/98 sign our work    */
   lump_ed = W_CheckNumForName("ENDOOM"); /* CPhipps - also maybe ENDOOM */
 
-  if (lump_eb == -1)
+  if (lump_eb == -1) {
     lump = lump_ed;
-  else if (lump_ed == -1)
+  }
+  else if (lump_ed == -1) {
     lump = lump_eb;
+  }
   else {
     /* Both ENDOOM and ENDBOOM are present */
 #define LUMP_IS_NEW(num) (!((lumpinfo[num].source == source_iwad) || (lumpinfo[num].source == source_auto_load)))
@@ -531,8 +542,7 @@ static void I_SetAffinityMask(void) {
       );
     }
     else {
-      D_Msg(
-        MSG_ERROR,
+      D_Msg(MSG_ERROR,
         "I_SetAffinityMask: failed to set process affinity mask (%s)\n",
         errbuf
       );
@@ -577,6 +587,112 @@ void I_SetProcessPriority(void) {
   }
 }
 
+static void initialize_messaging(const char *log_file) {
+  if (log_file) {
+    if (!D_MsgActivateWithFile(MSG_INFO, log_file))
+      I_Error("Error opening %s", log_file);
+
+#ifdef DEBUG
+    if (!D_MsgActivateWithFile(MSG_DEBUG, log_file))
+      I_Error("Error opening %s", log_file);
+#endif
+
+    if (!D_MsgActivateWithFile(MSG_WARN, log_file))
+      I_Error("Error opening %s", log_file);
+
+    if (!D_MsgActivateWithFile(MSG_ERROR, log_file))
+      I_Error("Error opening %s", log_file);
+
+    if (!D_MsgActivateWithFile(MSG_DEH, log_file))
+      I_Error("Error opening %s", log_file);
+
+    if (!D_MsgActivateWithFile(MSG_GAME, log_file))
+      I_Error("Error opening %s", log_file);
+  }
+  else {
+    D_MsgActivate(MSG_INFO);
+#ifdef DEBUG
+    D_MsgActivate(MSG_DEBUG);
+#endif
+    D_MsgActivate(MSG_INFO);
+    D_MsgActivate(MSG_WARN);
+    D_MsgActivate(MSG_ERROR);
+    D_MsgActivate(MSG_DEH);
+    D_MsgActivate(MSG_GAME);
+  }
+}
+
+static void daemonize(void) {
+  char *log_file;
+  char *pid_file;
+  char *pid_string;
+  pid_t pid;
+  pid_t sid;
+  int infofd;
+  int errorfd;
+  int p;
+  int pid_size;
+
+  if ((p = M_CheckParm("-log")))
+    log_file = myargv[p + 1];
+  else
+    log_file = M_PathJoin(I_DoomExeDir(), "server.log");
+
+  if ((p = M_CheckParm("-pid")))
+    pid_file = myargv[p + 1];
+  else
+    pid_file = M_PathJoin(I_DoomExeDir(), "d2k.pid");
+
+  pid = fork();
+
+  if (pid < 0)
+    exit(EXIT_FAILURE);
+
+  if (pid > 0)
+    exit(EXIT_SUCCESS);
+
+  umask(0);
+
+  initialize_messaging(log_file);
+
+  sid = setsid();
+
+  if (sid < 0)
+    I_Error("Error setting session ID: %s\n", strerror(errno));
+
+  pid_size = snprintf(NULL, 0, "%d", pid);
+  pid_string = calloc(pid_size + 1, sizeof(char));
+
+  if (snprintf(pid_string, pid_size, "%d", pid) != pid_size)
+    I_Error("Error converting PID to a string: %s", strerror(errno));
+
+  printf("PID: %u\n", pid);
+
+  if (!M_WriteFile(pid_file, pid_string, pid_size))
+    I_Error("Error writing PID to a file: %s", M_GetFileError());
+
+  free(pid_string);
+
+  if (chdir("/") < 0)
+    I_Error("Error changing directory to \"/\": %s\n", strerror(errno));
+
+  for (int fd = 0; fd < 1024; fd++)
+    close(fd);
+
+  infofd = D_MsgGetFD(MSG_INFO);
+
+  if (infofd < 0)
+    I_Error("Error getting info log file descriptor: %s", strerror(errno));
+
+  errorfd = D_MsgGetFD(MSG_ERROR);
+
+  if (errorfd < 0)
+    I_Error("Error getting error log file descriptor: %s", strerror(errno));
+
+  dup2(infofd, 1);
+  dup2(errorfd, 2);
+}
+
 #ifndef RUNNING_UNIT_TESTS
 //int main(int argc, const char * const * argv)
 int main(int argc, char **argv) {
@@ -592,6 +708,7 @@ int main(int argc, char **argv) {
       fprintf(stderr, "Revoked uid %d\n", stored_euid);
   }
 #endif
+
   myargc = argc;
   myargv = malloc(sizeof(myargv[0]) * myargc);
   memcpy(myargv, argv, sizeof(myargv[0]) * myargc);
@@ -612,40 +729,31 @@ int main(int argc, char **argv) {
 
   D_InitMessaging(); /* 05/09/14 CG: Enable messaging */
 
-  if ((p = M_CheckParm("-log"))) {
+  if (M_CheckParm("-serve")) {
+#ifdef G_OS_UNIX
+    if (!M_CheckParm("-nodaemon"))
+      daemonize();
+#else
+    if ((p = M_CheckParm("-log"))) {
+      const char *log_file = myargv[p + 1];
+
+      initialize_messaging(log_file);
+    }
+#endif
+  }
+  else if ((p = M_CheckParm("-log"))) {
     const char *log_file = myargv[p + 1];
 
-    if (D_MsgActivateWithFile(MSG_INFO, log_file)) {
-#ifdef DEBUG
-      D_MsgActivateWithFile(MSG_DEBUG, log_file);
-#endif
-      D_MsgActivateWithFile(MSG_INFO, log_file);
-      D_MsgActivateWithFile(MSG_WARN, log_file);
-      D_MsgActivateWithFile(MSG_ERROR, log_file);
-      D_MsgActivateWithFile(MSG_DEH, log_file);
-      D_MsgActivateWithFile(MSG_GAME, log_file);
-    }
-    else {
-      fprintf(stderr, "Error logging to file %s\n", log_file);
-      D_MsgActivate(MSG_INFO);
-#ifdef DEBUG
-      D_MsgActivate(MSG_DEBUG);
-#endif
-      D_MsgActivate(MSG_INFO);
-      D_MsgActivate(MSG_WARN);
-      D_MsgActivate(MSG_ERROR);
-      D_MsgActivate(MSG_DEH);
-      D_MsgActivate(MSG_GAME);
-    }
+    initialize_messaging(log_file);
   }
   else {
-    D_MsgActivate(MSG_INFO);
+    initialize_messaging(NULL);
   }
 
   // e6y: was moved from D_DoomMainSetup
   // init subsystems
   D_Msg(MSG_INFO, "M_LoadDefaults: Load system defaults.\n");
-  M_LoadDefaults();              // load before initing other systems
+  M_LoadDefaults(); // load before initing other systems
 
   /* Version info */
   D_Msg(MSG_INFO, "\n");
@@ -713,7 +821,7 @@ int main(int argc, char **argv) {
 
   D_DoomMain();
 
-  return 0;
+  return EXIT_SUCCESS;
 }
 #endif
 

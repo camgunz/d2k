@@ -170,6 +170,11 @@ size_t N_ParseAddressString(const char *address, char **host, uint16_t *port) {
   char *sep = NULL;
   size_t host_length = 0;
   size_t address_length = strlen(address);
+  bool should_free = false;
+  unsigned char a;
+  unsigned char b;
+  unsigned char c;
+  unsigned char d;
   
   if (address_length > MAX_ADDRESS_LENGTH)
     return 0;
@@ -179,33 +184,38 @@ size_t N_ParseAddressString(const char *address, char **host, uint16_t *port) {
 
   sep = strchr(address, ':');
 
-  if (sep == NULL) {
-    host_length = address_length;
-
-    if (host_length > 0) {
-      if (*host == NULL) {
-        *host = strdup(address);
-      }
-      else {
-        memset(*host, 0, (address_length + 1) * sizeof(char));
-        strncpy(*host, address, address_length);
-      }
+  if (!sep) {
+    if (!*host) {
+      *host = strdup(address);
+      should_free = true;
+    }
+    else {
+      memset(*host, 0, (address_length + 1) * sizeof(char));
+      strncpy(*host, address, address_length + 1);
     }
   }
   else {
     host_length = sep - address;
 
     if (host_length > 0) {
-      if (*host == NULL) {
+      if (!*host) {
         *host = calloc(host_length + 1, sizeof(char));
-        strncpy(*host, address, host_length);
+        should_free = true;
       }
       else {
         memset(host, 0, (host_length + 1) * sizeof(char));
-        strncpy(*host, address, host_length);
       }
+      strncpy(*host, address, host_length);
+    }
+  }
+
+  if (sscanf(address, "%hhu.%hhu.%hhu.%hhu", &a, &b, &c, &d) != 4) {
+    if (should_free) {
+      free(*host);
+      *host = NULL;
     }
 
+    return 0;
   }
 
   if (sep && strlen(++sep))
@@ -304,15 +314,13 @@ dboolean N_Listen(const char *host, unsigned short port) {
   );
   
   if (net_host == NULL) {
-    P_Printf(consoleplayer, "N_Listen: Error creating host on %s:%u\n",
-      host, port
-    );
+    D_Msg(MSG_ERROR, "N_Listen: Error creating host on %s:%u\n", host, port);
     return false;
   }
 
 #if USE_RANGE_CODER
   if (enet_host_compress_with_range_coder(net_host) < 0) {
-    P_Echo(consoleplayer, "N_Listen: Error activating range coder");
+    D_Msg(MSG_ERROR, "N_Listen: Error activating range coder");
     return false;
   }
 #endif

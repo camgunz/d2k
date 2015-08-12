@@ -330,11 +330,7 @@ void N_InitNetGame(void) {
     }
   }
   else {
-    if (M_CheckParm("-commandserve") && M_CheckParm("-deltaserve"))
-      I_Error("Cannot specify both '-commandserve' and '-deltaserve'");
-    else if ((i = M_CheckParm("-commandserve")))
-      netsync = NET_SYNC_TYPE_COMMAND;
-    else if ((i = M_CheckParm("-deltaserve")))
+    if ((i = M_CheckParm("-serve")))
       netsync = NET_SYNC_TYPE_DELTA;
 
     if (CMDSYNC || DELTASYNC) {
@@ -350,7 +346,7 @@ void N_InitNetGame(void) {
 
       N_Init();
 
-      if (i < myargc - 1) {
+      if (i < myargc) {
         size_t host_length = N_ParseAddressString(myargv[i + 1], &host, &port);
 
         if (host_length == 0)
@@ -363,18 +359,22 @@ void N_InitNetGame(void) {
       if (!N_Listen(host, port))
         I_Error("Startup aborted");
 
-      P_Printf(consoleplayer, "N_InitNetGame: Listening on %s:%u.\n",
-        host, port
-      );
+      D_Msg(MSG_INFO, "N_InitNetGame: Listening on %s:%u.\n", host, port);
 
-      if (DEBUG_NET && SERVER)
-        D_MsgActivateWithFile(MSG_NET, "server-net.log");
+      if (DEBUG_NET && SERVER) {
+        if (!D_MsgActivateWithFile(MSG_NET, "server-net.log"))
+          I_Error("Error activating server-net.log: %s", strerror(errno));
+      }
 
-      if (DEBUG_SAVE && SERVER)
-        D_MsgActivateWithFile(MSG_SAVE, "server-save.log");
+      if (DEBUG_SAVE && SERVER) {
+        if (!D_MsgActivateWithFile(MSG_SAVE, "server-save.log"))
+          I_Error("Error activating server-save.log: %s", strerror(errno));
+      }
 
-      if (DEBUG_SYNC && SERVER)
-        D_MsgActivateWithFile(MSG_SYNC, "server-sync.log");
+      if (DEBUG_SYNC && SERVER) {
+        if (!D_MsgActivateWithFile(MSG_SYNC, "server-sync.log"))
+          I_Error("Error activating server-sync.log: %s", strerror(errno));
+      }
     }
   }
 }
