@@ -219,6 +219,7 @@ end
 function Console:handle_event(event)
   if event:is_key_press(d2k.Key.BACKQUOTE) then
     self:toggle_scroll()
+    return
   end
 
   if self:get_scroll_rate() < 0 or self:get_height_in_pixels() == 0 then
