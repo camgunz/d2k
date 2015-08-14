@@ -147,7 +147,7 @@ end
 
 function HUD:handle_event(event)
   for i, w in pairs(self.widgets) do
-    if w:is_enabled() and w:handle_event(event) then
+    if w:is_enabled() and w:is_active() and w:handle_event(event) then
       return true
     end
   end

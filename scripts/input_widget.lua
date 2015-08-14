@@ -349,12 +349,12 @@ function InputWidget:draw()
   cr:restore()
 end
 
-function InputWidget:save_text_as_command()
+function InputWidget:save_text_into_history()
   table.insert(self:get_history(), self:get_text())
   self:set_history_index(0)
 end
 
-function InputWidget:show_previous_command()
+function InputWidget:show_previous_history_entry()
   local history = self:get_history()
   local command_count = #history
   local history_index = self:get_history_index()
@@ -368,7 +368,7 @@ function InputWidget:show_previous_command()
   self:set_text(history[command_count - (new_history_index - 1)])
 end
 
-function InputWidget:show_next_command()
+function InputWidget:show_next_history_entry()
   local history = self:get_history()
   local command_count = #history
   local history_index = self:get_history_index()
