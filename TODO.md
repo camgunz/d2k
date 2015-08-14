@@ -3,7 +3,15 @@
 ## Proto
 
 1. Add a few new widgets:
+  - Negative x/y coordinates (I think?)
+  - Need some kind of control over widget activation
+    - Only 1 widget at a time can get input; this widget is 'active'
+    - All other widgets are inactive
+    - 'inactive' widgets are still drawn; 'disabled' widgets are not, however
   - chat
+    - Create/Expose Lua API for sending messages
+    - input handler should be a function that wraps the input handler, clears
+      the text, and deactivates the chat
   - netstats
   - FPS
   - scoreboard

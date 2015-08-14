@@ -50,6 +50,7 @@ function InputWidget:new(iw)
   iw.history = {}
   iw.history_index = 0
   iw.scroll_offset = 0
+  iw.input_handler = iw.input_handler or function(input) end
 
   setmetatable(iw, self)
   self.__index = self
@@ -562,6 +563,50 @@ end
 function InputWidget:activate_cursor()
   self:set_cursor_active(true)
   self:set_cursor_timer(d2k.System.get_ticks())
+end
+
+function InputWidget:handle_event(event)
+  if event:is_key_press(d2k.Key.UP) then
+    self:show_previous_history_entry()
+    return true
+  elseif event:is_key_press(d2k.Key.DOWN) then
+    self:show_next_history_entry()
+    return true
+  elseif event:is_key_press(d2k.Key.LEFT) then
+    self:move_cursor_left()
+    return true
+  elseif event:is_key_press(d2k.Key.RIGHT) then
+    self:move_cursor_right()
+    return true
+  elseif event:is_key_press(d2k.Key.DELETE) then
+    self:delete_next_character()
+    return true
+  elseif event:is_key_press(d2k.Key.BACKSPACE) then
+    self:delete_previous_character()
+    return true
+  elseif event:is_key_press(d2k.Key.HOME) then
+    self:move_cursor_to_start()
+    return true
+  elseif event:is_key_press(d2k.Key.END) then
+    self:move_cursor_to_end()
+    return true
+  elseif event:is_key_press(d2k.Key.RETURN) or
+         event:is_key_press(d2k.Key.KP_ENTER) then
+    self.input_handler(self:get_text())
+    self:save_text_into_history()
+    self:clear()
+    return true
+  elseif event:is_key() and event:is_press() then
+    local char = event:get_char()
+
+    if char then
+      self:insert_character(event:get_char())
+    end
+
+    return true
+  end
+
+  return false
 end
 
 return {InputWidget = InputWidget}

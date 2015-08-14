@@ -26,7 +26,7 @@ local Cairo = lgi.cairo
 
 local HUD = {}
 
-function compare_widgets(w1, w2)
+function compare_widget_z_index(w1, w2)
   if w1.z_index < w2.z_index then
     return true
   end
@@ -52,7 +52,7 @@ function HUD:handle_overlay_built(overlay)
     self:start()
   end
 
-  for w in self.widgets do
+  for w in pairs(self.widgets) do
     w:handle_overlay_built()
   end
 end
@@ -62,13 +62,20 @@ function HUD:handle_overlay_destroyed(overlay)
     self:stop()
   end
 
-  for w in self.widgets do
+  for w in pairs(self.widgets) do
     w:handle_overlay_destroyed()
   end
 end
 
 function HUD:add_widget(widget)
   table.insert(self.widgets, widget)
+
+  print(string.format('Added widget %s at %s', widget:get_name(), #self.widgets))
+
+  for i = 1, #self.widgets do
+    local w = self.widgets[i]
+    print(string.format('Widget %s: %s', i, w:get_name()))
+  end
 
   widget:set_hud(self)
   widget:handle_add(self)
@@ -119,14 +126,18 @@ function HUD:tick()
   end
 end
 
-function HUD:sort_widgets()
-  table.sort(self.widgets, compare_widgets)
-end
-
 function HUD:draw()
+  local sorted_widgets = {}
+
   if not self.active then
     return
   end
+
+  for i = 1, #self.widgets do
+    sorted_widgets[i] = self.widgets[i]
+  end
+
+  table.sort(sorted_widgets, compare_widget_z_index)
 
   d2k.overlay:lock()
 
@@ -147,7 +158,7 @@ end
 
 function HUD:handle_event(event)
   for i, w in pairs(self.widgets) do
-    if w:is_enabled() and w:is_active() and w:handle_event(event) then
+    if w:is_enabled() and w:handle_event(event) then
       return true
     end
   end

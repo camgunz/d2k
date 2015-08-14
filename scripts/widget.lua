@@ -303,7 +303,6 @@ end
 
 function Widget:set_z_index(z_index)
   self.z_index = z_index
-  d2k.hud:sort_widgets()
 end
 
 function Widget:get_use_proportional_dimensions()
@@ -365,7 +364,6 @@ end
 
 function Widget:handle_add(hud)
   self:enable()
-  hud:sort_widgets()
 end
 
 function Widget:handle_remove(hud)

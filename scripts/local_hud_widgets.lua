@@ -41,8 +41,8 @@ messages_widget:set_external_text_source(
 local chat_widget = InputWidget.InputWidget:new({
   name = 'chat',
   z_index = 1,
-  top_margin = 2,
-  bottom_margin = 0,
+  top_margin = 4,
+  bottom_margin = 4,
   left_margin = 8,
   right_margin = 8,
   width = 1,
@@ -58,8 +58,27 @@ local chat_widget = InputWidget.InputWidget:new({
 
 function chat_widget:draw()
   if self:is_active() then
-    InputWidget.draw(self)
+    InputWidget.InputWidget.draw(self)
   end
+end
+
+function chat_widget:handle_event(event)
+  if not self:is_active() then
+    if event:is_key_press(d2k.Key.t) then
+      self:activate()
+      return true
+    end
+
+    return false
+  end
+
+  if event:is_key_press(d2k.Key.ESCAPE) then
+    self:clear()
+    self:deactivate()
+    return true
+  end
+
+  return InputWidget.InputWidget.handle_event(self, event)
 end
 
 d2k.hud:add_widget(messages_widget)

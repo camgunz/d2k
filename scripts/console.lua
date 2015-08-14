@@ -72,7 +72,8 @@ function Console:new(c)
     vertical_alignment = TextWidget.ALIGN_CENTER,
     fg_color = c.fg_color or Console.FG_COLOR,
     bg_color = c.bg_color or Console.BG_COLOR,
-    font_description_text = c.font_description_text
+    font_description_text = c.font_description_text,
+    input_handler = d2k.CommandInterface.handle_input,
   })
 
   c.output = TextWidget.TextWidget:new({
@@ -93,7 +94,7 @@ function Console:new(c)
     font_description_text = c.font_description_text,
     word_wrap = TextWidget.WRAP_WORD,
     use_markup = true,
-    strip_ending_newline = true
+    strip_ending_newline = true,
   })
 
   c.output:set_external_text_source(
@@ -213,17 +214,16 @@ function Console:draw()
 end
 
 function Console:handle_input(input)
-  d2k.CommandInterface.handle_input(input);
 end
 
 function Console:handle_event(event)
   if event:is_key_press(d2k.Key.BACKQUOTE) then
     self:toggle_scroll()
-    return
+    return true
   end
 
   if self:get_scroll_rate() < 0 or self:get_height_in_pixels() == 0 then
-    return
+    return false
   end
 
   if d2k.KeyStates.shift_is_down() then
@@ -242,47 +242,7 @@ function Console:handle_event(event)
     end
   end
 
-  if event:is_key_press(d2k.Key.UP) then
-    self:get_input():show_previous_history_entry()
-    return true
-  elseif event:is_key_press(d2k.Key.DOWN) then
-    self:get_input():show_next_history_entry()
-    return true
-  elseif event:is_key_press(d2k.Key.LEFT) then
-    self:get_input():move_cursor_left()
-    return true
-  elseif event:is_key_press(d2k.Key.RIGHT) then
-    self:get_input():move_cursor_right()
-    return true
-  elseif event:is_key_press(d2k.Key.DELETE) then
-    self:get_input():delete_next_character()
-    return true
-  elseif event:is_key_press(d2k.Key.BACKSPACE) then
-    self:get_input():delete_previous_character()
-    return true
-  elseif event:is_key_press(d2k.Key.HOME) then
-    self:get_input():move_cursor_to_start()
-    return true
-  elseif event:is_key_press(d2k.Key.END) then
-    self:get_input():move_cursor_to_end()
-    return true
-  elseif event:is_key_press(d2k.Key.RETURN) or
-         event:is_key_press(d2k.Key.KP_ENTER) then
-    self:handle_input(self:get_input():get_text())
-    self:get_input():save_text_into_history()
-    self:get_input():clear()
-    return true
-  elseif event:is_key() and event:is_press() then
-    local char = event:get_char()
-
-    if char then
-      self:get_input():insert_character(event:get_char())
-    end
-
-    return true
-  end
-
-  return false
+  return self:get_input():handle_event(event)
 end
 
 function Console:scroll_down()

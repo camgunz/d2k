@@ -23,9 +23,9 @@
 
 package.path = package.path .. ';' .. d2k.script_search_path
 
-print = function(s)
-  d2k.Messaging.print(d2k.Messaging.INFO, string.format("%s\n", s))
-end
+-- print = function(s)
+--   d2k.Messaging.print(d2k.Messaging.INFO, string.format("%s\n", s))
+-- end
 
 mprint = function(s)
   d2k.Messaging.mecho(d2k.Messaging.INFO, s)
