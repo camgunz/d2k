@@ -37,6 +37,25 @@ messages_widget:set_external_text_source(
   d2k.Game.clear_consoleplayer_messages_updated
 )
 
+local chat_widget = InputWidget.InputWidget:new({
+  name = 'chat',
+  z_index = 1,
+  top_margin = 2,
+  bottom_margin = 0,
+  left_margin = 8,
+  right_margin = 8,
+  width = 1,
+  line_height = 1,
+  use_markup = true,
+  font_description_text = 'ascsys,Arial Unicode MS, Unifont 11',
+  strip_ending_newline = true,
+  horizontal_alignment = TextWidget.ALIGN_LEFT,
+  vertical_alignment = TextWidget.ALIGN_CENTER,
+  fg_color = {1.0, 1.0, 1.0, 1.0},
+  bg_color = {0.0, 0.0, 0.0, 0.85},
+})
+
 d2k.hud:add_widget(messages_widget)
+d2k.hud:add_widget(chat_widget)
 
 -- vi: et ts=2 sw=2

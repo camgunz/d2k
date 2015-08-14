@@ -23,9 +23,13 @@
 
 package.path = package.path .. ';' .. d2k.script_search_path
 
--- print = function(s)
---   d2k.Messaging.print(d2k.Messaging.INFO, string.format("%s\n", s))
--- end
+print = function(s)
+  d2k.Messaging.print(d2k.Messaging.INFO, string.format("%s\n", s))
+end
+
+mprint = function(s)
+  d2k.Messaging.mecho(d2k.Messaging.INFO, s)
+end
 
 print('X_Init: Init script engine.')
 
@@ -68,11 +72,11 @@ if d2k.Video.is_enabled() then
   if func then
     local worked, err = pcall(func)
     if not worked then
-      d2k.console:mecho(string.format('<span color="red">%s</span>', err))
+      mprint(string.format('<span color="red">%s</span>', err))
       print(err)
     end
   else
-    d2k.console:mecho(string.format('<span color="red">%s</span>', err))
+    mprint(string.format('<span color="red">%s</span>', err))
     print(err)
   end
 end

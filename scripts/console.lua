@@ -325,42 +325,6 @@ function Console:set_fullscreen()
   self:set_last_scroll_ms(d2k.System.get_ticks())
 end
 
-function Console:write(text)
-  -- CG: [TODO] Bail if repredicting
-  if d2k.Video.is_enabled() then
-    self:get_output():write(text)
-  else
-    d2k.System.print(text)
-  end
-end
-
-function Console:mwrite(markup)
-  -- CG: [TODO] Bail if repredicting
-  if d2k.Video.is_enabled() then
-    self:get_output():mwrite(markup)
-  else
-    d2k.System.print(markup) -- CG: [TODO] Strip markup if video is disabled
-  end
-end
-
-function Console:echo(text)
-  -- CG: [TODO] Bail if repredicting
-  if d2k.Video.is_enabled() then
-    self:get_output():echo(text)
-  else
-    print(text)
-  end
-end
-
-function Console:mecho(markup)
-  -- CG: [TODO] Bail if repredicting
-  if d2k.Video.is_enabled() then
-    self:get_output():mecho(markup)
-  else
-    print(markup) -- CG: [TODO] Strip markup if video is disabled
-  end
-end
-
 return {Console = Console}
 
 -- vi: et ts=2 sw=2
