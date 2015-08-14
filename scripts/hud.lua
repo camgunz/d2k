@@ -137,7 +137,9 @@ function HUD:draw()
   d2k.overlay.render_context:set_operator(Cairo.Operator.OVER)
 
   for i, w in pairs(self.widgets) do
-    w:draw()
+    if w:is_enabled() then
+      w:draw()
+    end
   end
 
   d2k.overlay:unlock()

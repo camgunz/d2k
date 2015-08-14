@@ -243,10 +243,10 @@ function Console:handle_event(event)
   end
 
   if event:is_key_press(d2k.Key.UP) then
-    self:get_input():show_previous_command()
+    self:get_input():show_previous_history_entry()
     return true
   elseif event:is_key_press(d2k.Key.DOWN) then
-    self:get_input():show_next_command()
+    self:get_input():show_next_history_entry()
     return true
   elseif event:is_key_press(d2k.Key.LEFT) then
     self:get_input():move_cursor_left()
@@ -269,7 +269,7 @@ function Console:handle_event(event)
   elseif event:is_key_press(d2k.Key.RETURN) or
          event:is_key_press(d2k.Key.KP_ENTER) then
     self:handle_input(self:get_input():get_text())
-    self:get_input():save_text_as_command()
+    self:get_input():save_text_into_history()
     self:get_input():clear()
     return true
   elseif event:is_key() and event:is_press() then

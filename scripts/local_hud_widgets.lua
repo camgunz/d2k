@@ -6,6 +6,7 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
+local InputWidget = require('input_widget')
 local TextWidget = require('text_widget')
 local RetractableTextWidget = require('retractable_text_widget')
 
@@ -54,6 +55,12 @@ local chat_widget = InputWidget.InputWidget:new({
   fg_color = {1.0, 1.0, 1.0, 1.0},
   bg_color = {0.0, 0.0, 0.0, 0.85},
 })
+
+function chat_widget:draw()
+  if self:is_active() then
+    InputWidget.draw(self)
+  end
+end
 
 d2k.hud:add_widget(messages_widget)
 d2k.hud:add_widget(chat_widget)
