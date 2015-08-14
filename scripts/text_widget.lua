@@ -816,7 +816,6 @@ end
 
 function TextWidget:mecho(markup)
   if self.get_external_text then
-    print(debug.traceback())
     error(string.format("%s: Can't echo markup when displaying external text",
       self.name
     ))
