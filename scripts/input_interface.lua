@@ -23,80 +23,109 @@
 
 local classlib = require('classlib')
 
-class.InputHandler()
+class.InputInterface()
 
-function InputHandler:__init(ih)
-  self.current_event = d2k.InputEvent:new()
+function InputInterface:__init(ii)
+  ii = ii or {}
+
+  self.name = ii.name or ''
+
+  self.active = false
+  self.parent = nil
+  self.needs_updating = false
 end
 
-function InputHandler:handle_event()
-  local ev = self.current_event
-
-  if d2k.Input.handle_event(ev) then
-    return
-  end
-
-  if not d2k.Video.is_enabled() then
-    --[[
-    if d2k.Game.handle_event(ev) then
-      return
-    end
-    --]]
-  end
-
-  if ev:is_key_press(d2k.KeyBinds.get_screenshot()) then
-    d2k.Misc.take_screenshot()
-  end
-
-  if d2k.Menu.is_active() then
-    if d2k.Menu.handle_event(ev) then
-      return
-    end
-  end
-
-  if d2k.hud:handle_event(ev) then
-    return
-  end
-
-  if d2k.Menu.handle_event(ev) then
-    return
-  end
-
-  if d2k.Main.handle_event(ev) then
-    return
-  end
-
-  if d2k.StatusBar.handle_event(ev) then
-    return
-  end
-
-  if d2k.AutoMap.handle_event(ev) then
-    return
-  end
-
-  d2k.Game.handle_event(ev)
+function InputInterface:get_name()
+  return self.name
 end
 
-function InputHandler:handle_events()
-  while true do
-    self.current_event:reset()
-    event_received, event_populated = d2k.populate_event(self.current_event)
+function InputInterface:set_name(name)
+  self.name = name
+end
 
-    if not event_received then
-      break
-    end
+function InputInterface:activate()
+  local parent = self:get_parent()
 
-    if event_populated then
-      local result, err = pcall(function() self:handle_event() end)
+  self.active = true
 
-      if err then
-        print(string.format('InputHandler:handle_events: error: %s', err))
-      end
-    end
+  if parent then
+    parent:activate_interface(self)
   end
 end
 
-return {InputHandler = InputHandler}
+function InputInterface:deactivate()
+  local parent = self:get_parent()
+
+  self.active = false
+
+  if parent then
+    parent:deactivate_interface(self)
+  end
+end
+
+function InputInterface:toggle()
+  if self:is_active() then
+    self:deactivate()
+  else
+    self:activate()
+  end
+end
+
+function InputInterface:is_active()
+  return self.active
+end
+
+function InputInterface:is_enabled()
+  return self.parent ~= nil
+end
+
+function InputInterface:get_parent()
+  return self.parent
+end
+
+function InputInterface:remove_parent()
+  local current_parent = self:get_parent()
+
+  if current_parent then
+    self:get_parent():remove_interface(self)
+    self.parent = nil
+  end
+end
+
+
+function InputInterface:set_parent(parent)
+  self:remove_parent()
+
+  if parent then
+    parent:add_interface(self)
+  end
+end
+
+function InputInterface:get_needs_updating()
+  return self.needs_updating
+end
+
+function InputInterface:set_needs_updating(needs_updating)
+  self.needs_updating = needs_updating
+end
+
+function InputInterface:is_upfront()
+  return self:get_parent() and self:get_parent():get_front_interface() == self
+end
+
+function InputInterface:reset()
+end
+
+function InputInterface:tick()
+end
+
+function InputInterface:draw()
+end
+
+function InputInterface:handle_event(event)
+end
+
+return {InputInterface = InputInterface}
 
 -- vi: et ts=2 sw=2
 

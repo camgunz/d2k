@@ -4,6 +4,7 @@
 
 1. Add a few new widgets:
   - Negative x/y coordinates (I think?)
+  - `snap_right` and `snap_bottom` fields
   - Need some kind of control over widget activation
     - Only 1 widget at a time can get input; this widget is 'active'
     - All other widgets are inactive

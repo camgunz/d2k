@@ -21,6 +21,7 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
+local classlib = require('classlib')
 local lgi = require('lgi')
 local Cairo = lgi.cairo
 local GLib = lgi.GLib
@@ -28,7 +29,7 @@ local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
 local TextWidget = require('text_widget')
 
-local RetractableTextWidget = TextWidget.TextWidget:new()
+class.RetractableTextWidget(TextWidget.TextWidget)
 
 RetractableTextWidget.RETRACT_NONE = 0
 RetractableTextWidget.RETRACT_UP   = 1
@@ -37,69 +38,35 @@ RetractableTextWidget.RETRACT_DOWN = 2
 RetractableTextWidget.RETRACTION_TIME    = 2000
 RetractableTextWidget.RETRACTION_TIMEOUT = 2000
 
---
--- [TODO]
---
--- - Throw an error during initialization if vertical_align isn't ALIGN_TOP or
---   ALIGN_BOTTOM.
--- - Rename to RetractableTextWidget
--- - Only override methods that are actually different from TextWidget
--- - Pre-set fields properly, and only either new fields or fields whose
---   default value differs from TextWidget's default values
--- - On resize, we need to set the last retraction target to the last line
---
-
-function RetractableTextWidget:new(rtw)
+function RetractableTextWidget:__init(rtw)
   rtw = rtw or {}
 
-  rtw.retractable = rtw.retractable or RetractableTextWidget.RETRACT_NONE
-  rtw.retraction_time = rtw.retraction_time or
-                        RetractableTextWidget.RETRACTION_TIME
-  rtw.retraction_timeout = rtw.retraction_timeout or
-                           RetractableTextWidget.RETRACTION_TIMEOUT
+  self.TextWidget:__init(rtw)
 
-  rtw.retracting = false
-  rtw.retracting_line_number = -1
-  rtw.last_retracted_line_number = 0
-  rtw.retraction_target = 0
-  rtw.retraction_start_time = 0
+  self.retractable = rtw.retractable or RetractableTextWidget.RETRACT_NONE
+  self.retraction_time = rtw.retraction_time or
+                         RetractableTextWidget.RETRACTION_TIME
+  self.retraction_timeout = rtw.retraction_timeout or
+                            RetractableTextWidget.RETRACTION_TIMEOUT
 
-  setmetatable(rtw, self)
-  self.__index = self
+  self.retracting = false
+  self.retracting_line_number = -1
+  self.last_retracted_line_number = 0
+  self.retraction_target = 0
+  self.retraction_start_time = 0
 
-  rtw:build_layout()
+  self:build_layout()
+end
 
-  if rtw.word_wrap then
-    rtw:set_word_wrap(rtw.word_wrap)
-  else
-    rtw:set_word_wrap(TextWidget.WRAP_NONE)
+function RetractableTextWidget:set_vertical_alignment(vertical_alignment)
+  if not (vertical_alignment == TextWidget.ALIGN_TOP or
+          vertical_alignment == TextWidget.ALIGN_BOTTOM) then
+    s = 'Invalid vertical alignment; retractable text widgets must ' ..
+        'align to either top or bottom'
+    error(s)
   end
 
-  if rtw.horizontal_alignment then
-    rtw:set_horizontal_alignment(rtw.horizontal_alignment)
-  else
-    rtw:set_horizontal_alignment(TextWidget.ALIGN_LEFT)
-  end
-
-  if rtw.vertical_alignment then
-    if not (rtw.vertical_alignment == TextWidget.ALIGN_TOP or
-            rtw.vertical_alignment == TextWidget.ALIGN_BOTTOM) then
-      s = 'Invalid vertical alignment; retractable text widgets must ' ..
-          'align to either top or bottom'
-      error(s)
-    end
-    rtw:set_vertical_alignment(rtw.vertical_alignment)
-  else
-    rtw:set_vertical_alignment(TextWidget.ALIGN_TOP)
-  end
-
-  if rtw.ellipsize then
-    rtw:set_ellipsize(rtw.ellipsize)
-  else
-    rtw:set_ellipsize(TextWidget.ELLIPSIZE_NONE)
-  end
-
-  return rtw
+  self.TextWidget.set_vertical_alignment(vertical_alignment)
 end
 
 function RetractableTextWidget:get_retractable()
@@ -399,7 +366,7 @@ function RetractableTextWidget:tick()
     return
   end
 
-  if #self.text == 0 then
+  if #self:get_text() == 0 then
     return
   end
 

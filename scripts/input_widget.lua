@@ -21,6 +21,7 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
+local classlib = require('classlib')
 local lgi = require('lgi')
 local GLib = lgi.GLib
 local Cairo = lgi.cairo
@@ -29,35 +30,32 @@ local PangoCairo = lgi.PangoCairo
 local utf8 = require('utf8')
 local TextWidget = require('text_widget')
 
-local InputWidget = TextWidget.TextWidget:new({
-  use_markup = false
-})
+class.InputWidget(TextWidget.TextWidget)
+
+InputWidget.use_markup = false
 
 InputWidget.PROMPT_THICKNESS = 1.1
 InputWidget.CURSOR_THICKNESS = 1.1
 
-function InputWidget:new(iw)
+function InputWidget:__init(iw)
   iw = iw or {}
 
-  iw.cursor_color = iw.cursor_color or {0.8, 0.8, 0.8, 1.0}
-  iw.prompt_color = iw.prompt_color or {1.0, 1.0, 1.0, 1.0}
-  iw.cursor_blink_speed = iw.cursor_blink_speed or 500
+  self.TextWidget:__init(iw)
 
-  iw.cursor = 0
-  iw.cursor_active = 0
-  iw.cursor_trailing = 0
-  iw.cursor_timer = d2k.System.get_ticks()
-  iw.history = {}
-  iw.history_index = 0
-  iw.scroll_offset = 0
-  iw.input_handler = iw.input_handler or function(input) end
+  self.cursor_color = iw.cursor_color or {0.8, 0.8, 0.8, 1.0}
+  self.prompt_color = iw.prompt_color or {1.0, 1.0, 1.0, 1.0}
+  self.cursor_blink_speed = iw.cursor_blink_speed or 500
 
-  setmetatable(iw, self)
-  self.__index = self
+  self.cursor = 0
+  self.cursor_active = 0
+  self.cursor_trailing = 0
+  self.cursor_timer = d2k.System.get_ticks()
+  self.history = {}
+  self.history_index = 0
+  self.scroll_offset = 0
+  self.input_handler = iw.input_handler or function(input) end
 
-  iw:build_layout()
-
-  return iw
+  self:build_layout()
 end
 
 function InputWidget:get_cursor_color()

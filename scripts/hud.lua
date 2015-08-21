@@ -21,104 +21,69 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
+local classlib = require('classlib')
 local lgi = require('lgi')
 local Cairo = lgi.cairo
 
-local HUD = {}
+local InputInterface = require('input_interface')
+local InputInterfaceContainer = require('input_interface_container')
+local Widget = require('widget')
 
-function compare_widget_z_index(w1, w2)
-  if w1.z_index < w2.z_index then
-    return true
-  end
+class.HUD(
+  InputInterface.InputInterface,
+  InputInterfaceContainer.InputInterfaceContainer
+)
 
-  return false
-end
+function HUD:__init(h)
+  h = h or {}
 
-function HUD:new(h)
-  h = h or {
-    widgets = {},
-    active = false,
-    font_description_text = 'Noto Sans,Arial Unicode MS,Unifont 11'
-  }
+  self.InputInterface:__init(h)
+  self.InputInterfaceContainer:__init(h)
 
-  setmetatable(h, self)
-  self.__index = self
-
-  return h
+  self.font_description_text = h.font_description_text or
+                                 'Noto Sans,Arial Unicode MS,Unifont 11'
+  self.widgets = self.InputInterfaceContainer.interfaces
+  self.widgets_by_z_index = self.InputInterfaceContainer.active_interfaces
 end
 
 function HUD:handle_overlay_built(overlay)
-  if not self.active then
-    self:start()
-  end
+  self:reset()
 
-  for w in pairs(self.widgets) do
+  for i, w in pairs(self.widgets) do
     w:handle_overlay_built()
   end
 end
 
 function HUD:handle_overlay_destroyed(overlay)
-  if self.active then
-    self:stop()
-  end
-
-  for w in pairs(self.widgets) do
+  for i, w in pairs(self.widgets) do
     w:handle_overlay_destroyed()
   end
 end
 
 function HUD:add_widget(widget)
-  table.insert(self.widgets, widget)
-
-  print(string.format('Added widget %s at %s', widget:get_name(), #self.widgets))
-
-  for i = 1, #self.widgets do
-    local w = self.widgets[i]
-    print(string.format('Widget %s: %s', i, w:get_name()))
-  end
-
-  widget:set_hud(self)
-  widget:handle_add(self)
+  self:add_interface(widget)
 end
 
 function HUD:remove_widget(widget)
-  for i = #self.widgets, 1, -1 do
-    local w = self.widgets[i]
-
-    if w == widget then
-      table.remove(self.widgets, i)
-    end
-  end
-
-  widget:set_hud(nil)
-  widget:handle_remove(self)
+  self:remove_interface(widget)
 end
 
-function HUD:start()
-  if self.active then
-    self:stop()
-  end
+function HUD:sort_widgets()
+  table.sort(self.widgets, Widget.sort_by_z_index)
+  table.sort(self.widgets_by_z_index, Widget.sort_by_z_index)
+end
 
-  self.active = true
-
+function HUD:reset()
   for i, w in pairs(self.widgets) do
     w:reset()
   end
 end
 
-function HUD:stop()
-  self.active = false
-end
-
 function HUD:tick()
-  if not self.active then
-    return
-  end
-
   for i, w in pairs(self.widgets) do
-    local func = function() w:tick() end
-
-    local worked, err = pcall(func)
+    local worked, err = pcall(function()
+      w:tick()
+    end)
 
     if not worked then
       print(err)
@@ -127,18 +92,6 @@ function HUD:tick()
 end
 
 function HUD:draw()
-  local sorted_widgets = {}
-
-  if not self.active then
-    return
-  end
-
-  for i = 1, #self.widgets do
-    sorted_widgets[i] = self.widgets[i]
-  end
-
-  table.sort(sorted_widgets, compare_widget_z_index)
-
   d2k.overlay:lock()
 
   if d2k.Video.using_opengl() then
@@ -147,18 +100,16 @@ function HUD:draw()
 
   d2k.overlay.render_context:set_operator(Cairo.Operator.OVER)
 
-  for i, w in pairs(self.widgets) do
-    if w:is_enabled() then
-      w:draw()
-    end
+  for i, w in pairs(self.widgets_by_z_index) do
+    w:draw()
   end
 
   d2k.overlay:unlock()
 end
 
 function HUD:handle_event(event)
-  for i, w in pairs(self.widgets) do
-    if w:is_enabled() and w:handle_event(event) then
+  for i, w in ipairs(self.widgets_by_z_index) do
+    if w:handle_event(event) then
       return true
     end
   end

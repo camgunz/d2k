@@ -35,38 +35,23 @@ print('X_Init: Init script engine.')
 
 print('X_Init: Creating input handler.')
 local input_handler = require('input_handler')
-d2k.input_handler = input_handler.InputHandler:new()
+d2k.input_handler = input_handler.InputHandler()
 
 if d2k.Video.is_enabled() then
   print('X_Init: Creating overlay.')
   local Overlay = require('overlay')
-  d2k.overlay = Overlay.Overlay:new()
+  d2k.overlay = Overlay.Overlay()
 
   print('X_Init: Creating HUD')
   local HUD = require('hud')
-  d2k.hud = HUD.HUD:new()
-else
-  d2k.overlay = nil
-  d2k.hud = nil
-end
-
-if d2k.Video.is_enabled() then
+  d2k.hud = HUD.HUD()
   print('X_Init: Creating console')
   local Console = require('console')
-  d2k.console = Console.Console:new({
+  d2k.console = Console.Console({
     font_description_text = 'ascsys,Arial Unicode MS,Unifont 11'
   })
-end
-
-if d2k.hud then
   print('X_Init: Adding console to HUD')
-  d2k.hud:add_widget(d2k.console)
-end
-
-print('X_Init: Loading console shortcuts')
-require('console_shortcuts')
-
-if d2k.Video.is_enabled() then
+  d2k.console:set_parent(d2k.hud)
   print('X_Init: Loading HUD widgets')
   func, err = loadfile(d2k.script_folder .. '/local_hud_widgets.lua', 't')
   if func then
@@ -79,7 +64,13 @@ if d2k.Video.is_enabled() then
     mprint(string.format('<span color="red">%s</span>', err))
     print(err)
   end
+else
+  d2k.overlay = nil
+  d2k.hud = nil
 end
+
+print('X_Init: Loading console shortcuts')
+require('console_shortcuts')
 
 -- vi: et ts=2 sw=2
 

@@ -21,61 +21,97 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-local Widget = {}
+local classlib = require('classlib')
+local InputInterface = require('input_interface')
 
-function Widget:new(w)
+class.Widget(InputInterface.InputInterface)
+
+Widget.SNAP_NONE = 0
+Widget.SNAP_RIGHT = 1
+Widget.SNAP_BOTTOM = 2
+
+function Widget.sort_by_z_index(w1, w2)
+  if w1:get_z_index() < w2:get_z_index() then
+    return true
+  end
+
+  return false
+end
+
+function Widget:__init(w)
   w = w or {}
 
-  w.x = w.x or 0
-  w.y = w.y or 0
-  w.width = w.width or 0
-  w.height = w.height or 0
-  w.max_width = w.max_width or 0
-  w.max_height = w.max_height or 0
-  w.z_index = w.z_index or 0
-  w.use_proportional_dimensions = w.use_proportional_dimensions or true
+  w.name = w.name or 'Widget'
 
-  w.hud = nil
-  w.enabled = false
-  w.active = false
-  w.needs_updating = false
+  self.InputInterface:__init(w)
 
-  setmetatable(w, self)
-  self.__index = self
-
-  w:set_name(w.name or 'Widget')
-  w:deactivate()
-
-  return w
-end
-
-function Widget:get_name()
-  return self.name
-end
-
-function Widget:set_name(name)
-  self.name = name
+  self.x = w.x or 0
+  self.y = w.y or 0
+  self.snap = w.snap or Widget.SNAP_NONE
+  self.width = w.width or 0
+  self.height = w.height or 0
+  self.max_width = w.max_width or 0
+  self.max_height = w.max_height or 0
+  self.z_index = w.z_index or 0
+  self.use_proportional_dimensions = w.use_proportional_dimensions or true
 end
 
 function Widget:get_x()
+  if self:get_snap() == Widget.SNAP_RIGHT then
+    return d2k.Video.get_screen_width() - self:get_width_in_pixels()
+  end
+
+  if self.x < 0 then
+    return d2k.Video.get_screen_width() + self.x
+  end
+
   return self.x
 end
 
 function Widget:set_x(x)
+  if self:get_snap() == Widget.SNAP_RIGHT then
+    error(string.format(
+      '%s: Cannot set X coordinate when snapped to the right\n',
+      self:get_name()
+    ))
+  end
+
   self.x = x
 end
 
 function Widget:get_y()
+  if self:get_snap() == Widget.SNAP_BOTTOM then
+    return d2k.Video.get_screen_height() - self:get_height_in_pixels()
+  end
+
+  if self.y < 0 then
+    return d2k.Video.get_screen_height() + self.y
+  end
+
   return self.y
 end
 
 function Widget:set_y(y)
+  if self:get_snap() == Widget.SNAP_BOTTOM then
+    error(string.format(
+      '%s: Cannot set Y coordinate when snapped to the bottom\n',
+      self:get_name()
+    ))
+  end
+
   self.y = y
+end
+
+function Widget:get_snap()
+  return self.snap
+end
+
+function Widget:set_snap(snap)
+  self.snap = snap
 end
 
 function Widget:get_width()
   if self.width < 0 or self.width > 1 then
-    print(debug.traceback())
     error(string.format('%s: Invalid width %s\n', self:get_name(), self.width))
   end
 
@@ -94,7 +130,6 @@ function Widget:set_width(width)
   end
 
   if width < 0 or width > 1 then
-    print(debug.traceback())
     error(string.format('%s: Invalid width %s\n', self:get_name(), width))
   end
 
@@ -122,7 +157,6 @@ end
 
 function Widget:get_height()
   if self.height < 0 or self.height > 1 then
-    print(debug.traceback())
     error(string.format('%s: Invalid height %s\n',
       self:get_name(), self.height
     ))
@@ -143,7 +177,6 @@ function Widget:set_height(height)
   end
 
   if height < 0 or height > 1 then
-    print(debug.traceback())
     error(string.format('%s: Invalid height %s\n',
       self:get_name(), height
     ))
@@ -303,6 +336,9 @@ end
 
 function Widget:set_z_index(z_index)
   self.z_index = z_index
+  if self.parent then
+    self.parent:sort_widgets()
+  end
 end
 
 function Widget:get_use_proportional_dimensions()
@@ -313,61 +349,22 @@ function Widget:set_use_proportional_dimensions(use_proportional_dimensions)
   self.use_proportional_dimensions = proportional_dimensions
 end
 
-function Widget:get_hud()
-  return self.hud
+function Widget:remove_parent()
+  local current_parent = self:get_parent()
+
+  InputInterface.InputInterface.remove_parent(self)
+
+  if current_parent then
+    current_parent:sort_widgets()
+  end
 end
 
-function Widget:set_hud(hud)
-  self.hud = hud
-end
+function Widget:set_parent(parent)
+  InputInterface.InputInterface.set_parent(self, parent)
 
-function Widget:enable()
-  self.enabled = true
-end
-
-function Widget:disable()
-  self.enabled = false
-end
-
-function Widget:is_enabled()
-  return self.enabled
-end
-
-function Widget:activate()
-  self.active = true
-end
-
-function Widget:deactivate()
-  self.active = false
-end
-
-function Widget:is_active()
-  return self.active
-end
-
-function Widget:get_needs_updating()
-  return self.needs_updating
-end
-
-function Widget:set_needs_updating(needs_updating)
-  self.needs_updating = needs_updating
-end
-
-function Widget:reset()
-end
-
-function Widget:tick()
-end
-
-function Widget:draw()
-end
-
-function Widget:handle_add(hud)
-  self:enable()
-end
-
-function Widget:handle_remove(hud)
-  self:disable()
+  if self:get_parent() then
+    self:get_parent():sort_widgets()
+  end
 end
 
 function Widget:handle_overlay_built(overlay)

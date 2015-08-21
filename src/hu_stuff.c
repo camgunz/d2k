@@ -458,9 +458,6 @@ void HU_Start(void) {
   if (nodrawers)
     return;
 
-  if (!X_Call(X_GetState(), "hud", "start", 0, 0))
-    I_Error("HU_Start: Error starting hud (%s)", X_GetError(X_GetState()));
-
 #if 0
   if (headsupactive)                    // stop before starting
     HU_Stop();

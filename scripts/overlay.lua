@@ -21,28 +21,24 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
+local classlib = require('classlib')
 local lgi = require('lgi')
 local Cairo = lgi.cairo
 local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
 
-local Overlay = {}
+class.Overlay()
 
-function Overlay:new(o)
+function Overlay:__init(o)
   o = o or {}
 
-  o.width = 0
-  o.height = 0
+  self.width = 0
+  self.height = 0
 
-  o.build_listeners = {}
-  o.destroy_listeners = {}
+  self.build_listeners = {}
+  self.destroy_listeners = {}
 
-  setmetatable(o, self)
-  self.__index = self
-
-  o:build()
-
-  return o
+  self:build()
 end
 
 function Overlay:initialized()

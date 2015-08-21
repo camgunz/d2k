@@ -21,6 +21,7 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
+local classlib = require('classlib')
 local lgi = require('lgi')
 local Cairo = lgi.cairo
 local GLib = lgi.GLib
@@ -30,85 +31,82 @@ local Widget = require('widget')
 local TextWidget = require('text_widget')
 local InputWidget = require('input_widget')
 
-local Console = Widget.Widget:new({
-  EXTENSION_TIME           = 1200.0,
-  RETRACTION_TIME          = 1200.0,
-  MARGIN                   = 8,
-  HORIZONTAL_SCROLL_AMOUNT = 6,
-  VERTICAL_SCROLL_AMOUNT   = 12,
-  FG_COLOR                 = {1.0, 1.0, 1.0, 1.00},
-  BG_COLOR                 = {0.0, 0.0, 0.0, 0.85},
-})
+class.Console(Widget.Widget)
 
-function Console:new(c)
+Console.EXTENSION_TIME           = 1200.0
+Console.RETRACTION_TIME          = 1200.0
+Console.MARGIN                   = 8
+Console.HORIZONTAL_SCROLL_AMOUNT = 6
+Console.VERTICAL_SCROLL_AMOUNT   = 12
+Console.FG_COLOR                 = {1.0, 1.0, 1.0, 1.00}
+Console.BG_COLOR                 = {0.0, 0.0, 0.0, 0.85}
+
+function Console:__init(c)
   c = c or {}
 
-  c.extension_time = c.extension_time or Console.EXTENSION_TIME
-  c.retraction_time = c.retraction_time or Console.RETRACTION_TIME
-  c.max_width = c.max_width or 1
-  c.max_height = c.max_height or .5
-  c.z_index = c.z_index or 2
+  self.Widget:__init(c)
 
-  c.width = c.max_width
-  c.height = 0
-  c.scroll_rate = 0.0
-  c.last_scroll_ms = 0
+  self.extension_time = c.extension_time or Console.EXTENSION_TIME
+  self.retraction_time = c.retraction_time or Console.RETRACTION_TIME
+  self.max_width = c.max_width or 1
+  self.max_height = c.max_height or .5
+  self.z_index = c.z_index or 2
 
-  c.font_description_text = c.font_description_text or
-                            d2k.hud.font_description_text
+  self.width = self.max_width
+  self.height = 0
+  self.scroll_rate = 0.0
+  self.last_scroll_ms = 0
 
-  c.input = InputWidget.InputWidget:new({
+  self.font_description_text = c.font_description_text or
+                               d2k.hud.font_description_text
+
+  self.input = InputWidget.InputWidget({
     name = 'console input',
     x = 0,
     y = 0,
-    width = c.max_width,
+    width = self.width,
     height = 0,
-    z_index = c.z_index,
-    top_margin = c.input_margin or Console.MARGIN,
-    bottom_margin = c.bottom_margin or Console.MARGIN,
-    left_margin = c.left_margin or Console.MARGIN,
-    right_margin = c.right_margin or Console.MARGIN,
+    z_index = self.z_index,
+    top_margin = self.input_margin or Console.MARGIN,
+    bottom_margin = self.bottom_margin or Console.MARGIN,
+    left_margin = self.left_margin or Console.MARGIN,
+    right_margin = self.right_margin or Console.MARGIN,
     horizontal_alignment = TextWidget.ALIGN_LEFT,
     vertical_alignment = TextWidget.ALIGN_CENTER,
-    fg_color = c.fg_color or Console.FG_COLOR,
-    bg_color = c.bg_color or Console.BG_COLOR,
-    font_description_text = c.font_description_text,
+    fg_color = self.fg_color or Console.FG_COLOR,
+    bg_color = self.bg_color or Console.BG_COLOR,
+    font_description_text = self.font_description_text,
     input_handler = d2k.CommandInterface.handle_input,
   })
 
-  c.output = TextWidget.TextWidget:new({
+  self.output = TextWidget.TextWidget({
     name = 'console output',
     x = 0,
     y = 0,
-    width = c.max_width,
-    height = c.max_height,
-    z_index = c.z_index,
-    top_margin = c.top_margin or 0,
-    bottom_margin = c.bottom_margin or Console.MARGIN,
-    left_margin = c.left_margin or Console.MARGIN,
-    right_margin = c.right_margin or Console.MARGIN,
+    width = self.width,
+    height = self.max_height,
+    z_index = self.z_index,
+    top_margin = self.top_margin or 0,
+    bottom_margin = self.bottom_margin or Console.MARGIN,
+    left_margin = self.left_margin or Console.MARGIN,
+    right_margin = self.right_margin or Console.MARGIN,
     horizontal_alignment = TextWidget.ALIGN_LEFT,
     vertical_alignment = TextWidget.ALIGN_BOTTOM,
-    fg_color = c.fg_color or Console.FG_COLOR,
-    bg_color = c.bg_color or Console.BG_COLOR,
-    font_description_text = c.font_description_text,
+    fg_color = self.fg_color or Console.FG_COLOR,
+    bg_color = self.bg_color or Console.BG_COLOR,
+    font_description_text = self.font_description_text,
     word_wrap = TextWidget.WRAP_WORD,
     use_markup = true,
     strip_ending_newline = true,
   })
 
-  c.output:set_external_text_source(
+  self.output:set_external_text_source(
     d2k.Messaging.get_console_messages,
     d2k.Messaging.get_console_messages_updated,
     d2k.Messaging.clear_console_messages_updated
   )
 
-  setmetatable(c, self)
-  self.__index = self
-
-  c:set_name('console')
-
-  return c
+  self:set_name('console')
 end
 
 function Console:get_extension_time()

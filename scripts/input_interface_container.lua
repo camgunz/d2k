@@ -23,80 +23,79 @@
 
 local classlib = require('classlib')
 
-class.InputHandler()
+class.InputInterfaceContainer()
 
-function InputHandler:__init(ih)
-  self.current_event = d2k.InputEvent:new()
+function InputInterfaceContainer:__init()
+  self.interfaces = {}
+  self.active_interfaces = {}
 end
 
-function InputHandler:handle_event()
-  local ev = self.current_event
-
-  if d2k.Input.handle_event(ev) then
-    return
+function InputInterfaceContainer:get_front_interface()
+  if #self.active_interfaces > 0 then
+    return self.active_interfaces[1]
   end
+end
 
-  if not d2k.Video.is_enabled() then
-    --[[
-    if d2k.Game.handle_event(ev) then
-      return
-    end
-    --]]
-  end
-
-  if ev:is_key_press(d2k.KeyBinds.get_screenshot()) then
-    d2k.Misc.take_screenshot()
-  end
-
-  if d2k.Menu.is_active() then
-    if d2k.Menu.handle_event(ev) then
+function InputInterfaceContainer:add_interface(interface)
+  for i, ifc in pairs(self.interfaces) do
+    if ifc == new_interface then
       return
     end
   end
 
-  if d2k.hud:handle_event(ev) then
-    return
-  end
-
-  if d2k.Menu.handle_event(ev) then
-    return
-  end
-
-  if d2k.Main.handle_event(ev) then
-    return
-  end
-
-  if d2k.StatusBar.handle_event(ev) then
-    return
-  end
-
-  if d2k.AutoMap.handle_event(ev) then
-    return
-  end
-
-  d2k.Game.handle_event(ev)
+  table.insert(self.interfaces, interface)
 end
 
-function InputHandler:handle_events()
-  while true do
-    self.current_event:reset()
-    event_received, event_populated = d2k.populate_event(self.current_event)
-
-    if not event_received then
-      break
-    end
-
-    if event_populated then
-      local result, err = pcall(function() self:handle_event() end)
-
-      if err then
-        print(string.format('InputHandler:handle_events: error: %s', err))
-      end
+function InputInterfaceContainer:remove_interface(interface)
+  for i, ifc in pairs(self.interfaces) do
+    if ifc == interface then
+      table.remove(self.interfaces, i)
+      return
     end
   end
 end
 
-return {InputHandler = InputHandler}
+function InputInterfaceContainer:get_interface(interface_name)
+  for i, interface in pairs(self.interfaces) do
+    if interface:get_name() == interface_name then
+      return interface
+    end
+  end
+end
+
+function InputInterfaceContainer:activate_interface(interface)
+  for i, active_interface in pairs(self.active_interfaces) do
+    if interface == active_interface then
+      return
+    end
+  end
+
+  for i, ifc in pairs(self.interfaces) do
+    if ifc == interface then
+      table.insert(self.active_interfaces, 0, ifc)
+      return
+    end
+  end
+end
+
+function InputInterfaceContainer:deactivate_interface(interface)
+  for i, active_interface in pairs(self.active_interfaces) do
+    if interface == active_interface then
+      table.remove(self.active_interfaces, i)
+      return
+    end
+  end
+end
+
+function InputInterfaceContainer:get_interfaces()
+  return self.interfaces
+end
+
+function InputInterfaceContainer:get_active_interfaces()
+  return self.active_interfaces
+end
+
+return {InputInterfaceContainer = InputInterfaceContainer}
 
 -- vi: et ts=2 sw=2
 

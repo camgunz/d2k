@@ -6,11 +6,12 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-local InputWidget = require('input_widget')
+local Widget = require('widget')
 local TextWidget = require('text_widget')
+local InputWidget = require('input_widget')
 local RetractableTextWidget = require('retractable_text_widget')
 
-local messages_widget = RetractableTextWidget.RetractableTextWidget:new({
+local messages_widget = RetractableTextWidget.RetractableTextWidget({
   name = 'messages',
   z_index = 1,
   top_margin = 4,
@@ -38,9 +39,10 @@ messages_widget:set_external_text_source(
   d2k.Game.clear_consoleplayer_messages_updated
 )
 
-local chat_widget = InputWidget.InputWidget:new({
+local chat_widget = InputWidget.InputWidget({
   name = 'chat',
   z_index = 1,
+  snap = Widget.SNAP_BOTTOM,
   top_margin = 4,
   bottom_margin = 4,
   left_margin = 8,
@@ -48,7 +50,7 @@ local chat_widget = InputWidget.InputWidget:new({
   width = 1,
   line_height = 1,
   use_markup = true,
-  font_description_text = 'ascsys,Arial Unicode MS, Unifont 11',
+  font_description_text = 'Noto Sans,Arial Unicode MS, Unifont 11',
   strip_ending_newline = true,
   horizontal_alignment = TextWidget.ALIGN_LEFT,
   vertical_alignment = TextWidget.ALIGN_CENTER,
@@ -85,3 +87,4 @@ d2k.hud:add_widget(messages_widget)
 d2k.hud:add_widget(chat_widget)
 
 -- vi: et ts=2 sw=2
+

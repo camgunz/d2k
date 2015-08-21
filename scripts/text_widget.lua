@@ -21,6 +21,7 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
+local classlib = require('classlib')
 local lgi = require('lgi')
 local Cairo = lgi.cairo
 local GLib = lgi.GLib
@@ -28,89 +29,63 @@ local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
 local Widget = require('widget')
 
-local TextWidget = Widget.Widget:new()
+class.TextWidget(Widget.Widget)
 
-TextWidget.ALIGN_LEFT    = 0
-TextWidget.ALIGN_CENTER  = 1
-TextWidget.ALIGN_RIGHT   = 2
-TextWidget.ALIGN_JUSTIFY = 3
-
-TextWidget.ALIGN_TOP     = 0
-TextWidget.ALIGN_BOTTOM  = 2
-
-TextWidget.WRAP_NONE      = 0
-TextWidget.WRAP_WORD      = 1
-TextWidget.WRAP_CHAR      = 2
-TextWidget.WRAP_WORD_CHAR = 3
-
+TextWidget.ALIGN_LEFT       = 0
+TextWidget.ALIGN_CENTER     = 1
+TextWidget.ALIGN_RIGHT      = 2
+TextWidget.ALIGN_JUSTIFY    = 3
+TextWidget.ALIGN_TOP        = 0
+TextWidget.ALIGN_BOTTOM     = 1
+TextWidget.WRAP_NONE        = 0
+TextWidget.WRAP_WORD        = 1
+TextWidget.WRAP_CHAR        = 2
+TextWidget.WRAP_WORD_CHAR   = 3
 TextWidget.ELLIPSIZE_NONE   = 0
 TextWidget.ELLIPSIZE_START  = 1
 TextWidget.ELLIPSIZE_MIDDLE = 2
 TextWidget.ELLIPSIZE_END    = 3
 
-function TextWidget:new(tw)
+function TextWidget:__init(tw)
   tw = tw or {}
 
-  tw.top_margin = tw.top_margin or 0
-  tw.bottom_margin = tw.bottom_margin or 0
-  tw.left_margin = tw.left_margin or 0
-  tw.right_margin = tw.right_margin or 0
-  tw.text = tw.text or ''
-  tw.max_width = tw.max_width or tw.width or 0
-  tw.max_height = tw.max_height or tw.height or 0
-  tw.fg_color = tw.fg_color or {1.0, 1.0, 1.0, 1.0}
-  tw.bg_color = tw.bg_color or {0.0, 0.0, 0.0, 0.0}
-  tw.outline_color = tw.outline_color or {0.0, 0.0, 0.0, 0.0}
-  tw.outline_text = tw.outline_text or false
-  tw.outline_width = tw.outline_width or 0
-  tw.line_height = tw.line_height or 0
-  tw.scrollable = tw.scrollable or false
-  tw.font_description_text = tw.font_description_text or
-                             d2k.hud.font_description_text
-  tw.use_markup = tw.use_markup or false
-  tw.strip_ending_newline = tw.strip_ending_newline or false
+  self.Widget:__init(tw)
 
-  tw.text_context = nil
-  tw.current_render_context = nil
-  tw.layout = nil
+  self.top_margin = tw.top_margin or 0
+  self.bottom_margin = tw.bottom_margin or 0
+  self.left_margin = tw.left_margin or 0
+  self.right_margin = tw.right_margin or 0
+  self.text = tw.text or ''
+  self.max_width = tw.max_width or tw.width or 0
+  self.max_height = tw.max_height or tw.height or 0
+  self.fg_color = tw.fg_color or {1.0, 1.0, 1.0, 1.0}
+  self.bg_color = tw.bg_color or {0.0, 0.0, 0.0, 0.0}
+  self.outline_color = tw.outline_color or {0.0, 0.0, 0.0, 0.0}
+  self.outline_text = tw.outline_text or false
+  self.outline_width = tw.outline_width or 0
+  self.line_height = tw.line_height or 0
+  self.scrollable = tw.scrollable or false
+  self.use_markup = tw.use_markup or false
+  self.strip_ending_newline = tw.strip_ending_newline or false
 
-  tw.horizontal_offset = 0.0
-  tw.vertical_offset = 0.0
+  self.text_context = nil
+  self.current_render_context = nil
+  self.layout = nil
 
-  tw.get_external_text = nil
-  tw.external_text_updated = nil
-  tw.clear_external_text_updated = nil
+  self.horizontal_offset = 0.0
+  self.vertical_offset = 0.0
 
-  setmetatable(tw, self)
-  self.__index = self
+  self.get_external_text = nil
+  self.external_text_updated = nil
+  self.clear_external_text_updated = nil
 
-  tw:build_layout()
-
-  if tw.word_wrap then
-    tw:set_word_wrap(tw.word_wrap)
-  else
-    tw:set_word_wrap(TextWidget.WRAP_NONE)
-  end
-
-  if tw.horizontal_alignment then
-    tw:set_horizontal_alignment(tw.horizontal_alignment)
-  else
-    tw:set_horizontal_alignment(TextWidget.ALIGN_LEFT)
-  end
-
-  if tw.vertical_alignment then
-    tw:set_vertical_alignment(tw.vertical_alignment)
-  else
-    tw:set_vertical_alignment(TextWidget.ALIGN_TOP)
-  end
-
-  if tw.ellipsize then
-    tw:set_ellipsize(tw.ellipsize)
-  else
-    tw:set_ellipsize(TextWidget.ELLIPSIZE_NONE)
-  end
-
-  return tw
+  self:set_font_description_text(
+    tw.font_description_text or d2k.hud_font_description_text
+  )
+  self:set_word_wrap(tw.word_wrap or TextWidget.WRAP_NONE)
+  self:set_horizontal_alignment(tw.horizontal_alignment or TextWidget.ALIGN_LEFT)
+  self:set_vertical_alignment(tw.vertical_alignment or TextWidget.ALIGN_TOP)
+  self:set_ellipsize(tw.ellipsize or TextWidget.ELLIPSIZE_NONE)
 end
 
 function TextWidget:get_top_margin()
@@ -156,8 +131,7 @@ function TextWidget:set_text(text)
     ))
   end
   if not GLib.utf8_validate(text) then
-    print(debug.traceback())
-    print("bad text passed to text widget");
+    print('bad text passed to text widget');
     return
   end
   self.text = text
@@ -242,6 +216,7 @@ end
 
 function TextWidget:set_font_description_text(font_description_text)
   self.font_description_text = font_description_text
+  self:build_layout()
 end
 
 function TextWidget:get_use_markup()
@@ -277,6 +252,15 @@ function TextWidget:set_current_render_context(current_render_context)
 end
 
 function TextWidget:get_layout()
+  local cr = d2k.overlay.render_context
+  local current_render_context = self:get_current_render_context()
+
+  if not self.layout or
+     not current_render_context or
+     not current_render_context == cr then
+    self:build_layout()
+  end
+
   return self.layout
 end
 
@@ -378,10 +362,6 @@ function TextWidget:draw()
   local bg_color = self:get_bg_color()
   local outline_color = self:get_outline_color()
   local current_render_context = self:get_current_render_context()
-
-  if not current_render_context or current_render_context ~= cr then
-    self:build_layout()
-  end
 
   self:update_layout_if_needed()
 
@@ -556,9 +536,12 @@ end
 function TextWidget:build_layout()
   self:set_current_render_context(d2k.overlay.render_context)
   self:set_layout(Pango.Layout.new(d2k.overlay.text_context))
-  self:get_layout():set_font_description(Pango.FontDescription.from_string(
-    self:get_font_description_text()
-  ))
+
+  if self:get_font_description_text() then
+    self:get_layout():set_font_description(Pango.FontDescription.from_string(
+      self:get_font_description_text()
+    ))
+  end
 end
 
 function TextWidget:set_height_by_lines(line_count)
