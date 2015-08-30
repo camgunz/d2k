@@ -21,15 +21,15 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-local classlib = require('classlib')
+local class = require('middleclass')
 local lgi = require('lgi')
 local Cairo = lgi.cairo
 local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
 
-class.Overlay()
+Overlay = class('Overlay')
 
-function Overlay:__init(o)
+function Overlay:initialize(o)
   o = o or {}
 
   self.width = 0

@@ -72,8 +72,11 @@ void I_InputUpdateKeyStates(void) {
 }
 
 void I_InputHandle(void) {
-  if (!X_Call(X_GetState(), "input_handler", "handle_events", 0, 0))
-    I_Error("I_StartTic: Error handling input (%s)", X_GetError(X_GetState()));
+  if (!X_Call(X_GetState(), "interfaces", "handle_events", 0, 0)) {
+    I_Error("I_InputHandle: Error handling input (%s)",
+      X_GetError(X_GetState())
+    );
+  }
   I_MouseReset();
 }
 

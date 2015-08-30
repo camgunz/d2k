@@ -21,79 +21,82 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-local classlib = require('classlib')
+-- Requires:
+--   self.interfaces = {}
+--   self.active_interfaces = {}
 
-class.InputInterfaceContainer()
+InputInterfaceContainer = {
 
-function InputInterfaceContainer:__init()
-  self.interfaces = {}
-  self.active_interfaces = {}
-end
-
-function InputInterfaceContainer:get_front_interface()
-  if #self.active_interfaces > 0 then
-    return self.active_interfaces[1]
-  end
-end
-
-function InputInterfaceContainer:add_interface(interface)
-  for i, ifc in pairs(self.interfaces) do
-    if ifc == new_interface then
-      return
+  get_front_interface = function(self)
+    if #self.active_interfaces > 0 then
+      return self.active_interfaces[1]
     end
-  end
+  end,
 
-  table.insert(self.interfaces, interface)
-end
-
-function InputInterfaceContainer:remove_interface(interface)
-  for i, ifc in pairs(self.interfaces) do
-    if ifc == interface then
-      table.remove(self.interfaces, i)
-      return
+  add_interface = function(self, interface)
+    for i, ifc in pairs(self.interfaces) do
+      if ifc == new_interface then
+        return
+      end
     end
-  end
-end
 
-function InputInterfaceContainer:get_interface(interface_name)
-  for i, interface in pairs(self.interfaces) do
-    if interface:get_name() == interface_name then
-      return interface
+    table.insert(self.interfaces, interface)
+  end,
+
+  remove_interface = function(self, interface)
+    for i, ifc in pairs(self.interfaces) do
+      if ifc == interface then
+        table.remove(self.interfaces, i)
+        return
+      end
     end
-  end
-end
+  end,
 
-function InputInterfaceContainer:activate_interface(interface)
-  for i, active_interface in pairs(self.active_interfaces) do
-    if interface == active_interface then
-      return
+  get_interface = function(self, interface_name)
+    for i, interface in pairs(self.interfaces) do
+      if interface:get_name() == interface_name then
+        return interface
+      end
     end
-  end
+  end,
 
-  for i, ifc in pairs(self.interfaces) do
-    if ifc == interface then
-      table.insert(self.active_interfaces, 0, ifc)
-      return
+  activate_interface = function(self, interface)
+    for i, active_interface in pairs(self.active_interfaces) do
+      if interface == active_interface then
+        return
+      end
     end
-  end
-end
 
-function InputInterfaceContainer:deactivate_interface(interface)
-  for i, active_interface in pairs(self.active_interfaces) do
-    if interface == active_interface then
-      table.remove(self.active_interfaces, i)
-      return
+    for i, ifc in pairs(self.interfaces) do
+      if ifc == interface then
+        if #self.active_interfaces == 0 then
+          table.insert(self.active_interfaces, ifc)
+        else
+          table.insert(self.active_interfaces, 0, ifc)
+        end
+        return
+      end
     end
+  end,
+
+  deactivate_interface = function(self, interface)
+    for i, active_interface in pairs(self.active_interfaces) do
+      if interface == active_interface then
+        table.remove(self.active_interfaces, i)
+        return
+      end
+    end
+  end,
+
+  get_interfaces = function(self)
+    return self.interfaces
+  end,
+
+  get_active_interfaces = function(self)
+    return self.active_interfaces
   end
-end
 
-function InputInterfaceContainer:get_interfaces()
-  return self.interfaces
-end
-
-function InputInterfaceContainer:get_active_interfaces()
-  return self.active_interfaces
-end
+}
 
 return {InputInterfaceContainer = InputInterfaceContainer}
 

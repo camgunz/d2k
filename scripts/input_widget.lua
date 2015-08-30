@@ -21,26 +21,25 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-local classlib = require('classlib')
+local class = require('middleclass')
 local lgi = require('lgi')
 local GLib = lgi.GLib
 local Cairo = lgi.cairo
 local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
-local utf8 = require('utf8')
 local TextWidget = require('text_widget')
 
-class.InputWidget(TextWidget.TextWidget)
+InputWidget = class('InputWidget', TextWidget.TextWidget)
 
 InputWidget.use_markup = false
 
-InputWidget.PROMPT_THICKNESS = 1.1
-InputWidget.CURSOR_THICKNESS = 1.1
+local PROMPT_THICKNESS = 1.1
+local CURSOR_THICKNESS = 1.1
 
-function InputWidget:__init(iw)
+function InputWidget:initialize(iw)
   iw = iw or {}
 
-  self.TextWidget:__init(iw)
+  TextWidget.TextWidget.initialize(self, iw)
 
   self.cursor_color = iw.cursor_color or {0.8, 0.8, 0.8, 1.0}
   self.prompt_color = iw.prompt_color or {1.0, 1.0, 1.0, 1.0}
@@ -243,7 +242,7 @@ function InputWidget:draw()
     self:get_y() + self:get_top_margin() + h_half + h_quart
   )
 
-  cr:set_line_width(InputWidget.PROMPT_THICKNESS)
+  cr:set_line_width(PROMPT_THICKNESS)
   cr:stroke();
 
   local lx = self:get_x() + self:get_left_margin() + prompt_width
@@ -314,7 +313,7 @@ function InputWidget:draw()
 
     cr:move_to(lx + cursor_pos.x, ly + cursor_pos.y)
     cr:line_to(lx + cursor_pos.x, ly + cursor_pos.y + cursor_pos.height)
-    cr:set_line_width(InputWidget.CURSOR_THICKNESS)
+    cr:set_line_width(CURSOR_THICKNESS)
     cr:stroke()
   end
 
@@ -607,7 +606,11 @@ function InputWidget:handle_event(event)
   return false
 end
 
-return {InputWidget = InputWidget}
+return {
+  InputWidget      = InputWidget,
+  PROMPT_THICKNESS = PROMPT_THICKNESS,
+  CURSOR_THICKNESS = CURSOR_THICKNESS
+}
 
 -- vi: et ts=2 sw=2
 

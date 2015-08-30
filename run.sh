@@ -11,9 +11,9 @@ cp "${BASE_DIR}/scripts/"* ~/.d2k/scripts/
 cp "${BASE_DIR}/fonts/"* ~/.d2k/fonts/
 
 # gdb -ex 'source gdbserver.txt' --args $CMD
-gdb -ex run --args $CMD
+# gdb -ex run --args $CMD
 # gdb --args $CMD
 # CPUPROFILE=cpu.prof $CMD
 # valgrind --leak-check=full --show-leak-kinds=all $CMD
-# $CMD
+$CMD
 

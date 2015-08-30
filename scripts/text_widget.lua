@@ -21,35 +21,38 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-local classlib = require('classlib')
+local class = require('middleclass')
 local lgi = require('lgi')
 local Cairo = lgi.cairo
 local GLib = lgi.GLib
 local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
-local Widget = require('widget')
+local InputInterface = require('input_interface')
 
-class.TextWidget(Widget.Widget)
+TextWidget = class('TextWidget', InputInterface.InputInterface)
 
-TextWidget.ALIGN_LEFT       = 0
-TextWidget.ALIGN_CENTER     = 1
-TextWidget.ALIGN_RIGHT      = 2
-TextWidget.ALIGN_JUSTIFY    = 3
-TextWidget.ALIGN_TOP        = 0
-TextWidget.ALIGN_BOTTOM     = 1
-TextWidget.WRAP_NONE        = 0
-TextWidget.WRAP_WORD        = 1
-TextWidget.WRAP_CHAR        = 2
-TextWidget.WRAP_WORD_CHAR   = 3
-TextWidget.ELLIPSIZE_NONE   = 0
-TextWidget.ELLIPSIZE_START  = 1
-TextWidget.ELLIPSIZE_MIDDLE = 2
-TextWidget.ELLIPSIZE_END    = 3
+local ALIGN_LEFT       = 0
+local ALIGN_CENTER     = 1
+local ALIGN_RIGHT      = 2
+local ALIGN_JUSTIFY    = 3
 
-function TextWidget:__init(tw)
+local ALIGN_TOP        = 0
+local ALIGN_BOTTOM     = 1
+
+local WRAP_NONE        = 0
+local WRAP_WORD        = 1
+local WRAP_CHAR        = 2
+local WRAP_WORD_CHAR   = 3
+
+local ELLIPSIZE_NONE   = 0
+local ELLIPSIZE_START  = 1
+local ELLIPSIZE_MIDDLE = 2
+local ELLIPSIZE_END    = 3
+
+function TextWidget:initialize(tw)
   tw = tw or {}
 
-  self.Widget:__init(tw)
+  InputInterface.InputInterface.initialize(self, tw)
 
   self.top_margin = tw.top_margin or 0
   self.bottom_margin = tw.bottom_margin or 0
@@ -82,10 +85,10 @@ function TextWidget:__init(tw)
   self:set_font_description_text(
     tw.font_description_text or d2k.hud_font_description_text
   )
-  self:set_word_wrap(tw.word_wrap or TextWidget.WRAP_NONE)
-  self:set_horizontal_alignment(tw.horizontal_alignment or TextWidget.ALIGN_LEFT)
-  self:set_vertical_alignment(tw.vertical_alignment or TextWidget.ALIGN_TOP)
-  self:set_ellipsize(tw.ellipsize or TextWidget.ELLIPSIZE_NONE)
+  self:set_word_wrap(tw.word_wrap or WRAP_NONE)
+  self:set_horizontal_alignment(tw.horizontal_alignment or ALIGN_LEFT)
+  self:set_vertical_alignment(tw.vertical_alignment or ALIGN_TOP)
+  self:set_ellipsize(tw.ellipsize or ELLIPSIZE_NONE)
 end
 
 function TextWidget:get_top_margin()
@@ -405,18 +408,18 @@ function TextWidget:draw()
   local layout_ink_extents, layout_logical_extents =
     self:get_layout():get_pixel_extents()
 
-  if self.vertical_alignment == TextWidget.ALIGN_CENTER then
+  if self.vertical_alignment == ALIGN_CENTER then
     ly = ly + (text_height / 2) - (layout_height / 2)
-  elseif self.vertical_alignment == TextWidget.ALIGN_BOTTOM then
+  elseif self.vertical_alignment == ALIGN_BOTTOM then
     ly = ly + text_height - layout_height
   end
 
   lx = lx - self:get_horizontal_offset()
   ly = ly - self:get_vertical_offset()
 
-  if self.horizontal_alignment == TextWidget.ALIGN_CENTER then
+  if self.horizontal_alignment == ALIGN_CENTER then
     lx = (text_width / 2) - (layout_width / 2)
-  elseif self.horizontal_alignment == TextWidget.ALIGN_RIGHT then
+  elseif self.horizontal_alignment == ALIGN_RIGHT then
     lx = lx + text_width - layout_width
   end
 
@@ -432,10 +435,10 @@ function TextWidget:draw()
     if line_count <= line_height then
       min_line = 1
       max_line = line_count
-    elseif self.vertical_alignment == TextWidget.ALIGN_TOP then
+    elseif self.vertical_alignment == ALIGN_TOP then
       min_line = 1
       max_line = line_height
-    elseif self.vertical_alignment == TextWidget.ALIGN_CENTER then
+    elseif self.vertical_alignment == ALIGN_CENTER then
       local half_lines = line_count / 2
       local half_line_height = line_height / 2
 
@@ -572,17 +575,17 @@ end
 function TextWidget:set_ellipsize(ellipsize)
   local layout = self:get_layout()
 
-  if ellipsize == TextWidget.ELLIPSIZE_NONE then
-    self.ellipsize = TextWidget.ELLIPSIZE_NONE
+  if ellipsize == ELLIPSIZE_NONE then
+    self.ellipsize = ELLIPSIZE_NONE
     layout:set_ellipsize(Pango.EllipsizeMode.NONE)
-  elseif ellipsize == TextWidget.ELLIPSIZE_START then
-    self.ellipsize = TextWidget.ELLIPSIZE_START
+  elseif ellipsize == ELLIPSIZE_START then
+    self.ellipsize = ELLIPSIZE_START
     layout:set_ellipsize(Pango.EllipsizeMode.START)
-  elseif ellipsize == TextWidget.ELLIPSIZE_MIDDLE then
-    self.ellipsize = TextWidget.ELLIPSIZE_MIDDLE
+  elseif ellipsize == ELLIPSIZE_MIDDLE then
+    self.ellipsize = ELLIPSIZE_MIDDLE
     layout:set_ellipsize(Pango.EllipsizeMode.MIDDLE)
-  elseif ellipsize == TextWidget.ELLIPSIZE_END then
-    self.ellipsize = TextWidget.ELLIPSIZE_END
+  elseif ellipsize == ELLIPSIZE_END then
+    self.ellipsize = ELLIPSIZE_END
     layout:set_ellipsize(Pango.EllipsizeMode.END)
   else
     error(string.format(
@@ -605,19 +608,19 @@ end
 function TextWidget:set_word_wrap(word_wrap)
   local layout = self:get_layout()
 
-  if word_wrap == TextWidget.WRAP_NONE then
-    self.word_wrap = TextWidget.WRAP_NONE
+  if word_wrap == WRAP_NONE then
+    self.word_wrap = WRAP_NONE
     layout:set_width(-1)
-  elseif word_wrap == TextWidget.WRAP_WORD then
-    self.word_wrap = TextWidget.WRAP_WORD
+  elseif word_wrap == WRAP_WORD then
+    self.word_wrap = WRAP_WORD
     layout:set_width(self:get_width_in_pixels() * Pango.SCALE)
     layout:set_wrap(Pango.WrapMode.WORD)
-  elseif word_wrap == TextWidget.WRAP_CHAR then
-    self.word_wrap = TextWidget.WRAP_CHAR
+  elseif word_wrap == WRAP_CHAR then
+    self.word_wrap = WRAP_CHAR
     layout:set_width(self:get_width_in_pixels() * Pango.SCALE)
     layout:set_wrap(Pango.WrapMode.CHAR)
-  elseif word_wrap == TextWidget.WRAP_WORD_CHAR then
-    self.word_wrap = TextWidget.WRAP_WORD_CHAR
+  elseif word_wrap == WRAP_WORD_CHAR then
+    self.word_wrap = WRAP_WORD_CHAR
     layout:set_width(self:get_width_in_pixels() * Pango.SCALE)
     layout:set_wrap(Pango.WrapMode.WORD_CHAR)
   else
@@ -640,17 +643,17 @@ end
 function TextWidget:set_horizontal_alignment(horizontal_alignment)
   local layout = self:get_layout()
 
-  if horizontal_alignment == TextWidget.ALIGN_LEFT then
-    self.horizontal_alignment = TextWidget.ALIGN_LEFT
+  if horizontal_alignment == ALIGN_LEFT then
+    self.horizontal_alignment = ALIGN_LEFT
     layout:set_alignment(Pango.Alignment.LEFT)
-  elseif horizontal_alignment == TextWidget.ALIGN_CENTER then
-    self.horizontal_alignment = TextWidget.ALIGN_CENTER
+  elseif horizontal_alignment == ALIGN_CENTER then
+    self.horizontal_alignment = ALIGN_CENTER
     layout:set_alignment(Pango.Alignment.CENTER)
-  elseif horizontal_alignment == TextWidget.ALIGN_RIGHT then
-    self.horizontal_alignment = TextWidget.ALIGN_RIGHT
+  elseif horizontal_alignment == ALIGN_RIGHT then
+    self.horizontal_alignment = ALIGN_RIGHT
     layout:set_alignment(Pango.Alignment.RIGHT)
-  elseif horizontal_alignment == TextWidget.ALIGN_JUSTIFY then
-    self.horizontal_alignment = TextWidget.ALIGN_JUSTIFY
+  elseif horizontal_alignment == ALIGN_JUSTIFY then
+    self.horizontal_alignment = ALIGN_JUSTIFY
     layout:set_alignment(Pango.Alignment.JUSTIFY)
   else
     error(string.format(
@@ -667,13 +670,14 @@ function TextWidget:get_vertical_alignment()
 end
 
 function TextWidget:set_vertical_alignment(vertical_alignment)
-  if vertical_alignment == TextWidget.ALIGN_TOP then
-    self.vertical_alignment = TextWidget.ALIGN_TOP
-  elseif vertical_alignment == TextWidget.ALIGN_CENTER then
-    self.vertical_alignment = TextWidget.ALIGN_CENTER
-  elseif vertical_alignment == TextWidget.ALIGN_BOTTOM then
-    self.vertical_alignment = TextWidget.ALIGN_BOTTOM
+  if vertical_alignment == ALIGN_TOP then
+    self.vertical_alignment = ALIGN_TOP
+  elseif vertical_alignment == ALIGN_CENTER then
+    self.vertical_alignment = ALIGN_CENTER
+  elseif vertical_alignment == ALIGN_BOTTOM then
+    self.vertical_alignment = ALIGN_BOTTOM
   else
+    print(debug.traceback())
     error(string.format(
       'TextWidget:set_vertical_alignment: Invalid vertical alignment %s',
       vertical_alignment
@@ -698,18 +702,18 @@ function TextWidget:check_offsets()
   local max_y = text_height - self:get_top_margin()
   local y_delta = max_y - min_y
 
-  if self.horizontal_alignment == TextWidget.ALIGN_CENTER then
+  if self.horizontal_alignment == ALIGN_CENTER then
     min_x = -((layout_width - text_width) / 2) - self:get_left_margin()
     max_x = ((layout_width - text_width) / 2)
-  elseif self.horizontal_alignment == TextWidget.ALIGN_RIGHT then
+  elseif self.horizontal_alignment == ALIGN_RIGHT then
     min_x = -(layout_width - text_width) - self:get_left_margin()
     max_x = 0
   end
 
-  if self.vertical_alignment == TextWidget.ALIGN_CENTER then
+  if self.vertical_alignment == ALIGN_CENTER then
     min_y = -((layout_height - text_height) / 2) - self:get_top_margin()
     max_y = ((layout_height - text_height) / 2)
-  elseif self.vertical_alignment == TextWidget.ALIGN_BOTTOM then
+  elseif self.vertical_alignment == ALIGN_BOTTOM then
     min_y = -(layout_height - text_height) - self:get_top_margin()
     max_y = 0
   end
@@ -813,20 +817,20 @@ end
 
 return {
   TextWidget         = TextWidget,
-  ALIGN_LEFT         = TextWidget.ALIGN_LEFT,
-  ALIGN_CENTER       = TextWidget.ALIGN_CENTER,
-  ALIGN_RIGHT        = TextWidget.ALIGN_RIGHT,
-  ALIGN_JUSTIFY      = TextWidget.ALIGN_JUSTIFY,
-  ALIGN_TOP          = TextWidget.ALIGN_TOP,
-  ALIGN_BOTTOM       = TextWidget.ALIGN_BOTTOM,
-  WRAP_NONE          = TextWidget.WRAP_NONE,
-  WRAP_WORD          = TextWidget.WRAP_WORD,
-  WRAP_CHAR          = TextWidget.WRAP_CHAR,
-  WRAP_WORD_CHAR     = TextWidget.WRAP_WORD_CHAR,
-  ELLIPSIZE_NONE     = TextWidget.ELLIPSIZE_NONE,
-  ELLIPSIZE_START    = TextWidget.ELLIPSIZE_START,
-  ELLIPSIZE_MIDDLE   = TextWidget.ELLIPSIZE_MIDDLE,
-  ELLIPSIZE_END      = TextWidget.ELLIPSIZE_END,
+  ALIGN_LEFT         = ALIGN_LEFT,
+  ALIGN_CENTER       = ALIGN_CENTER,
+  ALIGN_RIGHT        = ALIGN_RIGHT,
+  ALIGN_JUSTIFY      = ALIGN_JUSTIFY,
+  ALIGN_TOP          = ALIGN_TOP,
+  ALIGN_BOTTOM       = ALIGN_BOTTOM,
+  WRAP_NONE          = WRAP_NONE,
+  WRAP_WORD          = WRAP_WORD,
+  WRAP_CHAR          = WRAP_CHAR,
+  WRAP_WORD_CHAR     = WRAP_WORD_CHAR,
+  ELLIPSIZE_NONE     = ELLIPSIZE_NONE,
+  ELLIPSIZE_START    = ELLIPSIZE_START,
+  ELLIPSIZE_MIDDLE   = ELLIPSIZE_MIDDLE,
+  ELLIPSIZE_END      = ELLIPSIZE_END,
 }
 
 -- vi: et ts=2 sw=2

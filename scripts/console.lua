@@ -21,33 +21,35 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-local classlib = require('classlib')
+local class = require('middleclass')
 local lgi = require('lgi')
 local Cairo = lgi.cairo
 local GLib = lgi.GLib
 local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
-local Widget = require('widget')
+local InputInterface = require('input_interface')
 local TextWidget = require('text_widget')
 local InputWidget = require('input_widget')
 
-class.Console(Widget.Widget)
+Console = class('Console', InputInterface.InputInterface)
 
-Console.EXTENSION_TIME           = 1200.0
-Console.RETRACTION_TIME          = 1200.0
-Console.MARGIN                   = 8
-Console.HORIZONTAL_SCROLL_AMOUNT = 6
-Console.VERTICAL_SCROLL_AMOUNT   = 12
-Console.FG_COLOR                 = {1.0, 1.0, 1.0, 1.00}
-Console.BG_COLOR                 = {0.0, 0.0, 0.0, 0.85}
+local EXTENSION_TIME           = 1200.0
+local RETRACTION_TIME          = 1200.0
+local MARGIN                   = 8
+local HORIZONTAL_SCROLL_AMOUNT = 6
+local VERTICAL_SCROLL_AMOUNT   = 12
+local FG_COLOR                 = {1.0, 1.0, 1.0, 1.00}
+local BG_COLOR                 = {0.0, 0.0, 0.0, 0.85}
 
-function Console:__init(c)
+function Console:initialize(c)
   c = c or {}
 
-  self.Widget:__init(c)
+  c.name = c.name or 'Console'
 
-  self.extension_time = c.extension_time or Console.EXTENSION_TIME
-  self.retraction_time = c.retraction_time or Console.RETRACTION_TIME
+  InputInterface.InputInterface.initialize(self, c)
+
+  self.extension_time = c.extension_time or EXTENSION_TIME
+  self.retraction_time = c.retraction_time or RETRACTION_TIME
   self.max_width = c.max_width or 1
   self.max_height = c.max_height or .5
   self.z_index = c.z_index or 2
@@ -67,14 +69,14 @@ function Console:__init(c)
     width = self.width,
     height = 0,
     z_index = self.z_index,
-    top_margin = self.input_margin or Console.MARGIN,
-    bottom_margin = self.bottom_margin or Console.MARGIN,
-    left_margin = self.left_margin or Console.MARGIN,
-    right_margin = self.right_margin or Console.MARGIN,
+    top_margin = self.input_margin or MARGIN,
+    bottom_margin = self.bottom_margin or MARGIN,
+    left_margin = self.left_margin or MARGIN,
+    right_margin = self.right_margin or MARGIN,
     horizontal_alignment = TextWidget.ALIGN_LEFT,
     vertical_alignment = TextWidget.ALIGN_CENTER,
-    fg_color = self.fg_color or Console.FG_COLOR,
-    bg_color = self.bg_color or Console.BG_COLOR,
+    fg_color = self.fg_color or FG_COLOR,
+    bg_color = self.bg_color or BG_COLOR,
     font_description_text = self.font_description_text,
     input_handler = d2k.CommandInterface.handle_input,
   })
@@ -87,13 +89,13 @@ function Console:__init(c)
     height = self.max_height,
     z_index = self.z_index,
     top_margin = self.top_margin or 0,
-    bottom_margin = self.bottom_margin or Console.MARGIN,
-    left_margin = self.left_margin or Console.MARGIN,
-    right_margin = self.right_margin or Console.MARGIN,
+    bottom_margin = self.bottom_margin or MARGIN,
+    left_margin = self.left_margin or MARGIN,
+    right_margin = self.right_margin or MARGIN,
     horizontal_alignment = TextWidget.ALIGN_LEFT,
     vertical_alignment = TextWidget.ALIGN_BOTTOM,
-    fg_color = self.fg_color or Console.FG_COLOR,
-    bg_color = self.bg_color or Console.BG_COLOR,
+    fg_color = self.fg_color or FG_COLOR,
+    bg_color = self.bg_color or BG_COLOR,
     font_description_text = self.font_description_text,
     word_wrap = TextWidget.WRAP_WORD,
     use_markup = true,
@@ -105,8 +107,6 @@ function Console:__init(c)
     d2k.Messaging.get_console_messages_updated,
     d2k.Messaging.clear_console_messages_updated
   )
-
-  self:set_name('console')
 end
 
 function Console:get_extension_time()
@@ -226,16 +226,16 @@ function Console:handle_event(event)
 
   if d2k.KeyStates.shift_is_down() then
     if event:is_key_press(d2k.Key.UP) then
-      self:get_output():scroll_up(Console.HORIZONTAL_SCROLL_AMOUNT)
+      self:get_output():scroll_up(HORIZONTAL_SCROLL_AMOUNT)
       return true
     elseif event:is_key_press(d2k.Key.PAGEUP) then
-      self:get_output():scroll_up(Console.HORIZONTAL_SCROLL_AMOUNT * 10)
+      self:get_output():scroll_up(HORIZONTAL_SCROLL_AMOUNT * 10)
       return true
     elseif event:is_key_press(d2k.Key.DOWN) then
-      self:get_output():scroll_down(Console.HORIZONTAL_SCROLL_AMOUNT)
+      self:get_output():scroll_down(HORIZONTAL_SCROLL_AMOUNT)
       return true
     elseif event:is_key_press(d2k.Key.PAGEDOWN) then
-      self:get_output():scroll_down(Console.HORIZONTAL_SCROLL_AMOUNT * 10)
+      self:get_output():scroll_down(HORIZONTAL_SCROLL_AMOUNT * 10)
       return true
     end
   end
@@ -283,7 +283,16 @@ function Console:set_fullscreen()
   self:set_last_scroll_ms(d2k.System.get_ticks())
 end
 
-return {Console = Console}
+return {
+  Console                  = Console,
+  EXTENSION_TIME           = EXTENSION_TIME,
+  RETRACTION_TIME          = RETRACTION_TIME,
+  MARGIN                   = MARGIN,
+  HORIZONTAL_SCROLL_AMOUNT = HORIZONTAL_SCROLL_AMOUNT,
+  VERTICAL_SCROLL_AMOUNT   = VERTICAL_SCROLL_AMOUNT,
+  FG_COLOR                 = FG_COLOR,
+  BG_COLOR                 = BG_COLOR
+}
 
 -- vi: et ts=2 sw=2
 

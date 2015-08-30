@@ -21,7 +21,7 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-local classlib = require('classlib')
+local class = require('middleclass')
 local lgi = require('lgi')
 local Cairo = lgi.cairo
 
@@ -29,21 +29,23 @@ local InputInterface = require('input_interface')
 local InputInterfaceContainer = require('input_interface_container')
 local Widget = require('widget')
 
-class.HUD(
-  InputInterface.InputInterface,
-  InputInterfaceContainer.InputInterfaceContainer
-)
+HUD = class('HUD', InputInterface.InputInterface)
+HUD:include(InputInterfaceContainer.InputInterfaceContainer)
 
-function HUD:__init(h)
+function HUD:initialize(h)
   h = h or {}
 
-  self.InputInterface:__init(h)
-  self.InputInterfaceContainer:__init(h)
+  h.name = h.name or 'HUD'
+  InputInterface.InputInterface.initialize(self, h)
+
+  self.widgets = {}
+  self.widgets_by_z_index = {}
+
+  self.interfaces = self.widgets
+  self.active_interfaces = self.widgets_by_z_index
 
   self.font_description_text = h.font_description_text or
                                  'Noto Sans,Arial Unicode MS,Unifont 11'
-  self.widgets = self.InputInterfaceContainer.interfaces
-  self.widgets_by_z_index = self.InputInterfaceContainer.active_interfaces
 end
 
 function HUD:handle_overlay_built(overlay)
@@ -58,6 +60,20 @@ function HUD:handle_overlay_destroyed(overlay)
   for i, w in pairs(self.widgets) do
     w:handle_overlay_destroyed()
   end
+end
+
+function HUD:add_interface(interface)
+  InputInterfaceContainer.InputInterfaceContainer.add_interface(
+    self, interface
+  )
+  self:sort_widgets()
+end
+
+function HUD:add_interface(interface)
+  InputInterfaceContainer.InputInterfaceContainer.remove_interface(
+    self, interface
+  )
+  self:sort_widgets()
 end
 
 function HUD:add_widget(widget)

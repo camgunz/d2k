@@ -21,7 +21,7 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-local classlib = require('classlib')
+local class = require('middleclass')
 local lgi = require('lgi')
 local Cairo = lgi.cairo
 local GLib = lgi.GLib
@@ -29,25 +29,23 @@ local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
 local TextWidget = require('text_widget')
 
-class.RetractableTextWidget(TextWidget.TextWidget)
+RetractableTextWidget = class('RetractableTextWidget', TextWidget.TextWidget)
 
-RetractableTextWidget.RETRACT_NONE = 0
-RetractableTextWidget.RETRACT_UP   = 1
-RetractableTextWidget.RETRACT_DOWN = 2
+local RETRACT_NONE = 0
+local RETRACT_UP   = 1
+local RETRACT_DOWN = 2
 
-RetractableTextWidget.RETRACTION_TIME    = 2000
-RetractableTextWidget.RETRACTION_TIMEOUT = 2000
+local RETRACTION_TIME    = 2000
+local RETRACTION_TIMEOUT = 2000
 
-function RetractableTextWidget:__init(rtw)
+function RetractableTextWidget:initialize(rtw)
   rtw = rtw or {}
 
-  self.TextWidget:__init(rtw)
+  TextWidget.TextWidget.initialize(self, rtw)
 
-  self.retractable = rtw.retractable or RetractableTextWidget.RETRACT_NONE
-  self.retraction_time = rtw.retraction_time or
-                         RetractableTextWidget.RETRACTION_TIME
-  self.retraction_timeout = rtw.retraction_timeout or
-                            RetractableTextWidget.RETRACTION_TIMEOUT
+  self.retractable = rtw.retractable or RETRACT_NONE
+  self.retraction_time = rtw.retraction_time or RETRACTION_TIME
+  self.retraction_timeout = rtw.retraction_timeout or RETRACTION_TIMEOUT
 
   self.retracting = false
   self.retracting_line_number = -1
@@ -66,11 +64,11 @@ function RetractableTextWidget:set_vertical_alignment(vertical_alignment)
     error(s)
   end
 
-  self.TextWidget.set_vertical_alignment(vertical_alignment)
+  TextWidget.TextWidget.set_vertical_alignment(self, vertical_alignment)
 end
 
 function RetractableTextWidget:get_retractable()
-  if self.retractable == RetractableTextWidget.RETRACT_NONE then
+  if self.retractable == RETRACT_NONE then
     return false
   end
 
@@ -79,7 +77,7 @@ end
 
 function RetractableTextWidget:set_retractable(retractable)
   if retractable == false then
-    self.retractable = RetractableTextWidget.RETRACT_NONE
+    self.retractable = RETRACT_NONE
   else
     self.retractable = retractable
   end
@@ -568,11 +566,11 @@ end
 
 return {
   RetractableTextWidget = RetractableTextWidget,
-  RETRACT_NONE          = RetractableTextWidget.RETRACT_NONE,
-  RETRACT_UP            = RetractableTextWidget.RETRACT_UP,
-  RETRACT_DOWN          = RetractableTextWidget.RETRACT_DOWN,
-  RETRACTION_TIME       = RetractableTextWidget.RETRACTION_TIME,
-  RETRACTION_TIMEOUT    = RetractableTextWidget.RETRACTION_TIMEOUT
+  RETRACT_NONE          = RETRACT_NONE,
+  RETRACT_UP            = RETRACT_UP,
+  RETRACT_DOWN          = RETRACT_DOWN,
+  RETRACTION_TIME       = RETRACTION_TIME,
+  RETRACTION_TIMEOUT    = RETRACTION_TIMEOUT
 }
 
 -- vi: et ts=2 sw=2

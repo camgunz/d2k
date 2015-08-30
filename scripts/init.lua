@@ -35,23 +35,31 @@ print('X_Init: Init script engine.')
 
 print('X_Init: Creating input handler.')
 local input_handler = require('input_handler')
-d2k.input_handler = input_handler.InputHandler()
+d2k.interfaces = input_handler.InputHandler()
 
 if d2k.Video.is_enabled() then
   print('X_Init: Creating overlay.')
   local Overlay = require('overlay')
   d2k.overlay = Overlay.Overlay()
 
+  print('X_Init: Creating Menu')
+  local Menu = require('menu')
+  d2k.menu = Menu.Menu()
+  d2k.menu:set_parent(d2k.interfaces)
+  print(d2k.menu)
+
   print('X_Init: Creating HUD')
   local HUD = require('hud')
   d2k.hud = HUD.HUD()
+  d2k.hud:set_parent(d2k.interfaces)
+
   print('X_Init: Creating console')
   local Console = require('console')
   d2k.console = Console.Console({
     font_description_text = 'ascsys,Arial Unicode MS,Unifont 11'
   })
-  print('X_Init: Adding console to HUD')
-  d2k.console:set_parent(d2k.hud)
+  d2k.console:set_parent(d2k.interfaces)
+
   print('X_Init: Loading HUD widgets')
   func, err = loadfile(d2k.script_folder .. '/local_hud_widgets.lua', 't')
   if func then
