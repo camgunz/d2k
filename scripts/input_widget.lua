@@ -53,6 +53,7 @@ function InputWidget:initialize(iw)
   self.history_index = 0
   self.scroll_offset = 0
   self.input_handler = iw.input_handler or function(input) end
+  self.deactivate_on_input = iw.deactivate_on_input or false
 
   self:build_layout()
 end
@@ -139,6 +140,14 @@ end
 
 function InputWidget:set_scroll_offset(scroll_offset)
   self.scroll_offset = scroll_offset
+end
+
+function InputWidget:get_deactivate_on_input()
+  return self.deactivate_on_input
+end
+
+function InputWidget:set_deactivate_on_input(deactivate_on_input)
+  self.deactivate_on_input = deactivate_on_input
 end
 
 function InputWidget:set_text(text)
@@ -592,6 +601,9 @@ function InputWidget:handle_event(event)
     self.input_handler(self:get_text())
     self:save_text_into_history()
     self:clear()
+    if self:get_deactivate_on_input() then
+      self:deactivate()
+    end
     return true
   elseif event:is_key() and event:is_press() then
     local char = event:get_char()

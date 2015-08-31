@@ -157,9 +157,11 @@ function Console:set_output(output)
   self.output = output
 end
 
+--[[
 function Console:is_active()
   return self:get_height_in_pixels() > 0 and self:get_scroll_rate() >= 0.0
 end
+--]]
 
 function Console:get_name()
   return self.name

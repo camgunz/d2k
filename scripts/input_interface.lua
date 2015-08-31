@@ -33,7 +33,6 @@ function InputInterface:initialize(ii)
   ii = ii or {}
 
   self.parent         = nil
-  self.active         = false
   self.needs_updating = false
 
   self.name                        = ii.name or 'Input Interface'
@@ -46,6 +45,7 @@ function InputInterface:initialize(ii)
   self.z_index                     = ii.z_index or 0
   self.snap                        = ii.snap or SNAP_NONE
   self.use_proportional_dimensions = ii.use_proportional_dimensions or true
+  self.fullscreen                  = ii.fullscreen or false
 end
 
 function InputInterface:get_name()
@@ -61,9 +61,11 @@ function InputInterface:get_x()
     return d2k.Video.get_screen_width() - self:get_width_in_pixels()
   end
 
+  --[[
   if self.x < 0 then
     return d2k.Video.get_screen_width() + self.x
   end
+  --]]
 
   return self.x
 end
@@ -84,9 +86,11 @@ function InputInterface:get_y()
     return d2k.Video.get_screen_height() - self:get_height_in_pixels()
   end
 
+  --[[
   if self.y < 0 then
     return d2k.Video.get_screen_height() + self.y
   end
+  --]]
 
   return self.y
 end
@@ -352,23 +356,27 @@ function InputInterface:set_use_proportional_dimensions(pd)
   self.use_proportional_dimensions = pd
 end
 
+function InputInterface:is_fullscreen()
+  return self.fullscreen
+end
+
+function InputInterface:set_fullscreen(fullscreen)
+  self.fullscreen = fullscreen
+end
+
 function InputInterface:activate()
   local parent = self:get_parent()
 
-  self.active = true
-
   if parent then
-    parent:activate_interface(self)
+    parent:activate(self)
   end
 end
 
 function InputInterface:deactivate()
   local parent = self:get_parent()
 
-  self.active = false
-
   if parent then
-    parent:deactivate_interface(self)
+    parent:deactivate(self)
   end
 end
 
@@ -381,7 +389,13 @@ function InputInterface:toggle()
 end
 
 function InputInterface:is_active()
-  return self.active
+  local parent = self:get_parent()
+
+  if not parent then
+    return false
+  end
+
+  return self == parent:get_front_interface()
 end
 
 function InputInterface:is_enabled()

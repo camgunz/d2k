@@ -87,11 +87,66 @@ static int XG_GameClearConsoleplayerMessagesUpdated(lua_State *L) {
   return 0;
 }
 
+static int XG_GameTick(lua_State *L) {
+  G_Ticker();
+
+  return 0;
+}
+
+static int XG_GameDraw(lua_State *L) {
+  G_Drawer();
+
+  return 0;
+}
+
+static int XG_GameInLevel(lua_State *L) {
+  if (gamestate == GS_LEVEL)
+    lua_pushboolean(L, true);
+  else
+    lua_pushboolean(L, false);
+
+  return 1;
+}
+
+static int XG_GameInIntermission(lua_State *L) {
+  if (gamestate == GS_INTERMISSION)
+    lua_pushboolean(L, true);
+  else
+    lua_pushboolean(L, false);
+
+  return 1;
+}
+
+static int XG_GameInFinale(lua_State *L) {
+  if (gamestate == GS_FINALE)
+    lua_pushboolean(L, true);
+  else
+    lua_pushboolean(L, false);
+
+  return 1;
+}
+
+static int XG_GameInDemoScreen(lua_State *L) {
+  if (gamestate == GS_DEMOSCREEN)
+    lua_pushboolean(L, true);
+  else
+    lua_pushboolean(L, false);
+
+  return 1;
+}
+
 void XG_GameRegisterInterface(void) {
-  X_RegisterObjects("Game", 5,
-    "get_gametic",  X_FUNCTION, XG_GameGetGametic,
-    "handle_event", X_FUNCTION, XG_GameHandleEvent,
-    "get_consoleplayer_messages", X_FUNCTION, XG_GameGetConsoleplayerMessages,
+  X_RegisterObjects("Game", 11,
+    "tick",            X_FUNCTION, XG_GameTick,
+    "draw",            X_FUNCTION, XG_GameDraw,
+    "in_level",        X_FUNCTION, XG_GameInLevel,
+    "in_intermission", X_FUNCTION, XG_GameInIntermission,
+    "in_finale",       X_FUNCTION, XG_GameInFinale,
+    "in_demoscreen",   X_FUNCTION, XG_GameInDemoScreen,
+    "handle_event",    X_FUNCTION, XG_GameHandleEvent,
+    "get_gametic",     X_FUNCTION, XG_GameGetGametic,
+    "get_consoleplayer_messages", X_FUNCTION,
+      XG_GameGetConsoleplayerMessages,
     "get_consoleplayer_messages_updated", X_FUNCTION,
       XG_GameGetConsoleplayerMessagesUpdated,
     "clear_consoleplayer_messages_updated", X_FUNCTION,

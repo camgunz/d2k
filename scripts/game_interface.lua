@@ -22,107 +22,68 @@
 -------------------------------------------------------------------------------
 
 local class = require('middleclass')
-local lgi = require('lgi')
-local Cairo = lgi.cairo
-
 local InputInterface = require('input_interface')
 local InputInterfaceContainer = require('input_interface_container')
 
-HUD = class('HUD', InputInterface.InputInterface)
-HUD:include(InputInterfaceContainer.InputInterfaceContainer)
+GameInterface = class('GameInterface', InputInterface.InputInterface)
+GameInterface:include(InputInterfaceContainer.InputInterfaceContainer)
 
-function HUD:initialize(h)
-  h = h or {}
+function GameInterface:initialize(gi)
+  gi = gi or {}
 
-  h.name = h.name or 'HUD'
+  gi.name = gi.name or 'Game Interface'
+
+  InputInterface.InputInterface.initialize(self, gi)
 
   self.interfaces = {}
-  self.widgets = self.interfaces
-  self.widgets_by_z_index = {}
-
-  InputInterface.InputInterface.initialize(self, h)
-
-  self.font_description_text = h.font_description_text or
-                                 'Noto Sans,Arial Unicode MS,Unifont 11'
 end
 
-function HUD:handle_overlay_built(overlay)
-  self:reset()
+function GameInterface:in_level()
+  return d2k.Game.in_level()
+end
 
-  for i, w in pairs(self.widgets) do
-    w:handle_overlay_built()
+function GameInterface:tick()
+  d2k.Game.tick()
+  InputInterfaceContainer.InputInterfaceContainer.tick(self)
+end
+
+function GameInterface:draw()
+  d2k.Game.draw()
+  InputInterfaceContainer.InputInterfaceContainer.draw(self)
+end
+
+function GameInterface:handle_event(event)
+  local handled = false
+  local active_before = self:is_active()
+
+  if not d2k.Game.in_level() then
+    return false
   end
-end
 
-function HUD:handle_overlay_destroyed(overlay)
-  for i, w in pairs(self.widgets) do
-    w:handle_overlay_destroyed()
-  end
-end
-
-function HUD:add_interface(interface)
-  InputInterfaceContainer.InputInterfaceContainer.add_interface(
-    self, interface
+  handled = InputInterfaceContainer.InputInterfaceContainer.handle_event(
+    self, event
   )
-  self:sort_widgets()
-end
 
-function HUD:remove_interface(interface)
-  InputInterfaceContainer.InputInterfaceContainer.remove_interface(
-    self, interface
-  )
-  self:sort_widgets()
-end
-
-function HUD:add_widget(widget)
-  self:add_interface(widget)
-end
-
-function HUD:remove_widget(widget)
-  self:remove_interface(widget)
-end
-
-function HUD:sort_widgets()
-  self.widgets_by_z_index = {}
-
-  for i = 1, #self.widgets do
-    self.widgets_by_z_index[i] = self.widgets[i]
+  if handled then
+    return true
   end
 
-  table.sort(self.widgets_by_z_index, function(w1, w2)
-    if w1:get_z_index() < w2:get_z_index() then
-      return -1
-    elseif w2:get_z_index() < w1:get_z_index() then
-      return 1
-    end
+  handled = d2k.Game.handle_event(event)
 
-    return 0
-  end)
-end
+  if handled then
+    local active_after = self:is_active()
 
-function HUD:draw()
-  for i, w in ipairs(self.widgets_by_z_index) do
-    w:draw()
-  end
-end
-
-function HUD:handle_event(event)
-  for i, w in ipairs(self.widgets) do
-    local widget_was_active = w:is_active()
-
-    if w:handle_event(event) then
-      local widget_is_active = w:is_active()
-      if widget_is_active and not widget_was_active then
-        self:activate()
-      end
-      return true
+    if active_before == false and active_after == true then
+      self:activate()
+    elseif active_before == true and active_after == false then
+      self:deactivate()
     end
   end
 
-  return false
+  return handled
 end
 
-return {HUD = HUD}
+return {GameInterface = GameInterface}
 
 -- vi: et ts=2 sw=2
 

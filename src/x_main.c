@@ -413,13 +413,13 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
   int status;
 
   if (arg_count < 0)
-    I_Error("X_CallFunc: arg_count < 0");
+    I_Error("X_Call: arg_count < 0");
 
   if (res_count < 0)
-    I_Error("X_CallFunc: res_count < 0");
+    I_Error("X_Call: res_count < 0");
 
   if (fname == NULL)
-    I_Error("X_CallFunc: fname == NULL");
+    I_Error("X_Call: fname == NULL");
 
   lua_pushcfunction(L, error_handler);
   lua_insert(L, error_handler_index);
@@ -472,7 +472,7 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
         lua_pushcfunction(L, va_arg(args, lua_CFunction));
       break;
       default:
-        I_Error("X_CallFunc: Invalid argument type %d\n", arg_type);
+        I_Error("X_Call: Invalid argument type %d\n", arg_type);
       break;
     }
   }

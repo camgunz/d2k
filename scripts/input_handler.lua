@@ -29,8 +29,21 @@ InputHandler:include(InputInterfaceContainer.InputInterfaceContainer)
 
 function InputHandler:initialize(ih)
   self.interfaces = {}
-  self.active_interfaces = {}
   self.current_event = d2k.InputEvent:new()
+end
+
+function InputHandler:draw()
+  d2k.overlay:lock()
+
+  if d2k.Video.using_opengl() then
+    d2k.overlay:clear()
+  end
+
+  d2k.overlay.render_context:set_operator(Cairo.Operator.OVER)
+
+  InputInterfaceContainer.InputInterfaceContainer.draw(self)
+
+  d2k.overlay:unlock()
 end
 
 function InputHandler:handle_event()
@@ -50,19 +63,9 @@ function InputHandler:handle_event()
     d2k.Misc.take_screenshot()
   end
 
-  for i, interface in ipairs(self.active_interfaces) do
-    if interface:handle_event(self.current_event) then
-      return
-    end
-  end
-
-  for i, interface in ipairs(self.interfaces) do
-    if not interface:is_active() then
-      if interface:handle_event(self.current_event) then
-        return
-      end
-    end
-  end
+  InputInterfaceContainer.InputInterfaceContainer.handle_event(
+    self, self.current_event
+  )
 
   --[[
   if d2k.Menu.is_active() then

@@ -23,24 +23,23 @@
 
 -- Requires:
 --   self.interfaces = {}
---   self.active_interfaces = {}
 
 InputInterfaceContainer = {
 
   get_front_interface = function(self)
-    if #self.active_interfaces > 0 then
-      return self.active_interfaces[1]
+    if #self.interfaces > 0 then
+      return self.interfaces[1]
     end
   end,
 
-  add_interface = function(self, interface)
-    for i, ifc in pairs(self.interfaces) do
-      if ifc == new_interface then
+  add_interface = function(self, new_interface)
+    for i, interface in pairs(self.interfaces) do
+      if new_interface == interface then
         return
       end
     end
 
-    table.insert(self.interfaces, interface)
+    table.insert(self.interfaces, new_interface)
   end,
 
   remove_interface = function(self, interface)
@@ -60,41 +59,82 @@ InputInterfaceContainer = {
     end
   end,
 
-  activate_interface = function(self, interface)
-    for i, active_interface in pairs(self.active_interfaces) do
-      if interface == active_interface then
-        return
-      end
-    end
-
-    for i, ifc in pairs(self.interfaces) do
-      if ifc == interface then
-        if #self.active_interfaces == 0 then
-          table.insert(self.active_interfaces, ifc)
-        else
-          table.insert(self.active_interfaces, 0, ifc)
-        end
-        return
-      end
-    end
-  end,
-
-  deactivate_interface = function(self, interface)
-    for i, active_interface in pairs(self.active_interfaces) do
-      if interface == active_interface then
-        table.remove(self.active_interfaces, i)
-        return
-      end
-    end
-  end,
-
   get_interfaces = function(self)
     return self.interfaces
   end,
 
-  get_active_interfaces = function(self)
-    return self.active_interfaces
-  end
+  activate = function(self, interface)
+    local parent = nil
+    
+    if self.get_parent then
+      parent = self:get_parent()
+    end
+
+    for i, ifc in ipairs(self.interfaces) do
+      if ifc == interface then
+        table.remove(self.interfaces, i)
+        table.insert(self.interfaces, 1, interface)
+      end
+    end
+
+    if parent then
+      parent:activate(self)
+    end
+  end,
+
+  deactivate = function(self, interface)
+    local parent = nil
+    
+    if self.get_parent then
+      parent = self:get_parent()
+    end
+
+    for i, ifc in ipairs(self.interfaces) do
+      if ifc == interface then
+        table.remove(self.interfaces, i)
+        table.insert(self.interfaces, interface)
+      end
+    end
+
+    if parent then
+      parent:deactivate(self)
+    end
+  end,
+
+  reset = function(self)
+    for i, interface in ipairs(self.interfaces) do
+      interface:reset()
+    end
+  end,
+
+  tick = function(self)
+    for i, interface in ipairs(self.interfaces) do
+      local worked, err = pcall(function()
+        interface:tick()
+      end)
+
+      if not worked then
+        print(err)
+      end
+    end
+  end,
+
+  draw = function(self)
+    for i, interface in ipairs(self.interfaces) do
+      interface:draw()
+    end
+  end,
+
+  handle_event = function(self, event)
+    for i, interface in ipairs(self.interfaces) do
+      if interface:handle_event(event) then
+        return
+      end
+      if interface:is_fullscreen() then
+        return
+      end
+    end
+  end,
 
 }
 

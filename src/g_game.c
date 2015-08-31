@@ -71,6 +71,7 @@
 #include "r_demo.h"
 #include "r_fps.h"
 #include "e6y.h"//e6y
+#include "x_main.h"
 
 extern int forceOldBsp;
 extern char *player_names[];
@@ -1381,6 +1382,8 @@ void G_Ticker(void) {
       AM_Ticker();
       ST_Ticker();
       HU_Ticker();
+      if (!X_Call(X_GetState(), "console", "tick", 0, 0))
+        I_Error("Error ticking console: %s\n", X_GetError(X_GetState()));
     break;
     case GS_INTERMISSION:
        WI_Ticker();
@@ -1394,6 +1397,89 @@ void G_Ticker(void) {
     case GS_BAD:
     break;
   }
+}
+
+void G_Drawer(void) {
+  static dboolean borderwillneedredraw = false;
+  static dboolean isborderstate        = false;
+
+  dboolean viewactive = false;
+  dboolean isborder   = false;
+
+  dboolean redrawborderstuff;
+
+  // Work out if the player view is visible, and if there is a border
+  viewactive = (!(automapmode & am_active) || (automapmode & am_overlay)) &&
+               !inhelpscreens;
+  if (viewactive)
+    isborder = viewheight != SCREENHEIGHT;
+  else
+    isborder = (!inhelpscreens && (automapmode & am_active));
+
+  if (oldgamestate != GS_LEVEL) {
+    R_FillBackScreen();    // draw the pattern into the back screen
+    redrawborderstuff = isborder;
+  }
+  else {
+    // CPhipps -
+    // If there is a border, and either there was no border last time,
+    // or the border might need refreshing, then redraw it.
+    redrawborderstuff = isborder && (!isborderstate || borderwillneedredraw);
+    // The border may need redrawing next time if the border surrounds the screen,
+    // and there is a menu being displayed
+    borderwillneedredraw = menuactive && isborder && viewactive;
+    // e6y
+    // I should do it because I call R_RenderPlayerView in all cases,
+    // not only if viewactive is true
+    borderwillneedredraw = (borderwillneedredraw) || (
+      (automapmode & am_active) && !(automapmode & am_overlay)
+    );
+  }
+#ifdef GL_DOOM
+  if (redrawborderstuff || (V_GetMode() == VID_MODEGL))
+    R_DrawViewBorder();
+#else
+  if (redrawborderstuff)
+    R_DrawViewBorder();
+#endif
+
+  // e6y
+  // Boom colormaps should be applied for everything in R_RenderPlayerView
+  use_boom_cm = true;
+
+  R_InterpolateView(&players[displayplayer]);
+
+  R_ClearStats();
+
+  // Now do the drawing
+  if (viewactive || map_always_updates)
+    R_RenderPlayerView(&players[displayplayer]);
+
+  // IDRATE cheat
+  R_ShowStats();
+
+  // e6y
+  // but should NOT be applied for automap, statusbar and HUD
+  use_boom_cm = false;
+  frame_fixedcolormap = 0;
+
+  if (automapmode & am_active)
+    AM_Drawer();
+
+  R_RestoreInterpolations();
+
+  ST_Drawer(
+    ((viewheight != SCREENHEIGHT) || (
+      (automapmode & am_active) && !(automapmode & am_overlay))
+    ),
+    redrawborderstuff || BorderNeedRefresh,
+    menuactive == mnact_full
+  );
+
+  BorderNeedRefresh = false;
+
+  if (V_GetMode() != VID_MODEGL)
+    R_DrawViewBorder();
 }
 
 //

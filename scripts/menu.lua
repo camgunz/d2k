@@ -21,69 +21,59 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-package.path = package.path .. ';' .. d2k.script_search_path
+local class = require('middleclass')
+local InputInterface = require('input_interface')
 
--- print = function(s)
---   d2k.Messaging.print(d2k.Messaging.INFO, string.format("%s\n", s))
--- end
+Menu = class('Menu', InputInterface.InputInterface)
 
-mprint = function(s)
-  d2k.Messaging.mecho(d2k.Messaging.INFO, s)
+function Menu:initialize(m)
+  m = m or {}
+  m.name = m.name or 'Menu'
+
+  InputInterface.InputInterface.initialize(self, m)
 end
 
-print('X_Init: Init script engine.')
+function Menu:activate()
+  InputInterface.InputInterface.activate(self)
+  d2k.Menu.activate()
+end
 
-print('X_Init: Creating input handler.')
-local input_handler = require('input_handler')
-d2k.interfaces = input_handler.InputHandler()
+function Menu:deactivate()
+  InputInterface.InputInterface.deactivate(self)
+  d2k.Menu.deactivate()
+end
 
-if d2k.Video.is_enabled() then
-  print('X_Init: Creating overlay.')
-  local Overlay = require('overlay')
-  d2k.overlay = Overlay.Overlay()
+function Menu:reset()
+  InputInterface.InputInterface.reset(self)
+  self:deactivate()
+end
 
-  print('X_Init: Creating Menu')
-  local Menu = require('menu')
-  d2k.menu = Menu.Menu()
-  d2k.menu:set_parent(d2k.interfaces)
+function Menu:tick()
+  d2k.Menu.tick()
+end
 
-  print('X_Init: Creating console')
-  local Console = require('console')
-  d2k.console = Console.Console({
-    font_description_text = 'ascsys,Arial Unicode MS,Unifont 11'
-  })
-  d2k.console:set_parent(d2k.interfaces)
+function Menu:draw()
+  d2k.Menu.draw()
+end
 
-  print('X_Init: Creating Game Interface')
-  local GameInterface = require('game_interface')
-  d2k.game_interface = GameInterface.GameInterface()
-  d2k.game_interface:set_parent(d2k.interfaces)
+function Menu:handle_event(event)
+  local active_before = self:is_active()
+  local handled = d2k.Menu.handle_event(event)
 
-  print('X_Init: Creating HUD')
-  local HUD = require('hud')
-  d2k.hud = HUD.HUD()
-  d2k.hud:set_parent(d2k.game_interface)
+  if handled then
+    local active_after = self:is_active()
 
-  print('X_Init: Loading HUD widgets')
-  func, err = loadfile(d2k.script_folder .. '/local_hud_widgets.lua', 't')
-  if func then
-    local worked, err = pcall(func)
-    if not worked then
-      mprint(string.format('<span color="red">%s</span>', err))
-      print(err)
+    if active_before == false and active_after == true then
+      self:activate()
+    elseif active_before == true and active_after == false then
+      self:deactivate()
     end
-  else
-    mprint(string.format('<span color="red">%s</span>', err))
-    print(err)
   end
 
-else
-  d2k.overlay = nil
-  d2k.hud = nil
+  return handled
 end
 
-print('X_Init: Loading console shortcuts')
-require('console_shortcuts')
+return {Menu = Menu}
 
 -- vi: et ts=2 sw=2
 

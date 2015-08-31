@@ -10,6 +10,7 @@ local Widget = require('widget')
 local TextWidget = require('text_widget')
 local InputWidget = require('input_widget')
 local RetractableTextWidget = require('retractable_text_widget')
+local InputInterface = require('input_interface')
 
 local messages_widget = RetractableTextWidget.RetractableTextWidget({
   name = 'messages',
@@ -42,7 +43,7 @@ messages_widget:set_external_text_source(
 local chat_widget = InputWidget.InputWidget({
   name = 'chat',
   z_index = 1,
-  snap = Widget.SNAP_BOTTOM,
+  snap = InputInterface.SNAP_BOTTOM,
   top_margin = 4,
   bottom_margin = 4,
   left_margin = 8,
@@ -56,7 +57,11 @@ local chat_widget = InputWidget.InputWidget({
   vertical_alignment = TextWidget.ALIGN_CENTER,
   fg_color = {1.0, 1.0, 1.0, 1.0},
   bg_color = {0.0, 0.0, 0.0, 0.85},
+  input_handler = function(input) print(input) end,
+  deactivate_on_input = true
 })
+
+messages_widget:set_parent(d2k.hud)
 
 function chat_widget:draw()
   if self:is_active() then
@@ -83,8 +88,7 @@ function chat_widget:handle_event(event)
   return InputWidget.InputWidget.handle_event(self, event)
 end
 
-d2k.hud:add_widget(messages_widget)
-d2k.hud:add_widget(chat_widget)
+chat_widget:set_parent(d2k.hud)
 
 -- vi: et ts=2 sw=2
 

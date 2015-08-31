@@ -71,6 +71,10 @@ extern menu_t SoundDef;
 extern menu_t SetupDef;
 extern int screenSize;
 
+//jff 4/18/98
+extern dboolean inhelpscreens;
+extern dboolean BorderNeedRefresh;
+
 void M_SaveGame(int choice);
 void M_LoadGame(int choice);
 void M_QuickSave(void);

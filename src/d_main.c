@@ -117,10 +117,6 @@ dboolean singletics = false; // debug flag to cancel adaptiveness
 dboolean nosfxparm;
 dboolean nomusicparm;
 
-//jff 4/18/98
-extern dboolean inhelpscreens;
-extern dboolean BorderNeedRefresh;
-
 skill_t startskill;
 int     startepisode;
 int     startmap;
@@ -467,18 +463,13 @@ static void D_Wipe(void) {
 //
 
 // wipegamestate can be set to -1 to force a wipe on the next draw
-gamestate_t    wipegamestate = GS_DEMOSCREEN;
+gamestate_t     wipegamestate = GS_DEMOSCREEN;
+gamestate_t     oldgamestate = GS_BAD;
 extern dboolean setsizeneeded;
-extern int     showMessages;
+extern int      showMessages;
 
 void D_Display(void) {
-  static dboolean isborderstate        = false;
-  static dboolean borderwillneedredraw = false;
-  static gamestate_t oldgamestate      = GS_BAD;
-
   dboolean wipe;
-  dboolean viewactive = false;
-  dboolean isborder = false;
 
   if (doSkip) {
     if (HU_DrawDemoProgress(false))
@@ -515,109 +506,37 @@ void D_Display(void) {
     R_ResetViewInterpolation();
   }
 
-  if (gamestate != GS_LEVEL) { // Not a level
-    switch (oldgamestate) {
-      case GS_BAD:
-      case GS_LEVEL:
-        V_SetPalette(0); // cph - use default (basic) palette
-      default:
-      break;
-    }
+  /*
+   * CG [TODO]: Eventually this will be all done in scripting.  The input
+   *            handler (the renaming of which seems imminent) will tick and
+   *            draw its contained interfaces according to its own
+   *            configuration and state.  Buuuuut for now, it remains a hacky
+   *            shitheap.
+   */
 
-    switch (gamestate) {
-      case GS_INTERMISSION:
-        WI_Drawer();
-      break;
-      case GS_FINALE:
-        F_Drawer();
-      break;
-      case GS_DEMOSCREEN:
-        D_PageDrawer();
-      break;
-      default:
-      break;
-    }
+
+  if (gamestate == GS_LEVEL) {
+    if (gametic != basetic)
+      if (!X_Call(X_GetState(), "game_interface", "draw", 0, 0))
+        I_Error("Error drawing game interface: %s", X_GetError(X_GetState()));
+
+      // G_Drawer();
   }
-  else if (gametic != basetic) {
-    // In a level
-    dboolean redrawborderstuff;
+  else { // Not a level
+    if (oldgamestate == GS_BAD || oldgamestate == GS_LEVEL)
+      V_SetPalette(0); // cph - use default (basic) palette
 
-    // Work out if the player view is visible, and if there is a border
-    viewactive = (!(automapmode & am_active) || (automapmode & am_overlay)) &&
-                 !inhelpscreens;
-    if (viewactive)
-      isborder = viewheight != SCREENHEIGHT;
-    else
-      isborder = (!inhelpscreens && (automapmode & am_active));
-
-    if (oldgamestate != GS_LEVEL) {
-      R_FillBackScreen();    // draw the pattern into the back screen
-      redrawborderstuff = isborder;
-    }
-    else {
-      // CPhipps -
-      // If there is a border, and either there was no border last time,
-      // or the border might need refreshing, then redraw it.
-      redrawborderstuff = isborder && (!isborderstate || borderwillneedredraw);
-      // The border may need redrawing next time if the border surrounds the screen,
-      // and there is a menu being displayed
-      borderwillneedredraw = menuactive && isborder && viewactive;
-      // e6y
-      // I should do it because I call R_RenderPlayerView in all cases,
-      // not only if viewactive is true
-      borderwillneedredraw = (borderwillneedredraw) || (
-        (automapmode & am_active) && !(automapmode & am_overlay)
-      );
-    }
-#ifdef GL_DOOM
-    if (redrawborderstuff || (V_GetMode() == VID_MODEGL))
-      R_DrawViewBorder();
-#else
-    if (redrawborderstuff)
-      R_DrawViewBorder();
-#endif
-
-    // e6y
-    // Boom colormaps should be applied for everything in R_RenderPlayerView
-    use_boom_cm = true;
-
-    R_InterpolateView(&players[displayplayer]);
-
-    R_ClearStats();
-
-    // Now do the drawing
-    if (viewactive || map_always_updates)
-      R_RenderPlayerView(&players[displayplayer]);
-
-    // IDRATE cheat
-    R_ShowStats();
-
-    // e6y
-    // but should NOT be applied for automap, statusbar and HUD
-    use_boom_cm = false;
-    frame_fixedcolormap = 0;
-
-    if (automapmode & am_active)
-      AM_Drawer();
-
-    R_RestoreInterpolations();
-
-    ST_Drawer(
-        ((viewheight != SCREENHEIGHT)
-         || ((automapmode & am_active) && !(automapmode & am_overlay))),
-        redrawborderstuff || BorderNeedRefresh,
-        (menuactive == mnact_full));
-
-    BorderNeedRefresh = false;
-
-    if (V_GetMode() != VID_MODEGL)
-      R_DrawViewBorder();
+    if (gamestate == GS_INTERMISSION)
+      WI_Drawer();
+    else if (gamestate == GS_FINALE)
+      F_Drawer();
+    else if (gamestate == GS_DEMOSCREEN)
+      D_PageDrawer();
   }
 
   HU_Drawer();
   HU_DrawDemoProgress(true); //e6y
 
-  isborderstate = isborder;
   oldgamestate = wipegamestate = gamestate;
 
   // draw pause pic
@@ -628,7 +547,15 @@ void D_Display(void) {
   }
 
   // menus go directly to the screen
+  if (!X_Call(X_GetState(), "menu", "draw", 0, 0))
+    I_Error("Error drawing menu interface: %s", X_GetError(X_GetState()));
+
+#if 0
   M_Drawer();          // menu is drawn even on top of everything
+#endif
+
+  if (!X_Call(X_GetState(), "console", "draw", 0, 0))
+    I_Error("Error drawing console: %s", X_GetError(X_GetState()));
 
   // normal update
   if (!wipe) {
