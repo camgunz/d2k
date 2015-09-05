@@ -5,8 +5,6 @@
 1. Add a few new widgets:
   - chat
     - Create/Expose Lua API for sending messages
-    - HUD doesn't activate when one its widgets does... propagate that change
-      up
   - netstats
   - FPS
   - scoreboard
@@ -28,13 +26,15 @@
 
 ## ZDDL
 
-- Add some way for scripting to tell whether it's a client or server (or not
+1. Menu draws under console
+
+1. Add some way for scripting to tell whether it's a client or server (or not
   networked).
 
-- Servers shouldn't `quit`, they should `shutdown`; also prevents accidentally
+1. Servers shouldn't `quit`, they should `shutdown`; also prevents accidentally
   running `/quit` in the console instead of `:quit` and closing the server....
 
-- Adding lines to messages when full flickers
+1. Adding lines to messages when full flickers
   - Probably have to check in `set_text` if the widget's full, and cancel
     the retraction if it is... although I thought `tick` already did that...
 

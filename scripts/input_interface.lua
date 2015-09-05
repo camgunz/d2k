@@ -33,6 +33,7 @@ function InputInterface:initialize(ii)
   ii = ii or {}
 
   self.parent         = nil
+  self.active         = false
   self.needs_updating = false
 
   self.name                        = ii.name or 'Input Interface'
@@ -367,17 +368,15 @@ end
 function InputInterface:activate()
   local parent = self:get_parent()
 
+  self.active = true
+
   if parent then
     parent:activate(self)
   end
 end
 
 function InputInterface:deactivate()
-  local parent = self:get_parent()
-
-  if parent then
-    parent:deactivate(self)
-  end
+  self.active = false
 end
 
 function InputInterface:toggle()
@@ -389,13 +388,7 @@ function InputInterface:toggle()
 end
 
 function InputInterface:is_active()
-  local parent = self:get_parent()
-
-  if not parent then
-    return false
-  end
-
-  return self == parent:get_front_interface()
+  return self.active
 end
 
 function InputInterface:is_enabled()
@@ -431,10 +424,6 @@ end
 
 function InputInterface:set_needs_updating(needs_updating)
   self.needs_updating = needs_updating
-end
-
-function InputInterface:is_upfront()
-  return self:get_parent() and self:get_parent():get_front_interface() == self
 end
 
 function InputInterface:reset()

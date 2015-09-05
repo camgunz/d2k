@@ -26,9 +26,11 @@
 
 InputInterfaceContainer = {
 
-  get_front_interface = function(self)
-    if #self.interfaces > 0 then
-      return self.interfaces[1]
+  get_active_interface = function(self)
+    for i, interface in ipairs(self.interfaces) do
+      if interface:is_active() then
+        return interface
+      end
     end
   end,
 
@@ -59,46 +61,25 @@ InputInterfaceContainer = {
     end
   end,
 
-  get_interfaces = function(self)
-    return self.interfaces
-  end,
-
   activate = function(self, interface)
-    local parent = nil
-    
-    if self.get_parent then
-      parent = self:get_parent()
-    end
-
-    for i, ifc in ipairs(self.interfaces) do
-      if ifc == interface then
+    for i, iface in ipairs(self.interfaces) do
+      if iface == interface and not iface:is_active() then
         table.remove(self.interfaces, i)
-        table.insert(self.interfaces, 1, interface)
+        table.insert(self.interfaces, 1, iface)
       end
     end
 
-    if parent then
-      parent:activate(self)
-    end
+    self.active = true
   end,
 
-  deactivate = function(self, interface)
-    local parent = nil
-    
-    if self.get_parent then
-      parent = self:get_parent()
-    end
-
-    for i, ifc in ipairs(self.interfaces) do
-      if ifc == interface then
-        table.remove(self.interfaces, i)
-        table.insert(self.interfaces, interface)
+  is_active = function(self)
+    for i, iface in pairs(self.interfaces) do
+      if iface:is_active() then
+        return true
       end
     end
 
-    if parent then
-      parent:deactivate(self)
-    end
+    return false
   end,
 
   reset = function(self)
@@ -109,13 +90,7 @@ InputInterfaceContainer = {
 
   tick = function(self)
     for i, interface in ipairs(self.interfaces) do
-      local worked, err = pcall(function()
-        interface:tick()
-      end)
-
-      if not worked then
-        print(err)
-      end
+      interface:tick()
     end
   end,
 
@@ -127,15 +102,21 @@ InputInterfaceContainer = {
 
   handle_event = function(self, event)
     for i, interface in ipairs(self.interfaces) do
-      if interface:handle_event(event) then
-        return
+      if interface:is_active() then
+        if interface:handle_event(event) then
+          return
+        end
       end
-      if interface:is_fullscreen() then
-        return
+    end
+
+    for i, interface in ipairs(self.interfaces) do
+      if not interface:is_active() then
+        if interface:handle_event(event) then
+          return
+        end
       end
     end
   end,
-
 }
 
 return {InputInterfaceContainer = InputInterfaceContainer}

@@ -36,11 +36,12 @@ function HUD:initialize(h)
 
   h.name = h.name or 'HUD'
 
+  InputInterface.InputInterface.initialize(self, h)
+
   self.interfaces = {}
+
   self.widgets = self.interfaces
   self.widgets_by_z_index = {}
-
-  InputInterface.InputInterface.initialize(self, h)
 
   self.font_description_text = h.font_description_text or
                                  'Noto Sans,Arial Unicode MS,Unifont 11'
@@ -108,13 +109,7 @@ end
 
 function HUD:handle_event(event)
   for i, w in ipairs(self.widgets) do
-    local widget_was_active = w:is_active()
-
     if w:handle_event(event) then
-      local widget_is_active = w:is_active()
-      if widget_is_active and not widget_was_active then
-        self:activate()
-      end
       return true
     end
   end

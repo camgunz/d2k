@@ -45,6 +45,7 @@ function Console:initialize(c)
   c = c or {}
 
   c.name = c.name or 'Console'
+  c.fullscreen = c.fullscreen or true
 
   InputInterface.InputInterface.initialize(self, c)
 

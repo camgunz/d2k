@@ -28,7 +28,9 @@ Menu = class('Menu', InputInterface.InputInterface)
 
 function Menu:initialize(m)
   m = m or {}
+
   m.name = m.name or 'Menu'
+  m.fullscreen = m.fullscreen or true
 
   InputInterface.InputInterface.initialize(self, m)
 end
