@@ -56,16 +56,16 @@ function GameInterface:handle_event(event)
   local handled = false
   local active_before = self:is_active()
 
-  if not d2k.Game.in_level() then
-    return false
-  end
-
   handled = InputInterfaceContainer.InputInterfaceContainer.handle_event(
     self, event
   )
 
   if handled then
     return true
+  end
+
+  if not d2k.Game.in_level() then
+    return false
   end
 
   handled = d2k.Game.handle_event(event)

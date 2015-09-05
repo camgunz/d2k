@@ -28,6 +28,21 @@ d2k.Shortcuts.write = d2k.Messaging.write
 d2k.Shortcuts.mwrite = d2k.Messaging.mwrite
 d2k.Shortcuts.echo = d2k.Messaging.echo
 d2k.Shortcuts.mecho = d2k.Messaging.mecho
+d2k.Shortcuts.is_singleplayer = d2k.Net.is_singleplayer
+d2k.Shortcuts.is_multiplayer = d2k.Net.is_multiplayer
+d2k.Shortcuts.is_client = d2k.Net.is_client
+d2k.Shortcuts.is_server = d2k.Net.is_server
+d2k.Shortcuts.connect = d2k.Net.connect
+d2k.Shortcuts.disconnect = d2k.Net.disconnect
+d2k.Shortcuts.reconnect = d2k.Net.reconnect
+d2k.Shortcuts.say = d2k.Client.say
+d2k.Shortcuts.say_to = d2k.Client.say_to
+d2k.Shortcuts.say_to_server = d2k.Client.say_to_server
+d2k.Shortcuts.say_to_team = d2k.Client.say_to_team
+d2k.Shortcuts.say_to_current_team = d2k.Client.say_to_current_team
+d2k.Shortcuts.set_name = d2k.Client.set_name
+d2k.Shortcuts.set_team = d2k.Client.set_team
+d2k.Shortcuts.set_bobbing = d2k.Client.set_bobbing
 
 func, err = loadfile(d2k.script_folder .. '/local_console_shortcuts.lua', 't')
 

@@ -2,19 +2,17 @@
 
 ## Proto
 
+1. Console output doesn't scroll down when output is added
+
 1. Add a few new widgets:
   - chat
-    - Create/Expose Lua API for sending messages
+    - Chat messages aren't displayed in messages widget
   - netstats
   - FPS
   - scoreboard
 
 1. Add a few new commands:
   - `map`
-  - `reconnect`
-  - `say`
-  - `say_to/sayto`
-  - `name`
 
 1. Update/Mirror dependencies somewhere
   - It would be really cool to use the pacman/pkgbuild system and mirror source
@@ -27,9 +25,8 @@
 ## ZDDL
 
 1. Menu draws under console
-
-1. Add some way for scripting to tell whether it's a client or server (or not
-  networked).
+  - This is because the menu is drawn onto the game screen, then the console is
+    drawn onto the overlay
 
 1. Servers shouldn't `quit`, they should `shutdown`; also prevents accidentally
   running `/quit` in the console instead of `:quit` and closing the server....

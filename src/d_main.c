@@ -2221,6 +2221,7 @@ static void D_DoomMainSetup(void) {
 
   XAM_RegisterInterface();
   XC_RegisterInterface();
+  XCL_RegisterInterface();
   XD_RegisterInterface();
   XD_MsgRegisterInterface();
   XG_GameRegisterInterface();
@@ -2229,6 +2230,7 @@ static void D_DoomMainSetup(void) {
   XI_InputRegisterInterface();
   XM_MenuRegisterInterface();
   XM_MiscRegisterInterface();
+  XN_RegisterInterface();
   XP_UserRegisterInterface();
   XST_RegisterInterface();
   XV_RegisterInterface();

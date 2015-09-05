@@ -104,7 +104,7 @@ InputInterfaceContainer = {
     for i, interface in ipairs(self.interfaces) do
       if interface:is_active() then
         if interface:handle_event(event) then
-          return
+          return true
         end
       end
     end
@@ -112,10 +112,12 @@ InputInterfaceContainer = {
     for i, interface in ipairs(self.interfaces) do
       if not interface:is_active() then
         if interface:handle_event(event) then
-          return
+          return true
         end
       end
     end
+
+    return false
   end,
 }
 

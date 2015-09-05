@@ -47,7 +47,6 @@
                       !democontinue && \
                       !netgame)
 
-
 typedef enum {
   AUTH_LEVEL_NONE,
   AUTH_LEVEL_SPECTATOR,

@@ -941,6 +941,7 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/z_zone.c
   ${CMAKE_SOURCE_DIR}/src/xam_main.c
   ${CMAKE_SOURCE_DIR}/src/xc_main.c
+  ${CMAKE_SOURCE_DIR}/src/xcl_main.c
   ${CMAKE_SOURCE_DIR}/src/xd_msg.c
   ${CMAKE_SOURCE_DIR}/src/xd_main.c
   ${CMAKE_SOURCE_DIR}/src/xg_game.c
@@ -949,6 +950,7 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/xi_main.c
   ${CMAKE_SOURCE_DIR}/src/xm_menu.c
   ${CMAKE_SOURCE_DIR}/src/xm_misc.c
+  ${CMAKE_SOURCE_DIR}/src/xn_main.c
   ${CMAKE_SOURCE_DIR}/src/xp_user.c
   ${CMAKE_SOURCE_DIR}/src/xst_main.c
   ${CMAKE_SOURCE_DIR}/src/xv_main.c
