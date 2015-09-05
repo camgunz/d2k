@@ -857,11 +857,7 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/g_keys.c
   ${CMAKE_SOURCE_DIR}/src/g_overflow.c
   ${CMAKE_SOURCE_DIR}/src/g_save.c
-  # ${CMAKE_SOURCE_DIR}/src/hu_chat.c
-  # ${CMAKE_SOURCE_DIR}/src/hu_cons.c
-  # ${CMAKE_SOURCE_DIR}/src/hu_input.c
   ${CMAKE_SOURCE_DIR}/src/hu_lib.c
-  ${CMAKE_SOURCE_DIR}/src/hu_msg.c
   ${CMAKE_SOURCE_DIR}/src/hu_stuff.c
   ${CMAKE_SOURCE_DIR}/src/hu_tracers.c
   ${CMAKE_SOURCE_DIR}/src/i_capture.c
