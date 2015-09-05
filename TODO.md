@@ -3,8 +3,8 @@
 ## Proto
 
 1. Add a few new widgets:
-  - Some weird NULL hash table bug (`g_hash_table_lookup`)
   - chat
+    - Some weird NULL hash table bug (`g_hash_table_lookup`)
   - netstats
   - FPS
   - scoreboard
@@ -12,15 +12,19 @@
 1. Add a few new commands:
   - `map`
 
-1. Update/Mirror dependencies somewhere
-  - It would be really cool to use the pacman/pkgbuild system and mirror source
-    also
-
 1. Clean up
   - Remove old C HUD widget code
   - Remove autotools stuff
 
+## After Proto
+
+1. Update/Mirror dependencies somewhere
+  - It would be really cool to use the pacman/pkgbuild system and mirror source
+    also
+
 ## ZDDL
+
+1. Messages widget should (optionally) display markup
 
 1. Menu draws under console
   - This is because the menu is drawn onto the game screen, then the console is
@@ -161,10 +165,6 @@
 1. Add Hexen map support
 
 1. Add scripted game modes
-
-1. Add more scripting commands
-  - `say_team`
-  - `team`
 
 ## Version 0.9
 

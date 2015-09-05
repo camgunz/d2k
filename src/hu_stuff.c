@@ -164,7 +164,6 @@ patchnum_t hu_font_hud[HU_FONTSIZE];
 // widgets
 static message_widget_t *w_messages;
 static message_widget_t *w_centermsg;
-static chat_widget_t *w_chat;
 
 static hu_textline_t  w_title;
 static hu_textline_t  w_coordx; //jff 2/16/98 new coord widget for automap
@@ -428,19 +427,6 @@ void HU_Init(void) {
 }
 
 //
-// HU_Stop()
-//
-// Make the heads-up displays inactive
-//
-// Passed nothing, returns nothing
-//
-#if 0
-static void HU_Stop(void) {
-  headsupactive = false;
-}
-#endif
-
-//
 // HU_Start
 //
 // Create and initialize the heads-up widgets, software machines to
@@ -457,11 +443,6 @@ void HU_Start(void) {
 
   if (nodrawers)
     return;
-
-#if 0
-  if (headsupactive)                    // stop before starting
-    HU_Stop();
-#endif
 
   plr = &players[displayplayer];        // killough 3/7/98
   custom_message_p = &custom_message[displayplayer];
@@ -2424,14 +2405,6 @@ void HU_Drawer(void) {
 main_widgets:
 
   return;
-
-  /*
-  HU_MessageWidgetDrawer(w_messages, NULL);
-  HU_MessageWidgetDrawer(w_centermsg, NULL);
-  C_Drawer();
-  if (HU_ChatWidgetActive(w_chat))
-    HU_ChatWidgetDrawer(w_chat, NULL);
-  */
 }
 
 //
@@ -2507,28 +2480,7 @@ void HU_Ticker(void) {
 // Passed the event to respond to, returns true if the event was handled
 //
 bool HU_Responder(event_t *ev) {
-#if 0
-  if (!(ev->type == ev_key && ev->pressed))
-    return false;
-
-  if (ev->key == key_chat && !HU_ChatWidgetActive(w_chat)) {
-    HU_ChatWidgetActivate(w_chat);
-    return true;
-  }
-
-  if (HU_ChatWidgetResponder(w_chat, ev))
-    return true;
-#endif
-
   return false;
-}
-
-bool HU_ChatActive(void) {
-  return HU_ChatWidgetActive(w_chat);
-}
-
-void HU_DeactivateChat(void) {
-  HU_ChatWidgetDeactivate(w_chat);
 }
 
 void T_ShowMessage(message_thinker_t* message) {
