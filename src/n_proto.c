@@ -166,6 +166,20 @@ const char *nm_names[9] = {
   "vote request"
 };
 
+static void print_local_chat_message(const char *message) {
+  int sfx;
+
+  if (gamemode == commercial)
+    sfx = sfx_radio;
+  else
+    sfx = sfx_tink;
+
+  P_SPrintf(consoleplayer, sfx, "&lt;%s&gt;: %s\n",
+    players[consoleplayer].name,
+    message
+  );
+}
+
 static buf_t* get_message_recipient_buffer(void) {
   static buf_t *recipients = NULL;
 
@@ -269,7 +283,6 @@ static void handle_player_message(netpeer_t *np) {
   else
     sfx = sfx_tink;
 
-
   if (SERVER) {
     size_t recipient_count =
       M_BufferGetSize(message_recipients) / sizeof(unsigned short);
@@ -292,6 +305,11 @@ static void handle_player_message(netpeer_t *np) {
       );
     }
   }
+
+  /*
+   * CG [TODO]: Pretty sure this has to be printed to all recipients' message
+   *            buffers for it to work right....
+   */
 
   if (sender != consoleplayer) {
     P_SPrintf(displayplayer, sfx, "<%s>: %s\n",
@@ -569,8 +587,12 @@ void CL_SendMessageToServer(const char *message) {
 
 void CL_SendMessageToPlayer(short recipient, const char *message) {
   buf_t *recipients = get_message_recipient_buffer();
-  netpeer_t *np = NULL;
-  CHECK_CONNECTION(np);
+  netpeer_t *np = CL_GetServerPeer();
+
+  print_local_chat_message(message);
+
+  if (!np)
+    return;                                                                   \
 
   if (recipient != -1 && !playeringame[recipient])
     return;
@@ -582,8 +604,12 @@ void CL_SendMessageToPlayer(short recipient, const char *message) {
 
 void CL_SendMessageToTeam(byte team, const char *message) {
   buf_t *recipients = get_message_recipient_buffer();
-  netpeer_t *np = NULL;
-  CHECK_CONNECTION(np);
+  netpeer_t *np = CL_GetServerPeer();
+
+  print_local_chat_message(message);
+
+  if (!np)
+    return;                                                                   \
 
   for (short i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i] && players[i].team == team) {
@@ -600,8 +626,12 @@ void CL_SendMessageToCurrentTeam(const char *message) {
 
 void CL_SendMessage(const char *message) {
   buf_t *recipients = get_message_recipient_buffer();
-  netpeer_t *np = NULL;
-  CHECK_CONNECTION(np);
+  netpeer_t *np = CL_GetServerPeer();
+
+  print_local_chat_message(message);
+
+  if (!np)
+    return;                                                                   \
 
   for (short i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i])

@@ -65,14 +65,14 @@ local chat_widget = InputWidget.InputWidget({
   right_margin = 8,
   width = 1,
   line_height = 1,
-  use_markup = true,
+  use_markup = false,
   font_description_text = 'Noto Sans,Arial Unicode MS, Unifont 11',
   strip_ending_newline = true,
   horizontal_alignment = TextWidget.ALIGN_LEFT,
   vertical_alignment = TextWidget.ALIGN_CENTER,
   fg_color = {1.0, 1.0, 1.0, 1.0},
   bg_color = {0.0, 0.0, 0.0, 0.85},
-  input_handler = function(input) print(input) end,
+  input_handler = function(input) d2k.Client.say(input) end,
   deactivate_on_input = true
 })
 

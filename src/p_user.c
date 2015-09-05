@@ -67,12 +67,14 @@ static void add_player_vmessage(int pn, bool is_markup, bool centered, int sfx,
   if (pn == consoleplayer)
     D_Msg(MSG_GAME, "%s", gcontent);
 
+#if 0
   if (!is_markup) {
     gchar *escaped_gcontent = g_markup_escape_text(gcontent, -1);
 
     g_free(gcontent);
     gcontent = escaped_gcontent;
   }
+#endif
 
   msg->content = strdup(gcontent);
   msg->centered = centered;

@@ -37,7 +37,7 @@ local ALIGN_RIGHT      = 2
 local ALIGN_JUSTIFY    = 3
 
 local ALIGN_TOP        = 0
-local ALIGN_BOTTOM     = 1
+local ALIGN_BOTTOM     = 2
 
 local WRAP_NONE        = 0
 local WRAP_WORD        = 1

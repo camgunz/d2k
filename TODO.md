@@ -2,11 +2,9 @@
 
 ## Proto
 
-1. Console output doesn't scroll down when output is added
-
 1. Add a few new widgets:
+  - Some weird NULL hash table bug (`g_hash_table_lookup`)
   - chat
-    - Chat messages aren't displayed in messages widget
   - netstats
   - FPS
   - scoreboard
@@ -29,7 +27,7 @@
     drawn onto the overlay
 
 1. Servers shouldn't `quit`, they should `shutdown`; also prevents accidentally
-  running `/quit` in the console instead of `:quit` and closing the server....
+   running `/quit` in the console instead of `:quit` and closing the server....
 
 1. Adding lines to messages when full flickers
   - Probably have to check in `set_text` if the widget's full, and cancel
