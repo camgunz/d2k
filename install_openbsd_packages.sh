@@ -7,7 +7,7 @@ pkg_add llvm \
         pango \
         gobject-introspection \
         pcre \
-        lua-5.2.3 \
+        lua52-lgi \
         enet \
         fluidsynth \
         dumb \

@@ -38,9 +38,6 @@
 #include "g_game.h"
 #include "g_keys.h"
 #include "hu_lib.h"
-#include "hu_input.h"
-#include "hu_chat.h"
-#include "hu_msg.h"
 #include "hu_stuff.h"
 #include "hu_tracers.h"
 #include "i_main.h"
@@ -162,9 +159,6 @@ patchnum_t hu_msgbg[9];          //jff 2/26/98 add patches for message backgroun
 patchnum_t hu_font_hud[HU_FONTSIZE];
 
 // widgets
-static message_widget_t *w_messages;
-static message_widget_t *w_centermsg;
-
 static hu_textline_t  w_title;
 static hu_textline_t  w_coordx; //jff 2/16/98 new coord widget for automap
 static hu_textline_t  w_coordy; //jff 3/3/98 split coord widgets automap
@@ -2433,7 +2427,7 @@ void HU_Ticker(void) {
   if (!X_Call(X_GetState(), "hud", "tick", 0, 0))
     I_Error("HU_Ticker: Error ticking HUD (%s)", X_GetError(X_GetState()));
 
-  return;
+#if 0
 
   if (nodrawers)
     return;
@@ -2470,6 +2464,7 @@ void HU_Ticker(void) {
   }
 
   HU_MessageWidgetTicker(w_messages);
+#endif
 }
 
 //
