@@ -13,7 +13,6 @@
   - `map`
 
 1. Clean up
-  - Remove old C HUD widget code
   - Remove autotools stuff
 
 ## After Proto

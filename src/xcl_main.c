@@ -23,7 +23,10 @@
 
 #include "z_zone.h"
 
+#include <enet/enet.h>
+
 #include "n_net.h"
+#include "n_peer.h"
 #include "n_proto.h"
 #include "x_main.h"
 
@@ -93,8 +96,82 @@ static int XCL_SetBobbing(lua_State *L) {
   return 0;
 }
 
+static int XCL_GetNetStats(lua_State *L) {
+  netpeer_t *server = NULL;
+
+  if (!CLIENT)
+    return 0;
+  
+  CL_GetServerPeer();
+
+  lua_createtable(L, 0, 18);
+
+  lua_pushinteger(L, N_GetUploadBandwidth());
+  lua_setfield(L, 2, "upload");
+
+  lua_pushinteger(L, N_GetDownloadBandwidth());
+  lua_setfield(L, 2, "download");
+
+  lua_pushinteger(L, server->lowestRoundTripTime);
+  lua_setfield(L, 2, "ping_low");
+
+  lua_pushinteger(L, server->lastRoundTripTime);
+  lua_setfield(L, 2, "ping_last");
+
+  lua_pushinteger(L, server->roundTripTime);
+  lua_setfield(L, 2, "ping_average");
+
+  lua_pushinteger(L, server->highestRoundTripTimeVariance);
+  lua_setfield(L, 2, "jitter_high");
+
+  lua_pushinteger(L, server->lastRoundTripTimeVariance);
+  lua_setfield(L, 2, "jitter_last");
+
+  lua_pushinteger(L, server->roundTripTimeVariance);
+  lua_setfield(L, 2, "jitter_average");
+
+  if (CLIENT)
+    lua_pushinteger(L, CL_GetUnsynchronizedCommandCount(consoleplayer));
+  else
+    lua_pushinteger(L, 0);
+  lua_setfield(L, 2, "unsynchronized_commands");
+
+  lua_pushinteger(L, P_GetCommandCount(iter.np->playernum));
+  lua_setfield(L, 2, "total_commands");
+
+  lua_pushnumber(L,
+    (server->packetLoss / (float)ENET_PEER_PACKET_LOSS_SCALE) * 100.f
+  );
+  lua_setfield(L, 2, "packet_loss");
+
+  lua_pushnumber(L,
+    (server->packetLossVariance / (float)ENET_PEER_PACKET_LOSS_SCALE) * 100.f
+  );
+  lua_setfield(L, 2, "packet_loss_jitter");
+
+  lua_pushinteger(L, server->packetThrottle);
+  lua_setfield(L, 2, "throttle");
+
+  lua_pushinteger(L, server->packetThrottleAcceleration);
+  lua_setfield(L, 2, "throttle_acceleration");
+
+  lua_pushinteger(L, server->packetThrottleCounter);
+  lua_setfield(L, 2, "throttle_counter");
+
+  lua_pushinteger(L, server->packetThrottleDeceleration);
+  lua_setfield(L, 2, "throttle_deceleration");
+
+  lua_pushinteger(L, server->packetThrottleInterval);
+  lua_setfield(L, 2, "throttle_interval");
+
+  lua_pushinteger(L, server->packetThrottleLimit);
+  lua_setfield(L, 2, "throttle_limit");
+
+  return 1;
+}
+
 void XCL_RegisterInterface(void) {
-  X_RegisterObjects("Client", 8,
+  X_RegisterObjects("Client", 9,
     "say",                 X_FUNCTION, XCL_Say,
     "say_to",              X_FUNCTION, XCL_SayToPlayer,
     "say_to_server",       X_FUNCTION, XCL_SayToServer,
@@ -102,7 +179,8 @@ void XCL_RegisterInterface(void) {
     "say_to_current_team", X_FUNCTION, XCL_SayToCurrentTeam,
     "set_name",            X_FUNCTION, XCL_SetName,
     "set_team",            X_FUNCTION, XCL_SetTeam,
-    "set_bobbing",         X_FUNCTION, XCL_SetBobbing
+    "set_bobbing",         X_FUNCTION, XCL_SetBobbing,
+    "get_netstats",        X_FUNCTION, XCL_GetNetStats
   );
 }
 
