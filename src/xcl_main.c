@@ -25,9 +25,13 @@
 
 #include <enet/enet.h>
 
+#include "doomstat.h"
 #include "n_net.h"
+#include "n_state.h"
 #include "n_peer.h"
 #include "n_proto.h"
+#include "p_cmd.h"
+#include "cl_cmd.h"
 #include "x_main.h"
 
 static int XCL_Say(lua_State *L) {
@@ -98,11 +102,21 @@ static int XCL_SetBobbing(lua_State *L) {
 
 static int XCL_GetNetStats(lua_State *L) {
   netpeer_t *server = NULL;
+  float packet_loss;
+  float packet_loss_jitter;
 
   if (!CLIENT)
     return 0;
   
-  CL_GetServerPeer();
+  server = CL_GetServerPeer();
+
+  packet_loss = server->peer->packetLoss;
+  packet_loss = packet_loss / (float)ENET_PEER_PACKET_LOSS_SCALE;
+  packet_loss = packet_loss * 100.f;
+
+  packet_loss_jitter = server->peer->packetLossVariance;
+  packet_loss_jitter = packet_loss_jitter / (float)ENET_PEER_PACKET_LOSS_SCALE;
+  packet_loss_jitter = packet_loss_jitter * 100.f;
 
   lua_createtable(L, 0, 18);
 
@@ -112,22 +126,22 @@ static int XCL_GetNetStats(lua_State *L) {
   lua_pushinteger(L, N_GetDownloadBandwidth());
   lua_setfield(L, 2, "download");
 
-  lua_pushinteger(L, server->lowestRoundTripTime);
+  lua_pushinteger(L, server->peer->lowestRoundTripTime);
   lua_setfield(L, 2, "ping_low");
 
-  lua_pushinteger(L, server->lastRoundTripTime);
+  lua_pushinteger(L, server->peer->lastRoundTripTime);
   lua_setfield(L, 2, "ping_last");
 
-  lua_pushinteger(L, server->roundTripTime);
+  lua_pushinteger(L, server->peer->roundTripTime);
   lua_setfield(L, 2, "ping_average");
 
-  lua_pushinteger(L, server->highestRoundTripTimeVariance);
+  lua_pushinteger(L, server->peer->highestRoundTripTimeVariance);
   lua_setfield(L, 2, "jitter_high");
 
-  lua_pushinteger(L, server->lastRoundTripTimeVariance);
+  lua_pushinteger(L, server->peer->lastRoundTripTimeVariance);
   lua_setfield(L, 2, "jitter_last");
 
-  lua_pushinteger(L, server->roundTripTimeVariance);
+  lua_pushinteger(L, server->peer->roundTripTimeVariance);
   lua_setfield(L, 2, "jitter_average");
 
   if (CLIENT)
@@ -136,35 +150,31 @@ static int XCL_GetNetStats(lua_State *L) {
     lua_pushinteger(L, 0);
   lua_setfield(L, 2, "unsynchronized_commands");
 
-  lua_pushinteger(L, P_GetCommandCount(iter.np->playernum));
+  lua_pushinteger(L, P_GetCommandCount(consoleplayer));
   lua_setfield(L, 2, "total_commands");
 
-  lua_pushnumber(L,
-    (server->packetLoss / (float)ENET_PEER_PACKET_LOSS_SCALE) * 100.f
-  );
+  lua_pushnumber(L, packet_loss);
   lua_setfield(L, 2, "packet_loss");
 
-  lua_pushnumber(L,
-    (server->packetLossVariance / (float)ENET_PEER_PACKET_LOSS_SCALE) * 100.f
-  );
+  lua_pushnumber(L, packet_loss_jitter);
   lua_setfield(L, 2, "packet_loss_jitter");
 
-  lua_pushinteger(L, server->packetThrottle);
+  lua_pushinteger(L, server->peer->packetThrottle);
   lua_setfield(L, 2, "throttle");
 
-  lua_pushinteger(L, server->packetThrottleAcceleration);
+  lua_pushinteger(L, server->peer->packetThrottleAcceleration);
   lua_setfield(L, 2, "throttle_acceleration");
 
-  lua_pushinteger(L, server->packetThrottleCounter);
+  lua_pushinteger(L, server->peer->packetThrottleCounter);
   lua_setfield(L, 2, "throttle_counter");
 
-  lua_pushinteger(L, server->packetThrottleDeceleration);
+  lua_pushinteger(L, server->peer->packetThrottleDeceleration);
   lua_setfield(L, 2, "throttle_deceleration");
 
-  lua_pushinteger(L, server->packetThrottleInterval);
+  lua_pushinteger(L, server->peer->packetThrottleInterval);
   lua_setfield(L, 2, "throttle_interval");
 
-  lua_pushinteger(L, server->packetThrottleLimit);
+  lua_pushinteger(L, server->peer->packetThrottleLimit);
   lua_setfield(L, 2, "throttle_limit");
 
   return 1;
