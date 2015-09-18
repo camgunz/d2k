@@ -48,15 +48,6 @@
                       !netgame)
 
 typedef enum {
-  AUTH_LEVEL_NONE,
-  AUTH_LEVEL_SPECTATOR,
-  AUTH_LEVEL_PLAYER,
-  AUTH_LEVEL_MODERATOR,
-  AUTH_LEVEL_ADMINISTRATOR,
-  AUTH_LEVEL_MAX
-} auth_level_e;
-
-typedef enum {
   NET_CHANNEL_RELIABLE,
   NET_CHANNEL_UNRELIABLE,
   NET_CHANNEL_MAX
@@ -67,6 +58,25 @@ typedef enum {
   NET_SYNC_TYPE_COMMAND,
   NET_SYNC_TYPE_DELTA,
 } net_sync_type_e;
+
+#define CHAT_CHANNEL_MIN CHAT_CHANNEL_SERVER
+#define CHAT_CHANNEL_MAX CHAT_CHANNEL_ALL
+
+typedef enum {
+  CHAT_CHANNEL_SERVER,
+  CHAT_CHANNEL_PLAYER,
+  CHAT_CHANNEL_TEAM,
+  CHAT_CHANNEL_ALL
+} chat_channel_e;
+
+typedef enum {
+  AUTH_LEVEL_NONE,
+  AUTH_LEVEL_SPECTATOR,
+  AUTH_LEVEL_PLAYER,
+  AUTH_LEVEL_MODERATOR,
+  AUTH_LEVEL_ADMINISTRATOR,
+  AUTH_LEVEL_MAX
+} auth_level_e;
 
 typedef struct netticcmd_s {
   int   index;

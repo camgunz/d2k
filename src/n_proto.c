@@ -166,30 +166,67 @@ const char *nm_names[9] = {
   "vote request"
 };
 
-static void print_local_chat_message(const char *message) {
+static void display_chat_message(chat_channel_e chat_channel,
+                                 unsigned short sender,
+                                 const char *message) {
   int sfx;
+  const char *sender_name;
+  const char *sender_opener;
+  const char *sender_closer;
+  const char *channel;
 
   if (gamemode == commercial)
     sfx = sfx_radio;
   else
     sfx = sfx_tink;
 
-  P_SPrintf(consoleplayer, sfx, "&lt;%s&gt;: %s\n",
-    players[consoleplayer].name,
+  if (sender < 0) {
+    sender_name = "SERVER";
+    sender_opener = "[";
+    sender_closer = "]";
+  }
+  else if ((sender >= MAXPLAYERS) || (!playeringame[sender])) {
+    D_Msg(MSG_WARN, "Invalid message sender %d\n", sender);
+    return;
+  }
+  else {
+    sender_name = players[sender].name;
+    sender_opener = "&lt;";
+    sender_closer = "&gt;";
+  }
+
+  switch (chat_channel)
+  {
+    case CHAT_CHANNEL_SERVER:
+      channel = " (SERVER)";
+    break;
+    case CHAT_CHANNEL_TEAM:
+      channel = " (TEAM)";
+    break;
+    case CHAT_CHANNEL_PLAYER:
+      channel = " (PRIVATE)";
+    break;
+    case CHAT_CHANNEL_ALL:
+      channel = "";
+    break;
+    default:
+      D_Msg(MSG_WARN, "Invalid chat channel %d\n", chat_channel);
+      return;
+    break;
+  }
+
+  /*
+   * CG [TODO]: Pretty sure this has to be printed to all recipients' message
+   *            buffers for it to work right....
+   */
+
+  P_SPrintf(consoleplayer, sfx, "%s%s%s%s: %s\n",
+    sender_opener,
+    sender_name,
+    sender_closer,
+    channel,
     message
   );
-}
-
-static buf_t* get_message_recipient_buffer(void) {
-  static buf_t *recipients = NULL;
-
-  if (!recipients)
-    recipients = M_BufferNew();
-
-  M_BufferEnsureCapacity(recipients, MAXPLAYERS * sizeof(unsigned short));
-  M_BufferClear(recipients);
-
-  return recipients;
 }
 
 static void handle_setup(netpeer_t *np) {
@@ -242,17 +279,75 @@ static void handle_auth_response(netpeer_t *np) {
     CL_SetAuthorizationLevel(level);
 }
 
-static void handle_server_message(netpeer_t *np) {
-  static buf_t server_message_buffer;
-  static dboolean initialized_buffer = false;
+static void handle_chat_message(netpeer_t *np) {
+  static buf_t message_contents;
+  static bool initialized_buffer = false;
+
+  bool unpacked_successfully;
+  chat_channel_e chat_channel;
+  unsigned short message_sender;
+  unsigned short message_recipient;
 
   if (!initialized_buffer) {
-    M_BufferInit(&server_message_buffer);
+    M_BufferInit(&message_contents);
     initialized_buffer = true;
   }
 
-  if (N_UnpackServerMessage(np, &server_message_buffer))
-    P_Printf(consoleplayer, "[SERVER]: %s", server_message_buffer.data);
+  unpacked_successfully = N_UnpackChatMessage(np,
+    &chat_channel,
+    &message_sender,
+    &message_recipient,
+    &message_contents
+  );
+
+  if (!unpacked_successfully)
+    return;
+
+  if (SERVER) {
+    switch (chat_channel)
+    {
+      case CHAT_CHANNEL_ALL:
+        NETPEER_FOR_EACH(iter) {
+          if (iter.np == np)
+            continue;
+
+          N_PackRelayedChatMessage(
+            iter.np, message_sender, message_contents.data
+          );
+        }
+      break;
+      case CHAT_CHANNEL_TEAM:
+        NETPEER_FOR_EACH(iter) {
+          if (iter.np == np)
+            continue;
+
+          if (players[iter.np->playernum].team != players[message_sender].team)
+            continue;
+
+          N_PackRelayedTeamChatMessage(
+            iter.np, message_sender, message_contents.data
+          );
+        }
+      break;
+      case CHAT_CHANNEL_PLAYER:
+        NETPEER_FOR_EACH(iter) {
+          if (iter.np == np)
+            continue;
+
+          if (iter.np->playernum != message_recipient)
+            continue;
+
+          N_PackRelayedPlayerChatMessage(
+            iter.np, message_sender, message_recipient, message_contents.data
+          );
+        }
+      break;
+      default:
+      break;
+    }
+  }
+
+  display_chat_message(chat_channel, message_sender, message_contents.data);
 }
 
 static void handle_sync(netpeer_t *np) {
@@ -260,70 +355,11 @@ static void handle_sync(netpeer_t *np) {
     N_UnpackSync(np);
 }
 
-static void handle_player_message(netpeer_t *np) {
-  static buf_t *player_message_buffer = NULL;
-
-  short sender = 0;
-  dboolean unpacked_successfully = false;
-  buf_t *message_recipients = get_message_recipient_buffer();
-  int sfx;
-
-  if (!player_message_buffer)
-    player_message_buffer = M_BufferNew();
-
-  unpacked_successfully = N_UnpackPlayerMessage(
-    np, &sender, message_recipients, player_message_buffer
-  );
-
-  if (!unpacked_successfully)
-    return;
-
-  if (gamemode == commercial)
-    sfx = sfx_radio;
-  else
-    sfx = sfx_tink;
-
-  if (SERVER) {
-    size_t recipient_count =
-      M_BufferGetSize(message_recipients) / sizeof(unsigned short);
-
-    M_BufferSeek(message_recipients, 0);
-
-    while (recipient_count--) {
-      netpeer_t *np;
-      unsigned short recipient;
-
-      M_BufferReadUShort(message_recipients, &recipient);
-
-      np = N_PeerForPlayer(recipient);
-
-      if (np == NULL)
-        continue;
-
-      N_PackRelayedPlayerMessage(
-        np, sender, recipient, M_BufferGetData(player_message_buffer)
-      );
-    }
-  }
-
-  /*
-   * CG [TODO]: Pretty sure this has to be printed to all recipients' message
-   *            buffers for it to work right....
-   */
-
-  if (sender != consoleplayer) {
-    P_SPrintf(displayplayer, sfx, "<%s>: %s\n",
-      players[sender].name,
-      M_BufferGetData(player_message_buffer)
-    );
-  }
-}
-
 static void handle_player_preference_change(netpeer_t *np) {
   static buf_t *pref_key_name = NULL;
   static buf_t *pref_key_value = NULL;
 
-  short playernum = 0;
+  unsigned short playernum = 0;
   int tic = 0;
   unsigned int pref_count = 0;
   player_t *player = &players[np->playernum];
@@ -369,7 +405,7 @@ static void handle_player_preference_change(netpeer_t *np) {
       P_SetPlayerName(playernum, pref_key_value->data);
     }
     else if (M_BufferEqualsString(pref_key_name, "team")) {
-      byte new_team = 0;
+      unsigned char new_team = 0;
 
       if (!N_UnpackTeamChange(np, &new_team))
         return;
@@ -442,15 +478,11 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
         CLIENT_ONLY("authorization response");
         handle_auth_response(np);
       break;
-      case nm_servermessage:
-        CLIENT_ONLY("server message");
-        handle_server_message(np);
+      case nm_chatmessage:
+        handle_chat_message(np);
       break;
       case nm_sync:
         handle_sync(np);
-      break;
-      case nm_playermessage:
-        handle_player_message(np);
       break;
       case nm_playerpreferencechange:
         NOT_DELTA_CLIENT("player preference change");
@@ -516,7 +548,7 @@ void N_UpdateSync(void) {
 }
 
 void SV_SetupNewPeer(int peernum) {
-  short playernum;
+  unsigned short playernum;
   netpeer_t *np = N_PeerGet(peernum);
 
   if (np == NULL)
@@ -541,7 +573,7 @@ void SV_SetupNewPeer(int peernum) {
   np->sync.tic = gametic;
 }
 
-void SV_SendSetup(short playernum) {
+void SV_SendSetup(unsigned short playernum) {
   netpeer_t *np = NULL;
   CHECK_VALID_PLAYER(np, playernum);
 
@@ -549,23 +581,23 @@ void SV_SendSetup(short playernum) {
   N_PackSetup(np);
 }
 
-void SV_SendAuthResponse(short playernum, auth_level_e auth_level) {
+void SV_SendAuthResponse(unsigned short playernum, auth_level_e auth_level) {
   netpeer_t *np = NULL;
   CHECK_VALID_PLAYER(np, playernum);
 
   N_PackAuthResponse(np, auth_level);
 }
 
-void SV_SendMessage(short playernum, const char *message) {
+void SV_SendMessage(unsigned short playernum, const char *message) {
   netpeer_t *np = NULL;
   CHECK_VALID_PLAYER(np, playernum);
 
-  N_PackServerMessage(np, message);
+  N_PackServerChatMessage(np, message);
 }
 
 void SV_BroadcastMessage(const char *message) {
   NETPEER_FOR_EACH(iter) {
-    N_PackServerMessage(iter.np, message);
+    N_PackServerChatMessage(iter.np, message);
   }
 }
 
@@ -582,63 +614,50 @@ void SV_BroadcastPrintf(const char *fmt, ...) {
 }
 
 void CL_SendMessageToServer(const char *message) {
-  CL_SendMessageToPlayer(-1, message);
-}
-
-void CL_SendMessageToPlayer(short recipient, const char *message) {
-  buf_t *recipients = get_message_recipient_buffer();
   netpeer_t *np = CL_GetServerPeer();
 
-  print_local_chat_message(message);
+  display_chat_message(CHAT_CHANNEL_SERVER, consoleplayer, message);
 
   if (!np)
-    return;                                                                   \
-
-  if (recipient != -1 && !playeringame[recipient])
     return;
 
-  M_BufferWriteShort(recipients, recipient);
-
-  N_PackPlayerMessage(np, consoleplayer, recipients, message);
+  N_PackServerChatMessage(np, message);
 }
 
-void CL_SendMessageToTeam(byte team, const char *message) {
-  buf_t *recipients = get_message_recipient_buffer();
+void CL_SendMessageToPlayer(unsigned short recipient, const char *message) {
   netpeer_t *np = CL_GetServerPeer();
 
-  print_local_chat_message(message);
+  display_chat_message(CHAT_CHANNEL_PLAYER, consoleplayer, message);
 
   if (!np)
     return;                                                                   \
 
-  for (short i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i] && players[i].team == team) {
-      M_BufferWriteShort(recipients, i);
-    }
-  }
+  if (!playeringame[recipient])
+    return;
 
-  N_PackPlayerMessage(np, consoleplayer, recipients, message);
+  N_PackPlayerChatMessage(np, recipient, message);
 }
 
-void CL_SendMessageToCurrentTeam(const char *message) {
-  CL_SendMessageToTeam(players[consoleplayer].team, message);
+void CL_SendMessageToTeam(const char *message) {
+  netpeer_t *np = CL_GetServerPeer();
+
+  display_chat_message(CHAT_CHANNEL_TEAM, consoleplayer, message);
+
+  if (!np)
+    return;
+
+  N_PackTeamChatMessage(np, message);
 }
 
 void CL_SendMessage(const char *message) {
-  buf_t *recipients = get_message_recipient_buffer();
   netpeer_t *np = CL_GetServerPeer();
 
-  print_local_chat_message(message);
+  display_chat_message(CHAT_CHANNEL_ALL, consoleplayer, message);
 
   if (!np)
     return;                                                                   \
 
-  for (short i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i])
-      M_BufferWriteShort(recipients, i);
-  }
-
-  N_PackPlayerMessage(np, consoleplayer, recipients, message);
+  N_PackChatMessage(np, message);
 }
 
 void CL_SendNameChange(const char *new_name) {
@@ -648,21 +667,23 @@ void CL_SendNameChange(const char *new_name) {
   N_PackNameChange(np, consoleplayer, new_name);
 }
 
-void SV_BroadcastPlayerNameChanged(short playernum, const char *new_name) {
+void SV_BroadcastPlayerNameChanged(unsigned short playernum,
+                                   const char *new_name) {
   NETPEER_FOR_EACH(iter) {
     if (iter.np->playernum != playernum)
       N_PackNameChange(iter.np, playernum, new_name);
   }
 }
 
-void CL_SendTeamChange(byte new_team) {
+void CL_SendTeamChange(unsigned char new_team) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
   N_PackTeamChange(np, consoleplayer, new_team);
 }
 
-void SV_BroadcastPlayerTeamChanged(short playernum, byte new_team) {
+void SV_BroadcastPlayerTeamChanged(unsigned short playernum,
+                                   unsigned char new_team) {
   NETPEER_FOR_EACH(iter) {
     if (iter.np->playernum != playernum)
       N_PackTeamChange(iter.np, playernum, new_team);
@@ -675,18 +696,19 @@ void CL_SendPWOChange(void) {
   /* CG: TODO */
 }
 
-void SV_BroadcastPlayerPWOChanged(short playernum) {
+void SV_BroadcastPlayerPWOChanged(unsigned short playernum) {
   /* CG: TODO */
 }
 
-void CL_SendWSOPChange(byte new_wsop_flags) {
+void CL_SendWSOPChange(unsigned char new_wsop_flags) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
   N_PackWSOPChange(np, consoleplayer, new_wsop_flags);
 }
 
-void SV_BroadcastPlayerWSOPChanged(short playernum, byte new_wsop_flags) {
+void SV_BroadcastPlayerWSOPChanged(unsigned short playernum,
+                                   unsigned char new_wsop_flags) {
   NETPEER_FOR_EACH(iter) {
     if (iter.np->playernum != playernum)
       N_PackWSOPChange(iter.np, playernum, new_wsop_flags);
@@ -700,7 +722,7 @@ void CL_SendBobbingChange(double new_bobbing_amount) {
   N_PackBobbingChange(np, consoleplayer, new_bobbing_amount);
 }
 
-void SV_BroadcastPlayerBobbingChanged(short playernum,
+void SV_BroadcastPlayerBobbingChanged(unsigned short playernum,
                                       double new_bobbing_amount) {
   NETPEER_FOR_EACH(iter) {
     if (iter.np->playernum != playernum)
@@ -715,7 +737,7 @@ void CL_SendAutoaimChange(dboolean new_autoaim_enabled) {
   N_PackAutoaimChange(np, consoleplayer, new_autoaim_enabled);
 }
 
-void SV_BroadcastPlayerAutoaimChanged(short playernum,
+void SV_BroadcastPlayerAutoaimChanged(unsigned short playernum,
                                       dboolean new_autoaim_enabled) {
   NETPEER_FOR_EACH(iter) {
     if (iter.np->playernum != playernum)
@@ -723,31 +745,34 @@ void SV_BroadcastPlayerAutoaimChanged(short playernum,
   }
 }
 
-void CL_SendWeaponSpeedChange(byte new_weapon_speed) {
+void CL_SendWeaponSpeedChange(unsigned char new_weapon_speed) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
   N_PackWeaponSpeedChange(np, consoleplayer, new_weapon_speed);
 }
 
-void SV_BroadcastPlayerWeaponSpeedChanged(short playernum,
-                                          byte new_weapon_speed) {
+void SV_BroadcastPlayerWeaponSpeedChanged(unsigned short playernum,
+                                          unsigned char new_weapon_speed) {
   NETPEER_FOR_EACH(iter) {
     if (iter.np->playernum != playernum)
       N_PackWeaponSpeedChange(iter.np, playernum, new_weapon_speed);
   }
 }
 
-void CL_SendColorChange(byte new_red, byte new_green, byte new_blue) {
+void CL_SendColorChange(unsigned char new_red,
+                        unsigned char new_green,
+                        unsigned char new_blue) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
   N_PackColorChange(np, consoleplayer, new_red, new_green, new_blue);
 }
 
-void SV_BroadcastPlayerColorChanged(short playernum, byte new_red,
-                                                     byte new_green,
-                                                     byte new_blue) {
+void SV_BroadcastPlayerColorChanged(unsigned short playernum,
+                                    unsigned char new_red,
+                                    unsigned char new_green,
+                                    unsigned char new_blue) {
   NETPEER_FOR_EACH(iter) {
     if (iter.np->playernum != playernum)
       N_PackColorChange(iter.np, playernum, new_red, new_green, new_blue);
@@ -761,7 +786,8 @@ void CL_SendColorIndexChange(int new_color) {
   N_PackColorIndexChange(np, consoleplayer, new_color);
 }
 
-void SV_BroadcastPlayerColorIndexChanged(short playernum, int new_color) {
+void SV_BroadcastPlayerColorIndexChanged(unsigned short playernum,
+                                         int new_color) {
   NETPEER_FOR_EACH(iter) {
     if (iter.np->playernum != playernum)
       N_PackColorIndexChange(iter.np, consoleplayer, new_color);
@@ -774,7 +800,7 @@ void CL_SendSkinChange(void) {
   /* CG: TODO */
 }
 
-void SV_BroadcastPlayerSkinChanged(short playernum) {
+void SV_BroadcastPlayerSkinChanged(unsigned short playernum) {
   /* CG: TODO */
 }
 

@@ -21,7 +21,6 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-local Widget = require('widget')
 local TextWidget = require('text_widget')
 local InputWidget = require('input_widget')
 local RetractableTextWidget = require('retractable_text_widget')

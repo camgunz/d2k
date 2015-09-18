@@ -30,59 +30,65 @@
 
 #define nm_setup                  1
 #define nm_authresponse           2
-#define nm_servermessage          3
+#define nm_chatmessage            3
 #define nm_sync                   4
-#define nm_playermessage          5
-#define nm_playerpreferencechange 6
-#define nm_authrequest            7
-#define nm_rconcommand            8
-#define nm_voterequest            9
+#define nm_playerpreferencechange 5
+#define nm_authrequest            6
+#define nm_rconcommand            7
+#define nm_voterequest            8
+#define nm_netstats               9
 
 void N_InitProtocol(void);
 void N_HandlePacket(int peernum, void *data, size_t data_size);
 void N_UpdateSync(void);
 
 void SV_SetupNewPeer(int peernum);
-void SV_SendSetup(short playernum);
-void SV_SendStateDelta(short playernum);
-void SV_SendFullState(short playernum);
-void SV_SendAuthResponse(short playernum, auth_level_e auth_level);
-void SV_SendMessage(short playernum, const char *message);
+void SV_SendSetup(unsigned short playernum);
+void SV_SendStateDelta(unsigned short playernum);
+void SV_SendFullState(unsigned short playernum);
+void SV_SendAuthResponse(unsigned short playernum, auth_level_e auth_level);
+void SV_SendMessage(unsigned short playernum, const char *message);
 void SV_BroadcastMessage(const char *message);
 void SV_BroadcastPrintf(const char *fmt, ...) PRINTF_DECL(1, 2);
-void SV_BroadcastPlayerNameChanged(short playernum, const char *new_name);
-void SV_BroadcastPlayerTeamChanged(short playernum, byte new_team);
-void SV_BroadcastPlayerPWOChanged(short playernum);
-void SV_BroadcastPlayerWSOPChanged(short playernum, byte new_wsop_flags);
-void SV_BroadcastPlayerBobbingChanged(short playernum,
+void SV_BroadcastPlayerNameChanged(unsigned short playernum,
+                                   const char *new_name);
+void SV_BroadcastPlayerTeamChanged(unsigned short playernum,
+                                   unsigned char new_team);
+void SV_BroadcastPlayerPWOChanged(unsigned short playernum);
+void SV_BroadcastPlayerWSOPChanged(unsigned short playernum,
+                                   unsigned char new_wsop_flags);
+void SV_BroadcastPlayerBobbingChanged(unsigned short playernum,
                                       double new_bobbing_amount);
-void SV_BroadcastPlayerAutoaimChanged(short playernum,
+void SV_BroadcastPlayerAutoaimChanged(unsigned short playernum,
                                       dboolean new_autoaim_enabled);
-void SV_BroadcastPlayerWeaponSpeedChanged(short playernum,
-                                          byte new_weapon_speed);
-void SV_BroadcastPlayerColorChanged(short playernum, byte new_red,
-                                                     byte new_green,
-                                                     byte new_blue);
-void SV_BroadcastPlayerColorIndexChanged(short playernum, int new_color);
-void SV_BroadcastPlayerSkinChanged(short playernum);
+void SV_BroadcastPlayerWeaponSpeedChanged(unsigned short playernum,
+                                          unsigned char new_weapon_speed);
+void SV_BroadcastPlayerColorChanged(unsigned short playernum,
+                                    unsigned char new_red,
+                                    unsigned char new_green,
+                                    unsigned char new_blue);
+void SV_BroadcastPlayerColorIndexChanged(unsigned short playernum,
+                                         int new_color);
+void SV_BroadcastPlayerSkinChanged(unsigned short playernum);
 void SV_BroadcastStateUpdates(void);
 void SV_ResyncPeers(void);
 
 void CL_SendMessageToServer(const char *message);
-void CL_SendMessageToPlayer(short recipient, const char *message);
-void CL_SendMessageToTeam(byte team, const char *message);
-void CL_SendMessageToCurrentTeam(const char *message);
+void CL_SendMessageToPlayer(unsigned short recipient, const char *message);
+void CL_SendMessageToTeam(const char *message);
 void CL_SendMessage(const char *message);
 void CL_SendCommands(void);
 void CL_SendSaveGameNameChange(const char *new_save_game_name);
 void CL_SendNameChange(const char *new_name);
-void CL_SendTeamChange(byte new_team);
+void CL_SendTeamChange(unsigned char new_team);
 void CL_SendPWOChange(void); /* CG: TODO */
-void CL_SendWSOPChange(byte new_wsop_flags);
+void CL_SendWSOPChange(unsigned char new_wsop_flags);
 void CL_SendBobbingChange(double new_bobbing_amount);
 void CL_SendAutoaimChange(dboolean new_autoaim_enabled);
-void CL_SendWeaponSpeedChange(byte new_weapon_speed);
-void CL_SendColorChange(byte new_red, byte new_green, byte new_blue);
+void CL_SendWeaponSpeedChange(unsigned char new_weapon_speed);
+void CL_SendColorChange(unsigned char new_red,
+                        unsigned char new_green,
+                        unsigned char new_blue);
 void CL_SendColorIndexChange(int new_color);
 void CL_SendSkinChange(void); /* CG: TODO */
 void CL_SendStateReceived(void);

@@ -60,24 +60,23 @@ static int XCL_SayToServer(lua_State *L) {
 }
 
 static int XCL_SayToTeam(lua_State *L) {
-  int team = luaL_checkinteger(L, 1);
-  const char *message = luaL_checkstring(L, 2);
-
-  CL_SendMessageToTeam(team, message);
-
-  return 0;
-}
-
-static int XCL_SayToCurrentTeam(lua_State *L) {
   const char *message = luaL_checkstring(L, 1);
 
-  CL_SendMessageToCurrentTeam(message);
+  CL_SendMessageToTeam(message);
 
   return 0;
 }
 
 static int XCL_SetName(lua_State *L) {
   const char *new_name = luaL_checkstring(L, 1);
+
+  free(players[consoleplayer].name);
+  players[consoleplayer].name = calloc(strlen(new_name) + 1, sizeof(char));
+
+  if (!players[consoleplayer].name)
+    I_Error("Error allocating player name");
+
+  strcpy(players[consoleplayer].name, new_name);
 
   CL_SendNameChange(new_name);
 
@@ -181,12 +180,11 @@ static int XCL_GetNetStats(lua_State *L) {
 }
 
 void XCL_RegisterInterface(void) {
-  X_RegisterObjects("Client", 9,
+  X_RegisterObjects("Client", 8,
     "say",                 X_FUNCTION, XCL_Say,
     "say_to",              X_FUNCTION, XCL_SayToPlayer,
     "say_to_server",       X_FUNCTION, XCL_SayToServer,
     "say_to_team",         X_FUNCTION, XCL_SayToTeam,
-    "say_to_current_team", X_FUNCTION, XCL_SayToCurrentTeam,
     "set_name",            X_FUNCTION, XCL_SetName,
     "set_team",            X_FUNCTION, XCL_SetTeam,
     "set_bobbing",         X_FUNCTION, XCL_SetBobbing,
