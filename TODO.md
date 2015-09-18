@@ -15,6 +15,9 @@
 1. Clean up
   - Remove autotools stuff
 
+1. When more than 2 messages are displayed in the messaging widget, FPS
+   suffers
+
 ## After Proto
 
 1. Update/Mirror dependencies somewhere
