@@ -989,8 +989,7 @@ void R_SetupMatrix(void)
 // R_SetupFrame
 //
 
-static void R_SetupFrame (player_t *player)
-{
+static void R_SetupFrame(player_t *player) {
   int i, cm;
 
   viewplayer = player;
@@ -1004,16 +1003,18 @@ static void R_SetupFrame (player_t *player)
 
   // killough 3/20/98, 4/4/98: select colormap based on player status
 
-  if (player->mo->subsector->sector->heightsec != -1)
-    {
-      const sector_t *s = player->mo->subsector->sector->heightsec + sectors;
-      cm = viewz < s->floorheight ? s->bottommap : viewz > s->ceilingheight ?
-        s->topmap : s->midmap;
-      if (cm < 0 || cm > numcolormaps)
-        cm = 0;
-    }
-  else
+  if (player->mo->subsector->sector->heightsec != -1) {
+    const sector_t *s = player->mo->subsector->sector->heightsec + sectors;
+
+    cm = viewz < s->floorheight ? s->bottommap : viewz > s->ceilingheight ?
+      s->topmap : s->midmap;
+
+    if (cm < 0 || cm > numcolormaps)
+      cm = 0;
+  }
+  else {
     cm = 0;
+  }
 
   //e6y: save previous and current colormap
   boom_cm = cm;
@@ -1024,27 +1025,28 @@ static void R_SetupFrame (player_t *player)
 
   //e6y
   frame_fixedcolormap = player->fixedcolormap;
-  if (frame_fixedcolormap < 0 || frame_fixedcolormap > NUMCOLORMAPS)
-  {
+  if (frame_fixedcolormap < 0 || frame_fixedcolormap > NUMCOLORMAPS) {
     I_Error("<fixedcolormap> value out of range: %d\n", player->fixedcolormap);
   }
 
-  if (player->fixedcolormap)
-    {
-      // killough 3/20/98: localize scalelightfixed (readability/optimization)
-      static const lighttable_t *scalelightfixed[MAXLIGHTSCALE];
+  if (player->fixedcolormap) {
+    // killough 3/20/98: localize scalelightfixed (readability/optimization)
+    static const lighttable_t *scalelightfixed[MAXLIGHTSCALE];
 
-      fixedcolormap = fullcolormap   // killough 3/20/98: use fullcolormap
-        + player->fixedcolormap*256*sizeof(lighttable_t);
+    fixedcolormap = fullcolormap + // killough 3/20/98: use fullcolormap
+                    player->fixedcolormap *
+                    256 *
+                    sizeof(lighttable_t);
 
-      walllights = scalelightfixed;
-      walllightsnext = scalelightfixed;
+    walllights = scalelightfixed;
+    walllightsnext = scalelightfixed;
 
-      for (i=0 ; i<MAXLIGHTSCALE ; i++)
-        scalelightfixed[i] = fixedcolormap;
-    }
-  else
+    for (i = 0; i < MAXLIGHTSCALE; i++)
+      scalelightfixed[i] = fixedcolormap;
+  }
+  else {
     fixedcolormap = 0;
+  }
 
   R_SetClipPlanes();
 
@@ -1069,13 +1071,13 @@ void R_ShowStats(void) {
 
   frame_count++;
 
-  if(tic >= saved_tic + 1000) {
+  if (tic >= saved_tic + 1000) {
     renderer_fps = 1000 * frame_count / (tic - saved_tic);
 
     if (rendering_stats) {
 #ifdef GL_DOOM
       if (V_GetMode() == VID_MODEGL) {
-        P_Printf(consoleplayer,
+        printf(
           "Frame rate %d fps\nWalls %d, Flats %d, Sprites %d\n",
           renderer_fps, rendered_segs, rendered_visplanes, rendered_vissprites
         );
@@ -1083,7 +1085,7 @@ void R_ShowStats(void) {
       else
 #endif
       {
-        P_Printf(consoleplayer,
+        printf(
           "Frame rate %d fps\nSegs %d, Visplanes %d, Sprites %d\n",
           renderer_fps, rendered_segs, rendered_visplanes, rendered_vissprites
         );

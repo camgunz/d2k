@@ -69,14 +69,13 @@ static int XCL_SayToTeam(lua_State *L) {
 
 static int XCL_SetName(lua_State *L) {
   const char *new_name = luaL_checkstring(L, 1);
+  size_t name_length = strlen(new_name);
+  const char *name = calloc(name_length + 1, sizeof(char));
 
-  free(players[consoleplayer].name);
-  players[consoleplayer].name = calloc(strlen(new_name) + 1, sizeof(char));
-
-  if (!players[consoleplayer].name)
+  if (!name)
     I_Error("Error allocating player name");
 
-  strcpy(players[consoleplayer].name, new_name);
+  P_SetName(consoleplayer, name);
 
   CL_SendNameChange(new_name);
 

@@ -65,7 +65,7 @@ local chat_widget = InputWidget.InputWidget({
   width = 1,
   line_height = 1,
   use_markup = false,
-  font_description_text = 'Noto Sans,Arial Unicode MS, Unifont 11',
+  font_description_text = 'Noto Sans,Arial Unicode MS,Unifont 11',
   strip_ending_newline = true,
   horizontal_alignment = TextWidget.ALIGN_LEFT,
   vertical_alignment = TextWidget.ALIGN_CENTER,
@@ -107,6 +107,69 @@ function chat_widget:handle_event(event)
 end
 
 chat_widget:set_parent(d2k.hud)
+
+local fps_widget = TextWidget.TextWidget({
+  name = 'fps',
+  z_index = 1,
+  top_margin = 4,
+  bottom_margin = 4,
+  left_margin = 8,
+  right_margin = 8,
+  x = 0,
+  y = 0,
+  width = .2,
+  height = .1,
+  use_markup = false,
+  font_description_text = 'Noto Sans,Arial Unicode MS,Unifont 11',
+  horizontal_alignment = TextWidget.ALIGN_RIGHT,
+  vertical_alignment = TextWidget.ALIGN_CENTER,
+  fg_color = {1.0, 1.0, 1.0, 1.00},
+  bg_color = {0.0, 0.0, 0.0, 0.65},
+})
+
+function fps_widget:get_last_time()
+  return self.last_time
+end
+
+function fps_widget:set_last_time(last_time)
+  self.last_time = last_time
+end
+
+function fps_widget:get_frame_count()
+  return self.frame_count
+end
+
+function fps_widget:set_frame_count(frame_count)
+  self.frame_count = frame_count
+end
+
+function fps_widget:increment_frame_count()
+  self.frame_count = self.frame_count + 1
+end
+
+function fps_widget:tick()
+  local current_time = d2k.System.get_ticks()
+  local time_elapsed = current_time - self:get_last_time()
+
+  self:increment_frame_count()
+
+  if time_elapsed >= 1000 then
+    self:set_text(string.format(
+      '%03.2f FPS', (self:get_frame_count() / time_elapsed) * 1000
+    ))
+    self:set_frame_count(0)
+    self:set_last_time(current_time)
+
+    self.needs_updating = true
+    print(self:get_text())
+  end
+end
+
+fps_widget:set_last_time(d2k.System.get_ticks())
+fps_widget:set_frame_count(0)
+fps_widget:set_text('0 FPS')
+
+fps_widget:set_parent(d2k.hud)
 
 -- vi: et ts=2 sw=2
 

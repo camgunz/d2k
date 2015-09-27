@@ -62,7 +62,7 @@ if d2k.Video.is_enabled() then
   print('X_Init: Creating HUD')
   local HUD = require('hud')
   d2k.hud = HUD.HUD()
-  d2k.hud:set_parent(d2k.game_interface)
+  d2k.hud:set_parent(d2k.interfaces)
 
   print('X_Init: Loading HUD widgets')
   func, err = loadfile(d2k.script_folder .. '/local_hud_widgets.lua', 't')
@@ -76,7 +76,6 @@ if d2k.Video.is_enabled() then
     mprint(string.format('<span color="red">%s</span>', err))
     print(err)
   end
-
 else
   d2k.overlay = nil
   d2k.hud = nil

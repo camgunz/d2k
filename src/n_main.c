@@ -34,6 +34,7 @@
 #include "d_main.h"
 #include "d_msg.h"
 #include "g_game.h"
+#include "hu_stuff.h"
 #include "i_network.h"
 #include "i_system.h"
 #include "i_main.h"
@@ -54,6 +55,7 @@
 #include "p_user.h"
 #include "r_fps.h"
 #include "s_sound.h"
+#include "x_main.h"
 #include "e6y.h"
 
 #define DEBUG_NET 0
@@ -493,8 +495,12 @@ bool N_TryRunTics(void) {
     C_ECIService();
   }
 
-  if ((tics_elapsed > 0) || needs_rendering)
+  if ((tics_elapsed > 0) || needs_rendering) {
+    if (!X_Call(X_GetState(), "console", "tick", 0, 0))
+      I_Error("Error ticking console: %s\n", X_GetError(X_GetState()));
+    HU_Ticker();
     D_Display();
+  }
 
   return tics_elapsed > 0;
 }

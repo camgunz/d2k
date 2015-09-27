@@ -349,8 +349,6 @@ function TextWidget:print_lines()
 end
 
 function TextWidget:tick()
-  local current_ms = d2k.System.get_ticks()
-
   if self.get_external_text and self.external_text_updated() then
     self.text = self.text .. self.get_external_text()
     self.needs_updating = true
@@ -429,6 +427,7 @@ function TextWidget:draw()
   local max_line = 0
   local start_y_offset = 0
   local rendered_at_least_one_line = false
+  --[[
   local line_height = self:get_line_height()
 
   if line_height > 0 then
@@ -453,6 +452,7 @@ function TextWidget:draw()
       max_line = line_count
     end
   end
+  --]]
 
   repeat
     local line_baseline_pixels = iter:get_baseline() / Pango.SCALE
@@ -460,11 +460,17 @@ function TextWidget:draw()
     local should_render_line = false
     local should_quit_after_rendering = false
 
+    --[[
     if line_height > 0 then
       if line_number >= min_line and line_number <= max_line then
         should_render_line = true
       end
     elseif line_end_y > 0 then
+      should_render_line = true
+    end
+    --]]
+
+    if line_end_y > 0 then
       should_render_line = true
     end
 
@@ -477,6 +483,7 @@ function TextWidget:draw()
       local line_start_x = line_logical_x + lx
       local line_start_y = line_logical_y + ly
 
+      --[[
       if line_height > 0 then
         if line_number == max_line then
           should_quit_after_rendering = true
@@ -484,12 +491,19 @@ function TextWidget:draw()
       elseif line_start_y >= text_height then
         should_quit_after_rendering = true
       end
+      --]]
 
+      if line_start_y >= text_height then
+        should_quit_after_rendering = true
+      end
+
+      --[[
       if line_height > 0 and
          (not rendered_at_least_one_line) and
          line_logical_y > 0 then
         start_y_offset = -line_logical_y
       end
+      --]]
 
       rendered_at_least_one_line = true
 

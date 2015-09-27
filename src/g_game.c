@@ -1381,9 +1381,6 @@ void G_Ticker(void) {
       mlooky = 0;
       AM_Ticker();
       ST_Ticker();
-      HU_Ticker();
-      if (!X_Call(X_GetState(), "console", "tick", 0, 0))
-        I_Error("Error ticking console: %s\n", X_GetError(X_GetState()));
     break;
     case GS_INTERMISSION:
        WI_Ticker();

@@ -516,11 +516,9 @@ void D_Display(void) {
    *            shitheap.
    */
 
-
   if (gamestate == GS_LEVEL) {
-    if (gametic != basetic)
-      if (!X_Call(X_GetState(), "game_interface", "draw", 0, 0))
-        I_Error("Error drawing game interface: %s", X_GetError(X_GetState()));
+    if (!X_Call(X_GetState(), "game_interface", "draw", 0, 0))
+      I_Error("Error drawing game interface: %s", X_GetError(X_GetState()));
 
       // G_Drawer();
   }
