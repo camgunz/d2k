@@ -22,6 +22,8 @@
 -------------------------------------------------------------------------------
 
 local class = require('middleclass')
+local lgi = require('lgi')
+local Cairo = lgi.cairo
 
 InputInterface = class('InputInterface')
 
@@ -34,7 +36,6 @@ function InputInterface:initialize(ii)
 
   self.parent         = nil
   self.active         = false
-  self.needs_updating = false
 
   self.name                        = ii.name or 'Input Interface'
   self.x                           = ii.x or 0
@@ -47,6 +48,9 @@ function InputInterface:initialize(ii)
   self.snap                        = ii.snap or SNAP_NONE
   self.use_proportional_dimensions = ii.use_proportional_dimensions or true
   self.fullscreen                  = ii.fullscreen or false
+  self.position_changed            = false
+  self.dimensions_changed          = false
+  self.cached_render               = nil
 end
 
 function InputInterface:get_name()
@@ -80,6 +84,8 @@ function InputInterface:set_x(x)
   end
 
   self.x = x
+
+  self:handle_position_change()
 end
 
 function InputInterface:get_y()
@@ -105,6 +111,8 @@ function InputInterface:set_y(y)
   end
 
   self.y = y
+
+  self:handle_position_change()
 end
 
 function InputInterface:get_width()
@@ -122,7 +130,7 @@ function InputInterface:set_width(width)
 
   if not self:get_use_proportional_dimensions() then
     self.width = width
-    self:set_needs_updating(true)
+    self:handle_dimension_change()
     return
   end
 
@@ -131,7 +139,7 @@ function InputInterface:set_width(width)
   end
 
   self.width = width
-  self:set_needs_updating(true)
+  self:handle_dimension_change()
 end
 
 function InputInterface:get_width_in_pixels()
@@ -149,7 +157,7 @@ function InputInterface:set_width_in_pixels(width)
     self.width = width
   end
 
-  self:set_needs_updating(true)
+  self:handle_dimension_change()
 end
 
 function InputInterface:get_height()
@@ -169,7 +177,7 @@ function InputInterface:set_height(height)
 
   if not self:get_use_proportional_dimensions() then
     self.height = height
-    self:set_needs_updating(true)
+    self:handle_dimension_change()
     return
   end
 
@@ -180,7 +188,8 @@ function InputInterface:set_height(height)
   end
 
   self.height = height
-  self:set_needs_updating(true)
+
+  self:handle_dimension_change()
 end
 
 function InputInterface:get_height_in_pixels()
@@ -198,7 +207,7 @@ function InputInterface:set_height_in_pixels(height)
     self.height = height
   end
 
-  self:set_needs_updating(true)
+  self:handle_dimension_change()
 end
 
 function InputInterface:get_max_width()
@@ -226,7 +235,7 @@ function InputInterface:set_max_width(max_width)
 
   if not self:get_use_proportional_dimensions() then
     self.max_width = max_width
-    self:set_needs_updating(true)
+    self:handle_dimension_change()
   end
 
   if max_width < 0 or max_width > 1 then
@@ -243,7 +252,7 @@ function InputInterface:set_max_width(max_width)
     self.max_width = max_width
   end
 
-  self:set_needs_updating(true)
+  self:handle_dimension_change()
 end
 
 function InputInterface:get_max_width_in_pixels()
@@ -261,7 +270,7 @@ function InputInterface:set_max_width_in_pixels(max_width)
     self.max_width = max_width
   end
 
-  self:set_needs_updating(true)
+  self:handle_dimension_change()
 end
 
 function InputInterface:get_max_height()
@@ -289,7 +298,7 @@ function InputInterface:set_max_height(max_height)
 
   if not self:get_use_proportional_dimensions() then
     self.max_height = max_height
-    self:set_needs_updating(true)
+    self:handle_dimension_change()
   end
 
   if max_height < 0 or max_height > 1 then
@@ -306,7 +315,7 @@ function InputInterface:set_max_height(max_height)
     self.max_height = max_height
   end
 
-  self:set_needs_updating(true)
+  self:handle_dimension_change()
 end
 
 function InputInterface:get_max_height_in_pixels()
@@ -324,7 +333,7 @@ function InputInterface:set_max_height_in_pixels(max_height)
     self.max_height = max_height
   end
 
-  self:set_needs_updating(true)
+  self:handle_dimension_change()
 end
 
 function InputInterface:get_z_index()
@@ -337,8 +346,10 @@ function InputInterface:set_z_index(z_index)
   self.z_index = z_index
 
   if parent then
-    parent:sort_widgets()
+    parent:sort_interfaces()
   end
+
+  self:handle_position_change()
 end
 
 function InputInterface:get_snap()
@@ -347,6 +358,8 @@ end
 
 function InputInterface:set_snap(snap)
   self.snap = snap
+
+  self:handle_position_change()
 end
 
 function InputInterface:get_use_proportional_dimensions()
@@ -355,6 +368,8 @@ end
 
 function InputInterface:set_use_proportional_dimensions(pd)
   self.use_proportional_dimensions = pd
+
+  self:handle_dimension_change()
 end
 
 function InputInterface:is_fullscreen()
@@ -363,6 +378,17 @@ end
 
 function InputInterface:set_fullscreen(fullscreen)
   self.fullscreen = fullscreen
+
+  self:handle_position_change()
+  self:handle_dimension_change()
+end
+
+function InputInterface:get_cached_render()
+  return self.cached_render
+end
+
+function InputInterface:set_cached_render(render)
+  self.cached_render = render
 end
 
 function InputInterface:activate()
@@ -418,21 +444,45 @@ function InputInterface:set_parent(parent)
   self.parent = parent
 end
 
-function InputInterface:get_needs_updating()
-  return self.needs_updating
-end
-
-function InputInterface:set_needs_updating(needs_updating)
-  self.needs_updating = needs_updating
-end
-
 function InputInterface:reset()
 end
 
 function InputInterface:tick()
 end
 
-function InputInterface:draw()
+function InputInterface:invalidate_render()
+  self.cached_render = nil
+end
+
+function InputInterface:needs_rendering()
+  if self.cached_render == nil then
+    return true
+  end
+
+  return false
+end
+
+function InputInterface:begin_render()
+  d2k.overlay.render_context:push_group_with_content(
+    Cairo.Content.COLOR_ALPHA
+  )
+end
+
+function InputInterface:render()
+end
+
+function InputInterface:get_render()
+  if self:needs_rendering() then
+    self:begin_render()
+    self:render()
+    self:end_render()
+  end
+
+  return self.cached_render
+end
+
+function InputInterface:end_render()
+  self.cached_render = d2k.overlay.render_context:pop_group()
 end
 
 function InputInterface:handle_event(event)
@@ -443,6 +493,21 @@ function InputInterface:handle_overlay_built(overlay)
 end
 
 function InputInterface:handle_overlay_destroyed(overlay)
+end
+
+function InputInterface:handle_position_change()
+  self.position_changed = true
+  self:invalidate_render()
+end
+
+function InputInterface:handle_dimension_change()
+  self.dimensions_changed = true
+  self:invalidate_render()
+end
+
+function InputInterface:handle_display_change()
+  self.display_changed = true
+  self:invalidate_render()
 end
 
 return {

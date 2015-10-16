@@ -32,7 +32,7 @@ function InputHandler:initialize(ih)
   self.current_event = d2k.InputEvent:new()
 end
 
-function InputHandler:draw()
+function InputHandler:render()
   d2k.overlay:lock()
 
   if d2k.Video.using_opengl() then
@@ -41,12 +41,14 @@ function InputHandler:draw()
 
   d2k.overlay.render_context:set_operator(Cairo.Operator.OVER)
 
-  InputInterfaceContainer.InputInterfaceContainer.draw(self)
+  InputInterfaceContainer.InputInterfaceContainer.render(self)
 
   d2k.overlay:unlock()
 end
 
 function InputHandler:handle_event()
+  print(string.format('%s', self.current_event))
+
   if d2k.Input.handle_event(self.current_event) then
     return
   end

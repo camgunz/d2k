@@ -93,7 +93,7 @@ static int XG_GameTick(lua_State *L) {
   return 0;
 }
 
-static int XG_GameDraw(lua_State *L) {
+static int XG_GameRender(lua_State *L) {
   G_Drawer();
 
   return 0;
@@ -138,7 +138,7 @@ static int XG_GameInDemoScreen(lua_State *L) {
 void XG_GameRegisterInterface(void) {
   X_RegisterObjects("Game", 11,
     "tick",            X_FUNCTION, XG_GameTick,
-    "draw",            X_FUNCTION, XG_GameDraw,
+    "render",          X_FUNCTION, XG_GameRender,
     "in_level",        X_FUNCTION, XG_GameInLevel,
     "in_intermission", X_FUNCTION, XG_GameInIntermission,
     "in_finale",       X_FUNCTION, XG_GameInFinale,

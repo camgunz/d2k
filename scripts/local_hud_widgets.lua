@@ -54,6 +54,8 @@ messages_widget:set_external_text_source(
   d2k.Game.clear_consoleplayer_messages_updated
 )
 
+messages_widget:set_parent(d2k.hud)
+
 local chat_widget = InputWidget.InputWidget({
   name = 'chat',
   z_index = 1,
@@ -75,17 +77,17 @@ local chat_widget = InputWidget.InputWidget({
   deactivate_on_input = true
 })
 
-messages_widget:set_parent(d2k.hud)
-
+--[[
 function chat_widget:tick()
   InputWidget.InputWidget.tick(self)
 end
 
-function chat_widget:draw()
+function chat_widget:render()
   if self:is_active() then
-    InputWidget.InputWidget.draw(self)
+    InputWidget.InputWidget.render(self)
   end
 end
+--]]
 
 function chat_widget:handle_event(event)
   if not self:is_active() then
@@ -159,9 +161,6 @@ function fps_widget:tick()
     ))
     self:set_frame_count(0)
     self:set_last_time(current_time)
-
-    self.needs_updating = true
-    print(self:get_text())
   end
 end
 

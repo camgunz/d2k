@@ -52,7 +52,7 @@ static int XM_MenuTick(lua_State *L) {
   return 0;
 }
 
-static int XM_MenuDraw(lua_State *L) {
+static int XM_MenuRender(lua_State *L) {
   M_Drawer();
 
   return 0;
@@ -73,7 +73,7 @@ void XM_MenuRegisterInterface(void) {
     "deactivate",   X_FUNCTION, XM_MenuDeactivate,
     "is_active",    X_FUNCTION, XM_MenuIsActive,
     "tick",         X_FUNCTION, XM_MenuTick,
-    "draw",         X_FUNCTION, XM_MenuDraw,
+    "render",       X_FUNCTION, XM_MenuRender,
     "handle_event", X_FUNCTION, XM_MenuHandleEvent
   );
 }

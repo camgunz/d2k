@@ -80,6 +80,7 @@ int         X_GetStackSize(lua_State *L);
 char*       X_ToString(lua_State *L, int index);
 void        X_PrintStack(lua_State *L);
 void        X_PopStackMembers(lua_State *L, int count);
+void        X_RunGC(lua_State *L);
 
 #endif
 

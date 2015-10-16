@@ -2213,8 +2213,8 @@ void HU_Drawer(void) {
   if (menuactive == mnact_full)
     return;
 
-  if (!X_Call(X_GetState(), "hud", "draw", 0, 0))
-    I_Error("Error drawing HUD: %s", X_GetError(X_GetState()));
+  if (!X_Call(X_GetState(), "hud", "render", 0, 0))
+    I_Error("Error rendering HUD: %s", X_GetError(X_GetState()));
 
   /*
   return;

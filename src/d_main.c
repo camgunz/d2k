@@ -517,11 +517,13 @@ void D_Display(void) {
    */
 
   if (gamestate == GS_LEVEL) {
-    if (gametic != basetic)
-      if (!X_Call(X_GetState(), "game_interface", "draw", 0, 0))
-        I_Error("Error drawing game interface: %s", X_GetError(X_GetState()));
-
-      // G_Drawer();
+    if (gametic != basetic) {
+      if (!X_Call(X_GetState(), "game_interface", "render", 0, 0)) {
+        I_Error("Error rendering game interface: %s",
+          X_GetError(X_GetState())
+        );
+      }
+    }
   }
   else { // Not a level
     if (oldgamestate == GS_BAD || oldgamestate == GS_LEVEL)
@@ -543,20 +545,26 @@ void D_Display(void) {
   // draw pause pic
   if (paused && (menuactive != mnact_full)) {
     // Simplified the "logic" here and no need for x-coord caching - POPE
-    V_DrawNamePatch((320 - V_NamePatchWidth("M_PAUSE"))/2, 4,
-                    0, "M_PAUSE", CR_DEFAULT, VPT_STRETCH);
+    V_DrawNamePatch(
+      (320 - V_NamePatchWidth("M_PAUSE")) / 2,
+      4,
+      0,
+      "M_PAUSE",
+      CR_DEFAULT,
+      VPT_STRETCH
+    );
   }
 
   // menus go directly to the screen
-  if (!X_Call(X_GetState(), "menu", "draw", 0, 0))
-    I_Error("Error drawing menu interface: %s", X_GetError(X_GetState()));
+  if (!X_Call(X_GetState(), "menu", "render", 0, 0))
+    I_Error("Error rendering menu interface: %s", X_GetError(X_GetState()));
 
 #if 0
   M_Drawer();          // menu is drawn even on top of everything
 #endif
 
-  if (!X_Call(X_GetState(), "console", "draw", 0, 0))
-    I_Error("Error drawing console: %s", X_GetError(X_GetState()));
+  if (!X_Call(X_GetState(), "console", "render", 0, 0))
+    I_Error("Error rendering console: %s", X_GetError(X_GetState()));
 
   // normal update
   if (!wipe) {

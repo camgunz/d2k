@@ -41,8 +41,6 @@ local RETRACTION_TIMEOUT = 2000
 function RetractableTextWidget:initialize(rtw)
   rtw = rtw or {}
 
-  TextWidget.TextWidget.initialize(self, rtw)
-
   self.retractable = rtw.retractable or RETRACT_NONE
   self.retraction_time = rtw.retraction_time or RETRACTION_TIME
   self.retraction_timeout = rtw.retraction_timeout or RETRACTION_TIMEOUT
@@ -53,15 +51,19 @@ function RetractableTextWidget:initialize(rtw)
   self.retraction_target = 0
   self.retraction_start_time = 0
 
-  self:build_layout()
+  self.min_line_number = nil
+  self.max_line_number = nil
+
+  TextWidget.TextWidget.initialize(self, rtw)
 end
 
 function RetractableTextWidget:set_vertical_alignment(vertical_alignment)
   if not (vertical_alignment == TextWidget.ALIGN_TOP or
           vertical_alignment == TextWidget.ALIGN_BOTTOM) then
-    s = 'Invalid vertical alignment; retractable text widgets must ' ..
-        'align to either top or bottom'
-    error(s)
+    error(
+      'Invalid vertical alignment; retractable text widgets must align to ' ..
+      'either top or bottom'
+    )
   end
 
   TextWidget.TextWidget.set_vertical_alignment(self, vertical_alignment)
@@ -143,10 +145,7 @@ function RetractableTextWidget:set_retraction_start_time(retraction_start_time)
   self.retraction_start_time = retraction_start_time
 end
 
-function RetractableTextWidget:get_text_context()
-  return self.text_context
-end
-
+--[[
 function RetractableTextWidget:get_layout_line_count()
   if #self:get_text() == 0 then
     return 0
@@ -154,120 +153,75 @@ function RetractableTextWidget:get_layout_line_count()
 
   return self:get_layout():get_line_count()
 end
+--]]
 
-function RetractableTextWidget:get_min_max_line_numbers(line_count)
+function RetractableTextWidget:get_min_line_number()
+  return self.min_line_number
+end
+
+function RetractableTextWidget:get_max_line_number()
+  return self.max_line_number
+end
+
+function RetractableTextWidget:update_min_max_line_numbers(line_count)
+  local line_count = self:get_layout_line_count()
   local line_height = self:get_line_height()
   local last_retracted_line_number = self:get_last_retracted_line_number()
-  local line_count = line_count or self:get_layout_line_count()
-  local min_line = 1
-  local max_line = line_count
+
+  self.min_line_number = 1
+  self.max_line_number = line_count
   
   if line_height == 0 or line_count <= line_height then
     if last_retracted_line_number == 0 then
-      return min_line, max_line
-    end
-
-    min_line = last_retracted_line_number + 1
-
-    if min_line > line_count then
-      return 0, 0
-    end
-
-    return min_line, max_line
-  end
-
-  min_line = line_count - (line_height - 1)
-
-  if min_line <= last_retracted_line_number then
-    min_line = last_retracted_line_number + 1
-  end
-
-  max_line = math.min(min_line + (line_height - 1), line_count)
-
-  return min_line, max_line
-end
-
-function RetractableTextWidget:update_layout_if_needed()
-  if not self.needs_updating then
-    return
-  end
-
-  local text = self:get_text()
-  local layout = self:get_layout()
-
-  if self:get_strip_ending_newline() then
-    while true do
-      local text_length = #text
-
-      if text:sub(text_length, text_length) ~= '\n' then
-        break
-      end
-
-      text = text:sub(1, text_length - 1)
-    end
-  end
-
-  if self:get_use_markup() then
-    self:get_layout():set_markup(text, -1)
-  else
-    self:get_layout():set_text(text, -1)
-  end
-
-  PangoCairo.update_context(
-    d2k.overlay.render_context, d2k.overlay.text_context
-  )
-  PangoCairo.update_layout(d2k.overlay.render_context, layout)
-  self:check_offsets()
-
-  if self.get_external_text then
-    local line_count = self:get_layout_line_count()
-    local start_line, end_line = self:get_min_max_line_numbers(line_count)
-    local lines = self:get_visible_line_dimensions(start_line, end_line)
-    local visible_line_count = #lines
-
-    if visible_line_count == 0 then
-      self:set_height_in_pixels(0)
       return
     end
 
-    self:set_height_in_pixels(
-      self:get_top_margin() +
-      lines[1].y +
-      lines[visible_line_count].y +
-      lines[visible_line_count].height +
-      self:get_bottom_margin()
-    )
+    self.min_line_number = last_retracted_line_number + 1
+
+    if min_line > line_count then
+      self.min_line_number = 0
+      self.max_line_number = 0
+    end
+
+    return
   end
 
-  self.needs_updating = false
+  self.min_line_number = line_count - (line_height - 1)
+
+  if self.min_line_number <= last_retracted_line_number then
+    self.min_line_number = last_retracted_line_number + 1
+  end
+
+  self.max_line_number = math.min(
+    self.min_line_number + (line_height - 1), line_count
+  )
 end
 
-function RetractableTextWidget:get_visible_lines(start_line, end_line)
+function RetractableTextWidget:get_visible_lines()
+  return self.visible_lines
+end
+
+function RetractableTextWidget:update_visible_lines()
+  self.visible_lines = {}
+
+  if self.min_line_number == 0 or self.max_line_number == 0 then
+    return
+  end
+
   local line_height = self:get_line_height()
-  local layout = self:get_layout()
   local line_number = 1
-  local lines = {}
-
-  if start_line == 0 or end_line == 0 then
-    return lines
-  end
-
   local line_count = self:get_layout_line_count()
-  local iter = layout:get_iter()
+  local iter = self:get_layout():get_iter()
 
-  if start_line == nil or end_line == nil then
-    start_line, end_line = self:get_min_max_line_numbers(line_count)
-  end
-
-  while line_number < start_line do
+  while line_number < self.min_line_number do
     iter:next_line()
     line_number = line_number + 1
   end
 
-  while line_number <= end_line do
+  while line_number <= self.max_line_number do
     local ink_rect, logical_rect = iter:get_line_extents()
 
-    table.insert(lines, {
+    table.insert(self.visible_lines, {
       number     = line_number,
       x          = logical_rect.x      / Pango.SCALE,
       y          = logical_rect.y      / Pango.SCALE,
@@ -283,53 +237,6 @@ function RetractableTextWidget:get_visible_lines(start_line, end_line)
 
     line_number = line_number + 1
   end
-
-  return lines
-end
-
-function RetractableTextWidget:get_visible_line_dimensions(
-  start_line, end_line
-)
-  local line_height = self:get_line_height()
-  local layout = self:get_layout()
-  local line_number = 1
-  local lines = {}
-
-  if start_line == 0 or end_line == 0 then
-    return lines
-  end
-
-  local line_count = self:get_layout_line_count()
-  local iter = layout:get_iter()
-
-  if start_line == nil or end_line == nil then
-    start_line, end_line = self:get_min_max_line_numbers(line_count)
-  end
-
-  while line_number < start_line do
-    iter:next_line()
-    line_number = line_number + 1
-  end
-
-  while line_number <= end_line do
-    local ink_rect, logical_rect = iter:get_line_extents()
-
-    table.insert(lines, {
-      number = line_number,
-      x      = logical_rect.x      / Pango.SCALE,
-      y      = logical_rect.y      / Pango.SCALE,
-      width  = logical_rect.width  / Pango.SCALE,
-      height = logical_rect.height / Pango.SCALE
-    })
-
-    if not iter:next_line() then
-      break
-    end
-
-    line_number = line_number + 1
-  end
-
-  return lines
 end
 
 function RetractableTextWidget:reset()
@@ -349,79 +256,6 @@ function RetractableTextWidget:reset()
   end
   self:set_retraction_target(0)
   self:set_retraction_start_time(0)
-end
-
-function RetractableTextWidget:tick()
-  local current_ms = d2k.System.get_ticks()
-
-  if self.get_external_text and self.external_text_updated() then
-    self.text = self.text .. self.get_external_text()
-    self.needs_updating = true
-    self.clear_external_text_updated()
-  end
-
-  if not self:get_retractable() then
-    return
-  end
-
-  if #self:get_text() == 0 then
-    return
-  end
-
-  local start_line, end_line = self:get_min_max_line_numbers()
-
-  if start_line == 0 or end_line == 0 then
-    return
-  end
-
-  local visible_lines = self:get_visible_line_dimensions(start_line, end_line)
-  local visible_line_count = #visible_lines
-
-  if visible_line_count == 0 then
-    return
-  end
-
-  local layout_width, layout_height = self:get_layout():get_pixel_size()
-
-  self:set_height_in_pixels(
-    (layout_height - visible_lines[1].y) +
-    self:get_top_margin() +
-    self:get_bottom_margin()
-  )
-
-  if self:get_retracting() then
-    local retracting_line_number = self:get_retracting_line_number()
-
-    if retracting_line_number < start_line or
-       retracting_line_number > end_line or
-       not self:retract(current_ms, visible_lines[1].y) then
-      self:set_vertical_offset(self:get_retraction_target())
-      self:set_retracting(false)
-      self:set_last_retracted_line_number(retracting_line_number)
-      self:set_retracting_line_number(0)
-      self:set_retraction_target(0)
-      self:set_retraction_start_time(0)
-    end
-
-    return
-  end
-
-  local retraction_start_time = self:get_retraction_start_time()
-
-  if retraction_start_time == 0 then
-    self:set_retraction_start_time(current_ms + self:get_retraction_timeout())
-    return
-  end
-
-  if current_ms > self:get_retraction_time() then
-    self:set_retracting_line_number(visible_lines[1].number)
-    if visible_line_count > 1 then
-      self:set_retraction_target(visible_lines[2].y)
-    else
-      self:set_retraction_target(layout_height)
-    end
-    self:set_retracting(true)
-  end
 end
 
 function RetractableTextWidget:retract(current_ms, top)
@@ -448,23 +282,96 @@ function RetractableTextWidget:retract(current_ms, top)
   return false
 end
 
-function RetractableTextWidget:draw()
+function RetractableTextWidget:tick()
+  local current_ms = d2k.System.get_ticks()
+
+  TextWidget.TextWidget.tick(self)
+
+  if not self:get_retractable() then
+    return
+  end
+
+  if #self:get_text() == 0 then
+    return
+  end
+
+  local start_line = self:get_min_line_number()
+  local end_line = self:get_max_line_number()
+
+  if start_line == 0 or end_line == 0 then
+    return
+  end
+
+  local visible_lines = self:get_visible_lines()
+  local visible_line_count = #visible_lines
+
+  if visible_line_count == 0 then
+    return
+  end
+
+  local layout_width = self:get_layout_pixel_width()
+  local layout_height = self:get_layout_pixel_height()
+  local height = self:get_height_in_pixels()
+  local new_height = (layout_height - visible_lines[1].y) +
+                     self:get_top_margin() +
+                     self:get_bottom_margin()
+
+  if height ~= new_height then
+    self:set_height_in_pixels(new_height)
+  end
+
+  if self:get_retracting() then
+    local retracting_line_number = self:get_retracting_line_number()
+
+    if retracting_line_number < start_line or
+       retracting_line_number > end_line or
+       not self:retract(current_ms, visible_lines[1].y) then
+      self:set_vertical_offset(self:get_retraction_target())
+      self:set_retracting(false)
+      self:set_last_retracted_line_number(retracting_line_number)
+      self:set_retracting_line_number(0)
+      self:set_retraction_target(0)
+      self:set_retraction_start_time(0)
+    end
+
+    self:handle_display_change()
+
+    return
+  end
+
+  local retraction_start_time = self:get_retraction_start_time()
+
+  if retraction_start_time == 0 then
+    self:set_retraction_start_time(current_ms + self:get_retraction_timeout())
+    return
+  end
+
+  if current_ms > self:get_retraction_time() then
+    self:set_retracting_line_number(visible_lines[1].number)
+    if visible_line_count > 1 then
+      self:set_retraction_target(visible_lines[2].y)
+    else
+      self:set_retraction_target(layout_height)
+    end
+    self:set_retracting(true)
+  end
+end
+
+function RetractableTextWidget:layout_text()
+  TextWidget.TextWidget.layout_text(self)
+
+  self:update_min_max_line_numbers()
+  self:update_visible_lines()
+end
+
+function RetractableTextWidget:render()
   local cr = d2k.overlay.render_context
-  local line_count = 0
   local fg_color = self:get_fg_color()
   local bg_color = self:get_bg_color()
   local outline_color = self:get_outline_color()
-  local current_render_context = self:get_current_render_context()
-
-  if not current_render_context or current_render_context ~= cr then
-    self:build_layout()
-  end
-
-  self:update_layout_if_needed()
-
-  local lw, lh = self:get_layout():get_pixel_size()
-
-  line_count = self:get_layout_line_count()
+  local lw = self:get_layout_pixel_width()
+  local lh = self:get_layout_pixel_height()
+  local line_count = self:get_layout_line_count()
 
   cr:save()
 
@@ -498,29 +405,26 @@ function RetractableTextWidget:draw()
   local text_height = self:get_height_in_pixels() - (
     self:get_top_margin() + self:get_bottom_margin()
   )
-  local layout_width, layout_height = self:get_layout():get_pixel_size()
-  local layout_ink_extents, layout_logical_extents =
-    self:get_layout():get_pixel_extents()
+  local layout_ink_extents = self:get_layout_ink_extents()
+  local layout_logical_extents = self:get_layout_logical_extents()
   local retractable = self:get_retractable()
 
   if self.vertical_alignment == TextWidget.ALIGN_BOTTOM then
-    ly = ly + text_height - layout_height
+    ly = ly + text_height - lh
   end
 
   if self.horizontal_alignment == TextWidget.ALIGN_CENTER then
     lx = (text_width / 2) - (layout_width / 2)
   elseif self.horizontal_alignment == TextWidget.ALIGN_RIGHT then
-    lx = lx + text_width - layout_width
+    lx = lx + text_width - lw
   end
 
   if retractable or layout_height > text_height then
     ly = ly - self:get_vertical_offset()
   end
 
-  local min_line, max_line = self:get_min_max_line_numbers(line_count)
-  local visible_lines = self:get_visible_lines(min_line, max_line)
+  local visible_lines = self:get_visible_lines()
   local start_y_offset = 0
-  local rendered_at_least_one_line = false
   local line_height = self:get_line_height()
 
   for i, line in ipairs(visible_lines) do

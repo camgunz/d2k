@@ -42,6 +42,8 @@ InputInterfaceContainer = {
     end
 
     table.insert(self.interfaces, new_interface)
+
+    self:sort_interfaces()
   end,
 
   remove_interface = function(self, interface)
@@ -51,6 +53,8 @@ InputInterfaceContainer = {
         return
       end
     end
+
+    self:sort_interfaces()
   end,
 
   get_interface = function(self, interface_name)
@@ -94,9 +98,24 @@ InputInterfaceContainer = {
     end
   end,
 
-  draw = function(self)
+  needs_rendering = function(self)
     for i, interface in ipairs(self.interfaces) do
-      interface:draw()
+      if interface:needs_rendering() then
+        return true
+      end
+    end
+
+    return false
+  end,
+
+  render = function(self)
+    local cr = d2k.overlay.render_context
+
+    for i, interface in ipairs(self.interfaces) do
+      cr:save()
+      cr:set_source(interface:get_render())
+      cr:paint()
+      cr:restore()
     end
   end,
 
@@ -104,6 +123,9 @@ InputInterfaceContainer = {
     for i, interface in ipairs(self.interfaces) do
       if interface:is_active() then
         if interface:handle_event(event) then
+          print(string.format('(active) %s: handled event %s',
+            interface:get_name(), event
+          ))
           return true
         end
       end
@@ -112,6 +134,9 @@ InputInterfaceContainer = {
     for i, interface in ipairs(self.interfaces) do
       if not interface:is_active() then
         if interface:handle_event(event) then
+          print(string.format('(inactive) %s: handled event %s',
+            interface:get_name(), event
+          ))
           return true
         end
       end
@@ -119,6 +144,24 @@ InputInterfaceContainer = {
 
     return false
   end,
+
+  handle_overlay_built = function(self, overlay)
+    self:reset()
+
+    for i, interface in pairs(self.interfaces) do
+      interface:handle_overlay_built()
+    end
+  end,
+
+  handle_overlay_destroyed = function(self, overlay)
+    for i, interface in pairs(self.interfaces) do
+      interface:handle_overlay_destroyed()
+    end
+  end,
+
+  sort_interfaces = function(self)
+  end,
+
 }
 
 return {InputInterfaceContainer = InputInterfaceContainer}

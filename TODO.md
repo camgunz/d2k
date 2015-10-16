@@ -2,12 +2,17 @@
 
 ## Proto
 
-1. Add a few new widgets:
-  - chat
-    - Some weird NULL hash table bug (`g_hash_table_lookup`)
-  - netstats
-  - FPS
-  - scoreboard
+1. Override `:reset` in widgets to update a bunch of stuff
+
+1. Messaging widget kills FPS, fix
+
+1. Fix NULL hash table bug (`g_hash_table_lookup`) when sending a chat message
+   in singleplayer (it's probably looking for peers)
+
+1. Add netstats
+
+1. Add scoreboard
+  - keybinding
 
 1. Add a few new commands:
   - `map`
@@ -15,8 +20,7 @@
 1. Clean up
   - Remove autotools stuff
 
-1. When more than 2 messages are displayed in the messaging widget, FPS
-   suffers
+1. Do some basic net testing
 
 ## After Proto
 

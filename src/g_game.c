@@ -1076,7 +1076,12 @@ dboolean G_Responder(event_t *ev) {
         else if (ev->key < NUMKEYS)
           gamekeydown[ev->key] = true;
 
-        return true;    // eat key down events
+        /*
+         * CG: Don't do this anymore
+         *
+         * return true;    // eat key down events
+         *
+         */
       }
       else {
         if (ev->key < NUMKEYS)

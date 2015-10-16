@@ -54,8 +54,6 @@ function InputWidget:initialize(iw)
   self.scroll_offset = 0
   self.input_handler = iw.input_handler or function(input) end
   self.deactivate_on_input = iw.deactivate_on_input or false
-
-  self:build_layout()
 end
 
 function InputWidget:get_cursor_color()
@@ -64,6 +62,7 @@ end
 
 function InputWidget:set_cursor_color(cursor_color)
   self.cursor_color = cursor_color
+  self:handle_display_change()
 end
 
 function InputWidget:get_prompt_color()
@@ -72,6 +71,7 @@ end
 
 function InputWidget:set_prompt_color(prompt_color)
   self.prompt_color = prompt_color
+  self:handle_display_change()
 end
 
 function InputWidget:get_cursor_blink_speed()
@@ -88,6 +88,7 @@ end
 
 function InputWidget:set_cursor(cursor)
   self.cursor = cursor
+  self:handle_display_change()
 end
 
 function InputWidget:get_cursor_active()
@@ -96,10 +97,12 @@ end
 
 function InputWidget:set_cursor_active(cursor_active)
   self.cursor_active = cursor_active
+  self:handle_display_change()
 end
 
 function InputWidget:toggle_cursor_active()
   self:set_cursor_active(not self:get_cursor_active())
+  self:handle_display_change()
 end
 
 function InputWidget:get_cursor_trailing()
@@ -165,38 +168,32 @@ function InputWidget:set_text(text)
 end
 
 function InputWidget:tick()
-  local font_metrics = d2k.overlay.text_context:get_metrics(
-    self:get_layout():get_font_description()
-  )
-  local ascent = font_metrics:get_ascent() / Pango.SCALE
-  local descent = font_metrics:get_descent() / Pango.SCALE
-  local line_height = ascent + descent
-  local layout_width, layout_height = self:get_layout():get_pixel_size()
-  local height = math.max(line_height, layout_height)
-  local new_height = self:get_top_margin() + height + self:get_bottom_margin()
+  if not self:is_active() then
+    return
+  end
+
+  local line_height = self:get_font_height()
+  local layout_width = self:get_layout_pixel_width()
+  local layout_height = self:get_layout_pixel_height()
+  local text_height = math.max(line_height, layout_height)
+  local height = self:get_top_margin() + text_height + self:get_bottom_margin()
   local ticks = d2k.System.get_ticks()
 
-  if self:get_height_in_pixels() ~= new_height then
-    self:set_height_in_pixels(new_height)
+  if self:get_height_in_pixels() ~= height then
+    self:set_height_in_pixels(height)
   end
 
   if ticks > self:get_cursor_timer() + self:get_cursor_blink_speed() then
     self:toggle_cursor_active()
     self:set_cursor_timer(ticks)
   end
-
-  self:update_layout_if_needed()
 end
 
-function InputWidget:draw()
+function InputWidget:render()
   local cr = d2k.overlay.render_context
-  local font_metrics = d2k.overlay.text_context:get_metrics(
-    self:get_layout():get_font_description()
-  )
-  local ascent = font_metrics:get_ascent() / Pango.SCALE
-  local descent = font_metrics:get_descent() / Pango.SCALE
-  local line_height = ascent + descent
-  local layout_width, layout_height = self:get_layout():get_pixel_size()
+  local line_height = self:get_font_height()
+  local layout_width = self:get_layout_pixel_width()
+  local layout_height = self:get_layout_pixel_height()
   local text_height = math.max(line_height, layout_height)
   local height = self:get_top_margin() + text_height + self:get_bottom_margin()
   local h_quart = text_height / 4.0
@@ -514,7 +511,6 @@ function InputWidget:delete_previous_character()
     self:set_text(text:sub(1, index - 1) .. text:sub(index + 1))
   end
 
-  self:update_layout_if_needed()
   self:activate_cursor()
 end
 
@@ -533,13 +529,12 @@ function InputWidget:delete_next_character()
     self:set_text(text:sub(1, index) .. text:sub(index + 2))
   end
 
-  self:set_needs_updating(true)
   self:activate_cursor()
+
+  self:handle_content_change()
 end
 
 function InputWidget:insert_character(char)
-  self:print_cursor_stats('insert_character (before)')
-
   local old_pos = self:get_cursor()
   local start_text = ''
   local text = self:get_text()
@@ -556,14 +551,10 @@ function InputWidget:insert_character(char)
 
   self:get_layout():set_text(self:get_text(), -1)
 
-  self:set_needs_updating(true)
-  self:update_layout_if_needed()
-
-  self:print_cursor_stats('insert_character (after)')
-
   self:move_cursor_right()
-
   self:activate_cursor()
+
+  self:handle_content_change()
 end
 
 function InputWidget:activate_cursor()

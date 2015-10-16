@@ -54,6 +54,18 @@ function TextWidget:initialize(tw)
 
   InputInterface.InputInterface.initialize(self, tw)
 
+  self.layout_needs_rebuilding = false
+
+  self.layout_changed = false
+  self.display_changed = false
+  self.content_changed = false
+
+  self.layout_pixel_width = nil
+  self.layout_pixel_height = nil
+  self.layout_line_count = nil
+  self.layout_ink_extents = nil
+  self.layout_logical_extents = nil
+
   self.top_margin = tw.top_margin or 0
   self.bottom_margin = tw.bottom_margin or 0
   self.left_margin = tw.left_margin or 0
@@ -89,6 +101,8 @@ function TextWidget:initialize(tw)
   self:set_horizontal_alignment(tw.horizontal_alignment or ALIGN_LEFT)
   self:set_vertical_alignment(tw.vertical_alignment or ALIGN_TOP)
   self:set_ellipsize(tw.ellipsize or ELLIPSIZE_NONE)
+
+  self:layout_text()
 end
 
 function TextWidget:get_top_margin()
@@ -97,6 +111,7 @@ end
 
 function TextWidget:set_top_margin(top_margin)
   self.top_margin = top_margin
+  self:handle_dimension_change()
 end
 
 function TextWidget:get_bottom_margin()
@@ -105,6 +120,7 @@ end
 
 function TextWidget:set_bottom_margin(bottom_margin)
   self.bottom_margin = bottom_margin
+  self:handle_dimension_change()
 end
 
 function TextWidget:get_left_margin()
@@ -113,6 +129,7 @@ end
 
 function TextWidget:set_left_margin(left_margin)
   self.left_margin = left_margin
+  self:handle_dimension_change()
 end
 
 function TextWidget:get_right_margin()
@@ -121,6 +138,7 @@ end
 
 function TextWidget:set_right_margin(right_margin)
   self.right_margin = right_margin
+  self:handle_dimension_change()
 end
 
 function TextWidget:get_text()
@@ -130,31 +148,18 @@ end
 function TextWidget:set_text(text)
   if self.get_external_text then
     error(string.format("%s: Can't set text when displaying external text",
-      self.name
+      self:get_name()
     ))
   end
+
   if not GLib.utf8_validate(text) then
     print('bad text passed to text widget');
     return
   end
+
   self.text = text
-  self.needs_updating = true
-end
 
-function TextWidget:get_max_width()
-  return self.max_width
-end
-
-function TextWidget:set_max_width(max_width)
-  self.max_width = max_width
-end
-
-function TextWidget:get_max_height()
-  return self.max_height
-end
-
-function TextWidget:set_max_height(max_height)
-  self.max_height = max_height
+  self:handle_content_change()
 end
 
 function TextWidget:get_fg_color()
@@ -163,6 +168,7 @@ end
 
 function TextWidget:set_fg_color(fg_color)
   self.fg_color = fg_color
+  self:handle_display_change()
 end
 
 function TextWidget:get_bg_color()
@@ -171,6 +177,7 @@ end
 
 function TextWidget:set_bg_color(bg_color)
   self.bg_color = bg_color
+  self:handle_display_change()
 end
 
 function TextWidget:get_outline_color()
@@ -179,6 +186,7 @@ end
 
 function TextWidget:set_outline_color(outline_color)
   self.outline_color = outline_color
+  self:handle_display_change()
 end
 
 function TextWidget:get_outline_text()
@@ -187,6 +195,7 @@ end
 
 function TextWidget:set_outline_text(outline_text)
   self.outline_text = outline_text
+  self:handle_display_change()
 end
 
 function TextWidget:get_outline_width()
@@ -195,14 +204,16 @@ end
 
 function TextWidget:set_outline_width(outline_width)
   self.outline_width = outline_width
+  self:handle_display_change()
 end
 
 function TextWidget:get_line_height()
   return self.line_height
 end
 
-function TextWidget:set_line_height(line_height)
+function TextWidget:set_height_in_lines(line_count)
   self.line_height = line_height
+  self:handle_dimension_change()
 end
 
 function TextWidget:get_scrollable()
@@ -219,12 +230,19 @@ end
 
 function TextWidget:set_font_description_text(font_description_text)
   self.font_description_text = font_description_text
-  self:build_layout()
+  self:get_layout():set_font_description(Pango.FontDescription.from_string(
+    self:get_font_description_text()
+  ))
+  self:update_font_metrics()
+  self:handle_display_change()
 end
 
 function TextWidget:get_use_markup()
   return self.use_markup
 end
+
+-- CG: TODO: Probably shouldn't be able to switch a widget between markup and
+--           non-markup.  *Feels* like a job for a mixin, too.
 
 function TextWidget:set_use_markup(use_markup)
   self.use_markup = use_markup
@@ -236,6 +254,7 @@ end
 
 function TextWidget:set_strip_ending_newline(strip_ending_newline)
   self.strip_ending_newline = strip_ending_newline
+  self:handle_content_change()
 end
 
 function TextWidget:get_text_context()
@@ -254,7 +273,7 @@ function TextWidget:set_current_render_context(current_render_context)
   self.current_render_context = current_render_context
 end
 
-function TextWidget:get_layout()
+function TextWidget:check_layout()
   local cr = d2k.overlay.render_context
   local current_render_context = self:get_current_render_context()
 
@@ -263,12 +282,11 @@ function TextWidget:get_layout()
      not current_render_context == cr then
     self:build_layout()
   end
-
-  return self.layout
 end
 
-function TextWidget:set_layout(layout)
-  self.layout = layout
+function TextWidget:get_layout()
+  self:check_layout()
+  return self.layout
 end
 
 function TextWidget:get_horizontal_offset()
@@ -278,6 +296,7 @@ end
 function TextWidget:set_horizontal_offset(horizontal_offset)
   self.horizontal_offset = horizontal_offset
   self:check_offsets()
+  self:handle_display_change()
 end
 
 function TextWidget:get_vertical_offset()
@@ -287,13 +306,10 @@ end
 function TextWidget:set_vertical_offset(vertical_offset)
   self.vertical_offset = vertical_offset
   self:check_offsets()
+  self:handle_display_change()
 end
 
-function TextWidget:update_layout_if_needed()
-  if not self.needs_updating then
-    return
-  end
-
+function TextWidget:layout_text()
   local text = self:get_text()
 
   if self:get_strip_ending_newline() then
@@ -320,11 +336,9 @@ function TextWidget:update_layout_if_needed()
   PangoCairo.update_layout(d2k.overlay.render_context, self:get_layout())
   self:check_offsets()
 
-  self.needs_updating = false
-end
-
-function get_line_y(layout_rect, line_rect)
-  return layout_rect.height + line_rect.y
+  self:update_layout_pixel_size()
+  self:update_layout_line_count()
+  self:update_layout_extents()
 end
 
 function TextWidget:print_lines()
@@ -349,26 +363,30 @@ function TextWidget:print_lines()
 end
 
 function TextWidget:tick()
+  self:check_layout()
   if self.get_external_text and self.external_text_updated() then
     self.text = self.text .. self.get_external_text()
-    self.needs_updating = true
+    self:handle_content_change()
     self.clear_external_text_updated()
   end
 end
 
-function TextWidget:draw()
+function TextWidget:begin_render()
+  InputInterface.InputInterface.begin_render(self)
+  self:check_layout()
+  if self.content_changed then
+    self:layout_text()
+  end
+end
+
+function TextWidget:render()
   local cr = d2k.overlay.render_context
-  local line_count = 0
   local fg_color = self:get_fg_color()
   local bg_color = self:get_bg_color()
   local outline_color = self:get_outline_color()
-  local current_render_context = self:get_current_render_context()
-
-  self:update_layout_if_needed()
-
-  local lw, lh = self:get_layout():get_pixel_size()
-
-  line_count = self:get_layout():get_line_count()
+  local lw = self:get_layout_pixel_width()
+  local lh = self:get_layout_pixel_height()
+  local line_count = self:get_layout_line_count()
 
   cr:save()
 
@@ -402,23 +420,22 @@ function TextWidget:draw()
   local text_height = self:get_height_in_pixels() - (
     self:get_top_margin() + self:get_bottom_margin()
   )
-  local layout_width, layout_height = self:get_layout():get_pixel_size()
-  local layout_ink_extents, layout_logical_extents =
-    self:get_layout():get_pixel_extents()
+  local layout_ink_extents = self:get_layout_ink_extents()
+  local layout_logical_extents = self:get_layout_logical_extents()
 
   if self.vertical_alignment == ALIGN_CENTER then
-    ly = ly + (text_height / 2) - (layout_height / 2)
+    ly = ly + (text_height / 2) - (lh / 2)
   elseif self.vertical_alignment == ALIGN_BOTTOM then
-    ly = ly + text_height - layout_height
+    ly = ly + text_height - lh
   end
 
   lx = lx - self:get_horizontal_offset()
   ly = ly - self:get_vertical_offset()
 
   if self.horizontal_alignment == ALIGN_CENTER then
-    lx = (text_width / 2) - (layout_width / 2)
+    lx = (text_width / 2) - (lw / 2)
   elseif self.horizontal_alignment == ALIGN_RIGHT then
-    lx = lx + text_width - layout_width
+    lx = lx + text_width - lw
   end
 
   local iter = self:get_layout():get_iter()
@@ -536,12 +553,6 @@ function TextWidget:draw()
       if should_quit_after_rendering then
         break
       end
-    elseif self:get_name() == 'messages' then
-      local line = iter:get_line_readonly()
-
-      print(string.format('Not rendering line [%s]',
-        self.text:sub(line.start_index + 1, line.length + 1)
-      ))
     end
 
     line_number = line_number + 1
@@ -550,20 +561,33 @@ function TextWidget:draw()
   cr:restore()
 end
 
+function TextWidget:end_render()
+  InputInterface.InputInterface.end_render(self)
+  self.layout_changed = false
+  self.display_changed = false
+  self.content_changed = false
+end
+
 function TextWidget:build_layout()
   self:set_current_render_context(d2k.overlay.render_context)
-  self:set_layout(Pango.Layout.new(d2k.overlay.text_context))
+
+  self.layout = Pango.Layout.new(d2k.overlay.text_context)
 
   if self:get_font_description_text() then
     self:get_layout():set_font_description(Pango.FontDescription.from_string(
       self:get_font_description_text()
     ))
   end
+
+  self:handle_layout_change()
+  self:handle_display_change()
 end
 
 function TextWidget:set_height_by_lines(line_count)
   self:set_line_height(line_count)
 end
+
+-- CG: TODO: This should be set only during initialization
 
 function TextWidget:set_external_text_source(get_text,
                                              text_updated,
@@ -580,39 +604,6 @@ function TextWidget:clear()
     ))
   end
   self:set_text('')
-end
-
-function TextWidget:get_ellipsize()
-  return self.ellipsize
-end
-
-function TextWidget:set_ellipsize(ellipsize)
-  local layout = self:get_layout()
-
-  if ellipsize == ELLIPSIZE_NONE then
-    self.ellipsize = ELLIPSIZE_NONE
-    layout:set_ellipsize(Pango.EllipsizeMode.NONE)
-  elseif ellipsize == ELLIPSIZE_START then
-    self.ellipsize = ELLIPSIZE_START
-    layout:set_ellipsize(Pango.EllipsizeMode.START)
-  elseif ellipsize == ELLIPSIZE_MIDDLE then
-    self.ellipsize = ELLIPSIZE_MIDDLE
-    layout:set_ellipsize(Pango.EllipsizeMode.MIDDLE)
-  elseif ellipsize == ELLIPSIZE_END then
-    self.ellipsize = ELLIPSIZE_END
-    layout:set_ellipsize(Pango.EllipsizeMode.END)
-  else
-    error(string.format(
-      'TextWidget:set_ellipsize: Invalid ellipsization value %s',
-      ellipsize
-    ))
-  end
-
-  self.needs_updating = true
-end
-
-function TextWidget:is_ellipsize()
-  return self:get_layout():is_ellipsized()
 end
 
 function TextWidget:get_word_wrap()
@@ -643,7 +634,7 @@ function TextWidget:set_word_wrap(word_wrap)
     ))
   end
 
-  self.needs_updating = true
+  self:handle_layout_change()
 end
 
 function TextWidget:is_wrapped()
@@ -676,7 +667,7 @@ function TextWidget:set_horizontal_alignment(horizontal_alignment)
     ))
   end
 
-  self.needs_updating = true
+  self:handle_layout_change()
 end
 
 function TextWidget:get_vertical_alignment()
@@ -698,7 +689,98 @@ function TextWidget:set_vertical_alignment(vertical_alignment)
     ))
   end
 
-  self.needs_updating = true
+  self:handle_layout_change()
+end
+
+function TextWidget:get_ellipsize()
+  return self.ellipsize
+end
+
+function TextWidget:set_ellipsize(ellipsize)
+  local layout = self:get_layout()
+
+  if ellipsize == ELLIPSIZE_NONE then
+    self.ellipsize = ELLIPSIZE_NONE
+    layout:set_ellipsize(Pango.EllipsizeMode.NONE)
+  elseif ellipsize == ELLIPSIZE_START then
+    self.ellipsize = ELLIPSIZE_START
+    layout:set_ellipsize(Pango.EllipsizeMode.START)
+  elseif ellipsize == ELLIPSIZE_MIDDLE then
+    self.ellipsize = ELLIPSIZE_MIDDLE
+    layout:set_ellipsize(Pango.EllipsizeMode.MIDDLE)
+  elseif ellipsize == ELLIPSIZE_END then
+    self.ellipsize = ELLIPSIZE_END
+    layout:set_ellipsize(Pango.EllipsizeMode.END)
+  else
+    error(string.format(
+      'TextWidget:set_ellipsize: Invalid ellipsization value %s',
+      ellipsize
+    ))
+  end
+
+  self:handle_layout_change()
+end
+
+function TextWidget:is_ellipsized()
+  return self:get_layout():is_ellipsized()
+end
+
+function TextWidget:get_layout_pixel_width()
+  return self.layout_pixel_width
+end
+
+function TextWidget:get_layout_pixel_height()
+  return self.layout_pixel_height
+end
+
+function TextWidget:update_layout_pixel_size()
+  local layout_width, layout_height = self:get_layout():get_pixel_size()
+
+  self.layout_pixel_width = layout_width
+  self.layout_pixel_height = layout_height
+end
+
+function TextWidget:get_layout_line_count()
+  return self.layout_line_count
+end
+
+function TextWidget:update_layout_line_count()
+  self.layout_line_count = self:get_layout():get_line_count()
+end
+
+function TextWidget:get_layout_ink_extents()
+  return self.layout_ink_extents
+end
+
+function TextWidget:get_layout_logical_extents()
+  return self.layout_logical_extents
+end
+
+function TextWidget:update_layout_extents()
+  local ink_extents, logical_extents = self:get_layout():get_pixel_extents()
+
+  self.layout_ink_extents = ink_extents
+  self.layout_logical_extents = logical_extents
+end
+
+function TextWidget:get_font_ascent()
+  return self.font_ascent
+end
+
+function TextWidget:get_font_descent()
+  return self.font_descent
+end
+
+function TextWidget:get_font_height()
+  return self:get_font_ascent() + self:get_font_descent()
+end
+
+function TextWidget:update_font_metrics()
+  local font_metrics = d2k.overlay.text_context:get_metrics(
+    self:get_layout():get_font_description()
+  )
+  self.font_ascent = font_metrics:get_ascent() / Pango.SCALE
+  self.font_descent = font_metrics:get_descent() / Pango.SCALE
 end
 
 function TextWidget:check_offsets()
@@ -762,19 +844,23 @@ end
 function TextWidget:scroll_left(pixels)
   self:set_horizontal_offset(self:get_horizontal_offset() - pixels)
   self:check_offsets()
+  self:handle_display_change()
 end
 
 function TextWidget:scroll_right(pixels)
   self:set_horizontal_offset(self:get_horizontal_offset() + pixels)
   self:check_offsets()
+  self:handle_display_change()
 end
 
 function TextWidget:scroll_up(pixels)
   self:set_vertical_offset(self:get_vertical_offset() - pixels)
+  self:handle_display_change()
 end
 
 function TextWidget:scroll_down(pixels)
   self:set_vertical_offset(self:get_vertical_offset() + pixels)
+  self:handle_display_change()
 end
 
 function TextWidget:write(text)
@@ -784,24 +870,10 @@ function TextWidget:write(text)
     ))
   end
 
-  if d2k.Video.is_enabled() then
-    self:set_text(self:get_text() .. GLib.markup_escape_text(text, -1))
-  else
-    d2k.System.print(text)
-  end
-end
-
-function TextWidget:mwrite(markup)
-  if self.get_external_text then
-    error(string.format("%s: Can't write markup when displaying external text",
-      self.name
-    ))
-  end
-
   if self:get_use_markup() then
-    self:set_text(self:get_text() .. markup)
+    self:set_text(self:get_text() .. text)
   else
-    self:write(markup)
+    self:set_text(self:get_text() .. GLib.markup_escape_text(text, -1))
   end
 end
 
@@ -812,21 +884,21 @@ function TextWidget:echo(text)
     ))
   end
 
-  self:set_text(self:get_text() .. GLib.markup_escape_text(text, -1) .. '\n')
+  if self:get_use_markup() then
+    self:set_text(self:get_text() .. text .. '\n')
+  else
+    self:set_text(self:get_text() .. GLib.markup_escape_text(text, -1) .. '\n')
+  end
 end
 
-function TextWidget:mecho(markup)
-  if self.get_external_text then
-    error(string.format("%s: Can't echo markup when displaying external text",
-      self.name
-    ))
-  end
+function TextWidget:handle_layout_change()
+  self.layout_changed = true
+  self:invalidate_render()
+end
 
-  if self:get_use_markup() then
-    self:set_text(self:get_text() .. markup .. '\n')
-  else
-    self:echo(markup)
-  end
+function TextWidget:handle_content_change()
+  self.content_changed = true
+  self:invalidate_render()
 end
 
 return {

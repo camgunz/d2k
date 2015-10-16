@@ -47,9 +47,9 @@ function GameInterface:tick()
   InputInterfaceContainer.InputInterfaceContainer.tick(self)
 end
 
-function GameInterface:draw()
-  d2k.Game.draw()
-  InputInterfaceContainer.InputInterfaceContainer.draw(self)
+function GameInterface:render()
+  d2k.Game.render()
+  InputInterfaceContainer.InputInterfaceContainer.render(self)
 end
 
 function GameInterface:handle_event(event)

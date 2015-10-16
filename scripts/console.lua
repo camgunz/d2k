@@ -28,10 +28,12 @@ local GLib = lgi.GLib
 local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
 local InputInterface = require('input_interface')
+local InputInterfaceContainer = require('input_interface_container')
 local TextWidget = require('text_widget')
 local InputWidget = require('input_widget')
 
 Console = class('Console', InputInterface.InputInterface)
+Console:include(InputInterfaceContainer.InputInterfaceContainer)
 
 local EXTENSION_TIME           = 1200.0
 local RETRACTION_TIME          = 1200.0
@@ -82,6 +84,12 @@ function Console:initialize(c)
     input_handler = d2k.CommandInterface.handle_input,
   })
 
+  self.input.console = self
+  self.input.is_active = function(self)
+    return self.console:get_height_in_pixels() > 0 and
+           self.console:get_scroll_rate() >= 0.0
+  end
+
   self.output = TextWidget.TextWidget({
     name = 'console output',
     x = 0,
@@ -103,11 +111,15 @@ function Console:initialize(c)
     strip_ending_newline = true,
   })
 
+  self.output.console = self
+
   self.output:set_external_text_source(
     d2k.Messaging.get_console_messages,
     d2k.Messaging.get_console_messages_updated,
     d2k.Messaging.clear_console_messages_updated
   )
+
+  self.interfaces = {self.input, self.output}
 end
 
 function Console:get_extension_time()
@@ -148,6 +160,7 @@ end
 
 function Console:set_input(input)
   self.input = input
+  self.interfaces[1] = self.input
 end
 
 function Console:get_output()
@@ -156,13 +169,12 @@ end
 
 function Console:set_output(output)
   self.output = output
+  self.interfaces[2] = self.output
 end
 
---[[
 function Console:is_active()
   return self:get_height_in_pixels() > 0 and self:get_scroll_rate() >= 0.0
 end
---]]
 
 function Console:get_name()
   return self.name
@@ -182,10 +194,13 @@ function Console:tick()
     end
 
     local ms_elapsed = current_ms - self:get_last_scroll_ms()
-
-    self:set_height_in_pixels(math.max(
+    local new_height = math.max(
       0, self:get_height_in_pixels() + (self:get_scroll_rate() * ms_elapsed)
-    ))
+    )
+
+    if self:get_height_in_pixels() ~= new_height then
+      self:set_height_in_pixels(new_height)
+    end
 
     if self:get_height_in_pixels() < 0 then
       self:set_height(0)
@@ -196,22 +211,32 @@ function Console:tick()
     end
   end
 
-  self:get_input():tick()
-  self:get_input():set_y(
-    self:get_height_in_pixels() - self:get_input():get_height_in_pixels()
-  )
+  local bottom = self:get_height_in_pixels()
+  local input_height = self:get_input():get_height_in_pixels()
+  local output_height = self:get_output():get_height_in_pixels()
+  local input_y = self:get_input():get_y()
+  local new_input_y = bottom - input_height
 
-  self:get_output():tick()
-  self:get_output():set_height_in_pixels(math.max(self:get_input():get_y(), 0))
+  InputInterfaceContainer.InputInterfaceContainer.tick(self)
+
+  if input_y ~= new_input_y then
+    self:get_input():set_y(new_input_y)
+    input_y = new_input_y
+  end
+
+  local new_output_height = math.max(input_y, 0)
+
+  if output_height ~= new_output_height then
+    self:get_output():set_height_in_pixels(new_output_height)
+  end
 end
 
-function Console:draw()
+function Console:render()
   if self:get_height_in_pixels() <= 0 then
     return
   end
 
-  self:get_input():draw()
-  self:get_output():draw()
+  InputInterfaceContainer.InputInterfaceContainer.render(self)
 end
 
 function Console:handle_input(input)

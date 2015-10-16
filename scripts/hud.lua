@@ -40,81 +40,20 @@ function HUD:initialize(h)
 
   self.interfaces = {}
 
-  self.widgets = self.interfaces
-  self.widgets_by_z_index = {}
-
   self.font_description_text = h.font_description_text or
                                  'Noto Sans,Arial Unicode MS,Unifont 11'
 end
 
-function HUD:handle_overlay_built(overlay)
-  self:reset()
-
-  for i, w in pairs(self.widgets) do
-    w:handle_overlay_built()
-  end
-end
-
-function HUD:handle_overlay_destroyed(overlay)
-  for i, w in pairs(self.widgets) do
-    w:handle_overlay_destroyed()
-  end
-end
-
-function HUD:add_interface(interface)
-  InputInterfaceContainer.InputInterfaceContainer.add_interface(
-    self, interface
-  )
-  self:sort_widgets()
-end
-
-function HUD:remove_interface(interface)
-  InputInterfaceContainer.InputInterfaceContainer.remove_interface(
-    self, interface
-  )
-  self:sort_widgets()
-end
-
-function HUD:add_widget(widget)
-  self:add_interface(widget)
-end
-
-function HUD:remove_widget(widget)
-  self:remove_interface(widget)
-end
-
-function HUD:sort_widgets()
-  self.widgets_by_z_index = {}
-
-  for i = 1, #self.widgets do
-    self.widgets_by_z_index[i] = self.widgets[i]
-  end
-
-  table.sort(self.widgets_by_z_index, function(w1, w2)
-    if w1:get_z_index() < w2:get_z_index() then
+function HUD:sort_interfaces()
+  table.sort(self.interfaces, function(i1, i2)
+    if i1:get_z_index() < i2:get_z_index() then
       return -1
-    elseif w2:get_z_index() < w1:get_z_index() then
+    elseif i2:get_z_index() < i1:get_z_index() then
       return 1
     end
 
     return 0
   end)
-end
-
-function HUD:draw()
-  for i, w in ipairs(self.widgets_by_z_index) do
-    w:draw()
-  end
-end
-
-function HUD:handle_event(event)
-  for i, w in ipairs(self.widgets) do
-    if w:handle_event(event) then
-      return true
-    end
-  end
-
-  return false
 end
 
 return {HUD = HUD}

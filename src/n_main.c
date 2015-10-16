@@ -495,12 +495,12 @@ bool N_TryRunTics(void) {
     C_ECIService();
   }
 
-  if ((tics_elapsed > 0) || needs_rendering) {
-    if (!X_Call(X_GetState(), "console", "tick", 0, 0))
-      I_Error("Error ticking console: %s\n", X_GetError(X_GetState()));
-    HU_Ticker();
-    D_Display();
-  }
+  if (!X_Call(X_GetState(), "console", "tick", 0, 0))
+    I_Error("Error ticking console: %s\n", X_GetError(X_GetState()));
+
+  HU_Ticker();
+  D_Display();
+  X_RunGC(X_GetState());
 
   return tics_elapsed > 0;
 }

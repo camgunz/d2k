@@ -627,5 +627,9 @@ void X_PopStackMembers(lua_State *L, int count) {
   lua_pop(L, count);
 }
 
+void X_RunGC(lua_State *L) {
+  lua_gc(L, LUA_GCCOLLECT, 0);
+}
+
 /* vi: set et ts=2 sw=2: */
 

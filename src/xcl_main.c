@@ -31,6 +31,7 @@
 #include "n_peer.h"
 #include "n_proto.h"
 #include "p_cmd.h"
+#include "p_user.h"
 #include "cl_cmd.h"
 #include "x_main.h"
 

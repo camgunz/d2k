@@ -54,8 +54,8 @@ function Menu:tick()
   d2k.Menu.tick()
 end
 
-function Menu:draw()
-  d2k.Menu.draw()
+function Menu:render()
+  d2k.Menu.render()
 end
 
 function Menu:handle_event(event)
