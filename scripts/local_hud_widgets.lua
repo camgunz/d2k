@@ -81,13 +81,13 @@ local chat_widget = InputWidget.InputWidget({
 function chat_widget:tick()
   InputWidget.InputWidget.tick(self)
 end
+--]]
 
 function chat_widget:render()
   if self:is_active() then
     InputWidget.InputWidget.render(self)
   end
 end
---]]
 
 function chat_widget:handle_event(event)
   if not self:is_active() then

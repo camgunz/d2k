@@ -2,6 +2,8 @@
 
 ## Proto
 
+1. Blank chat message crashes
+
 1. Override `:reset` in widgets to update a bunch of stuff
 
 1. Messaging widget kills FPS, fix

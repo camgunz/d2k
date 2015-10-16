@@ -123,9 +123,6 @@ InputInterfaceContainer = {
     for i, interface in ipairs(self.interfaces) do
       if interface:is_active() then
         if interface:handle_event(event) then
-          print(string.format('(active) %s: handled event %s',
-            interface:get_name(), event
-          ))
           return true
         end
       end
@@ -134,9 +131,6 @@ InputInterfaceContainer = {
     for i, interface in ipairs(self.interfaces) do
       if not interface:is_active() then
         if interface:handle_event(event) then
-          print(string.format('(inactive) %s: handled event %s',
-            interface:get_name(), event
-          ))
           return true
         end
       end

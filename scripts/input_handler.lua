@@ -47,8 +47,6 @@ function InputHandler:render()
 end
 
 function InputHandler:handle_event()
-  print(string.format('%s', self.current_event))
-
   if d2k.Input.handle_event(self.current_event) then
     return
   end
