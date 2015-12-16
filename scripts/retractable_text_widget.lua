@@ -145,6 +145,14 @@ function RetractableTextWidget:set_retraction_start_time(retraction_start_time)
   self.retraction_start_time = retraction_start_time
 end
 
+function RetractableTextWidget:update_layout_line_count()
+  if #self:get_text() == 0 then
+    self.layout_line_count = 0
+  else
+    self.layout_line_count = self:get_layout():get_line_count()
+  end
+end
+
 --[[
 function RetractableTextWidget:get_layout_line_count()
   if #self:get_text() == 0 then
@@ -178,7 +186,7 @@ function RetractableTextWidget:update_min_max_line_numbers(line_count)
 
     self.min_line_number = last_retracted_line_number + 1
 
-    if min_line > line_count then
+    if min_line_number > line_count then
       self.min_line_number = 0
       self.max_line_number = 0
     end
@@ -276,6 +284,7 @@ function RetractableTextWidget:retract(current_ms, top)
 
   if y_delta < retraction_distance then
     self:set_vertical_offset(top + y_delta)
+    self:handle_display_change()
     return true
   end
 
@@ -334,8 +343,6 @@ function RetractableTextWidget:tick()
       self:set_retraction_start_time(0)
     end
 
-    self:handle_display_change()
-
     return
   end
 
@@ -377,6 +384,7 @@ function RetractableTextWidget:render()
 
   cr:set_operator(Cairo.Operator.OVER)
 
+  --[[
   cr:reset_clip()
   cr:new_path()
   cr:rectangle(
@@ -386,6 +394,7 @@ function RetractableTextWidget:render()
     self:get_height_in_pixels()
   )
   cr:clip()
+  --]]
 
   cr:set_source_rgba(bg_color[1], bg_color[2], bg_color[3], bg_color[4])
   cr:paint()

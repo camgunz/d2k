@@ -34,8 +34,8 @@ local SNAP_BOTTOM = 2
 function InputInterface:initialize(ii)
   ii = ii or {}
 
-  self.parent         = nil
-  self.active         = false
+  self.parent = nil
+  self.active = false
 
   self.name                        = ii.name or 'Input Interface'
   self.x                           = ii.x or 0
@@ -482,6 +482,9 @@ function InputInterface:get_render()
 end
 
 function InputInterface:end_render()
+  self.position_changed = false
+  self.dimensions_changed = false
+  self.display_changed = false
   self.cached_render = d2k.overlay.render_context:pop_group()
 end
 
@@ -508,6 +511,10 @@ end
 function InputInterface:handle_display_change()
   self.display_changed = true
   self:invalidate_render()
+end
+
+function InputInterface:get_dimensions_changed()
+  return self.dimensions_changed
 end
 
 return {

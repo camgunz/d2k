@@ -392,6 +392,7 @@ function TextWidget:render()
 
   cr:set_operator(Cairo.Operator.OVER)
 
+  --[[
   cr:reset_clip()
   cr:new_path()
   cr:rectangle(
@@ -401,6 +402,7 @@ function TextWidget:render()
     self:get_height_in_pixels()
   )
   cr:clip()
+  --]]
 
   cr:set_source_rgba(bg_color[1], bg_color[2], bg_color[3], bg_color[4])
   cr:paint()

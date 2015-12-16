@@ -113,6 +113,15 @@ InputInterfaceContainer = {
 
     for i, interface in ipairs(self.interfaces) do
       cr:save()
+      cr:reset_clip()
+      cr:new_path()
+      cr:rectangle(
+        interface:get_x(),
+        interface:get_y(),
+        interface:get_width_in_pixels(),
+        interface:get_height_in_pixels()
+      )
+      cr:clip()
       cr:set_source(interface:get_render())
       cr:paint()
       cr:restore()

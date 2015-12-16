@@ -208,10 +208,12 @@ function InputWidget:render()
 
   cr:set_operator(Cairo.Operator.OVER)
 
+  --[[
   cr:reset_clip()
   cr:new_path()
   cr:rectangle(self:get_x(), self:get_y(), self:get_width_in_pixels(), height)
   cr:clip()
+  --]]
 
   cr:set_source_rgba(bg_color[1], bg_color[2], bg_color[3], bg_color[4])
   cr:paint()

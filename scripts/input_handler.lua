@@ -35,9 +35,7 @@ end
 function InputHandler:render()
   d2k.overlay:lock()
 
-  if d2k.Video.using_opengl() then
-    d2k.overlay:clear()
-  end
+  d2k.overlay:clear()
 
   d2k.overlay.render_context:set_operator(Cairo.Operator.OVER)
 
