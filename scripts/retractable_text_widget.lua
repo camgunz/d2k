@@ -327,7 +327,7 @@ function RetractableTextWidget:tick()
 
   local start_line = self.visible_lines[1]
   local end_line = self.visible_lines[visible_line_count]
-    
+
   if self:get_retracting() then
     if not self:retract(current_ms) then
       visible_line_count = visible_line_count - 1
