@@ -293,10 +293,10 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
   M_PBufReadString(savebuffer, &name_buf, MAX_NAME_LENGTH);
   if (M_BufferGetSize(&name_buf) > 0) {
     if (player->name)
-      free(player->name);
+      free((void *)player->name);
 
     M_BufferSeek(&name_buf, 0);
-    M_BufferReadStringDup(&name_buf, &player->name);
+    M_BufferReadStringDup(&name_buf, (char **)&player->name);
   }
   M_PBufReadUChar(savebuffer, &player->team);
 

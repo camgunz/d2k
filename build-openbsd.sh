@@ -1,6 +1,12 @@
 #!/bin/sh
 
 BUILD_TYPE=Debug
+if [ $(which gmake) ]
+then
+    MAKE=gmake
+else
+    MAKE=make
+fi
 
 if [ ! -d cbuild ]
 then
@@ -18,5 +24,5 @@ cmake .. \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     || exit 1
 
-make -j 3 || exit 1
+$MAKE || exit 1
 

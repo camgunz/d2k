@@ -3,6 +3,7 @@
 BASE_DIR="$(pwd)"
 
 CMD="${BASE_DIR}/cbuild/d2k -skill 5 -warp 1 -nomonsters -nomouse"
+CMD="${BASE_DIR}/cbuild/d2k -iwad doom2.wad -file dwango5.wad -skill 5 -warp 1 -nomonsters -nomouse"
 
 mkdir -p ~/.d2k/scripts
 mkdir -p ~/.d2k/fonts

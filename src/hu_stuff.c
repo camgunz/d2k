@@ -1184,45 +1184,52 @@ void HU_widget_build_ammo(void)
   // do the hud ammo display
   // clear the widgets internal line
   HUlib_clearTextLine(&w_ammo);
-  strcpy(hud_ammostr,"AMM ");
+  strncpy(hud_ammostr, "AMM ", sizeof(hud_ammostr) - 1);
   if (weaponinfo[plr->readyweapon].ammo == am_noammo || fullammo == 0)
   { // special case for weapon with no ammo selected - blank bargraph + N/A
-    strcat(hud_ammostr,"\x7f\x7f\x7f\x7f\x7f\x7f\x7f N/A");
+    strncat(
+      hud_ammostr,
+      "\x7f\x7f\x7f\x7f\x7f\x7f\x7f N/A",
+      sizeof(hud_ammostr) - 1
+    );
     w_ammo.cm = CR_GRAY;
   }
   else
   {
     int ammo = plr->ammo[weaponinfo[plr->readyweapon].ammo];
-    int ammopct = (100*ammo)/fullammo;
-    int ammobars = ammopct/4;
+    int ammopct = (100 * ammo) / fullammo;
+    int ammobars = ammopct / 4;
 
     // build the numeric amount init string
-    sprintf(ammostr,"%d/%d",ammo,fullammo);
+    sprintf(ammostr, "%d / %d", ammo, fullammo);
+
     // build the bargraph string
     // full bargraph chars
-    for (i=4;i<4+ammobars/4;)
+    for (i = 4; i < 4 + ammobars / 4; )
       hud_ammostr[i++] = 123;
+
     // plus one last character with 0,1,2,3 bars
-    switch(ammobars%4)
-    {
-    case 0:
+    switch(ammobars % 4) {
+      case 0:
       break;
-    case 1:
-      hud_ammostr[i++] = 126;
+      case 1:
+        hud_ammostr[i++] = 126;
       break;
-    case 2:
-      hud_ammostr[i++] = 125;
+      case 2:
+        hud_ammostr[i++] = 125;
       break;
-    case 3:
-      hud_ammostr[i++] = 124;
+      case 3:
+        hud_ammostr[i++] = 124;
       break;
     }
 
     // pad string with blank bar characters
-    while(i<4+7)
+    while(i < 4 + 7)
       hud_ammostr[i++] = 127;
+
     hud_ammostr[i] = '\0';
-    strcat(hud_ammostr,ammostr);
+
+    strncat(hud_ammostr, ammostr, sizeof(hud_ammostr) - 1 - i);
 
     // set the display color from the percentage of total ammo held
     w_ammo.cm = HU_GetAmmoColor(ammo, fullammo, CR_BLUE,
@@ -1246,7 +1253,7 @@ void HU_widget_build_health(void)
   char *s;
   char healthstr[80];//jff
   int health = plr->health;
-  int healthbars = health>100? 25 : health/4;
+  int healthbars = health > 100 ? 25 : health / 4;
 
   if (w_health.val != -1 && w_health.val == health)
     return;
@@ -1256,31 +1263,35 @@ void HU_widget_build_health(void)
   HUlib_clearTextLine(&w_health);
 
   // build the numeric amount init string
-  sprintf(healthstr,"%3d",health);
+  sprintf(healthstr, "%3d", health);
+
   // build the bargraph string
   // full bargraph chars
-  for (i=4;i<4+healthbars/4;)
+  for (i = 4; i < 4 + healthbars / 4; )
     hud_healthstr[i++] = 123;
+
   // plus one last character with 0,1,2,3 bars
-  switch(healthbars%4)
+  switch(healthbars % 4)
   {
-  case 0:
+    case 0:
     break;
-  case 1:
-    hud_healthstr[i++] = 126;
+    case 1:
+      hud_healthstr[i++] = 126;
     break;
-  case 2:
-    hud_healthstr[i++] = 125;
+    case 2:
+      hud_healthstr[i++] = 125;
     break;
-  case 3:
-    hud_healthstr[i++] = 124;
+    case 3:
+      hud_healthstr[i++] = 124;
     break;
   }
+
   // pad string with blank bar characters
-  while(i<4+7)
+  while(i < 4 + 7)
     hud_healthstr[i++] = 127;
+
   hud_healthstr[i] = '\0';
-  strcat(hud_healthstr,healthstr);
+  strncat(hud_healthstr, healthstr, sizeof(hud_healthstr) - 1 - i);
 
   // set the display color from the amount of health posessed
   w_health.cm = HU_GetHealthColor(health, CR_BLUE);
@@ -1381,40 +1392,46 @@ void HU_widget_build_armor(void)
   char *s;
   char armorstr[80]; //jff
   int armor = plr->armorpoints;
-  int armorbars = armor>100? 25 : armor/4;
+  int armorbars = armor > 100 ? 25 : armor / 4;
 
   if (w_armor.val != -1 && w_armor.val == armor)
     return;
+
   w_armor.val = armor;
 
   // clear the widgets internal line
   HUlib_clearTextLine(&w_armor);
+
   // build the numeric amount init string
-  sprintf(armorstr,"%3d",armor);
+  sprintf(armorstr, "%3d", armor);
+
   // build the bargraph string
   // full bargraph chars
-  for (i=4;i<4+armorbars/4;)
+  for (i = 4; i < 4 + armorbars / 4; )
     hud_armorstr[i++] = 123;
+
   // plus one last character with 0,1,2,3 bars
-  switch(armorbars%4)
+  switch(armorbars % 4)
   {
-  case 0:
+    case 0:
     break;
-  case 1:
-    hud_armorstr[i++] = 126;
+    case 1:
+      hud_armorstr[i++] = 126;
     break;
-  case 2:
-    hud_armorstr[i++] = 125;
+    case 2:
+      hud_armorstr[i++] = 125;
     break;
-  case 3:
-    hud_armorstr[i++] = 124;
+    case 3:
+      hud_armorstr[i++] = 124;
     break;
   }
+
   // pad string with blank bar characters
-  while(i<4+7)
+  while(i < 4 + 7)
     hud_armorstr[i++] = 127;
+
   hud_armorstr[i] = '\0';
-  strcat(hud_armorstr,armorstr);
+  strncat(hud_armorstr, armorstr, sizeof(hud_armorstr) - 1 - i);
 
   // set the display color from the amount of armor posessed
   w_armor.cm = HU_GetArmorColor(armor, CR_BLUE);

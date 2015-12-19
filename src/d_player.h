@@ -203,7 +203,7 @@ typedef struct player_s
   fixed_t jumpTics;      // delay the next jump for a moment
 
   /* CG 4/3/2014: New fields for netcode */
-  char          *name;
+  const char    *name;
   unsigned char  team;
   GPtrArray     *commands;
   int            commands_missed;

@@ -1511,7 +1511,7 @@ const char* M_CheckWritableDir(const char *dir) {
     strcpy(base, dir);
 
     if (base[len - 1] != '\\' && base[len - 1] != '/')
-      strcat(base, "/");
+      strncat(base, "/", 1);
 
     if (!access(base, O_RDWR)) {
       base[strlen(base) - 1] = 0;

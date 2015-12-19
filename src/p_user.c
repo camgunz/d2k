@@ -512,11 +512,11 @@ void P_PlayerThink(int playernum) {
 
 }
 
-void P_SetName(int playernum, char *name) {
+void P_SetName(int playernum, const char *name) {
   player_t *player = &players[playernum];
 
   if (player->name)
-    free(player->name);
+    free((char *)player->name);
 
   player->name = name;
 }
@@ -751,10 +751,7 @@ void P_SetPlayerName(int playernum, const char *name) {
   if (SERVER)
     SV_BroadcastPrintf("%s is now %s.\n", players[playernum].name, name);
 
-  if (players[playernum].name)
-    free(players[playernum].name);
-
-  players[playernum].name = strdup(name);
+  P_SetName(playernum, strdup(name));
 
   if (playernum != consoleplayer)
     return;
