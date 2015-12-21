@@ -38,6 +38,14 @@ local RETRACT_DOWN = 2
 local RETRACTION_TIME    = 2000
 local RETRACTION_TIMEOUT = 2000
 
+local DEBUG = false
+
+function debug(s)
+  if DEBUG then
+    print(s)
+  end
+end
+
 function RetractableTextWidget:initialize(rtw)
   rtw = rtw or {}
 
@@ -46,9 +54,8 @@ function RetractableTextWidget:initialize(rtw)
   self.retraction_timeout = rtw.retraction_timeout or RETRACTION_TIMEOUT
 
   self.retracting = false
-  self.retraction_target = 0
   self.retraction_start_time = 0
-  self.last_retracted_line_number = 0
+  self.last_retracted_line_index = 0
   self.strip_ending_newline = true
   self.visible_line_indices = {}
 
@@ -123,14 +130,14 @@ function RetractableTextWidget:update_layout_line_count()
   end
 end
 
-function RetractableTextWidget:get_last_retracted_line_number()
-  return self.last_retracted_line_number
+function RetractableTextWidget:get_last_retracted_line_index()
+  return self.last_retracted_line_index
 end
 
-function RetractableTextWidget:set_last_retracted_line_number(
-  last_retracted_line_number
+function RetractableTextWidget:set_last_retracted_line_index(
+  last_retracted_line_index
 )
-  self.last_retracted_line_number = last_retracted_line_number
+  self.last_retracted_line_index = last_retracted_line_index
 end
 
 function RetractableTextWidget:get_visible_lines()
@@ -138,16 +145,24 @@ function RetractableTextWidget:get_visible_lines()
   local visible_lines = {}
   local iter = self:get_layout():get_iter()
 
-  print(string.format('get_visible_lines - indices: %s', #visible_line_indices))
+  debug(string.format('get_visible_lines - indices: %s', #visible_line_indices))
 
   if #visible_line_indices < 1 then
     return visible_lines
   end
 
+  for i=2,visible_line_indices[1] do
+    if not iter:next_line() then
+      return visible_lines
+    end
+  end
+
   for i=1,#visible_line_indices do
     local ink_rect, logical_rect = iter:get_line_extents()
 
-    print(string.format('get_visible_lines- adding line %s', i))
+    debug(string.format('get_visible_lines- adding line %s',
+      visible_line_indices[i]
+    ))
     table.insert(visible_lines, {
       number     = visible_line_indices[i],
       x          = logical_rect.x      / Pango.SCALE,
@@ -171,9 +186,9 @@ function RetractableTextWidget:get_visible_lines()
     s = string.format('%s, %s', s, visible_lines[i].number)
   end
 
-  print(s)
-  print(string.format('get_visible_lines- last retracted line: %s',
-    last_retracted_line_number
+  debug(s)
+  debug(string.format('get_visible_lines- last retracted line index: %s',
+    last_retracted_line_index
   ))
   return visible_lines
 end
@@ -190,20 +205,20 @@ function RetractableTextWidget:update_visible_line_indices()
   local line_height = self:get_line_height()
   local line_count = self:get_layout_line_count()
   local visible_line_indices = self:get_visible_line_indices()
-  local last_retracted_line_number = self:get_last_retracted_line_number()
+  local last_retracted_line_index = self:get_last_retracted_line_index()
 
-  print(string.format(
+  debug(string.format(
     'update_visible_line_indices - visible_line_indices: %s, %s, %s, %s',
     line_height,
     line_count,
     #visible_line_indices,
-    last_retracted_line_number
+    last_retracted_line_index
   ))
 
   -- If there is no text, there are no visible lines.
 
   if #self.text <= 0 then
-    print(string.format('update_visible_line_indices - no text'))
+    debug(string.format('update_visible_line_indices - no text'))
     self:set_visible_line_indices({})
     return
   end
@@ -215,15 +230,15 @@ function RetractableTextWidget:update_visible_line_indices()
   local first_visible_line_index = ((line_count - line_height) + 1)
 
   -- This also handles the case where line_count < line_height, making
-  -- first_visible_line_index negative.  last_retracted_line_number will be 0
-  -- to start, and as a result this check ensures first_visible_line_index will
+  -- first_visible_line_index negative.  last_retracted_line_index will be 0 to
+  -- start, and as a result this check ensures first_visible_line_index will
   -- always be at least 1.
 
-  if first_visible_line_index < (last_retracted_line_number + 1) then
-    first_visible_line_index = last_retracted_line_number + 1
+  if first_visible_line_index < (last_retracted_line_index + 1) then
+    first_visible_line_index = last_retracted_line_index + 1
   end
 
-  print(string.format(
+  debug(string.format(
     'update_visible_line_indices - first_visible_line_index: %s',
     first_visible_line_index
   ))
@@ -233,7 +248,7 @@ function RetractableTextWidget:update_visible_line_indices()
   -- Build the new visible line indices.
 
   for i=first_visible_line_index,line_count do
-    print(string.format(
+    debug(string.format(
       'update_visible_line_indices - adding visible line index %s', i
     ))
     table.insert(new_visible_line_indices, i)
@@ -246,7 +261,7 @@ function RetractableTextWidget:update_visible_line_indices()
     -- - Set visible line indices to new visible line indices.
     -- - Set height to full height.
 
-    print(string.format(
+    debug(string.format(
       'update_visible_line_indices - No previously visible lines'
     ))
     self:set_visible_line_indices(new_visible_line_indices)
@@ -262,7 +277,7 @@ function RetractableTextWidget:update_visible_line_indices()
     -- - Stop retracting.
     -- - Set height to full height.
 
-    print(string.format(
+    debug(string.format(
       'update_visible_line_indices - Entirely new set of visible lines'
     ))
 
@@ -285,7 +300,7 @@ function RetractableTextWidget:update_visible_line_indices()
       break
     end
 
-    print(string.format(
+    debug(string.format(
       'update_visible_line_indices - Removing duplicate index %s',
       new_visible_line_indices[1]
     ))
@@ -296,7 +311,7 @@ function RetractableTextWidget:update_visible_line_indices()
   -- If there were no new visible line indices, we're done
 
   if #new_visible_line_indices <= 0 then
-    print(string.format(
+    debug(string.format(
       'update_visible_line_indices - No new visible lines'
     ))
     return
@@ -309,7 +324,7 @@ function RetractableTextWidget:update_visible_line_indices()
 
   while #visible_line_indices + #new_visible_line_indices > line_height do
     last_removed_line_index = visible_line_indices[1]
-    print(string.format(
+    debug(string.format(
       'update_visible_line_indices - Removing old line %s',
       visible_line_indices[1]
     ))
@@ -334,7 +349,7 @@ function RetractableTextWidget:update_visible_line_indices()
   -- - Set height to full height
 
   if last_removed_line_index > 0 then
-    print(string.format(
+    debug(string.format(
       'update_visible_line_indices - Handling visible line overflow'
     ))
     self:set_retracting(false)
@@ -359,7 +374,7 @@ function RetractableTextWidget:update_visible_line_indices()
     if not iter:next_line() then
       return
     end
-    print(string.format(
+    debug(string.format(
       'update_visible_line_indices - Iterated to line %s', i
     ))
   end
@@ -373,7 +388,7 @@ function RetractableTextWidget:update_visible_line_indices()
 
   for i=2,#new_visible_line_indices do
     if iter:at_last_line() then
-      print(string.format(
+      debug(string.format(
         'update_visible_line_indices - Reached last line prematurely'
       ))
       break
@@ -386,7 +401,7 @@ function RetractableTextWidget:update_visible_line_indices()
   local line_y = logical_rect.y / Pango.SCALE
   local line_height = logical_rect.height / Pango.SCALE
 
-  print(string.format(
+  debug(string.format(
     'update_visible_line_indices - New height: %s',
     height + (line_y - start_y) + line_height
   ))
@@ -406,36 +421,6 @@ function RetractableTextWidget:set_full_height()
   )
 end
 
-function RetractableTextWidget:update_height()
-  local height = 0
-  local visible_lines = self:get_visible_lines()
-
-  print(string.format('update_height - Updating height'))
-
-  if self:get_retracting() then
-    height = self:get_height_in_pixels()
-
-    for i=2,#visible_lines do
-      height = height + visible_lines[i].height
-    end
-  elseif #visible_lines > 0 then
-    height = (
-      self:get_top_margin() +
-      visible_lines[#visible_lines].y +
-      visible_lines[#visible_lines].height -
-      visible_lines[1].y +
-      self:get_bottom_margin()
-    )
-  else
-    height = 0
-  end
-
-  self:set_height_in_pixels(height)
-  print(string.format('%s visible lines total', #visible_lines))
-  print(string.format('Height: %s', height))
-end
-
-
 function RetractableTextWidget:reset()
   local layout = self:get_layout()
   local layout_width, layout_height = layout:get_pixel_size()
@@ -443,7 +428,7 @@ function RetractableTextWidget:reset()
 
   self:set_retracting(false)
   self:set_retraction_start_time(0)
-  self:set_last_retracted_line_number(0)
+  self:set_last_retracted_line_index(0)
 end
 
 function RetractableTextWidget:retract(current_ms)
@@ -453,7 +438,13 @@ function RetractableTextWidget:retract(current_ms)
   local ms_retracted = retraction_ms_elapsed - self:get_retraction_timeout()
 
   if ms_retracted <= 0 then
-    return true
+    -- debug(string.format('retract - bailing early (%s - %s <= 0) (%s, %s)',
+    --   retraction_ms_elapsed,
+    --   self:get_retraction_timeout(),
+    --   current_ms,
+    --   retraction_start_time
+    -- ))
+    return false
   end
 
   local retraction_time = self:get_retraction_time()
@@ -461,25 +452,46 @@ function RetractableTextWidget:retract(current_ms)
   local visible_lines = self:get_visible_lines()
   local top_line = visible_lines[1]
   local next_line = visible_lines[2]
-  local target = 0
+  local retraction_distance = 0
 
-  if next_line == nil then
-    target = top_line.height
-  else
-    target = next_line.y - top_line.y
-  end
-
-  local retraction_distance = target
-  local y_delta = (ms_retracted / retraction_time) * retraction_distance
-
-  if y_delta >= retraction_distance then
+  if top_line == nil then
+    debug(string.format('retract - no top line so retraction is impossible'))
     return false
   end
 
-  self:set_height_in_pixels(self:get_height_in_pixels() - y_delta)
-  -- self:set_vertical_offset(top + y_delta)
+  if next_line == nil then
+    retraction_distance = top_line.height
+  else
+    retraction_distance = next_line.y - top_line.y
+  end
+
+  local total_height = (
+    self:get_top_margin() +
+    visible_lines[#visible_lines].y +
+    visible_lines[#visible_lines].height -
+    visible_lines[1].y +
+    self:get_bottom_margin()
+  )
+  local y_delta = (ms_retracted / retraction_time) * retraction_distance
+
+  debug(string.format('retract - total_height/y_delta: %s/%s',
+    total_height, y_delta
+  ))
+
+  if y_delta >= retraction_distance then
+    debug(string.format('retract - done retracting (%s >= %s)',
+      y_delta, retraction_distance
+    ))
+    return true
+  end
+
+  debug(string.format('retract - retracted from %s to %s',
+    total_height, total_height - y_delta
+  ))
+
+  self:set_height_in_pixels(total_height - y_delta)
   self:handle_display_change()
-  return true
+  return false
 end
 
 function RetractableTextWidget:tick()
@@ -488,6 +500,7 @@ function RetractableTextWidget:tick()
   TextWidget.TextWidget.tick(self)
 
   if not self:get_retractable() then
+    debug(string.format('tick - not retractable'))
     return
   end
 
@@ -498,6 +511,7 @@ function RetractableTextWidget:tick()
   local visible_line_indices = self:get_visible_line_indices()
 
   if #visible_line_indices < 1 then
+    debug(string.format('tick - no visible line indices'))
     self:set_retracting(false)
     self:set_height_in_pixels(0)
     self:set_retraction_start_time(0)
@@ -505,21 +519,51 @@ function RetractableTextWidget:tick()
   end
 
   if self:get_retracting() then
-    if not self:retract(current_ms) then
+    if self:retract(current_ms) then
+      debug(string.format('tick - retraction stopped, removing line %s',
+        visible_line_indices[1]
+      ))
       self:set_retracting(false)
       self:set_retraction_start_time(0)
-      self:set_last_retracted_line_number(visible_line_indices[1])
+      self:set_last_retracted_line_index(visible_line_indices[1])
 
       table.remove(visible_line_indices, 1)
 
-      self:update_height()
+      if #visible_line_indices <= 0 then
+        self:set_height_in_pixels(0)
+      elseif #visible_line_indices == 1 then
+        local visible_lines = self:get_visible_lines()
+
+        self:set_height_in_pixels(
+          self:get_top_margin() +
+          visible_lines[1].height +
+          self:get_bottom_margin()
+        )
+      else
+        local visible_lines = self:get_visible_lines()
+
+        self:set_height_in_pixels(
+          self:get_top_margin() +
+          visible_lines[#visible_lines].y +
+          visible_lines[#visible_lines].height -
+          visible_lines[1].y +
+          self:get_bottom_margin()
+        )
+      end
+      debug(string.format('tick - new height: %s',
+        self:get_height_in_pixels()
+      ))
+    -- else
+    --   debug(string.format('tick - retraction continues'))
     end
-  else
-    if self:get_retraction_start_time() == 0 then
-      self:set_retraction_start_time(current_ms + self:get_retraction_timeout())
-    elseif current_ms > self:get_retraction_time() then
-      self:set_retracting(true)
-    end
+  elseif self:get_retraction_start_time() == 0 then
+    self:set_retraction_start_time(current_ms + self:get_retraction_timeout())
+    debug(string.format('tick - Set retraction start time to %s',
+      self:get_retraction_start_time()
+    ))
+  elseif current_ms > self:get_retraction_start_time() then
+    self:set_retracting(true)
+    debug(string.format('tick - Beginning retraction'))
   end
 end
 
@@ -583,8 +627,26 @@ function RetractableTextWidget:render()
   local layout_logical_extents = self:get_layout_logical_extents()
   local retractable = self:get_retractable()
 
+  --[[
   if self.vertical_alignment == TextWidget.ALIGN_BOTTOM then
     ly = ly + text_height - lh
+  end
+  --]]
+
+  if self:get_vertical_alignment() == TextWidget.ALIGN_BOTTOM then
+    debug(string.format('render - Moving ly (%s) back from %s to %s',
+      ly,
+      visible_lines[#visible_lines].number,
+      visible_lines[1].number
+    ))
+    ly = ly + text_height - (
+      self:get_top_margin() +
+      visible_lines[#visible_lines].y +
+      visible_lines[#visible_lines].height -
+      visible_lines[1].y +
+      self:get_bottom_margin()
+    )
+    debug(string.format('render - ly: %s', ly))
   end
 
   if self.horizontal_alignment == TextWidget.ALIGN_CENTER then
@@ -600,7 +662,9 @@ function RetractableTextWidget:render()
   local start_y_offset = 0
   local line_height = self:get_line_height()
 
-  print(string.format('Rendering %s lines', #visible_lines))
+  debug(string.format('render - Rendering %s lines at (%s, %s) (%s)',
+    #visible_lines, lx, ly, self:get_height_in_pixels()
+  ))
 
   for i, line in ipairs(visible_lines) do
     local line_start_x = line.x + lx
@@ -611,6 +675,15 @@ function RetractableTextWidget:render()
     end
 
     cr:move_to(line_start_x, line.baseline + ly + start_y_offset)
+
+    debug(string.format('render - Rendering line %s/%s (%s) at (%s, %s) (%s)',
+      i,
+      #visible_lines,
+      visible_lines[i].number,
+      line_start_x,
+      line_start_y,
+      self:get_height_in_pixels()
+    ))
 
     if self:get_outline_text() then
       cr:save()
