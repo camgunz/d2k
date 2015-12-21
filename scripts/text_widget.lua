@@ -339,6 +339,8 @@ function TextWidget:layout_text()
   self:update_layout_pixel_size()
   self:update_layout_line_count()
   self:update_layout_extents()
+
+  self.content_changed = false
 end
 
 function TextWidget:print_lines()

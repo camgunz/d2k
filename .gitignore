@@ -4,6 +4,7 @@
 *.a
 *.Po
 *.prof
+d2k.core
 features.md
 build/
 cbuild/
