@@ -392,7 +392,6 @@ IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
 ELSE()
   IF(GCC_OR_CLANG)
     TRY_C_COMPILER_FLAG(-fstack-protector FLAG_C_fstack_protector)
-    TRY_C_COMPILER_FLAG(-O3 FLAG_C_optimizations)
 
     IF(CMAKE_SYSTEM_NAME STREQUAL "Linux")
       # TRY_C_COMPILER_FLAG(-fPIC              FLAG_C_fPIC)
@@ -426,6 +425,7 @@ IF(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel" OR
    CMAKE_BUILD_TYPE STREQUAL "Release")
   IF(GCC_OR_CLANG)
     TRY_C_COMPILER_FLAG(-fomit-frame-pointer FLAG_C_fomit_frame_pointer)
+    TRY_C_COMPILER_FLAG(-O3 FLAG_C_optimizations)
   ENDIF()
 
   IF(CMAKE_C_COMPILER_ID STREQUAL "Intel")
