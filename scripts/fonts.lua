@@ -26,7 +26,7 @@ return {
     DEFAULT_FONT = 'sans serif',
     DEFAULT_UNICODE_FALLBACK_FONTS = 'Arial Unicode MS,Unifont 11',
     DEFAULT_CONSOLE_FONT = 'ascsys',
-    DEFAULT_HUD_FONT = 'Noto Sans',
+    DEFAULT_HUD_FONT = 'ascsys',
     DEFAULT_MESSAGES_FONT = 'Zeroes Two'
 }
 

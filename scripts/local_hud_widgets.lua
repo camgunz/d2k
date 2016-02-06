@@ -163,5 +163,65 @@ fps_widget:set_text('0 FPS')
 
 fps_widget:set_parent(d2k.hud)
 
+local netstats_widget = TextWidget.TextWidget({
+  name = 'netstats',
+  z_index = 1,
+  top_margin = 4,
+  bottom_margin = 4,
+  left_margin = 8,
+  right_margin = 8,
+  x = d2k.overlay:get_width() - (d2k.overlay:get_width() * .35),
+  y = 150,
+  width = .35,
+  height = .19,
+  use_markup = false,
+  horizontal_alignment = TextWidget.ALIGN_LEFT,
+  vertical_alignment = TextWidget.ALIGN_TOP,
+  fg_color = {1.0, 1.0, 1.0, 1.00},
+  bg_color = {0.0, 0.0, 0.0, 0.65},
+})
+
+function netstats_widget:get_last_time()
+  return self.last_time
+end
+
+function netstats_widget:set_last_time(last_time)
+  self.last_time = last_time
+end
+
+function netstats_widget:tick()
+  local current_time = d2k.System.get_ticks()
+  local time_elapsed = current_time - self:get_last_time()
+
+  if time_elapsed >= 1000 then
+    local netstats = d2k.Client.get_netstats()
+
+    netstats.upload = netstats.upload / 1000
+    netstats.download = netstats.download / 1000
+    netstats.packet_loss = netstats.packet_loss / 100
+    netstats.packet_loss_jitter = netstats.packet_loss_jitter / 100
+
+    self:set_text(''
+      .. string.format('U/D:      %d KB/s | %d KB/s\n',
+        netstats.upload, netstats.download
+      )
+      .. string.format('Ping:     %d ms\n', netstats.ping_average)
+      .. string.format('Jitter:   %d\n', netstats.jitter_average)
+      .. string.format('Commands: %d / %d\n',
+        netstats.unsynchronized_commands, netstats.total_commands
+      )
+      .. string.format('PL:       %0.2f%% | %0.2f%%\n',
+        netstats.packet_loss, netstats.packet_loss_jitter
+      )
+    )
+
+    self:set_last_time(current_time)
+  end
+end
+
+netstats_widget:set_last_time(d2k.System.get_ticks())
+
+netstats_widget:set_parent(d2k.hud)
+
 -- vi: et ts=2 sw=2
 

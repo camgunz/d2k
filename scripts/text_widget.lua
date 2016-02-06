@@ -522,7 +522,7 @@ function TextWidget:render()
       end
       --]]
 
-      if line_start_y >= text_height then
+      if (line_start_y - self:get_y()) >= text_height then
         should_quit_after_rendering = true
       end
 
