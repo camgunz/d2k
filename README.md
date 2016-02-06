@@ -9,9 +9,8 @@ Maintain Compatibility
 ----------------------
 
 One of the many strengths of PrBoom+ is its compatibility with past versions of
-Doom and Boom.  D2K will maintain this compatibility insofar as its target
-platforms (PNaCl, pepper.js) allow.  This will be achieved using a new
-compatibility testing framework.
+Doom and Boom.  D2K will maintain this compatibility, and will use a new
+compatibility testing framework to guard against regressions.
 
 Enhance Network Play
 --------------------
@@ -23,7 +22,9 @@ player's lag lags the whole group.
 
 D2K will replace this implementation with new netcode based on game saves,
 using delta compression to only send changes over the wire -- very similar to
-the Quake 3 architecture.
+the Quake 3 architecture.  In line with current client/server Doom ports, the 4
+player limit will be lifted and users will be able to spectate games without
+playing in them.
 
 Add Extensibility via Scripting
 -------------------------------
@@ -32,29 +33,33 @@ Doom's behavior and assets are hardcoded, making it difficult to extend the
 engine with new capabilities.  ACS, DECORATE, EDF and ExtraData attempt to
 solve this problem, but all leave much to be desired.
 
-A scripting language would be much more powerful here.  The fork will move
-behavior and assets into a scripting language, allowing modders full control
-over the engine.  It is extremely likely that this language will be Lua.
+A scripting language would be much more powerful here.  D2K will move behavior
+and assets into a scripting language, allowing modders full control over the
+engine.  It is extremely likely that this language will be Lua.
 
-Add PNaCl Port
---------------
+Web Play
+--------
 
-D2K will be playable using Google's [Portable Native
-Client](http://gonacl.com).  The intent is to allow playing either via PNaCl
-itself, or in browsers that do not support PNaCl via
-[Emscripten](https://github.com/kripken/emscripten/wiki) and
-[pepper.js](http://trypepperjs.appspot.com/).
+While the specifics have yet to be decided upon, D2K will be accessible on the
+web.  Current major contending implementations are:
+
+- web-based launcher executing a local, native executable
+- fully web-native client
+
+Add Console and Customizable HUD Widgets
+-----------
+
+PrBoom+ currently has no console, and its HUD widgets are hardcoded.  D2K will
+change both of these things via scripting.
 
 Modernize Renderer
 ------------------
 
-PNaCl and pepper.js provide access to graphics acceleration via WebGL, which is
-similar (but not identical) to OpenGL ES 2.0, meaning the fixed-function
-pipeline is unavailable.  D2K will convert the renderer from the fixed-function
-pipeline to the programmable pipeline.  In addition, the fork will upgrade the
-baseline OpenGL support necessary to run, requiring support for OpenGL 2.0.
-Deprecated features, such as paletted textures, will be removed and
-functionality dependent on them will be reimplemented.
+D2K will convert the renderer from the fixed-function pipeline to the
+programmable pipeline.  In addition, D2K will upgrade the baseline OpenGL
+support necessary to run, requiring support for OpenGL 2.0.  Deprecated
+features, such as paletted textures, will be removed and functionality
+dependent on them will be reimplemented.
 
 Add Modern Features and Compatibility
 -------------------------------------
@@ -62,8 +67,8 @@ Add Modern Features and Compatibility
 Doom source ports are splintered.  There is no single port that maintains
 compatibility with previous Doom/Boom releases while keeping up with the
 state-of-the-art in ports (much less the state-of-the-art in FPS gaming in
-general).  The fork aims to be compatible with as many features from other
-source ports as possible, including:
+general).  D2K aims to be compatible with as many features from other source
+ports as possible, including:
 
   * ACS scripting
   * DECORATE
@@ -77,7 +82,6 @@ source ports as possible, including:
   * Polyobjects
   * Ambient sounds
   * Support for other ID Tech 1 engines (Heretic, Hexen, etc.)
-  * Console
   * Advanced binds
   * Cameras
   * UDMF

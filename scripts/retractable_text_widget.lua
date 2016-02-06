@@ -533,6 +533,7 @@ function RetractableTextWidget:tick()
       self:set_last_retracted_line_index(visible_line_indices[1])
 
       table.remove(visible_line_indices, 1)
+      self:invalidate_render()
 
       if #visible_line_indices <= 0 then
         self:set_height_in_pixels(0)
@@ -578,12 +579,6 @@ function RetractableTextWidget:layout_text()
   self:update_visible_line_indices()
 end
 
-function RetractableTextWidget:invalidate_render()
-  -- print('Invalidating render')
-  -- print(debug.traceback())
-  TextWidget.TextWidget.invalidate_render(self)
-end
-
 function RetractableTextWidget:position_view()
   local cr = d2k.overlay.render_context
   local visible_lines = self:get_visible_lines()
@@ -604,12 +599,18 @@ function RetractableTextWidget:position_view()
   local delta = height - visible_line_height
   local y = self:get_y() + delta
 
-  print(string.format('Moving to (%s, %s)', x, y))
   local render = self:get_render()
   local matrix = render:get_matrix()
   matrix.x0 = x
   matrix.y0 = -y
   render:set_matrix(matrix)
+  dprint(string.format('X, Y, height, delta, line count: %s, %s, %s, %s, %s',
+    x,
+    y,
+    height,
+    delta,
+    #visible_lines
+  ))
 end
 
 function RetractableTextWidget:render()

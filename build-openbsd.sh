@@ -1,6 +1,6 @@
 #!/bin/sh
 
-BUILD_TYPE=Debug
+BUILD_TYPE=Release
 if [ $(which gmake) ]
 then
     MAKE=gmake
