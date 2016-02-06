@@ -2,11 +2,10 @@
 
 ## Proto
 
-1. Rename `x_in_pixels` functions to `pixel_x`
-  - Checkout `get/set_max_height`
-
-1. Test resolution switching
-  - Probably have to override `:reset` in widgets to update a bunch of stuff
+1. Implement relative widget positions
+  - `w:set_relative_positioning(true)`
+  - `w:center_horizontally()`
+  - `w:center_vertically()`
 
 1. Add netstats
 
@@ -15,6 +14,9 @@
 
 1. Add maplist
   - Add `map` command
+
+1. Test resolution switching
+  - Probably have to override `:reset` in widgets to update a bunch of stuff
 
 1. Do some basic net testing
 
@@ -30,11 +32,6 @@
 
 1. Messages widget should (optionally) display markup
 
-1. Implement relative widget positions
-  - `w:set_relative_positioning(true)`
-  - `w:center_horizontally()`
-  - `w:center_vertically()`
-
 1. Menu draws under console
   - This is because the menu is drawn onto the game screen, then the console is
     drawn onto the overlay
@@ -46,9 +43,10 @@
   - Currently nothing clears or renders when you switch to vidingl from OpenGL
 
 1. Remove 4 player restriction
-  - All playernums should be `unsigned int`s
-  - `players` becomes a GArray
+  - All playernums become `unsigned int`
+  - `players` becomes a GHashTable
   - `playeringame` becomes `bool D_PlayerInGame(unsigned int playernum)`
+    - Which is a wrapper around `g_hash_table_contains`
   - `MAXPLAYERS` becomes `VANILLA_MAXPLAYERS` for compat
   - Anything defined using `MAXPLAYERS` will be refactored
   - Servers aren't players
