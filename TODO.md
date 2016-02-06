@@ -6,8 +6,6 @@
 
 1. Override `:reset` in widgets to update a bunch of stuff
 
-1. Outlined text kills FPS, fix
-
 1. Fix NULL hash table bug (`g_hash_table_lookup`) when sending a chat message
    in singleplayer (it's probably looking for peers)
 
@@ -18,9 +16,6 @@
 
 1. Add a few new commands:
   - `map`
-
-1. Clean up
-  - Remove autotools stuff
 
 1. Do some basic net testing
 
