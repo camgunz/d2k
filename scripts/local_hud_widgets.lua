@@ -25,6 +25,7 @@ local TextWidget = require('text_widget')
 local InputWidget = require('input_widget')
 local RetractableTextWidget = require('retractable_text_widget')
 local InputInterface = require('input_interface')
+local Fonts = require('fonts')
 
 local messages_widget = RetractableTextWidget.RetractableTextWidget({
   name = 'messages',
@@ -41,7 +42,7 @@ local messages_widget = RetractableTextWidget.RetractableTextWidget({
   outline_width = 1,
   line_height = 4,
   use_markup = true,
-  font_description_text = 'Zeroes Two 12',
+  font_description_text = Fonts.DEFAULT_MESSAGES_FONT,
   strip_ending_newline = true,
   retractable = RetractableTextWidget.RETRACT_UP,
   retraction_time = 500,
@@ -67,7 +68,6 @@ local chat_widget = InputWidget.InputWidget({
   width = 1,
   line_height = 1,
   use_markup = false,
-  font_description_text = 'Noto Sans,Arial Unicode MS,Unifont 11',
   strip_ending_newline = true,
   horizontal_alignment = TextWidget.ALIGN_LEFT,
   vertical_alignment = TextWidget.ALIGN_CENTER,
@@ -76,12 +76,6 @@ local chat_widget = InputWidget.InputWidget({
   input_handler = function(input) d2k.Client.say(input) end,
   deactivate_on_input = true
 })
-
---[[
-function chat_widget:tick()
-  InputWidget.InputWidget.tick(self)
-end
---]]
 
 function chat_widget:render()
   if self:is_active() then
@@ -118,11 +112,10 @@ local fps_widget = TextWidget.TextWidget({
   left_margin = 8,
   right_margin = 8,
   x = 0,
-  y = 0,
-  width = .2,
+  y = 100,
+  width = .15,
   height = .1,
   use_markup = false,
-  font_description_text = 'Noto Sans,Arial Unicode MS,Unifont 11',
   horizontal_alignment = TextWidget.ALIGN_RIGHT,
   vertical_alignment = TextWidget.ALIGN_CENTER,
   fg_color = {1.0, 1.0, 1.0, 1.00},

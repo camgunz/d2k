@@ -63,7 +63,7 @@ end
 
 function InputInterface:get_x()
   if self:get_snap() == SNAP_RIGHT then
-    return d2k.Video.get_screen_width() - self:get_width_in_pixels()
+    return d2k.Video.get_screen_width() - self:get_pixel_width()
   end
 
   --[[
@@ -90,7 +90,7 @@ end
 
 function InputInterface:get_y()
   if self:get_snap() == SNAP_BOTTOM then
-    return d2k.Video.get_screen_height() - self:get_height_in_pixels()
+    return d2k.Video.get_screen_height() - self:get_pixel_height()
   end
 
   --[[
@@ -142,7 +142,7 @@ function InputInterface:set_width(width)
   self:handle_dimension_change()
 end
 
-function InputInterface:get_width_in_pixels()
+function InputInterface:get_pixel_width()
   if self:get_use_proportional_dimensions() then
     return math.floor(self.width * d2k.overlay:get_width())
   end
@@ -150,7 +150,7 @@ function InputInterface:get_width_in_pixels()
   return self.width
 end
 
-function InputInterface:set_width_in_pixels(width)
+function InputInterface:set_pixel_width(width)
   if self:get_use_proportional_dimensions() then
     self.width = width / d2k.overlay:get_width()
   else
@@ -192,7 +192,7 @@ function InputInterface:set_height(height)
   self:handle_dimension_change()
 end
 
-function InputInterface:get_height_in_pixels()
+function InputInterface:get_pixel_height()
   if self:get_use_proportional_dimensions() then
     return math.floor(self.height * d2k.overlay:get_height())
   end
@@ -200,7 +200,7 @@ function InputInterface:get_height_in_pixels()
   return self.height
 end
 
-function InputInterface:set_height_in_pixels(height)
+function InputInterface:set_pixel_height(height)
   if self:get_use_proportional_dimensions() then
     self.height = height / d2k.overlay:get_height()
   else
@@ -255,7 +255,7 @@ function InputInterface:set_max_width(max_width)
   self:handle_dimension_change()
 end
 
-function InputInterface:get_max_width_in_pixels()
+function InputInterface:get_max_pixel_width()
   if self:get_use_proportional_dimensions() then
     return self.max_width * d2k.overlay:get_width()
   end
@@ -263,7 +263,7 @@ function InputInterface:get_max_width_in_pixels()
   return self.max_width
 end
 
-function InputInterface:set_max_width_in_pixels(max_width)
+function InputInterface:set_max_pixel_width(max_width)
   if self:get_use_proportional_dimensions() then
     self.max_width = max_width / d2k.overlay:get_width()
   else
@@ -318,7 +318,7 @@ function InputInterface:set_max_height(max_height)
   self:handle_dimension_change()
 end
 
-function InputInterface:get_max_height_in_pixels()
+function InputInterface:get_max_pixel_height()
   if self:get_use_proportional_dimensions() then
     return self.max_height * d2k.overlay:get_height()
   end
@@ -326,7 +326,7 @@ function InputInterface:get_max_height_in_pixels()
   return self.max_height
 end
 
-function InputInterface:set_max_height_in_pixels(max_height)
+function InputInterface:set_max_pixel_height(max_height)
   if self:get_use_proportional_dimensions() then
     self.max_height = max_height / d2k.overlay:get_height()
   else
@@ -477,8 +477,8 @@ function InputInterface:clip_view()
   cr:rectangle(
     self:get_x(),
     self:get_y(),
-    self:get_width_in_pixels(),
-    self:get_height_in_pixels()
+    self:get_pixel_width(),
+    self:get_pixel_height()
   )
 end
 

@@ -369,7 +369,7 @@ function RetractableTextWidget:update_visible_line_indices()
   -- - Update height
   -- - Update visible lines
 
-  local height = self:get_height_in_pixels()
+  local height = self:get_pixel_height()
   local first_new_visible_line_index = new_visible_line_indices[1]
   local iter = self:get_layout():get_iter()
 
@@ -411,13 +411,13 @@ function RetractableTextWidget:update_visible_line_indices()
     height + (line_y - start_y) + line_height
   ))
 
-  self:set_height_in_pixels(height + (line_y - start_y) + line_height)
+  self:set_pixel_height(height + (line_y - start_y) + line_height)
 end
 
 function RetractableTextWidget:set_full_height()
   local visible_lines = self:get_visible_lines()
 
-  self:set_height_in_pixels(
+  self:set_pixel_height(
     self:get_top_margin() +
     visible_lines[#visible_lines].y +
     visible_lines[#visible_lines].height -
@@ -494,7 +494,7 @@ function RetractableTextWidget:retract(current_ms)
     total_height, total_height - y_delta
   ))
 
-  self:set_height_in_pixels(total_height - y_delta)
+  self:set_pixel_height(total_height - y_delta)
   -- self:handle_display_change()
   return false
 end
@@ -518,7 +518,7 @@ function RetractableTextWidget:tick()
   if #visible_line_indices < 1 then
     dprint(string.format('tick - no visible line indices'))
     self:set_retracting(false)
-    self:set_height_in_pixels(0)
+    self:set_pixel_height(0)
     self:set_retraction_start_time(0)
     return
   end
@@ -536,11 +536,11 @@ function RetractableTextWidget:tick()
       self:invalidate_render()
 
       if #visible_line_indices <= 0 then
-        self:set_height_in_pixels(0)
+        self:set_pixel_height(0)
       elseif #visible_line_indices == 1 then
         local visible_lines = self:get_visible_lines()
 
-        self:set_height_in_pixels(
+        self:set_pixel_height(
           self:get_top_margin() +
           visible_lines[1].height +
           self:get_bottom_margin()
@@ -548,7 +548,7 @@ function RetractableTextWidget:tick()
       else
         local visible_lines = self:get_visible_lines()
 
-        self:set_height_in_pixels(
+        self:set_pixel_height(
           self:get_top_margin() +
           visible_lines[#visible_lines].y +
           visible_lines[#visible_lines].height -
@@ -557,7 +557,7 @@ function RetractableTextWidget:tick()
         )
       end
       dprint(string.format('tick - new height: %s',
-        self:get_height_in_pixels()
+        self:get_pixel_height()
       ))
     -- else
     --   dprint(string.format('tick - retraction continues'))
@@ -595,7 +595,7 @@ function RetractableTextWidget:position_view()
     self:get_bottom_margin()
   )
   local x = self:get_x()
-  local height = self:get_height_in_pixels()
+  local height = self:get_pixel_height()
   local delta = height - visible_line_height
   local y = self:get_y() + delta
 
@@ -632,8 +632,8 @@ function RetractableTextWidget:render()
   cr:rectangle(
     self:get_x(),
     self:get_y(),
-    self:get_width_in_pixels(),
-    self:get_height_in_pixels()
+    self:get_pixel_width(),
+    self:get_pixel_height()
   )
   cr:clip()
   --]]
@@ -657,10 +657,10 @@ function RetractableTextWidget:render()
 
   local lx = self:get_x() + self:get_left_margin()
   local ly = self:get_y() + self:get_top_margin()
-  local text_width = self:get_width_in_pixels() - (
+  local text_width = self:get_pixel_width() - (
     self:get_left_margin() + self:get_right_margin()
   )
-  local text_height = self:get_height_in_pixels() - (
+  local text_height = self:get_pixel_height() - (
     self:get_top_margin() + self:get_bottom_margin()
   )
   local layout_ink_extents = self:get_layout_ink_extents()
@@ -673,7 +673,7 @@ function RetractableTextWidget:render()
     visible_lines[1].y +
     self:get_bottom_margin()
   )
-  local height = self:get_height_in_pixels()
+  local height = self:get_pixel_height()
 
   --[[
   if self.vertical_alignment == TextWidget.ALIGN_BOTTOM then
@@ -715,7 +715,7 @@ function RetractableTextWidget:render()
   local line_height = self:get_line_height()
 
   dprint(string.format('render - Rendering %s lines at (%s, %s) (%s)',
-    #visible_lines, lx, ly, self:get_height_in_pixels()
+    #visible_lines, lx, ly, self:get_pixel_height()
   ))
 
   for i, line in ipairs(visible_lines) do
@@ -734,7 +734,7 @@ function RetractableTextWidget:render()
       visible_lines[i].number,
       line_start_x,
       line_start_y,
-      self:get_height_in_pixels()
+      self:get_pixel_height()
     ))
 
     if self:get_outline_text() then

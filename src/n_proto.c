@@ -592,6 +592,9 @@ void SV_SendMessage(unsigned short playernum, const char *message) {
   netpeer_t *np = NULL;
   CHECK_VALID_PLAYER(np, playernum);
 
+  if (strlen(message) <= 0)
+    return;
+
   N_PackServerChatMessage(np, message);
 }
 
@@ -609,12 +612,18 @@ void SV_BroadcastPrintf(const char *fmt, ...) {
   gmessage = g_strdup_vprintf(fmt, args);
   va_end(args);
 
+  if (strlen(gmessage) <= 0)
+    return;
+
   SV_BroadcastMessage(gmessage);
   g_free(gmessage);
 }
 
 void CL_SendMessageToServer(const char *message) {
   netpeer_t *np = CL_GetServerPeer();
+
+  if (strlen(message) <= 0)
+    return;
 
   display_chat_message(CHAT_CHANNEL_SERVER, consoleplayer, message);
 
@@ -626,6 +635,9 @@ void CL_SendMessageToServer(const char *message) {
 
 void CL_SendMessageToPlayer(unsigned short recipient, const char *message) {
   netpeer_t *np = CL_GetServerPeer();
+
+  if (strlen(message) <= 0)
+    return;
 
   display_chat_message(CHAT_CHANNEL_PLAYER, consoleplayer, message);
 
@@ -641,6 +653,9 @@ void CL_SendMessageToPlayer(unsigned short recipient, const char *message) {
 void CL_SendMessageToTeam(const char *message) {
   netpeer_t *np = CL_GetServerPeer();
 
+  if (strlen(message) <= 0)
+    return;
+
   display_chat_message(CHAT_CHANNEL_TEAM, consoleplayer, message);
 
   if (!np)
@@ -651,6 +666,9 @@ void CL_SendMessageToTeam(const char *message) {
 
 void CL_SendMessage(const char *message) {
   netpeer_t *np = CL_GetServerPeer();
+
+  if (strlen(message) <= 0)
+    return;
 
   display_chat_message(CHAT_CHANNEL_ALL, consoleplayer, message);
 

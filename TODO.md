@@ -2,20 +2,19 @@
 
 ## Proto
 
-1. Blank chat message crashes
+1. Rename `x_in_pixels` functions to `pixel_x`
+  - Checkout `get/set_max_height`
 
-1. Override `:reset` in widgets to update a bunch of stuff
-
-1. Fix NULL hash table bug (`g_hash_table_lookup`) when sending a chat message
-   in singleplayer (it's probably looking for peers)
+1. Test resolution switching
+  - Probably have to override `:reset` in widgets to update a bunch of stuff
 
 1. Add netstats
 
 1. Add scoreboard
   - keybinding
 
-1. Add a few new commands:
-  - `map`
+1. Add maplist
+  - Add `map` command
 
 1. Do some basic net testing
 
@@ -27,7 +26,14 @@
 
 ## ZDDL
 
+1. Add error codes to `n_proto`
+
 1. Messages widget should (optionally) display markup
+
+1. Implement relative widget positions
+  - `w:set_relative_positioning(true)`
+  - `w:center_horizontally()`
+  - `w:center_vertically()`
 
 1. Menu draws under console
   - This is because the menu is drawn onto the game screen, then the console is
@@ -35,10 +41,6 @@
 
 1. Servers shouldn't `quit`, they should `shutdown`; also prevents accidentally
    running `/quit` in the console instead of `:quit` and closing the server....
-
-1. Adding lines to messages when full flickers
-  - Probably have to check in `set_text` if the widget's full, and cancel
-    the retraction if it is... although I thought `tick` already did that...
 
 1. Fix switching to vidingl
   - Currently nothing clears or renders when you switch to vidingl from OpenGL
@@ -124,7 +126,7 @@
   - Projectile nudging would spawn the projectile normally (i.e., right in
     front of the firing player) with a higher-than-normal velocity, and then
     adjust the velocity downwards based on the client's lag and a preselected
-    function (curve).
+    function (curve)
 
 1. Add 3D physics
 

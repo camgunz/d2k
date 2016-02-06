@@ -179,8 +179,8 @@ function InputWidget:tick()
   local height = self:get_top_margin() + text_height + self:get_bottom_margin()
   local ticks = d2k.System.get_ticks()
 
-  if self:get_height_in_pixels() ~= height then
-    self:set_height_in_pixels(height)
+  if self:get_pixel_height() ~= height then
+    self:set_pixel_height(height)
   end
 
   if ticks > self:get_cursor_timer() + self:get_cursor_blink_speed() then
@@ -208,13 +208,6 @@ function InputWidget:render()
 
   cr:set_operator(Cairo.Operator.OVER)
 
-  --[[
-  cr:reset_clip()
-  cr:new_path()
-  cr:rectangle(self:get_x(), self:get_y(), self:get_width_in_pixels(), height)
-  cr:clip()
-  --]]
-
   cr:set_source_rgba(bg_color[1], bg_color[2], bg_color[3], bg_color[4])
   cr:paint()
 
@@ -223,7 +216,7 @@ function InputWidget:render()
   cr:rectangle(
     self:get_x() + self:get_left_margin(),
     self:get_y() + self:get_top_margin(),
-    self:get_width_in_pixels() - (
+    self:get_pixel_width() - (
       self:get_left_margin() + self:get_right_margin()
     ),
     height - (self:get_top_margin() + self:get_bottom_margin())
@@ -255,7 +248,7 @@ function InputWidget:render()
 
   local lx = self:get_x() + self:get_left_margin() + prompt_width
   local ly = self:get_y() + self:get_top_margin()
-  local text_width = self:get_width_in_pixels() - (
+  local text_width = self:get_pixel_width() - (
     self:get_left_margin() + self:get_right_margin()
   )
 

@@ -287,6 +287,9 @@ unsigned int N_PeerGetCount(void) {
 }
 
 netpeer_t* N_PeerGet(int peernum) {
+  if (!net_peers)
+    return NULL;
+
   return g_hash_table_lookup(net_peers, GUINT_TO_POINTER(peernum));
 }
 

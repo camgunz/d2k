@@ -40,8 +40,10 @@ local RETRACTION_TIME          = 1200.0
 local MARGIN                   = 8
 local HORIZONTAL_SCROLL_AMOUNT = 6
 local VERTICAL_SCROLL_AMOUNT   = 12
-local FG_COLOR                 = {1.0, 1.0, 1.0, 1.00}
-local BG_COLOR                 = {0.0, 0.0, 0.0, 0.85}
+local FG_COLOR                 = {0.80, 0.80, 0.80, 1.00}
+local BG_COLOR                 = {0.00, 0.00, 0.00, 0.85}
+local DEFAULT_WIDTH            = 1
+local DEFAULT_HEIGHT           = .5
 
 function Console:initialize(c)
   c = c or {}
@@ -53,8 +55,8 @@ function Console:initialize(c)
 
   self.extension_time = c.extension_time or EXTENSION_TIME
   self.retraction_time = c.retraction_time or RETRACTION_TIME
-  self.max_width = c.max_width or 1
-  self.max_height = c.max_height or .5
+  self.max_width = c.max_width or DEFAULT_WIDTH
+  self.max_height = c.max_height or DEFAULT_HEIGHT
   self.z_index = c.z_index or 2
 
   self.width = self.max_width
@@ -86,7 +88,7 @@ function Console:initialize(c)
 
   self.input.console = self
   self.input.is_active = function(self)
-    return self.console:get_height_in_pixels() > 0 and
+    return self.console:get_pixel_height() > 0 and
            self.console:get_scroll_rate() >= 0.0
   end
 
@@ -173,7 +175,7 @@ function Console:set_output(output)
 end
 
 function Console:is_active()
-  return self:get_height_in_pixels() > 0 and self:get_scroll_rate() >= 0.0
+  return self:get_pixel_height() > 0 and self:get_scroll_rate() >= 0.0
 end
 
 function Console:get_name()
@@ -195,25 +197,26 @@ function Console:tick()
 
     local ms_elapsed = current_ms - self:get_last_scroll_ms()
     local new_height = math.max(
-      0, self:get_height_in_pixels() + (self:get_scroll_rate() * ms_elapsed)
+      0, self:get_pixel_height() + (self:get_scroll_rate() * ms_elapsed)
     )
 
-    if self:get_height_in_pixels() ~= new_height then
-      self:set_height_in_pixels(new_height)
+    if self:get_pixel_height() ~= new_height then
+      self:set_pixel_height(new_height)
     end
 
-    if self:get_height_in_pixels() < 0 then
+    if self:get_pixel_height() < 0 then
       self:set_height(0)
       self:set_scroll_rate(0)
-    elseif self:get_height_in_pixels() > self:get_max_height() then
-      self:set_height_in_pixels(self:get_max_height_in_pixels())
+    elseif self:get_pixel_height() >
+           self:get_max_pixel_height() then
+      self:set_pixel_height(self:get_max_pixel_height())
       self:set_scroll_rate(0)
     end
   end
 
-  local bottom = self:get_height_in_pixels()
-  local input_height = self:get_input():get_height_in_pixels()
-  local output_height = self:get_output():get_height_in_pixels()
+  local bottom = self:get_pixel_height()
+  local input_height = self:get_input():get_pixel_height()
+  local output_height = self:get_output():get_pixel_height()
   local input_y = self:get_input():get_y()
   local new_input_y = bottom - input_height
 
@@ -227,12 +230,12 @@ function Console:tick()
   local new_output_height = math.max(input_y, 0)
 
   if output_height ~= new_output_height then
-    self:get_output():set_height_in_pixels(new_output_height)
+    self:get_output():set_pixel_height(new_output_height)
   end
 end
 
 function Console:render()
-  if self:get_height_in_pixels() <= 0 then
+  if self:get_pixel_height() <= 0 then
     return
   end
 
@@ -248,7 +251,7 @@ function Console:handle_event(event)
     return true
   end
 
-  if self:get_scroll_rate() < 0 or self:get_height_in_pixels() == 0 then
+  if self:get_scroll_rate() < 0 or self:get_pixel_height() == 0 then
     return false
   end
 
@@ -272,19 +275,19 @@ function Console:handle_event(event)
 end
 
 function Console:scroll_down()
-  self:set_scroll_rate(self:get_max_height() / self:get_extension_time())
+  self:set_scroll_rate(self:get_max_pixel_height() / self:get_extension_time())
   self:set_last_scroll_ms(d2k.System.get_ticks())
 end
 
 function Console:scroll_up()
-  self:set_scroll_rate(-(self:get_max_height() / self:get_retraction_time()))
+  self:set_scroll_rate(-(self:get_max_pixel_height() / self:get_retraction_time()))
   self:set_last_scroll_ms(d2k.System.get_ticks())
 end
 
 function Console:toggle_scroll()
-  if self:get_height_in_pixels() == self:get_max_height() then
+  if self:get_pixel_height() == self:get_max_pixel_height() then
     self:scroll_up()
-  elseif self:get_height_in_pixels() == 0 then
+  elseif self:get_pixel_height() == 0 then
     self:scroll_down()
   elseif self:get_scroll_rate() < 0 then
     self:scroll_up()
@@ -306,7 +309,7 @@ function Console:banish()
 end
 
 function Console:set_fullscreen()
-  self:set_height(d2k.overlay:get_height_in_pixels())
+  self:set_height(d2k.overlay:get_pixel_height())
   self:set_scroll_rate(0.0)
   self:set_last_scroll_ms(d2k.System.get_ticks())
 end

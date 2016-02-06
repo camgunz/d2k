@@ -28,6 +28,7 @@ local GLib = lgi.GLib
 local Pango = lgi.Pango
 local PangoCairo = lgi.PangoCairo
 local InputInterface = require('input_interface')
+local Fonts = require('fonts')
 
 TextWidget = class('TextWidget', InputInterface.InputInterface)
 
@@ -95,7 +96,7 @@ function TextWidget:initialize(tw)
   self.clear_external_text_updated = nil
 
   self:set_font_description_text(
-    tw.font_description_text or d2k.hud_font_description_text
+    tw.font_description_text or d2k.hud:get_font_description_text()
   )
   self:set_word_wrap(tw.word_wrap or WRAP_NONE)
   self:set_horizontal_alignment(tw.horizontal_alignment or ALIGN_LEFT)
@@ -229,7 +230,14 @@ function TextWidget:get_font_description_text()
 end
 
 function TextWidget:set_font_description_text(font_description_text)
-  self.font_description_text = font_description_text
+  local fallback_fonts = Fonts.DEFAULT_UNICODE_FALLBACK_FONTS
+
+  if font_description_text == nil or #font_description_text <= 0 then
+    font_description_text = Fonts.DEFAULT_HUD_FONT
+  end
+
+  self.font_description_text = font_description_text .. ',' .. fallback_fonts
+
   self:get_layout():set_font_description(Pango.FontDescription.from_string(
     self:get_font_description_text()
   ))
@@ -400,8 +408,8 @@ function TextWidget:render()
   cr:rectangle(
     self:get_x(),
     self:get_y(),
-    self:get_width_in_pixels(),
-    self:get_height_in_pixels()
+    self:get_pixel_width(),
+    self:get_pixel_height()
   )
   cr:clip()
   --]]
@@ -418,10 +426,10 @@ function TextWidget:render()
 
   local lx = self:get_x() + self:get_left_margin()
   local ly = self:get_y() + self:get_top_margin()
-  local text_width = self:get_width_in_pixels() - (
+  local text_width = self:get_pixel_width() - (
     self:get_left_margin() + self:get_right_margin()
   )
-  local text_height = self:get_height_in_pixels() - (
+  local text_height = self:get_pixel_height() - (
     self:get_top_margin() + self:get_bottom_margin()
   )
   local layout_ink_extents = self:get_layout_ink_extents()
@@ -622,15 +630,15 @@ function TextWidget:set_word_wrap(word_wrap)
     layout:set_width(-1)
   elseif word_wrap == WRAP_WORD then
     self.word_wrap = WRAP_WORD
-    layout:set_width(self:get_width_in_pixels() * Pango.SCALE)
+    layout:set_width(self:get_pixel_width() * Pango.SCALE)
     layout:set_wrap(Pango.WrapMode.WORD)
   elseif word_wrap == WRAP_CHAR then
     self.word_wrap = WRAP_CHAR
-    layout:set_width(self:get_width_in_pixels() * Pango.SCALE)
+    layout:set_width(self:get_pixel_width() * Pango.SCALE)
     layout:set_wrap(Pango.WrapMode.CHAR)
   elseif word_wrap == WRAP_WORD_CHAR then
     self.word_wrap = WRAP_WORD_CHAR
-    layout:set_width(self:get_width_in_pixels() * Pango.SCALE)
+    layout:set_width(self:get_pixel_width() * Pango.SCALE)
     layout:set_wrap(Pango.WrapMode.WORD_CHAR)
   else
     error(string.format('TextWidget:set_word_wrap: Invalid word wrap value %s',
@@ -788,10 +796,10 @@ function TextWidget:update_font_metrics()
 end
 
 function TextWidget:check_offsets()
-  local text_width = self:get_width_in_pixels() - (
+  local text_width = self:get_pixel_width() - (
     self:get_left_margin() + self:get_right_margin()
   )
-  local text_height = self:get_height_in_pixels() - (
+  local text_height = self:get_pixel_height() - (
     self:get_top_margin() + self:get_bottom_margin()
   )
   local layout_width, layout_height = self:get_layout():get_pixel_size()

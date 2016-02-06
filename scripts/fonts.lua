@@ -1,3 +1,4 @@
+
 -------------------------------------------------------------------------------
 --                                                                           --
 -- D2K: A Doom Source Port for the 21st Century                              --
@@ -21,58 +22,13 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-local class = require('middleclass')
-local lgi = require('lgi')
-local Cairo = lgi.cairo
-local Fonts = require('fonts')
-
-local InputInterface = require('input_interface')
-local InputInterfaceContainer = require('input_interface_container')
-
-HUD = class('HUD', InputInterface.InputInterface)
-HUD:include(InputInterfaceContainer.InputInterfaceContainer)
-
-function HUD:initialize(h)
-  h = h or {}
-
-  h.name = h.name or 'HUD'
-
-  InputInterface.InputInterface.initialize(self, h)
-
-  self.interfaces = {}
-
-  self:set_font_description_text(h.font_description_text or Fonts.DEFAULT_HUD_FONT)
-end
-
-function HUD:get_font_description_text()
-  return self.font_description_text
-end
-
-function HUD:set_font_description_text(font_description_text)
-  local fallback_fonts = Fonts.DEFAULT_UNICODE_FALLBACK_FONTS
-
-  if #font_description_text <= 0 then
-    font_description_text = Fonts.DEFAULT_FONT
-  end
-
-  self.font_description_text = font_description_text .. ',' .. fallback_fonts
-
-  self:handle_display_change()
-end
-
-function HUD:sort_interfaces()
-  table.sort(self.interfaces, function(i1, i2)
-    if i1:get_z_index() < i2:get_z_index() then
-      return -1
-    elseif i2:get_z_index() < i1:get_z_index() then
-      return 1
-    end
-
-    return 0
-  end)
-end
-
-return {HUD = HUD}
+return {
+    DEFAULT_FONT = 'sans serif',
+    DEFAULT_UNICODE_FALLBACK_FONTS = 'Arial Unicode MS,Unifont 11',
+    DEFAULT_CONSOLE_FONT = 'ascsys',
+    DEFAULT_HUD_FONT = 'Noto Sans',
+    DEFAULT_MESSAGES_FONT = 'Zeroes Two'
+}
 
 -- vi: et ts=2 sw=2
 

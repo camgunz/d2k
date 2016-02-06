@@ -23,6 +23,8 @@
 
 package.path = package.path .. ';' .. d2k.script_search_path
 
+local Fonts = require('fonts')
+
 cprint = print
 
 -- print = function(s)
@@ -52,7 +54,7 @@ if d2k.Video.is_enabled() then
   print('X_Init: Creating console')
   local Console = require('console')
   d2k.console = Console.Console({
-    font_description_text = 'ascsys,Arial Unicode MS,Unifont 11'
+    font_description_text = Fonts.DEFAULT_CONSOLE_FONT
   })
   d2k.console:set_parent(d2k.interfaces)
 
@@ -63,7 +65,9 @@ if d2k.Video.is_enabled() then
 
   print('X_Init: Creating HUD')
   local HUD = require('hud')
-  d2k.hud = HUD.HUD()
+  d2k.hud = HUD.HUD({
+    font_description_text = Fonts.DEFAULT_HUD_FONT
+  })
   d2k.hud:set_parent(d2k.interfaces)
 
   print('X_Init: Loading HUD widgets')
