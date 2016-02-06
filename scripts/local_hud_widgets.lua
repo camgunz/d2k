@@ -54,7 +54,7 @@ messages_widget:set_external_text_source(
   d2k.Game.clear_consoleplayer_messages_updated
 )
 
--- messages_widget:set_parent(d2k.hud)
+messages_widget:set_parent(d2k.hud)
 
 local chat_widget = InputWidget.InputWidget({
   name = 'chat',

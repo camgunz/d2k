@@ -579,9 +579,37 @@ function RetractableTextWidget:layout_text()
 end
 
 function RetractableTextWidget:invalidate_render()
-  print('Invalidating render')
-  print(debug.traceback())
+  -- print('Invalidating render')
+  -- print(debug.traceback())
   TextWidget.TextWidget.invalidate_render(self)
+end
+
+function RetractableTextWidget:position_view()
+  local cr = d2k.overlay.render_context
+  local visible_lines = self:get_visible_lines()
+
+  if #visible_lines <= 0 then
+    return
+  end
+
+  local visible_line_height = (
+    self:get_top_margin() +
+    visible_lines[#visible_lines].y +
+    visible_lines[#visible_lines].height -
+    visible_lines[1].y +
+    self:get_bottom_margin()
+  )
+  local x = self:get_x()
+  local height = self:get_height_in_pixels()
+  local delta = height - visible_line_height
+  local y = self:get_y() + delta
+
+  print(string.format('Moving to (%s, %s)', x, y))
+  local render = self:get_render()
+  local matrix = render:get_matrix()
+  matrix.x0 = x
+  matrix.y0 = -y
+  render:set_matrix(matrix)
 end
 
 function RetractableTextWidget:render()
@@ -637,6 +665,14 @@ function RetractableTextWidget:render()
   local layout_ink_extents = self:get_layout_ink_extents()
   local layout_logical_extents = self:get_layout_logical_extents()
   local retractable = self:get_retractable()
+  local visible_line_height = (
+    self:get_top_margin() +
+    visible_lines[#visible_lines].y +
+    visible_lines[#visible_lines].height -
+    visible_lines[1].y +
+    self:get_bottom_margin()
+  )
+  local height = self:get_height_in_pixels()
 
   --[[
   if self.vertical_alignment == TextWidget.ALIGN_BOTTOM then
@@ -645,19 +681,23 @@ function RetractableTextWidget:render()
   --]]
 
   if self:get_vertical_alignment() == TextWidget.ALIGN_BOTTOM then
-    dprint(string.format('render - Moving ly (%s) back from %s to %s',
-      ly,
-      visible_lines[#visible_lines].number,
-      visible_lines[1].number
-    ))
-    ly = ly + text_height - (
-      self:get_top_margin() +
-      visible_lines[#visible_lines].y +
-      visible_lines[#visible_lines].height -
-      visible_lines[1].y +
-      self:get_bottom_margin()
-    )
-    dprint(string.format('render - ly: %s', ly))
+    if visible_line_height > height then
+      ly = height - visible_line_height
+    end
+    -- local new_ly = ly + text_height - (
+    --   self:get_top_margin() +
+    --   visible_lines[#visible_lines].y +
+    --   visible_lines[#visible_lines].height -
+    --   visible_lines[1].y +
+    --   self:get_bottom_margin()
+    -- )
+    -- print(string.format('render - Moving ly (%s -> %s) back from %s to %s',
+    --   ly,
+    --   new_ly,
+    --   visible_lines[#visible_lines].number,
+    --   visible_lines[1].number
+    -- ))
+    -- ly = new_ly
   end
 
   if self.horizontal_alignment == TextWidget.ALIGN_CENTER then

@@ -468,6 +468,20 @@ function InputInterface:begin_render()
   )
 end
 
+function InputInterface:position_view()
+end
+
+function InputInterface:clip_view()
+  local cr = d2k.overlay.render_context
+
+  cr:rectangle(
+    self:get_x(),
+    self:get_y(),
+    self:get_width_in_pixels(),
+    self:get_height_in_pixels()
+  )
+end
+
 function InputInterface:render()
 end
 
