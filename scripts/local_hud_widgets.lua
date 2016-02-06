@@ -173,7 +173,7 @@ local netstats_widget = TextWidget.TextWidget({
   x = d2k.overlay:get_width() - (d2k.overlay:get_width() * .35),
   y = 150,
   width = .35,
-  height = .19,
+  height = .22,
   use_markup = false,
   horizontal_alignment = TextWidget.ALIGN_LEFT,
   vertical_alignment = TextWidget.ALIGN_TOP,
@@ -213,6 +213,7 @@ function netstats_widget:tick()
       .. string.format('PL:       %0.2f%% | %0.2f%%\n',
         netstats.packet_loss, netstats.packet_loss_jitter
       )
+      .. string.format('Throttle: %d\n', netstats.throttle)
     )
 
     self:set_last_time(current_time)

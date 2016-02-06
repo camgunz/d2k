@@ -7,8 +7,6 @@
   - `w:center_horizontally()`
   - `w:center_vertically()`
 
-1. Add netstats
-
 1. Add scoreboard
   - keybinding
 
