@@ -60,7 +60,8 @@ messages_widget:set_parent(d2k.hud)
 local chat_widget = InputWidget.InputWidget({
   name = 'chat',
   z_index = 1,
-  snap = InputInterface.SNAP_BOTTOM,
+  screen_reference_point = InputInterface.REFERENCE_POINT_SOUTHWEST,
+  origin_reference_point = InputInterface.REFERENCE_POINT_SOUTHWEST,
   top_margin = 4,
   bottom_margin = 4,
   left_margin = 8,
@@ -170,8 +171,11 @@ local netstats_widget = TextWidget.TextWidget({
   bottom_margin = 4,
   left_margin = 8,
   right_margin = 8,
-  x = d2k.overlay:get_width() - (d2k.overlay:get_width() * .35),
-  y = 150,
+  screen_reference_point = InputInterface.REFERENCE_POINT_EAST,
+  origin_reference_point = InputInterface.REFERENCE_POINT_EAST,
+  y = -50,
+  -- x = d2k.overlay:get_width() - (d2k.overlay:get_width() * .35),
+  -- y = 150,
   width = .35,
   height = .22,
   use_markup = false,
@@ -196,25 +200,27 @@ function netstats_widget:tick()
   if time_elapsed >= 1000 then
     local netstats = d2k.Client.get_netstats()
 
-    netstats.upload = netstats.upload / 1000
-    netstats.download = netstats.download / 1000
-    netstats.packet_loss = netstats.packet_loss / 100
-    netstats.packet_loss_jitter = netstats.packet_loss_jitter / 100
+    if netstats ~= nil then
+      netstats.upload = netstats.upload / 1000
+      netstats.download = netstats.download / 1000
+      netstats.packet_loss = netstats.packet_loss / 100
+      netstats.packet_loss_jitter = netstats.packet_loss_jitter / 100
 
-    self:set_text(''
-      .. string.format('U/D:      %d KB/s | %d KB/s\n',
-        netstats.upload, netstats.download
+      self:set_text(''
+        .. string.format('U/D:      %d KB/s | %d KB/s\n',
+          netstats.upload, netstats.download
+        )
+        .. string.format('Ping:     %d ms\n', netstats.ping_average)
+        .. string.format('Jitter:   %d\n', netstats.jitter_average)
+        .. string.format('Commands: %d / %d\n',
+          netstats.unsynchronized_commands, netstats.total_commands
+        )
+        .. string.format('PL:       %0.2f%% | %0.2f%%\n',
+          netstats.packet_loss, netstats.packet_loss_jitter
+        )
+        .. string.format('Throttle: %d\n', netstats.throttle)
       )
-      .. string.format('Ping:     %d ms\n', netstats.ping_average)
-      .. string.format('Jitter:   %d\n', netstats.jitter_average)
-      .. string.format('Commands: %d / %d\n',
-        netstats.unsynchronized_commands, netstats.total_commands
-      )
-      .. string.format('PL:       %0.2f%% | %0.2f%%\n',
-        netstats.packet_loss, netstats.packet_loss_jitter
-      )
-      .. string.format('Throttle: %d\n', netstats.throttle)
-    )
+    end
 
     self:set_last_time(current_time)
   end

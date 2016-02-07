@@ -63,15 +63,6 @@ end
 function HUD:sort_interfaces()
   table.sort(self.interfaces, function(i1, i2)
     return i1:get_z_index() < i2:get_z_index()
-    --[[
-    if i1:get_z_index() < i2:get_z_index() then
-      return -1
-    elseif i2:get_z_index() < i1:get_z_index() then
-      return 1
-    end
-
-    return 0
-    --]]
   end)
 end
 

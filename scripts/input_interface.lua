@@ -27,9 +27,15 @@ local Cairo = lgi.cairo
 
 InputInterface = class('InputInterface')
 
-local SNAP_NONE = 0
-local SNAP_RIGHT = 1
-local SNAP_BOTTOM = 2
+local REFERENCE_POINT_NORTH     = 0
+local REFERENCE_POINT_NORTHEAST = 1
+local REFERENCE_POINT_EAST      = 2
+local REFERENCE_POINT_SOUTHEAST = 3
+local REFERENCE_POINT_SOUTH     = 4
+local REFERENCE_POINT_SOUTHWEST = 5
+local REFERENCE_POINT_WEST      = 6
+local REFERENCE_POINT_NORTHWEST = 7
+local REFERENCE_POINT_CENTER    = 8
 
 function InputInterface:initialize(ii)
   ii = ii or {}
@@ -45,8 +51,11 @@ function InputInterface:initialize(ii)
   self.max_width                   = ii.max_width or 0
   self.max_height                  = ii.max_height or 0
   self.z_index                     = ii.z_index or 0
-  self.snap                        = ii.snap or SNAP_NONE
   self.use_proportional_dimensions = ii.use_proportional_dimensions or true
+  self.origin_reference_point      = ii.origin_reference_point or
+                                      REFERENCE_POINT_NORTHWEST
+  self.screen_reference_point      = ii.screen_reference_point or
+                                      REFERENCE_POINT_NORTHWEST
   self.fullscreen                  = ii.fullscreen or false
   self.position_changed            = false
   self.dimensions_changed          = false
@@ -62,56 +71,76 @@ function InputInterface:set_name(name)
 end
 
 function InputInterface:get_x()
-  if self:get_snap() == SNAP_RIGHT then
-    return d2k.Video.get_screen_width() - self:get_pixel_width()
+  local screen_reference_point = self:get_screen_reference_point()
+  local origin_reference_point = self:get_origin_reference_point()
+  local x = self.x
+
+  if screen_reference_point == REFERENCE_POINT_NORTH or
+     screen_reference_point == REFERENCE_POINT_CENTER or
+     screen_reference_point == REFERENCE_POINT_SOUTH then
+    x = x + (d2k.Video.get_screen_width() / 2)
   end
 
-  --[[
-  if self.x < 0 then
-    return d2k.Video.get_screen_width() + self.x
+  if screen_reference_point == REFERENCE_POINT_NORTHEAST or
+     screen_reference_point == REFERENCE_POINT_EAST or
+     screen_reference_point == REFERENCE_POINT_SOUTHEAST then
+    x = x + d2k.Video.get_screen_width()
   end
-  --]]
 
-  return self.x
+  if origin_reference_point == REFERENCE_POINT_NORTH or
+     origin_reference_point == REFERENCE_POINT_CENTER or
+     origin_reference_point == REFERENCE_POINT_SOUTH then
+    x = x - (self:get_pixel_width() / 2)
+  end
+
+  if origin_reference_point == REFERENCE_POINT_NORTHEAST or
+     origin_reference_point == REFERENCE_POINT_EAST or
+     origin_reference_point == REFERENCE_POINT_SOUTHEAST then
+    x = x - self:get_pixel_width()
+  end
+
+  return x
 end
 
 function InputInterface:set_x(x)
-  if self:get_snap() == SNAP_RIGHT then
-    error(string.format(
-      '%s: Cannot set X coordinate when snapped to the right\n',
-      self:get_name()
-    ))
-  end
-
   self.x = x
-
   self:handle_position_change()
 end
 
 function InputInterface:get_y()
-  if self:get_snap() == SNAP_BOTTOM then
-    return d2k.Video.get_screen_height() - self:get_pixel_height()
+  local screen_reference_point = self:get_screen_reference_point()
+  local origin_reference_point = self:get_origin_reference_point()
+  local y = self.y
+
+  if screen_reference_point == REFERENCE_POINT_WEST  or
+     screen_reference_point == REFERENCE_POINT_CENTER or
+     screen_reference_point == REFERENCE_POINT_EAST then
+    y = y + (d2k.Video.get_screen_height() / 2)
   end
 
-  --[[
-  if self.y < 0 then
-    return d2k.Video.get_screen_height() + self.y
+  if screen_reference_point == REFERENCE_POINT_SOUTHWEST or
+     screen_reference_point == REFERENCE_POINT_SOUTH or
+     screen_reference_point == REFERENCE_POINT_SOUTHEAST then
+    y = y + d2k.Video.get_screen_height()
   end
-  --]]
 
-  return self.y
+  if origin_reference_point == REFERENCE_POINT_WEST or
+     origin_reference_point == REFERENCE_POINT_CENTER or
+     origin_reference_point == REFERENCE_POINT_EAST then
+    y = y - (self:get_pixel_height() / 2)
+  end
+
+  if origin_reference_point == REFERENCE_POINT_SOUTHWEST or
+     origin_reference_point == REFERENCE_POINT_SOUTH or
+     origin_reference_point == REFERENCE_POINT_SOUTHEAST then
+    y = y - self:get_pixel_height()
+  end
+
+  return y
 end
 
 function InputInterface:set_y(y)
-  if self:get_snap() == SNAP_BOTTOM then
-    error(string.format(
-      '%s: Cannot set Y coordinate when snapped to the bottom\n',
-      self:get_name()
-    ))
-  end
-
   self.y = y
-
   self:handle_position_change()
 end
 
@@ -352,24 +381,29 @@ function InputInterface:set_z_index(z_index)
   self:handle_position_change()
 end
 
-function InputInterface:get_snap()
-  return self.snap
-end
-
-function InputInterface:set_snap(snap)
-  self.snap = snap
-
-  self:handle_position_change()
-end
-
 function InputInterface:get_use_proportional_dimensions()
   return self.use_proportional_dimensions
 end
 
 function InputInterface:set_use_proportional_dimensions(pd)
   self.use_proportional_dimensions = pd
-
   self:handle_dimension_change()
+end
+
+function InputInterface:get_screen_reference_point()
+  return self.screen_reference_point
+end
+
+function InputInterface:set_screen_reference_point(screen_reference_point)
+  self.screen_reference_point = screen_reference_point
+end
+
+function InputInterface:get_origin_reference_point()
+  return self.origin_reference_point
+end
+
+function InputInterface:set_origin_reference_point(origin_reference_point)
+  self.origin_reference_point = origin_reference_point
 end
 
 function InputInterface:is_fullscreen()
@@ -532,10 +566,16 @@ function InputInterface:get_dimensions_changed()
 end
 
 return {
-  InputInterface = InputInterface,
-  SNAP_NONE      = SNAP_NONE,
-  SNAP_RIGHT     = SNAP_RIGHT,
-  SNAP_BOTTOM    = SNAP_BOTTOM
+  InputInterface            = InputInterface,
+  REFERENCE_POINT_NORTH     = REFERENCE_POINT_NORTH,
+  REFERENCE_POINT_NORTHEAST = REFERENCE_POINT_NORTHEAST,
+  REFERENCE_POINT_EAST      = REFERENCE_POINT_EAST,
+  REFERENCE_POINT_SOUTHEAST = REFERENCE_POINT_SOUTHEAST,
+  REFERENCE_POINT_SOUTH     = REFERENCE_POINT_SOUTH,
+  REFERENCE_POINT_SOUTHWEST = REFERENCE_POINT_SOUTHWEST,
+  REFERENCE_POINT_WEST      = REFERENCE_POINT_WEST,
+  REFERENCE_POINT_NORTHWEST = REFERENCE_POINT_NORTHWEST,
+  REFERENCE_POINT_CENTER    = REFERENCE_POINT_CENTER
 }
 
 
