@@ -25,11 +25,21 @@ package.path = package.path .. ';' .. d2k.script_search_path
 
 local Fonts = require('fonts')
 
+local DEBUG = false
+
+function dprint(s)
+  if DEBUG then
+    print(s)
+  end
+end
+
 cprint = print
 
--- print = function(s)
---   d2k.Messaging.print(d2k.Messaging.INFO, string.format('%s\n', s))
--- end
+if DEBUG then
+  print = function(s)
+    d2k.Messaging.print(d2k.Messaging.INFO, string.format('%s\n', s))
+  end
+end
 
 mprint = function(s)
   d2k.Messaging.mecho(d2k.Messaging.INFO, s)

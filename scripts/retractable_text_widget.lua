@@ -38,14 +38,6 @@ local RETRACT_DOWN = 2
 local RETRACTION_TIME    = 2000
 local RETRACTION_TIMEOUT = 2000
 
-local DEBUG = false
-
-function dprint(s)
-  if DEBUG then
-    print(s)
-  end
-end
-
 function RetractableTextWidget:initialize(rtw)
   rtw = rtw or {}
 
@@ -152,7 +144,9 @@ function RetractableTextWidget:get_visible_lines()
   local visible_lines = {}
   local iter = self:get_layout():get_iter()
 
-  dprint(string.format('get_visible_lines - indices: %s', #visible_line_indices))
+  dprint(string.format('get_visible_lines - indices: %s',
+    #visible_line_indices
+  ))
 
   if #visible_line_indices < 1 then
     return visible_lines
@@ -443,12 +437,6 @@ function RetractableTextWidget:retract(current_ms)
   local ms_retracted = retraction_ms_elapsed - self:get_retraction_timeout()
 
   if ms_retracted <= 0 then
-    -- dprint(string.format('retract - bailing early (%s - %s <= 0) (%s, %s)',
-    --   retraction_ms_elapsed,
-    --   self:get_retraction_timeout(),
-    --   current_ms,
-    --   retraction_start_time
-    -- ))
     return false
   end
 
@@ -495,7 +483,6 @@ function RetractableTextWidget:retract(current_ms)
   ))
 
   self:set_pixel_height(total_height - y_delta)
-  -- self:handle_display_change()
   return false
 end
 
@@ -559,8 +546,6 @@ function RetractableTextWidget:tick()
       dprint(string.format('tick - new height: %s',
         self:get_pixel_height()
       ))
-    -- else
-    --   dprint(string.format('tick - retraction continues'))
     end
   elseif self:get_retraction_start_time() == 0 then
     self:set_retraction_start_time(current_ms + self:get_retraction_timeout())
@@ -626,18 +611,6 @@ function RetractableTextWidget:render()
 
   cr:set_operator(Cairo.Operator.OVER)
 
-  --[[
-  cr:reset_clip()
-  cr:new_path()
-  cr:rectangle(
-    self:get_x(),
-    self:get_y(),
-    self:get_pixel_width(),
-    self:get_pixel_height()
-  )
-  cr:clip()
-  --]]
-
   cr:set_source_rgba(bg_color[1], bg_color[2], bg_color[3], bg_color[4])
   cr:paint()
 
@@ -675,30 +648,10 @@ function RetractableTextWidget:render()
   )
   local height = self:get_pixel_height()
 
-  --[[
-  if self.vertical_alignment == TextWidget.ALIGN_BOTTOM then
-    ly = ly + text_height - lh
-  end
-  --]]
-
   if self:get_vertical_alignment() == TextWidget.ALIGN_BOTTOM then
     if visible_line_height > height then
       ly = height - visible_line_height
     end
-    -- local new_ly = ly + text_height - (
-    --   self:get_top_margin() +
-    --   visible_lines[#visible_lines].y +
-    --   visible_lines[#visible_lines].height -
-    --   visible_lines[1].y +
-    --   self:get_bottom_margin()
-    -- )
-    -- print(string.format('render - Moving ly (%s -> %s) back from %s to %s',
-    --   ly,
-    --   new_ly,
-    --   visible_lines[#visible_lines].number,
-    --   visible_lines[1].number
-    -- ))
-    -- ly = new_ly
   end
 
   if self.horizontal_alignment == TextWidget.ALIGN_CENTER then

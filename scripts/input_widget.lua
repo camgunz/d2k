@@ -387,29 +387,28 @@ function InputWidget:show_next_history_entry()
 end
 
 function InputWidget:print_cursor_stats(s)
-  --[[
-  local cursor_position = self:get_layout():index_to_pos(self:get_cursor())
-  local cursor_line_number, cursor_line_x = self:get_layout():index_to_line_x(
-    self:get_cursor(), self:get_cursor_trailing()
-  )
+  if DEBUG then
+    local cursor_position = self:get_layout():index_to_pos(self:get_cursor())
+    local layout = self:get_layout()
+    local cursor_line_number, cursor_line_x = layout:index_to_line_x(
+      self:get_cursor(), self:get_cursor_trailing()
+    )
 
-  print(string.format(
-    '%s: cursor, trailing, text length, line #, line x, pos: ' ..
-    '%d, %d, %d, %d, %d, %dx%d+%d+%d',
-    s,
-    self:get_cursor(),
-    self:get_cursor_trailing(),
-    #self:get_text(),
-    cursor_line_number,
-    cursor_line_x / Pango.SCALE,
-    cursor_position.x / Pango.SCALE,
-    cursor_position.y / Pango.SCALE,
-    cursor_position.width / Pango.SCALE,
-    cursor_position.height / Pango.SCALE
-  ))
-  --]]
-
-  return
+    print(string.format(
+      '%s: cursor, trailing, text length, line #, line x, pos: ' ..
+      '%d, %d, %d, %d, %d, %dx%d+%d+%d',
+      s,
+      self:get_cursor(),
+      self:get_cursor_trailing(),
+      #self:get_text(),
+      cursor_line_number,
+      cursor_line_x / Pango.SCALE,
+      cursor_position.x / Pango.SCALE,
+      cursor_position.y / Pango.SCALE,
+      cursor_position.width / Pango.SCALE,
+      cursor_position.height / Pango.SCALE
+    ))
+  end
 end
 
 function InputWidget:move_cursor_visually(strong, direction)

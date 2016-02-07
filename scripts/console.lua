@@ -280,7 +280,9 @@ function Console:scroll_down()
 end
 
 function Console:scroll_up()
-  self:set_scroll_rate(-(self:get_max_pixel_height() / self:get_retraction_time()))
+  self:set_scroll_rate(
+    -(self:get_max_pixel_height() / self:get_retraction_time())
+  )
   self:set_last_scroll_ms(d2k.System.get_ticks())
 end
 

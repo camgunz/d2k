@@ -41,7 +41,9 @@ function HUD:initialize(h)
 
   self.interfaces = {}
 
-  self:set_font_description_text(h.font_description_text or Fonts.DEFAULT_HUD_FONT)
+  self:set_font_description_text(
+    h.font_description_text or Fonts.DEFAULT_HUD_FONT
+  )
 end
 
 function HUD:get_font_description_text()

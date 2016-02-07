@@ -402,18 +402,6 @@ function TextWidget:render()
 
   cr:set_operator(Cairo.Operator.OVER)
 
-  --[[
-  cr:reset_clip()
-  cr:new_path()
-  cr:rectangle(
-    self:get_x(),
-    self:get_y(),
-    self:get_pixel_width(),
-    self:get_pixel_height()
-  )
-  cr:clip()
-  --]]
-
   cr:set_source_rgba(bg_color[1], bg_color[2], bg_color[3], bg_color[4])
   cr:paint()
 
@@ -456,48 +444,12 @@ function TextWidget:render()
   local max_line = 0
   local start_y_offset = 0
   local rendered_at_least_one_line = false
-  --[[
-  local line_height = self:get_line_height()
-
-  if line_height > 0 then
-    if line_count <= line_height then
-      min_line = 1
-      max_line = line_count
-    elseif self.vertical_alignment == ALIGN_TOP then
-      min_line = 1
-      max_line = line_height
-    elseif self.vertical_alignment == ALIGN_CENTER then
-      local half_lines = line_count / 2
-      local half_line_height = line_height / 2
-
-      min_line = math.floor(half_lines - half_line_height)
-      max_line = math.floor(half_lines + half_line_height)
-
-      while ((max_line - min_line) + 1) < line_height do
-        max_line = max_line + 1
-      end
-    else
-      min_line = (line_count - line_height) + 1
-      max_line = line_count
-    end
-  end
-  --]]
 
   repeat
     local line_baseline_pixels = iter:get_baseline() / Pango.SCALE
     local line_end_y = line_baseline_pixels + ly
     local should_render_line = false
     local should_quit_after_rendering = false
-
-    --[[
-    if line_height > 0 then
-      if line_number >= min_line and line_number <= max_line then
-        should_render_line = true
-      end
-    elseif line_end_y > 0 then
-      should_render_line = true
-    end
-    --]]
 
     if line_end_y > 0 then
       should_render_line = true
@@ -512,27 +464,9 @@ function TextWidget:render()
       local line_start_x = line_logical_x + lx
       local line_start_y = line_logical_y + ly
 
-      --[[
-      if line_height > 0 then
-        if line_number == max_line then
-          should_quit_after_rendering = true
-        end
-      elseif line_start_y >= text_height then
-        should_quit_after_rendering = true
-      end
-      --]]
-
       if (line_start_y - self:get_y()) >= text_height then
         should_quit_after_rendering = true
       end
-
-      --[[
-      if line_height > 0 and
-         (not rendered_at_least_one_line) and
-         line_logical_y > 0 then
-        start_y_offset = -line_logical_y
-      end
-      --]]
 
       rendered_at_least_one_line = true
 
