@@ -2,11 +2,6 @@
 
 ## Proto
 
-1. Implement relative widget positions
-  - `w:set_relative_positioning(true)`
-  - `w:center_horizontally()`
-  - `w:center_vertically()`
-
 1. Add scoreboard
   - keybinding
 

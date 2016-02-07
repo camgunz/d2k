@@ -174,8 +174,6 @@ local netstats_widget = TextWidget.TextWidget({
   screen_reference_point = InputInterface.REFERENCE_POINT_EAST,
   origin_reference_point = InputInterface.REFERENCE_POINT_EAST,
   y = -50,
-  -- x = d2k.overlay:get_width() - (d2k.overlay:get_width() * .35),
-  -- y = 150,
   width = .35,
   height = .22,
   use_markup = false,
@@ -229,6 +227,46 @@ end
 netstats_widget:set_last_time(d2k.System.get_ticks())
 
 netstats_widget:set_parent(d2k.hud)
+
+local scoreboard_widget = TextWidget.TextWidget({
+  name = 'scoreboard',
+  z_index = 1,
+  top_margin = 4,
+  bottom_margin = 4,
+  left_margin = 8,
+  right_margin = 8,
+  screen_reference_point = InputInterface.REFERENCE_POINT_CENTER,
+  origin_reference_point = InputInterface.REFERENCE_POINT_CENTER,
+  width = .66,
+  height = .66,
+  use_markup = true,
+  horizontal_alignment = TextWidget.ALIGN_LEFT,
+  vertical_alignment = TextWidget.ALIGN_TOP,
+  fg_color = {1.0, 1.0, 1.0, 1.00},
+  bg_color = {0.0, 0.0, 0.0, 0.65}
+})
+
+function scoreboard_widget:render()
+  if self:is_active() then
+    InputWidget.InputWidget.render(self)
+  end
+end
+
+function scoreboard_widget:handle_event(event)
+  if not self:is_active() then
+    if event:is_key_press(d2k.Key.LCTRL) then
+      self:activate()
+      return true
+    end
+  elseif event:is_key_release(d2k.Key.LCTRL) then
+    self:deactivate()
+    return true
+  end
+
+  return false
+end
+
+scoreboard_widget:set_parent(d2k.hud)
 
 -- vi: et ts=2 sw=2
 
