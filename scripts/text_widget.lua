@@ -412,31 +412,52 @@ function TextWidget:render()
 
   cr:set_source_rgba(fg_color[1], fg_color[2], fg_color[3], fg_color[4])
 
-  local lx = self:get_x() + self:get_left_margin()
-  local ly = self:get_y() + self:get_top_margin()
+  local lx = 0
+  local ly = 0
   local text_width = self:get_pixel_width() - (
     self:get_left_margin() + self:get_right_margin()
   )
   local text_height = self:get_pixel_height() - (
     self:get_top_margin() + self:get_bottom_margin()
   )
+
+  if self.horizontal_alignment == ALIGN_LEFT then
+    lx = self:get_x() + self:get_left_margin()
+  elseif self.horizontal_alignment == ALIGN_CENTER then
+    lx = self:get_x() + (self:get_pixel_width() / 2) - (lw / 2)
+  elseif self.horizontal_alignment == ALIGN_RIGHT then
+    lx = self:get_x() + self:get_pixel_width() - (
+      lw + self:get_left_margin()
+    )
+  end
+
+  if self.vertical_alignment == ALIGN_TOP then
+    ly = self:get_y() + self:get_top_margin()
+  elseif self.vertical_alignment == ALIGN_CENTER then
+    ly = self:get_y() + (self:get_pixel_height() / 2) - (lh / 2)
+  elseif self.vertical_alignment == ALIGN_BOTTOM then
+    ly = self:get_y() + self:get_pixel_height() - (
+      lh + self:get_top_margin()
+    )
+  end
+
   local layout_ink_extents = self:get_layout_ink_extents()
   local layout_logical_extents = self:get_layout_logical_extents()
 
-  if self.vertical_alignment == ALIGN_CENTER then
-    ly = ly + (text_height / 2) - (lh / 2)
-  elseif self.vertical_alignment == ALIGN_BOTTOM then
-    ly = ly + text_height - lh
-  end
+  -- if self.vertical_alignment == ALIGN_CENTER then
+  --   ly = ly + (text_height / 2) - (lh / 2)
+  -- elseif self.vertical_alignment == ALIGN_BOTTOM then
+  --   ly = ly + text_height - lh
+  -- end
 
   lx = lx - self:get_horizontal_offset()
   ly = ly - self:get_vertical_offset()
 
-  if self.horizontal_alignment == ALIGN_CENTER then
-    lx = (text_width / 2) - (lw / 2)
-  elseif self.horizontal_alignment == ALIGN_RIGHT then
-    lx = lx + text_width - lw
-  end
+  -- if self.horizontal_alignment == ALIGN_CENTER then
+  --   lx = (text_width / 2) - (lw / 2)
+  -- elseif self.horizontal_alignment == ALIGN_RIGHT then
+  --   lx = lx + text_width - lw
+  -- end
 
   local iter = self:get_layout():get_iter()
   local line_number = 1

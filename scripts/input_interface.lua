@@ -56,6 +56,8 @@ function InputInterface:initialize(ii)
                                       REFERENCE_POINT_NORTHWEST
   self.screen_reference_point      = ii.screen_reference_point or
                                       REFERENCE_POINT_NORTHWEST
+  self.fg_color                    = ii.fg_color or {1.0, 1.0, 1.0, 1.0}
+  self.bg_color                    = ii.bg_color or {0.0, 0.0, 0.0, 0.0}
   self.fullscreen                  = ii.fullscreen or false
   self.position_changed            = false
   self.dimensions_changed          = false
@@ -70,21 +72,46 @@ function InputInterface:set_name(name)
   self.name = name
 end
 
+function InputInterface:get_parent_pixel_width()
+  local parent = self:get_parent()
+
+  if parent ~= nil and parent.get_pixel_width ~= nil then
+    return parent:get_pixel_width()
+  else
+    return d2k.overlay:get_width()
+  end
+end
+
+function InputInterface:get_parent_pixel_height()
+  local parent = self:get_parent()
+
+  if parent ~= nil and parent.get_pixel_height ~= nil then
+    return parent:get_pixel_height()
+  else
+    return d2k.overlay:get_height()
+  end
+end
+
 function InputInterface:get_x()
   local screen_reference_point = self:get_screen_reference_point()
   local origin_reference_point = self:get_origin_reference_point()
+  local parent = self:get_parent()
   local x = self.x
+
+  if parent ~= nil then
+    x = x + self.parent:get_x()
+  end
 
   if screen_reference_point == REFERENCE_POINT_NORTH or
      screen_reference_point == REFERENCE_POINT_CENTER or
      screen_reference_point == REFERENCE_POINT_SOUTH then
-    x = x + (d2k.Video.get_screen_width() / 2)
+    x = x + (self:get_parent_pixel_width() / 2)
   end
 
   if screen_reference_point == REFERENCE_POINT_NORTHEAST or
      screen_reference_point == REFERENCE_POINT_EAST or
      screen_reference_point == REFERENCE_POINT_SOUTHEAST then
-    x = x + d2k.Video.get_screen_width()
+    x = x + self:get_parent_pixel_width()
   end
 
   if origin_reference_point == REFERENCE_POINT_NORTH or
@@ -110,18 +137,24 @@ end
 function InputInterface:get_y()
   local screen_reference_point = self:get_screen_reference_point()
   local origin_reference_point = self:get_origin_reference_point()
+  local parent = self:get_parent()
   local y = self.y
+
+  if parent ~= nil then
+    y = y + self.parent:get_y()
+  end
+
 
   if screen_reference_point == REFERENCE_POINT_WEST  or
      screen_reference_point == REFERENCE_POINT_CENTER or
      screen_reference_point == REFERENCE_POINT_EAST then
-    y = y + (d2k.Video.get_screen_height() / 2)
+    y = y + (self:get_parent_pixel_height() / 2)
   end
 
   if screen_reference_point == REFERENCE_POINT_SOUTHWEST or
      screen_reference_point == REFERENCE_POINT_SOUTH or
      screen_reference_point == REFERENCE_POINT_SOUTHEAST then
-    y = y + d2k.Video.get_screen_height()
+    y = y + self:get_parent_pixel_height()
   end
 
   if origin_reference_point == REFERENCE_POINT_WEST or
@@ -173,7 +206,7 @@ end
 
 function InputInterface:get_pixel_width()
   if self:get_use_proportional_dimensions() then
-    return math.floor(self.width * d2k.overlay:get_width())
+    return math.floor(self.width * self:get_parent_pixel_width())
   end
 
   return self.width
@@ -181,7 +214,7 @@ end
 
 function InputInterface:set_pixel_width(width)
   if self:get_use_proportional_dimensions() then
-    self.width = width / d2k.overlay:get_width()
+    self.width = width / self:get_parent_pixel_width()
   else
     self.width = width
   end
@@ -223,7 +256,7 @@ end
 
 function InputInterface:get_pixel_height()
   if self:get_use_proportional_dimensions() then
-    return math.floor(self.height * d2k.overlay:get_height())
+    return math.floor(self.height * self:get_parent_pixel_height())
   end
 
   return self.height
@@ -231,7 +264,7 @@ end
 
 function InputInterface:set_pixel_height(height)
   if self:get_use_proportional_dimensions() then
-    self.height = height / d2k.overlay:get_height()
+    self.height = height / self:get_parent_pixel_height()
   else
     self.height = height
   end
@@ -251,10 +284,10 @@ function InputInterface:get_max_width()
   end
 
   if self.max_width == 0 then
-    return d2k.overlay:get_width()
+    return self:get_parent_pixel_width()
   end
 
-  return d2k.overlay:get_width() * self.max_width
+  return self:get_parent_pixel_width() * self.max_width
 end
 
 function InputInterface:set_max_width(max_width)
@@ -274,9 +307,9 @@ function InputInterface:set_max_width(max_width)
   end
 
   if max_width == 1 then
-    self.max_width = dk2.overlay:get_width()
+    self.max_width = self:get_parent_pixel_width()
   elseif max_width > 1 then
-    self.max_width = max_width / d2k.overlay:get_width()
+    self.max_width = max_width / self:get_parent_pixel_width()
   else
     self.max_width = max_width
   end
@@ -286,7 +319,7 @@ end
 
 function InputInterface:get_max_pixel_width()
   if self:get_use_proportional_dimensions() then
-    return self.max_width * d2k.overlay:get_width()
+    return self.max_width * self:get_parent_pixel_width()
   end
 
   return self.max_width
@@ -294,7 +327,7 @@ end
 
 function InputInterface:set_max_pixel_width(max_width)
   if self:get_use_proportional_dimensions() then
-    self.max_width = max_width / d2k.overlay:get_width()
+    self.max_width = max_width / self:get_parent_pixel_width()
   else
     self.max_width = max_width
   end
@@ -314,10 +347,10 @@ function InputInterface:get_max_height()
   end
 
   if self.max_height == 0 then
-    return d2k.overlay:get_height()
+    return self:get_parent_pixel_height()
   end
 
-  return d2k.overlay:get_height() * self.max_height
+  return self:get_parent_pixel_height() * self.max_height
 end
 
 function InputInterface:set_max_height(max_height)
@@ -339,7 +372,7 @@ function InputInterface:set_max_height(max_height)
   if max_height == 1 then
     self.max_height = dk2.overlay:get_height()
   elseif max_height > 1 then
-    self.max_height = max_height / d2k.overlay:get_height()
+    self.max_height = max_height / self:get_parent_pixel_height()
   else
     self.max_height = max_height
   end
@@ -349,7 +382,7 @@ end
 
 function InputInterface:get_max_pixel_height()
   if self:get_use_proportional_dimensions() then
-    return self.max_height * d2k.overlay:get_height()
+    return self.max_height * self:get_parent_pixel_height()
   end
 
   return self.max_height
@@ -357,7 +390,7 @@ end
 
 function InputInterface:set_max_pixel_height(max_height)
   if self:get_use_proportional_dimensions() then
-    self.max_height = max_height / d2k.overlay:get_height()
+    self.max_height = max_height / self:get_parent_pixel_height()
   else
     self.max_height = max_height
   end
@@ -404,6 +437,24 @@ end
 
 function InputInterface:set_origin_reference_point(origin_reference_point)
   self.origin_reference_point = origin_reference_point
+end
+
+function InputInterface:get_fg_color()
+  return self.fg_color
+end
+
+function InputInterface:set_fg_color(fg_color)
+  self.fg_color = fg_color
+  self:handle_display_change()
+end
+
+function InputInterface:get_bg_color()
+  return self.bg_color
+end
+
+function InputInterface:set_bg_color(bg_color)
+  self.bg_color = bg_color
+  self:handle_display_change()
 end
 
 function InputInterface:is_fullscreen()

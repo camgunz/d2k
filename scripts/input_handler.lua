@@ -32,6 +32,10 @@ function InputHandler:initialize(ih)
   self.current_event = d2k.InputEvent:new()
 end
 
+function InputHandler:get_name()
+  return 'input handler'
+end
+
 function InputHandler:render()
   d2k.overlay:lock()
 

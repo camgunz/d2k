@@ -368,6 +368,18 @@ static int XI_InputEventIsKeyPress(lua_State *L) {
   return 1;
 }
 
+static int XI_InputEventIsKeyRelease(lua_State *L) {
+  event_t *ev = (event_t *)luaL_checkudata(L, 1, "InputEvent");
+  int key = luaL_checkinteger(L, 2);
+
+  if (ev->type == ev_key && (!ev->pressed) && ev->key == key)
+    lua_pushboolean(L, true);
+  else
+    lua_pushboolean(L, false);
+
+  return 1;
+}
+
 static int XI_PopulateEvent(lua_State *L) {
   event_t *event = (event_t *)luaL_checkudata(L, -1, "InputEvent");
   SDL_Event sdl_event;
@@ -528,7 +540,7 @@ static int XI_HandleEvent(lua_State *L) {
 void XI_InputRegisterInterface(void) {
   /* CG: [TODO] Add functions to return names for mouse & joystick buttons */
 
-  X_RegisterType("InputEvent", 21,
+  X_RegisterType("InputEvent", 22,
     "new",                  XI_InputEventNew,
     "reset",                XI_InputEventReset,
     "__tostring",           XI_InputEventToString,
@@ -549,7 +561,8 @@ void XI_InputRegisterInterface(void) {
     "get_xmove",            XI_InputEventGetXMove,
     "get_ymove",            XI_InputEventGetYMove,
     "get_char",             XI_InputEventGetChar,
-    "is_key_press",         XI_InputEventIsKeyPress
+    "is_key_press",         XI_InputEventIsKeyPress,
+    "is_key_release",       XI_InputEventIsKeyRelease
   );
 
   X_RegisterObjects("KeyStates", 4,

@@ -21,11 +21,13 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
+local class = require('middleclass')
 local TextWidget = require('text_widget')
 local InputWidget = require('input_widget')
 local RetractableTextWidget = require('retractable_text_widget')
 local InputInterface = require('input_interface')
 local Fonts = require('fonts')
+local ContainerWidget = require('container_widget')
 
 local messages_widget = RetractableTextWidget.RetractableTextWidget({
   name = 'messages',
@@ -228,37 +230,32 @@ netstats_widget:set_last_time(d2k.System.get_ticks())
 
 netstats_widget:set_parent(d2k.hud)
 
-local scoreboard_widget = TextWidget.TextWidget({
+local scoreboard_widget = ContainerWidget.ContainerWidget({
   name = 'scoreboard',
   z_index = 1,
-  top_margin = 4,
-  bottom_margin = 4,
-  left_margin = 8,
-  right_margin = 8,
   screen_reference_point = InputInterface.REFERENCE_POINT_CENTER,
   origin_reference_point = InputInterface.REFERENCE_POINT_CENTER,
-  width = .66,
-  height = .66,
+  width = .7,
+  height = .7,
   use_markup = true,
-  horizontal_alignment = TextWidget.ALIGN_LEFT,
-  vertical_alignment = TextWidget.ALIGN_TOP,
   fg_color = {1.0, 1.0, 1.0, 1.00},
   bg_color = {0.0, 0.0, 0.0, 0.65}
 })
 
 function scoreboard_widget:render()
   if self:is_active() then
-    InputWidget.InputWidget.render(self)
+    ContainerWidget.ContainerWidget.render(self)
   end
 end
 
 function scoreboard_widget:handle_event(event)
   if not self:is_active() then
-    if event:is_key_press(d2k.Key.LCTRL) then
+    if event:is_key_press(d2k.Key.BACKSLASH) then
       self:activate()
       return true
     end
-  elseif event:is_key_release(d2k.Key.LCTRL) then
+  elseif event:is_key_release(d2k.Key.BACKSLASH) then
+    self:invalidate_render()
     self:deactivate()
     return true
   end
@@ -267,6 +264,57 @@ function scoreboard_widget:handle_event(event)
 end
 
 scoreboard_widget:set_parent(d2k.hud)
+
+local scoreboard_title_widget = TextWidget.TextWidget({
+  name = 'scoreboard_title',
+  z_index = scoreboard_widget.z_index,
+  top_margin = 12,
+  bottom_margin = 12,
+  left_margin = 12,
+  right_margin = 12,
+  screen_reference_point = InputInterface.REFERENCE_POINT_NORTH,
+  origin_reference_point = InputInterface.REFERENCE_POINT_NORTH,
+  width = 1,
+  height = .18,
+  use_markup = true,
+  horizontal_alignment = TextWidget.ALIGN_CENTER,
+  vertical_alignment = TextWidget.ALIGN_TOP,
+  fg_color = {1.0, 1.0, 1.0, 1.00},
+  bg_color = {0.0, 0.0, 0.0, 0.00}
+})
+
+scoreboard_title_widget:set_parent(scoreboard_widget)
+scoreboard_title_widget:set_text('DEATHMATCH\nFrag Limit: 50\tTime Limit: 30')
+
+local scoreboard_player_table_widget = TextWidget.TextWidget({
+  name = 'scoreboard_player_table',
+  z_index = scoreboard_widget.z_index,
+  top_margin = 12,
+  bottom_margin = 12,
+  left_margin = 12,
+  right_margin = 12,
+  screen_reference_point = InputInterface.REFERENCE_POINT_NORTHWEST,
+  origin_reference_point = InputInterface.REFERENCE_POINT_NORTHWEST,
+  y = scoreboard_title_widget:get_pixel_height(),
+  width = 1,
+  height = .7,
+  horizontal_alignment = TextWidget.ALIGN_CENTER,
+  vertical_alignment = TextWidget.ALIGN_TOP,
+  fg_color = {1.0, 1.0, 1.0, 1.00},
+  bg_color = {0.0, 0.0, 0.0, 0.00}
+})
+
+scoreboard_player_table_widget:set_parent(scoreboard_widget)
+scoreboard_player_table_widget:set_text(
+  'JKist3    |    28    |    14    |    17    |    3\n' ..
+  'Ladna     |    14    |    28    |    59    |    2\n'
+)
+
+scoreboard_player_table_widget:set_parent(scoreboard_widget)
+
+print(scoreboard_title_widget:get_y())
+print(scoreboard_title_widget:get_pixel_height())
+print(scoreboard_player_table_widget:get_y())
 
 -- vi: et ts=2 sw=2
 

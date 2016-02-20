@@ -24,62 +24,107 @@
 local class = require('middleclass')
 local lgi = require('lgi')
 local Cairo = lgi.cairo
-local Fonts = require('fonts')
 
 local InputInterface = require('input_interface')
 local InputInterfaceContainer = require('input_interface_container')
 
-HUD = class('HUD', InputInterface.InputInterface)
-HUD:include(InputInterfaceContainer.InputInterfaceContainer)
+ContainerWidget = class('ContainerWidget', InputInterface.InputInterface)
+ContainerWidget:include(InputInterfaceContainer.InputInterfaceContainer)
 
-function HUD:initialize(h)
-  h = h or {}
+function ContainerWidget:initialize(cw)
+  cw = cw or {}
 
-  h.name = h.name or 'HUD'
+  cw.name = cw.name or 'ContainerWidget'
 
-  InputInterface.InputInterface.initialize(self, h)
+  InputInterface.InputInterface.initialize(self, cw)
 
   self.interfaces = {}
-
-  self:set_font_description_text(
-    h.font_description_text or Fonts.DEFAULT_HUD_FONT
-  )
-
-  self:set_pixel_width(d2k.overlay:get_width())
-  self:set_pixel_height(d2k.overlay:get_height())
 end
 
-function HUD:get_x()
-  return 0
-end
-
-function HUD:get_y()
-  return 0
-end
-
-function HUD:get_font_description_text()
-  return self.font_description_text
-end
-
-function HUD:set_font_description_text(font_description_text)
-  local fallback_fonts = Fonts.DEFAULT_UNICODE_FALLBACK_FONTS
-
-  if #font_description_text <= 0 then
-    font_description_text = Fonts.DEFAULT_FONT
-  end
-
-  self.font_description_text = font_description_text .. ',' .. fallback_fonts
-
-  self:handle_display_change()
-end
-
-function HUD:sort_interfaces()
+function ContainerWidget:sort_interfaces()
   table.sort(self.interfaces, function(i1, i2)
     return i1:get_z_index() < i2:get_z_index()
   end)
 end
 
-return {HUD = HUD}
+function ContainerWidget:activate()
+  self.active = true
+end
+
+function ContainerWidget:deactivate()
+  self.active = false
+end
+
+function ContainerWidget:is_active()
+  return self.active
+end
+
+function ContainerWidget:clip_view()
+  local cr = d2k.overlay.render_context
+
+  cr:rectangle(
+    self:get_x(),
+    self:get_y(),
+    self:get_pixel_width(),
+    self:get_pixel_height()
+  )
+end
+
+function ContainerWidget:begin_render()
+  d2k.overlay.render_context:push_group_with_content(
+    Cairo.Content.COLOR_ALPHA
+  )
+end
+
+function ContainerWidget:position_view()
+end
+
+function ContainerWidget:clip_view()
+  local cr = d2k.overlay.render_context
+
+  cr:rectangle(
+    self:get_x(),
+    self:get_y(),
+    self:get_pixel_width(),
+    self:get_pixel_height()
+  )
+end
+
+function ContainerWidget:render()
+  local cr = d2k.overlay.render_context
+  local fg_color = self:get_fg_color()
+  local bg_color = self:get_bg_color()
+
+  cr:save()
+
+  cr:set_operator(Cairo.Operator.OVER)
+
+  cr:set_source_rgba(bg_color[1], bg_color[2], bg_color[3], bg_color[4])
+  cr:paint()
+
+  cr:restore()
+
+  InputInterfaceContainer.InputInterfaceContainer.render(self)
+end
+
+function ContainerWidget:get_render()
+  if self:needs_rendering() then
+    self:begin_render()
+    self:render()
+    self:end_render()
+  end
+
+  return self.cached_render
+end
+
+function ContainerWidget:end_render()
+  self.position_changed = false
+  self.dimensions_changed = false
+  self.display_changed = false
+  self.cached_render = d2k.overlay.render_context:pop_group()
+end
+
+return {ContainerWidget = ContainerWidget}
 
 -- vi: et ts=2 sw=2
 

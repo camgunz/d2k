@@ -98,6 +98,12 @@ InputInterfaceContainer = {
     end
   end,
 
+  invalidate_render = function(self)
+    for i, interface in ipairs(self.interfaces) do
+      interface:invalidate_render()
+    end
+  end,
+
   needs_rendering = function(self)
     for i, interface in ipairs(self.interfaces) do
       if interface:needs_rendering() then
@@ -112,6 +118,9 @@ InputInterfaceContainer = {
     local cr = d2k.overlay.render_context
 
     for i, interface in ipairs(self.interfaces) do
+      if self:get_name() == 'scoreboard_widget' then
+        print(string.format('Rendering %s', interface:get_name()))
+      end
       cr:save()
       cr:set_source(interface:get_render())
       interface:clip_view()

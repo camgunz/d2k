@@ -50,6 +50,8 @@ function Console:initialize(c)
 
   c.name = c.name or 'Console'
   c.fullscreen = c.fullscreen or true
+  c.fg_color = FG_COLOR
+  c.bg_color = BG_COLOR
 
   InputInterface.InputInterface.initialize(self, c)
 
