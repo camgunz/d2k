@@ -117,12 +117,13 @@ static bool deserialize_toc(GArray *toc, unsigned char *data,
   packet_data.size = size;
 
   if (!cmp_read_map(&cmp, &toc_size)) {
-    printf("Error reading map: %s\n", cmp_strerror(&cmp));
+    D_Msg(MSG_DEBUG, "Error reading map: %s\n", cmp_strerror(&cmp));
 
-    printf("Packet data: ");
+    D_Msg(MSG_DEBUG, "Packet data: ");
     for (unsigned int i = 0; i < MIN(size, 26); i++)
-      printf("%02X ", data[i] & 0xFF);
-    printf("\n");
+      D_Msg(MSG_DEBUG, "%02X ", data[i] & 0xFF);
+    D_Msg(MSG_DEBUG, "\n");
+
     return false;
   }
 
