@@ -3,7 +3,6 @@
 ## Proto
 
 1. Add scoreboard
-  - keybinding
 
 1. Add maplist
   - Add `map` command

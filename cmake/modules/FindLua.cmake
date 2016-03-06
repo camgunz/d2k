@@ -5,7 +5,10 @@ IF (NOT LUA_INCLUDE_DIR)
 ENDIF()
 
 IF (NOT LUA_LIBRARIES)
+    MESSAGE("Looking for Lua library")
     FIND_LIBRARY(LUA_LIBRARIES lua HINTS $ENV{LUA_DIR})
+else()
+    MESSAGE("lua libraries was set")
 ENDIF()
 
 MARK_AS_ADVANCED(LUA_INCLUDE_DIR)
