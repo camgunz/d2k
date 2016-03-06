@@ -59,17 +59,6 @@ function ContainerWidget:is_active()
   return self.active
 end
 
-function ContainerWidget:clip_view()
-  local cr = d2k.overlay.render_context
-
-  cr:rectangle(
-    self:get_x(),
-    self:get_y(),
-    self:get_pixel_width(),
-    self:get_pixel_height()
-  )
-end
-
 function ContainerWidget:begin_render()
   d2k.overlay.render_context:push_group_with_content(
     Cairo.Content.COLOR_ALPHA

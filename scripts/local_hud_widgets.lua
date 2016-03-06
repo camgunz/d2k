@@ -25,6 +25,7 @@ local class = require('middleclass')
 local TextWidget = require('text_widget')
 local InputWidget = require('input_widget')
 local RetractableTextWidget = require('retractable_text_widget')
+local TableWidget = require('table_widget')
 local InputInterface = require('input_interface')
 local Fonts = require('fonts')
 local ContainerWidget = require('container_widget')
@@ -286,16 +287,15 @@ local scoreboard_title_widget = TextWidget.TextWidget({
 scoreboard_title_widget:set_parent(scoreboard_widget)
 scoreboard_title_widget:set_text('DEATHMATCH\nFrag Limit: 50\tTime Limit: 30')
 
-local scoreboard_player_table_widget = TextWidget.TextWidget({
+local scoreboard_player_table_widget = TableWidget.TableWidget({
   name = 'scoreboard_player_table',
   z_index = scoreboard_widget.z_index,
   top_margin = 12,
   bottom_margin = 12,
   left_margin = 12,
   right_margin = 12,
-  screen_reference_point = InputInterface.REFERENCE_POINT_NORTHWEST,
-  origin_reference_point = InputInterface.REFERENCE_POINT_NORTHWEST,
-  y = scoreboard_title_widget:get_pixel_height(),
+  screen_reference_point = InputInterface.REFERENCE_POINT_NORTH,
+  origin_reference_point = InputInterface.REFERENCE_POINT_NORTH,
   width = 1,
   height = .7,
   horizontal_alignment = TextWidget.ALIGN_CENTER,
@@ -304,17 +304,52 @@ local scoreboard_player_table_widget = TextWidget.TextWidget({
   bg_color = {0.0, 0.0, 0.0, 0.00}
 })
 
-scoreboard_player_table_widget:set_parent(scoreboard_widget)
-scoreboard_player_table_widget:set_text(
-  'JKist3    |    28    |    14    |    17    |    3\n' ..
-  'Ladna     |    14    |    28    |    59    |    2\n'
-)
+-- Add header
+scoreboard_player_table_widget:add_row()
+
+-- Player name
+scoreboard_player_table_widget:add_column()
+
+-- Frags
+scoreboard_player_table_widget:add_column()
+
+-- Deaths
+scoreboard_player_table_widget:add_column()
+
+-- Ping
+scoreboard_player_table_widget:add_column()
+
+-- Time (minutes)
+scoreboard_player_table_widget:add_column()
+
+-- JKist3
+scoreboard_player_table_widget:add_row()
+
+-- Ladna
+scoreboard_player_table_widget:add_row()
+
+scoreboard_player_table_widget:get_cell(1, 2):set_text('Frags')
+scoreboard_player_table_widget:get_cell(1, 3):set_text('Deaths')
+scoreboard_player_table_widget:get_cell(1, 4):set_text('Ping')
+scoreboard_player_table_widget:get_cell(1, 5):set_text('Time')
+
+scoreboard_player_table_widget:get_cell(2, 1):set_text('JKist3')
+scoreboard_player_table_widget:get_cell(2, 2):set_text('28')
+scoreboard_player_table_widget:get_cell(2, 3):set_text('14')
+scoreboard_player_table_widget:get_cell(2, 4):set_text('17')
+scoreboard_player_table_widget:get_cell(2, 5):set_text('3')
+
+scoreboard_player_table_widget:get_cell(3, 1):set_text('Ladna')
+scoreboard_player_table_widget:get_cell(3, 2):set_text('14')
+scoreboard_player_table_widget:get_cell(3, 3):set_text('28')
+scoreboard_player_table_widget:get_cell(3, 4):set_text('59')
+scoreboard_player_table_widget:get_cell(3, 5):set_text('2')
+
+scoreboard_player_table_widget:set_cell_width(1.0 / 5.0)
+scoreboard_player_table_widget:set_cell_height(1.0 / 9.0)
 
 scoreboard_player_table_widget:set_parent(scoreboard_widget)
-
-print(scoreboard_title_widget:get_y())
-print(scoreboard_title_widget:get_pixel_height())
-print(scoreboard_player_table_widget:get_y())
+scoreboard_player_table_widget:set_y(scoreboard_title_widget:get_pixel_height())
 
 -- vi: et ts=2 sw=2
 
