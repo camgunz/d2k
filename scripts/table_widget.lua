@@ -250,6 +250,16 @@ function TableWidget:set_row_height(row, row_height)
   end
 end
 
+function TableWidget:set_column_horizontal_alignment(column, alignment)
+  for i, table_row in ipairs(self.rows) do
+    for j, table_cell in ipairs(table_row) do
+      if j == column then
+        table_cell:set_horizontal_alignment(alignment)
+      end
+    end
+  end
+end
+
 function TableWidget:get_row_count()
   return #self.rows
 end

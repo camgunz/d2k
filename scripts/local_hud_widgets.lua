@@ -296,7 +296,7 @@ local scoreboard_player_table_widget = TableWidget.TableWidget({
   right_margin = 12,
   screen_reference_point = InputInterface.REFERENCE_POINT_NORTH,
   origin_reference_point = InputInterface.REFERENCE_POINT_NORTH,
-  width = 1,
+  width = .7,
   height = .7,
   horizontal_alignment = TextWidget.ALIGN_CENTER,
   vertical_alignment = TextWidget.ALIGN_TOP,
@@ -348,8 +348,21 @@ scoreboard_player_table_widget:get_cell(3, 5):set_text('2')
 scoreboard_player_table_widget:set_cell_width(1.0 / 5.0)
 scoreboard_player_table_widget:set_cell_height(1.0 / 9.0)
 
+scoreboard_player_table_widget:set_column_horizontal_alignment(
+  2, TextWidget.ALIGN_CENTER
+)
+scoreboard_player_table_widget:set_column_horizontal_alignment(
+  3, TextWidget.ALIGN_CENTER
+)
+scoreboard_player_table_widget:set_column_horizontal_alignment(
+  4, TextWidget.ALIGN_CENTER
+)
+scoreboard_player_table_widget:set_column_horizontal_alignment(
+  5, TextWidget.ALIGN_CENTER
+)
+
 scoreboard_player_table_widget:set_parent(scoreboard_widget)
-scoreboard_player_table_widget:set_y(scoreboard_title_widget:get_pixel_height())
+scoreboard_player_table_widget:set_y(scoreboard_title_widget:get_pixel_height() + 5)
 
 -- vi: et ts=2 sw=2
 
