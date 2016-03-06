@@ -76,9 +76,12 @@ static int XCL_SetName(lua_State *L) {
   if (!name)
     I_Error("Error allocating player name");
 
+  strncpy(name, new_name, name_length);
+
   P_SetName(consoleplayer, name);
 
-  CL_SendNameChange(new_name);
+  if (CLIENT)
+    CL_SendNameChange(new_name);
 
   return 0;
 }

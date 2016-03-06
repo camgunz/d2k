@@ -75,6 +75,10 @@ void P_SendMessage(const char *message);
 void P_ClearMessages(int playernum);
 
 void P_SetPlayerName(int playernum, const char *name);
+int P_PlayerGetFragCount(int playernum);
+int P_PlayerGetDeathCount(int playernum);
+int P_PlayerGetPing(int playernum);
+int P_PlayerGetTime(int playernum);
 
 #endif  /* P_USER__ */
 

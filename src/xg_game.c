@@ -82,6 +82,45 @@ static int XG_GameGetTimeLimit(lua_State *L) {
   return 1;
 }
 
+static int XG_GameGetPlayers(lua_State *L) {
+  int player_count = 0;
+
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    if (playeringame[i]) {
+      player_count++;
+    }
+  }
+
+  lua_createtable(L, player_count, 0); // -1
+
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    if (!playeringame[i])
+      continue;
+
+    lua_createtable(L, 0, 5); // -2
+
+    lua_pushstring(L, players[i].name); // -3
+    lua_setfield(L, -3, "name");
+
+    lua_pushinteger(L, P_PlayerGetFragCount(i)); // -3
+    lua_setfield(L, -3, "frags");
+
+    lua_pushinteger(L, P_PlayerGetDeathCount(i)); // -3
+    lua_setfield(L, -3, "deaths");
+
+    lua_pushinteger(L, P_PlayerGetPing(i)); // -3
+    lua_setfield(L, -3, "ping");
+
+    lua_pushinteger(L, P_PlayerGetTime(i)); // -3
+    lua_setfield(L, -3, "time");
+
+    lua_insert(L, -2);
+    lua_seti(L, -2, i + 1);
+  }
+
+  return 1;
+}
+
 static int XG_GameHandleEvent(lua_State *L) {
   event_t *ev = luaL_checkudata(L, -1, "InputEvent");
   bool event_handled = G_Responder(ev);
@@ -182,7 +221,7 @@ static int XG_GameInDemoScreen(lua_State *L) {
 }
 
 void XG_GameRegisterInterface(void) {
-  X_RegisterObjects("Game", 14,
+  X_RegisterObjects("Game", 15,
     "tick",            X_FUNCTION, XG_GameTick,
     "render",          X_FUNCTION, XG_GameRender,
     "in_level",        X_FUNCTION, XG_GameInLevel,
@@ -194,6 +233,7 @@ void XG_GameRegisterInterface(void) {
     "get_game_mode",   X_FUNCTION, XG_GameGetGameMode,
     "get_frag_limit",  X_FUNCTION, XG_GameGetFragLimit,
     "get_time_limit",  X_FUNCTION, XG_GameGetTimeLimit,
+    "get_players",     X_FUNCTION, XG_GameGetPlayers,
     "get_consoleplayer_messages", X_FUNCTION,
       XG_GameGetConsoleplayerMessages,
     "get_consoleplayer_messages_updated", X_FUNCTION,

@@ -328,7 +328,7 @@ local scoreboard_player_table_widget = TableWidget.TableWidget({
   right_margin = 12,
   screen_reference_point = InputInterface.REFERENCE_POINT_NORTH,
   origin_reference_point = InputInterface.REFERENCE_POINT_NORTH,
-  width = .7,
+  width = .9,
   height = .7,
   horizontal_alignment = TextWidget.ALIGN_CENTER,
   vertical_alignment = TextWidget.ALIGN_TOP,
@@ -354,44 +354,80 @@ scoreboard_player_table_widget:add_column()
 -- Time (minutes)
 scoreboard_player_table_widget:add_column()
 
--- JKist3
-scoreboard_player_table_widget:add_row()
-
--- Ladna
-scoreboard_player_table_widget:add_row()
-
 scoreboard_player_table_widget:get_cell(1, 2):set_text('Frags')
 scoreboard_player_table_widget:get_cell(1, 3):set_text('Deaths')
 scoreboard_player_table_widget:get_cell(1, 4):set_text('Ping')
 scoreboard_player_table_widget:get_cell(1, 5):set_text('Time')
 
-scoreboard_player_table_widget:get_cell(2, 1):set_text('JKist3')
-scoreboard_player_table_widget:get_cell(2, 2):set_text('28')
-scoreboard_player_table_widget:get_cell(2, 3):set_text('14')
-scoreboard_player_table_widget:get_cell(2, 4):set_text('17')
-scoreboard_player_table_widget:get_cell(2, 5):set_text('3')
+function scoreboard_player_table_widget:tick()
+  local current_player_count = (#self.rows) - 1
+  local players = d2k.Game.get_players()
+  local added_rows = false
 
-scoreboard_player_table_widget:get_cell(3, 1):set_text('Ladna')
-scoreboard_player_table_widget:get_cell(3, 2):set_text('14')
-scoreboard_player_table_widget:get_cell(3, 3):set_text('28')
-scoreboard_player_table_widget:get_cell(3, 4):set_text('59')
-scoreboard_player_table_widget:get_cell(3, 5):set_text('2')
+  table.sort(players, function(p1, p2)
+    if p1.frags > p2.frags then
+      return true
+    else
+      return false
+    end
+  end)
+
+  while #self.rows < (#players + 1) do
+    self:add_row()
+    added_rows = true
+  end
+
+  while #self.rows > (#players + 1) do
+    self:remove_row()
+  end
+
+  for i, player in ipairs(players) do
+    local row = i + 1
+    local name = player.name
+    local frags = tostring(player.frags)
+    local deaths = tostring(player.deaths)
+    local ping = tostring(player.ping)
+    local time = tostring(math.floor(player.time / 60))
+
+    local name_cell = self:get_cell(row, 1)
+    local frags_cell = self:get_cell(row, 2)
+    local deaths_cell = self:get_cell(row, 3)
+    local ping_cell = self:get_cell(row, 4)
+    local time_cell = self:get_cell(row, 5)
+
+    if name_cell:get_text() ~= name then
+      name_cell:set_text(name)
+    end
+
+    if frags_cell:get_text() ~= frags then
+      frags_cell:set_text(frags)
+    end
+
+    if deaths_cell:get_text() ~= deaths then
+      deaths_cell:set_text(deaths)
+    end
+
+    if ping_cell:get_text() ~= ping then
+      ping_cell:set_text(ping)
+    end
+
+    if time_cell:get_text() ~= time then
+      time_cell:set_text(time)
+    end
+  end
+
+  if added_rows then
+    self:set_cell_width(1.0 / 5.0)
+    self:set_cell_height(1.0 / 9.0)
+    self:set_column_horizontal_alignment(2, TextWidget.ALIGN_CENTER)
+    self:set_column_horizontal_alignment(3, TextWidget.ALIGN_CENTER)
+    self:set_column_horizontal_alignment(4, TextWidget.ALIGN_CENTER)
+    self:set_column_horizontal_alignment(5, TextWidget.ALIGN_CENTER)
+  end
+end
 
 scoreboard_player_table_widget:set_cell_width(1.0 / 5.0)
 scoreboard_player_table_widget:set_cell_height(1.0 / 9.0)
-
-scoreboard_player_table_widget:set_column_horizontal_alignment(
-  2, TextWidget.ALIGN_CENTER
-)
-scoreboard_player_table_widget:set_column_horizontal_alignment(
-  3, TextWidget.ALIGN_CENTER
-)
-scoreboard_player_table_widget:set_column_horizontal_alignment(
-  4, TextWidget.ALIGN_CENTER
-)
-scoreboard_player_table_widget:set_column_horizontal_alignment(
-  5, TextWidget.ALIGN_CENTER
-)
 
 scoreboard_player_table_widget:set_parent(scoreboard_widget)
 scoreboard_player_table_widget:set_y(scoreboard_title_widget:get_pixel_height() + 5)

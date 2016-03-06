@@ -763,5 +763,52 @@ void P_SetPlayerName(int playernum, const char *name) {
     SV_BroadcastPlayerNameChanged(playernum, players[playernum].name);
 }
 
+int P_PlayerGetFragCount(int playernum) {
+  int frag_count = 0;
+
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    for (int j = 0; j < MAXPLAYERS; j++) {
+      if (j == i) {
+        frag_count -= players[i].frags[j];
+      }
+      else {
+        frag_count += players[i].frags[j];
+      }
+    }
+  }
+
+  return frag_count;
+}
+
+int P_PlayerGetDeathCount(int playernum) {
+  int death_count = 0;
+
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    for (int j = 0; j < MAXPLAYERS; j++) {
+      if (j == i) {
+        death_count += players[i].frags[j];
+      }
+    }
+  }
+
+  return death_count;
+}
+
+int P_PlayerGetPing(int playernum) {
+  if (!MULTINET) {
+    return 0;
+  }
+
+  /* [CG] TODO */
+
+  return 0;
+}
+
+int P_PlayerGetTime(int playernum) {
+  /* [CG] TODO */
+
+  return 0;
+}
+
 /* vi: set et ts=2 sw=2: */
 
