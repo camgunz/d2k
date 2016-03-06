@@ -285,7 +285,39 @@ local scoreboard_title_widget = TextWidget.TextWidget({
 })
 
 scoreboard_title_widget:set_parent(scoreboard_widget)
-scoreboard_title_widget:set_text('DEATHMATCH\nFrag Limit: 50\tTime Limit: 30')
+
+function scoreboard_title_widget:tick()
+  local game_mode = d2k.Game.get_game_mode()
+
+  if game_mode ~= self.game_mode then
+    self.game_mode = game_mode
+    if self.game_mode == 'deathmatch' then
+      local frag_limit = d2k.Game.get_frag_limit() or 'None'
+      local time_limit = d2k.Game.get_time_limit() or 0
+
+      if time_limit ~= 0 then
+        local minutes = math.floor(time_limit / 60)
+        local seconds = math.floor(time_limit % 60)
+
+        time_limit = string.format('%d:%02d', minutes, seconds)
+      else
+        time_limit = 'None'
+      end
+
+      self:set_text(string.format('%s\nFrag Limit: %s\tTime Limit: %s',
+        string.upper(self.game_mode), frag_limit, time_limit
+      ))
+    elseif self.game_mode == 'cooperative' then
+      self:set_text(string.format('%s', string.upper(self.game_mode)))
+    elseif self.game_mode == 'solonet' then
+      self:set_text(string.format('%s', string.upper(self.game_mode)))
+    elseif self.game_mode == 'singleplayer' then
+      self:set_text(string.format('%s', string.upper(self.game_mode)))
+    end
+    self:handle_content_change()
+  end
+  TextWidget.TextWidget.tick(self)
+end
 
 local scoreboard_player_table_widget = TableWidget.TableWidget({
   name = 'scoreboard_player_table',

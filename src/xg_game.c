@@ -27,11 +27,57 @@
 #include "d_event.h"
 #include "d_player.h"
 #include "g_game.h"
+#include "m_argv.h"
+#include "p_spec.h"
 #include "p_user.h"
+#include "n_net.h"
 #include "x_main.h"
 
 static int XG_GameGetGametic(lua_State *L) {
   lua_pushinteger(L, gametic);
+
+  return 1;
+}
+
+static int XG_GameGetGameMode(lua_State *L) {
+  if (deathmatch) {
+    lua_pushstring(L, "deathmatch");
+  }
+  else if (MULTINET) {
+    lua_pushstring(L, "cooperative");
+  }
+  else if (solonet) {
+    lua_pushstring(L, "solonet");
+  }
+  else {
+    lua_pushstring(L, "singleplayer");
+  }
+
+  return 1;
+}
+
+static int XG_GameGetFragLimit(lua_State *L) {
+  if (deathmatch) {
+    lua_pushinteger(L, levelFragLimitCount);
+  }
+  else {
+    lua_pushnil(L);
+  }
+
+  return 1;
+}
+
+static int XG_GameGetTimeLimit(lua_State *L) {
+  int i = M_CheckParm("-timer"); /* user defined timer on game play */
+
+  if (i && deathmatch) {
+    int time = atoi(myargv[i + 1]) * 60;
+
+    lua_pushinteger(L, time);
+  }
+  else {
+    lua_pushinteger(L, 0);
+  }
 
   return 1;
 }
@@ -136,7 +182,7 @@ static int XG_GameInDemoScreen(lua_State *L) {
 }
 
 void XG_GameRegisterInterface(void) {
-  X_RegisterObjects("Game", 11,
+  X_RegisterObjects("Game", 14,
     "tick",            X_FUNCTION, XG_GameTick,
     "render",          X_FUNCTION, XG_GameRender,
     "in_level",        X_FUNCTION, XG_GameInLevel,
@@ -145,6 +191,9 @@ void XG_GameRegisterInterface(void) {
     "in_demoscreen",   X_FUNCTION, XG_GameInDemoScreen,
     "handle_event",    X_FUNCTION, XG_GameHandleEvent,
     "get_gametic",     X_FUNCTION, XG_GameGetGametic,
+    "get_game_mode",   X_FUNCTION, XG_GameGetGameMode,
+    "get_frag_limit",  X_FUNCTION, XG_GameGetFragLimit,
+    "get_time_limit",  X_FUNCTION, XG_GameGetTimeLimit,
     "get_consoleplayer_messages", X_FUNCTION,
       XG_GameGetConsoleplayerMessages,
     "get_consoleplayer_messages_updated", X_FUNCTION,
