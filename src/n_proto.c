@@ -32,6 +32,7 @@
 #include "d_main.h"
 #include "d_ticcmd.h"
 #include "g_game.h"
+#include "m_misc.h"
 #include "n_net.h"
 #include "n_main.h"
 #include "n_state.h"
@@ -355,6 +356,23 @@ static void handle_sync(netpeer_t *np) {
     N_UnpackSync(np);
 }
 
+static void handle_ping(netpeer_t *np) {
+  double now = M_GetCurrentTime();
+  double server_time;
+
+  if (!N_UnpackPing(np, &server_time)) {
+    return;
+  }
+
+  if (CLIENT) {
+    CL_SendPing(server_time);
+  }
+
+  if (SERVER) {
+    players[np->playernum].ping = (int)((now - server_time) * 1000);
+  }
+}
+
 static void handle_player_preference_change(netpeer_t *np) {
   static buf_t *pref_key_name = NULL;
   static buf_t *pref_key_value = NULL;
@@ -500,6 +518,8 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
         SERVER_ONLY("vote request");
         handle_vote_request(np);
       break;
+      case nm_ping:
+        handle_ping(np);
       default:
         P_Printf(consoleplayer,
           "Received unknown message type %u from peer %s:%u.\n",
@@ -586,6 +606,14 @@ void SV_SendAuthResponse(unsigned short playernum, auth_level_e auth_level) {
   CHECK_VALID_PLAYER(np, playernum);
 
   N_PackAuthResponse(np, auth_level);
+}
+
+void SV_SendPing(unsigned short playernum) {
+  double now = M_GetCurrentTime();
+  netpeer_t *np = NULL;
+  CHECK_VALID_PLAYER(np, playernum);
+
+  N_PackPing(np, now);
 }
 
 void SV_SendMessage(unsigned short playernum, const char *message) {
@@ -698,6 +726,13 @@ void CL_SendTeamChange(unsigned char new_team) {
   CHECK_CONNECTION(np);
 
   N_PackTeamChange(np, consoleplayer, new_team);
+}
+
+void CL_SendPing(double server_time) {
+  netpeer_t *np = NULL;
+  CHECK_CONNECTION(np);
+
+  N_PackPing(np, server_time);
 }
 
 void SV_BroadcastPlayerTeamChanged(unsigned short playernum,

@@ -158,6 +158,8 @@ extern int bytes_per_tic;
 extern int speed_step;
 extern int autorun;           // always running?                   // phares
 
+extern time_t level_start_time; // CG
+
 #endif
 
 /* vi: set et ts=2 sw=2: */

@@ -32,6 +32,8 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
 void     N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level);
 dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level);
 
+void     N_PackPing(netpeer_t *np, double server_time);
+dboolean N_UnpackPing(netpeer_t *np, double *server_time);
 
 void     N_PackChatMessage(netpeer_t *np, const char *message);
 void     N_PackRelayedChatMessage(netpeer_t *np, unsigned short sender,

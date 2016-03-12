@@ -456,6 +456,32 @@ void SV_DisconnectLaggedClients(void) {
   }
 }
 
+void SV_UpdatePings(void) {
+  if (!SERVER) {
+    return;
+  }
+
+  if ((gametic % (TICRATE / 2)) != 0) {
+    return;
+  }
+
+  NETPEER_FOR_EACH(iter) {
+    int playernum;
+
+    if (!iter.np->sync.initialized) {
+      continue;
+    }
+
+    playernum = iter.np->playernum;
+
+    if (playernum == consoleplayer) {
+      continue;
+    }
+
+    SV_SendPing(playernum);
+  }
+}
+
 bool N_TryRunTics(void) {
   static int tics_built = 0;
 
@@ -479,6 +505,7 @@ bool N_TryRunTics(void) {
 
     process_tics(tics_elapsed);
 
+    SV_UpdatePings();
     SV_CleanupOldCommandsAndStates();
     SV_DisconnectLaggedClients();
 

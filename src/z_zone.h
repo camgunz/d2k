@@ -83,6 +83,7 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <time.h>
 
 #ifdef HAVE_ASM_BYTEORDER_H

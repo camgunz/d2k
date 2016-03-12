@@ -190,6 +190,7 @@ int             autorun = false;      // always running?          // phares
 int             totalleveltimes;      // CPhipps - total time for all completed levels
 int             longtics;
 int             bytes_per_tic;
+time_t          level_start_time;
 
 // e6y
 // There is a new command-line switch "-shorttics".
@@ -932,6 +933,7 @@ static void G_DoLoadLevel(void) {
     wipegamestate = -1;             // force a wipe
 
   gamestate = GS_LEVEL;
+  level_start_time = time(NULL);
 
   for (i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i] && players[i].playerstate == PST_DEAD)

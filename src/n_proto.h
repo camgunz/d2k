@@ -36,7 +36,7 @@
 #define nm_authrequest            6
 #define nm_rconcommand            7
 #define nm_voterequest            8
-#define nm_netstats               9
+#define nm_ping                   9
 
 void N_InitProtocol(void);
 void N_HandlePacket(int peernum, void *data, size_t data_size);
@@ -47,6 +47,7 @@ void SV_SendSetup(unsigned short playernum);
 void SV_SendStateDelta(unsigned short playernum);
 void SV_SendFullState(unsigned short playernum);
 void SV_SendAuthResponse(unsigned short playernum, auth_level_e auth_level);
+void SV_SendPing(unsigned short playernum);
 void SV_SendMessage(unsigned short playernum, const char *message);
 void SV_BroadcastMessage(const char *message);
 void SV_BroadcastPrintf(const char *fmt, ...) PRINTF_DECL(1, 2);
@@ -73,6 +74,7 @@ void SV_BroadcastPlayerSkinChanged(unsigned short playernum);
 void SV_BroadcastStateUpdates(void);
 void SV_ResyncPeers(void);
 
+void CL_SendPing(double server_time);
 void CL_SendMessageToServer(const char *message);
 void CL_SendMessageToPlayer(unsigned short recipient, const char *message);
 void CL_SendMessageToTeam(const char *message);

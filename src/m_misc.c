@@ -1189,6 +1189,18 @@ int numdefaults;
 static char* defaultfile; // CPhipps - static, const
 
 //
+// M_GetCurrentTime
+//
+
+double M_GetCurrentTime(void) {
+  struct timeval tv;
+
+  gettimeofday(&tv, NULL);
+
+  return tv.tv_sec + (((double)tv.tv_usec) / 1000000.0);
+}
+
+//
 // M_SaveDefaults
 //
 

@@ -25,9 +25,12 @@
 #define M_MISC_H__
 
 #include "doomtype.h"
+
 //
 // MISC
 //
+
+double M_GetCurrentTime(void);
 
 void M_ScreenShot (void);
 void M_DoScreenShot (const char*); // cph

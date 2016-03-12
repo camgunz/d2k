@@ -23,6 +23,8 @@
 
 #include "z_zone.h"
 
+#include <enet/enet.h>
+
 #include "doomstat.h"
 #include "d_event.h"
 #include "c_main.h"
@@ -33,6 +35,8 @@
 #include "i_system.h"
 #include "n_net.h"
 #include "n_main.h"
+#include "n_state.h"
+#include "n_peer.h"
 #include "n_proto.h"
 #include "cl_main.h"
 #include "p_cmd.h"
@@ -198,7 +202,7 @@ void P_CalcHeight(player_t *player) {
 
   //e6y
   if (!prboom_comp[PC_PRBOOM_FRICTION].state &&
-      compatibility_level >= boom_202_compatibility && 
+      compatibility_level >= boom_202_compatibility &&
       compatibility_level <= lxdoom_1_compatibility &&
       player->mo->friction > ORIG_FRICTION) { // ice?
     if (player->bob > (MAXBOB >> 2))
@@ -331,7 +335,7 @@ void P_MovePlayer(player_t *player) {
   //e6y
   if ((!demo_compatibility &&
        !mbf_features &&
-       !prboom_comp[PC_PRBOOM_FRICTION].state) || 
+       !prboom_comp[PC_PRBOOM_FRICTION].state) ||
       (cmd->forwardmove | cmd->sidemove)) { // killough 10/98
     if (onground || mo->flags & MF_BOUNCES || (mo->flags & MF_FLY)) {
       // killough 8/9/98
@@ -795,19 +799,24 @@ int P_PlayerGetDeathCount(int playernum) {
 }
 
 int P_PlayerGetPing(int playernum) {
-  if (!MULTINET) {
-    return 0;
-  }
-
-  /* [CG] TODO */
-
-  return 0;
+  return players[playernum].ping;
 }
 
 int P_PlayerGetTime(int playernum) {
-  /* [CG] TODO */
+  time_t now = time(NULL);
+  netpeer_t *peer;
 
-  return 0;
+  if (!MULTINET) {
+    return (int)difftime(now, level_start_time);
+  }
+
+  peer = N_PeerForPlayer(playernum);
+
+  if (!peer) {
+    return 0;
+  }
+
+  return (int)difftime(now, peer->connect_time);
 }
 
 /* vi: set et ts=2 sw=2: */

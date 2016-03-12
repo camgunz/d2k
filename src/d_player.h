@@ -210,6 +210,7 @@ typedef struct player_s
   int            command_limit;
   int            commands_run_this_tic;
   int            latest_command_run_index;
+  int            ping;
 } player_t;
 
 //

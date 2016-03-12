@@ -23,11 +23,15 @@
 
 #include "z_zone.h"
 
+#include <enet/enet.h>
+
 #include "doomstat.h"
 #include "am_map.h"
 #include "g_game.h"
 #include "m_random.h"
 #include "n_net.h"
+#include "n_state.h"
+#include "n_peer.h"
 #include "cl_main.h"
 #include "p_cmd.h"
 #include "p_enemy.h"
@@ -197,6 +201,13 @@ static void serialize_player(pbuf_t *savebuffer, int playernum) {
   if (command_count > 0)
     P_ForEachCommand(playernum, serialize_command, savebuffer);
   M_PBufWriteInt(savebuffer, player->latest_command_run_index);
+
+  if (MULTINET) {
+    M_PBufWriteInt(savebuffer, player->ping);
+  }
+  else {
+    M_PBufWriteInt(savebuffer, 0);
+  }
 }
 
 static void deserialize_player(pbuf_t *savebuffer, int playernum) {
@@ -320,6 +331,15 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
   }
 
   M_PBufReadInt(savebuffer, &player->latest_command_run_index);
+
+  if (MULTINET) {
+    M_PBufReadInt(savebuffer, &player->ping);
+  }
+  else {
+    int ping;
+
+    M_PBufReadInt(savebuffer, &ping);
+  }
 }
 
 static void serialize_actor_pointers(pbuf_t *savebuffer, mobj_t *mobj) {
@@ -980,8 +1000,9 @@ static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
 //
 void P_ArchivePlayers(pbuf_t *savebuffer) {
   for (int i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i])
+    if (playeringame[i]) {
       serialize_player(savebuffer, i);
+    }
   }
 }
 
@@ -990,8 +1011,9 @@ void P_ArchivePlayers(pbuf_t *savebuffer) {
 //
 void P_UnArchivePlayers(pbuf_t *savebuffer) {
   for (int i = 0; i < MAXPLAYERS; i++) {
-    if (!playeringame[i])
+    if (!playeringame[i]) {
       continue;
+    }
 
     deserialize_player(savebuffer, i);
 

@@ -544,6 +544,25 @@ dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
   return true;
 }
 
+void N_PackPing(netpeer_t *np, double server_time) {
+  pbuf_t *pbuf = N_PeerBeginMessage(
+    np->peernum, NET_CHANNEL_UNRELIABLE, nm_ping
+  );
+
+  M_PBufWriteDouble(pbuf, server_time);
+}
+
+dboolean N_UnpackPing(netpeer_t *np, double *server_time) {
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  double m_server_time;
+
+  read_double(pbuf, m_server_time, "server time");
+
+  *server_time = m_server_time;
+
+  return true;
+}
+
 void N_PackChatMessage(netpeer_t *np, const char *message) {
   pbuf_t *pbuf = N_PeerBeginMessage(
     np->peernum, NET_CHANNEL_RELIABLE, nm_chatmessage

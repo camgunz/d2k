@@ -387,7 +387,9 @@ function scoreboard_player_table_widget:tick()
     local frags = tostring(player.frags)
     local deaths = tostring(player.deaths)
     local ping = tostring(player.ping)
-    local time = tostring(math.floor(player.time / 60))
+    local time = string.format('%02d:%02d',
+      math.floor(player.time / 60), math.floor(player.time % 60)
+    )
 
     local name_cell = self:get_cell(row, 1)
     local frags_cell = self:get_cell(row, 2)
