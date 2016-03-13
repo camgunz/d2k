@@ -495,7 +495,11 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       continue;
     }
 
-    N_PeerFlushBuffers(np->peernum);
+    if ((gametic % 35) == 0) {
+      N_PeerFlushUnreliableChannel(np);
+    }
+
+    N_PeerFlushReliableChannel(np);
   }
 
   while (net_host != NULL) {

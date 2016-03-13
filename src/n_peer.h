@@ -53,6 +53,8 @@ typedef struct netpeer_s {
   netsync_t     sync;
   time_t        connect_time;
   time_t        disconnect_time;
+  unsigned int  bytes_uploaded;
+  unsigned int  bytes_downloaded;
 } netpeer_t;
 
 typedef void netpeer_iter_t;
@@ -79,7 +81,8 @@ netpeer_t*   N_PeerForPlayer(short playernum);
 unsigned int N_PeerGetNumForPlayer(short playernum);
 bool         N_PeerIter(netpeer_iter_t **it, netpeer_t **np);
 bool         N_PeerCheckTimeout(int peernum);
-void         N_PeerFlushBuffers(int peernum);
+void         N_PeerFlushReliableChannel(netpeer_t *np);
+void         N_PeerFlushUnreliableChannel(netpeer_t *np);
 pbuf_t*      N_PeerBeginMessage(int peernum, net_channel_e chan_type,
                                             unsigned char type);
 ENetPacket*  N_PeerGetPacket(int peernum, net_channel_e chan_type);

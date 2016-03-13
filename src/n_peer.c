@@ -225,10 +225,12 @@ unsigned int N_PeerAdd(void) {
   while (g_hash_table_contains(net_peers, GUINT_TO_POINTER(np->peernum)))
     np->peernum++;
 
-  np->playernum       = 0;
-  np->peer            = NULL;
-  np->connect_time    = time(NULL);
-  np->disconnect_time = 0;
+  np->playernum         = 0;
+  np->peer              = NULL;
+  np->connect_time      = time(NULL);
+  np->disconnect_time   = 0;
+  np->bytes_uploaded    = 0;
+  np->bytes_downloaded  = 0;
 
   g_hash_table_insert(net_peers, GUINT_TO_POINTER(np->peernum), np);
 
@@ -383,28 +385,30 @@ bool N_PeerCheckTimeout(int peernum) {
   return false;
 }
 
-void N_PeerFlushBuffers(int peernum) {
-  netpeer_t *np = N_PeerGet(peernum);
-
-  if (np == NULL)
+void N_PeerFlushReliableChannel(netpeer_t *np) {
+  if (channel_empty(&np->netcom.reliable)) {
     return;
-
-  if (!channel_empty(&np->netcom.reliable)) {
-    enet_peer_send(
-      np->peer,
-      NET_CHANNEL_RELIABLE,
-      N_PeerGetPacket(peernum, NET_CHANNEL_RELIABLE)
-    );
-    clear_channel(&np->netcom.reliable);
   }
 
-  if (!channel_empty(&np->netcom.unreliable)) {
-    enet_peer_send(
-      np->peer,
-      NET_CHANNEL_UNRELIABLE,
-      N_PeerGetPacket(peernum, NET_CHANNEL_UNRELIABLE)
-    );
+  enet_peer_send(
+    np->peer,
+    NET_CHANNEL_RELIABLE,
+    N_PeerGetPacket(np->peernum, NET_CHANNEL_RELIABLE)
+  );
+
+  clear_channel(&np->netcom.reliable);
+}
+
+void N_PeerFlushUnreliableChannel(netpeer_t *np) {
+  if (channel_empty(&np->netcom.unreliable)) {
+    return;
   }
+
+  enet_peer_send(
+    np->peer,
+    NET_CHANNEL_UNRELIABLE,
+    N_PeerGetPacket(np->peernum, NET_CHANNEL_UNRELIABLE)
+  );
 }
 
 pbuf_t* N_PeerBeginMessage(int peernum, net_channel_e chan_type,
@@ -469,6 +473,8 @@ ENetPacket* N_PeerGetPacket(int peernum, net_channel_e chan_type) {
     );
   }
 
+  np->bytes_uploaded += packet_size;
+
   memcpy(packet->data, M_PBufGetData(&chan->packed_toc), toc_size);
   memcpy(packet->data + toc_size, M_PBufGetData(&chan->messages), msg_size);
 
@@ -492,6 +498,8 @@ bool N_PeerLoadIncoming(int peernum, unsigned char *data, size_t size) {
 
   if (np == NULL)
     I_Error("N_PeerLoadIncoming: Invalid peer number %d.\n", peernum);
+
+  np->bytes_downloaded += size;
 
   incoming = &np->netcom.incoming;
   clear_channel(incoming);

@@ -201,6 +201,8 @@ function netstats_widget:tick()
   if time_elapsed >= 1000 then
     local netstats = d2k.Client.get_netstats()
 
+    d2k.Client.clear_netstats()
+
     if netstats ~= nil then
       netstats.upload = netstats.upload / 1000
       netstats.download = netstats.download / 1000

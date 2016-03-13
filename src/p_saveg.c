@@ -714,8 +714,11 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
 
   M_PBufWriteUInt(savebuffer, mobj->id);
 
-  if (mobj->state < states)
-    I_Error("Invalid mobj state %p (%td, %d, %u)", mobj->state, mobj->state - states, mobj->type, mobj->id);
+  if (mobj->state < states) {
+    I_Error("Invalid mobj state %p (%td, %d, %u)",
+      mobj->state, mobj->state - states, mobj->type, mobj->id
+    );
+  }
 
   state_index = (uint_64_t)(mobj->state - states);
 

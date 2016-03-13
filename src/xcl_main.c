@@ -102,7 +102,7 @@ static int XCL_SetBobbing(lua_State *L) {
   return 0;
 }
 
-static int XCL_GetNetStats(lua_State *L) {
+static int XCL_GetNetstats(lua_State *L) {
   netpeer_t *server = NULL;
   float packet_loss;
   float packet_loss_jitter;
@@ -120,10 +120,10 @@ static int XCL_GetNetStats(lua_State *L) {
 
   lua_createtable(L, 0, 18);
 
-  lua_pushinteger(L, N_GetUploadBandwidth());
+  lua_pushinteger(L, server->bytes_uploaded);
   lua_setfield(L, -2, "upload");
 
-  lua_pushinteger(L, N_GetDownloadBandwidth());
+  lua_pushinteger(L, server->bytes_downloaded);
   lua_setfield(L, -2, "download");
 
   lua_pushinteger(L, server->peer->lowestRoundTripTime);
@@ -181,8 +181,27 @@ static int XCL_GetNetStats(lua_State *L) {
   return 1;
 }
 
+int XCL_ClearNetstats(lua_State *L) {
+  netpeer_t *server = NULL;
+
+  if (!CLIENT) {
+    return 0;
+  }
+
+  server = CL_GetServerPeer();
+
+  if (!server) {
+    return 0;
+  }
+
+  server->bytes_uploaded = 0;
+  server->bytes_downloaded = 0;
+
+  return 0;
+}
+
 void XCL_RegisterInterface(void) {
-  X_RegisterObjects("Client", 8,
+  X_RegisterObjects("Client", 9,
     "say",                 X_FUNCTION, XCL_Say,
     "say_to",              X_FUNCTION, XCL_SayToPlayer,
     "say_to_server",       X_FUNCTION, XCL_SayToServer,
@@ -190,7 +209,8 @@ void XCL_RegisterInterface(void) {
     "set_name",            X_FUNCTION, XCL_SetName,
     "set_team",            X_FUNCTION, XCL_SetTeam,
     "set_bobbing",         X_FUNCTION, XCL_SetBobbing,
-    "get_netstats",        X_FUNCTION, XCL_GetNetStats
+    "get_netstats",        X_FUNCTION, XCL_GetNetstats,
+    "clear_netstats",      X_FUNCTION, XCL_ClearNetstats
   );
 }
 
