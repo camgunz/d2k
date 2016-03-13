@@ -10,6 +10,7 @@ yaourt --noconfirm -S clang \
                       sdl \
                       sdl_mixer \
                       sdl_image \
+                      libwebp \
                       libmad \
                       fluidsynth \
                       portmidi \
