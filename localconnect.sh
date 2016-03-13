@@ -1,18 +1,27 @@
+#!/bin/sh
+
 # export LIBGL_ALWAYS_SOFTWARE=1
 export SDL_AUDIODRIVER="pulse"
 
+BASE_DIR="$(pwd)"
+
 PORT=10667
 PORT=10666
+HOST=totaltrash.org
+HOST=45.33.60.48
 HOST=127.0.0.1
 
-EXE="/home/charlie/code/d2k/cbuild/d2k"
-CMD="$EXE -net $HOST:$PORT"
-CMD="$EXE -file freedm.wad -nomouse -net $HOST:$PORT"
+CMD="${BASE_DIR}/cbuild/d2k -nomouse -net ${HOST}:${PORT}"
+
+mkdir -p ~/.d2k/scripts
+mkdir -p ~/.d2k/fonts
+
+cp "${BASE_DIR}/scripts/"* ~/.d2k/scripts/
+cp "${BASE_DIR}/fonts/"* ~/.d2k/fonts/
 
 # gdb -ex "source gdbclient.txt" --args $CMD
-gdb -ex run --args $CMD
-# gdb --args $CMD
+# gdb -ex run --args $CMD
 # valgrind --track-origins=yes --leak-check=yes $CMD
 # CPUPROFILE=cpu.prof $CMD
-# $CMD
+$CMD
 

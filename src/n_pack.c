@@ -546,7 +546,7 @@ dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
 
 void N_PackPing(netpeer_t *np, double server_time) {
   pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_UNRELIABLE, nm_ping
+    np->peernum, NET_CHANNEL_RELIABLE, nm_ping
   );
 
   M_PBufWriteDouble(pbuf, server_time);

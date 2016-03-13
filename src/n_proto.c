@@ -369,7 +369,9 @@ static void handle_ping(netpeer_t *np) {
   }
 
   if (SERVER) {
-    players[np->playernum].ping = (int)((now - server_time) * 1000);
+    double ping = (now - server_time) * 1000;
+
+    players[np->playernum].ping = (int)ping;
   }
 }
 
