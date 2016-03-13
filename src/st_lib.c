@@ -51,15 +51,8 @@ void STlib_init(void)
 // to the value displayed, a pointer to the on/off control, and the width
 // Returns nothing
 //
-void STlib_initNum
-( st_number_t* n,
-  int x,
-  int y,
-  const patchnum_t* pl,
-  int* num,
-  dboolean* on,
-  int     width )
-{
+void STlib_initNum(st_number_t *n, int x, int y, const patchnum_t *pl,
+                                   int *num, bool *on, int width) {
   n->x  = x;
   n->y  = y;
   n->oldnum = 0;
@@ -82,36 +75,31 @@ void STlib_initNum
  * jff 2/16/98 add color translation to digit output
  * cphipps 10/99 - const pointer to colour trans table, made function static
  */
-static void STlib_drawNum
-( st_number_t*  n,
-  int cm,
-  dboolean refresh )
-{
-
-  int   numdigits = n->width;
-  int   num = *n->num;
-
-  int   w = n->p[0].width;
-  int   h = n->p[0].height;
-  int   x = n->x;
-
-  int   neg;
+static void STlib_drawNum(st_number_t *n, int cm, bool refresh) {
+  int numdigits = n->width;
+  int num = *n->num;
+  int w = n->p[0].width;
+  int h = n->p[0].height;
+  int x = n->x;
+  int neg;
 
   // leban 1/20/99:
   // strange that somebody went through all the work to draw only the
   // differences, and then went and constantly redrew all the numbers.
   // return without drawing if the number didn't change and the bar
   // isn't refreshing.
-  if(n->oldnum == num && !refresh)
+  if (n->oldnum == num && !refresh) {
     return;
+  }
 
   // CPhipps - compact some code, use num instead of *n->num
-  if ((neg = (n->oldnum = num) < 0))
-  {
-    if (numdigits == 2 && num < -9)
+  if ((neg = (n->oldnum = num) < 0)) {
+    if (numdigits == 2 && num < -9) {
       num = -9;
-    else if (numdigits == 3 && num < -99)
+    }
+    else if (numdigits == 3 && num < -99) {
       num = -99;
+    }
 
     num = -num;
   }
@@ -120,24 +108,31 @@ static void STlib_drawNum
   x = n->x - numdigits*w;
 
 #ifdef RANGECHECK
-  if (n->y - ST_Y < 0)
+  if (n->y - ST_Y < 0) {
     I_Error("STlib_drawNum: n->y - ST_Y < 0");
+  }
 #endif
 
   V_CopyRect(BG, FG, x, n->y, w * numdigits, h, VPT_STRETCH | VPT_ALIGN_BOTTOM);
 
   // if non-number, do not draw it
-  if (num == 1994)
+  if (num == 1994) {
     return;
+  }
 
   x = n->x;
 
   //jff 2/16/98 add color translation to digit output
   // in the special case of 0, you draw 0
-  if (!num)
+  if (!num) {
     // CPhipps - patch drawing updated, reformatted
-    V_DrawNumPatch(x - w, n->y, FG, n->p[0].lumpnum, cm,
-       (((cm!=CR_DEFAULT) && !sts_always_red) ? VPT_TRANS : VPT_NONE) | VPT_ALIGN_BOTTOM);
+    V_DrawNumPatch(x - w, n->y, FG, n->p[0].lumpnum, cm, (
+        ((cm != CR_DEFAULT) && !sts_always_red) ?
+        VPT_TRANS :
+        VPT_NONE
+      ) | VPT_ALIGN_BOTTOM
+    );
+  }
 
   // draw the new number
   //jff 2/16/98 add color translation to digit output
@@ -152,9 +147,10 @@ static void STlib_drawNum
   // draw a minus sign if necessary
   //jff 2/16/98 add color translation to digit output
   // cph - patch drawing updated, load by name instead of acquiring pointer earlier
-  if (neg)
+  if (neg) {
     V_DrawNamePatch(x - w, n->y, FG, "STTMINUS", cm,
        (((cm!=CR_DEFAULT) && !sts_always_red) ? VPT_TRANS : VPT_NONE) | VPT_ALIGN_BOTTOM);
+  }
 }
 
 /*
@@ -171,7 +167,7 @@ static void STlib_drawNum
 void STlib_updateNum
 ( st_number_t*    n,
   int cm,
-  dboolean   refresh )
+  bool   refresh )
 {
   if (*n->on) STlib_drawNum(n, cm, refresh);
 }
@@ -192,7 +188,7 @@ void STlib_initPercent
   int y,
   const patchnum_t* pl,
   int* num,
-  dboolean* on,
+  bool* on,
   const patchnum_t* percent )
 {
   STlib_initNum(&p->n, x, y, pl, num, on, 3);
@@ -244,7 +240,7 @@ void STlib_initMultIcon
   int y,
   const patchnum_t* il,
   int* inum,
-  dboolean* on )
+  bool* on )
 {
   i->x  = x;
   i->y  = y;
@@ -266,7 +262,7 @@ void STlib_initMultIcon
 //
 void STlib_updateMultIcon
 ( st_multicon_t*  mi,
-  dboolean   refresh )
+  bool   refresh )
 {
   int w;
   int h;
@@ -310,8 +306,8 @@ void STlib_initBinIcon
   int x,
   int y,
   const patchnum_t* i,
-  dboolean* val,
-  dboolean* on )
+  bool* val,
+  bool* on )
 {
   b->x  = x;
   b->y  = y;
@@ -336,7 +332,7 @@ void STlib_initBinIcon
 //
 void STlib_updateBinIcon
 ( st_binicon_t*   bi,
-  dboolean   refresh )
+  bool   refresh )
 {
   int     x;
   int     y;

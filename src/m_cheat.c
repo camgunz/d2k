@@ -845,18 +845,20 @@ static void cht_InitCheats(void) {
     boom_cheat_route[boom_202_compatibility] = 1;
     boom_cheat_route[mbf_compatibility] = 1;
 
-    for (cht = cheat; cht->cheat; cht++)
+    for (cht = cheat; cht->cheat; cht++) {
       cht->deh_sequence_len = strlen(cht->cheat);
+    }
   }
 }
 
-dboolean M_FindCheats(int key) {
+bool M_FindCheats(int key) {
   cht_InitCheats();
 
-  if (boom_cheat_route[compatibility_level])
+  if (boom_cheat_route[compatibility_level]) {
     return M_FindCheats_Boom(key);
-  else
-    return M_FindCheats_Doom(key);
+  }
+
+  return M_FindCheats_Doom(key);
 }
 
 /* vi: set et ts=2 sw=2: */

@@ -24,11 +24,11 @@
 #ifndef G_SAVE_H__
 #define G_SAVE_H__
 
-void     G_UpdateAverageSaveSize(int new_size);
-int      G_GetAverageSaveSize(void);
-dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
-                                            dboolean init_new);
-void     G_WriteSaveData(pbuf_t *savebuffer);
+void G_UpdateAverageSaveSize(int new_size);
+int  G_GetAverageSaveSize(void);
+bool G_ReadSaveData(pbuf_t *savebuffer, bool bail_on_errors,
+                                        bool init_new);
+void G_WriteSaveData(pbuf_t *savebuffer);
 
 #endif
 

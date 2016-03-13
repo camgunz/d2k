@@ -87,7 +87,7 @@ extern int render_patches_scaley;
 // user preferences. The integer ratio is hardly used anymore, so further
 // simplification may be in order.
 void SetRatio(int width, int height);
-extern dboolean tallscreen;
+extern bool tallscreen;
 extern unsigned int ratio_multiplier, ratio_scale;
 extern float gl_ratio;
 extern int psprite_offset; // Needed for "tallscreen" modes
@@ -122,7 +122,7 @@ typedef enum
 
 typedef struct {
   byte *data;          // pointer to the screen content
-  dboolean not_on_heap; // if set, no malloc or free is preformed and
+  bool not_on_heap; // if set, no malloc or free is preformed and
                        // data never set to NULL. Used i.e. with SDL doublebuffer.
   int width;           // the width of the surface
   int height;          // the height of the surface, used when mallocing

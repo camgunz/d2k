@@ -236,7 +236,7 @@ int P_WeaponPreferred(int w1, int w2) {
 // (only in demo_compatibility mode -- killough 3/22/98)
 //
 
-dboolean P_CheckAmmo(player_t *player) {
+bool P_CheckAmmo(player_t *player) {
   ammotype_t ammo  = weaponinfo[player->readyweapon].ammo;
   int        count = 1;  // Regular
 
@@ -712,14 +712,14 @@ static void P_BulletSlope(mobj_t *mo) {
 // P_GunShot
 //
 
-static void P_GunShot(mobj_t *mo, dboolean accurate)
-{
+static void P_GunShot(mobj_t *mo, bool accurate) {
   int damage = 5 * (P_Random(pr_gunshot) % 3 + 1);
   angle_t angle = mo->angle;
 
   if (!accurate) {  // killough 5/5/98: remove dependence on order of evaluation:
     int t = P_Random(pr_misfire);
-    angle += (t - P_Random(pr_misfire))<<18;
+
+    angle += (t - P_Random(pr_misfire)) << 18;
   }
 
   P_LineAttack(mo, angle, MISSILERANGE, bulletslope, damage);

@@ -42,14 +42,14 @@ extern char savedescription[SAVEDESCLEN];
 
 // killough 5/15/98: forced loadgames
 void G_ForcedLoadGame(void);
-void G_DoSaveGame(dboolean menu);
+void G_DoSaveGame(bool menu);
 void G_DoLoadGame(void);
 // Called by M_Responder.
 void G_SaveGame(int slot, char *description);
 // killough 5/15/98
-void G_LoadGame(int slot, dboolean is_command);
+void G_LoadGame(int slot, bool is_command);
 /* killough 3/22/98: sets savegame filename */
-int G_SaveGameName(char *name, size_t size, int slot, dboolean demoplayback);
+int G_SaveGameName(char *name, size_t size, int slot, bool demoplayback);
 
 //
 // GAME
@@ -70,8 +70,8 @@ int G_SaveGameName(char *name, size_t size, int slot, dboolean demoplayback);
 
 #define MAX_NAME_LENGTH 255
 
-dboolean G_Responder(event_t *ev);
-dboolean G_CheckDemoStatus(void);
+bool G_Responder(event_t *ev);
+bool G_CheckDemoStatus(void);
 void G_ClearCorpses(void);
 void G_DeathMatchSpawnPlayer(int playernum);
 void G_InitNew(skill_t skill, int episode, int map);
@@ -106,13 +106,13 @@ void G_BuildTiccmd(ticcmd_t *cmd); // CPhipps - move decl to header
 void G_ChangedPlayerColour(int pn, int cl); // CPhipps - On-the-fly player colour changing
 void G_MakeSpecialEvent(buttoncode_t bc, ...); /* cph - new event stuff */
 
-extern dboolean forced_loadgame;
-extern dboolean command_loadgame;
+extern bool forced_loadgame;
+extern bool command_loadgame;
 
 extern int totalleveltimes;
 
 //e6y
-extern dboolean democontinue;
+extern bool democontinue;
 extern char* demo_continue_name;
 void G_CheckDemoContinue(void);
 void G_SetSpeed(void);
@@ -127,10 +127,10 @@ void G_CalculateDemoParams(const byte *demo_p);
 // killough 5/2/98: moved from m_misc.c:
 
 /* CG: This is set to true when graphics have been initialized */
-extern dboolean graphics_initialized;
+extern bool graphics_initialized;
 
 extern int  defaultskill;      //jff 3/24/98 default skill
-extern dboolean haswolflevels;  //jff 4/18/98 wolf levels present
+extern bool haswolflevels;  //jff 4/18/98 wolf levels present
 
 extern GQueue *corpse_queue;
 extern int corpse_queue_size;       // killough 2/8/98: adustable corpse limit

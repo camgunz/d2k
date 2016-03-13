@@ -379,7 +379,7 @@ void gld_DrawSkyCaps(void)
 {
   if (SkyBox.type && SkyBox.wall.gltexture)
   {             
-    dboolean mlook = GetMouseLook();
+    bool mlook = GetMouseLook();
 
     if (mlook)
     {
@@ -568,10 +568,10 @@ void gld_DrawScreenSkybox(void)
 
 // The texture offset to be applied to the texture coordinates in SkyVertex().
 static int rows, columns;	
-static dboolean yflip;
+static int yflip;
 static int texw;
 static float yMult, yAdd;
-static dboolean foglayer;
+static bool foglayer;
 static float delta = 0.0f;
 
 int gl_sky_detail = 16;

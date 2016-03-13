@@ -57,7 +57,7 @@ CrossSubsectorFunc P_CrossSubsector;
 ==============
 */
 
-dboolean PTR_SightTraverse(intercept_t *in)
+bool PTR_SightTraverse(intercept_t *in)
 {
   line_t *li;
   fixed_t slope;
@@ -102,7 +102,7 @@ dboolean PTR_SightTraverse(intercept_t *in)
 ===================
 */
 
-dboolean P_SightBlockLinesIterator(int x, int y)
+bool P_SightBlockLinesIterator(int x, int y)
 {
   int offset;
   int *list;
@@ -155,7 +155,7 @@ dboolean P_SightBlockLinesIterator(int x, int y)
 ====================
 */
 
-dboolean P_SightTraverseIntercepts(void)
+bool P_SightTraverseIntercepts(void)
 {
   int count;
   fixed_t dist;
@@ -207,7 +207,7 @@ dboolean P_SightTraverseIntercepts(void)
 ==================
 */
 
-dboolean P_SightPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
+bool P_SightPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
 {
   fixed_t xt1,yt1,xt2,yt2;
   fixed_t xstep,ystep;
@@ -339,7 +339,7 @@ dboolean P_SightPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
 =====================
 */
 
-dboolean P_CheckSight_12(mobj_t *t1, mobj_t *t2)
+bool P_CheckSight_12(mobj_t *t1, mobj_t *t2)
 {
   int s1, s2;
   int pnum, bytenum, bitnum;
@@ -470,7 +470,7 @@ INLINE static int P_DivlineCrossed(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y
 //
 // killough 4/19/98: made static and cleaned up
 
-dboolean P_CrossSubsector_PrBoom(int num)
+bool P_CrossSubsector_PrBoom(int num)
 {
   ssline_t *ssline = &sslines[sslines_indexes[num]];
   const ssline_t *ssline_last = &sslines[sslines_indexes[num + 1]];
@@ -584,7 +584,7 @@ dboolean P_CrossSubsector_PrBoom(int num)
   return true;
 }
 
-dboolean P_CrossSubsector_Doom(int num)
+bool P_CrossSubsector_Doom(int num)
 {
   ssline_t *ssline = &sslines[sslines_indexes[num]];
   const ssline_t *ssline_last = &sslines[sslines_indexes[num + 1]];
@@ -677,7 +677,7 @@ dboolean P_CrossSubsector_Doom(int num)
   return true;
 }
 
-dboolean P_CrossSubsector_Boom(int num)
+bool P_CrossSubsector_Boom(int num)
 {
   ssline_t *ssline = &sslines[sslines_indexes[num]];
   const ssline_t *ssline_last = &sslines[sslines_indexes[num + 1]];
@@ -785,7 +785,7 @@ dboolean P_CrossSubsector_Boom(int num)
 //  could return 2 which was ambigous, and the former is
 //  better optimised; also removes two casts :-)
 
-static dboolean P_CrossBSPNode_LxDoom(int bspnum)
+static bool P_CrossBSPNode_LxDoom(int bspnum)
 {
   while (!(bspnum & NF_SUBSECTOR))
     {
@@ -804,7 +804,7 @@ static dboolean P_CrossBSPNode_LxDoom(int bspnum)
   return P_CrossSubsector(bspnum == -1 ? 0 : bspnum & ~NF_SUBSECTOR);
 }
 
-static dboolean P_CrossBSPNode_PrBoom(int bspnum)
+static bool P_CrossBSPNode_PrBoom(int bspnum)
 {
   while (!(bspnum & NF_SUBSECTOR))
     {
@@ -826,7 +826,7 @@ static dboolean P_CrossBSPNode_PrBoom(int bspnum)
 /* proff - Moved the compatibility check outside the functions
  * this gives a slight speedup
  */
-static dboolean P_CrossBSPNode(int bspnum)
+static bool P_CrossBSPNode(int bspnum)
 {
   /* cph - LxDoom used some R_* funcs here */
   if (compatibility_level == lxdoom_1_compatibility || prboom_comp[PC_FORCE_LXDOOM_DEMO_COMPATIBILITY].state)
@@ -843,7 +843,7 @@ static dboolean P_CrossBSPNode(int bspnum)
 //
 // killough 4/20/98: cleaned up, made to use new LOS struct
 
-dboolean P_CheckSight(mobj_t *t1, mobj_t *t2) {
+bool P_CheckSight(mobj_t *t1, mobj_t *t2) {
   const sector_t *s1, *s2;
   int pnum;
 

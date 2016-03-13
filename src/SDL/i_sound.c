@@ -76,8 +76,8 @@ typedef struct {
 } channel_info_t;
 
 static int SAMPLECOUNT =   512; // Needed for calling the actual sound output.
-static dboolean sound_inited = false;
-static dboolean first_sound_init = true;
+static bool sound_inited = false;
+static bool first_sound_init = true;
 static int dumping_sound = 0; // NSM
 
 int snd_pcspeaker;
@@ -497,7 +497,7 @@ void I_StopSound (int handle) {
   SDL_UnlockMutex(sfxmutex);
 }
 
-dboolean I_SoundIsPlaying(int handle) {
+bool I_SoundIsPlaying(int handle) {
 #ifdef RANGECHECK
   if ((handle < 0) || (handle >= MAX_SOUND_CHANNELS))
     I_Error("I_SoundIsPlaying: handle out of range");
@@ -512,7 +512,7 @@ dboolean I_SoundIsPlaying(int handle) {
   return channelinfo[handle].data != NULL;
 }
 
-dboolean I_AnySoundStillPlaying(void) {
+bool I_AnySoundStillPlaying(void) {
   int i;
 
   if (SOUND_DISABLED)

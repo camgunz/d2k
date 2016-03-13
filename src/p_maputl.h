@@ -46,14 +46,14 @@ typedef struct {
 
 typedef struct {
   fixed_t     frac;           /* along trace line */
-  dboolean     isaline;
+  bool        isaline;
   union {
     mobj_t* thing;
     line_t* line;
   } d;
 } intercept_t;
 
-typedef dboolean (*traverser_t)(intercept_t *in);
+typedef bool (*traverser_t)(intercept_t *in);
 
 fixed_t CONSTFUNC P_AproxDistance (fixed_t dx, fixed_t dy);
 int     PUREFUNC  P_PointOnLineSide (fixed_t x, fixed_t y, const line_t *line);
@@ -67,13 +67,13 @@ void P_MakeDivline(const line_t *li, divline_t *dl);
 int PUREFUNC P_PointOnDivlineSide(fixed_t x, fixed_t y, const divline_t *line);
 void check_intercept(void);
 
-void    P_LineOpening (const line_t *linedef);
-void    P_UnsetThingPosition(mobj_t *thing);
-void    P_SetThingPosition(mobj_t *thing);
-dboolean P_BlockLinesIterator (int x, int y, dboolean func(line_t *));
-dboolean P_BlockThingsIterator(int x, int y, dboolean func(mobj_t *));
-dboolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
-                       int flags, dboolean trav(intercept_t *));
+void P_LineOpening (const line_t *linedef);
+void P_UnsetThingPosition(mobj_t *thing);
+void P_SetThingPosition(mobj_t *thing);
+bool P_BlockLinesIterator (int x, int y, bool func(line_t *));
+bool P_BlockThingsIterator(int x, int y, bool func(mobj_t *));
+bool P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
+                   int flags, bool trav(intercept_t *));
 
 // MAES: support 512x512 blockmaps.
 int P_GetSafeBlockX(int coord);

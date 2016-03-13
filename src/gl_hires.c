@@ -622,8 +622,11 @@ static int gld_HiRes_GetExternalName(GLTexture *gltexture, char *img_path, char 
   hires_path_item_t *checklist = NULL;
   GLTexType useType = gltexture->textype;
 
-  dboolean supported = (gl_texture_external_hires && 
-    ((useType == GLDT_TEXTURE) || (useType == GLDT_FLAT) || (useType == GLDT_PATCH)));
+  bool supported = (gl_texture_external_hires && (
+      (useType == GLDT_TEXTURE) ||
+      (useType == GLDT_FLAT) ||
+      (useType == GLDT_PATCH))
+  );
 
   img_path[0] = '\0';
   dds_path[0] = '\0';

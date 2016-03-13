@@ -40,6 +40,7 @@
 #include "n_pack.h"
 #include "n_proto.h"
 #include "cl_main.h"
+#include "p_cmd.h"
 #include "p_user.h"
 #include "s_sound.h"
 #include "sounds.h"
@@ -271,6 +272,8 @@ static void handle_setup(netpeer_t *np) {
 
   CL_SetReceivedSetup(true);
   server->sync.outdated = true;
+
+  printf("Handled setup, command count: %d\n", P_GetCommandCount(consoleplayer));
 }
 
 static void handle_auth_response(netpeer_t *np) {
@@ -786,7 +789,7 @@ void SV_BroadcastPlayerBobbingChanged(unsigned short playernum,
   }
 }
 
-void CL_SendAutoaimChange(dboolean new_autoaim_enabled) {
+void CL_SendAutoaimChange(bool new_autoaim_enabled) {
   netpeer_t *np = NULL;
   CHECK_CONNECTION(np);
 
@@ -794,7 +797,7 @@ void CL_SendAutoaimChange(dboolean new_autoaim_enabled) {
 }
 
 void SV_BroadcastPlayerAutoaimChanged(unsigned short playernum,
-                                      dboolean new_autoaim_enabled) {
+                                      bool new_autoaim_enabled) {
   NETPEER_FOR_EACH(iter) {
     if (iter.np->playernum != playernum)
       N_PackAutoaimChange(iter.np, playernum, new_autoaim_enabled);

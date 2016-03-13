@@ -254,7 +254,7 @@ int GetPairForSwitchTexture(side_t *side)
 // Passed the thing using the line, the line being used, and the side used
 // Returns true if a thinker was created
 //
-dboolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side) {
+bool P_UseSpecialLine(mobj_t *thing, line_t *line, int side) {
   // e6y
   // b.m. side test was broken in boom201
   if ((demoplayback ? (demover != 201) : (compatibility_level != boom_201_compatibility)))

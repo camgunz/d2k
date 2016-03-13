@@ -72,8 +72,8 @@ extern menu_t SetupDef;
 extern int screenSize;
 
 //jff 4/18/98
-extern dboolean inhelpscreens;
-extern dboolean BorderNeedRefresh;
+extern bool inhelpscreens;
+extern bool BorderNeedRefresh;
 
 void M_SaveGame(int choice);
 void M_LoadGame(int choice);
@@ -87,7 +87,7 @@ void M_SetupNextMenu(menu_t *menudef);
 
 void M_SetCurrentMenu(menu_t *new_menu);
 
-dboolean M_Responder (event_t *ev);
+bool M_Responder (event_t *ev);
 
 // Called by main loop,
 // only used for menu (skull cursor) animation.
@@ -123,7 +123,7 @@ void M_DrawCredits(void);    // killough 11/98
 
 extern int warning_about_changes, print_warning_about_changes;
 
-extern dboolean menu_background;
+extern bool menu_background;
 
 /****************************
  *

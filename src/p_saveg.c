@@ -250,14 +250,14 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
   for (int i = 0; i < NUMPOWERS; i++)
     M_PBufReadInt(savebuffer, &player->powers[i]);
   for (int i = 0; i < NUMCARDS; i++)
-    M_PBufReadBool(savebuffer, (int *)&player->cards[i]);
-  M_PBufReadBool(savebuffer, (int *)&player->backpack);
+    M_PBufReadBool(savebuffer, &player->cards[i]);
+  M_PBufReadBool(savebuffer, &player->backpack);
   for (int i = 0; i < MAXPLAYERS; i++)
     M_PBufReadInt(savebuffer, &player->frags[i]);
   M_PBufReadInt(savebuffer, (int *)&player->readyweapon);
   M_PBufReadInt(savebuffer, (int *)&player->pendingweapon);
   for (int i = 0; i < NUMWEAPONS; i++)
-    M_PBufReadBool(savebuffer, (int *)&player->weaponowned[i]);
+    M_PBufReadBool(savebuffer, &player->weaponowned[i]);
   for (int i = 0; i < NUMAMMO; i++)
     M_PBufReadInt(savebuffer, &player->ammo[i]);
   for (int i = 0; i < NUMAMMO; i++)
@@ -1159,7 +1159,7 @@ void P_UnArchiveWorld(pbuf_t *savebuffer) {
 
       for (int j = 0; j < 2; j++) {
         unsigned char sidenum_index;
-        dboolean sidenum_index_valid;
+        bool sidenum_index_valid;
 
         M_PBufReadUChar(savebuffer, &sidenum_index);
 
@@ -1192,7 +1192,7 @@ void P_UnArchiveWorld(pbuf_t *savebuffer) {
 
       for (int j = 0; j < 2; j++) {
         unsigned char sidenum_index;
-        dboolean sidenum_index_valid;
+        bool sidenum_index_valid;
 
         M_PBufReadUChar(savebuffer, &sidenum_index);
 

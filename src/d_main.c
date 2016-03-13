@@ -101,32 +101,32 @@ static void D_PageDrawer(void);
 
 // CPhipps - removed wadfiles[] stuff
 
-dboolean devparm;        // started game with -devparm
+bool devparm;        // started game with -devparm
 
 // jff 1/24/98 add new versions of these variables to remember command line
-dboolean clnomonsters;   // checkparm of -nomonsters
-dboolean clrespawnparm;  // checkparm of -respawn
-dboolean clfastparm;     // checkparm of -fast
+bool clnomonsters;   // checkparm of -nomonsters
+bool clrespawnparm;  // checkparm of -respawn
+bool clfastparm;     // checkparm of -fast
 // jff 1/24/98 end definition of command line version of play mode switches
 
-dboolean nomonsters;     // working -nomonsters
-dboolean respawnparm;    // working -respawn
-dboolean fastparm;       // working -fast
+bool nomonsters;     // working -nomonsters
+bool respawnparm;    // working -respawn
+bool fastparm;       // working -fast
 
-dboolean singletics = false; // debug flag to cancel adaptiveness
+bool singletics = false; // debug flag to cancel adaptiveness
 
 //jff 1/22/98 parms for disabling music and sound
-dboolean nosfxparm;
-dboolean nomusicparm;
+bool nosfxparm;
+bool nomusicparm;
 
 skill_t startskill;
 int     startepisode;
 int     startmap;
-dboolean autostart;
+bool autostart;
 FILE    *debugfile;
 int ffmap;
 
-dboolean advancedemo;
+bool advancedemo;
 
 char    *basesavegame;             // killough 2/16/98: savegame directory
 
@@ -426,7 +426,7 @@ bool D_Responder(event_t *ev) {
 // and screen updating
 //
 static void D_Wipe(void) {
-  dboolean done;
+  bool done;
   int wipestart;
 
   if (!render_wipescreen)
@@ -467,11 +467,11 @@ static void D_Wipe(void) {
 // wipegamestate can be set to -1 to force a wipe on the next draw
 gamestate_t     wipegamestate = GS_DEMOSCREEN;
 gamestate_t     oldgamestate = GS_BAD;
-extern dboolean setsizeneeded;
+extern bool setsizeneeded;
 extern int      showMessages;
 
 void D_Display(void) {
-  dboolean wipe;
+  bool wipe;
 
   if (doSkip) {
     if (HU_DrawDemoProgress(false))
@@ -663,7 +663,7 @@ static void D_DoomLoop(void) {
 //  DEMO LOOP
 //
 
-dboolean bfgedition = 0;
+bool bfgedition = 0;
 
 //
 // D_PageTicker
@@ -1111,7 +1111,7 @@ void D_ClearDEHFiles(void) {
 // the gamemode from it. Also note if DOOM II, whether secret levels exist
 // CPhipps - const char* for iwadname, made static
 //e6y static
-void CheckIWAD(const char *iwadname, GameMode_t *gmode, dboolean *hassec) {
+void CheckIWAD(const char *iwadname, GameMode_t *gmode, bool *hassec) {
   int ud = 0;
   int rg = 0;
   int sw = 0;
@@ -1119,7 +1119,7 @@ void CheckIWAD(const char *iwadname, GameMode_t *gmode, dboolean *hassec) {
   int sc = 0;
   int hx = 0;
   int cq = 0;
-  dboolean noiwad = false;
+  bool noiwad = false;
   FILE *fp;
   wadinfo_t header;
   size_t length;
@@ -1532,7 +1532,7 @@ static void DoLooseFiles(void)
   int i,k,n,p;
   char **tmyargv;  // use these to recreate the argv array
   int tmyargc;
-  dboolean *skip; // CPhipps - should these be skipped at the end
+  bool *skip; // CPhipps - should these be skipped at the end
 
   struct {
     const char *ext;
@@ -1563,7 +1563,7 @@ static void DoLooseFiles(void)
   wads = malloc(myargc * sizeof(*wads));
   lmps = malloc(myargc * sizeof(*lmps));
   dehs = malloc(myargc * sizeof(*dehs));
-  skip = malloc(myargc * sizeof(dboolean));
+  skip = malloc(myargc * sizeof(bool));
 
   for (i = 0; i < myargc; i++)
     skip[i] = false;
@@ -1693,7 +1693,7 @@ const char* doomverstr = NULL;
 static void D_DoomMainSetup(void) {
   int p;
   int slot;
-  dboolean rsp_found;
+  bool rsp_found;
 
   X_Init(); /* CG 07/22/2014: Scripting */
 
@@ -1720,7 +1720,7 @@ static void D_DoomMainSetup(void) {
 
   // figgi 09/18/00-- added switch to force classic bsp nodes
   if (M_CheckParm("-forceoldbsp")) {
-    extern dboolean forceOldBsp;
+    extern bool forceOldBsp;
     forceOldBsp = true;
   }
 
@@ -2342,10 +2342,10 @@ void D_DoomMain(void) {
 void GetFirstMap(int *ep, int *map)
 {
   int i,j; // used to generate map name
-  dboolean done = false;  // Ty 09/13/98 - to exit inner loops
+  bool done = false;  // Ty 09/13/98 - to exit inner loops
   char test[6];  // MAPxx or ExMx plus terminator for testing
   char name[6];  // MAPxx or ExMx plus terminator for display
-  dboolean newlevel = false;  // Ty 10/04/98 - to test for new level
+  bool newlevel = false;  // Ty 10/04/98 - to test for new level
   int ix;  // index for lookup
 
   strcpy(name,""); // initialize

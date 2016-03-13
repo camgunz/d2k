@@ -28,6 +28,7 @@
 #include "am_map.h"
 #include "d_deh.h"  // Ty 03/22/98 - externalized strings
 #include "dstrings.h"
+#include "hu_lib.h"
 #include "hu_tracers.h"
 #include "m_random.h"
 #include "n_net.h"
@@ -89,7 +90,7 @@ int clipammo[NUMAMMO] = { 10,  4,  20,  1};
 // Returns false if the ammo can't be picked up at all
 //
 
-static dboolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
+static bool P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
 {
   int oldammo;
 
@@ -164,10 +165,10 @@ static dboolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
 // The weapon name may have a MF_DROPPED flag ored in.
 //
 
-static dboolean P_GiveWeapon(player_t *player, weapontype_t weapon,
-                                               dboolean dropped) {
-  dboolean gaveammo;
-  dboolean gaveweapon;
+static bool P_GiveWeapon(player_t *player, weapontype_t weapon,
+                                           bool dropped) {
+  bool gaveammo;
+  bool gaveweapon;
 
   if (netgame && deathmatch != 2 && !dropped) {
     // leave placed weapons forever on net games
@@ -218,7 +219,7 @@ static dboolean P_GiveWeapon(player_t *player, weapontype_t weapon,
 // Returns false if the body isn't needed at all
 //
 
-static dboolean P_GiveBody(player_t *player, int num)
+static bool P_GiveBody(player_t *player, int num)
 {
   if (player->health >= maxhealth)
     return false; // Ty 03/09/98 externalized MAXHEALTH to maxhealth
@@ -235,7 +236,7 @@ static dboolean P_GiveBody(player_t *player, int num)
 // than the current armor.
 //
 
-static dboolean P_GiveArmor(player_t *player, int armortype)
+static bool P_GiveArmor(player_t *player, int armortype)
 {
   int hits = armortype*100;
   if (player->armorpoints >= hits)
@@ -263,7 +264,7 @@ static void P_GiveCard(player_t *player, card_t card)
 // Rewritten by Lee Killough
 //
 
-dboolean P_GivePower(player_t *player, int power)
+bool P_GivePower(player_t *player, int power)
 {
   static const int tics[NUMPOWERS] = {
     INVULNTICS, 1 /* strength */, INVISTICS,
@@ -623,7 +624,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher) {
 static void P_KillMobj(mobj_t *source, mobj_t *target) {
   mobjtype_t item;
   mobj_t     *mo;
-  dboolean   e6y = false;
+  bool   e6y = false;
   
   if (target->player && source && target->health < -target->info->spawnhealth &&
     !demorecording && !demoplayback) {
@@ -814,7 +815,7 @@ static void P_KillMobj(mobj_t *source, mobj_t *target) {
 void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
 {
   player_t *player;
-  dboolean justhit = false;          /* killough 11/98 */
+  bool justhit = false;          /* killough 11/98 */
 
   /* killough 8/31/98: allow bouncers to take damage */
   if (!(target->flags & (MF_SHOOTABLE | MF_BOUNCES)))

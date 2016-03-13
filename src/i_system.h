@@ -45,12 +45,10 @@ extern int interpolation_method;
 extern int ms_to_next_tick;
 
 uint32_t      I_GetTicks(void);
-dboolean      I_StartDisplay(void);
+bool          I_StartDisplay(void);
 void          I_EndDisplay(void);
 int           I_GetTime_RealTime(void);     /* killough */
-#ifndef PRBOOM_SERVER
 fixed_t       I_GetTimeFrac (void);
-#endif
 void          I_GetTime_SaveMS(void);
 unsigned long I_GetRandomTimeSeed(void); /* cphipps */
 void          I_Sleep(unsigned long ms);
@@ -69,11 +67,11 @@ void          I_SwitchToWindow(HWND hwnd);
 #endif
 const char*   I_GetTempDir(void); // e6y
 const char*   I_DoomExeDir(void); // killough 2/16/98: path to executable's dir
-dboolean      HasTrailingSlash(const char* dn);
+bool          HasTrailingSlash(const char* dn);
 char*         I_FindFile(const char* wfname, const char* ext);
 char*         I_FindFileEx(const char* wfname, const char* ext);
 const char*   I_FindFile2(const char* wfname, const char* ext);
-dboolean      I_FileToBuffer(const char *filename, byte **data, int *size);
+bool          I_FileToBuffer(const char *filename, byte **data, int *size);
 /* cph 2001/11/18 - wrapper for read(2) which deals with partial reads */
 void          I_Read(int fd, void* buf, size_t sz);
 /* cph 2001/11/18 - Move W_Filelength to i_system.c */

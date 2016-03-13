@@ -78,7 +78,7 @@
   {name, {&keyloc}, {keyval}, 0, MAX_KEY, def_key, ss_keys}
 
 int usemouse;
-dboolean precache = true; /* if true, load all graphics at start */
+bool precache = true; /* if true, load all graphics at start */
 
 // The available anisotropic
 typedef enum {
@@ -1293,7 +1293,7 @@ void M_LoadDefaults (void)
   char* cfgline = malloc(CFG_BUFFERMAX);
   char* newstring = NULL;   // killough
   int   parm;
-  dboolean isstring;
+  bool isstring;
   // e6y: arrays
   default_t *item = NULL;
 

@@ -94,9 +94,8 @@ void HUlib_initTextLine(hu_textline_t* t, int x, int y,
 // Adds a character at the end of the text line in a hu_textline_t widget
 //
 // Passed the hu_textline_t and the char to add
-// Returns false if already at length limit, true if the character added
-//
-dboolean HUlib_addCharToTextLine(hu_textline_t *t, char ch)
+// Returns false if already at length 
+bool HUlib_addCharToTextLine(hu_textline_t *t, char ch)
 {
   // killough 1/23/98 -- support multiple lines
   if (t->linelen == HU_MAXLINELENGTH)
@@ -121,7 +120,7 @@ dboolean HUlib_addCharToTextLine(hu_textline_t *t, char ch)
 // Passed the hu_textline_t
 // Returns false if already empty, true if the character deleted
 //
-static dboolean HUlib_delCharFromTextLine(hu_textline_t* t)
+static bool HUlib_delCharFromTextLine(hu_textline_t* t)
 {
   if (!t->len)
     return false;
@@ -140,7 +139,7 @@ static dboolean HUlib_delCharFromTextLine(hu_textline_t* t)
 // Passed the hu_textline_t and flag whether to draw a cursor
 // Returns nothing
 //
-void HUlib_drawTextLine(hu_textline_t *l, dboolean drawcursor)
+void HUlib_drawTextLine(hu_textline_t *l, bool drawcursor)
 {
 
   int i;
@@ -274,7 +273,7 @@ void HUlib_eraseTextLine(hu_textline_t* l)
 //jff 2/16/98 add color range parameter
 void HUlib_initSText(hu_stext_t *s, int x, int y, int h,
                      const patchnum_t* font, int startchar, int cm,
-                     enum patch_translation_e flags, dboolean *on)
+                     enum patch_translation_e flags, bool *on)
 {
   int i;
 
@@ -413,7 +412,7 @@ void HUlib_eraseSText(hu_stext_t* s)
 void HUlib_initMText(hu_mtext_t *m, int x, int y, int w, int h,
                      const patchnum_t* font, int startchar, int cm,
                      const patchnum_t* bgfont, enum patch_translation_e flags,
-                     dboolean *on)
+                     bool *on)
 {
   int i;
 
@@ -641,7 +640,7 @@ void HUlib_eraseMText(hu_mtext_t *m)
 //jff 2/16/98 add color range parameter
 void HUlib_initIText(hu_itext_t *it, int x, int y, const patchnum_t *font,
                      int startchar, int cm, enum patch_translation_e flags,
-                     dboolean *on)
+                     bool *on)
 {
   it->lm = 0; // default left margin is start of text
   it->on = on;
@@ -721,7 +720,7 @@ void HUlib_addPrefixToIText(hu_itext_t *it, char *str)
 // Passed the hu_itext_t and the char input
 // Returns true if it ate the key
 //
-dboolean HUlib_keyInIText(hu_itext_t *it, unsigned char ch)
+bool HUlib_keyInIText(hu_itext_t *it, unsigned char ch)
 {
 
   if (ch >= ' ' && ch <= '_')

@@ -64,15 +64,16 @@ static int ls_y; // Lost Soul position for Lost Soul checks      // phares
 //  to undo the changes.
 //
 
-static dboolean crushchange, nofit;
+static bool crushchange;
+static bool nofit;
 
 // If "floatok" true, move would be ok
 // if within "tmfloorz - tmceilingz".
 
-dboolean   floatok;
+bool floatok;
 
 /* killough 11/98: if "felldown" true, object was pushed down ledge */
-dboolean   felldown;
+bool felldown;
 
 // The tm* items are used to hold information globally, usually for
 // line or object intersection checking
@@ -110,9 +111,9 @@ msecnode_t* sector_list = NULL;                             // phares 3/16/98
 // PIT_StompThing
 //
 
-static dboolean telefrag;   /* killough 8/9/98: whether to telefrag at exit */
+static bool telefrag;   /* killough 8/9/98: whether to telefrag at exit */
 
-dboolean PIT_StompThing (mobj_t* thing)
+bool PIT_StompThing (mobj_t* thing)
 {
   fixed_t blockdist;
 
@@ -269,7 +270,7 @@ int P_GetMoveFactor(mobj_t *mo, int *frictionp)
 // P_TeleportMove
 //
 
-dboolean P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, dboolean boss)
+bool P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, bool boss)
 {
   int     xl;
   int     xh;
@@ -366,7 +367,7 @@ dboolean P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, dboolean boss)
 //
 
 static // killough 3/26/98: make static
-dboolean PIT_CrossLine (line_t* ld)
+bool PIT_CrossLine (line_t* ld)
 {
   if (!(ld->flags & ML_TWOSIDED) ||
       (ld->flags & (ML_BLOCKING|ML_BLOCKMONSTERS)))
@@ -401,7 +402,7 @@ static int untouched(line_t *ld)
 //
 
 static // killough 3/26/98: make static
-dboolean PIT_CheckLine (line_t* ld)
+bool PIT_CheckLine (line_t* ld)
 {
   if (tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
    || tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
@@ -490,8 +491,8 @@ dboolean PIT_CheckLine (line_t* ld)
           &tmfloorz,     // fixed_t *tmfloorz;
           &tmceilingz,   // fixed_t *tmceilingz;
 
-          &crushchange,  // dboolean *crushchange;
-          &nofit,        // dboolean *nofit;
+          &crushchange,  // bool *crushchange;
+          &nofit,        // bool *nofit;
         };
         spechit_overrun_param.line = ld;
         SpechitOverrun(&spechit_overrun_param);
@@ -505,7 +506,7 @@ dboolean PIT_CheckLine (line_t* ld)
 // PIT_CheckThing
 //
 
-static dboolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
+static bool PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 {
   fixed_t blockdist;
   int damage;
@@ -686,7 +687,7 @@ static dboolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 // sides of the blocking line. If so, return true, otherwise
 // false.
 
-dboolean Check_Sides(mobj_t* actor, int x, int y)
+bool Check_Sides(mobj_t* actor, int x, int y)
 {
   int bx,by,xl,xh,yl,yh;
 
@@ -748,7 +749,7 @@ dboolean Check_Sides(mobj_t* actor, int x, int y)
 //  numspeciallines
 //
 
-dboolean P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
+bool P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
 {
   int     xl;
   int     xh;
@@ -828,9 +829,8 @@ dboolean P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
 // Attempt to move to a new position,
 // crossing special lines unless MF_TELEPORT is set.
 //
-dboolean P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,
-                  dboolean dropoff) // killough 3/15/98: allow dropoff as option
-  {
+bool P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,
+               int dropoff) { // killough 3/15/98: allow dropoff as option
   fixed_t oldx;
   fixed_t oldy;
 
@@ -850,9 +850,9 @@ dboolean P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,
           thing->momz = -8*FRACUNIT;
           return false;
         }
-        else if (thing->z < tmfloorz && tmfloorz-tmdropoffz > 24*FRACUNIT)
+        else if (thing->z < tmfloorz && tmfloorz - tmdropoffz > 24 * FRACUNIT)
         {
-          thing->momz = 8*FRACUNIT;
+          thing->momz = 8 * FRACUNIT;
           return false;
         }
       }
@@ -893,8 +893,8 @@ dboolean P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,
         return false;                      // don't stand over a dropoff
     }
   else
-    if (!dropoff || (dropoff==2 &&  // large jump down (e.g. dogs)
-         (tmfloorz-tmdropoffz > 128*FRACUNIT ||
+    if (!dropoff || (dropoff == 2 &&  // large jump down (e.g. dogs)
+         (tmfloorz-tmdropoffz > 128 * FRACUNIT ||
           !thing->target || thing->target->z >tmdropoffz)))
       {
         if (!monkeys || !mbf_features ?
@@ -963,7 +963,7 @@ dboolean P_TryMove(mobj_t* thing,fixed_t x,fixed_t y,
  * so balancing is possible.
  */
 
-static dboolean PIT_ApplyTorque(line_t *ld)
+static bool PIT_ApplyTorque(line_t *ld)
 {
   if (ld->backsector &&       // If thing touches two-sided pivot linedef
       tmbbox[BOXRIGHT]  > ld->bbox[BOXLEFT]  &&
@@ -1090,9 +1090,9 @@ void P_ApplyTorque(mobj_t *mo)
 // and false will be returned.
 //
 
-dboolean P_ThingHeightClip (mobj_t* thing)
+bool P_ThingHeightClip (mobj_t* thing)
 {
-  dboolean   onfloor;
+  bool   onfloor;
 
   onfloor = (thing->z == thing->floorz);
 
@@ -1158,7 +1158,7 @@ void P_HitSlideLine (line_t* ld)
   angle_t deltaangle;
   fixed_t movelen;
   fixed_t newlen;
-  dboolean icyfloor;  // is floor icy?                               // phares
+  bool icyfloor;  // is floor icy?                               // phares
                                                                     //   |
   // Under icy conditions, if the angle of approach to the wall     //   V
   // is more than 45 degrees, then you'll bounce and lose half
@@ -1181,7 +1181,7 @@ void P_HitSlideLine (line_t* ld)
   }
   else
   {
-    extern dboolean onground;
+    extern bool onground;
     icyfloor = !compatibility &&
     variable_friction &&
     slidemo->player &&
@@ -1263,7 +1263,7 @@ void P_HitSlideLine (line_t* ld)
 // PTR_SlideTraverse
 //
 
-dboolean PTR_SlideTraverse (intercept_t* in)
+bool PTR_SlideTraverse (intercept_t* in)
 {
   line_t* li;
 
@@ -1458,7 +1458,7 @@ static fixed_t  bottomslope;
 // PTR_AimTraverse
 // Sets linetaget and aimslope when a target is aimed at.
 //
-dboolean PTR_AimTraverse (intercept_t* in)
+bool PTR_AimTraverse (intercept_t* in)
 {
   line_t* li;
   mobj_t* th;
@@ -1554,7 +1554,7 @@ dboolean PTR_AimTraverse (intercept_t* in)
 //
 // PTR_ShootTraverse
 //
-dboolean PTR_ShootTraverse (intercept_t* in)
+bool PTR_ShootTraverse (intercept_t* in)
 {
   fixed_t x;
   fixed_t y;
@@ -1751,7 +1751,7 @@ void P_LineAttack
 
 mobj_t *usething;
 
-dboolean PTR_UseTraverse (intercept_t *in) {
+bool PTR_UseTraverse (intercept_t *in) {
   int side;
 
   if (!in->d.line->special) {
@@ -1792,7 +1792,7 @@ dboolean PTR_UseTraverse (intercept_t *in) {
 // by Lee Killough
 //
 
-dboolean PTR_NoWayTraverse(intercept_t* in)
+bool PTR_NoWayTraverse(intercept_t* in)
 {
   line_t *ld = in->d.line;
                                            // This linedef
@@ -1858,7 +1858,7 @@ int bombdamage;
 // that caused the explosion at "bombspot".
 //
 
-dboolean PIT_RadiusAttack (mobj_t* thing)
+bool PIT_RadiusAttack (mobj_t* thing)
 {
   fixed_t dx;
   fixed_t dy;
@@ -1939,7 +1939,7 @@ void P_RadiusAttack(mobj_t* spot,mobj_t* source,int damage)
 // PIT_ChangeSector
 //
 
-dboolean PIT_ChangeSector (mobj_t* thing)
+bool PIT_ChangeSector (mobj_t* thing)
 {
   mobj_t* mo;
 
@@ -2011,7 +2011,7 @@ dboolean PIT_ChangeSector (mobj_t* thing)
 //
 // P_ChangeSector
 //
-dboolean P_ChangeSector(sector_t* sector,dboolean crunch)
+bool P_ChangeSector(sector_t *sector, bool crunch)
 {
   int   x;
   int   y;
@@ -2039,7 +2039,7 @@ dboolean P_ChangeSector(sector_t* sector,dboolean crunch)
 // sector. Both more accurate and faster.
 //
 
-dboolean P_CheckSector(sector_t* sector,dboolean crunch)
+bool P_CheckSector(sector_t* sector, bool crunch)
 {
   msecnode_t *n;
 
@@ -2259,7 +2259,7 @@ void P_DelSeclist(msecnode_t* node) {
 // at this location, so don't bother with checking impassable or
 // blocking lines.
 
-dboolean PIT_GetSectors(line_t* ld)
+bool PIT_GetSectors(line_t* ld)
 {
   if (tmbbox[BOXRIGHT]  <= ld->bbox[BOXLEFT]   ||
       tmbbox[BOXLEFT]   >= ld->bbox[BOXRIGHT]  ||

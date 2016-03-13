@@ -49,7 +49,7 @@
 #include "version.h"
 #include "doomtype.h"
 
-extern dboolean bfgedition;
+extern bool bfgedition;
 
 // Game mode handling - identify IWAD version
 //  to handle IWAD dependend animations etc.

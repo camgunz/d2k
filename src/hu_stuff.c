@@ -191,12 +191,12 @@ static hu_textline_t  w_ammo_big;
 static hu_textline_t  w_ammo_icon;
 static hu_textline_t  w_keys_icon;
 
-static dboolean message_on;
-static dboolean message_list; //2/26/98 enable showing list of messages
-dboolean        message_dontfuckwithme;
-static dboolean message_nottobefuckedwith;
-extern int      showMessages;
-static dboolean headsupactive = false;
+static bool message_on;
+static bool message_list; //2/26/98 enable showing list of messages
+bool        message_dontfuckwithme;
+static bool message_nottobefuckedwith;
+extern int  showMessages;
+static bool headsupactive = false;
 
 //jff 2/16/98 hud supported automap colors added
 int hudcolor_titl;  // color range of automap level title
@@ -1150,7 +1150,7 @@ int HU_GetArmorColor(int armor, int def)
   return result;
 }
 
-int HU_GetAmmoColor(int ammo, int fullammo, int def, int tofire, dboolean backpack)
+int HU_GetAmmoColor(int ammo, int fullammo, int def, int tofire, bool backpack)
 {
   int result, ammopct;
 

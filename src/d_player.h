@@ -121,8 +121,8 @@ typedef struct player_s
 
   // Power ups. invinc and invis are tic counters.
   int                 powers[NUMPOWERS];
-  dboolean            cards[NUMCARDS];
-  dboolean            backpack;
+  bool                cards[NUMCARDS];
+  bool                backpack;
 
   // Frags, kills of other players.
   int                 frags[MAXPLAYERS];
@@ -131,7 +131,7 @@ typedef struct player_s
   // Is wp_nochange if not changing.
   weapontype_t        pendingweapon;
 
-  dboolean            weaponowned[NUMWEAPONS];
+  bool                weaponowned[NUMWEAPONS];
   int                 ammo[NUMAMMO];
   int                 maxammo[NUMAMMO];
 
@@ -179,7 +179,7 @@ typedef struct player_s
   pspdef_t            psprites[NUMPSPRITES];
 
   // True if secret level has been done.
-  dboolean            didsecret;
+  bool                didsecret;
 
   // e6y
   // All non original (new) fields of player_t struct are moved to bottom
@@ -217,47 +217,30 @@ typedef struct player_s
 // INTERMISSION
 // Structure passed e.g. to WI_Start(wb)
 //
-typedef struct
-{
-  dboolean   in;     // whether the player is in game
-
-  // Player stats, kills, collected items etc.
-  int         skills;
-  int         sitems;
-  int         ssecret;
-  int         stime;
-  int         frags[4];
-  int         score;  // current score on entry, modified on return
+typedef struct {
+  bool in;     // whether the player is in game
+  int  skills; // Player stats, kills, collected items etc.
+  int  sitems;
+  int  ssecret;
+  int  stime;
+  int  frags[4];
+  int  score;  // current score on entry, modified on return
 
 } wbplayerstruct_t;
 
-typedef struct
-{
-  int         epsd;   // episode # (0-2)
-
-  // if true, splash the secret level
-  dboolean   didsecret;
-
-  // previous and next levels, origin 0
-  int         last;
-  int         next;
-
-  int         maxkills;
-  int         maxitems;
-  int         maxsecret;
-  int         maxfrags;
-
-  // the par time
-  int         partime;
-
-  // index of this player in game
-  int         pnum;
-
-  wbplayerstruct_t    plyr[MAXPLAYERS];
-
-  // CPhipps - total game time for completed levels so far
-  int         totaltimes;
-
+typedef struct {
+  int              epsd;   // episode # (0-2)
+  bool             didsecret; // if true, splash the secret level
+  int              last; // previous and next levels, origin 0
+  int              next;
+  int              maxkills;
+  int              maxitems;
+  int              maxsecret;
+  int              maxfrags;
+  int              partime; // the par time
+  int              pnum; // index of this player in game
+  wbplayerstruct_t plyr[MAXPLAYERS];
+  int              totaltimes; // CPhipps - total game time for completed levels so far
 } wbstartstruct_t;
 
 #endif

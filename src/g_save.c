@@ -132,7 +132,7 @@ static uint_64_t G_UpdateSignature(uint_64_t s, const char *name) {
 
 static uint_64_t G_Signature(void) {
   static uint_64_t s = 0;
-  static dboolean computed = false;
+  static bool computed = false;
 
   char name[9];
   int episode, map;
@@ -300,8 +300,8 @@ void G_WriteSaveData(pbuf_t *savebuffer) {
   G_UpdateAverageSaveSize(M_PBufGetCapacity(savebuffer));
 }
 
-dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
-                                            dboolean init_new) {
+bool G_ReadSaveData(pbuf_t *savebuffer, bool bail_on_errors,
+                                        bool init_new) {
   int i;
   int savegame_compatibility = -1;
   complevel_t m_compatibility_level;
@@ -463,7 +463,9 @@ dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,
     M_PBufReadBool(savebuffer, &playeringame[i]);
 
   // killough 2/28/98
-  for (dboolean b = false, i = MAXPLAYERS; i < MIN_MAXPLAYERS; i++)
+  bool b = false;
+
+  for (i = MAXPLAYERS; i < MIN_MAXPLAYERS; i++)
     M_PBufReadBool(savebuffer, &b);
 
   M_PBufReadInt(savebuffer, &idmusnum); // jff 3/17/98 restore idmus music

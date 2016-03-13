@@ -92,7 +92,7 @@ float bw_blue = 0.11f;
 
 extern int tran_filter_pct;
 
-dboolean use_fog=false;
+bool use_fog = false;
 
 int gl_nearclip=5;
 int gl_texture_filter;
@@ -165,7 +165,7 @@ void gld_InitTextureParams(void)
 {
   typedef struct tex_filter_s
   {
-    dboolean mipmap;
+    bool mipmap;
     int tex_filter;
     int mipmap_filter;
     const char *tex_filter_name;
@@ -616,7 +616,7 @@ void gld_DrawNumPatch_f(float x, float y, int lump, int cm, enum patch_translati
   int leftoffset, topoffset;
 
   //e6y
-  dboolean bFakeColormap;
+  bool bFakeColormap;
 
   cmap = ((flags & VPT_TRANS) ? cm : CR_DEFAULT);
   gltexture=gld_RegisterPatch(lump, cmap);
@@ -1981,7 +1981,7 @@ static void gld_DrawFlat(GLFlat *flat)
 {
   int loopnum; // current loop number
   GLLoopDef *currentloop; // the current loop
-  dboolean has_detail;
+  bool has_detail;
   int has_offset;
   unsigned int flags;
 
@@ -2116,7 +2116,7 @@ static void gld_DrawFlat(GLFlat *flat)
 // This draws on flat for the sector "num"
 // The ceiling boolean indicates if the flat is a floor(false) or a ceiling(true)
 
-static void gld_AddFlat(int sectornum, dboolean ceiling, visplane_t *plane)
+static void gld_AddFlat(int sectornum, bool ceiling, visplane_t *plane)
 {
   sector_t *sector; // the sector we want to draw
   sector_t tempsec; // needed for R_FakeFlat
@@ -2404,12 +2404,12 @@ static void gld_DrawHealthBars(void)
 
 void gld_ProjectSprite(mobj_t* thing)
 {
-  fixed_t   tx;
+  fixed_t        tx;
   spritedef_t   *sprdef;
   spriteframe_t *sprframe;
-  int       lump;
-  dboolean   flip;
-  int heightsec;      // killough 3/27/98
+  int            lump;
+  bool           flip;
+  int            heightsec; // killough 3/27/98
 
   // transform the origin point
   //e6y
@@ -2499,13 +2499,13 @@ void gld_ProjectSprite(mobj_t* thing)
         (angle_t)(ANG180 / 16)) >> 28;
     }
     lump = sprframe->lump[rot];
-    flip = (dboolean)(sprframe->flip & (1 << rot));
+    flip = (bool)(sprframe->flip & (1 << rot));
   }
   else
   {
     // use single rotation for all views
     lump = sprframe->lump[0];
-    flip = (dboolean)(sprframe->flip & 1);
+    flip = (bool)(sprframe->flip & 1);
   }
   lump += firstspritelump;
 

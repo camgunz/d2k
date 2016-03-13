@@ -60,7 +60,7 @@
 #include "d_deh.h"
 #include "e6y.h"
 
-dboolean wasWiped = false;
+bool wasWiped = false;
 
 int secretfound;
 int demo_skiptics;
@@ -73,10 +73,10 @@ int avi_shot_time;
 int avi_shot_num;
 const char *avi_shot_fname;
 
-dboolean doSkip;
-dboolean demo_stoponnext;
-dboolean demo_stoponend;
-dboolean demo_warp;
+bool doSkip;
+bool demo_stoponnext;
+bool demo_stoponend;
+bool demo_warp;
 
 int speed_step;
 
@@ -132,7 +132,7 @@ float skyUpAngle;
 float skyUpShift;
 float skyXShift;
 float skyYShift;
-dboolean mlook_or_fov;
+bool mlook_or_fov;
 
 int maxViewPitch;
 int minViewPitch;
@@ -190,12 +190,12 @@ void e6y_assert(const char *format, ...)
  */
 void ParamsMatchingCheck()
 {
-  dboolean recording_attempt = 
+  bool recording_attempt = 
     M_CheckParm("-record") || 
     M_CheckParm("-recordfrom") ||
     M_CheckParm("-recordfromto");
   
-  dboolean playbacking_attempt = 
+  bool playbacking_attempt = 
     M_CheckParm("-playdemo") || 
     M_CheckParm("-timedemo") ||
     M_CheckParm("-fastdemo");
@@ -249,10 +249,10 @@ void e6y_InitCommandLine(void)
   shorttics = movement_shorttics || M_CheckParm("-shorttics");
 }
 
-static dboolean saved_fastdemo;
-static dboolean saved_nodrawers;
-static dboolean saved_nosfxparm;
-static dboolean saved_nomusicparm;
+static bool saved_fastdemo;
+static bool saved_nodrawers;
+static bool saved_nosfxparm;
+static bool saved_nomusicparm;
 static int saved_render_precise;
 
 void G_SkipDemoStart(void)
@@ -279,7 +279,7 @@ void G_SkipDemoStart(void)
   I_Init2();
 }
 
-dboolean sound_inited_once = false;
+bool sound_inited_once = false;
 
 void G_SkipDemoStop(void)
 {
@@ -492,11 +492,11 @@ void M_ChangeInterlacedScanning(void)
     interlaced_scanning_requires_clearing = 1;
 }
 
-dboolean GetMouseLook(void)
+bool GetMouseLook(void)
 {
   return movement_mouselook;
 }
-dboolean HaveMouseLook(void)
+bool HaveMouseLook(void)
 {
   return (viewpitch != 0);
 }
@@ -594,7 +594,7 @@ void M_ChangeSpriteClip(void)
   gl_spriteclip_threshold_f = (float)gl_spriteclip_threshold / MAP_COEFF;
 }
 
-void ResolveColormapsHiresConflict(dboolean prefer_colormap)
+void ResolveColormapsHiresConflict(bool prefer_colormap)
 {
   gl_boom_colormaps = !r_have_internal_hires && !gl_texture_external_hires;
 #if 0
@@ -673,7 +673,7 @@ void MouseAccelChanging(void)
 }
 
 float viewPitch;
-dboolean transparentpresent;
+bool transparentpresent;
 
 int StepwiseSum(int value, int direction, int step, int minval, int maxval, int defval)
 {
@@ -992,9 +992,9 @@ void e6y_G_Compatibility(void)
   }
 }
 
-dboolean zerotag_manual;
+bool zerotag_manual;
 
-dboolean ProcessNoTagLines(line_t* line, sector_t **sec, int *secnum)
+bool ProcessNoTagLines(line_t* line, sector_t **sec, int *secnum)
 {
   zerotag_manual = false;
   if (line->tag == 0 && comperr(comperr_zerotag))
@@ -1219,11 +1219,11 @@ void I_midiOutSetVolumes(int volume)
 
 #define CHKPIX(ofs) (l1[(ofs)*4+MSB]==255 ? (( ((unsigned int*)l1)[0] = ((unsigned int*)l1)[ofs]&SOME_MASK), trans=true ) : false)
 
-dboolean SmoothEdges(unsigned char * buffer,int w, int h)
+bool SmoothEdges(unsigned char * buffer,int w, int h)
 {
   int x,y;
-  dboolean trans=buffer[MSB]==0; // If I set this to false here the code won't detect textures 
-                                // that only contain transparent pixels.
+  int trans=buffer[MSB]==0; // If I set this to false here the code won't detect textures 
+                            // that only contain transparent pixels.
   unsigned char * l1;
 
   // makes (a) no sense and (b) doesn't work with this code!

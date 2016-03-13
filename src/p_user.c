@@ -50,6 +50,10 @@
 #include "sounds.h"
 #include "x_main.h"
 
+// 16 pixels of bob
+
+#define MAXBOB  0x100000
+
 static void add_player_vmessage(int pn, bool is_markup, bool centered, int sfx,
                                 const char *fmt, va_list args) {
   gchar *gcontent;
@@ -103,11 +107,7 @@ static void add_player_message(int pn, bool is_markup, bool centered, int sfx,
 // Movement.
 //
 
-// 16 pixels of bob
-
-#define MAXBOB  0x100000
-
-dboolean onground; // whether player is on ground or in air
+bool onground; // whether player is on ground or in air
 
 //
 // P_Thrust

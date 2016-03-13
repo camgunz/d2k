@@ -35,10 +35,10 @@
 // Command line parameters.
 //
 
-extern  dboolean nomonsters; // checkparm of -nomonsters
-extern  dboolean respawnparm;  // checkparm of -respawn
-extern  dboolean fastparm; // checkparm of -fast
-extern  dboolean devparm;  // DEBUG: launched with -devparm
+extern  bool nomonsters; // checkparm of -nomonsters
+extern  bool respawnparm;  // checkparm of -respawn
+extern  bool fastparm; // checkparm of -fast
+extern  bool devparm;  // DEBUG: launched with -devparm
 
 // -----------------------------------------------------
 // Game Mode - identify IWAD as shareware, retail etc.
@@ -49,7 +49,7 @@ extern GameMission_t  gamemission;
 extern const char *doomverstr;
 
 // Set if homebrew PWAD stuff has been added.
-extern  dboolean modifiedgame;
+extern  bool modifiedgame;
 
 // CPhipps - new compatibility handling
 extern complevel_t compatibility_level, default_compatibility_level;
@@ -63,7 +63,7 @@ extern complevel_t compatibility_level, default_compatibility_level;
 extern int pitched_sounds;        // killough
 
 extern int     default_translucency; // config file says           // phares
-extern dboolean general_translucency; // true if translucency is ok // phares
+extern bool general_translucency; // true if translucency is ok // phares
 
 extern int demo_insurance, default_demo_insurance;      // killough 4/5/98
 
@@ -132,7 +132,7 @@ extern  skill_t startskill;
 extern  int     startepisode;
 extern  int     startmap;
 
-extern  dboolean autostart;
+extern  bool autostart;
 
 // Selected by user.
 extern  skill_t gameskill;
@@ -140,11 +140,12 @@ extern  int     gameepisode;
 extern  int     gamemap;
 
 // Nightmare mode flag, single player.
-extern  dboolean respawnmonsters;
+extern  bool respawnmonsters;
 
 // Flag: true only if started as net deathmatch.
 // An enum might handle altdeath/cooperative better.
-extern  dboolean deathmatch;
+// Actually, this is an int now (altdeath)
+extern int deathmatch;
 
 // ------------------------------------------
 // Internal parameters for sound rendering.
@@ -183,9 +184,9 @@ enum menuactive_e {
 };
 extern enum menuactive_e menuactive; // Type of menu overlaid, if any
 
-extern  dboolean paused;        // Game Pause?
-extern  dboolean nodrawers;
-extern  dboolean noblit;
+extern  bool paused;        // Game Pause?
+extern  bool nodrawers;
+extern  bool noblit;
 
 // This one is related to the 3-screen display mode.
 // ANG90 = left side, ANG270 = right
@@ -211,17 +212,17 @@ extern  int leveltime;  // tics in game play for par
 // --------------------------------------
 // DEMO playback/recording related stuff.
 
-extern  dboolean usergame;
-extern  dboolean demoplayback;
-extern  dboolean demorecording;
+extern  bool usergame;
+extern  bool demoplayback;
+extern  bool demorecording;
 extern  int demover;
 
 // Quit after playing a demo from cmdline.
-extern  dboolean   singledemo;
+extern  bool   singledemo;
 // Print timing information after quitting.  killough
-extern  dboolean   timingdemo;
+extern  bool   timingdemo;
 // Run tick clock at fastest speed possible while playing demo.  killough
-extern  dboolean   fastdemo;
+extern  bool   fastdemo;
 
 extern  gamestate_t  gamestate;
 
@@ -234,15 +235,15 @@ extern  gamestate_t  gamestate;
 extern  int   gametic;
 
 //e6y
-extern  dboolean realframe;
+extern  bool realframe;
 
 // Bookkeeping on players - state.
 extern  player_t  players[MAXPLAYERS];
 extern  int       upmove;
 
 // Alive? Disconnected?
-extern  dboolean   playeringame[MAXPLAYERS];
-extern  dboolean   realplayeringame[MAXPLAYERS];
+extern  bool playeringame[MAXPLAYERS];
+extern  bool realplayeringame[MAXPLAYERS];
 
 extern  mapthing_t *deathmatchstarts;     // killough
 extern  size_t     num_deathmatchstarts; // killough
@@ -264,7 +265,7 @@ extern wbstartstruct_t wminfo;
 extern  FILE   *debugfile;
 
 // if true, load all graphics at level load
-extern  dboolean precache;
+extern  bool precache;
 
 // wipegamestate can be set to -1
 //  to force a wipe on the next draw
@@ -274,7 +275,7 @@ extern  int             mouseSensitivity_horiz; // killough
 extern  int             mouseSensitivity_vert;
 
 // debug flag to cancel adaptiveness
-extern  dboolean         singletics;
+extern  bool         singletics;
 
 extern  int             bodyqueslot;
 

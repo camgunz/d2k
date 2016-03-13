@@ -10,6 +10,8 @@
   - Probably have to override `:reset` in widgets to update a bunch of stuff
 
 1. Do some basic net testing
+  - Can outrun plasma and get hit
+  - Commands are never trimmed
 
 ## After Proto
 

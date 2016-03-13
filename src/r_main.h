@@ -69,7 +69,7 @@ extern float viewfocratio;
 //
 
 extern int rendered_visplanes, rendered_segs, rendered_vissprites;
-extern dboolean rendering_stats;
+extern bool rendering_stats;
 
 //
 // Lighting LUT.
@@ -109,9 +109,9 @@ extern const lighttable_t **colormaps;
 // killough 3/20/98, 4/4/98: end dynamic colormaps
 
 //e6y: for Boom colormaps in OpenGL mode
-extern dboolean use_boom_cm;
-extern int boom_cm;         // current colormap
-extern int frame_fixedcolormap;
+extern bool use_boom_cm;
+extern int  boom_cm;         // current colormap
+extern int  frame_fixedcolormap;
 
 extern int          extralight;
 extern const lighttable_t *fixedcolormap;

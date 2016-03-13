@@ -78,15 +78,15 @@ static fixed2_t *oldipos;
 static fixed2_t *bakipos;
 static interpolation_t *curipos;
 
-static dboolean NoInterpolateView;
-static dboolean didInterp;
+static bool NoInterpolateView;
+static bool didInterp;
 
 void R_InterpolateView(player_t *player)
 {
   static mobj_t *oviewer;
   fixed_t frac;
 
-  dboolean NoInterpolate = (paused && !walkcamera.type) || (menuactive && !demoplayback);
+  bool NoInterpolate = (paused && !walkcamera.type) || (menuactive && !demoplayback);
 
   viewplayer = player;
 

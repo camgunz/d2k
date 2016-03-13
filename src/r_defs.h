@@ -256,7 +256,7 @@ typedef struct msecnode_s
   struct msecnode_s *m_tnext;  // next msecnode_t for this thing
   struct msecnode_s *m_sprev;  // prev msecnode_t for this sector
   struct msecnode_s *m_snext;  // next msecnode_t for this sector
-  dboolean visited; // killough 4/4/98, 4/7/98: used in search algorithms
+  bool               visited;  // killough 4/4/98, 4/7/98: used in search algorithms
 } msecnode_t;
 
 //
@@ -264,22 +264,17 @@ typedef struct msecnode_s
 //
 typedef struct
 {
-  vertex_t *v1, *v2;
-  fixed_t offset;
-  angle_t angle;
-  side_t* sidedef;
-  line_t* linedef;
-
-  // figgi -- needed for glnodes
-  dboolean   miniseg;
-
-
-  // Sector references.
-  // Could be retrieved from linedef, too
-  // (but that would be slower -- killough)
-  // backsector is NULL for one sided lines
-
-  sector_t *frontsector, *backsector;
+  vertex_t *v1;
+  vertex_t *v2;
+  fixed_t   offset;
+  angle_t   angle;
+  side_t   *sidedef;
+  line_t   *linedef;
+  bool      miniseg; // figgi -- needed for glnodes
+  sector_t *frontsector; // Sector references.
+  sector_t *backsector;  // Could be retrieved from linedef, too
+                         // (but that would be slower -- killough)
+                         // backsector is NULL for one sided lines
 } seg_t;
 
 typedef struct ssline_s

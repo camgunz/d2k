@@ -282,7 +282,7 @@ int I_RegisterSong(const void *data, size_t len) {
   int i;
   char *name;
   size_t name_size;
-  dboolean io_errors = false;
+  bool io_errors = false;
 
   if (MUSIC_DISABLED)
     return 0;

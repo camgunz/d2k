@@ -24,9 +24,9 @@
 #ifndef M_DELTA_H__
 #define M_DELTA_H__
 
-void     M_InitDeltas(void);
-void     M_BuildDelta(pbuf_t *b1, pbuf_t *b2, buf_t *delta);
-dboolean M_ApplyDelta(pbuf_t *b1, pbuf_t *b2, buf_t *delta);
+void M_InitDeltas(void);
+void M_BuildDelta(pbuf_t *b1, pbuf_t *b2, buf_t *delta);
+bool M_ApplyDelta(pbuf_t *b1, pbuf_t *b2, buf_t *delta);
 
 #endif
 

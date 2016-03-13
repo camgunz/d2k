@@ -214,12 +214,12 @@ static int getColumnEdgeSlope(const column_t *prevcolumn, const column_t *nextco
 //
 //==========================================================================
 
-static dboolean CheckIfPatch(int lump)
+static bool CheckIfPatch(int lump)
 {
   int size;
   int width, height;
   const patch_t * patch;
-  dboolean result;
+  bool result;
 
   size = W_LumpLength(lump);
   

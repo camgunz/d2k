@@ -32,14 +32,14 @@
 
 #include "i_main.h"
 
-dboolean gl_use_FBO = false;
+bool gl_use_FBO = false;
 
 #ifdef USE_FBO_TECHNIQUE
 GLuint glSceneImageFBOTexID = 0;
 GLuint glDepthBufferFBOTexID = 0;
 GLuint glSceneImageTextureFBOTexID = 0;
 int SceneInTexture = false;
-static dboolean gld_CreateScreenSizeFBO(void);
+static bool gld_CreateScreenSizeFBO(void);
 #endif
 
 //e6y: motion bloor
@@ -76,11 +76,11 @@ void gld_InitFBO(void)
   }
 }
 
-static dboolean gld_CreateScreenSizeFBO(void)
+static bool gld_CreateScreenSizeFBO(void)
 {
   int status = 0;
   GLenum internalFormat;
-  dboolean attach_stencil = gl_ext_packed_depth_stencil;// && (gl_has_hires || gl_use_motionblur);
+  bool attach_stencil = gl_ext_packed_depth_stencil; // && (gl_has_hires || gl_use_motionblur);
 
   if (!gl_arb_framebuffer_object)
     return false;

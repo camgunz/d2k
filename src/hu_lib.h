@@ -84,15 +84,12 @@ typedef struct
 
 // Scrolling Text window widget
 //  (child of Text Line widget)
-typedef struct
-{
-  hu_textline_t l[HU_MAXLINES]; // text lines to draw
-  int     h;                    // height in lines
-  int     cl;                   // current line number
-
-  // pointer to dboolean stating whether to update window
-  dboolean*    on;
-  dboolean   laston;             // last value of *->on.
+typedef struct {
+  hu_textline_t  l[HU_MAXLINES]; // text lines to draw
+  int            h; // height in lines
+  int            cl; // current line number
+  bool          *on; // pointer to bool stating whether to update window
+  bool           laston; // last value of *->on.
 
 } hu_stext_t;
 
@@ -108,9 +105,9 @@ typedef struct
   int x,y,w,h;                         // window position and size
   const patchnum_t *bg;                  // patches for background
 
-  // pointer to dboolean stating whether to update window
-  dboolean*    on;
-  dboolean   laston;             // last value of *->on.
+  // pointer to bool stating whether to update window
+  bool    *on;
+  bool   laston;             // last value of *->on.
 
 } hu_mtext_t;
 
@@ -125,9 +122,9 @@ typedef struct
   // left margin past which I am not to delete characters
   int     lm;
 
-  // pointer to dboolean stating whether to update window
-  dboolean*    on;
-  dboolean   laston;   // last value of *->on;
+  // pointer to bool stating whether to update window
+  bool        *on;
+  bool   laston;   // last value of *->on;
 
 } hu_itext_t;
 
@@ -155,10 +152,10 @@ void HUlib_initTextLine
 );
 
 // returns success
-dboolean HUlib_addCharToTextLine(hu_textline_t *t, char ch);
+bool HUlib_addCharToTextLine(hu_textline_t *t, char ch);
 
 // draws tline
-void HUlib_drawTextLine(hu_textline_t *l, dboolean drawcursor);
+void HUlib_drawTextLine(hu_textline_t *l, bool drawcursor);
 
 // erases text line
 void HUlib_eraseTextLine(hu_textline_t *l);
@@ -169,19 +166,15 @@ void HUlib_eraseTextLine(hu_textline_t *l);
 //
 
 // initialize an stext widget
-void HUlib_initSText
-( hu_stext_t* s,
-  int   x,
-  int   y,
-  int   h,
-  const patchnum_t* font,
-  int   startchar,
-  int cm,   //jff 2/16/98 add color range parameter
-  enum patch_translation_e flags,
-  dboolean*  on );
+//jff 2/16/98 add color range parameter
+void HUlib_initSText(hu_stext_t* s, int x, int y, int h,
+                                    const patchnum_t *font, int startchar,
+                                    int cm, enum patch_translation_e flags,
+                                    bool *on);
 
 // add a text message to an stext widget
-void HUlib_addMessageToSText(hu_stext_t* s, const char* prefix, const char* msg);
+void HUlib_addMessageToSText(hu_stext_t *s, const char *prefix,
+                                            const char *msg);
 
 // draws stext
 void HUlib_drawSText(hu_stext_t* s);
@@ -191,61 +184,51 @@ void HUlib_eraseSText(hu_stext_t* s);
 
 //jff 2/26/98 message refresh widget
 // initialize refresh text widget
-void HUlib_initMText(hu_mtext_t *m, int x, int y, int w, int h, const patchnum_t* font,
-         int startchar, int cm, const patchnum_t* bgfont, enum patch_translation_e flags, dboolean *on);
+void HUlib_initMText(hu_mtext_t *m, int x, int y, int w, int h,
+                                    const patchnum_t* font,
+                                    int startchar, int cm,
+                                    const patchnum_t* bgfont,
+                                    enum patch_translation_e flags,
+                                    bool *on);
 
 //jff 2/26/98 message refresh widget
 // add a text message to refresh text widget
-void HUlib_addMessageToMText(hu_mtext_t* m, const char* prefix, const char* msg);
+void HUlib_addMessageToMText(hu_mtext_t *m, const char *prefix,
+                                            const char *msg);
 
 //jff 2/26/98 new routine to display a background on which
 // the list of last hud_msg_lines are displayed
-void HUlib_drawMBg
-( int x,
-  int y,
-  int w,
-  int h,
-  const patchnum_t* bgp
-);
+void HUlib_drawMBg(int x, int y, int w, int h, const patchnum_t *bgp);
 
 //jff 2/26/98 message refresh widget
 // draws mtext
-void HUlib_drawMText(hu_mtext_t* m);
+void HUlib_drawMText(hu_mtext_t *m);
 
 //jff 4/28/98 erases behind message list
-void HUlib_eraseMText(hu_mtext_t* m);
+void HUlib_eraseMText(hu_mtext_t *m);
 
 // Input Text Line widget routines
-void HUlib_initIText
-( hu_itext_t* it,
-  int   x,
-  int   y,
-  const patchnum_t* font,
-  int   startchar,
-  int cm,   //jff 2/16/98 add color range parameter
-  enum patch_translation_e flags,
-  dboolean*  on );
+//jff 2/16/98 add color range parameter
+void HUlib_initIText(hu_itext_t *it, int x, int y, const patchnum_t *font,
+                                     int startchar, int cm,
+                                     enum patch_translation_e flags, bool *on);
 
 // resets line and left margin
-void HUlib_resetIText(hu_itext_t* it);
+void HUlib_resetIText(hu_itext_t *it);
 
 // left of left-margin
-void HUlib_addPrefixToIText
-( hu_itext_t* it,
-  char*   str );
+void HUlib_addPrefixToIText(hu_itext_t *it, char *str);
 
 // whether eaten
-dboolean HUlib_keyInIText
-( hu_itext_t* it,
-  unsigned char ch );
+bool HUlib_keyInIText(hu_itext_t *it, unsigned char ch);
 
-void HUlib_drawIText(hu_itext_t* it);
+void HUlib_drawIText(hu_itext_t *it);
 
 // erases all itext lines
-void HUlib_eraseIText(hu_itext_t* it);
+void HUlib_eraseIText(hu_itext_t *it);
 
 //e6y
-void HUlib_setTextXCenter(hu_textline_t* t);
+void HUlib_setTextXCenter(hu_textline_t *t);
 
 #endif
 

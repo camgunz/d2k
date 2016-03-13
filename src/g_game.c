@@ -75,14 +75,14 @@
 
 extern int forceOldBsp;
 extern char *player_names[];
-extern dboolean setsizeneeded;
+extern bool setsizeneeded;
 
 #define MAXPLMOVE   (forwardmove[1])
 #define TURBOTHRESHOLD  0x32
 #define SLOWTURNTICS  6
 #define QUICKREVERSE (short)32768 // 180 degree reverse                    // phares
 
-static dboolean    netdemo;
+static bool        netdemo;
 static const byte *demobuffer;   /* cph - only used for playback */
 static int         demolength; // check for overrun (missing DEMOMARKER)
 static FILE       *demofp; /* cph - record straight to file */
@@ -126,8 +126,8 @@ static int   dclicks2;
 // joystick values are repeated
 static int   joyxmove;
 static int   joyymove;
-static dboolean joyarray[9];
-static dboolean *joybuttons = &joyarray[1];    // allow [-1]
+static bool  joyarray[9];
+static bool *joybuttons = &joyarray[1];    // allow [-1]
 
 // Game events info
 static buttoncode_t special_event; // Event triggered by local player, to send
@@ -153,23 +153,23 @@ const byte *demo_p;
 const byte *demo_continue_p = NULL;
 
 // CPhipps - moved *_loadgame vars here
-dboolean        forced_loadgame = false;
-dboolean        command_loadgame = false;
+bool            forced_loadgame = false;
+bool            command_loadgame = false;
 gameaction_t    gameaction;
 gamestate_t     gamestate = -1;
 skill_t         gameskill;
-dboolean        respawnmonsters;
+bool            respawnmonsters;
 int             gameepisode;
 int             gamemap;
-dboolean        paused;
-dboolean        usergame;      // ok to save / end game
-dboolean        timingdemo;    // if true, exit with report on completion
-dboolean        fastdemo;      // if true, run at full speed -- killough
-dboolean        nodrawers;     // for comparative timing purposes
-dboolean        noblit;        // for comparative timing purposes
+bool            paused;
+bool            usergame;      // ok to save / end game
+bool            timingdemo;    // if true, exit with report on completion
+bool            fastdemo;      // if true, run at full speed -- killough
+bool            nodrawers;     // for comparative timing purposes
+bool            noblit;        // for comparative timing purposes
 int             starttime;     // for comparative timing purposes
-dboolean        deathmatch;    // only if started as net death
-dboolean        playeringame[MAXPLAYERS];
+int             deathmatch;    // only if started as net death
+bool            playeringame[MAXPLAYERS];
 player_t        players[MAXPLAYERS];
 int             upmove;
 int             consoleplayer; // player taking events and displaying
@@ -178,14 +178,14 @@ int             gametic;
 int             basetic;       /* killough 9/29/98: for demo sync */
 int             totalkills, totallive, totalitems, totalsecret;    // for intermission
 int             show_alive;
-dboolean        demorecording;
-dboolean        demoplayback;
-dboolean        democontinue = false;
+bool            demorecording;
+bool            demoplayback;
+bool            democontinue = false;
 char*           demo_continue_name;
 int             demover;
-dboolean        singledemo;           // quit after playing a demo from cmdline
+bool            singledemo;           // quit after playing a demo from cmdline
 wbstartstruct_t wminfo;               // parms for world map / intermission
-dboolean        haswolflevels = false;// jff 4/18/98 wolf levels present
+bool            haswolflevels = false;// jff 4/18/98 wolf levels present
 int             autorun = false;      // always running?          // phares
 int             totalleveltimes;      // CPhipps - total time for all completed levels
 int             longtics;
@@ -205,7 +205,7 @@ int shorttics;
  *     printf and other routines that would like to fallback to some console
  *     output if the screen is not yet available.
  */
-dboolean graphics_initialized = false;
+bool graphics_initialized = false;
 
 //jff 3/24/98 define defaultskill here
 int defaultskill;               //note 1-based
@@ -259,7 +259,7 @@ static inline signed short fudgea(signed short b) {
  * (previously code was scattered around in multiple places)
  * cph - Avoid possible buffer overflow problems by passing
  * size to this function and using snprintf */
-int G_SaveGameName(char *name, size_t size, int slot, dboolean demoplayback) {
+int G_SaveGameName(char *name, size_t size, int slot, bool demoplayback) {
   const char* sgn;
   
   if (demoplayback)
@@ -381,7 +381,7 @@ void G_SaveGame(int slot, char *description) {
                   ((slot << BTS_SAVESHIFT) & BTS_SAVEMASK);
 }
 
-void G_DoSaveGame(dboolean menu) {
+void G_DoSaveGame(bool menu) {
   char *name;
   int length;
   pbuf_t savebuffer;
@@ -450,7 +450,7 @@ void G_DoSaveGame(dboolean menu) {
 
 // killough 3/16/98: add slot info
 // killough 5/15/98: add command-line
-void G_LoadGame(int slot, dboolean command) {
+void G_LoadGame(int slot, bool command) {
   if (!demoplayback && !command) {
     // CPhipps - handle savegame filename in G_DoLoadGame
     //         - Delay load so it can be communicated in net game
@@ -504,7 +504,7 @@ void G_SetSpeed(void) {
   }
 }
 
-static dboolean WeaponSelectable(weapontype_t weapon) {
+static bool WeaponSelectable(weapontype_t weapon) {
   if (gamemode == shareware) {
     if (weapon == wp_plasma || weapon == wp_bfg)
       return false;
@@ -680,7 +680,7 @@ void G_BuildTiccmd(ticcmd_t *cmd) {
     else {
       // killough 5/2/98: reformatted
       // CG: 04/15/2014: re-reformatted
-      dboolean can_check_wp9 = (!demo_compatibility) && gamemode == commercial;
+      bool can_check_wp9 = (!demo_compatibility) && gamemode == commercial;
 
       newweapon = wp_nochange;
 
@@ -993,7 +993,7 @@ static void G_DoLoadLevel(void) {
 // Get info needed to make ticcmd_ts for the players.
 //
 
-dboolean G_Responder(event_t *ev) {
+bool G_Responder(event_t *ev) {
   // allow spy mode changes even during the demo
   // killough 2/22/98: even during DM demo
   //
@@ -1404,13 +1404,13 @@ void G_Ticker(void) {
 }
 
 void G_Drawer(void) {
-  static dboolean borderwillneedredraw = false;
-  static dboolean isborderstate        = false;
+  static bool borderwillneedredraw = false;
+  static bool isborderstate        = false;
 
-  dboolean viewactive = false;
-  dboolean isborder   = false;
+  bool viewactive = false;
+  bool isborder   = false;
 
-  dboolean redrawborderstuff;
+  bool redrawborderstuff;
 
   // Work out if the player view is visible, and if there is a border
   viewactive = (!(automapmode & am_active) || (automapmode & am_overlay)) &&
@@ -1550,11 +1550,11 @@ void G_PlayerReborn(int player) {
   p->armorpoints = 0;
   p->armortype = 0;
   memset(p->powers, 0, sizeof(int) * NUMPOWERS);
-  memset(p->cards, 0,  sizeof(dboolean) * NUMCARDS);
+  memset(p->cards, 0,  sizeof(bool) * NUMCARDS);
   p->backpack = 0;
   p->readyweapon = 0;
   p->pendingweapon = 0;
-  memset(p->weaponowned, 0, sizeof(dboolean) * NUMWEAPONS);
+  memset(p->weaponowned, 0, sizeof(bool) * NUMWEAPONS);
   memset(p->ammo, 0, sizeof(int) * NUMAMMO);
   memset(p->maxammo, 0, sizeof(int) * NUMAMMO);
   p->attackdown = 0;
@@ -1616,7 +1616,7 @@ void G_ClearCorpses(void) {
 // because something is occupying it
 //
 
-static dboolean G_CheckSpot(int playernum, mapthing_t *mthing) {
+static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
   fixed_t       x;
   fixed_t       y;
   fixed_t      xa;
@@ -1804,7 +1804,7 @@ int cpars[34] = {
   120,30,30,30          // 31-34
 };
 
-static dboolean secretexit;
+static bool secretexit;
 
 void G_ExitLevel(void) {
   secretexit = false;
@@ -2331,8 +2331,8 @@ void G_InitNew(skill_t skill, int episode, int map) {
   // Ultimate Doom, Final Doom and Doom95 have
   // "if (episode == 0) episode = 3/4" check instead of
   // "if (episode > 3/4) episode = 3/4"
-  dboolean fake_episode_check = compatibility_level == ultdoom_compatibility ||
-                                compatibility_level == finaldoom_compatibility;
+  bool fake_episode_check = compatibility_level == ultdoom_compatibility ||
+                            compatibility_level == finaldoom_compatibility;
 
   if (paused) {
     paused = false;
@@ -2942,9 +2942,9 @@ static int G_GetOriginalDoomCompatLevel(int ver) {
 }
 
 //e6y: Check for overrun
-static dboolean CheckForOverrun(const byte *start_p, const byte *current_p,
-                                size_t maxsize, size_t size,
-                                dboolean failonerror) {
+static bool CheckForOverrun(const byte *start_p, const byte *current_p,
+                            size_t maxsize, size_t size,
+                            bool failonerror) {
   size_t pos = current_p - start_p;
 
   if (pos + size > maxsize) {
@@ -3009,10 +3009,10 @@ void G_SaveRestoreGameOptions(int save) {
     {-1, -1, NULL}
   };
 
-  static dboolean was_saved_once = false;
-  static dboolean playeringame_o[MAXPLAYERS];
-  static dboolean playerscheats_o[MAXPLAYERS];
-  static int comp_o[COMP_TOTAL];
+  static bool was_saved_once = false;
+  static bool playeringame_o[MAXPLAYERS];
+  static bool playerscheats_o[MAXPLAYERS];
+  static int  comp_o[COMP_TOTAL];
 
   int i = 0;
 
@@ -3027,7 +3027,7 @@ void G_SaveRestoreGameOptions(int save) {
   while (gameoptions[i].value_p) {
     switch (gameoptions[i].type) {
       case 1: //int
-      case 2: //dboolean
+      case 2: //bool
       case 3: //unsigned long
         if (save)
           gameoptions[i].value_int = *gameoptions[i].value_p;
@@ -3075,7 +3075,7 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size,
   // The local variable should be used instead of demobuffer,
   // because demobuffer can be uninitialized
   const byte *header_p = demo_p;
-  dboolean failonerror = (params & RDH_SAFE);
+  bool failonerror = (params & RDH_SAFE);
 
   basetic = gametic;  // killough 9/29/98
 
@@ -3378,7 +3378,7 @@ void G_DoPlayDemo(void) {
  * Called after a death or level completion to allow demos to be cleaned up
  * Returns true if a new demo loop action will take place
  */
-dboolean G_CheckDemoStatus(void) {
+bool G_CheckDemoStatus(void) {
   //e6y
   if (doSkip && (demo_stoponend || demo_stoponnext))
     G_SkipDemoStop();
@@ -3573,7 +3573,7 @@ void P_ResetWalkcam(void) {
   }
 }
 
-void P_SyncWalkcam(dboolean sync_coords, dboolean sync_sight) {
+void P_SyncWalkcam(bool sync_coords, bool sync_sight) {
   if (!walkcamera.type)
     return;
 

@@ -38,7 +38,7 @@ GameMission_t   gamemission = doom;
 Language_t   language = english;
 
 // Set if homebrew PWAD stuff has been added.
-dboolean modifiedgame;
+bool modifiedgame;
 
 //-----------------------------------------------------------------------------
 
@@ -55,19 +55,19 @@ int /*comperr[COMPERR_NUM], */default_comperr[COMPERR_NUM];
 // v1.1-like pitched sounds
 int pitched_sounds;        // killough
 
-int     default_translucency; // config file says           // phares
-dboolean general_translucency; // true if translucency is ok // phares
+int  default_translucency; // config file says           // phares
+bool general_translucency; // true if translucency is ok // phares
 
 int demo_insurance, default_demo_insurance;        // killough 1/16/98
 
-int  allow_pushers = 1;      // MT_PUSH Things              // phares 3/10/98
-int  default_allow_pushers;  // killough 3/1/98: make local to each game
+int allow_pushers = 1;      // MT_PUSH Things              // phares 3/10/98
+int default_allow_pushers;  // killough 3/1/98: make local to each game
 
-int  variable_friction = 1;      // ice & mud               // phares 3/10/98
-int  default_variable_friction;  // killough 3/1/98: make local to each game
+int variable_friction = 1;      // ice & mud               // phares 3/10/98
+int default_variable_friction;  // killough 3/1/98: make local to each game
 
-int  weapon_recoil;              // weapon recoil                   // phares
-int  default_weapon_recoil;      // killough 3/1/98: make local to each game
+int weapon_recoil;              // weapon recoil                   // phares
+int default_weapon_recoil;      // killough 3/1/98: make local to each game
 
 int player_bobbing;  // whether player bobs or not          // phares 2/25/98
 int default_player_bobbing;  // killough 3/1/98: make local to each game

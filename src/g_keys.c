@@ -139,9 +139,7 @@ int joybstraferight;
 int joybuse;
 int joybspeed;
 
-// CPhipps - made lots of key/button state vars static
-//e6y static
-dboolean gamekeydown[NUMKEYS];
+bool gamekeydown[NUMKEYS];
 
 /* vi: set et ts=2 sw=2: */
 

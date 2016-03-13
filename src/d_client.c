@@ -44,7 +44,7 @@
 #include "r_fps.h"
 #include "e6y.h"
 
-static dboolean   server;
+static bool   server;
 static int       remotetic; // Tic expected from the remote
 static int       remotesend; // Tic expected by the remote
 ticcmd_t         netcmds[MAXPLAYERS][BACKUPTICS];
@@ -54,7 +54,7 @@ static int ticdup = 1;
 static int xtratics = 0;
 int              wanted_player_number;
 
-static dboolean isExtraDDisplay = false;
+static bool isExtraDDisplay = false;
 
 static void D_QuitNetGame (void);
 
@@ -191,12 +191,12 @@ void D_CheckNetGame(void)
   Z_Free(packet);
 }
 
-dboolean N_GetWad(const char* name)
+bool N_GetWad(const char* name)
 {
 #if defined(HAVE_WAIT_H)
   size_t psize = sizeof(packet_header_t) + strlen(name) + 500;
   packet_header_t *packet;
-  dboolean done = false;
+  bool done = false;
 
   if (!server || strchr(name, '/')) return false; // If it contains path info, reject
 

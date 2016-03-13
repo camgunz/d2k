@@ -24,50 +24,43 @@
 #ifndef HU_TRACERS_H__
 #define HU_TRACERS_H__
 
-#include "hu_lib.h"
-
 #define MAXTRACEITEMS 8
 
-typedef enum
-{
+typedef enum {
   TRACE_HEALTH,
   TRACE_PICKUP,
   TRACE_CROSS,
   TRACE_DAMAGE,
-
   NUMTRACES
 } tracertype_t;
 
-typedef struct
-{
-  int index;
+typedef struct {
+  int  index;
   char value[16];
-  int data1;
+  int  data1;
 } traceitem_t;
 
 typedef void (*TRACERFUNC)(tracertype_t index);
-typedef struct traceslist_s
-{
-  traceitem_t items[MAXTRACEITEMS];
-  int count;
 
-  char hudstr[80];
-  char cmd[32];
-  char prefix[32];
-  TRACERFUNC ApplyFunc;
-  TRACERFUNC ResetFunc;
+typedef struct traceslist_s {
+  traceitem_t items[MAXTRACEITEMS];
+  int         count;
+  char        hudstr[80];
+  char        cmd[32];
+  char        prefix[32];
+  TRACERFUNC  ApplyFunc;
+  TRACERFUNC  ResetFunc;
 } traceslist_t;
 
-typedef struct traceslistinit_s
-{
-  char cmd[32];
-  char prefix[32];
+typedef struct traceslistinit_s {
+  char       cmd[32];
+  char       prefix[32];
   TRACERFUNC ApplyFunc;
   TRACERFUNC ResetFunc;
 } traceslistinit_t;
 
 extern traceslist_t traces[];
-extern dboolean traces_present;
+extern bool traces_present;
 
 extern hu_textline_t w_traces[];
 
@@ -82,10 +75,10 @@ void ClearLinesCrossTracer(void);
 void TracerClearStarts(void);
 void TracerAddDeathmatchStart(int num, int index);
 void TracerAddPlayerStart(int num, int index);
-int TracerGetDeathmatchStart(int index);
-int TracerGetPlayerStart(int index);
+int  TracerGetDeathmatchStart(int index);
+int  TracerGetPlayerStart(int index);
 
-#endif // __HU_TRACERS__
+#endif // HU_TRACERS_H__
 
 /* vi: set et ts=2 sw=2: */
 

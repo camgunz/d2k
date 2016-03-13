@@ -36,13 +36,13 @@
 extern char *basesavegame;      // killough 2/16/98: savegame path
 
 //jff 1/24/98 make command line copies of play modes available
-extern dboolean clnomonsters; // checkparm of -nomonsters
-extern dboolean clrespawnparm;  // checkparm of -respawn
-extern dboolean clfastparm; // checkparm of -fast
+extern bool clnomonsters; // checkparm of -nomonsters
+extern bool clrespawnparm;  // checkparm of -respawn
+extern bool clfastparm; // checkparm of -fast
 //jff end of external declaration of command line playmode
 
-extern dboolean nosfxparm;
-extern dboolean nomusicparm;
+extern bool nosfxparm;
+extern bool nomusicparm;
 extern int ffmap;
 
 extern gamestate_t oldgamestate;
@@ -51,7 +51,7 @@ extern gamestate_t oldgamestate;
 void D_PostEvent(event_t* ev);
 
 // Demo stuff
-extern dboolean advancedemo;
+extern bool advancedemo;
 void D_AdvanceDemo(void);
 void D_DoAdvanceDemo (void);
 
@@ -73,7 +73,7 @@ const char* D_GetIWADPath(void);
 void        D_ClearIWAD(void);
 void        D_ClearResourceFiles(void);
 void        D_ClearDEHFiles(void);
-void        CheckIWAD(const char *iwadname, GameMode_t *gmode, dboolean *hassec);
+void        CheckIWAD(const char *iwadname, GameMode_t *gmode, bool *hassec);
 void        IdentifyVersion(void);
 
 /* cph - MBF-like wad/deh/bex autoload code */

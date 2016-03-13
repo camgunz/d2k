@@ -223,6 +223,7 @@ void CL_CheckForStateUpdates(void) {
 
   gametic++;
 
+  printf("(%d) Trimming unsynchronized commands\n", gametic);
   CL_TrimSynchronizedCommands(consoleplayer);
 
   N_LogPlayerPosition(&players[consoleplayer]);

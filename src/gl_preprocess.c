@@ -72,7 +72,7 @@ static void gld_AddGlobalVertexes(int count)
 #define FIX2DBL(x)    ((double)(x))
 #define MAX_CC_SIDES  128
 
-static dboolean gld_PointOnSide(vertex_t *p, divline_t *d)
+static bool gld_PointOnSide(vertex_t *p, divline_t *d)
 {
   // We'll return false if the point c is on the left side.
   return ((FIX2DBL(d->y)-FIX2DBL(p->y))*FIX2DBL(d->dx)-(FIX2DBL(d->x)-FIX2DBL(p->x))*FIX2DBL(d->dy) >= 0);
@@ -447,7 +447,7 @@ static void CALLBACK ntessEnd( void )
 static void gld_PrecalculateSector(int num)
 {
   int i;
-  dboolean *lineadded=NULL;
+  bool *lineadded = NULL;
   int linecount;
   int currentline;
   int oldline;
@@ -464,19 +464,27 @@ static void gld_PrecalculateSector(int num)
   int maxvertexnum;
   int vertexnum;
 
-  currentsector=num;
-  lineadded=Z_Malloc(sectors[num].linecount*sizeof(dboolean),PU_LEVEL,0);
+  currentsector = num;
+  lineadded = Z_Malloc(sectors[num].linecount * sizeof(bool), PU_LEVEL, 0);
   if (!lineadded)
   {
-    if (levelinfo) fclose(levelinfo);
+    if (levelinfo) {
+      fclose(levelinfo);
+    }
     return;
   }
+
   // init tesselator
-  tess=gluNewTess();
-  if (!tess)
-  {
-    if (levelinfo) fclose(levelinfo);
+
+  tess = gluNewTess();
+
+  if (!tess) {
+    if (levelinfo) {
+      fclose(levelinfo);
+    }
+
     Z_Free(lineadded);
+
     return;
   }
   // set callbacks
@@ -485,175 +493,239 @@ static void gld_PrecalculateSector(int num)
   gluTessCallback(tess, GLU_TESS_ERROR, ntessError);
   gluTessCallback(tess, GLU_TESS_COMBINE, ntessCombine);
   gluTessCallback(tess, GLU_TESS_END, ntessEnd);
-  if (levelinfo) fprintf(levelinfo, "sector %i, %i lines in sector\n", num, sectors[num].linecount);
+
+  if (levelinfo) {
+    fprintf(levelinfo, "sector %i, %i lines in sector\n",
+      num, sectors[num].linecount
+    );
+  }
   // remove any line which has both sides in the same sector (i.e. Doom2 Map01 Sector 1)
-  for (i=0; i<sectors[num].linecount; i++)
-  {
-    lineadded[i]=false;
-    if (sectors[num].lines[i]->sidenum[0]!=NO_INDEX)
-      if (sectors[num].lines[i]->sidenum[1]!=NO_INDEX)
-        if (sides[sectors[num].lines[i]->sidenum[0]].sector
-          ==sides[sectors[num].lines[i]->sidenum[1]].sector)
-        {
-          lineadded[i]=true;
-          if (levelinfo) fprintf(levelinfo, "line %4i (iLineID %4i) has both sides in same sector (removed)\n", i, sectors[num].lines[i]->iLineID);
+  for (i = 0; i < sectors[num].linecount; i++) {
+    lineadded[i] = false;
+    if (sectors[num].lines[i]->sidenum[0] != NO_INDEX)
+      if (sectors[num].lines[i]->sidenum[1] != NO_INDEX)
+        if (sides[sectors[num].lines[i]->sidenum[0]].sector ==
+            sides[sectors[num].lines[i]->sidenum[1]].sector) {
+          lineadded[i] = true;
+          if (levelinfo) {
+            fprintf(levelinfo, "line %4i (iLineID %4i) has both sides in same sector (removed)\n",
+              i, sectors[num].lines[i]->iLineID
+            );
+          }
         }
   }
   // e6y
   // Remove any line which has a clone with the same vertexes and orientation
   // (i.e. MM.WAD Map22 lines 1298 and 2397)
   // There is no more HOM on Memento Mori MAP22 sector 299
-  for (i = 0; i < sectors[num].linecount - 1; i++)
-  {
+  for (i = 0; i < sectors[num].linecount - 1; i++) {
     int j;
-    for (j = i + 1; j < sectors[num].linecount; j++)
-    {
+
+    for (j = i + 1; j < sectors[num].linecount; j++) {
       if (sectors[num].lines[i]->v1 == sectors[num].lines[j]->v1 &&
           sectors[num].lines[i]->v2 == sectors[num].lines[j]->v2 &&
           sectors[num].lines[i]->frontsector == sectors[num].lines[j]->frontsector &&
           sectors[num].lines[i]->backsector == sectors[num].lines[j]->backsector &&
-          lineadded[i] == false && lineadded[j] == false)
-      {
+          lineadded[i] == false && lineadded[j] == false) {
         lineadded[i] = true;
       }
     }
   }
 
   // initialize variables
-  linecount=sectors[num].linecount;
-  oldline=0;
-  currentline=0;
-  startvertex=sectors[num].lines[currentline]->v2;
-  currentloop=0;
-  vertexnum=0;
-  maxvertexnum=0;
+  linecount = sectors[num].linecount;
+  oldline = 0;
+  currentline = 0;
+  startvertex = sectors[num].lines[currentline]->v2;
+  currentloop = 0;
+  vertexnum = 0;
+  maxvertexnum = 0;
+
   // start tesselator
-  if (levelinfo) fprintf(levelinfo, "gluTessBeginPolygon\n");
+  if (levelinfo) {
+    fprintf(levelinfo, "gluTessBeginPolygon\n");
+  }
+
   gluTessBeginPolygon(tess, NULL);
-  if (levelinfo) fprintf(levelinfo, "\tgluTessBeginContour\n");
+
+  if (levelinfo) {
+    fprintf(levelinfo, "\tgluTessBeginContour\n");
+  }
+
   gluTessBeginContour(tess);
-  while (linecount)
-  {
+  while (linecount) {
     // if there is no connected line, then start new loop
-    if ((oldline==currentline) || (startvertex==currentvertex))
-    {
-      currentline=-1;
-      for (i=0; i<sectors[num].linecount; i++)
-        if (!lineadded[i])
-        {
-          currentline=i;
+    if ((oldline == currentline) || (startvertex == currentvertex)) {
+      currentline = -1;
+      for (i = 0; i < sectors[num].linecount; i++) {
+        if (!lineadded[i]) {
+          currentline = i;
           currentloop++;
-          if ((sectors[num].lines[currentline]->sidenum[0]!=NO_INDEX) ? (sides[sectors[num].lines[currentline]->sidenum[0]].sector==&sectors[num]) : false)
-            startvertex=sectors[num].lines[currentline]->v1;
-          else
+          if ((sectors[num].lines[currentline]->sidenum[0] != NO_INDEX) ?
+              (sides[sectors[num].lines[currentline]->sidenum[0]].sector == &sectors[num]) :
+              false) {
+            startvertex = sectors[num].lines[currentline]->v1;
+          }
+          else {
             startvertex=sectors[num].lines[currentline]->v2;
-          if (levelinfo) fprintf(levelinfo, "\tNew Loop %3i\n", currentloop);
-          if (oldline!=0)
-          {
-            if (levelinfo) fprintf(levelinfo, "\tgluTessEndContour\n");
+          }
+
+          if (levelinfo) {
+            fprintf(levelinfo, "\tNew Loop %3i\n", currentloop);
+          }
+
+          if (oldline != 0) {
+            if (levelinfo) {
+              fprintf(levelinfo, "\tgluTessEndContour\n");
+            }
             gluTessEndContour(tess);
-//            if (levelinfo) fprintf(levelinfo, "\tgluNextContour\n");
-//            gluNextContour(tess, GLU_CW);
-            if (levelinfo) fprintf(levelinfo, "\tgluTessBeginContour\n");
+            if (levelinfo) {
+              fprintf(levelinfo, "\tgluTessBeginContour\n");
+            }
             gluTessBeginContour(tess);
           }
           break;
         }
+      }
     }
-    if (currentline==-1)
+
+    if (currentline == -1) {
       break;
+    }
+
     // add current line
-    lineadded[currentline]=true;
+    lineadded[currentline] = true;
+
     // check if currentsector is on the front side of the line ...
-    if ((sectors[num].lines[currentline]->sidenum[0]!=NO_INDEX) ? (sides[sectors[num].lines[currentline]->sidenum[0]].sector==&sectors[num]) : false)
-    {
+    if ((sectors[num].lines[currentline]->sidenum[0] != NO_INDEX) ?
+        (sides[sectors[num].lines[currentline]->sidenum[0]].sector == &sectors[num]) :
+        false) {
       // v2 is ending vertex
       currentvertex=sectors[num].lines[currentline]->v2;
       // calculate the angle of this line for use below
-      lineangle = R_PointToAngle2(sectors[num].lines[currentline]->v1->x,sectors[num].lines[currentline]->v1->y,sectors[num].lines[currentline]->v2->x,sectors[num].lines[currentline]->v2->y);
-      lineangle=(lineangle>>ANGLETOFINESHIFT)*360/8192;
+      lineangle = R_PointToAngle2(
+        sectors[num].lines[currentline]->v1->x,
+        sectors[num].lines[currentline]->v1->y,
+        sectors[num].lines[currentline]->v2->x,
+        sectors[num].lines[currentline]->v2->y
+      );
+
+      lineangle = (lineangle >> ANGLETOFINESHIFT) * 360 / 8192;
       
       //e6y: direction of a line shouldn't be changed
       //if (lineangle>=180)
       //  lineangle=lineangle-360;
 
-      if (levelinfo) fprintf(levelinfo, "\t\tAdded Line %4i to Loop, iLineID %5i, Angle: %4i, flipped false\n", currentline, sectors[num].lines[currentline]->iLineID, lineangle);
+      if (levelinfo) {
+        fprintf(levelinfo, "\t\t"
+          "Added Line %4i to Loop, iLineID %5i, Angle: %4i, flipped false\n",
+          currentline, sectors[num].lines[currentline]->iLineID, lineangle
+        );
     }
-    else // ... or on the back side
-    {
+    else { // ... or on the back side
       // v1 is ending vertex
       currentvertex=sectors[num].lines[currentline]->v1;
       // calculate the angle of this line for use below
-      lineangle = R_PointToAngle2(sectors[num].lines[currentline]->v2->x,sectors[num].lines[currentline]->v2->y,sectors[num].lines[currentline]->v1->x,sectors[num].lines[currentline]->v1->y);
-      lineangle=(lineangle>>ANGLETOFINESHIFT)*360/8192;
+      lineangle = R_PointToAngle2(
+        sectors[num].lines[currentline]->v2->x,
+        sectors[num].lines[currentline]->v2->y,
+        sectors[num].lines[currentline]->v1->x,
+        sectors[num].lines[currentline]->v1->y
+      );
+
+      lineangle = (lineangle >> ANGLETOFINESHIFT) * 360 / 8192;
 
       //e6y: direction of a line shouldn't be changed
       //if (lineangle>=180)
       //  lineangle=lineangle-360;
 
-      if (levelinfo) fprintf(levelinfo, "\t\tAdded Line %4i to Loop, iLineID %5i, Angle: %4i, flipped true\n", currentline, sectors[num].lines[currentline]->iLineID, lineangle);
+      if (levelinfo) {
+        fprintf(levelinfo,
+          "\t\tAdded Line %4i to Loop, iLineID %5i, Angle: %4i, flipped true\n",
+          currentline, sectors[num].lines[currentline]->iLineID, lineangle
+        );
+      }
     }
-    if (vertexnum>=maxvertexnum)
-    {
-      maxvertexnum+=512;
-      v=Z_Realloc(v,maxvertexnum*3*sizeof(double),PU_LEVEL,0);
+
+    if (vertexnum >= maxvertexnum) {
+      maxvertexnum += 512;
+      v = Z_Realloc(v, maxvertexnum * 3 * sizeof(double), PU_LEVEL, 0);
     }
     // calculate coordinates for the glu tesselation functions
-    v[vertexnum*3+0]=-(double)currentvertex->x/(double)MAP_SCALE;
-    v[vertexnum*3+1]=0.0;
-    v[vertexnum*3+2]= (double)currentvertex->y/(double)MAP_SCALE;
+    v[vertexnum * 3 + 0] = -(double)currentvertex->x / (double)MAP_SCALE;
+    v[vertexnum * 3 + 1] = 0.0;
+    v[vertexnum * 3 + 2] =  (double)currentvertex->y / (double)MAP_SCALE;
     // add the vertex to the tesselator, currentvertex is the pointer to the vertexlist of doom
     // v[vertexnum] is the GLdouble array of the current vertex
-    if (levelinfo) fprintf(levelinfo, "\t\tgluTessVertex(%i, %i)\n",currentvertex->x>>FRACBITS,currentvertex->y>>FRACBITS);
-    gluTessVertex(tess, &v[vertexnum*3], currentvertex);
+    if (levelinfo) {
+      fprintf(levelinfo, "\t\tgluTessVertex(%i, %i)\n",
+        currentvertex->x >> FRACBITS, currentvertex->y >> FRACBITS
+      );
+    }
+    gluTessVertex(tess, &v[vertexnum * 3], currentvertex);
     // increase vertexindex
     vertexnum++;
     // decrease linecount of current sector
     linecount--;
     // find the next line
-    oldline=currentline; // if this isn't changed at the end of the search, a new loop will start
-    bestline=-1; // set to start values
-    bestlinecount=0;
+    oldline = currentline; // if this isn't changed at the end of the search, a new loop will start
+    bestline = -1; // set to start values
+    bestlinecount = 0;
     // set backsector if there is one
     /*if (sectors[num].lines[currentline]->sidenum[1]!=NO_INDEX)
       backsector=sides[sectors[num].lines[currentline]->sidenum[1]].sector;
     else
       backsector=NULL;*/
     // search through all lines of the current sector
-    for (i=0; i<sectors[num].linecount; i++)
+    for (i = 0; i < sectors[num].linecount; i++)
       if (!lineadded[i]) // if the line isn't already added ...
         // check if one of the vertexes is the same as the current vertex
-        if ((sectors[num].lines[i]->v1==currentvertex) || (sectors[num].lines[i]->v2==currentvertex))
+        if ((sectors[num].lines[i]->v1 == currentvertex) || (sectors[num].lines[i]->v2 == currentvertex))
         {
           // calculate the angle of this best line candidate
-          if ((sectors[num].lines[i]->sidenum[0]!=NO_INDEX) ? (sides[sectors[num].lines[i]->sidenum[0]].sector==&sectors[num]) : false)
-            angle = R_PointToAngle2(sectors[num].lines[i]->v1->x,sectors[num].lines[i]->v1->y,sectors[num].lines[i]->v2->x,sectors[num].lines[i]->v2->y);
-          else
-            angle = R_PointToAngle2(sectors[num].lines[i]->v2->x,sectors[num].lines[i]->v2->y,sectors[num].lines[i]->v1->x,sectors[num].lines[i]->v1->y);
-          angle=(angle>>ANGLETOFINESHIFT)*360/8192;
+          if ((sectors[num].lines[i]->sidenum[0] != NO_INDEX) ?
+              (sides[sectors[num].lines[i]->sidenum[0]].sector == &sectors[num]) :
+              false) {
+            angle = R_PointToAngle2(
+              sectors[num].lines[i]->v1->x,
+              sectors[num].lines[i]->v1->y,
+              sectors[num].lines[i]->v2->x,
+              sectors[num].lines[i]->v2->y
+            );
+          }
+          else {
+            angle = R_PointToAngle2(
+              sectors[num].lines[i]->v2->x,
+              sectors[num].lines[i]->v2->y,
+              sectors[num].lines[i]->v1->x,
+              sectors[num].lines[i]->v1->y
+            );
+          }
+          angle = (angle >> ANGLETOFINESHIFT) * 360 / 8192;
 
           //e6y: direction of a line shouldn't be changed
           //if (angle>=180)
           //  angle=angle-360;
 
           // check if line is flipped ...
-          if ((sectors[num].lines[i]->sidenum[0]!=NO_INDEX) ? (sides[sectors[num].lines[i]->sidenum[0]].sector==&sectors[num]) : false)
-          {
+          if ((sectors[num].lines[i]->sidenum[0]!=NO_INDEX) ?
+              (sides[sectors[num].lines[i]->sidenum[0]].sector==&sectors[num]) :
+              false) {
             // when the line is not flipped and startvertex is not the currentvertex then skip this line
-            if (sectors[num].lines[i]->v1!=currentvertex)
+            if (sectors[num].lines[i]->v1 != currentvertex) {
               continue;
+            }
           }
-          else
-          {
+          else {
             // when the line is flipped and endvertex is not the currentvertex then skip this line
-            if (sectors[num].lines[i]->v2!=currentvertex)
+            if (sectors[num].lines[i]->v2 != currentvertex) {
               continue;
+            }
           }
           // set new best line candidate
-          if (bestline==-1) // if this is the first one ...
-          {
-            bestline=i;
-            bestangle=lineangle-angle;
+          if (bestline ==- 1) { // if this is the first one ...
+            bestline = i;
+            bestangle = lineangle - angle;
             bestlinecount++;
           }
           else
@@ -661,24 +733,32 @@ static void gld_PrecalculateSector(int num)
             // the angle of the last candidate
             // e6y: for finding an angle between AB and BC vectors we should subtract
             // (BC - BA) == (BC - (180 - AB)) == (angle-(180-lineangle))
-            if (D_abs(angle-(180-lineangle))<D_abs(bestangle))
-            {
-              bestline=i;
-              bestangle=angle-(180-lineangle);
+            if (D_abs(angle - (180 - lineangle)) < D_abs(bestangle)) {
+              bestline = i;
+              bestangle = angle - (180 - lineangle);
               bestlinecount++;
             }
         }
-    if (bestline!=-1) // if a line is found, make it the current line
-    {
-      currentline=bestline;
-      if (bestlinecount>1)
-        if (levelinfo) fprintf(levelinfo, "\t\tBestlinecount: %4i\n", bestlinecount);
+    if (bestline != -1) { // if a line is found, make it the current line
+      currentline = bestline;
+      if (bestlinecount > 1) {
+        if (levelinfo) {
+          fprintf(levelinfo, "\t\tBestlinecount: %4i\n", bestlinecount);
+        }
+      }
     }
   }
   // let the tesselator calculate the loops
-  if (levelinfo) fprintf(levelinfo, "\tgluTessEndContour\n");
+  if (levelinfo) {
+    fprintf(levelinfo, "\tgluTessEndContour\n");
+  }
+
   gluTessEndContour(tess);
-  if (levelinfo) fprintf(levelinfo, "gluTessEndPolygon\n");
+
+  if (levelinfo) {
+    fprintf(levelinfo, "gluTessEndPolygon\n");
+  }
+
   gluTessEndPolygon(tess);
   // clean memory
   gluDeleteTess(tess);
@@ -788,7 +868,7 @@ static void gld_MarkSectorsForClamp(void)
     int loopnum; // current loop number
     GLLoopDef *currentloop; // the current loop
     GLfloat minu, maxu, minv, maxv;
-    dboolean fail;
+    bool fail;
 
     minu = minv = 65535;
     maxu = maxv = -65535;

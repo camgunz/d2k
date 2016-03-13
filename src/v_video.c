@@ -44,7 +44,7 @@
 // SetRatio sets the following global variables based on window geometry and
 // user preferences. The integer ratio is hardly used anymore, so further
 // simplification may be in order.
-dboolean tallscreen;
+bool tallscreen;
 unsigned int ratio_multiplier, ratio_scale;
 float gl_ratio;
 int psprite_offset; // Needed for "tallscreen" modes

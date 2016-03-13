@@ -24,23 +24,10 @@
 #ifndef F_FINALE__
 #define F_FINALE__
 
-#include "doomtype.h"
-#include "d_event.h"
-
-/*
- * FINALE
- */
-
-/* Called by main loop. */
-dboolean F_Responder (event_t* ev);
-
-/* Called by main loop. */
-void F_Ticker (void);
-
-/* Called by main loop. */
-void F_Drawer (void);
-
-void F_StartFinale (void);
+bool F_Responder(event_t *ev);
+void F_Ticker(void);
+void F_Drawer(void);
+void F_StartFinale(void);
 
 #endif
 

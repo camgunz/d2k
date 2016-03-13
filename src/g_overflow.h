@@ -72,7 +72,7 @@ typedef struct
 {
     int len;
     void *addr;
-    dboolean int16_array;
+    bool int16_array;
 } intercepts_overrun_t;
 
 extern intercepts_overrun_t intercepts_overrun[];
@@ -102,8 +102,8 @@ typedef struct spechit_overrun_param_s
   fixed_t *tmfloorz;
   fixed_t *tmceilingz;
 
-  dboolean *crushchange;
-  dboolean *nofit;
+  bool *crushchange;
+  bool *nofit;
 } spechit_overrun_param_t;
 
 extern unsigned int spechit_baseaddr;

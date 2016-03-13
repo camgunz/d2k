@@ -27,15 +27,6 @@
 #ifndef BYTEBOOL__
 #define BYTEBOOL__
 
-/* Fixed to use builtin bool type with C++. */
-#ifdef __cplusplus
-typedef bool dboolean;
-#elif !defined(HAVE_STDBOOL_H)
-typedef enum {false, true} dboolean;
-#else
-typedef int dboolean;
-#endif
-
 #ifdef uint8_t // CG
 typedef uint8_t byte;
 #else

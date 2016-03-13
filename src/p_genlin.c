@@ -49,25 +49,23 @@
 // jff 02/04/98 Added this routine (and file) to handle generalized
 // floor movers using bit fields in the line special type.
 //
-int EV_DoGenFloor
-( line_t*       line )
-{
-  int                   secnum;
-  int                   rtn;
-  dboolean               manual;
-  sector_t*             sec;
-  floormove_t*          floor;
-  unsigned              value = (unsigned)line->special - GenFloorBase;
+int EV_DoGenFloor(line_t *line) {
+  int           secnum;
+  int           rtn;
+  bool          manual;
+  sector_t     *sec;
+  floormove_t  *floor;
+  unsigned int  value = (unsigned int)line->special - GenFloorBase;
 
   // parse the bit fields in the line's special type
 
-  int Crsh = (value & FloorCrush) >> FloorCrushShift;
-  int ChgT = (value & FloorChange) >> FloorChangeShift;
-  int Targ = (value & FloorTarget) >> FloorTargetShift;
+  int Crsh = (value & FloorCrush)     >> FloorCrushShift;
+  int ChgT = (value & FloorChange)    >> FloorChangeShift;
+  int Targ = (value & FloorTarget)    >> FloorTargetShift;
   int Dirn = (value & FloorDirection) >> FloorDirectionShift;
-  int ChgM = (value & FloorModel) >> FloorModelShift;
-  int Sped = (value & FloorSpeed) >> FloorSpeedShift;
-  int Trig = (value & TriggerType) >> TriggerTypeShift;
+  int ChgM = (value & FloorModel)     >> FloorModelShift;
+  int Sped = (value & FloorSpeed)     >> FloorSpeedShift;
+  int Trig = (value & TriggerType)    >> TriggerTypeShift;
 
   rtn = 0;
 
@@ -84,8 +82,9 @@ int EV_DoGenFloor
   // check if a manual trigger, if so do just the sector on the backside
   manual = false;
   if (Trig == PushOnce || Trig == PushMany) {
-    if (!(sec = line->backsector))
+    if (!(sec = line->backsector)) {
       return rtn;
+    }
 
     secnum = sec->iSectorID;
     manual = true;
@@ -100,10 +99,11 @@ int EV_DoGenFloor
 manual_floor:
     // Do not start another function if floor already moving
     if (P_SectorActive(floor_special, sec)) {
-      if (!manual)
+      if (!manual) {
         continue;
-      else
-        return rtn;
+      }
+
+      return rtn;
     }
 
     // new floor thinker
@@ -260,16 +260,14 @@ manual_floor:
 // jff 02/04/98 Added this routine (and file) to handle generalized
 // floor movers using bit fields in the line special type.
 //
-int EV_DoGenCeiling
-( line_t*       line )
-{
-  int                   secnum;
-  int                   rtn;
-  dboolean               manual;
-  fixed_t               targheight;
-  sector_t*             sec;
-  ceiling_t*            ceiling;
-  unsigned              value = (unsigned)line->special - GenCeilingBase;
+int EV_DoGenCeiling(line_t *line) {
+  int           secnum;
+  int           rtn;
+  bool          manual;
+  fixed_t       targheight;
+  sector_t     *sec;
+  ceiling_t    *ceiling;
+  unsigned int  value = (unsigned int)line->special - GenCeilingBase;
 
   // parse the bit fields in the line's special type
 
@@ -283,13 +281,22 @@ int EV_DoGenCeiling
 
   rtn = 0;
 
-  if (ProcessNoTagLines(line, &sec, &secnum)) {if (zerotag_manual) {manual = true; goto manual_ceiling;} else {return rtn;}};//e6y
+  if (ProcessNoTagLines(line, &sec, &secnum)) {
+    if (zerotag_manual) {
+      manual = true;
+      goto manual_ceiling;
+    }
+    else {
+      return rtn;
+    }
+  }//e6y
+
   // check if a manual trigger, if so do just the sector on the backside
   manual = false;
-  if (Trig==PushOnce || Trig==PushMany)
-  {
-    if (!(sec = line->backsector))
+  if (Trig == PushOnce || Trig == PushMany) {
+    if (!(sec = line->backsector)) {
       return rtn;
+    }
     secnum = sec->iSectorID;
     manual = true;
     goto manual_ceiling;
@@ -297,18 +304,17 @@ int EV_DoGenCeiling
 
   secnum = -1;
   // if not manual do all sectors tagged the same as the line
-  while ((secnum = P_FindSectorFromLineTag(line,secnum)) >= 0)
-  {
+  while ((secnum = P_FindSectorFromLineTag(line,secnum)) >= 0) {
     sec = &sectors[secnum];
 
 manual_ceiling:
     // Do not start another function if ceiling already moving
-    if (P_SectorActive(ceiling_special,sec)) //jff 2/22/98
-    {
-      if (!manual)
+    if (P_SectorActive(ceiling_special,sec)) { //jff 2/22/98
+      if (!manual) {
         continue;
-      else
-        return rtn;
+      }
+
+      return rtn;
     }
 
     // new ceiling thinker
@@ -473,7 +479,7 @@ int EV_DoGenLift
   plat_t*         plat;
   int             secnum;
   int             rtn;
-  dboolean         manual;
+  bool             manual;
   sector_t*       sec;
   unsigned        value = (unsigned)line->special - GenLiftBase;
 
@@ -629,7 +635,7 @@ int EV_DoGenStairs
   int                   texture;
   int                   ok;
   int                   rtn;
-  dboolean               manual;
+  bool                   manual;
 
   sector_t*             sec;
   sector_t*             tsec;
@@ -825,7 +831,7 @@ int EV_DoGenCrusher
 {
   int                   secnum;
   int                   rtn;
-  dboolean               manual;
+  bool                   manual;
   sector_t*             sec;
   ceiling_t*            ceiling;
   unsigned              value = (unsigned)line->special - GenCrusherBase;
@@ -925,7 +931,7 @@ int EV_DoGenLockedDoor
   int   secnum,rtn;
   sector_t* sec;
   vldoor_t* door;
-  dboolean manual;
+  bool     manual;
   unsigned  value = (unsigned)line->special - GenLockedBase;
 
   // parse the bit fields in the line's special type
@@ -1033,7 +1039,7 @@ int EV_DoGenDoor
 {
   int   secnum,rtn;
   sector_t* sec;
-  dboolean   manual;
+  bool       manual;
   vldoor_t* door;
   unsigned  value = (unsigned)line->special - GenDoorBase;
 

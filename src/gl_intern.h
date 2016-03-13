@@ -77,16 +77,14 @@ typedef struct gl_strip_coords_s
 
 #define PLAYERCOLORMAP_COUNT (3)
 
-typedef struct detail_s
-{
+typedef struct detail_s {
   GLuint texid;
   int texture_num;
   float width, height;
   float offsetx, offsety;
 } detail_t;
 
-typedef struct
-{
+typedef struct {
   int index;
   int width,height;
   int leftoffset,topoffset;
@@ -113,15 +111,16 @@ typedef struct
   float detail_width, detail_height;
 } GLTexture;
 
-typedef struct
-{
-  float x1,x2;
-  float z1,z2;
-  dboolean fracleft, fracright; //e6y
+typedef struct {
+  float x1;
+  float x2;
+  float z1;
+  float z2;
+  bool  fracleft;
+  bool  fracright; //e6y
 } GLSeg;
 
-typedef struct
-{
+typedef struct {
   GLSeg *glseg;
   float ytop,ybottom;
   float ul,ur,vt,vb;
@@ -135,14 +134,12 @@ typedef struct
   seg_t *seg;
 } GLWall;
 
-typedef enum
-{
+typedef enum {
   GLFLAT_CEILING      = 0x00000001,
   GLFLAT_HAVE_OFFSET  = 0x00000002,
 } GLFlat_flag_t;
 
-typedef struct
-{
+typedef struct {
   int sectornum;
   float light; // the lightlevel of the flat
   float fogdensity;
@@ -153,11 +150,11 @@ typedef struct
   float alpha;
 } GLFlat;
 
-/* GLLoopDef is the struct for one loop. A loop is a list of vertexes
+/*
+ * GLLoopDef is the struct for one loop. A loop is a list of vertexes
  * for triangles
  */
-typedef struct
-{
+typedef struct {
   int index;   // subsector index
   GLenum mode; // GL_TRIANGLES, GL_TRIANGLE_STRIP or GL_TRIANGLE_FAN
   int vertexcount; // number of vertexes in this loop
@@ -365,11 +362,11 @@ extern int scene_has_wall_details;
 extern int scene_has_flat_details;
 
 extern GLuint* last_glTexID;
-GLTexture *gld_RegisterTexture(int texture_num, dboolean mipmap, dboolean force);
+GLTexture *gld_RegisterTexture(int texture_num, bool mipmap, bool force);
 void gld_BindTexture(GLTexture *gltexture, unsigned int flags);
 GLTexture *gld_RegisterPatch(int lump, int cm);
 void gld_BindPatch(GLTexture *gltexture, int cm);
-GLTexture *gld_RegisterFlat(int lump, dboolean mipmap);
+GLTexture *gld_RegisterFlat(int lump, bool mipmap);
 void gld_BindFlat(GLTexture *gltexture, unsigned int flags);
 void gld_InitPalettedTextures(void);
 int gld_GetTexDimension(int value);
@@ -383,8 +380,8 @@ void SetFrameTextureMode(void);
 void gld_ResetGammaRamp(void);
 
 //gl_vertex
-void gld_SplitLeftEdge(const GLWall *wall, dboolean detail);
-void gld_SplitRightEdge(const GLWall *wall, dboolean detail);
+void gld_SplitLeftEdge(const GLWall *wall, bool detail);
+void gld_SplitRightEdge(const GLWall *wall, bool detail);
 void gld_RecalcVertexHeights(const vertex_t *v);
 
 //e6y
@@ -393,7 +390,7 @@ void gld_ResetLastTexture(void);
 
 unsigned char* gld_GetTextureBuffer(GLuint texid, int miplevel, int *width, int *height);
 
-int gld_BuildTexture(GLTexture *gltexture, void *data, dboolean readonly, int width, int height);
+int gld_BuildTexture(GLTexture *gltexture, void *data, bool readonly, int width, int height);
 
 //hires
 extern unsigned int gl_has_hires;

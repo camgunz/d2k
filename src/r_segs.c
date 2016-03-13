@@ -43,13 +43,13 @@
 // killough 1/6/98: replaced globals with statics where appropriate
 
 // True if any of the segs textures might be visible.
-static dboolean  segtextured;
-static dboolean  markfloor;      // False if the back side is the same plane.
-static dboolean  markceiling;
-static dboolean  maskedtexture;
-static int      toptexture;
-static int      bottomtexture;
-static int      midtexture;
+static bool segtextured;
+static bool markfloor;      // False if the back side is the same plane.
+static bool markceiling;
+static bool maskedtexture;
+static int  toptexture;
+static int  bottomtexture;
+static int  midtexture;
 
 static fixed_t  toptexheight, midtexheight, bottomtexheight; // cph
 

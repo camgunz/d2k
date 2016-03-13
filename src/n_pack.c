@@ -378,16 +378,16 @@ void N_PackSetup(netpeer_t *np) {
   np->sync.tic = gs->tic;
 }
 
-dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
-                                      unsigned short *player_count,
-                                      unsigned short *playernum) {
+bool N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
+                                  unsigned short *player_count,
+                                  unsigned short *playernum) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
   int m_sync_type = 0;
   unsigned short m_player_count = 0;
   unsigned short m_playernum = 0;
   int m_state_tic;
   game_state_t *gs;
-  dboolean has_resources;
+  bool has_resources;
   unsigned int deh_file_count;
   buf_t iwad_buf;
   GPtrArray *rf_list;
@@ -402,7 +402,7 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   read_ushort(pbuf, m_player_count, "player count");
 
   for (int i = 0; i < m_player_count; i++) {
-    dboolean m_ingame;
+    bool m_ingame;
 
     read_bool(pbuf, m_ingame, "player in game");
 
@@ -455,7 +455,7 @@ dboolean N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   if (deh_file_count) {
     buf_t deh_name;
     int deh_lumpnum;
-    dboolean is_lump;
+    bool is_lump;
 
     M_BufferInitWithCapacity(&deh_name, MAX_RESOURCE_NAME_LENGTH);
 
@@ -511,7 +511,7 @@ void N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level) {
   M_PBufWriteUChar(pbuf, auth_level);
 }
 
-dboolean N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
+bool N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
   unsigned char m_auth_level = 0;
 
@@ -552,7 +552,7 @@ void N_PackPing(netpeer_t *np, double server_time) {
   M_PBufWriteDouble(pbuf, server_time);
 }
 
-dboolean N_UnpackPing(netpeer_t *np, double *server_time) {
+bool N_UnpackPing(netpeer_t *np, double *server_time) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
   double m_server_time;
 
@@ -636,11 +636,11 @@ void N_PackServerChatMessage(netpeer_t *np, const char *message) {
   M_PBufWriteString(pbuf, message, strlen(message));
 }
 
-dboolean N_UnpackChatMessage(netpeer_t *np,
-                             chat_channel_e *chat_channel,
-                             unsigned short *message_sender,
-                             unsigned short *message_recipient,
-                             buf_t *message_contents) {
+bool N_UnpackChatMessage(netpeer_t *np,
+                         chat_channel_e *chat_channel,
+                         unsigned short *message_sender,
+                         unsigned short *message_recipient,
+                         buf_t *message_contents) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
   unsigned char m_chat_channel;
   unsigned short m_message_sender = 0;
@@ -695,7 +695,7 @@ void N_PackSync(netpeer_t *np) {
   }
 }
 
-dboolean N_UnpackSync(netpeer_t *np) {
+bool N_UnpackSync(netpeer_t *np) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
 
   if (CLIENT) {
@@ -744,7 +744,7 @@ dboolean N_UnpackSync(netpeer_t *np) {
   return true;
 }
 
-dboolean N_UnpackPlayerPreferenceChange(netpeer_t *np,
+bool N_UnpackPlayerPreferenceChange(netpeer_t *np,
                                         int *tic,
                                         unsigned short *playernum,
                                         unsigned int *count) {
@@ -764,7 +764,7 @@ dboolean N_UnpackPlayerPreferenceChange(netpeer_t *np,
   return true;
 }
 
-dboolean N_UnpackPlayerPreferenceName(netpeer_t *np, buf_t *buf) {
+bool N_UnpackPlayerPreferenceName(netpeer_t *np, buf_t *buf) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
 
   read_string(
@@ -783,7 +783,7 @@ void N_PackNameChange(netpeer_t *np, unsigned short playernum,
   printf("Packed name change [%s]\n", new_name);
 }
 
-dboolean N_UnpackNameChange(netpeer_t *np, buf_t *buf) {
+bool N_UnpackNameChange(netpeer_t *np, buf_t *buf) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
 
   read_string(pbuf, buf, "new name", MAX_PLAYER_NAME_SIZE);
@@ -802,7 +802,7 @@ void N_PackTeamChange(netpeer_t *np, unsigned short playernum,
   puts("Packed team change");
 }
 
-dboolean N_UnpackTeamChange(netpeer_t *np, unsigned char *new_team) {
+bool N_UnpackTeamChange(netpeer_t *np, unsigned char *new_team) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
   int team_count = 0;
   unsigned char m_new_team = 0;
@@ -824,7 +824,7 @@ void N_PackPWOChange(netpeer_t *np, unsigned short playernum) {
   puts("Packed PWO change");
 }
 
-dboolean N_UnpackPWOChange(netpeer_t *np) {
+bool N_UnpackPWOChange(netpeer_t *np) {
   return false; /* CG: TODO */
 }
 
@@ -837,7 +837,7 @@ void N_PackWSOPChange(netpeer_t *np, unsigned short playernum,
   puts("Packed WSOP change");
 }
 
-dboolean N_UnpackWSOPChange(netpeer_t *np, unsigned char *new_wsop_flags) {
+bool N_UnpackWSOPChange(netpeer_t *np, unsigned char *new_wsop_flags) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
   unsigned char m_new_wsop_flags = 0;
 
@@ -859,7 +859,7 @@ void N_PackBobbingChange(netpeer_t *np, unsigned short playernum,
   puts("Packed bobbing change");
 }
 
-dboolean N_UnpackBobbingChanged(netpeer_t *np, double *new_bobbing_amount) {
+bool N_UnpackBobbingChanged(netpeer_t *np, double *new_bobbing_amount) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
   double m_new_bobbing_amount = 0;
 
@@ -873,7 +873,7 @@ dboolean N_UnpackBobbingChanged(netpeer_t *np, double *new_bobbing_amount) {
 }
 
 void N_PackAutoaimChange(netpeer_t *np, unsigned short playernum,
-                                        dboolean new_autoaim_enabled) {
+                                        bool new_autoaim_enabled) {
   pack_player_preference_change(pbuf, gametic, playernum, "autoaim", 7);
 
   M_PBufWriteBool(pbuf, new_autoaim_enabled);
@@ -881,9 +881,9 @@ void N_PackAutoaimChange(netpeer_t *np, unsigned short playernum,
   puts("Packed autoaim change");
 }
 
-dboolean N_UnpackAutoaimChange(netpeer_t *np, dboolean *new_autoaim_enabled) {
+bool N_UnpackAutoaimChange(netpeer_t *np, bool *new_autoaim_enabled) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
-  dboolean m_new_autoaim_enabled = false;
+  bool m_new_autoaim_enabled = false;
 
   read_bool(pbuf, m_new_autoaim_enabled, "new autoaim enabled value");
 
@@ -901,8 +901,8 @@ void N_PackWeaponSpeedChange(netpeer_t *np, unsigned short playernum,
   puts("Packed weapon speed change");
 }
 
-dboolean N_UnpackWeaponSpeedChange(netpeer_t *np,
-                                   unsigned char *new_weapon_speed) {
+bool N_UnpackWeaponSpeedChange(netpeer_t *np,
+                               unsigned char *new_weapon_speed) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
   unsigned char m_new_weapon_speed = 0;
 
@@ -924,7 +924,7 @@ void N_PackColorChange(netpeer_t *np, unsigned short playernum,
   puts("Packed color change");
 }
 
-dboolean N_UnpackColorChange(netpeer_t *np, unsigned char *new_red,
+bool N_UnpackColorChange(netpeer_t *np, unsigned char *new_red,
                                             unsigned char *new_green,
                                             unsigned char *new_blue) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
@@ -948,7 +948,7 @@ void N_PackColorIndexChange(netpeer_t *np, unsigned short playernum,
   puts("Packed color index change");
 }
 
-dboolean N_UnpackColorIndexChange(netpeer_t *np, int *new_color_index) {
+bool N_UnpackColorIndexChange(netpeer_t *np, int *new_color_index) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
   int m_new_color_index = 0;
 
@@ -968,7 +968,7 @@ void N_PackSkinChange(netpeer_t *np, unsigned short playernum) {
   puts("Packed skin change");
 }
 
-dboolean N_UnpackSkinChange(netpeer_t *np, unsigned short *playernum) {
+bool N_UnpackSkinChange(netpeer_t *np, unsigned short *playernum) {
   return false; /* CG: TODO */
 }
 
@@ -982,7 +982,7 @@ void N_PackAuthRequest(netpeer_t *np, const char *password) {
   puts("Packed auth request");
 }
 
-dboolean N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
+bool N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
 
   read_string(
@@ -1002,7 +1002,7 @@ void N_PackRCONCommand(netpeer_t *np, const char *command) {
   puts("Packed RCON command");
 }
 
-dboolean N_UnpackRCONCommand(netpeer_t *np, buf_t *buf) {
+bool N_UnpackRCONCommand(netpeer_t *np, buf_t *buf) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
 
   read_string(pbuf, buf, "RCON command", MAX_COMMAND_LENGTH);
@@ -1020,7 +1020,7 @@ void N_PackVoteRequest(netpeer_t *np, const char *command) {
   puts("Packed vote request");
 }
 
-dboolean N_UnpackVoteRequest(netpeer_t *np, buf_t *buf) {
+bool N_UnpackVoteRequest(netpeer_t *np, buf_t *buf) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
 
   read_string(pbuf, buf, "vote command", MAX_COMMAND_LENGTH);

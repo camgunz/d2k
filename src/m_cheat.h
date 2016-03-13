@@ -61,7 +61,7 @@ typedef struct cheatseq_s {
 
 extern cheatseq_t cheat[];
 
-dboolean M_FindCheats(int key);
+bool M_FindCheats(int key);
 
 #endif
 

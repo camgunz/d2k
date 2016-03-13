@@ -56,7 +56,7 @@
 #include "xd_main.h"
 
 extern patchnum_t hu_font[HU_FONTSIZE];
-extern dboolean  message_dontfuckwithme;
+extern bool       message_dontfuckwithme;
 
 //
 // defaulted values
@@ -87,7 +87,7 @@ int     messx;
 int     messy;
 int     messageLastMenuActive;
 
-dboolean messageNeedsInput; // timed message = no input from user
+bool messageNeedsInput; // timed message = no input from user
 
 void (*messageRoutine)(int response);
 
@@ -114,7 +114,7 @@ int warning_about_changes, print_warning_about_changes;
 
 /* cphipps - M_DrawBackground renamed and moved to v_video.c */
 
-dboolean menu_background = 1; // do Boom fullscreen menus have backgrounds?
+bool menu_background = 1; // do Boom fullscreen menus have backgrounds?
 
 static void M_DrawBackground(const char *flat, int scrn)
 {
@@ -130,9 +130,9 @@ int saveCharIndex;   // which char we're editing
 // old save description before edit
 char saveOldString[SAVESTRINGSIZE];
 
-dboolean inhelpscreens; // indicates we are in or just left a help screen
+bool inhelpscreens; // indicates we are in or just left a help screen
 
-dboolean BorderNeedRefresh;
+bool BorderNeedRefresh;
 
 enum menuactive_e menuactive;    // The menus are up
 
@@ -228,7 +228,7 @@ int  M_StringWidth(const char *string);
 int  M_StringHeight(const char *string);
 void M_DrawTitle(int x, int y, const char *patch, int cm,
                  const char *alttext, int altcm);
-void M_StartMessage(const char *string,void *routine,dboolean input);
+void M_StartMessage(const char *string, void *routine, bool input);
 void M_StopMessage(void);
 void M_ClearMenus (void);
 
@@ -1475,20 +1475,20 @@ void M_SizeDisplay(int choice)
 // the overlay screens (automap colors, reset button message) should be
 // displayed
 
-dboolean setup_active      = false; // in one of the setup screens
-dboolean set_keybnd_active = false; // in key binding setup screens
-dboolean set_weapon_active = false; // in weapons setup screen
-dboolean set_status_active = false; // in status bar/hud setup screen
-dboolean set_auto_active   = false; // in automap setup screen
-dboolean set_enemy_active  = false; // in enemies setup screen
-dboolean set_mess_active   = false; // in messages setup screen
-dboolean set_chat_active   = false; // in chat string setup screen
-dboolean setup_select      = false; // changing an item
-dboolean setup_gather      = false; // gathering keys for value
-dboolean colorbox_active   = false; // color palette being shown
-dboolean default_verify    = false; // verify reset defaults decision
-dboolean set_general_active = false;
-dboolean set_compat_active = false;
+bool setup_active      = false; // in one of the setup screens
+bool set_keybnd_active = false; // in key binding setup screens
+bool set_weapon_active = false; // in weapons setup screen
+bool set_status_active = false; // in status bar/hud setup screen
+bool set_auto_active   = false; // in automap setup screen
+bool set_enemy_active  = false; // in enemies setup screen
+bool set_mess_active   = false; // in messages setup screen
+bool set_chat_active   = false; // in chat string setup screen
+bool setup_select      = false; // changing an item
+bool setup_gather      = false; // gathering keys for value
+bool colorbox_active   = false; // color palette being shown
+bool default_verify    = false; // verify reset defaults decision
+bool set_general_active = false;
+bool set_compat_active = false;
 
 /////////////////////////////
 //
@@ -4267,7 +4267,7 @@ static int M_IndexInChoices(const char *str, const char **choices) {
 // action based on the state of the system.
 //
 
-dboolean M_Responder(event_t* ev) {
+bool M_Responder(event_t* ev) {
   static int joywait   = 0;
   static int mousewait = 0;
 
@@ -4555,7 +4555,7 @@ dboolean M_Responder(event_t* ev) {
           //e6y
 #ifdef GL_DOOM
           {
-            extern dboolean gl_arb_multitexture;
+            extern bool gl_arb_multitexture;
 
             if ((ptr1->m_flags&S_CANT_GL_ARB_MULTITEXTURE) && !gl_arb_multitexture)
               warn_about_changes(ptr1->m_flags & S_CANT_GL_ARB_MULTITEXTURE);
@@ -4779,7 +4779,7 @@ dboolean M_Responder(event_t* ev) {
         {
           int oldbutton;
           setup_group group;
-          dboolean search = true;
+          bool search = true;
 
           if (!ptr1->m_joy)
             return true; // not a legal action here (yet)
@@ -4825,7 +4825,7 @@ dboolean M_Responder(event_t* ev) {
         {
           int i, oldbutton;
           setup_group group;
-          dboolean search = true;
+          bool search = true;
 
           if (!ptr1->m_mouse)
             return true; // not a legal action here (yet)
@@ -4873,7 +4873,7 @@ dboolean M_Responder(event_t* ev) {
         {
           int i,oldkey;
           setup_group group;
-          dboolean search = true;
+          bool search = true;
 
           // see if 'ch' is already bound elsewhere. if so, you have
           // to swap bindings so the action where it's currently
@@ -5557,19 +5557,18 @@ void M_Ticker (void)
 // Message Routines
 //
 
-void M_StartMessage (const char* string,void* routine,dboolean input)
-{
+void M_StartMessage(const char *string, void *routine, bool input) {
   messageLastMenuActive = menuactive;
   messageToPrint = 1;
   messageString = string;
   messageRoutine = routine;
   messageNeedsInput = input;
   menuactive = mnact_float;
+
   return;
 }
 
-void M_StopMessage(void)
-{
+void M_StopMessage(void) {
   menuactive = messageLastMenuActive;
   messageToPrint = 0;
 }
@@ -5586,10 +5585,9 @@ void M_StopMessage(void)
 // proff/nicolas 09/20/98 -- changed for hi-res
 // CPhipps - patch drawing updated
 //
-void M_DrawThermo(int x,int y,int thermWidth,int thermDot )
-{
-  int          xx;
-  int           i;
+void M_DrawThermo(int x, int y, int thermWidth, int thermDot) {
+  int xx;
+  int i;
   /*
    * Modification By Barry Mead to allow the Thermometer to have vastly
    * larger ranges. (the thermWidth parameter can now have a value as

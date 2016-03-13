@@ -53,10 +53,10 @@ static const char*   finaleflat; // made static const
 // Ty 03/22/98 - ... the new s_WHATEVER extern variables are used
 // in the code below instead.
 
-void    F_StartCast (void);
-void    F_CastTicker (void);
-dboolean F_CastResponder (event_t *ev);
-void    F_CastDrawer (void);
+void F_StartCast (void);
+void F_CastTicker (void);
+bool F_CastResponder (event_t *ev);
+void F_CastDrawer (void);
 
 void WI_checkForAccelerate(void);    // killough 3/28/98: used to
 extern int acceleratestage;          // accelerate intermission screens
@@ -176,10 +176,11 @@ void F_StartFinale (void)
 
 
 
-dboolean F_Responder (event_t *event)
+bool F_Responder (event_t *event)
 {
-  if (finalestage == 2)
+  if (finalestage == 2) {
     return F_CastResponder (event);
+  }
 
   return false;
 }
@@ -313,8 +314,7 @@ static void F_TextWrite (void)
 // Casting by id Software.
 //   in order of appearance
 //
-typedef struct
-{
+typedef struct {
   const char **name; // CPhipps - const**
   mobjtype_t   type;
 } castinfo_t;
@@ -340,21 +340,20 @@ static const castinfo_t castorder[] = { // CPhipps - static const, initialised h
   { NULL,         0}
   };
 
-int             castnum;
-int             casttics;
-state_t*        caststate;
-dboolean         castdeath;
-int             castframes;
-int             castonmelee;
-dboolean         castattacking;
+int      castnum;
+int      casttics;
+state_t *caststate;
+bool     castdeath;
+int      castframes;
+int      castonmelee;
+bool     castattacking;
 
 
 //
 // F_StartCast
 //
 
-void F_StartCast (void)
-{
+void F_StartCast(void) {
   wipegamestate = -1;         // force a screen wipe
   castnum = 0;
   caststate = &states[mobjinfo[castorder[castnum].type].seestate];
@@ -371,16 +370,15 @@ void F_StartCast (void)
 //
 // F_CastTicker
 //
-void F_CastTicker (void)
-{
+void F_CastTicker(void) {
   int st;
   int sfx;
 
-  if (--casttics > 0)
+  if (--casttics > 0) {
     return;                 // not time to change state yet
+  }
 
-  if (caststate->tics == -1 || caststate->nextstate == S_NULL)
-  {
+  if (caststate->tics == -1 || caststate->nextstate == S_NULL) {
     // switch from deathstate to next monster
     castnum++;
     castdeath = false;
@@ -478,7 +476,7 @@ void F_CastTicker (void)
 // F_CastResponder
 //
 
-dboolean F_CastResponder (event_t* ev)
+bool F_CastResponder (event_t* ev)
 {
   if (ev->type != ev_key || !ev->pressed)
     return false;
@@ -556,10 +554,10 @@ static void F_CastPrint (const char* text) // CPhipps - static, const char*
 
 void F_CastDrawer (void)
 {
-  spritedef_t*        sprdef;
-  spriteframe_t*      sprframe;
-  int                 lump;
-  dboolean             flip;
+  spritedef_t   *sprdef;
+  spriteframe_t *sprframe;
+  int            lump;
+  bool           flip;
 
   // erase the entire screen to a background
   // CPhipps - patch drawing updated
@@ -573,7 +571,7 @@ void F_CastDrawer (void)
   sprdef = &sprites[caststate->sprite];
   sprframe = &sprdef->spriteframes[ caststate->frame & FF_FRAMEMASK];
   lump = sprframe->lump[0];
-  flip = (dboolean)(sprframe->flip & 1);
+  flip = (bool)(sprframe->flip & 1);
 
   // CPhipps - patch drawing updated
   V_DrawNumPatch(160, 170, 0, lump+firstspritelump, CR_DEFAULT,
@@ -586,11 +584,10 @@ void F_CastDrawer (void)
 static const char pfub2[] = { "PFUB2" };
 static const char pfub1[] = { "PFUB1" };
 
-static void F_BunnyScroll (void)
-{
-  char        name[10];
-  int         stage;
-  static int  laststage;
+static void F_BunnyScroll(void) {
+  char       name[10];
+  int        stage;
+  static int laststage;
 
   {
     int scrolled = 320 - (finalecount-230)/2;

@@ -61,7 +61,7 @@ void SV_BroadcastPlayerWSOPChanged(unsigned short playernum,
 void SV_BroadcastPlayerBobbingChanged(unsigned short playernum,
                                       double new_bobbing_amount);
 void SV_BroadcastPlayerAutoaimChanged(unsigned short playernum,
-                                      dboolean new_autoaim_enabled);
+                                      bool new_autoaim_enabled);
 void SV_BroadcastPlayerWeaponSpeedChanged(unsigned short playernum,
                                           unsigned char new_weapon_speed);
 void SV_BroadcastPlayerColorChanged(unsigned short playernum,
@@ -86,7 +86,7 @@ void CL_SendTeamChange(unsigned char new_team);
 void CL_SendPWOChange(void); /* CG: TODO */
 void CL_SendWSOPChange(unsigned char new_wsop_flags);
 void CL_SendBobbingChange(double new_bobbing_amount);
-void CL_SendAutoaimChange(dboolean new_autoaim_enabled);
+void CL_SendAutoaimChange(bool new_autoaim_enabled);
 void CL_SendWeaponSpeedChange(unsigned char new_weapon_speed);
 void CL_SendColorChange(unsigned char new_red,
                         unsigned char new_green,

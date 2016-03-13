@@ -123,7 +123,7 @@ extern int joybstraferight;
 extern int joybuse;
 extern int joybspeed;
 
-extern dboolean gamekeydown[NUMKEYS];
+extern bool gamekeydown[NUMKEYS];
 
 #endif
 

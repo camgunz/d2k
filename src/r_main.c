@@ -138,7 +138,7 @@ int fake_contrast;
 // killough 3/20/98, 4/4/98: end dynamic colormaps
 
 //e6y: for Boom colormaps in OpenGL mode
-dboolean use_boom_cm;
+bool use_boom_cm;
 int boom_cm;         // current colormap
 int frame_fixedcolormap = 0;
 
@@ -460,7 +460,7 @@ static void R_InitLightTables (void)
 // The change will take effect next refresh.
 //
 
-dboolean setsizeneeded;
+bool setsizeneeded;
 int     setblocks;
 
 void R_SetViewSize(int blocks)
@@ -1060,7 +1060,7 @@ static void R_SetupFrame(player_t *player) {
 // R_ShowStats
 //
 int rendered_visplanes, rendered_segs, rendered_vissprites;
-dboolean rendering_stats;
+bool rendering_stats;
 int renderer_fps = 0;
 
 void R_ShowStats(void) {
@@ -1109,7 +1109,7 @@ void R_ClearStats(void)
 //
 void R_RenderPlayerView (player_t* player)
 {
-  dboolean automap = (automapmode & am_active) && !(automapmode & am_overlay);
+  bool automap = (automapmode & am_active) && !(automapmode & am_overlay);
 
   r_frame_count++;
 

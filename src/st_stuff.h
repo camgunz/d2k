@@ -49,13 +49,13 @@ void ST_SetAutomapEntered(void);
 void ST_SetAutomapExited(void);
 
 // Called by main loop.
-dboolean ST_Responder(event_t* ev);
+bool ST_Responder(event_t* ev);
 
 // Called by main loop.
 void ST_Ticker(void);
 
 // Called by main loop.
-void ST_Drawer(dboolean st_statusbaron, dboolean refresh, dboolean fullmenu);
+void ST_Drawer(bool st_statusbaron, bool refresh, bool fullmenu);
 
 // Called when the console player is spawned on each level.
 void ST_Start(void);

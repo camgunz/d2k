@@ -69,7 +69,7 @@
 
 typedef struct vertexsplit_info_s
 {
-  dboolean changed;
+  bool changed;
   int numheights;
   int numsectors;
   sector_t **sectors;
@@ -93,7 +93,7 @@ static splitsbysector_t * gl_splitsbysector = NULL;
 // Split left edge of wall
 //
 //==========================================================================
-void gld_SplitLeftEdge(const GLWall *wall, dboolean detail)
+void gld_SplitLeftEdge(const GLWall *wall, bool detail)
 {
   vertex_t *v;
   vertexsplit_info_t *vi;
@@ -155,7 +155,7 @@ void gld_SplitLeftEdge(const GLWall *wall, dboolean detail)
 // Split right edge of wall
 //
 //==========================================================================
-void gld_SplitRightEdge(const GLWall *wall, dboolean detail)
+void gld_SplitRightEdge(const GLWall *wall, bool detail)
 {
   vertex_t *v;
   vertexsplit_info_t * vi;

@@ -80,11 +80,11 @@ int I_GetTime_RealTime(void) {
 #ifndef PRBOOM_SERVER
 static unsigned int start_displaytime;
 static unsigned int displaytime;
-static dboolean InDisplay = false;
+static bool InDisplay = false;
 static int saved_gametic = -1;
-dboolean realframe = false;
+bool realframe = false;
 
-dboolean I_StartDisplay(void)
+bool I_StartDisplay(void)
 {
   if (InDisplay)
     return false;
@@ -189,11 +189,11 @@ const char* I_SigString(char* buf, size_t sz, int signum)
 
 #if 0
 #ifndef PRBOOM_SERVER
-dboolean I_FileToBuffer(const char *filename, byte **data, int *size)
+bool I_FileToBuffer(const char *filename, byte **data, int *size)
 {
   FILE *hfile;
 
-  dboolean result = false;
+  bool result = false;
   byte *buffer = NULL;
   size_t filesize = 0;
 
@@ -384,7 +384,7 @@ const char* I_GetTempDir(void) {
  * cphipps - simple test for trailing slash on dir names
  */
 
-dboolean HasTrailingSlash(const char* dn)
+bool HasTrailingSlash(const char* dn)
 {
   return ( (dn[strlen(dn)-1] == '/')
 #if defined(_WIN32)

@@ -25,12 +25,13 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "hu_lib.h"
 #include "m_argv.h"
 #include "m_misc.h"
 
 #include "hu_tracers.h"
 
-dboolean traces_present;
+bool traces_present;
 
 hu_textline_t w_traces[NUMTRACES];
 

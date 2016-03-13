@@ -41,7 +41,7 @@
 
 int leveltime;
 
-static dboolean newthinkerpresent;
+static bool newthinkerpresent;
 
 //
 // THINKERS
@@ -275,7 +275,7 @@ static void P_RunThinkers(void) {
 // P_Ticker
 //
 
-static dboolean setup_tic(void) {
+static bool setup_tic(void) {
   /*
    * pause if in menu and at least one tic has been run
    *

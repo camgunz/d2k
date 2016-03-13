@@ -99,7 +99,7 @@ static int wipe_initMelt(int ticks) {
 
 static int wipe_doMelt(int ticks)
 {
-  dboolean done = true;
+  bool done = true;
   int i;
   const int depth = V_GetPixelDepth();
 
@@ -242,7 +242,7 @@ int wipe_EndScreen(void)
 
 // killough 3/5/98: reformatted and cleaned up
 int wipe_ScreenWipe(int ticks) {
-  static dboolean go;                               // when zero, stop the wipe
+  static bool go; // when zero, stop the wipe
 
   if(!render_wipescreen)
     return 0;//e6y

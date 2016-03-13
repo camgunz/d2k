@@ -35,7 +35,7 @@
 
 #define BLKSIZE 1024
 
-static dboolean xdiff_initialized = false;
+static bool xdiff_initialized = false;
 
 static void* wrap_malloc(void *priv, unsigned int size) {
   return malloc(size);
@@ -117,11 +117,11 @@ void M_BuildDelta(pbuf_t *b1, pbuf_t *b2, buf_t *delta) {
   }
 }
 
-dboolean M_ApplyDelta(pbuf_t *b1, pbuf_t *b2, buf_t *delta) {
+bool M_ApplyDelta(pbuf_t *b1, pbuf_t *b2, buf_t *delta) {
   mmfile_t cs, is;
   xdemitcb_t ecb;
   buf_t delta_copy;
-  dboolean res = false;
+  bool res = false;
 
   ecb.priv = b2;
   ecb.outf = write_to_buffer;

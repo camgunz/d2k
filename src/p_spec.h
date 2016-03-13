@@ -190,11 +190,11 @@
 //
 typedef struct
 {
-    dboolean     istexture;
-    int         picnum;
-    int         basepic;
-    int         numpics;
-    int         speed;
+    bool istexture;
+    int  picnum;
+    int  basepic;
+    int  numpics;
+    int  speed;
 
 } anim_t;
 
@@ -613,7 +613,7 @@ typedef struct
   int count;
   plat_e status;
   plat_e oldstatus;
-  dboolean crush;
+  bool crush;
   int tag;
   plattype_e type;
 
@@ -664,7 +664,7 @@ typedef struct
   fixed_t topheight;
   fixed_t speed;
   fixed_t oldspeed;
-  dboolean crush;
+  bool     crush;
 
   //jff 02/04/98 add these to support ceiling changers
   int newspecial;
@@ -691,7 +691,7 @@ typedef struct
 {
   thinker_t thinker;
   floor_e type;
-  dboolean crush;
+  bool crush;
   sector_t* sector;
   int direction;
   int newspecial;
@@ -779,10 +779,10 @@ extern platlist_t *activeplats;        // killough 2/14/98
 extern ceilinglist_t *activeceilings;  // jff 2/22/98
 
 // Game globals
-dboolean levelTimer;
-int      levelTimeCount;
-dboolean levelFragLimit;      // Ty 03/18/98 Added -frags support
-int      levelFragLimitCount; // Ty 03/18/98 Added -frags support
+bool levelTimer;
+int  levelTimeCount;
+bool levelFragLimit;      // Ty 03/18/98 Added -frags support
+int  levelFragLimitCount; // Ty 03/18/98 Added -frags support
 
 ////////////////////////////////////////////////////////////////
 //
@@ -809,11 +809,11 @@ int       P_FindSectorFromLineTag(const line_t *line, int start); // killough 4/
 int       P_FindLineFromLineTag(const line_t *line, int start);   // killough 4/17/98
 int       P_FindMinSurroundingLight(sector_t *sector, int max);
 sector_t* getNextSector(line_t *line, sector_t *sec);
-int       P_CheckTag (line_t *line); // jff 2/27/98 dboolean P_CanUnlockGenDoor
-dboolean  P_CanUnlockGenDoor(line_t *line, player_t *player);
-dboolean  PUREFUNC P_SectorActive(special_e t, const sector_t *s);
-dboolean  PUREFUNC P_IsSecret(const sector_t *sec);
-dboolean  PUREFUNC P_WasSecret(const sector_t *sec);
+int       P_CheckTag (line_t *line); // jff 2/27/98 bool P_CanUnlockGenDoor
+bool      P_CanUnlockGenDoor(line_t *line, player_t *player);
+bool      PUREFUNC P_SectorActive(special_e t, const sector_t *s);
+bool      PUREFUNC P_IsSecret(const sector_t *sec);
+bool      PUREFUNC P_WasSecret(const sector_t *sec);
 void      P_ChangeSwitchTexture(line_t *line, int useAgain);
 
 ////////////////////////////////////////////////////////////////
@@ -842,7 +842,7 @@ void T_MoveCeiling(ceiling_t *ceiling);
 void     T_MoveFloor(floormove_t *floor);
 void     T_MoveElevator(elevator_t *elevator);
 result_e T_MovePlane(sector_t *sector, fixed_t speed, fixed_t dest,
-                                       dboolean crush, int floorOrCeiling,
+                                       int crush, int floorOrCeiling,
                                        int direction);
 
 // p_spec
@@ -862,7 +862,7 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing);
 int EV_SilentTeleport(line_t *line, int side, mobj_t *thing);
 // killough 1/31/98: Add silent line teleporter
 int EV_SilentLineTeleport(line_t *line, int side, mobj_t *thing,
-                                        dboolean reverse);
+                                        bool reverse);
 
 // p_floor
 int EV_DoElevator(line_t *line, elevator_e type);
@@ -915,10 +915,10 @@ void P_SpawnSpecials(void);
 // every tic
 void P_UpdateSpecials(void);
 // when needed
-dboolean P_UseSpecialLine(mobj_t *thing, line_t *line, int side);
-void     P_ShootSpecialLine(mobj_t *thing, line_t *line);
-void     P_CrossSpecialLine(line_t *line, int side, mobj_t *thing);
-void     P_PlayerInSpecialSector(player_t *player);
+bool P_UseSpecialLine(mobj_t *thing, line_t *line, int side);
+void P_ShootSpecialLine(mobj_t *thing, line_t *line);
+void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing);
+void P_PlayerInSpecialSector(player_t *player);
 
 // p_lights
 void P_SpawnFireFlicker(sector_t *sector);

@@ -32,7 +32,7 @@
 
 int gl_version;
 
-static dboolean gl_compatibility_mode;
+static bool gl_compatibility_mode;
 
 int GLEXT_CLAMP_TO_EDGE = GL_CLAMP;
 int gl_max_texture_size = 0;
@@ -45,17 +45,17 @@ int gl_use_shared_texture_palette = 0;
 int gl_paletted_texture = 0;
 int gl_shared_texture_palette = 0;
 
-dboolean gl_ext_texture_filter_anisotropic = false;
-dboolean gl_arb_texture_non_power_of_two = false;
-dboolean gl_arb_multitexture = false;
-dboolean gl_arb_texture_compression = false;
-dboolean gl_arb_framebuffer_object = false;
-dboolean gl_ext_packed_depth_stencil = false;
-dboolean gl_ext_blend_color = false;
-dboolean gl_use_stencil = false;
-dboolean gl_ext_arb_vertex_buffer_object = false;
-dboolean gl_arb_pixel_buffer_object = false;
-dboolean gl_arb_shader_objects = false;
+bool gl_ext_texture_filter_anisotropic = false;
+bool gl_arb_texture_non_power_of_two = false;
+bool gl_arb_multitexture = false;
+bool gl_arb_texture_compression = false;
+bool gl_arb_framebuffer_object = false;
+bool gl_ext_packed_depth_stencil = false;
+bool gl_ext_blend_color = false;
+bool gl_use_stencil = false;
+bool gl_ext_arb_vertex_buffer_object = false;
+bool gl_arb_pixel_buffer_object = false;
+bool gl_arb_shader_objects = false;
 
 // cfg values
 int gl_ext_texture_filter_anisotropic_default;
@@ -162,8 +162,7 @@ void gld_InitOpenGLVersion(void)
   }
 }
 
-void gld_InitOpenGL(dboolean compatibility_mode)
-{
+void gld_InitOpenGL(bool compatibility_mode) {
   GLenum texture;
   const char *extensions = (const char*)glGetString(GL_EXTENSIONS);
 

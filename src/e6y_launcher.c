@@ -57,8 +57,8 @@ typedef struct
 {
   char name[PATH_MAX];
   wad_source_t source;
-  dboolean doom1;
-  dboolean doom2;
+  bool doom1;
+  bool doom2;
 } fileitem_t;
 
 typedef struct
@@ -92,7 +92,7 @@ static char launchercachefile[PATH_MAX];
 unsigned int launcher_params;
 
 //global
-void CheckIWAD(const char *iwadname,GameMode_t *gmode,dboolean *hassec);
+void CheckIWAD(const char *iwadname, GameMode_t *gmode, bool *hassec);
 void ProcessDehFile(const char *filename, const char *outfilename, int lumpnum);
 const char *D_dehout(void);
 
@@ -130,11 +130,11 @@ static void L_SelAdd(int index);
 static void L_SelClearAndFree(void);
 static int L_SelGetList(int **list);
 
-static dboolean L_GetFileType(const char *filename, fileitem_t *item);
-static dboolean L_PrepareToLaunch(void);
+static bool L_GetFileType(const char *filename, fileitem_t *item);
+static bool L_PrepareToLaunch(void);
 
-static dboolean L_GUISelect(waddata_t *waddata);
-static dboolean L_LauncherIsNeeded(void);
+static bool L_GUISelect(waddata_t *waddata);
+static bool L_LauncherIsNeeded(void);
 
 static void L_FillFilesList(fileitem_t *iwad);
 static void L_AddItemToCache(fileitem_t *item);
@@ -487,7 +487,7 @@ static void L_CommandOnChange(void)
   SendMessage(launcher.listCMD, CB_SETCURSEL, -1, 0);
 }
 
-static dboolean L_GetFileType(const char *filename, fileitem_t *item)
+static bool L_GetFileType(const char *filename, fileitem_t *item)
 {
   size_t i, len;
   wadinfo_t header;
@@ -567,12 +567,12 @@ static dboolean L_GetFileType(const char *filename, fileitem_t *item)
   return false;
 }
 
-static dboolean L_GUISelect(waddata_t *waddata)
+static bool L_GUISelect(waddata_t *waddata)
 {
   int i, j;
   size_t k;
   int topindex;
-  dboolean processed = false;
+  bool processed = false;
   int listIWADCount, listPWADCount;
   char fullpath[PATH_MAX];
   
@@ -662,7 +662,7 @@ static dboolean L_GUISelect(waddata_t *waddata)
   return true;
 }
 
-static dboolean L_PrepareToLaunch(void)
+static bool L_PrepareToLaunch(void)
 {
   int i, index, listPWADCount;
   char *history = NULL;
@@ -846,7 +846,7 @@ static int L_SelGetList(int **list)
 
   for (i = launcher.selectioncount - 1; i >= 0; i--)
   {
-    dboolean present = false;
+    bool present = false;
     for (j = 0; j < count && !present; j++)
     {
       present = (*list)[j] == launcher.selection[i];
@@ -1011,7 +1011,7 @@ char* e6y_I_FindFile(const char* ext)
               if (item.source != source_err)
               {
                 size_t j;
-                dboolean present = false;
+                bool present = false;
                 for (j = 0; !present && j < launcher.filescount; j++)
                   present = !strcasecmp(launcher.files[j].name, fullpath);
 
@@ -1486,10 +1486,10 @@ VOID OnWMNotify(LPARAM lParam)
   return;
 }
 
-static dboolean L_LauncherIsNeeded(void)
+static bool L_LauncherIsNeeded(void)
 {
   int i;
-  dboolean pwad = false;
+  bool pwad = false;
   char *iwad = NULL;
 
 //  SHIFT for invert

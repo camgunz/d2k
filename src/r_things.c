@@ -128,7 +128,7 @@ void R_InitSpritesRes(void)
 //
 
 static void R_InstallSpriteLump(int lump, unsigned frame,
-                                char rot, dboolean flipped)
+                                char rot, bool flipped)
 {
   unsigned int rotation;
 
@@ -594,18 +594,18 @@ void R_SetClipPlanes(void)
 
 static void R_ProjectSprite (mobj_t* thing)
 {
-  fixed_t   gzt;               // killough 3/27/98
-  fixed_t   tx;
-  fixed_t   xscale;
-  int       x1;
-  int       x2;
+  fixed_t        gzt;               // killough 3/27/98
+  fixed_t        tx;
+  fixed_t        xscale;
+  int            x1;
+  int            x2;
   spritedef_t   *sprdef;
   spriteframe_t *sprframe;
-  int       lump;
-  dboolean   flip;
-  vissprite_t *vis;
-  fixed_t   iscale;
-  int heightsec;      // killough 3/27/98
+  int            lump;
+  bool           flip;
+  vissprite_t   *vis;
+  fixed_t        iscale;
+  int            heightsec;      // killough 3/27/98
 
   // transform the origin point
   //e6y
@@ -693,13 +693,13 @@ static void R_ProjectSprite (mobj_t* thing)
           (angle_t)(ANG180 / 16)) >> 28;
       }
       lump = sprframe->lump[rot];
-      flip = (dboolean)(sprframe->flip & (1 << rot));
+      flip = (bool)(sprframe->flip & (1 << rot));
     }
   else
     {
       // use single rotation for all views
       lump = sprframe->lump[0];
-      flip = (dboolean)(sprframe->flip & 1);
+      flip = (bool)(sprframe->flip & 1);
     }
 
   {
@@ -890,7 +890,7 @@ static void R_DrawPSprite (pspdef_t *psp)
   spritedef_t   *sprdef;
   spriteframe_t *sprframe;
   int           lump;
-  dboolean       flip;
+  bool           flip;
   vissprite_t   *vis;
   vissprite_t   avis;
   int           width;
@@ -914,7 +914,7 @@ static void R_DrawPSprite (pspdef_t *psp)
   sprframe = &sprdef->spriteframes[psp->state->frame & FF_FRAMEMASK];
 
   lump = sprframe->lump[0];
-  flip = (dboolean)(sprframe->flip & 1);
+  flip = (bool)(sprframe->flip & 1);
 
   {
     const rpatch_t* patch = R_CachePatchNum(lump+firstspritelump);

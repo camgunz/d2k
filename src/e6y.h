@@ -63,7 +63,7 @@ typedef struct camera_s
   int type;
 } camera_t;
 
-extern dboolean wasWiped;
+extern bool wasWiped;
 
 extern int totalleveltimes;
 
@@ -80,10 +80,10 @@ extern const char *avi_shot_fname;
 
 extern int speed_step;
 
-extern dboolean doSkip;
-extern dboolean demo_stoponnext;
-extern dboolean demo_stoponend;
-extern dboolean demo_warp;
+extern bool doSkip;
+extern bool demo_stoponnext;
+extern bool demo_stoponend;
+extern bool demo_warp;
 
 extern int hudadd_gamespeed;
 extern int hudadd_leveltime;
@@ -140,7 +140,7 @@ extern float skyUpAngle;
 extern float skyUpShift;
 extern float skyXShift;
 extern float skyYShift;
-extern dboolean mlook_or_fov;
+extern bool mlook_or_fov;
 
 extern hu_textline_t  w_hudadd;
 extern hu_textline_t  w_precache;
@@ -153,10 +153,10 @@ void ParamsMatchingCheck();
 void e6y_InitCommandLine(void);
 
 void P_WalkTicker ();
-void P_SyncWalkcam(dboolean sync_coords, dboolean sync_sight);
+void P_SyncWalkcam(bool sync_coords, bool sync_sight);
 void P_ResetWalkcam(void);
 
-extern dboolean sound_inited_once;
+extern bool sound_inited_once;
 void G_SkipDemoStart(void);
 void G_SkipDemoStop(void);
 void G_SkipDemoCheck(void);
@@ -186,11 +186,11 @@ void M_MouseAccel(int choice);
 void CheckPitch(signed int *pitch);
 void I_Init2(void);
 
-dboolean GetMouseLook(void);
-dboolean HaveMouseLook(void);
+bool GetMouseLook(void);
+bool HaveMouseLook(void);
 
 extern float viewPitch;
-extern dboolean transparentpresent;
+extern bool transparentpresent;
 
 void R_ClearClipSegs (void);
 void R_RenderBSPNode(int bspnum);
@@ -199,7 +199,7 @@ typedef struct prboom_comp_s
 {
   unsigned int minver;
   unsigned int maxver;
-  dboolean state;
+  bool state;
   const char *cmd;
 } prboom_comp_t;
 
@@ -283,9 +283,9 @@ extern int realtic_clock_rate;
 
 void e6y_G_Compatibility(void);
 
-extern dboolean zerotag_manual;
+extern bool zerotag_manual;
 
-dboolean ProcessNoTagLines(line_t* line, sector_t **sec, int *secnum);
+bool ProcessNoTagLines(line_t* line, sector_t **sec, int *secnum);
 
 #define I_FindName(a)	((a)->Name)
 #define I_FindAttr(a)	((a)->Attribs)
@@ -306,7 +306,7 @@ unsigned int AfxGetFileName(const char* lpszPathName, char* lpszTitle, unsigned 
 
 //extern int viewMaxY;
 
-extern dboolean isskytexture;
+extern bool isskytexture;
 
 extern int levelstarttic;
 
@@ -335,7 +335,7 @@ int GetFullPath(const char* FileName, const char* ext, char *Buffer, size_t Buff
 #define PRB_IDYES               6
 #define PRB_IDNO                7
 
-dboolean SmoothEdges(unsigned char * buffer,int w, int h);
+bool SmoothEdges(unsigned char * buffer,int w, int h);
 
 #ifdef _WIN32
 extern int mus_extend_volume;

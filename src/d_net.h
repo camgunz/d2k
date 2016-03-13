@@ -110,7 +110,7 @@ typedef struct
   byte fastparm;
   byte demo_insurance;
   unsigned int rngseed;
-  char filler[sizeof(ticcmd_t)*BACKUPTICS-STARTUPLEN];
+  char filler[sizeof(ticcmd_t) * BACKUPTICS - STARTUPLEN];
 } startup_t;
 
 typedef enum {
@@ -123,7 +123,7 @@ typedef struct
 {
   netmisctype_t type;
   size_t len;
-  byte value[sizeof(ticcmd_t)*BACKUPTICS - sizeof(netmisctype_t) - sizeof(size_t)];
+  byte value[sizeof(ticcmd_t) * BACKUPTICS - sizeof(netmisctype_t) - sizeof(size_t)];
 } netmisc_t;
 
 typedef struct
@@ -179,10 +179,10 @@ typedef struct
 // CPhipps - move to header file
 
 // CPhipps - misc info broadcast
-void D_NetSendMisc(netmisctype_t type, size_t len, void* data);
+void D_NetSendMisc(netmisctype_t type, size_t len, void *data);
 
 // CPhipps - ask server for a wad file we need
-dboolean D_GetWad(const char* name);
+bool D_GetWad(const char *name);
 
 // Netgame stuff (buffers and pointers, i.e. indices).
 extern  doomcom_t  *doomcom;

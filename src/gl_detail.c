@@ -221,7 +221,7 @@ void gld_EnableDetail(int enable)
 void gld_DrawWallWithDetail(GLWall *wall)
 {
   float w, h, dx, dy;
-  dboolean fake = (wall->flag == GLDWF_TOPFLUD) || (wall->flag == GLDWF_BOTFLUD);
+  bool fake = (wall->flag == GLDWF_TOPFLUD) || (wall->flag == GLDWF_BOTFLUD);
   detail_t *detail = wall->gltexture->detail;
   
   w = wall->gltexture->detail_width;
@@ -302,7 +302,7 @@ void gld_DrawWallDetail_NoARB(GLWall *wall)
       wall->glseg->x2, wall->glseg->z2))
   {
     float w, h, dx, dy;
-    dboolean fake = (wall->flag == GLDWF_TOPFLUD) || (wall->flag == GLDWF_BOTFLUD);
+    bool fake = (wall->flag == GLDWF_TOPFLUD) || (wall->flag == GLDWF_BOTFLUD);
     detail_t *detail = wall->gltexture->detail;
 
     w = wall->gltexture->detail_width;

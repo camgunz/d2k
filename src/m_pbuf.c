@@ -119,27 +119,27 @@ void M_PBufSetData(pbuf_t *pbuf, void *data, size_t size) {
   return M_BufferSetData(&pbuf->buf, data, size);
 }
 
-dboolean M_PBufSetFile(pbuf_t *pbuf, const char *filename) {
+bool M_PBufSetFile(pbuf_t *pbuf, const char *filename) {
   return M_BufferSetFile(&pbuf->buf, filename);
 }
 
-dboolean M_PBufSeek(pbuf_t *pbuf, size_t pos) {
+bool M_PBufSeek(pbuf_t *pbuf, size_t pos) {
   return M_BufferSeek(&pbuf->buf, pos);
 }
 
-dboolean M_PBufSeekBackward(pbuf_t *pbuf, size_t count) {
+bool M_PBufSeekBackward(pbuf_t *pbuf, size_t count) {
   return M_BufferSeekBackward(&pbuf->buf, count);
 }
 
-dboolean M_PBufSeekForward(pbuf_t *pbuf, size_t count) {
+bool M_PBufSeekForward(pbuf_t *pbuf, size_t count) {
   return M_BufferSeekForward(&pbuf->buf, count);
 }
 
-dboolean M_PBufWriteChar(pbuf_t *pbuf, char c) {
+bool M_PBufWriteChar(pbuf_t *pbuf, char c) {
   return cmp_write_sint(&pbuf->cmp, c);
 }
 
-dboolean M_PBufWriteCharArray(pbuf_t *pbuf, buf_t *chars) {
+bool M_PBufWriteCharArray(pbuf_t *pbuf, buf_t *chars) {
   size_t count = M_BufferGetSize(chars) / sizeof(char);
 
   if (!M_PBufWriteArray(pbuf, count))
@@ -153,11 +153,11 @@ dboolean M_PBufWriteCharArray(pbuf_t *pbuf, buf_t *chars) {
   return true;
 }
 
-dboolean M_PBufWriteUChar(pbuf_t *pbuf, unsigned char c) {
+bool M_PBufWriteUChar(pbuf_t *pbuf, unsigned char c) {
   return cmp_write_uint(&pbuf->cmp, c);
 }
 
-dboolean M_PBufWriteUCharArray(pbuf_t *pbuf, buf_t *uchars) {
+bool M_PBufWriteUCharArray(pbuf_t *pbuf, buf_t *uchars) {
   size_t count = M_BufferGetSize(uchars) / sizeof(unsigned char);
 
   if (!M_PBufWriteArray(pbuf, count))
@@ -171,11 +171,11 @@ dboolean M_PBufWriteUCharArray(pbuf_t *pbuf, buf_t *uchars) {
   return true;
 }
 
-dboolean M_PBufWriteShort(pbuf_t *pbuf, short s) {
+bool M_PBufWriteShort(pbuf_t *pbuf, short s) {
   return cmp_write_sint(&pbuf->cmp, s);
 }
 
-dboolean M_PBufWriteShortArray(pbuf_t *pbuf, buf_t *shorts) {
+bool M_PBufWriteShortArray(pbuf_t *pbuf, buf_t *shorts) {
   size_t count = M_BufferGetSize(shorts) / sizeof(short);
 
   if (!M_PBufWriteArray(pbuf, count))
@@ -189,11 +189,11 @@ dboolean M_PBufWriteShortArray(pbuf_t *pbuf, buf_t *shorts) {
   return true;
 }
 
-dboolean M_PBufWriteUShort(pbuf_t *pbuf, unsigned short s) {
+bool M_PBufWriteUShort(pbuf_t *pbuf, unsigned short s) {
   return cmp_write_uint(&pbuf->cmp, s);
 }
 
-dboolean M_PBufWriteUShortArray(pbuf_t *pbuf, buf_t *ushorts) {
+bool M_PBufWriteUShortArray(pbuf_t *pbuf, buf_t *ushorts) {
   size_t count = M_BufferGetSize(ushorts) / sizeof(unsigned short);
 
   if (!M_PBufWriteArray(pbuf, count))
@@ -207,11 +207,11 @@ dboolean M_PBufWriteUShortArray(pbuf_t *pbuf, buf_t *ushorts) {
   return true;
 }
 
-dboolean M_PBufWriteInt(pbuf_t *pbuf, int i) {
+bool M_PBufWriteInt(pbuf_t *pbuf, int i) {
   return cmp_write_sint(&pbuf->cmp, i);
 }
 
-dboolean M_PBufWriteIntArray(pbuf_t *pbuf, buf_t *ints) {
+bool M_PBufWriteIntArray(pbuf_t *pbuf, buf_t *ints) {
   size_t count = M_BufferGetSize(ints) / sizeof(int);
 
   if (!M_PBufWriteArray(pbuf, count))
@@ -225,11 +225,11 @@ dboolean M_PBufWriteIntArray(pbuf_t *pbuf, buf_t *ints) {
   return true;
 }
 
-dboolean M_PBufWriteUInt(pbuf_t *pbuf, unsigned int i) {
+bool M_PBufWriteUInt(pbuf_t *pbuf, unsigned int i) {
   return cmp_write_uint(&pbuf->cmp, i);
 }
 
-dboolean M_PBufWriteUIntArray(pbuf_t *pbuf, buf_t *uints) {
+bool M_PBufWriteUIntArray(pbuf_t *pbuf, buf_t *uints) {
   size_t count = M_BufferGetSize(uints) / sizeof(unsigned int);
 
   if (!M_PBufWriteArray(pbuf, count))
@@ -243,11 +243,11 @@ dboolean M_PBufWriteUIntArray(pbuf_t *pbuf, buf_t *uints) {
   return true;
 }
 
-dboolean M_PBufWriteLong(pbuf_t *pbuf, int_64_t l) {
+bool M_PBufWriteLong(pbuf_t *pbuf, int_64_t l) {
   return cmp_write_uint(&pbuf->cmp, l);
 }
 
-dboolean M_PBufWriteLongArray(pbuf_t *pbuf, buf_t *longs) {
+bool M_PBufWriteLongArray(pbuf_t *pbuf, buf_t *longs) {
   size_t count = M_BufferGetSize(longs) / sizeof(int_64_t);
 
   if (!M_PBufWriteArray(pbuf, count))
@@ -261,11 +261,11 @@ dboolean M_PBufWriteLongArray(pbuf_t *pbuf, buf_t *longs) {
   return true;
 }
 
-dboolean M_PBufWriteULong(pbuf_t *pbuf, uint_64_t l) {
+bool M_PBufWriteULong(pbuf_t *pbuf, uint_64_t l) {
   return cmp_write_uint(&pbuf->cmp, l);
 }
 
-dboolean M_PBufWriteULongArray(pbuf_t *pbuf, buf_t *ulongs) {
+bool M_PBufWriteULongArray(pbuf_t *pbuf, buf_t *ulongs) {
   size_t count = M_BufferGetSize(ulongs) / sizeof(uint_64_t);
 
   if (!M_PBufWriteArray(pbuf, count))
@@ -279,11 +279,11 @@ dboolean M_PBufWriteULongArray(pbuf_t *pbuf, buf_t *ulongs) {
   return true;
 }
 
-dboolean M_PBufWriteFloat(pbuf_t *pbuf, float f) {
+bool M_PBufWriteFloat(pbuf_t *pbuf, float f) {
   return cmp_write_float(&pbuf->cmp, f);
 }
 
-dboolean M_PBufWriteFloatArray(pbuf_t *pbuf, buf_t *floats) {
+bool M_PBufWriteFloatArray(pbuf_t *pbuf, buf_t *floats) {
   size_t count = M_BufferGetSize(floats) / sizeof(float);
 
   if (!M_PBufWriteArray(pbuf, count))
@@ -297,11 +297,11 @@ dboolean M_PBufWriteFloatArray(pbuf_t *pbuf, buf_t *floats) {
   return true;
 }
 
-dboolean M_PBufWriteDouble(pbuf_t *pbuf, double d) {
+bool M_PBufWriteDouble(pbuf_t *pbuf, double d) {
   return cmp_write_double(&pbuf->cmp, d);
 }
 
-dboolean M_PBufWriteDoubleArray(pbuf_t *pbuf, buf_t *doubles) {
+bool M_PBufWriteDoubleArray(pbuf_t *pbuf, buf_t *doubles) {
   size_t count = M_BufferGetSize(doubles) / sizeof(double);
 
   if (!M_PBufWriteArray(pbuf, count))
@@ -315,48 +315,48 @@ dboolean M_PBufWriteDoubleArray(pbuf_t *pbuf, buf_t *doubles) {
   return true;
 }
 
-dboolean M_PBufWriteBool(pbuf_t *pbuf, dboolean b) {
+bool M_PBufWriteBool(pbuf_t *pbuf, bool b) {
   if (b)
     return cmp_write_true(&pbuf->cmp);
 
   return cmp_write_false(&pbuf->cmp);
 }
 
-dboolean M_PBufWriteBoolArray(pbuf_t *pbuf, buf_t *bools) {
-  size_t count = M_BufferGetSize(bools) / sizeof(dboolean);
+bool M_PBufWriteBoolArray(pbuf_t *pbuf, buf_t *bools) {
+  size_t count = M_BufferGetSize(bools) / sizeof(bool);
 
   if (!M_PBufWriteArray(pbuf, count))
     return false;
 
   for (int i = 0; i < count; i++) {
-    if (!M_PBufWriteBool(pbuf, ((dboolean *)bools->data)[i]))
+    if (!M_PBufWriteBool(pbuf, ((bool *)bools->data)[i]))
       return false;
   }
 
   return true;
 }
 
-dboolean M_PBufWriteNil(pbuf_t *pbuf) {
+bool M_PBufWriteNil(pbuf_t *pbuf) {
   return cmp_write_nil(&pbuf->cmp);
 }
 
-dboolean M_PBufWriteArray(pbuf_t *pbuf, unsigned int array_size) {
+bool M_PBufWriteArray(pbuf_t *pbuf, unsigned int array_size) {
   return cmp_write_array(&pbuf->cmp, array_size);
 }
 
-dboolean M_PBufWriteMap(pbuf_t *pbuf, unsigned int map_size) {
+bool M_PBufWriteMap(pbuf_t *pbuf, unsigned int map_size) {
   return cmp_write_map(&pbuf->cmp, map_size);
 }
 
-dboolean M_PBufWriteBytes(pbuf_t *pbuf, const void *data, size_t size) {
+bool M_PBufWriteBytes(pbuf_t *pbuf, const void *data, size_t size) {
   return cmp_write_bin(&pbuf->cmp, data, size);
 }
 
-dboolean M_PBufWriteString(pbuf_t *pbuf, const char *data, size_t length) {
+bool M_PBufWriteString(pbuf_t *pbuf, const char *data, size_t length) {
   return cmp_write_str(&pbuf->cmp, data, length);
 }
 
-dboolean M_PBufWriteStringArray(pbuf_t *pbuf, GPtrArray *strings) {
+bool M_PBufWriteStringArray(pbuf_t *pbuf, GPtrArray *strings) {
   if (!M_PBufWriteArray(pbuf, strings->len))
     return false;
 
@@ -371,11 +371,11 @@ dboolean M_PBufWriteStringArray(pbuf_t *pbuf, GPtrArray *strings) {
   return true;
 }
 
-dboolean M_PBufReadChar(pbuf_t *pbuf, char *c) {
+bool M_PBufReadChar(pbuf_t *pbuf, char *c) {
   return cmp_read_char(&pbuf->cmp, (signed char *)c);
 }
 
-dboolean M_PBufReadCharArray(pbuf_t *pbuf, buf_t *chars, size_t limit) {
+bool M_PBufReadCharArray(pbuf_t *pbuf, buf_t *chars, size_t limit) {
   char c = 0;
   unsigned int array_size = 0;
 
@@ -398,11 +398,11 @@ dboolean M_PBufReadCharArray(pbuf_t *pbuf, buf_t *chars, size_t limit) {
   return true;
 }
 
-dboolean M_PBufReadUChar(pbuf_t *pbuf, unsigned char *c) {
+bool M_PBufReadUChar(pbuf_t *pbuf, unsigned char *c) {
   return cmp_read_uchar(&pbuf->cmp, c);
 }
 
-dboolean M_PBufReadUCharArray(pbuf_t *pbuf, buf_t *uchars, size_t limit) {
+bool M_PBufReadUCharArray(pbuf_t *pbuf, buf_t *uchars, size_t limit) {
   unsigned char c = 0;
   unsigned int array_size = 0;
 
@@ -425,11 +425,11 @@ dboolean M_PBufReadUCharArray(pbuf_t *pbuf, buf_t *uchars, size_t limit) {
   return true;
 }
 
-dboolean M_PBufReadShort(pbuf_t *pbuf, short *s) {
+bool M_PBufReadShort(pbuf_t *pbuf, short *s) {
   return cmp_read_short(&pbuf->cmp, s);
 }
 
-dboolean M_PBufReadShortArray(pbuf_t *pbuf, buf_t *shorts, size_t limit) {
+bool M_PBufReadShortArray(pbuf_t *pbuf, buf_t *shorts, size_t limit) {
   short s = 0;
   unsigned int array_size = 0;
 
@@ -452,11 +452,11 @@ dboolean M_PBufReadShortArray(pbuf_t *pbuf, buf_t *shorts, size_t limit) {
   return true;
 }
 
-dboolean M_PBufReadUShort(pbuf_t *pbuf, unsigned short *s) {
+bool M_PBufReadUShort(pbuf_t *pbuf, unsigned short *s) {
   return cmp_read_ushort(&pbuf->cmp, s);
 }
 
-dboolean M_PBufReadUShortArray(pbuf_t *pbuf, buf_t *ushorts, size_t limit) {
+bool M_PBufReadUShortArray(pbuf_t *pbuf, buf_t *ushorts, size_t limit) {
   unsigned short s = 0;
   unsigned int array_size = 0;
 
@@ -479,11 +479,11 @@ dboolean M_PBufReadUShortArray(pbuf_t *pbuf, buf_t *ushorts, size_t limit) {
   return true;
 }
 
-dboolean M_PBufReadInt(pbuf_t *pbuf, int *i) {
+bool M_PBufReadInt(pbuf_t *pbuf, int *i) {
   return cmp_read_int(&pbuf->cmp, i);
 }
 
-dboolean M_PBufReadIntArray(pbuf_t *pbuf, buf_t *ints, size_t limit) {
+bool M_PBufReadIntArray(pbuf_t *pbuf, buf_t *ints, size_t limit) {
   int i = 0;
   unsigned int array_size = 0;
 
@@ -506,11 +506,11 @@ dboolean M_PBufReadIntArray(pbuf_t *pbuf, buf_t *ints, size_t limit) {
   return true;
 }
 
-dboolean M_PBufReadUInt(pbuf_t *pbuf, unsigned int *i) {
+bool M_PBufReadUInt(pbuf_t *pbuf, unsigned int *i) {
   return cmp_read_uint(&pbuf->cmp, i);
 }
 
-dboolean M_PBufReadUIntArray(pbuf_t *pbuf, buf_t *uints, size_t limit) {
+bool M_PBufReadUIntArray(pbuf_t *pbuf, buf_t *uints, size_t limit) {
   unsigned int i = 0;
   unsigned int array_size = 0;
 
@@ -533,11 +533,11 @@ dboolean M_PBufReadUIntArray(pbuf_t *pbuf, buf_t *uints, size_t limit) {
   return true;
 }
 
-dboolean M_PBufReadLong(pbuf_t *pbuf, int_64_t *l) {
+bool M_PBufReadLong(pbuf_t *pbuf, int_64_t *l) {
   return cmp_read_long(&pbuf->cmp, l);
 }
 
-dboolean M_PBufReadLongArray(pbuf_t *pbuf, buf_t *longs, size_t limit) {
+bool M_PBufReadLongArray(pbuf_t *pbuf, buf_t *longs, size_t limit) {
   int_64_t l = 0;
   unsigned int array_size = 0;
 
@@ -560,11 +560,11 @@ dboolean M_PBufReadLongArray(pbuf_t *pbuf, buf_t *longs, size_t limit) {
   return true;
 }
 
-dboolean M_PBufReadULong(pbuf_t *pbuf, uint_64_t *l) {
+bool M_PBufReadULong(pbuf_t *pbuf, uint_64_t *l) {
   return cmp_read_ulong(&pbuf->cmp, l);
 }
 
-dboolean M_PBufReadULongArray(pbuf_t *pbuf, buf_t *ulongs, size_t limit) {
+bool M_PBufReadULongArray(pbuf_t *pbuf, buf_t *ulongs, size_t limit) {
   uint_64_t l = 0;
   unsigned int array_size = 0;
 
@@ -587,11 +587,11 @@ dboolean M_PBufReadULongArray(pbuf_t *pbuf, buf_t *ulongs, size_t limit) {
   return true;
 }
 
-dboolean M_PBufReadFloat(pbuf_t *pbuf, float *f) {
+bool M_PBufReadFloat(pbuf_t *pbuf, float *f) {
   return cmp_read_float(&pbuf->cmp, f);
 }
 
-dboolean M_PBufReadFloatArray(pbuf_t *pbuf, buf_t *floats, size_t limit) {
+bool M_PBufReadFloatArray(pbuf_t *pbuf, buf_t *floats, size_t limit) {
   float f = 0.0f;
   unsigned int array_size = 0;
 
@@ -614,11 +614,11 @@ dboolean M_PBufReadFloatArray(pbuf_t *pbuf, buf_t *floats, size_t limit) {
   return true;
 }
 
-dboolean M_PBufReadDouble(pbuf_t *pbuf, double *d) {
+bool M_PBufReadDouble(pbuf_t *pbuf, double *d) {
   return cmp_read_double(&pbuf->cmp, d);
 }
 
-dboolean M_PBufReadDoubleArray(pbuf_t *pbuf, buf_t *doubles, size_t limit) {
+bool M_PBufReadDoubleArray(pbuf_t *pbuf, buf_t *doubles, size_t limit) {
   double d = 0;
   unsigned int array_size = 0;
 
@@ -641,7 +641,7 @@ dboolean M_PBufReadDoubleArray(pbuf_t *pbuf, buf_t *doubles, size_t limit) {
   return true;
 }
 
-dboolean M_PBufReadBool(pbuf_t *pbuf, dboolean *b) {
+bool M_PBufReadBool(pbuf_t *pbuf, bool *b) {
   uint8_t u8 = 0;
 
   if (!cmp_read_bool_as_u8(&pbuf->cmp, &u8))
@@ -655,8 +655,8 @@ dboolean M_PBufReadBool(pbuf_t *pbuf, dboolean *b) {
   return true;
 }
 
-dboolean M_PBufReadBoolArray(pbuf_t *pbuf, buf_t *bools, size_t limit) {
-  dboolean b = 0;
+bool M_PBufReadBoolArray(pbuf_t *pbuf, buf_t *bools, size_t limit) {
+  bool b = 0;
   unsigned int array_size = 0;
 
   if (!M_PBufReadArray(pbuf, &array_size))
@@ -666,7 +666,7 @@ dboolean M_PBufReadBoolArray(pbuf_t *pbuf, buf_t *bools, size_t limit) {
     return false;
 
   M_BufferClear(bools);
-  M_BufferEnsureTotalCapacity(bools, array_size * sizeof(dboolean));
+  M_BufferEnsureTotalCapacity(bools, array_size * sizeof(bool));
 
   while (array_size--) {
     if (!M_PBufReadBool(pbuf, &b))
@@ -678,19 +678,19 @@ dboolean M_PBufReadBoolArray(pbuf_t *pbuf, buf_t *bools, size_t limit) {
   return true;
 }
 
-dboolean M_PBufReadNil(pbuf_t *pbuf) {
+bool M_PBufReadNil(pbuf_t *pbuf) {
   return cmp_read_nil(&pbuf->cmp);
 }
 
-dboolean M_PBufReadArray(pbuf_t *pbuf, unsigned int *array_size) {
+bool M_PBufReadArray(pbuf_t *pbuf, unsigned int *array_size) {
   return cmp_read_array(&pbuf->cmp, array_size);
 }
 
-dboolean M_PBufReadMap(pbuf_t *pbuf, unsigned int *map_size) {
+bool M_PBufReadMap(pbuf_t *pbuf, unsigned int *map_size) {
   return cmp_read_map(&pbuf->cmp, map_size);
 }
 
-dboolean M_PBufReadBytes(pbuf_t *pbuf, buf_t *buf) {
+bool M_PBufReadBytes(pbuf_t *pbuf, buf_t *buf) {
   uint32_t size = 0;
 
   if (!cmp_read_bin_size(&pbuf->cmp, &size))
@@ -712,7 +712,7 @@ dboolean M_PBufReadBytes(pbuf_t *pbuf, buf_t *buf) {
   return true;
 }
 
-dboolean M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit) {
+bool M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit) {
   cmp_object_t obj;
 
   if (!cmp_read_object(&pbuf->cmp, &obj)) {
@@ -736,7 +736,7 @@ dboolean M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit) {
   return true;
 }
 
-dboolean M_PBufReadStringArray(pbuf_t *pbuf, GPtrArray *strings,
+bool M_PBufReadStringArray(pbuf_t *pbuf, GPtrArray *strings,
                                              size_t string_count_limit,
                                              size_t string_size_limit) {
   uint32_t string_count = 0;
@@ -783,7 +783,7 @@ dboolean M_PBufReadStringArray(pbuf_t *pbuf, GPtrArray *strings,
   return true;
 }
 
-dboolean M_PBufAtEOF(pbuf_t *pbuf) {
+bool M_PBufAtEOF(pbuf_t *pbuf) {
   return M_PBufGetCursor(pbuf) == M_PBufGetSize(pbuf);
 }
 

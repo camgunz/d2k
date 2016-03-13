@@ -131,7 +131,7 @@ void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 // P_CheckMeleeRange
 //
 
-static dboolean P_CheckMeleeRange(mobj_t *actor)
+static bool P_CheckMeleeRange(mobj_t *actor)
 {
   mobj_t *pl = actor->target;
 
@@ -150,7 +150,7 @@ static dboolean P_CheckMeleeRange(mobj_t *actor)
 // killough 12/98
 // This function tries to prevent shooting at friends
 
-static dboolean P_HitFriend(mobj_t *actor)
+static bool P_HitFriend(mobj_t *actor)
 {
   return actor->flags & MF_FRIEND && actor->target &&
     (P_AimLineAttack(actor,
@@ -165,7 +165,7 @@ static dboolean P_HitFriend(mobj_t *actor)
 //
 // P_CheckMissileRange
 //
-static dboolean P_CheckMissileRange(mobj_t *actor)
+static bool P_CheckMissileRange(mobj_t *actor)
 {
   fixed_t dist;
 
@@ -250,7 +250,7 @@ static dboolean P_CheckMissileRange(mobj_t *actor)
  * while it goes up or down.
  */
 
-static dboolean P_IsOnLift(const mobj_t *actor)
+static bool P_IsOnLift(const mobj_t *actor)
 {
   const sector_t *sec = actor->subsector->sector;
   line_t line;
@@ -323,9 +323,9 @@ extern  line_t **spechit;          // New code -- killough
 extern  int    numspechit;
 
 /* killough 9/12/98 */
-static dboolean P_Move(mobj_t *actor, dboolean dropoff) {
+static bool P_Move(mobj_t *actor, bool dropoff) {
   fixed_t tryx, tryy, deltax, deltay, origx, origy;
-  dboolean try_ok;
+  bool try_ok;
   int movefactor = ORIG_FRICTION_FACTOR;    // killough 10/98
   int friction = ORIG_FRICTION;
   int speed;
@@ -440,7 +440,7 @@ static dboolean P_Move(mobj_t *actor, dboolean dropoff) {
  * killough 9/12/98: Same as P_Move, except smarter
  */
 
-static dboolean P_SmartMove(mobj_t *actor) {
+static bool P_SmartMove(mobj_t *actor) {
   mobj_t *target = actor->target;
   int on_lift, dropoff = false, under_damage;
   int tmp_monster_avoid_hazards = (prboom_comp[PC_MONSTER_AVOID_HAZARDS].state ? 
@@ -504,7 +504,7 @@ static dboolean P_SmartMove(mobj_t *actor) {
 // an OpenDoor call is made to start it opening.
 //
 
-static dboolean P_TryWalk(mobj_t *actor) {
+static bool P_TryWalk(mobj_t *actor) {
   if (!P_SmartMove(actor))
     return false;
 
@@ -596,7 +596,7 @@ static void P_DoNewChaseDir(mobj_t *actor, fixed_t deltax, fixed_t deltay) {
 
 static fixed_t dropoff_deltax, dropoff_deltay, floorz;
 
-static dboolean PIT_AvoidDropoff(line_t *line)
+static bool PIT_AvoidDropoff(line_t *line)
 {
   if (line->backsector                          && // Ignore one-sided linedefs
       tmbbox[BOXRIGHT]  > line->bbox[BOXLEFT]   &&
@@ -728,7 +728,7 @@ static void P_NewChaseDir(mobj_t *actor) {
 // killough 9/9/98: whether a target is visible to a monster
 //
 
-static dboolean P_IsVisible(mobj_t *actor, mobj_t *mo, dboolean allaround) {
+static bool P_IsVisible(mobj_t *actor, mobj_t *mo, bool allaround) {
   if (!allaround) {
     angle_t an = R_PointToAngle2(
       actor->x, actor->y, mo->x, mo->y
@@ -752,7 +752,7 @@ static dboolean P_IsVisible(mobj_t *actor, mobj_t *mo, dboolean allaround) {
 
 static int current_allaround;
 
-static dboolean PIT_FindTarget(mobj_t *mo)
+static bool PIT_FindTarget(mobj_t *mo)
 {
   mobj_t *actor = current_actor;
 
@@ -797,7 +797,7 @@ static dboolean PIT_FindTarget(mobj_t *mo)
 // Returns true if a player is targeted.
 //
 
-static dboolean P_LookForPlayers(mobj_t *actor, dboolean allaround) {
+static bool P_LookForPlayers(mobj_t *actor, bool allaround) {
   player_t *player;
   int stop, stopc, c;
 
@@ -894,7 +894,7 @@ static dboolean P_LookForPlayers(mobj_t *actor, dboolean allaround) {
 // A marine's best friend :)  killough 7/18/98, 9/98
 //
 
-static dboolean P_LookForMonsters(mobj_t *actor, dboolean allaround) {
+static bool P_LookForMonsters(mobj_t *actor, bool allaround) {
   thinker_t *cap, *th;
 
   if (demo_compatibility)
@@ -976,7 +976,7 @@ static dboolean P_LookForMonsters(mobj_t *actor, dboolean allaround) {
 // killough 9/5/98: look for targets to go after, depending on kind of monster
 //
 
-static dboolean P_LookForTargets(mobj_t *actor, int allaround) {
+static bool P_LookForTargets(mobj_t *actor, int allaround) {
   return actor->flags & MF_FRIEND ?
     P_LookForMonsters(actor, allaround) || P_LookForPlayers (actor, allaround):
     P_LookForPlayers (actor, allaround) || P_LookForMonsters(actor, allaround);
@@ -988,7 +988,7 @@ static dboolean P_LookForTargets(mobj_t *actor, int allaround) {
 // killough 9/8/98: Help friends in danger of dying
 //
 
-static dboolean P_HelpFriend(mobj_t *actor) {
+static bool P_HelpFriend(mobj_t *actor) {
   thinker_t *cap, *th;
 
   // If less than 33% health, self-preservation rules
@@ -1609,10 +1609,10 @@ mobj_t* vileobj;
 fixed_t viletryx;
 fixed_t viletryy;
 
-static dboolean PIT_VileCheck(mobj_t *thing)
+static bool PIT_VileCheck(mobj_t *thing)
 {
   int     maxdist;
-  dboolean check;
+  bool check;
 
   if (!(thing->flags & MF_CORPSE) )
     return true;        // not a monster
@@ -2657,7 +2657,7 @@ void A_Mushroom(mobj_t *actor)
   int i, j, n = actor->info->damage;
 
   // Mushroom parameters are part of code pointer's state
-  dboolean mbf = (compatibility_level == mbf_compatibility &&
+  bool mbf = (compatibility_level == mbf_compatibility &&
     !prboom_comp[PC_DO_NOT_USE_MISC12_FRAME_PARAMETERS_IN_A_MUSHROOM].state);
   fixed_t misc1 = ((mbf && actor->state->misc1) ? actor->state->misc1 : FRACUNIT*4);
   fixed_t misc2 = ((mbf && actor->state->misc2) ? actor->state->misc2 : FRACUNIT/2);

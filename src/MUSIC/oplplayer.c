@@ -299,9 +299,9 @@ static const unsigned int volume_mapping_table[] = {
     124, 124, 125, 125, 126, 126, 127, 127
 };
 
-static dboolean music_initialized = false;
+static bool music_initialized = false;
 
-//static dboolean musicpaused = false;
+//static bool musicpaused = false;
 static int current_music_volume;
 
 // GENMIDI lump instrument data:
@@ -320,7 +320,7 @@ static opl_voice_t *voice_alloced_list;
 static opl_track_data_t *tracks;
 static unsigned int num_tracks = 0;
 static unsigned int running_tracks = 0;
-static dboolean song_looping;
+static bool song_looping;
 
 // Configuration file variable, containing the port number for the
 // adlib chip.
@@ -329,7 +329,7 @@ int opl_io_port = 0x388;
 
 // Load instrument table from GENMIDI lump:
 
-static dboolean LoadInstrumentTable(void)
+static bool LoadInstrumentTable(void)
 {
     const byte *lump;
 
@@ -429,7 +429,7 @@ static void ReleaseVoice(opl_voice_t *voice)
 
 static void LoadOperatorData(int operator,
                              const genmidi_op_t *data,
-                             dboolean max_level)
+                             bool max_level)
 {
     int level;
 
@@ -1324,7 +1324,7 @@ static void I_OPL_UnRegisterSong(const void *handle)
 // Determine whether memory block is a .mid file
 
 #if 0
-static dboolean IsMid(byte *mem, int len)
+static bool IsMid(byte *mem, int len)
 {
     return len > 4 && !memcmp(mem, "MThd", 4);
 }

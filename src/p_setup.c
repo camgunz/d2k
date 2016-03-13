@@ -43,6 +43,7 @@
 #include "v_video.h"
 #include "r_demo.h"
 #include "r_fps.h"
+#include "hu_lib.h"
 #include "hu_tracers.h"
 #include "g_overflow.h"
 #include "am_map.h"
@@ -91,7 +92,7 @@ byte     *map_subsectors;
 
 int     firstglvertex = 0;
 int     nodesVersion  = 0;
-dboolean forceOldBsp  = false;
+bool    forceOldBsp  = false;
 
 // figgi 08/21/00 -- glSegs
 typedef struct {
@@ -201,7 +202,7 @@ static void *calloc_IfSameLevel(void* p, size_t n1, size_t n2) {
 // P_CheckForZDoomNodes
 //
 
-static dboolean P_CheckForZDoomNodes(int lumpnum, int gl_lumpnum) {
+static bool P_CheckForZDoomNodes(int lumpnum, int gl_lumpnum) {
   const void *data;
 
   data = W_CacheLumpNum(lumpnum + ML_NODES);
@@ -220,7 +221,7 @@ static dboolean P_CheckForZDoomNodes(int lumpnum, int gl_lumpnum) {
 // http://www.sbsoftware.com/files/DeePBSPV4specs.txt
 //
 
-static dboolean P_CheckForDeePBSPv4Nodes(int lumpnum, int gl_lumpnum) {
+static bool P_CheckForDeePBSPv4Nodes(int lumpnum, int gl_lumpnum) {
   const void *data;
   int result = false;
 
@@ -1883,7 +1884,7 @@ static void P_CreateBlockMap(void) {
 //
 // haleyjd 03/04/10: do verification on validity of blockmap.
 //
-static dboolean P_VerifyBlockMap(int count) {
+static bool P_VerifyBlockMap(int count) {
   int x, y;
   int *maxoffs = blockmaplump + count;
 
@@ -2235,7 +2236,7 @@ static void P_RemoveSlimeTrails(void) {       // killough 10/98
 //
 // Are these lumps in the same wad file?
 //
-dboolean P_CheckLumpsForSameSource(int lump1, int lump2) {
+bool P_CheckLumpsForSameSource(int lump1, int lump2) {
   if (((unsigned int)lump1 >= numlumps) || ((unsigned int)lump2 >= numlumps))
     return false;
 

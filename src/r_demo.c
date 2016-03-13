@@ -229,7 +229,7 @@ const char *demo_patterns_list_def[9];
 // demo ex
 int demo_extendedformat = -1;
 int demo_extendedformat_default;
-dboolean use_demoex_info = false;
+bool use_demoex_info = false;
 
 char demoex_filename[PATH_MAX];
 const char *demo_demoex_filename;
@@ -1246,7 +1246,7 @@ int WadDataAddItem(waddata_t *waddata, const char *filename,
   return true;
 }
 
-int ParseDemoPattern(const char *str, waddata_t* waddata, char **missed, dboolean trytodownload)
+int ParseDemoPattern(const char *str, waddata_t* waddata, char **missed, bool trytodownload)
 {
   int processed = 0;
   wadfile_info_t *wadfiles = NULL;

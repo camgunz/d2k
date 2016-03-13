@@ -48,7 +48,7 @@
 #include "n_net.h"
 #include "p_user.h"
 
-extern dboolean gamekeydown[];
+extern bool gamekeydown[];
 
 //jff 1/7/98 default automap colors added
 int mapcolor_back;    // map background
@@ -260,7 +260,7 @@ markpoint_t *markpoints = NULL;    // where the points are
 int markpointnum = 0; // next point to be assigned (also number of points now)
 int markpointnum_max = 0;       // killough 2/22/98
 
-static dboolean stopped = true;
+static bool stopped = true;
 
 am_frame_t am_frame;
 
@@ -712,7 +712,7 @@ static void AM_maxOutWindowScale(void)
 //
 // Passed an input event, returns true if its handled
 //
-dboolean AM_Responder(event_t *ev) {
+bool AM_Responder(event_t *ev) {
   int rc;
   static int bigstate = 0;
   int ch;                                                       // phares
@@ -998,12 +998,8 @@ void AM_Ticker (void)
 // clipping on them in the lines frame coordinates.
 // Returns true if any part of line was not clipped
 //
-static dboolean AM_clipMline
-( mline_t*  ml,
-  fline_t*  fl )
-{
-  enum
-  {
+static bool AM_clipMline(mline_t *ml, fline_t *fl) {
+  enum {
     LEFT    =1,
     RIGHT   =2,
     BOTTOM  =4,

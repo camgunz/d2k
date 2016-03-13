@@ -78,17 +78,17 @@ extern int gl_use_shared_texture_palette;
 extern int gl_paletted_texture;
 extern int gl_shared_texture_palette;
 
-extern dboolean gl_ext_texture_filter_anisotropic;
-extern dboolean gl_arb_texture_non_power_of_two;
-extern dboolean gl_arb_multitexture;
-extern dboolean gl_arb_texture_compression;
-extern dboolean gl_arb_framebuffer_object;
-extern dboolean gl_ext_packed_depth_stencil;
-extern dboolean gl_ext_blend_color;
-extern dboolean gl_use_stencil;
-extern dboolean gl_ext_arb_vertex_buffer_object;
-extern dboolean gl_arb_pixel_buffer_object;
-extern dboolean gl_arb_shader_objects;
+extern bool gl_ext_texture_filter_anisotropic;
+extern bool gl_arb_texture_non_power_of_two;
+extern bool gl_arb_multitexture;
+extern bool gl_arb_texture_compression;
+extern bool gl_arb_framebuffer_object;
+extern bool gl_ext_packed_depth_stencil;
+extern bool gl_ext_blend_color;
+extern bool gl_use_stencil;
+extern bool gl_ext_arb_vertex_buffer_object;
+extern bool gl_arb_pixel_buffer_object;
+extern bool gl_arb_shader_objects;
 
 // obsolete?
 extern PFNGLCOLORTABLEEXTPROC              GLEXT_glColorTableEXT;
@@ -155,7 +155,7 @@ extern PFNGLGETACTIVEUNIFORMARBPROC         GLEXT_glGetActiveUniformARB;
 extern PFNGLGETUNIFORMFVARBPROC             GLEXT_glGetUniformfvARB;
 #endif
   
-void gld_InitOpenGL(dboolean compatibility_mode);
+void gld_InitOpenGL(bool compatibility_mode);
 
 //states
 void gld_EnableTexture2D(GLenum texture, int enable);

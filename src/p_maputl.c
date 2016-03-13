@@ -348,7 +348,7 @@ void P_SetThingPosition(mobj_t *thing) { // link into subsector
 //
 // killough 5/3/98: reformatted, cleaned up
 
-dboolean P_BlockLinesIterator(int x, int y, dboolean func(line_t*))
+bool P_BlockLinesIterator(int x, int y, bool func(line_t*))
 {
   int        offset;
   const int  *list;   // killough 3/1/98: for removal of blockmap limit
@@ -388,7 +388,7 @@ dboolean P_BlockLinesIterator(int x, int y, dboolean func(line_t*))
 //
 // killough 5/3/98: reformatted, cleaned up
 
-dboolean P_BlockThingsIterator(int x, int y, dboolean func(mobj_t*))
+bool P_BlockThingsIterator(int x, int y, bool func(mobj_t*))
 {
   mobj_t *mobj;
   if (!(x<0 || y<0 || x>=bmapwidth || y>=bmapheight))
@@ -430,7 +430,7 @@ divline_t trace;
 //
 // killough 5/3/98: reformatted, cleaned up
 
-dboolean PIT_AddLineIntercepts(line_t *ld)
+bool PIT_AddLineIntercepts(line_t *ld)
 {
   int       s1;
   int       s2;
@@ -476,7 +476,7 @@ dboolean PIT_AddLineIntercepts(line_t *ld)
 //
 // killough 5/3/98: reformatted, cleaned up
 
-dboolean PIT_AddThingIntercepts(mobj_t *thing)
+bool PIT_AddThingIntercepts(mobj_t *thing)
 {
   fixed_t   x1, y1;
   fixed_t   x2, y2;
@@ -534,7 +534,7 @@ dboolean PIT_AddThingIntercepts(mobj_t *thing)
 //
 // killough 5/3/98: reformatted, cleaned up
 
-dboolean P_TraverseIntercepts(traverser_t func, fixed_t maxfrac)
+bool P_TraverseIntercepts(traverser_t func, fixed_t maxfrac)
 {
   intercept_t *in = NULL;
   int count = intercept_p - intercepts;
@@ -563,8 +563,8 @@ dboolean P_TraverseIntercepts(traverser_t func, fixed_t maxfrac)
 //
 // killough 5/3/98: reformatted, cleaned up
 
-dboolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
-                       int flags, dboolean trav(intercept_t *))
+bool P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
+                    int flags, bool trav(intercept_t *))
 {
   fixed_t xt1, yt1;
   fixed_t xt2, yt2;

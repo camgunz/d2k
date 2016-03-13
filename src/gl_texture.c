@@ -568,7 +568,7 @@ static void gld_AddFlatToTexture(GLTexture *gltexture, unsigned char *buffer, co
 }
 
 //e6y: "force" flag for loading texture with zero index
-GLTexture *gld_RegisterTexture(int texture_num, dboolean mipmap, dboolean force)
+GLTexture *gld_RegisterTexture(int texture_num, bool mipmap, bool force)
 {
   GLTexture *gltexture;
 
@@ -823,7 +823,7 @@ void gld_SetTexClamp(GLTexture *gltexture, unsigned int flags)
   }
 }
 
-int gld_BuildTexture(GLTexture *gltexture, void *data, dboolean readonly,
+int gld_BuildTexture(GLTexture *gltexture, void *data, bool readonly,
                      int width, int height) {
   int result = false;
   int tex_width;
@@ -1200,7 +1200,7 @@ void gld_BindPatch(GLTexture *gltexture, int cm)
   R_UnlockPatchNum(gltexture->index);
 }
 
-GLTexture *gld_RegisterFlat(int lump, dboolean mipmap)
+GLTexture *gld_RegisterFlat(int lump, bool mipmap)
 {
   GLTexture *gltexture;
 
