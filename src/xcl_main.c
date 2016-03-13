@@ -132,7 +132,8 @@ static int XCL_GetNetStats(lua_State *L) {
   lua_pushinteger(L, server->peer->lastRoundTripTime);
   lua_setfield(L, -2, "ping_last");
 
-  lua_pushinteger(L, server->peer->roundTripTime);
+  /* lua_pushinteger(L, server->peer->roundTripTime); */
+  lua_pushinteger(L, players[consoleplayer].ping);
   lua_setfield(L, -2, "ping_average");
 
   lua_pushinteger(L, server->peer->highestRoundTripTimeVariance);

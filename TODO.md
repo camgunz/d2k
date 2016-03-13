@@ -2,8 +2,9 @@
 
 ## Proto
 
-1. Add maplist
-  - Add `map` command
+1. Needs to be some way of calling widgets by name (like a widget namespace)
+
+1. Netstats shouldn't be enabled in singleplayer
 
 1. Test resolution switching
   - Probably have to override `:reset` in widgets to update a bunch of stuff
@@ -17,6 +18,9 @@
     also
 
 ## ZDDL
+
+1. Add maplist
+  - Add `map` command
 
 1. Add error codes to `n_proto`
 

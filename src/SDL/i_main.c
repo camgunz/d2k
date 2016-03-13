@@ -501,6 +501,7 @@ static void handle_sigterm(int signum) {
   exit_gracefully();
 }
 
+#ifdef G_OS_UNIX
 static void daemonize(void) {
   char *log_file;
   char *pid_file;
@@ -583,6 +584,7 @@ static void daemonize(void) {
   if (errorfd < 0)
     I_Error("Error getting error log file descriptor: %s", strerror(errno));
 }
+#endif
 
 //
 // Sets the priority class for the prboom-plus process

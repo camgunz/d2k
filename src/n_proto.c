@@ -520,6 +520,7 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
       break;
       case nm_ping:
         handle_ping(np);
+      break;
       default:
         P_Printf(consoleplayer,
           "Received unknown message type %u from peer %s:%u.\n",

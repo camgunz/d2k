@@ -115,7 +115,7 @@ static int XG_GameGetPlayers(lua_State *L) {
     lua_setfield(L, -3, "time");
 
     lua_insert(L, -2);
-    lua_seti(L, -2, i + 1);
+    lua_rawseti(L, -2, i + 1);
   }
 
   return 1;

@@ -436,66 +436,6 @@ IF(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel" OR
 ENDIF()
 
 #==============================================================================
-################################################### Lua Configuration #########
-#==============================================================================
-# IF(WIN32)
-#   ADD_DEFINITIONS(-DLUA_USE_WINDOWS)
-# ELSEIF(APPLE)
-#   IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-#     ADD_DEFINITIONS(-DLUA_USE_MACOSX)
-#   ENDIF()
-# ELSEIF(UNIX)
-#   IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-#     ADD_DEFINITIONS(-DLUA_USE_LINUX)
-#   ENDIF()
-# ENDIF()
-
-#==============================================================================
-################################################## Build Dependencies #########
-#==============================================================================
-# Build Lua Static library
-# SET(LUA_LIBRARY lua)
-# SET(LUA_SOURCE_DIRECTORY src/lua/src)
-# SET(LUA_SOURCES
-#   # Base
-#   ${LUA_SOURCE_DIRECTORY}/lapi.c
-#   ${LUA_SOURCE_DIRECTORY}/lcode.c
-#   ${LUA_SOURCE_DIRECTORY}/lctype.c
-#   ${LUA_SOURCE_DIRECTORY}/ldebug.c
-#   ${LUA_SOURCE_DIRECTORY}/ldo.c
-#   ${LUA_SOURCE_DIRECTORY}/ldump.c
-#   ${LUA_SOURCE_DIRECTORY}/lfunc.c
-#   ${LUA_SOURCE_DIRECTORY}/lgc.c
-#   ${LUA_SOURCE_DIRECTORY}/llex.c
-#   ${LUA_SOURCE_DIRECTORY}/lmem.c
-#   ${LUA_SOURCE_DIRECTORY}/lobject.c
-#   ${LUA_SOURCE_DIRECTORY}/lopcodes.c
-#   ${LUA_SOURCE_DIRECTORY}/lparser.c
-#   ${LUA_SOURCE_DIRECTORY}/lstate.c
-#   ${LUA_SOURCE_DIRECTORY}/lstring.c
-#   ${LUA_SOURCE_DIRECTORY}/ltable.c
-#   ${LUA_SOURCE_DIRECTORY}/ltm.c
-#   ${LUA_SOURCE_DIRECTORY}/lundump.c
-#   ${LUA_SOURCE_DIRECTORY}/lvm.c
-#   ${LUA_SOURCE_DIRECTORY}/lzio.c
-#   # Lib [AM] We might not need all this...
-#   ${LUA_SOURCE_DIRECTORY}/lauxlib.c
-#   ${LUA_SOURCE_DIRECTORY}/lbaselib.c
-#   ${LUA_SOURCE_DIRECTORY}/lbitlib.c
-#   ${LUA_SOURCE_DIRECTORY}/lcorolib.c
-#   ${LUA_SOURCE_DIRECTORY}/ldblib.c
-#   ${LUA_SOURCE_DIRECTORY}/liolib.c
-#   ${LUA_SOURCE_DIRECTORY}/lmathlib.c
-#   ${LUA_SOURCE_DIRECTORY}/loslib.c
-#   ${LUA_SOURCE_DIRECTORY}/lstrlib.c
-#   ${LUA_SOURCE_DIRECTORY}/ltablib.c
-#   ${LUA_SOURCE_DIRECTORY}/loadlib.c
-#   ${LUA_SOURCE_DIRECTORY}/linit.c)
-# 
-# INCLUDE_DIRECTORIES(${LUA_SOURCE_DIRECTORY})
-# ADD_LIBRARY(${LUA_LIBRARY} STATIC ${LUA_SOURCES})
-
-#==============================================================================
 ################################################### Find Dependencies #########
 #==============================================================================
 IF(ICONV_LIBRARIES)
@@ -605,7 +545,7 @@ INCLUDE_DIRECTORIES(${PANGO_INCLUDE_DIR})
 FIND_PACKAGE(GObjectIntrospection REQUIRED)
 INCLUDE_DIRECTORIES(${GOBJECT_INTROSPECTION_INCLUDE_DIR})
 
-FIND_PACKAGE(Lua REQUIRED)
+FIND_PACKAGE(Lua52 REQUIRED)
 INCLUDE_DIRECTORIES(${LUA_INCLUDE_DIR})
 
 FIND_PACKAGE(LGI REQUIRED)

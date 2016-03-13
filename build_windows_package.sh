@@ -67,6 +67,8 @@ mkdir "${PACKAGE_DIR}/typelibs"
 cp "${BASE_DIR}/crossdeps/lib/girepository-1.0/"* \
    "${PACKAGE_DIR}/typelibs/"
 
+chmod -x ${PACKAGE_DIR}/typelibs/*
+
 cp "${BASE_DIR}/COPYING" "${PACKAGE_DIR}/COPYING"
 
 cp "${BASE_DIR}/crossdeps/bin/SDL.dll"                           \
@@ -115,3 +117,4 @@ cp "${BASE_DIR}/crossdeps/bin/SDL.dll"                           \
    "${BASE_DIR}/crossdeps/bin/zlib1.dll"                         \
    "${PACKAGE_DIR}/"
 
+chmod -x ${PACKAGE_DIR}/*.dll
