@@ -107,6 +107,10 @@ void N_InitStates(void) {
   state_data_buffer_queue = g_queue_new();
 }
 
+game_state_t* N_GetCurrentState(void) {
+  game_state_t *gs
+}
+
 void N_SaveState(void) {
   game_state_t *gs = latest_game_state = get_new_state(gametic);
 
@@ -125,13 +129,14 @@ bool N_LoadState(int tic, bool call_init_new) {
     saved_game_states, GINT_TO_POINTER(tic)
   );
 
-  if (gs != NULL) {
-    M_PBufSeek(gs->data, 0);
-    G_ReadSaveData(gs->data, true, call_init_new);
-    return true;
+  if (!gs) {
+    return false;
   }
 
-  return false;
+  M_PBufSeek(gs->data, 0);
+  G_ReadSaveData(gs->data, true, call_init_new);
+
+  return true;
 }
 
 void N_RemoveOldStates(int tic) {

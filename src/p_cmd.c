@@ -220,6 +220,8 @@ static void process_queued_command(gpointer data, gpointer user_data) {
 
   leveltime = ncmd->tic;
 
+  SV_UnlagSetTIC(ncmd->tic);
+
   N_LogCommand(ncmd);
 
   run_player_command(player);
