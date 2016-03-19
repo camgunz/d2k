@@ -269,7 +269,7 @@ static void process_queued_command(gpointer data, gpointer user_data) {
 static bool extrapolate_player_position(int playernum) {
   player_t *player = &players[playernum];
 
-  if ((!DELTACLIENT) || (playernum == consoleplayer) || (!player->mo))
+  if ((!CLIENT) || (playernum == consoleplayer) || (!player->mo))
     return false;
 
   if (!cl_extrapolate_player_positions)
@@ -618,12 +618,12 @@ void P_BuildCommand(void) {
 void P_RunPlayerCommands(int playernum) {
   player_t *player = &players[playernum];
 
-  if (!(DELTACLIENT || DELTASERVER)) {
+  if (!MULTINET) {
     run_player_command(player);
     return;
   }
 
-  if (DELTACLIENT && playernum != consoleplayer && playernum != 0) {
+  if (CLIENT && playernum != consoleplayer && playernum != 0) {
     unsigned int command_count = P_GetCommandCount(playernum);
 
     if (command_count == 0) {

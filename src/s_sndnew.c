@@ -441,7 +441,7 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
 
   sfx = &S_sfx[sfx_id];
 
-  if (DELTACLIENT) {
+  if (CLIENT) {
     if ((CL_Synchronizing() || CL_RePredicting()) &&
         is_duplicate(origin, sfx, is_pickup)) {
       D_Msg(MSG_SOUND,
@@ -575,7 +575,7 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
   channel->handle = h;
   channel->pitch = pitch;
 
-  if (DELTACLIENT) {
+  if (CLIENT) {
     add_to_sound_log(
       channel->origin_id,
       (int)(channel->sfxinfo - S_sfx),
@@ -851,7 +851,7 @@ static void reposition_sounds(mobj_t *listener) {
 }
 
 void S_ReloadChannelOrigins(void) {
-  if (!DELTACLIENT)
+  if (!CLIENT)
     return;
 
   for (unsigned int i = 0; i < channels->len; i++) {
@@ -877,7 +877,7 @@ void S_ReloadChannelOrigins(void) {
 }
 
 void S_ResetSoundLog(void) {
-  if (!DELTACLIENT)
+  if (!CLIENT)
     return;
 
   for (GList *node = played_sounds; node != NULL; node = node->next) {
@@ -888,7 +888,7 @@ void S_ResetSoundLog(void) {
 }
 
 void S_TrimSoundLog(int tic, int command_index) {
-  if (!DELTACLIENT)
+  if (!CLIENT)
     return;
 
   while (played_sounds != NULL) {

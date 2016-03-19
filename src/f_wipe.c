@@ -73,7 +73,7 @@ static int wipe_initMelt(void) {
   }
 
   // setup initial column positions (y<0 => not ready to scroll yet)
-  if (DELTASYNC)
+  if (MULTINET)
     sw.y_lookup[0] = -(D_RandomRange(0, 16));
   else
     sw.y_lookup[0] = -(M_Random() % 16);
@@ -81,7 +81,7 @@ static int wipe_initMelt(void) {
   for (int i = 1; i < SCREENWIDTH; i++) {
     int r;
 
-    if (DELTASYNC)
+    if (MULTINET)
       r = D_RandomRange(-1, 2);
     else
       r = (M_Random() % 3) - 1;

@@ -32,14 +32,8 @@
 #define NET_DISCONNECT_TIMEOUT 1
 
 #define MULTINET     (netgame && (!solonet))
-#define CMDSYNC      (netsync == NET_SYNC_TYPE_COMMAND)
-#define DELTASYNC    (netsync == NET_SYNC_TYPE_DELTA)
 #define CLIENT       (MULTINET && (!netserver))
 #define SERVER       (MULTINET && netserver)
-#define CMDCLIENT    (CLIENT && CMDSYNC)
-#define CMDSERVER    (SERVER && CMDSYNC)
-#define DELTACLIENT  (CLIENT && DELTASYNC)
-#define DELTASERVER  (SERVER && DELTASYNC)
 #define SINGLEPLAYER (!demorecording && !demoplayback && !democontinue && !netgame)
 #define comperr(i)   (default_comperr[i] && \
                       !demorecording && \
@@ -52,12 +46,6 @@ typedef enum {
   NET_CHANNEL_UNRELIABLE,
   NET_CHANNEL_MAX
 } net_channel_e;
-
-typedef enum {
-  NET_SYNC_TYPE_NONE,
-  NET_SYNC_TYPE_COMMAND,
-  NET_SYNC_TYPE_DELTA,
-} net_sync_type_e;
 
 #define CHAT_CHANNEL_MIN CHAT_CHANNEL_SERVER
 #define CHAT_CHANNEL_MAX CHAT_CHANNEL_ALL
@@ -88,10 +76,9 @@ typedef struct netticcmd_s {
   byte  buttons;
 } netticcmd_t;
 
-extern bool            netgame;
-extern bool            solonet;
-extern bool            netserver;
-extern net_sync_type_e netsync;
+extern bool netgame;
+extern bool solonet;
+extern bool netserver;
 
 size_t      N_IPToString(uint32_t address, char *buffer);
 const char* N_IPToConstString(uint32_t address);

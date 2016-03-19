@@ -95,7 +95,7 @@ void S_Init(int sfxVolume, int musicVolume) {
     mus_paused = 0; // no sounds are playing, and they are not mus_paused
   }
 
-  if (DELTASYNC)
+  if (MULTINET)
     SoundEngine = S_GetNewSoundEngine();
   else
     SoundEngine = S_GetOldSoundEngine();

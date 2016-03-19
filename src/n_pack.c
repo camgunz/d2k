@@ -313,7 +313,6 @@ void N_PackSetup(netpeer_t *np) {
 
   pbuf = N_PeerBeginMessage(np->peernum, NET_CHANNEL_RELIABLE, nm_setup);
 
-  M_PBufWriteInt(pbuf, netsync);
   M_PBufWriteInt(pbuf, deathmatch);
   M_PBufWriteUShort(pbuf, MAXPLAYERS);
   for (int i = 0; i < MAXPLAYERS; i++) {
@@ -381,11 +380,9 @@ void N_PackSetup(netpeer_t *np) {
   np->sync.tic = gs->tic;
 }
 
-bool N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
-                                  unsigned short *player_count,
+bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
                                   unsigned short *playernum) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
-  int m_sync_type = 0;
   unsigned short m_player_count = 0;
   int m_deathmatch = 0;
   unsigned short m_playernum = 0;
@@ -398,10 +395,6 @@ bool N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
 
   for (int i = 0; i < MAXPLAYERS; i++)
     playeringame[i] = false;
-
-  read_ranged_int(
-    pbuf, m_sync_type, "netsync", NET_SYNC_TYPE_COMMAND, NET_SYNC_TYPE_DELTA
-  );
 
   read_ranged_int(pbuf, m_deathmatch, "deathmatch", 0, 2);
 
@@ -481,19 +474,6 @@ bool N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
 
   read_int(pbuf, m_state_tic, "game state tic");
   read_packed_game_state(pbuf, gs, m_state_tic, "game state data");
-
-  switch (m_sync_type) {
-    case NET_SYNC_TYPE_COMMAND:
-      *sync_type = NET_SYNC_TYPE_COMMAND;
-    break;
-    case NET_SYNC_TYPE_DELTA:
-      *sync_type = NET_SYNC_TYPE_DELTA;
-    break;
-    default:
-      P_Printf(consoleplayer, "Invalid sync type %d.\n", m_sync_type);
-      return false;
-    break;
-  }
 
   *player_count = m_player_count;
   deathmatch = m_deathmatch;
@@ -710,7 +690,7 @@ void N_PackSync(netpeer_t *np) {
       }
     }
   }
-  else if (DELTASERVER) {
+  else if (SERVER) {
     M_PBufWriteInt(pbuf, np->sync.delta.from_tic);
     M_PBufWriteInt(pbuf, np->sync.delta.to_tic);
     M_PBufWriteBytes(pbuf, np->sync.delta.data.data, np->sync.delta.data.size);

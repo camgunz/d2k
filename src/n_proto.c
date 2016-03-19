@@ -50,26 +50,6 @@ const char *D_dehout(void); /* CG: from d_main.c */
 
 #define MAX_PREF_NAME_SIZE 20
 
-#define COMMAND_SYNC_ONLY(name)                                               \
-  if (!CMDSYNC) {                                                             \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Erroneously received command-sync message [%s] in delta-sync "     \
-      "mode\n",                                                               \
-      __func__, name                                                          \
-    );                                                                        \
-    return;                                                                   \
-  }
-
-#define DELTA_SYNC_ONLY(name)                                                 \
-  if (!DELTASYNC) {                                                           \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Erroneously received delta-sync message [%s] in command-sync "     \
-      "mode\n",                                                               \
-      __func__, name                                                          \
-    );                                                                        \
-    return;                                                                   \
-  }
-
 #define SERVER_ONLY(name)                                                     \
   if (!SERVER) {                                                              \
     P_Printf(consoleplayer,                                                   \
@@ -87,60 +67,6 @@ const char *D_dehout(void); /* CG: from d_main.c */
     );                                                                        \
     return;                                                                   \
   }
-
-#define NOT_DELTA_SERVER(name)                                                \
-  if (DELTASERVER) {                                                          \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Erroneously received message [%s] as a delta-sync server\n",       \
-      __func__, name                                                          \
-    );                                                                        \
-    return;                                                                   \
-  }
-
-#define NOT_DELTA_CLIENT(name)                                                \
-  if (DELTACLIENT) {                                                          \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Erroneously received message [%s] as a delta-sync client\n",       \
-      __func__, name                                                          \
-    );                                                                        \
-    return;                                                                   \
-  }
-
-#define NOT_COMMAND_SERVER(name)                                              \
-  if (CMDSERVER) {                                                            \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Erroneously received message [%s] as a command-sync server "       \
-      "mode\n",                                                               \
-      __func__, name                                                          \
-    );                                                                        \
-    return;                                                                   \
-  }
-
-#define NOT_COMMAND_CLIENT(name)                                              \
-  if (CMDCLIENT) {                                                            \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Erroneously received message [%s] as a command-sync client"        \
-      "mode\n",                                                               \
-      __func__, name                                                          \
-    );                                                                        \
-    return;                                                                   \
-  }
-
-#define DELTA_SERVER_ONLY(name)                                               \
-  DELTA_SYNC_ONLY(name);                                                      \
-  SERVER_ONLY(name);
-
-#define DELTA_CLIENT_ONLY(name)                                               \
-  DELTA_SYNC_ONLY(name);                                                      \
-  CLIENT_ONLY(name);
-
-#define COMMAND_SERVER_ONLY(name)                                             \
-  COMMAND_SYNC_ONLY(name);                                                    \
-  SERVER_ONLY(name);
-
-#define COMMAND_CLIENT_ONLY(name)                                             \
-  COMMAND_SYNC_ONLY(name);                                                    \
-  CLIENT_ONLY(name);
 
 #define CHECK_VALID_PLAYER(np, playernum)                                     \
   if (((np) = N_PeerForPlayer(playernum)) == NULL)                            \
@@ -233,7 +159,6 @@ static void display_chat_message(chat_channel_e chat_channel,
 
 static void handle_setup(netpeer_t *np) {
   netpeer_t *server = CL_GetServerPeer();
-  net_sync_type_e net_sync = NET_SYNC_TYPE_NONE;
   unsigned short player_count = 0;
   unsigned short playernum = 0;
   int i;
@@ -245,7 +170,7 @@ static void handle_setup(netpeer_t *np) {
 
   N_ClearStates();
 
-  if (!N_UnpackSetup(np, &net_sync, &player_count, &playernum)) {
+  if (!N_UnpackSetup(np, &player_count, &playernum)) {
     D_ClearResourceFiles();
     D_ClearDEHFiles();
     N_ClearStates();
@@ -254,8 +179,6 @@ static void handle_setup(netpeer_t *np) {
   }
 
   W_Init();
-
-  netsync = net_sync;
 
   for (i = 0; i < MAXPLAYERS; i++)
     playeringame[i] = false;
@@ -506,7 +429,7 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
         handle_sync(np);
       break;
       case nm_playerpreferencechange:
-        NOT_DELTA_CLIENT("player preference change");
+        SERVER_ONLY("player preference change");
         handle_player_preference_change(np);
       break;
       case nm_authrequest:
@@ -559,7 +482,7 @@ void N_UpdateSync(void) {
     if (iter.np->sync.outdated && iter.np->sync.tic != 0) {
       N_PeerClearUnreliable(iter.np->peernum);
 
-      if (DELTASERVER) {
+      if (SERVER) {
         if (iter.np->sync.tic < N_GetLatestState()->tic)
           N_BuildStateDelta(iter.np->sync.tic, &iter.np->sync.delta);
       }

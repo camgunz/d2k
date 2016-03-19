@@ -254,7 +254,7 @@ static void P_RunThinkers(void) {
     if (!currentthinker->function)
       continue;
 
-    if (DELTASYNC) {
+    if (MULTINET) {
       if (currentthinker->function != P_MobjThinker)
         currentthinker->function(currentthinker);
       else if (((mobj_t *)currentthinker)->player == NULL)

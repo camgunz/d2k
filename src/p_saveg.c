@@ -2123,7 +2123,7 @@ void P_ArchiveMap(pbuf_t *savebuffer) {
 }
 
 void P_UnArchiveMap(pbuf_t *savebuffer) {
-  if (DELTACLIENT) {
+  if (CLIENT) {
     int count;
     int m_int;
     char m_char;

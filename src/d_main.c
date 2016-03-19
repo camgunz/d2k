@@ -2070,7 +2070,7 @@ static void D_DoomMainSetup(void) {
 #endif
   }
 
-  if (!DELTACLIENT)
+  if (!CLIENT)
     W_Init(); // CPhipps - handling of wadfiles init changed
 
   // e6y

@@ -169,7 +169,6 @@ fps_widget:set_last_time(d2k.System.get_ticks())
 fps_widget:set_frame_count(0)
 fps_widget:set_text('0 FPS')
 
-fps_widget:set_parent(d2k.hud)
 d2k.widgets['fps'] = fps_widget
 
 local netstats_widget = TextWidget.TextWidget({
@@ -244,7 +243,6 @@ netstats_widget:set_last_time(d2k.System.get_ticks())
 
 netstats_widget:set_pixel_width(282)
 netstats_widget:set_pixel_height(125)
-netstats_widget:set_parent(d2k.hud)
 d2k.widgets['netstats'] = netstats_widget
 
 local scoreboard_widget = ContainerWidget.ContainerWidget({

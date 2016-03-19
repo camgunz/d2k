@@ -59,10 +59,9 @@ static ENetHost   *net_host = NULL;
 static const char *previous_host = NULL;
 static uint16_t    previous_port = 0;
 
-bool            netgame   = false;
-bool            solonet   = false;
-bool            netserver = false;
-net_sync_type_e netsync   = NET_SYNC_TYPE_NONE;
+bool netgame   = false;
+bool solonet   = false;
+bool netserver = false;
 
 size_t N_IPToString(uint32_t address, char *buffer) {
   return snprintf(buffer, 16, "%u.%u.%u.%u",

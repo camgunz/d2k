@@ -984,7 +984,7 @@ static void G_DoLoadLevel(void) {
     }
   }
 
-  if (DELTASERVER)
+  if (SERVER)
     SV_ResyncPeers();
 }
 
@@ -1279,7 +1279,7 @@ void G_Ticker(void) {
   if (paused & 2 || (!demoplayback && menuactive && !netgame)) {
     basetic++;  // For revenant tracers and RNG -- we must maintain sync
   }
-  else if (!(MULTINET && DELTASYNC)) {
+  else if (!MULTINET) {
     for (i = 0; i < MAXPLAYERS; i++) {
       ticcmd_t *cmd = NULL;
 

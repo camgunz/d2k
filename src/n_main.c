@@ -93,34 +93,9 @@ static int run_tics(int tic_count) {
   return saved_tic_count;
 }
 
-static int run_commandsync_tics(int command_count) {
-  int tic_count = command_count;
-
-  while (command_count--)
-    P_BuildCommand();
-
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i]) {
-      tic_count = MIN(tic_count, P_GetCommandCount(i));
-    }
-  }
-
-  if (tic_count > 0)
-    run_tics(tic_count);
-
-  NETPEER_FOR_EACH(iter) {
-    iter.np->sync.outdated = true;
-  }
-
-  return tic_count;
-}
-
 static int process_tics(int tics_elapsed) {
   if (tics_elapsed <= 0)
     return 0;
-
-  if (CMDSYNC)
-    return run_commandsync_tics(tics_elapsed);
 
   return run_tics(tics_elapsed);
 }
@@ -246,7 +221,6 @@ void N_InitNetGame(void) {
   netgame   = false;
   solonet   = false;
   netserver = false;
-  netsync   = NET_SYNC_TYPE_NONE;
 
   displayplayer = consoleplayer = 0;
   playeringame[consoleplayer] = true;
@@ -339,15 +313,14 @@ void N_InitNetGame(void) {
     D_Msg(MSG_INFO, "N_InitNetGame: Setup information received!\n");
   }
   else {
-    if ((i = M_CheckParm("-serve")))
-      netsync = NET_SYNC_TYPE_DELTA;
-
-    if (CMDSYNC || DELTASYNC) {
-      char *host = NULL;
-      unsigned short port = DEFAULT_PORT;
-
+    if ((i = M_CheckParm("-serve"))) {
       netgame = true;
       netserver = true;
+    }
+
+    if (MULTINET) {
+      char *host = NULL;
+      unsigned short port = DEFAULT_PORT;
 
       nodrawers   = true;
       nosfxparm   = true;
@@ -421,7 +394,7 @@ void N_RunTic(void) {
 
   P_Checksum(gametic);
 
-  if (DELTASERVER && gametic > 0) {
+  if (SERVER && gametic > 0) {
     /* CG: TODO: Don't save states if there are no peers, saves resources */
     D_Msg(MSG_SYNC, "(%d) Saving state\n", gametic);
     N_SaveState();

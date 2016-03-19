@@ -25,8 +25,7 @@
 #define N_PACK_H__
 
 void N_PackSetup(netpeer_t *np);
-bool N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
-                                  unsigned short *player_count,
+bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
                                   unsigned short *playernum);
 
 void N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level);

@@ -2,8 +2,6 @@
 
 ## Proto
 
-1. Netstats shouldn't be enabled in singleplayer
-
 1. Test resolution switching
   - Probably have to override `:reset` in widgets to update a bunch of stuff
 
@@ -11,7 +9,6 @@
   - `P_Printf` doesn't work in server mode
   - Can outrun plasma and get hit
   - Maybe something like `enet_flush_whatever` will kill the minimum ping
-  - DELTASYNC should become MULTINET
   - The client will still occasionally not clear commands out
 
 1. PID file logic seems broken

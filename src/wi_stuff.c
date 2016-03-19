@@ -1142,7 +1142,7 @@ void WI_updateDeathmatchStats(void)
   }
   else if (dm_state == 4)
   {
-    if (DELTASERVER || acceleratestage)
+    if (SERVER || acceleratestage)
     {
       S_StartSound(0, sfx_slop);
 
@@ -1467,7 +1467,7 @@ void WI_updateNetgameStats(void)
   }
   else if (ng_state == 10)
   {
-    if (DELTASERVER || acceleratestage)
+    if (SERVER || acceleratestage)
     {
       S_StartSound(0, sfx_sgcock);
 

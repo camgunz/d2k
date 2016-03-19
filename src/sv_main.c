@@ -74,8 +74,7 @@ void SV_CleanupOldCommandsAndStates(void) {
     return;
 
   sv_remove_old_commands();
-  if (DELTASERVER)
-    sv_remove_old_states();
+  sv_remove_old_states();
 }
 
 /*

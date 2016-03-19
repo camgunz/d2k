@@ -188,7 +188,7 @@ void CL_CheckForStateUpdates(void) {
   bool state_loaded;
   int saved_gametic = gametic;
 
-  if (!DELTACLIENT)
+  if (!CLIENT)
     return;
 
   server = CL_GetServerPeer();
