@@ -502,11 +502,12 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
 
     if (gametic > last_flush_tic) {
       N_PeerFlushUnreliableChannel(np);
-      last_flush_tic = gametic;
     }
 
     N_PeerFlushReliableChannel(np);
   }
+
+  last_flush_tic = gametic;
 
   while (net_host != NULL) {
     status = enet_host_service(net_host, &net_event, timeout_ms);

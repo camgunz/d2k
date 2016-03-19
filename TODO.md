@@ -5,11 +5,14 @@
 1. Test resolution switching
   - Probably have to override `:reset` in widgets to update a bunch of stuff
 
+1. When console scrollback fills up, FPS sinks
+
 1. Do some basic net testing
   - `P_Printf` doesn't work in server mode
   - Can outrun plasma and get hit
   - Maybe something like `enet_flush_whatever` will kill the minimum ping
   - The client will still occasionally not clear commands out
+  - Uncapped framerate messes up player positions
 
 1. PID file logic seems broken
 

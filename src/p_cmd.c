@@ -463,9 +463,10 @@ void P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd) {
         ncmd->side    != tmp_ncmd->side    ||
         ncmd->angle   != tmp_ncmd->angle   ||
         ncmd->buttons != tmp_ncmd->buttons) {
-      P_Printf(consoleplayer,
-        "P_UnArchivePlayer: command mismatch: "
+      printf(
+        "P_UnArchivePlayer(%d): command mismatch: "
         "{%d, %d, %d, %d, %d, %d, %u} != {%d, %d, %d, %d, %d, %d, %u}\n",
+        playernum,
         ncmd->index,
         ncmd->tic,
         ncmd->server_tic,
@@ -529,8 +530,9 @@ void P_ForEachCommand(int playernum, GFunc func, gpointer user_data) {
 void P_ClearPlayerCommands(int playernum) {
   unsigned int command_count;
 
-  if (!playeringame[playernum])
+  if (!playeringame[playernum]) {
     return;
+  }
 
   D_Msg(MSG_SYNC,
     "P_ClearPlayerCommands: Clearing commands for %d\n", playernum

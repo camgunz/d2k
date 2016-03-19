@@ -313,6 +313,9 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
 
   M_PBufReadUInt(savebuffer, &command_count);
 
+  if (CLIENT && playernum != consoleplayer)
+    P_ClearPlayerCommands(playernum);
+
   for (unsigned int i = 0; i < command_count; i++) {
     netticcmd_t tmp_ncmd;
 
@@ -331,16 +334,6 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
   }
 
   command_count = player->commands->len;
-
-  /*
-  printf("(%d) ===\n", gametic);
-  for (unsigned int i = 0; i < command_count; i++) {
-    netticcmd_t *ncmd = g_ptr_array_index(player->commands, i);
-
-    printf("[%04d|%04d] ", ncmd->index, ncmd->server_tic);
-  }
-  puts("");
-  */
 
   M_PBufReadInt(savebuffer, &player->latest_command_run_index);
 
@@ -388,7 +381,7 @@ static void serialize_actor_pointers(pbuf_t *savebuffer, mobj_t *mobj) {
 
   state_index = (uint_64_t)(mobj->state - states);
 
-  if (state_index >= NUMSTATES) 
+  if (state_index >= NUMSTATES)
     I_Error("serialize_actor_pointers: Invalid mobj state %p", mobj->state);
 
   state_index++;
@@ -554,7 +547,7 @@ static void serialize_actor(pbuf_t *savebuffer, mobj_t *mobj) {
 
 static mobj_t* build_actor(mobjtype_t actor_type) {
   mobj_t *mobj;
-  
+
   if (actor_type >= NUMMOBJTYPES)
     I_Error("build_actor: Invalid actor type %d\n", actor_type);
 
@@ -734,7 +727,7 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
 
   state_index = (uint_64_t)(mobj->state - states);
 
-  if (state_index >= NUMSTATES) 
+  if (state_index >= NUMSTATES)
     I_Error("Invalid mobj state %p", mobj->state);
 
   state_index++;
@@ -787,7 +780,7 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
 
     state_index = (uint_64_t)(mobj->state - states);
 
-    if (state_index >= NUMSTATES) 
+    if (state_index >= NUMSTATES)
       I_Error("Invalid mobj state %p", mobj->state);
 
     state_index++;
@@ -825,7 +818,7 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
 
 static void commit_delta_compressed_actors(pbuf_t *savebuffer) {
   g_hash_table_foreach(
-    delta_compressed_actors, 
+    delta_compressed_actors,
     delta_compress_and_serialize_actor_list,
     (gpointer)savebuffer
   );
@@ -1374,7 +1367,7 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
   for (int i = 0; i < current_thinker_count; i++) {
     uint32_t mobj_id;
     mobj_t *mo = NULL;
-    
+
     M_PBufReadUInt(savebuffer, &mobj_id);
     mo = P_IdentLookup(mobj_id);
 
@@ -1476,7 +1469,7 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
 
 void P_ArchiveSectorIndex(pbuf_t *savebuffer, sector_t *s, const char *fun) {
   int sector_id;
-  
+
   if (s == NULL) {
     M_PBufWriteInt(savebuffer, 0);
     return;
@@ -1495,7 +1488,7 @@ void P_ArchiveSectorIndex(pbuf_t *savebuffer, sector_t *s, const char *fun) {
 
 void P_UnArchiveSectorIndex(pbuf_t *savebuffer, sector_t **s, const char *f) {
   int sector_id;
-  
+
   M_PBufReadInt(savebuffer, &sector_id);
 
   if (sector_id < 0)
@@ -1530,7 +1523,7 @@ void P_ArchiveLineIndex(pbuf_t *savebuffer, line_t *li, const char *fun) {
 
 void P_UnArchiveLineIndex(pbuf_t *savebuffer, line_t **li, const char *fun) {
   uint_64_t line_index;
-  
+
   M_PBufReadULong(savebuffer, &line_index);
 
   if (line_index == 0)

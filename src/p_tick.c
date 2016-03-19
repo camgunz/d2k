@@ -306,8 +306,15 @@ static void run_regular_tic(void) {
     P_PlayerThink(consoleplayer);
 
   for (int i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i] && i != consoleplayer)
-      P_PlayerThink(i);
+    if (!playeringame[i]) {
+      continue;
+    }
+
+    if (i == consoleplayer) {
+      continue;
+    }
+
+    P_PlayerThink(i);
   }
 }
 
