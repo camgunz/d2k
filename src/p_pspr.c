@@ -23,7 +23,6 @@
 
 #include "z_zone.h"
 
-
 #include "doomstat.h"
 #include "d_event.h"
 #include "e6y.h"//e6y
@@ -39,6 +38,8 @@
 #include "r_main.h"
 #include "s_sound.h"
 #include "sounds.h"
+#include "sv_main.h"
+
 #define LOWERSPEED   (FRACUNIT*6)
 #define RAISESPEED   (FRACUNIT*6)
 #define WEAPONBOTTOM (FRACUNIT*128)
@@ -272,12 +273,22 @@ bool P_CheckAmmo(player_t *player) {
 //
 
 static void P_FireWeapon(player_t *player) {
+  bool unlagged_activated;
   statenum_t newstate;
 
   if (!P_CheckAmmo(player))
     return;
 
+  if (SERVER) {
+    unlagged_activated = SV_UnlagStart();
+  }
+
   P_SetMobjState(player->mo, S_PLAY_ATK1);
+
+  if (SERVER && unlagged_activated) {
+    SV_UnlagEnd();
+  }
+
   newstate = weaponinfo[player->readyweapon].atkstate;
   P_SetPsprite(player, ps_weapon, newstate);
   P_NoiseAlert(player->mo, player->mo);

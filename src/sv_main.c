@@ -36,7 +36,10 @@
 
 #define MAX_COMMAND_COUNT (TICRATE / 4)
 
-int sv_limit_player_commands;
+static game_state_t *unlag_game_state = NULL;
+static int           unlag_tic;
+
+int sv_limit_player_commands = 0;
 
 static void sv_remove_old_commands(void) {
   int oldest_sync_tic = INT_MAX;
@@ -141,6 +144,68 @@ unsigned int SV_GetPlayerCommandLimit(int playernum) {
     return 2;
 
   return 1; /* always run at least 1 ticcmd if possible */
+}
+
+void SV_UnlagSetTIC(int tic) {
+  unlag_tic = tic;
+}
+
+bool SV_UnlagStart(void) {
+  if (!unlag_game_state) {
+    unlag_game_state = malloc(sizeof(game_state_t));
+    if (!unlag_game_state) {
+      I_Error("Error allocating unlagged game state");
+    }
+
+    unlag_game_state->data = M_PBufNewWithCapacity(16384);
+  }
+  else {
+    M_PBufClear(unlag_game_state->data);
+  }
+
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    if (!playeringame[i]) {
+      continue;
+    }
+
+    players[i].saved_momx        = players[i].momx;
+    players[i].saved_momy        = players[i].momy;
+    players[i].saved_momz        = players[i].momz;
+    players[i].saved_damagecount = players[i].damagecount;
+  }
+
+  unlag_game_state->tic = gametic;
+  G_WriteSaveData(unlag_game_state->data);
+
+  return N_LoadState(unlag_tic, false);
+}
+
+void SV_UnlagEnd(void) {
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    if (!playeringame[i]) {
+      continue;
+    }
+
+    /* [CG] These now become deltas instead of base values */
+    players[i].saved_momx        -= players[i].momx;
+    players[i].saved_momy        -= players[i].momy;
+    players[i].saved_momz        -= players[i].momz;
+    players[i].saved_damagecount -= players[i].damagecount;
+  }
+
+  M_PBufSeek(unlag_game_state->data, 0);
+  G_ReadSaveData(unlag_game_state->data, true, false);
+
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    if (!playeringame[i]) {
+      continue;
+    }
+
+    players[i].momx        += players[i].saved_momx;
+    players[i].momy        += players[i].saved_momy;
+    players[i].momz        += players[i].saved_momz;
+    players[i].damagecount += players[i].saved_damagecount;
+  }
 }
 
 /* vi: set et ts=2 sw=2: */

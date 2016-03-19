@@ -211,6 +211,10 @@ typedef struct player_s
   int            commands_run_this_tic;
   int            latest_command_run_index;
   int            ping;
+  fixed_t        saved_momx;
+  fixed_t        saved_momy;
+  fixed_t        saved_momz;
+  int            saved_damagecount;
 } player_t;
 
 //
