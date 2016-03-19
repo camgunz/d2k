@@ -30,6 +30,8 @@ local InputInterface = require('input_interface')
 local Fonts = require('fonts')
 local ContainerWidget = require('container_widget')
 
+d2k.widgets = {}
+
 local messages_widget = RetractableTextWidget.RetractableTextWidget({
   name = 'messages',
   z_index = 1,
@@ -59,6 +61,7 @@ messages_widget:set_external_text_source(
 )
 
 messages_widget:set_parent(d2k.hud)
+d2k.widgets['messages'] = messages_widget
 
 local chat_widget = InputWidget.InputWidget({
   name = 'chat',
@@ -107,6 +110,7 @@ function chat_widget:handle_event(event)
 end
 
 chat_widget:set_parent(d2k.hud)
+d2k.widgets['chat'] = chat_widget
 
 local fps_widget = TextWidget.TextWidget({
   name = 'fps',
@@ -166,6 +170,7 @@ fps_widget:set_frame_count(0)
 fps_widget:set_text('0 FPS')
 
 fps_widget:set_parent(d2k.hud)
+d2k.widgets['fps'] = fps_widget
 
 local netstats_widget = TextWidget.TextWidget({
   name = 'netstats',
@@ -185,9 +190,6 @@ local netstats_widget = TextWidget.TextWidget({
   fg_color = {1.0, 1.0, 1.0, 1.00},
   bg_color = {0.0, 0.0, 0.0, 0.65},
 })
-
-netstats_widget:set_pixel_width(282)
-netstats_widget:set_pixel_height(125)
 
 function netstats_widget:get_last_time()
   return self.last_time
@@ -240,7 +242,10 @@ end
 
 netstats_widget:set_last_time(d2k.System.get_ticks())
 
+netstats_widget:set_pixel_width(282)
+netstats_widget:set_pixel_height(125)
 netstats_widget:set_parent(d2k.hud)
+d2k.widgets['netstats'] = netstats_widget
 
 local scoreboard_widget = ContainerWidget.ContainerWidget({
   name = 'scoreboard',
@@ -444,6 +449,7 @@ scoreboard_player_table_widget:set_cell_height(1.0 / 9.0)
 
 scoreboard_player_table_widget:set_parent(scoreboard_widget)
 scoreboard_player_table_widget:set_y(scoreboard_title_widget:get_pixel_height() + 5)
+d2k.widgets['scoreboard'] = scoreboard_widget
 
 -- vi: et ts=2 sw=2
 

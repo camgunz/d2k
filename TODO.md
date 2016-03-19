@@ -2,8 +2,6 @@
 
 ## Proto
 
-1. Needs to be some way of calling widgets by name (like a widget namespace)
-
 1. Netstats shouldn't be enabled in singleplayer
 
 1. Test resolution switching
@@ -14,7 +12,7 @@
   - Can outrun plasma and get hit
   - Maybe something like `enet_flush_whatever` will kill the minimum ping
   - DELTASYNC should become MULTINET
-  - Gamemode isn't properly serialized (?)
+  - The client will still occasionally not clear commands out
 
 1. PID file logic seems broken
 
