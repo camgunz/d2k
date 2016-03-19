@@ -89,27 +89,6 @@
     { 3, 1, 1}                           //  3 bytes
                                          // Total: 20, saved: 14
 
-1. Add unlagged
-  - Save attacking player position
-  - Save current game state
-  - Restore game state that player was viewing during the attack
-    - This is contained in the command
-  - Restore attacking player position (if possible)
-  - Run hit detection and damage calculation
-    - For every impacted actor:
-      - Save momx/momy/momz values
-      - Save damagecount
-  - Restore saved state
-  - For every impacted actor:
-    - Add new momx/momy/momz values to the current momx/momy/momz
-    - Restore damagecount (MAX(old, new))
-  - Might require adding a new field to `netticcmd_t`: `world_tic`
-    - Denotes the world the client was looking at when the command was made
-    - If the client's enabled extrapolation, unlagged can just use `tic`
-    - Otherwise, the client has to stamp the command with the last world it
-      loaded from the server, which only the client can know reliably
-    - `world_tic` is probably the cleanest way to handle this
-
 1. Implement actor vectors
   - Send movement start TIC
   - x/y/z represent the start position at time of last velocity change

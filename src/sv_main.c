@@ -26,6 +26,7 @@
 #include <enet/enet.h>
 
 #include "doomstat.h"
+#include "g_save.h"
 #include "n_net.h"
 #include "n_main.h"
 #include "n_state.h"
@@ -168,9 +169,9 @@ bool SV_UnlagStart(void) {
       continue;
     }
 
-    players[i].saved_momx        = players[i].momx;
-    players[i].saved_momy        = players[i].momy;
-    players[i].saved_momz        = players[i].momz;
+    players[i].saved_momx        = players[i].mo->momx;
+    players[i].saved_momy        = players[i].mo->momy;
+    players[i].saved_momz        = players[i].mo->momz;
     players[i].saved_damagecount = players[i].damagecount;
   }
 
@@ -187,9 +188,9 @@ void SV_UnlagEnd(void) {
     }
 
     /* [CG] These now become deltas instead of base values */
-    players[i].saved_momx        -= players[i].momx;
-    players[i].saved_momy        -= players[i].momy;
-    players[i].saved_momz        -= players[i].momz;
+    players[i].saved_momx        -= players[i].mo->momx;
+    players[i].saved_momy        -= players[i].mo->momy;
+    players[i].saved_momz        -= players[i].mo->momz;
     players[i].saved_damagecount -= players[i].damagecount;
   }
 
@@ -201,9 +202,9 @@ void SV_UnlagEnd(void) {
       continue;
     }
 
-    players[i].momx        += players[i].saved_momx;
-    players[i].momy        += players[i].saved_momy;
-    players[i].momz        += players[i].saved_momz;
+    players[i].mo->momx    += players[i].saved_momx;
+    players[i].mo->momy    += players[i].saved_momy;
+    players[i].mo->momz    += players[i].saved_momz;
     players[i].damagecount += players[i].saved_damagecount;
   }
 }

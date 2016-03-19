@@ -29,7 +29,7 @@ extern int sv_limit_player_commands;
 void         SV_CleanupOldCommandsAndStates(void);
 unsigned int SV_GetPlayerCommandLimit(int playernum);
 void         SV_UnlagSetTIC(int tic);
-bool         SV_UnlagStart(player_t *player, int tic);
+bool         SV_UnlagStart(void);
 void         SV_UnlagEnd(void);
 
 #endif

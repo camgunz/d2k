@@ -137,7 +137,7 @@ static void serialize_player(pbuf_t *savebuffer, int playernum) {
   M_PBufWriteInt(savebuffer, player->readyweapon);
   M_PBufWriteInt(savebuffer, player->pendingweapon);
   for (int i = 0; i < NUMWEAPONS; i++)
-    M_PBufWriteBool(savebuffer, player->weaponowned[i]);
+    M_PBufWriteInt(savebuffer, player->weaponowned[i]);
   for (int i = 0; i < NUMAMMO; i++)
     M_PBufWriteInt(savebuffer, player->ammo[i]);
   for (int i = 0; i < NUMAMMO; i++)
@@ -257,7 +257,7 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
   M_PBufReadInt(savebuffer, (int *)&player->readyweapon);
   M_PBufReadInt(savebuffer, (int *)&player->pendingweapon);
   for (int i = 0; i < NUMWEAPONS; i++)
-    M_PBufReadBool(savebuffer, &player->weaponowned[i]);
+    M_PBufReadInt(savebuffer, &player->weaponowned[i]);
   for (int i = 0; i < NUMAMMO; i++)
     M_PBufReadInt(savebuffer, &player->ammo[i]);
   for (int i = 0; i < NUMAMMO; i++)
