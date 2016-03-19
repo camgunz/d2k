@@ -186,6 +186,9 @@ local netstats_widget = TextWidget.TextWidget({
   bg_color = {0.0, 0.0, 0.0, 0.65},
 })
 
+netstats_widget:set_pixel_width(282)
+netstats_widget:set_pixel_height(125)
+
 function netstats_widget:get_last_time()
   return self.last_time
 end

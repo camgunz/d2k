@@ -314,6 +314,7 @@ void N_PackSetup(netpeer_t *np) {
   pbuf = N_PeerBeginMessage(np->peernum, NET_CHANNEL_RELIABLE, nm_setup);
 
   M_PBufWriteInt(pbuf, netsync);
+  M_PBufWriteInt(pbuf, deathmatch);
   M_PBufWriteUShort(pbuf, MAXPLAYERS);
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i])
@@ -386,6 +387,7 @@ bool N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   pbuf_t *pbuf = &np->netcom.incoming.messages;
   int m_sync_type = 0;
   unsigned short m_player_count = 0;
+  int m_deathmatch = 0;
   unsigned short m_playernum = 0;
   int m_state_tic;
   game_state_t *gs;
@@ -400,6 +402,8 @@ bool N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   read_ranged_int(
     pbuf, m_sync_type, "netsync", NET_SYNC_TYPE_COMMAND, NET_SYNC_TYPE_DELTA
   );
+
+  read_ranged_int(pbuf, m_deathmatch, "deathmatch", 0, 2);
 
   read_ushort(pbuf, m_player_count, "player count");
 
@@ -492,6 +496,7 @@ bool N_UnpackSetup(netpeer_t *np, net_sync_type_e *sync_type,
   }
 
   *player_count = m_player_count;
+  deathmatch = m_deathmatch;
   *playernum = m_playernum;
 
   N_SetLatestState(gs);
