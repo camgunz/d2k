@@ -55,7 +55,7 @@ GLuint CaptureScreenAsTexID(void)
   return id;
 }
 
-int gld_wipe_doMelt(int ticks, int *y_lookup)
+int gld_wipe_doMelt(int *y_lookup)
 {
   int i;
   int total_w, total_h;
@@ -105,7 +105,7 @@ int gld_wipe_doMelt(int ticks, int *y_lookup)
   return 0;
 }
 
-int gld_wipe_exitMelt(int ticks)
+int gld_wipe_exitMelt(void)
 {
   if (wipe_scr_start_tex != 0)
   {

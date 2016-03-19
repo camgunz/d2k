@@ -58,6 +58,7 @@ void I_Sleep(unsigned long ms) {
   SDL_Delay(ms);
 }
 
+// Returns time in TICs
 int I_GetTime_RealTime(void) {
   int i;
   int t = SDL_GetTicks();

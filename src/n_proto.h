@@ -28,15 +28,16 @@
 #define GAME_OPTIONS_SIZE 64
 #endif
 
-#define nm_setup                  1
-#define nm_authresponse           2
-#define nm_chatmessage            3
-#define nm_sync                   4
-#define nm_playerpreferencechange 5
-#define nm_authrequest            6
-#define nm_rconcommand            7
-#define nm_voterequest            8
-#define nm_ping                   9
+#define nm_setup                   1
+#define nm_authresponse            2
+#define nm_chatmessage             3
+#define nm_sync                    4
+#define nm_playerpreferencechange  5
+#define nm_authrequest             6
+#define nm_rconcommand             7
+#define nm_voterequest             8
+#define nm_ping                    9
+#define nm_max                    10
 
 void N_InitProtocol(void);
 void N_HandlePacket(int peernum, void *data, size_t data_size);

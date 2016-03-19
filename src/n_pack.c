@@ -281,11 +281,13 @@ static void pack_unsynchronized_command(gpointer data, gpointer user_data) {
   pbuf_t *pbuf = (pbuf_t *)user_data;
   netpeer_t *server = CL_GetServerPeer();
 
-  if (server == NULL)
+  if (!server) {
     return;
+  }
 
-  if (ncmd->index <= server->sync.command_index)
+  if (ncmd->server_tic != 0) {
     return;
+  }
 
   M_PBufWriteInt(pbuf, ncmd->index);
   M_PBufWriteInt(pbuf, ncmd->tic);
@@ -687,6 +689,21 @@ void N_PackSync(netpeer_t *np) {
 
     if (command_count > 0)
       P_ForEachCommand(consoleplayer, pack_unsynchronized_command, pbuf);
+
+    if (command_count > 0) {
+      unsigned int oldest_index = 0;
+
+      for (size_t i = 0; i < players[consoleplayer].commands->len; i++) {
+        netticcmd_t *ncmd = g_ptr_array_index(
+          players[consoleplayer].commands, i
+        );
+
+        if (ncmd->index > np->sync.command_index) {
+          oldest_index = ncmd->index;
+          break;
+        }
+      }
+    }
   }
   else if (DELTASERVER) {
     M_PBufWriteInt(pbuf, np->sync.delta.from_tic);

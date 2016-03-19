@@ -127,8 +127,8 @@ extern int gl_color_mip_levels;
 extern int gl_blend_animations;
 
 // wipe
-int gld_wipe_doMelt(int ticks, int *y_lookup);
-int gld_wipe_exitMelt(int ticks);
+int gld_wipe_doMelt(int *y_lookup);
+int gld_wipe_exitMelt(void);
 int gld_wipe_StartScreen(void);
 int gld_wipe_EndScreen(void);
 

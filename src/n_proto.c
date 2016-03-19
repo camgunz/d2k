@@ -156,16 +156,16 @@ const char *D_dehout(void); /* CG: from d_main.c */
     return;                                                                   \
   }
 
-const char *nm_names[9] = {
+const char *nm_names[nm_max] = {
   "setup",
   "auth response",
-  "server message",
+  "chat message",
   "sync",
-  "player message",
   "player preference change",
   "auth request",
   "RCON command",
-  "vote request"
+  "vote request",
+  "ping"
 };
 
 static void display_chat_message(chat_channel_e chat_channel,
@@ -272,8 +272,6 @@ static void handle_setup(netpeer_t *np) {
 
   CL_SetReceivedSetup(true);
   server->sync.outdated = true;
-
-  printf("Handled setup, command count: %d\n", P_GetCommandCount(consoleplayer));
 }
 
 static void handle_auth_response(netpeer_t *np) {

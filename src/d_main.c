@@ -33,7 +33,6 @@
 #include "d_net.h"
 #include "dstrings.h"
 #include "f_finale.h"
-#include "f_wipe.h"
 #include "g_game.h"
 #include "g_keys.h"
 #include "hu_stuff.h"
@@ -56,6 +55,7 @@
 #include "s_sound.h"
 #include "st_stuff.h"
 #include "v_video.h"
+#include "f_wipe.h"
 #include "w_wad.h"
 #include "wi_stuff.h"
 #include "xam_main.h"
@@ -426,37 +426,37 @@ bool D_Responder(event_t *ev) {
 // and screen updating
 //
 static void D_Wipe(void) {
-  bool done;
-  int wipestart;
+  int current_time = I_GetTime();
 
   if (!render_wipescreen)
     return; //e6y
 
-  wipestart = I_GetTime() - 1;
+  wipe_ScreenWipe();
 
-  do {
-    int nowtime;
-    int tics;
+  while (true) {
+    int new_time = I_GetTime();
 
-    do {
+    while (new_time == current_time) {
       I_Sleep(5); // CPhipps - don't thrash cpu in this loop
-      nowtime = I_GetTime();
-      tics = nowtime - wipestart;
-    } while (!tics);
+      new_time = I_GetTime();
+    }
 
-    wipestart = nowtime;
+    if (MULTINET) {
+      N_TryRunTics();
+    }
 
-    done = wipe_ScreenWipe(tics);
+    if (wipe_Tick(new_time - current_time)) {
+      break;
+    }
 
     I_UpdateNoBlit();
 
-    if (MULTINET)
-      N_TryRunTics();
-    else
-      M_Drawer(); // menu is drawn even on top of wipes
+    M_Drawer(); // menu is drawn even on top of wipes
 
-    I_FinishUpdate(); // page flip or blit buffer
-  } while (!done);
+    I_FinishUpdate();
+
+    current_time = new_time;
+  }
 }
 
 //
@@ -465,10 +465,10 @@ static void D_Wipe(void) {
 //
 
 // wipegamestate can be set to -1 to force a wipe on the next draw
-gamestate_t     wipegamestate = GS_DEMOSCREEN;
-gamestate_t     oldgamestate = GS_BAD;
+gamestate_t wipegamestate = GS_DEMOSCREEN;
+gamestate_t oldgamestate = GS_BAD;
 extern bool setsizeneeded;
-extern int      showMessages;
+extern int  showMessages;
 
 void D_Display(void) {
   bool wipe;

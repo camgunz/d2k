@@ -177,8 +177,8 @@ local netstats_widget = TextWidget.TextWidget({
   screen_reference_point = InputInterface.REFERENCE_POINT_EAST,
   origin_reference_point = InputInterface.REFERENCE_POINT_EAST,
   y = -50,
-  width = .35,
-  height = .22,
+  width = .44,
+  height = .26,
   use_markup = false,
   horizontal_alignment = TextWidget.ALIGN_LEFT,
   vertical_alignment = TextWidget.ALIGN_TOP,
@@ -204,24 +204,30 @@ function netstats_widget:tick()
     d2k.Client.clear_netstats()
 
     if netstats ~= nil then
+      local gametic = d2k.Game.get_gametic()
+      local tic_delta = gametic - netstats.server_tic
+
       netstats.upload = netstats.upload / 1000
       netstats.download = netstats.download / 1000
       netstats.packet_loss = netstats.packet_loss / 100
       netstats.packet_loss_jitter = netstats.packet_loss_jitter / 100
 
       self:set_text(''
-        .. string.format('U/D:      %d KB/s | %d KB/s\n',
+        .. string.format('U/D:             %d KB/s | %d KB/s\n',
           netstats.upload, netstats.download
         )
-        .. string.format('Ping:     %d ms\n', netstats.ping_average)
-        .. string.format('Jitter:   %d\n', netstats.jitter_average)
-        .. string.format('Commands: %d / %d\n',
+        .. string.format('Ping:            %d ms\n', netstats.ping_average)
+        .. string.format('Jitter:          %d\n', netstats.jitter_average)
+        .. string.format('Commands:        %d / %d\n',
           netstats.unsynchronized_commands, netstats.total_commands
         )
-        .. string.format('PL:       %0.2f%% | %0.2f%%\n',
+        .. string.format('PL:              %0.2f%% | %0.2f%%\n',
           netstats.packet_loss, netstats.packet_loss_jitter
         )
-        .. string.format('Throttle: %d\n', netstats.throttle)
+        .. string.format('Throttle:        %d\n', netstats.throttle)
+        .. string.format('Server/Game TIC: %d / %d (%d)\n',
+          netstats.server_tic, gametic, tic_delta
+        )
       )
     end
 

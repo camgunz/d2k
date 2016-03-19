@@ -10,8 +10,10 @@
   - Probably have to override `:reset` in widgets to update a bunch of stuff
 
 1. Do some basic net testing
+  - `P_Printf` doesn't work in server mode
   - Can outrun plasma and get hit
-  - Commands are never trimmed
+  - Maybe something like `enet_flush_whatever` will kill the minimum ping
+  - DELTASYNC should become MULTINET
 
 ## After Proto
 

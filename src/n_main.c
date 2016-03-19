@@ -61,7 +61,7 @@
 #define DEBUG_NET 0
 #define DEBUG_SYNC 0
 #define DEBUG_SAVE 0
-#define LOG_COMMANDS 1
+#define LOG_COMMANDS 0
 #define PRINT_NETWORK_STATS 0
 // #define LOG_SECTOR 43
 
@@ -200,7 +200,7 @@ static void print_network_stats(void) {
 
 void N_LogCommand(netticcmd_t *ncmd) {
 #if LOG_COMMANDS
-#if LOG_SYNC
+#if DEBUG_SYNC
   D_Msg(MSG_SYNC, "(%d): {%d/%d/%d %d %d %d %u}\n",
     gametic,
     ncmd->index,
@@ -451,8 +451,10 @@ void SV_DisconnectLaggedClients(void) {
     if (!iter.np->sync.initialized)
       continue;
 
-    if ((gametic - iter.np->sync.tic) > SERVER_MAX_PEER_LAG)
+    if ((gametic - iter.np->sync.tic) > SERVER_MAX_PEER_LAG) {
+      printf("(%d) Peer %d is too lagged\n", gametic, iter.np->peernum);
       N_DisconnectPeer(iter.np->peernum);
+    }
   }
 }
 

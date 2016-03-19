@@ -46,13 +46,12 @@ static void count_command(gpointer data, gpointer user_data) {
   if (server == NULL)
     return;
 
-  if (ncmd->index > server->sync.command_index)
+  if (ncmd->server_tic == 0) {
     (*command_count)++;
+  }
 }
 
 void CL_TrimSynchronizedCommands(int playernum) {
-  D_Msg(MSG_SYNC, "CL_TrimSynchronizedCommands\n");
-
   P_TrimCommands(playernum, command_is_synchronized, NULL);
 }
 

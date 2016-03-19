@@ -44,7 +44,7 @@
 #include "cl_main.h"
 #include "p_user.h"
 
-#define USE_RANGE_CODER 0
+#define USE_RANGE_CODER 1
 #define MAX_DOWNLOAD 0
 #define MAX_UPLOAD 0
 
@@ -473,6 +473,8 @@ void N_DisconnectPlayer(short playernum) {
 }
 
 void N_ServiceNetworkTimeout(int timeout_ms) {
+  static int last_flush_tic = 0;
+
   netpeer_t *np;
   int status = 0;
   int peernum = -1;
@@ -495,8 +497,13 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
       continue;
     }
 
-    if ((gametic % 35) == 0) {
+    if ((last_flush_tic == 0) && (gametic > 0)) {
+      last_flush_tic = gametic - 1;
+    }
+
+    if (gametic > last_flush_tic) {
       N_PeerFlushUnreliableChannel(np);
+      last_flush_tic = gametic;
     }
 
     N_PeerFlushReliableChannel(np);

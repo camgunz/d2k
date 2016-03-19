@@ -1052,7 +1052,7 @@ static void ST_createWidgets(void)
       STlib_initMultIcon(&w_arms[i],
                          ST_ARMSX+(i%3)*ST_ARMSXSPACE,
                          ST_ARMSY+(i/3)*ST_ARMSYSPACE,
-                         arms[i], (int *) &plyr->weaponowned[i+1],
+                         arms[i], &plyr->weaponowned[i+1],
                          &st_armson);
     }
 

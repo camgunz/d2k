@@ -178,6 +178,9 @@ static int XCL_GetNetstats(lua_State *L) {
   lua_pushinteger(L, server->peer->packetThrottleLimit);
   lua_setfield(L, -2, "throttle_limit");
 
+  lua_pushinteger(L, server->sync.tic);
+  lua_setfield(L, -2, "server_tic");
+
   return 1;
 }
 

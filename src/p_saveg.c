@@ -330,6 +330,18 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
     P_InsertCommandSorted(playernum, &tmp_ncmd);
   }
 
+  command_count = player->commands->len;
+
+  /*
+  printf("(%d) ===\n", gametic);
+  for (unsigned int i = 0; i < command_count; i++) {
+    netticcmd_t *ncmd = g_ptr_array_index(player->commands, i);
+
+    printf("[%04d|%04d] ", ncmd->index, ncmd->server_tic);
+  }
+  puts("");
+  */
+
   M_PBufReadInt(savebuffer, &player->latest_command_run_index);
 
   if (MULTINET) {

@@ -174,7 +174,7 @@ void STlib_initMultIcon
   int x,
   int y,
   const patchnum_t*   il,
-  int* inum,
+  int*  inum,
   bool* on );
 
 
