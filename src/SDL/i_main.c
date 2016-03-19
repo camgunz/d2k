@@ -486,7 +486,9 @@ static void cleanup_pid_file(void) {
 }
 
 static void exit_gracefully(void) {
+  /*
   cleanup_pid_file();
+  */
 
   for (msg_channel_e chan = MSG_MIN; chan <= MSG_MAX; chan++) {
     D_MsgDeactivate(chan);

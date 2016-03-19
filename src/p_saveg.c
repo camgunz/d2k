@@ -652,6 +652,11 @@ static void deserialize_actor(pbuf_t *savebuffer) {
   M_PBufReadInt(savebuffer, &mobj->PrevY);
   M_PBufReadInt(savebuffer, &mobj->PrevZ);
   */
+
+  mobj->PrevX = mobj->x;
+  mobj->PrevY = mobj->y;
+  mobj->PrevZ = mobj->z;
+
   M_PBufReadShort(savebuffer, &mobj->patch_width);
   M_PBufReadInt(savebuffer, &mobj->iden_nums);
 
