@@ -381,7 +381,7 @@ function scoreboard_player_table_widget:tick()
   end
 
   while #self.rows > (#players + 1) do
-    self:remove_row()
+    self:remove_row(#self.rows)
   end
 
   for i, player in ipairs(players) do

@@ -3,8 +3,6 @@
 ## Proto
 
 1. Fix bugs:
-  - Player time logic should switch to TICs
-  - When player disconnects, scoreboard rows are messed up
   - Can outrun plasma and get hit
   - The client will still occasionally not clear commands out
   - `P_Printf` doesn't work in server mode
@@ -146,8 +144,6 @@
 1. Add scripted game modes
 
 ## Version 0.9
-
-1. Remove all vestiges of command sync, it just doesn't make sense anymore
 
 1. Remove software renderer
   - See about implementing Doom lighting and 8-bit color using shaders
