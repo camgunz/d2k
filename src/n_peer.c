@@ -26,6 +26,7 @@
 #include <enet/enet.h>
 
 #include "doomstat.h"
+#include "d_event.h"
 #include "d_ticcmd.h"
 #include "g_game.h"
 #include "n_net.h"

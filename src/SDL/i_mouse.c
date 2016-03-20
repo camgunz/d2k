@@ -26,6 +26,8 @@
 
 #include "doomstat.h"
 #include "e6y.h"
+#include "d_event.h"
+#include "g_game.h"
 #include "i_mouse.h"
 #include "i_video.h"
 #include "m_argv.h"

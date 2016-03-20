@@ -26,7 +26,8 @@
 #include "doomstat.h"
 #include "d_deh.h"
 #include "d_englsh.h"
-#include "e6y.h"//e6y
+#include "d_event.h"
+#include "e6y.h"
 #include "g_game.h"
 #include "hu_stuff.h"
 #include "i_sound.h"
@@ -1495,7 +1496,7 @@ void P_CrossSpecialLine(line_t *line, int side, mobj_t *thing)
       // EXIT!
       // killough 10/98: prevent zombies from exiting levels
       if (!(thing->player && thing->player->health <= 0 && !comp[comp_zombie]))
-  G_ExitLevel ();
+        G_ExitLevel();
       break;
 
     case 53:

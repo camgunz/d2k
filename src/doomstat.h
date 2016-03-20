@@ -224,8 +224,6 @@ extern  bool   timingdemo;
 // Run tick clock at fastest speed possible while playing demo.  killough
 extern  bool   fastdemo;
 
-extern  gamestate_t  gamestate;
-
 //-----------------------------
 // Internal parameters, fixed.
 // These are set by the engine, and not changed
@@ -262,29 +260,26 @@ extern wbstartstruct_t wminfo;
 //
 
 // File handling stuff.
-extern  FILE   *debugfile;
+extern FILE *debugfile;
 
 // if true, load all graphics at level load
-extern  bool precache;
+extern bool precache;
 
-// wipegamestate can be set to -1
-//  to force a wipe on the next draw
-extern  gamestate_t     wipegamestate;
 
-extern  int             mouseSensitivity_horiz; // killough
-extern  int             mouseSensitivity_vert;
+extern int mouseSensitivity_horiz; // killough
+extern int mouseSensitivity_vert;
 
 // debug flag to cancel adaptiveness
-extern  bool         singletics;
+extern bool singletics;
 
-extern  int             bodyqueslot;
+extern int bodyqueslot;
 
 // Needed to store the number of the dummy sky flat.
 // Used for rendering, as well as tracking projectiles etc.
 
-extern int    skyflatnum;
+extern int skyflatnum;
 
-extern  int        maketic;
+extern int maketic;
 
 // Networking and tick handling related.
 #define BACKUPTICS              12

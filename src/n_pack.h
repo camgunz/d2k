@@ -43,7 +43,7 @@ void N_PackRelayedTeamChatMessage(netpeer_t *np, unsigned short sender,
                                                      const char *message);
 
 void N_PackPlayerChatMessage(netpeer_t *np, unsigned short recipient,
-                                                const char *message);
+                                            const char *message);
 void N_PackRelayedPlayerChatMessage(netpeer_t *np,
                                     unsigned short sender,
                                     unsigned short recipient,
@@ -67,32 +67,32 @@ bool N_UnpackPlayerPreferenceChange(netpeer_t *np,
 bool N_UnpackPlayerPreferenceName(netpeer_t *np, buf_t *buf);
 
 void N_PackNameChange(netpeer_t *np, unsigned short playernum,
-                                         const char *new_name);
+                                     const char *new_name);
 bool N_UnpackNameChange(netpeer_t *np, buf_t *buf);
 
 void N_PackTeamChange(netpeer_t *np, unsigned short playernum,
-                                         unsigned char new_team);
+                                     unsigned char new_team);
 bool N_UnpackTeamChange(netpeer_t *np, unsigned char *new_team);
 
 void N_PackPWOChange(netpeer_t *np, unsigned short playernum);
 bool N_UnpackPWOChange(netpeer_t *np);
 
 void N_PackWSOPChange(netpeer_t *np, unsigned short playernum,
-                                         unsigned char new_wsop_flags);
+                                     unsigned char new_wsop_flags);
 bool N_UnpackWSOPChange(netpeer_t *np, unsigned char *new_wsop_flags);
 
 void N_PackBobbingChange(netpeer_t *np, unsigned short playernum,
-                                            double new_bobbing_amount);
+                                        double new_bobbing_amount);
 bool N_UnpackBobbingchange(netpeer_t *np, double *new_bobbing_amount);
 
 void N_PackAutoaimChange(netpeer_t *np, unsigned short playernum,
-                                            bool new_autoaim_enabled);
+                                        bool new_autoaim_enabled);
 bool N_UnpackAutoaimChange(netpeer_t *np, bool *new_autoaim_enabled);
 
 void N_PackWeaponSpeedChange(netpeer_t *np, unsigned short playernum,
-                                                unsigned char new_weapon_speed);
+                                            unsigned char new_weapon_speed);
 bool N_UnpackWeaponSpeedChange(netpeer_t *np,
-                                   unsigned char *new_weapon_speed);
+                               unsigned char *new_weapon_speed);
 
 void N_PackColorChange(netpeer_t *np, unsigned short playernum,
                                       unsigned char new_red,
@@ -117,6 +117,9 @@ bool N_UnpackRCONCommand(netpeer_t *np, buf_t *buf);
 
 void N_PackVoteRequest(netpeer_t *np, const char *command);
 bool N_UnpackVoteRequest(netpeer_t *np, buf_t *buf);
+
+void N_PackGameActionChange(netpeer_t *np);
+bool N_UnpackGameActionChange(netpeer_t *np, gameaction_t *new_gameaction);
 
 #endif
 

@@ -26,6 +26,7 @@
 #include "i_smp.h"
 
 #include "doomstat.h"
+#include "d_event.h"
 #include "m_argv.h"
 #include "g_game.h"
 #include "g_keys.h"

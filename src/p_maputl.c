@@ -24,6 +24,7 @@
 #include "z_zone.h"
 
 #include "doomstat.h"
+#include "d_event.h"
 #include "e6y.h"//e6y
 #include "g_game.h"
 #include "g_overflow.h"
@@ -39,13 +40,14 @@
 // Gives an estimation of distance (not exact)
 //
 
-fixed_t CONSTFUNC P_AproxDistance(fixed_t dx, fixed_t dy)
-{
+fixed_t CONSTFUNC P_AproxDistance(fixed_t dx, fixed_t dy) {
   dx = D_abs(dx);
   dy = D_abs(dy);
-  if (dx < dy)
-    return dx+dy-(dx>>1);
-  return dx+dy-(dy>>1);
+
+  if (dx < dy) {
+    return dx + dy - (dx >> 1);
+  }
+  return dx + dy - (dy >> 1);
 }
 
 //

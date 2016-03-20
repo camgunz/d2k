@@ -24,7 +24,8 @@
 #include "z_zone.h"
 
 #include "doomstat.h"
-#include "e6y.h"//e6y
+#include "d_event.h"
+#include "e6y.h"
 #include "g_game.h"
 #include "n_net.h"
 #include "p_spec.h"

@@ -29,6 +29,7 @@
 #include "doomstat.h"
 
 #include "d_deh.h"
+#include "d_event.h"
 #include "d_main.h"
 #include "d_ticcmd.h"
 #include "g_game.h"
@@ -84,11 +85,11 @@ const char *D_dehout(void); /* CG: from d_main.c */
 
 const char *nm_names[nm_max] = {
   "setup",
-  "auth response",
+  "authentication",
   "chat message",
   "sync",
   "player preference change",
-  "auth request",
+  "game action",
   "RCON command",
   "vote request",
   "ping"
@@ -391,6 +392,16 @@ static void handle_auth_request(netpeer_t *np) {
     CL_SetAuthorizationLevel(level);
 }
 
+static void handle_game_action_change(netpeer_t *np) {
+  gameaction_t new_game_action = 0;
+
+  if (!N_UnpackGameActionChange(np, &new_game_action)) {
+    return;
+  }
+
+  G_SetGameAction(new_game_action);
+}
+
 static void handle_rcon(netpeer_t *np) {
 }
 
@@ -418,9 +429,13 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
         CLIENT_ONLY("setup");
         handle_setup(np);
       break;
-      case nm_authresponse:
-        CLIENT_ONLY("authorization response");
-        handle_auth_response(np);
+      case nm_auth:
+        if (CLIENT) {
+          handle_auth_response(np);
+        }
+        else if (SERVER) {
+          handle_auth_request(np);
+        }
       break;
       case nm_chatmessage:
         handle_chat_message(np);
@@ -432,9 +447,9 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
         SERVER_ONLY("player preference change");
         handle_player_preference_change(np);
       break;
-      case nm_authrequest:
-        SERVER_ONLY("authorization request");
-        handle_auth_request(np);
+      case nm_gameaction:
+        CLIENT_ONLY("game action change");
+        handle_game_action_change(np);
       break;
       case nm_rconcommand:
         SERVER_ONLY("RCON command");
@@ -788,6 +803,12 @@ void SV_BroadcastPlayerSkinChanged(unsigned short playernum) {
 void SV_ResyncPeers(void) {
   NETPEER_FOR_EACH(iter) {
     N_PeerResetSync(iter.np->peernum);
+  }
+}
+
+void SV_BroadcastGameActionChange(void) {
+  NETPEER_FOR_EACH(iter) {
+    N_PackGameActionChange(iter.np);
   }
 }
 

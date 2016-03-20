@@ -132,6 +132,8 @@ static bool *joybuttons = &joyarray[1];    // allow [-1]
 // Game events info
 static buttoncode_t special_event; // Event triggered by local player, to send
 
+static gameaction_t gameaction;
+
 fixed_t forwardmove[2] = {0x19, 0x32};
 fixed_t sidemove[2]    = {0x18, 0x28};
 fixed_t angleturn[3]   = {640, 1280, 320};  // + slow turn
@@ -155,8 +157,11 @@ const byte *demo_continue_p = NULL;
 // CPhipps - moved *_loadgame vars here
 bool            forced_loadgame = false;
 bool            command_loadgame = false;
-gameaction_t    gameaction;
-gamestate_t     gamestate = -1;
+gamestate_t     gamestate = GS_BAD;
+gamestate_t     prevgamestate = GS_LEVEL;
+// wipegamestate can be set to -1 to force a wipe on the next draw
+gamestate_t wipegamestate = GS_DEMOSCREEN;
+gamestate_t oldgamestate = GS_BAD;
 skill_t         gameskill;
 bool            respawnmonsters;
 int             gameepisode;
@@ -274,8 +279,10 @@ int G_SaveGameName(char *name, size_t size, int slot, bool demoplayback) {
 // killough 5/15/98: add forced loadgames, which allow user to override checks
 //
 void G_ForcedLoadGame(void) {
-  gameaction = ga_loadgame; // CPhipps - net loadgames are always forced, so we
-  forced_loadgame = true;   //           only reach here in single player
+  // CPhipps - net loadgames are always forced, so we
+  //           so we only reach here in single player
+  G_SetGameAction(ga_loadgame);
+  forced_loadgame = true;
 }
 
 // CPhipps - do savegame filename stuff here
@@ -291,7 +298,7 @@ void G_DoLoadGame(void) {
   name = malloc(length + 1);
   G_SaveGameName(name, length + 1, savegameslot, demoplayback);
 
-  gameaction = ga_nothing;
+  G_SetGameAction(ga_nothing);
 
   M_PBufInitWithCapacity(&savebuffer, MAX(G_GetAverageSaveSize(), 16384));
 
@@ -353,8 +360,10 @@ void G_DoLoadGame(void) {
     singledemo = false;  /* Clear singledemo flag if loading from menu */
   }
   else if (singledemo) {
-    gameaction = ga_loadgame; /* Mark that we're loading a game before demo */
-    G_DoPlayDemo();           /* This will detect it and won't reinit level */
+    /* Mark that we're loading a game before demo */
+    /* This will detect it and won't reinit level */
+    G_SetGameAction(ga_loadgame);
+    G_DoPlayDemo();
   }
   else if (demorecording) {
     /* Command line + record means it's a recordfrom */
@@ -390,8 +399,9 @@ void G_DoSaveGame(bool menu) {
   int total_seconds;
   bool save_succeeded;
 
-  gameaction = ga_nothing; // cph - cancel savegame at top of this function,
-                           // in case later problems cause a premature exit
+  // cph - cancel savegame at top of this function,
+  // in case later problems cause a premature exit
+  G_SetGameAction(ga_nothing);
 
   M_PBufInitWithCapacity(&savebuffer, MAX(G_GetAverageSaveSize(), 16384));
 
@@ -462,7 +472,7 @@ void G_LoadGame(int slot, bool command) {
   }
   else {
     // Do the old thing, immediate load
-    gameaction = ga_loadgame;
+    G_SetGameAction(ga_loadgame);
     forced_loadgame = false;
     savegameslot = slot;
     demoplayback = false;
@@ -930,9 +940,9 @@ static void G_DoLoadLevel(void) {
     basetic = gametic;
 
   if (wipegamestate == GS_LEVEL)
-    wipegamestate = -1;             // force a wipe
+    G_SetWipeGameState(-1); // force a wipe
 
-  gamestate = GS_LEVEL;
+  G_SetGameState(GS_LEVEL);
   level_start_time = time(NULL);
 
   for (i = 0; i < MAXPLAYERS; i++) {
@@ -956,7 +966,7 @@ static void G_DoLoadLevel(void) {
   if (!demoplayback) // Don't switch views if playing a demo
     displayplayer = consoleplayer;    // view the guy you are playing
 
-  gameaction = ga_nothing;
+  G_SetGameAction(ga_nothing);
   Z_CheckHeap();
 
   // clear cmd building stuff
@@ -1199,7 +1209,6 @@ bool G_Responder(event_t *ev) {
 
 void G_Ticker(void) {
   int i;
-  static gamestate_t prevgamestate;
 
   // CPhipps - player colour changing
   if (!demoplayback && mapcolor_plyr[consoleplayer] != mapcolor_me) {
@@ -1333,12 +1342,12 @@ void G_Ticker(void) {
               strcpy(savedescription, "NET GAME");
             savegameslot =
               (players[i].cmd.buttons & BTS_SAVEMASK) >> BTS_SAVESHIFT;
-            gameaction = ga_savegame;
+            G_SetGameAction(ga_savegame);
           break;
           case BTS_LOADGAME: // CPhipps - remote loadgame request
             savegameslot =
               (players[i].cmd.buttons & BTS_SAVEMASK)>>BTS_SAVESHIFT;
-            gameaction = ga_loadgame;
+            G_SetGameAction(ga_loadgame);
             forced_loadgame = netgame; // Force if a netgame
             command_loadgame = false;
           break;
@@ -1346,7 +1355,7 @@ void G_Ticker(void) {
             if (demoplayback || (compatibility_level < lxdoom_1_compatibility))
               break; // CPhipps - Ignore in demos or old games
 
-            gameaction = ga_loadlevel;
+            G_SetGameAction(ga_loadlevel);
             break;
         }
         players[i].cmd.buttons = 0;
@@ -1371,7 +1380,8 @@ void G_Ticker(void) {
       default:
       break;
     }
-    prevgamestate = gamestate;
+
+    G_SetPrevGameState(gamestate);
   }
 
   // e6y
@@ -1498,13 +1508,21 @@ void G_Drawer(void) {
 
 static void G_PlayerFinishLevel(int player) {
   player_t *p = &players[player];
-  memset(p->powers, 0, sizeof p->powers);
-  memset(p->cards, 0, sizeof p->cards);
+
+  memset(p->powers, 0, sizeof(p->powers));
+  memset(p->cards, 0, sizeof(p->cards));
+
   p->mo = NULL;           // cph - this is allocated PU_LEVEL so it's gone
   p->extralight = 0;      // cancel gun flashes
   p->fixedcolormap = 0;   // cancel ir gogles
   p->damagecount = 0;     // no palette changes
   p->bonuscount = 0;
+
+  P_ClearPlayerCommands(player);
+  p->commands_missed = 0;
+  p->command_limit = 0;
+  p->commands_run_this_tic = 0;
+  p->latest_command_run_index = 0;
 }
 
 // CPhipps - G_SetPlayerColour
@@ -1782,7 +1800,7 @@ void G_DoReborn(int playernum) {
     P_SpawnPlayer(playernum, &playerstarts[playernum]);
   }
   else {
-    gameaction = ga_loadlevel;      // reload the level from scratch
+    G_SetGameAction(ga_loadlevel); // reload the level from scratch
   }
 }
 
@@ -1808,19 +1826,21 @@ static bool secretexit;
 
 void G_ExitLevel(void) {
   secretexit = false;
-  gameaction = ga_completed;
+  G_SetGameAction(ga_completed);
 }
 
 // Here's for the german edition.
 // IF NO WOLF3D LEVELS, NO SECRET EXIT!
 
 void G_SecretExitLevel(void) {
-  if (gamemode != commercial || haswolflevels)
+  if (gamemode != commercial || haswolflevels) {
     secretexit = true;
-  else
+  }
+  else {
     secretexit = false;
+  }
 
-  gameaction = ga_completed;
+  G_SetGameAction(ga_completed);
 }
 
 //
@@ -1830,7 +1850,7 @@ void G_SecretExitLevel(void) {
 void G_DoCompleted(void) {
   int i;
 
-  gameaction = ga_nothing;
+  G_SetGameAction(ga_nothing);
 
   for (i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i])
@@ -1844,7 +1864,7 @@ void G_DoCompleted(void) {
     // Chex Quest ends after 5 levels, rather than 8.
     if (gamemission == chex) {
       if (gamemap == 5) {
-        gameaction = ga_victory;
+        G_SetGameAction(ga_victory);
         return;
       }
     }
@@ -1959,7 +1979,7 @@ void G_DoCompleted(void) {
    */
   wminfo.totaltimes = (totalleveltimes += (leveltime - leveltime % 35));
 
-  gamestate = GS_INTERMISSION;
+  G_SetGameState(GS_INTERMISSION);
   automapmode &= ~am_active;
 
   // lmpwatch.pl engine-side demo testing support
@@ -1981,7 +2001,7 @@ void G_DoCompleted(void) {
 //
 
 void G_WorldDone(void) {
-  gameaction = ga_worlddone;
+  G_SetGameAction(ga_worlddone);
 
   if (secretexit)
     players[consoleplayer].didsecret = true;
@@ -2005,16 +2025,16 @@ void G_WorldDone(void) {
   }
   else if (gamemap == 8) {
     // cph - after ExM8 summary screen, show victory stuff
-    gameaction = ga_victory;
+    G_SetGameAction(ga_victory);
   }
 }
 
 void G_DoWorldDone(void) {
   idmusnum = -1;             //jff 3/17/98 allow new level's music to be loaded
-  gamestate = GS_LEVEL;
+  G_SetGameState(GS_LEVEL);
   gamemap = wminfo.next + 1;
   G_DoLoadLevel();
-  gameaction = ga_nothing;
+  G_SetGameAction(ga_nothing);
   AM_clearMarks();           //jff 4/12/98 clear any marks on the automap
   e6y_G_DoWorldDone();//e6y
 }
@@ -2056,7 +2076,7 @@ void G_DeferedInitNew(skill_t skill, int episode, int map) {
   d_skill = skill;
   d_episode = episode;
   d_map = map;
-  gameaction = ga_newgame;
+  G_SetGameAction(ga_newgame);
 }
 
 /* cph -
@@ -2282,7 +2302,7 @@ void G_DoNewGame(void) {
   netgame = false;               // killough 3/29/98
   deathmatch = false;
   G_InitNew(d_skill, d_episode, d_map);
-  gameaction = ga_nothing;
+  G_SetGameAction(ga_nothing);
 
   //jff 4/26/98 wake up the status bar in case were coming out of a DM demo
   ST_Start();
@@ -2910,7 +2930,7 @@ static const char *defdemoname;
 
 void G_DeferedPlayDemo(const char* name) {
   defdemoname = name;
-  gameaction = ga_playdemo;
+  G_SetGameAction(ga_playdemo);
 }
 
 static int demolumpnum = -1;
@@ -3352,7 +3372,7 @@ void G_DoPlayDemo(void) {
   if (LoadDemo(defdemoname, &demobuffer, &demolength, &demolumpnum)) {
     demo_p = G_ReadDemoHeaderEx(demobuffer, demolength, RDH_SAFE);
 
-    gameaction = ga_nothing;
+    G_SetGameAction(ga_nothing);
     usergame = false;
 
     demoplayback = true;
@@ -3369,7 +3389,7 @@ void G_DoPlayDemo(void) {
     // in the corresponding IWADs.
     usergame = false;
     D_StartTitle();                // Start the title screen
-    gamestate = GS_DEMOSCREEN;     // And set the game state accordingly
+    G_SetGameState(GS_DEMOSCREEN); // And set the game state accordingly
   }
 }
 
@@ -3620,6 +3640,43 @@ void G_CheckDemoContinue(void) {
       G_BeginRecording();
       usergame = true;
     }
+  }
+}
+
+void G_SetGameState(gamestate_t new_gamestate) {
+  gamestate = new_gamestate;
+}
+
+void G_SetPrevGameState(gamestate_t new_prevgamestate) {
+  prevgamestate = new_prevgamestate;
+}
+
+void G_SetOldGameState(gamestate_t new_oldgamestate) {
+  oldgamestate = new_oldgamestate;
+}
+
+void G_SetWipeGameState(gamestate_t new_wipegamestate) {
+  wipegamestate = new_wipegamestate;
+}
+
+void G_ResetGameState(void) {
+  oldgamestate = gamestate;
+  wipegamestate = gamestate;
+}
+
+gamestate_t G_GetGameState(void) {
+  return gamestate;
+}
+
+gameaction_t G_GetGameAction(void) {
+  return gameaction;
+}
+
+void G_SetGameAction(gameaction_t new_gameaction) {
+  gameaction = new_gameaction;
+
+  if (SERVER) {
+    SV_BroadcastGameActionChange();
   }
 }
 

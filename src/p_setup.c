@@ -24,6 +24,7 @@
 #include "z_zone.h"
 
 #include "doomstat.h"
+#include "d_event.h"
 #include "m_bbox.h"
 #include "m_argv.h"
 #include "g_game.h"

@@ -28,9 +28,9 @@
 #include <enet/enet.h>
 
 #include "doomstat.h"
+#include "d_event.h"
 #include "m_avg.h"
 #include "m_delta.h"
-
 #include "g_game.h"
 #include "g_save.h"
 #include "n_net.h"

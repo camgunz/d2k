@@ -27,6 +27,7 @@
 
 #include "am_map.h"
 #include "d_deh.h"  // Ty 03/22/98 - externalized strings
+#include "d_event.h"
 #include "dstrings.h"
 #include "hu_lib.h"
 #include "hu_tracers.h"

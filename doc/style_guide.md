@@ -149,23 +149,22 @@ everything... _except_ switch-case blocks (as in the example above).
 
 ### When To Use Braces
 
-Use braces _almost_ always.  You need not employ braces for single-line
-if-statements and loops, But if they contain other control structures, you
-**must** use braces.  For example, this is a common loop:
+Use braces always.
+
+Bad:
 
     for (int i = 0; i < MAXPLAYERS; i++)
       if (!playeringame[i])
         break;
 
-This style violates the guidelines because the for loop contains another
-control structure.  Rather it should be written either as:
+Bad:
 
     for (int i = 0; i < MAXPLAYERS; i++) {
       if (!playeringame[i])
         break;
     }
 
-or:
+Good:
 
     for (int i = 0; i < MAXPLAYERS; i++) {
       if (!playeringame[i]) {
@@ -173,36 +172,7 @@ or:
       }
     }
 
-The preferred form is the 1st form.
-
-Furthermore, if any of your if/else if/else blocks are not single-line blocks,
-use braces for all of them.  For example, instead of:
-
-    if (x == 0)
-      return false;
-    else if (x == 1) {
-      printf("X: 1\n");
-      return true;
-    }
-    else
-      I_Error("I_BadStyle: Got invalid value for x: %d.", x);
-
-write:
-
-    if (x == 0) {
-      return false;
-    }
-    else if (x == 1) {
-      printf("X: 1\n");
-      return true;
-    }
-    else {
-      I_Error("I_BadStyle: Got invalid value for x: %d.", x);
-    }
-
-## Multi-line Control Statements
-
-If your control statement spans more than one line, you must use braces.
+This is to avoid mishaps when diff algorithms.
 
 ## Else-If
 
@@ -504,8 +474,9 @@ This is because it is hard to find them, especially when looking for problems.
 
 In C, assignment returns a value, i.e.
 
-    if (!(super_struct = malloc(sizeof(super_struct_t)))
+    if (!(super_struct = malloc(sizeof(super_struct_t))) {
       I_Error("Error allocating super struct\n");
+    }
 
 Do not use this.  I sympathize because it's often great shorthand, but in
 practice, it creates cluttered and hard to read conditionals.  Rarely does

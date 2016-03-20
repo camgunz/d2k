@@ -464,9 +464,6 @@ static void D_Wipe(void) {
 //  draw current display, possibly wiping it from the previous
 //
 
-// wipegamestate can be set to -1 to force a wipe on the next draw
-gamestate_t wipegamestate = GS_DEMOSCREEN;
-gamestate_t oldgamestate = GS_BAD;
 extern bool setsizeneeded;
 extern int  showMessages;
 
@@ -499,7 +496,7 @@ void D_Display(void) {
 
   if (setsizeneeded) {               // change the view size if needed
     R_ExecuteSetViewSize();
-    oldgamestate = GS_BAD;        // force background redraw
+    G_SetOldGameState(GS_BAD); // force background redraw
   }
 
   // save the current screen if about to wipe
@@ -540,7 +537,7 @@ void D_Display(void) {
   HU_Drawer();
   HU_DrawDemoProgress(true); //e6y
 
-  oldgamestate = wipegamestate = gamestate;
+  G_ResetGameState();
 
   // draw pause pic
   if (paused && (menuactive != mnact_full)) {
@@ -805,10 +802,10 @@ static struct
 void D_DoAdvanceDemo(void) {
   players[consoleplayer].playerstate = PST_LIVE;  /* not reborn */
   advancedemo = usergame = paused = false;
-  gameaction = ga_nothing;
+  G_SetGameAction(ga_nothing);
 
   pagetic = TICRATE * 11;         /* killough 11/98: default behavior */
-  gamestate = GS_DEMOSCREEN;
+  G_SetGameState(GS_DEMOSCREEN);
 
   if (netgame && !demoplayback)
     demosequence = 0;
@@ -824,7 +821,7 @@ void D_DoAdvanceDemo(void) {
 // D_StartTitle
 //
 void D_StartTitle (void) {
-  gameaction = ga_nothing;
+  G_SetGameAction(ga_nothing);
   demosequence = -1;
   D_AdvanceDemo();
 }

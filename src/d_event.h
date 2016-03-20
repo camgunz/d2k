@@ -61,24 +61,10 @@ typedef struct {
   uint16_t   wchar;     // CG 07/15/14: SDL relays Unicode input as UTF-16
 } event_t;
 
-
-typedef enum {
-  ga_nothing,
-  ga_loadlevel,
-  ga_newgame,
-  ga_loadgame,
-  ga_savegame,
-  ga_playdemo,
-  ga_completed,
-  ga_victory,
-  ga_worlddone,
-} gameaction_t;
-
 //
 // Button/action code definitions.
 //
-typedef enum
-{
+typedef enum {
   // Press "Fire".
   BT_ATTACK       = 1,
 
@@ -111,13 +97,6 @@ typedef enum
   BTS_SAVESHIFT   = 2,
 
 } buttoncode_t;
-
-
-//
-// GLOBAL VARIABLES
-//
-
-extern gameaction_t gameaction;
 
 #endif
 

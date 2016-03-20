@@ -29,11 +29,11 @@
 #endif
 
 #define nm_setup                   1
-#define nm_authresponse            2
+#define nm_auth                    2
 #define nm_chatmessage             3
 #define nm_sync                    4
 #define nm_playerpreferencechange  5
-#define nm_authrequest             6
+#define nm_gameaction              6
 #define nm_rconcommand             7
 #define nm_voterequest             8
 #define nm_ping                    9
@@ -74,6 +74,7 @@ void SV_BroadcastPlayerColorIndexChanged(unsigned short playernum,
 void SV_BroadcastPlayerSkinChanged(unsigned short playernum);
 void SV_BroadcastStateUpdates(void);
 void SV_ResyncPeers(void);
+void SV_BroadcastGameActionChange(void);
 
 void CL_SendPing(double server_time);
 void CL_SendMessageToServer(const char *message);

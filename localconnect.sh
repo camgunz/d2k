@@ -20,8 +20,8 @@ cp "${BASE_DIR}/scripts/"* ~/.d2k/scripts/
 cp "${BASE_DIR}/fonts/"* ~/.d2k/fonts/
 
 # gdb -ex "source gdbclient.txt" --args $CMD
-# gdb -ex run --args $CMD
+gdb -ex run --args $CMD
 # valgrind --track-origins=yes --leak-check=yes $CMD
 # CPUPROFILE=cpu.prof $CMD
-$CMD
+# $CMD
 

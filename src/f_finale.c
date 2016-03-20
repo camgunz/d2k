@@ -28,296 +28,32 @@
 #include "doomstat.h"
 #include "f_finale.h" // CPhipps - hmm...
 #include "g_game.h"
+#include "hu_stuff.h"
 #include "n_net.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "v_video.h"
 #include "w_wad.h"
 
-// Stage of animation:
-//  0 = text, 1 = art screen, 2 = character cast
-static int finalestage; // cph -
-static int finalecount; // made static
-static const char*   finaletext; // cph -
-static const char*   finaleflat; // made static const
-
-// defines for the end mission display text                     // phares
+extern patchnum_t hu_font[HU_FONTSIZE];
+extern int acceleratestage; // accelerate intermission screens
 
 #define TEXTSPEED    3     // original value                    // phares
 #define TEXTWAIT     250   // original value                    // phares
 #define NEWTEXTSPEED 0.01f  // new value                         // phares
 #define NEWTEXTWAIT  1000  // new value                         // phares
 
-// CPhipps - removed the old finale screen text message strings;
-// they were commented out for ages already
-// Ty 03/22/98 - ... the new s_WHATEVER extern variables are used
-// in the code below instead.
-
-void F_StartCast (void);
-void F_CastTicker (void);
-bool F_CastResponder (event_t *ev);
-void F_CastDrawer (void);
-
-void WI_checkForAccelerate(void);    // killough 3/28/98: used to
-extern int acceleratestage;          // accelerate intermission screens
-static int midstage;                 // whether we're in "mid-stage"
-
-//
-// F_StartFinale
-//
-void F_StartFinale (void)
-{
-  gameaction = ga_nothing;
-  gamestate = GS_FINALE;
-  automapmode &= ~am_active;
-
-  // killough 3/28/98: clear accelerative text flags
-  acceleratestage = midstage = 0;
-
-  // Okay - IWAD dependend stuff.
-  // This has been changed severly, and
-  //  some stuff might have changed in the process.
-  switch ( gamemode )
-  {
-    // DOOM 1 - E1, E3 or E4, but each nine missions
-    case shareware:
-    case registered:
-    case retail:
-    {
-      S_ChangeMusic(mus_victor, true);
-
-      switch (gameepisode)
-      {
-        case 1:
-             finaleflat = bgflatE1; // Ty 03/30/98 - new externalized bg flats
-             finaletext = s_E1TEXT; // Ty 03/23/98 - Was e1text variable.
-             break;
-        case 2:
-             finaleflat = bgflatE2;
-             finaletext = s_E2TEXT; // Ty 03/23/98 - Same stuff for each
-             break;
-        case 3:
-             finaleflat = bgflatE3;
-             finaletext = s_E3TEXT;
-             break;
-        case 4:
-             finaleflat = bgflatE4;
-             finaletext = s_E4TEXT;
-             break;
-        default:
-             // Ouch.
-             break;
-      }
-      break;
-    }
-
-    // DOOM II and missions packs with E1, M34
-    case commercial:
-    {
-      S_ChangeMusic(mus_read_m, true);
-
-      // Ty 08/27/98 - added the gamemission logic
-      switch (gamemap)
-      {
-        case 6:
-             finaleflat = bgflat06;
-             finaletext = (gamemission==pack_tnt)  ? s_T1TEXT :
-                          (gamemission==pack_plut) ? s_P1TEXT : s_C1TEXT;
-             break;
-        case 11:
-             finaleflat = bgflat11;
-             finaletext = (gamemission==pack_tnt)  ? s_T2TEXT :
-                          (gamemission==pack_plut) ? s_P2TEXT : s_C2TEXT;
-             break;
-        case 20:
-             finaleflat = bgflat20;
-             finaletext = (gamemission==pack_tnt)  ? s_T3TEXT :
-                          (gamemission==pack_plut) ? s_P3TEXT : s_C3TEXT;
-             break;
-        case 30:
-             finaleflat = bgflat30;
-             finaletext = (gamemission==pack_tnt)  ? s_T4TEXT :
-                          (gamemission==pack_plut) ? s_P4TEXT : s_C4TEXT;
-             break;
-        case 15:
-             finaleflat = bgflat15;
-             finaletext = (gamemission==pack_tnt)  ? s_T5TEXT :
-                          (gamemission==pack_plut) ? s_P5TEXT : s_C5TEXT;
-             break;
-        case 31:
-             finaleflat = bgflat31;
-             finaletext = (gamemission==pack_tnt)  ? s_T6TEXT :
-                          (gamemission==pack_plut) ? s_P6TEXT : s_C6TEXT;
-             break;
-        default:
-             // Ouch.
-             break;
-      }
-      if (gamemission == pack_nerve && gamemap == 8)
-      {
-        finaleflat = bgflat06;
-        finaletext = s_C6TEXT;
-      }
-      break;
-      // Ty 08/27/98 - end gamemission logic
-    }
-
-    // Indeterminate.
-    default:  // Ty 03/30/98 - not externalized
-         S_ChangeMusic(mus_read_m, true);
-         finaleflat = "F_SKY1"; // Not used anywhere else.
-         finaletext = s_C1TEXT;  // FIXME - other text, music?
-         break;
-  }
-
-  finalestage = 0;
-  finalecount = 0;
-}
-
-
-
-bool F_Responder (event_t *event)
-{
-  if (finalestage == 2) {
-    return F_CastResponder (event);
-  }
-
-  return false;
-}
-
-// Get_TextSpeed() returns the value of the text display speed  // phares
-// Rewritten to allow user-directed acceleration -- killough 3/28/98
-
-static float Get_TextSpeed(void)
-{
-  return midstage ? NEWTEXTSPEED : (midstage=acceleratestage) ?
-    acceleratestage=0, NEWTEXTSPEED : TEXTSPEED;
-}
-
-
-//
-// F_Ticker
-//
-// killough 3/28/98: almost totally rewritten, to use
-// player-directed acceleration instead of constant delays.
-// Now the player can accelerate the text display by using
-// the fire/use keys while it is being printed. The delay
-// automatically responds to the user, and gives enough
-// time to read.
-//
-// killough 5/10/98: add back v1.9 demo compatibility
-//
-
-void F_Ticker(void)
-{
-  int i;
-  if (!demo_compatibility)
-    WI_checkForAccelerate();  // killough 3/28/98: check for acceleration
-  else
-    if (gamemode == commercial && finalecount > 50) // check for skipping
-      for (i=0; i<MAXPLAYERS; i++)
-        if (players[i].cmd.buttons)
-          goto next_level;      // go on to the next level
-
-  // advance animation
-  finalecount++;
-
-  if (finalestage == 2)
-    F_CastTicker();
-
-  if (!finalestage)
-    {
-      float speed = demo_compatibility ? TEXTSPEED : Get_TextSpeed();
-      /* killough 2/28/98: changed to allow acceleration */
-      if (finalecount > strlen(finaletext)*speed +
-          (midstage ? NEWTEXTWAIT : TEXTWAIT) ||
-          (midstage && acceleratestage)) {
-        if (gamemode != commercial)       // Doom 1 / Ultimate Doom episode end
-          {                               // with enough time, it's automatic
-            finalecount = 0;
-            finalestage = 1;
-            wipegamestate = -1;         // force a wipe
-            if (gameepisode == 3)
-              S_StartMusic(mus_bunny);
-          }
-        else   // you must press a button to continue in Doom 2
-          if (!demo_compatibility && midstage)
-            {
-            next_level:
-              if (gamemap == 30 || (gamemission == pack_nerve && SINGLEPLAYER && gamemap == 8))
-                F_StartCast();              // cast of Doom 2 characters
-              else
-                gameaction = ga_worlddone;  // next level, e.g. MAP07
-            }
-      }
-    }
-}
-
-//
-// F_TextWrite
-//
-// This program displays the background and text at end-mission     // phares
-// text time. It draws both repeatedly so that other displays,      //   |
-// like the main menu, can be drawn over it dynamically and         //   V
-// erased dynamically. The TEXTSPEED constant is changed into
-// the Get_TextSpeed function so that the speed of writing the      //   ^
-// text can be increased, and there's still time to read what's     //   |
-// written.                                                         // phares
-// CPhipps - reformatted
-
-#include "hu_stuff.h"
-extern patchnum_t hu_font[HU_FONTSIZE];
-
-
-static void F_TextWrite (void)
-{
-  V_DrawBackground(finaleflat, 0);
-  { // draw some of the text onto the screen
-    int         cx = 10;
-    int         cy = 10;
-    const char* ch = finaletext; // CPhipps - const
-    int         count = (int)((float)(finalecount - 10)/Get_TextSpeed()); // phares
-    int         w;
-
-    if (count < 0)
-      count = 0;
-
-    for ( ; count ; count-- ) {
-      int       c = *ch++;
-
-      if (!c)
-  break;
-      if (c == '\n') {
-  cx = 10;
-  cy += 11;
-  continue;
-      }
-
-      c = toupper(c) - HU_FONTSTART;
-      if (c < 0 || c> HU_FONTSIZE) {
-  cx += 4;
-  continue;
-      }
-
-      w = hu_font[c].width;
-      if (cx+w > SCREENWIDTH)
-  break;
-      // CPhipps - patch drawing updated
-      V_DrawNumPatch(cx, cy, 0, hu_font[c].lumpnum, CR_DEFAULT, VPT_STRETCH);
-      cx+=w;
-    }
-  }
-}
-
-//
-// Final DOOM 2 animation
-// Casting by id Software.
-//   in order of appearance
-//
 typedef struct {
   const char **name; // CPhipps - const**
   mobjtype_t   type;
 } castinfo_t;
+
+// Stage of animation:
+//  0 = text, 1 = art screen, 2 = character cast
+static int         finalestage; // cph -
+static int         finalecount; // made static
+static const char *finaletext; // cph -
+static const char *finaleflat; // made static const
 
 static const castinfo_t castorder[] = { // CPhipps - static const, initialised here
   { &s_CC_ZOMBIE,  MT_POSSESSED },
@@ -338,23 +74,288 @@ static const castinfo_t castorder[] = { // CPhipps - static const, initialised h
   { &s_CC_CYBER,   MT_CYBORG },
   { &s_CC_HERO,    MT_PLAYER },
   { NULL,         0}
-  };
+};
 
-int      castnum;
-int      casttics;
-state_t *caststate;
-bool     castdeath;
-int      castframes;
-int      castonmelee;
-bool     castattacking;
+static const char pfub2[] = { "PFUB2" };
+static const char pfub1[] = { "PFUB1" };
+
+static int      castnum;
+static int      casttics;
+static state_t *caststate;
+static bool     castdeath;
+static int      castframes;
+static int      castonmelee;
+static bool     castattacking;
+static int      midstage;                 // whether we're in "mid-stage"
+
+// defines for the end mission display text                     // phares
+
+// CPhipps - removed the old finale screen text message strings;
+// they were commented out for ages already
+// Ty 03/22/98 - ... the new s_WHATEVER extern variables are used
+// in the code below instead.
+
+void F_StartCast(void);
+void F_CastTicker(void);
+bool F_CastResponder(event_t *ev);
+void F_CastDrawer(void);
+
+void WI_checkForAccelerate(void);    // killough 3/28/98: used to
+
+//
+// F_StartFinale
+//
+void F_StartFinale(void) {
+  G_SetGameAction(ga_nothing);
+  G_SetGameState(GS_FINALE);
+  automapmode &= ~am_active;
+
+  // killough 3/28/98: clear accelerative text flags
+  acceleratestage = midstage = 0;
+
+  // Okay - IWAD dependend stuff.
+  // This has been changed severly, and
+  //  some stuff might have changed in the process.
+  switch (gamemode) {
+    case shareware:  // DOOM 1 - E1, E3
+    case registered: // or E4, but each
+    case retail:     // nine missions
+      S_ChangeMusic(mus_victor, true);
+
+      switch (gameepisode) {
+        case 1:
+          finaleflat = bgflatE1; // Ty 03/30/98 - new externalized bg flats
+          finaletext = s_E1TEXT; // Ty 03/23/98 - Was e1text variable.
+        break;
+        case 2:
+          finaleflat = bgflatE2;
+          finaletext = s_E2TEXT; // Ty 03/23/98 - Same stuff for each
+        break;
+        case 3:
+          finaleflat = bgflatE3;
+          finaletext = s_E3TEXT;
+        break;
+        case 4:
+          finaleflat = bgflatE4;
+          finaletext = s_E4TEXT;
+        break;
+        default:
+          // Ouch.
+        break;
+      }
+    break;
+    case commercial: // DOOM II and missions packs with E1, M34
+      S_ChangeMusic(mus_read_m, true);
+
+      switch (gamemap) { // Ty 08/27/98 - added the gamemission logic
+        case 6:
+          finaleflat = bgflat06;
+          finaletext = (gamemission==pack_tnt)  ? s_T1TEXT :
+                       (gamemission==pack_plut) ? s_P1TEXT : s_C1TEXT;
+        break;
+        case 11:
+          finaleflat = bgflat11;
+          finaletext = (gamemission==pack_tnt)  ? s_T2TEXT :
+                       (gamemission==pack_plut) ? s_P2TEXT : s_C2TEXT;
+        break;
+        case 20:
+          finaleflat = bgflat20;
+          finaletext = (gamemission==pack_tnt)  ? s_T3TEXT :
+                       (gamemission==pack_plut) ? s_P3TEXT : s_C3TEXT;
+        break;
+        case 30:
+          finaleflat = bgflat30;
+          finaletext = (gamemission==pack_tnt)  ? s_T4TEXT :
+                       (gamemission==pack_plut) ? s_P4TEXT : s_C4TEXT;
+        break;
+        case 15:
+          finaleflat = bgflat15;
+          finaletext = (gamemission==pack_tnt)  ? s_T5TEXT :
+                       (gamemission==pack_plut) ? s_P5TEXT : s_C5TEXT;
+          break;
+        case 31:
+          finaleflat = bgflat31;
+          finaletext = (gamemission==pack_tnt)  ? s_T6TEXT :
+                       (gamemission==pack_plut) ? s_P6TEXT : s_C6TEXT;
+        break;
+        default:
+          // Ouch.
+        break;
+      }
+      if (gamemission == pack_nerve && gamemap == 8) {
+        finaleflat = bgflat06;
+        finaletext = s_C6TEXT;
+      }
+      break;
+      // Ty 08/27/98 - end gamemission logic
+
+    // Indeterminate.
+    default:  // Ty 03/30/98 - not externalized
+      S_ChangeMusic(mus_read_m, true);
+      finaleflat = "F_SKY1"; // Not used anywhere else.
+      finaletext = s_C1TEXT;  // FIXME - other text, music?
+    break;
+  }
+
+  finalestage = 0;
+  finalecount = 0;
+}
 
 
+
+bool F_Responder(event_t *event) {
+  if (finalestage == 2) {
+    return F_CastResponder (event);
+  }
+
+  return false;
+}
+
+// Get_TextSpeed() returns the value of the text display speed  // phares
+// Rewritten to allow user-directed acceleration -- killough 3/28/98
+
+static float Get_TextSpeed(void) {
+  return midstage ? NEWTEXTSPEED : (midstage=acceleratestage) ?
+    acceleratestage=0, NEWTEXTSPEED : TEXTSPEED;
+}
+
+
+//
+// F_Ticker
+//
+// killough 3/28/98: almost totally rewritten, to use
+// player-directed acceleration instead of constant delays.
+// Now the player can accelerate the text display by using
+// the fire/use keys while it is being printed. The delay
+// automatically responds to the user, and gives enough
+// time to read.
+//
+// killough 5/10/98: add back v1.9 demo compatibility
+//
+
+void F_Ticker(void) {
+  int i;
+
+  if (!demo_compatibility) {
+    WI_checkForAccelerate();  // killough 3/28/98: check for acceleration
+  }
+  else if (!MULTINET) {
+    if (gamemode == commercial && finalecount > 50) { // check for skipping
+      for (i = 0; i < MAXPLAYERS; i++) {
+        if (players[i].cmd.buttons) {
+          goto next_level;      // go on to the next level
+        }
+      }
+    }
+  }
+
+  // advance animation
+  finalecount++;
+
+  if (finalestage == 2) {
+    F_CastTicker();
+  }
+
+  if (!finalestage) {
+    float speed = demo_compatibility ? TEXTSPEED : Get_TextSpeed();
+    /* killough 2/28/98: changed to allow acceleration */
+    if (finalecount > strlen(finaletext) * speed +
+        (midstage ? NEWTEXTWAIT : TEXTWAIT) ||
+        (midstage && acceleratestage)) {
+      if (gamemode != commercial) {     // Doom 1 / Ultimate Doom episode end
+        finalecount = 0;                // with enough time, it's automatic
+        finalestage = 1;
+        G_SetWipeGameState(-1); // force a wipe
+        if (gameepisode == 3) {
+          S_StartMusic(mus_bunny);
+        }
+      }
+      else { // you must press a button to continue in Doom 2
+        if (!demo_compatibility && midstage) {
+        next_level:
+          if (gamemap == 30 || (gamemission == pack_nerve &&
+                                SINGLEPLAYER &&
+                                gamemap == 8)) {
+            F_StartCast();              // cast of Doom 2 characters
+          }
+          else {
+            G_SetGameAction(ga_worlddone); // next level, e.g. MAP07
+          }
+        }
+      }
+    }
+  }
+}
+
+//
+// F_TextWrite
+//
+// This program displays the background and text at end-mission     // phares
+// text time. It draws both repeatedly so that other displays,      //   |
+// like the main menu, can be drawn over it dynamically and         //   V
+// erased dynamically. The TEXTSPEED constant is changed into
+// the Get_TextSpeed function so that the speed of writing the      //   ^
+// text can be increased, and there's still time to read what's     //   |
+// written.                                                         // phares
+// CPhipps - reformatted
+
+static void F_TextWrite(void) {
+  int         cx = 10;
+  int         cy = 10;
+  const char* ch = finaletext; // CPhipps - const
+  int         count = (int)((float)(finalecount - 10)/Get_TextSpeed()); // phares
+  int         w;
+
+  V_DrawBackground(finaleflat, 0);
+
+  // draw some of the text onto the screen
+
+  if (count < 0)
+    count = 0;
+
+  for (; count; count-- ) {
+    int c = *ch++;
+
+    if (!c)
+      break;
+
+    if (c == '\n') {
+      cx = 10;
+      cy += 11;
+      continue;
+    }
+
+    c = toupper(c) - HU_FONTSTART;
+
+    if (c < 0 || c > HU_FONTSIZE) {
+      cx += 4;
+      continue;
+    }
+
+    w = hu_font[c].width;
+
+    if (cx + w > SCREENWIDTH) {
+      break;
+    }
+
+    // CPhipps - patch drawing updated
+    V_DrawNumPatch(cx, cy, 0, hu_font[c].lumpnum, CR_DEFAULT, VPT_STRETCH);
+
+    cx += w;
+  }
+}
+
+//
+// Final DOOM 2 animation
+// Casting by id Software.
+//   in order of appearance
+//
 //
 // F_StartCast
 //
 
 void F_StartCast(void) {
-  wipegamestate = -1;         // force a screen wipe
+  G_SetWipeGameState(-1); // force a screen wipe
   castnum = 0;
   caststate = &states[mobjinfo[castorder[castnum].type].seestate];
   casttics = caststate->tics;
@@ -382,25 +383,30 @@ void F_CastTicker(void) {
     // switch from deathstate to next monster
     castnum++;
     castdeath = false;
-    if (castorder[castnum].name == NULL)
+
+    if (castorder[castnum].name == NULL) {
       castnum = 0;
-    if (mobjinfo[castorder[castnum].type].seesound)
+    }
+
+    if (mobjinfo[castorder[castnum].type].seesound) {
       S_StartSound (NULL, mobjinfo[castorder[castnum].type].seesound);
+    }
+
     caststate = &states[mobjinfo[castorder[castnum].type].seestate];
     castframes = 0;
   }
-  else
-  {
+  else {
     // just advance to next state in animation
-    if (caststate == &states[S_PLAY_ATK1])
+    if (caststate == &states[S_PLAY_ATK1]) {
       goto stopattack;    // Oh, gross hack!
+    }
+
     st = caststate->nextstate;
     caststate = &states[st];
     castframes++;
 
     // sound hacks....
-    switch (st)
-    {
+    switch (st) {
       case S_PLAY_ATK1:     sfx = sfx_dshtgn; break;
       case S_POSS_ATK2:     sfx = sfx_pistol; break;
       case S_SPOS_ATK2:     sfx = sfx_shotgn; break;
@@ -430,35 +436,38 @@ void F_CastTicker(void) {
       default: sfx = 0; break;
     }
 
-    if (sfx)
+    if (sfx) {
       S_StartSound (NULL, sfx);
-  }
-
-  if (castframes == 12)
-  {
-    // go into attack frame
-    castattacking = true;
-    if (castonmelee)
-      caststate=&states[mobjinfo[castorder[castnum].type].meleestate];
-    else
-      caststate=&states[mobjinfo[castorder[castnum].type].missilestate];
-    castonmelee ^= 1;
-    if (caststate == &states[S_NULL])
-    {
-      if (castonmelee)
-        caststate=
-          &states[mobjinfo[castorder[castnum].type].meleestate];
-      else
-        caststate=
-          &states[mobjinfo[castorder[castnum].type].missilestate];
     }
   }
 
-  if (castattacking)
-  {
-    if (castframes == 24
-       ||  caststate == &states[mobjinfo[castorder[castnum].type].seestate] )
-    {
+  if (castframes == 12) {
+    // go into attack frame
+
+    castattacking = true;
+
+    if (castonmelee) {
+      caststate = &states[mobjinfo[castorder[castnum].type].meleestate];
+    }
+    else {
+      caststate = &states[mobjinfo[castorder[castnum].type].missilestate];
+    }
+
+    castonmelee ^= 1;
+
+    if (caststate == &states[S_NULL]) {
+      if (castonmelee) {
+        caststate = &states[mobjinfo[castorder[castnum].type].meleestate];
+      }
+      else {
+        caststate = &states[mobjinfo[castorder[castnum].type].missilestate];
+      }
+    }
+  }
+
+  if (castattacking) {
+    if (castframes == 24 ||
+        caststate == &states[mobjinfo[castorder[castnum].type].seestate]) {
       stopattack:
       castattacking = false;
       castframes = 0;
@@ -467,8 +476,10 @@ void F_CastTicker(void) {
   }
 
   casttics = caststate->tics;
-  if (casttics == -1)
-      casttics = 15;
+
+  if (casttics == -1) {
+    casttics = 15;
+  }
 }
 
 
@@ -476,13 +487,14 @@ void F_CastTicker(void) {
 // F_CastResponder
 //
 
-bool F_CastResponder (event_t* ev)
-{
-  if (ev->type != ev_key || !ev->pressed)
+bool F_CastResponder(event_t *ev) {
+  if (ev->type != ev_key || !ev->pressed) {
     return false;
+  }
 
-  if (castdeath)
-    return true;                    // already in dying frames
+  if (castdeath) {
+    return true; // already in dying frames
+  }
 
   // go into death frame
   castdeath = true;
@@ -490,16 +502,17 @@ bool F_CastResponder (event_t* ev)
   casttics = caststate->tics;
   castframes = 0;
   castattacking = false;
-  if (mobjinfo[castorder[castnum].type].deathsound)
-    S_StartSound (NULL, mobjinfo[castorder[castnum].type].deathsound);
+
+  if (mobjinfo[castorder[castnum].type].deathsound) {
+    S_StartSound(NULL, mobjinfo[castorder[castnum].type].deathsound);
+  }
 
   return true;
 }
 
 
-static void F_CastPrint (const char* text) // CPhipps - static, const char*
-{
-  const char* ch; // CPhipps - const
+static void F_CastPrint(const char *text) { // CPhipps - static, const char*
+  const char *ch; // CPhipps - const
   int         c;
   int         cx;
   int         w;
@@ -509,14 +522,15 @@ static void F_CastPrint (const char* text) // CPhipps - static, const char*
   ch = text;
   width = 0;
 
-  while (ch)
-  {
+  while (ch) {
     c = *ch++;
-    if (!c)
+
+    if (!c) {
       break;
+    }
     c = toupper(c) - HU_FONTSTART;
-    if (c < 0 || c> HU_FONTSIZE)
-    {
+
+    if (c < 0 || c > HU_FONTSIZE) {
       width += 4;
       continue;
     }
@@ -526,24 +540,27 @@ static void F_CastPrint (const char* text) // CPhipps - static, const char*
   }
 
   // draw it
-  cx = 160-width/2;
+  cx = 160 - width / 2;
   ch = text;
-  while (ch)
-  {
+  while (ch) {
     c = *ch++;
+
     if (!c)
       break;
+
     c = toupper(c) - HU_FONTSTART;
-    if (c < 0 || c> HU_FONTSIZE)
-    {
+
+    if (c < 0 || c > HU_FONTSIZE) {
       cx += 4;
       continue;
     }
 
     w = hu_font[c].width;
+
     // CPhipps - patch drawing updated
     V_DrawNumPatch(cx, 180, 0, hu_font[c].lumpnum, CR_DEFAULT, VPT_STRETCH);
-    cx+=w;
+
+    cx += w;
   }
 }
 
@@ -552,8 +569,7 @@ static void F_CastPrint (const char* text) // CPhipps - static, const char*
 // F_CastDrawer
 //
 
-void F_CastDrawer (void)
-{
+void F_CastDrawer(void) {
   spritedef_t   *sprdef;
   spriteframe_t *sprframe;
   int            lump;
@@ -561,104 +577,120 @@ void F_CastDrawer (void)
 
   // erase the entire screen to a background
   // CPhipps - patch drawing updated
-  V_DrawNamePatch(0,0,0, bgcastcall, CR_DEFAULT, VPT_STRETCH); // Ty 03/30/98 bg texture extern
+
+  // Ty 03/30/98 bg texture extern
+  V_DrawNamePatch(0, 0, 0, bgcastcall, CR_DEFAULT, VPT_STRETCH);
+
   // e6y: wide-res
   V_FillBorder(-1, 0);
 
-  F_CastPrint (*(castorder[castnum].name));
+  F_CastPrint(*(castorder[castnum].name));
 
   // draw the current frame in the middle of the screen
   sprdef = &sprites[caststate->sprite];
-  sprframe = &sprdef->spriteframes[ caststate->frame & FF_FRAMEMASK];
+  sprframe = &sprdef->spriteframes[caststate->frame & FF_FRAMEMASK];
   lump = sprframe->lump[0];
   flip = (bool)(sprframe->flip & 1);
 
   // CPhipps - patch drawing updated
-  V_DrawNumPatch(160, 170, 0, lump+firstspritelump, CR_DEFAULT,
-     VPT_STRETCH | (flip ? VPT_FLIP : 0));
+  V_DrawNumPatch(
+    160,
+    170,
+    0,
+    lump + firstspritelump,
+    CR_DEFAULT,
+    VPT_STRETCH | (flip ? VPT_FLIP : 0)
+  );
 }
 
 //
 // F_BunnyScroll
 //
-static const char pfub2[] = { "PFUB2" };
-static const char pfub1[] = { "PFUB1" };
 
 static void F_BunnyScroll(void) {
-  char       name[10];
-  int        stage;
   static int laststage;
 
-  {
-    int scrolled = 320 - (finalecount-230)/2;
-    if (scrolled <= 0) {
-      V_DrawNamePatch(0, 0, 0, pfub2, CR_DEFAULT, VPT_STRETCH);
-    } else if (scrolled >= 320) {
-      V_DrawNamePatch(0, 0, 0, pfub1, CR_DEFAULT, VPT_STRETCH);
-    } else {
-      V_DrawNamePatch(320-scrolled, 0, 0, pfub1, CR_DEFAULT, VPT_STRETCH);
-      V_DrawNamePatch(-scrolled, 0, 0, pfub2, CR_DEFAULT, VPT_STRETCH);
-    }
+  char       name[10];
+  int        stage;
+  int scrolled = 320 - (finalecount-230)/2;
+
+  if (scrolled <= 0) {
+    V_DrawNamePatch(0, 0, 0, pfub2, CR_DEFAULT, VPT_STRETCH);
+  }
+  else if (scrolled >= 320) {
+    V_DrawNamePatch(0, 0, 0, pfub1, CR_DEFAULT, VPT_STRETCH);
+  }
+  else {
+    V_DrawNamePatch(320 - scrolled, 0, 0, pfub1, CR_DEFAULT, VPT_STRETCH);
+    V_DrawNamePatch(-scrolled, 0, 0, pfub2, CR_DEFAULT, VPT_STRETCH);
   }
 
-  if (finalecount < 1130)
+  if (finalecount < 1130) {
     return;
-  if (finalecount < 1180)
-  {
+  }
+
+  if (finalecount < 1180) {
     // CPhipps - patch drawing updated
-    V_DrawNamePatch((320-13*8)/2, (200-8*8)/2,0, "END0", CR_DEFAULT, VPT_STRETCH);
+    V_DrawNamePatch(
+      (320 - 13 * 8) / 2, (200 - 8 * 8) / 2, 0, "END0", CR_DEFAULT, VPT_STRETCH
+    );
     laststage = 0;
+
     return;
   }
 
-  stage = (finalecount-1180) / 5;
-  if (stage > 6)
+  stage = (finalecount - 1180) / 5;
+
+  if (stage > 6) {
     stage = 6;
-  if (stage > laststage)
-  {
+  }
+
+  if (stage > laststage) {
     S_StartSound (NULL, sfx_pistol);
     laststage = stage;
   }
 
-  sprintf (name,"END%i",stage);
+  sprintf(name, "END%i", stage);
+
   // CPhipps - patch drawing updated
-  V_DrawNamePatch((320-13*8)/2, (200-8*8)/2, 0, name, CR_DEFAULT, VPT_STRETCH);
+  V_DrawNamePatch(
+    (320 - 13 * 8) / 2, (200 - 8 * 8) / 2, 0, name, CR_DEFAULT, VPT_STRETCH
+  );
 }
 
 
 //
 // F_Drawer
 //
-void F_Drawer (void)
-{
-  if (finalestage == 2)
-  {
+void F_Drawer(void) {
+  if (finalestage == 2) {
     F_CastDrawer ();
     return;
   }
 
-  if (!finalestage)
-    F_TextWrite ();
-  else
-  {
-    switch (gameepisode)
-    {
+  if (!finalestage) {
+    F_TextWrite();
+  }
+  else {
+    switch (gameepisode) {
       // CPhipps - patch drawing updated
       case 1:
-           if ( gamemode == retail )
-             V_DrawNamePatch(0, 0, 0, "CREDIT", CR_DEFAULT, VPT_STRETCH);
-           else
-             V_DrawNamePatch(0, 0, 0, "HELP2", CR_DEFAULT, VPT_STRETCH);
-           break;
+        if (gamemode == retail) {
+          V_DrawNamePatch(0, 0, 0, "CREDIT", CR_DEFAULT, VPT_STRETCH);
+        }
+        else {
+          V_DrawNamePatch(0, 0, 0, "HELP2", CR_DEFAULT, VPT_STRETCH);
+        }
+      break;
       case 2:
-           V_DrawNamePatch(0, 0, 0, "VICTORY2", CR_DEFAULT, VPT_STRETCH);
-           break;
+        V_DrawNamePatch(0, 0, 0, "VICTORY2", CR_DEFAULT, VPT_STRETCH);
+      break;
       case 3:
-           F_BunnyScroll ();
-           break;
+        F_BunnyScroll ();
+      break;
       case 4:
-           V_DrawNamePatch(0, 0, 0, "ENDPIC", CR_DEFAULT, VPT_STRETCH);
-           break;
+        V_DrawNamePatch(0, 0, 0, "ENDPIC", CR_DEFAULT, VPT_STRETCH);
+      break;
     }
     // e6y: wide-res
     V_FillBorder(-1, 0);

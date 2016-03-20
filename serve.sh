@@ -5,7 +5,7 @@ WAD="-file freedm.wad"
 CMD="cbuild/d2k $WAD -skill 5 -warp 1 -nomonsters -serve"
 CMD="cbuild/d2k $WAD -skill 5 -warp 1 -deathmatch -frags 5 -serve"
 CMD="cbuild/d2k $WAD -skill 4 -warp 1 -serve"
-CMD="cbuild/d2k $WAD -skill 5 -warp 1 -nomonsters -deathmatch -frags 5 -log /home/charlie/.d2k/log.txt -serve -nodaemon"
+CMD="cbuild/d2k $WAD -skill 5 -warp 1 -nomonsters -deathmatch -frags 1 -log /home/charlie/.d2k/log.txt -serve -nodaemon"
 
 cp scripts/* ~/.d2k/scripts/
 

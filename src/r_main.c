@@ -26,8 +26,9 @@
 #include <SDL.h>
 
 #include "doomstat.h"
+#include "d_event.h"
 #include "d_net.h"
-#include "e6y.h"//e6y
+#include "e6y.h"
 #include "g_game.h"
 #include "i_main.h"
 #include "i_smp.h"

@@ -26,10 +26,11 @@
 #include <enet/enet.h>
 
 #include "doomdef.h"
+#include "doomstat.h"
 #include "d_deh.h"
+#include "d_event.h"
 #include "d_main.h"
 #include "d_ticcmd.h"
-#include "doomstat.h"
 #include "g_game.h"
 #include "i_system.h"
 #include "m_file.h"
@@ -491,7 +492,7 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
 
 void N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level) {
   pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_RELIABLE, nm_authresponse
+    np->peernum, NET_CHANNEL_RELIABLE, nm_auth
   );
   puts("Packing auth response");
 
@@ -976,7 +977,7 @@ bool N_UnpackSkinChange(netpeer_t *np, unsigned short *playernum) {
 
 void N_PackAuthRequest(netpeer_t *np, const char *password) {
   pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_RELIABLE, nm_authrequest
+    np->peernum, NET_CHANNEL_RELIABLE, nm_auth
   );
 
   M_PBufWriteString(pbuf, password, strlen(password));
@@ -1026,6 +1027,28 @@ bool N_UnpackVoteRequest(netpeer_t *np, buf_t *buf) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
 
   read_string(pbuf, buf, "vote command", MAX_COMMAND_LENGTH);
+
+  return true;
+}
+
+void N_PackGameActionChange(netpeer_t *np) {
+  pbuf_t *pbuf = N_PeerBeginMessage(
+    np->peernum, NET_CHANNEL_RELIABLE, nm_gameaction
+  );
+
+  M_PBufWriteInt(pbuf, G_GetGameAction());
+}
+
+bool N_UnpackGameActionChange(netpeer_t *np, gameaction_t *new_gameaction) {
+  pbuf_t *pbuf = &np->netcom.incoming.messages;
+
+  int m_new_game_action = 0;
+
+  read_ranged_int(
+    pbuf, m_new_game_action, "game action", ga_nothing, ga_worlddone
+  );
+
+  *new_gameaction = m_new_game_action;
 
   return true;
 }

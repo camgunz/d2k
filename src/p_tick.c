@@ -26,6 +26,8 @@
 #include <enet/enet.h>
 
 #include "doomstat.h"
+#include "d_event.h"
+#include "g_game.h"
 #include "p_user.h"
 #include "p_spec.h"
 #include "p_tick.h"

@@ -174,10 +174,10 @@ static uint_64_t G_Signature(void) {
 }
 
 static void G_LoadGameErr(const char *msg) {
-  M_ForcedLoadGame(msg);             // Print message asking for 'Y' to force
-  if (command_loadgame) {            // If this was a command-line -loadgame
+  M_ForcedLoadGame(msg);           // Print message asking for 'Y' to force
+  if (command_loadgame) {          // If this was a command-line -loadgame
     D_StartTitle();                // Start the title screen
-    gamestate = GS_DEMOSCREEN;     // And set the game state accordingly
+    G_SetGameState(GS_DEMOSCREEN); // And set the game state accordingly
   }
 }
 

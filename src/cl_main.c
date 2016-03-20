@@ -26,8 +26,10 @@
 #include <enet/enet.h>
 
 #include "doomdef.h"
+#include "d_event.h"
 #include "d_ticcmd.h"
 #include "d_player.h"
+#include "g_game.h"
 #include "n_net.h"
 #include "n_main.h"
 #include "n_state.h"
@@ -248,7 +250,10 @@ void CL_CheckForStateUpdates(void) {
     }
   }
 #endif
-  cl_predict(saved_gametic);
+
+  if (G_GetGameState() == GS_LEVEL) {
+    cl_predict(saved_gametic);
+  }
 
   cl_state_tic = server->sync.tic;
   cl_delta_from_tic = server->sync.delta.from_tic;
