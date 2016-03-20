@@ -84,38 +84,42 @@ static int XG_GameGetTimeLimit(lua_State *L) {
 
 static int XG_GameGetPlayers(lua_State *L) {
   int player_count = 0;
+  int player_start = 0;
 
-  for (int i = 0; i < MAXPLAYERS; i++) {
+  if (MULTINET) {
+    player_start = 1;
+  }
+
+  for (int i = player_start; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
       player_count++;
     }
   }
 
-  lua_createtable(L, player_count, 0); // -1
+  lua_createtable(L, player_count, 0); // 1
 
-  for (int i = 0; i < MAXPLAYERS; i++) {
+  for (int i = player_start; i < MAXPLAYERS; i++) {
     if (!playeringame[i])
       continue;
 
-    lua_createtable(L, 0, 5); // -2
+    lua_createtable(L, 0, 5); // 2
 
-    lua_pushstring(L, players[i].name); // -3
-    lua_setfield(L, -3, "name");
+    lua_pushstring(L, players[i].name); // 3
+    lua_setfield(L, 2, "name");
 
-    lua_pushinteger(L, P_PlayerGetFragCount(i)); // -3
-    lua_setfield(L, -3, "frags");
+    lua_pushinteger(L, P_PlayerGetFragCount(i)); // 3
+    lua_setfield(L, 2, "frags");
 
-    lua_pushinteger(L, P_PlayerGetDeathCount(i)); // -3
-    lua_setfield(L, -3, "deaths");
+    lua_pushinteger(L, P_PlayerGetDeathCount(i)); // 3
+    lua_setfield(L, 2, "deaths");
 
-    lua_pushinteger(L, P_PlayerGetPing(i)); // -3
-    lua_setfield(L, -3, "ping");
+    lua_pushinteger(L, P_PlayerGetPing(i)); // 3
+    lua_setfield(L, 2, "ping");
 
-    lua_pushinteger(L, P_PlayerGetTime(i)); // -3
-    lua_setfield(L, -3, "time");
+    lua_pushinteger(L, P_PlayerGetTime(i)); // 3
+    lua_setfield(L, 2, "time");
 
-    lua_insert(L, -2);
-    lua_rawseti(L, -2, i + 1);
+    lua_rawseti(L, 1, (i + 1) - player_start); // players[i + 1] = player
   }
 
   return 1;

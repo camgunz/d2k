@@ -350,23 +350,12 @@ local scoreboard_player_table_widget = TableWidget.TableWidget({
   bg_color = {0.0, 0.0, 0.0, 0.00}
 })
 
--- Add header
-scoreboard_player_table_widget:add_row()
-
--- Player name
-scoreboard_player_table_widget:add_column()
-
--- Frags
-scoreboard_player_table_widget:add_column()
-
--- Deaths
-scoreboard_player_table_widget:add_column()
-
--- Ping
-scoreboard_player_table_widget:add_column()
-
--- Time (minutes)
-scoreboard_player_table_widget:add_column()
+scoreboard_player_table_widget:add_row()    -- Add header
+scoreboard_player_table_widget:add_column() -- Player name
+scoreboard_player_table_widget:add_column() -- Frags
+scoreboard_player_table_widget:add_column() -- Deaths
+scoreboard_player_table_widget:add_column() -- Ping
+scoreboard_player_table_widget:add_column() -- Time (minutes)
 
 scoreboard_player_table_widget:get_cell(1, 2):set_text('Frags')
 scoreboard_player_table_widget:get_cell(1, 3):set_text('Deaths')

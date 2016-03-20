@@ -204,9 +204,11 @@ static void serialize_player(pbuf_t *savebuffer, int playernum) {
 
   if (MULTINET) {
     M_PBufWriteInt(savebuffer, player->ping);
+    M_PBufWriteULong(savebuffer, player->connect_time);
   }
   else {
     M_PBufWriteInt(savebuffer, 0);
+    M_PBufWriteULong(savebuffer, 0);
   }
 }
 
@@ -338,12 +340,19 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
   M_PBufReadInt(savebuffer, &player->latest_command_run_index);
 
   if (MULTINET) {
+    uint64_t connect_time;
+
     M_PBufReadInt(savebuffer, &player->ping);
+    M_PBufReadULong(savebuffer, &connect_time);
+
+    player->connect_time = connect_time;
   }
   else {
     int ping;
+    uint64_t connect_time;
 
     M_PBufReadInt(savebuffer, &ping);
+    M_PBufReadULong(savebuffer, &connect_time);
   }
 }
 
@@ -504,17 +513,9 @@ static void serialize_actor(pbuf_t *savebuffer, mobj_t *mobj) {
   M_PBufWriteUInt(savebuffer, mobj->pitch);
   M_PBufWriteULong(savebuffer, mobj->flags);
 
-  /*
-  M_PBufWriteInt(savebuffer, mobj->sprite);
-  M_PBufWriteInt(savebuffer, mobj->frame);
-  */
   M_PBufWriteInt(savebuffer, mobj->floorz);
   M_PBufWriteInt(savebuffer, mobj->ceilingz);
   M_PBufWriteInt(savebuffer, mobj->dropoffz);
-  /*
-  M_PBufWriteInt(savebuffer, mobj->radius);
-  M_PBufWriteInt(savebuffer, mobj->height);
-  */
   M_PBufWriteInt(savebuffer, mobj->momx);
   M_PBufWriteInt(savebuffer, mobj->momy);
   M_PBufWriteInt(savebuffer, mobj->momz);
@@ -536,11 +537,6 @@ static void serialize_actor(pbuf_t *savebuffer, mobj_t *mobj) {
   M_PBufWriteShort(savebuffer, mobj->spawnpoint.options);
   M_PBufWriteInt(savebuffer, mobj->friction);
   M_PBufWriteInt(savebuffer, mobj->movefactor);
-  /*
-  M_PBufWriteInt(savebuffer, mobj->PrevX);
-  M_PBufWriteInt(savebuffer, mobj->PrevY);
-  M_PBufWriteInt(savebuffer, mobj->PrevZ);
-  */
   M_PBufWriteShort(savebuffer, mobj->patch_width);
   M_PBufWriteInt(savebuffer, mobj->iden_nums);
 }
@@ -613,23 +609,13 @@ static void deserialize_actor(pbuf_t *savebuffer) {
 
   setup_actor(mobj);
 
-  /*
-  M_PBufReadInt(savebuffer, (int *)&mobj->sprite);
-  M_PBufReadInt(savebuffer, &mobj->frame);
-  */
   M_PBufReadInt(savebuffer, &mobj->floorz);
   M_PBufReadInt(savebuffer, &mobj->ceilingz);
   M_PBufReadInt(savebuffer, &mobj->dropoffz);
-  /*
-  M_PBufReadInt(savebuffer, &mobj->radius);
-  M_PBufReadInt(savebuffer, &mobj->height);
-  */
   M_PBufReadInt(savebuffer, &mobj->momx);
   M_PBufReadInt(savebuffer, &mobj->momy);
   M_PBufReadInt(savebuffer, &mobj->momz);
   M_PBufReadInt(savebuffer, &mobj->validcount);
-  /*
-  */
   M_PBufReadInt(savebuffer, &mobj->intflags);
   M_PBufReadInt(savebuffer, &mobj->health);
   M_PBufReadShort(savebuffer, &mobj->movedir);
@@ -647,11 +633,6 @@ static void deserialize_actor(pbuf_t *savebuffer) {
   M_PBufReadShort(savebuffer, &mobj->spawnpoint.options);
   M_PBufReadInt(savebuffer, &mobj->friction);
   M_PBufReadInt(savebuffer, &mobj->movefactor);
-  /*
-  M_PBufReadInt(savebuffer, &mobj->PrevX);
-  M_PBufReadInt(savebuffer, &mobj->PrevY);
-  M_PBufReadInt(savebuffer, &mobj->PrevZ);
-  */
 
   mobj->PrevX = mobj->x;
   mobj->PrevY = mobj->y;

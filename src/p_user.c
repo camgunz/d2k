@@ -771,13 +771,11 @@ int P_PlayerGetFragCount(int playernum) {
   int frag_count = 0;
 
   for (int i = 0; i < MAXPLAYERS; i++) {
-    for (int j = 0; j < MAXPLAYERS; j++) {
-      if (j == i) {
-        frag_count -= players[i].frags[j];
-      }
-      else {
-        frag_count += players[i].frags[j];
-      }
+    if (i == playernum) {
+      frag_count -= players[playernum].frags[i];
+    }
+    else {
+      frag_count += players[playernum].frags[i];
     }
   }
 
@@ -789,7 +787,7 @@ int P_PlayerGetDeathCount(int playernum) {
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     for (int j = 0; j < MAXPLAYERS; j++) {
-      if (j == i) {
+      if (j == playernum) {
         death_count += players[i].frags[j];
       }
     }
@@ -804,19 +802,12 @@ int P_PlayerGetPing(int playernum) {
 
 int P_PlayerGetTime(int playernum) {
   time_t now = time(NULL);
-  netpeer_t *peer;
 
   if (!MULTINET) {
     return (int)difftime(now, level_start_time);
   }
 
-  peer = N_PeerForPlayer(playernum);
-
-  if (!peer) {
-    return 0;
-  }
-
-  return (int)difftime(now, peer->connect_time);
+  return (int)difftime(now, players[playernum].connect_time);
 }
 
 /* vi: set et ts=2 sw=2: */
