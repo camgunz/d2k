@@ -801,13 +801,11 @@ int P_PlayerGetPing(int playernum) {
 }
 
 int P_PlayerGetTime(int playernum) {
-  time_t now = time(NULL);
-
   if (!MULTINET) {
-    return (int)difftime(now, level_start_time);
+    return gametic / TICRATE;
   }
 
-  return (int)difftime(now, players[playernum].connect_time);
+  return (gametic - players[playernum].connect_tic) / TICRATE;
 }
 
 /* vi: set et ts=2 sw=2: */

@@ -204,7 +204,7 @@ static void serialize_player(pbuf_t *savebuffer, int playernum) {
 
   if (MULTINET) {
     M_PBufWriteInt(savebuffer, player->ping);
-    M_PBufWriteULong(savebuffer, player->connect_time);
+    M_PBufWriteInt(savebuffer, player->connect_tic);
   }
   else {
     M_PBufWriteInt(savebuffer, 0);
@@ -340,19 +340,15 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
   M_PBufReadInt(savebuffer, &player->latest_command_run_index);
 
   if (MULTINET) {
-    uint64_t connect_time;
-
     M_PBufReadInt(savebuffer, &player->ping);
-    M_PBufReadULong(savebuffer, &connect_time);
-
-    player->connect_time = connect_time;
+    M_PBufReadInt(savebuffer, &player->connect_tic);
   }
   else {
     int ping;
-    uint64_t connect_time;
+    int connect_tic;
 
     M_PBufReadInt(savebuffer, &ping);
-    M_PBufReadULong(savebuffer, &connect_time);
+    M_PBufReadInt(savebuffer, &connect_tic);
   }
 }
 

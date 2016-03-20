@@ -518,7 +518,7 @@ void SV_SetupNewPeer(int peernum) {
   players[playernum].playerstate = PST_REBORN;
   np->playernum = playernum;
   np->sync.tic = gametic;
-  players[playernum].connect_time = time(NULL);
+  players[playernum].connect_tic = gametic;
 }
 
 void SV_SendSetup(unsigned short playernum) {

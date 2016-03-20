@@ -2,20 +2,25 @@
 
 ## Proto
 
+1. Fix bugs:
+  - Player time logic should switch to TICs
+  - When player disconnects, scoreboard rows are messed up
+  - Can outrun plasma and get hit
+  - The client will still occasionally not clear commands out
+  - `P_Printf` doesn't work in server mode
+  - When console scrollback fills up, FPS sinks
+  - Add a server message sound (just use radio/tink?)
+  - When switching to a different interface (menu, HUD, console, etc.), all key
+    presses should be cleared and spurious key releases ignored
+  - Add a message indicating that the server is full; currently it looks like a
+    crash
+  - Slow down the super fast doomguy face
+  - Maybe something like `enet_flush_whatever` will kill the minimum ping
+
 1. Test resolution switching
   - Probably have to override `:reset` in widgets to update a bunch of stuff
 
-1. When console scrollback fills up, FPS sinks
-
-1. Do some basic net testing
-  - `P_Printf` doesn't work in server mode
-  - Can outrun plasma and get hit
-  - Maybe something like `enet_flush_whatever` will kill the minimum ping
-  - The client will still occasionally not clear commands out
-
 1. Trace messaging uses after message channels are closed
-
-1. When player disconnects, scoreboard rows are messed up
 
 ## After Proto
 
@@ -129,14 +134,6 @@
 1. Add RCON
 
 1. Add maplist support
-
-1. Little bugs:
-  - Add a server message sound (just use radio/tink?)
-  - When switching to a different interface (menu, HUD, console, etc.), all key
-    presses should be cleared and spurious key releases ignored
-  - Add a message indicating that the server is full; currently it looks like a
-    crash
-  - Slow down the super fast doomguy face
 
 ## CTF
 
