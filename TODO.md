@@ -1,7 +1,5 @@
 # To Do
 
-## Proto
-
 1. Fix bugs:
   - Can outrun plasma and get hit
   - The client will still occasionally not clear commands out
@@ -20,42 +18,25 @@
 
 1. Trace messaging uses after message channels are closed
 
-## After Proto
+-- Proto Complete Here --
 
-1. Update/Mirror dependencies somewhere
-  - It would be really cool to use the pacman/pkgbuild system and mirror source
-    also
+1. Add drawing options to draw in the old PrBoom+/Doom style
 
-## ZDDL
-
-1. Add maplist
-  - Add `map` command
-
-1. Add error codes to `n_proto`
-
-1. Messages widget should (optionally) display markup
-
-1. Menu draws under console
+1. Move menu into scripting
   - This is because the menu is drawn onto the game screen, then the console is
     drawn onto the overlay
 
-1. Servers shouldn't `quit`, they should `shutdown`; also prevents accidentally
-   running `/quit` in the console instead of `:quit` and closing the server....
-
-1. Fix switching to vidingl
-  - Currently nothing clears or renders when you switch to vidingl from OpenGL
+1. Improve the configuration file and configuration variable system
+  - Ties into scripting and console
+  - JSON (Jansson)
 
 1. Remove 4 player restriction
   - All playernums become `unsigned int`
-  - `players` becomes a GHashTable
+  - `players` becomes a GPtrArray
   - `playeringame` becomes `bool D_PlayerInGame(unsigned int playernum)`
-    - Which is a wrapper around `g_hash_table_contains`
+    - Which just iterates
   - `MAXPLAYERS` becomes `VANILLA_MAXPLAYERS` for compat
   - Anything defined using `MAXPLAYERS` will be refactored
-  - Servers aren't players
-    - Use a camera in non-headless mode (add non-headless mode???)
-    - Sending a message to the server can use a bool `to_server` instead of the
-      `-1` recipient (which is a hack)
   - Player names are hardcoded for DeHackEd; the way this should work is:
     - Keep a private array of the default names ("Green", "Indigo", etc.)
     - After initialization, check if the names have been modified, by a
@@ -66,10 +47,66 @@
 
 1. Add spectators
 
-1. Improve the configuration file and configuration variable system
-  - Ties into scripting and console
+1. Add maplist
+  - Add `map` command
+
+1. Add 3D physics
+
+1. Add ZDoom physics
+  - Including ZDoom SSG spread
+
+1. Add SNDCURVE lump support
+
+1. Improve PWO
+  - Probably this is just gonna be a script
+    - How to not send an arbitrary script to the server though...?
+    - Does it make sense to have scripting contexts per-client serverside?
+
+1. Add WAD downloading
+  - cURL
+  - the client should do this between frames in case it needs to download a
+    huge file (or a file from a slow server); libcurl ought to make this
+    pretty easy
+
+1. Build master server
+  - Create a server description specification in JSON
+
+1. Add authorization framework
+
+1. Add RCON
+
+-- Suitable For DEATHMATCH Here --
+
+1. Add slopes
+
+1. Add teams
+
+1. Add Hexen map support
+
+1. Add scripted game modes
+
+-- Suitable For Competition Here --
+
+## Smaller Issues
+
+1. Remove server-as-player hack
+  - Use a camera in non-headless mode (add non-headless mode???)
+
+1. Add error codes to `n_proto`
+
+1. Messages widget should (optionally) display markup
+
+1. Servers shouldn't `quit`, they should `shutdown`; also prevents accidentally
+   running `/quit` in the console instead of `:quit` and closing the server....
+
+1. Fix switching to vidingl
+  - Currently nothing clears or renders when you switch to vidingl from OpenGL
 
 1. Add auto-scroll to TextWidget
+
+1. Update/Mirror dependencies somewhere
+  - It would be really cool to use the pacman/pkgbuild system and mirror source
+    also
 
 1. Manually delta compress commands (serverside and clientside)
   - bitmap:
@@ -108,42 +145,7 @@
     adjust the velocity downwards based on the client's lag and a preselected
     function (curve)
 
-1. Add 3D physics
-
-1. Add ZDoom physics
-  - Including ZDoom SSG spread
-
-1. Add SNDCURVE lump support
-
-1. Improve PWO
-  - Probably this is just gonna be a script
-    - How to not send an arbitrary script to the server though...?
-    - Does it make sense to have scripting contexts per-client serverside?
-
-1. Add HTTP and JSON (cURL and Jansson)
-  - Have client download missing WADs
-    - the client should do this between frames in case it needs to download a
-      huge file (or a file from a slow server); libcurl ought to make this
-      pretty easy
-  - Create a server description specification in JSON
-
-1. Add authorization framework
-
-1. Add RCON
-
-1. Add maplist support
-
-## CTF
-
-1. Add slopes
-
-1. Flesh out teams
-
-1. Add Hexen map support
-
-1. Add scripted game modes
-
-## Version 0.9
+## Future
 
 1. Remove software renderer
   - See about implementing Doom lighting and 8-bit color using shaders
@@ -152,23 +154,11 @@
   - Demos
   - Multiplayer command injection
 
-## Version 1.0
-
-1. Settle on types for:
-  - Player indices
-  - TICs
-
-1. Cleanup #includes
-
-1. Update renderer
+## Features
 
 1. UDMF
 
-1. Cameras
-
 1. ZIP/PK3 resource files
-
-## Features
 
 1. Bots
 
