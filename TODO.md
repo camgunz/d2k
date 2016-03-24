@@ -20,15 +20,30 @@
 
 -- Proto Complete Here --
 
+1. Improve the configuration file and configuration variable system
+  - Ties into scripting and console
+  - JSON (Jansson)
+
+1. Add maplist
+  - Add `map` command
+
+1. Add WAD downloading
+  - cURL
+  - the client should do this between frames in case it needs to download a
+    huge file (or a file from a slow server); libcurl ought to make this
+    pretty easy
+
+1. Build master server
+  - Create a server description specification in JSON
+
+1. Add authorization framework
+
 1. Add drawing options to draw in the old PrBoom+/Doom style
+  - Need to refactor `screens`
 
 1. Move menu into scripting
   - This is because the menu is drawn onto the game screen, then the console is
     drawn onto the overlay
-
-1. Improve the configuration file and configuration variable system
-  - Ties into scripting and console
-  - JSON (Jansson)
 
 1. Remove 4 player restriction
   - All playernums become `unsigned int`
@@ -47,9 +62,6 @@
 
 1. Add spectators
 
-1. Add maplist
-  - Add `map` command
-
 1. Add 3D physics
 
 1. Add ZDoom physics
@@ -61,17 +73,6 @@
   - Probably this is just gonna be a script
     - How to not send an arbitrary script to the server though...?
     - Does it make sense to have scripting contexts per-client serverside?
-
-1. Add WAD downloading
-  - cURL
-  - the client should do this between frames in case it needs to download a
-    huge file (or a file from a slow server); libcurl ought to make this
-    pretty easy
-
-1. Build master server
-  - Create a server description specification in JSON
-
-1. Add authorization framework
 
 1. Add RCON
 
