@@ -5,19 +5,28 @@ IF(NOT LGI_LIBRARIES)
         FIND_LIBRARY(LGI_LIBRARIES
             NAMES corelgilua52.so corelgilua51.so
             HINTS $ENV{LGI_DIR}
-            PATH_SUFFIXES lib64/lua/5.3/lgi
+            PATH_SUFFIXES lib64/x86_64-linux-gnu/lua/5.3/lgi
+                          lib64/lua/5.3/lgi
+                          lib64/x86_64-linux-gnu/lua/5.2/lgi
                           lib64/lua/5.2/lgi
+                          lib64/x86_64-linux-gnu/lua/5.1/lgi
                           lib64/lua/5.1/lgi
+                          lib/x86_64-linux-gnu/lua/5.3/lgi
                           lib/lua/5.3/lgi
+                          lib/x86_64-linux-gnu/lua/5.2/lgi
                           lib/lua/5.2/lgi
+                          lib/x86_64-linux-gnu/lua/5.1/lgi
                           lib/lua/5.1/lgi
         )
     ELSE()
         FIND_LIBRARY(LGI_LIBRARIES
             NAMES corelgilua52.so corelgilua51.so
             HINTS $ENV{LGI_DIR}
-            PATH_SUFFIXES lib/lua/5.3/lgi
+            PATH_SUFFIXES lib/i386-linux-gnu/lua/5.3/lgi
+                          lib/lua/5.3/lgi
+                          lib/i386-linux-gnu/lua/5.2/lgi
                           lib/lua/5.2/lgi
+                          lib/i386-linux-gnu/lua/5.1/lgi
                           lib/lua/5.1/lgi
         )
     ENDIF()

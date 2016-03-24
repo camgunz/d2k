@@ -43,8 +43,11 @@ void P_IdentGetID(void *obj, uint32_t *obj_id) {
 
   id = max_id;
 
-  if (!g_hash_table_insert(id_hash, GUINT_TO_POINTER(id), obj))
+  if (g_hash_table_contains(id_hash, GUINT_TO_POINTER(id))) {
     I_Error("P_IdentGetID: ID %d already assigned", id);
+  }
+
+  g_hash_table_insert(id_hash, GUINT_TO_POINTER(id), obj);
 
   *obj_id = id;
 }
@@ -55,8 +58,11 @@ void P_IdentAssignID(void *obj, uint32_t obj_id) {
 
   max_id = MAX(max_id, obj_id);
 
-  if (!g_hash_table_insert(id_hash, GUINT_TO_POINTER(obj_id), obj))
+  if (g_hash_table_contains(id_hash, GUINT_TO_POINTER(obj_id))) {
     I_Error("P_IdentAssignID: ID %d already assigned", obj_id);
+  }
+
+  g_hash_table_insert(id_hash, GUINT_TO_POINTER(obj_id), obj);
 }
 
 void P_IdentReleaseID(uint32_t *obj_id) {

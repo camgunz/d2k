@@ -677,15 +677,12 @@ void N_PackSync(netpeer_t *np) {
       P_ForEachCommand(consoleplayer, pack_unsynchronized_command, pbuf);
 
     if (command_count > 0) {
-      unsigned int oldest_index = 0;
-
       for (size_t i = 0; i < players[consoleplayer].commands->len; i++) {
         netticcmd_t *ncmd = g_ptr_array_index(
           players[consoleplayer].commands, i
         );
 
         if (ncmd->index > np->sync.command_index) {
-          oldest_index = ncmd->index;
           break;
         }
       }

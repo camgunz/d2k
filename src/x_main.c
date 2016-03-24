@@ -200,8 +200,11 @@ void X_RegisterType(const char *type_name, unsigned int count, ...) {
   methods[count].func = NULL;
   va_end(args);
 
-  if (!g_hash_table_insert(x_types, (char *)type_name, methods))
+  if (g_hash_table_contains(x_types, (char *)type_name)) {
     I_Error("X_RegisterType: Type '%s' already registered", type_name);
+  }
+
+  g_hash_table_insert(x_types, (char *)type_name, methods);
 }
 
 void X_RegisterObjects(const char *scope_name, unsigned int count, ...) {
@@ -225,7 +228,7 @@ void X_RegisterObjects(const char *scope_name, unsigned int count, ...) {
     char *name;
     x_object_t *x_obj;
     int bool_arg;
-    bool did_not_exist;
+    bool already_existed;
 
     x_obj = calloc(1, sizeof(x_object_t));
 
@@ -270,9 +273,9 @@ void X_RegisterObjects(const char *scope_name, unsigned int count, ...) {
       break;
     }
 
-    did_not_exist = g_hash_table_insert(scope, name, x_obj);
+    already_existed = g_hash_table_contains(scope, name);
 
-    if (!did_not_exist) {
+    if (already_existed) {
       if (scope_name && name) {
         I_Error("X_RegisterObjects: Object %s.%s already registered",
           scope_name, name
@@ -288,6 +291,10 @@ void X_RegisterObjects(const char *scope_name, unsigned int count, ...) {
         I_Error("X_RegisterObjects: Object already registered");
       }
     }
+    else {
+      g_hash_table_insert(scope, name, x_obj);
+    }
+
   }
 
   va_end(args);

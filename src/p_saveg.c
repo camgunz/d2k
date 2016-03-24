@@ -643,17 +643,21 @@ static void deserialize_actor(pbuf_t *savebuffer) {
 /* [CG] TODO: Expose this to scripting */
 static void add_delta_compressable_actor_type(mobjtype_t mobjtype) {
   GPtrArray *actors = g_ptr_array_new();
-  bool inserted_new = g_hash_table_insert(delta_compressed_actors,
-    GINT_TO_POINTER(mobjtype),
-    actors
+  bool already_exists = g_hash_table_contains(delta_compressed_actors,
+    GINT_TO_POINTER(mobjtype)
   );
 
-  if (!inserted_new) {
+  if (already_exists) {
     I_Error(
       "add_delta_compressable_actor: actor type %d already compressable\n",
       mobjtype
     );
   }
+
+  g_hash_table_insert(delta_compressed_actors,
+    GINT_TO_POINTER(mobjtype),
+    actors
+  );
 }
 
 static void initialize_delta_compressed_actors(void) {
