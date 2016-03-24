@@ -5,6 +5,7 @@
 1. Fix bugs:
   - Can outrun plasma and get hit
   - The client will still occasionally not clear commands out
+  - Need new-style intermission
   - `P_Printf` doesn't work in server mode
   - When console scrollback fills up, FPS sinks
   - Add a server message sound (just use radio/tink?)
@@ -14,6 +15,9 @@
     crash
   - Slow down the super fast doomguy face
   - Maybe something like `enet_flush_whatever` will kill the minimum ping
+  - weaponstay
+  - clear weapons between maps in deathmatch
+  - Debug `R_FlatNumForName: -N0_TEX- not found` error
 
 1. Test resolution switching
   - Probably have to override `:reset` in widgets to update a bunch of stuff

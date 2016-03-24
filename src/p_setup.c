@@ -1495,6 +1495,8 @@ static void P_LoadSideDefs2(int lump) {
   const byte *data = W_CacheLumpNum(lump); // cph - const*, wad lump handling updated
   int  i;
 
+  printf("Size of mapsidedef_t should be 30: %u\n", sizeof(mapsidedef_t));
+
   for (i = 0; i < numsides; i++) {
     register const mapsidedef_t *msd = (const mapsidedef_t *) data + i;
     register side_t *sd = sides + i;
