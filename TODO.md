@@ -3,7 +3,6 @@
 1. Fix bugs:
   - Can outrun plasma and get hit
   - The client will still occasionally not clear commands out
-  - Need new-style intermission
   - `P_Printf` doesn't work in server mode
   - When console scrollback fills up, FPS sinks
   - Add a server message sound (just use radio/tink?)
@@ -13,9 +12,8 @@
     crash
   - Slow down the super fast doomguy face
   - Maybe something like `enet_flush_whatever` will kill the minimum ping
-  - weaponstay
-  - clear weapons between maps in deathmatch
-  - Debug `R_FlatNumForName: -N0_TEX- not found` error
+
+1. Need a "not enough spawnpoints" strategy
 
 1. Test resolution switching
   - Probably have to override `:reset` in widgets to update a bunch of stuff
@@ -31,16 +29,16 @@
 1. Add maplist
   - Add `map` command
 
+1. Add authorization framework
+
+1. Build master server
+  - Create a server description specification in JSON
+
 1. Add WAD downloading
   - cURL
   - the client should do this between frames in case it needs to download a
     huge file (or a file from a slow server); libcurl ought to make this
     pretty easy
-
-1. Build master server
-  - Create a server description specification in JSON
-
-1. Add authorization framework
 
 1. Add drawing options to draw in the old PrBoom+/Doom style
   - Need to refactor `screens`
@@ -81,6 +79,8 @@
 1. Add RCON
 
 -- Suitable For DEATHMATCH Here --
+
+1. Add announcer
 
 1. Add slopes
 
