@@ -31,6 +31,8 @@
 
 1. Add authorization framework
 
+1. Add RCON
+
 1. Build master server
   - Create a server description specification in JSON
 
@@ -75,8 +77,6 @@
   - Probably this is just gonna be a script
     - How to not send an arbitrary script to the server though...?
     - Does it make sense to have scripting contexts per-client serverside?
-
-1. Add RCON
 
 -- Suitable For DEATHMATCH Here --
 
