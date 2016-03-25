@@ -392,7 +392,11 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
   bool has_resources;
   unsigned int deh_file_count;
   buf_t iwad_buf;
+  char *iwad_name;
+  char *iwad_path;
   GPtrArray *rf_list;
+
+  puts("Unpacking setup");
 
   for (int i = 0; i < MAXPLAYERS; i++)
     playeringame[i] = false;
@@ -411,18 +415,34 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
 
   read_ushort(pbuf, m_playernum, "consoleplayer");
 
+  M_BufferInit(&iwad_buf);
+  read_string(pbuf, &iwad_buf, "IWAD", MAX_IWAD_NAME_LENGTH);
+  iwad_name = M_StripExtension(M_BufferGetData(&iwad_buf));
+
+  printf("iwad_name: [%s] (%p)\n", iwad_name, iwad_name);
+
+  M_BufferFree(&iwad_buf);
+
+  iwad_path = I_FindFile(iwad_name, ".wad");
+
+  if (!iwad_path) {
+    D_Msg(MSG_WARN, "IWAD %s not found\n", iwad_name);
+    free(iwad_name);
+    return false;
+  }
+
+  free(iwad_name);
+
   W_ReleaseAllWads();
   D_ClearIWAD();
   D_ClearResourceFiles();
   D_ClearDEHFiles();
 
-  M_BufferInit(&iwad_buf);
-  read_string(pbuf, &iwad_buf, "IWAD", MAX_IWAD_NAME_LENGTH);
-  D_SetIWAD(M_BufferGetData(&iwad_buf));
-  IdentifyVersion();
-  M_BufferFree(&iwad_buf);
+  AddIWAD(iwad_path);
+  D_SetIWAD(iwad_path);
+  free(iwad_path);
 
-  D_AddFile(PACKAGE_TARNAME ".wad", source_auto_load);
+  IdentifyVersion();
 
   /*
    * CG: TODO: Add missing resources to a list of resources to fetch with
@@ -433,6 +453,7 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
    */
 
   read_bool(pbuf, has_resources, "has resources");
+
   if (has_resources) {
     rf_list = g_ptr_array_new_with_free_func(free_string);
     read_string_array(
@@ -449,6 +470,8 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
     }
     g_ptr_array_free(rf_list, true);
   }
+
+  D_AddFile(PACKAGE_TARNAME ".wad", source_auto_load);
 
   read_uint(pbuf, deh_file_count, "DeH/BEX file count");
 

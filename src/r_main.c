@@ -888,8 +888,7 @@ void R_ExecuteSetViewSize (void)
 
 extern int screenblocks;
 
-void R_Init (void)
-{
+void R_Init(void) {
   // CPhipps - R_DrawColumn isn't constant anymore, so must
   //  initialise in code
   // current column draw function

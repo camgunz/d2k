@@ -856,8 +856,9 @@ void WI_updateNoState(void)
 
   WI_updateAnimatedBack();
 
-  if (!--cnt)
+  if (!--cnt) {
     G_WorldDone();
+  }
 }
 
 static bool    snl_pointeron = false;
@@ -887,10 +888,12 @@ void WI_initShowNextLoc(void)
   // .text:0003119E                 mov     ds:acceleratestage, 0
   // .text:000311A8                 mov     ds:cnt, 3Ch
   // nowhere no hide
-  if (compatibility_level == tasdoom_compatibility)
+  if (compatibility_level == tasdoom_compatibility) {
     cnt = 60;
-  else
+  }
+  else {
     cnt = SHOWNEXTLOCDELAY * TICRATE;
+  }
 
   WI_initAnimatedBack();
 }
@@ -906,10 +909,12 @@ void WI_updateShowNextLoc(void)
 {
   WI_updateAnimatedBack();
 
-  if (!--cnt || acceleratestage)
+  if (!--cnt || acceleratestage) {
     WI_initNoState();
-  else
+  }
+  else {
     snl_pointeron = (cnt & 31) < 20;
+  }
 }
 
 
@@ -1143,7 +1148,7 @@ void WI_updateDeathmatchStats(void)
   }
   else if (dm_state == 4)
   {
-    if (SERVER || acceleratestage)
+    if (acceleratestage)
     {
       S_StartSound(0, sfx_slop);
 
@@ -1468,7 +1473,7 @@ void WI_updateNetgameStats(void)
   }
   else if (ng_state == 10)
   {
-    if (SERVER || acceleratestage)
+    if (acceleratestage)
     {
       S_StartSound(0, sfx_sgcock);
 
@@ -1506,6 +1511,10 @@ void WI_drawNetgameStats(void)
   int   fwidth = V_NamePatchWidth(facebackp);
 
   WI_slamBackground();
+
+  if (MULTINET) {
+    return;
+  }
 
   // draw animated background
   WI_drawAnimatedBack();
@@ -1824,6 +1833,10 @@ void WI_checkForAccelerate(void) {
 void WI_Ticker(void) {
   // counter for general background animation
   bcnt++;
+
+  if (SERVER && (bcnt == (30 * TICRATE))) {
+    acceleratestage = 1;
+  }
 
   if (bcnt == 1) {
     // intermission music

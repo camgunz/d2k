@@ -256,7 +256,7 @@ void W_InitCache(void) {
 
     wf = g_ptr_array_index(resource_files, lumpinfo[i].wadfile);
 
-    if (wf == NULL) {
+    if (!wf) {
       I_Error(
         "W_InitCache: Lump %d has invalid wadfile index (%d)",
         i, lumpinfo[i].wadfile
@@ -283,7 +283,7 @@ void W_InitCache(void) {
 
     wf = g_ptr_array_index(resource_files, lumpinfo[i].wadfile);
 
-    if (wf == NULL) {
+    if (!wf) {
       I_Error(
         "W_InitCache: Lump %d has invalid wadfile index (%d)",
         i, lumpinfo[i].wadfile
