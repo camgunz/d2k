@@ -1,7 +1,7 @@
 WAD="-file heights2.wad"
 WAD=""
 WAD="-file dwango5.wad"
-WAD="-file freedm.wad"
+WAD="-iwad freedm.wad"
 CMD="cbuild/d2k $WAD -skill 5 -warp 1 -nomonsters -serve"
 CMD="cbuild/d2k $WAD -skill 5 -warp 1 -deathmatch -frags 5 -serve"
 CMD="cbuild/d2k $WAD -skill 4 -warp 1 -serve"

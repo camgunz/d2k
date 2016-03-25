@@ -28,7 +28,7 @@
 #pragma interface
 #endif
 
-/* CPhipps - now the endianness handling, converting input or output to/from 
+/* CPhipps - now the endianness handling, converting input or output to/from
  * the machine's endianness to that wanted for this type of I/O
  *
  * To find our own endianness, use config.h
@@ -52,13 +52,13 @@
 #ifdef HAVE_ASM_BYTEORDER_H
 #include <asm/byteorder.h>
 #ifdef __arch__swab16
-#define doom_swap_s  (signed short)__arch__swab16
+#define doom_swap_s  (int16_t)__arch__swab16
 #endif
 #ifdef __arch__swab32
-#define doom_swap_l  (signed long)__arch__swab32
+#define doom_swap_l  (int32_t)__arch__swab32
 #endif
 #ifdef __arch__swab64
-#define doom_swap_ll (signed long long)__arch__swab64
+#define doom_swap_ll (int64_t)__arch__swab64
 #endif
 #endif /* HAVE_ASM_BYTEORDER_H */
 
@@ -74,32 +74,32 @@
 
 #ifndef doom_swap_ll
 #define doom_swap_ll(x) \
-        ((int_64_t)((((uint_64_t)(x) & 0x00000000000000ffLL) << 56) | \
-                    (((uint_64_t)(x) & 0x000000000000ff00LL) << 40) | \
-                    (((uint_64_t)(x) & 0x0000000000ff00ffLL) << 24) | \
-                    (((uint_64_t)(x) & 0x00000000ff0000ffLL) <<  8) | \
-                    (((uint_64_t)(x) & 0x000000ff000000ffLL) >>  8) | \
-                    (((uint_64_t)(x) & 0x0000ff00000000ffLL) >> 24) | \
-                    (((uint_64_t)(x) & 0x00ff0000000000ffLL) >> 40) | \
-                    (((uint_64_t)(x) & 0xff000000000000ffLL) >> 56)))
+        ((int64_t)((((uint64_t)(x) & 0x00000000000000ffLL) << 56) | \
+                   (((uint64_t)(x) & 0x000000000000ff00LL) << 40) | \
+                   (((uint64_t)(x) & 0x0000000000ff00ffLL) << 24) | \
+                   (((uint64_t)(x) & 0x00000000ff0000ffLL) <<  8) | \
+                   (((uint64_t)(x) & 0x000000ff000000ffLL) >>  8) | \
+                   (((uint64_t)(x) & 0x0000ff00000000ffLL) >> 24) | \
+                   (((uint64_t)(x) & 0x00ff0000000000ffLL) >> 40) | \
+                   (((uint64_t)(x) & 0xff000000000000ffLL) >> 56)))
 #endif
 
 #ifndef doom_swap_l
 #define doom_swap_l(x) \
-        ((long int)((((unsigned long int)(x) & 0x000000ffU) << 24) | \
-                    (((unsigned long int)(x) & 0x0000ff00U) <<  8) | \
-                    (((unsigned long int)(x) & 0x00ff0000U) >>  8) | \
-                    (((unsigned long int)(x) & 0xff000000U) >> 24)))
+        ((int32_t)((((unsigned long int)(x) & 0x000000ffU) << 24) | \
+                   (((unsigned long int)(x) & 0x0000ff00U) <<  8) | \
+                   (((unsigned long int)(x) & 0x00ff0000U) >>  8) | \
+                   (((unsigned long int)(x) & 0xff000000U) >> 24)))
 #endif
 
 #ifndef doom_swap_s
 #define doom_swap_s(x) \
-        ((short int)((((unsigned short int)(x) & 0x00ff) << 8) | \
-                     (((unsigned short int)(x) & 0xff00) >> 8))) 
+        ((int16_t)((((unsigned short int)(x) & 0x00ff) << 8) | \
+                   (((unsigned short int)(x) & 0xff00) >> 8)))
 #endif
 
-/* Macros are named doom_XtoYT, where 
- * X is thing to convert from, Y is thing to convert to, chosen from 
+/* Macros are named doom_XtoYT, where
+ * X is thing to convert from, Y is thing to convert to, chosen from
  * n for network, h for host (i.e our machine's), w for WAD (Doom data files)
  * and T is the type, l or s for long or short
  *
@@ -109,9 +109,9 @@
 
 #ifdef WORDS_BIGENDIAN
 
-#define doom_b16(x) (short int)(x)
-#define doom_b32(x) (long int)(x)
-#define doom_b64(x) (int_64_t)(x)
+#define doom_b16(x) (int16_t)(x)
+#define doom_b32(x) (int32_t)(x)
+#define doom_b64(x) (int64_t)(x)
 #define doom_l16(x) doom_swap_s(x)
 #define doom_l32(x) doom_swap_l(x)
 #define doom_l64(x) doom_swap_ll(x)
@@ -121,9 +121,9 @@
 #define doom_b16(x) doom_swap_s(x)
 #define doom_b32(x) doom_swap_l(x)
 #define doom_b64(x) doom_swap_ll(x)
-#define doom_l16(x) (short int)(x)
-#define doom_l32(x) (long int)(x)
-#define doom_l64(x) (int_64_t)(x)
+#define doom_l16(x) (int16_t)(x)
+#define doom_l32(x) (int32_t)(x)
+#define doom_l64(x) (int64_t)(x)
 
 #endif
 

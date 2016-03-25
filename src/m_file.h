@@ -54,6 +54,7 @@ bool        M_IsFileInFolder(const char *folder, const char *file);
 bool        M_IsRootFolder(const char *path);
 bool        M_IsAbsolutePath(const char *path);
 char*       M_StripAbsolutePath(const char *path);
+char*       M_StripExtension(const char *path);
 bool        M_RenamePath(const char *oldpath, const char *newpath);
 
 bool        M_CreateFolder(const char *path, int mode);
