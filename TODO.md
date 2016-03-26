@@ -3,7 +3,6 @@
 ## Proto
 
 1. Fix bugs:
-  - Can outrun plasma and get hit
   - The client will still occasionally not clear commands out
   - Need new-style intermission
   - `P_Printf` doesn't work in server mode

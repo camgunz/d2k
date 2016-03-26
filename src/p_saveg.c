@@ -717,7 +717,6 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
     M_PBufWriteUInt(savebuffer, 0);
   }
 
-
   if (mobj->state < states) {
     I_Error("Invalid mobj state %p (%td, %d, %u)",
       mobj->state, mobj->state - states, mobj->type, mobj->id
@@ -916,7 +915,7 @@ static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
     if (target_id) {
       target = P_IdentLookup(target_id);
 
-      if (target == NULL) {
+      if (!target) {
         I_Error("deserialize_delta_compressed_actors: Invalid mobj target %u",
           target_id
         );
@@ -965,7 +964,7 @@ static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
       if (target_id) {
         target = P_IdentLookup(target_id);
 
-        if (target == NULL) {
+        if (!target) {
           I_Error("deserialize_delta_compressed_actors: Invalid mobj target %u",
             target_id
           );

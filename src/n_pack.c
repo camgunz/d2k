@@ -396,8 +396,6 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
   char *iwad_path;
   GPtrArray *rf_list;
 
-  puts("Unpacking setup");
-
   for (int i = 0; i < MAXPLAYERS; i++)
     playeringame[i] = false;
 
@@ -418,8 +416,6 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
   M_BufferInit(&iwad_buf);
   read_string(pbuf, &iwad_buf, "IWAD", MAX_IWAD_NAME_LENGTH);
   iwad_name = M_StripExtension(M_BufferGetData(&iwad_buf));
-
-  printf("iwad_name: [%s] (%p)\n", iwad_name, iwad_name);
 
   M_BufferFree(&iwad_buf);
 
