@@ -1,7 +1,6 @@
 # To Do
 
 1. Fix bugs:
-  - Can outrun plasma and get hit
   - The client will still occasionally not clear commands out
   - `P_Printf` doesn't work in server mode
   - When console scrollback fills up, FPS sinks

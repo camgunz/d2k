@@ -507,19 +507,20 @@ bool PIT_CheckLine (line_t* ld)
 // PIT_CheckThing
 //
 
-static bool PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
-{
+static bool PIT_CheckThing(mobj_t *thing) { // killough 3/26/98: make static
   fixed_t blockdist;
   int damage;
 
   // killough 11/98: add touchy things
-  if (!(thing->flags & (MF_SOLID|MF_SPECIAL|MF_SHOOTABLE|MF_TOUCHY)))
+  if (!(thing->flags & (MF_SOLID|MF_SPECIAL|MF_SHOOTABLE|MF_TOUCHY))) {
     return true;
+  }
 
   blockdist = thing->radius + tmthing->radius;
 
-  if (D_abs(thing->x - tmx) >= blockdist || D_abs(thing->y - tmy) >= blockdist)
+  if (D_abs(thing->x - tmx) >= blockdist || D_abs(thing->y - tmy) >= blockdist) {
     return true; // didn't hit it
+  }
 
   // killough 11/98:
   //
@@ -528,8 +529,9 @@ static bool PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 
   // don't clip against self
 
-  if (thing == tmthing)
+  if (thing == tmthing) {
     return true;
+  }
 
   /* killough 11/98:
    *
@@ -551,82 +553,85 @@ static bool PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
       (thing->type ^ MT_PAIN) |                    // PEs and lost souls
       (tmthing->type ^ MT_SKULL) &&                // are considered same
       (thing->type ^ MT_SKULL) |                   // (but Barons & Knights
-      (tmthing->type ^ MT_PAIN))                   // are intentionally not)
-    {
+      (tmthing->type ^ MT_PAIN)) {                 // are intentionally not)
       P_DamageMobj(thing, NULL, NULL, thing->health);  // kill object
       return true;
     }
 
   // check for skulls slamming into things
 
-  if (tmthing->flags & MF_SKULLFLY)
-    {
-      // A flying skull is smacking something.
-      // Determine damage amount, and the skull comes to a dead stop.
+  if (tmthing->flags & MF_SKULLFLY) {
+    // A flying skull is smacking something.
+    // Determine damage amount, and the skull comes to a dead stop.
 
-      int damage = ((P_Random(pr_skullfly)%8)+1)*tmthing->info->damage;
+    int damage = ((P_Random(pr_skullfly) % 8) + 1) * tmthing->info->damage;
 
-      P_DamageMobj (thing, tmthing, tmthing, damage);
+    P_DamageMobj(thing, tmthing, tmthing, damage);
 
-      tmthing->flags &= ~MF_SKULLFLY;
-      tmthing->momx = tmthing->momy = tmthing->momz = 0;
+    tmthing->flags &= ~MF_SKULLFLY;
+    tmthing->momx = tmthing->momy = tmthing->momz = 0;
 
-      P_SetMobjState (tmthing, tmthing->info->spawnstate);
+    P_SetMobjState(tmthing, tmthing->info->spawnstate);
 
-      return false;   // stop moving
-    }
+    return false;   // stop moving
+  }
 
   // missiles can hit other things
   // killough 8/10/98: bouncing non-solid things can hit other things too
 
+  // see if it went over / under
   if (tmthing->flags & MF_MISSILE || (tmthing->flags & MF_BOUNCES &&
-              !(tmthing->flags & MF_SOLID)))
-    {
-      // see if it went over / under
+                                      !(tmthing->flags & MF_SOLID))) {
 
-      if (tmthing->z > thing->z + thing->height)
-  return true;    // overhead
+      if (tmthing->z > thing->z + thing->height) {
+        return true;    // overhead
+      }
 
-      if (tmthing->z+tmthing->height < thing->z)
-  return true;    // underneath
+      if (tmthing->z+tmthing->height < thing->z) {
+        return true;    // underneath
+      }
 
-      if (tmthing->target && (tmthing->target->type == thing->type ||
-    (tmthing->target->type == MT_KNIGHT && thing->type == MT_BRUISER)||
-    (tmthing->target->type == MT_BRUISER && thing->type == MT_KNIGHT)))
-      {
-  if (thing == tmthing->target)
-    return true;                // Don't hit same species as originator.
-  else
-    // e6y: Dehacked support - monsters infight
-    if (thing->type != MT_PLAYER && !monsters_infight) // Explode, but do no damage.
-      return false;         // Let players missile other players.
+      if (tmthing->target && (tmthing->target->type == thing->type || (
+                              tmthing->target->type == MT_KNIGHT &&
+                              thing->type == MT_BRUISER) || (
+                              tmthing->target->type == MT_BRUISER &&
+                              thing->type == MT_KNIGHT))) {
+        if (thing == tmthing->target) {
+          return true;                // Don't hit same species as originator.
+        }
+        // e6y: Dehacked support - monsters infight
+        else if (thing->type != MT_PLAYER && !monsters_infight) {
+          // Explode, but do no damage.
+          return false;         // Let players missile other players.
+        }
       }
 
       // killough 8/10/98: if moving thing is not a missile, no damage
       // is inflicted, and momentum is reduced if object hit is solid.
 
       if (!(tmthing->flags & MF_MISSILE)) {
-  if (!(thing->flags & MF_SOLID)) {
-      return true;
-  } else {
-      tmthing->momx = -tmthing->momx;
-      tmthing->momy = -tmthing->momy;
-      if (!(tmthing->flags & MF_NOGRAVITY))
-        {
-    tmthing->momx >>= 2;
-    tmthing->momy >>= 2;
+        if (!(thing->flags & MF_SOLID)) {
+          return true;
         }
-      return false;
-  }
+        else {
+          tmthing->momx = -tmthing->momx;
+          tmthing->momy = -tmthing->momy;
+          if (!(tmthing->flags & MF_NOGRAVITY)) {
+              tmthing->momx >>= 2;
+              tmthing->momy >>= 2;
+          }
+          return false;
+        }
       }
 
-      if (!(thing->flags & MF_SHOOTABLE))
-  return !(thing->flags & MF_SOLID); // didn't do any damage
+      if (!(thing->flags & MF_SHOOTABLE)) {
+        return !(thing->flags & MF_SOLID); // didn't do any damage
+      }
 
       // damage / explode
 
-      damage = ((P_Random(pr_damage)%8)+1)*tmthing->info->damage;
-      P_DamageMobj (thing, tmthing, tmthing->target, damage);
+      damage = ((P_Random(pr_damage) % 8) + 1) * tmthing->info->damage;
+      P_DamageMobj(thing, tmthing, tmthing->target, damage);
 
       // don't traverse any more
       return false;
@@ -634,13 +639,15 @@ static bool PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
 
   // check for special pickup
 
-  if (thing->flags & MF_SPECIAL)
-    {
-      uint_64_t solid = thing->flags & MF_SOLID;
-      if (tmthing->flags & MF_PICKUP)
-  P_TouchSpecialThing(thing, tmthing); // can remove thing
-      return !solid;
+  if (thing->flags & MF_SPECIAL) {
+    uint_64_t solid = thing->flags & MF_SOLID;
+
+    if (tmthing->flags & MF_PICKUP) { 
+      P_TouchSpecialThing(thing, tmthing); // can remove thing
     }
+
+    return !solid;
+  }
 
   // RjY
   // comperr_hangsolid, an attempt to handle blocking hanging bodies
@@ -665,12 +672,14 @@ static bool PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
   // Correction of wrong return value with demo_compatibility.
   // There is no more synch on http://www.doomworld.com/sda/dwdemo/w303-115.zip
   // (with correction in setMobjInfoValue)
-  if (demo_compatibility && !prboom_comp[PC_TREAT_NO_CLIPPING_THINGS_AS_NOT_BLOCKING].state)
+  if (demo_compatibility &&
+      !prboom_comp[PC_TREAT_NO_CLIPPING_THINGS_AS_NOT_BLOCKING].state) {
     return !(thing->flags & MF_SOLID);
-  else
-
-  return !((thing->flags & MF_SOLID && !(thing->flags & MF_NOCLIP))
-           && (tmthing->flags & MF_SOLID || demo_compatibility));
+  }
+  else {
+    return !((thing->flags & MF_SOLID && !(thing->flags & MF_NOCLIP))
+             && (tmthing->flags & MF_SOLID || demo_compatibility));
+  }
 
   // return !(thing->flags & MF_SOLID);   // old code -- killough
 }
