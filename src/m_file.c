@@ -299,6 +299,21 @@ char* M_StripAbsolutePath(const char *path) {
   return strdup(no_root);
 }
 
+char* M_StripExtension(const char *path) {
+  char *out;
+  const gchar *dot = g_strrstr(path, ".");
+
+  if (!dot) {
+    out = strdup(path);
+  }
+  else {
+    out = calloc((dot - path) + 1, sizeof(char));
+    strncpy(out, path, dot - path);
+  }
+
+  return out;
+}
+
 bool M_RenamePath(const char *oldpath, const char *newpath) {
   int res = g_rename(oldpath, newpath);
 

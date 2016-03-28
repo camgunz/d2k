@@ -257,6 +257,16 @@ local scoreboard_widget = ContainerWidget.ContainerWidget({
   bg_color = {0.0, 0.0, 0.0, 0.65}
 })
 
+function scoreboard_widget:is_active()
+  local active = ContainerWidget.ContainerWidget.is_active(self)
+
+  if not active then
+    active = d2k.Game.in_intermission()
+  end
+
+  return active
+end
+
 function scoreboard_widget:render()
   if self:is_active() then
     ContainerWidget.ContainerWidget.render(self)

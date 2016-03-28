@@ -57,7 +57,7 @@ enum {
   ACTOR_ANGLE = 1 << 6,
   ACTOR_TICS  = 1 << 7,
   ACTOR_PITCH = 1 << 8,
-  ACTOR_FLAGS = 1 << 9,
+  ACTOR_FLAGS = 1 << 9
 };
 
 extern int numspechit;
@@ -366,28 +366,33 @@ static void serialize_actor_pointers(pbuf_t *savebuffer, mobj_t *mobj) {
   // the thinker pointed to by these fields is not a
   // mobj thinker.
 
-  if (mobj->target && mobj->target->thinker.function == P_MobjThinker)
+  if (mobj->target && mobj->target->thinker.function == P_MobjThinker) {
     target_id = mobj->target->id;
+  }
 
-  if (mobj->tracer && mobj->tracer->thinker.function == P_MobjThinker)
+  if (mobj->tracer && mobj->tracer->thinker.function == P_MobjThinker) {
     tracer_id = mobj->tracer->id;
+  }
 
   // killough 2/14/98: new field: save last known enemy. Prevents
   // monsters from going to sleep after killing monsters and not
   // seeing player anymore.
 
-  if (mobj->lastenemy && mobj->lastenemy->thinker.function == P_MobjThinker)
+  if (mobj->lastenemy && mobj->lastenemy->thinker.function == P_MobjThinker) {
     lastenemy_id = mobj->lastenemy->id;
+  }
 
   // killough 2/14/98: end changes
 
-  if (mobj->state < states)
+  if (mobj->state < states) {
     I_Error("serialize_actor_pointers: Invalid mobj state %p", mobj->state);
+  }
 
   state_index = (uint_64_t)(mobj->state - states);
 
-  if (state_index >= NUMSTATES)
+  if (state_index >= NUMSTATES) {
     I_Error("serialize_actor_pointers: Invalid mobj state %p", mobj->state);
+  }
 
   state_index++;
 
@@ -461,7 +466,8 @@ static void deserialize_actor_pointers(pbuf_t *savebuffer, mobj_t *mobj) {
     if (target == NULL)
       I_Error("deserialize_actor_pointers: Invalid mobj target %u", target_id);
 
-    P_SetTarget(&mobj->target, P_IdentLookup(target_id));
+    // P_SetTarget(&mobj->target, P_IdentLookup(target_id));
+    P_SetTarget(&mobj->target, target);
   }
 
   if (tracer_id) {
@@ -470,7 +476,8 @@ static void deserialize_actor_pointers(pbuf_t *savebuffer, mobj_t *mobj) {
     if (tracer == NULL)
       I_Error("deserialize_actor_pointers: Invalid mobj tracer %u", tracer_id);
 
-    P_SetTarget(&mobj->tracer, P_IdentLookup(tracer_id));
+    // P_SetTarget(&mobj->tracer, P_IdentLookup(tracer_id));
+    P_SetTarget(&mobj->tracer, tracer);
   }
 
   if (lastenemy_id) {
@@ -482,7 +489,8 @@ static void deserialize_actor_pointers(pbuf_t *savebuffer, mobj_t *mobj) {
       );
     }
 
-    P_SetTarget(&mobj->lastenemy, P_IdentLookup(lastenemy_id));
+    // P_SetTarget(&mobj->lastenemy, P_IdentLookup(lastenemy_id));
+    P_SetTarget(&mobj->lastenemy, lastenemy);
   }
 
   if (player_index) {
@@ -692,14 +700,22 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
   M_PBufWriteInt(savebuffer, actor_type);
   M_PBufWriteUInt(savebuffer, actors->len);
 
-  if (actors->len == 0)
+  if (actors->len == 0) {
     return;
+  }
 
   memset(&last_actor, 0, sizeof(mobj_t));
 
   mobj = g_ptr_array_index(actors, 0);
 
   M_PBufWriteUInt(savebuffer, mobj->id);
+
+  if (mobj->target) {
+    M_PBufWriteUInt(savebuffer, mobj->target->id);
+  }
+  else {
+    M_PBufWriteUInt(savebuffer, 0);
+  }
 
   if (mobj->state < states) {
     I_Error("Invalid mobj state %p (%td, %d, %u)",
@@ -709,8 +725,9 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
 
   state_index = (uint_64_t)(mobj->state - states);
 
-  if (state_index >= NUMSTATES)
+  if (state_index >= NUMSTATES) {
     I_Error("Invalid mobj state %p", mobj->state);
+  }
 
   state_index++;
 
@@ -734,36 +751,64 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
 
     mobj = g_ptr_array_index(actors, i);
 
-    if (mobj->x != last_actor.x)
+    if (mobj->x != last_actor.x) {
       delta_flags |= ACTOR_X;
-    if (mobj->y != last_actor.y)
+    }
+
+    if (mobj->y != last_actor.y) {
       delta_flags |= ACTOR_Y;
-    if (mobj->z != last_actor.z)
+    }
+
+    if (mobj->z != last_actor.z) {
       delta_flags |= ACTOR_Z;
-    if (mobj->x != last_actor.momx)
+    }
+
+    if (mobj->x != last_actor.momx) {
       delta_flags |= ACTOR_MOMX;
-    if (mobj->y != last_actor.momy)
+    }
+
+    if (mobj->y != last_actor.momy) {
       delta_flags |= ACTOR_MOMY;
-    if (mobj->z != last_actor.momz)
+    }
+
+    if (mobj->z != last_actor.momz) {
       delta_flags |= ACTOR_MOMZ;
-    if (mobj->angle != last_actor.angle)
+    }
+
+    if (mobj->angle != last_actor.angle) {
       delta_flags |= ACTOR_ANGLE;
-    if (mobj->tics != last_actor.tics)
+    }
+
+    if (mobj->tics != last_actor.tics) {
       delta_flags |= ACTOR_TICS;
-    if (mobj->pitch != last_actor.pitch)
+    }
+
+    if (mobj->pitch != last_actor.pitch) {
       delta_flags |= ACTOR_PITCH;
-    if (mobj->flags != last_actor.flags)
+    }
+
+    if (mobj->flags != last_actor.flags) {
       delta_flags |= ACTOR_FLAGS;
+    }
 
     M_PBufWriteUInt(savebuffer, mobj->id);
 
-    if (mobj->state < states)
+    if (mobj->target) {
+      M_PBufWriteUInt(savebuffer, mobj->target->id);
+    }
+    else {
+      M_PBufWriteUInt(savebuffer, 0);
+    }
+
+    if (mobj->state < states) {
       I_Error("Invalid mobj state %p", mobj->state);
+    }
 
     state_index = (uint_64_t)(mobj->state - states);
 
-    if (state_index >= NUMSTATES)
+    if (state_index >= NUMSTATES) {
       I_Error("Invalid mobj state %p", mobj->state);
+    }
 
     state_index++;
 
@@ -771,26 +816,45 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
 
     M_PBufWriteUInt(savebuffer, delta_flags);
 
-    if (delta_flags & ACTOR_X)
+    if (delta_flags & ACTOR_X) {
       M_PBufWriteInt(savebuffer, mobj->x - last_actor.x);
-    if (delta_flags & ACTOR_Y)
+    }
+
+    if (delta_flags & ACTOR_Y) {
       M_PBufWriteInt(savebuffer, mobj->y - last_actor.y);
-    if (delta_flags & ACTOR_Z)
+    }
+
+    if (delta_flags & ACTOR_Z) {
       M_PBufWriteInt(savebuffer, mobj->z - last_actor.z);
-    if (delta_flags & ACTOR_MOMX)
+    }
+
+    if (delta_flags & ACTOR_MOMX) {
       M_PBufWriteInt(savebuffer, mobj->momx - last_actor.momx);
-    if (delta_flags & ACTOR_MOMY)
+    }
+
+    if (delta_flags & ACTOR_MOMY) {
       M_PBufWriteInt(savebuffer, mobj->momy - last_actor.momy);
-    if (delta_flags & ACTOR_MOMZ)
+    }
+
+    if (delta_flags & ACTOR_MOMZ) {
       M_PBufWriteInt(savebuffer, mobj->momz - last_actor.momz);
-    if (delta_flags & ACTOR_ANGLE)
+    }
+
+    if (delta_flags & ACTOR_ANGLE) {
       M_PBufWriteLong(savebuffer, mobj->angle - last_actor.angle);
-    if (delta_flags & ACTOR_TICS)
+    }
+
+    if (delta_flags & ACTOR_TICS) {
       M_PBufWriteInt(savebuffer, mobj->tics - last_actor.tics);
-    if (delta_flags & ACTOR_PITCH)
+    }
+
+    if (delta_flags & ACTOR_PITCH) {
       M_PBufWriteLong(savebuffer, mobj->pitch - last_actor.pitch);
-    if (delta_flags & ACTOR_FLAGS)
+    }
+
+    if (delta_flags & ACTOR_FLAGS) {
       M_PBufWriteULong(savebuffer, mobj->flags ^ last_actor.flags);
+    }
 
     memcpy(&last_actor, mobj, sizeof(mobj_t));
   }
@@ -816,21 +880,26 @@ static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
     unsigned int actor_count;
     mobj_t last_actor;
     mobj_t *mobj;
+    mobj_t *target;
+    unsigned int target_id = 0;
     uint_64_t state_index;
 
     M_PBufReadInt(savebuffer, (int *)(&actor_type));
 
-    if (actor_type >= NUMMOBJTYPES)
+    if (actor_type >= NUMMOBJTYPES) {
       I_Error("P_UnArchiveThinkers: Invalid actor type %d\n", actor_type);
+    }
 
     M_PBufReadUInt(savebuffer, &actor_count);
 
-    if (actor_count == 0)
+    if (actor_count == 0) {
       continue;
+    }
 
     mobj = build_actor(actor_type);
 
     M_PBufReadUInt(savebuffer, &mobj->id);
+    M_PBufReadUInt(savebuffer, &target_id);
     M_PBufReadULong(savebuffer, &state_index);
     M_PBufReadInt(savebuffer, &mobj->x);
     M_PBufReadInt(savebuffer, &mobj->y);
@@ -843,6 +912,18 @@ static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
     M_PBufReadUInt(savebuffer, &mobj->pitch);
     M_PBufReadULong(savebuffer, &mobj->flags);
 
+    if (target_id) {
+      target = P_IdentLookup(target_id);
+
+      if (!target) {
+        I_Error("deserialize_delta_compressed_actors: Invalid mobj target %u",
+          target_id
+        );
+      }
+
+      P_SetTarget(&mobj->target, target);
+    }
+
     if (state_index > NUMSTATES) {
       I_Error(
         "deserialize_delta_compressed_actors: Invalid mobj state %" PRIu64,
@@ -850,10 +931,12 @@ static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
       );
     }
 
-    if (state_index)
+    if (state_index) {
       mobj->state = &states[state_index - 1];
-    else
+    }
+    else {
       mobj->state = (state_t *)S_NULL;
+    }
 
     mobj->sprite = mobj->state->sprite;
     mobj->frame = mobj->state->frame;
@@ -875,6 +958,21 @@ static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
       mobj = build_actor(actor_type);
 
       M_PBufReadUInt(savebuffer, &mobj->id);
+
+      M_PBufReadUInt(savebuffer, &target_id);
+
+      if (target_id) {
+        target = P_IdentLookup(target_id);
+
+        if (!target) {
+          I_Error("deserialize_delta_compressed_actors: Invalid mobj target %u",
+            target_id
+          );
+        }
+
+        P_SetTarget(&mobj->target, target);
+      }
+
       M_PBufReadULong(savebuffer, &state_index);
 
       if (state_index > NUMSTATES) {

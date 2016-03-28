@@ -238,9 +238,12 @@ critical I'm using the for loop now.
     memcpy(texture->name, mtexture->name, sizeof(texture->name));
 #else
 */
-    for (size_t j = 0; j < sizeof(texture->name); j++)
+    for (size_t j = 0; j < sizeof(texture->name); j++) {
       texture->name[j] = mtexture->name[j];
+    }
+
 /* #endif */
+
 
     mpatch = mtexture->patches;
     patch = texture->patches;
@@ -590,6 +593,7 @@ int PUREFUNC R_CheckTextureNumForName(const char *name)
       while (i >= 0 && strncasecmp(textures[i]->name,name,8))
         i = textures[i]->next;
     }
+
   return i;
 }
 
