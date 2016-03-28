@@ -2239,6 +2239,7 @@ static void D_DoomMainSetup(void) {
   XD_MsgRegisterInterface();
   XG_GameRegisterInterface();
   XG_KeysRegisterInterface();
+  XG_MapRegisterInterface();
   XI_RegisterInterface();
   XI_InputRegisterInterface();
   XM_MenuRegisterInterface();
