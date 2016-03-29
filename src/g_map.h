@@ -24,6 +24,7 @@
 #ifndef G_MAP_H__
 #define G_MAP_H__
 
+bool   G_MapListActive(void);
 bool   G_MapListLoadPreviousMap(void);
 bool   G_MapListLoadNextMap(void);
 bool   G_MapListReloadMap(void);

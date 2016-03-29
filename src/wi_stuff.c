@@ -1569,9 +1569,10 @@ void WI_drawNetgameStats(void)
     y += WI_SPACINGY;
   }
 
-  if (y <= SP_TIMEY)
-    // cph - show times in coop on the entering screen
+  // cph - show times in coop on the entering screen
+  if (y <= SP_TIMEY) {
     WI_drawTimeStats(plrs[me].stime / TICRATE, wbs->totaltimes / TICRATE, wbs->partime / TICRATE);
+  }
 }
 
 static int  sp_state;

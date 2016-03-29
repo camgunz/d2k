@@ -28,6 +28,14 @@
 static json_t *map_list = NULL;
 static size_t  map_list_index = 0;
 
+bool G_MapListActive(void) {
+  if (map_list) {
+    return true;
+  }
+
+  return false;
+}
+
 bool G_MapListLoadPreviousMap(void) {
   size_t index = map_list_index;
   size_t map_count = G_MapListLength();

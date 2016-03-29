@@ -82,6 +82,10 @@ extern bool setsizeneeded;
 #define SLOWTURNTICS  6
 #define QUICKREVERSE (short)32768 // 180 degree reverse                    // phares
 
+static skill_t d_skill;
+static int     d_episode;
+static int     d_map;
+
 static bool        netdemo;
 static const byte *demobuffer;   /* cph - only used for playback */
 static int         demolength; // check for overrun (missing DEMOMARKER)
@@ -133,6 +137,27 @@ static bool *joybuttons = &joyarray[1];    // allow [-1]
 static buttoncode_t special_event; // Event triggered by local player, to send
 
 static gameaction_t gameaction;
+
+const char * comp_lev_str[MAX_COMPATIBILITY_LEVEL] = {
+  "Doom v1.2",
+  "Doom v1.666",
+  "Doom/Doom2 v1.9",
+  "Ultimate Doom/Doom95",
+  "Final Doom",
+  "early DosDoom",
+  "TASDoom",
+  "\"boom compatibility\"",
+  "boom v2.01",
+  "boom v2.02",
+  "lxdoom v1.3.2+",
+  "MBF",
+  "PrBoom 2.03beta",
+  "PrBoom v2.1.0-2.1.1",
+  "PrBoom v2.1.2-v2.2.6",
+  "PrBoom v2.3.x",
+  "PrBoom 2.4.0",
+  "Current PrBoom"
+};
 
 fixed_t forwardmove[2] = {0x19, 0x32};
 fixed_t sidemove[2]    = {0x18, 0x28};
@@ -1847,63 +1872,27 @@ void G_SecretExitLevel(void) {
   G_SetGameAction(ga_completed);
 }
 
-//
-// G_DoCompleted
-//
-
-void G_DoCompleted(void) {
-  int i;
-
-  G_SetGameAction(ga_nothing);
-
-  for (i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i])
-      G_PlayerFinishLevel(i);        // take away cards and stuff
-  }
-
-  if (automapmode & am_active)
-    AM_Stop();
-
-  if (gamemode != commercial) { // kilough 2/7/98
-    // Chex Quest ends after 5 levels, rather than 8.
-    if (gamemission == chex) {
-      if (gamemap == 5) {
-        G_SetGameAction(ga_victory);
-        return;
-      }
-    }
-    else {
-      switch(gamemap) {
-      // cph - Remove ExM8 special case, so it gets summary screen displayed
-        case 9:
-          for (i = 0; i < MAXPLAYERS; i++)
-            players[i].didsecret = true;
-        break;
-      }
-    }
-  }
-
-  wminfo.didsecret = players[consoleplayer].didsecret;
-  wminfo.epsd = gameepisode -1;
-  wminfo.last = gamemap -1;
+static int G_DoomGetNextMapNumber(void) {
+  int next_game_map = wminfo.next;
 
   // wminfo.next is 0 biased, unlike gamemap
+
   if (gamemode == commercial) {
     if (secretexit) {
       switch(gamemap) {
         case 15:
-          wminfo.next = 30;
+          next_game_map = 30;
         break;
         case 31:
-          wminfo.next = 31;
+          next_game_map = 31;
         break;
         case 2:
           if (bfgedition && SINGLEPLAYER)
-            wminfo.next = 32;
+            next_game_map = 32;
         break;
         case 4:
           if (gamemission == pack_nerve && SINGLEPLAYER)
-            wminfo.next = 8;
+            next_game_map = 8;
         break;
       }
     }
@@ -1911,42 +1900,55 @@ void G_DoCompleted(void) {
       switch (gamemap) {
         case 31:
         case 32:
-          wminfo.next = 15;
+          next_game_map = 15;
         break;
         case 33:
           if (bfgedition && SINGLEPLAYER) {
-            wminfo.next = 2;
+            next_game_map = 2;
             break;
           }
         default:
-          wminfo.next = gamemap;
+          next_game_map = gamemap;
       }
     }
     if (gamemission == pack_nerve && SINGLEPLAYER && gamemap == 9)
-      wminfo.next = 4;
+      next_game_map = 4;
   }
   else if (secretexit) {
-    wminfo.next = 8;  // go to secret level
+    next_game_map = 8;  // go to secret level
   }
   else if (gamemap == 9) {
     // returning from secret level
     switch (gameepisode) {
       case 1:
-        wminfo.next = 3;
+        next_game_map = 3;
       break;
       case 2:
-        wminfo.next = 5;
+        next_game_map = 5;
       break;
       case 3:
-        wminfo.next = 6;
+        next_game_map = 6;
       break;
       case 4:
-        wminfo.next = 2;
+        next_game_map = 2;
       break;
     }
   }
   else {
-    wminfo.next = gamemap;          // go to next level
+    next_game_map = gamemap;          // go to next level
+  }
+
+  return next_game_map;
+}
+
+static void G_StartIntermission(void) {
+  int i;
+
+  wminfo.didsecret = players[consoleplayer].didsecret;
+  wminfo.epsd = gameepisode -1;
+  wminfo.last = gamemap -1;
+  if (!G_MapListActive()) {
+    wminfo.next = G_DoomGetNextMapNumber();
   }
 
   wminfo.maxkills = totalkills;
@@ -1954,7 +1956,10 @@ void G_DoCompleted(void) {
   wminfo.maxsecret = totalsecret;
   wminfo.maxfrags = 0;
 
-  if (gamemode == commercial) {
+  if (G_MapListActive()) {
+    wminfo.partime = 0;
+  }
+  else if (gamemode == commercial) {
     if (gamemap >= 1 && gamemap <= 34)
       wminfo.partime = TICRATE * cpars[gamemap - 1];
   }
@@ -2001,6 +2006,47 @@ void G_DoCompleted(void) {
 }
 
 //
+// G_DoCompleted
+//
+
+void G_DoCompleted(void) {
+  int i;
+
+  G_SetGameAction(ga_nothing);
+
+  for (i = 0; i < MAXPLAYERS; i++) {
+    if (playeringame[i])
+      G_PlayerFinishLevel(i);        // take away cards and stuff
+  }
+
+  if (automapmode & am_active)
+    AM_Stop();
+
+  if (!G_MapListActive()) {
+    if (gamemode != commercial) { // kilough 2/7/98
+      // Chex Quest ends after 5 levels, rather than 8.
+      if (gamemission == chex) {
+        if (gamemap == 5) {
+          G_SetGameAction(ga_victory);
+          return;
+        }
+      }
+      else {
+        switch(gamemap) {
+        // cph - Remove ExM8 special case, so it gets summary screen displayed
+          case 9:
+            for (i = 0; i < MAXPLAYERS; i++)
+              players[i].didsecret = true;
+          break;
+        }
+      }
+    }
+  }
+
+  G_StartIntermission();
+}
+
+//
 // G_WorldDone
 //
 
@@ -2010,26 +2056,28 @@ void G_WorldDone(void) {
   if (secretexit)
     players[consoleplayer].didsecret = true;
 
-  if (gamemode == commercial && gamemission != pack_nerve) {
-    switch (gamemap) {
-      case 15:
-      case 31:
-        if (!secretexit)
-          break;
-      case 6:
-      case 11:
-      case 20:
-      case 30:
-        F_StartFinale();
-      break;
+  if (!G_MapListActive()) {
+    if (gamemode == commercial && gamemission != pack_nerve) {
+      switch (gamemap) {
+        case 15:
+        case 31:
+          if (!secretexit)
+            break;
+        case 6:
+        case 11:
+        case 20:
+        case 30:
+          F_StartFinale();
+        break;
+      }
     }
-  }
-  else if (gamemission == pack_nerve && SINGLEPLAYER && gamemap == 8) {
-    F_StartFinale();
-  }
-  else if (gamemap == 8) {
-    // cph - after ExM8 summary screen, show victory stuff
-    G_SetGameAction(ga_victory);
+    else if (gamemission == pack_nerve && SINGLEPLAYER && gamemap == 8) {
+      F_StartFinale();
+    }
+    else if (gamemap == 8) {
+      // cph - after ExM8 summary screen, show victory stuff
+      G_SetGameAction(ga_victory);
+    }
   }
 }
 
@@ -2050,31 +2098,6 @@ void G_DoWorldDone(void) {
  * It is used to distinguish between wads, for the purposes
  * of savegame compatibility warnings, and options lookups.
  */
-
-const char * comp_lev_str[MAX_COMPATIBILITY_LEVEL] = {
-  "Doom v1.2",
-  "Doom v1.666",
-  "Doom/Doom2 v1.9",
-  "Ultimate Doom/Doom95",
-  "Final Doom",
-  "early DosDoom",
-  "TASDoom",
-  "\"boom compatibility\"",
-  "boom v2.01",
-  "boom v2.02",
-  "lxdoom v1.3.2+",
-  "MBF",
-  "PrBoom 2.03beta",
-  "PrBoom v2.1.0-2.1.1",
-  "PrBoom v2.1.2-v2.2.6",
-  "PrBoom v2.3.x",
-  "PrBoom 2.4.0",
-  "Current PrBoom"
-};
-
-static skill_t d_skill;
-static int     d_episode;
-static int     d_map;
 
 void G_DeferedInitNew(skill_t skill, int episode, int map) {
   d_skill = skill;
