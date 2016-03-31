@@ -26,6 +26,7 @@
 
 #include "c_eci.h"
 #include "c_main.h"
+#include "x_intern.h"
 #include "x_main.h"
 
 int XC_HandleInput(lua_State *L) {

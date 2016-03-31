@@ -63,14 +63,6 @@
 
 extern SDL_Surface *screen;
 
-static GString *player_message_buffers[MAXPLAYERS] = {
-  NULL, NULL, NULL, NULL
-};
-
-static GString *player_center_message_buffers[MAXPLAYERS] = {
-  NULL, NULL, NULL, NULL
-};
-
 // global heads up display controls
 
 int hud_displayed;    //jff 2/23/98 turns heads-up display on/off
@@ -313,11 +305,6 @@ void HU_Init(void) {
 
   if (nodrawers)
     return;
-
-  for (i = 0; i < MAXPLAYERS; i++) {
-    player_message_buffers[i] = g_string_new("");
-    player_center_message_buffers[i] = g_string_new("");
-  }
 
   // load the heads-up font
   j = HU_FONTSTART;
@@ -2079,8 +2066,9 @@ void HU_widget_draw_gkeys(void)
   HUlib_drawTextLine(&w_keys_icon, false);
 }
 
-const char *crosshair_nam[HU_CROSSHAIRS]= { NULL, "CROSS1", "CROSS2", "CROSS3" };
-const char *crosshair_str[HU_CROSSHAIRS]= { "none", "cross", "angle", "dot" };
+const char *crosshair_nam[HU_CROSSHAIRS] = { NULL, "CROSS1", "CROSS2", "CROSS3" };
+const char *crosshair_str[HU_CROSSHAIRS] = { "none", "cross", "angle", "dot" };
+
 crosshair_t crosshair;
 
 void HU_init_crosshair(void)
@@ -2443,45 +2431,6 @@ void HU_Ticker(void) {
 
   if (!X_Call(X_GetState(), "hud", "tick", 0, 0))
     I_Error("HU_Ticker: Error ticking HUD (%s)", X_GetError(X_GetState()));
-
-#if 0
-
-  if (nodrawers)
-    return;
-
-  if (CL_RePredicting())
-    return;
-
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    player_t *player = &players[i];
-
-    if (!playeringame[i])
-      continue;
-
-    for (unsigned int i = 0; i < player->messages.messages->len; i++) {
-      player_message_t *msg = player->messages.messages->pdata[i];
-
-      if (msg->processed)
-        continue;
-
-      if (msg->centered) {
-        g_string_append(player_center_message_buffers[i], msg->content);
-        HU_MessageWidgetTextAppended(w_centermsg);
-      }
-      else {
-        g_string_append(player_message_buffers[i], msg->content);
-        HU_MessageWidgetTextAppended(w_messages);
-      }
-
-      if (i == displayplayer && msg->sfx > 0 && msg->sfx < NUMSFX)
-        S_StartSound(NULL, msg->sfx);
-
-      msg->processed = true;
-    }
-  }
-
-  HU_MessageWidgetTicker(w_messages);
-#endif
 }
 
 //

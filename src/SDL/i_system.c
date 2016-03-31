@@ -300,7 +300,7 @@ void I_SwitchToWindow(HWND hwnd) {
 }
 
 const char* I_DoomExeDir(void) {
-  static char *base;
+  static char *base = NULL;
 
   /*
    * CG: This code is largely from GLib, released under the GPLv2 (or any later

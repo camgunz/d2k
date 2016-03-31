@@ -27,6 +27,7 @@
 #include "d_event.h"
 #include "g_game.h"
 #include "n_net.h"
+#include "x_intern.h"
 #include "x_main.h"
 
 static int XN_IsSingleplayer(lua_State *L) {

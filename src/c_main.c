@@ -169,15 +169,14 @@ void C_SetFullscreen(void) {
 }
 
 bool C_Active(void) {
-  lua_State *L;
+  x_engine_t *xe;
   bool is_active = false;
 
   if (!nodrawers) {
-    L = X_GetState();
+    xe = X_GetState();
 
-    X_Call(L, "console", "is_active", 0, 1);
-    is_active = lua_toboolean(L, -1);
-    lua_pop(L, 1);
+    X_Call(xe, "console", "is_active", 0, 1);
+    is_active = X_PopBoolean(xe);
   }
 
   return is_active;

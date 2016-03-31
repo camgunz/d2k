@@ -30,19 +30,36 @@
 #include "i_main.h"
 #include "i_system.h"
 #include "m_file.h"
+#include "x_intern.h"
 #include "x_main.h"
+
+/* CG: [TODO] Add a member for metatable, in the case of light userdata */
+typedef struct x_object_s {
+  x_type_e type;
+  union x_object_data_u {
+    bool           boolean;
+    void          *light_userdata;
+    lua_Integer    integer;
+    lua_Unsigned   uinteger;
+    lua_Number     decimal;
+    char          *string;
+    lua_CFunction  function;
+  } as;
+} x_object_t;
 
 static lua_State  *x_main_interpreter = NULL;
 static GHashTable *x_types = NULL;
 static GHashTable *x_global_scope = NULL;
 static GHashTable *x_scopes = NULL;
-static bool        x_started = false;
+static bool        x_initialized = false;
 
 static gboolean x_objects_equal(gconstpointer a, gconstpointer b) {
   return a == b;
 }
 
-static bool push_x_object(lua_State *L, x_object_t *x_obj) {
+static bool push_x_object(x_engine_t xe, x_object_t *x_obj) {
+  lua_State *L = (lua_State *)xe;
+
   switch (x_obj->type) {
     case X_NIL:
       lua_pushnil(L);
@@ -84,8 +101,9 @@ static int error_handler(lua_State *L) {
   const char *error_message = lua_tostring(L, -1);
 
   if (!error_message) {
-    if (luaL_callmeta(L, 1, "__tostring") && lua_type(L, -1) == LUA_TSTRING)
+    if (luaL_callmeta(L, 1, "__tostring") && lua_type(L, -1) == LUA_TSTRING) {
       return 1;
+    }
 
     error_message = lua_pushfstring(L, "(error object is a %s value)",
       luaL_typename(L, 1)
@@ -97,28 +115,68 @@ static int error_handler(lua_State *L) {
   return 1;
 }
 
+static char* get_script_folder(void) {
+  char *script_folder = M_PathJoin(I_DoomExeDir(), X_FOLDER_NAME);
+
+  if (!M_IsFolder(script_folder)) {
+    free(script_folder);
+    script_folder = strdup(X_FOLDER_NAME);
+
+    if (!M_IsFolder(script_folder)) {
+      return NULL;
+    }
+  }
+
+  return script_folder;
+}
+
+bool X_LoadFile(const char *script_name) {
+  char *script_folder = get_script_folder();
+  char *script_path;
+  bool  script_load_failed;
+
+  if (!script_folder) {
+    I_Error("Script folder [%s] is missing", X_FOLDER_NAME);
+  }
+
+  script_path = M_PathJoin(script_folder, script_name);
+
+  if (!M_IsFile(script_path)) {
+    I_Error("Script [%s] is missing", script_path);
+  }
+
+  script_load_failed = luaL_dofile(x_main_interpreter, script_path);
+
+  free(script_folder);
+  free(script_path);
+
+  return !script_load_failed;
+}
+
 void X_Init(void) {
+  char      *script_search_path;
+  char      *script_folder = get_script_folder();
+  GITypelib *typelib;
+
+  if (!script_folder) {
+    I_Error("Script folder [%s] is missing", X_FOLDER_NAME);
+  }
+
   x_main_interpreter = X_NewState();
   luaL_openlibs(x_main_interpreter); /* CG: [TODO] Restrict clientside libs */
 
   x_types = g_hash_table_new(g_str_hash, x_objects_equal);
   x_global_scope = g_hash_table_new(g_str_hash, x_objects_equal);
   x_scopes = g_hash_table_new(g_str_hash, x_objects_equal);
-}
 
-void X_Start(void) {
-  bool script_load_failed;
-  char *init_script_file;
-  char *script_search_path;
-  char *script_folder = M_PathJoin(I_DoomExeDir(), X_FOLDER_NAME);
-  GITypelib *typelib = g_irepository_require(NULL, "GObject", NULL, 0, NULL);
+  typelib = g_irepository_require(NULL, "GObject", NULL, 0, NULL);
 
   if (!typelib) {
     char *typelib_folder = M_PathJoin(I_DoomExeDir(), X_TYPELIB_FOLDER_NAME);
 
     if (!M_IsFolder(typelib_folder)) {
       I_Error(
-        "X_Start: Could not locate typelib folder (%s) for scripting",
+        "X_Init: Could not locate typelib folder (%s) for scripting",
         typelib_folder
       );
     }
@@ -136,50 +194,44 @@ void X_Start(void) {
       typelib_search_paths = g_slist_next(typelib_search_paths);
     }
 
-    I_Error("X_Start: Could not locate typelib files for scripting");
+    I_Error("X_Init: Could not locate typelib files for scripting");
   }
 
-  if (!M_IsFolder(script_folder)) {
-    free(script_folder);
-    script_folder = strdup(X_FOLDER_NAME);
-
-    if (!M_IsFolder(script_folder))
-      I_Error("Script folder [%s] is missing", script_folder);
-  }
-
-  init_script_file = M_PathJoin(script_folder, X_INIT_SCRIPT_NAME);
   script_search_path = M_PathJoin(script_folder, "?.lua");
 
-  if (!M_IsFile(init_script_file))
-    I_Error("Initialization script [%s] is missing", init_script_file);
+  lua_newtable(x_main_interpreter);
+  lua_setglobal(x_main_interpreter, X_NAMESPACE);
 
   lua_getglobal(x_main_interpreter, X_NAMESPACE);
   lua_pushstring(x_main_interpreter, script_folder);
-  lua_setfield(x_main_interpreter, -2, "script_folder");
+  lua_setfield(x_main_interpreter, 1, "script_folder");
   lua_pop(x_main_interpreter, 1);
 
   lua_getglobal(x_main_interpreter, X_NAMESPACE);
   lua_pushstring(x_main_interpreter, script_search_path);
-  lua_setfield(x_main_interpreter, -2, "script_search_path");
+  lua_setfield(x_main_interpreter, 1, "script_search_path");
   lua_pop(x_main_interpreter, 1);
 
-  script_load_failed = luaL_dofile(x_main_interpreter, init_script_file);
-
-  if (script_load_failed) {
-    I_Error("X_Start: Error loading initialization script [%s]: %s",
-      init_script_file, X_GetError(x_main_interpreter)
+  if (!X_LoadFile(X_INIT_SCRIPT_NAME)) {
+    I_Error("X_Start: Error loading initialization script: %s",
+      X_GetError(x_main_interpreter)
     );
   }
 
   free(script_folder);
   free(script_search_path);
-  free(init_script_file);
 
-  x_started = true;
+  x_initialized = true;
+}
+
+void X_Start(void) {
+  if (!X_LoadFile(X_START_SCRIPT_NAME)) {
+    I_Error("Error running start script: %s", X_GetError(x_main_interpreter));
+  }
 }
 
 bool X_Available(void) {
-  return x_started;
+  return x_initialized;
 }
 
 void X_RegisterType(const char *type_name, unsigned int count, ...) {
@@ -300,18 +352,18 @@ void X_RegisterObjects(const char *scope_name, unsigned int count, ...) {
   va_end(args);
 }
 
-lua_State* X_GetState(void) {
+x_engine_t X_GetState(void) {
   if (!X_Available())
     I_Error("X_GetState: scripting is unavailable");
 
   return x_main_interpreter;
 }
 
-lua_State* X_NewState(void) {
+x_engine_t X_NewState(void) {
   return luaL_newstate();
 }
 
-lua_State* X_NewRestrictedState(void) {
+x_engine_t X_NewRestrictedState(void) {
   lua_State *L = luaL_newstate();
 
   luaL_requiref(L, "base", luaopen_base, true);
@@ -325,16 +377,21 @@ lua_State* X_NewRestrictedState(void) {
   return L;
 }
 
-void X_ExposeInterfaces(lua_State *L) {
+void X_ExposeInterfaces(x_engine_t xe) {
+  lua_State *L = (lua_State *)xe;
   GHashTableIter iter;
   gpointer key;
   gpointer value;
 
-  if (!L)
+  if (!L) {
     L = x_main_interpreter;
+  }
 
-  lua_createtable(L, 0, g_hash_table_size(x_global_scope));
-  lua_setglobal(L, X_NAMESPACE);
+  if (L != x_main_interpreter) {
+    lua_createtable(L, 0, g_hash_table_size(x_global_scope));
+    lua_setglobal(L, X_NAMESPACE);
+  }
+
   lua_getglobal(L, X_NAMESPACE);
 
   g_hash_table_iter_init(&iter, x_types);
@@ -395,7 +452,8 @@ void X_ExposeInterfaces(lua_State *L) {
  * CG: This function is from the Lua source code, licensed under the MIT
  *     license.
  */
-char* X_GetError(lua_State *L) {
+char* X_GetError(x_engine_t xe) {
+  lua_State *L = (lua_State *)xe;
   const char *lua_error_msg = lua_tostring(L, -1);
   char *error_message;
 
@@ -408,12 +466,14 @@ char* X_GetError(lua_State *L) {
   return error_message;
 }
 
-bool X_Eval(lua_State *L, const char *code) {
+bool X_Eval(x_engine_t xe, const char *code) {
+  lua_State *L = (lua_State *)xe;
   return !luaL_dostring(L, code);
 }
 
-bool X_Call(lua_State *L, const char *object, const char *fname,
+bool X_Call(x_engine_t xe, const char *object, const char *fname,
                           int arg_count, int res_count, ...) {
+  lua_State *L = (lua_State *)xe;
   va_list args;
   int args_remaining = arg_count;
   int error_handler_index = X_GetStackSize(L) - arg_count;
@@ -432,12 +492,28 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
   lua_insert(L, error_handler_index);
 
   lua_getglobal(L, X_NAMESPACE);
+
   if (object) {
     lua_getfield(L, -1, object);
+    if (!lua_istable(L, -1)) {
+      I_Error("X_Call: %s.%s not found\n", X_NAMESPACE, object);
+    }
+
     lua_remove(L, -2);
   }
+
   lua_getfield(L, -1, fname);
+  if (!lua_isfunction(L, -1)) {
+    if (object) {
+      I_Error("X_Call: %s.%s.%s not found\n", X_NAMESPACE, object, fname);
+    }
+    else {
+      I_Error("X_Call: %s.%s not found\n", X_NAMESPACE, fname);
+    }
+  }
+
   lua_remove(L, -2);
+
   if (object) {
     lua_getglobal(L, X_NAMESPACE);
     lua_getfield(L, -1, object);
@@ -495,11 +571,13 @@ bool X_Call(lua_State *L, const char *object, const char *fname,
   return status == 0;
 }
 
-int X_GetStackSize(lua_State *L) {
+int X_GetStackSize(x_engine_t xe) {
+  lua_State *L = (lua_State *)xe;
   return lua_gettop(L);
 }
 
-char* X_ToString(lua_State *L, int index) {
+char* X_ToString(x_engine_t xe, int index) {
+  lua_State *L = (lua_State *)xe;
   GString *s = g_string_new("");
   char *out;
 
@@ -617,7 +695,8 @@ char* X_ToString(lua_State *L, int index) {
   return out;
 }
 
-void X_PrintStack(lua_State *L) {
+void X_PrintStack(x_engine_t xe) {
+  lua_State *L = (lua_State *)xe;
   int stack_size = X_GetStackSize(L);
 
   for (int i = -1; -i <= stack_size; i--) {
@@ -630,13 +709,70 @@ void X_PrintStack(lua_State *L) {
   }
 }
 
-void X_PopStackMembers(lua_State *L, int count) {
+void X_PopStackMembers(x_engine_t xe, int count) {
+  lua_State *L = (lua_State *)xe;
   lua_pop(L, count);
 }
 
-void X_RunGC(lua_State *L) {
+void X_RunGC(x_engine_t xe) {
+  lua_State *L = (lua_State *)xe;
   lua_gc(L, LUA_GCCOLLECT, 0);
 }
+
+bool X_PopBoolean(x_engine_t xe) {
+  lua_State *L = (lua_State *)xe;
+  bool value = lua_toboolean(L, -1);
+
+  lua_pop(L, 1);
+
+  return value;
+}
+
+int32_t X_PopInteger(x_engine_t xe) {
+  lua_State *L = (lua_State *)xe;
+  int32_t value = lua_toboolean(L, -1);
+
+  lua_pop(L, 1);
+
+  return value;
+}
+
+uint32_t X_PopUInteger(x_engine_t xe) {
+  lua_State *L = (lua_State *)xe;
+  uint32_t value = lua_tounsigned(L, -1);
+
+  lua_pop(L, 1);
+
+  return value;
+}
+
+double X_PopDecimal(x_engine_t xe) {
+  lua_State *L = (lua_State *)xe;
+  double value = lua_tonumber(L, -1);
+
+  lua_pop(L, 1);
+
+  return value;
+}
+
+char* X_PopString(x_engine_t xe) {
+  lua_State *L = (lua_State *)xe;
+  const char* value = lua_tostring(L, -1);
+
+  lua_pop(L, 1);
+
+  return (char *)value;
+}
+
+void* X_PopUserdata(x_engine_t xe) {
+  lua_State *L = (lua_State *)xe;
+  void *value = lua_touserdata(L, -1);
+
+  lua_pop(L, 1);
+
+  return value;
+}
+
 
 /* vi: set et ts=2 sw=2: */
 

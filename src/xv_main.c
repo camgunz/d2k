@@ -26,16 +26,16 @@
 #include <SDL.h>
 #include <cairo/cairo.h>
 
-#ifdef GL_DOOM
 #include "gl_opengl.h"
 #include "gl_intern.h"
-#endif
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "hu_stuff.h"
 #include "i_video.h"
 #include "v_overlay.h"
 #include "v_video.h"
+#include "x_intern.h"
 #include "x_main.h"
 
 static int XV_IsEnabled(lua_State *L) {
@@ -142,7 +142,7 @@ static int XV_UnlockScreen(lua_State *L) {
 }
 
 void XV_RegisterInterface(void) {
-  X_RegisterObjects("Video", 14,
+  X_RegisterObjects("Video", 15,
     "is_enabled",                    X_FUNCTION, XV_IsEnabled,
     "get_screen_width",              X_FUNCTION, XV_GetScreenWidth,
     "get_screen_height",             X_FUNCTION, XV_GetScreenHeight,
@@ -156,7 +156,8 @@ void XV_RegisterInterface(void) {
     "overlay_needs_resetting",       X_FUNCTION, XV_OverlayNeedsResetting,
     "clear_overlay_needs_resetting", X_FUNCTION, XV_ClearOverlayNeedsResetting,
     "lock_screen",                   X_FUNCTION, XV_LockScreen,
-    "unlock_screen",                 X_FUNCTION, XV_UnlockScreen
+    "unlock_screen",                 X_FUNCTION, XV_UnlockScreen,
+    "crosshair_count",               X_INTEGER,  HU_CROSSHAIRS
   );
 }
 

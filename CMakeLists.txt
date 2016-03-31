@@ -785,6 +785,7 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/cl_cmd.c
   ${CMAKE_SOURCE_DIR}/src/cl_main.c
   ${CMAKE_SOURCE_DIR}/src/cmp.c
+  ${CMAKE_SOURCE_DIR}/src/d_cfg.c
   ${CMAKE_SOURCE_DIR}/src/d_deh.c
   ${CMAKE_SOURCE_DIR}/src/d_items.c
   ${CMAKE_SOURCE_DIR}/src/d_main.c
@@ -881,8 +882,10 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/xam_main.c
   ${CMAKE_SOURCE_DIR}/src/xc_main.c
   ${CMAKE_SOURCE_DIR}/src/xcl_main.c
-  ${CMAKE_SOURCE_DIR}/src/xd_msg.c
+  ${CMAKE_SOURCE_DIR}/src/xd_cfg.c
+  ${CMAKE_SOURCE_DIR}/src/xd_comp.c
   ${CMAKE_SOURCE_DIR}/src/xd_main.c
+  ${CMAKE_SOURCE_DIR}/src/xd_msg.c
   ${CMAKE_SOURCE_DIR}/src/xg_game.c
   ${CMAKE_SOURCE_DIR}/src/xg_keys.c
   ${CMAKE_SOURCE_DIR}/src/xi_input.c
@@ -891,6 +894,9 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/xm_misc.c
   ${CMAKE_SOURCE_DIR}/src/xn_main.c
   ${CMAKE_SOURCE_DIR}/src/xp_user.c
+  ${CMAKE_SOURCE_DIR}/src/xr_main.c
+  ${CMAKE_SOURCE_DIR}/src/xr_demo.c
+  ${CMAKE_SOURCE_DIR}/src/xs_main.c
   ${CMAKE_SOURCE_DIR}/src/xst_main.c
   ${CMAKE_SOURCE_DIR}/src/xv_main.c
 )

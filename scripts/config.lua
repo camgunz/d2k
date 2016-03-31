@@ -21,19 +21,36 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-package.path = package.path .. ';' .. d2k.script_search_path
+json = require('dkjson')
 
-local DEBUG = false
+d2k.Config.validate = function()
+    local ConfigSchema = require('config_schema')
 
-function dprint(s)
-    if DEBUG then
-        print(s)
-    end
+    print('Validating config (to do...)')
 end
 
-cprint = print
+d2k.Config.generate_default_config = function()
+    local ConfigSchema = require('config_schema')
+    local config = json.decode(json.encode(ConfigSchema.ConfigSchema))
 
-print('X_Init: Init script engine.')
+    for section_name, section in pairs(config) do
+        local is_array = false
+
+        if section[1] then
+            is_array = true
+        end
+
+        if not is_array then
+            for value_name, value in pairs(section) do
+                if type(value) == 'table' then
+                    section[value_name] = value.default
+                end
+            end
+        end
+    end
+
+    d2k.Config.write(json.encode(config, { indent = true }))
+end
 
 -- vi: et ts=4 sw=4
 

@@ -26,6 +26,7 @@
 #include "doomstat.h"
 #include "d_event.h"
 #include "m_menu.h"
+#include "x_intern.h"
 #include "x_main.h"
 
 static int XM_MenuActivate(lua_State *L) {

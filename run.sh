@@ -10,6 +10,7 @@ CMD="${BASE_DIR}/cbuild/d2k -iwad freedm.wad -skill 5 -warp 1 -nomonsters -nomou
 mkdir -p ~/.d2k/scripts
 mkdir -p ~/.d2k/fonts
 
+cp "${BASE_DIR}/d2k_config_schema.json" ~/.d2k/
 cp "${BASE_DIR}/scripts/"* ~/.d2k/scripts/
 cp "${BASE_DIR}/fonts/"* ~/.d2k/fonts/
 

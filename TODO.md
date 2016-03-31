@@ -11,6 +11,8 @@
     crash
   - Slow down the super fast doomguy face
   - Maybe something like `enet_flush_whatever` will kill the minimum ping
+  - Without `-iwad`, no IWAD is found in singleplayer, and it's not detected
+    until "PLAYPAL is not found".
 
 1. Need a "not enough spawnpoints" strategy
 

@@ -33,6 +33,7 @@
 #include "p_cmd.h"
 #include "p_user.h"
 #include "cl_cmd.h"
+#include "x_intern.h"
 #include "x_main.h"
 
 static int XCL_Say(lua_State *L) {

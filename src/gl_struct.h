@@ -26,6 +26,15 @@
 
 extern int nodesVersion;
 
+// The available anisotropic
+typedef enum {
+  gl_anisotropic_off = 0,
+  gl_anisotropic_2x  = 1,
+  gl_anisotropic_4x  = 2,
+  gl_anisotropic_8x  = 3,
+  gl_anisotropic_16x = 4,
+} gl_anisotropic_mode_t;
+
 typedef enum {
   filter_nearest,
   filter_linear,

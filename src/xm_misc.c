@@ -25,6 +25,7 @@
 
 #include "d_event.h"
 #include "m_misc.h"
+#include "x_intern.h"
 #include "x_main.h"
 
 static int XM_MiscTakeScreenShot(lua_State *L) {

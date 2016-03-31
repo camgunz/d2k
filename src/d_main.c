@@ -27,6 +27,7 @@
 #include "doomstat.h"
 #include "am_map.h"
 #include "c_main.h"
+#include "d_cfg.h"
 #include "d_deh.h"  // Ty 04/08/98 - Externalizations
 #include "d_event.h"
 #include "d_main.h"
@@ -61,6 +62,8 @@
 #include "xam_main.h"
 #include "xc_main.h"
 #include "xcl_main.h"
+#include "xd_cfg.h"
+#include "xd_comp.h"
 #include "xd_msg.h"
 #include "xd_main.h"
 #include "xg_game.h"
@@ -71,6 +74,9 @@
 #include "xm_misc.h"
 #include "xn_main.h"
 #include "xp_user.h"
+#include "xr_demo.h"
+#include "xr_main.h"
+#include "xs_main.h"
 #include "xst_main.h"
 #include "xv_main.h"
 
@@ -1319,8 +1325,9 @@ void IdentifyVersion(void) {
   // CPhipps - use DOOMSAVEDIR if defined
   const char *p = getenv("DOOMSAVEDIR");
 
-  if (p == NULL)
+  if (p == NULL) {
     p = I_DoomExeDir();
+  }
 
   free(basesavegame);
   basesavegame = strdup(p);
@@ -1700,6 +1707,31 @@ static void D_DoomMainSetup(void) {
   bool rsp_found;
 
   X_Init(); /* CG 07/22/2014: Scripting */
+
+  XAM_RegisterInterface();
+  XCL_RegisterInterface();
+  XC_RegisterInterface();
+  XD_CompatibilityRegisterInterface();
+  XD_ConfigRegisterInterface();
+  XD_MsgRegisterInterface();
+  XD_RegisterInterface();
+  XG_GameRegisterInterface();
+  XG_KeysRegisterInterface();
+  XI_InputRegisterInterface();
+  XI_RegisterInterface();
+  XM_MenuRegisterInterface();
+  XM_MiscRegisterInterface();
+  XN_RegisterInterface();
+  XP_UserRegisterInterface();
+  XR_DemoRegisterInterface();
+  XR_RegisterInterface();
+  XST_RegisterInterface();
+  XS_RegisterInterface();
+  XV_RegisterInterface();
+
+  X_ExposeInterfaces(NULL);
+
+  D_ConfigInit();
 
   // proff 04/05/2000: Added support for include response files
   /* proff 2001/7/1 - Moved up, so -config can be in response files */
@@ -2232,6 +2264,7 @@ static void D_DoomMainSetup(void) {
   D_Msg(MSG_INFO, "ST_Init: Init status bar.\n");
   ST_Init();
 
+  /*
   XAM_RegisterInterface();
   XC_RegisterInterface();
   XCL_RegisterInterface();
@@ -2249,7 +2282,11 @@ static void D_DoomMainSetup(void) {
   XV_RegisterInterface();
 
   X_ExposeInterfaces(NULL);
+  */
 
+  X_ExposeInterfaces(NULL);
+
+  puts("Starting...");
   X_Start();
 
   // CPhipps - auto screenshots

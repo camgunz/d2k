@@ -36,6 +36,7 @@
 #include "m_menu.h"
 #include "m_misc.h"
 #include "st_stuff.h"
+#include "x_intern.h"
 #include "x_main.h"
 #include "xd_main.h"
 

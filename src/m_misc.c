@@ -81,15 +81,6 @@
 int usemouse;
 bool precache = true; /* if true, load all graphics at start */
 
-// The available anisotropic
-typedef enum {
-  gl_anisotropic_off = 0,
-  gl_anisotropic_2x  = 1,
-  gl_anisotropic_4x  = 2,
-  gl_anisotropic_8x  = 3,
-  gl_anisotropic_16x = 4,
-} gl_anisotropic_mode_t;
-
 extern int viewwidth;
 extern int viewheight;
 #ifdef GL_DOOM
