@@ -74,21 +74,6 @@ typedef enum {
   tc_mobj
 } thinkerclass_t;
 
-enum {
-  tc_ceiling,
-  tc_door,
-  tc_floor,
-  tc_plat,
-  tc_flash,
-  tc_strobe,
-  tc_glow,
-  tc_elevator,    //jff 2/22/98 new elevator type thinker
-  tc_scroll,      // killough 3/7/98: new scroll effect thinker
-  tc_pusher,      // phares 3/22/98:  new push/pull effect thinker
-  tc_flicker,     // killough 10/4/98
-  tc_endspecials
-} specials_e;
-
 static void serialize_corpse(gpointer data, gpointer user_data) {
   mobj_t *corpse = (mobj_t *)data;
   pbuf_t *savebuffer = (pbuf_t *)user_data;

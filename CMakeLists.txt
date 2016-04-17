@@ -788,6 +788,7 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/d_cfg.c
   ${CMAKE_SOURCE_DIR}/src/d_deh.c
   ${CMAKE_SOURCE_DIR}/src/d_items.c
+  ${CMAKE_SOURCE_DIR}/src/d_dump.c
   ${CMAKE_SOURCE_DIR}/src/d_main.c
   ${CMAKE_SOURCE_DIR}/src/d_msg.c
   ${CMAKE_SOURCE_DIR}/src/doomdef.c

@@ -184,6 +184,21 @@
 #define LockedKindShift            5
 #define LockedSpeedShift           3
 
+enum {
+  tc_ceiling,
+  tc_door,
+  tc_floor,
+  tc_plat,
+  tc_flash,
+  tc_strobe,
+  tc_glow,
+  tc_elevator,    //jff 2/22/98 new elevator type thinker
+  tc_scroll,      // killough 3/7/98: new scroll effect thinker
+  tc_pusher,      // phares 3/22/98:  new push/pull effect thinker
+  tc_flicker,     // killough 10/4/98
+  tc_endspecials
+} specials_e;
+
 //
 // Animating textures and planes
 // There is another anim_t used in wi_stuff, unrelated.

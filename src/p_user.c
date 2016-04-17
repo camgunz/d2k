@@ -215,8 +215,9 @@ void P_CalcHeight(player_t *player) {
   if (!onground || player->cheats & CF_NOMOMENTUM) {
     player->viewz = player->mo->z + VIEWHEIGHT;
 
-    if (player->viewz > player->mo->ceilingz - 4 * FRACUNIT)
+    if (player->viewz > player->mo->ceilingz - 4 * FRACUNIT) {
       player->viewz = player->mo->ceilingz - 4 * FRACUNIT;
+    }
 
     // The following line was in the Id source and appears    // phares 2/25/98
     // to be a bug. player->viewz is checked in a similar
@@ -255,8 +256,10 @@ void P_CalcHeight(player_t *player) {
 
   player->viewz = player->mo->z + player->viewheight + bob;
 
-  if (player->viewz > player->mo->ceilingz - 4 * FRACUNIT)
+  if (player->viewz > player->mo->ceilingz - 4 * FRACUNIT) {
     player->viewz = player->mo->ceilingz - 4 * FRACUNIT;
+  }
+
 }
 
 

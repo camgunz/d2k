@@ -26,6 +26,7 @@
 #include "doomstat.h"
 #include "d_event.h"
 #include "c_main.h"
+#include "d_dump.h"
 #include "d_net.h"
 #include "f_finale.h"
 #include "i_video.h"
@@ -82,7 +83,8 @@ extern bool setsizeneeded;
 #define SLOWTURNTICS  6
 #define QUICKREVERSE (short)32768 // 180 degree reverse                    // phares
 
-static bool        netdemo;
+bool        netdemo;
+
 static const byte *demobuffer;   /* cph - only used for playback */
 static int         demolength; // check for overrun (missing DEMOMARKER)
 static FILE       *demofp; /* cph - record straight to file */
@@ -1402,6 +1404,10 @@ void G_Ticker(void) {
       mlooky = 0;
       AM_Ticker();
       ST_Ticker();
+
+      if (D_DumpEnabled()) {
+        D_DumpUpdate();
+      }
     break;
     case GS_INTERMISSION:
        WI_Ticker();
@@ -1576,7 +1582,7 @@ void G_PlayerReborn(int player) {
   p->backpack = 0;
   p->readyweapon = 0;
   p->pendingweapon = 0;
-  memset(p->weaponowned, 0, sizeof(bool) * NUMWEAPONS);
+  memset(p->weaponowned, 0, sizeof(int) * NUMWEAPONS);
   memset(p->ammo, 0, sizeof(int) * NUMAMMO);
   memset(p->maxammo, 0, sizeof(int) * NUMAMMO);
   p->attackdown = 0;
@@ -1751,11 +1757,13 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
 void G_DeathMatchSpawnPlayer(int playernum) {
   int selections = deathmatch_p - deathmatchstarts;
 
+  /*
   if (selections < MAXPLAYERS) {
     I_Error("G_DeathMatchSpawnPlayer: Only %i deathmatch spots, %d required",
       selections, MAXPLAYERS
     );
   }
+  */
 
   for (int j = 0; j < 20; j++) {
     int i = P_Random(pr_dmspawn) % selections;

@@ -23,8 +23,10 @@
 
 #include "z_zone.h"
 
+#include "doomstat.h"
 #include "d_ticcmd.h"
 #include "n_net.h"
+#include "info.h"
 
 static GHashTable *id_hash = NULL;
 static uint32_t max_id = 0;

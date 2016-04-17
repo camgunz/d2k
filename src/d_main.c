@@ -29,6 +29,7 @@
 #include "c_main.h"
 #include "d_cfg.h"
 #include "d_deh.h"  // Ty 04/08/98 - Externalizations
+#include "d_dump.h"
 #include "d_event.h"
 #include "d_main.h"
 #include "d_net.h"
@@ -2360,6 +2361,10 @@ static void D_DoomMainSetup(void) {
 
   // do not try to interpolate during timedemo
   M_ChangeUncappedFrameRate();
+
+  if ((p = M_CheckParm("-dumpdemo")) && ++p < myargc) {
+    D_DumpInit(myargv[p]);
+  }
 }
 
 //
