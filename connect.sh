@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # export LIBGL_ALWAYS_SOFTWARE=1
-export SDL_AUDIODRIVER="pulse"
+# export SDL_AUDIODRIVER="pulse"
 
 BASE_DIR="$(pwd)"
 

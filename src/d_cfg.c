@@ -163,7 +163,7 @@ bool D_ConfigSafeGetBool(const char *section_name, const char *value_name,
 } 
 
 bool D_ConfigGetBool(const char *section_name, const char *value_name) {
-  bool stored_value;
+  bool stored_value = false;
 
   if (!D_ConfigSafeGetBool(section_name, value_name, &stored_value)) {
     I_Error("Failed to get %s.%s as boolean\n", section_name, value_name);
@@ -256,7 +256,7 @@ bool D_ConfigSafeGetStr(const char *section_name, const char *value_name,
 } 
 
 char* D_ConfigGetStr(const char *section_name, const char *value_name) {
-  char *stored_value;
+  char *stored_value = NULL;
 
   if (!D_ConfigSafeGetStr(section_name, value_name, &stored_value)) {
     I_Error("Failed to get %s.%s as boolean\n", section_name, value_name);
@@ -351,7 +351,7 @@ bool D_ConfigSafeGetInt(const char *section_name, const char *value_name,
 } 
 
 int64_t D_ConfigGetInt(const char *section_name, const char *value_name) {
-  int64_t stored_value;
+  int64_t stored_value = 0;
 
   if (!D_ConfigSafeGetInt(section_name, value_name, &stored_value)) {
     I_Error("Failed to get %s.%s as boolean\n", section_name, value_name);
@@ -446,7 +446,7 @@ bool D_ConfigSafeGetDec(const char *section_name, const char *value_name,
 } 
 
 double D_ConfigGetDec(const char *section_name, const char *value_name) {
-  double stored_value;
+  double stored_value = 0;
 
   if (!D_ConfigSafeGetDec(section_name, value_name, &stored_value)) {
     I_Error("Failed to get %s.%s as boolean\n", section_name, value_name);

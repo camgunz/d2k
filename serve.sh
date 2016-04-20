@@ -11,6 +11,8 @@ CMD="cbuild/d2k $WAD -skill 5 -warp 1 -deathmatch -frags 5 -serve"
 CMD="cbuild/d2k $WAD -skill 4 -warp 1 -serve"
 CMD="cbuild/d2k $WAD -skill 5 -warp 1 -nomonsters -altdeath -frags 1 -log /home/charlie/.d2k/log.txt -serve -nodaemon"
 
+mkdir -p ~/.d2k/scripts
+
 cp "${BASE_DIR}/d2k_config_schema.json" ~/.d2k/
 cp "${BASE_DIR}/scripts/"* ~/.d2k/scripts/
 

@@ -497,7 +497,7 @@ bool N_TryRunTics(void) {
     C_ECIService();
   }
 
-  if (!SERVER) {
+  if ((!SERVER) && (!nodrawers)) {
     if (!X_Call(X_GetState(), "console", "tick", 0, 0))
       I_Error("Error ticking console: %s\n", X_GetError(X_GetState()));
 

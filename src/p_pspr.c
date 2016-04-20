@@ -273,7 +273,7 @@ bool P_CheckAmmo(player_t *player) {
 //
 
 static void P_FireWeapon(player_t *player) {
-  bool unlagged_activated;
+  bool unlagged_activated = false;
   statenum_t newstate;
 
   if (!P_CheckAmmo(player))
@@ -285,7 +285,7 @@ static void P_FireWeapon(player_t *player) {
 
   P_SetMobjState(player->mo, S_PLAY_ATK1);
 
-  if (SERVER && unlagged_activated) {
+  if (unlagged_activated) {
     SV_UnlagEnd();
   }
 
