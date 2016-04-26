@@ -93,13 +93,16 @@ static void dump_line_index(pbuf_t *savebuffer, line_t *li, const char *fn) {
   uint_64_t line_index;
 
   if (li < lines) {
-    I_Error("%s: Invalid line %p", fn, li);
+    // I_Error("%s: Invalid line %p < %p", fn, li, lines);
+    line_index = 0;
+  }
+  else {
+    line_index = li - lines;
   }
 
-  line_index = li - lines;
-
   if (line_index > numlines) {
-    I_Error("%s: Invalid line %p", fn, li);
+    // I_Error("%s: Invalid line %p", fn, li);
+    line_index = 0;
   }
 
   M_PBufWriteULong(savebuffer, line_index + 1);
@@ -151,9 +154,12 @@ void D_Dump(pbuf_t *savebuffer) {
     M_PBufWriteInt(savebuffer, weapon_recoil);
     M_PBufWriteInt(savebuffer, allow_pushers);
     M_PBufWriteInt(savebuffer, player_bobbing);
-    M_PBufWriteInt(savebuffer, respawnparm);
-    M_PBufWriteInt(savebuffer, fastparm);
-    M_PBufWriteInt(savebuffer, nomonsters);
+    /* [CG] respawnparm is > 1 in some demos */
+    M_PBufWriteInt(savebuffer, respawnparm ? 1 : 0);
+    /* [CG] fastparm is > 1 in some demos */
+    M_PBufWriteInt(savebuffer, fastparm ? 1 : 0);
+    /* [CG] nomonsters is > 1 in some demos */
+    M_PBufWriteInt(savebuffer, nomonsters ? 1 : 0);
     M_PBufWriteInt(savebuffer, demo_insurance);
     M_PBufWriteUInt(savebuffer, rngseed);
     M_PBufWriteInt(savebuffer, monster_infighting);
@@ -217,9 +223,12 @@ void D_Dump(pbuf_t *savebuffer) {
     M_PBufWriteInt(savebuffer, weapon_recoil);
     M_PBufWriteInt(savebuffer, allow_pushers);
     M_PBufWriteInt(savebuffer, player_bobbing);
-    M_PBufWriteInt(savebuffer, respawnparm);
-    M_PBufWriteInt(savebuffer, fastparm);
-    M_PBufWriteInt(savebuffer, nomonsters);
+    /* [CG] respawnparm is > 1 in some demos */
+    M_PBufWriteInt(savebuffer, respawnparm ? 1 : 0);
+    /* [CG] fastparm is > 1 in some demos */
+    M_PBufWriteInt(savebuffer, fastparm ? 1 : 0);
+    /* [CG] nomonsters is > 1 in some demos */
+    M_PBufWriteInt(savebuffer, nomonsters ? 1 : 0);
     M_PBufWriteInt(savebuffer, demo_insurance);
     M_PBufWriteUInt(savebuffer, rngseed);
     M_PBufWriteInt(savebuffer, monster_infighting);
@@ -272,9 +281,12 @@ void D_Dump(pbuf_t *savebuffer) {
     M_PBufWriteInt(savebuffer, gameepisode);
     M_PBufWriteInt(savebuffer, gamemap);
     M_PBufWriteInt(savebuffer, deathmatch);
-    M_PBufWriteInt(savebuffer, respawnparm);
-    M_PBufWriteInt(savebuffer, fastparm);
-    M_PBufWriteInt(savebuffer, nomonsters);
+    /* [CG] respawnparm is > 1 in some demos */
+    M_PBufWriteInt(savebuffer, respawnparm ? 1 : 0);
+    /* [CG] fastparm is > 1 in some demos */
+    M_PBufWriteInt(savebuffer, fastparm ? 1 : 0);
+    /* [CG] nomonsters is > 1 in some demos */
+    M_PBufWriteInt(savebuffer, nomonsters ? 1 : 0);
     M_PBufWriteInt(savebuffer, consoleplayer);
   }
 
@@ -289,6 +301,24 @@ void D_Dump(pbuf_t *savebuffer) {
   M_PBufWriteInt(savebuffer, totalleveltimes);
   // killough 11/98: save revenant tracer state
   M_PBufWriteInt(savebuffer, basetic);
+
+  for (int i = 0; i < VANILLA_MAXPLAYERS; i++) {
+    M_PBufWriteInt(savebuffer, playerstarts[i].x);
+    M_PBufWriteInt(savebuffer, playerstarts[i].y);
+    M_PBufWriteInt(savebuffer, playerstarts[i].angle);
+    M_PBufWriteInt(savebuffer, playerstarts[i].type);
+    M_PBufWriteInt(savebuffer, playerstarts[i].options);
+  }
+
+  M_PBufWriteInt(savebuffer, deathmatch_p - deathmatchstarts);
+
+  for (int i = 0; i < (deathmatch_p - deathmatchstarts); i++) {
+    M_PBufWriteInt(savebuffer, deathmatchstarts[i].x);
+    M_PBufWriteInt(savebuffer, deathmatchstarts[i].y);
+    M_PBufWriteInt(savebuffer, deathmatchstarts[i].angle);
+    M_PBufWriteInt(savebuffer, deathmatchstarts[i].type);
+    M_PBufWriteInt(savebuffer, deathmatchstarts[i].options);
+  }
 
   /** RNG **/
 
@@ -619,7 +649,7 @@ void D_Dump(pbuf_t *savebuffer) {
 
       M_PBufWriteInt(savebuffer, tc_ceiling);
       M_PBufWriteInt(savebuffer, ceiling->type);
-      dump_sector_index(savebuffer, ceiling->sector, __func__);
+      dump_sector_index(savebuffer, ceiling->sector, "ceiling");
       M_PBufWriteInt(savebuffer, ceiling->bottomheight);
       M_PBufWriteInt(savebuffer, ceiling->topheight);
       M_PBufWriteInt(savebuffer, ceiling->speed);
@@ -640,13 +670,13 @@ void D_Dump(pbuf_t *savebuffer) {
 
       M_PBufWriteInt(savebuffer, tc_door);
       M_PBufWriteInt(savebuffer, door->type);
-      dump_sector_index(savebuffer, door->sector, __func__);
+      dump_sector_index(savebuffer, door->sector, "verticaldoor");
       M_PBufWriteInt(savebuffer, door->topheight);
       M_PBufWriteInt(savebuffer, door->speed);
       M_PBufWriteInt(savebuffer, door->direction);
       M_PBufWriteInt(savebuffer, door->topwait);
       M_PBufWriteInt(savebuffer, door->topcountdown);
-      dump_line_index(savebuffer, door->line, __func__);
+      dump_line_index(savebuffer, door->line, "verticaldoor");
       M_PBufWriteInt(savebuffer, door->lighttag);
 
       continue;
@@ -658,7 +688,7 @@ void D_Dump(pbuf_t *savebuffer) {
       M_PBufWriteInt(savebuffer, tc_floor);
       M_PBufWriteInt(savebuffer, floor->type);
       M_PBufWriteInt(savebuffer, floor->crush);
-      dump_sector_index(savebuffer, floor->sector, __func__);
+      dump_sector_index(savebuffer, floor->sector, "floor");
       M_PBufWriteInt(savebuffer, floor->direction);
       M_PBufWriteInt(savebuffer, floor->newspecial);
       M_PBufWriteInt(savebuffer, floor->oldspecial);
@@ -677,7 +707,7 @@ void D_Dump(pbuf_t *savebuffer) {
       plat = (plat_t *)th;
 
       M_PBufWriteInt(savebuffer, tc_plat);
-      dump_sector_index(savebuffer, plat->sector, __func__);
+      dump_sector_index(savebuffer, plat->sector, "plat");
       M_PBufWriteInt(savebuffer, plat->speed);
       M_PBufWriteInt(savebuffer, plat->low);
       M_PBufWriteInt(savebuffer, plat->high);
@@ -696,7 +726,7 @@ void D_Dump(pbuf_t *savebuffer) {
       lightflash_t *flash = (lightflash_t *)th;
 
       M_PBufWriteInt(savebuffer, tc_flash);
-      dump_sector_index(savebuffer, flash->sector, __func__);
+      dump_sector_index(savebuffer, flash->sector, "lightflash");
       M_PBufWriteInt(savebuffer, flash->count);
       M_PBufWriteInt(savebuffer, flash->maxlight);
       M_PBufWriteInt(savebuffer, flash->minlight);
@@ -710,7 +740,7 @@ void D_Dump(pbuf_t *savebuffer) {
       strobe_t *strobe = (strobe_t *)th;
 
       M_PBufWriteInt(savebuffer, tc_strobe);
-      dump_sector_index(savebuffer, strobe->sector, __func__);
+      dump_sector_index(savebuffer, strobe->sector, "strobeflash");
       M_PBufWriteInt(savebuffer, strobe->count);
       M_PBufWriteInt(savebuffer, strobe->minlight);
       M_PBufWriteInt(savebuffer, strobe->maxlight);
@@ -724,7 +754,7 @@ void D_Dump(pbuf_t *savebuffer) {
       glow_t *glow = (glow_t *)th;
 
       M_PBufWriteInt(savebuffer, tc_glow);
-      dump_sector_index(savebuffer, glow->sector, __func__);
+      dump_sector_index(savebuffer, glow->sector, "glow");
       M_PBufWriteInt(savebuffer, glow->maxlight);
       M_PBufWriteInt(savebuffer, glow->minlight);
       M_PBufWriteInt(savebuffer, glow->direction);
@@ -737,7 +767,7 @@ void D_Dump(pbuf_t *savebuffer) {
       fireflicker_t *flicker = (fireflicker_t *)th;
 
       M_PBufWriteInt(savebuffer, tc_flicker);
-      dump_sector_index(savebuffer, flicker->sector, __func__);
+      dump_sector_index(savebuffer, flicker->sector, "fireflicker");
       M_PBufWriteInt(savebuffer, flicker->count);
       M_PBufWriteInt(savebuffer, flicker->maxlight);
       M_PBufWriteInt(savebuffer, flicker->minlight);
@@ -751,7 +781,7 @@ void D_Dump(pbuf_t *savebuffer) {
 
       M_PBufWriteInt(savebuffer, tc_elevator);
       M_PBufWriteInt(savebuffer, elevator->type);
-      dump_sector_index(savebuffer, elevator->sector, __func__);
+      dump_sector_index(savebuffer, elevator->sector, "elevator");
       M_PBufWriteInt(savebuffer, elevator->direction);
       M_PBufWriteInt(savebuffer, elevator->floordestheight);
       M_PBufWriteInt(savebuffer, elevator->ceilingdestheight);
@@ -769,7 +799,17 @@ void D_Dump(pbuf_t *savebuffer) {
       M_PBufWriteInt(savebuffer, scroll->dy);
       M_PBufWriteInt(savebuffer, scroll->affectee);
       M_PBufWriteInt(savebuffer, scroll->control);
-      M_PBufWriteInt(savebuffer, scroll->last_height);
+      /*
+       * [CG] scroll->last_height is uninitialized in Add_Scroller if there is
+       *      no control sector, so only dump this if there is a control
+       *      sector.
+       */
+      if (scroll->control == -1) {
+        M_PBufWriteInt(savebuffer, 0);
+      }
+      else {
+        M_PBufWriteInt(savebuffer, scroll->last_height);
+      }
       M_PBufWriteInt(savebuffer, scroll->vdx);
       M_PBufWriteInt(savebuffer, scroll->vdy);
       M_PBufWriteInt(savebuffer, scroll->accel);

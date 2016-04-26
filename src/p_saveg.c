@@ -1616,7 +1616,7 @@ void P_ArchiveCeiling(pbuf_t *savebuffer, ceiling_t *ceiling) {
   M_PBufWriteInt(savebuffer, ceiling->topheight);
   M_PBufWriteInt(savebuffer, ceiling->speed);
   M_PBufWriteInt(savebuffer, ceiling->oldspeed);
-  M_PBufWriteBool(savebuffer, ceiling->crush);
+  M_PBufWriteInt(savebuffer, ceiling->crush);
   M_PBufWriteInt(savebuffer, ceiling->newspecial);
   M_PBufWriteInt(savebuffer, ceiling->oldspecial);
   M_PBufWriteShort(savebuffer, ceiling->texture);
@@ -1632,7 +1632,7 @@ void P_UnArchiveCeiling(pbuf_t *savebuffer, ceiling_t *ceiling) {
   M_PBufReadInt(savebuffer, &ceiling->topheight);
   M_PBufReadInt(savebuffer, &ceiling->speed);
   M_PBufReadInt(savebuffer, &ceiling->oldspeed);
-  M_PBufReadBool(savebuffer, &ceiling->crush);
+  M_PBufReadInt(savebuffer, &ceiling->crush);
   M_PBufReadInt(savebuffer, &ceiling->newspecial);
   M_PBufReadInt(savebuffer, &ceiling->oldspecial);
   M_PBufReadShort(savebuffer, &ceiling->texture);
@@ -1667,7 +1667,7 @@ void P_UnArchiveDoor(pbuf_t *savebuffer, vldoor_t *door) {
 
 void P_ArchiveFloor(pbuf_t *savebuffer, floormove_t *floor) {
   M_PBufWriteInt(savebuffer, floor->type);
-  M_PBufWriteBool(savebuffer, floor->crush);
+  M_PBufWriteInt(savebuffer, floor->crush);
   P_ArchiveSectorIndex(savebuffer, floor->sector, __func__);
   M_PBufWriteInt(savebuffer, floor->direction);
   M_PBufWriteInt(savebuffer, floor->newspecial);
@@ -1679,7 +1679,7 @@ void P_ArchiveFloor(pbuf_t *savebuffer, floormove_t *floor) {
 
 void P_UnArchiveFloor(pbuf_t *savebuffer, floormove_t *floor) {
   M_PBufReadInt(savebuffer, (int *)&floor->type);
-  M_PBufReadBool(savebuffer, &floor->crush);
+  M_PBufReadInt(savebuffer, &floor->crush);
   P_UnArchiveSectorIndex(savebuffer, &floor->sector, __func__);
   M_PBufReadInt(savebuffer, &floor->direction);
   M_PBufReadInt(savebuffer, &floor->newspecial);
@@ -1698,7 +1698,7 @@ void P_ArchivePlat(pbuf_t *savebuffer, plat_t *plat) {
   M_PBufWriteInt(savebuffer, plat->count);
   M_PBufWriteInt(savebuffer, plat->status);
   M_PBufWriteInt(savebuffer, plat->oldstatus);
-  M_PBufWriteBool(savebuffer, plat->crush);
+  M_PBufWriteInt(savebuffer, plat->crush);
   M_PBufWriteInt(savebuffer, plat->tag);
   M_PBufWriteInt(savebuffer, plat->type);
 }
@@ -1712,7 +1712,7 @@ void P_UnArchivePlat(pbuf_t *savebuffer, plat_t *plat) {
   M_PBufReadInt(savebuffer, &plat->count);
   M_PBufReadInt(savebuffer, (int *)&plat->status);
   M_PBufReadInt(savebuffer, (int *)&plat->oldstatus);
-  M_PBufReadBool(savebuffer, &plat->crush);
+  M_PBufReadInt(savebuffer, &plat->crush);
   M_PBufReadInt(savebuffer, &plat->tag);
   M_PBufReadInt(savebuffer, (int *)&plat->type);
 }

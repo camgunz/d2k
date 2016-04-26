@@ -937,23 +937,19 @@ void D_AddDEH(const char *filename, int lumpnum) {
   deh_file_t *dehfile;
   const char *deh_out = D_dehout();
 
-  if (filename == NULL && lumpnum == 0)
+  if ((!filename) && lumpnum == 0) {
     I_Error("D_AddDEH: No filename or lumpnum given\n");
+  }
 
   if (!filename) {
-    /*
-    if (lumpnum > numlumps)
-      I_Error("D_AddDEH: lumpnum out of range (%d/%d)\n", lumpnum, numlumps);
-
-    deh_path = strdup(lumpinfo[lumpnum].name);
-    */
     deh_path = NULL;
   }
   else {
     deh_path = I_FindFile(filename, NULL);
 
-    if (deh_path == NULL)
+    if (!deh_path) {
       I_Error("D_AddDEH: Couldn't find %s\n", filename);
+    }
   }
 
   for (unsigned int i = 0; i < deh_files->len; i++) {
@@ -969,25 +965,33 @@ void D_AddDEH(const char *filename, int lumpnum) {
       continue;
     }
 
+    if (!stored_deh_file->filename) {
+      continue;
+    }
+
     if (strcmp(deh_path, stored_deh_file->filename) == 0) {
       D_Msg(MSG_INFO, "D_AddDEH: Skipping %s (already added).\n", deh_path);
       return;
     }
   }
 
-  if (deh_path)
+  if (deh_path) {
     D_Msg(MSG_INFO, "D_AddDEH: Adding %s.\n", deh_path);
+  }
 
   dehfile = malloc(sizeof(deh_file_t));
 
-  if (dehfile == NULL)
+  if (!dehfile) {
     I_Error("D_AddDEH: Error allocating DEH file info");
+  }
 
   dehfile->filename = deh_path;
-  if (deh_out != NULL)
+  if (deh_out) {
     dehfile->outfilename = strdup(deh_out);
-  else
+  }
+  else {
     dehfile->outfilename = NULL;
+  }
   dehfile->lumpnum = lumpnum;
 
   g_ptr_array_add(deh_files, dehfile);
@@ -2208,6 +2212,18 @@ static void D_DoomMainSetup(void) {
       else {
         I_Error("D_DoomMainSetup: Cannot find .deh or .bex file named %s",myargv[p]);
       }
+    }
+  }
+
+  if (!CLIENT) {
+    for (unsigned int i = 0; i < deh_files->len; i++) {
+      deh_file_t *stored_deh_file = g_ptr_array_index(deh_files, i);
+
+      ProcessDehFile(
+        stored_deh_file->filename,
+        stored_deh_file->outfilename,
+        stored_deh_file->lumpnum
+      );
     }
   }
 

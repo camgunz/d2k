@@ -467,17 +467,15 @@ void P_PlayerThink(int playernum) {
   else
     player->mo->flags &= ~MF_NOCLIP;
 
-  P_RunPlayerCommands(playernum);
-
-  if (player->playerstate == PST_DEAD) {
-    P_DeathThink(player);
+  if (!P_RunPlayerCommands(playernum)) {
     return;
   }
 
-  // Determine if there's anything about the sector you're in that's
-  // going to affect you, like painful floors.
-  if (player->mo->subsector->sector->special)
-    P_PlayerInSpecialSector(player);
+  /*
+  if (player->playerstate == PST_DEAD) {
+    return;
+  }
+  */
 
   // Counters, time dependent power ups.
 

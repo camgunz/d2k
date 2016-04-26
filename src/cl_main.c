@@ -92,6 +92,16 @@ static bool cl_synchronizing = false;
 static bool cl_repredicting = false;
 
 /*
+ * The TIC at which reprediction started.
+ */
+static int cl_repredicting_start_tic = 0;
+
+/*
+ * The TIC at which reprediction will finish.
+ */
+static int cl_repredicting_end_tic = 0;
+
+/*
  * The TIC of the last state received from the server
  */
 static int cl_state_tic = -1;
@@ -162,27 +172,57 @@ static bool cl_load_new_state(netpeer_t *server) {
   return true;
 }
 
+static void cl_set_repredicting(int start_tic, int end_tic) {
+  cl_repredicting_start_tic = start_tic;
+  cl_repredicting_end_tic = end_tic;
+  cl_repredicting = true;
+}
+
+static void cl_clear_repredicting(void) {
+  cl_repredicting_start_tic = 0;
+  cl_repredicting_end_tic = 0;
+  cl_repredicting = false;
+}
+
 static void cl_predict(int saved_gametic) {
+  player_t *player = &players[consoleplayer];
   int latest_command_index;
   
-  if (gametic == -1)
+  if (gametic == -1) {
     return;
+  }
 
   latest_command_index = P_GetLatestCommandIndex(consoleplayer);
 
-  if (latest_command_index == -1)
+  if (latest_command_index == -1) {
     return;
+  }
 
-  while (players[consoleplayer].latest_command_run_index <
-         latest_command_index) {
-    cl_repredicting = true;
+  cl_set_repredicting(player->latest_command_run_index, latest_command_index);
+  while (player->latest_command_run_index < latest_command_index) {
     N_RunTic();
     if (players[displayplayer].mo != NULL) {
       R_InterpolateView(&players[displayplayer]);
       R_RestoreInterpolations();
     }
-    cl_repredicting = false;
   }
+  cl_clear_repredicting();
+}
+
+bool CL_OccurredDuringRePrediction(int tic) {
+  if (!cl_repredicting) {
+    return false;
+  }
+
+  if (tic < cl_repredicting_start_tic) {
+    return false;
+  }
+
+  if (tic > cl_repredicting_end_tic) {
+    return false;
+  }
+
+  return true;
 }
 
 void CL_CheckForStateUpdates(void) {

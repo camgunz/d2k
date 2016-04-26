@@ -1594,7 +1594,7 @@ void G_PlayerReborn(int player) {
   p->extralight = 0;
   p->fixedcolormap = 0;
   p->colormap = 0;
-  memset(p->psprites, 0, sizeof(pspdef_t) * NUMPSPRITES);
+  memset(p->psprites, 0, sizeof(p->psprites));
   p->didsecret = 0;
   p->momx = 0;
   p->momy = 0;
@@ -1711,7 +1711,28 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
   /* BUG: an can end up negative, because mthing->angle is (signed) short.
    * We have to emulate original Doom's behaviour, deferencing past the start
    * of the array, into the previous array (finetangent) */
-  an = (ANG45 * ((signed int)mthing->angle / 45)) >> ANGLETOFINESHIFT;
+
+  // an = (ANG45 * ((signed)mthing->angle / 45)) >> ANGLETOFINESHIFT;
+
+  /*
+   * [CG] Shifting these signed values is implementation-defined, and it turns
+   *      out that clang will (if so configured) will mess this up.
+   */
+
+  an = ANG45 * ((signed)mthing->angle / 45);
+
+  switch (an) {
+    case 0x80000000:
+    case 0xA0000000:
+    case 0xC0000000:
+    case 0xE0000000:
+      an = -((-an) >> ANGLETOFINESHIFT);
+      break;
+    default:
+      an >>= ANGLETOFINESHIFT;
+      break;
+  }
+
   xa = finecosine[an];
   ya = finesine[an];
 

@@ -1,6 +1,7 @@
 #!/bin/sh
 
 BUILD_TYPE=Debug
+BUILD_TYPE=Release
 
 if [ ! -d cbuild ]
 then

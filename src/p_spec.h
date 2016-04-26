@@ -628,7 +628,7 @@ typedef struct
   int count;
   plat_e status;
   plat_e oldstatus;
-  bool crush;
+  int crush;
   int tag;
   plattype_e type;
 
@@ -679,7 +679,7 @@ typedef struct
   fixed_t topheight;
   fixed_t speed;
   fixed_t oldspeed;
-  bool     crush;
+  int     crush;
 
   //jff 02/04/98 add these to support ceiling changers
   int newspecial;
@@ -706,7 +706,7 @@ typedef struct
 {
   thinker_t thinker;
   floor_e type;
-  bool crush;
+  int crush;
   sector_t* sector;
   int direction;
   int newspecial;
