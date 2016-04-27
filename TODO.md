@@ -15,6 +15,8 @@
     until "PLAYPAL is not found".
 
 1. Need a "not enough spawnpoints" strategy
+  - Telefrag the player that's in the way
+  - Flag the telefragged player so they can (optionally) keep their stuff
 
 1. Test resolution switching
   - Probably have to override `:reset` in widgets to update a bunch of stuff
@@ -52,11 +54,9 @@
     drawn onto the overlay
 
 1. Remove 4 player restriction
-  - All playernums become `unsigned int`
-  - `players` becomes a GPtrArray
-  - `playeringame` becomes `bool D_PlayerInGame(unsigned int playernum)`
-    - Which just iterates
-  - `MAXPLAYERS` becomes `VANILLA_MAXPLAYERS` for compat
+  - Just increase `MAXPLAYERS`
+  - Add `#define VANILLA_MAXPLAYERS 4` for compat
+  - All playernums become `int`
   - Anything defined using `MAXPLAYERS` will be refactored
   - Player names are hardcoded for DeHackEd; the way this should work is:
     - Keep a private array of the default names ("Green", "Indigo", etc.)
