@@ -24,7 +24,11 @@
 #ifndef SV_MAIN_H__
 #define SV_MAIN_H__
 
-extern int sv_limit_player_commands;
+extern int   sv_limit_player_commands;
+extern char *sv_spectate_password;
+extern char *sv_join_password;
+extern char *sv_moderate_password;
+extern char *sv_administrate_password;
 
 void         SV_CleanupOldCommandsAndStates(void);
 unsigned int SV_GetPlayerCommandLimit(int playernum);

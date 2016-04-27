@@ -1165,6 +1165,22 @@ default_t defaults[] =
     "limit_player_commands",
     {&sv_limit_player_commands}, {1}, 0, 1, def_bool, ss_none
   },
+  {
+    "sv_spectate_password",
+    {NULL, &sv_spectate_password}, {0, ""}, UL, UL, def_str, ss_none
+  },
+  {
+    "sv_join_password",
+    {NULL, &sv_join_password}, {0, ""}, UL, UL, def_str, ss_none
+  },
+  {
+    "sv_moderate_password",
+    {NULL, &sv_moderate_password}, {0, ""}, UL, UL, def_str, ss_none
+  },
+  {
+    "sv_administrate_password",
+    {NULL, &sv_administrate_password}, {0, ""}, UL, UL, def_str, ss_none
+  },
 
   /* CG: Client options */
   {"Client", {NULL}, {0}, UL, UL, def_none, ss_none},

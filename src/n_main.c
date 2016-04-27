@@ -492,10 +492,10 @@ bool N_TryRunTics(void) {
 #if PRINT_NETWORK_STATS
     print_network_stats();
 #endif
-
-    N_ServiceNetwork();
-    C_ECIService();
   }
+
+  N_ServiceNetwork();
+  C_ECIService();
 
   if (!SERVER) {
     if (!X_Call(X_GetState(), "console", "tick", 0, 0))

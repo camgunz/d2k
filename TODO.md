@@ -33,6 +33,7 @@
 1. Add authorization framework
 
 1. Add RCON
+  - Need a way to intercept console I/O
 
 1. Build master server
   - Create a server description specification in JSON

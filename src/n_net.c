@@ -50,9 +50,9 @@
 
 #define MAX_ADDRESS_LENGTH 500
 
-#define to_uchar(x)  ((byte)((x) & 0xFF))
-#define to_ushort(x) ((unsigned short)((x) & 0xFFFF))
-#define string_to_uchar(x) (to_uchar(strtol(x, NULL, 10)))
+#define to_uchar(x)         ((unsigned char)((x) & 0xFF))
+#define to_ushort(x)        ((unsigned short)((x) & 0xFFFF))
+#define string_to_uchar(x)  (to_uchar(strtol(x, NULL, 10)))
 #define string_to_ushort(x) (to_ushort(strtol(x, NULL, 10)))
 
 static ENetHost   *net_host = NULL;
@@ -471,6 +471,14 @@ void N_DisconnectPlayer(short playernum) {
   N_DisconnectPeer(peernum);
 }
 
+void N_FlushNetwork(void) {
+  if (!net_host) {
+    return;
+  }
+
+  enet_host_flush(net_host);
+}
+
 void N_ServiceNetworkTimeout(int timeout_ms) {
   static int last_flush_tic = 0;
 
@@ -479,8 +487,9 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
   int peernum = -1;
   ENetEvent net_event;
 
-  if (net_host == NULL)
+  if (!net_host) {
     return;
+  }
 
   NETPEER_FOR_EACH(iter) {
     np = iter.np;
