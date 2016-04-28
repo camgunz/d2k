@@ -27,7 +27,9 @@
 #include "doomstat.h"
 #include "am_map.h"
 #include "c_main.h"
+#include "d_cfg.h"
 #include "d_deh.h"  // Ty 04/08/98 - Externalizations
+#include "d_dump.h"
 #include "d_event.h"
 #include "d_main.h"
 #include "d_net.h"
@@ -61,6 +63,8 @@
 #include "xam_main.h"
 #include "xc_main.h"
 #include "xcl_main.h"
+#include "xd_cfg.h"
+#include "xd_comp.h"
 #include "xd_msg.h"
 #include "xd_main.h"
 #include "xg_game.h"
@@ -71,6 +75,9 @@
 #include "xm_misc.h"
 #include "xn_main.h"
 #include "xp_user.h"
+#include "xr_demo.h"
+#include "xr_main.h"
+#include "xs_main.h"
 #include "xst_main.h"
 #include "xv_main.h"
 
@@ -930,23 +937,19 @@ void D_AddDEH(const char *filename, int lumpnum) {
   deh_file_t *dehfile;
   const char *deh_out = D_dehout();
 
-  if (filename == NULL && lumpnum == 0)
+  if ((!filename) && lumpnum == 0) {
     I_Error("D_AddDEH: No filename or lumpnum given\n");
+  }
 
   if (!filename) {
-    /*
-    if (lumpnum > numlumps)
-      I_Error("D_AddDEH: lumpnum out of range (%d/%d)\n", lumpnum, numlumps);
-
-    deh_path = strdup(lumpinfo[lumpnum].name);
-    */
     deh_path = NULL;
   }
   else {
     deh_path = I_FindFile(filename, NULL);
 
-    if (deh_path == NULL)
+    if (!deh_path) {
       I_Error("D_AddDEH: Couldn't find %s\n", filename);
+    }
   }
 
   for (unsigned int i = 0; i < deh_files->len; i++) {
@@ -962,25 +965,33 @@ void D_AddDEH(const char *filename, int lumpnum) {
       continue;
     }
 
+    if (!stored_deh_file->filename) {
+      continue;
+    }
+
     if (strcmp(deh_path, stored_deh_file->filename) == 0) {
       D_Msg(MSG_INFO, "D_AddDEH: Skipping %s (already added).\n", deh_path);
       return;
     }
   }
 
-  if (deh_path)
+  if (deh_path) {
     D_Msg(MSG_INFO, "D_AddDEH: Adding %s.\n", deh_path);
+  }
 
   dehfile = malloc(sizeof(deh_file_t));
 
-  if (dehfile == NULL)
+  if (!dehfile) {
     I_Error("D_AddDEH: Error allocating DEH file info");
+  }
 
   dehfile->filename = deh_path;
-  if (deh_out != NULL)
+  if (deh_out) {
     dehfile->outfilename = strdup(deh_out);
-  else
+  }
+  else {
     dehfile->outfilename = NULL;
+  }
   dehfile->lumpnum = lumpnum;
 
   g_ptr_array_add(deh_files, dehfile);
@@ -1319,8 +1330,9 @@ void IdentifyVersion(void) {
   // CPhipps - use DOOMSAVEDIR if defined
   const char *p = getenv("DOOMSAVEDIR");
 
-  if (p == NULL)
+  if (p == NULL) {
     p = I_DoomExeDir();
+  }
 
   free(basesavegame);
   basesavegame = strdup(p);
@@ -1700,6 +1712,31 @@ static void D_DoomMainSetup(void) {
   bool rsp_found;
 
   X_Init(); /* CG 07/22/2014: Scripting */
+
+  XAM_RegisterInterface();
+  XCL_RegisterInterface();
+  XC_RegisterInterface();
+  XD_CompatibilityRegisterInterface();
+  XD_ConfigRegisterInterface();
+  XD_MsgRegisterInterface();
+  XD_RegisterInterface();
+  XG_GameRegisterInterface();
+  XG_KeysRegisterInterface();
+  XI_InputRegisterInterface();
+  XI_RegisterInterface();
+  XM_MenuRegisterInterface();
+  XM_MiscRegisterInterface();
+  XN_RegisterInterface();
+  XP_UserRegisterInterface();
+  XR_DemoRegisterInterface();
+  XR_RegisterInterface();
+  XST_RegisterInterface();
+  XS_RegisterInterface();
+  XV_RegisterInterface();
+
+  X_ExposeInterfaces(NULL);
+
+  D_ConfigInit();
 
   // proff 04/05/2000: Added support for include response files
   /* proff 2001/7/1 - Moved up, so -config can be in response files */
@@ -2178,6 +2215,18 @@ static void D_DoomMainSetup(void) {
     }
   }
 
+  if (!CLIENT) {
+    for (unsigned int i = 0; i < deh_files->len; i++) {
+      deh_file_t *stored_deh_file = g_ptr_array_index(deh_files, i);
+
+      ProcessDehFile(
+        stored_deh_file->filename,
+        stored_deh_file->outfilename,
+        stored_deh_file->lumpnum
+      );
+    }
+  }
+
   V_InitColorTranslation(); //jff 4/24/98 load color translation lumps
 
   // killough 2/22/98: copyright / "modified game" / SPA banners removed
@@ -2232,6 +2281,7 @@ static void D_DoomMainSetup(void) {
   D_Msg(MSG_INFO, "ST_Init: Init status bar.\n");
   ST_Init();
 
+  /*
   XAM_RegisterInterface();
   XC_RegisterInterface();
   XCL_RegisterInterface();
@@ -2249,7 +2299,11 @@ static void D_DoomMainSetup(void) {
   XV_RegisterInterface();
 
   X_ExposeInterfaces(NULL);
+  */
 
+  X_ExposeInterfaces(NULL);
+
+  puts("Starting...");
   X_Start();
 
   // CPhipps - auto screenshots
@@ -2323,6 +2377,10 @@ static void D_DoomMainSetup(void) {
 
   // do not try to interpolate during timedemo
   M_ChangeUncappedFrameRate();
+
+  if ((p = M_CheckParm("-dumpdemo")) && ++p < myargc) {
+    D_DumpInit(myargv[p]);
+  }
 }
 
 //

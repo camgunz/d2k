@@ -266,7 +266,7 @@ static bool already_played(mobj_t *origin, sfxinfo_t *sfx, bool is_pickup) {
     );
 
     log_played_sound(sound);
-    D_Msg(MSG_SOUND, "\n");
+    D_Msg(MSG_SOUND, "(%d) \n", CL_OccurredDuringRePrediction(sound->tic));
 
     if (sound->origin_id == 0 && origin != NULL)
       continue;
@@ -314,8 +314,9 @@ static int get_channel(mobj_t *mobj, sfxinfo_t *sfxinfo, int is_pickup) {
       D_Msg(MSG_SOUND, "(%d) %s: calling stop_channel (1)\n",
         gametic, __func__
       );
-
       log_channel(i);
+      D_Msg(MSG_SOUND, "\n");
+
       stop_channel(c);
       init_channel(c, mobj, sfxinfo, is_pickup);
 
@@ -340,8 +341,9 @@ static int get_channel(mobj_t *mobj, sfxinfo_t *sfxinfo, int is_pickup) {
     D_Msg(MSG_SOUND, "(%d) %s: calling stop_channel (1)\n",
       gametic, __func__
     );
-
     log_channel(i);
+    D_Msg(MSG_SOUND, "\n");
+
     stop_channel(c);
     init_channel(c, mobj, sfxinfo, is_pickup);
 
@@ -357,8 +359,9 @@ static int get_channel(mobj_t *mobj, sfxinfo_t *sfxinfo, int is_pickup) {
     D_Msg(MSG_SOUND, "(%d) %s: calling stop_channel (2)\n",
       gametic, __func__
     );
-
     log_channel(i);
+    D_Msg(MSG_SOUND, "\n");
+
     stop_channel(c);
     init_channel(c, mobj, sfxinfo, is_pickup);
 
@@ -534,8 +537,9 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
         continue;
 
       D_Msg(MSG_SOUND, "(%d) %s: calling stop_channel\n", gametic, __func__);
-
       log_channel(i);
+      D_Msg(MSG_SOUND, "\n");
+
       stop_channel(channel);
 
       break;
@@ -557,9 +561,16 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
   if (sfx->usefulness++ < 0)
     sfx->usefulness = 1;
 
-  D_Msg(MSG_SOUND, "(%d | %d) Starting sound: ",
-    gametic, CL_GetCurrentCommandIndex()
-  );
+  if (CL_RePredicting()) {
+    D_Msg(MSG_SOUND, "||| (%d | %d) Repredicting sound: ",
+      gametic, CL_GetCurrentCommandIndex()
+    );
+  }
+  else {
+    D_Msg(MSG_SOUND, "||| (%d | %d) Starting sound: ",
+      gametic, CL_GetCurrentCommandIndex()
+    );
+  }
   log_channel(cnum);
   D_Msg(MSG_SOUND, "\n");
 
@@ -591,8 +602,12 @@ static void silence_actor(mobj_t *mobj) {
     channel_t *channel = &g_array_index(channels, channel_t, i);
 
     if (channel->sfxinfo && channel->origin_id == mobj->id) {
-      D_Msg(MSG_SOUND, "(%d) %s: calling stop_channel\n", gametic, __func__);
+      D_Msg(MSG_SOUND, "(%d) (silencing actor %u) %s: calling stop_channel\n",
+        gametic, mobj->id, __func__
+      );
       log_channel(i);
+      D_Msg(MSG_SOUND, "\n");
+
       stop_channel(channel);
       break;
     }
@@ -606,6 +621,8 @@ static void stop_sounds(void) {
     if (channel->sfxinfo) {
       D_Msg(MSG_SOUND, "(%d) %s: calling stop_channel\n", gametic, __func__);
       log_channel(i);
+      D_Msg(MSG_SOUND, "\n");
+
       stop_channel(channel);
     }
   }
@@ -803,6 +820,8 @@ static void reposition_sounds(mobj_t *listener) {
         gametic, __func__
       );
       log_channel(i);
+      D_Msg(MSG_SOUND, "\n");
+
       stop_channel(channel);
       continue;
     }
@@ -820,6 +839,8 @@ static void reposition_sounds(mobj_t *listener) {
           gametic, __func__
         );
         log_channel(i);
+        D_Msg(MSG_SOUND, "\n");
+
         stop_channel(channel);
         continue;
       }
@@ -841,6 +862,8 @@ static void reposition_sounds(mobj_t *listener) {
           gametic, __func__
         );
         log_channel(i);
+        D_Msg(MSG_SOUND, "\n");
+
         stop_channel(channel);
       }
       else {

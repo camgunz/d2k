@@ -25,6 +25,7 @@
 
 #include "doomstat.h"
 #include "p_user.h"
+#include "x_intern.h"
 #include "x_main.h"
 
 static int XF_Name(lua_State *L) {

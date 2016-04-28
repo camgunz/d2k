@@ -472,10 +472,20 @@ static void cleanup_pid_file(void) {
 
   puts("Cleaning up PID file");
 
-  if ((p = M_CheckParm("-pid")))
+  if ((p = M_CheckParm("-pid"))) {
     pid_file = myargv[p + 1];
-  else
+  }
+  else {
     pid_file = M_PathJoin(I_DoomExeDir(), DEFAULT_PID_FILE_NAME);
+
+    if (pid_file) {
+      I_Error("Error joining %s and %s: %s\n",
+        I_DoomExeDir(),
+        DEFAULT_PID_FILE_NAME,
+        M_GetFileError()
+      );
+    }
+  }
 
   if (!M_DeleteFile(pid_file)) {
     fprintf(stderr, "Error deleting PID file %s: %s\n",
@@ -510,77 +520,109 @@ static void daemonize(void) {
   int errorfd;
   int p;
 
-  if ((p = M_CheckParm("-log")))
+  if ((p = M_CheckParm("-log"))) {
     log_file = myargv[p + 1];
-  else
+  }
+  else {
     log_file = M_PathJoin(I_DoomExeDir(), DEFAULT_LOG_FILE_NAME);
 
-  if ((p = M_CheckParm("-pid")))
+    if (!log_file) {
+      I_Error("Error joining %s and %s: %s\n",
+        I_DoomExeDir(),
+        DEFAULT_LOG_FILE_NAME,
+        M_GetFileError()
+      );
+    }
+  }
+
+  if ((p = M_CheckParm("-pid"))) {
     pid_file = myargv[p + 1];
-  else
+  }
+  else {
     pid_file = M_PathJoin(I_DoomExeDir(), DEFAULT_PID_FILE_NAME);
+
+    if (!pid_file) {
+      I_Error("Error joining %s and %s: %s\n",
+        I_DoomExeDir(),
+        DEFAULT_PID_FILE_NAME,
+        M_GetFileError()
+      );
+    }
+  }
 
   pid = fork();
 
-  if (pid < 0)
+  if (pid < 0) {
     exit(EXIT_FAILURE);
+  }
 
-  if (pid > 0)
+  if (pid > 0) {
     exit(EXIT_SUCCESS);
+  }
 
   pid = getpid();
 
   umask(0);
 
-  for (int fd = 0; fd < 1024; fd++)
+  for (int fd = 0; fd < 1024; fd++) {
     close(fd);
+  }
 
   initialize_messaging(log_file);
 
   infofd = D_MsgGetFD(MSG_INFO);
 
-  if (infofd < 0)
+  if (infofd < 0) {
     I_Error("Error getting file descriptor of info log");
+  }
 
-  if (dup2(infofd, STDOUT_FILENO) == -1)
+  if (dup2(infofd, STDOUT_FILENO) == -1) {
     I_Error("Error duplicating STDOUT_FILENO: %s", strerror(errno));
+  }
 
   errorfd = D_MsgGetFD(MSG_ERROR);
 
-  if (errorfd < 0)
+  if (errorfd < 0) {
     I_Error("Error getting file descriptor of error log");
+  }
 
   dup2(errorfd, STDERR_FILENO);
 
-  if (dup2(errorfd, STDERR_FILENO) == -1)
+  if (dup2(errorfd, STDERR_FILENO) == -1) {
     I_Error("Error duplicating STDERR_FILENO: %s", strerror(errno));
+  }
 
   sid = setsid();
 
-  if (sid < 0)
+  if (sid < 0) {
     I_Error("Error setting session ID: %s", strerror(errno));
+  }
 
   pid_string = g_strdup_printf("%d\n", pid);
 
-  if (!M_WriteFile(pid_file, pid_string, strlen(pid_string)))
+  if (!M_WriteFile(pid_file, pid_string, strlen(pid_string))) {
     I_Error("Error writing PID to a file: %s", M_GetFileError());
+  }
 
   atexit(cleanup_pid_file);
 
   g_free(pid_string);
 
-  if (chdir("/") < 0)
+  if (chdir("/") < 0) {
     I_Error("Error changing directory to \"/\": %s", strerror(errno));
+  }
 
   infofd = D_MsgGetFD(MSG_INFO);
 
-  if (infofd < 0)
+  if (infofd < 0) {
     I_Error("Error getting info log file descriptor: %s", strerror(errno));
+  }
 
   errorfd = D_MsgGetFD(MSG_ERROR);
 
-  if (errorfd < 0)
+  if (errorfd < 0) {
     I_Error("Error getting error log file descriptor: %s", strerror(errno));
+  }
 }
 #endif
 
@@ -602,8 +644,9 @@ void I_Init(void) {
   }
 
   /* killough 2/21/98: avoid sound initialization if no sound & no music */
-  if (!(nomusicparm && nosfxparm))
+  if (!(nomusicparm && nosfxparm)) {
     I_InitSound();
+  }
 
   R_InitInterpolation();
 }

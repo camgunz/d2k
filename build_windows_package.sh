@@ -11,6 +11,11 @@ FREEDOOM_TARBALL=$(basename "$FREEDOOM_PACKAGE" .xz)
 FREEDOOM_FOLDER='freedoom-0.9'
 FREEDM_FOLDER='freedm-0.9'
 
+if [ ! -f ${BASE_DIR}/crossbuild/d2k.exe ]
+then
+    ./crossrebuild.sh
+fi
+
 if [ ! -f ${BASE_DIR}/data/d2k.wad ]
 then
     ./build_wad.sh
@@ -71,6 +76,8 @@ chmod -x ${PACKAGE_DIR}/typelibs/*
 
 cp "${BASE_DIR}/COPYING" "${PACKAGE_DIR}/COPYING"
 
+cp "${BASE_DIR}/connect.bat" "${PACKAGE_DIR}/connect.bat"
+
 cp "${BASE_DIR}/crossdeps/bin/SDL.dll"                           \
    "${BASE_DIR}/crossdeps/bin/SDL_image.dll"                     \
    "${BASE_DIR}/crossdeps/bin/SDL_mixer.dll"                     \
@@ -93,6 +100,7 @@ cp "${BASE_DIR}/crossdeps/bin/SDL.dll"                           \
    "${BASE_DIR}/crossdeps/bin/libharfbuzz-0.dll"                 \
    "${BASE_DIR}/crossdeps/bin/libiconv-2.dll"                    \
    "${BASE_DIR}/crossdeps/bin/libintl-8.dll"                     \
+   "${BASE_DIR}/crossdeps/bin/libjansson-4.dll"                  \
    "${BASE_DIR}/crossdeps/bin/libjpeg-62.dll"                    \
    "${BASE_DIR}/crossdeps/bin/liblzma-5.dll"                     \
    "${BASE_DIR}/crossdeps/bin/libmad-0.dll"                      \
@@ -118,3 +126,6 @@ cp "${BASE_DIR}/crossdeps/bin/SDL.dll"                           \
    "${PACKAGE_DIR}/"
 
 chmod -x ${PACKAGE_DIR}/*.dll
+
+7z a d2k.7z d2k
+

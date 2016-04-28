@@ -1289,34 +1289,34 @@ mobj_t* P_SpawnMapThing (const mapthing_t* mthing, int index)
   // count deathmatch start positions
 
   // doom2.exe has at most 10 deathmatch starts
-  if (thingtype == 11)
-    {
-    if (!(!compatibility || deathmatch_p-deathmatchstarts < 10)) {
-		return NULL;
-	} else {
-    // 1/11/98 killough -- new code removes limit on deathmatch starts:
-
-    size_t offset = deathmatch_p - deathmatchstarts;
-
-    if (compatibility && deathmatch_p-deathmatchstarts >= 10)
-      return NULL; //e6y
-    if (offset >= num_deathmatchstarts)
-      {
-      num_deathmatchstarts = num_deathmatchstarts ?
-                 num_deathmatchstarts*2 : 16;
-      deathmatchstarts = realloc(deathmatchstarts,
-                   num_deathmatchstarts *
-                   sizeof(*deathmatchstarts));
-      deathmatch_p = deathmatchstarts + offset;
-      }
-    memcpy(deathmatch_p++, mthing, sizeof(*mthing));
-    (deathmatch_p-1)->options = 1;
-
-    TracerAddDeathmatchStart(deathmatch_p - deathmatchstarts - 1, index);
-
-    return NULL;
-	}
+  if (thingtype == 11) {
+    if (!(!compatibility || deathmatch_p - deathmatchstarts < 10)) {
+      return NULL;
     }
+    else {
+      // 1/11/98 killough -- new code removes limit on deathmatch starts:
+
+      size_t offset = deathmatch_p - deathmatchstarts;
+
+      if (compatibility && deathmatch_p - deathmatchstarts >= 10) {
+        return NULL; //e6y
+      }
+      if (offset >= num_deathmatchstarts) {
+        num_deathmatchstarts = num_deathmatchstarts ?  num_deathmatchstarts * 2 : 16;
+        deathmatchstarts = realloc(
+          deathmatchstarts, num_deathmatchstarts * sizeof(*deathmatchstarts)
+        );
+        deathmatch_p = deathmatchstarts + offset;
+      }
+      memcpy(deathmatch_p, mthing, sizeof(*mthing));
+      deathmatch_p->options = 1;
+      deathmatch_p++;
+
+      TracerAddDeathmatchStart(deathmatch_p - deathmatchstarts - 1, index);
+
+      return NULL;
+    }
+  }
 
   // check for players specially
 

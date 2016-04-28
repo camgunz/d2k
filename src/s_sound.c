@@ -31,7 +31,7 @@
 #include "sounds.h"
 #include "s_sound.h"
 
-#define DEBUG_SOUND 0
+#define DEBUG_SOUND 1
 
 static int saved_sfx_volume;
 
@@ -58,12 +58,12 @@ void S_Init(int sfxVolume, int musicVolume) {
   int i;
 
 #if DEBUG_SOUND
-  if (!MULTINET)
-    D_EnableLogChannel(LOG_SOUND, "sound.log");
-  else if (CLIENT)
-    D_EnableLogChannel(LOG_SOUND, "client-sound.log");
+  if (CLIENT)
+    D_MsgActivateWithFile(MSG_SOUND, "client-sound.log");
   else if (SERVER)
-    D_EnableLogChannel(LOG_SOUND, "server-sound.log");
+    D_MsgActivateWithFile(MSG_SOUND, "server-sound.log");
+  else
+    D_MsgActivateWithFile(MSG_SOUND, "sound.log");
 #endif
 
   idmusnum = -1; //jff 3/17/98 insure idmus number is blank

@@ -40,6 +40,7 @@ bool CL_ReceivedSetup(void);
 void CL_SetReceivedSetup(bool new_received_setup);
 void CL_SetAuthorizationLevel(auth_level_e level);
 void CL_MarkServerOutdated(void);
+bool CL_OccurredDuringRePrediction(int tic);
 void CL_CheckForStateUpdates(void);
 void CL_UpdateReceivedCommandIndex(int command_index);
 void CL_Init(void);

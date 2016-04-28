@@ -23,8 +23,6 @@
 
 #include "z_zone.h"
 
-#include "i_smp.h"
-
 #include "doomstat.h"
 #include "d_event.h"
 #include "m_argv.h"
@@ -80,15 +78,6 @@
 
 int usemouse;
 bool precache = true; /* if true, load all graphics at start */
-
-// The available anisotropic
-typedef enum {
-  gl_anisotropic_off = 0,
-  gl_anisotropic_2x  = 1,
-  gl_anisotropic_4x  = 2,
-  gl_anisotropic_8x  = 3,
-  gl_anisotropic_16x = 4,
-} gl_anisotropic_mode_t;
 
 extern int viewwidth;
 extern int viewheight;
@@ -162,7 +151,6 @@ default_t defaults[] =
   //e6y
   {"System settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"process_priority", {&process_priority},{0},0,2,def_int,ss_none},
-  {"render_smp", {&use_smp_default},{0},0,1,def_bool,ss_none},
   {"try_to_reduce_cpu_cache_misses", {&try_to_reduce_cpu_cache_misses},{1},0,1,def_bool,ss_none},
   
   {"Misc settings",{NULL},{0},UL,UL,def_none,ss_none},

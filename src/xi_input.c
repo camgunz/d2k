@@ -30,9 +30,11 @@
 #include "i_joy.h"
 #include "i_mouse.h"
 #include "i_video.h"
+#include "m_misc.h"
 #include "p_mobj.h"
 #include "sounds.h"
 #include "s_sound.h"
+#include "x_intern.h"
 #include "x_main.h"
 #include "xi_input.h"
 
@@ -708,14 +710,15 @@ void XI_InputRegisterInterface(void) {
     "EURO",         X_INTEGER, SDLK_EURO
   );
 
-  X_RegisterObjects("Mouse", 7,
-    "LEFT",      X_INTEGER, SDL_BUTTON_LEFT,
-    "MIDDLE",    X_INTEGER, SDL_BUTTON_MIDDLE,
-    "RIGHT",     X_INTEGER, SDL_BUTTON_RIGHT,
-    "WHEELUP",   X_INTEGER, SDL_BUTTON_WHEELUP,
-    "WHEELDOWN", X_INTEGER, SDL_BUTTON_WHEELDOWN,
-    "X1",        X_INTEGER, SDL_BUTTON_X1,
-    "X2",        X_INTEGER, SDL_BUTTON_X2
+  X_RegisterObjects("Mouse", 8,
+    "LEFT",        X_INTEGER, SDL_BUTTON_LEFT,
+    "MIDDLE",      X_INTEGER, SDL_BUTTON_MIDDLE,
+    "RIGHT",       X_INTEGER, SDL_BUTTON_RIGHT,
+    "WHEELUP",     X_INTEGER, SDL_BUTTON_WHEELUP,
+    "WHEELDOWN",   X_INTEGER, SDL_BUTTON_WHEELDOWN,
+    "X1",          X_INTEGER, SDL_BUTTON_X1,
+    "X2",          X_INTEGER, SDL_BUTTON_X2,
+    "max_buttons", X_INTEGER, MAX_MOUSEB
   );
 
   X_RegisterObjects("Joystick", 9,

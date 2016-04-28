@@ -26,6 +26,7 @@
 #include "doomdef.h"
 #include "d_event.h"
 #include "g_keys.h"
+#include "x_intern.h"
 #include "x_main.h"
 
 static int XG_KeysGetRight(lua_State *L) {

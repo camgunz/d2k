@@ -82,32 +82,39 @@ static const int recoil_values[] = {    // phares
 static void P_SetPsprite(player_t *player, int position, statenum_t stnum) {
   pspdef_t *psp = &player->psprites[position];
 
-  do {
-    state_t *state;
+  do
+    {
+      state_t *state;
 
-    if (!stnum) { // object removed itself
-      psp->state = NULL;
-      break;
+      if (!stnum)
+        {
+          // object removed itself
+          psp->state = NULL;
+          break;
+        }
+
+      state = &states[stnum];
+      psp->state = state;
+      psp->tics = state->tics;        // could be 0
+
+      if (state->misc1)
+        {
+          // coordinate set
+          psp->sx = state->misc1 << FRACBITS;
+          psp->sy = state->misc2 << FRACBITS;
+        }
+
+      // Call action routine.
+      // Modified handling.
+      if (state->action)
+        {
+          state->action(player, psp);
+          if (!psp->state)
+            break;
+        }
+      stnum = psp->state->nextstate;
     }
-
-    state = &states[stnum];
-    psp->state = state;
-    psp->tics = state->tics; // could be 0
-
-    if (state->misc1) { // coordinate set
-      psp->sx = state->misc1 << FRACBITS;
-      psp->sy = state->misc2 << FRACBITS;
-    }
-
-    // Call action routine.
-    // Modified handling.
-    if (state->action) {
-      state->action(player, psp);
-      if (!psp->state)
-        break;
-    }
-    stnum = psp->state->nextstate;
-  } while (!psp->tics); // an initial state of 0 could cycle through
+  while (!psp->tics);     // an initial state of 0 could cycle through
 }
 
 //
@@ -273,7 +280,7 @@ bool P_CheckAmmo(player_t *player) {
 //
 
 static void P_FireWeapon(player_t *player) {
-  bool unlagged_activated;
+  bool unlagged_activated = false;
   statenum_t newstate;
 
   if (!P_CheckAmmo(player))
@@ -285,7 +292,7 @@ static void P_FireWeapon(player_t *player) {
 
   P_SetMobjState(player->mo, S_PLAY_ATK1);
 
-  if (SERVER && unlagged_activated) {
+  if (unlagged_activated) {
     SV_UnlagEnd();
   }
 

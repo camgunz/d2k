@@ -492,12 +492,12 @@ bool N_TryRunTics(void) {
 #if PRINT_NETWORK_STATS
     print_network_stats();
 #endif
-
-    N_ServiceNetwork();
-    C_ECIService();
   }
 
-  if (!SERVER) {
+  N_ServiceNetwork();
+  C_ECIService();
+
+  if ((!SERVER) && (!nodrawers)) {
     if (!X_Call(X_GetState(), "console", "tick", 0, 0))
       I_Error("Error ticking console: %s\n", X_GetError(X_GetState()));
 

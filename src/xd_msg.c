@@ -23,6 +23,7 @@
 #include "z_zone.h"
 
 #include "c_main.h"
+#include "x_intern.h"
 #include "x_main.h"
 
 int XD_Msg(lua_State *L) {

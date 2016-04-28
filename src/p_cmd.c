@@ -40,6 +40,7 @@
 #include "p_map.h"
 #include "p_mobj.h"
 #include "p_pspr.h"
+#include "p_spec.h"
 #include "p_user.h"
 #include "s_sound.h"
 #include "sv_main.h"
@@ -61,7 +62,7 @@ static void print_command(gpointer data, gpointer user_data) {
 }
 #endif
 
-static void run_player_command(player_t *player) {
+static bool run_player_command(player_t *player) {
   ticcmd_t *cmd = &player->cmd;
   weapontype_t newweapon;
 
@@ -82,8 +83,10 @@ static void run_player_command(player_t *player) {
     player->mo->flags &= ~MF_JUSTATTACKED;
   }
 
-  if (player->playerstate == PST_DEAD)
-    return;
+  if (player->playerstate == PST_DEAD) {
+    P_DeathThink(player);
+    return false;
+  }
 
   if (player->jumpTics)
     player->jumpTics--;
@@ -99,6 +102,11 @@ static void run_player_command(player_t *player) {
   P_SetPitch(player);
 
   P_CalcHeight(player); // Determines view height and bobbing
+
+  // Determine if there's anything about the sector you're in that's
+  // going to affect you, like painful floors.
+  if (player->mo->subsector->sector->special)
+    P_PlayerInSpecialSector(player);
 
   // Check for weapon change.
   if (cmd->buttons & BT_CHANGE) {
@@ -158,6 +166,8 @@ static void run_player_command(player_t *player) {
   // cycle psprites
 
   P_MovePsprites(player);
+
+  return true;
 }
 
 static void process_queued_command(gpointer data, gpointer user_data) {
@@ -228,7 +238,7 @@ static void process_queued_command(gpointer data, gpointer user_data) {
 
   player->commands_run_this_tic++;
 
-  if (player->mo)
+  if (MULTINET && player->mo)
     P_MobjThinker(player->mo);
 
   N_LogPlayerPosition(player);
@@ -617,20 +627,18 @@ void P_BuildCommand(void) {
     CL_MarkServerOutdated();
 }
 
-void P_RunPlayerCommands(int playernum) {
+bool P_RunPlayerCommands(int playernum) {
   player_t *player = &players[playernum];
 
   if (!MULTINET) {
-    run_player_command(player);
-    return;
+    return run_player_command(player);
   }
 
   if (CLIENT && playernum != consoleplayer && playernum != 0) {
     unsigned int command_count = P_GetCommandCount(playernum);
 
     if (command_count == 0) {
-      if (!extrapolate_player_position(playernum))
-        return;
+      return extrapolate_player_position(playernum);
     }
 #if EXTRAPOLATION == COPIED_COMMAND
     else {
@@ -646,6 +654,7 @@ void P_RunPlayerCommands(int playernum) {
   }
 
   run_queued_player_commands(playernum);
+  return player->playerstate != PST_DEAD;
 }
 
 void P_PrintCommands(int playernum) {

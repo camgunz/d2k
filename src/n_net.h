@@ -31,7 +31,7 @@
 #define NET_CONNECT_TIMEOUT 1
 #define NET_DISCONNECT_TIMEOUT 1
 
-#define MULTINET     (netgame && (!solonet))
+#define MULTINET     (netgame && (!solonet) && (!netdemo))
 #define CLIENT       (MULTINET && (!netserver))
 #define SERVER       (MULTINET && netserver)
 #define SINGLEPLAYER (!demorecording && !demoplayback && !democontinue && !netgame)
@@ -77,6 +77,7 @@ typedef struct netticcmd_s {
 } netticcmd_t;
 
 extern bool netgame;
+extern bool netdemo;
 extern bool solonet;
 extern bool netserver;
 

@@ -1506,6 +1506,8 @@ typedef struct
 /* See p_mobj_h for addition more technical info */
 extern mobjinfo_t mobjinfo[NUMMOBJTYPES];
 
+const char* D_ActorTypeName(mobjtype_t type);
+
 #endif
 
 /* vi: set et ts=2 sw=2: */

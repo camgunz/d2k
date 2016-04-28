@@ -40,7 +40,6 @@
 #include "i_joy.h"
 #include "i_main.h"
 #include "i_mouse.h"
-#include "i_smp.h"
 #include "i_video.h"
 #include "m_argv.h"
 #include "p_user.h"
@@ -749,8 +748,6 @@ void I_UpdateVideoMode(void) {
       vid_8ingl.surface = NULL;
     }
 #endif
-
-    SMP_Free();
   }
 
   // e6y: initialisation of screen_multiply
@@ -884,8 +881,6 @@ void I_UpdateVideoMode(void) {
       REAL_SCREENWIDTH, REAL_SCREENHEIGHT, SDL_GetError()
     );
   }
-
-  SMP_Init();
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {

@@ -26,6 +26,7 @@
 #include "doomstat.h"
 #include "d_event.h"
 #include "c_main.h"
+#include "d_dump.h"
 #include "d_net.h"
 #include "f_finale.h"
 #include "i_video.h"
@@ -82,7 +83,8 @@ extern bool setsizeneeded;
 #define SLOWTURNTICS  6
 #define QUICKREVERSE (short)32768 // 180 degree reverse                    // phares
 
-static bool        netdemo;
+bool        netdemo;
+
 static const byte *demobuffer;   /* cph - only used for playback */
 static int         demolength; // check for overrun (missing DEMOMARKER)
 static FILE       *demofp; /* cph - record straight to file */
@@ -1402,6 +1404,10 @@ void G_Ticker(void) {
       mlooky = 0;
       AM_Ticker();
       ST_Ticker();
+
+      if (D_DumpEnabled()) {
+        D_DumpUpdate();
+      }
     break;
     case GS_INTERMISSION:
        WI_Ticker();
@@ -1576,7 +1582,7 @@ void G_PlayerReborn(int player) {
   p->backpack = 0;
   p->readyweapon = 0;
   p->pendingweapon = 0;
-  memset(p->weaponowned, 0, sizeof(bool) * NUMWEAPONS);
+  memset(p->weaponowned, 0, sizeof(int) * NUMWEAPONS);
   memset(p->ammo, 0, sizeof(int) * NUMAMMO);
   memset(p->maxammo, 0, sizeof(int) * NUMAMMO);
   p->attackdown = 0;
@@ -1588,7 +1594,7 @@ void G_PlayerReborn(int player) {
   p->extralight = 0;
   p->fixedcolormap = 0;
   p->colormap = 0;
-  memset(p->psprites, 0, sizeof(pspdef_t) * NUMPSPRITES);
+  memset(p->psprites, 0, sizeof(p->psprites));
   p->didsecret = 0;
   p->momx = 0;
   p->momy = 0;
@@ -1705,7 +1711,28 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
   /* BUG: an can end up negative, because mthing->angle is (signed) short.
    * We have to emulate original Doom's behaviour, deferencing past the start
    * of the array, into the previous array (finetangent) */
-  an = (ANG45 * ((signed int)mthing->angle / 45)) >> ANGLETOFINESHIFT;
+
+  // an = (ANG45 * ((signed)mthing->angle / 45)) >> ANGLETOFINESHIFT;
+
+  /*
+   * [CG] Shifting these signed values is implementation-defined, and it turns
+   *      out that clang will (if so configured) will mess this up.
+   */
+
+  an = ANG45 * ((signed)mthing->angle / 45);
+
+  switch (an) {
+    case 0x80000000:
+    case 0xA0000000:
+    case 0xC0000000:
+    case 0xE0000000:
+      an = -((-an) >> ANGLETOFINESHIFT);
+      break;
+    default:
+      an >>= ANGLETOFINESHIFT;
+      break;
+  }
+
   xa = finecosine[an];
   ya = finesine[an];
 
@@ -1751,11 +1778,13 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
 void G_DeathMatchSpawnPlayer(int playernum) {
   int selections = deathmatch_p - deathmatchstarts;
 
+  /*
   if (selections < MAXPLAYERS) {
     I_Error("G_DeathMatchSpawnPlayer: Only %i deathmatch spots, %d required",
       selections, MAXPLAYERS
     );
   }
+  */
 
   for (int j = 0; j < 20; j++) {
     int i = P_Random(pr_dmspawn) % selections;

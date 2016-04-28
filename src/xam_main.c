@@ -26,6 +26,7 @@
 #include "d_event.h"
 #include "m_fixed.h"
 #include "am_map.h"
+#include "x_intern.h"
 #include "x_main.h"
 
 static int XAM_HandleEvent(lua_State *L) {
@@ -38,8 +39,11 @@ static int XAM_HandleEvent(lua_State *L) {
 }
 
 void XAM_RegisterInterface(void) {
-  X_RegisterObjects("AutoMap", 1,
-    "handle_event", X_FUNCTION, XAM_HandleEvent
+  X_RegisterObjects("AutoMap", 4,
+    "handle_event",                  X_FUNCTION, XAM_HandleEvent,
+    "map_things_appearance_classic", X_INTEGER,  map_things_appearance_classic,
+    "map_things_appearance_scaled",  X_INTEGER,  map_things_appearance_scaled,
+    "map_things_appearance_icon",    X_INTEGER,  map_things_appearance_icon
   );
 }
 

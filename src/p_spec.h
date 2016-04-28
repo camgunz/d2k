@@ -184,6 +184,21 @@
 #define LockedKindShift            5
 #define LockedSpeedShift           3
 
+enum {
+  tc_ceiling,
+  tc_door,
+  tc_floor,
+  tc_plat,
+  tc_flash,
+  tc_strobe,
+  tc_glow,
+  tc_elevator,    //jff 2/22/98 new elevator type thinker
+  tc_scroll,      // killough 3/7/98: new scroll effect thinker
+  tc_pusher,      // phares 3/22/98:  new push/pull effect thinker
+  tc_flicker,     // killough 10/4/98
+  tc_endspecials
+} specials_e;
+
 //
 // Animating textures and planes
 // There is another anim_t used in wi_stuff, unrelated.
@@ -613,7 +628,7 @@ typedef struct
   int count;
   plat_e status;
   plat_e oldstatus;
-  bool crush;
+  int crush;
   int tag;
   plattype_e type;
 
@@ -664,7 +679,7 @@ typedef struct
   fixed_t topheight;
   fixed_t speed;
   fixed_t oldspeed;
-  bool     crush;
+  int     crush;
 
   //jff 02/04/98 add these to support ceiling changers
   int newspecial;
@@ -691,7 +706,7 @@ typedef struct
 {
   thinker_t thinker;
   floor_e type;
-  bool crush;
+  int crush;
   sector_t* sector;
   int direction;
   int newspecial;

@@ -71,7 +71,7 @@ inline static CONSTFUNC fixed_t D_abs(fixed_t x)
  * Also made const */
 
 inline static CONSTFUNC fixed_t FixedMul(fixed_t a, fixed_t b) {
-  return (fixed_t)((int_64_t) a * b >> FRACBITS);
+  return (fixed_t)((int64_t) a * b >> FRACBITS);
 }
 
 /*
@@ -80,7 +80,7 @@ inline static CONSTFUNC fixed_t FixedMul(fixed_t a, fixed_t b) {
 
 inline static CONSTFUNC fixed_t FixedDiv(fixed_t a, fixed_t b) {
   return (D_abs(a) >> 14) >= D_abs(b) ? ((a ^ b) >> 31) ^ INT_MAX :
-    (fixed_t)(((int_64_t) a << FRACBITS) / b
+    (fixed_t)(((int64_t) a << FRACBITS) / b
   );
 }
 

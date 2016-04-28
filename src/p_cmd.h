@@ -41,7 +41,7 @@ void         P_TrimCommands(int playernum, TrimFunc should_trim,
 void         P_TrimCommandsByTic(int playernum, int tic);
 void         P_TrimCommandsByIndex(int playernum, int command_index);
 void         P_BuildCommand(void);
-void         P_RunPlayerCommands(int playernum);
+bool         P_RunPlayerCommands(int playernum);
 void         P_PrintCommands(int playernum);
 
 #endif

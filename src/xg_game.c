@@ -31,6 +31,7 @@
 #include "p_spec.h"
 #include "p_user.h"
 #include "n_net.h"
+#include "x_intern.h"
 #include "x_main.h"
 
 static int XG_GameGetGametic(lua_State *L) {

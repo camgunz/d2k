@@ -24,15 +24,15 @@
 #ifndef X_MAIN_H__
 #define X_MAIN_H__
 
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-
 #define X_NAMESPACE "d2k"
 #define X_FOLDER_NAME "scripts"
 #define X_TYPELIB_FOLDER_NAME "typelibs"
 #define X_INIT_SCRIPT_NAME "init.lua"
+#define X_CONFIG_SCRIPT_NAME "config.lua"
+#define X_START_SCRIPT_NAME "start.lua"
 #define X_RegisterObject(sn, n, t, d) X_RegisterObjects(sn, 1, n, t, d)
+
+typedef void* x_engine_t;
 
 typedef enum {
   X_NONE = -1,
@@ -46,41 +46,33 @@ typedef enum {
   X_FUNCTION
 } x_type_e;
 
-union x_object_data_u {
-  bool           boolean;
-  void          *light_userdata;
-  lua_Integer    integer;
-  lua_Unsigned   uinteger;
-  lua_Number     decimal;
-  char          *string;
-  lua_CFunction  function;
-};
+bool       X_LoadFile(const char *script_name);
+void       X_Init(void);
+void       X_Start(void);
+bool       X_Available(void);
+void       X_RegisterType(const char *type_name, unsigned int count, ...);
+void       X_RegisterObjects(const char *scope_name, unsigned int count, ...);
+x_engine_t X_GetState(void);
+x_engine_t X_NewState(void);
+x_engine_t X_NewRestrictedState(void);
 
-/* CG: [TODO] Add a member for metatable, in the case of light userdata */
-typedef struct x_object_s {
-  x_type_e type;
-  union x_object_data_u as;
-} x_object_t;
+void       X_ExposeInterfaces(x_engine_t xe);
+char*      X_GetError(x_engine_t xe);
+bool       X_Eval(x_engine_t xe, const char *code);
+bool       X_Call(x_engine_t xe, const char *object, const char *fname,
+                                  int arg_count, int res_count, ...);
+int        X_GetStackSize(x_engine_t xe);
+char*      X_ToString(x_engine_t xe, int index);
+void       X_PrintStack(x_engine_t xe);
+void       X_PopStackMembers(x_engine_t xe, int count);
+void       X_RunGC(x_engine_t xe);
 
-void        X_Init(void);
-void        X_Start(void);
-bool        X_Available(void);
-void        X_RegisterType(const char *type_name, unsigned int count, ...);
-void        X_RegisterObjects(const char *scope_name, unsigned int count, ...);
-lua_State*  X_GetState(void);
-lua_State*  X_NewState(void);
-lua_State*  X_NewRestrictedState(void);
-
-void        X_ExposeInterfaces(lua_State *L);
-char*       X_GetError(lua_State *L);
-bool        X_Eval(lua_State *L, const char *code);
-bool        X_Call(lua_State *L, const char *object, const char *fname,
-                                 int arg_count, int res_count, ...);
-int         X_GetStackSize(lua_State *L);
-char*       X_ToString(lua_State *L, int index);
-void        X_PrintStack(lua_State *L);
-void        X_PopStackMembers(lua_State *L, int count);
-void        X_RunGC(lua_State *L);
+bool       X_PopBoolean(x_engine_t xe);
+int32_t    X_PopInteger(x_engine_t xe);
+uint32_t   X_PopUInteger(x_engine_t xe);
+double     X_PopDecimal(x_engine_t xe);
+char*      X_PopString(x_engine_t xe);
+void*      X_PopUserdata(x_engine_t xe);
 
 #endif
 

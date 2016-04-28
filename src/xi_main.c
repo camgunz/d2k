@@ -25,6 +25,7 @@
 
 #include "i_main.h"
 #include "i_system.h"
+#include "x_intern.h"
 #include "x_main.h"
 
 static int XF_Quit(lua_State *L) {
