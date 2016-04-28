@@ -186,10 +186,12 @@ bool C_HandleInput(char *input_text) {
   bool success;
   const char *command;
 
-  if (command_is_shorthand(input_text))
+  if (command_is_shorthand(input_text)) {
     command = parse_shorthand_command(input_text);
-  else
+  }
+  else {
     command = input_text;
+  }
 
   success = X_Eval(X_GetState(), command);
 

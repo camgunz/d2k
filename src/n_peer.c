@@ -228,6 +228,7 @@ unsigned int N_PeerAdd(void) {
 
   np->playernum         = 0;
   np->peer              = NULL;
+  np->auth_level        = AUTH_LEVEL_NONE;
   np->connect_time      = time(NULL);
   np->disconnect_time   = 0;
   np->bytes_uploaded    = 0;

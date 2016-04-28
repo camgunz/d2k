@@ -513,7 +513,6 @@ void N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level) {
   pbuf_t *pbuf = N_PeerBeginMessage(
     np->peernum, NET_CHANNEL_RELIABLE, nm_auth
   );
-  puts("Packing auth response");
 
   M_PBufWriteUChar(pbuf, auth_level);
 }

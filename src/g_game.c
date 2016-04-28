@@ -3202,7 +3202,11 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size,
       compatibility_level = doom_12_compatibility;
       episode = *demo_p++;
       map = *demo_p++;
-      deathmatch = respawnparm = fastparm = nomonsters = consoleplayer = 0;
+      deathmatch = 0;
+      respawnparm = 0;
+      fastparm = 0;
+      nomonsters = 0;
+      consoleplayer = 0;
       
       // e6y
       // Ability to force -nomonsters and -respawn for playback of 1.2 demos.

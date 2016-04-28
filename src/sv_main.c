@@ -41,6 +41,10 @@ static game_state_t *unlag_game_state = NULL;
 static int           unlag_tic;
 
 int sv_limit_player_commands = 0;
+char *sv_spectate_password = NULL;
+char *sv_join_password = NULL;
+char *sv_moderate_password = NULL;
+char *sv_administrate_password = NULL;
 
 static void sv_remove_old_commands(void) {
   int oldest_sync_tic = INT_MAX;
