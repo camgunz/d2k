@@ -663,8 +663,9 @@ static void P_KillMobj(mobj_t *source, mobj_t *target) {
         source->player->resurectedkillcount++;
     }
 
-    if (target->player)
+    if (((!MULTINET) || deathmatch) && target->player) {
       source->player->frags[target->player-players]++;
+    }
   }
   else if (target->flags & MF_COUNTKILL) { /* Add to kills tally */
     if ((compatibility_level < lxdoom_1_compatibility) || !netgame) {
@@ -878,7 +879,7 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
           (player->cheats&CF_GODMODE || player->powers[pw_invulnerability]))
         return;
 
-      if (player->armortype)
+      if (player->armortype && (!player->telefragged_by_spawn))
         {
           int saved = player->armortype == 1 ? damage/3 : damage/2;
           if (player->armorpoints <= saved)

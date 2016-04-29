@@ -40,6 +40,7 @@ bool P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, int dropoff);
 
 // killough 8/9/98: extra argument for telefragging
 bool P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y,bool boss);
+bool P_StompSpawnPointBlockers(mobj_t *thing);
 void    P_SlideMove(mobj_t *mo);
 bool P_CheckSight(mobj_t *t1, mobj_t *t2);
 void    P_UseLines(player_t *player);

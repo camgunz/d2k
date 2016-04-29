@@ -28,6 +28,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 
+#include "c_main.h"
 #include "d_deh.h"
 #include "d_event.h"
 #include "d_main.h"
@@ -45,6 +46,7 @@
 #include "p_user.h"
 #include "s_sound.h"
 #include "sounds.h"
+#include "sv_main.h"
 #include "w_wad.h"
 
 const char *D_dehout(void); /* CG: from d_main.c */
@@ -392,8 +394,8 @@ static void handle_auth_request(netpeer_t *np) {
 
   M_BufferInit(&buf);
 
-  if (N_UnpackAuthResponse(np, &buf)) {
-    CL_SetAuthorizationLevel(level);
+  if (!N_UnpackAuthRequest(np, &buf)) {
+    return;
   }
 
   password = M_BufferGetData(&buf);
@@ -436,7 +438,7 @@ static void handle_rcon(netpeer_t *np) {
 
   M_BufferInit(&rcon_buf);
 
-  if (!N_UnpackRCONCommand(np, &buf)) {
+  if (!N_UnpackRCONCommand(np, &rcon_buf)) {
     return;
   }
 

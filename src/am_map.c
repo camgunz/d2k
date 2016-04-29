@@ -536,7 +536,7 @@ void AM_SetPosition(void)
 // Passed nothing, returns nothing
 //
 static void AM_initVariables(void) {
-  int playernum;
+  int playernum = -1;
 
   automapmode |= am_active;
 
@@ -559,8 +559,9 @@ static void AM_initVariables(void) {
     }
   }
 
-  if (!playeringame[playernum])
+  if (playernum == -1) {
     I_Error("AM_initVariables: Couldn't find an in-game player");
+  }
 
   plr = &players[playernum];
   m_x = (plr->mo->x >> FRACTOMAPBITS) - m_w / 2; //e6y

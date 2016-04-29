@@ -212,6 +212,7 @@ typedef struct player_s
   int            latest_command_run_index;
   int            ping;
   int            connect_tic;
+  bool           telefragged_by_spawn;
   fixed_t        saved_momx;
   fixed_t        saved_momy;
   fixed_t        saved_momz;
