@@ -802,7 +802,7 @@ static bool PIT_FindTarget(mobj_t *mo)
 // Returns true if a player is targeted.
 //
 
-static bool P_LookForPlayers(mobj_t *actor, bool allaround)
+static bool P_VanillaLookForPlayers(mobj_t *actor, bool allaround)
 {
   player_t *player;
   int stop, stopc, c;
@@ -897,6 +897,103 @@ static bool P_LookForPlayers(mobj_t *actor, bool allaround)
     }
 }
 
+static bool P_LookForPlayers(mobj_t *actor, bool allaround) {
+  player_t *player;
+  int stop;
+  int stopc;
+  int c;
+
+  // killough 9/9/98: friendly monsters go about players differently
+  if (actor->flags & MF_FRIEND) {
+    int anyone;
+
+#if 0
+    if (!allaround) // If you want friendly monsters not to awaken unprovoked
+      return false;
+#endif
+
+    // Go back to a player, no matter whether it's visible or not
+    for (anyone = 0; anyone <= 1; anyone++) {
+      for (c = 0; c < MAXPLAYERS; c++) {
+        if (playeringame[c] && players[c].playerstate == PST_LIVE &&
+            (anyone || P_IsVisible(actor, players[c].mo, allaround))) {
+          P_SetTarget(&actor->target, players[c].mo);
+
+          // killough 12/98:
+          // get out of refiring loop, to avoid hitting player accidentally
+
+          if (actor->info->missilestate) {
+            P_SetMobjState(actor, actor->info->seestate);
+            actor->flags &= ~MF_JUSTHIT;
+          }
+
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // Change mask of 3 to (MAXPLAYERS-1) -- killough 2/15/98:
+  stop = (actor->lastlook - 1) & (MAXPLAYERS - 1);
+
+  c = 0;
+
+  stopc = !mbf_features &&
+    !demo_compatibility && monsters_remember ?
+    MAXPLAYERS : 2;       // killough 9/9/98
+
+  for (;; actor->lastlook = (actor->lastlook + 1) & (MAXPLAYERS - 1)) {
+    if (!playeringame[actor->lastlook]) {
+      continue;
+    }
+
+    // killough 2/15/98, 9/9/98:
+    if (c++ == stopc || actor->lastlook == stop) { // done looking
+      // e6y
+      // Fixed Boom incompatibilities. The following code was missed.
+      // There are no more desyncs on Donce's demos on horror.wad
+
+      // Use last known enemy if no players sighted -- killough 2/15/98:
+      if (!mbf_features && !demo_compatibility && monsters_remember) {
+        if (actor->lastenemy && actor->lastenemy->health > 0) {
+          actor->target = actor->lastenemy;
+          actor->lastenemy = NULL;
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    player = &players[actor->lastlook];
+
+    if (player->cheats & CF_NOTARGET) {
+      continue; // no target
+    }
+
+    if (player->health <= 0) {
+      continue;               // dead
+    }
+
+    if (!P_IsVisible(actor, player->mo, allaround)) {
+      continue;
+    }
+
+    P_SetTarget(&actor->target, player->mo);
+
+    /* killough 9/9/98: give monsters a threshold towards getting players
+     * (we don't want it to be too easy for a player with dogs :)
+     */
+    if (!comp[comp_pursuit]) {
+      actor->threshold = 60;
+    }
+
+    return true;
+  }
+}
+
 //
 // Friendly monsters, by Lee Killough 7/18/98
 //
@@ -988,9 +1085,24 @@ static bool P_LookForMonsters(mobj_t *actor, bool allaround) {
 //
 
 static bool P_LookForTargets(mobj_t *actor, int allaround) {
-  return actor->flags & MF_FRIEND ?
-    P_LookForMonsters(actor, allaround) || P_LookForPlayers (actor, allaround):
-    P_LookForPlayers (actor, allaround) || P_LookForMonsters(actor, allaround);
+  if (MULTINET) {
+    if (actor->flags & MF_FRIEND) {
+      return P_LookForMonsters(actor, allaround) ||
+             P_LookForPlayers(actor, allaround);
+    }
+    else {
+      return P_LookForPlayers (actor, allaround) ||
+             P_LookForMonsters(actor, allaround);
+    }
+  }
+  else if (actor->flags & MF_FRIEND) {
+    return P_LookForMonsters(actor, allaround) ||
+           P_VanillaLookForPlayers(actor, allaround);
+  }
+  else {
+    return P_VanillaLookForPlayers (actor, allaround) ||
+           P_LookForMonsters(actor, allaround);
+  }
 }
 
 //
@@ -1222,10 +1334,18 @@ void A_Chase(mobj_t *actor) {
 
   if (!actor->threshold) {
     if (!mbf_features) {   /* killough 9/9/98: for backward demo compatibility */
-      if (netgame && !P_CheckSight(actor, actor->target) &&
-        P_LookForPlayers(actor, true))
-
-      return;
+      if (MULTINET) {
+        if (netgame &&
+            !P_CheckSight(actor, actor->target) &&
+            P_LookForPlayers(actor, true)) {
+          return;
+        }
+      }
+      else if (netgame &&
+               !P_CheckSight(actor, actor->target) &&
+               P_VanillaLookForPlayers(actor, true)) {
+        return;
+      }
     }
     /* killough 7/18/98, 9/9/98: new monster AI */
     else if (help_friends && P_HelpFriend(actor)) {
@@ -1262,24 +1382,34 @@ void A_Chase(mobj_t *actor) {
        */
 
       if (!actor->info->missilestate && actor->flags & MF_FRIEND) {
-        if (actor->flags & MF_JUSTHIT)          /* if recent action, */
+        if (actor->flags & MF_JUSTHIT) {        /* if recent action, */
           actor->flags &= ~MF_JUSTHIT;          /* keep fighting */
-        else if (P_LookForPlayers(actor, true)) /* else return to player */
+        }
+        else if (MULTINET) {
+          if (P_LookForPlayers(actor, true)) { /* else return to player */
+            return;
+          }
+        }
+        else if (P_VanillaLookForPlayers(actor, true)) { /* else return to player */
           return;
+        }
       }
     }
   }
 
-  if (actor->strafecount)
+  if (actor->strafecount) {
     actor->strafecount--;
+  }
 
   // chase towards player
-  if (--actor->movecount < 0 || !P_SmartMove(actor))
+  if (--actor->movecount < 0 || !P_SmartMove(actor)) {
     P_NewChaseDir(actor);
+  }
 
   // make active sound
-  if (actor->info->activesound && P_Random(pr_see) < 3)
+  if (actor->info->activesound && P_Random(pr_see) < 3) {
     S_StartSound(actor, actor->info->activesound);
+  }
 }
 
 //
@@ -2327,11 +2457,11 @@ void A_BossDeath(mobj_t *mo)
     }
 
   // make sure there is a player alive for victory
-  for (i=0; i<VANILLA_MAXPLAYERS; i++)
+  for (i=0; i<MAXPLAYERS; i++)
     if (playeringame[i] && players[i].health > 0)
       break;
 
-  if (i==VANILLA_MAXPLAYERS)
+  if (i==MAXPLAYERS)
     return;     // no one left alive, so do not end game
 
     // scan the remaining thinkers to see

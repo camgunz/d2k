@@ -907,7 +907,12 @@ mobj_t* P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type) {
     mobj->reactiontime = info->reactiontime;
   }
 
-  mobj->lastlook = P_Random(pr_lastlook) % MAXPLAYERS;
+  if (MULTINET) {
+    mobj->lastlook = P_Random(pr_lastlook) % MAXPLAYERS;
+  }
+  else {
+    mobj->lastlook = P_Random(pr_lastlook) % VANILLA_MAXPLAYERS;
+  }
 
   // do not set the state with P_SetMobjState,
   // because action routines can not be called yet
