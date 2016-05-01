@@ -1072,6 +1072,79 @@ static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
   }
 }
 
+static void serialize_sector_index(pbuf_t *savebuffer, sector_t *s, const char *fun) {
+  int sector_id;
+
+  if (s == NULL) {
+    M_PBufWriteInt(savebuffer, 0);
+    return;
+  }
+
+  sector_id = s->iSectorID;
+
+  if (sector_id < 0)
+    I_Error("%s: Invalid sector %d", fun, sector_id);
+
+  if (sector_id > numsectors)
+    I_Error("%s: Invalid sector %d", fun, sector_id);
+
+  M_PBufWriteInt(savebuffer, sector_id + 1);
+}
+
+static void deserialize_sector_index(pbuf_t *savebuffer, sector_t **s, const char *f) {
+  int sector_id;
+
+  M_PBufReadInt(savebuffer, &sector_id);
+
+  if (sector_id < 0)
+    I_Error("%s: Invalid sector index %d", f, sector_id);
+
+  if (sector_id == 0) {
+    *s = NULL;
+    return;
+  }
+
+  sector_id--;
+
+  if (sector_id >= numsectors)
+    I_Error("%s: Invalid sector index %d", f, sector_id);
+
+  *s = &sectors[sector_id];
+}
+
+static void serialize_line_index(pbuf_t *savebuffer, line_t *li, const char *fun) {
+  uint_64_t line_index;
+
+  if (li < lines)
+    I_Error("%s: Invalid line %p", fun, li);
+
+  line_index = li - lines;
+
+  if (line_index > numlines)
+    I_Error("%s: Invalid line %p", fun, li);
+
+  M_PBufWriteULong(savebuffer, line_index + 1);
+}
+
+static void deserialize_line_index(pbuf_t *savebuffer, line_t **li, const char *fun) {
+  uint_64_t line_index;
+
+  M_PBufReadULong(savebuffer, &line_index);
+
+  if (line_index == 0)
+    I_Error("%s: Invalid line index %" PRIu64, fun, line_index);
+
+  line_index--;
+
+  if (line_index >= numlines)
+    I_Error("%s: Invalid line index %" PRIu64, fun, line_index);
+
+  if (line_index == 0)
+    *li = NULL;
+  else
+    *li = &lines[line_index];
+}
+
 //
 // P_ArchivePlayers
 //
@@ -1104,6 +1177,8 @@ void P_UnArchivePlayers(pbuf_t *savebuffer) {
 // P_ArchiveWorld
 //
 void P_ArchiveWorld(pbuf_t *savebuffer) {
+  uint32_t button_count = 0;
+
   M_PBufWriteInt(savebuffer, numspechit);
   M_PBufWriteUInt(savebuffer, numsectors);
   M_PBufWriteUInt(savebuffer, numlines);
@@ -1163,6 +1238,27 @@ void P_ArchiveWorld(pbuf_t *savebuffer) {
   }
 
   M_PBufWriteInt(savebuffer, musinfo.current_item);
+
+  for (int i = 0; i < MAXBUTTONS; i++) {
+    if (buttonlist[i].btimer) {
+      button_count++;
+    }
+  }
+
+  M_PBufWriteUInt(savebuffer, button_count);
+
+  for (uint32_t i = 0; i < MAXBUTTONS; i++) {
+    if (!buttonlist[i].btimer) {
+      continue;
+    }
+
+    M_PBufWriteUInt(savebuffer, i);
+    serialize_line_index(savebuffer, buttonlist[i].line, __func__);
+    M_PBufWriteInt(savebuffer, buttonlist[i].where);
+    M_PBufWriteInt(savebuffer, buttonlist[i].btexture);
+    M_PBufWriteInt(savebuffer, buttonlist[i].btimer);
+    M_PBufWriteUInt(savebuffer, buttonlist[i].soundorg->id);
+  }
 }
 
 //
@@ -1171,6 +1267,7 @@ void P_ArchiveWorld(pbuf_t *savebuffer) {
 void P_UnArchiveWorld(pbuf_t *savebuffer) {
   uint32_t sector_count;
   uint32_t line_count;
+  uint32_t button_count;
 
   M_PBufReadInt(savebuffer, &numspechit);
   M_PBufReadUInt(savebuffer, &sector_count);
@@ -1296,6 +1393,30 @@ void P_UnArchiveWorld(pbuf_t *savebuffer) {
   }
 
   M_PBufReadInt(savebuffer, &musinfo.current_item);
+
+  M_PBufReadUInt(savebuffer, &button_count);
+
+  for (uint32_t i = 0; i < button_count; i++) {
+    uint32_t button_index = 0;
+    uint32_t button_soundorg_id = 0;
+    mobj_t *soundorg = NULL;
+
+    M_PBufReadUInt(savebuffer, &button_index);
+
+    deserialize_line_index(savebuffer, &buttonlist[button_index].line, __func__);
+    M_PBufReadInt(savebuffer, (int *)&buttonlist[button_index].where);
+    M_PBufReadInt(savebuffer, &buttonlist[button_index].btexture);
+    M_PBufReadInt(savebuffer, &buttonlist[button_index].btimer);
+    M_PBufReadUInt(savebuffer, &button_soundorg_id);
+
+    soundorg = P_IdentLookup(button_soundorg_id);
+
+    if (!soundorg) {
+      I_Error("Unknown button sound origin ID %u\n", button_soundorg_id);
+    }
+
+    buttonlist[button_index].soundorg = soundorg;
+  }
 }
 
 //
@@ -1536,82 +1657,9 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
 // T_FireFlicker                                            // killough 10/4/98
 //
 
-void P_ArchiveSectorIndex(pbuf_t *savebuffer, sector_t *s, const char *fun) {
-  int sector_id;
-
-  if (s == NULL) {
-    M_PBufWriteInt(savebuffer, 0);
-    return;
-  }
-
-  sector_id = s->iSectorID;
-
-  if (sector_id < 0)
-    I_Error("%s: Invalid sector %d", fun, sector_id);
-
-  if (sector_id > numsectors)
-    I_Error("%s: Invalid sector %d", fun, sector_id);
-
-  M_PBufWriteInt(savebuffer, sector_id + 1);
-}
-
-void P_UnArchiveSectorIndex(pbuf_t *savebuffer, sector_t **s, const char *f) {
-  int sector_id;
-
-  M_PBufReadInt(savebuffer, &sector_id);
-
-  if (sector_id < 0)
-    I_Error("%s: Invalid sector index %d", f, sector_id);
-
-  if (sector_id == 0) {
-    *s = NULL;
-    return;
-  }
-
-  sector_id--;
-
-  if (sector_id >= numsectors)
-    I_Error("%s: Invalid sector index %d", f, sector_id);
-
-  *s = &sectors[sector_id];
-}
-
-void P_ArchiveLineIndex(pbuf_t *savebuffer, line_t *li, const char *fun) {
-  uint_64_t line_index;
-
-  if (li < lines)
-    I_Error("%s: Invalid line %p", fun, li);
-
-  line_index = li - lines;
-
-  if (line_index > numlines)
-    I_Error("%s: Invalid line %p", fun, li);
-
-  M_PBufWriteULong(savebuffer, line_index + 1);
-}
-
-void P_UnArchiveLineIndex(pbuf_t *savebuffer, line_t **li, const char *fun) {
-  uint_64_t line_index;
-
-  M_PBufReadULong(savebuffer, &line_index);
-
-  if (line_index == 0)
-    I_Error("%s: Invalid line index %" PRIu64, fun, line_index);
-
-  line_index--;
-
-  if (line_index >= numlines)
-    I_Error("%s: Invalid line index %" PRIu64, fun, line_index);
-
-  if (line_index == 0)
-    *li = NULL;
-  else
-    *li = &lines[line_index];
-}
-
 void P_ArchiveCeiling(pbuf_t *savebuffer, ceiling_t *ceiling) {
   M_PBufWriteInt(savebuffer, ceiling->type);
-  P_ArchiveSectorIndex(savebuffer, ceiling->sector, __func__);
+  serialize_sector_index(savebuffer, ceiling->sector, __func__);
   M_PBufWriteInt(savebuffer, ceiling->bottomheight);
   M_PBufWriteInt(savebuffer, ceiling->topheight);
   M_PBufWriteInt(savebuffer, ceiling->speed);
@@ -1627,7 +1675,7 @@ void P_ArchiveCeiling(pbuf_t *savebuffer, ceiling_t *ceiling) {
 
 void P_UnArchiveCeiling(pbuf_t *savebuffer, ceiling_t *ceiling) {
   M_PBufReadInt(savebuffer, (int *)&ceiling->type);
-  P_UnArchiveSectorIndex(savebuffer, &ceiling->sector, __func__);
+  deserialize_sector_index(savebuffer, &ceiling->sector, __func__);
   M_PBufReadInt(savebuffer, &ceiling->bottomheight);
   M_PBufReadInt(savebuffer, &ceiling->topheight);
   M_PBufReadInt(savebuffer, &ceiling->speed);
@@ -1643,32 +1691,32 @@ void P_UnArchiveCeiling(pbuf_t *savebuffer, ceiling_t *ceiling) {
 
 void P_ArchiveDoor(pbuf_t *savebuffer, vldoor_t *door) {
   M_PBufWriteInt(savebuffer, door->type);
-  P_ArchiveSectorIndex(savebuffer, door->sector, __func__);
+  serialize_sector_index(savebuffer, door->sector, __func__);
   M_PBufWriteInt(savebuffer, door->topheight);
   M_PBufWriteInt(savebuffer, door->speed);
   M_PBufWriteInt(savebuffer, door->direction);
   M_PBufWriteInt(savebuffer, door->topwait);
   M_PBufWriteInt(savebuffer, door->topcountdown);
-  P_ArchiveLineIndex(savebuffer, door->line, __func__);
+  serialize_line_index(savebuffer, door->line, __func__);
   M_PBufWriteInt(savebuffer, door->lighttag);
 }
 
 void P_UnArchiveDoor(pbuf_t *savebuffer, vldoor_t *door) {
   M_PBufReadInt(savebuffer, (int *)&door->type);
-  P_UnArchiveSectorIndex(savebuffer, &door->sector, __func__);
+  deserialize_sector_index(savebuffer, &door->sector, __func__);
   M_PBufReadInt(savebuffer, &door->topheight);
   M_PBufReadInt(savebuffer, &door->speed);
   M_PBufReadInt(savebuffer, &door->direction);
   M_PBufReadInt(savebuffer, &door->topwait);
   M_PBufReadInt(savebuffer, &door->topcountdown);
-  P_UnArchiveLineIndex(savebuffer, &door->line, __func__);
+  deserialize_line_index(savebuffer, &door->line, __func__);
   M_PBufReadInt(savebuffer, &door->lighttag);
 }
 
 void P_ArchiveFloor(pbuf_t *savebuffer, floormove_t *floor) {
   M_PBufWriteInt(savebuffer, floor->type);
   M_PBufWriteInt(savebuffer, floor->crush);
-  P_ArchiveSectorIndex(savebuffer, floor->sector, __func__);
+  serialize_sector_index(savebuffer, floor->sector, __func__);
   M_PBufWriteInt(savebuffer, floor->direction);
   M_PBufWriteInt(savebuffer, floor->newspecial);
   M_PBufWriteInt(savebuffer, floor->oldspecial);
@@ -1680,7 +1728,7 @@ void P_ArchiveFloor(pbuf_t *savebuffer, floormove_t *floor) {
 void P_UnArchiveFloor(pbuf_t *savebuffer, floormove_t *floor) {
   M_PBufReadInt(savebuffer, (int *)&floor->type);
   M_PBufReadInt(savebuffer, &floor->crush);
-  P_UnArchiveSectorIndex(savebuffer, &floor->sector, __func__);
+  deserialize_sector_index(savebuffer, &floor->sector, __func__);
   M_PBufReadInt(savebuffer, &floor->direction);
   M_PBufReadInt(savebuffer, &floor->newspecial);
   M_PBufReadInt(savebuffer, &floor->oldspecial);
@@ -1690,7 +1738,7 @@ void P_UnArchiveFloor(pbuf_t *savebuffer, floormove_t *floor) {
 }
 
 void P_ArchivePlat(pbuf_t *savebuffer, plat_t *plat) {
-  P_ArchiveSectorIndex(savebuffer, plat->sector, __func__);
+  serialize_sector_index(savebuffer, plat->sector, __func__);
   M_PBufWriteInt(savebuffer, plat->speed);
   M_PBufWriteInt(savebuffer, plat->low);
   M_PBufWriteInt(savebuffer, plat->high);
@@ -1704,7 +1752,7 @@ void P_ArchivePlat(pbuf_t *savebuffer, plat_t *plat) {
 }
 
 void P_UnArchivePlat(pbuf_t *savebuffer, plat_t *plat) {
-  P_UnArchiveSectorIndex(savebuffer, &plat->sector, __func__);
+  deserialize_sector_index(savebuffer, &plat->sector, __func__);
   M_PBufReadInt(savebuffer, &plat->speed);
   M_PBufReadInt(savebuffer, &plat->low);
   M_PBufReadInt(savebuffer, &plat->high);
@@ -1718,7 +1766,7 @@ void P_UnArchivePlat(pbuf_t *savebuffer, plat_t *plat) {
 }
 
 void P_ArchiveLightFlash(pbuf_t *savebuffer, lightflash_t *flash) {
-  P_ArchiveSectorIndex(savebuffer, flash->sector, __func__);
+  serialize_sector_index(savebuffer, flash->sector, __func__);
   M_PBufWriteInt(savebuffer, flash->count);
   M_PBufWriteInt(savebuffer, flash->maxlight);
   M_PBufWriteInt(savebuffer, flash->minlight);
@@ -1727,7 +1775,7 @@ void P_ArchiveLightFlash(pbuf_t *savebuffer, lightflash_t *flash) {
 }
 
 void P_UnArchiveLightFlash(pbuf_t *savebuffer, lightflash_t *flash) {
-  P_UnArchiveSectorIndex(savebuffer, &flash->sector, __func__);
+  deserialize_sector_index(savebuffer, &flash->sector, __func__);
   M_PBufReadInt(savebuffer, &flash->count);
   M_PBufReadInt(savebuffer, &flash->maxlight);
   M_PBufReadInt(savebuffer, &flash->minlight);
@@ -1736,7 +1784,7 @@ void P_UnArchiveLightFlash(pbuf_t *savebuffer, lightflash_t *flash) {
 }
 
 void P_ArchiveStrobe(pbuf_t *savebuffer, strobe_t *strobe) {
-  P_ArchiveSectorIndex(savebuffer, strobe->sector, __func__);
+  serialize_sector_index(savebuffer, strobe->sector, __func__);
   M_PBufWriteInt(savebuffer, strobe->count);
   M_PBufWriteInt(savebuffer, strobe->minlight);
   M_PBufWriteInt(savebuffer, strobe->maxlight);
@@ -1745,7 +1793,7 @@ void P_ArchiveStrobe(pbuf_t *savebuffer, strobe_t *strobe) {
 }
 
 void P_UnArchiveStrobe(pbuf_t *savebuffer, strobe_t *strobe) {
-  P_UnArchiveSectorIndex(savebuffer, &strobe->sector, __func__);
+  deserialize_sector_index(savebuffer, &strobe->sector, __func__);
   M_PBufReadInt(savebuffer, &strobe->count);
   M_PBufReadInt(savebuffer, &strobe->minlight);
   M_PBufReadInt(savebuffer, &strobe->maxlight);
@@ -1754,28 +1802,28 @@ void P_UnArchiveStrobe(pbuf_t *savebuffer, strobe_t *strobe) {
 }
 
 void P_ArchiveGlow(pbuf_t *savebuffer, glow_t *glow) {
-  P_ArchiveSectorIndex(savebuffer, glow->sector, __func__);
+  serialize_sector_index(savebuffer, glow->sector, __func__);
   M_PBufWriteInt(savebuffer, glow->maxlight);
   M_PBufWriteInt(savebuffer, glow->minlight);
   M_PBufWriteInt(savebuffer, glow->direction);
 }
 
 void P_UnArchiveGlow(pbuf_t *savebuffer, glow_t *glow) {
-  P_UnArchiveSectorIndex(savebuffer, &glow->sector, __func__);
+  deserialize_sector_index(savebuffer, &glow->sector, __func__);
   M_PBufReadInt(savebuffer, &glow->maxlight);
   M_PBufReadInt(savebuffer, &glow->minlight);
   M_PBufReadInt(savebuffer, &glow->direction);
 }
 
 void P_ArchiveFireFlicker(pbuf_t *savebuffer, fireflicker_t *flicker) {
-  P_ArchiveSectorIndex(savebuffer, flicker->sector, __func__);
+  serialize_sector_index(savebuffer, flicker->sector, __func__);
   M_PBufWriteInt(savebuffer, flicker->count);
   M_PBufWriteInt(savebuffer, flicker->maxlight);
   M_PBufWriteInt(savebuffer, flicker->minlight);
 }
 
 void P_UnArchiveFireFlicker(pbuf_t *savebuffer, fireflicker_t *flicker) {
-  P_UnArchiveSectorIndex(savebuffer, &flicker->sector, __func__);
+  deserialize_sector_index(savebuffer, &flicker->sector, __func__);
   M_PBufReadInt(savebuffer, &flicker->count);
   M_PBufReadInt(savebuffer, &flicker->maxlight);
   M_PBufReadInt(savebuffer, &flicker->minlight);
@@ -1783,7 +1831,7 @@ void P_UnArchiveFireFlicker(pbuf_t *savebuffer, fireflicker_t *flicker) {
 
 void P_ArchiveElevator(pbuf_t *savebuffer, elevator_t *elevator) {
   M_PBufWriteInt(savebuffer, elevator->type);
-  P_ArchiveSectorIndex(savebuffer, elevator->sector, __func__);
+  serialize_sector_index(savebuffer, elevator->sector, __func__);
   M_PBufWriteInt(savebuffer, elevator->direction);
   M_PBufWriteInt(savebuffer, elevator->floordestheight);
   M_PBufWriteInt(savebuffer, elevator->ceilingdestheight);
@@ -1792,7 +1840,7 @@ void P_ArchiveElevator(pbuf_t *savebuffer, elevator_t *elevator) {
 
 void P_UnArchiveElevator(pbuf_t *savebuffer, elevator_t *elevator) {
   M_PBufReadInt(savebuffer, (int *)&elevator->type);
-  P_UnArchiveSectorIndex(savebuffer, &elevator->sector, __func__);
+  deserialize_sector_index(savebuffer, &elevator->sector, __func__);
   M_PBufReadInt(savebuffer, &elevator->direction);
   M_PBufReadInt(savebuffer, &elevator->floordestheight);
   M_PBufReadInt(savebuffer, &elevator->ceilingdestheight);

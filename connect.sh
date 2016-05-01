@@ -20,7 +20,7 @@ cp "${BASE_DIR}/d2k_config_schema.json" ~/.d2k/
 cp "${BASE_DIR}/scripts/"* ~/.d2k/scripts/
 cp "${BASE_DIR}/fonts/"* ~/.d2k/fonts/
 
-# gdb -ex "source gdbclient.txt" --args $CMD
+# gdb -ex "source gdb_dupesounds.txt" --args $CMD
 # gdb -ex run --args $CMD
 # valgrind --track-origins=yes --leak-check=yes $CMD
 # CPUPROFILE=cpu.prof $CMD

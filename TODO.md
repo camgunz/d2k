@@ -23,7 +23,24 @@
 
 1. Trace messaging uses after message channels are closed
 
+1. Fix sound
+
+1. Remove 4 player restriction
+  - Just increase `MAXPLAYERS`
+  - Add `#define VANILLA_MAXPLAYERS 4` for compat
+  - All playernums become `int`
+  - Anything defined using `MAXPLAYERS` will be refactored
+  - Player names are hardcoded for DeHackEd; the way this should work is:
+    - Keep a private array of the default names ("Green", "Indigo", etc.)
+    - After initialization, check if the names have been modified, by a
+      DeHackEd patch or anything
+    - If so, set each player's name accordingly
+    - Of course, this only works for the 1st 4 players; after that, fuck it
+      - Maybe assign more colors
+
 -- Proto Complete Here --
+
+1. Add spectators
 
 1. Improve the configuration file and configuration variable system
   - Ties into scripting and console
@@ -52,21 +69,6 @@
 1. Move menu into scripting
   - This is because the menu is drawn onto the game screen, then the console is
     drawn onto the overlay
-
-1. Remove 4 player restriction
-  - Just increase `MAXPLAYERS`
-  - Add `#define VANILLA_MAXPLAYERS 4` for compat
-  - All playernums become `int`
-  - Anything defined using `MAXPLAYERS` will be refactored
-  - Player names are hardcoded for DeHackEd; the way this should work is:
-    - Keep a private array of the default names ("Green", "Indigo", etc.)
-    - After initialization, check if the names have been modified, by a
-      DeHackEd patch or anything
-    - If so, set each player's name accordingly
-    - Of course, this only works for the 1st 4 players; after that, fuck it
-      - Maybe assign more colors
-
-1. Add spectators
 
 1. Add 3D physics
 

@@ -506,6 +506,8 @@ bool G_ReadSaveData(pbuf_t *savebuffer, bool bail_on_errors,
   // killough 11/98: load revenant tracer state
   M_PBufReadInt(savebuffer, &basetic);
 
+  memset(buttonlist, 0, sizeof(buttonlist));
+
   // dearchive all the modifications
   P_MapStart();
   P_UnArchiveWorld(savebuffer);

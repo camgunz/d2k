@@ -427,12 +427,13 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
                sfx_id == sfx_noway); // killough 4/25/98
   sfx_id &= ~PICKUP_SOUND;
 
-  D_Msg(MSG_SOUND, "(%d | %d) start_sound(%u, %s, %d, %d/%d/%d)\n",
+  D_Msg(MSG_SOUND, "(%d | %d) start_sound(%u, %s, %d, %d/%d/%d/%d)\n",
     gametic,
     CL_GetCurrentCommandIndex(),
     origin != NULL ? origin->id : 0,
     S_sfx[sfx_id].name,
     volume,
+    CL_RunningConsoleplayerCommands(),
     CL_Synchronizing(),
     CL_RePredicting(),
     CL_Predicting()
@@ -445,6 +446,30 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
   sfx = &S_sfx[sfx_id];
 
   if (CLIENT) {
+    if (CL_RunningConsoleplayerCommands() && CL_Predicting()) {
+      printf("(%d) Playing predicted consoleplayer sound (%s)\n",
+        gametic, S_sfx[sfx_id].name
+      );
+    }
+    else if ((!CL_RunningConsoleplayerCommands()) && (!CL_Predicting())) {
+      if (CL_RePredicting()) {
+        printf("(%d) Playing repredicted non-consoleplayer sound (%s)\n",
+          gametic, S_sfx[sfx_id].name
+        );
+      }
+      else {
+        printf("(%d) Playing synchronized non-consoleplayer sound (%s)\n",
+          gametic, S_sfx[sfx_id].name
+        );
+      }
+    }
+    else {
+      printf("(%d) Skipping duplicate sound (%s)\n",
+        gametic, S_sfx[sfx_id].name
+      );
+      return;
+    }
+
     if ((CL_Synchronizing() || CL_RePredicting()) &&
         is_duplicate(origin, sfx, is_pickup)) {
       D_Msg(MSG_SOUND,
