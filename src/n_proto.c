@@ -28,6 +28,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 
+#include "c_main.h"
 #include "d_deh.h"
 #include "d_event.h"
 #include "d_main.h"
@@ -45,6 +46,7 @@
 #include "p_user.h"
 #include "s_sound.h"
 #include "sounds.h"
+#include "sv_main.h"
 #include "w_wad.h"
 
 const char *D_dehout(void); /* CG: from d_main.c */
@@ -386,10 +388,39 @@ static void handle_player_preference_change(netpeer_t *np) {
 }
 
 static void handle_auth_request(netpeer_t *np) {
-  auth_level_e level;
+  buf_t buf;
+  const char *password;
+  auth_level_e auth_level = AUTH_LEVEL_NONE;
 
-  if (N_UnpackAuthResponse(np, &level))
-    CL_SetAuthorizationLevel(level);
+  M_BufferInit(&buf);
+
+  if (!N_UnpackAuthRequest(np, &buf)) {
+    return;
+  }
+
+  password = M_BufferGetData(&buf);
+
+  if (strcmp(password, sv_administrate_password) == 0) {
+    auth_level = AUTH_LEVEL_ADMINISTRATOR;
+  }
+  else if (strcmp(password, sv_moderate_password) == 0) {
+    auth_level = AUTH_LEVEL_MODERATOR;
+  }
+  else if ((!sv_join_password) ||
+           (strcmp(password, sv_join_password) == 0)) {
+    auth_level = AUTH_LEVEL_PLAYER;
+  }
+  else if ((!sv_spectate_password) ||
+           (strcmp(password, sv_spectate_password) == 0)) {
+    auth_level = AUTH_LEVEL_SPECTATOR;
+  }
+
+  if (auth_level > np->auth_level) {
+    np->auth_level = auth_level;
+    SV_SendAuthResponse(np->playernum, np->auth_level);
+  }
+
+  M_BufferFree(&buf);
 }
 
 static void handle_game_action_change(netpeer_t *np) {
@@ -403,6 +434,21 @@ static void handle_game_action_change(netpeer_t *np) {
 }
 
 static void handle_rcon(netpeer_t *np) {
+  buf_t rcon_buf;
+
+  M_BufferInit(&rcon_buf);
+
+  if (!N_UnpackRCONCommand(np, &rcon_buf)) {
+    return;
+  }
+
+  if (np->auth_level <= AUTH_LEVEL_PLAYER) {
+    SV_SendMessage(np->playernum, "Not authorized for RCON usage");
+    return;
+  }
+
+  /* [CG] TODO: Handle console output somehow */
+  C_HandleInput(M_BufferGetData(&rcon_buf));
 }
 
 static void handle_vote_request(netpeer_t *np) {

@@ -1532,6 +1532,7 @@ static void G_PlayerFinishLevel(int player) {
   p->commands_missed = 0;
   p->command_limit = 0;
   p->commands_run_this_tic = 0;
+  p->telefragged_by_spawn = false;
   p->latest_command_run_index = 0;
 }
 
@@ -1564,8 +1565,8 @@ void G_ChangedPlayerColour(int pn, int cl) {
 // almost everything is cleared and initialized
 //
 
-void G_PlayerReborn(int player) {
-  player_t *p = &players[player];
+void G_PlayerReborn(int playernum) {
+  player_t *p = &players[playernum];
 
   p->mo = NULL;
   p->playerstate = PST_LIVE;
@@ -1574,17 +1575,8 @@ void G_PlayerReborn(int player) {
   p->viewheight = 0;
   p->deltaviewheight = 0;
   p->bob = 0;
-  p->health = initial_health; // Ty 03/12/98 - use dehacked values
-  p->armorpoints = 0;
-  p->armortype = 0;
-  memset(p->powers, 0, sizeof(int) * NUMPOWERS);
-  memset(p->cards, 0,  sizeof(bool) * NUMCARDS);
-  p->backpack = 0;
   p->readyweapon = 0;
   p->pendingweapon = 0;
-  memset(p->weaponowned, 0, sizeof(int) * NUMWEAPONS);
-  memset(p->ammo, 0, sizeof(int) * NUMAMMO);
-  memset(p->maxammo, 0, sizeof(int) * NUMAMMO);
   p->attackdown = 0;
   p->usedown = 0;
   p->refire = 0;
@@ -1595,7 +1587,6 @@ void G_PlayerReborn(int player) {
   p->fixedcolormap = 0;
   p->colormap = 0;
   memset(p->psprites, 0, sizeof(p->psprites));
-  p->didsecret = 0;
   p->momx = 0;
   p->momy = 0;
   p->prev_viewz = 0;
@@ -1607,17 +1598,38 @@ void G_PlayerReborn(int player) {
   p->readyweapon = p->pendingweapon = wp_pistol;
   p->weaponowned[wp_fist] = true;
   p->weaponowned[wp_pistol] = true;
-  p->ammo[am_clip] = initial_bullets; // Ty 03/12/98 - use dehacked values
 
-  for (int i = 0; i < NUMAMMO; i++) {
-    p->maxammo[i] = maxammo[i];
-  }
+  /*
+   * [CG] Yeah, this lets you get all your health back by having a player die
+   *      then telefrag you with their spawn.  If you really want to cheat that
+   *      way, OK.
+   */
+  p->health = initial_health; // Ty 03/12/98 - use dehacked values
 
-  P_ClearPlayerCommands(player);
+  P_ClearPlayerCommands(playernum);
   p->commands_missed = 0;
   p->command_limit = 0;
   p->commands_run_this_tic = 0;
   p->latest_command_run_index = 0;
+
+  if (!p->telefragged_by_spawn) {
+    p->armorpoints = 0;
+    p->armortype = 0;
+    memset(p->powers, 0, sizeof(int) * NUMPOWERS);
+    memset(p->cards, 0,  sizeof(bool) * NUMCARDS);
+    p->backpack = 0;
+    memset(p->weaponowned, 0, sizeof(int) * NUMWEAPONS);
+    memset(p->ammo, 0, sizeof(int) * NUMAMMO);
+    memset(p->maxammo, 0, sizeof(int) * NUMAMMO);
+    p->didsecret = 0;
+    p->ammo[am_clip] = initial_bullets; // Ty 03/12/98 - use dehacked values
+
+    for (int i = 0; i < NUMAMMO; i++) {
+      p->maxammo[i] = maxammo[i];
+    }
+  }
+
+  p->telefragged_by_spawn = false;
 }
 
 void G_ClearCorpses(void) {
@@ -1660,8 +1672,9 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
   if (!players[playernum].mo) {
     // first spawn of level, before corpses
     for (i = 0; i < playernum; i++) {
-      if (players[i].mo == NULL)
+      if (!players[i].mo) {
         continue;
+      }
 
       if (players[i].mo->x == mthing->x << FRACBITS &&
           players[i].mo->y == mthing->y << FRACBITS) {
@@ -1684,24 +1697,28 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
   players[playernum].mo->flags |= MF_SOLID;
   i = P_CheckPosition(players[playernum].mo, x, y);
   players[playernum].mo->flags &= ~MF_SOLID;
-  if (!i)
+  if (!i) {
     return false;
+  }
 
   // flush an old corpse if needed
   // killough 2/8/98: make corpse queue have an adjustable limit
   // killough 8/1/98: Fix bugs causing strange crashes
-  if (corpse_queue_size < 0)
+  if (corpse_queue_size < 0) {
     I_Error("G_CheckSpot: corpse_queue_size < 0 (%d)", corpse_queue_size);
+  }
 
   if (corpse_queue_size == 0) {
     P_RemoveMobj(players[playernum].mo);
   }
   else {
-    if (corpse_queue == NULL)
+    if (!corpse_queue) {
       corpse_queue = g_queue_new();
+    }
 
-    if (g_queue_get_length(corpse_queue) == corpse_queue_size)
+    if (g_queue_get_length(corpse_queue) == corpse_queue_size) {
       P_RemoveMobj(g_queue_pop_head(corpse_queue));
+    }
 
     g_queue_push_tail(corpse_queue, players[playernum].mo);
   }
@@ -1794,8 +1811,9 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
 
   mo = P_SpawnMobj(x + 20 * xa, y + 20 * ya, ss->sector->floorheight, MT_TFOG);
 
-  if (players[consoleplayer].viewz != 1)
+  if (players[consoleplayer].viewz != 1) {
     S_StartSound(mo, sfx_telept);  // don't start sound on first frame
+  }
 
   return true;
 }
@@ -1828,6 +1846,9 @@ void G_DeathMatchSpawnPlayer(int playernum) {
 
   // no good spot, so the player will probably get stuck
   P_SpawnPlayer(playernum, &playerstarts[playernum]);
+  if (MULTINET) {
+    P_StompSpawnPointBlockers(players[playernum].mo);
+  }
 }
 
 //
@@ -3232,7 +3253,11 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size,
       compatibility_level = doom_12_compatibility;
       episode = *demo_p++;
       map = *demo_p++;
-      deathmatch = respawnparm = fastparm = nomonsters = consoleplayer = 0;
+      deathmatch = 0;
+      respawnparm = 0;
+      fastparm = 0;
+      nomonsters = 0;
+      consoleplayer = 0;
       
       // e6y
       // Ability to force -nomonsters and -respawn for playback of 1.2 demos.

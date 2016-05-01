@@ -142,6 +142,44 @@ bool PIT_StompThing (mobj_t* thing)
   return true;
 }
 
+//
+// PIT_StompSpawnPointBlockers
+//
+
+bool PIT_StompSpawnPointBlockers(mobj_t *thing) {
+  fixed_t blockdist;
+
+  // phares 9/10/98: moved this self-check to start of routine
+
+  // don't clip against self
+
+  if (thing == tmthing) {
+    return true;
+  }
+
+  if (!(thing->flags & MF_SHOOTABLE)) { // Can't shoot it? Can't stomp it!
+    return true;
+  }
+
+  blockdist = thing->radius + tmthing->radius;
+
+  if (D_abs(thing->x - tmx) >= blockdist || D_abs(thing->y - tmy) >= blockdist)
+    return true; // didn't hit it
+
+  // monsters don't stomp things except on boss level
+  if (!telefrag) {  // killough 8/9/98: make consistent across all levels
+    return false;
+  }
+
+  if (thing->player) {
+    thing->player->telefragged_by_spawn = true;
+  }
+
+  P_DamageMobj(thing, tmthing, tmthing, 10000); // Stomp!
+
+  return true;
+}
+
 
 /*
  * killough 8/28/98:
@@ -271,78 +309,103 @@ int P_GetMoveFactor(mobj_t *mo, int *frictionp)
 // P_TeleportMove
 //
 
-bool P_TeleportMove (mobj_t* thing,fixed_t x,fixed_t y, bool boss)
-{
-  int     xl;
-  int     xh;
-  int     yl;
-  int     yh;
-  int     bx;
-  int     by;
+static bool P_TeleportIterator(mobj_t *mo, fixed_t x, fixed_t y,
+                                           bool func(mobj_t *)) {
+  int xl;
+  int xh;
+  int yl;
+  int yh;
+  int bx;
+  int by;
+  subsector_t *newsubsec;
 
-  subsector_t*  newsubsec;
+  /* kill anything occupying the position */
 
-  /* killough 8/9/98: make telefragging more consistent, preserve compatibility */
-  telefrag = thing->player ||
-    (!comp[comp_telefrag] ? boss : (gamemap==30));
-
-  // kill anything occupying the position
-
-  tmthing = thing;
+  tmthing = mo;
 
   tmx = x;
   tmy = y;
 
-  tmbbox[BOXTOP] = y + tmthing->radius;
+  tmbbox[BOXTOP]    = y + tmthing->radius;
   tmbbox[BOXBOTTOM] = y - tmthing->radius;
-  tmbbox[BOXRIGHT] = x + tmthing->radius;
-  tmbbox[BOXLEFT] = x - tmthing->radius;
+  tmbbox[BOXRIGHT]  = x + tmthing->radius;
+  tmbbox[BOXLEFT]   = x - tmthing->radius;
 
-  newsubsec = R_PointInSubsector (x,y);
+  newsubsec = R_PointInSubsector(x, y);
   ceilingline = NULL;
 
-  // The base floor/ceiling is from the subsector
-  // that contains the point.
-  // Any contacted lines the step closer together
-  // will adjust them.
+  /*
+   * The base floor/ceiling is from the subsector
+   * that contains the point.
+   * Any contacted lines the step closer together
+   * will adjust them.
+   */
 
-  tmfloorz = tmdropoffz = newsubsec->sector->floorheight;
+  tmfloorz   = newsubsec->sector->floorheight;
+  tmdropoffz = newsubsec->sector->floorheight;
   tmceilingz = newsubsec->sector->ceilingheight;
 
   validcount++;
   numspechit = 0;
 
-  // stomp on any things contacted
+  /* stomp on any things contacted */
 
-  xl = P_GetSafeBlockX(tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS);
-  xh = P_GetSafeBlockX(tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS);
+  xl = P_GetSafeBlockX(tmbbox[BOXLEFT]   - bmaporgx - MAXRADIUS);
+  xh = P_GetSafeBlockX(tmbbox[BOXRIGHT]  - bmaporgx + MAXRADIUS);
   yl = P_GetSafeBlockY(tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS);
-  yh = P_GetSafeBlockY(tmbbox[BOXTOP] - bmaporgy + MAXRADIUS);
+  yh = P_GetSafeBlockY(tmbbox[BOXTOP]    - bmaporgy + MAXRADIUS);
 
-  for (bx=xl ; bx<=xh ; bx++)
-    for (by=yl ; by<=yh ; by++)
-      if (!P_BlockThingsIterator(bx,by,PIT_StompThing))
+  for (bx = xl; bx <= xh; bx++) {
+    for (by = yl; by <= yh; by++) {
+      if (!P_BlockThingsIterator(bx, by, func)) {
         return false;
+      }
+    }
+  }
 
-  // the move is ok,
-  // so unlink from the old position & link into the new position
+  /*
+   * the move is ok,
+   * so unlink from the old position & link into the new position
+   */
 
-  P_UnsetThingPosition(thing);
+  P_UnsetThingPosition(mo);
 
-  thing->floorz = tmfloorz;
-  thing->ceilingz = tmceilingz;
-  thing->dropoffz = tmdropoffz;        // killough 11/98
+  mo->floorz   = tmfloorz;
+  mo->ceilingz = tmceilingz;
+  mo->dropoffz = tmdropoffz;        // killough 11/98
 
-  thing->x = x;
-  thing->y = y;
+  mo->x = x;
+  mo->y = y;
 
-  P_SetThingPosition(thing);
+  P_SetThingPosition(mo);
 
-  thing->PrevX = x;
-  thing->PrevY = y;
-  thing->PrevZ = thing->floorz;
+  mo->PrevX = x;
+  mo->PrevY = y;
+  mo->PrevZ = mo->floorz;
 
   return true;
+}
+
+bool P_TeleportMove(mobj_t *thing, fixed_t x, fixed_t y, bool boss) {
+  /* killough 8/9/98: make telefragging more consistent, preserve compatibility */
+  telefrag = thing->player || (
+    !comp[comp_telefrag] ? boss : (gamemap == 30)
+  );
+
+  return P_TeleportIterator(thing, x, y, PIT_StompThing);
+}
+
+bool P_StompSpawnPointBlockers(mobj_t *thing) {
+  if (thing->player) {
+    telefrag = true;
+  }
+  else {
+    telefrag = false;
+  }
+
+  return P_TeleportIterator(
+    thing, thing->x, thing->y, PIT_StompSpawnPointBlockers
+  );
 }
 
 

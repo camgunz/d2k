@@ -48,6 +48,7 @@ typedef struct netsync_s {
 typedef struct netpeer_s {
   unsigned int  peernum;
   unsigned int  playernum;
+  auth_level_e  auth_level;
   ENetPeer     *peer;
   netcom_t      netcom;
   netsync_t     sync;
