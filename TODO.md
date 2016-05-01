@@ -14,16 +14,10 @@
   - Without `-iwad`, no IWAD is found in singleplayer, and it's not detected
     until "PLAYPAL is not found".
 
-1. Need a "not enough spawnpoints" strategy
-  - Telefrag the player that's in the way
-  - Flag the telefragged player so they can (optionally) keep their stuff
-
 1. Test resolution switching
   - Probably have to override `:reset` in widgets to update a bunch of stuff
 
 1. Trace messaging uses after message channels are closed
-
-1. Fix sound
 
 1. Remove 4 player restriction
   - Just increase `MAXPLAYERS`

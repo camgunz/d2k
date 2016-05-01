@@ -447,8 +447,17 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
 
   if (CLIENT) {
     /* [CG] Ohhhh what a hack */
-    if ((!(CL_RunningConsoleplayerCommands() || CL_Predicting())) &&
-        (!((!CL_RunningConsoleplayerCommands()) || CL_Synchronizing()))) {
+
+    if (CL_Predicting() && CL_RunningConsoleplayerCommands()) {
+    }
+    else if (CL_Synchronizing() && !CL_RunningConsoleplayerCommands()) {
+      if (gametic <= CL_StateTIC()) {
+        return;
+      }
+    }
+    else if (CL_Predicting() && !CL_RunningThinkers()) {
+    }
+    else {
       return;
     }
 

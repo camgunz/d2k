@@ -188,8 +188,11 @@ static void process_queued_command(gpointer data, gpointer user_data) {
   );
   */
 
-  if (ncmd->index <= player->latest_command_run_index)
-    return;
+  if (ncmd->index <= player->latest_command_run_index) {
+    if (playernum == consoleplayer) {
+      return;
+    }
+  }
 
   if (player->command_limit &&
       player->commands_run_this_tic >= player->command_limit) {
@@ -198,24 +201,29 @@ static void process_queued_command(gpointer data, gpointer user_data) {
 
   if (CLIENT) {
     if (CL_Synchronizing()) {
-      if (ncmd->server_tic == 0)
+      if (ncmd->server_tic == 0) {
         return;
+      }
 
-      if (ncmd->server_tic != gametic)
+      if (ncmd->server_tic != gametic) {
         return;
+      }
     }
 
     if (CL_RePredicting()) {
-      if (ncmd->server_tic != 0)
+      if (ncmd->server_tic != 0) {
         return;
+      }
 
-      if (ncmd->tic > gametic)
+      if (ncmd->tic > gametic) {
         return;
+      }
     }
 
     if (CL_Predicting()) {
-      if (ncmd->tic != gametic)
+      if (ncmd->tic != gametic) {
         return;
+      }
     }
   }
 

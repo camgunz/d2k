@@ -82,6 +82,11 @@ static bool cl_running_consoleplayer_commands = false;
 static bool cl_running_nonconsoleplayer_commands = false;
 
 /*
+ * Marked true when the client is running thinkers and specials
+ */
+static bool cl_running_thinkers = false;
+
+/*
  * Marked true when the client is synchronizing
  */
 static bool cl_synchronizing = false;
@@ -328,6 +333,14 @@ bool CL_RunningNonConsoleplayerCommands(void) {
   return cl_running_nonconsoleplayer_commands;
 }
 
+void CL_SetRunningThinkers(bool running) {
+  cl_running_thinkers = running;
+}
+
+bool CL_RunningThinkers(void) {
+  return cl_running_thinkers;
+}
+
 void CL_SetupCommandState(int playernum, netticcmd_t *ncmd) {
   if (!CLIENT)
     return;
@@ -396,6 +409,10 @@ void CL_UpdateReceivedCommandIndex(int command_index) {
     return;
 
   server->sync.command_index = MAX(server->sync.command_index, command_index);
+}
+
+int CL_StateTIC(void) {
+  return cl_state_tic;
 }
 
 void CL_Init(void) {

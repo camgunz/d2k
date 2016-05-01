@@ -32,6 +32,8 @@ bool CL_RePredicting(void);
 bool CL_Predicting(void);
 bool CL_RunningConsoleplayerCommands(void);
 bool CL_RunningNonConsoleplayerCommands(void);
+void CL_SetRunningThinkers(bool running);
+bool CL_RunningThinkers(void);
 void CL_SetupCommandState(int playernum, netticcmd_t *ncmd);
 void CL_ShutdownCommandState(void);
 int  CL_GetCurrentCommandIndex(void);
@@ -43,6 +45,7 @@ void CL_MarkServerOutdated(void);
 bool CL_OccurredDuringRePrediction(int tic);
 void CL_CheckForStateUpdates(void);
 void CL_UpdateReceivedCommandIndex(int command_index);
+int  CL_StateTIC(void);
 void CL_Init(void);
 
 #endif

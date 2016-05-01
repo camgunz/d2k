@@ -40,6 +40,7 @@
 #include "n_main.h"
 #include "n_state.h"
 #include "n_peer.h"
+#include "cl_main.h"
 
 int leveltime;
 
@@ -349,7 +350,9 @@ void P_Ticker(void) {
 
   run_regular_tic();
 
+  CL_SetRunningThinkers(true);
   run_thinkers_and_specials();
+  CL_SetRunningThinkers(false);
 }
 
 /* vi: set et ts=2 sw=2: */
