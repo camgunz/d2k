@@ -1568,6 +1568,23 @@ void G_ChangedPlayerColour(int pn, int cl) {
 void G_PlayerReborn(int playernum) {
   player_t *p = &players[playernum];
 
+  if (!p->telefragged_by_spawn) {
+    p->armorpoints = 0;
+    p->armortype = 0;
+    memset(p->powers, 0, sizeof(int) * NUMPOWERS);
+    memset(p->cards, 0,  sizeof(bool) * NUMCARDS);
+    p->backpack = 0;
+    memset(p->weaponowned, 0, sizeof(int) * NUMWEAPONS);
+    memset(p->ammo, 0, sizeof(int) * NUMAMMO);
+    memset(p->maxammo, 0, sizeof(int) * NUMAMMO);
+    p->didsecret = 0;
+    p->ammo[am_clip] = initial_bullets; // Ty 03/12/98 - use dehacked values
+
+    for (int i = 0; i < NUMAMMO; i++) {
+      p->maxammo[i] = maxammo[i];
+    }
+  }
+
   p->mo = NULL;
   p->playerstate = PST_LIVE;
   memset(&p->cmd, 0, sizeof(ticcmd_t));
@@ -1575,10 +1592,6 @@ void G_PlayerReborn(int playernum) {
   p->viewheight = 0;
   p->deltaviewheight = 0;
   p->bob = 0;
-  p->readyweapon = 0;
-  p->pendingweapon = 0;
-  p->attackdown = 0;
-  p->usedown = 0;
   p->refire = 0;
   p->damagecount = 0;
   p->bonuscount = 0;
@@ -1611,23 +1624,6 @@ void G_PlayerReborn(int playernum) {
   p->command_limit = 0;
   p->commands_run_this_tic = 0;
   p->latest_command_run_index = 0;
-
-  if (!p->telefragged_by_spawn) {
-    p->armorpoints = 0;
-    p->armortype = 0;
-    memset(p->powers, 0, sizeof(int) * NUMPOWERS);
-    memset(p->cards, 0,  sizeof(bool) * NUMCARDS);
-    p->backpack = 0;
-    memset(p->weaponowned, 0, sizeof(int) * NUMWEAPONS);
-    memset(p->ammo, 0, sizeof(int) * NUMAMMO);
-    memset(p->maxammo, 0, sizeof(int) * NUMAMMO);
-    p->didsecret = 0;
-    p->ammo[am_clip] = initial_bullets; // Ty 03/12/98 - use dehacked values
-
-    for (int i = 0; i < NUMAMMO; i++) {
-      p->maxammo[i] = maxammo[i];
-    }
-  }
 
   p->telefragged_by_spawn = false;
 }

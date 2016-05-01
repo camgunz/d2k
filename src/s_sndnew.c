@@ -446,27 +446,9 @@ static void start_sound(mobj_t *origin, int sfx_id, int volume) {
   sfx = &S_sfx[sfx_id];
 
   if (CLIENT) {
-    if (CL_RunningConsoleplayerCommands() && CL_Predicting()) {
-      printf("(%d) Playing predicted consoleplayer sound (%s)\n",
-        gametic, S_sfx[sfx_id].name
-      );
-    }
-    else if ((!CL_RunningConsoleplayerCommands()) && (!CL_Predicting())) {
-      if (CL_RePredicting()) {
-        printf("(%d) Playing repredicted non-consoleplayer sound (%s)\n",
-          gametic, S_sfx[sfx_id].name
-        );
-      }
-      else {
-        printf("(%d) Playing synchronized non-consoleplayer sound (%s)\n",
-          gametic, S_sfx[sfx_id].name
-        );
-      }
-    }
-    else {
-      printf("(%d) Skipping duplicate sound (%s)\n",
-        gametic, S_sfx[sfx_id].name
-      );
+    /* [CG] Ohhhh what a hack */
+    if ((!(CL_RunningConsoleplayerCommands() || CL_Predicting())) &&
+        (!((!CL_RunningConsoleplayerCommands()) || CL_Synchronizing()))) {
       return;
     }
 

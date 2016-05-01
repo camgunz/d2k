@@ -1890,18 +1890,6 @@ void P_UseLines(player_t*  player) {
   fixed_t x2;
   fixed_t y2;
 
-  /*
-  if ((player - players) == consoleplayer) {
-    printf("(%d) Consoleplayer using a line (%s, %s, %s, %s)\n",
-      gametic,
-      CL_Synchronizing() ? "Synchronizing" : "Not Synchronizing",
-      CL_Predicting() ? "Predicting" : "Not Predicting",
-      CL_RePredicting() ? "Re-Predicting" : "Not Re-Predicting",
-      CL_RunningConsoleplayerCommands() ? "CPC" : "Not CPC"
-    );
-  }
-  */
-
   usething = player->mo;
 
   angle = player->mo->angle >> ANGLETOFINESHIFT;
