@@ -189,7 +189,7 @@ static void process_queued_command(gpointer data, gpointer user_data) {
   */
 
   if (ncmd->index <= player->latest_command_run_index) {
-    if (playernum == consoleplayer) {
+    if (SERVER || playernum == consoleplayer) {
       return;
     }
   }
