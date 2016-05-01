@@ -1,7 +1,12 @@
 # To Do
 
+1. Client commands aren't deleted
+
+1. Slow down the super fast doomguy face
+
+-- Proto Complete Here --
+
 1. Fix bugs:
-  - The client will still occasionally not clear commands out
   - `P_Printf` doesn't work in server mode
   - When console scrollback fills up, FPS sinks
   - Add a server message sound (just use radio/tink?)
@@ -9,8 +14,6 @@
     presses should be cleared and spurious key releases ignored
   - Add a message indicating that the server is full; currently it looks like a
     crash
-  - Slow down the super fast doomguy face
-  - Maybe something like `enet_flush_whatever` will kill the minimum ping
   - Without `-iwad`, no IWAD is found in singleplayer, and it's not detected
     until "PLAYPAL is not found".
 
@@ -31,8 +34,6 @@
     - If so, set each player's name accordingly
     - Of course, this only works for the 1st 4 players; after that, fuck it
       - Maybe assign more colors
-
--- Proto Complete Here --
 
 1. Add spectators
 
