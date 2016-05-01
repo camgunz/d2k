@@ -1167,19 +1167,19 @@ default_t defaults[] =
   },
   {
     "sv_spectate_password",
-    {NULL, &sv_spectate_password}, {0, ""}, UL, UL, def_str, ss_none
+    {NULL, (const char **)&sv_spectate_password}, {0, ""}, UL, UL, def_str, ss_none
   },
   {
     "sv_join_password",
-    {NULL, &sv_join_password}, {0, ""}, UL, UL, def_str, ss_none
+    {NULL, (const char **)&sv_join_password}, {0, ""}, UL, UL, def_str, ss_none
   },
   {
     "sv_moderate_password",
-    {NULL, &sv_moderate_password}, {0, ""}, UL, UL, def_str, ss_none
+    {NULL, (const char **)&sv_moderate_password}, {0, ""}, UL, UL, def_str, ss_none
   },
   {
     "sv_administrate_password",
-    {NULL, &sv_administrate_password}, {0, ""}, UL, UL, def_str, ss_none
+    {NULL, (const char **)&sv_administrate_password}, {0, ""}, UL, UL, def_str, ss_none
   },
 
   /* CG: Client options */
