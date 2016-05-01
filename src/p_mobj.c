@@ -51,6 +51,13 @@
 #include "sounds.h"
 #include "st_stuff.h"
 
+extern byte playernumtotrans[MAXPLAYERS];
+
+static mapthing_t itemrespawnque[ITEMQUESIZE];
+static int        itemrespawntime[ITEMQUESIZE];
+int               iquehead;
+int               iquetail;
+
 //
 // P_SetMobjState
 // Returns true if the mobj is still present.
@@ -896,10 +903,11 @@ mobj_t* P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type) {
 
   mobj->health = info->spawnhealth;
 
-  if (gameskill != sk_nightmare)
+  if (gameskill != sk_nightmare) {
     mobj->reactiontime = info->reactiontime;
+  }
 
-  mobj->lastlook = P_Random (pr_lastlook) % MAXPLAYERS;
+  mobj->lastlook = P_Random(pr_lastlook) % MAXPLAYERS;
 
   // do not set the state with P_SetMobjState,
   // because action routines can not be called yet
@@ -921,8 +929,8 @@ mobj_t* P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type) {
   mobj->floorz   = mobj->subsector->sector->floorheight;
   mobj->ceilingz = mobj->subsector->sector->ceilingheight;
 
-  mobj->z = z == ONFLOORZ ? mobj->floorz : z == ONCEILINGZ ?
-    mobj->ceilingz - mobj->height : z;
+  mobj->z = z == ONFLOORZ ?
+    mobj->floorz : z == ONCEILINGZ ?  mobj->ceilingz - mobj->height : z;
   
   mobj->PrevX = mobj->x;
   mobj->PrevY = mobj->y;
@@ -936,20 +944,15 @@ mobj_t* P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type) {
 
   mobj->target = mobj->tracer = mobj->lastenemy = NULL;
   P_AddThinker(&mobj->thinker);
-  if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
+
+  if (!((mobj->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL))) {
     totallive++;
+  }
 
   P_IdentGetID(mobj, &mobj->id);
 
   return mobj;
 }
-
-
-static mapthing_t itemrespawnque[ITEMQUESIZE];
-static int        itemrespawntime[ITEMQUESIZE];
-int        iquehead;
-int        iquetail;
-
 
 //
 // P_RemoveMobj
@@ -1110,11 +1113,11 @@ void P_RespawnSpecials (void)
 //  between levels.
 //
 
-extern byte playernumtotrans[MAXPLAYERS];
-
-void P_SpawnPlayer(int playernum, const mapthing_t* mthing) {
+void P_SpawnPlayer(int playernum, const mapthing_t *mthing) {
   int       i;
-  fixed_t   x, y, z;
+  fixed_t   x;
+  fixed_t   y;
+  fixed_t   z;
   player_t *p;
   mobj_t   *mobj;
 
@@ -1122,18 +1125,21 @@ void P_SpawnPlayer(int playernum, const mapthing_t* mthing) {
   // playeringame overflow detection
   // it detects and emulates overflows on vex6d.wad\bug_wald(toke).lmp, etc.
   // http://www.doom2.net/doom2/research/runningbody.zip
-  if ((!MULTINET) && PlayeringameOverrun(mthing))
+  if ((!MULTINET) && PlayeringameOverrun(mthing)) {
     return;
+  }
 
   // not playing?
 
-  if (!playeringame[playernum])
+  if (!playeringame[playernum]) {
     return;
+  }
 
   p = &players[playernum];
 
-  if (p->playerstate == PST_REBORN)
+  if (p->playerstate == PST_REBORN) {
     G_PlayerReborn(playernum);
+  }
 
   /* cph 2001/08/14 - use the options field of memorised player starts to
    * indicate whether the start really exists in the level.
@@ -1143,17 +1149,18 @@ void P_SpawnPlayer(int playernum, const mapthing_t* mthing) {
       "P_SpawnPlayer: attempt to spawn player at unavailable start point"
     );
   }
-  
+
   x    = mthing->x << FRACBITS;
   y    = mthing->y << FRACBITS;
   z    = ONFLOORZ;
   mobj = P_SpawnMobj(x, y, z, MT_PLAYER);
 
-  if (deathmatch)
+  if (deathmatch) {
     mobj->index = TracerGetDeathmatchStart(playernum);
-  else
+  }
+  else {
     mobj->index = TracerGetPlayerStart(mthing->type - 1);
-
+  }
 
   // set color translations for player sprites
 
@@ -1564,8 +1571,9 @@ void P_CheckMissileSpawn (mobj_t* th)
 
   // killough 3/15/98: no dropoff (really = don't care for missiles)
 
-  if (!P_TryMove (th, th->x, th->y, false))
+  if (!P_TryMove (th, th->x, th->y, false)) {
     P_ExplodeMissile (th);
+  }
 }
 
 

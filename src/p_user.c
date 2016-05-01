@@ -396,15 +396,18 @@ void P_DeathThink(player_t *player) {
     // Flying bloody skull
     player->viewheight = 6 * FRACUNIT;
     player->deltaviewheight = 0;
-    if (onground && (int)player->mo->pitch > -(int)ANG1 * 19)
+    if (onground && (int)player->mo->pitch > -(int)ANG1 * 19) {
       player->mo->pitch -= ((int)ANG1 * 19 - player->mo->pitch) / 8;
+    }
   }
   else {
-    if (player->viewheight > 6 * FRACUNIT)
+    if (player->viewheight > 6 * FRACUNIT) {
       player->viewheight -= FRACUNIT;
+    }
 
-    if (player->viewheight < 6 * FRACUNIT)
+    if (player->viewheight < 6 * FRACUNIT) {
       player->viewheight = 6 * FRACUNIT;
+    }
 
     player->deltaviewheight = 0;
   }
@@ -424,8 +427,9 @@ void P_DeathThink(player_t *player) {
 
       player->mo->angle = angle;
 
-      if (player->damagecount)
+      if (player->damagecount) {
         player->damagecount--;
+      }
     }
     else if (delta < ANG180) {
       player->mo->angle += ANG5;
@@ -438,8 +442,9 @@ void P_DeathThink(player_t *player) {
     player->damagecount--;
   }
 
-  if (player->cmd.buttons & BT_USE)
+  if (player->cmd.buttons & BT_USE) {
     player->playerstate = PST_REBORN;
+  }
 
   R_SmoothPlaying_Reset(player); // e6y
 }

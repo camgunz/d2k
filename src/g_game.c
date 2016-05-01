@@ -1609,8 +1609,9 @@ void G_PlayerReborn(int player) {
   p->weaponowned[wp_pistol] = true;
   p->ammo[am_clip] = initial_bullets; // Ty 03/12/98 - use dehacked values
 
-  for (int i = 0; i < NUMAMMO; i++)
+  for (int i = 0; i < NUMAMMO; i++) {
     p->maxammo[i] = maxammo[i];
+  }
 
   P_ClearPlayerCommands(player);
   p->commands_missed = 0;
@@ -1625,16 +1626,18 @@ void G_ClearCorpses(void) {
    *     queued corpses don't leak.  This is why the call to P_RemoveMobj or
    *     free is omitted.
    */
-  if (corpse_queue_size < 0)
+  if (corpse_queue_size < 0) {
     I_Error("clear_corpses: corpse_queue_size < 0 (%d)", corpse_queue_size);
+  }
 
   if (corpse_queue) {
     g_queue_free(corpse_queue);
     corpse_queue = NULL;
   }
 
-  if (corpse_queue_size > 0)
+  if (corpse_queue_size > 0) {
     corpse_queue = g_queue_new();
+  }
 }
 
 //
@@ -1712,24 +1715,46 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
    * We have to emulate original Doom's behaviour, deferencing past the start
    * of the array, into the previous array (finetangent) */
 
-  // an = (ANG45 * ((signed)mthing->angle / 45)) >> ANGLETOFINESHIFT;
+  /*
+  an = ( ANG45 * ((signed)mthing->angle/45) ) >> ANGLETOFINESHIFT;
+  */
 
   /*
    * [CG] Shifting these signed values is implementation-defined, and it turns
-   *      out that clang will (if so configured) will mess this up.
+   *      out that clang will (in some configurations) mess this up.  We can
+   *      use this lookup here because spawnpoints only have 8 potential
+   *      angles.
    */
 
-  an = ANG45 * ((signed)mthing->angle / 45);
-
-  switch (an) {
-    case 0x80000000:
-    case 0xA0000000:
-    case 0xC0000000:
-    case 0xE0000000:
-      an = -((-an) >> ANGLETOFINESHIFT);
+  switch (mthing->angle) {
+    case 45:
+      an = 1024;
+      break;
+    case 90:
+      an = 2048;
+      break;
+    case 135:
+      an = 3072;
+      break;
+    case 180:
+      an = -4096;
+      break;
+    case 225:
+      an = -3072;
+      break;
+    case 270:
+      an = -2048;
+      break;
+    case 315:
+      an = -1024;
+      break;
+    case 360:
+    case 0:
+      an = 0;
       break;
     default:
-      an >>= ANGLETOFINESHIFT;
+      an = 0;
+      I_Error("Unexpected angle %d\n", mthing->angle);
       break;
   }
 
@@ -1739,16 +1764,20 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
   if (compatibility_level <= finaldoom_compatibility ||
       compatibility_level == prboom_4_compatibility) {
     switch (an) {
-      case -4096: xa = finetangent[2048]; // finecosine[-4096]
+      case -4096:
+        xa = finetangent[2048]; // finecosine[-4096]
         ya = finetangent[0];              // finesine[-4096]
       break;
-      case -3072: xa = finetangent[3072]; // finecosine[-3072]
+      case -3072:
+        xa = finetangent[3072]; // finecosine[-3072]
         ya = finetangent[1024];           // finesine[-3072]
       break;
-      case -2048: xa = finesine[0];       // finecosine[-2048]
+      case -2048:
+        xa = finesine[0];       // finecosine[-2048]
         ya = finetangent[2048];           // finesine[-2048]
       break;
-      case -1024:	xa = finesine[1024];    // finecosine[-1024]
+      case -1024:
+        xa = finesine[1024];    // finecosine[-1024]
         ya = finetangent[3072];           // finesine[-1024]
       break;
       case 1024:
@@ -1758,6 +1787,7 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
       case 0:
       break; /* correct angles set above */
       default:
+        printf("Gametic, mthing->angle: %d, %d\n", gametic, mthing->angle);
         I_Error("G_CheckSpot: unexpected angle %d\n",an);
     }
   }
