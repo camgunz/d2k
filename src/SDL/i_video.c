@@ -426,6 +426,7 @@ void I_PreInitGraphics(void) {
     strncat(buf, video_driver, sizeof(buf) - sizeof(buf[0]) - strlen(buf));
     putenv(buf);
   }
+
 #ifdef _WIN32
 #ifdef GL_DOOM
   else if ((int)GetVersion() < 0 && V_GetMode() != VID_MODEGL) {
@@ -437,6 +438,19 @@ void I_PreInitGraphics(void) {
     putenv("SDL_VIDEODRIVER=directx");
   }
 #endif
+
+  if (M_CheckParm("-nodraw")) {
+    char buf[80];
+
+    if (video_driver) {
+      free(video_driver);
+    }
+
+    video_driver = strdup("dummy");
+
+    strncpy(buf, "SDL_VIDEODRIVER=dummy", 80);
+    putenv(buf);
+  }
 
   p = SDL_Init(flags);
 
