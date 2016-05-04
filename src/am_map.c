@@ -74,7 +74,9 @@ int mapcolor_frnd;    // friendly sprite color
 int mapcolor_enemy;   // enemy sprite color
 int mapcolor_hair;    // crosshair color
 int mapcolor_sngl;    // single player arrow color
-int mapcolor_plyr[4] = { 112, 88, 64, 32 }; // colors for player arrows in multiplayer
+
+// colors for player arrows in multiplayer
+int vanilla_mapplayer_colors[VANILLA_MAXPLAYERS] = { 112, 88, 64, 32 };
 
 //jff 3/9/98 add option to not show secret sectors until entered
 int map_secret_after;
@@ -1684,7 +1686,8 @@ static void AM_drawPlayers(void)
 
       AM_drawLineCharacter (player_arrow, NUMPLYRLINES, scale, angle,
           p->powers[pw_invisibility] ? 246 /* *close* to black */
-          : mapcolor_plyr[i], //jff 1/6/98 use default color
+          //jff 1/6/98 use default color
+          : vanilla_mapplayer_colors[i % VANILLA_MAXPLAYERS],
           pt.x, pt.y);
     }
   }
@@ -1777,7 +1780,7 @@ static void AM_ProcessNiceThing(mobj_t* mobj, angle_t angle, fixed_t x, fixed_t 
   if (mobj->player)
   {
     player_t *p = mobj->player;
-    int color = mapcolor_plyr[p - players];
+    int color = vanilla_mapplayer_colors[(p - players) % VANILLA_MAXPLAYERS];
     const unsigned char *playpal = V_GetPlaypal();
 
     if ((deathmatch && !demoplayback) && p != plr)

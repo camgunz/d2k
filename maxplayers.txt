@@ -1,11 +1,3 @@
-mapcolor_plyr
-  - Add 'int vanilla_mapcolor_plyr[VANILLA_MAXPLAYERS] = { 112, 88, 64, 32 }'
-  - Use 'vanilla_mapcolor_plyr[playernum % VANILLA_MAXPLAYERS]'
-
-plyrcoltran
-  - Add 'int vanilla_player_colors[VANILLA_MAXPLAYERS] = { CR_GREEN, CR_GREY, CR_BROWN, CR_RED }'
-  - Use 'vanilla_player_colors[playernum % VANILLA_MAXPLAYERS]'
-
 Basically everything in wi_stuff should be gutted (scripting?)
 
 I think there's some weirdness in HU_widget_build_keys
