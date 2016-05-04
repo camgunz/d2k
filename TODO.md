@@ -14,8 +14,6 @@
     presses should be cleared and spurious key releases ignored
   - Add a message indicating that the server is full; currently it looks like a
     crash
-  - Without `-iwad`, no IWAD is found in singleplayer, and it's not detected
-    until "PLAYPAL is not found".
 
 1. Test resolution switching
   - Probably have to override `:reset` in widgets to update a bunch of stuff
@@ -36,6 +34,9 @@
       - Maybe assign more colors
 
 1. Add spectators
+  - I think that just keeping `playeringame[playernum]` `false` will do
+    everything I want spectating to do, and spycam + walkcamera does the
+    rest.
 
 1. Improve the configuration file and configuration variable system
   - Ties into scripting and console
