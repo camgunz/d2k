@@ -1875,7 +1875,7 @@ void G_DoReborn(int playernum) {
         P_SpawnPlayer(playernum, &playerstarts[i]);
         return;
       }
-      // he's going to be inside something.  Too bad.
+      // They're going to be inside something.  Too bad.
     }
     P_SpawnPlayer(playernum, &playerstarts[playernum]);
   }
@@ -3390,7 +3390,7 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size,
      * [CG] VANILLA_MAXPLAYERS is now 4, which is the original intent of the
      * hardcoded 4.
      */
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < VANILLA_MAXPLAYERS; i++) {
       playeringame[i] = *demo_p++;
     }
 

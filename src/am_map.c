@@ -536,7 +536,7 @@ void AM_SetPosition(void)
 // Passed nothing, returns nothing
 //
 static void AM_initVariables(void) {
-  int playernum = -1;
+  int playernum = 0;
 
   automapmode |= am_active;
 
@@ -552,15 +552,18 @@ static void AM_initVariables(void) {
     playernum = consoleplayer;
   }
   else {
+    bool found_player = false;
+
     for (playernum = 0; playernum < MAXPLAYERS; playernum++) {
       if (playeringame[playernum]) {
+        found_player = true;
         break;
       }
     }
-  }
 
-  if (playernum == -1) {
-    I_Error("AM_initVariables: Couldn't find an in-game player");
+    if (!found_player) {
+      I_Error("AM_initVariables: Couldn't find an in-game player");
+    }
   }
 
   plr = &players[playernum];
