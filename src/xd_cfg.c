@@ -26,125 +26,16 @@
 #include "x_intern.h"
 #include "x_main.h"
 
-static int XD_ConfigGetBool(lua_State *L) {
-  const char *section_name = luaL_checkstring(L, 1);
-  const char *value_name = luaL_checkstring(L, 2);
-  bool success;
-  bool value;
-  
-  success = D_ConfigSafeGetBool(section_name, value_name, &value);
-
-  lua_pushboolean(L, success);
-
-  if (success) {
-    lua_pushboolean(L, value);
-    return 2;
-  }
-
-  return 1;
-}
-
-static int XD_ConfigSetBool(lua_State *L) {
-  const char *section_name = luaL_checkstring(L, 1);
-  const char *value_name = luaL_checkstring(L, 2);
-  bool value = luaL_checkint(L, 3);
-  bool success = D_ConfigSetBool(section_name, value_name, value);
+static int XD_ConfigLoad(lua_State *L) {
+  bool success = D_ConfigLoad();
 
   lua_pushboolean(L, success);
 
   return 1;
 }
 
-static int XD_ConfigGetStr(lua_State *L) {
-  const char *section_name = luaL_checkstring(L, 1);
-  const char *value_name = luaL_checkstring(L, 2);
-  bool success;
-  char *value;
-  
-  success = D_ConfigSafeGetStr(section_name, value_name, &value);
-
-  lua_pushboolean(L, success);
-
-  if (success) {
-    lua_pushstring(L, value);
-    return 2;
-  }
-
-  return 1;
-}
-
-static int XD_ConfigSetStr(lua_State *L) {
-  const char *section_name = luaL_checkstring(L, 1);
-  const char *value_name = luaL_checkstring(L, 2);
-  const char *value = luaL_checkstring(L, 3);
-  bool success = D_ConfigSetStr(section_name, value_name, value);
-
-  lua_pushboolean(L, success);
-
-  return 1;
-}
-
-static int XD_ConfigGetInt(lua_State *L) {
-  const char *section_name = luaL_checkstring(L, 1);
-  const char *value_name = luaL_checkstring(L, 2);
-  bool success;
-  int64_t value;
-  
-  success = D_ConfigSafeGetInt(section_name, value_name, &value);
-
-  lua_pushboolean(L, success);
-
-  if (success) {
-    lua_pushinteger(L, value);
-    return 2;
-  }
-
-  return 1;
-}
-
-static int XD_ConfigSetInt(lua_State *L) {
-  const char *section_name = luaL_checkstring(L, 1);
-  const char *value_name = luaL_checkstring(L, 2);
-  int value = luaL_checkint(L, 3);
-  bool success = D_ConfigSetInt(section_name, value_name, value);
-
-  lua_pushboolean(L, success);
-
-  return 1;
-}
-
-static int XD_ConfigGetDec(lua_State *L) {
-  const char *section_name = luaL_checkstring(L, 1);
-  const char *value_name = luaL_checkstring(L, 2);
-  bool success;
-  double value;
-  
-  success = D_ConfigSafeGetDec(section_name, value_name, &value);
-
-  lua_pushboolean(L, success);
-
-  if (success) {
-    lua_pushnumber(L, value);
-    return 2;
-  }
-
-  return 1;
-}
-
-static int XD_ConfigSetDec(lua_State *L) {
-  const char *section_name = luaL_checkstring(L, 1);
-  const char *value_name = luaL_checkstring(L, 2);
-  double value = luaL_checknumber(L, 3);
-  bool success = D_ConfigSetDec(section_name, value_name, value);
-
-  lua_pushboolean(L, success);
-
-  return 1;
-}
-
-static int XD_ConfigWrite(lua_State *L) {
-  const char *config_contents = luaL_checkstring(L, 1);
-  bool success = D_ConfigWrite(config_contents);
+static int XD_ConfigSave(lua_State *L) {
+  bool success = D_ConfigSave();
 
   lua_pushboolean(L, success);
 
@@ -152,16 +43,9 @@ static int XD_ConfigWrite(lua_State *L) {
 }
 
 void XD_ConfigRegisterInterface(void) {
-  X_RegisterObjects("Config", 9,
-    "get_boolean", X_FUNCTION, XD_ConfigGetBool,
-    "set_boolean", X_FUNCTION, XD_ConfigSetBool,
-    "get_string",  X_FUNCTION, XD_ConfigGetStr,
-    "set_string",  X_FUNCTION, XD_ConfigSetStr,
-    "get_integer", X_FUNCTION, XD_ConfigGetInt,
-    "set_integer", X_FUNCTION, XD_ConfigSetInt,
-    "get_decimal", X_FUNCTION, XD_ConfigSetDec,
-    "set_decimal", X_FUNCTION, XD_ConfigGetDec,
-    "write",       X_FUNCTION, XD_ConfigWrite
+  X_RegisterObjects("config", 2,
+    "save", X_FUNCTION, XD_ConfigSave,
+    "load", X_FUNCTION, XD_ConfigLoad,
   );
 }
 
