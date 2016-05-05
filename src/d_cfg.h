@@ -25,34 +25,8 @@
 #define D_CFG_H__
 
 void    D_ConfigInit(void);
-bool    D_ConfigSectionExists(const char *section_name);
-bool    D_ConfigCreateSection(const char *section_name);
-
-bool    D_ConfigSafeGetBool(const char *section_name, const char *value_name,
-                                                      bool *stored_value);
-bool    D_ConfigGetBool(const char *section_name, const char *value_name);
-bool    D_ConfigSetBool(const char *section_name, const char *value_name,
-                                                  bool value);
-
-bool    D_ConfigSafeGetStr(const char *section_name, const char *value_name,
-                                                     char **stored_value);
-char*   D_ConfigGetStr(const char *section_name, const char *value_name);
-bool    D_ConfigSetStr(const char *section_name, const char *value_name,
-                                                 const char *new_value);
-
-bool    D_ConfigSafeGetInt(const char *section_name, const char *value_name,
-                                                     int64_t *stored_value);
-int64_t D_ConfigGetInt(const char *section_name, const char *value_name);
-bool    D_ConfigSetInt(const char *section_name, const char *value_name,
-                                                 int64_t new_value);
-
-bool    D_ConfigSafeGetDec(const char *section_name, const char *value_name,
-                                                     double *stored_value);
-double  D_ConfigGetDec(const char *section_name, const char *value_name);
-bool    D_ConfigSetDec(const char *section_name, const char *value_name,
-                                                 double new_value);
-
-bool    D_ConfigWrite(const char *contents);
+bool    D_ConfigLoad(void);
+bool    D_ConfigSave(void);
 
 #endif
 
