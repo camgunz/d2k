@@ -55,6 +55,8 @@
       - Uses screen[0] always, via PUTDOT -> `V_PlotPixel(0, ...)`
     - `V_FillRect`
     - `V_PlotPixel`
+
+1. Move configuration into scripting
   - Add drawing options to draw in the old PrBoom+/Doom style
   - Move menu into scripting
   - Move all config stuff into scripting
