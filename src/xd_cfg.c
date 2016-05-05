@@ -45,7 +45,7 @@ static int XD_ConfigSave(lua_State *L) {
 void XD_ConfigRegisterInterface(void) {
   X_RegisterObjects("config", 2,
     "save", X_FUNCTION, XD_ConfigSave,
-    "load", X_FUNCTION, XD_ConfigLoad,
+    "load", X_FUNCTION, XD_ConfigLoad
   );
 }
 
