@@ -1688,12 +1688,8 @@ static void AM_drawPlayers(void)
 
       AM_drawLineCharacter (player_arrow, NUMPLYRLINES, scale, angle,
           p->powers[pw_invisibility] ? 246 /* *close* to black */
-<<<<<<< HEAD
-          : mapcolor_plyr[i % VANILLA_MAXPLAYERS], //jff 1/6/98 use default color
-=======
           //jff 1/6/98 use default color
           : vanilla_mapplayer_colors[i % VANILLA_MAXPLAYERS],
->>>>>>> 570457bc2825134a9420f3b05bbab2cb3664099b
           pt.x, pt.y);
     }
   }
@@ -1786,11 +1782,7 @@ static void AM_ProcessNiceThing(mobj_t* mobj, angle_t angle, fixed_t x, fixed_t 
   if (mobj->player)
   {
     player_t *p = mobj->player;
-<<<<<<< HEAD
-    int color = mapcolor_plyr[(p - players) % VANILLA_MAXPLAYERS];
-=======
     int color = vanilla_mapplayer_colors[(p - players) % VANILLA_MAXPLAYERS];
->>>>>>> 570457bc2825134a9420f3b05bbab2cb3664099b
     const unsigned char *playpal = V_GetPlaypal();
 
     if ((deathmatch && !demoplayback) && p != plr)
