@@ -21,26 +21,25 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-json = require('dkjson')
+local serpent = require('serpent')
 
 d2k.Config.validate = function()
     local ConfigSchema = require('config_schema')
+    local schema = ConfigSchema.ConfigSchema
 
     print('Validating config (to do...)')
 end
 
-d2k.Config.generate_default_config = function()
+d2k.Config.get_default = function()
     local ConfigSchema = require('config_schema')
-    local config = json.decode(json.encode(ConfigSchema.ConfigSchema))
+    local schema = ConfigSchema.ConfigSchema
 
-    for section_name, section in pairs(config) do
-        local is_array = false
+    for section_name, section in pairs(schema) do
+        local section_type = type(section)
+        local is_table = section_type == 'table'
+        local is_array = section[1] ~= nil
 
-        if section[1] then
-            is_array = true
-        end
-
-        if not is_array then
+        if is_table and not is_array then
             for value_name, value in pairs(section) do
                 if type(value) == 'table' then
                     section[value_name] = value.default
@@ -49,7 +48,7 @@ d2k.Config.generate_default_config = function()
         end
     end
 
-    d2k.Config.write(json.encode(config, { indent = true }))
+    d2k.Config.write(serpent.block(schema, { comment = false }))
 end
 
 -- vi: et ts=4 sw=4
