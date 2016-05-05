@@ -23,21 +23,16 @@
 
 #include "z_zone.h"
 
-#include <jansson.h>
-
 #include "d_cfg.h"
 #include "d_msg.h"
 #include "i_system.h"
 #include "m_file.h"
 #include "x_main.h"
+#include "x_intern.h"
 
-#define DEFAULT_CONFIG_FILE_NAME PACKAGE_TARNAME ".json"
-
-static json_t *config;
+#define DEFAULT_CONFIG_FILE_NAME PACKAGE_TARNAME "_config.lua"
 
 void D_ConfigInit(void) {
-  json_error_t json_error;
-
   char *config_path;
   
   if (!X_LoadFile(X_CONFIG_SCRIPT_NAME)) {
@@ -57,71 +52,77 @@ void D_ConfigInit(void) {
   }
 
   if (!M_IsFile(config_path)) {
-    if (!X_Call(X_GetState(), "Config", "generate_default_config", 0, 0)) {
+    if (!X_Call(X_GetState(), "config", "get_default", 0, 0)) {
       I_Error("Error generating default config: %s\n",
         X_GetError(X_GetState())
       );
     }
   }
 
-  config = json_load_file(config_path, JSON_REJECT_DUPLICATES, &json_error);
-
-  if (!config) {
-    I_Error("JSON error in %s (line %d, column %d, position %d):\n  %s\n",
-      json_error.source,
-      json_error.line,
-      json_error.column,
-      json_error.position,
-      json_error.text
-    );
-  }
-
-  if (!X_Call(X_GetState(), "Config", "validate", 0, 0)) {
+  if (!X_Call(X_GetState(), "config", "validate", 0, 0)) {
     I_Error("Error validating config: %s\n", X_GetError(X_GetState()));
   }
 }
 
-bool D_ConfigSectionExists(const char *section_name) {
-  json_t *section = json_object_get(config, section_name);
+bool D_ConfigLoad(const char *contents) {
+  char *config_path = M_PathJoin(I_DoomExeDir(), DEFAULT_CONFIG_FILE_NAME);
+  char *config_data = NULL;
+  size_t config_size = 0;
 
-  if (section) {
-    return true;
+  if (!config_path) {
+    I_Error("Error joining %s and %s: %s\n",
+      I_DoomExeDir(),
+      DEFAULT_CONFIG_FILE_NAME,
+      M_GetFileError()
+    );
   }
 
-  return false;
+  if (!M_ReadFile(config_path, &config_data, &config_size)) {
+    I_Error("Error reading config from [%s]: %s\n",
+      config_path, M_GetFileError()
+    );
+  }
+
+  lua_pushstring(X_GetState(), config_data);
+  if (!X_Call(X_GetState(), "config", "deserialize", 1, 0)) {
+    I_Error("Error deserializing config: %s\n", X_GetError(X_GetState()));
+  }
+
+  return true;
 }
 
-bool D_ConfigCreateSection(const char *section_name) {
-  int res;
+bool D_ConfigSave(const char *contents) {
+  char *config_path = M_PathJoin(I_DoomExeDir(), DEFAULT_CONFIG_FILE_NAME);
+  char *config_data = NULL;
 
-  if (D_ConfigSectionExists(section_name)) {
-    return true;
+  if (!config_path) {
+    I_Error("Error joining %s and %s: %s\n",
+      I_DoomExeDir(),
+      DEFAULT_CONFIG_FILE_NAME,
+      M_GetFileError()
+    );
   }
 
-  res = json_object_set_new(config, section_name, json_object());
+  if (!X_Call(X_GetState(), "config", "serialize", 0, 1)) {
+    I_Error("Error serializing config: %s\n", X_GetError(X_GetState()));
+  }
+  config_data = X_PopString(X_GetState());
 
-  if (res != 0) {
+  if (!M_WriteFile(config_path, config_data, strlen(config_data))) {
+    D_Msg(MSG_WARN, "Failed to write config: %s\n", M_GetFileError());
     return false;
   }
 
   return true;
 }
 
-bool D_ConfigCreateArraySection(const char *section_name) {
-  int res;
-
-  if (D_ConfigSectionExists(section_name)) {
-    return true;
-  }
-
-  res = json_object_set_new(config, section_name, json_array());
-
-  if (res != 0) {
-    return false;
-  }
-
-  return true;
-}
+/*
+ * /set server.spectate_password "whodat"
+ *
+ * if (strcmp(C_CVarGetString("server", "spectate_password"), password) == 0) {
+ *   // blah blah blah
+ * }
+ */
 
 bool D_ConfigSafeGetBool(const char *section_name, const char *value_name,
                                                    bool *stored_value) {
@@ -500,29 +501,6 @@ bool D_ConfigSetDec(const char *section_name, const char *value_name,
       section_name, value_name, new_value
     );
 
-    return false;
-  }
-
-  return true;
-}
-
-bool D_ConfigWrite(const char *contents) {
-  char *config_path = M_PathJoin(I_DoomExeDir(), DEFAULT_CONFIG_FILE_NAME);
-
-  puts("Hello from D_ConfigWrite");
-
-  if (!config_path) {
-    I_Error("Error joining %s and %s: %s\n",
-      I_DoomExeDir(),
-      DEFAULT_CONFIG_FILE_NAME,
-      M_GetFileError()
-    );
-  }
-
-  printf("Writing config [%zu] to %s\n", strlen(contents), config_path);
-
-  if (!M_WriteFile(config_path, contents, strlen(contents))) {
-    D_Msg(MSG_WARN, "Failed to write config\n");
     return false;
   }
 

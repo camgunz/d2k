@@ -38,8 +38,13 @@
 1. Add spectators
 
 1. Improve the configuration file and configuration variable system
+  - Use Lua for config
+  - There's two ways to do this: keep all cvars in Lua as `d2k.config`, or keep
+    all cvars in C as a GLib hash table.
+  - Benchmarks indicate that these two methods are a wash speed-wise.
+    Therefore, because it will allow us to avoid keeping a separate hash table
+    of cvars, we'll just keep everything in Lua.
   - Ties into scripting and console
-  - JSON (Jansson)
 
 1. Add maplist
   - Add `map` command
