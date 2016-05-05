@@ -127,7 +127,7 @@ extern int mapcolor_hair;     // crosshair color
 extern int mapcolor_sngl;     // single player arrow color
 
 // colors for players in multiplayer
-extern int mapcolor_plyr[VANILLA_MAXPLAYERS];
+extern int vanilla_mapplayer_colors[VANILLA_MAXPLAYERS];
 
 extern int mapcolor_me;       // consoleplayer's chosen colour
 //jff 3/9/98

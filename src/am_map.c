@@ -76,7 +76,7 @@ int mapcolor_hair;    // crosshair color
 int mapcolor_sngl;    // single player arrow color
 
 // colors for player arrows in multiplayer
-int mapcolor_plyr[VANILLA_MAXPLAYERS] = { 112, 88, 64, 32 };
+int vanilla_mapplayer_colors[VANILLA_MAXPLAYERS] = { 112, 88, 64, 32 };
 
 //jff 3/9/98 add option to not show secret sectors until entered
 int map_secret_after;
@@ -538,7 +538,7 @@ void AM_SetPosition(void)
 // Passed nothing, returns nothing
 //
 static void AM_initVariables(void) {
-  int playernum = -1;
+  int playernum = 0;
 
   automapmode |= am_active;
 
@@ -554,15 +554,18 @@ static void AM_initVariables(void) {
     playernum = consoleplayer;
   }
   else {
+    bool found_player = false;
+
     for (playernum = 0; playernum < MAXPLAYERS; playernum++) {
       if (playeringame[playernum]) {
+        found_player = true;
         break;
       }
     }
-  }
 
-  if (playernum == -1) {
-    I_Error("AM_initVariables: Couldn't find an in-game player");
+    if (!found_player) {
+      I_Error("AM_initVariables: Couldn't find an in-game player");
+    }
   }
 
   plr = &players[playernum];
@@ -1685,7 +1688,12 @@ static void AM_drawPlayers(void)
 
       AM_drawLineCharacter (player_arrow, NUMPLYRLINES, scale, angle,
           p->powers[pw_invisibility] ? 246 /* *close* to black */
+<<<<<<< HEAD
           : mapcolor_plyr[i % VANILLA_MAXPLAYERS], //jff 1/6/98 use default color
+=======
+          //jff 1/6/98 use default color
+          : vanilla_mapplayer_colors[i % VANILLA_MAXPLAYERS],
+>>>>>>> 570457bc2825134a9420f3b05bbab2cb3664099b
           pt.x, pt.y);
     }
   }
@@ -1778,7 +1786,11 @@ static void AM_ProcessNiceThing(mobj_t* mobj, angle_t angle, fixed_t x, fixed_t 
   if (mobj->player)
   {
     player_t *p = mobj->player;
+<<<<<<< HEAD
     int color = mapcolor_plyr[(p - players) % VANILLA_MAXPLAYERS];
+=======
+    int color = vanilla_mapplayer_colors[(p - players) % VANILLA_MAXPLAYERS];
+>>>>>>> 570457bc2825134a9420f3b05bbab2cb3664099b
     const unsigned char *playpal = V_GetPlaypal();
 
     if ((deathmatch && !demoplayback) && p != plr)

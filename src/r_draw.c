@@ -33,6 +33,8 @@
 #include "g_game.h"
 #include "am_map.h"
 
+#define MAXTRANS 3
+
 //
 // All drawing to the view buffer is accomplished in this file.
 // The other refresh files only know about ccordinates,
@@ -141,6 +143,8 @@ draw_vars_t drawvars = {
   // 81920 = FRACUNIT * 1.25
   49152 // mag_threshold
 };
+
+byte playernumtotrans[MAXPLAYERS];
 
 //
 // Error functions that will abort if R_FlushColumns tries to flush 
@@ -550,43 +554,55 @@ void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars) {
 // Could be read from a lump instead.
 //
 
-byte playernumtotrans[MAXPLAYERS];
-
-void R_InitTranslationTables (void)
-{
-  int i, j;
-#define MAXTRANS 3
-  byte transtocolour[MAXTRANS];
+void R_InitTranslationTables(void) {
+  int i;
+  int j;
+  unsigned char transtocolour[MAXTRANS];
 
   // killough 5/2/98:
   // Remove dependency of colormaps aligned on 256-byte boundary
 
-  if (translationtables == NULL) // CPhipps - allow multiple calls
-    translationtables = Z_Malloc(256*MAXTRANS, PU_STATIC, 0);
-
-  for (i=0; i<MAXTRANS; i++) transtocolour[i] = 255;
-
-  for (i=0; i<MAXPLAYERS; i++) {
-    byte wantcolour = mapcolor_plyr[i % VANILLA_MAXPLAYERS];
-    playernumtotrans[i] = 0;
-    if (wantcolour != 0x70) // Not green, would like translation
-      for (j=0; j<MAXTRANS; j++)
-  if (transtocolour[j] == 255) {
-    transtocolour[j] = wantcolour; playernumtotrans[i] = j+1; break;
+  if (!translationtables) { // CPhipps - allow multiple calls
+    translationtables = Z_Malloc(256 * MAXTRANS, PU_STATIC, 0);
   }
+
+  for (i = 0; i < MAXTRANS; i++) {
+    transtocolour[i] = 255;
+  }
+
+  for (i = 0; i < MAXPLAYERS; i++) {
+    unsigned char wantcolor = vanilla_mapplayer_colors[i % VANILLA_MAXPLAYERS];
+
+    playernumtotrans[i] = 0;
+
+    if (wantcolor != 0x70) { // Not green, would like translation
+      for (j = 0; j < MAXTRANS; j++) {
+        if (transtocolour[j] == 255) {
+          transtocolour[j] = wantcolor;
+          playernumtotrans[i] = j + 1;
+          break;
+        }
+      }
+    }
   }
 
   // translate just the 16 green colors
-  for (i=0; i<256; i++)
-    if (i >= 0x70 && i<= 0x7f)
-      {
-  // CPhipps - configurable player colours
-        translationtables[i] = colormaps[0][((i&0xf)<<9) + transtocolour[0]];
-        translationtables[i+256] = colormaps[0][((i&0xf)<<9) + transtocolour[1]];
-        translationtables[i+512] = colormaps[0][((i&0xf)<<9) + transtocolour[2]];
-      }
-    else  // Keep all other colors as is.
-      translationtables[i]=translationtables[i+256]=translationtables[i+512]=i;
+  for (i = 0; i < 256; i++) {
+    if (i >= 0x70 && i <= 0x7f) {
+      // CPhipps - configurable player colours
+      translationtables[i      ] = colormaps[0][((i & 0xF) << 9) +
+                                   transtocolour[0]];
+      translationtables[i + 256] = colormaps[0][((i & 0xF) << 9) +
+                                   transtocolour[1]];
+      translationtables[i + 512] = colormaps[0][((i & 0xF) << 9) +
+                                   transtocolour[2]];
+    }
+    else { // Keep all other colors as is.
+      translationtables[i      ] = translationtables[i + 256];
+      translationtables[i + 256] = translationtables[i + 512];
+      translationtables[i + 512] = i;
+    }
+  }
 }
 
 //

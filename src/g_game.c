@@ -1216,15 +1216,19 @@ bool G_Responder(event_t *ev) {
 void G_Ticker(void) {
   int i;
 
-  // CPhipps - player colour changing
-  if (!demoplayback && mapcolor_plyr[consoleplayer] != mapcolor_me) {
 #if 0
-    if (CLIENT) // Changed my multiplayer colour - Inform the whole game
-      CL_SendColorIndexChange(mapcolor_me);
+  // CPhipps - player colour changing
+  {
+    int index = consoleplayer % VANILLA_MAXPLAYERS;
 
-    G_ChangedPlayerColour(consoleplayer, mapcolor_me);
-#endif
+    if (!demoplayback && vanilla_mapplayer_colors[index] != mapcolor_me) {
+      if (CLIENT) // Changed my multiplayer colour - Inform the whole game
+        CL_SendColorIndexChange(mapcolor_me);
+
+      G_ChangedPlayerColour(consoleplayer, mapcolor_me);
+    }
   }
+#endif
 
   P_MapStart();
 
@@ -1545,7 +1549,7 @@ void G_ChangedPlayerColour(int pn, int cl) {
   if (!netgame)
     return;
 
-  mapcolor_plyr[pn] = cl;
+  vanilla_mapplayer_colors[pn % VANILLA_MAXPLAYERS] = cl;
 
   // Rebuild colour translation tables accordingly
   R_InitTranslationTables();
@@ -1884,7 +1888,7 @@ void G_DoReborn(int playernum) {
         P_SpawnPlayer(playernum, &playerstarts[i]);
         return;
       }
-      // he's going to be inside something.  Too bad.
+      // They're going to be inside something.  Too bad.
     }
     printf("5: Spawning %d at player start %d\n", playernum, playernum);
     P_SpawnPlayer(playernum, &playerstarts[playernum]);
@@ -3401,7 +3405,7 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size,
      * [CG] VANILLA_MAXPLAYERS is now 4, which is the original intent of the
      * hardcoded 4.
      */
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < VANILLA_MAXPLAYERS; i++) {
       playeringame[i] = *demo_p++;
     }
 
