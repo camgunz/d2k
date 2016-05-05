@@ -3408,22 +3408,19 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size,
      */
     for (i = 0; i < VANILLA_MAXPLAYERS; i++) {
       playeringame[i] = *demo_p++;
-    }
 
-    for (; i < MAXPLAYERS; i++) {
+    for (; i < MAXPLAYERS; i++)
       playeringame[i] = 0;
-    }
   }
   else {
     //e6y: check for overrun
     if (CheckForOverrun(header_p, demo_p, size, MAXPLAYERS, failonerror))
       return NULL;
 
-    for (i = 0; i < VANILLA_MAXPLAYERS; i++) {
+    for (i = 0; i < MAXPLAYERS; i++)
       playeringame[i] = *demo_p++;
-    }
 
-    demo_p += MIN_MAXPLAYERS - VANILLA_MAXPLAYERS;
+    demo_p += MIN_MAXPLAYERS - MAXPLAYERS;
   }
 
   if (playeringame[1]) {
@@ -3437,9 +3434,8 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size,
     }
   }
 
-  for (i = 0; i < MAXPLAYERS; i++) { // killough 4/24/98
+  for (i = 0; i < MAXPLAYERS; i++) // killough 4/24/98
     players[i].cheats = 0;
-  }
 
   // e6y
   // additional params
