@@ -27,7 +27,6 @@
 
 #ifdef GL_DOOM
 #include "gl_opengl.h"
-#include "gl_intern.h"
 #endif
 
 #include "doomdef.h"

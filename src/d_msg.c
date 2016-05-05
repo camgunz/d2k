@@ -38,7 +38,7 @@ typedef struct message_channel_s {
 } message_channel_t;
 
 static bool message_channels_initialized = false;
-static message_channel_t message_channels[MSG_MAX];
+static message_channel_t message_channels[MSG_MAX + 1];
 
 static void check_message_channel(msg_channel_e c) {
   if (!message_channels_initialized)
@@ -52,8 +52,9 @@ static void check_message_channel(msg_channel_e c) {
 }
 
 static void deactivate_message_channels(void) {
-  for (msg_channel_e chan = MSG_MIN; chan <= MSG_MAX; chan++)
+  for (msg_channel_e chan = MSG_MIN; chan <= MSG_MAX; chan++) {
     D_MsgDeactivate(chan);
+  }
 }
 
 void D_InitMessaging(void) {

@@ -55,6 +55,8 @@ extern bool deh_pars;
 #define NUMEPISODES 4
 #define NUMMAPS     9
 
+/* [CG] Length of multiplayer intermission in seconds */
+#define INTERMISSION_LENGTH 15
 
 // Not used
 // in tics
@@ -1834,7 +1836,7 @@ void WI_Ticker(void) {
   // counter for general background animation
   bcnt++;
 
-  if (SERVER && (bcnt == (30 * TICRATE))) {
+  if (SERVER && (bcnt >= (INTERMISSION_LENGTH * TICRATE))) {
     acceleratestage = 1;
   }
 
@@ -1927,26 +1929,27 @@ void WI_loadData(void)
 // Args:    none
 // Returns: void
 //
-void WI_Drawer (void)
-{
-  switch (state)
-  {
+void WI_Drawer(void) {
+  switch (state) {
     case StatCount:
-         if (deathmatch)
-           WI_drawDeathmatchStats();
-         else if (netgame)
-           WI_drawNetgameStats();
-         else
-           WI_drawStats();
-         break;
-
+      if (!MULTINET) {
+        if (deathmatch) {
+          WI_drawDeathmatchStats();
+        }
+        else if (netgame) {
+          WI_drawNetgameStats();
+        }
+        else {
+          WI_drawStats();
+        }
+      }
+    break;
     case ShowNextLoc:
-         WI_drawShowNextLoc();
-         break;
-
+      WI_drawShowNextLoc();
+    break;
     case NoState:
-         WI_drawNoState();
-         break;
+      WI_drawNoState();
+    break;
   }
 }
 

@@ -585,6 +585,12 @@ void P_TrimCommands(int playernum, TrimFunc should_trim, gpointer user_data) {
     command_count++;
   }
 
+  /*
+  printf("(%d) Player %d command count: %u\n",
+    gametic, playernum, command_count
+  );
+  */
+
   if (command_count > 0) {
     g_ptr_array_remove_range(
       players[playernum].commands, 0, command_count

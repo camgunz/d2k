@@ -77,7 +77,7 @@
   {name, {&keyloc}, {keyval}, 0, MAX_KEY, def_key, ss_keys}
 
 int usemouse;
-bool precache = true; /* if true, load all graphics at start */
+int precache = 1; /* if true, load all graphics at start */
 
 extern int viewwidth;
 extern int viewheight;
