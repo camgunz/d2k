@@ -361,7 +361,6 @@ extern int details_count;
 extern int scene_has_wall_details;
 extern int scene_has_flat_details;
 
-extern GLuint* last_glTexID;
 GLTexture *gld_RegisterTexture(int texture_num, bool mipmap, bool force);
 void gld_BindTexture(GLTexture *gltexture, unsigned int flags);
 GLTexture *gld_RegisterPatch(int lump, int cm);
@@ -371,7 +370,6 @@ void gld_BindFlat(GLTexture *gltexture, unsigned int flags);
 void gld_InitPalettedTextures(void);
 int gld_GetTexDimension(int value);
 void gld_SetTexturePalette(GLenum target);
-void gld_Precache(void);
 void gld_BuildMipmaps(GLsizei w, GLsizei h, GLvoid *p, GLenum wrap);
 
 void SetFrameTextureMode(void);

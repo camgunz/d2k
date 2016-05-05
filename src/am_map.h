@@ -175,7 +175,7 @@ typedef enum
   
   map_things_appearance_max
 } map_things_appearance_t;
-extern map_things_appearance_t map_things_appearance;
+extern int map_things_appearance;
 extern const char *map_things_appearance_list[];
 
 #endif

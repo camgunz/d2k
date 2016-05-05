@@ -95,7 +95,7 @@ int map_overlay_pos_y;
 int map_overlay_pos_width;
 int map_overlay_pos_height;
 
-map_things_appearance_t map_things_appearance;
+int map_things_appearance;
 const char *map_things_appearance_list[map_things_appearance_max] =
 {
   "classic",
@@ -1669,20 +1669,22 @@ static void AM_drawPlayers(void)
     return;
   }
 
-  for (i=0;i<MAXPLAYERS;i++) {
-    player_t* p = &players[i];
+  for (i = 0; i < MAXPLAYERS; i++) {
+    player_t *p = &players[i];
 
-    if ( (deathmatch && !demoplayback) && p != plr)
+    if ((deathmatch && !demoplayback) && p != plr) {
       continue;
+    }
 
-    if (playeringame[i])
-    {
+    if (playeringame[i]) {
       AM_GetMobjPosition(p->mo, &pt, &angle);
 
-      if (automapmode & am_rotate)
+      if (automapmode & am_rotate) {
         AM_rotatePoint(&pt);
-      else
+      }
+      else {
         AM_SetMPointFloatValue(&pt);
+      }
 
       AM_drawLineCharacter (player_arrow, NUMPLYRLINES, scale, angle,
           p->powers[pw_invisibility] ? 246 /* *close* to black */
