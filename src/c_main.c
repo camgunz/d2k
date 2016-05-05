@@ -30,7 +30,6 @@
 #include "c_eci.h"
 #include "d_main.h"
 #include "gl_opengl.h"
-#include "gl_intern.h"
 #include "hu_lib.h"
 #include "hu_stuff.h"
 #include "i_main.h"

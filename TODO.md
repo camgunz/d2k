@@ -6,7 +6,11 @@
 
 -- Proto Complete Here --
 
+1. Get uncrustify config
+
 1. Fix bugs:
+  - Weird lurch at the beginning of the game
+  - Fix "Player N is too lagged"
   - `P_Printf` doesn't work in server mode
   - When console scrollback fills up, FPS sinks
   - Add a server message sound (just use radio/tink?)
@@ -22,19 +26,6 @@
 
 1. Trace messaging uses after message channels are closed
 
-1. Remove 4 player restriction
-  - Just increase `MAXPLAYERS`
-  - Add `#define VANILLA_MAXPLAYERS 4` for compat
-  - All playernums become `int`
-  - Anything defined using `MAXPLAYERS` will be refactored
-  - Player names are hardcoded for DeHackEd; the way this should work is:
-    - Keep a private array of the default names ("Green", "Indigo", etc.)
-    - After initialization, check if the names have been modified, by a
-      DeHackEd patch or anything
-    - If so, set each player's name accordingly
-    - Of course, this only works for the 1st 4 players; after that, fuck it
-      - Maybe assign more colors
-
 1. Add spectators
 
 1. Improve the configuration file and configuration variable system
@@ -43,8 +34,6 @@
 
 1. Add maplist
   - Add `map` command
-
-1. Add authorization framework
 
 1. Add RCON
   - Need a way to intercept console I/O
@@ -76,6 +65,10 @@
   - Probably this is just gonna be a script
     - How to not send an arbitrary script to the server though...?
     - Does it make sense to have scripting contexts per-client serverside?
+
+1. C/S Demos
+  - serverside
+  - clientside
 
 -- Suitable For DEATHMATCH Here --
 
@@ -153,10 +146,6 @@
 
 1. Remove software renderer
   - See about implementing Doom lighting and 8-bit color using shaders
-
-1. Setup testing framework
-  - Demos
-  - Multiplayer command injection
 
 ## Features
 

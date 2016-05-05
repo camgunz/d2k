@@ -1674,6 +1674,7 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
 
       if (players[i].mo->x == mthing->x << FRACBITS &&
           players[i].mo->y == mthing->y << FRACBITS) {
+        printf("Player %d on spot\n", i);
         return false;
       }
     }
@@ -1694,6 +1695,7 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
   i = P_CheckPosition(players[playernum].mo, x, y);
   players[playernum].mo->flags &= ~MF_SOLID;
   if (!i) {
+    puts("Something in the way");
     return false;
   }
 
@@ -1833,14 +1835,19 @@ void G_DeathMatchSpawnPlayer(int playernum) {
   for (int j = 0; j < 20; j++) {
     int i = P_Random(pr_dmspawn) % selections;
 
+    printf("Checking spot %d\n", i);
     if (G_CheckSpot(playernum, &deathmatchstarts[i])) {
       deathmatchstarts[i].type = playernum + 1;
-      P_SpawnPlayer(playernum, &deathmatchstarts[i]);
+      printf("1: Spawning %d at DM start %lu\n", playernum, i % num_deathmatchstarts);
+      P_SpawnPlayer(playernum, &deathmatchstarts[i % num_deathmatchstarts]);
       return;
     }
   }
 
   // no good spot, so the player will probably get stuck
+  printf("2: Spawning %d at player start %d (%lu)\n",
+    playernum, playernum, num_deathmatchstarts
+  );
   P_SpawnPlayer(playernum, &playerstarts[playernum]);
   if (MULTINET) {
     P_StompSpawnPointBlockers(players[playernum].mo);
@@ -1865,6 +1872,7 @@ void G_DoReborn(int playernum) {
     }
 
     if (G_CheckSpot(playernum, &playerstarts[playernum])) {
+      printf("3: Spawning %d at player start %d\n", playernum, playernum);
       P_SpawnPlayer(playernum, &playerstarts[playernum]);
       return;
     }
@@ -1872,11 +1880,13 @@ void G_DoReborn(int playernum) {
     // try to spawn at one of the other players spots
     for (int i = 0; i < MAXPLAYERS; i++) {
       if (G_CheckSpot(playernum, &playerstarts[i])) {
+        printf("4: Spawning %d at player start %d\n", playernum, i);
         P_SpawnPlayer(playernum, &playerstarts[i]);
         return;
       }
       // he's going to be inside something.  Too bad.
     }
+    printf("5: Spawning %d at player start %d\n", playernum, playernum);
     P_SpawnPlayer(playernum, &playerstarts[playernum]);
   }
   else {
@@ -2343,7 +2353,8 @@ void G_ReloadDefaults(void) {
   netdemo = false;
 
   // killough 2/21/98:
-  memset(playeringame + 1, 0, sizeof(*playeringame) * (MAXPLAYERS - 1));
+  memset(&playeringame[1], 0, sizeof(playeringame) - sizeof(playeringame[0]));
+  // memset(playeringame + 1, 0, sizeof(*playeringame) * (MAXPLAYERS - 1));
 
   consoleplayer = 0;
 

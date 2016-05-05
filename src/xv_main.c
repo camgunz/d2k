@@ -27,7 +27,6 @@
 #include <cairo/cairo.h>
 
 #include "gl_opengl.h"
-#include "gl_intern.h"
 
 #include "doomdef.h"
 #include "doomstat.h"

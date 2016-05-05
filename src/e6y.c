@@ -53,7 +53,6 @@
 #ifdef GL_DOOM
 #include "gl_opengl.h"
 #include "gl_struct.h"
-#include "gl_intern.h"
 #endif
 #include "g_game.h"
 #include "r_demo.h"

@@ -74,7 +74,9 @@ int mapcolor_frnd;    // friendly sprite color
 int mapcolor_enemy;   // enemy sprite color
 int mapcolor_hair;    // crosshair color
 int mapcolor_sngl;    // single player arrow color
-int mapcolor_plyr[4] = { 112, 88, 64, 32 }; // colors for player arrows in multiplayer
+
+// colors for player arrows in multiplayer
+int mapcolor_plyr[VANILLA_MAXPLAYERS] = { 112, 88, 64, 32 };
 
 //jff 3/9/98 add option to not show secret sectors until entered
 int map_secret_after;
@@ -93,7 +95,7 @@ int map_overlay_pos_y;
 int map_overlay_pos_width;
 int map_overlay_pos_height;
 
-map_things_appearance_t map_things_appearance;
+int map_things_appearance;
 const char *map_things_appearance_list[map_things_appearance_max] =
 {
   "classic",
@@ -1664,24 +1666,26 @@ static void AM_drawPlayers(void)
     return;
   }
 
-  for (i=0;i<MAXPLAYERS;i++) {
-    player_t* p = &players[i];
+  for (i = 0; i < MAXPLAYERS; i++) {
+    player_t *p = &players[i];
 
-    if ( (deathmatch && !demoplayback) && p != plr)
+    if ((deathmatch && !demoplayback) && p != plr) {
       continue;
+    }
 
-    if (playeringame[i])
-    {
+    if (playeringame[i]) {
       AM_GetMobjPosition(p->mo, &pt, &angle);
 
-      if (automapmode & am_rotate)
+      if (automapmode & am_rotate) {
         AM_rotatePoint(&pt);
-      else
+      }
+      else {
         AM_SetMPointFloatValue(&pt);
+      }
 
       AM_drawLineCharacter (player_arrow, NUMPLYRLINES, scale, angle,
           p->powers[pw_invisibility] ? 246 /* *close* to black */
-          : mapcolor_plyr[i], //jff 1/6/98 use default color
+          : mapcolor_plyr[i % VANILLA_MAXPLAYERS], //jff 1/6/98 use default color
           pt.x, pt.y);
     }
   }
@@ -1774,7 +1778,7 @@ static void AM_ProcessNiceThing(mobj_t* mobj, angle_t angle, fixed_t x, fixed_t 
   if (mobj->player)
   {
     player_t *p = mobj->player;
-    int color = mapcolor_plyr[p - players];
+    int color = mapcolor_plyr[(p - players) % VANILLA_MAXPLAYERS];
     const unsigned char *playpal = V_GetPlaypal();
 
     if ((deathmatch && !demoplayback) && p != plr)

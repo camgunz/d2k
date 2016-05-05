@@ -123,7 +123,7 @@ void M_DrawCredits(void);    // killough 11/98
 
 extern int warning_about_changes, print_warning_about_changes;
 
-extern bool menu_background;
+extern int menu_background;
 
 /****************************
  *

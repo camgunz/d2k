@@ -567,7 +567,7 @@ void R_InitTranslationTables (void)
   for (i=0; i<MAXTRANS; i++) transtocolour[i] = 255;
 
   for (i=0; i<MAXPLAYERS; i++) {
-    byte wantcolour = mapcolor_plyr[i];
+    byte wantcolour = mapcolor_plyr[i % VANILLA_MAXPLAYERS];
     playernumtotrans[i] = 0;
     if (wantcolour != 0x70) // Not green, would like translation
       for (j=0; j<MAXTRANS; j++)

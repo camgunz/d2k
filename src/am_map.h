@@ -125,7 +125,10 @@ extern int mapcolor_enemy;    // enemy sprite color
 extern int mapcolor_frnd;     // friendly sprite color
 extern int mapcolor_hair;     // crosshair color
 extern int mapcolor_sngl;     // single player arrow color
-extern int mapcolor_plyr[4];  // colors for players in multiplayer
+
+// colors for players in multiplayer
+extern int mapcolor_plyr[VANILLA_MAXPLAYERS];
+
 extern int mapcolor_me;       // consoleplayer's chosen colour
 //jff 3/9/98
 extern int map_secret_after;  // secrets do not appear til after bagged
@@ -172,7 +175,7 @@ typedef enum
   
   map_things_appearance_max
 } map_things_appearance_t;
-extern map_things_appearance_t map_things_appearance;
+extern int map_things_appearance;
 extern const char *map_things_appearance_list[];
 
 #endif
