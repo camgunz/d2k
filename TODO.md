@@ -6,8 +6,6 @@
 
 -- Proto Complete Here --
 
-1. Get uncrustify config
-
 1. Fix bugs:
   - Weird lurch at the beginning of the game
   - Fix "Player N is too lagged"
