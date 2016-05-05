@@ -16,11 +16,10 @@
     crash
   - Without `-iwad`, no IWAD is found in singleplayer, and it's not detected
     until "PLAYPAL is not found".
+  - Trace messaging uses after message channels are closed
 
-1. Test resolution switching
+1. Test/Fix resolution switching
   - Probably have to override `:reset` in widgets to update a bunch of stuff
-
-1. Trace messaging uses after message channels are closed
 
 1. Remove 4 player restriction
   - Just increase `MAXPLAYERS`
@@ -37,19 +36,14 @@
 
 1. Add spectators
 
-1. Improve the configuration file and configuration variable system
-  - Use Lua for config
-  - There's two ways to do this: keep all cvars in Lua as `d2k.config`, or keep
-    all cvars in C as a GLib hash table.
-  - Benchmarks indicate that these two methods are a wash speed-wise.
-    Therefore, because it will allow us to avoid keeping a separate hash table
-    of cvars, we'll just keep everything in Lua.
-  - Ties into scripting and console
+1. Move configuration into scripting
+  - Refactor screens
+  - Add drawing options to draw in the old PrBoom+/Doom style
+  - Move menu into scripting
+  - Move all config stuff into scripting
 
 1. Add maplist
   - Add `map` command
-
-1. Add authorization framework
 
 1. Add RCON
   - Need a way to intercept console I/O
@@ -63,13 +57,6 @@
     huge file (or a file from a slow server); libcurl ought to make this
     pretty easy
 
-1. Add drawing options to draw in the old PrBoom+/Doom style
-  - Need to refactor `screens`
-
-1. Move menu into scripting
-  - This is because the menu is drawn onto the game screen, then the console is
-    drawn onto the overlay
-
 1. Add 3D physics
 
 1. Add ZDoom physics
@@ -81,6 +68,9 @@
   - Probably this is just gonna be a script
     - How to not send an arbitrary script to the server though...?
     - Does it make sense to have scripting contexts per-client serverside?
+    - How to configure a script, since it can't be in `d2k_config.lua`?
+    - There should maybe be a `local_config.lua` file that runs after config
+      processing takes place, to modify and augment the loaded config
 
 -- Suitable For DEATHMATCH Here --
 
