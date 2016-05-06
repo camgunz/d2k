@@ -1844,6 +1844,9 @@ void G_DeathMatchSpawnPlayer(int playernum) {
     printf("Checking spot %d\n", i);
     if (G_CheckSpot(playernum, &deathmatchstarts[i])) {
       deathmatchstarts[i].type = playernum + 1;
+      printf("1: Spawning %d at DM start %u\n",
+        playernum, i % num_deathmatchstarts
+      );
       P_SpawnPlayer(playernum, &deathmatchstarts[i % num_deathmatchstarts]);
       return;
     }
