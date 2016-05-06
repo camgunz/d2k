@@ -31,10 +31,14 @@ d2k.config.validate = function()
 
     for section_name, section in pairs(schema) do
         local section_is_table = type(section) == 'table'
-        local section_is_array = section_is_table and section[1] ~= nil
+        local section_is_array = false
+        
+        if section_is_table and section[1] ~= nil then
+            section_is_array = true
+        end
 
         if section_is_table and not section_is_array then
-            for value_name, value in pairs(section) do
+            for value_name, value in ipairs(section) do
                 local value_type = type(value)
                 local value_is_table = value_type == 'table'
                 local value_is_array = value_is_table and value[1] ~= nil
@@ -43,7 +47,7 @@ d2k.config.validate = function()
                 if config_value == nil then
                     if value_is_table and not value_is_array then
                         d2k.cvars[section_name][value_name] = value.default
-                    else if value_is_array then
+                    elseif value_is_array then
                         -- [CG] TODO: Handle each array value as potentially a
                         --            table instead of a raw value
                         d2k.cvars[section_name][value_name] = {}
@@ -66,7 +70,7 @@ d2k.config.validate = function()
                             value_type,
                             config_value_type
                         ))
-                    else if value_is_array and not config_value_is_array then
+                    elseif value_is_array and not config_value_is_array then
                         error(string.format(
                             'Config value [%s.%s] must be a table, not an ' ..
                             'array',
@@ -128,9 +132,7 @@ d2k.config.get_default = function()
                             config[section_name][value_name][i] = value[i]
                         end
                     else
-                        for k, v in ipairs(value) do
-                            config[section_name][value_name][k] = v.default
-                        end
+                        config[section_name][value_name] = value.default
                     end
                 else
                     config[section_name][value_name] = value

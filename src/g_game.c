@@ -1806,8 +1806,10 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
       case 0:
       break; /* correct angles set above */
       default:
-        printf("Gametic, mthing->angle: %d, %d\n", gametic, mthing->angle);
-        I_Error("G_CheckSpot: unexpected angle %d\n",an);
+        I_Error("(%d) G_CheckSpot: unexpected angle %d (%d)\n",
+          gametic, an, mthing->angle
+        );
+        break;
     }
   }
 
@@ -1842,14 +1844,16 @@ void G_DeathMatchSpawnPlayer(int playernum) {
     printf("Checking spot %d\n", i);
     if (G_CheckSpot(playernum, &deathmatchstarts[i])) {
       deathmatchstarts[i].type = playernum + 1;
-      printf("1: Spawning %d at DM start %lu\n", playernum, i % num_deathmatchstarts);
+      printf("1: Spawning %d at DM start %u\n",
+        playernum, i % num_deathmatchstarts
+      );
       P_SpawnPlayer(playernum, &deathmatchstarts[i % num_deathmatchstarts]);
       return;
     }
   }
 
   // no good spot, so the player will probably get stuck
-  printf("2: Spawning %d at player start %d (%lu)\n",
+  printf("2: Spawning %d at player start %d (%u)\n",
     playernum, playernum, num_deathmatchstarts
   );
   P_SpawnPlayer(playernum, &playerstarts[playernum]);

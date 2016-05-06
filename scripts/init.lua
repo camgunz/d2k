@@ -33,7 +33,5 @@ end
 
 cprint = print
 
-print('X_Init: Init script engine.')
-
 -- vi: et ts=4 sw=4
 

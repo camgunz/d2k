@@ -27,7 +27,6 @@
 #include "doomstat.h"
 #include "am_map.h"
 #include "c_main.h"
-#include "d_cfg.h"
 #include "d_deh.h"  // Ty 04/08/98 - Externalizations
 #include "d_dump.h"
 #include "d_event.h"
@@ -60,26 +59,7 @@
 #include "f_wipe.h"
 #include "w_wad.h"
 #include "wi_stuff.h"
-#include "xam_main.h"
-#include "xc_main.h"
-#include "xcl_main.h"
-#include "xd_cfg.h"
-#include "xd_comp.h"
-#include "xd_msg.h"
-#include "xd_main.h"
-#include "xg_game.h"
-#include "xg_keys.h"
-#include "xi_input.h"
-#include "xi_main.h"
-#include "xm_menu.h"
-#include "xm_misc.h"
-#include "xn_main.h"
-#include "xp_user.h"
-#include "xr_demo.h"
-#include "xr_main.h"
-#include "xs_main.h"
-#include "xst_main.h"
-#include "xv_main.h"
+#include "x_main.h"
 
 //e6y
 #include "r_demo.h"
@@ -94,7 +74,6 @@
 #include "n_net.h"
 #include "n_main.h"
 #include "n_state.h"
-#include "x_main.h"
 
 extern int  forceOldBsp;
 extern bool setsizeneeded;
@@ -1711,33 +1690,6 @@ static void D_DoomMainSetup(void) {
   int p;
   int slot;
   bool rsp_found;
-
-  X_Init(); /* CG 07/22/2014: Scripting */
-
-  XAM_RegisterInterface();
-  XCL_RegisterInterface();
-  XC_RegisterInterface();
-  XD_CompatibilityRegisterInterface();
-  XD_ConfigRegisterInterface();
-  XD_MsgRegisterInterface();
-  XD_RegisterInterface();
-  XG_GameRegisterInterface();
-  XG_KeysRegisterInterface();
-  XI_InputRegisterInterface();
-  XI_RegisterInterface();
-  XM_MenuRegisterInterface();
-  XM_MiscRegisterInterface();
-  XN_RegisterInterface();
-  XP_UserRegisterInterface();
-  XR_DemoRegisterInterface();
-  XR_RegisterInterface();
-  XST_RegisterInterface();
-  XS_RegisterInterface();
-  XV_RegisterInterface();
-
-  X_ExposeInterfaces(NULL);
-
-  D_ConfigInit();
 
   // proff 04/05/2000: Added support for include response files
   /* proff 2001/7/1 - Moved up, so -config can be in response files */

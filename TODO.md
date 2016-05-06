@@ -38,6 +38,23 @@
 
 1. Move configuration into scripting
   - Refactor screens
+    - From what I can tell:
+      - screens[0] is the foreground for HUD, status bar, finale, and menu
+      - screens[1] is kept blank to erase screens[0]
+        ...although it looks like everything in r_draw.c uses it...
+      - screens[2] and screens[3] are used for the screen wipe (src and dst
+        respectively)
+      - screens[4] is the STBAR background
+    - `V_CopyRect`
+    - `V_FillFlat`
+    - `V_FillPatch`
+    - `V_DrawBackground`
+    - `V_DrawMemPatch`
+    - `V_DrawNumPatch`
+    - `V_DrawLine`
+      - Uses screen[0] always, via PUTDOT -> `V_PlotPixel(0, ...)`
+    - `V_FillRect`
+    - `V_PlotPixel`
   - Add drawing options to draw in the old PrBoom+/Doom style
   - Move menu into scripting
   - Move all config stuff into scripting
