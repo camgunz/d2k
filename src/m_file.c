@@ -245,15 +245,19 @@ bool M_IsFolder(const char *path) {
 }
 
 bool M_IsFile(const char *path) {
+  puts("1");
   if (!g_file_test(path, G_FILE_TEST_EXISTS))
     return false;
 
+  puts("2");
   if (g_file_test(path, G_FILE_TEST_IS_DIR))
     return false;
 
+  puts("3");
   if (g_file_test(path, G_FILE_TEST_IS_SYMLINK))
     return false;
 
+  puts("4");
   return true;
 }
 

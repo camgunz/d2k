@@ -33,7 +33,9 @@
 #define DEFAULT_CONFIG_FILE_NAME PACKAGE_TARNAME "_config.lua"
 
 void D_ConfigInit(void) {
+  char *local_config_path;
   char *config_path;
+  bool success;
   
   if (!X_LoadFile(X_CONFIG_SCRIPT_NAME)) {
     I_Error("D_ConfigInit: Error loading configuration script: %s",
@@ -41,9 +43,9 @@ void D_ConfigInit(void) {
     );
   }
 
-  config_path = M_PathJoin(I_DoomExeDir(), DEFAULT_CONFIG_FILE_NAME);
+  local_config_path = M_PathJoin(I_DoomExeDir(), DEFAULT_CONFIG_FILE_NAME);
 
-  if (!config_path) {
+  if (!local_config_path) {
     I_Error("Error joining %s and %s: %s\n",
       I_DoomExeDir(),
       DEFAULT_CONFIG_FILE_NAME,
@@ -51,11 +53,31 @@ void D_ConfigInit(void) {
     );
   }
 
+  config_path = M_UnLocalizePath(local_config_path);
+
+  free(local_config_path);
+
   if (!M_IsFile(config_path)) {
-    if (!X_Call(X_GetState(), "config", "get_default", 0, 0)) {
+    const char *default_config_contents = NULL;
+
+    printf("%s is not a file\n", config_path);
+
+    if (!X_Call(X_GetState(), "config", "get_default", 0, 1)) {
       I_Error("Error generating default config: %s\n",
         X_GetError(X_GetState())
       );
+    }
+
+    default_config_contents = X_PopString(X_GetState());
+
+    success = M_WriteFile(
+      config_path,
+      default_config_contents,
+      strlen(default_config_contents)
+    );
+
+    if (!success) {
+      I_Error("Error writing default config file: [%s]\n", M_GetFileError());
     }
   }
 
@@ -112,6 +134,7 @@ bool D_ConfigSave(void) {
   }
   config_data = X_PopString(X_GetState());
 
+  printf("Saving config to %s\n", config_path);
   if (!M_WriteFile(config_path, config_data, strlen(config_data))) {
     D_Msg(MSG_WARN, "Failed to write config: %s\n", M_GetFileError());
     return false;

@@ -32,6 +32,7 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "d_cfg.h"
 #include "d_main.h"
 #include "e6y.h"
 #include "g_game.h"
@@ -48,6 +49,26 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 #include "m_random.h"
 #include "r_fps.h"
 #include "x_main.h"
+#include "xam_main.h"
+#include "xc_main.h"
+#include "xcl_main.h"
+#include "xd_cfg.h"
+#include "xd_comp.h"
+#include "xd_msg.h"
+#include "xd_main.h"
+#include "xg_game.h"
+#include "xg_keys.h"
+#include "xi_input.h"
+#include "xi_main.h"
+#include "xm_menu.h"
+#include "xm_misc.h"
+#include "xn_main.h"
+#include "xp_user.h"
+#include "xr_demo.h"
+#include "xr_main.h"
+#include "xs_main.h"
+#include "xst_main.h"
+#include "xv_main.h"
 
 #include "icon.c"
 
@@ -808,6 +829,33 @@ int main(int argc, char **argv) {
   _setmode(_fileno(stdout), _O_BINARY);
   _setmode(_fileno(stderr), _O_BINARY);
 #endif
+
+  X_Init(); /* CG 07/22/2014: Scripting */
+
+  XAM_RegisterInterface();
+  XCL_RegisterInterface();
+  XC_RegisterInterface();
+  XD_CompatibilityRegisterInterface();
+  XD_ConfigRegisterInterface();
+  XD_MsgRegisterInterface();
+  XD_RegisterInterface();
+  XG_GameRegisterInterface();
+  XG_KeysRegisterInterface();
+  XI_InputRegisterInterface();
+  XI_RegisterInterface();
+  XM_MenuRegisterInterface();
+  XM_MiscRegisterInterface();
+  XN_RegisterInterface();
+  XP_UserRegisterInterface();
+  XR_DemoRegisterInterface();
+  XR_RegisterInterface();
+  XST_RegisterInterface();
+  XS_RegisterInterface();
+  XV_RegisterInterface();
+
+  X_ExposeInterfaces(NULL);
+
+  D_ConfigInit();
 
   D_InitMessaging(); /* 05/09/14 CG: Enable messaging */
 
