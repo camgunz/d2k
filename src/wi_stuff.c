@@ -1514,10 +1514,6 @@ void WI_drawNetgameStats(void)
 
   WI_slamBackground();
 
-  if (MULTINET) {
-    return;
-  }
-
   // draw animated background
   WI_drawAnimatedBack();
 
@@ -1932,16 +1928,19 @@ void WI_loadData(void)
 void WI_Drawer(void) {
   switch (state) {
     case StatCount:
-      if (!MULTINET) {
-        if (deathmatch) {
-          WI_drawDeathmatchStats();
-        }
-        else if (netgame) {
-          WI_drawNetgameStats();
-        }
-        else {
-          WI_drawStats();
-        }
+      if (MULTINET) {
+        WI_slamBackground();
+        WI_drawAnimatedBack();
+        WI_drawLF();
+      }
+      else if (deathmatch) {
+        WI_drawDeathmatchStats();
+      }
+      else if (netgame) {
+        WI_drawNetgameStats();
+      }
+      else {
+        WI_drawStats();
       }
     break;
     case ShowNextLoc:

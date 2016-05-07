@@ -839,66 +839,13 @@ static bool P_LookForPlayers(mobj_t *actor, bool allaround)
       return false;
     }
 
-  // Change mask of 3 to (MAXPLAYERS-1) -- killough 2/15/98:
+  // Change mask of 3 to (VANILLA_MAXPLAYERS-1) -- killough 2/15/98:
   stop = (actor->lastlook-1)&(VANILLA_MAXPLAYERS-1);
->>>>>>> parent of ac96ca4... Increase MAXPLAYERS to 32
 
   c = 0;
 
   stopc = !mbf_features &&
     !demo_compatibility && monsters_remember ?
-<<<<<<< HEAD
-    playercount : 2;       // killough 9/9/98
-
-  for (;; actor->lastlook = (actor->lastlook + 1) & (playercount - 1)) {
-    if (!playeringame[actor->lastlook]) {
-      continue;
-    }
-
-    // killough 2/15/98, 9/9/98:
-    if (c++ == stopc || actor->lastlook == stop) { // done looking
-      // e6y
-      // Fixed Boom incompatibilities. The following code was missed.
-      // There are no more desyncs on Donce's demos on horror.wad
-
-      // Use last known enemy if no players sighted -- killough 2/15/98:
-      if (!mbf_features && !demo_compatibility && monsters_remember) {
-        if (actor->lastenemy && actor->lastenemy->health > 0) {
-          actor->target = actor->lastenemy;
-          actor->lastenemy = NULL;
-          return true;
-        }
-      }
-
-      return false;
-    }
-
-    player = &players[actor->lastlook];
-
-    if (player->cheats & CF_NOTARGET) {
-      continue; // no target
-    }
-
-    if (player->health <= 0) {
-      continue;               // dead
-    }
-
-    if (!P_IsVisible(actor, player->mo, allaround)) {
-      continue;
-    }
-
-    P_SetTarget(&actor->target, player->mo);
-
-    /* killough 9/9/98: give monsters a threshold towards getting players
-     * (we don't want it to be too easy for a player with dogs :)
-     */
-    if (!comp[comp_pursuit]) {
-      actor->threshold = 60;
-    }
-
-    return true;
-  }
-=======
     VANILLA_MAXPLAYERS : 2;       // killough 9/9/98
 
   for (;; actor->lastlook = (actor->lastlook+1)&(VANILLA_MAXPLAYERS-1))
@@ -949,6 +896,7 @@ static bool P_LookForPlayers(mobj_t *actor, bool allaround)
       return true;
     }
 }
+
 
 //
 // Friendly monsters, by Lee Killough 7/18/98
@@ -1204,139 +1152,123 @@ static void A_KeepChasing(mobj_t *actor)
 // so it tries to close as fast as possible
 //
 
-void A_Chase(mobj_t *actor) {
+void A_Chase(mobj_t *actor)
+{
   if (actor->reactiontime)
     actor->reactiontime--;
 
   if (actor->threshold) { /* modify target threshold */
     if (compatibility_level == doom_12_compatibility)
+    {
       actor->threshold--;
-    else if (!actor->target || actor->target->health <= 0)
-      actor->threshold = 0;
+    }
     else
-      actor->threshold--;
+    {
+      if (!actor->target || actor->target->health <= 0)
+        actor->threshold = 0;
+      else
+        actor->threshold--;
+    }
   }
 
   /* turn towards movement direction if not there yet
    * killough 9/7/98: keep facing towards target if strafing or backing out
    */
 
-  if (actor->strafecount) {
+  if (actor->strafecount)
     A_FaceTarget(actor);
-  }
-  else if (actor->movedir < 8) {
-    int delta = (actor->angle &= (7 << 29)) - (actor->movedir << 29);
+  else if (actor->movedir < 8)
+    {
+      int delta = (actor->angle &= (7<<29)) - (actor->movedir << 29);
+      if (delta > 0)
+        actor->angle -= ANG90/2;
+      else
+        if (delta < 0)
+          actor->angle += ANG90/2;
+    }
 
-    if (delta > 0)
-      actor->angle -= ANG90 / 2;
-    else if (delta < 0)
-      actor->angle += ANG90 / 2;
-  }
-
-  if (!actor->target || !(actor->target->flags & MF_SHOOTABLE)) {
-    if (!P_LookForTargets(actor, true)) // look for a new target
-      P_SetMobjState(actor, actor->info->spawnstate); // no new target
-
-    return;
-  }
+  if (!actor->target || !(actor->target->flags&MF_SHOOTABLE))
+    {
+      if (!P_LookForTargets(actor,true)) // look for a new target
+  P_SetMobjState(actor, actor->info->spawnstate); // no new target
+      return;
+    }
 
   // do not attack twice in a row
-  if (actor->flags & MF_JUSTATTACKED) {
-    actor->flags &= ~MF_JUSTATTACKED;
-
-    if (gameskill != sk_nightmare && !fastparm)
-      P_NewChaseDir(actor);
-
-    return;
-  }
+  if (actor->flags & MF_JUSTATTACKED)
+    {
+      actor->flags &= ~MF_JUSTATTACKED;
+      if (gameskill != sk_nightmare && !fastparm)
+        P_NewChaseDir(actor);
+      return;
+    }
 
   // check for melee attack
-  if (actor->info->meleestate && P_CheckMeleeRange(actor)) {
-    if (actor->info->attacksound)
-      S_StartSound(actor, actor->info->attacksound);
-
-    P_SetMobjState(actor, actor->info->meleestate);
-
-    /* killough 8/98: remember an attack
-    * cph - DEMOSYNC? */
-    if (!actor->info->missilestate)
-      actor->flags |= MF_JUSTHIT;
-
-    return;
-  }
+  if (actor->info->meleestate && P_CheckMeleeRange(actor))
+    {
+      if (actor->info->attacksound)
+        S_StartSound(actor, actor->info->attacksound);
+      P_SetMobjState(actor, actor->info->meleestate);
+      /* killough 8/98: remember an attack
+      * cph - DEMOSYNC? */
+      if (!actor->info->missilestate)
+  actor->flags |= MF_JUSTHIT;
+      return;
+    }
 
   // check for missile attack
-  if (actor->info->missilestate) {
-    if (!(gameskill < sk_nightmare && !fastparm && actor->movecount)) {
-      if (P_CheckMissileRange(actor)) {
-        P_SetMobjState(actor, actor->info->missilestate);
-        actor->flags |= MF_JUSTATTACKED;
-
-        return;
-      }
-    }
-  }
+  if (actor->info->missilestate)
+    if (!(gameskill < sk_nightmare && !fastparm && actor->movecount))
+      if (P_CheckMissileRange(actor))
+        {
+          P_SetMobjState(actor, actor->info->missilestate);
+          actor->flags |= MF_JUSTATTACKED;
+          return;
+        }
 
   if (!actor->threshold) {
-    if (!mbf_features) {   /* killough 9/9/98: for backward demo compatibility */
-<<<<<<< HEAD
-      if (netgame &&
-           !P_CheckSight(actor, actor->target) &&
-           P_LookForPlayers(actor, true)) {
-        return;
+    if (!mbf_features)
+      {   /* killough 9/9/98: for backward demo compatibility */
+  if (netgame && !P_CheckSight(actor, actor->target) &&
+      P_LookForPlayers(actor, true))
+    return;
       }
-=======
-      if (netgame && !P_CheckSight(actor, actor->target) &&
-        P_LookForPlayers(actor, true))
-
-      return;
->>>>>>> parent of ac96ca4... Increase MAXPLAYERS to 32
-    }
     /* killough 7/18/98, 9/9/98: new monster AI */
-    else if (help_friends && P_HelpFriend(actor)) {
+    else if (help_friends && P_HelpFriend(actor))
       return;      /* killough 9/8/98: Help friends in need */
-    }
     /* Look for new targets if current one is bad or is out of view */
-    else if (actor->pursuecount) {
+    else if (actor->pursuecount)
       actor->pursuecount--;
-    }
-    else
-    {
-      /* Our pursuit time has expired. We're going to think about
-       * changing targets */
-      actor->pursuecount = BASETHRESHOLD;
+    else {
+  /* Our pursuit time has expired. We're going to think about
+   * changing targets */
+  actor->pursuecount = BASETHRESHOLD;
 
-      /* Unless (we have a live target
-       *         and it's not friendly
-       *         and we can see it)
-       *  try to find a new one; return if sucessful */
+  /* Unless (we have a live target
+   *         and it's not friendly
+   *         and we can see it)
+   *  try to find a new one; return if sucessful */
 
-      if (!(actor->target && actor->target->health > 0 &&
-            ((comp[comp_pursuit] && !netgame) ||
-             (((actor->target->flags ^ actor->flags) & MF_FRIEND ||
-              (!(actor->flags & MF_FRIEND) && monster_infighting)) &&
-              P_CheckSight(actor, actor->target)))) &&
-          P_LookForTargets(actor, true)) {
+  if (!(actor->target && actor->target->health > 0 &&
+        ((comp[comp_pursuit] && !netgame) ||
+         (((actor->target->flags ^ actor->flags) & MF_FRIEND ||
+     (!(actor->flags & MF_FRIEND) && monster_infighting)) &&
+    P_CheckSight(actor, actor->target))))
+      && P_LookForTargets(actor, true))
         return;
-      }
 
-      /* (Current target was good, or no new target was found.)
-       *
-       * If monster is a missile-less friend, give up pursuit and
-       * return to player, if no attacks have occurred recently.
-       */
+  /* (Current target was good, or no new target was found.)
+   *
+   * If monster is a missile-less friend, give up pursuit and
+   * return to player, if no attacks have occurred recently.
+   */
 
-      if (!actor->info->missilestate && actor->flags & MF_FRIEND) {
-        if (actor->flags & MF_JUSTHIT)          /* if recent action, */
-          actor->flags &= ~MF_JUSTHIT;          /* keep fighting */
-<<<<<<< HEAD
-        }
-        else if (P_LookForPlayers(actor, true)) { /* else return to player */
-=======
-        else if (P_LookForPlayers(actor, true)) /* else return to player */
->>>>>>> parent of ac96ca4... Increase MAXPLAYERS to 32
-          return;
-      }
+  if (!actor->info->missilestate && actor->flags & MF_FRIEND) {
+    if (actor->flags & MF_JUSTHIT)          /* if recent action, */
+      actor->flags &= ~MF_JUSTHIT;          /* keep fighting */
+    else if (P_LookForPlayers(actor, true)) /* else return to player */
+      return;
+  }
     }
   }
 
@@ -1344,11 +1276,11 @@ void A_Chase(mobj_t *actor) {
     actor->strafecount--;
 
   // chase towards player
-  if (--actor->movecount < 0 || !P_SmartMove(actor))
+  if (--actor->movecount<0 || !P_SmartMove(actor))
     P_NewChaseDir(actor);
 
   // make active sound
-  if (actor->info->activesound && P_Random(pr_see) < 3)
+  if (actor->info->activesound && P_Random(pr_see)<3)
     S_StartSound(actor, actor->info->activesound);
 }
 
@@ -2397,11 +2329,11 @@ void A_BossDeath(mobj_t *mo)
     }
 
   // make sure there is a player alive for victory
-  for (i=0; i<VANILLA_MAXPLAYERS; i++)
+  for (i=0; i<MAXPLAYERS; i++)
     if (playeringame[i] && players[i].health > 0)
       break;
 
-  if (i==VANILLA_MAXPLAYERS)
+  if (i==MAXPLAYERS)
     return;     // no one left alive, so do not end game
 
     // scan the remaining thinkers to see

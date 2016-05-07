@@ -3411,6 +3411,7 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size,
      */
     for (i = 0; i < VANILLA_MAXPLAYERS; i++) {
       playeringame[i] = *demo_p++;
+    }
 
     for (; i < MAXPLAYERS; i++)
       playeringame[i] = 0;
