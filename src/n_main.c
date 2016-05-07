@@ -417,8 +417,9 @@ void N_RunTic(void) {
 }
 
 void SV_DisconnectLaggedClients(void) {
-  if (!SERVER)
+  if (!SERVER) {
     return;
+  }
 
   NETPEER_FOR_EACH(iter) {
     if (!iter.np->sync.initialized)

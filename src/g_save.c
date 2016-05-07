@@ -43,7 +43,7 @@
 
 #include "p_tick.h"
 
-#include "gl_intern.h"
+#include "gl_opengl.h"
 #include "gl_struct.h"
 
 // CPhipps - size of version header

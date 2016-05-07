@@ -114,7 +114,7 @@ int warning_about_changes, print_warning_about_changes;
 
 /* cphipps - M_DrawBackground renamed and moved to v_video.c */
 
-bool menu_background = 1; // do Boom fullscreen menus have backgrounds?
+int menu_background = 1; // do Boom fullscreen menus have backgrounds?
 
 static void M_DrawBackground(const char *flat, int scrn)
 {
@@ -5118,7 +5118,7 @@ bool M_Responder(event_t* ev) {
       if (flags & S_NUM)
       {
         setup_gather = true;
-        print_warning_about_changes = false;
+        print_warning_about_changes = 0;
         gather_count = 0;
       }
       else if (flags & S_COLOR)
@@ -5218,7 +5218,7 @@ bool M_Responder(event_t* ev) {
           mult_screens_index--;
           current_setup_menu = ptr2->var.menu;
           set_menu_itemon = 0;
-          print_warning_about_changes = false; // killough 10/98
+          print_warning_about_changes = 0; // killough 10/98
 
           while (current_setup_menu[set_menu_itemon++].m_flags & S_SKIP);
 
@@ -5240,7 +5240,7 @@ bool M_Responder(event_t* ev) {
           mult_screens_index++;
           current_setup_menu = ptr2->var.menu;
           set_menu_itemon = 0;
-          print_warning_about_changes = false; // killough 10/98
+          print_warning_about_changes = 0; // killough 10/98
 
           while (current_setup_menu[set_menu_itemon++].m_flags & S_SKIP);
 
@@ -5427,7 +5427,7 @@ void M_StartControlPanel (void)
   menuactive = mnact_float;
   currentMenu = &MainDef;         // JDC
   itemOn = currentMenu->lastOn;   // JDC
-  print_warning_about_changes = false;   // killough 11/98
+  print_warning_about_changes = 0;   // killough 11/98
 }
 
 //

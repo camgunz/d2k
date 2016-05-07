@@ -263,7 +263,7 @@ extern wbstartstruct_t wminfo;
 extern FILE *debugfile;
 
 // if true, load all graphics at level load
-extern bool precache;
+extern int precache;
 
 
 extern int mouseSensitivity_horiz; // killough

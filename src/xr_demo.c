@@ -26,7 +26,7 @@
 #include "p_mobj.h"
 #include "r_defs.h"
 #include "tables.h"
-#include "gl_intern.h"
+#include "gl_opengl.h"
 #include "gl_struct.h"
 #include "r_demo.h"
 #include "x_intern.h"

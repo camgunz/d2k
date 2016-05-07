@@ -93,7 +93,7 @@ byte     *map_subsectors;
 
 int     firstglvertex = 0;
 int     nodesVersion  = 0;
-bool    forceOldBsp  = false;
+int     forceOldBsp   = 0;
 
 // figgi 08/21/00 -- glSegs
 typedef struct {
@@ -269,7 +269,7 @@ static void P_GetNodesVersion(int lumpnum, int gl_lumpnum) {
   int ver = -1;
   nodesVersion = 0;
 
-  if ((gl_lumpnum > lumpnum) && (forceOldBsp == false) &&
+  if ((gl_lumpnum > lumpnum) && (!forceOldBsp) &&
       (compatibility_level >= prboom_2_compatibility)) {
     const void *data = W_CacheLumpNum(gl_lumpnum + ML_GL_VERTS);
 
@@ -2574,6 +2574,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill) {
   if (deathmatch) {
     for (i = 0; i < MAXPLAYERS; i++) {
       if (playeringame[i]) {
+        printf("P_SetupLevel: Player %d is in game, spawning\n", i);
         players[i].mo = NULL; // not needed? - done before P_LoadThings
         G_DeathMatchSpawnPlayer(i);
       }

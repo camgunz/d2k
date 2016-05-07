@@ -74,16 +74,18 @@ static GArray *channels;
 static GList *played_sounds = NULL;
 
 static void log_channel(int channel_num) {
+#if 0
   channel_t *c = &g_array_index(channels, channel_t, channel_num);
 
   D_Msg(MSG_SOUND, "%d, %s, %u/%u, %d, %d\n", 
     channel_num,
-    c->sfxinfo != NULL ? c->sfxinfo->name : "(nil)",
-    c->origin != NULL ? c->origin->id : 0,
+    c->sfxinfo ? c->sfxinfo->name : "(nil)",
+    c->origin ? c->origin->id : 0,
     c->origin_id,
     c->tic,
     c->command_index
   );
+#endif
 }
 
 static void log_played_sound(played_sound_t *ps) {
@@ -209,6 +211,13 @@ static void stop_channel(channel_t *c) {
   // degrade usefulness of sound data
   c->sfxinfo->usefulness--;
   c->sfxinfo = NULL;
+  c->origin = NULL;
+  c->origin_id = 0;
+  c->handle = 0;
+  c->tic = 0;
+  c->command_index = 0;
+  c->is_pickup = 0;
+  c->pitch = 0;
 }
 
 static void init_channel(channel_t *c, mobj_t *mo, sfxinfo_t *sfx, int pu) {

@@ -138,7 +138,9 @@ const char* player_names[] =
 };
 
 //jff 3/17/98 translate player colmap to text color ranges
-int plyrcoltran[MAXPLAYERS] = {CR_GREEN, CR_GRAY, CR_BROWN, CR_RED};
+int vanilla_player_colors[VANILLA_MAXPLAYERS] = {
+  CR_GREEN, CR_GRAY, CR_BROWN, CR_RED
+};
 
 char chat_char;                 // remove later.
 static player_t *plr;
@@ -1653,7 +1655,7 @@ void HU_widget_build_keys(void)
         sprintf(numbuf,"%5d",top1);
         // make frag count in player's color via escape code
         hud_keysstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
-        hud_keysstr[i++] = '0'+plyrcoltran[idx1&3];
+        hud_keysstr[i++] = '0' + vanilla_player_colors[idx1 & 3];
         s = numbuf;
         while (*s)
           hud_keysstr[i++] = *(s++);
@@ -1664,7 +1666,7 @@ void HU_widget_build_keys(void)
         sprintf(numbuf,"%5d",top2);
         // make frag count in player's color via escape code
         hud_keysstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
-        hud_keysstr[i++] = '0'+plyrcoltran[idx2&3];
+        hud_keysstr[i++] = '0' + vanilla_player_colors[idx2 & 3];
         s = numbuf;
         while (*s)
           hud_keysstr[i++] = *(s++);
@@ -1675,7 +1677,7 @@ void HU_widget_build_keys(void)
         sprintf(numbuf,"%5d",top3);
         // make frag count in player's color via escape code
         hud_keysstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
-        hud_keysstr[i++] = '0'+plyrcoltran[idx3&3];
+        hud_keysstr[i++] = '0' + vanilla_player_colors[idx3 & 3];
         s = numbuf;
         while (*s)
           hud_keysstr[i++] = *(s++);
@@ -1686,7 +1688,7 @@ void HU_widget_build_keys(void)
         sprintf(numbuf,"%5d",top4);
         // make frag count in player's color via escape code
         hud_keysstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
-        hud_keysstr[i++] = '0'+plyrcoltran[idx4&3];
+        hud_keysstr[i++] = '0' + vanilla_player_colors[idx4 & 3];
         s = numbuf;
         while (*s)
           hud_keysstr[i++] = *(s++);
@@ -1696,7 +1698,7 @@ void HU_widget_build_keys(void)
     else // build alphabetical key display (not used currently)
     {
       // scan the keys
-      for (k=0;k<6;k++)
+      for (k = 0; k < NUMCARDS; k++)
       {
         // skip any not possessed by the displayed player's stats
         if (!plr->cards[k])
@@ -1706,37 +1708,37 @@ void HU_widget_build_keys(void)
         hud_keysstr[i++] = '\x1b'; //jff 3/26/98 use ESC not '\' for paths
         switch(k)
         {
-        case 0:
+        case it_bluecard:
           hud_keysstr[i++] = '0'+CR_BLUE;
           hud_keysstr[i++] = 'B';
           hud_keysstr[i++] = 'C';
           hud_keysstr[i++] = ' ';
           break;
-        case 1:
+        case it_yellowcard:
           hud_keysstr[i++] = '0'+CR_GOLD;
           hud_keysstr[i++] = 'Y';
           hud_keysstr[i++] = 'C';
           hud_keysstr[i++] = ' ';
           break;
-        case 2:
+        case it_redcard:
           hud_keysstr[i++] = '0'+CR_RED;
           hud_keysstr[i++] = 'R';
           hud_keysstr[i++] = 'C';
           hud_keysstr[i++] = ' ';
           break;
-        case 3:
+        case it_blueskull:
           hud_keysstr[i++] = '0'+CR_BLUE;
           hud_keysstr[i++] = 'B';
           hud_keysstr[i++] = 'S';
           hud_keysstr[i++] = ' ';
           break;
-        case 4:
+        case it_yellowskull:
           hud_keysstr[i++] = '0'+CR_GOLD;
           hud_keysstr[i++] = 'Y';
           hud_keysstr[i++] = 'S';
           hud_keysstr[i++] = ' ';
           break;
-        case 5:
+        case it_redskull:
           hud_keysstr[i++] = '0'+CR_RED;
           hud_keysstr[i++] = 'R';
           hud_keysstr[i++] = 'S';

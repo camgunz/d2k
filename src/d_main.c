@@ -75,6 +75,10 @@
 #include "n_main.h"
 #include "n_state.h"
 
+extern int  forceOldBsp;
+extern bool setsizeneeded;
+extern int  showMessages;
+
 static char *iwad_base = NULL;
 static char *iwad_path = NULL;
 static int  demosequence;         // killough 5/2/98: made static
@@ -449,9 +453,6 @@ static void D_Wipe(void) {
 // D_Display
 //  draw current display, possibly wiping it from the previous
 //
-
-extern bool setsizeneeded;
-extern int  showMessages;
 
 void D_Display(void) {
   bool wipe;
@@ -1713,7 +1714,6 @@ static void D_DoomMainSetup(void) {
 
   // figgi 09/18/00-- added switch to force classic bsp nodes
   if (M_CheckParm("-forceoldbsp")) {
-    extern bool forceOldBsp;
     forceOldBsp = true;
   }
 

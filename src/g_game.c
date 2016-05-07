@@ -1216,15 +1216,19 @@ bool G_Responder(event_t *ev) {
 void G_Ticker(void) {
   int i;
 
-  // CPhipps - player colour changing
-  if (!demoplayback && mapcolor_plyr[consoleplayer] != mapcolor_me) {
 #if 0
-    if (CLIENT) // Changed my multiplayer colour - Inform the whole game
-      CL_SendColorIndexChange(mapcolor_me);
+  // CPhipps - player colour changing
+  {
+    int index = consoleplayer % VANILLA_MAXPLAYERS;
 
-    G_ChangedPlayerColour(consoleplayer, mapcolor_me);
-#endif
+    if (!demoplayback && vanilla_mapplayer_colors[index] != mapcolor_me) {
+      if (CLIENT) // Changed my multiplayer colour - Inform the whole game
+        CL_SendColorIndexChange(mapcolor_me);
+
+      G_ChangedPlayerColour(consoleplayer, mapcolor_me);
+    }
   }
+#endif
 
   P_MapStart();
 
@@ -1545,7 +1549,7 @@ void G_ChangedPlayerColour(int pn, int cl) {
   if (!netgame)
     return;
 
-  mapcolor_plyr[pn] = cl;
+  vanilla_mapplayer_colors[pn % VANILLA_MAXPLAYERS] = cl;
 
   // Rebuild colour translation tables accordingly
   R_InitTranslationTables();
@@ -1674,6 +1678,7 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
 
       if (players[i].mo->x == mthing->x << FRACBITS &&
           players[i].mo->y == mthing->y << FRACBITS) {
+        printf("Player %d on spot\n", i);
         return false;
       }
     }
@@ -1694,6 +1699,7 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
   i = P_CheckPosition(players[playernum].mo, x, y);
   players[playernum].mo->flags &= ~MF_SOLID;
   if (!i) {
+    puts("Something in the way");
     return false;
   }
 
@@ -1835,6 +1841,7 @@ void G_DeathMatchSpawnPlayer(int playernum) {
   for (int j = 0; j < 20; j++) {
     int i = P_Random(pr_dmspawn) % selections;
 
+    printf("Checking spot %d\n", i);
     if (G_CheckSpot(playernum, &deathmatchstarts[i])) {
       deathmatchstarts[i].type = playernum + 1;
       P_SpawnPlayer(playernum, &deathmatchstarts[i % num_deathmatchstarts]);
@@ -1843,6 +1850,9 @@ void G_DeathMatchSpawnPlayer(int playernum) {
   }
 
   // no good spot, so the player will probably get stuck
+  printf("2: Spawning %d at player start %d (%u)\n",
+    playernum, playernum, num_deathmatchstarts
+  );
   P_SpawnPlayer(playernum, &playerstarts[playernum]);
   if (MULTINET) {
     P_StompSpawnPointBlockers(players[playernum].mo);
@@ -1867,6 +1877,7 @@ void G_DoReborn(int playernum) {
     }
 
     if (G_CheckSpot(playernum, &playerstarts[playernum])) {
+      printf("3: Spawning %d at player start %d\n", playernum, playernum);
       P_SpawnPlayer(playernum, &playerstarts[playernum]);
       return;
     }
@@ -1874,11 +1885,13 @@ void G_DoReborn(int playernum) {
     // try to spawn at one of the other players spots
     for (int i = 0; i < MAXPLAYERS; i++) {
       if (G_CheckSpot(playernum, &playerstarts[i])) {
+        printf("4: Spawning %d at player start %d\n", playernum, i);
         P_SpawnPlayer(playernum, &playerstarts[i]);
         return;
       }
-      // he's going to be inside something.  Too bad.
+      // They're going to be inside something.  Too bad.
     }
+    printf("5: Spawning %d at player start %d\n", playernum, playernum);
     P_SpawnPlayer(playernum, &playerstarts[playernum]);
   }
   else {
@@ -2345,7 +2358,8 @@ void G_ReloadDefaults(void) {
   netdemo = false;
 
   // killough 2/21/98:
-  memset(playeringame + 1, 0, sizeof(*playeringame) * (MAXPLAYERS - 1));
+  memset(&playeringame[1], 0, sizeof(playeringame) - sizeof(playeringame[0]));
+  // memset(playeringame + 1, 0, sizeof(*playeringame) * (MAXPLAYERS - 1));
 
   consoleplayer = 0;
 
@@ -3384,21 +3398,32 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size,
     if (CheckForOverrun(header_p, demo_p, size, 4, failonerror))
       return NULL;
 
-    for (i = 0; i < 4; i++) // intentionally hard-coded 4 -- killough
-      playeringame[i] = *demo_p++;
+    /*
+    for (i = 0; i < 4; i++) { // intentionally hard-coded 4 -- killough
+    */
 
-    for (; i < MAXPLAYERS; i++)
+    /*
+     * [CG] VANILLA_MAXPLAYERS is now 4, which is the original intent of the
+     * hardcoded 4.
+     */
+    for (i = 0; i < VANILLA_MAXPLAYERS; i++) {
+      playeringame[i] = *demo_p++;
+    }
+
+    for (; i < MAXPLAYERS; i++) {
       playeringame[i] = 0;
+    }
   }
   else {
     //e6y: check for overrun
     if (CheckForOverrun(header_p, demo_p, size, MAXPLAYERS, failonerror))
       return NULL;
 
-    for (i = 0; i < MAXPLAYERS; i++)
+    for (i = 0; i < VANILLA_MAXPLAYERS; i++) {
       playeringame[i] = *demo_p++;
+    }
 
-    demo_p += MIN_MAXPLAYERS - MAXPLAYERS;
+    demo_p += MIN_MAXPLAYERS - VANILLA_MAXPLAYERS;
   }
 
   if (playeringame[1]) {
@@ -3412,8 +3437,9 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size,
     }
   }
 
-  for (i = 0; i < MAXPLAYERS; i++) // killough 4/24/98
+  for (i = 0; i < MAXPLAYERS; i++) { // killough 4/24/98
     players[i].cheats = 0;
+  }
 
   // e6y
   // additional params

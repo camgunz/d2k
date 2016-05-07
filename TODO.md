@@ -7,6 +7,8 @@
 -- Proto Complete Here --
 
 1. Fix bugs:
+  - Weird lurch at the beginning of the game
+  - Fix "Player N is too lagged"
   - `P_Printf` doesn't work in server mode
   - When console scrollback fills up, FPS sinks
   - Add a server message sound (just use radio/tink?)
@@ -20,10 +22,7 @@
   - Probably have to override `:reset` in widgets to update a bunch of stuff
 
 1. Remove 4 player restriction
-  - Just increase `MAXPLAYERS`
-  - Add `#define VANILLA_MAXPLAYERS 4` for compat
-  - All playernums become `int`
-  - Anything defined using `MAXPLAYERS` will be refactored
+  - Fix bugs
   - Player names are hardcoded for DeHackEd; the way this should work is:
     - Keep a private array of the default names ("Green", "Indigo", etc.)
     - After initialization, check if the names have been modified, by a
@@ -89,6 +88,10 @@
     - How to configure a script, since it can't be in `d2k_config.lua`?
     - There should maybe be a `local_config.lua` file that runs after config
       processing takes place, to modify and augment the loaded config
+
+1. C/S Demos
+  - serverside
+  - clientside
 
 -- Suitable For DEATHMATCH Here --
 
@@ -166,10 +169,6 @@
 
 1. Remove software renderer
   - See about implementing Doom lighting and 8-bit color using shaders
-
-1. Setup testing framework
-  - Demos
-  - Multiplayer command injection
 
 ## Features
 

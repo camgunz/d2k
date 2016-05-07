@@ -72,6 +72,8 @@ extern int gl_max_texture_size;
 
 extern SDL_PixelFormat RGBAFormat;
 
+extern GLuint* last_glTexID;
+
 // obsolete?
 extern int gl_use_paletted_texture;
 extern int gl_use_shared_texture_palette;
@@ -176,6 +178,8 @@ typedef enum
   TM_INVERTOPAQUE = TMF_INVERTBIT | TMF_OPAQUEBIT,
 } tex_mode_e;
 void SetTextureMode(tex_mode_e type);
+
+void gld_Precache(void);
 
 #endif // _GL_OPENGL_H
 

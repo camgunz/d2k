@@ -52,7 +52,7 @@
 #include "s_advsound.h"
 #include "e6y.h"//e6y
 
-extern bool forceOldBsp;
+extern int forceOldBsp;
 extern int numspechit;
 
 static const char *dump_file_name = NULL;
