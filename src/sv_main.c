@@ -46,13 +46,18 @@ char *sv_join_password = NULL;
 char *sv_moderate_password = NULL;
 char *sv_administrate_password = NULL;
 
+typedef struct {
+  int playernum;
+  int oldest_sync_tic;
+} old_commands_struct_t;
+
 static bool command_synchronized(gpointer data, gpointer user_data) {
   netticcmd_t *ncmd = data;
-  player_t *player = user_data;
-  int playernum = player - players;
-  netpeer_t *np = N_PeerForPlayer(playernum);
+  old_commands_struct_t *ocs = user_data;
+  netpeer_t *np = N_PeerForPlayer(ocs->playernum);
 
-  if (ncmd->index < np->sync.oldest_command_index) {
+  if ((ncmd->tic <= ocs->oldest_sync_tic) &&
+      (ncmd->index < np->sync.oldest_command_index)) {
     return true;
   }
 
@@ -60,18 +65,21 @@ static bool command_synchronized(gpointer data, gpointer user_data) {
 }
 
 static void sv_remove_old_commands(void) {
-  int oldest_sync_tic = INT_MAX;
+  old_commands_struct_t ocs;
+
+  ocs.oldest_sync_tic = INT_MAX;
 
   NETPEER_FOR_EACH(iter) {
-    oldest_sync_tic = MIN(oldest_sync_tic, iter.np->sync.tic);
+    ocs.oldest_sync_tic = MIN(ocs.oldest_sync_tic, iter.np->sync.tic);
   }
 
-  if (oldest_sync_tic == INT_MAX) {
+  if (ocs.oldest_sync_tic == INT_MAX) {
     return;
   }
 
   for (int i = 0; i < MAXPLAYERS; i++) {
-    P_TrimCommands(i, command_synchronized, &players[i]);
+    ocs.playernum = i;
+    P_TrimCommands(i, command_synchronized, &ocs);
   }
 }
 
