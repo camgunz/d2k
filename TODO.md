@@ -4,6 +4,10 @@
 
 1. Slow down the super fast doomguy face
 
+1. Don't build commands during intermission
+
+1. Figure out how commands are processed during screen wipes
+
 -- Proto Complete Here --
 
 1. Fix bugs:

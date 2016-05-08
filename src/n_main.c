@@ -69,11 +69,10 @@
 #define SERVER_SLEEP_TIMEOUT 1
 #define SERVER_MAX_PEER_LAG 70
 
+static bool reset_tic_count = false;
+
 static int run_tics(int tic_count) {
   int saved_tic_count = tic_count;
-
-  if (CLIENT)
-    D_Msg(MSG_SYNC, "Building %d commands\n", tic_count);
 
   while (tic_count--) {
     if (MULTINET) {
@@ -118,8 +117,10 @@ static bool should_render(void) {
   if (!movement_smooth)
     return false;
 
+  /*
   if (gamestate != wipegamestate)
     return false;
+  */
 
   return true;
 }
@@ -458,11 +459,21 @@ void SV_UpdatePings(void) {
   }
 }
 
+void N_ResetTicCounts(void) {
+  reset_tic_count = true;
+}
+
 bool N_TryRunTics(void) {
   static int tics_built = 0;
 
   int tics_elapsed = I_GetTime() - tics_built;
   bool needs_rendering = should_render();
+
+  if (reset_tic_count) {
+    tics_elapsed = 0;
+    tics_built = I_GetTime();
+    reset_tic_count = false;
+  }
 
   if (tics_elapsed <= 0 && !needs_rendering) {
     N_ServiceNetwork();

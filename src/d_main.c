@@ -447,6 +447,8 @@ static void D_Wipe(void) {
 
     current_time = new_time;
   }
+
+  N_ResetTicCounts();
 }
 
 //

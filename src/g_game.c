@@ -1002,6 +1002,8 @@ static void G_DoLoadLevel(void) {
 
   if (SERVER)
     SV_ResyncPeers();
+
+  N_ResetTicCounts();
 }
 
 //
@@ -1841,21 +1843,14 @@ void G_DeathMatchSpawnPlayer(int playernum) {
   for (int j = 0; j < 20; j++) {
     int i = P_Random(pr_dmspawn) % selections;
 
-    printf("Checking spot %d\n", i);
     if (G_CheckSpot(playernum, &deathmatchstarts[i])) {
       deathmatchstarts[i].type = playernum + 1;
-      printf("1: Spawning %d at DM start %u\n",
-        playernum, i % num_deathmatchstarts
-      );
       P_SpawnPlayer(playernum, &deathmatchstarts[i % num_deathmatchstarts]);
       return;
     }
   }
 
   // no good spot, so the player will probably get stuck
-  printf("2: Spawning %d at player start %d (%u)\n",
-    playernum, playernum, num_deathmatchstarts
-  );
   P_SpawnPlayer(playernum, &playerstarts[playernum]);
   if (MULTINET) {
     P_StompSpawnPointBlockers(players[playernum].mo);
@@ -1880,7 +1875,6 @@ void G_DoReborn(int playernum) {
     }
 
     if (G_CheckSpot(playernum, &playerstarts[playernum])) {
-      printf("3: Spawning %d at player start %d\n", playernum, playernum);
       P_SpawnPlayer(playernum, &playerstarts[playernum]);
       return;
     }
@@ -1888,13 +1882,11 @@ void G_DoReborn(int playernum) {
     // try to spawn at one of the other players spots
     for (int i = 0; i < MAXPLAYERS; i++) {
       if (G_CheckSpot(playernum, &playerstarts[i])) {
-        printf("4: Spawning %d at player start %d\n", playernum, i);
         P_SpawnPlayer(playernum, &playerstarts[i]);
         return;
       }
       // They're going to be inside something.  Too bad.
     }
-    printf("5: Spawning %d at player start %d\n", playernum, playernum);
     P_SpawnPlayer(playernum, &playerstarts[playernum]);
   }
   else {
