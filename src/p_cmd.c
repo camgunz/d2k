@@ -64,7 +64,6 @@ static void print_command(gpointer data, gpointer user_data) {
 
 static void ignore_command(gpointer data, gpointer user_data) {
   netticcmd_t *ncmd = data;
-  player_t *player = user_data;
 
   ncmd->server_tic = gametic;
 }
@@ -197,18 +196,12 @@ static void process_queued_command(gpointer data, gpointer user_data) {
 
   if (ncmd->index <= player->latest_command_run_index) {
     if (SERVER || playernum == consoleplayer) {
-      printf("(%d) Already ran command %u for %d at %d\n",
-        gametic, ncmd->index, playernum, ncmd->server_tic
-      );
       return;
     }
   }
 
   if (player->command_limit &&
       player->commands_run_this_tic >= player->command_limit) {
-    printf("(%d) Limiting commands for %d (ran cmd %u, %u remaining)\n",
-      gametic, playernum, ncmd->index, player->commands->len
-    );
     return;
   }
 
@@ -476,7 +469,7 @@ netticcmd_t* P_GetCommand(int playernum, unsigned int index) {
 void P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd) {
   unsigned int current_command_count;
   bool found_command = false;
-  
+
   if (!playeringame[playernum])
     return;
 
@@ -528,9 +521,10 @@ void P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd) {
 void P_AppendNewCommand(int playernum, netticcmd_t *tmp_ncmd) {
   netticcmd_t *ncmd;
 
-  if (!playeringame[playernum])
+  if (!playeringame[playernum]) {
     return;
-  
+  }
+
   ncmd = get_new_blank_command();
 
   memcpy(ncmd, tmp_ncmd, sizeof(netticcmd_t));
@@ -581,7 +575,7 @@ void P_IgnorePlayerCommands(int playernum) {
     return;
   }
 
-  P_ForEachCommand(playernum, ignore_command, &players[playernum]);
+  P_ForEachCommand(playernum, ignore_command, NULL);
 }
 
 void P_TrimCommands(int playernum, TrimFunc should_trim, gpointer user_data) {

@@ -42,6 +42,7 @@ typedef struct netsync_s {
   bool               outdated;
   int                tic;
   int                command_index;
+  int                oldest_command_index;
   game_state_delta_t delta;
 } netsync_t;
 

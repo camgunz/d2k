@@ -46,6 +46,19 @@ char *sv_join_password = NULL;
 char *sv_moderate_password = NULL;
 char *sv_administrate_password = NULL;
 
+static bool command_synchronized(gpointer data, gpointer user_data) {
+  netticcmd_t *ncmd = data;
+  player_t *player = user_data;
+  int playernum = player - players;
+  netpeer_t *np = N_PeerForPlayer(playernum);
+
+  if (ncmd->index < np->sync.oldest_command_index) {
+    return true;
+  }
+
+  return false;
+}
+
 static void sv_remove_old_commands(void) {
   int oldest_sync_tic = INT_MAX;
 
@@ -53,11 +66,13 @@ static void sv_remove_old_commands(void) {
     oldest_sync_tic = MIN(oldest_sync_tic, iter.np->sync.tic);
   }
 
-  if (oldest_sync_tic == INT_MAX)
+  if (oldest_sync_tic == INT_MAX) {
     return;
+  }
 
-  for (int i = 0; i < MAXPLAYERS; i++)
-    P_TrimCommandsByTic(i, oldest_sync_tic);
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    P_TrimCommands(i, command_synchronized, &players[i]);
+  }
 }
 
 static void sv_remove_old_states(void) {

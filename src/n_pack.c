@@ -688,8 +688,9 @@ void N_PackSync(netpeer_t *np) {
     M_PBufWriteInt(pbuf, np->sync.tic);
     M_PBufWriteUInt(pbuf, command_count);
 
-    if (command_count > 0)
+    if (command_count > 0) {
       P_ForEachCommand(consoleplayer, pack_unsynchronized_command, pbuf);
+    }
 
     if (command_count > 0) {
       for (size_t i = 0; i < players[consoleplayer].commands->len; i++) {
@@ -747,8 +748,13 @@ bool N_UnpackSync(netpeer_t *np) {
       read_short(pbuf, ncmd.angle,   "command angle value");
       read_uchar(pbuf, ncmd.buttons, "command buttons value");
 
-      if (ncmd.index <= np->sync.command_index)
+      if (i == 0) {
+        np->sync.oldest_command_index = ncmd.index;
+      }
+
+      if (ncmd.index <= np->sync.command_index) {
         continue;
+      }
 
       ncmd.server_tic = 0;
       np->sync.command_index = ncmd.index;

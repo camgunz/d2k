@@ -182,6 +182,7 @@ static void init_netsync(netsync_t *ns) {
   ns->outdated = false;
   ns->tic = 0;
   ns->command_index = 0;
+  ns->oldest_command_index = 0;
   M_BufferInit(&ns->delta.data);
 }
 
@@ -190,6 +191,7 @@ static void free_netsync(netsync_t *ns) {
   ns->outdated = false;
   ns->tic = 0;
   ns->command_index = 0;
+  ns->oldest_command_index = 0;
   M_BufferFree(&ns->delta.data);
 }
 

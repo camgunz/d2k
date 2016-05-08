@@ -321,8 +321,6 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
     P_InsertCommandSorted(playernum, &tmp_ncmd);
   }
 
-  command_count = player->commands->len;
-
   M_PBufReadInt(savebuffer, &player->latest_command_run_index);
 
   if (MULTINET) {

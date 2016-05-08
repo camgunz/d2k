@@ -357,14 +357,6 @@ bool N_GetWad(const char *name) {
 }
 
 void N_RunTic(void) {
-  if (CLIENT) {
-    printf("(%5d) Player commands:", gametic);
-    for (int i = 0; i < MAXPLAYERS; i++) {
-      printf(" %4d", players[i].commands->len);
-    }
-    printf("\n");
-  }
-
   if (advancedemo) {
     D_DoAdvanceDemo();
   }
