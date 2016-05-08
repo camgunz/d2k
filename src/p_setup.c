@@ -2574,7 +2574,6 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill) {
   if (deathmatch) {
     for (i = 0; i < MAXPLAYERS; i++) {
       if (playeringame[i]) {
-        printf("P_SetupLevel: Player %d is in game, spawning\n", i);
         players[i].mo = NULL; // not needed? - done before P_LoadThings
         G_DeathMatchSpawnPlayer(i);
       }

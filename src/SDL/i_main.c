@@ -516,18 +516,14 @@ static void cleanup_pid_file(void) {
   }
 }
 
-static void exit_gracefully(void) {
-  for (msg_channel_e chan = MSG_MIN; chan <= MSG_MAX; chan++) {
-    D_MsgDeactivate(chan);
-  }
-}
-
 static void handle_sigint(int signum) {
-  exit_gracefully();
+  puts("Got SIGINT, exiting...");
+  exit(EXIT_SUCCESS);
 }
 
 static void handle_sigterm(int signum) {
-  exit_gracefully();
+  puts("Got SIGTERM, exiting...");
+  exit(EXIT_FAILURE);
 }
 
 #ifdef G_OS_UNIX
@@ -752,6 +748,7 @@ void I_SetWindowCaption(void) {
  */
 
 void I_SafeExit(int rc) {
+  puts("I_SafeExit...");
   if (!has_exited) {  /* If it hasn't exited yet, exit now -- killough */
     if (rc)
       has_exited = 2;

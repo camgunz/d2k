@@ -198,6 +198,9 @@ static void handle_setup(netpeer_t *np) {
 
   CL_SetReceivedSetup(true);
   server->sync.outdated = true;
+
+  if (gamestate == GS_INTERMISSION)
+    N_LoadLatestState(true);
 }
 
 static void handle_auth_response(netpeer_t *np) {

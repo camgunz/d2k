@@ -1000,10 +1000,9 @@ static void G_DoLoadLevel(void) {
     }
   }
 
-  if (SERVER)
+  if (SERVER) {
     SV_ResyncPeers();
-
-  N_ResetTicCounts();
+  }
 }
 
 //
@@ -1540,6 +1539,10 @@ static void G_PlayerFinishLevel(int player) {
   p->commands_run_this_tic = 0;
   p->telefragged_by_spawn = false;
   p->latest_command_run_index = 0;
+
+  if (deathmatch) {
+    p->playerstate = PST_REBORN;
+  }
 }
 
 // CPhipps - G_SetPlayerColour
@@ -1680,7 +1683,6 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
 
       if (players[i].mo->x == mthing->x << FRACBITS &&
           players[i].mo->y == mthing->y << FRACBITS) {
-        printf("Player %d on spot\n", i);
         return false;
       }
     }
@@ -2071,6 +2073,10 @@ void G_DoCompleted(void) {
 
   G_SetGameState(GS_INTERMISSION);
   automapmode &= ~am_active;
+
+  if (SERVER) {
+    SV_ResyncPeers();
+  }
 
   // lmpwatch.pl engine-side demo testing support
   // print "FINISHED: <mapname>" when the player exits the current map

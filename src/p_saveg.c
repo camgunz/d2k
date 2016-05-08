@@ -195,6 +195,7 @@ static void serialize_player(pbuf_t *savebuffer, int playernum) {
     M_PBufWriteInt(savebuffer, 0);
     M_PBufWriteULong(savebuffer, 0);
   }
+  M_PBufWriteBool(savebuffer, player->telefragged_by_spawn);
 }
 
 static void deserialize_player(pbuf_t *savebuffer, int playernum) {
@@ -335,6 +336,7 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
     M_PBufReadInt(savebuffer, &ping);
     M_PBufReadInt(savebuffer, &connect_tic);
   }
+  M_PBufReadBool(savebuffer, &player->telefragged_by_spawn);
 }
 
 static void serialize_actor_pointers(pbuf_t *savebuffer, mobj_t *mobj) {

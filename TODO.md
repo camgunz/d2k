@@ -1,39 +1,48 @@
 # To Do
 
+1. Server occupies a starting spot
+  - I think the only real way to fix this is to make the server not a player,
+    and I think the only real way to do this is to sleep if there are no
+    players.
+
+1. Console isn't drawn during intermission
+
+1. Can't chat during intermission
+
 1. Client commands aren't deleted
 
 1. Slow down the super fast doomguy face
 
-1. Don't build commands during intermission
+1. Figure out all the syncing with changing maps
 
-1. Figure out how commands are processed during screen wipes
+1. Fix game start lurch.
+   - loading the map and running the wipe causes too many TICs to build up
+     since the last command was built, so the game then builds around 45 of
+     them and runs them all at once.  This doesn't appear to happen in PrBoom+
+     because the buffer is only 12 TICs and it's circular, so once it builds 12
+     commands it starts overwriting the old ones.  The only issue is how to
+     deal with it.
+
+1. Fix "Player N is too lagged"
+   - I think this is basically due to lag being based on the server receiving
+     client commands, which.. it ignores during intermission?  Either that or
+     it's related to client commands not being deleted.
+
+1. Ending game wipe happens twice now
 
 -- Proto Complete Here --
 
 1. Fix bugs:
-  - Weird lurch at the beginning of the game
-  - Fix "Player N is too lagged"
   - `P_Printf` doesn't work in server mode
   - When console scrollback fills up, FPS sinks
   - Add a server message sound (just use radio/tink?)
-  - When switching to a different interface (menu, HUD, console, etc.), all key
-    presses should be cleared and spurious key releases ignored
   - Add a message indicating that the server is full; currently it looks like a
     crash
-  - Trace messaging uses after message channels are closed
 
 1. Test/Fix resolution switching
   - Probably have to override `:reset` in widgets to update a bunch of stuff
 
 1. Remove 4 player restriction
-  - Fix bugs
-  - Player names are hardcoded for DeHackEd; the way this should work is:
-    - Keep a private array of the default names ("Green", "Indigo", etc.)
-    - After initialization, check if the names have been modified, by a
-      DeHackEd patch or anything
-    - If so, set each player's name accordingly
-    - Of course, this only works for the 1st 4 players; after that, fuck it
-      - Maybe assign more colors
 
 1. Add spectators
   - I think that just keeping `playeringame[playernum]` `false` will do
@@ -59,11 +68,6 @@
       - Uses screen[0] always, via PUTDOT -> `V_PlotPixel(0, ...)`
     - `V_FillRect`
     - `V_PlotPixel`
-
-1. Move configuration into scripting
-  - Add drawing options to draw in the old PrBoom+/Doom style
-  - Move menu into scripting
-  - Move all config stuff into scripting
 
 1. Add maplist
   - Add `map` command

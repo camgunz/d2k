@@ -503,9 +503,6 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
 
   np->sync.tic = gs->tic;
 
-  if (gamestate == GS_INTERMISSION)
-    N_LoadLatestState(true);
-
   return true;
 }
 

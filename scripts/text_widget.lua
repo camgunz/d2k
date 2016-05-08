@@ -375,7 +375,12 @@ end
 function TextWidget:tick()
   self:check_layout()
   if self.get_external_text and self.external_text_updated() then
-    self.text = self.text .. self.get_external_text()
+    local external_text = self.get_external_text()
+
+    if external_text ~= nil then
+      self.text = self.text .. self.get_external_text()
+    end
+
     self:handle_content_change()
     self.clear_external_text_updated()
   end

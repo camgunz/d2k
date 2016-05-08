@@ -69,17 +69,11 @@
 #define SERVER_SLEEP_TIMEOUT 1
 #define SERVER_MAX_PEER_LAG 70
 
-static bool reset_tic_count = false;
-
 static int run_tics(int tic_count) {
   int saved_tic_count = tic_count;
 
   while (tic_count--) {
     if (MULTINET) {
-      /*
-      if (CLIENT)
-        P_ClearPlayerCommands(consoleplayer);
-      */
       P_BuildCommand();
     }
     else {
@@ -116,11 +110,6 @@ static bool should_render(void) {
 
   if (!movement_smooth)
     return false;
-
-  /*
-  if (gamestate != wipegamestate)
-    return false;
-  */
 
   return true;
 }
@@ -422,9 +411,14 @@ void SV_DisconnectLaggedClients(void) {
     return;
   }
 
+  if (gamestate != GS_LEVEL) {
+    return;
+  }
+
   NETPEER_FOR_EACH(iter) {
-    if (!iter.np->sync.initialized)
+    if (!iter.np->sync.initialized) {
       continue;
+    }
 
     if ((gametic - iter.np->sync.tic) > SERVER_MAX_PEER_LAG) {
       printf("(%d) Peer %d is too lagged\n", gametic, iter.np->peernum);
@@ -459,21 +453,11 @@ void SV_UpdatePings(void) {
   }
 }
 
-void N_ResetTicCounts(void) {
-  reset_tic_count = true;
-}
-
 bool N_TryRunTics(void) {
   static int tics_built = 0;
 
   int tics_elapsed = I_GetTime() - tics_built;
   bool needs_rendering = should_render();
-
-  if (reset_tic_count) {
-    tics_elapsed = 0;
-    tics_built = I_GetTime();
-    reset_tic_count = false;
-  }
 
   if (tics_elapsed <= 0 && !needs_rendering) {
     N_ServiceNetwork();
@@ -485,8 +469,9 @@ bool N_TryRunTics(void) {
   if (tics_elapsed > 0) {
     tics_built += tics_elapsed;
 
-    if (ffmap)
+    if (ffmap) {
       tics_elapsed++;
+    }
 
     CL_CheckForStateUpdates();
 
@@ -510,8 +495,9 @@ bool N_TryRunTics(void) {
   C_ECIService();
 
   if ((!SERVER) && (!nodrawers)) {
-    if (!X_Call(X_GetState(), "console", "tick", 0, 0))
+    if (!X_Call(X_GetState(), "console", "tick", 0, 0)) {
       I_Error("Error ticking console: %s\n", X_GetError(X_GetState()));
+    }
 
     HU_Ticker();
     D_Display();

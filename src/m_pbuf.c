@@ -643,17 +643,7 @@ bool M_PBufReadDoubleArray(pbuf_t *pbuf, buf_t *doubles, size_t limit) {
 }
 
 bool M_PBufReadBool(pbuf_t *pbuf, bool *b) {
-  uint8_t u8 = 0;
-
-  if (!cmp_read_bool_as_u8(&pbuf->cmp, &u8))
-    return false;
-
-  if (u8)
-    *b = true;
-  else
-    *b = false;
-
-  return true;
+  return cmp_read_bool(&pbuf->cmp, b);
 }
 
 bool M_PBufReadBoolArray(pbuf_t *pbuf, buf_t *bools, size_t limit) {
