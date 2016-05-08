@@ -581,6 +581,9 @@ void SV_SetupNewPeer(int peernum) {
     I_Error("SV_SetupNewPlayer: invalid peer %d.\n", peernum);
   }
 
+  printf("(%d) Setting up new peer %d\n", gametic, peernum);
+
+
   for (playernum = 0; playernum < MAXPLAYERS; playernum++) {
     if (players[playernum].playerstate == PST_DISCONNECTED) {
       continue;
@@ -607,6 +610,7 @@ void SV_SendSetup(unsigned short playernum) {
   netpeer_t *np = NULL;
   CHECK_VALID_PLAYER(np, playernum);
 
+  printf("(%d) Sending setup to %u\n", gametic, playernum);
   np->sync.initialized = true;
   N_PackSetup(np);
 }
