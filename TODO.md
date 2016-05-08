@@ -1,6 +1,6 @@
 # To Do
 
-1. Client commands aren't deleted
+1. Player positions are badly jerky, maybe an extrapolation problem?
 
 1. Figure out all the syncing with changing maps
 
