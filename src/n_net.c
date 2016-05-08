@@ -335,10 +335,12 @@ void N_Shutdown(void) {
 bool N_Listen(const char *host, uint16_t port) {
   ENetAddress address;
 
-  if (host != NULL)
+  if (host) {
     enet_address_set_host(&address, host);
-  else
+  }
+  else {
     address.host = ENET_HOST_ANY;
+  }
 
   if (port != 0)
     address.port = port;
@@ -371,7 +373,7 @@ bool N_Connect(const char *host, uint16_t port) {
 
   net_host = enet_host_create(NULL, 1, NET_CHANNEL_MAX, 0, 0);
 
-  if (net_host == NULL) {
+  if (!net_host) {
     D_Msg(MSG_ERROR, "N_Connect: Error creating host\n");
     return false;
   }
@@ -385,16 +387,19 @@ bool N_Connect(const char *host, uint16_t port) {
 
   enet_address_set_host(&address, host);
 
-  if (port != 0)
+  if (port != 0) {
     address.port = port;
-  else
+  }
+  else {
     address.port = DEFAULT_PORT;
+  }
 
   peernum = N_PeerAdd();
 
+  puts("Calling enet_host_connect");
   server = enet_host_connect(net_host, &address, NET_CHANNEL_MAX, 0);
 
-  if (server == NULL) {
+  if (!server) {
     D_Msg(MSG_ERROR, "N_Connect: Error connecting to server\n");
     N_Disconnect();
     return false;
@@ -405,14 +410,17 @@ bool N_Connect(const char *host, uint16_t port) {
   previous_host = host;
   previous_port = port;
 
+  puts("N_Connect: connected");
   return true;
 }
 
 bool N_Reconnect(void) {
-  if ((previous_host != NULL) && (previous_port != 0))
+  if ((previous_host != NULL) && (previous_port != 0)) {
     return N_Connect(previous_host, previous_port);
+  }
 
   D_Msg(MSG_INFO, "No previous connection\n");
+
   return false;
 }
 
@@ -429,21 +437,25 @@ bool N_ConnectToServer(const char *address) {
 
   N_ParseAddressString(address, &host, &port);
 
-  if (port == 0)
+  if (port == 0) {
     port = DEFAULT_PORT;
+  }
 
+  puts("Connecting to server");
   connected = N_Connect(host, port);
 
   free(host);
 
+  puts("Connected");
   return connected;
 }
 
 void N_PrintAddress(FILE *fp, int peernum) {
   netpeer_t *np = N_PeerGet(peernum);
 
-  if (np == NULL)
+  if (!np) {
     I_Error("N_PrintAddress: Invalid peer %d.\n", peernum);
+  }
 
   fprintf(fp, "%s:%u",
     N_IPToConstString(ENET_NET_TO_HOST_32(np->peer->address.host)),
@@ -454,8 +466,9 @@ void N_PrintAddress(FILE *fp, int peernum) {
 void N_DisconnectPeer(int peernum) {
   netpeer_t *np = N_PeerGet(peernum);
 
-  if (np == NULL)
+  if (!np) {
     I_Error("N_DisconnectPeer: Invalid peer %d.\n", peernum);
+  }
 
   D_Msg(MSG_INFO, "N_DisconnectPeer: Disconnecting peer %d\n", peernum);
   N_PeerSetDisconnected(peernum);
@@ -525,11 +538,13 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
      * [CG]: ENet says this must be cleared, and since we don't use it, we do
      *       so here up top.
      */
-    if (net_event.peer != NULL && net_event.peer->data != NULL)
+    if (net_event.peer && net_event.peer->data) {
       net_event.peer->data = NULL;
+    }
 
-    if (status == 0)
+    if (status == 0) {
       break;
+    }
 
     if (status < 0) {
       D_Msg(MSG_INFO,

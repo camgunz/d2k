@@ -66,10 +66,6 @@ static void ignore_command(gpointer data, gpointer user_data) {
   netticcmd_t *ncmd = data;
   player_t *player = user_data;
 
-  printf("(%d) Ignoring command %d from player %td\n",
-    gametic, ncmd->index, player - players
-  );
-
   ncmd->server_tic = gametic;
 }
 
