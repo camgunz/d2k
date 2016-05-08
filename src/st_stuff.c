@@ -464,6 +464,10 @@ static void ST_updateFaceWidget(void)
   static int  priority = 0;
   bool     doevilgrin;
 
+  if (CLIENT && !CL_Predicting()) {
+    return;
+  }
+
   if (priority < 10)
     {
       // dead
@@ -633,15 +637,15 @@ static void ST_updateFaceWidget(void)
     }
 
   // look left or look right if the facecount has timed out
-  if (!st_facecount)
-    {
+  if ((!CLIENT) || (CL_Predicting())) {
+    if (!st_facecount) {
       st_faceindex = ST_calcPainOffset() + (st_randomnumber % 3);
       st_facecount = ST_STRAIGHTFACECOUNT;
       priority = 0;
     }
 
-  st_facecount--;
-
+    st_facecount--;
+  }
 }
 
 int sts_traditional_keys; // killough 2/28/98: traditional status bar keys

@@ -189,7 +189,7 @@ static void cl_clear_repredicting(void) {
   cl_repredicting = false;
 }
 
-static void cl_predict(int saved_gametic) {
+static void cl_repredict(int saved_gametic) {
   player_t *player = &players[consoleplayer];
   int latest_command_index;
   
@@ -297,7 +297,7 @@ void CL_CheckForStateUpdates(void) {
 #endif
 
   if (G_GetGameState() == GS_LEVEL) {
-    cl_predict(saved_gametic);
+    cl_repredict(saved_gametic);
   }
 
   cl_state_tic = server->sync.tic;

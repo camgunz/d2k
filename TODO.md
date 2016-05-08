@@ -1,17 +1,6 @@
 # To Do
 
-1. Server occupies a starting spot
-  - I think the only real way to fix this is to make the server not a player,
-    and I think the only real way to do this is to sleep if there are no
-    players.
-
-1. Console isn't drawn during intermission
-
-1. Can't chat during intermission
-
 1. Client commands aren't deleted
-
-1. Slow down the super fast doomguy face
 
 1. Figure out all the syncing with changing maps
 
@@ -23,12 +12,7 @@
      commands it starts overwriting the old ones.  The only issue is how to
      deal with it.
 
-1. Fix "Player N is too lagged"
-   - I think this is basically due to lag being based on the server receiving
-     client commands, which.. it ignores during intermission?  Either that or
-     it's related to client commands not being deleted.
-
-1. Ending game wipe happens twice now
+1. Fix 'Player N is too lagged' message
 
 -- Proto Complete Here --
 

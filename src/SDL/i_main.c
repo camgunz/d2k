@@ -748,7 +748,6 @@ void I_SetWindowCaption(void) {
  */
 
 void I_SafeExit(int rc) {
-  puts("I_SafeExit...");
   if (!has_exited) {  /* If it hasn't exited yet, exit now -- killough */
     if (rc)
       has_exited = 2;

@@ -1665,8 +1665,8 @@ void G_ClearCorpses(void) {
 //
 
 static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
-  fixed_t       x;
-  fixed_t       y;
+  fixed_t       x = mthing->x << FRACBITS;
+  fixed_t       y = mthing->y << FRACBITS;
   fixed_t      xa;
   fixed_t      ya;
   subsector_t *ss;
@@ -1681,16 +1681,12 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
         continue;
       }
 
-      if (players[i].mo->x == mthing->x << FRACBITS &&
-          players[i].mo->y == mthing->y << FRACBITS) {
+      if (players[i].mo->x == x && players[i].mo->y == y) {
         return false;
       }
     }
     return true;
   }
-
-  x = mthing->x << FRACBITS;
-  y = mthing->y << FRACBITS;
 
   // killough 4/2/98: fix bug where P_CheckPosition() uses a non-solid
   // corpse to detect collisions with other players in DM starts
@@ -1702,8 +1698,8 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
   players[playernum].mo->flags |= MF_SOLID;
   i = P_CheckPosition(players[playernum].mo, x, y);
   players[playernum].mo->flags &= ~MF_SOLID;
+
   if (!i) {
-    puts("Something in the way");
     return false;
   }
 
