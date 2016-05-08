@@ -40,6 +40,8 @@
 #include "st_stuff.h"
 #include "w_wad.h"
 
+#include "cl_main.h"
+
 //
 // STATUS BAR DATA
 //
