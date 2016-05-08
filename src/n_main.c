@@ -357,13 +357,23 @@ bool N_GetWad(const char *name) {
 }
 
 void N_RunTic(void) {
-  if (advancedemo)
+  if (CLIENT) {
+    printf("(%5d) Player commands:", gametic);
+    for (int i = 0; i < MAXPLAYERS; i++) {
+      printf(" %4d", players[i].commands->len);
+    }
+    printf("\n");
+  }
+
+  if (advancedemo) {
     D_DoAdvanceDemo();
+  }
 
   M_Ticker();
 
-  if ((!CL_RePredicting()) && (!CL_Synchronizing()))
+  if ((!CL_RePredicting()) && (!CL_Synchronizing())) {
     I_GetTime_SaveMS();
+  }
 
   G_Ticker();
 

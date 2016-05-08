@@ -25,21 +25,22 @@
 
 #include <enet/enet.h>
 
-#include "doomstat.h"
 #include "d_event.h"
-#include "g_game.h"
-#include "p_user.h"
-#include "p_spec.h"
-#include "p_tick.h"
-#include "p_map.h"
-#include "r_fps.h"
+#include "doomstat.h"
 #include "e6y.h"
-#include "s_advsound.h"
-
+#include "g_game.h"
 #include "n_net.h"
 #include "n_main.h"
 #include "n_state.h"
 #include "n_peer.h"
+#include "p_cmd.h"
+#include "p_map.h"
+#include "p_spec.h"
+#include "p_tick.h"
+#include "p_user.h"
+#include "r_fps.h"
+#include "s_advsound.h"
+
 #include "cl_main.h"
 
 int leveltime;

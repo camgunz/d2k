@@ -62,6 +62,17 @@ static void print_command(gpointer data, gpointer user_data) {
 }
 #endif
 
+static void ignore_command(gpointer data, gpointer user_data) {
+  netticcmd_t *ncmd = data;
+  player_t *player = user_data;
+
+  printf("(%d) Ignoring command %d from player %td\n",
+    gametic, ncmd->index, player - players
+  );
+
+  ncmd->server_tic = gametic;
+}
+
 static bool run_player_command(player_t *player) {
   ticcmd_t *cmd = &player->cmd;
   weapontype_t newweapon;
@@ -190,12 +201,18 @@ static void process_queued_command(gpointer data, gpointer user_data) {
 
   if (ncmd->index <= player->latest_command_run_index) {
     if (SERVER || playernum == consoleplayer) {
+      printf("(%d) Already ran command %u for %d at %d\n",
+        gametic, ncmd->index, playernum, ncmd->server_tic
+      );
       return;
     }
   }
 
   if (player->command_limit &&
       player->commands_run_this_tic >= player->command_limit) {
+    printf("(%d) Limiting commands for %d (ran cmd %u, %u remaining)\n",
+      gametic, playernum, ncmd->index, player->commands->len
+    );
     return;
   }
 
@@ -255,8 +272,9 @@ static void process_queued_command(gpointer data, gpointer user_data) {
 
   player->latest_command_run_index = ncmd->index;
 
-  if (SERVER)
+  if (SERVER) {
     ncmd->server_tic = gametic;
+  }
 }
 
 /*
@@ -560,6 +578,14 @@ void P_ClearPlayerCommands(int playernum) {
 
   if (command_count > 0)
     g_ptr_array_remove_range(players[playernum].commands, 0, command_count);
+}
+
+void P_IgnorePlayerCommands(int playernum) {
+  if (!playeringame[playernum]) {
+    return;
+  }
+
+  P_ForEachCommand(playernum, ignore_command, &players[playernum]);
 }
 
 void P_TrimCommands(int playernum, TrimFunc should_trim, gpointer user_data) {

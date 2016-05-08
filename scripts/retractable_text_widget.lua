@@ -411,6 +411,10 @@ end
 function RetractableTextWidget:set_full_height()
   local visible_lines = self:get_visible_lines()
 
+  if #visible_lines == 0 then
+    return
+  end
+
   self:set_pixel_height(
     self:get_top_margin() +
     visible_lines[#visible_lines].y +

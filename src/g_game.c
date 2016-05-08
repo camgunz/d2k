@@ -1401,6 +1401,14 @@ void G_Ticker(void) {
   if (paused & 2 && gamestate != GS_LEVEL)
     return;
 
+  if (SERVER && gamestate != GS_LEVEL) {
+    for (int i = 0; i < MAXPLAYERS; i++) {
+      if (playeringame[i]) {
+        P_IgnorePlayerCommands(i);
+      }
+    }
+  }
+
   // do main actions
   switch (gamestate) {
     case GS_LEVEL:
