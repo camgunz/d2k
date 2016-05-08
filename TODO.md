@@ -1,7 +1,5 @@
 # To Do
 
-1. Player positions are badly jerky, maybe an extrapolation problem?
-
 1. Figure out all the syncing with changing maps
 
 1. Fix game start lurch.
