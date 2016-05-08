@@ -453,13 +453,23 @@ void SV_UpdatePings(void) {
   }
 }
 
+static bool no_players(void) {
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    if (playeringame[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 bool N_TryRunTics(void) {
   static int tics_built = 0;
 
   int tics_elapsed = I_GetTime() - tics_built;
   bool needs_rendering = should_render();
 
-  if (tics_elapsed <= 0 && !needs_rendering) {
+  if (no_players() || (tics_elapsed <= 0 && !needs_rendering)) {
     N_ServiceNetwork();
     C_ECIService();
     I_Sleep(1);
