@@ -56,7 +56,7 @@ static bool command_synchronized(gpointer data, gpointer user_data) {
   old_commands_struct_t *ocs = user_data;
   netpeer_t *np = N_PeerForPlayer(ocs->playernum);
 
-  if ((ncmd->tic <= ocs->oldest_sync_tic) &&
+  if ((ncmd->tic <= (ocs->oldest_sync_tic - TICRATE)) &&
       (ncmd->index < np->sync.oldest_command_index)) {
     return true;
   }
