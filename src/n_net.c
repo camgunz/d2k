@@ -556,7 +556,6 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     if (net_event.type == ENET_EVENT_TYPE_CONNECT) {
       if (SERVER) {
         peernum = N_PeerAdd();
-        printf("(%d) Added peer %d\n", gametic, peernum);
         np = N_PeerGet(peernum);
 
         if (np == NULL) {
@@ -564,16 +563,6 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
           continue;
         }
 
-        /*
-        enet_peer_timeout(
-          net_event.peer,
-          0,
-          NET_PEER_MINIMUM_TIMEOUT * 1000,
-          NET_PEER_MAXIMUM_TIMEOUT * 1000
-        );
-        */
-
-        printf("(%d) Setting peer connected\n", gametic);
         N_PeerSetConnected(np->peernum, net_event.peer);
 
         SV_SetupNewPeer(peernum);

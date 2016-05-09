@@ -1,6 +1,6 @@
 # To Do
 
-1. Figure out all the syncing with changing maps
+-- Proto Complete Here --
 
 1. Fix game start lurch.
    - loading the map and running the wipe causes too many TICs to build up
@@ -10,9 +10,7 @@
      commands it starts overwriting the old ones.  The only issue is how to
      deal with it.
 
-1. Fix 'Player N is too lagged' message
-
--- Proto Complete Here --
+1. Game end wipe can occur twice.
 
 1. Fix bugs:
   - `P_Printf` doesn't work in server mode

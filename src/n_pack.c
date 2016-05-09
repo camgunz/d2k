@@ -298,6 +298,14 @@ static void pack_unsynchronized_command(gpointer data, gpointer user_data) {
   M_PBufWriteUChar(pbuf, ncmd->buttons);
 }
 
+void N_PackSetupRequest(netpeer_t *np) {
+  pbuf_t *pbuf = N_PeerBeginMessage(
+    np->peernum, NET_CHANNEL_RELIABLE, nm_setup
+  );
+
+  M_PBufWriteUChar(pbuf, 0);
+}
+
 void N_PackSetup(netpeer_t *np) {
   game_state_t *gs = N_GetLatestState();
   unsigned short player_count = 0;

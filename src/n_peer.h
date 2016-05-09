@@ -55,6 +55,7 @@ typedef struct netpeer_s {
   netsync_t     sync;
   time_t        connect_time;
   time_t        disconnect_time;
+  time_t        last_setup_request;
   unsigned int  bytes_uploaded;
   unsigned int  bytes_downloaded;
 } netpeer_t;

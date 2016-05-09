@@ -228,13 +228,14 @@ unsigned int N_PeerAdd(void) {
   while (g_hash_table_contains(net_peers, GUINT_TO_POINTER(np->peernum)))
     np->peernum++;
 
-  np->playernum         = 0;
-  np->peer              = NULL;
-  np->auth_level        = AUTH_LEVEL_NONE;
-  np->connect_time      = time(NULL);
-  np->disconnect_time   = 0;
-  np->bytes_uploaded    = 0;
-  np->bytes_downloaded  = 0;
+  np->playernum          = 0;
+  np->peer               = NULL;
+  np->auth_level         = AUTH_LEVEL_NONE;
+  np->connect_time       = time(NULL);
+  np->disconnect_time    = 0;
+  np->last_setup_request = 0;
+  np->bytes_uploaded     = 0;
+  np->bytes_downloaded   = 0;
 
   g_hash_table_insert(net_peers, GUINT_TO_POINTER(np->peernum), np);
 

@@ -53,6 +53,8 @@ const char *D_dehout(void); /* CG: from d_main.c */
 
 #define MAX_PREF_NAME_SIZE 20
 
+#define MAX_SETUP_REQUEST_INTERVAL .6
+
 #define SERVER_ONLY(name)                                                     \
   if (!SERVER) {                                                              \
     P_Printf(consoleplayer,                                                   \
@@ -166,11 +168,9 @@ static void handle_setup(netpeer_t *np) {
   unsigned short playernum = 0;
   int i;
 
-  puts("Handling setup");
   D_Msg(MSG_NET, "Handling setup.\n");
 
   if (!server) {
-    puts("Server was NULL");
     return;
   }
 
@@ -181,7 +181,6 @@ static void handle_setup(netpeer_t *np) {
     D_ClearDEHFiles();
     N_ClearStates();
     N_Disconnect();
-    puts("Unpacking setup failed");
     return;
   }
 
@@ -209,8 +208,20 @@ static void handle_setup(netpeer_t *np) {
   if (gamestate == GS_INTERMISSION) {
     N_LoadLatestState(true);
   }
+}
 
-  puts("Setup handled");
+static void handle_setup_request(netpeer_t *np) {
+  time_t now = time(NULL);
+
+  if (np->last_setup_request != 0) {
+    if (difftime(now, np->last_setup_request) <= MAX_SETUP_REQUEST_INTERVAL) {
+      return;
+    }
+  }
+
+  np->last_setup_request = now;
+
+  SV_SendSetup(np->playernum);
 }
 
 static void handle_auth_response(netpeer_t *np) {
@@ -489,8 +500,12 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
 
     switch (message_type) {
       case nm_setup:
-        CLIENT_ONLY("setup");
-        handle_setup(np);
+        if (CLIENT) {
+          handle_setup(np);
+        }
+        else if (SERVER) {
+          handle_setup_request(np);
+        }
       break;
       case nm_auth:
         if (CLIENT) {
@@ -581,9 +596,6 @@ void SV_SetupNewPeer(int peernum) {
     I_Error("SV_SetupNewPlayer: invalid peer %d.\n", peernum);
   }
 
-  printf("(%d) Setting up new peer %d\n", gametic, peernum);
-
-
   for (playernum = 0; playernum < MAXPLAYERS; playernum++) {
     if (players[playernum].playerstate == PST_DISCONNECTED) {
       continue;
@@ -610,7 +622,6 @@ void SV_SendSetup(unsigned short playernum) {
   netpeer_t *np = NULL;
   CHECK_VALID_PLAYER(np, playernum);
 
-  printf("(%d) Sending setup to %u\n", gametic, playernum);
   np->sync.initialized = true;
   N_PackSetup(np);
 }
@@ -749,6 +760,13 @@ void CL_SendTeamChange(unsigned char new_team) {
   CHECK_CONNECTION(np);
 
   N_PackTeamChange(np, consoleplayer, new_team);
+}
+
+void CL_SendSetupRequest(void) {
+  netpeer_t *np = NULL;
+  CHECK_CONNECTION(np);
+
+  N_PackSetupRequest(np);
 }
 
 void CL_SendPing(double server_time) {

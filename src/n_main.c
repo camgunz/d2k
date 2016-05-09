@@ -68,6 +68,7 @@
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
 #define SERVER_SLEEP_TIMEOUT 1
 #define SERVER_MAX_PEER_LAG 70
+#define MAX_SETUP_REQUEST_ATTEMPTS 5
 
 static int run_tics(int tic_count) {
   int saved_tic_count = tic_count;
@@ -238,12 +239,14 @@ void N_InitNetGame(void) {
     solonet = true;
   }
   else if ((i = M_CheckParm("-net"))) {
-    if (i >= myargc)
-      I_Error("-net requires an address");
-
     char *host = NULL;
     unsigned short port = 0;
     time_t connect_time;
+    int setup_requests = 0;
+
+    if (i >= myargc) {
+      I_Error("-net requires an address");
+    }
 
     netgame = true;
 
@@ -274,15 +277,18 @@ void N_InitNetGame(void) {
       "N_InitNetGame: Connecting to server %s:%u...\n", host, port
     );
 
-    if (!N_Connect(host, port))
+    if (!N_Connect(host, port)) {
       I_Error("N_InitNetGame: Connection refused");
+    }
 
     D_Msg(MSG_INFO, "N_InitNetGame: Connected!\n");
 
-    if (CL_GetServerPeer() == NULL)
+    if (!CL_GetServerPeer()) {
       I_Error("N_InitNetGame: Server peer was NULL");
+    }
 
     connect_time = time(NULL);
+    setup_requests = 0;
 
     G_ReloadDefaults();
 
@@ -290,14 +296,23 @@ void N_InitNetGame(void) {
 
     while (true) {
       time_t now = time(NULL);
+      double elapsed;
 
       N_ServiceNetwork();
 
-      if (CL_ReceivedSetup())
+      if (CL_ReceivedSetup()) {
         break;
+      }
 
-      if (difftime(now, connect_time) > (NET_SETUP_TIMEOUT * 1000))
-        I_Error("N_InitNetGame: Timed out waiting for setup information");
+      elapsed = difftime(now, connect_time);
+      if (elapsed >= 1.0) {
+        if (setup_requests >= MAX_SETUP_REQUEST_ATTEMPTS) {
+          I_Error("N_InitNetGame: Timed out waiting for setup information");
+        }
+        CL_SendSetupRequest();
+        setup_requests++;
+        connect_time = now;
+      }
     }
 
     D_Msg(MSG_INFO, "N_InitNetGame: Setup information received!\n");
@@ -321,31 +336,36 @@ void N_InitNetGame(void) {
       if (i < (myargc - 1)) {
         size_t host_length = N_ParseAddressString(myargv[i + 1], &host, &port);
 
-        if (host_length == 0)
+        if (host_length == 0) {
           host = strdup("0.0.0.0");
+        }
       }
       else {
         host = strdup("0.0.0.0");
       }
 
-      if (!N_Listen(host, port))
+      if (!N_Listen(host, port)) {
         I_Error("Error listning on %s:%d\n", host, port);
+      }
 
       D_Msg(MSG_INFO, "N_InitNetGame: Listening on %s:%u.\n", host, port);
 
       if (DEBUG_NET && SERVER) {
-        if (!D_MsgActivateWithFile(MSG_NET, "server-net.log"))
+        if (!D_MsgActivateWithFile(MSG_NET, "server-net.log")) {
           I_Error("Error activating server-net.log: %s", strerror(errno));
+        }
       }
 
       if (DEBUG_SAVE && SERVER) {
-        if (!D_MsgActivateWithFile(MSG_SAVE, "server-save.log"))
+        if (!D_MsgActivateWithFile(MSG_SAVE, "server-save.log")) {
           I_Error("Error activating server-save.log: %s", strerror(errno));
+        }
       }
 
       if (DEBUG_SYNC && SERVER) {
-        if (!D_MsgActivateWithFile(MSG_SYNC, "server-sync.log"))
+        if (!D_MsgActivateWithFile(MSG_SYNC, "server-sync.log")) {
           I_Error("Error activating server-sync.log: %s", strerror(errno));
+        }
       }
     }
   }
@@ -394,11 +414,14 @@ void N_RunTic(void) {
     NETPEER_FOR_EACH(iter) {
       if (iter.np->sync.initialized) {
         iter.np->sync.outdated = true;
-        if (playeringame[iter.np->playernum])
+        if (playeringame[iter.np->playernum]) {
           N_LogPlayerPosition(&players[iter.np->playernum]);
+        }
       }
       else if (gametic > iter.np->sync.tic) {
+        /*
         SV_SendSetup(iter.np->playernum);
+        */
       }
     }
 

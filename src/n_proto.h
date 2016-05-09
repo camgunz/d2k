@@ -76,6 +76,7 @@ void SV_BroadcastStateUpdates(void);
 void SV_ResyncPeers(void);
 void SV_BroadcastGameActionChange(void);
 
+void CL_SendSetupRequest(void);
 void CL_SendPing(double server_time);
 void CL_SendMessageToServer(const char *message);
 void CL_SendMessageToPlayer(unsigned short recipient, const char *message);
