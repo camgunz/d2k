@@ -153,7 +153,7 @@ static bool cl_load_new_state(netpeer_t *server) {
   }
 
   cl_synchronizing = true;
-  while (gametic <= server->sync.tic) {
+  for (int i = gametic; i <= server->sync.tic; i++) {
     N_RunTic();
     if (players[displayplayer].mo != NULL) {
       R_InterpolateView(&players[displayplayer]);
@@ -161,6 +161,13 @@ static bool cl_load_new_state(netpeer_t *server) {
     }
   }
   cl_synchronizing = false;
+
+  if (gametic != server->sync.tic + 1) {
+    D_Msg(MSG_WARN, "Synchronization incomplete: %d, %d\n",
+      gametic, server->sync.tic
+    );
+    printf("Synchronization incomplete: %d, %d\n", gametic, server->sync.tic);
+  }
 
   D_Msg(MSG_SYNC, "Ran sync'd commands, loading latest state\n");
 

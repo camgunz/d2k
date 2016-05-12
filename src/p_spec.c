@@ -2416,48 +2416,56 @@ void P_UpdateSpecials(void) {
   int k;
   int m;
   int fragcount;
-  int exitflag = false;
+  bool exitflag = false;
   mobj_t *so;
   anim_t *anim;
   side_t *side;
 
   // Downcount level timer, exit level if elapsed
-  if (levelTimer == true) {
+  if (levelTimer) {
     levelTimeCount--;
 
-    if (!levelTimeCount)
+    if (!levelTimeCount) {
       G_ExitLevel();
+    }
   }
 
   // Check frag counters, if frag limit reached, exit level // Ty 03/18/98
   //  Seems like the total frags should be kept in a simple
   //  array somewhere, but until they are...
-  if (levelFragLimit == true) { // we used -frags so compare count
+  if (levelFragLimit) { // we used -frags so compare count
     for (k = 0; k < MAXPLAYERS; k++) {
-      if (!playeringame[k])
+      if (!playeringame[k]) {
         continue;
+      }
 
       fragcount = 0;
 
       for (m = 0; m < MAXPLAYERS; m++) {
-        if (!playeringame[m])
+        if (!playeringame[m]) {
           continue;
+        }
 
-        if (m == k)
+        if (m == k) {
           fragcount -= players[k].frags[m];
-        else
+        }
+        else {
           fragcount += players[k].frags[m];
+        }
       }
 
-      if (fragcount >= levelFragLimitCount)
+      if (fragcount >= levelFragLimitCount) {
         exitflag = true;
+      }
 
-      if (exitflag == true)
+      if (exitflag) {
         break; // skip out of the loop--we're done
+      }
     }
 
-    if (exitflag == true)
+    if (exitflag) {
       G_ExitLevel();
+    }
   }
 
   // Animate flats and textures globally
@@ -2465,22 +2473,26 @@ void P_UpdateSpecials(void) {
     for (i = anim->basepic; i < anim->basepic + anim->numpics; i++) {
       pic = anim->basepic + ((leveltime / anim->speed + i) % anim->numpics);
 
-      if (anim->istexture)
+      if (anim->istexture) {
         texturetranslation[i] = pic;
-      else
+      }
+      else {
         flattranslation[i] = pic;
+      }
     }
   }
 
   // Check buttons (retriggerable switches) and change texture on timeout
   for (i = 0; i < MAXBUTTONS; i++) {
-    if (!buttonlist[i].btimer)
+    if (!buttonlist[i].btimer) {
       continue;
+    }
 
     buttonlist[i].btimer--;
 
-    if (buttonlist[i].btimer)
+    if (buttonlist[i].btimer) {
       continue;
+    }
 
     side = &sides[buttonlist[i].line->sidenum[0]];
 
@@ -2505,8 +2517,9 @@ void P_UpdateSpecials(void) {
      * since the buttonlist array is usually zeroed out, button popouts
      * generally appear to come from (0,0)
      */
-    if (comp[comp_sound] || compatibility_level < prboom_6_compatibility)
+    if (comp[comp_sound] || compatibility_level < prboom_6_compatibility) {
       so = (mobj_t *)&buttonlist[i].soundorg;
+    }
 
     S_StartSound(so, sfx_swtchn);
 

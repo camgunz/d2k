@@ -12,6 +12,7 @@ HOST=127.0.0.1
 HOST=45.33.60.48
 
 CMD="${BASE_DIR}/cbuild/d2k -nomouse -net ${HOST}:${PORT}"
+CMD="${BASE_DIR}/cbuild/d2k -net ${HOST}:${PORT}"
 
 mkdir -p ~/.d2k/scripts
 mkdir -p ~/.d2k/fonts
@@ -21,8 +22,8 @@ cp "${BASE_DIR}/scripts/"* ~/.d2k/scripts/
 cp "${BASE_DIR}/fonts/"* ~/.d2k/fonts/
 
 # gdb -ex "source gdb_dupesounds.txt" --args $CMD
-# gdb -ex run --args $CMD
+gdb -ex run --args $CMD
 # valgrind --track-origins=yes --leak-check=yes $CMD
 # CPUPROFILE=cpu.prof $CMD
-$CMD
+# $CMD
 

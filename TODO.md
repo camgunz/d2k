@@ -1,7 +1,5 @@
 # To Do
 
--- Proto Complete Here --
-
 1. Fix game start lurch.
    - loading the map and running the wipe causes too many TICs to build up
      since the last command was built, so the game then builds around 45 of
@@ -11,6 +9,10 @@
      deal with it.
 
 1. Game end wipe can occur twice.
+
+1. Sometimes the map doesn't change.
+
+-- Proto Complete Here --
 
 1. Fix bugs:
   - `P_Printf` doesn't work in server mode

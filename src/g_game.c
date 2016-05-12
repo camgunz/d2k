@@ -3770,7 +3770,9 @@ void G_SetOldGameState(gamestate_t new_oldgamestate) {
 }
 
 void G_SetWipeGameState(gamestate_t new_wipegamestate) {
-  wipegamestate = new_wipegamestate;
+  if ((!CLIENT) || (CL_Predicting())) {
+    wipegamestate = new_wipegamestate;
+  }
 }
 
 void G_ResetGameState(void) {
@@ -3789,7 +3791,7 @@ gameaction_t G_GetGameAction(void) {
 void G_SetGameAction(gameaction_t new_gameaction) {
   gameaction = new_gameaction;
 
-  if (SERVER) {
+  if (SERVER && gameaction != ga_nothing) {
     SV_BroadcastGameActionChange();
   }
 }
