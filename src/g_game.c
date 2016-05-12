@@ -1858,7 +1858,7 @@ void G_DeathMatchSpawnPlayer(int playernum) {
   }
 
   // no good spot, so the player will probably get stuck
-  P_SpawnPlayer(playernum, &playerstarts[playernum]);
+  P_SpawnPlayer(playernum, &playerstarts[playernum % num_playerstarts]);
   if (MULTINET) {
     P_StompSpawnPointBlockers(players[playernum].mo);
   }
@@ -1881,20 +1881,20 @@ void G_DoReborn(int playernum) {
       return;
     }
 
-    if (G_CheckSpot(playernum, &playerstarts[playernum])) {
-      P_SpawnPlayer(playernum, &playerstarts[playernum]);
+    if (G_CheckSpot(playernum, &playerstarts[playernum % num_playerstarts])) {
+      P_SpawnPlayer(playernum, &playerstarts[playernum % num_playerstarts]);
       return;
     }
 
     // try to spawn at one of the other players spots
     for (int i = 0; i < MAXPLAYERS; i++) {
-      if (G_CheckSpot(playernum, &playerstarts[i])) {
-        P_SpawnPlayer(playernum, &playerstarts[i]);
+      if (G_CheckSpot(playernum, &playerstarts[i % num_playerstarts])) {
+        P_SpawnPlayer(playernum, &playerstarts[i % num_playerstarts]);
         return;
       }
       // They're going to be inside something.  Too bad.
     }
-    P_SpawnPlayer(playernum, &playerstarts[playernum]);
+    P_SpawnPlayer(playernum, &playerstarts[playernum % num_playerstarts]);
   }
   else {
     G_SetGameAction(ga_loadlevel); // reload the level from scratch

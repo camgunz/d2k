@@ -171,6 +171,8 @@ mapthing_t *deathmatchstarts;      // killough
 size_t     num_deathmatchstarts;   // killough
 
 mapthing_t *deathmatch_p;
+
+size_t num_playerstarts;
 mapthing_t playerstarts[MAXPLAYERS];
 
 static int current_episode = -1;
@@ -1258,12 +1260,15 @@ static void P_LoadThings(int lump) {
   int  i, numthings = W_LumpLength (lump) / sizeof(mapthing_t);
   const mapthing_t *data = W_CacheLumpNum (lump);
 
+
   mobj_t *mobj;
   int mobjcount = 0;
   mobj_t **mobjlist = malloc(numthings * sizeof(mobjlist[0]));
 
   if ((!data) || (!numthings))
     I_Error("P_LoadThings: no things in level");
+
+  num_playerstarts = 0;
 
   for (i = 0; i < numthings; i++) {
     mapthing_t mt = data[i];
@@ -1277,10 +1282,18 @@ static void P_LoadThings(int lump) {
     if (!P_IsDoomnumAllowed(mt.type))
       continue;
 
+    if (mt.type <= 4 && mt.type > 0) {
+      if (mt.type > num_playerstarts) {
+        num_playerstarts = mt.type;
+      }
+    }
+
     // Do spawn all other stuff.
     mobj = P_SpawnMapThing(&mt, i);
-    if (mobj && mobj->info->speed == 0)
+
+    if (mobj && mobj->info->speed == 0) {
       mobjlist[mobjcount++] = mobj;
+    }
   }
 
   W_UnlockLumpNum(lump); // cph - release the data
@@ -2579,12 +2592,17 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill) {
       }
     }
   }
+
+  /* [CG] Not all maps conform to this (Sunder) */
+
+#if 0
   else { // if !deathmatch, check all necessary player starts actually exist
     for (i = 0; i < MAXPLAYERS; i++) {
       if (playeringame[i] && !players[i].mo)
         I_Error("P_SetupLevel: missing player %d start\n", i + 1);
     }
   }
+#endif
 
   if (players[consoleplayer].cheats & CF_FLY)
     players[consoleplayer].mo->flags |= (MF_NOGRAVITY | MF_FLY);

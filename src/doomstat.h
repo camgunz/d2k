@@ -245,6 +245,7 @@ extern  bool realplayeringame[MAXPLAYERS];
 
 extern  mapthing_t *deathmatchstarts;     // killough
 extern  size_t     num_deathmatchstarts; // killough
+extern  size_t     num_playerstarts;
 
 extern  mapthing_t *deathmatch_p;
 
