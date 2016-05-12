@@ -72,6 +72,7 @@
 #include "r_demo.h"
 #include "r_fps.h"
 #include "e6y.h"//e6y
+#include "cl_main.h"
 #include "x_main.h"
 
 extern int forceOldBsp;

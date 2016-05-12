@@ -60,6 +60,7 @@ void D_DoAdvanceDemo (void);
 void        D_Display(void);
 void        D_PageTicker(void);
 void        D_StartTitle(void);
+bool        D_Wiping(void);
 bool        D_Responder(event_t *ev);
 void        D_DoomMain(void);
 void        D_AddFile(const char *file, wad_source_t source);

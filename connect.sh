@@ -12,7 +12,6 @@ HOST=127.0.0.1
 HOST=45.33.60.48
 
 CMD="${BASE_DIR}/cbuild/d2k -nomouse -net ${HOST}:${PORT}"
-CMD="${BASE_DIR}/cbuild/d2k -net ${HOST}:${PORT}"
 
 mkdir -p ~/.d2k/scripts
 mkdir -p ~/.d2k/fonts

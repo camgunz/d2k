@@ -75,7 +75,9 @@ static int run_tics(int tic_count) {
 
   while (tic_count--) {
     if (MULTINET) {
-      P_BuildCommand();
+      if (!D_Wiping()) {
+        P_BuildCommand();
+      }
     }
     else {
       memset(&players[consoleplayer].cmd, 0, sizeof(ticcmd_t));

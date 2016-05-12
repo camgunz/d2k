@@ -79,6 +79,8 @@ extern int  forceOldBsp;
 extern bool setsizeneeded;
 extern int  showMessages;
 
+static bool wiping = false; // [CG] true if wiping
+
 static char *iwad_base = NULL;
 static char *iwad_path = NULL;
 static int  demosequence;         // killough 5/2/98: made static
@@ -153,6 +155,14 @@ const char *const standard_iwads[]=
 
 //e6y static
 const int nstandard_iwads = sizeof(standard_iwads) / sizeof(*standard_iwads);
+
+/*
+ * D_Wiping
+ */
+
+bool D_Wiping(void) {
+  return wiping;
+}
 
 /*
  * D_Responder - Main event handler
@@ -423,6 +433,7 @@ static void D_Wipe(void) {
 
   wipe_ScreenWipe();
 
+  wiping = true;
   while (true) {
     int new_time = I_GetTime();
 
@@ -447,6 +458,7 @@ static void D_Wipe(void) {
 
     current_time = new_time;
   }
+  wiping = false;
 }
 
 //

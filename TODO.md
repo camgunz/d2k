@@ -1,19 +1,5 @@
 # To Do
 
-1. Fix game start lurch.
-   - loading the map and running the wipe causes too many TICs to build up
-     since the last command was built, so the game then builds around 45 of
-     them and runs them all at once.  This doesn't appear to happen in PrBoom+
-     because the buffer is only 12 TICs and it's circular, so once it builds 12
-     commands it starts overwriting the old ones.  The only issue is how to
-     deal with it.
-
-1. Game end wipe can occur twice.
-
-1. Sometimes the map doesn't change.
-
--- Proto Complete Here --
-
 1. Fix bugs:
   - `P_Printf` doesn't work in server mode
   - When console scrollback fills up, FPS sinks
