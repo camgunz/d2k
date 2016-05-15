@@ -7,6 +7,7 @@ CROSSDEPS="${BASE_DIR}/crossdeps"
 CROSSLIBS="${CROSSDEPS}/bin"
 BUILD_DIR="crossbuild"
 BUILD_TYPE="Release"
+BUILD_TYPE="Debug"
 
 if [ ! -d "$BUILD_DIR" ]
 then
@@ -27,5 +28,5 @@ cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
 
 clear
 
-make
+make VERBOSE=1
 

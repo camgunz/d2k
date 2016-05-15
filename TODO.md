@@ -1,5 +1,11 @@
 # To Do
 
+Multiplayer scoreboard shows during singleplayer intermission
+
+Next map doesn't load in singleplayer
+
+Windows crashes pretty early on
+
 1. Fix bugs:
   - `P_Printf` doesn't work in server mode
   - When console scrollback fills up, FPS sinks

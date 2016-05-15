@@ -33,7 +33,6 @@
 #define DEFAULT_CONFIG_FILE_NAME PACKAGE_TARNAME "_config.lua"
 
 void D_ConfigInit(void) {
-  char *local_config_path;
   char *config_path;
   bool success;
   
@@ -43,9 +42,9 @@ void D_ConfigInit(void) {
     );
   }
 
-  local_config_path = M_PathJoin(I_DoomExeDir(), DEFAULT_CONFIG_FILE_NAME);
+  config_path = M_PathJoin(I_DoomExeDir(), DEFAULT_CONFIG_FILE_NAME);
 
-  if (!local_config_path) {
+  if (!config_path) {
     I_Error("Error joining %s and %s: %s\n",
       I_DoomExeDir(),
       DEFAULT_CONFIG_FILE_NAME,
@@ -53,14 +52,8 @@ void D_ConfigInit(void) {
     );
   }
 
-  config_path = M_UnLocalizePath(local_config_path);
-
-  free(local_config_path);
-
   if (!M_IsFile(config_path)) {
     const char *default_config_contents = NULL;
-
-    printf("%s is not a file\n", config_path);
 
     if (!X_Call(X_GetState(), "config", "get_default", 0, 1)) {
       I_Error("Error generating default config: %s\n",
