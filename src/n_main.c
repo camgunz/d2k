@@ -67,7 +67,7 @@
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
 #define SERVER_SLEEP_TIMEOUT 1
-#define SERVER_MAX_PEER_LAG 70
+#define SERVER_MAX_PEER_LAG (TICRATE * 4)
 #define MAX_SETUP_REQUEST_ATTEMPTS 5
 
 static int run_tics(int tic_count) {
