@@ -23,8 +23,10 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "d_main.h"
+#include "p_setup.h"
 #include "p_mobj.h"
 #include "m_misc.h"
 #include "sounds.h"
@@ -33,7 +35,8 @@
 #include "r_defs.h"
 #include "sc_man.h"
 #include "w_wad.h"
-
+#include "p_user.h"
+#include "g_game.h"
 #include "s_advsound.h"
 
 #define TIDNUM(x) ((int)(x->iden_nums & 0xFFFF))		// thing identifier

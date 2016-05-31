@@ -24,6 +24,24 @@
 #ifndef GL_STRUCT_H__
 #define GL_STRUCT_H__
 
+struct seg_s;
+typedef struct seg_s seg_t;
+
+struct visplane_s;
+typedef struct visplane_s visplane_t;
+
+struct vissprite_s;
+typedef struct vissprite_s vissprite_t;
+
+struct sector_s;
+typedef struct sector_s sector_t;
+
+struct mobj_s;
+typedef struct mobj_s mobj_t;
+
+struct player_s;
+typedef struct player_s player_t;
+
 extern int nodesVersion;
 
 // The available anisotropic
@@ -78,7 +96,7 @@ extern int useglgamma;
 int gld_SetGammaRamp(int gamma);
 void gld_CheckHardwareGamma(void);
 void gld_FlushTextures(void);
-void gld_ApplyGammaRamp(byte *buf, int pitch, int width, int height);
+void gld_ApplyGammaRamp(unsigned char *buf, int pitch, int width, int height);
 void M_ChangeLightMode(void);
 
 //detail

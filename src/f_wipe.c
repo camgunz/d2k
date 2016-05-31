@@ -24,15 +24,17 @@
 #include "z_zone.h"
 
 #include "doomdef.h"
-#include "i_video.h"
-#include "v_video.h"
 #include "m_random.h"
 #include "f_wipe.h"
-#ifdef GL_DOOM
-#include "gl_struct.h"
-#endif
-#include "e6y.h"//e6y
+#include "e6y.h"
 #include "n_net.h"
+#include "r_defs.h"
+#include "v_video.h"
+
+#include "gl_opengl.h"
+#include "gl_struct.h"
+
+#include "i_video.h"
 
 //
 // SCREEN WIPE PACKAGE
@@ -109,7 +111,7 @@ static int doMelt(void) {
       continue;
     }
     if (sw.y_lookup[i] < SCREENHEIGHT) {
-      byte *s, *d;
+      unsigned char *s, *d;
       int j, k, dy;
 
       /* cph 2001/07/29 -

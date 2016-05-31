@@ -23,21 +23,27 @@
 
 #include "z_zone.h"
 
-#include <SDL.h>
-
+#include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
+#include "am_map.h"
+#include "p_user.h"
+#include "g_game.h"
 #include "d_net.h"
 #include "e6y.h"
-#include "g_game.h"
+#include "r_defs.h"
+#include "r_patch.h"
+#include "r_data.h"
+#include "r_draw.h"
 #include "i_main.h"
 #include "i_smp.h"
 #include "i_system.h"
 #include "m_bbox.h"
 #include "p_user.h"
+#include "r_state.h"
 #include "r_bsp.h"
+#include "w_wad.h"
 #include "r_demo.h"
-#include "r_draw.h"
 #include "r_fps.h"
 #include "r_main.h"
 #include "r_plane.h"
@@ -45,7 +51,11 @@
 #include "r_things.h"
 #include "st_stuff.h"
 #include "v_video.h"
-#include "w_wad.h"
+#include "p_setup.h"
+#include "p_mobj.h"
+
+#include "gl_opengl.h"
+#include "gl_struct.h"
 
 // e6y
 // Now they are variables. Depends from render_doom_lightmaps variable.
@@ -840,7 +850,7 @@ void R_ExecuteSetViewSize (void)
   pspritexscale_f = (float)wide_centerx/160.0f;
   pspriteyscale_f = (((float)cheight*viewwidth)/(float)SCREENWIDTH) / 200.0f;
 
-  skyiscale = (fixed_t)(((uint_64_t)FRACUNIT * SCREENWIDTH * 200) / (viewwidth * SCREENHEIGHT));
+  skyiscale = (fixed_t)(((uint64_t)FRACUNIT * SCREENWIDTH * 200) / (viewwidth * SCREENHEIGHT));
 
 	// [RH] Sky height fix for screens not 200 (or 240) pixels tall
 	R_InitSkyMap();

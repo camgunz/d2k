@@ -24,13 +24,26 @@
 #ifndef R_STATE_H__
 #define R_STATE_H__
 
-// Need data structure definitions.
-#include "d_player.h"
-#include "r_data.h"
+struct spritedef_s;
+typedef struct spritedef_s spritedef_t;
 
-#ifdef __GNUG__
-#pragma interface
-#endif
+struct sector_s;
+typedef struct sector_s sector_t;
+
+struct side_s;
+typedef struct side_s side_t;
+
+struct line_s;
+typedef struct line_s line_t;
+
+struct ssline_s;
+typedef struct ssline_s ssline_t;
+
+struct visplane_s;
+typedef struct visplane_s visplane_t;
+
+struct player_s;
+typedef struct player_s player_t;
 
 //
 // Refresh internal data structures,
@@ -83,7 +96,7 @@ extern side_t           *sides;
 extern int              *sslines_indexes;
 extern ssline_t         *sslines;
 
-extern byte             *map_subsectors;
+extern unsigned char    *map_subsectors;
 
 //
 // POV data.

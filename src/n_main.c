@@ -25,8 +25,8 @@
 
 #include <enet/enet.h>
 
+#include "doomdef.h"
 #include "doomstat.h"
-#include "protocol.h"
 
 #include "d_event.h"
 #include "c_eci.h"
@@ -34,15 +34,17 @@
 #include "d_main.h"
 #include "d_msg.h"
 #include "g_game.h"
-#include "hu_stuff.h"
-#include "i_network.h"
+#include "r_defs.h"
 #include "i_system.h"
 #include "i_main.h"
 #include "i_video.h"
 #include "m_argv.h"
 #include "m_delta.h"
+#include "p_user.h"
 #include "m_menu.h"
 #include "n_net.h"
+#include "p_setup.h"
+#include "p_mobj.h"
 #include "n_main.h"
 #include "n_state.h"
 #include "n_peer.h"
@@ -51,12 +53,13 @@
 #include "cl_main.h"
 #include "sv_main.h"
 #include "p_checksum.h"
-#include "p_cmd.h"
-#include "p_user.h"
 #include "r_fps.h"
 #include "s_sound.h"
 #include "x_main.h"
 #include "e6y.h"
+#include "v_video.h"
+#include "hu_lib.h"
+#include "hu_stuff.h"
 
 #define DEBUG_NET 0
 #define DEBUG_SYNC 0
@@ -69,6 +72,8 @@
 #define SERVER_SLEEP_TIMEOUT 1
 #define SERVER_MAX_PEER_LAG (TICRATE * 4)
 #define MAX_SETUP_REQUEST_ATTEMPTS 5
+
+void G_BuildTiccmd(ticcmd_t *cmd);
 
 static int run_tics(int tic_count) {
   int saved_tic_count = tic_count;
@@ -234,7 +239,7 @@ void N_InitNetGame(void) {
     P_InitPlayerMessages(i);
   }
 
-  P_InitCommands();
+  P_InitCommandQueue();
 
   if ((i = M_CheckParm("-solo-net"))) {
     netgame = true;

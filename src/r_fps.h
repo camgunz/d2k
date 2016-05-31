@@ -24,7 +24,8 @@
 #ifndef R_FPS_H__
 #define R_FPS_H__
 
-#include "doomstat.h"
+struct player_s;
+typedef struct player_s player_t;
 
 extern int movement_smooth_default;
 extern int movement_smooth;

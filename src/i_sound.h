@@ -24,15 +24,16 @@
 #ifndef I_SOUND_H__
 #define I_SOUND_H__
 
-#include "sounds.h"
-#include "doomtype.h"
-
 #define SNDSERV
 #undef SNDINTR
 
-#ifndef SNDSERV
-#include "l_soundgen.h"
-#endif
+struct sfxinfo_s;
+typedef struct sfxinfo_s sfxinfo_t;
+
+struct musicinfo_s;
+typedef struct musicinfo_s musicinfo_t;
+
+extern bool sound_inited_once;
 
 extern int snd_pcspeaker;
 

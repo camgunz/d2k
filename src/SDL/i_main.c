@@ -47,6 +47,8 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 #include "m_fixed.h"
 #include "m_misc.h"
 #include "m_random.h"
+#include "w_wad.h"
+#include "r_demo.h"
 #include "r_fps.h"
 #include "x_main.h"
 #include "xam_main.h"
@@ -85,7 +87,7 @@ static ExeptionsList_t current_exception_index;
 
 static int has_exited;
 
-static int_64_t get_time_scale = 1 << 24;
+static int64_t get_time_scale = 1 << 24;
 
 ExeptionParam_t ExeptionsParams[EXEPTION_MAX + 1] =
 {
@@ -109,7 +111,7 @@ int endoom_mode;
  */
 
 static int get_time_scaled(void) {
-  return (int)( (int_64_t) I_GetTime_RealTime() * get_time_scale >> 24);
+  return (int)( (int64_t) I_GetTime_RealTime() * get_time_scale >> 24);
 }
 
 static int get_time_fast_demo(void) {
@@ -653,7 +655,7 @@ void I_Init(void) {
     I_GetTime = get_time_fast_demo;
   }
   else if (realtic_clock_rate != 100) {
-    get_time_scale = ((int_64_t) realtic_clock_rate << 24) / 100;
+    get_time_scale = ((int64_t) realtic_clock_rate << 24) / 100;
     I_GetTime = get_time_scaled;
   }
   else {
@@ -674,7 +676,7 @@ void I_Init2(void) {
     I_GetTime = get_time_fast_demo;
   }
   else if (realtic_clock_rate != 100) {
-    get_time_scale = ((int_64_t) realtic_clock_rate << 24) / 100;
+    get_time_scale = ((int64_t) realtic_clock_rate << 24) / 100;
     I_GetTime = get_time_scaled;
   }
   else {

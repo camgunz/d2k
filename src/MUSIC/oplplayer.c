@@ -33,6 +33,8 @@
 #include "mus2mid.h"
 #include "musicplayer.h"
 #include "opl.h"
+#include "m_swap.h"
+#include "p_setup.h"
 #include "p_mobj.h"
 #include "s_sound.h"
 #include "w_wad.h"
@@ -48,28 +50,28 @@
 
 typedef struct
 {
-    byte tremolo;
-    byte attack;
-    byte sustain;
-    byte waveform;
-    byte scale;
-    byte level;
+    unsigned char tremolo;
+    unsigned char attack;
+    unsigned char sustain;
+    unsigned char waveform;
+    unsigned char scale;
+    unsigned char level;
 } PACKEDATTR genmidi_op_t;
 
 typedef struct
 {
     genmidi_op_t modulator;
-    byte feedback;
+    unsigned char feedback;
     genmidi_op_t carrier;
-    byte unused;
+    unsigned char unused;
     short base_note_offset;
 } PACKEDATTR genmidi_voice_t;
 
 typedef struct
 {
     unsigned short flags;
-    byte fine_tuning;
-    byte fixed_note;
+    unsigned char fine_tuning;
+    unsigned char fixed_note;
 
     genmidi_voice_t voices[2];
 } PACKEDATTR genmidi_instr_t;
@@ -331,7 +333,7 @@ int opl_io_port = 0x388;
 
 static bool LoadInstrumentTable(void)
 {
-    const byte *lump;
+    const unsigned char *lump;
 
     lump = W_CacheLumpName("GENMIDI");
 
@@ -1324,7 +1326,7 @@ static void I_OPL_UnRegisterSong(const void *handle)
 // Determine whether memory block is a .mid file
 
 #if 0
-static bool IsMid(byte *mem, int len)
+static bool IsMid(unsigned char *mem, int len)
 {
     return len > 4 && !memcmp(mem, "MThd", 4);
 }

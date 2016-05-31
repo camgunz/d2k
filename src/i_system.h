@@ -24,17 +24,6 @@
 #ifndef I_SYSTEM_H__
 #define I_SYSTEM_H__
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
-
-#include "m_fixed.h"
-
-#ifdef __GNUG__
-#pragma interface
-#endif
-
 #ifdef _MSC_VER
 #define    F_OK    0    /* Check for file existence */
 #define    W_OK    2    /* Check for write permission */
@@ -71,7 +60,7 @@ bool          HasTrailingSlash(const char* dn);
 char*         I_FindFile(const char* wfname, const char* ext);
 char*         I_FindFileEx(const char* wfname, const char* ext);
 const char*   I_FindFile2(const char* wfname, const char* ext);
-bool          I_FileToBuffer(const char *filename, byte **data, int *size);
+bool          I_FileToBuffer(const char *filename, unsigned char **data, int *size);
 /* cph 2001/11/18 - wrapper for read(2) which deals with partial reads */
 void          I_Read(int fd, void* buf, size_t sz);
 /* cph 2001/11/18 - Move W_Filelength to i_system.c */

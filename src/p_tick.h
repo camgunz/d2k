@@ -24,16 +24,12 @@
 #ifndef P_TICK_H__
 #define P_TICK_H__
 
-#include "d_think.h"
-
-#ifdef __GNUG__
-#pragma interface
-#endif
+struct mobj_s;
+typedef struct mobj_s mobj_t;
 
 /* Called by G_Ticker, can call G_PlayerExited.
  * Carries out all thinking of monsters and players. */
 void P_Ticker(void);
-
 void P_InitThinkers(void);
 void P_AddThinker(thinker_t *thinker);
 void P_RemoveThinker(thinker_t *thinker);

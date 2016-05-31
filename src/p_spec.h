@@ -24,10 +24,22 @@
 #ifndef P_SPEC_H__
 #define P_SPEC_H__
 
-#include "r_defs.h"
-#include "d_player.h"
+struct player_s;
+typedef struct player_s player_t;
 
-//      Define values for map objects
+struct mobj_s;
+typedef struct mobj_s mobj_t;
+
+struct line_s;
+typedef struct line_s line_t;
+
+struct side_s;
+typedef struct side_s side_t;
+
+struct sector_s;
+typedef struct sector_s sector_t;
+
+// Define values for map objects
 #define MO_TELEPORTMAN  14
 
 // p_floor
@@ -203,29 +215,23 @@ enum {
 // Animating textures and planes
 // There is another anim_t used in wi_stuff, unrelated.
 //
-typedef struct
-{
-    bool istexture;
-    int  picnum;
-    int  basepic;
-    int  numpics;
-    int  speed;
-
+typedef struct {
+  bool istexture;
+  int  picnum;
+  int  basepic;
+  int  numpics;
+  int  speed;
 } anim_t;
 
 //e6y
-typedef struct
-{
-  int index;
+typedef struct {
+  int     index;
   anim_t *anim;
 } TAnimItemParam;
-extern TAnimItemParam *anim_flats;
-extern TAnimItemParam *anim_textures;
 
 // define names for the TriggerType field of the general linedefs
 
-typedef enum
-{
+typedef enum {
   WalkOnce,
   WalkMany,
   SwitchOnce,
@@ -238,8 +244,7 @@ typedef enum
 
 // define names for the Speed field of the general linedefs
 
-typedef enum
-{
+typedef enum {
   SpeedSlow,
   SpeedNormal,
   SpeedFast,
@@ -248,8 +253,7 @@ typedef enum
 
 // define names for the Target field of the general floor
 
-typedef enum
-{
+typedef enum {
   FtoHnF,
   FtoLnF,
   FtoNnF,
@@ -262,8 +266,7 @@ typedef enum
 
 // define names for the Changer Type field of the general floor
 
-typedef enum
-{
+typedef enum {
   FNoChg,
   FChgZero,
   FChgTxt,
@@ -272,16 +275,14 @@ typedef enum
 
 // define names for the Change Model field of the general floor
 
-typedef enum
-{
+typedef enum {
   FTriggerModel,
   FNumericModel,
 } floormodel_t;
 
 // define names for the Target field of the general ceiling
 
-typedef enum
-{
+typedef enum {
   CtoHnC,
   CtoLnC,
   CtoNnC,
@@ -294,8 +295,7 @@ typedef enum
 
 // define names for the Changer Type field of the general ceiling
 
-typedef enum
-{
+typedef enum {
   CNoChg,
   CChgZero,
   CChgTxt,
@@ -304,16 +304,14 @@ typedef enum
 
 // define names for the Change Model field of the general ceiling
 
-typedef enum
-{
+typedef enum {
   CTriggerModel,
   CNumericModel,
 } ceilingmodel_t;
 
 // define names for the Target field of the general lift
 
-typedef enum
-{
+typedef enum {
   F2LnF,
   F2NnF,
   F2LnC,
@@ -322,8 +320,7 @@ typedef enum
 
 // define names for the door Kind field of the general ceiling
 
-typedef enum
-{
+typedef enum {
   OdCDoor,
   ODoor,
   CdODoor,
@@ -332,8 +329,7 @@ typedef enum
 
 // define names for the locked door Kind field of the general ceiling
 
-typedef enum
-{
+typedef enum {
   AnyKey,
   RCard,
   BCard,
@@ -352,32 +348,28 @@ typedef enum
 
 //jff 2/23/98 identify the special classes that can share sectors
 
-typedef enum
-{
+typedef enum {
   floor_special,
   ceiling_special,
   lighting_special,
 } special_e;
 
 //jff 3/15/98 pure texture/type change for better generalized support
-typedef enum
-{
+typedef enum {
   trigChangeOnly,
   numChangeOnly,
 } change_e;
 
 // p_plats
 
-typedef enum
-{
+typedef enum {
   up,
   down,
   waiting,
   in_stasis
 } plat_e;
 
-typedef enum
-{
+typedef enum {
   perpetualRaise,
   downWaitUpStay,
   raiseAndChange,
@@ -386,13 +378,11 @@ typedef enum
   genLift,      //jff added to support generalized Plat types
   genPerpetual,
   toggleUpDn,   //jff 3/14/98 added to support instant toggle type
-
 } plattype_e;
 
 // p_doors
 
-typedef enum
-{
+typedef enum {
   normal,
   close30ThenOpen,
   closeDoor,
@@ -415,8 +405,7 @@ typedef enum
 
 // p_ceilng
 
-typedef enum
-{
+typedef enum {
   lowerToFloor,
   raiseToHighest,
   lowerToLowest,
@@ -435,13 +424,11 @@ typedef enum
   //jff 02/05/98 add types for generalized ceiling mover
   genCrusher,
   genSilentCrusher,
-
 } ceiling_e;
 
 // p_floor
 
-typedef enum
-{
+typedef enum {
   // lower floor to highest surrounding floor
   lowerFloor,
 
@@ -497,15 +484,12 @@ typedef enum
   genBuildStair,
 } floor_e;
 
-typedef enum
-{
+typedef enum {
   build8, // slowly build by 8
   turbo16 // quickly build by 16
-
 } stair_e;
 
-typedef enum
-{
+typedef enum {
   elevateUp,
   elevateDown,
   elevateCurrent,
@@ -518,17 +502,14 @@ typedef enum
 //////////////////////////////////////////////////////////////////
 
 // texture type enum
-typedef enum
-{
-    top,
-    middle,
-    bottom
-
+typedef enum {
+  top,
+  middle,
+  bottom
 } bwhere_e;
 
 // crush check returns
-typedef enum
-{
+typedef enum {
   ok,
   crushed,
   pastdest
@@ -548,10 +529,9 @@ typedef enum
 #pragma options align=packed
 #endif
 
-typedef struct
-{
-  char name1[9];
-  char name2[9];
+typedef struct {
+  char  name1[9];
+  char  name2[9];
   short episode;
 } PACKEDATTR switchlist_t; //jff 3/23/98 pack to read from memory
 
@@ -559,79 +539,69 @@ typedef struct
 #pragma options align=reset
 #endif
 
-typedef struct
-{
-  line_t* line;
-  bwhere_e where;
-  int   btexture;
-  int   btimer;
-  mobj_t* soundorg;
-
+typedef struct {
+  line_t   *line;
+  bwhere_e  where;
+  int       btexture;
+  int       btimer;
+  mobj_t   *soundorg;
 } button_t;
 
 // p_lights
 
-typedef struct
-{
-  thinker_t thinker;
-  sector_t* sector;
-  int count;
-  int maxlight;
-  int minlight;
+typedef struct {
+  thinker_t  thinker;
+  sector_t  *sector;
+  int        count;
+  int        maxlight;
+  int        minlight;
 
 } fireflicker_t;
 
 typedef struct
 {
-  thinker_t thinker;
-  sector_t* sector;
-  int count;
-  int maxlight;
-  int minlight;
-  int maxtime;
-  int mintime;
-
+  thinker_t  thinker;
+  sector_t  *sector;
+  int        count;
+  int        maxlight;
+  int        minlight;
+  int        maxtime;
+  int        mintime;
 } lightflash_t;
 
-typedef struct
-{
-  thinker_t thinker;
-  sector_t* sector;
-  int count;
-  int minlight;
-  int maxlight;
-  int darktime;
-  int brighttime;
-
+typedef struct {
+  thinker_t  thinker;
+  sector_t  *sector;
+  int        count;
+  int        minlight;
+  int        maxlight;
+  int        darktime;
+  int        brighttime;
 } strobe_t;
 
-typedef struct
-{
-  thinker_t thinker;
-  sector_t* sector;
-  int minlight;
-  int maxlight;
-  int direction;
-
+typedef struct {
+  thinker_t  thinker;
+  sector_t  *sector;
+  int        minlight;
+  int        maxlight;
+  int        direction;
 } glow_t;
 
 // p_plats
 
-typedef struct
-{
-  thinker_t thinker;
-  sector_t* sector;
-  fixed_t speed;
-  fixed_t low;
-  fixed_t high;
-  int wait;
-  int count;
-  plat_e status;
-  plat_e oldstatus;
-  int crush;
-  int tag;
-  plattype_e type;
-
+typedef struct {
+  thinker_t        thinker;
+  sector_t        *sector;
+  fixed_t          speed;
+  fixed_t          low;
+  fixed_t          high;
+  int              wait;
+  int              count;
+  plat_e           status;
+  plat_e           oldstatus;
+  int              crush;
+  int              tag;
+  plattype_e       type;
   struct platlist *list;   // killough
 } plat_t;
 
@@ -786,6 +756,10 @@ typedef struct {
 //
 //////////////////////////////////////////////////////////////////
 
+extern bool zerotag_manual;
+extern TAnimItemParam *anim_flats;
+extern TAnimItemParam *anim_textures;
+
 // list of retriggerable buttons active
 extern button_t buttonlist[MAXBUTTONS];
 
@@ -830,6 +804,8 @@ bool      PUREFUNC P_SectorActive(special_e t, const sector_t *s);
 bool      PUREFUNC P_IsSecret(const sector_t *sec);
 bool      PUREFUNC P_WasSecret(const sector_t *sec);
 void      P_ChangeSwitchTexture(line_t *line, int useAgain);
+bool      ProcessNoTagLines(line_t* line, sector_t **sec, int *secnum);
+
 
 ////////////////////////////////////////////////////////////////
 //

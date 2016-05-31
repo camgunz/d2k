@@ -23,25 +23,32 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
 #include "e6y.h"//e6y
 #include "g_game.h"
 #include "g_overflow.h"
-#include "hu_tracers.h"
 #include "m_argv.h"
 #include "m_bbox.h"
 #include "m_random.h"
 #include "n_net.h"
+#include "p_setup.h"
+#include "p_mobj.h"
 #include "p_inter.h"
 #include "p_map.h"
 #include "p_maputl.h"
-#include "p_mobj.h"
-#include "p_setup.h"
 #include "p_spec.h"
+#include "p_user.h"
+#include "r_defs.h"
 #include "r_main.h"
+#include "r_state.h"
 #include "s_sound.h"
 #include "sounds.h"
+#include "v_video.h"
+
+#include "hu_lib.h"
+#include "hu_tracers.h"
 
 static mobj_t    *tmthing;
 static fixed_t   tmx;
@@ -703,7 +710,7 @@ static bool PIT_CheckThing(mobj_t *thing) { // killough 3/26/98: make static
   // check for special pickup
 
   if (thing->flags & MF_SPECIAL) {
-    uint_64_t solid = thing->flags & MF_SOLID;
+    uint64_t solid = thing->flags & MF_SOLID;
 
     if (tmthing->flags & MF_PICKUP) { 
       P_TouchSpecialThing(thing, tmthing); // can remove thing
@@ -1510,7 +1517,7 @@ mobj_t*   crosshair_target;
 static mobj_t*   shootthing;
 
 /* killough 8/2/98: for more intelligent autoaiming */
-static uint_64_t aim_flags_mask;
+static uint64_t aim_flags_mask;
 
 // Height if not aiming up or down
 fixed_t   shootz;
@@ -1755,7 +1762,7 @@ bool PTR_ShootTraverse (intercept_t* in)
 //
 // P_AimLineAttack
 //
-fixed_t P_AimLineAttack(mobj_t* t1,angle_t angle,fixed_t distance, uint_64_t mask)
+fixed_t P_AimLineAttack(mobj_t* t1,angle_t angle,fixed_t distance, uint64_t mask)
 {
   fixed_t x2;
   fixed_t y2;

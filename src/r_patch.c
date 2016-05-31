@@ -53,24 +53,27 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
+#include "m_swap.h"
 #include "w_wad.h"
+#include "p_tick.h"
+#include "i_system.h"
+#include "r_defs.h"
+#include "r_data.h"
+#include "r_draw.h"
+#include "r_patch.h"
 #include "r_main.h"
 #include "r_sky.h"
 #include "r_bsp.h"
 #include "r_things.h"
-#include "p_tick.h"
-#include "i_system.h"
-#include "r_draw.h"
-#include "r_patch.h"
 #include "v_video.h"
-#include <assert.h>
 
 // posts are runs of non masked source pixels
 typedef struct
 {
-  byte topdelta; // -1 is the last post in a column
-  byte length;   // length data bytes follows
+  unsigned char topdelta; // -1 is the last post in a column
+  unsigned char length;   // length data bytes follows
 } post_t;
 
 // column_t is a list of 0 or more post_t, (byte)-1 terminated
@@ -163,9 +166,14 @@ static int getPatchIsNotTileable(const patch_t *patch) {
   int hasAHole = 0;
 
   for (x=0; x<LittleShort(patch->width); x++) {
-    column = (const column_t *)((const byte *)patch + LittleLong(patch->columnofs[x]));
-    if (!x) lastColumnDelta = column->topdelta;
-    else if (lastColumnDelta != column->topdelta) hasAHole = 1;
+    column = (const column_t *)((const unsigned char *)patch +
+             LittleLong(patch->columnofs[x]));
+    if (!x) {
+      lastColumnDelta = column->topdelta;
+    }
+    else if (lastColumnDelta != column->topdelta) {
+      hasAHole = 1;
+    }
 
     numPosts = 0;
     while (column->topdelta != 0xff) {
@@ -176,7 +184,7 @@ static int getPatchIsNotTileable(const patch_t *patch) {
       else if (x == LittleShort(patch->width)-1 && column->topdelta + column->length >= LittleShort(patch->height)) cornerCount++;
 
       if (numPosts++) hasAHole = 1;
-      column = (const column_t *)((const byte *)column + column->length + 4);
+      column = (const column_t *)((const unsigned char *)column + column->length + 4);
     }
   }
 
@@ -190,7 +198,7 @@ static int getIsSolidAtSpot(const column_t *column, int spot) {
   while (column->topdelta != 0xff) {
     if (spot < column->topdelta) return 0;
     if ((spot >= column->topdelta) && (spot <= column->topdelta + column->length)) return 1;
-    column = (const column_t*)((const byte*)column + 3 + column->length + 1);
+    column = (const column_t*)((const unsigned char*)column + 3 + column->length + 1);
   }
   return 0;
 }
@@ -322,12 +330,12 @@ static void createPatch(int id) {
   numPostsTotal = 0;
 
   for (x=0; x<patch->width; x++) {
-    oldColumn = (const column_t *)((const byte *)oldPatch + LittleLong(oldPatch->columnofs[x]));
+    oldColumn = (const column_t *)((const unsigned char *)oldPatch + LittleLong(oldPatch->columnofs[x]));
     numPostsInColumn[x] = 0;
     while (oldColumn->topdelta != 0xff) {
       numPostsInColumn[x]++;
       numPostsTotal++;
-      oldColumn = (const column_t *)((const byte *)oldColumn + oldColumn->length + 4);
+      oldColumn = (const column_t *)((const unsigned char *)oldColumn + oldColumn->length + 4);
     }
   }
 
@@ -344,7 +352,7 @@ static void createPatch(int id) {
   patch->posts = (rpost_t*)((unsigned char*)patch->columns + columnsDataSize);
 
   // sanity check that we've got all the memory allocated we need
-  assert((((byte*)patch->posts  + numPostsTotal*sizeof(rpost_t)) - (byte*)patch->data) == dataSize);
+  assert((((unsigned char*)patch->posts  + numPostsTotal*sizeof(rpost_t)) - (unsigned char*)patch->data) == dataSize);
 
   memset(patch->pixels, 0xff, (patch->width*patch->height));
 
@@ -353,14 +361,14 @@ static void createPatch(int id) {
   for (x=0; x<patch->width; x++) {
     int top = -1;
 
-    oldColumn = (const column_t *)((const byte *)oldPatch + LittleLong(oldPatch->columnofs[x]));
+    oldColumn = (const column_t *)((const unsigned char *)oldPatch + LittleLong(oldPatch->columnofs[x]));
 
     if (patch->flags&PATCH_ISNOTTILEABLE) {
       // non-tiling
       if (x == 0) oldPrevColumn = 0;
-      else oldPrevColumn = (const column_t *)((const byte *)oldPatch + LittleLong(oldPatch->columnofs[x-1]));
+      else oldPrevColumn = (const column_t *)((const unsigned char *)oldPatch + LittleLong(oldPatch->columnofs[x-1]));
       if (x == patch->width-1) oldNextColumn = 0;
-      else oldNextColumn = (const column_t *)((const byte *)oldPatch + LittleLong(oldPatch->columnofs[x+1]));
+      else oldNextColumn = (const column_t *)((const unsigned char *)oldPatch + LittleLong(oldPatch->columnofs[x+1]));
     }
     else {
       // tiling
@@ -368,8 +376,8 @@ static void createPatch(int id) {
       int nextColumnIndex = x+1;
       while (prevColumnIndex < 0) prevColumnIndex += patch->width;
       while (nextColumnIndex >= patch->width) nextColumnIndex -= patch->width;
-      oldPrevColumn = (const column_t *)((const byte *)oldPatch + LittleLong(oldPatch->columnofs[prevColumnIndex]));
-      oldNextColumn = (const column_t *)((const byte *)oldPatch + LittleLong(oldPatch->columnofs[nextColumnIndex]));
+      oldPrevColumn = (const column_t *)((const unsigned char *)oldPatch + LittleLong(oldPatch->columnofs[prevColumnIndex]));
+      oldNextColumn = (const column_t *)((const unsigned char *)oldPatch + LittleLong(oldPatch->columnofs[nextColumnIndex]));
     }
 
     // setup the column's data
@@ -412,12 +420,12 @@ static void createPatch(int id) {
         else if (edgeSlope == -1) patch->posts[numPostsUsedSoFar].slope |= RDRAW_EDGESLOPE_BOT_DOWN;
 
         // fill in the post's pixels
-        oldColumnPixelData = (const byte *)oldColumn + 3;
+        oldColumnPixelData = (const unsigned char *)oldColumn + 3;
         for (y=0; y<len; y++) {
           patch->pixels[x * patch->height + top + y] = oldColumnPixelData[y];
         }
       }
-      oldColumn = (const column_t *)((const byte *)oldColumn + oldColumn->length + 4);
+      oldColumn = (const column_t *)((const unsigned char *)oldColumn + oldColumn->length + 4);
       numPostsUsedSoFar++;
     }
   }
@@ -428,7 +436,7 @@ static void createPatch(int id) {
     // copy the patch image down and to the right where there are
     // holes to eliminate the black halo from bilinear filtering
     for (x=0; x<patch->width; x++) {
-      //oldColumn = (const column_t *)((const byte *)oldPatch + oldPatch->columnofs[x]);
+      //oldColumn = (const column_t *)((const unsigned char *)oldPatch + oldPatch->columnofs[x]);
 
       column = R_GetPatchColumnClamped(patch, x);
       prevColumn = R_GetPatchColumnClamped(patch, x-1);
@@ -572,11 +580,11 @@ static void createTextureCompositePatch(int id) {
 
       countsInColumn[tx].patches++;
 
-      oldColumn = (const column_t *)((const byte *)oldPatch + LittleLong(oldPatch->columnofs[x]));
+      oldColumn = (const column_t *)((const unsigned char *)oldPatch + LittleLong(oldPatch->columnofs[x]));
       while (oldColumn->topdelta != 0xff) {
         countsInColumn[tx].posts++;
         numPostsTotal++;
-        oldColumn = (const column_t *)((const byte *)oldColumn + oldColumn->length + 4);
+        oldColumn = (const column_t *)((const unsigned char *)oldColumn + oldColumn->length + 4);
       }
     }
 
@@ -596,7 +604,7 @@ static void createTextureCompositePatch(int id) {
   composite_patch->posts = (rpost_t*)((unsigned char*)composite_patch->columns + columnsDataSize);
 
   // sanity check that we've got all the memory allocated we need
-  assert((((byte*)composite_patch->posts + numPostsTotal*sizeof(rpost_t)) - (byte*)composite_patch->data) == dataSize);
+  assert((((unsigned char*)composite_patch->posts + numPostsTotal*sizeof(rpost_t)) - (unsigned char*)composite_patch->data) == dataSize);
 
   memset(composite_patch->pixels, 0xff, (composite_patch->width*composite_patch->height));
 
@@ -625,7 +633,7 @@ static void createTextureCompositePatch(int id) {
       if (tx >= composite_patch->width)
         break;
 
-      oldColumn = (const column_t *)((const byte *)oldPatch + LittleLong(oldPatch->columnofs[x]));
+      oldColumn = (const column_t *)((const unsigned char *)oldPatch + LittleLong(oldPatch->columnofs[x]));
 
       {
         // tiling
@@ -633,8 +641,8 @@ static void createTextureCompositePatch(int id) {
         int nextColumnIndex = x+1;
         while (prevColumnIndex < 0) prevColumnIndex += LittleShort(oldPatch->width);
         while (nextColumnIndex >= LittleShort(oldPatch->width)) nextColumnIndex -= LittleShort(oldPatch->width);
-        oldPrevColumn = (const column_t *)((const byte *)oldPatch + LittleLong(oldPatch->columnofs[prevColumnIndex]));
-        oldNextColumn = (const column_t *)((const byte *)oldPatch + LittleLong(oldPatch->columnofs[nextColumnIndex]));
+        oldPrevColumn = (const column_t *)((const unsigned char *)oldPatch + LittleLong(oldPatch->columnofs[prevColumnIndex]));
+        oldNextColumn = (const column_t *)((const unsigned char *)oldPatch + LittleLong(oldPatch->columnofs[nextColumnIndex]));
       }
 
       while (oldColumn->topdelta != 0xff) {
@@ -650,7 +658,7 @@ static void createTextureCompositePatch(int id) {
           top = oldColumn->topdelta;
         }
 
-        oldColumnPixelData = (const byte *)oldColumn + 3;
+        oldColumnPixelData = (const unsigned char *)oldColumn + 3;
         oy = texpatch->originy;
         count = oldColumn->length;
         // the original renderer had several bugs which we reproduce here
@@ -714,7 +722,7 @@ static void createTextureCompositePatch(int id) {
           composite_patch->pixels[tx * composite_patch->height + ty] = oldColumnPixelData[y];
         }
 
-        oldColumn = (const column_t *)((const byte *)oldColumn + oldColumn->length + 4);
+        oldColumn = (const column_t *)((const unsigned char *)oldColumn + oldColumn->length + 4);
         countsInColumn[tx].posts_used++;
         assert(countsInColumn[tx].posts_used <= countsInColumn[tx].posts);
       }
@@ -761,7 +769,7 @@ static void createTextureCompositePatch(int id) {
     // copy the patch image down and to the right where there are
     // holes to eliminate the black halo from bilinear filtering
     for (x=0; x<composite_patch->width; x++) {
-      //oldColumn = (const column_t *)((const byte *)oldPatch + oldPatch->columnofs[x]);
+      //oldColumn = (const column_t *)((const unsigned char *)oldPatch + oldPatch->columnofs[x]);
 
       column = R_GetPatchColumnClamped(composite_patch, x);
       prevColumn = R_GetPatchColumnClamped(composite_patch, x-1);

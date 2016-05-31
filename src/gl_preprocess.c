@@ -27,13 +27,18 @@
 #define CALLBACK
 #endif
 
+#include "doomdef.h"
 #include "doomstat.h"
-#include "p_maputl.h"
-#include "r_main.h"
 #include "am_map.h"
+#include "p_maputl.h"
+#include "r_defs.h"
+#include "r_main.h"
+#include "r_state.h"
+#include "v_video.h"
 #include "gl_opengl.h"
 #include "gl_intern.h"
 #include "gl_struct.h"
+#include "p_setup.h"
 
 static FILE *levelinfo;
 
@@ -956,15 +961,15 @@ static void gld_PreprocessSectors(void)
 
   if (numsegs)
   {
-    segrendered=calloc(numsegs, sizeof(byte));
+    segrendered=calloc(numsegs, sizeof(unsigned char));
     if (!segrendered)
       I_Error("gld_PreprocessSectors: Not enough memory for array segrendered");
   }
 
   if (numlines)
   {
-    linerendered[0]=calloc(numlines, sizeof(byte));
-    linerendered[1]=calloc(numlines, sizeof(byte));
+    linerendered[0]=calloc(numlines, sizeof(unsigned char));
+    linerendered[1]=calloc(numlines, sizeof(unsigned char));
     if (!linerendered[0] || !linerendered[1])
       I_Error("gld_PreprocessSectors: Not enough memory for array linerendered");
   }

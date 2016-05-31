@@ -24,8 +24,6 @@
 #ifndef TABLES_H__
 #define TABLES_H__
 
-#include "m_fixed.h"
-
 #define FINEANGLES              8192
 #define FINEMASK                (FINEANGLES-1)
 

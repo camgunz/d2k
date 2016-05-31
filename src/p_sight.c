@@ -23,16 +23,19 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
-#include "doomtype.h"
+#include "r_defs.h"
 #include "r_main.h"
+#include "r_state.h"
 #include "p_map.h"
 #include "p_maputl.h"
 #include "p_setup.h"
 #include "m_bbox.h"
 #include "g_overflow.h"
-#include "e6y.h" //e6y
-
+#include "e6y.h"
+#include "g_game.h"
+#include "p_mobj.h"
 
 /*
 ==============================================================================

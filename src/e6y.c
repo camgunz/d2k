@@ -28,33 +28,41 @@
 #include <SDL_syswm.h>
 #endif
 
-#include "hu_lib.h"
+#include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
 #include "d_main.h"
 #include "s_sound.h"
 #include "i_system.h"
 #include "i_main.h"
+#include "sounds.h"
 #include "i_sound.h"
 #include "m_menu.h"
 #include "m_argv.h"
 #include "m_misc.h"
 #include "n_net.h"
 #include "i_system.h"
+#include "r_defs.h"
+#include "r_draw.h"
+#include "r_screenmultiply.h"
+#include "r_main.h"
+#include "r_patch.h"
+#include "r_things.h"
+#include "r_sky.h"
+#include "v_video.h"
+
 #include "p_maputl.h"
 #include "p_map.h"
 #include "i_video.h"
 #include "info.h"
-#include "r_screenmultiply.h"
-#include "r_main.h"
-#include "r_things.h"
-#include "r_sky.h"
 #include "am_map.h"
+#include "hu_lib.h"
 #include "hu_tracers.h"
-#ifdef GL_DOOM
 #include "gl_opengl.h"
 #include "gl_struct.h"
-#endif
+#include "p_user.h"
 #include "g_game.h"
+#include "w_wad.h"
 #include "r_demo.h"
 #include "d_deh.h"
 #include "e6y.h"
@@ -116,11 +124,6 @@ int palette_onpowers;
 float mouse_accelfactor;
 
 camera_t walkcamera;
-
-hu_textline_t  w_hudadd;
-hu_textline_t  w_precache;
-char hud_add[80];
-char hud_centermsg[80];
 
 int mouseSensitivity_mlook;
 angle_t viewpitch;
@@ -278,8 +281,6 @@ void G_SkipDemoStart(void)
   I_Init2();
 }
 
-bool sound_inited_once = false;
-
 void G_SkipDemoStop(void)
 {
   fastdemo = saved_fastdemo;
@@ -344,13 +345,13 @@ int G_ReloadLevel(void)
 
 int G_GotoNextLevel(void)
 {
-  static byte doom2_next[33] = {
+  static unsigned char doom2_next[33] = {
     2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
     12, 13, 14, 15, 31, 17, 18, 19, 20, 21,
     22, 23, 24, 25, 26, 27, 28, 29, 30, 1,
     32, 16, 3
   };
-  static byte doom_next[4][9] = {
+  static unsigned char doom_next[4][9] = {
     {12, 13, 19, 15, 16, 17, 18, 21, 14},
     {22, 23, 24, 25, 29, 27, 28, 31, 26},
     {32, 33, 34, 35, 36, 39, 38, 41, 37},
@@ -991,22 +992,6 @@ void e6y_G_Compatibility(void)
   }
 }
 
-bool zerotag_manual;
-
-bool ProcessNoTagLines(line_t* line, sector_t **sec, int *secnum)
-{
-  zerotag_manual = false;
-  if (line->tag == 0 && comperr(comperr_zerotag))
-  {
-    if (!(*sec=line->backsector))
-      return true;
-    *secnum = (*sec)->iSectorID;
-    zerotag_manual = true;
-    return true;
-  }
-  return false;
-}
-
 char* PathFindFileName(const char* pPath)
 {
   const char* pT = pPath;
@@ -1064,7 +1049,7 @@ int HU_DrawDemoProgress(int force)
     return false;
 
   tics_count = ((doSkip && demo_skiptics > 0) ? MIN(demo_skiptics, demo_tics_count) : demo_tics_count) * demo_playerscount;
-  len = MIN(SCREENWIDTH, (int)((int_64_t)SCREENWIDTH * demo_curr_tic / tics_count));
+  len = MIN(SCREENWIDTH, (int)((int64_t)SCREENWIDTH * demo_curr_tic / tics_count));
 
   if (!force)
   {

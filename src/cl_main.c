@@ -27,8 +27,7 @@
 
 #include "doomdef.h"
 #include "d_event.h"
-#include "d_ticcmd.h"
-#include "d_player.h"
+#include "p_user.h"
 #include "g_game.h"
 #include "n_net.h"
 #include "n_main.h"
@@ -37,8 +36,7 @@
 #include "n_proto.h"
 #include "cl_cmd.h"
 #include "cl_main.h"
-#include "p_cmd.h"
-#include "p_user.h"
+#include "r_defs.h"
 #include "r_fps.h"
 #include "r_state.h"
 #include "s_sound.h"
@@ -210,8 +208,8 @@ static void cl_repredict(int saved_gametic) {
     return;
   }
 
-  cl_set_repredicting(player->latest_command_run_index, latest_command_index);
-  while (player->latest_command_run_index < latest_command_index) {
+  cl_set_repredicting(player->cmdq.latest_command_run_index, latest_command_index);
+  while (player->cmdq.latest_command_run_index < latest_command_index) {
     N_RunTic();
     if (players[displayplayer].mo != NULL) {
       R_InterpolateView(&players[displayplayer]);
@@ -261,7 +259,7 @@ void CL_CheckForStateUpdates(void) {
     server->sync.command_index,
     server->sync.delta.from_tic,
     server->sync.delta.to_tic,
-    players[consoleplayer].latest_command_run_index
+    players[consoleplayer].cmdq.latest_command_run_index
   );
 
   S_ResetSoundLog();
@@ -286,7 +284,7 @@ void CL_CheckForStateUpdates(void) {
     server->sync.command_index,
     server->sync.delta.from_tic,
     server->sync.delta.to_tic,
-    players[consoleplayer].latest_command_run_index
+    players[consoleplayer].cmdq.latest_command_run_index
   );
 
 #ifdef LOG_SECTOR

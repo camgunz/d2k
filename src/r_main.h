@@ -24,12 +24,20 @@
 #ifndef R_MAIN_H__
 #define R_MAIN_H__
 
-#include "d_player.h"
-#include "r_data.h"
+struct vertex_s;
+typedef struct vertex_s vertex_t;
 
-#ifdef __GNUG__
-#pragma interface
-#endif
+struct subsector_s;
+typedef struct subsector_s subsector_t;
+
+struct seg_s;
+typedef struct seg_s seg_t;
+
+struct node_s;
+typedef struct node_s node_t;
+
+struct player_s;
+typedef struct player_s player_t;
 
 extern int r_frame_count;
 

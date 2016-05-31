@@ -24,12 +24,6 @@
 #ifndef R_DRAW_H__
 #define R_DRAW_H__
 
-#include "r_defs.h"
-
-#ifdef __GNUG__
-#pragma interface
-#endif
-
 enum column_pipeline_e {
   RDC_PIPELINE_STANDARD,
   RDC_PIPELINE_TRANSLUCENT,
@@ -75,12 +69,12 @@ typedef struct draw_column_vars_s
   fixed_t             texturemid;
   int                 texheight;    // killough
   fixed_t             texu; // the current column u coord
-  const byte          *source; // first pixel in a column
-  const byte          *prevsource; // first pixel in previous column
-  const byte          *nextsource; // first pixel in next column
+  const unsigned char *source; // first pixel in a column
+  const unsigned char *prevsource; // first pixel in previous column
+  const unsigned char *nextsource; // first pixel in next column
   const lighttable_t  *colormap;
   const lighttable_t  *nextcolormap;
-  const byte          *translation;
+  const unsigned char *translation;
   int                 edgeslope; // OR'ed RDRAW_EDGESLOPE_*
   // 1 if R_DrawColumn* is currently drawing a masked column, otherwise 0
   int                 drawingmasked;
@@ -102,13 +96,13 @@ typedef struct {
   fixed_t             yfrac;
   fixed_t             xstep;
   fixed_t             ystep;
-  const byte          *source; // start of a 64*64 tile image
+  const unsigned char *source; // start of a 64*64 tile image
   const lighttable_t  *colormap;
   const lighttable_t  *nextcolormap;
 } draw_span_vars_t;
 
 typedef struct {
-  byte           *byte_topleft;
+  unsigned char  *byte_topleft;
   unsigned int   *int_topleft;
   int   byte_pitch;
   int   int_pitch;
@@ -130,8 +124,10 @@ typedef struct {
 
 extern draw_vars_t drawvars;
 
-extern byte playernumtotrans[MAXPLAYERS]; // CPhipps - what translation table for what player
-extern byte       *translationtables;
+// CPhipps - what translation table for what player
+extern unsigned char playernumtotrans[MAXPLAYERS];
+
+extern unsigned char *translationtables;
 
 R_DrawColumn_f R_GetDrawColumnFunc(enum column_pipeline_e type,
                                    enum draw_filter_type_e filter,

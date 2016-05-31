@@ -43,7 +43,7 @@
 #endif
 
 typedef struct {
-  byte chunk_id[4];
+  unsigned char chunk_id[4];
   unsigned int chunk_size;
 } PACKEDATTR chunk_header_t;
 
@@ -71,11 +71,11 @@ struct midi_track_iter_s {
 };
 
 struct midi_file_s {
-  midi_header_t header;
-  midi_track_t *tracks;      // All tracks in this file:
-  unsigned int  num_tracks;
-  byte         *buffer;      // Data buffer used to store data read for SysEx
-  unsigned int  buffer_size; // or meta events
+  midi_header_t  header;
+  midi_track_t  *tracks;      // All tracks in this file:
+  unsigned int   num_tracks;
+  unsigned char *buffer;      // Data buffer used to store data read for SysEx
+  unsigned int   buffer_size; // or meta events
 };
 
 // Check the header of a chunk:
@@ -100,7 +100,7 @@ static bool CheckChunkHeader(chunk_header_t *chunk,
 }
 
 // Read a single byte.  Returns false on error.
-static bool ReadByte(byte *result, midimem_t *mf) {
+static bool ReadByte(unsigned char *result, midimem_t *mf) {
   if (mf->pos >= mf->len) {
     D_Msg(MSG_WARN, "ReadByte: Unexpected end of file\n");
     return false;
@@ -112,7 +112,7 @@ static bool ReadByte(byte *result, midimem_t *mf) {
 }
 
 static bool ReadMultipleBytes(void *dest, size_t len, midimem_t *mf) {
-  byte *cdest = (byte *) dest;
+  unsigned char *cdest = (unsigned char *) dest;
 
   for (unsigned int i = 0; i < len; i++) {
     if (!ReadByte (cdest + i, mf)) {
@@ -128,7 +128,7 @@ static bool ReadMultipleBytes(void *dest, size_t len, midimem_t *mf) {
 // Read a variable-length value.
 static bool ReadVariableLength(unsigned int *result, midimem_t *mf) {
   int i;
-  byte b;
+  unsigned char b;
 
   *result = 0;
 
@@ -161,7 +161,7 @@ static bool ReadVariableLength(unsigned int *result, midimem_t *mf) {
 // Read a byte sequence into the data buffer.
 static void* ReadByteSequence(unsigned int num_bytes, midimem_t *mf) {
   unsigned int i;
-  byte *result;
+  unsigned char *result;
 
   // events can be length 0.  malloc(0) is not portable (can return NULL)
   if (!num_bytes)
@@ -191,10 +191,10 @@ static void* ReadByteSequence(unsigned int num_bytes, midimem_t *mf) {
 // Read a MIDI channel event.
 // two_param indicates that the event type takes two parameters
 // (three byte) otherwise it is single parameter (two byte)
-static bool ReadChannelEvent(midi_event_t *event, byte event_type,
+static bool ReadChannelEvent(midi_event_t *event, unsigned char event_type,
                                                   bool two_param,
                                                   midimem_t *mf) {
-  byte b;
+  unsigned char b;
 
   // Set basics:
   event->event_type = event_type & 0xf0;
@@ -254,7 +254,7 @@ static bool ReadSysExEvent(midi_event_t *event, int event_type,
 
 // Read meta event:
 static bool ReadMetaEvent(midi_event_t *event, midimem_t *mf) {
-  byte b;
+  unsigned char b;
 
   event->event_type = MIDI_EVENT_META;
 
@@ -289,7 +289,7 @@ static bool ReadMetaEvent(midi_event_t *event, midimem_t *mf) {
 
 static bool ReadEvent(midi_event_t *event, unsigned int *last_event_type,
                                            midimem_t *mf) {
-  byte event_type;
+  unsigned char event_type;
 
   if (!ReadVariableLength(&event->delta_time, mf)) {
     D_Msg(MSG_WARN, "ReadEvent: Failed to read event timestamp\n");

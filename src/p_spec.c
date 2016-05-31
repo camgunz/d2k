@@ -23,30 +23,41 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "d_deh.h"
 #include "d_englsh.h"
 #include "d_event.h"
 #include "e6y.h"
 #include "g_game.h"
-#include "hu_stuff.h"
+#include "r_defs.h"
 #include "i_sound.h"
 #include "m_argv.h"
 #include "m_bbox.h"                                         // phares 3/20/98
 #include "m_random.h"
+#include "m_swap.h"
 #include "n_net.h"
 #include "p_inter.h"
 #include "p_map.h"
 #include "p_maputl.h"
 #include "p_setup.h"
+#include "p_mobj.h"
 #include "p_spec.h"
 #include "p_tick.h"
 #include "p_user.h"
+#include "r_defs.h"
 #include "r_main.h"
+#include "r_patch.h"
+#include "r_data.h"
 #include "r_plane.h"
+#include "r_state.h"
 #include "s_sound.h"
 #include "sounds.h"
+#include "v_video.h"
 #include "w_wad.h"
+
+#include "hu_lib.h"
+#include "hu_stuff.h"
 
 //
 //      source animation definition
@@ -88,6 +99,26 @@ static void P_SpawnScrollers(void);
 
 static void P_SpawnFriction(void);    // phares 3/16/98
 static void P_SpawnPushers(void);     // phares 3/20/98
+
+bool zerotag_manual;
+
+bool ProcessNoTagLines(line_t *line, sector_t **sec, int *secnum) {
+  zerotag_manual = false;
+
+  if (line->tag == 0 && comperr(comperr_zerotag)) {
+    if (!(*sec=line->backsector)) {
+      return true;
+    }
+
+    *secnum = (*sec)->iSectorID;
+
+    zerotag_manual = true;
+
+    return true;
+  }
+
+  return false;
+}
 
 //e6y
 void MarkAnimatedTextures(void) {
@@ -2877,8 +2908,8 @@ static void Add_WallScroller(fixed_t dx, fixed_t dy, const line_t *l,
 
   // CPhipps - Import scroller calc overflow fix, compatibility optioned
   if (compatibility_level >= lxdoom_1_compatibility) {
-    x = (fixed_t)(((int_64_t)dy * -(int_64_t)l->dy - (int_64_t)dx * (int_64_t)l->dx) / (int_64_t)d);  // killough 10/98:
-    y = (fixed_t)(((int_64_t)dy * (int_64_t)l->dx - (int_64_t)dx * (int_64_t)l->dy) / (int_64_t)d);   // Use long long arithmetic
+    x = (fixed_t)(((int64_t)dy * -(int64_t)l->dy - (int64_t)dx * (int64_t)l->dx) / (int64_t)d);  // killough 10/98:
+    y = (fixed_t)(((int64_t)dy * (int64_t)l->dx - (int64_t)dx * (int64_t)l->dy) / (int64_t)d);   // Use long long arithmetic
   } else {
     x = -FixedDiv(FixedMul(dy, l->dy) + FixedMul(dx, l->dx), d);
     y = -FixedDiv(FixedMul(dx, l->dy) - FixedMul(dy, l->dx), d);
@@ -3285,7 +3316,7 @@ static bool PIT_PushThing(mobj_t* thing)
         {
           int x = (thing->x-sx) >> FRACBITS;
           int y = (thing->y-sy) >> FRACBITS;
-          speed = (int)(((uint_64_t) tmpusher->magnitude << 23) / (x*x+y*y+1));
+          speed = (int)(((uint64_t) tmpusher->magnitude << 23) / (x*x+y*y+1));
         }
 
       // If speed <= 0, you're outside the effective radius. You also have

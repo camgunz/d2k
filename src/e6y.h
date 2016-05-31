@@ -24,11 +24,6 @@
 #ifndef E6Y_H__
 #define E6Y_H__
 
-#include <stdarg.h>
-
-#include "hu_lib.h"
-#include "r_demo.h"
-
 #define HU_HUDADDX (HU_HUDX)
 #define HU_HUDADDY (HU_HUDY+(-1)*HU_GAPY)
 #define HU_CENTERMSGX (320/2)
@@ -80,7 +75,6 @@ extern const char *avi_shot_fname;
 
 extern int speed_step;
 
-extern bool doSkip;
 extern bool demo_stoponnext;
 extern bool demo_stoponend;
 extern bool demo_warp;
@@ -142,11 +136,6 @@ extern float skyXShift;
 extern float skyYShift;
 extern bool mlook_or_fov;
 
-extern hu_textline_t  w_hudadd;
-extern hu_textline_t  w_precache;
-extern char hud_add[80];
-extern char hud_centermsg[80];
-
 void e6y_assert(const char *format, ...);
 
 void ParamsMatchingCheck();
@@ -156,7 +145,6 @@ void P_WalkTicker ();
 void P_SyncWalkcam(bool sync_coords, bool sync_sight);
 void P_ResetWalkcam(void);
 
-extern bool sound_inited_once;
 void G_SkipDemoStart(void);
 void G_SkipDemoStop(void);
 void G_SkipDemoCheck(void);
@@ -282,10 +270,6 @@ extern int mlooky;
 extern int realtic_clock_rate;
 
 void e6y_G_Compatibility(void);
-
-extern bool zerotag_manual;
-
-bool ProcessNoTagLines(line_t* line, sector_t **sec, int *secnum);
 
 #define I_FindName(a)	((a)->Name)
 #define I_FindAttr(a)	((a)->Attribs)

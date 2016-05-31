@@ -23,11 +23,11 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
 #include "e6y.h"//e6y
 #include "g_game.h"
-#include "hu_stuff.h"
 #include "i_sound.h"
 #include "m_bbox.h"
 #include "m_random.h"
@@ -39,9 +39,17 @@
 #include "p_setup.h"
 #include "p_spec.h"
 #include "p_tick.h"
+#include "r_defs.h"
 #include "r_main.h"
+#include "r_state.h"
 #include "s_sound.h"
 #include "sounds.h"
+#include "p_mobj.h"
+#include "p_user.h"
+
+#include "v_video.h"
+#include "hu_lib.h"
+#include "hu_stuff.h"
 
 static mobj_t *current_actor;
 
@@ -2729,7 +2737,7 @@ void A_Turn(mobj_t *mo)
       !prboom_comp[PC_APPLY_MBF_CODEPOINTERS_TO_ANY_COMPLEVEL].state)
     return;
 
-  mo->angle += (unsigned int)(((uint_64_t) mo->state->misc1 << 32) / 360);
+  mo->angle += (unsigned int)(((uint64_t) mo->state->misc1 << 32) / 360);
 }
 
 void A_Face(mobj_t *mo)
@@ -2738,7 +2746,7 @@ void A_Face(mobj_t *mo)
       !prboom_comp[PC_APPLY_MBF_CODEPOINTERS_TO_ANY_COMPLEVEL].state)
     return;
 
-  mo->angle = (unsigned int)(((uint_64_t) mo->state->misc1 << 32) / 360);
+  mo->angle = (unsigned int)(((uint64_t) mo->state->misc1 << 32) / 360);
 }
 
 void A_Scratch(mobj_t *mo)

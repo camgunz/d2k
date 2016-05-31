@@ -23,14 +23,27 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "m_bbox.h"
+#include "r_defs.h"
+#include "r_data.h"
+#include "r_draw.h"
 #include "r_main.h"
 #include "r_segs.h"
 #include "r_plane.h"
+#include "r_sky.h"
+#include "r_state.h"
 #include "r_things.h"
 #include "r_bsp.h" // cph - sanity checking
 #include "v_video.h"
+#include "p_setup.h"
+#include "g_game.h"
+#include "p_user.h"
+#include "p_mobj.h"
+
+#include "gl_opengl.h"
+#include "gl_struct.h"
 
 int currentsubsectornum;
 
@@ -63,7 +76,7 @@ void R_ClearDrawSegs(void)
 // indicating whether it's blocked by a solid wall yet or not.
 
 // e6y: resolution limitation is removed
-byte *solidcol;
+unsigned char *solidcol;
 
 // CPhipps -
 // R_ClipWallSegment
@@ -73,7 +86,7 @@ byte *solidcol;
 
 static void R_ClipWallSegment(int first, int last, bool solid)
 {
-  byte *p;
+  unsigned char *p;
   while (first < last) {
     if (solidcol[first]) {
       if (!(p = memchr(solidcol+first, 0, last-first))) return; // All solid

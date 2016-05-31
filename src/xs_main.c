@@ -26,6 +26,7 @@
 #include "doomdef.h"
 #include "d_main.h"
 #include "i_sound.h"
+#include "p_setup.h"
 #include "p_mobj.h"
 #include "s_sound.h"
 #include "x_intern.h"

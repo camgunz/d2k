@@ -25,6 +25,7 @@
 
 #include <enet/enet.h>
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "am_map.h"
 #include "g_game.h"
@@ -32,8 +33,8 @@
 #include "n_net.h"
 #include "n_state.h"
 #include "n_peer.h"
+#include "p_user.h"
 #include "cl_main.h"
-#include "p_cmd.h"
 #include "p_enemy.h"
 #include "p_ident.h"
 #include "p_map.h"
@@ -45,7 +46,10 @@
 #include "p_user.h"
 #include "r_main.h"
 #include "s_advsound.h"
-#include "e6y.h"//e6y
+#include "e6y.h"
+#include "p_mobj.h"
+#include "r_defs.h"
+#include "r_state.h"
 
 enum {
   ACTOR_X     = 1 << 0,
@@ -141,7 +145,7 @@ static void serialize_player(pbuf_t *savebuffer, int playernum) {
   M_PBufWriteInt(savebuffer, player->colormap);
   for (int i = 0; i < NUMPSPRITES; i++) {
     if (player->psprites[i].state) {
-      uint_64_t state_index;
+      uint64_t state_index;
 
       if (player->psprites[i].state < states) {
         I_Error(
@@ -185,7 +189,7 @@ static void serialize_player(pbuf_t *savebuffer, int playernum) {
   M_PBufWriteUInt(savebuffer, command_count);
   if (command_count > 0)
     P_ForEachCommand(playernum, serialize_command, savebuffer);
-  M_PBufWriteInt(savebuffer, player->latest_command_run_index);
+  // M_PBufWriteInt(savebuffer, player->latest_command_run_index);
 
   if (MULTINET) {
     M_PBufWriteInt(savebuffer, player->ping);
@@ -263,7 +267,7 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
   M_PBufReadInt(savebuffer, &player->fixedcolormap);
   M_PBufReadInt(savebuffer, &player->colormap);
   for (int i = 0; i < NUMPSPRITES; i++) {
-    uint_64_t state_index = 0;
+    uint64_t state_index = 0;
 
     M_PBufReadULong(savebuffer, &state_index);
 
@@ -321,7 +325,7 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
     P_InsertCommandSorted(playernum, &tmp_ncmd);
   }
 
-  M_PBufReadInt(savebuffer, &player->latest_command_run_index);
+  // M_PBufReadInt(savebuffer, &player->latest_command_run_index);
 
   if (MULTINET) {
     M_PBufReadInt(savebuffer, &player->ping);
@@ -342,7 +346,7 @@ static void serialize_actor_pointers(pbuf_t *savebuffer, mobj_t *mobj) {
   unsigned int target_id = 0;
   unsigned int tracer_id = 0;
   unsigned int lastenemy_id = 0;
-  uint_64_t    state_index = 0;
+  uint64_t     state_index = 0;
   unsigned int player_index = 0;
 
   // killough 2/14/98: convert pointers into indices.
@@ -373,7 +377,7 @@ static void serialize_actor_pointers(pbuf_t *savebuffer, mobj_t *mobj) {
     I_Error("serialize_actor_pointers: Invalid mobj state %p", mobj->state);
   }
 
-  state_index = (uint_64_t)(mobj->state - states);
+  state_index = (uint64_t)(mobj->state - states);
 
   if (state_index >= NUMSTATES) {
     I_Error("serialize_actor_pointers: Invalid mobj state %p", mobj->state);
@@ -407,7 +411,7 @@ static void deserialize_actor_pointers(pbuf_t *savebuffer, mobj_t *mobj) {
   unsigned int target_id    = 0;
   unsigned int tracer_id    = 0;
   unsigned int lastenemy_id = 0;
-  uint_64_t    state_index  = 0;
+  uint64_t     state_index  = 0;
   unsigned int player_index = 0;
   mobj_t *target    = NULL;
   mobj_t *tracer    = NULL;
@@ -681,10 +685,10 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
                                                     gpointer user_data) {
   mobjtype_t actor_type = (mobjtype_t)key;
   GPtrArray *actors = (GPtrArray *)value;
-  pbuf_t *savebuffer = (pbuf_t *)user_data;
-  mobj_t *mobj;
-  mobj_t last_actor;
-  uint_64_t state_index;
+  pbuf_t    *savebuffer = (pbuf_t *)user_data;
+  mobj_t    *mobj;
+  mobj_t     last_actor;
+  uint64_t   state_index;
 
   M_PBufWriteInt(savebuffer, actor_type);
   M_PBufWriteUInt(savebuffer, actors->len);
@@ -712,7 +716,7 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
     );
   }
 
-  state_index = (uint_64_t)(mobj->state - states);
+  state_index = (uint64_t)(mobj->state - states);
 
   if (state_index >= NUMSTATES) {
     I_Error("Invalid mobj state %p", mobj->state);
@@ -793,7 +797,7 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
       I_Error("Invalid mobj state %p", mobj->state);
     }
 
-    state_index = (uint_64_t)(mobj->state - states);
+    state_index = (uint64_t)(mobj->state - states);
 
     if (state_index >= NUMSTATES) {
       I_Error("Invalid mobj state %p", mobj->state);
@@ -871,7 +875,7 @@ static void deserialize_delta_compressed_actors(pbuf_t *savebuffer) {
     mobj_t *mobj;
     mobj_t *target;
     unsigned int target_id = 0;
-    uint_64_t state_index;
+    uint64_t state_index;
 
     M_PBufReadInt(savebuffer, (int *)(&actor_type));
 
@@ -1113,7 +1117,7 @@ static void deserialize_sector_index(pbuf_t *savebuffer, sector_t **s, const cha
 }
 
 static void serialize_line_index(pbuf_t *savebuffer, line_t *li, const char *fun) {
-  uint_64_t line_index;
+  uint64_t line_index;
 
   if (li < lines)
     I_Error("%s: Invalid line %p", fun, li);
@@ -1127,7 +1131,7 @@ static void serialize_line_index(pbuf_t *savebuffer, line_t *li, const char *fun
 }
 
 static void deserialize_line_index(pbuf_t *savebuffer, line_t **li, const char *fun) {
-  uint_64_t line_index;
+  uint64_t line_index;
 
   M_PBufReadULong(savebuffer, &line_index);
 

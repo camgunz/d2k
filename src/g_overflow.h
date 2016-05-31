@@ -24,9 +24,17 @@
 #ifndef G_OVERFLOW_H__
 #define G_OVERFLOW_H__
 
-#include "doomtype.h"
-#include "doomdata.h"
-#include "p_maputl.h"
+struct line_s;
+typedef struct line_s line_t;
+
+struct sector_s;
+typedef struct sector_s sector_t;
+
+struct mapthing_s;
+typedef struct mapthing_s mapthing_t;
+
+struct intercept_s;
+typedef struct intercept_s intercept_t;
 
 typedef struct overrun_param_s
 {
@@ -114,7 +122,7 @@ void SpechitOverrun(spechit_overrun_param_t *params);
 // reject overrun emulation
 //
 
-void RejectOverrun(int rejectlump, const byte **rejectmatrix, int totallines);
+void RejectOverrun(int rejectlump, const unsigned char **rejectmatrix, int totallines);
 
 //
 // donut overrun emulation (linedef action 9)

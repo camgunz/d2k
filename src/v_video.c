@@ -31,14 +31,21 @@
 #include "e6y.h"
 #include "i_video.h"
 #include "m_bbox.h"
+#include "r_defs.h"
+#include "r_data.h"
+#include "r_patch.h"
 #include "r_draw.h"
 #include "r_filter.h"
 #include "r_main.h"
 #include "r_screenmultiply.h"
+#include "r_state.h"
 #include "st_stuff.h"
 #include "v_video.h"
 #include "w_wad.h"   /* needed for color translation lump lookup */
 #include "x_main.h"
+
+#include "gl_opengl.h"
+#include "gl_struct.h"
 
 // DWF 2012-05-10
 // SetRatio sets the following global variables based on window geometry and
@@ -70,7 +77,7 @@ int render_patches_scaley;
 screeninfo_t screens[NUM_SCREENS];
 
 /* jff 4/24/98 initialize this at runtime */
-const byte *colrngs[CR_LIMIT];
+const unsigned char *colrngs[CR_LIMIT];
 
 int usegamma;
 
@@ -91,7 +98,7 @@ int usegamma;
 
 typedef struct {
   const char *name;
-  const byte **map;
+  const unsigned char **map;
 } crdef_t;
 
 // killough 5/2/98: table-driven approach
@@ -122,7 +129,7 @@ static const crdef_t crdefs[] = {
 // I don't care either way. It is effectively dual-licensed I suppose.
 
 unsigned int Col2RGB8[65][256];
-byte RGB32k[32][32][32];
+unsigned char RGB32k[32][32][32];
 
 #define MAKECOLOR(a) (((a)<<3)|((a)>>2))
 
@@ -192,8 +199,8 @@ static void FUNC_V_CopyRect(int srcscrn, int destscrn,
                 int x, int y, int width, int height,
                 enum patch_translation_e flags)
 {
-  byte *src;
-  byte *dest;
+  unsigned char *src;
+  unsigned char *dest;
   int pixel_depth = V_GetPixelDepth();
 
   if (flags & VPT_STRETCH_MASK)
@@ -231,7 +238,7 @@ static void FUNC_V_CopyRect(int srcscrn, int destscrn,
 
 #define FILL_FLAT(dest_type, dest_pitch, pal_func)\
 {\
-  const byte *src, *src_p;\
+  const unsigned char *src, *src_p;\
   dest_type *dest, *dest_p;\
   for (sy = y ; sy < y + height; sy += 64)\
   {\
@@ -260,7 +267,7 @@ static void FUNC_V_CopyRect(int srcscrn, int destscrn,
 static void FUNC_V_FillFlat(int lump, int scrn, int x, int y, int width, int height, enum patch_translation_e flags)
 {
   /* erase the entire screen to a tiled background */
-  const byte *data;
+  const unsigned char *data;
   int sx, sy, w, h;
   int i, j, pitch;
 
@@ -335,7 +342,7 @@ void V_Init(void) {
 //
 static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
                            int cm, enum patch_translation_e flags) {
-  const byte *trans;
+  const unsigned char *trans;
 
   stretch_param_t *params;
 
@@ -579,7 +586,7 @@ static int currentPaletteIndex = 0;
 //
 void V_UpdateTrueColorPalette(video_mode_t mode) {
   int i, w, p;
-  byte r,g,b;
+  unsigned char r,g,b;
   int nr,ng,nb;
   float t;
   int paletteNum = (V_GetMode() == VID_MODEGL ? 0 : currentPaletteIndex);
@@ -587,10 +594,10 @@ void V_UpdateTrueColorPalette(video_mode_t mode) {
   
   int pplump = W_GetNumForName("PLAYPAL");
   int gtlump = (W_CheckNumForName)("GAMMATBL",ns_prboom);
-  const byte *pal = W_CacheLumpNum(pplump);
+  const unsigned char *pal = W_CacheLumpNum(pplump);
   // opengl doesn't use the gamma
-  const byte *const gtable = 
-    (const byte *)W_CacheLumpNum(gtlump) + 
+  const unsigned char *const gtable = 
+    (const unsigned char *)W_CacheLumpNum(gtlump) + 
     (V_GetMode() == VID_MODEGL ? 0 : 256*(usegamma))
   ;
 
@@ -692,7 +699,7 @@ void V_SetPalette(int pal)
 // V_FillRect
 //
 // CPhipps - New function to fill a rectangle with a given colour
-static void V_FillRect32(int scrn, int x, int y, int width, int height, byte colour)
+static void V_FillRect32(int scrn, int x, int y, int width, int height, unsigned char colour)
 {
   unsigned int* dest = (unsigned int *)screens[scrn].data + x + y*screens[scrn].int_pitch;
   int w;
@@ -706,13 +713,13 @@ static void V_FillRect32(int scrn, int x, int y, int width, int height, byte col
 }
 
 static void WRAP_V_DrawLine(fline_t* fl, int color);
-static void V_PlotPixel32(int scrn, int x, int y, byte color);
+static void V_PlotPixel32(int scrn, int x, int y, unsigned char color);
 
 static void WRAP_V_DrawLineWu(fline_t* fl, int color);
-static void V_PlotPixelWu32(int scrn, int x, int y, byte color, int weight);
+static void V_PlotPixelWu32(int scrn, int x, int y, unsigned char color, int weight);
 
 #ifdef GL_DOOM
-static void WRAP_gld_FillRect(int scrn, int x, int y, int width, int height, byte colour)
+static void WRAP_gld_FillRect(int scrn, int x, int y, int width, int height, unsigned char colour)
 {
   gld_FillBlock(x,y,width,height,colour);
 }
@@ -740,15 +747,15 @@ static void WRAP_gld_DrawNumPatchPrecise(float x, float y, int scrn, int lump, i
   gld_DrawNumPatch_f(x,y,lump,cm,flags);
 }
 #if 0
-static void WRAP_gld_DrawBlock(int x, int y, int scrn, int width, int height, const byte *src, enum patch_translation_e flags)
+static void WRAP_gld_DrawBlock(int x, int y, int scrn, int width, int height, const unsigned char *src, enum patch_translation_e flags)
 {
 }
 #endif
-static void V_PlotPixelGL(int scrn, int x, int y, byte color) {
+static void V_PlotPixelGL(int scrn, int x, int y, unsigned char color) {
   gld_DrawLine(x-1, y, x+1, y, color);
   gld_DrawLine(x, y-1, x, y+1, color);
 }
-static void V_PlotPixelWuGL(int scrn, int x, int y, byte color, int weight) {
+static void V_PlotPixelWuGL(int scrn, int x, int y, unsigned char color, int weight) {
   V_PlotPixelGL(scrn, x, y, color);
 }
 static void WRAP_gld_DrawLine(fline_t* fl, int color)
@@ -760,7 +767,7 @@ static void WRAP_gld_DrawLine(fline_t* fl, int color)
 }
 #endif
 
-static void NULL_FillRect(int scrn, int x, int y, int width, int height, byte colour) {}
+static void NULL_FillRect(int scrn, int x, int y, int width, int height, unsigned char colour) {}
 static void NULL_CopyRect(int srcscrn, int destscrn, int x, int y, int width, int height, enum patch_translation_e flags) {}
 static void NULL_FillFlat(int lump, int n, int x, int y, int width, int height, enum patch_translation_e flags) {}
 static void NULL_FillPatch(int lump, int n, int x, int y, int width, int height, enum patch_translation_e flags) {}
@@ -768,10 +775,10 @@ static void NULL_DrawBackground(const char *flatname, int n) {}
 static void NULL_DrawNumPatch(int x, int y, int scrn, int lump, int cm, enum patch_translation_e flags) {}
 static void NULL_DrawNumPatchPrecise(float x, float y, int scrn, int lump, int cm, enum patch_translation_e flags) {}
 #if 0
-static void NULL_DrawBlock(int x, int y, int scrn, int width, int height, const byte *src, enum patch_translation_e flags) {}
+static void NULL_DrawBlock(int x, int y, int scrn, int width, int height, const unsigned char *src, enum patch_translation_e flags) {}
 #endif
-static void NULL_PlotPixel(int scrn, int x, int y, byte color) {}
-static void NULL_PlotPixelWu(int scrn, int x, int y, byte color, int weight) {}
+static void NULL_PlotPixel(int scrn, int x, int y, unsigned char color) {}
+static void NULL_PlotPixelWu(int scrn, int x, int y, unsigned char color, int weight) {}
 static void NULL_DrawLine(fline_t* fl, int color) {}
 static void NULL_DrawLineWu(fline_t* fl, int color) {}
 
@@ -907,11 +914,11 @@ void V_FreeScreens(void) {
     V_FreeScreen(&screens[i]);
 }
 
-static void V_PlotPixel32(int scrn, int x, int y, byte color) {
+static void V_PlotPixel32(int scrn, int x, int y, unsigned char color) {
   ((unsigned int *)screens[scrn].data)[x+screens[scrn].int_pitch*y] = VID_PAL32(color, VID_COLORWEIGHTMASK);
 }
 
-#define PUTDOT(xx,yy,cc) V_PlotPixel(0,xx,yy,(byte)cc)
+#define PUTDOT(xx,yy,cc) V_PlotPixel(0,xx,yy,(unsigned char)cc)
 
 //
 // WRAP_V_DrawLine()
@@ -1012,13 +1019,13 @@ extern SDL_Surface *screen;
 // Given 64 levels in the Col2RGB8 table, 65536 / 64 == 1024 == 2^10
 #define wu_fixedshift (16-wu_weightbits)
 
-static void V_PlotPixelWu32(int scrn, int x, int y, byte color, int weight)
+static void V_PlotPixelWu32(int scrn, int x, int y, unsigned char color, int weight)
 {
   const unsigned char *rgb = V_GetPlaypal() + color * 3;
 
-  byte r = (*(rgb + 0) * weight) >> wu_weightbits;
-  byte g = (*(rgb + 1) * weight) >> wu_weightbits;
-  byte b = (*(rgb + 2) * weight) >> wu_weightbits;
+  unsigned char r = (*(rgb + 0) * weight) >> wu_weightbits;
+  unsigned char g = (*(rgb + 1) * weight) >> wu_weightbits;
+  unsigned char b = (*(rgb + 2) * weight) >> wu_weightbits;
   
   ((unsigned int *)screens[scrn].data)[x+screens[scrn].int_pitch*y] =
     (unsigned int)RGB2COLOR(r, g, b);
@@ -1089,9 +1096,9 @@ void WRAP_V_DrawLineWu(fline_t *fl, int color)
       y += 1; // advance y
 
       // the trick is in the trig!
-      V_PlotPixelWu(0, x, y, (byte)color, 
+      V_PlotPixelWu(0, x, y, (unsigned char)color, 
         finecosine[erroracc >> wu_fineshift] >> wu_fixedshift);
-      V_PlotPixelWu(0, x + xdir, y, (byte)color, 
+      V_PlotPixelWu(0, x + xdir, y, (unsigned char)color, 
         finesine[erroracc >> wu_fineshift] >> wu_fixedshift);
     }
   }
@@ -1114,9 +1121,9 @@ void WRAP_V_DrawLineWu(fline_t *fl, int color)
       x += xdir; // advance x
 
       // the trick is in the trig!
-      V_PlotPixelWu(0, x, y, (byte)color, 
+      V_PlotPixelWu(0, x, y, (unsigned char)color, 
         finecosine[erroracc >> wu_fineshift] >> wu_fixedshift);
-      V_PlotPixelWu(0, x, y + 1, (byte)color, 
+      V_PlotPixelWu(0, x, y + 1, (unsigned char)color, 
         finesine[erroracc >> wu_fineshift] >> wu_fixedshift);
     }
   }
@@ -1133,7 +1140,7 @@ const unsigned char* V_GetPlaypal(void)
   {
     int lump = W_GetNumForName("PLAYPAL");
     int len = W_LumpLength(lump);
-    const byte *data = W_CacheLumpNum(lump);
+    const unsigned char *data = W_CacheLumpNum(lump);
     playpal_data = malloc(len);
     memcpy(playpal_data, data, len);
     W_UnlockLumpNum(lump);
@@ -1151,7 +1158,7 @@ void V_FreePlaypal(void)
   }
 }
 
-void V_FillBorder(int lump, byte color)
+void V_FillBorder(int lump, unsigned char color)
 {
   int bordtop, bordbottom, bordleft, bordright;
 

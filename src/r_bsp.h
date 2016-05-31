@@ -24,9 +24,20 @@
 #ifndef R_BSP_H__
 #define R_BSP_H__
 
-#ifdef __GNUG__
-#pragma interface
-#endif
+struct seg_s;
+typedef struct seg_s seg_t;
+
+struct line_s;
+typedef struct line_s line_t;
+
+struct drawseg_s;
+typedef struct drawseg_s drawseg_t;
+
+struct sector_s;
+typedef struct sector_s sector_t;
+
+struct side_s;
+typedef struct side_s side_t;
 
 extern seg_t    *curline;
 extern side_t   *sidedef;
@@ -41,7 +52,7 @@ extern drawseg_t *drawsegs;
 extern unsigned maxdrawsegs;
 
 // e6y: resolution limitation is removed
-extern byte *solidcol;
+extern unsigned char *solidcol;
 
 extern drawseg_t *ds_p;
 

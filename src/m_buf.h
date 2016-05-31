@@ -57,7 +57,7 @@ bool M_BufferSeek(buf_t *buf, size_t pos);
 bool M_BufferSeekBackward(buf_t *buf, size_t count);
 bool M_BufferSeekForward(buf_t *buf, size_t count);
 
-byte M_BufferPeek(buf_t *buf);
+unsigned char M_BufferPeek(buf_t *buf);
 
 void M_BufferWrite(buf_t *buf, const void *data, size_t size);
 void M_BufferWriteBool(buf_t *buf, bool b);
@@ -77,10 +77,10 @@ void M_BufferWriteInts(buf_t *buf, const int *ints, size_t count);
 void M_BufferWriteUInt(buf_t *buf, unsigned int i);
 void M_BufferWriteUInts(buf_t *buf, const unsigned int *ints,
                                         size_t count);
-void M_BufferWriteLong(buf_t *buf, int_64_t l);
-void M_BufferWriteLongs(buf_t *buf, const int_64_t *longs, size_t count);
-void M_BufferWriteULong(buf_t *buf, uint_64_t l);
-void M_BufferWriteULongs(buf_t *buf, const uint_64_t *longs, size_t count);
+void M_BufferWriteLong(buf_t *buf, int64_t l);
+void M_BufferWriteLongs(buf_t *buf, const int64_t *longs, size_t count);
+void M_BufferWriteULong(buf_t *buf, uint64_t l);
+void M_BufferWriteULongs(buf_t *buf, const uint64_t *longs, size_t count);
 void M_BufferWriteFloat(buf_t *buf, float f);
 void M_BufferWriteFloats(buf_t *buf, const float *floats, size_t count);
 void M_BufferWriteDouble(buf_t *buf, double d);
@@ -106,10 +106,10 @@ bool M_BufferReadInt(buf_t *buf, int *i);
 bool M_BufferReadInts(buf_t *buf, int *i, size_t count);
 bool M_BufferReadUInt(buf_t *buf, unsigned int *i);
 bool M_BufferReadUInts(buf_t *buf, unsigned int *i, size_t count);
-bool M_BufferReadLong(buf_t *buf, int_64_t *l);
-bool M_BufferReadLongs(buf_t *buf, int_64_t *l, size_t count);
-bool M_BufferReadULong(buf_t *buf, uint_64_t *l);
-bool M_BufferReadULongs(buf_t *buf, uint_64_t *l, size_t count);
+bool M_BufferReadLong(buf_t *buf, int64_t *l);
+bool M_BufferReadLongs(buf_t *buf, int64_t *l, size_t count);
+bool M_BufferReadULong(buf_t *buf, uint64_t *l);
+bool M_BufferReadULongs(buf_t *buf, uint64_t *l, size_t count);
 bool M_BufferReadFloat(buf_t *buf, float *f);
 bool M_BufferReadFloats(buf_t *buf, float *f, size_t count);
 bool M_BufferReadDouble(buf_t *buf, double *d);

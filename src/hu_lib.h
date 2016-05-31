@@ -24,9 +24,8 @@
 #ifndef HULIB_H__
 #define HULIB_H__
 
-// We are referring to patches.
-#include "r_defs.h"
-#include "v_video.h"  //jff 2/16/52 include color range defs
+struct patchnum_s;
+typedef struct patchnum_s patchnum_t;
 
 /* background and foreground screen numbers
  * different from other modules. */

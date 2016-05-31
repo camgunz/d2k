@@ -26,8 +26,6 @@
 #ifndef MIDIFILE_H
 #define MIDIFILE_H
 
-#include "doomtype.h"
-
 typedef struct midi_file_s midi_file_t;
 typedef struct midi_track_iter_s midi_track_iter_t;
 
@@ -35,7 +33,7 @@ typedef struct midi_track_iter_s midi_track_iter_t;
 
 typedef struct
 {
-    const byte *data;
+    const unsigned char *data;
     size_t len;
     size_t pos;
 } midimem_t;
@@ -91,54 +89,27 @@ typedef enum
     MIDI_META_SEQUENCER_SPECIFIC    = 0x7f,
 } midi_meta_event_type_t;
 
-typedef struct
-{
-    // Meta event type:
-
-    unsigned int type;
-
-    // Length:
-
-    unsigned int length;
-
-    // Meta event data:
-
-    byte *data;
+typedef struct {
+    unsigned int type;   // Meta event type:
+    unsigned int length; // Length:
+    unsigned char *data; // Meta event data:
 } midi_meta_event_data_t;
 
-typedef struct
-{
-    // Length:
-
-    unsigned int length;
-
-    // Event data:
-
-    byte *data;
+typedef struct {
+    unsigned int length; // Length:
+    unsigned char *data; // Event data:
 } midi_sysex_event_data_t;
 
-typedef struct
-{
-    // The channel number to which this applies:
-
-    unsigned int channel;
-
-    // Extra parameters:
-
-    unsigned int param1;
-    unsigned int param2;
+typedef struct {
+    unsigned int channel; // The channel number to which this applies:
+    unsigned int param1;  // Extra parameter 1
+    unsigned int param2;  // Extra parameter 2
 } midi_channel_event_data_t;
 
-typedef struct
-{
-    // Time between the previous event and this event.
-    unsigned int delta_time;
-
-    // Type of event:
-    midi_event_type_t event_type;
-
-    union
-    {
+typedef struct {
+    unsigned int delta_time; // Time between the previous event and this event.
+    midi_event_type_t event_type; // Type of event:
+    union {
         midi_channel_event_data_t channel;
         midi_meta_event_data_t meta;
         midi_sysex_event_data_t sysex;

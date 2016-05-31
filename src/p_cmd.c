@@ -23,25 +23,26 @@
 
 #include "z_zone.h"
 
+#include "enet/enet.h"
+
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
-#include "d_player.h"
-#include "d_ticcmd.h"
 #include "e6y.h"
 #include "g_game.h"
 #include "i_video.h"
 #include "n_net.h"
+#include "p_user.h"
 #include "n_main.h"
 #include "n_state.h"
+#include "n_peer.h"
 #include "n_proto.h"
+#include "r_defs.h"
 #include "cl_main.h"
-#include "p_cmd.h"
 #include "p_map.h"
+#include "p_setup.h"
 #include "p_mobj.h"
-#include "p_pspr.h"
 #include "p_spec.h"
-#include "p_user.h"
 #include "s_sound.h"
 #include "sv_main.h"
 
@@ -51,6 +52,8 @@
 #define EXTRAPOLATION PMOBJTHINKER
 #define MISSED_COMMAND_MAX 3
 #define LOG_COMMANDS 0
+
+void G_BuildTiccmd(ticcmd_t *cmd);
 
 static GQueue *blank_command_queue;
 
@@ -194,14 +197,14 @@ static void process_queued_command(gpointer data, gpointer user_data) {
   );
   */
 
-  if (ncmd->index <= player->latest_command_run_index) {
+  if (ncmd->index <= player->cmdq.latest_command_run_index) {
     if (SERVER || playernum == consoleplayer) {
       return;
     }
   }
 
-  if (player->command_limit &&
-      player->commands_run_this_tic >= player->command_limit) {
+  if (player->cmdq.command_limit &&
+      player->cmdq.commands_run_this_tic >= player->cmdq.command_limit) {
     return;
   }
 
@@ -250,7 +253,7 @@ static void process_queued_command(gpointer data, gpointer user_data) {
 
   run_player_command(player);
 
-  player->commands_run_this_tic++;
+  player->cmdq.commands_run_this_tic++;
 
   if (MULTINET && player->mo)
     P_MobjThinker(player->mo);
@@ -259,7 +262,7 @@ static void process_queued_command(gpointer data, gpointer user_data) {
 
   CL_ShutdownCommandState();
 
-  player->latest_command_run_index = ncmd->index;
+  player->cmdq.latest_command_run_index = ncmd->index;
 
   if (SERVER) {
     ncmd->server_tic = gametic;
@@ -306,12 +309,12 @@ static bool extrapolate_player_position(int playernum) {
 #elif EXTRAPOLATION == COPIED_COMMAND
   netticcmd_t ncmd;
 
-  if (player->commands_missed >= MISSED_COMMAND_MAX) {
+  if (player->cmdq.commands_missed >= MISSED_COMMAND_MAX) {
     printf("(%d) %td over missed command limit\n", gametic, player - players);
     return false;
   }
 
-  player->commands_missed++;
+  player->cmdq.commands_missed++;
 
   ncmd.forward = player->cmd.forwardmove;
   ncmd.side    = player->cmd.sidemove;
@@ -341,20 +344,25 @@ static void run_queued_player_commands(int playernum) {
   int saved_leveltime = leveltime;
   player_t *player = &players[playernum];
 
-  if (SERVER && playernum == consoleplayer)
+  if (SERVER && playernum == consoleplayer) {
     return;
+  }
 
-  if (CLIENT && playernum == consoleplayer)
+  if (CLIENT && playernum == consoleplayer) {
     P_PrintCommands(playernum);
+  }
 
-  if (CLIENT && !CL_Synchronizing())
-    player->command_limit = 1;
-  else if (SERVER && sv_limit_player_commands)
-    player->command_limit = SV_GetPlayerCommandLimit(playernum);
-  else
-    player->command_limit = 0;
+  if (CLIENT && !CL_Synchronizing()) {
+    player->cmdq.command_limit = 1;
+  }
+  else if (SERVER && sv_limit_player_commands) {
+    player->cmdq.command_limit = SV_GetPlayerCommandLimit(playernum);
+  }
+  else {
+    player->cmdq.command_limit = 0;
+  }
 
-  player->commands_run_this_tic = 0;
+  player->cmdq.commands_run_this_tic = 0;
 
   P_ForEachCommand(playernum, process_queued_command, player);
 
@@ -434,52 +442,87 @@ static netticcmd_t* get_new_blank_command(void) {
   return ncmd;
 }
 
-void P_InitCommands(void) {
-  if (blank_command_queue == NULL)
+void P_InitCommandQueue(void) {
+  if (!blank_command_queue) {
     blank_command_queue = g_queue_new();
+  }
 
-  for (int i = 0; i < MAXPLAYERS; i++)
-    players[i].commands = g_ptr_array_new_with_free_func(recycle_command);
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    players[i].cmdq.commands = g_ptr_array_new_with_free_func(recycle_command);
+    players[i].cmdq.updated = 0;
+    players[i].cmdq.latest_synchronized_index = 0xFFFFFFFF;
+    players[i].cmdq.commands_missed = 0;
+    players[i].cmdq.command_limit = 0;
+    players[i].cmdq.commands_run_this_tic = 0;
+    players[i].cmdq.latest_command_run_index = 0;
+  }
+}
+
+void P_ResetLatestSynchronizedCommandIndex(int playernum) {
+  players[playernum].cmdq.updated = 0;
+  players[playernum].cmdq.latest_synchronized_index = 0xFFFFFFFF;
+}
+
+bool P_LatestSynchronizedCommandIndexReady(int playernum) {
+  command_queue_t *cmdq = &players[playernum].cmdq;
+
+  NETPEER_FOR_EACH(iter) {
+    if ((cmdq->updated & (playernum << iter.np->playernum)) == 0) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+unsigned int P_GetLatestSynchronizedCommandIndex(int playernum) {
+  return players[playernum].cmdq.latest_synchronized_index;
 }
 
 bool P_HasCommands(int playernum) {
-  if (!playeringame[playernum])
+  if (!playeringame[playernum]) {
     return false;
+  }
 
   return P_GetCommandCount(playernum) > 0;
 }
 
 unsigned int P_GetCommandCount(int playernum) {
-  if (!playeringame[playernum])
+  if (!playeringame[playernum]) {
     return 0;
+  }
 
-  return players[playernum].commands->len;
+  return players[playernum].cmdq.commands->len;
 }
 
 netticcmd_t* P_GetCommand(int playernum, unsigned int index) {
-  if (!playeringame[playernum])
+  if (!playeringame[playernum]) {
     return NULL;
+  }
 
-  if (index >= P_GetCommandCount(playernum))
+  if (index >= P_GetCommandCount(playernum)) {
     return NULL;
+  }
 
-  return g_ptr_array_index(players[playernum].commands, index);
+  return g_ptr_array_index(players[playernum].cmdq.commands, index);
 }
 
 void P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd) {
   unsigned int current_command_count;
   bool found_command = false;
 
-  if (!playeringame[playernum])
+  if (!playeringame[playernum]) {
     return;
+  }
 
   current_command_count = P_GetCommandCount(playernum);
 
   for (unsigned int j = 0; j < current_command_count; j++) {
     netticcmd_t *ncmd = P_GetCommand(playernum, j);
 
-    if (ncmd->index != tmp_ncmd->index)
+    if (ncmd->index != tmp_ncmd->index) {
       continue;
+    }
 
     found_command = true;
 
@@ -514,7 +557,7 @@ void P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd) {
 
   if (!found_command) {
     P_AppendNewCommand(playernum, tmp_ncmd);
-    g_ptr_array_sort(players[playernum].commands, compare_commands);
+    g_ptr_array_sort(players[playernum].cmdq.commands, compare_commands);
   }
 }
 
@@ -529,12 +572,13 @@ void P_AppendNewCommand(int playernum, netticcmd_t *tmp_ncmd) {
 
   memcpy(ncmd, tmp_ncmd, sizeof(netticcmd_t));
 
-  g_ptr_array_add(players[playernum].commands, ncmd);
+  g_ptr_array_add(players[playernum].cmdq.commands, ncmd);
 }
 
 netticcmd_t* P_GetLatestCommand(int playernum) {
-  if (!playeringame[playernum])
+  if (!playeringame[playernum]) {
     return NULL;
+  }
 
   return P_GetCommand(playernum, P_GetCommandCount(playernum) - 1);
 }
@@ -548,9 +592,21 @@ int P_GetLatestCommandIndex(int playernum) {
   return ncmd->index;
 }
 
+void P_UpdateLatestSynchronizedCommandIndex(int originating_playernum,
+                                            int receiving_playernum,
+                                            unsigned int command_index) {
+  player_t *player = &players[originating_playernum];
+
+  if (command_index < player->cmdq.latest_synchronized_index) {
+    player->cmdq.latest_synchronized_index = command_index;
+  }
+
+  player->cmdq.updated &= (1 << receiving_playernum);
+}
+
 void P_ForEachCommand(int playernum, GFunc func, gpointer user_data) {
   if (playeringame[playernum])
-    g_ptr_array_foreach(players[playernum].commands, func, user_data);
+    g_ptr_array_foreach(players[playernum].cmdq.commands, func, user_data);
 }
 
 void P_ClearPlayerCommands(int playernum) {
@@ -566,8 +622,11 @@ void P_ClearPlayerCommands(int playernum) {
 
   command_count = P_GetCommandCount(playernum);
 
-  if (command_count > 0)
-    g_ptr_array_remove_range(players[playernum].commands, 0, command_count);
+  if (command_count > 0) {
+    g_ptr_array_remove_range(
+      players[playernum].cmdq.commands, 0, command_count
+    );
+  }
 }
 
 void P_IgnorePlayerCommands(int playernum) {
@@ -609,7 +668,7 @@ void P_TrimCommands(int playernum, TrimFunc should_trim, gpointer user_data) {
 
   if (command_count > 0) {
     g_ptr_array_remove_range(
-      players[playernum].commands, 0, command_count
+      players[playernum].cmdq.commands, 0, command_count
     );
   }
 }
@@ -672,7 +731,7 @@ bool P_RunPlayerCommands(int playernum) {
     }
 #if EXTRAPOLATION == COPIED_COMMAND
     else {
-      player->commands_missed = 0;
+      player->cmdq.commands_missed = 0;
 
       /*
       printf("(%d) Got (%d) command(s) for %d\n",

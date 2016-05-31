@@ -24,9 +24,8 @@
 #ifndef ST_STUFF_H__
 #define ST_STUFF_H__
 
-#include "doomtype.h"
-#include "d_event.h"
-#include "r_defs.h"
+struct event_s;
+typedef struct event_s event_t;
 
 // Size of statusbar.
 // Now sensitive for scaling.
@@ -49,7 +48,7 @@ void ST_SetAutomapEntered(void);
 void ST_SetAutomapExited(void);
 
 // Called by main loop.
-bool ST_Responder(event_t* ev);
+bool ST_Responder(event_t *ev);
 
 // Called by main loop.
 void ST_Ticker(void);

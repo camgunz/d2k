@@ -126,6 +126,8 @@ extern int        numlumps;
 // killough 4/17/98: if W_CheckNumForName() called with only
 // one argument, pass ns_global as the default namespace
 
+void    W_AddDEH(const char *filename, int lumpnum);
+void    W_AddResource(const char *file, wad_source_t source);
 #define W_FindNumFromName(name, lump) (W_FindNumFromName)(name, ns_global, lump)
 int     (W_FindNumFromName)(const char *name, int ns, int lump);
 int     W_CheckNumForNameInternal(const char *name);

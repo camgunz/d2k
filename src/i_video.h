@@ -24,41 +24,6 @@
 #ifndef I_VIDEO_H__
 #define I_VIDEO_H__
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "doomtype.h"
-#include "v_video.h"
-
-#ifdef __GNUG__
-#pragma interface
-#endif
-
-#ifdef GL_DOOM
-typedef struct SDL_Surface *PSDL_Surface;
-
-typedef struct vid_8ingl_s {
-  int enabled;
-  PSDL_Surface screen;
-  PSDL_Surface surface;
-  GLuint texid;
-  GLuint pboids[2];
-  int width;
-  int height;
-  int size;
-  unsigned char *buf;
-  unsigned char *colours;
-  int palette;
-  float fU1;
-  float fU2;
-  float fV1;
-  float fV2;
-} vid_8ingl_t;
-#endif
-
-extern SDL_Surface *screen;
-extern vid_8ingl_t vid_8ingl;
 extern int use_gl_surface;
 extern const char *screen_resolutions_list[];
 extern const char *screen_resolution;

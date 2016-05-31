@@ -24,20 +24,7 @@
 #ifndef I_NETWORK_H__
 #define I_NETWORK_H__
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#ifdef USE_SDL_NET
- #include "SDL_net.h"
- #define UDP_SOCKET UDPsocket
- #define UDP_PACKET UDPpacket
- #define AF_INET
- #define UDP_CHANNEL int
- extern UDP_SOCKET udp_socket;
-#else
- #define UDP_CHANNEL struct sockaddr
-#endif
+#define UDP_CHANNEL struct sockaddr
 
 #ifndef IPPORT_RESERVED
         #define IPPORT_RESERVED 1024

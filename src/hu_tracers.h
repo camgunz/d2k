@@ -24,6 +24,9 @@
 #ifndef HU_TRACERS_H__
 #define HU_TRACERS_H__
 
+struct mobj_s;
+typedef struct mobj_s mobj_t;
+
 #define MAXTRACEITEMS 8
 
 typedef enum {
@@ -61,8 +64,6 @@ typedef struct traceslistinit_s {
 
 extern traceslist_t traces[];
 extern bool traces_present;
-
-extern hu_textline_t w_traces[];
 
 void InitTracers(void);
 

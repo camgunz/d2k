@@ -31,13 +31,10 @@
 #ifndef MUS2MID_H__
 #define MUS2MID_H__
 
-#include "doomtype.h"
-#include "memio.h"
-
 // Structure to hold MUS file header
 typedef struct
 {
-  byte id[4];
+  unsigned char id[4];
   unsigned short scorelength;
   unsigned short scorestart;
   unsigned short primarychannels;

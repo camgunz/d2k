@@ -30,19 +30,17 @@
 #include "d_deh.h"
 #include "d_event.h"
 #include "d_main.h"
-#include "d_ticcmd.h"
 #include "g_game.h"
 #include "i_system.h"
 #include "m_file.h"
 #include "n_net.h"
+#include "p_user.h"
 #include "n_main.h"
 #include "n_state.h"
 #include "n_peer.h"
 #include "n_proto.h"
 #include "cl_cmd.h"
 #include "cl_main.h"
-#include "p_cmd.h"
-#include "p_pspr.h"
 #include "p_user.h"
 #include "w_wad.h"
 
@@ -470,12 +468,12 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
     for (unsigned int i = 0; i < rf_list->len; i++) {
       char *resource_name = g_ptr_array_index(rf_list, i);
 
-      D_AddFile(resource_name, source_net);
+      W_AddResource(resource_name, source_net);
     }
     g_ptr_array_free(rf_list, true);
   }
 
-  D_AddFile(PACKAGE_TARNAME ".wad", source_auto_load);
+  W_AddResource(PACKAGE_TARNAME ".wad", source_auto_load);
 
   read_uint(pbuf, deh_file_count, "DeH/BEX file count");
 
@@ -491,11 +489,11 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
 
       if (is_lump) {
         read_int(pbuf, deh_lumpnum, "DeH/BEX lumpnum");
-        D_AddDEH(NULL, deh_lumpnum);
+        W_AddDEH(NULL, deh_lumpnum);
       }
       else {
         read_string(pbuf, &deh_name, "DeH/BEX name", MAX_RESOURCE_NAME_LENGTH);
-        D_AddDEH(M_BufferGetData(&deh_name), deh_lumpnum);
+        W_AddDEH(M_BufferGetData(&deh_name), deh_lumpnum);
       }
     }
   }
@@ -690,6 +688,7 @@ void N_PackSync(netpeer_t *np) {
   );
 
   if (CLIENT) {
+    uint32_t bitmap = 0;
     unsigned int command_count =
       CL_GetUnsynchronizedCommandCount(consoleplayer);
 
@@ -701,14 +700,28 @@ void N_PackSync(netpeer_t *np) {
     }
 
     if (command_count > 0) {
-      for (size_t i = 0; i < players[consoleplayer].commands->len; i++) {
+      for (size_t i = 0; i < players[consoleplayer].cmdq.commands->len; i++) {
         netticcmd_t *ncmd = g_ptr_array_index(
-          players[consoleplayer].commands, i
+          players[consoleplayer].cmdq.commands, i
         );
 
         if (ncmd->index > np->sync.command_index) {
           break;
         }
+      }
+    }
+
+    for (int i = 0; i < MAXPLAYERS; i++) {
+      if (playeringame[i]) {
+        bitmap &= 1 << i;
+      }
+    }
+
+    M_PBufWriteUInt(pbuf, bitmap);
+
+    for (int i = 0; i < MAXPLAYERS; i++) {
+      if (playeringame[i]) {
+        M_PBufWriteUInt(pbuf, P_GetLatestCommandIndex(i));
       }
     }
   }
@@ -739,6 +752,7 @@ bool N_UnpackSync(netpeer_t *np) {
   else if (SERVER) {
     int m_sync_tic;
     unsigned int m_command_count;
+    uint32_t m_bitmap;
 
     read_int(pbuf, m_sync_tic, "sync tic");
     read_uint(pbuf, m_command_count, "command count");
@@ -767,6 +781,26 @@ bool N_UnpackSync(netpeer_t *np) {
       ncmd.server_tic = 0;
       np->sync.command_index = ncmd.index;
       P_AppendNewCommand(np->playernum, &ncmd);
+    }
+
+    read_uint(pbuf, m_bitmap, "player command bitmap");
+
+    for (int i = 0; i < MAXPLAYERS; i++) {
+      uint32_t m_command_index;
+
+      if ((m_bitmap & (1 << i)) == 0) {
+        continue;
+      }
+
+      /*
+       * - Read the latest command received from player
+       * - If it's lower than the stored command, store that instead
+       */
+      read_uint(pbuf, m_command_index, "latest_command_index");
+
+      P_UpdateLatestSynchronizedCommandIndex(
+        i, np->playernum, m_command_index
+      );
     }
   }
 

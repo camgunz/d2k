@@ -23,9 +23,13 @@
 
 #include "z_zone.h"
 
-#include "p_checksum.h"
-#include "md5.h"
+#include "doomdef.h"
 #include "doomstat.h" /* players{,ingame} */
+#include "d_event.h"
+#include "p_checksum.h"
+#include "p_user.h"
+#include "g_game.h"
+#include "md5.h"
 
 /* forward decls */
 static void p_checksum_cleanup(void);
@@ -103,11 +107,11 @@ void checksum_gamestate(int tic) {
         snprintf(buffer, sizeof(buffer), "%d", players[i].health);
         buffer[sizeof(buffer)-1] = 0;
 
-        MD5Update(&md5ctx, (md5byte const *)&buffer, strlen(buffer));
+        MD5Update(&md5ctx, (unsigned char const *)&buffer, strlen(buffer));
     }
     MD5Final(digest, &md5ctx);
     for (i=0; i<16; i++) {
-        MD5Update(&md5global, (md5byte const *)&digest[i], sizeof(digest[i]));
+        MD5Update(&md5global, (unsigned char const *)&digest[i], sizeof(digest[i]));
         fprintf(outfile,"%x", digest[i]);
     }
 

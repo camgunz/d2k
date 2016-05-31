@@ -24,7 +24,11 @@
 #ifndef P_MAPUTL_H__
 #define P_MAPUTL_H__
 
-#include "r_defs.h"
+struct line_s;
+typedef struct line_s line_t;
+
+struct mobj_s;
+typedef struct mobj_s mobj_t;
 
 /* mapblocks are used to check movement against lines and things */
 #define MAPBLOCKUNITS   128
@@ -44,7 +48,7 @@ typedef struct {
   fixed_t     dy;
 } divline_t;
 
-typedef struct {
+typedef struct intercept_s {
   fixed_t     frac;           /* along trace line */
   bool        isaline;
   union {

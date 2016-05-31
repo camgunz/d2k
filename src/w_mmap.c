@@ -23,16 +23,13 @@
 
 #include "z_zone.h"
 
-#ifdef __GNUG__
-#pragma implementation "w_wad.h"
-#endif
-
+#include "doomdef.h"
+#include "doomstat.h"
 #include "w_wad.h"
 #include "z_zone.h"
 #include "i_system.h"
 #include "m_file.h"
-
-#include "e6y.h"//e6y
+#include "e6y.h"
 
 static struct {
   void *cache;
@@ -346,7 +343,7 @@ const void* W_CacheLumpNum(int lump) {
     return NULL;
 
   return (const void *)(
-    ((const byte *)(mapped_wad[l->wadfile])) + l->position
+    ((const unsigned char *)(mapped_wad[l->wadfile])) + l->position
   );
 }
 #endif

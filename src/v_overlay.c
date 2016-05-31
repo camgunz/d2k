@@ -23,15 +23,20 @@
 
 #include "z_zone.h"
 
+#include <SDL.h>
 #include <cairo/cairo.h>
-
-#ifdef GL_DOOM
-#include "gl_opengl.h"
-#endif
 
 #include "doomdef.h"
 #include "i_video.h"
+#include "r_defs.h"
+#include "r_patch.h"
+#include "v_video.h"
 #include "x_main.h"
+
+#include "gl_opengl.h"
+#include "gl_struct.h"
+
+#include "i_vid8ingl.h"
 
 typedef struct overlay_s {
   unsigned char *pixels;

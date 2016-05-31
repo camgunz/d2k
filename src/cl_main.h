@@ -24,6 +24,9 @@
 #ifndef CL_MAIN_H__
 #define CL_MAIN_H__
 
+struct netticcmd_s;
+typedef struct netticcmd_s netticcmd_t;
+
 extern int cl_extrapolate_player_positions;
 
 bool CL_LoadingState(void);

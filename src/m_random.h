@@ -24,8 +24,6 @@
 #ifndef M_RANDOM_H__
 #define M_RANDOM_H__
 
-#include "doomtype.h"
-
 // killough 1/19/98: rewritten to use to use a better random number generator
 // in the new engine, although the old one is available for compatibility.
 

@@ -30,7 +30,6 @@
 #include <xdiff.h>
 
 #include "doomdef.h"
-#include "doomtype.h"
 #include "m_delta.h"
 
 #define BLKSIZE 1024

@@ -25,26 +25,16 @@
 
 #include <SDL.h>
 
-#ifndef PRBOOM_SERVER
-#include "m_argv.h"
-#endif
-
-#include "doomtype.h"
 #include "doomdef.h"
+#include "doomstat.h"
+#include "m_argv.h"
 #include "m_file.h"
-
-#ifndef PRBOOM_SERVER
-#include "d_player.h"
 #include "m_fixed.h"
 #include "r_fps.h"
 #include "e6y.h"
-#endif
+#include "g_game.h"
 
 #include "i_system.h"
-
-#ifdef __GNUG__
-#pragma implementation "i_system.h"
-#endif
 
 static int basetime = 0;
 
@@ -190,12 +180,12 @@ const char* I_SigString(char* buf, size_t sz, int signum)
 
 #if 0
 #ifndef PRBOOM_SERVER
-bool I_FileToBuffer(const char *filename, byte **data, int *size)
+bool I_FileToBuffer(const char *filename, unsigned char **data, int *size)
 {
   FILE *hfile;
 
   bool result = false;
-  byte *buffer = NULL;
+  unsigned char *buffer = NULL;
   size_t filesize = 0;
 
   hfile = fopen(filename, "rb");

@@ -24,14 +24,6 @@
 #ifndef D_NET_H__
 #define D_NET_H__
 
-#include "d_player.h"
-
-
-#ifdef __GNUG__
-#pragma interface
-#endif
-
-
 //
 // Network play related stuff.
 // There is a data struct that stores network
@@ -40,35 +32,29 @@
 //  be transmitted.
 //
 
-#define DOOMCOM_ID              0x12345678l
+#define DOOMCOM_ID 0x12345678l
 
 // Max computers/players in a game.
 #define MAXNETNODES             8
 
-
-typedef enum
-{
-    CMD_SEND    = 1,
-    CMD_GET     = 2
-
+typedef enum {
+  CMD_SEND    = 1,
+  CMD_GET     = 2
 } command_t;
 
 
 //
 // Network packet data.
 //
-typedef struct
-{
-    // High bit is retransmit request.
-    unsigned            checksum;
-    // Only valid if NCMD_RETRANSMIT.
-    byte                retransmitfrom;
-
-    byte                starttic;
-    byte                player;
-    byte                numtics;
-    ticcmd_t            cmds[BACKUPTICS];
-
+typedef struct {
+  // High bit is retransmit request.
+  unsigned int  checksum;
+  // Only valid if NCMD_RETRANSMIT.
+  unsigned char retransmitfrom;
+  unsigned char starttic;
+  unsigned char player;
+  unsigned char numtics;
+  ticcmd_t      cmds[BACKUPTICS];
 } doomdata_t;
 
 //
@@ -101,16 +87,16 @@ typedef struct
 #define STARTUPLEN 12
 typedef struct
 {
-  byte monsters_remember;
-  byte variable_friction;
-  byte weapon_recoil;
-  byte allow_pushers;
-  byte over_under;
-  byte player_bobbing;
-  byte fastparm;
-  byte demo_insurance;
-  unsigned int rngseed;
-  char filler[sizeof(ticcmd_t) * BACKUPTICS - STARTUPLEN];
+  unsigned char monsters_remember;
+  unsigned char variable_friction;
+  unsigned char weapon_recoil;
+  unsigned char allow_pushers;
+  unsigned char over_under;
+  unsigned char player_bobbing;
+  unsigned char fastparm;
+  unsigned char demo_insurance;
+  unsigned int  rngseed;
+  char          filler[sizeof(ticcmd_t) * BACKUPTICS - STARTUPLEN];
 } startup_t;
 
 typedef enum {
@@ -123,7 +109,9 @@ typedef struct
 {
   netmisctype_t type;
   size_t len;
-  byte value[sizeof(ticcmd_t) * BACKUPTICS - sizeof(netmisctype_t) - sizeof(size_t)];
+  unsigned char value[
+    sizeof(ticcmd_t) * BACKUPTICS - sizeof(netmisctype_t) - sizeof(size_t)
+  ];
 } netmisc_t;
 
 typedef struct

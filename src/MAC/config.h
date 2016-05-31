@@ -138,10 +138,5 @@
 #define SCREENSHOT_DIR I_DoomExeDir()
 #define HEAPDUMP_DIR I_DoomExeDir()
 
-#ifndef __BYTEBOOL__
-#define __BYTEBOOL__
-typedef unsigned char byte;
-#endif
-
 /* vi: set et ts=2 sw=2: */
 

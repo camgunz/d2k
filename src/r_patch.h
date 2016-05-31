@@ -47,13 +47,13 @@ typedef struct {
   edgeslope_t slope;
 } rpost_t;
 
-typedef struct {
+typedef struct rcolumn_s {
   int numPosts;
   rpost_t *posts;
   unsigned char *pixels;
 } rcolumn_t;
 
-typedef struct {
+typedef struct rpatch_s {
   int width;
   int height;
   unsigned  widthmask;

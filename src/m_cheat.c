@@ -23,10 +23,17 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
+#include "am_map.h"
+#include "p_user.h"
 #include "g_game.h"
+#include "r_defs.h"
+#include "r_patch.h"
 #include "r_data.h"
+#include "p_setup.h"
+#include "p_mobj.h"
 #include "p_inter.h"
 #include "p_tick.h"
 #include "m_cheat.h"
@@ -40,7 +47,6 @@
 #include "d_deh.h"  // Ty 03/27/98 - externalized strings
 /* cph 2006/07/23 - needs direct access to thinkercap */
 #include "p_tick.h"
-#include "p_user.h"
 
 #define plyr (players+consoleplayer)     /* the console player */
 
@@ -464,7 +470,7 @@ static void cheat_massacre() {  // jff 2/01/98 kill all monsters
   extern void A_PainDie(mobj_t *);
 
   // killough 7/20/98: kill friendly monsters only if no others to kill
-  uint_64_t mask = MF_FRIEND;
+  uint64_t mask = MF_FRIEND;
   P_MapStart();
   do {
     while ((currentthinker = P_NextThinker(currentthinker, th_all)) != NULL)
@@ -681,7 +687,7 @@ static void cheat_fly() {
 //-----------------------------------------------------------------------------
 
 static int M_FindCheats_Boom(int key) {
-  static uint_64_t sr;
+  static uint64_t sr;
   static char argbuf[CHEAT_ARGS_MAX + 1];
   static char *arg;
   static int init;
@@ -713,7 +719,7 @@ static int M_FindCheats_Boom(int key) {
   if (!init) {                           // initialize aux entries of table
     init = 1;
     for (i = 0; cheat[i].cheat; i++) {
-      uint_64_t c = 0, m = 0;
+      uint64_t c = 0, m = 0;
       const char *p;
 
       for (p = cheat[i].cheat; *p; p++) {

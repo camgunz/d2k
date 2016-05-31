@@ -27,9 +27,6 @@
 
 #include "pcsound.h"
 
-//e6y
-#include "doomtype.h"
-
 #ifdef USE_WIN32_PCSOUND_DRIVER
 extern pcsound_driver_t pcsound_win32_driver;
 #endif

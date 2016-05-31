@@ -27,20 +27,22 @@
 #define CALLBACK
 #endif
 
-#include <SDL.h>
-
-#include "doomtype.h"
+#include "doomdef.h"
+#include "doomstat.h"
 #include "w_wad.h"
 #include "m_argv.h"
 #include "d_event.h"
 #include "v_video.h"
-#include "doomstat.h"
+#include "r_defs.h"
+#include "r_data.h"
 #include "r_bsp.h"
 #include "r_main.h"
 #include "r_draw.h"
 #include "r_sky.h"
 #include "r_plane.h"
 #include "r_data.h"
+#include "r_patch.h"
+#include "r_state.h"
 #include "p_maputl.h"
 #include "p_tick.h"
 #include "m_bbox.h"
@@ -49,6 +51,11 @@
 #include "gl_struct.h"
 #include "p_spec.h"
 #include "e6y.h"
+#include "g_game.h"
+#include "p_setup.h"
+#include "p_mobj.h"
+
+extern bool doSkip;
 
 int imageformats[5] = {0, GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_RGB, GL_RGBA};
 
@@ -275,7 +282,7 @@ static void gld_AddPatchToTexture_UnTranslated(GLTexture *gltexture, unsigned ch
   int xs,xe;
   int js,je;
   const rcolumn_t *column;
-  const byte *source;
+  const unsigned char *source;
   int i, pos;
   const unsigned char *playpal;
 
@@ -387,7 +394,7 @@ void gld_AddPatchToTexture(GLTexture *gltexture, unsigned char *buffer, const rp
   int xs,xe;
   int js,je;
   const rcolumn_t *column;
-  const byte *source;
+  const unsigned char *source;
   int i, pos;
   const unsigned char *playpal;
   const unsigned char *outr;
@@ -672,8 +679,8 @@ unsigned char* gld_GetTextureBuffer(GLuint texid, int miplevel, int *width, int 
 // e6y: from Quake3
 // R_BlendOverTexture
 // Apply a color blend over a set of pixels
-static void gld_BlendOverTexture(byte *data, int pixelCount, byte blend[4])
-{
+static void gld_BlendOverTexture(unsigned char *data, int pixelCount,
+                                 unsigned char blend[4]) {
   int i;
   int inverseAlpha;
   int premult[3];
@@ -691,7 +698,7 @@ static void gld_BlendOverTexture(byte *data, int pixelCount, byte blend[4])
   }
 }
 
-byte	mipBlendColors[16][4] =
+unsigned char mipBlendColors[16][4] =
 {
   {0,0,0,0},
   {255,0,0,128},
@@ -711,7 +718,7 @@ byte	mipBlendColors[16][4] =
   {0,0,255,128},
 };
 
-static void gld_RecolorMipLevels(byte *data)
+static void gld_RecolorMipLevels(unsigned char *data)
 {
   //e6y: development aid to see texture mip usage
   if (gl_color_mip_levels)
@@ -728,7 +735,7 @@ static void gld_RecolorMipLevels(byte *data)
       if (w <= 0 || h <= 0)
         break;
 
-      gld_BlendOverTexture((byte *)buf, w * h, mipBlendColors[miplevel]);
+      gld_BlendOverTexture((unsigned char *)buf, w * h, mipBlendColors[miplevel]);
       glTexImage2D( GL_TEXTURE_2D, miplevel, gl_tex_format, w, h,
         0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
     }
@@ -1374,7 +1381,7 @@ void gld_FlushTextures(void)
   gld_ResetDrawInfo();
 }
 
-static void CalcHitsCount(const byte *hitlist, int size, int *hit, int*hitcount)
+static void CalcHitsCount(const unsigned char *hitlist, int size, int *hit, int*hitcount)
 {
   int i;
 
@@ -1401,7 +1408,7 @@ void gld_BuildMipmaps(GLsizei w, GLsizei h, GLvoid *p, GLenum wrap)
     );
     GLEXT_glGenerateMipmapEXT(GL_TEXTURE_2D);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   }
@@ -1410,7 +1417,7 @@ void gld_BuildMipmaps(GLsizei w, GLsizei h, GLvoid *p, GLenum wrap)
     printf("Using GL_GENERATE_MIPMAP\n");
     glEnable(GL_TEXTURE_2D); // Buggy ATI drivers need this.
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(
       GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR
@@ -1425,7 +1432,7 @@ void gld_BuildMipmaps(GLsizei w, GLsizei h, GLvoid *p, GLenum wrap)
       GL_TEXTURE_2D, gl_tex_format, w, h, GL_RGBA, GL_UNSIGNED_BYTE, p
     );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(
       GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR
@@ -1442,7 +1449,7 @@ void gld_BuildMipmaps(GLsizei w, GLsizei h, GLvoid *p, GLenum wrap)
 void gld_Precache(void)
 {
   int i;
-  byte *hitlist;
+  unsigned char *hitlist;
   int hit, hitcount = 0;
   GLTexture *gltexture;
   box_skybox_t *sb;

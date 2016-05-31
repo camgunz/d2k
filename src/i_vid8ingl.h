@@ -21,30 +21,33 @@
 /*****************************************************************************/
 
 
-#ifndef P_CMD_H__
-#define P_CMD_H__
+#ifndef I_VID_IN_8GL__
+#define I_VID_IN_8GL__
 
-typedef bool (*TrimFunc)(gpointer data, gpointer user_data);
+#ifdef GL_DOOM
 
-void         P_InitCommands(void);
-bool         P_HasCommands(int playernum);
-unsigned int P_GetCommandCount(int playernum);
-netticcmd_t* P_GetCommand(int playernum, unsigned int index);
-void         P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd);
-void         P_AppendNewCommand(int playernum, netticcmd_t *tmp_ncmd);
-netticcmd_t* P_GetLatestCommand(int playernum);
-int          P_GetLatestCommandIndex(int playernum);
-void         P_ForEachCommand(int playernum, GFunc func, gpointer user_data);
-void         P_ClearPlayerCommands(int playernum);
-void         P_IgnorePlayerCommands(int playernum);
-void         P_TrimCommands(int playernum, TrimFunc should_trim,
-                                           gpointer user_data);
-void         P_TrimCommandsByTic(int playernum, int tic);
-void         P_TrimCommandsByIndex(int playernum, int command_index);
-void         P_BuildCommand(void);
-bool         P_RunPlayerCommands(int playernum);
-void         P_PrintCommands(int playernum);
+typedef struct vid_8ingl_s {
+  int enabled;
+  SDL_Surface *screen;
+  SDL_Surface *surface;
+  GLuint texid;
+  GLuint pboids[2];
+  int width;
+  int height;
+  int size;
+  unsigned char *buf;
+  unsigned char *colours;
+  int palette;
+  float fU1;
+  float fU2;
+  float fV1;
+  float fV2;
+} vid_8ingl_t;
 
+extern vid_8ingl_t vid_8ingl;
+extern int use_gl_surface;
+
+#endif
 #endif
 
 /* vi: set et ts=2 sw=2: */

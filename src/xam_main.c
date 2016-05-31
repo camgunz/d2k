@@ -30,6 +30,8 @@
 #include "x_intern.h"
 #include "x_main.h"
 
+bool AM_Responder(event_t *ev);
+
 static int XAM_HandleEvent(lua_State *L) {
   event_t *ev = luaL_checkudata(L, -1, "InputEvent");
   bool event_handled = AM_Responder(ev);

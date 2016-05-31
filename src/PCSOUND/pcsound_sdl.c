@@ -3,17 +3,10 @@
 #include "z_zone.h"
 
 #include <SDL.h>
-//#ifdef HAVE_LIBSDL_MIXER
-//#include "SDL_mixer.h"
-//#endif
 
 #include "pcsound.h"
-
-//e6y
-#include "i_sound.h" // snd_samplerate
-
-// Can't do any of this without SDL_mixer
-//#ifdef HAVE_LIBSDL_MIXER
+#include "sounds.h"
+#include "i_sound.h"
 
 #define SQUARE_WAVE_AMP 0x2000
 

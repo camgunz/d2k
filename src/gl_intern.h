@@ -24,7 +24,20 @@
 #ifndef GL_INTERN_H__
 #define GL_INTERN_H__
 
-#include "v_video.h"
+struct mobj_s;
+typedef struct mobj_s mobj_t;
+
+struct side_s;
+typedef struct side_s side_t;
+
+struct sector_s;
+typedef struct sector_s sector_t;
+
+struct vertex_s;
+typedef struct vertex_s vertex_t;
+
+struct seg_s;
+typedef struct seg_s seg_t;
 
 #define MAXCOORD (32767.0f / MAP_COEFF)
 
@@ -130,7 +143,7 @@ typedef struct {
   float skyymid;
   float skyyaw;
   GLTexture *gltexture;
-  byte flag;
+  unsigned char flag;
   seg_t *seg;
 } GLWall;
 
@@ -235,7 +248,7 @@ typedef struct
   float fogdensity;
   fixed_t scale;
   GLTexture *gltexture;
-  uint_64_t flags;
+  uint64_t flags;
   int index;
   int xy;
 } GLSprite;
@@ -285,9 +298,9 @@ typedef struct GLDrawItem_s
 
 typedef struct GLDrawDataItem_s
 {
-  byte *data;
-  int maxsize;
-  int size;
+  unsigned char *data;
+  int            maxsize;
+  int            size;
 } GLDrawDataItem_t;
 
 typedef struct
@@ -538,8 +551,8 @@ void gld_CleanDisplayLists(void);
 extern int flats_display_list;
 
 // preprocessing
-extern byte *segrendered; // true if sector rendered (only here for malloc)
-extern byte *linerendered[2]; // true if linedef rendered (only here for malloc)
+extern unsigned char *segrendered; // true if sector rendered (only here for malloc)
+extern unsigned char *linerendered[2]; // true if linedef rendered (only here for malloc)
 extern GLuint flats_vbo_id;
 
 #ifdef USE_SHADERS

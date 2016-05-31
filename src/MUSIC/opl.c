@@ -29,6 +29,7 @@
 #include "opl.h"
 #include "opl_queue.h"
 #include "dbopl.h"
+#include "sounds.h"
 
 #include "i_sound.h" // mus_opl_gain
 

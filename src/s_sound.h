@@ -24,6 +24,9 @@
 #ifndef S_SOUND_H__
 #define S_SOUND_H__
 
+struct mobj_s;
+typedef struct mobj_s mobj_t;
+
 // The number of internal mixing channels, the samples calculated for each
 // mixing step, the size of the 16bit, 2 hardware channel (stereo) mixing
 // buffer, and the samplerate of the raw data.

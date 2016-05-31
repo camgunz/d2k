@@ -34,10 +34,6 @@
  * To find our own endianness, use config.h
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 /* Endianess handling. */
 
 /* cph - First the macros to do the actual byte swapping */

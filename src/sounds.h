@@ -28,11 +28,7 @@
 // SoundFX struct.
 //
 
-struct sfxinfo_struct;
-
-typedef struct sfxinfo_struct sfxinfo_t;
-
-struct sfxinfo_struct {
+typedef struct sfxinfo_s {
 
   // up to 6-character name
   const char *name; // CPhipps - const
@@ -44,7 +40,7 @@ struct sfxinfo_struct {
   int priority;
 
   // referenced sound if a link
-  sfxinfo_t *link;
+  struct sfxinfo_s *link;
 
   // pitch if a link
   int pitch;
@@ -62,13 +58,13 @@ struct sfxinfo_struct {
 
   // lump number of sfx
   int lumpnum;
-};
+} sfxinfo_t;
 
 //
 // MusicInfo struct.
 //
 
-typedef struct {
+typedef struct musicinfo_s {
   // up to 6-character name
   const char *name; // CPhipps - const
 

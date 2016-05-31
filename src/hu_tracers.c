@@ -25,15 +25,19 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
-#include "hu_lib.h"
+#include "d_event.h"
 #include "m_argv.h"
 #include "m_misc.h"
-
+#include "r_defs.h"
+#include "v_video.h"
+#include "p_setup.h"
+#include "p_mobj.h"
+#include "p_user.h"
+#include "g_game.h"
+#include "hu_lib.h"
 #include "hu_tracers.h"
 
 bool traces_present;
-
-hu_textline_t w_traces[NUMTRACES];
 
 void TracerApply(tracertype_t index);
 void GivenDamageReset(tracertype_t index);

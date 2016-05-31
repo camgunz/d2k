@@ -23,15 +23,23 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
+#include "r_defs.h"
 #include "r_main.h"
+#include "r_state.h"
 #include "p_map.h"
+#include "p_setup.h"
 #include "p_spec.h"
 #include "p_tick.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "g_overflow.h"
-#include "e6y.h"//e6y
+#include "e6y.h"
+#include "g_game.h"
+#include "v_video.h"
+#include "gl_opengl.h"
+#include "gl_struct.h"
 
 //e6y
 #define STAIRS_UNINITIALIZED_CRUSH_FIELD_VALUE 10

@@ -23,22 +23,28 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
-#include "e6y.h"//e6y
+#include "d_items.h"
+#include "e6y.h"
 #include "m_random.h"
 #include "n_net.h"
+#include "p_user.h"
 #include "n_main.h"
 #include "p_enemy.h"
 #include "p_inter.h"
 #include "p_map.h"
-#include "p_pspr.h"
 #include "p_tick.h"
+#include "w_wad.h"
 #include "r_demo.h"
 #include "r_main.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "sv_main.h"
+#include "g_game.h"
+#include "p_setup.h"
+#include "p_mobj.h"
 
 #define LOWERSPEED   (FRACUNIT*6)
 #define RAISESPEED   (FRACUNIT*6)
@@ -660,7 +666,7 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp) {
 
     if (autoaim/* || !beta_emulation*/) {
       // killough 8/2/98: make autoaiming prefer enemies
-      uint_64_t mask = mbf_features ? MF_FRIEND : 0;
+      uint64_t mask = mbf_features ? MF_FRIEND : 0;
       fixed_t slope;
       do {
         slope = P_AimLineAttack(mo, an, 16*64*FRACUNIT, mask);
@@ -715,7 +721,7 @@ static void P_BulletSlope(mobj_t *mo) {
   int funit = 16 * 64 * FRACUNIT;
 
   /* killough 8/2/98: make autoaiming prefer enemies */
-  uint_64_t mask = mbf_features ? MF_FRIEND : 0;
+  uint64_t mask = mbf_features ? MF_FRIEND : 0;
 
   do {
     bulletslope = P_AimLineAttack(mo, an, 16 * 64 * FRACUNIT, mask);

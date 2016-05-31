@@ -26,7 +26,7 @@
 //
 
 #if (R_DRAWSPAN_PIPELINE_BITS == 8)
-#define SCREENTYPE byte
+#define SCREENTYPE unsigned char
 #define TOPLEFT byte_topleft
 #define PITCH byte_pitch
 #elif (R_DRAWSPAN_PIPELINE_BITS == 15)
@@ -88,11 +88,11 @@ static void R_DRAWSPAN_FUNCNAME(draw_span_vars_t *dsvars)
   fixed_t yfrac = dsvars->yfrac;
   const fixed_t xstep = dsvars->xstep;
   const fixed_t ystep = dsvars->ystep;
-  const byte *source = dsvars->source;
+  const unsigned char *source = dsvars->source;
 #if (R_DRAWSPAN_PIPELINE & RDC_NOCOLMAP)
 #elif (R_DRAWSPAN_PIPELINE & RDC_DITHERZ)
 #else
-  const byte *colormap = dsvars->colormap;
+  const unsigned char *colormap = dsvars->colormap;
 #endif
   SCREENTYPE *dest = drawvars.TOPLEFT + dsvars->y*drawvars.PITCH + dsvars->x1;
 #if ((R_DRAWSPAN_PIPELINE & RDC_DITHERZ) || ( \
@@ -110,7 +110,7 @@ static void R_DRAWSPAN_FUNCNAME(draw_span_vars_t *dsvars)
 #endif
 #if (R_DRAWSPAN_PIPELINE & RDC_DITHERZ)
   const int fracz = (dsvars->z >> 12) & 255;
-  const byte *dither_colormaps[2] = { dsvars->colormap, dsvars->nextcolormap };
+  const unsigned char *dither_colormaps[2] = { dsvars->colormap, dsvars->nextcolormap };
 #endif
 
   while (count) {

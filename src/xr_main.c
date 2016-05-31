@@ -22,12 +22,14 @@
 
 #include "z_zone.h"
 
-#include "d_player.h"
+#include "doomdef.h"
+#include "doomstat.h"
+
+#include "p_setup.h"
 #include "p_mobj.h"
 #include "r_defs.h"
 #include "tables.h"
-#include "gl_opengl.h"
-#include "gl_struct.h"
+#include "w_wad.h"
 #include "r_demo.h"
 #include "r_draw.h"
 #include "r_patch.h"
@@ -35,6 +37,9 @@
 #include "v_video.h"
 #include "x_intern.h"
 #include "x_main.h"
+
+#include "gl_opengl.h"
+#include "gl_struct.h"
 
 void XR_RegisterInterface(void) {
   X_RegisterObjects("Renderer", 39,

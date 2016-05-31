@@ -23,32 +23,45 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
 #include "m_bbox.h"
 #include "m_argv.h"
+#include "m_swap.h"
 #include "g_game.h"
 #include "w_wad.h"
-#include "r_main.h"
-#include "r_things.h"
 #include "p_ident.h"
 #include "p_maputl.h"
 #include "p_map.h"
 #include "p_setup.h"
+#include "p_mobj.h"
 #include "p_spec.h"
 #include "p_tick.h"
 #include "p_user.h"
 #include "p_enemy.h"
 #include "s_sound.h"
 #include "s_advsound.h"
-#include "v_video.h"
+#include "r_defs.h"
+#include "r_patch.h"
+#include "r_data.h"
+#include "r_main.h"
+#include "r_draw.h"
+#include "r_things.h"
 #include "r_demo.h"
 #include "r_fps.h"
-#include "hu_lib.h"
-#include "hu_tracers.h"
 #include "g_overflow.h"
 #include "am_map.h"
 #include "e6y.h"//e6y
+#include "v_video.h"
+
+#include "hu_lib.h"
+#include "hu_tracers.h"
+
+#include "gl_opengl.h"
+#include "gl_struct.h"
+
+extern bool doSkip;
 
 //
 // MAP related Lookup tables.
@@ -79,7 +92,7 @@ side_t   *sides;
 int      *sslines_indexes;
 ssline_t *sslines;
 
-byte     *map_subsectors;
+unsigned char *map_subsectors;
 
 ///////////////////////////////////////////////////////////////////////////////
 // figgi 08/21/00 -- constants and globals for glBsp support
@@ -162,7 +175,7 @@ int blockmapyneg = -257;
 //
 
 static int rejectlump = -1;// cph - store reject lump num if cached
-const byte *rejectmatrix; // cph - const*
+const unsigned char *rejectmatrix; // cph - const*
 
 // Maintain single and multi player starting spots.
 
@@ -353,9 +366,9 @@ static void P_LoadVertexes(int lump) {
 //                 when P_LoadVertexes2 is used with classic BSP nodes.
 
 static void P_LoadVertexes2(int lump, int gllump) {
-  const byte         *gldata;
-  int                 i;
-  const mapvertex_t*  ml;
+  const unsigned char *gldata;
+  int                  i;
+  const mapvertex_t*   ml;
 
   firstglvertex = W_LumpLength(lump) / sizeof(mapvertex_t);
   numvertexes   = W_LumpLength(lump) / sizeof(mapvertex_t);
@@ -843,7 +856,7 @@ static void P_LoadSubsectors_V4(int lump) {
 // killough 5/3/98: reformatted, cleaned up
 
 static void P_LoadSectors(int lump) {
-  const byte *data; // cph - const*
+  const unsigned char *data; // cph - const*
   int  i;
 
   numsectors = W_LumpLength (lump) / sizeof(mapsector_t);
@@ -898,7 +911,7 @@ static void P_LoadSectors(int lump) {
 // killough 5/3/98: reformatted, cleaned up
 
 static void P_LoadNodes(int lump) {
-  const byte *data; // cph - const*
+  const unsigned char *data; // cph - const*
   int  i;
 
   numnodes = W_LumpLength (lump) / sizeof(mapnode_t);
@@ -958,7 +971,7 @@ static void P_LoadNodes(int lump) {
 }
 
 static void P_LoadNodes_V4(int lump) {
-  const byte *data; // cph - const*
+  const unsigned char *data; // cph - const*
   int  i;
 
   numnodes = (W_LumpLength (lump) - 8) / sizeof(mapnode_v4_t);
@@ -1010,7 +1023,7 @@ static void CheckZNodesOverflow(int *size, int count) {
     I_Error("P_LoadZNodes: incorrect nodes");
 }
 
-static void P_LoadZSegs(const byte *data) {
+static void P_LoadZSegs(const unsigned char *data) {
   int i;
 
   for (i = 0; i < numsegs; i++) {
@@ -1093,7 +1106,7 @@ static void P_LoadZSegs(const byte *data) {
 }
 
 static void P_LoadZNodes(int lump, int glnodes) {
-  const byte *data;
+  const unsigned char *data;
   unsigned int i;
   int len;
 
@@ -1342,7 +1355,7 @@ static void P_LoadThings(int lump) {
 // killough 5/3/98: reformatted, cleaned up
 
 static void P_LoadLineDefs(int lump) {
-  const byte *data; // cph - const*
+  const unsigned char *data; // cph - const*
   int  i;
 
   numlines = W_LumpLength (lump) / sizeof(maplinedef_t);
@@ -1505,7 +1518,7 @@ static void P_LoadSideDefs(int lump) {
 // killough 5/3/98: reformatted, cleaned up
 
 static void P_LoadSideDefs2(int lump) {
-  const byte *data = W_CacheLumpNum(lump); // cph - const*, wad lump handling updated
+  const unsigned char *data = W_CacheLumpNum(lump); // cph - const*, wad lump handling updated
   int  i;
 
   for (i = 0; i < numsides; i++) {
@@ -2211,7 +2224,7 @@ static int P_GroupLines(void) {
 //
 
 static void P_RemoveSlimeTrails(void) {       // killough 10/98
-  byte *hit = calloc(1, numvertexes);         // Hitlist for vertices
+  unsigned char *hit = calloc(1, numvertexes);         // Hitlist for vertices
   int i;
   for (i = 0; i < numsegs; i++) {                 // Go through each seg
     const line_t *l;
@@ -2228,10 +2241,10 @@ static void P_RemoveSlimeTrails(void) {       // killough 10/98
 
           if (v != l->v1 && v != l->v2) { // Exclude endpoints of linedefs
             // Project the vertex back onto the parent linedef
-            int_64_t dx2 = (l->dx >> FRACBITS) * (l->dx >> FRACBITS);
-            int_64_t dy2 = (l->dy >> FRACBITS) * (l->dy >> FRACBITS);
-            int_64_t dxy = (l->dx >> FRACBITS) * (l->dy >> FRACBITS);
-            int_64_t s = dx2 + dy2;
+            int64_t dx2 = (l->dx >> FRACBITS) * (l->dx >> FRACBITS);
+            int64_t dy2 = (l->dy >> FRACBITS) * (l->dy >> FRACBITS);
+            int64_t dxy = (l->dx >> FRACBITS) * (l->dy >> FRACBITS);
+            int64_t s = dx2 + dy2;
             int x0 = v->x, y0 = v->y, x1 = l->v1->x, y1 = l->v1->y;
             v->x = (int)((dx2 * x0 + dy2 * x1 + dxy * (y0 - y1)) / s);
             v->y = (int)((dy2 * y0 + dx2 * y1 + dxy * (x0 - x1)) / s);
@@ -2416,8 +2429,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill) {
 
   R_StopAllInterpolations();
 
-  totallive = totalkills = totalitems = totalsecret = wminfo.maxfrags = 0;
-  wminfo.partime = 180;
+  totallive = totalkills = totalitems = totalsecret = 0;
 
   for (i = 0; i < MAXPLAYERS; i++) {
     players[i].killcount = players[i].secretcount = players[i].itemcount = 0;

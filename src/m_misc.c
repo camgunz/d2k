@@ -23,20 +23,21 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
 #include "m_argv.h"
+#include "p_user.h"
 #include "g_game.h"
 #include "g_keys.h"
 #include "m_menu.h"
 #include "am_map.h"
 #include "w_wad.h"
 #include "i_system.h"
+#include "sounds.h"
 #include "i_sound.h"
 #include "i_video.h"
 #include "v_video.h"
-#include "hu_stuff.h"
-#include "st_stuff.h"
 #include "dstrings.h"
 #include "m_misc.h"
 #include "s_sound.h"
@@ -44,21 +45,24 @@
 #include "i_joy.h"
 #include "d_main.h"
 #include "d_deh.h"
+#include "r_defs.h"
 #include "r_draw.h"
 #include "r_demo.h"
 #include "r_fps.h"
 #include "r_main.h"
+#include "r_patch.h"
 #include "r_things.h"
 #include "r_sky.h"
-#include "p_user.h"
 #include "n_net.h"
 #include "cl_main.h"
 #include "sv_main.h"
+#include "hu_lib.h"
+#include "hu_stuff.h"
+#include "st_stuff.h"
 
-//e6y
-#ifdef GL_DOOM
+#include "gl_opengl.h"
 #include "gl_struct.h"
-#endif
+#include "p_maputl.h"
 #include "g_overflow.h"
 #include "r_screenmultiply.h"
 #include "e6y.h"
@@ -1638,6 +1642,8 @@ char *M_StrRTrim(char *str) {
   return str;
 }
 
+#if 0
+
 void M_ArrayClear(array_t *data) {
   data->count = 0;
 }
@@ -1672,6 +1678,8 @@ void* M_ArrayGetNewItem(array_t *data, int itemsize) {
 
   return (unsigned char*)data->data + (data->count - 1) * itemsize;
 }
+
+#endif
 
 /* vi: set et ts=2 sw=2: */
 

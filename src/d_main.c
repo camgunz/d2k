@@ -25,19 +25,28 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
+#include "r_defs.h"
+#include "v_video.h"
+
+#include "gl_opengl.h"
+#include "gl_struct.h"
+
 #include "am_map.h"
 #include "c_main.h"
 #include "d_deh.h"  // Ty 04/08/98 - Externalizations
 #include "d_dump.h"
-#include "d_event.h"
 #include "d_main.h"
-#include "d_net.h"
 #include "dstrings.h"
 #include "f_finale.h"
+#include "m_swap.h"
+#include "p_user.h"
 #include "g_game.h"
 #include "g_keys.h"
+#include "hu_lib.h"
 #include "hu_stuff.h"
 #include "i_main.h"
+#include "sounds.h"
 #include "i_sound.h"
 #include "i_system.h"
 #include "i_video.h"
@@ -48,18 +57,19 @@
 #include "p_checksum.h"
 #include "p_ident.h"
 #include "p_setup.h"
-#include "p_user.h"
+#include "d_net.h"
 #include "r_draw.h"
 #include "r_fps.h"
 #include "r_main.h"
+#include "r_patch.h"
 #include "sounds.h"
 #include "s_sound.h"
 #include "st_stuff.h"
-#include "v_video.h"
 #include "f_wipe.h"
 #include "w_wad.h"
 #include "wi_stuff.h"
 #include "x_main.h"
+#include "version.h"
 
 //e6y
 #include "r_demo.h"
@@ -75,9 +85,13 @@
 #include "n_main.h"
 #include "n_state.h"
 
+void G_BuildTiccmd(ticcmd_t *cmd);
+
 extern int  forceOldBsp;
 extern bool setsizeneeded;
 extern int  showMessages;
+
+extern bool doSkip;
 
 static bool wiping = false; // [CG] true if wiping
 
@@ -825,178 +839,15 @@ void D_StartTitle (void) {
   D_AdvanceDemo();
 }
 
-// killough 10/98: support -dehout filename
-// cph - made const, don't cache results
-//e6y static
-static const char* D_dehout(void) {
-  int p = M_CheckParm("-dehout");
-
-  if (!p)
-    p = M_CheckParm("-bexout");
-
-  if (p && ++p < myargc)
-    return myargv[p];
-
-  return NULL;
-}
-
-//
-// D_AddFile
-//
-// Rewritten by Lee Killough
-//
-// Ty 08/29/98 - add source parm to indicate where this came from
-// CPhipps - static, const char* parameter
-//         - source is an enum
-//         - modified to allocate & use new wadfiles array
-void D_AddFile(const char *path, wad_source_t source) {
-  char *wad_ext_path;
-  char *wad_path;
-  char *gwa_ext_path;
-  char *gwa_filepath;
-  int len;
-  wadfile_info_t *wadfile;
-  wadfile_info_t *gwafile;
-
-  wad_ext_path = M_AddDefaultExtension(path, "wad");
-
-  for (unsigned int i = 0; i < resource_files->len; i++) {
-    wadfile_info_t *wf = g_ptr_array_index(resource_files, i);
-
-    if (strcmp(wad_ext_path, wf->name) == 0) {
-      D_Msg(MSG_INFO, "D_AddFile: Skipping %s (already added).\n", path);
-      free(wad_ext_path);
-      return;
-    }
-  }
-
-  D_Msg(MSG_INFO, "D_AddFile: Searching for %s...\n", wad_ext_path);
-
-  wad_path = I_FindFile(wad_ext_path, NULL);
-
-  if (wad_path == NULL)
-    I_Error(" %s missing (original path: %s)\n", wad_ext_path, path);
-
-  wadfile = malloc(sizeof(wadfile_info_t));
-
-  if (wadfile == NULL)
-    I_Error("D_AddFile: Allocating WAD file info failed");
-
-  wadfile->name = wad_path;
-  wadfile->src = source; // Ty 08/29/98
-  wadfile->handle = 0;
-
-  g_ptr_array_add(resource_files, wadfile);
-
-  // No Rest For The Living
-  len = strlen(wadfile->name);
-  if (len >= 9 && !strnicmp(wadfile->name + len - 9, "nerve.wad", 9)) {
-    if (bfgedition)
-      gamemission = pack_nerve;
-  }
-
-  // proff: automatically try to add the gwa files
-  // proff - moved from w_wad.c
-  gwa_ext_path = M_SetFileExtension(wad_ext_path, "gwa");
-
-  free(wad_ext_path);
-
-  gwa_filepath = I_FindFile(gwa_ext_path, NULL);
-
-  free(gwa_ext_path);
-
-  if (gwa_filepath != NULL) {
-    gwafile = malloc(sizeof(wadfile_info_t));
-
-    if (gwafile == NULL)
-      I_Error("D_AddFile: Allocating GWA file info failed");
-
-    wadfile->name = gwa_filepath;
-    wadfile->src = source; // Ty 08/29/98
-    wadfile->handle = 0;
-
-    g_ptr_array_add(resource_files, wadfile);
-  }
-
-  free(gwa_filepath);
-}
-
-//
-// D_AddDEH
-//
-void D_AddDEH(const char *filename, int lumpnum) {
-  char *deh_path;
-  deh_file_t *dehfile;
-  const char *deh_out = D_dehout();
-
-  if ((!filename) && lumpnum == 0) {
-    I_Error("D_AddDEH: No filename or lumpnum given\n");
-  }
-
-  if (!filename) {
-    deh_path = NULL;
-  }
-  else {
-    deh_path = I_FindFile(filename, NULL);
-
-    if (!deh_path) {
-      I_Error("D_AddDEH: Couldn't find %s\n", filename);
-    }
-  }
-
-  for (unsigned int i = 0; i < deh_files->len; i++) {
-    deh_file_t *stored_deh_file = g_ptr_array_index(deh_files, i);
-
-    if (!filename) {
-      if (lumpnum == stored_deh_file->lumpnum) {
-        D_Msg(MSG_INFO,
-          "D_AddDEH: Skipping duplicate DeH/BEX (%d)\n", lumpnum
-        );
-        return;
-      }
-      continue;
-    }
-
-    if (!stored_deh_file->filename) {
-      continue;
-    }
-
-    if (strcmp(deh_path, stored_deh_file->filename) == 0) {
-      D_Msg(MSG_INFO, "D_AddDEH: Skipping %s (already added).\n", deh_path);
-      return;
-    }
-  }
-
-  if (deh_path) {
-    D_Msg(MSG_INFO, "D_AddDEH: Adding %s.\n", deh_path);
-  }
-
-  dehfile = malloc(sizeof(deh_file_t));
-
-  if (!dehfile) {
-    I_Error("D_AddDEH: Error allocating DEH file info");
-  }
-
-  dehfile->filename = deh_path;
-  if (deh_out) {
-    dehfile->outfilename = strdup(deh_out);
-  }
-  else {
-    dehfile->outfilename = NULL;
-  }
-  dehfile->lumpnum = lumpnum;
-
-  g_ptr_array_add(deh_files, dehfile);
-}
-
 //
 // AddIWAD
 //
 void AddIWAD(const char *iwad) {
   size_t i;
 
-  if (!(iwad && *iwad))
+  if (!(iwad && *iwad)) {
     return;
+  }
 
   D_Msg(MSG_INFO, "IWAD found: %s\n", iwad); //jff 4/20/98 print only if found
   CheckIWAD(iwad, &gamemode, &haswolflevels);
@@ -1361,7 +1212,7 @@ void IdentifyVersion(void) {
 
   AddIWAD(iwad);
   D_SetIWAD(iwad);
-  D_AddFile(iwad_path, source_iwad);
+  W_AddResource(iwad_path, source_iwad);
   free(iwad);
 }
 
@@ -1377,7 +1228,7 @@ static void FindResponseFile (void)
       size_t size;
       int index;
       int indexinfile;
-      byte *file = NULL;
+      unsigned char *file = NULL;
       const char **moreargs = malloc(myargc * sizeof(const char*));
       char **newargv;
       // proff 04/05/2000: Added for searching responsefile
@@ -1441,7 +1292,7 @@ static void FindResponseFile (void)
       }
 
       {
-        byte *infile = file;
+        unsigned char *infile = file;
         indexinfile = 0;
         indexinfile++;  // SKIP PAST ARGV[0] (KEEP IT)
         do {
@@ -1665,9 +1516,6 @@ static void DoLooseFiles(void)
 
 /* cph - MBF-like wad/deh/bex autoload code */
 const char *wad_file_names[MAXLOADFILES], *deh_file_names[MAXLOADFILES];
-
-// CPhipps - misc screen stuff
-unsigned int desired_screenwidth, desired_screenheight;
 
 static void D_destroyDEHFile(gpointer data) {
   deh_file_t *df = (deh_file_t *)data;
@@ -1977,7 +1825,7 @@ static void D_DoomMainSetup(void) {
         D_Msg(MSG_INFO, "Failed to autoload %s\n", fname);
       }
       else {
-        D_AddFile(fpath, source_auto_load);
+        W_AddResource(fpath, source_auto_load);
         free(fpath);
       }
     }
@@ -1996,7 +1844,7 @@ static void D_DoomMainSetup(void) {
    */
 
   if (!CLIENT)
-    D_AddFile(PACKAGE_TARNAME ".wad", source_auto_load);
+    W_AddResource(PACKAGE_TARNAME ".wad", source_auto_load);
 
   // add any files specified on the command line with -file wadfile
   // to the wad list
@@ -2017,7 +1865,7 @@ static void D_DoomMainSetup(void) {
         file = I_FindFile(myargv[p], ".wad");
 
       if (file) {
-        D_AddFile(file, source_pwad);
+        W_AddResource(file, source_pwad);
         free(file);
       }
     }
@@ -2047,7 +1895,7 @@ static void D_DoomMainSetup(void) {
 
     if (file_path) {
       D_Msg(MSG_INFO, "Playing demo %s\n", file);
-      D_AddFile(file, source_lmp);
+      W_AddResource(file, source_lmp);
     }
     else {
       D_Msg(MSG_INFO,
@@ -2087,7 +1935,7 @@ static void D_DoomMainSetup(void) {
       if (lumpinfo[p].source == source_iwad ||
           lumpinfo[p].source == source_pre  ||
           lumpinfo[p].source == source_auto_load) {
-        D_AddDEH(NULL, p); // cph - add dehacked-in-a-wad support
+        W_AddDEH(NULL, p); // cph - add dehacked-in-a-wad support
       }
     }
 
@@ -2095,13 +1943,13 @@ static void D_DoomMainSetup(void) {
       int lump = (W_CheckNumForName)("BFGBEX", ns_prboom);
 
       if (lump != -1)
-        D_AddDEH(NULL, lump);
+        W_AddDEH(NULL, lump);
 
       if (gamemission == pack_nerve) {
         lump = (W_CheckNumForName)("NERVEBEX", ns_prboom);
 
         if (lump != -1)
-          D_AddDEH(NULL, lump);
+          W_AddDEH(NULL, lump);
       }
     }
 
@@ -2109,7 +1957,7 @@ static void D_DoomMainSetup(void) {
       int lump = (W_CheckNumForName)("CHEXDEH", ns_prboom);
 
       if (lump != -1)
-        D_AddDEH(NULL, lump);
+        W_AddDEH(NULL, lump);
     }
   }
 
@@ -2129,7 +1977,7 @@ static void D_DoomMainSetup(void) {
         D_Msg(MSG_INFO, "Failed to autoload %s\n", fname);
       }
       else {
-        D_AddDEH(fpath, 0);
+        W_AddDEH(fpath, 0);
         // this used to set modifiedgame here, but patches shouldn't
         free(fpath);
       }
@@ -2141,7 +1989,7 @@ static void D_DoomMainSetup(void) {
       if (!(lumpinfo[p].source == source_iwad ||
             lumpinfo[p].source == source_pre  ||
             lumpinfo[p].source == source_auto_load)) {
-        D_AddDEH(NULL, p);
+        W_AddDEH(NULL, p);
       }
     }
   }
@@ -2170,7 +2018,7 @@ static void D_DoomMainSetup(void) {
       if ((file = I_FindFile(myargv[p], ".bex")) ||
           (file = I_FindFile(myargv[p], ".deh"))) {
         // during the beta we have debug output to dehout.txt
-        D_AddDEH(file, 0);
+        W_AddDEH(file, 0);
         free(file);
       }
       else {

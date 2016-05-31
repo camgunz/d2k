@@ -23,32 +23,40 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
 #include "c_main.h"
 #include "d_dump.h"
-#include "d_net.h"
 #include "f_finale.h"
-#include "i_video.h"
+// #include "i_video.h"
 #include "m_argv.h"
 #include "m_avg.h"
 #include "m_file.h"
 #include "m_misc.h"
 #include "m_menu.h"
 #include "m_random.h"
+
+#include "r_defs.h"
+#include "v_video.h"
+
+#include "gl_opengl.h"
+#include "gl_struct.h"
+
+#include "r_defs.h"
+#include "p_user.h"
 #include "n_net.h"
 #include "n_main.h"
 #include "n_proto.h"
 #include "n_state.h"
-#include "p_cmd.h"
 #include "p_ident.h"
 #include "p_setup.h"
 #include "p_tick.h"
 #include "p_map.h"
 #include "p_checksum.h"
-#include "p_user.h"
 #include "d_main.h"
 #include "wi_stuff.h"
+#include "hu_lib.h"
 #include "hu_stuff.h"
 #include "st_stuff.h"
 #include "am_map.h"
@@ -60,24 +68,29 @@
 #include "s_advsound.h"
 #include "dstrings.h"
 #include "sounds.h"
+#include "r_patch.h"
 #include "r_data.h"
 #include "r_sky.h"
 #include "d_deh.h"              // Ty 3/27/98 deh declarations
 #include "p_inter.h"
 #include "g_game.h"
+#include "d_net.h"
 #include "g_keys.h"
 #include "g_save.h"
 #include "i_main.h"
 #include "i_system.h"
 #include "r_demo.h"
 #include "r_fps.h"
-#include "e6y.h"//e6y
+#include "e6y.h"
 #include "cl_main.h"
 #include "x_main.h"
+#include "p_mobj.h"
+#include "v_video.h"
 
 extern int forceOldBsp;
 extern char *player_names[];
 extern bool setsizeneeded;
+extern bool doSkip;
 
 #define MAXPLMOVE   (forwardmove[1])
 #define TURBOTHRESHOLD  0x32
@@ -86,9 +99,9 @@ extern bool setsizeneeded;
 
 bool        netdemo;
 
-static const byte *demobuffer;   /* cph - only used for playback */
-static int         demolength; // check for overrun (missing DEMOMARKER)
-static FILE       *demofp; /* cph - record straight to file */
+static const unsigned char *demobuffer; /* cph - only used for playback */
+static int                  demolength; // check for overrun (missing DEMOMARKER)
+static FILE                *demofp;     /* cph - record straight to file */
 
 static int turnheld;       // for accelerative turning
 
@@ -114,7 +127,7 @@ static const struct {
 static int mousearray[6];
 static int *mousebuttons = &mousearray[1];    // allow [-1]
 
-static byte savegameslot; // Slot to load if gameaction == ga_loadgame
+static unsigned char savegameslot; // Slot to load if gameaction == ga_loadgame
 
 // mouse values are used once
 static int   mousex;
@@ -148,14 +161,14 @@ fixed_t sidemove_strafe50[2]  = {0x19, 0x32};
 
 // comp_options_by_version removed - see G_Compatibility
 #if 0
-static byte map_old_comp_levels[] = {
+static unsigned char map_old_comp_levels[] = {
   0, 1, 2, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
 };
 #endif
 
 //e6y static 
-const byte *demo_p;
-const byte *demo_continue_p = NULL;
+const unsigned char *demo_p;
+const unsigned char *demo_continue_p = NULL;
 
 // CPhipps - moved *_loadgame vars here
 bool            forced_loadgame = false;
@@ -968,6 +981,9 @@ static void G_DoLoadLevel(void) {
   /* CG 08/10/2014: Reset IDs */
   P_IdentReset();
 
+  wminfo.maxfrags = 0;
+  wminfo.partime = 180;
+
   P_SetupLevel(gameepisode, gamemap, 0, gameskill);
 
   if (!demoplayback) // Don't switch views if playing a demo
@@ -1210,6 +1226,104 @@ bool G_Responder(event_t *ev) {
   return false;
 }
 
+static void read_one_tick(ticcmd_t* cmd, const unsigned char **data_p) {
+  unsigned char at = 0; // e6y: for tasdoom demo format
+
+  cmd->forwardmove = (signed char)(*(*data_p)++);
+  cmd->sidemove = (signed char)(*(*data_p)++);
+
+  if (!longtics) {
+    cmd->angleturn = ((unsigned char)(at = *(*data_p)++)) << 8;
+  }
+  else {
+    unsigned int lowbyte = (unsigned char)(*(*data_p)++);
+
+    cmd->angleturn = (((signed int)(*(*data_p)++)) << 8) + lowbyte;
+  }
+
+  cmd->buttons = (unsigned char)(*(*data_p)++);
+  
+  // e6y: ability to play tasdoom demos directly
+  if (compatibility_level == tasdoom_compatibility) {
+    signed char tmp = cmd->forwardmove;
+
+    cmd->forwardmove = cmd->sidemove;
+    cmd->sidemove = (signed char)at;
+    cmd->angleturn = ((unsigned char)cmd->buttons) << 8;
+    cmd->buttons = (unsigned char)tmp;
+  }
+}
+
+static void read_demo_ticcmd(ticcmd_t *cmd) {
+  demo_curr_tic++;
+
+  if (*demo_p == DEMOMARKER) {
+    G_CheckDemoStatus();      // end of demo data stream
+  }
+  else if (demoplayback && demo_p + bytes_per_tic > demobuffer + demolength) {
+    D_Msg(MSG_WARN, "read_demo_ticcmd: missing DEMOMARKER\n");
+    G_CheckDemoStatus();
+  }
+  else {
+    read_one_tick(cmd, &demo_p);
+  }
+}
+
+static void read_demo_continue_ticcmd(ticcmd_t* cmd) {
+  if (!demo_continue_p)
+    return;
+
+  if (gametic <= demo_tics_count && 
+    demo_continue_p + bytes_per_tic <= demobuffer + demolength &&
+    *demo_continue_p != DEMOMARKER) {
+    read_one_tick(cmd, &demo_continue_p);
+  }
+
+  if (gametic >= demo_tics_count ||
+    demo_continue_p > demobuffer + demolength ||
+    gamekeydown[key_demo_jointogame] || joybuttons[joybuse]) {
+    demo_continue_p = NULL;
+    democontinue = false;
+  }
+}
+
+/* Demo limits removed -- killough
+ * cph - record straight to file
+ */
+static void write_demo_ticcmd(ticcmd_t *cmd) {
+  char buf[5];
+  char *p = buf;
+
+  if (compatibility_level == tasdoom_compatibility) {
+    *p++ = cmd->buttons;
+    *p++ = cmd->forwardmove;
+    *p++ = cmd->sidemove;
+    *p++ = (cmd->angleturn + 128) >> 8;
+  }
+  else {
+    *p++ = cmd->forwardmove;
+    *p++ = cmd->sidemove;
+
+    if (!longtics) {
+      *p++ = (cmd->angleturn + 128) >> 8;
+    }
+    else {
+      signed short a = cmd->angleturn;
+
+      *p++ = a & 0xff;
+      *p++ = (a >> 8) & 0xff;
+    }
+    *p++ = cmd->buttons;
+  } //e6y
+
+  if (fwrite(buf, p-buf, 1, demofp) != 1)
+    I_Error("write_demo_ticcmd: error writing demo");
+
+  /* cph - alias demo_p to it so we can read it back */
+  demo_p = (const unsigned char *)buf;
+  read_demo_ticcmd(cmd);         // make SURE it is exactly the same
+}
+
 //
 // G_Ticker
 // Make ticcmd_ts for the players.
@@ -1312,15 +1426,16 @@ void G_Ticker(void) {
       //e6y
       if (demoplayback) {
         memset(cmd, 0, sizeof(ticcmd_t));
-        G_ReadDemoTiccmd(cmd);
+        read_demo_ticcmd(cmd);
       }
       else if (democontinue) {
         memset(cmd, 0, sizeof(ticcmd_t));
-        G_ReadDemoContinueTiccmd(cmd);
+        read_demo_continue_ticcmd(cmd);
       }
 
-      if (demorecording)
-        G_WriteDemoTiccmd(cmd);
+      if (demorecording) {
+        write_demo_ticcmd(cmd);
+      }
 
       // check for turbo cheats
       // killough 2/14/98, 2/20/98 -- only warn in netgames and demos
@@ -1543,11 +1658,11 @@ static void G_PlayerFinishLevel(int player) {
   p->bonuscount = 0;
 
   P_ClearPlayerCommands(player);
-  p->commands_missed = 0;
-  p->command_limit = 0;
-  p->commands_run_this_tic = 0;
+  p->cmdq.commands_missed = 0;
+  p->cmdq.command_limit = 0;
+  p->cmdq.commands_run_this_tic = 0;
   p->telefragged_by_spawn = false;
-  p->latest_command_run_index = 0;
+  p->cmdq.latest_command_run_index = 0;
 
   if (deathmatch) {
     p->playerstate = PST_REBORN;
@@ -1572,7 +1687,7 @@ void G_ChangedPlayerColour(int pn, int cl) {
   for (int i = 0; i < MAXPLAYERS; i++) {
     if ((gamestate == GS_LEVEL) && playeringame[i] && (players[i].mo != NULL)) {
       players[i].mo->flags &= ~MF_TRANSLATION;
-      players[i].mo->flags |= ((uint_64_t)playernumtotrans[i]) << MF_TRANSSHIFT;
+      players[i].mo->flags |= ((uint64_t)playernumtotrans[i]) << MF_TRANSSHIFT;
     }
   }
 }
@@ -1638,10 +1753,10 @@ void G_PlayerReborn(int playernum) {
   p->health = initial_health; // Ty 03/12/98 - use dehacked values
 
   P_ClearPlayerCommands(playernum);
-  p->commands_missed = 0;
-  p->command_limit = 0;
-  p->commands_run_this_tic = 0;
-  p->latest_command_run_index = 0;
+  p->cmdq.commands_missed = 0;
+  p->cmdq.command_limit = 0;
+  p->cmdq.commands_run_this_tic = 0;
+  p->cmdq.latest_command_run_index = 0;
 
   p->telefragged_by_spawn = false;
 }
@@ -2356,8 +2471,9 @@ void G_ReloadDefaults(void) {
 
   //jff 3/24/98 set startskill from defaultskill in config file, unless
   // it has already been set by a -skill parameter
-  if (startskill == sk_none)
+  if (startskill == sk_none) {
     startskill = (skill_t)(defaultskill - 1);
+  }
 
   demoplayback = false;
   singledemo = false; // killough 9/29/98: don't stop after 1 demo
@@ -2533,86 +2649,6 @@ void G_InitNew(skill_t skill, int episode, int map) {
 // DEMO RECORDING
 //
 
-void G_ReadOneTick(ticcmd_t* cmd, const byte **data_p) {
-  unsigned char at = 0; // e6y: for tasdoom demo format
-
-  cmd->forwardmove = (signed char)(*(*data_p)++);
-  cmd->sidemove = (signed char)(*(*data_p)++);
-
-  if (!longtics) {
-    cmd->angleturn = ((unsigned char)(at = *(*data_p)++)) << 8;
-  }
-  else {
-    unsigned int lowbyte = (unsigned char)(*(*data_p)++);
-
-    cmd->angleturn = (((signed int)(*(*data_p)++)) << 8) + lowbyte;
-  }
-
-  cmd->buttons = (unsigned char)(*(*data_p)++);
-  
-  // e6y: ability to play tasdoom demos directly
-  if (compatibility_level == tasdoom_compatibility) {
-    signed char tmp = cmd->forwardmove;
-
-    cmd->forwardmove = cmd->sidemove;
-    cmd->sidemove = (signed char)at;
-    cmd->angleturn = ((unsigned char)cmd->buttons) << 8;
-    cmd->buttons = (byte)tmp;
-  }
-}
-
-void G_ReadDemoTiccmd (ticcmd_t *cmd) {
-  demo_curr_tic++;
-
-  if (*demo_p == DEMOMARKER) {
-    G_CheckDemoStatus();      // end of demo data stream
-  }
-  else if (demoplayback && demo_p + bytes_per_tic > demobuffer + demolength) {
-    D_Msg(MSG_WARN, "G_ReadDemoTiccmd: missing DEMOMARKER\n");
-    G_CheckDemoStatus();
-  }
-  else {
-    G_ReadOneTick(cmd, &demo_p);
-  }
-}
-
-/* Demo limits removed -- killough
- * cph - record straight to file
- */
-void G_WriteDemoTiccmd(ticcmd_t *cmd) {
-  char buf[5];
-  char *p = buf;
-
-  if (compatibility_level == tasdoom_compatibility) {
-    *p++ = cmd->buttons;
-    *p++ = cmd->forwardmove;
-    *p++ = cmd->sidemove;
-    *p++ = (cmd->angleturn + 128) >> 8;
-  }
-  else {
-    *p++ = cmd->forwardmove;
-    *p++ = cmd->sidemove;
-
-    if (!longtics) {
-      *p++ = (cmd->angleturn + 128) >> 8;
-    }
-    else {
-      signed short a = cmd->angleturn;
-
-      *p++ = a & 0xff;
-      *p++ = (a >> 8) & 0xff;
-    }
-    *p++ = cmd->buttons;
-  } //e6y
-
-  if (fwrite(buf, p-buf, 1, demofp) != 1)
-    I_Error("G_WriteDemoTiccmd: error writing demo");
-
-  /* cph - alias demo_p to it so we can read it back */
-  demo_p = (const byte *)buf;
-  G_ReadDemoTiccmd(cmd);         // make SURE it is exactly the same
-}
-
 //
 // G_RecordDemo
 //
@@ -2648,8 +2684,8 @@ void G_RecordDemo(const char* name) {
     demofp = fopen(demoname, "rb+");
     if (demofp) {
       int slot = -1;
-      const byte* pos;
-      byte buf[200];
+      const unsigned char* pos;
+      unsigned char buf[200];
       size_t len;
 
       //e6y: save all data which can be changed by G_ReadDemoHeader
@@ -2671,7 +2707,7 @@ void G_RecordDemo(const char* name) {
 
         /* Now read the demo to find the last save slot */
         do {
-          byte buf[5];
+          unsigned char buf[5];
 
           rc = fread(buf, 1, bytes_per_tic, demofp);
 
@@ -2720,10 +2756,10 @@ void G_RecordDemo(const char* name) {
 // byte(s) should still be skipped over or padded with 0's.
 // Lee Killough 3/1/98
 
-void G_WriteOptions(byte game_options[]) {
+void G_WriteOptions(unsigned char game_options[]) {
   int i = 0;
 
-  memset(game_options, 0, GAME_OPTION_SIZE * sizeof(byte));
+  memset(game_options, 0, GAME_OPTION_SIZE * sizeof(unsigned char));
 
   game_options[i++] = monsters_remember; // part of monster AI
   game_options[i++] = variable_friction; // ice & mud
@@ -2742,10 +2778,10 @@ void G_WriteOptions(byte game_options[]) {
   game_options[i++] = demo_insurance;    // killough 3/31/98
 
   // killough 3/26/98: Added rngseed. 3/31/98: moved here
-  game_options[i++] = (byte)((rngseed >> 24) & 0xff);
-  game_options[i++] = (byte)((rngseed >> 16) & 0xff);
-  game_options[i++] = (byte)((rngseed >>  8) & 0xff);
-  game_options[i++] = (byte)( rngseed        & 0xff);
+  game_options[i++] = (unsigned char)((rngseed >> 24) & 0xff);
+  game_options[i++] = (unsigned char)((rngseed >> 16) & 0xff);
+  game_options[i++] = (unsigned char)((rngseed >>  8) & 0xff);
+  game_options[i++] = (unsigned char)( rngseed        & 0xff);
 
   // Options new to v2.03 begin here
   if (mbf_features) {
@@ -2793,7 +2829,7 @@ void G_WriteOptions(byte game_options[]) {
  * cph - const byte*'s
  */
 
-void G_ReadOptions(byte game_options[]) {
+void G_ReadOptions(unsigned char game_options[]) {
   int i = 0;
 
   monsters_remember = game_options[i++];
@@ -2859,8 +2895,8 @@ void G_ReadOptions(byte game_options[]) {
 
 void G_BeginRecording(void) {
   int i;
-  byte game_options[GAME_OPTION_SIZE];
-  byte *demostart, *demo_p;
+  unsigned char game_options[GAME_OPTION_SIZE];
+  unsigned char *demostart, *demo_p;
   size_t bytes_written;
 
   demostart = demo_p = malloc(1000);
@@ -2931,8 +2967,8 @@ void G_BeginRecording(void) {
   // FIXME } else if (compatibility_level >= boom_compatibility_compatibility) { //e6y
   }
   else if (compatibility_level > boom_compatibility_compatibility) {
-    byte v = 0;
-    byte c = 0; /* Nominally, version and compatibility bits */
+    unsigned char v = 0;
+    unsigned char c = 0; /* Nominally, version and compatibility bits */
 
     switch (compatibility_level) {
       case boom_compatibility_compatibility:
@@ -3012,14 +3048,16 @@ void G_BeginRecording(void) {
     *demo_p++ = nomonsters;
     *demo_p++ = consoleplayer;
 
-    for (i = 0; i < 4; i++)  // intentionally hard-coded 4 -- killough
+    for (i = 0; i < 4; i++) { // intentionally hard-coded 4 -- killough
       *demo_p++ = playeringame[i];
+    }
   }
 
   bytes_written = fwrite(demostart, 1, demo_p - demostart, demofp);
   
-  if (bytes_written != (size_t)(demo_p - demostart))
+  if (bytes_written != (size_t)(demo_p - demostart)) {
     I_Error("G_BeginRecording: Error writing demo header");
+  }
 
   free(demostart);
 }
@@ -3064,7 +3102,8 @@ static int G_GetOriginalDoomCompatLevel(int ver) {
 }
 
 //e6y: Check for overrun
-static bool CheckForOverrun(const byte *start_p, const byte *current_p,
+static bool CheckForOverrun(const unsigned char *start_p,
+                            const unsigned char *current_p,
                             size_t maxsize, size_t size,
                             bool failonerror) {
   size_t pos = current_p - start_p;
@@ -3183,20 +3222,20 @@ void G_SaveRestoreGameOptions(int save) {
   }
 }
 
-const byte* G_ReadDemoHeader(const byte *demo_p, size_t size) {
+const unsigned char* G_ReadDemoHeader(const unsigned char *demo_p, size_t size) {
   return G_ReadDemoHeaderEx(demo_p, size, 0);
 }
 
-const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size,
-                               unsigned int params) {
+const unsigned char* G_ReadDemoHeaderEx(const unsigned char *demo_p, size_t size,
+                                        unsigned int params) {
   skill_t skill;
   int i, episode, map;
-  byte game_options[GAME_OPTION_SIZE];
+  unsigned char game_options[GAME_OPTION_SIZE];
 
   // e6y
   // The local variable should be used instead of demobuffer,
   // because demobuffer can be uninitialized
-  const byte *header_p = demo_p;
+  const unsigned char *header_p = demo_p;
   bool failonerror = (params & RDH_SAFE);
 
   basetic = gametic;  // killough 9/29/98
@@ -3447,7 +3486,7 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size,
   // e6y
   // additional params
   {
-    const byte *p = demo_p;
+    const unsigned char *p = demo_p;
 
     if (longtics)
       bytes_per_tic = 5;
@@ -3722,24 +3761,6 @@ void P_SyncWalkcam(bool sync_coords, bool sync_sight) {
       walkcamera.x = players[displayplayer].mo->x;
       walkcamera.y = players[displayplayer].mo->y;
     }
-  }
-}
-
-void G_ReadDemoContinueTiccmd(ticcmd_t* cmd) {
-  if (!demo_continue_p)
-    return;
-
-  if (gametic <= demo_tics_count && 
-    demo_continue_p + bytes_per_tic <= demobuffer + demolength &&
-    *demo_continue_p != DEMOMARKER) {
-    G_ReadOneTick(cmd, &demo_continue_p);
-  }
-
-  if (gametic >= demo_tics_count ||
-    demo_continue_p > demobuffer + demolength ||
-    gamekeydown[key_demo_jointogame] || joybuttons[joybuse]) {
-    demo_continue_p = NULL;
-    democontinue = false;
   }
 }
 

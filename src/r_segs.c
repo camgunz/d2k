@@ -25,18 +25,27 @@
 
 #include "z_zone.h"
 
-#include <SDL.h>
-
+#include "doomdef.h"
 #include "doomstat.h"
+#include "r_defs.h"
 #include "r_main.h"
 #include "r_bsp.h"
 #include "r_segs.h"
+#include "r_patch.h"
+#include "r_state.h"
 #include "r_plane.h"
-#include "r_things.h"
 #include "r_draw.h"
+#include "r_things.h"
+#include "r_data.h"
+#include "r_sky.h"
 #include "w_wad.h"
 #include "v_video.h"
 #include "i_smp.h"
+#include "g_game.h"
+#include "p_setup.h"
+
+#include "gl_opengl.h"
+#include "gl_struct.h"
 
 // OPTIMIZE: closed two sided lines as single sided
 
@@ -246,10 +255,10 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
         // mapping to screen coordinates is totally out of range:
 
         {
-          int_64_t t = ((int_64_t) centeryfrac << FRACBITS) -
-            (int_64_t) dcvars.texturemid * spryscale;
-          if (t + (int_64_t) textureheight[texnum] * spryscale < 0 ||
-              t > (int_64_t) SCREENHEIGHT << FRACBITS*2)
+          int64_t t = ((int64_t) centeryfrac << FRACBITS) -
+            (int64_t) dcvars.texturemid * spryscale;
+          if (t + (int64_t) textureheight[texnum] * spryscale < 0 ||
+              t > (int64_t) SCREENHEIGHT << FRACBITS*2)
             continue;        // skip if the texture is out of screen's range
           sprtopscreen = (long)(t >> FRACBITS);
         }

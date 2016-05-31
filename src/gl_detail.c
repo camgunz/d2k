@@ -23,22 +23,27 @@
 
 #include "z_zone.h"
 
-#include "gl_opengl.h"
-
 #include <SDL.h>
 
 #ifdef HAVE_LIBSDL_IMAGE
 #include <SDL_image.h>
 #endif
 
-#include "v_video.h"
+#include "doomdef.h"
+#include "doomstat.h"
+#include "r_defs.h"
+#include "r_data.h"
 #include "r_main.h"
-#include "gl_intern.h"
+#include "v_video.h"
 #include "w_wad.h"
 #include "p_spec.h"
 #include "m_misc.h"
 #include "sc_man.h"
 #include "e6y.h"
+
+#include "gl_opengl.h"
+#include "gl_struct.h"
+#include "gl_intern.h"
 
 int render_usedetail;
 int gl_allow_detail_textures;

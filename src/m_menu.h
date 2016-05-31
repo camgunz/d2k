@@ -24,8 +24,6 @@
 #ifndef M_MENU_H__
 #define M_MENU_H__
 
-#include "d_event.h"
-
 //
 // MENUS
 //

@@ -47,7 +47,7 @@ typedef struct cheatseq_s {
   } const when;
   void (*const func)();
   const int arg;
-  uint_64_t code, mask;
+  uint64_t code, mask;
 
   // settings for this cheat
   size_t sequence_len;

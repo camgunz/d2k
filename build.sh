@@ -3,6 +3,8 @@
 BUILD_TYPE=Debug
 BUILD_TYPE=Release
 
+printf '====================\n====================\n'
+
 if [ ! -d cbuild ]
 then
   mkdir cbuild

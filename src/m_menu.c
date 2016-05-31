@@ -26,6 +26,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "dstrings.h"
+#include "d_event.h"
 #include "am_map.h"
 #include "d_deh.h"
 #include "d_main.h"
@@ -33,30 +34,39 @@
 #ifdef _WIN32
 #include "e6y_launcher.h"
 #endif
+#include "p_user.h"
 #include "g_game.h"
 #include "g_keys.h"
-#include "hu_stuff.h"
+#include "w_wad.h"
+#include "r_demo.h"
+#include "r_fps.h"
+#include "r_defs.h"
+#include "r_patch.h"
+#include "r_data.h"
+#include "r_main.h"
 #include "i_input.h"
 #include "i_main.h"
+#include "sounds.h"
 #include "i_sound.h"
 #include "i_system.h"
 #include "i_video.h"
-#include "m_menu.h"
 #include "m_misc.h"
 #include "n_net.h"
-#include "p_user.h"
-#include "r_demo.h"
-#include "r_fps.h"
-#include "r_main.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "st_stuff.h"
 #include "v_video.h"
-#include "w_wad.h"
+#include "m_menu.h"
 #include "xd_main.h"
 
-extern patchnum_t hu_font[HU_FONTSIZE];
+#include "hu_lib.h"
+#include "hu_stuff.h"
+
+#include "gl_opengl.h"
+#include "gl_struct.h"
+
 extern bool       message_dontfuckwithme;
+extern patchnum_t hu_font[HU_FONTSIZE];
 
 //
 // defaulted values
@@ -1918,11 +1928,12 @@ static void M_DrawSetting(const setup_menu_t* s)
         V_FillRect(0, xx, yy, ww, hh, PAL_BLACK);
         xx = x + 1, yy = y, ww = 6, hh = 6;
         V_GetWideRect(&xx, &yy, &ww, &hh, VPT_STRETCH);
-        V_FillRect(0, xx, yy, ww, hh, (byte)ch);
+        V_FillRect(0, xx, yy, ww, hh, (unsigned char)ch);
       }
 
-      if (!ch) // don't show this item in automap mode
-  V_DrawNamePatch(x+1,y,0,"M_PALNO", CR_DEFAULT, VPT_STRETCH);
+      if (!ch) { // don't show this item in automap mode
+        V_DrawNamePatch(x+1,y,0,"M_PALNO", CR_DEFAULT, VPT_STRETCH);
+      }
       return;
     }
 
@@ -2815,7 +2826,7 @@ void M_Automap(int choice)
 
 int color_palette_x; // X position of the cursor on the color palette
 int color_palette_y; // Y position of the cursor on the color palette
-byte palette_background[16*(CHIP_SIZE+1)+8];
+unsigned char palette_background[16*(CHIP_SIZE+1)+8];
 
 // M_DrawColPal() draws the color palette when the user needs to select a
 // color.

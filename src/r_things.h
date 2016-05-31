@@ -24,13 +24,13 @@
 #ifndef R_THINGS_H__
 #define R_THINGS_H__
 
-#ifdef __GNUG__
-#pragma interface
-#endif
+#define MINZ (FRACUNIT*4)
 
-#include "r_draw.h"
+struct rcolumn_s;
+typedef struct rcolumn_s rcolumn_t;
 
-#define MINZ        (FRACUNIT*4)
+struct rpatch_s;
+typedef struct rpatch_s rpatch_t;
 
 extern int r_near_clip_plane;
 

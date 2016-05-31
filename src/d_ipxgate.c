@@ -42,35 +42,28 @@
 #define NCMD_KILL               0x10000000      // kill game
 #define NCMD_CHECKSUM           0x0fffffff
 
-typedef struct
-{
+typedef struct {
   short     gameid;                       // so multiple games can setup at once
   short     drone;
   short     nodesfound;
   short     nodeswanted;
 } setupdata_t;
 
-typedef struct
-a
-{
-    // High bit is retransmit request.
-    unsigned            checksum;
-    // Only valid if NCMD_RETRANSMIT.
-    byte                retransmitfrom;
-
-    byte                starttic;
-    byte                player; 
-    byte                numtics;
-    ticcmd_t            cmds[BACKUPTICS];
+typedef struct a {
+    unsigned int  checksum;       // High bit is retransmit request.
+    unsigned char retransmitfrom; // Only valid if NCMD_RETRANSMIT.
+    unsigned char starttic;
+    unsigned char player; 
+    unsigned char numtics;
+    ticcmd_t      cmds[BACKUPTICS];
 } doomdata_t;   
 	    
-typedef struct
-{
+typedef struct {
   signed int tic;
   union altu {
-    setupdata_t s;
+    setupdata_t   s;
     unsigned char data[100];
-    doomdata_t d;
+    doomdata_t    d;
   } u;
 } ipxpacket_t;
 
@@ -114,10 +107,10 @@ int udp_socket(const char* ip) {
   return s;
 }
 
-static byte ChecksumPacket(const packet_header_t* buffer, size_t len)
+static unsigned char ChecksumPacket(const packet_header_t* buffer, size_t len)
 {
-  const byte* p = (void*)buffer;
-  byte sum = 0;
+  const unsigned char* p = (void*)buffer;
+  unsigned char sum = 0;
 
   if (len==0)
 	  return 0;
@@ -254,7 +247,7 @@ void udp_receive(int s) {
 		    {
 			    ipxpacket_t pkt;
 			    int tic = doom_ntohl(p->tic);
-			    byte *pp = (void*)(p+1);
+			    unsigned char *pp = (void*)(p+1);
 			    int tics = *pp++;
 			    memset(&pkt,0,sizeof(pkt));
 			    size_t len;

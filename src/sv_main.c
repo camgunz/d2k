@@ -25,6 +25,7 @@
 
 #include <enet/enet.h>
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "g_save.h"
 #include "n_net.h"
@@ -32,8 +33,10 @@
 #include "n_state.h"
 #include "n_peer.h"
 #include "n_proto.h"
-#include "p_cmd.h"
 #include "p_user.h"
+#include "g_game.h"
+#include "p_setup.h"
+#include "p_mobj.h"
 
 #define MAX_COMMAND_COUNT (TICRATE / 4)
 
@@ -51,6 +54,7 @@ typedef struct {
   int oldest_sync_tic;
 } old_commands_struct_t;
 
+#if 0
 static bool command_synchronized(gpointer data, gpointer user_data) {
   netticcmd_t *ncmd = data;
   old_commands_struct_t *ocs = user_data;
@@ -63,23 +67,24 @@ static bool command_synchronized(gpointer data, gpointer user_data) {
 
   return false;
 }
+#endif
 
 static void sv_remove_old_commands(void) {
-  old_commands_struct_t ocs;
-
-  ocs.oldest_sync_tic = INT_MAX;
-
-  NETPEER_FOR_EACH(iter) {
-    ocs.oldest_sync_tic = MIN(ocs.oldest_sync_tic, iter.np->sync.tic);
-  }
-
-  if (ocs.oldest_sync_tic == INT_MAX) {
-    return;
-  }
-
   for (int i = 0; i < MAXPLAYERS; i++) {
-    ocs.playernum = i;
-    P_TrimCommands(i, command_synchronized, &ocs);
+    unsigned int latest_synchronized_command_index;
+
+    if (!P_LatestSynchronizedCommandIndexReady(i)) {
+      continue;
+    }
+
+    latest_synchronized_command_index = P_GetLatestSynchronizedCommandIndex(i);
+
+    if (latest_synchronized_command_index == 0xFFFFFFFF) {
+      continue;
+    }
+
+    P_TrimCommandsByIndex(i, latest_synchronized_command_index);
+    P_ResetLatestSynchronizedCommandIndex(i);
   }
 }
 

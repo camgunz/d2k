@@ -25,16 +25,17 @@
 
 #include <enet/enet.h>
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "n_net.h"
 #include "n_state.h"
 #include "n_peer.h"
 #include "n_proto.h"
-#include "p_cmd.h"
 #include "p_user.h"
 #include "cl_cmd.h"
 #include "x_intern.h"
 #include "x_main.h"
+#include "g_game.h"
 
 static int XCL_Say(lua_State *L) {
   const char *message = luaL_checkstring(L, 1);

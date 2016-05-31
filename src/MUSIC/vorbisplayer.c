@@ -23,7 +23,14 @@
 
 #include "z_zone.h"
 
+#ifdef HAVE_LIBVORBISFILE
+#include <vorbis/vorbisfile.h>
+#include <vorbis/codec.h>
+#endif
+
+#include "sounds.h"
 #include "musicplayer.h"
+#include "i_sound.h"
 
 #ifndef HAVE_LIBVORBISFILE
 
@@ -31,7 +38,6 @@ static const char *vorb_name (void)
 {
   return "vorbis player (DISABLED)";
 }
-
 
 static int vorb_init (int samplerate)
 {
@@ -55,14 +61,6 @@ const music_player_t vorb_player =
 
 #else // HAVE_LIBVORBISFILE
 
-
-#include <stdlib.h>
-#include <string.h>
-
-#include <vorbis/vorbisfile.h>
-#include <vorbis/codec.h>
-
-#include "i_sound.h"
 
 // uncomment to allow (experiemntal) support for
 // zdoom-style audio loops
@@ -211,12 +209,6 @@ static unsigned parsetag (const char *str, int samplerate)
   return ret;
 }      
 #endif // ZDOOM_AUDIO_LOOP
-
-#ifdef _MSC_VER
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <delayimp.h>
-#endif
 
 static int vorb_init (int samplerate)
 {

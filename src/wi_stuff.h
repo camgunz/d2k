@@ -24,10 +24,6 @@
 #ifndef WI_STUFF_H__
 #define WI_STUFF_H__
 
-//#include "v_video.h"
-
-#include "doomdef.h"
-
 // States for the intermission
 
 typedef enum

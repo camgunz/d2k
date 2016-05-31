@@ -65,16 +65,6 @@ typedef enum {
   AUTH_LEVEL_MAX
 } auth_level_e;
 
-typedef struct netticcmd_s {
-  int   index;
-  int   tic;
-  int   server_tic;
-  char  forward;
-  char  side;
-  short angle;
-  byte  buttons;
-} netticcmd_t;
-
 extern bool netgame;
 extern bool netdemo;
 extern bool solonet;

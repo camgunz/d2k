@@ -42,7 +42,6 @@
  #include "SDL.h"
 #endif
 
-#include "doomtype.h"
 #include "protocol.h"
 #include "i_network.h"
 #ifndef PRBOOM_SERVER
@@ -222,7 +221,7 @@ void BroadcastPacket(packet_header_t *packet, size_t len)
       I_SendPacketTo(packet, len, &remoteaddr[i]);
 }
 
-byte def_game_options[GAME_OPTIONS_SIZE] = \
+unsigned char def_game_options[GAME_OPTIONS_SIZE] = \
 { // cf g_game.c:G_WriteOptions()
   1, // monsters remember
   1, // friction
@@ -296,7 +295,7 @@ long int ptic(packet_header_t* p)
 
 void read_config_file(FILE* fp, struct setup_packet_s* sp)
 {
-  byte* gameopt = sp->game_options;
+  unsigned char* gameopt = sp->game_options;
 
   while (!feof(fp)) {
     char  def[80];
@@ -339,7 +338,7 @@ int main(int argc, char** argv)
   int numwads = 0;
   {
     int opt;
-    byte *gameopt = setupinfo.game_options;
+    unsigned char *gameopt = setupinfo.game_options;
 
     memcpy(gameopt, &def_game_options, sizeof (setupinfo.game_options));
     while ((opt = getopt(argc, argv, "c:t:x:p:e:l:adrfns:N:vw:")) != EOF)
@@ -512,7 +511,7 @@ int main(int argc, char** argv)
       break;
     case PKT_GO:
       if (!ingame) {
-        int from = *(byte*)(packet+1);
+        int from = *(unsigned char*)(packet+1);
 
 	if (badplayer(from) || playerstate[from] == pc_unused) break;
 	if (confirming) {
@@ -524,8 +523,8 @@ int main(int argc, char** argv)
       break;
     case PKT_TICC:
       {
-        byte tics = *(byte*)(packet+1);
-        int from = *(((byte*)(packet+1))+1);
+        unsigned char tics = *(unsigned char*)(packet+1);
+        int from = *(((unsigned char*)(packet+1))+1);
 
 	if (badplayer(from)) break;
 
@@ -536,7 +535,7 @@ int main(int argc, char** argv)
             packet_set(packet, PKT_RETRANS, remoteticfrom[from]);
             I_SendPacketTo(packet, sizeof *packet, remoteaddr+from);
         } else {
-            ticcmd_t *newtic = (void*)(((byte*)(packet+1))+2);
+            ticcmd_t *newtic = (void*)(((unsigned char*)(packet+1))+2);
             if (ptic(packet) + tics < remoteticfrom[from]) break; // Won't help
             remoteticfrom[from] = ptic(packet);
             while (tics--)
@@ -546,7 +545,7 @@ int main(int argc, char** argv)
       break;
     case PKT_RETRANS:
       {
-        int from = *(byte*)(packet+1);
+        int from = *(unsigned char*)(packet+1);
 	if (badplayer(from)) break;
 
         if (verbose>2) printf("%d requests resend from %ld\n", from, ptic(packet));
@@ -555,7 +554,7 @@ int main(int argc, char** argv)
       break;
     case PKT_QUIT:
       {
-        int from = *(byte*)(packet+1);
+        int from = *(unsigned char*)(packet+1);
 	if (badplayer(from)) break;
 
 	if (!ingame && playerstate[from] != pc_unused) {
@@ -575,13 +574,13 @@ int main(int argc, char** argv)
     case PKT_EXTRA:
       BroadcastPacket(packet, len);
       if (packet->type == PKT_EXTRA) {
-        if (verbose>2) printf("misc from %d\n", *(((byte*)(packet+1))+1));
+        if (verbose>2) printf("misc from %d\n", *(((unsigned char*)(packet+1))+1));
       }
       break;
     case PKT_WAD:
       {
         int i;
-        int from = *(byte*)(packet+1);
+        int from = *(unsigned char*)(packet+1);
         char *name = 1 + (char*)(packet+1);
         size_t size = sizeof(packet_header_t);
         packet_header_t *reply;
@@ -671,7 +670,7 @@ int main(int argc, char** argv)
       if ((remoteticto[i] -= xtratics) < 0) remoteticto[i] = 0;
       tics = lowtic - remoteticto[i];
       {
-        byte *p;
+        unsigned char *p;
         packet = malloc(sizeof(packet_header_t) + 1 +
          tics * (1 + numplayers * (1 + sizeof(ticcmd_t))));
         p = (void*)(packet+1);
@@ -680,7 +679,7 @@ int main(int argc, char** argv)
         if (verbose>1) printf("sending %d tics to %d\n", tics, i);
         while (tics--) {
     int j, playersthistic = 0;
-    byte *q = p++;
+    unsigned char *q = p++;
     for (j=0; j<MAXPLAYERS; j++)
       if ((playerjoingame[j] <= remoteticto[i]) &&
           (playerleftgame[j] > remoteticto[i])) {
@@ -692,7 +691,7 @@ int main(int argc, char** argv)
     *q = playersthistic;
     remoteticto[i]++;
         }
-        I_SendPacketTo(packet, p - ((byte*)packet), remoteaddr+i);
+        I_SendPacketTo(packet, p - ((unsigned char*)packet), remoteaddr+i);
         free(packet);
       }
       {

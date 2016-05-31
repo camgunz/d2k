@@ -27,7 +27,6 @@
 
 #include "pcreposix.h"
 
-#include "doomtype.h"
 #include "w_wad.h"
 #include "doomstat.h"
 #include "d_main.h"
@@ -718,7 +717,7 @@ static bool L_PrepareToLaunch(void)
     fileitem_t *item = &launcher.files[index];
 
     if (item->source == source_pwad || item->source == source_iwad) {
-      D_AddFile(item->name, source_pwad);
+      W_AddResource(item->name, source_pwad);
       modifiedgame = true;
     }
 
@@ -735,7 +734,7 @@ static bool L_PrepareToLaunch(void)
 
   for (i = 0; (size_t)i < new_numwadfiles; i++) {
     if (new_wadfiles[i].src == source_lmp || new_wadfiles[i].src == source_net)
-      D_AddFile(new_wadfiles[i].name, new_wadfiles[i].src);
+      W_AddResource(new_wadfiles[i].name, new_wadfiles[i].src);
 
     if (new_wadfiles[i].name)
       free((char *)new_wadfiles[i].name);

@@ -27,10 +27,12 @@
 
 #include <enet/enet.h>
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
 #include "m_avg.h"
 #include "m_delta.h"
+#include "p_user.h"
 #include "g_game.h"
 #include "g_save.h"
 #include "n_net.h"

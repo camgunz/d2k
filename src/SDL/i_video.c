@@ -28,37 +28,42 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
-#include "am_map.h"
-#include "d_deh.h"
 #include "d_event.h"
-#include "d_main.h"
-#include "e6y.h"//e6y
-#include "f_wipe.h"
-#include "g_game.h"
-#include "i_capture.h"
-#include "i_input.h"
-#include "i_joy.h"
-#include "i_main.h"
+
+#include "r_defs.h"
+#include "v_video.h"
+#include "gl_opengl.h"
+#include "gl_struct.h"
+#include "st_stuff.h"
+#include "r_screenmultiply.h"
+#include "v_overlay.h"
+#include "i_vid8ingl.h"
+#include "r_main.h"
+#include "m_argv.h"
 #include "i_mouse.h"
 #include "i_video.h"
-#include "m_argv.h"
-#include "p_user.h"
-#include "r_draw.h"
-#include "r_main.h"
-#include "r_plane.h"
-#include "r_screenmultiply.h"
-#include "r_things.h"
-#include "st_stuff.h"
-#include "v_overlay.h"
-#include "v_video.h"
-#include "w_wad.h"
-#include "xd_main.h"
+#include "i_main.h"
+#include "i_input.h"
+#include "i_capture.h"
+
+void R_InitSpritesRes(void);
+void R_InitBuffersRes(void);
+void R_InitMeltRes(void);
+void R_InitPlanesRes(void);
+void R_InitVisplanesRes(void);
+void R_InitBuffer(int width, int height);
+void AM_SetResolution(void);
+void M_ChangeFOV(void);
+void M_ChangeRenderPrecise(void);
+void deh_changeCompTranslucency(void);
 
 #ifdef GL_DOOM
-#include "gl_struct.h"
 
 extern GLuint* last_glTexID;
+
 #endif
+
+extern bool nodrawers;
 
 #define MAX_RESOLUTIONS_COUNT 128
 #define NO_PALETTE_CHANGE 1000
@@ -96,12 +101,10 @@ int use_fullscreen;
 int desired_fullscreen;
 SDL_Surface *screen;
 
-#ifdef GL_DOOM
-vid_8ingl_t vid_8ingl;
-int use_gl_surface;
-#endif
-
 int leds_always_off = 0; // Expected by m_misc, not relevant
+
+// CPhipps - misc screen stuff
+unsigned int desired_screenwidth, desired_screenheight;
 
 int I_GetModeFromString(const char *modestr);
 
@@ -350,8 +353,8 @@ void I_FinishUpdate(void) {
 
   if ((screen_multiply > 1) || SDL_MUSTLOCK(screen)) {
     int h;
-    byte *src;
-    byte *dest;
+    unsigned char *src;
+    unsigned char *dest;
 
     if (SDL_LockSurface(screen) < 0) {
       D_Msg(MSG_INFO, "I_FinishUpdate: %s\n", SDL_GetError());

@@ -21,12 +21,8 @@
 /*****************************************************************************/
 
 
-#ifndef __PROTOCOL__
-#define __PROTOCOL__
-
-#include "doomtype.h"
-#include "d_ticcmd.h"
-#include "m_swap.h"
+#ifndef PROTOCOL_H__
+#define PROTOCOL_H__
 
 enum packet_type_e {
   PKT_INIT,    // initial packet to server
@@ -43,9 +39,9 @@ enum packet_type_e {
 };
 
 typedef struct {
-  byte checksum;       // Simple checksum of the entire packet
-  byte type;           /* Type of packet */
-  byte reserved[2];	/* Was random in prboom <=2.2.4, now 0 */
+  unsigned char checksum;       // Simple checksum of the entire packet
+  unsigned char type;           /* Type of packet */
+  unsigned char reserved[2];	/* Was random in prboom <=2.2.4, now 0 */
   unsigned tic;        // Timestamp
 } PACKEDATTR packet_header_t;
 
@@ -58,10 +54,18 @@ static inline void packet_set(packet_header_t* p, enum packet_type_e t, unsigned
 #endif
 
 struct setup_packet_s {
-  byte players, yourplayer, skill, episode, level, deathmatch, complevel, ticdup, extratic;
-  byte game_options[GAME_OPTIONS_SIZE];
-  byte numwads;
-  byte wadnames[1]; // Actually longer
+  unsigned char players;
+  unsigned char yourplayer;
+  unsigned char skill;
+  unsigned char episode;
+  unsigned char level;
+  unsigned char deathmatch;
+  unsigned char complevel;
+  unsigned char ticdup;
+  unsigned char extratic;
+  unsigned char game_options[GAME_OPTIONS_SIZE];
+  unsigned char numwads;
+  unsigned char wadnames[1]; // Actually longer
 };
 
 /* cph - convert network byte stream to usable ticcmd_t and visa-versa

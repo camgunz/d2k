@@ -26,16 +26,21 @@
 #include <SDL.h>
 #include <cairo/cairo.h>
 
-#include "gl_opengl.h"
-
 #include "doomdef.h"
 #include "doomstat.h"
 #include "hu_stuff.h"
 #include "i_video.h"
-#include "v_overlay.h"
+#include "g_game.h"
 #include "v_video.h"
 #include "x_intern.h"
 #include "x_main.h"
+
+#include "gl_opengl.h"
+#include "gl_struct.h"
+
+#include "v_overlay.h"
+
+extern SDL_Surface *screen;
 
 static int XV_IsEnabled(lua_State *L) {
   if (nodrawers || noblit)

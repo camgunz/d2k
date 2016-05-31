@@ -22,7 +22,7 @@
 
 
 #if (R_DRAWCOLUMN_PIPELINE_BITS == 8)
-#define SCREENTYPE byte
+#define SCREENTYPE unsigned char
 #define TEMPBUF byte_tempbuf
 #elif (R_DRAWCOLUMN_PIPELINE_BITS == 15)
 #define SCREENTYPE unsigned short
@@ -244,7 +244,7 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
 #if (!(R_DRAWCOLUMN_PIPELINE & RDC_FUZZ))
   {
 #if (!(R_DRAWCOLUMN_PIPELINE & RDC_BILINEAR) || R_DRAWCOLUMN_PIPELINE_BITS != 8)
-    const byte          *source = dcvars->source;
+    const unsigned char *source = dcvars->source;
 #endif
 #if (R_DRAWCOLUMN_PIPELINE & RDC_NOCOLMAP)
 #elif (R_DRAWCOLUMN_PIPELINE & RDC_DITHERZ)
@@ -252,7 +252,7 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
     const lighttable_t  *colormap = dcvars->colormap;
 #endif
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLATED)
-    const byte          *translation = dcvars->translation;
+    const unsigned char *translation = dcvars->translation;
 #endif
 #if (R_DRAWCOLUMN_PIPELINE & (RDC_BILINEAR|RDC_ROUNDED|RDC_DITHERZ))
     int y = dcvars->yl;
@@ -283,21 +283,21 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
 #endif
 #if (R_DRAWCOLUMN_PIPELINE & RDC_DITHERZ)
     const int fracz = (dcvars->z >> 6) & 255;
-    const byte *dither_colormaps[2] = { dcvars->colormap, dcvars->nextcolormap };
+    const unsigned char *dither_colormaps[2] = { dcvars->colormap, dcvars->nextcolormap };
 #endif
 #if (R_DRAWCOLUMN_PIPELINE & RDC_BILINEAR)
   #if (R_DRAWCOLUMN_PIPELINE_BITS == 8)
     const int yl = dcvars->yl;
-    const byte *dither_sources[2] = { dcvars->source, dcvars->nextsource };
+    const unsigned char *dither_sources[2] = { dcvars->source, dcvars->nextsource };
     const unsigned int filter_fracu = (dcvars->source == dcvars->nextsource) ? 0 : (dcvars->texu>>8) & 0xff;
   #else
-    const byte          *nextsource = dcvars->nextsource;
+    const unsigned char *nextsource = dcvars->nextsource;
     const unsigned int filter_fracu = (dcvars->source == dcvars->nextsource) ? 0 : dcvars->texu & 0xffff;
   #endif
 #endif
 #if (R_DRAWCOLUMN_PIPELINE & RDC_ROUNDED)
-    const byte          *prevsource = dcvars->prevsource;
-    const byte          *nextsource = dcvars->nextsource;
+    const unsigned char *prevsource = dcvars->prevsource;
+    const unsigned char *nextsource = dcvars->nextsource;
     const unsigned int filter_fracu = (dcvars->source == dcvars->nextsource) ? 0 : (dcvars->texu>>8) & 0xff;
 #endif
 

@@ -23,16 +23,28 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "w_wad.h"
+#include "r_defs.h"
+#include "r_data.h"
+#include "r_state.h"
 #include "r_main.h"
 #include "r_bsp.h"
 #include "r_segs.h"
 #include "r_draw.h"
 #include "r_things.h"
 #include "r_fps.h"
+#include "r_patch.h"
 #include "v_video.h"
+#include "p_setup.h"
+#include "p_mobj.h"
 #include "e6y.h"//e6y
+#include "p_user.h"
+#include "g_game.h"
+
+#include "gl_opengl.h"
+#include "gl_struct.h"
 
 #define BASEYCENTER 100
 

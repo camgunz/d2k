@@ -23,17 +23,26 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
 
 #include "d_deh.h"  // Ty 03/27/98 - externalized
 #include "dstrings.h"
-#include "e6y.h"//e6y
+#include "p_user.h"
+#include "r_defs.h"
+#include "r_main.h"
+#include "r_state.h"
+#include "p_setup.h"
+#include "g_game.h"
+#include "d_net.h"
+#include "p_mobj.h"
 #include "p_spec.h"
 #include "p_tick.h"
 #include "p_user.h"
-#include "r_main.h"
 #include "s_sound.h"
 #include "sounds.h"
+#include "e6y.h"
 
 ///////////////////////////////////////////////////////////////
 //

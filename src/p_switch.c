@@ -23,16 +23,24 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
 #include "e6y.h"
 #include "g_game.h"
+#include "m_swap.h"
 #include "n_net.h"
+#include "p_user.h"
 #include "p_spec.h"
+#include "r_defs.h"
+#include "r_data.h"
 #include "r_main.h"
+#include "r_state.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "w_wad.h"
+#include "p_setup.h"
+#include "p_mobj.h"
 
 // killough 2/8/98: Remove switch limit
 

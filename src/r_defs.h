@@ -24,23 +24,8 @@
 #ifndef R_DEFS_H__
 #define R_DEFS_H__
 
-// Screenwidth.
-#include "doomdef.h"
-
-// Some more or less basic data types
-// we depend on.
-#include "m_fixed.h"
-
-// We rely on the thinker data struct
-// to handle sound origins in sectors.
-#include "d_think.h"
-
-// SECTORS do store MObjs anyway.
-#include "p_mobj.h"
-
-#ifdef __GNUG__
-#pragma interface
-#endif
+struct mobj_s;
+typedef struct mobj_s mobj_t;
 
 // Silhouette, needed for clipping Segs (mainly)
 // and sprites representing things.
@@ -61,9 +46,10 @@
 // Note: transformed values not buffered locally,
 // like some DOOM-alikes ("wt", "WebView") do.
 //
-typedef struct
+typedef struct vertex_s
 {
-  fixed_t x, y;
+  fixed_t x;
+  fixed_t y;
   angle_t viewangle;   // e6y: precalculated angle for clipping
   int angletime;       // e6y: recalculation time for view angle 
 } vertex_t;
@@ -88,7 +74,7 @@ typedef struct
 #define SECTOR_IS_CLOSED      0x00000004
 #define NULL_SECTOR           0x00000008
 
-typedef struct
+typedef struct sector_s
 {
   int iSectorID; // proff 04/05/2000: needed for OpenGL and used in debugmode by the HUD to draw sectornum
   unsigned int flags;    //e6y: instead of .no_toptextures and .no_bottomtextures
@@ -168,7 +154,7 @@ typedef struct
 // The SideDef.
 //
 
-typedef struct
+typedef struct side_s
 {
   fixed_t textureoffset; // add this to the calculated texture column
   fixed_t rowoffset;     // add this to the calculated texture top
@@ -262,8 +248,7 @@ typedef struct msecnode_s
 //
 // The LineSeg.
 //
-typedef struct
-{
+typedef struct seg_s {
   vertex_t *v1;
   vertex_t *v2;
   fixed_t   offset;
@@ -306,25 +291,15 @@ typedef struct subsector_s
 //
 // BSP node.
 //
-typedef struct
-{
-  fixed_t  x,  y, dx, dy;        // Partition line.
-  fixed_t bbox[2][4];            // Bounding box for each child.
+typedef struct node_s {
+  fixed_t x;  // Partition line
+  fixed_t y;  // |
+  fixed_t dx; // |
+  fixed_t dy; // V
+  fixed_t bbox[2][4]; // Bounding box for each child.
   //unsigned short children[2];    // If NF_SUBSECTOR its a subsector.
   int children[2];    // If NF_SUBSECTOR its a subsector.
 } node_t;
-
-//
-// OTHER TYPES
-//
-
-// This could be wider for >8 bit display.
-// Indeed, true color support is posibble
-// precalculating 24bpp lightmap/colormap LUT.
-// from darkening PLAYPAL to all black.
-// Could use even more than 32 levels.
-
-typedef byte  lighttable_t;
 
 //
 // Masked 2s linedefs
@@ -349,7 +324,7 @@ typedef struct drawseg_s
 } drawseg_t;
 
 // proff: Added for OpenGL
-typedef struct
+typedef struct patchnum_s
 {
   int width,height;
   int leftoffset,topoffset;
@@ -371,7 +346,7 @@ typedef struct vissprite_s
   fixed_t xiscale;             // negative if flipped
   fixed_t texturemid;
   int patch;
-  uint_64_t mobjflags;
+  uint64_t mobjflags;
 
   // for color translation and shadow draw, maxbright frames as well
   const lighttable_t *colormap;
@@ -416,7 +391,7 @@ typedef struct
 //  a number of animation frames.
 //
 
-typedef struct
+typedef struct spritedef_s
 {
   int numframes;
   spriteframe_t *spriteframes;
@@ -428,9 +403,9 @@ typedef struct
 // Go to http://classicgaming.com/doom/editing/ to find out -- killough
 //
 
-typedef struct visplane
+typedef struct visplane_s
 {
-  struct visplane *next;        // Next visplane in hash chain -- killough
+  struct visplane_s *next;      // Next visplane in hash chain -- killough
   int picnum, lightlevel, minx, maxx;
   fixed_t height;
   fixed_t xoffs, yoffs;         // killough 2/28/98: Support scrolling flats

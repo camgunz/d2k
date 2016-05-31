@@ -24,14 +24,18 @@
 
 #include <SDL.h>
 
+#include "doomdef.h"
 #include "d_event.h"
-#include "e6y.h"
+
 #include "g_keys.h"
 #include "i_input.h"
 #include "i_joy.h"
 #include "i_main.h"
 #include "i_mouse.h"
+#include "v_video.h"
 #include "x_main.h"
+
+extern bool doSkip;
 
 key_states_t key_states;
 

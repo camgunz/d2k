@@ -25,6 +25,7 @@
 
 // We are referring to sprite numbers.
 #include "doomdef.h"
+#include "d_event.h"
 #include "d_main.h"
 #include "info.h"
 

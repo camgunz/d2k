@@ -21,14 +21,15 @@
 /*****************************************************************************/
 
 
+#include "z_zone.h"
+
 #include <SDL.h>
 
 #include "doomdef.h"
-#include "doomtype.h"
 
+#include "sounds.h"
 #include "i_pcsound.h"
 #include "i_sound.h"
-#include "sounds.h"
 
 #include "w_wad.h"
 

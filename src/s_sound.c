@@ -27,6 +27,7 @@
 #include "d_main.h"
 #include "i_sound.h"
 #include "n_net.h"
+#include "p_setup.h"
 #include "p_mobj.h"
 #include "sounds.h"
 #include "s_sound.h"

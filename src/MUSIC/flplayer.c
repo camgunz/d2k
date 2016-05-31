@@ -23,23 +23,21 @@
 
 #include "z_zone.h"
 
+#include "sounds.h"
 #include "musicplayer.h"
 
 #ifndef HAVE_LIBFLUIDSYNTH
 
-static const char *fl_name (void)
-{
+static const char* fl_name(void) {
   return "fluidsynth midi player (DISABLED)";
 }
 
 
-static int fl_init (int samplerate)
-{
+static int fl_init(int samplerate) {
   return 0;
 }
 
-const music_player_t fl_player =
-{
+const music_player_t fl_player = {
   fl_name,
   fl_init,
   NULL,

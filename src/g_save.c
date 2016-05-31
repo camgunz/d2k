@@ -23,23 +23,29 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
 #include "m_avg.h"
 #include "d_main.h"
+#include "p_user.h"
 #include "g_game.h"
 #include "g_save.h"
 #include "m_menu.h"
 #include "n_net.h"
 #include "p_ident.h"
+#include "r_defs.h"
+#include "v_video.h"
 #include "p_map.h"
 #include "p_saveg.h"
 #include "p_spec.h"
+#include "w_wad.h"
 #include "r_demo.h"
-#include "r_defs.h"
 #include "r_fps.h"
 #include "r_state.h"
 #include "s_advsound.h"
 #include "s_sound.h"
+#include "p_setup.h"
 
 #include "p_tick.h"
 
@@ -110,14 +116,14 @@ static unsigned int GetPackageVersion(void) {
   return PACKAGEVERSION;
 }
 
-static uint_64_t G_UpdateSignature(uint_64_t s, const char *name) {
+static uint64_t G_UpdateSignature(uint64_t s, const char *name) {
   int i;
   int lump = W_CheckNumForName(name);
 
   if (lump != -1 && (i = lump + 10) < numlumps) {
     do {
       int size = W_LumpLength(i);
-      const byte *p = W_CacheLumpNum(i);
+      const unsigned char *p = W_CacheLumpNum(i);
 
       while (size--) {
         s <<= 1;
@@ -130,8 +136,8 @@ static uint_64_t G_UpdateSignature(uint_64_t s, const char *name) {
   return s;
 }
 
-static uint_64_t G_Signature(void) {
-  static uint_64_t s = 0;
+static uint64_t G_Signature(void) {
+  static uint64_t s = 0;
   static bool computed = false;
 
   char name[9];
@@ -224,7 +230,7 @@ int G_GetAverageSaveSize(void) {
 void G_WriteSaveData(pbuf_t *savebuffer) {
   int i;
   char name2[VERSIONSIZE];
-  byte game_options[GAME_OPTION_SIZE];
+  unsigned char game_options[GAME_OPTION_SIZE];
   //e6y: numeric version number of package
   unsigned int packageversion = GetPackageVersion();
   char *description = savedescription;
@@ -313,7 +319,7 @@ bool G_ReadSaveData(pbuf_t *savebuffer, bool bail_on_errors,
   unsigned int packageversion = 0;
   unsigned char description[SAVESTRINGSIZE];
   unsigned char save_version[VERSIONSIZE];
-  byte game_options[GAME_OPTION_SIZE];
+  unsigned char game_options[GAME_OPTION_SIZE];
   unsigned int game_option_count;
   unsigned char safety_byte;
   buf_t byte_buf;
@@ -378,15 +384,15 @@ bool G_ReadSaveData(pbuf_t *savebuffer, bool bail_on_errors,
   //           only print a warning if forced
   {
     // killough 3/16/98: check lump name checksum (independent of order)
-    uint_64_t checksum;
-    uint_64_t save_checksum = 0;
+    uint64_t checksum;
+    uint64_t save_checksum = 0;
 
     if (MULTINET)
       checksum = 1;
     else
       checksum = G_Signature();
 
-    M_PBufReadLong(savebuffer, (int_64_t *)&save_checksum);
+    M_PBufReadLong(savebuffer, (int64_t *)&save_checksum);
 
     if (save_checksum != checksum) {
       fprintf(stderr, "bad checksum: %" PRIu64 " != %" PRIu64 "\n",

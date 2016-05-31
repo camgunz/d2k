@@ -21,6 +21,8 @@
 /*****************************************************************************/
 
 
+#include "z_zone.h"
+
 #ifdef __GNUG__
 #pragma implementation "dstrings.h"
 #endif

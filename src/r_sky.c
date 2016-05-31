@@ -21,16 +21,13 @@
 /*****************************************************************************/
 
 
-#ifdef __GNUG__
-#pragma implementation "r_sky.h"
-#endif
-
 #include "z_zone.h"
 
-#include "doomtype.h"
-
+#include "doomdef.h"
+#include "r_defs.h"
 #include "r_sky.h"
 #include "r_main.h"
+#include "r_state.h"
 #include "e6y.h"
 
 //
@@ -56,7 +53,7 @@ void R_InitSkyMap(void)
     skytexturemid = 100*FRACUNIT;
     if (viewwidth != 0)
     {
-      skyiscale = (fixed_t)(((uint_64_t)FRACUNIT * SCREENWIDTH * 200) / (viewwidth * SCREENHEIGHT));
+      skyiscale = (fixed_t)(((uint64_t)FRACUNIT * SCREENWIDTH * 200) / (viewwidth * SCREENHEIGHT));
     }
   }
   else
@@ -96,16 +93,16 @@ void R_InitSkyMap(void)
     if (viewwidth != 0 && viewheight != 0)
     {
       //skyiscale = 200 * FRACUNIT / freelookviewheight;
-      skyiscale = (fixed_t)(((uint_64_t)FRACUNIT * SCREENWIDTH * 200) / (viewwidth * SCREENHEIGHT));
+      skyiscale = (fixed_t)(((uint64_t)FRACUNIT * SCREENWIDTH * 200) / (viewwidth * SCREENHEIGHT));
       // line below is from zdoom, but it works incorrectly with prboom
       // with widescreen resolutions (eg 1280x720) by some reasons
-      //skyiscale = (fixed_t)((int_64_t)skyiscale * FieldOfView / 2048);
+      //skyiscale = (fixed_t)((int64_t)skyiscale * FieldOfView / 2048);
     }
 
     if (skystretch)
     {
-      skyiscale = (fixed_t)((int_64_t)skyiscale * skyheight / SKYSTRETCH_HEIGHT);
-      skytexturemid = (int)((int_64_t)skytexturemid * skyheight / SKYSTRETCH_HEIGHT);
+      skyiscale = (fixed_t)((int64_t)skyiscale * skyheight / SKYSTRETCH_HEIGHT);
+      skytexturemid = (int)((int64_t)skytexturemid * skyheight / SKYSTRETCH_HEIGHT);
     }
     else
     {

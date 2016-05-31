@@ -23,15 +23,25 @@
 
 #include "z_zone.h"
 
-#include "gl_opengl.h"
-#include "gl_intern.h"
+#include "doomdef.h"
 #include "doomstat.h"
+#include "p_setup.h"
+#include "p_mobj.h"
 #include "p_maputl.h"
 #include "w_wad.h"
+#include "r_defs.h"
 #include "r_fps.h"
 #include "r_bsp.h"
 #include "r_sky.h"
+#include "r_state.h"
 #include "r_main.h"
+#include "g_game.h"
+#include "p_user.h"
+#include "v_video.h"
+
+#include "gl_opengl.h"
+#include "gl_intern.h"
+#include "gl_struct.h"
 
 int gl_shadows_maxdist;
 int gl_shadows_factor;

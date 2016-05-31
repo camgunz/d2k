@@ -21,39 +21,20 @@
 /*****************************************************************************/
 
 
-#ifndef D_TICCMD_H__
-#define D_TICCMD_H__
+#include "z_zone.h"
 
-#include "doomtype.h"
+#include <SDL.h>
 
-#ifdef __GNUG__
-#pragma interface
-#endif
+#include "doomdef.h"
+#include "doomstat.h"
+#include "v_video.h"
 
-/* The data sampled per tick (single player)
- * and transmitted to other peers (multiplayer).
- * Mainly movements/button commands per game tick,
- * plus a checksum for internal state consistency.
- * CPhipps - explicitely signed the elements, since they have to be signed to work right
- */
+#include "gl_opengl.h"
+#include "gl_intern.h"
+#include "gl_struct.h"
 
- /*
-  * CG 04/23/2014: Un-explicitly sign the elements.  If a platform's char's are
-  *                implicitly unsigned, that's too bad.  They'll be fixed again
-  *                when the grand "use explicitly sized types where needed"
-  *                initiative is completed.
-  */
+#include "i_vid8ingl.h"
 
-typedef struct {
-  char   forwardmove;  /* *2048 for move       */
-  char   sidemove;     /* *2048 for move       */
-  short  angleturn;    /* <<16 for angle delta */
-  short  consistancy;  /* checks for net game  */
-  byte   chatchar;
-  byte   buttons;
-} ticcmd_t;
-
-#endif
-
-/* vi: set et ts=2 sw=2: */
+vid_8ingl_t vid_8ingl;
+int use_gl_surface;
 

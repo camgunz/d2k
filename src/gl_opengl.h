@@ -24,10 +24,6 @@
 #ifndef GL_OPENGL_H__
 #define GL_OPENGL_H__
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 //#define USE_OPENGLES2
 #define USE_VERTEX_ARRAYS
 #define USE_VBO
@@ -44,8 +40,6 @@
 #else
 #include <SDL_opengl.h>
 #endif
-
-#include "doomtype.h"
 
 #if !defined(GL_DEPTH_STENCIL_EXT)
 #define GL_DEPTH_STENCIL_EXT              0x84F9

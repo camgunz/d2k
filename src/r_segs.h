@@ -24,9 +24,8 @@
 #ifndef R_SEGS_H__
 #define R_SEGS_H__
 
-#ifdef __GNUG__
-#pragma interface
-#endif
+struct drawseg_s;
+typedef struct drawseg_s drawseg_t;
 
 void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2);
 void R_StoreWallRange(const int start, const int stop);

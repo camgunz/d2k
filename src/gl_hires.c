@@ -29,21 +29,30 @@
 #include <SDL_image.h>
 #endif
 
+#include "doomdef.h"
 #include "doomstat.h"
-#include "gl_opengl.h"
-#include "gl_intern.h"
 #include "v_video.h"
 #include "i_system.h"
 #include "w_wad.h"
 #include "i_video.h"
 #include "hu_lib.h"
 #include "hu_stuff.h"
+#include "r_defs.h"
+#include "r_data.h"
 #include "r_main.h"
 #include "r_sky.h"
 #include "m_argv.h"
 #include "m_file.h"
 #include "m_misc.h"
 #include "e6y.h"
+#include "r_state.h"
+#include "g_game.h"
+
+#include "gl_opengl.h"
+#include "gl_intern.h"
+#include "gl_struct.h"
+
+extern hu_textline_t w_precache;
 
 unsigned int gl_has_hires = 0;
 int gl_texture_external_hires = -1;
@@ -150,7 +159,7 @@ void gld_ProgressUpdate(const char * text, int progress, int total)
   gld_ProgressRestoreScreen();
   HUlib_drawTextLine(&w_precache, false);
   
-  len = MIN(SCREENWIDTH, (int)((int_64_t)SCREENWIDTH * progress / total));
+  len = MIN(SCREENWIDTH, (int)((int64_t)SCREENWIDTH * progress / total));
   V_FillRect(0, 0, SCREENHEIGHT - 4, len - 0, 4, 4);
   if (len > 4)
   {
@@ -400,7 +409,7 @@ GLGenericImage * ReadDDSFile(const char *filename, int * bufsize, int * numMipma
   }
 }
 
-static byte* RGB2PAL = NULL;
+static unsigned char* RGB2PAL = NULL;
 
 static const char* gld_HiRes_GetInternalName(GLTexture *gltexture)
 {
@@ -810,7 +819,7 @@ void gld_HiRes_ProcessColormap(unsigned char *buffer, int bufSize)
   for (pos = 0; pos < bufSize; pos += 4)
   {
 #if 1
-    byte color;
+    unsigned char color;
     
     if (gl_hires_24bit_colormap)
       color = RGB2PAL[(buffer[pos+0]<<16) + (buffer[pos+1]<<8) + buffer[pos+2]];
@@ -825,7 +834,7 @@ void gld_HiRes_ProcessColormap(unsigned char *buffer, int bufSize)
 #if 0
     float factor;
     int c, r, g, b, m;
-    byte color;
+    unsigned char color;
 
     color = RGB2PAL[(buffer[pos+0]<<16) + (buffer[pos+1]<<8) + buffer[pos+2]];
 
@@ -917,7 +926,7 @@ int gld_HiRes_BuildTables(void)
       size = W_LumpLength(lump);
       if (size == RGB2PAL_size)
       {
-        const byte* RGB2PAL_lump;
+        const unsigned char* RGB2PAL_lump;
 
         RGB2PAL_lump = W_CacheLumpNum(lump);
         RGB2PAL = malloc(RGB2PAL_size);
@@ -968,7 +977,7 @@ int gld_HiRes_BuildTables(void)
     if (ok)
     {
       void* NewIntDynArray(int dimCount, int *dims);
-      const byte* palette;
+      const unsigned char* palette;
       int r, g, b, k, color;
       int **x, **y, **z;
       int dims[2] = {numcolors_per_chanel, 256};

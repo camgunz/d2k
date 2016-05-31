@@ -23,6 +23,7 @@
 
 #include "z_zone.h"
 
+#include "sounds.h"
 #include "musicplayer.h"
 
 #ifndef HAVE_LIBMAD

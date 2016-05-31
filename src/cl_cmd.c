@@ -25,12 +25,16 @@
 
 #include <enet/enet.h>
 
+#include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
 #include "n_net.h"
 #include "n_state.h"
 #include "n_peer.h"
 #include "cl_cmd.h"
-#include "p_cmd.h"
+#include "p_user.h"
+#include "p_setup.h"
+#include "g_game.h"
 
 static bool command_is_synchronized(gpointer data, gpointer user_data) {
   netticcmd_t *ncmd = (netticcmd_t *)data;

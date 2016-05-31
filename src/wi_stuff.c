@@ -23,13 +23,18 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
 #include "m_random.h"
 #include "w_wad.h"
 #include "g_game.h"
+#include "r_defs.h"
+#include "r_data.h"
+#include "r_patch.h"
 #include "r_main.h"
 #include "v_video.h"
+#include "p_user.h"
 #include "wi_stuff.h"
 #include "s_sound.h"
 #include "sounds.h"
@@ -1956,7 +1961,7 @@ void WI_Drawer(void) {
 // ====================================================================
 // WI_initVariables
 // Purpose: Initialize the intermission information structure
-//          Note: wbstartstruct_t is defined in d_player.h
+//          Note: wbstartstruct_t is defined in p_user.h
 // Args:    wbstartstruct -- pointer to the structure with the data
 // Returns: void
 //
@@ -2002,7 +2007,7 @@ void WI_initVariables(wbstartstruct_t* wbstartstruct)
 // ====================================================================
 // WI_Start
 // Purpose: Call the various init routines
-//          Note: wbstartstruct_t is defined in d_player.h
+//          Note: wbstartstruct_t is defined in p_user.h
 // Args:    wbstartstruct -- pointer to the structure with the
 //          intermission data
 // Returns: void

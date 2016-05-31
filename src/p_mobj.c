@@ -30,28 +30,37 @@
 #include "e6y.h"
 #include "g_game.h"
 #include "g_overflow.h"
-#include "hu_stuff.h"
-#include "hu_tracers.h"
 #include "info.h"
 #include "m_random.h"
 #include "n_net.h"
+#include "p_user.h"
 #include "n_main.h"
 #include "cl_main.h"
-#include "p_cmd.h"
 #include "p_ident.h"
 #include "p_inter.h"
 #include "p_map.h"
 #include "p_maputl.h"
+#include "p_setup.h"
+#include "p_mobj.h"
 #include "p_tick.h"
-#include "p_user.h"
+#include "w_wad.h"
+#include "r_defs.h"
 #include "r_demo.h"
 #include "r_main.h"
 #include "s_advsound.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "st_stuff.h"
+#include "v_video.h"
 
-extern byte playernumtotrans[MAXPLAYERS];
+#include "hu_lib.h"
+#include "hu_stuff.h"
+#include "hu_tracers.h"
+
+#include "gl_opengl.h"
+#include "gl_struct.h"
+
+extern unsigned char playernumtotrans[MAXPLAYERS];
 
 static mapthing_t itemrespawnque[ITEMQUESIZE];
 static int        itemrespawntime[ITEMQUESIZE];
@@ -1635,12 +1644,11 @@ void P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type) {
   // killough 7/19/98: autoaiming was not in original beta
 
   // killough 8/2/98: prefer autoaiming at enemies
-  uint_64_t mask;
+  uint64_t mask = 0;
   
-  if (mbf_features)
+  if (mbf_features) {
     mask = MF_FRIEND;
-  else
-    mask = 0;
+  }
 
   do {
     slope = P_AimLineAttack(source, an, 16 * 64 * FRACUNIT, mask);

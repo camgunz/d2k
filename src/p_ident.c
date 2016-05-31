@@ -24,7 +24,6 @@
 #include "z_zone.h"
 
 #include "doomstat.h"
-#include "d_ticcmd.h"
 #include "n_net.h"
 #include "info.h"
 

@@ -24,8 +24,6 @@
 #ifndef D_ITEMS_H__
 #define D_ITEMS_H__
 
-#include "doomdef.h"
-
 #ifdef __GNUG__
 #pragma interface
 #endif

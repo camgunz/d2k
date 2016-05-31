@@ -23,10 +23,11 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
-#include "g_game.h"
 #include "p_user.h"
+#include "g_game.h"
 
 static bool buf_read(cmp_ctx_t *ctx, void *data, size_t limit) {
   buf_t *buf = (buf_t *)ctx->buf;
@@ -244,36 +245,36 @@ bool M_PBufWriteUIntArray(pbuf_t *pbuf, buf_t *uints) {
   return true;
 }
 
-bool M_PBufWriteLong(pbuf_t *pbuf, int_64_t l) {
+bool M_PBufWriteLong(pbuf_t *pbuf, int64_t l) {
   return cmp_write_uint(&pbuf->cmp, l);
 }
 
 bool M_PBufWriteLongArray(pbuf_t *pbuf, buf_t *longs) {
-  size_t count = M_BufferGetSize(longs) / sizeof(int_64_t);
+  size_t count = M_BufferGetSize(longs) / sizeof(int64_t);
 
   if (!M_PBufWriteArray(pbuf, count))
     return false;
 
   for (int i = 0; i < count; i++) {
-    if (!M_PBufWriteLong(pbuf, ((int_64_t *)longs->data)[i]))
+    if (!M_PBufWriteLong(pbuf, ((int64_t *)longs->data)[i]))
       return false;
   }
 
   return true;
 }
 
-bool M_PBufWriteULong(pbuf_t *pbuf, uint_64_t l) {
+bool M_PBufWriteULong(pbuf_t *pbuf, uint64_t l) {
   return cmp_write_uint(&pbuf->cmp, l);
 }
 
 bool M_PBufWriteULongArray(pbuf_t *pbuf, buf_t *ulongs) {
-  size_t count = M_BufferGetSize(ulongs) / sizeof(uint_64_t);
+  size_t count = M_BufferGetSize(ulongs) / sizeof(uint64_t);
 
   if (!M_PBufWriteArray(pbuf, count))
     return false;
 
   for (int i = 0; i < count; i++) {
-    if (!M_PBufWriteULong(pbuf, ((uint_64_t *)ulongs->data)[i]))
+    if (!M_PBufWriteULong(pbuf, ((uint64_t *)ulongs->data)[i]))
       return false;
   }
 
@@ -534,12 +535,12 @@ bool M_PBufReadUIntArray(pbuf_t *pbuf, buf_t *uints, size_t limit) {
   return true;
 }
 
-bool M_PBufReadLong(pbuf_t *pbuf, int_64_t *l) {
+bool M_PBufReadLong(pbuf_t *pbuf, int64_t *l) {
   return cmp_read_long(&pbuf->cmp, l);
 }
 
 bool M_PBufReadLongArray(pbuf_t *pbuf, buf_t *longs, size_t limit) {
-  int_64_t l = 0;
+  int64_t l = 0;
   unsigned int array_size = 0;
 
   if (!M_PBufReadArray(pbuf, &array_size))
@@ -549,7 +550,7 @@ bool M_PBufReadLongArray(pbuf_t *pbuf, buf_t *longs, size_t limit) {
     return false;
 
   M_BufferClear(longs);
-  M_BufferEnsureTotalCapacity(longs, array_size * sizeof(int_64_t));
+  M_BufferEnsureTotalCapacity(longs, array_size * sizeof(int64_t));
 
   while (array_size--) {
     if (!M_PBufReadLong(pbuf, &l))
@@ -561,12 +562,12 @@ bool M_PBufReadLongArray(pbuf_t *pbuf, buf_t *longs, size_t limit) {
   return true;
 }
 
-bool M_PBufReadULong(pbuf_t *pbuf, uint_64_t *l) {
+bool M_PBufReadULong(pbuf_t *pbuf, uint64_t *l) {
   return cmp_read_ulong(&pbuf->cmp, l);
 }
 
 bool M_PBufReadULongArray(pbuf_t *pbuf, buf_t *ulongs, size_t limit) {
-  uint_64_t l = 0;
+  uint64_t l = 0;
   unsigned int array_size = 0;
 
   if (!M_PBufReadArray(pbuf, &array_size))
@@ -576,7 +577,7 @@ bool M_PBufReadULongArray(pbuf_t *pbuf, buf_t *ulongs, size_t limit) {
     return false;
 
   M_BufferClear(ulongs);
-  M_BufferEnsureTotalCapacity(ulongs, array_size * sizeof(uint_64_t));
+  M_BufferEnsureTotalCapacity(ulongs, array_size * sizeof(uint64_t));
 
   while (array_size--) {
     if (!M_PBufReadULong(pbuf, &l))

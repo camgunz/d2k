@@ -24,30 +24,13 @@
 #ifndef DOOMDEF_H__
 #define DOOMDEF_H__
 
-/* use config.h if autoconf made one -- josh */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+// This could be wider for >8 bit display.
+// Indeed, true color support is posibble
+// precalculating 24bpp lightmap/colormap LUT.
+// from darkening PLAYPAL to all black.
+// Could use even more than 32 levels.
 
-// This must come first, since it redefines malloc(), free(), etc. -- killough:
-#include "z_zone.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <limits.h>
-
-// this should go here, not in makefile/configure.ac -- josh
-#if 0
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
-#endif
-
-#include "m_swap.h"
-#include "version.h"
-#include "doomtype.h"
+typedef unsigned char lighttable_t;
 
 extern bool bfgedition;
 

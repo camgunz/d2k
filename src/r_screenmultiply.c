@@ -23,7 +23,6 @@
 
 #include "z_zone.h"
 
-#include "doomtype.h"
 #include "doomdef.h"
 
 #include "r_screenmultiply.h"
@@ -90,7 +89,7 @@ int interlaced_scanning_requires_clearing;
     for (y = ytop; y <= ybottom; y++)\
     {\
       unsigned int *pdest = (unsigned int *)(pixels_dest + y * (pitch_dest * 2));\
-      byte *pdest_saved = (byte *)pdest;\
+      unsigned char *pdest_saved = (unsigned char *)pdest;\
       SCREENTYPE *psrc = (SCREENTYPE*)(pixels_src + y * pitch_src);\
       PROCESS_LINE_2X_ ## PIXELDEPTH;\
       memcpy(pdest_saved + pitch_dest, pdest_saved, pitch_dest);\
@@ -98,13 +97,15 @@ int interlaced_scanning_requires_clearing;
   }\
 }\
 
-static void R_ProcessScreenMultiplyBlock2x(byte* pixels_src, byte* pixels_dest,
-  int pixel_depth, int pitch_src, int pitch_dest, int ytop, int ybottom, int interlaced)
-{
-  switch (pixel_depth)
-  {
+static void R_ProcessScreenMultiplyBlock2x(unsigned char *pixels_src,
+                                           unsigned char *pixels_dest,
+                                           int pixel_depth, int pitch_src,
+                                           int pitch_dest,
+                                           int ytop, int ybottom,
+                                           int interlaced) {
+  switch (pixel_depth) {
   case 1:
-    PROCESS_SCREEN_MULTIPLY_2X(byte, 1);
+    PROCESS_SCREEN_MULTIPLY_2X(unsigned char, 1);
     break;
   case 2:
     PROCESS_SCREEN_MULTIPLY_2X(unsigned short, 2);
@@ -161,7 +162,7 @@ static void R_ProcessScreenMultiplyBlock2x(byte* pixels_src, byte* pixels_dest,
   for (y = ytop; y <= ybottom; y++)\
   {\
     unsigned int *pdest = (unsigned int *)(pixels_dest + y * (pitch_dest * 4));\
-    byte *pdest_saved = (byte *)pdest;\
+    unsigned char *pdest_saved = (unsigned char *)pdest;\
     SCREENTYPE *psrc = (SCREENTYPE *)(pixels_src + y * pitch_src);\
     PROCESS_LINE_4X_ ## PIXELDEPTH;\
     if (!interlaced)\
@@ -172,13 +173,16 @@ static void R_ProcessScreenMultiplyBlock2x(byte* pixels_src, byte* pixels_dest,
   }\
 }\
 
-static void R_ProcessScreenMultiplyBlock4x(byte* pixels_src, byte* pixels_dest,
-  int pixel_depth, int pitch_src, int pitch_dest, int ytop, int ybottom, int interlaced)
+static void R_ProcessScreenMultiplyBlock4x(unsigned char *pixels_src,
+                                           unsigned char *pixels_dest,
+                                           int pixel_depth, int pitch_src,
+                                           int pitch_dest,
+                                           int ytop, int ybottom,
+                                           int interlaced)
 {
-  switch (pixel_depth)
-  {
+  switch (pixel_depth) {
   case 1:
-    PROCESS_SCREEN_MULTIPLY_4X(byte, 1);
+    PROCESS_SCREEN_MULTIPLY_4X(unsigned char, 1);
     break;
   case 2:
     PROCESS_SCREEN_MULTIPLY_4X(unsigned short, 2);
@@ -192,14 +196,14 @@ static void R_ProcessScreenMultiplyBlock4x(byte* pixels_src, byte* pixels_dest,
 #define PROCESS_SCREEN_MULTIPLY_UNI(SCREENTYPE) \
 {\
   SCREENTYPE *pdest = (SCREENTYPE *)(pixels_dest + pitch_dest * (ybottom * screen_multiply));\
-  byte *pdest_saved = (byte *)pdest;\
+  unsigned char *pdest_saved = (unsigned char *)pdest;\
   SCREENTYPE *psrc  = (SCREENTYPE *)(pixels_src + pitch_src * ybottom);\
   SCREENTYPE *data_src;\
   for (y = ybottom; y >= ytop; y--)\
   {\
     data_src = psrc;\
-    { /* GCC didn't like (byte *)psrc -= pitch_src; */ \
-      byte *p = (byte *)psrc;\
+    { /* GCC didn't like (unsigned char *)psrc -= pitch_src; */ \
+      unsigned char *p = (unsigned char *)psrc;\
       p -= pitch_src;\
       psrc = (SCREENTYPE *)p;\
     }\
@@ -216,11 +220,11 @@ static void R_ProcessScreenMultiplyBlock4x(byte* pixels_src, byte* pixels_dest,
         memcpy(pdest_saved + i * pitch_dest, pdest_saved, pitch_dest);\
     }\
     pdest = (SCREENTYPE *)(pdest_saved - pitch_dest * screen_multiply);\
-    pdest_saved = (byte *)pdest;\
+    pdest_saved = (unsigned char *)pdest;\
   }\
 }\
 
-static void R_ProcessScreenMultiplyBlock(byte* pixels_src, byte* pixels_dest,
+static void R_ProcessScreenMultiplyBlock(unsigned char* pixels_src, unsigned char* pixels_dest,
   int pixel_depth, int pitch_src, int pitch_dest, int ytop, int ybottom, int interlaced)
 {
   int x, y, i;
@@ -228,7 +232,7 @@ static void R_ProcessScreenMultiplyBlock(byte* pixels_src, byte* pixels_dest,
   switch (pixel_depth)
   {
   case 1:
-    PROCESS_SCREEN_MULTIPLY_UNI(byte)
+    PROCESS_SCREEN_MULTIPLY_UNI(unsigned char)
     break;
   case 2:
     PROCESS_SCREEN_MULTIPLY_UNI(unsigned short);
@@ -239,7 +243,7 @@ static void R_ProcessScreenMultiplyBlock(byte* pixels_src, byte* pixels_dest,
   }
 }
 
-void R_ProcessScreenMultiply(byte* pixels_src, byte* pixels_dest,
+void R_ProcessScreenMultiply(unsigned char* pixels_src, unsigned char* pixels_dest,
   int pixel_depth, int pitch_src, int pitch_dest)
 {
   if (screen_multiply < 2)
@@ -278,7 +282,7 @@ void R_ProcessScreenMultiply(byte* pixels_src, byte* pixels_dest,
       if (same)
       {
         // never happens after SDL_LockSurface()
-        static byte *tmpbuf = NULL;
+        static unsigned char *tmpbuf = NULL;
         if (!tmpbuf)
         {
           tmpbuf = malloc(pitch_src);

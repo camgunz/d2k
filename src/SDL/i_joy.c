@@ -28,8 +28,10 @@
 #include "doomdef.h"
 #include "m_argv.h"
 #include "d_event.h"
+#include "w_wad.h"
 #include "d_main.h"
 #include "i_joy.h"
+#include "w_wad.h"
 
 int joyleft;
 int joyright;

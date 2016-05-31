@@ -24,10 +24,6 @@
 #ifndef ST_LIB_H__
 #define ST_LIB_H__
 
-// We are referring to patches.
-#include "r_defs.h"
-#include "v_video.h"  // color ranges
-
 //
 // Background and foreground screen numbers
 //

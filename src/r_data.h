@@ -24,13 +24,8 @@
 #ifndef R_DATA_H__
 #define R_DATA_H__
 
-#include "r_defs.h"
-#include "r_state.h"
-#include "r_patch.h"
-
-#ifdef __GNUG__
-#pragma interface
-#endif
+struct rpatch_s;
+typedef struct rpatch_s rpatch_t;
 
 // A single patch from a texture definition, basically
 // a rectangular area within the texture rectangle.
@@ -62,7 +57,7 @@ extern int numtextures;
 extern texture_t **textures;
 
 
-const byte *R_GetTextureColumn(const rpatch_t *texpatch, int col);
+const unsigned char* R_GetTextureColumn(const rpatch_t *texpatch, int col);
 
 
 // I/O, setting up the stuff.
@@ -87,7 +82,7 @@ int PUREFUNC R_CheckTextureNumForName (const char *name);
 void R_InitTranMap(int);      // killough 3/6/98: translucency initialization
 int R_ColormapNumForName(const char *name);      // killough 4/4/98
 
-extern const byte *main_tranmap, *tranmap;
+extern const unsigned char *main_tranmap, *tranmap;
 
 /* Proff - Added for OpenGL - cph - const char* param */
 void R_SetPatchNum(patchnum_t *patchnum, const char *name);

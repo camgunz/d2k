@@ -23,11 +23,20 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
+#include "p_maputl.h"
+#include "p_setup.h"
+#include "r_defs.h"
 #include "g_overflow.h"
 #include "m_argv.h"
 #include "m_misc.h"
 #include "e6y.h"
+#include "p_user.h"
+#include "g_game.h"
+#include "w_wad.h"
+#include "r_state.h"
 
 overrun_param_t overflows[OVERFLOW_MAX];
 const char *overflow_cfgname[OVERFLOW_MAX] =
@@ -311,10 +320,10 @@ void SpechitOverrun(spechit_overrun_param_t *params)
 // No more desync on teeth-32.wad\teeth-32.lmp.
 // http://www.doomworld.com/vb/showthread.php?s=&threadid=35214
 
-void RejectOverrun(int rejectlump, const byte **rejectmatrix, int totallines)
+void RejectOverrun(int rejectlump, const unsigned char **rejectmatrix, int totallines)
 {
   unsigned int length, required;
-  byte *newreject;
+  unsigned char *newreject;
   unsigned char pad;
 
   required = (numsectors * numsectors + 7) / 8;
@@ -353,7 +362,7 @@ void RejectOverrun(int rejectlump, const byte **rejectmatrix, int totallines)
           0x1d4a11  // DOOM_CONST_ZONEID
         };
         unsigned int i, pad = 0, *src = rejectpad;
-        byte *dest = newreject + length;
+        unsigned char *dest = newreject + length;
 
         rejectpad[0] = ((totallines*4+3)&~3)+24; // doom.exe zone header size
 

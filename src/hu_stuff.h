@@ -24,7 +24,8 @@
 #ifndef HU_STUFF_H__
 #define HU_STUFF_H__
 
-#include "d_event.h"
+struct event_s;
+typedef struct event_s event_t;
 
 /*
  * Globally visible constants.

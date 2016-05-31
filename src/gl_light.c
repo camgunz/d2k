@@ -23,14 +23,18 @@
 
 #include "z_zone.h"
 
-#include <SDL.h>
-
+#include "doomdef.h"
 #include "doomstat.h"
+#include "r_defs.h"
 #include "v_video.h"
 #include "r_main.h"
+#include "r_sky.h"
 #include "gl_opengl.h"
 #include "gl_intern.h"
+#include "gl_struct.h"
 #include "e6y.h"
+#include "g_game.h"
+#include "p_user.h"
 
 gl_lightmode_t gl_lightmode;
 gl_lightmode_t gl_lightmode_default;

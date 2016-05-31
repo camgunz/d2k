@@ -31,7 +31,6 @@
 #endif
 
 #include "doomdef.h"
-#include "doomtype.h"
 #include "dstrings.h"
 #include "d_main.h"
 #include "m_fixed.h"

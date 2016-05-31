@@ -24,10 +24,6 @@
 #ifndef I_SMP_H__
 #define I_SMP_H__
 
-#include "SDL.h"
-
-#include "r_draw.h"
-
 typedef struct smp_item_s
 {
   volatile int size;

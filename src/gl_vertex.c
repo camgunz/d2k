@@ -62,10 +62,14 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
+#include "doomstat.h"
 #include "v_video.h"
 #include "gl_opengl.h"
 #include "gl_intern.h"
+#include "r_defs.h"
 #include "r_main.h"
+#include "r_state.h"
 
 typedef struct vertexsplit_info_s
 {
@@ -74,7 +78,7 @@ typedef struct vertexsplit_info_s
   int numsectors;
   sector_t **sectors;
   float *heightlist;
-  byte validcount;
+  unsigned char validcount;
 } vertexsplit_info_t;
 
 int gl_seamless = false;
@@ -219,7 +223,7 @@ void gld_SplitRightEdge(const GLWall *wall, bool detail)
 //==========================================================================
 void gld_RecalcVertexHeights(const vertex_t *v)
 {
-  extern byte rendermarker;
+  extern unsigned char rendermarker;
 
   int i,j,k;
   float height;

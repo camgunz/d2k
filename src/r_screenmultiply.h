@@ -24,19 +24,14 @@
 #ifndef R_SCREENMULTIPLY_H__
 #define R_SCREENMULTIPLY_H__
 
-#ifdef __GNUG__
-#pragma interface
-#endif
-
-#include "doomtype.h"
-
 extern int render_screen_multiply;
 extern int screen_multiply;
 extern int render_interlaced_scanning;
 extern int interlaced_scanning_requires_clearing;
 
-void R_ProcessScreenMultiply(byte* pixels_src, byte* pixels_dest,
-  int pixel_depth, int pitch_src, int pitch_dest);
+void R_ProcessScreenMultiply(unsigned char *pixels_src,
+                             unsigned char *pixels_dest,
+                             int pixel_depth, int pitch_src, int pitch_dest);
 
 #endif
 

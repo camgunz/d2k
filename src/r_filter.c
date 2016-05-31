@@ -22,18 +22,17 @@
 
 
 #include "z_zone.h"
-#include "doomtype.h"
 
 #include "r_filter.h"
 
 #define DMR 16
-byte filter_ditherMatrix[DITHER_DIM][DITHER_DIM] = {
+unsigned char filter_ditherMatrix[DITHER_DIM][DITHER_DIM] = {
   { 0*DMR, 14*DMR,  3*DMR, 13*DMR}, {11*DMR,  5*DMR, 8*DMR,  6*DMR},
   {12*DMR,  2*DMR, 15*DMR,  1*DMR}, { 7*DMR,  9*DMR, 4*DMR, 10*DMR}
 };
 
-byte filter_roundedUVMap[FILTER_UVDIM*FILTER_UVDIM];
-byte filter_roundedRowMap[4*16];
+unsigned char filter_roundedUVMap[FILTER_UVDIM*FILTER_UVDIM];
+unsigned char filter_roundedRowMap[4*16];
 
 void R_FilterInit(void) {
   int i,j,s,t;
@@ -90,13 +89,17 @@ void R_FilterInit(void) {
   }
 }
 
-byte *filter_getScale2xQuadColors(byte e, byte b, byte f, byte h, byte d) {
+unsigned char *filter_getScale2xQuadColors(unsigned char e,
+                                           unsigned char b,
+                                           unsigned char f,
+                                           unsigned char h,
+                                           unsigned char d) {
   // A B C
   // D E F
   // G H I
   // perform the Scale2x algorithm (quickly) to get the new quad to represent E
-  static byte quad[5];
-  static byte rowColors[3];
+  static unsigned char quad[5];
+  static unsigned char rowColors[3];
   int code;
   
   rowColors[0] = d;

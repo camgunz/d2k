@@ -24,11 +24,8 @@
 #ifndef S_ADVSOUND_H__
 #define S_ADVSOUND_H__
 
-#include "p_mobj.h"
-
-#ifdef __GNUG__
-#pragma interface
-#endif
+struct mobj_s;
+typedef struct mobj_s mobj_t;
 
 //
 //MUSINFO lump

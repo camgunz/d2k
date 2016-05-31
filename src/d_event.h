@@ -24,8 +24,6 @@
 #ifndef D_EVENT_H__
 #define D_EVENT_H__
 
-#include "doomtype.h"
-
 //
 // Event handling.
 //
@@ -49,7 +47,7 @@ typedef enum {
 
 // Event structure.
 // CG 01/10/15: Updated to be a little more explanatory
-typedef struct {
+typedef struct event_s {
   int        device_id; // generating device ID
   evtype_t   type;      // event type
   jsevtype_e jstype;    // type of joystick event, axis, ball or hat
@@ -64,7 +62,7 @@ typedef struct {
 //
 // Button/action code definitions.
 //
-typedef enum {
+typedef enum buttoncode_e {
   // Press "Fire".
   BT_ATTACK       = 1,
 

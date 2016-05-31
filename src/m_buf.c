@@ -89,7 +89,7 @@ void M_BufferEnsureCapacity(buf_t *buf, size_t capacity) {
   size_t needed_capacity = buf->cursor + capacity;
 
   if (buf->capacity < needed_capacity) {
-    buf->data = realloc(buf->data, needed_capacity * sizeof(byte));
+    buf->data = realloc(buf->data, needed_capacity * sizeof(unsigned char));
 
     if (buf->data == NULL)
       I_Error("M_BufferEnsureCapacity: Reallocating buffer data failed");
@@ -104,7 +104,7 @@ void M_BufferEnsureTotalCapacity(buf_t *buf, size_t capacity) {
     size_t old_capacity = buf->capacity;
 
     buf->capacity = capacity;
-    buf->data = realloc(buf->data, buf->capacity * sizeof(byte));
+    buf->data = realloc(buf->data, buf->capacity * sizeof(unsigned char));
 
     if (buf->data == NULL)
       I_Error("M_BufferEnsureCapacity: Allocating buffer data failed");
@@ -176,7 +176,7 @@ bool M_BufferSeekForward(buf_t *buf, size_t count) {
   return true;
 }
 
-byte M_BufferPeek(buf_t *buf) {
+unsigned char M_BufferPeek(buf_t *buf) {
   return *(buf->data + buf->cursor);
 }
 
@@ -250,22 +250,22 @@ void M_BufferWriteUInts(buf_t *buf, const unsigned int *uints, size_t count) {
   M_BufferWriteChars(buf, (char *)uints, count * sizeof(unsigned int));
 }
 
-void M_BufferWriteLong(buf_t *buf, int_64_t l) {
+void M_BufferWriteLong(buf_t *buf, int64_t l) {
   M_BufferWriteLongs(buf, &l, 1);
 }
 
-void M_BufferWriteLongs(buf_t *buf, const int_64_t *longs, size_t count) {
-  M_BufferEnsureCapacity(buf, count * sizeof(int_64_t));
-  M_BufferWriteChars(buf, (char *)longs, count * sizeof(int_64_t));
+void M_BufferWriteLongs(buf_t *buf, const int64_t *longs, size_t count) {
+  M_BufferEnsureCapacity(buf, count * sizeof(int64_t));
+  M_BufferWriteChars(buf, (char *)longs, count * sizeof(int64_t));
 }
 
-void M_BufferWriteULong(buf_t *buf, uint_64_t l) {
+void M_BufferWriteULong(buf_t *buf, uint64_t l) {
   M_BufferWriteULongs(buf, &l, 1);
 }
 
-void M_BufferWriteULongs(buf_t *buf, const uint_64_t *ulongs, size_t count) {
-  M_BufferEnsureCapacity(buf, count * sizeof(int_64_t));
-  M_BufferWriteChars(buf, (char *)ulongs, count * sizeof(uint_64_t));
+void M_BufferWriteULongs(buf_t *buf, const uint64_t *ulongs, size_t count) {
+  M_BufferEnsureCapacity(buf, count * sizeof(int64_t));
+  M_BufferWriteChars(buf, (char *)ulongs, count * sizeof(uint64_t));
 }
 
 void M_BufferWriteFloat(buf_t *buf, float f) {
@@ -390,20 +390,20 @@ bool M_BufferReadUInts(buf_t *buf, unsigned int *i, size_t count) {
   return M_BufferRead(buf, i, count * sizeof(unsigned int));
 }
 
-bool M_BufferReadLong(buf_t *buf, int_64_t *l) {
+bool M_BufferReadLong(buf_t *buf, int64_t *l) {
   return M_BufferReadLongs(buf, l, 1);
 }
 
-bool M_BufferReadLongs(buf_t *buf, int_64_t *l, size_t count) {
-  return M_BufferRead(buf, l, count * sizeof(int_64_t));
+bool M_BufferReadLongs(buf_t *buf, int64_t *l, size_t count) {
+  return M_BufferRead(buf, l, count * sizeof(int64_t));
 }
 
-bool M_BufferReadULong(buf_t *buf, uint_64_t *l) {
+bool M_BufferReadULong(buf_t *buf, uint64_t *l) {
   return M_BufferReadULongs(buf, l, 1);
 }
 
-bool M_BufferReadULongs(buf_t *buf, uint_64_t *l, size_t count) {
-  return M_BufferRead(buf, l, count * sizeof(uint_64_t));
+bool M_BufferReadULongs(buf_t *buf, uint64_t *l, size_t count) {
+  return M_BufferRead(buf, l, count * sizeof(uint64_t));
 }
 
 bool M_BufferReadFloat(buf_t *buf, float *f) {
@@ -450,7 +450,7 @@ bool M_BufferCopyString(buf_t *dst, buf_t *src) {
 
 void M_BufferCompact(buf_t *buf) {
   if (buf->size < buf->capacity) {
-    char *new_buf = calloc(buf->size, sizeof(byte));
+    char *new_buf = calloc(buf->size, sizeof(unsigned char));
 
     if (buf->data == NULL)
       I_Error("M_BufferCompact: Allocating new buffer data failed");

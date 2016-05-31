@@ -26,6 +26,7 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "d_main.h"
 #include "e6y.h"
@@ -35,7 +36,6 @@
 #include "n_net.h"
 #include "n_main.h"
 #include "cl_main.h"
-#include "p_cmd.h"
 #include "p_ident.h"
 #include "r_main.h"
 #include "s_advsound.h"
@@ -43,6 +43,12 @@
 #include "s_sound.h"
 #include "sc_man.h"
 #include "w_wad.h"
+#include "p_setup.h"
+#include "p_mobj.h"
+#include "g_game.h"
+#include "p_user.h"
+
+extern bool doSkip;
 
 typedef struct {
   sfxinfo_t *sfxinfo;  // sound information (if null, channel avail.)

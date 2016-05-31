@@ -23,23 +23,31 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
 
 #include "am_map.h"
 #include "d_deh.h"  // Ty 03/22/98 - externalized strings
 #include "d_event.h"
+#include "d_items.h"
 #include "dstrings.h"
-#include "hu_lib.h"
-#include "hu_tracers.h"
+#include "g_game.h"
 #include "m_random.h"
 #include "n_net.h"
 #include "p_enemy.h"
 #include "p_inter.h"
+#include "p_setup.h"
+#include "p_mobj.h"
 #include "p_tick.h"
 #include "p_user.h"
+#include "r_defs.h"
 #include "r_main.h"
 #include "s_sound.h"
 #include "sounds.h"
+#include "v_video.h"
+
+#include "hu_lib.h"
+#include "hu_tracers.h"
 
 #ifdef __GNUG__
 #pragma implementation "p_inter.h"

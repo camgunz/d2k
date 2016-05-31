@@ -25,18 +25,24 @@
 
 #include "z_zone.h"
 
-#include <fontconfig/fontconfig.h>
-#include <pango/pangocairo.h>
-
+#include "doomdef.h"
 #include "doomstat.h"
-#include "d_deh.h"   /* Ty 03/27/98 - externalization of mapnamesx arrays */
 #include "d_event.h"
+#include "am_map.h"
+#include "d_deh.h"   /* Ty 03/27/98 - externalization of mapnamesx arrays */
+#include "d_items.h"
 #include "d_main.h"
 #include "dstrings.h"
 #include "c_main.h"
 #include "e6y.h" //e6y
+#include "p_user.h"
+#include "r_defs.h"
+#include "v_video.h"
+#include "r_patch.h"
+#include "r_data.h"
 #include "g_game.h"
 #include "g_keys.h"
+#include "w_wad.h"
 #include "hu_lib.h"
 #include "hu_stuff.h"
 #include "hu_tracers.h"
@@ -50,10 +56,10 @@
 #include "n_proto.h"
 #include "cl_main.h"
 #include "p_inter.h"
+#include "p_setup.h"
 #include "p_map.h"
+#include "p_mobj.h"
 #include "p_tick.h"
-#include "p_user.h"
-#include "r_main.h"
 #include "r_main.h"
 #include "s_sound.h"
 #include "sc_man.h"
@@ -61,7 +67,7 @@
 #include "st_stuff.h" /* jff 2/16/98 need loc of status bar */
 #include "x_main.h"
 
-extern SDL_Surface *screen;
+hu_textline_t w_traces[NUMTRACES];
 
 // global heads up display controls
 
@@ -164,6 +170,11 @@ static hu_textline_t  w_weapon; //jff 2/16/98 new weapon widget for hud
 static hu_textline_t  w_keys;   //jff 2/16/98 new keys widget for hud
 static hu_textline_t  w_gkeys;  //jff 3/7/98 graphic keys widget for hud
 static hu_textline_t  w_monsec; //jff 2/16/98 new kill/secret widget for hud
+
+hu_textline_t  w_hudadd;
+hu_textline_t  w_precache;
+char hud_add[80];
+char hud_centermsg[80];
 
 static hu_textline_t  w_map_monsters;  //e6y monsters widget for automap
 static hu_textline_t  w_map_secrets;   //e6y secrets widgets automap

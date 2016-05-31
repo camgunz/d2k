@@ -1,5 +1,4 @@
 /*****************************************************************************/
-
 /* D2K: A Doom Source Port for the 21st Century                              */
 /*                                                                           */
 /* Copyright (C) 2014: See COPYRIGHT file                                    */
@@ -23,8 +22,10 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "w_wad.h"
+#include "r_defs.h"
 #include "r_main.h"
 #include "r_draw.h"
 #include "r_filter.h"
@@ -32,6 +33,7 @@
 #include "st_stuff.h"
 #include "g_game.h"
 #include "am_map.h"
+#include "r_patch.h"
 
 #define MAXTRANS 3
 
@@ -44,7 +46,7 @@
 //  and the total size == width*height*depth/8.,
 //
 
-byte *viewimage;
+unsigned char *viewimage;
 int viewwidth;
 int scaledviewwidth;
 int viewheight;
@@ -57,8 +59,8 @@ int viewwindowy;
 //
 
 // CPhipps - made const*'s
-const byte *tranmap;          // translucency filter maps 256x256   // phares
-const byte *main_tranmap;     // killough 4/11/98
+const unsigned char *tranmap;          // translucency filter maps 256x256   // phares
+const unsigned char *main_tranmap;     // killough 4/11/98
 
 //
 // R_DrawColumn
@@ -79,16 +81,16 @@ static int temp_x = 0;
 static int tempyl[4], tempyh[4];
 
 // e6y: resolution limitation is removed
-static byte *byte_tempbuf;
+static unsigned char *byte_tempbuf;
 static unsigned int *int_tempbuf;
 
 static int startx = 0;
 static int temptype = COL_NONE;
 static int commontop, commonbot;
-static const byte *temptranmap = NULL;
+static const unsigned char *temptranmap = NULL;
 
 // SoM 7-28-04: Fix the fuzz problem.
-static const byte *tempfuzzmap;
+static const unsigned char *tempfuzzmap;
 
 //
 // Spectre/Invisibility.
@@ -147,7 +149,7 @@ draw_vars_t drawvars = {
   49152                          // mag_threshold
 };
 
-byte playernumtotrans[MAXPLAYERS];
+unsigned char playernumtotrans[MAXPLAYERS];
 
 //
 // Error functions that will abort if R_FlushColumns tries to flush
@@ -297,7 +299,7 @@ void R_ResetColumnBuffer(void) {
 //  be used. It has also been used with Wolfenstein 3D.
 //
 
-byte *translationtables;
+unsigned char *translationtables;
 
 #define R_DRAWCOLUMN_PIPELINE_TYPE RDC_PIPELINE_STANDARD
 #define R_DRAWCOLUMN_PIPELINE_BASE RDC_STANDARD
@@ -566,7 +568,7 @@ void R_InitTranslationTables(void) {
   int i, j;
 
 #define MAXTRANS 3
-  byte transtocolour[MAXTRANS];
+  unsigned char transtocolour[MAXTRANS];
 
   // killough 5/2/98:
   // Remove dependency of colormaps aligned on 256-byte boundary
@@ -580,7 +582,7 @@ void R_InitTranslationTables(void) {
   }
 
   for (i = 0; i < MAXPLAYERS; i++) {
-    byte wantcolour = vanilla_mapplayer_colors[i % VANILLA_MAXPLAYERS];
+    unsigned char wantcolour = vanilla_mapplayer_colors[i % VANILLA_MAXPLAYERS];
     playernumtotrans[i] = 0;
     if (wantcolour != 0x70) { // Not green, would like translation
       for (j = 0; j < MAXTRANS; j++) {
@@ -792,7 +794,7 @@ void R_DrawSpan(draw_span_vars_t *dsvars) {
 }
 
 void R_InitBuffersRes(void) {
-  extern byte *solidcol;
+  extern unsigned char *solidcol;
 
   if (solidcol) {
     free(solidcol);

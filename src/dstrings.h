@@ -56,8 +56,6 @@
  * replace hardcoded limit with extern var (silly hack, I know)
  */
 
-#include <stddef.h>
-
 extern const size_t NUM_QUITMESSAGES;  /* Calculated in dstrings.c */
 
 extern const char* const endmsg[];   /* killough 1/18/98 const added */

@@ -24,9 +24,6 @@
 #ifndef INFO_H__
 #define INFO_H__
 
-/* Needed for action function pointer handling. */
-#include "d_think.h"
-
 /********************************************************************
  * Sprite name enumeration - must match info.c                      *
  ********************************************************************/
@@ -1257,6 +1254,60 @@ typedef enum
  * Definition of the state (frames) structure                       *
  ********************************************************************/
 
+/*
+ * Experimental stuff.
+ * To compile this as "ANSI C with classes"
+ *  we will need to handle the various
+ *  action functions cleanly.
+ */
+// killough 11/98: convert back to C instead of C++
+typedef void (*actionf_t)();
+
+//e6y: for boom's friction code
+typedef  void (*actionf_v)();
+typedef  void (*actionf_p1)( void* );
+typedef  void (*actionf_p2)( void*, void* );
+
+/*
+ * Historically, "think_t" is yet another function pointer to a routine to
+ * handle an actor.
+ */
+
+typedef actionf_t think_t;
+
+/* Doubly linked list of actors. */
+typedef struct thinker_s {
+  struct thinker_s *prev;
+  struct thinker_s *next;
+  think_t           function;
+
+  /*
+   * killough 8/29/98: we maintain thinkers in several equivalence classes,
+   * according to various criteria, so as to allow quicker searches.
+   */
+
+  struct thinker_s *cnext, *cprev; /* Next, previous thinkers in same class */
+
+  /*
+   * killough 11/98: count of how many other objects reference this one using
+   * pointers. Used for garbage collection.
+   */
+  unsigned int references;
+} thinker_t;
+
+/* Note: In d_deh.c you will find references to these
+ * wherever code pointers and function handlers exist
+ */
+/*
+typedef union
+{
+  actionf_p1    acp1;
+  actionf_v     acv;
+  actionf_p2    acp2;
+
+} actionf_t;
+*/
+
 typedef struct
 {
   spritenum_t sprite;       /* sprite number to show                       */
@@ -1497,7 +1548,7 @@ typedef struct
   int damage;       /* If this is a missile, how much does it hurt? */
   int activesound;  /* What sound it makes wandering around, once
            in a while.  Chance is 3/256 it will. */
-  uint_64_t flags;  /* Bit masks for lots of things.  See p_mobj.h */
+  uint64_t flags;   /* Bit masks for lots of things.  See p_mobj.h */
   int raisestate;   /* The first state for an Archvile or respawn
            resurrection.  Zero means it won't come
            back to life. */

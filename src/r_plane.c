@@ -23,16 +23,22 @@
 
 #include "z_zone.h"
 
-#include "i_smp.h"
+#include "doomdef.h"
 #include "doomstat.h"
 #include "w_wad.h"
+#include "r_defs.h"
 #include "r_main.h"
 #include "r_draw.h"
 #include "r_things.h"
 #include "r_sky.h"
 #include "r_plane.h"
 #include "r_main.h"
+#include "r_state.h"
 #include "v_video.h"
+#include "i_smp.h"
+#include "g_game.h"
+#include "r_data.h"
+#include "r_patch.h"
 
 #define MAXVISPLANES 128    /* must be a power of 2 */
 
@@ -452,7 +458,7 @@ static void R_DoDrawPlane(visplane_t *pl)
         if (skystretch)
         {
           int skyheight = textureheight[texture]>>FRACBITS;
-          dcvars.texturemid = (int)((int_64_t)dcvars.texturemid * skyheight / SKYSTRETCH_HEIGHT);
+          dcvars.texturemid = (int)((int64_t)dcvars.texturemid * skyheight / SKYSTRETCH_HEIGHT);
         }
       }
       else

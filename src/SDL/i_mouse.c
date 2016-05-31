@@ -24,10 +24,20 @@
 
 #include <SDL.h>
 
+#include "doomdef.h"
 #include "doomstat.h"
-#include "e6y.h"
+#include "info.h"
+#include "p_setup.h"
+#include "p_mobj.h"
+#include "p_user.h"
 #include "d_event.h"
 #include "g_game.h"
+#include "r_defs.h"
+#include "r_patch.h"
+#include "r_data.h"
+#include "v_video.h"
+#include "hu_lib.h"
+#include "e6y.h"
 #include "i_mouse.h"
 #include "i_video.h"
 #include "m_argv.h"

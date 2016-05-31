@@ -23,7 +23,10 @@
 
 #include "z_zone.h"
 
-#include "doomtype.h"
+#include "doomdef.h"
+#include "r_defs.h"
+#include "v_video.h"
+
 #include "gl_opengl.h"
 #include "gl_intern.h"
 
@@ -115,7 +118,7 @@ static int itemsizes[GLDIT_TYPES] = {
 
 void gld_AddDrawItem(GLDrawItemType dit, void *itemdata) {
   int itemsize = 0;
-  byte *item_p = NULL;
+  unsigned char *item_p = NULL;
 
   itemsize = itemsizes[dit];
   if (itemsize == 0)

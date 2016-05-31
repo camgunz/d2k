@@ -27,6 +27,7 @@
 #include "doomstat.h"
 #include "v_video.h"
 #include "w_wad.h"
+#include "r_defs.h"
 #include "st_stuff.h"
 #include "st_lib.h"
 #include "r_main.h"

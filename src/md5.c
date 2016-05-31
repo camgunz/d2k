@@ -48,13 +48,13 @@
 
 #ifdef WORDS_BIGENDIAN
 void
-byteSwap(UWORD32 *buf, unsigned words)
+byteSwap(uint32_t *buf, unsigned int words)
 {
-        md5byte *p = (md5byte *)buf;
+        unsigned char *p = (unsigned char *)buf;
 
         do {
-                *buf++ = (UWORD32)((unsigned)p[3] << 8 | p[2]) << 16 |
-                        ((unsigned)p[1] << 8 | p[0]);
+                *buf++ = (uint32_t)((unsigned int)p[3] << 8 | p[2]) << 16 |
+                        ((unsigned int)p[1] << 8 | p[0]);
                 p += 4;
         } while (--words);
 }
@@ -83,9 +83,9 @@ MD5Init(struct MD5Context *ctx)
  * of bytes.
  */
 void
-MD5Update(struct MD5Context *ctx, md5byte const *buf, unsigned len)
+MD5Update(struct MD5Context *ctx, unsigned char const *buf, unsigned int len)
 {
-        UWORD32 t;
+        uint32_t t;
 
         /* Update byte count */
 
@@ -95,11 +95,11 @@ MD5Update(struct MD5Context *ctx, md5byte const *buf, unsigned len)
 
         t = 64 - (t & 0x3f);    /* Space available in ctx->in (at least 1) */
         if (t > len) {
-                memcpy((md5byte *)ctx->in + 64 - t, buf, len);
+                memcpy((unsigned char *)ctx->in + 64 - t, buf, len);
                 return;
         }
         /* First chunk is an odd size */
-        memcpy((md5byte *)ctx->in + 64 - t, buf, t);
+        memcpy((unsigned char *)ctx->in + 64 - t, buf, t);
         byteSwap(ctx->in, 16);
         MD5Transform(ctx->buf, ctx->in);
         buf += t;
@@ -123,10 +123,10 @@ MD5Update(struct MD5Context *ctx, md5byte const *buf, unsigned len)
  * 1 0* (64-bit count of bits processed, MSB-first)
  */
 void
-MD5Final(md5byte digest[16], struct MD5Context *ctx)
+MD5Final(unsigned char digest[16], struct MD5Context *ctx)
 {
         int count = ctx->bytes[0] & 0x3f;       /* Number of bytes in ctx->in */
-        md5byte *p = (md5byte *)ctx->in + count;
+        unsigned char *p = (unsigned char *)ctx->in + count;
 
         /* Set the first char of padding to 0x80.  There is always room. */
         *p++ = 0x80;
@@ -138,7 +138,7 @@ MD5Final(md5byte digest[16], struct MD5Context *ctx)
                 memset(p, 0, count + 8);
                 byteSwap(ctx->in, 16);
                 MD5Transform(ctx->buf, ctx->in);
-                p = (md5byte *)ctx->in;
+                p = (unsigned char *)ctx->in;
                 count = 56;
         }
         memset(p, 0, count);
@@ -174,9 +174,9 @@ MD5Final(md5byte digest[16], struct MD5Context *ctx)
  * the data and converts bytes into longwords for this routine.
  */
 void
-MD5Transform(UWORD32 buf[4], UWORD32 const in[16])
+MD5Transform(uint32_t buf[4], uint32_t const in[16])
 {
-        register UWORD32 a, b, c, d;
+        register uint32_t a, b, c, d;
 
         a = buf[0];
         b = buf[1];

@@ -60,6 +60,9 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
+#include "doomstat.h"
+#include "r_defs.h"
 #include "v_video.h"
 #include "gl_opengl.h"
 #include "r_main.h"

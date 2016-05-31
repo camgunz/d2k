@@ -26,8 +26,6 @@
 #include <SDL.h>
 #include "gl_opengl.h"
 
-#include "doomtype.h"
-
 #define isExtensionSupported(ext) strstr(extensions, ext)
 
 int gl_version;

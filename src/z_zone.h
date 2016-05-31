@@ -190,17 +190,48 @@ void Z_DumpHistory(char *);
 
 void Z_ZoneHistory(char *);
 
-/* CG: Include the basic data structures so other stuff can use them */
+/* [CG] Some GCC-specific defines */
+#ifdef __GNUC__
+#define CONSTFUNC __attribute__((const))
+#define PUREFUNC  __attribute__((pure))
+#define NORETURN  __attribute__((noreturn))
+#else
+#define CONSTFUNC
+#define PUREFUNC
+#define NORETURN
+#endif
+
+/* [CG]: Some generic compiler defines */
+
+#ifdef WIN32
+#define C_DECL __cdecl
+#else
+#define C_DECL
+#endif
+
+#ifdef _MSC_VER
+  #define INLINE __forceinline /* use __forceinline (VC++ specific) */
+#else
+  #define INLINE inline        /* use standard inline */
+#endif
+
+//e6y
+#ifndef BETWEEN
+#define BETWEEN(l,u,x) ((l)>(x)?(l):(x)>(u)?(u):(x))
+#endif
+
+/* [CG]: Include the basic data structures so other stuff can use them */
 
 #include <glib.h>
 
 #include "cmp.h"
 
-#include "doomtype.h"
 #include "d_msg.h"
 #include "m_buf.h"
 #include "m_fixed.h"
 #include "m_pbuf.h"
+#include "tables.h"
+#include "info.h"
 
 void I_Error(const char *error, ...) PRINTF_DECL(1, 2);
 

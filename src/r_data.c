@@ -23,8 +23,12 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
+#include "m_swap.h"
 #include "w_wad.h"
+#include "r_defs.h"
+#include "r_data.h"
 #include "r_draw.h"
 #include "r_main.h"
 #include "r_sky.h"
@@ -32,7 +36,11 @@
 #include "r_bsp.h"
 #include "r_things.h"
 #include "p_tick.h"
-#include "p_tick.h"
+#include "r_patch.h"
+#include "r_state.h"
+#include "g_game.h"
+#include "p_setup.h"
+#include "p_mobj.h"
 
 //
 // Graphics.
@@ -87,7 +95,7 @@ int       *texturetranslation;
 // R_GetTextureColumn
 //
 
-const byte *R_GetTextureColumn(const rpatch_t *texpatch, int col) {
+const unsigned char *R_GetTextureColumn(const rpatch_t *texpatch, int col) {
   while (col < 0)
     col += texpatch->width;
   col &= texpatch->widthmask;
@@ -194,7 +202,7 @@ static void R_InitTextures(void) {
     if (offset > maxoff)
       I_Error("R_InitTextures: Bad texture directory");
 
-    mtexture = (const maptexture_t *) ((const byte *)maptex + offset);
+    mtexture = (const maptexture_t *) ((const unsigned char *)maptex + offset);
 
     texture = textures[i] = Z_Malloc(
       sizeof(texture_t) +
@@ -421,8 +429,8 @@ void R_InitTranMap(int progress)
     main_tranmap = W_CacheLumpNum(lump);   // killough 4/11/98
   else if (W_CheckNumForName("PLAYPAL")!=-1) // can be called before WAD loaded
     {   // Compose a default transparent filter map based on PLAYPAL.
-      const byte *playpal = W_CacheLumpName("PLAYPAL");
-      byte       *my_tranmap;
+      const unsigned char *playpal = W_CacheLumpName("PLAYPAL");
+      unsigned char       *my_tranmap;
 
       char *fname;
       int fnlen;
@@ -482,7 +490,7 @@ void R_InitTranMap(int progress)
 
           {
             int i,j;
-            byte *tp = my_tranmap;
+            unsigned char *tp = my_tranmap;
             for (i=0;i<256;i++)
               {
                 long r1 = pal[0][i] * w2;
@@ -657,7 +665,7 @@ static inline void precache_lump(int l)
 void R_PrecacheLevel(void)
 {
   register int i;
-  register byte *hitlist;
+  register unsigned char *hitlist;
 
   if (timingdemo)
     return;

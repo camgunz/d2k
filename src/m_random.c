@@ -23,10 +23,15 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
 #include "m_random.h"
+#include "p_user.h"
 #include "n_net.h"
 #include "n_main.h"
+#include "g_game.h"
+#include "d_net.h"
 
 /* CG: 08/13/2014: Add a RNG that isn't sync-critical */
 static GRand *g_rand = NULL;

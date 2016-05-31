@@ -23,12 +23,33 @@
 
 #include "z_zone.h"
 
-#include <SDL.h>
-
-#ifdef GL_DOOM
+#include "doomdef.h"
+#include "d_event.h"
+#include "r_defs.h"
+#include "v_video.h"
 #include "gl_opengl.h"
-#endif
+#include "gl_struct.h"
 
+#include "am_map.h"
+#include "p_user.h"
+#include "r_state.h"
+#include "r_patch.h"
+#include "w_wad.h"
+#include "r_fps.h"
+#include "r_main.h"
+#include "st_stuff.h"
+#include "p_setup.h"
+#include "g_game.h"
+#include "p_mobj.h"
+#include "g_keys.h"
+#include "d_deh.h"
+#include "m_misc.h"
+#include "p_spec.h"
+#include "m_bbox.h"
+#include "r_demo.h"
+#include "n_net.h"
+
+/*
 #include "doomstat.h"
 #include "st_stuff.h"
 #include "r_main.h"
@@ -47,6 +68,7 @@
 #include "m_bbox.h"
 #include "n_net.h"
 #include "p_user.h"
+*/
 
 extern bool gamekeydown[];
 
@@ -126,7 +148,7 @@ const char *map_things_appearance_list[map_things_appearance_max] =
 #define FTOM(x) FixedMul(((x)<<16),scale_ftom)
 // e6y: int64 version to avoid overflows
 //#define MTOF(x) (FixedMul((x),scale_mtof)>>16)
-#define MTOF(x) (fixed_t)((((int_64_t)(x) * scale_mtof) >> FRACBITS)>>FRACBITS)
+#define MTOF(x) (fixed_t)((((int64_t)(x) * scale_mtof) >> FRACBITS)>>FRACBITS)
 // translates between frame-buffer and map coordinates
 #define CXMTOF(x)  (f_x + MTOF((x)-m_x))
 #define CYMTOF(y)  (f_y + (f_h - MTOF((y)-m_y)))
@@ -266,7 +288,7 @@ static bool stopped = true;
 
 am_frame_t am_frame;
 
-array_t map_lines;
+GArray *map_lines = NULL;
 
 static void AM_rotate(fixed_t* x,  fixed_t* y, angle_t a);
 
@@ -628,17 +650,21 @@ void AM_clearMarks(void)
 // Affects automap's global variables
 //
 // CPhipps - get status bar height from status bar code
-static void AM_LevelInit(void)
-{
+static void AM_LevelInit(void) {
   leveljuststarted = 0;
+
+  if (!map_lines) {
+    map_lines = g_array_new(false, false, sizeof(map_line_t));
+  }
 
   AM_SetPosition();
   AM_SetScale();
 
   AM_findMinMaxBoundaries();
   scale_mtof = FixedDiv(min_scale_mtof, (int) (0.7*FRACUNIT));
-  if (scale_mtof > max_scale_mtof)
+  if (scale_mtof > max_scale_mtof) {
     scale_mtof = min_scale_mtof;
+  }
   scale_ftom = FixedDiv(FRACUNIT, scale_mtof);
 }
 
@@ -1092,7 +1118,7 @@ static bool AM_clipMline(mline_t *ml, fline_t *fl) {
       dy = fl->a.y - fl->b.y;
       dx = fl->b.x - fl->a.x;
       // 'int64' math to avoid overflows on long lines
-      tmp.x = fl->a.x + (fixed_t)(((int_64_t)dx*(fl->a.y-f_y))/dy);
+      tmp.x = fl->a.x + (fixed_t)(((int64_t)dx*(fl->a.y-f_y))/dy);
       tmp.y = f_y;
       if (am_frame.precise)
       {
@@ -1106,7 +1132,7 @@ static bool AM_clipMline(mline_t *ml, fline_t *fl) {
     {
       dy = fl->a.y - fl->b.y;
       dx = fl->b.x - fl->a.x;
-      tmp.x = fl->a.x + (fixed_t)(((int_64_t)dx*(fl->a.y-(f_y+f_h)))/dy);
+      tmp.x = fl->a.x + (fixed_t)(((int64_t)dx*(fl->a.y-(f_y+f_h)))/dy);
       tmp.y = f_y+f_h-1;
       if (am_frame.precise)
       {
@@ -1120,7 +1146,7 @@ static bool AM_clipMline(mline_t *ml, fline_t *fl) {
     {
       dy = fl->b.y - fl->a.y;
       dx = fl->b.x - fl->a.x;
-      tmp.y = fl->a.y + (fixed_t)(((int_64_t)dy*(f_x+f_w-1 - fl->a.x))/dx);
+      tmp.y = fl->a.y + (fixed_t)(((int64_t)dy*(f_x+f_w-1 - fl->a.x))/dx);
       tmp.x = f_x+f_w-1;
       if (am_frame.precise)
       {
@@ -1134,7 +1160,7 @@ static bool AM_clipMline(mline_t *ml, fline_t *fl) {
     {
       dy = fl->b.y - fl->a.y;
       dx = fl->b.x - fl->a.x;
-      tmp.y = fl->a.y + (fixed_t)(((int_64_t)dy*(f_x-fl->a.x))/dx);
+      tmp.y = fl->a.y + (fixed_t)(((int64_t)dy*(f_x-fl->a.x))/dx);
       tmp.x = f_x;
       if (am_frame.precise)
       {
@@ -1175,24 +1201,25 @@ static bool AM_clipMline(mline_t *ml, fline_t *fl) {
 // in the defaults file.
 // Returns nothing.
 //
-static void AM_drawMline
-( mline_t*  ml,
-  int   color )
-{
+static void AM_drawMline(mline_t *ml, int color) {
   static fline_t fl;
 
-  if (color==-1)  // jff 4/3/98 allow not drawing any sort of line
-    return;       // by setting its color to -1
-  if (color==247) // jff 4/3/98 if color is 247 (xparent), use black
-    color=0;
+  if (color == -1) { // jff 4/3/98 allow not drawing any sort of line
+    return;          // by setting its color to -1
+  }
 
-  if (AM_clipMline(ml, &fl))
-  {
+  if (color == 247) { // jff 4/3/98 if color is 247 (xparent), use black
+    color = 0;
+  }
+
+  if (AM_clipMline(ml, &fl)) {
     // draws it on frame buffer using fb coords
-    if (map_use_multisamling)
+    if (map_use_multisamling) {
       V_DrawLineWu(&fl, color);
-    else
+    }
+    else {
       V_DrawLine(&fl, color);
+    }
   }
 }
 
@@ -1204,8 +1231,7 @@ static void AM_drawMline
 // Passed the color to draw the grid lines
 // Returns nothing
 //
-static void AM_drawGrid(int color)
-{
+static void AM_drawGrid(int color) {
   fixed_t x, y;
   fixed_t start, end;
   mline_t ml;
@@ -1266,13 +1292,12 @@ static void AM_drawGrid(int color)
     ml.b.x = ml.a.x + minlen;
     ml.a.y = y;
     ml.b.y = y;
-    if (automapmode & am_rotate)
-    {
+
+    if (automapmode & am_rotate) {
       AM_rotatePoint (&ml.a);
       AM_rotatePoint (&ml.b);
     }
-    else
-    {
+    else {
       AM_SetMPointFloatValue(&ml.a);
       AM_SetMPointFloatValue(&ml.b);
     }
@@ -1294,18 +1319,18 @@ static void AM_drawGrid(int color)
 //
 // jff 4/3/98 add routine to get color of generalized keyed door
 //
-static int AM_DoorColor(int type)
-{
-  if (GenLockedBase <= type && type< GenDoorBase)
-  {
+static int AM_DoorColor(int type) {
+  if (GenLockedBase <= type && type< GenDoorBase) {
     type -= GenLockedBase;
     type = (type & LockedKey) >> LockedKeyShift;
-    if (!type || type==7)
+    if (!type || type == 7) {
       return 3;  //any or all keys
-    else return (type-1)%3;
+    }
+    else {
+      return (type - 1) % 3;
+    }
   }
-  switch (type)  // closed keyed door
-  {
+  switch (type) { // closed keyed door
     case 26: case 32: case 99: case 133:
       /*bluekey*/
       return 1;
@@ -1548,19 +1573,19 @@ static void AM_drawWalls(void)
 // the color to draw it with, and the map coordinates to draw it at.
 // Returns nothing
 //
-static void AM_drawLineCharacter
-( mline_t*  lineguy,
-  int   lineguylines,
-  fixed_t scale,
-  angle_t angle,
-  int   color,
-  fixed_t x,
-  fixed_t y )
-{
+static void AM_drawLineCharacter(mline_t *lineguy,
+                                 int lineguylines,
+                                 fixed_t scale,
+                                 angle_t angle,
+                                 int   color,
+                                 fixed_t x,
+                                 fixed_t y) {
   int   i;
   mline_t l;
 
-  if (automapmode & am_rotate) angle -= viewangle - ANG90; // cph
+  if (automapmode & am_rotate) {
+    angle -= viewangle - ANG90; // cph
+  }
 
   for (i=0;i<lineguylines;i++)
   {
@@ -1573,8 +1598,9 @@ static void AM_drawLineCharacter
       l.a.y = FixedMul(scale, l.a.y);
     }
 
-    if (angle)
+    if (angle) {
       AM_rotate(&l.a.x, &l.a.y, angle);
+    }
 
     l.a.x += x;
     l.a.y += y;
@@ -2304,8 +2330,10 @@ void AM_Drawer (void)
   }
 #endif
 
-  if (!(automapmode & am_overlay)) // cph - If not overlay mode, clear background for the automap
-    V_FillRect(FB, f_x, f_y, f_w, f_h, (byte)mapcolor_back); //jff 1/5/98 background default color
+  // cph - If not overlay mode, clear background for the automap
+  if (!(automapmode & am_overlay))
+    //jff 1/5/98 background default color
+    V_FillRect(FB, f_x, f_y, f_w, f_h, (unsigned char)mapcolor_back);
 
   if (map_textured)
   {
@@ -2323,7 +2351,7 @@ void AM_Drawer (void)
   if (V_GetMode() == VID_MODEGL)
   {
     gld_DrawMapLines();
-    M_ArrayClear(&map_lines);
+    g_array_remove_range(map_lines, 0, map_lines->len);
 
     if (map_things_appearance == map_things_appearance_icon)
     {

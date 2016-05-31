@@ -23,6 +23,8 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
+#include "r_defs.h"
 #include "d_event.h"
 #include "st_stuff.h"
 #include "x_intern.h"

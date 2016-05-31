@@ -25,13 +25,15 @@
 
 #include <SDL.h>
 
+#include "doomdef.h"
 #include "doomstat.h"
+#include "m_argv.h"
 #include "v_video.h"
+#include "i_video.h"
+
 #include "gl_opengl.h"
 #include "gl_intern.h"
-#include "doomtype.h"
-#include "i_video.h"
-#include "m_argv.h"
+#include "gl_struct.h"
 
 #ifndef HIBYTE
 #define HIBYTE(W) (((W) >> 8) & 0xFF)
@@ -210,12 +212,12 @@ void gld_ResetGammaRamp(void)
   }
 }
 
-void gld_ApplyGammaRamp(byte *buf, int pitch, int width, int height)
+void gld_ApplyGammaRamp(unsigned char *buf, int pitch, int width, int height)
 {
   if (gl_hardware_gamma)
   {
     int w, h;
-    byte *pixel;
+    unsigned char *pixel;
     Uint16 r[256], g[256], b[256];
 
     SDL_GetGammaRamp(&r[0], &g[0], &b[0]);
@@ -226,9 +228,9 @@ void gld_ApplyGammaRamp(byte *buf, int pitch, int width, int height)
       {
         pixel = buf + h * pitch + 3 * w;
 
-        *(pixel + 0) = (byte)(r[*(pixel + 0)] >> 8);
-        *(pixel + 1) = (byte)(g[*(pixel + 1)] >> 8);
-        *(pixel + 2) = (byte)(b[*(pixel + 2)] >> 8);
+        *(pixel + 0) = (unsigned char)(r[*(pixel + 0)] >> 8);
+        *(pixel + 1) = (unsigned char)(g[*(pixel + 1)] >> 8);
+        *(pixel + 2) = (unsigned char)(b[*(pixel + 2)] >> 8);
       }
     }
   }

@@ -23,13 +23,6 @@
 
 #include "z_zone.h"
 
-#include "d_event.h"
-#include "c_main.h"
-#include "doomstat.h"
-#include "m_argv.h"
-#include "v_video.h"
-#include "g_game.h"
-
 #ifdef DJGPP
 #include <dpmi.h>
 #endif

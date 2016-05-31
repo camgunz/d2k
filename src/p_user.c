@@ -25,11 +25,17 @@
 
 #include <enet/enet.h>
 
+#include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
+
+#include "am_map.h"
 #include "c_main.h"
-#include "e6y.h"//e6y
+#include "e6y.h"
 #include "g_game.h"
+#include "r_defs.h"
+#include "v_video.h"
+#include "hu_lib.h"
 #include "hu_stuff.h"
 #include "i_main.h"
 #include "i_system.h"
@@ -39,16 +45,18 @@
 #include "n_peer.h"
 #include "n_proto.h"
 #include "cl_main.h"
-#include "p_cmd.h"
 #include "p_map.h"
 #include "p_spec.h"
 #include "p_user.h"
+#include "w_wad.h"
 #include "r_demo.h"
 #include "r_fps.h"
 #include "r_main.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "x_main.h"
+#include "p_setup.h"
+#include "p_mobj.h"
 
 // 16 pixels of bob
 

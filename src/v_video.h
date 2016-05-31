@@ -24,12 +24,6 @@
 #ifndef V_VIDEO_H__
 #define V_VIDEO_H__
 
-#include "doomtype.h"
-#include "doomdef.h"
-// Needed because we are refering to patches.
-#include "r_data.h"
-#include "gl_opengl.h"
-
 //
 // VIDEO
 //
@@ -42,6 +36,30 @@ typedef enum
   
   patch_stretch_max
 } patch_stretch_t;
+
+/* cph - from v_video.h, needed by gl_struct.h */
+#define VPT_ALIGN_MASK 0xF
+#define VPT_STRETCH_MASK 0x1F
+
+enum patch_translation_e {
+  // e6y: wide-res
+  VPT_ALIGN_LEFT         = 1,
+  VPT_ALIGN_RIGHT        = 2,
+  VPT_ALIGN_TOP          = 3,
+  VPT_ALIGN_LEFT_TOP     = 4,
+  VPT_ALIGN_RIGHT_TOP    = 5,
+  VPT_ALIGN_BOTTOM       = 6,
+  VPT_ALIGN_WIDE         = 7,
+  VPT_ALIGN_LEFT_BOTTOM  = 8,
+  VPT_ALIGN_RIGHT_BOTTOM = 9,
+  VPT_ALIGN_MAX          = 10,
+  VPT_STRETCH            = 16, // Stretch to compensate for high-res
+
+  VPT_NONE    = 128, // Normal
+  VPT_FLIP    = 256, // Flip image horizontally
+  VPT_TRANS   = 512, // Translate image via a translation table
+  VPT_NOOFFSET = 1024,
+};
 
 typedef struct
 {
@@ -98,7 +116,7 @@ extern int psprite_offset; // Needed for "tallscreen" modes
 // Screen 1 is an extra buffer.
 
 // array of pointers to color translation tables
-extern const byte *colrngs[];
+extern const unsigned char *colrngs[];
 
 // symbolic indices into color translation table pointer array
 typedef enum
@@ -121,7 +139,7 @@ typedef enum
 #define CR_DEFAULT CR_RED   /* default value for out of range colors */
 
 typedef struct {
-  byte *data;          // pointer to the screen content
+  unsigned char *data;          // pointer to the screen content
   bool not_on_heap; // if set, no malloc or free is preformed and
                        // data never set to NULL. Used i.e. with SDL doublebuffer.
   int width;           // the width of the surface
@@ -194,7 +212,7 @@ extern V_CopyRect_f V_CopyRect;
 
 // V_FillRect
 typedef void (*V_FillRect_f)(int scrn, int x, int y,
-                             int width, int height, byte colour);
+                             int width, int height, unsigned char colour);
 extern V_FillRect_f V_FillRect;
 
 // CPhipps - patch drawing
@@ -250,7 +268,7 @@ void V_ChangeScreenResolution(void);
 // CPhipps - function to plot a pixel
 
 // V_PlotPixel
-typedef void (*V_PlotPixel_f)(int,int,int,byte);
+typedef void (*V_PlotPixel_f)(int,int,int,unsigned char);
 extern V_PlotPixel_f V_PlotPixel;
 
 typedef struct
@@ -273,7 +291,7 @@ typedef void (*V_DrawLineWu_f)(fline_t* fl, int color);
 extern V_DrawLineWu_f V_DrawLineWu;
 
 // V_PlotPixelWu
-typedef void (*V_PlotPixelWu_f)(int scrn, int x, int y, byte color, int weight);
+typedef void (*V_PlotPixelWu_f)(int scrn, int x, int y, unsigned char color, int weight);
 extern V_PlotPixelWu_f V_PlotPixelWu;
 
 void V_AllocScreen(screeninfo_t *scrn);
@@ -285,15 +303,12 @@ const unsigned char* V_GetPlaypal(void);
 void V_FreePlaypal(void);
 
 // e6y: wide-res
-void V_FillBorder(int lump, byte color);
+void V_FillBorder(int lump, unsigned char color);
 
 void V_GetWideRect(int *x, int *y, int *w, int *h, enum patch_translation_e flags);
 
 int V_BestColor(const unsigned char *palette, int r, int g, int b);
 
-#ifdef GL_DOOM
-#include "gl_struct.h"
-#endif
 #endif
 
 /* vi: set et ts=2 sw=2: */

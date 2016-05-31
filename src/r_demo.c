@@ -24,8 +24,8 @@
 #include "z_zone.h"
 
 #include "doomdef.h"
-#include "doomtype.h"
 #include "doomstat.h"
+#include "w_wad.h"
 #include "r_demo.h"
 #include "r_fps.h"
 #include "i_system.h"
@@ -33,6 +33,7 @@
 #include "m_file.h"
 #include "m_misc.h"
 #include "m_argv.h"
+#include "m_swap.h"
 #include "w_wad.h"
 #include "d_main.h"
 #include "d_deh.h"
@@ -41,9 +42,16 @@
 #include "hu_stuff.h"
 #include "g_overflow.h"
 #include "e6y.h"
+#include "p_user.h"
+#include "p_setup.h"
+#include "p_mobj.h"
+#include "r_defs.h"
+#include "v_video.h"
 
 #include "n_net.h"
 #include "n_main.h"
+
+extern patchnum_t hu_font[HU_FONTSIZE];
 
 int IsDemoPlayback(void)
 {
@@ -72,12 +80,12 @@ int IsDemoContinue(void)
   return 0;
 }
 
-int LoadDemo(const char *name, const byte **buffer, int *length, int *lump) {
+int LoadDemo(const char *name, const unsigned char **buffer, int *length, int *lump) {
   char basename[9];
   char *filename = NULL;
   int num = -1;
   size_t len = 0;
-  const byte *buf = NULL;
+  const unsigned char *buf = NULL;
   bool success;
 
   M_ExtractFileBase(name, basename);
@@ -104,7 +112,7 @@ int LoadDemo(const char *name, const byte **buffer, int *length, int *lump) {
       if (!success)
         return false;
 
-      buf = (const byte *)sbuf;
+      buf = (const unsigned char *)sbuf;
     }
   }
   else {
@@ -138,7 +146,7 @@ int demo_smoothturns = false;
 int demo_smoothturnsfactor = 6;
 
 static int smooth_playing_turns[SMOOTH_PLAYING_MAXFACTOR];
-static int_64_t smooth_playing_sum;
+static int64_t smooth_playing_sum;
 static int smooth_playing_index;
 static angle_t smooth_playing_angle;
 
@@ -250,7 +258,7 @@ int AddString(char **str, const char *val);
 
 static void R_DemoEx_AddParams(wadtbl_t *wadtbl);
 static int R_DemoEx_GetVersion(void);
-static void R_DemoEx_GetParams(const byte *pwad_p, waddata_t *waddata);
+static void R_DemoEx_GetParams(const unsigned char *pwad_p, waddata_t *waddata);
 static void R_DemoEx_AddMouseLookData(wadtbl_t *wadtbl);
 
 static int G_ReadDemoFooter(const char *filename);
@@ -312,7 +320,7 @@ void W_FreePWADTable(wadtbl_t *wadtbl)
   free(wadtbl->data);
 }
 
-void W_AddLump(wadtbl_t *wadtbl, const char *name, const byte* data, size_t size)
+void W_AddLump(wadtbl_t *wadtbl, const char *name, const unsigned char* data, size_t size)
 {
   int lumpnum;
 
@@ -348,8 +356,6 @@ void W_AddLump(wadtbl_t *wadtbl, const char *name, const byte* data, size_t size
 
 void R_DemoEx_ShowComment(void)
 {
-  extern patchnum_t hu_font[];
-
   int         lump;
   int         cx = 10;
   int         cy = 10;
@@ -493,7 +499,7 @@ static int R_DemoEx_GetVersion(void)
   return result;
 }
 
-static void R_DemoEx_GetParams(const byte *pwad_p, waddata_t *waddata)
+static void R_DemoEx_GetParams(const unsigned char *pwad_p, waddata_t *waddata)
 {
   int lump;
   size_t size;
@@ -798,7 +804,7 @@ static void R_DemoEx_AddParams(wadtbl_t *wadtbl) {
 
   if (files)
   {
-    W_AddLump(wadtbl, DEMOEX_PARAMS_LUMPNAME, (const byte*)files, strlen(files));
+    W_AddLump(wadtbl, DEMOEX_PARAMS_LUMPNAME, (const unsigned char*)files, strlen(files));
   }
 }
 
@@ -815,7 +821,7 @@ static void R_DemoEx_AddMouseLookData(wadtbl_t *wadtbl)
     if (mlook_lump.data[i] != 0)
     {
       W_AddLump(wadtbl, mlook_lump.name, 
-        (const byte*)mlook_lump.data, mlook_lump.tick * sizeof(mlook_lump.data[0]));
+        (const unsigned char*)mlook_lump.data, mlook_lump.tick * sizeof(mlook_lump.data[0]));
       break;
     }
     i++;
@@ -836,13 +842,13 @@ void I_DemoExShutdown(void)
   }
 }
 
-byte* G_GetDemoFooter(const char *filename, const byte **footer, size_t *size)
+unsigned char* G_GetDemoFooter(const char *filename, const unsigned char **footer, size_t *size)
 {
-  byte* result = NULL;
+  unsigned char* result = NULL;
 
   FILE *hfile;
-  byte *buffer = NULL;
-  const byte* p;
+  unsigned char *buffer = NULL;
+  const unsigned char* p;
   size_t file_size;
 
   hfile = fopen(filename, "rb");
@@ -909,8 +915,8 @@ byte* G_GetDemoFooter(const char *filename, const byte **footer, size_t *size)
 void G_SetDemoFooter(const char *filename, wadtbl_t *wadtbl)
 {
   FILE *hfile;
-  byte *buffer = NULL;
-  const byte *demoex_p = NULL;
+  unsigned char *buffer = NULL;
+  const unsigned char *demoex_p = NULL;
   size_t size;
 
   buffer = G_GetDemoFooter(filename, &demoex_p, &size);
@@ -1034,8 +1040,8 @@ int CheckWadFileIntegrity(const char *filename)
 static int G_ReadDemoFooter(const char *filename) {
   int result = false;
 
-  byte *buffer = NULL;
-  const byte *demoex_p = NULL;
+  unsigned char *buffer = NULL;
+  const unsigned char *demoex_p = NULL;
   size_t size;
 
   M_ChangeDemoExtendedFormat();
@@ -1104,7 +1110,7 @@ static int G_ReadDemoFooter(const char *filename) {
       else
       {
         //add demoex.wad to the wads list
-        D_AddFile(demoex_filename, source_auto_load);
+        W_AddResource(demoex_filename, source_auto_load);
 
         //cache demoex.wad for immediately getting its data with W_CacheLumpName
         W_Init();
@@ -1168,25 +1174,25 @@ void G_WriteDemoFooter(FILE *file)
   //
 
   // separators for eye-friendly looking
-  W_AddLump(&demoex, NULL, (const byte*)DEMOEX_SEPARATOR, strlen(DEMOEX_SEPARATOR));
-  W_AddLump(&demoex, NULL, (const byte*)DEMOEX_SEPARATOR, strlen(DEMOEX_SEPARATOR));
+  W_AddLump(&demoex, NULL, (const unsigned char*)DEMOEX_SEPARATOR, strlen(DEMOEX_SEPARATOR));
+  W_AddLump(&demoex, NULL, (const unsigned char*)DEMOEX_SEPARATOR, strlen(DEMOEX_SEPARATOR));
 
   //process format version
-  W_AddLump(&demoex, DEMOEX_VERSION_LUMPNAME, (const byte*)DEMOEX_VERSION, strlen(DEMOEX_VERSION));
-  W_AddLump(&demoex, NULL, (const byte*)DEMOEX_SEPARATOR, strlen(DEMOEX_SEPARATOR));
+  W_AddLump(&demoex, DEMOEX_VERSION_LUMPNAME, (const unsigned char*)DEMOEX_VERSION, strlen(DEMOEX_VERSION));
+  W_AddLump(&demoex, NULL, (const unsigned char*)DEMOEX_SEPARATOR, strlen(DEMOEX_SEPARATOR));
 
   //process mlook
   R_DemoEx_AddMouseLookData(&demoex);
-  W_AddLump(&demoex, NULL, (const byte*)DEMOEX_SEPARATOR, strlen(DEMOEX_SEPARATOR));
+  W_AddLump(&demoex, NULL, (const unsigned char*)DEMOEX_SEPARATOR, strlen(DEMOEX_SEPARATOR));
 
   //process port name
   W_AddLump(&demoex, DEMOEX_PORTNAME_LUMPNAME,
-    (const byte*)(PACKAGE_NAME" "PACKAGE_VERSION), strlen(PACKAGE_NAME" "PACKAGE_VERSION));
-  W_AddLump(&demoex, NULL, (const byte*)DEMOEX_SEPARATOR, strlen(DEMOEX_SEPARATOR));
+    (const unsigned char*)(PACKAGE_NAME" "PACKAGE_VERSION), strlen(PACKAGE_NAME" "PACKAGE_VERSION));
+  W_AddLump(&demoex, NULL, (const unsigned char*)DEMOEX_SEPARATOR, strlen(DEMOEX_SEPARATOR));
 
   //process iwad, pwads, dehs and critical for demos params like -spechit, etc
   R_DemoEx_AddParams(&demoex);
-  W_AddLump(&demoex, NULL, (const byte*)DEMOEX_SEPARATOR, strlen(DEMOEX_SEPARATOR));
+  W_AddLump(&demoex, NULL, (const unsigned char*)DEMOEX_SEPARATOR, strlen(DEMOEX_SEPARATOR));
 
   //write pwad header, all data and lookup table to the end of a demo
   if (
@@ -1464,7 +1470,7 @@ void WadDataToWadFiles(waddata_t *waddata) {
 
   for (i = 0; (size_t)i < waddata->numwadfiles; i++) {
     if (waddata->wadfiles[i].src == source_iwad && i != iwadindex) {
-      D_AddFile(waddata->wadfiles[i].name, source_pwad);
+      W_AddResource(waddata->wadfiles[i].name, source_pwad);
       modifiedgame = true;
     }
 
@@ -1479,19 +1485,19 @@ void WadDataToWadFiles(waddata_t *waddata) {
       }
 
       if (file) {
-        D_AddFile(waddata->wadfiles[i].name, source_pwad);
+        W_AddResource(waddata->wadfiles[i].name, source_pwad);
         modifiedgame = true;
       }
     }
 
     if (waddata->wadfiles[i].src == source_deh)
-      D_AddDEH(waddata->wadfiles[i].name, 0);
+      W_AddDEH(waddata->wadfiles[i].name, 0);
   }
 
   for (i = 0; (size_t)i < waddata->numwadfiles; i++) {
     if (waddata->wadfiles[i].src == source_lmp ||
         waddata->wadfiles[i].src == source_net) {
-      D_AddFile(waddata->wadfiles[i].name, waddata->wadfiles[i].src);
+      W_AddResource(waddata->wadfiles[i].name, waddata->wadfiles[i].src);
     }
   }
 

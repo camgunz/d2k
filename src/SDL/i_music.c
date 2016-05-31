@@ -48,14 +48,18 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
 #include "d_main.h"
 #include "i_pcsound.h"
+#include "sounds.h"
 #include "i_sound.h"
 #include "m_file.h"
+#include "p_setup.h"
 #include "p_mobj.h"
 #include "s_sound.h"
 
 #ifdef HAVE_MIXER
+#include "memio.h"
 #include "mus2mid.h"
 #endif
 

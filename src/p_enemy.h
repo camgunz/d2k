@@ -24,7 +24,8 @@
 #ifndef P_ENEMY_H__
 #define P_ENEMY_H__
 
-#include "p_mobj.h"
+struct mobj_s;
+typedef struct mobj_s mobj_t;
 
 void P_NoiseAlert (mobj_t *target, mobj_t *emmiter);
 void P_SpawnBrainTargets(void); /* killough 3/26/98: spawn icon landings */

@@ -27,7 +27,7 @@ COMMON_SRC = \
  hu_lib.c       lprintf.c          p_mobj.h         r_demo.h    r_segs.h    \
  hu_lib.h       lprintf.h          p_plats.c        r_sky.c	\
  d_deh.c        hu_stuff.c         m_argv.c         p_pspr.c    r_sky.h	    \
- d_deh.h        hu_stuff.h         m_argv.h         p_pspr.h    r_state.h   \
+ d_deh.h        hu_stuff.h         m_argv.h                     r_state.h   \
  d_englsh.h     i_joy.h            m_bbox.c         p_saveg.c   r_things.c  \
  d_event.h                         m_bbox.h         p_saveg.h   r_things.h  \
  d_items.c      i_network.h        m_cheat.c        p_setup.c   s_sound.c   \
@@ -36,7 +36,7 @@ COMMON_SRC = \
  d_main.h       i_video.h          m_menu.c         p_spec.c    sounds.h    \
                 info.c             m_menu.h         p_spec.h    st_lib.c    \
  d_net.h        info.h             m_misc.c         p_switch.c  st_lib.h    \
- d_player.h                        m_misc.h         p_telept.c  st_stuff.c  \
+                                   m_misc.h         p_telept.c  st_stuff.c  \
  m_random.c     p_tick.c           st_stuff.h       i_main.h    \
  d_think.h      m_random.h         p_tick.h         tables.c    \
  d_ticcmd.h     m_swap.h           p_user.c         tables.h     \
@@ -45,7 +45,7 @@ COMMON_SRC = \
  doomdef.h      p_enemy.c          r_bsp.c          version.c   \
  doomstat.c     p_enemy.h          r_bsp.h          version.h   \
  doomstat.h     p_floor.c          r_data.c         w_wad.c	\
- doomtype.h     p_genlin.c         r_data.h         w_wad.h	\
+                p_genlin.c         r_data.h         w_wad.h	\
  dstrings.c     p_inter.c          r_defs.h         wi_stuff.c  \
  dstrings.h     p_inter.h          r_draw.c         wi_stuff.h  \
  f_finale.c     p_lights.c         r_draw.h         z_bmalloc.c \

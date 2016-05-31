@@ -31,9 +31,14 @@
 
 #include "doomstat.h"
 #include "doomdef.h"
+
+#include "r_defs.h"
 #include "v_video.h"
+#include "gl_opengl.h"
+#include "gl_struct.h"
+
 #include "i_video.h"
-#include "z_zone.h"
+#include "i_vid8ingl.h"
 
 #ifdef HAVE_LIBPNG
 
@@ -74,7 +79,7 @@ static void fill_buffer_hicolor(SDL_Surface *scr, void *buffer)
 {
   SDL_PixelFormat *fmt = scr->format;
   png_color *pixel = buffer;
-  byte *source = scr->pixels;
+  unsigned char *source = scr->pixels;
   int y;
 
   // translate SDL pixel format into png_color
@@ -119,7 +124,7 @@ static int screenshot_sdl(
     SDL_Surface *scr, const struct screenshot_sdl_func *mode)
 {
   int y, result = -1;
-  byte *pixel_data;
+  unsigned char *pixel_data;
 
   pixel_data = malloc(REAL_SCREENWIDTH * REAL_SCREENHEIGHT * mode->pixel_size);
 

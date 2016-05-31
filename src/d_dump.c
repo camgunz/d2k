@@ -22,35 +22,30 @@
 
 
 #include "z_zone.h"
-#include "doomtype.h"
-
-#include <stdint.h>
-#include <stdlib.h>
-
-#include "cmp.h"
-
-#include "m_buf.h"
-#include "m_pbuf.h"
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
 #include "am_map.h"
 #include "d_dump.h"
+#include "p_user.h"
 #include "g_game.h"
 #include "m_delta.h"
 #include "m_random.h"
 #include "p_enemy.h"
 #include "p_ident.h"
+#include "r_defs.h"
+#include "r_state.h"
 #include "p_map.h"
 #include "p_maputl.h"
 #include "p_setup.h"
 #include "p_spec.h"
 #include "p_tick.h"
 #include "p_saveg.h"
-#include "p_user.h"
 #include "r_main.h"
 #include "s_advsound.h"
-#include "e6y.h"//e6y
+#include "e6y.h"
+#include "p_mobj.h"
 
 extern int forceOldBsp;
 extern int numspechit;
@@ -90,7 +85,7 @@ static void dump_sector_index(pbuf_t *savebuffer, sector_t *s, const char *fn) {
 }
 
 static void dump_line_index(pbuf_t *savebuffer, line_t *li, const char *fn) {
-  uint_64_t line_index;
+  uint64_t line_index;
 
   if (li < lines) {
     // I_Error("%s: Invalid line %p < %p", fn, li, lines);
@@ -114,7 +109,7 @@ void D_Dump(pbuf_t *savebuffer) {
   unsigned int target_id = 0;
   unsigned int tracer_id = 0;
   unsigned int lastenemy_id = 0;
-  uint_64_t    state_index = 0;
+  uint64_t     state_index = 0;
   unsigned int player_index = 0;
 
   /** Config **/
@@ -390,7 +385,7 @@ void D_Dump(pbuf_t *savebuffer) {
       M_PBufWriteInt(savebuffer, player->colormap);
       for (int i = 0; i < NUMPSPRITES; i++) {
         if (player->psprites[i].state) {
-          uint_64_t state_index;
+          uint64_t state_index;
 
           if (player->psprites[i].state < states) {
             I_Error(
@@ -577,7 +572,7 @@ void D_Dump(pbuf_t *savebuffer) {
       I_Error("D_Dump: Invalid mobj state %p", mobj->state);
     }
 
-    state_index = (uint_64_t)(mobj->state - states);
+    state_index = (uint64_t)(mobj->state - states);
 
     if (state_index >= NUMSTATES) {
       I_Error("D_Dump: Invalid mobj state %p", mobj->state);

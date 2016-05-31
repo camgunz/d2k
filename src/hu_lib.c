@@ -20,14 +20,18 @@
 /*                                                                           */
 /*****************************************************************************/
 
+#include "z_zone.h"
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
+#include "am_map.h"
+#include "r_defs.h"
+#include "r_main.h"
+#include "r_draw.h"
 #include "v_video.h"
 #include "hu_lib.h"
 #include "hu_stuff.h"
-#include "r_main.h"
-#include "r_draw.h"
 
 extern int  key_backspace;                                          // phares
 extern int  key_enter;                                              // phares

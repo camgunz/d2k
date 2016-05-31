@@ -25,20 +25,24 @@
 
 #include <SDL.h>
 
-#include "doomtype.h"
+#include "doomdef.h"
+#include "doomstat.h"
+
 #include "w_wad.h"
 #include "m_argv.h"
 #include "d_event.h"
 #include "v_video.h"
-#include "doomstat.h"
+#include "r_defs.h"
 #include "r_bsp.h"
 #include "r_main.h"
 #include "r_draw.h"
 #include "r_sky.h"
 #include "r_plane.h"
 #include "r_data.h"
+#include "r_state.h"
 #include "r_things.h"
 #include "r_fps.h"
+#include "r_patch.h"
 #include "p_maputl.h"
 #include "m_bbox.h"
 #include "gl_opengl.h"
@@ -53,7 +57,11 @@
 #include "sc_man.h"
 #include "st_stuff.h"
 #include "hu_stuff.h"
-#include "e6y.h"//e6y
+#include "e6y.h"
+#include "g_game.h"
+#include "p_setup.h"
+#include "p_mobj.h"
+#include "p_user.h"
 
 // All OpenGL extentions will be disabled in gl_compatibility mode
 int gl_compatibility = 0;
@@ -788,31 +796,34 @@ void gld_DrawLine_f(float x0, float y0, float x1, float y1, int BaseColor)
 #if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
   const unsigned char *playpal = V_GetPlaypal();
   unsigned char r, g, b, a;
-  map_line_t *line;
-  
+  // map_line_t *line;
+  map_line_t line;
+
   a = ((automapmode & am_overlay) ? map_lines_overlay_trans * 255 / 100 : 255);
-  if (a == 0)
+
+  if (a == 0) {
     return;
+  }
 
   r = playpal[3 * BaseColor + 0];
   g = playpal[3 * BaseColor + 1];
   b = playpal[3 * BaseColor + 2];
 
-  line = M_ArrayGetNewItem(&map_lines, sizeof(line[0]));
+  line.point[0].x = x0;
+  line.point[0].y = y0;
+  line.point[0].r = r;
+  line.point[0].g = g;
+  line.point[0].b = b;
+  line.point[0].a = a;
 
-  line->point[0].x = x0;
-  line->point[0].y = y0;
-  line->point[0].r = r;
-  line->point[0].g = g;
-  line->point[0].b = b;
-  line->point[0].a = a;
+  line.point[1].x = x1;
+  line.point[1].y = y1;
+  line.point[1].r = r;
+  line.point[1].g = g;
+  line.point[1].b = b;
+  line.point[1].a = a;
 
-  line->point[1].x = x1;
-  line->point[1].y = y1;
-  line->point[1].r = r;
-  line->point[1].g = g;
-  line->point[1].b = b;
-  line->point[1].a = a;
+  g_array_append_val(map_lines, line);
 #else
   const unsigned char *playpal = V_GetPlaypal();
   
@@ -1072,9 +1083,9 @@ vbo_xyz_uv_t *flats_vbo = NULL;
 GLSeg *gl_segs=NULL;
 GLSeg *gl_lines=NULL;
 
-byte rendermarker=0;
-byte *segrendered; // true if sector rendered (only here for malloc)
-byte *linerendered[2]; // true if linedef rendered (only here for malloc)
+unsigned char rendermarker=0;
+unsigned char *segrendered; // true if sector rendered (only here for malloc)
+unsigned char *linerendered[2]; // true if linedef rendered (only here for malloc)
 
 float roll     = 0.0f;
 float yaw      = 0.0f;

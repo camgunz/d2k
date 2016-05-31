@@ -26,11 +26,11 @@
 
 #define DITHER_DIM 4
 
-extern byte filter_ditherMatrix[DITHER_DIM][DITHER_DIM];
+extern unsigned char filter_ditherMatrix[DITHER_DIM][DITHER_DIM];
 #define FILTER_UVBITS 6
 #define FILTER_UVDIM (1<<FILTER_UVBITS)
-extern byte filter_roundedUVMap[FILTER_UVDIM*FILTER_UVDIM];
-extern byte filter_roundedRowMap[4*16];
+extern unsigned char filter_roundedUVMap[FILTER_UVDIM*FILTER_UVDIM];
+extern unsigned char filter_roundedRowMap[4*16];
 
 void R_FilterInit(void);
 
@@ -78,7 +78,11 @@ void R_FilterInit(void);
       ((((texV)>>8) & 0xff)>>(8-FILTER_UVBITS)) \
     ] ]
 
-byte *filter_getScale2xQuadColors(byte e, byte b, byte f, byte h, byte d);
+unsigned char *filter_getScale2xQuadColors(unsigned char e,
+                                           unsigned char b,
+                                           unsigned char f,
+                                           unsigned char h,
+                                           unsigned char d);
 
 // This is the horrendous macro version of the function commented out of 
 // r_filter.c. It does a bilinear blend on the four source texels for a 

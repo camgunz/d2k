@@ -763,6 +763,7 @@ SET(SDL_SOURCES
   ${CMAKE_SOURCE_DIR}/src/SDL/i_network.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_sound.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_sshot.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_vid8ingl.c
   ${CMAKE_SOURCE_DIR}/src/SDL/i_video.c
 )
 

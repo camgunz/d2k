@@ -24,11 +24,8 @@
 #ifndef R_PLANE_H__
 #define R_PLANE_H__
 
-#include "r_data.h"
-
-#ifdef __GNUG__
-#pragma interface
-#endif
+struct visplane_s;
+typedef struct visplane_s visplane_t;
 
 /* killough 10/98: special mask indicates sky flat comes from sidedef */
 #define PL_SKYFLAT (0x80000000)

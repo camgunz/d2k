@@ -23,20 +23,27 @@
 
 #include "z_zone.h"
 
-#include "d_deh.h"  // Ty 03/22/98 - externalizations
-#include "d_event.h"
+#include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
+
+#include "am_map.h"
+#include "d_deh.h"  // Ty 03/22/98 - externalizations
 #include "f_finale.h" // CPhipps - hmm...
+#include "p_user.h"
 #include "g_game.h"
-#include "hu_stuff.h"
 #include "n_net.h"
+#include "r_defs.h"
+#include "r_state.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "v_video.h"
 #include "w_wad.h"
+#include "hu_lib.h"
+#include "hu_stuff.h"
 
-extern patchnum_t hu_font[HU_FONTSIZE];
 extern int acceleratestage; // accelerate intermission screens
+extern patchnum_t hu_font[HU_FONTSIZE];
 
 #define TEXTSPEED    3     // original value                    // phares
 #define TEXTWAIT     250   // original value                    // phares

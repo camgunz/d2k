@@ -50,11 +50,16 @@ experimental music API
 
 #include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
+#include "w_wad.h"
 #include "d_main.h"
+#include "sounds.h"
 #include "i_sound.h"
 #include "m_file.h"
+#include "p_setup.h"
 #include "p_mobj.h"
 #include "s_sound.h"
+#include "memio.h"
 
 #include "mus2mid.h"
 

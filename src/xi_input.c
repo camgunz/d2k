@@ -25,12 +25,14 @@
 
 #include <SDL.h>
 
+#include "doomdef.h"
 #include "d_event.h"
 #include "i_input.h"
 #include "i_joy.h"
 #include "i_mouse.h"
 #include "i_video.h"
 #include "m_misc.h"
+#include "p_setup.h"
 #include "p_mobj.h"
 #include "sounds.h"
 #include "s_sound.h"

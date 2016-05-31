@@ -24,12 +24,8 @@
 #ifndef D_MAIN_H__
 #define D_MAIN_H__
 
-#include "d_event.h"
-#include "w_wad.h"
-
-#ifdef __GNUG__
-#pragma interface
-#endif
+struct event_s;
+typedef struct event_s event_t;
 
 /* CPhipps - removed wadfiles[] stuff to w_wad.h */
 
@@ -63,8 +59,6 @@ void        D_StartTitle(void);
 bool        D_Wiping(void);
 bool        D_Responder(event_t *ev);
 void        D_DoomMain(void);
-void        D_AddFile(const char *file, wad_source_t source);
-void        D_AddDEH(const char *filename, int lumpnum);
 void        AddIWAD(const char *iwad);
 void        D_SetIWAD(const char *iwad);
 const char* D_GetIWAD(void);

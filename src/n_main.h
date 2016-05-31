@@ -24,6 +24,12 @@
 #ifndef N_MAIN_H__
 #define N_MAIN_H__
 
+struct netticcmd_s;
+typedef struct netticcmd_s netticcmd_t;
+
+struct player_s;
+typedef struct player_s player_t;
+
 void N_LogCommand(netticcmd_t *ncmd);
 void N_LogPlayerPosition(player_t *player);
 void N_InitNetGame(void);

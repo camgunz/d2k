@@ -25,16 +25,18 @@
 
 #include <enet/enet.h>
 
-#include "d_event.h"
+#include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
 #include "e6y.h"
 #include "g_game.h"
 #include "n_net.h"
 #include "n_main.h"
 #include "n_state.h"
 #include "n_peer.h"
-#include "p_cmd.h"
 #include "p_map.h"
+#include "p_setup.h"
+#include "p_mobj.h"
 #include "p_spec.h"
 #include "p_tick.h"
 #include "p_user.h"

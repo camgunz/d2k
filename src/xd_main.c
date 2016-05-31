@@ -23,8 +23,7 @@
 
 #include "z_zone.h"
 
-#include <SDL.h>
-
+#include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
 #include "am_map.h"
@@ -35,10 +34,13 @@
 #include "i_input.h"
 #include "m_menu.h"
 #include "m_misc.h"
+#include "r_defs.h"
 #include "st_stuff.h"
 #include "x_intern.h"
 #include "x_main.h"
 #include "xd_main.h"
+
+bool AM_Responder(event_t *ev);
 
 static int XD_HandleEvent(lua_State *L) {
   event_t *ev = luaL_checkudata(L, -1, "InputEvent");

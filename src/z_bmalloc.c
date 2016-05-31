@@ -23,17 +23,19 @@
 
 #include "z_zone.h"
 
-#include "doomtype.h"
 #include "z_bmalloc.h"
 
 typedef struct bmalpool_s {
   struct bmalpool_s *nextpool;
   size_t             blocks;
-  byte               used[0];
+  unsigned char      used[0];
 } bmalpool_t;
 
 inline static void* getelem(bmalpool_t *p, size_t size, size_t n) {
-  return (((byte*)p) + sizeof(bmalpool_t) + sizeof(byte)*(p->blocks) + size*n);
+  return (
+    ((unsigned char *)p) + sizeof(bmalpool_t) +
+    sizeof(unsigned char)*(p->blocks) + size*n
+  );
 }
 
 inline static PUREFUNC int iselem(const bmalpool_t *pool, size_t size, const void* p) {
@@ -60,7 +62,7 @@ void* Z_BMalloc(struct block_memory_alloc_s *pzone) {
 
   while (*pool != NULL) {
     // Scan for unused marker
-    byte *p = memchr((*pool)->used, unused_block, (*pool)->blocks);
+    unsigned char *p = memchr((*pool)->used, unused_block, (*pool)->blocks);
 
     if (p) {
       int n = p - (*pool)->used;
@@ -82,7 +84,7 @@ void* Z_BMalloc(struct block_memory_alloc_s *pzone) {
     // CPhipps: Allocate new memory, initialised to 0
 
     *pool = newpool = Z_Calloc(
-      sizeof(*newpool) + (sizeof(byte) + pzone->size)*(pzone->perpool),
+      sizeof(*newpool) + (sizeof(unsigned char) + pzone->size)*(pzone->perpool),
       1,
       pzone->tag,
       NULL
