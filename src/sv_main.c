@@ -83,7 +83,12 @@ static void sv_remove_old_commands(void) {
       continue;
     }
 
+    printf("(%5d) Trimming commands before %5d\n",
+      gametic, latest_synchronized_command_index
+    );
+
     P_TrimCommandsByIndex(i, latest_synchronized_command_index);
+    printf("(%5d) Resetting latest synchronized command index\n", gametic);
     P_ResetLatestSynchronizedCommandIndex(i);
   }
 }

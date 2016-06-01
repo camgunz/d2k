@@ -85,6 +85,7 @@ static void serialize_corpse(gpointer data, gpointer user_data) {
   M_PBufWriteUInt(savebuffer, corpse->id);
 }
 
+#if 0
 static void serialize_command(gpointer data, gpointer user_data) {
   netticcmd_t *ncmd = (netticcmd_t *)data;
   pbuf_t *savebuffer = (pbuf_t *)user_data;
@@ -97,10 +98,11 @@ static void serialize_command(gpointer data, gpointer user_data) {
   M_PBufWriteShort(savebuffer, ncmd->angle);
   M_PBufWriteUChar(savebuffer, ncmd->buttons);
 }
+#endif
 
 static void serialize_player(pbuf_t *savebuffer, int playernum) {
   player_t *player = &players[playernum];
-  unsigned int command_count;
+  // unsigned int command_count;
 
   M_PBufWriteInt(savebuffer, player->playerstate);
   M_PBufWriteChar(savebuffer, player->cmd.forwardmove);
@@ -185,11 +187,13 @@ static void serialize_player(pbuf_t *savebuffer, int playernum) {
   else
     M_PBufWriteString(savebuffer, "", 0);
   M_PBufWriteUChar(savebuffer, player->team);
+  /*
   command_count = P_GetCommandCount(playernum);
   M_PBufWriteUInt(savebuffer, command_count);
   if (command_count > 0)
     P_ForEachCommand(playernum, serialize_command, savebuffer);
   // M_PBufWriteInt(savebuffer, player->latest_command_run_index);
+  */
 
   if (MULTINET) {
     M_PBufWriteInt(savebuffer, player->ping);
@@ -209,7 +213,7 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
   static bool name_buf_initialized = false;
 
   player_t *player = &players[playernum];
-  unsigned int command_count;
+  // unsigned int command_count;
 
   if (!player_message_buf_initialized) {
     M_BufferInit(&player_message_buf);
@@ -303,6 +307,7 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
   }
   M_PBufReadUChar(savebuffer, &player->team);
 
+  /*
   M_PBufReadUInt(savebuffer, &command_count);
 
   if (CLIENT && playernum != consoleplayer)
@@ -324,6 +329,7 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
 
     P_InsertCommandSorted(playernum, &tmp_ncmd);
   }
+  */
 
   // M_PBufReadInt(savebuffer, &player->latest_command_run_index);
 

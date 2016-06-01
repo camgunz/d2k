@@ -56,15 +56,14 @@ typedef struct
   fixed_t sy;
 } pspdef_t;
 
-typedef enum
-{
-  WSOP_NONE   = 0x0,
-  WSOP_WEAPON = 0x1,
-  WSOP_AMMO   = 0x2,
-  WSOP_MAX    = 0x4,
+typedef enum {
+  WSOP_NONE   = 0,
+  WSOP_WEAPON = 1,
+  WSOP_AMMO   = 2,
+  WSOP_MAX    = 4,
 } wsop_e;
 
-extern int weapon_preferences[2][NUMWEAPONS+1];      /* killough 5/2/98 */
+extern int weapon_preferences[2][NUMWEAPONS + 1]; /* killough 5/2/98 */
 int P_WeaponPreferred(int w1, int w2);
 
 typedef struct netticcmd_s {
@@ -369,7 +368,10 @@ bool         P_HasCommands(int playernum);
 unsigned int P_GetCommandCount(int playernum);
 netticcmd_t* P_GetCommand(int playernum, unsigned int index);
 void         P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd);
+void         P_QueuePlayerCommand(int playernum, netticcmd_t *ncmd);
 void         P_AppendNewCommand(int playernum, netticcmd_t *tmp_ncmd);
+netticcmd_t* P_GetEarliestCommand(int playernum);
+int          P_GetEarliestCommandIndex(int playernum);
 netticcmd_t* P_GetLatestCommand(int playernum);
 int          P_GetLatestCommandIndex(int playernum);
 void         P_UpdateLatestCommandIndex(int originating_playernum,

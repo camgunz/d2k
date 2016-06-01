@@ -64,6 +64,8 @@
 #include "doomstat.h"
 #include "r_defs.h"
 #include "v_video.h"
+#include "r_defs.h"
+#include "r_data.h"
 #include "r_plane.h"
 #include "r_sky.h"
 #include "r_main.h"

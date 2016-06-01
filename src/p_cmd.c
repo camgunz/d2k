@@ -561,6 +561,30 @@ void P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd) {
   }
 }
 
+void P_QueuePlayerCommand(int playernum, netticcmd_t *ncmd) {
+  GPtrArray *commands = players[playernum].cmdq.commands;
+  netticcmd_t *new_ncmd;
+
+  for (size_t i = 0; i < commands->len; i++) {
+    netticcmd_t *stored_ncmd = (netticcmd_t *)g_ptr_array_index(commands, i);
+
+    if (stored_ncmd->index == ncmd->index) {
+      break;
+    }
+
+    if (stored_ncmd->index > ncmd->index) {
+      new_ncmd = get_new_blank_command();
+      memcpy(new_ncmd, ncmd, sizeof(netticcmd_t));
+      g_ptr_array_insert(commands, i, new_ncmd);
+      return;
+    }
+  }
+
+  new_ncmd = get_new_blank_command();
+  memcpy(new_ncmd, ncmd, sizeof(netticcmd_t));
+  g_ptr_array_add(players[playernum].cmdq.commands, new_ncmd);
+}
+
 void P_AppendNewCommand(int playernum, netticcmd_t *tmp_ncmd) {
   netticcmd_t *ncmd;
 
@@ -575,6 +599,14 @@ void P_AppendNewCommand(int playernum, netticcmd_t *tmp_ncmd) {
   g_ptr_array_add(players[playernum].cmdq.commands, ncmd);
 }
 
+netticcmd_t* P_GetEarliestCommand(int playernum) {
+  if (!playeringame[playernum]) {
+    return NULL;
+  }
+
+  return P_GetCommand(playernum, 0);
+}
+
 netticcmd_t* P_GetLatestCommand(int playernum) {
   if (!playeringame[playernum]) {
     return NULL;
@@ -583,11 +615,22 @@ netticcmd_t* P_GetLatestCommand(int playernum) {
   return P_GetCommand(playernum, P_GetCommandCount(playernum) - 1);
 }
 
+int P_GetEarliestCommandIndex(int playernum) {
+  netticcmd_t *ncmd = P_GetEarliestCommand(playernum);
+
+  if (!ncmd) {
+    return -1;
+  }
+
+  return ncmd->index;
+}
+
 int P_GetLatestCommandIndex(int playernum) {
   netticcmd_t *ncmd = P_GetLatestCommand(playernum);
 
-  if (!ncmd)
+  if (!ncmd) {
     return -1;
+  }
 
   return ncmd->index;
 }
@@ -598,7 +641,18 @@ void P_UpdateLatestSynchronizedCommandIndex(int originating_playernum,
   player_t *player = &players[originating_playernum];
 
   if (command_index < player->cmdq.latest_synchronized_index) {
+    printf(
+      "(%5d) Player %d has commands from %d up until %d\n",
+      gametic, receiving_playernum, originating_playernum, command_index
+    );
+
     player->cmdq.latest_synchronized_index = command_index;
+  }
+  else {
+    printf(
+      "(%5d) Player %d has commands from %d up until %d\n",
+      gametic, receiving_playernum, originating_playernum, command_index
+    );
   }
 
   player->cmdq.updated &= (1 << receiving_playernum);

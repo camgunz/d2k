@@ -181,8 +181,14 @@ static void init_netsync(netsync_t *ns) {
   ns->outdated = false;
   ns->tic = 0;
   ns->command_index = 0;
-  ns->oldest_command_index = 0;
   M_BufferInit(&ns->delta.data);
+}
+
+static void init_cmdsync(cmdsync_t *cs) {
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    cs->players[i].earliest_index = 0;
+    cs->players[i].latest_index = 0;
+  }
 }
 
 static void free_netsync(netsync_t *ns) {
@@ -190,7 +196,6 @@ static void free_netsync(netsync_t *ns) {
   ns->outdated = false;
   ns->tic = 0;
   ns->command_index = 0;
-  ns->oldest_command_index = 0;
   M_BufferFree(&ns->delta.data);
 }
 
@@ -222,10 +227,12 @@ unsigned int N_PeerAdd(void) {
 
   init_netcom(&np->netcom);
   init_netsync(&np->sync);
+  init_cmdsync(&np->cmdsync);
 
   np->peernum = 1;
-  while (g_hash_table_contains(net_peers, GUINT_TO_POINTER(np->peernum)))
+  while (g_hash_table_contains(net_peers, GUINT_TO_POINTER(np->peernum))) {
     np->peernum++;
+  }
 
   np->playernum          = 0;
   np->peer               = NULL;

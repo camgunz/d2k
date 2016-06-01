@@ -36,11 +36,13 @@
 #include "p_setup.h"
 #include "g_game.h"
 
+#if 0
 static bool command_is_synchronized(gpointer data, gpointer user_data) {
   netticcmd_t *ncmd = (netticcmd_t *)data;
 
   return ncmd->server_tic != 0;
 }
+#endif
 
 static void count_command(gpointer data, gpointer user_data) {
   netpeer_t *server = CL_GetServerPeer();
@@ -56,7 +58,11 @@ static void count_command(gpointer data, gpointer user_data) {
 }
 
 void CL_TrimSynchronizedCommands(int playernum) {
-  P_TrimCommands(playernum, command_is_synchronized, NULL);
+  printf(
+    "(%5d) Trimming synchronized commands (actually, just skipping this)\n",
+    gametic
+  );
+  // P_TrimCommands(playernum, command_is_synchronized, NULL);
 }
 
 unsigned int CL_GetUnsynchronizedCommandCount(int playernum) {
