@@ -64,6 +64,7 @@
 #define DEBUG_NET 0
 #define DEBUG_SYNC 0
 #define DEBUG_SAVE 0
+#define DEBUG_CMD 0
 #define LOG_COMMANDS 0
 #define PRINT_NETWORK_STATS 0
 // #define LOG_SECTOR 43
@@ -239,7 +240,7 @@ void N_InitNetGame(void) {
     P_InitPlayerMessages(i);
   }
 
-  P_InitCommandQueue();
+  P_InitCommandQueues();
 
   if ((i = M_CheckParm("-solo-net"))) {
     netgame = true;
@@ -261,14 +262,29 @@ void N_InitNetGame(void) {
 
     /* CG [FIXME] Should these use the ~/.d2k path? */
 
-    if (DEBUG_NET && CLIENT)
-      D_MsgActivateWithFile(MSG_NET, "client-net.log");
+    if (DEBUG_NET && CLIENT) {
+      if (!D_MsgActivateWithFile(MSG_NET, "client-net.log")) {
+        I_Error("Error activating client-net.log: %s", strerror(errno));
+      }
+    }
 
-    if (DEBUG_SAVE && CLIENT)
-      D_MsgActivateWithFile(MSG_SAVE, "client-save.log");
+    if (DEBUG_SAVE && CLIENT) {
+      if (!D_MsgActivateWithFile(MSG_SAVE, "client-save.log")) {
+        I_Error("Error activating client-save.log: %s", strerror(errno));
+      }
+    }
 
-    if (DEBUG_SYNC && CLIENT)
-      D_MsgActivateWithFile(MSG_SYNC, "client-sync.log");
+    if (DEBUG_SYNC && CLIENT) {
+      if (!D_MsgActivateWithFile(MSG_SYNC, "client-sync.log")) {
+        I_Error("Error activating client-sync.log: %s", strerror(errno));
+      }
+    }
+
+    if (DEBUG_CMD && CLIENT) {
+      if (!D_MsgActivateWithFile(MSG_CMD, "client-cmd.log")) {
+        I_Error("Error activating client-cmd.log: %s", strerror(errno));
+      }
+    }
 
     CL_Init();
 
@@ -372,6 +388,12 @@ void N_InitNetGame(void) {
       if (DEBUG_SYNC && SERVER) {
         if (!D_MsgActivateWithFile(MSG_SYNC, "server-sync.log")) {
           I_Error("Error activating server-sync.log: %s", strerror(errno));
+        }
+      }
+
+      if (DEBUG_CMD && SERVER) {
+        if (!D_MsgActivateWithFile(MSG_CMD, "server-cmd.log")) {
+          I_Error("Error activating server-cmd.log: %s", strerror(errno));
         }
       }
     }

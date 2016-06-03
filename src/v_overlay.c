@@ -41,9 +41,7 @@
 typedef struct overlay_s {
   unsigned char *pixels;
   bool owns_pixels;
-#ifdef GL_DOOM
   GLuint tex_id;
-#endif
   bool needs_resetting;
 } overlay_t;
 
@@ -52,9 +50,7 @@ static overlay_t overlay;
 void V_OverlayInit(void) {
   overlay.pixels          = NULL;
   overlay.owns_pixels     = false;
-#ifdef GL_DOOM
   overlay.tex_id          = 0;
-#endif
   overlay.needs_resetting = false;
 }
 
@@ -62,7 +58,6 @@ void V_OverlayBuildPixels(void) {
   if (overlay.pixels)
     I_Error("build_overlay_pixels: pixels already built");
 
-#ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
     overlay.pixels = calloc(SCREENWIDTH * SCREENHEIGHT, sizeof(uint32_t));
 
@@ -79,10 +74,6 @@ void V_OverlayBuildPixels(void) {
     overlay.pixels = screens[0].data;
     overlay.owns_pixels = false;
   }
-#else
-  overlay.pixels = screens[0].data;
-  overlay.owns_pixels = false;
-#endif
 }
 
 void V_OverlayDestroyPixels(void) {
@@ -95,7 +86,6 @@ void V_OverlayDestroyPixels(void) {
 }
 
 void V_OverlayBuildTexture(void) {
-#ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
     if (overlay.tex_id) {
       glDeleteTextures(1, &overlay.tex_id);
@@ -114,16 +104,13 @@ void V_OverlayBuildTexture(void) {
 
     last_glTexID = &overlay.tex_id;
   }
-#endif
 }
 
 void V_OverlayDestroyTexture(void) {
-#ifdef GL_DOOM
   if (overlay.tex_id != 0) {
     glDeleteTextures(1, &overlay.tex_id);
     overlay.tex_id = 0;
   }
-#endif
 }
 
 bool V_OverlayNeedsResetting(void) {
@@ -138,7 +125,6 @@ void V_OverlayClearNeedsResetting(void) {
   overlay.needs_resetting = false;
 }
 
-#ifdef GL_DOOM
 GLuint V_OverlayGetTexID(void) {
   return overlay.tex_id;
 }
@@ -146,7 +132,6 @@ GLuint V_OverlayGetTexID(void) {
 GLuint* V_OverlayGetTexIDPointer(void) {
   return &overlay.tex_id;
 }
-#endif
 
 unsigned char* V_OverlayGetPixels(void) {
   return overlay.pixels;

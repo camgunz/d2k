@@ -275,7 +275,7 @@ void CL_CheckForStateUpdates(void) {
 
   gametic++;
 
-  CL_TrimSynchronizedCommands(consoleplayer);
+  CL_TrimSynchronizedCommands();
 
   N_LogPlayerPosition(&players[consoleplayer]);
 

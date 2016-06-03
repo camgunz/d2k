@@ -36,49 +36,68 @@
 #include "p_setup.h"
 #include "g_game.h"
 
-#if 0
 static bool command_is_synchronized(gpointer data, gpointer user_data) {
   netticcmd_t *ncmd = (netticcmd_t *)data;
+  uint32_t state_tic = GPOINTER_TO_INT(user_data);
 
-  return ncmd->server_tic != 0;
+  if (ncmd->server_tic < state_tic) {
+    return true;
+  }
+
+  return false;
 }
-#endif
 
 static void count_command(gpointer data, gpointer user_data) {
-  netpeer_t *server = CL_GetServerPeer();
+  game_state_t *gs = N_GetLatestState();
+  uint32_t state_tic = 0xFFFFFFFF;
   netticcmd_t *ncmd = (netticcmd_t *)data;
   unsigned int *command_count = (unsigned int *)user_data;
 
-  if (server == NULL)
-    return;
+  if (gs) {
+    state_tic = gs->tic;
+  }
 
-  if (ncmd->server_tic == 0) {
+  if (ncmd->index < state_tic) {
     (*command_count)++;
   }
 }
 
-void CL_TrimSynchronizedCommands(int playernum) {
-  printf(
-    "(%5d) Trimming synchronized commands (actually, just skipping this)\n",
-    gametic
-  );
-  // P_TrimCommands(playernum, command_is_synchronized, NULL);
+void CL_TrimSynchronizedCommands(void) {
+  game_state_t *gs = N_GetLatestState();
+  uint32_t state_tic = 0xFFFFFFFF;
+
+  if (gs) {
+    state_tic = gs->tic;
+  }
+
+  D_Msg(MSG_CMD, "(%5d) Trimming synchronized commands\n", gametic);
+
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    if (!playeringame[i]) {
+      continue;
+    }
+
+    P_TrimCommands(i, command_is_synchronized, GUINT_TO_POINTER(state_tic));
+  }
 }
 
 unsigned int CL_GetUnsynchronizedCommandCount(int playernum) {
   netpeer_t *server;
   unsigned int command_count = 0;
   
-  if (!CLIENT)
+  if (!CLIENT) {
     return 0;
+  }
   
-  if (!playeringame[playernum])
+  if (!playeringame[playernum]) {
     return 0;
+  }
 
   server = CL_GetServerPeer();
 
-  if (server == NULL)
+  if (!server) {
     return 0;
+  }
 
   P_ForEachCommand(playernum, count_command, &command_count);
 

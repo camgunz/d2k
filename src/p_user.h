@@ -356,6 +356,8 @@ void P_InitPlayerMessages(int playernum);
 void P_AddMessage(int playernum, player_message_t *message);
 void P_ClearMessagesUpdated(int playernum);
 
+void         P_UpdateCommandServerTic(int playernum, uint32_t command_index,
+                                                     uint32_t server_tic);
 void         P_UpdateLatestSynchronizedCommandIndex(int originating_playernum,
                                                     int receiving_playernum,
                                                     unsigned int command_index);
@@ -363,7 +365,7 @@ void         P_ResetLatestSynchronizedCommandIndex(int playernum);
 bool         P_LatestSynchronizedCommandIndexReady(int playernum);
 unsigned int P_GetLatestSynchronizedCommandIndex(int playernum);
 
-void         P_InitCommandQueue(void);
+void         P_InitCommandQueues(void);
 bool         P_HasCommands(int playernum);
 unsigned int P_GetCommandCount(int playernum);
 netticcmd_t* P_GetCommand(int playernum, unsigned int index);

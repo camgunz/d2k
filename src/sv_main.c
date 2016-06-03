@@ -49,47 +49,65 @@ char *sv_join_password = NULL;
 char *sv_moderate_password = NULL;
 char *sv_administrate_password = NULL;
 
-typedef struct {
-  int playernum;
-  int oldest_sync_tic;
-} old_commands_struct_t;
+typedef struct command_trim_info_s {
+  uint32_t oldest_sync_tic;
+  uint32_t earliest_command_index;
+} command_trim_info_t;
 
-#if 0
-static bool command_synchronized(gpointer data, gpointer user_data) {
-  netticcmd_t *ncmd = data;
-  old_commands_struct_t *ocs = user_data;
-  netpeer_t *np = N_PeerForPlayer(ocs->playernum);
+static bool sv_command_is_synchronized(gpointer data, gpointer user_data) {
+  netticcmd_t *ncmd = (netticcmd_t *)data;
+  uint32_t oldest_sync_tic = GPOINTER_TO_UINT(user_data);
 
-  if ((ncmd->tic <= (ocs->oldest_sync_tic - TICRATE)) &&
-      (ncmd->index < np->sync.oldest_command_index)) {
-    return true;
-  }
-
-  return false;
-}
-#endif
-
-static void sv_remove_old_commands(void) {
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    unsigned int latest_synchronized_command_index;
-
-    if (!P_LatestSynchronizedCommandIndexReady(i)) {
-      continue;
-    }
-
-    latest_synchronized_command_index = P_GetLatestSynchronizedCommandIndex(i);
-
-    if (latest_synchronized_command_index == 0xFFFFFFFF) {
-      continue;
-    }
-
-    printf("(%5d) Trimming commands before %5d\n",
-      gametic, latest_synchronized_command_index
+  if (ncmd->server_tic == 0) {
+    D_Msg(MSG_CMD, "Command %u is not synchronized (%u >= %u)\n",
+      ncmd->index, ncmd->server_tic, oldest_sync_tic
     );
 
-    P_TrimCommandsByIndex(i, latest_synchronized_command_index);
-    printf("(%5d) Resetting latest synchronized command index\n", gametic);
-    P_ResetLatestSynchronizedCommandIndex(i);
+    return false;
+  }
+
+  if (ncmd->server_tic >= oldest_sync_tic) {
+    D_Msg(MSG_CMD, "Command %u is not synchronized (%u >= %u)\n",
+      ncmd->index, ncmd->server_tic, oldest_sync_tic
+    );
+
+    return false;
+  }
+
+  return true;
+}
+
+static void sv_remove_old_commands(void) {
+  uint32_t oldest_sync_tic = 0xFFFFFFFF;
+
+  if (N_PeerGetCount() == 0) {
+    return;
+  }
+
+  NETPEER_FOR_EACH(iter) {
+    if (iter.np->sync.tic < oldest_sync_tic) {
+      oldest_sync_tic = iter.np->sync.tic;
+    }
+  }
+
+  if (oldest_sync_tic == 0xFFFFFFFF) {
+    return;
+  }
+
+  NETPEER_FOR_EACH(iter) {
+    uint32_t command_count = players[iter.np->playernum].cmdq.commands->len;
+
+    P_TrimCommands(
+      iter.np->playernum,
+      sv_command_is_synchronized,
+      GUINT_TO_POINTER(oldest_sync_tic)
+    );
+
+    D_Msg(MSG_CMD, "(%5d) Trimmed %u commands for %d\n",
+      gametic,
+      command_count - players[iter.np->playernum].cmdq.commands->len,
+      iter.np->playernum
+    );
   }
 }
 
@@ -115,7 +133,7 @@ void SV_CleanupOldCommandsAndStates(void) {
 }
 
 /*
- * CG: This code originates from Odamex, released under the GPLv2 or any later
+ * CG: This code originates from Odamex, licensed under the GPLv2 or any later
  *     version.
  */
 unsigned int SV_GetPlayerCommandLimit(int playernum) {

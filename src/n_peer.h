@@ -46,15 +46,6 @@ typedef struct netsync_s {
   game_state_delta_t delta;
 } netsync_t;
 
-typedef struct cmdsync_status_s {
-  uint32_t earliest_index;
-  uint32_t latest_index;
-} cmdsync_status_t;
-
-typedef struct cmdsync_s {
-  cmdsync_status_t players[MAXPLAYERS];
-} cmdsync_t;
-
 typedef struct netpeer_s {
   unsigned int  peernum;
   unsigned int  playernum;
@@ -62,7 +53,7 @@ typedef struct netpeer_s {
   ENetPeer     *peer;
   netcom_t      netcom;
   netsync_t     sync;
-  cmdsync_t     cmdsync;
+  uint32_t      command_indices[MAXPLAYERS];
   time_t        connect_time;
   time_t        disconnect_time;
   time_t        last_setup_request;

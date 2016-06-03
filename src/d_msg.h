@@ -32,6 +32,7 @@ typedef enum {
   MSG_DEH,
   MSG_GAME,
   MSG_NET,
+  MSG_CMD,
   MSG_SYNC,
   MSG_STATE,
   MSG_MEM,

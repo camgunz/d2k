@@ -184,13 +184,6 @@ static void init_netsync(netsync_t *ns) {
   M_BufferInit(&ns->delta.data);
 }
 
-static void init_cmdsync(cmdsync_t *cs) {
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    cs->players[i].earliest_index = 0;
-    cs->players[i].latest_index = 0;
-  }
-}
-
 static void free_netsync(netsync_t *ns) {
   ns->initialized = false;
   ns->outdated = false;
@@ -223,11 +216,11 @@ void N_InitPeers(void) {
 unsigned int N_PeerAdd(void) {
   netpeer_t *np = calloc(1, sizeof(netpeer_t));
 
-  /* CG: TODO: Add some kind of check for MAXCLIENTS */
-
   init_netcom(&np->netcom);
   init_netsync(&np->sync);
-  init_cmdsync(&np->cmdsync);
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    np->command_indices[i] = 0;
+  }
 
   np->peernum = 1;
   while (g_hash_table_contains(net_peers, GUINT_TO_POINTER(np->peernum))) {

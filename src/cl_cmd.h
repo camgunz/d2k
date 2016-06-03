@@ -24,7 +24,7 @@
 #ifndef CL_CMD_H__
 #define CL_CMD_H__
 
-void         CL_TrimSynchronizedCommands(int playernum);
+void         CL_TrimSynchronizedCommands(void);
 unsigned int CL_GetUnsynchronizedCommandCount(int playernum);
 
 #endif

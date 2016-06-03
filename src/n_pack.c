@@ -275,42 +275,47 @@ static void free_string(gpointer data) {
   free(data);
 }
 
-static void pack_local_unsynchronized_command(gpointer data,
-                                              gpointer user_data) {
-  netticcmd_t *ncmd = (netticcmd_t *)data;
-  pbuf_t *pbuf = (pbuf_t *)user_data;
-  netpeer_t *server = CL_GetServerPeer();
+static void pack_run_commands(pbuf_t *pbuf, netpeer_t *np) {
+  GPtrArray *commands = players[np->playernum].cmdq.commands;
+  unsigned int command_count = 0;
 
-  if (!server) {
-    return;
+  for (unsigned int i = 0; i < commands->len; i++) {
+    netticcmd_t *ncmd = g_ptr_array_index(commands, i);
+
+    if (ncmd->server_tic != 0) {
+      command_count++;
+    }
   }
 
-  if (ncmd->index <= server->cmdsync.players[consoleplayer].latest_index) {
-    return;
-  }
+  M_PBufWriteUInt(pbuf, command_count);
 
-  M_PBufWriteInt(pbuf, ncmd->index);
-  M_PBufWriteInt(pbuf, ncmd->tic);
-  M_PBufWriteChar(pbuf, ncmd->forward);
-  M_PBufWriteChar(pbuf, ncmd->side);
-  M_PBufWriteShort(pbuf, ncmd->angle);
-  M_PBufWriteUChar(pbuf, ncmd->buttons);
+  for (unsigned int i = 0; i < commands->len; i++) {
+    netticcmd_t *ncmd = g_ptr_array_index(commands, i);
+
+    if (ncmd->server_tic != 0) {
+      M_PBufWriteUInt(pbuf, ncmd->index);
+      M_PBufWriteUInt(pbuf, ncmd->server_tic);
+    }
+  }
 }
 
 static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
-                                                       int recipient,
-                                                       int originator) {
-  cmdsync_t *cmdsync = &np->cmdsync;
-  GPtrArray *commands = players[originator].cmdq.commands;
+                                                       int source_playernum) {
+  GPtrArray *commands = players[source_playernum].cmdq.commands;
   unsigned int command_count = 0;
-  uint32_t latest_index = cmdsync->players[originator].latest_index;
 
-  for (size_t i = 0; i < commands->len; i++) {
+  for (unsigned int i = 0; i < commands->len; i++) {
     netticcmd_t *ncmd = (netticcmd_t *)g_ptr_array_index(commands, i);
 
-    if (ncmd->index > latest_index) {
+    if (ncmd->index > np->command_indices[source_playernum]) {
       command_count++;
     }
+  }
+
+  if (command_count > 0) {
+    D_Msg(MSG_CMD, "(%5d) Sending %u command(s) for %d to %d (%d total): [ ",
+      gametic, command_count, source_playernum, np->playernum, commands->len
+    );
   }
 
   M_PBufWriteUInt(pbuf, command_count);
@@ -318,7 +323,8 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
   for (size_t i = 0; i < commands->len; i++) {
     netticcmd_t *ncmd = (netticcmd_t *)g_ptr_array_index(commands, i);
 
-    if (ncmd->index > latest_index) {
+    if (ncmd->index > np->command_indices[source_playernum]) {
+      D_Msg(MSG_CMD, "%u ", ncmd->index);
       M_PBufWriteInt(pbuf, ncmd->index);
       M_PBufWriteInt(pbuf, ncmd->tic);
       M_PBufWriteChar(pbuf, ncmd->forward);
@@ -326,6 +332,10 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
       M_PBufWriteShort(pbuf, ncmd->angle);
       M_PBufWriteUChar(pbuf, ncmd->buttons);
     }
+  }
+
+  if (command_count > 0) {
+    D_Msg(MSG_CMD, "]\n");
   }
 }
 
@@ -692,11 +702,13 @@ bool N_UnpackChatMessage(netpeer_t *np,
     CHAT_CHANNEL_MIN, CHAT_CHANNEL_MAX
   );
 
-  if ((CLIENT) && (m_chat_channel != CHAT_CHANNEL_SERVER))
+  if ((CLIENT) && (m_chat_channel != CHAT_CHANNEL_SERVER)) {
     read_player(pbuf, m_message_sender);
+  }
 
-  if (m_chat_channel == CHAT_CHANNEL_PLAYER)
+  if (m_chat_channel == CHAT_CHANNEL_PLAYER) {
     read_player(pbuf, m_message_recipient);
+  }
 
   read_string(
     pbuf, message_contents, "chat message", MAX_CHAT_MESSAGE_SIZE
@@ -704,13 +716,16 @@ bool N_UnpackChatMessage(netpeer_t *np,
 
   *chat_channel = m_chat_channel;
 
-  if (CLIENT)
+  if (CLIENT) {
     *message_sender = m_message_sender;
-  else
+  }
+  else {
     *message_sender = np->playernum;
+  }
 
-  if (m_chat_channel == CHAT_CHANNEL_PLAYER)
+  if (m_chat_channel == CHAT_CHANNEL_PLAYER) {
     *message_recipient = m_message_recipient;
+  }
 
   return true;
 }
@@ -721,53 +736,52 @@ void N_PackSync(netpeer_t *np) {
   );
   uint64_t bitmap = 0;
 
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i]) {
-      bitmap &= (1 << i);
-    }
-  }
-
-  M_PBufWriteULong(pbuf, bitmap);
-
   if (CLIENT) {
-    unsigned int command_count =
-      CL_GetUnsynchronizedCommandCount(consoleplayer);
+    for (int i = 0; i < MAXPLAYERS; i++) {
+      if (playeringame[i] && (i > 0) && (i != consoleplayer)) {
+        bitmap |= (1 << i);
+      }
+    }
+
+    M_PBufWriteULong(pbuf, bitmap);
 
     M_PBufWriteInt(pbuf, np->sync.tic);
 
-    for (int i = 0; i < MAXPLAYERS; i++) {
-      if (playeringame[i]) {
-        M_PBufWriteUInt(pbuf, np->cmdsync.players[i].earliest_index);
-        M_PBufWriteUInt(pbuf, np->cmdsync.players[i].latest_index);
-      }
-    }
+    pack_unsynchronized_commands(pbuf, np, consoleplayer);
 
-    M_PBufWriteUInt(pbuf, command_count);
-
-    if (command_count > 0) {
-      P_ForEachCommand(
-        consoleplayer, pack_local_unsynchronized_command, pbuf
-      );
-    }
-  }
-  else if (SERVER) {
     for (int i = 0; i < MAXPLAYERS; i++) {
-      if (!playeringame[i]) {
+      if ((bitmap & (1 << i)) == 0) {
         continue;
       }
 
-      for (int j = 0; j < MAXPLAYERS; j++) {
-        if (!playeringame[j]) {
-          continue;
-        }
+      D_Msg(MSG_CMD,
+        "(%5d) Acknowledging receipt of commands for %d: %u\n",
+        gametic, i, np->command_indices[i]
+      );
 
-        if (i == j) {
-          M_PBufWriteUInt(pbuf, P_GetEarliestCommandIndex(i));
-          M_PBufWriteUInt(pbuf, P_GetLatestCommandIndex(i));
-        }
-        else {
-          pack_unsynchronized_commands(pbuf, np, i, j);
-        }
+      M_PBufWriteUInt(pbuf, np->command_indices[i]);
+    }
+  }
+  else if (SERVER) {
+    NETPEER_FOR_EACH(iter) {
+      bitmap |= (1 << iter.np->playernum);
+    }
+
+    M_PBufWriteULong(pbuf, bitmap);
+
+    NETPEER_FOR_EACH(iter) {
+      if (iter.np->playernum == np->playernum) {
+        D_Msg(MSG_CMD, "(%5d) cmdsync for player %d: %u\n",
+          gametic,
+          np->playernum,
+          np->command_indices[np->playernum]
+        );
+
+        M_PBufWriteUInt(pbuf, np->command_indices[np->playernum]);
+        pack_run_commands(pbuf, np);
+      }
+      else {
+        pack_unsynchronized_commands(pbuf, np, iter.np->playernum);
       }
     }
 
@@ -780,13 +794,13 @@ void N_PackSync(netpeer_t *np) {
 bool N_UnpackSync(netpeer_t *np) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
   uint64_t m_bitmap;
+  uint32_t m_command_count;
+  uint32_t m_command_index;
+  uint32_t m_server_tic;
 
-  read_ulong(pbuf, m_bitmap, "player bitmap");
+  read_ulong(pbuf, m_bitmap, "sync player bitmap");
 
   if (CLIENT) {
-    unsigned int m_command_count;
-    unsigned int m_earliest_index;
-    unsigned int m_latest_index;
     int m_delta_from_tic;
     int m_delta_to_tic;
 
@@ -796,29 +810,42 @@ bool N_UnpackSync(netpeer_t *np) {
       }
 
       if (i == consoleplayer) {
-        read_uint(pbuf, m_earliest_index, "earliest command index");
-        read_uint(pbuf, m_latest_index, "latest command index");
+        read_uint(pbuf, m_command_index, "command index");
+        read_uint(pbuf, m_command_count, "command count");
+
+        for (uint32_t j = 0; j < m_command_count; j++) {
+          read_uint(pbuf, m_command_index, "run command index");
+          read_uint(pbuf, m_server_tic, "server TIC");
+
+          P_UpdateCommandServerTic(i, m_command_index, m_server_tic);
+        }
       }
       else {
-        netticcmd_t ncmd;
+        read_uint(pbuf, m_command_count, "command count");
 
-        read_int(pbuf,   ncmd.index,   "command index");
-        read_int(pbuf,   ncmd.tic,     "command TIC");
-        read_char(pbuf,  ncmd.forward, "command forward value");
-        read_char(pbuf,  ncmd.side,    "command side value");
-        read_short(pbuf, ncmd.angle,   "command angle value");
-        read_uchar(pbuf, ncmd.buttons, "command buttons value");
+        for (unsigned int j = 0; j < m_command_count; j++) {
+          netticcmd_t m_ncmd;
 
-        P_QueuePlayerCommand(i, &ncmd);
+          read_int(pbuf,   m_ncmd.index,   "command index");
+          read_int(pbuf,   m_ncmd.tic,     "command TIC");
+          read_char(pbuf,  m_ncmd.forward, "command forward value");
+          read_char(pbuf,  m_ncmd.side,    "command side value");
+          read_short(pbuf, m_ncmd.angle,   "command angle value");
+          read_uchar(pbuf, m_ncmd.buttons, "command buttons value");
+
+          P_QueuePlayerCommand(i, &m_ncmd);
+        }
+
+        m_command_index = P_GetLatestCommandIndex(i);
       }
-    }
 
-    read_uint(pbuf, m_command_count, "command count");
+      if (m_command_index > np->command_indices[i]) {
+        np->command_indices[i] = m_command_index;
 
-    for (int i = 0; i < m_command_count; i++) {
-      int m_playernum;
-
-      read_int(pbuf, m_playernum, "playernum");
+        D_Msg(MSG_CMD, "(%5d) Command index sync for %d: %u\n",
+          gametic, i, np->command_indices[i]
+        );
+      }
     }
 
     read_int(pbuf, m_delta_from_tic, "delta from tic");
@@ -840,32 +867,13 @@ bool N_UnpackSync(netpeer_t *np) {
       np->sync.tic = m_sync_tic;
     }
 
-    for (int i = 0; i < MAXPLAYERS; i++) {
-      unsigned int m_earliest_index;
-      unsigned int m_latest_index;
-
-      if ((m_bitmap & (1 << i)) == 0) {
-        continue;
-      }
-
-      read_uint(pbuf, m_earliest_index, "earliest command index");
-      read_uint(pbuf, m_latest_index, "latest command index");
-
-      printf(
-        "(%5d) Latest synchronized index %d => %d is [%5d, %5d]\n",
-        gametic, np->playernum, i, m_earliest_index, m_latest_index
-      );
-
-      if (m_earliest_index < np->cmdsync.players[i].earliest_index) {
-        np->cmdsync.players[i].earliest_index = m_earliest_index;
-      }
-
-      if (m_latest_index > np->cmdsync.players[i].latest_index) {
-        np->cmdsync.players[i].latest_index = m_latest_index;
-      }
-    }
-
     read_uint(pbuf, m_command_count, "command count");
+
+    if (m_command_count > 0) {
+      D_Msg(MSG_CMD, "(%5d) Received %u commands from %d:",
+        gametic, m_command_count, np->playernum
+      );
+    }
 
     for (unsigned int i = 0; i < m_command_count; i++) {
       netticcmd_t ncmd;
@@ -877,51 +885,54 @@ bool N_UnpackSync(netpeer_t *np) {
       read_short(pbuf, ncmd.angle,   "command angle value");
       read_uchar(pbuf, ncmd.buttons, "command buttons value");
 
-      /*
       if (i == 0) {
-        np->sync.oldest_command_index = ncmd.index;
+        D_Msg(MSG_CMD, " [%u => ", ncmd.index);
       }
 
-      if (ncmd.index <= np->sync.command_index) {
-        continue;
+      if (i == (m_command_count - 1)) {
+        D_Msg(MSG_CMD, "%u]\n", ncmd.index);
       }
-      */
 
       ncmd.server_tic = 0;
-
-      /*
-      np->sync.command_index = ncmd.index;
-      */
 
       P_QueuePlayerCommand(np->playernum, &ncmd);
     }
 
-    /*
-    read_uint(pbuf, m_bitmap, "player command bitmap");
+    if (m_command_count > 0) {
+      m_command_index = P_GetLatestCommandIndex(np->playernum);
+
+      if (m_command_index > np->command_indices[np->playernum]) {
+        np->command_indices[np->playernum] = m_command_index;
+
+        D_Msg(MSG_CMD, "(%5d) Command index sync for %d: %u\n",
+          gametic, np->playernum, np->command_indices[np->playernum]
+        );
+      }
+    }
 
     for (int i = 0; i < MAXPLAYERS; i++) {
-      uint32_t m_command_index;
+      if (i == np->playernum) {
+        continue;
+      }
 
       if ((m_bitmap & (1 << i)) == 0) {
         continue;
       }
 
-      read_uint(pbuf, m_command_index, "latest_command_index");
+      read_uint(pbuf, m_command_index, "command index");
 
-      P_UpdateLatestSynchronizedCommandIndex(
-        i, np->playernum, m_command_index
-      );
+      if (m_command_index > np->command_indices[i]) {
+        np->command_indices[i] = m_command_index;
+      }
     }
-    */
   }
 
   return true;
 }
 
-bool N_UnpackPlayerPreferenceChange(netpeer_t *np,
-                                        int *tic,
-                                        unsigned short *playernum,
-                                        unsigned int *count) {
+bool N_UnpackPlayerPreferenceChange(netpeer_t *np, int *tic,
+                                                   unsigned short *playernum,
+                                                   unsigned int *count) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
   unsigned short m_playernum = 0;
   int m_tic = 0;
@@ -953,16 +964,12 @@ void N_PackNameChange(netpeer_t *np, unsigned short playernum,
   pack_player_preference_change(pbuf, gametic, playernum, "name", 4);
 
   M_PBufWriteString(pbuf, new_name, strlen(new_name));
-
-  printf("Packed name change [%s]\n", new_name);
 }
 
 bool N_UnpackNameChange(netpeer_t *np, buf_t *buf) {
   pbuf_t *pbuf = &np->netcom.incoming.messages;
 
   read_string(pbuf, buf, "new name", MAX_PLAYER_NAME_SIZE);
-
-  printf("Unpacked name change [%s]\n", M_BufferGetData(buf));
 
   return true;
 }
