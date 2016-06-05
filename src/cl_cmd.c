@@ -38,24 +38,23 @@
 
 static bool command_is_synchronized(gpointer data, gpointer user_data) {
   netticcmd_t *ncmd = (netticcmd_t *)data;
-  uint32_t state_tic = GPOINTER_TO_INT(user_data);
+  int state_tic = GPOINTER_TO_INT(user_data);
 
-  if (ncmd->server_tic < state_tic) {
-    return true;
+  if (ncmd->server_tic == 0) {
+    return false;
   }
 
-  return false;
+  if (ncmd->server_tic >= state_tic) {
+    return false;
+  }
+
+  return true;
 }
 
 static void count_command(gpointer data, gpointer user_data) {
-  game_state_t *gs = N_GetLatestState();
-  uint32_t state_tic = 0xFFFFFFFF;
+  int state_tic = N_GetStateFromTic();
   netticcmd_t *ncmd = (netticcmd_t *)data;
   unsigned int *command_count = (unsigned int *)user_data;
-
-  if (gs) {
-    state_tic = gs->tic;
-  }
 
   if (ncmd->index < state_tic) {
     (*command_count)++;
@@ -63,12 +62,7 @@ static void count_command(gpointer data, gpointer user_data) {
 }
 
 void CL_TrimSynchronizedCommands(void) {
-  game_state_t *gs = N_GetLatestState();
-  uint32_t state_tic = 0xFFFFFFFF;
-
-  if (gs) {
-    state_tic = gs->tic;
-  }
+  int state_tic = N_GetStateFromTic();
 
   D_Msg(MSG_CMD, "(%5d) Trimming synchronized commands\n", gametic);
 
@@ -77,7 +71,7 @@ void CL_TrimSynchronizedCommands(void) {
       continue;
     }
 
-    P_TrimCommands(i, command_is_synchronized, GUINT_TO_POINTER(state_tic));
+    P_TrimCommands(i, command_is_synchronized, GINT_TO_POINTER(state_tic));
   }
 }
 

@@ -125,8 +125,6 @@ static bool cl_load_new_state(netpeer_t *server) {
   game_state_delta_t *delta = &server->sync.delta;
   bool state_loaded;
 
-  // cl_current_command_index = start_command_index;
-
   if (!N_ApplyStateDelta(delta)) {
     P_Echo(consoleplayer, "Error applying state delta");
     return false;
@@ -151,6 +149,8 @@ static bool cl_load_new_state(netpeer_t *server) {
   }
 
   cl_synchronizing = true;
+  D_Msg(MSG_SYNC, "Synchronizing %d => %d\n", gametic, server->sync.tic);
+  R_ResetViewInterpolation();
   for (int i = gametic; i <= server->sync.tic; i++) {
     N_RunTic();
     if (players[displayplayer].mo != NULL) {
@@ -164,10 +164,9 @@ static bool cl_load_new_state(netpeer_t *server) {
     D_Msg(MSG_WARN, "Synchronization incomplete: %d, %d\n",
       gametic, server->sync.tic
     );
-    printf("Synchronization incomplete: %d, %d\n", gametic, server->sync.tic);
   }
 
-  D_Msg(MSG_SYNC, "Ran sync'd commands, loading latest state\n");
+  D_Msg(MSG_CMD, "Ran sync'd commands, loading latest state\n");
 
   cl_loading_state = true;
   state_loaded = N_LoadLatestState(false);
@@ -178,7 +177,10 @@ static bool cl_load_new_state(netpeer_t *server) {
     return false;
   }
 
+  R_UpdateInterpolations();
+
   N_RemoveOldStates(delta->from_tic);
+
   return true;
 }
 
@@ -196,19 +198,24 @@ static void cl_clear_repredicting(void) {
 
 static void cl_repredict(int saved_gametic) {
   player_t *player = &players[consoleplayer];
-  int latest_command_index;
+  unsigned int latest_command_index = P_GetLatestCommandIndex(consoleplayer);
   
   if (gametic == -1) {
     return;
   }
 
-  latest_command_index = P_GetLatestCommandIndex(consoleplayer);
-
   if (latest_command_index == -1) {
     return;
   }
 
-  cl_set_repredicting(player->cmdq.latest_command_run_index, latest_command_index);
+  cl_set_repredicting(
+    player->cmdq.latest_command_run_index, latest_command_index
+  );
+  D_Msg(MSG_SYNC, "Re-predicting %u => %u (%d)\n",
+    player->cmdq.latest_command_run_index,
+    latest_command_index,
+    latest_command_index - player->cmdq.latest_command_run_index
+  );
   while (player->cmdq.latest_command_run_index < latest_command_index) {
     N_RunTic();
     if (players[displayplayer].mo != NULL) {
@@ -254,7 +261,7 @@ void CL_CheckForStateUpdates(void) {
   if (server->sync.tic == cl_state_tic)
     return;
 
-  D_Msg(MSG_SYNC, "(%d) Loading new state [%d, %d => %d] (%d)\n",
+  printf("(%d) Loading new state [%d, %d => %d] (%d)\n",
     gametic,
     server->sync.command_index,
     server->sync.delta.from_tic,
@@ -279,6 +286,7 @@ void CL_CheckForStateUpdates(void) {
 
   N_LogPlayerPosition(&players[consoleplayer]);
 
+  /*
   D_Msg(MSG_SYNC, "(%d) Loaded new state [%d, %d => %d] (%d)\n",
     gametic,
     server->sync.command_index,
@@ -286,6 +294,7 @@ void CL_CheckForStateUpdates(void) {
     server->sync.delta.to_tic,
     players[consoleplayer].cmdq.latest_command_run_index
   );
+  */
 
 #ifdef LOG_SECTOR
   if (LOG_SECTOR < numsectors) {

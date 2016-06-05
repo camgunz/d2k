@@ -37,6 +37,8 @@ bool N_GetWad(const char *name);
 void N_RunTic(void);
 bool N_TryRunTics(void);
 
+const char* N_RunningStateName(void);
+
 #endif
 
 /* vi: set et ts=2 sw=2: */

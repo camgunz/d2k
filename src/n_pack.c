@@ -289,13 +289,22 @@ static void pack_run_commands(pbuf_t *pbuf, netpeer_t *np) {
 
   M_PBufWriteUInt(pbuf, command_count);
 
+  if (command_count > 0) {
+    printf("(%d) Ran commands: [", gametic);
+  }
+
   for (unsigned int i = 0; i < commands->len; i++) {
     netticcmd_t *ncmd = g_ptr_array_index(commands, i);
 
     if (ncmd->server_tic != 0) {
+      printf(" %d/%d/%d", ncmd->index, ncmd->tic, ncmd->server_tic);
       M_PBufWriteUInt(pbuf, ncmd->index);
       M_PBufWriteUInt(pbuf, ncmd->server_tic);
     }
+  }
+
+  if (command_count > 0) {
+    printf(" ]\n");
   }
 }
 
@@ -312,19 +321,12 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
     }
   }
 
-  if (command_count > 0) {
-    D_Msg(MSG_CMD, "(%5d) Sending %u command(s) for %d to %d (%d total): [ ",
-      gametic, command_count, source_playernum, np->playernum, commands->len
-    );
-  }
-
   M_PBufWriteUInt(pbuf, command_count);
 
   for (size_t i = 0; i < commands->len; i++) {
     netticcmd_t *ncmd = (netticcmd_t *)g_ptr_array_index(commands, i);
 
     if (ncmd->index > np->command_indices[source_playernum]) {
-      D_Msg(MSG_CMD, "%u ", ncmd->index);
       M_PBufWriteInt(pbuf, ncmd->index);
       M_PBufWriteInt(pbuf, ncmd->tic);
       M_PBufWriteChar(pbuf, ncmd->forward);
@@ -332,10 +334,6 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
       M_PBufWriteShort(pbuf, ncmd->angle);
       M_PBufWriteUChar(pbuf, ncmd->buttons);
     }
-  }
-
-  if (command_count > 0) {
-    D_Msg(MSG_CMD, "]\n");
   }
 }
 
@@ -754,15 +752,12 @@ void N_PackSync(netpeer_t *np) {
         continue;
       }
 
-      D_Msg(MSG_CMD,
-        "(%5d) Acknowledging receipt of commands for %d: %u\n",
-        gametic, i, np->command_indices[i]
-      );
-
       M_PBufWriteUInt(pbuf, np->command_indices[i]);
     }
   }
   else if (SERVER) {
+    player_t *player = &players[np->playernum];
+
     NETPEER_FOR_EACH(iter) {
       bitmap |= (1 << iter.np->playernum);
     }
@@ -771,12 +766,6 @@ void N_PackSync(netpeer_t *np) {
 
     NETPEER_FOR_EACH(iter) {
       if (iter.np->playernum == np->playernum) {
-        D_Msg(MSG_CMD, "(%5d) cmdsync for player %d: %u\n",
-          gametic,
-          np->playernum,
-          np->command_indices[np->playernum]
-        );
-
         M_PBufWriteUInt(pbuf, np->command_indices[np->playernum]);
         pack_run_commands(pbuf, np);
       }
@@ -785,6 +774,12 @@ void N_PackSync(netpeer_t *np) {
       }
     }
 
+    D_Msg(MSG_SYNC, "(%d) Syncing %d => %d (%d)\n",
+      gametic,
+      np->sync.delta.from_tic,
+      np->sync.delta.to_tic,
+      player->cmdq.latest_command_run_index
+    );
     M_PBufWriteInt(pbuf, np->sync.delta.from_tic);
     M_PBufWriteInt(pbuf, np->sync.delta.to_tic);
     M_PBufWriteBytes(pbuf, np->sync.delta.data.data, np->sync.delta.data.size);
@@ -841,10 +836,6 @@ bool N_UnpackSync(netpeer_t *np) {
 
       if (m_command_index > np->command_indices[i]) {
         np->command_indices[i] = m_command_index;
-
-        D_Msg(MSG_CMD, "(%5d) Command index sync for %d: %u\n",
-          gametic, i, np->command_indices[i]
-        );
       }
     }
 
@@ -869,12 +860,6 @@ bool N_UnpackSync(netpeer_t *np) {
 
     read_uint(pbuf, m_command_count, "command count");
 
-    if (m_command_count > 0) {
-      D_Msg(MSG_CMD, "(%5d) Received %u commands from %d:",
-        gametic, m_command_count, np->playernum
-      );
-    }
-
     for (unsigned int i = 0; i < m_command_count; i++) {
       netticcmd_t ncmd;
 
@@ -884,14 +869,6 @@ bool N_UnpackSync(netpeer_t *np) {
       read_char(pbuf,  ncmd.side,    "command side value");
       read_short(pbuf, ncmd.angle,   "command angle value");
       read_uchar(pbuf, ncmd.buttons, "command buttons value");
-
-      if (i == 0) {
-        D_Msg(MSG_CMD, " [%u => ", ncmd.index);
-      }
-
-      if (i == (m_command_count - 1)) {
-        D_Msg(MSG_CMD, "%u]\n", ncmd.index);
-      }
 
       ncmd.server_tic = 0;
 
@@ -903,10 +880,6 @@ bool N_UnpackSync(netpeer_t *np) {
 
       if (m_command_index > np->command_indices[np->playernum]) {
         np->command_indices[np->playernum] = m_command_index;
-
-        D_Msg(MSG_CMD, "(%5d) Command index sync for %d: %u\n",
-          gametic, np->playernum, np->command_indices[np->playernum]
-        );
       }
     }
 

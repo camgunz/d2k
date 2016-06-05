@@ -456,24 +456,24 @@ static void set_affinity_mask(void) {
 
 static void initialize_messaging(const char *log_file) {
   if (log_file) {
-    if (!D_MsgActivateWithFile(MSG_INFO, log_file))
+    if (!D_MsgActivateWithPath(MSG_INFO, log_file))
       I_Error("Error opening %s", log_file);
 
 #ifdef DEBUG
-    if (!D_MsgActivateWithFile(MSG_DEBUG, log_file))
+    if (!D_MsgActivateWithPath(MSG_DEBUG, log_file))
       I_Error("Error opening %s", log_file);
 #endif
 
-    if (!D_MsgActivateWithFile(MSG_WARN, log_file))
+    if (!D_MsgActivateWithPath(MSG_WARN, log_file))
       I_Error("Error opening %s", log_file);
 
-    if (!D_MsgActivateWithFile(MSG_ERROR, log_file))
+    if (!D_MsgActivateWithPath(MSG_ERROR, log_file))
       I_Error("Error opening %s", log_file);
 
-    if (!D_MsgActivateWithFile(MSG_DEH, log_file))
+    if (!D_MsgActivateWithPath(MSG_DEH, log_file))
       I_Error("Error opening %s", log_file);
 
-    if (!D_MsgActivateWithFile(MSG_GAME, log_file))
+    if (!D_MsgActivateWithPath(MSG_GAME, log_file))
       I_Error("Error opening %s", log_file);
   }
   else {

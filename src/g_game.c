@@ -1346,7 +1346,7 @@ void G_Ticker(void) {
   }
 #endif
 
-  P_MapStart();
+  P_MapStart("G_Ticker");
 
   // do player reborns if needed
   for (i = 0; i < MAXPLAYERS; i++) {

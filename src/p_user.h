@@ -78,7 +78,6 @@ typedef struct netticcmd_s {
 
 typedef struct {
   GPtrArray *commands;
-  uint32_t   updated;
   uint32_t   latest_synchronized_index;
   uint32_t   commands_missed;
   uint32_t   command_limit;
@@ -356,6 +355,7 @@ void P_InitPlayerMessages(int playernum);
 void P_AddMessage(int playernum, player_message_t *message);
 void P_ClearMessagesUpdated(int playernum);
 
+unsigned int P_GetLatestServerRunCommandIndex(int playernum);
 void         P_UpdateCommandServerTic(int playernum, uint32_t command_index,
                                                      uint32_t server_tic);
 void         P_UpdateLatestSynchronizedCommandIndex(int originating_playernum,

@@ -43,6 +43,7 @@ static game_state_t *latest_game_state = NULL;
 static GHashTable *saved_game_states = NULL;
 static GQueue *state_data_buffer_queue = NULL;
 static avg_t average_state_size;
+static int last_delta_loaded_from_tic = 0;
 
 static void clear_state_buffer(gpointer gp) {
   pbuf_t *pbuf = gp;
@@ -181,8 +182,9 @@ bool N_ApplyStateDelta(game_state_delta_t *delta) {
   );
   game_state_t *new_gs = NULL;
 
-  if (gs == NULL)
+  if (!gs) {
     return false;
+  }
 
   new_gs = get_new_state(delta->to_tic);
 
@@ -190,11 +192,14 @@ bool N_ApplyStateDelta(game_state_delta_t *delta) {
   M_PBufSeek(new_gs->data, 0);
   M_BufferSeek(&delta->data, 0);
 
-  if (!M_ApplyDelta(gs->data, new_gs->data, &delta->data))
+  if (!M_ApplyDelta(gs->data, new_gs->data, &delta->data)) {
     return false;
+  }
 
   g_hash_table_insert(saved_game_states, GINT_TO_POINTER(new_gs->tic), new_gs);
   N_SetLatestState(new_gs);
+
+  last_delta_loaded_from_tic = delta->from_tic;
 
   return true;
 }
@@ -212,6 +217,10 @@ void N_BuildStateDelta(int tic, game_state_delta_t *delta) {
 
   delta->from_tic = tic;
   delta->to_tic = latest_game_state->tic;
+}
+
+int N_GetStateFromTic(void) {
+  return last_delta_loaded_from_tic;
 }
 
 /* vi: set et ts=2 sw=2: */

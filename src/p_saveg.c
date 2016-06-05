@@ -182,18 +182,14 @@ static void serialize_player(pbuf_t *savebuffer, int playernum) {
   M_PBufWriteInt(savebuffer, player->momy);
   M_PBufWriteInt(savebuffer, player->resurectedkillcount);
   M_PBufWriteInt(savebuffer, player->jumpTics);
-  if (player->name)
+  if (player->name) {
     M_PBufWriteString(savebuffer, player->name, strlen(player->name));
-  else
+  }
+  else {
     M_PBufWriteString(savebuffer, "", 0);
+  }
   M_PBufWriteUChar(savebuffer, player->team);
-  /*
-  command_count = P_GetCommandCount(playernum);
-  M_PBufWriteUInt(savebuffer, command_count);
-  if (command_count > 0)
-    P_ForEachCommand(playernum, serialize_command, savebuffer);
-  // M_PBufWriteInt(savebuffer, player->latest_command_run_index);
-  */
+  M_PBufWriteUInt(savebuffer, player->cmdq.latest_command_run_index);
 
   if (MULTINET) {
     M_PBufWriteInt(savebuffer, player->ping);
@@ -307,31 +303,7 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
   }
   M_PBufReadUChar(savebuffer, &player->team);
 
-  /*
-  M_PBufReadUInt(savebuffer, &command_count);
-
-  if (CLIENT && playernum != consoleplayer)
-    P_ClearPlayerCommands(playernum);
-
-  for (unsigned int i = 0; i < command_count; i++) {
-    netticcmd_t tmp_ncmd;
-
-    M_PBufReadInt(savebuffer, &tmp_ncmd.index);
-    M_PBufReadInt(savebuffer, &tmp_ncmd.tic);
-    M_PBufReadInt(savebuffer, &tmp_ncmd.server_tic);
-    M_PBufReadChar(savebuffer, &tmp_ncmd.forward);
-    M_PBufReadChar(savebuffer, &tmp_ncmd.side);
-    M_PBufReadShort(savebuffer, &tmp_ncmd.angle);
-    M_PBufReadUChar(savebuffer, &tmp_ncmd.buttons);
-
-    if (CLIENT && playernum == consoleplayer)
-      CL_UpdateReceivedCommandIndex(tmp_ncmd.index);
-
-    P_InsertCommandSorted(playernum, &tmp_ncmd);
-  }
-  */
-
-  // M_PBufReadInt(savebuffer, &player->latest_command_run_index);
+  M_PBufReadUInt(savebuffer, &player->cmdq.latest_command_run_index);
 
   if (MULTINET) {
     M_PBufReadInt(savebuffer, &player->ping);

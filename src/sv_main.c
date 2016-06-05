@@ -59,18 +59,10 @@ static bool sv_command_is_synchronized(gpointer data, gpointer user_data) {
   uint32_t oldest_sync_tic = GPOINTER_TO_UINT(user_data);
 
   if (ncmd->server_tic == 0) {
-    D_Msg(MSG_CMD, "Command %u is not synchronized (%u >= %u)\n",
-      ncmd->index, ncmd->server_tic, oldest_sync_tic
-    );
-
     return false;
   }
 
   if (ncmd->server_tic >= oldest_sync_tic) {
-    D_Msg(MSG_CMD, "Command %u is not synchronized (%u >= %u)\n",
-      ncmd->index, ncmd->server_tic, oldest_sync_tic
-    );
-
     return false;
   }
 
@@ -95,18 +87,10 @@ static void sv_remove_old_commands(void) {
   }
 
   NETPEER_FOR_EACH(iter) {
-    uint32_t command_count = players[iter.np->playernum].cmdq.commands->len;
-
     P_TrimCommands(
       iter.np->playernum,
       sv_command_is_synchronized,
       GUINT_TO_POINTER(oldest_sync_tic)
-    );
-
-    D_Msg(MSG_CMD, "(%5d) Trimmed %u commands for %d\n",
-      gametic,
-      command_count - players[iter.np->playernum].cmdq.commands->len,
-      iter.np->playernum
     );
   }
 }

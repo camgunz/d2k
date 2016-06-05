@@ -60,11 +60,11 @@ void S_Init(int sfxVolume, int musicVolume) {
 
 #if DEBUG_SOUND
   if (CLIENT)
-    D_MsgActivateWithFile(MSG_SOUND, "client-sound.log");
+    D_MsgActivateWithPath(MSG_SOUND, "client-sound.log");
   else if (SERVER)
-    D_MsgActivateWithFile(MSG_SOUND, "server-sound.log");
+    D_MsgActivateWithPath(MSG_SOUND, "server-sound.log");
   else
-    D_MsgActivateWithFile(MSG_SOUND, "sound.log");
+    D_MsgActivateWithPath(MSG_SOUND, "sound.log");
 #endif
 
   idmusnum = -1; //jff 3/17/98 insure idmus number is blank

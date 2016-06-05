@@ -98,16 +98,19 @@ static bool run_player_command(player_t *player) {
     return false;
   }
 
-  if (player->jumpTics)
+  if (player->jumpTics) {
     player->jumpTics--;
+  }
 
   // Move around.
   // Reactiontime is used to prevent movement
   //  for a bit after a teleport.
-  if (player->mo->reactiontime)
+  if (player->mo->reactiontime) {
     player->mo->reactiontime--;
-  else
+  }
+  else {
     P_MovePlayer(player);
+  }
 
   P_SetPitch(player);
 
@@ -115,8 +118,9 @@ static bool run_player_command(player_t *player) {
 
   // Determine if there's anything about the sector you're in that's
   // going to affect you, like painful floors.
-  if (player->mo->subsector->sector->special)
+  if (player->mo->subsector->sector->special) {
     P_PlayerInSpecialSector(player);
+  }
 
   // Check for weapon change.
   if (cmd->buttons & BT_CHANGE) {
@@ -133,8 +137,9 @@ static bool run_player_command(player_t *player) {
     // compatibility mode -- required for old demos -- killough
     if (demo_compatibility) {
       //e6y
-      if (!prboom_comp[PC_ALLOW_SSG_DIRECT].state)
+      if (!prboom_comp[PC_ALLOW_SSG_DIRECT].state) {
         newweapon = (cmd->buttons & BT_WEAPONMASK_OLD) >> BT_WEAPONSHIFT;
+      }
 
       if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
           (player->readyweapon != wp_chainsaw ||
@@ -180,79 +185,8 @@ static bool run_player_command(player_t *player) {
   return true;
 }
 
-static void process_queued_command(gpointer data, gpointer user_data) {
-  netticcmd_t *ncmd = (netticcmd_t *)data;
-  player_t *player = (player_t *)user_data;
-  int playernum = player - players;
-
-  /*
-  printf("(%d) Command: %d/%d/%d, %d/%d/%d/%d\n",
-    gametic,
-    ncmd->index,
-    ncmd->tic,
-    ncmd->server_tic,
-    ncmd->forward,
-    ncmd->side,
-    ncmd->angle,
-    ncmd->buttons
-  );
-  */
-
-  if (ncmd->index <= player->cmdq.latest_command_run_index) {
-    if (SERVER || playernum == consoleplayer) {
-      return;
-    }
-  }
-
-  if (player->cmdq.command_limit &&
-      player->cmdq.commands_run_this_tic >= player->cmdq.command_limit) {
-    return;
-  }
-
-  if (CLIENT) {
-    if (CL_Synchronizing()) {
-      D_Msg(MSG_CMD, "(%d) Running synchronized command %d/%d/%d for %d\n",
-        gametic, ncmd->index, ncmd->tic, ncmd->server_tic, playernum
-      );
-
-      if (ncmd->server_tic == 0) {
-        return;
-      }
-
-      if (ncmd->server_tic != gametic) {
-        return;
-      }
-    }
-
-    if (CL_RePredicting()) {
-      D_Msg(MSG_CMD, "(%d) Running re-predicted command %d/%d/%d for %d\n",
-        gametic, ncmd->index, ncmd->tic, ncmd->server_tic, playernum
-      );
-
-      if (ncmd->server_tic != 0) {
-        return;
-      }
-
-      if (ncmd->tic > gametic) {
-        return;
-      }
-    }
-
-    if (CL_Predicting()) {
-      D_Msg(MSG_CMD, "(%d) Running predicted command %d/%d/%d for %d\n",
-        gametic, ncmd->index, ncmd->tic, ncmd->server_tic, playernum
-      );
-
-      if (ncmd->tic != gametic) {
-        return;
-      }
-    }
-  }
-  else {
-    D_Msg(MSG_CMD, "(%d) Running command %d/%d/%d for %d\n",
-      gametic, ncmd->index, ncmd->tic, ncmd->server_tic, playernum
-    );
-  }
+static void run_queued_command(int playernum, netticcmd_t *ncmd) {
+  player_t *player = &players[playernum];
 
   CL_SetupCommandState(playernum, ncmd);
 
@@ -273,8 +207,9 @@ static void process_queued_command(gpointer data, gpointer user_data) {
 
   player->cmdq.commands_run_this_tic++;
 
-  if (MULTINET && player->mo)
+  if (MULTINET && player->mo) {
     P_MobjThinker(player->mo);
+  }
 
   N_LogPlayerPosition(player);
 
@@ -302,7 +237,7 @@ static void process_queued_command(gpointer data, gpointer user_data) {
  *                momentum (and other attributes).  This will work for very
  *                small gaps (1-5 TICs).
  *
- *                A better solution is to predict a player's position base on
+ *                A better solution is to predict a player's position based on
  *                their recent movement.  Essentially, this would mean saving
  *                their momx/y/z values and continuing to apply them inside
  *                command gaps.
@@ -315,11 +250,21 @@ static void process_queued_command(gpointer data, gpointer user_data) {
 static bool extrapolate_player_position(int playernum) {
   player_t *player = &players[playernum];
 
-  if ((!CLIENT) || (playernum == consoleplayer) || (!player->mo))
+  if (!CLIENT) {
     return false;
+  }
 
-  if (!cl_extrapolate_player_positions)
+  if (playernum == consoleplayer) {
     return false;
+  }
+
+  if (!player->mo) {
+    return false;
+  }
+
+  if (!cl_extrapolate_player_positions) {
+    return false;
+  }
 
 #if EXTRAPOLATION == PMOBJTHINKER
   P_MobjThinker(player->mo);
@@ -354,6 +299,7 @@ static bool extrapolate_player_position(int playernum) {
 
   return true;
 #endif
+
   return false;
 }
 
@@ -381,68 +327,92 @@ static void run_queued_player_commands(int playernum) {
 
   player->cmdq.commands_run_this_tic = 0;
 
-  P_ForEachCommand(playernum, process_queued_command, player);
+  if (player->cmdq.commands->len) {
+    printf("(%d) (%s) [ ", gametic,
+      SERVER ? "server" :
+        CL_Predicting() ? "predicting" :
+          CL_RePredicting() ? "repredicting" :
+            "synchronizing"
+    );
+
+    for (unsigned int i = 0; i < player->cmdq.commands->len; i++) {
+      netticcmd_t *ncmd = g_ptr_array_index(player->cmdq.commands, i);
+
+      printf("%d/%d/%d ", ncmd->index, ncmd->tic, ncmd->server_tic);
+    }
+
+    printf("]\n");
+  }
+
+  if (CLIENT && CL_Synchronizing()) {
+    for (unsigned int i = 0; i < player->cmdq.commands->len; i++) {
+      netticcmd_t *ncmd = g_ptr_array_index(player->cmdq.commands, i);
+
+      if ((ncmd->index > player->cmdq.latest_command_run_index) &&
+          (ncmd->server_tic == gametic)) {
+        run_queued_command(playernum, ncmd);
+      }
+    }
+  }
+  else {
+    for (unsigned int i = 0; i < player->cmdq.commands->len; i++) {
+      netticcmd_t *ncmd = g_ptr_array_index(player->cmdq.commands, i);
+
+      if (ncmd->index > player->cmdq.latest_command_run_index) {
+        run_queued_command(playernum, ncmd);
+        break;
+      }
+    }
+  }
 
   leveltime = saved_leveltime;
 }
-
-#if 0
-static bool command_index_is_old(gpointer data, gpointer user_data) {
-  netticcmd_t *ncmd = (netticcmd_t *)data;
-  int command_index = GPOINTER_TO_INT(user_data);
-
-  return ncmd->index <= command_index;
-}
-
-static bool command_tic_is_old(gpointer data, gpointer user_data) {
-  netticcmd_t *ncmd = (netticcmd_t *)data;
-  int tic = GPOINTER_TO_INT(user_data);
-
-  return ncmd->tic <= tic;
-}
-#endif
 
 static gint compare_commands(gconstpointer a, gconstpointer b) {
   netticcmd_t *ncmd_one = *(netticcmd_t **)a;
   netticcmd_t *ncmd_two = *(netticcmd_t **)b;
 
-  if (ncmd_one->index < ncmd_two->index)
+  if (ncmd_one->index < ncmd_two->index) {
     return -1;
+  }
 
-  if (ncmd_one->index > ncmd_two->index)
+  if (ncmd_one->index > ncmd_two->index) {
     return 1;
+  }
 
-  if (ncmd_one->tic < ncmd_two->index)
+  if (ncmd_one->tic < ncmd_two->index) {
     return -1;
+  }
 
-  if (ncmd_one->tic > ncmd_two->index)
+  if (ncmd_one->tic > ncmd_two->index) {
     return 1;
+  }
 
-  if (ncmd_one->server_tic != 0 && ncmd_two->server_tic == 0)
+  if (ncmd_one->server_tic != 0 && ncmd_two->server_tic == 0) {
     return -1;
+  }
 
-  if (ncmd_one->server_tic == 0 && ncmd_two->server_tic != 0)
+  if (ncmd_one->server_tic == 0 && ncmd_two->server_tic != 0) {
     return 1;
+  }
 
-  if (ncmd_one->server_tic == 0 && ncmd_two->server_tic != 0)
+  if (ncmd_one->server_tic == 0 && ncmd_two->server_tic != 0) {
     return 1;
+  }
 
-  if (ncmd_one->server_tic < ncmd_two->server_tic)
+  if (ncmd_one->server_tic < ncmd_two->server_tic) {
     return -1;
+  }
 
-  if (ncmd_one->server_tic > ncmd_two->server_tic)
+  if (ncmd_one->server_tic > ncmd_two->server_tic) {
     return 1;
+  }
 
   return 0;
 }
 
 static void recycle_command(gpointer data) {
   netticcmd_t *ncmd = (netticcmd_t *)data;
-
-  D_Msg(MSG_SYNC, "recycle_command: Recycling command %d/%d\n",
-    ncmd->index,
-    ncmd->tic
-  );
 
   memset(ncmd, 0, sizeof(netticcmd_t));
 
@@ -470,34 +440,11 @@ void P_InitCommandQueues(void) {
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     players[i].cmdq.commands = g_ptr_array_new_with_free_func(recycle_command);
-    players[i].cmdq.updated = 0;
-    players[i].cmdq.latest_synchronized_index = 0xFFFFFFFF;
     players[i].cmdq.commands_missed = 0;
     players[i].cmdq.command_limit = 0;
     players[i].cmdq.commands_run_this_tic = 0;
     players[i].cmdq.latest_command_run_index = 0;
   }
-}
-
-void P_ResetLatestSynchronizedCommandIndex(int playernum) {
-  players[playernum].cmdq.updated = 0;
-  players[playernum].cmdq.latest_synchronized_index = 0xFFFFFFFF;
-}
-
-bool P_LatestSynchronizedCommandIndexReady(int playernum) {
-  command_queue_t *cmdq = &players[playernum].cmdq;
-
-  NETPEER_FOR_EACH(iter) {
-    if ((cmdq->updated & (playernum << iter.np->playernum)) == 0) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-unsigned int P_GetLatestSynchronizedCommandIndex(int playernum) {
-  return players[playernum].cmdq.latest_synchronized_index;
 }
 
 bool P_HasCommands(int playernum) {
@@ -654,6 +601,21 @@ int P_GetLatestCommandIndex(int playernum) {
   return ncmd->index;
 }
 
+unsigned int P_GetLatestServerRunCommandIndex(int playernum) {
+  GPtrArray *commands = players[playernum].cmdq.commands;
+
+  for (unsigned int i = 0; i < commands->len; i++) {
+    netticcmd_t *ncmd =
+      (netticcmd_t *)g_ptr_array_index(commands, commands->len - (1 + i));
+
+    if (ncmd->server_tic) {
+      return ncmd->index;
+    }
+  }
+
+  return 0;
+}
+
 void P_UpdateCommandServerTic(int playernum, uint32_t command_index,
                                              uint32_t server_tic) {
   GPtrArray *commands = players[playernum].cmdq.commands;
@@ -663,7 +625,7 @@ void P_UpdateCommandServerTic(int playernum, uint32_t command_index,
 
     if (ncmd->index == command_index) {
       ncmd->server_tic = server_tic;
-      D_Msg(MSG_CMD, "(%5d) Server ran %u at %u\n",
+      printf("(%5d) Server ran %u at %u\n",
         gametic, ncmd->index, ncmd->server_tic
       );
       break;
@@ -671,32 +633,10 @@ void P_UpdateCommandServerTic(int playernum, uint32_t command_index,
   }
 }
 
-void P_UpdateLatestSynchronizedCommandIndex(int originating_playernum,
-                                            int receiving_playernum,
-                                            unsigned int command_index) {
-  player_t *player = &players[originating_playernum];
-
-  if (command_index < player->cmdq.latest_synchronized_index) {
-    printf(
-      "(%5d) Player %d has commands from %d up until %d\n",
-      gametic, receiving_playernum, originating_playernum, command_index
-    );
-
-    player->cmdq.latest_synchronized_index = command_index;
-  }
-  else {
-    printf(
-      "(%5d) Player %d has commands from %d up until %d\n",
-      gametic, receiving_playernum, originating_playernum, command_index
-    );
-  }
-
-  player->cmdq.updated &= (1 << receiving_playernum);
-}
-
 void P_ForEachCommand(int playernum, GFunc func, gpointer user_data) {
-  if (playeringame[playernum])
+  if (playeringame[playernum]) {
     g_ptr_array_foreach(players[playernum].cmdq.commands, func, user_data);
+  }
 }
 
 void P_ClearPlayerCommands(int playernum) {
@@ -743,40 +683,25 @@ void P_TrimCommands(int playernum, TrimFunc should_trim, gpointer user_data) {
     netticcmd_t *ncmd = g_ptr_array_index(commands, i);
 
     if (should_trim(ncmd, user_data)) {
+      printf("(%d) Removing command %d/%d/%d\n",
+        gametic, ncmd->index, ncmd->tic, ncmd->server_tic
+      );
+
       g_ptr_array_remove_index(commands, i);
     }
     else {
       i++;
     }
   }
-
-  D_Msg(MSG_CMD, "(%5d) Kept %u/%u commands for %d\n",
-    gametic, commands->len, command_count, playernum
-  );
 }
-
-#if 0
-void P_TrimCommandsByTic(int playernum, int tic) {
-  D_Msg(MSG_SYNC, "(%d) P_TrimCommandsByTic(%d)\n", gametic, tic);
-
-  P_TrimCommands(playernum, command_tic_is_old, GINT_TO_POINTER(tic));
-}
-
-void P_TrimCommandsByIndex(int playernum, int command_index) {
-  D_Msg(MSG_SYNC, "(%d) P_TrimCommandsByIndex(%d)\n", gametic, command_index);
-
-  P_TrimCommands(
-    playernum, command_index_is_old, GINT_TO_POINTER(command_index)
-  );
-}
-#endif
 
 void P_BuildCommand(void) {
   ticcmd_t cmd;
   netticcmd_t ncmd;
 
-  if (!CLIENT)
+  if (!CLIENT) {
     return;
+  }
 
   memset(&cmd, 0, sizeof(ticcmd_t));
   G_BuildTiccmd(&cmd);
@@ -789,15 +714,11 @@ void P_BuildCommand(void) {
   ncmd.angle      = cmd.angleturn;
   ncmd.buttons    = cmd.buttons;
 
-  /*
-  D_Msg(MSG_CMD, "(%d) P_BuildCommand: ", gametic);
-  N_LogCommand(run_ncmd);
-  */
-
   P_AppendNewCommand(consoleplayer, &ncmd);
 
-  if (CLIENT)
+  if (CLIENT) {
     CL_MarkServerOutdated();
+  }
 }
 
 bool P_RunPlayerCommands(int playernum) {
@@ -816,17 +737,12 @@ bool P_RunPlayerCommands(int playernum) {
 #if EXTRAPOLATION == COPIED_COMMAND
     else {
       player->cmdq.commands_missed = 0;
-
-      /*
-      printf("(%d) Got (%d) command(s) for %d\n",
-        gametic, command_count, playernum
-      );
-      */
     }
 #endif
   }
 
   run_queued_player_commands(playernum);
+
   return player->playerstate != PST_DEAD;
 }
 

@@ -46,11 +46,14 @@ typedef enum {
 void D_InitMessaging(void);
 bool D_MsgActive(msg_channel_e chan);
 void D_MsgActivate(msg_channel_e chan);
-bool D_MsgActivateWithFile(msg_channel_e chan, const char *file_path);
+bool D_MsgActivateWithPath(msg_channel_e chan, const char *file_path);
+bool D_MsgActivateWithFile(msg_channel_e chan, FILE *fobj);
+bool D_MsgActivateWithFD(msg_channel_e chan, int fd);
 void D_MsgDeactivate(msg_channel_e chan);
 void D_VMsg(msg_channel_e chan, const char *fmt, va_list args);
 void D_Msg(msg_channel_e chan, const char *fmt, ...) PRINTF_DECL(2, 3);
-bool D_LogToFile(msg_channel_e chan, const char *file_path);
+bool D_LogToPath(msg_channel_e chan, const char *file_path);
+bool D_LogToFile(msg_channel_e chan, FILE *fobj);
 bool D_LogToFD(msg_channel_e chan, int fd);
 int  D_MsgGetFD(msg_channel_e chan);
 

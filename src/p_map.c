@@ -2474,9 +2474,9 @@ void P_CreateSecNodeList(mobj_t* thing, fixed_t x, fixed_t y) {
  * it was pointing too. Hopefully we don't need to carry this between tics for
  * sync.
  */
-void P_MapStart(void) {
+void P_MapStart(const char *caller) {
 	if (tmthing)
-    I_Error("P_MapStart: tmthing set!");
+    I_Error("P_MapStart (%s): tmthing set!", caller);
 }
 
 void P_MapEnd(void) {

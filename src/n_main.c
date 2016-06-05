@@ -174,8 +174,7 @@ static void print_network_stats(void) {
 
 void N_LogCommand(netticcmd_t *ncmd) {
 #if LOG_COMMANDS
-#if DEBUG_SYNC
-  D_Msg(MSG_SYNC, "(%d): {%d/%d/%d %d %d %d %u}\n",
+  D_Msg(MSG_CMD, "(%d): {%d/%d/%d %d %d %d %u}\n",
     gametic,
     ncmd->index,
     ncmd->tic,
@@ -185,7 +184,6 @@ void N_LogCommand(netticcmd_t *ncmd) {
     ncmd->angle,
     ncmd->buttons
   );
-#endif
 #endif
 }
 
@@ -263,25 +261,32 @@ void N_InitNetGame(void) {
     /* CG [FIXME] Should these use the ~/.d2k path? */
 
     if (DEBUG_NET && CLIENT) {
-      if (!D_MsgActivateWithFile(MSG_NET, "client-net.log")) {
+      if (!D_MsgActivateWithPath(MSG_NET, "client-net.log")) {
         I_Error("Error activating client-net.log: %s", strerror(errno));
       }
     }
 
     if (DEBUG_SAVE && CLIENT) {
-      if (!D_MsgActivateWithFile(MSG_SAVE, "client-save.log")) {
+      if (!D_MsgActivateWithPath(MSG_SAVE, "client-save.log")) {
         I_Error("Error activating client-save.log: %s", strerror(errno));
       }
     }
 
     if (DEBUG_SYNC && CLIENT) {
-      if (!D_MsgActivateWithFile(MSG_SYNC, "client-sync.log")) {
+      if (!D_MsgActivateWithPath(MSG_SYNC, "client-sync.log")) {
         I_Error("Error activating client-sync.log: %s", strerror(errno));
       }
     }
+#if 0
+    else if (CLIENT) {
+      if (!D_MsgActivateWithFile(MSG_SYNC, stderr)) {
+        I_Error("Error logging sync to stderr: %s", strerror(errno));
+      }
+    }
+#endif
 
     if (DEBUG_CMD && CLIENT) {
-      if (!D_MsgActivateWithFile(MSG_CMD, "client-cmd.log")) {
+      if (!D_MsgActivateWithPath(MSG_CMD, "client-cmd.log")) {
         I_Error("Error activating client-cmd.log: %s", strerror(errno));
       }
     }
@@ -374,25 +379,32 @@ void N_InitNetGame(void) {
       D_Msg(MSG_INFO, "N_InitNetGame: Listening on %s:%u.\n", host, port);
 
       if (DEBUG_NET && SERVER) {
-        if (!D_MsgActivateWithFile(MSG_NET, "server-net.log")) {
+        if (!D_MsgActivateWithPath(MSG_NET, "server-net.log")) {
           I_Error("Error activating server-net.log: %s", strerror(errno));
         }
       }
 
       if (DEBUG_SAVE && SERVER) {
-        if (!D_MsgActivateWithFile(MSG_SAVE, "server-save.log")) {
+        if (!D_MsgActivateWithPath(MSG_SAVE, "server-save.log")) {
           I_Error("Error activating server-save.log: %s", strerror(errno));
         }
       }
 
       if (DEBUG_SYNC && SERVER) {
-        if (!D_MsgActivateWithFile(MSG_SYNC, "server-sync.log")) {
+        if (!D_MsgActivateWithPath(MSG_SYNC, "server-sync.log")) {
           I_Error("Error activating server-sync.log: %s", strerror(errno));
         }
       }
+#if 0
+      else if (SERVER) {
+        if (!D_MsgActivateWithFile(MSG_SYNC, stderr)) {
+          I_Error("Error logging sync to stderr: %s", strerror(errno));
+        }
+      }
+#endif
 
       if (DEBUG_CMD && SERVER) {
-        if (!D_MsgActivateWithFile(MSG_CMD, "server-cmd.log")) {
+        if (!D_MsgActivateWithPath(MSG_CMD, "server-cmd.log")) {
           I_Error("Error activating server-cmd.log: %s", strerror(errno));
         }
       }
@@ -437,7 +449,6 @@ void N_RunTic(void) {
 
   if (SERVER && gametic > 0) {
     /* CG: TODO: Don't save states if there are no peers, saves resources */
-    D_Msg(MSG_SYNC, "(%d) Saving state\n", gametic);
     N_SaveState();
 
     NETPEER_FOR_EACH(iter) {
@@ -515,6 +526,27 @@ static bool no_players(void) {
   }
 
   return true;
+}
+
+const char* N_RunningStateName(void) {
+  if (CLIENT) {
+    if (CL_Predicting()) {
+      return "predicting";
+    }
+
+    if (CL_RePredicting()) {
+      return "re-predicting";
+    }
+
+    if (CL_Synchronizing()) {
+      return "synchronizing";
+    }
+  }
+  else if (SERVER) {
+    return "server";
+  }
+
+  return "unknown!";
 }
 
 bool N_TryRunTics(void) {

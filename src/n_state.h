@@ -46,6 +46,7 @@ void          N_SetLatestState(game_state_t *state);
 bool          N_LoadLatestState(bool call_init_new);
 bool          N_ApplyStateDelta(game_state_delta_t *delta);
 void          N_BuildStateDelta(int tic, game_state_delta_t *delta);
+int           N_GetStateFromTic(void);
 
 #endif
 

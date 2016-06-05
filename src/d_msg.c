@@ -81,11 +81,36 @@ void D_MsgActivate(msg_channel_e chan) {
   message_channels[chan].active = true;
 }
 
-bool D_MsgActivateWithFile(msg_channel_e chan, const char *file_path) {
+bool D_MsgActivateWithPath(msg_channel_e chan, const char *file_path) {
   check_message_channel(chan);
 
-  if (!D_LogToFile(chan, file_path))
+  if (!D_LogToPath(chan, file_path)) {
     return false;
+  }
+
+  D_MsgActivate(chan);
+
+  return true;
+}
+
+bool D_MsgActivateWithFile(msg_channel_e chan, FILE *fobj) {
+  check_message_channel(chan);
+
+  if (!D_LogToFile(chan, fobj)) {
+    return false;
+  }
+
+  D_MsgActivate(chan);
+
+  return true;
+}
+
+bool D_MsgActivateWithFD(msg_channel_e chan, int fd) {
+  check_message_channel(chan);
+
+  if (!D_LogToFD(chan, fd)) {
+    return false;
+  }
 
   D_MsgActivate(chan);
 
@@ -117,9 +142,17 @@ void D_VMsg(msg_channel_e chan, const char *fmt, va_list args) {
 
   mc = &message_channels[chan];
 
-  va_copy(console_args, args);
-  C_MVPrintf(fmt, console_args);
-  va_end(console_args);
+  if ((chan == MSG_DEBUG) ||
+      (chan == MSG_DEH)   ||
+      (chan == MSG_GAME)  ||
+      (chan == MSG_SAVE)  ||
+      (chan == MSG_INFO)  ||
+      (chan == MSG_WARN)  ||
+      (chan == MSG_ERROR)) {
+    va_copy(console_args, args);
+    C_MVPrintf(fmt, console_args);
+    va_end(console_args);
+  }
 
   if (mc->fobj) {
     va_copy(log_args, args);
@@ -144,9 +177,17 @@ void D_Msg(msg_channel_e chan, const char *fmt, ...) {
 
   va_start(args, fmt);
 
-  va_copy(console_args, args);
-  C_MVPrintf(fmt, console_args);
-  va_end(console_args);
+  if ((chan == MSG_DEBUG) ||
+      (chan == MSG_DEH)   ||
+      (chan == MSG_GAME)  ||
+      (chan == MSG_SAVE)  ||
+      (chan == MSG_INFO)  ||
+      (chan == MSG_WARN)  ||
+      (chan == MSG_ERROR)) {
+    va_copy(console_args, args);
+    C_MVPrintf(fmt, console_args);
+    va_end(console_args);
+  }
 
   if (mc->fobj) {
     va_copy(log_args, args);
@@ -158,7 +199,7 @@ void D_Msg(msg_channel_e chan, const char *fmt, ...) {
   va_end(args);
 }
 
-bool D_LogToFile(msg_channel_e chan, const char *file_path) {
+bool D_LogToPath(msg_channel_e chan, const char *file_path) {
   check_message_channel(chan);
 
   if (message_channels[chan].fobj) {
@@ -169,6 +210,26 @@ bool D_LogToFile(msg_channel_e chan, const char *file_path) {
   }
 
   message_channels[chan].fobj = M_OpenFile(file_path, "w");
+
+  if (message_channels[chan].fobj)
+    D_MsgActivate(chan);
+  else
+    D_MsgDeactivate(chan);
+
+  return D_MsgActive(chan);
+}
+
+bool D_LogToFile(msg_channel_e chan, FILE *fobj) {
+  check_message_channel(chan);
+
+  if (message_channels[chan].fobj) {
+    if (!M_CloseFile(message_channels[chan].fobj)) {
+      D_MsgDeactivate(chan);
+      return false;
+    }
+  }
+
+  message_channels[chan].fobj = fobj;
 
   if (message_channels[chan].fobj)
     D_MsgActivate(chan);

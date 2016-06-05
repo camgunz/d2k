@@ -1,7 +1,7 @@
 #!/bin/sh
 
-BUILD_TYPE=Release
 BUILD_TYPE=Debug
+BUILD_TYPE=Release
 
 printf '====================\n====================\n'
 

@@ -772,16 +772,6 @@ void P_MobjThinker(mobj_t* mobj) {
     return;
   }
 
-  if (mobj->type == MT_ROCKET) {
-    D_Msg(MSG_SYNC, "(%d) Rocket %u position: %d, %d, %d\n",
-      gametic,
-      mobj->id,
-      mobj->x >> FRACBITS,
-      mobj->y >> FRACBITS,
-      mobj->z >> FRACBITS
-    );
-  }
-
   mobj->PrevX = mobj->x;
   mobj->PrevY = mobj->y;
   mobj->PrevZ = mobj->z;

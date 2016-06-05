@@ -302,7 +302,7 @@ static bool setup_tic(void) {
 
   R_UpdateInterpolations();
 
-  P_MapStart();
+  P_MapStart("setup_tic");
 
   return true;
 }

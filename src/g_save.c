@@ -515,7 +515,7 @@ bool G_ReadSaveData(pbuf_t *savebuffer, bool bail_on_errors,
   memset(buttonlist, 0, sizeof(buttonlist));
 
   // dearchive all the modifications
-  P_MapStart();
+  P_MapStart("G_ReadSaveData");
   P_UnArchiveWorld(savebuffer);
   P_UnArchivePlayers(savebuffer);
   P_UnArchiveThinkers(savebuffer);

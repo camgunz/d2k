@@ -84,7 +84,7 @@ int     P_GetFriction(const mobj_t *mo, int *factor);       // killough 8/28/98
 void    P_ApplyTorque(mobj_t *mo);                          // killough 9/12/98
 
 /* cphipps 2004/08/30 */
-void	P_MapStart(void);
+void	P_MapStart(const char *caller);
 void	P_MapEnd(void);
 
 // If "floatok" true, move would be ok if within "tmfloorz - tmceilingz".

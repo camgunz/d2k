@@ -2591,7 +2591,7 @@ void P_SetupLevel(int episode, int map, int playermask, skill_t skill) {
     players[i].mo = NULL;
   TracerClearStarts();
 
-  P_MapStart();
+  P_MapStart("P_SetupLevel");
 
   P_LoadThings(lumpnum+ML_THINGS);
 
