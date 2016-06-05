@@ -422,8 +422,9 @@ pbuf_t* N_PeerBeginMessage(int peernum, net_channel_e chan_type,
   netchan_t *chan = NULL;
   tocentry_t *toc_entry = NULL;
 
-  if (np == NULL)
+  if (!np) {
     I_Error("N_PeerBeginMessage: Invalid peer number %d.\n", peernum);
+  }
 
   nc = &np->netcom;
   get_netchan(chan, nc, chan_type);
@@ -431,13 +432,14 @@ pbuf_t* N_PeerBeginMessage(int peernum, net_channel_e chan_type,
   for (unsigned int i = 0; i < chan->toc->len; i++) {
     toc_entry = &g_array_index(chan->toc, tocentry_t, i);
 
-    if (toc_entry->index == 0 && toc_entry->type == 0)
+    if (toc_entry->index == 0 && toc_entry->type == 0) {
       break;
+    }
 
     toc_entry = NULL;
   }
 
-  if (toc_entry == NULL) {
+  if (!toc_entry) {
     g_array_set_size(chan->toc, chan->toc->len + 1);
     toc_entry = &g_array_index(chan->toc, tocentry_t, chan->toc->len - 1);
   }

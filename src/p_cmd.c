@@ -179,7 +179,6 @@ static bool run_player_command(player_t *player) {
   }
 
   // cycle psprites
-
   P_MovePsprites(player);
 
   return true;
@@ -187,6 +186,15 @@ static bool run_player_command(player_t *player) {
 
 static void run_queued_command(int playernum, netticcmd_t *ncmd) {
   player_t *player = &players[playernum];
+
+  D_Msg(MSG_SYNC, "(%d) (%d) [%s] Running command %d/%d/%d\n",
+    gametic,
+    playernum,
+    N_RunningStateName(),
+    ncmd->index,
+    ncmd->tic,
+    ncmd->server_tic
+  );
 
   CL_SetupCommandState(playernum, ncmd);
 
@@ -273,7 +281,7 @@ static bool extrapolate_player_position(int playernum) {
   netticcmd_t ncmd;
 
   if (player->cmdq.commands_missed >= MISSED_COMMAND_MAX) {
-    printf("(%d) %td over missed command limit\n", gametic, player - players);
+    D_Msg(MSG_WARN, "(%d) %td over missed command limit\n", gametic, player - players);
     return false;
   }
 
@@ -287,7 +295,7 @@ static bool extrapolate_player_position(int playernum) {
   if (player != &players[0] && ncmd.forward != 0 &&
                                ncmd.side != 0 &&
                                ncmd.angle != 0) {
-    printf("(%d) Re-running command: {%d, %d, %d}\n",
+    D_Msg(MSG_SYNC, "(%d) Re-running command: {%d, %d, %d}\n",
       gametic,
       ncmd.forward,
       ncmd.side,
@@ -327,21 +335,11 @@ static void run_queued_player_commands(int playernum) {
 
   player->cmdq.commands_run_this_tic = 0;
 
-  if (player->cmdq.commands->len) {
-    printf("(%d) (%s) [ ", gametic,
-      SERVER ? "server" :
-        CL_Predicting() ? "predicting" :
-          CL_RePredicting() ? "repredicting" :
-            "synchronizing"
+  /* [CG] TODO: Fix this weirdness; triggered by moving the window */
+  if (CLIENT && player->cmdq.commands->len > 100) {
+    I_Error("%d commands for %d, exiting\n",
+      player->cmdq.commands->len, playernum
     );
-
-    for (unsigned int i = 0; i < player->cmdq.commands->len; i++) {
-      netticcmd_t *ncmd = g_ptr_array_index(player->cmdq.commands, i);
-
-      printf("%d/%d/%d ", ncmd->index, ncmd->tic, ncmd->server_tic);
-    }
-
-    printf("]\n");
   }
 
   if (CLIENT && CL_Synchronizing()) {
@@ -499,7 +497,7 @@ void P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd) {
         ncmd->side    != tmp_ncmd->side    ||
         ncmd->angle   != tmp_ncmd->angle   ||
         ncmd->buttons != tmp_ncmd->buttons) {
-      printf(
+      D_Msg(MSG_SYNC, 
         "P_UnArchivePlayer(%d): command mismatch: "
         "{%d, %d, %d, %d, %d, %d, %u} != {%d, %d, %d, %d, %d, %d, %u}\n",
         playernum,
@@ -539,6 +537,9 @@ void P_QueuePlayerCommand(int playernum, netticcmd_t *ncmd) {
     netticcmd_t *stored_ncmd = (netticcmd_t *)g_ptr_array_index(commands, i);
 
     if (stored_ncmd->index == ncmd->index) {
+      if ((stored_ncmd->server_tic == 0) && (ncmd->server_tic != 0)) {
+        stored_ncmd->server_tic = ncmd->server_tic;
+      }
       return;
     }
 
@@ -591,11 +592,11 @@ int P_GetEarliestCommandIndex(int playernum) {
   return ncmd->index;
 }
 
-int P_GetLatestCommandIndex(int playernum) {
+unsigned int P_GetLatestCommandIndex(int playernum) {
   netticcmd_t *ncmd = P_GetLatestCommand(playernum);
 
   if (!ncmd) {
-    return -1;
+    return 0;
   }
 
   return ncmd->index;
@@ -625,7 +626,7 @@ void P_UpdateCommandServerTic(int playernum, uint32_t command_index,
 
     if (ncmd->index == command_index) {
       ncmd->server_tic = server_tic;
-      printf("(%5d) Server ran %u at %u\n",
+      D_Msg(MSG_SYNC, "(%5d) Server ran %u at %u\n",
         gametic, ncmd->index, ncmd->server_tic
       );
       break;
@@ -683,7 +684,7 @@ void P_TrimCommands(int playernum, TrimFunc should_trim, gpointer user_data) {
     netticcmd_t *ncmd = g_ptr_array_index(commands, i);
 
     if (should_trim(ncmd, user_data)) {
-      printf("(%d) Removing command %d/%d/%d\n",
+      D_Msg(MSG_SYNC, "(%d) Removing command %d/%d/%d\n",
         gametic, ncmd->index, ncmd->tic, ncmd->server_tic
       );
 
@@ -732,6 +733,9 @@ bool P_RunPlayerCommands(int playernum) {
     unsigned int command_count = P_GetCommandCount(playernum);
 
     if (command_count == 0) {
+      D_Msg(MSG_WARN, "(%d) Extrapolating position for %d\n",
+        gametic, playernum
+      );
       return extrapolate_player_position(playernum);
     }
 #if EXTRAPOLATION == COPIED_COMMAND

@@ -63,9 +63,11 @@
 
 #define DEBUG_NET 0
 #define DEBUG_SYNC 0
+#define DEBUG_SYNC_STDERR 0
 #define DEBUG_SAVE 0
 #define DEBUG_CMD 0
 #define LOG_COMMANDS 0
+#define LOG_POSITIONS 0
 #define PRINT_NETWORK_STATS 0
 // #define LOG_SECTOR 43
 
@@ -188,8 +190,10 @@ void N_LogCommand(netticcmd_t *ncmd) {
 }
 
 void N_LogPlayerPosition(player_t *player) {
-  if (player->mo == NULL)
+#if LOG_POSITIONS
+  if (!player->mo) {
     return;
+  }
 
   D_Msg(MSG_SYNC,
     "(%d): %td: {%4d/%4d/%4d %4d/%4d/%4d %4d %4d/%4d/%4d/%4d %4d/%4u/%4u}\n", 
@@ -210,6 +214,7 @@ void N_LogPlayerPosition(player_t *player) {
     player->prev_viewangle  /  ANG1,
     player->prev_viewpitch  /  ANG1
   );
+#endif
 }
 
 void N_InitNetGame(void) {
@@ -277,7 +282,7 @@ void N_InitNetGame(void) {
         I_Error("Error activating client-sync.log: %s", strerror(errno));
       }
     }
-#if 0
+#if DEBUG_SYNC_STDERR
     else if (CLIENT) {
       if (!D_MsgActivateWithFile(MSG_SYNC, stderr)) {
         I_Error("Error logging sync to stderr: %s", strerror(errno));
@@ -395,7 +400,7 @@ void N_InitNetGame(void) {
           I_Error("Error activating server-sync.log: %s", strerror(errno));
         }
       }
-#if 0
+#if DEBUG_SYNC_STDERR
       else if (SERVER) {
         if (!D_MsgActivateWithFile(MSG_SYNC, stderr)) {
           I_Error("Error logging sync to stderr: %s", strerror(errno));
@@ -454,9 +459,11 @@ void N_RunTic(void) {
     NETPEER_FOR_EACH(iter) {
       if (iter.np->sync.initialized) {
         iter.np->sync.outdated = true;
+#if 0
         if (playeringame[iter.np->playernum]) {
           N_LogPlayerPosition(&players[iter.np->playernum]);
         }
+#endif
       }
       else if (gametic > iter.np->sync.tic) {
         /*
@@ -555,11 +562,13 @@ bool N_TryRunTics(void) {
   int tics_elapsed = I_GetTime() - tics_built;
   bool needs_rendering = should_render();
 
-  if (no_players() || (tics_elapsed <= 0 && !needs_rendering)) {
-    N_ServiceNetwork();
-    C_ECIService();
-    I_Sleep(1);
-    return false;
+  if (gametic > 0) {
+    if (no_players() || (tics_elapsed <= 0 && !needs_rendering)) {
+      N_ServiceNetwork();
+      C_ECIService();
+      I_Sleep(1);
+      return false;
+    }
   }
 
   if (tics_elapsed > 0) {

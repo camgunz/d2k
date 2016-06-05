@@ -290,21 +290,21 @@ static void pack_run_commands(pbuf_t *pbuf, netpeer_t *np) {
   M_PBufWriteUInt(pbuf, command_count);
 
   if (command_count > 0) {
-    printf("(%d) Ran commands: [", gametic);
+    D_Msg(MSG_SYNC, "(%d) (%d) Ran commands: [", gametic, np->playernum);
   }
 
   for (unsigned int i = 0; i < commands->len; i++) {
     netticcmd_t *ncmd = g_ptr_array_index(commands, i);
 
     if (ncmd->server_tic != 0) {
-      printf(" %d/%d/%d", ncmd->index, ncmd->tic, ncmd->server_tic);
+      D_Msg(MSG_SYNC, " %d/%d/%d", ncmd->index, ncmd->tic, ncmd->server_tic);
       M_PBufWriteUInt(pbuf, ncmd->index);
       M_PBufWriteUInt(pbuf, ncmd->server_tic);
     }
   }
 
   if (command_count > 0) {
-    printf(" ]\n");
+    D_Msg(MSG_SYNC, " ]\n");
   }
 }
 
@@ -327,8 +327,9 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
     netticcmd_t *ncmd = (netticcmd_t *)g_ptr_array_index(commands, i);
 
     if (ncmd->index > np->command_indices[source_playernum]) {
-      M_PBufWriteInt(pbuf, ncmd->index);
-      M_PBufWriteInt(pbuf, ncmd->tic);
+      M_PBufWriteUInt(pbuf, ncmd->index);
+      M_PBufWriteUInt(pbuf, ncmd->tic);
+      M_PBufWriteUInt(pbuf, ncmd->server_tic);
       M_PBufWriteChar(pbuf, ncmd->forward);
       M_PBufWriteChar(pbuf, ncmd->side);
       M_PBufWriteShort(pbuf, ncmd->angle);
@@ -821,12 +822,13 @@ bool N_UnpackSync(netpeer_t *np) {
         for (unsigned int j = 0; j < m_command_count; j++) {
           netticcmd_t m_ncmd;
 
-          read_int(pbuf,   m_ncmd.index,   "command index");
-          read_int(pbuf,   m_ncmd.tic,     "command TIC");
-          read_char(pbuf,  m_ncmd.forward, "command forward value");
-          read_char(pbuf,  m_ncmd.side,    "command side value");
-          read_short(pbuf, m_ncmd.angle,   "command angle value");
-          read_uchar(pbuf, m_ncmd.buttons, "command buttons value");
+          read_uint(pbuf,  m_ncmd.index,      "command index");
+          read_uint(pbuf,  m_ncmd.tic,        "command TIC");
+          read_uint(pbuf,  m_ncmd.server_tic, "server command TIC");
+          read_char(pbuf,  m_ncmd.forward,    "command forward value");
+          read_char(pbuf,  m_ncmd.side,       "command side value");
+          read_short(pbuf, m_ncmd.angle,      "command angle value");
+          read_uchar(pbuf, m_ncmd.buttons,    "command buttons value");
 
           P_QueuePlayerCommand(i, &m_ncmd);
         }
@@ -861,18 +863,19 @@ bool N_UnpackSync(netpeer_t *np) {
     read_uint(pbuf, m_command_count, "command count");
 
     for (unsigned int i = 0; i < m_command_count; i++) {
-      netticcmd_t ncmd;
+      netticcmd_t m_ncmd;
 
-      read_int(pbuf,   ncmd.index,   "command index");
-      read_int(pbuf,   ncmd.tic,     "command TIC");
-      read_char(pbuf,  ncmd.forward, "command forward value");
-      read_char(pbuf,  ncmd.side,    "command side value");
-      read_short(pbuf, ncmd.angle,   "command angle value");
-      read_uchar(pbuf, ncmd.buttons, "command buttons value");
+      read_uint(pbuf,  m_ncmd.index,      "command index");
+      read_uint(pbuf,  m_ncmd.tic,        "command TIC");
+      read_uint(pbuf,  m_ncmd.server_tic, "server command TIC");
+      read_char(pbuf,  m_ncmd.forward,    "command forward value");
+      read_char(pbuf,  m_ncmd.side,       "command side value");
+      read_short(pbuf, m_ncmd.angle,      "command angle value");
+      read_uchar(pbuf, m_ncmd.buttons,    "command buttons value");
 
-      ncmd.server_tic = 0;
+      m_ncmd.server_tic = 0;
 
-      P_QueuePlayerCommand(np->playernum, &ncmd);
+      P_QueuePlayerCommand(np->playernum, &m_ncmd);
     }
 
     if (m_command_count > 0) {

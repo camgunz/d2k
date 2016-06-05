@@ -67,9 +67,9 @@ extern int weapon_preferences[2][NUMWEAPONS + 1]; /* killough 5/2/98 */
 int P_WeaponPreferred(int w1, int w2);
 
 typedef struct netticcmd_s {
-  int           index;
-  int           tic;
-  int           server_tic;
+  uint32_t      index;
+  uint32_t      tic;
+  uint32_t      server_tic;
   char          forward;
   char          side;
   short         angle;
@@ -375,7 +375,7 @@ void         P_AppendNewCommand(int playernum, netticcmd_t *tmp_ncmd);
 netticcmd_t* P_GetEarliestCommand(int playernum);
 int          P_GetEarliestCommandIndex(int playernum);
 netticcmd_t* P_GetLatestCommand(int playernum);
-int          P_GetLatestCommandIndex(int playernum);
+unsigned int P_GetLatestCommandIndex(int playernum);
 void         P_UpdateLatestCommandIndex(int originating_playernum,
                                         int receiving_playernum,
                                         unsigned int command_index);

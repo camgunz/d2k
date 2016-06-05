@@ -351,6 +351,8 @@ void A_WeaponReady(player_t *player, pspdef_t *psp) {
   //  the missile launcher and bfg do not auto fire
 
   if (player->cmd.buttons & BT_ATTACK) {
+    D_Msg(MSG_SOUND, "(%d) Player %td firing\n", gametic, player - players);
+
     if (!player->attackdown || (player->readyweapon != wp_missile &&
                                 player->readyweapon != wp_bfg)) {
       player->attackdown = true;
@@ -385,6 +387,7 @@ void A_ReFire(player_t *player, pspdef_t *psp) {
 
   if ((player->cmd.buttons & BT_ATTACK) &&
       player->pendingweapon == wp_nochange && player->health) {
+    D_Msg(MSG_SOUND, "(%d) Player %td re-firing\n", gametic, player - players);
     player->refire++;
     P_FireWeapon(player);
   }

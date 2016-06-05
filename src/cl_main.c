@@ -148,6 +148,28 @@ static bool cl_load_new_state(netpeer_t *server) {
     return false;
   }
 
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    player_t *player;
+    
+    if (!playeringame[i]) {
+      continue;
+    }
+
+    player = &players[i];
+
+    if (player->cmdq.commands->len) {
+      D_Msg(MSG_SYNC, "(%d) (%d) [ ", gametic, i);
+
+      for (unsigned int i = 0; i < player->cmdq.commands->len; i++) {
+        netticcmd_t *ncmd = g_ptr_array_index(player->cmdq.commands, i);
+
+        D_Msg(MSG_SYNC, "%d/%d/%d ", ncmd->index, ncmd->tic, ncmd->server_tic);
+      }
+
+      D_Msg(MSG_SYNC, "]\n");
+    }
+  }
+
   cl_synchronizing = true;
   D_Msg(MSG_SYNC, "Synchronizing %d => %d\n", gametic, server->sync.tic);
   R_ResetViewInterpolation();
@@ -204,7 +226,7 @@ static void cl_repredict(int saved_gametic) {
     return;
   }
 
-  if (latest_command_index == -1) {
+  if (latest_command_index == 0) {
     return;
   }
 
@@ -258,10 +280,11 @@ void CL_CheckForStateUpdates(void) {
     return;
   }
 
-  if (server->sync.tic == cl_state_tic)
+  if (server->sync.tic == cl_state_tic) {
     return;
+  }
 
-  printf("(%d) Loading new state [%d, %d => %d] (%d)\n",
+  D_Msg(MSG_SYNC, "(%d) Loading new state [%d, %d => %d] (%d)\n",
     gametic,
     server->sync.command_index,
     server->sync.delta.from_tic,
@@ -285,16 +308,6 @@ void CL_CheckForStateUpdates(void) {
   CL_TrimSynchronizedCommands();
 
   N_LogPlayerPosition(&players[consoleplayer]);
-
-  /*
-  D_Msg(MSG_SYNC, "(%d) Loaded new state [%d, %d => %d] (%d)\n",
-    gametic,
-    server->sync.command_index,
-    server->sync.delta.from_tic,
-    server->sync.delta.to_tic,
-    players[consoleplayer].cmdq.latest_command_run_index
-  );
-  */
 
 #ifdef LOG_SECTOR
   if (LOG_SECTOR < numsectors) {
