@@ -733,7 +733,7 @@ bool P_RunPlayerCommands(int playernum) {
     unsigned int command_count = P_GetCommandCount(playernum);
 
     if (command_count == 0) {
-      D_Msg(MSG_WARN, "(%d) Extrapolating position for %d\n",
+      D_Msg(MSG_NET, "(%d) Extrapolating position for %d\n",
         gametic, playernum
       );
       return extrapolate_player_position(playernum);

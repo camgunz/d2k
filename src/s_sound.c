@@ -33,7 +33,7 @@
 #include "s_sound.h"
 
 #define DEBUG_SOUND 0
-#define DEBUG_SOUND_STDERR 1
+#define DEBUG_SOUND_STDERR 0
 
 static int saved_sfx_volume;
 
