@@ -1,6 +1,6 @@
 # To Do
 
-Multiplayer scoreboard shows during singleplayer intermission
+Fix netcode when more than 1 player
 
 Next map doesn't load in singleplayer
 

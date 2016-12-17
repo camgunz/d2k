@@ -2,11 +2,11 @@
 
 BASE_DIR="$(pwd)"
 
-CMD="${BASE_DIR}/cbuild/d2k -skill 5 -warp 1 -nomonsters -nomouse"
 CMD="${BASE_DIR}/cbuild/d2k -iwad doom2.wad -playdemo DEMO3 -nomouse"
 CMD="${BASE_DIR}/cbuild/d2k -iwad freedm.wad -skill 5 -warp 1 -nomonsters -nomouse -deathmatch -frags 50 -timer 10"
 CMD="${BASE_DIR}/cbuild/d2k -iwad doom2.wad -file gothicdm.wad -playdemo DEMO1 -dumpdemo d2kdump.bin"
 CMD="${BASE_DIR}/cbuild/d2k -iwad doom2.wad -file dwango5.wad -skill 5 -warp 1 -nomonsters -nomouse -deathmatch -frags 50 -timer 10"
+CMD="${BASE_DIR}/cbuild/d2k -skill 5 -warp 1 -nomonsters -nomouse"
 
 mkdir -p ~/.d2k/scripts
 mkdir -p ~/.d2k/fonts

@@ -258,13 +258,9 @@ local scoreboard_widget = ContainerWidget.ContainerWidget({
 })
 
 function scoreboard_widget:is_active()
-  local active = ContainerWidget.ContainerWidget.is_active(self)
-
-  if not active then
-    active = d2k.Game.in_intermission()
-  end
-
-  return active
+  return ContainerWidget.ContainerWidget.is_active(self) or (
+    d2k.Game.is_multiplayer() and d2k.Game.in_intermission()
+  )
 end
 
 function scoreboard_widget:render()

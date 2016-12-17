@@ -57,6 +57,17 @@ static int XG_GameGetGameMode(lua_State *L) {
   return 1;
 }
 
+static int XG_GameIsMultiplayer(lua_State *L) {
+  if (deathmatch || MULTINET) {
+    lua_pushboolean(L, true);
+  }
+  else {
+    lua_pushboolean(L, false);
+  }
+
+  return 1;
+}
+
 static int XG_GameGetFragLimit(lua_State *L) {
   if (deathmatch) {
     lua_pushinteger(L, levelFragLimitCount);
@@ -226,7 +237,7 @@ static int XG_GameInDemoScreen(lua_State *L) {
 }
 
 void XG_GameRegisterInterface(void) {
-  X_RegisterObjects("Game", 15,
+  X_RegisterObjects("Game", 16,
     "tick",            X_FUNCTION, XG_GameTick,
     "render",          X_FUNCTION, XG_GameRender,
     "in_level",        X_FUNCTION, XG_GameInLevel,
@@ -236,6 +247,7 @@ void XG_GameRegisterInterface(void) {
     "handle_event",    X_FUNCTION, XG_GameHandleEvent,
     "get_gametic",     X_FUNCTION, XG_GameGetGametic,
     "get_game_mode",   X_FUNCTION, XG_GameGetGameMode,
+    "is_multiplayer",  X_FUNCTION, XG_GameIsMultiplayer,
     "get_frag_limit",  X_FUNCTION, XG_GameGetFragLimit,
     "get_time_limit",  X_FUNCTION, XG_GameGetTimeLimit,
     "get_players",     X_FUNCTION, XG_GameGetPlayers,
