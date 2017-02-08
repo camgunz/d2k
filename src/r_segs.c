@@ -578,7 +578,15 @@ void R_StoreWallRange(const int start, const int stop)
 
   offsetangle = rw_normalangle-rw_angle1;
 
-  if (D_abs(offsetangle) > ANG90)
+  /*
+   * [CG] This used to be `D_abs(offsetangle)`, which was `#define`'d to `abs`,
+   *      which accepts an `int` and returns an `int`.  `offsetangle` is
+   *      `angle_t` -- `unsigned int` in otherwords -- and the call to `abs`
+   *      effectively truncated it to an `int` in this comparison.  So compiler
+   *      suggestions to simply remove the call to `abs` were incorrect; the
+   *      correct fix is to cast to `int` specifically.
+   */
+  if (((int)offsetangle) > ANG90)
     offsetangle = ANG90;
 
   hyp = (viewx==curline->v1->x && viewy==curline->v1->y)?

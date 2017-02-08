@@ -1292,9 +1292,9 @@ void gld_EndDrawScene(void)
   gl_EnableFog(false);
   gld_Set2DMode();
 
+  // don't draw on side views
   if (viewangleoffset <= 1024<<ANGLETOFINESHIFT ||
-    viewangleoffset >=-1024<<ANGLETOFINESHIFT)
-  { // don't draw on side views
+      viewangleoffset >=-(1024<<ANGLETOFINESHIFT)) {
     glsl_SetActiveShader(sh_main);
     R_DrawPlayerSprites();
     glsl_SetActiveShader(NULL);
