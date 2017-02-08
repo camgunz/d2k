@@ -8,6 +8,7 @@ Windows crashes pretty early on
 
 1. Fix bugs:
   - `P_Printf` doesn't work in server mode
+    - Honestly, probably need a messaging overhaul
   - When console scrollback fills up, FPS sinks
   - Add a server message sound (just use radio/tink?)
   - Add a message indicating that the server is full; currently it looks like a
@@ -18,10 +19,13 @@ Windows crashes pretty early on
 
 1. Remove 4 player restriction
 
+:: Proto Done Here ::
+
+---
+
 1. Add spectators
-  - I think that just keeping `playeringame[playernum]` `false` will do
-    everything I want spectating to do, and spycam + walkcamera does the
-    rest.
+  - This is essentially reworking the logic between `playeringame`, `players`,
+    and walkcamera/spycam
 
 1. Move configuration into scripting
   - Refactor screens

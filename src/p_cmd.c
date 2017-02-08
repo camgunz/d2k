@@ -335,10 +335,9 @@ static void run_queued_player_commands(int playernum) {
 
   player->cmdq.commands_run_this_tic = 0;
 
-  /* [CG] TODO: Fix this weirdness; triggered by moving the window */
-  if (CLIENT && player->cmdq.commands->len > 100) {
-    I_Error("%d commands for %d, exiting\n",
-      player->cmdq.commands->len, playernum
+  if (CLIENT && player->cmdq.commands->len >= 100) {
+    I_Error("%d commands for %d (%d), exiting\n",
+      player->cmdq.commands->len, playernum, consoleplayer
     );
   }
 
@@ -530,6 +529,14 @@ void P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd) {
 void P_QueuePlayerCommand(int playernum, netticcmd_t *ncmd) {
   GPtrArray *commands = players[playernum].cmdq.commands;
   netticcmd_t *new_ncmd = get_new_blank_command();
+
+  D_Msg(MSG_SYNC, "(%d) (%d) Queueing %d/%d/%d\n",
+    gametic,
+    playernum,
+    ncmd->index,
+    ncmd->tic,
+    ncmd->server_tic
+  );
 
   memcpy(new_ncmd, ncmd, sizeof(netticcmd_t));
 
@@ -743,6 +750,14 @@ bool P_RunPlayerCommands(int playernum) {
       player->cmdq.commands_missed = 0;
     }
 #endif
+  }
+
+  if (CLIENT) {
+    for (unsigned int i = 0; i < MAXPLAYERS; i++) {
+      if (!playeringame[i]) {
+        continue;
+      }
+    }
   }
 
   run_queued_player_commands(playernum);

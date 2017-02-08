@@ -23,6 +23,8 @@
 
 #include "z_zone.h"
 
+#include <time.h>
+
 #include "c_main.h"
 #include "d_msg.h"
 #include "m_file.h"
@@ -209,7 +211,15 @@ bool D_LogToPath(msg_channel_e chan, const char *file_path) {
     }
   }
 
-  message_channels[chan].fobj = M_OpenFile(file_path, "w");
+  char *full_file_path = g_strdup_printf(
+    "%u-%s",
+    (unsigned char)time(NULL),
+    file_path
+  );
+
+  message_channels[chan].fobj = M_OpenFile(full_file_path, "w");
+
+  g_free(full_file_path);
 
   if (message_channels[chan].fobj)
     D_MsgActivate(chan);

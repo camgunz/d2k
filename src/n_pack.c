@@ -323,10 +323,19 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
 
   M_PBufWriteUInt(pbuf, command_count);
 
+  if (command_count > 0) {
+    D_Msg(MSG_SYNC, "(%d) (%d->%d) Unsync'd commands: [",
+      gametic,
+      source_playernum,
+      np->playernum
+    );
+  }
+
   for (size_t i = 0; i < commands->len; i++) {
     netticcmd_t *ncmd = (netticcmd_t *)g_ptr_array_index(commands, i);
 
     if (ncmd->index > np->command_indices[source_playernum]) {
+      D_Msg(MSG_SYNC, " %d/%d/%d", ncmd->index, ncmd->tic, ncmd->server_tic);
       M_PBufWriteUInt(pbuf, ncmd->index);
       M_PBufWriteUInt(pbuf, ncmd->tic);
       M_PBufWriteUInt(pbuf, ncmd->server_tic);
@@ -335,6 +344,10 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
       M_PBufWriteShort(pbuf, ncmd->angle);
       M_PBufWriteUChar(pbuf, ncmd->buttons);
     }
+  }
+
+  if (command_count > 0) {
+    D_Msg(MSG_SYNC, " ]\n");
   }
 }
 
@@ -833,7 +846,23 @@ bool N_UnpackSync(netpeer_t *np) {
           P_QueuePlayerCommand(i, &m_ncmd);
         }
 
-        m_command_index = P_GetLatestCommandIndex(i);
+        m_command_index = 0;
+
+        for (unsigned int ci = 0; ci < P_GetCommandCount(i); ci++) {
+          netticcmd_t *m_ncmd = P_GetCommand(i, ci);
+
+          if (!m_ncmd) {
+            continue;
+          }
+
+          if (m_ncmd->server_tic == 0) {
+            continue;
+          }
+
+          if (m_ncmd->index > m_command_index) {
+            m_command_index = m_ncmd->index;
+          }
+        }
       }
 
       if (m_command_index > np->command_indices[i]) {
