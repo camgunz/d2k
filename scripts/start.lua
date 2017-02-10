@@ -44,7 +44,7 @@ if d2k.Video.is_enabled() then
   local Overlay = require('overlay')
   d2k.overlay = Overlay.Overlay()
 
-  print('X_Init: Creating Menu')
+  print('X_Init: Creating menu')
   local Menu = require('menu')
   d2k.menu = Menu.Menu()
   d2k.menu:set_parent(d2k.interfaces)
@@ -56,7 +56,7 @@ if d2k.Video.is_enabled() then
   })
   d2k.console:set_parent(d2k.interfaces)
 
-  print('X_Init: Creating Game Interface')
+  print('X_Init: Creating game Interface')
   local GameInterface = require('game_interface')
   d2k.game_interface = GameInterface.GameInterface()
   d2k.game_interface:set_parent(d2k.interfaces)

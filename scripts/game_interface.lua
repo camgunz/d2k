@@ -64,7 +64,7 @@ function GameInterface:handle_event(event)
     return true
   end
 
-  if not d2k.Game.in_level() then
+  if not d2k.Game.in_level() and not d2k.Game.in_intermission() then
     return false
   end
 

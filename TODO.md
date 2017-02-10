@@ -1,9 +1,5 @@
 # To Do
 
-Fix netcode when more than 1 player
-
-Next map doesn't load in singleplayer
-
 Windows crashes pretty early on
 
 1. Fix bugs:

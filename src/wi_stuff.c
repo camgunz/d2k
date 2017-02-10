@@ -890,7 +890,7 @@ void WI_initShowNextLoc(void)
   // e6y: That was pretty easy - only a HEX editor and luck
   // There is no more desync on ddt-tas.zip\e4tux231.lmp
   // --------- tasdoom.idb ---------
-  // .text:00031194 loc_31194:      ; CODE XREF: WI_updateStats+3A9j
+  // .text:00031194 loc_31194:      ; CODE XREF: WI_updateStats
   // .text:00031194                 mov     ds:state, 1
   // .text:0003119E                 mov     ds:acceleratestage, 0
   // .text:000311A8                 mov     ds:cnt, 3Ch
