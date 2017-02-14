@@ -1,26 +1,22 @@
 # To Do
 
-1. Clients quit with a '100 commands for X' message after loading a new map in
-   multiplayer.
-
-- Need a refactor
-  - clientside reset:
-    - when gameaction is `ga_loadlevel`
-    - command queues for all players
-    - static vars in `cl_cmd`, `cl_main`, and `cl_net`
-    - ...might have to ignore `ga_loadlevel` from the server... or wait for
-      setup or something
-  - Move all the `SV_*` calls to `netpeer_t` instead of `playernum`; eventually
-    these will apply to peers that are just spectators
-  - Add a message indicating that the server is full; currently it looks like a
-    crash
+1. Add a message indicating that the server is full; currently it looks like a
+   crash
 
 1. Fix bugs:
+  - Some races around game state: clients are in intermission, then level, then
+    intermission again when loading a new map
+    - `G_DoLoadLevel`
+    - `...`
+    - `G_WorldDone`
+    - `G_DoLoadLevel`
   - Connection sometimes takes multiple tries
   - Nothing displays in console
     - Probably scripting bug
     - Should fix silently failing scripting... then again that probably goes to
       the console to haha
+  - Console and messages widget should render during intermission
+    - I think widgets need a "render during intermission" flag
   - Windows crashes pretty early on
   - `P_Printf` doesn't work in server mode
   - Messaging needs to print to command-line console if graphics haven't yet
@@ -39,6 +35,8 @@
 1. Add spectators
   - This is essentially reworking the logic between `playeringame`, `players`,
     and walkcamera/spycam
+  - Move all the `SV_*` calls to `netpeer_t` instead of `playernum`; eventually
+    these will apply to peers that are just spectators
 
 1. Remove 4 player restriction
 

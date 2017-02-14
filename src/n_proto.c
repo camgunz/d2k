@@ -186,7 +186,7 @@ static void handle_setup(netpeer_t *np) {
   N_PeerSyncSetHasGameState(server);
   N_PeerSyncSetOutdated(server);
 
-  if (gamestate == GS_INTERMISSION) {
+  if (G_GetGameState() == GS_INTERMISSION) {
     G_LoadLatestState(true);
   }
 }
@@ -203,6 +203,7 @@ static void handle_setup_request(netpeer_t *np) {
 static void handle_full_state(netpeer_t *np) {
   N_UnpackFullState(np);
   N_PeerSyncSetHasGameState(np);
+  CL_SetNewGameState(GS_LEVEL);
 }
 
 static void handle_auth_response(netpeer_t *np) {
@@ -584,6 +585,9 @@ void N_UpdateSync(void) {
       N_PeerUpdateLastSetupRequestTime(iter.np);
     }
     else if (N_PeerSyncNeedsGameState(iter.np)) {
+      printf("(%d) Sending full state to %d\n",
+        gametic, N_PeerGetPlayernum(iter.np)
+      );
       N_PackFullState(iter.np);
       N_PeerSyncSetHasGameState(iter.np);
       N_PeerUpdateLastSetupRequestTime(iter.np);
@@ -897,7 +901,11 @@ void SV_BroadcastPlayerSkinChanged(unsigned short playernum) {
 
 void SV_ResyncPeers(void) {
   NETPEER_FOR_EACH(iter) {
+    unsigned int playernum = N_PeerGetPlayernum(iter.np);
+
     N_PeerResetSync(iter.np);
+    N_PeerSyncSetHasGameInfo(iter.np);
+    P_ResetPlayerCommands(playernum);
   }
 }
 

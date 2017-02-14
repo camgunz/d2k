@@ -75,6 +75,16 @@ static int cl_repredicting_end_tic = 0;
  */
 static auth_level_e cl_authorization_level = AUTH_LEVEL_NONE;
 
+/*
+ * Next gamestate to load after loading last state
+ */
+static gamestate_t cl_new_gamestate = GS_BAD;
+
+/*
+ * If set, calls G_InitNew next time the latest state is loaded
+ */
+static bool cl_needs_init_new = false;
+
 static void cl_set_repredicting(int start_tic, int end_tic) {
   cl_repredicting_start_tic = start_tic;
   cl_repredicting_end_tic = end_tic;
@@ -97,13 +107,15 @@ static bool cl_load_new_state(netpeer_t *server) {
   }
 
   cl_loading_state = true;
-  state_loaded = G_LoadLatestState(false);
+  state_loaded = G_LoadLatestState(cl_needs_init_new);
   cl_loading_state = false;
 
   if (!state_loaded) {
     P_Echo(consoleplayer, "Error loading latest state");
     return false;
   }
+
+  cl_needs_init_new = false;
 
   cl_loading_state = true;
   state_loaded = G_LoadState(delta->from_tic, false);
@@ -175,6 +187,14 @@ static bool cl_load_new_state(netpeer_t *server) {
   R_UpdateInterpolations();
 
   G_RemoveOldStates(delta->from_tic);
+
+  if (cl_new_gamestate != GS_BAD) {
+    if ((cl_new_gamestate != GS_LEVEL) && (G_GetGameState() == GS_LEVEL)) {
+      G_ExitLevel();
+    }
+    G_SetGameState(cl_new_gamestate);
+    cl_new_gamestate = GS_BAD;
+  }
 
   return true;
 }
@@ -353,6 +373,19 @@ void CL_SetAuthorizationLevel(auth_level_e level) {
   cl_authorization_level = level;
 }
 
+void CL_SetNewGameState(gamestate_t new_gamestate) {
+  switch (new_gamestate) {
+    case GS_LEVEL:
+    case GS_INTERMISSION:
+    case GS_FINALE:
+    case GS_DEMOSCREEN:
+      cl_new_gamestate = new_gamestate;
+    break;
+    default:
+    break;
+  }
+}
+
 void CL_RePredict(int saved_gametic) {
   player_t *player = &players[consoleplayer];
   unsigned int latest_command_index = P_GetLatestCommandIndex(consoleplayer);
@@ -397,6 +430,29 @@ bool CL_Synchronizing(void) {
 
 bool CL_RePredicting(void) {
   return (CLIENT && cl_repredicting);
+}
+
+void CL_ResetSync(void) {
+  netpeer_t *server = CL_GetServerPeer();
+
+  cl_state_tic = -1;
+  cl_repredicting_start_tic = 0;
+  cl_repredicting_end_tic = 0;
+
+  for (size_t i = 0; i < MAXPLAYERS; i++) {
+    if (playeringame[i]) {
+      P_ResetPlayerCommands(i);
+    }
+  }
+
+  G_ClearStates();
+
+  if (server) {
+    N_PeerResetSync(server);
+    N_PeerSyncSetHasGameInfo(server);
+  }
+
+  cl_needs_init_new = true;
 }
 
 /* vi: set et ts=2 sw=2: */

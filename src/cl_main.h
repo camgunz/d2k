@@ -37,6 +37,7 @@ int  CL_GetCurrentCommandIndex(void);
 int  CL_GetNextCommandIndex(void);
 bool CL_ReceivedSetup(void);
 void CL_Init(void);
+void CL_Reset(void);
 
 #endif
 

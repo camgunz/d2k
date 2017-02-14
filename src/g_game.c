@@ -81,6 +81,7 @@
 #include "r_fps.h"
 #include "e6y.h"
 #include "cl_main.h"
+#include "cl_net.h"
 #include "x_main.h"
 #include "p_mobj.h"
 #include "v_video.h"
@@ -2179,8 +2180,9 @@ void G_DoCompleted(void) {
     }
   }
 
-  if (automapmode & am_active)
+  if (automapmode & am_active) {
     AM_Stop();
+  }
 
   if (gamemode != commercial) { // kilough 2/7/98
     // Chex Quest ends after 5 levels, rather than 8.
@@ -2362,12 +2364,20 @@ void G_WorldDone(void) {
 
 void G_DoWorldDone(void) {
   idmusnum = -1;             //jff 3/17/98 allow new level's music to be loaded
-  G_SetGameState(GS_LEVEL);
+  if (!CLIENT) {
+    G_SetGameState(GS_LEVEL);
+  }
   gamemap = wminfo.next + 1;
-  G_DoLoadLevel();
+  if (!CLIENT) {
+    G_DoLoadLevel();
+  }
   G_SetGameAction(ga_nothing);
   AM_clearMarks();           //jff 4/12/98 clear any marks on the automap
   e6y_G_DoWorldDone();//e6y
+  if (CLIENT) {
+    CL_Reset();
+    CL_ResetSync();
+  }
 }
 
 //CPhipps - savename variable redundant

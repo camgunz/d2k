@@ -693,6 +693,23 @@ void P_ClearPlayerCommands(int playernum) {
   }
 }
 
+void P_ResetPlayerCommands(int playernum) {
+  command_queue_t *cmdq = NULL;
+
+  if (!playeringame[playernum]) {
+    return;
+  }
+
+  cmdq = &players[playernum].cmdq;
+
+  P_ClearPlayerCommands(playernum);
+
+  cmdq->commands_missed = 0;
+  cmdq->command_limit = 0;
+  cmdq->commands_run_this_tic = 0;
+  cmdq->latest_command_run_index = 0;
+}
+
 void P_IgnorePlayerCommands(int playernum) {
   if (!playeringame[playernum]) {
     return;

@@ -339,7 +339,7 @@ void N_RunTic(void) {
 
   P_Checksum(gametic);
 
-  if (SERVER && gametic > 0) {
+  if ((G_GetGameState() == GS_LEVEL) && SERVER && (gametic > 0)) {
     NETPEER_FOR_EACH(iter) {
       if (N_PeerSynchronized(iter.np)) {
         N_PeerSyncSetOutdated(iter.np);

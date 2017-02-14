@@ -38,6 +38,7 @@
 #include "p_user.h"
 #include "cl_cmd.h"
 #include "cl_main.h"
+#include "cl_net.h"
 #include "p_user.h"
 #include "w_wad.h"
 
@@ -332,6 +333,15 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
 
     if (ncmd->index > N_PeerGetSyncCommandIndexForPlayer(np, src_playernum)) {
       command_count++;
+    }
+    else {
+      D_Msg(MSG_SYNC, "(%d) (%u->%u) Skipping command (%u <= %u)\n",
+        gametic,
+        src_playernum,
+        N_PeerGetPlayernum(np),
+        ncmd->index,
+        N_PeerGetSyncCommandIndexForPlayer(np, src_playernum)
+      );
     }
   }
 
@@ -791,6 +801,8 @@ void N_PackSync(netpeer_t *np) {
 
     M_PBufWriteULong(pbuf, bitmap);
 
+    M_PBufWriteInt(pbuf, G_GetGameState());
+
     NETPEER_FOR_EACH(iter) {
       unsigned int playernum  = N_PeerGetPlayernum(iter.np);
 
@@ -827,8 +839,13 @@ bool N_UnpackSync(netpeer_t *np) {
   read_ulong(pbuf, m_bitmap, "sync player bitmap");
 
   if (CLIENT) {
+    gamestate_t m_gamestate;
     int m_delta_from_tic;
     int m_delta_to_tic;
+
+    read_int(pbuf, m_gamestate, "game state");
+
+    CL_SetNewGameState(m_gamestate);
 
     for (int i = 0; i < MAXPLAYERS; i++) {
       if ((m_bitmap & (1 << i)) == 0) {

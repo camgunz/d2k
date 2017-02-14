@@ -380,6 +380,7 @@ void         P_UpdateLatestCommandIndex(int originating_playernum,
                                         unsigned int command_index);
 void         P_ForEachCommand(int playernum, GFunc func, gpointer user_data);
 void         P_ClearPlayerCommands(int playernum);
+void         P_ResetPlayerCommands(int playernum);
 void         P_IgnorePlayerCommands(int playernum);
 void         P_TrimCommands(int playernum, TrimFunc should_trim,
                                            gpointer user_data);

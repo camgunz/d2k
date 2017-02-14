@@ -122,5 +122,10 @@ int CL_GetNextCommandIndex(void) {
 void CL_Init(void) {
 }
 
+void CL_Reset(void) {
+  cl_local_command_index = 1;
+  cl_current_command_index = 1;
+}
+
 /* vi: set et ts=2 sw=2: */
 
