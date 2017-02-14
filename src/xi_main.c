@@ -58,4 +58,3 @@ void XI_RegisterInterface(void) {
 }
 
 /* vi: set et ts=2 sw=2: */
-

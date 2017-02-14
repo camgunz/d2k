@@ -25,7 +25,6 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
-
 #include "am_map.h"
 #include "d_deh.h"  // Ty 03/22/98 - externalized strings
 #include "d_event.h"
@@ -33,7 +32,7 @@
 #include "dstrings.h"
 #include "g_game.h"
 #include "m_random.h"
-#include "n_net.h"
+#include "n_main.h"
 #include "p_enemy.h"
 #include "p_inter.h"
 #include "p_setup.h"

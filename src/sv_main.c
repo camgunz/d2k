@@ -28,11 +28,8 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "g_save.h"
-#include "n_net.h"
+#include "g_state.h"
 #include "n_main.h"
-#include "n_state.h"
-#include "n_peer.h"
-#include "n_proto.h"
 #include "p_user.h"
 #include "g_game.h"
 #include "p_setup.h"
@@ -77,8 +74,8 @@ static void sv_remove_old_commands(void) {
   }
 
   NETPEER_FOR_EACH(iter) {
-    if (iter.np->sync.tic < oldest_sync_tic) {
-      oldest_sync_tic = iter.np->sync.tic;
+    if (N_PeerGetSyncTIC(iter.np) < oldest_sync_tic) {
+      oldest_sync_tic = N_PeerGetSyncTIC(iter.np);
     }
   }
 
@@ -88,7 +85,7 @@ static void sv_remove_old_commands(void) {
 
   NETPEER_FOR_EACH(iter) {
     P_TrimCommands(
-      iter.np->playernum,
+      N_PeerGetPlayernum(iter.np),
       sv_command_is_synchronized,
       GUINT_TO_POINTER(oldest_sync_tic)
     );
@@ -101,11 +98,12 @@ static void sv_remove_old_states(void) {
   NETPEER_FOR_EACH(iter) {
     netpeer_t *np = iter.np;
 
-    if (np->sync.tic > 0)
-      oldest_gametic = MIN(oldest_gametic, np->sync.tic);
+    if (N_PeerGetSyncTIC(np)) {
+      oldest_gametic = MIN(oldest_gametic, N_PeerGetSyncTIC(np));
+    }
   }
 
-  N_RemoveOldStates(oldest_gametic);
+  G_RemoveOldStates(oldest_gametic);
 }
 
 void SV_CleanupOldCommandsAndStates(void) {
@@ -216,7 +214,7 @@ bool SV_UnlagStart(void) {
   unlag_game_state->tic = gametic;
   G_WriteSaveData(unlag_game_state->data);
 
-  return N_LoadState(unlag_tic, false);
+  return G_LoadState(unlag_tic, false);
 }
 
 void SV_UnlagEnd(void) {

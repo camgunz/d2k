@@ -205,7 +205,9 @@ function netstats_widget:tick()
   if time_elapsed >= 1000 then
     local netstats = d2k.Client.get_netstats()
 
-    d2k.Client.clear_netstats()
+    -- [CG] FIXME The functionality to clear netstats has been removed, so this
+    --            widget needs to remember values between TICs if it wants to
+    --            show recent information instead of average information.
 
     if netstats ~= nil then
       local gametic = d2k.Game.get_gametic()

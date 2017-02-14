@@ -38,7 +38,7 @@
 #include "p_tick.h"
 #include "m_cheat.h"
 #include "m_argv.h"
-#include "n_net.h"
+#include "n_main.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "dstrings.h"

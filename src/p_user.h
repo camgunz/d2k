@@ -66,19 +66,8 @@ typedef enum {
 extern int weapon_preferences[2][NUMWEAPONS + 1]; /* killough 5/2/98 */
 int P_WeaponPreferred(int w1, int w2);
 
-typedef struct netticcmd_s {
-  uint32_t      index;
-  uint32_t      tic;
-  uint32_t      server_tic;
-  char          forward;
-  char          side;
-  short         angle;
-  unsigned char buttons;
-} netticcmd_t;
-
 typedef struct {
   GPtrArray *commands;
-  uint32_t   latest_synchronized_index;
   uint32_t   commands_missed;
   uint32_t   command_limit;
   uint32_t   commands_run_this_tic;
@@ -163,6 +152,16 @@ typedef struct player_message_s {
  * plus a checksum for internal state consistency.
  * CPhipps - explicitely signed the elements, since they have to be signed to work right
  */
+
+typedef struct netticcmd_s {
+  uint32_t index;
+  uint32_t tic;
+  uint32_t server_tic;
+  int8_t   forward;
+  int8_t   side;
+  int16_t  angle;
+  uint8_t  buttons;
+} netticcmd_t;
 
  /*
   * CG 04/23/2014: Un-explicitly sign the elements.  If a platform's char's are

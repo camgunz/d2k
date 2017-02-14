@@ -21,24 +21,28 @@
 /*****************************************************************************/
 
 
-#ifndef CL_MAIN_H__
-#define CL_MAIN_H__
+#ifndef N_CHAN_H__
+#define N_CHAN_H__
 
-extern int cl_extrapolate_player_positions;
+typedef struct netchan_s {
+  bool    reliable;
+  bool    throttled;
+  GArray *toc;
+  pbuf_t  messages;
+  pbuf_t  packet_data;
+  pbuf_t  packed_toc;
+  int     last_flush_tic;
+} netchan_t;
 
-bool CL_Predicting(void);
-bool CL_RunningConsoleplayerCommands(void);
-bool CL_RunningNonConsoleplayerCommands(void);
-void CL_SetRunningThinkers(bool running);
-bool CL_RunningThinkers(void);
-void CL_SetupCommandState(int playernum, unsigned int command_index);
-void CL_ShutdownCommandState(void);
-int  CL_GetCurrentCommandIndex(void);
-int  CL_GetNextCommandIndex(void);
-bool CL_ReceivedSetup(void);
-void CL_Init(void);
+void    N_ChannelInit(netchan_t *nc, bool reliable, bool throttled);
+void    N_ChannelClear(netchan_t *nc);
+void*   N_ChannelGetPacket(netchan_t *nc);
+pbuf_t* N_ChannelBeginMessage(netchan_t *nc, unsigned char type);
+bool    N_ChannelReady(netchan_t *nc);
+pbuf_t* N_ChannelGetMessage(netchan_t *nc);
+bool    N_ChannelLoadFromData(netchan_t *nc, unsigned char *data, size_t size);
+bool    N_ChannelLoadNextMessage(netchan_t *nc, net_message_e *message_type);
 
 #endif
 
 /* vi: set et ts=2 sw=2: */
-

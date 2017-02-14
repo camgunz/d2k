@@ -27,7 +27,7 @@
 #include "m_random.h"
 #include "f_wipe.h"
 #include "e6y.h"
-#include "n_net.h"
+#include "n_main.h"
 #include "r_defs.h"
 #include "v_video.h"
 

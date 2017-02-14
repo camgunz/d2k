@@ -29,6 +29,7 @@
 #include "c_main.h"
 #include "d_dump.h"
 #include "f_finale.h"
+#include "g_state.h"
 // #include "i_video.h"
 #include "m_argv.h"
 #include "m_avg.h"
@@ -45,10 +46,7 @@
 
 #include "r_defs.h"
 #include "p_user.h"
-#include "n_net.h"
 #include "n_main.h"
-#include "n_proto.h"
-#include "n_state.h"
 #include "p_ident.h"
 #include "p_setup.h"
 #include "p_tick.h"

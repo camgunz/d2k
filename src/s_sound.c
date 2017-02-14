@@ -26,7 +26,7 @@
 #include "doomdef.h"
 #include "d_main.h"
 #include "i_sound.h"
-#include "n_net.h"
+#include "n_main.h"
 #include "p_setup.h"
 #include "p_mobj.h"
 #include "sounds.h"

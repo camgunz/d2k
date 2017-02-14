@@ -31,14 +31,11 @@
 #include "e6y.h"
 #include "g_game.h"
 #include "i_video.h"
-#include "n_net.h"
-#include "p_user.h"
 #include "n_main.h"
-#include "n_state.h"
-#include "n_peer.h"
-#include "n_proto.h"
+#include "p_user.h"
 #include "r_defs.h"
 #include "cl_main.h"
+#include "cl_net.h"
 #include "p_map.h"
 #include "p_setup.h"
 #include "p_mobj.h"
@@ -196,7 +193,7 @@ static void run_queued_command(int playernum, netticcmd_t *ncmd) {
     ncmd->server_tic
   );
 
-  CL_SetupCommandState(playernum, ncmd);
+  CL_SetupCommandState(playernum, ncmd->index);
 
   player->cmd.forwardmove = ncmd->forward;
   player->cmd.sidemove    = ncmd->side;
@@ -209,7 +206,18 @@ static void run_queued_command(int playernum, netticcmd_t *ncmd) {
 
   SV_UnlagSetTIC(ncmd->tic);
 
-  N_LogCommand(ncmd);
+#if LOG_COMMANDS
+  D_Msg(MSG_CMD, "(%d): {%d/%d/%d %d %d %d %u}\n",
+    gametic,
+    ncmd->index,
+    ncmd->tic,
+    ncmd->server_tic,
+    ncmd->forward,
+    ncmd->side,
+    ncmd->angle,
+    ncmd->buttons
+  );
+#endif
 
   run_player_command(player);
 
@@ -219,7 +227,25 @@ static void run_queued_command(int playernum, netticcmd_t *ncmd) {
     P_MobjThinker(player->mo);
   }
 
-  N_LogPlayerPosition(player);
+  D_Msg(MSG_SYNC,
+    "(%d): %d: {%4d/%4d/%4d %4d/%4d/%4d %4d %4d/%4d/%4d/%4d %4d/%4u/%4u}\n",
+    gametic,
+    playernum,
+    player->mo->x           >> FRACBITS,
+    player->mo->y           >> FRACBITS,
+    player->mo->z           >> FRACBITS,
+    player->mo->momx        >> FRACBITS,
+    player->mo->momy        >> FRACBITS,
+    player->mo->momz        >> FRACBITS,
+    player->mo->angle       /  ANG1,
+    player->viewz           >> FRACBITS,
+    player->viewheight      >> FRACBITS,
+    player->deltaviewheight >> FRACBITS,
+    player->bob             >> FRACBITS,
+    player->prev_viewz      >> FRACBITS,
+    player->prev_viewangle  /  ANG1,
+    player->prev_viewpitch  /  ANG1
+  );
 
   CL_ShutdownCommandState();
 
@@ -496,7 +522,7 @@ void P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd) {
         ncmd->side    != tmp_ncmd->side    ||
         ncmd->angle   != tmp_ncmd->angle   ||
         ncmd->buttons != tmp_ncmd->buttons) {
-      D_Msg(MSG_SYNC, 
+      D_Msg(MSG_SYNC,
         "P_UnArchivePlayer(%d): command mismatch: "
         "{%d, %d, %d, %d, %d, %d, %u} != {%d, %d, %d, %d, %d, %d, %u}\n",
         playernum,

@@ -21,24 +21,22 @@
 /*****************************************************************************/
 
 
-#ifndef CL_MAIN_H__
-#define CL_MAIN_H__
+#ifndef CL_NET_H__
+#define CL_NET_H__
 
-extern int cl_extrapolate_player_positions;
-
-bool CL_Predicting(void);
-bool CL_RunningConsoleplayerCommands(void);
-bool CL_RunningNonConsoleplayerCommands(void);
-void CL_SetRunningThinkers(bool running);
-bool CL_RunningThinkers(void);
-void CL_SetupCommandState(int playernum, unsigned int command_index);
-void CL_ShutdownCommandState(void);
-int  CL_GetCurrentCommandIndex(void);
-int  CL_GetNextCommandIndex(void);
-bool CL_ReceivedSetup(void);
-void CL_Init(void);
+netpeer_t* CL_GetServerPeer(void);
+void       CL_CheckForStateUpdates(void);
+void       CL_MarkServerOutdated(void);
+void       CL_UpdateReceivedCommandIndex(unsigned int command_index);
+int        CL_StateTIC(void);
+bool       CL_ReceivedSetup(void);
+void       CL_SetAuthorizationLevel(auth_level_e level);
+void       CL_RePredict(int saved_gametic);
+bool       CL_OccurredDuringRePrediction(int tic);
+bool       CL_LoadingState(void);
+bool       CL_Synchronizing(void);
+bool       CL_RePredicting(void);
 
 #endif
 
 /* vi: set et ts=2 sw=2: */
-

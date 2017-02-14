@@ -29,179 +29,41 @@
 #include "doomstat.h"
 #include "d_event.h"
 #include "g_game.h"
-#include "n_net.h"
-#include "n_state.h"
-#include "n_peer.h"
+#include "g_state.h"
+#include "n_main.h"
 #include "p_user.h"
+#include "n_chan.h"
+#include "n_com.h"
+#include "n_sync.h"
 
 #define NET_THROTTLE_ACCEL 2
 #define NET_THROTTLE_DECEL 1
 
-#define get_netchan(netchan, netcom, chan_type)                               \
-  if (chan_type == NET_CHANNEL_RELIABLE)                                      \
-    netchan = &netcom->reliable;                                              \
-  else if (chan_type == NET_CHANNEL_UNRELIABLE)                               \
-    netchan = &netcom->unreliable;                                            \
-  else                                                                        \
-    I_Error("%s: Invalid network channel %d.\n", __func__, chan_type)
+#define MAX_SETUP_REQUEST_INTERVAL 6.0
 
-typedef struct tocentry_s {
-  unsigned int index;
-  unsigned char type;
-} tocentry_t;
-
-typedef struct packet_buf_s {
-  unsigned char *data;
-  unsigned int size;
-  unsigned int cursor;
-} packet_buf_t;
+struct netpeer_s {
+  unsigned int peernum;
+  unsigned int playernum;
+  netcom_t     com;
+  netsync_t    sync;
+  time_t       connect_start_time;
+  time_t       disconnect_start_time;
+  time_t       last_setup_request_time;
+  auth_level_e auth_level;
+};
 
 static GHashTable *net_peers = NULL;
 
-static void init_channel(netchan_t *nc) {
-  nc->toc = g_array_new(false, true, sizeof(tocentry_t));
-  M_PBufInit(&nc->messages);
-  M_PBufInit(&nc->packet_data);
-  M_PBufInit(&nc->packed_toc);
-}
-
-static void clear_channel(netchan_t *nc) {
-  if (nc->toc->len > 0)
-    g_array_remove_range(nc->toc, 0, nc->toc->len);
-  M_PBufClear(&nc->messages);
-  M_PBufClear(&nc->packet_data);
-  M_PBufClear(&nc->packed_toc);
-}
-
-static void serialize_toc(netchan_t *chan) {
-  M_PBufClear(&chan->packed_toc);
-
-  if (!M_PBufWriteMap(&chan->packed_toc, chan->toc->len))
-    I_Error("Error writing map: %s.\n", cmp_strerror(&chan->packed_toc.cmp));
-
-  D_Msg(MSG_MEM, "serialize_toc: Buffer cursor, size, capacity: %zu/%zu/%zu\n",
-    M_PBufGetCursor(&chan->packed_toc),
-    M_PBufGetSize(&chan->packed_toc),
-    M_PBufGetCapacity(&chan->packed_toc)
-  );
-
-  for (unsigned int i = 0; i < chan->toc->len; i++) {
-    tocentry_t *message = &g_array_index(chan->toc, tocentry_t, i);
-
-    if (!M_PBufWriteUInt(&chan->packed_toc, message->index))
-      I_Error("Error writing UInt: %s.\n", cmp_strerror(&chan->packed_toc.cmp));
-    if (!M_PBufWriteUChar(&chan->packed_toc, message->type))
-      I_Error("Error writing UChar: %s\n", cmp_strerror(&chan->packed_toc.cmp));
-  }
-}
-
-static bool packet_read(cmp_ctx_t *ctx, void *data, size_t limit) {
-  packet_buf_t *packet_data = (packet_buf_t *)ctx->buf;
-
-  memcpy(data, packet_data->data + packet_data->cursor, limit);
-  packet_data->cursor += limit;
-
-  return true;
-}
-
-static bool deserialize_toc(GArray *toc, unsigned char *data,
-                                         unsigned int size,
-                                         size_t *message_start_point) {
-  cmp_ctx_t cmp;
-  packet_buf_t packet_data;
-  unsigned int toc_size = 0;
-
-  cmp_init(&cmp, &packet_data, &packet_read, NULL);
-  packet_data.data = data;
-  packet_data.cursor = 0;
-  packet_data.size = size;
-
-  if (!cmp_read_map(&cmp, &toc_size)) {
-    D_Msg(MSG_DEBUG, "Error reading map: %s\n", cmp_strerror(&cmp));
-
-    D_Msg(MSG_DEBUG, "Packet data: ");
-    for (unsigned int i = 0; i < MIN(size, 26); i++)
-      D_Msg(MSG_DEBUG, "%02X ", data[i] & 0xFF);
-    D_Msg(MSG_DEBUG, "\n");
-
-    return false;
-  }
-
-  if (toc->len > 0)
-    g_array_remove_range(toc, 0, toc->len);
-
-  g_array_set_size(toc, toc_size);
-
-  for (unsigned int i = 0; i < toc_size; i++) {
-    tocentry_t *toc_entry = &g_array_index(toc, tocentry_t, i);
-
-    if (!cmp_read_uint(&cmp, &toc_entry->index)) {
-      P_Printf(consoleplayer,
-        "Error reading message index: %s\n", cmp_strerror(&cmp)
-      );
-      return false;
-    }
-
-    if (!cmp_read_uchar(&cmp, &toc_entry->type)) {
-      P_Printf(consoleplayer, "Error reading message type: %s\n",
-        cmp_strerror(&cmp)
-      );
-      return false;
-    }
-  }
-
-  *message_start_point = packet_data.cursor;
-  return true;
-}
-
-static bool channel_empty(netchan_t *nc) {
-  return nc->toc->len == 0;
-}
-
-static void init_netcom(netcom_t *nc) {
-  init_channel(&nc->incoming);
-  init_channel(&nc->reliable);
-  init_channel(&nc->unreliable);
-}
-
-static void free_netcom(netcom_t *nc) {
-  g_array_free(nc->incoming.toc, true);
-  M_PBufFree(&nc->incoming.messages);
-  M_PBufFree(&nc->incoming.packet_data);
-  g_array_free(nc->reliable.toc, true);
-  M_PBufFree(&nc->reliable.messages);
-  M_PBufFree(&nc->reliable.packet_data);
-  g_array_free(nc->unreliable.toc, true);
-  M_PBufFree(&nc->unreliable.messages);
-  M_PBufFree(&nc->unreliable.packet_data);
-}
-
-static void init_netsync(netsync_t *ns) {
-  ns->initialized = false;
-  ns->outdated = false;
-  ns->tic = 0;
-  ns->command_index = 0;
-  M_BufferInit(&ns->delta.data);
-}
-
-static void free_netsync(netsync_t *ns) {
-  ns->initialized = false;
-  ns->outdated = false;
-  ns->tic = 0;
-  ns->command_index = 0;
-  M_BufferFree(&ns->delta.data);
-}
-
 static void free_peer(netpeer_t *np) {
-  P_Printf(consoleplayer, "Removing peer %u %s:%u\n",
-    np->peernum,
-    N_IPToConstString((ENET_NET_TO_HOST_32(np->peer->address.host))),
-    np->peer->address.port
+  P_Printf(consoleplayer, "Removing peer for %u (%s:%u)\n",
+    np->playernum,
+    N_PeerGetIPAddressConstString(np),
+    N_PeerGetPort(np)
   );
 
   players[np->playernum].playerstate = PST_DISCONNECTED;
-  free_netcom(&np->netcom);
-  free_netsync(&np->sync);
+  N_ComFree(&np->com);
+  N_SyncFree(&np->sync);
   free(np);
 }
 
@@ -209,153 +71,241 @@ static void peer_destroy_func(gpointer data) {
   free_peer((netpeer_t *)data);
 }
 
+unsigned int N_PeerGetPlayernum(netpeer_t *np) {
+  return np->playernum;
+}
+
+void N_PeerSetPlayernum(netpeer_t *np, unsigned int playernum) {
+  np->playernum = playernum;
+}
+
+double N_PeerGetConnecionWaitTime(netpeer_t *np) {
+  return difftime(time(NULL), np->connect_start_time);
+}
+
+double N_PeerGetDisconnectionWaitTime(netpeer_t *np) {
+  return difftime(time(NULL), np->disconnect_start_time);
+}
+
+double N_PeerGetLastSetupRequestTime(netpeer_t *np) {
+  return difftime(time(NULL), np->last_setup_request_time);
+}
+
+void N_PeerUpdateLastSetupRequestTime(netpeer_t *np) {
+  np->last_setup_request_time = time(NULL);
+}
+
+auth_level_e N_PeerGetAuthLevel(netpeer_t *np) {
+  return np->auth_level;
+}
+
+void N_PeerSetAuthLevel(netpeer_t *np, auth_level_e auth_level) {
+  np->auth_level = auth_level;
+}
+
+bool N_PeerCheckTimeout(netpeer_t *np) {
+  time_t now = time(NULL);
+
+  if (np->connect_start_time != 0) {
+    if (difftime(now, np->connect_start_time) >
+        (NET_CONNECT_TIMEOUT * 1000)) {
+      return true;
+    }
+  }
+
+  if (np->disconnect_start_time != 0) {
+    if (difftime(now, np->disconnect_start_time) >
+        (NET_DISCONNECT_TIMEOUT * 1000)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool N_PeerCanRequestSetup(netpeer_t *np) {
+  time_t now = time(NULL);
+
+  if (np->last_setup_request_time == 0) {
+    return true;
+  }
+
+  return (
+    difftime(now, np->last_setup_request_time) <= MAX_SETUP_REQUEST_INTERVAL
+  );
+}
+
+uint32_t N_PeerGetIPAddress(netpeer_t *np) {
+  ENetPeer *enet_peer = N_ComGetENetPeer(&np->com);
+
+  return ENET_NET_TO_HOST_32(enet_peer->address.host);
+}
+
+const char* N_PeerGetIPAddressConstString(netpeer_t *np) {
+  ENetPeer *enet_peer = N_ComGetENetPeer(&np->com);
+
+  return N_IPToConstString(ENET_NET_TO_HOST_32(enet_peer->address.host));
+}
+
+unsigned short N_PeerGetPort(netpeer_t * np) {
+  ENetPeer *enet_peer = N_ComGetENetPeer(&np->com);
+
+  return enet_peer->address.port;
+}
+
 void N_InitPeers(void) {
   net_peers = g_hash_table_new_full(NULL, NULL, NULL, peer_destroy_func);
 }
 
-unsigned int N_PeerAdd(void) {
-  netpeer_t *np = calloc(1, sizeof(netpeer_t));
-
-  init_netcom(&np->netcom);
-  init_netsync(&np->sync);
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    np->command_indices[i] = 0;
+unsigned int N_PeerGetCount(void) {
+  if (!net_peers) {
+    return 0;
   }
+
+  return g_hash_table_size(net_peers);
+}
+
+netpeer_t* N_PeerAdd(void *enet_peer) {
+  netpeer_t *np = NULL;
+  unsigned int playernum;
+
+  if (SERVER) {
+    for (playernum = 0; playernum < MAXPLAYERS; playernum++) {
+      if (players[playernum].playerstate == PST_DISCONNECTED) {
+        continue;
+      }
+
+      if (!playeringame[playernum]) {
+        break;
+      }
+    }
+
+    if (playernum == MAXPLAYERS) {
+      return NULL;
+    }
+  }
+
+  np = calloc(1, sizeof(netpeer_t));
+
+  N_ComInit(&np->com, enet_peer);
+  N_SyncInit(&np->sync);
 
   np->peernum = 1;
   while (g_hash_table_contains(net_peers, GUINT_TO_POINTER(np->peernum))) {
     np->peernum++;
   }
 
-  np->playernum          = 0;
-  np->peer               = NULL;
-  np->auth_level         = AUTH_LEVEL_NONE;
-  np->connect_time       = time(NULL);
-  np->disconnect_time    = 0;
-  np->last_setup_request = 0;
-  np->bytes_uploaded     = 0;
-  np->bytes_downloaded   = 0;
-
-  g_hash_table_insert(net_peers, GUINT_TO_POINTER(np->peernum), np);
-
-  return np->peernum;
-}
-
-void N_PeerSetConnected(int peernum, ENetPeer *peer) {
-  netpeer_t *np = N_PeerGet(peernum);
-
-  if (np == NULL)
-    I_Error("N_PeerSetConnected: Invalid peer %d.\n", peernum);
-
-  np->peer = peer;
-  np->connect_time = 0;
-  /*
-  enet_peer_throttle_configure(
-    peer,
-    ENET_PEER_PACKET_THROTTLE_INTERVAL,
-    ENET_PEER_PACKET_THROTTLE_SCALE,
-    ENET_PEER_PACKET_THROTTLE_SCALE
-  );
-  */
+  np->playernum               = playernum;
+  np->auth_level              = AUTH_LEVEL_NONE;
+  np->connect_start_time      = time(NULL);
+  np->disconnect_start_time   = 0;
+  np->last_setup_request_time = 0;
 
   if (SERVER) {
     enet_peer_throttle_configure(
-      peer,
+      enet_peer,
       300,
       NET_THROTTLE_ACCEL,
       NET_THROTTLE_DECEL
     );
   }
+  /*
+  else {
+    enet_peer_throttle_configure(
+      enet_peer,
+      ENET_PEER_PACKET_THROTTLE_INTERVAL,
+      ENET_PEER_PACKET_THROTTLE_SCALE,
+      ENET_PEER_PACKET_THROTTLE_SCALE
+    );
+  }
+  */
+
+  g_hash_table_insert(net_peers, GUINT_TO_POINTER(np->peernum), np);
+
+  if (SERVER) {
+    /* [CG] Should this really be gametic, not 0? */
+    N_SyncSetTIC(&np->sync, gametic);
+    playeringame[playernum] = true;
+    players[playernum].playerstate = PST_REBORN;
+    players[playernum].connect_tic = gametic;
+  }
+
+  return np;
 }
 
-void N_PeerSetDisconnected(int peernum) {
-  netpeer_t *np = N_PeerGet(peernum);
+netpeer_t* N_PeerGet(int peernum) {
+  if (!net_peers) {
+    return NULL;
+  }
 
-  if (np == NULL)
-    I_Error("N_PeerSetConnected: Invalid peer %d.\n", peernum);
+  return g_hash_table_lookup(net_peers, GUINT_TO_POINTER(peernum));
+}
 
-  np->disconnect_time = time(NULL);
-  enet_peer_disconnect(np->peer, 0);
+netpeer_t* N_PeerForPeer(void *enet_peer) {
+  GHashTableIter it;
+  gpointer key, value;
+  ENetPeer *epeer = (ENetPeer *)enet_peer;
+
+  g_hash_table_iter_init(&it, net_peers);
+
+  while (g_hash_table_iter_next(&it, &key, &value)) {
+    netpeer_t *np = (netpeer_t *)value;
+    ENetPeer *np_epeer = N_ComGetENetPeer(&np->com);
+
+    if (np_epeer->connectID == epeer->connectID) {
+      return np;
+    }
+  }
+
+  return NULL;
+}
+
+netpeer_t* N_PeerForPlayer(unsigned int playernum) {
+  GHashTableIter it;
+  gpointer key, value;
+
+  g_hash_table_iter_init(&it, net_peers);
+
+  while (g_hash_table_iter_next(&it, &key, &value)) {
+    netpeer_t *np = (netpeer_t *)value;
+
+    if (np->playernum == playernum) {
+      return np;
+    }
+  }
+
+  return NULL;
+}
+
+unsigned int N_PeerGetNumForPlayer(unsigned int playernum) {
+  netpeer_t *np = N_PeerForPlayer(playernum);
+
+  if (np) {
+    return np->peernum;
+  }
+
+  return 0;
 }
 
 void N_PeerRemove(netpeer_t *np) {
   g_hash_table_remove(net_peers, GUINT_TO_POINTER(np->peernum));
 }
 
-void N_PeerIterRemove(netpeer_iter_t *it, netpeer_t *np) {
-  g_hash_table_iter_remove(it);
+void N_PeerSetConnected(netpeer_t *np) {
+  np->connect_start_time = 0;
 }
 
-unsigned int N_PeerGetCount(void) {
-  if (net_peers == NULL)
-    return 0;
+void N_PeerDisconnect(netpeer_t *np) {
+  ENetPeer *epeer = N_ComGetENetPeer(&np->com);
 
-  return g_hash_table_size(net_peers);
-}
-
-netpeer_t* N_PeerGet(int peernum) {
-  if (!net_peers)
-    return NULL;
-
-  return g_hash_table_lookup(net_peers, GUINT_TO_POINTER(peernum));
-}
-
-netpeer_t* CL_GetServerPeer(void) {
-  return N_PeerGet(1);
-}
-
-unsigned int N_PeerForPeer(ENetPeer *peer) {
-  GHashTableIter it;
-  gpointer key, value;
-
-  g_hash_table_iter_init(&it, net_peers);
-
-  while (g_hash_table_iter_next(&it, &key, &value)) {
-    netpeer_t *np = (netpeer_t *)value;
-
-    if (np->peer->connectID == peer->connectID)
-      return np->peernum;
-  }
-
-  return 0;
-}
-
-netpeer_t* N_PeerForPlayer(short playernum) {
-  GHashTableIter it;
-  gpointer key, value;
-
-  g_hash_table_iter_init(&it, net_peers);
-
-  while (g_hash_table_iter_next(&it, &key, &value)) {
-    netpeer_t *np = (netpeer_t *)value;
-
-    if (np->playernum == playernum)
-      return np;
-  }
-
-  return NULL;
-}
-
-unsigned int N_PeerGetNumForPlayer(short playernum) {
-  GHashTableIter it;
-  gpointer key, value;
-
-  g_hash_table_iter_init(&it, net_peers);
-
-  while (g_hash_table_iter_next(&it, &key, &value)) {
-    netpeer_t *np = (netpeer_t *)value;
-
-    if (np->playernum == playernum)
-      return np->peernum;
-  }
-
-  return 0;
+  enet_peer_disconnect(epeer, 0);
+  np->disconnect_start_time = time(NULL);
 }
 
 bool N_PeerIter(netpeer_iter_t **it, netpeer_t **np) {
   gpointer key, value;
 
-  if (*it == NULL) {
+  if (!*it) {
     *it = malloc(sizeof(GHashTableIter));
     g_hash_table_iter_init(*it, net_peers);
   }
@@ -366,247 +316,182 @@ bool N_PeerIter(netpeer_iter_t **it, netpeer_t **np) {
   }
 
   free(*it);
-  return false;
-}
-
-bool N_PeerCheckTimeout(int peernum) {
-  time_t t = time(NULL);
-  netpeer_t *np = N_PeerGet(peernum);
-
-  if (np == NULL)
-    return false;
-
-  if ((np->connect_time != 0) &&
-      (difftime(t, np->connect_time) > (NET_CONNECT_TIMEOUT * 1000))) {
-    return true;
-  }
-
-  if ((np->disconnect_time != 0) &&
-      (difftime(t, np->disconnect_time) > (NET_DISCONNECT_TIMEOUT * 1000))) {
-    return true;
-  }
 
   return false;
 }
 
-void N_PeerFlushReliableChannel(netpeer_t *np) {
-  if (channel_empty(&np->netcom.reliable)) {
-    return;
-  }
-
-  enet_peer_send(
-    np->peer,
-    NET_CHANNEL_RELIABLE,
-    N_PeerGetPacket(np->peernum, NET_CHANNEL_RELIABLE)
-  );
-
-  clear_channel(&np->netcom.reliable);
+void N_PeerIterRemove(netpeer_iter_t *it, netpeer_t *np) {
+  g_hash_table_iter_remove(it);
 }
 
-void N_PeerFlushUnreliableChannel(netpeer_t *np) {
-  if (channel_empty(&np->netcom.unreliable)) {
-    return;
-  }
-
-  enet_peer_send(
-    np->peer,
-    NET_CHANNEL_UNRELIABLE,
-    N_PeerGetPacket(np->peernum, NET_CHANNEL_UNRELIABLE)
-  );
+void N_PeerFlushChannel(netpeer_t *np, net_channel_e channel) {
+  N_ComFlushChannel(&np->com, channel);
 }
 
-pbuf_t* N_PeerBeginMessage(int peernum, net_channel_e chan_type,
-                                        unsigned char type) {
-  netpeer_t *np = N_PeerGet(peernum);
-  netcom_t *nc = NULL;
-  netchan_t *chan = NULL;
-  tocentry_t *toc_entry = NULL;
-
-  if (!np) {
-    I_Error("N_PeerBeginMessage: Invalid peer number %d.\n", peernum);
+void N_PeerFlushChannels(netpeer_t *np) {
+  for (size_t channel = 0; channel < NET_CHANNEL_MAX; channel++) {
+    N_PeerFlushChannel(np, channel);
   }
-
-  nc = &np->netcom;
-  get_netchan(chan, nc, chan_type);
-
-  for (unsigned int i = 0; i < chan->toc->len; i++) {
-    toc_entry = &g_array_index(chan->toc, tocentry_t, i);
-
-    if (toc_entry->index == 0 && toc_entry->type == 0) {
-      break;
-    }
-
-    toc_entry = NULL;
-  }
-
-  if (!toc_entry) {
-    g_array_set_size(chan->toc, chan->toc->len + 1);
-    toc_entry = &g_array_index(chan->toc, tocentry_t, chan->toc->len - 1);
-  }
-
-  toc_entry->index = M_PBufGetCursor(&chan->messages);
-  toc_entry->type = type;
-
-  return &chan->messages;
 }
 
-ENetPacket* N_PeerGetPacket(int peernum, net_channel_e chan_type) {
-  netpeer_t *np = N_PeerGet(peernum);
-  netcom_t *nc = NULL;
-  netchan_t *chan = NULL;
-  size_t toc_size, msg_size, packet_size;
-  ENetPacket *packet = NULL;
-
-  if (np == NULL)
-    I_Error("N_PeerGetPacket: Invalid peer number %d.\n", peernum);
-
-  nc = &np->netcom;
-  get_netchan(chan, nc, chan_type);
-
-  M_PBufClear(&chan->packed_toc);
-  serialize_toc(chan);
-
-  toc_size = M_PBufGetSize(&chan->packed_toc);
-  msg_size = M_PBufGetSize(&chan->messages);
-  packet_size = toc_size + msg_size;
-
-  if (chan_type == NET_CHANNEL_RELIABLE) {
-    packet = enet_packet_create(NULL, packet_size, ENET_PACKET_FLAG_RELIABLE);
-  }
-  else {
-    packet = enet_packet_create(
-      NULL, packet_size, ENET_PACKET_FLAG_UNSEQUENCED
-    );
-  }
-
-  np->bytes_uploaded += packet_size;
-
-  memcpy(packet->data, M_PBufGetData(&chan->packed_toc), toc_size);
-  memcpy(packet->data + toc_size, M_PBufGetData(&chan->messages), msg_size);
-
-  if (packet->data[2] != 4) {
-    D_Msg(MSG_NET,
-      "Sending packet (packet size %zu):\n", packet->dataLength
-    );
-    for (int i = 0; i < MIN(26, packet->dataLength); i++)
-      D_Msg(MSG_NET, "%02X ", packet->data[i] & 0xFF);
-    D_Msg(MSG_NET, "\n");
-  }
-
-  return packet;
+pbuf_t* N_PeerBeginMessage(netpeer_t *np, net_message_e type) {
+  return N_ComBeginMessage(&np->com, type);
 }
 
-bool N_PeerLoadIncoming(int peernum, unsigned char *data, size_t size) {
-  netpeer_t *np = N_PeerGet(peernum);
-  netchan_t *incoming = NULL;
-  size_t message_start_point = 0;
-  buf_t buf;
-
-  if (np == NULL)
-    I_Error("N_PeerLoadIncoming: Invalid peer number %d.\n", peernum);
-
-  np->bytes_downloaded += size;
-
-  incoming = &np->netcom.incoming;
-  clear_channel(incoming);
-  M_BufferInitWithCapacity(&buf, size);
-  M_BufferWrite(&buf, data, size);
-
-  if (!deserialize_toc(incoming->toc, data, size, &message_start_point)) {
-    for (size_t i = 0; i < size; i++)
-      printf("%02X ", data[i] & 0xFF);
-    printf("\n");
-    M_BufferPrint(&buf);
-    I_Error("N_PeerLoadIncoming: Error reading packet's TOC.\n");
-    return false;
-  }
-
-  M_BufferFree(&buf);
-
-  if (message_start_point >= size) {
-    P_Printf(consoleplayer, "N_PeerLoadIncoming: Received empty packet.\n");
-    return false;
-  }
-
-  M_PBufSetData(
-    &incoming->messages, data + message_start_point, size - message_start_point
-  );
-
-  if (data[2] != 4) {
-    D_Msg(MSG_NET, "Received packet (packet size %zu):\n", size);
-    for (int i = 0; i < MIN(26, size); i++)
-      D_Msg(MSG_NET, "%02X ", data[i] & 0xFF);
-    D_Msg(MSG_NET, "\n");
-  }
-
-  return true;
+bool N_PeerSetIncoming(netpeer_t *np, unsigned char *data, size_t size) {
+  return N_ComSetIncoming(&np->com, data, size);
 }
 
-bool N_PeerLoadNextMessage(int peernum, unsigned char *message_type) {
-  netpeer_t *np = N_PeerGet(peernum);
-  tocentry_t *toc_entry = NULL;
-  netchan_t *incoming = NULL;
-  bool valid_message = true;
-  unsigned int i = 0;
-
-  if (np == NULL)
-    I_Error("N_PeerLoadNextMessage: Invalid peer number %d.\n", peernum);
-
-  incoming = &np->netcom.incoming;
-
-  if (incoming->toc->len == 0)
-    return false;
-
-  while (i < incoming->toc->len) {
-    toc_entry = &g_array_index(incoming->toc, tocentry_t, i);
-
-    if (toc_entry->index >= M_PBufGetSize(&incoming->messages)) {
-      P_Printf(consoleplayer,
-        "N_PeerLoadNextMessage: Invalid message index (%u >= %zu).\n",
-        toc_entry->index, M_PBufGetSize(&incoming->messages)
-      );
-      valid_message = false;
-      break;
-    }
-
-    *message_type = toc_entry->type;
-    M_PBufSeek(&incoming->messages, toc_entry->index);
-    i++;
-  }
-
-  if (incoming->toc->len > 0)
-    g_array_remove_range(incoming->toc, 0, i);
-
-  return valid_message;
+bool N_PeerLoadNextMessage(netpeer_t *np, net_message_e *message_type) {
+  return N_ComLoadNextMessage(&np->com, message_type);
 }
 
-void N_PeerClearReliable(int peernum) {
-  netpeer_t *np = N_PeerGet(peernum);
-
-  if (np == NULL)
-    I_Error("N_PeerClearReliable: Invalid peer number %d.\n", peernum);
-
-  clear_channel(&np->netcom.reliable);
+pbuf_t* N_PeerGetIncomingMessageData(netpeer_t *np) {
+  return N_ComGetIncomingMessageData(&np->com);
 }
 
-void N_PeerClearUnreliable(int peernum) {
-  netpeer_t *np = N_PeerGet(peernum);
-
-  if (np == NULL)
-    I_Error("N_PeerClearUnreliable: Invalid peer number %d.\n", peernum);
-
-  clear_channel(&np->netcom.unreliable);
+void N_PeerClearChannel(netpeer_t *np, net_channel_e channel) {
+  N_ComClearChannel(&np->com, channel);
 }
 
-void N_PeerResetSync(int peernum) {
-  netpeer_t *np = N_PeerGet(peernum);
+void N_PeerSendReset(netpeer_t *np) {
+  N_ComSendReset(&np->com);
+}
 
-  if (np == NULL)
-    I_Error("N_PeerResetSync: Invalid peer number %d.\n", peernum);
+size_t N_PeerGetBytesUploaded(netpeer_t *np) {
+  return N_ComGetBytesUploaded(&np->com);
+}
 
-  np->sync.initialized = false;
-  np->sync.outdated = false;
+size_t N_PeerGetBytesDownloaded(netpeer_t *np) {
+  return N_ComGetBytesDownloaded(&np->com);
+}
+
+bool N_PeerSyncOutdated(netpeer_t *np) {
+  return N_SyncOutdated(&np->sync);
+}
+
+void N_PeerSyncSetOutdated(netpeer_t *np) {
+  N_SyncSetOutdated(&np->sync);
+}
+
+void N_PeerSyncSetNotOutdated(netpeer_t *np) {
+  N_SyncSetNotOutdated(&np->sync);
+}
+
+bool N_PeerSyncNeedsGameInfo(netpeer_t *np) {
+  return N_SyncNeedsGameInfo(&np->sync);
+}
+
+void N_PeerSyncSetNeedsGameInfo(netpeer_t *np) {
+  N_SyncSetNeedsGameInfo(&np->sync);
+}
+
+void N_PeerSyncSetHasGameInfo(netpeer_t *np) {
+  N_SyncSetHasGameInfo(&np->sync);
+}
+
+bool N_PeerSyncNeedsGameState(netpeer_t *np) {
+  return N_SyncNeedsGameState(&np->sync);
+}
+
+void N_PeerSyncSetNeedsGameState(netpeer_t *np) {
+  N_SyncSetNeedsGameState(&np->sync);
+}
+
+void N_PeerSyncSetHasGameState(netpeer_t *np) {
+  N_SyncSetHasGameState(&np->sync);
+}
+
+bool N_PeerSynchronized(netpeer_t *np) {
+  return !(N_PeerSyncNeedsGameInfo(np) || N_PeerSyncNeedsGameState(np));
+}
+
+bool N_PeerSyncUpdated(netpeer_t *np) {
+  return N_SyncUpdated(&np->sync);
+}
+
+void N_PeerSyncSetUpdated(netpeer_t *np) {
+  N_SyncSetUpdated(&np->sync);
+}
+
+void N_PeerSyncSetNotUpdated(netpeer_t *np) {
+  N_SyncSetNotUpdated(&np->sync);
+}
+
+bool N_PeerTooLagged(netpeer_t *np) {
+  return N_SyncTooLagged(&np->sync);
+}
+
+int N_PeerGetSyncTIC(netpeer_t *np) {
+  return N_SyncGetTIC(&np->sync);
+}
+
+void N_PeerSetSyncTIC(netpeer_t *np, int sync_tic) {
+  N_SyncSetTIC(&np->sync, sync_tic);
+}
+
+void N_PeerUpdateSyncTIC(netpeer_t *np, int sync_tic) {
+  N_SyncUpdateTIC(&np->sync, sync_tic);
+}
+
+unsigned int N_PeerGetSyncCommandIndex(netpeer_t *np) {
+  return N_SyncGetCommandIndex(&np->sync);
+}
+
+void N_PeerSetSyncCommandIndex(netpeer_t *np, unsigned int command_index) {
+  N_SyncSetCommandIndex(&np->sync, command_index);
+}
+
+void N_PeerUpdateSyncCommandIndex(netpeer_t *np, unsigned int command_index) {
+  N_SyncUpdateCommandIndex(&np->sync, command_index);
+}
+
+game_state_delta_t* N_PeerGetSyncStateDelta(netpeer_t *np) {
+  return N_SyncGetStateDelta(&np->sync);
+}
+
+void N_PeerUpdateSyncStateDelta(netpeer_t *np, int from_tic,
+                                               int to_tic,
+                                               pbuf_t *delta_data) {
+  N_SyncUpdateStateDelta(&np->sync, from_tic, to_tic, delta_data);
+}
+
+void N_PeerBuildNewSyncStateDelta(netpeer_t *np) {
+  N_SyncBuildNewStateDelta(&np->sync);
+}
+
+bool N_PeerSyncStateDeltaUpdated(netpeer_t *np) {
+  return N_SyncUpdated(&np->sync);
+}
+
+void N_PeerResetSyncStateDelta(netpeer_t *np, int sync_tic, int from_tic,
+                                                            int to_tic) {
+  N_SyncResetStateDelta(&np->sync, sync_tic, from_tic, to_tic);
+}
+
+unsigned int N_PeerGetSyncCommandIndexForPlayer(netpeer_t *np,
+                                            unsigned int playernum) {
+  return N_SyncGetCommandIndexForPlayer(&np->sync, playernum);
+}
+
+void N_PeerSetSyncCommandIndexForPlayer(netpeer_t *np,
+                                       unsigned int playernum,
+                                       unsigned int command_index) {
+  N_SyncSetCommandIndexForPlayer(&np->sync, playernum, command_index);
+}
+
+void N_PeerUpdateSyncCommandIndexForPlayer(netpeer_t *np,
+                                           unsigned int playernum,
+                                           unsigned int command_index) {
+  N_SyncUpdateCommandIndexForPlayer(&np->sync, playernum, command_index);
+}
+
+void N_PeerResetSync(netpeer_t *np) {
+  N_SyncReset(&np->sync);
+}
+
+void* N_PeerGetENetPeer(netpeer_t *np) {
+  return N_ComGetENetPeer(&np->com);
 }
 
 /* vi: set et ts=2 sw=2: */
-

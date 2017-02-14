@@ -28,8 +28,6 @@
 #include "d_event.h"
 #include "m_random.h"
 #include "p_user.h"
-#include "n_net.h"
-#include "n_main.h"
 #include "g_game.h"
 #include "d_net.h"
 
@@ -102,8 +100,9 @@ int (P_Random)(pr_class_t pr_class
   // much more unstable method by putting everything
   // except pr_misc into pr_all_in_one
 
-  if (pr_class != pr_misc && !demo_insurance)      // killough 3/31/98
+  if (pr_class != pr_misc && !demo_insurance) {    // killough 3/31/98
     pr_class = pr_all_in_one;
+  }
 
   boom = rng.seed[pr_class];
 
@@ -111,8 +110,9 @@ int (P_Random)(pr_class_t pr_class
 
   rng.seed[pr_class] = boom * 1664525ul + 221297ul + pr_class * 2;
 
-  if (demo_compatibility)
+  if (demo_compatibility) {
     return rndtable[compat];
+  }
 
   boom >>= 20;
 
@@ -124,22 +124,25 @@ int (P_Random)(pr_class_t pr_class
    *       but does it break Boom ones?
    */
 
-  if (demo_insurance)
+  if (demo_insurance) {
     boom += (gametic - basetic) * 7;
+  }
 
   return boom & 255;
 }
 
 int D_Random(void) {
-  if (!g_rand)
+  if (!g_rand) {
     g_rand = g_rand_new();
+  }
 
   return g_rand_int(g_rand);
 }
 
 int D_RandomRange(int begin, int end) {
-  if (!g_rand)
+  if (!g_rand) {
     g_rand = g_rand_new();
+  }
 
   return g_rand_int_range(g_rand, begin, end);
 }
@@ -155,11 +158,11 @@ void M_ClearRandom(void) {
   int i;
   unsigned int seed = rngseed * 2 + 1;     // add 3/26/98: add rngseed
 
-  for (i = 0; i < NUMPRCLASS; i++)         // go through each pr_class and set
+  for (i = 0; i < NUMPRCLASS; i++) {       // go through each pr_class and set
     rng.seed[i] = seed *= 69069ul;     // each starting seed differently
+  }
 
   rng.prndindex = rng.rndindex = 0;    // clear two compatibility indices
 }
 
 /* vi: set et ts=2 sw=2: */
-

@@ -33,7 +33,7 @@
 #include "i_video.h"
 #include "m_cheat.h"
 #include "m_random.h"
-#include "n_net.h"
+#include "n_main.h"
 #include "r_defs.h"
 #include "r_data.h"
 #include "r_draw.h"
@@ -445,17 +445,15 @@ bool ST_Responder(event_t *ev) {
   return false;
 }
 
-static int ST_calcPainOffset(void)
-{
+static int ST_calcPainOffset(void) {
   static int lastcalc;
   static int oldhealth = -1;
   int health = plyr->health > 100 ? 100 : plyr->health;
 
-  if (health != oldhealth)
-    {
-      lastcalc = ST_FACESTRIDE * (((100 - health) * ST_NUMPAINFACES) / 101);
-      oldhealth = health;
-    }
+  if (health != oldhealth) {
+    lastcalc = ST_FACESTRIDE * (((100 - health) * ST_NUMPAINFACES) / 101);
+    oldhealth = health;
+  }
   return lastcalc;
 }
 

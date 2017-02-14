@@ -27,42 +27,50 @@
 #include "doomstat.h"
 #include "d_event.h"
 #include "g_game.h"
-#include "n_net.h"
+#include "n_main.h"
 #include "x_intern.h"
 #include "x_main.h"
 
 static int XN_IsSingleplayer(lua_State *L) {
-  if (SINGLEPLAYER)
+  if (SINGLEPLAYER) {
     lua_pushboolean(L, true);
-  else
+  }
+  else {
     lua_pushboolean(L, false);
+  }
 
   return 1;
 }
 
 static int XN_IsMultiplayer(lua_State *L) {
-  if (MULTINET)
+  if (MULTINET) {
     lua_pushboolean(L, true);
-  else
+  }
+  else {
     lua_pushboolean(L, false);
+  }
 
   return 1;
 }
 
 static int XN_IsClient(lua_State *L) {
-  if (CLIENT)
+  if (CLIENT) {
     lua_pushboolean(L, true);
-  else
+  }
+  else {
     lua_pushboolean(L, false);
+  }
 
   return 1;
 }
 
 static int XN_IsServer(lua_State *L) {
-  if (SERVER)
+  if (SERVER) {
     lua_pushboolean(L, true);
-  else
+  }
+  else {
     lua_pushboolean(L, false);
+  }
 
   return 1;
 }

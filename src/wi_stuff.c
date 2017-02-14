@@ -29,6 +29,7 @@
 #include "m_random.h"
 #include "w_wad.h"
 #include "g_game.h"
+#include "n_main.h"
 #include "r_defs.h"
 #include "r_data.h"
 #include "r_patch.h"
@@ -39,8 +40,6 @@
 #include "s_sound.h"
 #include "sounds.h"
 #include "r_draw.h"
-
-#include "n_net.h"
 
 // Ty 03/17/98: flag that new par times have been loaded in d_deh
 extern bool deh_pars;

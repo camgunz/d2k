@@ -30,10 +30,8 @@
 #include "d_event.h"
 #include "e6y.h"
 #include "g_game.h"
-#include "n_net.h"
+#include "g_state.h"
 #include "n_main.h"
-#include "n_state.h"
-#include "n_peer.h"
 #include "p_map.h"
 #include "p_setup.h"
 #include "p_mobj.h"
@@ -344,10 +342,13 @@ static void run_thinkers_and_specials(void) {
 }
 
 void P_Ticker(void) {
-  if (!setup_tic())
-    return;
+  gamestate_t gs = G_GetGameState();
 
-  if (gamestate != GS_LEVEL) {
+  if (!setup_tic()) {
+    return;
+  }
+
+  if (gs != GS_LEVEL) {
     P_MapEnd();
     return; // not if this is an intermission screen
   }

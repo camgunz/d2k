@@ -32,7 +32,7 @@
 #include "g_game.h"
 #include "g_save.h"
 #include "m_menu.h"
-#include "n_net.h"
+#include "n_main.h"
 #include "p_ident.h"
 #include "r_defs.h"
 #include "v_video.h"

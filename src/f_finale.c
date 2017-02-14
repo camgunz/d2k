@@ -32,7 +32,7 @@
 #include "f_finale.h" // CPhipps - hmm...
 #include "p_user.h"
 #include "g_game.h"
-#include "n_net.h"
+#include "n_main.h"
 #include "r_defs.h"
 #include "r_state.h"
 #include "s_sound.h"

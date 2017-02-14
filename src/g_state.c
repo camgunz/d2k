@@ -25,8 +25,6 @@
 
 #include "z_zone.h"
 
-#include <enet/enet.h>
-
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
@@ -35,9 +33,8 @@
 #include "p_user.h"
 #include "g_game.h"
 #include "g_save.h"
-#include "n_net.h"
-#include "n_state.h"
-#include "n_peer.h"
+#include "n_main.h"
+#include "g_state.h"
 
 static game_state_t *latest_game_state = NULL;
 static GHashTable *saved_game_states = NULL;
@@ -77,53 +74,77 @@ static gboolean state_is_old(gpointer key, gpointer value, gpointer user_data) {
 game_state_t* get_new_state(int tic) {
   game_state_t *new_gs = malloc(sizeof(game_state_t));
 
-  if (new_gs == NULL)
+  if (!new_gs) {
     I_Error("get_new_state: Error allocating new game state");
+  }
 
-  if (g_queue_is_empty(state_data_buffer_queue))
+  if (g_queue_is_empty(state_data_buffer_queue)) {
     new_gs->data = M_PBufNewWithCapacity(MAX(average_state_size.value, 16384));
-  else
+  }
+  else {
     new_gs->data = g_queue_pop_head(state_data_buffer_queue);
+  }
 
   new_gs->tic = tic;
 
   return new_gs;
 }
 
-void N_InitStates(void) {
+void G_DeltaInit(game_state_delta_t *delta) {
+  delta->from_tic = 0;
+  delta->to_tic = 0;
+  M_BufferInit(&delta->data);
+}
+
+void G_DeltaClear(game_state_delta_t *delta) {
+  delta->from_tic = 0;
+  delta->to_tic = 0;
+  M_BufferClear(&delta->data);
+}
+
+void G_DeltaFree(game_state_delta_t *delta) {
+  delta->from_tic = 0;
+  delta->to_tic = 0;
+  M_BufferFree(&delta->data);
+}
+
+void G_InitStates(void) {
 #if DEBUG_STATES
-  if (SERVER)
+  if (SERVER) {
     D_EnableLogChannel(LOG_STATE, "server-states.log");
+  }
 #endif
   M_AverageInit(&average_state_size);
 
-  if (saved_game_states != NULL)
+  if (saved_game_states) {
     g_hash_table_destroy(saved_game_states);
+  }
 
   saved_game_states = g_hash_table_new_full(
     g_direct_hash, g_direct_equal, NULL, clear_game_state_data
   );
 
-  if (state_data_buffer_queue != NULL)
+  if (state_data_buffer_queue) {
     g_queue_free_full(state_data_buffer_queue, clear_state_buffer);
+  }
 
   state_data_buffer_queue = g_queue_new();
 }
 
-void N_SaveState(void) {
+void G_SaveState(void) {
   game_state_t *gs = latest_game_state = get_new_state(gametic);
+
+  printf("(%d) Saving state\n", gametic);
 
   M_PBufClear(gs->data);
   G_WriteSaveData(gs->data);
 
   g_hash_table_insert(saved_game_states, GINT_TO_POINTER(gs->tic), gs);
 
-  M_AverageUpdate(
-    &average_state_size, M_PBufGetCapacity(gs->data)
-  );
+  M_AverageUpdate(&average_state_size, M_PBufGetCapacity(gs->data));
 }
 
-bool N_LoadState(int tic, bool call_init_new) {
+bool G_LoadState(int tic, bool call_init_new) {
   game_state_t *gs = g_hash_table_lookup(
     saved_game_states, GINT_TO_POINTER(tic)
   );
@@ -138,17 +159,17 @@ bool N_LoadState(int tic, bool call_init_new) {
   return true;
 }
 
-void N_RemoveOldStates(int tic) {
+void G_RemoveOldStates(int tic) {
   g_hash_table_foreach_remove(
     saved_game_states, state_is_old, GINT_TO_POINTER(tic)
   );
 }
 
-void N_ClearStates(void) {
+void G_ClearStates(void) {
   g_hash_table_remove_all(saved_game_states);
 }
 
-game_state_t* N_ReadNewStateFromPackedBuffer(int tic, pbuf_t *pbuf) {
+game_state_t* G_ReadNewStateFromPackedBuffer(int tic, pbuf_t *pbuf) {
   game_state_t *gs = get_new_state(tic);
 
   if (!M_PBufReadBytes(pbuf, M_PBufGetBuffer(gs->data))) {
@@ -162,21 +183,27 @@ game_state_t* N_ReadNewStateFromPackedBuffer(int tic, pbuf_t *pbuf) {
   return gs;
 }
 
-game_state_t* N_GetLatestState(void) {
+game_state_t* G_GetLatestState(void) {
+  if (latest_game_state) {
+    printf("latest_game_state->tic: %d\n", latest_game_state->tic);
+  }
+  else {
+    puts("latest_game_state is NULL");
+  }
   return latest_game_state;
 }
 
-void N_SetLatestState(game_state_t *state) {
+void G_SetLatestState(game_state_t *state) {
   latest_game_state = state;
 }
 
-bool N_LoadLatestState(bool call_init_new) {
+bool G_LoadLatestState(bool call_init_new) {
   M_PBufSeek(latest_game_state->data, 0);
 
   return G_ReadSaveData(latest_game_state->data, true, call_init_new);
 }
 
-bool N_ApplyStateDelta(game_state_delta_t *delta) {
+bool G_ApplyStateDelta(game_state_delta_t *delta) {
   game_state_t *gs = g_hash_table_lookup(
     saved_game_states, GINT_TO_POINTER(delta->from_tic)
   );
@@ -197,20 +224,21 @@ bool N_ApplyStateDelta(game_state_delta_t *delta) {
   }
 
   g_hash_table_insert(saved_game_states, GINT_TO_POINTER(new_gs->tic), new_gs);
-  N_SetLatestState(new_gs);
+  G_SetLatestState(new_gs);
 
   last_delta_loaded_from_tic = delta->from_tic;
 
   return true;
 }
 
-void N_BuildStateDelta(int tic, game_state_delta_t *delta) {
+void G_BuildStateDelta(int tic, game_state_delta_t *delta) {
   game_state_t *gs = g_hash_table_lookup(
     saved_game_states, GINT_TO_POINTER(tic)
   );
 
-  if (gs == NULL)
-    I_Error("N_BuildStateDelta: Missing game state %d.\n", tic);
+  if (!gs) {
+    I_Error("G_BuildStateDelta: Missing game state %d.\n", tic);
+  }
 
   M_BufferClear(&delta->data);
   M_BuildDelta(gs->data, latest_game_state->data, &delta->data);
@@ -219,9 +247,8 @@ void N_BuildStateDelta(int tic, game_state_delta_t *delta) {
   delta->to_tic = latest_game_state->tic;
 }
 
-int N_GetStateFromTic(void) {
+int G_GetStateFromTic(void) {
   return last_delta_loaded_from_tic;
 }
 
 /* vi: set et ts=2 sw=2: */
-

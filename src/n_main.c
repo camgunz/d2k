@@ -42,15 +42,13 @@
 #include "m_delta.h"
 #include "p_user.h"
 #include "m_menu.h"
-#include "n_net.h"
+#include "n_main.h"
 #include "p_setup.h"
 #include "p_mobj.h"
-#include "n_main.h"
-#include "n_state.h"
-#include "n_peer.h"
-#include "n_proto.h"
+#include "g_state.h"
 #include "cl_cmd.h"
 #include "cl_main.h"
+#include "cl_net.h"
 #include "sv_main.h"
 #include "p_checksum.h"
 #include "r_fps.h"
@@ -62,18 +60,14 @@
 #include "hu_stuff.h"
 
 #define DEBUG_NET 0
-#define DEBUG_SYNC 0
+#define DEBUG_SYNC 1
 #define DEBUG_SYNC_STDERR 0
 #define DEBUG_SAVE 0
 #define DEBUG_CMD 0
-#define LOG_COMMANDS 0
-#define LOG_POSITIONS 0
-#define PRINT_NETWORK_STATS 0
 // #define LOG_SECTOR 43
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
 #define SERVER_SLEEP_TIMEOUT 1
-#define SERVER_MAX_PEER_LAG (TICRATE * 4)
 #define MAX_SETUP_REQUEST_ATTEMPTS 5
 
 void G_BuildTiccmd(ticcmd_t *cmd);
@@ -83,7 +77,7 @@ static int run_tics(int tic_count) {
 
   while (tic_count--) {
     if (MULTINET) {
-      if (!D_Wiping()) {
+      if ((!D_Wiping()) && (G_GetGameState() != GS_INTERMISSION)) {
         P_BuildCommand();
       }
     }
@@ -125,98 +119,6 @@ static bool should_render(void) {
   return true;
 }
 
-#if PRINT_NETWORK_STATS
-static void print_network_stats(void) {
-  static float frequency_factor = .5;
-  static uint64_t loop_count = 0;
-
-  int frequency = TICRATE * frequency_factor;
-
-  if ((loop_count++ % frequency) != 0)
-    return;
-
-  if (N_PeerGetCount() <= 0)
-    return;
-
-  NETPEER_FOR_EACH(iter) {
-    puts("------------------------------------------------------------------------------");
-    puts("|  TIC  |      D/U      | Max/Last/Avg RTT | Max/Last/Avg RTTv |  Commands   |");
-    puts("------------------------------------------------------------------------------");
-    printf("| %5d | %4d/%4d b/s | %3d/%3d/%3d ms   | %3d/%3d/%3d ms    |     %3d %3d |\n",
-      gametic,
-      N_GetUploadBandwidth(),
-      N_GetDownloadBandwidth(),
-      iter.np->peer->lowestRoundTripTime,
-      iter.np->peer->lastRoundTripTime,
-      iter.np->peer->roundTripTime,
-      iter.np->peer->highestRoundTripTimeVariance,
-      iter.np->peer->lastRoundTripTimeVariance,
-      iter.np->peer->roundTripTimeVariance,
-      CLIENT ? CL_GetUnsynchronizedCommandCount(iter.np->playernum) : 0,
-      P_GetCommandCount(iter.np->playernum)
-    );
-    puts("------------------------------------------------------------------------------");
-    puts("| Packet Loss | Throttle | Accel | Counter | Decel | Interval | Limit |  #   |");
-    puts("------------------------------------------------------------------------------");
-    printf("| %4.1f%%/%4.1f%% |    %5d | %5d |   %5d | %5d |    %5d | %5d |   %2d |\n",
-      (iter.np->peer->packetLoss / (float)ENET_PEER_PACKET_LOSS_SCALE) * 100.f,
-      (iter.np->peer->packetLossVariance / (float)ENET_PEER_PACKET_LOSS_SCALE) * 100.f,
-      iter.np->peer->packetThrottle,
-      iter.np->peer->packetThrottleAcceleration,
-      iter.np->peer->packetThrottleCounter,
-      iter.np->peer->packetThrottleDeceleration,
-      iter.np->peer->packetThrottleInterval,
-      iter.np->peer->packetThrottleLimit,
-      iter.np->playernum
-    );
-    puts("------------------------------------------------------------------------------");
-  }
-}
-#endif
-
-void N_LogCommand(netticcmd_t *ncmd) {
-#if LOG_COMMANDS
-  D_Msg(MSG_CMD, "(%d): {%d/%d/%d %d %d %d %u}\n",
-    gametic,
-    ncmd->index,
-    ncmd->tic,
-    ncmd->server_tic,
-    ncmd->forward,
-    ncmd->side,
-    ncmd->angle,
-    ncmd->buttons
-  );
-#endif
-}
-
-void N_LogPlayerPosition(player_t *player) {
-#if LOG_POSITIONS
-  if (!player->mo) {
-    return;
-  }
-
-  D_Msg(MSG_SYNC,
-    "(%d): %td: {%4d/%4d/%4d %4d/%4d/%4d %4d %4d/%4d/%4d/%4d %4d/%4u/%4u}\n", 
-    gametic,
-    player - players,
-    player->mo->x           >> FRACBITS,
-    player->mo->y           >> FRACBITS,
-    player->mo->z           >> FRACBITS,
-    player->mo->momx        >> FRACBITS,
-    player->mo->momy        >> FRACBITS,
-    player->mo->momz        >> FRACBITS,
-    player->mo->angle       /  ANG1,
-    player->viewz           >> FRACBITS,
-    player->viewheight      >> FRACBITS,
-    player->deltaviewheight >> FRACBITS,
-    player->bob             >> FRACBITS,
-    player->prev_viewz      >> FRACBITS,
-    player->prev_viewangle  /  ANG1,
-    player->prev_viewpitch  /  ANG1
-  );
-#endif
-}
-
 void N_InitNetGame(void) {
   int i;
 
@@ -253,7 +155,6 @@ void N_InitNetGame(void) {
     char *host = NULL;
     unsigned short port = 0;
     time_t connect_time;
-    int setup_requests = 0;
 
     if (i >= myargc) {
       I_Error("-net requires an address");
@@ -263,7 +164,7 @@ void N_InitNetGame(void) {
 
     N_Init();
 
-    /* CG [FIXME] Should these use the ~/.d2k path? */
+    /* [CG] [FIXME] Should these use the ~/.d2k path? */
 
     if (DEBUG_NET && CLIENT) {
       if (!D_MsgActivateWithPath(MSG_NET, "client-net.log")) {
@@ -321,15 +222,13 @@ void N_InitNetGame(void) {
     }
 
     connect_time = time(NULL);
-    setup_requests = 0;
 
     G_ReloadDefaults();
 
     D_Msg(MSG_INFO, "N_InitNetGame: Waiting for setup information...\n");
 
-    while (true) {
+    for (size_t i = 1; i <= MAX_SETUP_REQUEST_ATTEMPTS; i++) {
       time_t now = time(NULL);
-      double elapsed;
 
       N_ServiceNetwork();
 
@@ -337,16 +236,20 @@ void N_InitNetGame(void) {
         break;
       }
 
-      elapsed = difftime(now, connect_time);
-      if (elapsed >= 1.0) {
-        if (setup_requests >= MAX_SETUP_REQUEST_ATTEMPTS) {
-          I_Error("N_InitNetGame: Timed out waiting for setup information");
-        }
+      if (difftime(now, connect_time) >= 1.0) {
         CL_SendSetupRequest();
-        setup_requests++;
         connect_time = now;
       }
     }
+
+    if (!CL_ReceivedSetup()) {
+      /*
+       * [CG] [FIXME] This should just cancel the connection and print to the
+       *              console.
+       */
+      I_Error("N_InitNetGame: Timed out waiting for setup information");
+    }
+
 
     D_Msg(MSG_INFO, "N_InitNetGame: Setup information received!\n");
   }
@@ -417,11 +320,6 @@ void N_InitNetGame(void) {
   }
 }
 
-/* CG: TODO: Add WAD fetching (waiting on libcurl) */
-bool N_GetWad(const char *name) {
-  return false;
-}
-
 void N_RunTic(void) {
   if (advancedemo) {
     D_DoAdvanceDemo();
@@ -453,23 +351,16 @@ void N_RunTic(void) {
   P_Checksum(gametic);
 
   if (SERVER && gametic > 0) {
-    /* CG: TODO: Don't save states if there are no peers, saves resources */
-    N_SaveState();
+    unsigned int peer_count = 0;
 
     NETPEER_FOR_EACH(iter) {
-      if (iter.np->sync.initialized) {
-        iter.np->sync.outdated = true;
-#if 0
-        if (playeringame[iter.np->playernum]) {
-          N_LogPlayerPosition(&players[iter.np->playernum]);
-        }
-#endif
+      if (N_PeerSynchronized(iter.np)) {
+        N_PeerSyncSetOutdated(iter.np);
       }
-      else if (gametic > iter.np->sync.tic) {
-        /*
-        SV_SendSetup(iter.np->playernum);
-        */
-      }
+    }
+
+    if (peer_count > 0) {
+      G_SaveState();
     }
 
     N_UpdateSync();
@@ -488,13 +379,16 @@ void SV_DisconnectLaggedClients(void) {
   }
 
   NETPEER_FOR_EACH(iter) {
-    if (!iter.np->sync.initialized) {
+    if (!N_PeerSynchronized(iter.np)) {
       continue;
     }
 
-    if ((gametic - iter.np->sync.tic) > SERVER_MAX_PEER_LAG) {
-      printf("(%d) Peer %d is too lagged\n", gametic, iter.np->peernum);
-      N_DisconnectPeer(iter.np->peernum);
+    if (N_PeerTooLagged(iter.np)) {
+      D_Msg(MSG_INFO, "(%d) Player %d is too lagged\n",
+        gametic,
+        N_PeerGetPlayernum(iter.np)
+      );
+      N_DisconnectPeer(iter.np);
     }
   }
 }
@@ -511,11 +405,11 @@ void SV_UpdatePings(void) {
   NETPEER_FOR_EACH(iter) {
     int playernum;
 
-    if (!iter.np->sync.initialized) {
+    if (!N_PeerSynchronized(iter.np)) {
       continue;
     }
 
-    playernum = iter.np->playernum;
+    playernum = N_PeerGetPlayernum(iter.np);
 
     if (playernum == consoleplayer) {
       continue;
@@ -525,37 +419,6 @@ void SV_UpdatePings(void) {
   }
 }
 
-static bool no_players(void) {
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i]) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-const char* N_RunningStateName(void) {
-  if (CLIENT) {
-    if (CL_Predicting()) {
-      return "predicting";
-    }
-
-    if (CL_RePredicting()) {
-      return "re-predicting";
-    }
-
-    if (CL_Synchronizing()) {
-      return "synchronizing";
-    }
-  }
-  else if (SERVER) {
-    return "server";
-  }
-
-  return "unknown!";
-}
-
 bool N_TryRunTics(void) {
   static int tics_built = 0;
 
@@ -563,7 +426,7 @@ bool N_TryRunTics(void) {
   bool needs_rendering = should_render();
 
   if (gametic > 0) {
-    if (no_players() || (tics_elapsed <= 0 && !needs_rendering)) {
+    if ((N_PeerGetCount() == 0) || (tics_elapsed <= 0 && !needs_rendering)) {
       N_ServiceNetwork();
       C_ECIService();
       I_Sleep(1);
@@ -590,10 +453,6 @@ bool N_TryRunTics(void) {
       P_Echo(consoleplayer, "Server disconnected.");
       N_Disconnect();
     }
-
-#if PRINT_NETWORK_STATS
-    print_network_stats();
-#endif
   }
 
   N_ServiceNetwork();

@@ -36,7 +36,6 @@
 #include "m_bbox.h"                                         // phares 3/20/98
 #include "m_random.h"
 #include "m_swap.h"
-#include "n_net.h"
 #include "p_inter.h"
 #include "p_map.h"
 #include "p_maputl.h"

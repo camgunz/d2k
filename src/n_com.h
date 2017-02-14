@@ -21,34 +21,38 @@
 /*****************************************************************************/
 
 
-#ifndef N_STATE_H__
-#define N_STATE_H__
+#ifndef N_COM_H__
+#define N_COM_H__
 
-typedef struct game_state_s {
-  int     tic;
-  pbuf_t *data;
-} game_state_t;
+typedef struct netcom_s {
+  netchan_t  incoming;
+  netchan_t  outgoing[NET_CHANNEL_MAX];
+  size_t     bytes_uploaded;
+  size_t     bytes_downloaded;
+  void      *enet_peer;
+} netcom_t;
 
-typedef struct game_state_delta_s {
-  int   from_tic;
-  int   to_tic;
-  buf_t data;
-} game_state_delta_t;
+typedef struct {
+  bool reliable;
+  bool throttle; /* only flushes once per TIC if true */
+} net_channel_info_t;
 
-void          N_InitStates(void);
-void          N_SaveState(void);
-bool          N_LoadState(int tic, bool call_init_new);
-void          N_RemoveOldStates(int tic);
-void          N_ClearStates(void);
-game_state_t* N_ReadNewStateFromPackedBuffer(int tic, pbuf_t *pbuf);
-game_state_t* N_GetLatestState(void);
-void          N_SetLatestState(game_state_t *state);
-bool          N_LoadLatestState(bool call_init_new);
-bool          N_ApplyStateDelta(game_state_delta_t *delta);
-void          N_BuildStateDelta(int tic, game_state_delta_t *delta);
-int           N_GetStateFromTic(void);
+extern net_channel_info_t net_channel_info[NET_CHANNEL_MAX];
+
+void    N_ComInit(netcom_t *nc, void *enet_peer);
+void    N_ComFree(netcom_t *nc);
+void    N_ComReset(netcom_t *nc);
+size_t  N_ComGetBytesUploaded(netcom_t *nc);
+size_t  N_ComGetBytesDownloaded(netcom_t *nc);
+pbuf_t* N_ComBeginMessage(netcom_t *nc, net_message_e type);
+bool    N_ComSetIncoming(netcom_t *nc, unsigned char *data, size_t size);
+void    N_ComFlushChannel(netcom_t *nc, net_channel_e channel);
+void    N_ComClearChannel(netcom_t *nc, net_channel_e channel);
+void    N_ComSendReset(netcom_t *nc);
+pbuf_t* N_ComGetIncomingMessageData(netcom_t *nc);
+bool    N_ComLoadNextMessage(netcom_t *nc, net_message_e *message_type);
+void*   N_ComGetENetPeer(netcom_t *nc);
 
 #endif
 
 /* vi: set et ts=2 sw=2: */
-

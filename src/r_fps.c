@@ -33,7 +33,6 @@
 #include "r_fps.h"
 #include "i_system.h"
 #include "e6y.h"
-#include "n_net.h"
 #include "p_user.h"
 #include "g_game.h"
 #include "p_setup.h"

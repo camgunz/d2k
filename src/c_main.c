@@ -38,12 +38,11 @@
 #include "i_system.h"
 #include "i_video.h"
 #include "p_user.h"
-#include "n_net.h"
-#include "n_main.h"
-#include "cl_main.h"
 #include "x_main.h"
 #include "p_setup.h"
 #include "g_game.h"
+#include "n_main.h"
+#include "cl_main.h"
 
 /* CG TODO: Put these in a configuration file */
 #define CONSOLE_SHORTHAND_MARKER "/"

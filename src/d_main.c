@@ -81,9 +81,8 @@
 // NSM
 #include "i_capture.h"
 
-#include "n_net.h"
+#include "g_state.h"
 #include "n_main.h"
-#include "n_state.h"
 
 void G_BuildTiccmd(ticcmd_t *cmd);
 
@@ -2171,16 +2170,20 @@ static void D_DoomMainSetup(void) {
   }
   else if (!singledemo) { /* killough 12/98 */
     if (autostart || netgame) {
-      if (autostart) // sets first map and first episode if unknown
+      if (autostart) { // sets first map and first episode if unknown
         GetFirstMap(&startepisode, &startmap);
+      }
 
-      if (CLIENT)
-        N_LoadLatestState(true);
-      else
+      if (CLIENT) {
+        G_LoadLatestState(true);
+      }
+      else {
         G_InitNew(startskill, startepisode, startmap);
+      }
 
-      if (demorecording)
+      if (demorecording) {
         G_BeginRecording();
+      }
     }
     else {
       D_StartTitle();                 // start up intro loop

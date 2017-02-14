@@ -32,7 +32,6 @@
 #include "m_argv.h"
 #include "m_bbox.h"
 #include "m_random.h"
-#include "n_net.h"
 #include "p_setup.h"
 #include "p_mobj.h"
 #include "p_inter.h"

@@ -155,6 +155,10 @@ bool M_PBufWriteCharArray(pbuf_t *pbuf, buf_t *chars) {
   return true;
 }
 
+bool M_PBufWriteS8(pbuf_t *pbuf, int8_t s8) {
+  return cmp_write_s8(&pbuf->cmp, s8);
+}
+
 bool M_PBufWriteUChar(pbuf_t *pbuf, unsigned char c) {
   return cmp_write_uint(&pbuf->cmp, c);
 }
@@ -171,6 +175,10 @@ bool M_PBufWriteUCharArray(pbuf_t *pbuf, buf_t *uchars) {
   }
 
   return true;
+}
+
+bool M_PBufWriteU8(pbuf_t *pbuf, uint8_t u8) {
+  return cmp_write_u8(&pbuf->cmp, u8);
 }
 
 bool M_PBufWriteShort(pbuf_t *pbuf, short s) {
@@ -191,6 +199,10 @@ bool M_PBufWriteShortArray(pbuf_t *pbuf, buf_t *shorts) {
   return true;
 }
 
+bool M_PBufWriteS16(pbuf_t *pbuf, int16_t s16) {
+  return cmp_write_s16(&pbuf->cmp, s16);
+}
+
 bool M_PBufWriteUShort(pbuf_t *pbuf, unsigned short s) {
   return cmp_write_uint(&pbuf->cmp, s);
 }
@@ -207,6 +219,10 @@ bool M_PBufWriteUShortArray(pbuf_t *pbuf, buf_t *ushorts) {
   }
 
   return true;
+}
+
+bool M_PBufWriteU16(pbuf_t *pbuf, uint16_t u16) {
+  return cmp_write_u16(&pbuf->cmp, u16);
 }
 
 bool M_PBufWriteInt(pbuf_t *pbuf, int i) {
@@ -227,6 +243,10 @@ bool M_PBufWriteIntArray(pbuf_t *pbuf, buf_t *ints) {
   return true;
 }
 
+bool M_PBufWriteS32(pbuf_t *pbuf, int32_t s32) {
+  return cmp_write_s32(&pbuf->cmp, s32);
+}
+
 bool M_PBufWriteUInt(pbuf_t *pbuf, unsigned int i) {
   return cmp_write_uint(&pbuf->cmp, i);
 }
@@ -243,6 +263,10 @@ bool M_PBufWriteUIntArray(pbuf_t *pbuf, buf_t *uints) {
   }
 
   return true;
+}
+
+bool M_PBufWriteU32(pbuf_t *pbuf, uint32_t u32) {
+  return cmp_write_u32(&pbuf->cmp, u32);
 }
 
 bool M_PBufWriteLong(pbuf_t *pbuf, int64_t l) {
@@ -263,6 +287,10 @@ bool M_PBufWriteLongArray(pbuf_t *pbuf, buf_t *longs) {
   return true;
 }
 
+bool M_PBufWriteS64(pbuf_t *pbuf, int64_t s64) {
+  return cmp_write_s64(&pbuf->cmp, s64);
+}
+
 bool M_PBufWriteULong(pbuf_t *pbuf, uint64_t l) {
   return cmp_write_uint(&pbuf->cmp, l);
 }
@@ -279,6 +307,10 @@ bool M_PBufWriteULongArray(pbuf_t *pbuf, buf_t *ulongs) {
   }
 
   return true;
+}
+
+bool M_PBufWriteU64(pbuf_t *pbuf, uint64_t u64) {
+  return cmp_write_u64(&pbuf->cmp, u64);
 }
 
 bool M_PBufWriteFloat(pbuf_t *pbuf, float f) {
@@ -400,6 +432,10 @@ bool M_PBufReadCharArray(pbuf_t *pbuf, buf_t *chars, size_t limit) {
   return true;
 }
 
+bool M_PBufReadS8(pbuf_t *pbuf, int8_t *s8) {
+  return cmp_read_s8(&pbuf->cmp, s8);
+}
+
 bool M_PBufReadUChar(pbuf_t *pbuf, unsigned char *c) {
   return cmp_read_uchar(&pbuf->cmp, c);
 }
@@ -425,6 +461,10 @@ bool M_PBufReadUCharArray(pbuf_t *pbuf, buf_t *uchars, size_t limit) {
   }
 
   return true;
+}
+
+bool M_PBufReadU8(pbuf_t *pbuf, uint8_t *u8) {
+  return cmp_read_u8(&pbuf->cmp, u8);
 }
 
 bool M_PBufReadShort(pbuf_t *pbuf, short *s) {
@@ -454,6 +494,10 @@ bool M_PBufReadShortArray(pbuf_t *pbuf, buf_t *shorts, size_t limit) {
   return true;
 }
 
+bool M_PBufReadS16(pbuf_t *pbuf, int16_t *s16) {
+  return cmp_read_s16(&pbuf->cmp, s16);
+}
+
 bool M_PBufReadUShort(pbuf_t *pbuf, unsigned short *s) {
   return cmp_read_ushort(&pbuf->cmp, s);
 }
@@ -479,6 +523,10 @@ bool M_PBufReadUShortArray(pbuf_t *pbuf, buf_t *ushorts, size_t limit) {
   }
 
   return true;
+}
+
+bool M_PBufReadU16(pbuf_t *pbuf, uint16_t *u16) {
+  return cmp_read_u16(&pbuf->cmp, u16);
 }
 
 bool M_PBufReadInt(pbuf_t *pbuf, int *i) {
@@ -508,6 +556,10 @@ bool M_PBufReadIntArray(pbuf_t *pbuf, buf_t *ints, size_t limit) {
   return true;
 }
 
+bool M_PBufReadS32(pbuf_t *pbuf, int32_t *s32) {
+  return cmp_read_s32(&pbuf->cmp, s32);
+}
+
 bool M_PBufReadUInt(pbuf_t *pbuf, unsigned int *i) {
   return cmp_read_uint(&pbuf->cmp, i);
 }
@@ -533,6 +585,10 @@ bool M_PBufReadUIntArray(pbuf_t *pbuf, buf_t *uints, size_t limit) {
   }
 
   return true;
+}
+
+bool M_PBufReadU32(pbuf_t *pbuf, uint32_t *u32) {
+  return cmp_read_u32(&pbuf->cmp, u32);
 }
 
 bool M_PBufReadLong(pbuf_t *pbuf, int64_t *l) {
@@ -562,6 +618,10 @@ bool M_PBufReadLongArray(pbuf_t *pbuf, buf_t *longs, size_t limit) {
   return true;
 }
 
+bool M_PBufReadS64(pbuf_t *pbuf, int64_t *s64) {
+  return cmp_read_s64(&pbuf->cmp, s64);
+}
+
 bool M_PBufReadULong(pbuf_t *pbuf, uint64_t *l) {
   return cmp_read_ulong(&pbuf->cmp, l);
 }
@@ -587,6 +647,10 @@ bool M_PBufReadULongArray(pbuf_t *pbuf, buf_t *ulongs, size_t limit) {
   }
 
   return true;
+}
+
+bool M_PBufReadU64(pbuf_t *pbuf, uint64_t *u64) {
+  return cmp_read_u64(&pbuf->cmp, u64);
 }
 
 bool M_PBufReadFloat(pbuf_t *pbuf, float *f) {

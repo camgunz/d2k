@@ -231,6 +231,18 @@ typedef enum {
   ss_max
 } ss_types;
 
+typedef enum {
+  ga_nothing,
+  ga_loadlevel,
+  ga_newgame,
+  ga_loadgame,
+  ga_savegame,
+  ga_playdemo,
+  ga_completed,
+  ga_victory,
+  ga_worlddone,
+} gameaction_t;
+
 // phares 3/20/98:
 //
 // Player friction is variable, based on controlling
@@ -241,6 +253,8 @@ typedef enum {
 #define ORIG_FRICTION          0xE800      // original value
 #define ORIG_FRICTION_FACTOR   2048        // original value
 #define FRICTION_FLY           0xeb00
+
+extern bool netgame;
 
 #endif          // __DOOMDEF__
 

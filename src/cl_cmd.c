@@ -28,13 +28,13 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
-#include "n_net.h"
-#include "n_state.h"
-#include "n_peer.h"
 #include "cl_cmd.h"
+#include "g_state.h"
 #include "p_user.h"
 #include "p_setup.h"
 #include "g_game.h"
+#include "n_main.h"
+#include "cl_net.h"
 
 static bool command_is_synchronized(gpointer data, gpointer user_data) {
   netticcmd_t *ncmd = (netticcmd_t *)data;
@@ -52,7 +52,7 @@ static bool command_is_synchronized(gpointer data, gpointer user_data) {
 }
 
 static void count_command(gpointer data, gpointer user_data) {
-  int state_tic = N_GetStateFromTic();
+  int state_tic = G_GetStateFromTic();
   netticcmd_t *ncmd = (netticcmd_t *)data;
   unsigned int *command_count = (unsigned int *)user_data;
 
@@ -62,7 +62,7 @@ static void count_command(gpointer data, gpointer user_data) {
 }
 
 void CL_TrimSynchronizedCommands(void) {
-  int state_tic = N_GetStateFromTic();
+  int state_tic = G_GetStateFromTic();
 
   D_Msg(MSG_CMD, "(%5d) Trimming synchronized commands\n", gametic);
 

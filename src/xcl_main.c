@@ -27,12 +27,11 @@
 
 #include "doomdef.h"
 #include "doomstat.h"
-#include "n_net.h"
-#include "n_state.h"
-#include "n_peer.h"
-#include "n_proto.h"
+#include "g_state.h"
+#include "n_main.h"
 #include "p_user.h"
 #include "cl_cmd.h"
+#include "cl_net.h"
 #include "x_intern.h"
 #include "x_main.h"
 #include "g_game.h"
@@ -75,15 +74,17 @@ static int XCL_SetName(lua_State *L) {
   size_t name_length = strlen(new_name);
   char *name = calloc(name_length + 1, sizeof(char));
 
-  if (!name)
+  if (!name) {
     I_Error("Error allocating player name");
+  }
 
   strncpy(name, new_name, name_length);
 
   P_SetName(consoleplayer, name);
 
-  if (CLIENT)
+  if (CLIENT) {
     CL_SendNameChange(new_name);
+  }
 
   return 0;
 }
@@ -108,86 +109,7 @@ static int XCL_GetNetstats(lua_State *L) {
   netpeer_t *server = NULL;
   float packet_loss;
   float packet_loss_jitter;
-
-  if (!CLIENT)
-    return 0;
-
-  server = CL_GetServerPeer();
-
-  packet_loss = server->peer->packetLoss;
-  packet_loss = packet_loss / (float)ENET_PEER_PACKET_LOSS_SCALE;
-
-  packet_loss_jitter = server->peer->packetLossVariance;
-  packet_loss_jitter = packet_loss_jitter / (float)ENET_PEER_PACKET_LOSS_SCALE;
-
-  lua_createtable(L, 0, 18);
-
-  lua_pushinteger(L, server->bytes_uploaded);
-  lua_setfield(L, -2, "upload");
-
-  lua_pushinteger(L, server->bytes_downloaded);
-  lua_setfield(L, -2, "download");
-
-  lua_pushinteger(L, server->peer->lowestRoundTripTime);
-  lua_setfield(L, -2, "ping_low");
-
-  lua_pushinteger(L, server->peer->lastRoundTripTime);
-  lua_setfield(L, -2, "ping_last");
-
-  /* lua_pushinteger(L, server->peer->roundTripTime); */
-  lua_pushinteger(L, players[consoleplayer].ping);
-  lua_setfield(L, -2, "ping_average");
-
-  lua_pushinteger(L, server->peer->highestRoundTripTimeVariance);
-  lua_setfield(L, -2, "jitter_high");
-
-  lua_pushinteger(L, server->peer->lastRoundTripTimeVariance);
-  lua_setfield(L, -2, "jitter_last");
-
-  lua_pushinteger(L, server->peer->roundTripTimeVariance);
-  lua_setfield(L, -2, "jitter_average");
-
-  if (CLIENT)
-    lua_pushinteger(L, CL_GetUnsynchronizedCommandCount(consoleplayer));
-  else
-    lua_pushinteger(L, 0);
-  lua_setfield(L, -2, "unsynchronized_commands");
-
-  lua_pushinteger(L, P_GetCommandCount(consoleplayer));
-  lua_setfield(L, -2, "total_commands");
-
-  lua_pushnumber(L, packet_loss);
-  lua_setfield(L, -2, "packet_loss");
-
-  lua_pushnumber(L, packet_loss_jitter);
-  lua_setfield(L, -2, "packet_loss_jitter");
-
-  lua_pushinteger(L, server->peer->packetThrottle);
-  lua_setfield(L, -2, "throttle");
-
-  lua_pushinteger(L, server->peer->packetThrottleAcceleration);
-  lua_setfield(L, -2, "throttle_acceleration");
-
-  lua_pushinteger(L, server->peer->packetThrottleCounter);
-  lua_setfield(L, -2, "throttle_counter");
-
-  lua_pushinteger(L, server->peer->packetThrottleDeceleration);
-  lua_setfield(L, -2, "throttle_deceleration");
-
-  lua_pushinteger(L, server->peer->packetThrottleInterval);
-  lua_setfield(L, -2, "throttle_interval");
-
-  lua_pushinteger(L, server->peer->packetThrottleLimit);
-  lua_setfield(L, -2, "throttle_limit");
-
-  lua_pushinteger(L, server->sync.tic);
-  lua_setfield(L, -2, "server_tic");
-
-  return 1;
-}
-
-int XCL_ClearNetstats(lua_State *L) {
-  netpeer_t *server = NULL;
+  ENetPeer *epeer = NULL;
 
   if (!CLIENT) {
     return 0;
@@ -199,10 +121,80 @@ int XCL_ClearNetstats(lua_State *L) {
     return 0;
   }
 
-  server->bytes_uploaded = 0;
-  server->bytes_downloaded = 0;
+  epeer = N_PeerGetENetPeer(server);
 
-  return 0;
+  packet_loss = epeer->packetLoss;
+  packet_loss = packet_loss / (float)ENET_PEER_PACKET_LOSS_SCALE;
+
+  packet_loss_jitter = epeer->packetLossVariance;
+  packet_loss_jitter = packet_loss_jitter / (float)ENET_PEER_PACKET_LOSS_SCALE;
+
+  lua_createtable(L, 0, 18);
+
+  lua_pushinteger(L, N_PeerGetBytesUploaded(server));
+  lua_setfield(L, -2, "upload");
+
+  lua_pushinteger(L, N_PeerGetBytesDownloaded(server));
+  lua_setfield(L, -2, "download");
+
+  lua_pushinteger(L, epeer->lowestRoundTripTime);
+  lua_setfield(L, -2, "ping_low");
+
+  lua_pushinteger(L, epeer->lastRoundTripTime);
+  lua_setfield(L, -2, "ping_last");
+
+  /* lua_pushinteger(L, epeer->roundTripTime); */
+  lua_pushinteger(L, players[consoleplayer].ping);
+  lua_setfield(L, -2, "ping_average");
+
+  lua_pushinteger(L, epeer->highestRoundTripTimeVariance);
+  lua_setfield(L, -2, "jitter_high");
+
+  lua_pushinteger(L, epeer->lastRoundTripTimeVariance);
+  lua_setfield(L, -2, "jitter_last");
+
+  lua_pushinteger(L, epeer->roundTripTimeVariance);
+  lua_setfield(L, -2, "jitter_average");
+
+  if (CLIENT) {
+    lua_pushinteger(L, CL_GetUnsynchronizedCommandCount(consoleplayer));
+  }
+  else {
+    lua_pushinteger(L, 0);
+  }
+  lua_setfield(L, -2, "unsynchronized_commands");
+
+  lua_pushinteger(L, P_GetCommandCount(consoleplayer));
+  lua_setfield(L, -2, "total_commands");
+
+  lua_pushnumber(L, packet_loss);
+  lua_setfield(L, -2, "packet_loss");
+
+  lua_pushnumber(L, packet_loss_jitter);
+  lua_setfield(L, -2, "packet_loss_jitter");
+
+  lua_pushinteger(L, epeer->packetThrottle);
+  lua_setfield(L, -2, "throttle");
+
+  lua_pushinteger(L, epeer->packetThrottleAcceleration);
+  lua_setfield(L, -2, "throttle_acceleration");
+
+  lua_pushinteger(L, epeer->packetThrottleCounter);
+  lua_setfield(L, -2, "throttle_counter");
+
+  lua_pushinteger(L, epeer->packetThrottleDeceleration);
+  lua_setfield(L, -2, "throttle_deceleration");
+
+  lua_pushinteger(L, epeer->packetThrottleInterval);
+  lua_setfield(L, -2, "throttle_interval");
+
+  lua_pushinteger(L, epeer->packetThrottleLimit);
+  lua_setfield(L, -2, "throttle_limit");
+
+  lua_pushinteger(L, N_PeerGetSyncTIC(server));
+  lua_setfield(L, -2, "server_tic");
+
+  return 1;
 }
 
 void XCL_RegisterInterface(void) {
@@ -214,8 +206,7 @@ void XCL_RegisterInterface(void) {
     "set_name",            X_FUNCTION, XCL_SetName,
     "set_team",            X_FUNCTION, XCL_SetTeam,
     "set_bobbing",         X_FUNCTION, XCL_SetBobbing,
-    "get_netstats",        X_FUNCTION, XCL_GetNetstats,
-    "clear_netstats",      X_FUNCTION, XCL_ClearNetstats
+    "get_netstats",        X_FUNCTION, XCL_GetNetstats
   );
 }
 

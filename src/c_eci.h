@@ -24,8 +24,19 @@
 #ifndef C_ECI_H__
 #define C_ECI_H__
 
-void C_ECIInit(void);
-void C_ECIService(void);
+#ifdef G_OS_UNIX
+#define C_ECIInit C_ECIInitUNIX
+#define C_ECIService C_ECIServiceUNIX
+#else
+#define C_ECIInit C_ECIInitNonUNIX
+#define C_ECIService C_ECIServiceNonUNIX
+#endif
+
+void C_ECIInitUNIX(void);
+void C_ECIServiceUNIX(void);
+
+void C_ECIInitNonUNIX(void);
+void C_ECIServiceNonUNIX(void);
 
 #endif
 

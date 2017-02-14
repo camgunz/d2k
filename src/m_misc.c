@@ -53,7 +53,7 @@
 #include "r_patch.h"
 #include "r_things.h"
 #include "r_sky.h"
-#include "n_net.h"
+#include "n_main.h"
 #include "cl_main.h"
 #include "sv_main.h"
 #include "hu_lib.h"

@@ -804,6 +804,7 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/c_main.c
   ${CMAKE_SOURCE_DIR}/src/cl_cmd.c
   ${CMAKE_SOURCE_DIR}/src/cl_main.c
+  ${CMAKE_SOURCE_DIR}/src/cl_net.c
   ${CMAKE_SOURCE_DIR}/src/cmp.c
   ${CMAKE_SOURCE_DIR}/src/d_cfg.c
   ${CMAKE_SOURCE_DIR}/src/d_deh.c
@@ -822,6 +823,7 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/g_keys.c
   ${CMAKE_SOURCE_DIR}/src/g_overflow.c
   ${CMAKE_SOURCE_DIR}/src/g_save.c
+  ${CMAKE_SOURCE_DIR}/src/g_state.c
   ${CMAKE_SOURCE_DIR}/src/hu_lib.c
   ${CMAKE_SOURCE_DIR}/src/hu_stuff.c
   ${CMAKE_SOURCE_DIR}/src/hu_tracers.c
@@ -840,12 +842,17 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/m_pbuf.c
   ${CMAKE_SOURCE_DIR}/src/m_random.c
   ${CMAKE_SOURCE_DIR}/src/md5.c
+  ${CMAKE_SOURCE_DIR}/src/n_addr.c
+  ${CMAKE_SOURCE_DIR}/src/n_chan.c
+  ${CMAKE_SOURCE_DIR}/src/n_com.c
   ${CMAKE_SOURCE_DIR}/src/n_main.c
+  ${CMAKE_SOURCE_DIR}/src/n_misc.c
+  ${CMAKE_SOURCE_DIR}/src/n_msg.c
   ${CMAKE_SOURCE_DIR}/src/n_net.c
   ${CMAKE_SOURCE_DIR}/src/n_pack.c
   ${CMAKE_SOURCE_DIR}/src/n_peer.c
   ${CMAKE_SOURCE_DIR}/src/n_proto.c
-  ${CMAKE_SOURCE_DIR}/src/n_state.c
+  ${CMAKE_SOURCE_DIR}/src/n_sync.c
   ${CMAKE_SOURCE_DIR}/src/p_ceilng.c
   ${CMAKE_SOURCE_DIR}/src/p_checksum.c
   ${CMAKE_SOURCE_DIR}/src/p_cmd.c

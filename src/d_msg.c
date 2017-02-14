@@ -144,16 +144,20 @@ void D_VMsg(msg_channel_e chan, const char *fmt, va_list args) {
 
   mc = &message_channels[chan];
 
-  if ((chan == MSG_DEBUG) ||
-      (chan == MSG_DEH)   ||
-      (chan == MSG_GAME)  ||
-      (chan == MSG_SAVE)  ||
-      (chan == MSG_INFO)  ||
-      (chan == MSG_WARN)  ||
-      (chan == MSG_ERROR)) {
-    va_copy(console_args, args);
-    C_MVPrintf(fmt, console_args);
-    va_end(console_args);
+  switch (chan) {
+    case MSG_DEBUG:
+    case MSG_DEH:
+    case MSG_GAME:
+    case MSG_SAVE:
+    case MSG_INFO:
+    case MSG_WARN:
+    case MSG_ERROR:
+      va_copy(console_args, args);
+      C_MVPrintf(fmt, console_args);
+      va_end(console_args);
+      break;
+    default:
+      break;
   }
 
   if (mc->fobj) {

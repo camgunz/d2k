@@ -28,9 +28,9 @@
 #include "d_event.h"
 #include "g_game.h"
 #include "m_argv.h"
+#include "n_main.h"
 #include "p_spec.h"
 #include "p_user.h"
-#include "n_net.h"
 #include "x_intern.h"
 #include "x_main.h"
 

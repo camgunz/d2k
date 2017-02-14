@@ -21,24 +21,41 @@
 /*****************************************************************************/
 
 
-#ifndef CL_MAIN_H__
-#define CL_MAIN_H__
+#include "z_zone.h"
 
-extern int cl_extrapolate_player_positions;
+#include "doomdef.h"
+#include "g_game.h"
+#include "p_user.h"
+#include "n_main.h"
+#include "cl_main.h"
 
-bool CL_Predicting(void);
-bool CL_RunningConsoleplayerCommands(void);
-bool CL_RunningNonConsoleplayerCommands(void);
-void CL_SetRunningThinkers(bool running);
-bool CL_RunningThinkers(void);
-void CL_SetupCommandState(int playernum, unsigned int command_index);
-void CL_ShutdownCommandState(void);
-int  CL_GetCurrentCommandIndex(void);
-int  CL_GetNextCommandIndex(void);
-bool CL_ReceivedSetup(void);
-void CL_Init(void);
+#define LOG_COMMANDS 0
+#define LOG_POSITIONS 0
 
-#endif
+/* [CG] TODO: Add WAD fetching (waiting on libcurl) */
+bool N_GetWad(const char *name) {
+  return false;
+}
+
+const char* N_RunningStateName(void) {
+  if (CLIENT) {
+    if (CL_Predicting()) {
+      return "predicting";
+    }
+
+    if (CL_RePredicting()) {
+      return "re-predicting";
+    }
+
+    if (CL_Synchronizing()) {
+      return "synchronizing";
+    }
+  }
+  else if (SERVER) {
+    return "server";
+  }
+
+  return "unknown!";
+}
 
 /* vi: set et ts=2 sw=2: */
-

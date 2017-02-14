@@ -21,17 +21,14 @@
 /*****************************************************************************/
 
 
-#ifndef G_OS_UNIX
-void C_ECIInit(void) {}
-void C_ECIService(void) {}
-#else
-
 #include "z_zone.h"
 
 #include <gio/gio.h>
 
+#include "doomdef.h"
 #include "c_main.h"
-#include "n_net.h"
+#include "g_game.h"
+#include "n_main.h"
 #include "n_uds.h"
 #include "x_main.h"
 
@@ -52,7 +49,7 @@ static void eci_cleanup(void) {
   N_UDSFree(&uds);
 }
 
-void C_ECIInit(void) {
+void C_ECIInitUNIX(void) {
   memset(&uds, 0, sizeof(uds_t));
 
   N_UDSInit(
@@ -66,19 +63,23 @@ void C_ECIInit(void) {
   atexit(eci_cleanup);
 }
 
-void C_ECIService(void) {
+void C_ECIInitNonUNIX(void) {}
+
+void C_ECIServiceUNIX(void) {
   if (C_MessagesUpdated()) {
-    if (SERVER)
+    if (SERVER) {
       N_UDSBroadcast(&uds, C_GetMessages()->str);
+    }
 
     C_ClearMessagesUpdated();
   }
 
-  if (SERVER)
+  if (SERVER) {
     N_UDSService(&uds);
+  }
 }
 
-#endif
+void C_ECIServiceNonUNIX(void) {}
 
 /* vi: set et ts=2 sw=2: */
 

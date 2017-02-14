@@ -56,18 +56,6 @@ typedef struct mapthing_s mapthing_t;
 #define RDH_SKIP_HEADER 0x00000002
 
 typedef enum {
-  ga_nothing,
-  ga_loadlevel,
-  ga_newgame,
-  ga_loadgame,
-  ga_savegame,
-  ga_playdemo,
-  ga_completed,
-  ga_victory,
-  ga_worlddone,
-} gameaction_t;
-
-typedef enum {
   doom_12_compatibility,   /* Doom v1.2 */
   doom_1666_compatibility, /* Doom v1.666 */
   doom2_19_compatibility,  /* Doom & Doom 2 v1.9 */
@@ -133,6 +121,10 @@ extern int demo_insurance, default_demo_insurance;      // killough 4/5/98
 // -------------------------------------------
 // killough 10/98: compatibility vector
 
+#define comperr(i) (default_comperr[i] && !demorecording && \
+                                          !demoplayback && \
+                                          !democontinue && \
+                                          !netgame)
 enum {
   comp_telefrag,
   comp_dropoff,

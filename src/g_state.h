@@ -21,24 +21,37 @@
 /*****************************************************************************/
 
 
-#ifndef CL_MAIN_H__
-#define CL_MAIN_H__
+#ifndef G_STATE_H__
+#define G_STATE_H__
 
-extern int cl_extrapolate_player_positions;
+typedef struct game_state_s {
+  int     tic;
+  pbuf_t *data;
+} game_state_t;
 
-bool CL_Predicting(void);
-bool CL_RunningConsoleplayerCommands(void);
-bool CL_RunningNonConsoleplayerCommands(void);
-void CL_SetRunningThinkers(bool running);
-bool CL_RunningThinkers(void);
-void CL_SetupCommandState(int playernum, unsigned int command_index);
-void CL_ShutdownCommandState(void);
-int  CL_GetCurrentCommandIndex(void);
-int  CL_GetNextCommandIndex(void);
-bool CL_ReceivedSetup(void);
-void CL_Init(void);
+typedef struct game_state_delta_s {
+  int   from_tic;
+  int   to_tic;
+  buf_t data;
+} game_state_delta_t;
+
+void G_DeltaInit(game_state_delta_t *delta);
+void G_DeltaClear(game_state_delta_t *delta);
+void G_DeltaFree(game_state_delta_t *delta);
+
+void          G_InitStates(void);
+void          G_SaveState(void);
+bool          G_LoadState(int tic, bool call_init_new);
+void          G_RemoveOldStates(int tic);
+void          G_ClearStates(void);
+game_state_t* G_ReadNewStateFromPackedBuffer(int tic, pbuf_t *pbuf);
+game_state_t* G_GetLatestState(void);
+void          G_SetLatestState(game_state_t *state);
+bool          G_LoadLatestState(bool call_init_new);
+bool          G_ApplyStateDelta(game_state_delta_t *delta);
+void          G_BuildStateDelta(int tic, game_state_delta_t *delta);
+int           G_GetStateFromTic(void);
 
 #endif
 
 /* vi: set et ts=2 sw=2: */
-

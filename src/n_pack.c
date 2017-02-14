@@ -31,14 +31,11 @@
 #include "d_event.h"
 #include "d_main.h"
 #include "g_game.h"
+#include "g_state.h"
 #include "i_system.h"
 #include "m_file.h"
-#include "n_net.h"
-#include "p_user.h"
 #include "n_main.h"
-#include "n_state.h"
-#include "n_peer.h"
-#include "n_proto.h"
+#include "p_user.h"
 #include "cl_cmd.h"
 #include "cl_main.h"
 #include "p_user.h"
@@ -60,6 +57,42 @@
       "%s: Invalid message: %s is out of range (%s, %s)\n",                   \
       __func__, #x, #min, #max                                                \
     );                                                                        \
+  }
+
+#define read_s8(pbuf, var, name)                                              \
+  if (!M_PBufReadS8(pbuf, &var)) {                                            \
+    P_Printf(consoleplayer,                                                   \
+      "%s: Error reading %s: %s.\n",                                          \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
+    return false;                                                             \
+  }
+
+#define read_u8(pbuf, var, name)                                              \
+  if (!M_PBufReadU8(pbuf, &var)) {                                            \
+    P_Printf(consoleplayer,                                                   \
+      "%s: Error reading %s: %s.\n",                                          \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
+    return false;                                                             \
+  }
+
+#define read_s16(pbuf, var, name)                                             \
+  if (!M_PBufReadS16(pbuf, &var)) {                                           \
+    P_Printf(consoleplayer,                                                   \
+      "%s: Error reading %s: %s.\n",                                          \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
+    return false;                                                             \
+  }
+
+#define read_u32(pbuf, var, name)                                             \
+  if (!M_PBufReadU32(pbuf, &var)) {                                           \
+    P_Printf(consoleplayer,                                                   \
+      "%s: Error reading %s: %s.\n",                                          \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
+    return false;                                                             \
   }
 
 #define read_char(pbuf, var, name)                                            \
@@ -218,7 +251,7 @@
   }
 
 #define read_packed_game_state(pbuf, var, tic, name)                          \
-  var = N_ReadNewStateFromPackedBuffer(tic, pbuf);                            \
+  var = G_ReadNewStateFromPackedBuffer(tic, pbuf);                            \
   if (var == NULL) {                                                          \
     P_Printf(consoleplayer,                                                   \
       "%s: Error reading %s: %s.\n",                                          \
@@ -263,9 +296,7 @@
   }
 
 #define pack_player_preference_change(pbuf, gametic, playernum, pn, pnsz)     \
-  pbuf_t *pbuf = N_PeerBeginMessage(                                          \
-    np->peernum, NET_CHANNEL_RELIABLE, nm_playerpreferencechange              \
-  );                                                                          \
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_PLAYER_PREFERENCE_CHANGE);         \
   M_PBufWriteInt(pbuf, gametic);                                              \
   M_PBufWriteUShort(pbuf, playernum);                                         \
   M_PBufWriteMap(pbuf, 1);                                                    \
@@ -275,22 +306,32 @@ static void free_string(gpointer data) {
   free(data);
 }
 
-static void pack_run_commands(pbuf_t *pbuf, netpeer_t *np) {
-  GPtrArray *commands = players[np->playernum].cmdq.commands;
+static void pack_run_commands(pbuf_t *pbuf, unsigned int playernum) {
+  GPtrArray *commands = players[playernum].cmdq.commands;
   unsigned int command_count = 0;
+  unsigned int total_command_count = 0;
 
   for (unsigned int i = 0; i < commands->len; i++) {
     netticcmd_t *ncmd = g_ptr_array_index(commands, i);
+
+    total_command_count++;
 
     if (ncmd->server_tic != 0) {
       command_count++;
     }
   }
 
+  D_Msg(MSG_SYNC, "(%d) (%d) Synced/Total: %u/%u\n",
+    gametic,
+    playernum,
+    command_count,
+    total_command_count
+  );
+
   M_PBufWriteUInt(pbuf, command_count);
 
   if (command_count > 0) {
-    D_Msg(MSG_SYNC, "(%d) (%d) Ran commands: [", gametic, np->playernum);
+    D_Msg(MSG_SYNC, "(%d) (%d) Ran commands: [", gametic, playernum);
   }
 
   for (unsigned int i = 0; i < commands->len; i++) {
@@ -309,14 +350,14 @@ static void pack_run_commands(pbuf_t *pbuf, netpeer_t *np) {
 }
 
 static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
-                                                       int source_playernum) {
-  GPtrArray *commands = players[source_playernum].cmdq.commands;
+                                                       int src_playernum) {
+  GPtrArray *commands = players[src_playernum].cmdq.commands;
   unsigned int command_count = 0;
 
   for (unsigned int i = 0; i < commands->len; i++) {
     netticcmd_t *ncmd = (netticcmd_t *)g_ptr_array_index(commands, i);
 
-    if (ncmd->index > np->command_indices[source_playernum]) {
+    if (ncmd->index > N_PeerGetSyncCommandIndexForPlayer(np, src_playernum)) {
       command_count++;
     }
   }
@@ -326,15 +367,15 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
   if (command_count > 0) {
     D_Msg(MSG_SYNC, "(%d) (%d->%d) Unsync'd commands: [",
       gametic,
-      source_playernum,
-      np->playernum
+      src_playernum,
+      N_PeerGetPlayernum(np)
     );
   }
 
   for (size_t i = 0; i < commands->len; i++) {
     netticcmd_t *ncmd = (netticcmd_t *)g_ptr_array_index(commands, i);
 
-    if (ncmd->index > np->command_indices[source_playernum]) {
+    if (ncmd->index > N_PeerGetSyncCommandIndexForPlayer(np, src_playernum)) {
       D_Msg(MSG_SYNC, " %d/%d/%d", ncmd->index, ncmd->tic, ncmd->server_tic);
       M_PBufWriteUInt(pbuf, ncmd->index);
       M_PBufWriteUInt(pbuf, ncmd->tic);
@@ -352,15 +393,13 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
 }
 
 void N_PackSetupRequest(netpeer_t *np) {
-  pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_RELIABLE, nm_setup
-  );
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_SETUP);
 
   M_PBufWriteUChar(pbuf, 0);
 }
 
 void N_PackSetup(netpeer_t *np) {
-  game_state_t *gs = N_GetLatestState();
+  game_state_t *gs = G_GetLatestState();
   unsigned short player_count = 0;
   pbuf_t *pbuf = NULL;
   size_t resource_count = 0;
@@ -373,7 +412,7 @@ void N_PackSetup(netpeer_t *np) {
     }
   }
 
-  pbuf = N_PeerBeginMessage(np->peernum, NET_CHANNEL_RELIABLE, nm_setup);
+  pbuf = N_PeerBeginMessage(np, NM_SETUP);
 
   M_PBufWriteInt(pbuf, deathmatch);
   M_PBufWriteUShort(pbuf, MAXPLAYERS);
@@ -383,7 +422,7 @@ void N_PackSetup(netpeer_t *np) {
     else
       M_PBufWriteBool(pbuf, false);
   }
-  M_PBufWriteUShort(pbuf, np->playernum);
+  M_PBufWriteUShort(pbuf, N_PeerGetPlayernum(np));
   M_PBufWriteString(pbuf, iwad, strlen(iwad));
 
   for (unsigned int i = 0; i < resource_files->len; i++) {
@@ -439,12 +478,12 @@ void N_PackSetup(netpeer_t *np) {
 
   M_PBufWriteInt(pbuf, gs->tic);
   M_PBufWriteBytes(pbuf, M_PBufGetData(gs->data), M_PBufGetSize(gs->data));
-  np->sync.tic = gs->tic;
+  N_PeerUpdateSyncTIC(np, gs->tic);
 }
 
 bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
                                   unsigned short *playernum) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   unsigned short m_player_count = 0;
   int m_deathmatch = 0;
   unsigned short m_playernum = 0;
@@ -560,23 +599,46 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
   deathmatch = m_deathmatch;
   *playernum = m_playernum;
 
-  N_SetLatestState(gs);
+  G_SetLatestState(gs);
 
-  np->sync.tic = gs->tic;
+  N_PeerUpdateSyncTIC(np, gs->tic);
+
+  return true;
+}
+
+void N_PackFullState(netpeer_t *np) {
+  game_state_t *gs = G_GetLatestState();
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_FULL_STATE);
+
+  M_PBufWriteInt(pbuf, gs->tic);
+  M_PBufWriteBytes(pbuf, M_PBufGetData(gs->data), M_PBufGetSize(gs->data));
+
+  N_PeerUpdateSyncTIC(np, gs->tic);
+}
+
+bool N_UnpackFullState(netpeer_t *np) {
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
+  int m_state_tic;
+  game_state_t *gs;
+
+  read_int(pbuf, m_state_tic, "game state tic");
+  read_packed_game_state(pbuf, gs, m_state_tic, "game state data");
+
+  G_SetLatestState(gs);
+
+  N_PeerUpdateSyncTIC(np, gs->tic);
 
   return true;
 }
 
 void N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level) {
-  pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_RELIABLE, nm_auth
-  );
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_AUTH);
 
   M_PBufWriteUChar(pbuf, auth_level);
 }
 
 bool N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   unsigned char m_auth_level = 0;
 
   read_ranged_uchar(
@@ -609,15 +671,13 @@ bool N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
 }
 
 void N_PackPing(netpeer_t *np, double server_time) {
-  pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_RELIABLE, nm_ping
-  );
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_PING);
 
   M_PBufWriteDouble(pbuf, server_time);
 }
 
 bool N_UnpackPing(netpeer_t *np, double *server_time) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   double m_server_time;
 
   read_double(pbuf, m_server_time, "server time");
@@ -628,9 +688,7 @@ bool N_UnpackPing(netpeer_t *np, double *server_time) {
 }
 
 void N_PackChatMessage(netpeer_t *np, const char *message) {
-  pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_RELIABLE, nm_chatmessage
-  );
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CHAT_MESSAGE);
 
   M_PBufWriteUChar(pbuf, CHAT_CHANNEL_ALL);
   M_PBufWriteString(pbuf, message, strlen(message));
@@ -638,9 +696,7 @@ void N_PackChatMessage(netpeer_t *np, const char *message) {
 
 void N_PackRelayedChatMessage(netpeer_t *np, unsigned short sender,
                                              const char *message) {
-  pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_RELIABLE, nm_chatmessage
-  );
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CHAT_MESSAGE);
 
   M_PBufWriteUChar(pbuf, CHAT_CHANNEL_ALL);
   M_PBufWriteUShort(pbuf, sender);
@@ -648,9 +704,7 @@ void N_PackRelayedChatMessage(netpeer_t *np, unsigned short sender,
 }
 
 void N_PackTeamChatMessage(netpeer_t *np, const char *message) {
-  pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_RELIABLE, nm_chatmessage
-  );
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CHAT_MESSAGE);
 
   M_PBufWriteUChar(pbuf, CHAT_CHANNEL_TEAM);
   M_PBufWriteString(pbuf, message, strlen(message));
@@ -658,9 +712,7 @@ void N_PackTeamChatMessage(netpeer_t *np, const char *message) {
 
 void N_PackRelayedTeamChatMessage(netpeer_t *np, unsigned short sender,
                                                  const char *message) {
-  pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_RELIABLE, nm_chatmessage
-  );
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CHAT_MESSAGE);
 
   M_PBufWriteUChar(pbuf, CHAT_CHANNEL_TEAM);
   M_PBufWriteUShort(pbuf, sender);
@@ -669,9 +721,7 @@ void N_PackRelayedTeamChatMessage(netpeer_t *np, unsigned short sender,
 
 void N_PackPlayerChatMessage(netpeer_t *np, unsigned short recipient,
                                             const char *message) {
-  pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_RELIABLE, nm_chatmessage
-  );
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CHAT_MESSAGE);
 
   M_PBufWriteUChar(pbuf, CHAT_CHANNEL_PLAYER);
   M_PBufWriteUShort(pbuf, recipient);
@@ -681,9 +731,7 @@ void N_PackPlayerChatMessage(netpeer_t *np, unsigned short recipient,
 void N_PackRelayedPlayerChatMessage(netpeer_t *np, unsigned short sender,
                                                    unsigned short recipient,
                                                    const char *message) {
-  pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_RELIABLE, nm_chatmessage
-  );
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CHAT_MESSAGE);
 
   M_PBufWriteUChar(pbuf, CHAT_CHANNEL_PLAYER);
   M_PBufWriteUShort(pbuf, sender);
@@ -692,9 +740,7 @@ void N_PackRelayedPlayerChatMessage(netpeer_t *np, unsigned short sender,
 }
 
 void N_PackServerChatMessage(netpeer_t *np, const char *message) {
-  pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_RELIABLE, nm_chatmessage
-  );
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CHAT_MESSAGE);
 
   M_PBufWriteUChar(pbuf, CHAT_CHANNEL_SERVER);
   M_PBufWriteString(pbuf, message, strlen(message));
@@ -705,7 +751,7 @@ bool N_UnpackChatMessage(netpeer_t *np,
                          unsigned short *message_sender,
                          unsigned short *message_recipient,
                          buf_t *message_contents) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   unsigned char m_chat_channel;
   unsigned short m_message_sender = 0;
   unsigned short m_message_recipient = 0;
@@ -732,7 +778,7 @@ bool N_UnpackChatMessage(netpeer_t *np,
     *message_sender = m_message_sender;
   }
   else {
-    *message_sender = np->playernum;
+    *message_sender = N_PeerGetPlayernum(np);
   }
 
   if (m_chat_channel == CHAT_CHANNEL_PLAYER) {
@@ -743,10 +789,9 @@ bool N_UnpackChatMessage(netpeer_t *np,
 }
 
 void N_PackSync(netpeer_t *np) {
-  pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_UNRELIABLE, nm_sync
-  );
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_SYNC);
   uint64_t bitmap = 0;
+  unsigned int dest_playernum = N_PeerGetPlayernum(np);
 
   if (CLIENT) {
     for (int i = 0; i < MAXPLAYERS; i++) {
@@ -757,7 +802,7 @@ void N_PackSync(netpeer_t *np) {
 
     M_PBufWriteULong(pbuf, bitmap);
 
-    M_PBufWriteInt(pbuf, np->sync.tic);
+    M_PBufWriteInt(pbuf, N_PeerGetSyncTIC(np));
 
     pack_unsynchronized_commands(pbuf, np, consoleplayer);
 
@@ -766,42 +811,49 @@ void N_PackSync(netpeer_t *np) {
         continue;
       }
 
-      M_PBufWriteUInt(pbuf, np->command_indices[i]);
+      M_PBufWriteUInt(pbuf, N_PeerGetSyncCommandIndexForPlayer(np, i));
     }
   }
   else if (SERVER) {
-    player_t *player = &players[np->playernum];
+    player_t *player = &players[N_PeerGetPlayernum(np)];
+    game_state_delta_t *delta = N_PeerGetSyncStateDelta(np);
 
     NETPEER_FOR_EACH(iter) {
-      bitmap |= (1 << iter.np->playernum);
+      unsigned int playernum  = N_PeerGetPlayernum(iter.np);
+
+      bitmap |= (1 << playernum);
     }
 
     M_PBufWriteULong(pbuf, bitmap);
 
     NETPEER_FOR_EACH(iter) {
-      if (iter.np->playernum == np->playernum) {
-        M_PBufWriteUInt(pbuf, np->command_indices[np->playernum]);
-        pack_run_commands(pbuf, np);
+      unsigned int playernum  = N_PeerGetPlayernum(iter.np);
+
+      if (playernum == dest_playernum) {
+        M_PBufWriteUInt(
+          pbuf, N_PeerGetSyncCommandIndexForPlayer(np, playernum)
+        );
+        pack_run_commands(pbuf, dest_playernum);
       }
       else {
-        pack_unsynchronized_commands(pbuf, np, iter.np->playernum);
+        pack_unsynchronized_commands(pbuf, np, playernum);
       }
     }
 
     D_Msg(MSG_SYNC, "(%d) Syncing %d => %d (%d)\n",
       gametic,
-      np->sync.delta.from_tic,
-      np->sync.delta.to_tic,
+      delta->from_tic,
+      delta->to_tic,
       player->cmdq.latest_command_run_index
     );
-    M_PBufWriteInt(pbuf, np->sync.delta.from_tic);
-    M_PBufWriteInt(pbuf, np->sync.delta.to_tic);
-    M_PBufWriteBytes(pbuf, np->sync.delta.data.data, np->sync.delta.data.size);
+    M_PBufWriteInt(pbuf, delta->from_tic);
+    M_PBufWriteInt(pbuf, delta->to_tic);
+    M_PBufWriteBytes(pbuf, delta->data.data, delta->data.size);
   }
 }
 
 bool N_UnpackSync(netpeer_t *np) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   uint64_t m_bitmap;
   uint32_t m_command_count;
   uint32_t m_command_index;
@@ -835,13 +887,13 @@ bool N_UnpackSync(netpeer_t *np) {
         for (unsigned int j = 0; j < m_command_count; j++) {
           netticcmd_t m_ncmd;
 
-          read_uint(pbuf,  m_ncmd.index,      "command index");
-          read_uint(pbuf,  m_ncmd.tic,        "command TIC");
-          read_uint(pbuf,  m_ncmd.server_tic, "server command TIC");
-          read_char(pbuf,  m_ncmd.forward,    "command forward value");
-          read_char(pbuf,  m_ncmd.side,       "command side value");
-          read_short(pbuf, m_ncmd.angle,      "command angle value");
-          read_uchar(pbuf, m_ncmd.buttons,    "command buttons value");
+          read_u32(pbuf, m_ncmd.index,      "command index");
+          read_u32(pbuf, m_ncmd.tic,        "command TIC");
+          read_u32(pbuf, m_ncmd.server_tic, "server command TIC");
+          read_s8(pbuf,  m_ncmd.forward,    "command forward value");
+          read_s8(pbuf,  m_ncmd.side,       "command side value");
+          read_s16(pbuf, m_ncmd.angle,      "command angle value");
+          read_u8(pbuf,  m_ncmd.buttons,    "command buttons value");
 
           P_QueuePlayerCommand(i, &m_ncmd);
         }
@@ -865,58 +917,51 @@ bool N_UnpackSync(netpeer_t *np) {
         }
       }
 
-      if (m_command_index > np->command_indices[i]) {
-        np->command_indices[i] = m_command_index;
-      }
+      N_PeerUpdateSyncCommandIndexForPlayer(np, i, m_command_index);
     }
 
     read_int(pbuf, m_delta_from_tic, "delta from tic");
     read_int(pbuf, m_delta_to_tic,   "delta to tic");
 
-    if (m_delta_to_tic > np->sync.tic) {
-      np->sync.tic = m_delta_to_tic;
-      np->sync.delta.from_tic = m_delta_from_tic;
-      np->sync.delta.to_tic = m_delta_to_tic;
-      read_bytes(pbuf, np->sync.delta.data, "delta data");
-    }
+    /* [CG] pbuf now points to the delta's binary data */
+    N_PeerUpdateSyncStateDelta(np, m_delta_from_tic, m_delta_to_tic, pbuf);
   }
   else if (SERVER) {
     int m_sync_tic;
     unsigned int m_command_count;
+    unsigned int playernum = N_PeerGetPlayernum(np);
+
+
     read_int(pbuf, m_sync_tic, "sync tic");
 
-    if (m_sync_tic > np->sync.tic) {
-      np->sync.tic = m_sync_tic;
-    }
+    N_PeerUpdateSyncTIC(np, m_sync_tic);
 
     read_uint(pbuf, m_command_count, "command count");
 
     for (unsigned int i = 0; i < m_command_count; i++) {
       netticcmd_t m_ncmd;
 
-      read_uint(pbuf,  m_ncmd.index,      "command index");
-      read_uint(pbuf,  m_ncmd.tic,        "command TIC");
-      read_uint(pbuf,  m_ncmd.server_tic, "server command TIC");
-      read_char(pbuf,  m_ncmd.forward,    "command forward value");
-      read_char(pbuf,  m_ncmd.side,       "command side value");
-      read_short(pbuf, m_ncmd.angle,      "command angle value");
-      read_uchar(pbuf, m_ncmd.buttons,    "command buttons value");
+      read_u32(pbuf, m_ncmd.index,      "command index");
+      read_u32(pbuf, m_ncmd.tic,        "command TIC");
+      read_u32(pbuf, m_ncmd.server_tic, "server command TIC");
+      read_s8(pbuf,  m_ncmd.forward,    "command forward value");
+      read_s8(pbuf,  m_ncmd.side,       "command side value");
+      read_s16(pbuf, m_ncmd.angle,      "command angle value");
+      read_u8(pbuf,  m_ncmd.buttons,    "command buttons value");
 
       m_ncmd.server_tic = 0;
 
-      P_QueuePlayerCommand(np->playernum, &m_ncmd);
+      P_QueuePlayerCommand(playernum, &m_ncmd);
     }
 
     if (m_command_count > 0) {
-      m_command_index = P_GetLatestCommandIndex(np->playernum);
+      m_command_index = P_GetLatestCommandIndex(playernum);
 
-      if (m_command_index > np->command_indices[np->playernum]) {
-        np->command_indices[np->playernum] = m_command_index;
-      }
+      N_PeerUpdateSyncCommandIndexForPlayer(np, playernum, m_command_index);
     }
 
     for (int i = 0; i < MAXPLAYERS; i++) {
-      if (i == np->playernum) {
+      if (i == playernum) {
         continue;
       }
 
@@ -926,9 +971,7 @@ bool N_UnpackSync(netpeer_t *np) {
 
       read_uint(pbuf, m_command_index, "command index");
 
-      if (m_command_index > np->command_indices[i]) {
-        np->command_indices[i] = m_command_index;
-      }
+      N_PeerUpdateSyncCommandIndexForPlayer(np, i, m_command_index);
     }
   }
 
@@ -938,7 +981,7 @@ bool N_UnpackSync(netpeer_t *np) {
 bool N_UnpackPlayerPreferenceChange(netpeer_t *np, int *tic,
                                                    unsigned short *playernum,
                                                    unsigned int *count) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   unsigned short m_playernum = 0;
   int m_tic = 0;
   unsigned int m_count = 0;
@@ -955,7 +998,7 @@ bool N_UnpackPlayerPreferenceChange(netpeer_t *np, int *tic,
 }
 
 bool N_UnpackPlayerPreferenceName(netpeer_t *np, buf_t *buf) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
 
   read_string(
     pbuf, buf, "player preference name", MAX_PLAYER_PREFERENCE_NAME_SIZE
@@ -972,7 +1015,7 @@ void N_PackNameChange(netpeer_t *np, unsigned short playernum,
 }
 
 bool N_UnpackNameChange(netpeer_t *np, buf_t *buf) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
 
   read_string(pbuf, buf, "new name", MAX_PLAYER_NAME_SIZE);
 
@@ -989,7 +1032,7 @@ void N_PackTeamChange(netpeer_t *np, unsigned short playernum,
 }
 
 bool N_UnpackTeamChange(netpeer_t *np, unsigned char *new_team) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   int team_count = 0;
   unsigned char m_new_team = 0;
 
@@ -1024,7 +1067,7 @@ void N_PackWSOPChange(netpeer_t *np, unsigned short playernum,
 }
 
 bool N_UnpackWSOPChange(netpeer_t *np, unsigned char *new_wsop_flags) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   unsigned char m_new_wsop_flags = 0;
 
   read_ranged_uchar(
@@ -1046,7 +1089,7 @@ void N_PackBobbingChange(netpeer_t *np, unsigned short playernum,
 }
 
 bool N_UnpackBobbingChanged(netpeer_t *np, double *new_bobbing_amount) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   double m_new_bobbing_amount = 0;
 
   read_ranged_double(
@@ -1068,7 +1111,7 @@ void N_PackAutoaimChange(netpeer_t *np, unsigned short playernum,
 }
 
 bool N_UnpackAutoaimChange(netpeer_t *np, bool *new_autoaim_enabled) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   bool m_new_autoaim_enabled = false;
 
   read_bool(pbuf, m_new_autoaim_enabled, "new autoaim enabled value");
@@ -1089,7 +1132,7 @@ void N_PackWeaponSpeedChange(netpeer_t *np, unsigned short playernum,
 
 bool N_UnpackWeaponSpeedChange(netpeer_t *np,
                                unsigned char *new_weapon_speed) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   unsigned char m_new_weapon_speed = 0;
 
   read_uchar(pbuf, m_new_weapon_speed, "new weapon speed");
@@ -1113,7 +1156,7 @@ void N_PackColorChange(netpeer_t *np, unsigned short playernum,
 bool N_UnpackColorChange(netpeer_t *np, unsigned char *new_red,
                                             unsigned char *new_green,
                                             unsigned char *new_blue) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   unsigned int m_new_color = 0;
 
   read_uint(pbuf, m_new_color, "new color");
@@ -1135,7 +1178,7 @@ void N_PackColorIndexChange(netpeer_t *np, unsigned short playernum,
 }
 
 bool N_UnpackColorIndexChange(netpeer_t *np, int *new_color_index) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   int m_new_color_index = 0;
 
   /* CG: TODO: Ensure new color map index is reasonable */
@@ -1159,9 +1202,7 @@ bool N_UnpackSkinChange(netpeer_t *np, unsigned short *playernum) {
 }
 
 void N_PackAuthRequest(netpeer_t *np, const char *password) {
-  pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_RELIABLE, nm_auth
-  );
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_AUTH);
 
   M_PBufWriteString(pbuf, password, strlen(password));
 
@@ -1169,7 +1210,7 @@ void N_PackAuthRequest(netpeer_t *np, const char *password) {
 }
 
 bool N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
 
   read_string(
     pbuf, buf, "authorization request password", MAX_PASSWORD_LENGTH
@@ -1179,9 +1220,7 @@ bool N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
 }
 
 void N_PackRCONCommand(netpeer_t *np, const char *command) {
-  pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_RELIABLE, nm_rconcommand
-  );
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_RCON_COMMAND);
 
   M_PBufWriteString(pbuf, command, strlen(command));
 
@@ -1189,7 +1228,7 @@ void N_PackRCONCommand(netpeer_t *np, const char *command) {
 }
 
 bool N_UnpackRCONCommand(netpeer_t *np, buf_t *buf) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
 
   read_string(pbuf, buf, "RCON command", MAX_COMMAND_LENGTH);
 
@@ -1197,9 +1236,7 @@ bool N_UnpackRCONCommand(netpeer_t *np, buf_t *buf) {
 }
 
 void N_PackVoteRequest(netpeer_t *np, const char *command) {
-  pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_RELIABLE, nm_voterequest
-  );
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_VOTE_REQUEST);
 
   M_PBufWriteString(pbuf, command, strlen(command));
 
@@ -1207,7 +1244,7 @@ void N_PackVoteRequest(netpeer_t *np, const char *command) {
 }
 
 bool N_UnpackVoteRequest(netpeer_t *np, buf_t *buf) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
 
   read_string(pbuf, buf, "vote command", MAX_COMMAND_LENGTH);
 
@@ -1215,23 +1252,26 @@ bool N_UnpackVoteRequest(netpeer_t *np, buf_t *buf) {
 }
 
 void N_PackGameActionChange(netpeer_t *np) {
-  pbuf_t *pbuf = N_PeerBeginMessage(
-    np->peernum, NET_CHANNEL_RELIABLE, nm_gameaction
-  );
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_GAME_ACTION);
 
   M_PBufWriteInt(pbuf, G_GetGameAction());
+  M_PBufWriteInt(pbuf, gametic);
 }
 
-bool N_UnpackGameActionChange(netpeer_t *np, gameaction_t *new_gameaction) {
-  pbuf_t *pbuf = &np->netcom.incoming.messages;
+bool N_UnpackGameActionChange(netpeer_t *np, gameaction_t *new_gameaction,
+                                             int *new_gametic) {
+  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
 
-  int m_new_game_action = 0;
+  int m_new_gameaction = 0;
+  int m_new_gametic = 0;
 
   read_ranged_int(
-    pbuf, m_new_game_action, "game action", ga_nothing, ga_worlddone
+    pbuf, m_new_gameaction, "game action", ga_nothing, ga_worlddone
   );
+  read_int(pbuf, m_new_gametic, "game action gametic");
 
-  *new_gameaction = m_new_game_action;
+  *new_gameaction = m_new_gameaction;
+  *new_gametic = m_new_gametic;
 
   return true;
 }

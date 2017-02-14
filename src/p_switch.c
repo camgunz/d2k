@@ -29,7 +29,6 @@
 #include "e6y.h"
 #include "g_game.h"
 #include "m_swap.h"
-#include "n_net.h"
 #include "p_user.h"
 #include "p_spec.h"
 #include "r_defs.h"

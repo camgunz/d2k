@@ -48,39 +48,41 @@
 #include "r_defs.h"
 #include "v_video.h"
 
-#include "n_net.h"
 #include "n_main.h"
 
 extern patchnum_t hu_font[HU_FONTSIZE];
 
-int IsDemoPlayback(void)
-{
+int IsDemoPlayback(void) {
   int p;
 
-  if ((p = M_CheckParm("-playdemo")) && (p < myargc - 1))
+  if ((p = M_CheckParm("-playdemo")) && (p < myargc - 1)) {
     return p;
-  if ((p = M_CheckParm("-timedemo")) && (p < myargc - 1))
+  }
+
+  if ((p = M_CheckParm("-timedemo")) && (p < myargc - 1)) {
     return p;
-  if ((p = M_CheckParm("-fastdemo")) && (p < myargc - 1))
-    return p;
+  }
 
-  return 0;
-}
-
-int IsDemoContinue(void)
-{
-  int p;
-
-  if ((p = M_CheckParm("-recordfromto")) && (p < myargc - 2) &&
-    I_FindFile(myargv[p + 1], ".lmp"))
-  {
+  if ((p = M_CheckParm("-fastdemo")) && (p < myargc - 1)) {
     return p;
   }
 
   return 0;
 }
 
-int LoadDemo(const char *name, const unsigned char **buffer, int *length, int *lump) {
+int IsDemoContinue(void) {
+  int p;
+
+  if ((p = M_CheckParm("-recordfromto")) && (p < myargc - 2) &&
+      I_FindFile(myargv[p + 1], ".lmp")) {
+    return p;
+  }
+
+  return 0;
+}
+
+int LoadDemo(const char *name, const unsigned char **buffer, int *length,
+                                                             int *lump) {
   char basename[9];
   char *filename = NULL;
   int num = -1;
@@ -93,8 +95,9 @@ int LoadDemo(const char *name, const unsigned char **buffer, int *length, int *l
 
   // check ns_demos namespace first, then ns_global
   num = (W_CheckNumForName)(basename, ns_demos);
-  if (num < 0)
+  if (num < 0) {
     num = W_CheckNumForName(basename);
+  }
 
   if (num < 0) {
     // Allow for demos not loaded as lumps
@@ -109,8 +112,9 @@ int LoadDemo(const char *name, const unsigned char **buffer, int *length, int *l
       success = M_ReadFile(filename, &sbuf, &len);
       free(filename);
 
-      if (!success)
+      if (!success) {
         return false;
+      }
 
       buf = (const unsigned char *)sbuf;
     }
@@ -120,19 +124,26 @@ int LoadDemo(const char *name, const unsigned char **buffer, int *length, int *l
     buf = W_CacheLumpNum(num);
     lump_len = W_LumpLength(num);
 
-    if (lump_len >= 0)
+    if (lump_len >= 0) {
       len = lump_len;
-    else
+    }
+    else {
       len = 0;
+    }
   }
 
   if (len > 0) {
-    if (buffer)
+    if (buffer) {
       *buffer = buf;
-    if (length)
+    }
+
+    if (length) {
       *length = len;
-    if (lump)
+    }
+
+    if (lump) {
       *lump = num;
+    }
   }
 
   return (len > 0);
@@ -150,19 +161,20 @@ static int64_t smooth_playing_sum;
 static int smooth_playing_index;
 static angle_t smooth_playing_angle;
 
-void R_SmoothPlaying_Reset(player_t *player)
-{
-  if (demo_smoothturns && demoplayback)
-  {
-    if (!player)
+void R_SmoothPlaying_Reset(player_t *player) {
+  if (demo_smoothturns && demoplayback) {
+    if (!player) {
       player = &players[displayplayer];
+    }
 
-    if (player==&players[displayplayer])
-    {
-      if (player->mo)
-      {
+    if (player ==& players[displayplayer]) {
+      if (player->mo) {
         smooth_playing_angle = player->mo->angle;
-        memset(smooth_playing_turns, 0, sizeof(smooth_playing_turns[0]) * SMOOTH_PLAYING_MAXFACTOR);
+        memset(
+          smooth_playing_turns,
+          0,
+          sizeof(smooth_playing_turns[0]) * SMOOTH_PLAYING_MAXFACTOR
+        );
         smooth_playing_sum = 0;
         smooth_playing_index = 0;
       }
@@ -170,10 +182,8 @@ void R_SmoothPlaying_Reset(player_t *player)
   }
 }
 
-void R_SmoothPlaying_Add(int delta)
-{
-  if (demo_smoothturns && demoplayback)
-  {
+void R_SmoothPlaying_Add(int delta) {
+  if (demo_smoothturns && demoplayback) {
     smooth_playing_sum -= smooth_playing_turns[smooth_playing_index];
     smooth_playing_turns[smooth_playing_index] = delta;
     smooth_playing_index = (smooth_playing_index + 1)%(demo_smoothturnsfactor);
@@ -182,16 +192,15 @@ void R_SmoothPlaying_Add(int delta)
   }
 }
 
-angle_t R_SmoothPlaying_Get(player_t *player)
-{
-  if (demo_smoothturns && demoplayback && player == &players[displayplayer])
+angle_t R_SmoothPlaying_Get(player_t *player) {
+  if (demo_smoothturns && demoplayback && player == &players[displayplayer]) {
     return smooth_playing_angle;
-  else
-    return player->mo->angle;
+  }
+
+  return player->mo->angle;
 }
 
-void R_ResetAfterTeleport(player_t *player)
-{
+void R_ResetAfterTeleport(player_t *player) {
   R_ResetViewInterpolation();
   R_SmoothPlaying_Reset(player);
 }
@@ -243,8 +252,7 @@ char demoex_filename[PATH_MAX];
 const char *demo_demoex_filename;
 //wadtbl_t demoex;
 
-typedef struct
-{
+typedef struct {
   const char name[9];
   short *data;
   int lump;
@@ -258,26 +266,25 @@ int AddString(char **str, const char *val);
 
 static void R_DemoEx_AddParams(wadtbl_t *wadtbl);
 static int R_DemoEx_GetVersion(void);
-static void R_DemoEx_GetParams(const unsigned char *pwad_p, waddata_t *waddata);
+static void R_DemoEx_GetParams(const unsigned char *pwad_p,
+                               waddata_t *waddata);
 static void R_DemoEx_AddMouseLookData(wadtbl_t *wadtbl);
 
 static int G_ReadDemoFooter(const char *filename);
 
-int AddString(char **str, const char *val)
-{
+int AddString(char **str, const char *val) {
   int size = 0;
 
-  if (!str || !val)
+  if ((!str) || (!val)) {
     return 0;
+  }
 
-  if (*str)
-  {
+  if (*str) {
     size = strlen(*str) + strlen(val) + 1;
     *str = realloc(*str, size);
     strcat(*str, val);
   }
-  else
-  {
+  else {
     size = strlen(val) + 1;
     *str = malloc(size);
     strcpy(*str, val);
@@ -286,18 +293,15 @@ int AddString(char **str, const char *val)
   return size;
 }
 
-void M_ChangeDemoExtendedFormat(void)
-{
-  if (demo_extendedformat == -1)
-  {
+void M_ChangeDemoExtendedFormat(void) {
+  if (demo_extendedformat == -1) {
     demo_extendedformat = demo_extendedformat_default;
   }
 
   use_demoex_info = demo_extendedformat || M_CheckParm("-auto");
 }
 
-void W_InitPWADTable(wadtbl_t *wadtbl)
-{
+void W_InitPWADTable(wadtbl_t *wadtbl) {
   //init header signature and lookup table offset and size
   strncpy(wadtbl->header.identification, PWAD_SIGNATURE, 4);
   wadtbl->header.infotableofs = sizeof(wadtbl->header);
@@ -311,8 +315,7 @@ void W_InitPWADTable(wadtbl_t *wadtbl)
   wadtbl->datasize = 0;
 }
 
-void W_FreePWADTable(wadtbl_t *wadtbl)
-{
+void W_FreePWADTable(wadtbl_t *wadtbl) {
   //clear PWAD lookup table
   free(wadtbl->lumps);
   
@@ -320,21 +323,22 @@ void W_FreePWADTable(wadtbl_t *wadtbl)
   free(wadtbl->data);
 }
 
-void W_AddLump(wadtbl_t *wadtbl, const char *name, const unsigned char* data, size_t size)
-{
+void W_AddLump(wadtbl_t *wadtbl, const char *name, const unsigned char* data,
+                                                   size_t size) {
   int lumpnum;
 
-  if (!wadtbl || (name && strlen(name) > 8))
-  {
+  if (!wadtbl || (name && strlen(name) > 8)) {
     I_Error("W_AddLump: wrong parameters.");
     return;
   }
 
   lumpnum = wadtbl->header.numlumps;
   
-  if (name)
-  {
-    wadtbl->lumps = realloc(wadtbl->lumps, (lumpnum + 1) * sizeof(wadtbl->lumps[0]));
+  if (name) {
+    wadtbl->lumps = realloc(
+      wadtbl->lumps,
+      (lumpnum + 1) * sizeof(wadtbl->lumps[0])
+    );
 
     strncpy(wadtbl->lumps[lumpnum].name, name, 8);
     wadtbl->lumps[lumpnum].size = size;
@@ -343,8 +347,7 @@ void W_AddLump(wadtbl_t *wadtbl, const char *name, const unsigned char* data, si
     wadtbl->header.numlumps++;
   }
 
-  if (data && size > 0)
-  {
+  if (data && size > 0) {
     wadtbl->data = realloc(wadtbl->data, wadtbl->datasize + size);
 
     memcpy(wadtbl->data + wadtbl->datasize, data, size);
@@ -354,8 +357,7 @@ void W_AddLump(wadtbl_t *wadtbl, const char *name, const unsigned char* data, si
   }
 }
 
-void R_DemoEx_ShowComment(void)
-{
+void R_DemoEx_ShowComment(void) {
   int         lump;
   int         cx = 10;
   int         cy = 10;
@@ -363,43 +365,46 @@ void R_DemoEx_ShowComment(void)
   int         count;
   int         w;
 
-  if (!use_demoex_info)
+  if (!use_demoex_info) {
     return;
+  }
 
   lump = W_CheckNumForName(DEMOEX_COMMENT_LUMPNAME);
-  if (lump == -1)
+  if (lump == -1) {
     return;
+  }
 
   count = W_LumpLength(lump);
 
-  if (count <= 0)
+  if (count <= 0) {
     return;
+  }
 
   ch = W_CacheLumpNum(lump);
 
-  for ( ; count ; count-- )
-  {
+  for ( ; count ; count-- ) {
     int c = *ch++;
 
-    if (!c)
+    if (!c) {
       break;
-    if (c == '\n')
-    {
+    }
+
+    if (c == '\n') {
       cx = 10;
       cy += 11;
       continue;
     }
 
     c = toupper(c) - HU_FONTSTART;
-    if (c < 0 || c> HU_FONTSIZE)
-    {
+    if (c < 0 || c > HU_FONTSIZE) {
       cx += 4;
       continue;
     }
 
     w = hu_font[c].width;
-    if (cx + w > SCREENWIDTH)
+    if (cx + w > SCREENWIDTH) {
       break;
+    }
 
     V_DrawNumPatch(cx, cy, 0, hu_font[c].lumpnum, CR_DEFAULT, VPT_STRETCH);
     cx += w;
@@ -408,8 +413,7 @@ void R_DemoEx_ShowComment(void)
   W_UnlockLumpNum(lump);
 }
 
-angle_t R_DemoEx_ReadMLook(void)
-{
+angle_t R_DemoEx_ReadMLook(void) {
   angle_t pitch;
 
   if (!use_demoex_info || !(demoplayback || democontinue))

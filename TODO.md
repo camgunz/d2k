@@ -1,27 +1,47 @@
 # To Do
 
-Windows crashes pretty early on
+1. Clients quit with a '100 commands for X' message after loading a new map in
+   multiplayer.
+
+- Need a refactor
+  - still need to setup branches based on client needing game info, state, or
+    being synchronized
+  - clientside reset:
+    - when gameaction is `ga_loadlevel`
+    - command queues for all players
+    - static vars in `cl_cmd`, `cl_main`, and `cl_net`
+    - ...might have to ignore `ga_loadlevel` from the server... or wait for
+      setup or something
+  - Move all the `SV_*` calls to `netpeer_t` instead of `playernum`; eventually
+    these will apply to peers that are just spectators
+
+1. Windows crashes pretty early on
 
 1. Fix bugs:
+  - `NM_SETUP` message packs a player count, but it needs to be a bitmap
   - `P_Printf` doesn't work in server mode
-    - Honestly, probably need a messaging overhaul
+  - `ping` should be in `netpeer_t`, not `player_t`; it's only this way so it's
+    included in deltas... which after thinking for a bit might not be wrong, so
+    hold off for now
   - When console scrollback fills up, FPS sinks
   - Add a server message sound (just use radio/tink?)
   - Add a message indicating that the server is full; currently it looks like a
     crash
+  - Currently nothing clears or renders when you switch to vidingl from OpenGL
+    - Also I think OpenGL mode doesn't refresh properly (console sticks)
 
 1. Test/Fix resolution switching
   - Probably have to override `:reset` in widgets to update a bunch of stuff
+
+1. Add spectators
+  - This is essentially reworking the logic between `playeringame`, `players`,
+    and walkcamera/spycam
 
 1. Remove 4 player restriction
 
 :: Proto Done Here ::
 
 ---
-
-1. Add spectators
-  - This is essentially reworking the logic between `playeringame`, `players`,
-    and walkcamera/spycam
 
 1. Move configuration into scripting
   - Refactor screens
@@ -77,9 +97,9 @@ Windows crashes pretty early on
   - serverside
   - clientside
 
--- Suitable For DEATHMATCH Here --
-
 1. Add announcer
+
+:: Suitable For DEATHMATCH Here ::
 
 1. Add slopes
 
@@ -89,7 +109,7 @@ Windows crashes pretty early on
 
 1. Add scripted game modes
 
--- Suitable For Competition Here --
+:: Suitable For Competition Here ::
 
 ## Smaller Issues
 
@@ -102,9 +122,6 @@ Windows crashes pretty early on
 
 1. Servers shouldn't `quit`, they should `shutdown`; also prevents accidentally
    running `/quit` in the console instead of `:quit` and closing the server....
-
-1. Fix switching to vidingl
-  - Currently nothing clears or renders when you switch to vidingl from OpenGL
 
 1. Add auto-scroll to TextWidget
 
@@ -149,7 +166,7 @@ Windows crashes pretty early on
     adjust the velocity downwards based on the client's lag and a preselected
     function (curve)
 
-## Future
+## Future/Possible
 
 1. Remove software renderer
   - See about implementing Doom lighting and 8-bit color using shaders
@@ -157,31 +174,18 @@ Windows crashes pretty early on
 ## Features
 
 1. UDMF
-
 1. ZIP/PK3 resource files
-
 1. Bots
-
 1. ACS Scripting
-
 1. DECORATE
-
 1. EDF
-
 1. ExtraData
-
 1. MAPINFO
-
 1. 3D floors
-
 1. 3D MixTex
-
 1. Portals
-
 1. Polyobjects
-
 1. Ambient Sounds
-
 1. Support for other ID Tech 1 games (Heretic, Hexen, etc.)
 
 <!-- vi: set et ts=4 sw=4 tw=79: -->

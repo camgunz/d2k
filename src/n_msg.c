@@ -21,24 +21,23 @@
 /*****************************************************************************/
 
 
-#ifndef CL_MAIN_H__
-#define CL_MAIN_H__
+#include "z_zone.h"
 
-extern int cl_extrapolate_player_positions;
+#include "doomdef.h"
+#include "n_main.h"
 
-bool CL_Predicting(void);
-bool CL_RunningConsoleplayerCommands(void);
-bool CL_RunningNonConsoleplayerCommands(void);
-void CL_SetRunningThinkers(bool running);
-bool CL_RunningThinkers(void);
-void CL_SetupCommandState(int playernum, unsigned int command_index);
-void CL_ShutdownCommandState(void);
-int  CL_GetCurrentCommandIndex(void);
-int  CL_GetNextCommandIndex(void);
-bool CL_ReceivedSetup(void);
-void CL_Init(void);
-
-#endif
+net_message_info_t network_message_info[NM_MAX] = {
+  { "none", NET_CHANNEL_UNRELIABLE },
+  { "setup", NET_CHANNEL_RELIABLE },
+  { "full state", NET_CHANNEL_RELIABLE },
+  { "authentication", NET_CHANNEL_RELIABLE },
+  { "chat message", NET_CHANNEL_RELIABLE },
+  { "sync", NET_CHANNEL_UNRELIABLE },
+  { "player preference change", NET_CHANNEL_RELIABLE },
+  { "game action", NET_CHANNEL_RELIABLE },
+  { "RCON command", NET_CHANNEL_RELIABLE },
+  { "vote request", NET_CHANNEL_RELIABLE },
+  { "ping", NET_CHANNEL_RELIABLE },
+};
 
 /* vi: set et ts=2 sw=2: */
-

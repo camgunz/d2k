@@ -30,7 +30,6 @@
 #include "g_game.h"
 #include "g_overflow.h"
 #include "m_bbox.h"
-#include "n_net.h"
 #include "r_defs.h"
 #include "p_maputl.h"
 #include "p_setup.h"

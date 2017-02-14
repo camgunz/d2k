@@ -32,10 +32,10 @@
 #include "g_overflow.h"
 #include "info.h"
 #include "m_random.h"
-#include "n_net.h"
 #include "p_user.h"
 #include "n_main.h"
 #include "cl_main.h"
+#include "cl_net.h"
 #include "p_ident.h"
 #include "p_inter.h"
 #include "p_map.h"
@@ -968,8 +968,9 @@ void P_RemoveMobj(mobj_t* mobj) {
 
     // lose one off the end?
 
-    if (iquehead == iquetail)
+    if (iquehead == iquetail) {
       iquetail = (iquetail + 1) & (ITEMQUESIZE - 1);
+    }
   }
 
   // unlink from sector and block lists
@@ -982,8 +983,9 @@ void P_RemoveMobj(mobj_t* mobj) {
   }
 
   // stop any playing sound
-  if (!CL_LoadingState())
+  if (!CL_LoadingState()) {
     S_StopSound(mobj);
+  }
 
   // killough 11/98:
   //

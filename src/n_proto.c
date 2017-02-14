@@ -33,15 +33,12 @@
 #include "d_event.h"
 #include "d_main.h"
 #include "g_game.h"
+#include "g_state.h"
 #include "m_misc.h"
-#include "n_net.h"
-#include "p_user.h"
 #include "n_main.h"
-#include "n_state.h"
-#include "n_peer.h"
-#include "n_pack.h"
-#include "n_proto.h"
+#include "p_user.h"
 #include "cl_main.h"
+#include "cl_net.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "sv_main.h"
@@ -51,15 +48,13 @@ const char *D_dehout(void); /* CG: from d_main.c */
 
 #define MAX_PREF_NAME_SIZE 20
 
-#define MAX_SETUP_REQUEST_INTERVAL .6
-
 #define SERVER_ONLY(name)                                                     \
   if (!SERVER) {                                                              \
     P_Printf(consoleplayer,                                                   \
       "%s: Erroneously received message [%s] from the server\n",              \
       __func__, name                                                          \
     );                                                                        \
-    return;                                                                   \
+    continue;                                                                 \
   }
 
 #define CLIENT_ONLY(name)                                                     \
@@ -68,34 +63,29 @@ const char *D_dehout(void); /* CG: from d_main.c */
       "%s: Erroneously received message [%s] from a client\n",                \
       __func__, name                                                          \
     );                                                                        \
-    return;                                                                   \
+    continue;                                                                 \
   }
 
 #define CHECK_VALID_PLAYER(np, playernum)                                     \
+  if (playernum < 0 || playernum >= MAXPLAYERS)                               \
+    I_Error("%s: Invalid player %d.\n", __func__, playernum);                 \
+  if (!playeringame[playernum])                                               \
+    I_Error("%s: Invalid player %d.\n", __func__, playernum);                 \
   if (((np) = N_PeerForPlayer(playernum)) == NULL)                            \
     I_Error("%s: Invalid player %d.\n", __func__, playernum);                 \
-  if (np->playernum < 0 || np->playernum >= MAXPLAYERS)                       \
-    I_Error("%s: Invalid player %d.\n", __func__, np->playernum);             \
-  if (!playeringame[np->playernum])                                           \
-    I_Error("%s: Invalid player %d.\n", __func__, np->playernum);
+  if (N_PeerGetPlayernum(np) != playernum) {                                  \
+    I_Error("%s: Peer playernum mismatch (%d != %d)\n",                       \
+      __func__,                                                               \
+      N_PeerGetPlayernum(np),                                                 \
+      playernum                                                               \
+    );                                                                        \
+  }
 
 #define CHECK_CONNECTION(np)                                                  \
   if (((np) = CL_GetServerPeer()) == NULL) {                                  \
     P_Printf(consoleplayer, "%s: Not connected\n", __func__);                 \
     return;                                                                   \
   }
-
-const char *nm_names[nm_max] = {
-  "setup",
-  "authentication",
-  "chat message",
-  "sync",
-  "player preference change",
-  "game action",
-  "RCON command",
-  "vote request",
-  "ping"
-};
 
 static void display_chat_message(chat_channel_e chat_channel,
                                  unsigned short sender,
@@ -106,10 +96,12 @@ static void display_chat_message(chat_channel_e chat_channel,
   const char *sender_closer;
   const char *channel;
 
-  if (gamemode == commercial)
+  if (gamemode == commercial) {
     sfx = sfx_radio;
-  else
+  }
+  else {
     sfx = sfx_tink;
+  }
 
   if (sender < 0) {
     sender_name = "SERVER";
@@ -172,12 +164,12 @@ static void handle_setup(netpeer_t *np) {
     return;
   }
 
-  N_ClearStates();
+  G_ClearStates();
 
   if (!N_UnpackSetup(np, &player_count, &playernum)) {
     D_ClearResourceFiles();
     D_ClearDEHFiles();
-    N_ClearStates();
+    G_ClearStates();
     N_Disconnect();
     return;
   }
@@ -198,35 +190,39 @@ static void handle_setup(netpeer_t *np) {
     I_Error("consoleplayer not in game");
   }
 
-  np->sync.tic = N_GetLatestState()->tic;
+  N_PeerSetSyncTIC(np, G_GetLatestState()->tic);
 
-  CL_SetReceivedSetup(true);
-  server->sync.outdated = true;
+  N_PeerSyncSetHasGameInfo(server);
+  N_PeerSyncSetHasGameState(server);
+  N_PeerSyncSetOutdated(server);
 
   if (gamestate == GS_INTERMISSION) {
-    N_LoadLatestState(true);
+    G_LoadLatestState(true);
   }
 }
 
 static void handle_setup_request(netpeer_t *np) {
-  time_t now = time(NULL);
-
-  if (np->last_setup_request != 0) {
-    if (difftime(now, np->last_setup_request) <= MAX_SETUP_REQUEST_INTERVAL) {
-      return;
-    }
+  if (!N_PeerCanRequestSetup(np)) {
+    return;
   }
 
-  np->last_setup_request = now;
+  SV_SendSetup(N_PeerGetPlayernum(np));
+  N_PeerUpdateLastSetupRequestTime(np);
+}
 
-  SV_SendSetup(np->playernum);
+static void handle_full_state(netpeer_t *np) {
+  N_UnpackFullState(np);
+  N_PeerSyncSetHasGameState(np);
 }
 
 static void handle_auth_response(netpeer_t *np) {
   auth_level_e level;
 
-  if (N_UnpackAuthResponse(np, &level))
-    CL_SetAuthorizationLevel(level);
+  if (!N_UnpackAuthResponse(np, &level)) {
+    return;
+  }
+
+  CL_SetAuthorizationLevel(level);
 }
 
 static void handle_chat_message(netpeer_t *np) {
@@ -257,8 +253,9 @@ static void handle_chat_message(netpeer_t *np) {
     switch (chat_channel) {
       case CHAT_CHANNEL_ALL:
         NETPEER_FOR_EACH(iter) {
-          if (iter.np == np)
+          if (iter.np == np) {
             continue;
+          }
 
           N_PackRelayedChatMessage(
             iter.np, message_sender, message_contents.data
@@ -267,11 +264,17 @@ static void handle_chat_message(netpeer_t *np) {
       break;
       case CHAT_CHANNEL_TEAM:
         NETPEER_FOR_EACH(iter) {
-          if (iter.np == np)
-            continue;
+          unsigned int playernum;
 
-          if (players[iter.np->playernum].team != players[message_sender].team)
+          if (iter.np == np) {
             continue;
+          }
+
+          playernum = N_PeerGetPlayernum(iter.np);
+
+          if (players[playernum].team != players[message_sender].team) {
+            continue;
+          }
 
           N_PackRelayedTeamChatMessage(
             iter.np, message_sender, message_contents.data
@@ -280,11 +283,17 @@ static void handle_chat_message(netpeer_t *np) {
       break;
       case CHAT_CHANNEL_PLAYER:
         NETPEER_FOR_EACH(iter) {
-          if (iter.np == np)
-            continue;
+          unsigned int playernum;
 
-          if (iter.np->playernum != message_recipient)
+          if (iter.np == np) {
             continue;
+          }
+
+          playernum = N_PeerGetPlayernum(iter.np);
+
+          if (playernum != message_recipient) {
+            continue;
+          }
 
           N_PackRelayedPlayerChatMessage(
             iter.np, message_sender, message_recipient, message_contents.data
@@ -320,7 +329,7 @@ static void handle_ping(netpeer_t *np) {
   if (SERVER) {
     double ping = (now - server_time) * 1000;
 
-    players[np->playernum].ping = (int)ping;
+    players[N_PeerGetPlayernum(np)].ping = (int)ping;
   }
 }
 
@@ -331,7 +340,7 @@ static void handle_player_preference_change(netpeer_t *np) {
   unsigned short playernum = 0;
   int tic = 0;
   unsigned int pref_count = 0;
-  player_t *player = &players[np->playernum];
+  player_t *player = &players[N_PeerGetPlayernum(np)];
 
   if (!pref_key_name) {
     pref_key_name = M_BufferNew();
@@ -345,10 +354,10 @@ static void handle_player_preference_change(netpeer_t *np) {
     return;
   }
 
-  if (SERVER && playernum != np->playernum) {
+  if (SERVER && playernum != N_PeerGetPlayernum(np)) {
     P_Printf(consoleplayer,
       "Received player preference for player %d from peer %d.\n",
-      playernum, np->playernum
+      playernum, N_PeerGetPlayernum(np)
     );
     return;
   }
@@ -400,7 +409,7 @@ static void handle_player_preference_change(netpeer_t *np) {
       int new_color;
 
       if (N_UnpackColorIndexChange(np, &new_color)) {
-        G_ChangedPlayerColour(np->playernum, new_color);
+        G_ChangedPlayerColour(N_PeerGetPlayernum(np), new_color);
       }
     }
     else if (M_BufferEqualsString(pref_key_name, "skin name")) {
@@ -441,22 +450,24 @@ static void handle_auth_request(netpeer_t *np) {
     auth_level = AUTH_LEVEL_SPECTATOR;
   }
 
-  if (auth_level > np->auth_level) {
-    np->auth_level = auth_level;
-    SV_SendAuthResponse(np->playernum, np->auth_level);
+  if (auth_level > N_PeerGetAuthLevel(np)) {
+    N_PeerSetAuthLevel(np, auth_level);
+    SV_SendAuthResponse(N_PeerGetPlayernum(np), N_PeerGetAuthLevel(np));
   }
 
   M_BufferFree(&buf);
 }
 
 static void handle_game_action_change(netpeer_t *np) {
-  gameaction_t new_game_action = 0;
+  gameaction_t new_gameaction = 0;
+  int new_gametic = 0;
 
-  if (!N_UnpackGameActionChange(np, &new_game_action)) {
+  if (!N_UnpackGameActionChange(np, &new_gameaction, &new_gametic)) {
     return;
   }
 
-  G_SetGameAction(new_game_action);
+  G_SetGameAction(new_gameaction);
+  gametic = new_gametic;
 }
 
 static void handle_rcon(netpeer_t *np) {
@@ -468,8 +479,8 @@ static void handle_rcon(netpeer_t *np) {
     return;
   }
 
-  if (np->auth_level <= AUTH_LEVEL_PLAYER) {
-    SV_SendMessage(np->playernum, "Not authorized for RCON usage");
+  if (N_PeerGetAuthLevel(np) < AUTH_LEVEL_MODERATOR) {
+    SV_SendMessage(N_PeerGetPlayernum(np), "Not authorized for RCON usage");
     return;
   }
 
@@ -480,24 +491,25 @@ static void handle_rcon(netpeer_t *np) {
 static void handle_vote_request(netpeer_t *np) {
 }
 
-void N_HandlePacket(int peernum, void *data, size_t data_size) {
-  netpeer_t *np = N_PeerGet(peernum);
-  unsigned char message_type = 0;
+void N_HandlePacket(netpeer_t *np, void *data, size_t data_size) {
+  net_message_e message_type = NM_NONE;
 
-  if (!N_PeerLoadIncoming(peernum, data, data_size)) {
-    D_Msg(MSG_NET, "N_HandlePacket: Ignoring packet with malformed TOC.\n");
+  if (!N_PeerSetIncoming(np, data, data_size)) {
+    D_Msg(MSG_NET, "N_HandlePacket: Ignoring malformed packet.\n");
     return;
   }
 
-  while (N_PeerLoadNextMessage(peernum, &message_type)) {
-    if (message_type >= 1 &&
-        message_type != nm_sync &&
-        message_type <= sizeof(nm_names)) {
-      D_Msg(MSG_NET, "Handling [%s] message.\n", nm_names[message_type - 1]);
+  while (N_PeerLoadNextMessage(np, &message_type)) {
+    if (message_type > NM_NONE &&
+        message_type != NM_SYNC &&
+        message_type < NM_MAX) {
+      D_Msg(MSG_NET, "Handling [%s] message.\n",
+        network_message_info[message_type].name
+      );
     }
 
     switch (message_type) {
-      case nm_setup:
+      case NM_SETUP:
         if (CLIENT) {
           handle_setup(np);
         }
@@ -505,7 +517,11 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
           handle_setup_request(np);
         }
       break;
-      case nm_auth:
+      case NM_FULL_STATE:
+        CLIENT_ONLY("full state");
+        handle_full_state(np);
+      break;
+      case NM_AUTH:
         if (CLIENT) {
           handle_auth_response(np);
         }
@@ -513,37 +529,37 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
           handle_auth_request(np);
         }
       break;
-      case nm_chatmessage:
+      case NM_CHAT_MESSAGE:
         handle_chat_message(np);
       break;
-      case nm_sync:
+      case NM_SYNC:
         handle_sync(np);
       break;
-      case nm_playerpreferencechange:
+      case NM_PLAYER_PREFERENCE_CHANGE:
         SERVER_ONLY("player preference change");
         handle_player_preference_change(np);
       break;
-      case nm_gameaction:
+      case NM_GAME_ACTION:
         CLIENT_ONLY("game action change");
         handle_game_action_change(np);
       break;
-      case nm_rconcommand:
+      case NM_RCON_COMMAND:
         SERVER_ONLY("RCON command");
         handle_rcon(np);
       break;
-      case nm_voterequest:
+      case NM_VOTE_REQUEST:
         SERVER_ONLY("vote request");
         handle_vote_request(np);
       break;
-      case nm_ping:
+      case NM_PING:
         handle_ping(np);
       break;
       default:
         P_Printf(consoleplayer,
-          "Received unknown message type %u from peer %s:%u.\n",
+          "Received unknown message type %d from peer %s:%u.\n",
           message_type,
-          N_IPToConstString(ENET_NET_TO_HOST_32(np->peer->address.host)),
-          np->peer->address.port
+          N_PeerGetIPAddressConstString(np),
+          N_PeerGetPort(np)
         );
       break;
     }
@@ -551,77 +567,53 @@ void N_HandlePacket(int peernum, void *data, size_t data_size) {
 }
 
 void N_UpdateSync(void) {
-  netpeer_t *np = NULL;
-
   if (CLIENT) {
-    np = CL_GetServerPeer();
+    netpeer_t *server = CL_GetServerPeer();
 
-    if (np == NULL)
+    if (!server) {
       return;
+    }
 
-    if (!np->sync.outdated)
+    if (!N_PeerSyncOutdated(server)) {
       return;
+    }
 
-    N_PeerClearUnreliable(np->peernum);
-    N_PackSync(np);
-    np->sync.outdated = false;
+    N_PeerClearChannel(server, network_message_info[NM_SYNC].channel);
+    N_PackSync(server);
+    N_PeerSyncSetNotOutdated(server);
 
     return;
   }
 
   NETPEER_FOR_EACH(iter) {
-    if (iter.np->sync.outdated && iter.np->sync.tic != 0) {
-      N_PeerClearUnreliable(iter.np->peernum);
-
-      if (SERVER) {
-        if (iter.np->sync.tic < N_GetLatestState()->tic) {
-          N_BuildStateDelta(iter.np->sync.tic, &iter.np->sync.delta);
-        }
-      }
-
-      N_PackSync(iter.np);
-
-      iter.np->sync.outdated = false;
-    }
-  }
-}
-
-void SV_SetupNewPeer(int peernum) {
-  unsigned short playernum;
-  netpeer_t *np = N_PeerGet(peernum);
-
-  if (!np) {
-    I_Error("SV_SetupNewPlayer: invalid peer %d.\n", peernum);
-  }
-
-  for (playernum = 0; playernum < MAXPLAYERS; playernum++) {
-    if (players[playernum].playerstate == PST_DISCONNECTED) {
+    if (!N_PeerSynchronized(iter.np)) {
       continue;
     }
 
-    if (!playeringame[playernum]) {
-      break;
+    if (N_PeerSyncOutdated(iter.np) && N_PeerGetSyncTIC(iter.np) != 0) {
+      N_PeerClearChannel(iter.np, network_message_info[NM_SYNC].channel);
+      N_PeerBuildNewSyncStateDelta(iter.np);
+      N_PackSync(iter.np);
+      N_PeerSyncSetNotOutdated(iter.np);
     }
   }
-
-  if (playernum == MAXPLAYERS) {
-    N_DisconnectPeer(peernum);
-    return;
-  }
-
-  playeringame[playernum] = true;
-  players[playernum].playerstate = PST_REBORN;
-  np->playernum = playernum;
-  np->sync.tic = gametic;
-  players[playernum].connect_tic = gametic;
 }
 
 void SV_SendSetup(unsigned short playernum) {
   netpeer_t *np = NULL;
   CHECK_VALID_PLAYER(np, playernum);
 
-  np->sync.initialized = true;
   N_PackSetup(np);
+  N_PeerSyncSetHasGameInfo(np);
+  N_PeerSyncSetHasGameState(np);
+}
+
+void SV_SendFullState(unsigned short playernum) {
+  netpeer_t *np = NULL;
+  CHECK_VALID_PLAYER(np, playernum);
+
+  N_PackFullState(np);
+  N_PeerSyncSetHasGameState(np);
 }
 
 void SV_SendAuthResponse(unsigned short playernum, auth_level_e auth_level) {
@@ -643,8 +635,9 @@ void SV_SendMessage(unsigned short playernum, const char *message) {
   netpeer_t *np = NULL;
   CHECK_VALID_PLAYER(np, playernum);
 
-  if (strlen(message) <= 0)
+  if (strlen(message) <= 0) {
     return;
+  }
 
   N_PackServerChatMessage(np, message);
 }
@@ -690,8 +683,9 @@ void CL_SendMessageToServer(const char *message) {
 void CL_SendMessageToPlayer(unsigned short recipient, const char *message) {
   netpeer_t *np = CL_GetServerPeer();
 
-  if (strlen(message) <= 0)
+  if (strlen(message) <= 0) {
     return;
+  }
 
   display_chat_message(CHAT_CHANNEL_PLAYER, consoleplayer, message);
 
@@ -725,8 +719,9 @@ void CL_SendMessageToTeam(const char *message) {
 void CL_SendMessage(const char *message) {
   netpeer_t *np = CL_GetServerPeer();
 
-  if (strlen(message) <= 0)
+  if (strlen(message) <= 0) {
     return;
+  }
 
   display_chat_message(CHAT_CHANNEL_ALL, consoleplayer, message);
 
@@ -747,7 +742,9 @@ void CL_SendNameChange(const char *new_name) {
 void SV_BroadcastPlayerNameChanged(unsigned short playernum,
                                    const char *new_name) {
   NETPEER_FOR_EACH(iter) {
-    if (iter.np->playernum != playernum) {
+    unsigned int peer_playernum = N_PeerGetPlayernum(iter.np);
+
+    if (peer_playernum != playernum) {
       N_PackNameChange(iter.np, playernum, new_name);
     }
   }
@@ -777,7 +774,9 @@ void CL_SendPing(double server_time) {
 void SV_BroadcastPlayerTeamChanged(unsigned short playernum,
                                    unsigned char new_team) {
   NETPEER_FOR_EACH(iter) {
-    if (iter.np->playernum != playernum) {
+    unsigned int peer_playernum = N_PeerGetPlayernum(iter.np);
+
+    if (peer_playernum != playernum) {
       N_PackTeamChange(iter.np, playernum, new_team);
     }
   }
@@ -803,7 +802,9 @@ void CL_SendWSOPChange(unsigned char new_wsop_flags) {
 void SV_BroadcastPlayerWSOPChanged(unsigned short playernum,
                                    unsigned char new_wsop_flags) {
   NETPEER_FOR_EACH(iter) {
-    if (iter.np->playernum != playernum) {
+    unsigned int peer_playernum = N_PeerGetPlayernum(iter.np);
+
+    if (peer_playernum != playernum) {
       N_PackWSOPChange(iter.np, playernum, new_wsop_flags);
     }
   }
@@ -819,7 +820,9 @@ void CL_SendBobbingChange(double new_bobbing_amount) {
 void SV_BroadcastPlayerBobbingChanged(unsigned short playernum,
                                       double new_bobbing_amount) {
   NETPEER_FOR_EACH(iter) {
-    if (iter.np->playernum != playernum) {
+    unsigned int peer_playernum = N_PeerGetPlayernum(iter.np);
+
+    if (peer_playernum != playernum) {
       N_PackBobbingChange(iter.np, playernum, new_bobbing_amount);
     }
   }
@@ -835,7 +838,9 @@ void CL_SendAutoaimChange(bool new_autoaim_enabled) {
 void SV_BroadcastPlayerAutoaimChanged(unsigned short playernum,
                                       bool new_autoaim_enabled) {
   NETPEER_FOR_EACH(iter) {
-    if (iter.np->playernum != playernum) {
+    unsigned int peer_playernum = N_PeerGetPlayernum(iter.np);
+
+    if (peer_playernum != playernum) {
       N_PackAutoaimChange(iter.np, playernum, new_autoaim_enabled);
     }
   }
@@ -851,7 +856,9 @@ void CL_SendWeaponSpeedChange(unsigned char new_weapon_speed) {
 void SV_BroadcastPlayerWeaponSpeedChanged(unsigned short playernum,
                                           unsigned char new_weapon_speed) {
   NETPEER_FOR_EACH(iter) {
-    if (iter.np->playernum != playernum) {
+    unsigned int peer_playernum = N_PeerGetPlayernum(iter.np);
+
+    if (peer_playernum != playernum) {
       N_PackWeaponSpeedChange(iter.np, playernum, new_weapon_speed);
     }
   }
@@ -871,7 +878,9 @@ void SV_BroadcastPlayerColorChanged(unsigned short playernum,
                                     unsigned char new_green,
                                     unsigned char new_blue) {
   NETPEER_FOR_EACH(iter) {
-    if (iter.np->playernum != playernum) {
+    unsigned int peer_playernum = N_PeerGetPlayernum(iter.np);
+
+    if (peer_playernum != playernum) {
       N_PackColorChange(iter.np, playernum, new_red, new_green, new_blue);
     }
   }
@@ -887,7 +896,9 @@ void CL_SendColorIndexChange(int new_color) {
 void SV_BroadcastPlayerColorIndexChanged(unsigned short playernum,
                                          int new_color) {
   NETPEER_FOR_EACH(iter) {
-    if (iter.np->playernum != playernum) {
+    unsigned int peer_playernum = N_PeerGetPlayernum(iter.np);
+
+    if (peer_playernum != playernum) {
       N_PackColorIndexChange(iter.np, consoleplayer, new_color);
     }
   }
@@ -905,7 +916,7 @@ void SV_BroadcastPlayerSkinChanged(unsigned short playernum) {
 
 void SV_ResyncPeers(void) {
   NETPEER_FOR_EACH(iter) {
-    N_PeerResetSync(iter.np->peernum);
+    N_PeerResetSync(iter.np);
   }
 }
 

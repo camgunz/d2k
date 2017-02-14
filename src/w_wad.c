@@ -35,13 +35,11 @@
 #include "m_argv.h"
 #include "m_file.h"
 #include "m_swap.h"
+#include "n_main.h"
 #include "w_wad.h"
 #include "r_demo.h"
 #include "r_main.h"
 #include "v_video.h"
-
-#include "n_net.h"
-#include "n_main.h"
 
 //
 // GLOBALS

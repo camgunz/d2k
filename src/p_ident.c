@@ -24,7 +24,6 @@
 #include "z_zone.h"
 
 #include "doomstat.h"
-#include "n_net.h"
 #include "info.h"
 
 static GHashTable *id_hash = NULL;
@@ -39,8 +38,9 @@ void P_IdentGetID(void *obj, uint32_t *obj_id) {
 
   max_id++;
 
-  if (max_id == 0)
+  if (max_id == 0) {
     I_Error("P_IdentGetID: ID number rolled over");
+  }
 
   id = max_id;
 
@@ -54,8 +54,9 @@ void P_IdentGetID(void *obj, uint32_t *obj_id) {
 }
 
 void P_IdentAssignID(void *obj, uint32_t obj_id) {
-  if (obj_id == 0)
+  if (obj_id == 0) {
     I_Error("P_IdentAssignID: ID is 0");
+  }
 
   max_id = MAX(max_id, obj_id);
 
@@ -69,8 +70,9 @@ void P_IdentAssignID(void *obj, uint32_t obj_id) {
 void P_IdentReleaseID(uint32_t *obj_id) {
   uint32_t id = *obj_id;
 
-  if (id == 0)
+  if (id == 0) {
     I_Error("P_IdentReleaseID: ID %d not assigned", id);
+  }
 
   g_hash_table_remove(id_hash, GUINT_TO_POINTER(id));
 

@@ -51,7 +51,7 @@
 #include "i_system.h"
 #include "i_video.h"
 #include "m_misc.h"
-#include "n_net.h"
+#include "n_main.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "st_stuff.h"

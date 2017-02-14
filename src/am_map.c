@@ -42,33 +42,12 @@
 #include "g_game.h"
 #include "p_mobj.h"
 #include "g_keys.h"
-#include "d_deh.h"
-#include "m_misc.h"
-#include "p_spec.h"
-#include "m_bbox.h"
-#include "r_demo.h"
-#include "n_net.h"
-
-/*
-#include "doomstat.h"
-#include "st_stuff.h"
-#include "r_main.h"
-#include "p_setup.h"
-#include "p_maputl.h"
-#include "w_wad.h"
-#include "v_video.h"
-#include "p_spec.h"
-#include "am_map.h"
 #include "d_deh.h"    // Ty 03/27/98 - externalizations
-#include "g_game.h"
-#include "g_keys.h"
-#include "r_fps.h"
-#include "r_demo.h"
 #include "m_misc.h"
+#include "p_spec.h"
 #include "m_bbox.h"
-#include "n_net.h"
-#include "p_user.h"
-*/
+#include "r_demo.h"
+#include "n_main.h"
 
 extern bool gamekeydown[];
 

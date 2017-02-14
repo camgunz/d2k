@@ -31,7 +31,6 @@
 #include "i_sound.h"
 #include "m_bbox.h"
 #include "m_random.h"
-#include "n_net.h"
 #include "p_enemy.h"
 #include "p_inter.h"
 #include "p_map.h"
