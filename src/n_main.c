@@ -60,7 +60,7 @@
 #include "hu_stuff.h"
 
 #define DEBUG_NET 0
-#define DEBUG_SYNC 1
+#define DEBUG_SYNC 0
 #define DEBUG_SYNC_STDERR 0
 #define DEBUG_SAVE 0
 #define DEBUG_CMD 0
@@ -68,7 +68,7 @@
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
 #define SERVER_SLEEP_TIMEOUT 1
-#define MAX_SETUP_REQUEST_ATTEMPTS 5
+#define MAX_SETUP_REQUEST_ATTEMPTS 10
 
 void G_BuildTiccmd(ticcmd_t *cmd);
 
@@ -154,7 +154,6 @@ void N_InitNetGame(void) {
   else if ((i = M_CheckParm("-net"))) {
     char *host = NULL;
     unsigned short port = 0;
-    time_t connect_time;
 
     if (i >= myargc) {
       I_Error("-net requires an address");
@@ -221,24 +220,14 @@ void N_InitNetGame(void) {
       I_Error("N_InitNetGame: Server peer was NULL");
     }
 
-    connect_time = time(NULL);
-
     G_ReloadDefaults();
 
-    D_Msg(MSG_INFO, "N_InitNetGame: Waiting for setup information...\n");
-
     for (size_t i = 1; i <= MAX_SETUP_REQUEST_ATTEMPTS; i++) {
-      time_t now = time(NULL);
-
-      N_ServiceNetwork();
-
+      D_Msg(MSG_INFO, "N_InitNetGame: Requesting setup information...\n");
+      CL_SendSetupRequest();
+      N_ServiceNetworkTimeout(1000);
       if (CL_ReceivedSetup()) {
         break;
-      }
-
-      if (difftime(now, connect_time) >= 1.0) {
-        CL_SendSetupRequest();
-        connect_time = now;
       }
     }
 
@@ -351,15 +340,13 @@ void N_RunTic(void) {
   P_Checksum(gametic);
 
   if (SERVER && gametic > 0) {
-    unsigned int peer_count = 0;
-
     NETPEER_FOR_EACH(iter) {
       if (N_PeerSynchronized(iter.np)) {
         N_PeerSyncSetOutdated(iter.np);
       }
     }
 
-    if (peer_count > 0) {
+    if (N_PeerGetCount() > 0) {
       G_SaveState();
     }
 

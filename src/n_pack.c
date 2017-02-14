@@ -59,42 +59,6 @@
     );                                                                        \
   }
 
-#define read_s8(pbuf, var, name)                                              \
-  if (!M_PBufReadS8(pbuf, &var)) {                                            \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define read_u8(pbuf, var, name)                                              \
-  if (!M_PBufReadU8(pbuf, &var)) {                                            \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define read_s16(pbuf, var, name)                                             \
-  if (!M_PBufReadS16(pbuf, &var)) {                                           \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define read_u32(pbuf, var, name)                                             \
-  if (!M_PBufReadU32(pbuf, &var)) {                                           \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
-    );                                                                        \
-    return false;                                                             \
-  }
-
 #define read_char(pbuf, var, name)                                            \
   if (!M_PBufReadChar(pbuf, &var)) {                                          \
     P_Printf(consoleplayer,                                                   \
@@ -302,6 +266,15 @@
   M_PBufWriteMap(pbuf, 1);                                                    \
   M_PBufWriteString(pbuf, pn, pnsz)
 
+#define unpack_net_command(pbuf, m_ncmd)                                      \
+  read_uint(pbuf,  m_ncmd.index,      "command index");                       \
+  read_uint(pbuf,  m_ncmd.tic,        "command TIC");                         \
+  read_uint(pbuf,  m_ncmd.server_tic, "server command TIC");                  \
+  read_char(pbuf,  m_ncmd.forward,    "command forward value");               \
+  read_char(pbuf,  m_ncmd.side,       "command side value");                  \
+  read_short(pbuf, m_ncmd.angle,      "command angle value");                 \
+  read_uchar(pbuf, m_ncmd.buttons,    "command buttons value")
+
 static void free_string(gpointer data) {
   free(data);
 }
@@ -365,7 +338,7 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
   M_PBufWriteUInt(pbuf, command_count);
 
   if (command_count > 0) {
-    D_Msg(MSG_SYNC, "(%d) (%d->%d) Unsync'd commands: [",
+    D_Msg(MSG_SYNC, "(%d) (%u->%u) Unsync'd commands: [",
       gametic,
       src_playernum,
       N_PeerGetPlayernum(np)
@@ -376,7 +349,7 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
     netticcmd_t *ncmd = (netticcmd_t *)g_ptr_array_index(commands, i);
 
     if (ncmd->index > N_PeerGetSyncCommandIndexForPlayer(np, src_playernum)) {
-      D_Msg(MSG_SYNC, " %d/%d/%d", ncmd->index, ncmd->tic, ncmd->server_tic);
+      D_Msg(MSG_SYNC, " %u/%u/%u", ncmd->index, ncmd->tic, ncmd->server_tic);
       M_PBufWriteUInt(pbuf, ncmd->index);
       M_PBufWriteUInt(pbuf, ncmd->tic);
       M_PBufWriteUInt(pbuf, ncmd->server_tic);
@@ -400,29 +373,25 @@ void N_PackSetupRequest(netpeer_t *np) {
 
 void N_PackSetup(netpeer_t *np) {
   game_state_t *gs = G_GetLatestState();
-  unsigned short player_count = 0;
   pbuf_t *pbuf = NULL;
   size_t resource_count = 0;
   size_t deh_count = deh_files->len;
   const char *iwad = D_GetIWAD();
+  uint64_t bitmap = 0;
 
   for (int i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
-      player_count++;
+      bitmap |= (1 << i);
     }
   }
 
   pbuf = N_PeerBeginMessage(np, NM_SETUP);
 
   M_PBufWriteInt(pbuf, deathmatch);
-  M_PBufWriteUShort(pbuf, MAXPLAYERS);
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i])
-      M_PBufWriteBool(pbuf, true);
-    else
-      M_PBufWriteBool(pbuf, false);
-  }
-  M_PBufWriteUShort(pbuf, N_PeerGetPlayernum(np));
+  M_PBufWriteUChar(pbuf, MAXPLAYERS);
+  M_PBufWriteULong(pbuf, bitmap);
+  M_PBufWriteUChar(pbuf, N_PeerGetPlayernum(np));
+
   M_PBufWriteString(pbuf, iwad, strlen(iwad));
 
   for (unsigned int i = 0; i < resource_files->len; i++) {
@@ -481,12 +450,12 @@ void N_PackSetup(netpeer_t *np) {
   N_PeerUpdateSyncTIC(np, gs->tic);
 }
 
-bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
-                                  unsigned short *playernum) {
+bool N_UnpackSetup(netpeer_t *np, unsigned short *playernum) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
-  unsigned short m_player_count = 0;
+  uint64_t m_player_bitmap;
+  unsigned char m_max_players;
   int m_deathmatch = 0;
-  unsigned short m_playernum = 0;
+  unsigned char m_playernum = 0;
   int m_state_tic;
   game_state_t *gs;
   bool has_resources;
@@ -496,22 +465,20 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
   char *iwad_path;
   GPtrArray *rf_list;
 
-  for (int i = 0; i < MAXPLAYERS; i++)
+  for (size_t i = 0; i < MAXPLAYERS; i++) {
     playeringame[i] = false;
-
-  read_ranged_int(pbuf, m_deathmatch, "deathmatch", 0, 2);
-
-  read_ushort(pbuf, m_player_count, "player count");
-
-  for (int i = 0; i < m_player_count; i++) {
-    bool m_ingame;
-
-    read_bool(pbuf, m_ingame, "player in game");
-
-    playeringame[i] = m_ingame;
   }
 
-  read_ushort(pbuf, m_playernum, "consoleplayer");
+
+  read_ranged_int(pbuf, m_deathmatch, "deathmatch", 0, 2);
+  read_uchar(pbuf, m_max_players, "MAXPLAYERS");
+  read_ulong(pbuf, m_player_bitmap, "playeringame bitmap");
+
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    playeringame[i] = ((m_player_bitmap & (1 << i)) != 0);
+  }
+
+  read_uchar(pbuf, m_playernum, "consoleplayer");
 
   M_BufferInit(&iwad_buf);
   read_string(pbuf, &iwad_buf, "IWAD", MAX_IWAD_NAME_LENGTH);
@@ -595,7 +562,6 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
   read_int(pbuf, m_state_tic, "game state tic");
   read_packed_game_state(pbuf, gs, m_state_tic, "game state data");
 
-  *player_count = m_player_count;
   deathmatch = m_deathmatch;
   *playernum = m_playernum;
 
@@ -801,7 +767,6 @@ void N_PackSync(netpeer_t *np) {
     }
 
     M_PBufWriteULong(pbuf, bitmap);
-
     M_PBufWriteInt(pbuf, N_PeerGetSyncTIC(np));
 
     pack_unsynchronized_commands(pbuf, np, consoleplayer);
@@ -887,13 +852,7 @@ bool N_UnpackSync(netpeer_t *np) {
         for (unsigned int j = 0; j < m_command_count; j++) {
           netticcmd_t m_ncmd;
 
-          read_u32(pbuf, m_ncmd.index,      "command index");
-          read_u32(pbuf, m_ncmd.tic,        "command TIC");
-          read_u32(pbuf, m_ncmd.server_tic, "server command TIC");
-          read_s8(pbuf,  m_ncmd.forward,    "command forward value");
-          read_s8(pbuf,  m_ncmd.side,       "command side value");
-          read_s16(pbuf, m_ncmd.angle,      "command angle value");
-          read_u8(pbuf,  m_ncmd.buttons,    "command buttons value");
+          unpack_net_command(pbuf, m_ncmd);
 
           P_QueuePlayerCommand(i, &m_ncmd);
         }
@@ -931,23 +890,15 @@ bool N_UnpackSync(netpeer_t *np) {
     unsigned int m_command_count;
     unsigned int playernum = N_PeerGetPlayernum(np);
 
-
     read_int(pbuf, m_sync_tic, "sync tic");
+    read_uint(pbuf, m_command_count, "command count");
 
     N_PeerUpdateSyncTIC(np, m_sync_tic);
-
-    read_uint(pbuf, m_command_count, "command count");
 
     for (unsigned int i = 0; i < m_command_count; i++) {
       netticcmd_t m_ncmd;
 
-      read_u32(pbuf, m_ncmd.index,      "command index");
-      read_u32(pbuf, m_ncmd.tic,        "command TIC");
-      read_u32(pbuf, m_ncmd.server_tic, "server command TIC");
-      read_s8(pbuf,  m_ncmd.forward,    "command forward value");
-      read_s8(pbuf,  m_ncmd.side,       "command side value");
-      read_s16(pbuf, m_ncmd.angle,      "command angle value");
-      read_u8(pbuf,  m_ncmd.buttons,    "command buttons value");
+      unpack_net_command(pbuf, m_ncmd);
 
       m_ncmd.server_tic = 0;
 

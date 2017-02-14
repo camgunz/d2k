@@ -134,8 +134,6 @@ void G_InitStates(void) {
 void G_SaveState(void) {
   game_state_t *gs = latest_game_state = get_new_state(gametic);
 
-  printf("(%d) Saving state\n", gametic);
-
   M_PBufClear(gs->data);
   G_WriteSaveData(gs->data);
 
@@ -184,12 +182,6 @@ game_state_t* G_ReadNewStateFromPackedBuffer(int tic, pbuf_t *pbuf) {
 }
 
 game_state_t* G_GetLatestState(void) {
-  if (latest_game_state) {
-    printf("latest_game_state->tic: %d\n", latest_game_state->tic);
-  }
-  else {
-    puts("latest_game_state is NULL");
-  }
   return latest_game_state;
 }
 

@@ -1578,6 +1578,9 @@ static void D_DoomMainSetup(void) {
 
   D_BuildBEXTables(); // haleyjd
 
+  D_Msg(MSG_INFO, "I_InitGetTime: Setting up timer.\n");
+  I_InitGetTime();
+
   // 1/18/98 killough: Z_Init() call moved to i_main.c
 
   // CPhipps - move up netgame init

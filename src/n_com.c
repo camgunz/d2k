@@ -97,7 +97,7 @@ void N_ComFlushChannel(netcom_t *nc, net_channel_e channel) {
   netchan_t *netchan = &nc->outgoing[channel];
   ENetPacket *packet = NULL;
 
-  if (N_ChannelReady(netchan)) {
+  if (!N_ChannelReady(netchan)) {
     return;
   }
 

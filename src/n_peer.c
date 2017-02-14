@@ -39,7 +39,7 @@
 #define NET_THROTTLE_ACCEL 2
 #define NET_THROTTLE_DECEL 1
 
-#define MAX_SETUP_REQUEST_INTERVAL 6.0
+#define MAX_SETUP_REQUEST_INTERVAL 2.0
 
 struct netpeer_s {
   unsigned int peernum;
@@ -167,7 +167,7 @@ unsigned int N_PeerGetCount(void) {
 
 netpeer_t* N_PeerAdd(void *enet_peer) {
   netpeer_t *np = NULL;
-  unsigned int playernum;
+  unsigned int playernum = 0;
 
   if (SERVER) {
     for (playernum = 0; playernum < MAXPLAYERS; playernum++) {

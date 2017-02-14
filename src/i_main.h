@@ -58,6 +58,7 @@ void I_ExeptionProcess(void);
 #endif
 
 void I_Init(void);
+void I_InitGetTime(void);
 void I_SetWindowIcon(void);
 void I_SetWindowCaption(void);
 void I_SafeExit(int rc);

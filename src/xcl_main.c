@@ -198,7 +198,7 @@ static int XCL_GetNetstats(lua_State *L) {
 }
 
 void XCL_RegisterInterface(void) {
-  X_RegisterObjects("Client", 9,
+  X_RegisterObjects("Client", 8,
     "say",                 X_FUNCTION, XCL_Say,
     "say_to",              X_FUNCTION, XCL_SayToPlayer,
     "say_to_server",       X_FUNCTION, XCL_SayToServer,

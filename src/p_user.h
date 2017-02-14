@@ -154,13 +154,13 @@ typedef struct player_message_s {
  */
 
 typedef struct netticcmd_s {
-  uint32_t index;
-  uint32_t tic;
-  uint32_t server_tic;
-  int8_t   forward;
-  int8_t   side;
-  int16_t  angle;
-  uint8_t  buttons;
+  unsigned int  index;
+  unsigned int  tic;
+  unsigned int  server_tic;
+  char          forward;
+  char          side;
+  short         angle;
+  unsigned char buttons;
 } netticcmd_t;
 
  /*

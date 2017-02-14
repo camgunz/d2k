@@ -28,6 +28,7 @@
 #include "p_user.h"
 #include "n_main.h"
 #include "cl_main.h"
+#include "cl_net.h"
 
 #define LOG_COMMANDS 0
 #define LOG_POSITIONS 0

@@ -158,7 +158,6 @@ bool N_Listen(const char *host, uint16_t port) {
 }
 
 bool N_Connect(const char *host, uint16_t port) {
-  netpeer_t *np = NULL;
   ENetPeer *server = NULL;
   ENetAddress address;
 
@@ -185,8 +184,6 @@ bool N_Connect(const char *host, uint16_t port) {
     address.port = DEFAULT_PORT;
   }
 
-  np = N_PeerAdd(server);
-
   server = enet_host_connect(net_host, &address, NET_CHANNEL_MAX, 0);
 
   if (!server) {
@@ -194,6 +191,8 @@ bool N_Connect(const char *host, uint16_t port) {
     N_Disconnect();
     return false;
   }
+
+  N_PeerAdd(server);
 
   previous_host = host;
   previous_port = port;
@@ -260,14 +259,6 @@ void N_DisconnectPlayer(unsigned short playernum) {
 
   D_Msg(MSG_INFO, "N_DisconnectPlayer: Disconnecting player %d\n", playernum);
   N_DisconnectPeer(np);
-}
-
-void N_FlushNetwork(void) {
-  if (!net_host) {
-    return;
-  }
-
-  enet_host_flush(net_host);
 }
 
 static void handle_enet_connection(ENetEvent *net_event) {

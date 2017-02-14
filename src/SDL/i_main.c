@@ -649,7 +649,8 @@ static void daemonize(void) {
 // Sets the priority class for the prboom-plus process
 //
 
-void I_Init(void) {
+/* [CG] Break out I_GetTime initialization */
+void I_InitGetTime(void) {
   /* killough 4/14/98: Adjustable speedup based on realtic_clock_rate */
   if (fastdemo) {
     I_GetTime = get_time_fast_demo;
@@ -661,7 +662,9 @@ void I_Init(void) {
   else {
     I_GetTime = I_GetTime_RealTime;
   }
+}
 
+void I_Init(void) {
   /* killough 2/21/98: avoid sound initialization if no sound & no music */
   if (!(nomusicparm && nosfxparm)) {
     I_InitSound();

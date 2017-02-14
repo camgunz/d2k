@@ -124,7 +124,6 @@ bool     N_Reconnect(void);
 bool     N_ConnectToServer(const char *address);
 void     N_DisconnectPeer(netpeer_t *np);
 void     N_DisconnectPlayer(unsigned short playernum);
-void     N_FlushNetwork(void);
 void     N_ServiceNetworkTimeout(int timeout_ms);
 void     N_ServiceNetwork(void);
 uint32_t N_GetUploadBandwidth(void);
@@ -147,8 +146,6 @@ void N_InitProtocol(void);
 void N_HandlePacket(netpeer_t *np, void *data, size_t data_size);
 void N_UpdateSync(void);
 
-void SV_SendSetup(unsigned short playernum);
-void SV_SendFullState(unsigned short playernum);
 void SV_SendAuthResponse(unsigned short playernum, auth_level_e auth_level);
 void SV_SendPing(unsigned short playernum);
 void SV_SendMessage(unsigned short playernum, const char *message);
@@ -208,8 +205,7 @@ void CL_SendVoteRequest(const char *command);
 void N_PackSetupRequest(netpeer_t *np);
 
 void N_PackSetup(netpeer_t *np);
-bool N_UnpackSetup(netpeer_t *np, unsigned short *player_count,
-                                  unsigned short *playernum);
+bool N_UnpackSetup(netpeer_t *np, unsigned short *playernum);
 
 void N_PackFullState(netpeer_t *np);
 bool N_UnpackFullState(netpeer_t *np);

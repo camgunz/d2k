@@ -154,9 +154,7 @@ static void display_chat_message(chat_channel_e chat_channel,
 
 static void handle_setup(netpeer_t *np) {
   netpeer_t *server = CL_GetServerPeer();
-  unsigned short player_count = 0;
   unsigned short playernum = 0;
-  int i;
 
   D_Msg(MSG_NET, "Handling setup.\n");
 
@@ -166,7 +164,7 @@ static void handle_setup(netpeer_t *np) {
 
   G_ClearStates();
 
-  if (!N_UnpackSetup(np, &player_count, &playernum)) {
+  if (!N_UnpackSetup(np, &playernum)) {
     D_ClearResourceFiles();
     D_ClearDEHFiles();
     G_ClearStates();
@@ -176,19 +174,11 @@ static void handle_setup(netpeer_t *np) {
 
   W_Init();
 
-  for (i = 0; i < MAXPLAYERS; i++) {
-    playeringame[i] = false;
-  }
-
-  for (i = 0; i < player_count; i++) {
-    playeringame[i] = true;
+  if (!playeringame[playernum]) {
+    I_Error("consoleplayer (%d) not in game", playernum);
   }
 
   consoleplayer = playernum;
-
-  if (!playeringame[consoleplayer]) {
-    I_Error("consoleplayer not in game");
-  }
 
   N_PeerSetSyncTIC(np, G_GetLatestState()->tic);
 
@@ -206,8 +196,8 @@ static void handle_setup_request(netpeer_t *np) {
     return;
   }
 
-  SV_SendSetup(N_PeerGetPlayernum(np));
-  N_PeerUpdateLastSetupRequestTime(np);
+  N_PeerSyncSetNeedsGameInfo(np);
+  N_PeerSyncSetNeedsGameState(np);
 }
 
 static void handle_full_state(netpeer_t *np) {
@@ -586,34 +576,25 @@ void N_UpdateSync(void) {
   }
 
   NETPEER_FOR_EACH(iter) {
-    if (!N_PeerSynchronized(iter.np)) {
-      continue;
+    if (N_PeerSyncNeedsGameInfo(iter.np) &&
+        N_PeerSyncNeedsGameState(iter.np)) {
+      N_PackSetup(iter.np);
+      N_PeerSyncSetHasGameInfo(iter.np);
+      N_PeerSyncSetHasGameState(iter.np);
+      N_PeerUpdateLastSetupRequestTime(iter.np);
     }
-
-    if (N_PeerSyncOutdated(iter.np) && N_PeerGetSyncTIC(iter.np) != 0) {
+    else if (N_PeerSyncNeedsGameState(iter.np)) {
+      N_PackFullState(iter.np);
+      N_PeerSyncSetHasGameState(iter.np);
+      N_PeerUpdateLastSetupRequestTime(iter.np);
+    }
+    else if (N_PeerSyncOutdated(iter.np) && N_PeerGetSyncTIC(iter.np) != 0) {
       N_PeerClearChannel(iter.np, network_message_info[NM_SYNC].channel);
       N_PeerBuildNewSyncStateDelta(iter.np);
       N_PackSync(iter.np);
       N_PeerSyncSetNotOutdated(iter.np);
     }
   }
-}
-
-void SV_SendSetup(unsigned short playernum) {
-  netpeer_t *np = NULL;
-  CHECK_VALID_PLAYER(np, playernum);
-
-  N_PackSetup(np);
-  N_PeerSyncSetHasGameInfo(np);
-  N_PeerSyncSetHasGameState(np);
-}
-
-void SV_SendFullState(unsigned short playernum) {
-  netpeer_t *np = NULL;
-  CHECK_VALID_PLAYER(np, playernum);
-
-  N_PackFullState(np);
-  N_PeerSyncSetHasGameState(np);
 }
 
 void SV_SendAuthResponse(unsigned short playernum, auth_level_e auth_level) {

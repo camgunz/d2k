@@ -4,8 +4,6 @@
    multiplayer.
 
 - Need a refactor
-  - still need to setup branches based on client needing game info, state, or
-    being synchronized
   - clientside reset:
     - when gameaction is `ga_loadlevel`
     - command queues for all players
@@ -14,24 +12,29 @@
       setup or something
   - Move all the `SV_*` calls to `netpeer_t` instead of `playernum`; eventually
     these will apply to peers that are just spectators
-
-1. Windows crashes pretty early on
-
-1. Fix bugs:
-  - `NM_SETUP` message packs a player count, but it needs to be a bitmap
-  - `P_Printf` doesn't work in server mode
-  - `ping` should be in `netpeer_t`, not `player_t`; it's only this way so it's
-    included in deltas... which after thinking for a bit might not be wrong, so
-    hold off for now
-  - When console scrollback fills up, FPS sinks
-  - Add a server message sound (just use radio/tink?)
   - Add a message indicating that the server is full; currently it looks like a
     crash
+
+1. Fix bugs:
+  - Connection sometimes takes multiple tries
+  - Nothing displays in console
+    - Probably scripting bug
+    - Should fix silently failing scripting... then again that probably goes to
+      the console to haha
+  - Windows crashes pretty early on
+  - `P_Printf` doesn't work in server mode
+  - Messaging needs to print to command-line console if graphics haven't yet
+    been initialized
+    - Or, initialize graphics much sooner
+  - When console scrollback fills up, FPS sinks
+  - Add a server message sound (just use radio/tink?)
   - Currently nothing clears or renders when you switch to vidingl from OpenGL
     - Also I think OpenGL mode doesn't refresh properly (console sticks)
 
 1. Test/Fix resolution switching
   - Probably have to override `:reset` in widgets to update a bunch of stuff
+
+:: Proto Done Here ::
 
 1. Add spectators
   - This is essentially reworking the logic between `playeringame`, `players`,
@@ -39,7 +42,7 @@
 
 1. Remove 4 player restriction
 
-:: Proto Done Here ::
+:: Alpha Done Here ::
 
 ---
 
