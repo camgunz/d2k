@@ -1,41 +1,33 @@
 # D2K
 
----
-
 D2K is a fork of [PrBoom+](http://prboom-plus.sourceforge.net) with several
 lofty goals.
 
 Maintain Compatibility
 ----------------------
 
-One of the many strengths of PrBoom+ is its compatibility with past versions of
-Doom and Boom.  D2K will maintain this compatibility, and will use a new
-compatibility testing framework to guard against regressions.
+D2K maintains the PrBoom+'s commitment to compatibility, using a compatibility
+testing framework to guard against regressions.
 
 Enhance Network Play
 --------------------
 
-PrBoom+ only supports the original command-based synchronized networking, This
-implementation has several limitations: only 4 players may play together,
-players cannot join an in-progress game, game modes are hard-coded, and one
-player's lag lags the whole group.
-
-D2K will replace this implementation with new netcode based on game saves,
-using delta compression to only send changes over the wire -- very similar to
-the Quake 3 architecture.  In line with current client/server Doom ports, the 4
-player limit will be lifted and users will be able to spectate games without
-playing in them.
+D2K features enhanced client/server network play inspired by the Quake 3
+networking model.  Compared with the original, games no longer pause when one
+player lags and players can join in-progress games.  We also plan to lift the 4
+player limit, and to add modern multiplayer features like spectators and
+scripted game modes.
 
 Add Extensibility via Scripting
 -------------------------------
 
+D2K is scriptable with [https://www.lua.org](Lua), a language used by dozens if
+not hundreds of other games including World of Warcraft and Garry's Mod.
+
 Doom's behavior and assets are hardcoded, making it difficult to extend the
 engine with new capabilities.  ACS, DECORATE, EDF and ExtraData attempt to
-solve this problem, but all leave much to be desired.
-
-A scripting language would be much more powerful here.  D2K will move behavior
-and assets into a scripting language, allowing modders full control over the
-engine.  It is extremely likely that this language will be Lua.
+solve this problem, but all leave much to be desired.  D2K will move behavior
+and assets into Lua, allowing modders full control over the engine.
 
 Web Play
 --------
@@ -49,17 +41,16 @@ web.  Current major contending implementations are:
 Add Console and Customizable HUD Widgets
 -----------
 
-PrBoom+ currently has no console, and its HUD widgets are hardcoded.  D2K will
-change both of these things via scripting.
+D2K features a console and a fully scriptable HUD, and can be scripted via the
+console.
 
 Modernize Renderer
 ------------------
 
 D2K will convert the renderer from the fixed-function pipeline to the
-programmable pipeline.  In addition, D2K will upgrade the baseline OpenGL
-support necessary to run, requiring support for OpenGL 2.0.  Deprecated
-features, such as paletted textures, will be removed and functionality
-dependent on them will be reimplemented.
+programmable pipeline and require support for OpenGL 2.0.  Deprecated features
+such as paletted textures will be removed and functionality dependent on them
+will be reimplemented.
 
 Add Modern Features and Compatibility
 -------------------------------------

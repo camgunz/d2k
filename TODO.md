@@ -6,6 +6,8 @@
 1. Fix bugs:
   - Sometimes the server doesn't call `G_WorldDone` when `gameaction` is set to
     `ga_worlddone`; something sets it back to `ga_nothing` first.
+    - It looks this might also set `GS_FINALE`
+    - And also it prevents the server from sending `NM_FULLSTATE` to clients
   - Nothing displays in console
     - Checked, (probably) not a scripting bug
   - Console and messages widget should render during intermission
@@ -23,7 +25,7 @@
 1. Test/Fix resolution switching
   - Probably have to override `:reset` in widgets to update a bunch of stuff
 
-:: Proto Done Here ::
+:::: Proto Release Here ::::
 
 1. Add spectators
   - This is essentially reworking the logic between `playeringame`, `players`,
@@ -33,7 +35,7 @@
 
 1. Remove 4 player restriction
 
-:: Alpha Done Here ::
+:::: Alpha Release Here ::::
 
 ---
 
@@ -72,6 +74,8 @@
     huge file (or a file from a slow server); libcurl ought to make this
     pretty easy
 
+:::: Beta Release Here ::::
+
 1. Add 3D physics
 
 1. Add ZDoom physics
@@ -93,7 +97,7 @@
 
 1. Add announcer
 
-:: Suitable For DEATHMATCH Here ::
+:::: Version 1 - DEATHMATCH Capable :::
 
 1. Add slopes
 
