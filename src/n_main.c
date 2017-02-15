@@ -121,6 +121,7 @@ static bool should_render(void) {
 
 void N_InitNetGame(void) {
   int i;
+  time_t start_request_time;
 
   netgame   = false;
   solonet   = false;
@@ -210,22 +211,36 @@ void N_InitNetGame(void) {
       "N_InitNetGame: Connecting to server %s:%u...\n", host, port
     );
 
-    if (!N_Connect(host, port)) {
-      I_Error("N_InitNetGame: Connection refused");
-    }
+    for (int i = 0; i < MAX_SETUP_REQUEST_ATTEMPTS; i++) {
+      if (!N_Connect(host, port)) {
+        I_Error("N_InitNetGame: Connection refused");
+      }
 
-    D_Msg(MSG_INFO, "N_InitNetGame: Connected!\n");
+      D_Msg(MSG_INFO, "N_InitNetGame: Connected!\n");
 
-    if (!CL_GetServerPeer()) {
-      I_Error("N_InitNetGame: Server peer was NULL");
-    }
+      if (!CL_GetServerPeer()) {
+        I_Error("N_InitNetGame: Server peer was NULL");
+      }
 
-    G_ReloadDefaults();
+      G_ReloadDefaults();
 
-    for (size_t i = 1; i <= MAX_SETUP_REQUEST_ATTEMPTS; i++) {
       D_Msg(MSG_INFO, "N_InitNetGame: Requesting setup information...\n");
-      CL_SendSetupRequest();
-      N_ServiceNetworkTimeout(1000);
+
+      start_request_time = time(NULL);
+
+      while (N_Connected()) {
+        CL_SendSetupRequest();
+        N_ServiceNetwork();
+
+        if (CL_ReceivedSetup()) {
+          break;
+        }
+
+        if (difftime(time(NULL), start_request_time) > 10.0) {
+          break;
+        }
+      }
+
       if (CL_ReceivedSetup()) {
         break;
       }

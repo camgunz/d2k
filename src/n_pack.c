@@ -801,8 +801,6 @@ void N_PackSync(netpeer_t *np) {
 
     M_PBufWriteULong(pbuf, bitmap);
 
-    M_PBufWriteInt(pbuf, G_GetGameState());
-
     NETPEER_FOR_EACH(iter) {
       unsigned int playernum  = N_PeerGetPlayernum(iter.np);
 
@@ -839,13 +837,8 @@ bool N_UnpackSync(netpeer_t *np) {
   read_ulong(pbuf, m_bitmap, "sync player bitmap");
 
   if (CLIENT) {
-    gamestate_t m_gamestate;
     int m_delta_from_tic;
     int m_delta_to_tic;
-
-    read_int(pbuf, m_gamestate, "game state");
-
-    CL_SetNewGameState(m_gamestate);
 
     for (int i = 0; i < MAXPLAYERS; i++) {
       if ((m_bitmap & (1 << i)) == 0) {

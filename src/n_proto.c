@@ -203,7 +203,6 @@ static void handle_setup_request(netpeer_t *np) {
 static void handle_full_state(netpeer_t *np) {
   N_UnpackFullState(np);
   N_PeerSyncSetHasGameState(np);
-  CL_SetNewGameState(GS_LEVEL);
 }
 
 static void handle_auth_response(netpeer_t *np) {
@@ -457,8 +456,29 @@ static void handle_game_action_change(netpeer_t *np) {
     return;
   }
 
-  G_SetGameAction(new_gameaction);
   gametic = new_gametic;
+
+  switch (new_gameaction) {
+    case ga_loadlevel:
+      puts("got ga_loadlevel");
+      // force players to be initialized on level reload
+      for (size_t i = 0; i < MAXPLAYERS; i++) {
+        players[i].playerstate = PST_REBORN;
+      }
+
+      G_DoLoadLevel();
+    break;
+    case ga_completed:
+      puts("got ga_completed");
+      G_DoCompleted();
+    break;
+    case ga_worlddone:
+      puts("got ga_worlddone");
+      G_DoWorldDone();
+    break;
+    default:
+    break;
+  }
 }
 
 static void handle_rcon(netpeer_t *np) {

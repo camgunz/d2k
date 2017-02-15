@@ -432,6 +432,10 @@ bool CL_RePredicting(void) {
   return (CLIENT && cl_repredicting);
 }
 
+void CL_SetNeedsInitNew(void) {
+  cl_needs_init_new = true;
+}
+
 void CL_ResetSync(void) {
   netpeer_t *server = CL_GetServerPeer();
 

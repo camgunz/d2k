@@ -172,6 +172,7 @@ void D_Msg(msg_channel_e chan, const char *fmt, ...) {
   va_list args;
   va_list log_args;
   va_list console_args;
+  va_list cmdline_args;
   message_channel_t *mc;
 
   check_message_channel(chan);
@@ -201,6 +202,11 @@ void D_Msg(msg_channel_e chan, const char *fmt, ...) {
     va_end(log_args);
     fflush(mc->fobj);
   }
+
+  va_copy(cmdline_args, args);
+  vprintf(fmt, cmdline_args);
+  va_end(cmdline_args);
+  fflush(stdout);
 
   va_end(args);
 }

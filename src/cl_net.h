@@ -37,6 +37,7 @@ bool       CL_OccurredDuringRePrediction(int tic);
 bool       CL_LoadingState(void);
 bool       CL_Synchronizing(void);
 bool       CL_RePredicting(void);
+void       CL_SetNeedsInitNew(void);
 void       CL_ResetSync(void);
 
 #endif

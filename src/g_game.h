@@ -462,6 +462,7 @@ void G_DoReborn(int playernum);
 void G_DoPlayDemo(void);
 void G_DoCompleted(void);
 void G_DoWorldDone(void);
+void G_DoLoadLevel(void);
 void G_Compatibility(void);
 void G_ReadOptions(unsigned char game_options[]);
 void G_WriteOptions(unsigned char game_options[]);

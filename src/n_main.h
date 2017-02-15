@@ -120,6 +120,7 @@ void     N_Disconnect(void);
 void     N_Shutdown(void);
 bool     N_Listen(const char *host, uint16_t port);
 bool     N_Connect(const char *host, uint16_t port);
+bool     N_Connected(void);
 bool     N_Reconnect(void);
 bool     N_ConnectToServer(const char *address);
 void     N_DisconnectPeer(netpeer_t *np);

@@ -197,9 +197,11 @@ bool N_Connect(const char *host, uint16_t port) {
   previous_host = host;
   previous_port = port;
 
-  D_Msg(MSG_INFO, "N_Connect: connected");
-
   return true;
+}
+
+bool N_Connected(void) {
+  return (net_host != NULL);
 }
 
 bool N_Reconnect(void) {
@@ -301,7 +303,6 @@ static void handle_enet_disconnection(ENetEvent *net_event) {
 
   if (CLIENT) {
     N_Disconnect();
-    I_SafeExit(0);
   }
 
   N_PeerRemove(np);

@@ -969,7 +969,7 @@ void G_RestartLevel(void) {
 // G_DoLoadLevel
 //
 
-static void G_DoLoadLevel(void) {
+void G_DoLoadLevel(void) {
   int i;
 
   if (CLIENT) {
@@ -1473,8 +1473,9 @@ void G_Ticker(void) {
     switch (gameaction) {
       case ga_loadlevel:
         // force players to be initialized on level reload
-        for (i = 0; i < MAXPLAYERS; i++)
+        for (i = 0; i < MAXPLAYERS; i++) {
           players[i].playerstate = PST_REBORN;
+        }
 
         G_DoLoadLevel();
       break;
@@ -4029,7 +4030,46 @@ gameaction_t G_GetGameAction(void) {
 }
 
 void G_SetGameAction(gameaction_t new_gameaction) {
+  if (CLIENT) {
+    if (new_gameaction == ga_nothing) {
+      gameaction = ga_nothing;
+    }
+    return;
+  }
+
   gameaction = new_gameaction;
+
+#if 0
+  switch (new_gameaction) {
+    case ga_nothing:
+      puts("ga_nothing");
+    break;
+    case ga_loadlevel:
+      puts("ga_loadlevel");
+    break;
+    case ga_newgame:
+      puts("ga_newgame");
+    break;
+    case ga_loadgame:
+      puts("ga_loadgame");
+    break;
+    case ga_savegame:
+      puts("ga_savegame");
+    break;
+    case ga_playdemo:
+      puts("ga_playdemo");
+    break;
+    case ga_completed:
+      puts("ga_completed");
+    break;
+    case ga_victory:
+      puts("ga_victory");
+    break;
+    case ga_worlddone:
+      puts("ga_worlddone");
+    break;
+  }
+#endif
 
   if (SERVER && gameaction != ga_nothing) {
     SV_BroadcastGameActionChange();

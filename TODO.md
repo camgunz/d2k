@@ -4,17 +4,10 @@
    crash
 
 1. Fix bugs:
-  - Some races around game state: clients are in intermission, then level, then
-    intermission again when loading a new map
-    - `G_DoLoadLevel`
-    - `...`
-    - `G_WorldDone`
-    - `G_DoLoadLevel`
-  - Connection sometimes takes multiple tries
+  - Sometimes the server doesn't call `G_WorldDone` when `gameaction` is set to
+    `ga_worlddone`; something sets it back to `ga_nothing` first.
   - Nothing displays in console
-    - Probably scripting bug
-    - Should fix silently failing scripting... then again that probably goes to
-      the console to haha
+    - Checked, (probably) not a scripting bug
   - Console and messages widget should render during intermission
     - I think widgets need a "render during intermission" flag
   - Windows crashes pretty early on
