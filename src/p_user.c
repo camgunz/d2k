@@ -521,11 +521,26 @@ void P_PlayerThink(int playernum) {
 
   // Handling colormaps.
   // killough 3/20/98: reformat to terse C syntax
+
+  /*
   player->fixedcolormap = palette_onpowers &&
     (player->powers[pw_invulnerability] > 4 * 32 ||
     player->powers[pw_invulnerability] & 8) ? INVERSECOLORMAP :
     player->powers[pw_infrared] > 4 * 32 || player->powers[pw_infrared] & 8;
+  */
 
+  if (palette_onpowers && (
+      player->powers[pw_invulnerability] > 4 * 32 ||
+      player->powers[pw_invulnerability] & 8)) {
+    player->fixedcolormap = INVERSECOLORMAP;
+  }
+  else if (player->powers[pw_infrared] > 4 * 32 ||
+           player->powers[pw_infrared] & 8) {
+    player->fixedcolormap = 1;
+  }
+  else {
+    player->fixedcolormap = 0;
+  }
 }
 
 void P_SetName(int playernum, const char *name) {

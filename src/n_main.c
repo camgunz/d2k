@@ -427,13 +427,13 @@ bool N_TryRunTics(void) {
   int tics_elapsed = I_GetTime() - tics_built;
   bool needs_rendering = should_render();
 
-  if (gametic > 0) {
-    if ((N_PeerGetCount() == 0) || (tics_elapsed <= 0 && !needs_rendering)) {
-      N_ServiceNetwork();
-      C_ECIService();
-      I_Sleep(1);
-      return false;
-    }
+  if ((gametic > 0) &&
+      (((tics_elapsed <= 0) && (!needs_rendering)) ||
+       (SERVER && N_PeerGetCount() == 0))) {
+    N_ServiceNetwork();
+    C_ECIService();
+    I_Sleep(1);
+    return false;
   }
 
   if (tics_elapsed > 0) {

@@ -4,13 +4,11 @@
    crash
 
 1. Fix bugs:
-  - Singleplayer quit ticking
+  - Cheats don't work (probably scripting input handler)
   - Sometimes the server doesn't call `G_WorldDone` when `gameaction` is set to
     `ga_worlddone`; something sets it back to `ga_nothing` first.
     - It looks this might also set `GS_FINALE`
     - And also it prevents the server from sending `NM_FULLSTATE` to clients
-  - Nothing displays in console
-    - Checked, (probably) not a scripting bug
   - Console and messages widget should render during intermission
     - I think widgets need a "render during intermission" flag
   - Windows crashes pretty early on

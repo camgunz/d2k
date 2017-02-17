@@ -9,6 +9,7 @@ WAD="-file king1.wad"
 WAD="-file sunder.wad"
 WAD="-file judas23_.wad"
 WAD="-file dwango5.wad"
+WAD="-file BOOMEDIT.WAD"
 
 MAP="2"
 MAP="23"
