@@ -8,14 +8,10 @@
   - Sometimes the server doesn't call `G_WorldDone` when `gameaction` is set to
     `ga_worlddone`; something sets it back to `ga_nothing` first.
     - It looks this might also set `GS_FINALE`
-    - And also it prevents the server from sending `NM_FULLSTATE` to clients
-  - Console and messages widget should render during intermission
-    - I think widgets need a "render during intermission" flag
+    - And also it prevents the server from sending a `gameaction` update and
+      `NM_FULLSTATE` to clients
   - Windows crashes pretty early on
   - `P_Printf` doesn't work in server mode
-  - Messaging needs to print to command-line console if graphics haven't yet
-    been initialized
-    - Or, initialize graphics much sooner
   - When console scrollback fills up, FPS sinks
   - Add a server message sound (just use radio/tink?)
   - Currently nothing clears or renders when you switch to vidingl from OpenGL
@@ -31,6 +27,8 @@
     and walkcamera/spycam
   - Move all the `SV_*` calls to `netpeer_t` instead of `playernum`; eventually
     these will apply to peers that are just spectators
+  - Probably also take this opportunity to remove server-as-player hack
+    - Use a camera in non-headless mode (add non-headless mode???)
 
 1. Remove 4 player restriction
 
@@ -109,9 +107,6 @@
 :: Suitable For Competition Here ::
 
 ## Smaller Issues
-
-1. Remove server-as-player hack
-  - Use a camera in non-headless mode (add non-headless mode???)
 
 1. Add error codes to `n_proto`
 
