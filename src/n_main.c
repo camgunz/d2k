@@ -77,8 +77,13 @@ static int run_tics(int tic_count) {
 
   while (tic_count--) {
     if (MULTINET) {
-      if ((!D_Wiping()) && (G_GetGameState() != GS_INTERMISSION)) {
-        P_BuildCommand();
+      if (!D_Wiping()) {
+        if (G_GetGameState() == GS_LEVEL) {
+          P_BuildCommand();
+        }
+        else {
+          I_InputHandle();
+        }
       }
     }
     else {
