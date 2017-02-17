@@ -4,6 +4,7 @@
    crash
 
 1. Fix bugs:
+  - Singleplayer quit ticking
   - Sometimes the server doesn't call `G_WorldDone` when `gameaction` is set to
     `ga_worlddone`; something sets it back to `ga_nothing` first.
     - It looks this might also set `GS_FINALE`

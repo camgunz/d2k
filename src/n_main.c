@@ -152,12 +152,12 @@ void N_InitNetGame(void) {
     netgame = true;
     solonet = true;
   }
-  else if ((i = M_CheckParm("-net"))) {
+  else if ((i = M_CheckParm("-connect"))) {
     char *host = NULL;
     unsigned short port = 0;
 
     if (i >= myargc) {
-      I_Error("-net requires an address");
+      I_Error("-connect requires an address");
     }
 
     netgame = true;

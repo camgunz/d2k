@@ -83,10 +83,12 @@ static int XD_MsgGetMessages(lua_State *L) {
 }
 
 static int XD_MsgGetMessagesUpdated(lua_State *L) {
-  if (C_MessagesUpdated())
+  if (C_MessagesUpdated()) {
     lua_pushboolean(L, true);
-  else
+  }
+  else {
     lua_pushboolean(L, false);
+  }
 
   return 1;
 }

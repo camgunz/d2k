@@ -66,17 +66,16 @@ void C_ECIInitUNIX(void) {
 void C_ECIInitNonUNIX(void) {}
 
 void C_ECIServiceUNIX(void) {
-  if (C_MessagesUpdated()) {
-    if (SERVER) {
-      N_UDSBroadcast(&uds, C_GetMessages()->str);
-    }
+  if (!SERVER) {
+    return;
+  }
 
+  if (C_MessagesUpdated()) {
+    N_UDSBroadcast(&uds, C_GetMessages()->str);
     C_ClearMessagesUpdated();
   }
 
-  if (SERVER) {
-    N_UDSService(&uds);
-  }
+  N_UDSService(&uds);
 }
 
 void C_ECIServiceNonUNIX(void) {}
