@@ -23,6 +23,9 @@
 
 package.path = package.path .. ';' .. d2k.script_search_path
 
+_G['pl'] = require('pl.import_into')()
+pl.stringx.import()
+
 local Fonts = require('fonts')
 
 if not DEBUG then
@@ -87,6 +90,13 @@ end
 
 print('X_Init: Loading console shortcuts')
 require('console_shortcuts')
+
+print('X_Init: Loading cheat engine')
+local CheatEngine = require('cheat_engine')
+d2k.cheat_engine = CheatEngine.CheatEngine()
+
+-- print('X_Init: Loading cheats')
+-- require('cheats')
 
 -- vi: et ts=4 sw=4
 

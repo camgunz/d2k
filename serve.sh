@@ -2,25 +2,24 @@
 
 BASE_DIR="$(pwd)"
 
-WAD="-file heights2.wad"
 WAD=""
 WAD="-iwad freedm.wad"
 WAD="-file king1.wad"
-WAD="-file sunder.wad"
 WAD="-file judas23_.wad"
 WAD="-file BOOMEDIT.WAD"
 WAD="-file dwango5.wad"
+WAD="-file heights.wad"
+WAD="-file sunder.wad"
 
-MAP="2"
 MAP="23"
+MAP="2"
 MAP="1"
 
-CMD="cbuild/d2k $WAD -skill 5 -warp $MAP -nomonsters -serve"
-CMD="cbuild/d2k $WAD -skill 5 -warp $MAP -deathmatch -frags 5 -serve"
-CMD="cbuild/d2k $WAD -skill 4 -warp $MAP -serve"
-CMD="cbuild/d2k $WAD -skill 5 -warp $MAP -log /home/charlie/.d2k/log.txt -serve -nodaemon"
-CMD="cbuild/d2k $WAD -skill 5 -warp $MAP -nomonsters -altdeath -frags 1 -log /home/charlie/.d2k/log.txt -serve -nodaemon"
-CMD="cbuild/d2k $WAD -skill 5 -warp $MAP3 -nomonsters -altdeath -frags 1 -log /home/charlie/.d2k/log.txt -serve -nodaemon"
+CMD="cbuild/d2k -serve -nodaemon $WAD -skill 5 -warp $MAP -nomonsters"
+CMD="cbuild/d2k -serve -nodaemon $WAD -skill 5 -warp $MAP -log /home/charlie/.d2k/log.txt"
+CMD="cbuild/d2k -serve -nodaemon $WAD -skill 5 -warp $MAP -nomonsters -altdeath -frags 1 -log ~/.d2k/log.txt"
+CMD="cbuild/d2k -serve -nodaemon $WAD -skill 5 -warp $MAP -deathmatch -frags 5"
+CMD="cbuild/d2k -serve -nodaemon $WAD -skill 4 -warp $MAP"
 
 mkdir -p ~/.d2k/scripts
 

@@ -192,7 +192,7 @@ void D_Msg(msg_channel_e chan, const char *fmt, ...) {
       (chan == MSG_WARN)  ||
       (chan == MSG_ERROR)) {
     va_copy(console_args, args);
-    C_MVPrintf(fmt, console_args);
+    C_VPrintf(fmt, console_args);
     va_end(console_args);
   }
 

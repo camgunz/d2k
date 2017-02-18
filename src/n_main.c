@@ -36,6 +36,7 @@
 #include "g_game.h"
 #include "r_defs.h"
 #include "i_system.h"
+#include "i_input.h"
 #include "i_main.h"
 #include "i_video.h"
 #include "m_argv.h"
