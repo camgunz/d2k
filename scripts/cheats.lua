@@ -21,6 +21,10 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
+-- [CG] [FIXME] These cheats are all strongly tied to Doom, assuming the same
+--              keys, weapons, etc.  So I think there should probably be a
+--              namespace for this kind of thing.
+
 Cheat = d2k.cheat_engine.add_cheat
 
 function get_give_power_func(pow)
@@ -75,6 +79,7 @@ Cheat {
 
         consoleplayer:add_power(d2k.Game.Powers.Invulnerability)
         consoleplayer:add_weapon(d2k.Game.Weapons.Chainsaw)
+        -- Ty 03/27/98 - externalized
         d2k.Messaging.echo(d2k.Deh.s_STSTR_CHOPPERS)
     end
 }
@@ -92,6 +97,7 @@ Cheat {
 
         if consoleplayer:is_cheating(d2k.Game.Cheats.GodMode) then
             consoleplayer.remove_cheat(d2k.Game.Cheats.GodMode)
+            -- Ty 03/27/98 - externalized
             d2k.Messaging.echo(d2k.Deh.s_STSTR_DQDOFF);
             return
         end
@@ -103,6 +109,7 @@ Cheat {
         end
 
         consoleplayer:set_health(d2k.Deh.GodHealth)
+        -- Ty 03/27/98 - externalized
         d2k.Messaging.echo(d2k.Deh.s_STSTR_DQDON);
     end
 }
@@ -131,34 +138,74 @@ Cheat {
     when = CheatEngine.NEVER,
 }
 
+-- CPhipps - new health and armour cheat codes
 Cheat {
     code = 'idbeholdh',
     description = 'Invincibility',
     when = CheatEngine.NEVER,
+    func = function()
+        local consoleplayer = d2k.Game.get_consoleplayer()
+
+        if not consoleplayer then
+            return
+        end
+
+        if consoleplayer:is_cheating(d2k.Game.Cheats.GodMode) then
+            return
+        end
+
+        local actor = consoleplayer:get_actor()
+
+        if actor then
+            actor:set_health(d2k.Deh.mega_health)
+        end
+
+        consoleplayer:set_health(d2k.Deh.mega_health)
+        -- Ty 03/27/98 - externalized
+        d2k.Messaging.echo(s_STSTR_BEHOLDX)
+    end
 }
 
+-- CPhipps - new health and armour cheat codes
 Cheat {
     code = 'idbeholdm',
     description = 'Invincibility',
     when = CheatEngine.NEVER,
+    func = function()
+        local consoleplayer = d2k.Game.get_consoleplayer()
+
+        if not consoleplayer then
+            return
+        end
+
+        -- Ty 03/09/98 - deh
+        consoleplayer:set_armor(d2k.Deh.idfa_armor)
+        -- Ty 03/09/98 - deh
+        consoleplayer:set_armor_type(d2k.Deh.idfa_armor_class)
+        -- Ty 03/27/98 - externalized
+        d2k.Messaging.echo(s_STSTR_BEHOLDX)
+    end
 }
 
 Cheat {
     code = 'idbeholdv',
     description = 'Invincibility',
     when = CheatEngine.NEVER,
+    func = get_give_power_func(dk2.Game.Powers.Invulnerability)
 }
 
 Cheat {
     code = 'idbeholds',
     description = 'Berserk',
     when = CheatEngine.NEVER,
+    func = get_give_power_func(dk2.Game.Powers.Strength)
 }
 
 Cheat {
     code = 'idbeholdi',
     description = 'Invisibility',
     when = CheatEngine.NEVER,
+    func = get_give_power_func(dk2.Game.Powers.Invisibility)
 }
 
 Cheat {
@@ -172,12 +219,14 @@ Cheat {
     code = 'idbeholda',
     description = 'Auto-map',
     when = CheatEngine.NOT_DM,
+    func = get_give_power_func(dk2.Game.Powers.AllMap)
 }
 
 Cheat {
     code = 'idbeholdl',
     description = 'Lite-Amp Goggles',
     when = CheatEngine.NOT_DM,
+    func = get_give_power_func(dk2.Game.Powers.Infrared)
 }
 
 Cheat {
@@ -253,31 +302,37 @@ Cheat {
 Cheat {
     code = 'tntkeyrc'
     when = CheatEngine.NEVER,
+    func = get_give_key_func(dk2.Game.Keys.RedKeyCard)
 }
 
 Cheat {
     code = 'tntkeyyc'
     when = CheatEngine.NEVER,
+    func = get_give_key_func(dk2.Game.Keys.YellowKeyCard)
 }
 
 Cheat {
     code = 'tntkeybc'
     when = CheatEngine.NEVER,
+    func = get_give_key_func(dk2.Game.Keys.BlueKeyCard)
 }
 
 Cheat {
     code = 'tntkeyrs'
     when = CheatEngine.NEVER,
+    func = get_give_key_func(dk2.Game.Keys.RedSkullKey)
 }
 
 Cheat {
     code = 'tntkeyys'
     when = CheatEngine.NEVER,
+    func = get_give_key_func(dk2.Game.Keys.YellowSkullKey)
 }
 
 Cheat {
     code = 'tntkeybs'
     when = CheatEngine.NEVER,
+    func = get_give_key_func(dk2.Game.Keys.BlueSkullKey)
 }
 
 -- killough 2/16/98: end generalized keys
