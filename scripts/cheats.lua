@@ -207,14 +207,12 @@ Cheat {
 -- phares
 Cheat {
     code = 'tntcomp'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 -- jff 2/01/98 kill all monsters
 Cheat {
     code = 'tntem'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
@@ -228,68 +226,57 @@ Cheat {
 -- killough 2/07/98: HOM autodetector
 Cheat {
     code = 'tnthom'
-    description = '',
     when = CheatEngine.ALWAYS,
 }
 
 -- killough 2/16/98: generalized key cheats
 Cheat {
     code = 'tntkey'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 Cheat {
     code = 'tntkeyr'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 Cheat {
     code = 'tntkeyy'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 Cheat {
     code = 'tntkeyb'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 Cheat {
     code = 'tntkeyrc'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 Cheat {
     code = 'tntkeyyc'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 Cheat {
     code = 'tntkeybc'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 Cheat {
     code = 'tntkeyrs'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 Cheat {
     code = 'tntkeyys'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 Cheat {
     code = 'tntkeybs'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
@@ -298,7 +285,6 @@ Cheat {
 -- Ty 04/11/98 - Added TNTKA
 Cheat {
     code = 'tntka'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
@@ -306,25 +292,21 @@ Cheat {
 
 Cheat {
     code = 'tntweap'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 Cheat {
     code = 'tntweap'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 Cheat {
     code = 'tntammo'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 Cheat {
     code = 'tntammo'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
@@ -333,21 +315,18 @@ Cheat {
 -- invoke translucency         -- phares
 Cheat {
     code = 'tnttran'
-    description = '',
     when = CheatEngine.ALWAYS,
 }
 
 -- killough 2/21/98: smart monster toggle
 Cheat {
     code = 'tntsmart'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 -- killough 2/21/98: pitched sound toggle
 Cheat {
     code = 'tntpitch'
-    description = '',
     when = CheatEngine.ALWAYS,
 }
 
@@ -355,56 +334,48 @@ Cheat {
 -- killough 2/21/98: same as tnttran
 Cheat {
     code = 'tntran'
-    description = '',
     when = CheatEngine.ALWAYS,
 }
 
 -- killough 2/21/98: same as tntammo
 Cheat {
     code = 'tntamo'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 -- killough 2/21/98: same as tntammo
 Cheat {
     code = 'tntamo'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 -- killough 3/6/98: -fast toggle
 Cheat {
     code = 'tntfast'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 -- phares 3/10/98: toggle variable friction effects
 Cheat {
     code = 'tntice'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 -- phares 3/10/98: toggle pushers
 Cheat {
     code = 'tntpush'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 -- [RH] Monsters don't target
 Cheat {
     code = 'notarget'
-    description = '',
     when = CheatEngine.NEVER,
 }
 
 -- fly mode is active
 Cheat {
     code = 'fly'
-    description = '',
     when = CheatEngine.NEVER,
 }
 

@@ -36,13 +36,13 @@ local NOT_NET  = NOT_DM | NOT_COOP
 local NEVER    = NOT_NET | NOT_DEMO
 
 function CheatEngine:add_cheat(cht)
-    local cheat_code = cht[1]
+    local cheat_code = cht.code
 
     cht.cheats[cheat_code] = {
-        code = cht[1],
-        description = cht[2],
-        when = cht[3],
-        run = cht[4],
+        code = cht.code,
+        description = cht.description or ''
+        when = cht.when,
+        run = cht.func
         arity = debug.getinfo(cht.func, 'u').nparams
     }
 end
