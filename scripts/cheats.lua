@@ -118,6 +118,23 @@ Cheat {
     code = 'idkfa',
     description = 'Ammo & Keys',
     when = CheatEngine.NEVER,
+    func = function()
+        local consoleplayer = d2k.Game.get_consoleplayer()
+
+        if not consoleplayer then
+            return
+        end
+
+        if not consoleplayer:has_backpack() then
+            consoleplayer:double_ammo()
+            console:set_has_backpack(true)
+        end
+
+        -- Ty 03/09/98 - deh
+        consoleplayer:set_armor(d2k.Deh.idfa_armor)
+        -- Ty 03/09/98 - deh
+        consoleplayer:set_armor_type(d2k.Deh.idfa_armor_class)
+    end
 }
 
 Cheat {
@@ -251,6 +268,15 @@ Cheat {
     code = 'idrate',
     description = 'Frame rate',
     when = CheatEngine.ALWAYS,
+    func = function()
+        local fps_widget = d2k.widgets['fps']
+
+        if fps_widget.enabled() then
+            fps_widget.disable()
+        else
+            d2k.widgets['fps'].enable()
+        end
+    end
 }
 
 -- phares
@@ -282,11 +308,17 @@ Cheat {
 Cheat {
     code = 'tntkey'
     when = CheatEngine.NEVER,
+    func = function()
+        d2k.Messaging.echo('Red, Yellow, Blue')
+    end
 }
 
 Cheat {
     code = 'tntkeyr'
     when = CheatEngine.NEVER,
+    func = function()
+        d2k.Messaging.echo('Card, Skull')
+    end
 }
 
 Cheat {
