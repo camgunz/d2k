@@ -21,39 +21,144 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-d2k.Shortcuts = {}
-d2k.Shortcuts.exit = d2k.System.exit
-d2k.Shortcuts.quit = d2k.System.quit
-d2k.Shortcuts.write = d2k.Messaging.write
-d2k.Shortcuts.mwrite = d2k.Messaging.mwrite
-d2k.Shortcuts.echo = d2k.Messaging.echo
-d2k.Shortcuts.mecho = d2k.Messaging.mecho
-d2k.Shortcuts.is_singleplayer = d2k.Net.is_singleplayer
-d2k.Shortcuts.is_multiplayer = d2k.Net.is_multiplayer
-d2k.Shortcuts.is_client = d2k.Net.is_client
-d2k.Shortcuts.is_server = d2k.Net.is_server
-d2k.Shortcuts.connect = d2k.Net.connect
-d2k.Shortcuts.disconnect = d2k.Net.disconnect
-d2k.Shortcuts.reconnect = d2k.Net.reconnect
-d2k.Shortcuts.say = d2k.Client.say
-d2k.Shortcuts.say_to = d2k.Client.say_to
-d2k.Shortcuts.say_to_server = d2k.Client.say_to_server
-d2k.Shortcuts.say_to_team = d2k.Client.say_to_team
-d2k.Shortcuts.say_to_current_team = d2k.Client.say_to_current_team
-d2k.Shortcuts.set_name = d2k.Client.set_name
-d2k.Shortcuts.set_team = d2k.Client.set_team
-d2k.Shortcuts.set_bobbing = d2k.Client.set_bobbing
+local Shortcut = require('shortcuts').add
+
+Shortcut {
+    name = 'exit',
+    help = 'exit\n  Alias for quit',
+    func = d2k.System.exit
+}
+
+Shortcut {
+    name = 'quit',
+    help = 'quit\n  Quit D2K',
+    func = d2k.System.quit
+}
+
+Shortcut {
+    name = 'write',
+    help = 'write [message]\n  Write a message to the console, escape markup',
+    func = d2k.Messaging.write
+}
+
+Shortcut {
+    name = 'mwrite',
+    help = 'mwrite [message]\n' ..
+           '  Write a message to the console, process markup',
+    func = d2k.Messaging.mwrite
+}
+
+
+Shortcut {
+    name = 'echo',
+    help = 'echo [message]\n' ..
+           '  Write a message and a newline to the console, escape markup',
+    func = d2k.Messaging.echo
+}
+
+Shortcut {
+    name = 'mecho',
+    help = 'mecho [message]\n' ..
+           '  Write a message and a newline to the console, process markup',
+    func = d2k.Messaging.mecho
+}
+
+Shortcut {
+    name = 'is_singleplayer',
+    help = 'is_singleplayer\n' ..
+           '  Returns true if the game is in singleplayer mode',
+    func = d2k.Net.is_singleplayer
+}
+
+Shortcut {
+    name = 'is_multiplayer',
+    help = 'is_multiplayer\n' ..
+           '  Returns true if the game is in multiplayer mode',
+    func = d2k.Net.is_multiplayer
+}
+
+Shortcut {
+    name = 'is_client',
+    help = 'is_client\n  Returns true if D2K is running as a client',
+    func = d2k.Net.is_client
+}
+
+Shortcut {
+    name = 'is_server',
+    help = 'is_server\n  Returns true if D2K is running as a server',
+    func = d2k.Net.is_server
+}
+
+Shortcut {
+    name = 'connect',
+    help = 'connect [address:port]\n  Connects to a remote server',
+    func = d2k.Net.connect
+}
+
+Shortcut {
+    name = 'disconnect',
+    help = 'disconnect\n  Disconnects from the server',
+    func = d2k.Net.disconnect
+}
+
+Shortcut {
+    name = 'reconnect',
+    help = 'reconnect\n  Reconnects to the previous server',
+    func = d2k.Net.reconnect
+}
+
+Shortcut {
+    name = 'say',
+    help = 'say [message]\n  Broadcasts a message',
+    func = d2k.Client.say
+}
+
+Shortcut {
+    name = 'say_to',
+    help = 'say_to [playernum] [message]\n  Sends a message to a player',
+    func = d2k.Client.say_to
+}
+
+Shortcut {
+    name = 'say_to_server',
+    help = 'say_to_server [message]\n  Sends a message to the server',
+    func = d2k.Client.say_to_server
+}
+
+Shortcut {
+    name = 'say_to_team',
+    help = 'say_to_team [message]\n  Broadcast a message to your current team',
+    func = d2k.Client.say_to_team
+}
+
+Shortcut {
+    name = 'set_name',
+    help = 'set_name [name]\n  Set your name',
+    func = d2k.Client.set_name
+}
+
+Shortcut {
+    name = 'set_team',
+    help = 'set_team [team]\n  Set your team',
+    func = d2k.Client.set_name
+}
+
+Shortcut {
+    name = 'set_bobbing',
+    help = 'set_bobbing [value]\n  Set your player bobbing value',
+    func = d2k.Client.set_bobbing
+}
 
 func, err = loadfile(d2k.script_folder .. '/local_console_shortcuts.lua', 't')
 
 if not func then
-  d2k.Messaging.mecho(string.format('<span color="red">%s</span>', err))
-else
-  local worked, err = pcall(func)
-  if not worked then
     d2k.Messaging.mecho(string.format('<span color="red">%s</span>', err))
-  end
+else
+    local worked, err = pcall(func)
+    if not worked then
+        d2k.Messaging.mecho(string.format('<span color="red">%s</span>', err))
+    end
 end
 
--- vi: et ts=2 sw=2
+-- vi: et ts=4 sw=4
 

@@ -59,6 +59,17 @@ typedef enum {
   NM_MAX,
 } net_message_e;
 
+typedef enum {
+  DISCONNECT_REASON_LOST_PEER_CONNECTION,
+  DISCONNECT_REASON_GOT_PEER_DISCONNECTION,
+  DISCONNECT_REASON_MANUAL,
+  DISCONNECT_REASON_CONNECTION_ERROR,
+  DISCONNECT_REASON_EXCESSIVE_LAG,
+  DISCONNECT_REASON_MALFORMED_SETUP,
+  DISCONNECT_REASON_SERVER_FULL,
+  DISCONNECT_REASON_MAX,
+} disconnection_reason_e;
+
 #define CHAT_CHANNEL_MIN CHAT_CHANNEL_SERVER
 #define CHAT_CHANNEL_MAX CHAT_CHANNEL_ALL
 
@@ -116,15 +127,16 @@ size_t      N_ParseAddressString(const char *address, char **host,
 /* General Networking (n_net.c) */
 
 void     N_Init(void);
-void     N_Disconnect(void);
+void     N_Disconnect(disconnection_reason_e reason);
 void     N_Shutdown(void);
 bool     N_Listen(const char *host, uint16_t port);
 bool     N_Connect(const char *host, uint16_t port);
 bool     N_Connected(void);
 bool     N_Reconnect(void);
 bool     N_ConnectToServer(const char *address);
-void     N_DisconnectPeer(netpeer_t *np);
-void     N_DisconnectPlayer(unsigned short playernum);
+void     N_DisconnectPeer(netpeer_t *np, disconnection_reason_e reason);
+void     N_DisconnectPlayer(unsigned short playernum,
+                            disconnection_reason_e reason);
 void     N_ServiceNetworkTimeout(int timeout_ms);
 void     N_ServiceNetwork(void);
 uint32_t N_GetUploadBandwidth(void);
@@ -134,6 +146,7 @@ uint32_t N_GetDownloadBandwidth(void);
 
 bool        N_GetWad(const char *name);
 const char* N_RunningStateName(void);
+const char* N_GetDisconnectionReason(uint32_t reason);
 
 /* Main Networking (n_main.c) */
 
@@ -332,7 +345,7 @@ unsigned int N_PeerGetNumForPlayer(unsigned int playernum);
 void         N_PeerRemove(netpeer_t *np);
 
 void N_PeerSetConnected(netpeer_t *np);
-void N_PeerDisconnect(netpeer_t *np);
+void N_PeerDisconnect(netpeer_t *np, disconnection_reason_e reason);
 
 bool N_PeerIter(netpeer_iter_t **it, netpeer_t **np);
 void N_PeerIterRemove(netpeer_iter_t *it, netpeer_t *np);

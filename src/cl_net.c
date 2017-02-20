@@ -218,7 +218,7 @@ void CL_CheckForStateUpdates(void) {
 
   if (!server) {
     P_Echo(consoleplayer, "Server disconnected");
-    N_Disconnect();
+    N_Disconnect(DISCONNECT_REASON_LOST_PEER_CONNECTION);
     return;
   }
 

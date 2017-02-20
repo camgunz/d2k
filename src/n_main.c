@@ -36,6 +36,7 @@
 #include "g_game.h"
 #include "r_defs.h"
 #include "i_system.h"
+#include "i_input.h"
 #include "i_main.h"
 #include "i_video.h"
 #include "m_argv.h"
@@ -395,7 +396,7 @@ void SV_DisconnectLaggedClients(void) {
         gametic,
         N_PeerGetPlayernum(iter.np)
       );
-      N_DisconnectPeer(iter.np);
+      N_DisconnectPeer(iter.np, DISCONNECT_REASON_EXCESSIVE_LAG);
     }
   }
 }
@@ -458,7 +459,7 @@ bool N_TryRunTics(void) {
 
     if (CLIENT && gametic > 0 && CL_GetServerPeer() == NULL) {
       P_Echo(consoleplayer, "Server disconnected.");
-      N_Disconnect();
+      N_Disconnect(DISCONNECT_REASON_LOST_PEER_CONNECTION);
     }
   }
 

@@ -138,18 +138,19 @@ static void display_chat_message(chat_channel_e chat_channel,
     break;
   }
 
-  /*
-   * CG [TODO]: Pretty sure this has to be printed to all recipients' message
-   *            buffers for it to work right....
-   */
+  for (size_t i = 0; i < MAXPLAYERS; i++) {
+    if (!playeringame[i]) {
+      continue;
+    }
 
-  P_SPrintf(consoleplayer, sfx, "%s%s%s%s: %s\n",
-    sender_opener,
-    sender_name,
-    sender_closer,
-    channel,
-    message
-  );
+    P_MSPrintf(i, sfx, "%s%s%s%s: %s\n",
+      sender_opener,
+      sender_name,
+      sender_closer,
+      channel,
+      message
+    );
+  }
 }
 
 static void handle_setup(netpeer_t *np) {
@@ -168,7 +169,7 @@ static void handle_setup(netpeer_t *np) {
     D_ClearResourceFiles();
     D_ClearDEHFiles();
     G_ClearStates();
-    N_Disconnect();
+    N_Disconnect(DISCONNECT_REASON_MALFORMED_SETUP);
     return;
   }
 

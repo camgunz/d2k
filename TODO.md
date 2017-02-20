@@ -1,26 +1,35 @@
 # To Do
 
-1. Add a message indicating that the server is full; currently it looks like a
-   crash
-
 1. Fix bugs:
-  - Cheats don't work (probably scripting input handler)
   - Sometimes the server doesn't call `G_WorldDone` when `gameaction` is set to
     `ga_worlddone`; something sets it back to `ga_nothing` first.
     - It looks this might also set `GS_FINALE`
     - And also it prevents the server from sending a `gameaction` update and
       `NM_FULLSTATE` to clients
   - Windows crashes pretty early on
-  - `P_Printf` doesn't work in server mode
-  - When console scrollback fills up, FPS sinks
-  - Add a server message sound (just use radio/tink?)
   - Currently nothing clears or renders when you switch to vidingl from OpenGL
     - Also I think OpenGL mode doesn't refresh properly (console sticks)
+
+1. Add a server message sound (just use radio/tink?)
 
 1. Test/Fix resolution switching
   - Probably have to override `:reset` in widgets to update a bunch of stuff
 
 :::: Proto Release Here ::::
+
+1. Fix bugs
+  - Cheats don't work (probably scripting input handler)
+  - `P_Printf` doesn't work in server mode
+  - When console scrollback fills up, FPS sinks
+  - Messages widget doesn't display colors
+
+1. Revamp messaging
+  - Specifically don't bug the console on bad markup; test it first
+
+1. Test ECI again
+
+1. Lift artificial limit on players
+  - bitmaps, basically
 
 1. Add spectators
   - This is essentially reworking the logic between `playeringame`, `players`,
@@ -109,8 +118,6 @@
 ## Smaller Issues
 
 1. Add error codes to `n_proto`
-
-1. Messages widget should (optionally) display markup
 
 1. Servers shouldn't `quit`, they should `shutdown`; also prevents accidentally
    running `/quit` in the console instead of `:quit` and closing the server....

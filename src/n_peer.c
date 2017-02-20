@@ -295,10 +295,10 @@ void N_PeerSetConnected(netpeer_t *np) {
   np->connect_start_time = 0;
 }
 
-void N_PeerDisconnect(netpeer_t *np) {
+void N_PeerDisconnect(netpeer_t *np, disconnection_reason_e reason) {
   ENetPeer *epeer = N_ComGetENetPeer(&np->com);
 
-  enet_peer_disconnect(epeer, 0);
+  enet_peer_disconnect(epeer, reason);
   np->disconnect_start_time = time(NULL);
 }
 

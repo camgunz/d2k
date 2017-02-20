@@ -33,6 +33,16 @@
 #define LOG_COMMANDS 0
 #define LOG_POSITIONS 0
 
+static const char *disconnection_reasons[DISCONNECT_REASON_MAX] = {
+  "Lost peer connection",
+  "Got peer disconnection",
+  "Disconnection requested manually",
+  "Error during connection",
+  "Excessive lag",
+  "Malformed setup",
+  "Server full",
+};
+
 /* [CG] TODO: Add WAD fetching (waiting on libcurl) */
 bool N_GetWad(const char *name) {
   return false;
@@ -57,6 +67,14 @@ const char* N_RunningStateName(void) {
   }
 
   return "unknown!";
+}
+
+const char* N_GetDisconnectionReason(uint32_t reason) {
+  if (reason >= DISCONNECT_REASON_MAX) {
+    return "unknown";
+  }
+
+  return disconnection_reasons[reason];
 }
 
 /* vi: set et ts=2 sw=2: */

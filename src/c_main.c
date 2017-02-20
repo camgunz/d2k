@@ -277,7 +277,6 @@ void C_MEcho(const char *message) {
 }
 
 void C_Write(const char *msg) {
-#if 0
   gchar *emsg;
 
   if (!msg)
@@ -293,8 +292,6 @@ void C_Write(const char *msg) {
   buffered_console_messages_updated = true;
 
   g_free(emsg);
-#endif
-  C_MWrite(msg);
 }
 
 void C_MWrite(const char *msg) {

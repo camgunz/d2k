@@ -62,7 +62,7 @@ void N_Init(void) {
   atexit(N_Shutdown);
 }
 
-void N_Disconnect(void) {
+void N_Disconnect(disconnection_reason_e reason) {
   ENetEvent net_event;
 
   if (!net_host) {
@@ -71,7 +71,7 @@ void N_Disconnect(void) {
 
   NETPEER_FOR_EACH(iter) {
     D_Msg(MSG_INFO, "Disconnecting peer %d\n", N_PeerGetPlayernum(iter.np));
-    N_PeerDisconnect(iter.np);
+    N_PeerDisconnect(iter.np, reason);
   }
 
   while (true) {
@@ -116,7 +116,7 @@ void N_Disconnect(void) {
 
 void N_Shutdown(void) {
   D_Msg(MSG_INFO, "N_Shutdown: shutting down\n");
-  N_Disconnect();
+  N_Disconnect(DISCONNECT_REASON_MANUAL);
 
   enet_deinitialize();
 }
@@ -188,7 +188,7 @@ bool N_Connect(const char *host, uint16_t port) {
 
   if (!server) {
     D_Msg(MSG_ERROR, "N_Connect: Error connecting to server\n");
-    N_Disconnect();
+    N_Disconnect(DISCONNECT_REASON_CONNECTION_ERROR);
     return false;
   }
 
@@ -245,14 +245,15 @@ bool N_ConnectToServer(const char *address) {
   return connected;
 }
 
-void N_DisconnectPeer(netpeer_t *np) {
+void N_DisconnectPeer(netpeer_t *np, disconnection_reason_e reason) {
   D_Msg(MSG_INFO, "N_DisconnectPeer: Disconnecting peer %d\n",
     N_PeerGetPlayernum(np)
   );
-  N_PeerDisconnect(np);
+  N_PeerDisconnect(np, reason);
 }
 
-void N_DisconnectPlayer(unsigned short playernum) {
+void N_DisconnectPlayer(unsigned short playernum,
+                        disconnection_reason_e reason) {
   netpeer_t *np = N_PeerForPlayer(playernum);
 
   if (!np) {
@@ -260,7 +261,7 @@ void N_DisconnectPlayer(unsigned short playernum) {
   }
 
   D_Msg(MSG_INFO, "N_DisconnectPlayer: Disconnecting player %d\n", playernum);
-  N_DisconnectPeer(np);
+  N_DisconnectPeer(np, reason);
 }
 
 static void handle_enet_connection(ENetEvent *net_event) {
@@ -271,6 +272,7 @@ static void handle_enet_connection(ENetEvent *net_event) {
 
     if (!np) {
       D_Msg(MSG_ERROR, "N_ServiceNetwork: Adding new peer failed\n");
+      enet_peer_disconnect(net_event->peer, DISCONNECT_REASON_SERVER_FULL);
       return;
     }
   }
@@ -302,8 +304,12 @@ static void handle_enet_disconnection(ENetEvent *net_event) {
   }
 
   if (CLIENT) {
-    N_Disconnect();
+    N_Disconnect(DISCONNECT_REASON_GOT_PEER_DISCONNECTION);
   }
+
+  D_Msg(MSG_INFO, "Peer disconnected: %s\n",
+    N_GetDisconnectionReason(net_event->data)
+  );
 
   N_PeerRemove(np);
 }

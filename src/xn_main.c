@@ -85,7 +85,7 @@ static int XN_Connect(lua_State *L) {
 }
 
 static int XN_Disconnect(lua_State *L) {
-  N_Disconnect();
+  N_Disconnect(DISCONNECT_REASON_MANUAL);
 
   return 0;
 }
