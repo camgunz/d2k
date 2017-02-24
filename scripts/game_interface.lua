@@ -23,10 +23,8 @@
 
 local class = require('middleclass')
 local InputInterface = require('input_interface')
-local InputInterfaceContainer = require('input_interface_container')
 
 GameInterface = class('GameInterface', InputInterface.InputInterface)
-GameInterface:include(InputInterfaceContainer.InputInterfaceContainer)
 
 function GameInterface:initialize(gi)
   gi = gi or {}
@@ -34,8 +32,6 @@ function GameInterface:initialize(gi)
   gi.name = gi.name or 'Game Interface'
 
   InputInterface.InputInterface.initialize(self, gi)
-
-  self.interfaces = {}
 end
 
 function GameInterface:in_level()
@@ -43,26 +39,18 @@ function GameInterface:in_level()
 end
 
 function GameInterface:tick()
+  InputInterface.InputInterface.tick(self)
   d2k.Game.tick()
-  InputInterfaceContainer.InputInterfaceContainer.tick(self)
 end
 
 function GameInterface:render()
+  InputInterface.InputInterface.render(self)
   d2k.Game.render()
-  InputInterfaceContainer.InputInterfaceContainer.render(self)
 end
 
 function GameInterface:handle_event(event)
   local handled = false
   local active_before = self:is_active()
-
-  handled = InputInterfaceContainer.InputInterfaceContainer.handle_event(
-    self, event
-  )
-
-  if handled then
-    return true
-  end
 
   if not d2k.Game.in_level() and not d2k.Game.in_intermission() then
     return false

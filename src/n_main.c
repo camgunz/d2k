@@ -331,6 +331,10 @@ void N_InitNetGame(void) {
 }
 
 void N_RunTic(void) {
+  if (!X_Call(X_GetState(), "overlay", "check_overlay", 0, 0)) {
+    I_Error("Error checking overlay: %s", X_GetError(X_GetState()));
+  }
+
   if (advancedemo) {
     D_DoAdvanceDemo();
   }

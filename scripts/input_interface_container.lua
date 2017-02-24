@@ -26,151 +26,199 @@
 
 InputInterfaceContainer = {
 
-  get_active_interface = function(self)
-    for i, interface in ipairs(self.interfaces) do
-      if interface:is_active() then
-        return interface
-      end
-    end
-  end,
-
-  add_interface = function(self, new_interface)
-    for i, interface in pairs(self.interfaces) do
-      if new_interface == interface then
-        return
-      end
-    end
-
-    table.insert(self.interfaces, new_interface)
-
-    self:sort_interfaces()
-  end,
-
-  remove_interface = function(self, interface)
-    for i, ifc in pairs(self.interfaces) do
-      if ifc == interface then
-        table.remove(self.interfaces, i)
-        return
-      end
-    end
-
-    self:sort_interfaces()
-  end,
-
-  get_interface = function(self, interface_name)
-    for i, interface in pairs(self.interfaces) do
-      if interface:get_name() == interface_name then
-        return interface
-      end
-    end
-  end,
-
-  activate = function(self, interface)
-    for i, iface in ipairs(self.interfaces) do
-      if iface == interface and not iface:is_active() then
-        table.remove(self.interfaces, i)
-        table.insert(self.interfaces, 1, iface)
-      end
-    end
-
-    self.active = true
-  end,
-
-  is_active = function(self)
-    for i, iface in pairs(self.interfaces) do
-      if iface:is_active() then
-        return true
-      end
-    end
-
-    return false
-  end,
-
-  reset = function(self)
-    for i, interface in ipairs(self.interfaces) do
-      interface:reset()
-    end
-  end,
-
-  tick = function(self)
-    for i, interface in ipairs(self.interfaces) do
-      interface:tick()
-    end
-  end,
-
-  invalidate_render = function(self)
-    for i, interface in ipairs(self.interfaces) do
-      interface:invalidate_render()
-    end
-  end,
-
-  needs_rendering = function(self)
-    for i, interface in ipairs(self.interfaces) do
-      if interface:needs_rendering() then
-        return true
-      end
-    end
-
-    return false
-  end,
-
-  render = function(self)
-    local cr = d2k.overlay.render_context
-
-    for i, interface in ipairs(self.interfaces) do
-      if self:get_name() == 'scoreboard_widget' then
-        print(string.format('Rendering %s', interface:get_name()))
-      end
-      cr:save()
-      cr:set_source(interface:get_render())
-      interface:clip_view()
-      interface:position_view()
-      cr:clip()
-      cr:paint()
-      cr:restore()
-    end
-  end,
-
-  handle_event = function(self, event)
-    for i, interface in ipairs(self.interfaces) do
-      if interface:is_active() then
-        if interface:handle_event(event) then
-          return true
+    get_active_interface = function(self)
+        if not self.interfaces then
+            return
         end
-      end
-    end
 
-    for i, interface in ipairs(self.interfaces) do
-      if not interface:is_active() then
-        if interface:handle_event(event) then
-          return true
+        for i, interface in ipairs(self.interfaces) do
+            if interface:is_active() then
+                return interface
+            end
         end
-      end
-    end
+    end,
 
-    return false
-  end,
+    add_interface = function(self, interface)
+        local name = 'unknown container'
+        local get_name = self.get_name
 
-  handle_overlay_built = function(self, overlay)
-    self:reset()
+        if get_name then
+            name = get_name(self)
+        end
 
-    for i, interface in pairs(self.interfaces) do
-      interface:handle_overlay_built()
-    end
-  end,
+        if self.interfaces then
+            for i, iface in ipairs(self.interfaces) do
+                if iface == interface then
+                    return
+                end
+            end
+        end
 
-  handle_overlay_destroyed = function(self, overlay)
-    for i, interface in pairs(self.interfaces) do
-      interface:handle_overlay_destroyed()
-    end
-  end,
+        table.insert(self.interfaces, interface)
 
-  sort_interfaces = function(self)
-  end,
+        self:sort_interfaces()
+    end,
+
+    remove_interface = function(self, interface)
+        if not self.interfaces then
+            return
+        end
+
+        for i, iface in ipairs(self.interfaces) do
+            if iface == interface then
+                table.remove(self.interfaces, i)
+                return
+            end
+        end
+
+        self:sort_interfaces()
+    end,
+
+    get_interface = function(self, interface_name)
+        if not self.interfaces then
+            return
+        end
+
+        for i, interface in ipairs(self.interfaces) do
+            if interface:get_name() == interface_name then
+                return interface
+            end
+        end
+    end,
+
+    activate = function(self, interface)
+        if not self.interfaces then
+            return
+        end
+
+        for i, iface in pairs(self.interfaces) do
+            if iface == interface and not iface:is_active() then
+                table.remove(self.interfaces, i)
+                table.insert(self.interfaces, 1, iface)
+            end
+        end
+    end,
+
+    is_active = function(self)
+        if not self.interfaces then
+            return false
+        end
+
+        for i, iface in ipairs(self.interfaces) do
+            if iface:is_active() then
+                return true
+            end
+        end
+
+        return false
+    end,
+
+    reset = function(self)
+        if not self.interfaces then
+            return
+        end
+
+        for i, interface in ipairs(self.interfaces) do
+            interface:reset()
+        end
+    end,
+
+    tick = function(self)
+        if not self.interfaces then
+            return
+        end
+
+        for i, interface in ipairs(self.interfaces) do
+            interface:tick()
+        end
+    end,
+
+    invalidate_render = function(self)
+        if not self.interfaces then
+            return
+        end
+
+        if self.interfaces then
+            for i, interface in ipairs(self.interfaces) do
+                interface:invalidate_render()
+            end
+        end
+    end,
+
+    needs_rendering = function(self)
+        for i, interface in ipairs(self.interfaces) do
+            if interface:needs_rendering() then
+                return true
+            end
+        end
+
+        return false
+    end,
+
+    render = function(self)
+        if not self.interfaces then
+            return
+        end
+
+        local cr = d2k.overlay.render_context
+
+        for i, interface in ipairs(self.interfaces) do
+            cr:save()
+            cr:set_source(interface:get_render())
+            interface:clip_view()
+            interface:position_view()
+            cr:clip()
+            cr:paint()
+            cr:restore()
+        end
+    end,
+
+    handle_event = function(self, event)
+        if not self.interfaces then
+            return false
+        end
+
+        for i, interface in ipairs(self.interfaces) do
+            if interface:is_active() then
+                if interface:handle_event(event) then
+                    return true
+                end
+            end
+        end
+
+        for i, interface in ipairs(self.interfaces) do
+            if not interface:is_active() then
+                if interface:handle_event(event) then
+                    return true
+                end
+            end
+        end
+
+        return false
+    end,
+
+    scale = function(self, value)
+        if self.interfaces then
+            for i, interface in ipairs(self.interfaces) do
+                interface:scale(value)
+            end
+        end
+    end,
+
+    handle_overlay_reset = function(self)
+        if self.interfaces then
+            for i, interface in ipairs(self.interfaces) do
+                interface:handle_overlay_reset()
+            end
+        end
+    end,
+
+    sort_interfaces = function(self)
+    end,
 
 }
 
 return {InputInterfaceContainer = InputInterfaceContainer}
 
--- vi: et ts=2 sw=2
+-- vi: et ts=4 sw=4
 

@@ -33,17 +33,25 @@ InputWidget = class('InputWidget', TextWidget.TextWidget)
 
 InputWidget.use_markup = false
 
-local PROMPT_THICKNESS = 1.1
-local CURSOR_THICKNESS = 1.1
+local MIN_PROMPT_THICKNESS = 1.1
+local MIN_CURSOR_THICKNESS = 1.1
+
+local DEFAULT_PROMPT_COLOR = {1.0, 1.0, 1.0, 1.0}
+local DEFAULT_PROMPT_THICKNESS = MIN_PROMPT_THICKNESS
+local DEFAULT_CURSOR_COLOR = {0.8, 0.8, 0.8, 1.0}
+local DEFAULT_CURSOR_THICKNESS = MIN_CURSOR_THICKNESS
+local DEFAULT_BLINK_SPEED = 500
 
 function InputWidget:initialize(iw)
   iw = iw or {}
 
   TextWidget.TextWidget.initialize(self, iw)
 
-  self.cursor_color = iw.cursor_color or {0.8, 0.8, 0.8, 1.0}
-  self.prompt_color = iw.prompt_color or {1.0, 1.0, 1.0, 1.0}
-  self.cursor_blink_speed = iw.cursor_blink_speed or 500
+  self.cursor_color = iw.cursor_color or DEFAULT_CURSOR_COLOR
+  self.cursor_thickness = iw.cursor_thickness or DEFAULT_CURSOR_THICKNESS
+  self.prompt_color = iw.prompt_color or DEFAULT_PROMPT_COLOR
+  self.prompt_thickness = iw.prompt_thickness or DEFAULT_PROMPT_THICKNESS
+  self.cursor_blink_speed = iw.cursor_blink_speed or DEFAULT_BLINK_SPEED
 
   self.cursor = 0
   self.cursor_active = 0
@@ -56,6 +64,23 @@ function InputWidget:initialize(iw)
   self.deactivate_on_input = iw.deactivate_on_input or false
 end
 
+function InputWidget:get_prompt_color()
+  return self.prompt_color
+end
+
+function InputWidget:set_prompt_color(prompt_color)
+  self.prompt_color = prompt_color
+  self:handle_display_change()
+end
+
+function InputWidget:get_prompt_thickness()
+  return math.max(MIN_PROMPT_THICKNESS, self.prompt_thickness)
+end
+
+function InputWidget:set_prompt_thickness(prompt_thickness)
+  self.prompt_thickness = prompt_thickness
+end
+
 function InputWidget:get_cursor_color()
   return self.cursor_color
 end
@@ -65,13 +90,12 @@ function InputWidget:set_cursor_color(cursor_color)
   self:handle_display_change()
 end
 
-function InputWidget:get_prompt_color()
-  return self.prompt_color
+function InputWidget:get_cursor_thickness()
+  return math.max(MIN_CURSOR_THICKNESS, self.cursor_thickness)
 end
 
-function InputWidget:set_prompt_color(prompt_color)
-  self.prompt_color = prompt_color
-  self:handle_display_change()
+function InputWidget:set_cursor_thickness(cursor_thickness)
+  self.cursor_thickness = cursor_thickness
 end
 
 function InputWidget:get_cursor_blink_speed()
@@ -172,11 +196,9 @@ function InputWidget:tick()
     return
   end
 
-  local line_height = self:get_font_height()
-  local layout_width = self:get_layout_pixel_width()
-  local layout_height = self:get_layout_pixel_height()
-  local text_height = math.max(line_height, layout_height)
-  local height = self:get_top_margin() + text_height + self:get_bottom_margin()
+  local height = self:get_top_padding() +
+                 self:get_layout_pixel_height() +
+                 self:get_bottom_padding()
   local ticks = d2k.System.get_ticks()
 
   if self:get_pixel_height() ~= height then
@@ -195,14 +217,16 @@ function InputWidget:render()
   local layout_width = self:get_layout_pixel_width()
   local layout_height = self:get_layout_pixel_height()
   local text_height = math.max(line_height, layout_height)
-  local height = self:get_top_margin() + text_height + self:get_bottom_margin()
-  local h_quart = text_height / 4.0
+  local height = self:get_top_padding() +
+                 layout_height +
+                 self:get_bottom_padding()
+  local h_quart = layout_height / 4.0
   local h_half = h_quart * 2.0
   local fg_color = self:get_fg_color()
   local bg_color = self:get_bg_color()
   local cursor_color = self:get_cursor_color()
   local prompt_color = self:get_prompt_color()
-  local prompt_width = text_height
+  local prompt_width = layout_height
 
   cr:save()
 
@@ -214,12 +238,12 @@ function InputWidget:render()
   cr:reset_clip()
   cr:new_path()
   cr:rectangle(
-    self:get_x() + self:get_left_margin(),
-    self:get_y() + self:get_top_margin(),
+    self:get_x() + self:get_left_padding(),
+    self:get_y() + self:get_top_padding(),
     self:get_pixel_width() - (
-      self:get_left_margin() + self:get_right_margin()
+      self:get_left_padding() + self:get_right_padding()
     ),
-    height - (self:get_top_margin() + self:get_bottom_margin())
+    height - (self:get_top_padding() + self:get_bottom_padding())
   )
   cr:clip()
 
@@ -231,31 +255,33 @@ function InputWidget:render()
   )
 
   cr:move_to(
-    self:get_x() + self:get_left_margin(),
-    self:get_y() + self:get_top_margin() + h_quart
+    self:get_x() + self:get_left_padding(),
+    self:get_y() + self:get_top_padding() + h_quart
   )
   cr:line_to(
-    self:get_x() + self:get_left_margin() + h_half,
-    self:get_y() + self:get_top_margin() + h_half
+    self:get_x() + self:get_left_padding() + h_half,
+    self:get_y() + self:get_top_padding() + h_half
   )
   cr:line_to(
-    self:get_x() + self:get_left_margin(),
-    self:get_y() + self:get_top_margin() + h_half + h_quart
+    self:get_x() + self:get_left_padding(),
+    self:get_y() + self:get_top_padding() + h_half + h_quart
   )
 
-  cr:set_line_width(PROMPT_THICKNESS)
+  cr:set_line_width(self:get_prompt_thickness())
   cr:stroke();
 
-  local lx = self:get_x() + self:get_left_margin() + prompt_width
-  local ly = self:get_y() + self:get_top_margin()
+  -- Start cursor calculation
+
+  local lx = self:get_x() + self:get_left_padding() + prompt_width
+  local ly = self:get_y() + self:get_top_padding()
   local text_width = self:get_pixel_width() - (
-    self:get_left_margin() + self:get_right_margin()
+    self:get_left_padding() + self:get_right_padding()
   )
 
   if self:get_vertical_alignment() == TextWidget.ALIGN_CENTER then
-    ly = ly + (text_height / 2) - h_half
+    ly = ly + (layout_height / 2) - h_half
   elseif self:get_vertical_alignment() == TextWidget.ALIGN_BOTTOM then
-    ly = ly + text_height - height
+    ly = ly + layout_height - height
   end
 
   if self:get_horizontal_alignment() == TextWidget.ALIGN_CENTER then
@@ -273,20 +299,20 @@ function InputWidget:render()
   end
 
   local cursor_pos = self:get_layout():index_to_pos(self:get_cursor())
+
   cursor_pos.x = cursor_pos.x / Pango.SCALE
   cursor_pos.y = cursor_pos.y / Pango.SCALE
   cursor_pos.width = cursor_pos.width / Pango.SCALE
   cursor_pos.height = cursor_pos.height / Pango.SCALE
 
   if self:get_cursor_trailing() then
-    cursor_pos.x =
-      cursor_pos.x + (cursor_pos.width * self:get_cursor_trailing())
+    cursor_pos.x = cursor_pos.x + (
+      cursor_pos.width * self:get_cursor_trailing()
+    )
   end
 
   if cursor_pos.x > (text_width - prompt_width) + self:get_scroll_offset() then
-    self:set_scroll_offset(
-      cursor_pos.x - (text_width - prompt_width)
-    )
+    self:set_scroll_offset(cursor_pos.x - (text_width - prompt_width))
   elseif cursor_pos.x < self:get_scroll_offset() then
     self:set_scroll_offset(cursor_pos.x)
   end
@@ -296,12 +322,14 @@ function InputWidget:render()
   cr:reset_clip()
   cr:new_path()
   cr:rectangle(
-    self:get_x() + self:get_left_margin() + prompt_width,
+    self:get_x() + self:get_left_padding() + prompt_width,
     self:get_y(),
     text_width - prompt_width,
     height
   )
   cr:clip()
+
+  -- end cursor calculation
 
   if self:get_cursor_active() then
     cr:set_source_rgba(
@@ -309,12 +337,12 @@ function InputWidget:render()
     )
 
     cursor_pos.width  = math.max(cursor_pos.width, 4)
-    cursor_pos.height = math.max(cursor_pos.height, text_height)
+    cursor_pos.height = math.max(cursor_pos.height, layout_height)
     cursor_pos.x      = math.max(cursor_pos.x, cursor_pos.width / 2)
 
     cr:move_to(lx + cursor_pos.x, ly + cursor_pos.y)
     cr:line_to(lx + cursor_pos.x, ly + cursor_pos.y + cursor_pos.height)
-    cr:set_line_width(CURSOR_THICKNESS)
+    cr:set_line_width(self:get_cursor_thickness())
     cr:stroke()
   end
 
@@ -365,6 +393,7 @@ function InputWidget:show_previous_history_entry()
 
   self:set_history_index(new_history_index)
   self:set_text(history[command_count - (new_history_index - 1)])
+  self:move_cursor_to_end()
 end
 
 function InputWidget:show_next_history_entry()
@@ -384,6 +413,8 @@ function InputWidget:show_next_history_entry()
   else
     self:set_text(history[command_count - (new_history_index - 1)])
   end
+
+  self:move_cursor_to_end()
 end
 
 function InputWidget:print_cursor_stats(s)
@@ -603,11 +634,17 @@ function InputWidget:handle_event(event)
   return false
 end
 
-return {
-  InputWidget      = InputWidget,
-  PROMPT_THICKNESS = PROMPT_THICKNESS,
-  CURSOR_THICKNESS = CURSOR_THICKNESS
-}
+function InputWidget:scale(value)
+  TextWidget.TextWidget.scale(self, value)
+
+  local new_prompt_thickness = self.prompt_thickness * value
+  local new_cursor_thickness = self.cursor_thickness * value
+
+  self:set_cursor_thickness(new_cursor_thickness)
+  self:set_prompt_thickness(new_prompt_thickness)
+end
+
+return {InputWidget = InputWidget }
 
 -- vi: et ts=2 sw=2
 

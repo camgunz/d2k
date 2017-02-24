@@ -30,155 +30,162 @@ local PangoCairo = lgi.PangoCairo
 Overlay = class('Overlay')
 
 function Overlay:initialize(o)
-  o = o or {}
+    o = o or {}
 
-  self.width = 0
-  self.height = 0
+    self.width = 0
+    self.height = 0
+    self.previous_width = 0
+    self.previous_height = 0
 
-  self.build_listeners = {}
-  self.destroy_listeners = {}
+    self.reset_listeners = {}
 
-  self:build()
+    self:build()
 end
 
 function Overlay:initialized()
-  if self.render_context and self.render_surface then
-    return true
-  end
+    if self.render_context and self.render_surface then
+        return true
+    end
 
-  return false
+    return false
 end
 
 function Overlay:build()
-  assert(not self:initialized(), 'overlay already built')
+    assert(not self:initialized(), 'overlay already built')
 
-  self.width = d2k.Video.get_screen_width()
-  self.height = d2k.Video.get_screen_height()
+    self.previous_width = self.width
+    self.previous_height = self.height
 
-  self.render_surface = Cairo.ImageSurface.create_for_data(
-    d2k.Video.get_overlay_pixels(),
-    Cairo.Format.RGB24, -- CG: FIXME: This is duplicated in i_video.c
-    self.width,
-    self.height,
-    d2k.Video.get_screen_stride()
-  )
+    self.width = d2k.Video.get_screen_width()
+    self.height = d2k.Video.get_screen_height()
 
-  local status = self.render_surface.status
-  if status == Cairo.Status.SUCCESS then
-    local cairo_error = Cairo.Status.to_string(status)
-    error(string.format('Error creating overlay surface (%s)', cairo_error))
-  end
+    self.render_surface = Cairo.ImageSurface.create_for_data(
+        d2k.Video.get_overlay_pixels(),
+        Cairo.Format.RGB24, -- CG: FIXME: This is duplicated in i_video.c
+        self.width,
+        self.height,
+        d2k.Video.get_screen_stride()
+    )
 
-  local cairo_context = Cairo.Context.create(self.render_surface)
+    local status = self.render_surface.status
+    if status == Cairo.Status.SUCCESS then
+        local cairo_error = Cairo.Status.to_string(status)
+        error(string.format('Error creating overlay surface (%s)', cairo_error))
+    end
 
-  local status = cairo_context.status
-  if status == Cairo.Status.SUCCESS then
-    local cairo_error = Cairo.Status.to_string(status)
-    error(string.format('Error creating overlay surface (%s)', cairo_error))
-  end
+    local cairo_context = Cairo.Context.create(self.render_surface)
 
-  if d2k.Video.using_opengl() then
-    d2k.Video.build_overlay_texture()
-  end
+    local status = cairo_context.status
+    if status == Cairo.Status.SUCCESS then
+        local cairo_error = Cairo.Status.to_string(status)
+        error(string.format('Error creating overlay surface (%s)', cairo_error))
+    end
 
-  d2k.Video.clear_overlay_needs_resetting()
+    if d2k.Video.using_opengl() then
+        d2k.Video.build_overlay_texture()
+    end
 
-  local pango_context = Pango.Context.new()
-  local pango_cairo_font_map = PangoCairo.FontMap.get_default()
-  local font_options = pango_context:get_font_options()
+    d2k.Video.clear_overlay_needs_resetting()
 
-  if (not font_options) then
-    pango_context:set_font_options(Cairo.FontOptions.create())
+    local pango_context = Pango.Context.new()
+    local pango_cairo_font_map = PangoCairo.FontMap.get_default()
+    local font_options = pango_context:get_font_options()
+
+    if not font_options then
+        pango_context:set_font_options(Cairo.FontOptions.create())
+        font_options = pango_context:get_font_options()
+    end
+
+    pango_context:set_font_map(pango_cairo_font_map)
+    pango_context:set_resolution(96.0)
+
+    font_options:set_antialias(Cairo.ANTIALIAS_BEST)
+    font_options:set_subpixel_order(Cairo.SUBPIXEL_ORDER_RGB)
+    font_options:set_hint_style(Cairo.HINT_STYLE_FULL)
+    font_options:set_hint_metrics(Cairo.HINT_METRICS_ON)
+
+    pango_context:set_font_options(font_options)
     font_options = pango_context:get_font_options()
-  end
 
-  pango_context:set_font_map(pango_cairo_font_map)
-  pango_context:set_resolution(96.0)
+    cairo_context:update_context(pango_context)
 
-  font_options:set_antialias(Cairo.ANTIALIAS_BEST)
-  font_options:set_subpixel_order(Cairo.SUBPIXEL_ORDER_RGB)
-  font_options:set_hint_style(Cairo.HINT_STYLE_FULL)
-  font_options:set_hint_metrics(Cairo.HINT_METRICS_ON)
-
-  pango_context:set_font_options(font_options)
-  font_options = pango_context:get_font_options()
-
-  cairo_context:update_context(pango_context)
-
-  self.render_context = cairo_context
-  self.text_context = pango_context
-
-  for i, l in pairs(self.build_listeners) do
-    l.handle_overlay_built(self)
-  end
+    self.render_context = cairo_context
+    self.text_context = pango_context
 end
 
 function Overlay:destroy()
-  assert(self:initialized(), 'overlay already destroyed')
+    assert(self:initialized(), 'overlay already destroyed')
 
-  self.render_context = nil
-  self.render_surface = nil
+    self.render_context = nil
+    self.render_surface = nil
 
-  if d2k.Video.using_opengl() then
-    d2k.Video.destroy_overlay_texture()
-  end
-
-  for i, l in pairs(self.destroy_listeners) do
-    l.handle_overlay_destroyed(self)
-  end
+    if d2k.Video.using_opengl() then
+        d2k.Video.destroy_overlay_texture()
+    end
 end
 
 function Overlay:reset()
-  if self:initialized() then
-    self:destroy()
-  end
+    if self:initialized() then
+        self:destroy()
+    end
 
-  self:build()
+    self:build()
+
+    for i, l in pairs(self.reset_listeners) do
+        l:handle_overlay_reset()
+        l:scale(self:get_resolution_change_ratio())
+    end
+end
+
+function Overlay:check_overlay()
+    if d2k.Video.overlay_needs_resetting() then
+        self:reset()
+    end
 end
 
 function Overlay:lock()
-  if d2k.Video.overlay_needs_resetting() then
-    self:reset()
-  end
-
-  d2k.Video.lock_screen()
+    d2k.Video.lock_screen()
 end
 
 function Overlay:unlock()
-  self.render_surface:flush()
-  d2k.Video.unlock_screen()
+    self.render_surface:flush()
+    d2k.Video.unlock_screen()
 end
 
 function Overlay:clear()
-  self.render_context:set_operator(Cairo.OPERATOR_CLEAR)
-  self.render_context:paint()
+    self.render_context:set_operator(Cairo.OPERATOR_CLEAR)
+    self.render_context:paint()
 end
 
 function Overlay:get_width()
-  return self.width
+    return self.width
 end
 
 function Overlay:get_height()
-  return self.height
+    return self.height
 end
 
-function Overlay:add_build_listener(listener)
-  table.insert(self.build_listeners, listener)
+function Overlay:get_resolution_change_ratio()
+    return self.height / self.previous_height
+end
+
+function Overlay:add_reset_listener(listener)
+    table.insert(self.reset_listeners, listener)
 end
 
 function Overlay:add_destroy_listener(listener)
-  table.insert(self.destroy_listeners, listener)
+    table.insert(self.destroy_listeners, listener)
 end
 
 function Overlay:list_fonts()
-  local font_families = self.text_context:get_font_map():list_families()
+    local font_families = self.text_context:get_font_map():list_families()
 
-  for _, font_family in pairs(font_families) do
-    print(font_family:get_name())
-  end
+    for _, font_family in pairs(font_families) do
+        print(font_family:get_name())
+    end
 end
 
 return {Overlay = Overlay}
 
--- vi: et ts=2 sw=2
+-- vi: et ts=4 sw=4
 

@@ -22,64 +22,47 @@
 -------------------------------------------------------------------------------
 
 local class = require('middleclass')
-local lgi = require('lgi')
-local Cairo = lgi.cairo
 local Fonts = require('fonts')
 
 local InputInterface = require('input_interface')
-local InputInterfaceContainer = require('input_interface_container')
+local ContainerWidget = require('container_widget')
 
-HUD = class('HUD', InputInterface.InputInterface)
-HUD:include(InputInterfaceContainer.InputInterfaceContainer)
+local HUD = class('HUD', ContainerWidget.ContainerWidget)
+
+local DEFAULT_X = 0
+local DEFAULT_Y = 0
+local DEFAULT_WIDTH  = 1
+local DEFAULT_HEIGHT = 1
+local DEFAULT_MAX_WIDTH  = 1
+local DEFAULT_MAX_HEIGHT = 1
+local DEFAULT_USE_PROPORTIONAL_DIMENSIONS = true
 
 function HUD:initialize(h)
-  h = h or {}
+    h = h or {}
 
-  h.name = h.name or 'HUD'
+    h.name = h.name or 'HUD'
+    h.font = h.font or Fonts.get_default_hud_font()
+    h.x = h.x or DEFAULT_X
+    h.y = h.y or DEFAULT_Y
+    h.width = h.width or DEFAULT_WIDTH
+    h.height = h.height or DEFAULT_HEIGHT
+    h.max_width = h.max_width or DEFAULT_MAX_WIDTH
+    h.max_height = h.max_height or DEFAULT_MAX_HEIGHT
+    h.use_proportional_dimensions = h.use_proportional_dimensions or
+                                    DEFAULT_USE_PROPORTIONAL_DIMENSIONS
 
-  InputInterface.InputInterface.initialize(self, h)
+    self.interfaces = {}
 
-  self.interfaces = {}
-
-  self:set_font_description_text(
-    h.font_description_text or Fonts.DEFAULT_HUD_FONT
-  )
-
-  self:set_pixel_width(d2k.overlay:get_width())
-  self:set_pixel_height(d2k.overlay:get_height())
-end
-
-function HUD:get_x()
-  return 0
-end
-
-function HUD:get_y()
-  return 0
-end
-
-function HUD:get_font_description_text()
-  return self.font_description_text
-end
-
-function HUD:set_font_description_text(font_description_text)
-  local fallback_fonts = Fonts.DEFAULT_UNICODE_FALLBACK_FONTS
-
-  if #font_description_text <= 0 then
-    font_description_text = Fonts.DEFAULT_FONT
-  end
-
-  self.font_description_text = font_description_text .. ',' .. fallback_fonts
-
-  self:handle_display_change()
+    ContainerWidget.ContainerWidget.initialize(self, h)
 end
 
 function HUD:sort_interfaces()
-  table.sort(self.interfaces, function(i1, i2)
-    return i1:get_z_index() < i2:get_z_index()
-  end)
+    table.sort(self.interfaces, function(i1, i2)
+        return i1:get_z_index() < i2:get_z_index()
+    end)
 end
 
 return {HUD = HUD}
 
--- vi: et ts=2 sw=2
+-- vi: et ts=4 sw=4
 

@@ -1,5 +1,13 @@
 # To Do
 
+1. UI scaling
+  - Don't scale the UI in the middle of a render (an obviously bad idea)
+  - Make UI scaling optional
+  - Console input doesn't scale up
+  - cursor/prompt scaling is a little imprecise
+  - Wrapping doesn't wrap unbroken lines
+  - I think there's some recursion happening with scaling
+
 1. Fix bugs:
   - Sometimes the server doesn't call `G_WorldDone` when `gameaction` is set to
     `ga_worlddone`; something sets it back to `ga_nothing` first.
@@ -12,19 +20,26 @@
 
 1. Add a server message sound (just use radio/tink?)
 
-1. Test/Fix resolution switching
-  - Probably have to override `:reset` in widgets to update a bunch of stuff
+1. Get rid of 'widget'
+  - Basic UI elements become 'box'
+  - HUD elements become 'element'
 
 :::: Proto Release Here ::::
 
-1. Fix bugs
-  - Cheats don't work (probably scripting input handler)
-  - `P_Printf` doesn't work in server mode
-  - When console scrollback fills up, FPS sinks
-  - Messages widget doesn't display colors
+1. Move cheats to scripting
+  - ...so they work
+  - Need a lot of binding support
 
-1. Revamp messaging
+1. UI Enhancements
+  - I don't think padding should proportional to the parent widget, but to
+    the widget's size
+
+1. UI Bugs
+  - When console scrollback fills up, FPS sinks
+
+1. Messaging
   - Specifically don't bug the console on bad markup; test it first
+  - `P_Printf` doesn't work in server mode
 
 1. Test ECI again
 
@@ -42,8 +57,6 @@
 1. Remove 4 player restriction
 
 :::: Alpha Release Here ::::
-
----
 
 1. Move configuration into scripting
   - Refactor screens

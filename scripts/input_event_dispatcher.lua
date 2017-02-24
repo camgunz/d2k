@@ -22,62 +22,55 @@
 -------------------------------------------------------------------------------
 
 local class = require('middleclass')
-local InputInterface = require('input_interface')
+local BaseInputEventDispatcher = require('base_input_event_dispatcher')
 
-Menu = class('Menu', InputInterface.InputInterface)
+InputEventDispatcher = class('InputEventDispatcher',
+    BaseInputEventDispatcher.BaseInputEventDispatcher
+)
 
-function Menu:initialize(m)
-  m = m or {}
+function InputEventDispatcher:dispatch_event()
+  if d2k.Input.handle_event(self.current_event) then
+    return
+  end
 
-  m.name = m.name or 'Menu'
-  m.fullscreen = m.fullscreen or true
+  if self.current_event:is_key_press(d2k.KeyBinds.get_screenshot()) then
+      d2k.Misc.take_screenshot()
+  end
 
-  InputInterface.InputInterface.initialize(self, m)
-end
+  BaseInputEventDispatcher.BaseInputEventDispatcher.dispatch_event(self)
 
-function Menu:activate()
-  InputInterface.InputInterface.activate(self)
-  d2k.Menu.activate()
-end
-
-function Menu:deactivate()
-  InputInterface.InputInterface.deactivate(self)
-  d2k.Menu.deactivate()
-end
-
-function Menu:reset()
-  InputInterface.InputInterface.reset(self)
-  self:deactivate()
-end
-
-function Menu:tick()
-  InputInterface.InputInterface.tick(self)
-  d2k.Menu.tick()
-end
-
-function Menu:render()
-  InputInterface.InputInterface.render(self)
-  d2k.Menu.render()
-end
-
-function Menu:handle_event(event)
-  local active_before = self:is_active()
-  local handled = d2k.Menu.handle_event(event)
-
-  if handled then
-    local active_after = self:is_active()
-
-    if active_before == false and active_after == true then
-      self:activate()
-    elseif active_before == true and active_after == false then
-      self:deactivate()
+  --[[
+  if d2k.Menu.is_active() then
+    if d2k.Menu.handle_event(self.current_event) then
+      return
     end
   end
 
-  return handled
+  if d2k.hud:handle_event(self.current_event) then
+    return
+  end
+
+  if d2k.Menu.handle_event(self.current_event) then
+    return
+  end
+
+  if d2k.Main.handle_event(self.current_event) then
+    return
+  end
+
+  if d2k.StatusBar.handle_event(self.current_event) then
+    return
+  end
+
+  if d2k.AutoMap.handle_event(self.current_event) then
+    return
+  end
+
+  d2k.Game.handle_event(self.current_event)
+  --]]
 end
 
-return {Menu = Menu}
+return {InputEventDispatcher = InputEventDispatcher}
 
--- vi: et ts=2 sw=2
+-- vi: et ts=4 sw=4
 

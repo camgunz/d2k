@@ -22,62 +22,21 @@
 -------------------------------------------------------------------------------
 
 local class = require('middleclass')
-local InputInterface = require('input_interface')
+local InputInterfaceContainer = require('input_interface_container')
 
-Menu = class('Menu', InputInterface.InputInterface)
+InputInterfaces = class('InputInterfaces')
+InputInterfaces:include(InputInterfaceContainer.InputInterfaceContainer)
 
-function Menu:initialize(m)
-  m = m or {}
+function InputInterfaces:initialize(iis)
+    self.name = iis.name or 'input interfaces'
 
-  m.name = m.name or 'Menu'
-  m.fullscreen = m.fullscreen or true
-
-  InputInterface.InputInterface.initialize(self, m)
+    self.interfaces = {}
 end
 
-function Menu:activate()
-  InputInterface.InputInterface.activate(self)
-  d2k.Menu.activate()
+function InputInterfaces:get_name()
+    return self.name
 end
 
-function Menu:deactivate()
-  InputInterface.InputInterface.deactivate(self)
-  d2k.Menu.deactivate()
-end
+return {InputInterfaces = InputInterfaces}
 
-function Menu:reset()
-  InputInterface.InputInterface.reset(self)
-  self:deactivate()
-end
-
-function Menu:tick()
-  InputInterface.InputInterface.tick(self)
-  d2k.Menu.tick()
-end
-
-function Menu:render()
-  InputInterface.InputInterface.render(self)
-  d2k.Menu.render()
-end
-
-function Menu:handle_event(event)
-  local active_before = self:is_active()
-  local handled = d2k.Menu.handle_event(event)
-
-  if handled then
-    local active_after = self:is_active()
-
-    if active_before == false and active_after == true then
-      self:activate()
-    elseif active_before == true and active_after == false then
-      self:deactivate()
-    end
-  end
-
-  return handled
-end
-
-return {Menu = Menu}
-
--- vi: et ts=2 sw=2
-
+-- vi: et ts=4 sw=4

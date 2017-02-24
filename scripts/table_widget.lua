@@ -30,11 +30,17 @@ TableCell = class('TableCell', TextWidget.TextWidget)
 function TableCell:initialize(tc)
   tc = tc or {}
 
+  tc.name = tc.name or 'table cell'
+
   TextWidget.TextWidget.initialize(self, tc)
 
   self.header = false
   self.row = tc.row or 1
   self.column = tc.column or 1
+end
+
+function TableCell:render()
+  TextWidget.TextWidget.render(self)
 end
 
 function TableCell:is_header()
@@ -89,6 +95,8 @@ TableWidget = class('TableWidget', ContainerWidget.ContainerWidget)
 
 function TableWidget:initialize(tw)
   tw = tw or {}
+
+  tw.name = tw.name or 'table'
 
   self.rows = {}
 

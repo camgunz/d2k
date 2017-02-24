@@ -12,7 +12,7 @@ mkdir -p ~/.d2k/scripts
 mkdir -p ~/.d2k/fonts
 
 cp "${BASE_DIR}/d2k_config_schema.json" ~/.d2k/
-cp "${BASE_DIR}/scripts/"* ~/.d2k/scripts/
+cp -r "${BASE_DIR}/scripts/"* ~/.d2k/scripts/
 cp "${BASE_DIR}/fonts/"* ~/.d2k/fonts/
 
 # gdb -ex 'source gdbserver.txt' --args $CMD

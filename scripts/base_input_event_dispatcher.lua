@@ -22,62 +22,44 @@
 -------------------------------------------------------------------------------
 
 local class = require('middleclass')
-local InputInterface = require('input_interface')
 
-Menu = class('Menu', InputInterface.InputInterface)
+BaseInputEventDispatcher = class('BaseInputEventDispatcher')
 
-function Menu:initialize(m)
-  m = m or {}
+function BaseInputEventDispatcher:initialize(ied)
+    ied = ied or {}
 
-  m.name = m.name or 'Menu'
-  m.fullscreen = m.fullscreen or true
-
-  InputInterface.InputInterface.initialize(self, m)
+    self.input_interfaces = ied['input_interfaces'] or {}
+    self.current_event = d2k.InputEvent:new()
 end
 
-function Menu:activate()
-  InputInterface.InputInterface.activate(self)
-  d2k.Menu.activate()
-end
+function BaseInputEventDispatcher:dispatch_events()
+    while true do
+        self.current_event:reset()
+        event_received, event_populated = d2k.populate_event(
+            self.current_event
+        )
 
-function Menu:deactivate()
-  InputInterface.InputInterface.deactivate(self)
-  d2k.Menu.deactivate()
-end
+        if not event_received then
+            break
+        end
 
-function Menu:reset()
-  InputInterface.InputInterface.reset(self)
-  self:deactivate()
-end
+        if event_populated then
+            local result, err = pcall(self.dispatch_event, self)
 
-function Menu:tick()
-  InputInterface.InputInterface.tick(self)
-  d2k.Menu.tick()
-end
-
-function Menu:render()
-  InputInterface.InputInterface.render(self)
-  d2k.Menu.render()
-end
-
-function Menu:handle_event(event)
-  local active_before = self:is_active()
-  local handled = d2k.Menu.handle_event(event)
-
-  if handled then
-    local active_after = self:is_active()
-
-    if active_before == false and active_after == true then
-      self:activate()
-    elseif active_before == true and active_after == false then
-      self:deactivate()
+            if err then
+                print(string.format(
+                    'InputHandler:dispatch_events: error: %s', err
+                ))
+            end
+      end
     end
-  end
-
-  return handled
 end
 
-return {Menu = Menu}
+function BaseInputEventDispatcher:dispatch_event()
+    self.input_interfaces:handle_event(self.current_event)
+end
 
--- vi: et ts=2 sw=2
+return {BaseInputEventDispatcher = BaseInputEventDispatcher}
+
+-- vi: et ts=4 sw=4
 

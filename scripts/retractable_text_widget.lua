@@ -35,15 +35,21 @@ local RETRACT_NONE = 0
 local RETRACT_UP   = 1
 local RETRACT_DOWN = 2
 
-local RETRACTION_TIME    = 2000
-local RETRACTION_TIMEOUT = 2000
+
+local DEFAULT_RETRACTABLE        = RETRACT_NONE
+local DEFAULT_RETRACTION_TIME    = 2000
+local DEFAULT_RETRACTION_TIMEOUT = 2000
+local DEFAULT_DISPLAY_LINE_COUNT = 4
 
 function RetractableTextWidget:initialize(rtw)
   rtw = rtw or {}
 
-  self.retractable = rtw.retractable or RETRACT_NONE
-  self.retraction_time = rtw.retraction_time or RETRACTION_TIME
-  self.retraction_timeout = rtw.retraction_timeout or RETRACTION_TIMEOUT
+  self.retractable = rtw.retractable or DEFAULT_RETRACTABLE
+  self.retraction_time = rtw.retraction_time or DEFAULT_RETRACTION_TIME
+  self.retraction_timeout = rtw.retraction_timeout or
+                            DEFAULT_RETRACTION_TIMEOUT
+  self.display_line_count = rtw.display_line_count or
+                            DEFAULT_DISPLAY_LINE_COUNT
 
   self.retracting = false
   self.retraction_start_time = 0
@@ -202,15 +208,23 @@ function RetractableTextWidget:set_visible_line_indices(visible_line_indices)
   self.visible_line_indices = visible_line_indices
 end
 
+function RetractableTextWidget:get_display_line_count()
+  return self.display_line_count
+end
+
+function RetractableTextWidget:set_display_line_count(display_line_count)
+  self.display_line_count = display_line_count
+end
+
 function RetractableTextWidget:update_visible_line_indices()
-  local line_height = self:get_line_height()
+  local display_line_count = self:get_display_line_count()
   local line_count = self:get_layout_line_count()
   local visible_line_indices = self:get_visible_line_indices()
   local last_retracted_line_index = self:get_last_retracted_line_index()
 
   dprint(string.format(
     'update_visible_line_indices - visible_line_indices: %s, %s, %s, %s',
-    line_height,
+    display_line_count,
     line_count,
     #visible_line_indices,
     last_retracted_line_index
@@ -225,10 +239,10 @@ function RetractableTextWidget:update_visible_line_indices()
   end
 
   -- The first visible line is either the Nth from the end (where N is
-  -- line_height) or the line after the last retracted line index, whichever is
-  -- newer.
+  -- display_line_count) or the line after the last retracted line index,
+  -- whichever is newer.
 
-  local first_visible_line_index = ((line_count - line_height) + 1)
+  local first_visible_line_index = ((line_count - display_line_count) + 1)
 
   -- This also handles the case where line_count < line_height, making
   -- first_visible_line_index negative.  last_retracted_line_index will be 0 to
@@ -316,12 +330,13 @@ function RetractableTextWidget:update_visible_line_indices()
     return
   end
 
-  -- If the new set of visible line indices is longer than line_height, then
-  -- remove old lines until it isn't.
+  -- If the new set of visible line indices is longer than display_line_count,
+  -- then remove old lines until it isn't.
 
   local last_removed_line_index = 0
 
-  while #visible_line_indices + #new_visible_line_indices > line_height do
+  while #visible_line_indices + #new_visible_line_indices >
+        display_line_count do
     last_removed_line_index = visible_line_indices[1]
     dprint(string.format(
       'update_visible_line_indices - Removing old line %s',
@@ -416,22 +431,20 @@ function RetractableTextWidget:set_full_height()
   end
 
   self:set_pixel_height(
-    self:get_top_margin() +
+    self:get_top_padding() +
     visible_lines[#visible_lines].y +
     visible_lines[#visible_lines].height -
     visible_lines[1].y +
-    self:get_bottom_margin()
+    self:get_bottom_padding()
   )
 end
 
 function RetractableTextWidget:reset()
-  local layout = self:get_layout()
-  local layout_width, layout_height = layout:get_pixel_size()
-  local line_count = self:get_layout_line_count()
+  TextWidget.TextWidget.reset(self)
 
-  self:set_retracting(false)
-  self:set_retraction_start_time(0)
-  self:set_last_retracted_line_index(0)
+  -- self:set_retracting(false)
+  -- self:set_retraction_start_time(0)
+  -- self:set_last_retracted_line_index(0)
 end
 
 function RetractableTextWidget:retract(current_ms)
@@ -463,11 +476,11 @@ function RetractableTextWidget:retract(current_ms)
   end
 
   local total_height = (
-    self:get_top_margin() +
+    self:get_top_padding() +
     visible_lines[#visible_lines].y +
     visible_lines[#visible_lines].height -
     visible_lines[1].y +
-    self:get_bottom_margin()
+    self:get_bottom_padding()
   )
   local y_delta = (ms_retracted / retraction_time) * retraction_distance
 
@@ -532,19 +545,19 @@ function RetractableTextWidget:tick()
         local visible_lines = self:get_visible_lines()
 
         self:set_pixel_height(
-          self:get_top_margin() +
+          self:get_top_padding() +
           visible_lines[1].height +
-          self:get_bottom_margin()
+          self:get_bottom_padding()
         )
       else
         local visible_lines = self:get_visible_lines()
 
         self:set_pixel_height(
-          self:get_top_margin() +
+          self:get_top_padding() +
           visible_lines[#visible_lines].y +
           visible_lines[#visible_lines].height -
           visible_lines[1].y +
-          self:get_bottom_margin()
+          self:get_bottom_padding()
         )
       end
       dprint(string.format('tick - new height: %s',
@@ -577,11 +590,11 @@ function RetractableTextWidget:position_view()
   end
 
   local visible_line_height = (
-    self:get_top_margin() +
+    self:get_top_padding() +
     visible_lines[#visible_lines].y +
     visible_lines[#visible_lines].height -
     visible_lines[1].y +
-    self:get_bottom_margin()
+    self:get_bottom_padding()
   )
   local x = self:get_x()
   local height = self:get_pixel_height()
@@ -632,23 +645,23 @@ function RetractableTextWidget:render()
 
   cr:set_source_rgba(fg_color[1], fg_color[2], fg_color[3], fg_color[4])
 
-  local lx = self:get_x() + self:get_left_margin()
-  local ly = self:get_y() + self:get_top_margin()
+  local lx = self:get_x() + self:get_left_padding()
+  local ly = self:get_y() + self:get_top_padding()
   local text_width = self:get_pixel_width() - (
-    self:get_left_margin() + self:get_right_margin()
+    self:get_left_padding() + self:get_right_padding()
   )
   local text_height = self:get_pixel_height() - (
-    self:get_top_margin() + self:get_bottom_margin()
+    self:get_top_padding() + self:get_bottom_padding()
   )
   local layout_ink_extents = self:get_layout_ink_extents()
   local layout_logical_extents = self:get_layout_logical_extents()
   local retractable = self:get_retractable()
   local visible_line_height = (
-    self:get_top_margin() +
+    self:get_top_padding() +
     visible_lines[#visible_lines].y +
     visible_lines[#visible_lines].height -
     visible_lines[1].y +
-    self:get_bottom_margin()
+    self:get_bottom_padding()
   )
   local height = self:get_pixel_height()
 
@@ -669,7 +682,7 @@ function RetractableTextWidget:render()
   end
 
   local start_y_offset = 0
-  local line_height = self:get_line_height()
+  local display_line_count = self:get_display_line_count()
 
   dprint(string.format('render - Rendering %s lines at (%s, %s) (%s)',
     #visible_lines, lx, ly, self:get_pixel_height()
@@ -679,7 +692,7 @@ function RetractableTextWidget:render()
     local line_start_x = line.x + lx
     local line_start_y = line.y + ly
 
-    if line_height > 0 and i == 1 and line.y > 0 then
+    if display_line_count > 0 and i == 1 and line.y > 0 then
       start_y_offset = -line.y
     end
 
@@ -710,8 +723,9 @@ function RetractableTextWidget:render()
       cr:stroke_preserve()
       cr:restore()
 
-      cr:set_source_rgba(fg_color[1], fg_color[2], fg_color[3], fg_color[4])
-      cr:fill_preserve()
+      -- cr:set_source_rgba(fg_color[1], fg_color[2], fg_color[3], fg_color[4])
+      -- cr:fill_preserve()
+      PangoCairo.show_layout_line(cr, line.pango_line)
 
       cr:restore()
     else
@@ -740,8 +754,6 @@ return {
   RETRACT_NONE          = RETRACT_NONE,
   RETRACT_UP            = RETRACT_UP,
   RETRACT_DOWN          = RETRACT_DOWN,
-  RETRACTION_TIME       = RETRACTION_TIME,
-  RETRACTION_TIMEOUT    = RETRACTION_TIMEOUT
 }
 
 -- vi: et ts=2 sw=2

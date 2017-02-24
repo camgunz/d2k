@@ -76,11 +76,12 @@ void I_InputUpdateKeyStates(void) {
 }
 
 void I_InputHandle(void) {
-  if (!X_Call(X_GetState(), "interfaces", "handle_events", 0, 0)) {
-    I_Error("I_InputHandle: Error handling input (%s)",
-      X_GetError(X_GetState())
-    );
+  x_engine_t *xe = X_GetState();
+
+  if (!X_Call(xe, "input_event_dispatcher", "dispatch_events", 0, 0)) {
+    I_Error("I_InputHandle: Error handling input (%s)", X_GetError(xe));
   }
+
   I_MouseReset();
 }
 

@@ -55,14 +55,16 @@ void V_OverlayInit(void) {
 }
 
 void V_OverlayBuildPixels(void) {
-  if (overlay.pixels)
+  if (overlay.pixels) {
     I_Error("build_overlay_pixels: pixels already built");
+  }
 
   if (V_GetMode() == VID_MODEGL) {
     overlay.pixels = calloc(SCREENWIDTH * SCREENHEIGHT, sizeof(uint32_t));
 
-    if (!overlay.pixels)
+    if (!overlay.pixels) {
       I_Error("build_overlay_pixels: Allocating overlay pixels failed");
+    }
 
     overlay.owns_pixels = true;
   }
