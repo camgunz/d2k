@@ -119,6 +119,7 @@ function TextWidget:set_text(text)
     end
 
     if not GLib.utf8_validate(text) then
+        print(debug.traceback())
         print('bad text passed to text widget');
         return
     end

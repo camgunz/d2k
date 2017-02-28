@@ -52,6 +52,7 @@ static GHashTable *x_types = NULL;
 static GHashTable *x_global_scope = NULL;
 static GHashTable *x_scopes = NULL;
 static bool        x_initialized = false;
+static bool        x_started = false;
 
 static gboolean x_objects_equal(gconstpointer a, gconstpointer b) {
   return a == b;
@@ -213,7 +214,7 @@ void X_Init(void) {
   lua_pop(x_main_interpreter, 1);
 
   if (!X_LoadFile(X_INIT_SCRIPT_NAME)) {
-    I_Error("X_Start: Error loading initialization script: %s",
+    I_Error("X_Init: Error loading initialization script: %s",
       X_GetError(x_main_interpreter)
     );
   }
@@ -226,12 +227,20 @@ void X_Init(void) {
 
 void X_Start(void) {
   if (!X_LoadFile(X_START_SCRIPT_NAME)) {
-    I_Error("Error running start script: %s", X_GetError(x_main_interpreter));
+    I_Error("X_Start: Error running start script: %s",
+      X_GetError(x_main_interpreter)
+    );
   }
+
+  x_started = true;
 }
 
 bool X_Available(void) {
   return x_initialized;
+}
+
+bool X_Started(void) {
+  return x_started;
 }
 
 void X_RegisterType(const char *type_name, unsigned int count, ...) {

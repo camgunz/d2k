@@ -26,7 +26,7 @@ local class = require('middleclass')
 
 DEFAULT_FONT = 'sans serif'
 DEFAULT_UNICODE_FALLBACK_FONTS = 'Arial Unicode MS,Unifont'
-DEFAULT_FONT_SIZE = 12
+DEFAULT_FONT_SIZE = 15
 
 Font = class('Font')
 
@@ -54,6 +54,10 @@ end
 
 function Font:get_size()
     return math.floor(self.dec_size)
+end
+
+function Font:copy()
+    return Font({name = self:get_name(), size = self.dec_size})
 end
 
 function Font:scale(factor)

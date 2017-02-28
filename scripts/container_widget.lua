@@ -59,17 +59,14 @@ function ContainerWidget:is_active()
 end
 
 function ContainerWidget:reset()
-    InputInterface.InputInterface.reset(self)
     InputInterfaceContainer.InputInterfaceContainer.reset(self)
 end
 
 function ContainerWidget:tick()
-    InputInterface.InputInterface.tick(self)
     InputInterfaceContainer.InputInterfaceContainer.tick(self)
 end
 
 function ContainerWidget:invalidate_render()
-    InputInterface.InputInterface.invalidate_render(self)
     InputInterfaceContainer.InputInterfaceContainer.invalidate_render(self)
 end
 
@@ -77,13 +74,11 @@ function ContainerWidget:position_view()
 end
 
 function ContainerWidget:render()
-    InputInterface.InputInterface.render(self)
     InputInterfaceContainer.InputInterfaceContainer.render(self)
 end
 
 function ContainerWidget:needs_rendering()
     return (
-        InputInterface.InputInterface.needs_rendering(self) or
         InputInterfaceContainer.InputInterfaceContainer.needs_rendering(self)
     )
 end
@@ -93,12 +88,10 @@ function ContainerWidget:handle_event(event)
 end
 
 function ContainerWidget:scale(value)
-    InputInterface.InputInterface.scale(self, value)
     InputInterfaceContainer.InputInterfaceContainer.scale(self, value)
 end
 
 function ContainerWidget:handle_overlay_reset()
-    InputInterface.InputInterface.handle_overlay_reset(self)
     InputInterfaceContainer.InputInterfaceContainer.handle_overlay_reset(self)
 end
 

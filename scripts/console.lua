@@ -50,7 +50,7 @@ local DEFAULT_HEIGHT                = .5
 function Console:initialize(c)
     c = c or {}
 
-    c.name = c.name or 'Console'
+    c.name = c.name or 'console'
     c.fullscreen = c.fullscreen or true
     c.fg_color = DEFAULT_FG_COLOR
     c.bg_color = DEFAULT_BG_COLOR
@@ -88,7 +88,7 @@ function Console:initialize(c)
         vertical_alignment = TextWidget.ALIGN_CENTER,
         fg_color = self.fg_color or DEFAULT_FG_COLOR,
         bg_color = self.bg_color or DEFAULT_BG_COLOR,
-        use_parent_font = true,
+        font = self.font:copy(),
         input_handler = d2k.CommandInterface.handle_input,
     })
 
@@ -115,7 +115,7 @@ function Console:initialize(c)
         vertical_alignment = TextWidget.ALIGN_BOTTOM,
         fg_color = self.fg_color or DEFAULT_FG_COLOR,
         bg_color = self.bg_color or DEFAULT_BG_COLOR,
-        use_parent_font = true,
+        font = self.font:copy(),
         word_wrap = TextWidget.WRAP_WORD,
         use_markup = true,
         strip_ending_newline = true,

@@ -321,7 +321,7 @@ end
 scoreboard_widget:set_parent(d2k.hud)
 
 local scoreboard_title_widget = TextWidget.TextWidget({
-    name = 'scoreboard_title',
+    name = 'scoreboard title',
     z_index = scoreboard_widget.z_index,
     y = 20,
     top_padding = 0.0375,
@@ -376,7 +376,7 @@ function scoreboard_title_widget:tick()
 end
 
 local scoreboard_player_table_widget = TableWidget.TableWidget({
-    name = 'scoreboard_player_table',
+    name = 'scoreboard player table',
     z_index = scoreboard_widget.z_index,
     top_padding = 0.0375,
     bottom_padding = 0.0375,

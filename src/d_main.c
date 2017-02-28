@@ -482,6 +482,10 @@ static void D_Wipe(void) {
 void D_Display(void) {
   bool wipe;
 
+  if (!X_Call(X_GetState(), "overlay", "check_overlay", 0, 0)) {
+    I_Error("Error resetting overlay: %s", X_GetError(X_GetState()));
+  }
+
   if (doSkip) {
     if (HU_DrawDemoProgress(false))
       I_FinishUpdate();

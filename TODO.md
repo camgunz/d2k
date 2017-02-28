@@ -1,12 +1,8 @@
 # To Do
 
 1. UI scaling
-  - Don't scale the UI in the middle of a render (an obviously bad idea)
   - Make UI scaling optional
-  - Console input doesn't scale up
-  - cursor/prompt scaling is a little imprecise
   - Wrapping doesn't wrap unbroken lines
-  - I think there's some recursion happening with scaling
 
 1. Fix bugs:
   - Sometimes the server doesn't call `G_WorldDone` when `gameaction` is set to
@@ -31,11 +27,11 @@
   - Need a lot of binding support
 
 1. UI Enhancements
-  - I don't think padding should proportional to the parent widget, but to
-    the widget's size
+  - I think padding should be proportional to the widget's size instead of the
+    parent widget's size.
 
 1. UI Bugs
-  - When console scrollback fills up, FPS sinks
+  - FPS sinks when console scrollback fills up
 
 1. Messaging
   - Specifically don't bug the console on bad markup; test it first

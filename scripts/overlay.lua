@@ -132,8 +132,8 @@ function Overlay:reset()
     self:build()
 
     for i, l in pairs(self.reset_listeners) do
-        l:handle_overlay_reset()
         l:scale(self:get_resolution_change_ratio())
+        l:handle_overlay_reset()
     end
 end
 

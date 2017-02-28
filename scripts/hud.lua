@@ -40,7 +40,7 @@ local DEFAULT_USE_PROPORTIONAL_DIMENSIONS = true
 function HUD:initialize(h)
     h = h or {}
 
-    h.name = h.name or 'HUD'
+    h.name = h.name or 'hud'
     h.font = h.font or Fonts.get_default_hud_font()
     h.x = h.x or DEFAULT_X
     h.y = h.y or DEFAULT_Y

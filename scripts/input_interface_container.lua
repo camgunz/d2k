@@ -197,6 +197,14 @@ InputInterfaceContainer = {
         return false
     end,
 
+    set_font = function(self, font)
+        if self.interfaces then
+            for i, interface in ipairs(self.interfaces) do
+                interface:set_font(font:copy())
+            end
+        end
+    end,
+
     scale = function(self, value)
         if self.interfaces then
             for i, interface in ipairs(self.interfaces) do

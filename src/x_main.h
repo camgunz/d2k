@@ -50,6 +50,7 @@ bool       X_LoadFile(const char *script_name);
 void       X_Init(void);
 void       X_Start(void);
 bool       X_Available(void);
+bool       X_Started(void);
 void       X_RegisterType(const char *type_name, unsigned int count, ...);
 void       X_RegisterObjects(const char *scope_name, unsigned int count, ...);
 x_engine_t X_GetState(void);
