@@ -1,8 +1,6 @@
 # To Do
 
-1. UI scaling
-  - Make UI scaling optional
-  - Wrapping doesn't wrap unbroken lines
+1. Add a preliminary master server advertising implementation
 
 1. Fix bugs:
   - Sometimes the server doesn't call `G_WorldDone` when `gameaction` is set to
@@ -20,6 +18,11 @@
   - Basic UI elements become 'box'
   - HUD elements become 'element'
 
+1. UI scaling
+  - Make UI scaling optional
+  - Wrapping doesn't wrap unbroken lines
+    - May be nothing I can do about this
+
 :::: Proto Release Here ::::
 
 1. Move cheats to scripting
@@ -28,7 +31,7 @@
 
 1. UI Enhancements
   - I think padding should be proportional to the widget's size instead of the
-    parent widget's size.
+    parent widget's size
 
 1. UI Bugs
   - FPS sinks when console scrollback fills up

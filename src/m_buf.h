@@ -39,6 +39,7 @@ void   M_BufferInitWithCapacity(buf_t *buf, size_t capacity);
 size_t M_BufferGetCapacity(buf_t *buf);
 size_t M_BufferGetSize(buf_t *buf);
 size_t M_BufferGetCursor(buf_t *buf);
+size_t M_BufferGetDataRemaining(buf_t *buf);
 char*  M_BufferGetData(buf_t *buf);
 char*  M_BufferGetDataAtCursor(buf_t *buf);
 
@@ -66,17 +67,17 @@ void M_BufferWriteChar(buf_t *buf, char c);
 void M_BufferWriteChars(buf_t *buf, const char *chars, size_t count);
 void M_BufferWriteUChar(buf_t *buf, unsigned char c);
 void M_BufferWriteUChars(buf_t *buf, const unsigned char *uchars,
-                                         size_t count);
+                                     size_t count);
 void M_BufferWriteShort(buf_t *buf, short s);
 void M_BufferWriteShorts(buf_t *buf, const short *shorts, size_t count);
 void M_BufferWriteUShort(buf_t *buf, unsigned short s);
 void M_BufferWriteUShorts(buf_t *buf, const unsigned short *ushorts,
-                                          size_t count);
+                                      size_t count);
 void M_BufferWriteInt(buf_t *buf, int i);
 void M_BufferWriteInts(buf_t *buf, const int *ints, size_t count);
 void M_BufferWriteUInt(buf_t *buf, unsigned int i);
 void M_BufferWriteUInts(buf_t *buf, const unsigned int *ints,
-                                        size_t count);
+                                    size_t count);
 void M_BufferWriteLong(buf_t *buf, int64_t l);
 void M_BufferWriteLongs(buf_t *buf, const int64_t *longs, size_t count);
 void M_BufferWriteULong(buf_t *buf, uint64_t l);

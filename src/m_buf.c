@@ -77,6 +77,10 @@ size_t M_BufferGetCursor(buf_t *buf) {
   return buf->cursor;
 }
 
+size_t M_BufferGetDataRemaining(buf_t *buf) {
+  return buf->size - buf->cursor;
+}
+
 char* M_BufferGetData(buf_t *buf) {
   return buf->data;
 }

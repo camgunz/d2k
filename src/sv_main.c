@@ -245,5 +245,37 @@ void SV_UnlagEnd(void) {
   }
 }
 
+const char* SV_GetServerName(void) {
+  /*
+   * [CG] [TODO] This needs to be tied to the config; just a placeholder for
+   *             now.
+   */
+  return "D2K Server";
+}
+
+const char* SV_GetDirSrvGroup(const char *address, unsigned short port) {
+  /*
+   * [CG] [TODO] This needs to be tied to the config, and defined separately
+   *             for each directory server; just a placeholder for now.
+   */
+  return "d2k";
+}
+
+const char* SV_GetHost(void) {
+  /*
+   * [CG] [TODO] This needs to be tied to the config; just a placeholder for
+   * now.
+   */
+  return "totaltrash.org";
+}
+
+unsigned short SV_GetPort(void) {
+  /*
+   * [CG] [TODO] This needs to be tied to the config; just a placeholder for
+   * now.
+   */
+  return 10666;
+}
+
 /* vi: set et ts=2 sw=2: */
 

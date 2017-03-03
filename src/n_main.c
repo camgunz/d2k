@@ -481,4 +481,3 @@ bool N_TryRunTics(void) {
 }
 
 /* vi: set et ts=2 sw=2: */
-

@@ -21,26 +21,38 @@
 /*****************************************************************************/
 
 
-#ifndef SV_MAIN_H__
-#define SV_MAIN_H__
+#ifndef N_HTTP_H__
+#define N_HTTP_H__
 
-extern int   sv_limit_player_commands;
-extern char *sv_spectate_password;
-extern char *sv_join_password;
-extern char *sv_moderate_password;
-extern char *sv_administrate_password;
+typedef enum {
+  HTTP_METHOD_NONE,
+  HTTP_METHOD_GET,
+  HTTP_METHOD_POST,
+  HTTP_METHOD_PUT,
+  HTTP_METHOD_DELETE
+} http_method_e;
 
-void           SV_CleanupOldCommandsAndStates(void);
-unsigned int   SV_GetPlayerCommandLimit(int playernum);
-void           SV_UnlagSetTIC(int tic);
-bool           SV_UnlagStart(void);
-void           SV_UnlagEnd(void);
-const char*    SV_GetServerName(void);
-const char*    SV_GetDirSrvGroup(const char *address, unsigned short port);
-const char*    SV_GetHost(void);
-unsigned short SV_GetPort(void);
+struct http_req_s;
+typedef struct http_req_s http_req_t;
+
+typedef void (http_handler_t)(http_req_t *req);
+
+char*       N_HTTPEscape(const char *s);
+void        N_HTTPClearReqs(void);
+http_req_t* N_HTTPReqNew(http_method_e method, char *url);
+long        N_HTTPReqErrno(http_req_t *req);
+const char* N_HTTPReqStrerror(http_req_t *req);
+void        N_HTTPReqSetCallback(http_req_t *req, http_handler_t *callback);
+void        N_HTTPReqSetCallbackData(http_req_t *req, void *data);
+void        N_HTTPReqSetAuth(http_req_t *req, const char *auth);
+void        N_HTTPReqAddHeader(http_req_t *req, const char *header);
+buf_t*      N_HTTPReqGetOutgoingData(http_req_t *req);
+void        N_HTTPReqHandleOutgoingDataChanged(http_req_t *req);
+void        N_HTTPReqSend(http_req_t *req);
+buf_t*      N_HTTPReqGetReceivedData(http_req_t *req);
+long        N_HTTPReqGetStatus(http_req_t *req);
+void*       N_HTTPReqGetCallbackData(http_req_t *req);
 
 #endif
 
 /* vi: set et ts=2 sw=2: */
-

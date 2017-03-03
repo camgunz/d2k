@@ -25,6 +25,7 @@
 #==============================================================================
 ################################################# CMake Configuration #########
 #==============================================================================
+
 PROJECT("D2K" C)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.0 FATAL_ERROR)
 IF(${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
@@ -45,6 +46,7 @@ ENDIF()
 #  * Release (CMAKE_C_FLAGS_RELEASE)
 # If no build type requested, default to Release
 ###
+
 IF(NOT DEFINED CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
 ENDIF()
@@ -74,6 +76,7 @@ SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 #==============================================================================
 ########################################################### Functions #########
 #==============================================================================
+
 FUNCTION(TRY_C_COMPILER_FLAG flag name)
   CHECK_C_COMPILER_FLAG("${flag}" ${name})
   IF(${name})
@@ -84,6 +87,7 @@ ENDFUNCTION(TRY_C_COMPILER_FLAG flag name)
 #==============================================================================
 ##################################################### Package Details #########
 #==============================================================================
+
 SET(VERSION "0")
 SET(PACKAGE "D2K")
 SET(PACKAGE_NAME "D2K")
@@ -118,6 +122,7 @@ SET(CPACK_DEBIAN_PACKAGE_DEPENDS
    libgl1,
    libxdiff (>= 0.23),
    libenet1a (>= 1.3.3-2),
+   libcurl (>= 7.38.0-4),
    bash"
 )
 SET(CPACK_DEBIAN_PACKAGE_RECOMMENDS
@@ -300,6 +305,7 @@ ENDIF()
 #==============================================================================
 ############################################################# Options #########
 #==============================================================================
+
 OPTION(DOOMWADDIR, "The path where Doom WADs are stored" "")
 OPTION(
   CHECK_HEAP "Exhaustively run memory checks while the game is running" OFF
@@ -348,6 +354,7 @@ ENDIF()
 #==============================================================================
 ################################################## Compiler: Features #########
 #==============================================================================
+
 IF(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   TRY_C_COMPILER_FLAG(--std=c99 FLAG_C_stdc99)
   IF(PROFILE)
@@ -358,6 +365,7 @@ ENDIF()
 #==============================================================================
 ################################################## Compiler: Warnings #########
 #==============================================================================
+
 IF(GCC_OR_CLANG)
   TRY_C_COMPILER_FLAG(-Wall FLAG_C_Wall)
 ENDIF()
@@ -377,6 +385,7 @@ ENDIF()
 #==============================================================================
 ################################################# Compiler: Hardening #########
 #==============================================================================
+
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
   ADD_DEFINITIONS(-DDEBUG)
   IF(GCC_OR_CLANG)
@@ -439,6 +448,7 @@ ENDIF()
 #==============================================================================
 ############################################## Compiler: Optimization #########
 #==============================================================================
+
 IF(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel" OR
    CMAKE_BUILD_TYPE STREQUAL "Release")
   IF(GCC_OR_CLANG)
@@ -456,6 +466,7 @@ ENDIF()
 #==============================================================================
 ################################################### Find Dependencies #########
 #==============================================================================
+
 IF(ICONV_LIBRARIES)
   SET(SAVED_ICONV_LIBRARIES ${ICONV_LIBRARIES})
 ENDIF()
@@ -576,6 +587,9 @@ INCLUDE_DIRECTORIES(${XDIFF_INCLUDE_DIR})
 
 FIND_PACKAGE(ENet REQUIRED)
 INCLUDE_DIRECTORIES(${ENET_INCLUDE_DIR})
+
+FIND_PACKAGE(CURL REQUIRED)
+INCLUDE_DIRECTORIES(${CURL_INCLUDE_DIR})
 
 FIND_PACKAGE(SDL REQUIRED)
 SET(HAVE_LIBSDL TRUE)
@@ -845,6 +859,8 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/n_addr.c
   ${CMAKE_SOURCE_DIR}/src/n_chan.c
   ${CMAKE_SOURCE_DIR}/src/n_com.c
+  ${CMAKE_SOURCE_DIR}/src/n_dirsrv.c
+  ${CMAKE_SOURCE_DIR}/src/n_http.c
   ${CMAKE_SOURCE_DIR}/src/n_main.c
   ${CMAKE_SOURCE_DIR}/src/n_misc.c
   ${CMAKE_SOURCE_DIR}/src/n_msg.c
@@ -1063,6 +1079,8 @@ ENDIF()
 SET(D2K_LIBRARIES ${D2K_LIBRARIES}
   ${ENET_LIBRARIES}
   ${XDIFF_LIBRARIES}
+  ${CURL_LIBRARIES}
+  ${JANSSON_LIBRARIES}
   ${PANGOCAIRO_LIBRARIES}
   ${PANGOFT2_LIBRARIES}
 )
@@ -1090,7 +1108,6 @@ SET(D2K_LIBRARIES ${D2K_LIBRARIES}
   ${GOBJECT_INTROSPECTION_LIBRARIES}
   ${PCRE_LIBRARIES}
   ${EXPAT_LIBRARIES}
-  ${JANSSON_LIBRARIES}
   ${ARCH_SPECIFIC_LIBRARIES}
 )
 
