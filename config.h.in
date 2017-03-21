@@ -12,6 +12,7 @@
 #define PACKAGE_TARNAME "${PACKAGE_TARNAME}"
 #define PACKAGE_URL "${PACKAGE_URL}"
 
+#cmakedefine LONG_LONG
 #cmakedefine DOOMWADDIR "@DOOMWADDIR@"
 #cmakedefine CHECK_HEAP
 #cmakedefine HEAPDUMP

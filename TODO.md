@@ -1,7 +1,5 @@
 # To Do
 
-1. Add a preliminary master server advertising implementation
-
 1. Fix bugs:
   - Sometimes the server doesn't call `G_WorldDone` when `gameaction` is set to
     `ga_worlddone`; something sets it back to `ga_nothing` first.
@@ -10,20 +8,23 @@
       `NM_FULLSTATE` to clients
   - Windows crashes pretty early on
   - Currently nothing clears or renders when you switch to vidingl from OpenGL
-    - Also I think OpenGL mode doesn't refresh properly (console sticks)
+    - I think I'll wait to fix this after syncing up w/ Pr+ because they
+      switched to SDL2
 
 1. Add a server message sound (just use radio/tink?)
 
-1. Get rid of 'widget'
-  - Basic UI elements become 'box'
-  - HUD elements become 'element'
+:::: Proto Release Here ::::
 
 1. UI scaling
   - Make UI scaling optional
   - Wrapping doesn't wrap unbroken lines
     - May be nothing I can do about this
 
-:::: Proto Release Here ::::
+1. Get rid of 'widget'
+  - Basic UI elements become 'box'
+  - HUD elements become 'element'
+
+1. Add a preliminary master server advertising implementation
 
 1. Move cheats to scripting
   - ...so they work
@@ -54,8 +55,6 @@
     - Use a camera in non-headless mode (add non-headless mode???)
 
 1. Remove 4 player restriction
-
-:::: Alpha Release Here ::::
 
 1. Move configuration into scripting
   - Refactor screens
@@ -92,7 +91,7 @@
     huge file (or a file from a slow server); libcurl ought to make this
     pretty easy
 
-:::: Beta Release Here ::::
+:::: Alpha Release Here ::::
 
 1. Add 3D physics
 
