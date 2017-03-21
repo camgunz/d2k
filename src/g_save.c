@@ -267,11 +267,15 @@ void G_WriteSaveData(pbuf_t *savebuffer) {
   M_PBufWriteBool(savebuffer, levelFragLimit);
   M_PBufWriteInt(savebuffer, levelFragLimitCount);
 
-  for (i = 0; i < MAXPLAYERS; i++)
+  for (i = 0; i < MAXPLAYERS; i++) {
     M_PBufWriteBool(savebuffer, playeringame[i]);
+  }
 
-  for (i = MAXPLAYERS; i < MIN_MAXPLAYERS; i++)
-    M_PBufWriteBool(savebuffer, false);
+  if (MAXPLAYERS < MIN_MAXPLAYERS) {
+    for (i = MAXPLAYERS; i < MIN_MAXPLAYERS; i++) {
+      M_PBufWriteBool(savebuffer, false);
+    }
+  }
 
   M_PBufWriteInt(savebuffer, idmusnum);
 
@@ -465,14 +469,18 @@ bool G_ReadSaveData(pbuf_t *savebuffer, bool bail_on_errors,
   M_PBufReadBool(savebuffer, &levelFragLimit);
   M_PBufReadInt(savebuffer, &levelFragLimitCount);
 
-  for (i = 0; i < MAXPLAYERS; i++)
+  for (i = 0; i < MAXPLAYERS; i++) {
     M_PBufReadBool(savebuffer, &playeringame[i]);
+  }
 
-  // killough 2/28/98
-  bool b = false;
+  if (MAXPLAYERS < MIN_MAXPLAYERS) {
+    // killough 2/28/98
+    bool b = false;
 
-  for (i = MAXPLAYERS; i < MIN_MAXPLAYERS; i++)
-    M_PBufReadBool(savebuffer, &b);
+    for (i = MAXPLAYERS; i < MIN_MAXPLAYERS; i++) {
+      M_PBufReadBool(savebuffer, &b);
+    }
+  }
 
   M_PBufReadInt(savebuffer, &idmusnum); // jff 3/17/98 restore idmus music
 

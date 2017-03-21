@@ -1582,6 +1582,24 @@ static void D_DoomMainSetup(void) {
 
   D_BuildBEXTables(); // haleyjd
 
+  if (!(p = M_CheckParm("-playdemo")) || p >= myargc - 1) {  /* killough */
+    if ((p = M_CheckParm("-fastdemo")) && p < myargc - 1) {  /* killough */
+      fastdemo = true;             // run at fastest speed possible
+    }
+    else {
+      if ((p = IsDemoContinue())) {
+        if (demo_continue_name)
+          free(demo_continue_name);
+
+        demo_continue_name = M_AddDefaultExtension(myargv[p + 2], "lmp");
+        democontinue = true;
+      }
+      else {
+        p = M_CheckParm("-timedemo");
+      }
+    }
+  }
+
   D_Msg(MSG_INFO, "I_InitGetTime: Setting up timer.\n");
   I_InitGetTime();
 
@@ -1873,24 +1891,6 @@ static void D_DoomMainSetup(void) {
       if (file) {
         W_AddResource(file, source_pwad);
         free(file);
-      }
-    }
-  }
-
-  if (!(p = M_CheckParm("-playdemo")) || p >= myargc - 1) {  /* killough */
-    if ((p = M_CheckParm("-fastdemo")) && p < myargc - 1) {  /* killough */
-      fastdemo = true;             // run at fastest speed possible
-    }
-    else {
-      if ((p = IsDemoContinue())) {
-        if (demo_continue_name)
-          free(demo_continue_name);
-
-        demo_continue_name = M_AddDefaultExtension(myargv[p + 2], "lmp");
-        democontinue = true;
-      }
-      else {
-        p = M_CheckParm("-timedemo");
       }
     }
   }
