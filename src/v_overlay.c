@@ -139,4 +139,8 @@ unsigned char* V_OverlayGetPixels(void) {
   return overlay.pixels;
 }
 
+void V_OverlayClear(void) {
+  memset(overlay.pixels, 0, SCREENWIDTH * SCREENHEIGHT * sizeof(uint32_t));
+}
+
 /* vi: set et ts=2 sw=2: */

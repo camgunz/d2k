@@ -36,6 +36,7 @@ bool           V_OverlayNeedsResetting(void);
 void           V_OverlaySetNeedsResetting(void);
 void           V_OverlayClearNeedsResetting(void);
 unsigned char* V_OverlayGetPixels(void);
+void           V_OverlayClear(void);
 
 #ifdef GL_DOOM
 GLuint  V_OverlayGetTexID(void);

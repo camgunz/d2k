@@ -343,6 +343,8 @@ void I_FinishUpdate(void) {
       glEnd();
 
       last_glTexID = V_OverlayGetTexIDPointer();
+
+      V_OverlayClear();
     }
 
     gld_Finish();
