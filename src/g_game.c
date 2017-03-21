@@ -3118,8 +3118,10 @@ void G_BeginRecording(void) {
       *demo_p++ = 0;
     }
 
-  // FIXME } else if (compatibility_level >= boom_compatibility_compatibility) { //e6y
   }
+  /* [FIXME] e6y
+   * else if (compatibility_level >= boom_compatibility_compatibility) {
+   */
   else if (compatibility_level > boom_compatibility_compatibility) {
     unsigned char v = 0;
     unsigned char c = 0; /* Nominally, version and compatibility bits */
