@@ -74,10 +74,12 @@ typedef enum {
   prboom_4_compatibility,                /* PrBoom 2.3.x */
   prboom_5_compatibility,                /* PrBoom 2.4.0 */
   prboom_6_compatibility,                /* Latest PrBoom */
+  d2k_0_compatibility,                   /* D2K compatibility, v0 */
   MAX_COMPATIBILITY_LEVEL,               /* Must be last entry */
   /* Aliases follow */
   boom_compatibility = boom_201_compatibility, /* Alias used by G_Compatibility */
   best_compatibility = prboom_6_compatibility,
+  d2k_compatibility  = d2k_0_compatibility,
 } complevel_t_e;
 
 typedef int complevel_t;

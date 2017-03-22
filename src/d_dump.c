@@ -55,12 +55,14 @@ static pbuf_t     *dump_buf1      = NULL;
 static pbuf_t     *dump_buf2      = NULL;
 static buf_t      *delta_buf      = NULL;
 static pbuf_t     *size_buf       = NULL;
+static int         dump_fd        = -1;
 static FILE       *dump_fobj      = NULL;
 static uint32_t    state_count    = 0;
 
 static void close_dump_file(void) {
   fflush(dump_fobj);
   fclose(dump_fobj);
+  close(dump_fd);
 }
 
 static void dump_sector_index(pbuf_t *savebuffer, sector_t *s, const char *fn) {
@@ -864,7 +866,19 @@ void D_DumpInit(const char *input_dump_file_name) {
   dump_buf2 = M_PBufNew();
   delta_buf = M_BufferNew();
   size_buf = M_PBufNew();
-  dump_fobj = fopen(dump_file_name, "ab");
+
+  dump_fd = open(
+    dump_file_name,
+    O_WRONLY | O_CREAT | O_TRUNC,
+    S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP
+  );
+
+  if (dump_fd == -1) {
+    perror("Error opening dump file");
+    I_Error("Opening %s failed, exiting\n", dump_file_name);
+  }
+
+  dump_fobj = fdopen(dump_fd, "wb");
 
   if (!dump_fobj) {
     perror("Error opening dump file");
