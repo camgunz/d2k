@@ -33,6 +33,7 @@
 #include "g_game.h"
 #include "g_state.h"
 #include "i_system.h"
+#include "m_bitmap.h"
 #include "m_file.h"
 #include "n_main.h"
 #include "p_user.h"
@@ -387,19 +388,71 @@ void N_PackSetup(netpeer_t *np) {
   size_t resource_count = 0;
   size_t deh_count = deh_files->len;
   const char *iwad = D_GetIWAD();
-  uint64_t bitmap = 0;
-
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i]) {
-      bitmap |= (1 << i);
-    }
-  }
+  size_t player_count = 0;
 
   pbuf = N_PeerBeginMessage(np, NM_SETUP);
 
+  /*
+   * So there's something of a tradeoff here.  Let's suppose that the maximum
+   * number of players is an unsigned 16-bit number, or max 65536.  A bitmap
+   * covering all that is 65536 bits, or 1024 bytes.
+   *
+   * This is complicated by MessagePack's packing; even if we pack a 16-bit
+   * number, the packer will use a single byte for it if it will fit.  So that
+   * means the first 256 players will consume 256 bytes, and the remaining 768
+   * bytes will be consumed by the next 384 players.
+   *
+   * However, every entry takes up an additional byte for a type marker, so the
+   * first 512 bytes are consumed by the first 256 players, and the last 512
+   * bytes are consumed by the last 128 players.
+   *
+   * But I forgot about fixnums, where numbers <= 127 only consume a single
+   * byte.  So the first 128 players consume 128 bytes, the next 128 players
+   * consume 256 bytes, and the next 213 players consume 639 bytes, for a total
+   * of 469 players in 1k.
+   *
+   * So if there are more than 469 players we should use a bitmap.  But we also
+   * need space to record the size of the incoming array, so that's at most 3
+   * bytes, which knocks us down to 468.
+   */
+
+  for (size_t i = 0; i < MAXPLAYERS; i++) {
+    if (playeringame[i]) {
+      player_count++;
+    }
+  }
+
   M_PBufWriteInt(pbuf, deathmatch);
   M_PBufWriteUChar(pbuf, MAXPLAYERS);
-  M_PBufWriteULong(pbuf, bitmap);
+
+  if (player_count <= 439) {
+    M_PBufWriteBool(pbuf, false);
+    M_PBufWriteUInt(pbuf, player_count);
+    for (size_t i = 0; i < MAXPLAYERS; i++) {
+      if (playeringame[i]) {
+        M_PBufWriteInt(pbuf, i);
+      }
+    }
+  }
+  else {
+    M_PBufWriteBool(pbuf, true);
+    M_PBufWriteUInt(pbuf, player_count);
+
+    def_bitmap(bitmap, MAXPLAYERS);
+
+    for (size_t i = 0; i < MAXPLAYERS; i++) {
+      if (playeringame[i]) {
+        bitmap_set_bit(bitmap, i);
+      }
+      else {
+        bitmap_clear_bit(bitmap, i);
+      }
+    }
+
+    print_bitmap(bitmap);
+    M_PBufWriteBytes(pbuf, bitmap, sizeof(bitmap));
+  }
+
   M_PBufWriteUChar(pbuf, N_PeerGetPlayernum(np));
 
   M_PBufWriteString(pbuf, iwad, strlen(iwad));
@@ -464,6 +517,7 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *playernum) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   uint64_t m_player_bitmap;
   unsigned char m_max_players;
+  bool m_using_bitmap;
   int m_deathmatch = 0;
   unsigned char m_playernum = 0;
   int m_state_tic;
@@ -479,9 +533,66 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *playernum) {
     playeringame[i] = false;
   }
 
-
   read_ranged_int(pbuf, m_deathmatch, "deathmatch", 0, 2);
   read_uchar(pbuf, m_max_players, "MAXPLAYERS");
+  read_bool(pbuf, m_using_bitmap, "playeringame serialized as bitmap");
+
+  if (m_using_bitmap) {
+    buf_t bitmap_buf;
+
+    M_BufferInit(&bitmap_buf);
+
+    if (!M_PBufReadBytes(pbuf, &bitmap_buf)) {
+      P_Printf(consoleplayer,
+        "N_UnpackSetup: Error reading playeringame bitmap: %s.\n",
+        M_PBufGetError(pbuf)
+      );
+      M_BufferFree(&bitmap_buf);
+      return false;
+    }
+
+    if (M_BufferGetSize(&bitmap_buf) < MAXPLAYERS) {
+      P_Printf(consoleplayer,
+        "N_UnpackSetup: Error reading playeringame bitmap: bitmap too short.\n"
+      );
+      M_BufferFree(&bitmap_buf);
+      return false;
+    }
+
+    char *bitmap = bitmap_buf.data;
+
+    for (size_t i = 0; i < MAXPLAYERS; i++) {
+      if (bitmap_get_bit(bitmap, i)) {
+        playeringame[i] = true;
+      }
+      else {
+        playeringame[i] = false;
+      }
+    }
+  }
+  else {
+    unsigned int m_player_count;
+
+    read_uint(pbuf, m_player_count, "player count");
+
+    for (size_t i = 0; i < m_player_count; i++) {
+      unsigned int m_in_game_player;
+
+      if (i >= MAXPLAYERS) {
+        P_Printf(
+          consoleplayer,
+          "N_UnpackSetup: Error reading playeringame: index %zu out of bounds",
+          i
+        );
+        return false;
+      }
+
+      read_uint(pbuf, m_in_game_player, "in-game player");
+
+      playeringame[m_in_game_player] = true;
+    }
+  }
+
   read_ulong(pbuf, m_player_bitmap, "playeringame bitmap");
 
   for (int i = 0; i < MAXPLAYERS; i++) {

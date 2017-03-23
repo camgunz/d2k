@@ -1,7 +1,5 @@
 # To Do
 
-1. Add a preliminary master server advertising implementation
-
 1. Fix bugs:
   - Sometimes the server doesn't call `G_WorldDone` when `gameaction` is set to
     `ga_worlddone`; something sets it back to `ga_nothing` first.
@@ -14,36 +12,16 @@
 
 1. Add a server message sound (just use radio/tink?)
 
-1. Get rid of 'widget'
-  - Basic UI elements become 'box'
-  - HUD elements become 'element'
-
 1. UI scaling
-  - Make UI scaling optional
-  - Wrapping doesn't wrap unbroken lines
-    - May be nothing I can do about this
-
-:::: Proto Release Here ::::
-
-1. Move cheats to scripting
-  - ...so they work
-  - Need a lot of binding support
-
-1. UI Enhancements
-  - I think padding should be proportional to the widget's size instead of the
-    parent widget's size
-
-1. UI Bugs
-  - FPS sinks when console scrollback fills up
+  - Base font size on a base font size per height line and scale accordingly
+    - Configurable, of course
+    - Looks like this is 1/32 for now
 
 1. Messaging
   - Specifically don't bug the console on bad markup; test it first
   - `P_Printf` doesn't work in server mode
 
-1. Test ECI again
-
-1. Lift artificial limit on players
-  - bitmaps, basically
+:::: Proto Release Here ::::
 
 1. Add spectators
   - This is essentially reworking the logic between `playeringame`, `players`,
@@ -53,46 +31,70 @@
   - Probably also take this opportunity to remove server-as-player hack
     - Use a camera in non-headless mode (add non-headless mode???)
 
-1. Remove 4 player restriction
+1. Add WAD downloading
+  - cURL
+    - I think this will end up being a larger "requests" sub-subsystem, which
+      subsystems (directory server, WAD repo, etc.) wrap their APIs around.
+      They'll all be asynchronous, as in you make a request with an optional
+      progress callback and get a handle to poll.
 
-:::: Alpha Release Here ::::
-
-1. Move configuration into scripting
-  - Refactor screens
-    - From what I can tell:
-      - screens[0] is the foreground for HUD, status bar, finale, and menu
-      - screens[1] is kept blank to erase screens[0]
-        ...although it looks like everything in r_draw.c uses it...
-      - screens[2] and screens[3] are used for the screen wipe (src and dst
-        respectively)
-      - screens[4] is the STBAR background
-    - `V_CopyRect`
-    - `V_FillFlat`
-    - `V_FillPatch`
-    - `V_DrawBackground`
-    - `V_DrawMemPatch`
-    - `V_DrawNumPatch`
-    - `V_DrawLine`
-      - Uses screen[0] always, via PUTDOT -> `V_PlotPixel(0, ...)`
-    - `V_FillRect`
-    - `V_PlotPixel`
-
-1. Add maplist
-  - Add `map` command
-
-1. Add RCON
-  - Need a way to intercept console I/O
+1. Move configuration into scripting (this is a big undertaking)
+  1. Move the menu into scripting
+    - Need to add bindings for screen drawing and sounds
+    - Refactor screens
+      - From what I can tell:
+        - screens[0] is the foreground for HUD, status bar, finale, and menu
+        - screens[1] is kept blank to erase screens[0]
+          ...although it looks like everything in r_draw.c uses it...
+        - screens[2] and screens[3] are used for the screen wipe (src and dst
+          respectively)
+        - screens[4] is the STBAR background
+      - `V_CopyRect`
+      - `V_FillFlat`
+      - `V_FillPatch`
+      - `V_DrawBackground`
+      - `V_DrawMemPatch`
+      - `V_DrawNumPatch`
+      - `V_DrawLine`
+        - Uses screen[0] always, via PUTDOT -> `V_PlotPixel(0, ...)`
+      - `V_FillRect`
+      - `V_PlotPixel`
 
 1. Build master server
   - Create a server description specification in JSON
 
-1. Add WAD downloading
-  - cURL
-  - the client should do this between frames in case it needs to download a
-    huge file (or a file from a slow server); libcurl ought to make this
-    pretty easy
+1. Add a preliminary master server advertising implementation
+  - Testing
 
-:::: Beta Release Here ::::
+1. Add RCON
+  - Need a way to intercept console I/O
+
+1. Move cheats to scripting
+  - ...so they work
+  - Need a lot of binding support
+
+1. Get rid of 'widget'
+  - Basic UI elements become 'box'
+  - HUD elements become 'element'
+
+1. UI scaling
+  - Make UI scaling optional
+  - Wrapping doesn't wrap unbroken lines
+    - May be nothing I can do about this
+
+1. UI Enhancements
+  - I think padding should be proportional to the widget's size instead of the
+    parent widget's size
+
+1. UI Bugs
+  - FPS sinks when console scrollback fills up
+
+1. Test ECI again
+
+:::: Alpha Release Here ::::
+
+1. Add maplist
+  - Add `map` command
 
 1. Add 3D physics
 
