@@ -23,6 +23,7 @@ PKG_CONFIG_PATH="${CROSSDEPS}/lib/pkgconfig" \
 cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
          -DLUA_LIBRARIES="${CROSSDEPS}/bin/lua52.dll" \
          -DLGI_LIBRARIES="${CROSSDEPS}/lib/lua/5.2/lgi/corelgilua51.dll" \
+         -DCURL_LIBRARIES="${CROSSDEPS}/bin/libcurl-4.dll" \
          -DFFI_INCLUDE_DIR="${CROSSDEPS}/lib/libffi-3.2.1/include" \
          -DCMAKE_TOOLCHAIN_FILE=mingw32-toolchain.cmake
 

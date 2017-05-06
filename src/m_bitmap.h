@@ -21,69 +21,34 @@
 /*****************************************************************************/
 
 
-#include "z_zone.h"
+#ifndef M_BITMAP_H__
+#define M_BITMAP_H__
 
-#include <gio/gio.h>
+#define bit_index_to_byte_index(i) ((i) - ((i) & 0x7)) >> 3
 
-#include "doomdef.h"
-#include "c_main.h"
-#include "g_game.h"
-#include "n_main.h"
-#include "x_main.h"
+#define bit_size_to_byte_size(size) ((((size) - (((size) & 0x7))) >> 3) + 1)
 
-#ifdef G_OS_UNIX
+#define def_bitmap(name, size) uint8_t name[bit_size_to_byte_size((size))]
 
-#include "n_uds.h"
+#define bitmap_flag_to_bit_flag(flag) (1 << ((flag) & 0x7))
 
-/* CG [TODO]: Make this configurable */
-#define D2K_SERVER_SOCKET_NAME "d2k.sock"
+#define bitmap_get_bit(bitmap, i) \
+    bitmap[bit_index_to_byte_index((i))] & bitmap_flag_to_bit_flag((i))
 
-static uds_t uds;
+#define bitmap_set_bit(bitmap, i) \
+    bitmap[bit_index_to_byte_index((i))] |= bitmap_flag_to_bit_flag((i))
 
-static void handle_data(uds_t *uds, uds_peer_t *peer) {
-  C_HandleInput(uds->input->str);
-}
+#define bitmap_clear_bit(bitmap, i) \
+    bitmap[bit_index_to_byte_index((i))] &= ~bitmap_flag_to_bit_flag((i))
 
-static void handle_oob(uds_t *uds) {
-  D_Msg(MSG_ERROR, "ECI: Got out-of-band data [%s]\n", uds->oob->str);
-}
-
-static void eci_cleanup(void) {
-  N_UDSFree(&uds);
-}
-
-void C_ECIInitUNIX(void) {
-  memset(&uds, 0, sizeof(uds_t));
-
-  N_UDSInit(
-    &uds,
-    D2K_SERVER_SOCKET_NAME,
-    handle_data,
-    handle_oob,
-    true
-  );
-
-  atexit(eci_cleanup);
-}
-
-void C_ECIServiceUNIX(void) {
-  if (!SERVER) {
-    return;
-  }
-
-  if (C_MessagesUpdated()) {
-    N_UDSBroadcast(&uds, C_GetMessages()->str);
-    C_ClearMessagesUpdated();
-  }
-
-  N_UDSService(&uds);
-}
+#define print_bitmap(bitmap) do {                         \
+  puts("[");                                              \
+  for (size_t i = 0; i < sizeof(bitmap); i++) {           \
+    printf(" %c", bitmap_get_bit(bitmap, i) ? '1' : '0'); \
+  }                                                       \
+  puts(" ]");                                             \
+} while (0)
 
 #endif
 
-void C_ECIInitNonUNIX(void) {}
-
-void C_ECIServiceNonUNIX(void) {}
-
 /* vi: set et ts=2 sw=2: */
-

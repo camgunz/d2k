@@ -63,3 +63,4 @@
 #cmakedefine HAVE_LIBPCREPOSIX
 #cmakedefine HAVE_LIBPNG
 
+#cmakedefine CURL_STATICLIB @CURL_STATICLIB@

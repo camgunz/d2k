@@ -85,6 +85,8 @@ cp "${BASE_DIR}/crossdeps/bin/SDL.dll"                           \
    "${BASE_DIR}/crossdeps/bin/libcairo-2.dll"                    \
    "${BASE_DIR}/crossdeps/bin/libcairo-gobject-2.dll"            \
    "${BASE_DIR}/crossdeps/bin/libcairo-script-interpreter-2.dll" \
+   "${BASE_DIR}/crossdeps/bin/libcrypto-1_1.dll"                 \
+   "${BASE_DIR}/crossdeps/bin/libcurl-4.dll"                     \
    "${BASE_DIR}/crossdeps/bin/libdumb.dll"                       \
    "${BASE_DIR}/crossdeps/bin/libexpat-1.dll"                    \
    "${BASE_DIR}/crossdeps/bin/libffi-6.dll"                      \
@@ -99,6 +101,7 @@ cp "${BASE_DIR}/crossdeps/bin/SDL.dll"                           \
    "${BASE_DIR}/crossdeps/bin/libgobject-2.0-0.dll"              \
    "${BASE_DIR}/crossdeps/bin/libharfbuzz-0.dll"                 \
    "${BASE_DIR}/crossdeps/bin/libiconv-2.dll"                    \
+   "${BASE_DIR}/crossdeps/bin/libidn2-0.dll"                     \
    "${BASE_DIR}/crossdeps/bin/libintl-8.dll"                     \
    "${BASE_DIR}/crossdeps/bin/libjansson-4.dll"                  \
    "${BASE_DIR}/crossdeps/bin/libjpeg-62.dll"                    \
@@ -115,6 +118,7 @@ cp "${BASE_DIR}/crossdeps/bin/SDL.dll"                           \
    "${BASE_DIR}/crossdeps/bin/libpixman-1-0.dll"                 \
    "${BASE_DIR}/crossdeps/bin/libpng16-16.dll"                   \
    "${BASE_DIR}/crossdeps/bin/libportmidi.dll"                   \
+   "${BASE_DIR}/crossdeps/bin/libssl-1_1.dll"                    \
    "${BASE_DIR}/crossdeps/bin/libssp-0.dll"                      \
    "${BASE_DIR}/crossdeps/bin/libtiff-5.dll"                     \
    "${BASE_DIR}/crossdeps/bin/libvorbis-0.dll"                   \
