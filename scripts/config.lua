@@ -25,10 +25,9 @@ local serpent = require('serpent')
 
 d2k.cvars = {}
 
-d2k.config.validate = function()
-    local ConfigSchema = require('config_schema')
-    local schema = ConfigSchema.ConfigSchema
 
+
+function validate(schema)
     for section_name, section in pairs(schema) do
         local section_is_table = type(section) == 'table'
         local section_is_array = false
@@ -110,9 +109,7 @@ d2k.config.validate = function()
     end
 end
 
-d2k.config.get_default = function()
-    local ConfigSchema = require('config_schema')
-    local schema = ConfigSchema.ConfigSchema
+function build_from_defaults(schema)
     local config = {}
 
     for section_name, section in pairs(schema) do
@@ -150,6 +147,21 @@ d2k.config.get_default = function()
     end
 
     return serpent.block(config, { comment = false })
+end
+
+d2k.config.validate = function()
+    local ConfigSchema = require('config_schema')
+    local schema = ConfigSchema.ConfigSchema
+    validate(schema)
+end
+
+function 
+
+d2k.config.build_from_defaults = function()
+    local ConfigSchema = require('config_schema')
+    local schema = ConfigSchema.ConfigSchema
+
+    return get_default(schema)
 end
 
 d2k.config.serialize = function()

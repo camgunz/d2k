@@ -389,31 +389,23 @@ void N_PackSetup(netpeer_t *np) {
   size_t deh_count = deh_files->len;
   const char *iwad = D_GetIWAD();
   size_t player_count = 0;
+  def_bitmap_zero(bitmap, MAXPLAYERS);
 
   pbuf = N_PeerBeginMessage(np, NM_SETUP);
 
+  M_PBufWriteNum(pbuf, deathmatch);
+  M_PBufWriteUNum(pbuf, N_PeerGetPlayernum(np));
+
   /*
-   * So there's something of a tradeoff here.  Let's suppose that the maximum
-   * number of players is an unsigned 16-bit number, or max 65536.  A bitmap
-   * covering all that is 65536 bits, or 1024 bytes.
+   * We will support 2048 connections, which is a maximum of 2048 players.
+   * Encoding the indices of 2048 players with MessagePack is:
+   * - 128 bytes for the first 128 players
+   * - 256 bytes for the next 128 players
+   * - 5,376 bytes for the next 1,792 players
+   * - A total of 5,760 bytes
    *
-   * This is complicated by MessagePack's packing; even if we pack a 16-bit
-   * number, the packer will use a single byte for it if it will fit.  So that
-   * means the first 256 players will consume 256 bytes, and the remaining 768
-   * bytes will be consumed by the next 384 players.
-   *
-   * However, every entry takes up an additional byte for a type marker, so the
-   * first 512 bytes are consumed by the first 256 players, and the last 512
-   * bytes are consumed by the last 128 players.
-   *
-   * But I forgot about fixnums, where numbers <= 127 only consume a single
-   * byte.  So the first 128 players consume 128 bytes, the next 128 players
-   * consume 256 bytes, and the next 213 players consume 639 bytes, for a total
-   * of 469 players in 1k.
-   *
-   * So if there are more than 469 players we should use a bitmap.  But we also
-   * need space to record the size of the incoming array, so that's at most 3
-   * bytes, which knocks us down to 468.
+   * A bitmap of 2048 players is always 256 bytes, so until there are more than
+   * 192 players it's more efficient to encode the indices.
    */
 
   for (size_t i = 0; i < MAXPLAYERS; i++) {
@@ -422,24 +414,19 @@ void N_PackSetup(netpeer_t *np) {
     }
   }
 
-  M_PBufWriteInt(pbuf, deathmatch);
-  M_PBufWriteUChar(pbuf, MAXPLAYERS);
-
-  if (player_count <= 439) {
+  if (player_count <= 192) {
     M_PBufWriteBool(pbuf, false);
-    M_PBufWriteUInt(pbuf, player_count);
+    M_PBufWriteArray(pbuf, player_count);
     for (size_t i = 0; i < MAXPLAYERS; i++) {
-      if (playeringame[i]) {
-        M_PBufWriteInt(pbuf, i);
+      if (!playeringame[i]) {
+        continue;
       }
+
+      M_PBufWriteUNum(pbuf, i);
     }
   }
   else {
     M_PBufWriteBool(pbuf, true);
-    M_PBufWriteUInt(pbuf, player_count);
-
-    def_bitmap(bitmap, MAXPLAYERS);
-
     for (size_t i = 0; i < MAXPLAYERS; i++) {
       if (playeringame[i]) {
         bitmap_set_bit(bitmap, i);
@@ -450,10 +437,8 @@ void N_PackSetup(netpeer_t *np) {
     }
 
     print_bitmap(bitmap);
-    M_PBufWriteBytes(pbuf, bitmap, sizeof(bitmap));
+    M_PBufWriteBitmap(pbuf, bitmap, sizeof(bitmap));
   }
-
-  M_PBufWriteUChar(pbuf, N_PeerGetPlayernum(np));
 
   M_PBufWriteString(pbuf, iwad, strlen(iwad));
 
@@ -534,32 +519,13 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *playernum) {
   }
 
   read_ranged_int(pbuf, m_deathmatch, "deathmatch", 0, 2);
-  read_uchar(pbuf, m_max_players, "MAXPLAYERS");
+  read_uint(pbuf, m_max_players, "MAXPLAYERS");
   read_bool(pbuf, m_using_bitmap, "playeringame serialized as bitmap");
 
   if (m_using_bitmap) {
-    buf_t bitmap_buf;
+    def_bitmap(bitmap, MAXPLAYERS);
 
-    M_BufferInit(&bitmap_buf);
-
-    if (!M_PBufReadBytes(pbuf, &bitmap_buf)) {
-      P_Printf(consoleplayer,
-        "N_UnpackSetup: Error reading playeringame bitmap: %s.\n",
-        M_PBufGetError(pbuf)
-      );
-      M_BufferFree(&bitmap_buf);
-      return false;
-    }
-
-    if (M_BufferGetSize(&bitmap_buf) < MAXPLAYERS) {
-      P_Printf(consoleplayer,
-        "N_UnpackSetup: Error reading playeringame bitmap: bitmap too short.\n"
-      );
-      M_BufferFree(&bitmap_buf);
-      return false;
-    }
-
-    char *bitmap = bitmap_buf.data;
+    read_bitmap(pbuf, bitmap, "playeringame bitmap");
 
     for (size_t i = 0; i < MAXPLAYERS; i++) {
       if (bitmap_get_bit(bitmap, i)) {
