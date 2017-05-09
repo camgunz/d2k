@@ -768,6 +768,29 @@ bool M_PBufReadBytes(pbuf_t *pbuf, buf_t *buf) {
   return true;
 }
 
+bool M_PBufReadBytesRaw(pbuf_t *pbuf, char *buf, size_t limit) {
+  cmp_object_t obj;
+
+  if (!cmp_read_object(&pbuf->cmp, &obj)) {
+    P_Printf(consoleplayer,
+      "M_PBufReadBytesRaw: Error reading from packed buffer: %s\n",
+      cmp_strerror(&pbuf->cmp)
+    );
+    return false;
+  }
+
+  if (limit != 0 && obj.as.bin_size > limit) {
+    P_Echo(consoleplayer, "M_PBufReadBytesRaw: Binary data too long.");
+    return false;
+  }
+
+  memcpy(buf, M_PBufGetDataAtCursor(pbuf), obj.as.bin_size);
+
+  M_BufferSeekForward(&pbuf->buf, obj.as.str_size);
+
+  return true;
+}
+
 bool M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit) {
   cmp_object_t obj;
 
