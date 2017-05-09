@@ -60,8 +60,8 @@
 #include "hu_lib.h"
 #include "hu_stuff.h"
 
-#define DEBUG_NET 0
-#define DEBUG_SYNC 0
+#define DEBUG_NET 1
+#define DEBUG_SYNC 1
 #define DEBUG_SYNC_STDERR 0
 #define DEBUG_SAVE 0
 #define DEBUG_CMD 0
@@ -291,7 +291,7 @@ void N_InitNetGame(void) {
       }
 
       if (!N_Listen(host, port)) {
-        I_Error("Error listning on %s:%d\n", host, port);
+        I_Error("Error listening on %s:%d\n", host, port);
       }
 
       D_Msg(MSG_INFO, "N_InitNetGame: Listening on %s:%u.\n", host, port);

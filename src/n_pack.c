@@ -54,7 +54,7 @@
 #define MAX_CHAT_MESSAGE_SIZE 256
 
 #define check_range(x, min, max)                                              \
-  if (x < min || x > max) {                                                   \
+  if ((x < min) || (x > max)) {                                               \
     P_Printf(consoleplayer,                                                   \
       "%s: Invalid message: %s is out of range (%s, %s)\n",                   \
       __func__, #x, #min, #max                                                \
@@ -261,6 +261,18 @@
     return false;                                                             \
   }
 
+#define read_bitmap(pbuf, var, name) do {                                     \
+    bool _res = true;                                                         \
+    bitmap_read_from_pbuf(bitmap, pbuf, _res);                                \
+    if (!_res) {                                                              \
+      P_Printf(consoleplayer,                                                 \
+        "%s: Error reading %s: %s.\n",                                        \
+        __func__, name, M_PBufGetError(pbuf)                                  \
+      );                                                                      \
+      return false;                                                           \
+    }                                                                         \
+} while (0)
+
 #define pack_player_preference_change(pbuf, gametic, playernum, pn, pnsz)     \
   pbuf_t *pbuf = N_PeerBeginMessage(np, NM_PLAYER_PREFERENCE_CHANGE);         \
   M_PBufWriteInt(pbuf, gametic);                                              \
@@ -303,7 +315,7 @@ static void pack_run_commands(pbuf_t *pbuf, unsigned int playernum) {
     total_command_count
   );
 
-  M_PBufWriteUInt(pbuf, command_count);
+  M_PBufWriteUNum(pbuf, command_count);
 
   if (command_count > 0) {
     D_Msg(MSG_SYNC, "(%d) (%d) Ran commands: [", gametic, playernum);
@@ -314,8 +326,8 @@ static void pack_run_commands(pbuf_t *pbuf, unsigned int playernum) {
 
     if (ncmd->server_tic != 0) {
       D_Msg(MSG_SYNC, " %d/%d/%d", ncmd->index, ncmd->tic, ncmd->server_tic);
-      M_PBufWriteUInt(pbuf, ncmd->index);
-      M_PBufWriteUInt(pbuf, ncmd->server_tic);
+      M_PBufWriteUNum(pbuf, ncmd->index);
+      M_PBufWriteUNum(pbuf, ncmd->server_tic);
     }
   }
 
@@ -346,7 +358,7 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
     }
   }
 
-  M_PBufWriteUInt(pbuf, command_count);
+  M_PBufWriteUNum(pbuf, command_count);
 
   if (command_count > 0) {
     D_Msg(MSG_SYNC, "(%d) (%u->%u) Unsync'd commands: [",
@@ -361,13 +373,13 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
 
     if (ncmd->index > N_PeerGetSyncCommandIndexForPlayer(np, src_playernum)) {
       D_Msg(MSG_SYNC, " %u/%u/%u", ncmd->index, ncmd->tic, ncmd->server_tic);
-      M_PBufWriteUInt(pbuf, ncmd->index);
-      M_PBufWriteUInt(pbuf, ncmd->tic);
-      M_PBufWriteUInt(pbuf, ncmd->server_tic);
-      M_PBufWriteChar(pbuf, ncmd->forward);
-      M_PBufWriteChar(pbuf, ncmd->side);
-      M_PBufWriteShort(pbuf, ncmd->angle);
-      M_PBufWriteUChar(pbuf, ncmd->buttons);
+      M_PBufWriteUNum(pbuf, ncmd->index);
+      M_PBufWriteUNum(pbuf, ncmd->tic);
+      M_PBufWriteUNum(pbuf, ncmd->server_tic);
+      M_PBufWriteNum(pbuf, ncmd->forward);
+      M_PBufWriteNum(pbuf, ncmd->side);
+      M_PBufWriteNum(pbuf, ncmd->angle);
+      M_PBufWriteUNum(pbuf, ncmd->buttons);
     }
   }
 
@@ -388,7 +400,6 @@ void N_PackSetup(netpeer_t *np) {
   size_t resource_count = 0;
   size_t deh_count = deh_files->len;
   const char *iwad = D_GetIWAD();
-  size_t player_count = 0;
   def_bitmap_zero(bitmap, MAXPLAYERS);
 
   pbuf = N_PeerBeginMessage(np, NM_SETUP);
@@ -397,48 +408,21 @@ void N_PackSetup(netpeer_t *np) {
   M_PBufWriteUNum(pbuf, N_PeerGetPlayernum(np));
 
   /*
-   * We will support 2048 connections, which is a maximum of 2048 players.
-   * Encoding the indices of 2048 players with MessagePack is:
-   * - 128 bytes for the first 128 players
-   * - 256 bytes for the next 128 players
-   * - 5,376 bytes for the next 1,792 players
-   * - A total of 5,760 bytes
-   *
-   * A bitmap of 2048 players is always 256 bytes, so until there are more than
-   * 192 players it's more efficient to encode the indices.
+   * We will support 2048 connections, which is a maximum of 2048 players.  I
+   * could do (and have done) math here to figure out where the optimal
+   * crossover point between indices and a bitmap is, but the fact is that
+   * putting a 2048 short array in a struct is 4k, and that tends to blow
+   * stacks.  So bitmap it (always) is, then.
    */
 
   for (size_t i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
-      player_count++;
+      bitmap_set_bit(bitmap, i);
     }
   }
 
-  if (player_count <= 192) {
-    M_PBufWriteBool(pbuf, false);
-    M_PBufWriteArray(pbuf, player_count);
-    for (size_t i = 0; i < MAXPLAYERS; i++) {
-      if (!playeringame[i]) {
-        continue;
-      }
-
-      M_PBufWriteUNum(pbuf, i);
-    }
-  }
-  else {
-    M_PBufWriteBool(pbuf, true);
-    for (size_t i = 0; i < MAXPLAYERS; i++) {
-      if (playeringame[i]) {
-        bitmap_set_bit(bitmap, i);
-      }
-      else {
-        bitmap_clear_bit(bitmap, i);
-      }
-    }
-
-    print_bitmap(bitmap);
-    M_PBufWriteBitmap(pbuf, bitmap, sizeof(bitmap));
-  }
+  print_bitmap(bitmap);
+  M_PBufWriteBitmap(pbuf, (char *)bitmap, sizeof(bitmap));
 
   M_PBufWriteString(pbuf, iwad, strlen(iwad));
 
@@ -500,11 +484,9 @@ void N_PackSetup(netpeer_t *np) {
 
 bool N_UnpackSetup(netpeer_t *np, unsigned short *playernum) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
-  uint64_t m_player_bitmap;
-  unsigned char m_max_players;
-  bool m_using_bitmap;
   int m_deathmatch = 0;
-  unsigned char m_playernum = 0;
+  unsigned int m_playernum = 0;
+  def_bitmap_zero(bitmap, MAXPLAYERS);
   int m_state_tic;
   game_state_t *gs;
   bool has_resources;
@@ -519,53 +501,15 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *playernum) {
   }
 
   read_ranged_int(pbuf, m_deathmatch, "deathmatch", 0, 2);
-  read_uint(pbuf, m_max_players, "MAXPLAYERS");
-  read_bool(pbuf, m_using_bitmap, "playeringame serialized as bitmap");
+  read_uint(pbuf, m_playernum, "consoleplayer");
 
-  if (m_using_bitmap) {
-    def_bitmap(bitmap, MAXPLAYERS);
+  read_bitmap(pbuf, bitmap, "playeringame bitmap");
 
-    read_bitmap(pbuf, bitmap, "playeringame bitmap");
-
-    for (size_t i = 0; i < MAXPLAYERS; i++) {
-      if (bitmap_get_bit(bitmap, i)) {
-        playeringame[i] = true;
-      }
-      else {
-        playeringame[i] = false;
-      }
+  for (size_t i = 0; i < MAXPLAYERS; i++) {
+    if (bitmap_get_bit(bitmap, i)) {
+      playeringame[i] = true;
     }
   }
-  else {
-    unsigned int m_player_count;
-
-    read_uint(pbuf, m_player_count, "player count");
-
-    for (size_t i = 0; i < m_player_count; i++) {
-      unsigned int m_in_game_player;
-
-      if (i >= MAXPLAYERS) {
-        P_Printf(
-          consoleplayer,
-          "N_UnpackSetup: Error reading playeringame: index %zu out of bounds",
-          i
-        );
-        return false;
-      }
-
-      read_uint(pbuf, m_in_game_player, "in-game player");
-
-      playeringame[m_in_game_player] = true;
-    }
-  }
-
-  read_ulong(pbuf, m_player_bitmap, "playeringame bitmap");
-
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    playeringame[i] = ((m_player_bitmap & (1 << i)) != 0);
-  }
-
-  read_uchar(pbuf, m_playernum, "consoleplayer");
 
   M_BufferInit(&iwad_buf);
   read_string(pbuf, &iwad_buf, "IWAD", MAX_IWAD_NAME_LENGTH);
@@ -843,48 +787,48 @@ bool N_UnpackChatMessage(netpeer_t *np,
 
 void N_PackSync(netpeer_t *np) {
   pbuf_t *pbuf = N_PeerBeginMessage(np, NM_SYNC);
-  uint64_t bitmap = 0;
   unsigned int dest_playernum = N_PeerGetPlayernum(np);
+  def_bitmap_zero(bitmap, MAXPLAYERS);
 
   if (CLIENT) {
     for (int i = 0; i < MAXPLAYERS; i++) {
       if (playeringame[i] && (i > 0) && (i != consoleplayer)) {
-        bitmap |= (1 << i);
+        bitmap_set_bit(bitmap, i);
       }
     }
 
-    M_PBufWriteULong(pbuf, bitmap);
-    M_PBufWriteInt(pbuf, N_PeerGetSyncTIC(np));
+    M_PBufWriteNum(pbuf, N_PeerGetSyncTIC(np));
+    M_PBufWriteBitmap(pbuf, (char *)bitmap, sizeof(bitmap));
 
     pack_unsynchronized_commands(pbuf, np, consoleplayer);
 
-    for (int i = 0; i < MAXPLAYERS; i++) {
-      if ((bitmap & (1 << i)) == 0) {
+    for (size_t i = 0; i < MAXPLAYERS; i++) {
+      if (!bitmap_get_bit(bitmap, i)) {
         continue;
       }
 
-      M_PBufWriteUInt(pbuf, N_PeerGetSyncCommandIndexForPlayer(np, i));
+      M_PBufWriteUNum(pbuf, N_PeerGetSyncCommandIndexForPlayer(np, i));
     }
   }
   else if (SERVER) {
     player_t *player = &players[N_PeerGetPlayernum(np)];
     game_state_delta_t *delta = N_PeerGetSyncStateDelta(np);
+    bool res = true;
+
+    M_PBufWriteUNum(pbuf, N_PeerGetSyncCommandIndex(np));
 
     NETPEER_FOR_EACH(iter) {
       unsigned int playernum  = N_PeerGetPlayernum(iter.np);
 
-      bitmap |= (1 << playernum);
+      bitmap_set_bit(bitmap, playernum);
     }
 
-    M_PBufWriteULong(pbuf, bitmap);
+    bitmap_write_to_pbuf(bitmap, pbuf, res);
 
     NETPEER_FOR_EACH(iter) {
       unsigned int playernum  = N_PeerGetPlayernum(iter.np);
 
       if (playernum == dest_playernum) {
-        M_PBufWriteUInt(
-          pbuf, N_PeerGetSyncCommandIndexForPlayer(np, playernum)
-        );
         pack_run_commands(pbuf, dest_playernum);
       }
       else {
@@ -906,31 +850,34 @@ void N_PackSync(netpeer_t *np) {
 
 bool N_UnpackSync(netpeer_t *np) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
-  uint64_t m_bitmap;
-  uint32_t m_command_count;
   uint32_t m_command_index;
-  uint32_t m_server_tic;
-
-  read_ulong(pbuf, m_bitmap, "sync player bitmap");
+  def_bitmap(bitmap, MAXPLAYERS);
 
   if (CLIENT) {
     int m_delta_from_tic;
     int m_delta_to_tic;
 
-    for (int i = 0; i < MAXPLAYERS; i++) {
-      if ((m_bitmap & (1 << i)) == 0) {
+    read_uint(pbuf, m_command_index, "command index");
+    read_bitmap(pbuf, bitmap, "sync player bitmap");
+
+    for (size_t i = 0; i < MAXPLAYERS; i++) {
+      uint32_t m_command_count;
+
+      if (!bitmap_get_bit(bitmap, i)) {
         continue;
       }
 
       if (i == consoleplayer) {
-        read_uint(pbuf, m_command_index, "command index");
-        read_uint(pbuf, m_command_count, "command count");
+        read_uint(pbuf, m_command_count, "consoleplayer sync command count");
 
         for (uint32_t j = 0; j < m_command_count; j++) {
-          read_uint(pbuf, m_command_index, "run command index");
+          uint32_t m_run_command_index;
+          uint32_t m_server_tic;
+
+          read_uint(pbuf, m_run_command_index, "run command index");
           read_uint(pbuf, m_server_tic, "server TIC");
 
-          P_UpdateCommandServerTic(i, m_command_index, m_server_tic);
+          P_UpdateCommandServerTic(i, m_run_command_index, m_server_tic);
         }
       }
       else {
@@ -957,10 +904,18 @@ bool N_UnpackSync(netpeer_t *np) {
             continue;
           }
 
-          if (m_ncmd->index > m_command_index) {
-            m_command_index = m_ncmd->index;
+          if (m_ncmd->index <= m_command_index) {
+            continue;
           }
+
+          m_command_index = m_ncmd->index;
         }
+      }
+
+      if (m_command_index > N_PeerGetSyncCommandIndexForPlayer(np, i)) {
+        I_Error("Bad server sync command index for %zu: %u > %u",
+          i, m_command_index, N_PeerGetSyncCommandIndexForPlayer(np, i)
+        );
       }
 
       N_PeerUpdateSyncCommandIndexForPlayer(np, i, m_command_index);
@@ -978,6 +933,8 @@ bool N_UnpackSync(netpeer_t *np) {
     unsigned int playernum = N_PeerGetPlayernum(np);
 
     read_int(pbuf, m_sync_tic, "sync tic");
+    read_bitmap(pbuf, bitmap, "sync player bitmap");
+
     read_uint(pbuf, m_command_count, "command count");
 
     N_PeerUpdateSyncTIC(np, m_sync_tic);
@@ -998,12 +955,12 @@ bool N_UnpackSync(netpeer_t *np) {
       N_PeerUpdateSyncCommandIndexForPlayer(np, playernum, m_command_index);
     }
 
-    for (int i = 0; i < MAXPLAYERS; i++) {
+    for (size_t i = 0; i < MAXPLAYERS; i++) {
       if (i == playernum) {
         continue;
       }
 
-      if ((m_bitmap & (1 << i)) == 0) {
+      if (!bitmap_get_bit(bitmap, i)) {
         continue;
       }
 

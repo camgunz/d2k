@@ -218,10 +218,7 @@ void CL_SendVoteRequest(const char *command);
 
 void N_PackSetupRequest(netpeer_t *np);
 
-void N_PackSetup(netpeer_t *np, int game_mode,
-                                unsigned int max_players,
-
-);
+void N_PackSetup(netpeer_t *np);
 
 bool N_UnpackSetup(netpeer_t *np, unsigned short *playernum);
 

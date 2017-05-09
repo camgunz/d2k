@@ -53,12 +53,12 @@ static size_t buf_write(cmp_ctx_t *ctx, const void *data, size_t count) {
 
 void M_PBufInit(pbuf_t *pbuf) {
   M_BufferInit(&pbuf->buf);
-  cmp_init(&pbuf->cmp, &pbuf->buf, &buf_read, &buf_write);
+  cmp_init(&pbuf->cmp, &pbuf->buf, &buf_read, NULL, &buf_write);
 }
 
 void M_PBufInitWithCapacity(pbuf_t *pbuf, size_t capacity) {
   M_BufferInitWithCapacity(&pbuf->buf, capacity);
-  cmp_init(&pbuf->cmp, &pbuf->buf, &buf_read, &buf_write);
+  cmp_init(&pbuf->cmp, &pbuf->buf, &buf_read, NULL, &buf_write);
 }
 
 pbuf_t* M_PBufNew(void) {
@@ -782,6 +782,29 @@ bool M_PBufReadBytes(pbuf_t *pbuf, buf_t *buf) {
   return true;
 }
 
+bool M_PBufReadBytesRaw(pbuf_t *pbuf, char *buf, size_t limit) {
+  cmp_object_t obj;
+
+  if (!cmp_read_object(&pbuf->cmp, &obj)) {
+    P_Printf(consoleplayer,
+      "M_PBufReadBytesRaw: Error reading from packed buffer: %s\n",
+      cmp_strerror(&pbuf->cmp)
+    );
+    return false;
+  }
+
+  if (limit != 0 && obj.as.bin_size > limit) {
+    P_Echo(consoleplayer, "M_PBufReadBytesRaw: Binary data too long.");
+    return false;
+  }
+
+  memcpy(buf, M_PBufGetDataAtCursor(pbuf), obj.as.bin_size);
+
+  M_BufferSeekForward(&pbuf->buf, obj.as.str_size);
+
+  return true;
+}
+
 bool M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit) {
   cmp_object_t obj;
 
@@ -857,7 +880,7 @@ bool M_PBufReadBitmap(pbuf_t *pbuf, const char *bitmap, size_t limit) {
   int8_t type;
   uint32_t size = limit;
 
-  if (!cmp_read_ext(&pbuf->cmp, &type, &size, bitmap)) {
+  if (!cmp_read_ext(&pbuf->cmp, &type, &size, (void *)bitmap)) {
     return false;
   }
 

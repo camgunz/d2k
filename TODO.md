@@ -1,5 +1,54 @@
 # To Do
 
+## General
+
+It turns out ENet supports a max 4095 connections.  This makes sense because on
+UNIX platforms it uses either `select` or `poll`, and those don't really scale
+past that.
+
+I don't like this artificial limitation though, even though it's tempting to
+just pick a number below that -- say 2000 -- and say, "we support 2000 players
+max".  For one, I think the limits should be dictated by hardware, not
+arbitrary limits.  But it also confuses a lot of things.  There should be
+multiple counts:
+- maximum connections supported (these may not be full clients) 
+- maximum clients supported (these may only be spectators, not players)
+- maximum players supported
+
+Right now we just use `MAXPLAYERS` for all of these, and that's confusing.
+
+The main issue is working around ENet's artificial limitation.  I actually
+think replacing ENet with regular sockets and libuv is fine.  libuv would also
+clean up some of the directory server code, which would be welcome.
+
+In the interim, I think `MAXPLAYERS` needs to be removed.  It ultimately needs
+to be removed anyway, but the concepts behind `players` and `playeringame` and
+`consoleplayer`/`displayplayer` need to be refactored since the list of
+`player_t` instances will be dynamic now.
+
+So a TODO list:
+
+- Get netcode working again
+  - With a static `players` and with `MAXPLAYERS` set to 4.
+  - Also using bitmaps
+- Increase `MAXPLAYERS` to 16384
+  - The goal here is to find overruns and assumptions
+- Refactor `players`, `playeringame`, `consoleplayer`, `displayplayer`
+  - `player_t` gets an... `index` field?
+  - `void P_PlayersInit(void)`
+  - `bool P_PlayersIter(player_t *start)`
+  - `player_t* P_PlayersGetNew(void)`
+  - `void P_PlayerRemove(player_t *player)`
+  - `void P_PlayerIsConsoleplayer(player_t *player)`
+  - `void P_PlayerIsDisplayplayer(player_t *player)`
+  - `playeringame` disappears completely
+- Add config options in the server section for:
+  - `max_connections`
+  - `max_clients`
+  - `max_players`
+- Put a soft cap of 2000 on those config options until ENet is removed.
+- Resume refactoring the network message packers to use 
+
 ## Smaller Issues
 
 1. Add error codes to `n_proto`

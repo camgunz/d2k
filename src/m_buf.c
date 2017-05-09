@@ -213,7 +213,8 @@ void M_BufferWriteUChar(buf_t *buf, unsigned char c) {
   M_BufferWriteUChars(buf, &c, 1);
 }
 
-void M_BufferWriteUChars(buf_t *buf, const unsigned char *uchars, size_t count) {
+void M_BufferWriteUChars(buf_t *buf, const unsigned char *uchars,
+                                     size_t count) {
   M_BufferWrite(buf, uchars, count * sizeof(unsigned char));
 }
 

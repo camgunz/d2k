@@ -26,39 +26,81 @@
 #include "doomstat.h"
 #include "m_idhash.h"
 
-static id_hash_t mobj_id_hash;
+#define ID_HASH_INITIAL_ALLOC 64
 
-void P_IdentInit(void) {
-  M_IDHashInit(&mobj_id_hash);
+void M_IDHashInit(id_hash_t *idhash) {
+  idhash->objs = g_hash_table_new(NULL, NULL);
+  idhash->recycled_ids = g_array_sized_new(
+    false,
+    true,
+    sizeof(uint32_t),
+    ID_HASH_INITIAL_ALLOC
+  );
+  idhash->max_id = 0;
 }
 
-void P_IdentGetID(void *obj, uint32_t *obj_id) {
-  *obj_id = M_IDHashGetNewID(&mobj_id_hash);
+uint32_t M_IDHashGetNewID(id_hash_t *idhash) {
+  uint32_t id;
+
+  if (idhash->recycled_ids->len > 0) {
+    id = g_array_index(
+      idhash->recycled_ids,
+      uint32_t,
+      idhash->recycled_ids->len - 1
+    );
+
+    idhash->recycled_ids = g_array_remove_index_fast(
+      idhash->recycled_ids,
+      idhash->recycled_ids->len - 1
+    );
+  }
+  else {
+    id = idhash->max_id++;
+
+    if (id == 0) {
+      I_Error("M_IDHashGetNewID: ID number rolled over");
+    }
+  }
+
+  return id;
 }
 
-void P_IdentAssignID(void *obj, uint32_t obj_id) {
-  M_IDHashAssignID(&mobj_id_hash, obj, obj_id);
+void M_IDHashAssignID(id_hash_t *idhash, void *obj, uint32_t obj_id) {
+  if (obj_id == 0) {
+    I_Error("M_IDHashAssignID: ID is 0");
+  }
+
+  idhash->max_id = MAX(idhash->max_id, obj_id);
+
+  if (g_hash_table_contains(idhash->objs, GUINT_TO_POINTER(obj_id))) {
+    I_Error("M_IDHashAssignID: ID %d already assigned", obj_id);
+  }
+
+  g_hash_table_insert(idhash->objs, GUINT_TO_POINTER(obj_id), obj);
 }
 
-void P_IdentReleaseID(uint32_t *obj_id) {
-  M_IDHashReleaseID(&mobj_id_hash, *obj_id);
-  *obj_id = 0;
+void M_IDHashReleaseID(id_hash_t *idhash, uint32_t id) {
+  if (id == 0) {
+    I_Error("M_IDHashReleaseID: Cannot release ID 0");
+  }
+
+  g_hash_table_remove(idhash->objs, GUINT_TO_POINTER(id));
 }
 
-void* P_IdentLookup(uint32_t id) {
-  return M_IDHashLookupObj(&mobj_id_hash, id);
+void* M_IDHashLookupObj(id_hash_t *idhash, uint32_t id) {
+  return g_hash_table_lookup(idhash->objs, GUINT_TO_POINTER(id));
 }
 
-void P_IdentReset(void) {
-  M_IDHashReset(&mobj_id_hash);
+void M_IDHashReset(id_hash_t *idhash) {
+  g_hash_table_remove_all(idhash->objs);
+  g_array_remove_range(idhash->recycled_ids, 0, idhash->recycled_ids->len);
+  idhash->max_id = 0;
 }
 
-uint32_t P_IdentGetMaxID(void) {
-  return mobj_id_hash.max_id;
-}
-
-void P_IdentSetMaxID(uint32_t new_max_id) {
-  mobj_id_hash.max_id = new_max_id;
+void M_IDHashFree(id_hash_t *idhash) {
+  g_hash_table_destroy(idhash->objs);
+  g_array_free(idhash->recycled_ids, true);
+  idhash->max_id = 0;
 }
 
 /* vi: set et ts=2 sw=2: */

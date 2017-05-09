@@ -125,6 +125,7 @@ bool M_PBufReadNil(pbuf_t *pbuf);
 bool M_PBufReadArray(pbuf_t *pbuf, unsigned int *array_size);
 bool M_PBufReadMap(pbuf_t *pbuf, unsigned int *map_size);
 bool M_PBufReadBytes(pbuf_t *pbuf, buf_t *buf);
+bool M_PBufReadBytesRaw(pbuf_t *pbuf, char *buf, size_t limit);
 bool M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit);
 bool M_PBufReadStringArray(pbuf_t *pbuf, GPtrArray *strings,
                                          size_t string_count_limit,

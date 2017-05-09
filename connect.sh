@@ -7,9 +7,10 @@ BASE_DIR="$(pwd)"
 
 PORT=10667
 PORT=10666
-HOST=totaltrash.org
 HOST=45.33.60.48
 HOST=127.0.0.1
+HOST=totaltrash.org
+HOST=97.107.132.133
 
 CMD="${BASE_DIR}/cbuild/d2k -nomouse -connect ${HOST}:${PORT}"
 
