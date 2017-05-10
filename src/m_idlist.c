@@ -27,9 +27,20 @@
 #include "m_idlist.h"
 
 /*
- * Why build this when id_hash exists?  While it's true that hash table lookups
- * are O(1) and array lookups are O(N), it's still faster to search
- * sequentially through an array until you reach thousands of entries.
+ * Why build this when id_hash exists?  Two reasons:
+ * - While it's true that hash table lookups are O(1) and array lookups are
+ *   O(N), it's still faster to search sequentially through an array until you
+ *   reach thousands of entries.
+ * - id_hash's iteration order is non-deterministic.  id_list's objects are
+ *   always sorted by ID
+ *
+ * Essentially if you don't expect very many entries, id_list will be faster
+ * and smaller for you.  If you need deterministic iteration order, you have to
+ * use id_list even if it will be slower at larger sizes.
+ *
+ * GLib provides GTree, which is a balanced binary tree.  Unfortunately you
+ * have to provide a callback to iterate it in-order, and that's generally too
+ * clunky.
  */
 
 #define ID_LIST_INITIAL_ALLOC 64
@@ -38,6 +49,21 @@ typedef struct {
   uint32_t id;
   void *obj;
 } id_obj_tuple_t;
+
+static int compare_tuples(gconstpointer a, gconstpointer b) {
+  id_obj_tuple_t *ta = (id_obj_tuple_t *)a;
+  id_obj_tuple_t *tb = (id_obj_tuple_t *)b;
+
+  if (ta->id < tb->id) {
+    return -1;
+  }
+
+  if (ta->id > tb->id) {
+    return 1;
+  }
+
+  return 0;
+}
 
 static bool id_list_contains(id_list_t *idlist, uint32_t id) {
   for (size_t i = 0; i < idlist->objs->len; i++) {
@@ -74,6 +100,7 @@ static void id_list_insert(id_list_t *idlist, uint32_t id, void *obj) {
   tuple.obj = obj;
 
   g_array_append_val(idlist->objs, tuple);
+  g_array_sort(idlist->objs, compare_tuples);
 }
 
 static bool id_list_remove(id_list_t *idlist, uint32_t id) {
@@ -81,7 +108,13 @@ static bool id_list_remove(id_list_t *idlist, uint32_t id) {
     id_obj_tuple_t *tuple = &g_array_index(idlist->objs, id_obj_tuple_t, i);
 
     if (tuple->id == id) {
-      g_array_remove_index_fast(idlist->objs, i);
+      if (idlist->free_obj) {
+        idlist->free_obj(tuple->obj);
+      }
+
+      g_array_remove_index(idlist->objs, i);
+      g_array_sort(idlist->objs, compare_tuples);
+
       return true;
     }
   }
@@ -89,7 +122,7 @@ static bool id_list_remove(id_list_t *idlist, uint32_t id) {
   return false;
 }
 
-void M_IDListInit(id_list_t *idlist) {
+void M_IDListInit(id_list_t *idlist, GDestroyNotify free_obj) {
   idlist->objs = g_array_sized_new(
     false,
     true,
@@ -103,9 +136,10 @@ void M_IDListInit(id_list_t *idlist) {
     ID_LIST_INITIAL_ALLOC
   );
   idlist->max_id = 0;
+  idlist->free_obj = free_obj;
 }
 
-uint32_t M_IDListGetNewID(id_list_t *idlist) {
+uint32_t M_IDListGetNewID(id_list_t *idlist, void *obj) {
   uint32_t id;
 
   if (idlist->recycled_ids->len > 0) {
@@ -127,6 +161,8 @@ uint32_t M_IDListGetNewID(id_list_t *idlist) {
       I_Error("M_IDListGetNewID: ID number rolled over");
     }
   }
+
+  id_list_insert(idlist, id, obj);
 
   return id;
 }
@@ -155,6 +191,29 @@ void M_IDListReleaseID(id_list_t *idlist, uint32_t id) {
 
 void* M_IDListLookupObj(id_list_t *idlist, uint32_t id) {
   return id_list_lookup(idlist, id);
+}
+
+bool M_IDListIterate(id_list_t *idlist, size_t *index, void **obj) {
+  if (!(*obj)) {
+    *index = 0;
+  }
+  else {
+    *index = *index + 1;
+  }
+
+  if (*index >= idlist->objs->len) {
+    return false;
+  }
+
+  id_obj_tuple_t *tuple = &g_array_index(idlist->objs, id_obj_tuple_t, *index);
+
+  *obj = tuple->obj;
+
+  return true;
+}
+
+uint32_t M_IDListGetSize(id_list_t *idlist) {
+  return idlist->objs->len;
 }
 
 void M_IDListReset(id_list_t *idlist) {

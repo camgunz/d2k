@@ -28,8 +28,8 @@
 
 #define ID_HASH_INITIAL_ALLOC 64
 
-void M_IDHashInit(id_hash_t *idhash) {
-  idhash->objs = g_hash_table_new(NULL, NULL);
+void M_IDHashInit(id_hash_t *idhash, GDestroyNotify free_obj) {
+  idhash->objs = g_hash_table_new_full(NULL, NULL, NULL, free_obj);
   idhash->recycled_ids = g_array_sized_new(
     false,
     true,
@@ -39,7 +39,7 @@ void M_IDHashInit(id_hash_t *idhash) {
   idhash->max_id = 0;
 }
 
-uint32_t M_IDHashGetNewID(id_hash_t *idhash) {
+uint32_t M_IDHashGetNewID(id_hash_t *idhash, void *obj) {
   uint32_t id;
 
   if (idhash->recycled_ids->len > 0) {
@@ -61,6 +61,8 @@ uint32_t M_IDHashGetNewID(id_hash_t *idhash) {
       I_Error("M_IDHashGetNewID: ID number rolled over");
     }
   }
+
+  g_hash_table_insert(idhash->objs, GUINT_TO_POINTER(id), obj);
 
   return id;
 }
@@ -89,6 +91,25 @@ void M_IDHashReleaseID(id_hash_t *idhash, uint32_t id) {
 
 void* M_IDHashLookupObj(id_hash_t *idhash, uint32_t id) {
   return g_hash_table_lookup(idhash->objs, GUINT_TO_POINTER(id));
+}
+
+bool M_IDHashIterate(id_hash_t *idhash, id_hash_iterator_t *iterator) {
+  gpointer id;
+
+  if (!iterator->initialized) {
+    g_hash_table_iter_init(&iterator->iterator, idhash->objs);
+  }
+
+  if (!g_hash_table_iter_next(&iterator->iterator, &id, &iterator->obj)) {
+    return false;
+  }
+
+  iterator->id = *(uint32_t *)id;
+  return true;
+}
+
+uint32_t M_IDHashGetSize(id_hash_t *idhash) {
+  return g_hash_table_size(idhash->objs);
 }
 
 void M_IDHashReset(id_hash_t *idhash) {

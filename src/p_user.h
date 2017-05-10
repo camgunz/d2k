@@ -290,6 +290,7 @@ typedef struct player_s
   fixed_t jumpTics;      // delay the next jump for a moment
 
   /* CG 4/3/2014: New fields for netcode */
+  uint32_t         id;
   const char      *name;
   unsigned char    team;
   command_queue_t  cmdq;

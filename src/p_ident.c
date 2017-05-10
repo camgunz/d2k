@@ -29,11 +29,11 @@
 static id_hash_t mobj_id_hash;
 
 void P_IdentInit(void) {
-  M_IDHashInit(&mobj_id_hash);
+  M_IDHashInit(&mobj_id_hash, NULL);
 }
 
 void P_IdentGetID(void *obj, uint32_t *obj_id) {
-  *obj_id = M_IDHashGetNewID(&mobj_id_hash);
+  *obj_id = M_IDHashGetNewID(&mobj_id_hash, NULL);
 }
 
 void P_IdentAssignID(void *obj, uint32_t obj_id) {

@@ -891,6 +891,7 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/p_maputl.c
   ${CMAKE_SOURCE_DIR}/src/p_mobj.c
   ${CMAKE_SOURCE_DIR}/src/p_plats.c
+  ${CMAKE_SOURCE_DIR}/src/p_player.c
   ${CMAKE_SOURCE_DIR}/src/p_pspr.c
   ${CMAKE_SOURCE_DIR}/src/p_saveg.c
   ${CMAKE_SOURCE_DIR}/src/p_setup.c

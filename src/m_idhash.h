@@ -30,11 +30,20 @@ typedef struct {
   uint32_t max_id;
 } id_hash_t;
 
-void     M_IDHashInit(id_hash_t *idhash);
-uint32_t M_IDHashGetNewID(id_hash_t *idhash);
+typedef struct {
+  bool initialized;
+  GHashTableIter iterator;
+  uint32_t id;
+  void *obj;
+} id_hash_iterator_t;
+
+void     M_IDHashInit(id_hash_t *idhash, GDestroyNotify free_obj);
+uint32_t M_IDHashGetNewID(id_hash_t *idhash, void *obj);
 void     M_IDHashAssignID(id_hash_t *idhash, void *obj, uint32_t id);
 void     M_IDHashReleaseID(id_hash_t *idhash, uint32_t id);
 void*    M_IDHashLookupObj(id_hash_t *idhash, uint32_t id);
+bool     M_IDHashIterate(id_hash_t *idhash, id_hash_iterator_t *iterator);
+uint32_t M_IDHashGetSize(id_hash_t *idhash);
 void     M_IDHashReset(id_hash_t *idhash);
 void     M_IDHashFree(id_hash_t *idhash);
 

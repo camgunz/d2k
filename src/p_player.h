@@ -21,25 +21,19 @@
 /*****************************************************************************/
 
 
-#ifndef M_IDLIST_H__
-#define M_IDLIST_H__
+#ifndef P_PLAYER_H__
+#define P_PLAYER_H__
 
-typedef struct {
-  GArray *objs;
-  GArray *recycled_ids;
-  uint32_t max_id;
-  GDestroyNotify free_obj;
-} id_list_t;
-
-void     M_IDListInit(id_list_t *idlist, GDestroyNotify free_obj);
-uint32_t M_IDListGetNewID(id_list_t *idlist, void *obj);
-void     M_IDListAssignID(id_list_t *idlist, void *obj, uint32_t id);
-void     M_IDListReleaseID(id_list_t *idlist, uint32_t id);
-void*    M_IDListLookupObj(id_list_t *idlist, uint32_t id);
-bool     M_IDListIterate(id_list_t *idlist, size_t *index, void **obj);
-uint32_t M_IDListGetSize(id_list_t *idlist);
-void     M_IDListReset(id_list_t *idlist);
-void     M_IDListFree(id_list_t *idlist);
+void      P_PlayersInit(void);
+uint32_t  P_PlayersGetCount(void);
+bool      P_PlayersIter(size_t *index, player_t **start);
+player_t* P_PlayersGetNew(void);
+player_t* P_PlayersLookup(uint32_t id);
+void      P_PlayerRemove(player_t *player);
+bool      P_PlayerIsConsoleplayer(player_t *player);
+bool      P_PlayerIsDisplayplayer(player_t *player);
+void      P_PlayerSetConsoleplayerID(uint32_t new_consoleplayer_id);
+void      P_PlayerSetDisplayplayerID(uint32_t new_displayplayer_id);
 
 #endif
 

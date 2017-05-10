@@ -31,23 +31,18 @@ So a TODO list:
 - Get netcode working again
   - With a static `players` and with `MAXPLAYERS` set to 4.
   - Also using bitmaps
-- Increase `MAXPLAYERS` to 16384
-  - The goal here is to find overruns and assumptions
-- Refactor `players`, `playeringame`, `consoleplayer`, `displayplayer`
-  - `player_t` gets an... `index` field?
-  - `void P_PlayersInit(void)`
-  - `bool P_PlayersIter(player_t *start)`
-  - `player_t* P_PlayersGetNew(void)`
-  - `void P_PlayerRemove(player_t *player)`
-  - `void P_PlayerIsConsoleplayer(player_t *player)`
-  - `void P_PlayerIsDisplayplayer(player_t *player)`
-  - `playeringame` disappears completely
-- Add config options in the server section for:
-  - `max_connections`
-  - `max_clients`
-  - `max_players`
-- Put a soft cap of 2000 on those config options until ENet is removed.
-- Resume refactoring the network message packers to use 
+* Increase `MAXPLAYERS` to 16384
+  * The goal here is to find overruns and assumptions
+* Add config options in the server section for:
+  * `max_connections`
+  * `max_clients`
+  * `max_players`
+* Put a soft cap of 2000 on those config options until ENet is removed.
+* Resume refactoring the network message packers to use structs instead of
+  ad-hoc packing globals into a buffer
+  - Is this really worth it?  It's definitely slower, and the only benefit is
+    maybe it's easier to find problems, which there usually aren't, and which
+    there will be very few of once the netcode solidifies.
 
 ## Smaller Issues
 

@@ -21,26 +21,64 @@
 /*****************************************************************************/
 
 
-#ifndef M_IDLIST_H__
-#define M_IDLIST_H__
+#include "z_zone.h"
 
-typedef struct {
-  GArray *objs;
-  GArray *recycled_ids;
-  uint32_t max_id;
-  GDestroyNotify free_obj;
-} id_list_t;
+#include "doomdef.h"
+#include "doomstat.h"
+#include "m_idlist.h"
+#include "p_user.h"
+#include "p_player.h"
 
-void     M_IDListInit(id_list_t *idlist, GDestroyNotify free_obj);
-uint32_t M_IDListGetNewID(id_list_t *idlist, void *obj);
-void     M_IDListAssignID(id_list_t *idlist, void *obj, uint32_t id);
-void     M_IDListReleaseID(id_list_t *idlist, uint32_t id);
-void*    M_IDListLookupObj(id_list_t *idlist, uint32_t id);
-bool     M_IDListIterate(id_list_t *idlist, size_t *index, void **obj);
-uint32_t M_IDListGetSize(id_list_t *idlist);
-void     M_IDListReset(id_list_t *idlist);
-void     M_IDListFree(id_list_t *idlist);
+static id_list_t new_players;
+static uint32_t  consoleplayer_id;
+static uint32_t  displayplayer_id;
 
-#endif
+static void free_player(gpointer data) {
+  free(data);
+}
+
+void P_PlayersInit(void) {
+  M_IDListInit(&new_players, free_player);
+}
+
+uint32_t P_PlayersGetCount(void) {
+  return M_IDListGetSize(&new_players);
+}
+
+bool P_PlayersIter(size_t *index, player_t **start) {
+  return M_IDListIterate(&new_players, index, (void **)start);
+}
+
+player_t* P_PlayersGetNew(void) {
+  player_t *new_player = malloc(sizeof(player_t));
+
+  new_player->id = M_IDListGetNewID(&new_players, new_player);
+
+  return new_player;
+}
+
+player_t* P_PlayersLookup(uint32_t id) {
+  return M_IDListLookupObj(&new_players, id);
+}
+
+void P_PlayerRemove(player_t *player) {
+  M_IDListReleaseID(&new_players, player->id);
+}
+
+bool P_PlayerIsConsoleplayer(player_t *player) {
+  return player->id == consoleplayer_id;
+}
+
+bool P_PlayerIsDisplayplayer(player_t *player) {
+  return player->id == displayplayer_id;
+}
+
+void P_PlayerSetConsoleplayerID(uint32_t new_consoleplayer_id) {
+  consoleplayer_id = new_consoleplayer_id;
+}
+
+void P_PlayerSetDisplayplayerID(uint32_t new_displayplayer_id) {
+  displayplayer_id = new_displayplayer_id;
+}
 
 /* vi: set et ts=2 sw=2: */
