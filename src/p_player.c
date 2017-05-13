@@ -23,42 +23,62 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "doomstat.h"
-#include "m_idhash.h"
+#include "m_idlist.h"
+#include "p_user.h"
+#include "p_player.h"
 
-static id_hash_t mobj_id_hash;
+static id_list_t new_players;
+static uint32_t  consoleplayer_id;
+static uint32_t  displayplayer_id;
 
-void P_IdentInit(void) {
-  M_IDHashInit(&mobj_id_hash, NULL);
+static void free_player(gpointer data) {
+  free(data);
 }
 
-void P_IdentGetID(void *obj, uint32_t *obj_id) {
-  *obj_id = M_IDHashGetNewID(&mobj_id_hash, NULL);
+void P_PlayersInit(void) {
+  M_IDListInit(&new_players, free_player);
 }
 
-void P_IdentAssignID(void *obj, uint32_t obj_id) {
-  M_IDHashAssignID(&mobj_id_hash, obj, obj_id);
+uint32_t P_PlayersGetCount(void) {
+  return M_IDListGetSize(&new_players);
 }
 
-void P_IdentReleaseID(uint32_t *obj_id) {
-  M_IDHashReleaseID(&mobj_id_hash, *obj_id);
-  *obj_id = 0;
+bool P_PlayersIter(size_t *index, player_t **start) {
+  return M_IDListIterate(&new_players, index, (void **)start);
 }
 
-void* P_IdentLookup(uint32_t id) {
-  return M_IDHashLookupObj(&mobj_id_hash, id);
+player_t* P_PlayersGetNew(void) {
+  player_t *new_player = malloc(sizeof(player_t));
+
+  new_player->id = M_IDListGetNewID(&new_players, new_player);
+
+  return new_player;
 }
 
-void P_IdentReset(void) {
-  M_IDHashReset(&mobj_id_hash);
+player_t* P_PlayersLookup(uint32_t id) {
+  return M_IDListLookupObj(&new_players, id);
 }
 
-uint32_t P_IdentGetMaxID(void) {
-  return mobj_id_hash.max_id;
+void P_PlayerRemove(player_t *player) {
+  M_IDListReleaseID(&new_players, player->id);
 }
 
-void P_IdentSetMaxID(uint32_t new_max_id) {
-  mobj_id_hash.max_id = new_max_id;
+bool P_PlayerIsConsoleplayer(player_t *player) {
+  return player->id == consoleplayer_id;
+}
+
+bool P_PlayerIsDisplayplayer(player_t *player) {
+  return player->id == displayplayer_id;
+}
+
+void P_PlayerSetConsoleplayerID(uint32_t new_consoleplayer_id) {
+  consoleplayer_id = new_consoleplayer_id;
+}
+
+void P_PlayerSetDisplayplayerID(uint32_t new_displayplayer_id) {
+  displayplayer_id = new_displayplayer_id;
 }
 
 /* vi: set et ts=2 sw=2: */

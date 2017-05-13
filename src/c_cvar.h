@@ -26,11 +26,16 @@
 
 #define X_CVAR_NAMESPACE "cvars"
 
-bool        C_CVarGetBool(const char *section, const char *value);
-int32_t     C_CVarGetInt(const char *section, const char *value);
-uint32_t    C_CVarGetUInt(const char *section, const char *value);
-double      C_CVarGetFloat(const char *section, const char *value);
-const char* C_CVarGetString(const char *section, const char *value);
+/*
+ * [CG] The CVar API is a read-only API.  CVars should only be modified from
+ *      scripting.
+ */
+
+bool        C_CVarGetBool(const char *section_path, const char *value);
+int32_t     C_CVarGetInt(const char *section_path, const char *value);
+uint32_t    C_CVarGetUInt(const char *section_path, const char *value);
+double      C_CVarGetFloat(const char *section_path, const char *value);
+const char* C_CVarGetString(const char *section_path, const char *value);
 
 #endif
 

@@ -76,6 +76,8 @@ bool M_PBufWriteS64(pbuf_t *pbuf, int64_t s64);
 bool M_PBufWriteULong(pbuf_t *pbuf, uint64_t l);
 bool M_PBufWriteULongArray(pbuf_t *pbuf, buf_t *ulongs);
 bool M_PBufWriteU64(pbuf_t *pbuf, uint64_t u64);
+bool M_PBufWriteNum(pbuf_t *pbuf, int64_t num);
+bool M_PBufWriteUNum(pbuf_t *pbuf, uint64_t num);
 bool M_PBufWriteDouble(pbuf_t *pbuf, double d);
 bool M_PBufWriteDoubleArray(pbuf_t *pbuf, buf_t *doubles);
 bool M_PBufWriteBool(pbuf_t *pbuf, bool b);
@@ -86,6 +88,8 @@ bool M_PBufWriteMap(pbuf_t *pbuf, unsigned int map_size);
 bool M_PBufWriteBytes(pbuf_t *pbuf, const void *data, size_t size);
 bool M_PBufWriteString(pbuf_t *pbuf, const char *data, size_t length);
 bool M_PBufWriteStringArray(pbuf_t *pbuf, GPtrArray *strings);
+
+bool M_PBufWriteBitmap(pbuf_t *pbuf, const char *bitmap, size_t size);
 
 bool M_PBufReadChar(pbuf_t *pbuf, char *c);
 bool M_PBufReadCharArray(pbuf_t *pbuf, buf_t *chars, size_t limit);
@@ -126,6 +130,7 @@ bool M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit);
 bool M_PBufReadStringArray(pbuf_t *pbuf, GPtrArray *strings,
                                          size_t string_count_limit,
                                          size_t string_size_limit);
+bool M_PBufReadBitmap(pbuf_t *pbuf, const char *bitmap, size_t limit);
 bool M_PBufAtEOF(pbuf_t *pbuf);
 
 void M_PBufCompact(pbuf_t *pbuf);

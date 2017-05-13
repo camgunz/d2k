@@ -81,7 +81,7 @@ static bool deserialize_toc(GArray *toc, unsigned char *data,
   packet_buf_t packet_data;
   unsigned int toc_size = 0;
 
-  cmp_init(&cmp, &packet_data, &packet_read, NULL);
+  cmp_init(&cmp, &packet_data, &packet_read, NULL, NULL);
   packet_data.data = data;
   packet_data.cursor = 0;
   packet_data.size = size;

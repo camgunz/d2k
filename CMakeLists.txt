@@ -857,6 +857,8 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/m_cheat.c
   ${CMAKE_SOURCE_DIR}/src/m_delta.c
   ${CMAKE_SOURCE_DIR}/src/m_file.c
+  ${CMAKE_SOURCE_DIR}/src/m_idlist.c
+  ${CMAKE_SOURCE_DIR}/src/m_idhash.c
   ${CMAKE_SOURCE_DIR}/src/m_menu.c
   ${CMAKE_SOURCE_DIR}/src/m_misc.c
   ${CMAKE_SOURCE_DIR}/src/m_pbuf.c
@@ -889,6 +891,7 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/p_maputl.c
   ${CMAKE_SOURCE_DIR}/src/p_mobj.c
   ${CMAKE_SOURCE_DIR}/src/p_plats.c
+  ${CMAKE_SOURCE_DIR}/src/p_player.c
   ${CMAKE_SOURCE_DIR}/src/p_pspr.c
   ${CMAKE_SOURCE_DIR}/src/p_saveg.c
   ${CMAKE_SOURCE_DIR}/src/p_setup.c

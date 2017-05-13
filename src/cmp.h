@@ -1,9 +1,34 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Charles Gunyon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 #ifndef CMP_H__
 #define CMP_H__
 
 struct cmp_ctx_s;
 
 typedef bool   (*cmp_reader)(struct cmp_ctx_s *ctx, void *data, size_t limit);
+typedef bool   (*cmp_skipper)(struct cmp_ctx_s *ctx, size_t count);
 typedef size_t (*cmp_writer)(struct cmp_ctx_s *ctx, const void *data,
                                                     size_t count);
 
@@ -70,10 +95,11 @@ union cmp_object_data_u {
 };
 
 typedef struct cmp_ctx_s {
-  uint8_t     error;
-  void       *buf;
-  cmp_reader  read;
-  cmp_writer  write;
+  uint8_t      error;
+  void        *buf;
+  cmp_reader   read;
+  cmp_skipper  skip;
+  cmp_writer   write;
 } cmp_ctx_t;
 
 typedef struct cmp_object_s {
@@ -91,8 +117,20 @@ extern "C" {
  * ============================================================================
  */
 
-/* Initializes a CMP context */
-void cmp_init(cmp_ctx_t *ctx, void *buf, cmp_reader read, cmp_writer write);
+/*
+ * Initializes a CMP context
+ *
+ * If you don't intend to read, `read` may be NULL, but calling `*read*`
+ * functions will crash; there is no check.
+ *
+ * `skip` may be NULL, in which case skipping functions will use `read`.
+ *
+ * If you don't intend to write, `write` may be NULL, but calling `*write*`
+ * functions will crash; there is no check.
+ */
+void cmp_init(cmp_ctx_t *ctx, void *buf, cmp_reader read,
+                                         cmp_skipper skip,
+                                         cmp_writer write);
 
 /* Returns CMP's version */
 uint32_t cmp_version(void);
@@ -104,16 +142,16 @@ uint32_t cmp_mp_version(void);
 const char* cmp_strerror(cmp_ctx_t *ctx);
 
 /* Writes a signed integer to the backend */
-bool cmp_write_sint(cmp_ctx_t *ctx, int64_t d);
+bool cmp_write_integer(cmp_ctx_t *ctx, int64_t d);
 
 /* Writes an unsigned integer to the backend */
-bool cmp_write_uint(cmp_ctx_t *ctx, uint64_t u);
+bool cmp_write_uinteger(cmp_ctx_t *ctx, uint64_t u);
 
-/* Writes a single-precision float to the backend */
-bool cmp_write_float(cmp_ctx_t *ctx, float f);
-
-/* Writes a double-precision float to the backend */
-bool cmp_write_double(cmp_ctx_t *ctx, double d);
+/*
+ * Writes a floating-point value (either single or double-precision) to the
+ * backend
+ */
+bool cmp_write_decimal(cmp_ctx_t *ctx, double d);
 
 /* Writes NULL to the backend */
 bool cmp_write_nil(cmp_ctx_t *ctx);
@@ -140,10 +178,27 @@ bool cmp_write_u8_as_bool(cmp_ctx_t *ctx, uint8_t b);
 bool cmp_write_str(cmp_ctx_t *ctx, const char *data, uint32_t size);
 
 /*
+ * Writes a string to the backend.  This avoids using the STR8 marker, which
+ * is unsupported by MessagePack v4, the version implemented by many other
+ * MessagePack libraries.  No encoding is assumed in this case, not that it
+ * matters.
+ */
+bool cmp_write_str_v4(cmp_ctx_t *ctx, const char *data, uint32_t size);
+
+/*
  * Writes the string marker to the backend.  This is useful if you are writing
  * data in chunks instead of a single shot.
  */
 bool cmp_write_str_marker(cmp_ctx_t *ctx, uint32_t size);
+
+/*
+ * Writes the string marker to the backend.  This is useful if you are writing
+ * data in chunks instead of a single shot.  This avoids using the STR8
+ * marker, which is unsupported by MessagePack v4, the version implemented by
+ * many other MessagePack libraries.  No encoding is assumed in this case, not
+ * that it matters.
+ */
+bool cmp_write_str_marker_v4(cmp_ctx_t *ctx, uint32_t size);
 
 /* Writes binary data to the backend */
 bool cmp_write_bin(cmp_ctx_t *ctx, const void *data, uint32_t size);
@@ -173,6 +228,13 @@ bool cmp_write_ext_marker(cmp_ctx_t *ctx, int8_t type, uint32_t size);
 /* Writes an object to the backend */
 bool cmp_write_object(cmp_ctx_t *ctx, cmp_object_t *obj);
 
+/*
+ * Writes an object to the backend. This avoids using the STR8 marker, which
+ * is unsupported by MessagePack v4, the version implemented by many other
+ * MessagePack libraries.
+ */
+bool cmp_write_object_v4(cmp_ctx_t *ctx, cmp_object_t *obj);
+
 /* Reads a signed integer that fits inside a signed char */
 bool cmp_read_char(cmp_ctx_t *ctx, int8_t *c);
 
@@ -186,7 +248,7 @@ bool cmp_read_int(cmp_ctx_t *ctx, int32_t *i);
 bool cmp_read_long(cmp_ctx_t *ctx, int64_t *d);
 
 /* Reads a signed integer */
-bool cmp_read_sinteger(cmp_ctx_t *ctx, int64_t *d);
+bool cmp_read_integer(cmp_ctx_t *ctx, int64_t *d);
 
 /* Reads an unsigned integer that fits inside an unsigned char */
 bool cmp_read_uchar(cmp_ctx_t *ctx, uint8_t *c);
@@ -203,11 +265,11 @@ bool cmp_read_ulong(cmp_ctx_t *ctx, uint64_t *u);
 /* Reads an unsigned integer */
 bool cmp_read_uinteger(cmp_ctx_t *ctx, uint64_t *u);
 
-/* Reads a single-precision float from the backend */
-bool cmp_read_float(cmp_ctx_t *ctx, float *f);
-
-/* Reads a double-precision float from the backend */
-bool cmp_read_double(cmp_ctx_t *ctx, double *d);
+/*
+ * Reads a floating point value (either single or double-precision) from the
+ * backend
+ */
+bool cmp_read_decimal(cmp_ctx_t *ctx, double *d);
 
 /* "Reads" (more like "skips") a NULL value from the backend */
 bool cmp_read_nil(cmp_ctx_t *ctx);
@@ -252,6 +314,44 @@ bool cmp_read_ext(cmp_ctx_t *ctx, int8_t *type, uint32_t *size, void *data);
 bool cmp_read_object(cmp_ctx_t *ctx, cmp_object_t *obj);
 
 /*
+ * Skips the next object from the backend.  If that object is an array or map,
+ * this function will:
+ *   - If `obj` is not `NULL`, fill in `obj` with that object
+ *   - Set `ctx->error` to `SKIP_DEPTH_LIMIT_EXCEEDED_ERROR`
+ *   - Return `false`
+ * Otherwise:
+ *   - (Don't touch `obj`)
+ *   - Return `true`
+ */
+bool cmp_skip_object(cmp_ctx_t *ctx, cmp_object_t *obj);
+
+/*
+ * This is similar to `cmp_skip_object`, except it tolerates up to `limit`
+ * levels of nesting.  For example, in order to skip an array that contains a
+ * map, call `cmp_skip_object_limit(ctx, &obj, 2)`.  Or in other words,
+ * `cmp_skip_object(ctx, &obj)` acts similarly to `cmp_skip_object_limit(ctx,
+ * &obj, 0)`
+ *
+ * Specifically, `limit` refers to depth, not breadth.  So in order to skip an
+ * array that contains two arrays that each contain 3 strings, you would call
+ * `cmp_skip_object_limit(ctx, &obj, 2).  In order to skip an array that
+ * contains 4 arrays that each contain 1 string, you would still call
+ * `cmp_skip_object_limit(ctx, &obj, 2).
+ */
+bool cmp_skip_object_limit(cmp_ctx_t *ctx, cmp_object_t *obj, uint32_t limit);
+
+/*
+ * This is similar to `cmp_skip_object`, except it will continually skip
+ * nested data structures.
+ *
+ * WARNING: This can cause your application to spend an unbounded amount of
+ *          time reading nested data structures.  Unless you completely trust
+ *          the data source, you should strongly consider `cmp_skip_object` or
+ *          `cmp_skip_object_limit`.
+ */
+bool cmp_skip_object_no_limit(cmp_ctx_t *ctx);
+
+/*
  * ============================================================================
  * === Specific API
  * ============================================================================
@@ -271,6 +371,9 @@ bool cmp_write_u8(cmp_ctx_t *ctx, uint8_t c);
 bool cmp_write_u16(cmp_ctx_t *ctx, uint16_t s);
 bool cmp_write_u32(cmp_ctx_t *ctx, uint32_t i);
 bool cmp_write_u64(cmp_ctx_t *ctx, uint64_t l);
+
+bool cmp_write_float(cmp_ctx_t *ctx, float f);
+bool cmp_write_double(cmp_ctx_t *ctx, double d);
 
 bool cmp_write_fixstr_marker(cmp_ctx_t *ctx, uint8_t size);
 bool cmp_write_fixstr(cmp_ctx_t *ctx, const char *data, uint8_t size);
@@ -331,6 +434,9 @@ bool cmp_read_u8(cmp_ctx_t *ctx, uint8_t *c);
 bool cmp_read_u16(cmp_ctx_t *ctx, uint16_t *s);
 bool cmp_read_u32(cmp_ctx_t *ctx, uint32_t *i);
 bool cmp_read_u64(cmp_ctx_t *ctx, uint64_t *l);
+
+bool cmp_read_float(cmp_ctx_t *ctx, float *f);
+bool cmp_read_double(cmp_ctx_t *ctx, double *d);
 
 bool cmp_read_fixext1_marker(cmp_ctx_t *ctx, int8_t *type);
 bool cmp_read_fixext1(cmp_ctx_t *ctx, int8_t *type, void *data);
@@ -395,9 +501,24 @@ bool cmp_object_as_array(cmp_object_t *obj, uint32_t *size);
 bool cmp_object_as_map(cmp_object_t *obj, uint32_t *size);
 bool cmp_object_as_ext(cmp_object_t *obj, int8_t *type, uint32_t *size);
 
+bool cmp_object_to_str(cmp_ctx_t *ctx, cmp_object_t *obj, char *data, uint32_t buf_size);
+bool cmp_object_to_bin(cmp_ctx_t *ctx, cmp_object_t *obj, void *data, uint32_t buf_size);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
+
+/*
+ * ============================================================================
+ * === Backwards compatibility defines
+ * ============================================================================
+ */
+
+#define cmp_write_int      cmp_write_integer
+#define cmp_write_sint     cmp_write_integer
+#define cmp_write_sinteger cmp_write_integer
+#define cmp_write_uint     cmp_write_uinteger
+#define cmp_read_sinteger  cmp_read_integer
 
 #endif /* CMP_H__ */
 

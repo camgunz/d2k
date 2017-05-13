@@ -21,44 +21,26 @@
 /*****************************************************************************/
 
 
-#include "z_zone.h"
+#ifndef M_IDLIST_H__
+#define M_IDLIST_H__
 
-#include "doomstat.h"
-#include "m_idhash.h"
+typedef struct {
+  GArray *objs;
+  GArray *recycled_ids;
+  uint32_t max_id;
+  GDestroyNotify free_obj;
+} id_list_t;
 
-static id_hash_t mobj_id_hash;
+void     M_IDListInit(id_list_t *idlist, GDestroyNotify free_obj);
+uint32_t M_IDListGetNewID(id_list_t *idlist, void *obj);
+void     M_IDListAssignID(id_list_t *idlist, void *obj, uint32_t id);
+void     M_IDListReleaseID(id_list_t *idlist, uint32_t id);
+void*    M_IDListLookupObj(id_list_t *idlist, uint32_t id);
+bool     M_IDListIterate(id_list_t *idlist, size_t *index, void **obj);
+uint32_t M_IDListGetSize(id_list_t *idlist);
+void     M_IDListReset(id_list_t *idlist);
+void     M_IDListFree(id_list_t *idlist);
 
-void P_IdentInit(void) {
-  M_IDHashInit(&mobj_id_hash, NULL);
-}
-
-void P_IdentGetID(void *obj, uint32_t *obj_id) {
-  *obj_id = M_IDHashGetNewID(&mobj_id_hash, NULL);
-}
-
-void P_IdentAssignID(void *obj, uint32_t obj_id) {
-  M_IDHashAssignID(&mobj_id_hash, obj, obj_id);
-}
-
-void P_IdentReleaseID(uint32_t *obj_id) {
-  M_IDHashReleaseID(&mobj_id_hash, *obj_id);
-  *obj_id = 0;
-}
-
-void* P_IdentLookup(uint32_t id) {
-  return M_IDHashLookupObj(&mobj_id_hash, id);
-}
-
-void P_IdentReset(void) {
-  M_IDHashReset(&mobj_id_hash);
-}
-
-uint32_t P_IdentGetMaxID(void) {
-  return mobj_id_hash.max_id;
-}
-
-void P_IdentSetMaxID(uint32_t new_max_id) {
-  mobj_id_hash.max_id = new_max_id;
-}
+#endif
 
 /* vi: set et ts=2 sw=2: */

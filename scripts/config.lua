@@ -21,14 +21,255 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
+local class = require('middleclass')
 local serpent = require('serpent')
 
-d2k.cvars = {}
+local CVARS = {}
 
-d2k.config.validate = function()
-    local ConfigSchema = require('config_schema')
-    local schema = ConfigSchema.ConfigSchema
+local CVar = class('CVar')
+local Config = class('Config')
 
+local BOOLEAN = 1
+local INTEGER = 2
+local FLOAT = 3
+local STRING = 4
+local ARRAY = 5
+local TABLE = 6
+
+function is_array(t)
+    local is_array = false
+
+    for i, x in ipairs(var) do
+        is_array = true
+        break
+    end
+
+    return is_array
+end
+
+function get_type_and_value(var)
+    if var_type == 'boolean' then
+        return (BOOLEAN, var)
+    elseif var_type == 'number' then
+        local int = tonumber(var, 10)
+
+        if int ~= nil then
+            return (INTEGER, int)
+        else
+            return (FLOAT, var)
+        end
+    elseif var_type == 'string' then
+        return (STRING, var)
+    elseif var_type == 'table' then
+        if is_array(var) then
+            return (ARRAY, var)
+        else
+            return (TABLE, var)
+        end
+
+    else
+        error(string.format('Invalid type "%s"', var_type))
+    end
+end
+
+function CVar:initialize(args)
+    if not args then
+        error('No arguments passed to cvar:initialize')
+    end
+
+    self._name = args.name
+    self._help = args.help or 'No help text yet'
+
+    self._type = nil
+    self._default = nil
+    self._value = nil
+    self._options = {}
+    self._min = nil
+    self._max = nil
+
+    local var_type, var_value = get_value_and_type(args.default)
+
+    if var_type == 'table' then
+        -- This can be:
+        -- - { values... }
+        -- - { default = default }
+        -- - { default = default, options = { values... } }
+        -- - { default = default, min = min }
+        -- - { default = default, max = max }
+        -- - { default = default, min = min, max = max }
+
+        if var['default'] == nil then
+            error(string.format('CVar %s missing "default" key', self._name))
+        end
+
+        local default = var['default']
+
+        default_type, default_value = get_value_and_type(default)
+
+        if default_type == TABLE then
+            error(string.format(
+                'Default value for CVar %s cannot be a table',
+                self._name
+            ))
+        end
+
+        self._type = default_type
+        self._default = default_value
+        self._value = default
+
+        if var['options'] ~= nil then
+            if var['min'] ~= nil then
+                error(string.format(
+                    'Cannot specify both "options" and "min" for CVar %s',
+                    self._name
+                ))
+            end
+
+            if var['max'] ~= nil then
+                error(string.format(
+                    'Cannot specify both "options" and "max" for CVar %s',
+                    self._name
+                ))
+            end
+
+            if self._type ~= INTEGER and
+               self._type ~= FLOAT and
+               self._type ~= STRING then
+                error(string.format(
+                    'CVar %s does not support "options", only integers, '
+                    'floats and strings do',
+                    self._name
+                ))
+            end
+
+            self._options = var['options']
+        end
+
+        if var['min'] ~= nil and not (self._type == INTEGER or
+                                      self._type == FLOAT) then
+            error(string.format(
+                'CVar %s does not support "min", only integers and floats do',
+                self._name
+            ))
+        end
+
+        if var['max'] ~= nil and not (self._type == INTEGER or
+                                      self._type == FLOAT) then
+            error(string.format(
+                'CVar %s does not support "max", only integers and floats do',
+                self._name
+            ))
+        end
+
+        self._min = var['min']
+        self._max = var['max']
+    end
+end
+
+function CVar:get_name()
+    return self._name
+end
+
+function CVar:get_type()
+    return self._type
+end
+
+function CVar:get_value()
+    return self._value
+end
+
+function CVar:get_default()
+    return self._default
+end
+
+function CVar:get_options()
+    return self._options
+end
+
+function CVar:get_min()
+    self._min = nil
+    self._max = nil
+
+function CVar:set_value(var)
+    var_type = type(var)
+
+    if #self._options and not tablex.find(self._options, var) then
+        error(string.format('Cannot assign invalid option %s to %s',
+            var,
+            self._name
+        ))
+    end
+
+    if self._min ~= nil and var < self._min then
+        error(string.format('Cannot assign %s to %s, value is too low',
+            var,
+            self._name
+        ))
+    end
+
+    if self._min ~= nil and var < self._max then
+        error(string.format('Cannot assign %s to %s, value is too large',
+            var,
+            self._name
+        ))
+    end
+
+    if var_type == 'table' and is_array(var) and self._type == ARRAY then
+        self._value = var
+    elseif var_type == 'boolean' and self._type == BOOLEAN then
+        self._value = var
+    elseif var_type == 'integer' and self._type == INTEGER then
+        self._value = var
+    elseif var_type == 'float' and self._type == FLOAT then
+        self._value = var
+    elseif var_type == 'string' and self._type == STRING then
+        self._value = var
+    else
+        error(string.format('Cannot assign value of type %s to %s',
+            var_type,
+            self._name
+        ))
+    end
+end
+
+function cvar(args)
+    local section_path = args.name
+    local help = args.help
+
+    local parts = section_path.split('.')
+    local namespaces = table.unpack(parts, i, #parts - 1)
+    local name = parts[#parts]
+    local section = CVARS
+
+    for i, namespace in ipairs(namespaces) do
+        if section[namespace] == nil then
+            section[namespace] = {}
+        else
+            section = section[namespace]
+        end
+    end
+
+    namespace[name] = CVar({
+        name = name,
+        help = help,
+        default = args.default,
+        options = args.options,
+        min = args.min,
+        max = arg.max,
+    })
+end
+
+return {
+    CVar = CVar
+    BOOLEAN = BOOLEAN,
+    INTEGER = INTEGER,
+    FLOAT = FLOAT,
+    STRING = STRING,
+    ARRAY = ARRAY
+    CVAR = CVAR,
+}
+
+function validate(schema)
     for section_name, section in pairs(schema) do
         local section_is_table = type(section) == 'table'
         local section_is_array = false
@@ -110,9 +351,7 @@ d2k.config.validate = function()
     end
 end
 
-d2k.config.get_default = function()
-    local ConfigSchema = require('config_schema')
-    local schema = ConfigSchema.ConfigSchema
+function build_from_defaults(schema)
     local config = {}
 
     for section_name, section in pairs(schema) do
@@ -150,6 +389,37 @@ d2k.config.get_default = function()
     end
 
     return serpent.block(config, { comment = false })
+end
+
+--[[
+So the steps here are:
+
+- D2K calls d2k.config.init() (or whatever), which builds the main config
+  object in memory at d2k.config
+- D2K loads the configuration file data, passing it to
+  d2k.config:update_from_file_data
+- d2k.config:update_from_file_data:
+  - deserializes the config, storing it in a local variable
+  - validates the config, walking through it and its tree of CVARs
+  - if a config value is invalid, the cvar's value is not set and a warning is
+    printed to the console
+--]]
+
+function Config:initialize()
+    for name, section in pairs(CVARS)
+end
+
+d2k.config.validate = function()
+    local ConfigSchema = require('config_schema')
+    local schema = ConfigSchema.ConfigSchema
+    validate(schema)
+end
+
+d2k.config.build_from_defaults = function()
+    local ConfigSchema = require('config_schema')
+    local schema = ConfigSchema.ConfigSchema
+
+    return get_default(schema)
 end
 
 d2k.config.serialize = function()

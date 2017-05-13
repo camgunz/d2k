@@ -21,44 +21,32 @@
 /*****************************************************************************/
 
 
-#include "z_zone.h"
+#ifndef M_IDHASH_H__
+#define M_IDHASH_H__
 
-#include "doomstat.h"
-#include "m_idhash.h"
+typedef struct {
+  GHashTable *objs;
+  GArray *recycled_ids;
+  uint32_t max_id;
+} id_hash_t;
 
-static id_hash_t mobj_id_hash;
+typedef struct {
+  bool initialized;
+  GHashTableIter iterator;
+  uint32_t id;
+  void *obj;
+} id_hash_iterator_t;
 
-void P_IdentInit(void) {
-  M_IDHashInit(&mobj_id_hash, NULL);
-}
+void     M_IDHashInit(id_hash_t *idhash, GDestroyNotify free_obj);
+uint32_t M_IDHashGetNewID(id_hash_t *idhash, void *obj);
+void     M_IDHashAssignID(id_hash_t *idhash, void *obj, uint32_t id);
+void     M_IDHashReleaseID(id_hash_t *idhash, uint32_t id);
+void*    M_IDHashLookupObj(id_hash_t *idhash, uint32_t id);
+bool     M_IDHashIterate(id_hash_t *idhash, id_hash_iterator_t *iterator);
+uint32_t M_IDHashGetSize(id_hash_t *idhash);
+void     M_IDHashReset(id_hash_t *idhash);
+void     M_IDHashFree(id_hash_t *idhash);
 
-void P_IdentGetID(void *obj, uint32_t *obj_id) {
-  *obj_id = M_IDHashGetNewID(&mobj_id_hash, NULL);
-}
-
-void P_IdentAssignID(void *obj, uint32_t obj_id) {
-  M_IDHashAssignID(&mobj_id_hash, obj, obj_id);
-}
-
-void P_IdentReleaseID(uint32_t *obj_id) {
-  M_IDHashReleaseID(&mobj_id_hash, *obj_id);
-  *obj_id = 0;
-}
-
-void* P_IdentLookup(uint32_t id) {
-  return M_IDHashLookupObj(&mobj_id_hash, id);
-}
-
-void P_IdentReset(void) {
-  M_IDHashReset(&mobj_id_hash);
-}
-
-uint32_t P_IdentGetMaxID(void) {
-  return mobj_id_hash.max_id;
-}
-
-void P_IdentSetMaxID(uint32_t new_max_id) {
-  mobj_id_hash.max_id = new_max_id;
-}
+#endif
 
 /* vi: set et ts=2 sw=2: */

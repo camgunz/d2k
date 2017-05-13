@@ -29,6 +29,8 @@
 #include "p_user.h"
 #include "g_game.h"
 
+#define EXT_TYPE_BITMAP 10
+
 static bool buf_read(cmp_ctx_t *ctx, void *data, size_t limit) {
   buf_t *buf = (buf_t *)ctx->buf;
   size_t pos = M_BufferGetCursor(buf);
@@ -51,12 +53,12 @@ static size_t buf_write(cmp_ctx_t *ctx, const void *data, size_t count) {
 
 void M_PBufInit(pbuf_t *pbuf) {
   M_BufferInit(&pbuf->buf);
-  cmp_init(&pbuf->cmp, &pbuf->buf, &buf_read, &buf_write);
+  cmp_init(&pbuf->cmp, &pbuf->buf, &buf_read, NULL, &buf_write);
 }
 
 void M_PBufInitWithCapacity(pbuf_t *pbuf, size_t capacity) {
   M_BufferInitWithCapacity(&pbuf->buf, capacity);
-  cmp_init(&pbuf->cmp, &pbuf->buf, &buf_read, &buf_write);
+  cmp_init(&pbuf->cmp, &pbuf->buf, &buf_read, NULL, &buf_write);
 }
 
 pbuf_t* M_PBufNew(void) {
@@ -313,6 +315,14 @@ bool M_PBufWriteU64(pbuf_t *pbuf, uint64_t u64) {
   return cmp_write_u64(&pbuf->cmp, u64);
 }
 
+bool M_PBufWriteNum(pbuf_t *pbuf, int64_t num) {
+  return cmp_write_integer(&pbuf->cmp, num);
+}
+
+bool M_PBufWriteUNum(pbuf_t *pbuf, uint64_t num) {
+  return cmp_write_uinteger(&pbuf->cmp, num);
+}
+
 bool M_PBufWriteFloat(pbuf_t *pbuf, float f) {
   return cmp_write_float(&pbuf->cmp, f);
 }
@@ -403,6 +413,10 @@ bool M_PBufWriteStringArray(pbuf_t *pbuf, GPtrArray *strings) {
   }
 
   return true;
+}
+
+bool M_PBufWriteBitmap(pbuf_t *pbuf, const char *bitmap, size_t size) {
+  return cmp_write_ext(&pbuf->cmp, EXT_TYPE_BITMAP, size, bitmap);
 }
 
 bool M_PBufReadChar(pbuf_t *pbuf, char *c) {
@@ -860,6 +874,17 @@ bool M_PBufReadStringArray(pbuf_t *pbuf, GPtrArray *strings,
   }
 
   return true;
+}
+
+bool M_PBufReadBitmap(pbuf_t *pbuf, const char *bitmap, size_t limit) {
+  int8_t type;
+  uint32_t size = limit;
+
+  if (!cmp_read_ext(&pbuf->cmp, &type, &size, (void *)bitmap)) {
+    return false;
+  }
+
+  return type == EXT_TYPE_BITMAP;
 }
 
 bool M_PBufAtEOF(pbuf_t *pbuf) {
