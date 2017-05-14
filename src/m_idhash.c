@@ -55,7 +55,8 @@ uint32_t M_IDHashGetNewID(id_hash_t *idhash, void *obj) {
     );
   }
   else {
-    id = idhash->max_id++;
+    idhash->max_id++;
+    id = idhash->max_id;
 
     if (id == 0) {
       I_Error("M_IDHashGetNewID: ID number rolled over");

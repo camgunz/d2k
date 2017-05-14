@@ -24,11 +24,19 @@
 #ifndef D_CFG_H__
 #define D_CFG_H__
 
-void    D_ConfigInit(void);
-bool    D_ConfigLoad(void);
-bool    D_ConfigSave(void);
+/*
+ * [CG] The config API is a read-only API.  Config variables should only be
+ *      modified in scripts.
+ */
+
+void        D_ConfigInit(void);
+bool        D_ConfigSave(void);
+bool        D_ConfigGetBool(const char *path);
+int32_t     D_ConfigGetInt(const char *path);
+uint32_t    D_ConfigGetUInt(const char *path);
+double      D_ConfigGetFloat(const char *path);
+const char* D_ConfigGetString(const char *path);
 
 #endif
 
 /* vi: set et ts=2 sw=2: */
-

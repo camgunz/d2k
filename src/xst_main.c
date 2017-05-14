@@ -41,10 +41,11 @@ static int XST_HandleEvent(lua_State *L) {
 
 void XST_RegisterInterface(void) {
   X_RegisterObjects("StatusBar", 4,
-    "handle_event",                   X_FUNCTION, XST_HandleEvent,
-    "ammo_colour_behavior_no",        X_INTEGER,  ammo_colour_behaviour_no,
-    "ammo_colour_behavior_full_only", X_INTEGER,  ammo_colour_behaviour_full_only,
-    "ammo_colour_behavior_yes",       X_INTEGER,  ammo_colour_behaviour_yes
+    "handle_event",                    X_FUNCTION, XST_HandleEvent,
+    "ammo_colour_behaviour_no",        X_INTEGER,  ammo_colour_behaviour_no,
+    "ammo_colour_behaviour_full_only", X_INTEGER, 
+                                               ammo_colour_behaviour_full_only,
+    "ammo_colour_behaviour_yes",       X_INTEGER,  ammo_colour_behaviour_yes
   );
 }
 

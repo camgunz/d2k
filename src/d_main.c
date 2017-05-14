@@ -2119,11 +2119,6 @@ static void D_DoomMainSetup(void) {
   X_ExposeInterfaces(NULL);
   */
 
-  X_ExposeInterfaces(NULL);
-
-  puts("Starting...");
-  X_Start();
-
   // CPhipps - auto screenshots
   if ((p = M_CheckParm("-autoshot")) && (p < myargc - 2))
     if ((auto_shot_count = auto_shot_time = atoi(myargv[p + 1])))

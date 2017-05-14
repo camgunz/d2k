@@ -24,20 +24,17 @@
 #ifndef C_CVAR_H__
 #define C_CVAR_H__
 
-#define X_CVAR_NAMESPACE "cvars"
-
 /*
  * [CG] The CVar API is a read-only API.  CVars should only be modified from
  *      scripting.
  */
 
-bool        C_CVarGetBool(const char *section_path, const char *value);
-int32_t     C_CVarGetInt(const char *section_path, const char *value);
-uint32_t    C_CVarGetUInt(const char *section_path, const char *value);
-double      C_CVarGetFloat(const char *section_path, const char *value);
-const char* C_CVarGetString(const char *section_path, const char *value);
+bool        C_CVarGetBool(const char *path);
+int32_t     C_CVarGetInt(const char *path);
+uint32_t    C_CVarGetUInt(const char *path);
+double      C_CVarGetFloat(const char *path);
+const char* C_CVarGetString(const char *path);
 
 #endif
 
 /* vi: set et ts=2 sw=2: */
-

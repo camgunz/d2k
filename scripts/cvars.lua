@@ -25,7 +25,7 @@ local cvar = require('config').cvar
 
 cvar {
     name = 'system.process_priority',
-    help = 'Sets the priority of the D2K process'
+    help = 'Sets the priority of the D2K process',
     default = 0,
     min = 0,
     max = 0,
@@ -42,12 +42,13 @@ cvar {
     help = [[
         Run quick diagnostics to adjust the size of internal data structures
         to try and avoid CPU cache misses (slowdowns)
-    ]]
+    ]],
     default = true
 }
 
 cvar {
     name = 'misc.default_compatibility_level',
+    help = 'Default compatibility level',
     default = -1,
     min = -1,
     max = d2k.Compatibility.max
@@ -55,52 +56,61 @@ cvar {
 
 cvar {
     name = 'misc.realtic_clock_rate',
-	default = 100
+    help = 'Game speed (percentage)',
+	default = 100,
 	min = 0
 }
 
 cvar {
     name = 'misc.menu_background',
+    help = 'Draw menu background',
 	default = true
 }
 
 cvar {
     name = 'misc.max_player_corpse',
-	default = 32
+    help = 'Maximum player corpse count',
+	default = 32,
 	min = -1
 }
 
 cvar {
     name = 'misc.flashing_hom',
+    help = 'Flash HoMs when detected',
 	default = false
 }
 
 cvar {
     name = 'misc.demo_insurance',
-	default = 2
+    help = 'Demo insurance mode (0 = disabled)',
+	default = 2,
 	min = 0,
 	max = 2
 }
 
 cvar {
     name = 'misc.endoom_mode',
-	default = 5
+    help = 'Used to affect endoom properties, no longer active',
+	default = 5,
 	min = 0,
 	max = 7
 }
 
 cvar {
     name = 'misc.level_precache',
+    help = 'Precache level data',
 	default = true
 }
 
 cvar {
     name = 'misc.demo_smoothturns',
+    help = 'Smooth out turns when recording demos',
 	default = false
 }
 
 cvar {
     name = 'misc.demo_smoothturnsfactor',
+    help = 'Turn smoothing strength',
     default = 6,
     min = 1,
     max = d2k.Demo.smooth_playing_max_factor
@@ -108,211 +118,257 @@ cvar {
 
 cvar {
     name = 'misc.showendoom',
+    help = 'Enable endoom',
 	default = false
 }
 
 cvar {
     name = 'misc.screenshot_dir',
+    help = 'Folder to store screenshots in',
 	default = ''
 }
 
 cvar {
     name = 'misc.health_bar',
+    help = 'Show health bars over things with health',
 	default = false
 }
 
 cvar {
     name = 'misc.health_bar_full_length',
+    help = 'Show health bar outline when not full',
 	default = true
 }
 
 cvar {
     name = 'misc.health_bar_red',
-	default = 50
+    help = 'Threshold at which healthbars turn red',
+	default = 50,
 	min = 0,
 	max = 100
 }
 
 cvar {
     name = 'misc.health_bar_yellow',
-	default = 99
+    help = 'Threshold at which healthbars turn yellow',
+	default = 99,
 	min = 0,
 	max = 100
 }
 
 cvar {
     name = 'misc.health_bar_green',
-	default = 0
+    help = 'Threshold at which healthbars turn green',
+	default = 0,
 	min = 0,
 	max = 100
 }
 
-
 cvar {
     name = 'files.wadfile_1',
+    help = 'WAD file to preload (1 of 2)',
 	default = ''
 }
 
 cvar {
     name = 'files.wadfile_2',
+    help = 'WAD file to preload (2 of 2)',
 	default = ''
 }
 
 cvar {
     name = 'files.dehfile_1',
+    help = 'DeHackEd file to preload (1 of 2)',
 	default = ''
 }
 
 cvar {
     name = 'files.dehfile_2',
+    help = 'DeHackEd file to preload (2 of 2)',
 	default = ''
 }
 
 
 cvar {
     name = 'game.default_skill',
-	default = 3
+    help = "Default skill level, 1 = I'm Too Young To Die, 5 = Nightmare",
+	default = 3,
 	min = 1,
 	max = 5
 }
 
 cvar {
     name = 'game.weapon_recoil',
+    help = 'Enable weapon recoil',
 	default = false
 }
 
 cvar {
     name = 'game.doom_weapon_toggles',
+    help = 'Looks old, dunno',
 	default = true
 }
 
 cvar {
     name = 'game.player_bobbing',
+    help = 'Enable player movement bobbing',
 	default = true
 }
 
 cvar {
     name = 'game.leave_weapons',
+    help = 'Leave weapons if picked up',
 	default = false
 }
 
 cvar {
     name = 'game.monsters_remember',
+    help = 'Monsters will remember last target if no other target present',
 	default = true
 }
 
 cvar {
     name = 'game.monster_infighting',
+    help = 'Monsters will fight amongst themselves',
 	default = true
 }
 
 cvar {
     name = 'game.monster_backing',
+    help = 'Monsters will back away from melee attacks',
 	default = false
 }
 
 cvar {
     name = 'game.monster_avoid_hazards',
+    help = 'Monsters will avoid hazards',
 	default = true
 }
 
 cvar {
     name = 'game.monkeys',
+    help = 'Monsters will traverse steep stairs',
 	default = false
 }
 
 cvar {
     name = 'game.monster_friction',
+    help = 'Monsters will be affected by friction effects',
 	default = true
 }
 
 cvar {
     name = 'game.help_friends',
+    help = [[
+        Friendly monsters will go to the aid of other dying friendly monsters
+    ]],
 	default = false
 }
 
 cvar {
     name = 'game.allow_pushers',
+    help = 'Enable push effects (wind, current, etc.)',
 	default = true
 }
 
 cvar {
     name = 'game.variable_friction',
+    help = 'Enable friction effects (ice, mud, etc.)',
 	default = true
 }
 
 cvar {
     name = 'game.player_helpers',
-	default = false
+    help = 'Number of friendly monsters to spawn',
+	default = 0,
+    min = 0,
+    max = 3
 }
 
 cvar {
     name = 'game.friend_distance',
-	default = 128
+    help = 'Minimum friendly monster distance',
+	default = 128,
 	min = 0,
 	max = 999
 }
 
 cvar {
     name = 'game.dog_jumping',
+    help = 'Allow friendly monsters to jump',
 	default = true
 }
 
 cvar {
     name = 'game.sts_always_red',
+    help = 'Always use red numbers on the status bar',
 	default = true
 }
 
 cvar {
     name = 'game.sts_pct_always_gray',
+    help = 'Always use gray percent marks on the status bar',
 	default = false
 }
 
 cvar {
     name = 'game.sts_traditional_keys',
+    help = 'Use traditional keys on the status bar',
 	default = false
 }
 
 cvar {
     name = 'game.show_messages',
+    help = 'Enable HUD messages',
 	default = true
 }
 
 cvar {
     name = 'game.autorun',
+    help = 'Always run',
 	default = true
 }
 
 cvar {
     name = 'game.speed_step',
-	default = 0
+    help = 'Amount of speed to increase/decrease when changing speed',
+	default = 0,
 	min = 0,
 	max = 1000
 }
 
 cvar {
     name = 'game.movement_strafe50',
+    help = 'Always SR50',
 	default = false
 }
 
 cvar {
     name = 'game.movement_strafe50onturns',
+    help = 'SR50 on turns',
 	default = false
 }
 
 cvar {
     name = 'game.movement_shorttics',
+    help = 'Use shorttics even when not recording a demo',
 	default = false
 }
 
 cvar {
     name = 'game.interpolation_maxobjects',
-	default = 0
+    help = [[
+        Maximum number of objects to interpolate, for a given type (sector
+        floors, sector ceilings, panning walls, panning floors, and panning
+        ceilings)
+    ]],
+	default = 0,
 	min = 0
 }
 
 cvar {
     name = 'dehacked.deh_apply_cheats',
+    help = 'Accept cheats in DeHackEd files',
 	default = true
 }
 
@@ -483,14 +539,14 @@ cvar {
 
 cvar {
     name = 'sound.sound_card',
-	default = -1
+	default = -1,
 	min = -1,
 	max = 7
 }
 
 cvar {
     name = 'sound.music_card',
-	default = -1
+	default = -1,
 	min = -1,
 	max = 9
 }
@@ -502,21 +558,21 @@ cvar {
 
 cvar {
     name = 'sound.samplerate',
-	default = 22050
+	default = 22050,
 	min = 11025,
 	max = 48000
 }
 
 cvar {
     name = 'sound.sfx_volume',
-	default = 8
+	default = 8,
 	min = 0,
 	max = 15
 }
 
 cvar {
     name = 'sound.mus_pause_opt',
-	default = 1
+	default = 1,
 	min = 0,
 	max = 2
 }
@@ -550,21 +606,21 @@ cvar {
 
 cvar {
     name = 'sound.mus_fluidsynth_gain',
-	default = 50
+	default = 50,
 	min = 0,
 	max = 1000
 }
 
 cvar {
     name = 'sound.mus_opl_gain',
-	default = 50
+	default = 50,
 	min = 0,
 	max = 1000
 }
 
 cvar {
     name = 'video.videomode',
-	default = '32'
+	default = '32',
 }
 
 cvar {
@@ -594,21 +650,21 @@ cvar {
 
 cvar {
     name = 'video.tran_filter_pct',
-	default = 66
+	default = 66,
 	min = 0,
 	max = 100
 }
 
 cvar {
     name = 'video.screenblocks',
-	default = 10
+	default = 10,
 	min = 3,
 	max = 11
 }
 
 cvar {
     name = 'video.usegamma',
-	default = 3
+	default = 3,
 	min = 0,
 	max = 4
 }
@@ -660,7 +716,7 @@ cvar {
 
 cvar {
     name = 'video.filter_threshold',
-	default = 49152
+	default = 49152,
 	min = 0
 }
 
@@ -710,7 +766,7 @@ cvar {
 
 cvar {
     name = 'video.render_screen_multiply',
-	default = 1
+	default = 1,
 	min = 1,
 	max = 4
 }
@@ -727,7 +783,7 @@ cvar {
 
 cvar {
     name = 'video.render_aspect',
-	default = 0
+	default = 0,
 	min = 0,
 	max = 4
 }
@@ -751,14 +807,14 @@ cvar {
 
 cvar {
     name = 'video.render_patches_scalex',
-	default = 0
+	default = 0,
 	min = 0,
 	max = 16
 }
 
 cvar {
     name = 'video.render_patches_scaley',
-	default = 0
+	default = 0,
 	min = 0,
 	max = 16
 }
@@ -782,7 +838,7 @@ cvar {
 
 cvar {
     name = 'video.movement_maxviewpitch',
-	default = 90
+	default = 90,
 	min = 0,
 	max = 90
 }
@@ -875,20 +931,20 @@ cvar {
 
 cvar {
     name = 'opengl.gl_nearclip',
-	default = 5
+	default = 5,
 	min = 0
 }
 
 cvar {
     name = 'opengl.gl_colorbuffer_bits',
-	default = 32
+	default = 32,
 	min = 16,
 	max = 32
 }
 
 cvar {
     name = 'opengl.gl_depthbuffer_bits',
-	default = 24
+	default = 24,
 	min = 16,
 	max = 32
 }
@@ -903,7 +959,6 @@ cvar {
 cvar {
     name = 'opengl.gl_sprite_filter',
     default = d2k.Renderer.gl_filter_linear,
-	default = 
     min = d2k.Renderer.gl_filter_nearest,
     max = d2k.Renderer.gl_filter_linear_mipmap_nearest
 }
@@ -929,7 +984,7 @@ cvar {
 
 cvar {
     name = 'opengl.gl_sprite_offset',
-	default = 0
+	default = 0,
 	min = 0,
 	max = 5
 }
@@ -941,7 +996,7 @@ cvar {
 
 cvar {
     name = 'opengl.gl_mask_sprite_threshold',
-	default = 50
+	default = 50,
 	min = 0,
 	max = 100
 }
@@ -955,7 +1010,7 @@ cvar {
 
 cvar {
     name = 'opengl.gl_sky_detail',
-	default = 16
+	default = 16,
 	min = 1,
 	max = 32
 }
@@ -977,21 +1032,21 @@ cvar {
 
 cvar {
     name = 'opengl.gl_detail_maxdist',
-	default = 0
+	default = 0,
 	min = 0,
 	max = 65535
 }
 
 cvar {
     name = 'opengl.render_multisampling',
-	default = 0
+	default = 0,
 	min = 0,
 	max = 8
 }
 
 cvar {
     name = 'opengl.render_fov',
-	default = 90
+	default = 90,
 	min = 20,
 	max = 160
 }
@@ -1005,7 +1060,7 @@ cvar {
 
 cvar {
     name = 'opengl.gl_spriteclip_threshold',
-	default = 10
+	default = 10,
 	min = 0,
 	max = 100
 }
@@ -1115,7 +1170,7 @@ cvar {
 
 cvar {
     name = 'opengl.gl_light_ambient',
-	default = 20
+	default = 20,
 	min = 1,
 	max = 255
 }
@@ -1127,7 +1182,7 @@ cvar {
 
 cvar {
     name = 'opengl.gl_fog_color',
-	default = 0
+	default = 0,
 	min = 0,
 	max = 16777215
 }
@@ -1151,14 +1206,14 @@ cvar {
 
 cvar {
     name = 'opengl.gl_shadows_maxdist',
-	default = 1000
+	default = 1000,
 	min = 0,
 	max = 32767
 }
 
 cvar {
     name = 'opengl.gl_shadows_factor',
-	default = 128
+	default = 128,
 	min = 0,
 	max = 255
 }
@@ -1166,7 +1221,7 @@ cvar {
 cvar {
     name = 'opengl.gl_blend_animations',
 	default = false
-
+}
 
 cvar {
     name = 'mouse.enabled',
@@ -1175,13 +1230,13 @@ cvar {
 
 cvar {
     name = 'mouse.horizontal_sensitivity_horiz',
-	default = 10
+	default = 10,
 	min = 0
 }
 
 cvar {
     name = 'mouse.vertical_sensitivity',
-	default = 10
+	default = 10,
 	min = 0
 }
 
@@ -1222,13 +1277,13 @@ cvar {
 
 cvar {
     name = 'mouse.acceleration',
-	default = 0
+	default = 0,
 	min = 0
 }
 
 cvar {
     name = 'mouse.mouselook_sensitivity',
-	default = 10
+	default = 10,
 	min = 0
 }
 
@@ -1659,7 +1714,7 @@ cvar {
 
 cvar {
     name = 'joystick.mode',
-	default = 0
+	default = 0,
 	min = 0,
 	max = 2
 }
@@ -1691,31 +1746,31 @@ cvar {
 
 cvar {
     name = 'joystick.strafe',
-	default = 1
+	default = 1,
 	min = 0
 }
 
 cvar {
     name = 'joystick.speed',
-	default = 2
+	default = 2,
 	min = 0
 }
 
 cvar {
     name = 'joystick.use',
-	default = 3
+	default = 3,
 	min = 0
 }
 
 cvar {
     name = 'joystick.strafeleft',
-	default = 4
+	default = 4,
 	min = 0
 }
 
 cvar {
     name = 'joystick.straferight',
-	default = 5
+	default = 5,
 	min = 0
 }
 
@@ -1728,8 +1783,7 @@ cvar {
         "I'm not looking too good!",
         'Help!',
         'You suck!',
-        'Next time,
-        default = scumbag...',
+        'Next time, scumbag...',
         'Come here!',
         "I'll take care of it.",
         'Yes'
@@ -1738,28 +1792,28 @@ cvar {
 
 cvar {
     name = 'automap.color.background',
-	default = 247
+	default = 247,
 	min = 0,
 	max = 255
 }
 
 cvar {
     name = 'automap.color.grid',
-	default = 104
+	default = 104,
 	min = 0,
 	max = 255
 }
 
 cvar {
     name = 'automap.color.wall',
-	default = 23
+	default = 23,
 	min = 0,
 	max = 255
 }
 
 cvar {
     name = 'automap.color.floor_height_change',
-	default = 55
+	default = 55,
 	min = 0,
 	max = 255
 }
@@ -1780,70 +1834,70 @@ cvar {
 
 cvar {
     name = 'automap.color.red_key',
-	default = 175
+	default = 175,
 	min = 0,
 	max = 255
 }
 
 cvar {
     name = 'automap.color.blue_key',
-	default = 204
+	default = 204,
 	min = 0,
 	max = 255
 }
 
 cvar {
     name = 'automap.color.yellow_key',
-	default = 231
+	default = 231,
 	min = 0,
 	max = 255
 }
 
 cvar {
     name = 'automap.color.red_door',
-	default = 175
+	default = 175,
 	min = 0,
 	max = 255
 }
 
 cvar {
     name = 'automap.color.blue_door',
-	default = 204
+	default = 204,
 	min = 0,
 	max = 255
 }
 
 cvar {
     name = 'automap.color.yellow_door',
-	default = 231
+	default = 231,
 	min = 0,
 	max = 255
 }
 
 cvar {
     name = 'automap.color.teleporter',
-	default = 119
+	default = 119,
 	min = 0,
 	max = 255
 }
 
 cvar {
     name = 'automap.color.secret',
-	default = 252
+	default = 252,
 	min = 0,
 	max = 255
 }
 
 cvar {
     name = 'automap.color.exit',
-	default = 0
+	default = 0,
 	min = 0,
 	max = 255
 }
 
 cvar {
     name = 'automap.color.unseen',
-	default = 104
+	default = 104,
 	min = 0,
 	max = 255
 }
@@ -1857,28 +1911,28 @@ cvar {
 
 cvar {
     name = 'automap.color.sprite',
-	default = 112
+	default = 112,
 	min = 0,
 	max = 255
 }
 
 cvar {
     name = 'automap.color.item',
-	default = 231
+	default = 231,
 	min = 0,
 	max = 255
 }
 
 cvar {
     name = 'automap.color.crosshair',
-	default = 208
+	default = 208,
 	min = 0,
 	max = 255
 }
 
 cvar {
     name = 'automap.color.singleplayer_arrow',
-	default = 208
+	default = 208,
 	min = 0,
 	max = 255
 }
@@ -1892,14 +1946,14 @@ cvar {
 
 cvar {
     name = 'automap.color.enemy_sprite',
-	default = 177
+	default = 177,
 	min = 0,
 	max = 255
 }
 
 cvar {
     name = 'automap.color.friends',
-	default = 112
+	default = 112,
 	min = 0,
 	max = 255
 }
@@ -1931,14 +1985,14 @@ cvar {
 
 cvar {
     name = 'automap.grid_size',
-	default = 128
+	default = 128,
 	min = 8,
 	max = 256
 }
 
 cvar {
     name = 'automap.scroll_speed',
-	default = 8
+	default = 8,
 	min = 1,
 	max = 32
 }
@@ -1960,7 +2014,7 @@ cvar {
 
 cvar {
     name = 'automap.textured.translucency',
-	default = 100
+	default = 100,
 	min = 0,
 	max = 100
 }
@@ -1974,35 +2028,35 @@ cvar {
 
 cvar {
     name = 'automap.textured.overlay.line_translucency',
-	default = 100
+	default = 100,
 	min = 0,
 	max = 100
 }
 
 cvar {
     name = 'automap.textured.overlay.pos_x',
-	default = 0
+	default = 0,
 	min = 0,
 	max = 319
 }
 
 cvar {
     name = 'automap.textured.overlay.pos_y',
-	default = 0
+	default = 0,
 	min = 0,
 	max = 199
 }
 
 cvar {
     name = 'automap.textured.overlay.pos_width',
-	default = 320
+	default = 320,
 	min = 0,
 	max = 320
 }
 
 cvar {
     name = 'automap.textured.overlay.pos_height',
-	default = 200
+	default = 200,
 	min = 0,
 	max = 200
 }
@@ -2017,63 +2071,63 @@ cvar {
 
 cvar {
     name = 'hud.color.automap_title',
-	default = 5
+	default = 5,
 	min = 0,
 	max = 9
 }
 
 cvar {
     name = 'hud.color.automap_coordinates',
-	default = 3
+	default = 3,
 	min = 0,
 	max = 9
 }
 
 cvar {
     name = 'hud.color.mapstat_title',
-	default = 6
+	default = 6,
 	min = 0,
 	max = 9
 }
 
 cvar {
     name = 'hud.color.mapstat_value',
-	default = 2
+	default = 2,
 	min = 0,
 	max = 9
 }
 
 cvar {
     name = 'hud.color.mapstat_time',
-	default = 2
+	default = 2,
 	min = 0,
 	max = 9
 }
 
 cvar {
     name = 'hud.color.messages',
-	default = 6
+	default = 6,
 	min = 0,
 	max = 9
 }
 
 cvar {
     name = 'hud.color.chat',
-	default = 5
+	default = 5,
 	min = 0,
 	max = 9
 }
 
 cvar {
     name = 'hud.message_review.size',
-	default = 1
+	default = 1,
 	min = 1,
 	max = 16
 }
 
 cvar {
     name = 'hud.message_review.color',
-	default = 5
+	default = 5,
 	min = 0,
 	max = 9
 }
@@ -2085,56 +2139,56 @@ cvar {
 
 cvar {
     name = 'hud.health.threshold.red',
-	default = 25
+	default = 25,
 	min = 0,
 	max = 200
 }
 
 cvar {
     name = 'hud.health.threshold.yellow',
-	default = 50
+	default = 50,
 	min = 0,
 	max = 200
 }
 
 cvar {
     name = 'hud.health.threshold.green',
-	default = 100
+	default = 100,
 	min = 0,
 	max = 200
 }
 
 cvar {
     name = 'hud.armor.threshold.red',
-	default = 25
+	default = 25,
 	min = 0,
 	max = 200
 }
 
 cvar {
     name = 'hud.armor.threshold.yellow',
-	default = 50
+	default = 50,
 	min = 0,
 	max = 200
 }
 
 cvar {
     name = 'hud.armor.threshold.green',
-	default = 100
+	default = 100,
 	min = 0,
 	max = 200
 }
 
 cvar {
     name = 'hud.ammo.threshold.red',
-	default = 25
+	default = 25,
 	min = 0,
 	max = 100
 }
 
 cvar {
     name = 'hud.ammo.threshold.yellow',
-	default = 50
+	default = 50,
 	min = 0,
 	max = 100
 }
@@ -2148,7 +2202,7 @@ cvar {
 
 cvar {
     name = 'hud.num',
-	default = 6
+	default = 6,
 	min = 0,
 	max = 100
 }
@@ -2202,7 +2256,7 @@ cvar {
 
 cvar {
     name = 'hud.crosshair.color',
-	default = 3
+	default = 3,
 	min = 0,
 	max = 9
 }
@@ -2219,7 +2273,7 @@ cvar {
 
 cvar {
     name = 'hud.crosshair.target_color',
-	default = 9
+	default = 9,
 	min = 0,
 	max = 9
 }
@@ -2257,8 +2311,10 @@ cvar {
 
 cvar {
     name = 'video_recording.command.video',
-    'x264 -o output.mp4 --crf 22 --muxer mp4 --demuxer raw --input-csp rgb '
-    '--input-depth 8 --input-res %wx%h --fps 35 -'
+    default = [[
+        x264 -o output.mp4 --crf 22 --muxer mp4 --demuxer raw --input-csp rgb
+        --input-depth 8 --input-res %wx%h --fps 35 -
+    ]]
 }
 
 cvar {

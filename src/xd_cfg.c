@@ -26,14 +26,6 @@
 #include "x_intern.h"
 #include "x_main.h"
 
-static int XD_ConfigLoad(lua_State *L) {
-  bool success = D_ConfigLoad();
-
-  lua_pushboolean(L, success);
-
-  return 1;
-}
-
 static int XD_ConfigSave(lua_State *L) {
   bool success = D_ConfigSave();
 
@@ -43,9 +35,8 @@ static int XD_ConfigSave(lua_State *L) {
 }
 
 void XD_ConfigRegisterInterface(void) {
-  X_RegisterObjects("config", 2,
-    "save", X_FUNCTION, XD_ConfigSave,
-    "load", X_FUNCTION, XD_ConfigLoad
+  X_RegisterObjects("config_file", 1,
+    "save", X_FUNCTION, XD_ConfigSave
   );
 }
 

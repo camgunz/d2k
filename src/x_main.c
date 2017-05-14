@@ -131,29 +131,6 @@ static char* get_script_folder(void) {
   return script_folder;
 }
 
-bool X_LoadFile(const char *script_name) {
-  char *script_folder = get_script_folder();
-  char *script_path;
-  bool  script_load_failed;
-
-  if (!script_folder) {
-    I_Error("Script folder [%s] is missing", X_FOLDER_NAME);
-  }
-
-  script_path = M_PathJoin(script_folder, script_name);
-
-  if (!M_IsFile(script_path)) {
-    I_Error("Script [%s] is missing", script_path);
-  }
-
-  script_load_failed = luaL_dofile(x_main_interpreter, script_path);
-
-  free(script_folder);
-  free(script_path);
-
-  return !script_load_failed;
-}
-
 void X_Init(void) {
   char      *script_search_path;
   char      *script_folder = get_script_folder();
@@ -213,7 +190,7 @@ void X_Init(void) {
   lua_setfield(x_main_interpreter, 1, "script_search_path");
   lua_pop(x_main_interpreter, 1);
 
-  if (!X_LoadFile(X_INIT_SCRIPT_NAME)) {
+  if (!X_EvalScript(x_main_interpreter, X_INIT_SCRIPT_NAME)) {
     I_Error("X_Init: Error loading initialization script: %s",
       X_GetError(x_main_interpreter)
     );
@@ -226,9 +203,9 @@ void X_Init(void) {
 }
 
 void X_Start(void) {
-  if (!X_LoadFile(X_START_SCRIPT_NAME)) {
+  if (!X_EvalScript(X_GetState(), X_START_SCRIPT_NAME)) {
     I_Error("X_Start: Error running start script: %s",
-      X_GetError(x_main_interpreter)
+      X_GetError(X_GetState())
     );
   }
 
@@ -578,6 +555,34 @@ bool X_Call(x_engine_t xe, const char *object, const char *fname,
   lua_remove(L, error_handler_index);
 
   return status == 0;
+}
+
+bool X_EvalFile(x_engine_t xe, const char *file_path) {
+  if (!M_IsFile(file_path)) {
+    I_Error("Script [%s] is missing", file_path);
+  }
+
+  return !luaL_dofile(xe, file_path);
+}
+
+bool X_EvalScript(x_engine_t xe, const char *script_name) {
+  char *script_folder = get_script_folder();
+  char *script_path;
+  bool  success;
+
+  if (!script_folder) {
+    I_Error("Script folder [%s] is missing", X_FOLDER_NAME);
+  }
+
+  script_path = M_PathJoin(script_folder, script_name);
+
+  free(script_folder);
+
+  success = X_EvalFile(xe, script_path);
+
+  free(script_path);
+
+  return success;
 }
 
 int X_GetStackSize(x_engine_t xe) {

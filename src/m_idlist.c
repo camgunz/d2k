@@ -155,7 +155,8 @@ uint32_t M_IDListGetNewID(id_list_t *idlist, void *obj) {
     );
   }
   else {
-    id = idlist->max_id++;
+    idlist->max_id++;
+    id = idlist->max_id;
 
     if (id == 0) {
       I_Error("M_IDListGetNewID: ID number rolled over");

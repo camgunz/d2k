@@ -21,12 +21,8 @@
 --                                                                           --
 -------------------------------------------------------------------------------
 
-package.path = package.path .. ';' .. d2k.script_search_path
-
 local Fonts = require('fonts')
-
-pl = require('pl.import_into')()
-pl.stringx.import()
+local Config = require('config')
 
 function cprint(s)
     io.write(string.format('%s\n', s))
@@ -73,8 +69,18 @@ function mwritef(fmt, ...)
     d2k.Messaging.mwrite(string.format(fmt, ...))
 end
 
+function load_config()
+    print('X_Init: Loading configuration.')
+
+    local Config = require('config')
+
+    d2k.config = Config.Config()
+    require('cvars')
+end
+
 function load_input_event_handlers()
     print('X_Init: Loading input event handlers.')
+
     local InputInterfaces = require('input_interfaces')
     local InputEventDispatcher = require('input_event_dispatcher')
 
@@ -85,26 +91,26 @@ function load_input_event_handlers()
 end
 
 function load_overlay()
-    local Overlay = require('overlay')
-
     print('X_Init: Creating overlay.')
+
+    local Overlay = require('overlay')
 
     d2k.overlay = Overlay.Overlay()
 end
 
 function load_menu()
-    local Menu = require('menu')
-
     print('X_Init: Creating menu.')
+
+    local Menu = require('menu')
 
     d2k.menu = Menu.Menu()
     d2k.interfaces:add_interface(d2k.menu)
 end
 
 function load_console()
-    local Console = require('console')
-
     print('X_Init: Creating console')
+
+    local Console = require('console')
 
     d2k.console = Console.Console({font = Fonts.get_default_console_font()})
     d2k.interfaces:add_interface(d2k.console)
@@ -112,9 +118,9 @@ function load_console()
 end
 
 function load_game_interface()
-    local GameInterface = require('game_interface')
-
     print('X_Init: Creating game interface')
+
+    local GameInterface = require('game_interface')
 
     d2k.game_interface = GameInterface.GameInterface()
     d2k.interfaces:add_interface(d2k.game_interface)
@@ -122,7 +128,9 @@ end
 
 function load_hud()
     print('X_Init: Creating HUD')
+
     local HUD = require('hud')
+
     d2k.hud = HUD.HUD()
     d2k.interfaces:add_interface(d2k.hud)
     d2k.overlay:add_reset_listener(d2k.hud)
@@ -130,10 +138,12 @@ end
 
 function load_hud_widgets()
     print('X_Init: Loading HUD widgets')
+
     func, err = loadfile(d2k.script_folder .. '/local_hud_widgets.lua', 't')
+
     if func then
-        local worked, err = pcall(func)
-        if not worked then
+        local succeeded, err = pcall(func)
+        if not succeeded then
             mprint(string.format('<span color="red">%s</span>', err))
             print(err)
         end
@@ -148,21 +158,26 @@ function load_console_shortcuts()
     require('console_shortcuts')
 end
 
-load_input_event_handlers()
+function main()
+    load_config()
+    load_input_event_handlers()
 
-if d2k.Video.is_enabled() then
-    load_overlay()
-    load_menu()
-    load_console()
-    load_game_interface()
-    load_hud()
-    load_hud_widgets()
-else
-    d2k.overlay = nil
-    d2k.hud = nil
+    if d2k.Video.is_enabled() then
+        load_overlay()
+        load_menu()
+        load_console()
+        load_game_interface()
+        load_hud()
+        load_hud_widgets()
+    else
+        d2k.overlay = nil
+        d2k.hud = nil
+    end
+
+    load_console_shortcuts()
 end
 
-load_console_shortcuts()
+main()
 
 -- vi: et ts=4 sw=4
 

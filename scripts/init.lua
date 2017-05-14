@@ -23,6 +23,9 @@
 
 package.path = package.path .. ';' .. d2k.script_search_path
 
+pl = require('pl.import_into')()
+pl.stringx.import()
+
 local DEBUG = false
 
 function dprint(s)
@@ -34,4 +37,3 @@ end
 cprint = print
 
 -- vi: et ts=4 sw=4
-
