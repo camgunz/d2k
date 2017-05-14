@@ -2763,12 +2763,34 @@ cvar {
 	default = "dm2int.mp3"
 }
 
-
 cvar {
     name = 'server.limit_player_commands',
 	default = true
 }
 
+cvar {
+    name = 'server.max_connections',
+    help = 'Maximum number of allowed connections',
+    default = 32,
+    min = 1,
+    max = 2000
+}
+
+cvar {
+    name = 'server.max_clients',
+    help = 'Maximum number of allowed player clients',
+    default = 32,
+    min = 1,
+    max = 2000
+}
+
+cvar {
+    name = 'server.max_players',
+    help = 'Maximum number of allowed in-game players',
+    default = 32,
+    min = 1,
+    max = 2000
+}
 
 cvar {
     name = 'client.extrapolate_player_positions',

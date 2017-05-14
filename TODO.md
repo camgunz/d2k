@@ -26,24 +26,6 @@ to be removed anyway, but the concepts behind `players` and `playeringame` and
 `consoleplayer`/`displayplayer` need to be refactored since the list of
 `player_t` instances will be dynamic now.
 
-So a TODO list:
-
-- Get netcode working again
-  - With a static `players` and with `MAXPLAYERS` set to 4.
-  - Also using bitmaps
-* Increase `MAXPLAYERS` to 16384
-  * The goal here is to find overruns and assumptions
-* Add config options in the server section for:
-  * `max_connections`
-  * `max_clients`
-  * `max_players`
-* Put a soft cap of 2000 on those config options until ENet is removed.
-* Resume refactoring the network message packers to use structs instead of
-  ad-hoc packing globals into a buffer
-  - Is this really worth it?  It's definitely slower, and the only benefit is
-    maybe it's easier to find problems, which there usually aren't, and which
-    there will be very few of once the netcode solidifies.
-
 ## Smaller Issues
 
 1. Add error codes to `n_proto`
