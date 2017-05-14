@@ -67,7 +67,6 @@ function get_type_and_value(var)
             return TABLE, var
         end
     else
-        cprint(debug.traceback())
         error(string.format('Invalid type "%s"', var_type))
     end
 end
@@ -80,12 +79,6 @@ function CVar:initialize(args)
     self._name = args.name
     self._help = args.help or 'Sorry, no help text yet'
     self._default = args.default
-
-    cprint('cvar:')
-    for name, value in pairs(args) do
-        cprint(string.format('  %s: %s', name, value))
-    end
-    cprint('')
 
     self._type, self._value = get_type_and_value(args.default)
 
@@ -265,9 +258,9 @@ function Config:get_or_make_section_and_name(path)
     for i, namespace in ipairs(namespaces) do
         if section[namespace] == nil then
             section[namespace] = {}
-        else
-            section = section[namespace]
         end
+
+        section = section[namespace]
     end
 
     return section, name
@@ -288,9 +281,9 @@ function Config:get_section_and_name(path)
     for i, namespace in ipairs(namespaces) do
         if section[namespace] == nil then
             error(string.format('No CVar "%s"', path))
-        else
-            section = section[namespace]
         end
+
+        section = section[namespace]
     end
 
     return section, name
@@ -309,30 +302,36 @@ function Config:set_cvar(path, cvar)
 end
 
 function Config:get_values()
-    local values = {}
+    local out = {}
 
     function walk(section, values)
-        for name, value in pairs(self:get_cvars()) do
-            if type(value) == 'table' then
-                if value['isInstanceof'] and value:isInstanceOf('CVar') then
-                    values[name] = value:get_value()
-                else
-                    values[name] = {}
-                    if is_array(value) then
-                        for i, element in ipairs(value) do
-                            table.insert(values[name], element)
-                        end
-                    else
-                        walk(section[name], values[name])
+        for name, value in pairs(section) do
+            if type(value) ~= 'table' then
+                error('Corrupt cvars')
+            end
+            if value['isInstanceOf'] and value:isInstanceOf(CVar) then
+                cprint(string.format('  Getting value of %s (%s)',
+                    name,
+                    value:get_value()
+                ))
+                values[name] = value:get_value()
+            else
+                values[name] = {}
+                if is_array(value) then
+                    for i, element in ipairs(value) do
+                        table.insert(values[name], element)
                     end
+                else
+                    cprint('Walking ' .. name)
+                    walk(section[name], values[name])
                 end
             end
         end
     end
 
-    walk(self:get_cvars(), values)
+    walk(self:get_cvars(), out)
 
-    return values
+    return out
 end
 
 function Config:update(values)
@@ -356,7 +355,7 @@ function Config:update(values)
 end
 
 function Config:serialize()
-    return serpent.block(self:get_values(), { comment = false })
+    return 'return ' .. serpent.block(self:get_values(), { comment = false })
 end
 
 function cvar(args)

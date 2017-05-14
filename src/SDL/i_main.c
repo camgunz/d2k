@@ -858,9 +858,9 @@ int main(int argc, char **argv) {
 
   X_Start();
 
-  D_ConfigInit();
-
   D_InitMessaging(); /* CG 05/09/14: Enable messaging */
+
+  D_ConfigInit();
 
   if (M_CheckParm("-serve")) {
 #ifdef G_OS_UNIX

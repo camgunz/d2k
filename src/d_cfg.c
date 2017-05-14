@@ -23,15 +23,12 @@
 
 #include "z_zone.h"
 
-#include "doomdef.h"
 #include "d_cfg.h"
 #include "d_msg.h"
 #include "i_system.h"
 #include "m_file.h"
 #include "x_main.h"
 #include "x_intern.h"
-#include "p_user.h"
-#include "g_game.h"
 
 #define DEFAULT_CONFIG_FILE_NAME PACKAGE_TARNAME "_config.lua"
 
@@ -85,14 +82,14 @@ bool D_ConfigSave(void) {
 
   config_data = X_PopString(X_GetState());
 
-  P_Printf(consoleplayer, "Saving config to %s\n", config_path);
+  D_Msg(MSG_INFO, "Saving config to %s\n", config_path);
 
   if (!M_WriteFile(config_path, config_data, strlen(config_data))) {
     D_Msg(MSG_WARN, "Failed to write config: %s\n", M_GetFileError());
     return false;
   }
 
-  P_Printf(consoleplayer, "Config saved\n");
+  D_Msg(MSG_INFO, "Config saved\n");
 
   return true;
 }
