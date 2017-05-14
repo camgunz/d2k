@@ -36,6 +36,7 @@
 #include "n_com.h"
 #include "n_sync.h"
 
+#define NET_THROTTLE_INTERVAL 300
 #define NET_THROTTLE_ACCEL 2
 #define NET_THROTTLE_DECEL 1
 
@@ -204,7 +205,7 @@ netpeer_t* N_PeerAdd(void *enet_peer) {
   if (SERVER) {
     enet_peer_throttle_configure(
       enet_peer,
-      300,
+      NET_THROTTLE_INTERVAL,
       NET_THROTTLE_ACCEL,
       NET_THROTTLE_DECEL
     );
@@ -223,7 +224,6 @@ netpeer_t* N_PeerAdd(void *enet_peer) {
   g_hash_table_insert(net_peers, GUINT_TO_POINTER(np->peernum), np);
 
   if (SERVER) {
-    /* [CG] Should this really be gametic, not 0? */
     N_SyncSetTIC(&np->sync, gametic);
     playeringame[playernum] = true;
     players[playernum].playerstate = PST_REBORN;

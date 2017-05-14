@@ -261,17 +261,14 @@
     return false;                                                             \
   }
 
-#define read_bitmap(pbuf, var, name) do {                                     \
-    bool _res = true;                                                         \
-    bitmap_read_from_pbuf(bitmap, pbuf, _res);                                \
-    if (!_res) {                                                              \
-      P_Printf(consoleplayer,                                                 \
-        "%s: Error reading %s: %s.\n",                                        \
-        __func__, name, M_PBufGetError(pbuf)                                  \
-      );                                                                      \
-      return false;                                                           \
-    }                                                                         \
-} while (0)
+#define read_bitmap(pbuf, var, size, name)                                    \
+  if (!M_PBufReadBitmap(pbuf, (char *)var, size)) {                           \
+    P_Printf(consoleplayer,                                                   \
+      "%s: Error reading %s: %s.\n",                                          \
+      __func__, name, M_PBufGetError(pbuf)                                    \
+    );                                                                        \
+    return false;                                                             \
+  }
 
 #define pack_player_preference_change(pbuf, gametic, playernum, pn, pnsz)     \
   pbuf_t *pbuf = N_PeerBeginMessage(np, NM_PLAYER_PREFERENCE_CHANGE);         \
@@ -421,7 +418,6 @@ void N_PackSetup(netpeer_t *np) {
     }
   }
 
-  print_bitmap(bitmap);
   M_PBufWriteBitmap(pbuf, (char *)bitmap, sizeof(bitmap));
 
   M_PBufWriteString(pbuf, iwad, strlen(iwad));
@@ -503,7 +499,7 @@ bool N_UnpackSetup(netpeer_t *np, unsigned short *playernum) {
   read_ranged_int(pbuf, m_deathmatch, "deathmatch", 0, 2);
   read_uint(pbuf, m_playernum, "consoleplayer");
 
-  read_bitmap(pbuf, bitmap, "playeringame bitmap");
+  read_bitmap(pbuf, bitmap, MAXPLAYERS, "playeringame bitmap");
 
   for (size_t i = 0; i < MAXPLAYERS; i++) {
     if (bitmap_get_bit(bitmap, i)) {
@@ -813,7 +809,6 @@ void N_PackSync(netpeer_t *np) {
   else if (SERVER) {
     player_t *player = &players[N_PeerGetPlayernum(np)];
     game_state_delta_t *delta = N_PeerGetSyncStateDelta(np);
-    bool res = true;
 
     M_PBufWriteUNum(pbuf, N_PeerGetSyncCommandIndex(np));
 
@@ -823,7 +818,7 @@ void N_PackSync(netpeer_t *np) {
       bitmap_set_bit(bitmap, playernum);
     }
 
-    bitmap_write_to_pbuf(bitmap, pbuf, res);
+    M_PBufWriteBitmap(pbuf, (char *)bitmap, sizeof(bitmap));
 
     NETPEER_FOR_EACH(iter) {
       unsigned int playernum  = N_PeerGetPlayernum(iter.np);
@@ -858,7 +853,7 @@ bool N_UnpackSync(netpeer_t *np) {
     int m_delta_to_tic;
 
     read_uint(pbuf, m_command_index, "command index");
-    read_bitmap(pbuf, bitmap, "sync player bitmap");
+    read_bitmap(pbuf, bitmap, MAXPLAYERS, "sync player bitmap");
 
     for (size_t i = 0; i < MAXPLAYERS; i++) {
       uint32_t m_command_count;
@@ -933,7 +928,7 @@ bool N_UnpackSync(netpeer_t *np) {
     unsigned int playernum = N_PeerGetPlayernum(np);
 
     read_int(pbuf, m_sync_tic, "sync tic");
-    read_bitmap(pbuf, bitmap, "sync player bitmap");
+    read_bitmap(pbuf, bitmap, MAXPLAYERS, "sync player bitmap");
 
     read_uint(pbuf, m_command_count, "command count");
 
