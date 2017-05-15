@@ -182,8 +182,7 @@ typedef struct {
 //
 // Extended player object info: player_t
 //
-typedef struct player_s
-{
+typedef struct player_s {
   mobj_t*             mo;
   playerstate_t       playerstate;
   ticcmd_t            cmd;
@@ -281,7 +280,7 @@ typedef struct player_s
 
   //e6y
   int                 resurectedkillcount;
-  //not used, not removed because of savagame compatibility
+  //not used, not removed because of savegame compatibility
   const char*         centermessage;
 
   fixed_t prev_viewz;
@@ -302,9 +301,6 @@ typedef struct player_s
   fixed_t          saved_momz;
   int              saved_damagecount;
 } player_t;
-
-// Bookkeeping on players - state.
-extern  player_t  players[MAXPLAYERS];
 
 //
 // INTERMISSION
@@ -354,42 +350,6 @@ void P_SetName(int playernum, const char *name);
 void P_InitPlayerMessages(int playernum);
 void P_AddMessage(int playernum, player_message_t *message);
 void P_ClearMessagesUpdated(int playernum);
-
-unsigned int P_GetLatestServerRunCommandIndex(int playernum);
-void         P_UpdateCommandServerTic(int playernum, uint32_t command_index,
-                                                     uint32_t server_tic);
-void         P_UpdateLatestSynchronizedCommandIndex(int originating_playernum,
-                                                    int receiving_playernum,
-                                                    unsigned int command_index);
-void         P_ResetLatestSynchronizedCommandIndex(int playernum);
-bool         P_LatestSynchronizedCommandIndexReady(int playernum);
-unsigned int P_GetLatestSynchronizedCommandIndex(int playernum);
-
-void         P_InitCommandQueues(void);
-bool         P_HasCommands(int playernum);
-unsigned int P_GetCommandCount(int playernum);
-netticcmd_t* P_GetCommand(int playernum, unsigned int index);
-void         P_InsertCommandSorted(int playernum, netticcmd_t *tmp_ncmd);
-void         P_QueuePlayerCommand(int playernum, netticcmd_t *ncmd);
-void         P_AppendNewCommand(int playernum, netticcmd_t *tmp_ncmd);
-netticcmd_t* P_GetEarliestCommand(int playernum);
-int          P_GetEarliestCommandIndex(int playernum);
-netticcmd_t* P_GetLatestCommand(int playernum);
-unsigned int P_GetLatestCommandIndex(int playernum);
-void         P_UpdateLatestCommandIndex(int originating_playernum,
-                                        int receiving_playernum,
-                                        unsigned int command_index);
-void         P_ForEachCommand(int playernum, GFunc func, gpointer user_data);
-void         P_ClearPlayerCommands(int playernum);
-void         P_ResetPlayerCommands(int playernum);
-void         P_IgnorePlayerCommands(int playernum);
-void         P_TrimCommands(int playernum, TrimFunc should_trim,
-                                           gpointer user_data);
-void         P_TrimCommandsByTic(int playernum, int tic);
-void         P_TrimCommandsByIndex(int playernum, int command_index);
-void         P_BuildCommand(void);
-bool         P_RunPlayerCommands(int playernum);
-void         P_PrintCommands(int playernum);
 
 void P_Printf(int playernum, const char *fmt, ...) PRINTF_DECL(2, 3);
 void P_VPrintf(int playernum, const char *fmt, va_list args);

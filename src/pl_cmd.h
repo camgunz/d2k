@@ -21,72 +21,29 @@
 /*****************************************************************************/
 
 
-#include "z_zone.h"
+#ifndef PL_CMD_H__
+#define PL_CMD_H__
 
-#include "doomdef.h"
-#include "doomstat.h"
-#include "m_idlist.h"
-#include "p_user.h"
-#include "p_player.h"
+uint32_t     PL_GetLatestServerRunCommandIndex(player_t *player);
+void         PL_UpdateCommandServerTic(player_t *player,
+                                       uint32_t command_index,
+                                       uint32_t server_tic);
+void         PL_InitCommandQueues(void);
+size_t       PL_GetCommandCount(player_t *player);
+netticcmd_t* PL_GetCommand(player_t *player, unsigned int index);
+void         PL_QueueCommand(player_t *player, netticcmd_t *ncmd);
+void         PL_AppendNewCommand(player_t *player, netticcmd_t *tmp_ncmd);
+uint32_t     PL_GetLatestCommandIndex(player_t *player);
+void         PL_ForEachCommand(player_t *player, GFunc func,
+                                                 gpointer user_data);
+void         PL_ClearCommands(player_t *player);
+void         PL_ResetCommands(player_t *player);
+void         PL_IgnoreCommands(player_t *player);
+void         PL_TrimCommands(player_t *player, TrimFunc should_trim,
+                                               gpointer user_data);
+void         PL_BuildCommand(void);
+bool         PL_RunCommands(player_t *player);
 
-static id_list_t new_players;
-static uint32_t console_player_id;
-static uint32_t display_player_id;
-
-static void free_player(gpointer data) {
-  free(data);
-}
-
-void P_PlayersInit(void) {
-  M_IDListInit(&new_players, free_player);
-}
-
-uint32_t P_PlayersGetCount(void) {
-  return M_IDListGetSize(&new_players);
-}
-
-bool P_PlayersIter(size_t *index, player_t **start) {
-  return M_IDListIterate(&new_players, index, (void **)start);
-}
-
-player_t* P_PlayersGetNew(void) {
-  player_t *new_player = malloc(sizeof(player_t));
-
-  new_player->id = M_IDListGetNewID(&new_players, new_player);
-
-  return new_player;
-}
-
-player_t* P_PlayersLookup(uint32_t id) {
-  return M_IDListLookupObj(&new_players, id);
-}
-
-void P_PlayerRemove(player_t *player) {
-  M_IDListReleaseID(&new_players, player->id);
-}
-
-void P_PlayersSetConsolePlayerID(uint32_t new_console_player_id) {
-  console_player_id = new_console_player_id;
-}
-
-void P_PlayersSetDisplayPlayerID(uint32_t new_display_player_id) {
-  display_player_id = new_display_player_id;
-}
-
-player_t* P_PlayersGetConsolePlayer(void) {
-  return P_PlayersLookup(console_player_id);
-}
-
-player_t* P_PlayersGetDisplayPlayer(void) {
-  return P_PlayersLookup(display_player_id);
-}
-
-bool PL_IsConsolePlayer(player_t *player) {
-  return player->id == console_player_id;
-}
-
-bool PL_IsDisplayPlayer(player_t *player) {
-  return player->id == display_player_id;
-}
+#endif
 
 /* vi: set et ts=2 sw=2: */

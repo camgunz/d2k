@@ -879,7 +879,7 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/n_sync.c
   ${CMAKE_SOURCE_DIR}/src/p_ceilng.c
   ${CMAKE_SOURCE_DIR}/src/p_checksum.c
-  ${CMAKE_SOURCE_DIR}/src/p_cmd.c
+  ${CMAKE_SOURCE_DIR}/src/pl_cmd.c
   ${CMAKE_SOURCE_DIR}/src/p_doors.c
   ${CMAKE_SOURCE_DIR}/src/p_enemy.c
   ${CMAKE_SOURCE_DIR}/src/p_floor.c

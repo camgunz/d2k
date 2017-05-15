@@ -30,10 +30,13 @@ bool      P_PlayersIter(size_t *index, player_t **start);
 player_t* P_PlayersGetNew(void);
 player_t* P_PlayersLookup(uint32_t id);
 void      P_PlayerRemove(player_t *player);
-bool      P_PlayerIsConsoleplayer(player_t *player);
-bool      P_PlayerIsDisplayplayer(player_t *player);
-void      P_PlayerSetConsoleplayerID(uint32_t new_consoleplayer_id);
-void      P_PlayerSetDisplayplayerID(uint32_t new_displayplayer_id);
+void      P_PlayersSetConsolePlayerID(uint32_t new_console_player_id);
+void      P_PlayersSetDisplayPlayerID(uint32_t new_display_player_id);
+player_t* P_PlayersGetConsolePlayer(void);
+player_t* P_PlayersGetDisplayPlayer(void);
+
+bool PL_IsConsolePlayer(player_t *player);
+bool PL_IsDisplayPlayer(player_t *player);
 
 #endif
 
