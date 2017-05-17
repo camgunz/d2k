@@ -194,9 +194,23 @@ void* M_IDListLookupObj(id_list_t *idlist, uint32_t id) {
   return id_list_lookup(idlist, id);
 }
 
+/*
+ * [CG] [FIXME] The problem with all this is the rollover.  It means we need a
+ *              full on iterator object, which is fine.
+ */
+
 bool M_IDListIterate(id_list_t *idlist, size_t *index, void **obj) {
   if (!(*obj)) {
     *index = 0;
+  }
+  else if ((*index) == 0) {
+    for (size_t i = 0; i < idlist->objs->len; i++) {
+      void *start_obj = &g_array_index(idlist->objs, void, i);
+
+      if (start_obj == *obj) {
+        *index = i + 1;
+      }
+    }
   }
   else {
     *index = *index + 1;
