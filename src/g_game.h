@@ -269,6 +269,9 @@ extern  bool   timingdemo;
 // Run tick clock at fastest speed possible while playing demo.  killough
 extern  bool   fastdemo;
 
+// The next map
+extern int next_map;
+
 //-----------------------------
 // Internal parameters, fixed.
 // These are set by the engine, and not changed
@@ -490,4 +493,3 @@ void G_CalculateDemoParams(const unsigned char *demo_p);
 #endif
 
 /* vi: set et ts=2 sw=2: */
-

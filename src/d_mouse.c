@@ -20,60 +20,85 @@
 /*                                                                           */
 /*****************************************************************************/
 
-#ifndef WI_STUFF_H__
-#define WI_STUFF_H__
+#include "z_zone.h"
 
-//
-// INTERMISSION
-// Structure passed e.g. to WI_Start(wb)
-//
-typedef struct {
-  bool in;                    // whether the player is in game
-  int  skills;                // Player stats, kills, collected items etc.
-  int  sitems;
-  int  ssecret;
-  int  stime;
-  int  frags[MAXPLAYERS];
-  int  score;                 // current score on entry, modified on return
-} wbplayerstruct_t;
+#include "doomdef.h"
+#include "e6y.h"
+#include "g_game.h"
+#include "m_misc.h"
+#include "d_mouse.h"
 
-typedef struct {
-  int              epsd;      // episode # (0-2)
-  bool             didsecret; // if true, splash the secret level
-  int              last;      // previous and next levels, origin 0
-  int              next;
-  int              maxkills;
-  int              maxitems;
-  int              maxsecret;
-  int              maxfrags;
-  int              partime;   // the par time
-  int              pnum;      // index of this player in game
-  wbplayerstruct_t plyr[VANILLA_MAXPLAYERS];
-  int              totaltimes; // CPhipps - total game time for completed
-                               // levels so far
-} wbstartstruct_t;
+int mouse_sensitivity_horiz; // has default   //  killough
+int mouse_sensitivity_vert;  // has default
+int mouse_sensitivity_mlook;
+int mouse_acceleration;
+float mouse_accelfactor;
 
-// States for the intermission
+bool D_MouseShouldBeGrabbed(void) {
+  if (walkcamera.type) {
+    return (demoplayback && gamestate == GS_LEVEL && !menuactive);
+  }
 
-typedef enum {
-  NoState = -1,
-  StatCount,
-  ShowNextLoc
-} stateenum_t;
+  if (menuactive || paused) { /* [CG] [TODO] Add consoleactive here */
+    return false;
+  }
 
-// Called by main loop, animate the intermission.
-void WI_Ticker(void);
+  if (demoplayback) {
+    return false;
+  }
 
-// Called by main loop,
-// draws the intermission directly into the screen buffer.
-void WI_Drawer(void);
+  if (gamestate != GS_LEVEL) {
+    return false;
+  }
 
-// Setup for an intermission screen.
-void WI_Start(int par_time);
+  return true;
+}
 
-// Release intermission screen memory
-void WI_End(void);
+void D_MouseMLook(int choice) {
+  D_Mouse(choice, &mouse_sensitivity_mlook);
+}
 
-#endif // ifndef WI_STUFF_H__
+void D_MouseAccel(int choice) {
+  D_Mouse(choice, &mouse_acceleration);
+  D_MouseScaleAccel();
+}
+
+void D_MouseScaleAccel(void) {
+  mouse_accelfactor = (float)mouse_acceleration/100.0f+1.0f;
+}
+
+void D_MouseHoriz(int choice) {
+  D_Mouse(choice, &mouse_sensitivity_horiz);
+}
+
+void D_MouseVert(int choice) {
+  D_Mouse(choice, &mouse_sensitivity_vert);
+}
+
+void D_Mouse(int choice, int *sens) {
+  switch(choice) {
+    case 0:
+      if (*sens)
+        --*sens;
+      break;
+    case 1:
+      if (*sens < 99) {
+        ++*sens;              /*mead*/
+      }
+      break;
+  }
+}
+
+int D_MouseAccelerate(int val) {
+  if (!mouse_acceleration) {
+    return val;
+  }
+
+  if (val < 0) {
+    return -D_MouseAccelerate(-val);
+  }
+
+  return M_DoubleToInt(pow((double)val, (double)mouse_accelfactor));
+}
 
 /* vi: set et ts=2 sw=2: */

@@ -831,6 +831,7 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/d_items.c
   ${CMAKE_SOURCE_DIR}/src/d_dump.c
   ${CMAKE_SOURCE_DIR}/src/d_main.c
+  ${CMAKE_SOURCE_DIR}/src/d_mouse.c
   ${CMAKE_SOURCE_DIR}/src/d_msg.c
   ${CMAKE_SOURCE_DIR}/src/doomdef.c
   ${CMAKE_SOURCE_DIR}/src/doomstat.c
@@ -879,7 +880,6 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/n_sync.c
   ${CMAKE_SOURCE_DIR}/src/p_ceilng.c
   ${CMAKE_SOURCE_DIR}/src/p_checksum.c
-  ${CMAKE_SOURCE_DIR}/src/pl_cmd.c
   ${CMAKE_SOURCE_DIR}/src/p_doors.c
   ${CMAKE_SOURCE_DIR}/src/p_enemy.c
   ${CMAKE_SOURCE_DIR}/src/p_floor.c
@@ -891,8 +891,6 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/p_maputl.c
   ${CMAKE_SOURCE_DIR}/src/p_mobj.c
   ${CMAKE_SOURCE_DIR}/src/p_plats.c
-  ${CMAKE_SOURCE_DIR}/src/p_player.c
-  ${CMAKE_SOURCE_DIR}/src/p_pspr.c
   ${CMAKE_SOURCE_DIR}/src/p_saveg.c
   ${CMAKE_SOURCE_DIR}/src/p_setup.c
   ${CMAKE_SOURCE_DIR}/src/p_sight.c
@@ -901,6 +899,10 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/p_telept.c
   ${CMAKE_SOURCE_DIR}/src/p_tick.c
   ${CMAKE_SOURCE_DIR}/src/p_user.c
+  ${CMAKE_SOURCE_DIR}/src/pl_cmd.c
+  ${CMAKE_SOURCE_DIR}/src/pl_main.c
+  ${CMAKE_SOURCE_DIR}/src/pl_msg.c
+  ${CMAKE_SOURCE_DIR}/src/pl_pspr.c
   ${CMAKE_SOURCE_DIR}/src/r_bsp.c
   ${CMAKE_SOURCE_DIR}/src/r_data.c
   ${CMAKE_SOURCE_DIR}/src/r_demo.c

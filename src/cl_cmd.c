@@ -28,26 +28,24 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
-#include "p_user.h"
+#include "pl_main.h"
 #include "cl_cmd.h"
 #include "g_state.h"
-#include "p_user.h"
 #include "p_setup.h"
 #include "g_game.h"
 #include "n_main.h"
 #include "cl_net.h"
-#include "p_player.h"
 #include "pl_cmd.h"
 
 static bool command_is_synchronized(gpointer data, gpointer user_data) {
-  netticcmd_t *ncmd = (netticcmd_t *)data;
+  idxticcmd_t *icmd = (idxticcmd_t *)data;
   int state_tic = GPOINTER_TO_INT(user_data);
 
-  if (ncmd->server_tic == 0) {
+  if (icmd->server_tic == 0) {
     return false;
   }
 
-  if (ncmd->server_tic >= state_tic) {
+  if (icmd->server_tic >= state_tic) {
     return false;
   }
 
@@ -56,10 +54,10 @@ static bool command_is_synchronized(gpointer data, gpointer user_data) {
 
 static void count_command(gpointer data, gpointer user_data) {
   int state_tic = G_GetStateFromTic();
-  netticcmd_t *ncmd = (netticcmd_t *)data;
+  idxticcmd_t *icmd = (idxticcmd_t *)data;
   unsigned int *command_count = (unsigned int *)user_data;
 
-  if (ncmd->index < state_tic) {
+  if (icmd->index < state_tic) {
     (*command_count)++;
   }
 }

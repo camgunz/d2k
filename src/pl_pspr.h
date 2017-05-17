@@ -20,60 +20,52 @@
 /*                                                                           */
 /*****************************************************************************/
 
-#ifndef WI_STUFF_H__
-#define WI_STUFF_H__
 
-//
-// INTERMISSION
-// Structure passed e.g. to WI_Start(wb)
-//
-typedef struct {
-  bool in;                    // whether the player is in game
-  int  skills;                // Player stats, kills, collected items etc.
-  int  sitems;
-  int  ssecret;
-  int  stime;
-  int  frags[MAXPLAYERS];
-  int  score;                 // current score on entry, modified on return
-} wbplayerstruct_t;
+#ifndef PL_PSPR_H__
+#define PL_PSPR_H__
 
-typedef struct {
-  int              epsd;      // episode # (0-2)
-  bool             didsecret; // if true, splash the secret level
-  int              last;      // previous and next levels, origin 0
-  int              next;
-  int              maxkills;
-  int              maxitems;
-  int              maxsecret;
-  int              maxfrags;
-  int              partime;   // the par time
-  int              pnum;      // index of this player in game
-  wbplayerstruct_t plyr[VANILLA_MAXPLAYERS];
-  int              totaltimes; // CPhipps - total game time for completed
-                               // levels so far
-} wbstartstruct_t;
+/*
+ * Frame flags:
+ * handles maximum brightness (torches, muzzle flare, light sources)
+ */
 
-// States for the intermission
+#define FF_FULLBRIGHT   0x8000  /* flag in thing->frame */
+#define FF_FRAMEMASK    0x7fff
 
-typedef enum {
-  NoState = -1,
-  StatCount,
-  ShowNextLoc
-} stateenum_t;
+/*
+ * Overlay psprites are scaled shapes
+ * drawn directly on the view screen,
+ * coordinates are given for a 320*200 view screen.
+ */
 
-// Called by main loop, animate the intermission.
-void WI_Ticker(void);
+void A_Light0();
+void A_WeaponReady();
+void A_Lower();
+void A_Raise();
+void A_Punch();
+void A_ReFire();
+void A_FirePistol();
+void A_Light1();
+void A_FireShotgun();
+void A_Light2();
+void A_FireShotgun2();
+void A_CheckReload();
+void A_OpenShotgun2();
+void A_LoadShotgun2();
+void A_CloseShotgun2();
+void A_FireCGun();
+void A_GunFlash();
+void A_FireMissile();
+void A_Saw();
+void A_FirePlasma();
+void A_BFGsound();
+void A_FireBFG();
+void A_BFGSpray();
+void A_FireOldBFG();
 
-// Called by main loop,
-// draws the intermission directly into the screen buffer.
-void WI_Drawer(void);
+void PL_SetupPsprites(player_t *player);
+void PL_MovePsprites(player_t *player);
 
-// Setup for an intermission screen.
-void WI_Start(int par_time);
-
-// Release intermission screen memory
-void WI_End(void);
-
-#endif // ifndef WI_STUFF_H__
+#endif  /* P_USER__ */
 
 /* vi: set et ts=2 sw=2: */

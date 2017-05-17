@@ -24,12 +24,17 @@
 
 #include <SDL.h>
 
+#include "i_mouse.h"
+#include "i_video.h"
 #include "doomdef.h"
+#include "d_mouse.h"
+#include "m_argv.h"
+
+#if 0
 #include "doomstat.h"
 #include "info.h"
 #include "p_setup.h"
 #include "p_mobj.h"
-#include "p_user.h"
 #include "d_event.h"
 #include "g_game.h"
 #include "r_defs.h"
@@ -38,9 +43,8 @@
 #include "v_video.h"
 #include "hu_lib.h"
 #include "e6y.h"
-#include "i_mouse.h"
-#include "i_video.h"
 #include "m_argv.h"
+#endif
 
 extern int usemouse;
 
@@ -48,29 +52,19 @@ static SDL_Cursor* cursors[2] = {NULL, NULL};
 static bool mouse_enabled;
 
 static bool mouse_should_be_grabbed() {
-  if (!window_focused)
+  if (!window_focused) {
     return false;
+  }
 
-  if (desired_fullscreen)
+  if (desired_fullscreen) {
     return true;
+  }
 
-  if (!mouse_enabled)
+  if (!mouse_enabled) {
     return false;
+  }
 
-  if (walkcamera.type)
-    return (demoplayback && gamestate == GS_LEVEL && !menuactive);
-
-  /* CG [TODO] Add consoleactive here */
-  if (menuactive || paused)
-    return false;
-
-  if (demoplayback)
-    return false;
-
-  if (gamestate != GS_LEVEL)
-    return false;
-
-  return true;
+  return D_MouseShouldBeGrabbed();
 }
 
 void I_MouseInit(void) {
@@ -88,8 +82,9 @@ void I_MouseInit(void) {
     &empty_cursor_data, &empty_cursor_data, 8, 1, 0, 0
   );
 
-  if (mouse_enabled)
-    MouseAccelChanging();
+  if (mouse_enabled) {
+    D_MouseScaleAccel();
+  }
 
   atexit(I_MouseShutdown);
 }
@@ -120,16 +115,18 @@ void I_MouseDeactivate(void) {
 void I_MouseReset(void) {
   static int mouse_currently_grabbed = true;
 
-  if (!usemouse)
+  if (!usemouse) {
     return;
+  }
 
   if (!mouse_should_be_grabbed()) {
     mouse_currently_grabbed = false;
     return;
   }
 
-  if (!mouse_currently_grabbed && !desired_fullscreen)
+  if (!mouse_currently_grabbed && !desired_fullscreen) {
     mouse_currently_grabbed = true;
+  }
 }
 
 void I_MouseUpdateGrab(void) {
@@ -138,14 +135,15 @@ void I_MouseUpdateGrab(void) {
 
   grab = mouse_should_be_grabbed();
 
-  if (grab && !currently_grabbed)
+  if (grab && !currently_grabbed) {
     I_MouseActivate();
+  }
 
-  if (!grab && currently_grabbed)
+  if (!grab && currently_grabbed) {
     I_MouseDeactivate();
+  }
 
   currently_grabbed = grab;
 }
 
 /* vi: set et ts=2 sw=2: */
-

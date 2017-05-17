@@ -45,7 +45,8 @@
 #include "gl_struct.h"
 
 #include "r_defs.h"
-#include "p_user.h"
+#include "pl_main.h"
+#include "pl_msg.h"
 #include "n_main.h"
 #include "p_ident.h"
 #include "p_setup.h"
@@ -206,7 +207,7 @@ bool            democontinue = false;
 char*           demo_continue_name;
 int             demover;
 bool            singledemo;           // quit after playing a demo from cmdline
-wbstartstruct_t wminfo;               // parms for world map / intermission
+int             next_map;
 bool            haswolflevels = false;// jff 4/18/98 wolf levels present
 int             autorun = false;      // always running?          // phares
 int             totalleveltimes;      // CPhipps - total time for all completed levels
@@ -324,7 +325,10 @@ void G_DoLoadGame(void) {
   M_PBufInitWithCapacity(&savebuffer, MAX(G_GetAverageSaveSize(), 16384));
 
   if (!M_PBufSetFile(&savebuffer, name)) {
-    P_Printf(consoleplayer, "Couldn't read file %s: %s\n", name, strerror(errno));
+    PL_Printf(P_GetConsolePlayer(), "Couldn't read file %s: %s\n",
+      name, strerror(errno)
+    );
+    M_PBufFree(&savebuffer);
     return;
   }
 
@@ -442,10 +446,11 @@ void G_DoSaveGame(bool menu) {
   );
   
   if (save_succeeded) {
-    P_Echo(consoleplayer, s_GGSAVED); /* Ty - externalized */
+    PL_Echo(P_GetConsolePlayer(), s_GGSAVED); /* Ty - externalized */
   }
   else {
-    P_Echo(consoleplayer, "Game save failed!"); // CPhipps - not externalised
+    // CPhipps - not externalised
+    PL_Echo(P_GetConsolePlayer(), "Game save failed!");
   }
 
   M_PBufFree(&savebuffer); // killough
@@ -558,7 +563,7 @@ static bool WeaponSelectable(weapontype_t weapon) {
   }
 
   // Can't select a weapon if we don't own it.
-  if (!players[consoleplayer].weaponowned[weapon]) {
+  if (!P_GetConsolePlayer()->weaponowned[weapon]) {
     return false;
   }
 
@@ -571,11 +576,11 @@ static int G_NextWeapon(int direction) {
   int arrlen;
 
   // Find index in the table.
-  if (players[consoleplayer].pendingweapon == wp_nochange) {
-    weapon = players[consoleplayer].readyweapon;
+  if (P_GetConsolePlayer()->pendingweapon == wp_nochange) {
+    weapon = P_GetConsolePlayer()->readyweapon;
   }
   else {
-    weapon = players[consoleplayer].pendingweapon;
+    weapon = P_GetConsolePlayer()->pendingweapon;
   }
 
   arrlen = sizeof(weapon_order_table) / sizeof(*weapon_order_table);
@@ -602,7 +607,7 @@ void G_BuildTiccmd(ticcmd_t *cmd) {
   int forward;
   int side;
   int newweapon; // phares
-  player_t *player = &players[consoleplayer];
+  player_t *player = P_GetConsolePlayer();
 
   I_StartTic();
   
@@ -738,9 +743,9 @@ void G_BuildTiccmd(ticcmd_t *cmd) {
   // killough 3/26/98, 4/2/98: fix autoswitch when no weapons are left
 
   if ((!demo_compatibility && player->attackdown && // killough
-       !P_CheckAmmo(player)) ||
+       !PL_CheckAmmo(player)) ||
       gamekeydown[key_weapontoggle]) {
-    newweapon = P_SwitchWeapon(player);           // phares
+    newweapon = PL_SwitchWeapon(player);           // phares
   }
   else {                                 // phares 02/26/98: Added gamemode checks
     if (next_weapon) {
@@ -800,11 +805,12 @@ void G_BuildTiccmd(ticcmd_t *cmd) {
       // the fist is already in use, or the player does not
       // have the berserker strength.
 
-      if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
-                                  player->readyweapon != wp_chainsaw && (
-                                  player->readyweapon == wp_fist ||
-                                  !player->powers[pw_strength] ||
-                                  P_WeaponPreferred(wp_chainsaw, wp_fist))) {
+      if (newweapon == wp_fist &&
+          player->weaponowned[wp_chainsaw] &&
+          player->readyweapon != wp_chainsaw && (
+            player->readyweapon == wp_fist ||
+            !player->powers[pw_strength] ||
+            PL_WeaponPreferred(wp_chainsaw, wp_fist))) {
         newweapon = wp_chainsaw;
       }
 
@@ -813,12 +819,13 @@ void G_BuildTiccmd(ticcmd_t *cmd) {
       // in use, or if the SSG is not already in use and the
       // player prefers it.
 
-      if (newweapon == wp_shotgun && gamemode == commercial &&
-                                     player->weaponowned[wp_supershotgun] && (
-                                     !player->weaponowned[wp_shotgun] ||
-                                     player->readyweapon == wp_shotgun || (
-                                     player->readyweapon != wp_supershotgun &&
-                                     P_WeaponPreferred(wp_supershotgun, wp_shotgun)))) {
+      if (newweapon == wp_shotgun &&
+          gamemode == commercial &&
+          player->weaponowned[wp_supershotgun] && (
+            !player->weaponowned[wp_shotgun] ||
+            player->readyweapon == wp_shotgun || (
+              player->readyweapon != wp_supershotgun &&
+              PL_WeaponPreferred(wp_supershotgun, wp_shotgun)))) {
         newweapon = wp_supershotgun;
       }
     }
@@ -1036,12 +1043,12 @@ void G_DoLoadLevel(void) {
   G_SetGameState(GS_LEVEL);
   level_start_time = time(NULL);
 
-  for (i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i] && players[i].playerstate == PST_DEAD) {
-      players[i].playerstate = PST_REBORN;
+  PLAYERS_FOR_EACH(iter) {
+    if (iter.player->playerstate == PST_DEAD) {
+      iter.player->.playerstate = PST_REBORN;
     }
 
-    memset(players[i].frags, 0, sizeof(players[i].frags));
+    PL_ClearFragsAndDeaths(iter.player);
   }
 
   // initialize the msecnode_t freelist.                     phares 3/25/98
@@ -1052,9 +1059,6 @@ void G_DoLoadLevel(void) {
 
   /* CG 08/10/2014: Reset IDs */
   P_IdentReset();
-
-  wminfo.maxfrags = 0;
-  wminfo.partime = 180;
 
   P_SetupLevel(gameepisode, gamemap, 0, gameskill);
 
@@ -1125,7 +1129,7 @@ bool G_Responder(event_t *ev) {
 
       ST_Start(); // killough 3/7/98: switch status bar views too
       HU_Start();
-      S_UpdateSounds(players[displayplayer].mo);
+      S_UpdateSounds(P_GetDisplayPlayer()->mo);
       R_ActivateSectorInterpolations();
       R_SmoothPlaying_Reset(NULL);
     }
@@ -1443,9 +1447,9 @@ void G_Ticker(void) {
   P_MapStart("G_Ticker");
 
   // do player reborns if needed
-  for (i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i] && players[i].playerstate == PST_REBORN) {
-      G_DoReborn(i);
+  PLAYERS_FOR_EACH(iter) {
+    if (iter.player->playerstate == PST_REBORN) {
+      G_DoReborn(iter.player);
     }
 
     if (players[i].playerstate == PST_DISCONNECTED) {
@@ -1543,7 +1547,7 @@ void G_Ticker(void) {
           ((gametic >> 5) & 3) == i) {
 
         /* cph - don't use sprintf, use doom_printf */
-        P_Printf(consoleplayer, "%s is turbo!\n", player_names[i]);
+        PL_Printf(P_GetConsolePlayer(), "%s is turbo!\n", player_names[i]);
       }
     }
 
@@ -1708,13 +1712,13 @@ void G_Drawer(void) {
   // Boom colormaps should be applied for everything in R_RenderPlayerView
   use_boom_cm = true;
 
-  R_InterpolateView(&players[displayplayer]);
+  R_InterpolateView(P_GetDisplayPlayer());
 
   R_ClearStats();
 
   // Now do the drawing
   if (viewactive || map_always_updates) {
-    R_RenderPlayerView(&players[displayplayer]);
+    R_RenderPlayerView(P_GetDisplayPlayer());
   }
 
   // IDRATE cheat
@@ -1768,12 +1772,9 @@ static void G_PlayerFinishLevel(int player) {
   p->damagecount = 0;     // no palette changes
   p->bonuscount = 0;
 
-  P_ClearPlayerCommands(player);
-  p->cmdq.commands_missed = 0;
-  p->cmdq.command_limit = 0;
-  p->cmdq.commands_run_this_tic = 0;
+  PL_ResetCommands(player);
+
   p->telefragged_by_spawn = false;
-  p->cmdq.latest_command_run_index = 0;
 
   if (deathmatch) {
     p->playerstate = PST_REBORN;
@@ -1786,6 +1787,9 @@ static void G_PlayerFinishLevel(int player) {
 // G_SetPlayerColour
 
 void G_ChangedPlayerColour(int pn, int cl) {
+  size_t index = 0;
+  player_t *player = NULL;
+
   if (!netgame) {
     return;
   }
@@ -1796,10 +1800,15 @@ void G_ChangedPlayerColour(int pn, int cl) {
   R_InitTranslationTables();
 
   // Change translations on existing player mobj's
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    if ((gamestate == GS_LEVEL) && playeringame[i] && (players[i].mo != NULL)) {
-      players[i].mo->flags &= ~MF_TRANSLATION;
-      players[i].mo->flags |= ((uint64_t)playernumtotrans[i]) << MF_TRANSSHIFT;
+  if (gamestate == GS_LEVEL) {
+    while (P_PlayersIter(&index, &player)) {
+      if (player->mo) {
+        uint32_t translation_index = ((player->id - 1) % VANILLA_MAXPLAYERS)
+        uint64_t translation_flag = playernumtotrans[translation_index];
+
+        player->mo->flags &= ~MF_TRANSLATION;
+        player->mo->flags |= translation_flag << MF_TRANSSHIFT;
+      }
     }
   }
 }
@@ -2051,7 +2060,7 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
 
   mo = P_SpawnMobj(x + 20 * xa, y + 20 * ya, ss->sector->floorheight, MT_TFOG);
 
-  if (players[consoleplayer].viewz != 1) {
+  if (P_GetConsolePlayer()->viewz != 1) {
     S_StartSound(mo, sfx_telept);  // don't start sound on first frame
   }
 
@@ -2063,7 +2072,7 @@ static bool G_CheckSpot(int playernum, mapthing_t *mthing) {
 // Spawns a player at one of the random death match spots
 // called at level load and each death
 //
-void G_DeathMatchSpawnPlayer(int playernum) {
+void G_DeathMatchSpawnPlayer(player_t *player) {
   int selections = deathmatch_p - deathmatchstarts;
 
   /*
@@ -2077,52 +2086,60 @@ void G_DeathMatchSpawnPlayer(int playernum) {
   for (int j = 0; j < 20; j++) {
     int i = P_Random(pr_dmspawn) % selections;
 
-    if (G_CheckSpot(playernum, &deathmatchstarts[i])) {
-      deathmatchstarts[i].type = playernum + 1;
-      P_SpawnPlayer(playernum, &deathmatchstarts[i % num_deathmatchstarts]);
+    if (G_CheckSpot(player, &deathmatchstarts[i])) {
+      deathmatchstarts[i].type = ((player->id - 1) % VANILLA_MAXPLAYERS) + 1;
+      PL_Spawn(player, &deathmatchstarts[i % num_deathmatchstarts]);
       return;
     }
   }
 
   // no good spot, so the player will probably get stuck
-  P_SpawnPlayer(playernum, &playerstarts[playernum % num_playerstarts]);
+  PL_Spawn(player, &playerstarts[(player->id - 1) % num_playerstarts]);
+
+  // [CG] Nah, blow up whatever's there
   if (MULTINET) {
-    P_StompSpawnPointBlockers(players[playernum].mo);
+    P_StompSpawnPointBlockers(player->mo);
   }
 }
 
 //
 // G_DoReborn
 //
-void G_DoReborn(int playernum) {
+void G_DoReborn(player_t *player) {
   if (netgame) {
+    mapthing_t *start = NULL;
+
     // respawn at the start
 
     // first dissasociate the corpse
-    if (players[playernum].mo) {
-      players[playernum].mo->player = NULL;
+    if (player->mo) {
+      player->mo->player = NULL;
     }
 
     // spawn at random spot if in death match
     if (deathmatch) {
-      G_DeathMatchSpawnPlayer(playernum);
+      G_DeathMatchSpawnPlayer(player);
       return;
     }
 
-    if (G_CheckSpot(playernum, &playerstarts[playernum % num_playerstarts])) {
-      P_SpawnPlayer(playernum, &playerstarts[playernum % num_playerstarts]);
+    start = &playerstarts[(player->id - 1) % num_playerstarts];
+
+    if (G_CheckSpot(player, start)) {
+      PL_Spawn(player, start);
       return;
     }
 
     // try to spawn at one of the other players spots
-    for (int i = 0; i < MAXPLAYERS; i++) {
-      if (G_CheckSpot(playernum, &playerstarts[i % num_playerstarts])) {
-        P_SpawnPlayer(playernum, &playerstarts[i % num_playerstarts]);
+    for (int i = 0; i < VANILLA_MAXPLAYERS; i++) {
+      mapthing_t *other_start = &playerstarts[i % num_playerstarts];
+      if (G_CheckSpot(player, other_start)) {
+        PL_Spawn(player, other_start);
         return;
       }
-      // They're going to be inside something.  Too bad.
     }
-    P_SpawnPlayer(playernum, &playerstarts[playernum % num_playerstarts]);
+
+    // They're going to be inside something.  Too bad.
+    PL_Spawn(player, start);
   }
   else {
     G_SetGameAction(ga_loadlevel); // reload the level from scratch
@@ -2174,13 +2191,14 @@ void G_SecretExitLevel(void) {
 
 void G_DoCompleted(void) {
   int i;
+  int par_time = 0;
+  size_t index = 0;
+  player_t *player = NULL;
 
   G_SetGameAction(ga_nothing);
 
-  for (i = 0; i < MAXPLAYERS; i++) {
-    if (playeringame[i]) {
-      G_PlayerFinishLevel(i);        // take away cards and stuff
-    }
+  while (P_PlayersIter(&index, &player)) {
+    G_PlayerFinishLevel(player);        // take away cards and stuff
   }
 
   if (automapmode & am_active) {
@@ -2199,34 +2217,33 @@ void G_DoCompleted(void) {
       switch(gamemap) {
       // cph - Remove ExM8 special case, so it gets summary screen displayed
         case 9:
-          for (i = 0; i < MAXPLAYERS; i++)
-            players[i].didsecret = true;
+          index = 0;
+          player = NULL;
+          while (P_PlayersIter(&index, &player)) {
+            player->didsecret = true;
+          }
         break;
       }
     }
   }
 
-  wminfo.didsecret = players[consoleplayer].didsecret;
-  wminfo.epsd = gameepisode -1;
-  wminfo.last = gamemap -1;
-
-  // wminfo.next is 0 biased, unlike gamemap
+  // next_map is 0 biased, unlike gamemap
   if (gamemode == commercial) {
     if (secretexit) {
       switch(gamemap) {
         case 15:
-          wminfo.next = 30;
+          next_map = 30;
         break;
         case 31:
-          wminfo.next = 31;
+          next_map = 31;
         break;
         case 2:
           if (bfgedition && SINGLEPLAYER)
-            wminfo.next = 32;
+            next_map = 32;
         break;
         case 4:
           if (gamemission == pack_nerve && SINGLEPLAYER)
-            wminfo.next = 8;
+            next_map = 8;
         break;
       }
     }
@@ -2234,71 +2251,53 @@ void G_DoCompleted(void) {
       switch (gamemap) {
         case 31:
         case 32:
-          wminfo.next = 15;
+          next_map = 15;
         break;
         case 33:
           if (bfgedition && SINGLEPLAYER) {
-            wminfo.next = 2;
+            next_map = 2;
             break;
           }
         default:
-          wminfo.next = gamemap;
+          next_map = gamemap;
       }
     }
     if (gamemission == pack_nerve && SINGLEPLAYER && gamemap == 9) {
-      wminfo.next = 4;
+      next_map = 4;
     }
   }
   else if (secretexit) {
-    wminfo.next = 8;  // go to secret level
+    next_map = 8;  // go to secret level
   }
   else if (gamemap == 9) {
     // returning from secret level
     switch (gameepisode) {
       case 1:
-        wminfo.next = 3;
+        next_map = 3;
       break;
       case 2:
-        wminfo.next = 5;
+        next_map = 5;
       break;
       case 3:
-        wminfo.next = 6;
+        next_map = 6;
       break;
       case 4:
-        wminfo.next = 2;
+        next_map = 2;
       break;
     }
   }
   else {
-    wminfo.next = gamemap;          // go to next level
+    next_map = gamemap;          // go to next level
   }
-
-  wminfo.maxkills = totalkills;
-  wminfo.maxitems = totalitems;
-  wminfo.maxsecret = totalsecret;
-  wminfo.maxfrags = 0;
 
   if (gamemode == commercial) {
     if (gamemap >= 1 && gamemap <= 34) {
-      wminfo.partime = TICRATE * cpars[gamemap - 1];
+      par_time = TICRATE * cpars[gamemap - 1];
     }
   }
   else if (gameepisode >= 1 && gameepisode <= 4 && gamemap >= 1 &&
                                                    gamemap <= 9) {
-    wminfo.partime = TICRATE*pars[gameepisode][gamemap];
-  }
-
-  wminfo.pnum = consoleplayer;
-
-  for (i = 0; i < MAXPLAYERS; i++) {
-    wminfo.plyr[i].in = playeringame[i];
-    wminfo.plyr[i].skills = players[i].killcount;
-    wminfo.plyr[i].sitems = players[i].itemcount;
-    wminfo.plyr[i].ssecret = players[i].secretcount;
-    wminfo.plyr[i].stime = leveltime;
-    memcpy(
-      wminfo.plyr[i].frags, players[i].frags, sizeof(wminfo.plyr[i].frags)
-    );
+    par_time = TICRATE * pars[gameepisode][gamemap];
   }
 
   /* cph - modified so that only whole seconds are added to the totalleveltimes
@@ -2306,7 +2305,7 @@ void G_DoCompleted(void) {
    *  the times in seconds shown for each level. Also means our total time
    *  will agree with Compet-n.
    */
-  wminfo.totaltimes = (totalleveltimes += (leveltime - leveltime % 35));
+  totalleveltimes += (leveltime - leveltime % 35)
 
   G_SetGameState(GS_INTERMISSION);
   automapmode &= ~am_active;
@@ -2328,7 +2327,7 @@ void G_DoCompleted(void) {
 
   e6y_G_DoCompleted();//e6y
 
-  WI_Start(&wminfo);
+  WI_Start(par_time);
 }
 
 //
@@ -2339,7 +2338,7 @@ void G_WorldDone(void) {
   G_SetGameAction(ga_worlddone);
 
   if (secretexit) {
-    players[consoleplayer].didsecret = true;
+    P_GetConsolePlayer()->didsecret = true;
   }
 
   if (gamemode == commercial && gamemission != pack_nerve) {
@@ -2367,16 +2366,21 @@ void G_WorldDone(void) {
 
 void G_DoWorldDone(void) {
   idmusnum = -1;             //jff 3/17/98 allow new level's music to be loaded
+
   if (!CLIENT) {
     G_SetGameState(GS_LEVEL);
   }
-  gamemap = wminfo.next + 1;
+
+  gamemap = next_map + 1;
+
   if (!CLIENT) {
     G_DoLoadLevel();
   }
+
   G_SetGameAction(ga_nothing);
   AM_clearMarks();           //jff 4/12/98 clear any marks on the automap
   e6y_G_DoWorldDone();//e6y
+
   if (CLIENT) {
     CL_Reset();
     CL_ResetSync();
@@ -2769,8 +2773,8 @@ void G_InitNew(skill_t skill, int episode, int map) {
   }
 
   // force players to be initialized upon first level load
-  for (i = 0; i < MAXPLAYERS; i++) {
-    players[i].playerstate = PST_REBORN;
+  PLAYERS_FOR_EACH(iter) {
+    iter.player->playerstate = PST_REBORN;
   }
 
   usergame = true;                // will be set false if a demo
@@ -3974,15 +3978,15 @@ void P_SyncWalkcam(bool sync_coords, bool sync_sight) {
     return;
   }
 
-  if (players[displayplayer].mo) {
+  if (P_GetDisplayPlayer()->mo) {
     if (sync_sight) {
-      walkcamera.angle = players[displayplayer].mo->angle;
-      walkcamera.pitch = players[displayplayer].mo->pitch;
+      walkcamera.angle = P_GetDisplayPlayer()->mo->angle;
+      walkcamera.pitch = P_GetDisplayPlayer()->mo->pitch;
     }
 
     if(sync_coords) {
-      walkcamera.x = players[displayplayer].mo->x;
-      walkcamera.y = players[displayplayer].mo->y;
+      walkcamera.x = P_GetDisplayPlayer()->mo->x;
+      walkcamera.y = P_GetDisplayPlayer()->mo->y;
     }
   }
 }
@@ -4081,4 +4085,3 @@ void G_SetGameAction(gameaction_t new_gameaction) {
 }
 
 /* vi: set et ts=2 sw=2: */
-

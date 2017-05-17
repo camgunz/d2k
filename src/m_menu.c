@@ -72,9 +72,6 @@ extern patchnum_t hu_font[HU_FONTSIZE];
 // defaulted values
 //
 
-int mouseSensitivity_horiz; // has default   //  killough
-int mouseSensitivity_vert;  // has default
-
 int showMessages;    // Show messages has default, 0 = off, 1 = on
 
 int hide_setup=1; // killough 5/15/98
@@ -203,9 +200,6 @@ void M_SizeDisplay(int choice);
 void M_StartGame(int choice);
 void M_Sound(int choice);
 
-void M_Mouse(int choice, int *sens);      /* killough */
-void M_MouseVert(int choice);
-void M_MouseHoriz(int choice);
 void M_DrawMouse(void);
 
 void M_FinishReadThis(int choice);
@@ -1285,31 +1279,6 @@ void M_ChangeSensitivity(int choice)
   //        mouseSensitivity++;
   //      break;
   //      }
-}
-
-void M_MouseHoriz(int choice)
-{
-  M_Mouse(choice, &mouseSensitivity_horiz);
-}
-
-void M_MouseVert(int choice)
-{
-  M_Mouse(choice, &mouseSensitivity_vert);
-}
-
-void M_Mouse(int choice, int *sens)
-{
-  switch(choice)
-    {
-    case 0:
-      if (*sens)
-        --*sens;
-      break;
-    case 1:
-      if (*sens < 99)
-        ++*sens;              /*mead*/
-      break;
-    }
 }
 
 /////////////////////////////

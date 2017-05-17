@@ -27,8 +27,8 @@
 
 #include "doomdef.h"
 #include "d_event.h"
-#include "p_user.h"
 #include "g_game.h"
+#include "pl_main.h"
 #include "g_state.h"
 #include "n_main.h"
 #include "cl_cmd.h"

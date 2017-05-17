@@ -56,62 +56,11 @@
 #include "p_setup.h"
 #include "p_mobj.h"
 
-// 16 pixels of bob
+/* Used in P_DeathThink */
+#define ANG5 (ANG90/18)
 
+/* 16 pixels of bob */
 #define MAXBOB  0x100000
-
-static void add_player_vmessage(int pn, bool is_markup, bool centered, int sfx,
-                                const char *fmt, va_list args) {
-  gchar *gcontent;
-  player_message_t *msg;
-
-  if (CL_Synchronizing() || CL_RePredicting())
-    return;
-
-  if (strlen(fmt) <= 0)
-    return;
-
-  msg = malloc(sizeof(player_message_t));
-
-  if (msg == NULL)
-    I_Error("P_Printf: malloc failed");
-
-  gcontent = g_strdup_vprintf(fmt, args);
-
-  if (pn == consoleplayer)
-    D_Msg(MSG_GAME, "%s", gcontent);
-
-#if 0
-  if (!is_markup) {
-    gchar *escaped_gcontent = g_markup_escape_text(gcontent, -1);
-
-    g_free(gcontent);
-    gcontent = escaped_gcontent;
-  }
-#endif
-
-  msg->content = strdup(gcontent);
-  msg->centered = centered;
-  msg->processed = false;
-  msg->sfx = sfx;
-
-  g_free(gcontent);
-
-  P_AddMessage(pn, msg);
-}
-
-static void add_player_message(int pn, bool is_markup, bool centered, int sfx,
-                               const char *fmt, ...) {
-  va_list args;
-
-  va_start(args, fmt);
-  add_player_vmessage(pn, is_markup, centered, sfx, fmt, args);
-  va_end(args);
-}
-
-//
-// Movement.
-//
 
 bool onground; // whether player is on ground or in air
 
@@ -159,6 +108,13 @@ static void P_Bob(player_t *player, angle_t angle, fixed_t move) {
 
   player->momx += FixedMul(move, finecosine[angle >>= ANGLETOFINESHIFT]);
   player->momy += FixedMul(move, finesine[angle]);
+}
+
+static void destroy_message(gpointer data) {
+  player_message_t *msg = data;
+
+  free(msg->content);
+  free(msg);
 }
 
 //
@@ -381,8 +337,6 @@ void P_MovePlayer(player_t *player) {
   }
 }
 
-#define ANG5 (ANG90/18)
-
 //
 // P_DeathThink
 // Fall on your face when dying.
@@ -455,30 +409,26 @@ void P_DeathThink(player_t *player) {
   R_SmoothPlaying_Reset(player); // e6y
 }
 
-
-//
-// P_PlayerThink
-//
-
-void P_PlayerThink(int playernum) {
-  player_t *player = &players[playernum];
-
+void PL_Think(player_t *player) {
   if (movement_smooth) {
     player->prev_viewz = player->viewz;
     player->prev_viewangle = R_SmoothPlaying_Get(player) + viewangleoffset;
     player->prev_viewpitch = player->mo->pitch;
 
-    if (&players[displayplayer] == player)
+    if (&players[displayplayer] == player) {
       P_ResetWalkcam();
+    }
   }
 
   // killough 2/8/98, 3/21/98:
-  if (player->cheats & CF_NOCLIP)
+  if (player->cheats & CF_NOCLIP) {
     player->mo->flags |= MF_NOCLIP;
-  else
+  }
+  else {
     player->mo->flags &= ~MF_NOCLIP;
+  }
 
-  if (!PL_RunCommands(playernum)) {
+  if (!PL_RunCommands(player)) {
     return;
   }
 
@@ -492,32 +442,39 @@ void P_PlayerThink(int playernum) {
 
   // Strength counts up to diminish fade.
 
-  if (player->powers[pw_strength])
+  if (player->powers[pw_strength]) {
     player->powers[pw_strength]++;
+  }
 
   // killough 1/98: Make idbeholdx toggle:
 
-  if (player->powers[pw_invulnerability] > 0) // killough
+  if (player->powers[pw_invulnerability] > 0) { // killough
     player->powers[pw_invulnerability]--;
-
-  if (player->powers[pw_invisibility] > 0) {  // killough
-    player->powers[pw_invisibility]--;
-
-    if (!player->powers[pw_invisibility])
-      player->mo->flags &= ~MF_SHADOW;
   }
 
-  if (player->powers[pw_infrared] > 0)        // killough
+  if (player->powers[pw_invisibility] > 0) { // killough
+    player->powers[pw_invisibility]--;
+
+    if (!player->powers[pw_invisibility]) {
+      player->mo->flags &= ~MF_SHADOW;
+    }
+  }
+
+  if (player->powers[pw_infrared] > 0) {      // killough
     player->powers[pw_infrared]--;
+  }
 
-  if (player->powers[pw_ironfeet] > 0)        // killough
+  if (player->powers[pw_ironfeet] > 0) {      // killough
     player->powers[pw_ironfeet]--;
+  }
 
-  if (player->damagecount)
+  if (player->damagecount) {
     player->damagecount--;
+  }
 
-  if (player->bonuscount)
+  if (player->bonuscount) {
     player->bonuscount--;
+  }
 
   // Handling colormaps.
   // killough 3/20/98: reformat to terse C syntax
@@ -655,298 +612,4 @@ bool PL_RunCommand(player_t *player) {
   return true;
 }
 
-
-void P_SetName(int playernum, const char *name) {
-  player_t *player = &players[playernum];
-
-  if (player->name)
-    free((char *)player->name);
-
-  player->name = name;
-}
-
-void P_InitPlayerMessages(int playernum) {
-  players[playernum].messages.messages = g_ptr_array_new_with_free_func(
-    P_DestroyMessage
-  );
-  players[playernum].messages.updated = false;
-}
-
-void P_AddMessage(int playernum, player_message_t *message) {
-  g_ptr_array_add(players[playernum].messages.messages, message);
-  players[playernum].messages.updated = true;
-}
-
-void P_ClearMessagesUpdated(int playernum) {
-  players[playernum].messages.updated = false;
-  P_ClearMessages(playernum);
-}
-
-void P_Printf(int playernum, const char *fmt, ...) {
-  va_list args;
-
-  va_start(args, fmt);
-  add_player_vmessage(playernum, false, false, 0, fmt, args);
-  va_end(args);
-}
-
-void P_VPrintf(int playernum, const char *fmt, va_list args) {
-  add_player_vmessage(playernum, false, false, 0, fmt, args);
-}
-
-void P_Echo(int playernum, const char *message) {
-  add_player_message(playernum, false, false, 0, "%s\n", message);
-}
-
-void P_Write(int playernum, const char *message) {
-  add_player_message(playernum, false, false, 0, "%s", message);
-}
-
-void P_MPrintf(int playernum, const char *fmt, ...) {
-  va_list args;
-
-  va_start(args, fmt);
-  add_player_vmessage(playernum, true, false, 0, fmt, args);
-  va_end(args);
-}
-
-void P_MVPrintf(int playernum, const char *fmt, va_list args) {
-  add_player_vmessage(playernum, true, false, 0, fmt, args);
-}
-
-void P_MEcho(int playernum, const char *message) {
-  add_player_message(playernum, true, false, 0, "%s\n", message);
-}
-
-void P_MWrite(int playernum, const char *message) {
-  add_player_message(playernum, true, false, 0, "%s", message);
-}
-
-void P_SPrintf(int playernum, int sfx, const char *fmt, ...) {
-  va_list args;
-
-  va_start(args, fmt);
-  add_player_vmessage(playernum, false, false, sfx, fmt, args);
-  va_end(args);
-}
-
-void P_SVPrintf(int playernum, int sfx, const char *fmt, va_list args) {
-  add_player_vmessage(playernum, false, false, sfx, fmt, args);
-}
-
-void P_SEcho(int playernum, int sfx, const char *message) {
-  add_player_message(playernum, false, false, sfx, "%s\n", message);
-}
-
-void P_SWrite(int playernum, int sfx, const char *message) {
-  add_player_message(playernum, false, false, sfx, "%s", message);
-}
-
-void P_MSPrintf(int playernum, int sfx, const char *fmt, ...) {
-  va_list args;
-
-  va_start(args, fmt);
-  add_player_vmessage(playernum, true, false, sfx, fmt, args);
-  va_end(args);
-}
-
-void P_MSVPrintf(int playernum, int sfx, const char *fmt, va_list args) {
-  add_player_vmessage(playernum, true, false, sfx, fmt, args);
-}
-
-void P_MSEcho(int playernum, int sfx, const char *message) {
-  add_player_message(playernum, true, false, sfx, "%s\n", message);
-}
-
-void P_MSWrite(int playernum, int sfx, const char *message) {
-  add_player_message(playernum, true, false, sfx, "%s", message);
-}
-
-void P_CenterPrintf(int playernum, const char *fmt, ...) {
-  va_list args;
-
-  va_start(args, fmt);
-  add_player_vmessage(playernum, false, true, 0, fmt, args);
-  va_end(args);
-}
-
-void P_CenterVPrintf(int playernum, const char *fmt, va_list args) {
-  add_player_vmessage(playernum, false, true, 0, fmt, args);
-}
-
-void P_CenterEcho(int playernum, const char *message) {
-  add_player_message(playernum, false, true, 0, "%s\n", message);
-}
-
-void P_CenterWrite(int playernum, const char *message) {
-  add_player_message(playernum, false, true, 0, "%s", message);
-}
-
-void P_CenterMPrintf(int playernum, const char *fmt, ...) {
-  va_list args;
-
-  va_start(args, fmt);
-  add_player_vmessage(playernum, true, true, 0, fmt, args);
-  va_end(args);
-}
-
-void P_CenterMVPrintf(int playernum, const char *fmt, va_list args) {
-  add_player_vmessage(playernum, true, true, 0, fmt, args);
-}
-
-void P_CenterMEcho(int playernum, const char *message) {
-  add_player_message(playernum, true, true, 0, "%s\n", message);
-}
-
-void P_CenterMWrite(int playernum, const char *message) {
-  add_player_message(playernum, true, true, 0, "%s", message);
-}
-
-void P_CenterSPrintf(int playernum, int sfx, const char *fmt, ...) {
-  va_list args;
-
-  va_start(args, fmt);
-  add_player_vmessage(playernum, false, true, sfx, fmt, args);
-  va_end(args);
-}
-
-void P_CenterSVPrintf(int playernum, int sfx, const char *fmt, va_list args) {
-  add_player_vmessage(playernum, false, true, sfx, fmt, args);
-}
-
-void P_CenterSEcho(int playernum, int sfx, const char *message) {
-  add_player_message(playernum, false, true, sfx, "%s\n", message);
-}
-
-void P_CenterSWrite(int playernum, int sfx, const char *message) {
-  add_player_message(playernum, false, true, sfx, "%s", message);
-}
-
-void P_CenterMSPrintf(int playernum, int sfx, const char *fmt, ...) {
-  va_list args;
-
-  va_start(args, fmt);
-  add_player_vmessage(playernum, true, true, sfx, fmt, args);
-  va_end(args);
-}
-
-void P_CenterMSVPrintf(int playernum, int sfx, const char *fmt, va_list args) {
-  add_player_vmessage(playernum, true, true, sfx, fmt, args);
-}
-
-void P_CenterMSEcho(int playernum, int sfx, const char *message) {
-  add_player_message(playernum, true, true, sfx, "%s\n", message);
-}
-
-void P_CenterMSWrite(int playernum, int sfx, const char *message) {
-  add_player_message(playernum, true, true, sfx, "%s", message);
-}
-
-void P_SendMessage(const char *message) {
-  int sfx;
-
-  if (gamemode == commercial)
-    sfx = sfx_radio;
-  else
-    sfx = sfx_tink;
-
-  if (CLIENT) {
-    CL_SendMessage(message);
-  }
-  else if (SERVER) {
-    SV_BroadcastMessage(message);
-  }
-
-  if (players[consoleplayer].name != NULL)
-    P_Printf(consoleplayer, "<%s>: %s\n", players[consoleplayer].name, message);
-  else
-    P_Printf(consoleplayer, "<Player %d>: %s\n", consoleplayer, message);
-
-  S_StartSound(NULL, sfx);
-}
-
-void P_DestroyMessage(gpointer data) {
-  player_message_t *msg = data;
-
-  free(msg->content);
-  free(msg);
-}
-
-void P_ClearMessages(int playernum) {
-  if (players[playernum].messages.messages->len == 0)
-    return;
-
-  g_ptr_array_remove_range(
-    players[playernum].messages.messages,
-    0,
-    players[playernum].messages.messages->len
-  );
-}
-
-void P_SetPlayerName(int playernum, const char *name) {
-  if (!name)
-    return;
-
-  if (!strlen(name))
-    return;
-
-  P_Printf(consoleplayer, "%s is now %s.\n", players[playernum].name, name);
-
-  if (SERVER)
-    SV_BroadcastPrintf("%s is now %s.\n", players[playernum].name, name);
-
-  P_SetName(playernum, strdup(name));
-
-  if (playernum != consoleplayer)
-    return;
-
-  if (CLIENT)
-    CL_SendNameChange(players[playernum].name);
-
-  if (SERVER)
-    SV_BroadcastPlayerNameChanged(playernum, players[playernum].name);
-}
-
-int P_PlayerGetFragCount(int playernum) {
-  int frag_count = 0;
-
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    if (i == playernum) {
-      frag_count -= players[playernum].frags[i];
-    }
-    else {
-      frag_count += players[playernum].frags[i];
-    }
-  }
-
-  return frag_count;
-}
-
-int P_PlayerGetDeathCount(int playernum) {
-  int death_count = 0;
-
-  for (int i = 0; i < MAXPLAYERS; i++) {
-    for (int j = 0; j < MAXPLAYERS; j++) {
-      if (j == playernum) {
-        death_count += players[i].frags[j];
-      }
-    }
-  }
-
-  return death_count;
-}
-
-int P_PlayerGetPing(int playernum) {
-  return players[playernum].ping;
-}
-
-int P_PlayerGetTime(int playernum) {
-  if (!MULTINET) {
-    return gametic / TICRATE;
-  }
-
-  return (gametic - players[playernum].connect_tic) / TICRATE;
-}
-
 /* vi: set et ts=2 sw=2: */
-

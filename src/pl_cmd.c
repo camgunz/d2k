@@ -341,20 +341,19 @@ static netticcmd_t* get_new_blank_command(void) {
 }
 
 void PL_InitCommandQueues(void) {
-  size_t index = 0;
-  player_t *player = NULL;
-
-  if (!blank_command_queue) {
-    blank_command_queue = g_queue_new();
+  if (blank_command_queue) {
+    return;
   }
 
-  while (P_PlayersIter(&index, &player)) {
-    player->cmdq.commands = g_ptr_array_new_with_free_func(recycle_command);
-    player->cmdq.commands_missed = 0;
-    player->cmdq.command_limit = 0;
-    player->cmdq.commands_run_this_tic = 0;
-    player->cmdq.latest_command_run_index = 0;
-  }
+  blank_command_queue = g_queue_new();
+}
+
+void PL_InitCommandQueue(player_t *player) {
+  player->cmdq.commands = g_ptr_array_new_with_free_func(recycle_command);
+  player->cmdq.commands_missed = 0;
+  player->cmdq.command_limit = 0;
+  player->cmdq.commands_run_this_tic = 0;
+  player->cmdq.latest_command_run_index = 0;
 }
 
 size_t PL_GetCommandCount(player_t *player) {
@@ -523,6 +522,118 @@ void PL_BuildCommand(void) {
   if (CLIENT) {
     CL_MarkServerOutdated();
   }
+}
+
+bool PL_RunCommand(player_t *player) {
+  ticcmd_t *cmd = &player->cmd;
+  weapontype_t newweapon;
+
+  /*
+  if (CLIENT && player != &players[consoleplayer]) {
+    D_Msg(MSG_CMD, "(%d) run_player_command: Running command for %td\n",
+      gametic,
+      player - players
+    );
+  }
+  */
+
+  // chain saw run forward
+  if (player->mo->flags & MF_JUSTATTACKED) {
+    cmd->angleturn = 0;
+    cmd->forwardmove = 0xc800 / 512;
+    cmd->sidemove = 0;
+    player->mo->flags &= ~MF_JUSTATTACKED;
+  }
+
+  if (player->playerstate == PST_DEAD) {
+    P_DeathThink(player);
+    return false;
+  }
+
+  if (player->jumpTics) {
+    player->jumpTics--;
+  }
+
+  // Move around.
+  // Reactiontime is used to prevent movement
+  //  for a bit after a teleport.
+  if (player->mo->reactiontime) {
+    player->mo->reactiontime--;
+  }
+  else {
+    P_MovePlayer(player);
+  }
+
+  P_SetPitch(player);
+
+  P_CalcHeight(player); // Determines view height and bobbing
+
+  // Determine if there's anything about the sector you're in that's
+  // going to affect you, like painful floors.
+  if (player->mo->subsector->sector->special) {
+    P_PlayerInSpecialSector(player);
+  }
+
+  // Check for weapon change.
+  if (cmd->buttons & BT_CHANGE) {
+    // The actual changing of the weapon is done
+    //  when the weapon psprite can do it
+    //  (read: not in the middle of an attack).
+
+    newweapon = (cmd->buttons & BT_WEAPONMASK) >> BT_WEAPONSHIFT;
+
+    // killough 3/22/98: For demo compatibility we must perform the fist
+    // and SSG weapons switches here, rather than in G_BuildTiccmd(). For
+    // other games which rely on user preferences, we must use the latter.
+
+    // compatibility mode -- required for old demos -- killough
+    if (demo_compatibility) {
+      //e6y
+      if (!prboom_comp[PC_ALLOW_SSG_DIRECT].state) {
+        newweapon = (cmd->buttons & BT_WEAPONMASK_OLD) >> BT_WEAPONSHIFT;
+      }
+
+      if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
+          (player->readyweapon != wp_chainsaw ||
+           !player->powers[pw_strength])) {
+        newweapon = wp_chainsaw;
+      }
+
+      if (gamemode == commercial &&
+          newweapon == wp_shotgun &&
+          player->weaponowned[wp_supershotgun] &&
+          player->readyweapon != wp_supershotgun) {
+        newweapon = wp_supershotgun;
+      }
+    }
+
+    // killough 2/8/98, 3/22/98 -- end of weapon selection changes
+
+    // Do not go to plasma or BFG in shareware, even if cheated.
+    if (player->weaponowned[newweapon] &&
+        newweapon != player->readyweapon &&
+        ((newweapon != wp_plasma && newweapon != wp_bfg) ||
+         (gamemode != shareware))) {
+      player->pendingweapon = newweapon;
+    }
+  }
+
+  // check for use
+
+  if (cmd->buttons & BT_USE) {
+    if (!player->usedown) {
+      P_UseLines(player);
+      player->usedown = true;
+    }
+  }
+  else {
+    player->usedown = false;
+  }
+
+  // cycle psprites
+  P_MovePsprites(player);
+
+  return true;
 }
 
 bool PL_RunCommands(player_t *player) {

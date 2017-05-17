@@ -21,22 +21,17 @@
 /*****************************************************************************/
 
 
-#ifndef P_PLAYER_H__
-#define P_PLAYER_H__
+#ifndef D_MOUSE_H__
+#define D_MOUSE_H__
 
-void      P_PlayersInit(void);
-uint32_t  P_PlayersGetCount(void);
-bool      P_PlayersIter(size_t *index, player_t **start);
-player_t* P_PlayersGetNew(void);
-player_t* P_PlayersLookup(uint32_t id);
-void      P_PlayerRemove(player_t *player);
-void      P_PlayersSetConsolePlayerID(uint32_t new_console_player_id);
-void      P_PlayersSetDisplayPlayerID(uint32_t new_display_player_id);
-player_t* P_PlayersGetConsolePlayer(void);
-player_t* P_PlayersGetDisplayPlayer(void);
-
-bool PL_IsConsolePlayer(player_t *player);
-bool PL_IsDisplayPlayer(player_t *player);
+bool D_MouseShouldBeGrabbed(void);
+void D_Mouse(int choice, int *sens);      /* killough */
+void D_MouseHoriz(int choice);
+void D_MouseVert(int choice);
+void D_MouseMLook(int choice);
+void D_MouseAccel(int choice);
+void D_MouseScaleAccel(void);
+int  D_MouseAccelerate(int val);
 
 #endif
 
