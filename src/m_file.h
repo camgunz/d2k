@@ -50,6 +50,7 @@ bool        M_IsFolder(const char *path);
 bool        M_IsFile(const char *path);
 bool        M_IsRegularFile(const char *path);
 bool        M_IsSymlink(const char *path);
+bool        M_CheckAccess(const char *path, int flags);
 bool        M_IsFileInFolder(const char *folder, const char *file);
 bool        M_IsRootFolder(const char *path);
 bool        M_IsAbsolutePath(const char *path);
@@ -87,13 +88,19 @@ uint32_t    M_FDLength(int fd);
 FILE*       M_OpenFile(const char *path, const char *mode);
 FILE*       M_OpenFD(int fd, const char *mode);
 bool        M_ReadFile(const char *path, char **data, size_t *size);
+bool        M_ReadFromFile(FILE *f, char *data, size_t member_count,
+                                                size_t member_size);
 bool        M_ReadFileBuf(buf_t *buf, const char *path);
-bool        M_WriteFile(const char* name, const char* source, size_t size);
+bool        M_WriteFile(const char* name, const char *source, size_t size);
+bool        M_WriteToFile(FILE *f, const char *source, size_t member_count,
+                                                       size_t member_size);
 long        M_GetFilePosition(FILE *f);
 bool        M_SeekFile(FILE *f, long int offset, int origin);
 uint32_t    M_FileLength(FILE *f);
 bool        M_FlushFile(FILE *f);
 bool        M_CloseFile(FILE *f);
+int         M_GetFDFromFile(FILE *f);
+
 // killough
 void        M_ExtractFileBase(const char *path, char *dest);
 // killough 1/18/98

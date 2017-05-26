@@ -82,14 +82,14 @@ bool D_ConfigSave(void) {
 
   config_data = X_PopString(X_GetState());
 
-  D_Msg(MSG_INFO, "Saving config to %s\n", config_path);
+  D_MsgLocalInfo("Saving config to %s\n", config_path);
 
   if (!M_WriteFile(config_path, config_data, strlen(config_data))) {
-    D_Msg(MSG_WARN, "Failed to write config: %s\n", M_GetFileError());
+    D_MsgLocalWarn("Failed to write config: %s\n", M_GetFileError());
     return false;
   }
 
-  D_Msg(MSG_INFO, "Config saved\n");
+  D_MsgLocalInfo("Config saved\n");
 
   return true;
 }

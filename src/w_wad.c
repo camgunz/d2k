@@ -23,8 +23,6 @@
 
 #include "z_zone.h"
 
-#include "doomdef.h"
-#include "doomstat.h"
 #include "d_deh.h"
 #include "d_main.h"
 #include "p_user.h"
@@ -537,155 +535,72 @@ void W_ReadLump(int lump, void *dest) {
 
   wadfile = g_ptr_array_index(resource_files, l->wadfile);
 
-  if (wadfile == NULL)
+  if (!wadfile) {
     return;
+  }
 
-  if (!M_Seek(wadfile->handle, l->position, SEEK_SET))
+  if (!M_Seek(wadfile->handle, l->position, SEEK_SET)) {
     I_Error("W_ReadLump: seek failed: %s.\n", M_GetFileError());
+  }
 
-  if (!M_Read(wadfile->handle, dest, l->size))
+  if (!M_Read(wadfile->handle, dest, l->size)) {
     I_Error("W_ReadLump: read failed: %s\n", M_GetFileError());
+  }
 }
 
-void W_AddResource(const char *path, wad_source_t source) {
-  char *wad_ext_path;
-  char *wad_path;
-  char *gwa_ext_path;
-  char *gwa_filepath;
-  int len;
-  wadfile_info_t *wadfile;
-  wadfile_info_t *gwafile;
+void W_InitPWADTable(wadtbl_t *wadtbl) {
+  // init header signature and lookup table offset and size
+  strncpy(wadtbl->header.identification, PWAD_SIGNATURE, 4);
+  wadtbl->header.infotableofs = sizeof(wadtbl->header);
+  wadtbl->header.numlumps = 0;
 
-  wad_ext_path = M_AddDefaultExtension(path, "wad");
+  // clear PWAD lookup table
+  wadtbl->lumps = NULL;
 
-  for (unsigned int i = 0; i < resource_files->len; i++) {
-    wadfile_info_t *wf = g_ptr_array_index(resource_files, i);
-
-    if (strcmp(wad_ext_path, wf->name) == 0) {
-      D_Msg(MSG_INFO, "W_AddResource: Skipping %s (already added).\n", path);
-      free(wad_ext_path);
-      return;
-    }
-  }
-
-  D_Msg(MSG_INFO, "W_AddResource: Searching for %s...\n", wad_ext_path);
-
-  wad_path = I_FindFile(wad_ext_path, NULL);
-
-  if (wad_path == NULL)
-    I_Error(" %s missing (original path: %s)\n", wad_ext_path, path);
-
-  wadfile = malloc(sizeof(wadfile_info_t));
-
-  if (wadfile == NULL)
-    I_Error("W_AddResource: Allocating WAD file info failed");
-
-  wadfile->name = wad_path;
-  wadfile->src = source; // Ty 08/29/98
-  wadfile->handle = 0;
-
-  g_ptr_array_add(resource_files, wadfile);
-
-  // No Rest For The Living
-  len = strlen(wadfile->name);
-  if (len >= 9 && !strnicmp(wadfile->name + len - 9, "nerve.wad", 9)) {
-    if (bfgedition)
-      gamemission = pack_nerve;
-  }
-
-  // proff: automatically try to add the gwa files
-  // proff - moved from w_wad.c
-  gwa_ext_path = M_SetFileExtension(wad_ext_path, "gwa");
-
-  free(wad_ext_path);
-
-  gwa_filepath = I_FindFile(gwa_ext_path, NULL);
-
-  free(gwa_ext_path);
-
-  if (gwa_filepath != NULL) {
-    gwafile = malloc(sizeof(wadfile_info_t));
-
-    if (gwafile == NULL)
-      I_Error("W_AddResource: Allocating GWA file info failed");
-
-    wadfile->name = gwa_filepath;
-    wadfile->src = source; // Ty 08/29/98
-    wadfile->handle = 0;
-
-    g_ptr_array_add(resource_files, wadfile);
-  }
-
-  free(gwa_filepath);
+  // clear PWAD data
+  wadtbl->data = NULL;
+  wadtbl->datasize = 0;
 }
 
-//
-// W_AddDEH
-//
-void W_AddDEH(const char *filename, int lumpnum) {
-  char *deh_path;
-  deh_file_t *dehfile;
-  const char *deh_out = D_dehout();
+void W_FreePWADTable(wadtbl_t *wadtbl) {
+  // clear PWAD lookup table
+  free(wadtbl->lumps);
 
-  if ((!filename) && lumpnum == 0) {
-    I_Error("W_AddDEH: No filename or lumpnum given\n");
+  // clear PWAD data
+  free(wadtbl->data);
+}
+
+void W_AddLump(wadtbl_t *wadtbl, const char *name, const unsigned char *data,
+                                                   size_t size) {
+  int lumpnum;
+
+  if (!wadtbl || (name && strlen(name) > 8)) {
+    I_Error("W_AddLump: wrong parameters.");
+    return;
   }
 
-  if (!filename) {
-    deh_path = NULL;
-  }
-  else {
-    deh_path = I_FindFile(filename, NULL);
+  lumpnum = wadtbl->header.numlumps;
 
-    if (!deh_path) {
-      I_Error("W_AddDEH: Couldn't find %s\n", filename);
-    }
-  }
+  if (name) {
+    wadtbl->lumps = realloc(wadtbl->lumps,
+      (lumpnum + 1) * sizeof(wadtbl->lumps[0])
+    );
 
-  for (unsigned int i = 0; i < deh_files->len; i++) {
-    deh_file_t *stored_deh_file = g_ptr_array_index(deh_files, i);
+    strncpy(wadtbl->lumps[lumpnum].name, name, 8);
+    wadtbl->lumps[lumpnum].size = size;
+    wadtbl->lumps[lumpnum].filepos = wadtbl->header.infotableofs;
 
-    if (!filename) {
-      if (lumpnum == stored_deh_file->lumpnum) {
-        D_Msg(MSG_INFO,
-          "W_AddDEH: Skipping duplicate DeH/BEX (%d)\n", lumpnum
-        );
-        return;
-      }
-      continue;
-    }
-
-    if (!stored_deh_file->filename) {
-      continue;
-    }
-
-    if (strcmp(deh_path, stored_deh_file->filename) == 0) {
-      D_Msg(MSG_INFO, "W_AddDEH: Skipping %s (already added).\n", deh_path);
-      return;
-    }
+    wadtbl->header.numlumps++;
   }
 
-  if (deh_path) {
-    D_Msg(MSG_INFO, "W_AddDEH: Adding %s.\n", deh_path);
-  }
+  if (data && size > 0) {
+    wadtbl->data = realloc(wadtbl->data, wadtbl->datasize + size);
 
-  dehfile = malloc(sizeof(deh_file_t));
+    memcpy(wadtbl->data + wadtbl->datasize, data, size);
+    wadtbl->datasize += size;
 
-  if (!dehfile) {
-    I_Error("W_AddDEH: Error allocating DEH file info");
+    wadtbl->header.infotableofs += size;
   }
-
-  dehfile->filename = deh_path;
-  if (deh_out) {
-    dehfile->outfilename = strdup(deh_out);
-  }
-  else {
-    dehfile->outfilename = NULL;
-  }
-  dehfile->lumpnum = lumpnum;
-
-  g_ptr_array_add(deh_files, dehfile);
 }
 
 /* vi: set et ts=2 sw=2: */
-

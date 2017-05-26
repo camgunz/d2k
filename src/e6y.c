@@ -23,23 +23,31 @@
 
 #include "z_zone.h"
 
+#include "m_argv.h"
+#include "g_demo.h"
+#include "g_game.h"
+#include "r_main.h"
+#include "r_screenmultiply.h"
+#include "v_video.h"
+#include "gl_opengl.h"
+#include "gl_struct.h"
+
+#if 0
 #include <SDL.h>
 #ifdef _WIN32
 #include <SDL_syswm.h>
 #endif
 
-#include "doomdef.h"
-#include "doomstat.h"
-#include "d_event.h"
 #include "d_main.h"
 #include "s_sound.h"
 #include "i_system.h"
 #include "i_main.h"
 #include "sounds.h"
 #include "i_sound.h"
-#include "m_menu.h"
+#include "mn_main.h"
 #include "m_argv.h"
 #include "m_misc.h"
+#include "pl_main.h"
 #include "g_game.h"
 #include "n_main.h"
 #include "i_system.h"
@@ -67,24 +75,16 @@
 #include "d_deh.h"
 #include "e6y.h"
 
+#endif
+
 bool wasWiped = false;
 
 int secretfound;
-int demo_skiptics;
-int demo_playerscount;
-int demo_tics_count;
-int demo_curr_tic;
-char demo_len_st[80];
-
 int avi_shot_time;
 int avi_shot_num;
 const char *avi_shot_fname;
 
 bool doSkip;
-bool demo_stoponnext;
-bool demo_stoponend;
-bool demo_warp;
-
 int speed_step;
 
 int hudadd_gamespeed;
@@ -103,17 +103,10 @@ int hudadd_crosshair_lock_target;
 int movement_strafe50;
 int movement_shorttics;
 int movement_strafe50onturns;
-int movement_mouselook;
-int movement_mouseinvert;
-int movement_maxviewpitch;
-int mouse_handler;
-int mouse_doubleclick_as_use;
 int render_fov;
 int render_multisampling;
 int render_paperitems;
 int render_wipescreen;
-int demo_overwriteexisting;
-
 int showendoom;
 
 int palette_ondamage;
@@ -122,7 +115,6 @@ int palette_onpowers;
 
 camera_t walkcamera;
 
-angle_t viewpitch;
 float skyscale;
 float screen_skybox_zplane;
 float tan_pitch;
@@ -130,10 +122,6 @@ float skyUpAngle;
 float skyUpShift;
 float skyXShift;
 float skyYShift;
-bool mlook_or_fov;
-
-int maxViewPitch;
-int minViewPitch;
 
 #ifdef _WIN32
 const char* WINError(void)
@@ -229,16 +217,21 @@ prboom_comp_t prboom_comp[PC_MAX] = {
   {0x00000000, 0x02050104, 0, "-reset_monsterspawner_params_after_loading"},
 };
 
-void e6y_InitCommandLine(void)
-{
+void e6y_InitCommandLine(void) {
   int p;
 
-  if ((p = M_CheckParm("-skipsec")) && (p < myargc-1))
+  if ((p = M_CheckParm("-skipsec")) && (p < myargc - 1)) {
     demo_skiptics = (int)(atof(myargv[p + 1]) * 35);
-  if ((IsDemoPlayback() || IsDemoContinue()) && (startmap > 1 || demo_skiptics))
+  }
+
+  if ((IsDemoPlayback() || IsDemoContinue()) &&
+      (startmap > 1 || demo_skiptics)) {
     G_SkipDemoStart();
-  if ((p = M_CheckParm("-avidemo")) && (p < myargc-1))
+  }
+
+  if ((p = M_CheckParm("-avidemo")) && (p < myargc - 1)) {
     avi_shot_fname = myargv[p + 1];
+  }
 
   // TAS-tracers
   InitTracers();
@@ -246,229 +239,22 @@ void e6y_InitCommandLine(void)
   shorttics = movement_shorttics || M_CheckParm("-shorttics");
 }
 
-static bool saved_fastdemo;
-static bool saved_nodrawers;
-static bool saved_nosfxparm;
-static bool saved_nomusicparm;
-static int saved_render_precise;
-
-void G_SkipDemoStart(void)
-{
-  saved_fastdemo = fastdemo;
-  saved_nodrawers = nodrawers;
-  saved_nosfxparm = nosfxparm;
-  saved_nomusicparm = nomusicparm;
-  saved_render_precise = render_precise;
-
-  paused = false;
-  
-  doSkip = true;
-
-  S_StopMusic();
-  fastdemo = true;
-  nodrawers = true;
-  nosfxparm = true;
-  nomusicparm = true;
-
-  render_precise = render_precise_speed;
-  M_ChangeRenderPrecise();
-
-  I_Init2();
-}
-
-void G_SkipDemoStop(void)
-{
-  fastdemo = saved_fastdemo;
-  nodrawers = saved_nodrawers;
-  nosfxparm = saved_nosfxparm;
-  nomusicparm = saved_nomusicparm;
-  
-  render_precise = saved_render_precise;
-  M_ChangeRenderPrecise();
-
-  demo_stoponnext = false;
-  demo_stoponend = false;
-  demo_warp = false;
-  doSkip = false;
-  demo_skiptics = 0;
-  startmap = 0;
-
-  I_Init2();
-  if (!sound_inited_once && !(nomusicparm && nosfxparm))
-  {
-    I_InitSound();
-  }
-  S_Init(snd_SfxVolume, snd_MusicVolume);
-  S_Stop();
-  S_RestartMusic();
-
-#ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL) {
-    gld_PreprocessLevel();
-  }
-#endif
-}
-
-void G_SkipDemoCheck(void)
-{
-  if (doSkip && gametic > 0)
-  {
-    if (((startmap <= 1) && 
-         (gametic > demo_skiptics + (demo_skiptics > 0 ? 0 : demo_tics_count))) ||
-        (demo_warp && gametic - levelstarttic > demo_skiptics))
-     {
-       G_SkipDemoStop();
-     }
-  }
-}
-
-int G_ReloadLevel(void)
-{
-  int result = false;
-
-  if ((gamestate == GS_LEVEL) &&
-      !deathmatch && !netgame &&
-      !demorecording && !demoplayback &&
-      !menuactive)
-  {
-    G_DeferedInitNew(gameskill, gameepisode, gamemap);
-    result = true;
-  }
-
-  return result;
-}
-
-int G_GotoNextLevel(void)
-{
-  static unsigned char doom2_next[33] = {
-    2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-    12, 13, 14, 15, 31, 17, 18, 19, 20, 21,
-    22, 23, 24, 25, 26, 27, 28, 29, 30, 1,
-    32, 16, 3
-  };
-  static unsigned char doom_next[4][9] = {
-    {12, 13, 19, 15, 16, 17, 18, 21, 14},
-    {22, 23, 24, 25, 29, 27, 28, 31, 26},
-    {32, 33, 34, 35, 36, 39, 38, 41, 37},
-    {42, 49, 44, 45, 46, 47, 48, 11, 43}
-  };
-
-  int changed = false;
-
-  // secret level
-  doom2_next[14] = (haswolflevels ? 31 : 16);
-  
-  if (bfgedition && SINGLEPLAYER) {
-    if (gamemission == pack_nerve) {
-      doom2_next[3] = 9;
-      doom2_next[7] = 1;
-      doom2_next[8] = 5;
-    }
-    else {
-      doom2_next[1] = 33;
-    }
-  }
-
-  // shareware doom has only episode 1
-  doom_next[0][7] = (gamemode == shareware ? 11 : 21);
-  
-  doom_next[2][7] = ((gamemode == registered) ||
-    // the fourth episode for pre-ultimate complevels is not allowed.
-    (compatibility_level < ultdoom_compatibility) ?
-    11 : 41);
-  
-  if ((gamestate == GS_LEVEL) &&
-      !deathmatch && !netgame &&
-      !demorecording && !demoplayback &&
-      !menuactive)
-  {
-    //doom2_next and doom_next are 0 biased, unlike gameepisode and gamemap
-    int epsd = gameepisode - 1;
-    int map = gamemap - 1;
-
-    if (gamemode == commercial)
-    {
-      epsd = 1;
-      map = doom2_next[BETWEEN(0, 32, map)];
-    }
-    else
-    {
-      int next = doom_next[BETWEEN(0, 3, epsd)][BETWEEN(0, 9, map)];
-      epsd = next / 10;
-      map = next % 10;
-    }
-
-    G_DeferedInitNew(gameskill, epsd, map);
-    changed = true;
-  }
-
-  return changed;
-}
-
-void M_ChangeSpeed(void)
-{
+void M_ChangeSpeed(void) {
   G_SetSpeed();
 }
 
-void M_ChangeMouseLook(void)
-{
-  viewpitch = 0;
-
-  R_InitSkyMap();
-
+void M_ChangeRenderPrecise(void) {
 #ifdef GL_DOOM
-  if (gl_skymode == skytype_auto)
-    gl_drawskys = (movement_mouselook ? skytype_skydome : skytype_standard);
-  else
-    gl_drawskys = gl_skymode;
-#endif // GL_DOOM
-}
-
-void M_ChangeMouseInvert(void)
-{
-}
-
-void M_ChangeMaxViewPitch(void)
-{
-  int max_up, max_dn, angle_up, angle_dn;
-  
-  if (V_GetMode() == VID_MODEGL)
-  {
-    max_up = movement_maxviewpitch;
-    max_dn = movement_maxviewpitch;
-  }
-  else
-  {
-    max_up = MIN(movement_maxviewpitch, 61);
-    max_dn = MIN(movement_maxviewpitch, 36);
-  }
-
-  angle_up = (int)((float)max_up / 45.0f * ANG45);
-  angle_dn = (int)((float)max_dn / 45.0f * ANG45);
-
-  maxViewPitch = (+angle_up - (1<<ANGLETOFINESHIFT));
-  minViewPitch = (-angle_dn + (1<<ANGLETOFINESHIFT));
-
-  viewpitch = 0;
-}
-
-void M_ChangeRenderPrecise(void)
-{
-#ifdef GL_DOOM
-  if (V_GetMode() != VID_MODEGL)
-  {
+  if (V_GetMode() != VID_MODEGL) {
     gl_seamless = false;
     return;
   }
-  else
-  {
-    if (render_precise)
-    {
+  else {
+    if (render_precise) {
       gl_seamless = true;
       gld_InitVertexData();
     }
-    else
-    {
+    else {
       gl_seamless = false;
       gld_CleanVertexData();
     }
@@ -476,35 +262,14 @@ void M_ChangeRenderPrecise(void)
 #endif // GL_DOOM
 }
 
-void M_ChangeScreenMultipleFactor(void)
-{
+void M_ChangeScreenMultipleFactor(void) {
   V_ChangeScreenResolution();
 }
 
-void M_ChangeInterlacedScanning(void)
-{
-  if (render_interlaced_scanning)
+void M_ChangeInterlacedScanning(void) {
+  if (render_interlaced_scanning) {
     interlaced_scanning_requires_clearing = 1;
-}
-
-bool GetMouseLook(void)
-{
-  return movement_mouselook;
-}
-bool HaveMouseLook(void)
-{
-  return (viewpitch != 0);
-}
-
-void CheckPitch(signed int *pitch)
-{
-  if(*pitch > maxViewPitch)
-    *pitch = maxViewPitch;
-  if(*pitch < minViewPitch)
-    *pitch = minViewPitch;
-
-  (*pitch) >>= 16;
-  (*pitch) <<= 16;
+  }
 }
 
 int render_aspect;
@@ -513,8 +278,7 @@ float render_fovratio;
 float render_fovy = FOV90;
 float render_multiplier;
 
-void M_ChangeAspectRatio(void)
-{
+void M_ChangeAspectRatio(void) {
   extern int screenblocks;
 
 #ifdef GL_DOOM
@@ -524,8 +288,7 @@ void M_ChangeAspectRatio(void)
   R_SetViewSize(screenblocks);
 }
 
-void M_ChangeStretch(void)
-{
+void M_ChangeStretch(void) {
   extern int screenblocks;
 
   render_stretch_hud = render_stretch_hud_default;
@@ -538,8 +301,7 @@ void M_ChangeMultiSample(void)
 {
 }
 
-void M_ChangeFOV(void)
-{
+void M_ChangeFOV(void) {
   float f1, f2;
   int p;
   int render_aspect_width, render_aspect_height;
@@ -650,7 +412,6 @@ void M_ChangeTextureHQResize(void)
 }
 #endif //GL_DOOM
 
-float viewPitch;
 bool transparentpresent;
 
 int StepwiseSum(int value, int direction, int step, int minval, int maxval, int defval)
@@ -758,8 +519,6 @@ HWND WIN32_GetHWND(void)
   return Window;
 }
 #endif
-
-int mlooky = 0;
 
 void e6y_G_Compatibility(void)
 {

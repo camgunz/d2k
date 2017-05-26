@@ -30,7 +30,6 @@
 #include "config.h"
 #endif
 
-#include "doomdef.h"
 #include "dstrings.h"
 #include "d_main.h"
 #include "m_fixed.h"

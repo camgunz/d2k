@@ -20,29 +20,14 @@
 /*                                                                           */
 /*****************************************************************************/
 
+
 #include "z_zone.h"
 
-#include "doomdef.h"
-#include "doomstat.h"
+#include "n_http.h"
 
-#include "p_setup.h"
-#include "p_mobj.h"
-#include "r_defs.h"
-#include "tables.h"
-#include "w_wad.h"
-#include "r_demo.h"
-#include "v_video.h"
-#include "x_intern.h"
-#include "x_main.h"
-
-#include "gl_opengl.h"
-#include "gl_struct.h"
-
-void XR_DemoRegisterInterface(void) {
-  X_RegisterObjects("Demo", 1,
-    "smooth_playing_max_factor", X_INTEGER, SMOOTH_PLAYING_MAXFACTOR
-  );
+/* [CG] TODO: Add WAD fetching (waiting on libcurl) */
+bool N_GetWad(const char *name) {
+  return false;
 }
 
 /* vi: set et ts=2 sw=2: */
-

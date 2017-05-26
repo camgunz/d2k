@@ -33,7 +33,7 @@ typedef struct {
   int  sitems;
   int  ssecret;
   int  stime;
-  int  frags[MAXPLAYERS];
+  int  frags[VANILLA_MAXPLAYERS];
   int  score;                 // current score on entry, modified on return
 } wbplayerstruct_t;
 

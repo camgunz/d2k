@@ -46,7 +46,7 @@ static uds_peer_t* uds_add_peer(uds_t *uds, GSocketAddress *address) {
   gchar *address_string = socket_address_to_string(address);
 
   if (g_hash_table_contains(uds->peer_directory, address_string)) {
-    D_Msg(MSG_WARN, "Peer at %s already exists!\n", address_string);
+    D_MsgLocalWarn("Peer at %s already exists!\n", address_string);
     g_free(address_string);
     return NULL;
   }
@@ -54,7 +54,7 @@ static uds_peer_t* uds_add_peer(uds_t *uds, GSocketAddress *address) {
   peer = g_malloc0(sizeof(uds_peer_t));
 
   if (!peer) {
-    D_Msg(MSG_ERROR, "Error allocating UDS peer\n");
+    D_MsgLocalError("Error allocating UDS peer\n");
     exit(EXIT_FAILURE);
   }
 
@@ -66,7 +66,7 @@ static uds_peer_t* uds_add_peer(uds_t *uds, GSocketAddress *address) {
   g_hash_table_insert(uds->peer_directory, address_string, peer);
   g_ptr_array_add(uds->peers, peer);
 
-  // D_Msg(MSG_WARN, "Added peer at %s\n", address_string);
+  // D_MsgLocalWarn("Added peer at %s\n", address_string);
 
   return peer;
 }
@@ -81,7 +81,7 @@ static void uds_check_for_connection(uds_t *uds) {
   GError *error = NULL;
 
   if (!g_socket_check_connect_result(uds->socket, &error)) {
-    D_Msg(MSG_ERROR, "Error connecting: %s\n", error->message);
+    D_MsgLocalError("Error connecting: %s\n", error->message);
     exit(EXIT_FAILURE);
   }
 
@@ -101,7 +101,7 @@ static gboolean uds_read_data(uds_t *uds) {
   message_size = g_socket_get_available_bytes(uds->socket);
 
   if (message_size == -1) {
-    D_Msg(MSG_ERROR, "Error getting message size from UDS\n");
+    D_MsgLocalError("Error getting message size from UDS\n");
     return false;
   }
 
@@ -113,17 +113,17 @@ static gboolean uds_read_data(uds_t *uds) {
   );
 
   if (!address) {
-    D_Msg(MSG_ERROR, "Client socket not bound\n");
+    D_MsgLocalError("Client socket not bound\n");
     return false;
   }
 
   if (bytes_read == -1) {
-    D_Msg(MSG_ERROR, "Error getting message from UDS: %s\n", error->message);
+    D_MsgLocalError("Error getting message from UDS: %s\n", error->message);
     return false;
   }
 
   if (bytes_read == 0) {
-    D_Msg(MSG_ERROR, "Connection closed\n");
+    D_MsgLocalError("Connection closed\n");
     return false;
   }
 
@@ -165,7 +165,7 @@ static gboolean uds_write_data(uds_peer_t *peer) {
 
   if (bytes_written < 0) {
     if (error->code != G_IO_ERROR_WOULD_BLOCK) {
-      D_Msg(MSG_INFO, "Disconnecting client: %s\n", error->message);
+      D_MsgLocalInfo("Disconnecting client: %s\n", error->message);
       peer->disconnected = true;
       return false;
     }
@@ -195,7 +195,7 @@ static gboolean uds_read_oob(uds_t *uds) {
   oob_size = g_socket_get_available_bytes(uds->socket);
 
   if (oob_size == -1) {
-    D_Msg(MSG_ERROR, "Error getting oob size from UDS\n");
+    D_MsgLocalError("Error getting oob size from UDS\n");
     return false;
   }
 
@@ -211,7 +211,7 @@ static gboolean uds_read_oob(uds_t *uds) {
   );
 
   if (bytes_read == -1) {
-    D_Msg(MSG_ERROR, "Error getting oob from UDS: %s\n", error->message);
+    D_MsgLocalError("Error getting oob from UDS: %s\n", error->message);
     return false;
   }
 
@@ -346,21 +346,21 @@ void N_UDSInit(uds_t *uds, const gchar *socket_path,
   );
 
   if (!uds->socket) {
-    D_Msg(MSG_ERROR, "Error creating UDS: %s\n", error->message);
+    D_MsgLocalError("Error creating UDS: %s\n", error->message);
     exit(EXIT_FAILURE);
   }
 
   if (g_file_test(uds->socket_path, G_FILE_TEST_EXISTS)) {
     if (g_file_test(uds->socket_path, G_FILE_TEST_IS_DIR |
                                       G_FILE_TEST_IS_SYMLINK)) {
-      D_Msg(MSG_ERROR, "UDS file [%s] exists, but isn't a file\n",
+      D_MsgLocalError("UDS file [%s] exists, but isn't a file\n",
         uds->socket_path
       );
       exit(EXIT_FAILURE);
     }
 
     if (g_unlink(uds->socket_path) == -1) {
-      D_Msg(MSG_ERROR, "Error removing stale socket %s: %s\n",
+      D_MsgLocalError("Error removing stale socket %s: %s\n",
         uds->socket_path, strerror(errno)
       );
       exit(EXIT_FAILURE);
@@ -370,7 +370,7 @@ void N_UDSInit(uds_t *uds, const gchar *socket_path,
   error = NULL;
 
   if (!g_initable_init((GInitable *)uds->socket, NULL, &error)) {
-    D_Msg(MSG_ERROR, "Error initializing UDS: %s\n", error->message);
+    D_MsgLocalError("Error initializing UDS: %s\n", error->message);
     exit(EXIT_FAILURE);
   }
 
@@ -381,7 +381,7 @@ void N_UDSInit(uds_t *uds, const gchar *socket_path,
   bound = g_socket_bind(uds->socket, socket_address, false, &error);
 
   if (!bound) {
-    D_Msg(MSG_ERROR, "Error binding UDS to %s: %s\n",
+    D_MsgLocalError("Error binding UDS to %s: %s\n",
       uds->socket_path,
       error->message
     );
@@ -422,7 +422,7 @@ void N_UDSFree(uds_t *uds) {
   GError *error = NULL;
 
   if (!g_socket_close(uds->socket, &error)) {
-    D_Msg(MSG_ERROR, "Error closing UDS: %s\n", error->message);
+    D_MsgLocalError("Error closing UDS: %s\n", error->message);
     exit(EXIT_FAILURE);
   }
 
@@ -430,7 +430,7 @@ void N_UDSFree(uds_t *uds) {
 
   if (g_file_test(uds->socket_path, G_FILE_TEST_EXISTS)) {
     if (g_unlink(uds->socket_path) == -1) {
-      D_Msg(MSG_ERROR, "Error removing UDS file: %s\n", strerror(errno));
+      D_MsgLocalError("Error removing UDS file: %s\n", strerror(errno));
       exit(EXIT_FAILURE);
     }
   }
@@ -450,7 +450,7 @@ void N_UDSConnect(uds_t *uds, const gchar *socket_path) {
   GError *error = NULL;
 
   if (!g_socket_connect(uds->socket, socket_address, NULL, &error)) {
-    D_Msg(MSG_ERROR, "%s", error->message);
+    D_MsgLocalError("%s", error->message);
     exit(EXIT_FAILURE);
   }
 

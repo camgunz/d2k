@@ -24,6 +24,36 @@
 #ifndef PL_WEAP_H__
 #define PL_WEAP_H__
 
+struct player_s;
+typedef struct player_s player_t;
+
+// The defined weapons, including a marker
+// indicating user has not changed weapon.
+typedef enum {
+  wp_fist,
+  wp_pistol,
+  wp_shotgun,
+  wp_chaingun,
+  wp_missile,
+  wp_plasma,
+  wp_bfg,
+  wp_chainsaw,
+  wp_supershotgun,
+
+  NUMWEAPONS,
+  wp_nochange              // No pending weapon change.
+} weapontype_t;
+
+// Ammunition types defined.
+typedef enum {
+  am_clip,    // Pistol / chaingun ammo.
+  am_shell,   // Shotgun / double barreled shotgun.
+  am_cell,    // Plasma rifle, BFG.
+  am_misl,    // Missile launcher.
+  NUMAMMO,
+  am_noammo   // Unlimited for chainsaw / fist.
+} ammotype_t;
+
 typedef enum {
   WSOP_NONE   = 0,
   WSOP_WEAPON = 1,
@@ -31,12 +61,26 @@ typedef enum {
   WSOP_MAX    = 4,
 } wsop_e;
 
+/* Weapon info: sprite frames, ammunition use. */
+typedef struct {
+  ammotype_t  ammo;
+  int         upstate;
+  int         downstate;
+  int         readystate;
+  int         atkstate;
+  int         flashstate;
+
+} weaponinfo_t;
+
+extern weaponinfo_t weaponinfo[NUMWEAPONS + 2];
+extern int ammopershot[NUMWEAPONS + 2];
+
 extern int weapon_preferences[2][NUMWEAPONS + 1]; /* killough 5/2/98 */
 
-int  P_WeaponPreferred(int w1, int w2);
-int  P_SwitchWeapon(player_t *player);
-bool P_CheckAmmo(player_t *player);
-void P_DropWeapon(player_t *player);
+int  PL_SwitchWeapon(player_t *player);
+int  PL_WeaponPreferred(int w1, int w2);
+bool PL_CheckAmmo(player_t *player);
+void PL_DropWeapon(player_t *player);
 
 #endif
 

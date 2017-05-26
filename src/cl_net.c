@@ -23,20 +23,19 @@
 
 #include "z_zone.h"
 
-#include "doomdef.h"
-#include "doomstat.h"
+
+#include "d_msg.h"
 #include "g_game.h"
 #include "g_state.h"
-#include "n_main.h"
-#include "pl_main.h"
-#include "pl_cmd.h"
-#include "pl_msg.h"
-#include "p_setup.h"
 #include "p_mobj.h"
-#include "r_defs.h"
-#include "r_state.h"
+#include "pl_cmd.h"
+#include "pl_main.h"
 #include "r_fps.h"
 #include "s_sound.h"
+#include "n_main.h"
+#include "n_msg.h"
+#include "n_proto.h"
+#include "n_peer.h"
 #include "cl_cmd.h"
 #include "cl_net.h"
 
@@ -102,11 +101,9 @@ static void cl_clear_repredicting(void) {
 static bool cl_load_new_state(netpeer_t *server) {
   game_state_delta_t *delta = N_PeerGetSyncStateDelta(server);
   bool state_loaded;
-  size_t index = 0;;
-  player_t *player;
 
   if (!G_ApplyStateDelta(delta)) {
-    PL_Echo(P_GetConsolePlayer(), "Error applying state delta");
+    D_MsgLocalError("Error applying state delta");
     return false;
   }
 
@@ -115,7 +112,7 @@ static bool cl_load_new_state(netpeer_t *server) {
   cl_loading_state = false;
 
   if (!state_loaded) {
-    PL_Echo(P_GetConsolePlayer(), "Error loading latest state");
+    D_MsgLocalError("Error loading latest state");
     return false;
   }
 
@@ -126,27 +123,27 @@ static bool cl_load_new_state(netpeer_t *server) {
   cl_loading_state = false;
 
   if (!state_loaded) {
-    PL_Echo(P_GetConsolePlayer(), "Error loading previous state");
+    D_MsgLocalError("Error loading previous state");
     return false;
   }
 
-  while (P_PlayersIter(&index, &player)) {
-    if (player->cmdq.commands->len) {
-      D_Msg(MSG_SYNC, "(%d) (%zu) [ ", gametic, index);
+  PLAYERS_FOR_EACH(iter) {
+    if (iter.player->cmdq.commands->len) {
+      N_MsgSyncLocalDebug("(%d) (%u) [ ", gametic, iter.player->id);
 
-      for (size_t i = 0; i < player->cmdq.commands->len; i++) {
-        idxticcmd_t *icmd = g_ptr_array_index(player->cmdq.commands, i);
+      for (size_t i = 0; i < iter.player->cmdq.commands->len; i++) {
+        idxticcmd_t *icmd = g_ptr_array_index(iter.player->cmdq.commands, i);
 
-        D_Msg(MSG_SYNC, "%d/%d/%d ", icmd->index, icmd->tic, icmd->server_tic);
+        N_MsgSyncLocalDebug("%d/%d/%d ", icmd->index, icmd->tic, icmd->server_tic);
       }
 
-      D_Msg(MSG_SYNC, "]\n");
+      N_MsgSyncLocalDebug("]\n");
     }
   }
 
   cl_synchronizing = true;
 
-  D_Msg(MSG_SYNC, "Synchronizing %d => %d\n",
+  N_MsgSyncLocalDebug("Synchronizing %d => %d\n",
     gametic, N_PeerGetSyncTIC(server)
   );
 
@@ -164,19 +161,19 @@ static bool cl_load_new_state(netpeer_t *server) {
   cl_synchronizing = false;
 
   if (gametic != N_PeerGetSyncTIC(server) + 1) {
-    D_Msg(MSG_WARN, "Synchronization incomplete: %d, %d\n",
+    D_MsgLocalWarn("Synchronization incomplete: %d, %d\n",
       gametic, N_PeerGetSyncTIC(server)
     );
   }
 
-  D_Msg(MSG_CMD, "Ran sync'd commands, loading latest state\n");
+  N_MsgCmdLocalDebug("Ran sync'd commands, loading latest state\n");
 
   cl_loading_state = true;
   state_loaded = G_LoadLatestState(false);
   cl_loading_state = false;
 
   if (!state_loaded) {
-    PL_Echo(P_GetConsolePlayer(), "Error loading latest state");
+    D_MsgLocalError("Error loading latest state");
     return false;
   }
 
@@ -213,7 +210,7 @@ void CL_CheckForStateUpdates(void) {
   server = CL_GetServerPeer();
 
   if (!server) {
-    PL_Echo(P_GetConsolePlayer(), "Server disconnected");
+    D_MsgLocalError("Server disconnected");
     N_Disconnect(DISCONNECT_REASON_LOST_PEER_CONNECTION);
     return;
   }
@@ -226,7 +223,7 @@ void CL_CheckForStateUpdates(void) {
   saved_state_delta_from_tic = N_PeerGetSyncStateDelta(server)->from_tic;
   saved_state_delta_to_tic = N_PeerGetSyncStateDelta(server)->to_tic;
 
-  D_Msg(MSG_SYNC, "(%d) Loading new state [%d, %d => %d] (%d)\n",
+  N_MsgSyncLocalDebug("(%d) Loading new state [%d, %d => %d] (%d)\n",
     gametic,
     N_PeerGetSyncCommandIndex(server),
     saved_state_delta_from_tic,
@@ -250,10 +247,10 @@ void CL_CheckForStateUpdates(void) {
 
   CL_TrimSynchronizedCommands();
 
-  D_Msg(MSG_SYNC,
-    "(%d): %d: {%4d/%4d/%4d %4d/%4d/%4d %4d %4d/%4d/%4d/%4d %4d/%4u/%4u}\n", 
+  N_MsgSyncLocalDebug(
+    "(%d): %u: {%4d/%4d/%4d %4d/%4d/%4d %4d %4d/%4d/%4d/%4d %4d/%4u/%4u}\n", 
     gametic,
-    consoleplayer,
+    P_GetConsolePlayer()->id,
     P_GetConsolePlayer()->mo->x           >> FRACBITS,
     P_GetConsolePlayer()->mo->y           >> FRACBITS,
     P_GetConsolePlayer()->mo->z           >> FRACBITS,
@@ -274,7 +271,7 @@ void CL_CheckForStateUpdates(void) {
   if (LOG_SECTOR < numsectors) {
     if (sectors[LOG_SECTOR].floorheight != (168 << FRACBITS) &&
         sectors[LOG_SECTOR].floorheight != (40 << FRACBITS)) {
-      D_Msg(MSG_SYNC, "(%d) Sector %d: %d/%d\n",
+      N_MsgSyncLocalDebug("(%d) Sector %d: %d/%d\n",
         gametic,
         LOG_SECTOR,
         sectors[LOG_SECTOR].floorheight >> FRACBITS,
@@ -398,7 +395,7 @@ void CL_RePredict(int saved_gametic) {
     player->cmdq.latest_command_run_index, latest_command_index
   );
 
-  D_Msg(MSG_SYNC, "Re-predicting %u => %u (%d)\n",
+  N_MsgSyncLocalDebug("Re-predicting %u => %u (%d)\n",
     player->cmdq.latest_command_run_index,
     latest_command_index,
     latest_command_index - player->cmdq.latest_command_run_index
@@ -433,16 +430,14 @@ void CL_SetNeedsInitNew(void) {
 }
 
 void CL_ResetSync(void) {
-  size_t index = 0;
-  player_t *player = NULL;
   netpeer_t *server = CL_GetServerPeer();
 
   cl_state_tic = -1;
   cl_repredicting_start_tic = 0;
   cl_repredicting_end_tic = 0;
 
-  while (P_PlayersIter(&index, &player)) {
-    PL_ResetCommands(player);
+  PLAYERS_FOR_EACH(iter) {
+    PL_ResetCommands(iter.player);
   }
 
   G_ClearStates();

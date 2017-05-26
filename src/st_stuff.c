@@ -23,10 +23,7 @@
 
 #include "z_zone.h"
 
-#include "doomdef.h"
-#include "doomstat.h"
 #include "dstrings.h"
-#include "d_event.h"
 #include "am_map.h"
 #include "d_items.h"
 #include "e6y.h"

@@ -22,7 +22,6 @@
 
 #include "z_zone.h"
 
-#include "doomdef.h"
 #include "v_video.h"
 #include "gl_opengl.h"
 #include "gl_intern.h"

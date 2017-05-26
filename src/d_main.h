@@ -29,8 +29,6 @@ typedef struct event_s event_t;
 
 /* CPhipps - removed wadfiles[] stuff to w_wad.h */
 
-extern char *basesavegame;      // killough 2/16/98: savegame path
-
 //jff 1/24/98 make command line copies of play modes available
 extern bool clnomonsters; // checkparm of -nomonsters
 extern bool clrespawnparm;  // checkparm of -respawn
@@ -41,11 +39,27 @@ extern bool nosfxparm;
 extern bool nomusicparm;
 extern int ffmap;
 
+// Set if homebrew PWAD stuff has been added.
+extern bool modifiedgame;
+
+// -------------------------------------------
+// Language.
+
+/* Identify language to use, software localization. */
+typedef enum {
+  english,
+  french,
+  german,
+  unknown
+} Language_e;
+
+extern Language_e language;
+extern bool advancedemo;
+
 // Called by IO functions when input is detected.
-void D_PostEvent(event_t* ev);
+void D_PostEvent(event_t *ev);
 
 // Demo stuff
-extern bool advancedemo;
 void D_AdvanceDemo(void);
 void D_DoAdvanceDemo (void);
 
@@ -59,23 +73,8 @@ void        D_StartTitle(void);
 bool        D_Wiping(void);
 bool        D_Responder(event_t *ev);
 void        D_DoomMain(void);
-void        AddIWAD(const char *iwad);
-void        D_SetIWAD(const char *iwad);
-const char* D_GetIWAD(void);
-const char* D_GetIWADPath(void);
-void        D_ClearIWAD(void);
-void        D_ClearResourceFiles(void);
-void        D_ClearDEHFiles(void);
-void        CheckIWAD(const char *iwadname, GameMode_t *gmode, bool *hassec);
 void        IdentifyVersion(void);
-
-/* cph - MBF-like wad/deh/bex autoload code */
-/* proff 2001/7/1 - added prboom.wad as last entry so it's always loaded and
-   doesn't overlap with the cfg settings */
-#define MAXLOADFILES 3
-extern const char *wad_file_names[MAXLOADFILES], *deh_file_names[MAXLOADFILES];
 
 #endif
 
 /* vi: set et ts=2 sw=2: */
-

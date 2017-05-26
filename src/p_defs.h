@@ -21,25 +21,8 @@
 /*****************************************************************************/
 
 
-#ifndef P_SETUP_H__
-#define P_SETUP_H__
-
-void P_SetupLevel(int episode, int map, int playermask, skill_t skill);
-void P_Init(void);               /* Called by startup code. */
-
-extern const unsigned char *rejectmatrix;   /* for fast sight rejection -  cph - const* */
-
-/* killough 3/1/98: change blockmap from "short" to "long" offsets: */
-extern int      *blockmaplump; /* offsets in blockmap are from here */
-extern int      *blockmap;
-extern int       bmapwidth;
-extern int       bmapheight;   /* in mapblocks */
-extern fixed_t   bmaporgx;
-extern fixed_t   bmaporgy;     /* origin of block map */
-
-// MAES: extensions to support 512x512 blockmaps.
-extern int blockmapxneg;
-extern int blockmapyneg;
+#ifndef P_DEFS_H__
+#define P_DEFS_H__
 
 //
 // Map level types.
@@ -246,15 +229,6 @@ typedef struct mapthing_s {
   short options;
 } PACKEDATTR mapthing_t;
 
-extern  mapthing_t *deathmatchstarts;     // killough
-extern  size_t     num_deathmatchstarts; // killough
-extern  size_t     num_playerstarts;
-
-extern  mapthing_t *deathmatch_p;
-
-// Player spawn spots.
-extern  mapthing_t playerstarts[];
-
 #ifdef _MSC_VER
 #pragma pack(pop)
 #endif //_MSC_VER
@@ -262,4 +236,3 @@ extern  mapthing_t playerstarts[];
 #endif
 
 /* vi: set et ts=2 sw=2: */
-

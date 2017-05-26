@@ -25,8 +25,6 @@
 
 #include <SDL.h>
 
-#include "doomdef.h"
-
 #include "sounds.h"
 #include "i_pcsound.h"
 #include "i_sound.h"

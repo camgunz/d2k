@@ -332,7 +332,6 @@ OPTION(
   "Perform ID checks on zone blocks to detect corrupted and illegally freed blocks"
   OFF
 )
-OPTION(GL_DOOM "Build with OpenGL support" ON)
 CMAKE_DEPENDENT_OPTION(USE_GLU_IMAGESCALE "Use gluImageScale" OFF USE_GLU OFF)
 CMAKE_DEPENDENT_OPTION(USE_GLU_MIPMAP "Use gluBuild2DMipmaps" OFF USE_GLU OFF)
 CMAKE_DEPENDENT_OPTION(USE_GLU_TESS "Use gluTesselator" OFF USE_GLU OFF)
@@ -610,11 +609,7 @@ FIND_PACKAGE(OpenGL)
 IF(OPENGL_FOUND)
   INCLUDE_DIRECTORIES(${OPENGL_INCLUDE_DIR})
 ELSE()
-  IF(GL_DOOM)
-    MESSAGE(FATAL_ERROR "OpenGL not found")
-  ELSE()
-    MESSAGE(WARNING "OpenGL not found")
-  ENDIF()
+  MESSAGE(FATAL_ERROR "OpenGL not found")
 ENDIF()
 
 FIND_PACKAGE(LZMA)
@@ -756,8 +751,6 @@ CONFIGURE_FILE(
 #==============================================================================
 
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
-INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/ICONS)
 
 IF(GCC_OR_CLANG)
   ADD_DEFINITIONS(-D_GNU_SOURCE)
@@ -772,197 +765,45 @@ IF(MINGW)
   TRY_C_COMPILER_FLAG(-mno-ms-bitfields FLAG_C_nomsbitfields)
 ENDIF()
 
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/SDL)
-SET(SDL_SOURCES
-  ${CMAKE_SOURCE_DIR}/src/SDL/i_font.c
-  ${CMAKE_SOURCE_DIR}/src/SDL/i_input.c
-  ${CMAKE_SOURCE_DIR}/src/SDL/i_joy.c
-  ${CMAKE_SOURCE_DIR}/src/SDL/i_emusic.c
-  ${CMAKE_SOURCE_DIR}/src/SDL/i_mouse.c
-  ${CMAKE_SOURCE_DIR}/src/SDL/i_music.c
-  ${CMAKE_SOURCE_DIR}/src/SDL/i_network.c
-  ${CMAKE_SOURCE_DIR}/src/SDL/i_sound.c
-  ${CMAKE_SOURCE_DIR}/src/SDL/i_sshot.c
-  ${CMAKE_SOURCE_DIR}/src/SDL/i_vid8ingl.c
-  ${CMAKE_SOURCE_DIR}/src/SDL/i_video.c
-)
-
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/PCSOUND)
-SET(PCSOUND_SOURCES
-  ${CMAKE_SOURCE_DIR}/src/PCSOUND/pcsound.c
-  ${CMAKE_SOURCE_DIR}/src/PCSOUND/pcsound_sdl.c
-)
-
-IF(APPLE)
-  INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/MAC)
-  FILE(GLOB ARCH_SPECIFIC_SOURCES ${CMAKE_SOURCE_DIR}/src/MAC/*.m)
-ELSE()
-  IF(UNIX)
-    SET(ARCH_SPECIFIC_SOURCES ${ARCH_SPECIFIC_SOURCES}
-      ${CMAKE_SOURCE_DIR}/src/PCSOUND/pcsound_linux.c
-      ${CMAKE_SOURCE_DIR}/src/n_uds.c
-    )
-  ELSE()
-    # SET(ARCH_SPECIFIC_SOURCES ${CMAKE_SOURCE_DIR}/src/SDL/SDL_win32_main.c)
-    SET(ARCH_SPECIFIC_SOURCES ${ARCH_SPECIFIC_SOURCES}
-      ${CMAKE_SOURCE_DIR}/src/PCSOUND/pcsound_win32.c
-    )
-  ENDIF()
-ENDIF()
-
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/textscreen)
-FILE(GLOB TEXTSCREEN_SOURCES ${CMAKE_SOURCE_DIR}/src/TEXTSCREEN/*.c)
-
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/MUSIC)
-FILE(GLOB MUSIC_SOURCES ${CMAKE_SOURCE_DIR}/src/MUSIC/*.c)
-
+INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/ICONS)
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/MUSIC)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/PCSOUND)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/SDL)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/textscreen)
+
 SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/am_map.c
-  ${CMAKE_SOURCE_DIR}/src/c_cvar.c
   ${CMAKE_SOURCE_DIR}/src/c_eci.c
-  ${CMAKE_SOURCE_DIR}/src/c_main.c
   ${CMAKE_SOURCE_DIR}/src/cl_cmd.c
   ${CMAKE_SOURCE_DIR}/src/cl_main.c
   ${CMAKE_SOURCE_DIR}/src/cl_net.c
+  ${CMAKE_SOURCE_DIR}/src/c_main.c
   ${CMAKE_SOURCE_DIR}/src/cmp.c
   ${CMAKE_SOURCE_DIR}/src/d_cfg.c
   ${CMAKE_SOURCE_DIR}/src/d_deh.c
-  ${CMAKE_SOURCE_DIR}/src/d_items.c
   ${CMAKE_SOURCE_DIR}/src/d_dump.c
   ${CMAKE_SOURCE_DIR}/src/d_main.c
   ${CMAKE_SOURCE_DIR}/src/d_mouse.c
   ${CMAKE_SOURCE_DIR}/src/d_msg.c
-  ${CMAKE_SOURCE_DIR}/src/doomdef.c
+  ${CMAKE_SOURCE_DIR}/src/d_res.c
   ${CMAKE_SOURCE_DIR}/src/doomstat.c
   ${CMAKE_SOURCE_DIR}/src/dstrings.c
   ${CMAKE_SOURCE_DIR}/src/e6y.c
-  ${CMAKE_SOURCE_DIR}/src/e6y_launcher.c
   ${CMAKE_SOURCE_DIR}/src/f_finale.c
   ${CMAKE_SOURCE_DIR}/src/f_wipe.c
+  ${CMAKE_SOURCE_DIR}/src/g_comp.c
+  ${CMAKE_SOURCE_DIR}/src/g_corpse.c
+  ${CMAKE_SOURCE_DIR}/src/g_demo.c
   ${CMAKE_SOURCE_DIR}/src/g_game.c
+  ${CMAKE_SOURCE_DIR}/src/g_input.c
   ${CMAKE_SOURCE_DIR}/src/g_keys.c
+  ${CMAKE_SOURCE_DIR}/src/g_opt.c
   ${CMAKE_SOURCE_DIR}/src/g_overflow.c
+  ${CMAKE_SOURCE_DIR}/src/g_player.c
   ${CMAKE_SOURCE_DIR}/src/g_save.c
   ${CMAKE_SOURCE_DIR}/src/g_state.c
-  ${CMAKE_SOURCE_DIR}/src/hu_lib.c
-  ${CMAKE_SOURCE_DIR}/src/hu_stuff.c
-  ${CMAKE_SOURCE_DIR}/src/hu_tracers.c
-  ${CMAKE_SOURCE_DIR}/src/i_capture.c
-  ${CMAKE_SOURCE_DIR}/src/i_pcsound.c
-  ${CMAKE_SOURCE_DIR}/src/i_smp.c
-  ${CMAKE_SOURCE_DIR}/src/info.c
-  ${CMAKE_SOURCE_DIR}/src/m_avg.c
-  ${CMAKE_SOURCE_DIR}/src/m_bbox.c
-  ${CMAKE_SOURCE_DIR}/src/m_buf.c
-  ${CMAKE_SOURCE_DIR}/src/m_cheat.c
-  ${CMAKE_SOURCE_DIR}/src/m_delta.c
-  ${CMAKE_SOURCE_DIR}/src/m_file.c
-  ${CMAKE_SOURCE_DIR}/src/m_idlist.c
-  ${CMAKE_SOURCE_DIR}/src/m_idhash.c
-  ${CMAKE_SOURCE_DIR}/src/m_menu.c
-  ${CMAKE_SOURCE_DIR}/src/m_misc.c
-  ${CMAKE_SOURCE_DIR}/src/m_pbuf.c
-  ${CMAKE_SOURCE_DIR}/src/m_random.c
-  ${CMAKE_SOURCE_DIR}/src/md5.c
-  ${CMAKE_SOURCE_DIR}/src/n_addr.c
-  ${CMAKE_SOURCE_DIR}/src/n_chan.c
-  ${CMAKE_SOURCE_DIR}/src/n_com.c
-  ${CMAKE_SOURCE_DIR}/src/n_dirsrv.c
-  ${CMAKE_SOURCE_DIR}/src/n_http.c
-  ${CMAKE_SOURCE_DIR}/src/n_main.c
-  ${CMAKE_SOURCE_DIR}/src/n_misc.c
-  ${CMAKE_SOURCE_DIR}/src/n_msg.c
-  ${CMAKE_SOURCE_DIR}/src/n_net.c
-  ${CMAKE_SOURCE_DIR}/src/n_pack.c
-  ${CMAKE_SOURCE_DIR}/src/n_peer.c
-  ${CMAKE_SOURCE_DIR}/src/n_proto.c
-  ${CMAKE_SOURCE_DIR}/src/n_sync.c
-  ${CMAKE_SOURCE_DIR}/src/p_ceilng.c
-  ${CMAKE_SOURCE_DIR}/src/p_checksum.c
-  ${CMAKE_SOURCE_DIR}/src/p_doors.c
-  ${CMAKE_SOURCE_DIR}/src/p_enemy.c
-  ${CMAKE_SOURCE_DIR}/src/p_floor.c
-  ${CMAKE_SOURCE_DIR}/src/p_genlin.c
-  ${CMAKE_SOURCE_DIR}/src/p_ident.c
-  ${CMAKE_SOURCE_DIR}/src/p_inter.c
-  ${CMAKE_SOURCE_DIR}/src/p_lights.c
-  ${CMAKE_SOURCE_DIR}/src/p_map.c
-  ${CMAKE_SOURCE_DIR}/src/p_maputl.c
-  ${CMAKE_SOURCE_DIR}/src/p_mobj.c
-  ${CMAKE_SOURCE_DIR}/src/p_plats.c
-  ${CMAKE_SOURCE_DIR}/src/p_saveg.c
-  ${CMAKE_SOURCE_DIR}/src/p_setup.c
-  ${CMAKE_SOURCE_DIR}/src/p_sight.c
-  ${CMAKE_SOURCE_DIR}/src/p_spec.c
-  ${CMAKE_SOURCE_DIR}/src/p_switch.c
-  ${CMAKE_SOURCE_DIR}/src/p_telept.c
-  ${CMAKE_SOURCE_DIR}/src/p_tick.c
-  ${CMAKE_SOURCE_DIR}/src/p_user.c
-  ${CMAKE_SOURCE_DIR}/src/pl_cmd.c
-  ${CMAKE_SOURCE_DIR}/src/pl_main.c
-  ${CMAKE_SOURCE_DIR}/src/pl_msg.c
-  ${CMAKE_SOURCE_DIR}/src/pl_pspr.c
-  ${CMAKE_SOURCE_DIR}/src/r_bsp.c
-  ${CMAKE_SOURCE_DIR}/src/r_data.c
-  ${CMAKE_SOURCE_DIR}/src/r_demo.c
-  ${CMAKE_SOURCE_DIR}/src/r_draw.c
-  ${CMAKE_SOURCE_DIR}/src/r_filter.c
-  ${CMAKE_SOURCE_DIR}/src/r_fps.c
-  ${CMAKE_SOURCE_DIR}/src/r_main.c
-  ${CMAKE_SOURCE_DIR}/src/r_patch.c
-  ${CMAKE_SOURCE_DIR}/src/r_plane.c
-  ${CMAKE_SOURCE_DIR}/src/r_screenmultiply.c
-  ${CMAKE_SOURCE_DIR}/src/r_segs.c
-  ${CMAKE_SOURCE_DIR}/src/r_sky.c
-  ${CMAKE_SOURCE_DIR}/src/r_things.c
-  ${CMAKE_SOURCE_DIR}/src/s_advsound.c
-  ${CMAKE_SOURCE_DIR}/src/s_sndnew.c
-  ${CMAKE_SOURCE_DIR}/src/s_sndold.c
-  ${CMAKE_SOURCE_DIR}/src/s_sound.c
-  ${CMAKE_SOURCE_DIR}/src/sc_man.c
-  ${CMAKE_SOURCE_DIR}/src/sounds.c
-  ${CMAKE_SOURCE_DIR}/src/st_lib.c
-  ${CMAKE_SOURCE_DIR}/src/st_stuff.c
-  ${CMAKE_SOURCE_DIR}/src/sv_main.c
-  ${CMAKE_SOURCE_DIR}/src/tables.c
-  ${CMAKE_SOURCE_DIR}/src/v_overlay.c
-  ${CMAKE_SOURCE_DIR}/src/v_video.c
-  ${CMAKE_SOURCE_DIR}/src/version.c
-  ${CMAKE_SOURCE_DIR}/src/w_wad.c
-  ${CMAKE_SOURCE_DIR}/src/wi_stuff.c
-  ${CMAKE_SOURCE_DIR}/src/x_main.c
-  ${CMAKE_SOURCE_DIR}/src/z_bmalloc.c
-  ${CMAKE_SOURCE_DIR}/src/z_zone.c
-  ${CMAKE_SOURCE_DIR}/src/xam_main.c
-  ${CMAKE_SOURCE_DIR}/src/xc_main.c
-  ${CMAKE_SOURCE_DIR}/src/xcl_main.c
-  ${CMAKE_SOURCE_DIR}/src/xd_cfg.c
-  ${CMAKE_SOURCE_DIR}/src/xd_comp.c
-  ${CMAKE_SOURCE_DIR}/src/xd_main.c
-  ${CMAKE_SOURCE_DIR}/src/xd_msg.c
-  ${CMAKE_SOURCE_DIR}/src/xg_game.c
-  ${CMAKE_SOURCE_DIR}/src/xg_keys.c
-  ${CMAKE_SOURCE_DIR}/src/xi_input.c
-  ${CMAKE_SOURCE_DIR}/src/xi_main.c
-  ${CMAKE_SOURCE_DIR}/src/xm_menu.c
-  ${CMAKE_SOURCE_DIR}/src/xm_misc.c
-  ${CMAKE_SOURCE_DIR}/src/xn_main.c
-  ${CMAKE_SOURCE_DIR}/src/xp_user.c
-  ${CMAKE_SOURCE_DIR}/src/xr_main.c
-  ${CMAKE_SOURCE_DIR}/src/xr_demo.c
-  ${CMAKE_SOURCE_DIR}/src/xs_main.c
-  ${CMAKE_SOURCE_DIR}/src/xst_main.c
-  ${CMAKE_SOURCE_DIR}/src/xv_main.c
-)
-
-SET(CLIENT_SOURCES
-  ${CMAKE_SOURCE_DIR}/src/SDL/i_main.c
-  ${CMAKE_SOURCE_DIR}/src/SDL/i_system.c
-  ${CMAKE_SOURCE_DIR}/src/m_argv.c
-)
-
-SET(GL_SOURCES
   ${CMAKE_SOURCE_DIR}/src/gl_clipper.c
   ${CMAKE_SOURCE_DIR}/src/gl_detail.c
   ${CMAKE_SOURCE_DIR}/src/gl_drawinfo.c
@@ -983,40 +824,179 @@ SET(GL_SOURCES
   ${CMAKE_SOURCE_DIR}/src/gl_texture.c
   ${CMAKE_SOURCE_DIR}/src/gl_vertex.c
   ${CMAKE_SOURCE_DIR}/src/gl_wipe.c
+  ${CMAKE_SOURCE_DIR}/src/hu_lib.c
+  ${CMAKE_SOURCE_DIR}/src/hu_stuff.c
+  ${CMAKE_SOURCE_DIR}/src/hu_tracers.c
+  ${CMAKE_SOURCE_DIR}/src/i_capture.c
+  ${CMAKE_SOURCE_DIR}/src/icon.c
+  ${CMAKE_SOURCE_DIR}/src/info.c
+  ${CMAKE_SOURCE_DIR}/src/i_pcsound.c
+  ${CMAKE_SOURCE_DIR}/src/i_smp.c
+  ${CMAKE_SOURCE_DIR}/src/m_argv.c
+  ${CMAKE_SOURCE_DIR}/src/m_avg.c
+  ${CMAKE_SOURCE_DIR}/src/m_bbox.c
+  ${CMAKE_SOURCE_DIR}/src/m_buf.c
+  ${CMAKE_SOURCE_DIR}/src/md5.c
+  ${CMAKE_SOURCE_DIR}/src/m_delta.c
+  ${CMAKE_SOURCE_DIR}/src/memio.c
+  ${CMAKE_SOURCE_DIR}/src/m_file.c
+  ${CMAKE_SOURCE_DIR}/src/m_idarr.c
+  ${CMAKE_SOURCE_DIR}/src/m_idhash.c
+  ${CMAKE_SOURCE_DIR}/src/m_idlist.c
+  ${CMAKE_SOURCE_DIR}/src/m_pbuf.c
+  ${CMAKE_SOURCE_DIR}/src/m_random.c
+  ${CMAKE_SOURCE_DIR}/src/mn_def.c
+  ${CMAKE_SOURCE_DIR}/src/mn_main.c
+  ${CMAKE_SOURCE_DIR}/src/mus2mid.c
+  ${CMAKE_SOURCE_DIR}/src/n_addr.c
+  ${CMAKE_SOURCE_DIR}/src/n_chan.c
+  ${CMAKE_SOURCE_DIR}/src/n_com.c
+  ${CMAKE_SOURCE_DIR}/src/n_dirsrv.c
+  ${CMAKE_SOURCE_DIR}/src/n_getwad.c
+  ${CMAKE_SOURCE_DIR}/src/n_http.c
+  ${CMAKE_SOURCE_DIR}/src/n_main.c
+  ${CMAKE_SOURCE_DIR}/src/n_msg.c
+  ${CMAKE_SOURCE_DIR}/src/n_pack.c
+  ${CMAKE_SOURCE_DIR}/src/n_peer.c
+  ${CMAKE_SOURCE_DIR}/src/n_proto.c
+  ${CMAKE_SOURCE_DIR}/src/n_state.c
+  ${CMAKE_SOURCE_DIR}/src/n_sync.c
+  ${CMAKE_SOURCE_DIR}/src/n_uds.c
+  ${CMAKE_SOURCE_DIR}/src/p_camera.c
+  ${CMAKE_SOURCE_DIR}/src/p_ceilng.c
+  ${CMAKE_SOURCE_DIR}/src/p_checksum.c
+  ${CMAKE_SOURCE_DIR}/src/p_cmd.c
+  ${CMAKE_SOURCE_DIR}/src/p_doors.c
+  ${CMAKE_SOURCE_DIR}/src/p_enemy.c
+  ${CMAKE_SOURCE_DIR}/src/p_floor.c
+  ${CMAKE_SOURCE_DIR}/src/p_genlin.c
+  ${CMAKE_SOURCE_DIR}/src/p_ident.c
+  ${CMAKE_SOURCE_DIR}/src/p_inter.c
+  ${CMAKE_SOURCE_DIR}/src/p_lights.c
+  ${CMAKE_SOURCE_DIR}/src/p_main.c
+  ${CMAKE_SOURCE_DIR}/src/p_map.c
+  ${CMAKE_SOURCE_DIR}/src/p_maputl.c
+  ${CMAKE_SOURCE_DIR}/src/p_mobj.c
+  ${CMAKE_SOURCE_DIR}/src/p_plats.c
+  ${CMAKE_SOURCE_DIR}/src/p_saveg.c
+  ${CMAKE_SOURCE_DIR}/src/p_setup.c
+  ${CMAKE_SOURCE_DIR}/src/p_sight.c
+  ${CMAKE_SOURCE_DIR}/src/p_spec.c
+  ${CMAKE_SOURCE_DIR}/src/p_switch.c
+  ${CMAKE_SOURCE_DIR}/src/p_telept.c
+  ${CMAKE_SOURCE_DIR}/src/p_tick.c
+  ${CMAKE_SOURCE_DIR}/src/pl_cheat.c
+  ${CMAKE_SOURCE_DIR}/src/pl_cmd.c
+  ${CMAKE_SOURCE_DIR}/src/pl_main.c
+  ${CMAKE_SOURCE_DIR}/src/pl_msg.c
+  ${CMAKE_SOURCE_DIR}/src/pl_pspr.c
+  ${CMAKE_SOURCE_DIR}/src/pl_tick.c
+  ${CMAKE_SOURCE_DIR}/src/pl_weap.c
+  ${CMAKE_SOURCE_DIR}/src/r_bsp.c
+  ${CMAKE_SOURCE_DIR}/src/r_data.c
+  ${CMAKE_SOURCE_DIR}/src/r_draw.c
+  ${CMAKE_SOURCE_DIR}/src/r_filter.c
+  ${CMAKE_SOURCE_DIR}/src/r_fps.c
+  ${CMAKE_SOURCE_DIR}/src/r_main.c
+  ${CMAKE_SOURCE_DIR}/src/r_patch.c
+  ${CMAKE_SOURCE_DIR}/src/r_plane.c
+  ${CMAKE_SOURCE_DIR}/src/r_screenmultiply.c
+  ${CMAKE_SOURCE_DIR}/src/r_segs.c
+  ${CMAKE_SOURCE_DIR}/src/r_sky.c
+  ${CMAKE_SOURCE_DIR}/src/r_things.c
+  ${CMAKE_SOURCE_DIR}/src/s_advsound.c
+  ${CMAKE_SOURCE_DIR}/src/sc_man.c
+  ${CMAKE_SOURCE_DIR}/src/sounds.c
+  ${CMAKE_SOURCE_DIR}/src/s_sndnew.c
+  ${CMAKE_SOURCE_DIR}/src/s_sndold.c
+  ${CMAKE_SOURCE_DIR}/src/s_sound.c
+  ${CMAKE_SOURCE_DIR}/src/st_lib.c
+  ${CMAKE_SOURCE_DIR}/src/st_stuff.c
+  ${CMAKE_SOURCE_DIR}/src/sv_main.c
+  ${CMAKE_SOURCE_DIR}/src/tables.c
+  ${CMAKE_SOURCE_DIR}/src/version.c
+  ${CMAKE_SOURCE_DIR}/src/v_overlay.c
+  ${CMAKE_SOURCE_DIR}/src/v_sshot.c
+  ${CMAKE_SOURCE_DIR}/src/v_video.c
+  ${CMAKE_SOURCE_DIR}/src/wi_stuff.c
+  ${CMAKE_SOURCE_DIR}/src/w_memcache.c
+  ${CMAKE_SOURCE_DIR}/src/w_mmap.c
+  ${CMAKE_SOURCE_DIR}/src/w_wad.c
+  ${CMAKE_SOURCE_DIR}/src/xam_main.c
+  ${CMAKE_SOURCE_DIR}/src/xcl_main.c
+  ${CMAKE_SOURCE_DIR}/src/xc_main.c
+  ${CMAKE_SOURCE_DIR}/src/xd_cfg.c
+  ${CMAKE_SOURCE_DIR}/src/xd_comp.c
+  ${CMAKE_SOURCE_DIR}/src/xd_main.c
+  ${CMAKE_SOURCE_DIR}/src/xd_msg.c
+  ${CMAKE_SOURCE_DIR}/src/xg_game.c
+  ${CMAKE_SOURCE_DIR}/src/xg_keys.c
+  ${CMAKE_SOURCE_DIR}/src/xi_input.c
+  ${CMAKE_SOURCE_DIR}/src/xi_main.c
+  ${CMAKE_SOURCE_DIR}/src/x_main.c
+  ${CMAKE_SOURCE_DIR}/src/xm_menu.c
+  ${CMAKE_SOURCE_DIR}/src/xm_misc.c
+  ${CMAKE_SOURCE_DIR}/src/xn_main.c
+  ${CMAKE_SOURCE_DIR}/src/xp_user.c
+  ${CMAKE_SOURCE_DIR}/src/xr_main.c
+  ${CMAKE_SOURCE_DIR}/src/xs_main.c
+  ${CMAKE_SOURCE_DIR}/src/xst_main.c
+  ${CMAKE_SOURCE_DIR}/src/xv_main.c
+  ${CMAKE_SOURCE_DIR}/src/z_bmalloc.c
+  ${CMAKE_SOURCE_DIR}/src/z_zone.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_font.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_input.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_joy.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_emusic.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_main.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_mouse.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_music.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_network.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_sound.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_sshot.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_system.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_vid8ingl.c
+  ${CMAKE_SOURCE_DIR}/src/SDL/i_video.c
+  ${CMAKE_SOURCE_DIR}/src/PCSOUND/pcsound.c
+  ${CMAKE_SOURCE_DIR}/src/PCSOUND/pcsound_sdl.c
 )
 
 IF(HAVE_MMAP)
-  SET(WAD_SOURCES ${CMAKE_SOURCE_DIR}/src/w_mmap.c)
+  SET(D2K_SOURCES ${D2K_SOURCES}
+    ${CMAKE_SOURCE_DIR}/src/w_mmap.c
+  )
 ELSE()
-  SET(WAD_SOURCES ${CMAKE_SOURCE_DIR}/src/w_memcache.c)
+  SET(D2K_SOURCES ${D2K_SOURCES}
+    ${CMAKE_SOURCE_DIR}/src/w_memcache.c
+  )
 ENDIF()
 
-SET(MUS2MID_SOURCES
-  ${CMAKE_SOURCE_DIR}/src/memio.c
-  ${CMAKE_SOURCE_DIR}/src/mus2mid.c
-)
+IF(APPLE)
+  INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/MAC)
+  FILE(GLOB ARCH_SPECIFIC_SOURCES ${CMAKE_SOURCE_DIR}/src/MAC/*.m)
+ELSE()
+  IF(UNIX)
+    SET(ARCH_SPECIFIC_SOURCES ${ARCH_SPECIFIC_SOURCES}
+      ${CMAKE_SOURCE_DIR}/src/PCSOUND/pcsound_linux.c
+      ${CMAKE_SOURCE_DIR}/src/n_uds.c
+    )
+  ELSE()
+    # SET(ARCH_SPECIFIC_SOURCES ${CMAKE_SOURCE_DIR}/src/SDL/SDL_win32_main.c)
+    SET(ARCH_SPECIFIC_SOURCES ${ARCH_SPECIFIC_SOURCES}
+      ${CMAKE_SOURCE_DIR}/src/PCSOUND/pcsound_win32.c
+    )
+  ENDIF()
+ENDIF()
 
-SET(D2K_CLIENT_SOURCES
+FILE(GLOB TEXTSCREEN_SOURCES ${CMAKE_SOURCE_DIR}/src/TEXTSCREEN/*.c)
+
+FILE(GLOB MUSIC_SOURCES ${CMAKE_SOURCE_DIR}/src/MUSIC/*.c)
+
+SET(D2K_SOURCES ${D2K_SOURCES}
   ${ARCH_SPECIFIC_SOURCES}
-  ${SDL_SOURCES}
-  ${PCSOUND_SOURCES}
   ${TEXTSCREEN_SOURCES}
   ${MUSIC_SOURCES}
-  ${D2K_SOURCES}
-  ${CLIENT_SOURCES}
-  ${MUS2MID_SOURCES}
-  ${WAD_SOURCES}
 )
-
-IF(GL_DOOM)
-  SET(D2K_CLIENT_SOURCES ${D2K_CLIENT_SOURCES} ${GL_SOURCES})
-ENDIF()
-
-FILE(GLOB TESTING_SOURCES ${CMAKE_SOURCE_DIR}/unittests/*.c)
-
-SET(TESTING_SOURCES ${TESTING_SOURCES} ${CMAKE_SOURCE_DIR}/cutest/CuTest.c)
-
-SET(D2K_TESTING_SOURCES ${D2K_CLIENT_SOURCES} ${TESTING_SOURCES})
 
 SET(D2K_LIBRARIES "-lm")
 
@@ -1080,11 +1060,9 @@ ENDIF()
 
 SET(D2K_LIBRARIES ${D2K_LIBRARIES} ${SDL_LIBRARY})
 
-IF(GL_DOOM)
-  SET(D2K_LIBRARIES ${D2K_LIBRARIES} ${OPENGL_gl_LIBRARY})
-  IF(USE_GLU_IMAGESCALE OR USE_GLU_MIPMAP OR USE_GLU_TESS)
-    SET(D2K_LIBRARIES ${D2K_LIBRARIES} ${OPENGL_glu_LIBRARY})
-  ENDIF()
+SET(D2K_LIBRARIES ${D2K_LIBRARIES} ${OPENGL_gl_LIBRARY})
+IF(USE_GLU_IMAGESCALE OR USE_GLU_MIPMAP OR USE_GLU_TESS)
+  SET(D2K_LIBRARIES ${D2K_LIBRARIES} ${OPENGL_glu_LIBRARY})
 ENDIF()
 
 SET(D2K_LIBRARIES ${D2K_LIBRARIES}
@@ -1160,21 +1138,15 @@ IF(WIN32)
   )
 ENDIF()
 
-ADD_EXECUTABLE(d2k ${D2K_CLIENT_SOURCES})
+ADD_EXECUTABLE(d2k ${D2K_SOURCES})
 TARGET_LINK_LIBRARIES(d2k ${D2K_LIBRARIES})
-
-# INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/unittests)
-# INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/cutest)
-# ADD_DEFINITIONS(-DRUNNING_UNIT_TESTS)
-# ADD_EXECUTABLE(test-d2k ${D2K_TESTING_SOURCES})
-# TARGET_LINK_LIBRARIES(test-d2k ${D2K_LIBRARIES})
 
 SET(BIN_DIR "${PREFIX}/bin")
 SET(LIB_DIR "${PREFIX}/lib")
 SET(INCLUDE_DIR "${PREFIX}/include")
 SET(SHARE_DIR "${PREFIX}/share")
 
-# TODO: Need to run test-d2k and use deutex to build the WAD here
+# TODO: Need to use deutex to build the WAD here
 
 INSTALL(
   TARGETS d2k

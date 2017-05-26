@@ -23,10 +23,6 @@
 
 #include "z_zone.h"
 
-#include <enet/enet.h>
-
-#include "doomdef.h"
-#include "doomstat.h"
 #include "am_map.h"
 #include "g_game.h"
 #include "m_random.h"
@@ -1567,7 +1563,7 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
     P_SetTarget(&sectors[i].soundtarget, sound_target);
   }
 
-  G_ClearCorpses();
+  G_CorpseQueueClear();
   M_PBufReadInt(savebuffer, &corpse_queue_size);
 
   if (corpse_queue_size < 0) {

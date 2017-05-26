@@ -23,12 +23,10 @@
 
 #include "z_zone.h"
 
-#include "doomdef.h"
-#include "doomstat.h"
-#include "d_event.h"
 #include "m_avg.h"
 #include "d_main.h"
-#include "p_user.h"
+#include "p_setup.h"
+#include "pl_main.h"
 #include "g_game.h"
 #include "g_save.h"
 #include "m_menu.h"
@@ -45,7 +43,6 @@
 #include "r_state.h"
 #include "s_advsound.h"
 #include "s_sound.h"
-#include "p_setup.h"
 
 #include "p_tick.h"
 
@@ -56,6 +53,7 @@
 #define VERSIONSIZE 16
 #define SAVESTRINGSIZE  24
 
+static unsigned char savegameslot; // Slot to load if gameaction == ga_loadgame
 static avg_t average_savebuffer_size;
 static bool average_savebuffer_size_initialized = false;
 
@@ -87,6 +85,8 @@ static const struct {
 
 static const size_t num_version_headers =
   sizeof(version_headers) / sizeof(version_headers[0]);
+
+char *basesavegame; // killough 2/16/98: savegame directory
 
 // Description to save in savegame if gameaction == ga_savegame
 char savedescription[SAVEDESCLEN];
@@ -267,16 +267,6 @@ void G_WriteSaveData(pbuf_t *savebuffer) {
   M_PBufWriteBool(savebuffer, levelFragLimit);
   M_PBufWriteInt(savebuffer, levelFragLimitCount);
 
-  for (i = 0; i < MAXPLAYERS; i++) {
-    M_PBufWriteBool(savebuffer, playeringame[i]);
-  }
-
-  if (MAXPLAYERS < MIN_MAXPLAYERS) {
-    for (i = MAXPLAYERS; i < MIN_MAXPLAYERS; i++) {
-      M_PBufWriteBool(savebuffer, false);
-    }
-  }
-
   M_PBufWriteInt(savebuffer, idmusnum);
 
   G_WriteOptions(game_options);    // killough 3/1/98: save game options
@@ -309,6 +299,9 @@ void G_WriteSaveData(pbuf_t *savebuffer) {
 
   G_UpdateAverageSaveSize(M_PBufGetCapacity(savebuffer));
 }
+
+// killough 5/15/98:
+// Consistency Error when attempting to load savegame.
 
 bool G_ReadSaveData(pbuf_t *savebuffer, bool bail_on_errors,
                                         bool init_new) {
@@ -469,19 +462,6 @@ bool G_ReadSaveData(pbuf_t *savebuffer, bool bail_on_errors,
   M_PBufReadBool(savebuffer, &levelFragLimit);
   M_PBufReadInt(savebuffer, &levelFragLimitCount);
 
-  for (i = 0; i < MAXPLAYERS; i++) {
-    M_PBufReadBool(savebuffer, &playeringame[i]);
-  }
-
-  if (MAXPLAYERS < MIN_MAXPLAYERS) {
-    // killough 2/28/98
-    bool b = false;
-
-    for (i = MAXPLAYERS; i < MIN_MAXPLAYERS; i++) {
-      M_PBufReadBool(savebuffer, &b);
-    }
-  }
-
   M_PBufReadInt(savebuffer, &idmusnum); // jff 3/17/98 restore idmus music
 
   /* killough 3/1/98: Read game options
@@ -547,6 +527,67 @@ bool G_ReadSaveData(pbuf_t *savebuffer, bool bail_on_errors,
   G_UpdateAverageSaveSize(M_PBufGetCapacity(savebuffer));
 
   return true;
+}
+
+/* killough 3/22/98: form savegame name in one location
+ * (previously code was scattered around in multiple places)
+ * cph - Avoid possible buffer overflow problems by passing
+ * size to this function and using snprintf */
+int G_SaveGameName(char *name, size_t size, int slot, bool demoplayback) {
+  const char* sgn;
+  
+  if (demoplayback) {
+    sgn = "demosav";
+  }
+  else {
+    sgn = savegamename;
+  }
+
+  return snprintf(name, size, "%s/%s%d.dsg", basesavegame, sgn, slot);
+}
+
+// G_SaveGame
+// Called by the menu task.
+// Description is a 24 byte text string
+//
+void G_SaveGame(int slot, char *description) {
+  strcpy(savedescription, description);
+
+  if (demoplayback) {
+    savegameslot = slot; // cph - We're doing a user-initiated save game while
+    G_DoSaveGame(true);  //       a demo is running so, go outside normal
+                         //       mechanisms
+  }
+  // CPhipps - store info in special_event
+  special_event = BT_SPECIAL |
+                  (BTS_SAVEGAME & BT_SPECIALMASK) |
+                  ((slot << BTS_SAVESHIFT) & BTS_SAVEMASK);
+}
+
+// killough 3/16/98: add slot info
+// killough 5/15/98: add command-line
+void G_LoadGame(int slot, bool command) {
+  if (!demoplayback && !command) {
+    // CPhipps - handle savegame filename in G_DoLoadGame
+    //         - Delay load so it can be communicated in net game
+    //         - store info in special_event
+    special_event = BT_SPECIAL |
+                   (BTS_LOADGAME & BT_SPECIALMASK) |
+                   ((slot << BTS_SAVESHIFT) & BTS_SAVEMASK);
+    forced_loadgame = netgame; // CPhipps - always force load netgames
+  }
+  else {
+    // Do the old thing, immediate load
+    G_SetGameAction(ga_loadgame);
+    forced_loadgame = false;
+    savegameslot = slot;
+    demoplayback = false;
+    // Don't stay in netgame state if loading single player save
+    // while watching multiplayer demo
+    netgame = false;
+  }
+  command_loadgame = command;
+  R_SmoothPlaying_Reset(NULL); // e6y
 }
 
 /* vi: set et ts=2 sw=2: */

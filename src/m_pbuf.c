@@ -23,11 +23,8 @@
 
 #include "z_zone.h"
 
-#include "doomdef.h"
-#include "doomstat.h"
-#include "d_event.h"
-#include "p_user.h"
-#include "g_game.h"
+#include "pl_main.h"
+#include "pl_msg.h"
 
 #define EXT_TYPE_BITMAP 10
 
@@ -771,7 +768,9 @@ bool M_PBufReadBytes(pbuf_t *pbuf, buf_t *buf) {
    *     16MB
    */
   if (size > 0x00FFFFFF) {
-    P_Echo(consoleplayer, "M_PBufReadBytes: Tried to read more than 16MB.");
+    PL_Echo(P_GetConsolePlayer(),
+      "M_PBufReadBytes: Tried to read more than 16MB."
+    );
     return false;
   }
 
@@ -786,7 +785,7 @@ bool M_PBufReadBytesRaw(pbuf_t *pbuf, char *buf, size_t limit) {
   cmp_object_t obj;
 
   if (!cmp_read_object(&pbuf->cmp, &obj)) {
-    P_Printf(consoleplayer,
+    PL_Printf(P_GetConsolePlayer(),
       "M_PBufReadBytesRaw: Error reading from packed buffer: %s\n",
       cmp_strerror(&pbuf->cmp)
     );
@@ -794,7 +793,7 @@ bool M_PBufReadBytesRaw(pbuf_t *pbuf, char *buf, size_t limit) {
   }
 
   if (limit != 0 && obj.as.bin_size > limit) {
-    P_Echo(consoleplayer, "M_PBufReadBytesRaw: Binary data too long.");
+    PL_Echo(P_GetConsolePlayer(), "M_PBufReadBytesRaw: Binary data too long.");
     return false;
   }
 
@@ -809,7 +808,7 @@ bool M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit) {
   cmp_object_t obj;
 
   if (!cmp_read_object(&pbuf->cmp, &obj)) {
-    P_Printf(consoleplayer,
+    PL_Printf(P_GetConsolePlayer(),
       "M_PBufReadString: Error reading from packed buffer: %s\n",
       cmp_strerror(&pbuf->cmp)
     );
@@ -817,7 +816,7 @@ bool M_PBufReadString(pbuf_t *pbuf, buf_t *buf, size_t limit) {
   }
 
   if (limit != 0 && obj.as.str_size > limit) {
-    P_Echo(consoleplayer, "M_PBufReadString: String too long.");
+    PL_Echo(P_GetConsolePlayer(), "M_PBufReadString: String too long.");
     return false;
   }
 
@@ -838,7 +837,7 @@ bool M_PBufReadStringArray(pbuf_t *pbuf, GPtrArray *strings,
     return false;
 
   if (string_count_limit > 0 && string_count > string_count_limit) {
-    P_Echo(consoleplayer, "M_PBufReadStringArray: Too many strings.");
+    PL_Echo(P_GetConsolePlayer(), "M_PBufReadStringArray: Too many strings.");
     return false;
   }
 
@@ -850,7 +849,7 @@ bool M_PBufReadStringArray(pbuf_t *pbuf, GPtrArray *strings,
     char *s = NULL;
 
     if (!cmp_read_object(&pbuf->cmp, &obj)) {
-      P_Printf(consoleplayer,
+      PL_Printf(P_GetConsolePlayer(),
         "M_PBufReadStringArray: Error reading from packed buffer: %s\n",
         cmp_strerror(&pbuf->cmp)
       );
@@ -858,15 +857,19 @@ bool M_PBufReadStringArray(pbuf_t *pbuf, GPtrArray *strings,
     }
 
     if (string_size_limit > 0 && obj.as.str_size > string_size_limit) {
-      P_Echo(consoleplayer, "M_PBufReadStringArray: String too long.");
+      PL_Echo(P_GetConsolePlayer(), "M_PBufReadStringArray: String too long.");
       return false;
     }
 
-    if (!(s = calloc(obj.as.str_size + 1, sizeof(char))))
+    if (!(s = calloc(obj.as.str_size + 1, sizeof(char)))) {
       I_Error("M_PBufReadStringArray: Error allocating string");
+    }
 
     if (!M_BufferReadString(&pbuf->buf, s, obj.as.str_size)) {
-      P_Echo(consoleplayer, "M_PBufReadStringArray: Error reading string");
+      PL_Echo(P_GetConsolePlayer(),
+        "M_PBufReadStringArray: Error reading string"
+      );
+
       return false;
     }
 

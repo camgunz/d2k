@@ -23,24 +23,20 @@
 
 #include "z_zone.h"
 
-#include <enet/enet.h>
-
-#include "doomdef.h"
-#include "doomstat.h"
 #include "d_deh.h"
 #include "d_event.h"
 #include "d_main.h"
+#include "p_setup.h"
+#include "pl_main.h"
 #include "g_game.h"
 #include "g_state.h"
 #include "i_system.h"
 #include "m_bitmap.h"
 #include "m_file.h"
 #include "n_main.h"
-#include "p_user.h"
 #include "cl_cmd.h"
 #include "cl_main.h"
 #include "cl_net.h"
-#include "p_user.h"
 #include "w_wad.h"
 
 /* CG: FIXME: Most of these should be more than just defines tucked here */
@@ -277,30 +273,30 @@
   M_PBufWriteMap(pbuf, 1);                                                    \
   M_PBufWriteString(pbuf, pn, pnsz)
 
-#define unpack_net_command(pbuf, m_ncmd)                                      \
-  read_uint(pbuf,  m_ncmd.index,      "command index");                       \
-  read_uint(pbuf,  m_ncmd.tic,        "command TIC");                         \
-  read_uint(pbuf,  m_ncmd.server_tic, "server command TIC");                  \
-  read_char(pbuf,  m_ncmd.forward,    "command forward value");               \
-  read_char(pbuf,  m_ncmd.side,       "command side value");                  \
-  read_short(pbuf, m_ncmd.angle,      "command angle value");                 \
-  read_uchar(pbuf, m_ncmd.buttons,    "command buttons value")
+#define unpack_net_command(pbuf, m_icmd)                                      \
+  read_uint(pbuf,  m_icmd.index,      "command index");                       \
+  read_uint(pbuf,  m_icmd.tic,        "command TIC");                         \
+  read_uint(pbuf,  m_icmd.server_tic, "server command TIC");                  \
+  read_char(pbuf,  m_icmd.forward,    "command forward value");               \
+  read_char(pbuf,  m_icmd.side,       "command side value");                  \
+  read_short(pbuf, m_icmd.angle,      "command angle value");                 \
+  read_uchar(pbuf, m_icmd.buttons,    "command buttons value")
 
 static void free_string(gpointer data) {
   free(data);
 }
 
-static void pack_run_commands(pbuf_t *pbuf, unsigned int playernum) {
-  GPtrArray *commands = players[playernum].cmdq.commands;
+static void pack_run_commands(pbuf_t *pbuf, player_t *player) {
+  GPtrArray *commands = player->cmdq.commands;
   unsigned int command_count = 0;
   unsigned int total_command_count = 0;
 
   for (unsigned int i = 0; i < commands->len; i++) {
-    netticcmd_t *ncmd = g_ptr_array_index(commands, i);
+    idxticcmd_t *icmd = g_ptr_array_index(commands, i);
 
     total_command_count++;
 
-    if (ncmd->server_tic != 0) {
+    if (icmd->server_tic != 0) {
       command_count++;
     }
   }
@@ -319,12 +315,12 @@ static void pack_run_commands(pbuf_t *pbuf, unsigned int playernum) {
   }
 
   for (unsigned int i = 0; i < commands->len; i++) {
-    netticcmd_t *ncmd = g_ptr_array_index(commands, i);
+    idxticcmd_t *icmd = g_ptr_array_index(commands, i);
 
-    if (ncmd->server_tic != 0) {
-      D_Msg(MSG_SYNC, " %d/%d/%d", ncmd->index, ncmd->tic, ncmd->server_tic);
-      M_PBufWriteUNum(pbuf, ncmd->index);
-      M_PBufWriteUNum(pbuf, ncmd->server_tic);
+    if (icmd->server_tic != 0) {
+      D_Msg(MSG_SYNC, " %d/%d/%d", icmd->index, icmd->tic, icmd->server_tic);
+      M_PBufWriteUNum(pbuf, icmd->index);
+      M_PBufWriteUNum(pbuf, icmd->server_tic);
     }
   }
 
@@ -334,14 +330,14 @@ static void pack_run_commands(pbuf_t *pbuf, unsigned int playernum) {
 }
 
 static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
-                                                       int src_playernum) {
-  GPtrArray *commands = players[src_playernum].cmdq.commands;
+                                                       player_t *src) 
+  GPtrArray *commands = src->cmdq.commands;
   unsigned int command_count = 0;
 
   for (unsigned int i = 0; i < commands->len; i++) {
-    netticcmd_t *ncmd = (netticcmd_t *)g_ptr_array_index(commands, i);
+    idxticcmd_t *icmd = (idxticcmd_t *)g_ptr_array_index(commands, i);
 
-    if (ncmd->index > N_PeerGetSyncCommandIndexForPlayer(np, src_playernum)) {
+    if (icmd->index > N_PeerGetSyncCommandIndexForPlayer(np, src)) {
       command_count++;
     }
     else {
@@ -349,8 +345,8 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
         gametic,
         src_playernum,
         N_PeerGetPlayernum(np),
-        ncmd->index,
-        N_PeerGetSyncCommandIndexForPlayer(np, src_playernum)
+        icmd->index,
+        N_PeerGetSyncCommandIndexForPlayer(np, src)
       );
     }
   }
@@ -360,23 +356,23 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
   if (command_count > 0) {
     D_Msg(MSG_SYNC, "(%d) (%u->%u) Unsync'd commands: [",
       gametic,
-      src_playernum,
+      src->id,
       N_PeerGetPlayernum(np)
     );
   }
 
   for (size_t i = 0; i < commands->len; i++) {
-    netticcmd_t *ncmd = (netticcmd_t *)g_ptr_array_index(commands, i);
+    idxticcmd_t *icmd = (idxticcmd_t *)g_ptr_array_index(commands, i);
 
-    if (ncmd->index > N_PeerGetSyncCommandIndexForPlayer(np, src_playernum)) {
-      D_Msg(MSG_SYNC, " %u/%u/%u", ncmd->index, ncmd->tic, ncmd->server_tic);
-      M_PBufWriteUNum(pbuf, ncmd->index);
-      M_PBufWriteUNum(pbuf, ncmd->tic);
-      M_PBufWriteUNum(pbuf, ncmd->server_tic);
-      M_PBufWriteNum(pbuf, ncmd->forward);
-      M_PBufWriteNum(pbuf, ncmd->side);
-      M_PBufWriteNum(pbuf, ncmd->angle);
-      M_PBufWriteUNum(pbuf, ncmd->buttons);
+    if (icmd->index > N_PeerGetSyncCommandIndexForPlayer(np, src)) {
+      D_Msg(MSG_SYNC, " %u/%u/%u", icmd->index, icmd->tic, icmd->server_tic);
+      M_PBufWriteUNum(pbuf, icmd->index);
+      M_PBufWriteUNum(pbuf, icmd->tic);
+      M_PBufWriteUNum(pbuf, icmd->server_tic);
+      M_PBufWriteNum(pbuf, icmd->forward);
+      M_PBufWriteNum(pbuf, icmd->side);
+      M_PBufWriteNum(pbuf, icmd->angle);
+      M_PBufWriteUNum(pbuf, icmd->buttons);
     }
   }
 
@@ -879,31 +875,31 @@ bool N_UnpackSync(netpeer_t *np) {
         read_uint(pbuf, m_command_count, "command count");
 
         for (unsigned int j = 0; j < m_command_count; j++) {
-          netticcmd_t m_ncmd;
+          idxticcmd_t m_icmd;
 
-          unpack_net_command(pbuf, m_ncmd);
+          unpack_net_command(pbuf, m_icmd);
 
-          P_QueuePlayerCommand(i, &m_ncmd);
+          P_QueuePlayerCommand(i, &m_icmd);
         }
 
         m_command_index = 0;
 
         for (unsigned int ci = 0; ci < P_GetCommandCount(i); ci++) {
-          netticcmd_t *m_ncmd = P_GetCommand(i, ci);
+          idxticcmd_t *m_icmd = P_GetCommand(i, ci);
 
-          if (!m_ncmd) {
+          if (!m_icmd) {
             continue;
           }
 
-          if (m_ncmd->server_tic == 0) {
+          if (m_icmd->server_tic == 0) {
             continue;
           }
 
-          if (m_ncmd->index <= m_command_index) {
+          if (m_icmd->index <= m_command_index) {
             continue;
           }
 
-          m_command_index = m_ncmd->index;
+          m_command_index = m_icmd->index;
         }
       }
 
@@ -935,13 +931,13 @@ bool N_UnpackSync(netpeer_t *np) {
     N_PeerUpdateSyncTIC(np, m_sync_tic);
 
     for (unsigned int i = 0; i < m_command_count; i++) {
-      netticcmd_t m_ncmd;
+      idxticcmd_t m_icmd;
 
-      unpack_net_command(pbuf, m_ncmd);
+      unpack_net_command(pbuf, m_icmd);
 
-      m_ncmd.server_tic = 0;
+      m_icmd.server_tic = 0;
 
-      P_QueuePlayerCommand(playernum, &m_ncmd);
+      P_QueuePlayerCommand(playernum, &m_icmd);
     }
 
     if (m_command_count > 0) {

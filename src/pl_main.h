@@ -21,8 +21,57 @@
 #ifndef PL_MAIN_H__
 #define PL_MAIN_H__
 
+#include "pl_weap.h"
+
+struct mapthing_s;
+typedef struct mapthing_s mapthing_t;
+
 struct mobj_s;
 typedef struct mobj_s mobj_t;
+
+// phares 3/20/98:
+//
+// Player friction is variable, based on controlling
+// linedefs. More friction can create mud, sludge,
+// magnetized floors, etc. Less friction can create ice.
+
+#define MORE_FRICTION_MOMENTUM 15000       // mud factor based on momentum
+#define ORIG_FRICTION          0xE800      // original value
+#define ORIG_FRICTION_FACTOR   2048        // original value
+#define FRICTION_FLY           0xeb00
+
+//
+// Key cards.
+//
+
+typedef enum {
+  it_bluecard,
+  it_yellowcard,
+  it_redcard,
+  it_blueskull,
+  it_yellowskull,
+  it_redskull,
+  NUMCARDS
+} card_t;
+
+// Power up artifacts.
+typedef enum {
+  pw_invulnerability,
+  pw_strength,
+  pw_invisibility,
+  pw_ironfeet,
+  pw_allmap,
+  pw_infrared,
+  NUMPOWERS
+} powertype_t;
+
+// Power up durations (how many seconds till expiration).
+typedef enum {
+  INVULNTICS  = (30  * TICRATE),
+  INVISTICS   = (60  * TICRATE),
+  INFRATICS   = (120 * TICRATE),
+  IRONTICS    = (60  * TICRATE)
+} powerduration_t;
 
 typedef enum {
   ps_weapon,
@@ -43,6 +92,24 @@ typedef enum {
   PST_REBORN,      /* Ready to restart/respawn??? */
   PST_DISCONNECTED /* Disconnected */
 } playerstate_t;
+
+/*
+ * The data sampled per tick (single player)
+ * and transmitted to other peers (multiplayer).
+ * Mainly movements/button commands per game tick,
+ * plus a checksum for internal state consistency.
+ *
+ * CPhipps - explicitely signed the elements, since they have to be signed to
+ *           work right
+ *
+ */
+
+ /*
+  * CG 04/23/2014: Un-explicitly sign the elements.  If a platform's char's are
+  *                implicitly unsigned, that's too bad.  They'll be fixed again
+  *                when the grand "use explicitly sized types where needed"
+  *                initiative is completed.
+  */
 
 typedef struct {
   char          forwardmove;  /* *2048 for move       */
@@ -210,23 +277,30 @@ typedef struct player_s {
 } player_t;
 
 typedef struct {
-  size_t index;
+  GSList *node;
   player_t *player;
-  bool wrap_around;
-} players_iterator_t;
+  player_t *wraparound;
+} players_iter_t;
 
-#define PLAYERS_FOR_EACH(iter) \
-  for (players_iterator_t (iter) = {0, NULL, false}; \
-       P_PlayersIter(&iter.index, &iter.player);)
+#define PLAYERS_FOR_EACH(_it) \
+  for (players_iter_t _it = {NULL, NULL, NULL}; P_PlayersIterate(&_it);)
 
-#define PLAYERS_FOR_EACH_AFTER(iter, p) \
-  for (players_iterator_t (iter) = {0, p, false}; \
-       P_PlayersIter(&iter.index, &iter.player);)
+#define PLAYERS_FOR_EACH_AT(_it, _p) \
+  for (players_iter_t _it = {NULL, _p, _p}; P_PlayersIterate(&_it);)
+
+static inline uint32_t PL_GetVanillaNum(player_t *player) {
+  if (player->id == 0) {
+    return 0;
+  }
+
+  return (player->id - 1) % VANILLA_MAXPLAYERS;
+}
 
 void      P_PlayersInit(void);
 uint32_t  P_PlayersGetCount(void);
-bool      P_PlayersIter(size_t *index, player_t **start);
+bool      P_PlayersIterate(players_iter_t *iter);
 player_t* P_PlayersGetNew(void);
+player_t* P_PlayersGetNewWithID(uint32_t id);
 player_t* P_PlayersLookup(uint32_t id);
 void      P_PlayerRemove(player_t *player);
 
@@ -238,6 +312,8 @@ player_t* P_GetDisplayPlayer(void);
 player_t* PL_New(void);
 bool      PL_IsConsolePlayer(player_t *player);
 bool      PL_IsDisplayPlayer(player_t *player);
+void      PL_SetNameRaw(player_t *player, const char *name);
+void      PL_SetName(player_t *player, const char *name);
 void      PL_AddDeath(player_t *victim, player_t *fragger);
 uint32_t  PL_GetFrags(player_t *fragger, player_t *victim);
 uint32_t  PL_GetTotalFrags(player_t *player);

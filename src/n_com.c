@@ -24,7 +24,6 @@
 
 #include <enet/enet.h>
 
-#include "doomdef.h"
 #include "n_main.h"
 #include "n_chan.h"
 #include "n_com.h"

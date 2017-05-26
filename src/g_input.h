@@ -21,24 +21,9 @@
 /*****************************************************************************/
 
 
-#include "z_zone.h"
+#ifndef G_INPUT_H__
+#define G_INPUT_H__
 
-// Location for any defines turned variables.
-// None.
-
-// proff 08/17/98: Changed for high-res
-int SCREENWIDTH=320;
-int SCREENHEIGHT=200;
-int SCREENPITCH=320;
-
-int REAL_SCREENWIDTH;
-int REAL_SCREENHEIGHT;
-int REAL_SCREENPITCH;
-
-// e6y: wide-res
-int SCREEN_320x200;
-int WIDE_SCREENWIDTH = 320;
-int WIDE_SCREENHEIGHT = 200;
+#endif
 
 /* vi: set et ts=2 sw=2: */
-

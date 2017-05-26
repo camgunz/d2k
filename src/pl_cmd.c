@@ -23,11 +23,6 @@
 
 #include "z_zone.h"
 
-#include "enet/enet.h"
-
-#include "doomdef.h"
-#include "doomstat.h"
-#include "d_event.h"
 #include "e6y.h"
 #include "g_game.h"
 #include "i_video.h"
@@ -350,10 +345,7 @@ void PL_InitCommandQueues(void) {
 
 void PL_InitCommandQueue(player_t *player) {
   player->cmdq.commands = g_ptr_array_new_with_free_func(recycle_command);
-  player->cmdq.commands_missed = 0;
-  player->cmdq.command_limit = 0;
-  player->cmdq.commands_run_this_tic = 0;
-  player->cmdq.latest_command_run_index = 0;
+  PL_ResetCommands(player);
 }
 
 size_t PL_GetCommandCount(player_t *player) {
@@ -443,10 +435,6 @@ void PL_ForEachCommand(player_t *player, GFunc func, gpointer user_data) {
 void PL_ClearCommands(player_t *player) {
   unsigned int command_count;
 
-  if (!playeringame[playernum]) {
-    return;
-  }
-
   D_Msg(MSG_CMD,
     "PL_ClearCommands: Clearing commands for %u\n", player->id
   );
@@ -473,7 +461,7 @@ void PL_IgnoreCommands(player_t *player) {
   PL_ForEachCommand(playernum, ignore_command, NULL);
 }
 
-void PL_TrimCommands(player_t *player, TrimFunc should_trim,
+void PL_TrimCommands(player_t *player, cmd_trim_f should_trim,
                                        gpointer user_data) {
   GPtrArray *commands;
   uint32_t command_count = 0;

@@ -23,30 +23,16 @@
 
 #include "z_zone.h"
 
-#include "doomdef.h"
-#include "doomstat.h"
-#include "d_event.h"
-#include "c_main.h"
 #include "c_eci.h"
-#include "d_main.h"
-#include "r_defs.h"
-#include "v_video.h"
-#include "gl_opengl.h"
-#include "hu_lib.h"
-#include "hu_stuff.h"
-#include "i_main.h"
-#include "i_system.h"
-#include "i_video.h"
-#include "x_main.h"
-#include "p_setup.h"
+#include "c_main.h"
 #include "g_game.h"
-#include "n_main.h"
-#include "cl_main.h"
+#include "x_main.h"
 
 /* CG TODO: Put these in a configuration file */
 #define CONSOLE_SHORTHAND_MARKER "/"
 #define CONSOLE_TEXT_PROMPT "> "
 
+/* [CG] [TODO] Use GScanner instead of a regex */
 static GRegex  *shorthand_regex = NULL;
 static GString *buffered_console_messages = NULL;
 static bool     buffered_console_messages_updated = false;
@@ -72,30 +58,35 @@ static const char* parse_shorthand_command(const char *short_command) {
   bool wrote_func_name = false;
   bool wrote_first_argument = false;
 
-  if (command == NULL)
+  if (!command) {
     command = g_string_new("");
+  }
 
   short_command = strip_shorthand_marker(short_command);
 
-  if (short_command == NULL)
+  if (!short_command) {
     return "";
+  }
 
   tokens = g_regex_split(shorthand_regex, short_command, 0);
   token_count = g_strv_length(tokens);
 
-  if (token_count == 0)
+  if (!token_count) {
     return "";
+  }
 
   g_string_printf(command, "%s.Shortcuts.", X_NAMESPACE);
 
   for (size_t i = 0; i < token_count; i++) {
     char *token = tokens[i];
 
-    if (token == NULL)
+    if (!token) {
       break;
+    }
 
-    if (!(*token))
+    if (!(*token)) {
       continue;
+    }
 
     if (!wrote_func_name) {
       g_string_append_printf(command, "%s(", token);
@@ -125,62 +116,15 @@ void C_Init(void) {
     &error
   );
 
-  if (error)
-    I_Error("C_Init: Error compiling shorthand regex: %s", error->message);
-
-#ifdef G_OS_UNIX
-  if (SERVER)
-    C_ECIInit();
-#endif
-}
-
-void C_Reset(void) {
-  if (!nodrawers)
-    X_Call(X_GetState(), "console", "reset", 0, 0);
-}
-
-void C_ScrollDown(void) {
-  if (!nodrawers)
-    X_Call(X_GetState(), "console", "scroll_down", 0, 0);
-}
-
-void C_ScrollUp(void) {
-  if (!nodrawers)
-    X_Call(X_GetState(), "console", "scroll_up", 0, 0);
-}
-
-void C_ToggleScroll(void) {
-  if (!nodrawers)
-    X_Call(X_GetState(), "console", "toggle_scroll", 0, 0);
-}
-
-void C_Summon(void) {
-  if (!nodrawers)
-    X_Call(X_GetState(), "console", "summon", 0, 0);
-}
-
-void C_Banish(void) {
-  if (!nodrawers)
-    X_Call(X_GetState(), "console", "banish", 0, 0);
-}
-
-void C_SetFullscreen(void) {
-  if (!nodrawers)
-    X_Call(X_GetState(), "console", "set_fullscreen", 0, 0);
-}
-
-bool C_Active(void) {
-  x_engine_t *xe;
-  bool is_active = false;
-
-  if (!nodrawers) {
-    xe = X_GetState();
-
-    X_Call(xe, "console", "is_active", 0, 1);
-    is_active = X_PopBoolean(xe);
+  if (error) {
+    I_Error("C_Init: Error compiling shorthand regex: %s\n", error->message);
   }
 
-  return is_active;
+#ifdef G_OS_UNIX
+  if (SERVER) {
+    C_ECIInit();
+  }
+#endif
 }
 
 bool C_HandleInput(char *input_text) {

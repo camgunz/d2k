@@ -26,8 +26,6 @@
 
 #include "i_mouse.h"
 #include "i_video.h"
-#include "doomdef.h"
-#include "d_mouse.h"
 #include "m_argv.h"
 
 #if 0

@@ -23,8 +23,6 @@
 
 #include "z_zone.h"
 
-#include "doomdef.h"
-#include "doomstat.h"
 #include "am_map.h"
 #include "d_deh.h"  // Ty 03/22/98 - externalized strings
 #include "d_event.h"

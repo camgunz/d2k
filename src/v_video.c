@@ -25,7 +25,6 @@
 
 #include <SDL.h>
 
-#include "doomdef.h"
 #include "d_event.h"
 #include "c_main.h"
 #include "e6y.h"
@@ -46,6 +45,20 @@
 
 #include "gl_opengl.h"
 #include "gl_struct.h"
+
+// proff 08/17/98: Changed for high-res
+int SCREENWIDTH  = 320;
+int SCREENHEIGHT = 200;
+int SCREENPITCH  = 320;
+
+int REAL_SCREENWIDTH;
+int REAL_SCREENHEIGHT;
+int REAL_SCREENPITCH;
+
+// e6y: wide-res
+int SCREEN_320x200;
+int WIDE_SCREENWIDTH  = 320;
+int WIDE_SCREENHEIGHT = 200;
 
 // DWF 2012-05-10
 // SetRatio sets the following global variables based on window geometry and

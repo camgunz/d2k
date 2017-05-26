@@ -35,7 +35,7 @@ void I_LoadCustomFonts(void) {
   gchar *cwd = g_get_current_dir();
   char *font_folder = M_PathJoin(cwd, FONT_FOLDER_NAME);
 
-  D_Msg(MSG_INFO, "I_LoadCustomFonts: Loading custom fonts\n");
+  D_MsgLocalInfo("I_LoadCustomFonts: Loading custom fonts\n");
 
 #ifdef _WIN32
   GPtrArray *font_files = M_ListFiles(font_folder);

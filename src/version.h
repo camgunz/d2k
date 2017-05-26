@@ -24,6 +24,8 @@
 #ifndef VERSION_H___
 #define VERSION_H___
 
+#define VERSION_STRING PACKAGE_NAME " v" PACKAGE_VERSION " (" PACKAGE_URL ")"
+
 extern const char version_date[];
 
 #endif

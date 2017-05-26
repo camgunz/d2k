@@ -68,18 +68,18 @@ uint32_t M_IDHashGetNewID(id_hash_t *idhash, void *obj) {
   return id;
 }
 
-void M_IDHashAssignID(id_hash_t *idhash, void *obj, uint32_t obj_id) {
-  if (obj_id == 0) {
+void M_IDHashAssignID(id_hash_t *idhash, void *obj, uint32_t id) {
+  if (id == 0) {
     I_Error("M_IDHashAssignID: ID is 0");
   }
 
-  idhash->max_id = MAX(idhash->max_id, obj_id);
+  idhash->max_id = MAX(idhash->max_id, id);
 
-  if (g_hash_table_contains(idhash->objs, GUINT_TO_POINTER(obj_id))) {
-    I_Error("M_IDHashAssignID: ID %d already assigned", obj_id);
+  if (g_hash_table_contains(idhash->objs, GUINT_TO_POINTER(id))) {
+    I_Error("M_IDHashAssignID: ID %u already assigned", id);
   }
 
-  g_hash_table_insert(idhash->objs, GUINT_TO_POINTER(obj_id), obj);
+  g_hash_table_insert(idhash->objs, GUINT_TO_POINTER(id), obj);
 }
 
 void M_IDHashReleaseID(id_hash_t *idhash, uint32_t id) {
@@ -88,6 +88,10 @@ void M_IDHashReleaseID(id_hash_t *idhash, uint32_t id) {
   }
 
   g_hash_table_remove(idhash->objs, GUINT_TO_POINTER(id));
+  g_array_append_val(
+    idhash->recycled_ids,
+    GUINT_TO_POINTER(id)
+  );
 }
 
 void* M_IDHashLookupObj(id_hash_t *idhash, uint32_t id) {

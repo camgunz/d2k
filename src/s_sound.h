@@ -76,11 +76,26 @@ typedef struct sound_engine_s {
   void (*reposition_sounds)(mobj_t *listener);                 // S_UpdateSounds
 } sound_engine_t;
 
-extern int snd_SfxVolume;
-extern int snd_MusicVolume;
+// ------------------------------------------
+// Internal parameters for sound rendering.
+// These have been taken from the DOS version,
+//  but are not (yet) supported with Linux
+//  (e.g. no sound volume adjustment with menu.
+
+// These are not used, but should be (menu).
+// From m_menu.c:
+//  Sound FX volume has default, 0 - 15
+//  Music volume has default, 0 - 15
+// These are multiplied by 8.
+extern int snd_SfxVolume;      // maximum volume for sound
+extern int snd_MusicVolume;    // maximum volume for music
+
 extern int default_numChannels;
 extern int idmusnum; //jff 3/17/98 holds last IDMUS number, or -1
 extern const char *S_music_files[]; // cournia - stores music file names
+
+// v1.1-like pitched sounds
+extern int pitched_sounds; // killough
 
 void S_Init(int sfxVolume, int musicVolume);
 int  S_GetChannelCount(void);

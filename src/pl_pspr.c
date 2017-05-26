@@ -23,9 +23,6 @@
 
 #include "z_zone.h"
 
-#include "doomdef.h"
-#include "doomstat.h"
-#include "d_event.h"
 #include "d_items.h"
 #include "e6y.h"
 #include "m_random.h"
@@ -64,91 +61,99 @@
   #define CHECK_WEAPON_CODEPOINTER(codepointer, player)
 #endif
 
-extern void P_Thrust(player_t *, angle_t, fixed_t);
+extern void PL_Thrust(player_t *player, angle_t angle, fixed_t move);
 
 // The following array holds the recoil values         // phares
 
 static const int recoil_values[] = {    // phares
-  10, // wp_fist
-  10, // wp_pistol
-  30, // wp_shotgun
-  10, // wp_chaingun
-  100,// wp_missile
-  20, // wp_plasma
-  100,// wp_bfg
-  0,  // wp_chainsaw
-  80  // wp_supershotgun
+  10,  // wp_fist
+  10,  // wp_pistol
+  30,  // wp_shotgun
+  10,  // wp_chaingun
+  100, // wp_missile
+  20,  // wp_plasma
+  100, // wp_bfg
+  0,   // wp_chainsaw
+  80   // wp_supershotgun
 };
 
+int autoaim = 0;  // killough 7/19/98: autoaiming was not in original beta
+
+//e6y static 
+fixed_t bulletslope;
+
 //
-// P_SetPsprite
+// PL_SetPsprite
 //
 
-static void P_SetPsprite(player_t *player, int position, statenum_t stnum) {
+static void PL_SetPsprite(player_t *player, int position, statenum_t stnum) {
   pspdef_t *psp = &player->psprites[position];
 
-  do
-    {
-      state_t *state;
+  do {
+    state_t *state;
 
-      if (!stnum)
-        {
-          // object removed itself
-          psp->state = NULL;
-          break;
-        }
-
-      state = &states[stnum];
-      psp->state = state;
-      psp->tics = state->tics;        // could be 0
-
-      if (state->misc1)
-        {
-          // coordinate set
-          psp->sx = state->misc1 << FRACBITS;
-          psp->sy = state->misc2 << FRACBITS;
-        }
-
-      // Call action routine.
-      // Modified handling.
-      if (state->action)
-        {
-          state->action(player, psp);
-          if (!psp->state)
-            break;
-        }
-      stnum = psp->state->nextstate;
+    if (!stnum) {
+      // object removed itself
+      psp->state = NULL;
+      break;
     }
-  while (!psp->tics);     // an initial state of 0 could cycle through
+
+    state = &states[stnum];
+    psp->state = state;
+    psp->tics = state->tics;        // could be 0
+
+    if (state->misc1) {
+      // coordinate set
+      psp->sx = state->misc1 << FRACBITS;
+      psp->sy = state->misc2 << FRACBITS;
+    }
+
+    // Call action routine.
+    // Modified handling.
+    if (state->action) {
+      state->action(player, psp);
+
+      if (!psp->state) {
+        break;
+      }
+    }
+
+    stnum = psp->state->nextstate;
+  } while (!psp->tics); // an initial state of 0 could cycle through
 }
 
 //
-// P_BringUpWeapon
+// PL_BringUpWeapon
 // Starts bringing the pending weapon up
 // from the bottom of the screen.
 // Uses player
 //
 
-static void P_BringUpWeapon(player_t *player) {
+static void PL_BringUpWeapon(player_t *player) {
   statenum_t newstate;
 
-  if (player->pendingweapon == wp_nochange)
+  if (player->pendingweapon == wp_nochange) {
     player->pendingweapon = player->readyweapon;
+  }
 
-  if (player->pendingweapon == wp_chainsaw)
-    S_StartSound (player->mo, sfx_sawup);
+  if (player->pendingweapon == wp_chainsaw) {
+    S_StartSound(player->mo, sfx_sawup);
+  }
 
-  if (player->pendingweapon >= NUMWEAPONS)
-    D_Msg(MSG_WARN, "P_BringUpWeapon: weaponinfo overrun has occured.\n");
+  if (player->pendingweapon >= NUMWEAPONS) {
+    D_Msg(MSG_WARN, "PL_BringUpWeapon: weaponinfo overrun has occured.\n");
+  }
 
   newstate = weaponinfo[player->pendingweapon].upstate;
 
   player->pendingweapon = wp_nochange;
-  // killough 12/98: prevent pistol from starting visibly at bottom of screen:
-  player->psprites[ps_weapon].sy =
-    mbf_features ? WEAPONBOTTOM+FRACUNIT*2 : WEAPONBOTTOM;
 
-  P_SetPsprite(player, ps_weapon, newstate);
+  // killough 12/98: prevent pistol from starting visibly at bottom of screen:
+  player->psprites[ps_weapon].sy = mbf_features ?
+                                   WEAPONBOTTOM + FRACUNIT * 2 :
+                                   WEAPONBOTTOM;
+
+  PL_SetPsprite(player, ps_weapon, newstate);
 }
 
 // The first set is where the weapon preferences from             // killough,
@@ -156,19 +161,19 @@ static void P_BringUpWeapon(player_t *player) {
 // in DOOM2 to bring up the weapon, i.e. 6 = plasma gun. These    //    |
 // are NOT the wp_* constants.                                    //    V
 
-int weapon_preferences[2][NUMWEAPONS+1] = {
+int weapon_preferences[2][NUMWEAPONS + 1] = {
   {6, 9, 4, 3, 2, 8, 5, 7, 1, 0},  // !compatibility preferences
   {6, 9, 4, 3, 2, 8, 5, 7, 1, 0},  //  compatibility preferences
 };
 
-// P_SwitchWeapon checks current ammo levels and gives you the
+// PL_SwitchWeapon checks current ammo levels and gives you the
 // most preferred weapon with ammo. It will not pick the currently
-// raised weapon. When called from P_CheckAmmo this won't matter,
+// raised weapon. When called from PL_CheckAmmo this won't matter,
 // because the raised weapon has no ammo anyway. When called from
 // G_BuildTiccmd you want to toggle to a different weapon regardless.
 
-int P_SwitchWeapon(player_t *player) {
-  int *prefer = weapon_preferences[demo_compatibility!=0]; // killough 3/22/98
+int PL_SwitchWeapon(player_t *player) {
+  int *prefer = weapon_preferences[demo_compatibility != 0]; // killough 3/22/98
   int currentweapon = player->readyweapon;
   int newweapon = currentweapon;
   int i = NUMWEAPONS+1;   // killough 5/2/98
@@ -178,35 +183,41 @@ int P_SwitchWeapon(player_t *player) {
   do {
     switch (*prefer++) {
       case 1:
-        if (!player->powers[pw_strength])      // allow chainsaw override
+        if (!player->powers[pw_strength]) {    // allow chainsaw override
           break;
+        }
       case 0:
         newweapon = wp_fist;
       break;
       case 2:
-        if (player->ammo[am_clip])
+        if (player->ammo[am_clip]) {
           newweapon = wp_pistol;
+        }
       break;
       case 3:
-        if (player->weaponowned[wp_shotgun] && player->ammo[am_shell])
+        if (player->weaponowned[wp_shotgun] && player->ammo[am_shell]) {
           newweapon = wp_shotgun;
+        }
       break;
       case 4:
-        if (player->weaponowned[wp_chaingun] && player->ammo[am_clip])
+        if (player->weaponowned[wp_chaingun] && player->ammo[am_clip]) {
           newweapon = wp_chaingun;
+        }
       break;
       case 5:
-        if (player->weaponowned[wp_missile] && player->ammo[am_misl])
+        if (player->weaponowned[wp_missile] && player->ammo[am_misl]) {
           newweapon = wp_missile;
+        }
       break;
       case 6:
         if (player->weaponowned[wp_plasma] && player->ammo[am_cell] &&
-            gamemode != shareware) {
+                                              gamemode != shareware) {
           newweapon = wp_plasma;
         }
       break;
       case 7:
-        if (player->weaponowned[wp_bfg] && gamemode != shareware &&
+        if (player->weaponowned[wp_bfg] &&
+            gamemode != shareware &&
             player->ammo[am_cell] >= (demo_compatibility ? 41 : 40)) {
           newweapon = wp_bfg;
         }
@@ -216,20 +227,20 @@ int P_SwitchWeapon(player_t *player) {
           newweapon = wp_chainsaw;
       break;
       case 9:
-        if (player->weaponowned[wp_supershotgun] && gamemode == commercial &&
+        if (player->weaponowned[wp_supershotgun] &&
+            gamemode == commercial &&
             player->ammo[am_shell] >= (demo_compatibility ? 3 : 2)) {
           newweapon = wp_supershotgun;
         }
       break;
     }
-  }
-  while (newweapon == currentweapon && --i);          // killough 5/2/98
+  } while (newweapon == currentweapon && --i); // killough 5/2/98
 
   return newweapon;
 }
 
 // killough 5/2/98: whether consoleplayer prefers weapon w1 over weapon w2.
-int P_WeaponPreferred(int w1, int w2) {
+int PL_WeaponPreferred(int w1, int w2) {
   return
     (weapon_preferences[0][0] != ++w2 && (weapon_preferences[0][0] == ++w1 ||
     (weapon_preferences[0][1] !=   w2 && (weapon_preferences[0][1] ==   w1 ||
@@ -243,26 +254,29 @@ int P_WeaponPreferred(int w1, int w2) {
 }
 
 //
-// P_CheckAmmo
+// PL_CheckAmmo
 // Returns true if there is enough ammo to shoot.
 // If not, selects the next weapon to use.
 // (only in demo_compatibility mode -- killough 3/22/98)
 //
 
-bool P_CheckAmmo(player_t *player) {
+bool PL_CheckAmmo(player_t *player) {
   ammotype_t ammo  = weaponinfo[player->readyweapon].ammo;
   int        count = 1;  // Regular
 
-  if (player->readyweapon == wp_bfg)  // Minimal amount for one shot varies.
+  if (player->readyweapon == wp_bfg) { // Minimal amount for one shot varies.
     count = BFGCELLS;
-  else if (player->readyweapon == wp_supershotgun)        // Double barrel.
+  }
+  else if (player->readyweapon == wp_supershotgun) { // Double barrel.
     count = 2;
+  }
 
   // Some do not need ammunition anyway.
   // Return if current ammunition sufficient.
 
-  if (ammo == am_noammo || player->ammo[ammo] >= count)
+  if (ammo == am_noammo || player->ammo[ammo] >= count) {
     return true;
+  }
 
   // Out of ammo, pick a weapon to change to.
   //
@@ -272,47 +286,48 @@ bool P_CheckAmmo(player_t *player) {
   // G_BuildTiccmd() interface instead of making the switch here.
 
   if (demo_compatibility) {
-    player->pendingweapon = P_SwitchWeapon(player);      // phares
+    player->pendingweapon = PL_SwitchWeapon(player); // phares
     // Now set appropriate weapon overlay.
-    P_SetPsprite(player,ps_weapon,weaponinfo[player->readyweapon].downstate);
+    PL_SetPsprite(player,ps_weapon,weaponinfo[player->readyweapon].downstate);
   }
 
   return false;
 }
 
 //
-// P_FireWeapon.
+// PL_FireWeapon.
 //
 
-static void P_FireWeapon(player_t *player) {
+static void PL_FireWeapon(player_t *player) {
   bool unlagged_activated = false;
   statenum_t newstate;
 
-  if (!P_CheckAmmo(player))
+  if (!PL_CheckAmmo(player)) {
     return;
+  }
 
   if (SERVER) {
     unlagged_activated = SV_UnlagStart();
   }
 
-  P_SetMobjState(player->mo, S_PLAY_ATK1);
+  PL_SetMobjState(player->mo, S_PLAY_ATK1);
 
   if (unlagged_activated) {
     SV_UnlagEnd();
   }
 
   newstate = weaponinfo[player->readyweapon].atkstate;
-  P_SetPsprite(player, ps_weapon, newstate);
+  PL_SetPsprite(player, ps_weapon, newstate);
   P_NoiseAlert(player->mo, player->mo);
 }
 
 //
-// P_DropWeapon
+// PL_DropWeapon
 // Player died, so put the weapon away.
 //
 
-void P_DropWeapon(player_t *player) {
-  P_SetPsprite(player, ps_weapon, weaponinfo[player->readyweapon].downstate);
+void PL_DropWeapon(player_t *player) {
+  PL_SetPsprite(player, ps_weapon, weaponinfo[player->readyweapon].downstate);
 }
 
 //
@@ -332,8 +347,9 @@ void A_WeaponReady(player_t *player, pspdef_t *psp) {
     P_SetMobjState(player->mo, S_PLAY);
   }
 
-  if (player->readyweapon == wp_chainsaw && psp->state == &states[S_SAW])
+  if (player->readyweapon == wp_chainsaw && psp->state == &states[S_SAW]) {
     S_StartSound(player->mo, sfx_sawidl);
+  }
 
   // check for change
   //  if player is dead, put the weapon away
@@ -341,7 +357,7 @@ void A_WeaponReady(player_t *player, pspdef_t *psp) {
   if (player->pendingweapon != wp_nochange || !player->health) {
     // change weapon (pending weapon should already be validated)
     statenum_t newstate = weaponinfo[player->readyweapon].downstate;
-    P_SetPsprite(player, ps_weapon, newstate);
+    PL_SetPsprite(player, ps_weapon, newstate);
 
     return;
   }
@@ -355,7 +371,7 @@ void A_WeaponReady(player_t *player, pspdef_t *psp) {
     if (!player->attackdown || (player->readyweapon != wp_missile &&
                                 player->readyweapon != wp_bfg)) {
       player->attackdown = true;
-      P_FireWeapon(player);
+      PL_FireWeapon(player);
 
       return;
     }
@@ -385,27 +401,32 @@ void A_ReFire(player_t *player, pspdef_t *psp) {
   //  (if a weaponchange is pending, let it go through instead)
 
   if ((player->cmd.buttons & BT_ATTACK) &&
-      player->pendingweapon == wp_nochange && player->health) {
+      player->pendingweapon == wp_nochange &&
+      player->health) {
     D_Msg(MSG_SOUND, "(%d) Player %td re-firing\n", gametic, player - players);
     player->refire++;
-    P_FireWeapon(player);
+    PL_FireWeapon(player);
   }
   else {
     player->refire = 0;
-    P_CheckAmmo(player);
+    PL_CheckAmmo(player);
   }
 }
 
 void A_CheckReload(player_t *player, pspdef_t *psp) {
   CHECK_WEAPON_CODEPOINTER("A_CheckReload", player);
 
-  if (!P_CheckAmmo(player) && compatibility_level >= prboom_4_compatibility) {
-    /* cph 2002/08/08 - In old Doom, P_CheckAmmo would start the weapon lowering
-     * immediately. This was lost in Boom when the weapon switching logic was
-     * rewritten. But we must tell Doom that we don't need to complete the
-     * reload frames for the weapon here. G_BuildTiccmd will set ->pendingweapon
-     * for us later on. */
-    P_SetPsprite(player,ps_weapon,weaponinfo[player->readyweapon].downstate);
+  if (!PL_CheckAmmo(player) && compatibility_level >= prboom_4_compatibility) {
+    /* cph 2002/08/08 - In old Doom, PL_CheckAmmo would start the weapon
+     * lowering immediately. This was lost in Boom when the weapon switching
+     * logic was rewritten. But we must tell Doom that we don't need to
+     * complete the reload frames for the weapon here. G_BuildTiccmd will set
+     * ->pendingweapon for us later on. */
+    PL_SetPsprite(
+      player,
+      ps_weapon,
+      weaponinfo[player->readyweapon].downstate
+    );
   }
 }
 
@@ -421,8 +442,9 @@ void A_Lower(player_t *player, pspdef_t *psp) {
   psp->sy += LOWERSPEED;
 
   // Is already down.
-  if (psp->sy < WEAPONBOTTOM)
+  if (psp->sy < WEAPONBOTTOM) {
     return;
+  }
 
   // Player is dead.
   if (player->playerstate == PST_DEAD) {
@@ -435,7 +457,7 @@ void A_Lower(player_t *player, pspdef_t *psp) {
 
   if (!player->health) {
     // Player is dead, so keep the weapon off screen.
-    P_SetPsprite(player,  ps_weapon, S_NULL);
+    PL_SetPsprite(player,  ps_weapon, S_NULL);
     return;
   }
 
@@ -444,7 +466,7 @@ void A_Lower(player_t *player, pspdef_t *psp) {
   // if(player->pendingweapon < NUMWEAPONS)
   player->readyweapon = player->pendingweapon;
 
-  P_BringUpWeapon(player);
+  PL_BringUpWeapon(player);
 }
 
 //
@@ -468,26 +490,26 @@ void A_Raise(player_t *player, pspdef_t *psp) {
 
   newstate = weaponinfo[player->readyweapon].readystate;
 
-  P_SetPsprite(player, ps_weapon, newstate);
+  PL_SetPsprite(player, ps_weapon, newstate);
 }
 
 
 // Weapons now recoil, amount depending on the weapon.              // phares
 //                                                                  //   |
-// The P_SetPsprite call in each of the weapon firing routines      //   V
+// The PL_SetPsprite call in each of the weapon firing routines     //   V
 // was moved here so the recoil could be synched with the
 // muzzle flash, rather than the pressing of the trigger.
 // The BFG delay caused this to be necessary.
 
 static void A_FireSomething(player_t* player,int adder) {
-  P_SetPsprite(
+  PL_SetPsprite(
     player, ps_flash, weaponinfo[player->readyweapon].flashstate + adder
   );
 
   // killough 3/27/98: prevent recoil in no-clipping mode
   if (!(player->mo->flags & MF_NOCLIP)) {
     if (!compatibility && weapon_recoil) {
-      P_Thrust(
+      PL_Thrust(
         player,
         ANG180 + player->mo->angle,
         2048 * recoil_values[player->readyweapon]
@@ -503,7 +525,7 @@ static void A_FireSomething(player_t* player,int adder) {
 void A_GunFlash(player_t *player, pspdef_t *psp) {
   CHECK_WEAPON_CODEPOINTER("A_GunFlash", player);
 
-  P_SetMobjState(player->mo, S_PLAY_ATK2);
+  PL_SetMobjState(player->mo, S_PLAY_ATK2);
 
   A_FireSomething(player,0);                                      // phares
 }
@@ -522,28 +544,31 @@ void A_Punch(player_t *player, pspdef_t *psp) {
 
   CHECK_WEAPON_CODEPOINTER("A_Punch", player);
 
-  damage = (P_Random(pr_punch)%10+1)<<1;
+  damage = (P_Random(pr_punch) % 10 + 1) << 1;
 
-  if (player->powers[pw_strength])
+  if (player->powers[pw_strength]) {
     damage *= 10;
+  }
 
   angle = player->mo->angle;
 
   // killough 5/5/98: remove dependence on order of evaluation:
   t = P_Random(pr_punchangle);
-  angle += (t - P_Random(pr_punchangle))<<18;
+  angle += (t - P_Random(pr_punchangle)) << 18;
 
   /* killough 8/2/98: make autoaiming prefer enemies */
-  if (!mbf_features ||
-      (slope = P_AimLineAttack(player->mo, angle, MELEERANGE, MF_FRIEND),
-       !linetarget)) {
+  if (!mbf_features || (slope = P_AimLineAttack(player->mo,
+                                                angle,
+                                                MELEERANGE,
+                                                MF_FRIEND), !linetarget)) {
     slope = P_AimLineAttack(player->mo, angle, MELEERANGE, 0);
   }
 
   P_LineAttack(player->mo, angle, MELEERANGE, slope, damage);
 
-  if (!linetarget)
+  if (!linetarget) {
     return;
+  }
 
   S_StartSound(player->mo, sfx_punch);
 
@@ -573,9 +598,10 @@ void A_Saw(player_t *player, pspdef_t *psp) {
 
   /* Use meleerange + 1 so that the puff doesn't skip the flash
    * killough 8/2/98: make autoaiming prefer enemies */
-  if (!mbf_features ||
-      (slope = P_AimLineAttack(player->mo, angle, MELEERANGE + 1, MF_FRIEND),
-       !linetarget)) {
+  if (!mbf_features || (slope = P_AimLineAttack(player->mo,
+                                                angle,
+                                                MELEERANGE + 1,
+                                                MF_FRIEND), !linetarget)) {
     slope = P_AimLineAttack(player->mo, angle, MELEERANGE + 1, 0);
   }
 
@@ -594,16 +620,20 @@ void A_Saw(player_t *player, pspdef_t *psp) {
   );
 
   if (angle - player->mo->angle > ANG180) {
-    if (angle - player->mo->angle < -ANG90 / 20)
+    if (angle - player->mo->angle < -ANG90 / 20) {
       player->mo->angle = angle + ANG90 / 21;
-    else
+    }
+    else {
       player->mo->angle -= ANG90 / 20;
+    }
   }
   else {
-    if (angle - player->mo->angle > ANG90 / 20)
+    if (angle - player->mo->angle > ANG90 / 20) {
       player->mo->angle = angle - ANG90 / 21;
-    else
+    }
+    else {
       player->mo->angle += ANG90 / 20;
+    }
   }
 
   player->mo->flags |= MF_JUSTATTACKED;
@@ -641,8 +671,6 @@ void A_FireBFG(player_t *player, pspdef_t *psp) {
 // This code may not be used in other mods without appropriate credit given.
 // Code leeches will be telefragged.
 
-int autoaim = 0;  // killough 7/19/98: autoaiming was not in original beta
-
 void A_FireOldBFG(player_t *player, pspdef_t *psp) {
   int type = MT_PLASMA1;
 
@@ -651,9 +679,13 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp) {
 
   CHECK_WEAPON_CODEPOINTER("A_FireOldBFG", player);
 
-  if (weapon_recoil && !(player->mo->flags & MF_NOCLIP))
-    P_Thrust(player, ANG180 + player->mo->angle,
-    512 * recoil_values[wp_plasma]);
+  if (weapon_recoil && !(player->mo->flags & MF_NOCLIP)) {
+    PL_Thrust(
+      player,
+      ANG180 + player->mo->angle,
+      512 * recoil_values[wp_plasma]
+    );
+  }
 
   player->ammo[weaponinfo[player->readyweapon].ammo]--;
 
@@ -672,13 +704,16 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp) {
       fixed_t slope;
       do {
         slope = P_AimLineAttack(mo, an, 16*64*FRACUNIT, mask);
-        if (!linetarget)
+        if (!linetarget) {
           slope = P_AimLineAttack(mo, an += 1<<26, 16*64*FRACUNIT, mask);
-        if (!linetarget)
+        }
+        if (!linetarget) {
           slope = P_AimLineAttack(mo, an -= 2<<26, 16*64*FRACUNIT, mask);
-        if (!linetarget)
+        }
+        if (!linetarget) {
           slope = 0, an = mo->angle;
-      } while (mask && (mask = 0, !linetarget));     // killough 8/2/98
+        }
+      } while (mask && (mask = 0, !linetarget)); // killough 8/2/98
       an1 += an - mo->angle;
       an2 += tantoangle[slope >> DBITS];
     }
@@ -688,12 +723,11 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp) {
     );
     P_SetTarget(&th->target, mo);
     th->angle = an1;
-    th->momx = finecosine[an1>>ANGLETOFINESHIFT] * 25;
-    th->momy = finesine[an1>>ANGLETOFINESHIFT] * 25;
-    th->momz = finetangent[an2>>ANGLETOFINESHIFT] * 25;
+    th->momx = finecosine[an1 >> ANGLETOFINESHIFT] * 25;
+    th->momy = finesine[an1 >> ANGLETOFINESHIFT] * 25;
+    th->momz = finetangent[an2 >> ANGLETOFINESHIFT] * 25;
     P_CheckMissileSpawn(th);
-  }
-  while ((type != MT_PLASMA2) && (type = MT_PLASMA2)); //killough: obfuscated!
+  } while ((type != MT_PLASMA2) && (type = MT_PLASMA2)); //killough: obfuscated!
 }
 
 //
@@ -705,7 +739,7 @@ void A_FirePlasma(player_t *player, pspdef_t *psp) {
 
   player->ammo[weaponinfo[player->readyweapon].ammo]--;
 
-  A_FireSomething(player,P_Random(pr_plasma)&1);              // phares
+  A_FireSomething(player, P_Random(pr_plasma) & 1); // phares
   P_SpawnPlayerMissile(player->mo, MT_PLASMA);
 }
 
@@ -714,9 +748,6 @@ void A_FirePlasma(player_t *player, pspdef_t *psp) {
 // Sets a slope so a near miss is at aproximately
 // the height of the intended target
 //
-
-//e6y static 
-fixed_t bulletslope;
 
 static void P_BulletSlope(mobj_t *mo) {
   angle_t an = mo->angle;    // see which target is to be aimed at
@@ -727,11 +758,13 @@ static void P_BulletSlope(mobj_t *mo) {
 
   do {
     bulletslope = P_AimLineAttack(mo, an, 16 * 64 * FRACUNIT, mask);
-    if (!linetarget)
+    if (!linetarget) {
       bulletslope = P_AimLineAttack(mo, an += 1 << 26, funit, mask);
-    if (!linetarget)
+    }
+    if (!linetarget) {
       bulletslope = P_AimLineAttack(mo, an -= 2 << 26, funit, mask);
-  } while (mask && (mask = 0, !linetarget));  /* killough 8/2/98 */
+    }
+  } while (mask && (mask = 0, !linetarget)); /* killough 8/2/98 */
 }
 
 //
@@ -786,8 +819,9 @@ void A_FireShotgun(player_t *player, pspdef_t *psp) {
 
   P_BulletSlope(player->mo);
 
-  for (i = 0; i < 7; i++)
+  for (i = 0; i < 7; i++) {
     P_GunShot(player->mo, false);
+  }
 }
 
 //
@@ -875,7 +909,8 @@ void A_BFGSpray(mobj_t *mo) {
   int i;
 
   for (i = 0 ; i < 40 ; i++) { // offset angles from its attack angle
-    int j, damage;
+    int j;
+    int damage;
     angle_t an = mo->angle - ANG90 / 2 + ANG90 / 40 * i;
 
     // mo->target is the originator (player) of the missile
@@ -883,11 +918,13 @@ void A_BFGSpray(mobj_t *mo) {
     // killough 8/2/98: make autoaiming prefer enemies
     if (!mbf_features ||
        (P_AimLineAttack(mo->target, an, 16 * 64 * FRACUNIT, MF_FRIEND),
-       !linetarget))
+       !linetarget)) {
       P_AimLineAttack(mo->target, an, 16 * 64 * FRACUNIT, 0);
+    }
 
-    if (!linetarget)
+    if (!linetarget) {
       continue;
+    }
 
     P_SpawnMobj(
       linetarget->x,
@@ -896,8 +933,9 @@ void A_BFGSpray(mobj_t *mo) {
       MT_EXTRABFG
     );
 
-    for (damage = j = 0; j < 15; j++)
+    for (damage = j = 0; j < 15; j++) {
       damage += (P_Random(pr_bfg) & 7) + 1;
+    }
 
     P_DamageMobj(linetarget, mo->target, mo->target, damage);
   }
@@ -914,16 +952,15 @@ void A_BFGsound(player_t *player, pspdef_t *psp) {
 }
 
 //
-// P_SetupPsprites
+// PL_SetupPsprites
 // Called at start of level for each player.
 //
 
-void P_SetupPsprites(player_t *player) {
-  int i;
-
+void PL_SetupPsprites(player_t *player) {
   // remove all psprites
-  for (i = 0; i < NUMPSPRITES; i++)
+  for (int i = 0; i < NUMPSPRITES; i++) {
     player->psprites[i].state = NULL;
+  }
 
   // spawn the gun
   player->pendingweapon = player->readyweapon;
@@ -935,7 +972,7 @@ void P_SetupPsprites(player_t *player) {
 // Called every tic by player thinking routine.
 //
 
-void P_MovePsprites(player_t *player) {
+void PL_MovePsprites(player_t *player) {
   pspdef_t *psp = player->psprites;
 
   // a null state means not active
@@ -953,4 +990,3 @@ void P_MovePsprites(player_t *player) {
 }
 
 /* vi: set et ts=2 sw=2: */
-

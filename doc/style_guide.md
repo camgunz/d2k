@@ -6,16 +6,23 @@ crucially, code style can also be used to help guard against dangerous code.
 While many argue that consistency, rather than a specific style, is the real
 goal, I disagree: consistently unreadable and confusing is still unreadable and
 confusing.  Therefore, I provide these style guidelines which set out the
-format in which D2k source is to be formatted.
+format in which D2K source is to be formatted.
 
 ## General Guidelines
 
 First, some general guidelines.
 
+### Clarity
+
+Clarity is paramount.  Unless your code is in an extremely hot path (rendering,
+for example), losing a few cycles to clarity is a clear win.  Use verbose
+variable names.  Be obvious in your intent.  Strive to do only a single thing
+per line.
+
 ### Reformatting
 
 As a derivative of PrBoom+, D2K has accepted contributions from numerous
-contributors over its storied lifespan, many of which have different code
+contributors over its storied lifespan, many of whom have different code
 styles.  Going forward, contributions should be formatted according to this
 style guide, but existing code should be properly reformatted whenever it is
 found.  Some projects advise against formatting-only changes; this is not one
@@ -101,35 +108,168 @@ wide.
     * Bad: `data = (void*) p;`
     * Good: `data = (void *)p;`
 
+### Comments
+
+Prefer `/* [text] */` to `// [text]` comments.
+
+```c
+/* Single-line comment */
+
+/*
+ * This is
+ * a multiline comment
+ /
+```
+
+Comment **very**, **very** sparsely.  Code should not require comments; take a
+look at this code from `PTR_AimTraverse`:
+
+```c
+if (!(th->flags & MF_SHOOTABLE)) {
+  return true; // corpse or something
+}
+```
+
+`PTR_AimTraverse` looks for shootable things.  Naturally, if a thing doesn't
+have the shootable flag set it isn't shootable.  This comment is worthless.
+
+But even worse, it imposes its own -- and likely now outdated -- understanding
+of which `mobj_t` types might not be shootable.  Why do you even care here?
+It's not shootable; whether it's a corpse or a ghost or anything else makes no
+difference.
+
+Don't make artistic comments.  The code is littered with comment art that makes
+code extremely hard to edit; don't contribute to this problem.  Example:
+
+```c
+// The wall is angled. Bounce if the angle of approach is         // phares
+// less than 45 degrees.                                          // phares
+
+side = P_PointOnLineSide(slidemo->x, slidemo->y, ld);
+
+lineangle = R_PointToAngle2(0, 0, ld->dx, ld->dy);
+if (side == 1) {
+  lineangle += ANG180;
+}
+moveangle = R_PointToAngle2(0, 0, tmxmove, tmymove);
+
+// killough 3/2/98:
+// The moveangle+=10 breaks v1.9 demo compatibility in
+// some demos, so it needs demo_compatibility switch.
+
+if (!demo_compatibility) {
+  moveangle += 10;                 // prevents sudden path reversal due to
+}                                  // rounding error              // phares
+deltaangle = moveangle - lineangle;                               //   |
+movelen = P_AproxDistance(tmxmove, tmymove);                      //   V
+if (icyfloor && (deltaangle > ANG45) && (deltaangle < ANG90 + ANG45)) {
+  moveangle = lineangle - deltaangle;
+  movelen /= 2;                    // absorb
+  S_StartSound(slidemo, sfx_oof);  // oooff!
+  moveangle >>= ANGLETOFINESHIFT;
+  tmxmove = FixedMul(movelen, finecosine[moveangle]);
+  tmymove = FixedMul(movelen, finesine[moveangle]);
+}                                                                 //   ^
+else {                                                            //   |
+  if (deltaangle > ANG180) {                                      // phares
+    deltaangle += ANG180;    
+  }
+
+  //  I_Error ("SlideLine: ang>ANG180");
+
+  lineangle >>= ANGLETOFINESHIFT;
+  deltaangle >>= ANGLETOFINESHIFT;
+  newlen = FixedMul(movelen, finecosine[deltaangle]);
+  tmxmove = FixedMul(newlen, finecosine[lineangle]);
+  tmymove = FixedMul(newlen, finesine[lineangle]);
+} // phares
+```
+
+*(Also don't litter the code with your name; a "phares" here and there is one
+thing, 18 "phares" in a function is too much)*
+
+A less egregious example:
+
+```c
+if (!((mo->intflags | flags) & MIF_FALLING)) { // If not falling for a while,
+  mo->gear = 0;                                // Reset it to full strength
+}
+else if (mo->gear < MAXGEAR) {                 // Else if not at max gear,
+  mo->gear++;                                  // move up a gear
+}
+```
+
+This could all be replaced with:
+
+```c
+/*
+ * If not falling for a while, reset it to full strength.  Otherwise if not at
+ * max gear, move up a gear
+ /
+if (!((mo->intflags | flags) & MIF_FALLING)) {
+  mo->gear = 0;
+}
+else if (mo->gear < MAXGEAR) {
+  mo->gear++;
+}
+```
+
+But don't do that either, because that's obviously what this code does.  Don't
+annotate code with comments; if your code is so obscure as to need annotation,
+rewrite it.
+
+Don't jam comments into `if` clauses:
+
+```c
+  if (comperr(comperr_hangsolid) &&
+      !((~thing->flags) & (MF_SOLID | MF_SPAWNCEILING)) && // solid and hanging
+      // invert everything, then both bits should be clear
+      tmthing->z + tmthing->height <= thing->z) { // head height <= base
+      // top of thing trying to move under the body <= bottom of body
+    tmceilingz = thing->z; // pretend ceiling height is at body's base
+    return true;
+  }
+```
+
+This is powerfully difficult to read and edit.
+
+In fact, don't jam comments anywhere.  Generally prefer giving comments their
+own lines.  This makes enums and structs a little ugly, so don't put comments
+in those.  Instead, make your values/field names verbose and meaningful.
+
 ## Switch Blocks
 
 Format switch blocks accordingly:
 
-    switch (x) {
-      case 0:
-      {
-        int zero = 0;
-        M_DoingSomeThingsHere(zero);
-      }
-      break;
-      case 1:
-        M_DoingSomeThingsHere(1);
-      break;
-      default:
-      break;
-    }
+```c
+switch (x) {
+  case 0:
+  {
+    int zero = 0;
+    M_DoingSomeThingsHere(zero);
+  }
+  break;
+  case 1:
+    M_DoingSomeThingsHere(1);
+  break;
+  default:
+  break;
+}
+```
 
 The `break` is indented at the same level as the `case` because if one creates
 a block, ugliness ensues:
 
-    switch (x) {
-      case 0:
-      {
-        int zero = 0;
-        M_DoingSomeThingsHere(zero);
-      }
-        break;
-      ...
+```c
+switch (x) {
+  case 0:
+  {
+    int zero = 0;
+    M_DoingSomeThingsHere(zero);
+  }
+    break;
+  /* ... */
+```
 
 Putting the `break` inside the block is an option, however that breaks up the
 visual consistency of always having the `break` before the `case`, which is
@@ -140,9 +280,11 @@ vitally important in checking for fall-through bugs.
 Braces open on the same line and close on their own line; i.e. OTBS style.
 Perhaps an example is best:
 
-    int main(int argc, char **argv) {
-      return EXIT_SUCCESS;
-    }
+```c
+int main(int argc, char **argv) {
+  return EXIT_SUCCESS;
+}
+```
 
 This applies to all blocks, functions, structs, enums, standalone blocks,
 everything... _except_ switch-case blocks (as in the example above).
@@ -153,24 +295,30 @@ Use braces always.
 
 Bad:
 
-    for (int i = 0; i < MAXPLAYERS; i++)
-      if (!playeringame[i])
-        break;
+```c
+for (int i = 0; i < MAXPLAYERS; i++)
+  if (!playeringame[i])
+    break;
+```
 
 Bad:
 
-    for (int i = 0; i < MAXPLAYERS; i++) {
-      if (!playeringame[i])
-        break;
-    }
+```c
+for (int i = 0; i < MAXPLAYERS; i++) {
+  if (!playeringame[i])
+    break;
+}
+```
 
 Good:
 
-    for (int i = 0; i < MAXPLAYERS; i++) {
-      if (!playeringame[i]) {
-        break;
-      }
-    }
+```c
+for (int i = 0; i < MAXPLAYERS; i++) {
+  if (!playeringame[i]) {
+    break;
+  }
+}
+```
 
 This is to avoid mishaps when diff algorithms.
 
@@ -178,12 +326,16 @@ This is to avoid mishaps when diff algorithms.
 
 `else if` goes on a single line.  For example, instead of:
 
-    else
-      if
+```c
+else
+  if
+```
 
 write:
 
-    else if
+```c
+else if
+```
 
 ## Blocks after `return`, `continue`, etc.
 
@@ -193,22 +345,26 @@ save on indentation levels.  For example:
 
 Don't do this:
 
-    if (error) {
-      C_Echo("Error!");
-      return;
-    }
-    else {
-      C_Echo("No problem!");
-    }
+```c
+if (error) {
+  C_Echo("Error!");
+  return;
+}
+else {
+  C_Echo("No problem!");
+}
+```
 
 Do this:
 
-    if (error) {
-      C_Echo("Error!");
-      return;
-    }
+```c
+if (error) {
+  C_Echo("Error!");
+  return;
+}
 
-    C_Echo("No problem!");
+C_Echo("No problem!");
+```
 
 Keep this in mind as a general rule (it can apply to `I_Error`, etc., as well).
 
@@ -219,22 +375,24 @@ some examples:
 
 **For Loop**
 
-    for (
-      int whoa_this_is_long = 0;
-      whoa_this_is_long < whoa_this_is_longer;
-      whoa_this_is_long++
-    ) {
-      /* Blah... */
-    }
+```c
+for (int whoa_this_is_long = 0;
+     whoa_this_is_long < whoa_this_is_longer;
+     whoa_this_is_long++) {
+  /* Blah... */
+}
+```
 
 **If**
 
-    if (this_is_a_long_condition &&
-        (this_is_a_longer_condition && this_is_the_longest_condition) &&
-        (these_are_very_long_conditions_that_go_on_different_lines_1 &&
-         these_are_very_long_conditions_that_go_on_different_lines_2)) {
-      /* Blah... */
-    }
+```c
+if (this_is_a_long_condition &&
+    (this_is_a_longer_condition && this_is_the_longest_condition) &&
+    (these_are_very_long_conditions_that_go_on_different_lines_1 &&
+     these_are_very_long_conditions_that_go_on_different_lines_2)) {
+  /* Blah... */
+}
+```
 
 That said, these are quite ugly, and you should consider a slight refactoring.
 
@@ -243,13 +401,17 @@ violates the style guidelines:
 
     case pc_unused: fputc(' ', stderr); break;
 
-And do not put single-line control statements on the same line either, i.e.:
+Neither should you put single-line control statements on the same line, i.e.:
 
-    while (i--) printf("BAHAHAHAHAHAHAHAHAHHAA\n");
+```c
+while (i--) printf("BAHAHAHAHAHAHAHAHAHHAA\n");
+```
 
 or:
 
-    if (debug) prinf("This is a debugging printf");
+```c
+if (debug) prinf("This is a debugging printf");
+```
 
 ### Function Calls
 
@@ -262,28 +424,32 @@ Function calls should be broken using the following logic:
 
 For example:
 
-    printf(
-      "This is a long format string with %d argument", 1
-    );
+```c
+printf(
+  "This is a long format string with %d argument", 1
+);
 
-    printf(
-      "This is a long format string with multiple arguments: %d, %d, %d.\n",
-      1,
-      2,
-      3
-    );
+printf(
+  "This is a long format string with multiple arguments: %d, %d, %d.\n",
+  1,
+  2,
+  3
+);
+```
 
 Some functions have what amounts to "boilerplate" for their initial
 arguments--`printf` is a good example of this--and therefore you can justify
 keeping them on the same line as the function call:
 
-    printf("This is a long format string with many arguments: %d, %d, %d.\n",
-      1, 2, 3
-    );
+```c
+printf("This is a long format string with many arguments: %d, %d, %d.\n",
+  1, 2, 3
+);
 
-    fprintf(stderr, "This is a long error with many arguments: %d, %d, %d.\n",
-      1, 2, 3
-    );
+fprintf(stderr, "This is a long error with many arguments: %d, %d, %d.\n",
+  1, 2, 3
+);
+```
 
 ### "But it still just doesn't fit"
 
@@ -305,18 +471,22 @@ variables in the nested block, not in the top-level block, to improve locality.
 Put a line between variable declarations and the body of a block, i.e. instead
 of:
 
-    if (blah) {
-      unsigned int j = 0;
-      printf("Blah: %u.\n", j);
-    }
+```c
+if (blah) {
+  unsigned int j = 0;
+  printf("Blah: %u.\n", j);
+}
+```
 
 you should write:
 
-    if (blah) {
-      unsigned int j = 0;
+```c
+if (blah) {
+  unsigned int j = 0;
 
-      printf("Blah: %u.\n", j);
-    }
+  printf("Blah: %u.\n", j);
+}
+```
 
 While it seems unnecessary for this small example, it enhances readability
 immensely for larger blocks.
@@ -326,11 +496,13 @@ immensely for larger blocks.
 When declaring a pointer type, place the `*` by the variable, not by the type,
 for example:
 
-    int main(int argc, char **argv) {
-      char *name = NULL;
+```c
+int main(int argc, char **argv) {
+  char *name = NULL;
 
-      return EXIT_SUCCESS;
-    }
+  return EXIT_SUCCESS;
+}
+```
 
 I sympathize with those who disagree; `char` is not the same type as `char*`,
 but this is to avoid inconsistency when declaring a variable list of pointer
@@ -339,18 +511,24 @@ types.
 Casts can also be difficult to read quickly without a space, therefore employ
 a space in these cases as well, i.e.:
 
-    M_BufferWrite(&buf, (void *)important_data, 42);
+```c
+M_BufferWrite(&buf, (void *)important_data, 42);
+```
 
 However, there is no opportunity for inconsistency when declaring a return
 value that is a pointer, therefore in that case, keep the `*` with the type:
 
-    const char* M_GetUTFError(int error_code);
+```c
+const char* M_GetUTFError(int error_code);
+```
 
 ## Static Functions
 
 Declare static functions using lowercase and underscores, i.e.:
 
-    static void try_harder(void);
+```c
+static void try_harder(void);
+```
 
 Put all static functions at the top of the file, before non-static functions,
 and order them so as to avoid the need for forward declarations.  If this is
@@ -361,7 +539,9 @@ impossible, it's likely that you need to refactor.
 Declare non-static functions with their prefix, an underscore, then a capital
 camel case name:
 
-    void M_GoodFunctionName(void);
+```
+void M_GoodFunctionName(void);
+```
 
 Admittedly, this is not the norm for C, but the majority of the Doom source was
 originally written in this style, and when dealing with developers familiar
@@ -378,7 +558,8 @@ Don't `#include` headers in header files.  If you like, you can write a comment
 indicating what headers an including C source file should include before it.
 If you need something declared in a different header file, forward declare it.
 If you need to modify the original header file to do so, feel free to.  This
-cuts down on compilation time and avoids complicated dependency issues.
+cuts down on compilation time and avoids complicated dependency issues.  Employ
+forward declarations liberally.
 
 ### Header Guards
 
@@ -388,19 +569,23 @@ Always use header guards.  Name them after the file itself, i.e.,
 The `__` prefix is reserved for compiler defines; do not use it for headers.
 For example, instead of:
 
-    #ifndef __P_MOBJ_H__
-    #define __P_MOBJ_H__
+```c
+#ifndef __P_MOBJ_H__
+#define __P_MOBJ_H__
+```
 
 write:
 
-    #ifndef P_MOBJ_H__
-    #define P_MOBJ_H__
+```c
+#ifndef P_MOBJ_H__
+#define P_MOBJ_H__
+```
 
 ### Include Order
 
-  1. `z_zone.h`
-  2. Library header files (`<SDL.h>`, `<enet/enet.h>`, etc.)
-  3. D2K headers
+1. `z_zone.h`
+2. Library header files (`<SDL.h>`, `<enet/enet.h>`, etc.)
+3. D2K headers
 
 Include `z_zone.h` first, so that anything afterwards uses its configuration
 information and redefinitions.
@@ -411,22 +596,30 @@ Include library headers next so that D2K headers can use their definitions.
 
 Always surround local headers with double-quotation marks, i.e.:
 
-    #include "p_mobj.h"
+```c
+#include "p_mobj.h"
+```
 
 instead of
 
-    #include <p_mobj.h>
+```c
+#include <p_mobj.h>
+```
 
-Conversely, always surround non-local headers (like `stddef.h` and
-`SDL.h`) with angle brackets, i.e.:
+Conversely, always surround non-local headers (like `stddef.h` and `SDL.h`)
+with angle brackets, i.e.:
 
-    #include <stddef.h>
+```c
+#include <stddef.h>
 
-    #include <SDL.h>
+#include <SDL.h>
+```
 
 instead of
 
-    #include "SDL.h"
+```c
+#include "SDL.h"
+```
 
 ### System Headers
 
@@ -437,49 +630,75 @@ best interface is one that requires no header files besides its own to
 function.  Of course, this is not always (or even often) possible, but the
 ideal serves well as a goal nonetheless.
 
-## Function Declarations
+## C++ Idioms
+
+There are various C++ idioms that programmers tend to carry with them onto C
+projects.  **Do not do this**.  Here are some examples.
+
+### Function Declarations
 
 Functions that take no arguments should be declared as:
 
-    void M_GreatFunction(void);
+```c
+void M_GreatFunction(void);
+```
 
 not:
 
-    void M_GreatFunction();
+```c
+void M_GreatFunction();
+```
 
 The latter indicates that the function takes any number of of arguments
 (unknown arity), whereas the former indicates that the function takes no
 arguments (0 arity).  If you want to leave the arity unspecified use varargs.
 
-## Pre/Post-Increment/Decrement
+### Pre/Post-Increment/Decrement
 
-D2K is written in C, not C++, and the convention in C is to default to
-post-increment/decrement.  Do not use pre-increment/decrement unless it is
+Use post-increment/decrement in all cases unless pre-increment/decrement is
 vital to the algorithm.
 
-Do not tuck increments and decrements in other calls or array accesses.
+Do not tuck increments and decrements in other calls or array accesses; they
+should be their own expression.
 
 Bad:
 
-    *result = mf->data[mf->pos++];
+```c
+*result = mf->data[mf->pos++];
+```
 
 Good:
 
-    *result = mf->data[mf->pos];
-    mf->pos++;
+```c
+*result = mf->data[mf->pos];
+mf->pos++;
+```
 
-This is because it is hard to find them, especially when looking for problems.
+There are number of reasons for this:
+- It's hard to find them, when looking for problems or otherwise
+- They might be passed to macros where:
+  - They might be passed to array accesses
+  - They might be passed to `sizeof`
+  - They might be called multiple times
+
+### Casting `malloc`/`realloc`
+
+`malloc` and `realloc` in C return `void *`, which does not require a cast.
+Indeed it is specifically cast to the type to which it is assigned on
+assignment.  Do not add a redundant, explicit cast.
 
 ## Assignment Value
 
 In C, assignment returns a value, i.e.
 
-    if (!(super_struct = malloc(sizeof(super_struct_t))) {
-      I_Error("Error allocating super struct\n");
-    }
+```c
+if (!(super_struct = malloc(sizeof(super_struct_t))) {
+  I_Error("Error allocating super struct\n");
+}
+```
 
 Do not use this.  I sympathize because it's often great shorthand, but in
-practice, it creates cluttered and hard to read conditionals.  Rarely does
+practice it creates cluttered and hard to read conditionals.  Rarely does
 something like this fit on a single line.
 
 Do not use multiple assignment.  The extra couple lines saved are not worth the
@@ -498,5 +717,8 @@ general the shorthand is worth it, because the vast majority of these checks
 are error cases and you don't care what the tested operand is afterwards
 anyway.
 
-<!-- vi: set et ts=2 sw=2 tw=79: -->
+## Comma operator
 
+Don't use it.
+
+<!-- vi: set et ts=2 sw=2 tw=79: -->

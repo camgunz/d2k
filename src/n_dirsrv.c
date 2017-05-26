@@ -29,7 +29,6 @@
 
 #include <jansson.h>
 
-#include "doomdef.h"
 #include "i_system.h"
 #include "n_http.h"
 #include "n_main.h"

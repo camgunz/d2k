@@ -25,306 +25,307 @@
 
 #include <time.h>
 
-#include "c_main.h"
-#include "d_msg.h"
 #include "m_file.h"
+#include "m_idhash.h"
+#include "d_msg.h"
+#include "pl_main.h"
 
-/*
- * CG [TODO]: Add an API to disable flushing a message channel's log file after
- *            writing every message.
- */
+typedef struct message_handler_s {
+  message_handler_f *handle;
+  void *data;
+} message_handler_t;
 
 typedef struct message_channel_s {
-  bool  active;
-  FILE *fobj;
+  const char *name;
+  bool enabled;
+  msg_level_e level;
 } message_channel_t;
 
-static bool message_channels_initialized = false;
-static message_channel_t message_channels[MSG_MAX + 1];
+/* [CG] [FIXME] There's no reason to use idhash here; indices will suffice. */
 
-static void check_message_channel(msg_channel_e c) {
-  if (!message_channels_initialized)
-    I_Error("Messaging has not yet been initialized!");
+static id_hash_t message_channels;
+static GArray *message_handlers = NULL;
 
-  if (c < MSG_MIN)
-    I_Error("Invalid message channel %d (valid: %d - %d)", c, MSG_MIN, MSG_MAX);
+uint32_t MSG_CHANNEL_SYS;
 
-  if (c > MSG_MAX)
-    I_Error("Invalid message channel %d (valid: %d - %d)", c, MSG_MIN, MSG_MAX);
-}
+static void handle_new_message(message_t *msg) {
+  message_channel_t *mc = M_IDHashLookup(&message_channels, msg->channel_id);
 
-static void deactivate_message_channels(void) {
-  for (msg_channel_e chan = MSG_MIN; chan <= MSG_MAX; chan++) {
-    D_MsgDeactivate(chan);
-  }
-}
-
-void D_InitMessaging(void) {
-  for (msg_channel_e chan = MSG_MIN; chan <= MSG_MAX; chan++) {
-    message_channel_t *mc = &message_channels[chan];
-
-    mc->active = false;
-    mc->fobj = NULL;
-  }
-  atexit(deactivate_message_channels);
-
-  message_channels_initialized = true;
-}
-
-bool D_MsgActive(msg_channel_e chan) {
-  check_message_channel(chan);
-
-  return message_channels[chan].active;
-}
-
-void D_MsgActivate(msg_channel_e chan) {
-  check_message_channel(chan);
-
-  message_channels[chan].active = true;
-}
-
-bool D_MsgActivateWithPath(msg_channel_e chan, const char *file_path) {
-  check_message_channel(chan);
-
-  if (!D_LogToPath(chan, file_path)) {
-    return false;
-  }
-
-  D_MsgActivate(chan);
-
-  return true;
-}
-
-bool D_MsgActivateWithFile(msg_channel_e chan, FILE *fobj) {
-  check_message_channel(chan);
-
-  if (!D_LogToFile(chan, fobj)) {
-    return false;
-  }
-
-  D_MsgActivate(chan);
-
-  return true;
-}
-
-bool D_MsgActivateWithFD(msg_channel_e chan, int fd) {
-  check_message_channel(chan);
-
-  if (!D_LogToFD(chan, fd)) {
-    return false;
-  }
-
-  D_MsgActivate(chan);
-
-  return true;
-}
-
-void D_MsgDeactivate(msg_channel_e chan) {
-  message_channel_t *mc;
-
-  check_message_channel(chan);
-
-  mc = &message_channels[chan];
-
-  if (mc->fobj != NULL) {
-    fflush(mc->fobj);
-    fclose(mc->fobj);
-  }
-
-  mc->active = false;
-  mc->fobj = NULL;
-}
-
-void D_VMsg(msg_channel_e chan, const char *fmt, va_list args) {
-  va_list log_args;
-  va_list console_args;
-  message_channel_t *mc;
-
-  check_message_channel(chan);
-
-  mc = &message_channels[chan];
-
-  switch (chan) {
-    case MSG_DEBUG:
-    case MSG_DEH:
-    case MSG_GAME:
-    case MSG_SAVE:
-    case MSG_INFO:
-    case MSG_WARN:
-    case MSG_ERROR:
-      va_copy(console_args, args);
-      C_MVPrintf(fmt, console_args);
-      va_end(console_args);
-      break;
-    default:
-      break;
-  }
-
-  if (mc->fobj) {
-    va_copy(log_args, args);
-    vfprintf(mc->fobj, fmt, log_args);
-    va_end(log_args);
-    fflush(mc->fobj);
-  }
-}
-
-void D_Msg(msg_channel_e chan, const char *fmt, ...) {
-  va_list args;
-  va_list log_args;
-  va_list console_args;
-  va_list cmdline_args;
-  message_channel_t *mc;
-
-  check_message_channel(chan);
-
-  mc = &message_channels[chan];
-
-  if (!mc->active)
+  if (!mc->enabled) {
     return;
+  }
+
+  if (msg->level < mc->level) {
+    return;
+  }
+
+  for (size_t i = 0; i < message_handlers->len; i++) {
+    message_handler_t *handler = &g_array_index(
+      message_handlers,
+      message_handler_t,
+      i
+    );
+
+    handler->handle(msg, handler->data);
+  }
+}
+
+static void free_message_channel(gpointer data) {
+  message_channel_t *mc = data;
+
+  free(mc);
+}
+
+void D_MessagingInit(void) {
+  message_handlers = g_array_new(false, false, sizeof(message_handler_t));
+
+  M_IDHashInit(&message_channels, free_message_channel);
+
+  MSG_CHANNEL_SYS = D_MsgRegisterChannel("System message channel");
+}
+
+void D_MsgRegisterHandler(message_handler_f func, void *data) {
+  message_handler_t handler;
+
+  handler.handle = func;
+  handler.data = data;
+
+  g_array_append_val(message_handlers, handler);
+}
+
+void D_MsgUnregisterHandler(message_handler_f func) {
+  for (size_t i = message_handlers->len; i > 0; i--) {
+    message_handler_t *handler = &g_array_index(
+      message_handlers, 
+      message_handler_t,
+      i - 1
+    );
+
+    if (handler->handle == func) {
+      g_array_remove_index_fast(message_handlers, i - 1);
+    }
+  }
+}
+
+uint32_t D_MsgRegisterChannel(const char *name) {
+  message_channel_t *mc = calloc(1, sizeof(message_channel_t));
+
+  mc->name = name;
+  mc->enabled = true;
+#ifdef DEBUG
+  mc->level = MSG_LEVEL_DEBUG;
+#else
+  mc->level = MSG_LEVEL_INFO;
+#endif
+
+  return M_IDHashAdd(&message_channels, (void *)mc);
+}
+
+void D_MsgUnregisterChannel(uint32_t channel_id) {
+  M_IDHashRemoveID(&message_channels, channel_id);
+}
+
+void D_MsgChanSetEnabled(uint32_t channel_id, bool enabled) {
+  message_channel_t *mc = M_IDHashLookup(&message_channels, channel_id);
+
+  if (!mc) {
+    D_MsgLocalError("D_MsgChanSetEnabled: Unknown channel ID %u\n", channel_id);
+    return;
+  }
+
+  mc->enabled = enabled;
+}
+
+bool D_MsgChanEnabled(uint32_t channel_id) {
+  message_channel_t *mc = M_IDHashLookup(&message_channels, channel_id);
+
+  if (!mc) {
+    I_Error("D_MsgChanSetEnabled: Unknown channel ID %u\n", channel_id);
+    return false;
+  }
+
+  return mc->enabled;
+}
+
+void D_MsgChanSetLevel(uint32_t channel_id, msg_level_e level) {
+  message_channel_t *mc = M_IDHashLookup(&message_channels, channel_id);
+
+  if (!mc) {
+    D_MsgLocalError("D_MsgChanSetLevel: Unknown channel ID %u\n",
+      channel_id
+    );
+    return;
+  }
+
+  mc->level = level;
+}
+
+msg_level_e D_MsgChanGetLevel(uint32_t channel_id) {
+  message_channel_t *mc = M_IDHashLookup(&message_channels, channel_id);
+
+  if (!mc) {
+    I_Error("D_MsgChanSetLevel: Unknown channel ID %u\n", channel_id);
+  }
+
+  return mc->level;
+}
+
+const char* D_MsgChanGetName(uint32_t channel_id) {
+  message_channel_t *mc = M_IDHashLookup(&message_channels, channel_id);
+
+  if (!mc) {
+    I_Error("D_MsgChanSetEnabled: Unknown channel ID %u\n", channel_id);
+  }
+
+  return mc->name;
+}
+
+void D_MsgChanMsg(uint32_t channel_id, msg_level_e level,
+                                       msg_recipient_e recipient,
+                                       unsigned int sinks,
+                                       uint32_t recipient_id,
+                                       bool is_markup,
+                                       int sfx,
+                                       const char *fmt,
+                                       ...) {
+  va_list args;
 
   va_start(args, fmt);
-
-  if ((chan == MSG_DEBUG) ||
-      (chan == MSG_DEH)   ||
-      (chan == MSG_GAME)  ||
-      (chan == MSG_SAVE)  ||
-      (chan == MSG_INFO)  ||
-      (chan == MSG_WARN)  ||
-      (chan == MSG_ERROR)) {
-    va_copy(console_args, args);
-    C_MVPrintf(fmt, console_args);
-    va_end(console_args);
-  }
-
-  if (mc->fobj) {
-    va_copy(log_args, args);
-    vfprintf(mc->fobj, fmt, log_args);
-    va_end(log_args);
-    fflush(mc->fobj);
-  }
-
-  va_copy(cmdline_args, args);
-  vprintf(fmt, cmdline_args);
-  va_end(cmdline_args);
-  fflush(stdout);
-
+  D_MsgChanVMsg(
+    channel_id,
+    level,
+    recipient,
+    sinks,
+    recipient_id,
+    is_markup,
+    sfx,
+    fmt,
+    args
+  );
   va_end(args);
 }
 
-bool D_LogToPath(msg_channel_e chan, const char *file_path) {
-  check_message_channel(chan);
+void D_MsgChanVMsg(uint32_t channel_id, msg_level_e level,
+                                        msg_recipient_e recipient,
+                                        unsigned int sinks,
+                                        uint32_t recipient_id,
+                                        bool is_markup,
+                                        int sfx,
+                                        const char *fmt,
+                                        va_list args) {
+  message_t msg;
 
-  if (message_channels[chan].fobj) {
-    if (!M_CloseFile(message_channels[chan].fobj)) {
-      D_MsgDeactivate(chan);
-      return false;
+  if (recipient == MSG_RECIPIENT_PEER) {
+    if (!MULTINET) {
+      D_MsgLocalWarn(
+        "D_MsgChanVMsg: Cannot send messages to peers outside of netgames\n"
+      );
+      return;
+    }
+
+    if (recipient_id == 0) {
+      D_MsgLocalWarn("D_MsgChanVMsg: Invalid peer ID 0\n");
+      return;
     }
   }
 
-  char *full_file_path = g_strdup_printf(
-    "%u-%s",
-    (unsigned char)time(NULL),
-    file_path
+  if (recipient == MSG_RECIPIENT_PLAYER) {
+    if (recipient_id == 0) {
+      D_MsgLocalWarn("D_MsgChanVMsg: Invalid peer ID 0\n");
+    }
+
+    if (!P_PlayersLookup(recipient_id)) {
+      D_MsgLocalWarn(
+        "Cannot send message to non-existent player %u\n",
+        recipient_id
+      );
+      return;
+    }
+  }
+
+  msg.channel_id = channel_id;
+  msg.level = level;
+  msg.recipient = recipient;
+  msg.sinks = sinks;
+  msg.recipient_id = recipient_id;
+  msg.is_markup = is_markup;
+  msg.sfx = sfx;
+  msg.contents = g_strdup_vprintf(fmt, args);
+  msg.processed = false;
+
+  handle_new_message(&msg);
+}
+
+void D_MsgLocalDebug(const char *fmt, ...) {
+  va_list args;
+
+  va_start(args, fmt);
+  D_MsgChanVMsg(
+    MSG_CHANNEL_SYS,
+    MSG_LEVEL_DEBUG,
+    MSG_RECIPIENT_LOCAL,
+    MSG_SINK_CONSOLE | MSG_SINK_MESSAGES,
+    0,
+    true,
+    -1,
+    fmt,
+    args
   );
-
-  message_channels[chan].fobj = M_OpenFile(full_file_path, "w");
-
-  g_free(full_file_path);
-
-  if (message_channels[chan].fobj)
-    D_MsgActivate(chan);
-  else
-    D_MsgDeactivate(chan);
-
-  return D_MsgActive(chan);
+  va_end(args);
 }
 
-bool D_LogToFile(msg_channel_e chan, FILE *fobj) {
-  check_message_channel(chan);
+void D_MsgLocalInfo(const char *fmt, ...) {
+  va_list args;
 
-  if (message_channels[chan].fobj) {
-    if (!M_CloseFile(message_channels[chan].fobj)) {
-      D_MsgDeactivate(chan);
-      return false;
-    }
-  }
-
-  message_channels[chan].fobj = fobj;
-
-  if (message_channels[chan].fobj)
-    D_MsgActivate(chan);
-  else
-    D_MsgDeactivate(chan);
-
-  return D_MsgActive(chan);
+  va_start(args, fmt);
+  D_MsgChanVMsg(
+    MSG_CHANNEL_SYS,
+    MSG_LEVEL_INFO,
+    MSG_RECIPIENT_LOCAL,
+    MSG_SINK_CONSOLE | MSG_SINK_MESSAGES,
+    0,
+    true,
+    -1,
+    fmt,
+    args
+  );
+  va_end(args);
 }
 
-bool D_LogToFD(msg_channel_e chan, int fd) {
-  message_channel_t *mc;
+void D_MsgLocalWarn(const char *fmt, ...) {
+  va_list args;
 
-  check_message_channel(chan);
-
-  mc = &message_channels[chan];
-
-  if (!mc->active)
-    return false;
-
-  if (!mc->fobj)
-    return false;
-
-  if (!M_CloseFile(mc->fobj)) {
-    I_Error("Error closing log file for channel %d: %s\n",
-      chan,
-      M_GetFileError()
-    );
-  }
-
-  mc->fobj = M_OpenFD(fd, "w");
-
-  if (!mc->fobj) {
-    I_Error("Error logging channel %d to FD %d: %s\n",
-      chan,
-      fd,
-      M_GetFileError()
-    );
-  }
-
-  return true;
+  va_start(args, fmt);
+  D_MsgChanVMsg(
+    MSG_CHANNEL_SYS,
+    MSG_LEVEL_WARN,
+    MSG_RECIPIENT_LOCAL,
+    MSG_SINK_CONSOLE | MSG_SINK_MESSAGES,
+    0,
+    true,
+    -1,
+    fmt,
+    args
+  );
+  va_end(args);
 }
 
-FILE* D_MsgGetFile(msg_channel_e chan) {
-  message_channel_t *mc;
+void D_MsgLocalError(const char *fmt, ...) {
+  va_list args;
 
-  check_message_channel(chan);
-
-  mc = &message_channels[chan];
-
-  if (!mc->active)
-    return NULL;
-
-  return mc->fobj;
-}
-
-int D_MsgGetFD(msg_channel_e chan) {
-  int fd;
-  FILE *fobj;
-
-  fobj = D_MsgGetFile(chan);
-
-  if (!fobj)
-    return -1;
-
-  fd = fileno(fobj);
-
-  if (fd == -1) {
-    I_Error("Error retrieving file descriptor from log channel %d: %s\n",
-      chan,
-      strerror(errno)
-    );
-  }
-
-  return fd;
+  va_start(args, fmt);
+  D_MsgChanVMsg(
+    MSG_CHANNEL_SYS,
+    MSG_LEVEL_ERROR,
+    MSG_RECIPIENT_LOCAL,
+    MSG_SINK_CONSOLE | MSG_SINK_MESSAGES,
+    0,
+    true,
+    -1,
+    fmt,
+    args
+  );
+  va_end(args);
 }
 
 /* vi: set et ts=2 sw=2: */
-

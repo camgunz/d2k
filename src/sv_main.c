@@ -23,10 +23,6 @@
 
 #include "z_zone.h"
 
-#include <enet/enet.h>
-
-#include "doomdef.h"
-#include "doomstat.h"
 #include "g_save.h"
 #include "g_state.h"
 #include "n_main.h"

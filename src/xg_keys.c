@@ -23,7 +23,6 @@
 
 #include "z_zone.h"
 
-#include "doomdef.h"
 #include "d_event.h"
 #include "g_keys.h"
 #include "x_intern.h"
@@ -384,25 +383,25 @@ static int XG_KeysGetWeaponPrevious(lua_State *L) {
 }
 
 static int XG_KeysGetDestinationKeyOne(lua_State *L) {
-  lua_pushinteger(L, destination_keys[0]);
+  lua_pushinteger(L, destination_key_green);
 
   return 1;
 }
 
 static int XG_KeysGetDestinationKeyTwo(lua_State *L) {
-  lua_pushinteger(L, destination_keys[1]);
+  lua_pushinteger(L, destination_key_indigo);
 
   return 1;
 }
 
 static int XG_KeysGetDestinationKeyThree(lua_State *L) {
-  lua_pushinteger(L, destination_keys[2]);
+  lua_pushinteger(L, destination_key_brown);
 
   return 1;
 }
 
 static int XG_KeysGetDestinationKeyFour(lua_State *L) {
-  lua_pushinteger(L, destination_keys[3]);
+  lua_pushinteger(L, destination_key_red);
 
   return 1;
 }

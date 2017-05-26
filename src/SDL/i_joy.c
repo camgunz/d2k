@@ -25,7 +25,6 @@
 
 #include <SDL.h>
 
-#include "doomdef.h"
 #include "m_argv.h"
 #include "d_event.h"
 #include "w_wad.h"
@@ -46,7 +45,7 @@ static SDL_Joystick *joystick;
 
 #ifdef HAVE_SDL_JOYSTICKGETAXIS
 static void I_EndJoystick(void) {
-  D_Msg(MSG_DEBUG, "I_EndJoystick : closing joystick\n");
+  D_MsgLocalDebug("I_EndJoystick : closing joystick\n");
 }
 #endif
 
@@ -104,9 +103,9 @@ void I_InitJoystick(void) {
   if (M_CheckParm("-nojoy") ||
       (usejoystick > num_joysticks) | (usejoystick < 0)) {
     if ((usejoystick > num_joysticks) || (usejoystick < 0))
-      D_Msg(MSG_WARN, "%sinvalid joystick %d\n", fname, usejoystick);
+      D_MsgLocalWarn("%sinvalid joystick %d\n", fname, usejoystick);
     else
-      D_Msg(MSG_INFO, "%suser disabled\n", fname);
+      D_MsgLocalInfo("%suser disabled\n", fname);
 
     return;
   }
@@ -114,13 +113,13 @@ void I_InitJoystick(void) {
   joystick = SDL_JoystickOpen(usejoystick - 1);
 
   if (!joystick) {
-    D_Msg(MSG_ERROR, "%serror opening joystick %s\n",
+    D_MsgLocalError("%serror opening joystick %s\n",
       fname, SDL_JoystickName(usejoystick - 1)
     );
   }
   else {
     atexit(I_EndJoystick);
-    D_Msg(MSG_INFO, "%sopened %s\n",
+    D_MsgLocalInfo("%sopened %s\n",
       fname, SDL_JoystickName(usejoystick - 1)
     );
     joyup    =  32767;

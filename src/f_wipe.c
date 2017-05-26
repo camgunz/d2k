@@ -23,7 +23,6 @@
 
 #include "z_zone.h"
 
-#include "doomdef.h"
 #include "m_random.h"
 #include "f_wipe.h"
 #include "e6y.h"

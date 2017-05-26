@@ -45,13 +45,15 @@ static void free_string(gpointer data) {
 }
 
 static void clear_file_error(void) {
-  if (file_error)
+  if (file_error) {
     g_clear_error(&file_error);
+  }
 }
 
 static void set_file_error(GQuark domain, gint code, gchar *message) {
-  if (file_error)
+  if (file_error) {
     g_clear_error(&file_error);
+  }
 
   g_propagate_error(&file_error, g_error_new_literal(domain, code, message));
 }
@@ -117,8 +119,9 @@ char* M_LocalizePath(const char *path) {
   gchar *lp;
   char *out;
 
-  if (!path)
+  if (!path) {
     return NULL;
+  }
 
   clear_file_error();
 
@@ -132,8 +135,9 @@ char* M_LocalizePath(const char *path) {
   out = calloc(sz + 1, sizeof(char));
 #endif
 
-  if (!out)
+  if (!out) {
     I_Error("M_LocalizePath: calloc failed");
+  }
 
   memcpy(out, lp, sz);
 
@@ -147,8 +151,9 @@ char* M_UnLocalizePath(const char *local_path) {
   gchar *ulp;
   char *out;
 
-  if (!local_path)
+  if (!local_path) {
     return NULL;
+  }
 
   clear_file_error();
 
@@ -160,8 +165,9 @@ char* M_UnLocalizePath(const char *local_path) {
 
   out = calloc(sz + 1, sizeof(char));
 
-  if (!out)
+  if (!out) {
     I_Error("M_UnLocalizePath: calloc failed");
+  }
 
   memcpy(out, ulp, sz);
 
@@ -245,30 +251,43 @@ bool M_IsFolder(const char *path) {
 }
 
 bool M_IsFile(const char *path) {
-  if (!g_file_test(path, G_FILE_TEST_EXISTS))
+  if (!g_file_test(path, G_FILE_TEST_EXISTS)) {
     return false;
+  }
 
-  if (g_file_test(path, G_FILE_TEST_IS_DIR))
+  if (g_file_test(path, G_FILE_TEST_IS_DIR)) {
     return false;
+  }
 
-  if (g_file_test(path, G_FILE_TEST_IS_SYMLINK))
+  if (g_file_test(path, G_FILE_TEST_IS_SYMLINK)) {
     return false;
+  }
 
   return true;
 }
 
 bool M_IsRegularFile(const char *path) {
-  if (!g_file_test(path, G_FILE_TEST_IS_REGULAR))
+  if (!g_file_test(path, G_FILE_TEST_IS_REGULAR)) {
     return false;
+  }
 
-  if (g_file_test(path, G_FILE_TEST_IS_SYMLINK))
+  if (g_file_test(path, G_FILE_TEST_IS_SYMLINK)) {
     return false;
+  }
 
   return true;
 }
 
 bool M_IsSymlink(const char *path) {
   return g_file_test(path, G_FILE_TEST_IS_SYMLINK);
+}
+
+bool M_CheckAccess(const char *path, int flags) {
+  if (g_access(path, flags) == -1) {
+    return false;
+  }
+
+  return true;
 }
 
 bool M_IsFileInFolder(const char *folder, const char *file) {
@@ -293,8 +312,9 @@ bool M_IsAbsolutePath(const char *path) {
 char* M_StripAbsolutePath(const char *path) {
   const gchar *no_root = g_path_skip_root(path);
 
-  if (no_root != NULL && *no_root == '0')
+  if (no_root != NULL && *no_root == '0') {
     return NULL;
+  }
 
   return strdup(no_root);
 }
@@ -348,14 +368,17 @@ bool M_CreateFile(const char *path, int mode) {
 }
 
 bool M_DeletePath(const char *path) {
-  if (!M_PathExists(path))
+  if (!M_PathExists(path)) {
     return false;
+  }
 
-  if (M_IsFile(path))
+  if (M_IsFile(path)) {
     return M_DeleteFile(path);
+  }
 
-  if (M_IsFolder(path))
+  if (M_IsFolder(path)) {
     return M_DeleteFolder(path);
+  }
 
   return false;
 }
@@ -402,16 +425,18 @@ GPtrArray* M_ListFiles(const char *path) {
 
   dir = g_dir_open(path, 0, &file_error);
 
-  if (!dir)
+  if (!dir) {
     return NULL;
+  }
 
   files = g_ptr_array_new_with_free_func(free_string);
 
   while ((entry_name = g_dir_read_name(dir))) {
     char *entry_path = M_PathJoin(path, entry_name);
 
-    if (M_IsFile(entry_path))
+    if (M_IsFile(entry_path)) {
       g_ptr_array_add(files, entry_path);
+    }
   }
 
   if (errno) {
@@ -434,14 +459,16 @@ bool M_ListFilesBuf(const char *path, GPtrArray *files) {
 
   dir = g_dir_open(path, 0, &file_error);
 
-  if (!dir)
+  if (!dir) {
     return false;
+  }
 
   while ((entry_name = g_dir_read_name(dir))) {
     char *entry_path = M_PathJoin(path, entry_name);
 
-    if (M_IsFile(entry_path))
+    if (M_IsFile(entry_path)) {
       g_ptr_array_add(files, entry_path);
+    }
   }
 
   if (errno) {
@@ -465,16 +492,18 @@ GPtrArray* M_ListFolders(const char *path) {
 
   dir = g_dir_open(path, 0, &file_error);
 
-  if (!dir)
+  if (!dir) {
     return NULL;
+  }
 
   folders = g_ptr_array_new_with_free_func(free_string);
 
   while ((entry_name = g_dir_read_name(dir))) {
     char *entry_path = M_PathJoin(path, entry_name);
 
-    if (M_IsFolder(entry_path))
+    if (M_IsFolder(entry_path)) {
       g_ptr_array_add(folders, entry_path);
+    }
   }
 
   if (errno) {
@@ -497,14 +526,16 @@ bool M_ListFoldersBuf(const char *path, GPtrArray *folders) {
 
   dir = g_dir_open(path, 0, &file_error);
 
-  if (!dir)
+  if (!dir) {
     return false;
+  }
 
   while ((entry_name = g_dir_read_name(dir))) {
     char *entry_path = M_PathJoin(path, entry_name);
 
-    if (M_IsFolder(entry_path))
+    if (M_IsFolder(entry_path)) {
       g_ptr_array_add(folders, entry_path);
+    }
   }
 
   if (errno) {
@@ -519,30 +550,12 @@ bool M_ListFoldersBuf(const char *path, GPtrArray *folders) {
 }
 
 GPtrArray* M_ListFilesAndFolders(const char *path) {
-  GDir *dir;
-  GPtrArray *files_and_folders;
-  const char *entry_name;
+  GPtrArray *files_and_folders = g_ptr_array_new_with_free_func(free_string);
 
-  errno = 0;
-  clear_file_error();
-
-  dir = g_dir_open(path, 0, &file_error);
-
-  if (!dir)
+  if (!M_ListFilesAndFoldersBuf(path, files_and_folders)) {
+    g_free(files_and_folders);
     return NULL;
-
-  files_and_folders = g_ptr_array_new_with_free_func(free_string);
-
-  while ((entry_name = g_dir_read_name(dir)))
-    g_ptr_array_add(files_and_folders, M_PathJoin(path, entry_name));
-
-  if (errno) {
-    set_file_error_from_errno();
-    g_ptr_array_free(files_and_folders, true);
-    files_and_folders = NULL;
   }
-
-  g_dir_close(dir);
 
   return files_and_folders;
 }
@@ -556,11 +569,21 @@ bool M_ListFilesAndFoldersBuf(const char *path, GPtrArray *files_and_folders) {
 
   dir = g_dir_open(path, 0, &file_error);
 
-  if (!dir)
+  if (!dir) {
     return false;
+  }
 
-  while ((entry_name = g_dir_read_name(dir)))
-    g_ptr_array_add(files_and_folders, M_PathJoin(path, entry_name));
+  entry_name = g_dir_read_name(dir);
+  while (entry_name) {
+    char *joined_path = M_PathJoin(path, entry_name);
+
+    if (!joined_path) {
+      I_Error("M_ListFilesAndFolders: Error joining path\n");
+    }
+
+    g_ptr_array_add(files_and_folders, joined_path);
+    entry_name = g_dir_read_name(dir);
+  }
 
   if (errno) {
     set_file_error_from_errno();
@@ -632,8 +655,9 @@ bool M_DeleteFolderAndContents(const char *path) {
 int M_Open(const char *path, int flags, int mode) {
   int fd = g_open(path, flags, mode);
 
-  if (fd == -1)
+  if (fd == -1) {
     set_file_error_from_errno();
+  }
 
   return fd;
 }
@@ -672,7 +696,8 @@ bool M_Read(int fd, void *vbuf, size_t sz) {
 }
 
 uint32_t M_FDLength(int fd) {
-  off_t curpos, len;
+  off_t curpos;
+  off_t len;
 
   curpos = lseek(fd, 0, SEEK_CUR);
   lseek(fd, 0, SEEK_END);
@@ -685,8 +710,9 @@ uint32_t M_FDLength(int fd) {
 FILE* M_OpenFile(const char *path, const char *mode) {
   FILE *f = g_fopen(path, mode);
 
-  if (!f)
+  if (!f) {
     set_file_error_from_errno();
+  }
 
   return f;
 }
@@ -694,8 +720,9 @@ FILE* M_OpenFile(const char *path, const char *mode) {
 FILE* M_OpenFD(int fd, const char *mode) {
   FILE *f = fdopen(fd, mode);
 
-  if (!f)
+  if (!f) {
     set_file_error_from_errno();
+  }
 
   return f;
 }
@@ -723,8 +750,9 @@ bool M_ReadFileBuf(buf_t *buf, const char *path) {
   res = g_file_get_contents(path, &data, &size, &file_error);
   I_EndRead();
 
-  if (!res)
+  if (!res) {
     return false;
+  }
 
   M_BufferWrite(buf, data, size);
 
@@ -746,8 +774,9 @@ bool M_WriteFile(const char *path, const char *contents, size_t size) {
 long M_GetFilePosition(FILE *f) {
   long result = ftell(f);
 
-  if (result == -1)
+  if (result == -1) {
     set_file_error_from_errno();
+  }
 
   return result;
 }
@@ -755,22 +784,15 @@ long M_GetFilePosition(FILE *f) {
 bool M_SeekFile(FILE *f, long int offset, int origin) {
   if (fseek(f, offset, origin) != 0) {
     set_file_error_from_errno();
-
     return false;
   }
 
   return true;
 }
 
-/*
- * M_FileLength
- *
- * Gets the length of a file given its handle.
- * haleyjd 03/09/06: made global
- * haleyjd 01/04/10: use fseek/ftell
- */
 uint32_t M_FileLength(FILE *f) {
-  long curpos, len;
+  long curpos;
+  long len;
 
   curpos = M_GetFilePosition(f);
   M_SeekFile(f, 0, SEEK_END);
@@ -798,14 +820,25 @@ bool M_CloseFile(FILE *f) {
   return true;
 }
 
+int M_GetFDFromFile(FILE *f) {
+   int fd = fileno(f);
+
+   if (fd == -1) {
+     set_file_error_from_errno();
+   }
+
+   return fd;
+}
+
 void M_ExtractFileBase(const char *path, char *dest) {
   const char *src = path + strlen(path) - 1;
   int length;
 
   // back up until a \ or the start
-  while (src != path && src[-1] != ':' // killough 3/22/98: allow c:filename
-         && *(src-1) != '\\'
-         && *(src-1) != '/') {
+  while (src != path      &&
+         src[-1] != ':'   && // killough 3/22/98: allow c:filename
+         *(src-1) != '\\' &&
+         *(src-1) != '/') {
     src--;
   }
 
@@ -837,7 +870,7 @@ char* M_AddDefaultExtension(const char *path, const char *ext) {
   basename = M_Basename(path);
 
   if (!basename) {
-    I_Error("M_AddDefaultExtension: Error getting basename of %s (%s)",
+    I_Error("M_AddDefaultExtension: Error getting basename of %s (%s)\n",
       path, M_GetFileError()
     );
   }
@@ -845,7 +878,7 @@ char* M_AddDefaultExtension(const char *path, const char *ext) {
   dirname = M_Dirname(path);
 
   if (!dirname) {
-    I_Error("M_AddDefaultExtension: Error getting dirname of %s (%s)",
+    I_Error("M_AddDefaultExtension: Error getting dirname of %s (%s)\n",
       path, M_GetFileError()
     );
   }
@@ -861,7 +894,7 @@ char* M_AddDefaultExtension(const char *path, const char *ext) {
   M_BufferInit(&buf);
 
   if (!M_PathJoinBuf(&buf, dirname, basename)) {
-    I_Error("M_AddDefaultExtension: Error joining %s and %s (%s)",
+    I_Error("M_AddDefaultExtension: Error joining %s and %s (%s)\n",
       dirname, basename, M_GetFileError()
     );
   }
@@ -890,7 +923,7 @@ char* M_SetFileExtension(const char *path, const char *ext) {
   basename = M_Basename(path);
 
   if (!basename) {
-    I_Error("M_SetFileExtension: Error getting basename of %s (%s)",
+    I_Error("M_SetFileExtension: Error getting basename of %s (%s)\n",
       path, M_GetFileError()
     );
   }
@@ -898,19 +931,20 @@ char* M_SetFileExtension(const char *path, const char *ext) {
   dirname = M_Dirname(path);
 
   if (!dirname) {
-    I_Error("M_SetFileExtension: Error getting dirname of %s (%s)",
+    I_Error("M_SetFileExtension: Error getting dirname of %s (%s)\n",
       path, M_GetFileError()
     );
   }
 
   path_ext = strrchr(basename, '.');
-  if (path_ext)
+  if (path_ext) {
     *path_ext = 0;
+  }
 
   M_BufferInit(&buf);
 
   if (!M_PathJoinBuf(&buf, dirname, basename)) {
-    I_Error("M_SetFileExtension: Error joining %s and %s (%s)",
+    I_Error("M_SetFileExtension: Error joining %s and %s (%s)\n",
       dirname, basename, M_GetFileError()
     );
   }
@@ -930,4 +964,3 @@ char* M_SetFileExtension(const char *path, const char *ext) {
 }
 
 /* vi: set et ts=2 sw=2: */
-

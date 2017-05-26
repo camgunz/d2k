@@ -23,17 +23,14 @@
 
 #include "z_zone.h"
 
-#include <enet/enet.h>
-
-#include "doomdef.h"
-#include "d_event.h"
 #include "g_game.h"
-#include "pl_main.h"
 #include "g_state.h"
+#include "p_defs.h"
+#include "pl_main.h"
+#include "s_sound.h"
 #include "n_main.h"
 #include "cl_cmd.h"
 #include "cl_net.h"
-#include "s_sound.h"
 
 /*
  * The current command index, used for generating new commands
@@ -83,12 +80,12 @@ bool CL_RunningThinkers(void) {
   return cl_running_thinkers;
 }
 
-void CL_SetupCommandState(int playernum, unsigned int command_index) {
+void CL_SetupCommandState(player_t *player, uint32_t command_index) {
   if (!CLIENT) {
     return;
   }
 
-  if (playernum == consoleplayer) {
+  if (PL_IsConsolePlayer(player)) {
     cl_running_consoleplayer_commands = true;
     cl_running_nonconsoleplayer_commands = false;
   }
@@ -128,4 +125,3 @@ void CL_Reset(void) {
 }
 
 /* vi: set et ts=2 sw=2: */
-

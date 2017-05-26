@@ -24,6 +24,9 @@
 #ifndef CL_CMD_H__
 #define CL_CMD_H__
 
+struct player_s;
+typedef struct player_s player_t;
+
 void   CL_TrimSynchronizedCommands(void);
 size_t CL_GetUnsynchronizedCommandCount(player_t *player);
 

@@ -1,30 +1,17 @@
 # To Do
 
-## General
+- Remove ENet
+  - Replace with libuv and regular sockets
 
-It turns out ENet supports a max 4095 connections.  This makes sense because on
-UNIX platforms it uses either `select` or `poll`, and those don't really scale
-past that.
-
-I don't like this artificial limitation though, even though it's tempting to
-just pick a number below that -- say 2000 -- and say, "we support 2000 players
-max".  For one, I think the limits should be dictated by hardware, not
-arbitrary limits.  But it also confuses a lot of things.  There should be
-multiple counts:
-- maximum connections supported (these may not be full clients) 
-- maximum clients supported (these may only be spectators, not players)
-- maximum players supported
-
-Right now we just use `MAXPLAYERS` for all of these, and that's confusing.
-
-The main issue is working around ENet's artificial limitation.  I actually
-think replacing ENet with regular sockets and libuv is fine.  libuv would also
-clean up some of the directory server code, which would be welcome.
-
-In the interim, I think `MAXPLAYERS` needs to be removed.  It ultimately needs
-to be removed anyway, but the concepts behind `players` and `playeringame` and
-`consoleplayer`/`displayplayer` need to be refactored since the list of
-`player_t` instances will be dynamic now.
+- Define the distinction between peers, spectators, and players
+  - The main thing is that it's possible for there to be peer connected to a
+    server that other peers don't ever know about, or there can be peers
+    connected to a server that don't have a player.  I ran into this when
+    refactoring the chat message stuff; that code currently presumes that if
+    there's a peer there's a player, which is wrong if the peer is spectating.
+    This has other implications, like assuming that if connected you have a
+    player in the game, you have a consoleplayer, and so on.  A lot of work to
+    do here probably.
 
 ## Smaller Issues
 

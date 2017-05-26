@@ -24,11 +24,28 @@
 #ifndef G_SAVE_H__
 #define G_SAVE_H__
 
+// CPhipps - Make savedesciption visible in wider scope
+#define SAVEDESCLEN 32
+
+extern char *basesavegame;      // killough 2/16/98: savegame path
+
+// Description to save in savegame
+extern char savedescription[SAVEDESCLEN];
+
 void G_UpdateAverageSaveSize(int new_size);
 int  G_GetAverageSaveSize(void);
 bool G_ReadSaveData(pbuf_t *savebuffer, bool bail_on_errors,
                                         bool init_new);
 void G_WriteSaveData(pbuf_t *savebuffer);
+
+/* killough 3/22/98: sets savegame filename */
+int G_SaveGameName(char *name, size_t size, int slot, bool demoplayback);
+
+// Called by M_Responder.
+void G_SaveGame(int slot, char *description);
+
+// killough 5/15/98
+void G_LoadGame(int slot, bool is_command);
 
 #endif
 

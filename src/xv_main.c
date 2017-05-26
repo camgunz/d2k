@@ -26,8 +26,6 @@
 #include <SDL.h>
 #include <cairo/cairo.h>
 
-#include "doomdef.h"
-#include "doomstat.h"
 #include "hu_stuff.h"
 #include "i_video.h"
 #include "g_game.h"

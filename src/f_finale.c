@@ -23,13 +23,10 @@
 
 #include "z_zone.h"
 
-#include "doomdef.h"
-#include "doomstat.h"
-#include "d_event.h"
-
 #include "am_map.h"
 #include "d_deh.h"  // Ty 03/22/98 - externalizations
 #include "f_finale.h" // CPhipps - hmm...
+#include "p_setup.h"
 #include "pl_main.h"
 #include "pl_pspr.h"
 #include "g_game.h"
@@ -242,18 +239,14 @@ static float Get_TextSpeed(void) {
 //
 
 void F_Ticker(void) {
-  size_t index = 0;
-  player_t *player = NULL;
-
   if (!demo_compatibility) {
     WI_checkForAccelerate();  // killough 3/28/98: check for acceleration
   }
-  else if (!MULTINET) {
-    if (gamemode == commercial && finalecount > 50) { // check for skipping
-      while (P_PlayersIter(&index, &player)) {
-        if (player->cmd.buttons) {
-          goto next_level;      // go on to the next level
-        }
+  else if ((!MULTINET) && gamemode == commercial && finalecount > 50) {
+    // check for skipping
+    PLAYERS_FOR_EACH(iter) {
+      if (iter.player->cmd.buttons) {
+        goto next_level; // go on to the next level
       }
     }
   }

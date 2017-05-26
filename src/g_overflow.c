@@ -23,8 +23,6 @@
 
 #include "z_zone.h"
 
-#include "doomdef.h"
-#include "doomstat.h"
 #include "d_event.h"
 #include "p_maputl.h"
 #include "p_setup.h"
@@ -33,7 +31,7 @@
 #include "m_argv.h"
 #include "m_misc.h"
 #include "e6y.h"
-#include "p_user.h"
+#include "pl_main.h"
 #include "g_game.h"
 #include "w_wad.h"
 #include "r_state.h"
@@ -171,19 +169,25 @@ void InterceptsOverrun(int num_intercepts, intercept_t *intercept)
 // playeringame overrun emulation
 // it detects and emulates overflows on vex6d.wad\bug_wald(toke).lmp, etc.
 // http://www.doom2.net/doom2/research/runningbody.zip
+// [CG] [FIXME] Doesn't work after the players refactor (probably)
 
-int PlayeringameOverrun(const mapthing_t* mthing)
-{
-  if (mthing->type == 0 && PROCESS(OVERFLOW_PLYERINGAME))
-  {
+int PlayeringameOverrun(const mapthing_t *mthing) {
+  if (mthing->type == 0 && PROCESS(OVERFLOW_PLYERINGAME)) {
+    player_t *player = P_PlayersLookup(4);
+    bool didsecret = false;
+
+    if (player) {
+      didsecret = player->didsecret;
+    }
+
     // playeringame[-1] == players[3].didsecret
-    ShowOverflowWarning(OVERFLOW_PLYERINGAME, (players + 3)->didsecret, "");
+    ShowOverflowWarning(OVERFLOW_PLYERINGAME, didsecret, "");
 
-    if (EMULATE(OVERFLOW_PLYERINGAME))
-    {
+    if (EMULATE(OVERFLOW_PLYERINGAME)) {
       return true;
     }
   }
+
   return false;
 }
 

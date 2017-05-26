@@ -24,20 +24,41 @@
 #ifndef M_IDLIST_H__
 #define M_IDLIST_H__
 
+typedef uint32_t (*M_GetIDFunc)(void *data);
+
 typedef struct {
-  GArray *objs;
+  GList *objs;
   GArray *recycled_ids;
   uint32_t max_id;
+  size_t len;
+  M_GetIDFunc get_id;
   GDestroyNotify free_obj;
 } id_list_t;
 
-void     M_IDListInit(id_list_t *idlist, GDestroyNotify free_obj);
-uint32_t M_IDListGetNewID(id_list_t *idlist, void *obj);
-void     M_IDListAssignID(id_list_t *idlist, void *obj, uint32_t id);
-void     M_IDListReleaseID(id_list_t *idlist, uint32_t id);
-void*    M_IDListLookupObj(id_list_t *idlist, uint32_t id);
-bool     M_IDListIterate(id_list_t *idlist, size_t *index, void **obj);
-uint32_t M_IDListGetSize(id_list_t *idlist);
+typedef struct {
+  GList *node;
+  void *obj;
+  void *wraparound;
+} id_list_iter_t;
+
+#define IDLIST_FOR_EACH(_idlist, _it) \
+  for (id_list_iter_t _it = {_idlist, NULL, NULL, NULL}; \
+       M_IDListIterate(_idlist, &_it.node, &_id.obj, &_id.wraparound);)
+
+#define IDLIST_FOR_EACH_AT(_idlist, _it, _obj) \
+  for (id_list_iter_t _iter = {_idlist, NULL, _obj, _obj}; \
+       M_IDListIterate(_idlist, &_it.node, &_id.obj, &_id.wraparound);)
+
+void     M_IDListInit(id_list_t *idlist, M_GetIDFunc get_id,
+                                         GDestroyNotify free_obj);
+uint32_t M_IDListAdd(id_list_t *idlist, void *obj);
+void     M_IDListAssign(id_list_t *idlist, void *obj, uint32_t id);
+bool     M_IDListRemove(id_list_t *idlist, void *obj);
+bool     M_IDListRemoveID(id_list_t *idlist, uint32_t id);
+void*    M_IDListLookup(id_list_t *idlist, uint32_t id);
+bool     M_IDListIterate(id_list_t *idlist, GList **node, void **obj,
+                                                          void *wraparound);
+uint32_t M_IDListGetLen(id_list_t *idlist);
 void     M_IDListReset(id_list_t *idlist);
 void     M_IDListFree(id_list_t *idlist);
 

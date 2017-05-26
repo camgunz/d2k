@@ -30,8 +30,6 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 
 #include "TEXTSCREEN/txt_main.h"
 
-#include "doomdef.h"
-#include "doomstat.h"
 #include "d_cfg.h"
 #include "d_main.h"
 #include "e6y.h"
@@ -98,9 +96,10 @@ ExeptionParam_t ExeptionsParams[EXEPTION_MAX + 1] =
   {NULL}
 };
 
+static FILE *log_file;
+
 int realtic_clock_rate = 100;
 int (*I_GetTime)(void) = NULL;
-int endoom_mode;
 
 /*
  * Most of the following has been rewritten by Lee Killough
@@ -160,9 +159,7 @@ inline static int convert(int color, int *bold)
 #endif
 
 static void print_version(void) {
-  char vbuf[200];
-
-  D_Msg(MSG_INFO, "%s\n", I_GetVersionString(vbuf, 200));
+  D_MsgLocalInfo("%s\n", VERSION_STRING);
 }
 
 //
@@ -441,51 +438,16 @@ static void set_affinity_mask(void) {
 #endif
 
     if (errbuf == NULL) {
-      D_Msg(MSG_INFO, "I_SetAffinityMask: manual affinity mask is %d\n",
+      D_MsgLocalInfo("I_SetAffinityMask: manual affinity mask is %d\n",
         process_affinity_mask
       );
     }
     else {
-      D_Msg(MSG_ERROR,
+      D_MsgLocalError(
         "I_SetAffinityMask: failed to set process affinity mask (%s)\n",
         errbuf
       );
     }
-  }
-}
-
-static void initialize_messaging(const char *log_file) {
-  if (log_file) {
-    if (!D_MsgActivateWithPath(MSG_INFO, log_file))
-      I_Error("Error opening %s", log_file);
-
-#ifdef DEBUG
-    if (!D_MsgActivateWithPath(MSG_DEBUG, log_file))
-      I_Error("Error opening %s", log_file);
-#endif
-
-    if (!D_MsgActivateWithPath(MSG_WARN, log_file))
-      I_Error("Error opening %s", log_file);
-
-    if (!D_MsgActivateWithPath(MSG_ERROR, log_file))
-      I_Error("Error opening %s", log_file);
-
-    if (!D_MsgActivateWithPath(MSG_DEH, log_file))
-      I_Error("Error opening %s", log_file);
-
-    if (!D_MsgActivateWithPath(MSG_GAME, log_file))
-      I_Error("Error opening %s", log_file);
-  }
-  else {
-    D_MsgActivate(MSG_INFO);
-#ifdef DEBUG
-    D_MsgActivate(MSG_DEBUG);
-#endif
-    D_MsgActivate(MSG_INFO);
-    D_MsgActivate(MSG_WARN);
-    D_MsgActivate(MSG_ERROR);
-    D_MsgActivate(MSG_DEH);
-    D_MsgActivate(MSG_GAME);
   }
 }
 
@@ -528,31 +490,117 @@ static void handle_sigterm(int signum) {
   exit(EXIT_FAILURE);
 }
 
-#ifdef G_OS_UNIX
-static void daemonize(void) {
-  char *log_file;
-  char *pid_file;
-  char *pid_string;
-  pid_t pid;
-  pid_t sid;
-  int infofd;
-  int errorfd;
-  int p;
+static void stdout_message_handler(message_t *message, void *data) {
+  printf("%s", message->contents);
+}
 
-  if ((p = M_CheckParm("-log"))) {
-    log_file = myargv[p + 1];
+static void log_file_message_handler(message_t *message, void *data) {
+  FILE *log_file = (FILE *)data;
+
+  fprintf(log_file, "%s", message->contents);
+  fflush(log_file);
+}
+
+static void initialize_messaging(bool redirect) {
+  int p;
+  char *log_file_folder = NULL;
+  char *log_file_name = NULL;
+  char *log_file_path = NULL;
+
+  if ((p = M_CheckParm("-logdir"))) {
+    log_file_folder = myargv[p + 1];
   }
   else {
-    log_file = M_PathJoin(I_DoomExeDir(), DEFAULT_LOG_FILE_NAME);
+    log_file_folder = I_DoomExeDir();
+  }
 
-    if (!log_file) {
+  if ((p = M_CheckParm("-log"))) {
+    log_file_name = myargv[p + 1];
+
+    log_file_path = M_PathJoin(log_file_folder, log_file_name);
+
+    if (!log_file_path) {
       I_Error("Error joining %s and %s: %s\n",
-        I_DoomExeDir(),
-        DEFAULT_LOG_FILE_NAME,
+        log_file_folder,
+        log_file_name,
         M_GetFileError()
       );
     }
   }
+  else {
+    GDateTime *now = g_date_time_new_now_local();
+    char *date_time_stamp = date_time_stamp = g_date_time_format(now, "%F-%T");
+
+    g_free(now);
+
+    log_file_name = g_strdup_printf("%s-%s.log",
+      PACKAGE_TARNAME,
+      date_time_stamp
+    );
+
+    g_free(date_time_stamp);
+
+    log_file_path = M_PathJoin(log_file_path, log_file_name);
+
+    if (!log_file_path) {
+      I_Error("Error joining %s and %s: %s\n",
+        log_file_folder,
+        log_file_name,
+        M_GetFileError()
+      );
+    }
+
+    g_free(full_file_name);
+  }
+
+  D_MessagingInit();
+
+  for (int fd = 0; fd < 1024; fd++) {
+    close(fd);
+  }
+
+  if (redirect) {
+    int log_fd;
+    
+    for (int fd = 0; fd < 1024; fd++) {
+      close(fd);
+    }
+
+    log_file = M_OpenFile(log_file_path);
+    log_fd = M_GetFDFromFile(log_file);
+
+    if (log_fd < 0) {
+      I_Error("Error getting file descriptor of info log (%s)\n",
+        M_FileGetError()
+      );
+    }
+
+    if (dup2(log_fd, STDOUT_FILENO) == -1) {
+      I_Error("Error duplicating STDOUT_FILENO: %s", strerror(errno));
+    }
+
+    if (dup2(log_fd, STDERR_FILENO) == -1) {
+      I_Error("Error duplicating STDERR_FILENO: %s", strerror(errno));
+    }
+  }
+  else {
+    log_file = M_OpenFile(log_file_path);
+  }
+
+  D_MessageRegisterHandler(log_file_message_handler, (void *)log_file);
+#ifdef DEBUG
+  D_MessageRegisterHandler(stdout_message_handler, NULL);
+#endif
+
+}
+
+#ifdef G_OS_UNIX
+static void daemonize(void) {
+  int p;
+  char *pid_file;
+  char *pid_string;
+  pid_t pid;
+  pid_t sid;
 
   if ((p = M_CheckParm("-pid"))) {
     pid_file = myargv[p + 1];
@@ -583,34 +631,6 @@ static void daemonize(void) {
 
   umask(0);
 
-  for (int fd = 0; fd < 1024; fd++) {
-    close(fd);
-  }
-
-  initialize_messaging(log_file);
-
-  infofd = D_MsgGetFD(MSG_INFO);
-
-  if (infofd < 0) {
-    I_Error("Error getting file descriptor of info log");
-  }
-
-  if (dup2(infofd, STDOUT_FILENO) == -1) {
-    I_Error("Error duplicating STDOUT_FILENO: %s", strerror(errno));
-  }
-
-  errorfd = D_MsgGetFD(MSG_ERROR);
-
-  if (errorfd < 0) {
-    I_Error("Error getting file descriptor of error log");
-  }
-
-  dup2(errorfd, STDERR_FILENO);
-
-  if (dup2(errorfd, STDERR_FILENO) == -1) {
-    I_Error("Error duplicating STDERR_FILENO: %s", strerror(errno));
-  }
-
   sid = setsid();
 
   if (sid < 0) {
@@ -629,18 +649,6 @@ static void daemonize(void) {
 
   if (chdir("/") < 0) {
     I_Error("Error changing directory to \"/\": %s", strerror(errno));
-  }
-
-  infofd = D_MsgGetFD(MSG_INFO);
-
-  if (infofd < 0) {
-    I_Error("Error getting info log file descriptor: %s", strerror(errno));
-  }
-
-  errorfd = D_MsgGetFD(MSG_ERROR);
-
-  if (errorfd < 0) {
-    I_Error("Error getting error log file descriptor: %s", strerror(errno));
   }
 }
 #endif
@@ -799,6 +807,7 @@ void I_SetProcessPriority(void) {
 #ifndef RUNNING_UNIT_TESTS
 int main(int argc, char **argv) {
   int p;
+  bool daemonizing = false;
 
 #ifdef SECURE_UID
   /* First thing, revoke setuid status (if any) */
@@ -831,6 +840,14 @@ int main(int argc, char **argv) {
   _setmode(_fileno(stderr), _O_BINARY);
 #endif
 
+#ifdef G_OS_UNIX
+  if (M_CheckParm("-serve") && !M_CheckParm("-nodaemon")) {
+    daemonizing = true;
+  }
+#endif
+
+  initialize_messaging(daemonizing);
+
   X_Init(); /* CG 07/22/2014: Scripting */
 
   XAM_RegisterInterface();
@@ -858,30 +875,13 @@ int main(int argc, char **argv) {
 
   X_Start();
 
-  D_InitMessaging(); /* CG 05/09/14: Enable messaging */
-
   D_ConfigInit();
 
-  if (M_CheckParm("-serve")) {
 #ifdef G_OS_UNIX
-    if (!M_CheckParm("-nodaemon"))
-      daemonize();
-#else
-    if ((p = M_CheckParm("-log"))) {
-      const char *log_file = myargv[p + 1];
-
-      initialize_messaging(log_file);
-    }
+  if (daemonizing) {
+    daemonize();
+  }
 #endif
-  }
-  else if ((p = M_CheckParm("-log"))) {
-    const char *log_file = myargv[p + 1];
-
-    initialize_messaging(log_file);
-  }
-  else {
-    initialize_messaging(NULL);
-  }
 
   // e6y: was moved from D_DoomMainSetup
   // init subsystems

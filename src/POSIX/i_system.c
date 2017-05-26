@@ -25,12 +25,6 @@
 
 #include "m_fixed.h"
 #include "i_system.h"
-#include "doomdef.h"
-
-#ifdef __GNUG__
-#pragma implementation "i_system.h"
-#endif
-#include "i_system.h"
 
 void I_uSleep(unsigned long usecs) {
 #ifdef HAVE_USLEEP
@@ -91,14 +85,6 @@ unsigned long I_GetRandomTimeSeed(void) {
   gettimeofday(&tv, &tz);
 
   return (tv.tv_sec * 1000ul + tv.tv_usec / 1000ul);
-}
-
-/* cphipps - I_GetVersionString
- * Returns a version string in the given buffer
- */
-const char* I_GetVersionString(char *buf, size_t sz) {
-  snprintf(buf, sz, "%s v%s (%s)", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_URL);
-  return buf;
 }
 
 /* cphipps - I_SigString

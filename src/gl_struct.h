@@ -115,14 +115,14 @@ void gld_Init(int width, int height);
 void gld_InitCommandLine(void);
 void gld_InitTextureParams(void);
 
-void gld_DrawNumPatch(int x, int y, int lump, int cm, enum patch_translation_e flags);
-void gld_DrawNumPatch_f(float x, float y, int lump, int cm, enum patch_translation_e flags);
+void gld_DrawNumPatch(int x, int y, int lump, int cm, patch_translation_e flags);
+void gld_DrawNumPatch_f(float x, float y, int lump, int cm, patch_translation_e flags);
 
-void gld_FillFlat(int lump, int x, int y, int width, int height, enum patch_translation_e flags);
+void gld_FillFlat(int lump, int x, int y, int width, int height, patch_translation_e flags);
 #define gld_FillFlatName(flatname, x, y, width, height, flags) \
   gld_FillFlat(R_FlatNumForName(flatname), (x), (y), (width), (height), (flags))
 
-void gld_FillPatch(int lump, int x, int y, int width, int height, enum patch_translation_e flags);
+void gld_FillPatch(int lump, int x, int y, int width, int height, patch_translation_e flags);
 #define gld_FillPatchName(name, x, y, width, height, flags) \
   gld_FillPatch(W_GetNumForName(name), (x), (y), (width), (height), (flags))
 

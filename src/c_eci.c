@@ -25,9 +25,7 @@
 
 #include <gio/gio.h>
 
-#include "doomdef.h"
 #include "c_main.h"
-#include "g_game.h"
 #include "n_main.h"
 #include "x_main.h"
 
@@ -45,7 +43,7 @@ static void handle_data(uds_t *uds, uds_peer_t *peer) {
 }
 
 static void handle_oob(uds_t *uds) {
-  D_Msg(MSG_ERROR, "ECI: Got out-of-band data [%s]\n", uds->oob->str);
+  D_MsgLocalError("ECI: Got out-of-band data [%s]\n", uds->oob->str);
 }
 
 static void eci_cleanup(void) {

@@ -24,29 +24,24 @@
 #include "z_zone.h"
 
 // killough 5/2/98: fixed headers, removed rendunant external declarations:
-#include "doomdef.h"
-#include "doomstat.h"
-#include "dstrings.h"  // to get the initial values
-#include "d_event.h"
-#include "d_deh.h"
-#include "d_main.h"
-#include "pl_main.h"
-#include "pl_pspr.h"
-#include "g_game.h"
-#include "info.h"
+
 #include "m_argv.h"
-#include "m_cheat.h"
 #include "m_misc.h"
+#include "dstrings.h"
+#include "d_deh.h"
+#include "d_res.h"
+#include "e6y.h"
+#include "g_comp.h"
+#include "g_game.h"
 #include "p_enemy.h"
 #include "p_inter.h"
-#include "sounds.h"
-#include "w_wad.h"
-#include "p_setup.h"
 #include "p_mobj.h"
+#include "pl_cheat.h"
+#include "pl_pspr.h"
+#include "pl_weap.h"
+#include "sounds.h"
 #include "v_video.h"
-#include "d_items.h"
-
-#include "e6y.h"
+#include "w_wad.h"
 
 #define DEHTRUE 1
 #define DEHFALSE 0
@@ -1506,7 +1501,7 @@ void ProcessDehFile(const char *filename, const char *outfilename, int lumpnum)
       fileout = stdout;
     }
     else if (!(fileout=fopen(outfilename, firstfile ? "wt" : "at"))) {
-      D_Msg(MSG_DEH, "Could not open -dehout file %s\n... using stdout.\n",
+      D_MsgLocalWarn("Could not open -dehout file %s\n... using stdout.\n",
         outfilename
       );
       fileout = stdout;
@@ -1520,7 +1515,7 @@ void ProcessDehFile(const char *filename, const char *outfilename, int lumpnum)
     {
       if (!(infile.f = fopen(filename,"rt")))
         {
-          D_Msg(MSG_DEH, "-deh file %s not found\n",filename);
+          D_MsgLocalError("-deh file %s not found\n",filename);
           return;  // should be checked up front anyway
         }
       infile.lump = NULL;
@@ -1551,7 +1546,7 @@ void ProcessDehFile(const char *filename, const char *outfilename, int lumpnum)
       file_or_lump = "lump from";
     }
 
-  D_Msg(MSG_DEH, "Loading DEH %s %s\n", file_or_lump, filename);
+  D_MsgLocalInfo("Loading DEH %s %s\n", file_or_lump, filename);
   if (fileout)
     fprintf(fileout, "\nLoading DEH %s %s\n\n", file_or_lump, filename);
 

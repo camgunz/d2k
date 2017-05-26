@@ -46,9 +46,6 @@
 #include <SDL_mixer.h>
 #endif
 
-#include "doomdef.h"
-#include "doomstat.h"
-#include "d_event.h"
 #include "d_main.h"
 #include "i_pcsound.h"
 #include "sounds.h"
@@ -107,8 +104,9 @@ void I_ShutdownMusic(void) {
 
       snprintf(name, name_size, "%s%s", music_tmp, music_tmp_ext[i]);
 
-      if (!unlink(name))
-        D_Msg(MSG_DEBUG, "I_ShutdownMusic: removed %s\n", name);
+      if (!unlink(name)) {
+        D_MsgLocalDebug("I_ShutdownMusic: removed %s\n", name);
+      }
 
       free(name);
     }
@@ -139,7 +137,7 @@ void I_InitMusic(void) {
     fd = mkstemp(music_tmp);
 
     if (fd < 0) {
-      D_Msg(MSG_ERROR, "I_InitMusic: failed to create music temp file %s",
+      D_MsgLocalError("I_InitMusic: failed to create music temp file %s",
         music_tmp
       );
 
@@ -159,7 +157,7 @@ void I_InitMusic(void) {
 
   return;
 #endif
-  D_Msg(MSG_INFO,
+  D_MsgLocalInfo(
     "I_InitMusic: Was compiled without SDL_Mixer support.  "
     "You should enable experimental music.\n"
   );
@@ -401,9 +399,9 @@ int I_RegisterSong(const void *data, size_t len) {
       rw_midi = NULL;
 
     if (io_errors)
-      D_Msg(MSG_ERROR, "Error writing song\n");
+      D_MsgLocalError("Error writing song\n");
     else
-      D_Msg(MSG_ERROR, "Error loading song: %s\n", Mix_GetError());
+      D_MsgLocalError("Error loading song: %s\n", Mix_GetError());
   }
 
 #endif
@@ -428,7 +426,7 @@ int I_RegisterMusic(const char* filename, musicinfo_t *song) {
 
   music[0] = Mix_LoadMUS(filename);
   if (music[0] == NULL) {
-    D_Msg(MSG_WARN,
+    D_MsgLocalWarn(
       "Couldn't load music from %s: %s\nAttempting to load default "
       "MIDI music.\n",
       filename,

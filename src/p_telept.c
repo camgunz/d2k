@@ -22,8 +22,6 @@
 
 #include "z_zone.h"
 
-#include "doomdef.h"
-#include "doomstat.h"
 #include "p_spec.h"
 #include "p_maputl.h"
 #include "p_map.h"
@@ -40,6 +38,11 @@
 #include "w_wad.h"
 #include "r_demo.h"
 #include "r_state.h"
+
+static void reset_after_teleport(player_t *player) {
+  R_ResetViewInterpolation();
+  G_DemoSmoothPlaying_Reset(player);
+}
 
 static mobj_t* P_TeleportDestination(line_t *line) {
   int i;
@@ -126,7 +129,7 @@ int EV_Teleport(line_t *line, int side, mobj_t *thing) {
 
     // e6y
     if (player && player->mo == thing) {
-      R_ResetAfterTeleport(player);
+      reset_after_teleport(player);
     }
 
     return 1;
@@ -205,7 +208,7 @@ int EV_SilentTeleport(line_t *line, int side, mobj_t *thing) {
 
     // e6y
     if (player && player->mo == thing) {
-      R_ResetAfterTeleport(player);
+      reset_after_teleport(player);
     }
 
     return 1;
@@ -310,7 +313,7 @@ int EV_SilentLineTeleport(line_t *line, int side, mobj_t *thing, bool reverse) {
 
       // e6y
       if (player && player->mo == thing) {
-        R_ResetAfterTeleport(player);
+        reset_after_teleport(player);
       }
 
       // Adjust z position to be same height above ground as before.
@@ -346,7 +349,7 @@ int EV_SilentLineTeleport(line_t *line, int side, mobj_t *thing, bool reverse) {
 
       // e6y
       if (player && player->mo == thing) {
-        R_ResetAfterTeleport(player);
+        reset_after_teleport(player);
       }
 
       return 1;

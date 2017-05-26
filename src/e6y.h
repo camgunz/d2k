@@ -43,41 +43,17 @@
 #define FOV_CORRECTION_FACTOR (1.13776f)
 #define FOV90 (90)
 
-typedef struct camera_s
-{
-  int x;
-  int y;
-  int z;
-  int PrevX;
-  int PrevY;
-  int PrevZ;
-  angle_t angle;
-  angle_t pitch;
-  angle_t PrevAngle;
-  angle_t PrevPitch;
-  int type;
-} camera_t;
-
 extern bool wasWiped;
 
 extern int totalleveltimes;
 
 extern int secretfound;
-extern int demo_skiptics;
-extern int demo_tics_count;
-extern int demo_curr_tic;
-extern int demo_playerscount;
-extern char demo_len_st[80];
 
 extern int avi_shot_time;
 extern int avi_shot_num;
 extern const char *avi_shot_fname;
 
 extern int speed_step;
-
-extern bool demo_stoponnext;
-extern bool demo_stoponend;
-extern bool demo_warp;
 
 extern int hudadd_gamespeed;
 extern int hudadd_leveltime;
@@ -95,16 +71,9 @@ extern int hudadd_crosshair_lock_target;
 extern int movement_strafe50;
 extern int movement_shorttics;
 extern int movement_strafe50onturns;
-extern int movement_mouselook;
-extern int movement_mouseinvert;
-extern int movement_maxviewpitch;
-extern int mouse_handler;
-extern int mouse_doubleclick_as_use;
 extern int render_multisampling;
 extern int render_paperitems;
 extern int render_wipescreen;
-extern int mouse_acceleration;
-extern int demo_overwriteexisting;
 
 extern int render_fov;
 extern int render_aspect;
@@ -121,10 +90,7 @@ extern int palette_ondamage;
 extern int palette_onbonus;
 extern int palette_onpowers;
 
-extern camera_t walkcamera;
-
 extern int PitchSign;
-extern int mouseSensitivity_mlook;
 extern angle_t viewpitch;
 extern float skyscale;
 extern float screen_skybox_zplane;
@@ -134,27 +100,11 @@ extern float skyUpAngle;
 extern float skyUpShift;
 extern float skyXShift;
 extern float skyYShift;
-extern bool mlook_or_fov;
 
 void e6y_assert(const char *format, ...);
 
 void ParamsMatchingCheck();
 void e6y_InitCommandLine(void);
-
-void P_WalkTicker ();
-void P_SyncWalkcam(bool sync_coords, bool sync_sight);
-void P_ResetWalkcam(void);
-
-void G_SkipDemoStart(void);
-void G_SkipDemoStop(void);
-void G_SkipDemoCheck(void);
-int G_ReloadLevel(void);
-int G_GotoNextLevel(void);
-
-void M_ChangeMouseLook(void);
-void M_ChangeMaxViewPitch(void);
-void M_ChangeMouseInvert(void);
-
 #ifdef GL_DOOM
 void M_ChangeFOV(void);
 void M_ChangeUseDetail(void);
@@ -169,13 +119,7 @@ void M_ChangeRenderPrecise(void);
 void M_ChangeSpeed(void);
 void M_ChangeScreenMultipleFactor(void);
 void M_ChangeInterlacedScanning(void);
-void M_MouseMLook(int choice);
-void M_MouseAccel(int choice);
-void CheckPitch(signed int *pitch);
 void I_Init2(void);
-
-bool GetMouseLook(void);
-bool HaveMouseLook(void);
 
 extern float viewPitch;
 extern bool transparentpresent;
@@ -243,9 +187,9 @@ typedef struct timetable_s
 {
   char map[16];
 
-  int kill[MAXPLAYERS];
-  int item[MAXPLAYERS];
-  int secret[MAXPLAYERS];
+  int kill[VANILLA_MAXPLAYERS];
+  int item[VANILLA_MAXPLAYERS];
+  int secret[VANILLA_MAXPLAYERS];
   
   int stat[TT_MAX];
 } timetable_t;
@@ -258,13 +202,6 @@ void e6y_G_DoCompleted(void);
 
 void e6y_G_DoWorldDone(void);
 
-void I_ProcessWin32Mouse(void);
-void I_StartWin32Mouse(void);
-void I_EndWin32Mouse(void);
-int AccelerateMouse(int val);
-void MouseAccelChanging(void);
-
-extern int mlooky;
 extern int realtic_clock_rate;
 
 void e6y_G_Compatibility(void);
@@ -327,4 +264,3 @@ void I_midiOutSetVolumes(int volume);
 #endif
 
 /* vi: set et ts=2 sw=2: */
-
