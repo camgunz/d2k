@@ -39,6 +39,7 @@
 #include "n_main.h"
 #include "n_msg.h"
 #include "n_peer.h"
+#include "n_proto.h"
 #include "cl_cmd.h"
 #include "cl_main.h"
 #include "cl_net.h"
@@ -64,8 +65,7 @@
 #define read_num(pbuf, var, name)                                             \
   if (!M_PBufReadNum(pbuf, &var)) {                                           \
     D_MsgLocalError(                                                          \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
+      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
     );                                                                        \
     return false;                                                             \
   }
@@ -73,8 +73,7 @@
 #define read_unum(pbuf, var, name)                                            \
   if (!M_PBufReadUNum(pbuf, &var)) {                                          \
     D_MsgLocalError(                                                          \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
+      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
     );                                                                        \
     return false;                                                             \
   }
@@ -87,131 +86,72 @@
   read_unum(pbuf, var, name)                                                  \
   check_range(var, min, max) 
 
-#define read_char(pbuf, var, name)                                            \
-  read_ranged_num(pbuf, var, name, -128, 127)
+#define _read_cnum(pbuf, var, name, type, min, max) do {                      \
+  int64_t _int_var = 0;                                                       \
+  read_ranged_num(pbuf, _int_var, name, min, max)                             \
+  var = (type)_int_var;                                                       \
+} while (0);
 
-#define read_uchar(pbuf, var, name)                                           \
-  read_ranged_unum(pbuf, var, name, 0, 255)
-
-#define read_short(pbuf, var, name)                                           \
-  read_ranged_num(pbuf, var, name, -128, 127)
-
-#define read_ushort(pbuf, var, name)                                          \
-  read_ranged_unum(pbuf, var, name, 0, 255)
-
-#define read_int(pbuf, var, name)                                             \
-  read_ranged_num(pbuf, var, name, -128, 127)
-
-#define read_uint(pbuf, var, name)                                            \
-  read_ranged_unum(pbuf, var, name, 0, 255)
-
-#define read_long(pbuf, var, name)                                            \
-  read_ranged_num(pbuf, var, name, -128, 127)
-
-#define read_ulong(pbuf, var, name)                                           \
-  read_ranged_unum(pbuf, var, name, 0, 255)
+#define _read_cunum(pbuf, var, name, type, min, max) do {                     \
+  uint64_t _uint_var = 0;                                                     \
+  read_ranged_unum(pbuf, _uint_var, name, min, max)                           \
+  var = (type)_uint_var;                                                      \
+} while (0);
 
 #define read_ranged_char(pbuf, var, name, min, max)                           \
-  read_char(pbuf, var, name);                                                 \
-  check_range(var, min, max);
-
-#define read_uchar(pbuf, var, name)                                           \
-  if (!M_PBufReadUChar(pbuf, &var)) {                                         \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
-    );                                                                        \
-    return false;                                                             \
-  }
+  _read_cnum(pbuf, var, name, int8_t, min, max)
 
 #define read_ranged_uchar(pbuf, var, name, min, max)                          \
-  read_uchar(pbuf, var, name);                                                \
-  check_range(var, min, max);
+  _read_cunum(pbuf, var, name, uint8_t, min, max)
 
-#define read_short(pbuf, var, name)                                           \
-  if (!M_PBufReadShort(pbuf, &var)) {                                         \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
-    );                                                                        \
-    return false;                                                             \
-  }
+#define read_char(pbuf, var, name)                                            \
+  read_ranged_char(pbuf, var, name, -128, 127)   
+
+#define read_uchar(pbuf, var, name)                                           \
+  read_ranged_uchar(pbuf, var, name, 0, 255)   
 
 #define read_ranged_short(pbuf, var, name, min, max)                          \
-  read_short(pbuf, var, name);                                                \
-  check_range(var, min, max);
-
-#define read_ushort(pbuf, var, name)                                          \
-  if (!M_PBufReadUShort(pbuf, &var)) {                                        \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
-    );                                                                        \
-    return false;                                                             \
-  }
+  _read_cnum(pbuf, var, name, int16_t, min, max)
 
 #define read_ranged_ushort(pbuf, var, name, min, max)                         \
-  read_ushort(pbuf, var, name);                                               \
-  check_range(var, min, max);
+  _read_cunum(pbuf, var, name, uint16_t, min, max)
 
-#define read_int(pbuf, var, name)                                             \
-  if (!M_PBufReadInt(pbuf, &var)) {                                           \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
-    );                                                                        \
-    M_PBufPrint(pbuf);                                                        \
-    return false;                                                             \
-  }
+#define read_short(pbuf, var, name)                                           \
+  read_ranged_short(pbuf, var, name, -32768, 32767)   
+
+#define read_ushort(pbuf, var, name)                                          \
+  read_ranged_ushort(pbuf, var, name, 0, 65535)   
 
 #define read_ranged_int(pbuf, var, name, min, max)                            \
-  read_int(pbuf, var, name);                                                  \
-  check_range(var, min, max);
-
-#define read_uint(pbuf, var, name)                                            \
-  if (!M_PBufReadUInt(pbuf, &var)) {                                          \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
-    );                                                                        \
-    return false;                                                             \
-  }
+  _read_cnum(pbuf, var, name, int8_t, min, max)
 
 #define read_ranged_uint(pbuf, var, name, min, max)                           \
-  read_uint(pbuf, var, name);                                                 \
-  check_range(var, min, max);
+  _read_cunum(pbuf, var, name, uint8_t, min, max)
 
-#define read_long(pbuf, var, name)                                            \
-  if (!M_PBufReadLong(pbuf, &var)) {                                          \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
-    );                                                                        \
-    return false;                                                             \
-  }
+#define read_int(pbuf, var, name)                                             \
+  read_ranged_int(pbuf, var, name, -2147483647, 2147483647)   
+
+#define read_uint(pbuf, var, name)                                            \
+  read_ranged_uint(pbuf, var, name, 0, 4294967295)   
 
 #define read_ranged_long(pbuf, var, name, min, max)                           \
-  read_long(pbuf, var, name);                                                 \
-  check_range(var, min, max);
-
-#define read_ulong(pbuf, var, name)                                           \
-  if (!M_PBufReadULong(pbuf, &var)) {                                         \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
-    );                                                                        \
-    return false;                                                             \
-  }
+  _read_cnum(pbuf, var, name, int8_t, min, max)
 
 #define read_ranged_ulong(pbuf, var, name, min, max)                          \
-  read_ulong(pbuf, var, name);                                                \
-  check_range(var, min, max);
+  _read_cunum(pbuf, var, name, uint8_t, min, max)
+
+#define read_long(pbuf, var, name)                                            \
+  read_ranged_long(                                                           \
+    pbuf, var, name, -9223372036854775808LL, 9223372036854775807LL            \
+  )
+
+#define read_ulong(pbuf, var, name)                                           \
+  read_ranged_ulong(pbuf, var, name, 0, 18446744073709551615ULL)   
 
 #define read_double(pbuf, var, name)                                          \
   if (!M_PBufReadDouble(pbuf, &var)) {                                        \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
+    D_MsgLocalError(                                                          \
+      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
     );                                                                        \
     return false;                                                             \
   }
@@ -222,27 +162,24 @@
 
 #define read_bool(pbuf, var, name)                                            \
   if (!M_PBufReadBool(pbuf, &var)) {                                          \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
+    D_MsgLocalError(                                                          \
+      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
     );                                                                        \
     return false;                                                             \
   }
 
 #define read_array(pbuf, var, name)                                           \
   if (!M_PBufReadArray(pbuf, &var)) {                                         \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
+    D_MsgLocalError(                                                          \
+      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
     );                                                                        \
     return false;                                                             \
   }
 
 #define read_map(pbuf, var, name)                                             \
   if (!M_PBufReadMap(pbuf, &var)) {                                           \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
+    D_MsgLocalError(                                                          \
+      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
     );                                                                        \
     return false;                                                             \
   }
@@ -250,19 +187,17 @@
 #define read_bytes(pbuf, var, name)                                           \
   M_BufferClear(&var);                                                        \
   if (!M_PBufReadBytes(pbuf, &var)) {                                         \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
+    D_MsgLocalError(                                                          \
+      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
     );                                                                        \
     return false;                                                             \
   }
 
 #define read_packed_game_state(pbuf, var, tic, name)                          \
   var = G_ReadNewStateFromPackedBuffer(tic, pbuf);                            \
-  if (var == NULL) {                                                          \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
+  if (!var) {                                                                 \
+    D_MsgLocalError(                                                          \
+      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
     );                                                                        \
     return false;                                                             \
   }
@@ -270,46 +205,47 @@
 #define read_string(pbuf, var, name, sz)                                      \
   M_BufferClear(var);                                                         \
   if (!M_PBufReadString(pbuf, var, sz)) {                                     \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
+    D_MsgLocalError(                                                          \
+      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
     );                                                                        \
     return false;                                                             \
   }
 
 #define read_string_array(pbuf, var, name, count, length)                     \
   if (!M_PBufReadStringArray(pbuf, var, count, length)) {                     \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
+    D_MsgLocalError(                                                          \
+      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
     );                                                                        \
     return false;                                                             \
   }
 
-#define read_player(pbuf, var)                                                \
-  if (!M_PBufReadUShort(pbuf, &var)) {                                        \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading player number: %s.\n",                               \
-      __func__, M_PBufGetError(pbuf)                                          \
-    );                                                                        \
+#define read_player(pbuf, var) do {                                           \
+  uint32_t _player_id = 0;                                                    \
+  read_uint(pbuf, _player_id, "player ID")                                    \
+  if ((_player_id == 0) || (_player_id >= PLAYER_CAP)) {                      \
+    D_MsgLocalError("%s: Invalid player ID\n", __func__);                     \
     return false;                                                             \
   }                                                                           \
-  if (var >= PLAYER_CAP) {                                                    \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Invalid player number %d.\n",                                      \
-      __func__, var                                                           \
-    );                                                                        \
+  var = P_PlayersLookup(_player_id);                                          \
+  if (!var) {                                                                 \
+    D_MsgLocalError("%s: No player for ID %u\n", __func__, _player_id);       \
     return false;                                                             \
-  }
+  }                                                                           \
+} while (0);
 
-#define read_bitmap(pbuf, var, size, name)                                    \
-  if (!M_PBufReadBitmap(pbuf, (char *)var, size)) {                           \
-    P_Printf(consoleplayer,                                                   \
-      "%s: Error reading %s: %s.\n",                                          \
-      __func__, name, M_PBufGetError(pbuf)                                    \
-    );                                                                        \
+#define read_peer(pbuf, var) do {                                             \
+  uint32_t _peer_id = 0;                                                      \
+  read_uint(pbuf, _peer_id, "peer ID")                                        \
+  if (_peer_id == 0) {                                                        \
+    D_MsgLocalError("%s: Invalid peer ID\n", __func__);                       \
     return false;                                                             \
-  }
+  }                                                                           \
+  var = N_PeersLookup(_peer_id);                                              \
+  if (!var) {                                                                 \
+    D_MsgLocalError("%s: No peer for ID %u\n", __func__, _peer_id);           \
+    return false;                                                             \
+  }                                                                           \
+} while (0);
 
 #define pack_player_preference_change(pbuf, gametic, playernum, pn, pnsz)     \
   pbuf_t *pbuf = N_PeerBeginMessage(np, NM_PLAYER_PREFERENCE_CHANGE);         \
@@ -418,6 +354,7 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
     }
   }
 
+  M_PBufWriteUNum(player->id);
   M_PBufWriteUNum(pbuf, command_count);
 
   if (command_count > 0) {
@@ -550,7 +487,7 @@ bool N_UnpackSetup(netpeer_t *np) {
   iwad_path = I_FindFile(iwad_name, ".wad");
 
   if (!iwad_path) {
-    D_Msg(MSG_WARN, "IWAD %s not found\n", iwad_name);
+    D_MsgLocalWarn("IWAD %s not found\n", iwad_name);
     free(iwad_name);
     return false;
   }
@@ -562,7 +499,7 @@ bool N_UnpackSetup(netpeer_t *np) {
   D_ClearResourceFiles();
   D_ClearDEHFiles();
 
-  AddIWAD(iwad_path);
+  D_AddIWAD(iwad_path);
   D_SetIWAD(iwad_path);
   free(iwad_path);
 
@@ -590,12 +527,12 @@ bool N_UnpackSetup(netpeer_t *np) {
     for (unsigned int i = 0; i < rf_list->len; i++) {
       char *resource_name = g_ptr_array_index(rf_list, i);
 
-      W_AddResource(resource_name, source_net);
+      D_AddResource(resource_name, source_net);
     }
     g_ptr_array_free(rf_list, true);
   }
 
-  W_AddResource(PACKAGE_TARNAME ".wad", source_auto_load);
+  D_AddResource(PACKAGE_TARNAME ".wad", source_auto_load);
 
   read_uint(pbuf, deh_file_count, "DeH/BEX file count");
 
@@ -611,11 +548,11 @@ bool N_UnpackSetup(netpeer_t *np) {
 
       if (is_lump) {
         read_int(pbuf, deh_lumpnum, "DeH/BEX lumpnum");
-        W_AddDEH(NULL, deh_lumpnum);
+        D_AddDEH(NULL, deh_lumpnum);
       }
       else {
         read_string(pbuf, &deh_name, "DeH/BEX name", MAX_RESOURCE_NAME_LENGTH);
-        W_AddDEH(M_BufferGetData(&deh_name), deh_lumpnum);
+        D_AddDEH(M_BufferGetData(&deh_name), deh_lumpnum);
       }
     }
   }
@@ -627,7 +564,7 @@ bool N_UnpackSetup(netpeer_t *np) {
 
   G_SetLatestState(gs);
 
-  N_PeerUpdateSyncTIC(np, gs->tic);
+  N_PeerSyncUpdateTIC(np, gs->tic);
 
   return true;
 }
@@ -639,7 +576,7 @@ void N_PackFullState(netpeer_t *np) {
   M_PBufWriteNum(pbuf, gs->tic);
   M_PBufWriteBytes(pbuf, M_PBufGetData(gs->data), M_PBufGetSize(gs->data));
 
-  N_PeerUpdateSyncTIC(np, gs->tic);
+  N_PeerSyncUpdateTIC(np, gs->tic);
 }
 
 bool N_UnpackFullState(netpeer_t *np) {
@@ -652,7 +589,7 @@ bool N_UnpackFullState(netpeer_t *np) {
 
   G_SetLatestState(gs);
 
-  N_PeerUpdateSyncTIC(np, gs->tic);
+  N_PeerSyncUpdateTIC(np, gs->tic);
 
   return true;
 }
@@ -717,7 +654,7 @@ void N_PackRelayedChatMessage(netpeer_t *np, uint32_t sender_id,
   pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CHAT_MESSAGE);
 
   M_PBufWriteUNum(pbuf, CHAT_CHANNEL_ALL);
-  M_PBufWriteUNum(pbuf, sender);
+  M_PBufWriteUNum(pbuf, sender_id);
   M_PBufWriteString(pbuf, message, strlen(message));
 }
 
@@ -728,32 +665,32 @@ void N_PackTeamChatMessage(netpeer_t *np, const char *message) {
   M_PBufWriteString(pbuf, message, strlen(message));
 }
 
-void N_PackRelayedTeamChatMessage(netpeer_t *np, unsigned short sender,
+void N_PackRelayedTeamChatMessage(netpeer_t *np, uint32_t sender_id,
                                                  const char *message) {
   pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CHAT_MESSAGE);
 
   M_PBufWriteUNum(pbuf, CHAT_CHANNEL_TEAM);
-  M_PBufWriteUNum(pbuf, sender);
+  M_PBufWriteUNum(pbuf, sender_id);
   M_PBufWriteString(pbuf, message, strlen(message));
 }
 
-void N_PackPlayerChatMessage(netpeer_t *np, unsigned short recipient,
+void N_PackPlayerChatMessage(netpeer_t *np, uint32_t recipient_id,
                                             const char *message) {
   pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CHAT_MESSAGE);
 
-  M_PBufWriteUNum(pbuf, CHAT_CHANNEL_PLAYER);
-  M_PBufWriteUNum(pbuf, recipient);
+  M_PBufWriteUNum(pbuf, CHAT_CHANNEL_PEER);
+  M_PBufWriteUNum(pbuf, recipient_id);
   M_PBufWriteString(pbuf, message, strlen(message));
 }
 
-void N_PackRelayedPlayerChatMessage(netpeer_t *np, unsigned short sender,
-                                                   unsigned short recipient,
+void N_PackRelayedPlayerChatMessage(netpeer_t *np, uint32_t sender_id,
+                                                   uint32_t recipient_id,
                                                    const char *message) {
   pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CHAT_MESSAGE);
 
-  M_PBufWriteUNum(pbuf, CHAT_CHANNEL_PLAYER);
-  M_PBufWriteUNum(pbuf, sender);
-  M_PBufWriteUNum(pbuf, recipient);
+  M_PBufWriteUNum(pbuf, CHAT_CHANNEL_PEER);
+  M_PBufWriteUNum(pbuf, sender_id);
+  M_PBufWriteUNum(pbuf, recipient_id);
   M_PBufWriteString(pbuf, message, strlen(message));
 }
 
@@ -766,24 +703,24 @@ void N_PackServerChatMessage(netpeer_t *np, const char *message) {
 
 bool N_UnpackChatMessage(netpeer_t *np,
                          chat_channel_e *chat_channel,
-                         unsigned short *message_sender,
-                         unsigned short *message_recipient,
+                         uint32_t *sender_id,
+                         uint32_t *recipient_id,
                          buf_t *message_contents) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
-  unsigned char m_chat_channel;
-  unsigned short m_message_sender = 0;
-  unsigned short m_message_recipient = 0;
+  uint8_t m_chat_channel;
+  uint32_t m_sender_id = 0;
+  uint32_t m_recipient_id = 0;
 
   read_ranged_uchar(pbuf, m_chat_channel, "chat channel",
     CHAT_CHANNEL_MIN, CHAT_CHANNEL_MAX
   );
 
   if ((CLIENT) && (m_chat_channel != CHAT_CHANNEL_SERVER)) {
-    read_player(pbuf, m_message_sender);
+    read_peer(pbuf, m_sender_id);
   }
 
-  if (m_chat_channel == CHAT_CHANNEL_PLAYER) {
-    read_player(pbuf, m_message_recipient);
+  if (m_chat_channel == CHAT_CHANNEL_PEER) {
+    read_peer(pbuf, m_message_recipient);
   }
 
   read_string(
@@ -799,7 +736,7 @@ bool N_UnpackChatMessage(netpeer_t *np,
     *message_sender = N_PeerGetID(np);
   }
 
-  if (m_chat_channel == CHAT_CHANNEL_PLAYER) {
+  if (m_chat_channel == CHAT_CHANNEL_PEER) {
     *message_recipient = m_message_recipient;
   }
 
@@ -810,29 +747,55 @@ void N_PackSync(netpeer_t *np) {
   pbuf_t *pbuf = N_PeerBeginMessage(np, NM_SYNC);
 
   if (CLIENT) {
-    M_PBufWriteNum(pbuf, N_PeerSyncGetTIC(np));
+    player_t *player = P_GetConsolePlayer();
+    bool is_player = (player != NULL);
 
-    pack_unsynchronized_commands(pbuf, np, consoleplayer);
+    M_PBufWriteNum(pbuf, N_PeerSyncGetTIC(np));
+    M_PBufWriteBool(pbuf, is_player);
+
+    if (is_player) {
+      pack_unsynchronized_commands(pbuf, np, player);
+      M_PBufWriteUNum(pbuf, P_PlayersGetCount() - 1);
+    }
+    else {
+      M_PBufWriteUNum(pbuf, P_PlayersGetCount());
+    }
 
     PLAYERS_FOR_EACH(iter) {
-      M_PBufWriteUNum(iter.player->id);
+      if (is_player && iter.player == consoleplayer) {
+        continue;
+      }
+
+      M_PBufWriteUNum(pbuf, iter.player->id);
       M_PBufWriteUNum(pbuf, N_PeerSyncGetCommandIndexForPlayer(np, i));
     }
   }
   else if (SERVER) {
     game_state_delta_t *delta = N_PeerSyncGetStateDelta(np);
     bool is_player = N_PeerGetStatus(np) == NETPEER_STATUS_PLAYER;
+    size_t player_peer_count = 0;
 
     M_PBufWriteUNum(pbuf, N_PeerSyncGetCommandIndex(np));
     M_PBufWriteBool(pbuf, is_player);
 
     if (is_player) {
-      M_PBufWriteBool(pbuf, true);
       pack_run_commands(pbuf, np);
     }
 
     NETPEER_FOR_EACH(iter) {
+      if (N_PeerGetStatus(np) == NETPEER_STATUS_PLAYER) {
+        player_peer_count++;
+      }
+    }
+
+    M_PBufWriteUNum(pbuf, player_peer_count);
+
+    NETPEER_FOR_EACH(iter) {
       if (N_PeerGetStatus(np) != NETPEER_STATUS_PLAYER) {
+        continue;
+      }
+
+      if (iter.np == np) {
         continue;
       }
 
@@ -854,65 +817,62 @@ void N_PackSync(netpeer_t *np) {
 bool N_UnpackSync(netpeer_t *np) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   uint32_t m_command_index;
-  def_bitmap(bitmap, PLAYER_CAP);
 
   if (CLIENT) {
-    int m_delta_from_tic;
-    int m_delta_to_tic;
+    int32_t m_delta_from_tic;
+    int32_t m_delta_to_tic;
+    bool m_is_player;
+    uint32_t m_peer_player_count;
+    uint32_t m_command_count;
 
     read_uint(pbuf, m_command_index, "command index");
-    read_bitmap(pbuf, bitmap, PLAYER_CAP, "sync player bitmap");
+    read_bool(pbuf, m_is_player, "peer is player");
+    read_uint(pbuf, m_peer_player_count, "peer player count");
 
-    for (size_t i = 0; i < PLAYER_CAP; i++) {
-      uint32_t m_command_count;
+    if (m_is_player) {
+      read_uint(pbuf, m_command_count, "consoleplayer sync command count");
 
-      if (!bitmap_get_bit(bitmap, i)) {
-        continue;
+      for (uint32_t j = 0; j < m_command_count; j++) {
+        uint32_t m_run_command_index;
+        uint32_t m_server_tic;
+
+        read_uint(pbuf, m_run_command_index, "run command index");
+        read_uint(pbuf, m_server_tic, "server TIC");
+
+        P_UpdateCommandServerTic(i, m_run_command_index, m_server_tic);
+      }
+    }
+
+    for (size_t i = 0; i < m_peer_player_count; i++) {
+      player_t *m_player;
+
+      read_player(pbuf, m_player);
+      read_uint(pbuf, m_command_count, "command count");
+
+      for (size_t j = 0; j < m_command_count; j++) {
+        idxticcmd_t m_icmd;
+
+        unpack_net_command(pbuf, m_icmd);
+
+        PL_QueueCommand(m_player, &m_icmd);
       }
 
-      if (i == consoleplayer) {
-        read_uint(pbuf, m_command_count, "consoleplayer sync command count");
+      for (size_t ci = 0; ci < PL_GetCommandCount(m_player); ci++) {
+        idxticcmd_t *m_icmd = PL_GetCommand(m_player, ci);
 
-        for (uint32_t j = 0; j < m_command_count; j++) {
-          uint32_t m_run_command_index;
-          uint32_t m_server_tic;
-
-          read_uint(pbuf, m_run_command_index, "run command index");
-          read_uint(pbuf, m_server_tic, "server TIC");
-
-          P_UpdateCommandServerTic(i, m_run_command_index, m_server_tic);
-        }
-      }
-      else {
-        read_uint(pbuf, m_command_count, "command count");
-
-        for (unsigned int j = 0; j < m_command_count; j++) {
-          idxticcmd_t m_icmd;
-
-          unpack_net_command(pbuf, m_icmd);
-
-          P_QueuePlayerCommand(i, &m_icmd);
+        if (!m_icmd) {
+          continue;
         }
 
-        m_command_index = 0;
-
-        for (unsigned int ci = 0; ci < P_GetCommandCount(i); ci++) {
-          idxticcmd_t *m_icmd = P_GetCommand(i, ci);
-
-          if (!m_icmd) {
-            continue;
-          }
-
-          if (m_icmd->server_tic == 0) {
-            continue;
-          }
-
-          if (m_icmd->index <= m_command_index) {
-            continue;
-          }
-
-          m_command_index = m_icmd->index;
+        if (m_icmd->server_tic == 0) {
+          continue;
         }
+
+        if (m_icmd->index <= m_command_index) {
+          continue;
+        }
+
+        m_command_index = m_icmd->index;
       }
 
       if (m_command_index > N_PeerSyncGetCommandIndexForPlayer(np, i)) {
@@ -921,42 +881,64 @@ bool N_UnpackSync(netpeer_t *np) {
         );
       }
 
-      N_PeerUpdateSyncCommandIndexForPlayer(np, i, m_command_index);
+      N_PeerSyncUpdateCommandIndexForPlayer(np, m_player, m_command_index);
     }
 
     read_int(pbuf, m_delta_from_tic, "delta from tic");
     read_int(pbuf, m_delta_to_tic,   "delta to tic");
 
     /* [CG] pbuf now points to the delta's binary data */
-    N_PeerUpdateSyncStateDelta(np, m_delta_from_tic, m_delta_to_tic, pbuf);
+    N_PeerSyncUpdateStateDelta(np, m_delta_from_tic, m_delta_to_tic, pbuf);
   }
   else if (SERVER) {
-    int m_sync_tic;
-    unsigned int m_command_count;
-    unsigned int playernum = N_PeerGetPlayernum(np);
+    int32_t m_sync_tic;
+    uint32_t m_command_count;
+    bool m_is_player;
 
     read_int(pbuf, m_sync_tic, "sync tic");
-    read_bitmap(pbuf, bitmap, PLAYER_CAP, "sync player bitmap");
+    read_bool(pbuf, m_is_player, "peer is player");
 
-    read_uint(pbuf, m_command_count, "command count");
+    if (m_is_player) {
+      if (N_PeerGetStatus(np) != NETPEER_STATUS_PLAYER) {
+        D_MsgLocalError(
+          "N_UnpackSync: Receiving commands from non-player peer %u\n",
+          N_PeerGetID(np)
+        );
 
-    N_PeerUpdateSyncTIC(np, m_sync_tic);
+        /* [CG] [FIXME] Should maybe read/ignore these instead of bailing? */
 
-    for (unsigned int i = 0; i < m_command_count; i++) {
-      idxticcmd_t m_icmd;
+        return false;
+      }
 
-      unpack_net_command(pbuf, m_icmd);
+      read_uint(pbuf, m_command_count, "command count");
 
-      m_icmd.server_tic = 0;
+      for (size_t i = 0; i < m_command_count; i++) {
+        idxticcmd_t m_icmd;
 
-      P_QueuePlayerCommand(playernum, &m_icmd);
+        unpack_net_command(pbuf, m_icmd);
+
+        m_icmd.server_tic = 0;
+
+        P_QueuePlayerCommand(playernum, &m_icmd);
+      }
+
+      if (m_command_count > 0) {
+        m_command_index = P_GetLatestCommandIndex(player);
+
+        N_PeerSyncUpdateCommandIndexForPlayer(np, player, m_command_index);
+      }
+
+      read_uint(pbuf, m_player_count, "player count");
+
+      for (size_t i = 0; i < m_player_count; i++) {
+        player_t *m_player;
+
+        read_player(pbuf, m_player);
+        read_unum(pbuf, m_command_index, "command index");
+      }
     }
 
-    if (m_command_count > 0) {
-      m_command_index = P_GetLatestCommandIndex(playernum);
-
-      N_PeerUpdateSyncCommandIndexForPlayer(np, playernum, m_command_index);
-    }
+    N_PeerSyncUpdateTIC(np, m_sync_tic);
 
     for (size_t i = 0; i < PLAYER_CAP; i++) {
       if (i == playernum) {
@@ -969,7 +951,7 @@ bool N_UnpackSync(netpeer_t *np) {
 
       read_uint(pbuf, m_command_index, "command index");
 
-      N_PeerUpdateSyncCommandIndexForPlayer(np, i, m_command_index);
+      N_PeerSyncUpdateCommandIndexForPlayer(np, i, m_command_index);
     }
   }
 

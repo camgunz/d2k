@@ -664,6 +664,14 @@ bool M_PBufReadU64(pbuf_t *pbuf, uint64_t *u64) {
   return cmp_read_u64(&pbuf->cmp, u64);
 }
 
+bool M_PBufReadNum(pbuf_t *pbuf, int64_t *s64) {
+  return cmp_read_integer(&pbuf->cmp, s64);
+}
+
+bool M_PBufReadUNum(pbuf_t *pbuf, uint64_t *u64) {
+  return cmp_read_uinteger(&pbuf->cmp, u64);
+}
+
 bool M_PBufReadFloat(pbuf_t *pbuf, float *f) {
   return cmp_read_float(&pbuf->cmp, f);
 }

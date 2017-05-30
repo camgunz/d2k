@@ -116,6 +116,8 @@ bool M_PBufReadS64(pbuf_t *pbuf, int64_t *s64);
 bool M_PBufReadULong(pbuf_t *pbuf, uint64_t *l);
 bool M_PBufReadULongArray(pbuf_t *pbuf, buf_t *ulongs, size_t limit);
 bool M_PBufReadU64(pbuf_t *pbuf, uint64_t *u64);
+bool M_PBufReadNum(pbuf_t *pbuf, int64_t *s64);
+bool M_PBufReadUNum(pbuf_t *pbuf, uint64_t *u64);
 bool M_PBufReadDouble(pbuf_t *pbuf, double *d);
 bool M_PBufReadDoubleArray(pbuf_t *pbuf, buf_t *doubles,
                                          size_t limit);
