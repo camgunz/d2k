@@ -210,7 +210,7 @@ void V_InitColorTranslation(void)
 //
 static void FUNC_V_CopyRect(int srcscrn, int destscrn,
                 int x, int y, int width, int height,
-                enum patch_translation_e flags)
+                patch_translation_e flags)
 {
   unsigned char *src;
   unsigned char *dest;
@@ -277,7 +277,7 @@ static void FUNC_V_CopyRect(int srcscrn, int destscrn,
   }\
 }\
 
-static void FUNC_V_FillFlat(int lump, int scrn, int x, int y, int width, int height, enum patch_translation_e flags)
+static void FUNC_V_FillFlat(int lump, int scrn, int x, int y, int width, int height, patch_translation_e flags)
 {
   /* erase the entire screen to a tiled background */
   const unsigned char *data;
@@ -297,7 +297,7 @@ static void FUNC_V_FillFlat(int lump, int scrn, int x, int y, int width, int hei
   W_UnlockLumpNum(lump);
 }
 
-static void FUNC_V_FillPatch(int lump, int scrn, int x, int y, int width, int height, enum patch_translation_e flags)
+static void FUNC_V_FillPatch(int lump, int scrn, int x, int y, int width, int height, patch_translation_e flags)
 {
   int sx, sy, w, h;
 
@@ -354,7 +354,7 @@ void V_Init(void) {
 //  means that their inner loops weren't so well optimised, so merging code may even speed them).
 //
 static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
-                           int cm, enum patch_translation_e flags) {
+                           int cm, patch_translation_e flags) {
   const unsigned char *trans;
 
   stretch_param_t *params;
@@ -573,14 +573,14 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
 // This inline is _only_ for the function below
 
 static void FUNC_V_DrawNumPatch(int x, int y, int scrn, int lump,
-         int cm, enum patch_translation_e flags)
+         int cm, patch_translation_e flags)
 {
   V_DrawMemPatch(x, y, scrn, R_CachePatchNum(lump), cm, flags);
   R_UnlockPatchNum(lump);
 }
 
 static void FUNC_V_DrawNumPatchPrecise(float x, float y, int scrn, int lump,
-         int cm, enum patch_translation_e flags)
+         int cm, patch_translation_e flags)
 {
   V_DrawMemPatch((int)x, (int)y, scrn, R_CachePatchNum(lump), cm, flags);
   R_UnlockPatchNum(lump);
@@ -736,31 +736,31 @@ static void WRAP_gld_FillRect(int scrn, int x, int y, int width, int height, uns
 {
   gld_FillBlock(x,y,width,height,colour);
 }
-static void WRAP_gld_CopyRect(int srcscrn, int destscrn, int x, int y, int width, int height, enum patch_translation_e flags)
+static void WRAP_gld_CopyRect(int srcscrn, int destscrn, int x, int y, int width, int height, patch_translation_e flags)
 {
 }
 static void WRAP_gld_DrawBackground(const char *flatname, int n)
 {
   gld_FillFlatName(flatname, 0, 0, SCREENWIDTH, SCREENHEIGHT, VPT_NONE);
 }
-static void WRAP_gld_FillFlat(int lump, int n, int x, int y, int width, int height, enum patch_translation_e flags)
+static void WRAP_gld_FillFlat(int lump, int n, int x, int y, int width, int height, patch_translation_e flags)
 {
   gld_FillFlat(lump, x, y, width, height, flags);
 }
-static void WRAP_gld_FillPatch(int lump, int n, int x, int y, int width, int height, enum patch_translation_e flags)
+static void WRAP_gld_FillPatch(int lump, int n, int x, int y, int width, int height, patch_translation_e flags)
 {
   gld_FillPatch(lump, x, y, width, height, flags);
 }
-static void WRAP_gld_DrawNumPatch(int x, int y, int scrn, int lump, int cm, enum patch_translation_e flags)
+static void WRAP_gld_DrawNumPatch(int x, int y, int scrn, int lump, int cm, patch_translation_e flags)
 {
   gld_DrawNumPatch(x,y,lump,cm,flags);
 }
-static void WRAP_gld_DrawNumPatchPrecise(float x, float y, int scrn, int lump, int cm, enum patch_translation_e flags)
+static void WRAP_gld_DrawNumPatchPrecise(float x, float y, int scrn, int lump, int cm, patch_translation_e flags)
 {
   gld_DrawNumPatch_f(x,y,lump,cm,flags);
 }
 #if 0
-static void WRAP_gld_DrawBlock(int x, int y, int scrn, int width, int height, const unsigned char *src, enum patch_translation_e flags)
+static void WRAP_gld_DrawBlock(int x, int y, int scrn, int width, int height, const unsigned char *src, patch_translation_e flags)
 {
 }
 #endif
@@ -781,14 +781,14 @@ static void WRAP_gld_DrawLine(fline_t* fl, int color)
 #endif
 
 static void NULL_FillRect(int scrn, int x, int y, int width, int height, unsigned char colour) {}
-static void NULL_CopyRect(int srcscrn, int destscrn, int x, int y, int width, int height, enum patch_translation_e flags) {}
-static void NULL_FillFlat(int lump, int n, int x, int y, int width, int height, enum patch_translation_e flags) {}
-static void NULL_FillPatch(int lump, int n, int x, int y, int width, int height, enum patch_translation_e flags) {}
+static void NULL_CopyRect(int srcscrn, int destscrn, int x, int y, int width, int height, patch_translation_e flags) {}
+static void NULL_FillFlat(int lump, int n, int x, int y, int width, int height, patch_translation_e flags) {}
+static void NULL_FillPatch(int lump, int n, int x, int y, int width, int height, patch_translation_e flags) {}
 static void NULL_DrawBackground(const char *flatname, int n) {}
-static void NULL_DrawNumPatch(int x, int y, int scrn, int lump, int cm, enum patch_translation_e flags) {}
-static void NULL_DrawNumPatchPrecise(float x, float y, int scrn, int lump, int cm, enum patch_translation_e flags) {}
+static void NULL_DrawNumPatch(int x, int y, int scrn, int lump, int cm, patch_translation_e flags) {}
+static void NULL_DrawNumPatchPrecise(float x, float y, int scrn, int lump, int cm, patch_translation_e flags) {}
 #if 0
-static void NULL_DrawBlock(int x, int y, int scrn, int width, int height, const unsigned char *src, enum patch_translation_e flags) {}
+static void NULL_DrawBlock(int x, int y, int scrn, int width, int height, const unsigned char *src, patch_translation_e flags) {}
 #endif
 static void NULL_PlotPixel(int scrn, int x, int y, unsigned char color) {}
 static void NULL_PlotPixelWu(int scrn, int x, int y, unsigned char color, int weight) {}
@@ -1417,7 +1417,7 @@ void SetRatio(int width, int height)
     (WIDE_SCREENWIDTH == 320) && (WIDE_SCREENHEIGHT == 200);
 }
 
-void V_GetWideRect(int *x, int *y, int *w, int *h, enum patch_translation_e flags)
+void V_GetWideRect(int *x, int *y, int *w, int *h, patch_translation_e flags)
 {
   stretch_param_t *params = &stretch_params[flags & VPT_ALIGN_MASK];
   int sx = *x;

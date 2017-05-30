@@ -28,15 +28,17 @@
 #endif
 
 #include "am_map.h"
+#include "p_defs.h"
+#include "p_map.h"
 #include "p_maputl.h"
 #include "r_defs.h"
 #include "r_main.h"
 #include "r_state.h"
 #include "v_video.h"
+
 #include "gl_opengl.h"
 #include "gl_intern.h"
 #include "gl_struct.h"
-#include "p_setup.h"
 
 static FILE *levelinfo;
 

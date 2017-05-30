@@ -803,20 +803,20 @@ bool AM_Responder(event_t *ev) {
 
       // Ty 03/27/98 - externalized
       if (automapmode & am_follow) {
-        D_MsgLocalInfo(s_AMSTR_FOLLOWON);
+        D_MsgLocalInfo("%s\n", s_AMSTR_FOLLOWON);
       }
       else {
-        D_MsgLocalInfo(s_AMSTR_FOLLOWOFF);
+        D_MsgLocalInfo("%s\n", s_AMSTR_FOLLOWOFF);
       }
     }
     else if (ch == key_map_grid) {
       automapmode ^= am_grid;                     // CPhipps
       // Ty 03/27/98 - *not* externalized
       if (automapmode & am_grid) {
-        D_MsgLocalInfo(s_AMSTR_GRIDON);
+        D_MsgLocalInfo("%s\n", s_AMSTR_GRIDON);
       }
       else {
-        D_MsgLocalInfo(s_AMSTR_GRIDOFF);
+        D_MsgLocalInfo("%s\n", s_AMSTR_GRIDOFF);
       }
     }
     else if (ch == key_map_mark) {
@@ -828,15 +828,15 @@ bool AM_Responder(event_t *ev) {
     else if (ch == key_map_clear) {
       AM_clearMarks();                                     // Ty 03/27/98 *not*
                                                            // externalized
-      D_MsgLocalInfo(s_AMSTR_MARKSCLEARED); //    ^
+      D_MsgLocalInfo("%s\n", s_AMSTR_MARKSCLEARED);        //    ^
     }                                                      //    |
     else if (ch == key_map_rotate) {
       automapmode ^= am_rotate;
       if (automapmode & am_rotate) {
-        D_MsgLocalInfo(s_AMSTR_ROTATEON);
+        D_MsgLocalInfo("%s\n", s_AMSTR_ROTATEON);
       }
       else {
-        D_MsgLocalInfo(s_AMSTR_ROTATEOFF);
+        D_MsgLocalInfo("%s\n", s_AMSTR_ROTATEOFF);
       }
     }
     else if (ch == key_map_overlay) {
@@ -845,21 +845,21 @@ bool AM_Responder(event_t *ev) {
       AM_SetScale();
       AM_initVariables();
       if (automapmode & am_overlay) {
-        D_MsgLocalInfo(s_AMSTR_OVERLAYON);
+        D_MsgLocalInfo("%s\n", s_AMSTR_OVERLAYON);
       }
       else {
-        D_MsgLocalInfo(s_AMSTR_OVERLAYOFF);
+        D_MsgLocalInfo("%s\n", s_AMSTR_OVERLAYOFF);
       }
     }
 #ifdef GL_DOOM
     else if (ch == key_map_textured) {
       map_textured = !map_textured;
-      M_ChangeMapTextured();
+      MN_ChangeMapTextured();
       if (map_textured) {
-        D_MsgLocalInfo(s_AMSTR_TEXTUREDON);
+        D_MsgLocalInfo("%s\n", s_AMSTR_TEXTUREDON);
       }
       else {
-        D_MsgLocalInfo(s_AMSTR_TEXTUREDOFF);
+        D_MsgLocalInfo("%s\n", s_AMSTR_TEXTUREDOFF);
       }
     }
 #endif /* ifdef GL_DOOM */
@@ -1224,7 +1224,7 @@ static void AM_drawMline(mline_t *ml, int color) {
 
   if (AM_clipMline(ml, &fl)) {
     // draws it on frame buffer using fb coords
-    if (map_use_multisamling) {
+    if (map_use_multisampling) {
       V_DrawLineWu(&fl, color);
     }
     else {
@@ -2251,7 +2251,7 @@ static void AM_drawCrosshair(int color) {
   V_DrawLine(&line, color);
 }
 
-void M_ChangeMapTextured(void) {
+void MN_ChangeMapTextured(void) {
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
     gld_ProcessTexturedMap();
@@ -2259,10 +2259,12 @@ void M_ChangeMapTextured(void) {
 #endif /* ifdef GL_DOOM */
 }
 
-void M_ChangeMapMultisamling(void) {
-  if (map_use_multisamling && V_GetMode() != VID_MODEGL) {
+void MN_ChangeMapMultisampling(void) {
+#ifdef GL_DOOM
+  if (map_use_multisampling && V_GetMode() != VID_MODEGL) {
     V_InitFlexTranTable();
   }
+#endif
 }
 
 // =============================================================================

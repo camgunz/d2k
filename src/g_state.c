@@ -27,18 +27,38 @@
 
 #include "m_avg.h"
 #include "m_delta.h"
-#include "p_setup.h"
-#include "pl_main.h"
 #include "g_game.h"
 #include "g_save.h"
-#include "n_main.h"
 #include "g_state.h"
+#include "pl_main.h"
+
+#include "n_main.h"
 
 static game_state_t *latest_game_state = NULL;
 static GHashTable *saved_game_states = NULL;
 static GQueue *state_data_buffer_queue = NULL;
 static avg_t average_state_size;
 static int last_delta_loaded_from_tic = 0;
+
+static void state_debug(const char *fmt, ...) {
+#if DEBUG_STATES
+  va_list args;
+
+  va_start(args, fmt);
+  D_MsgChanVMsg(
+    MSG_CHANNEL_STATE,
+    MSG_LEVEL_DEBUG,
+    MSG_RECIPIENT_LOCAL,
+    MSG_SINK_CONSOLE | MSG_SINK_MESSAGES,
+    0,
+    true,
+    -1,
+    fmt,
+    args
+  );
+  va_end(args);
+#endif
+}
 
 static void clear_state_buffer(gpointer gp) {
   pbuf_t *pbuf = gp;
@@ -62,7 +82,7 @@ static gboolean state_is_old(gpointer key, gpointer value, gpointer user_data) {
   game_state_t *gs = (game_state_t *)value;
 
   if (gs->tic < tic) {
-    D_Msg(MSG_STATE, "Removing state %d (< %d)\n", gs->tic, tic);
+    state_debug("Removing state %d (< %d)\n", gs->tic, tic);
     return true;
   }
 

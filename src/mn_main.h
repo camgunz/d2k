@@ -74,7 +74,8 @@
 //e6y
 #define S_DISABLE  0x1000000
 
-/* S_SHOWDESC  = the set of items whose description should be displayed
+/*
+ * S_SHOWDESC  = the set of items whose description should be displayed
  * S_SHOWSET   = the set of items whose setting should be displayed
  * S_STRING    = the set of items whose settings are strings -- killough 10/98:
  * S_HASDEFPTR = the set of items whose var field points to default array

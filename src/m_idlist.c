@@ -245,7 +245,7 @@ bool M_IDListIterate(id_list_t *idlist, GList **node, void **obj,
   return true;
 }
 
-uint32_t M_IDListGetSize(id_list_t *idlist) {
+uint32_t M_IDListGetCount(id_list_t *idlist) {
   return idlist->len;
 }
 

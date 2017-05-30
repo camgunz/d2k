@@ -1,5 +1,4 @@
 /*****************************************************************************/
-
 /* D2K: A Doom Source Port for the 21st Century                              */
 /*                                                                           */
 /* Copyright (C) 2014: See COPYRIGHT file                                    */
@@ -20,6 +19,13 @@
 /* with D2K.  If not, see <http://www.gnu.org/licenses/>.                    */
 /*                                                                           */
 /*****************************************************************************/
+
+
+#include "z_zone.h"
+
+#include "p_camera.h"
+
+camera_t walkcamera;
 
 // e6y
 void P_WalkTicker(void) {

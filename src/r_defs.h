@@ -24,6 +24,9 @@
 #ifndef R_DEFS_H__
 #define R_DEFS_H__
 
+struct seg_s;
+typedef struct seg_s seg_t;
+
 struct mobj_s;
 typedef struct mobj_s mobj_t;
 
@@ -72,10 +75,11 @@ typedef struct drawseg_s
 } drawseg_t;
 
 // proff: Added for OpenGL
-typedef struct patchnum_s
-{
-  int width,height;
-  int leftoffset,topoffset;
+typedef struct patchnum_s {
+  int width;
+  int height;
+  int leftoffset;
+  int topoffset;
   int lumpnum;
 } patchnum_t;
 
@@ -168,4 +172,3 @@ typedef struct visplane_s
 #endif
 
 /* vi: set et ts=2 sw=2: */
-

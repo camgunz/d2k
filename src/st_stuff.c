@@ -397,30 +397,35 @@ extern char     *mapnames[];
 
 static void ST_Stop(void);
 
-static void ST_refreshBackground(void)
-{
+static void ST_refreshBackground(void) {
   int y = ST_Y;
-  enum patch_translation_e flags = VPT_ALIGN_LEFT_TOP;
+  patch_translation_e flags = VPT_ALIGN_LEFT_TOP;
   
-  if (st_statusbaron)
-    {
-      flags = VPT_ALIGN_BOTTOM;
+  if (st_statusbaron) {
+    flags = VPT_ALIGN_BOTTOM;
 
-      V_DrawNumPatch(ST_X, y, BG, stbarbg.lumpnum, CR_DEFAULT, flags);
-      if (!deathmatch)
-      {
-        V_DrawNumPatch(ST_ARMSBGX, y, BG, armsbg.lumpnum, CR_DEFAULT, flags);
-      }
-
-      // killough 3/7/98: make face background change with displayplayer
-      if (netgame)
-      {
-        V_DrawNumPatch(ST_FX, y, BG, faceback.lumpnum,
-           displayplayer ? CR_LIMIT+displayplayer : CR_DEFAULT,
-           displayplayer ? (VPT_TRANS | VPT_ALIGN_BOTTOM) : flags);
-      }
-      V_CopyRect(BG, FG, ST_X + wide_offsetx, SCREENHEIGHT - ST_SCALED_HEIGHT, ST_SCALED_WIDTH, ST_SCALED_HEIGHT, VPT_NONE);
+    V_DrawNumPatch(ST_X, y, BG, stbarbg.lumpnum, CR_DEFAULT, flags);
+    if (!deathmatch) {
+      V_DrawNumPatch(ST_ARMSBGX, y, BG, armsbg.lumpnum, CR_DEFAULT, flags);
     }
+
+    // killough 3/7/98: make face background change with displayplayer
+    if (netgame) {
+      V_DrawNumPatch(ST_FX, y, BG, faceback.lumpnum,
+         displayplayer ? CR_LIMIT+displayplayer : CR_DEFAULT,
+         displayplayer ? (VPT_TRANS | VPT_ALIGN_BOTTOM) : flags
+       );
+    }
+    V_CopyRect(
+      BG,
+      FG,
+      ST_X + wide_offsetx,
+      SCREENHEIGHT - ST_SCALED_HEIGHT,
+      ST_SCALED_WIDTH,
+      ST_SCALED_HEIGHT,
+      VPT_NONE
+    );
+  }
 }
 
 void ST_SetAutomapEntered(void) {
@@ -793,7 +798,7 @@ static void ST_doPaletteStuff(void)
   }
 }
 
-void M_ChangeApplyPalette(void)
+void t_ChangeApplyPalette(void)
 {
   ST_doPaletteStuff();
 }

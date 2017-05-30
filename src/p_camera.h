@@ -24,7 +24,14 @@
 #ifndef P_CAMERA_H__
 #define P_CAMERA_H__
 
+typedef enum {
+  camera_mode_disabled,
+  camera_mode_player,
+  camera_mode_free
+} camera_mode_e;
+
 typedef struct camera_s {
+  camera_mode_e mode;
   int x;
   int y;
   int z;
@@ -35,7 +42,6 @@ typedef struct camera_s {
   angle_t pitch;
   angle_t PrevAngle;
   angle_t PrevPitch;
-  int type;
 } camera_t;
 
 extern camera_t walkcamera;

@@ -161,10 +161,10 @@ static void check_request_status(http_req_t *req, bool *disabled,
        * [CG] Maybe put a limit on timeouts instead of removing on the 1st
        *      one.
        */
-      D_Msg(MSG_ERROR, "Directory server [%s] timed out\n", ds->url);
+      D_MsgLocalError("Directory server [%s] timed out\n", ds->url);
       ds->timeouts++;
       if (ds->timeouts >= DIRECTORY_SERVER_TIMEOUT_LIMIT) {
-        D_Msg(MSG_ERROR,
+        D_MsgLocalError(
           "Directory server [%s] reached timeout limit, delisting\n", ds->url
         );
         ds->state = DS_STATE_DISABLED;
@@ -186,7 +186,7 @@ static void check_request_status(http_req_t *req, bool *disabled,
       break;
     case 304:
       if (SERVER) {
-        D_Msg(MSG_ERROR, "Got unexpected 304 (Not Modified) from [%s]\n",
+        D_MsgLocalError("Got unexpected 304 (Not Modified) from [%s]\n",
           ds->url
         );
       }
@@ -196,14 +196,14 @@ static void check_request_status(http_req_t *req, bool *disabled,
       *updated = false;
       break;
     case 401:
-      D_Msg(MSG_ERROR, "Authentication to [%s] failed, delisting\n", ds->url);
+      D_MsgLocalError("Authentication to [%s] failed, delisting\n", ds->url);
       ds->timeouts = 0;
       ds->state = DS_STATE_DISABLED;
       *disabled = true;
       *updated = false;
       break;
     default:
-      D_Msg(MSG_ERROR, "Unexpected HTTP status code '%ld' from [%s]\n",
+      D_MsgLocalError("Unexpected HTTP status code '%ld' from [%s]\n",
         status_code,
         ds->url
       );
@@ -277,10 +277,10 @@ static void dir_srv_set_delisted(http_req_t *req) {
   dir_srv_t *ds = N_HTTPReqGetCallbackData(req);
 
   if (disabled || !updated) {
-    D_Msg(MSG_INFO, "Error delisting from [%s].\n", ds->url);
+    D_MsgLocalInfo("Error delisting from [%s].\n", ds->url);
   }
   else {
-    D_Msg(MSG_INFO, "Delisted from [%s].\n", ds->url);
+    D_MsgLocalInfo("Delisted from [%s].\n", ds->url);
   }
 
   ds->state = DS_STATE_DELISTED;
@@ -302,9 +302,7 @@ static void dir_srv_list(dir_srv_t *ds) {
   json_decref(json);
 
   if (!jstr) {
-    D_Msg(MSG_ERROR, "Error encoding JSON when advertising to [%s]\n",
-      ds->url
-    );
+    D_MsgLocalError("Error encoding JSON when advertising to [%s]\n", ds->url);
     return;
   }
 
@@ -332,7 +330,7 @@ static void dir_srv_delist(dir_srv_t *ds) {
 static void dir_srv_delist_all(void) {
   size_t listed_server_count = 0;
 
-  D_Msg(MSG_INFO, "Delisting from all directory servers\n");
+  D_MsgLocalInfo("Delisting from all directory servers\n");
 
   N_HTTPClearReqs();
 
@@ -444,7 +442,7 @@ void N_DirSrvAdd(const char *address, unsigned short port, bool https) {
   dir_srv_t *ds = N_DirSrvGet(address, port);
 
   if (ds) {
-    D_Msg(MSG_WARN, "Duplicate directory server [%s:%u]\n", address, port);
+    D_MsgLocalWarn("Duplicate directory server [%s:%u]\n", address, port);
   }
   else {
     g_array_set_size(directory_servers, directory_servers->len + 1);
@@ -498,7 +496,7 @@ void SV_DirSrvAdd(const char *address, unsigned short port,
   dir_srv_t *ds = N_DirSrvGet(address, port);
 
   if (ds) {
-    D_Msg(MSG_WARN, "Duplicate directory server [%s:%u]\n", address, port);
+    D_MsgLocalWarn("Duplicate directory server [%s:%u]\n", address, port);
   }
   else {
     g_array_set_size(directory_servers, directory_servers->len + 1);

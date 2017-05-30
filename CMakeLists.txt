@@ -828,7 +828,6 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/hu_stuff.c
   ${CMAKE_SOURCE_DIR}/src/hu_tracers.c
   ${CMAKE_SOURCE_DIR}/src/i_capture.c
-  ${CMAKE_SOURCE_DIR}/src/icon.c
   ${CMAKE_SOURCE_DIR}/src/info.c
   ${CMAKE_SOURCE_DIR}/src/i_pcsound.c
   ${CMAKE_SOURCE_DIR}/src/i_smp.c
@@ -840,7 +839,6 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/m_delta.c
   ${CMAKE_SOURCE_DIR}/src/memio.c
   ${CMAKE_SOURCE_DIR}/src/m_file.c
-  ${CMAKE_SOURCE_DIR}/src/m_idarr.c
   ${CMAKE_SOURCE_DIR}/src/m_idhash.c
   ${CMAKE_SOURCE_DIR}/src/m_idlist.c
   ${CMAKE_SOURCE_DIR}/src/m_pbuf.c

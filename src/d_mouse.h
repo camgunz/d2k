@@ -24,6 +24,9 @@
 #ifndef D_MOUSE_H__
 #define D_MOUSE_H__
 
+extern int mouse_sensitivity_horiz;
+extern int mouse_sensitivity_vert;
+extern int mouse_sensitivity_mlook;
 extern int movement_mouselook;
 extern int movement_mouseinvert;
 extern int movement_maxviewpitch;
@@ -44,6 +47,11 @@ int  D_MouseAccelerate(int val);
 void D_ChangeMouseLook(void);
 bool D_GetMouseLook(void);
 bool D_HaveMouseLook(void);
+
+void MN_MouseChangeHoriz(int choice);
+void MN_MouseChangeVert(int choice);
+void MN_MouseChangeMouseLook(int choice);
+void MN_MouseChangeAccel(int choice);
 
 #endif
 

@@ -53,46 +53,53 @@ typedef struct {
 #define NETPEER_FOR_EACH(_it) \
   for (netpeer_iterator_t (_it) = { 0 }; N_PeerIter(&(_it));)
 
-void         N_InitPeers(void);
-size_t       N_PeerGetCount(void);
-netpeer_t*   N_PeerAdd(void *enet_peer);
-netpeer_t*   N_PeerGet(uint32_t id);
-netpeer_t*   N_PeerForPeer(void *enet_peer);
-netpeer_t*   N_PeerForPlayer(player_t *player);
-void         N_PeerRemove(netpeer_t *np);
-bool         N_PeerHasPlayer(netpeer_t *np);
-player_t*    N_PeerGetPlayer(netpeer_t *np);
-void         N_PeerSetPlayer(netpeer_t *np, player_t *player);
-double       N_PeerGetConnectionWaitTime(netpeer_t *np);
-double       N_PeerGetDisconnectionWaitTime(netpeer_t *np);
-double       N_PeerGetLastSetupRequestTime(netpeer_t *np);
-void         N_PeerUpdateLastSetupRequestTime(netpeer_t *np);
-auth_level_e N_PeerGetAuthLevel(netpeer_t *np);
-void         N_PeerSetAuthLevel(netpeer_t *np, auth_level_e auth_level);
-bool         N_PeerCheckTimeout(netpeer_t *np);
-bool         N_PeerCanRequestSetup(netpeer_t *np);
-const char*  N_PeerGetName(netpeer_t *np);
-void         N_PeerSetNameRaw(netpeer_t *np, char *name);
-void         N_PeerSetName(netpeer_t *np, char *name);
-team_t*      N_PeerGetTeam(netpeer_t *np);
-void         N_PeerSetTeamRaw(netpeer_t *np, team_t *team);
-void         N_PeerSetTeam(netpeer_t *np, team_t *team);
-bool         N_PeerTooLagged(netpeer_t *np);
-uint32_t     N_PeerGetIPAddress(netpeer_t *np);
-const char*  N_PeerGetIPAddressConstString(netpeer_t *np);
-uint16_t     N_PeerGetPort(netpeer_t *np);
-void         N_PeerSetConnected(netpeer_t *np);
-void         N_PeerDisconnect(netpeer_t *np, disconnection_reason_e reason);
-bool         N_PeerIter(netpeer_iterator_t *iter);
-void         N_PeerIterRemove(netpeer_iterator_t *iter);
+void       N_PeersInit(void);
+netpeer_t* N_PeersAdd(void *enet_peer);
+netpeer_t* N_PeersLookup(uint32_t id);
+netpeer_t* N_PeersLookupByENetPeer(void *enet_peer);
+netpeer_t* N_PeersLookupByPlayer(player_t *player);
+size_t     N_PeersGetCount(void);
 
-void    N_PeerFlushChannel(netpeer_t *np, net_channel_e channel);
+bool       N_PeerIter(netpeer_iterator_t *iter);
+void       N_PeerIterRemove(netpeer_iterator_t *iter);
+
+void       N_PeerRemove(netpeer_t *np);
+bool       N_PeerHasPlayer(netpeer_t *np);
+bool       N_PeerCheckTimeout(netpeer_t *np);
+bool       N_PeerCanRequestSetup(netpeer_t *np);
+void       N_PeerSetConnected(netpeer_t *np);
+bool       N_PeerTooLagged(netpeer_t *np);
+void       N_PeerDisconnect(netpeer_t *np, disconnection_reason_e reason);
+
+player_t*        N_PeerGetPlayer(netpeer_t *np);
+void             N_PeerSetPlayer(netpeer_t *np, player_t *player);
+double           N_PeerGetConnectionWaitTime(netpeer_t *np);
+double           N_PeerGetDisconnectionWaitTime(netpeer_t *np);
+double           N_PeerGetLastSetupRequestTime(netpeer_t *np);
+void             N_PeerUpdateLastSetupRequestTime(netpeer_t *np);
+auth_level_e     N_PeerGetAuthLevel(netpeer_t *np);
+void             N_PeerSetAuthLevel(netpeer_t *np, auth_level_e auth_level);
+uint32_t         N_PeerGetID(netpeer_t *np);
+netpeer_status_e N_PeerGetStatus(netpeer_t *np);
+const char*      N_PeerGetName(netpeer_t *np);
+void             N_PeerSetNameRaw(netpeer_t *np, char *name);
+void             N_PeerSetName(netpeer_t *np, char *name);
+team_t*          N_PeerGetTeam(netpeer_t *np);
+void             N_PeerSetTeamRaw(netpeer_t *np, team_t *team);
+void             N_PeerSetTeam(netpeer_t *np, team_t *team);
+uint32_t         N_PeerGetIPAddress(netpeer_t *np);
+const char*      N_PeerGetIPAddressConstString(netpeer_t *np);
+uint16_t         N_PeerGetPort(netpeer_t *np);
+
+void    N_PeerFlushReliableChannel(netpeer_t *np);
+void    N_PeerFlushUnreliableChannel(netpeer_t *np);
 void    N_PeerFlushChannels(netpeer_t *np);
 pbuf_t* N_PeerBeginMessage(netpeer_t *np, net_message_e type);
 bool    N_PeerSetIncoming(netpeer_t *np, unsigned char *data, size_t size);
 bool    N_PeerLoadNextMessage(netpeer_t *np, net_message_e *message_type);
 pbuf_t* N_PeerGetIncomingMessageData(netpeer_t *np);
-void    N_PeerClearChannel(netpeer_t *np, net_channel_e channel);
+void    N_PeerClearReliableChannel(netpeer_t *np);
+void    N_PeerClearUnreliableChannel(netpeer_t *np);
 void    N_PeerSendReset(netpeer_t *np);
 size_t  N_PeerGetBytesUploaded(netpeer_t *np);
 size_t  N_PeerGetBytesDownloaded(netpeer_t *np);
@@ -113,32 +120,32 @@ void N_PeerSyncSetNotOutdated(netpeer_t *np);
 bool N_PeerSyncUpdated(netpeer_t *np);
 void N_PeerSyncSetUpdated(netpeer_t *np);
 void N_PeerSyncSetNotUpdated(netpeer_t *np);
-void N_PeerResetSync(netpeer_t *np);
+void N_PeerSyncReset(netpeer_t *np);
 
-int  N_PeerGetSyncTIC(netpeer_t *np);
-void N_PeerSetSyncTIC(netpeer_t *np, int sync_tic);
-void N_PeerUpdateSyncTIC(netpeer_t *np, int sync_tic);
+int  N_PeerSyncGetTIC(netpeer_t *np);
+void N_PeerSyncSetTIC(netpeer_t *np, int sync_tic);
+void N_PeerSyncUpdateTIC(netpeer_t *np, int sync_tic);
 
-uint32_t N_PeerGetSyncCommandIndex(netpeer_t *np);
-void     N_PeerSetSyncCommandIndex(netpeer_t *np, uint32_t command_index);
-void     N_PeerUpdateSyncCommandIndex(netpeer_t *np, uint32_t command_index);
+uint32_t N_PeerSyncGetCommandIndex(netpeer_t *np);
+void     N_PeerSyncSetCommandIndex(netpeer_t *np, uint32_t command_index);
+void     N_PeerSyncUpdateCommandIndex(netpeer_t *np, uint32_t command_index);
 
-game_state_delta_t* N_PeerGetSyncStateDelta(netpeer_t *np);
-void                N_PeerUpdateSyncStateDelta(netpeer_t *np,
+game_state_delta_t* N_PeerSyncGetStateDelta(netpeer_t *np);
+void                N_PeerSyncUpdateStateDelta(netpeer_t *np,
                                                int from_tic,
                                                int to_tic,
                                                pbuf_t *delta_data);
-void                N_PeerBuildNewSyncStateDelta(netpeer_t *np);
+void                N_PeerSyncBuildNewStateDelta(netpeer_t *np);
 bool                N_PeerSyncStateDeltaUpdated(netpeer_t *np);
-void                N_PeerResetSyncStateDelta(netpeer_t *np, int sync_tic,
+void                N_PeerSyncResetStateDelta(netpeer_t *np, int sync_tic,
                                                              int from_tic,
                                                              int to_tic);
 
-uint32_t N_PeerGetSyncCommandIndexForPlayer(netpeer_t *np, player_t *player);
-void     N_PeerSetSyncCommandIndexForPlayer(netpeer_t *np,
+uint32_t N_PeerSyncGetCommandIndexForPlayer(netpeer_t *np, player_t *player);
+void     N_PeerSyncSetCommandIndexForPlayer(netpeer_t *np,
                                             player_t *player,
                                             uint32_t command_index);
-void     N_PeerUpdateSyncCommandIndexForPlayer(netpeer_t *np,
+void     N_PeerSyncUpdateCommandIndexForPlayer(netpeer_t *np,
                                                player_t *player,
                                                uint32_t command_index);
 

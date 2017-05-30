@@ -27,6 +27,9 @@
 struct mobj_s;
 typedef struct mobj_s mobj_t;
 
+struct line_s;
+typedef struct line_s line_t;
+
 #define MAXTRACEITEMS 8
 
 typedef enum {

@@ -23,41 +23,45 @@
 
 #include "z_zone.h"
 
-#include "dstrings.h"
-#include "d_event.h"
-#include "am_map.h"
-#include "d_deh.h"
-#include "d_main.h"
-#include "d_mouse.h"
-#include "e6y.h"//e6y
-#ifdef _WIN32
-#include "e6y_launcher.h"
-#endif
-#include "p_setup.h"
-#include "pl_main.h"
-#include "pl_msg.h"
-#include "g_game.h"
-#include "g_keys.h"
-#include "w_wad.h"
-#include "r_demo.h"
-#include "r_fps.h"
-#include "r_defs.h"
-#include "r_patch.h"
-#include "r_data.h"
-#include "r_main.h"
 #include "i_input.h"
 #include "i_main.h"
-#include "sounds.h"
 #include "i_sound.h"
 #include "i_system.h"
 #include "i_video.h"
+#include "d_event.h"
+#include "d_mouse.h"
+#include "d_res.h"
 #include "m_misc.h"
-#include "n_main.h"
+#include "am_map.h"
+#include "d_deh.h"
+#include "d_event.h"
+#include "d_main.h"
+#include "d_mouse.h"
+#include "dstrings.h"
+#include "e6y.h"//e6y
+#include "g_comp.h"
+#include "g_demo.h"
+#include "g_game.h"
+#include "g_input.h"
+#include "g_keys.h"
+#include "g_save.h"
+#include "mn_def.h"
+#include "mn_main.h"
+#include "p_main.h"
+#include "p_map.h"
+#include "pl_main.h"
+#include "pl_msg.h"
+#include "r_data.h"
+#include "r_defs.h"
+#include "r_fps.h"
+#include "r_main.h"
+#include "r_patch.h"
 #include "s_sound.h"
+#include "sounds.h"
 #include "sounds.h"
 #include "st_stuff.h"
 #include "v_video.h"
-#include "m_menu.h"
+#include "w_wad.h"
 #include "xd_main.h"
 
 #include "hu_lib.h"
@@ -66,6 +70,8 @@
 #include "gl_opengl.h"
 #include "gl_struct.h"
 
+#include "n_main.h"
+
 #define SAVESTRINGSIZE  24
 #define SKULLXOFF  -32
 #define LINEHEIGHT  16
@@ -73,7 +79,6 @@
 
 // I'm using a scale of 100 since I don't know what's normal -- killough.
 #define MOUSE_SENS_MAX 100
-
 
 // Establish the message colors to be used
 #define CR_TITLE  CR_GOLD
@@ -155,8 +160,6 @@
 #define KT_Y1   2
 #define KT_Y2 118
 #define KT_Y3 102
-
-#define SPACEWIDTH 4
 
 #define CR_S 9
 #define CR_X 20
@@ -460,7 +463,7 @@ bool inhelpscreens; // indicates we are in or just left a help screen
 
 bool BorderNeedRefresh;
 
-enum menuactive_e menuactive;    // The menus are up
+menuactive_e menuactive; // The menus are up
 
 char savegamestrings[10][SAVESTRINGSIZE];
 
@@ -567,11 +570,9 @@ void MN_ChatStrings(int);
 void MN_InitExtendedHelp(void);
 void MN_ExtHelpNextScreen(int);
 void MN_ExtHelp(int);
-static int MN_GetPixelWidth(const char*);
 void MN_DrawKeybnd(void);
 void MN_DrawWeapons(void);
 static void MN_DrawMenuString(int,int,int);
-static void MN_DrawStringCentered(int,int,int,const char*);
 void MN_DrawStatusHUD(void);
 void MN_DrawExtHelp(void);
 void MN_DrawAutoMap(void);
@@ -811,7 +812,7 @@ void MN_Episode(int choice) {
 
   // Yet another hack...
   if ((gamemode == registered) && (choice > 2)) {
-    D_Msg(MSG_WARN, "MN_Episode: 4th episode requires Ultimate DOOM\n");
+    D_MsgLocalWarn("MN_Episode: 4th episode requires Ultimate DOOM\n");
     choice = 0;
   }
 
@@ -1428,16 +1429,16 @@ void MN_MusicVol(int choice)
 
 menuitem_t MouseMenu[]=
 {
-  {2,"M_HORSEN",D_MouseHoriz,'h', "HORIZONTAL"},
+  {2,"M_HORSEN",MN_MouseChangeHoriz,'h', "HORIZONTAL"},
   {-1,"",0},
-  {2,"M_VERSEN",D_MouseVert,'v', "VERTICAL"},
+  {2,"M_VERSEN",MN_MouseChangeVert,'v', "VERTICAL"},
   {-1,"",0}
 
   //e6y
   ,
-  {2,"M_LOKSEN",D_MouseMLook,'l', "MOUSE LOOK"},
+  {2,"M_LOKSEN",MN_MouseChangeMouseLook,'l', "MOUSE LOOK"},
   {-1,"",0},
-  {2,"M_ACCEL",D_MouseAccel,'a', "ACCELERATION"},
+  {2,"M_ACCEL",MN_MouseChangeAccel,'a', "ACCELERATION"},
   {-1,"",0}
 };
 
@@ -1464,16 +1465,16 @@ void MN_DrawMouse(void)
   V_DrawNamePatch(60, 15, 0, "M_MSENS", CR_DEFAULT, VPT_STRETCH);//e6y
 
   //jff 4/3/98 clamp horizontal sensitivity display
-  mhmx = mouseSensitivity_horiz>99? 99 : mouseSensitivity_horiz; /*mead*/
+  mhmx = mouse_sensitivity_horiz>99? 99 : mouse_sensitivity_horiz; /*mead*/
   MN_DrawThermo(MouseDef.x,MouseDef.y+LINEHEIGHT*(mouse_horiz+1),100,mhmx);
   //jff 4/3/98 clamp vertical sensitivity display
-  mvmx = mouseSensitivity_vert>99? 99 : mouseSensitivity_vert; /*mead*/
+  mvmx = mouse_sensitivity_vert>99? 99 : mouse_sensitivity_vert; /*mead*/
   MN_DrawThermo(MouseDef.x,MouseDef.y+LINEHEIGHT*(mouse_vert+1),100,mvmx);
 
   //e6y
   {
     int mpmx;
-    mpmx = mouseSensitivity_mlook>99? 99 : mouseSensitivity_mlook;
+    mpmx = mouse_sensitivity_mlook>99? 99 : mouse_sensitivity_mlook;
     MN_DrawThermo(MouseDef.x,MouseDef.y+LINEHEIGHT*(mouse_mlook+1),100,mpmx);
     mpmx = mouse_acceleration>99? 99 : mouse_acceleration;
     MN_DrawThermo(MouseDef.x,MouseDef.y+LINEHEIGHT*(mouse_accel+1),100,mpmx);
@@ -1487,12 +1488,12 @@ void MN_ChangeSensitivity(int choice)
   //  switch(choice)
   //      {
   //    case 0:
-  //      if (mouseSensitivity)
-  //        mouseSensitivity--;
+  //      if (mouse_sensitivity)
+  //        mouse_sensitivity--;
   //      break;
   //    case 1:
-  //      if (mouseSensitivity < 9)
-  //        mouseSensitivity++;
+  //      if (mouse_sensitivity < 9)
+  //        mouse_sensitivity++;
   //      break;
   //      }
 }
@@ -1957,7 +1958,7 @@ static void MN_DrawItem(const setup_menu_t *s) {
       strcpy(menu_buffer,p);
 
       if (!(flags & S_LEFTJUST)) {
-        w = MN_GetPixelWidth(menu_buffer) + 4;
+        w = HU_GetPixelWidth(menu_buffer) + 4;
       }
 
       MN_DrawMenuString(x - w, y ,color);
@@ -2108,7 +2109,7 @@ static void MN_DrawSetting(const setup_menu_t* s)
       // one char at a time until it fits. This should only occur
       // while you're editing the string.
 
-      while (MN_GetPixelWidth(text) >= MAXCHATWIDTH) {
+      while (HU_GetPixelWidth(text) >= MAXCHATWIDTH) {
   int len = strlen(text);
   text[--len] = 0;
   if (chat_index > len)
@@ -2121,11 +2122,11 @@ static void MN_DrawSetting(const setup_menu_t* s)
 
       *c = text[chat_index]; // hold temporarily
       c[1] = 0;
-      char_width = MN_GetPixelWidth(c);
+      char_width = HU_GetPixelWidth(c);
       if (char_width == 1)
   char_width = 7; // default for end of line
       text[chat_index] = 0; // NULL to get cursor position
-      cursor_start = MN_GetPixelWidth(text);
+      cursor_start = HU_GetPixelWidth(text);
       text[chat_index] = *c; // replace stored char
 
       // Now draw the cursor
@@ -2241,7 +2242,7 @@ static void MN_DrawDefVerify(void)
 // MN_DrawInstructions writes the instruction text just below the screen title
 //
 // cph 2006/08/06 - go back to the Boom version, and then clean up by using
-// MN_DrawStringCentered (much better than all those magic 'x' valies!)
+// HU_DrawStringCentered (much better than all those magic 'x' valies!)
 
 static void MN_DrawInstructions(void)
 {
@@ -2256,47 +2257,47 @@ static void MN_DrawInstructions(void)
         // See if a joystick or mouse button setting is allowed for
         // this item.
         if (current_setup_menu[set_menu_itemon].m_mouse || current_setup_menu[set_menu_itemon].m_joy)
-          MN_DrawStringCentered(160, 20, CR_SELECT, "Press key or button for this action");
+          HU_DrawStringCentered(160, 20, CR_SELECT, "Press key or button for this action");
         else
-          MN_DrawStringCentered(160, 20, CR_SELECT, "Press key for this action");
+          HU_DrawStringCentered(160, 20, CR_SELECT, "Press key for this action");
         break;
 
     case S_YESNO:
-      MN_DrawStringCentered(160, 20, CR_SELECT, "Press ENTER key to toggle");
+      HU_DrawStringCentered(160, 20, CR_SELECT, "Press ENTER key to toggle");
       break;
     case S_WEAP:
-      MN_DrawStringCentered(160, 20, CR_SELECT, "Enter weapon number");
+      HU_DrawStringCentered(160, 20, CR_SELECT, "Enter weapon number");
       break;
     case S_NUM:
-      MN_DrawStringCentered(160, 20, CR_SELECT, "Enter value. Press ENTER when finished.");
+      HU_DrawStringCentered(160, 20, CR_SELECT, "Enter value. Press ENTER when finished.");
       break;
     case S_COLOR:
-      MN_DrawStringCentered(160, 20, CR_SELECT, "Select color and press enter");
+      HU_DrawStringCentered(160, 20, CR_SELECT, "Select color and press enter");
       break;
     case S_CRITEM:
-      MN_DrawStringCentered(160, 20, CR_SELECT, "Enter value");
+      HU_DrawStringCentered(160, 20, CR_SELECT, "Enter value");
       break;
     case S_CHAT:
-      MN_DrawStringCentered(160, 20, CR_SELECT, "Type/edit chat string and Press ENTER");
+      HU_DrawStringCentered(160, 20, CR_SELECT, "Type/edit chat string and Press ENTER");
       break;
     case S_FILE:
-      MN_DrawStringCentered(160, 20, CR_SELECT, "Type/edit filename and Press ENTER");
+      HU_DrawStringCentered(160, 20, CR_SELECT, "Type/edit filename and Press ENTER");
       break;
     case S_CHOICE: 
-      MN_DrawStringCentered(160, 20, CR_SELECT, "Press left or right to choose");
+      HU_DrawStringCentered(160, 20, CR_SELECT, "Press left or right to choose");
       break;
     case S_RESET:
       break;
 #ifdef SIMPLECHECKS
     default:
-      D_Msg(MSG_WARN, "Unrecognized menu item type %d", flags);
+      D_MsgLocalWarn("Unrecognized menu item type %d", flags);
 #endif
     }
   } else {
     if (flags & S_RESET)
-      MN_DrawStringCentered(160, 20, CR_HILITE, "Press ENTER key to reset to defaults");
+      HU_DrawStringCentered(160, 20, CR_HILITE, "Press ENTER key to reset to defaults");
     else
-      MN_DrawStringCentered(160, 20, CR_HILITE, "Press Enter to Change");
+      HU_DrawStringCentered(160, 20, CR_HILITE, "Press Enter to Change");
   }
 }
 
@@ -2823,7 +2824,6 @@ setup_menu_t auto_settings1[] =  // 1st AutoMap Settings screen
   {"Grid cell size (8..256)",                 S_NUM,  m_null,AU_X,AU_Y+4*8, {"map_grid_size"}},
   {"Scroll / Zoom speed  (1..32)",            S_NUM,  m_null,AU_X,AU_Y+5*8, {"map_scroll_speed"}},
   {"Use mouse wheel for zooming",             S_YESNO,m_null,AU_X,AU_Y+6*8, {"map_wheel_zoom"}},
-  {"Apply multisampling",                     S_YESNO,m_null,AU_X,AU_Y+7*8, {"map_use_multisamling"}, 0, 0, MN_ChangeMapMultisamling},
 #ifdef GL_DOOM
   {"Enable textured display",                 S_YESNO,m_null,AU_X,AU_Y+8*8, {"map_textured"}, 0, 0, MN_ChangeMapTextured},
   {"Things appearance",                       S_CHOICE,m_null,AU_X,AU_Y+9*8, {"map_things_appearance"}, 0, 0, NULL, map_things_appearance_list},
@@ -3204,21 +3204,20 @@ setup_menu_t gen_settings2[] = { // General Settings screen2
 
 setup_menu_t gen_settings3[] = { // General Settings screen2
   {"Demos",                       S_SKIP|S_TITLE, m_null, G_X, G_Y+ 1*8},
-  {"Use Extended Format",         S_YESNO|S_PRGWARN, m_null,G_X,G_Y+ 2*8, {"demo_extendedformat"}, 0, 0, MN_ChangeDemoExtendedFormat},
+  {"Use Extended Format",         S_YESNO|S_PRGWARN, m_null,G_X,G_Y+ 2*8, {"demo_extendedformat"}, 0, 0, G_DemoChangeExtendedFormat},
   {"Overwrite Existing",          S_YESNO, m_null, G_X, G_Y+ 3*8, {"demo_overwriteexisting"}},
   {"Smooth Demo Playback",        S_YESNO, m_null, G_X, G_Y+ 4*8, {"demo_smoothturns"}, 0, 0, MN_ChangeDemoSmoothTurns},
   {"Smooth Demo Playback Factor", S_NUM,   m_null, G_X, G_Y+ 5*8, {"demo_smoothturnsfactor"}, 0, 0, MN_ChangeDemoSmoothTurns},
 
   {"Movements",                   S_SKIP|S_TITLE,m_null,G_X, G_Y+7*8},
-  {"Permanent Strafe50",          S_YESNO, m_null, G_X, G_Y+ 8*8, {"movement_strafe50"}, 0, 0, MN_ChangeSpeed},
-  {"Strafe50 On Turns",           S_YESNO, m_null, G_X, G_Y+ 9*8, {"movement_strafe50onturns"}, 0, 0, MN_ChangeSpeed},
+  {"Permanent Strafe50",          S_YESNO, m_null, G_X, G_Y+ 8*8, {"movement_strafe50"}, 0, 0, G_SetSpeed},
+  {"Strafe50 On Turns",           S_YESNO, m_null, G_X, G_Y+ 9*8, {"movement_strafe50onturns"}, 0, 0, G_SetSpeed},
 
   {"Mouse",                       S_SKIP|S_TITLE,m_null, G_X, G_Y+11*8},
   {"Dbl-Click As Use",            S_YESNO, m_null, G_X, G_Y+12*8, {"mouse_doubleclick_as_use"}},
 
-  {"Enable Mouselook",            S_YESNO, m_null, G_X, G_Y+13*8, {"movement_mouselook"}, 0, 0, MN_ChangeMouseLook},
-  {"Invert Mouse",                S_YESNO, m_null, G_X, G_Y+14*8, {"movement_mouseinvert"}, 0, 0, MN_ChangeMouseInvert},
-  {"Max View Pitch",              S_NUM,   m_null, G_X, G_Y+15*8, {"movement_maxviewpitch"}, 0, 0, MN_ChangeMaxViewPitch},
+  {"Enable Mouselook",            S_YESNO, m_null, G_X, G_Y+13*8, {"movement_mouselook"}, 0, 0, D_ChangeMouseLook},
+  {"Max View Pitch",              S_NUM,   m_null, G_X, G_Y+15*8, {"movement_maxviewpitch"}, 0, 0, P_ChangeMaxViewPitch},
 
   {"<- PREV",S_SKIP|S_PREV, m_null,KB_PREV, KB_Y+20*8, {gen_settings2}},
   {"NEXT ->",S_SKIP|S_NEXT,m_null,KB_NEXT,KB_Y+20*8, {gen_settings4}},
@@ -3260,7 +3259,6 @@ setup_menu_t gen_settings5[] = { // General Settings screen3
   {"Interlaced Scanning",       S_YESNO,  m_null, G_X, G_Y+3*8, {"render_interlaced_scanning"}, 0, 0, MN_ChangeInterlacedScanning},
 #ifdef GL_DOOM
   {"OpenGL Options",             S_SKIP|S_TITLE,m_null,G_X,G_Y+5*8},
-  {"Multisampling (0-None)",    S_NUM|S_PRGWARN|S_CANT_GL_ARB_MULTISAMPLEFACTOR,m_null,G_X,G_Y+6*8, {"render_multisampling"}, 0, 0, MN_ChangeMultiSample},
   {"Field Of View",             S_NUM,    m_null, G_X, G_Y+ 7*8, {"render_fov"}, 0, 0, MN_ChangeFOV},
   {"Sector Light Mode",         S_CHOICE, m_null, G_X, G_Y+ 8*8, {"gl_lightmode"}, 0, 0, MN_ChangeLightMode, gl_lightmodes},
   {"Allow Fog",                 S_YESNO,  m_null, G_X, G_Y+ 9*8, {"gl_fog"}, 0, 0, MN_ChangeAllowFog},
@@ -3374,7 +3372,7 @@ void MN_ChangeUseGLSurface(void)
 
 void MN_ChangeDemoSmoothTurns(void)
 {
-  R_SmoothPlaying_Reset(NULL);
+  G_DemoSmoothPlayingReset(NULL);
 }
 
 void MN_ChangeTextureParams(void)
@@ -3813,12 +3811,8 @@ static setup_menu_t **setup_screens[] =
 //
 // killough 10/98: rewritten to fix bugs and warn about pending changes
 
-static void MN_ResetDefaults(void)
-{
-  int i; //e6y
-
-  default_t *dp;
-  int warn = 0;
+static void MN_ResetDefaults(void) {
+  bool warn = false;
 
   // Look through the defaults table and reset every variable that
   // belongs to the group we're interested in.
@@ -3831,52 +3825,55 @@ static void MN_ResetDefaults(void)
   // Fixed crash while trying to read data past array end
   // All previous versions of prboom worked only by a lucky accident
   // old code: for (dp = defaults; dp->name; dp++)
-  for (i = 0; i < numdefaults ; i++)
-  {
-    dp = &defaults[i];
+  for (size_t i = 0; i < numdefaults ; i++) {
+    default_t *dp = &defaults[i];
 
-    if (dp->setupscreen == setup_screen)
-      {
-  setup_menu_t **l, *p;
-  for (l = setup_screens[setup_screen-1]; *l; l++)
-    for (p = *l; !(p->m_flags & S_END); p++)
-      if (p->m_flags & S_HASDEFPTR ? p->var.def == dp :
-    p->var.m_key == dp->location.pi ||
-    p->m_mouse == dp->location.pi ||
-    p->m_joy == dp->location.pi)
-        {
-    if (IS_STRING(*dp))
-    {
-      union { const char **c; char **s; } u; // type punning via unions
+    if (dp->setupscreen == setup_screen) {
+      setup_menu_t **l;
+      setup_menu_t *p;
 
-      u.c = dp->location.ppsz;
-      free(*(u.s));
-      *(u.c) = strdup(dp->defaultvalue.psz);
-    }
-    else
-      *dp->location.pi = dp->defaultvalue.i;
+      for (l = setup_screens[setup_screen-1]; *l; l++) {
+        for (p = *l; !(p->m_flags & S_END); p++) {
+          if (p->m_flags & S_HASDEFPTR ? p->var.def == dp :
+              p->var.m_key == dp->location.pi ||
+              p->m_mouse == dp->location.pi ||
+              p->m_joy == dp->location.pi) {
+            if (DEF_IS_STRING(*dp)) {
+              union { const char **c; char **s; } u; // type punning via unions
+
+              u.c = dp->location.ppsz;
+              free(*(u.s));
+              *(u.c) = strdup(dp->defaultvalue.psz);
+            }
+            else {
+              *dp->location.pi = dp->defaultvalue.i;
+            }
 
 #if 0
-    if (p->m_flags & (S_LEVWARN | S_PRGWARN))
+      if (p->m_flags & (S_LEVWARN | S_PRGWARN))
       warn |= p->m_flags & (S_LEVWARN | S_PRGWARN);
-    else
+      else
       if (dp->current)
         if (allow_changes())
           *dp->current = *dp->location.pi;
         else
           warn |= S_LEVWARN;
 #endif
-    if (p->action)
-      p->action();
+            if (p->action) {
+              p->action();
+            }
 
-    goto end;
+            goto end;
+          }
+          end:;
         }
-      end:;
       }
+    }
   }
 
-  if (warn)
+  if (warn) {
     warn_about_changes(warn);
+  }
 }
 
 //
@@ -5651,10 +5648,9 @@ void MN_Init(void)
   MN_InitExtendedHelp(); // init extended help screens // phares 3/30/98
   
   //e6y
-  MN_ChangeSpeed();
-  MN_ChangeMaxViewPitch();
-  MN_ChangeMouseLook();
-  MN_ChangeMouseInvert();
+  G_SetSpeed();
+  P_ChangeMaxViewPitch();
+  D_ChangeMouseLook();
 #ifdef GL_DOOM
   MN_ChangeFOV();
   MN_ChangeSpriteClip();
@@ -5663,9 +5659,9 @@ void MN_Init(void)
   MN_ChangeInterlacedScanning();
 
   MN_ChangeDemoSmoothTurns();
-  MN_ChangeDemoExtendedFormat();
+  G_DemoChangeExtendedFormat();
 
-  MN_ChangeMapMultisamling();
+  MN_ChangeMapMultisampling();
 
   render_stretch_hud = render_stretch_hud_default;
 

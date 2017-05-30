@@ -90,10 +90,15 @@ void D_MsgChanMsg(uint32_t channel_id, msg_level_e level,
                                        const char *fmt,
                                        ...) PRINTF_DECL(8, 9);
 
-void D_MsgLocalDebug(const char *fmt, ...);
-void D_MsgLocalInfo(const char *fmt, ...);
-void D_MsgLocalWarn(const char *fmt, ...);
-void D_MsgLocalError(const char *fmt, ...);
+void D_MsgLocalDebug(const char *fmt, ...) PRINTF_DECL(1, 2);
+void D_MsgLocalInfo(const char *fmt, ...) PRINTF_DECL(1, 2);
+void D_MsgLocalWarn(const char *fmt, ...) PRINTF_DECL(1, 2);
+void D_MsgLocalError(const char *fmt, ...) PRINTF_DECL(1, 2);
+
+void D_VMsgLocalDebug(const char *fmt, va_list args);
+void D_VMsgLocalInfo(const char *fmt, va_list args);
+void D_VMsgLocalWarn(const char *fmt, va_list args);
+void D_VMsgLocalError(const char *fmt, va_list args);
 
 #endif
 

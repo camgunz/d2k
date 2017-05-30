@@ -23,20 +23,22 @@
 
 #include "z_zone.h"
 
-#include "v_video.h"
-#include "gl_opengl.h"
-#include "gl_intern.h"
-#include "r_defs.h"
+#include "i_system.h"
+
+#include "d_res.h"
+#include "e6y.h"
+#include "p_map.h"
 #include "r_bsp.h"
+#include "r_defs.h"
 #include "r_draw.h"
 #include "r_main.h"
 #include "r_things.h"
+#include "v_video.h"
 #include "w_wad.h"
-#include "i_system.h"
-#include "e6y.h"
 
 #include "gl_opengl.h"
 #include "gl_struct.h"
+#include "gl_intern.h"
 
 #ifdef USE_SHADERS
 
@@ -46,24 +48,26 @@ static GLShader *active_shader = NULL;
 static GLShader* gld_LoadShader(const char *vpname, const char *fpname);
 
 int glsl_Init(void) {
-  if (!gl_arb_shader_objects)
-    D_Msg(MSG_WARN, "glsl_Init: shaders expects OpenGL 2.0\n");
-  else
+  if (!gl_arb_shader_objects) {
+    D_MsgLocalWarn("glsl_Init: shaders expects OpenGL 2.0\n");
+  }
+  else {
     sh_main = gld_LoadShader("glvp", "glfp");
+  }
 
   return (sh_main != NULL);
 }
 
-static int ReadLump(const char *filename, const char *lumpname, unsigned char **buffer)
-{
+static int ReadLump(const char *filename, const char *lumpname,
+                                          unsigned char **buffer) {
   FILE *file = NULL;
   int size = 0;
   const unsigned char *data;
   int lump;
 
   file = fopen(filename, "r");
-  if (file)
-  {
+
+  if (file) {
     fseek(file, 0, SEEK_END);
     size = ftell(file);
     fseek(file, 0, SEEK_SET);
@@ -150,7 +154,7 @@ static GLShader* gld_LoadShader(const char *vpname, const char *fpname)
 
     if (linked)
     {
-      D_Msg(MSG_INFO,
+      D_MsgLocalInfo(
         "gld_LoadShader: Shader \"%s+%s\" compiled OK: %s\n",
         vpname, fpname, buffer
       );
@@ -168,7 +172,7 @@ static GLShader* gld_LoadShader(const char *vpname, const char *fpname)
     }
     else
     {
-      D_Msg(MSG_ERROR,
+      D_MsgLocalError(
         "gld_LoadShader: Error compiling shader \"%s+%s\": %s\n",
         vpname, fpname, buffer
       );

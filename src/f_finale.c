@@ -24,9 +24,25 @@
 #include "z_zone.h"
 
 #include "am_map.h"
+#include "d_deh.h"
+#include "d_event.h"
+#include "d_res.h"
+#include "g_comp.h"
+#include "g_game.h"
+#include "hu_stuff.h"
+#include "pl_main.h"
+#include "pl_pspr.h"
+#include "r_defs.h"
+#include "r_state.h"
+#include "s_sound.h"
+#include "sounds.h"
+#include "v_video.h"
+#include "w_wad.h"
+
+#if 0
+#include "am_map.h"
 #include "d_deh.h"  // Ty 03/22/98 - externalizations
 #include "f_finale.h" // CPhipps - hmm...
-#include "p_setup.h"
 #include "pl_main.h"
 #include "pl_pspr.h"
 #include "g_game.h"
@@ -39,6 +55,7 @@
 #include "w_wad.h"
 #include "hu_lib.h"
 #include "hu_stuff.h"
+#endif
 
 extern int acceleratestage; // accelerate intermission screens
 extern patchnum_t hu_font[HU_FONTSIZE];

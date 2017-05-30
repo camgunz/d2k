@@ -24,36 +24,40 @@
 #include "z_zone.h"
 
 #include "m_avg.h"
+#include "d_event.h"
 #include "d_main.h"
-#include "p_setup.h"
-#include "pl_main.h"
+#include "d_res.h"
+#include "g_comp.h"
+#include "g_demo.h"
 #include "g_game.h"
+#include "g_input.h"
+#include "g_opt.h"
 #include "g_save.h"
-#include "m_menu.h"
-#include "n_main.h"
+#include "mn_main.h"
+#include "p_defs.h"
 #include "p_ident.h"
-#include "r_defs.h"
-#include "v_video.h"
 #include "p_map.h"
 #include "p_saveg.h"
 #include "p_spec.h"
-#include "w_wad.h"
-#include "r_demo.h"
+#include "p_tick.h"
+#include "pl_main.h"
+#include "r_defs.h"
 #include "r_fps.h"
 #include "r_state.h"
 #include "s_advsound.h"
 #include "s_sound.h"
-
-#include "p_tick.h"
+#include "v_video.h"
+#include "w_wad.h"
 
 #include "gl_opengl.h"
 #include "gl_struct.h"
+
+#include "n_main.h"
 
 // CPhipps - size of version header
 #define VERSIONSIZE 16
 #define SAVESTRINGSIZE  24
 
-static unsigned char savegameslot; // Slot to load if gameaction == ga_loadgame
 static avg_t average_savebuffer_size;
 static bool average_savebuffer_size_initialized = false;
 
@@ -86,10 +90,16 @@ static const struct {
 static const size_t num_version_headers =
   sizeof(version_headers) / sizeof(version_headers[0]);
 
+unsigned char savegameslot; // Slot to load if gameaction == ga_loadgame
+
 char *basesavegame; // killough 2/16/98: savegame directory
 
 // Description to save in savegame if gameaction == ga_savegame
 char savedescription[SAVEDESCLEN];
+
+/* Ty 05/03/98 - externalized
+ * cph - updated for prboom */
+const char *savegamename = PACKAGE_TARNAME"-savegame";
 
 //e6y
 static unsigned int GetPackageVersion(void) {
@@ -180,7 +190,7 @@ static uint64_t G_Signature(void) {
 }
 
 static void G_LoadGameErr(const char *msg) {
-  M_ForcedLoadGame(msg);           // Print message asking for 'Y' to force
+  MN_ForcedLoadGame(msg);          // Print message asking for 'Y' to force
   if (command_loadgame) {          // If this was a command-line -loadgame
     D_StartTitle();                // Start the title screen
     G_SetGameState(GS_DEMOSCREEN); // And set the game state accordingly
@@ -404,14 +414,12 @@ bool G_ReadSaveData(pbuf_t *savebuffer, bool bail_on_errors,
         return false;
       }
       else {
-        D_Msg(MSG_WARN, "G_DoLoadGame: Incompatible savegame\n");
+        D_MsgLocalWarn("G_DoLoadGame: Incompatible savegame\n");
       }
     }
   }
 
-  /*-----------------*/
-  /* CG: TODO: PWADs */
-  /*-----------------*/
+  /* [CG] [TODO] PWADs */
 
   M_PBufReadUInt(savebuffer, &packageversion);
 
@@ -513,7 +521,7 @@ bool G_ReadSaveData(pbuf_t *savebuffer, bool bail_on_errors,
   S_ReloadChannelOrigins();
   P_MapEnd();
   R_ActivateSectorInterpolations();//e6y
-  R_SmoothPlaying_Reset(NULL); // e6y
+  G_DemoSmoothPlayingReset(NULL); // e6y
 
   if (musinfo.current_item != -1)
     S_ChangeMusInfoMusic(musinfo.current_item, true);
@@ -587,7 +595,7 @@ void G_LoadGame(int slot, bool command) {
     netgame = false;
   }
   command_loadgame = command;
-  R_SmoothPlaying_Reset(NULL); // e6y
+  G_DemoSmoothPlayingReset(NULL); // e6y
 }
 
 /* vi: set et ts=2 sw=2: */

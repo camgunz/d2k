@@ -62,15 +62,16 @@
 
 #include "z_zone.h"
 
-#include "v_video.h"
-#include "gl_opengl.h"
-#include "gl_intern.h"
+#include "p_map.h"
 #include "r_defs.h"
 #include "r_main.h"
 #include "r_state.h"
+#include "v_video.h"
 
-typedef struct vertexsplit_info_s
-{
+#include "gl_opengl.h"
+#include "gl_intern.h"
+
+typedef struct vertexsplit_info_s {
   bool changed;
   int numheights;
   int numsectors;

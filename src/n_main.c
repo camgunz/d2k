@@ -25,39 +25,43 @@
 
 #include <enet/enet.h>
 
-#include "c_eci.h"
-#include "c_main.h"
-#include "d_main.h"
-#include "d_msg.h"
-#include "r_defs.h"
 #include "i_system.h"
 #include "i_input.h"
 #include "i_main.h"
 #include "i_video.h"
 #include "m_argv.h"
 #include "m_delta.h"
-#include "m_menu.h"
-#include "n_main.h"
-#include "n_msg.h"
-#include "p_setup.h"
-#include "p_mobj.h"
-#include "pl_main.h"
-#include "pl_cmd.h"
-#include "pl_msg.h"
+#include "c_eci.h"
+#include "c_main.h"
+#include "d_main.h"
+#include "d_msg.h"
+#include "e6y.h"
 #include "g_game.h"
 #include "g_state.h"
+#include "mn_main.h"
+#include "p_checksum.h"
+#include "p_mobj.h"
+#include "pl_cmd.h"
+#include "pl_main.h"
+#include "pl_msg.h"
+#include "r_defs.h"
+#include "r_fps.h"
+#include "s_sound.h"
+#include "sv_main.h"
+#include "v_video.h"
+#include "x_main.h"
+
+#include "hu_lib.h"
+#include "hu_stuff.h"
+
+#include "n_addr.h"
+#include "n_main.h"
+#include "n_msg.h"
+#include "n_peer.h"
+#include "n_proto.h"
 #include "cl_cmd.h"
 #include "cl_main.h"
 #include "cl_net.h"
-#include "sv_main.h"
-#include "p_checksum.h"
-#include "r_fps.h"
-#include "s_sound.h"
-#include "x_main.h"
-#include "e6y.h"
-#include "v_video.h"
-#include "hu_lib.h"
-#include "hu_stuff.h"
 
 // #define LOG_SECTOR 43
 
@@ -147,7 +151,7 @@ void N_Init(void) {
     I_Error("Error initializing ENet");
   }
 
-  N_InitPeers();
+  N_PeersInit();
   G_InitStates();
   atexit(N_Shutdown);
 }
@@ -160,7 +164,7 @@ void N_Disconnect(disconnection_reason_e reason) {
   }
 
   NETPEER_FOR_EACH(iter) {
-    D_Msg(MSG_INFO, "Disconnecting peer %d\n", N_PeerGetPlayernum(iter.np));
+    D_MsgLocalInfo("Disconnecting peer %d\n", N_PeerGetID(iter.np));
     N_PeerDisconnect(iter.np, reason);
   }
 
@@ -170,10 +174,10 @@ void N_Disconnect(disconnection_reason_e reason) {
     );
 
     if (res > 0) {
-      netpeer_t *np = N_PeerForPeer(net_event.peer);
+      netpeer_t *np = N_PeersLookupByENetPeer(net_event.peer);
 
       if (!np) {
-        D_Msg(MSG_WARN,
+        D_MsgLocalWarn(
           "N_Disconnect: Received network event from unknown peer %s:%u\n",
           N_IPToConstString(ENET_NET_TO_HOST_32(net_event.peer->address.host)),
           net_event.peer->address.port
@@ -187,7 +191,7 @@ void N_Disconnect(disconnection_reason_e reason) {
     }
     else {
       if (res < 0) {
-        D_Msg(MSG_WARN, "N_Disconnect: Unknown error disconnecting\n");
+        D_MsgLocalWarn("N_Disconnect: Unknown error disconnecting\n");
       }
       break;
     }
@@ -195,7 +199,7 @@ void N_Disconnect(disconnection_reason_e reason) {
 
   NETPEER_FOR_EACH(iter) {
     N_PeerSendReset(iter.np);
-    N_PeerIterRemove(iter.it, iter.np);
+    N_PeerIterRemove(&iter);
   }
 
   memset(&net_event, 0, sizeof(ENetEvent));
@@ -205,7 +209,7 @@ void N_Disconnect(disconnection_reason_e reason) {
 }
 
 void N_Shutdown(void) {
-  D_Msg(MSG_INFO, "N_Shutdown: shutting down\n");
+  D_MsgLocalInfo("N_Shutdown: shutting down\n");
   N_Disconnect(DISCONNECT_REASON_MANUAL);
 
   enet_deinitialize();
@@ -229,17 +233,17 @@ bool N_Listen(const char *host, uint16_t port) {
   }
 
   net_host = enet_host_create(
-    &address, MAX_CLIENTS, NET_CHANNEL_MAX, MAX_DOWNLOAD, MAX_UPLOAD
+    &address, MAX_CLIENTS, 2, MAX_DOWNLOAD, MAX_UPLOAD
   );
   
   if (!net_host) {
-    D_Msg(MSG_ERROR, "N_Listen: Error creating host on %s:%u\n", host, port);
+    D_MsgLocalError("N_Listen: Error creating host on %s:%u\n", host, port);
     return false;
   }
 
 #if USE_RANGE_CODER
   if (enet_host_compress_with_range_coder(net_host) < 0) {
-    D_Msg(MSG_ERROR, "N_Listen: Error activating range coder\n");
+    D_MsgLocalError("N_Listen: Error activating range coder\n");
     return false;
   }
 #endif
@@ -251,16 +255,16 @@ bool N_Connect(const char *host, uint16_t port) {
   ENetPeer *server = NULL;
   ENetAddress address;
 
-  net_host = enet_host_create(NULL, 1, NET_CHANNEL_MAX, 0, 0);
+  net_host = enet_host_create(NULL, 1, 2, 0, 0);
 
   if (!net_host) {
-    D_Msg(MSG_ERROR, "N_Connect: Error creating host\n");
+    D_MsgLocalError("N_Connect: Error creating host\n");
     return false;
   }
 
 #if USE_RANGE_CODER
   if (enet_host_compress_with_range_coder(net_host) < 0) {
-    D_Msg(MSG_ERROR, "N_Connect: Error activating range coder\n");
+    D_MsgLocalError("N_Connect: Error activating range coder\n");
     return false;
   }
 #endif
@@ -274,15 +278,15 @@ bool N_Connect(const char *host, uint16_t port) {
     address.port = DEFAULT_PORT;
   }
 
-  server = enet_host_connect(net_host, &address, NET_CHANNEL_MAX, 0);
+  server = enet_host_connect(net_host, &address, 2, 0);
 
   if (!server) {
-    D_Msg(MSG_ERROR, "N_Connect: Error connecting to server\n");
+    D_MsgLocalError("N_Connect: Error connecting to server\n");
     N_Disconnect(DISCONNECT_REASON_CONNECTION_ERROR);
     return false;
   }
 
-  N_PeerAdd(server);
+  N_PeersAdd(server);
 
   previous_host = host;
   previous_port = port;
@@ -296,7 +300,7 @@ bool N_Connected(void) {
 
 bool N_Reconnect(void) {
   if ((!previous_host) || (previous_port == 0)) {
-    D_Msg(MSG_INFO, "No previous connection\n");
+    D_MsgLocalInfo("No previous connection\n");
     return false;
   }
 
@@ -320,37 +324,46 @@ bool N_ConnectToServer(const char *address) {
     port = DEFAULT_PORT;
   }
 
-  D_Msg(MSG_INFO, "Connecting to server");
+  D_MsgLocalInfo("Connecting to server");
   connected = N_Connect(host, port);
 
   free(host);
 
   if (connected) {
-    D_Msg(MSG_INFO, "Connected");
+    D_MsgLocalInfo("Connected");
   }
   else {
-    D_Msg(MSG_ERROR, "Connection failed");
+    D_MsgLocalError("Connection failed");
   }
 
   return connected;
 }
 
 void N_DisconnectPeer(netpeer_t *np, disconnection_reason_e reason) {
-  D_Msg(MSG_INFO, "N_DisconnectPeer: Disconnecting peer %d\n",
-    N_PeerGetPlayernum(np)
-  );
+  D_MsgLocalInfo("N_DisconnectPeer: Disconnecting peer %u\n", N_PeerGetID(np));
   N_PeerDisconnect(np, reason);
 }
 
-void N_DisconnectPlayer(unsigned short playernum,
-                        disconnection_reason_e reason) {
-  netpeer_t *np = N_PeerForPlayer(playernum);
-
-  if (!np) {
-    I_Error("N_DisconnectPlayer: Invalid player %d.\n", playernum);
+void N_DisconnectPlayerID(uint32_t player_id, disconnection_reason_e reason) {
+  player_t *player = P_PlayersLookup(player_id);
+  
+  if (!player) {
+    D_MsgLocalWarn("N_DisconnectPlayerID: No player for ID %u\n", player_id);
+    return;
   }
 
-  D_Msg(MSG_INFO, "N_DisconnectPlayer: Disconnecting player %d\n", playernum);
+  N_DisconnectPlayer(player, reason);
+}
+
+void N_DisconnectPlayer(player_t *player, disconnection_reason_e reason) {
+  netpeer_t *np = N_PeersLookupByPlayer(player);
+
+  if (!np) {
+    D_MsgLocalWarn("N_DisconnectPlayer: No peer for player %u\n", player->id);
+    return;
+  }
+
+  D_MsgLocalInfo("N_DisconnectPlayer: Disconnecting player %u\n", player->id);
   N_DisconnectPeer(np, reason);
 }
 
@@ -358,10 +371,10 @@ static void handle_enet_connection(ENetEvent *net_event) {
   netpeer_t *np;
 
   if (SERVER) {
-    np = N_PeerAdd(net_event->peer);
+    np = N_PeersAdd(net_event->peer);
 
     if (!np) {
-      D_Msg(MSG_ERROR, "N_ServiceNetwork: Adding new peer failed\n");
+      D_MsgLocalError("N_ServiceNetwork: Adding new peer failed\n");
       enet_peer_disconnect(net_event->peer, DISCONNECT_REASON_SERVER_FULL);
       return;
     }
@@ -370,7 +383,7 @@ static void handle_enet_connection(ENetEvent *net_event) {
     np = CL_GetServerPeer();
 
     if (!np) {
-      D_Msg(MSG_WARN,
+      D_MsgLocalWarn(
         "N_ServiceNetwork: Got 'connect' event but no connection "
         "was requested.\n"
       );
@@ -382,10 +395,10 @@ static void handle_enet_connection(ENetEvent *net_event) {
 }
 
 static void handle_enet_disconnection(ENetEvent *net_event) {
-  netpeer_t *np = N_PeerForPeer(net_event->peer);
+  netpeer_t *np = N_PeersLookupByENetPeer(net_event->peer);
 
   if (!np) {
-    D_Msg(MSG_WARN,
+    D_MsgLocalWarn(
       "N_ServiceNetwork: Got 'disconnect' event from unknown peer %s:%u.\n",
       N_IPToConstString(ENET_NET_TO_HOST_32(net_event->peer->address.host)),
       net_event->peer->address.port
@@ -397,18 +410,25 @@ static void handle_enet_disconnection(ENetEvent *net_event) {
     N_Disconnect(DISCONNECT_REASON_GOT_PEER_DISCONNECTION);
   }
 
-  D_Msg(MSG_INFO, "Peer disconnected: %s\n",
-    N_GetDisconnectionReason(net_event->data)
-  );
+  if (net_event->data >= DISCONNECT_REASON_MAX) {
+    D_MsgLocalInfo("Peer disconnected: Reason unknown (%u)\n",
+      net_event->data
+    );
+  }
+  else {
+    D_MsgLocalInfo("Peer disconnected: %s\n",
+      disconnection_reasons[net_event->data]
+    );
+  }
 
   N_PeerRemove(np);
 }
 
 static void handle_enet_receive(ENetEvent *net_event) {
-  netpeer_t *np = N_PeerForPeer(net_event->peer);
+  netpeer_t *np = N_PeersLookupByENetPeer(net_event->peer);
 
   if (!np) {
-    D_Msg(MSG_WARN,
+    D_MsgLocalWarn(
       "N_ServiceNetwork: Got 'packet' event from unknown peer %s:%u.\n",
       N_IPToConstString(ENET_NET_TO_HOST_32(
         net_event->peer->address.host
@@ -437,12 +457,12 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
 
   NETPEER_FOR_EACH(iter) {
     if (N_PeerCheckTimeout(iter.np)) {
-      D_Msg(MSG_INFO, "Peer %s:%u timed out.\n",
+      D_MsgLocalInfo("Peer %s:%u timed out.\n",
         N_PeerGetIPAddressConstString(iter.np),
         N_PeerGetPort(iter.np)
       );
       N_PeerSendReset(iter.np);
-      N_PeerIterRemove(iter.it, iter.np);
+      N_PeerIterRemove(&iter);
       continue;
     }
 
@@ -465,7 +485,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
     }
 
     if (status < 0) {
-      D_Msg(MSG_INFO,
+      D_MsgLocalInfo(
         "N_ServiceNetwork: Unknown error occurred while servicing host\n"
       );
       break;
@@ -482,7 +502,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
         handle_enet_receive(&net_event);
       break;
       default:
-        D_Msg(MSG_WARN,
+        D_MsgLocalWarn(
           "N_ServiceNetwork: Got unknown event from peer %s:%u.\n",
           N_IPToConstString(ENET_NET_TO_HOST_32(net_event.peer->address.host)),
           net_event.peer->address.port
@@ -547,7 +567,7 @@ void N_InitNetGame(void) {
       port = DEFAULT_PORT;
     }
 
-    D_Msg(MSG_INFO,
+    D_MsgLocalInfo(
       "N_InitNetGame: Connecting to server %s:%u...\n", host, port
     );
 
@@ -556,7 +576,7 @@ void N_InitNetGame(void) {
         I_Error("N_InitNetGame: Connection refused");
       }
 
-      D_Msg(MSG_INFO, "N_InitNetGame: Connected!\n");
+      D_MsgLocalInfo("N_InitNetGame: Connected!\n");
 
       if (!CL_GetServerPeer()) {
         I_Error("N_InitNetGame: Server peer was NULL");
@@ -564,7 +584,7 @@ void N_InitNetGame(void) {
 
       G_ReloadDefaults();
 
-      D_Msg(MSG_INFO, "N_InitNetGame: Requesting setup information...\n");
+      D_MsgLocalInfo("N_InitNetGame: Requesting setup information...\n");
 
       start_request_time = time(NULL);
 
@@ -595,7 +615,7 @@ void N_InitNetGame(void) {
     }
 
 
-    D_Msg(MSG_INFO, "N_InitNetGame: Setup information received!\n");
+    D_MsgLocalInfo("N_InitNetGame: Setup information received!\n");
   }
   else {
     if ((i = M_CheckParm("-serve"))) {
@@ -628,7 +648,7 @@ void N_InitNetGame(void) {
         I_Error("Error listening on %s:%d\n", host, port);
       }
 
-      D_Msg(MSG_INFO, "N_InitNetGame: Listening on %s:%u.\n", host, port);
+      D_MsgLocalInfo("N_InitNetGame: Listening on %s:%u.\n", host, port);
     }
   }
 }
@@ -638,28 +658,13 @@ void N_RunTic(void) {
     D_DoAdvanceDemo();
   }
 
-  M_Ticker();
+  MN_Ticker();
 
   if ((!CL_RePredicting()) && (!CL_Synchronizing())) {
     I_GetTime_SaveMS();
   }
 
   G_Ticker();
-
-#ifdef LOG_SECTOR
-  if ((LOG_SECTOR < numsectors) &&
-      (!CL_RePredicting()) &&
-      (!CL_Synchronizing()) &&
-      (sectors[LOG_SECTOR].floorheight != (168 << FRACBITS)) &&
-      (sectors[LOG_SECTOR].floorheight != (40 << FRACBITS))) {
-    D_Msg(MSG_SYNC, "(%d) Sector %d: %d/%d\n",
-      gametic,
-      LOG_SECTOR,
-      sectors[LOG_SECTOR].floorheight >> FRACBITS,
-      sectors[LOG_SECTOR].ceilingheight >> FRACBITS
-    );
-  }
-#endif
 
   P_Checksum(gametic);
 
@@ -670,7 +675,7 @@ void N_RunTic(void) {
       }
     }
 
-    if (N_PeerGetCount() > 0) {
+    if (N_PeersGetCount() > 0) {
       G_SaveState();
     }
 
@@ -694,11 +699,19 @@ void SV_DisconnectLaggedClients(void) {
       continue;
     }
 
+    if (N_PeerGetStatus(iter.np) != NETPEER_STATUS_PLAYER) {
+      continue;
+    }
+
     if (N_PeerTooLagged(iter.np)) {
-      D_Msg(MSG_INFO, "(%d) Player %d is too lagged\n",
+      D_MsgLocalInfo("(%d) Player %u is too lagged\n",
         gametic,
-        N_PeerGetPlayernum(iter.np)
+        N_PeerGetPlayer(iter.np)->id
       );
+      /*
+       * [CG] [FIXME] Should demote this peer to spectator instead of
+       *              disconnecting them
+       */
       N_DisconnectPeer(iter.np, DISCONNECT_REASON_EXCESSIVE_LAG);
     }
   }
@@ -714,19 +727,19 @@ void SV_UpdatePings(void) {
   }
 
   NETPEER_FOR_EACH(iter) {
-    int playernum;
+    player_t *player = NULL;
 
     if (!N_PeerSynchronized(iter.np)) {
       continue;
     }
 
-    playernum = N_PeerGetPlayernum(iter.np);
+    player = N_PeerGetPlayer(iter.np);
 
-    if (playernum == consoleplayer) {
+    if (PL_IsConsolePlayer(player)) {
       continue;
     }
 
-    SV_SendPing(playernum);
+    SV_SendPing(iter.np);
   }
 }
 
@@ -738,7 +751,7 @@ bool N_TryRunTics(void) {
 
   if ((gametic > 0) &&
       (((tics_elapsed <= 0) && (!needs_rendering)) ||
-       (SERVER && N_PeerGetCount() == 0))) {
+       (SERVER && N_PeersGetCount() == 0))) {
     N_ServiceNetwork();
     C_ECIService();
     I_Sleep(1);

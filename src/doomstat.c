@@ -26,8 +26,8 @@
 bool usergame;      // ok to save / end game
 
 // Game Mode - identify IWAD as shareware, retail etc.
-GameMode_e gamemode = indetermined;
-GameMission_e gamemission = doom;
+game_mode_e gamemode = indetermined;
+game_mission_e gamemission = doom;
 
 //-----------------------------------------------------------------------------
 

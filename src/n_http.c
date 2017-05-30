@@ -126,7 +126,7 @@ http_req_t* N_HTTPReqNew(http_method_e method, char *url) {
   CURL *curl_handle = curl_easy_init();
 
   if (!curl_handle) {
-    D_Msg(MSG_ERROR, "Unknown error creating cURL handle\n");
+    D_MsgLocalError("Unknown error creating cURL handle\n");
     return NULL;
   }
 
@@ -242,7 +242,7 @@ void N_HTTPServiceRequests(void) {
   mres = curl_multi_fdset(multi_handle, &fdread, &fdwrite, &fdexcep, &maxfd);
 
   if (mres != CURLM_OK) {
-    D_Msg(MSG_WARN,
+    D_MsgLocalWarn(
       "service_http_requests: Error running curl_multi_fdset:\n\t%d %s.\n",
       mres, curl_easy_strerror((CURLcode)mres)
     );
@@ -253,7 +253,7 @@ void N_HTTPServiceRequests(void) {
   mres = curl_multi_timeout(multi_handle, &curl_timeout);
 
   if (mres != CURLM_OK) {
-    D_Msg(MSG_WARN,
+    D_MsgLocalWarn(
       "service_http_requests: Error running curl_multi_timeout:\n\t%d %s.\n",
       mres, curl_easy_strerror((CURLcode)mres)
     );
@@ -270,7 +270,7 @@ void N_HTTPServiceRequests(void) {
   } while (mres == CURLM_CALL_MULTI_PERFORM);
 
   if (mres != CURLM_OK) {
-    D_Msg(MSG_WARN,
+    D_MsgLocalWarn(
       "service_http_requests: Error running curl_multi_perform:\n\t%d %s.\n",
       mres, curl_easy_strerror((CURLcode)mres)
     );
@@ -296,7 +296,7 @@ void N_HTTPServiceRequests(void) {
     res = curl_easy_getinfo(req_info->easy_handle, CURLINFO_PRIVATE, &req);
 
     if (res != CURLE_OK) {
-      D_Msg(MSG_WARN,
+      D_MsgLocalWarn(
         "service_http_requests: Error looking up request in request "
         "info:\n\t%d %s,\n\n",
         res, curl_easy_strerror(res)
@@ -324,7 +324,7 @@ void N_HTTPServiceRequests(void) {
     }
 
     if (req->status_code == 0) {
-      D_Msg(MSG_WARN,
+      D_MsgLocalWarn(
         "service_http_request: timed out waiting for response from [%s].\n",
         req->url
       );

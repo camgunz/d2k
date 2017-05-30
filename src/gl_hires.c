@@ -29,22 +29,24 @@
 #include <SDL_image.h>
 #endif
 
-#include "v_video.h"
 #include "i_system.h"
-#include "w_wad.h"
 #include "i_video.h"
-#include "hu_lib.h"
-#include "hu_stuff.h"
-#include "r_defs.h"
-#include "r_data.h"
-#include "r_main.h"
-#include "r_sky.h"
 #include "m_argv.h"
 #include "m_file.h"
 #include "m_misc.h"
+#include "d_res.h"
 #include "e6y.h"
-#include "r_state.h"
 #include "g_game.h"
+#include "r_data.h"
+#include "r_defs.h"
+#include "r_main.h"
+#include "r_sky.h"
+#include "r_state.h"
+#include "v_video.h"
+#include "w_wad.h"
+
+#include "hu_lib.h"
+#include "hu_stuff.h"
 
 #include "gl_opengl.h"
 #include "gl_intern.h"
@@ -448,7 +450,7 @@ static int gld_HiRes_GetExternalName(GLTexture *gltexture, char *img_path, char 
 
   typedef struct hires_path_s
   {
-    const GameMission_t gamemission;
+    const game_mission_e gamemission;
     const GLTexType textype;
     hires_path_item_t item[16];
   } hires_path_t;
@@ -1057,7 +1059,7 @@ int gld_HiRes_BuildTables(void)
   }
 
   gl_boom_colormaps_default = false;
-  M_ChangeAllowBoomColormaps();
+  MN_ChangeAllowBoomColormaps();
   return false;
 }
 
@@ -1216,7 +1218,7 @@ static int gld_HiRes_WriteCache(GLTexture *gltexture, GLuint *texid,
   }
 
   if (!result) {
-    D_Msg(MSG_WARN,
+    D_MsgLocalWarn(
       "gld_HiRes_WriteCache: error writing '%s'.\n", cache_filename
     );
   }
@@ -1233,7 +1235,7 @@ static int gld_HiRes_LoadFromFile(GLTexture *gltexture, GLuint *texid,
   surf_tmp = IMG_Load(img_path);
 
   if (!surf_tmp) {
-    D_Msg(MSG_WARN, "gld_HiRes_LoadExternal: %s\n", SDL_GetError());
+    D_MsgLocalWarn("gld_HiRes_LoadExternal: %s\n", SDL_GetError());
     return false;
   }
 
@@ -1291,7 +1293,7 @@ int gld_LoadHiresTex(GLTexture *gltexture, int cm) {
             SDL_FreeRW(rw_data);
 
             if (!surf_tmp) {
-              D_Msg(MSG_WARN, "gld_LoadHiresTex: %s\n", SDL_GetError());
+              D_MsgLocalWarn("gld_LoadHiresTex: %s\n", SDL_GetError());
             }
             else {
               SDL_Surface *surf = SDL_ConvertSurface(

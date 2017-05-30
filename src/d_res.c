@@ -23,6 +23,19 @@
 
 #include "z_zone.h"
 
+#include "i_system.h"
+#include "m_argv.h"
+#include "m_file.h"
+#include "m_misc.h"
+#include "m_swap.h"
+#include "d_deh.h"
+#include "d_main.h"
+#include "d_res.h"
+#include "g_game.h"
+#include "g_save.h"
+#include "w_wad.h"
+#include "n_getwad.h"
+
 static char *iwad_base = NULL;
 static char *iwad_path = NULL;
 
@@ -63,7 +76,7 @@ const char *deh_file_names[MAXLOADFILES];
 static void destroy_deh_file(gpointer data) {
   deh_file_t *df = (deh_file_t *)data;
 
-  if (dv->filename) {
+  if (df->filename) {
     free(df->filename);
   }
 
@@ -78,7 +91,7 @@ static void destroy_wad_file(gpointer data) {
   wadfile_info_t *wf = (wadfile_info_t *)data;
 
   if (wf->handle > 0) {
-    M_Close(wf->handle);
+    M_FDClose(wf->handle);
     wf->handle = 0;
   }
 
@@ -86,17 +99,56 @@ static void destroy_wad_file(gpointer data) {
   free(wf);
 }
 
+/*
+ * find_iwad_file
+ *
+ * Search for one of the standard IWADs
+ * CPhipps  - static, proper prototype
+ *    - 12/1999 - rewritten to use I_FindFile
+ */
+static char* find_iwad_file(void) {
+  int pi;
+
+  if (CLIENT) {
+    D_MsgLocalInfo("find_iwad_file: Looking for IWAD %s\n", D_GetIWAD());
+    return I_FindFile(D_GetIWAD(), NULL);
+  }
+
+  pi = M_CheckParm("-iwad");
+
+  if (pi && (++pi < myargc)) {
+    D_MsgLocalInfo("find_iwad_file: Searching for IWAD %s\n", myargv[pi]);
+    return I_FindFile(myargv[pi], ".wad");
+  }
+
+  for (size_t i = 0; i < nstandard_iwads; i++) {
+    char *iwad = NULL;
+
+    D_MsgLocalInfo("find_iwad_file: Searching for IWAD %s\n",
+      standard_iwads[i]
+    );
+
+    iwad = I_FindFile(standard_iwads[i], ".wad");
+
+    if (iwad) {
+      return iwad;
+    }
+  }
+
+  return NULL;
+}
+
 GPtrArray* D_ResNew(void) {
   return g_ptr_array_new_with_free_func(destroy_wad_file);
 }
 
 void D_ResClear(GPtrArray *resources) {
-  g_ptr_array_remove_range(resources, 0, resource->len);
+  g_ptr_array_remove_range(resources, 0, resources->len);
 }
 
 void D_ResFree(GPtrArray *resources) {
   D_ResClear(resources);
-  g_ptr_array_free(resources, true)
+  g_ptr_array_free(resources, true);
 }
 
 void D_ResAdd(GPtrArray *resources, const char *file_name,
@@ -108,8 +160,8 @@ void D_ResAdd(GPtrArray *resources, const char *file_name,
     I_Error("D_ResAdd: Error allocating memory for new wadfile_info_t\n");
   }
 
-  wf->name = strdup(filename);
-  wf->source = source; // Ty 08/29/98
+  wf->name = strdup(file_name);
+  wf->src = source; // Ty 08/29/98
   wf->handle = handle;
 }
 
@@ -122,14 +174,10 @@ void D_ResourcesSet(GPtrArray *wad_files) {
   size_t iwad_index = 0;
   bool iwad_found = false;
   size_t preloaded_wad_file_count = 0;
-  GArray *preloaded_wad_files = NULL;
+  GArray *preloaded = NULL;
 
   for (size_t i = 0; i < resource_files->len; i++) {
-    wadfile_info_t *wf = &g_array_index(
-      preloaded_wad_files,
-      &wadfile_info_t,
-      i
-    );
+    wadfile_info_t *wf = &g_array_index(preloaded, wadfile_info_t, i);
 
     if (!(wf->src == source_pre) || (wf->src == source_auto_load)) {
       continue;
@@ -139,7 +187,7 @@ void D_ResourcesSet(GPtrArray *wad_files) {
   }
   
   if (preloaded_wad_file_count) {
-    preloaded_wad_files = g_array_sized_new(
+    preloaded = g_array_sized_new(
       false,
       false,
       sizeof(wadfile_info_t),
@@ -148,21 +196,13 @@ void D_ResourcesSet(GPtrArray *wad_files) {
 
     for (size_t i = 0; i < resource_files->len; i++) {
       wadfile_info_t *wf = NULL;
-      wadfile_info_t *rf = g_ptr_array_index(
-        resource_files,
-        &wadfile_info_t,
-        i
-      );
+      wadfile_info_t *rf = g_ptr_array_index(resource_files, i);
 
       if (!(rf->src == source_pre) || (rf->src == source_auto_load)) {
         continue;
       }
 
-      wf = &g_array_index(
-        preloaded_wad_files,
-        &wadfile_info_t,
-        i
-      );
+      wf = &g_array_index(preloaded, wadfile_info_t, i);
 
       wf->name = strdup(rf->name);
       wf->src = rf->src;
@@ -173,10 +213,10 @@ void D_ResourcesSet(GPtrArray *wad_files) {
   D_ClearResourceFiles();
 
   for (iwad_index = 0; iwad_index < wad_files->len; iwad_index++) {
-    wad_file_info_t *wf = g_ptr_array_index(wad_files, iwad_index);
+    wadfile_info_t *wf = g_ptr_array_index(wad_files, iwad_index);
 
     if (wf->src == source_iwad) {
-      AddIWAD(I_FindFile(wf->name, ".wad"));
+      D_AddIWAD(I_FindFile(wf->name, ".wad"));
       iwad_found = true;
       break;
     }
@@ -187,26 +227,22 @@ void D_ResourcesSet(GPtrArray *wad_files) {
   }
 
   if (preloaded_wad_file_count) {
-    for (size_t i = 0; i < preloaded_wad_files->len; i++) {
-      wadfile_info_t *pf = &g_array_index(
-        preloaded_wad_files,
-        wadfile_info_t,
-        i
-      );
+    for (size_t i = 0; i < preloaded->len; i++) {
+      wadfile_info_t *pf = &g_array_index(preloaded, wadfile_info_t, i);
       wadfile_info_t *wf = malloc(sizeof(wadfile_info_t));
 
       if (!wf) {
         I_Error("WadDataToWadFiles: Allocating WAD file info failed");
       }
 
-      wadfile->name = strdup(wf->name);
-      wadfile->src = wf->src;
-      wadfile->handle = wf->handle;
+      wf->name = strdup(pf->name);
+      wf->src = wf->src;
+      wf->handle = wf->handle;
 
-      g_ptr_array_add(resource_files, wadfile);
+      g_ptr_array_add(resource_files, wf);
     }
 
-    g_array_free(preloaded_wad_files, true);
+    g_array_free(preloaded, true);
   }
 
   for (size_t i = 0; i < wad_files->len; i++) {
@@ -223,7 +259,7 @@ void D_ResourcesSet(GPtrArray *wad_files) {
       nwf->src = wf->src;
       nwf->handle = wf->handle;
 
-      g_ptr_array_add(resource_files, wadfile);
+      g_ptr_array_add(resource_files, nwf);
     }
   }
 
@@ -232,7 +268,7 @@ void D_ResourcesSet(GPtrArray *wad_files) {
 
     if (wf->src == source_iwad) {
       if (i != iwad_index) {
-        W_AddResource(wf->name, source_pwad);
+        D_AddResource(wf->name, source_pwad);
         modifiedgame = true;
       }
     }
@@ -248,13 +284,13 @@ void D_ResourcesSet(GPtrArray *wad_files) {
       }
 
       if (file) {
-        W_AddResource(wf->name, source_pwad);
+        D_AddResource(wf->name, source_pwad);
         modifiedgame = true;
       }
     }
 
     if (wf->src == source_deh) {
-      W_AddDEH(wf->name, 0);
+      D_AddDEH(wf->name, 0);
     }
   }
 
@@ -262,7 +298,7 @@ void D_ResourcesSet(GPtrArray *wad_files) {
     wadfile_info_t *wf = g_ptr_array_index(wad_files, i);
 
     if (wf->src == source_lmp || wf->src == source_net) {
-      W_AddResource(wf->name, wf->src);
+      D_AddResource(wf->name, wf->src);
     }
   }
 }
@@ -306,7 +342,7 @@ void D_AutoLoadPatches(void) {
       continue;
     }
 
-    W_AddDEH(fpath, 0);
+    D_AddDEH(fpath, 0);
     // this used to set modifiedgame here, but patches shouldn't
     free(fpath);
   }
@@ -423,7 +459,7 @@ void D_ClearResourceFiles(void) {
 //
 void D_ClearDEHFiles(void) {
   if (deh_files) {
-    D_ResClear(deh_file);
+    D_ResClear(deh_files);
   }
 }
 
@@ -441,7 +477,7 @@ void D_ClearDEHFiles(void) {
 // the gamemode from it. Also note if DOOM II, whether secret levels exist
 // CPhipps - const char* for iwadname, made static
 //e6y static
-void D_CheckIWAD(const char *iwadname, GameMode_e *gmode, bool *hassec) {
+void D_CheckIWAD(const char *iwadname, game_mode_e *gmode, bool *hassec) {
   int ud = 0;
   int rg = 0;
   int sw = 0;
@@ -455,11 +491,11 @@ void D_CheckIWAD(const char *iwadname, GameMode_e *gmode, bool *hassec) {
   size_t length;
   filelump_t *fileinfo;
 
-  if (M_Access(iwadname, R_OK)) { // error from access call
+  if (!M_CheckAccess(iwadname, R_OK)) { // error from access call
     I_Error("D_CheckIWAD: IWAD %s not readable", iwadname);
   }
 
-  if (!(fp = M_OpenFile(iwadname, "rb"))) { // error from open call
+  if (!(fp = M_FileOpen(iwadname, "rb"))) { // error from open call
     I_Error(
       "D_CheckIWAD: Can't open IWAD %s (%s)", iwadname, M_GetFileError()
     );
@@ -468,7 +504,7 @@ void D_CheckIWAD(const char *iwadname, GameMode_e *gmode, bool *hassec) {
   *gmode = indetermined;
   *hassec = false;
 
-  if (!M_ReadFromFile(fp, &header, 1, sizeof(header))) {
+  if (!M_FileRead(fp, (char *)&header, 1, sizeof(header))) {
     I_Error("D_CheckIWAD: Error reading IWAD header from %s: %s",
       iwadname,
       M_GetFileError()
@@ -494,25 +530,25 @@ void D_CheckIWAD(const char *iwadname, GameMode_e *gmode, bool *hassec) {
     I_Error("D_CheckIWAD: Allocating fileinfo memory failed\n");
   }
 
-  if (!M_SeekFile(fp, header.infotableofs, SEEK_SET)) {
+  if (!M_FileSeek(fp, header.infotableofs, SEEK_SET)) {
     I_Error("D_CheckIWAD: Error seeking to info table in %s: %s\n",
       iwadname,
       M_GetFileError()
     );
   }
 
-  if (!M_ReadFromFile(fp, fileinfo, length, sizeof(filelump_t))) {
+  if (!M_FileRead(fp, (char *)fileinfo, length, sizeof(filelump_t))) {
     I_Error("D_CheckIWAD: Error reading lump data from %s: %s\n",
       iwadname,
       M_GetFileError()
     );
   }
 
-  M_CloseFile(fp);
+  M_FileClose(fp);
 
   // scan directory for levelname lumps
   while (length--) {
-    fileinfo_t *fi = &fileinfo[length];
+    filelump_t *fi = &fileinfo[length];
 
     if (fi->name[0] == 'E' && fi->name[2] == 'M' && fi->name[4] == 0) {
       if (fi->name[1] == '4') {
@@ -581,45 +617,6 @@ void D_CheckIWAD(const char *iwadname, GameMode_e *gmode, bool *hassec) {
   }
 }
 
-/*
- * D_FindIWADFIle
- *
- * Search for one of the standard IWADs
- * CPhipps  - static, proper prototype
- *    - 12/1999 - rewritten to use I_FindFile
- */
-char* D_FindIWADFile(void) {
-  int pi;
-
-  if (CLIENT) {
-    D_MsgLocalInfo("FindIWADFile: Looking for IWAD %s\n", D_GetIWAD());
-    return I_FindFile(D_GetIWAD(), NULL);
-  }
-
-  pi = M_CheckParm("-iwad");
-
-  if (pi && (++pi < myargc)) {
-    D_MsgLocalInfo("FindIWADFile: Searching for IWAD %s\n", myargv[pi]);
-    return I_FindFile(myargv[pi], ".wad");
-  }
-
-  for (size_t i = 0; i < nstandard_iwads; i++) {
-    char *iwad = NULL;
-
-    D_MsgLocalInfo("FindIWADFile: Searching for IWAD %s\n",
-      standard_iwads[i]
-    );
-
-    iwad = I_FindFile(standard_iwads[i], ".wad");
-
-    if (iwad) {
-      return iwad;
-    }
-  }
-
-  return NULL;
-}
-
 //
 // D_IdentifyVersion
 //
@@ -678,7 +675,7 @@ void D_IdentifyVersion(void) {
   }
 
   // locate the IWAD and determine game mode from it
-  iwad = FindIWADFile();
+  iwad = find_iwad_file();
 
 #if (defined(GL_DOOM) && defined(LEVELINFO_DEBUG))
   // proff 11/99: used for debugging
@@ -763,7 +760,7 @@ void D_AddResource(const char *path, wad_source_e source) {
       I_Error("D_AddResource: Allocating GWA file info failed");
     }
 
-    D_AddRes(resource_files, gwa_filepath, source, 0);
+    D_ResAdd(resource_files, gwa_filepath, source, 0);
     free(gwa_filepath);
   }
 
@@ -771,15 +768,15 @@ void D_AddResource(const char *path, wad_source_e source) {
 }
 
 //
-// W_AddDEH
+// D_AddDEH
 //
-void W_AddDEH(const char *filename, int lumpnum) {
+void D_AddDEH(const char *filename, int lumpnum) {
   char *deh_path;
   deh_file_t *dehfile;
-  const char *deh_out = D_dehout();
+  const char *deh_out = D_DEHOut();
 
   if ((!filename) && lumpnum == 0) {
-    I_Error("W_AddDEH: No filename or lumpnum given\n");
+    I_Error("D_AddDEH: No filename or lumpnum given\n");
   }
 
   if (!filename) {
@@ -789,7 +786,7 @@ void W_AddDEH(const char *filename, int lumpnum) {
     deh_path = I_FindFile(filename, NULL);
 
     if (!deh_path) {
-      I_Error("W_AddDEH: Couldn't find %s\n", filename);
+      I_Error("D_AddDEH: Couldn't find %s\n", filename);
     }
   }
 
@@ -798,9 +795,7 @@ void W_AddDEH(const char *filename, int lumpnum) {
 
     if (!filename) {
       if (lumpnum == stored_deh_file->lumpnum) {
-        D_Msg(MSG_INFO,
-          "W_AddDEH: Skipping duplicate DeH/BEX (%d)\n", lumpnum
-        );
+        D_MsgLocalInfo("D_AddDEH: Skipping duplicate DeH/BEX (%d)\n", lumpnum);
         return;
       }
       continue;
@@ -811,19 +806,19 @@ void W_AddDEH(const char *filename, int lumpnum) {
     }
 
     if (strcmp(deh_path, stored_deh_file->filename) == 0) {
-      D_Msg(MSG_INFO, "W_AddDEH: Skipping %s (already added).\n", deh_path);
+      D_MsgLocalInfo("D_AddDEH: Skipping %s (already added).\n", deh_path);
       return;
     }
   }
 
   if (deh_path) {
-    D_Msg(MSG_INFO, "W_AddDEH: Adding %s.\n", deh_path);
+    D_MsgLocalInfo("D_AddDEH: Adding %s.\n", deh_path);
   }
 
   dehfile = malloc(sizeof(deh_file_t));
 
   if (!dehfile) {
-    I_Error("W_AddDEH: Error allocating DEH file info");
+    I_Error("D_AddDEH: Error allocating DEH file info");
   }
 
   dehfile->filename = deh_path;

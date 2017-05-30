@@ -260,6 +260,11 @@ void D_MsgLocalDebug(const char *fmt, ...) {
   va_list args;
 
   va_start(args, fmt);
+  D_VMsgLocalDebug(fmt, args);
+  va_end(args);
+}
+
+void D_VMsgLocalDebug(const char *fmt, va_list args) {
   D_MsgChanVMsg(
     MSG_CHANNEL_SYS,
     MSG_LEVEL_DEBUG,
@@ -271,13 +276,17 @@ void D_MsgLocalDebug(const char *fmt, ...) {
     fmt,
     args
   );
-  va_end(args);
 }
 
 void D_MsgLocalInfo(const char *fmt, ...) {
   va_list args;
 
   va_start(args, fmt);
+  D_VMsgLocalInfo(fmt, args);
+  va_end(args);
+}
+
+void D_VMsgLocalInfo(const char *fmt, va_list args) {
   D_MsgChanVMsg(
     MSG_CHANNEL_SYS,
     MSG_LEVEL_INFO,
@@ -289,13 +298,17 @@ void D_MsgLocalInfo(const char *fmt, ...) {
     fmt,
     args
   );
-  va_end(args);
 }
 
 void D_MsgLocalWarn(const char *fmt, ...) {
   va_list args;
 
   va_start(args, fmt);
+  D_VMsgLocalWarn(fmt, args);
+  va_end(args);
+}
+
+void D_VMsgLocalWarn(const char *fmt, va_list args) {
   D_MsgChanVMsg(
     MSG_CHANNEL_SYS,
     MSG_LEVEL_WARN,
@@ -307,13 +320,17 @@ void D_MsgLocalWarn(const char *fmt, ...) {
     fmt,
     args
   );
-  va_end(args);
 }
 
 void D_MsgLocalError(const char *fmt, ...) {
   va_list args;
 
   va_start(args, fmt);
+  D_VMsgLocalError(fmt, args);
+  va_end(args);
+}
+
+void D_VMsgLocalError(const char *fmt, va_list args) {
   D_MsgChanVMsg(
     MSG_CHANNEL_SYS,
     MSG_LEVEL_ERROR,
@@ -325,7 +342,6 @@ void D_MsgLocalError(const char *fmt, ...) {
     fmt,
     args
   );
-  va_end(args);
 }
 
 /* vi: set et ts=2 sw=2: */

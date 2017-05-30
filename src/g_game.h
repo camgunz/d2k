@@ -111,6 +111,8 @@ extern int     startmap;
 
 extern bool autostart;
 
+extern gameaction_t gameaction;
+
 // Selected by user.
 extern skill_t gameskill;
 extern int     gameepisode;
@@ -151,6 +153,8 @@ extern int show_alive;
 // Timer, for scores.
 extern int basetic;    /* killough 9/29/98: levelstarttic, adjusted */
 extern int leveltime;  // tics in game play for par
+
+extern int  starttime;
 
 // --------------------------------------
 // DEMO playback/recording related stuff.
@@ -303,8 +307,6 @@ void G_SkipDemoStop(void);
 void G_SkipDemoCheck(void);
 int  G_ReloadLevel(void);
 int  G_GotoNextLevel(void);
-
-void G_SetSpeed(void);
 
 // killough 5/15/98: forced loadgames
 void G_ForcedLoadGame(void);

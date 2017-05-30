@@ -24,11 +24,20 @@
 #include "z_zone.h"
 
 #include "m_argv.h"
+#include "d_deh.h"
+#include "e6y.h"
+#include "g_comp.h"
 #include "g_demo.h"
 #include "g_game.h"
+#include "hu_tracers.h"
+#include "p_map.h"
+#include "r_defs.h"
 #include "r_main.h"
 #include "r_screenmultiply.h"
 #include "v_video.h"
+
+#include "hu_stuff.h"
+
 #include "gl_opengl.h"
 #include "gl_struct.h"
 
@@ -66,14 +75,12 @@
 #include "info.h"
 #include "am_map.h"
 #include "hu_lib.h"
-#include "hu_tracers.h"
 #include "gl_opengl.h"
 #include "gl_struct.h"
 #include "pl_main.h"
 #include "w_wad.h"
 #include "r_demo.h"
 #include "d_deh.h"
-#include "e6y.h"
 
 #endif
 
@@ -87,19 +94,6 @@ const char *avi_shot_fname;
 bool doSkip;
 int speed_step;
 
-int hudadd_gamespeed;
-int hudadd_leveltime;
-int hudadd_demotime;
-int hudadd_secretarea;
-int hudadd_smarttotals;
-int hudadd_demoprogressbar;
-int hudadd_crosshair;
-int hudadd_crosshair_scale;
-int hudadd_crosshair_color;
-int hudadd_crosshair_health;
-int hudadd_crosshair_target;
-int hudadd_crosshair_target_color;
-int hudadd_crosshair_lock_target;
 int movement_strafe50;
 int movement_shorttics;
 int movement_strafe50onturns;
@@ -112,8 +106,6 @@ int showendoom;
 int palette_ondamage;
 int palette_onbonus;
 int palette_onpowers;
-
-camera_t walkcamera;
 
 float skyscale;
 float screen_skybox_zplane;
@@ -224,7 +216,7 @@ void e6y_InitCommandLine(void) {
     demo_skiptics = (int)(atof(myargv[p + 1]) * 35);
   }
 
-  if ((IsDemoPlayback() || IsDemoContinue()) &&
+  if ((G_DemoIsPlayback() || G_DemoIsContinue()) &&
       (startmap > 1 || demo_skiptics)) {
     G_SkipDemoStart();
   }
@@ -239,11 +231,7 @@ void e6y_InitCommandLine(void) {
   shorttics = movement_shorttics || M_CheckParm("-shorttics");
 }
 
-void M_ChangeSpeed(void) {
-  G_SetSpeed();
-}
-
-void M_ChangeRenderPrecise(void) {
+void MN_ChangeRenderPrecise(void) {
 #ifdef GL_DOOM
   if (V_GetMode() != VID_MODEGL) {
     gl_seamless = false;
@@ -262,11 +250,11 @@ void M_ChangeRenderPrecise(void) {
 #endif // GL_DOOM
 }
 
-void M_ChangeScreenMultipleFactor(void) {
+void MN_ChangeScreenMultipleFactor(void) {
   V_ChangeScreenResolution();
 }
 
-void M_ChangeInterlacedScanning(void) {
+void MN_ChangeInterlacedScanning(void) {
   if (render_interlaced_scanning) {
     interlaced_scanning_requires_clearing = 1;
   }
@@ -278,17 +266,17 @@ float render_fovratio;
 float render_fovy = FOV90;
 float render_multiplier;
 
-void M_ChangeAspectRatio(void) {
+void MN_ChangeAspectRatio(void) {
   extern int screenblocks;
 
 #ifdef GL_DOOM
-  M_ChangeFOV();
+  MN_ChangeFOV();
 #endif
 
   R_SetViewSize(screenblocks);
 }
 
-void M_ChangeStretch(void) {
+void MN_ChangeStretch(void) {
   extern int screenblocks;
 
   render_stretch_hud = render_stretch_hud_default;
@@ -297,11 +285,7 @@ void M_ChangeStretch(void) {
 }
 
 #ifdef GL_DOOM
-void M_ChangeMultiSample(void)
-{
-}
-
-void M_ChangeFOV(void) {
+void MN_ChangeFOV(void) {
   float f1, f2;
   int p;
   int render_aspect_width, render_aspect_height;
@@ -345,7 +329,7 @@ void M_ChangeFOV(void) {
   skyscale = 1.0f / (float)tan(DEG2RAD(render_fov / 2));
 }
 
-void M_ChangeSpriteClip(void)
+void MN_ChangeSpriteClip(void)
 {
   gl_sprite_offset = (gl_spriteclip != spriteclip_const ? 0 : (.01f * (float)gl_sprite_offset_default));
   gl_spriteclip_threshold_f = (float)gl_spriteclip_threshold / MAP_COEFF;
@@ -382,7 +366,7 @@ void ResolveColormapsHiresConflict(bool prefer_colormap)
 #endif
 }
 
-void M_ChangeAllowBoomColormaps(void)
+void MN_ChangeAllowBoomColormaps(void)
 {
   if (gl_boom_colormaps == -1)
   {
@@ -398,7 +382,7 @@ void M_ChangeAllowBoomColormaps(void)
   }
 }
 
-void M_ChangeTextureUseHires(void)
+void MN_ChangeTextureUseHires(void)
 {
   ResolveColormapsHiresConflict(false);
 
@@ -406,7 +390,7 @@ void M_ChangeTextureUseHires(void)
   gld_Precache();
 }
 
-void M_ChangeTextureHQResize(void)
+void MN_ChangeTextureHQResize(void)
 {
   gld_FlushTextures();
 }
@@ -524,7 +508,7 @@ void e6y_G_Compatibility(void)
 {
   deh_applyCompatibility();
 
-  if (IsDemoPlayback())
+  if (G_DemoIsPlayback())
   {
     int i, p;
 
@@ -621,46 +605,6 @@ unsigned int AfxGetFileName(const char* lpszPathName, char* lpszTitle, unsigned 
 int levelstarttic;
 
 int force_singletics_to = 0;
-
-int HU_DrawDemoProgress(int force)
-{
-  static unsigned int last_update = 0;
-  static int prev_len = -1;
-
-  int len, tics_count, diff;
-  unsigned int tick, max_period;
-  
-  if (gamestate == GS_DEMOSCREEN || (!demoplayback && !democontinue) || !hudadd_demoprogressbar)
-    return false;
-
-  tics_count = ((doSkip && demo_skiptics > 0) ? MIN(demo_skiptics, demo_tics_count) : demo_tics_count) * demo_playerscount;
-  len = MIN(SCREENWIDTH, (int)((int64_t)SCREENWIDTH * demo_curr_tic / tics_count));
-
-  if (!force)
-  {
-    max_period = ((tics_count - demo_curr_tic > 35 * demo_playerscount) ? 500 : 15);
-
-    // Unnecessary updates of progress bar
-    // can slow down demo skipping and playback
-    tick = SDL_GetTicks();
-    if (tick - last_update < max_period)
-      return false;
-    last_update = tick;
-
-    // Do not update progress bar if difference is small
-    diff = len - prev_len;
-    if (diff == 0 || diff == 1) // because of static prev_len
-      return false;
-  }
-
-  prev_len = len;
-  
-  V_FillRect(0, 0, SCREENHEIGHT - 4, len - 0, 4, 4);
-  if (len > 4)
-    V_FillRect(0, 2, SCREENHEIGHT - 3, len - 4, 2, 0);
-
-  return true;
-}
 
 #ifdef _WIN32
 int GetFullPath(const char* FileName, const char* ext, char *Buffer, size_t BufferLength)

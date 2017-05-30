@@ -102,9 +102,9 @@ unsigned char *map_subsectors;
 #define ZGLN            0x4E4C475A
 #define GL_VERT_OFFSET  4
 
-int     firstglvertex = 0;
-int     nodesVersion  = 0;
-int     forceOldBsp   = 0;
+int firstglvertex = 0;
+int nodesVersion  = 0;
+int forceOldBsp   = 0;
 
 // figgi 08/21/00 -- glSegs
 typedef struct {

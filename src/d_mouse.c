@@ -49,7 +49,7 @@ int     mlooky = 0;
 angle_t viewpitch;
 
 bool D_MouseShouldBeGrabbed(void) {
-  if (walkcamera.type) {
+  if (walkcamera.mode != camera_mode_disabled) {
     return (demoplayback && gamestate == GS_LEVEL && !menuactive);
   }
 
@@ -140,6 +140,22 @@ bool D_GetMouseLook(void) {
 
 bool D_HaveMouseLook(void) {
   return (viewpitch != 0);
+}
+
+void MN_MouseChangeHoriz(int choice) {
+  D_MouseChangeHoriz((bool)choice);
+}
+
+void MN_MouseChangeVert(int choice) {
+  D_MouseChangeVert((bool)choice);
+}
+
+void MN_MouseChangeMouseLook(int choice) {
+  D_MouseChangeMouseLook((bool)choice);
+}
+
+void MN_MouseChangeAccel(int choice) {
+  D_MouseChangeAccel((bool)choice);
 }
 
 /* vi: set et ts=2 sw=2: */

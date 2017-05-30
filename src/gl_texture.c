@@ -27,31 +27,35 @@
 #define CALLBACK
 #endif
 
-#include "w_wad.h"
 #include "m_argv.h"
-#include "d_event.h"
-#include "v_video.h"
-#include "r_defs.h"
-#include "r_data.h"
-#include "r_bsp.h"
-#include "r_main.h"
-#include "r_draw.h"
-#include "r_sky.h"
-#include "r_plane.h"
-#include "r_data.h"
-#include "r_patch.h"
-#include "r_state.h"
-#include "p_maputl.h"
-#include "p_tick.h"
 #include "m_bbox.h"
-#include "gl_opengl.h"
-#include "gl_intern.h"
-#include "gl_struct.h"
-#include "p_spec.h"
+#include "p_maputl.h"
+#include "d_event.h"
+#include "d_res.h"
 #include "e6y.h"
+#include "g_comp.h"
+#include "g_demo.h"
 #include "g_game.h"
-#include "p_setup.h"
+#include "p_map.h"
 #include "p_mobj.h"
+#include "p_spec.h"
+#include "p_tick.h"
+#include "r_bsp.h"
+#include "r_data.h"
+#include "r_data.h"
+#include "r_defs.h"
+#include "r_draw.h"
+#include "r_main.h"
+#include "r_patch.h"
+#include "r_plane.h"
+#include "r_sky.h"
+#include "r_state.h"
+#include "v_video.h"
+#include "w_wad.h"
+
+#include "gl_opengl.h"
+#include "gl_struct.h"
+#include "gl_intern.h"
 
 extern bool doSkip;
 
@@ -234,7 +238,11 @@ static GLTexture *gld_AddNewGLTexItem(int num, int count, GLTexture ***items)
     //if (gl_boom_colormaps)
     {
       GLTexture *texture = (*items)[num];
-      int dims[3] = {(CR_LIMIT+MAXPLAYERS), (PLAYERCOLORMAP_COUNT), numcolormaps};
+      int dims[3] = {
+        (CR_LIMIT + VANILLA_MAXPLAYERS),
+        (PLAYERCOLORMAP_COUNT),
+        numcolormaps
+      };
       texture->glTexExID = NewIntDynArray(3, dims);
     }
   }
@@ -274,42 +282,63 @@ void gld_SetTexturePalette(GLenum target)
   GLEXT_glColorTableEXT(target, GL_RGBA, 256, GL_RGBA, GL_UNSIGNED_BYTE, pal);
 }
 
-static void gld_AddPatchToTexture_UnTranslated(GLTexture *gltexture, unsigned char *buffer, const rpatch_t *patch, int originx, int originy, int paletted)
-{
-  int x,y,j;
-  int xs,xe;
-  int js,je;
+static void gld_AddPatchToTexture_UnTranslated(GLTexture *gltexture,
+                                               unsigned char *buffer,
+                                               const rpatch_t *patch,
+                                               int originx,
+                                               int originy,
+                                               int paletted) {
+  int x;
+  int y;
+  int j;
+  int xs;
+  int xe;
+  int js;
+  int je;
+  int i;
+  int pos;
   const rcolumn_t *column;
   const unsigned char *source;
-  int i, pos;
   const unsigned char *playpal;
 
-  if (!gltexture)
+  if (!gltexture) {
     return;
-  if (!patch)
+  }
+
+  if (!patch) {
     return;
+  }
+
   playpal = V_GetPlaypal();
-  xs=0;
-  xe=patch->width;
-  if ((xs+originx)>=gltexture->realtexwidth)
+
+  xs = 0;
+  xe = patch->width;
+
+  if ((xs + originx) >= gltexture->realtexwidth) {
     return;
-  if ((xe+originx)<=0)
+  }
+
+  if ((xe + originx) <= 0) {
     return;
-  if ((xs+originx)<0)
-    xs=-originx;
-  if ((xe+originx)>gltexture->realtexwidth)
-    xe+=(gltexture->realtexwidth-(xe+originx));
+  }
+
+  if ((xs+originx)<0) {
+    xs = -originx;
+  }
+
+  if ((xe + originx) > gltexture->realtexwidth) {
+    xe += (gltexture->realtexwidth - (xe + originx));
+  }
   
   //e6y
-  if (patch->flags&PATCH_HASHOLES)
+  if (patch->flags & PATCH_HASHOLES) {
     gltexture->flags |= GLTEXTURE_HASHOLES;
+  }
 
-  for (x=xs;x<xe;x++)
-  {
+  for (x = xs; x < xe; x++) {
 #ifdef RANGECHECK
-    if (x>=patch->width)
-    {
-      D_Msg(MSG_ERROR,
+    if (x >= patch->width) {
+      D_MsgLocalError(
         "gld_AddPatchToTexture_UnTranslated x>=patch->width (%i >= %i)\n",
         x,
         patch->width
@@ -318,28 +347,39 @@ static void gld_AddPatchToTexture_UnTranslated(GLTexture *gltexture, unsigned ch
     }
 #endif
     column = &patch->columns[x];
-    for (i=0; i<column->numPosts; i++) {
+
+    for (i = 0; i < column->numPosts; i++) {
       const rpost_t *post = &column->posts[i];
-      y=(post->topdelta+originy);
-      js=0;
-      je=post->length;
-      if ((js+y)>=gltexture->realtexheight)
+
+      y = (post->topdelta + originy);
+      js = 0;
+      je = post->length;
+
+      if ((js + y) >= gltexture->realtexheight) {
         continue;
-      if ((je+y)<=0)
+      }
+
+      if ((je + y) <= 0) {
         continue;
-      if ((js+y)<0)
-        js=-y;
-      if ((je+y)>gltexture->realtexheight)
-        je+=(gltexture->realtexheight-(je+y));
+      }
+
+      if ((js + y) < 0) {
+        js = -y;
+      }
+
+      if ((je + y) > gltexture->realtexheight) {
+        je += (gltexture->realtexheight - (je + y));
+      }
+
       source = column->pixels + post->topdelta;
+
       if (paletted) {
-        pos=(((js+y)*gltexture->buffer_width)+x+originx);
-        for (j=js;j<je;j++,pos+=(gltexture->buffer_width))
-        {
+        pos=(((js + y) * gltexture->buffer_width) + x + originx);
+
+        for (j = js; j < je; j++, pos += (gltexture->buffer_width)) {
 #ifdef RANGECHECK
-          if (pos>=gltexture->buffer_size)
-          {
-            D_Msg(MSG_ERROR,
+          if (pos >= gltexture->buffer_size) {
+            D_MsgLocalError(
               "gld_AddPatchToTexture_UnTranslated pos>=size (%i >= %i)\n",
               pos + 3,
               gltexture->buffer_size
@@ -351,13 +391,12 @@ static void gld_AddPatchToTexture_UnTranslated(GLTexture *gltexture, unsigned ch
         }
       }
       else {
-        pos=4*(((js+y)*gltexture->buffer_width)+x+originx);
-        for (j=js;j<je;j++,pos+=(4*gltexture->buffer_width))
-        {
+        pos = 4 * (((js + y) * gltexture->buffer_width) + x + originx);
+
+        for (j = js; j < je; j++, pos += (4 * gltexture->buffer_width)) {
 #ifdef RANGECHECK
-          if ((pos+3)>=gltexture->buffer_size)
-          {
-            D_Msg(MSG_ERROR,
+          if ((pos + 3) >= gltexture->buffer_size) {
+            D_MsgLocalError(
               "gld_AddPatchToTexture_UnTranslated pos+3>=size (%i >= %i)\n",
               pos + 3,
               gltexture->buffer_size
@@ -366,18 +405,19 @@ static void gld_AddPatchToTexture_UnTranslated(GLTexture *gltexture, unsigned ch
           }
 #endif
           //e6y: Boom's color maps
-          if (gl_boom_colormaps && use_boom_cm && !(comp[comp_skymap] && (gltexture->flags&GLTEXTURE_SKY)))
-          {
-            const lighttable_t *colormap = (fixedcolormap ? fixedcolormap : fullcolormap);
-            buffer[pos+0]=playpal[colormap[source[j]]*3+0];
-            buffer[pos+1]=playpal[colormap[source[j]]*3+1];
-            buffer[pos+2]=playpal[colormap[source[j]]*3+2];
+          if (gl_boom_colormaps && use_boom_cm &&
+                                   !(comp[comp_skymap] &&
+                                   (gltexture->flags & GLTEXTURE_SKY))) {
+            const lighttable_t *colormap = (fixedcolormap ? fixedcolormap
+                                                          : fullcolormap);
+            buffer[pos + 0] = playpal[colormap[source[j]] * 3 + 0];
+            buffer[pos + 1] = playpal[colormap[source[j]] * 3 + 1];
+            buffer[pos + 2] = playpal[colormap[source[j]] * 3 + 2];
           }
-          else
-          {
-            buffer[pos+0]=playpal[source[j]*3+0];
-            buffer[pos+1]=playpal[source[j]*3+1];
-            buffer[pos+2]=playpal[source[j]*3+2];
+          else {
+            buffer[pos + 0] = playpal[source[j] * 3 + 0];
+            buffer[pos + 1] = playpal[source[j] * 3 + 1];
+            buffer[pos + 2] = playpal[source[j] * 3 + 2];
           }
           buffer[pos+3]=255;
         }
@@ -431,7 +471,7 @@ void gld_AddPatchToTexture(GLTexture *gltexture, unsigned char *buffer, const rp
 #ifdef RANGECHECK
     if (x>=patch->width)
     {
-      D_Msg(MSG_ERROR,
+      D_MsgLocalError(
         "gld_AddPatchToTexture x>=patch->width (%i >= %i)\n", x, patch->width
       );
       return;
@@ -459,7 +499,7 @@ void gld_AddPatchToTexture(GLTexture *gltexture, unsigned char *buffer, const rp
 #ifdef RANGECHECK
           if (pos>=gltexture->buffer_size)
           {
-            D_Msg(MSG_ERROR,
+            D_MsgLocalError(
               "gld_AddPatchToTexture_UnTranslated pos>=size (%i >= %i)\n",
               pos + 3,
               gltexture->buffer_size
@@ -476,7 +516,7 @@ void gld_AddPatchToTexture(GLTexture *gltexture, unsigned char *buffer, const rp
 #ifdef RANGECHECK
           if ((pos+3)>=gltexture->buffer_size)
           {
-            D_Msg(MSG_ERROR,
+            D_MsgLocalError(
               "gld_AddPatchToTexture pos+3>=size (%i >= %i)\n",
               pos + 3,
               gltexture->buffer_size
@@ -523,7 +563,7 @@ static void gld_AddFlatToTexture(GLTexture *gltexture, unsigned char *buffer, co
 #ifdef RANGECHECK
         if (pos>=gltexture->buffer_size)
         {
-          D_Msg(MSG_ERROR,
+          D_MsgLocalError(
             "gld_AddFlatToTexture pos>=size (%i >= %i)\n",
             pos,
             gltexture->buffer_size
@@ -544,7 +584,7 @@ static void gld_AddFlatToTexture(GLTexture *gltexture, unsigned char *buffer, co
 #ifdef RANGECHECK
         if ((pos+3)>=gltexture->buffer_size)
         {
-          D_Msg(MSG_ERROR,
+          D_MsgLocalError(
             "gld_AddFlatToTexture pos+3>=size (%i >= %i)\n",
             pos + 3,
             gltexture->buffer_size
@@ -1337,7 +1377,7 @@ static void gld_CleanTexItems(int count, GLTexture ***items)
     if ((*items)[i])
     {
       int cm, n;
-      for (j=0; j<(CR_LIMIT+MAXPLAYERS); j++)
+      for (j=0; j<(CR_LIMIT+VANILLA_MAXPLAYERS); j++)
       {
         for (n=0; n<PLAYERCOLORMAP_COUNT; n++)
         {
@@ -1682,7 +1722,7 @@ void gld_Precache(void)
     else
       sprintf(map, "E%iM%i", gameepisode, gamemap);
     
-    D_Msg(MSG_INFO, "gld_Precache: %s done in %d ms\n", map, SDL_GetTicks() - tics);
+    D_MsgLocalInfo("gld_Precache: %s done in %d ms\n", map, SDL_GetTicks() - tics);
   }
 }
 

@@ -27,39 +27,6 @@
 struct netpeer_s;
 typedef struct netpeer_s netpeer_t;
 
-typedef enum {
-  NM_NONE,
-  NM_SETUP,
-  NM_FULL_STATE,
-  NM_AUTH,
-  NM_CHAT_MESSAGE,
-  NM_SYNC,
-  NM_PLAYER_PREFERENCE_CHANGE,
-  NM_GAME_ACTION,
-  NM_RCON_COMMAND,
-  NM_VOTE_REQUEST,
-  NM_PING,
-  NM_MAX,
-} net_message_e;
-
-typedef enum {
-  NET_CHANNEL_RELIABLE,
-  NET_CHANNEL_UNRELIABLE,
-  NET_CHANNEL_MAX
-} net_channel_e;
-
-typedef struct {
-  bool reliable;
-  bool throttle; /* only flushes once per TIC if true */
-} net_channel_info_t;
-
-typedef struct {
-  const char *name;
-  net_channel_e channel;
-} net_message_info_t;
-
-extern net_channel_info_t net_channel_info[NET_CHANNEL_MAX];
-
 #define CHAT_CHANNEL_MIN CHAT_CHANNEL_SERVER
 #define CHAT_CHANNEL_MAX CHAT_CHANNEL_ALL
 

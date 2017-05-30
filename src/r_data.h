@@ -24,13 +24,15 @@
 #ifndef R_DATA_H__
 #define R_DATA_H__
 
+struct patchnum_s;
+typedef struct patchnum_s patchnum_t;
+
 struct rpatch_s;
 typedef struct rpatch_s rpatch_t;
 
 // A single patch from a texture definition, basically
 // a rectangular area within the texture rectangle.
-typedef struct
-{
+typedef struct {
   int originx, originy;  // Block origin, which has already accounted
   int patch;             // for the internal origin of the patch.
 } texpatch_t;

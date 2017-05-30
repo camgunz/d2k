@@ -27,10 +27,11 @@
 #include <SDL_image.h>
 #endif /* ifdef HAVE_LIBSDL_IMAGE */
 
-#include "v_video.h"
-#include "w_wad.h"
 #include "m_misc.h"
 #include "am_map.h"
+#include "d_res.h"
+#include "v_video.h"
+#include "w_wad.h"
 
 #include "gl_opengl.h"
 #include "gl_intern.h"

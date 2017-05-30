@@ -23,7 +23,46 @@
 
 #include "z_zone.h"
 
+#include "i_capture.h"
+#include "i_joy.h"
+#include "i_sound.h"
+#include "i_system.h"
+#include "i_video.h"
+#include "m_argv.h"
+#include "am_map.h"
+#include "d_deh.h"
+#include "d_mouse.h"
+#include "d_res.h"
+#include "dstrings.h"
+#include "e6y.h"
+#include "g_comp.h"
+#include "g_demo.h"
+#include "g_game.h"
+#include "g_keys.h"
+#include "g_overflow.h"
 #include "mn_def.h"
+#include "mn_main.h"
+#include "pl_weap.h"
+#include "r_defs.h"
+#include "r_draw.h"
+#include "r_fps.h"
+#include "r_main.h"
+#include "r_screenmultiply.h"
+#include "r_sky.h"
+#include "r_things.h"
+#include "s_sound.h"
+#include "sounds.h"
+#include "st_stuff.h"
+#include "v_sshot.h"
+#include "v_video.h"
+
+#include "hu_stuff.h"
+
+#include "gl_opengl.h"
+#include "gl_struct.h"
+
+#include "cl_main.h"
+#include "sv_main.h"
 
 #define CFG_BUFFERMAX 32000
 
@@ -380,10 +419,10 @@ default_t defaults[] = {
   {"use_mouse",{&usemouse},{1},0,1,
    def_bool,ss_none}, // enables use of mouse with DOOM
   //jff 4/3/98 allow unlimited sensitivity
-  {"mouse_sensitivity_horiz",{&mouseSensitivity_horiz},{10},0,UL,
+  {"mouse_sensitivity_horiz",{&mouse_sensitivity_horiz},{10},0,UL,
    def_int,ss_none}, /* adjust horizontal (x) mouse sensitivity killough/mead */
   //jff 4/3/98 allow unlimited sensitivity
-  {"mouse_sensitivity_vert",{&mouseSensitivity_vert},{10},0,UL,
+  {"mouse_sensitivity_vert",{&mouse_sensitivity_vert},{10},0,UL,
    def_int,ss_none}, /* adjust vertical (y) mouse sensitivity killough/mead */
   //jff 3/8/98 allow -1 in mouse bindings to disable mouse function
   {"mouseb_fire",{&mousebfire},{0},-1,MAX_MOUSEB,
@@ -595,10 +634,10 @@ default_t defaults[] = {
   {"map_wheel_zoom", {&map_wheel_zoom}, {1},0,1,
    def_bool,ss_auto},
 #ifdef GL_DOOM
-  {"map_use_multisamling", {&map_use_multisamling}, {1},0,1,
+  {"map_use_multisampling", {&map_use_multisampling}, {1},0,1,
    def_bool,ss_auto},
 #else
-  {"map_use_multisamling", {&map_use_multisamling}, {0},0,1,
+  {"map_use_multisampling", {&map_use_multisampling}, {0},0,1,
    def_bool,ss_auto},
 #endif
 #ifdef GL_DOOM
@@ -718,7 +757,7 @@ default_t defaults[] = {
   {"Prboom-plus mouse settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"mouse_acceleration",{&mouse_acceleration},{0},0,UL,
    def_int,ss_none},
-  {"mouse_sensitivity_mlook",{&mouseSensitivity_mlook},{10},0,UL,
+  {"mouse_sensitivity_mlook",{&mouse_sensitivity_mlook},{10},0,UL,
    def_int,ss_none},
   {"mouse_doubleclick_as_use", {&mouse_doubleclick_as_use},  {1},0,1,
    def_bool,ss_stat},
@@ -1147,26 +1186,27 @@ default_t defaults[] = {
 };
 
 /*
- * M_LookupDefault
+ * MN_LookupDefault
  *
  * cph - mimic MBF function for now. Yes it's crap.
  */
 
-default_t* M_LookupDefault(const char *name) {
+default_t* MN_LookupDefault(const char *name) {
   for (int i = 0; i < numdefaults; i++) {
     if ((defaults[i].type != def_none) && !strcmp(name, defaults[i].name)) {
       return &defaults[i];
     }
   }
 
-  I_Error("M_LookupDefault: %s not found\n", name);
+  I_Error("MN_LookupDefault: %s not found\n", name);
+  return NULL;
 }
 
 //
-// M_LoadDefaults
+// MN_LoadDefaults
 //
 
-void M_LoadDefaults(void) {
+void MN_LoadDefaults(void) {
   int   i;
   int   len;
   FILE* f;
@@ -1234,7 +1274,7 @@ void M_LoadDefaults(void) {
     snprintf(defaultfile, len + 1, "%s/%s.cfg", exedir, PACKAGE_TARNAME);
   }
 
-  D_Msg(MSG_INFO, " default file: %s\n",defaultfile);
+  D_MsgLocalInfo(" default file: %s\n",defaultfile);
 
   // read the file in, overriding any set defaults
 
@@ -1311,8 +1351,8 @@ void M_LoadDefaults(void) {
             }
 
             // CPhipps - safety check
-            if (isstring != IS_STRING(defaults[i])) {
-              D_Msg(MSG_WARN, "M_LoadDefaults: Type mismatch reading %s\n",
+            if (isstring != DEF_IS_STRING(defaults[i])) {
+              D_MsgLocalWarn("MN_LoadDefaults: Type mismatch reading %s\n",
                 defaults[i].name
               );
               continue;
@@ -1350,10 +1390,10 @@ void M_LoadDefaults(void) {
 }
 
 //
-// M_SaveDefaults
+// MN_SaveDefaults
 //
 
-void M_SaveDefaults (void) {
+void MN_SaveDefaults (void) {
   int   i;
   FILE *f;
 
@@ -1388,7 +1428,7 @@ void M_SaveDefaults (void) {
     else {
       // CPhipps - modified for new default_t form
       //jff 4/10/98 kill super-hack on pointer value
-      if (!IS_STRING(defaults[i])) {
+      if (!DEF_IS_STRING(defaults[i])) {
         // CPhipps - remove keycode hack
         // killough 3/6/98: use spaces instead of tabs for uniform justification
         if (defaults[i].type == def_hex)

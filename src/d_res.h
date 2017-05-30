@@ -40,12 +40,20 @@ typedef enum {
   source_lmp,       // lmp file load
   source_net        // CPhipps
 
-  /* e6y
-  ,source_deh_auto_load
+  // e6y
+  // ,source_deh_auto_load
   ,source_deh
-  ,source_err
-  */
+  // ,source_err
 } wad_source_e;
+
+// CPhipps - changed wad init
+// We _must_ have the wadfiles[] the same as those actually loaded, so there 
+// is no point having these separate entities. This belongs here.
+typedef struct {
+  char         *name;
+  wad_source_e  src;
+  int           handle;
+} wadfile_info_t;
 
 extern const char *wad_file_names[MAXLOADFILES];
 extern const char *deh_file_names[MAXLOADFILES];
@@ -66,7 +74,8 @@ void        D_SetIWAD(const char *iwad);
 const char* D_GetIWAD(void);
 const char* D_GetIWADPath(void);
 void        D_ClearIWAD(void);
-void        D_CheckIWAD(const char *iwadname, GameMode_e *gmode, bool *hassec);
+void        D_CheckIWAD(const char *iwadname, game_mode_e *gmode,
+                                              bool *hassec);
 char*       D_FindIWADFile(void);
 void        D_IdentifyVersion(void);
 void        D_AddDEH(const char *filename, int lumpnum);

@@ -30,7 +30,10 @@ typedef struct player_s player_t;
 struct wadtbl_s;
 typedef struct wadtbl_s wadtbl_t;
 
-#define DEMOMARKER 0x80
+struct ticcmd_s;
+typedef struct ticcmd_s ticcmd_t;
+
+#define DEMOMARKER -128
 #define SMOOTH_PLAYING_MAXFACTOR 16 
 
 //e6y
@@ -87,12 +90,8 @@ extern const char  *getwad_cmdline;
 
 void G_BeginRecording(void);
 void G_DeferedPlayDemo(const char *demo); // CPhipps - const
-const unsigned char* G_ReadDemoHeaderEx(const unsigned char *demo_p,
-                                        size_t size,
-                                        unsigned int params);
-const unsigned char* G_ReadDemoHeader(const unsigned char *demo_p,
-                                      size_t size);
-void G_CalculateDemoParams(const unsigned char *demo_p);
+char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params);
+char* G_DemoReadHeader(char *demo_p, size_t size);
 bool G_CheckDemoStatus(void);
 void G_CheckDemoContinue(void);
 void G_RecordDemo(const char *name); // Only called by startup code.
@@ -114,9 +113,9 @@ void G_DemoSetFooter(const char *filename, wadtbl_t *wadtbl);
 void G_DemoWriteFooter(FILE *file);
 void G_DemoShutdown(void);
 
-unsigned char* G_DemoGetFooter(const char *filename,
-                               const unsigned char **footer,
-                               size_t *size);
+char* G_DemoGetFooter(const char *filename,
+                      char **footer,
+                      size_t *size);
 
 
 void    G_DemoWriteMouseLook(angle_t pitch);
@@ -129,10 +128,15 @@ const char* G_DemoGetDemoArg(void);
 bool G_DemoIsPlayback(void);
 bool G_DemoIsContinue(void);
 
-bool G_DemoLoad(const char *name, unsigned char **buffer, int *length,
-                                                          int *lump);
+bool G_DemoLoad(const char *name, char **buffer, size_t *length, int *lump);
 bool G_DemoCheckAutoDemo(void);
 bool G_DemoCheckExDemo(void);
+
+void G_DoPlayDemo(void);
+
+void G_DemoReadTiccmd(ticcmd_t *cmd);
+void G_DemoReadContinueTiccmd(ticcmd_t* cmd);
+void G_DemoWriteTiccmd(ticcmd_t *cmd);
 
 #endif
 

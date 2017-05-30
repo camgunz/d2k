@@ -29,15 +29,17 @@
 #include <SDL_image.h>
 #endif
 
-#include "r_defs.h"
+#include "m_misc.h"
+#include "d_res.h"
+#include "e6y.h"
+#include "p_map.h"
+#include "p_spec.h"
 #include "r_data.h"
+#include "r_defs.h"
 #include "r_main.h"
+#include "sc_man.h"
 #include "v_video.h"
 #include "w_wad.h"
-#include "p_spec.h"
-#include "m_misc.h"
-#include "sc_man.h"
-#include "e6y.h"
 
 #include "gl_opengl.h"
 #include "gl_struct.h"
@@ -55,15 +57,13 @@ int scene_has_details;
 int scene_has_wall_details;
 int scene_has_flat_details;
 
-typedef enum
-{
+typedef enum {
   TAG_DETAIL_WALL,
   TAG_DETAIL_FLAT,
   TAG_DETAIL_MAX,
 } tag_detail_e;
 
-static const char *DetailItem_Keywords[TAG_DETAIL_MAX + 1] =
-{
+static const char *DetailItem_Keywords[TAG_DETAIL_MAX + 1] = {
   "walls",
   "flats",
   NULL
@@ -77,7 +77,7 @@ TAnimItemParam *anim_textures = NULL;
 
 void gld_ShutdownDetail(void);
 
-void M_ChangeUseDetail(void)
+void MN_ChangeUseDetail(void)
 {
   render_usedetail = false;
 
@@ -133,7 +133,7 @@ void gld_InitDetail(void)
   gl_detail_maxdist_sqrt = (float)sqrt((float)gl_detail_maxdist);
 
   atexit(gld_ShutdownDetail);
-  M_ChangeUseDetail();
+  MN_ChangeUseDetail();
 }
 
 void gld_ShutdownDetail(void)

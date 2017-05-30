@@ -26,11 +26,11 @@
 #include <enet/enet.h>
 
 #include "i_main.h"
-#include "n_main.h"
-#include "n_chan.h"
-#include "pl_msg.h"
+#include "d_msg.h"
 
-extern int gametic;
+#include "n_main.h"
+#include "n_proto.h"
+#include "n_chan.h"
 
 typedef struct tocentry_s {
   unsigned int  index;
@@ -43,39 +43,31 @@ typedef struct packet_buf_s {
   unsigned int   cursor;
 } packet_buf_t;
 
-net_message_info_t network_message_info[NM_MAX] = {
-  { "none", NET_CHANNEL_UNRELIABLE },
-  { "setup", NET_CHANNEL_RELIABLE },
-  { "full state", NET_CHANNEL_RELIABLE },
-  { "authentication", NET_CHANNEL_RELIABLE },
-  { "chat message", NET_CHANNEL_RELIABLE },
-  { "sync", NET_CHANNEL_UNRELIABLE },
-  { "player preference change", NET_CHANNEL_RELIABLE },
-  { "game action", NET_CHANNEL_RELIABLE },
-  { "RCON command", NET_CHANNEL_RELIABLE },
-  { "vote request", NET_CHANNEL_RELIABLE },
-  { "ping", NET_CHANNEL_RELIABLE },
-};
-
 static void serialize_toc(netchan_t *chan) {
   M_PBufClear(&chan->packed_toc);
 
-  if (!M_PBufWriteMap(&chan->packed_toc, chan->toc->len))
-    I_Error("Error writing map: %s.\n", cmp_strerror(&chan->packed_toc.cmp));
-
-  D_Msg(MSG_NET, "serialize_toc: Buffer cursor, size, capacity: %zu/%zu/%zu\n",
-    M_PBufGetCursor(&chan->packed_toc),
-    M_PBufGetSize(&chan->packed_toc),
-    M_PBufGetCapacity(&chan->packed_toc)
-  );
+  if (!M_PBufWriteMap(&chan->packed_toc, chan->toc->len)) {
+    I_Error("serialize_toc: Error writing map entry to TOC: %s.\n",
+      cmp_strerror(&chan->packed_toc.cmp)
+    );
+  }
 
   for (unsigned int i = 0; i < chan->toc->len; i++) {
     tocentry_t *message = &g_array_index(chan->toc, tocentry_t, i);
 
-    if (!M_PBufWriteUInt(&chan->packed_toc, message->index))
-      I_Error("Error writing UInt: %s.\n", cmp_strerror(&chan->packed_toc.cmp));
-    if (!M_PBufWriteUChar(&chan->packed_toc, message->type))
-      I_Error("Error writing UChar: %s\n", cmp_strerror(&chan->packed_toc.cmp));
+    if (!M_PBufWriteUNum(&chan->packed_toc, message->index)) {
+      I_Error(
+        "serialize_toc: Error writing network message index to TOC: %s.\n",
+        cmp_strerror(&chan->packed_toc.cmp)
+      );
+    }
+
+    if (!M_PBufWriteUChar(&chan->packed_toc, message->type)) {
+      I_Error(
+        "serialize_toc: Error writing network message type to TOC: %s\n",
+        cmp_strerror(&chan->packed_toc.cmp)
+      );
+    }
   }
 }
 
@@ -101,14 +93,6 @@ static bool deserialize_toc(GArray *toc, unsigned char *data,
   packet_data.size = size;
 
   if (!cmp_read_map(&cmp, &toc_size)) {
-    D_Msg(MSG_DEBUG, "Error reading map: %s\n", cmp_strerror(&cmp));
-
-    D_Msg(MSG_DEBUG, "Packet data: ");
-    for (unsigned int i = 0; i < MIN(size, 26); i++) {
-      D_Msg(MSG_DEBUG, "%02X ", data[i] & 0xFF);
-    }
-    D_Msg(MSG_DEBUG, "\n");
-
     return false;
   }
 
@@ -122,16 +106,12 @@ static bool deserialize_toc(GArray *toc, unsigned char *data,
     tocentry_t *toc_entry = &g_array_index(toc, tocentry_t, i);
 
     if (!cmp_read_uint(&cmp, &toc_entry->index)) {
-      PL_Printf(P_GetConsolePlayer(),
-        "Error reading message index: %s\n", cmp_strerror(&cmp)
-      );
+      D_MsgLocalError("Error reading message index: %s\n", cmp_strerror(&cmp));
       return false;
     }
 
     if (!cmp_read_uchar(&cmp, &toc_entry->type)) {
-      PL_Printf(P_GetConsolePlayer(), "Error reading message type: %s\n",
-        cmp_strerror(&cmp)
-      );
+      D_MsgLocalError("Error reading message type: %s\n", cmp_strerror(&cmp));
       return false;
     }
   }
@@ -189,18 +169,6 @@ void* N_ChannelGetPacket(netchan_t *nc) {
   memcpy(packet->data, M_PBufGetData(&nc->packed_toc), toc_size);
   memcpy(packet->data + toc_size, M_PBufGetData(&nc->messages), msg_size);
 
-  if (packet->data[2] != 4) {
-    D_Msg(MSG_NET,
-      "Sending packet (packet size %zu):\n", packet->dataLength
-    );
-
-    for (int i = 0; i < MIN(26, packet->dataLength); i++) {
-      D_Msg(MSG_NET, "%02X ", packet->data[i] & 0xFF);
-    }
-
-    D_Msg(MSG_NET, "\n");
-  }
-
   if (nc->throttled) {
     nc->last_flush_tic = I_GetTime();
   }
@@ -254,30 +222,18 @@ bool N_ChannelLoadFromData(netchan_t *nc, unsigned char *data, size_t size) {
   N_ChannelClear(nc);
 
   if (!deserialize_toc(nc->toc, data, size, &message_start_point)) {
-    PL_Printf(P_GetConsolePlayer(),
-      "N_ChannelLoadFromData: Error reading packet's TOC.\n"
-    );
+    D_MsgLocalError("Error reading packet's TOC.\n");
     return false;
   }
 
   if (message_start_point >= size) {
-    PL_Printf(P_GetConsolePlayer(),
-      "N_ChannelLoadFromData: Received empty packet.\n"
-    );
+    D_MsgLocalError("Received empty packet.\n");
     return false;
   }
 
   M_PBufSetData(
     &nc->messages, data + message_start_point, size - message_start_point
   );
-
-  if (data[2] != 4) {
-    D_Msg(MSG_NET, "Received packet (packet size %zu):\n", size);
-    for (int i = 0; i < MIN(26, size); i++) {
-      D_Msg(MSG_NET, "%02X ", data[i] & 0xFF);
-    }
-    D_Msg(MSG_NET, "\n");
-  }
 
   return true;
 }
@@ -295,9 +251,9 @@ bool N_ChannelLoadNextMessage(netchan_t *nc, net_message_e *message_type) {
     toc_entry = &g_array_index(nc->toc, tocentry_t, i);
 
     if (toc_entry->index >= M_PBufGetSize(&nc->messages)) {
-      PL_Printf(P_GetConsolePlayer(),
-        "N_PeerLoadNextMessage: Invalid message index (%u >= %zu).\n",
-        toc_entry->index, M_PBufGetSize(&nc->messages)
+      D_MsgLocalError("Invalid message index (%u >= %zu).\n",
+        toc_entry->index,
+        M_PBufGetSize(&nc->messages)
       );
       valid_message = false;
       break;

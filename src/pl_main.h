@@ -111,7 +111,7 @@ typedef enum {
   *                initiative is completed.
   */
 
-typedef struct {
+typedef struct ticcmd_s {
   char          forwardmove;  /* *2048 for move       */
   char          sidemove;     /* *2048 for move       */
   short         angleturn;    /* <<16 for angle delta */
@@ -130,7 +130,7 @@ typedef struct idxticcmd_s {
   unsigned char buttons;
 } idxticcmd_t;
 
-typedef struct {
+typedef struct command_queue_s {
   GPtrArray *commands;
   uint32_t   commands_missed;
   uint32_t   command_limit;
@@ -304,8 +304,8 @@ player_t* P_PlayersGetNewWithID(uint32_t id);
 player_t* P_PlayersLookup(uint32_t id);
 void      P_PlayerRemove(player_t *player);
 
-void      P_SetConsolePlayerID(player_t *player);
-void      P_SetDisplayPlayerID(player_t *player);
+void      P_SetConsolePlayer(player_t *player);
+void      P_SetDisplayPlayer(player_t *player);
 player_t* P_GetConsolePlayer(void);
 player_t* P_GetDisplayPlayer(void);
 

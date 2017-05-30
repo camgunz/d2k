@@ -60,18 +60,20 @@
 
 #include "z_zone.h"
 
-#include "r_defs.h"
-#include "v_video.h"
-#include "gl_opengl.h"
-#include "r_main.h"
 #include "e6y.h"
+#include "r_defs.h"
+#include "r_main.h"
+#include "v_video.h"
+
+#include "gl_opengl.h"
 
 float frustum[6][4];
 
-typedef struct clipnode_s
-{
-  struct clipnode_s *prev, *next;
-  angle_t start, end;
+typedef struct clipnode_s {
+  struct clipnode_s *prev;
+  struct clipnode_s *next;
+  angle_t start;
+  angle_t end;
 } clipnode_t;
 
 clipnode_t *freelist;

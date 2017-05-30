@@ -24,6 +24,9 @@
 #ifndef G_CORPSE_H__
 #define G_CORPSE_H__
 
+struct mobj_s;
+typedef struct mobj_s mobj_t;
+
 bool   G_CorpseQueueInitialized(void);
 void   G_CorpseQueueInit(void);
 void   G_CorpseQueueClear(void);

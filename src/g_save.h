@@ -27,10 +27,14 @@
 // CPhipps - Make savedesciption visible in wider scope
 #define SAVEDESCLEN 32
 
+extern unsigned char savegameslot;
+
 extern char *basesavegame;      // killough 2/16/98: savegame path
 
 // Description to save in savegame
 extern char savedescription[SAVEDESCLEN];
+
+extern const char *savegamename;
 
 void G_UpdateAverageSaveSize(int new_size);
 int  G_GetAverageSaveSize(void);

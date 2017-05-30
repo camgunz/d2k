@@ -24,6 +24,9 @@
 #ifndef I_INPUT_H__
 #define I_INPUT_H__
 
+struct event_s;
+typedef struct event_s event_t;
+
 typedef struct key_states_s {
   bool shiftdown;
   bool ctrldown;

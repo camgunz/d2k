@@ -364,7 +364,7 @@ bool M_CreateFile(const char *path, int mode) {
     return false;
   }
 
-  return M_Close(fd);
+  return M_FDClose(fd);
 }
 
 bool M_DeletePath(const char *path) {

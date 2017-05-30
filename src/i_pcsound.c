@@ -25,10 +25,10 @@
 
 #include <SDL.h>
 
-#include "sounds.h"
 #include "i_pcsound.h"
 #include "i_sound.h"
-
+#include "d_res.h"
+#include "sounds.h"
 #include "w_wad.h"
 
 #include "PCSOUND/pcsound.h"

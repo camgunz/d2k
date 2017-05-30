@@ -99,7 +99,7 @@ static void cl_clear_repredicting(void) {
 }
 
 static bool cl_load_new_state(netpeer_t *server) {
-  game_state_delta_t *delta = N_PeerGetSyncStateDelta(server);
+  game_state_delta_t *delta = N_PeerSyncGetStateDelta(server);
   bool state_loaded;
 
   if (!G_ApplyStateDelta(delta)) {
@@ -144,12 +144,12 @@ static bool cl_load_new_state(netpeer_t *server) {
   cl_synchronizing = true;
 
   N_MsgSyncLocalDebug("Synchronizing %d => %d\n",
-    gametic, N_PeerGetSyncTIC(server)
+    gametic, N_PeerSyncGetTIC(server)
   );
 
   R_ResetViewInterpolation();
 
-  for (int i = gametic; i <= N_PeerGetSyncTIC(server); i++) {
+  for (int i = gametic; i <= N_PeerSyncGetTIC(server); i++) {
     N_RunTic();
 
     if (P_GetDisplayPlayer()->mo != NULL) {
@@ -160,9 +160,9 @@ static bool cl_load_new_state(netpeer_t *server) {
 
   cl_synchronizing = false;
 
-  if (gametic != N_PeerGetSyncTIC(server) + 1) {
+  if (gametic != N_PeerSyncGetTIC(server) + 1) {
     D_MsgLocalWarn("Synchronization incomplete: %d, %d\n",
-      gametic, N_PeerGetSyncTIC(server)
+      gametic, N_PeerSyncGetTIC(server)
     );
   }
 
@@ -193,7 +193,7 @@ static bool cl_load_new_state(netpeer_t *server) {
 }
 
 netpeer_t* CL_GetServerPeer(void) {
-  return N_PeerGet(1);
+  return N_PeersLookup(1);
 }
 
 void CL_CheckForStateUpdates(void) {
@@ -219,13 +219,13 @@ void CL_CheckForStateUpdates(void) {
     return;
   }
 
-  saved_state_tic = N_PeerGetSyncTIC(server);
-  saved_state_delta_from_tic = N_PeerGetSyncStateDelta(server)->from_tic;
-  saved_state_delta_to_tic = N_PeerGetSyncStateDelta(server)->to_tic;
+  saved_state_tic = N_PeerSyncGetTIC(server);
+  saved_state_delta_from_tic = N_PeerSyncGetStateDelta(server)->from_tic;
+  saved_state_delta_to_tic = N_PeerSyncGetStateDelta(server)->to_tic;
 
   N_MsgSyncLocalDebug("(%d) Loading new state [%d, %d => %d] (%d)\n",
     gametic,
-    N_PeerGetSyncCommandIndex(server),
+    N_PeerSyncGetCommandIndex(server),
     saved_state_delta_from_tic,
     saved_state_delta_to_tic,
     P_GetConsolePlayer()->cmdq.latest_command_run_index
@@ -234,7 +234,7 @@ void CL_CheckForStateUpdates(void) {
   S_ResetSoundLog();
 
   if (!cl_load_new_state(server)) {
-    N_PeerResetSyncStateDelta(
+    N_PeerSyncResetStateDelta(
       server,
       saved_state_tic,
       saved_state_delta_from_tic,
@@ -285,14 +285,14 @@ void CL_CheckForStateUpdates(void) {
     CL_RePredict(saved_gametic);
   }
 
-  cl_state_tic = N_PeerGetSyncTIC(server);
+  cl_state_tic = N_PeerSyncGetTIC(server);
 
   N_PeerSyncSetNotUpdated(server);
   N_PeerSyncSetOutdated(server);
 
   S_TrimSoundLog(
-    N_PeerGetSyncStateDelta(server)->from_tic,
-    N_PeerGetSyncCommandIndex(server)
+    N_PeerSyncGetStateDelta(server)->from_tic,
+    N_PeerSyncGetCommandIndex(server)
   );
 }
 
@@ -335,7 +335,7 @@ void CL_UpdateReceivedCommandIndex(unsigned int command_index) {
     return;
   }
 
-  N_PeerUpdateSyncCommandIndex(server, command_index);
+  N_PeerSyncUpdateCommandIndex(server, command_index);
 }
 
 int CL_StateTIC(void) {
@@ -443,7 +443,7 @@ void CL_ResetSync(void) {
   G_ClearStates();
 
   if (server) {
-    N_PeerResetSync(server);
+    N_PeerSyncReset(server);
     N_PeerSyncSetHasGameInfo(server);
   }
 

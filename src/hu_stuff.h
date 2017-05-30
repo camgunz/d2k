@@ -52,11 +52,33 @@ typedef struct event_s event_t;
 
 #define HU_MSGTIMEOUT   (4*TICRATE)
 
+#define HU_HUDADDX (HU_HUDX)
+#define HU_HUDADDY (HU_HUDY+(-1)*HU_GAPY)
+#define HU_CENTERMSGX (320/2)
+#define HU_CENTERMSGY ((200-ST_HEIGHT)/2 - 1 - LittleShort(hu_font[0].height))
+
+#define HU_HUDADDX_D (HU_HUDX_LL)
+#define HU_HUDADDY_D (HU_HUDY_LL+(-1)*HU_GAPY)
+
 #define HU_CROSSHAIRS	4
 extern const char *crosshair_nam[HU_CROSSHAIRS];
 extern const char *crosshair_str[HU_CROSSHAIRS];
 
 extern bool chat_on;
+
+extern int hudadd_gamespeed;
+extern int hudadd_leveltime;
+extern int hudadd_demotime;
+extern int hudadd_secretarea;
+extern int hudadd_smarttotals;
+extern int hudadd_demoprogressbar;
+extern int hudadd_crosshair;
+extern int hudadd_crosshair_scale;
+extern int hudadd_crosshair_color;
+extern int hudadd_crosshair_health;
+extern int hudadd_crosshair_target;
+extern int hudadd_crosshair_target_color;
+extern int hudadd_crosshair_lock_target;
 
 /*
  * Heads up text
@@ -139,7 +161,8 @@ void   HU_DrawTitle(int x, int y, const char *patch, int cm,
 void   HU_DrawString(int cx, int cy, int color, const char *ch);
 size_t HU_GetPixelWidth(const char *ch);
 void   HU_DrawStringCentered(int cx, int cy, int color, const char *ch);
+bool   HU_DrawDemoProgress(int force);
+
 #endif
 
 /* vi: set et ts=2 sw=2: */
-

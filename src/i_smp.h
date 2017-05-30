@@ -24,6 +24,12 @@
 #ifndef I_SMP_H__
 #define I_SMP_H__
 
+struct draw_column_vars_s;
+typedef struct draw_column_vars_s draw_column_vars_t;
+
+struct draw_span_vars_s;
+typedef struct draw_span_vars_s draw_span_vars_t;
+
 typedef struct smp_item_s
 {
   volatile int size;

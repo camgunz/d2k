@@ -42,7 +42,7 @@ typedef enum {
   commercial,   // DOOM 2 retail, E1 M34  (DOOM 2 german edition not handled)
   retail,       // DOOM 1 retail, E4, M36
   indetermined  // Well, no IWAD found.
-} GameMode_e;
+} game_mode_e;
 
 // Mission packs - might be useful for TC stuff?
 typedef enum {
@@ -54,18 +54,18 @@ typedef enum {
   hacx,         // HACX - Twitch 'n Kill
   chex,         // Chex Quest
   none
-} GameMission_e;
+} game_mission_e;
 
-extern bool          usergame;
-extern bool          solonet;
-extern bool          netgame;
-extern bool          netserver;
-extern bool          netdemo;
-extern bool          demorecording;
-extern bool          demoplayback;
-extern bool          democontinue;
-extern GameMode_e    gamemode;
-extern GameMission_e gamemission;
+extern bool           usergame;
+extern bool           solonet;
+extern bool           netgame;
+extern bool           netserver;
+extern bool           netdemo;
+extern bool           demorecording;
+extern bool           demoplayback;
+extern bool           democontinue;
+extern game_mode_e    gamemode;
+extern game_mission_e gamemission;
 
 #endif
 

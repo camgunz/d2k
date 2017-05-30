@@ -65,11 +65,11 @@ static void OpenScriptByNum(int lump);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 char *sc_String;
-int sc_Number;
-int sc_Line;
-bool sc_End;
-bool sc_Crossed;
-bool sc_FileScripts = false;
+int   sc_Number;
+int   sc_Line;
+bool  sc_End;
+bool  sc_Crossed;
+bool  sc_FileScripts = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
