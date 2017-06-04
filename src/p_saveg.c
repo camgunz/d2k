@@ -80,24 +80,8 @@ static void serialize_corpse(gpointer data, gpointer user_data) {
   M_PBufWriteUInt(savebuffer, corpse->id);
 }
 
-#if 0
-static void serialize_command(gpointer data, gpointer user_data) {
-  netticcmd_t *ncmd = (netticcmd_t *)data;
-  pbuf_t *savebuffer = (pbuf_t *)user_data;
-
-  M_PBufWriteInt(savebuffer, ncmd->index);
-  M_PBufWriteInt(savebuffer, ncmd->tic);
-  M_PBufWriteInt(savebuffer, ncmd->server_tic);
-  M_PBufWriteChar(savebuffer, ncmd->forward);
-  M_PBufWriteChar(savebuffer, ncmd->side);
-  M_PBufWriteShort(savebuffer, ncmd->angle);
-  M_PBufWriteUChar(savebuffer, ncmd->buttons);
-}
-#endif
-
 static void serialize_player(pbuf_t *savebuffer, int playernum) {
   player_t *player = &players[playernum];
-  // unsigned int command_count;
 
   M_PBufWriteInt(savebuffer, player->playerstate);
   M_PBufWriteChar(savebuffer, player->cmd.forwardmove);
@@ -113,20 +97,20 @@ static void serialize_player(pbuf_t *savebuffer, int playernum) {
   M_PBufWriteInt(savebuffer, player->health);
   M_PBufWriteInt(savebuffer, player->armorpoints);
   M_PBufWriteInt(savebuffer, player->armortype);
-  for (int i = 0; i < NUMPOWERS; i++)
+  for (size_t i = 0; i < NUMPOWERS; i++)
     M_PBufWriteInt(savebuffer, player->powers[i]);
-  for (int i = 0; i < NUMCARDS; i++)
+  for (size_t i = 0; i < NUMCARDS; i++)
     M_PBufWriteBool(savebuffer, player->cards[i]);
   M_PBufWriteBool(savebuffer, player->backpack);
-  for (int i = 0; i < MAXPLAYERS; i++)
+  for (size_t i = 0; i < MAXPLAYERS; i++)
     M_PBufWriteInt(savebuffer, player->frags[i]);
   M_PBufWriteInt(savebuffer, player->readyweapon);
   M_PBufWriteInt(savebuffer, player->pendingweapon);
-  for (int i = 0; i < NUMWEAPONS; i++)
+  for (size_t i = 0; i < NUMWEAPONS; i++)
     M_PBufWriteInt(savebuffer, player->weaponowned[i]);
-  for (int i = 0; i < NUMAMMO; i++)
+  for (size_t i = 0; i < NUMAMMO; i++)
     M_PBufWriteInt(savebuffer, player->ammo[i]);
-  for (int i = 0; i < NUMAMMO; i++)
+  for (size_t i = 0; i < NUMAMMO; i++)
     M_PBufWriteInt(savebuffer, player->maxammo[i]);
   M_PBufWriteInt(savebuffer, player->attackdown);
   M_PBufWriteInt(savebuffer, player->usedown);
@@ -140,7 +124,7 @@ static void serialize_player(pbuf_t *savebuffer, int playernum) {
   M_PBufWriteInt(savebuffer, player->extralight);
   M_PBufWriteInt(savebuffer, player->fixedcolormap);
   M_PBufWriteInt(savebuffer, player->colormap);
-  for (int i = 0; i < NUMPSPRITES; i++) {
+  for (size_t i = 0; i < NUMPSPRITES; i++) {
     if (player->psprites[i].state) {
       uint64_t state_index;
 
@@ -234,20 +218,20 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
   M_PBufReadInt(savebuffer, &player->health);
   M_PBufReadInt(savebuffer, &player->armorpoints);
   M_PBufReadInt(savebuffer, &player->armortype);
-  for (int i = 0; i < NUMPOWERS; i++)
+  for (size_t i = 0; i < NUMPOWERS; i++)
     M_PBufReadInt(savebuffer, &player->powers[i]);
-  for (int i = 0; i < NUMCARDS; i++)
+  for (size_t i = 0; i < NUMCARDS; i++)
     M_PBufReadBool(savebuffer, &player->cards[i]);
   M_PBufReadBool(savebuffer, &player->backpack);
-  for (int i = 0; i < MAXPLAYERS; i++)
+  for (size_t i = 0; i < MAXPLAYERS; i++)
     M_PBufReadInt(savebuffer, &player->frags[i]);
   M_PBufReadInt(savebuffer, (int *)&player->readyweapon);
   M_PBufReadInt(savebuffer, (int *)&player->pendingweapon);
-  for (int i = 0; i < NUMWEAPONS; i++)
+  for (size_t i = 0; i < NUMWEAPONS; i++)
     M_PBufReadInt(savebuffer, &player->weaponowned[i]);
-  for (int i = 0; i < NUMAMMO; i++)
+  for (size_t i = 0; i < NUMAMMO; i++)
     M_PBufReadInt(savebuffer, &player->ammo[i]);
-  for (int i = 0; i < NUMAMMO; i++)
+  for (size_t i = 0; i < NUMAMMO; i++)
     M_PBufReadInt(savebuffer, &player->maxammo[i]);
   M_PBufReadInt(savebuffer, &player->attackdown);
   M_PBufReadInt(savebuffer, &player->usedown);
@@ -261,7 +245,7 @@ static void deserialize_player(pbuf_t *savebuffer, int playernum) {
   M_PBufReadInt(savebuffer, &player->extralight);
   M_PBufReadInt(savebuffer, &player->fixedcolormap);
   M_PBufReadInt(savebuffer, &player->colormap);
-  for (int i = 0; i < NUMPSPRITES; i++) {
+  for (size_t i = 0; i < NUMPSPRITES; i++) {
     uint64_t state_index = 0;
 
     M_PBufReadULong(savebuffer, &state_index);
@@ -1126,7 +1110,7 @@ static void deserialize_line_index(pbuf_t *savebuffer, line_t **li, const char *
 // P_ArchivePlayers
 //
 void P_ArchivePlayers(pbuf_t *savebuffer) {
-  for (int i = 0; i < MAXPLAYERS; i++) {
+  for (size_t i = 0; i < MAXPLAYERS; i++) {
     if (playeringame[i]) {
       serialize_player(savebuffer, i);
     }
@@ -1137,7 +1121,7 @@ void P_ArchivePlayers(pbuf_t *savebuffer) {
 // P_UnArchivePlayers
 //
 void P_UnArchivePlayers(pbuf_t *savebuffer) {
-  for (int i = 0; i < MAXPLAYERS; i++) {
+  for (size_t i = 0; i < MAXPLAYERS; i++) {
     if (!playeringame[i]) {
       continue;
     }
@@ -1216,7 +1200,7 @@ void P_ArchiveWorld(pbuf_t *savebuffer) {
 
   M_PBufWriteInt(savebuffer, musinfo.current_item);
 
-  for (int i = 0; i < MAXBUTTONS; i++) {
+  for (size_t i = 0; i < MAXBUTTONS; i++) {
     if (buttonlist[i].btimer) {
       button_count++;
     }
@@ -1453,7 +1437,7 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
   }
 
   // killough 9/14/98: save soundtargets
-  for (int i = 0; i < numsectors; i++) {
+  for (size_t i = 0; i < numsectors; i++) {
     mobj_t *target = sectors[i].soundtarget;
 
     if (target && target->thinker.function == P_MobjThinker)

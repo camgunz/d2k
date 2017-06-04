@@ -45,13 +45,12 @@ typedef enum {
 } netpeer_status_e;
 
 typedef struct {
-  bool initialized;
-  netpeer_t *np;
   id_hash_iterator_t iter;
+  netpeer_t *np;
 } netpeer_iterator_t;
 
 #define NETPEER_FOR_EACH(_it) \
-  for (netpeer_iterator_t (_it) = { 0 }; N_PeerIter(&(_it));)
+  for (netpeer_iterator_t _it = { { 0 }, NULL }; N_PeerIterate(&_it);)
 
 void       N_PeersInit(void);
 netpeer_t* N_PeersAdd(void *enet_peer);
@@ -59,37 +58,43 @@ netpeer_t* N_PeersLookup(uint32_t id);
 netpeer_t* N_PeersLookupByENetPeer(void *enet_peer);
 netpeer_t* N_PeersLookupByPlayer(player_t *player);
 size_t     N_PeersGetCount(void);
+bool       N_PeersPeerExists(uint32_t id);
 
-bool       N_PeerIter(netpeer_iterator_t *iter);
-void       N_PeerIterRemove(netpeer_iterator_t *iter);
+bool       N_PeerIterate(netpeer_iterator_t *iter);
+void       N_PeerIterateRemove(netpeer_iterator_t *iter);
 
 void       N_PeerRemove(netpeer_t *np);
-bool       N_PeerHasPlayer(netpeer_t *np);
 bool       N_PeerCheckTimeout(netpeer_t *np);
 bool       N_PeerCanRequestSetup(netpeer_t *np);
 void       N_PeerSetConnected(netpeer_t *np);
 bool       N_PeerTooLagged(netpeer_t *np);
 void       N_PeerDisconnect(netpeer_t *np, disconnection_reason_e reason);
 
-player_t*        N_PeerGetPlayer(netpeer_t *np);
-void             N_PeerSetPlayer(netpeer_t *np, player_t *player);
+uint32_t         N_PeerGetID(netpeer_t *np);
+uint32_t         N_PeerGetIPAddress(netpeer_t *np);
+const char*      N_PeerGetIPAddressConstString(netpeer_t *np);
+uint16_t         N_PeerGetPort(netpeer_t *np);
+netpeer_status_e N_PeerGetStatus(netpeer_t *np);
+void             N_PeerSetStatus(netpeer_t *np, netpeer_status_e status);
 double           N_PeerGetConnectionWaitTime(netpeer_t *np);
 double           N_PeerGetDisconnectionWaitTime(netpeer_t *np);
 double           N_PeerGetLastSetupRequestTime(netpeer_t *np);
 void             N_PeerUpdateLastSetupRequestTime(netpeer_t *np);
 auth_level_e     N_PeerGetAuthLevel(netpeer_t *np);
 void             N_PeerSetAuthLevel(netpeer_t *np, auth_level_e auth_level);
-uint32_t         N_PeerGetID(netpeer_t *np);
-netpeer_status_e N_PeerGetStatus(netpeer_t *np);
+unsigned int     N_PeerGetPing(netpeer_t *np);
+void             N_PeerSetPing(netpeer_t *np, unsigned int ping);
+int              N_PeerGetConnectTic(netpeer_t *np);
 const char*      N_PeerGetName(netpeer_t *np);
-void             N_PeerSetNameRaw(netpeer_t *np, char *name);
-void             N_PeerSetName(netpeer_t *np, char *name);
+void             N_PeerSetName(netpeer_t *np, const char *name);
 team_t*          N_PeerGetTeam(netpeer_t *np);
+void             N_PeerSetTeam(netpeer_t *np, team_t *team);
+bool             N_PeerHasTeam(netpeer_t *np);
 void             N_PeerSetTeamRaw(netpeer_t *np, team_t *team);
 void             N_PeerSetTeam(netpeer_t *np, team_t *team);
-uint32_t         N_PeerGetIPAddress(netpeer_t *np);
-const char*      N_PeerGetIPAddressConstString(netpeer_t *np);
-uint16_t         N_PeerGetPort(netpeer_t *np);
+player_t*        N_PeerGetPlayer(netpeer_t *np);
+void             N_PeerSetPlayer(netpeer_t *np, player_t *player);
+bool             N_PeerHasPlayer(netpeer_t *np);
 
 void    N_PeerFlushReliableChannel(netpeer_t *np);
 void    N_PeerFlushUnreliableChannel(netpeer_t *np);
@@ -103,6 +108,7 @@ void    N_PeerClearUnreliableChannel(netpeer_t *np);
 void    N_PeerSendReset(netpeer_t *np);
 size_t  N_PeerGetBytesUploaded(netpeer_t *np);
 size_t  N_PeerGetBytesDownloaded(netpeer_t *np);
+
 void*   N_PeerGetENetPeer(netpeer_t *np);
 float   N_PeerGetPacketLoss(netpeer_t *np);
 float   N_PeerGetPacketLossJitter(netpeer_t *np);

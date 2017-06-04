@@ -35,8 +35,8 @@ typedef enum {
 typedef struct netsync_s {
   net_sync_state_e state;
   int tic;
-  unsigned int command_index;
-  unsigned int command_indices[MAXPLAYERS];
+  uint32_t command_index;
+  GHashTable *command_indices;
   game_state_delta_t delta;
 } netsync_t;
 
@@ -66,10 +66,9 @@ int      N_SyncGetTIC(netsync_t *ns);
 void     N_SyncSetTIC(netsync_t *ns, int tic);
 void     N_SyncUpdateTIC(netsync_t *ns, int tic);
 
-unsigned int N_SyncGetCommandIndex(netsync_t *ns);
-void         N_SyncSetCommandIndex(netsync_t *ns, unsigned int command_index);
-void         N_SyncUpdateCommandIndex(netsync_t *ns,
-                                      unsigned int command_index);
+uint32_t N_SyncGetCommandIndex(netsync_t *ns);
+void     N_SyncSetCommandIndex(netsync_t *ns, uint32_t command_index);
+void     N_SyncUpdateCommandIndex(netsync_t *ns, uint32_t command_index);
 
 game_state_delta_t* N_SyncGetStateDelta(netsync_t *ns);
 bool                N_SyncUpdateStateDelta(netsync_t *ns, int from_tic,
@@ -80,14 +79,12 @@ void                N_SyncResetStateDelta(netsync_t *ns, int sync_tic,
                                                          int from_tic,
                                                          int to_tic);
 
-unsigned int N_SyncGetCommandIndexForPlayer(netsync_t *ns,
-                                            unsigned int playernum);
-void         N_SyncSetCommandIndexForPlayer(netsync_t *ns,
-                                            unsigned int playernum,
-                                            unsigned int command_index);
-void         N_SyncUpdateCommandIndexForPlayer(netsync_t *ns,
-                                               unsigned int playernum,
-                                               unsigned int command_index);
+uint32_t N_SyncGetCommandIndexForPlayer(netsync_t *ns, player_t *player);
+void     N_SyncSetCommandIndexForPlayer(netsync_t *ns, player_t *player,
+                                                       uint32_t command_index);
+void     N_SyncUpdateCommandIndexForPlayer(netsync_t *ns,
+                                           player_t *player,
+                                           uint32_t command_index);
 
 #endif
 

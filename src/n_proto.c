@@ -23,29 +23,28 @@
 
 #include "z_zone.h"
 
-#include "c_main.h"
+#include "m_misc.h"
 #include "d_deh.h"
 #include "d_event.h"
 #include "d_main.h"
+#include "d_res.h"
 #include "g_game.h"
 #include "g_state.h"
-#include "m_misc.h"
-#include "n_main.h"
-#include "p_user.h"
-#include "cl_main.h"
-#include "cl_net.h"
+#include "pl_main.h"
 #include "s_sound.h"
 #include "sounds.h"
 #include "sv_main.h"
 #include "w_wad.h"
 
-const char *D_dehout(void); /* CG: from d_main.c */
+#include "n_main.h"
+#include "cl_main.h"
+#include "cl_net.h"
 
 #define MAX_PREF_NAME_SIZE 20
 
 #define SERVER_ONLY(name)                                                     \
   if (!SERVER) {                                                              \
-    P_Printf(consoleplayer,                                                   \
+    D_MsgLocalError(                                                          \
       "%s: Erroneously received message [%s] from the server\n",              \
       __func__, name                                                          \
     );                                                                        \
@@ -54,36 +53,21 @@ const char *D_dehout(void); /* CG: from d_main.c */
 
 #define CLIENT_ONLY(name)                                                     \
   if (SERVER) {                                                               \
-    P_Printf(consoleplayer,                                                   \
+    D_MsgLocalError(                                                          \
       "%s: Erroneously received message [%s] from a client\n",                \
       __func__, name                                                          \
     );                                                                        \
     continue;                                                                 \
   }
 
-#define CHECK_VALID_PLAYER(np, playernum)                                     \
-  if (playernum < 0 || playernum >= MAXPLAYERS)                               \
-    I_Error("%s: Invalid player %d.\n", __func__, playernum);                 \
-  if (!playeringame[playernum])                                               \
-    I_Error("%s: Invalid player %d.\n", __func__, playernum);                 \
-  if (((np) = N_PeerForPlayer(playernum)) == NULL)                            \
-    I_Error("%s: Invalid player %d.\n", __func__, playernum);                 \
-  if (N_PeerGetPlayernum(np) != playernum) {                                  \
-    I_Error("%s: Peer playernum mismatch (%d != %d)\n",                       \
-      __func__,                                                               \
-      N_PeerGetPlayernum(np),                                                 \
-      playernum                                                               \
-    );                                                                        \
-  }
-
 #define CHECK_CONNECTION(np)                                                  \
   if (((np) = CL_GetServerPeer()) == NULL) {                                  \
-    P_Printf(consoleplayer, "%s: Not connected\n", __func__);                 \
+    D_MsgLocalError("%s: Not connected\n", __func__);                         \
     return;                                                                   \
   }
 
 static void display_chat_message(chat_channel_e chat_channel,
-                                 unsigned short sender,
+                                 netpeer_t *sender,
                                  const char *message) {
   int sfx;
   const char *sender_name;
@@ -108,13 +92,12 @@ static void display_chat_message(chat_channel_e chat_channel,
     return;
   }
   else {
-    sender_name = players[sender].name;
+    sender_name = N_PeerGetName(sender);
     sender_opener = "&lt;";
     sender_closer = "&gt;";
   }
 
-  switch (chat_channel)
-  {
+  switch (chat_channel) {
     case CHAT_CHANNEL_SERVER:
       channel = " (SERVER)";
     break;
@@ -324,10 +307,8 @@ static void handle_player_preference_change(netpeer_t *np) {
   static buf_t *pref_key_name = NULL;
   static buf_t *pref_key_value = NULL;
 
-  unsigned short playernum = 0;
   int tic = 0;
-  unsigned int pref_count = 0;
-  player_t *player = &players[N_PeerGetPlayernum(np)];
+  netpeer_t *src = NULL;
 
   if (!pref_key_name) {
     pref_key_name = M_BufferNew();
@@ -337,75 +318,90 @@ static void handle_player_preference_change(netpeer_t *np) {
     pref_key_value = M_BufferNew();
   }
 
-  if (!N_UnpackPlayerPreferenceChange(np, &tic, &playernum, &pref_count)) {
+  if (!N_UnpackPreferenceChange(np, &tic, &src)) {
     return;
   }
 
-  if (SERVER && playernum != N_PeerGetPlayernum(np)) {
-    P_Printf(consoleplayer,
-      "Received player preference for player %d from peer %d.\n",
-      playernum, N_PeerGetPlayernum(np)
+  if (SERVER && (N_PeerGetID(np) != N_PeerGetID(src))) {
+    D_MsgLocalError(
+      "Received player preference for peer %u from peer %u.\n",
+      N_PeerGetID(src), N_PeerGetID(np)
     );
     return;
   }
 
-  for (size_t i = 0; i < pref_count; i++) {
-    if (!N_UnpackPlayerPreferenceName(np, pref_key_name)) {
-      P_Echo(consoleplayer,
-        "N_HandlePacket: Error unpacking client preference change"
-      );
+  if (!N_UnpackPlayerPreferenceName(np, pref_key_name)) {
+    D_MsgLocalError(
+      "N_HandlePacket: Error unpacking client preference change\n"
+    );
+    return;
+  }
+
+  if (pref_key_name->size > MAX_PREF_NAME_SIZE) {
+    D_MsgLocalError(
+      "N_HandlePacket: Invalid client preference change message: preference "
+      "name exceeds maximum length\n"
+    );
+    return;
+  }
+
+  M_BufferSeek(pref_key_name, 0);
+
+  if (M_BufferEqualsString(pref_key_name, "name")) {
+    N_UnpackNameChange(np, pref_key_value);
+
+    D_MsgLocalInfo("%s is now known as ", N_PeerGetName(np));
+    N_PeerSetName(np, pref_key_value->data);
+    D_MsgLocalInfo("%s\n", N_PeerGetName(np));
+  }
+  else if (M_BufferEqualsString(pref_key_name, "team")) {
+    team_t *team = NULL;
+
+    if (!N_UnpackTeamChange(np, &team)) {
       return;
     }
 
-    if (pref_key_name->size > MAX_PREF_NAME_SIZE) {
-      P_Echo(consoleplayer,
-        "N_HandlePacket: Invalid client preference change message: preference "
-        "name exceeds maximum length"
-      );
-      return;
-    }
-
-    M_BufferSeek(pref_key_name, 0);
-
-    if (M_BufferEqualsString(pref_key_name, "name")) {
-      N_UnpackNameChange(np, pref_key_value);
-
-      P_SetPlayerName(playernum, pref_key_value->data);
-    }
-    else if (M_BufferEqualsString(pref_key_name, "team")) {
-      unsigned char new_team = 0;
-
-      if (!N_UnpackTeamChange(np, &new_team))
-        return;
-
-      player->team = new_team;
-    }
-    else if (M_BufferEqualsString(pref_key_name, "pwo")) {
-    }
-    else if (M_BufferEqualsString(pref_key_name, "wsop")) {
-    }
-    else if (M_BufferEqualsString(pref_key_name, "bobbing")) {
-    }
-    else if (M_BufferEqualsString(pref_key_name, "autoaim")) {
-    }
-    else if (M_BufferEqualsString(pref_key_name, "weapon speed")) {
-    }
-    else if (M_BufferEqualsString(pref_key_name, "color")) {
-    }
-    else if (M_BufferEqualsString(pref_key_name, "color index")) {
-      int new_color;
-
-      if (N_UnpackColorIndexChange(np, &new_color)) {
-        G_ChangedPlayerColour(N_PeerGetPlayernum(np), new_color);
-      }
-    }
-    else if (M_BufferEqualsString(pref_key_name, "skin name")) {
+    if (team) {
+      N_PeerSetTeam(team);
+      D_MsgLocalInfo("%s has joined %s\n", N_PeerGetName(np), team->name);
     }
     else {
-      P_Printf(consoleplayer,
-        "Unsupported player preference %s.\n", pref_key_name->data
-      );
+      team = N_PeerGetTeam(np);
+      
+      if (team) {
+        D_MsgLocalInfo("%s has left %s", N_PeerGetName(np), team->name);
+      }
+
+      N_PeerSetTeam(NULL);
     }
+  }
+  else if (M_BufferEqualsString(pref_key_name, "color index")) {
+    int new_color;
+
+    if (N_UnpackColorIndexChange(np, &new_color)) {
+      G_ChangedPlayerColour(N_PeerGetPlayernum(np), new_color);
+    }
+  }
+  /*
+   * [CG] [TODO]
+   *
+   * else if (M_BufferEqualsString(pref_key_name, "pwo")) {
+   * }
+   * else if (M_BufferEqualsString(pref_key_name, "wsop")) {
+   * }
+   * else if (M_BufferEqualsString(pref_key_name, "bobbing")) {
+   * }
+   * else if (M_BufferEqualsString(pref_key_name, "autoaim")) {
+   * }
+   * else if (M_BufferEqualsString(pref_key_name, "weapon speed")) {
+   * }
+   * else if (M_BufferEqualsString(pref_key_name, "color")) {
+   * }
+   * else if (M_BufferEqualsString(pref_key_name, "skin name")) {
+   * }
+   */
+  else {
+    D_MsgLocalWarn("Unsupported preference [%s].\n", pref_key_name->data);
   }
 }
 
@@ -610,26 +606,16 @@ void N_UpdateSync(void) {
   }
 }
 
-void SV_SendAuthResponse(unsigned short playernum, auth_level_e auth_level) {
-  netpeer_t *np = NULL;
-  CHECK_VALID_PLAYER(np, playernum);
-
+void SV_SendAuthResponse(netpeer_t *np, auth_level_e auth_level) {
   N_PackAuthResponse(np, auth_level);
 }
 
-void SV_SendPing(unsigned short playernum) {
-  double now = M_GetCurrentTime();
-  netpeer_t *np = NULL;
-  CHECK_VALID_PLAYER(np, playernum);
-
-  N_PackPing(np, now);
+void SV_SendPing(netpeer_t *np) {
+  N_PackPing(np, M_GetCurrentTime());
 }
 
-void SV_SendMessage(unsigned short playernum, const char *message) {
-  netpeer_t *np = NULL;
-  CHECK_VALID_PLAYER(np, playernum);
-
-  if (strlen(message) <= 0) {
+void SV_SendMessage(netpeer_t *np, const char *message) {
+  if ((!message) || (!(*message))) {
     return;
   }
 
@@ -643,19 +629,23 @@ void SV_BroadcastMessage(const char *message) {
 }
 
 void SV_BroadcastPrintf(const char *fmt, ...) {
-  gchar *gmessage;
+  static GString *buf = NULL;
+
   va_list args;
 
+  if (!buf) {
+    buf = g_string_sized_new(256);
+  }
+
   va_start(args, fmt);
-  gmessage = g_strdup_vprintf(fmt, args);
+  g_string_vprintf(buf, fmt, args);
   va_end(args);
 
-  if (strlen(gmessage) <= 0) {
+  if (!buf->len) {
     return;
   }
 
-  SV_BroadcastMessage(gmessage);
-  g_free(gmessage);
+  SV_BroadcastMessage(buf->str);
 }
 
 void CL_SendMessageToServer(const char *message) {

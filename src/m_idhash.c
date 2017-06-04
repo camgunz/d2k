@@ -107,7 +107,12 @@ bool M_IDHashIterate(id_hash_t *idhash, id_hash_iterator_t *iterator) {
   }
 
   iterator->id = *(uint32_t *)id;
+
   return true;
+}
+
+void M_IDHashIterateRemove(id_hash_iterator_t *iterator) {
+  g_hash_table_iter_remove(&iterator->iterator);
 }
 
 uint32_t M_IDHashGetCount(id_hash_t *idhash) {

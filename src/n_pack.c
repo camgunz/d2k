@@ -24,7 +24,6 @@
 #include "z_zone.h"
 
 #include "i_system.h"
-#include "m_bitmap.h"
 #include "m_file.h"
 #include "d_deh.h"
 #include "d_event.h"
@@ -32,7 +31,9 @@
 #include "d_res.h"
 #include "g_game.h"
 #include "g_state.h"
+#include "g_team.h"
 #include "p_map.h"
+#include "pl_cmd.h"
 #include "pl_main.h"
 #include "w_wad.h"
 
@@ -48,8 +49,8 @@
 #define MAX_IWAD_NAME_LENGTH 20
 #define MAX_RESOURCE_NAMES 1000
 #define MAX_RESOURCE_NAME_LENGTH 128
-#define MAX_PLAYER_PREFERENCE_NAME_SIZE 32
-#define MAX_PLAYER_NAME_SIZE 32
+#define MAX_PREFERENCE_NAME_SIZE 32
+#define MAX_NAME_SIZE 32
 #define MAX_PASSWORD_LENGTH 256
 #define MAX_COMMAND_LENGTH 32
 #define MAX_CHAT_MESSAGE_SIZE 256
@@ -123,10 +124,10 @@
   read_ranged_ushort(pbuf, var, name, 0, 65535)   
 
 #define read_ranged_int(pbuf, var, name, min, max)                            \
-  _read_cnum(pbuf, var, name, int8_t, min, max)
+  _read_cnum(pbuf, var, name, int32_t, min, max)
 
 #define read_ranged_uint(pbuf, var, name, min, max)                           \
-  _read_cunum(pbuf, var, name, uint8_t, min, max)
+  _read_cunum(pbuf, var, name, uint32_t, min, max)
 
 #define read_int(pbuf, var, name)                                             \
   read_ranged_int(pbuf, var, name, -2147483647, 2147483647)   
@@ -139,14 +140,6 @@
 
 #define read_ranged_ulong(pbuf, var, name, min, max)                          \
   _read_cunum(pbuf, var, name, uint8_t, min, max)
-
-#define read_long(pbuf, var, name)                                            \
-  read_ranged_long(                                                           \
-    pbuf, var, name, -9223372036854775808LL, 9223372036854775807LL            \
-  )
-
-#define read_ulong(pbuf, var, name)                                           \
-  read_ranged_ulong(pbuf, var, name, 0, 18446744073709551615ULL)   
 
 #define read_double(pbuf, var, name)                                          \
   if (!M_PBufReadDouble(pbuf, &var)) {                                        \
@@ -222,7 +215,7 @@
 #define read_player(pbuf, var) do {                                           \
   uint32_t _player_id = 0;                                                    \
   read_uint(pbuf, _player_id, "player ID")                                    \
-  if ((_player_id == 0) || (_player_id >= PLAYER_CAP)) {                      \
+  if ((_player_id == 0) || (_player_id > PLAYER_CAP)) {                       \
     D_MsgLocalError("%s: Invalid player ID\n", __func__);                     \
     return false;                                                             \
   }                                                                           \
@@ -233,25 +226,16 @@
   }                                                                           \
 } while (0);
 
-#define read_peer(pbuf, var) do {                                             \
-  uint32_t _peer_id = 0;                                                      \
-  read_uint(pbuf, _peer_id, "peer ID")                                        \
-  if (_peer_id == 0) {                                                        \
-    D_MsgLocalError("%s: Invalid peer ID\n", __func__);                       \
+#define read_peer_id(pbuf, var)                                               \
+  read_uint(pbuf, var, "peer ID")                                             \
+  if (var == 0) {                                                             \
+    D_MsgLocalError("%s: Invalid peer ID 0\n", __func__);                     \
     return false;                                                             \
   }                                                                           \
-  var = N_PeersLookup(_peer_id);                                              \
-  if (!var) {                                                                 \
-    D_MsgLocalError("%s: No peer for ID %u\n", __func__, _peer_id);           \
+  if (!N_PeersPeerExists(var)) {                                              \
+    D_MsgLocalError("%s: No peer for ID %u\n", __func__, var);                \
     return false;                                                             \
-  }                                                                           \
-} while (0);
-
-#define pack_player_preference_change(pbuf, gametic, playernum, pn, pnsz)     \
-  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_PLAYER_PREFERENCE_CHANGE);         \
-  M_PBufWriteNum(pbuf, gametic);                                              \
-  M_PBufWriteUNum(pbuf, playernum);                                           \
-  M_PBufWriteString(pbuf, pn, pnsz)
+  }
 
 #define unpack_net_command(pbuf, m_icmd)                                      \
   read_uint(pbuf,  m_icmd.index,      "command index");                       \
@@ -354,7 +338,7 @@ static void pack_unsynchronized_commands(pbuf_t *pbuf, netpeer_t *np,
     }
   }
 
-  M_PBufWriteUNum(player->id);
+  M_PBufWriteUNum(pbuf, player->id);
   M_PBufWriteUNum(pbuf, command_count);
 
   if (command_count > 0) {
@@ -716,28 +700,26 @@ bool N_UnpackChatMessage(netpeer_t *np,
   );
 
   if ((CLIENT) && (m_chat_channel != CHAT_CHANNEL_SERVER)) {
-    read_peer(pbuf, m_sender_id);
+    read_peer_id(pbuf, m_sender_id);
   }
 
   if (m_chat_channel == CHAT_CHANNEL_PEER) {
-    read_peer(pbuf, m_message_recipient);
+    read_peer_id(pbuf, m_recipient_id);
   }
 
-  read_string(
-    pbuf, message_contents, "chat message", MAX_CHAT_MESSAGE_SIZE
-  );
+  read_string(pbuf, message_contents, "chat message", MAX_CHAT_MESSAGE_SIZE);
 
   *chat_channel = m_chat_channel;
 
   if (CLIENT) {
-    *message_sender = m_message_sender;
+    *sender_id = m_sender_id;
   }
   else {
-    *message_sender = N_PeerGetID(np);
+    *sender_id = N_PeerGetID(np);
   }
 
   if (m_chat_channel == CHAT_CHANNEL_PEER) {
-    *message_recipient = m_message_recipient;
+    *recipient_id = m_recipient_id;
   }
 
   return true;
@@ -762,52 +744,47 @@ void N_PackSync(netpeer_t *np) {
     }
 
     PLAYERS_FOR_EACH(iter) {
-      if (is_player && iter.player == consoleplayer) {
+      if (is_player && iter.player == player) {
         continue;
       }
 
       M_PBufWriteUNum(pbuf, iter.player->id);
-      M_PBufWriteUNum(pbuf, N_PeerSyncGetCommandIndexForPlayer(np, i));
+      M_PBufWriteUNum(
+        pbuf,
+        N_PeerSyncGetCommandIndexForPlayer(np, iter.player)
+      );
     }
   }
   else if (SERVER) {
     game_state_delta_t *delta = N_PeerSyncGetStateDelta(np);
     bool is_player = N_PeerGetStatus(np) == NETPEER_STATUS_PLAYER;
-    size_t player_peer_count = 0;
+    player_t *peer_player = NULL;
 
     M_PBufWriteUNum(pbuf, N_PeerSyncGetCommandIndex(np));
     M_PBufWriteBool(pbuf, is_player);
 
     if (is_player) {
+      peer_player = N_PeerGetPlayer(np);
       pack_run_commands(pbuf, np);
     }
 
-    NETPEER_FOR_EACH(iter) {
-      if (N_PeerGetStatus(np) == NETPEER_STATUS_PLAYER) {
-        player_peer_count++;
-      }
-    }
+    M_PBufWriteUNum(pbuf, P_PlayersGetCount());
 
-    M_PBufWriteUNum(pbuf, player_peer_count);
-
-    NETPEER_FOR_EACH(iter) {
-      if (N_PeerGetStatus(np) != NETPEER_STATUS_PLAYER) {
+    PLAYERS_FOR_EACH(iter) {
+      if (iter.player == peer_player) {
         continue;
       }
 
-      if (iter.np == np) {
-        continue;
-      }
+      pack_unsynchronized_commands(pbuf, np, iter.player);
 
-      pack_unsynchronized_commands(pbuf, np, iter.np);
+      N_MsgSyncLocalDebug("(%d) Syncing %d => %d (%d)\n",
+        gametic,
+        delta->from_tic,
+        delta->to_tic,
+        iter.player->cmdq.latest_command_run_index
+      );
     }
 
-    N_MsgSyncLocalDebug("(%d) Syncing %d => %d (%d)\n",
-      gametic,
-      delta->from_tic,
-      delta->to_tic,
-      player->cmdq.latest_command_run_index
-    );
     M_PBufWriteNum(pbuf, delta->from_tic);
     M_PBufWriteNum(pbuf, delta->to_tic);
     M_PBufWriteBytes(pbuf, delta->data.data, delta->data.size);
@@ -826,10 +803,11 @@ bool N_UnpackSync(netpeer_t *np) {
     uint32_t m_command_count;
 
     read_uint(pbuf, m_command_index, "command index");
-    read_bool(pbuf, m_is_player, "peer is player");
+    read_bool(pbuf, m_is_player, "local peer is player");
     read_uint(pbuf, m_peer_player_count, "peer player count");
 
     if (m_is_player) {
+      player_t *player = P_GetConsolePlayer();
       read_uint(pbuf, m_command_count, "consoleplayer sync command count");
 
       for (uint32_t j = 0; j < m_command_count; j++) {
@@ -839,7 +817,7 @@ bool N_UnpackSync(netpeer_t *np) {
         read_uint(pbuf, m_run_command_index, "run command index");
         read_uint(pbuf, m_server_tic, "server TIC");
 
-        P_UpdateCommandServerTic(i, m_run_command_index, m_server_tic);
+        PL_UpdateCommandServerTic(player, m_run_command_index, m_server_tic);
       }
     }
 
@@ -875,9 +853,11 @@ bool N_UnpackSync(netpeer_t *np) {
         m_command_index = m_icmd->index;
       }
 
-      if (m_command_index > N_PeerSyncGetCommandIndexForPlayer(np, i)) {
+      if (m_command_index > N_PeerSyncGetCommandIndexForPlayer(np, m_player)) {
         I_Error("Bad server sync command index for %zu: %u > %u",
-          i, m_command_index, N_PeerSyncGetCommandIndexForPlayer(np, i)
+          i,
+          m_command_index,
+          N_PeerSyncGetCommandIndexForPlayer(np, m_player)
         );
       }
 
@@ -893,21 +873,18 @@ bool N_UnpackSync(netpeer_t *np) {
   else if (SERVER) {
     int32_t m_sync_tic;
     uint32_t m_command_count;
+    uint32_t m_player_count;
     bool m_is_player;
+    bool should_ignore;
 
     read_int(pbuf, m_sync_tic, "sync tic");
     read_bool(pbuf, m_is_player, "peer is player");
 
     if (m_is_player) {
-      if (N_PeerGetStatus(np) != NETPEER_STATUS_PLAYER) {
-        D_MsgLocalError(
-          "N_UnpackSync: Receiving commands from non-player peer %u\n",
-          N_PeerGetID(np)
-        );
+      player_t *player = N_PeerGetPlayer(np);
 
-        /* [CG] [FIXME] Should maybe read/ignore these instead of bailing? */
-
-        return false;
+      if ((!player) || (N_PeerGetStatus(np) != NETPEER_STATUS_PLAYER)) {
+        should_ignore = true;
       }
 
       read_uint(pbuf, m_command_count, "command count");
@@ -919,103 +896,90 @@ bool N_UnpackSync(netpeer_t *np) {
 
         m_icmd.server_tic = 0;
 
-        P_QueuePlayerCommand(playernum, &m_icmd);
+        if (!should_ignore) {
+          PL_QueueCommand(player, &m_icmd);
+        }
       }
 
-      if (m_command_count > 0) {
-        m_command_index = P_GetLatestCommandIndex(player);
+
+      if ((!should_ignore) && (m_command_count > 0)) {
+        m_command_index = PL_GetLatestCommandIndex(player);
 
         N_PeerSyncUpdateCommandIndexForPlayer(np, player, m_command_index);
       }
+    }
 
-      read_uint(pbuf, m_player_count, "player count");
+    read_uint(pbuf, m_player_count, "sync player count");
 
-      for (size_t i = 0; i < m_player_count; i++) {
-        player_t *m_player;
+    for (size_t i = 0; i < m_player_count; i++) {
+      player_t *m_player;
 
-        read_player(pbuf, m_player);
-        read_unum(pbuf, m_command_index, "command index");
-      }
+      read_player(pbuf, m_player);
+      read_uint(pbuf, m_command_index, "command index");
+      N_PeerSyncUpdateCommandIndexForPlayer(np, m_player, m_command_index);
     }
 
     N_PeerSyncUpdateTIC(np, m_sync_tic);
-
-    for (size_t i = 0; i < PLAYER_CAP; i++) {
-      if (i == playernum) {
-        continue;
-      }
-
-      if (!bitmap_get_bit(bitmap, i)) {
-        continue;
-      }
-
-      read_uint(pbuf, m_command_index, "command index");
-
-      N_PeerSyncUpdateCommandIndexForPlayer(np, i, m_command_index);
-    }
   }
 
   return true;
 }
 
-bool N_UnpackPlayerPreferenceChange(netpeer_t *np, int *tic,
-                                                   unsigned short *playernum,
-                                                   unsigned int *count) {
+bool N_UnpackPreferenceChange(netpeer_t *np) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
-  unsigned short m_playernum = 0;
-  int m_tic = 0;
-  unsigned int m_count = 0;
-
-  read_int(pbuf, m_tic, "player preference change tic");
-  read_player(pbuf, m_playernum);
-  read_map(pbuf, m_count, "player preference change count");
-
-  *tic = m_tic;
-  *playernum = m_playernum;
-  *count = m_count;
 
   return true;
 }
 
-bool N_UnpackPlayerPreferenceName(netpeer_t *np, buf_t *buf) {
+bool N_UnpackPreferenceName(netpeer_t *np, buf_t *buf) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
 
-  read_string(
-    pbuf, buf, "player preference name", MAX_PLAYER_PREFERENCE_NAME_SIZE
-  );
+  read_string(pbuf, buf, "preference name", MAX_PREFERENCE_NAME_SIZE);
 
   return true;
 }
 
-void N_PackNameChange(netpeer_t *np, unsigned short playernum,
-                                     const char *new_name) {
-  pack_player_preference_change(pbuf, gametic, playernum, "name", 4);
+void N_PackNameChange(netpeer_t *np, const char *new_name) {
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_PREFERENCE_CHANGE);
 
+  M_PBufWriteString(pbuf, "name", 4);
   M_PBufWriteString(pbuf, new_name, strlen(new_name));
 }
 
 bool N_UnpackNameChange(netpeer_t *np, buf_t *buf) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
 
-  read_string(pbuf, buf, "new name", MAX_PLAYER_NAME_SIZE);
+  read_string(pbuf, buf, "new name", MAX_NAME_SIZE);
 
   return true;
 }
 
-void N_PackTeamChange(netpeer_t *np, unsigned short playernum,
-                                     unsigned char new_team) {
-  pack_player_preference_change(pbuf, gametic, playernum, "team", 4);
+void N_PackTeamChange(netpeer_t *np, team_t *new_team) {
+  pack_preference_change(pbuf, gametic, "team", 4);
 
-  M_PBufWriteUNum(pbuf, new_team);
+  M_PBufWriteUNum(pbuf, new_team->id);
 }
 
-bool N_UnpackTeamChange(netpeer_t *np, unsigned char *new_team) {
+bool N_UnpackTeamChange(netpeer_t *np, team_t **new_team) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
-  int team_count = 0;
-  unsigned char m_new_team = 0;
+  uint32_t m_new_team_id = 0;
+  team_t *m_new_team = NULL;
 
-  if (team_count > 0) { /* CG: TODO: teams */
-    read_ranged_uchar(pbuf, m_new_team, "new team index", 0, team_count - 1);
+  read_uint(pbuf, m_new_team_id, "new team ID");
+
+  if (m_new_team_id) {
+    *new_team = NULL;
+    return true;
+  }
+
+  *m_new_team = G_TeamsLookup(m_new_team_id);
+
+  if (!m_new_team) {
+    D_MsgLocalError("N_UnpackTeamChange: Invalid team ID %u\n",
+      m_new_team_id
+    );
+
+    return false;
   }
 
   *new_team = m_new_team;
@@ -1023,8 +987,8 @@ bool N_UnpackTeamChange(netpeer_t *np, unsigned char *new_team) {
   return true;
 }
 
-void N_PackPWOChange(netpeer_t *np, unsigned short playernum) {
-  pack_player_preference_change(pbuf, gametic, playernum, "pwo", 3);
+void N_PackPWOChange(netpeer_t *np) {
+  pack_preference_change(pbuf, gametic, "pwo", 3);
 
   M_PBufWriteUNum(pbuf, 0); /* CG: TODO */
 }
@@ -1033,19 +997,18 @@ bool N_UnpackPWOChange(netpeer_t *np) {
   return false; /* CG: TODO */
 }
 
-void N_PackWSOPChange(netpeer_t *np, unsigned short playernum,
-                                     unsigned char new_wsop_flags) {
-  pack_player_preference_change(pbuf, gametic, playernum, "wsop", 4);
+void N_PackWSOPChange(netpeer_t *np, unsigned int new_wsop_flags) {
+  pack_preference_change(pbuf, gametic, "wsop", 4);
 
-  M_PBufWriteUChar(pbuf, new_wsop_flags);
+  M_PBufWriteUNum(pbuf, new_wsop_flags);
 }
 
-bool N_UnpackWSOPChange(netpeer_t *np, unsigned char *new_wsop_flags) {
+bool N_UnpackWSOPChange(netpeer_t *np, unsigned int *new_wsop_flags) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
-  unsigned char m_new_wsop_flags = 0;
+  unsigned int m_new_wsop_flags = 0;
 
-  read_ranged_uchar(
-    pbuf, m_new_wsop_flags, "new WSOP flags", WSOP_NONE, WSOP_MAX - 1
+  read_ranged_uint(
+    pbuf, m_new_wsop_flags, "new WSOP flags", WSOP_NONE, WSOP_MAX
   );
 
   *new_wsop_flags = m_new_wsop_flags;
@@ -1053,9 +1016,8 @@ bool N_UnpackWSOPChange(netpeer_t *np, unsigned char *new_wsop_flags) {
   return true;
 }
 
-void N_PackBobbingChange(netpeer_t *np, unsigned short playernum,
-                                        double new_bobbing_amount) {
-  pack_player_preference_change(pbuf, gametic, playernum, "bobbing", 7);
+void N_PackBobbingChange(netpeer_t *np, double new_bobbing_amount) {
+  pack_preference_change(pbuf, gametic, "bobbing", 7);
 
   M_PBufWriteDouble(pbuf, new_bobbing_amount);
 }
@@ -1073,9 +1035,8 @@ bool N_UnpackBobbingChanged(netpeer_t *np, double *new_bobbing_amount) {
   return true;
 }
 
-void N_PackAutoaimChange(netpeer_t *np, unsigned short playernum,
-                                        bool new_autoaim_enabled) {
-  pack_player_preference_change(pbuf, gametic, playernum, "autoaim", 7);
+void N_PackAutoaimChange(netpeer_t *np, bool new_autoaim_enabled) {
+  pack_preference_change(pbuf, gametic, "autoaim", 7);
 
   M_PBufWriteBool(pbuf, new_autoaim_enabled);
 }
@@ -1091,9 +1052,8 @@ bool N_UnpackAutoaimChange(netpeer_t *np, bool *new_autoaim_enabled) {
   return true;
 }
 
-void N_PackWeaponSpeedChange(netpeer_t *np, unsigned short playernum,
-                                            unsigned char new_weapon_speed) {
-  pack_player_preference_change(pbuf, gametic, playernum, "weapon speed", 12);
+void N_PackWeaponSpeedChange(netpeer_t *np, unsigned char new_weapon_speed) {
+  pack_preference_change(pbuf, gametic, "weapon speed", 12);
 
   M_PBufWriteUChar(pbuf, new_weapon_speed);
 }
@@ -1110,18 +1070,17 @@ bool N_UnpackWeaponSpeedChange(netpeer_t *np,
   return true;
 }
 
-void N_PackColorChange(netpeer_t *np, unsigned short playernum,
-                                      unsigned char new_red,
+void N_PackColorChange(netpeer_t *np, unsigned char new_red,
                                       unsigned char new_green,
                                       unsigned char new_blue) {
-  pack_player_preference_change(pbuf, gametic, playernum, "color", 5);
+  pack_preference_change(pbuf, gametic, "color", 5);
 
   M_PBufWriteUInt(pbuf, (new_red << 24) | (new_green << 16) | (new_blue << 8));
 }
 
 bool N_UnpackColorChange(netpeer_t *np, unsigned char *new_red,
-                                            unsigned char *new_green,
-                                            unsigned char *new_blue) {
+                                        unsigned char *new_green,
+                                        unsigned char *new_blue) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   unsigned int m_new_color = 0;
 
@@ -1134,9 +1093,8 @@ bool N_UnpackColorChange(netpeer_t *np, unsigned char *new_red,
   return true;
 }
 
-void N_PackColorIndexChange(netpeer_t *np, unsigned short playernum,
-                                           int new_color_index) {
-  pack_player_preference_change(pbuf, gametic, playernum, "color index", 11);
+void N_PackColorIndexChange(netpeer_t *np int new_color_index) {
+  pack_preference_change(pbuf, gametic, "color index", 11);
 
   M_PBufWriteNum(pbuf, new_color_index);
 }
@@ -1153,13 +1111,13 @@ bool N_UnpackColorIndexChange(netpeer_t *np, int *new_color_index) {
   return true;
 }
 
-void N_PackSkinChange(netpeer_t *np, unsigned short playernum) {
-  pack_player_preference_change(pbuf, gametic, playernum, "skin name", 9);
+void N_PackSkinChange(netpeer_t *np) {
+  pack_preference_change(pbuf, gametic, "skin name", 9);
 
   M_PBufWriteUChar(pbuf, 0); /* CG: TODO */
 }
 
-bool N_UnpackSkinChange(netpeer_t *np, unsigned short *playernum) {
+bool N_UnpackSkinChange(netpeer_t *np) {
   return false; /* CG: TODO */
 }
 
