@@ -169,66 +169,66 @@ void M_PBufPrint(pbuf_t *pbuf);
   }
 
 #define pbuf_read_ranged_num(pbuf, var, name, min, max)                       \
-  read_num(pbuf, var, name)                                                   \
-  pbuf_check_range(var, min, max) 
+  pbuf_read_num(pbuf, var, name)                                              \
+  pbuf_check_range(var, min, max)
 
 #define pbuf_read_ranged_unum(pbuf, var, name, min, max)                      \
-  read_unum(pbuf, var, name)                                                  \
-  pbuf_check_range(var, min, max) 
+  pbuf_read_unum(pbuf, var, name)                                             \
+  pbuf_check_range(var, min, max)
 
 #define _pbuf_read_cnum(pbuf, var, name, type, min, max) do {                 \
   int64_t _int_var = 0;                                                       \
-  read_ranged_num(pbuf, _int_var, name, min, max)                             \
+  pbuf_read_ranged_num(pbuf, _int_var, name, min, max)                        \
   var = (type)_int_var;                                                       \
 } while (0);
 
 #define _pbuf_read_cunum(pbuf, var, name, type, min, max) do {                \
   uint64_t _uint_var = 0;                                                     \
-  read_ranged_unum(pbuf, _uint_var, name, min, max)                           \
+  pbuf_read_ranged_unum(pbuf, _uint_var, name, min, max)                      \
   var = (type)_uint_var;                                                      \
 } while (0);
 
 #define pbuf_read_ranged_char(pbuf, var, name, min, max)                      \
-  _read_cnum(pbuf, var, name, int8_t, min, max)
+  _pbuf_read_cnum(pbuf, var, name, int8_t, min, max)
 
 #define pbuf_read_ranged_uchar(pbuf, var, name, min, max)                     \
-  _read_cunum(pbuf, var, name, uint8_t, min, max)
+  _pbuf_read_cunum(pbuf, var, name, uint8_t, min, max)
 
 #define pbuf_read_char(pbuf, var, name)                                       \
-  read_ranged_char(pbuf, var, name, -128, 127)   
+  pbuf_read_ranged_char(pbuf, var, name, -128, 127)
 
 #define pbuf_read_uchar(pbuf, var, name)                                      \
-  read_ranged_uchar(pbuf, var, name, 0, 255)   
+  pbuf_read_ranged_uchar(pbuf, var, name, 0, 255)
 
 #define pbuf_read_ranged_short(pbuf, var, name, min, max)                     \
-  _read_cnum(pbuf, var, name, int16_t, min, max)
+  _pbuf_read_cnum(pbuf, var, name, int16_t, min, max)
 
 #define pbuf_read_ranged_ushort(pbuf, var, name, min, max)                    \
-  _read_cunum(pbuf, var, name, uint16_t, min, max)
+  _pbuf_read_cunum(pbuf, var, name, uint16_t, min, max)
 
 #define pbuf_read_short(pbuf, var, name)                                      \
-  read_ranged_short(pbuf, var, name, -32768, 32767)   
+  pbuf_read_ranged_short(pbuf, var, name, -32768, 32767)
 
 #define pbuf_read_ushort(pbuf, var, name)                                     \
-  read_ranged_ushort(pbuf, var, name, 0, 65535)   
+  pbuf_read_ranged_ushort(pbuf, var, name, 0, 65535)
 
 #define pbuf_read_ranged_int(pbuf, var, name, min, max)                       \
-  _read_cnum(pbuf, var, name, int32_t, min, max)
+  _pbuf_read_cnum(pbuf, var, name, int32_t, min, max)
 
 #define pbuf_read_ranged_uint(pbuf, var, name, min, max)                      \
-  _read_cunum(pbuf, var, name, uint32_t, min, max)
+  _pbuf_read_cunum(pbuf, var, name, uint32_t, min, max)
 
 #define pbuf_read_int(pbuf, var, name)                                        \
-  read_ranged_int(pbuf, var, name, -2147483647, 2147483647)   
+  pbuf_read_ranged_int(pbuf, var, name, -2147483647, 2147483647)
 
 #define pbuf_read_uint(pbuf, var, name)                                       \
-  read_ranged_uint(pbuf, var, name, 0, 4294967295)   
+  pbuf_read_ranged_uint(pbuf, var, name, 0, 4294967295)
 
 #define pbuf_read_ranged_long(pbuf, var, name, min, max)                      \
-  _read_cnum(pbuf, var, name, int8_t, min, max)
+  _pbuf_read_cnum(pbuf, var, name, int8_t, min, max)
 
 #define pbuf_read_ranged_ulong(pbuf, var, name, min, max)                     \
-  _read_cunum(pbuf, var, name, uint8_t, min, max)
+  _pbuf_read_cunum(pbuf, var, name, uint8_t, min, max)
 
 #define pbuf_read_double(pbuf, var, name)                                     \
   if (!M_PBufReadDouble(pbuf, &var)) {                                        \
@@ -239,7 +239,7 @@ void M_PBufPrint(pbuf_t *pbuf);
   }
 
 #define pbuf_read_ranged_double(pbuf, var, name, min, max)                    \
-  read_double(pbuf, var, name);                                               \
+  pbuf_read_double(pbuf, var, name);                                          \
   pbuf_check_range(var, min, max);
 
 #define pbuf_read_bool(pbuf, var, name)                                       \

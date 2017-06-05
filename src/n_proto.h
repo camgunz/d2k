@@ -47,11 +47,8 @@ void N_InitProtocol(void);
 void N_HandlePacket(netpeer_t *np, void *data, size_t data_size);
 void N_UpdateSync(void);
 
-void SV_SendAuthResponse(netpeer_t *np, auth_level_e auth_level);
 void SV_SendPing(netpeer_t *np);
-void SV_SendMessage(netpeer_t *np, const char *message);
-void SV_BroadcastMessage(const char *message);
-void SV_BroadcastPrintf(const char *fmt, ...) PRINTF_DECL(1, 2);
+void SV_SendMessage(netpeer_t *np, message_t *message);
 void SV_BroadcastPlayerNameChanged(netpeer_t *np, const char *new_name);
 void SV_BroadcastPlayerTeamChanged(netpeer_t *np, uint32_t new_team_id);
 void SV_BroadcastPlayerPWOChanged(netpeer_t *np);
@@ -74,10 +71,7 @@ void SV_BroadcastGameActionChange(void);
 
 void CL_SendSetupRequest(void);
 void CL_SendPing(double server_time);
-void CL_SendMessageToServer(const char *message);
-void CL_SendMessageToPeer(uint32_t peer_id, const char *message);
-void CL_SendMessageToTeam(const char *message);
-void CL_SendMessage(const char *message);
+void CL_SendMessage(message_t *message);
 void CL_SendCommands(void);
 void CL_SendSaveGameNameChange(const char *new_save_game_name);
 void CL_SendNameChange(const char *new_name);

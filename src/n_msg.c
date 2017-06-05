@@ -24,7 +24,11 @@
 #include "z_zone.h"
 
 #include "d_msg.h"
+#include "pl_main.h"
+#include "n_main.h"
 #include "n_msg.h"
+#include "n_peer.h"
+#include "n_proto.h"
 
 #define DEBUG_NET 1
 #define DEBUG_SYNC 1
@@ -36,13 +40,118 @@ uint32_t MSG_CHANNEL_SYNC;
 uint32_t MSG_CHANNEL_SAVE;
 uint32_t MSG_CHANNEL_CMD;
 uint32_t MSG_CHANNEL_STATE;
+uint32_t MSG_CHANNEL_CHAT_INCOMING;
+uint32_t MSG_CHANNEL_CHAT_OUTGOING;
+
+static void sv_handle_incoming_chat_message(message_t *message, void *data) {
+}
+
+static void sv_handle_outgoing_chat_message(message_t *message, void *data) {
+  netpeer_t *np = NULL;
+  player_t *player = NULL;
+
+  if (message->channel_id != MSG_CHANNEL_CHAT_OUTGOING) {
+    return;
+  }
+
+  switch (message->recipient) {
+    case MSG_RECIPIENT_EVERYONE:
+      message->recipient = MSG_RECIPIENT_LOCAL;
+      NETPEER_FOR_EACH(iter) {
+        SV_SendMessage(np, message);
+      }
+      break;
+    case MSG_RECIPIENT_TEAM:
+      message->recipient = MSG_RECIPIENT_LOCAL;
+
+      NETPEER_FOR_EACH(iter) {
+        team_t *team = N_PeerGetTeam(iter.np);
+
+        if ((!team) || (team->id != message->recipient_id)) {
+          continue;
+        }
+
+        SV_SendMessage(iter.np, message);
+      }
+      break;
+    case MSG_RECIPIENT_PLAYER:
+      message->recipient = MSG_RECIPIENT_LOCAL;
+      player = P_PlayersLookup(message->recipient_id);
+
+      if (!player) {
+        D_MsgLocalWarn(
+          "sv_handle_outgoing_chat_message: No player with ID %u\n",
+          message->recipient_id
+        );
+        return;
+      }
+
+      np = N_PeersLookupByPlayer(player);
+
+      if (!np) {
+        D_MsgLocalWarn(
+          "sv_handle_outgoing_chat_message: No peer for player %u\n",
+          player->id
+        );
+        return;
+      }
+
+      SV_SendMessage(np, message);
+      break;
+    case MSG_RECIPIENT_PEER:
+      message->recipient = MSG_RECIPIENT_LOCAL;
+      np = N_PeersLookup(message->recipient_id);
+
+      if (!np) {
+        D_MsgLocalWarn(
+          "sv_handle_outgoing_chat_message: No peer with ID %u\n",
+          iter.player->id
+        );
+        return;
+      }
+
+      SV_SendMessage(np, message);
+      break;
+    default:
+      break;
+  }
+}
+
+static void cl_handle_incoming_chat_message(message_t *message, void *data) {
+}
+
+static void cl_handle_outgoing_chat_message(message_t *message, void *data) {
+  if (message->recipient == MSG_RECIPIENT_LOCAL) {
+    return;
+  }
+
+  CL_SendMessage(message);
+}
+
+static void server_message_handler(message_t *message, void *data) {
+  if (message->channel_id == MSG_CHANNEL_CHAT_INCOMING) {
+    sv_handle_incoming_chat_message(message, data);
+  }
+  else if (message->channel_id == MSG_CHANNEL_CHAT_OUTGOING) {
+    sv_handle_outgoing_chat_message(message, data);
+  }
+}
+
+static void client_message_handler(message_t *message, void *data) {
+  if (message->channel_id != MSG_CHANNEL_CHAT_OUTGOING) {
+    return;
+  }
+  cl_handle_outgoing_chat_message(message, data);
+}
 
 void N_MsgInit(void) {
-  MSG_CHANNEL_NET =   D_MsgRegisterChannel("Network messages");
-  MSG_CHANNEL_SYNC =  D_MsgRegisterChannel("Sync messages");
-  MSG_CHANNEL_SAVE =  D_MsgRegisterChannel("Save messages");
-  MSG_CHANNEL_CMD =   D_MsgRegisterChannel("Player command messages");
-  MSG_CHANNEL_STATE = D_MsgRegisterChannel("Game states");
+  MSG_CHANNEL_NET           = D_MsgRegisterChannel("Network messages");
+  MSG_CHANNEL_SYNC          = D_MsgRegisterChannel("Sync messages");
+  MSG_CHANNEL_SAVE          = D_MsgRegisterChannel("Save messages");
+  MSG_CHANNEL_CMD           = D_MsgRegisterChannel("Player command messages");
+  MSG_CHANNEL_STATE         = D_MsgRegisterChannel("Game state messages");
+  MSG_CHANNEL_CHAT_INCOMING = D_MsgRegisterChannel("Chat messages (incoming)");
+  MSG_CHANNEL_CHAT_OUTGOING = D_MsgRegisterChannel("Chat messages (outgoing)");
 
 #ifdef DEBUG
 
@@ -63,6 +172,13 @@ void N_MsgInit(void) {
 #endif
 
 #endif
+
+  if (SERVER) {
+    D_MsgRegisterHandler(server_message_handler, NULL);
+  }
+  else if (CLIENT) {
+    D_MsgRegisterHandler(client_message_handler, NULL);
+  }
 }
 
 void N_MsgCmdLocalDebug(const char *fmt, ...) {
@@ -73,7 +189,7 @@ void N_MsgCmdLocalDebug(const char *fmt, ...) {
     MSG_CHANNEL_CMD,
     MSG_LEVEL_DEBUG,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_NONE,
+    MSG_VISIBILITY_CONSOLE_ONLY,
     0,
     false,
     -1,
@@ -91,7 +207,7 @@ void N_MsgNetLocalDebug(const char *fmt, ...) {
     MSG_CHANNEL_NET,
     MSG_LEVEL_DEBUG,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_NONE,
+    MSG_VISIBILITY_CONSOLE_ONLY,
     0,
     false,
     -1,
@@ -109,7 +225,7 @@ void N_MsgSyncLocalDebug(const char *fmt, ...) {
     MSG_CHANNEL_SYNC,
     MSG_LEVEL_DEBUG,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_NONE,
+    MSG_VISIBILITY_CONSOLE_ONLY,
     0,
     false,
     -1,
@@ -127,7 +243,7 @@ void N_MsgSaveLocalDebug(const char *fmt, ...) {
     MSG_CHANNEL_SAVE,
     MSG_LEVEL_DEBUG,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_NONE,
+    MSG_VISIBILITY_CONSOLE_ONLY,
     0,
     false,
     -1,
@@ -145,7 +261,7 @@ void N_MsgCmdLocalInfo(const char *fmt, ...) {
     MSG_CHANNEL_CMD,
     MSG_LEVEL_INFO,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_NONE,
+    MSG_VISIBILITY_NORMAL,
     0,
     false,
     -1,
@@ -163,7 +279,7 @@ void N_MsgNetLocalInfo(const char *fmt, ...) {
     MSG_CHANNEL_NET,
     MSG_LEVEL_INFO,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_NONE,
+    MSG_VISIBILITY_NORMAL,
     0,
     false,
     -1,
@@ -181,7 +297,7 @@ void N_MsgSyncLocalInfo(const char *fmt, ...) {
     MSG_CHANNEL_SYNC,
     MSG_LEVEL_INFO,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_NONE,
+    MSG_VISIBILITY_NORMAL,
     0,
     false,
     -1,
@@ -199,7 +315,7 @@ void N_MsgSaveLocalInfo(const char *fmt, ...) {
     MSG_CHANNEL_SAVE,
     MSG_LEVEL_INFO,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_NONE,
+    MSG_VISIBILITY_NORMAL,
     0,
     false,
     -1,
@@ -217,7 +333,7 @@ void N_MsgCmdLocalWarn(const char *fmt, ...) {
     MSG_CHANNEL_CMD,
     MSG_LEVEL_WARN,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_NONE,
+    MSG_VISIBILITY_NORMAL,
     0,
     false,
     -1,
@@ -235,7 +351,7 @@ void N_MsgNetLocalWarn(const char *fmt, ...) {
     MSG_CHANNEL_NET,
     MSG_LEVEL_WARN,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_NONE,
+    MSG_VISIBILITY_NORMAL,
     0,
     false,
     -1,
@@ -253,7 +369,7 @@ void N_MsgSyncLocalWarn(const char *fmt, ...) {
     MSG_CHANNEL_SYNC,
     MSG_LEVEL_WARN,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_NONE,
+    MSG_VISIBILITY_NORMAL,
     0,
     false,
     -1,
@@ -271,7 +387,7 @@ void N_MsgSaveLocalWarn(const char *fmt, ...) {
     MSG_CHANNEL_SAVE,
     MSG_LEVEL_WARN,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_NONE,
+    MSG_VISIBILITY_NORMAL,
     0,
     false,
     -1,
@@ -289,7 +405,7 @@ void N_MsgCmdLocalError(const char *fmt, ...) {
     MSG_CHANNEL_CMD,
     MSG_LEVEL_ERROR,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_NONE,
+    MSG_VISIBILITY_NORMAL,
     0,
     false,
     -1,
@@ -307,7 +423,7 @@ void N_MsgNetLocalError(const char *fmt, ...) {
     MSG_CHANNEL_NET,
     MSG_LEVEL_ERROR,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_NONE,
+    MSG_VISIBILITY_NORMAL,
     0,
     false,
     -1,
@@ -325,7 +441,7 @@ void N_MsgSyncLocalError(const char *fmt, ...) {
     MSG_CHANNEL_SYNC,
     MSG_LEVEL_ERROR,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_NONE,
+    MSG_VISIBILITY_NORMAL,
     0,
     false,
     -1,
@@ -343,7 +459,7 @@ void N_MsgSaveLocalError(const char *fmt, ...) {
     MSG_CHANNEL_SAVE,
     MSG_LEVEL_ERROR,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_NONE,
+    MSG_VISIBILITY_NORMAL,
     0,
     false,
     -1,
@@ -353,3 +469,4 @@ void N_MsgSaveLocalError(const char *fmt, ...) {
   va_end(args);
 }
 
+/* vi: set et ts=2 sw=2: */

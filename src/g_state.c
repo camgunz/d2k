@@ -49,7 +49,7 @@ static void state_debug(const char *fmt, ...) {
     MSG_CHANNEL_STATE,
     MSG_LEVEL_DEBUG,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_CONSOLE | MSG_SINK_MESSAGES,
+    MSG_VISIBILITY_CONSOLE_ONLY,
     0,
     true,
     -1,

@@ -182,7 +182,7 @@ const char* D_MsgChanGetName(uint32_t channel_id) {
 
 void D_MsgChanMsg(uint32_t channel_id, msg_level_e level,
                                        msg_recipient_e recipient,
-                                       unsigned int sinks,
+                                       msg_visibility_e visibility,
                                        uint32_t recipient_id,
                                        bool is_markup,
                                        int sfx,
@@ -195,7 +195,7 @@ void D_MsgChanMsg(uint32_t channel_id, msg_level_e level,
     channel_id,
     level,
     recipient,
-    sinks,
+    visibility,
     recipient_id,
     is_markup,
     sfx,
@@ -207,7 +207,7 @@ void D_MsgChanMsg(uint32_t channel_id, msg_level_e level,
 
 void D_MsgChanVMsg(uint32_t channel_id, msg_level_e level,
                                         msg_recipient_e recipient,
-                                        unsigned int sinks,
+                                        msg_visibility_e visibility,
                                         uint32_t recipient_id,
                                         bool is_markup,
                                         int sfx,
@@ -246,7 +246,7 @@ void D_MsgChanVMsg(uint32_t channel_id, msg_level_e level,
   msg.channel_id = channel_id;
   msg.level = level;
   msg.recipient = recipient;
-  msg.sinks = sinks;
+  msg.visibility = visibility;
   msg.recipient_id = recipient_id;
   msg.is_markup = is_markup;
   msg.sfx = sfx;
@@ -269,7 +269,7 @@ void D_VMsgLocalDebug(const char *fmt, va_list args) {
     MSG_CHANNEL_SYS,
     MSG_LEVEL_DEBUG,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_CONSOLE | MSG_SINK_MESSAGES,
+    MSG_VISIBILITY_CONSOLE_ONLY,
     0,
     true,
     -1,
@@ -291,7 +291,7 @@ void D_VMsgLocalInfo(const char *fmt, va_list args) {
     MSG_CHANNEL_SYS,
     MSG_LEVEL_INFO,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_CONSOLE | MSG_SINK_MESSAGES,
+    MSG_VISIBILITY_NORMAL,
     0,
     true,
     -1,
@@ -313,7 +313,7 @@ void D_VMsgLocalWarn(const char *fmt, va_list args) {
     MSG_CHANNEL_SYS,
     MSG_LEVEL_WARN,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_CONSOLE | MSG_SINK_MESSAGES,
+    MSG_VISIBILITY_NORMAL,
     0,
     true,
     -1,
@@ -335,7 +335,7 @@ void D_VMsgLocalError(const char *fmt, va_list args) {
     MSG_CHANNEL_SYS,
     MSG_LEVEL_ERROR,
     MSG_RECIPIENT_LOCAL,
-    MSG_SINK_CONSOLE | MSG_SINK_MESSAGES,
+    MSG_VISIBILITY_NORMAL,
     0,
     true,
     -1,

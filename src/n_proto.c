@@ -65,71 +65,6 @@
     return;                                                                   \
   }
 
-static void display_chat_message(chat_channel_e chat_channel,
-                                 netpeer_t *sender,
-                                 const char *message) {
-  int sfx;
-  const char *sender_name;
-  const char *sender_opener;
-  const char *sender_closer;
-  const char *channel;
-
-  if (gamemode == commercial) {
-    sfx = sfx_radio;
-  }
-  else {
-    sfx = sfx_tink;
-  }
-
-  if (sender < 0) {
-    sender_name = "SERVER";
-    sender_opener = "[";
-    sender_closer = "]";
-  }
-  else if ((sender >= MAXPLAYERS) || (!playeringame[sender])) {
-    D_Msg(MSG_WARN, "Invalid message sender %d\n", sender);
-    return;
-  }
-  else {
-    sender_name = N_PeerGetName(sender);
-    sender_opener = "&lt;";
-    sender_closer = "&gt;";
-  }
-
-  switch (chat_channel) {
-    case CHAT_CHANNEL_SERVER:
-      channel = " (SERVER)";
-    break;
-    case CHAT_CHANNEL_TEAM:
-      channel = " (TEAM)";
-    break;
-    case CHAT_CHANNEL_PLAYER:
-      channel = " (PRIVATE)";
-    break;
-    case CHAT_CHANNEL_ALL:
-      channel = "";
-    break;
-    default:
-      D_Msg(MSG_WARN, "Invalid chat channel %d\n", chat_channel);
-      return;
-    break;
-  }
-
-  for (size_t i = 0; i < MAXPLAYERS; i++) {
-    if (!playeringame[i]) {
-      continue;
-    }
-
-    P_MSPrintf(i, sfx, "%s%s%s%s: %s\n",
-      sender_opener,
-      sender_name,
-      sender_closer,
-      channel,
-      message
-    );
-  }
-}
-
 static void handle_setup(netpeer_t *np) {
   netpeer_t *server = CL_GetServerPeer();
 
@@ -519,7 +454,7 @@ void N_HandlePacket(netpeer_t *np, void *data, size_t data_size) {
         CLIENT_ONLY("full state");
         handle_full_state(np);
       break;
-      case NM_CHAT_MESSAGE:
+      case NM_MESSAGE:
         handle_chat_message(np);
       break;
       case NM_SYNC:

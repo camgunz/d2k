@@ -28,6 +28,8 @@ extern uint32_t MSG_CHANNEL_CMD;
 extern uint32_t MSG_CHANNEL_NET;
 extern uint32_t MSG_CHANNEL_SYNC;
 extern uint32_t MSG_CHANNEL_SAVE;
+extern uint32_t MSG_CHANNEL_CHAT_INCOMING;
+extern uint32_t MSG_CHANNEL_CHAT_OUTGOING;
 extern uint32_t MSG_CHANNEL_STATE; /* managed in g_state */
 
 void N_MsgInit(void);
