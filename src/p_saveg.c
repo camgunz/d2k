@@ -77,53 +77,56 @@ static void serialize_corpse(gpointer data, gpointer user_data) {
   mobj_t *corpse = (mobj_t *)data;
   pbuf_t *savebuffer = (pbuf_t *)user_data;
 
-  M_PBufWriteUInt(savebuffer, corpse->id);
+  M_PBufWriteUNum(savebuffer, corpse->id);
 }
 
 static void serialize_player(pbuf_t *savebuffer, int playernum) {
   player_t *player = &players[playernum];
 
-  M_PBufWriteInt(savebuffer, player->playerstate);
-  M_PBufWriteChar(savebuffer, player->cmd.forwardmove);
-  M_PBufWriteChar(savebuffer, player->cmd.sidemove);
-  M_PBufWriteShort(savebuffer, player->cmd.angleturn);
-  M_PBufWriteShort(savebuffer, player->cmd.consistancy);
-  M_PBufWriteUChar(savebuffer, player->cmd.chatchar);
-  M_PBufWriteUChar(savebuffer, player->cmd.buttons);
-  M_PBufWriteInt(savebuffer, player->viewz);
-  M_PBufWriteInt(savebuffer, player->viewheight);
-  M_PBufWriteInt(savebuffer, player->deltaviewheight);
-  M_PBufWriteInt(savebuffer, player->bob);
-  M_PBufWriteInt(savebuffer, player->health);
-  M_PBufWriteInt(savebuffer, player->armorpoints);
-  M_PBufWriteInt(savebuffer, player->armortype);
-  for (size_t i = 0; i < NUMPOWERS; i++)
-    M_PBufWriteInt(savebuffer, player->powers[i]);
-  for (size_t i = 0; i < NUMCARDS; i++)
+  M_PBufWriteNum(savebuffer, player->playerstate);
+  M_PBufWriteNum(savebuffer, player->cmd.forwardmove);
+  M_PBufWriteNum(savebuffer, player->cmd.sidemove);
+  M_PBufWriteNum(savebuffer, player->cmd.angleturn);
+  M_PBufWriteNum(savebuffer, player->cmd.consistancy);
+  M_PBufWriteUNum(savebuffer, player->cmd.chatchar);
+  M_PBufWriteUNum(savebuffer, player->cmd.buttons);
+  M_PBufWriteNum(savebuffer, player->viewz);
+  M_PBufWriteNum(savebuffer, player->viewheight);
+  M_PBufWriteNum(savebuffer, player->deltaviewheight);
+  M_PBufWriteNum(savebuffer, player->bob);
+  M_PBufWriteNum(savebuffer, player->health);
+  M_PBufWriteNum(savebuffer, player->armorpoints);
+  M_PBufWriteNum(savebuffer, player->armortype);
+  for (size_t i = 0; i < NUMPOWERS; i++) {
+    M_PBufWriteNum(savebuffer, player->powers[i]);
+  }
+  for (size_t i = 0; i < NUMCARDS; i++) {
     M_PBufWriteBool(savebuffer, player->cards[i]);
+  }
   M_PBufWriteBool(savebuffer, player->backpack);
-  for (size_t i = 0; i < MAXPLAYERS; i++)
-    M_PBufWriteInt(savebuffer, player->frags[i]);
-  M_PBufWriteInt(savebuffer, player->readyweapon);
-  M_PBufWriteInt(savebuffer, player->pendingweapon);
+  for (size_t i = 0; i < MAXPLAYERS; i++) {
+    M_PBufWriteNum(savebuffer, player->frags[i]);
+  }
+  M_PBufWriteNum(savebuffer, player->readyweapon);
+  M_PBufWriteNum(savebuffer, player->pendingweapon);
   for (size_t i = 0; i < NUMWEAPONS; i++)
-    M_PBufWriteInt(savebuffer, player->weaponowned[i]);
+    M_PBufWriteNum(savebuffer, player->weaponowned[i]);
   for (size_t i = 0; i < NUMAMMO; i++)
-    M_PBufWriteInt(savebuffer, player->ammo[i]);
+    M_PBufWriteNum(savebuffer, player->ammo[i]);
   for (size_t i = 0; i < NUMAMMO; i++)
-    M_PBufWriteInt(savebuffer, player->maxammo[i]);
-  M_PBufWriteInt(savebuffer, player->attackdown);
-  M_PBufWriteInt(savebuffer, player->usedown);
-  M_PBufWriteInt(savebuffer, player->cheats);
-  M_PBufWriteInt(savebuffer, player->refire);
-  M_PBufWriteInt(savebuffer, player->killcount);
-  M_PBufWriteInt(savebuffer, player->itemcount);
-  M_PBufWriteInt(savebuffer, player->secretcount);
-  M_PBufWriteInt(savebuffer, player->damagecount);
-  M_PBufWriteInt(savebuffer, player->bonuscount);
-  M_PBufWriteInt(savebuffer, player->extralight);
-  M_PBufWriteInt(savebuffer, player->fixedcolormap);
-  M_PBufWriteInt(savebuffer, player->colormap);
+    M_PBufWriteNum(savebuffer, player->maxammo[i]);
+  M_PBufWriteNum(savebuffer, player->attackdown);
+  M_PBufWriteNum(savebuffer, player->usedown);
+  M_PBufWriteNum(savebuffer, player->cheats);
+  M_PBufWriteNum(savebuffer, player->refire);
+  M_PBufWriteNum(savebuffer, player->killcount);
+  M_PBufWriteNum(savebuffer, player->itemcount);
+  M_PBufWriteNum(savebuffer, player->secretcount);
+  M_PBufWriteNum(savebuffer, player->damagecount);
+  M_PBufWriteNum(savebuffer, player->bonuscount);
+  M_PBufWriteNum(savebuffer, player->extralight);
+  M_PBufWriteNum(savebuffer, player->fixedcolormap);
+  M_PBufWriteNum(savebuffer, player->colormap);
   for (size_t i = 0; i < NUMPSPRITES; i++) {
     if (player->psprites[i].state) {
       uint64_t state_index;
@@ -144,39 +147,39 @@ static void serialize_player(pbuf_t *savebuffer, int playernum) {
         );
       }
 
-      M_PBufWriteULong(savebuffer, state_index + 1);
-      M_PBufWriteInt(savebuffer, player->psprites[i].tics);
-      M_PBufWriteInt(savebuffer, player->psprites[i].sx);
-      M_PBufWriteInt(savebuffer, player->psprites[i].sy);
+      M_PBufWriteUNum(savebuffer, state_index + 1);
+      M_PBufWriteNum(savebuffer, player->psprites[i].tics);
+      M_PBufWriteNum(savebuffer, player->psprites[i].sx);
+      M_PBufWriteNum(savebuffer, player->psprites[i].sy);
     }
     else {
-      M_PBufWriteULong(savebuffer, 0);
-      M_PBufWriteInt(savebuffer, 0);
-      M_PBufWriteInt(savebuffer, 0);
-      M_PBufWriteInt(savebuffer, 0);
+      M_PBufWriteUNum(savebuffer, 0);
+      M_PBufWriteNum(savebuffer, 0);
+      M_PBufWriteNum(savebuffer, 0);
+      M_PBufWriteNum(savebuffer, 0);
     }
   }
-  M_PBufWriteInt(savebuffer, player->didsecret);
-  M_PBufWriteInt(savebuffer, player->momx);
-  M_PBufWriteInt(savebuffer, player->momy);
-  M_PBufWriteInt(savebuffer, player->resurectedkillcount);
-  M_PBufWriteInt(savebuffer, player->jumpTics);
+  M_PBufWriteNum(savebuffer, player->didsecret);
+  M_PBufWriteNum(savebuffer, player->momx);
+  M_PBufWriteNum(savebuffer, player->momy);
+  M_PBufWriteNum(savebuffer, player->resurectedkillcount);
+  M_PBufWriteNum(savebuffer, player->jumpTics);
   if (player->name) {
     M_PBufWriteString(savebuffer, player->name, strlen(player->name));
   }
   else {
     M_PBufWriteString(savebuffer, "", 0);
   }
-  M_PBufWriteUChar(savebuffer, player->team);
-  M_PBufWriteUInt(savebuffer, player->cmdq.latest_command_run_index);
+  M_PBufWriteUNum(savebuffer, player->team);
+  M_PBufWriteUNum(savebuffer, player->cmdq.latest_command_run_index);
 
   if (MULTINET) {
-    M_PBufWriteInt(savebuffer, player->ping);
-    M_PBufWriteInt(savebuffer, player->connect_tic);
+    M_PBufWriteNum(savebuffer, player->ping);
+    M_PBufWriteNum(savebuffer, player->connect_tic);
   }
   else {
-    M_PBufWriteInt(savebuffer, 0);
-    M_PBufWriteULong(savebuffer, 0);
+    M_PBufWriteNum(savebuffer, 0);
+    M_PBufWriteUNum(savebuffer, 0);
   }
   M_PBufWriteBool(savebuffer, player->telefragged_by_spawn);
 }
@@ -356,12 +359,12 @@ static void serialize_actor_pointers(pbuf_t *savebuffer, mobj_t *mobj) {
     }
   }
 
-  M_PBufWriteUInt(savebuffer, mobj->id);
-  M_PBufWriteULong(savebuffer, state_index);
-  M_PBufWriteUInt(savebuffer, target_id);
-  M_PBufWriteUInt(savebuffer, player_index);
-  M_PBufWriteUInt(savebuffer, tracer_id);
-  M_PBufWriteUInt(savebuffer, lastenemy_id);
+  M_PBufWriteUNum(savebuffer, mobj->id);
+  M_PBufWriteUNum(savebuffer, state_index);
+  M_PBufWriteUNum(savebuffer, target_id);
+  M_PBufWriteUNum(savebuffer, player_index);
+  M_PBufWriteUNum(savebuffer, tracer_id);
+  M_PBufWriteUNum(savebuffer, lastenemy_id);
 }
 
 static void deserialize_actor_pointers(pbuf_t *savebuffer, mobj_t *mobj) {
@@ -452,43 +455,43 @@ static bool should_delta_compress_actor(mobj_t *mobj) {
 }
 
 static void serialize_actor(pbuf_t *savebuffer, mobj_t *mobj) {
-  M_PBufWriteInt(savebuffer, mobj->type);
-  M_PBufWriteUInt(savebuffer, mobj->id);
-  M_PBufWriteInt(savebuffer, mobj->index);
-  M_PBufWriteInt(savebuffer, mobj->x);
-  M_PBufWriteInt(savebuffer, mobj->y);
-  M_PBufWriteInt(savebuffer, mobj->z);
-  M_PBufWriteUInt(savebuffer, mobj->angle);
-  M_PBufWriteInt(savebuffer, mobj->tics);
-  M_PBufWriteUInt(savebuffer, mobj->pitch);
-  M_PBufWriteULong(savebuffer, mobj->flags);
+  M_PBufWriteNum(savebuffer, mobj->type);
+  M_PBufWriteUNum(savebuffer, mobj->id);
+  M_PBufWriteNum(savebuffer, mobj->index);
+  M_PBufWriteNum(savebuffer, mobj->x);
+  M_PBufWriteNum(savebuffer, mobj->y);
+  M_PBufWriteNum(savebuffer, mobj->z);
+  M_PBufWriteUNum(savebuffer, mobj->angle);
+  M_PBufWriteNum(savebuffer, mobj->tics);
+  M_PBufWriteUNum(savebuffer, mobj->pitch);
+  M_PBufWriteUNum(savebuffer, mobj->flags);
 
-  M_PBufWriteInt(savebuffer, mobj->floorz);
-  M_PBufWriteInt(savebuffer, mobj->ceilingz);
-  M_PBufWriteInt(savebuffer, mobj->dropoffz);
-  M_PBufWriteInt(savebuffer, mobj->momx);
-  M_PBufWriteInt(savebuffer, mobj->momy);
-  M_PBufWriteInt(savebuffer, mobj->momz);
-  M_PBufWriteInt(savebuffer, mobj->validcount);
-  M_PBufWriteInt(savebuffer, mobj->intflags);
-  M_PBufWriteInt(savebuffer, mobj->health);
-  M_PBufWriteShort(savebuffer, mobj->movedir);
-  M_PBufWriteShort(savebuffer, mobj->movecount);
-  M_PBufWriteShort(savebuffer, mobj->strafecount);
-  M_PBufWriteShort(savebuffer, mobj->reactiontime);
-  M_PBufWriteShort(savebuffer, mobj->threshold);
-  M_PBufWriteShort(savebuffer, mobj->pursuecount);
-  M_PBufWriteShort(savebuffer, mobj->gear);
-  M_PBufWriteShort(savebuffer, mobj->lastlook);
-  M_PBufWriteShort(savebuffer, mobj->spawnpoint.x);
-  M_PBufWriteShort(savebuffer, mobj->spawnpoint.y);
-  M_PBufWriteShort(savebuffer, mobj->spawnpoint.angle);
-  M_PBufWriteShort(savebuffer, mobj->spawnpoint.type);
-  M_PBufWriteShort(savebuffer, mobj->spawnpoint.options);
-  M_PBufWriteInt(savebuffer, mobj->friction);
-  M_PBufWriteInt(savebuffer, mobj->movefactor);
-  M_PBufWriteShort(savebuffer, mobj->patch_width);
-  M_PBufWriteInt(savebuffer, mobj->iden_nums);
+  M_PBufWriteNum(savebuffer, mobj->floorz);
+  M_PBufWriteNum(savebuffer, mobj->ceilingz);
+  M_PBufWriteNum(savebuffer, mobj->dropoffz);
+  M_PBufWriteNum(savebuffer, mobj->momx);
+  M_PBufWriteNum(savebuffer, mobj->momy);
+  M_PBufWriteNum(savebuffer, mobj->momz);
+  M_PBufWriteNum(savebuffer, mobj->validcount);
+  M_PBufWriteNum(savebuffer, mobj->intflags);
+  M_PBufWriteNum(savebuffer, mobj->health);
+  M_PBufWriteNum(savebuffer, mobj->movedir);
+  M_PBufWriteNum(savebuffer, mobj->movecount);
+  M_PBufWriteNum(savebuffer, mobj->strafecount);
+  M_PBufWriteNum(savebuffer, mobj->reactiontime);
+  M_PBufWriteNum(savebuffer, mobj->threshold);
+  M_PBufWriteNum(savebuffer, mobj->pursuecount);
+  M_PBufWriteNum(savebuffer, mobj->gear);
+  M_PBufWriteNum(savebuffer, mobj->lastlook);
+  M_PBufWriteNum(savebuffer, mobj->spawnpoint.x);
+  M_PBufWriteNum(savebuffer, mobj->spawnpoint.y);
+  M_PBufWriteNum(savebuffer, mobj->spawnpoint.angle);
+  M_PBufWriteNum(savebuffer, mobj->spawnpoint.type);
+  M_PBufWriteNum(savebuffer, mobj->spawnpoint.options);
+  M_PBufWriteNum(savebuffer, mobj->friction);
+  M_PBufWriteNum(savebuffer, mobj->movefactor);
+  M_PBufWriteNum(savebuffer, mobj->patch_width);
+  M_PBufWriteNum(savebuffer, mobj->iden_nums);
 }
 
 static mobj_t* build_actor(mobjtype_t actor_type) {
@@ -647,8 +650,8 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
   mobj_t     last_actor;
   uint64_t   state_index;
 
-  M_PBufWriteInt(savebuffer, actor_type);
-  M_PBufWriteUInt(savebuffer, actors->len);
+  M_PBufWriteNum(savebuffer, actor_type);
+  M_PBufWriteUNum(savebuffer, actors->len);
 
   if (actors->len == 0) {
     return;
@@ -658,13 +661,13 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
 
   mobj = g_ptr_array_index(actors, 0);
 
-  M_PBufWriteUInt(savebuffer, mobj->id);
+  M_PBufWriteUNum(savebuffer, mobj->id);
 
   if (mobj->target) {
-    M_PBufWriteUInt(savebuffer, mobj->target->id);
+    M_PBufWriteUNum(savebuffer, mobj->target->id);
   }
   else {
-    M_PBufWriteUInt(savebuffer, 0);
+    M_PBufWriteUNum(savebuffer, 0);
   }
 
   if (mobj->state < states) {
@@ -681,18 +684,18 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
 
   state_index++;
 
-  M_PBufWriteULong(savebuffer, state_index);
+  M_PBufWriteUNum(savebuffer, state_index);
 
-  M_PBufWriteInt(savebuffer, mobj->x);
-  M_PBufWriteInt(savebuffer, mobj->y);
-  M_PBufWriteInt(savebuffer, mobj->z);
-  M_PBufWriteInt(savebuffer, mobj->momx);
-  M_PBufWriteInt(savebuffer, mobj->momy);
-  M_PBufWriteInt(savebuffer, mobj->momz);
-  M_PBufWriteUInt(savebuffer, mobj->angle);
-  M_PBufWriteInt(savebuffer, mobj->tics);
-  M_PBufWriteUInt(savebuffer, mobj->pitch);
-  M_PBufWriteULong(savebuffer, mobj->flags);
+  M_PBufWriteNum(savebuffer, mobj->x);
+  M_PBufWriteNum(savebuffer, mobj->y);
+  M_PBufWriteNum(savebuffer, mobj->z);
+  M_PBufWriteNum(savebuffer, mobj->momx);
+  M_PBufWriteNum(savebuffer, mobj->momy);
+  M_PBufWriteNum(savebuffer, mobj->momz);
+  M_PBufWriteUNum(savebuffer, mobj->angle);
+  M_PBufWriteNum(savebuffer, mobj->tics);
+  M_PBufWriteUNum(savebuffer, mobj->pitch);
+  M_PBufWriteUNum(savebuffer, mobj->flags);
 
   memcpy(&last_actor, mobj, sizeof(mobj_t));
 
@@ -741,13 +744,13 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
       delta_flags |= ACTOR_FLAGS;
     }
 
-    M_PBufWriteUInt(savebuffer, mobj->id);
+    M_PBufWriteUNum(savebuffer, mobj->id);
 
     if (mobj->target) {
-      M_PBufWriteUInt(savebuffer, mobj->target->id);
+      M_PBufWriteUNum(savebuffer, mobj->target->id);
     }
     else {
-      M_PBufWriteUInt(savebuffer, 0);
+      M_PBufWriteUNum(savebuffer, 0);
     }
 
     if (mobj->state < states) {
@@ -762,48 +765,48 @@ static void delta_compress_and_serialize_actor_list(gpointer key,
 
     state_index++;
 
-    M_PBufWriteULong(savebuffer, state_index);
+    M_PBufWriteUNum(savebuffer, state_index);
 
-    M_PBufWriteUInt(savebuffer, delta_flags);
+    M_PBufWriteUNum(savebuffer, delta_flags);
 
     if (delta_flags & ACTOR_X) {
-      M_PBufWriteInt(savebuffer, mobj->x - last_actor.x);
+      M_PBufWriteNum(savebuffer, mobj->x - last_actor.x);
     }
 
     if (delta_flags & ACTOR_Y) {
-      M_PBufWriteInt(savebuffer, mobj->y - last_actor.y);
+      M_PBufWriteNum(savebuffer, mobj->y - last_actor.y);
     }
 
     if (delta_flags & ACTOR_Z) {
-      M_PBufWriteInt(savebuffer, mobj->z - last_actor.z);
+      M_PBufWriteNum(savebuffer, mobj->z - last_actor.z);
     }
 
     if (delta_flags & ACTOR_MOMX) {
-      M_PBufWriteInt(savebuffer, mobj->momx - last_actor.momx);
+      M_PBufWriteNum(savebuffer, mobj->momx - last_actor.momx);
     }
 
     if (delta_flags & ACTOR_MOMY) {
-      M_PBufWriteInt(savebuffer, mobj->momy - last_actor.momy);
+      M_PBufWriteNum(savebuffer, mobj->momy - last_actor.momy);
     }
 
     if (delta_flags & ACTOR_MOMZ) {
-      M_PBufWriteInt(savebuffer, mobj->momz - last_actor.momz);
+      M_PBufWriteNum(savebuffer, mobj->momz - last_actor.momz);
     }
 
     if (delta_flags & ACTOR_ANGLE) {
-      M_PBufWriteLong(savebuffer, mobj->angle - last_actor.angle);
+      M_PBufWriteNum(savebuffer, mobj->angle - last_actor.angle);
     }
 
     if (delta_flags & ACTOR_TICS) {
-      M_PBufWriteInt(savebuffer, mobj->tics - last_actor.tics);
+      M_PBufWriteNum(savebuffer, mobj->tics - last_actor.tics);
     }
 
     if (delta_flags & ACTOR_PITCH) {
-      M_PBufWriteLong(savebuffer, mobj->pitch - last_actor.pitch);
+      M_PBufWriteNum(savebuffer, mobj->pitch - last_actor.pitch);
     }
 
     if (delta_flags & ACTOR_FLAGS) {
-      M_PBufWriteULong(savebuffer, mobj->flags ^ last_actor.flags);
+      M_PBufWriteUNum(savebuffer, mobj->flags ^ last_actor.flags);
     }
 
     memcpy(&last_actor, mobj, sizeof(mobj_t));
@@ -1037,7 +1040,7 @@ static void serialize_sector_index(pbuf_t *savebuffer, sector_t *s, const char *
   int sector_id;
 
   if (s == NULL) {
-    M_PBufWriteInt(savebuffer, 0);
+    M_PBufWriteNum(savebuffer, 0);
     return;
   }
 
@@ -1049,7 +1052,7 @@ static void serialize_sector_index(pbuf_t *savebuffer, sector_t *s, const char *
   if (sector_id > numsectors)
     I_Error("%s: Invalid sector %d", fun, sector_id);
 
-  M_PBufWriteInt(savebuffer, sector_id + 1);
+  M_PBufWriteNum(savebuffer, sector_id + 1);
 }
 
 static void deserialize_sector_index(pbuf_t *savebuffer, sector_t **s, const char *f) {
@@ -1084,7 +1087,7 @@ static void serialize_line_index(pbuf_t *savebuffer, line_t *li, const char *fun
   if (line_index > numlines)
     I_Error("%s: Invalid line %p", fun, li);
 
-  M_PBufWriteULong(savebuffer, line_index + 1);
+  M_PBufWriteUNum(savebuffer, line_index + 1);
 }
 
 static void deserialize_line_index(pbuf_t *savebuffer, line_t **li, const char *fun) {
@@ -1104,6 +1107,131 @@ static void deserialize_line_index(pbuf_t *savebuffer, line_t **li, const char *
     *li = NULL;
   else
     *li = &lines[line_index];
+}
+
+//
+// P_ArchivePeers
+//
+void P_ArchivePeers(pbuf_t *savebuffer) {
+  M_PBufWriteUNum(savebuffer, N_PeersGetCount());
+
+  NETPEER_FOR_EACH(iter) {
+    team_t *team = N_PeerGetTeam();
+    player_t *player = N_PeerGetPlayer();
+    const char *name = N_PeerGetName();
+
+    M_PBufWriteUNum(savebuffer, N_PeerGetID());
+    M_PBufWriteNum(savebuffer, N_PeerGetStatus());
+    M_PBufWriteNum(savebuffer, N_PeerGetAuthLevel());
+    M_PBufWriteUNum(savebuffer, N_PeerGetPing());
+    M_PBufWriteNum(savebuffer, N_PeerGetConnectTic());
+    M_PBufWriteString(savebuffer, name, strlen(name));
+    if (team) {
+      M_PBufWriteUNum(savebuffer, team->id);
+    }
+    else {
+      M_PBufWriteUNum(savebuffer, 0);
+    }
+    if (player) {
+      M_PBufWriteUNum(savebuffer, player->id);
+    }
+    else {
+      M_PBufWriteUNum(savebuffer, 0);
+    }
+  }
+}
+
+#define MAX_PEER_NAME_SIZE 128
+
+//
+// P_UnArchivePeers
+//
+void P_UnArchivePeers(pbuf_t *savebuffer) {
+  static buf_t *buf = NULL;
+
+  uint32_t peer_count;
+
+  if (!buf) {
+    buf = M_BufferNewWithCapacity(64);
+  }
+
+  read_uint(savebuffer, peer_count, "peer count");
+
+  for (size_t i = 0; i < peer_count; i++) {
+    uint32_t peer_id;
+    netpeer_t *peer;
+    netpeer_status_e status;
+    auth_level_e auth_level;
+    unsigned int ping;
+    int connect_tic;
+    uint32_t team_id;
+    team_t *team = NULL;
+    uint32_t player_id;
+    player_t *player = NULL;
+
+    read_uint(savebuffer, peer_id, "peer ID");
+    read_num(savebuffer, status, "peer status");
+    read_num(savebuffer, auth_level, "peer auth level");
+    read_unum(savebuffer, ping, "peer ping");
+    read_num(savebuffer, connect_tic, "peer connection TIC");
+    read_string(savebuffer, buf, "peer name", MAX_PEER_NAME_SIZE);
+    read_uint(savebuffer, team_id, "peer team ID");
+    read_uint(savebuffer, player_id, "peer player ID");
+
+    if (team_id) {
+      team = G_TeamsLookup(team_id);
+
+      if (!team) {
+        I_Error("P_UnArchivePeers: No team for ID %u\n", team_id);
+      }
+    }
+
+    if (player_id) {
+      player = P_PlayersLookup(player_id);
+
+      if (!player) {
+        I_Error("P_UnArchivePeers: No player for ID %u\n", player_id);
+      }
+    }
+
+    peer = N_PeersLookup(peer_id);
+
+    if (!peer) {
+      peer = N_PeersAddRaw(peer_id);
+    }
+
+    N_PeerSetStatus(peer, status);
+    N_PeerSetAuthLevel(peer, auth_level);
+    N_PeerSetPing(peer, ping);
+    N_PeerSetConnectTic(peer, connect_tic);
+    N_PeerSetName(peer, buf->data);
+    N_PeerSetTeam(peer, team);
+    N_PeerSetPlayer(peer, player);
+  }
+}
+
+//
+// P_ArchiveTeams
+//
+void P_ArchiveTeams(pbuf_t *savebuffer) {
+  M_PBufWriteUNum(savebuffer, G_TeamsGetCount());
+
+  TEAMS_FOR_EACH(iter) {
+    M_PBufWriteUNum(savebuffer, iter.team->id);
+    M_PBufWriteString(savebuffer, iter.team->name, strlen(iter.team->name));
+    M_PBufWriteString(
+      savebuffer,
+      iter.team->message_name,
+      strlen(iter.team->message_name)
+    );
+  }
+}
+
+//
+// P_UnArchiveTeams
+//
+void P_UnArchiveTeams(pbuf_t *savebuffer) {
+  size_t team_count;
 }
 
 //
@@ -1140,40 +1268,40 @@ void P_UnArchivePlayers(pbuf_t *savebuffer) {
 void P_ArchiveWorld(pbuf_t *savebuffer) {
   uint32_t button_count = 0;
 
-  M_PBufWriteInt(savebuffer, numspechit);
-  M_PBufWriteUInt(savebuffer, numsectors);
-  M_PBufWriteUInt(savebuffer, numlines);
+  M_PBufWriteNum(savebuffer, numspechit);
+  M_PBufWriteUNum(savebuffer, numsectors);
+  M_PBufWriteUNum(savebuffer, numlines);
 
   // do sectors
   for (sector_t *sec = sectors; (sec - sectors) < numsectors; sec++) {
     // killough 10/98: save full floor & ceiling heights, including fraction
-    M_PBufWriteInt(savebuffer, sec->floorheight);
-    M_PBufWriteInt(savebuffer, sec->ceilingheight);
+    M_PBufWriteNum(savebuffer, sec->floorheight);
+    M_PBufWriteNum(savebuffer, sec->ceilingheight);
 
-    M_PBufWriteShort(savebuffer, sec->floorpic);
-    M_PBufWriteShort(savebuffer, sec->ceilingpic);
-    M_PBufWriteShort(savebuffer, sec->lightlevel);
+    M_PBufWriteNum(savebuffer, sec->floorpic);
+    M_PBufWriteNum(savebuffer, sec->ceilingpic);
+    M_PBufWriteNum(savebuffer, sec->lightlevel);
 
     // needed?   yes -- transfer types
-    M_PBufWriteShort(savebuffer, sec->special);
+    M_PBufWriteNum(savebuffer, sec->special);
 
     // needed?   need them -- killough
-    M_PBufWriteShort(savebuffer, sec->tag);
+    M_PBufWriteNum(savebuffer, sec->tag);
 
-    M_PBufWriteInt(savebuffer, sec->soundorg.x);
-    M_PBufWriteInt(savebuffer, sec->soundorg.y);
-    M_PBufWriteInt(savebuffer, sec->soundorg.z);
-    M_PBufWriteUInt(savebuffer, sec->soundorg.id);
+    M_PBufWriteNum(savebuffer, sec->soundorg.x);
+    M_PBufWriteNum(savebuffer, sec->soundorg.y);
+    M_PBufWriteNum(savebuffer, sec->soundorg.z);
+    M_PBufWriteUNum(savebuffer, sec->soundorg.id);
   }
 
   // do lines
   for (line_t *li = lines; (li - lines) < numlines; li++) {
-    M_PBufWriteShort(savebuffer, li->flags);
-    M_PBufWriteShort(savebuffer, li->special);
-    M_PBufWriteShort(savebuffer, li->tag);
+    M_PBufWriteNum(savebuffer, li->flags);
+    M_PBufWriteNum(savebuffer, li->special);
+    M_PBufWriteNum(savebuffer, li->tag);
 
     for (int j = 0; j < 2; j++) {
-      M_PBufWriteUChar(savebuffer, j);
+      M_PBufWriteUNum(savebuffer, j);
 
       if (li->sidenum[j] == NO_INDEX) {
         M_PBufWriteBool(savebuffer, false);
@@ -1184,21 +1312,21 @@ void P_ArchiveWorld(pbuf_t *savebuffer) {
         M_PBufWriteBool(savebuffer, true);
         // killough 10/98: save full sidedef offsets,
         // preserving fractional scroll offsets
-        M_PBufWriteInt(savebuffer, si->textureoffset);
-        M_PBufWriteInt(savebuffer, si->rowoffset);
-        M_PBufWriteShort(savebuffer, si->toptexture);
-        M_PBufWriteShort(savebuffer, si->bottomtexture);
-        M_PBufWriteShort(savebuffer, si->midtexture);
+        M_PBufWriteNum(savebuffer, si->textureoffset);
+        M_PBufWriteNum(savebuffer, si->rowoffset);
+        M_PBufWriteNum(savebuffer, si->toptexture);
+        M_PBufWriteNum(savebuffer, si->bottomtexture);
+        M_PBufWriteNum(savebuffer, si->midtexture);
       }
     }
 
-    M_PBufWriteInt(savebuffer, li->soundorg.x);
-    M_PBufWriteInt(savebuffer, li->soundorg.y);
-    M_PBufWriteInt(savebuffer, li->soundorg.z);
-    M_PBufWriteUInt(savebuffer, li->soundorg.id);
+    M_PBufWriteNum(savebuffer, li->soundorg.x);
+    M_PBufWriteNum(savebuffer, li->soundorg.y);
+    M_PBufWriteNum(savebuffer, li->soundorg.z);
+    M_PBufWriteUNum(savebuffer, li->soundorg.id);
   }
 
-  M_PBufWriteInt(savebuffer, musinfo.current_item);
+  M_PBufWriteNum(savebuffer, musinfo.current_item);
 
   for (size_t i = 0; i < MAXBUTTONS; i++) {
     if (buttonlist[i].btimer) {
@@ -1206,19 +1334,19 @@ void P_ArchiveWorld(pbuf_t *savebuffer) {
     }
   }
 
-  M_PBufWriteUInt(savebuffer, button_count);
+  M_PBufWriteUNum(savebuffer, button_count);
 
   for (uint32_t i = 0; i < MAXBUTTONS; i++) {
     if (!buttonlist[i].btimer) {
       continue;
     }
 
-    M_PBufWriteUInt(savebuffer, i);
+    M_PBufWriteUNum(savebuffer, i);
     serialize_line_index(savebuffer, buttonlist[i].line, __func__);
-    M_PBufWriteInt(savebuffer, buttonlist[i].where);
-    M_PBufWriteInt(savebuffer, buttonlist[i].btexture);
-    M_PBufWriteInt(savebuffer, buttonlist[i].btimer);
-    M_PBufWriteUInt(savebuffer, buttonlist[i].soundorg->id);
+    M_PBufWriteNum(savebuffer, buttonlist[i].where);
+    M_PBufWriteNum(savebuffer, buttonlist[i].btexture);
+    M_PBufWriteNum(savebuffer, buttonlist[i].btimer);
+    M_PBufWriteUNum(savebuffer, buttonlist[i].soundorg->id);
   }
 }
 
@@ -1393,11 +1521,11 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
     initialize_delta_compressed_actors();
   }
 
-  M_PBufWriteUInt(savebuffer, P_IdentGetMaxID());
+  M_PBufWriteUNum(savebuffer, P_IdentGetMaxID());
 
   // killough 3/26/98: Save boss brain state
-  M_PBufWriteInt(savebuffer, brain.easy);
-  M_PBufWriteInt(savebuffer, brain.targeton);
+  M_PBufWriteNum(savebuffer, brain.easy);
+  M_PBufWriteNum(savebuffer, brain.targeton);
 
   for (thinker_t *th = thinkercap.next; th != &thinkercap; th = th->next) {
     mobj_t *mobj = (mobj_t *)th;
@@ -1406,7 +1534,7 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
       thinker_count++;
   }
 
-  M_PBufWriteUInt(savebuffer, thinker_count);
+  M_PBufWriteUNum(savebuffer, thinker_count);
 
   for (thinker_t *th = thinkercap.next; th != &thinkercap; th = th->next) {
     mobj_t *mobj;
@@ -1441,18 +1569,18 @@ void P_ArchiveThinkers(pbuf_t *savebuffer) {
     mobj_t *target = sectors[i].soundtarget;
 
     if (target && target->thinker.function == P_MobjThinker)
-      M_PBufWriteUInt(savebuffer, target->id);
+      M_PBufWriteUNum(savebuffer, target->id);
     else
-      M_PBufWriteUInt(savebuffer, 0);
+      M_PBufWriteUNum(savebuffer, 0);
   }
 
   if (corpse_queue) {
-    M_PBufWriteInt(savebuffer, corpse_queue_size);
-    M_PBufWriteUInt(savebuffer, g_queue_get_length(corpse_queue));
+    M_PBufWriteNum(savebuffer, corpse_queue_size);
+    M_PBufWriteUNum(savebuffer, g_queue_get_length(corpse_queue));
     g_queue_foreach(corpse_queue, serialize_corpse, savebuffer);
   }
   else {
-    M_PBufWriteInt(savebuffer, 0);
+    M_PBufWriteNum(savebuffer, 0);
   }
 
 }
@@ -1582,7 +1710,7 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
     }
   }
   else {
-    M_PBufWriteInt(savebuffer, 0);
+    M_PBufWriteNum(savebuffer, 0);
   }
 
   // killough 3/26/98: Spawn icon landings:
@@ -1619,19 +1747,19 @@ void P_UnArchiveThinkers(pbuf_t *savebuffer) {
 //
 
 void P_ArchiveCeiling(pbuf_t *savebuffer, ceiling_t *ceiling) {
-  M_PBufWriteInt(savebuffer, ceiling->type);
+  M_PBufWriteNum(savebuffer, ceiling->type);
   serialize_sector_index(savebuffer, ceiling->sector, __func__);
-  M_PBufWriteInt(savebuffer, ceiling->bottomheight);
-  M_PBufWriteInt(savebuffer, ceiling->topheight);
-  M_PBufWriteInt(savebuffer, ceiling->speed);
-  M_PBufWriteInt(savebuffer, ceiling->oldspeed);
-  M_PBufWriteInt(savebuffer, ceiling->crush);
-  M_PBufWriteInt(savebuffer, ceiling->newspecial);
-  M_PBufWriteInt(savebuffer, ceiling->oldspecial);
-  M_PBufWriteShort(savebuffer, ceiling->texture);
-  M_PBufWriteInt(savebuffer, ceiling->direction);
-  M_PBufWriteInt(savebuffer, ceiling->tag);
-  M_PBufWriteInt(savebuffer, ceiling->olddirection);
+  M_PBufWriteNum(savebuffer, ceiling->bottomheight);
+  M_PBufWriteNum(savebuffer, ceiling->topheight);
+  M_PBufWriteNum(savebuffer, ceiling->speed);
+  M_PBufWriteNum(savebuffer, ceiling->oldspeed);
+  M_PBufWriteNum(savebuffer, ceiling->crush);
+  M_PBufWriteNum(savebuffer, ceiling->newspecial);
+  M_PBufWriteNum(savebuffer, ceiling->oldspecial);
+  M_PBufWriteNum(savebuffer, ceiling->texture);
+  M_PBufWriteNum(savebuffer, ceiling->direction);
+  M_PBufWriteNum(savebuffer, ceiling->tag);
+  M_PBufWriteNum(savebuffer, ceiling->olddirection);
 }
 
 void P_UnArchiveCeiling(pbuf_t *savebuffer, ceiling_t *ceiling) {
@@ -1651,15 +1779,15 @@ void P_UnArchiveCeiling(pbuf_t *savebuffer, ceiling_t *ceiling) {
 }
 
 void P_ArchiveDoor(pbuf_t *savebuffer, vldoor_t *door) {
-  M_PBufWriteInt(savebuffer, door->type);
+  M_PBufWriteNum(savebuffer, door->type);
   serialize_sector_index(savebuffer, door->sector, __func__);
-  M_PBufWriteInt(savebuffer, door->topheight);
-  M_PBufWriteInt(savebuffer, door->speed);
-  M_PBufWriteInt(savebuffer, door->direction);
-  M_PBufWriteInt(savebuffer, door->topwait);
-  M_PBufWriteInt(savebuffer, door->topcountdown);
+  M_PBufWriteNum(savebuffer, door->topheight);
+  M_PBufWriteNum(savebuffer, door->speed);
+  M_PBufWriteNum(savebuffer, door->direction);
+  M_PBufWriteNum(savebuffer, door->topwait);
+  M_PBufWriteNum(savebuffer, door->topcountdown);
   serialize_line_index(savebuffer, door->line, __func__);
-  M_PBufWriteInt(savebuffer, door->lighttag);
+  M_PBufWriteNum(savebuffer, door->lighttag);
 }
 
 void P_UnArchiveDoor(pbuf_t *savebuffer, vldoor_t *door) {
@@ -1675,15 +1803,15 @@ void P_UnArchiveDoor(pbuf_t *savebuffer, vldoor_t *door) {
 }
 
 void P_ArchiveFloor(pbuf_t *savebuffer, floormove_t *floor) {
-  M_PBufWriteInt(savebuffer, floor->type);
-  M_PBufWriteInt(savebuffer, floor->crush);
+  M_PBufWriteNum(savebuffer, floor->type);
+  M_PBufWriteNum(savebuffer, floor->crush);
   serialize_sector_index(savebuffer, floor->sector, __func__);
-  M_PBufWriteInt(savebuffer, floor->direction);
-  M_PBufWriteInt(savebuffer, floor->newspecial);
-  M_PBufWriteInt(savebuffer, floor->oldspecial);
-  M_PBufWriteShort(savebuffer, floor->texture);
-  M_PBufWriteInt(savebuffer, floor->floordestheight);
-  M_PBufWriteInt(savebuffer, floor->speed);
+  M_PBufWriteNum(savebuffer, floor->direction);
+  M_PBufWriteNum(savebuffer, floor->newspecial);
+  M_PBufWriteNum(savebuffer, floor->oldspecial);
+  M_PBufWriteNum(savebuffer, floor->texture);
+  M_PBufWriteNum(savebuffer, floor->floordestheight);
+  M_PBufWriteNum(savebuffer, floor->speed);
 }
 
 void P_UnArchiveFloor(pbuf_t *savebuffer, floormove_t *floor) {
@@ -1700,16 +1828,16 @@ void P_UnArchiveFloor(pbuf_t *savebuffer, floormove_t *floor) {
 
 void P_ArchivePlat(pbuf_t *savebuffer, plat_t *plat) {
   serialize_sector_index(savebuffer, plat->sector, __func__);
-  M_PBufWriteInt(savebuffer, plat->speed);
-  M_PBufWriteInt(savebuffer, plat->low);
-  M_PBufWriteInt(savebuffer, plat->high);
-  M_PBufWriteInt(savebuffer, plat->wait);
-  M_PBufWriteInt(savebuffer, plat->count);
-  M_PBufWriteInt(savebuffer, plat->status);
-  M_PBufWriteInt(savebuffer, plat->oldstatus);
-  M_PBufWriteInt(savebuffer, plat->crush);
-  M_PBufWriteInt(savebuffer, plat->tag);
-  M_PBufWriteInt(savebuffer, plat->type);
+  M_PBufWriteNum(savebuffer, plat->speed);
+  M_PBufWriteNum(savebuffer, plat->low);
+  M_PBufWriteNum(savebuffer, plat->high);
+  M_PBufWriteNum(savebuffer, plat->wait);
+  M_PBufWriteNum(savebuffer, plat->count);
+  M_PBufWriteNum(savebuffer, plat->status);
+  M_PBufWriteNum(savebuffer, plat->oldstatus);
+  M_PBufWriteNum(savebuffer, plat->crush);
+  M_PBufWriteNum(savebuffer, plat->tag);
+  M_PBufWriteNum(savebuffer, plat->type);
 }
 
 void P_UnArchivePlat(pbuf_t *savebuffer, plat_t *plat) {
@@ -1728,11 +1856,11 @@ void P_UnArchivePlat(pbuf_t *savebuffer, plat_t *plat) {
 
 void P_ArchiveLightFlash(pbuf_t *savebuffer, lightflash_t *flash) {
   serialize_sector_index(savebuffer, flash->sector, __func__);
-  M_PBufWriteInt(savebuffer, flash->count);
-  M_PBufWriteInt(savebuffer, flash->maxlight);
-  M_PBufWriteInt(savebuffer, flash->minlight);
-  M_PBufWriteInt(savebuffer, flash->maxtime);
-  M_PBufWriteInt(savebuffer, flash->mintime);
+  M_PBufWriteNum(savebuffer, flash->count);
+  M_PBufWriteNum(savebuffer, flash->maxlight);
+  M_PBufWriteNum(savebuffer, flash->minlight);
+  M_PBufWriteNum(savebuffer, flash->maxtime);
+  M_PBufWriteNum(savebuffer, flash->mintime);
 }
 
 void P_UnArchiveLightFlash(pbuf_t *savebuffer, lightflash_t *flash) {
@@ -1746,11 +1874,11 @@ void P_UnArchiveLightFlash(pbuf_t *savebuffer, lightflash_t *flash) {
 
 void P_ArchiveStrobe(pbuf_t *savebuffer, strobe_t *strobe) {
   serialize_sector_index(savebuffer, strobe->sector, __func__);
-  M_PBufWriteInt(savebuffer, strobe->count);
-  M_PBufWriteInt(savebuffer, strobe->minlight);
-  M_PBufWriteInt(savebuffer, strobe->maxlight);
-  M_PBufWriteInt(savebuffer, strobe->darktime);
-  M_PBufWriteInt(savebuffer, strobe->brighttime);
+  M_PBufWriteNum(savebuffer, strobe->count);
+  M_PBufWriteNum(savebuffer, strobe->minlight);
+  M_PBufWriteNum(savebuffer, strobe->maxlight);
+  M_PBufWriteNum(savebuffer, strobe->darktime);
+  M_PBufWriteNum(savebuffer, strobe->brighttime);
 }
 
 void P_UnArchiveStrobe(pbuf_t *savebuffer, strobe_t *strobe) {
@@ -1764,9 +1892,9 @@ void P_UnArchiveStrobe(pbuf_t *savebuffer, strobe_t *strobe) {
 
 void P_ArchiveGlow(pbuf_t *savebuffer, glow_t *glow) {
   serialize_sector_index(savebuffer, glow->sector, __func__);
-  M_PBufWriteInt(savebuffer, glow->maxlight);
-  M_PBufWriteInt(savebuffer, glow->minlight);
-  M_PBufWriteInt(savebuffer, glow->direction);
+  M_PBufWriteNum(savebuffer, glow->maxlight);
+  M_PBufWriteNum(savebuffer, glow->minlight);
+  M_PBufWriteNum(savebuffer, glow->direction);
 }
 
 void P_UnArchiveGlow(pbuf_t *savebuffer, glow_t *glow) {
@@ -1778,9 +1906,9 @@ void P_UnArchiveGlow(pbuf_t *savebuffer, glow_t *glow) {
 
 void P_ArchiveFireFlicker(pbuf_t *savebuffer, fireflicker_t *flicker) {
   serialize_sector_index(savebuffer, flicker->sector, __func__);
-  M_PBufWriteInt(savebuffer, flicker->count);
-  M_PBufWriteInt(savebuffer, flicker->maxlight);
-  M_PBufWriteInt(savebuffer, flicker->minlight);
+  M_PBufWriteNum(savebuffer, flicker->count);
+  M_PBufWriteNum(savebuffer, flicker->maxlight);
+  M_PBufWriteNum(savebuffer, flicker->minlight);
 }
 
 void P_UnArchiveFireFlicker(pbuf_t *savebuffer, fireflicker_t *flicker) {
@@ -1791,12 +1919,12 @@ void P_UnArchiveFireFlicker(pbuf_t *savebuffer, fireflicker_t *flicker) {
 }
 
 void P_ArchiveElevator(pbuf_t *savebuffer, elevator_t *elevator) {
-  M_PBufWriteInt(savebuffer, elevator->type);
+  M_PBufWriteNum(savebuffer, elevator->type);
   serialize_sector_index(savebuffer, elevator->sector, __func__);
-  M_PBufWriteInt(savebuffer, elevator->direction);
-  M_PBufWriteInt(savebuffer, elevator->floordestheight);
-  M_PBufWriteInt(savebuffer, elevator->ceilingdestheight);
-  M_PBufWriteInt(savebuffer, elevator->speed);
+  M_PBufWriteNum(savebuffer, elevator->direction);
+  M_PBufWriteNum(savebuffer, elevator->floordestheight);
+  M_PBufWriteNum(savebuffer, elevator->ceilingdestheight);
+  M_PBufWriteNum(savebuffer, elevator->speed);
 }
 
 void P_UnArchiveElevator(pbuf_t *savebuffer, elevator_t *elevator) {
@@ -1809,15 +1937,15 @@ void P_UnArchiveElevator(pbuf_t *savebuffer, elevator_t *elevator) {
 }
 
 void P_ArchiveScroll(pbuf_t *savebuffer, scroll_t *scroll) {
-  M_PBufWriteInt(savebuffer, scroll->dx);
-  M_PBufWriteInt(savebuffer, scroll->dy);
-  M_PBufWriteInt(savebuffer, scroll->affectee);
-  M_PBufWriteInt(savebuffer, scroll->control);
-  M_PBufWriteInt(savebuffer, scroll->last_height);
-  M_PBufWriteInt(savebuffer, scroll->vdx);
-  M_PBufWriteInt(savebuffer, scroll->vdy);
-  M_PBufWriteInt(savebuffer, scroll->accel);
-  M_PBufWriteInt(savebuffer, scroll->type);
+  M_PBufWriteNum(savebuffer, scroll->dx);
+  M_PBufWriteNum(savebuffer, scroll->dy);
+  M_PBufWriteNum(savebuffer, scroll->affectee);
+  M_PBufWriteNum(savebuffer, scroll->control);
+  M_PBufWriteNum(savebuffer, scroll->last_height);
+  M_PBufWriteNum(savebuffer, scroll->vdx);
+  M_PBufWriteNum(savebuffer, scroll->vdy);
+  M_PBufWriteNum(savebuffer, scroll->accel);
+  M_PBufWriteNum(savebuffer, scroll->type);
 }
 
 void P_UnArchiveScroll(pbuf_t *savebuffer, scroll_t *scroll) {
@@ -1833,14 +1961,14 @@ void P_UnArchiveScroll(pbuf_t *savebuffer, scroll_t *scroll) {
 }
 
 void P_ArchivePusher(pbuf_t *savebuffer, pusher_t *pusher) {
-  M_PBufWriteInt(savebuffer, pusher->type);
-  M_PBufWriteInt(savebuffer, pusher->x_mag);
-  M_PBufWriteInt(savebuffer, pusher->y_mag);
-  M_PBufWriteInt(savebuffer, pusher->magnitude);
-  M_PBufWriteInt(savebuffer, pusher->radius);
-  M_PBufWriteInt(savebuffer, pusher->x);
-  M_PBufWriteInt(savebuffer, pusher->y);
-  M_PBufWriteInt(savebuffer, pusher->affectee);
+  M_PBufWriteNum(savebuffer, pusher->type);
+  M_PBufWriteNum(savebuffer, pusher->x_mag);
+  M_PBufWriteNum(savebuffer, pusher->y_mag);
+  M_PBufWriteNum(savebuffer, pusher->magnitude);
+  M_PBufWriteNum(savebuffer, pusher->radius);
+  M_PBufWriteNum(savebuffer, pusher->x);
+  M_PBufWriteNum(savebuffer, pusher->y);
+  M_PBufWriteNum(savebuffer, pusher->affectee);
 }
 
 void P_UnArchivePusher(pbuf_t *savebuffer, pusher_t *pusher) {
@@ -1886,7 +2014,7 @@ void P_ArchiveSpecials(pbuf_t *savebuffer) {
 
       ceiling = (ceiling_t *)th;
 
-      M_PBufWriteInt(savebuffer, tc_ceiling);
+      M_PBufWriteNum(savebuffer, tc_ceiling);
       P_ArchiveCeiling(savebuffer, ceiling);
 
       continue;
@@ -1895,7 +2023,7 @@ void P_ArchiveSpecials(pbuf_t *savebuffer) {
     if (th->function == T_VerticalDoor) {
       vldoor_t *door = (vldoor_t *)th;
 
-      M_PBufWriteInt(savebuffer, tc_door);
+      M_PBufWriteNum(savebuffer, tc_door);
       P_ArchiveDoor(savebuffer, door);
 
       continue;
@@ -1904,7 +2032,7 @@ void P_ArchiveSpecials(pbuf_t *savebuffer) {
     if (th->function == T_MoveFloor) {
       floormove_t *floor = (floormove_t *)th;
 
-      M_PBufWriteInt(savebuffer, tc_floor);
+      M_PBufWriteNum(savebuffer, tc_floor);
       P_ArchiveFloor(savebuffer, floor);
 
       continue;
@@ -1917,7 +2045,7 @@ void P_ArchiveSpecials(pbuf_t *savebuffer) {
 
       plat = (plat_t *)th;
 
-      M_PBufWriteInt(savebuffer, tc_plat);
+      M_PBufWriteNum(savebuffer, tc_plat);
       P_ArchivePlat(savebuffer, plat);
 
       continue;
@@ -1926,7 +2054,7 @@ void P_ArchiveSpecials(pbuf_t *savebuffer) {
     if (th->function == T_LightFlash) {
       lightflash_t *flash = (lightflash_t *)th;
 
-      M_PBufWriteInt(savebuffer, tc_flash);
+      M_PBufWriteNum(savebuffer, tc_flash);
       P_ArchiveLightFlash(savebuffer, flash);
 
       continue;
@@ -1935,7 +2063,7 @@ void P_ArchiveSpecials(pbuf_t *savebuffer) {
     if (th->function == T_StrobeFlash) {
       strobe_t *strobe = (strobe_t *)th;
 
-      M_PBufWriteInt(savebuffer, tc_strobe);
+      M_PBufWriteNum(savebuffer, tc_strobe);
       P_ArchiveStrobe(savebuffer, strobe);
 
       continue;
@@ -1944,7 +2072,7 @@ void P_ArchiveSpecials(pbuf_t *savebuffer) {
     if (th->function == T_Glow) {
       glow_t *glow = (glow_t *)th;
 
-      M_PBufWriteInt(savebuffer, tc_glow);
+      M_PBufWriteNum(savebuffer, tc_glow);
       P_ArchiveGlow(savebuffer, glow);
 
       continue;
@@ -1954,7 +2082,7 @@ void P_ArchiveSpecials(pbuf_t *savebuffer) {
     if (th->function == T_FireFlicker) {
       fireflicker_t *flicker = (fireflicker_t *)th;
 
-      M_PBufWriteInt(savebuffer, tc_flicker);
+      M_PBufWriteNum(savebuffer, tc_flicker);
       P_ArchiveFireFlicker(savebuffer, flicker);
 
       continue;
@@ -1964,7 +2092,7 @@ void P_ArchiveSpecials(pbuf_t *savebuffer) {
     if (th->function == T_MoveElevator) {
       elevator_t *elevator = (elevator_t *)th;         //jff 2/22/98
 
-      M_PBufWriteInt(savebuffer, tc_elevator);
+      M_PBufWriteNum(savebuffer, tc_elevator);
       P_ArchiveElevator(savebuffer, elevator);
 
       continue;
@@ -1974,7 +2102,7 @@ void P_ArchiveSpecials(pbuf_t *savebuffer) {
     if (th->function == T_Scroll) {
       scroll_t *scroll = (scroll_t *)th;
 
-      M_PBufWriteInt(savebuffer, tc_scroll);
+      M_PBufWriteNum(savebuffer, tc_scroll);
       P_ArchiveScroll(savebuffer, scroll);
 
       continue;
@@ -1984,7 +2112,7 @@ void P_ArchiveSpecials(pbuf_t *savebuffer) {
     if (th->function == T_Pusher) {
       pusher_t *pusher = (pusher_t *)th;
 
-      M_PBufWriteInt(savebuffer, tc_pusher);
+      M_PBufWriteNum(savebuffer, tc_pusher);
       P_ArchivePusher(savebuffer, pusher);
 
       continue;
@@ -1992,7 +2120,7 @@ void P_ArchiveSpecials(pbuf_t *savebuffer) {
   }
 
   // add a terminating marker
-  M_PBufWriteInt(savebuffer, tc_endspecials);
+  M_PBufWriteNum(savebuffer, tc_endspecials);
 }
 
 //
@@ -2151,10 +2279,10 @@ void P_ArchiveRNG(pbuf_t *savebuffer) {
   M_PBufWriteArray(savebuffer, NUMPRCLASS);
 
   for (int i = 0; i < NUMPRCLASS; i++)
-    M_PBufWriteUInt(savebuffer, rng.seed[i]);
+    M_PBufWriteUNum(savebuffer, rng.seed[i]);
 
-  M_PBufWriteInt(savebuffer, rng.rndindex);
-  M_PBufWriteInt(savebuffer, rng.prndindex);
+  M_PBufWriteNum(savebuffer, rng.rndindex);
+  M_PBufWriteNum(savebuffer, rng.prndindex);
 }
 
 void P_UnArchiveRNG(pbuf_t *savebuffer) {
@@ -2177,19 +2305,19 @@ void P_UnArchiveRNG(pbuf_t *savebuffer) {
 
 // killough 2/22/98: Save/restore automap state
 void P_ArchiveMap(pbuf_t *savebuffer) {
-  M_PBufWriteInt(savebuffer, automapmode);
+  M_PBufWriteNum(savebuffer, automapmode);
 
-  M_PBufWriteInt(savebuffer, markpointnum);
+  M_PBufWriteNum(savebuffer, markpointnum);
 
   for (int i = 0; i < markpointnum; i++) {
-    M_PBufWriteInt(savebuffer, markpoints[i].x);
-    M_PBufWriteInt(savebuffer, markpoints[i].y);
-    M_PBufWriteInt(savebuffer, markpoints[i].w);
-    M_PBufWriteInt(savebuffer, markpoints[i].h);
+    M_PBufWriteNum(savebuffer, markpoints[i].x);
+    M_PBufWriteNum(savebuffer, markpoints[i].y);
+    M_PBufWriteNum(savebuffer, markpoints[i].w);
+    M_PBufWriteNum(savebuffer, markpoints[i].h);
     for (int j = 0; j < 16; j++)
-      M_PBufWriteChar(savebuffer, markpoints[i].label[j]);
+      M_PBufWriteNum(savebuffer, markpoints[i].label[j]);
     for (int j = 0; j < 16; j++)
-      M_PBufWriteInt(savebuffer, markpoints[i].widths[j]);
+      M_PBufWriteNum(savebuffer, markpoints[i].widths[j]);
   }
 }
 

@@ -54,6 +54,7 @@ typedef struct {
 
 void       N_PeersInit(void);
 netpeer_t* N_PeersAdd(void *enet_peer);
+netpeer_t* N_PeersAddRaw(uint32_t id);
 netpeer_t* N_PeersLookup(uint32_t id);
 netpeer_t* N_PeersLookupByENetPeer(void *enet_peer);
 netpeer_t* N_PeersLookupByPlayer(player_t *player);

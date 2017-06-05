@@ -55,137 +55,6 @@
 #define MAX_COMMAND_LENGTH 32
 #define MAX_CHAT_MESSAGE_SIZE 256
 
-#define check_range(var, min, max)                                            \
-  if ((var < min) || (var > max)) {                                           \
-    D_MsgLocalError(                                                          \
-      "%s: Invalid message: %s is out of range (%s, %s)\n",                   \
-      __func__, #var, #min, #max                                              \
-    );                                                                        \
-  }
-
-#define read_num(pbuf, var, name)                                             \
-  if (!M_PBufReadNum(pbuf, &var)) {                                           \
-    D_MsgLocalError(                                                          \
-      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define read_unum(pbuf, var, name)                                            \
-  if (!M_PBufReadUNum(pbuf, &var)) {                                          \
-    D_MsgLocalError(                                                          \
-      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define read_ranged_num(pbuf, var, name, min, max)                            \
-  read_num(pbuf, var, name)                                                   \
-  check_range(var, min, max) 
-
-#define read_ranged_unum(pbuf, var, name, min, max)                           \
-  read_unum(pbuf, var, name)                                                  \
-  check_range(var, min, max) 
-
-#define _read_cnum(pbuf, var, name, type, min, max) do {                      \
-  int64_t _int_var = 0;                                                       \
-  read_ranged_num(pbuf, _int_var, name, min, max)                             \
-  var = (type)_int_var;                                                       \
-} while (0);
-
-#define _read_cunum(pbuf, var, name, type, min, max) do {                     \
-  uint64_t _uint_var = 0;                                                     \
-  read_ranged_unum(pbuf, _uint_var, name, min, max)                           \
-  var = (type)_uint_var;                                                      \
-} while (0);
-
-#define read_ranged_char(pbuf, var, name, min, max)                           \
-  _read_cnum(pbuf, var, name, int8_t, min, max)
-
-#define read_ranged_uchar(pbuf, var, name, min, max)                          \
-  _read_cunum(pbuf, var, name, uint8_t, min, max)
-
-#define read_char(pbuf, var, name)                                            \
-  read_ranged_char(pbuf, var, name, -128, 127)   
-
-#define read_uchar(pbuf, var, name)                                           \
-  read_ranged_uchar(pbuf, var, name, 0, 255)   
-
-#define read_ranged_short(pbuf, var, name, min, max)                          \
-  _read_cnum(pbuf, var, name, int16_t, min, max)
-
-#define read_ranged_ushort(pbuf, var, name, min, max)                         \
-  _read_cunum(pbuf, var, name, uint16_t, min, max)
-
-#define read_short(pbuf, var, name)                                           \
-  read_ranged_short(pbuf, var, name, -32768, 32767)   
-
-#define read_ushort(pbuf, var, name)                                          \
-  read_ranged_ushort(pbuf, var, name, 0, 65535)   
-
-#define read_ranged_int(pbuf, var, name, min, max)                            \
-  _read_cnum(pbuf, var, name, int32_t, min, max)
-
-#define read_ranged_uint(pbuf, var, name, min, max)                           \
-  _read_cunum(pbuf, var, name, uint32_t, min, max)
-
-#define read_int(pbuf, var, name)                                             \
-  read_ranged_int(pbuf, var, name, -2147483647, 2147483647)   
-
-#define read_uint(pbuf, var, name)                                            \
-  read_ranged_uint(pbuf, var, name, 0, 4294967295)   
-
-#define read_ranged_long(pbuf, var, name, min, max)                           \
-  _read_cnum(pbuf, var, name, int8_t, min, max)
-
-#define read_ranged_ulong(pbuf, var, name, min, max)                          \
-  _read_cunum(pbuf, var, name, uint8_t, min, max)
-
-#define read_double(pbuf, var, name)                                          \
-  if (!M_PBufReadDouble(pbuf, &var)) {                                        \
-    D_MsgLocalError(                                                          \
-      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define read_ranged_double(pbuf, var, name, min, max)                         \
-  read_double(pbuf, var, name);                                               \
-  check_range(var, min, max);
-
-#define read_bool(pbuf, var, name)                                            \
-  if (!M_PBufReadBool(pbuf, &var)) {                                          \
-    D_MsgLocalError(                                                          \
-      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define read_array(pbuf, var, name)                                           \
-  if (!M_PBufReadArray(pbuf, &var)) {                                         \
-    D_MsgLocalError(                                                          \
-      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define read_map(pbuf, var, name)                                             \
-  if (!M_PBufReadMap(pbuf, &var)) {                                           \
-    D_MsgLocalError(                                                          \
-      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define read_bytes(pbuf, var, name)                                           \
-  M_BufferClear(&var);                                                        \
-  if (!M_PBufReadBytes(pbuf, &var)) {                                         \
-    D_MsgLocalError(                                                          \
-      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
-    );                                                                        \
-    return false;                                                             \
-  }
-
 #define read_packed_game_state(pbuf, var, tic, name)                          \
   var = G_ReadNewStateFromPackedBuffer(tic, pbuf);                            \
   if (!var) {                                                                 \
@@ -195,26 +64,9 @@
     return false;                                                             \
   }
 
-#define read_string(pbuf, var, name, sz)                                      \
-  M_BufferClear(var);                                                         \
-  if (!M_PBufReadString(pbuf, var, sz)) {                                     \
-    D_MsgLocalError(                                                          \
-      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
-    );                                                                        \
-    return false;                                                             \
-  }
-
-#define read_string_array(pbuf, var, name, count, length)                     \
-  if (!M_PBufReadStringArray(pbuf, var, count, length)) {                     \
-    D_MsgLocalError(                                                          \
-      "%s: Error reading %s: %s.\n", __func__, name, M_PBufGetError(pbuf)     \
-    );                                                                        \
-    return false;                                                             \
-  }
-
 #define read_player(pbuf, var) do {                                           \
   uint32_t _player_id = 0;                                                    \
-  read_uint(pbuf, _player_id, "player ID")                                    \
+  pbuf_read_uint(pbuf, _player_id, "player ID")                               \
   if ((_player_id == 0) || (_player_id > PLAYER_CAP)) {                       \
     D_MsgLocalError("%s: Invalid player ID\n", __func__);                     \
     return false;                                                             \
@@ -227,7 +79,7 @@
 } while (0);
 
 #define read_peer_id(pbuf, var)                                               \
-  read_uint(pbuf, var, "peer ID")                                             \
+  pbuf_read_uint(pbuf, var, "peer ID")                                        \
   if (var == 0) {                                                             \
     D_MsgLocalError("%s: Invalid peer ID 0\n", __func__);                     \
     return false;                                                             \
@@ -238,13 +90,13 @@
   }
 
 #define unpack_net_command(pbuf, m_icmd)                                      \
-  read_uint(pbuf,  m_icmd.index,      "command index");                       \
-  read_uint(pbuf,  m_icmd.tic,        "command TIC");                         \
-  read_uint(pbuf,  m_icmd.server_tic, "server command TIC");                  \
-  read_char(pbuf,  m_icmd.forward,    "command forward value");               \
-  read_char(pbuf,  m_icmd.side,       "command side value");                  \
-  read_short(pbuf, m_icmd.angle,      "command angle value");                 \
-  read_uchar(pbuf, m_icmd.buttons,    "command buttons value")
+  pbuf_read_uint(pbuf,  m_icmd.index,      "command index");                  \
+  pbuf_read_uint(pbuf,  m_icmd.tic,        "command TIC");                    \
+  pbuf_read_uint(pbuf,  m_icmd.server_tic, "server command TIC");             \
+  pbuf_read_char(pbuf,  m_icmd.forward,    "command forward value");          \
+  pbuf_read_char(pbuf,  m_icmd.side,       "command side value");             \
+  pbuf_read_short(pbuf, m_icmd.angle,      "command angle value");            \
+  pbuf_read_uchar(pbuf, m_icmd.buttons,    "command buttons value")
 
 static void free_string(gpointer data) {
   free(data);
@@ -460,10 +312,10 @@ bool N_UnpackSetup(netpeer_t *np) {
   char *iwad_path;
   GPtrArray *rf_list;
 
-  read_ranged_int(pbuf, m_deathmatch, "deathmatch", 0, 2);
+  pbuf_read_ranged_int(pbuf, m_deathmatch, "deathmatch", 0, 2);
 
   M_BufferInit(&iwad_buf);
-  read_string(pbuf, &iwad_buf, "IWAD", MAX_IWAD_NAME_LENGTH);
+  pbuf_read_string(pbuf, &iwad_buf, "IWAD", MAX_IWAD_NAME_LENGTH);
   iwad_name = M_StripExtension(M_BufferGetData(&iwad_buf));
 
   M_BufferFree(&iwad_buf);
@@ -497,11 +349,11 @@ bool N_UnpackSetup(netpeer_t *np) {
    *           successfully obtained
    */
 
-  read_bool(pbuf, has_resources, "has resources");
+  pbuf_read_bool(pbuf, has_resources, "has resources");
 
   if (has_resources) {
     rf_list = g_ptr_array_new_with_free_func(free_string);
-    read_string_array(
+    pbuf_read_string_array(
       pbuf,
       rf_list,
       "resource names",
@@ -518,7 +370,7 @@ bool N_UnpackSetup(netpeer_t *np) {
 
   D_AddResource(PACKAGE_TARNAME ".wad", source_auto_load);
 
-  read_uint(pbuf, deh_file_count, "DeH/BEX file count");
+  pbuf_read_uint(pbuf, deh_file_count, "DeH/BEX file count");
 
   if (deh_file_count) {
     buf_t deh_name;
@@ -528,21 +380,23 @@ bool N_UnpackSetup(netpeer_t *np) {
     M_BufferInitWithCapacity(&deh_name, MAX_RESOURCE_NAME_LENGTH);
 
     for (unsigned int i = 0; i < deh_file_count; i++) {
-      read_bool(pbuf, is_lump, "DeH/BEX is lump");
+      pbuf_read_bool(pbuf, is_lump, "DeH/BEX is lump");
 
       if (is_lump) {
-        read_int(pbuf, deh_lumpnum, "DeH/BEX lumpnum");
+        pbuf_read_int(pbuf, deh_lumpnum, "DeH/BEX lumpnum");
         D_AddDEH(NULL, deh_lumpnum);
       }
       else {
-        read_string(pbuf, &deh_name, "DeH/BEX name", MAX_RESOURCE_NAME_LENGTH);
+        pbuf_read_string(
+          pbuf, &deh_name, "DeH/BEX name", MAX_RESOURCE_NAME_LENGTH
+        );
         D_AddDEH(M_BufferGetData(&deh_name), deh_lumpnum);
       }
     }
   }
 
-  read_int(pbuf, m_state_tic, "game state tic");
-  read_packed_game_state(pbuf, gs, m_state_tic, "game state data");
+  pbuf_read_int(pbuf, m_state_tic, "game state tic");
+  pbuf_read_packed_game_state(pbuf, gs, m_state_tic, "game state data");
 
   deathmatch = m_deathmatch;
 
@@ -568,43 +422,12 @@ bool N_UnpackFullState(netpeer_t *np) {
   int m_state_tic;
   game_state_t *gs;
 
-  read_int(pbuf, m_state_tic, "game state tic");
+  pbuf_read_int(pbuf, m_state_tic, "game state tic");
   read_packed_game_state(pbuf, gs, m_state_tic, "game state data");
 
   G_SetLatestState(gs);
 
   N_PeerSyncUpdateTIC(np, gs->tic);
-
-  return true;
-}
-
-void N_PackAuthResponse(netpeer_t *np, auth_level_e auth_level) {
-  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_AUTH);
-
-  M_PBufWriteUNum(pbuf, auth_level);
-}
-
-bool N_UnpackAuthResponse(netpeer_t *np, auth_level_e *auth_level) {
-  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
-  unsigned char m_auth_level = 0;
-
-  read_ranged_uchar(
-    pbuf, m_auth_level, "auth level", AUTH_LEVEL_NONE, AUTH_LEVEL_MAX - 1
-  );
-
-  switch (m_auth_level) {
-    case AUTH_LEVEL_NONE:
-    case AUTH_LEVEL_SPECTATOR:
-    case AUTH_LEVEL_PLAYER:
-    case AUTH_LEVEL_MODERATOR:
-    case AUTH_LEVEL_ADMINISTRATOR:
-      *auth_level = m_auth_level;
-    break;
-    default:
-      D_MsgLocalError("Invalid auth level type %d.\n", m_auth_level);
-      return false;
-    break;
-  }
 
   return true;
 }
@@ -619,7 +442,7 @@ bool N_UnpackPing(netpeer_t *np, double *server_time) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   double m_server_time;
 
-  read_double(pbuf, m_server_time, "server time");
+  pbuf_read_double(pbuf, m_server_time, "server time");
 
   *server_time = m_server_time;
 
@@ -695,7 +518,7 @@ bool N_UnpackChatMessage(netpeer_t *np,
   uint32_t m_sender_id = 0;
   uint32_t m_recipient_id = 0;
 
-  read_ranged_uchar(pbuf, m_chat_channel, "chat channel",
+  pbuf_read_ranged_uchar(pbuf, m_chat_channel, "chat channel",
     CHAT_CHANNEL_MIN, CHAT_CHANNEL_MAX
   );
 
@@ -707,7 +530,9 @@ bool N_UnpackChatMessage(netpeer_t *np,
     read_peer_id(pbuf, m_recipient_id);
   }
 
-  read_string(pbuf, message_contents, "chat message", MAX_CHAT_MESSAGE_SIZE);
+  pbuf_read_string(
+    pbuf, message_contents, "chat message", MAX_CHAT_MESSAGE_SIZE
+  );
 
   *chat_channel = m_chat_channel;
 
@@ -802,20 +627,22 @@ bool N_UnpackSync(netpeer_t *np) {
     uint32_t m_peer_player_count;
     uint32_t m_command_count;
 
-    read_uint(pbuf, m_command_index, "command index");
-    read_bool(pbuf, m_is_player, "local peer is player");
-    read_uint(pbuf, m_peer_player_count, "peer player count");
+    pbuf_read_uint(pbuf, m_command_index, "command index");
+    pbuf_read_bool(pbuf, m_is_player, "local peer is player");
+    pbuf_read_uint(pbuf, m_peer_player_count, "peer player count");
 
     if (m_is_player) {
       player_t *player = P_GetConsolePlayer();
-      read_uint(pbuf, m_command_count, "consoleplayer sync command count");
+      pbuf_read_uint(
+        pbuf, m_command_count, "consoleplayer sync command count"
+      );
 
       for (uint32_t j = 0; j < m_command_count; j++) {
         uint32_t m_run_command_index;
         uint32_t m_server_tic;
 
-        read_uint(pbuf, m_run_command_index, "run command index");
-        read_uint(pbuf, m_server_tic, "server TIC");
+        pbuf_read_uint(pbuf, m_run_command_index, "run command index");
+        pbuf_read_uint(pbuf, m_server_tic, "server TIC");
 
         PL_UpdateCommandServerTic(player, m_run_command_index, m_server_tic);
       }
@@ -825,7 +652,7 @@ bool N_UnpackSync(netpeer_t *np) {
       player_t *m_player;
 
       read_player(pbuf, m_player);
-      read_uint(pbuf, m_command_count, "command count");
+      pbuf_read_uint(pbuf, m_command_count, "command count");
 
       for (size_t j = 0; j < m_command_count; j++) {
         idxticcmd_t m_icmd;
@@ -864,8 +691,8 @@ bool N_UnpackSync(netpeer_t *np) {
       N_PeerSyncUpdateCommandIndexForPlayer(np, m_player, m_command_index);
     }
 
-    read_int(pbuf, m_delta_from_tic, "delta from tic");
-    read_int(pbuf, m_delta_to_tic,   "delta to tic");
+    pbuf_read_int(pbuf, m_delta_from_tic, "delta from tic");
+    pbuf_read_int(pbuf, m_delta_to_tic,   "delta to tic");
 
     /* [CG] pbuf now points to the delta's binary data */
     N_PeerSyncUpdateStateDelta(np, m_delta_from_tic, m_delta_to_tic, pbuf);
@@ -877,8 +704,8 @@ bool N_UnpackSync(netpeer_t *np) {
     bool m_is_player;
     bool should_ignore;
 
-    read_int(pbuf, m_sync_tic, "sync tic");
-    read_bool(pbuf, m_is_player, "peer is player");
+    pbuf_read_int(pbuf, m_sync_tic, "sync tic");
+    pbuf_read_bool(pbuf, m_is_player, "peer is player");
 
     if (m_is_player) {
       player_t *player = N_PeerGetPlayer(np);
@@ -887,7 +714,7 @@ bool N_UnpackSync(netpeer_t *np) {
         should_ignore = true;
       }
 
-      read_uint(pbuf, m_command_count, "command count");
+      pbuf_read_uint(pbuf, m_command_count, "command count");
 
       for (size_t i = 0; i < m_command_count; i++) {
         idxticcmd_t m_icmd;
@@ -909,13 +736,13 @@ bool N_UnpackSync(netpeer_t *np) {
       }
     }
 
-    read_uint(pbuf, m_player_count, "sync player count");
+    pbuf_read_uint(pbuf, m_player_count, "sync player count");
 
     for (size_t i = 0; i < m_player_count; i++) {
       player_t *m_player;
 
       read_player(pbuf, m_player);
-      read_uint(pbuf, m_command_index, "command index");
+      pbuf_read_uint(pbuf, m_command_index, "command index");
       N_PeerSyncUpdateCommandIndexForPlayer(np, m_player, m_command_index);
     }
 
@@ -925,38 +752,42 @@ bool N_UnpackSync(netpeer_t *np) {
   return true;
 }
 
-bool N_UnpackPreferenceChange(netpeer_t *np) {
-  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
+void N_PackAuthRequest(netpeer_t *np, const char *password) {
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CLIENT_ATTRIBUTE_CHANGE);
 
-  return true;
+  M_PBufWriteNum(pbuf, CLIENT_ATTRIBUTE_AUTH);
+  M_PBufWriteString(pbuf, password, strlen(password));
 }
 
-bool N_UnpackPreferenceName(netpeer_t *np, buf_t *buf) {
+bool N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
 
-  read_string(pbuf, buf, "preference name", MAX_PREFERENCE_NAME_SIZE);
+  pbuf_read_string(
+    pbuf, buf, "authorization request password", MAX_PASSWORD_LENGTH
+  );
 
   return true;
 }
 
 void N_PackNameChange(netpeer_t *np, const char *new_name) {
-  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_PREFERENCE_CHANGE);
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CLIENT_ATTRIBUTE_CHANGE);
 
-  M_PBufWriteString(pbuf, "name", 4);
+  M_PBufWriteNum(pbuf, CLIENT_ATTRIBUTE_NAME);
   M_PBufWriteString(pbuf, new_name, strlen(new_name));
 }
 
 bool N_UnpackNameChange(netpeer_t *np, buf_t *buf) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
 
-  read_string(pbuf, buf, "new name", MAX_NAME_SIZE);
+  pbuf_read_string(pbuf, buf, "new name", MAX_NAME_SIZE);
 
   return true;
 }
 
 void N_PackTeamChange(netpeer_t *np, team_t *new_team) {
-  pack_preference_change(pbuf, gametic, "team", 4);
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CLIENT_ATTRIBUTE_CHANGE);
 
+  M_PBufWriteNum(pbuf, CLIENT_ATTRIBUTE_TEAM);
   M_PBufWriteUNum(pbuf, new_team->id);
 }
 
@@ -965,14 +796,14 @@ bool N_UnpackTeamChange(netpeer_t *np, team_t **new_team) {
   uint32_t m_new_team_id = 0;
   team_t *m_new_team = NULL;
 
-  read_uint(pbuf, m_new_team_id, "new team ID");
+  pbuf_read_uint(pbuf, m_new_team_id, "new team ID");
 
   if (m_new_team_id) {
     *new_team = NULL;
     return true;
   }
 
-  *m_new_team = G_TeamsLookup(m_new_team_id);
+  m_new_team = G_TeamsLookup(m_new_team_id);
 
   if (!m_new_team) {
     D_MsgLocalError("N_UnpackTeamChange: Invalid team ID %u\n",
@@ -988,9 +819,7 @@ bool N_UnpackTeamChange(netpeer_t *np, team_t **new_team) {
 }
 
 void N_PackPWOChange(netpeer_t *np) {
-  pack_preference_change(pbuf, gametic, "pwo", 3);
-
-  M_PBufWriteUNum(pbuf, 0); /* CG: TODO */
+  /* CG: TODO */
 }
 
 bool N_UnpackPWOChange(netpeer_t *np) {
@@ -998,8 +827,9 @@ bool N_UnpackPWOChange(netpeer_t *np) {
 }
 
 void N_PackWSOPChange(netpeer_t *np, unsigned int new_wsop_flags) {
-  pack_preference_change(pbuf, gametic, "wsop", 4);
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CLIENT_ATTRIBUTE_CHANGE);
 
+  M_PBufWriteNum(pbuf, CLIENT_ATTRIBUTE_WSOP);
   M_PBufWriteUNum(pbuf, new_wsop_flags);
 }
 
@@ -1007,7 +837,7 @@ bool N_UnpackWSOPChange(netpeer_t *np, unsigned int *new_wsop_flags) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   unsigned int m_new_wsop_flags = 0;
 
-  read_ranged_uint(
+  pbuf_read_ranged_uint(
     pbuf, m_new_wsop_flags, "new WSOP flags", WSOP_NONE, WSOP_MAX
   );
 
@@ -1017,8 +847,9 @@ bool N_UnpackWSOPChange(netpeer_t *np, unsigned int *new_wsop_flags) {
 }
 
 void N_PackBobbingChange(netpeer_t *np, double new_bobbing_amount) {
-  pack_preference_change(pbuf, gametic, "bobbing", 7);
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CLIENT_ATTRIBUTE_CHANGE);
 
+  M_PBufWriteNum(pbuf, CLIENT_ATTRIBUTE_WSOP);
   M_PBufWriteDouble(pbuf, new_bobbing_amount);
 }
 
@@ -1026,7 +857,7 @@ bool N_UnpackBobbingChanged(netpeer_t *np, double *new_bobbing_amount) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   double m_new_bobbing_amount = 0;
 
-  read_ranged_double(
+  pbuf_read_ranged_double(
     pbuf, m_new_bobbing_amount, "new bobbing amount", 0.0, 1.0
   );
 
@@ -1036,8 +867,9 @@ bool N_UnpackBobbingChanged(netpeer_t *np, double *new_bobbing_amount) {
 }
 
 void N_PackAutoaimChange(netpeer_t *np, bool new_autoaim_enabled) {
-  pack_preference_change(pbuf, gametic, "autoaim", 7);
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CLIENT_ATTRIBUTE_CHANGE);
 
+  M_PBufWriteNum(pbuf, CLIENT_ATTRIBUTE_AUTOAIM);
   M_PBufWriteBool(pbuf, new_autoaim_enabled);
 }
 
@@ -1045,7 +877,7 @@ bool N_UnpackAutoaimChange(netpeer_t *np, bool *new_autoaim_enabled) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   bool m_new_autoaim_enabled = false;
 
-  read_bool(pbuf, m_new_autoaim_enabled, "new autoaim enabled value");
+  pbuf_read_bool(pbuf, m_new_autoaim_enabled, "new autoaim enabled value");
 
   *new_autoaim_enabled = m_new_autoaim_enabled;
 
@@ -1053,9 +885,10 @@ bool N_UnpackAutoaimChange(netpeer_t *np, bool *new_autoaim_enabled) {
 }
 
 void N_PackWeaponSpeedChange(netpeer_t *np, unsigned char new_weapon_speed) {
-  pack_preference_change(pbuf, gametic, "weapon speed", 12);
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CLIENT_ATTRIBUTE_CHANGE);
 
-  M_PBufWriteUChar(pbuf, new_weapon_speed);
+  M_PBufWriteNum(pbuf, CLIENT_ATTRIBUTE_WEAPON_SPEED);
+  M_PBufWriteUNum(pbuf, new_weapon_speed);
 }
 
 bool N_UnpackWeaponSpeedChange(netpeer_t *np,
@@ -1063,7 +896,7 @@ bool N_UnpackWeaponSpeedChange(netpeer_t *np,
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
   unsigned char m_new_weapon_speed = 0;
 
-  read_uchar(pbuf, m_new_weapon_speed, "new weapon speed");
+  pbuf_read_uchar(pbuf, m_new_weapon_speed, "new weapon speed");
 
   *new_weapon_speed = m_new_weapon_speed;
 
@@ -1073,18 +906,20 @@ bool N_UnpackWeaponSpeedChange(netpeer_t *np,
 void N_PackColorChange(netpeer_t *np, unsigned char new_red,
                                       unsigned char new_green,
                                       unsigned char new_blue) {
-  pack_preference_change(pbuf, gametic, "color", 5);
+  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_CLIENT_ATTRIBUTE_CHANGE);
+  uint32_t color = ((new_red << 24) | (new_green << 16) | (new_blue << 8));
 
-  M_PBufWriteUInt(pbuf, (new_red << 24) | (new_green << 16) | (new_blue << 8));
+  M_PBufWriteNum(pbuf, CLIENT_ATTRIBUTE_WEAPON_SPEED);
+  M_PBufWriteUNum(pbuf, color);
 }
 
 bool N_UnpackColorChange(netpeer_t *np, unsigned char *new_red,
                                         unsigned char *new_green,
                                         unsigned char *new_blue) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
-  unsigned int m_new_color = 0;
+  uint32_t m_new_color;
 
-  read_uint(pbuf, m_new_color, "new color");
+  pbuf_read_uint(pbuf, m_new_color, "new color");
 
   *new_red   = (m_new_color >> 24) & 0xFF;
   *new_green = (m_new_color >> 16) & 0xFF;
@@ -1093,48 +928,22 @@ bool N_UnpackColorChange(netpeer_t *np, unsigned char *new_red,
   return true;
 }
 
-void N_PackColorIndexChange(netpeer_t *np int new_color_index) {
-  pack_preference_change(pbuf, gametic, "color index", 11);
-
-  M_PBufWriteNum(pbuf, new_color_index);
+void N_PackColormapIndexChange(netpeer_t *np,
+                               unsigned char new_colormap_index) {
+  /* CG: TODO */
 }
 
-bool N_UnpackColorIndexChange(netpeer_t *np, int *new_color_index) {
-  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
-  int m_new_color_index = 0;
-
-  /* CG: TODO: Ensure new color map index is reasonable */
-  read_int(pbuf, m_new_color_index, "new color index");
-
-  *new_color_index = m_new_color_index;
-
-  return true;
+bool N_UnpackColormapIndexChange(netpeer_t *np,
+                                 unsigned char *new_colormap_index) {
+  return false; /* CG: TODO */
 }
 
 void N_PackSkinChange(netpeer_t *np) {
-  pack_preference_change(pbuf, gametic, "skin name", 9);
-
-  M_PBufWriteUChar(pbuf, 0); /* CG: TODO */
+  /* CG: TODO */
 }
 
 bool N_UnpackSkinChange(netpeer_t *np) {
   return false; /* CG: TODO */
-}
-
-void N_PackAuthRequest(netpeer_t *np, const char *password) {
-  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_AUTH);
-
-  M_PBufWriteString(pbuf, password, strlen(password));
-}
-
-bool N_UnpackAuthRequest(netpeer_t *np, buf_t *buf) {
-  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
-
-  read_string(
-    pbuf, buf, "authorization request password", MAX_PASSWORD_LENGTH
-  );
-
-  return true;
 }
 
 void N_PackRCONCommand(netpeer_t *np, const char *command) {
@@ -1146,7 +955,7 @@ void N_PackRCONCommand(netpeer_t *np, const char *command) {
 bool N_UnpackRCONCommand(netpeer_t *np, buf_t *buf) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
 
-  read_string(pbuf, buf, "RCON command", MAX_COMMAND_LENGTH);
+  pbuf_read_string(pbuf, buf, "RCON command", MAX_COMMAND_LENGTH);
 
   return true;
 }
@@ -1160,7 +969,7 @@ void N_PackVoteRequest(netpeer_t *np, const char *command) {
 bool N_UnpackVoteRequest(netpeer_t *np, buf_t *buf) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
 
-  read_string(pbuf, buf, "vote command", MAX_COMMAND_LENGTH);
+  pbuf_read_string(pbuf, buf, "vote command", MAX_COMMAND_LENGTH);
 
   return true;
 }
@@ -1179,10 +988,10 @@ bool N_UnpackGameActionChange(netpeer_t *np, gameaction_t *new_gameaction,
   int m_new_gameaction = 0;
   int m_new_gametic = 0;
 
-  read_ranged_int(
+  pbuf_read_ranged_int(
     pbuf, m_new_gameaction, "game action", ga_nothing, ga_worlddone
   );
-  read_int(pbuf, m_new_gametic, "game action gametic");
+  pbuf_read_int(pbuf, m_new_gametic, "game action gametic");
 
   *new_gameaction = m_new_gameaction;
   *new_gametic = m_new_gametic;

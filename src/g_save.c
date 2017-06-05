@@ -299,6 +299,10 @@ void G_WriteSaveData(pbuf_t *savebuffer) {
   // killough 11/98: save revenant tracer state
   M_PBufWriteInt(savebuffer, basetic);
 
+  if (MULTINET) {
+    P_ArchivePeers(savebuffer);
+  }
+
   P_ArchiveWorld(savebuffer);
   P_ArchivePlayers(savebuffer);
   P_ArchiveThinkers(savebuffer);

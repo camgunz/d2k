@@ -37,10 +37,9 @@
 #include "w_wad.h"
 
 #include "n_main.h"
+#include "n_proto.h"
 #include "cl_main.h"
 #include "cl_net.h"
-
-#define MAX_PREF_NAME_SIZE 20
 
 #define SERVER_ONLY(name)                                                     \
   if (!SERVER) {                                                              \
@@ -185,16 +184,6 @@ static void handle_full_state(netpeer_t *np) {
   N_PeerSyncSetHasGameState(np);
 }
 
-static void handle_auth_response(netpeer_t *np) {
-  auth_level_e level;
-
-  if (!N_UnpackAuthResponse(np, &level)) {
-    return;
-  }
-
-  CL_SetAuthorizationLevel(level);
-}
-
 static void handle_chat_message(netpeer_t *np) {
   static buf_t message_contents;
   static bool initialized_buffer = false;
@@ -303,109 +292,7 @@ static void handle_ping(netpeer_t *np) {
   }
 }
 
-static void handle_player_preference_change(netpeer_t *np) {
-  static buf_t *pref_key_name = NULL;
-  static buf_t *pref_key_value = NULL;
-
-  int tic = 0;
-  netpeer_t *src = NULL;
-
-  if (!pref_key_name) {
-    pref_key_name = M_BufferNew();
-  }
-
-  if (!pref_key_value) {
-    pref_key_value = M_BufferNew();
-  }
-
-  if (!N_UnpackPreferenceChange(np, &tic, &src)) {
-    return;
-  }
-
-  if (SERVER && (N_PeerGetID(np) != N_PeerGetID(src))) {
-    D_MsgLocalError(
-      "Received player preference for peer %u from peer %u.\n",
-      N_PeerGetID(src), N_PeerGetID(np)
-    );
-    return;
-  }
-
-  if (!N_UnpackPlayerPreferenceName(np, pref_key_name)) {
-    D_MsgLocalError(
-      "N_HandlePacket: Error unpacking client preference change\n"
-    );
-    return;
-  }
-
-  if (pref_key_name->size > MAX_PREF_NAME_SIZE) {
-    D_MsgLocalError(
-      "N_HandlePacket: Invalid client preference change message: preference "
-      "name exceeds maximum length\n"
-    );
-    return;
-  }
-
-  M_BufferSeek(pref_key_name, 0);
-
-  if (M_BufferEqualsString(pref_key_name, "name")) {
-    N_UnpackNameChange(np, pref_key_value);
-
-    D_MsgLocalInfo("%s is now known as ", N_PeerGetName(np));
-    N_PeerSetName(np, pref_key_value->data);
-    D_MsgLocalInfo("%s\n", N_PeerGetName(np));
-  }
-  else if (M_BufferEqualsString(pref_key_name, "team")) {
-    team_t *team = NULL;
-
-    if (!N_UnpackTeamChange(np, &team)) {
-      return;
-    }
-
-    if (team) {
-      N_PeerSetTeam(team);
-      D_MsgLocalInfo("%s has joined %s\n", N_PeerGetName(np), team->name);
-    }
-    else {
-      team = N_PeerGetTeam(np);
-      
-      if (team) {
-        D_MsgLocalInfo("%s has left %s", N_PeerGetName(np), team->name);
-      }
-
-      N_PeerSetTeam(NULL);
-    }
-  }
-  else if (M_BufferEqualsString(pref_key_name, "color index")) {
-    int new_color;
-
-    if (N_UnpackColorIndexChange(np, &new_color)) {
-      G_ChangedPlayerColour(N_PeerGetPlayernum(np), new_color);
-    }
-  }
-  /*
-   * [CG] [TODO]
-   *
-   * else if (M_BufferEqualsString(pref_key_name, "pwo")) {
-   * }
-   * else if (M_BufferEqualsString(pref_key_name, "wsop")) {
-   * }
-   * else if (M_BufferEqualsString(pref_key_name, "bobbing")) {
-   * }
-   * else if (M_BufferEqualsString(pref_key_name, "autoaim")) {
-   * }
-   * else if (M_BufferEqualsString(pref_key_name, "weapon speed")) {
-   * }
-   * else if (M_BufferEqualsString(pref_key_name, "color")) {
-   * }
-   * else if (M_BufferEqualsString(pref_key_name, "skin name")) {
-   * }
-   */
-  else {
-    D_MsgLocalWarn("Unsupported preference [%s].\n", pref_key_name->data);
-  }
-}
-
-static void handle_auth_request(netpeer_t *np) {
+static void handle_client_auth_change(netpeer_t *np) {
   buf_t buf;
   const char *password;
   auth_level_e auth_level = AUTH_LEVEL_NONE;
@@ -424,8 +311,7 @@ static void handle_auth_request(netpeer_t *np) {
   else if (strcmp(password, sv_moderate_password) == 0) {
     auth_level = AUTH_LEVEL_MODERATOR;
   }
-  else if ((!sv_join_password) ||
-           (strcmp(password, sv_join_password) == 0)) {
+  else if ((!sv_join_password) || (strcmp(password, sv_join_password) == 0)) {
     auth_level = AUTH_LEVEL_PLAYER;
   }
   else if ((!sv_spectate_password) ||
@@ -435,10 +321,126 @@ static void handle_auth_request(netpeer_t *np) {
 
   if (auth_level > N_PeerGetAuthLevel(np)) {
     N_PeerSetAuthLevel(np, auth_level);
-    SV_SendAuthResponse(N_PeerGetPlayernum(np), N_PeerGetAuthLevel(np));
   }
 
   M_BufferFree(&buf);
+}
+
+static void handle_client_name_change(netpeer_t *np) {
+  static buf_t *new_name = NULL;
+
+  if (!new_name) {
+    new_name = M_BufferNew();
+  }
+
+  if (!N_UnpackClientNameChange(np, new_name)) {
+    return;
+  }
+
+  D_MsgLocalInfo("%s is now known as ", N_PeerGetName(np));
+  N_PeerSetName(np, new_name->data);
+  D_MsgLocalInfo("%s\n", N_PeerGetName(np));
+}
+
+static void handle_client_team_change(netpeer_t *np) {
+  team_t *team = NULL;
+
+  if (!N_UnpackTeamChange(np, &team)) {
+    return;
+  }
+
+  if (team) {
+    N_PeerSetTeam(team);
+    D_MsgLocalInfo("%s has joined %s\n", N_PeerGetName(np), team->name);
+  }
+  else {
+    team = N_PeerGetTeam(np);
+
+    if (team) {
+      D_MsgLocalInfo("%s has left %s", N_PeerGetName(np), team->name);
+    }
+
+    N_PeerSetTeam(NULL);
+  }
+}
+
+static void handle_client_wsop_change(netpeer_t *np) {
+  unsigned int wsop_flags = 0;
+
+  if (!N_UnpackWSOPChange(np, &wsop_flags)) {
+    return;
+  }
+}
+
+static void handle_client_bobbing_change(netpeer_t *np) {
+  double bobbing;
+
+  if (!N_UnpackBobbingChange(np, &bobbing)) {
+    return;
+  }
+}
+
+static void handle_client_autoaim_change(netpeer_t *np) {
+  bool autoaim;
+
+  if (!N_UnpackAutoaimChange(np, &autoaim)) {
+    return;
+  }
+}
+
+static void handle_client_weapon_speed_change(netpeer_t *np) {
+  unsigned char weapon_speed;
+
+  if (!N_UnpackWeaponSpeedChange(np, &weapon_speed)) {
+    return;
+  }
+}
+
+static void handle_client_color_change(netpeer_t *np) {
+  unsigned char red;
+  unsigned char green;
+  unsigned char blue;
+
+  if (!N_UnpackColorChange(np, &red, &green, &blue)) {
+    return;
+  }
+}
+
+static void handle_client_attribute_change(netpeer_t *np) {
+  int tic = 0;
+  netpeer_t *src = NULL;
+  client_attribute_e attribute_type;
+
+  if (!N_UnpackClientAttributeChange(np, &attribute_type)) {
+    return;
+  }
+
+  switch (attribute_type) {
+    case CLIENT_ATTRIBUTE_AUTH:
+      handle_client_auth_change(np);
+    break;
+    case CLIENT_ATTRIBUTE_NAME:
+      handle_client_name_change(np);
+    break;
+    case CLIENT_ATTRIBUTE_TEAM:
+      handle_client_team_change(np);
+    break;
+    case CLIENT_ATTRIBUTE_WSOP:
+      handle_client_wsop_change(np);
+    break;
+    case CLIENT_ATTRIBUTE_PWO:
+    case CLIENT_ATTRIBUTE_BOBBING:
+    case CLIENT_ATTRIBUTE_AUTOAIM:
+    case CLIENT_ATTRIBUTE_WEAPON_SPEED:
+    case CLIENT_ATTRIBUTE_COLOR:
+    case CLIENT_ATTRIBUTE_COLORMAP_INDEX:
+    case CLIENT_ATTRIBUTE_SKIN:
+      D_MsgLocalWarn("Unimplemented preference [%d].\n", attribute_type);
+    break;
+    default:
+      D_MsgLocalWarn("Unsupported preference [%d].\n", attribute_type);
+    break;
+  }
 }
 
 static void handle_game_action_change(netpeer_t *np) {
@@ -517,23 +519,15 @@ void N_HandlePacket(netpeer_t *np, void *data, size_t data_size) {
         CLIENT_ONLY("full state");
         handle_full_state(np);
       break;
-      case NM_AUTH:
-        if (CLIENT) {
-          handle_auth_response(np);
-        }
-        else if (SERVER) {
-          handle_auth_request(np);
-        }
-      break;
       case NM_CHAT_MESSAGE:
         handle_chat_message(np);
       break;
       case NM_SYNC:
         handle_sync(np);
       break;
-      case NM_PLAYER_PREFERENCE_CHANGE:
-        SERVER_ONLY("player preference change");
-        handle_player_preference_change(np);
+      case NM_CLIENT_ATTRIBUTE_CHANGE:
+        SERVER_ONLY("client attribute change");
+        handle_client_attribute_change(np);
       break;
       case NM_GAME_ACTION:
         CLIENT_ONLY("game action change");
