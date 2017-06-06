@@ -247,6 +247,12 @@ void D_MsgChanVMsg(uint32_t channel_id, msg_level_e level,
   msg.level = level;
   msg.recipient = recipient;
   msg.visibility = visibility;
+  if (MULTINET) {
+    msg.sender_id = N_GetLocalPeerID();
+  }
+  else {
+    msg.sender_id = 0;
+  }
   msg.recipient_id = recipient_id;
   msg.is_markup = is_markup;
   msg.sfx = sfx;

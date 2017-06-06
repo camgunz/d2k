@@ -23,20 +23,26 @@
 
 #include "z_zone.h"
 
+#include <enet/enet.h>
+
+#include "g_game.h"
 #include "g_save.h"
 #include "g_state.h"
-#include "n_main.h"
-#include "p_user.h"
-#include "g_game.h"
-#include "p_setup.h"
 #include "p_mobj.h"
+
+#include "n_addr.h"
+#include "n_main.h"
+#include "n_chan.h"
+#include "n_com.h"
+#include "n_sync.h"
+#include "sv_main.h"
 
 #define MAX_COMMAND_COUNT (TICRATE / 4)
 
 static game_state_t *unlag_game_state = NULL;
 static int           unlag_tic;
 
-int sv_limit_player_commands = 0;
+int   sv_limit_player_commands = 0;
 char *sv_spectate_password = NULL;
 char *sv_join_password = NULL;
 char *sv_moderate_password = NULL;
@@ -271,6 +277,34 @@ unsigned short SV_GetPort(void) {
    * now.
    */
   return 10666;
+}
+
+void SV_DisconnectPeer(netpeer_t *np, disconnection_reason_e reason) {
+  D_MsgEveryoneInfo("Disconnecting peer %u\n", N_PeerGetID(np));
+  N_PeerDisconnect(np, reason);
+}
+
+void SV_DisconnectPlayerID(uint32_t player_id, disconnection_reason_e reason) {
+  player_t *player = P_PlayersLookup(player_id);
+  
+  if (!player) {
+    D_MsgLocalWarn("N_DisconnectPlayerID: No player for ID %u\n", player_id);
+    return;
+  }
+
+  SV_DisconnectPlayer(player, reason);
+}
+
+void SV_DisconnectPlayer(player_t *player, disconnection_reason_e reason) {
+  netpeer_t *np = N_PeersLookupByPlayer(player);
+
+  if (!np) {
+    D_MsgLocalWarn("N_DisconnectPlayer: No peer for player %u\n", player->id);
+    return;
+  }
+
+  D_MsgEveryoneInfo("Disconnecting player %u\n", player->id);
+  N_DisconnectPeer(np, reason);
 }
 
 /* vi: set et ts=2 sw=2: */

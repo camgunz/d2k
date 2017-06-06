@@ -48,4 +48,69 @@ void G_TeamsInit(void) {
   M_IDHashInit(&teams, team_destroy_func);
 }
 
+team_t* G_TeamsAdd(const char *name, const char *message_name) {
+  team_t *team = calloc(1, sizeof(team_t));
+
+  if (!team) {
+    I_Error("G_TeamsAdd: Error allocating memory for new team\n");
+  }
+
+  team->name = strdup(name);
+  team->message_name = strdup(message_name);
+  team->id = M_IDHashAdd(&teams, team);
+
+  return team;
+}
+
+team_t* G_TeamsAddRaw(uint32_t id, const char *name,
+                                   const char *message_name) {
+  team_t *team = calloc(1, sizeof(team_t));
+
+  if (!team) {
+    I_Error("G_TeamsAddRaw: Error allocating memory for new team\n");
+  }
+
+  team->id = id;
+  team->name = strdup(name);
+  team->message_name = strdup(message_name);
+
+  M_IDHashAssign(&teams, (void *)team, team->id);
+
+  return team;
+}
+
+team_t* G_TeamsLookup(uint32_t id) {
+  return M_IDHashLookup(&teams, id);
+}
+
+size_t G_TeamsGetCount(void) {
+  return M_IDHashGetCount(&teams);
+}
+
+bool G_TeamsTeamExists(uint32_t id) {
+  if (G_TeamsLookup(id)) {
+    return true;
+  }
+
+  return false;
+}
+
+bool G_TeamsIterate(team_iterator_t *iter) {
+  if (!M_IDHashIterate(&teams, &iter->iter)) {
+    return false;
+  }
+
+  iter->team = (team_t *)iter->iter.obj;
+
+  return true;
+}
+
+void G_TeamsIterateRemove(team_iterator_t *iter) {
+  M_IDHashIterateRemove(&iter->iter);
+}
+
+void G_TeamRemove(team_t *team) {
+  M_IDHashRemoveID(&teams, team->id);
+}
+
 /* vi: set et ts=2 sw=2: */

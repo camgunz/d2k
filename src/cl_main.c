@@ -33,39 +33,204 @@
 #include "cl_net.h"
 
 /*
- * The current command index, used for generating new commands
+ * There are 3 types of clients:
+ * - The client that the server sees
+ * - The local client that the client sees
+ * - The remote clients that the client sees
  */
-static int cl_local_command_index = 1;
 
-/*
- * Index of the currently running command
- */
-static int cl_current_command_index = 1;
+typedef struct local_client_state_s {
+  uint32_t    remote client_id;
+  uint32_t    local_command_index;
+  uint32_t    current_command_index;
+  bool        running_consoleplayer_commands;
+  bool        running_nonconsoleplayer_commands;
+  bool        running_thinkers;
+  bool        loading_state;
+  bool        synchronizing
+  int         state_tic;
+  int         reprediction_start_tic;
+  int         reprediction_end_tic;
+  gamestate_e new_gamestate;
+  bool        needs_init_new;
+  netcom_t    server_com;
+  netsync_t   server_sync;
+} local_client_state_t;
 
-/*
- * Marked true when the client is running consoleplayer's commands
- */
-static bool cl_running_consoleplayer_commands = false;
-
-/*
- * Marked true when the client is running commands for a non-consoleplayer
- * player
- */
-static bool cl_running_nonconsoleplayer_commands = false;
-
-/*
- * Marked true when the client is running thinkers and specials
- */
-static bool cl_running_thinkers = false;
+static local_client_t local_client;
 
 int cl_extrapolate_player_positions = false;
 
-bool CL_Predicting(void) {
-  return !(CL_Synchronizing() || CL_RePredicting());
+static void cl_set_repredicting(int start_tic, int end_tic) {
+  cl_repredicting_start_tic = start_tic;
+  cl_repredicting_end_tic = end_tic;
+  cl_repredicting = true;
+}
+
+static void cl_clear_repredicting(void) {
+  cl_repredicting_start_tic = 0;
+  cl_repredicting_end_tic = 0;
+  cl_repredicting = false;
+}
+
+static bool cl_load_new_state(netpeer_t *server) {
+  game_state_delta_t *delta = N_PeerSyncGetStateDelta(server);
+  bool state_loaded;
+
+  if (!G_ApplyStateDelta(delta)) {
+    D_MsgLocalError("Error applying state delta");
+    return false;
+  }
+
+  cl_loading_state = true;
+  state_loaded = G_LoadLatestState(cl_needs_init_new);
+  cl_loading_state = false;
+
+  if (!state_loaded) {
+    D_MsgLocalError("Error loading latest state");
+    return false;
+  }
+
+  cl_needs_init_new = false;
+
+  cl_loading_state = true;
+  state_loaded = G_LoadState(delta->from_tic, false);
+  cl_loading_state = false;
+
+  if (!state_loaded) {
+    D_MsgLocalError("Error loading previous state");
+    return false;
+  }
+
+  PLAYERS_FOR_EACH(iter) {
+    if (iter.player->cmdq.commands->len) {
+      N_MsgSyncLocalDebug("(%d) (%u) [ ", gametic, iter.player->id);
+
+      for (size_t i = 0; i < iter.player->cmdq.commands->len; i++) {
+        idxticcmd_t *icmd = g_ptr_array_index(iter.player->cmdq.commands, i);
+
+        N_MsgSyncLocalDebug("%d/%d/%d ", icmd->index, icmd->tic, icmd->server_tic);
+      }
+
+      N_MsgSyncLocalDebug("]\n");
+    }
+  }
+
+  cl_synchronizing = true;
+
+  N_MsgSyncLocalDebug("Synchronizing %d => %d\n",
+    gametic, N_PeerSyncGetTIC(server)
+  );
+
+  R_ResetViewInterpolation();
+
+  for (int i = gametic; i <= N_PeerSyncGetTIC(server); i++) {
+    N_RunTic();
+
+    if (P_GetDisplayPlayer()->mo != NULL) {
+      R_InterpolateView(P_GetDisplayPlayer());
+      R_RestoreInterpolations();
+    }
+  }
+
+  cl_synchronizing = false;
+
+  if (gametic != N_PeerSyncGetTIC(server) + 1) {
+    D_MsgLocalWarn("Synchronization incomplete: %d, %d\n",
+      gametic, N_PeerSyncGetTIC(server)
+    );
+  }
+
+  N_MsgCmdLocalDebug("Ran sync'd commands, loading latest state\n");
+
+  cl_loading_state = true;
+  state_loaded = G_LoadLatestState(false);
+  cl_loading_state = false;
+
+  if (!state_loaded) {
+    D_MsgLocalError("Error loading latest state");
+    return false;
+  }
+
+  R_UpdateInterpolations();
+
+  G_RemoveOldStates(delta->from_tic);
+
+  if (cl_new_gamestate != GS_BAD) {
+    if ((cl_new_gamestate != GS_LEVEL) && (G_GetGameState() == GS_LEVEL)) {
+      G_ExitLevel();
+    }
+    G_SetGameState(cl_new_gamestate);
+    cl_new_gamestate = GS_BAD;
+  }
+
+  return true;
+}
+
+static bool command_is_synchronized(gpointer data, gpointer user_data) {
+  idxticcmd_t *icmd = (idxticcmd_t *)data;
+  int state_tic = GPOINTER_TO_INT(user_data);
+
+  if (icmd->server_tic == 0) {
+    return false;
+  }
+
+  if (icmd->server_tic >= state_tic) {
+    return false;
+  }
+
+  return true;
+}
+
+static void count_command(gpointer data, gpointer user_data) {
+  int state_tic = G_GetStateFromTic();
+  idxticcmd_t *icmd = (idxticcmd_t *)data;
+  unsigned int *command_count = (unsigned int *)user_data;
+
+  if (icmd->index < state_tic) {
+    (*command_count)++;
+  }
+}
+
+void CL_TrimSynchronizedCommands(void) {
+  int state_tic = G_GetStateFromTic();
+
+  N_MsgCmdLocalDebug("(%5d) Trimming synchronized commands\n", gametic);
+
+  PLAYERS_FOR_EACH(iter) {
+    PL_TrimCommands(
+      iter.player,
+      command_is_synchronized,
+      GINT_TO_POINTER(state_tic)
+    );
+  }
+}
+
+size_t CL_GetUnsynchronizedCommandCount(player_t *player) {
+  netpeer_t *server;
+  size_t command_count = 0;
+  
+  if (!CLIENT) {
+    return 0;
+  }
+  
+  server = CL_GetServerPeer();
+
+  if (!server) {
+    return 0;
+  }
+
+  PL_ForEachCommand(player, count_command, &command_count);
+
+  return command_count;
 }
 
 bool CL_RunningConsoleplayerCommands(void) {
   return cl_running_consoleplayer_commands;
+}
+
+bool CL_Predicting(void) {
+  return !(CL_Synchronizing() || CL_RePredicting());
 }
 
 bool CL_RunningNonConsoleplayerCommands(void) {
@@ -117,11 +282,348 @@ int CL_GetNextCommandIndex(void) {
 }
 
 void CL_Init(void) {
+  /*
+   * The current command index, used for generating new commands
+   */
+  local_client.local_command_index = 1;
+
+  /*
+   * The index of the currently running command
+   */
+  local_client.current_command_index = 1;
+
+  /*
+   * Marked true when the client is running consoleplayer's commands
+   */
+  local_client.running_consoleplayer_commands = false;
+
+  /*
+   * Marked true when the client is running commands for a non-consoleplayer
+   * player
+   */
+  local_client.running_nonconsoleplayer_commands = false;
+
+  /*
+   * Marked true when the client is running thinkers and specials
+   */
+  local_client.running_thinkers = false;
+
+  /*
+   * Marked true when the client is loading a state
+   * NOTE: Currently used to avoid stopping orphaned sounds
+   */
+  local_client.loading_state = false;
+
+  /*
+   * The TIC of the last state received from the server
+   */
+  local_client.state_tic = -1;
+
+  /*
+   * Marked true when the client is synchronizing
+   */
+  local_client.synchronizing = false;
+
+  /*
+   * Marked true when the client is re-predicting
+   */
+  local_client.repredicting = false;
+
+  /*
+   * The TIC at which reprediction started.
+   */
+  local_client.repredicting_start_tic = 0;
+
+  /*
+   * The TIC at which reprediction will finish.
+   */
+  local_client.repredicting_end_tic = 0;
+
+  /*
+   * Set when the client receives an authorization message from the server
+   * NOTE: Currently unimplemented.
+   */
+  local_client.authorization_level = AUTH_LEVEL_NONE;
+
+  /*
+   * Next gamestate to load after loading last state
+   */
+  local_client.new_gamestate = GS_BAD;
+
+  /*
+   * If set, calls G_InitNew next time the latest state is loaded
+   */
+  local_client.needs_init_new = false;
+
+  /*
+   * The server, if connected
+   */
+  local_client.server = NULL;
+
 }
 
+
 void CL_Reset(void) {
-  cl_local_command_index = 1;
-  cl_current_command_index = 1;
+  local_client.local_command_index = 1;
+  local_client.current_command_index = 1;
+}
+
+server_t* CL_GetServer(void) {
+  return local_client.server;
+}
+
+void CL_CheckForStateUpdates(void) {
+  netpeer_t *server;
+  int saved_gametic = gametic;
+  int saved_state_tic;
+  int saved_state_delta_from_tic;
+  int saved_state_delta_to_tic;
+
+  if (!CLIENT) {
+    return;
+  }
+
+  server = CL_GetServerPeer();
+
+  if (!server) {
+    D_MsgLocalError("Server disconnected");
+    N_Disconnect(DISCONNECT_REASON_LOST_PEER_CONNECTION);
+    return;
+  }
+
+  if (!N_PeerSyncUpdated(server)) {
+    return;
+  }
+
+  saved_state_tic = N_PeerSyncGetTIC(server);
+  saved_state_delta_from_tic = N_PeerSyncGetStateDelta(server)->from_tic;
+  saved_state_delta_to_tic = N_PeerSyncGetStateDelta(server)->to_tic;
+
+  N_MsgSyncLocalDebug("(%d) Loading new state [%d, %d => %d] (%d)\n",
+    gametic,
+    N_PeerSyncGetCommandIndex(server),
+    saved_state_delta_from_tic,
+    saved_state_delta_to_tic,
+    P_GetConsolePlayer()->cmdq.latest_command_run_index
+  );
+
+  S_ResetSoundLog();
+
+  if (!cl_load_new_state(server)) {
+    N_PeerSyncResetStateDelta(
+      server,
+      saved_state_tic,
+      saved_state_delta_from_tic,
+      saved_state_delta_to_tic
+    );
+    return;
+  }
+
+  gametic++;
+
+  CL_TrimSynchronizedCommands();
+
+  N_MsgSyncLocalDebug(
+    "(%d): %u: {%4d/%4d/%4d %4d/%4d/%4d %4d %4d/%4d/%4d/%4d %4d/%4u/%4u}\n", 
+    gametic,
+    P_GetConsolePlayer()->id,
+    P_GetConsolePlayer()->mo->x           >> FRACBITS,
+    P_GetConsolePlayer()->mo->y           >> FRACBITS,
+    P_GetConsolePlayer()->mo->z           >> FRACBITS,
+    P_GetConsolePlayer()->mo->momx        >> FRACBITS,
+    P_GetConsolePlayer()->mo->momy        >> FRACBITS,
+    P_GetConsolePlayer()->mo->momz        >> FRACBITS,
+    P_GetConsolePlayer()->mo->angle       /  ANG1,
+    P_GetConsolePlayer()->viewz           >> FRACBITS,
+    P_GetConsolePlayer()->viewheight      >> FRACBITS,
+    P_GetConsolePlayer()->deltaviewheight >> FRACBITS,
+    P_GetConsolePlayer()->bob             >> FRACBITS,
+    P_GetConsolePlayer()->prev_viewz      >> FRACBITS,
+    P_GetConsolePlayer()->prev_viewangle  /  ANG1,
+    P_GetConsolePlayer()->prev_viewpitch  /  ANG1
+  );
+
+#ifdef LOG_SECTOR
+  if (LOG_SECTOR < numsectors) {
+    if (sectors[LOG_SECTOR].floorheight != (168 << FRACBITS) &&
+        sectors[LOG_SECTOR].floorheight != (40 << FRACBITS)) {
+      N_MsgSyncLocalDebug("(%d) Sector %d: %d/%d\n",
+        gametic,
+        LOG_SECTOR,
+        sectors[LOG_SECTOR].floorheight >> FRACBITS,
+        sectors[LOG_SECTOR].ceilingheight >> FRACBITS
+      );
+    }
+  }
+#endif
+
+  if (G_GetGameState() == GS_LEVEL) {
+    CL_RePredict(saved_gametic);
+  }
+
+  cl_state_tic = N_PeerSyncGetTIC(server);
+
+  N_PeerSyncSetNotUpdated(server);
+  N_PeerSyncSetOutdated(server);
+
+  S_TrimSoundLog(
+    N_PeerSyncGetStateDelta(server)->from_tic,
+    N_PeerSyncGetCommandIndex(server)
+  );
+}
+
+void CL_MarkServerOutdated(void) {
+  netpeer_t *server;
+
+  if (!CLIENT) {
+    return;
+  }
+  
+  server = CL_GetServerPeer();
+
+  if (server) {
+    N_PeerSyncSetOutdated(server);
+  }
+
+  N_UpdateSync();
+}
+
+bool CL_OccurredDuringRePrediction(int tic) {
+  if (!cl_repredicting) {
+    return false;
+  }
+
+  if (tic < cl_repredicting_start_tic) {
+    return false;
+  }
+
+  if (tic > cl_repredicting_end_tic) {
+    return false;
+  }
+
+  return true;
+}
+
+void CL_UpdateReceivedCommandIndex(unsigned int command_index) {
+  netpeer_t *server = CL_GetServerPeer();
+
+  if (!server) {
+    return;
+  }
+
+  N_PeerSyncUpdateCommandIndex(server, command_index);
+}
+
+int CL_StateTIC(void) {
+  netpeer_t *server = CL_GetServerPeer();
+
+  if (!server) {
+    return -1;
+  }
+
+  return cl_state_tic;
+}
+
+bool CL_ReceivedSetup(void) {
+  netpeer_t *server = CL_GetServerPeer();
+
+  if (!server) {
+    return false;
+  }
+
+  return !(N_PeerSyncNeedsGameInfo(server) || N_PeerSyncNeedsGameState(server));
+}
+
+void CL_SetAuthorizationLevel(auth_level_e level) {
+  if (level <= cl_authorization_level) {
+    return;
+  }
+
+  cl_authorization_level = level;
+}
+
+void CL_SetNewGameState(gamestate_t new_gamestate) {
+  switch (new_gamestate) {
+    case GS_LEVEL:
+    case GS_INTERMISSION:
+    case GS_FINALE:
+    case GS_DEMOSCREEN:
+      cl_new_gamestate = new_gamestate;
+    break;
+    default:
+    break;
+  }
+}
+
+void CL_RePredict(int saved_gametic) {
+  player_t *player = P_GetConsolePlayer();
+  uint32_t latest_command_index = PL_GetLatestCommandIndex(player);
+  
+  if (gametic == -1) {
+    return;
+  }
+
+  if (latest_command_index == 0) {
+    return;
+  }
+
+  cl_set_repredicting(
+    player->cmdq.latest_command_run_index, latest_command_index
+  );
+
+  N_MsgSyncLocalDebug("Re-predicting %u => %u (%d)\n",
+    player->cmdq.latest_command_run_index,
+    latest_command_index,
+    latest_command_index - player->cmdq.latest_command_run_index
+  );
+
+  while (player->cmdq.latest_command_run_index < latest_command_index) {
+    N_RunTic();
+
+    if (P_GetDisplayPlayer()->mo != NULL) {
+      R_InterpolateView(P_GetDisplayPlayer());
+      R_RestoreInterpolations();
+    }
+  }
+
+  cl_clear_repredicting();
+}
+
+bool CL_LoadingState(void) {
+  return cl_loading_state;
+}
+
+bool CL_Synchronizing(void) {
+  return (CLIENT && cl_synchronizing);
+}
+
+bool CL_RePredicting(void) {
+  return (CLIENT && cl_repredicting);
+}
+
+void CL_SetNeedsInitNew(void) {
+  cl_needs_init_new = true;
+}
+
+void CL_ResetSync(void) {
+  netpeer_t *server = CL_GetServerPeer();
+
+  cl_state_tic = -1;
+  cl_repredicting_start_tic = 0;
+  cl_repredicting_end_tic = 0;
+
+  PLAYERS_FOR_EACH(iter) {
+    PL_ResetCommands(iter.player);
+  }
+
+  G_ClearStates();
+
+  if (server) {
+    N_PeerSyncReset(server);
+    N_PeerSyncSetHasGameInfo(server);
+  }
+
+  cl_needs_init_new = true;
 }
 
 /* vi: set et ts=2 sw=2: */

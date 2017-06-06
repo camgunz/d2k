@@ -21,34 +21,14 @@
 /*****************************************************************************/
 
 
-#ifndef G_TEAM_H__
-#define G_TEAM_H__
+#ifndef CL_TICK_H__
+#define CL_TICK_H__
 
-#include "m_idhash.h"
+extern int cl_extrapolate_player_positions;
 
-typedef struct team_s {
-  uint32_t  id;
-  char     *name;         /* ex: "Blue" */
-  char     *message_name; /* ex: "the Blue Team" */
-} team_t;
-
-typedef struct {
-  id_hash_iterator_t iter;
-  team_t *team;
-} team_iterator_t;
-
-#define TEAMS_FOR_EACH(_it) \
-  for (team_iterator_t _it = { { 0 }, NULL }; G_TeamsIterate(&_it);)
-
-void    G_TeamsInit(void);
-team_t* G_TeamsAdd(const char *name, const char *message_name);
-team_t* G_TeamsAddRaw(uint32_t id, const char *name, const char *message_name);
-team_t* G_TeamsLookup(uint32_t id);
-size_t  G_TeamsGetCount(void);
-bool    G_TeamsTeamExists(uint32_t id);
-bool    G_TeamsIterate(team_iterator_t *iter);
-void    G_TeamsIterateRemove(team_iterator_t *iter);
-void    G_TeamRemove(team_t *team);
+bool CL_Predicting(void);
+void CL_SetRunningThinkers(bool running);
+bool CL_RunningThinkers(void);
 
 #endif
 

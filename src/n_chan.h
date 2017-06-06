@@ -36,6 +36,7 @@ typedef struct netchan_s {
 
 void    N_ChannelInit(netchan_t *nc, bool reliable, bool throttled);
 void    N_ChannelClear(netchan_t *nc);
+void    N_ChannelFree(netchan_t *nc);
 void*   N_ChannelGetPacket(netchan_t *nc);
 pbuf_t* N_ChannelBeginMessage(netchan_t *nc, unsigned char type);
 bool    N_ChannelReady(netchan_t *nc);

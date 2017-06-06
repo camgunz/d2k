@@ -24,21 +24,16 @@
 #ifndef N_COM_H__
 #define N_COM_H__
 
-typedef enum {
-  NET_CHANNEL_RELIABLE,
-  NET_CHANNEL_UNRELIABLE,
-  NET_CHANNEL_MAX
-} net_channel_e;
-
 typedef struct netcom_s {
+  void      *base_net_peer;
   netchan_t  incoming;
-  netchan_t  outgoing[NET_CHANNEL_MAX];
+  netchan_t  outgoing_reliable;
+  netchan_t  outgoing_unreliable;
   size_t     bytes_uploaded;
   size_t     bytes_downloaded;
-  void      *enet_peer;
 } netcom_t;
 
-void    N_ComInit(netcom_t *nc, void *enet_peer);
+void    N_ComInit(netcom_t *nc, void *base_net_peer);
 void    N_ComFree(netcom_t *nc);
 void    N_ComReset(netcom_t *nc);
 size_t  N_ComGetBytesUploaded(netcom_t *nc);

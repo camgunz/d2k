@@ -33,64 +33,6 @@
 #include "cl_cmd.h"
 #include "cl_net.h"
 
-static bool command_is_synchronized(gpointer data, gpointer user_data) {
-  idxticcmd_t *icmd = (idxticcmd_t *)data;
-  int state_tic = GPOINTER_TO_INT(user_data);
-
-  if (icmd->server_tic == 0) {
-    return false;
-  }
-
-  if (icmd->server_tic >= state_tic) {
-    return false;
-  }
-
-  return true;
-}
-
-static void count_command(gpointer data, gpointer user_data) {
-  int state_tic = G_GetStateFromTic();
-  idxticcmd_t *icmd = (idxticcmd_t *)data;
-  unsigned int *command_count = (unsigned int *)user_data;
-
-  if (icmd->index < state_tic) {
-    (*command_count)++;
-  }
-}
-
-void CL_TrimSynchronizedCommands(void) {
-  int state_tic = G_GetStateFromTic();
-
-  N_MsgCmdLocalDebug("(%5d) Trimming synchronized commands\n", gametic);
-
-  PLAYERS_FOR_EACH(iter) {
-    PL_TrimCommands(
-      iter.player,
-      command_is_synchronized,
-      GINT_TO_POINTER(state_tic)
-    );
-  }
-}
-
-size_t CL_GetUnsynchronizedCommandCount(player_t *player) {
-  netpeer_t *server;
-  size_t command_count = 0;
-  
-  if (!CLIENT) {
-    return 0;
-  }
-  
-  server = CL_GetServerPeer();
-
-  if (!server) {
-    return 0;
-  }
-
-  PL_ForEachCommand(player, count_command, &command_count);
-
-  return command_count;
-}
-
 
 /* vi: set et ts=2 sw=2: */
 

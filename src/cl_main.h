@@ -24,13 +24,8 @@
 #ifndef CL_MAIN_H__
 #define CL_MAIN_H__
 
-extern int cl_extrapolate_player_positions;
-
-bool CL_Predicting(void);
 bool CL_RunningConsoleplayerCommands(void);
 bool CL_RunningNonConsoleplayerCommands(void);
-void CL_SetRunningThinkers(bool running);
-bool CL_RunningThinkers(void);
 void CL_SetupCommandState(int playernum, unsigned int command_index);
 void CL_ShutdownCommandState(void);
 int  CL_GetCurrentCommandIndex(void);

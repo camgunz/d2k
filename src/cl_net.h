@@ -24,25 +24,6 @@
 #ifndef CL_NET_H__
 #define CL_NET_H__
 
-struct netpeer_s;
-typedef struct netpeer_s netpeer_t;
-
-netpeer_t* CL_GetServerPeer(void);
-void       CL_CheckForStateUpdates(void);
-void       CL_MarkServerOutdated(void);
-void       CL_UpdateReceivedCommandIndex(unsigned int command_index);
-int        CL_StateTIC(void);
-bool       CL_ReceivedSetup(void);
-void       CL_SetAuthorizationLevel(auth_level_e level);
-void       CL_SetNewGameState(gamestate_t new_gamestate);
-void       CL_RePredict(int saved_gametic);
-bool       CL_OccurredDuringRePrediction(int tic);
-bool       CL_LoadingState(void);
-bool       CL_Synchronizing(void);
-bool       CL_RePredicting(void);
-void       CL_SetNeedsInitNew(void);
-void       CL_ResetSync(void);
-
 #endif
 
 /* vi: set et ts=2 sw=2: */
