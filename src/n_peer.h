@@ -91,8 +91,6 @@ void        N_PeersInit(void);
 net_peer_t* N_PeersAdd(void *base_net_peer);
 net_peer_t* N_PeersAddRaw(uint32_t id);
 net_peer_t* N_PeersLookup(uint32_t id);
-net_peer_t* N_PeersLookupByENetPeer(void *enet_peer);
-net_peer_t* N_PeersLookupByPlayer(player_t *player);
 size_t      N_PeersGetCount(void);
 bool        N_PeersPeerExists(uint32_t id);
 

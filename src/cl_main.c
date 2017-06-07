@@ -28,33 +28,26 @@
 #include "p_defs.h"
 #include "pl_main.h"
 #include "s_sound.h"
+
 #include "n_main.h"
 #include "cl_cmd.h"
 #include "cl_net.h"
 
-/*
- * There are 3 types of clients:
- * - The client that the server sees
- * - The local client that the client sees
- * - The remote clients that the client sees
- */
-
 typedef struct local_client_state_s {
-  uint32_t    remote client_id;
-  uint32_t    local_command_index;
-  uint32_t    current_command_index;
-  bool        running_consoleplayer_commands;
-  bool        running_nonconsoleplayer_commands;
-  bool        running_thinkers;
-  bool        loading_state;
-  bool        synchronizing
-  int         state_tic;
-  int         reprediction_start_tic;
-  int         reprediction_end_tic;
-  gamestate_e new_gamestate;
-  bool        needs_init_new;
-  netcom_t    server_com;
-  netsync_t   server_sync;
+  net_peer_t   *local_peer;
+  net_peer_t   *server_peer;
+  uint32_t      local_command_index;
+  uint32_t      current_command_index;
+  bool          running_consoleplayer_commands;
+  bool          running_nonconsoleplayer_commands;
+  bool          running_thinkers;
+  bool          loading_state;
+  bool          synchronizing
+  int           state_tic;
+  int           reprediction_start_tic;
+  int           reprediction_end_tic;
+  gamestate_e   new_gamestate;
+  bool          needs_init_new;
 } local_client_state_t;
 
 static local_client_t local_client;
