@@ -52,13 +52,6 @@ typedef struct client_info_s {
   player_t      *player;
 } client_info_t;
 
-typedef struct net_link_s {
-  netcom_t   com;
-  netsync_t  sync;
-  time_t     connection_start_time;
-  time_t     disconnection_start_time;
-} net_link_t;
-
 typedef struct client_s {
   net_link_t    link;
   client_info_t info;
@@ -93,97 +86,26 @@ net_peer_t* N_PeersAddRaw(uint32_t id);
 net_peer_t* N_PeersLookup(uint32_t id);
 size_t      N_PeersGetCount(void);
 bool        N_PeersPeerExists(uint32_t id);
+bool        N_PeersIterate(netpeer_iterator_t *iter);
+void        N_PeersIterateRemove(netpeer_iterator_t *iter);
 
-bool        N_PeerIterate(netpeer_iterator_t *iter);
-void        N_PeerIterateRemove(netpeer_iterator_t *iter);
+uint32_t N_PeerGetID(net_peer_t *np);
+void     N_PeerRemove(net_peer_t *np);
 
-void       N_PeerRemove(net_peer_t *np);
-bool       N_PeerCheckTimeout(net_peer_t *np);
-bool       N_PeerCanRequestSetup(net_peer_t *np);
-void       N_PeerSetConnected(net_peer_t *np);
-bool       N_PeerTooLagged(net_peer_t *np);
-void       N_PeerDisconnect(net_peer_t *np, disconnection_reason_e reason);
 
-uint32_t         N_PeerGetID(net_peer_t *np);
-uint32_t         N_PeerGetIPAddress(net_peer_t *np);
-const char*      N_PeerGetIPAddressConstString(net_peer_t *np);
-uint16_t         N_PeerGetPort(net_peer_t *np);
-netpeer_status_e N_PeerGetStatus(net_peer_t *np);
-void             N_PeerSetStatus(net_peer_t *np, netpeer_status_e status);
-auth_level_e     N_PeerGetAuthLevel(net_peer_t *np);
-void             N_PeerSetAuthLevel(net_peer_t *np, auth_level_e auth_level);
-unsigned int     N_PeerGetPing(net_peer_t *np);
-void             N_PeerSetPing(net_peer_t *np, unsigned int ping);
-int              N_PeerGetConnectTic(net_peer_t *np);
-const char*      N_PeerGetName(net_peer_t *np);
-void             N_PeerSetName(net_peer_t *np, const char *name);
-team_t*          N_PeerGetTeam(net_peer_t *np);
-void             N_PeerSetTeam(net_peer_t *np, team_t *team);
-bool             N_PeerHasTeam(net_peer_t *np);
-void             N_PeerSetTeamRaw(net_peer_t *np, team_t *team);
-void             N_PeerSetTeam(net_peer_t *np, team_t *team);
-player_t*        N_PeerGetPlayer(net_peer_t *np);
-void             N_PeerSetPlayer(net_peer_t *np, player_t *player);
-bool             N_PeerHasPlayer(net_peer_t *np);
-
-void    N_PeerFlushReliableChannel(net_peer_t *np);
-void    N_PeerFlushUnreliableChannel(net_peer_t *np);
-void    N_PeerFlushChannels(net_peer_t *np);
-pbuf_t* N_PeerBeginMessage(net_peer_t *np, net_message_e type);
-bool    N_PeerSetIncoming(net_peer_t *np, unsigned char *data, size_t size);
-bool    N_PeerLoadNextMessage(net_peer_t *np, net_message_e *message_type);
-pbuf_t* N_PeerGetIncomingMessageData(net_peer_t *np);
-void    N_PeerClearReliableChannel(net_peer_t *np);
-void    N_PeerClearUnreliableChannel(net_peer_t *np);
-void    N_PeerSendReset(net_peer_t *np);
-size_t  N_PeerGetBytesUploaded(net_peer_t *np);
-size_t  N_PeerGetBytesDownloaded(net_peer_t *np);
-
-void*   N_PeerGetENetPeer(net_peer_t *np);
-float   N_PeerGetPacketLoss(net_peer_t *np);
-float   N_PeerGetPacketLossJitter(net_peer_t *np);
-
-bool N_PeerSyncNeedsGameInfo(net_peer_t *np);
-void N_PeerSyncSetNeedsGameInfo(net_peer_t *np);
-void N_PeerSyncSetHasGameInfo(net_peer_t *np);
-bool N_PeerSyncNeedsGameState(net_peer_t *np);
-void N_PeerSyncSetNeedsGameState(net_peer_t *np);
-void N_PeerSyncSetHasGameState(net_peer_t *np);
-bool N_PeerSynchronized(net_peer_t *np);
-bool N_PeerSyncOutdated(net_peer_t *np);
-void N_PeerSyncSetOutdated(net_peer_t *np);
-void N_PeerSyncSetNotOutdated(net_peer_t *np);
-bool N_PeerSyncUpdated(net_peer_t *np);
-void N_PeerSyncSetUpdated(net_peer_t *np);
-void N_PeerSyncSetNotUpdated(net_peer_t *np);
-void N_PeerSyncReset(net_peer_t *np);
-
-int  N_PeerSyncGetTIC(net_peer_t *np);
-void N_PeerSyncSetTIC(net_peer_t *np, int sync_tic);
-void N_PeerSyncUpdateTIC(net_peer_t *np, int sync_tic);
-
-uint32_t N_PeerSyncGetCommandIndex(net_peer_t *np);
-void     N_PeerSyncSetCommandIndex(net_peer_t *np, uint32_t command_index);
-void     N_PeerSyncUpdateCommandIndex(net_peer_t *np, uint32_t command_index);
-
-game_state_delta_t* N_PeerSyncGetStateDelta(net_peer_t *np);
-void                N_PeerSyncUpdateStateDelta(net_peer_t *np,
-                                               int from_tic,
-                                               int to_tic,
-                                               pbuf_t *delta_data);
-void                N_PeerSyncBuildNewStateDelta(net_peer_t *np);
-bool                N_PeerSyncStateDeltaUpdated(net_peer_t *np);
-void                N_PeerSyncResetStateDelta(net_peer_t *np, int sync_tic,
-                                                             int from_tic,
-                                                             int to_tic);
-
-uint32_t N_PeerSyncGetCommandIndexForPlayer(net_peer_t *np, player_t *player);
-void     N_PeerSyncSetCommandIndexForPlayer(net_peer_t *np,
-                                            player_t *player,
-                                            uint32_t command_index);
-void     N_PeerSyncUpdateCommandIndexForPlayer(net_peer_t *np,
-                                               player_t *player,
-                                               uint32_t command_index);
+client_type_e N_ClientGetType(client_info_t *ci);
+void          N_ClientSetType(client_info_t *ci, client_type_e type);
+auth_level_e  N_ClientGetAuthLevel(client_info_t *ci);
+void          N_ClientSetAuthLevel(client_info_t *ci, auth_level_e auth_level);
+const char*   N_ClientGetName(client_info_t *ci);
+void          N_ClientSetName(client_info_t *ci, const char *name);
+team_t*       N_ClientGetTeam(client_info_t *ci);
+void          N_ClientSetTeam(client_info_t *ci, team_t *team);
+void          N_ClientSetTeamRaw(client_info_t *ci, team_t *team);
+bool          N_ClientHasTeam(client_info_t *ci);
+player_t*     N_ClientGetPlayer(client_info_t *ci);
+void          N_ClientSetPlayer(client_info_t *ci, player_t *player);
+bool          N_ClientHasPlayer(client_info_t *ci);
 
 #endif
 

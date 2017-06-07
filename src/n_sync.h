@@ -47,8 +47,8 @@ typedef struct netsync_s {
 } netsync_t;
 
 void N_SyncInit(netsync_t *ns);
+void N_SyncClear(netsync_t *ns);
 void N_SyncFree(netsync_t *ns);
-void N_SyncReset(netsync_t *ns);
 
 bool N_SyncNeedsGameInfo(netsync_t *ns);
 void N_SyncSetNeedsGameInfo(netsync_t *ns);

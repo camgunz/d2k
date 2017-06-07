@@ -39,7 +39,7 @@ void N_SyncInit(netsync_t *ns) {
   G_DeltaInit(&ns->delta);
 }
 
-void N_SyncReset(netsync_t *ns) {
+void N_SyncClear(netsync_t *ns) {
   ns->state = SYNC_NEEDS_GAME_INFO | SYNC_NEEDS_GAME_STATE;
   ns->tic = 0;
   ns->command_index = 0;

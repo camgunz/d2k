@@ -36,21 +36,11 @@
 #include "n_peer.h"
 #include "n_sync.h"
 
-#define NET_THROTTLE_INTERVAL 300
-#define NET_THROTTLE_ACCEL 2
-#define NET_THROTTLE_DECEL 1
-
 #define MAX_SETUP_REQUEST_INTERVAL 2.0
 
 static id_hash_t net_peers;
 
 static void peer_free(net_peer_t *np) {
-  D_MsgLocalInfo("Removing peer %u (%s:%u)\n",
-    np->id,
-    N_PeerGetIPAddressConstString(np),
-    N_PeerGetPort(np)
-  );
-
   switch (np->type) {
     case PEER_TYPE_CLIENT:
       N_ComFree(&np->as.client.link.com);
@@ -79,6 +69,25 @@ void N_PeersInit(void) {
   M_IDHashInit(&net_peers, peer_destroy_func);
 }
 
+net_peer_t* peer_new(peer_type_e type) {
+  net_peer_t *np = calloc(1, sizeof(net_peer_t));
+
+  if (!np) {
+    I_Error("N_PeersAdd: Error allocating memory for new net peer\n");
+  }
+
+  np->id = M_IDHashAdd(&net_peers, np);
+  np->type = type;
+
+  return np;
+}
+
+net_peer_t* client_peer_new(void *base_net_peer) {
+  net_peer_t *np = peer_new(PEER_TYPE_CLIENT);
+
+  N_ComInit(&np->as.client.link.com, base_net_peer);
+  N_SyncInit(&np->as.client.link.sync);
+
 net_peer_t* N_PeersAdd(void *enet_peer) {
   net_peer_t *np = NULL;
 
@@ -95,12 +104,6 @@ net_peer_t* N_PeersAdd(void *enet_peer) {
   N_SyncInit(&np->sync);
 
   if (SERVER) {
-    enet_peer_throttle_configure(
-      enet_peer,
-      NET_THROTTLE_INTERVAL,
-      NET_THROTTLE_ACCEL,
-      NET_THROTTLE_DECEL
-    );
     N_SyncSetTIC(&np->sync, gametic);
   }
 
@@ -111,30 +114,6 @@ net_peer_t* N_PeersAdd(void *enet_peer) {
 
 net_peer_t* N_PeersLookup(uint32_t id) {
   return M_IDHashLookup(&net_peers, id);
-}
-
-net_peer_t* N_PeersLookupByENetPeer(void *enet_peer) {
-  ENetPeer *epeer = (ENetPeer *)enet_peer;
-
-  NETPEER_FOR_EACH(iter) {
-    ENetPeer *np_epeer = N_ComGetENetPeer(&iter.np->com);
-
-    if (np_epeer->connectID == epeer->connectID) {
-      return iter.np;
-    }
-  }
-
-  return NULL;
-}
-
-net_peer_t* N_PeersLookupByPlayer(player_t *player) {
-  NETPEER_FOR_EACH(iter) {
-    if (iter.np->player_id == player->id) {
-      return iter.np;
-    }
-  }
-
-  return NULL;
 }
 
 size_t N_PeersGetCount(void) {
@@ -167,26 +146,6 @@ void N_PeerRemove(net_peer_t *np) {
   M_IDHashRemoveID(&net_peers, np->id);
 }
 
-bool N_PeerCheckTimeout(net_peer_t *np) {
-  time_t now = time(NULL);
-
-  if (np->connect_start_time != 0) {
-    if (difftime(now, np->connect_start_time) >
-        (NET_CONNECT_TIMEOUT * 1000)) {
-      return true;
-    }
-  }
-
-  if (np->disconnect_start_time != 0) {
-    if (difftime(now, np->disconnect_start_time) >
-        (NET_DISCONNECT_TIMEOUT * 1000)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 bool N_PeerCanRequestSetup(net_peer_t *np) {
   time_t now = time(NULL);
 
@@ -199,41 +158,8 @@ bool N_PeerCanRequestSetup(net_peer_t *np) {
   );
 }
 
-void N_PeerSetConnected(net_peer_t *np) {
-  np->connect_start_time = 0;
-}
-
-bool N_PeerTooLagged(net_peer_t *np) {
-  return N_SyncTooLagged(&np->sync);
-}
-
-void N_PeerDisconnect(net_peer_t *np, disconnection_reason_e reason) {
-  ENetPeer *epeer = N_ComGetENetPeer(&np->com);
-
-  enet_peer_disconnect(epeer, reason);
-  np->disconnect_start_time = time(NULL);
-}
-
 uint32_t N_PeerGetID(net_peer_t *np) {
   return np->id;
-}
-
-uint32_t N_PeerGetIPAddress(net_peer_t *np) {
-  ENetPeer *enet_peer = N_ComGetENetPeer(&np->com);
-
-  return ENET_NET_TO_HOST_32(enet_peer->address.host);
-}
-
-const char* N_PeerGetIPAddressConstString(net_peer_t *np) {
-  ENetPeer *enet_peer = N_ComGetENetPeer(&np->com);
-
-  return N_IPToConstString(ENET_NET_TO_HOST_32(enet_peer->address.host));
-}
-
-unsigned short N_PeerGetPort(net_peer_t * np) {
-  ENetPeer *enet_peer = N_ComGetENetPeer(&np->com);
-
-  return enet_peer->address.port;
 }
 
 netpeer_status_e N_PeerGetStatus(net_peer_t *np) {
@@ -312,71 +238,6 @@ bool N_PeerHasPlayer(net_peer_t *np) {
   }
 
   return false;
-}
-
-void N_PeerFlushReliableChannel(net_peer_t *np) {
-  N_ComFlushReliableChannel(&np->com);
-}
-
-void N_PeerFlushUnreliableChannel(net_peer_t *np) {
-  N_ComFlushUnreliableChannel(&np->com);
-}
-
-void N_PeerFlushChannels(net_peer_t *np) {
-  N_PeerFlushReliableChannel(np);
-  N_PeerFlushUnreliableChannel(np);
-}
-
-pbuf_t* N_PeerBeginMessage(net_peer_t *np, net_message_e type) {
-  return N_ComBeginMessage(&np->com, type);
-}
-
-bool N_PeerSetIncoming(net_peer_t *np, unsigned char *data, size_t size) {
-  return N_ComSetIncoming(&np->com, data, size);
-}
-
-bool N_PeerLoadNextMessage(net_peer_t *np, net_message_e *message_type) {
-  return N_ComLoadNextMessage(&np->com, message_type);
-}
-
-pbuf_t* N_PeerGetIncomingMessageData(net_peer_t *np) {
-  return N_ComGetIncomingMessageData(&np->com);
-}
-
-void N_PeerClearReliableChannel(net_peer_t *np) {
-  N_ComClearReliableChannel(&np->com);
-}
-
-void N_PeerClearUnreliableChannel(net_peer_t *np) {
-  N_ComClearUnreliableChannel(&np->com);
-}
-
-void N_PeerSendReset(net_peer_t *np) {
-  N_ComSendReset(&np->com);
-}
-
-size_t N_PeerGetBytesUploaded(net_peer_t *np) {
-  return N_ComGetBytesUploaded(&np->com);
-}
-
-size_t N_PeerGetBytesDownloaded(net_peer_t *np) {
-  return N_ComGetBytesDownloaded(&np->com);
-}
-
-void* N_PeerGetENetPeer(net_peer_t *np) {
-  return N_ComGetENetPeer(&np->com);
-}
-
-float N_PeerGetPacketLoss(net_peer_t *np) {
-  ENetPeer *epeer = N_PeerGetENetPeer(np);
-
-  return epeer->packetLoss / (float)ENET_PEER_PACKET_LOSS_SCALE;
-}
-
-float N_PeerGetPacketLossJitter(net_peer_t *np) {
-  ENetPeer *epeer = N_PeerGetENetPeer(np);
-
-  return epeer->packetLossVariance / (float)ENET_PEER_PACKET_LOSS_SCALE;
 }
 
 bool N_PeerSyncOutdated(net_peer_t *np) {

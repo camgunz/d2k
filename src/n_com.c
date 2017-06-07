@@ -20,27 +20,30 @@
 /*                                                                           */
 /*****************************************************************************/
 
+
 #include "z_zone.h"
 
-#include <enet/enet.h>
-
+#include "i_net.h"
 #include "n_main.h"
-#include "n_proto.h"
 #include "n_chan.h"
 #include "n_com.h"
 
-#define ENET_CHANNEL_RELIABLE 0
-#define ENET_CHANNEL_UNRELIABLE 1
-
-void N_ComInit(netcom_t *nc, void *enet_peer) {
+void N_ComInit(netcom_t *nc, void *base_net_peer) {
   N_ChannelInit(&nc->incoming, false, false);
-  /* Reliable and not throttled */
   N_ChannelInit(&nc->outgoing_reliable, true, false);
-  /* Unreliable and not throttled */
   N_ChannelInit(&nc->outgoing_unreliable, false, true);
   nc->bytes_uploaded = 0;
   nc->bytes_downloaded = 0;
-  nc->enet_peer = enet_peer;
+  nc->connect_start_time = 0;
+  nc->disconnect_start_time = 0;
+  nc->base_net_peer = base_net_peer;
+  I_NetPeerInit(nc->base_net_peer);
+}
+
+void N_ComClear(netcom_t *nc) {
+  N_ChannelClear(&nc->incoming);
+  N_ChannelClear(&nc->outgoing_reliable);
+  N_ChannelClear(&nc->outgoing_unreliable);
 }
 
 void N_ComFree(netcom_t *nc) {
@@ -52,6 +55,26 @@ void N_ComFree(netcom_t *nc) {
 void N_ComReset(netcom_t *nc) {
   nc->bytes_uploaded = 0;
   nc->bytes_downloaded = 0;
+}
+
+uint32_t N_ComGetIPAddress(netcom_t *nc) {
+  I_NetPeerGetIPAddress(nc->base_net_peer);
+}
+
+const char* N_ComGetIPAddressConstString(netcom_t *nc) {
+  return N_IPToConstString(N_ComGetIPAddress(nl));
+}
+
+uint16_t N_ComGetPort(netcom_t *nc) {
+  return I_NetPeerGetPort(nc->base_net_peer);
+}
+
+float N_ComGetPacketLoss(netcom_t *nc) {
+  return I_NetPeerGetPacketLoss(nc->base_net_peer);
+}
+
+float N_ComGetPacketLossJitter(netcom_t *nc) {
+  return I_NetPeerGetPacketLossJitter(nc->base_net_peer);
 }
 
 size_t N_ComGetBytesUploaded(netcom_t *nc) {
@@ -84,38 +107,17 @@ bool N_ComLoadNextMessage(netcom_t *nc, net_message_e *message_type) {
   return N_ChannelLoadNextMessage(&nc->incoming, message_type);
 }
 
+void N_ComFlushChannels(netcom_t *nc) {
+  N_ComFlushReliableChannel(nc);
+  N_ComFlushUnreliableChannel(nc);
+}
+
 void N_ComFlushReliableChannel(netcom_t *nc) {
-  netchan_t *netchan = &nc->outgoing_reliable;
-  ENetPacket *packet = NULL;
-
-  if (!N_ChannelReady(netchan)) {
-    return;
-  }
-
-  packet = N_ChannelGetPacket(netchan);
-
-  enet_peer_send((ENetPeer *)nc->enet_peer, ENET_CHANNEL_RELIABLE, packet);
-
-  N_ChannelClear(netchan);
-
-  nc->bytes_uploaded += packet->dataLength;
+  nc->bytes_uploaded += N_ChannelFlush(&nc->outgoing_reliable);
 }
 
 void N_ComFlushUnreliableChannel(netcom_t *nc) {
-  netchan_t *netchan = &nc->outgoing_unreliable;
-  ENetPacket *packet = NULL;
-
-  if (!N_ChannelReady(netchan)) {
-    return;
-  }
-
-  packet = N_ChannelGetPacket(netchan);
-
-  enet_peer_send((ENetPeer *)nc->enet_peer, ENET_CHANNEL_UNRELIABLE, packet);
-
-  N_ChannelClear(netchan);
-
-  nc->bytes_uploaded += packet->dataLength;
+  nc->bytes_uploaded += N_ChannelFlush(&nc->outgoing_unreliable);
 }
 
 void N_ComClearReliableChannel(netcom_t *nc) {
@@ -127,15 +129,11 @@ void N_ComClearUnreliableChannel(netcom_t *nc) {
 }
 
 void N_ComSendReset(netcom_t *nc) {
-  enet_peer_reset((ENetPeer *)nc->enet_peer);
+  I_NetPeerSendReset(nc->base_net_peer);
 }
 
 pbuf_t* N_ComGetIncomingMessageData(netcom_t *nc) {
   return N_ChannelGetMessage(&nc->incoming);
-}
-
-void* N_ComGetENetPeer(netcom_t *nc) {
-  return nc->enet_peer;
 }
 
 /* vi: set et ts=2 sw=2: */

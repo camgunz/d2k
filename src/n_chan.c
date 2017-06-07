@@ -23,8 +23,6 @@
 
 #include "z_zone.h"
 
-#include <enet/enet.h>
-
 #include "i_main.h"
 
 #include "n_main.h"
@@ -119,6 +117,50 @@ static bool deserialize_toc(GArray *toc, unsigned char *data,
   return true;
 }
 
+static bool channel_has_data(netchan_t *nc) {
+  if (nc->toc->len == 0) {
+    return false;
+  }
+  
+  if (!nc->throttled) {
+    return true;
+  }
+
+  return (I_GetTime() - nc->last_flush_tic) > 0;
+}
+
+static netpacket_t* channel_get_packet(netchan_t *nc) {
+  size_t toc_size;
+  size_t msg_size;
+  size_t packet_size;
+  netpacket_t *packet = NULL;
+  unsigned char *packet_data = NULL;
+
+  M_PBufClear(&nc->packed_toc);
+  serialize_toc(nc);
+
+  toc_size = M_PBufGetSize(&nc->packed_toc);
+  msg_size = M_PBufGetSize(&nc->messages);
+  packet_size = toc_size + msg_size;
+
+  if (nc->reliable) {
+    packet = I_NetPacketNewReliable(packet_size);
+  }
+  else {
+    packet = I_NetPacketNewUnreliable(packet_size);
+  }
+
+  packet_data = I_NetPacketGetData(packet);
+  memcpy(packet_data, M_PBufGetData(&nc->packed_toc), toc_size);
+  memcpy(packet_data + toc_size, M_PBufGetData(&nc->messages), msg_size);
+
+  if (nc->throttled) {
+    nc->last_flush_tic = I_GetTime();
+  }
+
+  return packet;
+}
+
 void N_ChannelInit(netchan_t *nc, bool reliable, bool throttled) {
   nc->reliable = reliable;
   nc->throttled = throttled;
@@ -143,42 +185,30 @@ void N_ChannelFree(netchan_t *nc) {
   g_array_free(nc->toc, true);
   M_PBufFree(nc->messages);
   M_PBufFree(nc->packet_data);
+  M_PBufFree(nc->packed_toc);
 }
 
-void* N_ChannelGetPacket(netchan_t *nc) {
-  size_t toc_size;
-  size_t msg_size;
+size_t N_ChannelFlush(netchan_t *nc) {
+  netpacket_t *packet;
   size_t packet_size;
-  ENetPacket *packet = NULL;
 
-  M_PBufClear(&nc->packed_toc);
-  serialize_toc(nc);
+  if (!N_ChannelReady(nc)) {
+    return;
+  }
 
-  toc_size = M_PBufGetSize(&nc->packed_toc);
-  msg_size = M_PBufGetSize(&nc->messages);
-  packet_size = toc_size + msg_size;
+  packet = channel_get_packet(nc);
+  packet_size = I_NetPacketGetSize(packet);
 
   if (nc->reliable) {
-    packet = enet_packet_create(NULL, packet_size, ENET_PACKET_FLAG_RELIABLE);
+    I_NetPeerSendReliablePacket(nc->base_net_peer, packet);
   }
   else {
-    packet = enet_packet_create(
-      NULL, packet_size, ENET_PACKET_FLAG_UNSEQUENCED
-    );
+    I_NetPeerSendUnreliablePacket(nc->base_net_peer, packet);
   }
 
-  if (!packet) {
-    I_Error("Error allocating packet\n");
-  }
+  N_ChannelClear(nc);
 
-  memcpy(packet->data, M_PBufGetData(&nc->packed_toc), toc_size);
-  memcpy(packet->data + toc_size, M_PBufGetData(&nc->messages), msg_size);
-
-  if (nc->throttled) {
-    nc->last_flush_tic = I_GetTime();
-  }
-
-  return packet;
+  return packet_size;
 }
 
 pbuf_t* N_ChannelBeginMessage(netchan_t *nc, unsigned char type) {
@@ -203,18 +233,6 @@ pbuf_t* N_ChannelBeginMessage(netchan_t *nc, unsigned char type) {
   toc_entry->type = type;
 
   return &nc->messages;
-}
-
-bool N_ChannelReady(netchan_t *nc) {
-  if (nc->toc->len == 0) {
-    return false;
-  }
-  
-  if (!nc->throttled) {
-    return true;
-  }
-
-  return (I_GetTime() - nc->last_flush_tic) > 0;
 }
 
 pbuf_t* N_ChannelGetMessage(netchan_t *nc) {

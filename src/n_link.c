@@ -21,39 +21,67 @@
 /*****************************************************************************/
 
 
-#ifndef N_COM_H__
-#define N_COM_H__
+#include "z_zone.h"
 
-typedef struct netcom_s {
-  base_net_peer_t *base_net_peer;
-  netchan_t        incoming;
-  netchan_t        outgoing_reliable;
-  netchan_t        outgoing_unreliable;
-  size_t           bytes_uploaded;
-  size_t           bytes_downloaded;
-} netcom_t;
+#include "n_main.h"
+#include "n_chan.h"
+#include "n_com.h"
+#include "n_link.h"
 
-void        N_ComInit(netcom_t *nc, void *base_net_peer);
-void        N_ComFree(netcom_t *nc);
-void        N_ComReset(netcom_t *nc);
-uint32_t    N_ComGetIPAddress(netcom_t *nc);
-const char* N_ComGetIPAddressConstString(netcom_t *nc);
-uint16_t    N_ComGetPort(netcom_t *nc);
-float       N_ComGetPacketLoss(netcom_t *nc);
-float       N_ComGetPacketLossJitter(netcom_t *nc);
-size_t      N_ComGetBytesUploaded(netcom_t *nc);
-size_t      N_ComGetBytesDownloaded(netcom_t *nc);
-pbuf_t*     N_ComBeginMessage(netcom_t *nc, net_message_e type);
-bool        N_ComSetIncoming(netcom_t *nc, unsigned char *data, size_t size);
-void        N_ComFlushChannels(netcom_t *nc);
-void        N_ComFlushReliableChannel(netcom_t *nc);
-void        N_ComFlushUnreliableChannel(netcom_t *nc);
-void        N_ComClearReliableChannel(netcom_t *nc);
-void        N_ComClearUnreliableChannel(netcom_t *nc);
-void        N_ComSendReset(netcom_t *nc);
-pbuf_t*     N_ComGetIncomingMessageData(netcom_t *nc);
-bool        N_ComLoadNextMessage(netcom_t *nc, net_message_e *message_type);
+void N_LinkInit(netlink_t *nl, void *base_net_peer) {
+  N_ComInit(&nl->com, base_net_peer);
+  N_SyncInit(&nl->sync);
+  nl->connection_start_time = 0;
+  nl->disconnection_start_time = 0;
+}
 
-#endif
+void N_LinkClear(netlink_t *nl) {
+  N_ComClear(&nl->com);
+  N_SyncClear(&nl->sync);
+  nl->connection_start_time = 0;
+  nl->disconnection_start_time = 0;
+}
+
+void N_LinkFree(netlink_t *nl) {
+  N_ComFree(&nl->com);
+  N_SyncFree(&nl->sync);
+  nl->connection_start_time = 0;
+  nl->disconnection_start_time = 0;
+}
+
+void N_LinkDisconnect(netlink_t *nl, disconnection_reason_e reason) {
+  time_t now = time(NULL);
+
+  if (nl->disconnect_start_time) {
+    return;
+  }
+
+  I_NetPeerDisconnect(nc->base_net_peer, reason);
+  nl->disconnect_start_time = now;
+}
+
+bool N_LinkCheckTimeout(netlink_t *nl) {
+  time_t now = time(NULL);
+
+  if (nl->connect_start_time != 0) {
+    if (difftime(now, nl->connect_start_time) >
+        (NET_CONNECT_TIMEOUT * 1000)) {
+      return true;
+    }
+  }
+
+  if (nl->disconnect_start_time != 0) {
+    if (difftime(now, nl->disconnect_start_time) >
+        (NET_DISCONNECT_TIMEOUT * 1000)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void N_LinkSetConnected(netlink_t *nl) {
+  nl->connect_start_time = 0;
+}
 
 /* vi: set et ts=2 sw=2: */
