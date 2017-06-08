@@ -24,6 +24,22 @@
 #ifndef I_NET_H__
 #define I_NET_H__
 
+#define NET_DEFAULT_PORT 10666
+#define NET_MAX_CLIENTS 2000
+#define NET_CONNECT_WAIT 1000 /* ms */
+#define NET_DISCONNECT_WAIT 1000 /* ms */
+
+typedef enum {
+  DISCONNECT_REASON_LOST_PEER_CONNECTION,
+  DISCONNECT_REASON_GOT_PEER_DISCONNECTION,
+  DISCONNECT_REASON_MANUAL,
+  DISCONNECT_REASON_CONNECTION_ERROR,
+  DISCONNECT_REASON_EXCESSIVE_LAG,
+  DISCONNECT_REASON_MALFORMED_SETUP,
+  DISCONNECT_REASON_SERVER_FULL,
+  DISCONNECT_REASON_MAX,
+} disconnection_reason_e;
+
 typedef void base_netpeer_t;
 typedef void netpacket_t;
 typedef void netevent_t;
@@ -33,6 +49,25 @@ typedef (void)(net_disconnection_handler_f)(base_net_peer_t *peer,
                                             disconnection_reason_e reason);
 typedef (void)(net_data_handler_f)(base_net_peer_t *peer, unsigned char *data,
                                                           size_t size);
+
+void I_NetInit(void);
+bool I_NetListen(const char *host, uint16_t port,
+                                   net_connection_handler_f conn_handler,
+                                   net_disconnection_handler_f disconn_handler,
+                                   net_data_handler_f data_handler);
+base_net_peer_t* I_NetConnect(const char *host,
+                              uint16_t port,
+                              net_connection_handler_f conn_handler,
+                              net_disconnection_handler_f disconn_handler,
+                              net_data_handler_f data_handler);
+bool I_NetReconnect(void);
+bool I_NetConnected(void);
+void I_NetSetConnectionHandler(net_connection_handler_f handler);
+void I_NetSetDisconnectionHandler(net_disconnection_handler_f handler);
+void I_NetSetDataHandler(net_data_handler_f handler);
+void I_NetDisconnect(disconnection_reason_e reason);
+void I_NetShutdown(void);
+void I_NetServiceNetworkTimeout(int timeout_ms);
 
 void     I_NetPeerInit(base_netpeer_t *peer);
 void     I_NetPeerSendPacket(base_netpeer_t *peer, netpacket_t *packet);
@@ -52,23 +87,10 @@ bool             I_NetEventIsConnection(netevent_t *event);
 bool             I_NetEventIsDisconnection(netevent_t *event);
 bool             I_NetEventIsData(netevent_t *event);
 
-void I_NetInit(void);
-bool I_NetListen(const char *host,
-                 uint16_t port,
-                 net_connection_handler_f net_connection_handler,
-                 net_disconnection_handler_f net_disconnection_handler,
-                 net_data_handler_f net_data_handler);
-bool I_NetConnect(const char *host,
-                  uint16_t port,
-                  net_connection_handler_f net_connection_handler,
-                  net_disconnection_handler_f net_disconnection_handler,
-                  net_data_handler_f net_data_handler);
-bool I_NetConnected(void);
-bool I_NetReconnect(void);
-void I_NetSetConnectionHandler(net_connection_handler_f handler);
-void I_NetSetDisconnectionHandler(net_disconnection_handler_f handler);
-void I_NetSetDataHandler(net_data_handler_f handler);
-void I_NetDisconnect(disconnection_reason_e reason);
-void I_NetShutdown(void);
+size_t      I_NetIPToString(uint32_t address, char *buffer);
+const char* I_NetIPToConstString(uint32_t address);
+bool        I_NetIPToInt(const char *address_string, uint32_t *address_int);
+size_t      I_NetParseAddressString(const char *address, char **host,
+                                                         uint16_t *port);
 
 /* vi: set et ts=2 sw=2: */

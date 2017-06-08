@@ -64,15 +64,13 @@ bool N_LinkCheckTimeout(netlink_t *nl) {
   time_t now = time(NULL);
 
   if (nl->connect_start_time != 0) {
-    if (difftime(now, nl->connect_start_time) >
-        (NET_CONNECT_TIMEOUT * 1000)) {
+    if (difftime(now, nl->connect_start_time) > NET_CONNECT_WAIT) {
       return true;
     }
   }
 
   if (nl->disconnect_start_time != 0) {
-    if (difftime(now, nl->disconnect_start_time) >
-        (NET_DISCONNECT_TIMEOUT * 1000)) {
+    if (difftime(now, nl->disconnect_start_time) > NET_DISCONNECT_WAIT) {
       return true;
     }
   }

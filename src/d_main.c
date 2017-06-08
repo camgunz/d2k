@@ -1194,6 +1194,9 @@ static void D_DoomMainSetup(void) {
   // 1/18/98 killough: Z_Init() call moved to i_main.c
 
   // CPhipps - move up netgame init
+  D_MsgLocalInfo("I_NetInit: Initializing network\n");
+  I_NetInit();
+
   D_MsgLocalInfo("N_InitNetGame: Checking for network game.\n");
   N_InitNetGame();
 

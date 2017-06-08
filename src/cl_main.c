@@ -185,95 +185,6 @@ static void count_command(gpointer data, gpointer user_data) {
   }
 }
 
-void CL_TrimSynchronizedCommands(void) {
-  int state_tic = G_GetStateFromTic();
-
-  N_MsgCmdLocalDebug("(%5d) Trimming synchronized commands\n", gametic);
-
-  PLAYERS_FOR_EACH(iter) {
-    PL_TrimCommands(
-      iter.player,
-      command_is_synchronized,
-      GINT_TO_POINTER(state_tic)
-    );
-  }
-}
-
-size_t CL_GetUnsynchronizedCommandCount(player_t *player) {
-  netpeer_t *server;
-  size_t command_count = 0;
-  
-  if (!CLIENT) {
-    return 0;
-  }
-  
-  server = CL_GetServerPeer();
-
-  if (!server) {
-    return 0;
-  }
-
-  PL_ForEachCommand(player, count_command, &command_count);
-
-  return command_count;
-}
-
-bool CL_RunningConsoleplayerCommands(void) {
-  return cl_running_consoleplayer_commands;
-}
-
-bool CL_Predicting(void) {
-  return !(CL_Synchronizing() || CL_RePredicting());
-}
-
-bool CL_RunningNonConsoleplayerCommands(void) {
-  return cl_running_nonconsoleplayer_commands;
-}
-
-void CL_SetRunningThinkers(bool running) {
-  cl_running_thinkers = running;
-}
-
-bool CL_RunningThinkers(void) {
-  return cl_running_thinkers;
-}
-
-void CL_SetupCommandState(player_t *player, uint32_t command_index) {
-  if (!CLIENT) {
-    return;
-  }
-
-  if (PL_IsConsolePlayer(player)) {
-    cl_running_consoleplayer_commands = true;
-    cl_running_nonconsoleplayer_commands = false;
-  }
-  else {
-    cl_running_consoleplayer_commands = false;
-    cl_running_nonconsoleplayer_commands = true;
-  }
-
-  if (cl_running_consoleplayer_commands) {
-    cl_current_command_index = command_index;
-  }
-}
-
-void CL_ShutdownCommandState(void) {
-  cl_running_consoleplayer_commands = false;
-  cl_running_nonconsoleplayer_commands = false;
-}
-
-int CL_GetCurrentCommandIndex(void) {
-  return cl_current_command_index;
-}
-
-int CL_GetNextCommandIndex(void) {
-  int out = cl_local_command_index;
-
-  cl_local_command_index++;
-
-  return out;
-}
-
 void CL_Init(void) {
   /*
    * The current command index, used for generating new commands
@@ -359,6 +270,178 @@ void CL_Init(void) {
 void CL_Reset(void) {
   local_client.local_command_index = 1;
   local_client.current_command_index = 1;
+}
+
+void CL_Connect(const char *address) {
+  size_t host_length = 0;
+  char *host = NULL;
+  uint16_t port = 0;
+  time_t start_request_time;
+
+  host_length = N_ParseAddressString(address, &host, &port);
+
+  if (!host_length) {
+    D_MsgLocalWarn(
+      "CL_Connect: Invalid host (address: %s); using default host\n",
+      address
+    );
+
+    host = strdup("0.0.0.0");
+  }
+
+  if (port == 0) {
+    port = NET_DEFAULT_PORT;
+  }
+
+  D_MsgLocalInfo(
+    "CL_Connect: Connecting to server %s:%u...\n", host, port
+  );
+
+  for (size_t i = 0; i < MAX_SETUP_REQUEST_ATTEMPTS; i++) {
+    if (!I_NetConnect(host, port)) {
+      D_MsgLocalError("CL_Connect: Connection refused\n");
+      free(host);
+      return;
+    }
+
+    D_MsgLocalInfo("CL_Connect: Connected!\n");
+
+    if (!CL_GetServerPeer()) {
+      I_Error("CL_Connect: Server peer was NULL");
+    }
+
+    G_ReloadDefaults();
+
+    D_MsgLocalInfo("CL_Connect: Requesting setup information...\n");
+
+    start_request_time = time(NULL);
+
+    while (true) {
+      if (!I_NetConnected()) {
+        break;
+      }
+
+      CL_SendSetupRequest();
+      I_NetServiceNetwork();
+
+      if (CL_ReceivedSetup()) {
+        break;
+      }
+
+      if (difftime(time(NULL), start_request_time) > 10.0) {
+        break;
+      }
+    }
+
+    if (CL_ReceivedSetup()) {
+      break;
+    }
+  }
+
+  if (!CL_ReceivedSetup()) {
+    D_MsgLocalError("CL_Connect: Timed out waiting for setup information\n");
+  }
+  else {
+    D_MsgLocalInfo("CL_Connect: Setup information received!\n");
+  }
+}
+
+void CL_SetConnected(void) {
+  N_PeerSetConnected(CL_GetServerPeer());
+}
+
+void CL_Disconnect(void) {
+  N_PeerRemove(CL_GetServerPeer());
+  I_NetDisconnect();
+}
+
+void CL_TrimSynchronizedCommands(void) {
+  int state_tic = G_GetStateFromTic();
+
+  N_MsgCmdLocalDebug("(%5d) Trimming synchronized commands\n", gametic);
+
+  PLAYERS_FOR_EACH(iter) {
+    PL_TrimCommands(
+      iter.player,
+      command_is_synchronized,
+      GINT_TO_POINTER(state_tic)
+    );
+  }
+}
+
+size_t CL_GetUnsynchronizedCommandCount(player_t *player) {
+  netpeer_t *server;
+  size_t command_count = 0;
+  
+  if (!CLIENT) {
+    return 0;
+  }
+  
+  server = CL_GetServerPeer();
+
+  if (!server) {
+    return 0;
+  }
+
+  PL_ForEachCommand(player, count_command, &command_count);
+
+  return command_count;
+}
+
+bool CL_RunningConsoleplayerCommands(void) {
+  return cl_running_consoleplayer_commands;
+}
+
+bool CL_RunningNonConsoleplayerCommands(void) {
+  return cl_running_nonconsoleplayer_commands;
+}
+
+bool CL_Predicting(void) {
+  return !(CL_Synchronizing() || CL_RePredicting());
+}
+
+void CL_SetRunningThinkers(bool running) {
+  cl_running_thinkers = running;
+}
+
+bool CL_RunningThinkers(void) {
+  return cl_running_thinkers;
+}
+
+void CL_SetupCommandState(player_t *player, uint32_t command_index) {
+  if (!CLIENT) {
+    return;
+  }
+
+  if (PL_IsConsolePlayer(player)) {
+    cl_running_consoleplayer_commands = true;
+    cl_running_nonconsoleplayer_commands = false;
+  }
+  else {
+    cl_running_consoleplayer_commands = false;
+    cl_running_nonconsoleplayer_commands = true;
+  }
+
+  if (cl_running_consoleplayer_commands) {
+    cl_current_command_index = command_index;
+  }
+}
+
+void CL_ShutdownCommandState(void) {
+  cl_running_consoleplayer_commands = false;
+  cl_running_nonconsoleplayer_commands = false;
+}
+
+uint32_t CL_GetCurrentCommandIndex(void) {
+  return cl_current_command_index;
+}
+
+uint32_t CL_GetNextCommandIndex(void) {
+  uint32_t out = cl_local_command_index;
+
+  cl_local_command_index++;
+
+  return out;
 }
 
 server_t* CL_GetServer(void) {
@@ -497,7 +580,7 @@ bool CL_OccurredDuringRePrediction(int tic) {
   return true;
 }
 
-void CL_UpdateReceivedCommandIndex(unsigned int command_index) {
+void CL_UpdateReceivedCommandIndex(uint32_t command_index) {
   netpeer_t *server = CL_GetServerPeer();
 
   if (!server) {

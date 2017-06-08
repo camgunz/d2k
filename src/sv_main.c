@@ -75,7 +75,7 @@ static void sv_remove_old_commands(void) {
     return;
   }
 
-  NETPEER_FOR_EACH(iter) {
+  NET_PEERS_FOR_EACH(iter) {
     if (N_PeerGetSyncTIC(iter.np) < oldest_sync_tic) {
       oldest_sync_tic = N_PeerGetSyncTIC(iter.np);
     }
@@ -85,7 +85,7 @@ static void sv_remove_old_commands(void) {
     return;
   }
 
-  NETPEER_FOR_EACH(iter) {
+  NET_PEERS_FOR_EACH(iter) {
     P_TrimCommands(
       N_PeerGetPlayernum(iter.np),
       sv_command_is_synchronized,
@@ -97,7 +97,7 @@ static void sv_remove_old_commands(void) {
 static void sv_remove_old_states(void) {
   int oldest_gametic = gametic;
 
-  NETPEER_FOR_EACH(iter) {
+  NET_PEERS_FOR_EACH(iter) {
     netpeer_t *np = iter.np;
 
     if (N_PeerGetSyncTIC(np)) {
@@ -106,6 +106,88 @@ static void sv_remove_old_states(void) {
   }
 
   G_RemoveOldStates(oldest_gametic);
+}
+
+void SV_Listen(const char *address) {
+  size_t host_length = 0;
+  char *host = NULL;
+  uint16_t port = 0;
+
+  host_length = I_NetParseAddressString(address, &host, &port);
+
+  if (!host_length) {
+    host = strdup("0.0.0.0");
+  }
+
+  if (!port) {
+    port = NET_DEFAULT_PORT;
+  }
+
+  if (!I_NetListen(host, port)) {
+    I_Error("SV_Listen: Error listening on %s:%u\n", host, port);
+  }
+
+  D_MsgLocalInfo("SV_Listen: Listening on %s:%u\n", host, port);
+
+  free(host);
+}
+
+void SV_DisconnectLaggedClients(void) {
+  if (!SERVER) {
+    return;
+  }
+
+  if (gamestate != GS_LEVEL) {
+    return;
+  }
+
+  NET_PEERS_FOR_EACH(iter) {
+    if (!N_PeerSynchronized(iter.np)) {
+      continue;
+    }
+
+    if (N_PeerGetStatus(iter.np) != NET_PEERS_STATUS_PLAYER) {
+      continue;
+    }
+
+    if (N_PeerTooLagged(iter.np)) {
+      D_MsgLocalInfo("(%d) Player %u is too lagged\n",
+        gametic,
+        N_PeerGetPlayer(iter.np)->id
+      );
+      /*
+       * [CG] [FIXME] Should demote this peer to spectator instead of
+       *              disconnecting them
+       */
+      N_DisconnectPeer(iter.np, DISCONNECT_REASON_EXCESSIVE_LAG);
+    }
+  }
+}
+
+void SV_UpdatePings(void) {
+  if (!SERVER) {
+    return;
+  }
+
+  if ((gametic % (TICRATE / 2)) != 0) {
+    return;
+  }
+
+  NET_PEERS_FOR_EACH(iter) {
+    player_t *player = NULL;
+
+    if (!N_PeerSynchronized(iter.np)) {
+      continue;
+    }
+
+    player = N_PeerGetPlayer(iter.np);
+
+    if (PL_IsConsolePlayer(player)) {
+      continue;
+    }
+
+    SV_SendPing(iter.np);
+  }
 }
 
 void SV_CleanupOldCommandsAndStates(void) {
@@ -305,6 +387,30 @@ void SV_DisconnectPlayer(player_t *player, disconnection_reason_e reason) {
 
   D_MsgEveryoneInfo("Disconnecting player %u\n", player->id);
   N_DisconnectPeer(np, reason);
+}
+
+void SV_Disconnect(disconnection_reason_e reason) {
+  /*
+   * - Send a base disconnection to all connected peers and wait for them to
+   *   disconnect.
+   * - As they disconnect, remove them
+   * - For each remaining peer:
+   *   - `enet_peer_reset`
+   *   - `N_PeerRemove`
+   * - I_NetShutdown
+   */
+
+  I_NetSetConnectionHandler(NULL);
+  I_NetSetDisconnectionHandler(remove_disconnecting_peer);
+  I_NetSetDataHandler(NULL);
+
+  NET_PEER_FOR_EACH(iter) {
+    I_NetPeerDisconnect(iter.np->link.com.base_net_peer);
+  }
+
+  I_NetServiceNetworkTimeout(NET_DISCONNECT_WAIT * 1000);
+
+  I_NetDisconnect();
 }
 
 /* vi: set et ts=2 sw=2: */

@@ -88,6 +88,7 @@ size_t      N_PeersGetCount(void);
 bool        N_PeersPeerExists(uint32_t id);
 bool        N_PeersIterate(netpeer_iterator_t *iter);
 void        N_PeersIterateRemove(netpeer_iterator_t *iter);
+void        N_PeersCheckTimeouts(void);
 
 uint32_t N_PeerGetID(net_peer_t *np);
 void     N_PeerRemove(net_peer_t *np);

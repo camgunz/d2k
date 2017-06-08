@@ -37,6 +37,12 @@
 #define NET_THROTTLE_ACCEL 2
 #define NET_THROTTLE_DECEL 1
 
+#define MAX_ADDRESS_LENGTH 500
+
+#define to_uchar(x)         ((unsigned char)((x) & 0xFF))
+#define to_ushort(x)        ((unsigned short)((x) & 0xFFFF))
+#define string_to_ushort(x) (to_ushort(strtol(x, NULL, 10)))
+
 static ENetHost   *net_host = NULL;
 static const char *previous_host = NULL;
 static uint16_t    previous_port = 0;
@@ -45,34 +51,15 @@ static net_connection_handler_f handle_net_connection = NULL;
 static net_disconnection_handler_f handle_net_disconnection = NULL;
 static net_data_handler_f handle_net_data = NULL;
 
-void CL_SetConnected(void) {
-  N_PeerSetConnected(CL_GetServerPeer());
-}
-
-void CL_Disconnect(void) {
-  N_PeerRemove(CL_GetServerPeer());
-  I_NetDisconnect();
-}
-
-void I_NetInit(void) {
-  if (enet_initialize() != 0) {
-    I_Error("I_NetInit: Error initializing ENet");
-  }
-
-  atexit(I_NetShutdown);
-}
-
-void I_NetSetConnectionHandler(net_connection_handler_f handler) {
-  net_connection_handler = handler;
-}
-
-void I_NetSetDisconnectionHandler(net_disconnection_handler_f handler) {
-  net_disconnection_handler = handler;
-}
-
-void I_NetSetDataHandler(net_data_handler_f handler) {
-  net_data_handler = handler;
-}
+const char *disconnection_reasons[DISCONNECT_REASON_MAX] = {
+  "Lost peer connection",
+  "Peer disconnected",
+  "Manual disconnection",
+  "Connection error",
+  "Excessive lag",
+  "Malformed setup",
+  "Server full",
+};
 
 static void remove_disconnecting_peer(base_net_peer_t *peer,
                                       disconnection_reason_e reason) {
@@ -85,50 +72,12 @@ static void remove_disconnecting_peer(base_net_peer_t *peer,
   N_PeerRemove(np);
 }
 
-void SV_Disconnect(disconnection_reason_e reason) {
-  /*
-   * - Send a base disconnection to all connected peers and wait for them to
-   *   disconnect.
-   * - As they disconnect, remove them
-   * - For each remaining peer:
-   *   - `enet_peer_reset`
-   *   - `N_PeerRemove`
-   * - I_NetShutdown
-   */
-
-  I_NetSetConnectionHandler(NULL);
-  I_NetSetDisconnectionHandler(remove_disconnecting_peer);
-  I_NetSetDataHandler(NULL);
-
-  NET_PEER_FOR_EACH(iter) {
-    I_NetPeerDisconnect(iter.np->link.com.base_net_peer);
+void I_NetInit(void) {
+  if (enet_initialize() != 0) {
+    I_Error("I_NetInit: Error initializing ENet");
   }
 
-  I_NetServiceNetworkTimeout(NET_DISCONNECT_TIMEOUT * 1000);
-
-  I_NetDisconnect();
-}
-
-void I_NetDisconnect(void) {
-  if (!net_host) {
-    return;
-  }
-
-  enet_host_destroy(net_host);
-  net_host = NULL;
-
-  I_NetSetConnectionHandler(NULL);
-  I_NetSetDisconnectionHandler(NULL);
-  I_NetSetDataHandler(NULL);
-}
-
-void I_NetShutdown(void) {
-  enet_deinitialize();
-}
-
-void N_Shutdown(void) {
-  D_MsgLocalInfo("N_Shutdown: shutting down\n");
-  N_Disconnect(DISCONNECT_REASON_MANUAL);
+  atexit(I_NetShutdown);
 }
 
 bool I_NetListen(const char *host,
@@ -138,22 +87,13 @@ bool I_NetListen(const char *host,
                  net_data_handler_f net_data_handler) {
   ENetAddress address;
 
-  if (host) {
-    enet_address_set_host(&address, host);
-  }
-  else {
-    address.host = ENET_HOST_ANY;
-  }
+  enet_address_set_host(&address, host);
+  address.port = port;
 
-  if (port) {
-    address.port = port;
-  }
-  else {
-    address.port = DEFAULT_PORT;
-  }
+  net_host = enet_host_create(
+    &address, MAX_CLIENTS, 2, NET_MAX_DOWNLOAD, NET_MAX_UPLOAD
+  );
 
-  net_host = enet_host_create(&address, MAX_CLIENTS, 2, 0, 0);
-  
   if (!net_host) {
     D_MsgLocalError("I_NetListen: Error creating host on %s:%u\n", host, port);
     return false;
@@ -162,6 +102,7 @@ bool I_NetListen(const char *host,
 #if USE_RANGE_CODER
   if (enet_host_compress_with_range_coder(net_host) < 0) {
     D_MsgLocalError("I_NetListen: Error activating range coder\n");
+    I_NetDisconnect();
     return false;
   }
 #endif
@@ -173,59 +114,47 @@ bool I_NetListen(const char *host,
   return true;
 }
 
-bool I_NetConnect(const char *host,
-                  uint16_t port,
-                  net_connection_handler_f net_connection_handler,
-                  net_disconnection_handler_f net_disconnection_handler,
-                  net_data_handler_f net_data_handler) {
-  ENetPeer *server = NULL;
+base_net_peer_t* I_NetConnect(const char *host,
+                              uint16_t port,
+                              net_connection_handler_f conn_handler,
+                              net_disconnection_handler_f disconn_handler,
+                              net_data_handler_f data_handler) {
+  ENetPeer *peer = NULL;
   ENetAddress address;
 
-  net_host = enet_host_create(NULL, 1, 2, 0, 0);
+  net_host = enet_host_create(NULL, 1, 2, NET_MAX_DOWNLOAD, NET_MAX_UPLOAD);
 
   if (!net_host) {
     D_MsgLocalError("I_NetConnect: Error creating host\n");
-    return false;
+    return NULL;
   }
 
 #if USE_RANGE_CODER
   if (enet_host_compress_with_range_coder(net_host) < 0) {
     D_MsgLocalError("I_NetConnect: Error activating range coder\n");
-    return false;
+    I_NetDisconnect();
+    return NULL;
   }
 #endif
 
   enet_address_set_host(&address, host);
+  address.port = port;
+  peer = enet_host_connect(net_host, &address, 2, 0);
 
-  if (port) {
-    address.port = port;
+  if (!peer) {
+    D_MsgLocalError("I_NetConnect: Connection failed\n");
+    I_NetDisconnect();
+    return NULL;
   }
-  else {
-    address.port = DEFAULT_PORT;
-  }
-
-  server = enet_host_connect(net_host, &address, 2, 0);
-
-  if (!server) {
-    D_MsgLocalError("I_NetConnect: Error connecting to server\n");
-    N_Disconnect(DISCONNECT_REASON_CONNECTION_ERROR);
-    return false;
-  }
-
-  N_PeersAdd(server);
 
   previous_host = host;
   previous_port = port;
 
-  handle_net_connection = net_connection_handler;
-  handle_net_disconnection = net_disconnection_handler;
-  handle_net_data = net_data_handler;
+  handle_net_connection = conn_handler;
+  handle_net_disconnection = disconn_handler;
+  handle_net_data = data_handler;
 
-  return true;
-}
-
-bool I_NetConnected(void) {
-  return (net_host != NULL);
+  return peer;
 }
 
 bool I_NetReconnect(void) {
@@ -251,82 +180,37 @@ bool I_NetReconnect(void) {
   );
 }
 
-void I_NetWaitForPacket(int ms) {
-  ENetEvent net_event;
-
-  enet_host_service(net_host, &net_event, ms);
+bool I_NetConnected(void) {
+  return (net_host != NULL);
 }
 
-bool N_ConnectToServer(const char *address) {
-  char *host = NULL;
-  uint16_t port = 0;
-  bool connected = false;
-
-  N_ParseAddressString(address, &host, &port);
-
-  if (port == 0) {
-    port = DEFAULT_PORT;
-  }
-
-  D_MsgLocalInfo("Connecting to server");
-  connected = N_Connect(host, port);
-
-  free(host);
-
-  if (connected) {
-    D_MsgLocalInfo("Connected");
-  }
-  else {
-    D_MsgLocalError("Connection failed");
-  }
-
-  return connected;
+void I_NetSetConnectionHandler(net_connection_handler_f handler) {
+  net_connection_handler = handler;
 }
 
-void N_PeersCheckTimeouts(void) {
-  NETPEER_FOR_EACH(iter) {
-    if (SERVER) {
-      if (iter.np->type != PEER_TYPE_CLIENT) {
-        continue;
-      }
-
-      if (!N_LinkCheckTimeout(&iter.np->as.client.link)) {
-        continue;
-      }
-
-      D_MsgLocalInfo("Client %s:%u timed out.\n",
-        N_ComGetIPAddress(&iter.np->as.client.link.com),
-        N_ComGetPort(&iter.np->as.client.link.com),
-      );
-      N_ComSendReset(&iter.np->as.client.link.com);
-      N_PeerIterateRemove(&iter);
-    }
-
-    if (CLIENT) {
-      if (iter.np->type != PEER_TYPE_SERVER) {
-        continue;
-      }
-
-      if (!N_LinkCheckTimeout(&iter.np->as.server.link)) {
-        continue;
-      }
-
-      D_MsgLocalInfo("Server (%s:%u) timed out.\n"
-        N_ComGetIPAddress(&iter.np->as.server.link.com),
-        N_ComGetPort(&iter.np->as.server.link.com),
-      );
-      N_ComSendReset(&iter.np->as.server.link.com);
-      N_PeerIterateRemove(&iter);
-    }
-  }
+void I_NetSetDisconnectionHandler(net_disconnection_handler_f handler) {
+  net_disconnection_handler = handler;
 }
 
-void N_ServiceNetworkTimeout(int timeout_ms) {
-  N_PeersCheckTimeouts();
-  NETPEER_FOR_EACH(iter) {
-    N_ComFlushChannels(iter.np->as.server.link.com);
+void I_NetSetDataHandler(net_data_handler_f handler) {
+  net_data_handler = handler;
+}
+
+void I_NetDisconnect(void) {
+  if (!net_host) {
+    return;
   }
-  I_NetServiceNetworkTimeout(timeout_ms);
+
+  enet_host_destroy(net_host);
+  net_host = NULL;
+
+  I_NetSetConnectionHandler(NULL);
+  I_NetSetDisconnectionHandler(NULL);
+  I_NetSetDataHandler(NULL);
+}
+
+void I_NetShutdown(void) {
+  enet_deinitialize();
 }
 
 void I_NetServiceNetworkTimeout(int timeout_ms) {
@@ -385,10 +269,6 @@ void I_NetServiceNetworkTimeout(int timeout_ms) {
       break;
     }
   }
-}
-
-void N_ServiceNetwork(void) {
-  N_ServiceNetworkTimeout(0);
 }
 
 void I_NetPeerInit(base_netpeer_t *peer) {
@@ -523,6 +403,100 @@ bool I_NetEventIsData(netevent_t *event) {
   ENetEvent *eevent = (ENetEvent *)event;
 
   return eevent->type == ENET_EVENT_TYPE_RECEIVE;
+}
+
+size_t I_NetIPToString(uint32_t address, char *buffer) {
+  return snprintf(buffer, 16, "%u.%u.%u.%u",
+    to_uchar(address >> 24),
+    to_uchar(address >> 16),
+    to_uchar(address >>  8),
+    to_uchar(address      )
+  );
+}
+
+const char* I_NetIPToConstString(uint32_t address) {
+  static char buf[16];
+
+  I_NetIPToString(address, &buf[0]);
+
+  return &buf[0];
+}
+
+bool I_NetIPToInt(const char *address_string, uint32_t *address_int) {
+  int ip = 0;
+  int arg_count;
+  unsigned char octets[4];
+
+  arg_count = sscanf(address_string, "%hhu.%hhu.%hhu.%hhu",
+    &octets[0],
+    &octets[1],
+    &octets[2],
+    &octets[3]
+  );
+
+  if (arg_count != 4) {
+    D_MsgLocalError("Malformed IP address %s.\n", address_string);
+    return false;
+  }
+
+  for (int i = 0; i < 4; i++) {
+    ip += octets[i] << (8 * (3 - i));
+  }
+
+  return ip;
+}
+
+size_t I_NetParseAddressString(const char *address, char **host,
+                                                    uint16_t *port) {
+  unsigned char octets[4];
+  uint16_t      tmp_port;
+  int           parsed_tokens;
+  size_t        address_length;
+  size_t        bytes_written;
+
+  parsed_tokens = sscanf(address, "%hhu.%hhu.%hhu.%hhu:%hu",
+    &octets[0],
+    &octets[1],
+    &octets[2],
+    &octets[3],
+    &tmp_port
+  );
+
+  if (parsed_tokens != 5) {
+    D_MsgLocalWarn("Invalid IP address %s\n", address);
+    return 0;
+  }
+
+  address_length = snprintf(NULL, 0, "%hhu.%hhu.%hhu.%hhu",
+    octets[0],
+    octets[1],
+    octets[2],
+    octets[3]
+  );
+
+  if (!*host) {
+    *host = calloc(address_length + 1, sizeof(char));
+
+    if (!*host) {
+      I_Error("I_NetParseAddressString: error allocating memory for host\n");
+    }
+  }
+
+  bytes_written = snprintf(*host, address_length + 1, "%hhu.%hhu.%hhu.%hhu",
+    octets[0],
+    octets[1],
+    octets[2],
+    octets[3]
+  );
+
+  if (bytes_written != address_length) {
+    D_MsgLocalError("Error copying host: %s\n", strerror(errno));
+    return 0;
+  }
+
+  *port = tmp_port;
+
+  return bytes_written;
 }
 
 /* vi: set et ts=2 sw=2: */

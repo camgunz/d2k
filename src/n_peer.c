@@ -142,6 +142,44 @@ void N_PeerIterateRemove(netpeer_iterator_t *iter) {
   M_IDHashIterateRemove(&iter->iter);
 }
 
+void N_PeersCheckTimeouts(void) {
+  NETPEER_FOR_EACH(iter) {
+    if (SERVER) {
+      if (iter.np->type != PEER_TYPE_CLIENT) {
+        continue;
+      }
+
+      if (!N_LinkCheckTimeout(&iter.np->as.client.link)) {
+        continue;
+      }
+
+      D_MsgLocalInfo("Client %s:%u timed out.\n",
+        N_ComGetIPAddress(&iter.np->as.client.link.com),
+        N_ComGetPort(&iter.np->as.client.link.com),
+      );
+      N_ComSendReset(&iter.np->as.client.link.com);
+      N_PeerIterateRemove(&iter);
+    }
+
+    if (CLIENT) {
+      if (iter.np->type != PEER_TYPE_SERVER) {
+        continue;
+      }
+
+      if (!N_LinkCheckTimeout(&iter.np->as.server.link)) {
+        continue;
+      }
+
+      D_MsgLocalInfo("Server (%s:%u) timed out.\n"
+        N_ComGetIPAddress(&iter.np->as.server.link.com),
+        N_ComGetPort(&iter.np->as.server.link.com),
+      );
+      N_ComSendReset(&iter.np->as.server.link.com);
+      N_PeerIterateRemove(&iter);
+    }
+  }
+}
+
 void N_PeerRemove(net_peer_t *np) {
   M_IDHashRemoveID(&net_peers, np->id);
 }

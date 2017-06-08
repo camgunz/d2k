@@ -35,6 +35,7 @@ extern char *sv_join_password;
 extern char *sv_moderate_password;
 extern char *sv_administrate_password;
 
+void           SV_Listen(char *host, uint16_t port);
 void           SV_CleanupOldCommandsAndStates(void);
 unsigned int   SV_GetPlayerCommandLimit(int playernum);
 void           SV_UnlagSetTIC(int tic);
@@ -44,6 +45,7 @@ const char*    SV_GetServerName(void);
 const char*    SV_GetDirSrvGroup(const char *address, unsigned short port);
 const char*    SV_GetHost(void);
 unsigned short SV_GetPort(void);
+void           SV_Disconnect(disconnection_reason_e reason);
 void           SV_DisconnectPeer(netpeer_t *np, disconnection_reason_e reason);
 void           SV_DisconnectPlayerID(uint32_t player_id,
                                      disconnection_reason_e reason);

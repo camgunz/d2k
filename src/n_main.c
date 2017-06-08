@@ -26,6 +26,7 @@
 #include "i_system.h"
 #include "i_input.h"
 #include "i_main.h"
+#include "i_net.h"
 #include "i_video.h"
 #include "m_argv.h"
 #include "m_delta.h"
@@ -52,7 +53,6 @@
 #include "hu_lib.h"
 #include "hu_stuff.h"
 
-#include "n_addr.h"
 #include "n_main.h"
 #include "n_msg.h"
 #include "n_peer.h"
@@ -68,16 +68,6 @@
 bool netgame   = false;
 bool solonet   = false;
 bool netserver = false;
-
-const char *disconnection_reasons[DISCONNECT_REASON_MAX] = {
-  "Lost peer connection",
-  "Peer disconnected",
-  "Manual disconnection",
-  "Connection error",
-  "Excessive lag",
-  "Malformed setup",
-  "Server full",
-};
 
 void G_BuildTiccmd(ticcmd_t *cmd);
 
@@ -240,24 +230,14 @@ static bool should_render(void) {
   return true;
 }
 
-const char* N_GetDisconnectionReason(uint32_t reason) {
-  if (reason >= DISCONNECT_REASON_MAX) {
-    return "unknown";
-  }
-
-  return disconnection_reasons[reason];
-}
-
 void N_InitNetGame(void) {
   int i;
-  time_t start_request_time;
 
   netgame   = false;
   solonet   = false;
   netserver = false;
 
   M_InitDeltas();
-
   N_MsgInit();
   PL_InitCommandQueues();
 
@@ -266,109 +246,27 @@ void N_InitNetGame(void) {
     solonet = true;
   }
   else if ((i = M_CheckParm("-connect"))) {
-    char *host = NULL;
-    unsigned short port = 0;
-
     if (i >= myargc) {
-      I_Error("-connect requires an address");
+      I_Error("-connect requires an address, i.e. 12.88.97.14:10666");
     }
 
     netgame = true;
 
-    N_Init();
-
     CL_Init();
+    CL_Connect(myargv[i + 1]);
+  }
+  else if ((i = M_CheckParm("-serve"))) {
+    netgame     = true;
+    netserver   = true;
+    nodrawers   = true;
+    nosfxparm   = true;
+    nomusicparm = true;
 
     if (i < (myargc - 1)) {
-      N_ParseAddressString(myargv[i + 1], &host, &port);
+      SV_Listen(strdup(myargv[1 + 1]));
     }
     else {
-      host = strdup("0.0.0.0");
-      port = DEFAULT_PORT;
-    }
-
-    D_MsgLocalInfo(
-      "N_InitNetGame: Connecting to server %s:%u...\n", host, port
-    );
-
-    for (int i = 0; i < MAX_SETUP_REQUEST_ATTEMPTS; i++) {
-      if (!N_Connect(host, port)) {
-        I_Error("N_InitNetGame: Connection refused");
-      }
-
-      D_MsgLocalInfo("N_InitNetGame: Connected!\n");
-
-      if (!CL_GetServerPeer()) {
-        I_Error("N_InitNetGame: Server peer was NULL");
-      }
-
-      G_ReloadDefaults();
-
-      D_MsgLocalInfo("N_InitNetGame: Requesting setup information...\n");
-
-      start_request_time = time(NULL);
-
-      while (N_Connected()) {
-        CL_SendSetupRequest();
-        N_ServiceNetwork();
-
-        if (CL_ReceivedSetup()) {
-          break;
-        }
-
-        if (difftime(time(NULL), start_request_time) > 10.0) {
-          break;
-        }
-      }
-
-      if (CL_ReceivedSetup()) {
-        break;
-      }
-    }
-
-    if (!CL_ReceivedSetup()) {
-      /*
-       * [CG] [FIXME] This should just cancel the connection and print to the
-       *              console.
-       */
-      I_Error("N_InitNetGame: Timed out waiting for setup information");
-    }
-
-
-    D_MsgLocalInfo("N_InitNetGame: Setup information received!\n");
-  }
-  else {
-    if ((i = M_CheckParm("-serve"))) {
-      netgame = true;
-      netserver = true;
-    }
-
-    if (MULTINET) {
-      char *host = NULL;
-      unsigned short port = DEFAULT_PORT;
-
-      nodrawers   = true;
-      nosfxparm   = true;
-      nomusicparm = true;
-
-      N_Init();
-
-      if (i < (myargc - 1)) {
-        size_t host_length = N_ParseAddressString(myargv[i + 1], &host, &port);
-
-        if (host_length == 0) {
-          host = strdup("0.0.0.0");
-        }
-      }
-      else {
-        host = strdup("0.0.0.0");
-      }
-
-      if (!N_Listen(host, port)) {
-        I_Error("Error listening on %s:%d\n", host, port);
-      }
-
-      D_MsgLocalInfo("N_InitNetGame: Listening on %s:%u.\n", host, port);
+      SV_Listen(strdup("0.0.0.0:10666"));
     }
   }
 }
@@ -389,7 +287,7 @@ void N_RunTic(void) {
   P_Checksum(gametic);
 
   if ((G_GetGameState() == GS_LEVEL) && SERVER && (gametic > 0)) {
-    NETPEER_FOR_EACH(iter) {
+    NET_PEER_FOR_EACH(iter) {
       if (N_PeerSynchronized(iter.np)) {
         N_PeerSyncSetOutdated(iter.np);
       }
@@ -405,62 +303,15 @@ void N_RunTic(void) {
   gametic++;
 }
 
-void SV_DisconnectLaggedClients(void) {
-  if (!SERVER) {
-    return;
+void N_ServiceNetworkTimeout(int timeout_ms) {
+  NET_PEERS_FOR_EACH(iter) {
+    N_ComFlushChannels(iter.np->as.server.link.com);
   }
-
-  if (gamestate != GS_LEVEL) {
-    return;
-  }
-
-  NETPEER_FOR_EACH(iter) {
-    if (!N_PeerSynchronized(iter.np)) {
-      continue;
-    }
-
-    if (N_PeerGetStatus(iter.np) != NETPEER_STATUS_PLAYER) {
-      continue;
-    }
-
-    if (N_PeerTooLagged(iter.np)) {
-      D_MsgLocalInfo("(%d) Player %u is too lagged\n",
-        gametic,
-        N_PeerGetPlayer(iter.np)->id
-      );
-      /*
-       * [CG] [FIXME] Should demote this peer to spectator instead of
-       *              disconnecting them
-       */
-      N_DisconnectPeer(iter.np, DISCONNECT_REASON_EXCESSIVE_LAG);
-    }
-  }
+  I_NetServiceNetworkTimeout(timeout_ms);
 }
 
-void SV_UpdatePings(void) {
-  if (!SERVER) {
-    return;
-  }
-
-  if ((gametic % (TICRATE / 2)) != 0) {
-    return;
-  }
-
-  NETPEER_FOR_EACH(iter) {
-    player_t *player = NULL;
-
-    if (!N_PeerSynchronized(iter.np)) {
-      continue;
-    }
-
-    player = N_PeerGetPlayer(iter.np);
-
-    if (PL_IsConsolePlayer(player)) {
-      continue;
-    }
-
-    SV_SendPing(iter.np);
-  }
+void N_ServiceNetwork(void) {
+  N_ServiceNetworkTimeout(0);
 }
 
 bool N_TryRunTics(void) {
@@ -500,6 +351,7 @@ bool N_TryRunTics(void) {
   }
 
   N_ServiceNetwork();
+  N_PeersCheckTimeouts();
   C_ECIService();
 
   if ((!SERVER) && (!nodrawers)) {

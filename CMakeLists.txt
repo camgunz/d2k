@@ -776,9 +776,7 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/textscreen)
 SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/am_map.c
   ${CMAKE_SOURCE_DIR}/src/c_eci.c
-  ${CMAKE_SOURCE_DIR}/src/cl_cmd.c
   ${CMAKE_SOURCE_DIR}/src/cl_main.c
-  ${CMAKE_SOURCE_DIR}/src/cl_net.c
   ${CMAKE_SOURCE_DIR}/src/c_main.c
   ${CMAKE_SOURCE_DIR}/src/cmp.c
   ${CMAKE_SOURCE_DIR}/src/d_cfg.c
@@ -829,16 +827,15 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/hu_stuff.c
   ${CMAKE_SOURCE_DIR}/src/hu_tracers.c
   ${CMAKE_SOURCE_DIR}/src/i_capture.c
-  ${CMAKE_SOURCE_DIR}/src/info.c
+  ${CMAKE_SOURCE_DIR}/src/i_net.c
   ${CMAKE_SOURCE_DIR}/src/i_pcsound.c
   ${CMAKE_SOURCE_DIR}/src/i_smp.c
+  ${CMAKE_SOURCE_DIR}/src/info.c
   ${CMAKE_SOURCE_DIR}/src/m_argv.c
   ${CMAKE_SOURCE_DIR}/src/m_avg.c
   ${CMAKE_SOURCE_DIR}/src/m_bbox.c
   ${CMAKE_SOURCE_DIR}/src/m_buf.c
-  ${CMAKE_SOURCE_DIR}/src/md5.c
   ${CMAKE_SOURCE_DIR}/src/m_delta.c
-  ${CMAKE_SOURCE_DIR}/src/memio.c
   ${CMAKE_SOURCE_DIR}/src/m_file.c
   ${CMAKE_SOURCE_DIR}/src/m_idhash.c
   ${CMAKE_SOURCE_DIR}/src/m_idlist.c
@@ -846,13 +843,15 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/m_random.c
   ${CMAKE_SOURCE_DIR}/src/mn_def.c
   ${CMAKE_SOURCE_DIR}/src/mn_main.c
+  ${CMAKE_SOURCE_DIR}/src/md5.c
+  ${CMAKE_SOURCE_DIR}/src/memio.c
   ${CMAKE_SOURCE_DIR}/src/mus2mid.c
-  ${CMAKE_SOURCE_DIR}/src/n_addr.c
   ${CMAKE_SOURCE_DIR}/src/n_chan.c
   ${CMAKE_SOURCE_DIR}/src/n_com.c
   ${CMAKE_SOURCE_DIR}/src/n_dirsrv.c
   ${CMAKE_SOURCE_DIR}/src/n_getwad.c
   ${CMAKE_SOURCE_DIR}/src/n_http.c
+  ${CMAKE_SOURCE_DIR}/src/n_link.c
   ${CMAKE_SOURCE_DIR}/src/n_main.c
   ${CMAKE_SOURCE_DIR}/src/n_msg.c
   ${CMAKE_SOURCE_DIR}/src/n_pack.c

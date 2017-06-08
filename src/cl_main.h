@@ -24,15 +24,37 @@
 #ifndef CL_MAIN_H__
 #define CL_MAIN_H__
 
-bool CL_RunningConsoleplayerCommands(void);
-bool CL_RunningNonConsoleplayerCommands(void);
-void CL_SetupCommandState(int playernum, unsigned int command_index);
-void CL_ShutdownCommandState(void);
-int  CL_GetCurrentCommandIndex(void);
-int  CL_GetNextCommandIndex(void);
-bool CL_ReceivedSetup(void);
-void CL_Init(void);
-void CL_Reset(void);
+void      CL_Init(void);
+void      CL_Reset(void);
+void      CL_Connect(const char *address);
+void      CL_SetConnected(void);
+void      CL_Disconnect(void);
+void      CL_TrimSynchronizedCommands(void);
+size_t    CL_GetUnsynchronizedCommandCount(player_t *player);
+bool      CL_RunningConsoleplayerCommands(void);
+bool      CL_RunningNonConsoleplayerCommands(void);
+bool      CL_Predicting(void);
+void      CL_SetRunningThinkers(bool running);
+bool      CL_RunningThinkers(void);
+void      CL_SetupCommandState(player_t *player, uint32_t command_index);
+void      CL_ShutdownCommandState(void);
+uint32_t  CL_GetCurrentCommandIndex(void);
+uint32_t  CL_GetNextCommandIndex(void);
+server_t* CL_GetServer(void);
+void      CL_CheckForStateUpdates(void);
+void      CL_MarkServerOutdated(void);
+bool      CL_OccurredDuringRePrediction(int tic);
+void      CL_UpdateReceivedCommandIndex(uint32_t command_index);
+int       CL_GetStateTIC(void);
+bool      CL_ReceivedSetup(void);
+void      CL_SetAuthorizationLevel(auth_level_e level);
+void      CL_SetNewGameState(gamestate_t new_gamestate);
+void      CL_RePredict(int saved_gametic);
+bool      CL_LoadingState(void);
+bool      CL_Synchronizing(void);
+bool      CL_RePredicting(void);
+void      CL_SetNeedsInitNew(void);
+void      CL_ResetSync(void);
 
 #endif
 
