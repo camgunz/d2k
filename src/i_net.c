@@ -381,7 +381,7 @@ uint32_t I_NetEventGetData(netevent_t *event) {
   return eevent->data;
 }
 
-netpacket_t* I_NetEventGetData(netevent_t *event) {
+netpacket_t* I_NetEventGetPacket(netevent_t *event) {
   ENetEvent *eevent = (ENetEvent *)event;
 
   return (netpacket_t *)eevent->packet;

@@ -25,15 +25,15 @@
 #define N_COM_H__
 
 typedef struct netcom_s {
-  base_net_peer_t *base_net_peer;
-  netchan_t        incoming;
-  netchan_t        outgoing_reliable;
-  netchan_t        outgoing_unreliable;
-  size_t           bytes_uploaded;
-  size_t           bytes_downloaded;
+  base_netpeer_t *base_netpeer;
+  netchan_t       incoming;
+  netchan_t       outgoing_reliable;
+  netchan_t       outgoing_unreliable;
+  size_t          bytes_uploaded;
+  size_t          bytes_downloaded;
 } netcom_t;
 
-void        N_ComInit(netcom_t *nc, void *base_net_peer);
+void        N_ComInit(netcom_t *nc, void *base_netpeer);
 void        N_ComFree(netcom_t *nc);
 void        N_ComReset(netcom_t *nc);
 uint32_t    N_ComGetIPAddress(netcom_t *nc);

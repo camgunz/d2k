@@ -25,8 +25,8 @@
 
 #include <gio/gio.h>
 
+#include "i_net.h"
 #include "c_main.h"
-#include "n_main.h"
 #include "x_main.h"
 
 #ifdef G_OS_UNIX

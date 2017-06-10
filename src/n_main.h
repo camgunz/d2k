@@ -67,7 +67,6 @@ typedef enum {
   CLIENT_ATTRIBUTE_SKIN,
 } client_attribute_e;
 
-void     N_Init(void);
 void     N_Disconnect(disconnection_reason_e reason);
 void     N_Shutdown(void);
 bool     N_Listen(const char *host, uint16_t port);

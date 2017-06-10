@@ -25,14 +25,21 @@
 #define N_PEER_H__
 
 #include "m_idhash.h"
+#include "n_chan.h"
+#include "n_com.h"
+#include "n_sync.h"
+#include "n_link.h"
 
 struct player_s;
 typedef struct player_s player_t;
 
+struct team_s;
+typedef struct team_s team_t;
+
 typedef enum {
-  PEER_TYPE_CLIENT;
-  PEER_TYPE_SERVER;
-  PEER_TYPE_OTHER_CLIENT;
+  PEER_TYPE_CLIENT,
+  PEER_TYPE_SERVER,
+  PEER_TYPE_OTHER_CLIENT,
 } peer_type_e;
 
 typedef enum {
@@ -53,13 +60,13 @@ typedef struct client_info_s {
 } client_info_t;
 
 typedef struct client_s {
-  net_link_t    link;
+  netlink_t     link;
   client_info_t info;
   time_t        last_setup_request_time;
 } client_t;
 
 typedef struct server_s {
-  net_link_t  link;
+  netlink_t link;
 } server_t;
 
 typedef struct net_peer_s {
@@ -86,8 +93,8 @@ net_peer_t* N_PeersAddRaw(uint32_t id);
 net_peer_t* N_PeersLookup(uint32_t id);
 size_t      N_PeersGetCount(void);
 bool        N_PeersPeerExists(uint32_t id);
-bool        N_PeersIterate(netpeer_iterator_t *iter);
-void        N_PeersIterateRemove(netpeer_iterator_t *iter);
+bool        N_PeersIterate(net_peer_iterator_t *iter);
+void        N_PeersIterateRemove(net_peer_iterator_t *iter);
 void        N_PeersCheckTimeouts(void);
 
 uint32_t N_PeerGetID(net_peer_t *np);

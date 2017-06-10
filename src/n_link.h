@@ -24,12 +24,12 @@
 #ifndef N_LINK_H__
 #define N_LINK_H__
 
-typedef struct net_link_s {
+typedef struct netlink_s {
   netcom_t   com;
   netsync_t  sync;
   time_t     connection_start_time;
   time_t     disconnection_start_time;
-} net_link_t;
+} netlink_t;
 
 void         N_LinkInit(netlink_t *nl, void *base_net_peer);
 void         N_LinkClear(netlink_t *nl);

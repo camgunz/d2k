@@ -314,15 +314,34 @@ void N_ServiceNetwork(void) {
   N_ServiceNetworkTimeout(0);
 }
 
+static inline void should_short_circuit_main_loop(int tics_elapsed,
+                                                  bool needs_rendering) {
+  if (gametic < 0) {
+    return false;
+  }
+
+  if (SERVER && N_PeersGetCount() == 0) {
+    return true;
+  }
+
+  if (tics_elapsed > 0) {
+    return false;
+  }
+
+  if (needs_rendering) {
+    return false;
+  }
+
+  return true;
+}
+
 bool N_TryRunTics(void) {
   static int tics_built = 0;
 
   int tics_elapsed = I_GetTime() - tics_built;
   bool needs_rendering = should_render();
 
-  if ((gametic > 0) &&
-      (((tics_elapsed <= 0) && (!needs_rendering)) ||
-       (SERVER && N_PeersGetCount() == 0))) {
+  if (should_short_circuit_main_loop(tics_elapsed, needs_rendering)) {
     N_ServiceNetwork();
     C_ECIService();
     I_Sleep(1);
@@ -344,9 +363,9 @@ bool N_TryRunTics(void) {
     SV_CleanupOldCommandsAndStates();
     SV_DisconnectLaggedClients();
 
-    if (CLIENT && gametic > 0 && CL_GetServerPeer() == NULL) {
-      PL_Echo(P_GetConsolePlayer(), "Server disconnected.");
-      N_Disconnect(DISCONNECT_REASON_LOST_PEER_CONNECTION);
+    if (CLIENT && (gametic > 0) && (!CL_GetServerPeer())) {
+      D_MsgLocalInfo("Server disconnected\n");
+      I_NetDisconnect();
     }
   }
 

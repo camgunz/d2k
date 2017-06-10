@@ -48,7 +48,7 @@ void      CL_UpdateReceivedCommandIndex(uint32_t command_index);
 int       CL_GetStateTIC(void);
 bool      CL_ReceivedSetup(void);
 void      CL_SetAuthorizationLevel(auth_level_e level);
-void      CL_SetNewGameState(gamestate_t new_gamestate);
+void      CL_SetNewGameState(gamestate_e new_gamestate);
 void      CL_RePredict(int saved_gametic);
 bool      CL_LoadingState(void);
 bool      CL_Synchronizing(void);

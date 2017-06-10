@@ -28,7 +28,7 @@
 #include "n_chan.h"
 #include "n_com.h"
 
-void N_ComInit(netcom_t *nc, void *base_net_peer) {
+void N_ComInit(netcom_t *nc, void *base_netpeer) {
   N_ChannelInit(&nc->incoming, false, false);
   N_ChannelInit(&nc->outgoing_reliable, true, false);
   N_ChannelInit(&nc->outgoing_unreliable, false, true);
@@ -36,8 +36,8 @@ void N_ComInit(netcom_t *nc, void *base_net_peer) {
   nc->bytes_downloaded = 0;
   nc->connect_start_time = 0;
   nc->disconnect_start_time = 0;
-  nc->base_net_peer = base_net_peer;
-  I_NetPeerInit(nc->base_net_peer);
+  nc->base_netpeer = base_netpeer;
+  I_NetPeerInit(nc->base_netpeer);
 }
 
 void N_ComClear(netcom_t *nc) {
@@ -58,7 +58,7 @@ void N_ComReset(netcom_t *nc) {
 }
 
 uint32_t N_ComGetIPAddress(netcom_t *nc) {
-  I_NetPeerGetIPAddress(nc->base_net_peer);
+  I_NetPeerGetIPAddress(nc->base_netpeer);
 }
 
 const char* N_ComGetIPAddressConstString(netcom_t *nc) {
@@ -66,15 +66,15 @@ const char* N_ComGetIPAddressConstString(netcom_t *nc) {
 }
 
 uint16_t N_ComGetPort(netcom_t *nc) {
-  return I_NetPeerGetPort(nc->base_net_peer);
+  return I_NetPeerGetPort(nc->base_netpeer);
 }
 
 float N_ComGetPacketLoss(netcom_t *nc) {
-  return I_NetPeerGetPacketLoss(nc->base_net_peer);
+  return I_NetPeerGetPacketLoss(nc->base_netpeer);
 }
 
 float N_ComGetPacketLossJitter(netcom_t *nc) {
-  return I_NetPeerGetPacketLossJitter(nc->base_net_peer);
+  return I_NetPeerGetPacketLossJitter(nc->base_netpeer);
 }
 
 size_t N_ComGetBytesUploaded(netcom_t *nc) {
@@ -129,7 +129,7 @@ void N_ComClearUnreliableChannel(netcom_t *nc) {
 }
 
 void N_ComSendReset(netcom_t *nc) {
-  I_NetPeerSendReset(nc->base_net_peer);
+  I_NetPeerSendReset(nc->base_netpeer);
 }
 
 pbuf_t* N_ComGetIncomingMessageData(netcom_t *nc) {

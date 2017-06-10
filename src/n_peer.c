@@ -29,12 +29,8 @@
 #include "g_state.h"
 #include "pl_main.h"
 
-#include "n_addr.h"
 #include "n_main.h"
-#include "n_chan.h"
-#include "n_com.h"
 #include "n_peer.h"
-#include "n_sync.h"
 
 #define MAX_SETUP_REQUEST_INTERVAL 2.0
 

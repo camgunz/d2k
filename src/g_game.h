@@ -111,7 +111,7 @@ extern int     startmap;
 
 extern bool autostart;
 
-extern gameaction_t gameaction;
+extern gameaction_e gameaction;
 
 // Selected by user.
 extern skill_e gameskill;
@@ -296,10 +296,10 @@ extern int autorun;           // always running?                   // phares
 
 extern time_t level_start_time; // CG
 
-extern gamestate_t gamestate;
-extern gamestate_t prevgamestate;
-extern gamestate_t oldgamestate;
-extern gamestate_t wipegamestate; // wipegamestate can be set to -1
+extern gamestate_e gamestate;
+extern gamestate_e prevgamestate;
+extern gamestate_e oldgamestate;
+extern gamestate_e wipegamestate; // wipegamestate can be set to -1
                                   //  to force a wipe on the next draw
 
 void G_SkipDemoStart(void);
@@ -338,16 +338,16 @@ void G_PlayerReborn(player_t *player);
 void G_RestartLevel(void); // CPhipps - menu involked level restart
 void G_DoVictory(void);
 void G_MakeSpecialEvent(buttoncode_t bc, ...); /* cph - new event stuff */
-void G_SetGameState(gamestate_t new_gamestate);
-void G_SetPrevGameState(gamestate_t new_prevgamestate);
-void G_SetOldGameState(gamestate_t new_oldgamestate);
-void G_SetWipeGameState(gamestate_t new_wipegamestate);
+void G_SetGameState(gamestate_e new_gamestate);
+void G_SetPrevGameState(gamestate_e new_prevgamestate);
+void G_SetOldGameState(gamestate_e new_oldgamestate);
+void G_SetWipeGameState(gamestate_e new_wipegamestate);
 void G_ResetGameState(void);
 
-gamestate_t G_GetGameState(void);
+gamestate_e G_GetGameState(void);
 
-gameaction_t G_GetGameAction(void);
-void         G_SetGameAction(gameaction_t new_gameaction);
+gameaction_e G_GetGameAction(void);
+void         G_SetGameAction(gameaction_e new_gameaction);
 
 #endif
 

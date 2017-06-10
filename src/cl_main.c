@@ -23,6 +23,7 @@
 
 #include "z_zone.h"
 
+#include "i_net.h"
 #include "g_game.h"
 #include "g_state.h"
 #include "p_defs.h"
@@ -30,8 +31,8 @@
 #include "s_sound.h"
 
 #include "n_main.h"
-#include "cl_cmd.h"
-#include "cl_net.h"
+#include "n_peer.h"
+#include "cl_main.h"
 
 typedef struct local_client_state_s {
   net_peer_t   *local_peer;
@@ -66,7 +67,7 @@ static void cl_clear_repredicting(void) {
   cl_repredicting = false;
 }
 
-static bool cl_load_new_state(netpeer_t *server) {
+static bool cl_load_new_state(net_peer_t *server) {
   game_state_delta_t *delta = N_PeerSyncGetStateDelta(server);
   bool state_loaded;
 
@@ -370,7 +371,7 @@ void CL_TrimSynchronizedCommands(void) {
 }
 
 size_t CL_GetUnsynchronizedCommandCount(player_t *player) {
-  netpeer_t *server;
+  net_peer_t *server;
   size_t command_count = 0;
   
   if (!CLIENT) {
@@ -444,12 +445,12 @@ uint32_t CL_GetNextCommandIndex(void) {
   return out;
 }
 
-server_t* CL_GetServer(void) {
-  return local_client.server;
+net_peer_t* CL_GetServerPeer(void) {
+  return local_client.server_peer;
 }
 
 void CL_CheckForStateUpdates(void) {
-  netpeer_t *server;
+  net_peer_t *server;
   int saved_gametic = gametic;
   int saved_state_tic;
   int saved_state_delta_from_tic;
@@ -549,7 +550,7 @@ void CL_CheckForStateUpdates(void) {
 }
 
 void CL_MarkServerOutdated(void) {
-  netpeer_t *server;
+  net_peer_t *server;
 
   if (!CLIENT) {
     return;
@@ -581,7 +582,7 @@ bool CL_OccurredDuringRePrediction(int tic) {
 }
 
 void CL_UpdateReceivedCommandIndex(uint32_t command_index) {
-  netpeer_t *server = CL_GetServerPeer();
+  net_peer_t *server = CL_GetServerPeer();
 
   if (!server) {
     return;
@@ -591,7 +592,7 @@ void CL_UpdateReceivedCommandIndex(uint32_t command_index) {
 }
 
 int CL_StateTIC(void) {
-  netpeer_t *server = CL_GetServerPeer();
+  net_peer_t *server = CL_GetServerPeer();
 
   if (!server) {
     return -1;
@@ -601,7 +602,7 @@ int CL_StateTIC(void) {
 }
 
 bool CL_ReceivedSetup(void) {
-  netpeer_t *server = CL_GetServerPeer();
+  net_peer_t *server = CL_GetServerPeer();
 
   if (!server) {
     return false;
@@ -682,7 +683,7 @@ void CL_SetNeedsInitNew(void) {
 }
 
 void CL_ResetSync(void) {
-  netpeer_t *server = CL_GetServerPeer();
+  net_peer_t *server = CL_GetServerPeer();
 
   cl_state_tic = -1;
   cl_repredicting_start_tic = 0;

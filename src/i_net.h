@@ -44,22 +44,22 @@ typedef void base_netpeer_t;
 typedef void netpacket_t;
 typedef void netevent_t;
 
-typedef (void)(net_connection_handler_f)(base_net_peer_t *peer);
-typedef (void)(net_disconnection_handler_f)(base_net_peer_t *peer,
-                                            disconnection_reason_e reason);
-typedef (void)(net_data_handler_f)(base_net_peer_t *peer, unsigned char *data,
-                                                          size_t size);
+typedef void (net_connection_handler_f)(base_netpeer_t *peer);
+typedef void (net_disconnection_handler_f)(base_netpeer_t *peer,
+                                           disconnection_reason_e reason);
+typedef void (net_data_handler_f)(base_netpeer_t *peer, unsigned char *data,
+                                                        size_t size);
 
 void I_NetInit(void);
 bool I_NetListen(const char *host, uint16_t port,
                                    net_connection_handler_f conn_handler,
                                    net_disconnection_handler_f disconn_handler,
                                    net_data_handler_f data_handler);
-base_net_peer_t* I_NetConnect(const char *host,
-                              uint16_t port,
-                              net_connection_handler_f conn_handler,
-                              net_disconnection_handler_f disconn_handler,
-                              net_data_handler_f data_handler);
+base_netpeer_t* I_NetConnect(const char *host,
+                             uint16_t port,
+                             net_connection_handler_f conn_handler,
+                             net_disconnection_handler_f disconn_handler,
+                             net_data_handler_f data_handler);
 bool I_NetReconnect(void);
 bool I_NetConnected(void);
 void I_NetSetConnectionHandler(net_connection_handler_f handler);
@@ -80,17 +80,19 @@ netpacket_t*   I_NetPacketNewReliable(size_t size);
 netpacket_t*   I_NetPacketNewUnreliable(size_t size);
 unsigned char* I_NetPacketGetData(netpacket_t *packet);
 
-base_net_peer_t* I_NetEventGetPeer(netevent_t *event);
-uint32_t         I_NetEventGetData(netevent_t *event);
-netpacket_t*     I_NetEventGetData(netevent_t *event);
-bool             I_NetEventIsConnection(netevent_t *event);
-bool             I_NetEventIsDisconnection(netevent_t *event);
-bool             I_NetEventIsData(netevent_t *event);
+base_netpeer_t* I_NetEventGetPeer(netevent_t *event);
+uint32_t        I_NetEventGetData(netevent_t *event);
+netpacket_t*    I_NetEventGetPacket(netevent_t *event);
+bool            I_NetEventIsConnection(netevent_t *event);
+bool            I_NetEventIsDisconnection(netevent_t *event);
+bool            I_NetEventIsData(netevent_t *event);
 
 size_t      I_NetIPToString(uint32_t address, char *buffer);
 const char* I_NetIPToConstString(uint32_t address);
 bool        I_NetIPToInt(const char *address_string, uint32_t *address_int);
 size_t      I_NetParseAddressString(const char *address, char **host,
                                                          uint16_t *port);
+
+#endif
 
 /* vi: set et ts=2 sw=2: */
