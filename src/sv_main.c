@@ -159,7 +159,7 @@ void SV_DisconnectLaggedClients(void) {
        * [CG] [FIXME] Should demote this peer to spectator instead of
        *              disconnecting them
        */
-      N_DisconnectPeer(iter.np, DISCONNECT_REASON_EXCESSIVE_LAG);
+      N_LinkDisconnect(&iter.np->link, DISCONNECT_REASON_EXCESSIVE_LAG);
     }
   }
 }
@@ -362,8 +362,11 @@ unsigned short SV_GetPort(void) {
 }
 
 void SV_DisconnectPeer(netpeer_t *np, disconnection_reason_e reason) {
-  D_MsgEveryoneInfo("Disconnecting peer %u\n", N_PeerGetID(np));
-  N_PeerDisconnect(np, reason);
+  D_MsgEveryoneInfo("Disconnecting peer %u: %s\n",
+    N_PeerGetID(np),
+    disconnection_reasons[reason]
+  );
+  N_LinkDisconnect(&np->link, reason);
 }
 
 void SV_DisconnectPlayerID(uint32_t player_id, disconnection_reason_e reason) {
@@ -385,32 +388,7 @@ void SV_DisconnectPlayer(player_t *player, disconnection_reason_e reason) {
     return;
   }
 
-  D_MsgEveryoneInfo("Disconnecting player %u\n", player->id);
-  N_DisconnectPeer(np, reason);
-}
-
-void SV_Disconnect(disconnection_reason_e reason) {
-  /*
-   * - Send a base disconnection to all connected peers and wait for them to
-   *   disconnect.
-   * - As they disconnect, remove them
-   * - For each remaining peer:
-   *   - `enet_peer_reset`
-   *   - `N_PeerRemove`
-   * - I_NetShutdown
-   */
-
-  I_NetSetConnectionHandler(NULL);
-  I_NetSetDisconnectionHandler(remove_disconnecting_peer);
-  I_NetSetDataHandler(NULL);
-
-  NET_PEER_FOR_EACH(iter) {
-    I_NetPeerDisconnect(iter.np->link.com.base_net_peer);
-  }
-
-  I_NetServiceNetworkTimeout(NET_DISCONNECT_WAIT * 1000);
-
-  I_NetDisconnect();
+  SV_DisconnectPeer(np, reason);
 }
 
 /* vi: set et ts=2 sw=2: */

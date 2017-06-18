@@ -49,7 +49,7 @@ typedef enum {
 } client_type_e;
 
 typedef struct client_info_s {
-  uint32_t       peer_id;
+  net_peer_t    *peer;
   char          *name;
   client_type_e  status;
   auth_level_e   auth_level;
@@ -84,11 +84,11 @@ typedef struct {
   net_peer_t *np;
 } net_peer_iterator_t;
 
-#define NET_PEER_FOR_EACH(_it) \
-  for (net_peer_iterator_t _it = { { 0 }, NULL }; N_PeerIterate(&_it);)
+#define NET_PEERS_FOR_EACH(_it) \
+  for (net_peer_iterator_t _it = { { 0 }, NULL }; N_PeersIterate(&_it);)
 
 void        N_PeersInit(void);
-net_peer_t* N_PeersAdd(void *base_net_peer);
+net_peer_t* N_PeersAdd(void *base_net_peer, peer_type_e type);
 net_peer_t* N_PeersAddRaw(uint32_t id);
 net_peer_t* N_PeersLookup(uint32_t id);
 size_t      N_PeersGetCount(void);

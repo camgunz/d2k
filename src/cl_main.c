@@ -27,12 +27,19 @@
 #include "g_game.h"
 #include "g_state.h"
 #include "p_defs.h"
+#include "p_mobj.h"
+#include "pl_cmd.h"
 #include "pl_main.h"
+#include "r_fps.h"
 #include "s_sound.h"
 
 #include "n_main.h"
+#include "n_msg.h"
 #include "n_peer.h"
+#include "n_proto.h"
 #include "cl_main.h"
+
+#define MAX_SETUP_REQUEST_ATTEMPTS 10
 
 typedef struct local_client_state_s {
   net_peer_t   *local_peer;
@@ -43,32 +50,36 @@ typedef struct local_client_state_s {
   bool          running_nonconsoleplayer_commands;
   bool          running_thinkers;
   bool          loading_state;
-  bool          synchronizing
+  bool          synchronizing;
+  bool          repredicting;
   int           state_tic;
   int           reprediction_start_tic;
   int           reprediction_end_tic;
+  auth_level_e  authorization_level;
   gamestate_e   new_gamestate;
   bool          needs_init_new;
 } local_client_state_t;
 
-static local_client_t local_client;
+static local_client_state_t local_client;
 
 int cl_extrapolate_player_positions = false;
 
 static void cl_set_repredicting(int start_tic, int end_tic) {
-  cl_repredicting_start_tic = start_tic;
-  cl_repredicting_end_tic = end_tic;
-  cl_repredicting = true;
+  local_client.reprediction_start_tic = start_tic;
+  local_client.reprediction_end_tic = end_tic;
+  local_client.repredicting = true;
 }
 
 static void cl_clear_repredicting(void) {
-  cl_repredicting_start_tic = 0;
-  cl_repredicting_end_tic = 0;
-  cl_repredicting = false;
+  local_client.reprediction_start_tic = 0;
+  local_client.reprediction_end_tic = 0;
+  local_client.repredicting = false;
 }
 
-static bool cl_load_new_state(net_peer_t *server) {
-  game_state_delta_t *delta = N_PeerSyncGetStateDelta(server);
+static bool cl_load_new_state() {
+  net_peer_t *server_peer = CL_GetServerPeer();
+  netsync_t *sync = &server_peer->as.server.link.sync;
+  game_state_delta_t *delta = N_SyncGetStateDelta(sync);
   bool state_loaded;
 
   if (!G_ApplyStateDelta(delta)) {
@@ -76,20 +87,20 @@ static bool cl_load_new_state(net_peer_t *server) {
     return false;
   }
 
-  cl_loading_state = true;
-  state_loaded = G_LoadLatestState(cl_needs_init_new);
-  cl_loading_state = false;
+  local_client.loading_state = true;
+  state_loaded = G_LoadLatestState(local_client.needs_init_new);
+  local_client.loading_state = false;
 
   if (!state_loaded) {
     D_MsgLocalError("Error loading latest state");
     return false;
   }
 
-  cl_needs_init_new = false;
+  local_client.needs_init_new = false;
 
-  cl_loading_state = true;
+  local_client.loading_state = true;
   state_loaded = G_LoadState(delta->from_tic, false);
-  cl_loading_state = false;
+  local_client.loading_state = false;
 
   if (!state_loaded) {
     D_MsgLocalError("Error loading previous state");
@@ -110,15 +121,13 @@ static bool cl_load_new_state(net_peer_t *server) {
     }
   }
 
-  cl_synchronizing = true;
+  local_client.synchronizing = true;
 
-  N_MsgSyncLocalDebug("Synchronizing %d => %d\n",
-    gametic, N_PeerSyncGetTIC(server)
-  );
+  N_MsgSyncLocalDebug("Synchronizing %d => %d\n", gametic, N_SyncGetTIC(sync));
 
   R_ResetViewInterpolation();
 
-  for (int i = gametic; i <= N_PeerSyncGetTIC(server); i++) {
+  for (int i = gametic; i <= N_SyncGetTIC(sync); i++) {
     N_RunTic();
 
     if (P_GetDisplayPlayer()->mo != NULL) {
@@ -127,19 +136,19 @@ static bool cl_load_new_state(net_peer_t *server) {
     }
   }
 
-  cl_synchronizing = false;
+  local_client.synchronizing = false;
 
-  if (gametic != N_PeerSyncGetTIC(server) + 1) {
+  if (gametic != N_SyncGetTIC(sync) + 1) {
     D_MsgLocalWarn("Synchronization incomplete: %d, %d\n",
-      gametic, N_PeerSyncGetTIC(server)
+      gametic, N_SyncGetTIC(sync)
     );
   }
 
   N_MsgCmdLocalDebug("Ran sync'd commands, loading latest state\n");
 
-  cl_loading_state = true;
+  local_client.loading_state = true;
   state_loaded = G_LoadLatestState(false);
-  cl_loading_state = false;
+  local_client.loading_state = false;
 
   if (!state_loaded) {
     D_MsgLocalError("Error loading latest state");
@@ -150,12 +159,13 @@ static bool cl_load_new_state(net_peer_t *server) {
 
   G_RemoveOldStates(delta->from_tic);
 
-  if (cl_new_gamestate != GS_BAD) {
-    if ((cl_new_gamestate != GS_LEVEL) && (G_GetGameState() == GS_LEVEL)) {
+  if (local_client.new_gamestate != GS_BAD) {
+    if ((local_client.new_gamestate != GS_LEVEL) &&
+        (G_GetGameState() == GS_LEVEL)) {
       G_ExitLevel();
     }
-    G_SetGameState(cl_new_gamestate);
-    cl_new_gamestate = GS_BAD;
+    G_SetGameState(local_client.new_gamestate);
+    local_client.new_gamestate = GS_BAD;
   }
 
   return true;
@@ -237,12 +247,12 @@ void CL_Init(void) {
   /*
    * The TIC at which reprediction started.
    */
-  local_client.repredicting_start_tic = 0;
+  local_client.reprediction_start_tic = 0;
 
   /*
    * The TIC at which reprediction will finish.
    */
-  local_client.repredicting_end_tic = 0;
+  local_client.reprediction_end_tic = 0;
 
   /*
    * Set when the client receives an authorization message from the server
@@ -263,10 +273,14 @@ void CL_Init(void) {
   /*
    * The server, if connected
    */
-  local_client.server = NULL;
+  local_client.server_peer = NULL;
+
+  /*
+   * The local peer, if connected
+   */
+  local_client.local_peer = NULL;
 
 }
-
 
 void CL_Reset(void) {
   local_client.local_command_index = 1;
@@ -279,7 +293,7 @@ void CL_Connect(const char *address) {
   uint16_t port = 0;
   time_t start_request_time;
 
-  host_length = N_ParseAddressString(address, &host, &port);
+  host_length = I_NetParseAddressString(address, &host, &port);
 
   if (!host_length) {
     D_MsgLocalWarn(
@@ -299,7 +313,9 @@ void CL_Connect(const char *address) {
   );
 
   for (size_t i = 0; i < MAX_SETUP_REQUEST_ATTEMPTS; i++) {
-    if (!I_NetConnect(host, port)) {
+    base_netpeer_t *base_server_peer = N_Connect(host, port);
+
+    if (!base_server_peer) {
       D_MsgLocalError("CL_Connect: Connection refused\n");
       free(host);
       return;
@@ -307,9 +323,7 @@ void CL_Connect(const char *address) {
 
     D_MsgLocalInfo("CL_Connect: Connected!\n");
 
-    if (!CL_GetServerPeer()) {
-      I_Error("CL_Connect: Server peer was NULL");
-    }
+    local_client.server_peer = N_PeersAdd(base_server_peer, PEER_TYPE_SERVER);
 
     G_ReloadDefaults();
 
@@ -347,13 +361,17 @@ void CL_Connect(const char *address) {
   }
 }
 
-void CL_SetConnected(void) {
-  N_PeerSetConnected(CL_GetServerPeer());
+void CL_Disconnect(void) {
+  NET_PEERS_FOR_EACH(iter) {
+    N_PeersIterateRemove(&iter);
+  }
+
+  I_NetDisconnect(DISCONNECT_REASON_MANUAL);
 }
 
-void CL_Disconnect(void) {
-  N_PeerRemove(CL_GetServerPeer());
-  I_NetDisconnect();
+void CL_AbortNetgame(void) {
+  /* [CG] [TODO] Go to fullscreen console or something */
+  I_NetReset();
 }
 
 void CL_TrimSynchronizedCommands(void) {
@@ -371,18 +389,7 @@ void CL_TrimSynchronizedCommands(void) {
 }
 
 size_t CL_GetUnsynchronizedCommandCount(player_t *player) {
-  net_peer_t *server;
-  size_t command_count = 0;
-  
-  if (!CLIENT) {
-    return 0;
-  }
-  
-  server = CL_GetServerPeer();
-
-  if (!server) {
-    return 0;
-  }
+  size_t command_count;
 
   PL_ForEachCommand(player, count_command, &command_count);
 
@@ -390,11 +397,11 @@ size_t CL_GetUnsynchronizedCommandCount(player_t *player) {
 }
 
 bool CL_RunningConsoleplayerCommands(void) {
-  return cl_running_consoleplayer_commands;
+  return local_client.running_consoleplayer_commands;
 }
 
 bool CL_RunningNonConsoleplayerCommands(void) {
-  return cl_running_nonconsoleplayer_commands;
+  return local_client.running_nonconsoleplayer_commands;
 }
 
 bool CL_Predicting(void) {
@@ -402,45 +409,41 @@ bool CL_Predicting(void) {
 }
 
 void CL_SetRunningThinkers(bool running) {
-  cl_running_thinkers = running;
+  local_client.running_thinkers = running;
 }
 
 bool CL_RunningThinkers(void) {
-  return cl_running_thinkers;
+  return local_client.running_thinkers;
 }
 
 void CL_SetupCommandState(player_t *player, uint32_t command_index) {
-  if (!CLIENT) {
-    return;
-  }
-
   if (PL_IsConsolePlayer(player)) {
-    cl_running_consoleplayer_commands = true;
-    cl_running_nonconsoleplayer_commands = false;
+    local_client.running_consoleplayer_commands = true;
+    local_client.running_nonconsoleplayer_commands = false;
   }
   else {
-    cl_running_consoleplayer_commands = false;
-    cl_running_nonconsoleplayer_commands = true;
+    local_client.running_consoleplayer_commands = false;
+    local_client.running_nonconsoleplayer_commands = true;
   }
 
-  if (cl_running_consoleplayer_commands) {
-    cl_current_command_index = command_index;
+  if (local_client.running_consoleplayer_commands) {
+    local_client.current_command_index = command_index;
   }
 }
 
 void CL_ShutdownCommandState(void) {
-  cl_running_consoleplayer_commands = false;
-  cl_running_nonconsoleplayer_commands = false;
+  local_client.running_consoleplayer_commands = false;
+  local_client.running_nonconsoleplayer_commands = false;
 }
 
 uint32_t CL_GetCurrentCommandIndex(void) {
-  return cl_current_command_index;
+  return local_client.current_command_index;
 }
 
 uint32_t CL_GetNextCommandIndex(void) {
-  uint32_t out = cl_local_command_index;
+  uint32_t out = local_client.local_command_index;
 
-  cl_local_command_index++;
+  local_client.local_command_index++;
 
   return out;
 }
@@ -450,35 +453,23 @@ net_peer_t* CL_GetServerPeer(void) {
 }
 
 void CL_CheckForStateUpdates(void) {
-  net_peer_t *server;
+  net_peer_t *server_peer = CL_GetServerPeer();
   int saved_gametic = gametic;
-  int saved_state_tic;
-  int saved_state_delta_from_tic;
-  int saved_state_delta_to_tic;
+  int saved_state_tic = N_SyncGetTIC(&server_peer->as.server.link.sync);
+  int saved_state_delta_from_tic = N_SyncGetStateDelta(
+    &server_peer->as.server.link.sync
+  )->from_tic;
+  int saved_state_delta_to_tic = N_SyncGetStateDelta(
+    &server_peer->as.server.link.sync
+  )->to_tic;
 
-  if (!CLIENT) {
+  if (!N_SyncUpdated(&server_peer->as.server.link.sync)) {
     return;
   }
-
-  server = CL_GetServerPeer();
-
-  if (!server) {
-    D_MsgLocalError("Server disconnected");
-    N_Disconnect(DISCONNECT_REASON_LOST_PEER_CONNECTION);
-    return;
-  }
-
-  if (!N_PeerSyncUpdated(server)) {
-    return;
-  }
-
-  saved_state_tic = N_PeerSyncGetTIC(server);
-  saved_state_delta_from_tic = N_PeerSyncGetStateDelta(server)->from_tic;
-  saved_state_delta_to_tic = N_PeerSyncGetStateDelta(server)->to_tic;
 
   N_MsgSyncLocalDebug("(%d) Loading new state [%d, %d => %d] (%d)\n",
     gametic,
-    N_PeerSyncGetCommandIndex(server),
+    N_SyncGetCommandIndex(&server_peer->as.server.link.sync),
     saved_state_delta_from_tic,
     saved_state_delta_to_tic,
     P_GetConsolePlayer()->cmdq.latest_command_run_index
@@ -486,9 +477,9 @@ void CL_CheckForStateUpdates(void) {
 
   S_ResetSoundLog();
 
-  if (!cl_load_new_state(server)) {
-    N_PeerSyncResetStateDelta(
-      server,
+  if (!cl_load_new_state()) {
+    N_SyncResetStateDelta(
+      &server_peer->as.server.link.sync,
       saved_state_tic,
       saved_state_delta_from_tic,
       saved_state_delta_to_tic
@@ -538,43 +529,35 @@ void CL_CheckForStateUpdates(void) {
     CL_RePredict(saved_gametic);
   }
 
-  cl_state_tic = N_PeerSyncGetTIC(server);
+  local_client.state_tic = N_SyncGetTIC(&server_peer->as.server.link.sync);
 
-  N_PeerSyncSetNotUpdated(server);
-  N_PeerSyncSetOutdated(server);
+  N_SyncSetNotUpdated(&server_peer->as.server.link.sync);
+  N_SyncSetOutdated(&server_peer->as.server.link.sync);
 
   S_TrimSoundLog(
-    N_PeerSyncGetStateDelta(server)->from_tic,
-    N_PeerSyncGetCommandIndex(server)
+    N_SyncGetStateDelta(&server_peer->as.server.link.sync)->from_tic,
+    N_SyncGetCommandIndex(&server_peer->as.server.link.sync)
   );
 }
 
 void CL_MarkServerOutdated(void) {
-  net_peer_t *server;
+  net_peer_t *server_peer = CL_GetServerPeer();
 
-  if (!CLIENT) {
-    return;
-  }
-  
-  server = CL_GetServerPeer();
-
-  if (server) {
-    N_PeerSyncSetOutdated(server);
-  }
+  N_SyncSetOutdated(&server_peer->as.server.link.sync);
 
   N_UpdateSync();
 }
 
 bool CL_OccurredDuringRePrediction(int tic) {
-  if (!cl_repredicting) {
+  if (!local_client.repredicting) {
     return false;
   }
 
-  if (tic < cl_repredicting_start_tic) {
+  if (tic < local_client.reprediction_start_tic) {
     return false;
   }
 
-  if (tic > cl_repredicting_end_tic) {
+  if (tic > local_client.reprediction_end_tic) {
     return false;
   }
 
@@ -582,50 +565,36 @@ bool CL_OccurredDuringRePrediction(int tic) {
 }
 
 void CL_UpdateReceivedCommandIndex(uint32_t command_index) {
-  net_peer_t *server = CL_GetServerPeer();
-
-  if (!server) {
-    return;
-  }
-
-  N_PeerSyncUpdateCommandIndex(server, command_index);
+  net_peer_t *server_peer = CL_GetServerPeer();
+  N_SyncUpdateCommandIndex(&server_peer->as.server.link.sync, command_index);
 }
 
 int CL_StateTIC(void) {
-  net_peer_t *server = CL_GetServerPeer();
-
-  if (!server) {
-    return -1;
-  }
-
-  return cl_state_tic;
+  return local_client.state_tic;
 }
 
 bool CL_ReceivedSetup(void) {
-  net_peer_t *server = CL_GetServerPeer();
+  net_peer_t *server_peer = CL_GetServerPeer();
 
-  if (!server) {
-    return false;
-  }
-
-  return !(N_PeerSyncNeedsGameInfo(server) || N_PeerSyncNeedsGameState(server));
+  return !(N_SyncNeedsGameInfo(&server_peer->as.server.link.sync) ||
+           N_SyncNeedsGameState(&server_peer->as.server.link.sync));
 }
 
 void CL_SetAuthorizationLevel(auth_level_e level) {
-  if (level <= cl_authorization_level) {
+  if (level <= local_client.authorization_level) {
     return;
   }
 
-  cl_authorization_level = level;
+  local_client.authorization_level = level;
 }
 
-void CL_SetNewGameState(gamestate_t new_gamestate) {
+void CL_SetNewGameState(gamestate_e new_gamestate) {
   switch (new_gamestate) {
     case GS_LEVEL:
     case GS_INTERMISSION:
     case GS_FINALE:
     case GS_DEMOSCREEN:
-      cl_new_gamestate = new_gamestate;
+      local_client.new_gamestate = new_gamestate;
     break;
     default:
     break;
@@ -667,27 +636,27 @@ void CL_RePredict(int saved_gametic) {
 }
 
 bool CL_LoadingState(void) {
-  return cl_loading_state;
+  return local_client.loading_state;
 }
 
 bool CL_Synchronizing(void) {
-  return (CLIENT && cl_synchronizing);
+  return local_client.synchronizing;
 }
 
 bool CL_RePredicting(void) {
-  return (CLIENT && cl_repredicting);
+  return local_client.repredicting;
 }
 
 void CL_SetNeedsInitNew(void) {
-  cl_needs_init_new = true;
+  local_client.needs_init_new = true;
 }
 
 void CL_ResetSync(void) {
-  net_peer_t *server = CL_GetServerPeer();
+  net_peer_t *server_peer = CL_GetServerPeer();
 
-  cl_state_tic = -1;
-  cl_repredicting_start_tic = 0;
-  cl_repredicting_end_tic = 0;
+  local_client.state_tic = -1;
+  local_client.reprediction_start_tic = 0;
+  local_client.reprediction_end_tic = 0;
 
   PLAYERS_FOR_EACH(iter) {
     PL_ResetCommands(iter.player);
@@ -695,12 +664,12 @@ void CL_ResetSync(void) {
 
   G_ClearStates();
 
-  if (server) {
-    N_PeerSyncReset(server);
-    N_PeerSyncSetHasGameInfo(server);
+  if (server_peer) {
+    N_SyncClear(&server_peer->as.server.link.sync);
+    N_SyncSetHasGameInfo(&server_peer->as.server.link.sync);
   }
 
-  cl_needs_init_new = true;
+  local_client.needs_init_new = true;
 }
 
 /* vi: set et ts=2 sw=2: */

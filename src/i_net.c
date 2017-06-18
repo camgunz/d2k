@@ -26,9 +26,12 @@
 
 #include "i_net.h"
 
+struct net_peer_s;
+typedef struct net_peer_s net_peer_t;
+
 #define USE_RANGE_CODER 1
-#define MAX_DOWNLOAD 0
-#define MAX_UPLOAD 0
+#define NET_MAX_DOWNLOAD 0
+#define NET_MAX_UPLOAD 0
 
 #define NET_CHANNEL_RELIABLE 0
 #define NET_CHANNEL_UNRELIABLE 1
@@ -47,9 +50,9 @@ static ENetHost   *net_host = NULL;
 static const char *previous_host = NULL;
 static uint16_t    previous_port = 0;
 
-static net_connection_handler_f handle_net_connection = NULL;
-static net_disconnection_handler_f handle_net_disconnection = NULL;
-static net_data_handler_f handle_net_data = NULL;
+static net_connection_handler_f *handle_net_connection = NULL;
+static net_disconnection_handler_f *handle_net_disconnection = NULL;
+static net_data_handler_f *handle_net_data = NULL;
 
 const char *disconnection_reasons[DISCONNECT_REASON_MAX] = {
   "Lost peer connection",
@@ -61,23 +64,12 @@ const char *disconnection_reasons[DISCONNECT_REASON_MAX] = {
   "Server full",
 };
 
-static void remove_disconnecting_peer(base_net_peer_t *peer,
-                                      disconnection_reason_e reason) {
-  net_peer_t *np = I_NetPeerGetPeer(peer);
-
-  if (!np) {
-    return;
-  }
-
-  N_PeerRemove(np);
-}
-
 void I_NetInit(void) {
   if (enet_initialize() != 0) {
     I_Error("I_NetInit: Error initializing ENet");
   }
 
-  atexit(I_NetShutdown);
+  atexit(enet_deinitialize);
 }
 
 bool I_NetListen(const char *host,
@@ -91,7 +83,7 @@ bool I_NetListen(const char *host,
   address.port = port;
 
   net_host = enet_host_create(
-    &address, MAX_CLIENTS, 2, NET_MAX_DOWNLOAD, NET_MAX_UPLOAD
+    &address, NET_MAX_CLIENTS, 2, NET_MAX_DOWNLOAD, NET_MAX_UPLOAD
   );
 
   if (!net_host) {
@@ -102,7 +94,7 @@ bool I_NetListen(const char *host,
 #if USE_RANGE_CODER
   if (enet_host_compress_with_range_coder(net_host) < 0) {
     D_MsgLocalError("I_NetListen: Error activating range coder\n");
-    I_NetDisconnect();
+    I_NetReset();
     return false;
   }
 #endif
@@ -114,11 +106,11 @@ bool I_NetListen(const char *host,
   return true;
 }
 
-base_net_peer_t* I_NetConnect(const char *host,
-                              uint16_t port,
-                              net_connection_handler_f conn_handler,
-                              net_disconnection_handler_f disconn_handler,
-                              net_data_handler_f data_handler) {
+base_netpeer_t* I_NetConnect(const char *host,
+                             uint16_t port,
+                             net_connection_handler_f conn_handler,
+                             net_disconnection_handler_f disconn_handler,
+                             net_data_handler_f data_handler) {
   ENetPeer *peer = NULL;
   ENetAddress address;
 
@@ -132,7 +124,7 @@ base_net_peer_t* I_NetConnect(const char *host,
 #if USE_RANGE_CODER
   if (enet_host_compress_with_range_coder(net_host) < 0) {
     D_MsgLocalError("I_NetConnect: Error activating range coder\n");
-    I_NetDisconnect();
+    I_NetReset();
     return NULL;
   }
 #endif
@@ -143,7 +135,7 @@ base_net_peer_t* I_NetConnect(const char *host,
 
   if (!peer) {
     D_MsgLocalError("I_NetConnect: Connection failed\n");
-    I_NetDisconnect();
+    I_NetReset();
     return NULL;
   }
 
@@ -158,9 +150,9 @@ base_net_peer_t* I_NetConnect(const char *host,
 }
 
 bool I_NetReconnect(void) {
-  net_connection_handler_f connection_handler = handle_net_connection;
-  net_disconnection_handler_f disconnection_handler = handle_net_disconnection;
-  net_data_handler_f data_handler = handle_net_data;
+  net_connection_handler_f *conn_handler = handle_net_connection;
+  net_disconnection_handler_f *disconn_handler = handle_net_disconnection;
+  net_data_handler_f *data_handler = *handle_net_data;
 
   if ((!previous_host) || (previous_port == 0)) {
     D_MsgLocalInfo("No previous connection\n");
@@ -174,8 +166,8 @@ bool I_NetReconnect(void) {
   return I_NetConnect(
     previous_host,
     previous_port,
-    connection_handler,
-    disconnection_handler,
+    conn_handler,
+    disconn_handler,
     data_handler
   );
 }
@@ -185,22 +177,32 @@ bool I_NetConnected(void) {
 }
 
 void I_NetSetConnectionHandler(net_connection_handler_f handler) {
-  net_connection_handler = handler;
+  handle_net_connection = handler;
 }
 
 void I_NetSetDisconnectionHandler(net_disconnection_handler_f handler) {
-  net_disconnection_handler = handler;
+  handle_net_disconnection = handler;
 }
 
 void I_NetSetDataHandler(net_data_handler_f handler) {
-  net_data_handler = handler;
+  handle_net_data = handler;
 }
 
-void I_NetDisconnect(void) {
-  if (!net_host) {
-    return;
+void I_NetDisconnect(disconnection_reason_e reason) {
+  for (size_t i = 0; i < net_host->peerCount; i++) {
+    enet_peer_disconnect(&net_host->peers[i], reason);
   }
 
+  I_NetServiceNetworkTimeout(NET_DISCONNECT_WAIT);
+
+  for (size_t i = 0; i < net_host->peerCount; i++) {
+    enet_peer_disconnect_now(&net_host->peers[i], reason);
+  }
+
+  I_NetReset();
+}
+
+void I_NetReset(void) {
   enet_host_destroy(net_host);
   net_host = NULL;
 
@@ -209,20 +211,10 @@ void I_NetDisconnect(void) {
   I_NetSetDataHandler(NULL);
 }
 
-void I_NetShutdown(void) {
-  enet_deinitialize();
-}
-
 void I_NetServiceNetworkTimeout(int timeout_ms) {
-  int status = 0;
-  ENetEvent net_event;
-
-  if (!net_host) {
-    return;
-  }
-
   while (net_host) {
-    status = enet_host_service(net_host, &net_event, timeout_ms);
+    ENetEvent net_event;
+    int status = enet_host_service(net_host, &net_event, timeout_ms);
 
     if (status == 0) {
       break;
@@ -241,9 +233,9 @@ void I_NetServiceNetworkTimeout(int timeout_ms) {
         handle_net_connection(net_event.peer);
       break;
       case ENET_EVENT_TYPE_DISCONNECT:
-        if (net_event->data >= DISCONNECT_REASON_MAX) {
+        if (net_event.data >= DISCONNECT_REASON_MAX) {
           D_MsgLocalInfo("Peer disconnected: Reason unknown (%u)\n",
-            net_event->data
+            net_event.data
           );
         }
         else {
@@ -259,7 +251,9 @@ void I_NetServiceNetworkTimeout(int timeout_ms) {
       default:
         D_MsgLocalWarn(
           "N_ServiceNetwork: Got unknown event from peer %s:%u.\n",
-          N_IPToConstString(ENET_NET_TO_HOST_32(net_event.peer->address.host)),
+          I_NetIPToConstString(ENET_NET_TO_HOST_32(
+            net_event.peer->address.host
+          )),
           net_event.peer->address.port
         );
       break;
@@ -287,10 +281,10 @@ void I_NetPeerSendPacket(base_netpeer_t *peer, netpacket_t *packet) {
   ENetPacket *epacket = (ENetPacket *)packet;
 
   if (epacket->flags & ENET_PACKET_FLAG_RELIABLE) {
-    enet_peer_send(peer, NET_CHANNEL_RELIABLE, epacket);
+    enet_peer_send(epeer, NET_CHANNEL_RELIABLE, epacket);
   }
   else {
-    enet_peer_send(peer, NET_CHANNEL_UNRELIABLE, epacket);
+    enet_peer_send(epeer, NET_CHANNEL_UNRELIABLE, epacket);
   }
 }
 
@@ -317,19 +311,19 @@ float I_NetPeerGetPacketLoss(base_netpeer_t *peer) {
 }
 
 float I_NetPeerGetPacketLossJitter(base_netpeer_t *peer) {
-  ENetPeer *epeer = N_LinkGetENetPeer(nl);
+  ENetPeer *epeer = (ENetPeer *)peer;
 
   return epeer->packetLossVariance / (float)ENET_PEER_PACKET_LOSS_SCALE;
 }
 
-void I_NetPeerDisconnect(base_net_peer_t *peer,
+void I_NetPeerDisconnect(base_netpeer_t *peer,
                          disconnection_reason_e reason) {
   ENetPeer *epeer = (ENetPeer *)peer;
 
   enet_peer_disconnect(epeer, reason);
 }
 
-net_peer_t* I_NetPeerGetPeer(base_net_peer_t *peer) {
+net_peer_t* I_NetPeerGetPeer(base_netpeer_t *peer) {
   ENetPeer *epeer = (ENetPeer *)peer;
 
   return (net_peer_t *)epeer->data;
@@ -369,10 +363,10 @@ unsigned char* I_NetPacketGetData(netpacket_t *packet) {
   return epacket->data;
 }
 
-base_net_peer_t* I_NetEventGetPeer(netevent_t *event) {
+base_netpeer_t* I_NetEventGetPeer(netevent_t *event) {
   ENetEvent *eevent = (ENetEvent *)event;
 
-  return (base_net_peer_t *)eevent->peer;
+  return (base_netpeer_t *)eevent->peer;
 }
 
 uint32_t I_NetEventGetData(netevent_t *event) {

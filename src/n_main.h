@@ -67,24 +67,26 @@ typedef enum {
   CLIENT_ATTRIBUTE_SKIN,
 } client_attribute_e;
 
-void     N_Disconnect(disconnection_reason_e reason);
-void     N_Shutdown(void);
-bool     N_Listen(const char *host, uint16_t port);
-bool     N_Connect(const char *host, uint16_t port);
-bool     N_Connected(void);
-bool     N_Reconnect(void);
-bool     N_ConnectToServer(const char *address);
-void     N_DisconnectPeer(net_peer_t *np, disconnection_reason_e reason);
-void     N_DisconnectPlayerID(uint32_t player_id,
-                              disconnection_reason_e reason);
-void     N_DisconnectPlayer(player_t *player, disconnection_reason_e reason);
-void     N_ServiceNetworkTimeout(int timeout_ms);
-void     N_ServiceNetwork(void);
-uint32_t N_GetUploadBandwidth(void);
-uint32_t N_GetDownloadBandwidth(void);
-void     N_InitNetGame(void);
-void     N_RunTic(void);
-bool     N_TryRunTics(void);
+void            N_Disconnect(disconnection_reason_e reason);
+void            N_Shutdown(void);
+bool            N_Listen(const char *host, uint16_t port);
+base_netpeer_t* N_Connect(const char *host, uint16_t port);
+bool            N_Connected(void);
+bool            N_Reconnect(void);
+bool            N_ConnectToServer(const char *address);
+void            N_DisconnectPeer(net_peer_t *np,
+                                 disconnection_reason_e reason);
+void            N_DisconnectPlayerID(uint32_t player_id,
+                                     disconnection_reason_e reason);
+void            N_DisconnectPlayer(player_t *player,
+                                   disconnection_reason_e reason);
+void            N_ServiceNetworkTimeout(int timeout_ms);
+void            N_ServiceNetwork(void);
+uint32_t        N_GetUploadBandwidth(void);
+uint32_t        N_GetDownloadBandwidth(void);
+void            N_InitNetGame(void);
+void            N_RunTic(void);
+bool            N_TryRunTics(void);
 
 #endif
 

@@ -63,7 +63,6 @@
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
 #define SERVER_SLEEP_TIMEOUT 1
-#define MAX_SETUP_REQUEST_ATTEMPTS 10
 
 bool netgame   = false;
 bool solonet   = false;
@@ -269,6 +268,18 @@ void N_InitNetGame(void) {
       SV_Listen(strdup("0.0.0.0:10666"));
     }
   }
+}
+
+base_net_peer_t* N_Connect(const char *host, uint16_t port) {
+  base_netpeer_t *bnp = I_NetConnect(host, port, net_connection_handler,
+                                                 net_disconnection_handler,
+                                                 net_data_handler);
+  if (!bnp) {
+    D_MsgLocalError("N_Connect: Connection failed\n");
+    return NULL;
+  }
+
+  return bnp;
 }
 
 void N_RunTic(void) {

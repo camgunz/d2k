@@ -25,6 +25,7 @@
 
 #include "i_input.h"
 #include "i_main.h"
+#include "i_net.h"
 #include "i_sound.h"
 #include "i_system.h"
 #include "i_video.h"

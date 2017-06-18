@@ -52,8 +52,6 @@
 #include "gl_opengl.h"
 #include "gl_struct.h"
 
-#include "n_main.h"
-
 // CPhipps - size of version header
 #define VERSIONSIZE 16
 #define SAVESTRINGSIZE  24
@@ -322,7 +320,7 @@ bool G_ReadSaveData(pbuf_t *savebuffer, bool bail_on_errors,
   int i;
   int savegame_compatibility = -1;
   complevel_t m_compatibility_level;
-  skill_t m_gameskill;
+  skill_e m_gameskill;
   int m_gameepisode;
   int m_gamemap;
   //e6y: numeric version number of package should be zero before initializing

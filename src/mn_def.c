@@ -25,6 +25,7 @@
 
 #include "i_capture.h"
 #include "i_joy.h"
+#include "i_net.h"
 #include "i_sound.h"
 #include "i_system.h"
 #include "i_video.h"
@@ -61,6 +62,7 @@
 #include "gl_opengl.h"
 #include "gl_struct.h"
 
+#include "n_main.h"
 #include "cl_main.h"
 #include "sv_main.h"
 

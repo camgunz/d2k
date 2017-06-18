@@ -25,6 +25,7 @@
 
 #include "i_capture.h"
 #include "i_main.h"
+#include "i_net.h"
 #include "i_system.h"
 #include "i_video.h"
 #include "m_file.h"
@@ -109,7 +110,7 @@ bool singletics = false; // debug flag to cancel adaptiveness
 bool nosfxparm;
 bool nomusicparm;
 
-skill_t  startskill;
+skill_e  startskill;
 int      startepisode;
 int      startmap;
 

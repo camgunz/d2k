@@ -23,6 +23,7 @@
 
 #include "z_zone.h"
 
+#include "i_net.h"
 #include "i_sound.h"
 #include "i_system.h"
 #include "m_argv.h"
@@ -75,13 +76,12 @@
 #include "n_main.h"
 #include "n_proto.h"
 #include "cl_main.h"
-#include "cl_net.h"
 
 extern bool setsizeneeded;
 extern bool doSkip;
 
 static bool secretexit;
-static skill_t d_skill;
+static skill_e d_skill;
 static int d_episode;
 static int d_map;
 static bool saved_fastdemo;
@@ -109,18 +109,18 @@ int cpars[34] = {
   120, 30, 30, 30                                   // 31-34
 };
 
-gameaction_t gameaction;
+gameaction_e gameaction;
 
 // CPhipps - moved *_loadgame vars here
 bool forced_loadgame = false;
 bool command_loadgame = false;
-gamestate_t gamestate = GS_BAD;
-gamestate_t prevgamestate = GS_LEVEL;
+gamestate_e gamestate = GS_BAD;
+gamestate_e prevgamestate = GS_LEVEL;
 
 // wipegamestate can be set to -1 to force a wipe on the next draw
-gamestate_t wipegamestate = GS_DEMOSCREEN;
-gamestate_t oldgamestate = GS_BAD;
-skill_t gameskill;
+gamestate_e wipegamestate = GS_DEMOSCREEN;
+gamestate_e oldgamestate = GS_BAD;
+skill_e gameskill;
 bool respawnmonsters;
 int gameepisode;
 int gamemap;
@@ -1276,7 +1276,7 @@ void G_DoWorldDone(void) {
  * of savegame compatibility warnings, and options lookups.
  */
 
-void G_DeferedInitNew(skill_t skill, int episode, int map) {
+void G_DeferedInitNew(skill_e skill, int episode, int map) {
   d_skill = skill;
   d_episode = episode;
   d_map = map;
@@ -1367,7 +1367,7 @@ void G_ReloadDefaults(void) {
   // jff 3/24/98 set startskill from defaultskill in config file, unless
   // it has already been set by a -skill parameter
   if (startskill == sk_none) {
-    startskill = (skill_t)(defaultskill - 1);
+    startskill = (skill_e)(defaultskill - 1);
   }
 
   demoplayback = false;
@@ -1470,7 +1470,7 @@ void G_SetFastParms(int fast_pending) {
 // consoleplayer, displayplayer, playeringame[] should be set.
 //
 
-void G_InitNew(skill_t skill, int episode, int map) {
+void G_InitNew(skill_e skill, int episode, int map) {
   // e6y
   // This variable is for correct checking for upper limit of episode.
   // Ultimate Doom, Final Doom and Doom95 have
@@ -1564,19 +1564,19 @@ void G_InitNew(skill_t skill, int episode, int map) {
   G_DoLoadLevel();
 }
 
-void G_SetGameState(gamestate_t new_gamestate) {
+void G_SetGameState(gamestate_e new_gamestate) {
   gamestate = new_gamestate;
 }
 
-void G_SetPrevGameState(gamestate_t new_prevgamestate) {
+void G_SetPrevGameState(gamestate_e new_prevgamestate) {
   prevgamestate = new_prevgamestate;
 }
 
-void G_SetOldGameState(gamestate_t new_oldgamestate) {
+void G_SetOldGameState(gamestate_e new_oldgamestate) {
   oldgamestate = new_oldgamestate;
 }
 
-void G_SetWipeGameState(gamestate_t new_wipegamestate) {
+void G_SetWipeGameState(gamestate_e new_wipegamestate) {
   if ((!CLIENT) || (CL_Predicting())) {
     wipegamestate = new_wipegamestate;
   }
@@ -1587,15 +1587,15 @@ void G_ResetGameState(void) {
   wipegamestate = gamestate;
 }
 
-gamestate_t G_GetGameState(void) {
+gamestate_e G_GetGameState(void) {
   return gamestate;
 }
 
-gameaction_t G_GetGameAction(void) {
+gameaction_e G_GetGameAction(void) {
   return gameaction;
 }
 
-void G_SetGameAction(gameaction_t new_gameaction) {
+void G_SetGameAction(gameaction_e new_gameaction) {
   if (CLIENT) {
     if (new_gameaction == ga_nothing) {
       gameaction = ga_nothing;

@@ -1,5 +1,18 @@
 # To Do
 
+- Refactoring
+  - I think the concept of "netgame" is kind of outdated.  It's at least
+    overloaded.  It used to mean "more than one player", because implicitly
+    that had to be a netgame, but because some maps are different in netgame
+    mode, solo-net arose to play those variants without an actual netgame.  So
+    there are a few things here:
+    - Multiple players
+    - Use netgame variant
+    This all kind of falls under the purview of the "game".  Peers can still be
+    connected when there is no game so they can exist without one, but players
+    cannot exist outside of a game so they disappear when the game ends.  So I
+    think there is going to be a `game_t` struct.  Yep.
+
 - Remove ENet
   - Replace with libuv and regular sockets
 

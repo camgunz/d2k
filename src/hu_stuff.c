@@ -31,7 +31,6 @@
 #include "m_misc.h"
 #include "am_map.h"
 #include "c_main.h"
-#include "cl_main.h"
 #include "d_deh.h"/* Ty 03/27/98 - externalization of mapnamesx arrays */
 #include "d_event.h"
 #include "d_items.h"
@@ -63,8 +62,6 @@
 #include "hu_lib.h"
 #include "hu_stuff.h"
 #include "hu_tracers.h"
-
-#include "n_main.h"
 
 extern int doSkip;
 

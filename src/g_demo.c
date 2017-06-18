@@ -1239,7 +1239,7 @@ char* G_DemoReadHeader(char *demo_p, size_t size) {
 }
 
 char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
-  skill_t skill;
+  skill_e skill;
   int i;
   int episode;
   int map;

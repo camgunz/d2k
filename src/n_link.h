@@ -25,10 +25,9 @@
 #define N_LINK_H__
 
 typedef struct netlink_s {
-  netcom_t   com;
-  netsync_t  sync;
-  time_t     connection_start_time;
-  time_t     disconnection_start_time;
+  netcom_t  com;
+  netsync_t sync;
+  time_t    disconnection_start_time;
 } netlink_t;
 
 void         N_LinkInit(netlink_t *nl, void *base_net_peer);

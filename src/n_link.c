@@ -28,46 +28,29 @@
 #include "n_com.h"
 #include "n_link.h"
 
-void N_LinkInit(netlink_t *nl, void *base_net_peer) {
-  N_ComInit(&nl->com, base_net_peer);
-  N_SyncInit(&nl->sync);
-  nl->connection_start_time = 0;
+void N_LinkInit(netlink_t *nl) {
   nl->disconnection_start_time = 0;
 }
 
 void N_LinkClear(netlink_t *nl) {
-  N_ComClear(&nl->com);
-  N_SyncClear(&nl->sync);
-  nl->connection_start_time = 0;
   nl->disconnection_start_time = 0;
 }
 
 void N_LinkFree(netlink_t *nl) {
-  N_ComFree(&nl->com);
-  N_SyncFree(&nl->sync);
-  nl->connection_start_time = 0;
   nl->disconnection_start_time = 0;
 }
 
 void N_LinkDisconnect(netlink_t *nl, disconnection_reason_e reason) {
-  time_t now = time(NULL);
-
   if (nl->disconnect_start_time) {
     return;
   }
 
-  I_NetPeerDisconnect(nc->base_net_peer, reason);
-  nl->disconnect_start_time = now;
+  I_NetPeerDisconnect(nl->com.base_net_peer, reason);
+  nl->disconnect_start_time = time(NULL);
 }
 
-bool N_LinkCheckTimeout(netlink_t *nl) {
+bool N_LinkCheckDisconnectTimeout(netlink_t *nl) {
   time_t now = time(NULL);
-
-  if (nl->connect_start_time != 0) {
-    if (difftime(now, nl->connect_start_time) > NET_CONNECT_WAIT) {
-      return true;
-    }
-  }
 
   if (nl->disconnect_start_time != 0) {
     if (difftime(now, nl->disconnect_start_time) > NET_DISCONNECT_WAIT) {
@@ -76,10 +59,6 @@ bool N_LinkCheckTimeout(netlink_t *nl) {
   }
 
   return false;
-}
-
-void N_LinkSetConnected(netlink_t *nl) {
-  nl->connect_start_time = 0;
 }
 
 /* vi: set et ts=2 sw=2: */
