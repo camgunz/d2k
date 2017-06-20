@@ -1,15 +1,29 @@
-INCLUDE(FindPkgConfig)
 INCLUDE(FindPackageHandleStandardArgs)
 
-PKG_SEARCH_MODULE(PkgConfig_FFI libffi)
+IF(APPLE)
+    IF (NOT FFI_INCLUDE_DIR)
+        FIND_PATH(FFI_INCLUDE_DIR ffi.h
+            HINTS $ENV{FFI_DIR}
+                  /usr/local/opt/libffi/lib/libffi-3.2.1/include
+        )
+    ENDIF()
 
-IF (NOT FFI_INCLUDE_DIR)
-    FIND_PATH(FFI_INCLUDE_DIR ffi.h
-        HINTS $ENV{FFI_DIR} ${PkgConfig_FFI_INCLUDE_DIRS}
-    )
-ENDIF()
-IF (NOT FFI_LIBRARIES)
-    FIND_LIBRARY(FFI_LIBRARIES ffi HINTS $ENV{FFI_DIR})
+    IF (NOT FFI_LIBRARIES)
+        FIND_LIBRARY(FFI_LIBRARIES ffi HINTS $ENV{FFI_DIR})
+    ENDIF()
+ELSE()
+    INCLUDE(FindPkgConfig)
+    PKG_SEARCH_MODULE(PkgConfig_FFI libffi)
+
+    IF (NOT FFI_INCLUDE_DIR)
+        FIND_PATH(FFI_INCLUDE_DIR ffi.h
+            HINTS $ENV{FFI_DIR} ${PkgConfig_FFI_INCLUDE_DIRS}
+        )
+    ENDIF()
+
+    IF (NOT FFI_LIBRARIES)
+        FIND_LIBRARY(FFI_LIBRARIES ffi HINTS $ENV{FFI_DIR})
+    ENDIF()
 ENDIF()
 
 MARK_AS_ADVANCED(FFI_INCLUDE_DIR)
