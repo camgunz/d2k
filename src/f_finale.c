@@ -128,8 +128,8 @@ void WI_checkForAccelerate(void);    // killough 3/28/98: used to
 // F_StartFinale
 //
 void F_StartFinale(void) {
-  G_SetGameAction(ga_nothing);
-  G_SetGameState(GS_FINALE);
+  G_SetGameAction(gameaction_nothing);
+  G_SetGameState(gamestate_finale);
   automapmode &= ~am_active;
 
   // killough 3/28/98: clear accelerative text flags
@@ -298,7 +298,7 @@ void F_Ticker(void) {
             F_StartCast();              // cast of Doom 2 characters
           }
           else {
-            G_SetGameAction(ga_worlddone); // next level, e.g. MAP07
+            G_SetGameAction(gameaction_world_done); // next level, e.g. MAP07
           }
         }
       }

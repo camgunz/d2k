@@ -63,7 +63,6 @@
 
 #define SERVER_NO_PEER_SLEEP_TIMEOUT 20
 #define SERVER_SLEEP_TIMEOUT 1
-#define MAX_SETUP_REQUEST_ATTEMPTS 10
 
 bool netgame   = false;
 bool solonet   = false;
@@ -179,7 +178,7 @@ static int run_tics(int tic_count) {
   while (tic_count--) {
     if (MULTINET) {
       if (!D_Wiping()) {
-        if (G_GetGameState() == GS_LEVEL) {
+        if (G_GetGameState() == gamestate_level) {
           PL_BuildCommand();
         }
         else {
@@ -271,6 +270,18 @@ void N_InitNetGame(void) {
   }
 }
 
+base_net_peer_t* N_Connect(const char *host, uint16_t port) {
+  base_netpeer_t *bnp = I_NetConnect(host, port, net_connection_handler,
+                                                 net_disconnection_handler,
+                                                 net_data_handler);
+  if (!bnp) {
+    D_MsgLocalError("N_Connect: Connection failed\n");
+    return NULL;
+  }
+
+  return bnp;
+}
+
 void N_RunTic(void) {
   if (advancedemo) {
     D_DoAdvanceDemo();
@@ -286,7 +297,7 @@ void N_RunTic(void) {
 
   P_Checksum(gametic);
 
-  if ((G_GetGameState() == GS_LEVEL) && SERVER && (gametic > 0)) {
+  if ((G_GetGameState() == gamestate_level) && SERVER && (gametic > 0)) {
     NET_PEER_FOR_EACH(iter) {
       if (N_PeerSynchronized(iter.np)) {
         N_PeerSyncSetOutdated(iter.np);

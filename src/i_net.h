@@ -51,6 +51,7 @@ typedef void (net_data_handler_f)(base_netpeer_t *peer, unsigned char *data,
                                                         size_t size);
 
 void I_NetInit(void);
+void I_NetReset(void);
 bool I_NetListen(const char *host, uint16_t port,
                                    net_connection_handler_f conn_handler,
                                    net_disconnection_handler_f disconn_handler,
@@ -66,8 +67,8 @@ void I_NetSetConnectionHandler(net_connection_handler_f handler);
 void I_NetSetDisconnectionHandler(net_disconnection_handler_f handler);
 void I_NetSetDataHandler(net_data_handler_f handler);
 void I_NetDisconnect(disconnection_reason_e reason);
-void I_NetShutdown(void);
 void I_NetServiceNetworkTimeout(int timeout_ms);
+void I_NetServiceNetwork(void);
 
 void     I_NetPeerInit(base_netpeer_t *peer);
 void     I_NetPeerSendPacket(base_netpeer_t *peer, netpacket_t *packet);

@@ -246,7 +246,7 @@ cvar {
 }
 
 cvar {
-    name = 'game.monkeys',
+    name = 'game.monsters_climb',
     help = 'Monsters will traverse steep stairs',
 	default = false
 }

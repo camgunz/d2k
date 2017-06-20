@@ -156,7 +156,7 @@ void G_Compatibility(void) {
     dog_jumping = 0;
 #endif
 
-    monkeys = 0;
+    monsters_climb = 0;
   }
 }
 

@@ -901,7 +901,7 @@ mobj_t* P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type) {
 
   mobj->health = info->spawnhealth;
 
-  if (gameskill != sk_nightmare) {
+  if (gameskill != gameskill_nightmare) {
     mobj->reactiontime = info->reactiontime;
   }
 
@@ -1290,9 +1290,9 @@ mobj_t* P_SpawnMapThing (const mapthing_t* mthing, int index)
     return NULL;
 
   // killough 11/98: simplify
-  if (gameskill == sk_baby || gameskill == sk_easy ?
+  if (gameskill == gameskill_baby || gameskill == gameskill_easy ?
       !(options & MTF_EASY) :
-      gameskill == sk_hard || gameskill == sk_nightmare ?
+      gameskill == gameskill_hard || gameskill == gameskill_nightmare ?
       !(options & MTF_HARD) : !(options & MTF_NORMAL))
     return NULL;
 

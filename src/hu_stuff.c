@@ -31,7 +31,6 @@
 #include "m_misc.h"
 #include "am_map.h"
 #include "c_main.h"
-#include "cl_main.h"
 #include "d_deh.h"/* Ty 03/27/98 - externalization of mapnamesx arrays */
 #include "d_event.h"
 #include "d_items.h"
@@ -63,8 +62,6 @@
 #include "hu_lib.h"
 #include "hu_stuff.h"
 #include "hu_tracers.h"
-
-#include "n_main.h"
 
 extern int doSkip;
 
@@ -706,7 +703,7 @@ void HU_Start(void) {
   // e6y: stop SEGV here when gamemap is not initialized
 
   /* cph - stop SEGV here when not in level */
-  if (gamestate == GS_LEVEL && gamemap > 0) {
+  if (gamestate == gamestate_level && gamemap > 0) {
     switch (gamemode) {
       case shareware:
       case registered:
@@ -2357,7 +2354,7 @@ void HU_Drawer(void) {
    *  return;
    */
 
-  if (gamestate != GS_LEVEL) {
+  if (gamestate != gamestate_level) {
     return;
   }
 
@@ -2848,7 +2845,7 @@ bool HU_DrawDemoProgress(int force) {
   unsigned int tick;
   unsigned int max_period;
   
-  if (gamestate == GS_DEMOSCREEN || (!demoplayback && !democontinue) ||
+  if (gamestate == gamestate_demo_screen || (!demoplayback && !democontinue) ||
                                     !hudadd_demoprogressbar) {
     return false;
   }

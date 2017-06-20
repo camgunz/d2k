@@ -69,7 +69,7 @@ net_peer_t* peer_new(peer_type_e type) {
   net_peer_t *np = calloc(1, sizeof(net_peer_t));
 
   if (!np) {
-    I_Error("N_PeersAdd: Error allocating memory for new net peer\n");
+    I_Error("peer_new: Error allocating memory for new net peer\n");
   }
 
   np->id = M_IDHashAdd(&net_peers, np);
@@ -84,7 +84,7 @@ net_peer_t* client_peer_new(void *base_net_peer) {
   N_ComInit(&np->as.client.link.com, base_net_peer);
   N_SyncInit(&np->as.client.link.sync);
 
-net_peer_t* N_PeersAdd(void *enet_peer) {
+net_peer_t* N_PeersAdd(base_net_peer_t *base_net_peer, peer_type_e type) {
   net_peer_t *np = NULL;
 
   np = calloc(1, sizeof(net_peer_t));
@@ -93,15 +93,45 @@ net_peer_t* N_PeersAdd(void *enet_peer) {
     I_Error("N_PeersAdd: Error allocating memory for new net peer\n");
   }
 
+  switch (type) {
+    case PEER_TYPE_CLIENT:
+      np->type = PEER_TYPE_CLIENT;
+      N_LinkInit(&np->as.client.link);
+      N_ComInit(&np->as.client.link.com, base_net_peer);
+      N_SyncInit(&np->as.client.link.sync);
+      np->as.client.info.peer = np;
+      np->as.client.info.name = NULL;
+      np->as.client.info.status = CLIENT_TYPE_BASIC;
+      np->as.client.info.auth_level = AUTH_LEVEL_NONE;
+      np->as.client.info.connect_tic = gametic;
+      np->as.client.info.ping = 0;
+      np->as.client.info.team = NULL;
+      np->as.client.info.player = NULL;
+      N_SyncSetTIC(&np->sync, gametic);
+      break;
+    case PEER_TYPE_SERVER:
+      np->type = PEER_TYPE_SERVER;
+      N_LinkInit(&np->as.server.link);
+      N_ComInit(&np->as.server.link.com, base_net_peer);
+      N_SyncInit(&np->as.server.link.sync);
+      break;
+    case PEER_TYPE_OTHER_CLIENT:
+      np->type = PEER_TYPE_OTHER_CLIENT;
+      np->as.other_client.info.peer = np;
+      np->as.other_client.info.name = NULL;
+      np->as.other_client.info.status = CLIENT_TYPE_BASIC;
+      np->as.other_client.info.auth_level = AUTH_LEVEL_NONE;
+      np->as.other_client.info.connect_tic = gametic;
+      np->as.other_client.info.ping = 0;
+      np->as.other_client.info.team = NULL;
+      np->as.other_client.info.player = NULL;
+      break;
+    default:
+      I_Error("N_PeersAdd: Invalid peer type %d\n", type);
+  }
+
   np->connect_start_time = time(NULL);
   np->connect_tic = gametic;
-
-  N_ComInit(&np->com, enet_peer);
-  N_SyncInit(&np->sync);
-
-  if (SERVER) {
-    N_SyncSetTIC(&np->sync, gametic);
-  }
 
   np->id = M_IDHashAdd(&net_peers, np);
 

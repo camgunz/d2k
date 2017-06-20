@@ -33,8 +33,6 @@
 #include "gl_opengl.h"
 #include "gl_struct.h"
 
-#include "n_main.h"
-
 //
 // SCREEN WIPE PACKAGE
 //

@@ -2413,7 +2413,7 @@ void P_InitSubsectorsLines(void) {
 //
 // killough 5/3/98: reformatted, cleaned up
 
-void P_SetupLevel(int episode, int map, int playermask, skill_t skill) {
+void P_SetupLevel(int episode, int map, int playermask, gameskill_e skill) {
   int   i;
   char  lumpname[9];
   int   lumpnum;

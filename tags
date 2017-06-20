@@ -1337,11 +1337,11 @@ GOTYELWCARD	src/d_englsh.h	82;"	d
 GOTYELWSKUL	src/d_englsh.h	85;"	d
 GPART	src/gl_sky.c	431;"	d	file:
 GRAVITY	src/p_mobj.h	374;"	d
-GS_BAD	src/doomdef.h	/^  GS_BAD = -1,$/;"	e	enum:__anon47
-GS_DEMOSCREEN	src/doomdef.h	/^  GS_DEMOSCREEN$/;"	e	enum:__anon47
-GS_FINALE	src/doomdef.h	/^  GS_FINALE,$/;"	e	enum:__anon47
-GS_INTERMISSION	src/doomdef.h	/^  GS_INTERMISSION,$/;"	e	enum:__anon47
-GS_LEVEL	src/doomdef.h	/^  GS_LEVEL = 0,$/;"	e	enum:__anon47
+gamestate_bad	src/doomdef.h	/^  gamestate_bad = -1,$/;"	e	enum:__anon47
+gamestate_demo_screen	src/doomdef.h	/^  gamestate_demo_screen$/;"	e	enum:__anon47
+gamestate_finale	src/doomdef.h	/^  gamestate_finale,$/;"	e	enum:__anon47
+gamestate_intermission	src/doomdef.h	/^  gamestate_intermission,$/;"	e	enum:__anon47
+gamestate_level	src/doomdef.h	/^  gamestate_level = 0,$/;"	e	enum:__anon47
 G_BeginRecording	src/g_game.c	/^void G_BeginRecording(void) {$/;"	f
 G_BuildTiccmd	src/g_game.c	/^void G_BuildTiccmd(ticcmd_t *cmd) {$/;"	f
 G_ChangedPlayerColour	src/g_game.c	/^void G_ChangedPlayerColour(int pn, int cl) {$/;"	f
@@ -1351,7 +1351,7 @@ G_CheckSpot	src/g_game.c	/^static dboolean G_CheckSpot(int playernum, mapthing_t
 G_ClearCorpses	src/g_game.c	/^void G_ClearCorpses(void) {$/;"	f
 G_Compatibility	src/g_game.c	/^void G_Compatibility(void) {$/;"	f
 G_DeathMatchSpawnPlayer	src/g_game.c	/^void G_DeathMatchSpawnPlayer(int playernum) {$/;"	f
-G_DeferedInitNew	src/g_game.c	/^void G_DeferedInitNew(skill_t skill, int episode, int map) {$/;"	f
+G_DeferedInitNew	src/g_game.c	/^void G_DeferredInitNew(gameskill_e skill, int episode, int map) {$/;"	f
 G_DeferedPlayDemo	src/g_game.c	/^void G_DeferedPlayDemo(const char* name) {$/;"	f
 G_DoCompleted	src/g_game.c	/^void G_DoCompleted(void) {$/;"	f
 G_DoLoadGame	src/g_game.c	/^void G_DoLoadGame(void) {$/;"	f
@@ -1369,7 +1369,7 @@ G_GetDemoFooter	src/r_demo.c	/^byte* G_GetDemoFooter(const char *filename, const
 G_GetHelpers	src/g_game.c	/^static int G_GetHelpers(void) {$/;"	f	file:
 G_GetOriginalDoomCompatLevel	src/g_game.c	/^static int G_GetOriginalDoomCompatLevel(int ver) {$/;"	f	file:
 G_GotoNextLevel	src/e6y.c	/^int G_GotoNextLevel(void)$/;"	f
-G_InitNew	src/g_game.c	/^void G_InitNew(skill_t skill, int episode, int map) {$/;"	f
+G_InitNew	src/g_game.c	/^void G_InitNew(gameskill_e skill, int episode, int map) {$/;"	f
 G_KEYS_H__	src/g_keys.h	24;"	d
 G_LoadGame	src/g_game.c	/^void G_LoadGame(int slot, dboolean command) {$/;"	f
 G_LoadGameErr	src/g_save.c	/^static void G_LoadGameErr(const char *msg) {$/;"	f	file:
@@ -1383,7 +1383,7 @@ G_ReadDemoHeader	src/g_game.c	/^const byte* G_ReadDemoHeader(const byte *demo_p,
 G_ReadDemoHeaderEx	src/g_game.c	/^const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size,$/;"	f
 G_ReadDemoTiccmd	src/g_game.c	/^void G_ReadDemoTiccmd (ticcmd_t *cmd) {$/;"	f
 G_ReadOneTick	src/g_game.c	/^void G_ReadOneTick(ticcmd_t* cmd, const byte **data_p) {$/;"	f
-G_ReadOptions	src/g_game.c	/^void G_ReadOptions(byte game_options[]) {$/;"	f
+G_ReadOptions	src/g_game.c	/^void G_ReadOldOptions(byte game_options[]) {$/;"	f
 G_ReadSaveData	src/g_save.c	/^dboolean G_ReadSaveData(pbuf_t *savebuffer, dboolean bail_on_errors,$/;"	f
 G_RecordDemo	src/g_game.c	/^void G_RecordDemo(const char* name) {$/;"	f
 G_ReloadDefaults	src/g_game.c	/^void G_ReloadDefaults(void) {$/;"	f
@@ -1393,7 +1393,7 @@ G_RestartLevel	src/g_game.c	/^void G_RestartLevel(void) {$/;"	f
 G_SAVE_H__	src/g_save.h	25;"	d
 G_SaveGame	src/g_game.c	/^void G_SaveGame(int slot, char *description) {$/;"	f
 G_SaveGameName	src/g_game.c	/^int G_SaveGameName(char *name, size_t size, int slot, dboolean demoplayback) {$/;"	f
-G_SaveRestoreGameOptions	src/g_game.c	/^void G_SaveRestoreGameOptions(int save) {$/;"	f
+G_SaveRestoreGameOptions	src/g_game.c	/^void G_SaveRestoreGameOldOptions(int save) {$/;"	f
 G_SecretExitLevel	src/g_game.c	/^void G_SecretExitLevel(void) {$/;"	f
 G_SetDemoFooter	src/r_demo.c	/^void G_SetDemoFooter(const char *filename, wadtbl_t *wadtbl)$/;"	f
 G_SetFastParms	src/g_game.c	/^void G_SetFastParms(int fast_pending) {$/;"	f
@@ -1408,7 +1408,7 @@ G_UpdateSignature	src/g_save.c	/^static uint_64_t G_UpdateSignature(uint_64_t s,
 G_WorldDone	src/g_game.c	/^void G_WorldDone(void) {$/;"	f
 G_WriteDemoFooter	src/r_demo.c	/^void G_WriteDemoFooter(FILE *file)$/;"	f
 G_WriteDemoTiccmd	src/g_game.c	/^void G_WriteDemoTiccmd(ticcmd_t *cmd) {$/;"	f
-G_WriteOptions	src/g_game.c	/^void G_WriteOptions(byte game_options[]) {$/;"	f
+G_WriteOptions	src/g_game.c	/^void G_WriteOldOptions(byte game_options[]) {$/;"	f
 G_WriteSaveData	src/g_save.c	/^void G_WriteSaveData(pbuf_t *savebuffer) {$/;"	f
 G_X	src/m_menu.c	3023;"	d	file:
 G_X2	src/m_menu.c	3026;"	d	file:
@@ -4091,7 +4091,7 @@ P_SetPlayerName	src/p_user.c	/^void P_SetPlayerName(int playernum, const char *n
 P_SetPsprite	src/p_pspr.c	/^static void P_SetPsprite(player_t *player, int position, statenum_t stnum) {$/;"	f	file:
 P_SetTarget	src/p_tick.c	/^void P_SetTarget(mobj_t **mop, mobj_t *targ) {$/;"	f
 P_SetThingPosition	src/p_maputl.c	/^void P_SetThingPosition(mobj_t *thing) { \/\/ link into subsector$/;"	f
-P_SetupLevel	src/p_setup.c	/^void P_SetupLevel(int episode, int map, int playermask, skill_t skill)$/;"	f
+P_SetupLevel	src/p_setup.c	/^void P_SetupLevel(int episode, int map, int playermask, gameskill_e skill)$/;"	f
 P_SetupPsprites	src/p_pspr.c	/^void P_SetupPsprites(player_t *player)$/;"	f
 P_ShootSpecialLine	src/p_spec.c	/^void P_ShootSpecialLine$/;"	f
 P_SideThrust	src/p_user.c	/^void P_SideThrust(player_t *player, angle_t angle, fixed_t move) {$/;"	f
@@ -8343,7 +8343,7 @@ d	src/d_ipxgate.c	/^    doomdata_t d;$/;"	m	union:__anon19::altu	file:
 d	src/p_maputl.h	/^  } d;$/;"	m	struct:__anon223	typeref:union:__anon223::__anon224
 d_episode	src/g_game.c	/^static int     d_episode;$/;"	v	file:
 d_map	src/g_game.c	/^static int     d_map;$/;"	v	file:
-d_skill	src/g_game.c	/^static skill_t d_skill;$/;"	v	file:
+d_skill	src/g_game.c	/^static gameskill_e d_skill;$/;"	v	file:
 damage	src/info.h	/^  int damage;       \/* If this is a missile, how much does it hurt? *\/$/;"	m	struct:__anon139
 damagecount	src/d_player.h	/^  int                 damagecount;$/;"	m	struct:player_s
 darktime	src/p_spec.h	/^  int darktime;$/;"	m	struct:__anon265
@@ -8461,7 +8461,7 @@ default_dog_jumping	src/doomstat.c	/^int dog_jumping, default_dog_jumping;   \/\
 default_dogs	src/doomstat.c	/^int dogs, default_dogs;         \/\/ killough 7\/19\/98: Marine's best friend :)$/;"	v
 default_help_friends	src/doomstat.c	/^int help_friends, default_help_friends;$/;"	v
 default_leave_weapons	src/doomstat.c	/^int default_leave_weapons; \/\/ CG 08\/19\/2014$/;"	v
-default_monkeys	src/doomstat.c	/^int monkeys, default_monkeys;$/;"	v
+default_monsters_climb	src/doomstat.c	/^int monsters_climb, default_monsters_climb;$/;"	v
 default_monster_avoid_hazards	src/doomstat.c	/^int monster_avoid_hazards, default_monster_avoid_hazards;$/;"	v
 default_monster_backing	src/doomstat.c	/^int monster_backing, default_monster_backing;$/;"	v
 default_monster_friction	src/doomstat.c	/^int default_monster_friction=1;$/;"	v
@@ -9276,15 +9276,15 @@ gNd5	src/p_setup.c	88;"	d	file:
 g_hhk	src/e6y_launcher.c	/^HHOOK g_hhk;$/;"	v
 g_hwndTT	src/e6y_launcher.c	/^HWND g_hwndTT;$/;"	v
 g_rand	src/m_random.c	/^static GRand *g_rand = NULL;$/;"	v	file:
-ga_completed	src/d_event.h	/^  ga_completed,$/;"	e	enum:__anon16
-ga_loadgame	src/d_event.h	/^  ga_loadgame,$/;"	e	enum:__anon16
-ga_loadlevel	src/d_event.h	/^  ga_loadlevel,$/;"	e	enum:__anon16
-ga_newgame	src/d_event.h	/^  ga_newgame,$/;"	e	enum:__anon16
-ga_nothing	src/d_event.h	/^  ga_nothing,$/;"	e	enum:__anon16
-ga_playdemo	src/d_event.h	/^  ga_playdemo,$/;"	e	enum:__anon16
-ga_savegame	src/d_event.h	/^  ga_savegame,$/;"	e	enum:__anon16
-ga_victory	src/d_event.h	/^  ga_victory,$/;"	e	enum:__anon16
-ga_worlddone	src/d_event.h	/^  ga_worlddone,$/;"	e	enum:__anon16
+gameaction_completed	src/d_event.h	/^  gameaction_completed,$/;"	e	enum:__anon16
+gameaction_load_game	src/d_event.h	/^  gameaction_load_game,$/;"	e	enum:__anon16
+gameaction_load_level	src/d_event.h	/^  gameaction_load_level,$/;"	e	enum:__anon16
+gameaction_new_game	src/d_event.h	/^  gameaction_new_game,$/;"	e	enum:__anon16
+gameaction_nothing	src/d_event.h	/^  gameaction_nothing,$/;"	e	enum:__anon16
+gameaction_play_demo	src/d_event.h	/^  gameaction_play_demo,$/;"	e	enum:__anon16
+gameaction_save_game	src/d_event.h	/^  gameaction_save_game,$/;"	e	enum:__anon16
+gameaction_victory	src/d_event.h	/^  gameaction_victory,$/;"	e	enum:__anon16
+gameaction_world_done	src/d_event.h	/^  gameaction_world_done,$/;"	e	enum:__anon16
 game_options	src/protocol.h	/^  byte game_options[GAME_OPTIONS_SIZE];$/;"	m	struct:setup_packet_s
 game_state_delta_s	src/n_state.h	/^typedef struct game_state_delta_s {$/;"	s
 game_state_delta_t	src/n_state.h	/^} game_state_delta_t;$/;"	t	typeref:struct:game_state_delta_s
@@ -9299,7 +9299,7 @@ gamemap	src/g_game.c	/^int             gamemap;$/;"	v
 gamemission	src/doomstat.c	/^GameMission_t   gamemission = doom;$/;"	v
 gamemode	src/doomstat.c	/^GameMode_t gamemode = indetermined;$/;"	v
 gameopt_config_names	src/d_server.c	/^const char* gameopt_config_names[] = {$/;"	v
-gameskill	src/g_game.c	/^skill_t         gameskill;$/;"	v
+gameskill	src/g_game.c	/^gameskill_e         gameskill;$/;"	v
 gamestate	src/g_game.c	/^gamestate_t     gamestate = -1;$/;"	v
 gamestate_t	src/doomdef.h	/^} gamestate_t;$/;"	t	typeref:enum:__anon47
 gametic	src/g_game.c	/^int             gametic;$/;"	v
@@ -10862,7 +10862,7 @@ momx	src/p_mobj.h	/^    fixed_t             momx;$/;"	m	struct:mobj_s
 momy	src/d_player.h	/^  fixed_t             momx, momy;      \/\/ killough 10\/98$/;"	m	struct:player_s
 momy	src/p_mobj.h	/^    fixed_t             momy;$/;"	m	struct:mobj_s
 momz	src/p_mobj.h	/^    fixed_t             momz;$/;"	m	struct:mobj_s
-monkeys	src/doomstat.c	/^int monkeys, default_monkeys;$/;"	v
+monsters_climb	src/doomstat.c	/^int monsters_climb, default_monsters_climb;$/;"	v
 monster_avoid_hazards	src/doomstat.c	/^int monster_avoid_hazards, default_monster_avoid_hazards;$/;"	v
 monster_backing	src/doomstat.c	/^int monster_backing, default_monster_backing;$/;"	v
 monster_friction	src/doomstat.c	/^int monster_friction=1;       \/\/ killough 10\/98: monsters affected by friction$/;"	v
@@ -12515,7 +12515,7 @@ savedescription	src/g_save.c	/^char savedescription[SAVEDESCLEN];$/;"	v
 savegame	src/d_net.h	/^    short               savegame;$/;"	m	struct:__anon28
 savegame	src/m_menu.c	/^  savegame,$/;"	e	enum:__anon149	file:
 savegamename	src/d_deh.c	/^const char *savegamename = PACKAGE_TARNAME"-savegame";$/;"	v
-savegameslot	src/g_game.c	/^static byte savegameslot; \/\/ Slot to load if gameaction == ga_loadgame$/;"	v	file:
+savegameslot	src/g_game.c	/^static byte savegameslot; \/\/ Slot to load if gameaction == gameaction_load_game$/;"	v	file:
 savegamestrings	src/m_menu.c	/^char savegamestrings[10][SAVESTRINGSIZE];$/;"	v
 sc	src/hu_lib.h	/^  int   sc;                             \/\/ start character$/;"	m	struct:__anon122
 sc_Crossed	src/sc_man.c	/^dboolean sc_Crossed;$/;"	v
@@ -12912,15 +12912,15 @@ size	src/z_bmalloc.h	/^  size_t size;$/;"	m	struct:block_memory_alloc_s
 size	src/z_zone.c	/^  size_t size;$/;"	m	struct:memblock	file:
 size_calc	src/TEXTSCREEN/txt_widget.h	/^    TxtWidgetSizeCalc size_calc;$/;"	m	struct:txt_widget_class_s
 size_t	src/PCRELIB/config.h	63;"	d
-sk_baby	src/doomdef.h	/^  sk_baby=0,$/;"	e	enum:__anon48
-sk_easy	src/doomdef.h	/^  sk_easy,$/;"	e	enum:__anon48
-sk_hard	src/doomdef.h	/^  sk_hard,$/;"	e	enum:__anon48
-sk_medium	src/doomdef.h	/^  sk_medium,$/;"	e	enum:__anon48
-sk_nightmare	src/doomdef.h	/^  sk_nightmare$/;"	e	enum:__anon48
-sk_none	src/doomdef.h	/^  sk_none=-1, \/\/jff 3\/24\/98 create unpicked skill setting$/;"	e	enum:__anon48
+gameskill_baby	src/doomdef.h	/^  gameskill_baby=0,$/;"	e	enum:__anon48
+gameskill_easy	src/doomdef.h	/^  gameskill_easy,$/;"	e	enum:__anon48
+gameskill_hard	src/doomdef.h	/^  gameskill_hard,$/;"	e	enum:__anon48
+gameskill_medium	src/doomdef.h	/^  gameskill_medium,$/;"	e	enum:__anon48
+gameskill_nightmare	src/doomdef.h	/^  gameskill_nightmare$/;"	e	enum:__anon48
+gameskill_none	src/doomdef.h	/^  gameskill_none=-1, \/\/jff 3\/24\/98 create unpicked skill setting$/;"	e	enum:__anon48
 skill	src/d_net.h	/^    short               skill;          \/\/ 1-5$/;"	m	struct:__anon28
 skill	src/protocol.h	/^  byte players, yourplayer, skill, episode, level, deathmatch, complevel, ticdup, extratic;$/;"	m	struct:setup_packet_s
-skill_t	src/doomdef.h	/^} skill_t;$/;"	t	typeref:enum:__anon48
+gameskill_e	src/doomdef.h	/^} gameskill_e;$/;"	t	typeref:enum:__anon48
 skills	src/d_player.h	/^  int         skills;$/;"	m	struct:__anon61
 skip_	src/PCRELIB/pcre_scanner.h	/^  RE*           skip_;          \/\/ If non-NULL, RE for skipping input$/;"	m	class:pcrecpp::Scanner
 skullAnimCounter	src/m_menu.c	/^short skullAnimCounter; \/\/ skull animation counter$/;"	v
@@ -13160,7 +13160,7 @@ startfrac	src/r_defs.h	/^  fixed_t startfrac;           \/\/ horizontal position
 starting_input	src/TEXTSCREEN/examples/calculator.c	/^int starting_input = 0;$/;"	v
 startmap	src/d_main.c	/^int     startmap;$/;"	v
 startname	src/p_spec.c	/^  char        startname[9];$/;"	m	struct:__anon236	file:
-startskill	src/d_main.c	/^skill_t startskill;$/;"	v
+startskill	src/d_main.c	/^gameskill_e startskill;$/;"	v
 starttic	src/d_ipxgate.c	/^    byte                starttic;$/;"	m	struct:a	file:
 starttic	src/d_net.h	/^    byte                starttic;$/;"	m	struct:__anon24
 starttime	src/SDL/i_sound.c	/^  int starttime;                \/\/ Time\/gametic that the channel started$/;"	m	struct:__anon314	file:
@@ -14161,7 +14161,7 @@ wipe_scr_end	src/f_wipe.c	/^static screeninfo_t wipe_scr_end;$/;"	v	file:
 wipe_scr_end_tex	src/gl_wipe.c	/^static GLuint wipe_scr_end_tex = 0;$/;"	v	file:
 wipe_scr_start	src/f_wipe.c	/^static screeninfo_t wipe_scr_start;$/;"	v	file:
 wipe_scr_start_tex	src/gl_wipe.c	/^static GLuint wipe_scr_start_tex = 0;$/;"	v	file:
-wipegamestate	src/d_main.c	/^gamestate_t    wipegamestate = GS_DEMOSCREEN;$/;"	v
+wipegamestate	src/d_main.c	/^gamestate_t    wipegamestate = gamestate_demo_screen;$/;"	v
 wminfo	src/g_game.c	/^wbstartstruct_t wminfo;               \/\/ parms for world map \/ intermission$/;"	v
 worldbottom	src/r_segs.c	/^static int      worldbottom;$/;"	v	file:
 worldhigh	src/r_segs.c	/^static int      worldhigh;$/;"	v	file:

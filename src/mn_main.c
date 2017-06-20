@@ -25,6 +25,7 @@
 
 #include "i_input.h"
 #include "i_main.h"
+#include "i_net.h"
 #include "i_sound.h"
 #include "i_system.h"
 #include "i_video.h"
@@ -907,7 +908,7 @@ static void MN_VerifyNightmare(int ch)
   if (ch != 'y')
     return;
 
-  G_DeferedInitNew(nightmare,epi+1,1);
+  G_DeferredInitNew(nightmare, epi + 1, 1);
   MN_ClearMenus ();
 }
 
@@ -919,7 +920,7 @@ void MN_ChooseSkill(int choice)
       return;
     }
 
-  G_DeferedInitNew(choice,epi+1,1);
+  G_DeferredInitNew(choice, epi + 1, 1);
   MN_ClearMenus ();
 }
 
@@ -1189,7 +1190,7 @@ void MN_SaveGame(int choice)
     return;
   }
 
-  if (gamestate != GS_LEVEL)
+  if (gamestate != gamestate_level)
     return;
 
   MN_SetupNextMenu(&SaveDef);
@@ -1520,7 +1521,7 @@ void MN_QuickSave(void)
     return;
   }
 
-  if (gamestate != GS_LEVEL)
+  if (gamestate != gamestate_level)
     return;
 
   if (quickSaveSlot < 0) {
@@ -3004,7 +3005,7 @@ setup_menu_t enem_settings1[] =  // Enemy Settings screen
   // killough 9/8/98
   {"Monster Backing Out",S_YESNO,m_null,E_X,E_Y+ enem_backing*8, {"monster_backing"}},
 
-  {"Climb Steep Stairs", S_YESNO,m_null,E_X,E_Y+enem_monkeys*8, {"monkeys"}},
+  {"Climb Steep Stairs", S_YESNO,m_null,E_X,E_Y+enem_monkeys*8, {"monsters_climb"}},
 
   // killough 9/9/98
   {"Intelligently Avoid Hazards",S_YESNO,m_null,E_X,E_Y+ enem_avoid_hazards*8, {"monster_avoid_hazards"}},

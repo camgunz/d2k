@@ -24,6 +24,7 @@
 #include "z_zone.h"
 
 #include "i_main.h"
+#include "i_net.h"
 
 #include "n_main.h"
 #include "n_proto.h"

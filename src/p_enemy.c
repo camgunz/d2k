@@ -1272,7 +1272,7 @@ void A_Chase(mobj_t *actor) {
   // do not attack twice in a row
   if (actor->flags & MF_JUSTATTACKED) {
     actor->flags &= ~MF_JUSTATTACKED;
-    if (gameskill != sk_nightmare && !fastparm) {
+    if (gameskill != gameskill_nightmare && !fastparm) {
       P_NewChaseDir(actor);
     }
     return;
@@ -1295,7 +1295,7 @@ void A_Chase(mobj_t *actor) {
 
   // check for missile attack
   if (actor->info->missilestate) {
-    if (!(gameskill < sk_nightmare && !fastparm && actor->movecount)) {
+    if (!(gameskill < gameskill_nightmare && !fastparm && actor->movecount)) {
       if (P_CheckMissileRange(actor)) {
         P_SetMobjState(actor, actor->info->missilestate);
         actor->flags |= MF_JUSTATTACKED;
@@ -2646,7 +2646,7 @@ void A_BrainSpit(mobj_t *mo) {
   }
 
   brain.easy ^= 1;                      // killough 3/26/98: use brain struct
-  if (gameskill <= sk_easy && !brain.easy) {
+  if (gameskill <= gameskill_easy && !brain.easy) {
     return;
   }
 

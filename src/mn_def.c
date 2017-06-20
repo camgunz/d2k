@@ -25,6 +25,7 @@
 
 #include "i_capture.h"
 #include "i_joy.h"
+#include "i_net.h"
 #include "i_sound.h"
 #include "i_system.h"
 #include "i_video.h"
@@ -61,6 +62,7 @@
 #include "gl_opengl.h"
 #include "gl_struct.h"
 
+#include "n_main.h"
 #include "cl_main.h"
 #include "sv_main.h"
 
@@ -199,8 +201,8 @@ default_t defaults[] = {
    def_bool, ss_enem, &monster_backing},
   {"monster_avoid_hazards",{&default_monster_avoid_hazards}, {1}, 0, 1,
    def_bool, ss_enem, &monster_avoid_hazards},
-  {"monkeys",{&default_monkeys}, {0}, 0, 1,
-   def_bool, ss_enem, &monkeys},
+  {"monsters_climb",{&default_monsters_climb}, {0}, 0, 1,
+   def_bool, ss_enem, &monsters_climb},
   {"monster_friction",{&default_monster_friction}, {1}, 0, 1,
    def_bool, ss_enem, &monster_friction},
   {"help_friends",{&default_help_friends}, {0}, 0, 1,

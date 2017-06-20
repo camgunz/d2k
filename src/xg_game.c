@@ -198,7 +198,7 @@ static int XG_GameRender(lua_State *L) {
 }
 
 static int XG_GameInLevel(lua_State *L) {
-  if (G_GetGameState() == GS_LEVEL)
+  if (G_GetGameState() == gamestate_level)
     lua_pushboolean(L, true);
   else
     lua_pushboolean(L, false);
@@ -207,7 +207,7 @@ static int XG_GameInLevel(lua_State *L) {
 }
 
 static int XG_GameInIntermission(lua_State *L) {
-  if (G_GetGameState() == GS_INTERMISSION)
+  if (G_GetGameState() == gamestate_intermission)
     lua_pushboolean(L, true);
   else
     lua_pushboolean(L, false);
@@ -216,7 +216,7 @@ static int XG_GameInIntermission(lua_State *L) {
 }
 
 static int XG_GameInFinale(lua_State *L) {
-  if (G_GetGameState() == GS_FINALE)
+  if (G_GetGameState() == gamestate_finale)
     lua_pushboolean(L, true);
   else
     lua_pushboolean(L, false);
@@ -225,7 +225,7 @@ static int XG_GameInFinale(lua_State *L) {
 }
 
 static int XG_GameInDemoScreen(lua_State *L) {
-  if (G_GetGameState() == GS_DEMOSCREEN)
+  if (G_GetGameState() == gamestate_demo_screen)
     lua_pushboolean(L, true);
   else
     lua_pushboolean(L, false);

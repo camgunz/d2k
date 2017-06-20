@@ -32,8 +32,6 @@
 #include "g_state.h"
 #include "pl_main.h"
 
-#include "n_main.h"
-
 static game_state_t *latest_game_state = NULL;
 static GHashTable *saved_game_states = NULL;
 static GQueue *state_data_buffer_queue = NULL;

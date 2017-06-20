@@ -1029,7 +1029,7 @@ bool P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, int dropoff) {
                (dropoff == 2 && // large jump down (e.g. dogs)
                  (tmfloorz - tmdropoffz > 128 * FRACUNIT ||
                    !thing->target || thing->target->z > tmdropoffz))) {
-        if (!monkeys ||
+        if (!monsters_climb ||
             !mbf_features ?
             tmfloorz - tmdropoffz > 24 * FRACUNIT :
             thing->floorz - tmfloorz > 24 * FRACUNIT ||

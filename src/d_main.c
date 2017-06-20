@@ -25,6 +25,7 @@
 
 #include "i_capture.h"
 #include "i_main.h"
+#include "i_net.h"
 #include "i_system.h"
 #include "i_video.h"
 #include "m_file.h"
@@ -109,7 +110,7 @@ bool singletics = false; // debug flag to cancel adaptiveness
 bool nosfxparm;
 bool nomusicparm;
 
-skill_t  startskill;
+gameskill_e  startskill;
 int      startepisode;
 int      startmap;
 
@@ -333,7 +334,7 @@ bool D_Responder(event_t *ev) {
   }
 
   if (ev->key == key_walkcamera) {
-    if (demoplayback && gamestate == GS_LEVEL) {
+    if (demoplayback && gamestate == gamestate_level) {
       switch (walkcamera.mode) {
         case camera_mode_disabled:
           walkcamera.mode = camera_mode_player;
@@ -491,7 +492,7 @@ void D_Display(void) {
 
   if (setsizeneeded) {               // change the view size if needed
     R_ExecuteSetViewSize();
-    G_SetOldGameState(GS_BAD); // force background redraw
+    G_SetOldGameState(gamestate_bad); // force background redraw
   }
 
   // save the current screen if about to wipe
@@ -508,7 +509,7 @@ void D_Display(void) {
    *            shitheap.
    */
 
-  if (gamestate == GS_LEVEL) {
+  if (gamestate == gamestate_level) {
     if (gametic != basetic) {
       if (!X_Call(X_GetState(), "game_interface", "render", 0, 0)) {
         I_Error("Error rendering game interface: %s",
@@ -518,14 +519,14 @@ void D_Display(void) {
     }
   }
   else { // Not a level
-    if (oldgamestate == GS_BAD || oldgamestate == GS_LEVEL)
+    if (oldgamestate == gamestate_bad || oldgamestate == gamestate_level)
       V_SetPalette(0); // cph - use default (basic) palette
 
-    if (gamestate == GS_INTERMISSION)
+    if (gamestate == gamestate_intermission)
       WI_Drawer();
-    else if (gamestate == GS_FINALE)
+    else if (gamestate == gamestate_finale)
       F_Drawer();
-    else if (gamestate == GS_DEMOSCREEN)
+    else if (gamestate == gamestate_demo_screen)
       D_PageDrawer();
   }
 
@@ -805,10 +806,10 @@ static struct
 void D_DoAdvanceDemo(void) {
   P_GetConsolePlayer()->playerstate = PST_LIVE;  /* not reborn */
   advancedemo = usergame = paused = false;
-  G_SetGameAction(ga_nothing);
+  G_SetGameAction(gameaction_nothing);
 
   pagetic = TICRATE * 11;         /* killough 11/98: default behavior */
-  G_SetGameState(GS_DEMOSCREEN);
+  G_SetGameState(gamestate_demo_screen);
 
   if (netgame && !demoplayback) {
     demosequence = 0;
@@ -826,7 +827,7 @@ void D_DoAdvanceDemo(void) {
 // D_StartTitle
 //
 void D_StartTitle (void) {
-  G_SetGameAction(ga_nothing);
+  G_SetGameAction(gameaction_nothing);
   demosequence = -1;
   D_AdvanceDemo();
 }
@@ -1316,7 +1317,7 @@ static void D_DoomMainSetup(void) {
   // get skill / episode / map from parms
 
   if (!CLIENT) {
-    startskill = sk_none; // jff 3/24/98 was sk_medium, just note not picked
+    startskill = gameskill_none; // jff 3/24/98 was gameskill_medium, just note not picked
     startepisode = 1;
     startmap = 1;
     autostart = false;
