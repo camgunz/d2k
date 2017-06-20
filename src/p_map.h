@@ -365,6 +365,11 @@ extern line_t *blockline;   // killough 8/11/98
 
 extern int forceOldBsp;
 
+// Needed to store the number of the dummy sky flat.
+// Used for rendering, as well as tracking projectiles etc.
+
+extern int skyflatnum;
+
 // killough 3/15/98: add fourth argument to P_TryMove
 bool P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, int dropoff);
 

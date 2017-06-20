@@ -159,13 +159,13 @@ static bool cl_load_new_state() {
 
   G_RemoveOldStates(delta->from_tic);
 
-  if (local_client.new_gamestate != GS_BAD) {
-    if ((local_client.new_gamestate != GS_LEVEL) &&
-        (G_GetGameState() == GS_LEVEL)) {
+  if (local_client.new_gamestate != gamestate_bad) {
+    if ((local_client.new_gamestate != gamestate_level) &&
+        (G_GetGameState() == gamestate_level)) {
       G_ExitLevel();
     }
     G_SetGameState(local_client.new_gamestate);
-    local_client.new_gamestate = GS_BAD;
+    local_client.new_gamestate = gamestate_bad;
   }
 
   return true;
@@ -263,7 +263,7 @@ void CL_Init(void) {
   /*
    * Next gamestate to load after loading last state
    */
-  local_client.new_gamestate = GS_BAD;
+  local_client.new_gamestate = gamestate_bad;
 
   /*
    * If set, calls G_InitNew next time the latest state is loaded
@@ -525,7 +525,7 @@ void CL_CheckForStateUpdates(void) {
   }
 #endif
 
-  if (G_GetGameState() == GS_LEVEL) {
+  if (G_GetGameState() == gamestate_level) {
     CL_RePredict(saved_gametic);
   }
 
@@ -590,10 +590,10 @@ void CL_SetAuthorizationLevel(auth_level_e level) {
 
 void CL_SetNewGameState(gamestate_e new_gamestate) {
   switch (new_gamestate) {
-    case GS_LEVEL:
-    case GS_INTERMISSION:
-    case GS_FINALE:
-    case GS_DEMOSCREEN:
+    case gamestate_level:
+    case gamestate_intermission:
+    case gamestate_finale:
+    case gamestate_demo_screen:
       local_client.new_gamestate = new_gamestate;
     break;
     default:

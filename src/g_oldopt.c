@@ -27,7 +27,7 @@
 #include "g_comp.h"
 #include "g_demo.h"
 #include "g_game.h"
-#include "g_opt.h"
+#include "g_oldopt.h"
 #include "p_map.h"
 #include "pl_main.h"
 
@@ -39,7 +39,7 @@
 // byte(s) should still be skipped over or padded with 0's.
 // Lee Killough 3/1/98
 
-void G_WriteOptions(unsigned char game_options[]) {
+void G_WriteOldOptions(unsigned char *game_options) {
   int i = 0;
 
   memset(game_options, 0, GAME_OPTION_SIZE * sizeof(unsigned char));
@@ -115,7 +115,7 @@ void G_WriteOptions(unsigned char game_options[]) {
  * cph - const byte*'s
  */
 
-void G_ReadOptions(unsigned char game_options[]) {
+void G_ReadOldOptions(unsigned char *game_options) {
   int i = 0;
 
   monsters_remember = game_options[i++];
@@ -182,7 +182,7 @@ void G_ReadOptions(unsigned char game_options[]) {
 
 // e6y
 // save/restore all data which could be changed by G_ReadDemoHeader
-void G_SaveRestoreGameOptions(int save) {
+void G_SaveRestoreGameOldOptions(int save) {
   static int consoleplayer;
   
   typedef struct gameoption_s {
@@ -248,7 +248,7 @@ void G_SaveRestoreGameOptions(int save) {
   }
   else {
     if (!was_saved_once) {
-      I_Error("G_SaveRestoreGameOptions: Trying to restore unsaved data");
+      I_Error("G_SaveRestoreGameOldOptions: Trying to restore unsaved data");
     }
   }
 
@@ -263,7 +263,7 @@ void G_SaveRestoreGameOptions(int save) {
           *gameoptions[i].value_p = gameoptions[i].value_int;
       break;
       default: // unrecognised type
-        I_Error("G_SaveRestoreGameOptions: Unrecognised type of option");
+        I_Error("G_SaveRestoreGameOldOptions: Unrecognised type of option");
       break;
     }
 

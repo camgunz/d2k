@@ -24,7 +24,7 @@
 #ifndef P_SETUP_H__
 #define P_SETUP_H__
 
-void P_SetupLevel(int episode, int map, int playermask, skill_e skill);
+void P_SetupLevel(int episode, int map, int playermask, gameskill_e skill);
 
 #endif
 

@@ -137,7 +137,7 @@ void SV_DisconnectLaggedClients(void) {
     return;
   }
 
-  if (gamestate != GS_LEVEL) {
+  if (gamestate != gamestate_level) {
     return;
   }
 

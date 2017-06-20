@@ -170,7 +170,7 @@ void D_Dump(pbuf_t *savebuffer) {
     M_PBufWriteInt(savebuffer, 0);
 #endif
 
-    M_PBufWriteInt(savebuffer, monkeys);
+    M_PBufWriteInt(savebuffer, monsters_climb);
 
     for (int i = 0; i < COMP_TOTAL; i++) {
       M_PBufWriteInt(savebuffer, comp[i]);
@@ -239,7 +239,7 @@ void D_Dump(pbuf_t *savebuffer) {
     M_PBufWriteInt(savebuffer, 0);
 #endif
 
-    M_PBufWriteInt(savebuffer, monkeys);
+    M_PBufWriteInt(savebuffer, monsters_climb);
 
     for (int i = 0; i < COMP_TOTAL; i++) {
       M_PBufWriteInt(savebuffer, comp[i]);

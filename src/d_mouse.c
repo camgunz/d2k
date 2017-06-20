@@ -50,7 +50,7 @@ angle_t viewpitch;
 
 bool D_MouseShouldBeGrabbed(void) {
   if (walkcamera.mode != camera_mode_disabled) {
-    return (demoplayback && gamestate == GS_LEVEL && !menuactive);
+    return (demoplayback && gamestate == gamestate_level && !menuactive);
   }
 
   if (menuactive || paused) { /* [CG] [TODO] Add consoleactive here */
@@ -61,7 +61,7 @@ bool D_MouseShouldBeGrabbed(void) {
     return false;
   }
 
-  if (gamestate != GS_LEVEL) {
+  if (gamestate != gamestate_level) {
     return false;
   }
 

@@ -703,7 +703,7 @@ void HU_Start(void) {
   // e6y: stop SEGV here when gamemap is not initialized
 
   /* cph - stop SEGV here when not in level */
-  if (gamestate == GS_LEVEL && gamemap > 0) {
+  if (gamestate == gamestate_level && gamemap > 0) {
     switch (gamemode) {
       case shareware:
       case registered:
@@ -2354,7 +2354,7 @@ void HU_Drawer(void) {
    *  return;
    */
 
-  if (gamestate != GS_LEVEL) {
+  if (gamestate != gamestate_level) {
     return;
   }
 
@@ -2845,7 +2845,7 @@ bool HU_DrawDemoProgress(int force) {
   unsigned int tick;
   unsigned int max_period;
   
-  if (gamestate == GS_DEMOSCREEN || (!demoplayback && !democontinue) ||
+  if (gamestate == gamestate_demo_screen || (!demoplayback && !democontinue) ||
                                     !hudadd_demoprogressbar) {
     return false;
   }

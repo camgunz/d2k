@@ -455,7 +455,7 @@ static void cheat_clev(char buf[3]) {
   // So be it.
   PL_Echo(P_GetConsolePlayer(), s_STSTR_CLEV); // Ty 03/27/98 - externalized
 
-  G_DeferedInitNew(gameskill, epsd, map);
+  G_DeferredInitNew(gameskill, epsd, map);
 }
 
 // 'mypos' for player position

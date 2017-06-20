@@ -31,7 +31,7 @@
 #include "g_demo.h"
 #include "g_game.h"
 #include "g_input.h"
-#include "g_opt.h"
+#include "g_oldopt.h"
 #include "g_save.h"
 #include "mn_main.h"
 #include "p_defs.h"
@@ -88,11 +88,11 @@ static const struct {
 static const size_t num_version_headers =
   sizeof(version_headers) / sizeof(version_headers[0]);
 
-unsigned char savegameslot; // Slot to load if gameaction == ga_loadgame
+unsigned char savegameslot; // Slot to load if gameaction == gameaction_load_game
 
 char *basesavegame; // killough 2/16/98: savegame directory
 
-// Description to save in savegame if gameaction == ga_savegame
+// Description to save in savegame if gameaction == gameaction_save_game
 char savedescription[SAVEDESCLEN];
 
 /* Ty 05/03/98 - externalized
@@ -191,7 +191,7 @@ static void G_LoadGameErr(const char *msg) {
   MN_ForcedLoadGame(msg);          // Print message asking for 'Y' to force
   if (command_loadgame) {          // If this was a command-line -loadgame
     D_StartTitle();                // Start the title screen
-    G_SetGameState(GS_DEMOSCREEN); // And set the game state accordingly
+    G_SetGameState(gamestate_demo_screen); // And set the game state accordingly
   }
 }
 
@@ -277,7 +277,7 @@ void G_WriteSaveData(pbuf_t *savebuffer) {
 
   M_PBufWriteInt(savebuffer, idmusnum);
 
-  G_WriteOptions(game_options);    // killough 3/1/98: save game options
+  G_WriteOldOptions(game_options);    // killough 3/1/98: save game options
 
   if (mbf_features) {
     M_PBufWriteArray(savebuffer, GAME_OPTION_SIZE);
@@ -320,7 +320,7 @@ bool G_ReadSaveData(pbuf_t *savebuffer, bool bail_on_errors,
   int i;
   int savegame_compatibility = -1;
   complevel_t m_compatibility_level;
-  skill_e m_gameskill;
+  gameskill_e m_gameskill;
   int m_gameepisode;
   int m_gamemap;
   //e6y: numeric version number of package should be zero before initializing
@@ -492,7 +492,7 @@ bool G_ReadSaveData(pbuf_t *savebuffer, bool bail_on_errors,
   for (i = 0; i < game_option_count; i++)
     M_PBufReadUChar(savebuffer, &game_options[i]);
 
-  G_ReadOptions(game_options);  // killough 3/1/98: Read game options
+  G_ReadOldOptions(game_options);  // killough 3/1/98: Read game options
 
   // load a base level
   if (init_new)
@@ -588,7 +588,7 @@ void G_LoadGame(int slot, bool command) {
   }
   else {
     // Do the old thing, immediate load
-    G_SetGameAction(ga_loadgame);
+    G_SetGameAction(gameaction_load_game);
     forced_loadgame = false;
     savegameslot = slot;
     demoplayback = false;

@@ -91,7 +91,7 @@ int flashing_hom;     // killough 10/98
 
 int doom_weapon_toggles; // killough 10/98
 
-int monkeys;
-int default_monkeys;
+int monsters_climb;
+int default_monsters_climb;
 
 /* vi: set et ts=2 sw=2: */

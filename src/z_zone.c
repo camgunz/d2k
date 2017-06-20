@@ -90,7 +90,7 @@ static int purgable_memory = 0;
 
 static void Z_DrawStats(void)            // Print allocation statistics
 {
-  if (gamestate != GS_LEVEL)
+  if (gamestate != gamestate_level)
     return;
 
   if (memory_size > 0) {

@@ -133,7 +133,7 @@ GAME SETTINGS
        monster_avoid_hazards
               Whether monsters avoid crushing ceilings.
 
-       monkeys
+       monsters_climb
               Whether monsters will climb steep stairs.
 
        monster_friction

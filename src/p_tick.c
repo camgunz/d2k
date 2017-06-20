@@ -343,7 +343,7 @@ void P_Ticker(void) {
     return;
   }
 
-  if (gs != GS_LEVEL) {
+  if (gs != gamestate_level) {
     P_MapEnd();
     return; // not if this is an intermission screen
   }

@@ -24,11 +24,30 @@
 #ifndef G_OPT_H__
 #define G_OPT_H__
 
-void G_WriteOptions(unsigned char game_options[]);
-void G_ReadOptions(unsigned char game_options[]);
-void G_SaveRestoreGameOptions(int save);
+typedef struct game_options_s {
+  bool monsters;
+  bool monsters_respawn;
+  bool monsters_fast;
+  bool dev_mode;
+  int  deathmatch;
+  bool allow_pushers;
+  bool variable_friction;
+  bool monsters_remember;
+  bool weapon_recoil;
+  bool player_bobbing;
+  bool leave_weapons;
+  int  dogs;
+  bool dog_jumping;
+  int  distfriend;
+  bool monster_backing;
+  bool monster_avoid_hazards;
+  bool monster_friction;
+  bool help_friends;
+  bool monster_infighting;
+  bool monsters_climb;
+  int  viewangleoffset;
+} game_options_t;
 
 #endif
 
 /* vi: set et ts=2 sw=2: */
-

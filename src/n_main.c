@@ -178,7 +178,7 @@ static int run_tics(int tic_count) {
   while (tic_count--) {
     if (MULTINET) {
       if (!D_Wiping()) {
-        if (G_GetGameState() == GS_LEVEL) {
+        if (G_GetGameState() == gamestate_level) {
           PL_BuildCommand();
         }
         else {
@@ -297,7 +297,7 @@ void N_RunTic(void) {
 
   P_Checksum(gametic);
 
-  if ((G_GetGameState() == GS_LEVEL) && SERVER && (gametic > 0)) {
+  if ((G_GetGameState() == gamestate_level) && SERVER && (gametic > 0)) {
     NET_PEER_FOR_EACH(iter) {
       if (N_PeerSynchronized(iter.np)) {
         N_PeerSyncSetOutdated(iter.np);

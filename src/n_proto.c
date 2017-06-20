@@ -100,7 +100,7 @@ static void handle_setup(netpeer_t *np) {
   N_PeerSyncSetHasGameState(server);
   N_PeerSyncSetOutdated(server);
 
-  if (G_GetGameState() == GS_INTERMISSION) {
+  if (G_GetGameState() == gamestate_intermission) {
     G_LoadLatestState(true);
   }
 }
@@ -389,8 +389,8 @@ static void handle_game_action_change(netpeer_t *np) {
   gametic = new_gametic;
 
   switch (new_gameaction) {
-    case ga_loadlevel:
-      puts("got ga_loadlevel");
+    case gameaction_load_level:
+      puts("got gameaction_load_level");
       // force players to be initialized on level reload
       for (size_t i = 0; i < MAXPLAYERS; i++) {
         players[i].playerstate = PST_REBORN;
@@ -398,12 +398,12 @@ static void handle_game_action_change(netpeer_t *np) {
 
       G_DoLoadLevel();
     break;
-    case ga_completed:
-      puts("got ga_completed");
+    case gameaction_completed:
+      puts("got gameaction_completed");
       G_DoCompleted();
     break;
-    case ga_worlddone:
-      puts("got ga_worlddone");
+    case gameaction_world_done:
+      puts("got gameaction_world_done");
       G_DoWorldDone();
     break;
     default:

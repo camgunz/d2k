@@ -39,7 +39,7 @@
 #include "g_game.h"
 #include "g_input.h"
 #include "g_keys.h"
-#include "g_opt.h"
+#include "g_oldopt.h"
 #include "g_overflow.h"
 #include "g_save.h"
 #include "hu_stuff.h"
@@ -1090,7 +1090,7 @@ void G_BeginRecording(void) {
     *demo_p++ = deathmatch;
     *demo_p++ = P_GetConsolePlayer()->id;
 
-    G_WriteOptions(game_options); // killough 3/1/98: Save game options
+    G_WriteOldOptions(game_options); // killough 3/1/98: Save game options
     for (i = 0; i < GAME_OPTION_SIZE; i++) {
       *demo_p++ = game_options[i];
     }
@@ -1156,7 +1156,7 @@ void G_BeginRecording(void) {
     *demo_p++ = deathmatch;
     *demo_p++ = P_GetConsolePlayer()->id;
 
-    G_WriteOptions(game_options); // killough 3/1/98: Save game options
+    G_WriteOldOptions(game_options); // killough 3/1/98: Save game options
     for (i = 0; i < GAME_OPTION_SIZE; i++) {
       *demo_p++ = game_options[i];
     }
@@ -1231,7 +1231,7 @@ void G_BeginRecording(void) {
 
 void G_DeferedPlayDemo(const char *name) {
   defdemoname = name;
-  G_SetGameAction(ga_playdemo);
+  G_SetGameAction(gameaction_play_demo);
 }
 
 char* G_DemoReadHeader(char *demo_p, size_t size) {
@@ -1239,7 +1239,7 @@ char* G_DemoReadHeader(char *demo_p, size_t size) {
 }
 
 char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
-  skill_e skill;
+  gameskill_e skill;
   int i;
   int episode;
   int map;
@@ -1295,7 +1295,7 @@ char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
     monster_avoid_hazards = 0;        // killough 9/9/98
     monster_friction = 0;             // killough 10/98
     help_friends = 0;                 // killough 9/9/98
-    monkeys = 0;
+    monsters_climb = 0;
 
     // killough 3/6/98: rearrange to fix savegame bugs (moved fastparm,
     // respawnparm, nomonsters flags to G_LoadOptions()/G_SaveOptions())
@@ -1457,7 +1457,7 @@ char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
       game_options[i] = *demo_p++;
     }
 
-    G_ReadOptions(game_options);  // killough 3/1/98: Read game options
+    G_ReadOldOptions(game_options);  // killough 3/1/98: Read game options
 
     if (demover == 200) { // killough 6/3/98: partially fix v2.00 demos
       demo_p += 256 - GAME_OPTION_SIZE;
@@ -1508,7 +1508,7 @@ char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
   }
 
   if (!(params & RDH_SKIP_HEADER)) {
-    if (gameaction != ga_loadgame) { /* killough 12/98: support -loadgame */
+    if (gameaction != gameaction_load_game) { /* killough 12/98: support -loadgame */
       G_InitNew(skill, episode, map);
     }
   }
@@ -1673,7 +1673,7 @@ void G_RecordDemo(const char* name) {
       size_t len;
 
       //e6y: save all data which can be changed by G_DemoReadHeader
-      G_SaveRestoreGameOptions(true);
+      G_SaveRestoreGameOldOptions(true);
 
       /* Read the demo header for options etc */
       len = M_FileRead(demofp, buf, 1, sizeof(buf));
@@ -1724,7 +1724,7 @@ void G_RecordDemo(const char* name) {
       M_FileClose(demofp);
       if (demo_overwriteexisting) {
         //restoration of all data which could be changed by G_DemoReadHeader
-        G_SaveRestoreGameOptions(false);
+        G_SaveRestoreGameOldOptions(false);
         demofp = M_FileOpen(demoname, "wb");
       }
       else {
@@ -2146,7 +2146,7 @@ void G_DoPlayDemo(void) {
   if (G_DemoLoad(defdemoname, &demobuffer, &demolength, &demolumpnum)) {
     demo_p = G_DemoReadHeaderEx(demobuffer, demolength, RDH_SAFE);
 
-    G_SetGameAction(ga_nothing);
+    G_SetGameAction(gameaction_nothing);
     usergame = false;
 
     demoplayback = true;
@@ -2163,7 +2163,7 @@ void G_DoPlayDemo(void) {
     // in the corresponding IWADs.
     usergame = false;
     D_StartTitle();               // Start the title screen
-    G_SetGameState(GS_DEMOSCREEN);// And set the game state accordingly
+    G_SetGameState(gamestate_demo_screen);// And set the game state accordingly
   }
 }
 

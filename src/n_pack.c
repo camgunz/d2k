@@ -1108,7 +1108,7 @@ bool N_UnpackGameActionChange(netpeer_t *np, gameaction_t *new_gameaction,
   int m_new_gametic = 0;
 
   pbuf_read_ranged_int(
-    pbuf, m_new_gameaction, "game action", ga_nothing, ga_worlddone
+    pbuf, m_new_gameaction, "game action", gameaction_nothing, gameaction_world_done
   );
   pbuf_read_int(pbuf, m_new_gametic, "game action gametic");
 
