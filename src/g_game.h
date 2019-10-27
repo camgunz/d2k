@@ -60,7 +60,7 @@ typedef enum {
   sk_medium,
   sk_hard,
   sk_nightmare
-} skill_t;
+} skill_e;
 
 // The current state of the game: whether we are playing, gazing
 // at the intermission screen, the game final animation, or a demo.
@@ -71,7 +71,7 @@ typedef enum {
   GS_INTERMISSION,
   GS_FINALE,
   GS_DEMOSCREEN
-} gamestate_t;
+} gamestate_e;
 
 typedef enum {
   ga_nothing,
@@ -83,7 +83,7 @@ typedef enum {
   ga_completed,
   ga_victory,
   ga_worlddone,
-} gameaction_t;
+} gameaction_e;
 
 
 // ------------------------
@@ -105,7 +105,7 @@ extern int  default_translucency; // config file says           // phares
 extern bool general_translucency; // true if translucency is ok // phares
 
 // Defaults for menu, methinks.
-extern skill_t startskill;
+extern skill_e startskill;
 extern int     startepisode;
 extern int     startmap;
 
@@ -114,7 +114,7 @@ extern bool autostart;
 extern gameaction_t gameaction;
 
 // Selected by user.
-extern skill_t gameskill;
+extern skill_e gameskill;
 extern int     gameepisode;
 extern int     gamemap;
 
@@ -315,8 +315,8 @@ void G_DoLoadGame(void);
 
 bool G_Responder(event_t *ev);
 void G_DeathMatchSpawnPlayer(player_t *player);
-void G_InitNew(skill_t skill, int episode, int map);
-void G_DeferedInitNew(skill_t skill, int episode, int map);
+void G_InitNew(skill_e skill, int episode, int map);
+void G_DeferedInitNew(skill_e skill, int episode, int map);
 
 // CPhipps - const on these string params
 

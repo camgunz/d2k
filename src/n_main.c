@@ -125,18 +125,22 @@ static int process_tics(int tics_elapsed) {
 }
 
 static bool should_render(void) {
-  if (nodrawers)
+  if (nodrawers) {
     return false;
+  }
 
-  if (!window_focused)
+  if (!window_focused) {
     return false;
+  }
 
-  if (gametic <= 0)
+  if (gametic <= 0) {
     return false;
+  }
 
 #ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL)
+  if (V_GetMode() == VID_MODEGL) {
     return true;
+  }
 #endif
 
   if (!movement_smooth) {
@@ -144,6 +148,86 @@ static bool should_render(void) {
   }
 
   return true;
+}
+
+static void handle_enet_connection(ENetEvent *net_event) {
+  netpeer_t *np;
+
+  if (SERVER) {
+    np = N_PeersAdd(net_event->peer);
+
+    if (!np) {
+      D_MsgLocalError("N_ServiceNetwork: Adding new peer failed\n");
+      enet_peer_disconnect(net_event->peer, DISCONNECT_REASON_SERVER_FULL);
+      return;
+    }
+  }
+  else {
+    np = CL_GetServerPeer();
+
+    if (!np) {
+      D_MsgLocalWarn(
+        "N_ServiceNetwork: Got 'connect' event but no connection "
+        "was requested.\n"
+      );
+      return;
+    }
+
+    N_PeerSetConnected(np);
+  }
+}
+
+static void handle_enet_disconnection(ENetEvent *net_event) {
+  netpeer_t *np = N_PeersLookupByENetPeer(net_event->peer);
+
+  if (!np) {
+    D_MsgLocalWarn(
+      "N_ServiceNetwork: Got 'disconnect' event from unknown peer %s:%u.\n",
+      N_IPToConstString(ENET_NET_TO_HOST_32(net_event->peer->address.host)),
+      net_event->peer->address.port
+    );
+    return;
+  }
+
+  if (CLIENT) {
+    N_Disconnect(DISCONNECT_REASON_GOT_PEER_DISCONNECTION);
+  }
+
+  if (net_event->data >= DISCONNECT_REASON_MAX) {
+    D_MsgLocalInfo("Peer disconnected: Reason unknown (%u)\n",
+      net_event->data
+    );
+  }
+  else {
+    D_MsgLocalInfo("Peer disconnected: %s\n",
+      disconnection_reasons[net_event->data]
+    );
+  }
+
+  N_PeerRemove(np);
+}
+
+static void handle_enet_receive(ENetEvent *net_event) {
+  netpeer_t *np = N_PeersLookupByENetPeer(net_event->peer);
+
+  if (!np) {
+    D_MsgLocalWarn(
+      "N_ServiceNetwork: Got 'packet' event from unknown peer %s:%u.\n",
+      N_IPToConstString(ENET_NET_TO_HOST_32(
+        net_event->peer->address.host
+      )),
+      net_event->peer->address.port
+    );
+    return;
+  }
+
+  if ((net_event->packet->data[0] & 0x80) == 0x80) {
+    N_HandlePacket(
+      np, net_event->packet->data, net_event->packet->dataLength
+    );
+  }
+
+  enet_packet_destroy(net_event->packet);
 }
 
 void N_Init(void) {
@@ -337,114 +421,6 @@ bool N_ConnectToServer(const char *address) {
   }
 
   return connected;
-}
-
-void N_DisconnectPeer(netpeer_t *np, disconnection_reason_e reason) {
-  D_MsgLocalInfo("N_DisconnectPeer: Disconnecting peer %u\n", N_PeerGetID(np));
-  N_PeerDisconnect(np, reason);
-}
-
-void N_DisconnectPlayerID(uint32_t player_id, disconnection_reason_e reason) {
-  player_t *player = P_PlayersLookup(player_id);
-  
-  if (!player) {
-    D_MsgLocalWarn("N_DisconnectPlayerID: No player for ID %u\n", player_id);
-    return;
-  }
-
-  N_DisconnectPlayer(player, reason);
-}
-
-void N_DisconnectPlayer(player_t *player, disconnection_reason_e reason) {
-  netpeer_t *np = N_PeersLookupByPlayer(player);
-
-  if (!np) {
-    D_MsgLocalWarn("N_DisconnectPlayer: No peer for player %u\n", player->id);
-    return;
-  }
-
-  D_MsgLocalInfo("N_DisconnectPlayer: Disconnecting player %u\n", player->id);
-  N_DisconnectPeer(np, reason);
-}
-
-static void handle_enet_connection(ENetEvent *net_event) {
-  netpeer_t *np;
-
-  if (SERVER) {
-    np = N_PeersAdd(net_event->peer);
-
-    if (!np) {
-      D_MsgLocalError("N_ServiceNetwork: Adding new peer failed\n");
-      enet_peer_disconnect(net_event->peer, DISCONNECT_REASON_SERVER_FULL);
-      return;
-    }
-  }
-  else {
-    np = CL_GetServerPeer();
-
-    if (!np) {
-      D_MsgLocalWarn(
-        "N_ServiceNetwork: Got 'connect' event but no connection "
-        "was requested.\n"
-      );
-      return;
-    }
-
-    N_PeerSetConnected(np);
-  }
-}
-
-static void handle_enet_disconnection(ENetEvent *net_event) {
-  netpeer_t *np = N_PeersLookupByENetPeer(net_event->peer);
-
-  if (!np) {
-    D_MsgLocalWarn(
-      "N_ServiceNetwork: Got 'disconnect' event from unknown peer %s:%u.\n",
-      N_IPToConstString(ENET_NET_TO_HOST_32(net_event->peer->address.host)),
-      net_event->peer->address.port
-    );
-    return;
-  }
-
-  if (CLIENT) {
-    N_Disconnect(DISCONNECT_REASON_GOT_PEER_DISCONNECTION);
-  }
-
-  if (net_event->data >= DISCONNECT_REASON_MAX) {
-    D_MsgLocalInfo("Peer disconnected: Reason unknown (%u)\n",
-      net_event->data
-    );
-  }
-  else {
-    D_MsgLocalInfo("Peer disconnected: %s\n",
-      disconnection_reasons[net_event->data]
-    );
-  }
-
-  N_PeerRemove(np);
-}
-
-static void handle_enet_receive(ENetEvent *net_event) {
-  netpeer_t *np = N_PeersLookupByENetPeer(net_event->peer);
-
-  if (!np) {
-    D_MsgLocalWarn(
-      "N_ServiceNetwork: Got 'packet' event from unknown peer %s:%u.\n",
-      N_IPToConstString(ENET_NET_TO_HOST_32(
-        net_event->peer->address.host
-      )),
-      net_event->peer->address.port
-    );
-    return;
-  }
-
-  if ((net_event->packet->data[0] & 0x80) == 0x80) {
-    N_HandlePacket(
-      np, net_event->packet->data, net_event->packet->dataLength
-    );
-  }
-
-  enet_packet_destroy(net_event->packet);
 }
 
 void N_ServiceNetworkTimeout(int timeout_ms) {

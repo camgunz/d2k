@@ -26,7 +26,6 @@
 #include <enet/enet.h>
 
 #include "i_main.h"
-#include "d_msg.h"
 
 #include "n_main.h"
 #include "n_proto.h"
@@ -138,6 +137,12 @@ void N_ChannelClear(netchan_t *nc) {
   M_PBufClear(&nc->messages);
   M_PBufClear(&nc->packet_data);
   M_PBufClear(&nc->packed_toc);
+}
+
+void N_ChannelFree(netchan_t *nc) {
+  g_array_free(nc->toc, true);
+  M_PBufFree(nc->messages);
+  M_PBufFree(nc->packet_data);
 }
 
 void* N_ChannelGetPacket(netchan_t *nc) {

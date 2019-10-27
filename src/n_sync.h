@@ -24,6 +24,12 @@
 #ifndef N_SYNC_H__
 #define N_SYNC_H__
 
+struct player_s;
+typedef struct player_s player_t;
+
+struct game_state_delta_s;
+typedef struct game_state_delta_s game_state_delta_t;
+
 typedef enum {
   SYNC_SYNCHRONIZED     = 0,
   SYNC_NEEDS_GAME_INFO  = 1,
@@ -33,11 +39,11 @@ typedef enum {
 } net_sync_state_e;
 
 typedef struct netsync_s {
-  net_sync_state_e state;
-  int tic;
-  uint32_t command_index;
-  GHashTable *command_indices;
-  game_state_delta_t delta;
+  unsigned int        state;
+  int                 tic;
+  uint32_t            command_index;
+  GHashTable         *command_indices;
+  game_state_delta_t  delta;
 } netsync_t;
 
 void N_SyncInit(netsync_t *ns);

@@ -24,6 +24,7 @@
 #include "z_zone.h"
 
 #include "d_msg.h"
+#include "g_team.h"
 #include "pl_main.h"
 #include "n_main.h"
 #include "n_msg.h"
@@ -44,26 +45,45 @@ uint32_t MSG_CHANNEL_CHAT_INCOMING;
 uint32_t MSG_CHANNEL_CHAT_OUTGOING;
 
 static void sv_handle_incoming_chat_message(message_t *message, void *data) {
-}
-
-static void sv_handle_outgoing_chat_message(message_t *message, void *data) {
-  netpeer_t *np = NULL;
-  player_t *player = NULL;
-
-  if (message->channel_id != MSG_CHANNEL_CHAT_OUTGOING) {
+  /*
+   * This is for chat messages received over the network.  If they're not meant
+   * specifically for the server, the server needs to forward them to their
+   * destinations.
+   */
+  if (message->channel_id != MSG_CHANNEL_CHAT_INCOMING) {
     return;
   }
 
   switch (message->recipient) {
     case MSG_RECIPIENT_EVERYONE:
-      message->recipient = MSG_RECIPIENT_LOCAL;
+      break;
+    case MSG_RECIPIENT_TEAM:
+      break;
+    case MSG_RECIPIENT_PLAYER:
+      break;
+    case MSG_RECIPIENT_PEER:
+      break;
+    default:
+      break;
+  }
+}
+
+static void sv_handle_chat_message(message_t *message, void *data) {
+  netpeer_t *np = NULL;
+  player_t *player = NULL;
+
+  if (!((message->channel_id == MSG_CHANNEL_CHAT_OUTGOING) ||
+        (message->channel_id == MSG_CHANNEL_CHAT_INCOMING))) {
+    return;
+  }
+
+  switch (message->recipient) {
+    case MSG_RECIPIENT_EVERYONE:
       NETPEER_FOR_EACH(iter) {
         SV_SendMessage(np, message);
       }
       break;
     case MSG_RECIPIENT_TEAM:
-      message->recipient = MSG_RECIPIENT_LOCAL;
-
       NETPEER_FOR_EACH(iter) {
         team_t *team = N_PeerGetTeam(iter.np);
 
@@ -75,7 +95,6 @@ static void sv_handle_outgoing_chat_message(message_t *message, void *data) {
       }
       break;
     case MSG_RECIPIENT_PLAYER:
-      message->recipient = MSG_RECIPIENT_LOCAL;
       player = P_PlayersLookup(message->recipient_id);
 
       if (!player) {
@@ -105,7 +124,7 @@ static void sv_handle_outgoing_chat_message(message_t *message, void *data) {
       if (!np) {
         D_MsgLocalWarn(
           "sv_handle_outgoing_chat_message: No peer with ID %u\n",
-          iter.player->id
+          message->recipient_id
         );
         return;
       }
@@ -115,9 +134,6 @@ static void sv_handle_outgoing_chat_message(message_t *message, void *data) {
     default:
       break;
   }
-}
-
-static void cl_handle_incoming_chat_message(message_t *message, void *data) {
 }
 
 static void cl_handle_outgoing_chat_message(message_t *message, void *data) {
