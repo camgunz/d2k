@@ -753,7 +753,7 @@ int32_t X_PopInteger(x_engine_t xe) {
 
 uint32_t X_PopUInteger(x_engine_t xe) {
   lua_State *L = (lua_State *)xe;
-  uint32_t value = lua_tounsigned(L, -1);
+  uint32_t value = (uint32_t)lua_tointeger(L, -1);
 
   lua_pop(L, 1);
 

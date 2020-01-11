@@ -35,29 +35,29 @@ editor to convert tabs into 2 spaces.
 Adhere strongly to 80-column buffer widths in your editor.  Yes it can be silly
 and no we aren't on tiny terminals anymore, but having multiple editing buffers
 open horizontally at a time (or browser windows, debuggers, etc.) is a much
-bigger increase of productivity than not having to break a line.
+bigger increase of productivity than very occasionally not having to break a line.
 
-Presuming a font that is 7 pixels wide:
+Presuming a font that is 6 pixels wide, here are buffer counts for 80, 100, and
+120 character limits:
 
-  * 1024x768: 146 characters (1, 1)
-  * 1152x720: 164 characters (2, 1)
-  * 1280x720: 182 characters (2, 1)
-  * 1366x768: 195 characters (2, 1)
-  * 1440x900: 200 characters (2, 2)
-  * 1600x900: 228 characters (2, 2)
-  * 1920x1080: 274 characters (3, 2)
-  * 2048x1152: 292 characters (3, 2)
-  * 2560x1440: 365 characters (4, 3)
-  * 2880x1800: 411 characters (5, 4)
+  * 1024x768:  170 characters (2, 1, 1)
+  * 1152x720:  192 characters (2, 1, 1)
+  * 1280x720:  213 characters (2, 2, 1)
+  * 1366x768:  227 characters (2, 2, 1)
+  * 1440x900:  240 characters (3, 2, 2)
+  * 1600x900:  266 characters (3, 2, 2)
+  * 1920x1080: 320 characters (4, 3, 2)
+  * 2048x1152: 341 characters (5, 3, 2)
+  * 2560x1440: 426 characters (5, 4, 3)
+  * 2880x1800: 480 characters (6, 4, 4)
+  * 3840x2160: 640 characters (8, 6, 5)
+  * 4000x3000: 666 characters (8, 6, 5)
 
-100-column buffer widths only match up when using 1440x900 and 1600x900, two
-relatively uncommon resolutions.  Everywhere else, particularly the common
-resolutions of 1280x720, 1366x768 and 1920x1080, 80-column buffer widths afford
-the programmer an extra buffer.  Users of 1024x768 will have to scale down
-their font size if they desire more than 1 column regardless of buffer width.
+Usually an 80-column width gets you an extra buffer, and sometimes you get 2.
 
-Furthermore, it is becoming more common to view code on mobile devices, and 
-longer lines there mean smaller, less readable characters.
+Furthermore, it is becoming more common to view code side by side in diffs and
+on mobile devices, and longer lines there mean smaller, less readable
+characters and line breaks.
 
 It's also worth saying that high-resolution displays are uncommon in the
 developing world.  You ought to be able to edit the source code of D2K without

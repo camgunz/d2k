@@ -110,7 +110,7 @@ static const void* db_registersong(const void *data, unsigned len) {
   if (!duh) {
     dumbfile_close(dfil);
     dfil = dumbfile_open_memory(data, len);
-    duh = dumb_read_mod_quick(dfil);  
+    duh = dumb_read_mod_quick(dfil, 3);  
   }
 
   if (!duh) {

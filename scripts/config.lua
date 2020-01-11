@@ -50,16 +50,16 @@ function get_type_and_value(var)
 
     if var_type == 'boolean' then
         return BOOLEAN, var
-    elseif var_type == 'number' then
-        local int = tonumber(var, 10)
-
-        if int ~= nil then
-            return INTEGER, int
-        else
-            return FLOAT, var
-        end
     elseif var_type == 'string' then
         return STRING, var
+    elseif var_type == 'number' then
+        local float = math.modf(var)
+
+        if float == var then
+            return FLOAT, var
+        else
+            return INTEGER, var
+        end
     elseif var_type == 'table' then
         if is_array(var) then
             return ARRAY, var
