@@ -27,6 +27,8 @@
 #include <SDL_image.h>
 #endif /* ifdef HAVE_LIBSDL_IMAGE */
 
+#include "doomdef.h"
+#include "doomstat.h"
 #include "r_defs.h"
 #include "r_data.h"
 #include "r_state.h"

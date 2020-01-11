@@ -20,12 +20,13 @@
 /*                                                                           */
 /*****************************************************************************/
 
-/* [CG] [FIXME] Supports only HTTP (not HTTPS, or anything else) for now */
+/* [CG] [FIXME] Supports only HTTP (not HTTPS, or anything else ) for now */
 
 #include "z_zone.h"
 
 #include <curl/curl.h>
 
+#include "doomdef.h"
 #include "i_system.h"
 #include "n_main.h"
 #include "n_http.h"

@@ -27,6 +27,7 @@
 #include <SDL_image.h>
 #endif /* ifdef HAVE_LIBSDL_IMAGE */
 
+#include "doomdef.h"
 #include "v_video.h"
 #include "w_wad.h"
 #include "m_misc.h"

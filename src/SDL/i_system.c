@@ -25,6 +25,8 @@
 
 #include <SDL.h>
 
+#include "doomdef.h"
+#include "doomstat.h"
 #include "m_argv.h"
 #include "m_file.h"
 #include "m_fixed.h"
@@ -151,6 +153,15 @@ unsigned long I_GetRandomTimeSeed(void)
 {
 /* This isnt very random */
   return(SDL_GetTicks());
+}
+
+/* cphipps - I_GetVersionString
+ * Returns a version string in the given buffer
+ */
+const char* I_GetVersionString(char* buf, size_t sz)
+{
+  snprintf(buf, sz, "%s v%s (" PACKAGE_URL ")", PACKAGE_NAME, PACKAGE_VERSION);
+  return buf;
 }
 
 /* cphipps - I_SigString

@@ -24,9 +24,6 @@
 #ifndef CL_NET_H__
 #define CL_NET_H__
 
-struct netpeer_s;
-typedef struct netpeer_s netpeer_t;
-
 netpeer_t* CL_GetServerPeer(void);
 void       CL_CheckForStateUpdates(void);
 void       CL_MarkServerOutdated(void);

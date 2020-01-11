@@ -29,6 +29,8 @@
 #include <SDL_image.h>
 #endif
 
+#include "doomdef.h"
+#include "doomstat.h"
 #include "v_video.h"
 #include "i_system.h"
 #include "w_wad.h"

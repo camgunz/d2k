@@ -25,6 +25,7 @@
 
 #include <enet/enet.h>
 
+#include "doomdef.h"
 #include "n_main.h"
 
 #define MAX_ADDRESS_LENGTH 500

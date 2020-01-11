@@ -23,6 +23,8 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
+
 #include "r_screenmultiply.h"
 
 int render_screen_multiply;
@@ -31,11 +33,9 @@ int render_interlaced_scanning;
 int interlaced_scanning_requires_clearing;
 
 #ifdef WORDS_BIGENDIAN
-#define INIT_DATA_DEST_2X unsigned int data_dest = (*(psrc + 1)) | \
-                                                   ((*psrc) << 16);
+#define INIT_DATA_DEST_2X unsigned int data_dest = (*(psrc + 1)) | ((*psrc) << 16);
 #else
-#define INIT_DATA_DEST_2X unsigned int data_dest = (*psrc) | \
-                                                   ((*(psrc + 1)) << 16);
+#define INIT_DATA_DEST_2X unsigned int data_dest = (*psrc) | ((*(psrc + 1)) << 16);
 #endif
 
 #define PROCESS_LINE_2X_1 \

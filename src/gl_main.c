@@ -25,6 +25,9 @@
 
 #include <SDL.h>
 
+#include "doomdef.h"
+#include "doomstat.h"
+
 #include "w_wad.h"
 #include "m_argv.h"
 #include "d_event.h"

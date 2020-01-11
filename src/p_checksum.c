@@ -23,6 +23,9 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
+#include "doomstat.h" /* players{,ingame} */
+#include "d_event.h"
 #include "p_checksum.h"
 #include "p_user.h"
 #include "g_game.h"

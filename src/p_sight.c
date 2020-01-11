@@ -23,6 +23,8 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
+#include "doomstat.h"
 #include "r_defs.h"
 #include "r_main.h"
 #include "r_state.h"

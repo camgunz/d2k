@@ -24,9 +24,6 @@
 #ifndef AMMAP_H__
 #define AMMAP_H__
 
-struct event_s;
-typedef struct event_s event_t;
-
 enum automapmode_e {
   am_active = 1,  // currently shown
   am_overlay= 2,  // covers the screen, i.e. not overlay mode
@@ -79,8 +76,6 @@ void AM_clearMarks(void);
 void AM_setMarkParams(int num);
 
 void AM_SetResolution(void);
-
-bool AM_Responder(event_t *ev);
 
 typedef struct
 {

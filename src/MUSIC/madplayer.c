@@ -133,7 +133,7 @@ static const void *mp_registersong(const void *data, unsigned len) {
   for (i = 0; i < maxtry; i++) {
     if (mad_header_decode(&Header, &Stream) != 0) {
       if (!MAD_RECOVERABLE(Stream.error)) {
-        D_MsgLocalWarn("mad_registersong failed: %s\n",
+        D_Msg(MSG_WARN, "mad_registersong failed: %s\n",
           mad_stream_errorstr(&Stream)
         );
         return NULL;
@@ -146,11 +146,11 @@ static const void *mp_registersong(const void *data, unsigned len) {
 
   // 80% to pass
   if (success < maxtry * 8 / 10) {
-    D_MsgLocalWarn("mad_registersong failed\n");
+    D_Msg(MSG_WARN, "mad_registersong failed\n");
     return NULL;
   }
   
-  D_MsgLocalInfo("mad_registersong succeed. bitrate %lu samplerate %d\n",
+  D_Msg(MSG_INFO, "mad_registersong succeed. bitrate %lu samplerate %d\n",
     Header.bitrate, Header.samplerate
   );
  
@@ -243,7 +243,7 @@ static void mp_render_ex(void *dest, unsigned nsamp) {
         // packet)
         localerrors++;
         if (localerrors == 10) {
-          D_MsgLocalWarn(
+          D_Msg(MSG_WARN,
             "mad_frame_decode: Lots of errors.  Most recent %s\n",
             mad_stream_errorstr(&Stream)
           );
@@ -267,7 +267,7 @@ static void mp_render_ex(void *dest, unsigned nsamp) {
         }
       }
       else { // oh well.
-        D_MsgLocalWarn("mad_frame_decode: Unrecoverable error %s\n",
+        D_Msg(MSG_WARN, "mad_frame_decode: Unrecoverable error %s\n",
           mad_stream_errorstr(&Stream)
         );
         mp_playing = 0;

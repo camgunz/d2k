@@ -24,13 +24,25 @@
 #ifndef PL_CMD_H__
 #define PL_CMD_H__
 
-struct player_s;
-typedef struct player_s player_t;
+/*
+ * The data sampled per tick (single player)
+ * and transmitted to other peers (multiplayer).
+ * Mainly movements/button commands per game tick,
+ * plus a checksum for internal state consistency.
+ *
+ * CPhipps - explicitely signed the elements, since they have to be signed to
+ *           work right
+ *
+ */
 
-struct idxticcmd_s;
-typedef struct idxticcmd_s idxticcmd_t;
+ /*
+  * CG 04/23/2014: Un-explicitly sign the elements.  If a platform's char's are
+  *                implicitly unsigned, that's too bad.  They'll be fixed again
+  *                when the grand "use explicitly sized types where needed"
+  *                initiative is completed.
+  */
 
-typedef bool (*cmd_trim_f)(gpointer data, gpointer user_data);
+typedef bool (*TrimFunc)(gpointer data, gpointer user_data);
 
 uint32_t     PL_GetLatestServerRunCommandIndex(player_t *player);
 void         PL_UpdateCommandServerTic(player_t *player,
@@ -47,7 +59,7 @@ void         PL_ForEachCommand(player_t *player, GFunc func,
 void         PL_ClearCommands(player_t *player);
 void         PL_ResetCommands(player_t *player);
 void         PL_IgnoreCommands(player_t *player);
-void         PL_TrimCommands(player_t *player, cmd_trim_f should_trim,
+void         PL_TrimCommands(player_t *player, TrimFunc should_trim,
                                                gpointer user_data);
 void         PL_BuildCommand(void);
 bool         PL_RunCommands(player_t *player);

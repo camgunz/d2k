@@ -21,17 +21,19 @@
 /*****************************************************************************/
 
 
-#ifndef G_CORPSE_H__
-#define G_CORPSE_H__
+#ifndef C_CVAR_H__
+#define C_CVAR_H__
 
-bool   G_CorpseQueueInitialized(void);
-void   G_CorpseQueueInit(void);
-void   G_CorpseQueueClear(void);
-void   G_CorpseQueuePush(mobj_t *mobj);
-void   G_CorpseQueuePop(void);
-size_t G_CorpseQueueGetLen(void);
-int    G_CorpseQueueGetMaxLen(void);
-void   G_CorpseQueueSetMaxLen(int new_max_len);
+/*
+ * [CG] The CVar API is a read-only API.  CVars should only be modified from
+ *      scripting.
+ */
+
+bool        C_CVarGetBool(const char *path);
+int32_t     C_CVarGetInt(const char *path);
+uint32_t    C_CVarGetUInt(const char *path);
+double      C_CVarGetFloat(const char *path);
+const char* C_CVarGetString(const char *path);
 
 #endif
 

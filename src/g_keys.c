@@ -22,7 +22,20 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "g_keys.h"
+
+/*
+name
+location
+defaultvalue
+minvalue
+maxvalue
+type
+setupscreen
+current
+setup_menu
+*/
 
 //
 // controls (have defaults)
@@ -90,10 +103,7 @@ int key_forward;
 int key_leftturn;
 int key_rightturn;
 int key_backward;
-int destination_key_green;
-int destination_key_indigo;
-int destination_key_brown;
-int destination_key_red;
+int destination_keys[MAXPLAYERS];
 int key_weapontoggle;
 int key_weapon1;
 int key_weapon2;

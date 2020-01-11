@@ -1,4 +1,5 @@
 /*****************************************************************************/
+
 /* D2K: A Doom Source Port for the 21st Century                              */
 /*                                                                           */
 /* Copyright (C) 2014: See COPYRIGHT file                                    */
@@ -20,40 +21,36 @@
 /*                                                                           */
 /*****************************************************************************/
 
-
 #include "z_zone.h"
 
-#include "m_bbox.h"
-#include "m_misc.h"
-#include "am_map.h"
-#include "d_deh.h"   // Ty 03/27/98 - externalizations
+#include "doomdef.h"
 #include "d_event.h"
-#include "d_res.h"
-#include "g_demo.h"
-#include "g_game.h"
-#include "g_keys.h"
-#include "p_defs.h"
-#include "p_map.h"
-#include "p_mobj.h"
-#include "p_spec.h"
-#include "pl_cheat.h"
-#include "pl_main.h"
 #include "r_defs.h"
-#include "r_fps.h"
-#include "r_main.h"
-#include "r_patch.h"
-#include "r_state.h"
-#include "st_stuff.h"
 #include "v_video.h"
-#include "w_wad.h"
 #include "gl_opengl.h"
 #include "gl_struct.h"
 
-#if 0
+#include "am_map.h"
+#include "r_state.h"
+#include "r_patch.h"
+#include "w_wad.h"
+#include "r_fps.h"
+#include "r_main.h"
+#include "st_stuff.h"
+#include "p_setup.h"
+#include "g_game.h"
+#include "p_mobj.h"
+#include "g_keys.h"
+#include "d_deh.h"   // Ty 03/27/98 - externalizations
+#include "m_misc.h"
+#include "p_spec.h"
+#include "m_bbox.h"
+#include "r_demo.h"
 #include "n_main.h"
+#include "pl_main.h"
+#include "pl_pspr.h"
 #include "pl_msg.h"
-#include "pl_weap.h"
-#endif
+#include "m_cheat.h"
 
 extern bool gamekeydown[];
 
@@ -565,9 +562,9 @@ static void AM_initVariables(void) {
 
   if (!player) {
     bool found_player = false;
+    size_t index = 0;
 
-    PLAYERS_FOR_EACH(iter) {
-      player = iter.player;
+    while (P_PlayersIter(&index, &player)) {
       found_player = true;
       break;
     }
@@ -773,12 +770,14 @@ bool AM_Responder(event_t *ev) {
         rc = false;
       }
     }
-    else if (ch == key_map_zoomout) {
+    else if ((ch == key_map_zoomout) ||
+      (map_wheel_zoom && ch == SDL_BUTTON_WHEELDOWN)) {
       mtof_zoommul = M_ZOOMOUT;
       ftom_zoommul = M_ZOOMIN;
       curr_mtof_zoommul = mtof_zoommul;
     }
-    else if (ch == key_map_zoomin) {
+    else if ((ch == key_map_zoomin) ||
+      (map_wheel_zoom && ch == SDL_BUTTON_WHEELUP)) {
       mtof_zoommul = M_ZOOMIN;
       ftom_zoommul = M_ZOOMOUT;
       curr_mtof_zoommul = mtof_zoommul;
@@ -803,40 +802,42 @@ bool AM_Responder(event_t *ev) {
 
       // Ty 03/27/98 - externalized
       if (automapmode & am_follow) {
-        D_MsgLocalInfo(s_AMSTR_FOLLOWON);
+        PL_Echo(P_GetConsolePlayer(), s_AMSTR_FOLLOWON);
       }
       else {
-        D_MsgLocalInfo(s_AMSTR_FOLLOWOFF);
+        PL_Echo(P_GetConsolePlayer(), s_AMSTR_FOLLOWOFF);
       }
     }
     else if (ch == key_map_grid) {
       automapmode ^= am_grid;                     // CPhipps
       // Ty 03/27/98 - *not* externalized
       if (automapmode & am_grid) {
-        D_MsgLocalInfo(s_AMSTR_GRIDON);
+        PL_Echo(P_GetConsolePlayer(), s_AMSTR_GRIDON);
       }
       else {
-        D_MsgLocalInfo(s_AMSTR_GRIDOFF);
+        PL_Echo(P_GetConsolePlayer(), s_AMSTR_GRIDOFF);
       }
     }
     else if (ch == key_map_mark) {
       /* Ty 03/27/98 - *not* externalized
        * cph 2001/11/20 - use doom_printf so we don't have our own buffer */
-      D_MsgLocalInfo("%s %d\n", s_AMSTR_MARKEDSPOT, markpointnum);
+      PL_Printf(P_GetConsolePlayer(), "%s %d\n",
+        s_AMSTR_MARKEDSPOT, markpointnum
+      );
       AM_addMark();
     }
     else if (ch == key_map_clear) {
       AM_clearMarks();                                     // Ty 03/27/98 *not*
                                                            // externalized
-      D_MsgLocalInfo(s_AMSTR_MARKSCLEARED); //    ^
+      PL_Echo(P_GetConsolePlayer(), s_AMSTR_MARKSCLEARED); //    ^
     }                                                      //    |
     else if (ch == key_map_rotate) {
       automapmode ^= am_rotate;
       if (automapmode & am_rotate) {
-        D_MsgLocalInfo(s_AMSTR_ROTATEON);
+        PL_Echo(P_GetConsolePlayer(), s_AMSTR_ROTATEON);
       }
       else {
-        D_MsgLocalInfo(s_AMSTR_ROTATEOFF);
+        PL_Echo(P_GetConsolePlayer(), s_AMSTR_ROTATEOFF);
       }
     }
     else if (ch == key_map_overlay) {
@@ -845,10 +846,10 @@ bool AM_Responder(event_t *ev) {
       AM_SetScale();
       AM_initVariables();
       if (automapmode & am_overlay) {
-        D_MsgLocalInfo(s_AMSTR_OVERLAYON);
+        PL_Echo(P_GetConsolePlayer(), s_AMSTR_OVERLAYON);
       }
       else {
-        D_MsgLocalInfo(s_AMSTR_OVERLAYOFF);
+        PL_Echo(P_GetConsolePlayer(), s_AMSTR_OVERLAYOFF);
       }
     }
 #ifdef GL_DOOM
@@ -856,10 +857,10 @@ bool AM_Responder(event_t *ev) {
       map_textured = !map_textured;
       M_ChangeMapTextured();
       if (map_textured) {
-        D_MsgLocalInfo(s_AMSTR_TEXTUREDON);
+        PL_Echo(P_GetConsolePlayer(), s_AMSTR_TEXTUREDON);
       }
       else {
-        D_MsgLocalInfo(s_AMSTR_TEXTUREDOFF);
+        PL_Echo(P_GetConsolePlayer(), s_AMSTR_TEXTUREDOFF);
       }
     }
 #endif /* ifdef GL_DOOM */
@@ -890,7 +891,10 @@ bool AM_Responder(event_t *ev) {
         m_paninc.y = 0;
       }
     }
-    else if ((ch == key_map_zoomout) || (ch == key_map_zoomin)) {
+    else if ((ch == key_map_zoomout) ||
+      (ch == key_map_zoomin) ||
+      (map_wheel_zoom &&
+      ((ch == SDL_BUTTON_WHEELDOWN) || (ch == SDL_BUTTON_WHEELUP)))) {
       mtof_zoommul = FRACUNIT;
       ftom_zoommul = FRACUNIT;
     }
@@ -1625,7 +1629,7 @@ INLINE static void AM_GetMobjPosition(mobj_t *mo, mpoint_t *p, angle_t *angle) {
     p->y = mo->PrevY + FixedMul(tic_vars.frac, mo->y - mo->PrevY);
     if (mo->player) {
       *angle = mo->player->prev_viewangle + FixedMul(tic_vars.frac,
-        G_DemoSmoothPlayingGet(mo->player) - mo->player->prev_viewangle);
+        R_SmoothPlaying_Get(mo->player) - mo->player->prev_viewangle);
     }
     else {
       *angle = mo->angle;
@@ -1653,6 +1657,8 @@ static void AM_drawPlayers(void) {
   angle_t angle;
   mpoint_t pt;
   fixed_t scale;
+  size_t i = 0;
+  player_t *p = NULL;
 
 #if defined(HAVE_LIBSDL_IMAGE) && defined(GL_DOOM)
   if (V_GetMode() == VID_MODEGL) {
@@ -1703,12 +1709,12 @@ static void AM_drawPlayers(void) {
     return;
   }
 
-  PLAYERS_FOR_EACH(iter) {
-    if ((deathmatch && !demoplayback) && iter.player != plr) {
+  while (P_PlayersIter(&i, &p)) {
+    if ((deathmatch && !demoplayback) && p != plr) {
       continue;
     }
 
-    AM_GetMobjPosition(iter.player->mo, &pt, &angle);
+    AM_GetMobjPosition(p->mo, &pt, &angle);
 
     if (automapmode & am_rotate) {
       AM_rotatePoint(&pt);
@@ -1723,17 +1729,19 @@ static void AM_drawPlayers(void) {
       NUMPLYRLINES,
       scale,
       angle,
-      iter.player->powers[pw_invisibility] ?
+      p->powers[pw_invisibility] ?
         246 : /* *close* to black */
-        vanilla_mapplayer_colors[(iter.player->id - 1) % VANILLA_MAXPLAYERS],
+        vanilla_mapplayer_colors[i % VANILLA_MAXPLAYERS],
       pt.x,
       pt.y
     );
   }
 }
 
-static void AM_ProcessNiceThing(mobj_t *mobj, angle_t angle, fixed_t x,
-                                                             fixed_t y) {
+static void AM_ProcessNiceThing(mobj_t *mobj,
+  angle_t                               angle,
+  fixed_t                               x,
+  fixed_t                               y) {
 #ifdef GL_DOOM
   const float shadow_scale_factor = 1.3f;
   angle_t ang;
@@ -1910,16 +1918,18 @@ static void AM_DrawNiceThings(void) {
   mobj_t *t;
   mpoint_t p;
   angle_t angle;
+  size_t j = 0;
+  player_t *player = NULL;
 
   gld_ClearNiceThings();
 
   // draw players
-  PLAYERS_FOR_EACH(iter) {
-    if ((deathmatch && !demoplayback) && iter.player != plr) {
+  while (P_PlayersIter(&j, &player)) {
+    if ((deathmatch && !demoplayback) && player != plr) {
       continue;
     }
 
-    t = iter.player->mo;
+    t = player->mo;
 
     AM_GetMobjPosition(t, &p, &angle);
 

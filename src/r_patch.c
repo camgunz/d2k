@@ -53,6 +53,8 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
+#include "doomstat.h"
 #include "m_swap.h"
 #include "w_wad.h"
 #include "p_tick.h"

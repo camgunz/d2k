@@ -24,9 +24,16 @@
 #include "z_zone.h"
 
 // We are referring to sprite numbers.
+#include "doomdef.h"
+#include "d_event.h"
 #include "d_main.h"
 #include "info.h"
+
+#ifdef __GNUG__
+#pragma implementation "d_items.h"
+#endif
 #include "d_items.h"
+
 
 //
 // PSPRITE ACTIONS for waepons.
@@ -153,3 +160,4 @@ weaponinfo_t weaponinfo[NUMWEAPONS + 2] = {
 int ammopershot[NUMWEAPONS+2] = {0, 1, 1, 1, 1, 1, 40, 0, 2, 0, 0};
 
 /* vi: set et ts=2 sw=2: */
+

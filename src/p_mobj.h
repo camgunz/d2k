@@ -88,35 +88,6 @@
 // Any questions?
 //
 
-#include "p_defs.h"
-
-// phares 5/14/98:
-// DOOM Editor Numbers (aka doomednum in mobj_t)
-
-#define DEN_PLAYER5 4001
-#define DEN_PLAYER6 4002
-#define DEN_PLAYER7 4003
-#define DEN_PLAYER8 4004
-
-//
-// Difficulty/skill settings/filters.
-//
-// These are Thing flags
-
-// Skill flags.
-#define MTF_EASY                1
-#define MTF_NORMAL              2
-#define MTF_HARD                4
-// Deaf monsters/do not react to sound.
-#define MTF_AMBUSH              8
-
-/* killough 11/98 */
-#define MTF_NOTSINGLE          16
-#define MTF_NOTDM              32
-#define MTF_NOTCOOP            64
-#define MTF_FRIEND            128
-#define MTF_RESERVED          256
-
 //
 // Misc. mobj flags
 //
@@ -411,22 +382,23 @@ extern mobj_t  **blocklinks;   /* for thing chains */
 extern int iquehead;
 extern int iquetail;
 
-mobj_t* P_SubstNullMobj (mobj_t *th);
-void    P_RespawnSpecials(void);
-mobj_t* P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
-void    P_RemoveMobj(mobj_t *th);
-bool    P_SetMobjState(mobj_t *mobj, statenum_t state);
-void    P_MobjThinker(mobj_t *mobj);
-void    P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z);
-void    P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage);
-mobj_t* P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type);
-void    P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type);
-bool    P_IsDoomnumAllowed(int doomnum);
-mobj_t* P_SpawnMapThing (const mapthing_t *mthing, int index);
-void    P_CheckMissileSpawn(mobj_t *mobj);  // killough 8/2/98
-void    P_ExplodeMissile(mobj_t *mobj);     // killough
-void    P_CheckPitch(signed int *pitch);
+mobj_t*  P_SubstNullMobj (mobj_t* th);
+void     P_RespawnSpecials(void);
+mobj_t*  P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
+void     P_RemoveMobj(mobj_t *th);
+bool     P_SetMobjState(mobj_t *mobj, statenum_t state);
+void     P_MobjThinker(mobj_t *mobj);
+void     P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z);
+void     P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage);
+mobj_t*  P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type);
+void     P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type);
+bool     P_IsDoomnumAllowed(int doomnum);
+mobj_t*  P_SpawnMapThing (const mapthing_t*  mthing, int index);
+void     PL_Spawn(player_t *player, const mapthing_t *mthing);
+void     P_CheckMissileSpawn(mobj_t*);  // killough 8/2/98
+void     P_ExplodeMissile(mobj_t*);     // killough
 
 #endif
 
 /* vi: set et ts=2 sw=2: */
+

@@ -29,6 +29,7 @@
 
 #include <xdiff.h>
 
+#include "doomdef.h"
 #include "m_delta.h"
 
 #define BLKSIZE 1024

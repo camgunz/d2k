@@ -29,6 +29,9 @@
 #include <png.h>
 #endif
 
+#include "doomstat.h"
+#include "doomdef.h"
+
 #include "r_defs.h"
 #include "v_video.h"
 #include "gl_opengl.h"
@@ -53,11 +56,11 @@
 //
 
 static void error_fn(png_structp p, png_const_charp s) {
-  D_MsgLocalError("I_ScreenShot: %s\n", s);
+  D_Msg(MSG_ERROR, "I_ScreenShot: %s\n", s);
 }
 
 static void warning_fn(png_structp p, png_const_charp s) {
-  D_MsgLocalWarn("I_ScreenShot: %s\n", s);
+  D_Msg(MSG_WARN, "I_ScreenShot: %s\n", s);
 }
 
 //

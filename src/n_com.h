@@ -32,6 +32,13 @@ typedef struct netcom_s {
   void      *enet_peer;
 } netcom_t;
 
+typedef struct {
+  bool reliable;
+  bool throttle; /* only flushes once per TIC if true */
+} net_channel_info_t;
+
+extern net_channel_info_t net_channel_info[NET_CHANNEL_MAX];
+
 void    N_ComInit(netcom_t *nc, void *enet_peer);
 void    N_ComFree(netcom_t *nc);
 void    N_ComReset(netcom_t *nc);

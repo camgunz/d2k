@@ -23,6 +23,7 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "g_game.h"
 #include "g_state.h"
 #include "n_main.h"

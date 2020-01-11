@@ -23,15 +23,19 @@
 
 #include "z_zone.h"
 
-#include "g_game.h"
-#include "g_state.h"
-#include "pl_cmd.h"
-#include "pl_weap.h"
+#include <enet/enet.h>
+
+#include "doomdef.h"
+#include "doomstat.h"
+#include "d_event.h"
 #include "pl_main.h"
-#include "n_main.h"
-#include "n_msg.h"
 #include "cl_cmd.h"
+#include "g_state.h"
+#include "p_setup.h"
+#include "g_game.h"
+#include "n_main.h"
 #include "cl_net.h"
+#include "pl_cmd.h"
 
 static bool command_is_synchronized(gpointer data, gpointer user_data) {
   idxticcmd_t *icmd = (idxticcmd_t *)data;
@@ -59,13 +63,15 @@ static void count_command(gpointer data, gpointer user_data) {
 }
 
 void CL_TrimSynchronizedCommands(void) {
+  size_t index = 0;
+  player_t *player = NULL;
   int state_tic = G_GetStateFromTic();
 
-  N_MsgCmdLocalDebug("(%5d) Trimming synchronized commands\n", gametic);
+  D_Msg(MSG_CMD, "(%5d) Trimming synchronized commands\n", gametic);
 
-  PLAYERS_FOR_EACH(iter) {
+  while (P_PlayersIter(&index, &player)) {
     PL_TrimCommands(
-      iter.player,
+      player,
       command_is_synchronized,
       GINT_TO_POINTER(state_tic)
     );

@@ -27,6 +27,8 @@
 #define CALLBACK
 #endif
 
+#include "doomdef.h"
+#include "doomstat.h"
 #include "am_map.h"
 #include "p_maputl.h"
 #include "r_defs.h"

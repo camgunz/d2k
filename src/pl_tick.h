@@ -31,6 +31,7 @@ void PL_Move(player_t *player);
 void PL_Thrust(player_t *player, angle_t angle, fixed_t move);
 void PL_SetPitch(player_t *player);
 
-#endif
+#endif  /* P_USER__ */
 
 /* vi: set et ts=2 sw=2: */
+

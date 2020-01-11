@@ -21,30 +21,60 @@
 /*****************************************************************************/
 
 
-#ifndef P_CAMERA_H__
-#define P_CAMERA_H__
+#include "z_zone.h"
 
-typedef struct camera_s {
-  int x;
-  int y;
-  int z;
-  int PrevX;
-  int PrevY;
-  int PrevZ;
-  angle_t angle;
-  angle_t pitch;
-  angle_t PrevAngle;
-  angle_t PrevPitch;
-  int type;
-} camera_t;
+#include "doomdef.h"
+#include "g_game.h"
+#include "p_user.h"
+#include "n_main.h"
+#include "cl_main.h"
+#include "cl_net.h"
 
-extern camera_t walkcamera;
+#define LOG_COMMANDS 0
+#define LOG_POSITIONS 0
 
-void P_WalkTicker(void);
-void P_ResetWalkcam(void);
-void P_SyncWalkcam(bool sync_coords, bool sync_sight);
+static const char *disconnection_reasons[DISCONNECT_REASON_MAX] = {
+  "Lost peer connection",
+  "Got peer disconnection",
+  "Disconnection requested manually",
+  "Error during connection",
+  "Excessive lag",
+  "Malformed setup",
+  "Server full",
+};
 
-#endif
+/* [CG] TODO: Add WAD fetching (waiting on libcurl) */
+bool N_GetWad(const char *name) {
+  return false;
+}
+
+const char* N_RunningStateName(void) {
+  if (CLIENT) {
+    if (CL_Predicting()) {
+      return "predicting";
+    }
+
+    if (CL_RePredicting()) {
+      return "re-predicting";
+    }
+
+    if (CL_Synchronizing()) {
+      return "synchronizing";
+    }
+  }
+  else if (SERVER) {
+    return "server";
+  }
+
+  return "unknown!";
+}
+
+const char* N_GetDisconnectionReason(uint32_t reason) {
+  if (reason >= DISCONNECT_REASON_MAX) {
+    return "unknown";
+  }
+
+  return disconnection_reasons[reason];
+}
 
 /* vi: set et ts=2 sw=2: */
-

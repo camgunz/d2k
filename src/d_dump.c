@@ -23,22 +23,29 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
+#include "doomstat.h"
+#include "d_event.h"
+#include "am_map.h"
+#include "d_dump.h"
+#include "pl_main.h"
+#include "g_game.h"
 #include "m_delta.h"
 #include "m_random.h"
-#include "am_map.h"
-#include "g_comp.h"
-#include "g_demo.h"
-#include "g_game.h"
-#include "p_defs.h"
 #include "p_enemy.h"
 #include "p_ident.h"
+#include "r_defs.h"
+#include "r_state.h"
 #include "p_map.h"
-#include "p_mobj.h"
+#include "p_maputl.h"
+#include "p_setup.h"
 #include "p_spec.h"
 #include "p_tick.h"
-#include "pl_main.h"
-#include "r_defs.h"
+#include "p_saveg.h"
+#include "r_main.h"
 #include "s_advsound.h"
+#include "e6y.h"
+#include "p_mobj.h"
 
 extern int forceOldBsp;
 extern int numspechit;
@@ -61,7 +68,7 @@ static void close_dump_file(void) {
 static void dump_sector_index(pbuf_t *savebuffer, sector_t *s, const char *fn) {
   int sector_id;
 
-  if (!s) {
+  if (s == NULL) {
     M_PBufWriteInt(savebuffer, 0);
     return;
   }
@@ -138,7 +145,7 @@ void D_Dump(pbuf_t *savebuffer) {
     M_PBufWriteInt(savebuffer, gameepisode);
     M_PBufWriteInt(savebuffer, gamemap);
     M_PBufWriteInt(savebuffer, deathmatch);
-    M_PBufWriteInt(savebuffer, P_GetConsolePlayer()->id - 1);
+    M_PBufWriteInt(savebuffer, consoleplayer);
     M_PBufWriteInt(savebuffer, monsters_remember);
     M_PBufWriteInt(savebuffer, variable_friction);
     M_PBufWriteInt(savebuffer, weapon_recoil);
@@ -207,7 +214,7 @@ void D_Dump(pbuf_t *savebuffer) {
     M_PBufWriteInt(savebuffer, gameepisode);
     M_PBufWriteInt(savebuffer, gamemap);
     M_PBufWriteInt(savebuffer, deathmatch);
-    M_PBufWriteInt(savebuffer, P_GetConsolePlayer()->id);
+    M_PBufWriteInt(savebuffer, consoleplayer);
     M_PBufWriteInt(savebuffer, monsters_remember);
     M_PBufWriteInt(savebuffer, variable_friction);
     M_PBufWriteInt(savebuffer, weapon_recoil);
@@ -277,7 +284,7 @@ void D_Dump(pbuf_t *savebuffer) {
     M_PBufWriteInt(savebuffer, fastparm ? 1 : 0);
     /* [CG] nomonsters is > 1 in some demos */
     M_PBufWriteInt(savebuffer, nomonsters ? 1 : 0);
-    M_PBufWriteInt(savebuffer, P_GetConsolePlayer()->id);
+    M_PBufWriteInt(savebuffer, consoleplayer);
   }
 
   for (int i = 0; i < 5; i++) {

@@ -23,6 +23,10 @@
 
 #include "z_zone.h"
 
+#include <SDL.h>
+
+#include "doomdef.h"
+#include "doomstat.h"
 #include "m_argv.h"
 #include "v_video.h"
 #include "i_video.h"
@@ -33,45 +37,50 @@
 
 #ifndef HIBYTE
 #define HIBYTE(W) (((W) >> 8) & 0xFF)
-#endif /* ifndef HIBYTE */
+#endif
 
 int useglgamma;
 int gl_DeviceSupportsGamma = false;
 
-static uint16_t gl_oldHardwareGamma[3][256];
+static Uint16 gl_oldHardwareGamma[3][256];
 
-static void CalculateGammaRamp(float gamma, uint16_t *ramp) {
+static void CalculateGammaRamp (float gamma, Uint16 *ramp)
+{
   int i;
 
   // 0.0 gamma is all black
-  if (gamma <= 0.0f) {
-    for (i = 0; i < 256; i++) {
+  if (gamma <= 0.0f)
+  {
+    for (i = 0; i < 256; i++)
+    {
       ramp[i] = 0;
     }
     return;
   }
-  else {
+  else
+  {
     // 1.0 gamma is identity
-    if (gamma == 1.0f) {
-      for (i = 0; i < 256; i++) {
+    if (gamma == 1.0f)
+    {
+      for (i = 0; i < 256; i++)
+      {
         ramp[i] = (i << 8) | i;
       }
       return;
     }
-    else {
+    else
+    {
       // Calculate a real gamma ramp
       int value;
-
       gamma = 1.0f / gamma;
-
-      for (i = 0; i < 256; i++) {
+      for (i = 0; i < 256; i++)
+      {
         value = (int)(pow((double)i / 256.0, gamma) * 65535.0 + 0.5);
-
-        if (value > 65535) {
+        if (value > 65535)
+        {
           value = 65535;
         }
-
-        ramp[i] = (uint16_t)value;
+        ramp[i] = (Uint16)value;
       }
     }
   }
@@ -80,50 +89,51 @@ static void CalculateGammaRamp(float gamma, uint16_t *ramp) {
 //
 // gld_CheckHardwareGamma
 //
-// Determines if the underlying hardware supports the Win32 gamma correction
-// API.
+// Determines if the underlying hardware supports the Win32 gamma correction API.
 //
-void gld_CheckHardwareGamma(void) {
-  gl_DeviceSupportsGamma = (SDL_GetGammaRamp(
-    gl_oldHardwareGamma[0],
-    gl_oldHardwareGamma[1],
-    gl_oldHardwareGamma[2]
-  ) != -1);
+void gld_CheckHardwareGamma(void)
+{
+  gl_DeviceSupportsGamma = (-1 != SDL_GetGammaRamp(gl_oldHardwareGamma[0], gl_oldHardwareGamma[1], gl_oldHardwareGamma[2]));
 
-  if (gl_DeviceSupportsGamma) {
+  if (gl_DeviceSupportsGamma)
+  {
     //
     // do a sanity check on the gamma values
     //
-    if ((HIBYTE(gl_oldHardwareGamma[0][255]) <=
-         HIBYTE(gl_oldHardwareGamma[0][0])) ||
-        (HIBYTE(gl_oldHardwareGamma[1][255]) <=
-         HIBYTE(gl_oldHardwareGamma[1][0])) ||
-        (HIBYTE(gl_oldHardwareGamma[2][255]) <=
-         HIBYTE(gl_oldHardwareGamma[2][0]))) {
+    if (
+      (HIBYTE(gl_oldHardwareGamma[0][255]) <= HIBYTE(gl_oldHardwareGamma[0][0])) ||
+      (HIBYTE(gl_oldHardwareGamma[1][255]) <= HIBYTE(gl_oldHardwareGamma[1][0])) ||
+      (HIBYTE(gl_oldHardwareGamma[2][255]) <= HIBYTE(gl_oldHardwareGamma[2][0])))
+    {
       gl_DeviceSupportsGamma = false;
     }
 
     //
-    // make sure that we didn't have a prior crash in the game, and if so we
-    // need to
+    // make sure that we didn't have a prior crash in the game, and if so we need to
     // restore the gamma values to at least a linear value
     //
-    if ((HIBYTE(gl_oldHardwareGamma[0][181]) == 255)) {
-      // if ((HIBYTE(gl_oldHardwareGamma[0][247]) == 255))
-      D_MsgLocalWarn(
+    if ((HIBYTE(gl_oldHardwareGamma[0][181]) == 255))
+    //if ((HIBYTE(gl_oldHardwareGamma[0][247]) == 255))
+    {
+      int g;
+
+      D_Msg(MSG_WARN,
         "gld_CheckHardwareGamma: suspicious gamma tables, using linear ramp "
         "for restoration\n"
       );
 
-      for (int g = 0; g < 255; g++) {
+      for ( g = 0; g < 255; g++ )
+      {
         gl_oldHardwareGamma[0][g] = g << 8;
         gl_oldHardwareGamma[1][g] = g << 8;
         gl_oldHardwareGamma[2][g] = g << 8;
       }
     }
+
   }
-  else {
-    D_MsgLocalWarn(
+
+  if (!gl_DeviceSupportsGamma) {
+    D_Msg(MSG_WARN,
       "gld_CheckHardwareGamma: device has broken gamma support\n"
     );
   }
@@ -134,25 +144,24 @@ void gld_CheckHardwareGamma(void) {
 //
 // This routine should only be called if gl_DeviceSupportsGamma is TRUE
 //
-int gld_SetGammaRamp(int gamma) {
-  static int first = true;
+int gld_SetGammaRamp(int gamma)
+{
   int succeeded = false;
+  static int first = true;
   float g = (BETWEEN(0, MAX_GLGAMMA, gamma)) / 10.0f + 1.0f;
-  uint16_t gammatable[256];
+  Uint16 gammatable[256];
 
-  if (!gl_DeviceSupportsGamma) {
+  if (!gl_DeviceSupportsGamma)
     return false;
-  }
 
-  if (gamma == -1) {
-    succeeded = (SDL_SetGammaRamp(
-      gl_oldHardwareGamma[0],
-      gl_oldHardwareGamma[1],
-      gl_oldHardwareGamma[2]
-    ) != -1);
+  if (gamma == -1)
+  {
+    succeeded = (SDL_SetGammaRamp(gl_oldHardwareGamma[0], gl_oldHardwareGamma[1], gl_oldHardwareGamma[2]) != -1);
   }
-  else {
-    if (first && desired_fullscreen) {
+  else
+  {
+    if (first && desired_fullscreen)
+    {
       // From GZDoom:
       //
       // Fix for Radeon 9000, possibly other R200s: When the device is
@@ -160,7 +169,7 @@ int gld_SetGammaRamp(int gamma) {
       // cached copy of the ramp that it doesn't update, so when
       // SetGammaRamp is called later to handle the NeedGammaUpdate flag,
       // it doesn't do anything, because the gamma ramp is the same as the
-      // one passed in the last call, even though the visible gamma ramp
+      // one passed in the last call, even though the visible gamma ramp 
       // actually has changed.
       //
       // So here we force the gamma ramp to something absolutely horrible and
@@ -173,8 +182,9 @@ int gld_SetGammaRamp(int gamma) {
     CalculateGammaRamp(g, gammatable);
 
     succeeded = (SDL_SetGammaRamp(gammatable, gammatable, gammatable) != -1);
-    if (!succeeded) {
-      D_MsgLocalWarn(
+    if (!succeeded)
+    {
+      D_Msg(MSG_WARN,
         "gld_SetGammaRamp: hardware gamma adjustment is not supported\n"
       );
       gl_lightmode = gl_lightmode_glboom;
@@ -186,29 +196,37 @@ int gld_SetGammaRamp(int gamma) {
 
 // gld_ResetGammaRamp
 // Restoring the gamma values to a linear value and exit
-void gld_ResetGammaRamp(void) {
-  if (M_CheckParm("-resetgamma")) {
-    if (gld_SetGammaRamp(1)) {
-      D_MsgLocalWarn(
+void gld_ResetGammaRamp(void)
+{
+  if (M_CheckParm("-resetgamma"))
+  {
+    if (gld_SetGammaRamp(1))
+    {
+      D_Msg(MSG_WARN,
         "gld_ResetGammaRamp: suspicious gamma tables, using linear ramp for "
         "restoration\n"
       );
-
       /* CG: [FIXME] What? */
       _exit(0);
     }
   }
 }
 
-void gld_ApplyGammaRamp(unsigned char *buf, int pitch, int width, int height) {
-  if (gl_hardware_gamma) {
-    uint16_t r[256], g[256], b[256];
+void gld_ApplyGammaRamp(unsigned char *buf, int pitch, int width, int height)
+{
+  if (gl_hardware_gamma)
+  {
+    int w, h;
+    unsigned char *pixel;
+    Uint16 r[256], g[256], b[256];
 
     SDL_GetGammaRamp(&r[0], &g[0], &b[0]);
 
-    for (int h = 0; h < height; h++) {
-      for (int w = 0; w < width; w++) {
-        unsigned char *pixel = buf + h * pitch + 3 * w;
+    for (h = 0; h < height; h++)
+    {
+      for (w = 0; w < width; w++)
+      {
+        pixel = buf + h * pitch + 3 * w;
 
         *(pixel + 0) = (unsigned char)(r[*(pixel + 0)] >> 8);
         *(pixel + 1) = (unsigned char)(g[*(pixel + 1)] >> 8);
@@ -219,3 +237,4 @@ void gld_ApplyGammaRamp(unsigned char *buf, int pitch, int width, int height) {
 }
 
 /* vi: set et ts=2 sw=2: */
+

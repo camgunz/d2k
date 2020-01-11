@@ -116,7 +116,7 @@ static const void* db_registersong(const void *data, unsigned len) {
   if (!duh) {
     dumbfile_close(dfil);
     dfil = NULL;
-    D_MsgLocalWarn("db_registersong: couldn't load as tracker\n");
+    D_Msg(MSG_WARN, "db_registersong: couldn't load as tracker\n");
     return NULL;
   }
 
@@ -184,7 +184,7 @@ static void db_render(void *dest, unsigned nsamp) {
         if (nsampwrit == 0) {
           // special case: avoid infinite recursion
           db_stop();
-          D_MsgLocalWarn(
+          D_Msg(MSG_WARN,
             "db_render: problem (0 length tracker file on loop?\n"
           );
           return;

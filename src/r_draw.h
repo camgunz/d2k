@@ -125,7 +125,7 @@ typedef struct {
 extern draw_vars_t drawvars;
 
 // CPhipps - what translation table for what player
-extern unsigned char playernumtotrans[VANILLA_MAXPLAYERS];
+extern unsigned char playernumtotrans[MAXPLAYERS];
 
 extern unsigned char *translationtables;
 

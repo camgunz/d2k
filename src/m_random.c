@@ -23,12 +23,13 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
+#include "doomstat.h"
+#include "d_event.h"
 #include "m_random.h"
-
-extern int gametic;
-extern int basetic;
-extern int demo_compatibility;
-extern int demo_insurance;
+#include "p_user.h"
+#include "g_game.h"
+#include "d_net.h"
 
 /* CG: 08/13/2014: Add a RNG that isn't sync-critical */
 static GRand *g_rand = NULL;

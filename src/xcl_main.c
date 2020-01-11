@@ -23,6 +23,10 @@
 
 #include "z_zone.h"
 
+#include <enet/enet.h>
+
+#include "doomdef.h"
+#include "doomstat.h"
 #include "g_state.h"
 #include "n_main.h"
 #include "p_user.h"
@@ -105,6 +109,7 @@ static int XCL_GetNetstats(lua_State *L) {
   netpeer_t *server = NULL;
   float packet_loss;
   float packet_loss_jitter;
+  ENetPeer *epeer = NULL;
 
   if (!CLIENT) {
     return 0;
@@ -116,8 +121,13 @@ static int XCL_GetNetstats(lua_State *L) {
     return 0;
   }
 
-  packet_loss = N_PeerGetPacketLoss(server);
-  packet_loss_jitter = N_PeerGetPacketLossJitter(server);
+  epeer = N_PeerGetENetPeer(server);
+
+  packet_loss = epeer->packetLoss;
+  packet_loss = packet_loss / (float)ENET_PEER_PACKET_LOSS_SCALE;
+
+  packet_loss_jitter = epeer->packetLossVariance;
+  packet_loss_jitter = packet_loss_jitter / (float)ENET_PEER_PACKET_LOSS_SCALE;
 
   lua_createtable(L, 0, 18);
 

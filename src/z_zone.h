@@ -226,7 +226,6 @@ void Z_ZoneHistory(char *);
 
 #include "cmp.h"
 
-#include "doomstat.h"
 #include "d_msg.h"
 #include "m_buf.h"
 #include "m_fixed.h"

@@ -26,6 +26,7 @@
 #include <SDL.h>
 #include <cairo/cairo.h>
 
+#include "doomdef.h"
 #include "i_video.h"
 #include "r_defs.h"
 #include "r_patch.h"

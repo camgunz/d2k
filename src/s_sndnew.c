@@ -26,6 +26,8 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
+#include "doomstat.h"
 #include "d_main.h"
 #include "e6y.h"
 #include "i_sound.h"

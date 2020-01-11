@@ -29,6 +29,8 @@
 #include <SDL_image.h>
 #endif
 
+#include "doomdef.h"
+#include "doomstat.h"
 #include "r_defs.h"
 #include "r_data.h"
 #include "r_main.h"

@@ -25,6 +25,7 @@
 
 #include <SDL.h>
 
+#include "doomdef.h"
 #include "r_defs.h"
 #include "sounds.h"
 #include "i_video.h"

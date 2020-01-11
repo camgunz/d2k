@@ -24,15 +24,6 @@
 #ifndef PL_MSG_H__
 #define PL_MSG_H__
 
-struct player_message_s;
-typedef struct player_message_s player_message_t;
-
-struct player_s;
-typedef struct player_s player_t;
-
-player_t* P_GetConsolePlayer(void);
-player_t* P_GetDisplayPlayer(void);
-
 void PL_InitMessages(player_t *player);
 void PL_AddMessage(player_t *player, player_message_t *message);
 void PL_ClearMessagesUpdated(player_t *player);

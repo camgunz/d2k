@@ -43,12 +43,12 @@
 #include "i_pcsound.h"
 #include "i_sound.h"
 
+#include "doomdef.h"
 #include "d_main.h"
 #include "s_sound.h"
 #include "sounds.h"
+#include "g_game.h"
 #include "w_wad.h"
-
-extern int gametic;
 
 bool sound_inited_once = false;
 
@@ -567,12 +567,12 @@ void I_ShutdownSound(void) {
   }
 
   if (sound_inited) {
-    D_MsgLocalInfo("I_ShutdownSound: ");
+    D_Msg(MSG_INFO, "I_ShutdownSound: ");
 #ifdef HAVE_MIXER
     Mix_CloseAudio();
 #endif
     SDL_CloseAudio();
-    D_MsgLocalInfo("\n");
+    D_Msg(MSG_INFO, "\n");
     sound_inited = false;
 
     if (sfxmutex) {
@@ -595,7 +595,7 @@ void I_InitSound(void) {
 
   // haleyjd: the docs say we should do this
   if (SDL_InitSubSystem(SDL_INIT_AUDIO)) {
-    D_MsgLocalInfo("Couldn't initialize SDL audio (%s))\n", SDL_GetError());
+    D_Msg(MSG_INFO, "Couldn't initialize SDL audio (%s))\n", SDL_GetError());
     nosfxparm = true;
     nomusicparm = true;
     return;
@@ -606,7 +606,7 @@ void I_InitSound(void) {
   }
 
   // Secure and configure sound device first.
-  D_MsgLocalInfo("I_InitSound: ");
+  D_Msg(MSG_INFO, "I_InitSound: ");
 
   if (!use_experimental_music) {
 #ifdef HAVE_MIXER
@@ -622,7 +622,7 @@ void I_InitSound(void) {
     );
     
     if (res < 0) {
-      D_MsgLocalInfo("couldn't open audio with desired format (%s)\n",
+      D_Msg(MSG_INFO, "couldn't open audio with desired format (%s)\n",
         SDL_GetError()
       );
       nosfxparm = true;
@@ -635,7 +635,7 @@ void I_InitSound(void) {
     sound_inited = true;
     SAMPLECOUNT = audio_buffers;
     Mix_SetPostMix(update_sound, NULL);
-    D_MsgLocalInfo(" configured audio device with %d samples/slice\n",
+    D_Msg(MSG_INFO, " configured audio device with %d samples/slice\n",
       SAMPLECOUNT
     );
   }
@@ -656,7 +656,7 @@ void I_InitSound(void) {
     audio.callback = update_sound;
 
     if (SDL_OpenAudio(&audio, NULL) < 0) {
-      D_MsgLocalInfo("couldn't open audio with desired format (%s))\n",
+      D_Msg(MSG_INFO, "couldn't open audio with desired format (%s))\n",
         SDL_GetError()
       );
       nosfxparm = true;
@@ -668,7 +668,7 @@ void I_InitSound(void) {
     sound_inited_once = true;//e6y
     sound_inited = true;
     SAMPLECOUNT = audio.samples;
-    D_MsgLocalInfo(" configured audio device with %d samples/slice\n",
+    D_Msg(MSG_INFO, " configured audio device with %d samples/slice\n",
       SAMPLECOUNT
     );
   }
@@ -690,7 +690,7 @@ void I_InitSound(void) {
   }
 
   // Finished initialization.
-  D_MsgLocalInfo("I_InitSound: sound module ready\n");
+  D_Msg(MSG_INFO, "I_InitSound: sound module ready\n");
   SDL_PauseAudio(0);
 }
 

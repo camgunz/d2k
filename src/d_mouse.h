@@ -24,26 +24,14 @@
 #ifndef D_MOUSE_H__
 #define D_MOUSE_H__
 
-extern int movement_mouselook;
-extern int movement_mouseinvert;
-extern int movement_maxviewpitch;
-extern int mouse_handler;
-extern int mouse_doubleclick_as_use;
-extern int mouse_acceleration;
-extern bool mlook_or_fov;
-extern int mlooky;
-
 bool D_MouseShouldBeGrabbed(void);
-void D_Mouse(bool increase, int *value); /* killough */
-void D_MouseChangeHoriz(bool increase);
-void D_MouseChangeVert(bool increase);
-void D_MouseChangeMouseLook(bool increase);
-void D_MouseChangeAccel(bool increase);
+void D_Mouse(int choice, int *sens);      /* killough */
+void D_MouseHoriz(int choice);
+void D_MouseVert(int choice);
+void D_MouseMLook(int choice);
+void D_MouseAccel(int choice);
 void D_MouseScaleAccel(void);
 int  D_MouseAccelerate(int val);
-void D_ChangeMouseLook(void);
-bool D_GetMouseLook(void);
-bool D_HaveMouseLook(void);
 
 #endif
 

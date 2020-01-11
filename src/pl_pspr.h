@@ -24,9 +24,6 @@
 #ifndef PL_PSPR_H__
 #define PL_PSPR_H__
 
-struct player_s;
-typedef struct player_s player_t;
-
 /*
  * Frame flags:
  * handles maximum brightness (torches, muzzle flare, light sources)
@@ -69,6 +66,6 @@ void A_FireOldBFG();
 void PL_SetupPsprites(player_t *player);
 void PL_MovePsprites(player_t *player);
 
-#endif
+#endif  /* P_USER__ */
 
 /* vi: set et ts=2 sw=2: */

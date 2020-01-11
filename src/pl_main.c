@@ -23,6 +23,8 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
+#include "doomstat.h"
 #include "m_idlist.h"
 #include "p_user.h"
 #include "p_player.h"
@@ -47,27 +49,14 @@ uint32_t P_PlayersGetCount(void) {
   return M_IDListGetSize(&new_players);
 }
 
-bool P_PlayersIterate(players_iter_t *iter) {
-  return M_IDListIterate(
-    &new_players,
-    &iter->node,
-    &iter->player,
-    iter->wraparound
-  );
+bool P_PlayersIter(size_t *index, player_t **start) {
+  return M_IDListIterate(&new_players, index, (void **)start);
 }
 
 player_t* P_PlayersGetNew(void) {
   player_t *player = PL_New();
 
-  player->id = M_IDListAdd(&new_players, player);
-
-  return player;
-}
-
-player_t* P_PlayersGetNewWithID(uint32_t id) {
-  player_t *player = PL_New();
-
-  player->id = M_IDListAssign(&new_players, player, id);
+  player->id = M_IDListGetNewID(&new_players, player);
 
   return player;
 }
@@ -281,104 +270,6 @@ int P_PlayerGetTime(player_t *player) {
   }
 
   return (gametic - player->connect_tic) / TICRATE;
-}
-
-//
-// PL_Spawn
-// Called when a player is spawned on the level.
-// Most of the player structure stays unchanged
-//  between levels.
-//
-
-void PL_Spawn(player_t *player, const mapthing_t *mthing) {
-  int i;
-  fixed_t x;
-  fixed_t y;
-  fixed_t z;
-  mobj_t *mobj;
-
-  // e6y
-  // playeringame overflow detection
-  // it detects and emulates overflows on vex6d.wad\bug_wald(toke).lmp, etc.
-  // http://www.doom2.net/doom2/research/runningbody.zip
-  if ((!MULTINET) && PlayeringameOverrun(mthing)) {
-    return;
-  }
-
-  if (p->playerstate == PST_REBORN) {
-    G_PlayerReborn(playernum);
-  }
-
-  /* cph 2001/08/14 - use the options field of memorised player starts to
-   * indicate whether the start really exists in the level.
-   */
-  if (!mthing->options) {
-    I_Error(
-      "P_SpawnPlayer: attempt to spawn player at unavailable start point"
-    );
-  }
-
-  x    = mthing->x << FRACBITS;
-  y    = mthing->y << FRACBITS;
-  z    = ONFLOORZ;
-  mobj = P_SpawnMobj(x, y, z, MT_PLAYER);
-
-  if (deathmatch) {
-    mobj->index = TracerGetDeathmatchStart(player);
-  }
-  else {
-    mobj->index = TracerGetPlayerStart(mthing->type - 1);
-  }
-
-  // set color translations for player sprites
-
-  mobj->flags |= playernumtotrans[P_GetVanillaNum(player)] << MF_TRANSSHIFT;
-
-  /* CG: Make the server's player invisible, etc. */
-  if (MULTINET && player->id == 1) {
-    mobj->flags &= ~MF_SOLID;
-    mobj->flags &= ~MF_SHOOTABLE;
-    mobj->flags |=  MF_NOSECTOR;
-    mobj->flags |=  MF_NOBLOCKMAP;
-  }
-
-  mobj->angle      = ANG45 * (mthing->angle / 45);
-  mobj->player     = player;
-  mobj->health     = player->health;
-  mobj->player->prev_viewangle = mobj->angle + viewangleoffset;
-
-  player->mo            = mobj;
-  player->playerstate   = PST_LIVE;
-  player->refire        = 0;
-  PL_ClearMessages(player);
-  player->damagecount   = 0;
-  player->bonuscount    = 0;
-  player->extralight    = 0;
-  player->fixedcolormap = 0;
-  player->viewheight    = VIEWHEIGHT;
-
-  player->momx = player->momy = 0; // killough 10/98: initialize bobbing to 0.
-
-  // setup gun psprite
-
-  P_SetupPsprites(player);
-
-  // give all cards in death match mode
-
-  if (deathmatch) {
-    for (i = 0; i < NUMCARDS; i++) {
-      player->cards[i] = true;
-    }
-  }
-
-  if (mthing->type == P_GetConsolePlayer()->id) {
-    ST_Start(); // wake up the status bar
-    HU_Start(); // wake up the heads up text
-  }
-
-  PL_ClearCommands(player);
-
-  R_SmoothPlaying_Reset(player); // e6y
 }
 
 /* vi: set et ts=2 sw=2: */

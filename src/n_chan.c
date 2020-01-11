@@ -25,12 +25,12 @@
 
 #include <enet/enet.h>
 
+#include "doomdef.h"
 #include "i_main.h"
+#include "g_game.h"
 #include "n_main.h"
+#include "p_user.h"
 #include "n_chan.h"
-#include "pl_msg.h"
-
-extern int gametic;
 
 typedef struct tocentry_s {
   unsigned int  index;
@@ -43,27 +43,13 @@ typedef struct packet_buf_s {
   unsigned int   cursor;
 } packet_buf_t;
 
-net_message_info_t network_message_info[NM_MAX] = {
-  { "none", NET_CHANNEL_UNRELIABLE },
-  { "setup", NET_CHANNEL_RELIABLE },
-  { "full state", NET_CHANNEL_RELIABLE },
-  { "authentication", NET_CHANNEL_RELIABLE },
-  { "chat message", NET_CHANNEL_RELIABLE },
-  { "sync", NET_CHANNEL_UNRELIABLE },
-  { "player preference change", NET_CHANNEL_RELIABLE },
-  { "game action", NET_CHANNEL_RELIABLE },
-  { "RCON command", NET_CHANNEL_RELIABLE },
-  { "vote request", NET_CHANNEL_RELIABLE },
-  { "ping", NET_CHANNEL_RELIABLE },
-};
-
 static void serialize_toc(netchan_t *chan) {
   M_PBufClear(&chan->packed_toc);
 
   if (!M_PBufWriteMap(&chan->packed_toc, chan->toc->len))
     I_Error("Error writing map: %s.\n", cmp_strerror(&chan->packed_toc.cmp));
 
-  D_Msg(MSG_NET, "serialize_toc: Buffer cursor, size, capacity: %zu/%zu/%zu\n",
+  D_Msg(MSG_MEM, "serialize_toc: Buffer cursor, size, capacity: %zu/%zu/%zu\n",
     M_PBufGetCursor(&chan->packed_toc),
     M_PBufGetSize(&chan->packed_toc),
     M_PBufGetCapacity(&chan->packed_toc)
@@ -122,14 +108,14 @@ static bool deserialize_toc(GArray *toc, unsigned char *data,
     tocentry_t *toc_entry = &g_array_index(toc, tocentry_t, i);
 
     if (!cmp_read_uint(&cmp, &toc_entry->index)) {
-      PL_Printf(P_GetConsolePlayer(),
+      P_Printf(consoleplayer,
         "Error reading message index: %s\n", cmp_strerror(&cmp)
       );
       return false;
     }
 
     if (!cmp_read_uchar(&cmp, &toc_entry->type)) {
-      PL_Printf(P_GetConsolePlayer(), "Error reading message type: %s\n",
+      P_Printf(consoleplayer, "Error reading message type: %s\n",
         cmp_strerror(&cmp)
       );
       return false;
@@ -254,16 +240,14 @@ bool N_ChannelLoadFromData(netchan_t *nc, unsigned char *data, size_t size) {
   N_ChannelClear(nc);
 
   if (!deserialize_toc(nc->toc, data, size, &message_start_point)) {
-    PL_Printf(P_GetConsolePlayer(),
+    P_Printf(consoleplayer,
       "N_ChannelLoadFromData: Error reading packet's TOC.\n"
     );
     return false;
   }
 
   if (message_start_point >= size) {
-    PL_Printf(P_GetConsolePlayer(),
-      "N_ChannelLoadFromData: Received empty packet.\n"
-    );
+    P_Printf(consoleplayer, "N_ChannelLoadFromData: Received empty packet.\n");
     return false;
   }
 
@@ -295,7 +279,7 @@ bool N_ChannelLoadNextMessage(netchan_t *nc, net_message_e *message_type) {
     toc_entry = &g_array_index(nc->toc, tocentry_t, i);
 
     if (toc_entry->index >= M_PBufGetSize(&nc->messages)) {
-      PL_Printf(P_GetConsolePlayer(),
+      P_Printf(consoleplayer,
         "N_PeerLoadNextMessage: Invalid message index (%u >= %zu).\n",
         toc_entry->index, M_PBufGetSize(&nc->messages)
       );

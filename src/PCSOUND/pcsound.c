@@ -70,7 +70,7 @@ int PCSound_Init(pcsound_callback_func callback_func) {
           pcsound_driver = drivers[i];
         }
         else {
-          D_MsgLocalWarn("Failed to initialise PC sound driver: %s\n",
+          D_Msg(MSG_WARN, "Failed to initialise PC sound driver: %s\n",
             drivers[i]->name
           );
           break;
@@ -90,11 +90,11 @@ int PCSound_Init(pcsound_callback_func callback_func) {
   }
     
   if (pcsound_driver != NULL) {
-    D_MsgLocalInfo("Using PC sound driver: %s\n", pcsound_driver->name);
+    D_Msg(MSG_INFO, "Using PC sound driver: %s\n", pcsound_driver->name);
     return 1;
   }
   else {
-    D_MsgLocalWarn("Failed to find a working PC sound driver.\n");
+    D_Msg(MSG_WARN, "Failed to find a working PC sound driver.\n");
     return 0;
   }
 }

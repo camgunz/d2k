@@ -23,69 +23,8 @@
 
 #include "z_zone.h"
 
-#include "g_corpse.h"
-
-// killough 2/8/98: make corpse queue variable in size
-/*
- * CG 09/25/2014: Use a GQueue for this instead
- *
- * int    bodyqueslot, bodyquesize;        // killough 2/8/98
- * mobj_t **bodyque = 0;                   // phares 8/10/98
- */
-static int corpse_queue_initialized;
-static int corpse_queue_size; // killough 2/8/98
-static GQueue *corpse_queue = NULL;
-
-bool G_CorpseQueueInitialized(void) {
-  return corpse_queue_initialized;
-}
-
-void G_CorpseQueueInit(void) {
-  if (corpse_queue_initialized) {
-    I_Error("G_CorpseQueueInit: Corpse queue already initialized");
-  }
-
-  corpse_queue = g_queue_new();
-}
-
-void G_CorpseQueueClear(void) {
-  /*
-   * CG: This is only called when loading a new state or map, therefore the
-   *     queued corpses don't leak.  This is why the call to P_RemoveMobj or
-   *     free is omitted.
-   */
-  if (corpse_queue_size < 0) {
-    I_Error("clear_corpses: corpse_queue_size < 0 (%d)", corpse_queue_size);
-  }
-
-  if (corpse_queue) {
-    g_queue_free(corpse_queue);
-    corpse_queue = NULL;
-  }
-
-  if (corpse_queue_size > 0) {
-    corpse_queue = g_queue_new();
-  }
-}
-
-void G_CorpseQueuePush(mobj_t *mobj) {
-  g_queue_push_tail(corpse_queue, mobj);
-}
-
-void G_CorpseQueuePop(void) {
-  P_RemoveMobj(g_queue_pop_head(corpse_queue));
-}
-
-int G_CorpseQueueGetMaxLen(void) {
-  return corpse_queue_size;
-}
-
-void G_CorpseQueueSetMaxLen(int new_max_len) {
-  if (new_max_len < 0) {
-    I_Error("G_CorpseQueueSetMaxLen: Cannot set corpse queue len < 0\n");
-  }
-
-  corpse_queue_size = new_max_len;
-}
+#include "c_cvar.h"
+#include "x_main.h"
+#include "x_intern.h"
 
 /* vi: set et ts=2 sw=2: */

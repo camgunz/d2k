@@ -23,6 +23,8 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
+#include "doomstat.h" //jff 5/18/98
 #include "m_random.h"
 #include "r_main.h"
 #include "p_spec.h"

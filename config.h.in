@@ -11,7 +11,6 @@
 #define PACKAGE_STRING "${PACKAGE_STRING}"
 #define PACKAGE_TARNAME "${PACKAGE_TARNAME}"
 #define PACKAGE_URL "${PACKAGE_URL}"
-#define GL_DOOM
 
 #cmakedefine DOOMWADDIR "@DOOMWADDIR@"
 #cmakedefine CHECK_HEAP
@@ -23,6 +22,7 @@
 #cmakedefine SIMPLECHECKS
 #cmakedefine ZONEIDCHECK
 
+#cmakedefine GL_DOOM
 #cmakedefine USE_GLU_IMAGESCALE
 #cmakedefine USE_GLU_MIPMAP
 #cmakedefine USE_GLU_TESS

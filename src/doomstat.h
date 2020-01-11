@@ -21,52 +21,14 @@
 /*****************************************************************************/
 
 
-#ifndef DOOMSTAT_H__
-#define DOOMSTAT_H__
+#ifndef D_STATE_H__
+#define D_STATE_H__
 
-#define VANILLA_MAXPLAYERS 4
-#define PLAYER_CAP 2000
-#define TICRATE 35
-
-#define MULTINET     (netgame && (!solonet) && (!netdemo))
-#define CLIENT       (MULTINET && (!netserver))
-#define SERVER       (MULTINET && netserver)
-#define SINGLEPLAYER (!demorecording && !demoplayback && !democontinue && \
-                      !netgame)
-
-// Game mode handling - identify IWAD version
-//  to handle IWAD dependend animations etc.
-typedef enum {
-  shareware,    // DOOM 1 shareware, E1, M9
-  registered,   // DOOM 1 registered, E3, M27
-  commercial,   // DOOM 2 retail, E1 M34  (DOOM 2 german edition not handled)
-  retail,       // DOOM 1 retail, E4, M36
-  indetermined  // Well, no IWAD found.
-} GameMode_e;
-
-// Mission packs - might be useful for TC stuff?
-typedef enum {
-  doom,         // DOOM 1
-  doom2,        // DOOM 2
-  pack_tnt,     // TNT mission pack
-  pack_plut,    // Plutonia pack
-  pack_nerve,   // No Rest For The Living
-  hacx,         // HACX - Twitch 'n Kill
-  chex,         // Chex Quest
-  none
-} GameMission_e;
-
-extern bool          usergame;
-extern bool          solonet;
-extern bool          netgame;
-extern bool          netserver;
-extern bool          netdemo;
-extern bool          demorecording;
-extern bool          demoplayback;
-extern bool          democontinue;
-extern GameMode_e    gamemode;
-extern GameMission_e gamemission;
+#ifdef __GNUG__
+#pragma interface
+#endif
 
 #endif
 
 /* vi: set et ts=2 sw=2: */
+

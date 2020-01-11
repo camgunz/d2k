@@ -25,6 +25,9 @@
 
 #include <enet/enet.h>
 
+#include "doomdef.h"
+#include "doomstat.h"
+#include "d_event.h"
 #include "g_game.h"
 #include "g_state.h"
 #include "n_main.h"
@@ -489,18 +492,6 @@ void N_PeerResetSync(netpeer_t *np) {
 
 void* N_PeerGetENetPeer(netpeer_t *np) {
   return N_ComGetENetPeer(&np->com);
-}
-
-float N_PeerGetPacketLoss(netpeer_t *np) {
-  ENetPeer *epeer = N_PeerGetENetPeer(np);
-
-  return epeer->packetLoss / (float)ENET_PEER_PACKET_LOSS_SCALE;
-}
-
-float N_PeerGetPacketLossJitter(netpeer_t *np) {
-  ENetPeer *epeer = N_PeerGetENetPeer(np);
-
-  return epeer->packetLossVariance / (float)ENET_PEER_PACKET_LOSS_SCALE;
 }
 
 /* vi: set et ts=2 sw=2: */

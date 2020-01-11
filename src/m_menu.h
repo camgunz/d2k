@@ -21,8 +21,8 @@
 /*****************************************************************************/
 
 
-#ifndef MN_MAIN_H__
-#define MN_MAIN_H__
+#ifndef M_MENU_H__
+#define M_MENU_H__
 
 //
 // MENUS
@@ -33,12 +33,95 @@
 // this can resize the view and change game parameters.
 // Does all the real work of the menu interaction.
 
-#define MAX_KEY 65536
-#define MAX_MOUSEB 4
+typedef struct menuitem_s {
+  short status; // 0 = no cursor here, 1 = ok, 2 = arrows ok
+  char  name[10];
+
+  // choice = menu item #.
+  // if status = 2,
+  //   choice=0:leftarrow,1:rightarrow
+  void  (*routine)(int choice);
+  char  alphaKey; // hotkey in menu
+  const char *alttext;
+} menuitem_t;
+
+typedef struct menu_s {
+  short           numitems;     // # of menu items
+  struct menu_s*  prevMenu;     // previous menu
+  menuitem_t*     menuitems;    // menu items
+  void            (*routine)(); // draw routine
+  short           x;
+  short           y;            // x,y of menu
+  short           lastOn;       // last item user was on in menu
+} menu_t;
+
+enum {
+  sfx_vol,
+  sfx_empty1,
+  music_vol,
+  sfx_empty2,
+  sound_end
+} sound_e;
+
+extern short itemOn;
+extern menu_t HelpDef;
+extern menu_t SoundDef;
+extern menu_t SetupDef;
+extern int screenSize;
+
+//jff 4/18/98
+extern bool inhelpscreens;
+extern bool BorderNeedRefresh;
+
+void M_SaveGame(int choice);
+void M_LoadGame(int choice);
+void M_QuickSave(void);
+void M_EndGame(int choice);
+void M_ChangeMessages(int choice);
+void M_QuickLoad(void);
+void M_QuitDOOM(int choice);
+void M_SizeDisplay(int choice);
+void M_SetupNextMenu(menu_t *menudef);
+
+void M_SetCurrentMenu(menu_t *new_menu);
+
+bool M_Responder (event_t *ev);
+
+// Called by main loop,
+// only used for menu (skull cursor) animation.
+
+void M_Ticker (void);
+
+// Called by main loop,
+// draws the menus directly into the screen buffer.
+
+void M_Drawer (void);
+
+// Called by D_DoomMain,
+// loads the config file.
+
+void M_Init (void);
+
+// Called by intro code to force menu up upon a keypress,
+// does nothing if menu is already up.
+
+void M_StartControlPanel (void);
+
+void M_ForcedLoadGame(const char *msg); // killough 5/15/98: forced loadgames
+
+void M_Trans(void);          // killough 11/98: reset translucency
+
+void M_ResetMenu(void);      // killough 11/98: reset main menu ordering
+
+void M_DrawCredits(void);    // killough 11/98
 
 /* killough 8/15/98: warn about changes not being committed until next game */
 #define warn_about_changes(x) (warning_about_changes=(x), \
              print_warning_about_changes = 2)
+
+extern int warning_about_changes, print_warning_about_changes;
+
+extern int menu_background;
 
 /****************************
  *
@@ -80,52 +163,13 @@
  * S_HASDEFPTR = the set of items whose var field points to default array
  */
 
-#define S_SHOWDESC (\
-  S_TITLE|S_YESNO|S_CRITEM|S_COLOR|S_CHAT|S_RESET|S_PREV|S_NEXT|S_KEY|\
-  S_WEAP|S_NUM|S_FILE|S_CREDIT|S_CHOICE\
-)
+#define S_SHOWDESC (S_TITLE|S_YESNO|S_CRITEM|S_COLOR|S_CHAT|S_RESET|S_PREV|S_NEXT|S_KEY|S_WEAP|S_NUM|S_FILE|S_CREDIT|S_CHOICE)
 
-#define S_SHOWSET (\
-  S_YESNO|S_CRITEM|S_COLOR|S_CHAT|S_KEY|S_WEAP|S_NUM|S_FILE|S_CHOICE\
-)
+#define S_SHOWSET  (S_YESNO|S_CRITEM|S_COLOR|S_CHAT|S_KEY|S_WEAP|S_NUM|S_FILE|S_CHOICE)
 
 #define S_STRING (S_CHAT|S_FILE)
 
 #define S_HASDEFPTR (S_STRING|S_YESNO|S_NUM|S_WEAP|S_COLOR|S_CRITEM|S_CHOICE)
-
-typedef enum {
-  mnact_inactive, // no menu
-  mnact_float, // doom-style large font menu, doesn't overlap anything
-  mnact_full, // boom-style small font menu, may overlap status bar
-} menuactive_e;
-
-extern menuactive_e menuactive; // Type of menu overlaid, if any
-
-typedef enum {
-  sfx_vol,
-  sfx_empty1,
-  music_vol,
-  sfx_empty2,
-  sound_end
-} sound_e;
-
-// phares 4/19/98:
-// Defines Setup Screen groups that config variables appear in.
-// Used when resetting the defaults for every item in a Setup group.
-
-typedef enum {
-  ss_none,
-  ss_keys,
-  ss_weap,
-  ss_stat,
-  ss_auto,
-  ss_enem,
-  ss_mess,
-  ss_chat,
-  ss_gen,       /* killough 10/98 */
-  ss_comp,      /* killough 10/98 */
-  ss_max
-} ss_types;
 
 /****************************
  *
@@ -157,36 +201,16 @@ typedef enum {
  * Moved from m_menu.c to m_menu.h so that m_misc.c can use it.
  */
 
-typedef struct menuitem_s {
-  short status; // 0 = no cursor here, 1 = ok, 2 = arrows ok
-  char  name[10];
+typedef struct setup_menu_s
+{
+  const char  *m_text;  /* text to display */
+  int         m_flags;  /* phares 4/17/98: flag bits S_* (defined above) */
+  setup_group m_group;  /* Group */
+  short       m_x;      /* screen x position (left is 0) */
+  short       m_y;      /* screen y position (top is 0) */
 
-  // choice = menu item #.
-  // if status = 2,
-  //   choice=0:leftarrow,1:rightarrow
-  void  (*routine)(int choice);
-  char  alphaKey; // hotkey in menu
-  const char *alttext;
-} menuitem_t;
-
-typedef struct menu_s {
-  short          numitems;     // # of menu items
-  struct menu_s *prevMenu;     // previous menu
-  menuitem_t    *menuitems;    // menu items
-  void           (*routine)(); // draw routine
-  short          x;
-  short          y;            // x,y of menu
-  short          lastOn;       // last item user was on in menu
-} menu_t;
-
-typedef struct setup_menu_s {
-  const char  *m_text;   /* text to display */
-  int          m_flags;  /* phares 4/17/98: flag bits S_* (defined above) */
-  setup_group  m_group;  /* Group */
-  short        m_x;      /* screen x position (left is 0) */
-  short        m_y;      /* screen y position (top is 0) */
-
-  union { /* killough 11/98: The first field is a union of several types */
+  union  /* killough 11/98: The first field is a union of several types */
+  {
     const void          *var;   /* generic variable */
     int                 *m_key; /* key value, or 0 if not shown */
     const char          *name;  /* name */
@@ -200,57 +224,7 @@ typedef struct setup_menu_s {
   const char **selectstrings; /* list of strings for choice value */
 } setup_menu_t;
 
-extern short itemOn;
-extern menu_t HelpDef;
-extern menu_t SoundDef;
-extern menu_t SetupDef;
-extern int screenSize;
-
-//jff 4/18/98
-extern bool inhelpscreens;
-extern bool BorderNeedRefresh;
-
-extern int warning_about_changes;
-extern int print_warning_about_changes;
-
-extern int menu_background;
-
-void MN_SaveGame(int choice);
-void MN_LoadGame(int choice);
-void MN_QuickSave(void);
-void MN_EndGame(int choice);
-void MN_ChangeMessages(int choice);
-void MN_QuickLoad(void);
-void MN_QuitDOOM(int choice);
-void MN_SizeDisplay(int choice);
-void MN_SetupNextMenu(menu_t *menudef);
-
-void MN_SetCurrentMenu(menu_t *new_menu);
-
-bool MN_Responder(event_t *ev);
-
-// Called by main loop,
-// only used for menu (skull cursor) animation.
-void MN_Ticker(void);
-
-// Called by main loop,
-// draws the menus directly into the screen buffer.
-void MN_Drawer(void);
-
-// Called by D_DoomMain,
-// loads the config file.
-void MN_Init(void);
-
-// Called by intro code to force menu up upon a keypress,
-// does nothing if menu is already up.
-void MN_StartControlPanel(void);
-
-void MN_ForcedLoadGame(const char *msg); // killough 5/15/98: forced loadgames
-void MN_Trans(void);                     // killough 11/98: reset translucency
-void MN_ResetMenu(void);                 // killough 11/98: reset main menu
-                                         //                 ordering
-void MN_DrawCredits(void);               // killough 11/98
-
 #endif
 
 /* vi: set et ts=2 sw=2: */
+

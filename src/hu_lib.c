@@ -22,6 +22,9 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
+#include "doomstat.h"
+#include "d_event.h"
 #include "am_map.h"
 #include "r_defs.h"
 #include "r_main.h"
@@ -30,8 +33,8 @@
 #include "hu_lib.h"
 #include "hu_stuff.h"
 
-extern int key_backspace;                                           // phares
-extern int key_enter;                                               // phares
+extern int  key_backspace;                                          // phares
+extern int  key_enter;                                              // phares
 
 //
 // not used currently

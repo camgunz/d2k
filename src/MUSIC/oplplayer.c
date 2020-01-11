@@ -26,6 +26,7 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "m_misc.h"
 #include "memio.h"
 #include "midifile.h"
@@ -974,7 +975,7 @@ static void ControllerEvent(opl_track_data_t *track, midi_event_t *event)
 
         default:
 #ifdef OPL_MIDI_DEBUG
-            D_MsgLocalWarn("Unknown MIDI controller type: %i\n", controller);
+            D_Msg(MSG_WARN, "Unknown MIDI controller type: %i\n", controller);
 #endif
             break;
     }
@@ -1031,7 +1032,7 @@ static void MetaEvent(opl_track_data_t *track, midi_event_t *event)
 
         default:
 #ifdef OPL_MIDI_DEBUG
-            D_MsgLocalWarn("Unknown MIDI meta event type: %i\n",
+            D_Msg(MSG_WARN, "Unknown MIDI meta event type: %i\n",
               event->data.meta.type
             );
 #endif
@@ -1077,7 +1078,7 @@ static void ProcessEvent(opl_track_data_t *track, midi_event_t *event)
 
         default:
 #ifdef OPL_MIDI_DEBUG
-            D_MsgLocalWarn("Unknown MIDI event type %i\n", event->event_type);
+            D_Msg(MSG_WARN, "Unknown MIDI event type %i\n", event->event_type);
 #endif
             break;
     }
@@ -1353,7 +1354,7 @@ static const void *I_OPL_RegisterSong(const void *data, unsigned len)
     // time numbers we have to traverse the tracks and everything
     if (mf.len < 100)
     {
-        D_MsgLocalWarn(
+        D_Msg(MSG_WARN,
           "I_OPL_RegisterSong: Very short MIDI (%zu bytes)\n", mf.len
         );
         return NULL;
@@ -1363,7 +1364,7 @@ static const void *I_OPL_RegisterSong(const void *data, unsigned len)
 
     if (result == NULL)
     {
-        D_MsgLocalWarn("I_OPL_RegisterSong: Failed to load MID.\n");
+        D_Msg(MSG_WARN, "I_OPL_RegisterSong: Failed to load MID.\n");
     }
     
 

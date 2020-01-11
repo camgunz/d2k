@@ -23,6 +23,11 @@
 
 #include "z_zone.h"
 
+#include <enet/enet.h>
+
+#include "doomdef.h"
+#include "doomstat.h"
+#include "d_event.h"
 #include "e6y.h"
 #include "g_game.h"
 #include "g_state.h"

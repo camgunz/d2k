@@ -23,13 +23,13 @@
 
 #include "z_zone.h"
 
+#include "doomdef.h"
 #include "sounds.h"
 #include "m_fixed.h"
 #include "p_setup.h"
 #include "p_mobj.h"
 #include "p_enemy.h"
-#include "pl_main.h"
-#include "pl_pspr.h"
+#include "p_user.h"
 #include "info.h"
 
 void A_BetaSkullAttack(); // killough 10/98: beta lost souls attacked different

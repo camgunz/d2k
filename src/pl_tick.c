@@ -23,9 +23,14 @@
 
 #include "z_zone.h"
 
+#include <enet/enet.h>
+
+#include "doomdef.h"
+#include "doomstat.h"
+#include "d_event.h"
+
 #include "am_map.h"
 #include "c_main.h"
-#include "d_event.h"
 #include "e6y.h"
 #include "g_game.h"
 #include "g_state.h"
@@ -40,7 +45,7 @@
 #include "cl_net.h"
 #include "p_map.h"
 #include "p_spec.h"
-#include "pl_tick.h"
+#include "p_user.h"
 #include "w_wad.h"
 #include "r_demo.h"
 #include "r_fps.h"
@@ -59,40 +64,19 @@
 
 bool onground; // whether player is on ground or in air
 
-static void side_thrust(player_t *player, angle_t angle, fixed_t move) {
+//
+// P_Thrust
+// Moves the given origin along a given angle.
+//
+
+void P_SideThrust(player_t *player, angle_t angle, fixed_t move) {
   angle >>= ANGLETOFINESHIFT;
 
   player->mo->momx += FixedMul(move, finecosine[angle]);
   player->mo->momy += FixedMul(move, finesine[angle]);
 }
 
-/*
- * bob
- *
- * Same as P_Thrust, but only affects bobbing.
- *
- * killough 10/98: We apply thrust separately between the real physical player
- * and the part which affects bobbing. This way, bobbing only comes from player
- * motion, nothing external, avoiding many problems, e.g. bobbing should not
- * occur on conveyors, unless the player walks on one, and bobbing should be
- * reduced at a regular rate, even on ice (where the player coasts).
- */
-
-static void bob(player_t *player, angle_t angle, fixed_t move) {
-  if (!mbf_features && !prboom_comp[PC_PRBOOM_FRICTION].state) { //e6y
-    return;
-  }
-
-  player->momx += FixedMul(move, finecosine[angle >>= ANGLETOFINESHIFT]);
-  player->momy += FixedMul(move, finesine[angle]);
-}
-
-//
-// PL_Thrust
-// Moves the given origin along a given angle.
-//
-
-void PL_Thrust(player_t* player,angle_t angle,fixed_t move) {
+void P_Thrust(player_t* player,angle_t angle,fixed_t move) {
   angle >>= ANGLETOFINESHIFT;
 
   if ((player->mo->flags & MF_FLY) && player->mo->pitch != 0) {
@@ -107,12 +91,38 @@ void PL_Thrust(player_t* player,angle_t angle,fixed_t move) {
 }
 
 
+/*
+ * P_Bob
+ * Same as P_Thrust, but only affects bobbing.
+ *
+ * killough 10/98: We apply thrust separately between the real physical player
+ * and the part which affects bobbing. This way, bobbing only comes from player
+ * motion, nothing external, avoiding many problems, e.g. bobbing should not
+ * occur on conveyors, unless the player walks on one, and bobbing should be
+ * reduced at a regular rate, even on ice (where the player coasts).
+ */
+
+static void P_Bob(player_t *player, angle_t angle, fixed_t move) {
+  if (!mbf_features && !prboom_comp[PC_PRBOOM_FRICTION].state) //e6y
+    return;
+
+  player->momx += FixedMul(move, finecosine[angle >>= ANGLETOFINESHIFT]);
+  player->momy += FixedMul(move, finesine[angle]);
+}
+
+static void destroy_message(gpointer data) {
+  player_message_t *msg = data;
+
+  free(msg->content);
+  free(msg);
+}
+
 //
 // P_CalcHeight
 // Calculate the walking / running height adjustment
 //
 
-void PL_CalcHeight(player_t *player) {
+void P_CalcHeight(player_t *player) {
   int angle;
   fixed_t bob;
 
@@ -133,9 +143,8 @@ void PL_CalcHeight(player_t *player) {
 
   player->bob = 0;
 
-  if ((player->mo->flags & MF_FLY) && !onground) {
+  if ((player->mo->flags & MF_FLY) && !onground)
     player->bob = FRACUNIT / 2;
-  }
 
   if (mbf_features) {
     if (player_bobbing) {
@@ -195,17 +204,15 @@ void PL_CalcHeight(player_t *player) {
 
     if (player->viewheight < VIEWHEIGHT / 2) {
       player->viewheight = VIEWHEIGHT / 2;
-      if (player->deltaviewheight <= 0) {
+      if (player->deltaviewheight <= 0)
         player->deltaviewheight = 1;
-      }
     }
 
     if (player->deltaviewheight) {
       player->deltaviewheight += FRACUNIT / 4;
 
-      if (!player->deltaviewheight) {
+      if (!player->deltaviewheight)
         player->deltaviewheight = 1;
-      }
     }
   }
 
@@ -219,23 +226,19 @@ void PL_CalcHeight(player_t *player) {
 
 
 //
-// PL_SetPitch
+// P_SetPitch
 // Mouse Look Stuff
 //
-void PL_SetPitch(player_t *player) {
+void P_SetPitch(player_t *player) {
   mobj_t *mo = player->mo;
 
-  if (!PL_IsConsolePlayer(player)) {
-    if (demoplayback || democontinue) {
-      mo->pitch = R_DemoEx_ReadMLook();
-      P_CheckPitch((signed int *)&mo->pitch);
-    }
-    else {
+  if (player == &players[consoleplayer]) {
+    if (!(demoplayback || democontinue)) {
       if (GetMouseLook()) {
         if (!mo->reactiontime &&
             (!(automapmode & am_active) || (automapmode & am_overlay))) {
           mo->pitch += (mlooky << 16);
-          P_CheckPitch((signed int *)&mo->pitch);
+          CheckPitch((signed int *)&mo->pitch);
         }
       }
       else {
@@ -244,6 +247,10 @@ void PL_SetPitch(player_t *player) {
 
       R_DemoEx_WriteMLook(mo->pitch);
     }
+    else {
+      mo->pitch = R_DemoEx_ReadMLook();
+      CheckPitch((signed int *)&mo->pitch);
+    }
   }
   else {
     mo->pitch = 0;
@@ -251,21 +258,20 @@ void PL_SetPitch(player_t *player) {
 }
 
 //
-// PL_Move
+// P_MovePlayer
 //
 // Adds momentum if the player is not in the air
 //
 // killough 10/98: simplified
-//
-void PL_Move(player_t *player) {
+
+void P_MovePlayer(player_t *player) {
   ticcmd_t *cmd = &player->cmd;
   mobj_t *mo = player->mo;
 
   mo->angle += cmd->angleturn << 16;
 
-  if (demo_smoothturns && player == &players[displayplayer]) {
+  if (demo_smoothturns && player == &players[displayplayer])
     R_SmoothPlaying_Add(cmd->angleturn << 16);
-  }
 
   onground = mo->z <= mo->floorz;
 
@@ -308,13 +314,13 @@ void PL_Move(player_t *player) {
         friction < ORIG_FRICTION ? movefactor : ORIG_FRICTION_FACTOR;
 
       if (cmd->forwardmove) {
-        bob(player,mo->angle,cmd->forwardmove*bobfactor);
+        P_Bob(player,mo->angle,cmd->forwardmove*bobfactor);
         P_Thrust(player,mo->angle,cmd->forwardmove*movefactor);
       }
 
       if (cmd->sidemove) {
-        bob(player,mo->angle - ANG90,cmd->sidemove * bobfactor);
-        side_thrust(player,mo->angle - ANG90, cmd->sidemove * movefactor);
+        P_Bob(player,mo->angle - ANG90,cmd->sidemove * bobfactor);
+        P_SideThrust(player,mo->angle - ANG90, cmd->sidemove * movefactor);
       }
     }
     else if (comperr(comperr_allowjump)) {
@@ -337,7 +343,7 @@ void PL_Move(player_t *player) {
 // Decrease POV height to floor height.
 //
 
-void PL_DeathThink(player_t *player) {
+void P_DeathThink(player_t *player) {
   angle_t angle;
   angle_t delta;
 
@@ -492,6 +498,118 @@ void PL_Think(player_t *player) {
   else {
     player->fixedcolormap = 0;
   }
+}
+
+bool PL_RunCommand(player_t *player) {
+  ticcmd_t *cmd = &player->cmd;
+  weapontype_t newweapon;
+
+  /*
+  if (CLIENT && player != &players[consoleplayer]) {
+    D_Msg(MSG_CMD, "(%d) run_player_command: Running command for %td\n",
+      gametic,
+      player - players
+    );
+  }
+  */
+
+  // chain saw run forward
+  if (player->mo->flags & MF_JUSTATTACKED) {
+    cmd->angleturn = 0;
+    cmd->forwardmove = 0xc800 / 512;
+    cmd->sidemove = 0;
+    player->mo->flags &= ~MF_JUSTATTACKED;
+  }
+
+  if (player->playerstate == PST_DEAD) {
+    P_DeathThink(player);
+    return false;
+  }
+
+  if (player->jumpTics) {
+    player->jumpTics--;
+  }
+
+  // Move around.
+  // Reactiontime is used to prevent movement
+  //  for a bit after a teleport.
+  if (player->mo->reactiontime) {
+    player->mo->reactiontime--;
+  }
+  else {
+    P_MovePlayer(player);
+  }
+
+  P_SetPitch(player);
+
+  P_CalcHeight(player); // Determines view height and bobbing
+
+  // Determine if there's anything about the sector you're in that's
+  // going to affect you, like painful floors.
+  if (player->mo->subsector->sector->special) {
+    P_PlayerInSpecialSector(player);
+  }
+
+  // Check for weapon change.
+  if (cmd->buttons & BT_CHANGE) {
+    // The actual changing of the weapon is done
+    //  when the weapon psprite can do it
+    //  (read: not in the middle of an attack).
+
+    newweapon = (cmd->buttons & BT_WEAPONMASK) >> BT_WEAPONSHIFT;
+
+    // killough 3/22/98: For demo compatibility we must perform the fist
+    // and SSG weapons switches here, rather than in G_BuildTiccmd(). For
+    // other games which rely on user preferences, we must use the latter.
+
+    // compatibility mode -- required for old demos -- killough
+    if (demo_compatibility) {
+      //e6y
+      if (!prboom_comp[PC_ALLOW_SSG_DIRECT].state) {
+        newweapon = (cmd->buttons & BT_WEAPONMASK_OLD) >> BT_WEAPONSHIFT;
+      }
+
+      if (newweapon == wp_fist && player->weaponowned[wp_chainsaw] &&
+          (player->readyweapon != wp_chainsaw ||
+           !player->powers[pw_strength])) {
+        newweapon = wp_chainsaw;
+      }
+
+      if (gamemode == commercial &&
+          newweapon == wp_shotgun &&
+          player->weaponowned[wp_supershotgun] &&
+          player->readyweapon != wp_supershotgun) {
+        newweapon = wp_supershotgun;
+      }
+    }
+
+    // killough 2/8/98, 3/22/98 -- end of weapon selection changes
+
+    // Do not go to plasma or BFG in shareware, even if cheated.
+    if (player->weaponowned[newweapon] &&
+        newweapon != player->readyweapon &&
+        ((newweapon != wp_plasma && newweapon != wp_bfg) ||
+         (gamemode != shareware))) {
+      player->pendingweapon = newweapon;
+    }
+  }
+
+  // check for use
+
+  if (cmd->buttons & BT_USE) {
+    if (!player->usedown) {
+      P_UseLines(player);
+      player->usedown = true;
+    }
+  }
+  else {
+    player->usedown = false;
+  }
+
+  // cycle psprites
+  P_MovePsprites(player);
+
+  return true;
 }
 
 /* vi: set et ts=2 sw=2: */
