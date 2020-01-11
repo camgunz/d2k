@@ -28,7 +28,6 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
-#include "p_user.h"
 #include "cl_cmd.h"
 #include "g_state.h"
 #include "p_user.h"
@@ -36,8 +35,6 @@
 #include "g_game.h"
 #include "n_main.h"
 #include "cl_net.h"
-#include "p_player.h"
-#include "pl_cmd.h"
 
 static bool command_is_synchronized(gpointer data, gpointer user_data) {
   netticcmd_t *ncmd = (netticcmd_t *)data;
@@ -65,36 +62,38 @@ static void count_command(gpointer data, gpointer user_data) {
 }
 
 void CL_TrimSynchronizedCommands(void) {
-  size_t index = 0;
-  player_t *player = NULL;
   int state_tic = G_GetStateFromTic();
 
   D_Msg(MSG_CMD, "(%5d) Trimming synchronized commands\n", gametic);
 
-  while (P_PlayersIter(&index, &player)) {
-    PL_TrimCommands(
-      player,
-      command_is_synchronized,
-      GINT_TO_POINTER(state_tic)
-    );
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    if (!playeringame[i]) {
+      continue;
+    }
+
+    P_TrimCommands(i, command_is_synchronized, GINT_TO_POINTER(state_tic));
   }
 }
 
-size_t CL_GetUnsynchronizedCommandCount(player_t *player) {
+unsigned int CL_GetUnsynchronizedCommandCount(int playernum) {
   netpeer_t *server;
-  size_t command_count = 0;
+  unsigned int command_count = 0;
   
   if (!CLIENT) {
     return 0;
   }
   
+  if (!playeringame[playernum]) {
+    return 0;
+  }
+
   server = CL_GetServerPeer();
 
   if (!server) {
     return 0;
   }
 
-  PL_ForEachCommand(player, count_command, &command_count);
+  P_ForEachCommand(playernum, count_command, &command_count);
 
   return command_count;
 }

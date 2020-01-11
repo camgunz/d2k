@@ -30,8 +30,8 @@
 #include "p_player.h"
 
 static id_list_t new_players;
-static uint32_t console_player_id;
-static uint32_t display_player_id;
+static uint32_t  consoleplayer_id;
+static uint32_t  displayplayer_id;
 
 static void free_player(gpointer data) {
   free(data);
@@ -65,28 +65,20 @@ void P_PlayerRemove(player_t *player) {
   M_IDListReleaseID(&new_players, player->id);
 }
 
-void P_PlayersSetConsolePlayerID(uint32_t new_console_player_id) {
-  console_player_id = new_console_player_id;
+bool P_PlayerIsConsoleplayer(player_t *player) {
+  return player->id == consoleplayer_id;
 }
 
-void P_PlayersSetDisplayPlayerID(uint32_t new_display_player_id) {
-  display_player_id = new_display_player_id;
+bool P_PlayerIsDisplayplayer(player_t *player) {
+  return player->id == displayplayer_id;
 }
 
-player_t* P_PlayersGetConsolePlayer(void) {
-  return P_PlayersLookup(console_player_id);
+void P_PlayerSetConsoleplayerID(uint32_t new_consoleplayer_id) {
+  consoleplayer_id = new_consoleplayer_id;
 }
 
-player_t* P_PlayersGetDisplayPlayer(void) {
-  return P_PlayersLookup(display_player_id);
-}
-
-bool PL_IsConsolePlayer(player_t *player) {
-  return player->id == console_player_id;
-}
-
-bool PL_IsDisplayPlayer(player_t *player) {
-  return player->id == display_player_id;
+void P_PlayerSetDisplayplayerID(uint32_t new_displayplayer_id) {
+  displayplayer_id = new_displayplayer_id;
 }
 
 /* vi: set et ts=2 sw=2: */

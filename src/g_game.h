@@ -282,6 +282,10 @@ extern  bool realframe;
 
 extern  int       upmove;
 
+// Alive? Disconnected?
+extern  bool playeringame[MAXPLAYERS];
+extern  bool realplayeringame[MAXPLAYERS];
+
 //-----------------------------------------
 // Internal parameters, used for engine.
 //

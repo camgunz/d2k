@@ -189,10 +189,8 @@ bool            nodrawers;     // for comparative timing purposes
 bool            noblit;        // for comparative timing purposes
 int             starttime;     // for comparative timing purposes
 int             deathmatch;    // only if started as net death
-/* [CG] Here we go...
 bool            playeringame[MAXPLAYERS];
 player_t        players[MAXPLAYERS];
-*/
 int             upmove;
 int             consoleplayer; // player taking events and displaying
 int             displayplayer; // view being displayed
