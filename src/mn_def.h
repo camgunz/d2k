@@ -82,9 +82,9 @@ typedef struct default_s {
   struct setup_menu_s *setup_menu;   /* Xref to setup menu item, if any */
 } default_t;
 
-void       MN_LoadDefaults (void);
-void       MN_SaveDefaults (void);
-default_t* MN_LookupDefault(const char *name); /* killough 11/98 */
+void       M_LoadDefaults (void);
+void       M_SaveDefaults (void);
+default_t* M_LookupDefault(const char *name); /* killough 11/98 */
 
 #endif
 

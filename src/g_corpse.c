@@ -24,7 +24,6 @@
 #include "z_zone.h"
 
 #include "g_corpse.h"
-#include "p_mobj.h"
 
 // killough 2/8/98: make corpse queue variable in size
 /*

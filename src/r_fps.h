@@ -42,7 +42,7 @@ typedef struct {
 
 extern tic_vars_t tic_vars;
 
-void MN_ChangeUncappedFrameRate(void);
+void M_ChangeUncappedFrameRate(void);
 
 void R_InitInterpolation(void);
 void R_InterpolateView(player_t *player);

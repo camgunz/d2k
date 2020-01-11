@@ -25,47 +25,40 @@
 
 #include <SDL.h>
 
-#include "i_main.h"
-#include "i_system.h"
-#include "i_video.h"
+#include "w_wad.h"
 #include "m_argv.h"
-#include "m_argv.h"
-#include "m_bbox.h"
-#include "am_map.h"
 #include "d_event.h"
-#include "d_mouse.h"
-#include "d_res.h"
-#include "e6y.h"
-#include "g_comp.h"
-#include "g_game.h"
-#include "hu_stuff.h"
-#include "p_camera.h"
-#include "p_map.h"
-#include "p_maputl.h"
-#include "p_mobj.h"
-#include "p_setup.h"
-#include "p_spec.h"
-#include "pl_main.h"
-#include "pl_pspr.h"
-#include "r_bsp.h"
-#include "r_data.h"
+#include "v_video.h"
 #include "r_defs.h"
-#include "r_draw.h"
-#include "r_fps.h"
+#include "r_bsp.h"
 #include "r_main.h"
-#include "r_patch.h"
-#include "r_plane.h"
+#include "r_draw.h"
 #include "r_sky.h"
+#include "r_plane.h"
+#include "r_data.h"
 #include "r_state.h"
 #include "r_things.h"
+#include "r_fps.h"
+#include "r_patch.h"
+#include "p_maputl.h"
+#include "m_bbox.h"
+#include "gl_opengl.h"
+#include "gl_intern.h"
+#include "gl_struct.h"
+#include "p_spec.h"
+#include "i_system.h"
+#include "m_argv.h"
+#include "i_video.h"
+#include "i_main.h"
+#include "am_map.h"
 #include "sc_man.h"
 #include "st_stuff.h"
-#include "v_video.h"
-#include "w_wad.h"
-
-#include "gl_opengl.h"
-#include "gl_struct.h"
-#include "gl_intern.h"
+#include "hu_stuff.h"
+#include "e6y.h"
+#include "g_game.h"
+#include "p_setup.h"
+#include "p_mobj.h"
+#include "p_user.h"
 
 // All OpenGL extentions will be disabled in gl_compatibility mode
 int gl_compatibility = 0;
@@ -229,7 +222,7 @@ void gld_InitTextureParams(void)
     if (!strcasecmp(gl_tex_format_string, tex_formats[i].tex_format_name))
     {
       gl_tex_format = tex_formats[i].tex_format;
-      D_MsgLocalInfo("Using texture format %s.\n",
+      D_Msg(MSG_INFO,"Using texture format %s.\n",
         tex_formats[i].tex_format_name
       );
       break;
@@ -278,11 +271,8 @@ void gld_MultisamplingSet(void)
 {
   if (render_multisampling)
   {
-    int use_multisampling = (
-      map_use_multisampling ||
-      (!(automapmode & am_active)) ||
-      (automapmode & am_overlay)
-    );;
+    int use_multisampling = map_use_multisamling ||
+      (!(automapmode & am_active) || (automapmode & am_overlay));
 
     gld_EnableMultisample(use_multisampling);
   }
@@ -339,11 +329,11 @@ void gld_Init(int width, int height)
 {
   GLfloat params[4]={0.0f,0.0f,1.0f,0.0f};
 
-  D_MsgLocalInfo("GL_VENDOR: %s\n", glGetString(GL_VENDOR));
-  D_MsgLocalInfo("GL_RENDERER: %s\n", glGetString(GL_RENDERER));
-  D_MsgLocalInfo("GL_VERSION: %s\n", glGetString(GL_VERSION));
+  D_Msg(MSG_INFO, "GL_VENDOR: %s\n", glGetString(GL_VENDOR));
+  D_Msg(MSG_INFO, "GL_RENDERER: %s\n", glGetString(GL_RENDERER));
+  D_Msg(MSG_INFO, "GL_VERSION: %s\n", glGetString(GL_VERSION));
 #if 0
-  D_MsgLocalInfo("GL_EXTENSIONS:\n");
+  D_Msg(MSG_INFO, "GL_EXTENSIONS:\n");
   {
     char ext_name[256];
     const char *extensions = (const char*)glGetString(GL_EXTENSIONS);
@@ -364,7 +354,7 @@ void gld_Init(int width, int height)
         len = MIN(len, sizeof(ext_name)-1);
         memset(ext_name, 0, sizeof(ext_name));
         strncpy(ext_name, rover, len);
-        D_MsgLocalInfo("\t%s\n", ext_name);
+        D_Msg(MSG_INFO, "\t%s\n", ext_name);
       }
       rover = p;
       while (*rover && *rover == ' ')
@@ -415,8 +405,8 @@ void gld_Init(int width, int height)
 
   gld_InitLightTable();
   gld_InitSky();
-  MN_ChangeLightMode();
-  MN_ChangeAllowFog();
+  M_ChangeLightMode();
+  M_ChangeAllowFog();
 
   gld_InitDetail();
   gld_InitShadows();
@@ -621,9 +611,8 @@ void gld_DrawTriangleStrip(GLWall *wall, gl_strip_coords_t *c)
   glEnd();
 }
 
-void gld_DrawNumPatch_f(float x, float y, int lump,
-                                          int cm,
-                                          patch_translation_e flags) {
+void gld_DrawNumPatch_f(float x, float y, int lump, int cm, enum patch_translation_e flags)
+{
   GLTexture *gltexture;
   float fU1,fU2,fV1,fV2;
   float width,height;
@@ -713,14 +702,13 @@ void gld_DrawNumPatch_f(float x, float y, int lump,
   }
 }
 
-void gld_DrawNumPatch(int x, int y, int lump, int cm,
-                                              patch_translation_e flags) {
+void gld_DrawNumPatch(int x, int y, int lump, int cm, enum patch_translation_e flags)
+{
   gld_DrawNumPatch_f((float)x, (float)y, lump, cm, flags);
 }
 
-void gld_FillFlat(int lump, int x, int y, int width,
-                                          int height,
-                                          patch_translation_e flags) {
+void gld_FillFlat(int lump, int x, int y, int width, int height, enum patch_translation_e flags)
+{
   GLTexture *gltexture;
   float fU1, fU2, fV1, fV2;
 
@@ -758,9 +746,8 @@ void gld_FillFlat(int lump, int x, int y, int width,
   glEnd();
 }
 
-void gld_FillPatch(int lump, int x, int y, int width,
-                                           int height,
-                                           patch_translation_e flags) {
+void gld_FillPatch(int lump, int x, int y, int width, int height, enum patch_translation_e flags)
+{
   GLTexture *gltexture;
   float fU1, fU2, fV1, fV2;
 
@@ -1180,7 +1167,7 @@ void gld_StartDrawScene(void)
     !frame_fixedcolormap && !boom_cm;
 
 //e6y
-  mlook_or_fov = D_GetMouseLook() || (render_fov != FOV90);
+  mlook_or_fov = GetMouseLook() || (render_fov != FOV90);
   if(!mlook_or_fov)
   {
     pitch = 0.0f;
@@ -1207,7 +1194,7 @@ void gld_StartDrawScene(void)
   gld_InitFrameSky();
   
   invul_method = 0;
-  if (P_GetDisplayPlayer()->fixedcolormap == 32)
+  if (players[displayplayer].fixedcolormap == 32)
   {
     if (gl_boom_colormaps && !gl_has_hires)
     {
@@ -1229,7 +1216,7 @@ void gld_StartDrawScene(void)
 #ifdef USE_FBO_TECHNIQUE
   motion_blur.enabled = gl_use_motionblur &&
     ((motion_blur.curr_speed_pow2 > motion_blur.minspeed_pow2) ||
-    (abs(P_GetDisplayPlayer()->cmd.angleturn) > motion_blur.minangle));
+    (abs(players[displayplayer].cmd.angleturn) > motion_blur.minangle));
 
   SceneInTexture = (gl_arb_framebuffer_object) &&
     ((invul_method & INVUL_BW) || (motion_blur.enabled));
@@ -2442,8 +2429,8 @@ void gld_ProjectSprite(mobj_t* thing)
   GLSprite sprite;
   const rpatch_t* patch;
 
-  int frustum_culling = D_HaveMouseLook() && gl_sprites_frustum_culling;
-  int mlook = D_HaveMouseLook() || (render_fov > FOV90);
+  int frustum_culling = HaveMouseLook() && gl_sprites_frustum_culling;
+  int mlook = HaveMouseLook() || (render_fov > FOV90);
 
   if (!paused && movement_smooth)
   {
@@ -2575,10 +2562,8 @@ void gld_ProjectSprite(mobj_t* thing)
   }
 
   //e6y FIXME!!!
-  if (thing == P_GetDisplayPlayer()->mo &&
-      walkcamera.mode != camera_mode_free) {
+  if (thing == players[displayplayer].mo && walkcamera.type != 2)
     goto unlock_patch;
-  }
 
   sprite.x =-(float)fx / MAP_SCALE;
   sprite.y = (float)fz / MAP_SCALE;

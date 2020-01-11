@@ -38,21 +38,6 @@ struct netpeer_s;
 typedef struct netpeer_s netpeer_t;
 
 typedef enum {
-  NM_NONE,
-  NM_SETUP,
-  NM_FULL_STATE,
-  NM_AUTH,
-  NM_CHAT_MESSAGE,
-  NM_SYNC,
-  NM_PLAYER_PREFERENCE_CHANGE,
-  NM_GAME_ACTION,
-  NM_RCON_COMMAND,
-  NM_VOTE_REQUEST,
-  NM_PING,
-  NM_MAX,
-} net_message_e;
-
-typedef enum {
   AUTH_LEVEL_NONE,
   AUTH_LEVEL_SPECTATOR,
   AUTH_LEVEL_PLAYER,
@@ -81,8 +66,6 @@ bool     N_Connected(void);
 bool     N_Reconnect(void);
 bool     N_ConnectToServer(const char *address);
 void     N_DisconnectPeer(netpeer_t *np, disconnection_reason_e reason);
-void     N_DisconnectPlayerID(uint32_t player_id,
-                              disconnection_reason_e reason);
 void     N_DisconnectPlayer(player_t *player, disconnection_reason_e reason);
 void     N_ServiceNetworkTimeout(int timeout_ms);
 void     N_ServiceNetwork(void);

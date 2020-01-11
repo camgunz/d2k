@@ -514,9 +514,8 @@ static void GenLookup(short *lookup1, short *lookup2, int size, int max, int ste
   }
 }
 
-static void InitStretchParam(stretch_param_t *offsets,
-                             int stretch,
-                             patch_translation_e flags) {
+static void InitStretchParam(stretch_param_t* offsets, int stretch, enum patch_translation_e flags)
+{
   memset(offsets, 0, sizeof(*offsets));
 
   switch (stretch)

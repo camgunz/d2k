@@ -1104,7 +1104,8 @@ extern const char* startup4;
 // char*        startup5 = "";
 extern const char* startup5;
 
-const char* D_DEHOut(void);
+// from g_game.c, prefix for savegame name like "boomsav"
+extern const char* savegamename;
 
 void D_BuildBEXTables(void);
 void deh_changeCompTranslucency(void);

@@ -23,25 +23,23 @@
 
 #include "z_zone.h"
 
-#include "d_res.h"
-#include "g_game.h"
-#include "p_map.h"
-#include "p_maputl.h"
+#include "p_setup.h"
 #include "p_mobj.h"
-#include "pl_main.h"
-#include "pl_pspr.h"
-#include "r_bsp.h"
+#include "p_maputl.h"
+#include "w_wad.h"
 #include "r_defs.h"
 #include "r_fps.h"
-#include "r_main.h"
+#include "r_bsp.h"
 #include "r_sky.h"
 #include "r_state.h"
+#include "r_main.h"
+#include "g_game.h"
+#include "p_user.h"
 #include "v_video.h"
-#include "w_wad.h"
 
 #include "gl_opengl.h"
-#include "gl_struct.h"
 #include "gl_intern.h"
+#include "gl_struct.h"
 
 int gl_shadows_maxdist;
 int gl_shadows_factor;
@@ -111,7 +109,7 @@ void gld_InitShadows(void)
 
   if (simple_shadows.enable && !simple_shadows.loaded)
   {
-    D_MsgLocalInfo("gld_InitShadows: failed to initialise shadow texture");
+    D_Msg(MSG_INFO, "gld_InitShadows: failed to initialise shadow texture");
   }
 }
 
@@ -234,16 +232,14 @@ void gld_RenderShadows(void)
 {
   int i;
 
-  if (!simple_shadows.enable || !simple_shadows.loaded ||
-                                P_GetDisplayPlayer()->fixedcolormap) {
+  if (!simple_shadows.enable || !simple_shadows.loaded || players[displayplayer].fixedcolormap)
     return;
-  }
 
-  if (gld_drawinfo.num_items[GLDIT_SHADOW] <= 0) {
+  if (gld_drawinfo.num_items[GLDIT_SHADOW] <= 0)
     return;
-  }
 
-  if (!gl_ztrick) {
+  if (!gl_ztrick)
+  {
     glDepthRange(simple_shadows.bias, 1);
   }
 

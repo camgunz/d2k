@@ -1,4 +1,5 @@
 /*****************************************************************************/
+
 /* D2K: A Doom Source Port for the 21st Century                              */
 /*                                                                           */
 /* Copyright (C) 2014: See COPYRIGHT file                                    */
@@ -24,13 +25,12 @@
 
 #include "m_argv.h"
 #include "m_misc.h"
-#include "g_game.h"
-#include "p_map.h"
-#include "p_mobj.h"
-#include "pl_main.h"
 #include "r_defs.h"
 #include "v_video.h"
-
+#include "p_setup.h"
+#include "p_mobj.h"
+#include "pl_main.h"
+#include "g_game.h"
 #include "hu_lib.h"
 #include "hu_tracers.h"
 

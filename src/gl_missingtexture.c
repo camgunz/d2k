@@ -27,23 +27,20 @@
 #include <SDL_image.h>
 #endif /* ifdef HAVE_LIBSDL_IMAGE */
 
-#include "i_system.h"
-#include "i_video.h"
-#include "e6y.h"
-#include "p_defs.h"
-#include "p_map.h"
-#include "r_data.h"
 #include "r_defs.h"
-#include "r_main.h"
+#include "r_data.h"
 #include "r_state.h"
 #include "v_video.h"
-
+#include "gl_opengl.h"
+#include "gl_intern.h"
+#include "gl_struct.h"
+#include "i_system.h"
+#include "i_video.h"
 #include "hu_lib.h"
 #include "hu_stuff.h"
-
-#include "gl_opengl.h"
-#include "gl_struct.h"
-#include "gl_intern.h"
+#include "r_main.h"
+#include "e6y.h"
+#include "p_setup.h"
 
 typedef struct {
   int        count;     // size of the list with adjoining sectors
@@ -97,10 +94,10 @@ static void gld_PrepareSectorSpecialEffects(void) {
       }
     }
     if (sectors[num].flags & NO_TOPTEXTURES) {
-      D_MsgLocalDebug("Sector %i has no toptextures\n", num);
+      D_Msg(MSG_DEBUG, "Sector %i has no toptextures\n", num);
     }
     if (sectors[num].flags & NO_BOTTOMTEXTURES) {
-      D_MsgLocalDebug("Sector %i has no bottomtextures\n", num);
+      D_Msg(MSG_DEBUG, "Sector %i has no bottomtextures\n", num);
     }
   }
 }

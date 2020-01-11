@@ -47,6 +47,21 @@
 lumpinfo_t *lumpinfo;
 int        numlumps;         // killough
 
+// killough 10/98: support -dehout filename
+// cph - made const, don't cache results
+//e6y static
+static const char* D_dehout(void) {
+  int p = M_CheckParm("-dehout");
+
+  if (!p)
+    p = M_CheckParm("-bexout");
+
+  if (p && ++p < myargc)
+    return myargv[p];
+
+  return NULL;
+}
+
 //
 // LUMP BASED ROUTINES.
 //

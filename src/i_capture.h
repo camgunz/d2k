@@ -37,7 +37,7 @@ extern const char *cap_tempfile2;
 extern int cap_remove_tempfiles;
 
 // true if we're capturing video
-extern bool capturing_video;
+extern int capturing_video;
 
 // init and open sound, video pipes
 // fn is filename passed from command line, typically final output file

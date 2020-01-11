@@ -59,10 +59,19 @@ typedef struct {
   char name[8];
 } filelump_t;
 
+// CPhipps - changed wad init
+// We _must_ have the wadfiles[] the same as those actually loaded, so there 
+// is no point having these separate entities. This belongs here.
+typedef struct {
+  char         *name;
+  wad_source_e  src;
+  int           handle;
+} wadfile_info_t;
+
 typedef struct wadtbl_s {
   wadinfo_t header;
   filelump_t *lumps;
-  char *data;
+  char* data;
   int datasize;
 } wadtbl_t;
 
@@ -99,9 +108,9 @@ void W_DoneCache(void);
 int               (W_FindNumFromName)(const char *name, int ns, int lump);
 int               W_CheckNumForNameInternal(const char *name);
 int               W_ListNumFromName(const char *name, int lump);
-int               W_GetNumForName (const char *name);
+int               W_GetNumForName (const char* name);
 const lumpinfo_t* W_GetLumpInfoByNum(int lump);
-int               W_SafeGetNumForName (const char *name); //e6y
+int               W_SafeGetNumForName (const char* name); //e6y
 int               W_LumpLength (int lump);
 void              W_ReadLump (int lump, void *dest);
 
@@ -113,7 +122,8 @@ void        W_UnlockLumpNum(int lump);
 unsigned W_LumpNameHash(const char *s);         // killough 1/31/98
 void W_HashLumps(void);                         // cph 2001/07/07 - made public
 
-void W_AddLump(wadtbl_t *wadtbl, const char *name, char *data, size_t size);
+void W_AddLump(wadtbl_t *wadtbl, const char *name, const unsigned char *data,
+                                                   size_t size);
 
 void W_InitPWADTable(wadtbl_t *wadtbl);
 void W_FreePWADTable(wadtbl_t *wadtbl);

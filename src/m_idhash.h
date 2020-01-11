@@ -43,7 +43,7 @@ void     M_IDHashAssign(id_hash_t *idhash, void *obj, uint32_t id);
 void     M_IDHashRemoveID(id_hash_t *idhash, uint32_t id);
 void*    M_IDHashLookup(id_hash_t *idhash, uint32_t id);
 bool     M_IDHashIterate(id_hash_t *idhash, id_hash_iterator_t *iterator);
-uint32_t M_IDHashGetCount(id_hash_t *idhash);
+uint32_t M_IDHashGetLen(id_hash_t *idhash);
 void     M_IDHashReset(id_hash_t *idhash);
 void     M_IDHashFree(id_hash_t *idhash);
 

@@ -26,11 +26,13 @@
 #include <SDL.h>
 #include <SDL_thread.h>
 
+#include "sounds.h"
 #include "i_sound.h"
 #include "i_video.h"
 #include "i_capture.h"
-#include "sounds.h"
-#include "v_video.h"
+
+int capturing_video = 0;
+static const char *vid_fname;
 
 typedef struct
 { // information on a running pipe
@@ -49,9 +51,6 @@ static pipeinfo_t soundpipe;
 static pipeinfo_t videopipe;
 static pipeinfo_t muxpipe;
 
-static const char *vid_fname;
-
-bool capturing_video = 0;
 
 const char *cap_soundcommand;
 const char *cap_videocommand;
@@ -482,40 +481,40 @@ void I_CapturePrep (const char *fn)
 
   if (!parsecommand (soundpipe.command, cap_soundcommand, sizeof(soundpipe.command)))
   {
-    D_MsgLocalError("I_CapturePrep: malformed command %s\n", cap_soundcommand);
+    D_Msg(MSG_ERROR, "I_CapturePrep: malformed command %s\n", cap_soundcommand);
     capturing_video = 0;
     return;
   }
   if (!parsecommand (videopipe.command, cap_videocommand, sizeof(videopipe.command)))
   {
-    D_MsgLocalError("I_CapturePrep: malformed command %s\n", cap_videocommand);
+    D_Msg(MSG_ERROR, "I_CapturePrep: malformed command %s\n", cap_videocommand);
     capturing_video = 0;
     return;
   }
   if (!parsecommand (muxpipe.command, cap_muxcommand, sizeof(muxpipe.command)))
   {
-    D_MsgLocalError("I_CapturePrep: malformed command %s\n", cap_muxcommand);
+    D_Msg(MSG_ERROR, "I_CapturePrep: malformed command %s\n", cap_muxcommand);
     capturing_video = 0;
     return;
   }
 
-  D_MsgLocalInfo("I_CapturePrep: opening pipe \"%s\"\n", soundpipe.command);
+  D_Msg(MSG_INFO, "I_CapturePrep: opening pipe \"%s\"\n", soundpipe.command);
   if (!my_popen3 (&soundpipe))
   {
-    D_MsgLocalError("I_CapturePrep: sound pipe failed\n");
+    D_Msg(MSG_ERROR, "I_CapturePrep: sound pipe failed\n");
     capturing_video = 0;
     return;
   }
-  D_MsgLocalInfo("I_CapturePrep: opening pipe \"%s\"\n", videopipe.command);
+  D_Msg(MSG_INFO, "I_CapturePrep: opening pipe \"%s\"\n", videopipe.command);
   if (!my_popen3 (&videopipe))
   {
-    D_MsgLocalError("I_CapturePrep: video pipe failed\n");
+    D_Msg(MSG_ERROR, "I_CapturePrep: video pipe failed\n");
     my_pclose3 (&soundpipe);
     capturing_video = 0;
     return;
   }
   I_SetSoundCap ();
-  D_MsgLocalInfo("I_CapturePrep: video capture started\n");
+  D_Msg(MSG_INFO, "I_CapturePrep: video capture started\n");
   capturing_video = 1;
 
   // start reader threads
@@ -535,43 +534,39 @@ void I_CapturePrep (const char *fn)
 
 // capture a single frame of video (and corresponding audio length)
 // and send it to pipes
-void I_CaptureFrame(void) {
+void I_CaptureFrame (void)
+{
   unsigned char *snd;
   unsigned char *vid;
   static int partsof35 = 0; // correct for sync when samplerate % 35 != 0
   int nsampreq;
 
-  if (!capturing_video) {
+  if (!capturing_video)
     return;
-  }
 
   nsampreq = snd_samplerate / 35;
   partsof35 += snd_samplerate % 35;
-
-  if (partsof35 >= 35) {
+  if (partsof35 >= 35)
+  {
     partsof35 -= 35;
     nsampreq++;
   }
 
-  snd = I_GrabSound(nsampreq);
-  if (snd) {
-    if (fwrite(snd, nsampreq * 4, 1, soundpipe.f_stdin) != 1) {
-      D_MsgLocalWarn("I_CaptureFrame: error writing soundpipe.\n");
-    }
-
+  snd = I_GrabSound (nsampreq);
+  if (snd)
+  {
+    if (fwrite (snd, nsampreq * 4, 1, soundpipe.f_stdin) != 1)
+      D_Msg(MSG_WARN, "I_CaptureFrame: error writing soundpipe.\n");
     //free (snd); // static buffer
   }
-  vid = I_GrabScreen();
-
-  if (vid) {
-    if (fwrite(vid, REAL_SCREENWIDTH * REAL_SCREENHEIGHT * 3,
-                    1,
-                    videopipe.f_stdin) != 1) {
-      D_MsgLocalWarn("I_CaptureFrame: error writing videopipe.\n");
-    }
-
+  vid = I_GrabScreen ();
+  if (vid)
+  {
+    if (fwrite (vid, REAL_SCREENWIDTH * REAL_SCREENHEIGHT * 3, 1, videopipe.f_stdin) != 1)
+      D_Msg(MSG_WARN, "I_CaptureFrame: error writing videopipe.\n");
     //free (vid); // static buffer
   }
+
 }
 
 
@@ -599,11 +594,11 @@ void I_CaptureFinish (void)
 
   // muxing and temp file cleanup
 
-  D_MsgLocalInfo("I_CaptureFinish: opening pipe \"%s\"\n", muxpipe.command);
+  D_Msg(MSG_INFO, "I_CaptureFinish: opening pipe \"%s\"\n", muxpipe.command);
 
   if (!my_popen3 (&muxpipe))
   {
-    D_MsgLocalError("I_CaptureFinish: finalize pipe failed\n");
+    D_Msg(MSG_ERROR, "I_CaptureFinish: finalize pipe failed\n");
     return;
   }
 

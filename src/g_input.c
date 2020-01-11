@@ -23,26 +23,10 @@
 
 #include "z_zone.h"
 
-#include "i_main.h"
-#include "m_argv.h"
-#include "d_event.h"
-#include "d_mouse.h"
-#include "e6y.h"
-#include "g_comp.h"
-#include "g_demo.h"
 #include "g_input.h"
-#include "g_keys.h"
-#include "g_game.h"
-#include "mn_main.h"
-#include "p_camera.h"
-#include "pl_main.h"
-#include "pl_weap.h"
-#include "v_video.h"
-
-#include "gl_opengl.h"
-#include "gl_struct.h"
 
 #define MAXPLMOVE   (forwardmove[1])
+#define TURBOTHRESHOLD  0x32
 #define SLOWTURNTICS  6
 #define QUICKREVERSE (short)32768 // 180 degree reverse // phares
 
@@ -83,8 +67,11 @@ static int   dclicks2;
 // joystick values are repeated
 static int   joyxmove;
 static int   joyymove;
-bool  joyarray[9];
-bool *joybuttons = &joyarray[1];    // allow [-1]
+static bool  joyarray[9];
+static bool *joybuttons = &joyarray[1];    // allow [-1]
+
+// Game events info
+static buttoncode_t special_event; // Event triggered by local player, to send
 
 int upmove;
 int autorun = false;      // always running?          // phares
@@ -104,9 +91,6 @@ fixed_t flyspeed[2]    = {1*256, 3*256};
 fixed_t forwardmove_normal[2] = {0x19, 0x32};
 fixed_t sidemove_normal[2]    = {0x18, 0x28};
 fixed_t sidemove_strafe50[2]  = {0x19, 0x32};
-
-// Game events info
-buttoncode_t special_event; // Event triggered by local player, to send
 
 static inline signed char fudgef(signed char b) {
 /*e6y
@@ -134,55 +118,6 @@ static inline signed short fudgea(signed short b) {
   else {
     return b;
   }
-}
-
-static bool weapon_selectable(weapontype_t weapon) {
-  if (gamemode == shareware) {
-    if (weapon == wp_plasma || weapon == wp_bfg) {
-      return false;
-    }
-  }
-
-  // Can't select the super shotgun in Doom 1.
-  if (weapon == wp_supershotgun && gamemission == doom) {
-    return false;
-  }
-
-  // Can't select a weapon if we don't own it.
-  if (!P_GetConsolePlayer()->weaponowned[weapon]) {
-    return false;
-  }
-
-  return true;
-}
-
-static int G_NextWeapon(int direction) {
-  weapontype_t weapon;
-  int i;
-  int arrlen;
-
-  // Find index in the table.
-  if (P_GetConsolePlayer()->pendingweapon == wp_nochange) {
-    weapon = P_GetConsolePlayer()->readyweapon;
-  }
-  else {
-    weapon = P_GetConsolePlayer()->pendingweapon;
-  }
-
-  arrlen = sizeof(weapon_order_table) / sizeof(*weapon_order_table);
-  for (i = 0; i < arrlen; i++) {
-    if (weapon_order_table[i].weapon == weapon) {
-      break;
-    }
-  }
-
-  // Switch weapon.
-  do {
-    i += direction;
-    i = (i + arrlen) % arrlen;
-  } while (!weapon_selectable(weapon_order_table[i].weapon));
-
-  return weapon_order_table[i].weapon_num;
 }
 
 //
@@ -339,7 +274,7 @@ void G_BuildTiccmd(ticcmd_t *cmd) {
       gamekeydown[key_weapontoggle]) {
     newweapon = PL_SwitchWeapon(player);           // phares
   }
-  else { // phares 02/26/98: Added gamemode checks
+  else {                                 // phares 02/26/98: Added gamemode checks
     if (next_weapon) {
       newweapon = G_NextWeapon(next_weapon);
       next_weapon = 0;
@@ -494,7 +429,7 @@ void G_BuildTiccmd(ticcmd_t *cmd) {
     cmd->angleturn -= mousex; /* mead now have enough dynamic range 2-10-00 */
   }
 
-  if ((walkcamera.mode == camera_mode_disabled) || menuactive) { //e6y
+  if (!walkcamera.type || menuactive) { //e6y
     mousex = 0;
     mousey = 0;
     joyxmove = 0;
@@ -556,200 +491,6 @@ void G_BuildTiccmd(ticcmd_t *cmd) {
     cmd->buttons = special_event;
     special_event = 0;
   }
-}
-
-void G_SetSpeed(void) {
-  int p;
-
-  if (movement_strafe50) {
-    sidemove[0] = sidemove_strafe50[0];
-    sidemove[1] = sidemove_strafe50[1];
-  }
-  else {
-    movement_strafe50onturns = false;
-    sidemove[0] = sidemove_normal[0];
-    sidemove[1] = sidemove_normal[1];
-  }
-
-  if ((p = M_CheckParm("-turbo"))) {
-    int scale = ((p < myargc - 1) ? atoi(myargv[p + 1]) : 200);
-
-    scale = BETWEEN(10, 400, scale);
-
-    D_MsgLocalInfo("turbo scale: %i%%\n", scale);
-
-    forwardmove[0] = forwardmove_normal[0] * scale / 100;
-    forwardmove[1] = forwardmove_normal[1] * scale / 100;
-    sidemove[0] = sidemove[0] * scale / 100;
-    sidemove[1] = sidemove[1] * scale / 100;
-  }
-}
-
-void G_InputClear(void) {
-  memset(gamekeydown, 0, sizeof(gamekeydown));
-  joyxmove = joyymove = 0;
-  mousex = mousey = 0;
-  mlooky = 0;                     // e6y
-  special_event = 0;
-  paused = false;
-  memset(&mousearray, 0, sizeof(mousearray));
-  memset(&joyarray, 0, sizeof(joyarray));
-}
-
-bool G_InputHandleEvent(event_t *ev) {
-  // If the next/previous weapon keys are pressed, set the next_weapon
-  // variable to change weapons when the next ticcmd is generated.
-  if (ev->type == ev_key && ev->pressed) {
-    if (ev->key == key_prevweapon) {
-      next_weapon = -1;
-    }
-    else if (ev->key == key_nextweapon) {
-      next_weapon = 1;
-    }
-  }
-
-  switch (ev->type) {
-    case ev_key:
-      if (ev->pressed) {
-        if (ev->key == key_pause) {// phares
-          special_event = BT_SPECIAL | (BTS_PAUSE & BT_SPECIALMASK);
-        }
-        else if (ev->key < NUMKEYS) {
-          gamekeydown[ev->key] = true;
-        }
-
-        /*
-         * CG: Don't do this anymore
-         *
-         * return true;    // eat key down events
-         *
-         */
-      }
-      else {
-        if (ev->key < NUMKEYS) {
-          gamekeydown[ev->key] = false;
-        }
-
-        return false;              // always let key up events filter down
-      }
-      break;
-    case ev_mouse:
-      if (ev->key == SDL_BUTTON_LEFT) {
-        mousebuttons[0] = ev->pressed;
-      }
-      else if (ev->key == SDL_BUTTON_MIDDLE) {
-        mousebuttons[1] = ev->pressed;
-      }
-      else if (ev->key == SDL_BUTTON_RIGHT) {
-        mousebuttons[2] = ev->pressed;
-      }
-      else if (ev->key == SDL_BUTTON_X1) {
-        mousebuttons[3] = ev->pressed;
-      }
-      else if (ev->key == SDL_BUTTON_X2) {
-        mousebuttons[4] = ev->pressed;
-      }
-
-      return true;
-      break;
-    case ev_mouse_movement:
-
-      /*
-       * bmead@surfree.com
-       * Modified by Barry Mead after adding vastly more resolution
-       * to the Mouse Sensitivity Slider in the options menu 1-9-2000
-       * Removed the mouseSensitivity "*4" to allow more low end
-       * sensitivity resolution especially for lsdoom users.
-       */
-
-      // e6y mousex += (ev->data2*(mouseSensitivity_horiz))/10;  /* killough */
-      // e6y mousey += (ev->data3*(mouseSensitivity_vert))/10;  /*Mead rm *4 */
-
-      /* killough */
-
-      // e6y
-      mousex += (D_MouseAccelerate(ev->xmove) * (mouse_sensitivity_horiz)) / 10;
-      if (D_GetMouseLook()) {
-        if (movement_mouseinvert) {
-          mlooky += (
-            D_MouseAccelerate(ev->ymove) * (mouse_sensitivity_mlook)
-          ) / 10;
-        }
-        else {
-          mlooky -= (
-            D_MouseAccelerate(ev->ymove) * (mouse_sensitivity_mlook)
-          ) / 10;
-        }
-      }
-      else {
-        mousey += (
-          D_MouseAccelerate(ev->ymove) * (mouse_sensitivity_vert)
-        ) / 40;
-      }
-
-      return true;    // eat events
-      break;
-    case ev_joystick:
-      if (ev->key >= 0 && ev->key <= 7) {
-        joybuttons[ev->key] = ev->pressed;
-      }
-
-      return true;
-      break;
-    case ev_joystick_movement:
-      if (ev->jstype == ev_joystick_axis) {
-        if (ev->key == 0) {
-          joyxmove = ev->value;
-        }
-        else if (ev->key == 1) {
-          joyymove = ev->value;
-        }
-      }
-      else if (ev->jstype == ev_joystick_ball) {
-        joyxmove = ev->xmove;
-        joyymove = ev->ymove;
-      }
-      else if (ev->jstype == ev_joystick_hat) {
-        if (ev->value == SDL_HAT_CENTERED) {
-          joyxmove = 0;
-          joyymove = 0;
-        }
-        else if (ev->value == SDL_HAT_UP) {
-          joyymove = 1;
-        }
-        else if (ev->value == SDL_HAT_RIGHT) {
-          joyxmove = 1;
-        }
-        else if (ev->value == SDL_HAT_DOWN) {
-          joyymove = -1;
-        }
-        else if (ev->value == SDL_HAT_LEFT) {
-          joyxmove = -1;
-        }
-        else if (ev->value == SDL_HAT_RIGHTUP) {
-          joyxmove = 1;
-          joyymove = 1;
-        }
-        else if (ev->value == SDL_HAT_RIGHTDOWN) {
-          joyxmove = 1;
-          joyymove = -1;
-        }
-        else if (ev->value == SDL_HAT_LEFTUP) {
-          joyxmove = -1;
-          joyymove = 1;
-        }
-        else if (ev->value == SDL_HAT_LEFTDOWN) {
-          joyxmove = -1;
-          joyymove = -1;
-        }
-      }
-      return true;    // eat events
-      break;
-    default:
-      break;
-  }
-
-  return false;
 }
 
 /* vi: set et ts=2 sw=2: */

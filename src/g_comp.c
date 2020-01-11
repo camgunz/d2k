@@ -24,9 +24,6 @@
 #include "z_zone.h"
 
 #include "g_comp.h"
-#include "g_game.h"
-
-void e6y_G_Compatibility(void);
 
 // comp_options_by_version removed - see G_Compatibility
 #if 0

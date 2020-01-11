@@ -25,13 +25,14 @@
 
 #include <SDL.h>
 
-#include "i_smp.h"
-#include "i_sound.h"
-#include "i_video.h"
 #include "r_defs.h"
-#include "r_draw.h"
 #include "sounds.h"
+#include "i_video.h"
+#include "i_sound.h"
 #include "v_video.h"
+#include "r_draw.h"
+
+#include "i_smp.h"
 
 static SDL_Thread *smp_thread;
 static SDL_mutex *smp_mutex;
@@ -222,7 +223,7 @@ void SMP_Init(void)
   {
     if (process_affinity_mask)
     {
-      D_MsgLocalWarn(
+      D_Msg(MSG_WARN,
         "SMP_Init: Unable to init SMP if 'process_affinity_mask' is not a "
         "zero\n"
       );
@@ -231,7 +232,7 @@ void SMP_Init(void)
 
     if (!strcasecmp(snd_midiplayer, midiplayers[midi_player_sdl]))
     {
-      D_MsgLocalWarn(
+      D_Msg(MSG_WARN,
         "SMP_Init: Unable to init SMP if 'Preffered MIDI Player' is '%s'\n",
         midiplayers[midi_player_sdl]
       );
@@ -275,7 +276,7 @@ void SMP_Init(void)
       }
       else
       {
-        D_MsgLocalWarn("SMP_Init: Unable to init SMP: %s\n", SDL_GetError());
+        D_Msg(MSG_WARN, "SMP_Init: Unable to init SMP: %s\n", SDL_GetError());
         SMP_Free();
       }
     }

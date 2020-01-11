@@ -88,7 +88,10 @@ void M_IDHashReleaseID(id_hash_t *idhash, uint32_t id) {
   }
 
   g_hash_table_remove(idhash->objs, GUINT_TO_POINTER(id));
-  g_array_append_val(idhash->recycled_ids, id);
+  g_array_append_val(
+    idhash->recycled_ids,
+    GUINT_TO_POINTER(id)
+  );
 }
 
 void* M_IDHashLookupObj(id_hash_t *idhash, uint32_t id) {
@@ -110,7 +113,7 @@ bool M_IDHashIterate(id_hash_t *idhash, id_hash_iterator_t *iterator) {
   return true;
 }
 
-uint32_t M_IDHashGetCount(id_hash_t *idhash) {
+uint32_t M_IDHashGetSize(id_hash_t *idhash) {
   return g_hash_table_size(idhash->objs);
 }
 

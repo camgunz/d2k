@@ -23,22 +23,7 @@
 
 #include "z_zone.h"
 
-#include "m_random.h"
-#include "am_map.h"
-#include "g_comp.h"
-#include "g_corpse.h"
-#include "g_game.h"
 #include "g_player.h"
-#include "p_inter.h"
-#include "p_mobj.h"
-#include "p_map.h"
-#include "pl_cmd.h"
-#include "pl_main.h"
-#include "r_defs.h"
-#include "r_draw.h"
-#include "r_main.h"
-#include "s_sound.h"
-#include "sounds.h"
 
 //
 // PLAYER STRUCTURE FUNCTIONS

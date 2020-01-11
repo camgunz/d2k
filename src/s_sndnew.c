@@ -136,9 +136,8 @@ static int adjust_sound_params(mobj_t *listener, mobj_t *source,
   //
   // There is no more crash on e1cmnet3.lmp between e1m2 and e1m3
   // http://competn.doom2.net/pub/compet-n/doom/coop/movies/e1cmnet3.zip
-  if (!listener) {
+  if (!listener)
     return 0;
-  }
 
   // calculate the distance to sound origin
   //  and clip it if necessary

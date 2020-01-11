@@ -70,7 +70,7 @@ static void R_DoAnInterpolation (int i, fixed_t smoothratio);
 extern int realtic_clock_rate;
 void D_Display(void);
 
-void MN_ChangeUncappedFrameRate(void)
+void M_ChangeUncappedFrameRate(void)
 {
   movement_smooth = (singletics ? false : movement_smooth_default);
 }

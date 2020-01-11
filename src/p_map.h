@@ -24,15 +24,6 @@
 #ifndef P_MAP_H__
 #define P_MAP_H__
 
-struct mapthing_s;
-typedef struct mapthing_s mapthing_t;
-
-struct mobj_s;
-typedef struct mobj_s mobj_t;
-
-struct player_s;
-typedef struct player_s player_t;
-
 #define NO_TOPTEXTURES        0x00000001
 #define NO_BOTTOMTEXTURES     0x00000002
 #define SECTOR_IS_CLOSED      0x00000004
@@ -46,6 +37,12 @@ typedef struct player_s player_t;
 // is larger, but we do not have any moving sectors nearby
 
 #define MAXRADIUS    (32 * FRACUNIT)
+
+struct mobj_s;
+typedef struct mobj_s mobj_t;
+
+struct player_s;
+typedef struct player_s player_t;
 
 //
 // Move clipping aid for LineDefs.
@@ -363,8 +360,6 @@ extern msecnode_t *sector_list;                             // phares 3/16/98
 extern fixed_t tmbbox[4];         // phares 3/20/98
 extern line_t *blockline;   // killough 8/11/98
 
-extern int forceOldBsp;
-
 // killough 3/15/98: add fourth argument to P_TryMove
 bool P_TryMove(mobj_t *thing, fixed_t x, fixed_t y, int dropoff);
 
@@ -408,6 +403,7 @@ void P_MapStart(const char *caller);
 void P_MapEnd(void);
 
 void P_Init(void);
+void P_SetupLevel(int episode, int map, int playermask, skill_t skill);
 
 #endif
 

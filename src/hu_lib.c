@@ -23,15 +23,15 @@
 #include "z_zone.h"
 
 #include "am_map.h"
-#include "g_keys.h"
-#include "mn_main.h"
 #include "r_defs.h"
 #include "r_main.h"
 #include "r_draw.h"
 #include "v_video.h"
-
 #include "hu_lib.h"
 #include "hu_stuff.h"
+
+extern int key_backspace;                                           // phares
+extern int key_enter;                                               // phares
 
 //
 // not used currently
@@ -76,10 +76,9 @@ void HUlib_clearTextLine(hu_textline_t* t)
 //
 //jff 2/16/98 add color range parameter
 void HUlib_initTextLine(hu_textline_t* t, int x, int y,
-                                                 const patchnum_t *f,
-                                                 int sc,
-                                                 int cm,
-                                                 patch_translation_e flags) {
+                        const patchnum_t* f, int sc, int cm,
+                        enum patch_translation_e flags)
+{
   t->x = x;
   t->y = y;
   t->val = -1;
@@ -274,17 +273,17 @@ void HUlib_eraseTextLine(hu_textline_t* l)
 //
 //jff 2/16/98 add color range parameter
 void HUlib_initSText(hu_stext_t *s, int x, int y, int h,
-                                                  const patchnum_t* font,
-                                                  int startchar,
-                                                  int cm,
-                                                  patch_translation_e flags,
-                                                  bool *on) {
+                     const patchnum_t* font, int startchar, int cm,
+                     enum patch_translation_e flags, bool *on)
+{
+  int i;
+
   s->h = h;
   s->on = on;
   s->laston = true;
   s->cl = 0;
 
-  for (int i = 0; i < h; i++) {
+  for (i = 0; i < h; i++) {
     HUlib_initTextLine(
       &s->l[i],
       x,
@@ -411,15 +410,11 @@ void HUlib_eraseSText(hu_stext_t* s)
 // Passed a hu_mtext_t, and the values used to initialize
 // Returns nothing
 //
-void HUlib_initMText(hu_mtext_t *m, int x, int y,
-                                           int w,
-                                           int h,
-                                           const patchnum_t *font,
-                                           int startchar,
-                                           int cm,
-                                           const patchnum_t *bgfont,
-                                           patch_translation_e flags,
-                                           bool *on) {
+void HUlib_initMText(hu_mtext_t *m, int x, int y, int w, int h,
+                     const patchnum_t* font, int startchar, int cm,
+                     const patchnum_t* bgfont, enum patch_translation_e flags,
+                     bool *on)
+{
   int i;
 
   m->nl = 0;
@@ -644,12 +639,10 @@ void HUlib_eraseMText(hu_mtext_t *m)
 // Returns nothing
 //
 //jff 2/16/98 add color range parameter
-void HUlib_initIText(hu_itext_t *it, int x, int y,
-                                            const patchnum_t *font,
-                                            int startchar,
-                                            int cm,
-                                            patch_translation_e flags,
-                                            bool *on) {
+void HUlib_initIText(hu_itext_t *it, int x, int y, const patchnum_t *font,
+                     int startchar, int cm, enum patch_translation_e flags,
+                     bool *on)
+{
   it->lm = 0; // default left margin is start of text
   it->on = on;
   it->laston = true;

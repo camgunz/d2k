@@ -51,7 +51,8 @@ typedef struct hu_color_s {
 
 /* Text Line widget
  *  (parent of Scrolling Text and Input Text widgets) */
-typedef struct {
+typedef struct
+{
   // left-justified position of scrolling text window
   int   x;
   int   y;
@@ -75,8 +76,10 @@ typedef struct {
   int   needsupdate;
 
   // e6y: wide-res
-  patch_translation_e flags;
+  enum patch_translation_e flags;
 } hu_textline_t;
+
+
 
 // Scrolling Text window widget
 //  (child of Text Line widget)
@@ -144,7 +147,7 @@ void HUlib_initTextLine
   const patchnum_t *f,
   int sc,
   int cm,    //jff 2/16/98 add color range parameter
-  patch_translation_e flags
+  enum patch_translation_e flags
 );
 
 // returns success
@@ -165,7 +168,7 @@ void HUlib_eraseTextLine(hu_textline_t *l);
 //jff 2/16/98 add color range parameter
 void HUlib_initSText(hu_stext_t* s, int x, int y, int h,
                                     const patchnum_t *font, int startchar,
-                                    int cm, patch_translation_e flags,
+                                    int cm, enum patch_translation_e flags,
                                     bool *on);
 
 // add a text message to an stext widget
@@ -184,7 +187,7 @@ void HUlib_initMText(hu_mtext_t *m, int x, int y, int w, int h,
                                     const patchnum_t* font,
                                     int startchar, int cm,
                                     const patchnum_t* bgfont,
-                                    patch_translation_e flags,
+                                    enum patch_translation_e flags,
                                     bool *on);
 
 //jff 2/26/98 message refresh widget
@@ -207,7 +210,7 @@ void HUlib_eraseMText(hu_mtext_t *m);
 //jff 2/16/98 add color range parameter
 void HUlib_initIText(hu_itext_t *it, int x, int y, const patchnum_t *font,
                                      int startchar, int cm,
-                                     patch_translation_e flags, bool *on);
+                                     enum patch_translation_e flags, bool *on);
 
 // resets line and left margin
 void HUlib_resetIText(hu_itext_t *it);

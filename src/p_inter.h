@@ -24,9 +24,6 @@
 #ifndef P_INTER_H__
 #define P_INTER_H__
 
-struct mobj_s;
-typedef struct mobj_s mobj_t;
-
 struct player_s;
 typedef struct player_s player_t;
 

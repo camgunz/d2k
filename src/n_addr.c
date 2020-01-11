@@ -63,7 +63,7 @@ bool N_IPToInt(const char *address_string, uint32_t *address_int) {
   );
 
   if (arg_count != 4) {
-    D_MsgLocalError("Malformed IP address %s.\n", address_string);
+    D_Msg(MSG_ERROR, "Malformed IP address %s.\n", address_string);
     return false;
   }
 
@@ -144,7 +144,7 @@ size_t N_ParseAddressString(const char *address, char **host, uint16_t *port) {
   );
 
   if (parsed_tokens != 5) {
-    D_MsgLocalWarn("Invalid IP address %s\n", address);
+    D_Msg(MSG_WARN, "Invalid IP address %s\n", address);
     return 0;
   }
 
@@ -170,7 +170,7 @@ size_t N_ParseAddressString(const char *address, char **host, uint16_t *port) {
   );
 
   if (bytes_written != address_length) {
-    D_MsgLocalError("Error copying host: %s\n", strerror(errno));
+    D_Msg(MSG_ERROR, "Error copying host: %s\n", strerror(errno));
     return 0;
   }
 

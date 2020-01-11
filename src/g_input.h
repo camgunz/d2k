@@ -24,16 +24,6 @@
 #ifndef G_INPUT_H__
 #define G_INPUT_H__
 
-#define TURBOTHRESHOLD 0x32
-
-extern bool  joyarray[9];
-extern bool *joybuttons;
-extern buttoncode_t special_event;
-
-void G_SetSpeed(void);
-void G_InputClear(void);
-bool G_InputHandleEvent(event_t *ev);
-
 #endif
 
 /* vi: set et ts=2 sw=2: */

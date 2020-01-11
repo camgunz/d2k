@@ -20,66 +20,76 @@
 /*                                                                           */
 /*****************************************************************************/
 
-
 #include "z_zone.h"
 
-#include "i_sound.h"
-#include "i_system.h"
-#include "m_argv.h"
-#include "m_file.h"
-#include "m_random.h"
-#include "am_map.h"
-#include "c_main.h"
-#include "d_deh.h"
-#include "d_dump.h"
 #include "d_event.h"
-#include "d_main.h"
-#include "d_mouse.h"
-#include "d_res.h"
-#include "e6y.h"
+#include "c_main.h"
+#include "d_dump.h"
 #include "f_finale.h"
-#include "g_comp.h"
-#include "g_demo.h"
-#include "g_game.h"
-#include "g_input.h"
-#include "g_keys.h"
-#include "g_player.h"
-#include "g_save.h"
-#include "hu_stuff.h"
-#include "mn_main.h"
-#include "p_camera.h"
-#include "p_ident.h"
-#include "p_map.h"
-#include "p_mobj.h"
-#include "p_setup.h"
-#include "p_tick.h"
-#include "pl_cmd.h"
-#include "pl_main.h"
-#include "r_data.h"
+#include "g_state.h"
+#include "m_argv.h"
+#include "m_avg.h"
+#include "m_file.h"
+#include "m_misc.h"
+#include "m_menu.h"
+#include "m_random.h"
+
 #include "r_defs.h"
-#include "r_draw.h"
-#include "r_fps.h"
-#include "r_main.h"
-#include "r_sky.h"
-#include "s_sound.h"
-#include "sounds.h"
-#include "st_stuff.h"
 #include "v_video.h"
-#include "w_wad.h"
-#include "wi_stuff.h"
-#include "x_main.h"
 
 #include "gl_opengl.h"
 #include "gl_struct.h"
 
+#include "r_defs.h"
+#include "p_setup.h"
+#include "pl_main.h"
+#include "pl_cmd.h"
+#include "pl_msg.h"
+#include "pl_weap.h"
 #include "n_main.h"
-#include "n_proto.h"
+#include "p_ident.h"
+#include "p_tick.h"
+#include "p_map.h"
+#include "p_checksum.h"
+#include "d_main.h"
+#include "wi_stuff.h"
+#include "hu_lib.h"
+#include "hu_stuff.h"
+#include "st_stuff.h"
+#include "am_map.h"
+#include "w_wad.h"
+#include "r_main.h"
+#include "r_draw.h"
+#include "p_map.h"
+#include "s_sound.h"
+#include "s_advsound.h"
+#include "dstrings.h"
+#include "sounds.h"
+#include "r_patch.h"
+#include "r_data.h"
+#include "r_sky.h"
+#include "d_deh.h"              // Ty 3/27/98 deh declarations
+#include "p_inter.h"
+#include "g_game.h"
+#include "d_net.h"
+#include "g_keys.h"
+#include "g_save.h"
+#include "i_main.h"
+#include "i_system.h"
+#include "r_demo.h"
+#include "r_fps.h"
+#include "e6y.h"
 #include "cl_main.h"
 #include "cl_net.h"
+#include "x_main.h"
+#include "p_mobj.h"
+#include "v_video.h"
 
+extern int forceOldBsp;
 extern bool setsizeneeded;
 extern bool doSkip;
 
+static gameaction_t gameaction;
 static bool secretexit;
 static skill_t d_skill;
 static int d_episode;
@@ -108,8 +118,6 @@ int cpars[34] = {
   240, 150, 180, 150, 150, 300, 330, 420, 300, 180, // 21-30
   120, 30, 30, 30                                   // 31-34
 };
-
-gameaction_t gameaction;
 
 // CPhipps - moved *_loadgame vars here
 bool forced_loadgame = false;
@@ -166,7 +174,7 @@ void G_SkipDemoStart(void) {
   nomusicparm = true;
 
   render_precise = render_precise_speed;
-  MN_ChangeRenderPrecise();
+  M_ChangeRenderPrecise();
 
   I_Init2();
 }
@@ -178,7 +186,7 @@ void G_SkipDemoStop(void) {
   nomusicparm = saved_nomusicparm;
   
   render_precise = saved_render_precise;
-  MN_ChangeRenderPrecise();
+  M_ChangeRenderPrecise();
 
   demo_stoponnext = false;
   demo_stoponend = false;
@@ -353,7 +361,7 @@ void G_DoLoadGame(void) {
     I_Error("G_DoLoadGame: Couldn't find wadfile for %s\n", maplump);
   }
 
-  D_MsgLocalInfo(
+  D_Msg(MSG_INFO,
     "G_DoLoadGame: [%d] %s (%s), Skill %d, Level Time %02d:%02d:%02d, "
     "Total Time %02d:%02d:%02d\n",
     savegameslot + 1,
@@ -420,11 +428,11 @@ void G_DoSaveGame(bool menu) {
     );
 
   if (save_succeeded) {
-    D_MsgLocalInfo("%s\n", s_GGSAVED);/* Ty - externalized */
+    PL_Echo(P_GetConsolePlayer(), s_GGSAVED);/* Ty - externalized */
   }
   else {
     // CPhipps - not externalised
-    D_MsgLocalInfo("%s\n", "Game save failed!");
+    PL_Echo(P_GetConsolePlayer(), "Game save failed!");
   }
 
   M_PBufFree(&savebuffer);                   // killough
@@ -449,7 +457,7 @@ void G_DoSaveGame(bool menu) {
     I_Error("G_DoSaveGame: Couldn't find wadfile for %s\n", maplump);
   }
 
-  D_MsgLocalInfo(
+  D_Msg(MSG_INFO,
     "G_DoSaveGame: [%d] %s (%s), Skill %d, Level Time %02d:%02d:%02d, "
     "Total Time %02d:%02d:%02d\n",
     savegameslot + 1,
@@ -466,6 +474,82 @@ void G_DoSaveGame(bool menu) {
 
   savedescription[0] = 0;
   free(name);
+}
+
+void G_SetSpeed(void) {
+  int p;
+
+  if (movement_strafe50) {
+    sidemove[0] = sidemove_strafe50[0];
+    sidemove[1] = sidemove_strafe50[1];
+  }
+  else {
+    movement_strafe50onturns = false;
+    sidemove[0] = sidemove_normal[0];
+    sidemove[1] = sidemove_normal[1];
+  }
+
+  if ((p = M_CheckParm("-turbo"))) {
+    int scale = ((p < myargc - 1) ? atoi(myargv[p + 1]) : 200);
+
+    scale = BETWEEN(10, 400, scale);
+
+    D_MsgLocalInfo("turbo scale: %i%%\n", scale);
+
+    forwardmove[0] = forwardmove_normal[0] * scale / 100;
+    forwardmove[1] = forwardmove_normal[1] * scale / 100;
+    sidemove[0] = sidemove[0] * scale / 100;
+    sidemove[1] = sidemove[1] * scale / 100;
+  }
+}
+
+static bool WeaponSelectable(weapontype_t weapon) {
+  if (gamemode == shareware) {
+    if (weapon == wp_plasma || weapon == wp_bfg) {
+      return false;
+    }
+  }
+
+  // Can't select the super shotgun in Doom 1.
+  if (weapon == wp_supershotgun && gamemission == doom) {
+    return false;
+  }
+
+  // Can't select a weapon if we don't own it.
+  if (!P_GetConsolePlayer()->weaponowned[weapon]) {
+    return false;
+  }
+
+  return true;
+}
+
+static int G_NextWeapon(int direction) {
+  weapontype_t weapon;
+  int i;
+  int arrlen;
+
+  // Find index in the table.
+  if (P_GetConsolePlayer()->pendingweapon == wp_nochange) {
+    weapon = P_GetConsolePlayer()->readyweapon;
+  }
+  else {
+    weapon = P_GetConsolePlayer()->pendingweapon;
+  }
+
+  arrlen = sizeof(weapon_order_table) / sizeof(*weapon_order_table);
+  for (i = 0; i < arrlen; i++) {
+    if (weapon_order_table[i].weapon == weapon) {
+      break;
+    }
+  }
+
+  // Switch weapon.
+  do {
+    i += direction;
+    i = (i + arrlen) % arrlen;
+  } while (!WeaponSelectable(weapon_order_table[i].weapon));
+
+  return weapon_order_table[i].weapon_num;
 }
 
 //
@@ -564,16 +648,22 @@ void G_DoLoadLevel(void) {
 
   P_SetupLevel(gameepisode, gamemap, 0, gameskill);
 
-  if (!demoplayback) { // Don't switch views if playing a demo
-    // view the player you are playing
-    P_SetDisplayPlayer(P_GetConsolePlayer());
+  if (!demoplayback) {            // Don't switch views if playing a demo
+    displayplayer = consoleplayer;// view the guy you are playing
   }
 
   G_SetGameAction(ga_nothing);
   Z_CheckHeap();
 
   // clear cmd building stuff
-  G_InputClear();
+  memset(gamekeydown, 0, sizeof(gamekeydown));
+  joyxmove = joyymove = 0;
+  mousex = mousey = 0;
+  mlooky = 0;                     // e6y
+  special_event = 0;
+  paused = false;
+  memset(&mousearray, 0, sizeof(mousearray));
+  memset(&joyarray, 0, sizeof(joyarray));
 
   // killough 5/13/98: in case netdemo has consoleplayer other than green
   ST_Start();
@@ -630,7 +720,7 @@ bool G_Responder(event_t *ev) {
       HU_Start();
       S_UpdateSounds(P_GetDisplayPlayer()->mo);
       R_ActivateSectorInterpolations();
-      G_DemoSmoothPlayingReset(NULL);
+      R_SmoothPlaying_Reset(NULL);
     }
 
     return true;
@@ -675,10 +765,158 @@ bool G_Responder(event_t *ev) {
   }
 
   if (gamestate == GS_FINALE && F_Responder(ev)) {
-    return true; // finale ate the event
+    return true;                   // finale ate the event
   }
 
-  return G_InputHandleEvent(ev);
+  // If the next/previous weapon keys are pressed, set the next_weapon
+  // variable to change weapons when the next ticcmd is generated.
+  if (ev->type == ev_key && ev->pressed) {
+    if (ev->key == key_prevweapon) {
+      next_weapon = -1;
+    }
+    else if (ev->key == key_nextweapon) {
+      next_weapon = 1;
+    }
+  }
+
+  switch (ev->type) {
+    case ev_key:
+      if (ev->pressed) {
+        if (ev->key == key_pause) {// phares
+          special_event = BT_SPECIAL | (BTS_PAUSE & BT_SPECIALMASK);
+        }
+        else if (ev->key < NUMKEYS) {
+          gamekeydown[ev->key] = true;
+        }
+
+        /*
+         * CG: Don't do this anymore
+         *
+         * return true;    // eat key down events
+         *
+         */
+      }
+      else {
+        if (ev->key < NUMKEYS) {
+          gamekeydown[ev->key] = false;
+        }
+
+        return false;              // always let key up events filter down
+      }
+      break;
+    case ev_mouse:
+      if (ev->key == SDL_BUTTON_LEFT) {
+        mousebuttons[0] = ev->pressed;
+      }
+      else if (ev->key == SDL_BUTTON_MIDDLE) {
+        mousebuttons[1] = ev->pressed;
+      }
+      else if (ev->key == SDL_BUTTON_RIGHT) {
+        mousebuttons[2] = ev->pressed;
+      }
+      else if (ev->key == SDL_BUTTON_X1) {
+        mousebuttons[3] = ev->pressed;
+      }
+      else if (ev->key == SDL_BUTTON_X2) {
+        mousebuttons[4] = ev->pressed;
+      }
+
+      return true;
+      break;
+    case ev_mouse_movement:
+
+      /*
+       * bmead@surfree.com
+       * Modified by Barry Mead after adding vastly more resolution
+       * to the Mouse Sensitivity Slider in the options menu 1-9-2000
+       * Removed the mouseSensitivity "*4" to allow more low end
+       * sensitivity resolution especially for lsdoom users.
+       */
+
+      // e6y mousex += (ev->data2*(mouseSensitivity_horiz))/10;  /* killough */
+      // e6y mousey += (ev->data3*(mouseSensitivity_vert))/10;  /*Mead rm *4 */
+
+      /* killough */
+
+      // e6y
+      mousex += (AccelerateMouse(ev->xmove) * (mouseSensitivity_horiz)) / 10;
+      if (GetMouseLook()) {
+        if (movement_mouseinvert) {
+          mlooky += (AccelerateMouse(ev->ymove) * (mouseSensitivity_mlook)) /
+            10;
+        }
+        else {
+          mlooky -= (AccelerateMouse(ev->ymove) * (mouseSensitivity_mlook)) /
+            10;
+        }
+      }
+      else {
+        mousey += (AccelerateMouse(ev->ymove) * (mouseSensitivity_vert)) / 40;
+      }
+
+      return true;    // eat events
+      break;
+    case ev_joystick:
+      if (ev->key >= 0 && ev->key <= 7) {
+        joybuttons[ev->key] = ev->pressed;
+      }
+
+      return true;
+      break;
+    case ev_joystick_movement:
+      if (ev->jstype == ev_joystick_axis) {
+        if (ev->key == 0) {
+          joyxmove = ev->value;
+        }
+        else if (ev->key == 1) {
+          joyymove = ev->value;
+        }
+      }
+      else if (ev->jstype == ev_joystick_ball) {
+        joyxmove = ev->xmove;
+        joyymove = ev->ymove;
+      }
+      else if (ev->jstype == ev_joystick_hat) {
+        if (ev->value == SDL_HAT_CENTERED) {
+          joyxmove = 0;
+          joyymove = 0;
+        }
+        else if (ev->value == SDL_HAT_UP) {
+          joyymove = 1;
+        }
+        else if (ev->value == SDL_HAT_RIGHT) {
+          joyxmove = 1;
+        }
+        else if (ev->value == SDL_HAT_DOWN) {
+          joyymove = -1;
+        }
+        else if (ev->value == SDL_HAT_LEFT) {
+          joyxmove = -1;
+        }
+        else if (ev->value == SDL_HAT_RIGHTUP) {
+          joyxmove = 1;
+          joyymove = 1;
+        }
+        else if (ev->value == SDL_HAT_RIGHTDOWN) {
+          joyxmove = 1;
+          joyymove = -1;
+        }
+        else if (ev->value == SDL_HAT_LEFTUP) {
+          joyxmove = -1;
+          joyymove = 1;
+        }
+        else if (ev->value == SDL_HAT_LEFTDOWN) {
+          joyxmove = -1;
+          joyymove = -1;
+        }
+      }
+      return true;    // eat events
+      break;
+    default:
+      break;
+  }
+
+  return false;
 }
 
 //
@@ -780,26 +1018,26 @@ void G_Ticker(void) {
       // e6y
       if (demoplayback) {
         memset(cmd, 0, sizeof(ticcmd_t));
-        G_DemoReadTiccmd(cmd);
+        read_demo_ticcmd(cmd);
       }
       else if (democontinue) {
         memset(cmd, 0, sizeof(ticcmd_t));
-        G_DemoReadContinueTiccmd(cmd);
+        read_demo_continue_ticcmd(cmd);
       }
 
       if (demorecording) {
-        G_DemoWriteTiccmd(cmd);
+        write_demo_ticcmd(cmd);
       }
 
       // check for turbo cheats
       // killough 2/14/98, 2/20/98 -- only warn in netgames and demos
 
       if ((netgame || demoplayback) &&
-          cmd->forwardmove > TURBOTHRESHOLD &&
-          !(gametic & 31) &&
-          ((gametic >> 5) & 3) == PL_GetVanillaNum(iter.player)) {
+        cmd->forwardmove > TURBOTHRESHOLD &&
+        !(gametic & 31) &&
+        ((gametic >> 5) & 3) == PL_GetVanillaNum(iter.player)) {
         /* cph - don't use sprintf, use doom_printf */
-        D_MsgLocalWarn("%s is turbo!\n", iter.player->name);
+        PL_Printf(P_GetConsolePlayer(), "%s is turbo!\n", iter.player->name);
       }
     }
 
@@ -1193,10 +1431,10 @@ void G_DoCompleted(void) {
   // print "FINISHED: <mapname>" when the player exits the current map
   if (nodrawers && (demoplayback || timingdemo)) {
     if (gamemode == commercial) {
-      D_MsgLocalInfo("FINISHED: MAP%02d\n", gamemap);
+      D_Msg(MSG_INFO, "FINISHED: MAP%02d\n", gamemap);
     }
     else {
-      D_MsgLocalInfo("FINISHED: E%dM%d\n", gameepisode, gamemap);
+      D_Msg(MSG_INFO, "FINISHED: E%dM%d\n", gameepisode, gamemap);
     }
   }
 
@@ -1384,7 +1622,7 @@ void G_ReloadDefaults(void) {
   // );
   // memset(playeringame + 1, 0, sizeof(*playeringame) * (MAXPLAYERS - 1));
 
-  // consoleplayer = 0;
+  consoleplayer = 0;
 
   compatibility_level = default_compatibility_level;
 
@@ -1428,7 +1666,7 @@ void G_DoNewGame(void) {
 
   // jff 4/26/98 wake up the status bar in case were coming out of a DM demo
   ST_Start();
-  walkcamera.mode = camera_mode_disabled;               // e6y
+  walkcamera.type = 0;                                  // e6y
 }
 
 // killough 4/10/98: New function to fix bug which caused Doom
@@ -1562,6 +1800,50 @@ void G_InitNew(skill_t skill, int episode, int map) {
   AM_clearMarks();
 
   G_DoLoadLevel();
+}
+
+// e6y: Check for overrun
+static bool CheckForOverrun(const unsigned char *start_p,
+  const unsigned char                           *current_p,
+  size_t                                         maxsize,
+  size_t                                         size,
+  bool                                           failonerror) {
+  size_t pos = current_p - start_p;
+
+  if (pos + size > maxsize) {
+    if (failonerror) {
+      I_Error("G_ReadDemoHeader: wrong demo header\n");
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+void G_DoPlayDemo(void) {
+  if (LoadDemo(defdemoname, &demobuffer, &demolength, &demolumpnum)) {
+    demo_p = G_ReadDemoHeaderEx(demobuffer, demolength, RDH_SAFE);
+
+    G_SetGameAction(ga_nothing);
+    usergame = false;
+
+    demoplayback = true;
+    R_SmoothPlaying_Reset(NULL);  // e6y
+  }
+  else {
+    // e6y
+    // Do not exit if corresponding demo lump is not found.
+    // It makes sense for Plutonia and TNT IWADs, which have no DEMO4 lump,
+    // but DEMO4 should be in a demo cycle as real Plutonia and TNT have.
+    //
+    // Plutonia/Tnt executables exit with "W_GetNumForName: DEMO4 not found"
+    // message after playing of DEMO3, because DEMO4 is not present
+    // in the corresponding IWADs.
+    usergame = false;
+    D_StartTitle();               // Start the title screen
+    G_SetGameState(GS_DEMOSCREEN);// And set the game state accordingly
+  }
 }
 
 void G_SetGameState(gamestate_t new_gamestate) {

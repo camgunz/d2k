@@ -23,17 +23,17 @@
 
 #include "z_zone.h"
 
-#include "i_video.h"
 #include "m_random.h"
 #include "f_wipe.h"
 #include "e6y.h"
+#include "n_main.h"
 #include "r_defs.h"
 #include "v_video.h"
 
 #include "gl_opengl.h"
 #include "gl_struct.h"
 
-#include "n_main.h"
+#include "i_video.h"
 
 //
 // SCREEN WIPE PACKAGE

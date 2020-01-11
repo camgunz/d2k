@@ -33,7 +33,6 @@
 #include "e6y.h"
 #include "g_comp.h"
 #include "g_game.h"
-#include "g_save.h"
 #include "p_enemy.h"
 #include "p_inter.h"
 #include "p_mobj.h"
@@ -46,23 +45,6 @@
 
 #define DEHTRUE 1
 #define DEHFALSE 0
-
-// killough 10/98: support -dehout filename
-// cph - made const, don't cache results
-//e6y static
-const char* D_DEHOut(void) {
-  int p = M_CheckParm("-dehout");
-
-  if (!p) {
-    p = M_CheckParm("-bexout");
-  }
-
-  if (p && ++p < myargc) {
-    return myargv[p];
-  }
-
-  return NULL;
-}
 
 // e6y: for compatibility with BOOM deh parser
 int deh_strcasecmp(const char *str1, const char *str2)
@@ -478,6 +460,10 @@ const char *startup2     = "";
 const char *startup3     = "";
 const char *startup4     = "";
 const char *startup5     = "";
+
+/* Ty 05/03/98 - externalized
+ * cph - updated for prboom */
+const char *savegamename = PACKAGE_TARNAME"-savegame";
 
 // end d_deh.h variable declarations
 // ====================================================================

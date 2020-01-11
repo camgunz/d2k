@@ -60,24 +60,22 @@
 
 #include "z_zone.h"
 
-#include "d_mouse.h"
-#include "e6y.h"
-#include "g_comp.h"
-#include "g_game.h"
-#include "m_misc.h"
-#include "p_map.h"
-#include "r_data.h"
 #include "r_defs.h"
-#include "r_main.h"
+#include "v_video.h"
+#include "r_defs.h"
+#include "r_data.h"
 #include "r_plane.h"
 #include "r_sky.h"
+#include "r_main.h"
 #include "r_state.h"
 #include "sc_man.h"
-#include "v_video.h"
+#include "m_misc.h"
+#include "e6y.h"
+#include "g_game.h"
 
 #include "gl_opengl.h"
-#include "gl_struct.h"
 #include "gl_intern.h"
+#include "gl_struct.h"
 
 typedef struct {
   int mode;
@@ -362,7 +360,7 @@ void gld_DrawStripsSky(void) {
 
 void gld_DrawSkyCaps(void) {
   if (SkyBox.type && SkyBox.wall.gltexture) {
-    bool mlook = D_GetMouseLook();
+    bool mlook = GetMouseLook();
 
     if (mlook) {
       gld_BindTexture(SkyBox.wall.gltexture, 0);
@@ -853,7 +851,7 @@ static void RenderDome(SkyBoxParams_t *sky) {
     }
   }
 
-  for (j = (D_HaveMouseLook() || !gl_stretchsky ? 0 : 1); j < 2; j++) {
+  for (j = (HaveMouseLook() || !gl_stretchsky ? 0 : 1); j < 2; j++) {
     gld_EnableTexture2D(GL_TEXTURE0_ARB, j != 0);
 
     for (i = 0; i < vbo->loopcount; i++) {

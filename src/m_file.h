@@ -80,28 +80,26 @@ bool        M_DeleteFolderAndContents(const char *path);
 bool        M_ReadFromFile(void *ptr, size_t size, size_t count, FILE *f);
 bool        M_WriteToFile(const void *ptr, size_t size, size_t count, FILE *f);
 #endif
-
+int         M_Open(const char *path, int flags, int mode);
+bool        M_Close(int fd);
+bool        M_Seek(int fd, off_t offset, int origin);
+bool        M_Read(int fd, void *vbuf, size_t sz);
+uint32_t    M_FDLength(int fd);
+FILE*       M_OpenFile(const char *path, const char *mode);
+FILE*       M_OpenFD(int fd, const char *mode);
 bool        M_ReadFile(const char *path, char **data, size_t *size);
+bool        M_ReadFromFile(FILE *f, char *data, size_t member_count,
+                                                size_t member_size);
 bool        M_ReadFileBuf(buf_t *buf, const char *path);
 bool        M_WriteFile(const char* name, const char *source, size_t size);
-
-int         M_FDOpen(const char *path, int flags, int mode);
-bool        M_FDClose(int fd);
-bool        M_FDSeek(int fd, off_t offset, int origin);
-bool        M_FDRead(int fd, void *vbuf, size_t sz);
-uint32_t    M_FDLength(int fd);
-FILE*       M_FileOpen(const char *path, const char *mode);
-FILE*       M_FileFromFD(int fd, const char *mode);
-bool        M_FileRead(FILE *f, char *data, size_t member_count,
-                                            size_t member_size);
-bool        M_FileWrite(FILE *f, const char *source, size_t member_count,
-                                                     size_t member_size);
-long        M_FileGetPosition(FILE *f);
-bool        M_FileSeek(FILE *f, long int offset, int origin);
+bool        M_WriteToFile(FILE *f, const char *source, size_t member_count,
+                                                       size_t member_size);
+long        M_GetFilePosition(FILE *f);
+bool        M_SeekFile(FILE *f, long int offset, int origin);
 uint32_t    M_FileLength(FILE *f);
-bool        M_FileFlush(FILE *f);
-bool        M_FileClose(FILE *f);
-int         M_FileGetFD(FILE *f);
+bool        M_FlushFile(FILE *f);
+bool        M_CloseFile(FILE *f);
+int         M_GetFDFromFile(FILE *f);
 
 // killough
 void        M_ExtractFileBase(const char *path, char *dest);

@@ -97,7 +97,7 @@ int gld_SetGammaRamp(int gamma);
 void gld_CheckHardwareGamma(void);
 void gld_FlushTextures(void);
 void gld_ApplyGammaRamp(unsigned char *buf, int pitch, int width, int height);
-void MN_ChangeLightMode(void);
+void M_ChangeLightMode(void);
 
 //detail
 extern int gl_detail_maxdist;

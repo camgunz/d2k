@@ -74,6 +74,7 @@
 
 void G_BuildTiccmd(ticcmd_t *cmd);
 
+extern int  forceOldBsp;
 extern bool setsizeneeded;
 extern int  showMessages;
 
@@ -334,22 +335,12 @@ bool D_Responder(event_t *ev) {
 
   if (ev->key == key_walkcamera) {
     if (demoplayback && gamestate == GS_LEVEL) {
-      switch (walkcamera.mode) {
-        case camera_mode_disabled:
-          walkcamera.mode = camera_mode_player;
-          break;
-        case camera_mode_player:
-          walkcamera.mode = camera_mode_free;
-          break;
-        default:
-          walkcamera.mode = camera_mode_disabled;
-          break;
-      }
+      walkcamera.type = (walkcamera.type + 1) % 3;
 
-      P_SyncWalkcam(true, (walkcamera.mode != camera_mode_free));
+      P_SyncWalkcam(true, (walkcamera.type != 2));
       R_ResetViewInterpolation();
 
-      if (walkcamera.mode == camera_mode_disabled) {
+      if (walkcamera.type == 0) {
         G_DemoSmoothPlayingReset(NULL);
       }
 
@@ -570,10 +561,8 @@ void D_Display(void) {
 
   // e6y
   // Don't thrash cpu during pausing or if the window doesnt have focus
-  if ((paused && walkcamera.mode == camera_mode_disabled) ||
-      (!window_focused)) {
+  if ((paused && !walkcamera.type) || (!window_focused))
     I_Sleep(5);
-  }
 
   I_EndDisplay();
 }
@@ -1753,7 +1742,7 @@ static void D_DoomMainSetup(void) {
   }
 
   // do not try to interpolate during timedemo
-  MN_ChangeUncappedFrameRate();
+  M_ChangeUncappedFrameRate();
 
   if ((p = M_CheckParm("-dumpdemo")) && ++p < myargc) {
     D_DumpInit(myargv[p]);

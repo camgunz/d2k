@@ -23,18 +23,16 @@
 
 #include "z_zone.h"
 
-#include "e6y.h"
-#include "g_game.h"
-#include "p_map.h"
-#include "pl_main.h"
 #include "r_defs.h"
+#include "v_video.h"
 #include "r_main.h"
 #include "r_sky.h"
-#include "v_video.h"
-
 #include "gl_opengl.h"
-#include "gl_struct.h"
 #include "gl_intern.h"
+#include "gl_struct.h"
+#include "e6y.h"
+#include "g_game.h"
+#include "p_user.h"
 
 gl_lightmode_t gl_lightmode;
 gl_lightmode_t gl_lightmode_default;
@@ -110,15 +108,15 @@ int gl_hardware_gamma = false;
 gld_CalcLightLevel_f gld_CalcLightLevel = gld_CalcLightLevel_glboom;
 gld_CalcFogDensity_f gld_CalcFogDensity = gld_CalcFogDensity_glboom;
 
-void MN_ChangeLightMode(void)
+void M_ChangeLightMode(void)
 {
   if (gl_compatibility)
   {
     if (gl_lightmode_default == gl_lightmode_fogbased ||
       gl_lightmode_default == gl_lightmode_shaders)
     {
-      D_MsgLocalInfo(
-        "MN_ChangeLightMode: '%s' sector light mode is not allowed in "
+      D_Msg(MSG_INFO,
+        "M_ChangeLightMode: '%s' sector light mode is not allowed in "
         "gl_compatibility mode\n",
         gl_lightmodes[gl_lightmode_default]
       );
@@ -231,15 +229,16 @@ static float gld_CalcLightLevel_gzdoom(int lightlevel)
   return lighttable_gzdoom[BETWEEN(0, 255, lightlevel)];
 }
 
-static float gld_CalcLightLevel_fogbased(int lightlevel) {
-  if (P_GetDisplayPlayer()->fixedcolormap) {
+static float gld_CalcLightLevel_fogbased(int lightlevel)
+{
+  if (players[displayplayer].fixedcolormap)
     return lighttable_gzdoom[BETWEEN(0, 255, lightlevel)];
-  }
-  else if (extralight) {
-    return lighttable_fogbased[255];
-  }
-  else {
-    return lighttable_fogbased[BETWEEN(0, 255, lightlevel)];
+  else
+  {
+    if (extralight)
+      return lighttable_fogbased[255];
+    else
+      return lighttable_fogbased[BETWEEN(0, 255, lightlevel)];
   }
 }
 
@@ -254,9 +253,10 @@ static float gld_CalcLightLevel_shaders(int lightlevel)
 
 void gld_StaticLightAlpha(float light, float alpha)
 {
+  player_t *player = &players[displayplayer];
   int shaders = (gl_lightmode == gl_lightmode_shaders);
 
-  if (!P_GetDisplayPlayer()->fixedcolormap)
+  if (!player->fixedcolormap)
   {
     float ll = (shaders ? 1.0f : light);
     glColor4f(ll, ll, ll, alpha);
@@ -284,11 +284,11 @@ void gld_StaticLightAlpha(float light, float alpha)
 
   if (shaders)
   {
-    glsl_SetLightLevel((P_GetDisplayPlayer()->fixedcolormap ? 1.0f : light));
+    glsl_SetLightLevel((player->fixedcolormap ? 1.0f : light));
   }
 }
 
-void MN_ChangeAllowFog(void)
+void M_ChangeAllowFog(void)
 {
   int i;
   GLfloat FogColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -376,7 +376,7 @@ static float gld_CalcFogDensity_gzdoom(sector_t *sector, int lightlevel, GLDrawI
 
 static float gld_CalcFogDensity_fogbased(sector_t *sector, int lightlevel, GLDrawItemType type)
 {
-  if (P_GetDisplayPlayer()->fixedcolormap)
+  if (players[displayplayer].fixedcolormap)
   {
     return 0;
   }

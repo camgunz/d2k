@@ -24,6 +24,14 @@
 #ifndef E6Y_H__
 #define E6Y_H__
 
+#define HU_HUDADDX (HU_HUDX)
+#define HU_HUDADDY (HU_HUDY+(-1)*HU_GAPY)
+#define HU_CENTERMSGX (320/2)
+#define HU_CENTERMSGY ((200-ST_HEIGHT)/2 - 1 - LittleShort(hu_font[0].height))
+
+#define HU_HUDADDX_D (HU_HUDX_LL)
+#define HU_HUDADDY_D (HU_HUDY_LL+(-1)*HU_GAPY)
+
 #define STSTR_SECRETFOUND   "A secret is revealed!"
 
 #define S_CANT_GL_ARB_MULTITEXTURE 0x10000000
@@ -47,6 +55,19 @@ extern const char *avi_shot_fname;
 
 extern int speed_step;
 
+extern int hudadd_gamespeed;
+extern int hudadd_leveltime;
+extern int hudadd_demotime;
+extern int hudadd_secretarea;
+extern int hudadd_smarttotals;
+extern int hudadd_demoprogressbar;
+extern int hudadd_crosshair;
+extern int hudadd_crosshair_scale;
+extern int hudadd_crosshair_color;
+extern int hudadd_crosshair_health;
+extern int hudadd_crosshair_target;
+extern int hudadd_crosshair_target_color;
+extern int hudadd_crosshair_lock_target;
 extern int movement_strafe50;
 extern int movement_shorttics;
 extern int movement_strafe50onturns;
@@ -60,9 +81,8 @@ extern float render_ratio;
 extern float render_fovratio;
 extern float render_fovy;
 extern float render_multiplier;
-
-void MN_ChangeAspectRatio(void);
-void MN_ChangeStretch(void);
+void M_ChangeAspectRatio(void);
+void M_ChangeStretch(void);
 
 extern int showendoom;
 
@@ -86,17 +106,19 @@ void e6y_assert(const char *format, ...);
 void ParamsMatchingCheck();
 void e6y_InitCommandLine(void);
 #ifdef GL_DOOM
-void MN_ChangeFOV(void);
-void MN_ChangeUseDetail(void);
-void MN_ChangeSpriteClip(void);
-void MN_ChangeAllowBoomColormaps(void);
-void MN_ChangeTextureUseHires(void);
-void MN_ChangeAllowFog(void);
-void MN_ChangeTextureHQResize(void);
+void M_ChangeFOV(void);
+void M_ChangeUseDetail(void);
+void M_ChangeMultiSample(void);
+void M_ChangeSpriteClip(void);
+void M_ChangeAllowBoomColormaps(void);
+void M_ChangeTextureUseHires(void);
+void M_ChangeAllowFog(void);
+void M_ChangeTextureHQResize(void);
 #endif
-void MN_ChangeRenderPrecise(void);
-void MN_ChangeScreenMultipleFactor(void);
-void MN_ChangeInterlacedScanning(void);
+void M_ChangeRenderPrecise(void);
+void M_ChangeSpeed(void);
+void M_ChangeScreenMultipleFactor(void);
+void M_ChangeInterlacedScanning(void);
 void I_Init2(void);
 
 extern float viewPitch;
@@ -208,6 +230,8 @@ extern bool isskytexture;
 extern int levelstarttic;
 
 extern int force_singletics_to;
+
+int HU_DrawDemoProgress(int force);
 
 #ifdef _MSC_VER
 int GetFullPath(const char* FileName, const char* ext, char *Buffer, size_t BufferLength);

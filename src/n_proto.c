@@ -150,25 +150,17 @@ static void display_chat_message(chat_channel_e chat_channel,
 
 static void handle_setup(netpeer_t *np) {
   netpeer_t *server = CL_GetServerPeer();
+  unsigned short playernum = 0;
 
-  N_MsgNetLocalDebug("Handling setup.\n");
+  D_Msg(MSG_NET, "Handling setup.\n");
 
   if (!server) {
     return;
   }
 
-  if (server != np) {
-    N_MsgNetLocalWarn("Received setup for non-server peer\n");
-    return;
-  }
-
   G_ClearStates();
 
-  if (!N_UnpackSetup(np)) {
-    /*
-     * [CG] [TODO] Come to think of it, this stuff should probably go in
-     *             N_Disconnect itself....
-     */
+  if (!N_UnpackSetup(np, &playernum)) {
     D_ClearResourceFiles();
     D_ClearDEHFiles();
     G_ClearStates();
@@ -178,7 +170,14 @@ static void handle_setup(netpeer_t *np) {
 
   W_Init();
 
-  N_PeerSyncSetTIC(np, G_GetLatestState()->tic);
+  if (!playeringame[playernum]) {
+    I_Error("consoleplayer (%d) not in game", playernum);
+  }
+
+  consoleplayer = playernum;
+
+  N_PeerSetSyncTIC(np, G_GetLatestState()->tic);
+
   N_PeerSyncSetHasGameInfo(server);
   N_PeerSyncSetHasGameState(server);
   N_PeerSyncSetOutdated(server);
@@ -508,6 +507,14 @@ void N_HandlePacket(netpeer_t *np, void *data, size_t data_size) {
   }
 
   while (N_PeerLoadNextMessage(np, &message_type)) {
+    if (message_type > NM_NONE &&
+        message_type != NM_SYNC &&
+        message_type < NM_MAX) {
+      D_Msg(MSG_NET, "Handling [%s] message.\n",
+        network_message_info[message_type].name
+      );
+    }
+
     switch (message_type) {
       case NM_SETUP:
         if (CLIENT) {
@@ -578,7 +585,7 @@ void N_UpdateSync(void) {
       return;
     }
 
-    N_PeerClearUnreliableChannel(server);
+    N_PeerClearChannel(server, network_message_info[NM_SYNC].channel);
     N_PackSync(server);
     N_PeerSyncSetNotOutdated(server);
 
@@ -602,7 +609,7 @@ void N_UpdateSync(void) {
       N_PeerUpdateLastSetupRequestTime(iter.np);
     }
     else if (N_PeerSyncOutdated(iter.np) && N_PeerGetSyncTIC(iter.np) != 0) {
-      N_PeerClearUnreliableChannel(iter.np);
+      N_PeerClearChannel(iter.np, network_message_info[NM_SYNC].channel);
       N_PeerBuildNewSyncStateDelta(iter.np);
       N_PackSync(iter.np);
       N_PeerSyncSetNotOutdated(iter.np);

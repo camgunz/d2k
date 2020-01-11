@@ -23,13 +23,7 @@
 
 #include "z_zone.h"
 
-#include "m_random.h"
-#include "g_comp.h"
-#include "g_demo.h"
-#include "g_game.h"
 #include "g_opt.h"
-#include "p_map.h"
-#include "pl_main.h"
 
 // These functions are used to read and write game-specific options in demos
 // and savegames so that demo sync is preserved and savegame restoration is
@@ -183,8 +177,6 @@ void G_ReadOptions(unsigned char game_options[]) {
 // e6y
 // save/restore all data which could be changed by G_ReadDemoHeader
 void G_SaveRestoreGameOptions(int save) {
-  static int consoleplayer;
-  
   typedef struct gameoption_s {
     int type;
     int value_int;
@@ -241,8 +233,6 @@ void G_SaveRestoreGameOptions(int save) {
 
   size_t i = 0;
 
-  consoleplayer = (int)P_GetConsolePlayer()->id;
-
   if (save) {
     was_saved_once = true;
   }
@@ -290,10 +280,6 @@ void G_SaveRestoreGameOptions(int save) {
     else {
       comp[i] = comp_o[i];
     }
-  }
-
-  if (!save) {
-    P_SetConsolePlayer(P_PlayersGetNewWithID(consoleplayer));
   }
 }
 

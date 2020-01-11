@@ -141,7 +141,7 @@ extern int map_always_updates;
 extern int map_grid_size;
 extern int map_scroll_speed;
 extern int map_wheel_zoom;
-extern int map_use_multisampling;
+extern int map_use_multisamling;
 
 extern int map_textured;
 extern int map_textured_trans;
@@ -152,9 +152,8 @@ extern int map_overlay_pos_y;
 extern int map_overlay_pos_width;
 extern int map_overlay_pos_height;
 extern int map_type;
-
-void MN_ChangeMapTextured(void);
-void MN_ChangeMapMultisampling(void);
+void M_ChangeMapTextured(void);
+void M_ChangeMapMultisamling(void);
 
 typedef struct am_frame_s
 {

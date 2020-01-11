@@ -58,7 +58,7 @@ bool     M_IDListRemoveID(id_list_t *idlist, uint32_t id);
 void*    M_IDListLookup(id_list_t *idlist, uint32_t id);
 bool     M_IDListIterate(id_list_t *idlist, GList **node, void **obj,
                                                           void *wraparound);
-uint32_t M_IDListGetCount(id_list_t *idlist);
+uint32_t M_IDListGetLen(id_list_t *idlist);
 void     M_IDListReset(id_list_t *idlist);
 void     M_IDListFree(id_list_t *idlist);
 

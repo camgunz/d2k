@@ -35,14 +35,12 @@ uint32_t MSG_CHANNEL_NET;
 uint32_t MSG_CHANNEL_SYNC;
 uint32_t MSG_CHANNEL_SAVE;
 uint32_t MSG_CHANNEL_CMD;
-uint32_t MSG_CHANNEL_STATE;
 
 void N_MsgInit(void) {
-  MSG_CHANNEL_NET =   D_MsgRegisterChannel("Network messages");
-  MSG_CHANNEL_SYNC =  D_MsgRegisterChannel("Sync messages");
-  MSG_CHANNEL_SAVE =  D_MsgRegisterChannel("Save messages");
-  MSG_CHANNEL_CMD =   D_MsgRegisterChannel("Player command messages");
-  MSG_CHANNEL_STATE = D_MsgRegisterChannel("Game states");
+  MSG_CHANNEL_NET = D_MsgRegisterChannel("Network messages");
+  MSG_CHANNEL_SYNC = D_MsgRegisterChannel("Sync messages");
+  MSG_CHANNEL_SAVE = D_MsgRegisterChannel("Save messages");
+  MSG_CHANNEL_CMD = D_MsgRegisterChannel("Player command messages");
 
 #ifdef DEBUG
 

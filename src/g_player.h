@@ -24,12 +24,6 @@
 #ifndef G_PLAYER_H__
 #define G_PLAYER_H__
 
-struct mapthing_s;
-typedef struct mapthing_s mapthing_t;
-
-struct player_s;
-typedef struct player_s player_t;
-
 void G_PlayerFinishLevel(player_t *player);
 void G_ChangedPlayerColour(int pn, int cl);
 void G_PlayerReborn(player_t *player);

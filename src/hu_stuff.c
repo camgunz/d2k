@@ -1,4 +1,5 @@
 /*****************************************************************************/
+
 /* D2K: A Doom Source Port for the 21st Century                              */
 /*                                                                           */
 /* Copyright (C) 2014: See COPYRIGHT file                                    */
@@ -24,67 +25,44 @@
 
 #include "z_zone.h"
 
+#include "d_event.h"
+#include "am_map.h"
+#include "d_deh.h"/* Ty 03/27/98 - externalization of mapnamesx arrays */
+#include "d_items.h"
+#include "d_main.h"
+#include "dstrings.h"
+#include "c_main.h"
+#include "e6y.h"  // e6y
+#include "p_setup.h"
+#include "pl_main.h"
+#include "r_defs.h"
+#include "v_video.h"
+#include "r_patch.h"
+#include "r_data.h"
+#include "g_game.h"
+#include "g_keys.h"
+#include "w_wad.h"
+#include "hu_lib.h"
+#include "hu_stuff.h"
+#include "hu_tracers.h"
 #include "i_main.h"
 #include "i_system.h"
 #include "i_video.h"
 #include "m_file.h"
 #include "m_misc.h"
-#include "am_map.h"
-#include "c_main.h"
+#include "n_main.h"
 #include "cl_main.h"
-#include "d_deh.h"/* Ty 03/27/98 - externalization of mapnamesx arrays */
-#include "d_event.h"
-#include "d_items.h"
-#include "d_main.h"
-#include "d_res.h"
-#include "dstrings.h"
-#include "e6y.h"  // e6y
-#include "g_demo.h"
-#include "g_game.h"
-#include "g_keys.h"
-#include "mn_main.h"
 #include "p_inter.h"
 #include "p_map.h"
 #include "p_mobj.h"
 #include "p_tick.h"
-#include "pl_main.h"
-#include "r_data.h"
-#include "r_defs.h"
 #include "r_main.h"
-#include "r_patch.h"
 #include "s_sound.h"
 #include "sc_man.h"
 #include "sounds.h"
 #include "st_stuff.h"/* jff 2/16/98 need loc of status bar */
-#include "v_video.h"
-#include "w_wad.h"
 #include "x_main.h"
 
-#include "hu_lib.h"
-#include "hu_stuff.h"
-#include "hu_tracers.h"
-
-#include "n_main.h"
-
-extern int doSkip;
-
-#define SPACEWIDTH 4
-
-// jff 2/16/98 initialization strings for ammo, health, armor widgets
-static char hud_coordstrx[32];
-static char hud_coordstry[32];
-static char hud_coordstrz[32];
-static char hud_ammostr[80];
-static char hud_healthstr[80];
-static char hud_armorstr[80];
-static char hud_weapstr[80];
-static char hud_keysstr[80];
-static char hud_gkeysstr[80];        // jff 3/7/98 add support for graphic key
-                                     // display
-static char hud_monsecstr[80];
-
-static custom_message_t custom_message[VANILLA_MAXPLAYERS];
-static custom_message_t *custom_message_p;
 hu_textline_t w_traces[NUMTRACES];
 
 // global heads up display controls
@@ -249,19 +227,18 @@ int hudcolor_list;                   // list of messages color
 int hud_list_bgon;                   // enable for solid window background for
                                      // message list
 
-int hudadd_gamespeed;
-int hudadd_leveltime;
-int hudadd_demotime;
-int hudadd_secretarea;
-int hudadd_smarttotals;
-int hudadd_demoprogressbar;
-int hudadd_crosshair;
-int hudadd_crosshair_scale;
-int hudadd_crosshair_color;
-int hudadd_crosshair_health;
-int hudadd_crosshair_target;
-int hudadd_crosshair_target_color;
-int hudadd_crosshair_lock_target;
+// jff 2/16/98 initialization strings for ammo, health, armor widgets
+static char hud_coordstrx[32];
+static char hud_coordstry[32];
+static char hud_coordstrz[32];
+static char hud_ammostr[80];
+static char hud_healthstr[80];
+static char hud_armorstr[80];
+static char hud_weapstr[80];
+static char hud_keysstr[80];
+static char hud_gkeysstr[80];        // jff 3/7/98 add support for graphic key
+                                     // display
+static char hud_monsecstr[80];
 
 //
 // Builtin map names.
@@ -284,6 +261,8 @@ extern int map_level_stat;
 //
 const char *shiftxform;
 
+static custom_message_t custom_message[VANILLA_MAXPLAYERS];
+static custom_message_t *custom_message_p;
 void HU_init_crosshair(void);
 
 const char english_shiftxform[] =
@@ -928,13 +907,13 @@ typedef struct hud_cfg_item_s {
 } hud_cfg_item_t;
 
 typedef struct hud_widget_s {
-  hu_textline_t        *hu_textline;
-  int                   x;
-  int                   y;
-  patch_translation_e   flags;
-  HU_widget_build_func  build;
-  HU_widget_draw_func   draw;
-  const char           *name;
+  hu_textline_t           *hu_textline;
+  int                      x;
+  int                      y;
+  enum patch_translation_e flags;
+  HU_widget_build_func     build;
+  HU_widget_draw_func      draw;
+  const char              *name;
 } hud_widget_t;
 
 typedef struct hud_widgets_list_s {
@@ -2677,7 +2656,7 @@ size_t HU_StringHeight(const char *string) {
   size_t height;
   
   if (hu_font[0].height < 0) {
-    I_Error("HU_StringHeight: Character 0 in hu_font has negative height\n");
+    I_Error("HU_StringHeight: Character 0 in hu_font has negative height\n")
   }
 
   h = (size_t)hu_font[0].height;
@@ -2836,64 +2815,6 @@ size_t HU_GetPixelWidth(const char *ch) {
 
 void HU_DrawStringCentered(int cx, int cy, int color, const char *ch) {
   HU_DrawString(cx - HU_GetPixelWidth(ch) / 2, cy, color, ch);
-}
-
-bool HU_DrawDemoProgress(int force) {
-  static unsigned int last_update = 0;
-  static int prev_len = -1;
-
-  int len;
-  int tics_count;
-  int diff;
-  unsigned int tick;
-  unsigned int max_period;
-  
-  if (gamestate == GS_DEMOSCREEN || (!demoplayback && !democontinue) ||
-                                    !hudadd_demoprogressbar) {
-    return false;
-  }
-
-  if (doSkip && demo_skiptics > 0) {
-    tics_count = MIN(demo_skiptics, demo_tics_count) * demo_playerscount;
-  }
-  else {
-    tics_count = demo_tics_count * demo_playerscount;
-  }
-
-  len = MIN(
-    SCREENWIDTH,
-    (int)((int64_t)SCREENWIDTH * demo_curr_tic / tics_count)
-  );
-
-  if (!force) {
-    max_period = (
-      (tics_count - demo_curr_tic > 35 * demo_playerscount) ? 500 : 15
-    );
-
-    // Unnecessary updates of progress bar
-    // can slow down demo skipping and playback
-    tick = I_GetTicks();
-    if (tick - last_update < max_period) {
-      return false;
-    }
-    last_update = tick;
-
-    // Do not update progress bar if difference is small
-    diff = len - prev_len;
-
-    if (diff == 0 || diff == 1) { // because of static prev_len
-      return false;
-    }
-  }
-
-  prev_len = len;
-  
-  V_FillRect(0, 0, SCREENHEIGHT - 4, len - 0, 4, 4);
-  if (len > 4) {
-    V_FillRect(0, 2, SCREENHEIGHT - 3, len - 4, 2, 0);
-  }
-
-  return true;
 }
 
 /* vi: set et ts=2 sw=2: */

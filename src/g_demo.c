@@ -25,36 +25,8 @@
 
 #include <pcreposix.h>
 
-#include "i_system.h"
-#include "m_argv.h"
-#include "m_file.h"
-#include "m_misc.h"
-#include "m_swap.h"
-#include "d_event.h"
-#include "d_main.h"
-#include "d_res.h"
-#include "e6y.h"
-#include "g_comp.h"
 #include "g_demo.h"
-#include "g_game.h"
-#include "g_input.h"
-#include "g_keys.h"
-#include "g_opt.h"
-#include "g_overflow.h"
-#include "g_save.h"
 #include "hu_stuff.h"
-#include "mn_def.h"
-#include "p_camera.h"
-#include "p_checksum.h"
-#include "p_mobj.h"
-#include "pl_cmd.h"
-#include "pl_main.h"
-#include "r_defs.h"
-#include "w_wad.h"
-
-#include "n_getwad.h"
-
-extern bool doSkip;
 
 #define PWAD_SIGNATURE "PWAD"
 #define DEMOEX_VERSION "2"
@@ -80,10 +52,10 @@ typedef struct {
 static int demolumpnum = -1;
 
 /* cph - only used for playback */
-static char *demobuffer;
+static const unsigned char *demobuffer;
 
 /* check for overrun (missing DEMOMARKER) */
-static size_t demolength;
+static int demolength;
 
 /* cph - record straight to file */
 static FILE *demofp;
@@ -91,8 +63,8 @@ static FILE *demofp;
 static const char *defdemoname;
 
 //e6y static 
-static char *demo_p;
-static char *demo_continue_p = NULL;
+static const unsigned char *demo_p;
+static const unsigned char *demo_continue_p = NULL;
 
 static int smooth_playing_turns[SMOOTH_PLAYING_MAXFACTOR];
 static int64_t smooth_playing_sum;
@@ -188,7 +160,7 @@ static int get_version(void) {
   return result;
 }
 
-static void get_params(char *pwad_p, GPtrArray *wad_files) {
+static void get_params(const unsigned char *pwad_p, GPtrArray *wad_files) {
   int lump;
   size_t size;
   char *str;
@@ -220,7 +192,7 @@ static void get_params(char *pwad_p, GPtrArray *wad_files) {
   if (params) {
     struct {
       const char  *param;
-      wad_source_e source;
+      wad_source_t source;
     }
 
     files[] = {
@@ -468,7 +440,10 @@ static void add_params(wadtbl_t *wadtbl) {
   }
 
   if (files) {
-    W_AddLump(wadtbl, DEMOEX_PARAMS_LUMPNAME, files, strlen(files));
+    W_AddLump(wadtbl,
+      DEMOEX_PARAMS_LUMPNAME,
+      (const unsigned char *)files,
+      strlen(files));
   }
 }
 
@@ -483,7 +458,7 @@ static void add_mouse_look_data(wadtbl_t *wadtbl) {
   while (i < (int)mlook_lump.tick) {
     if (mlook_lump.data[i] != 0) {
       W_AddLump(wadtbl, mlook_lump.name,
-        (char *)mlook_lump.data,
+        (const unsigned char *)mlook_lump.data,
         mlook_lump.tick * sizeof(mlook_lump.data[0]));
       break;
     }
@@ -503,21 +478,34 @@ static inline bool should_smooth(player_t *player) {
   if (player && !PL_IsDisplayPlayer(player)) {
     return false;
   }
-
-  return true;
 }
 
-static void read_one_tick(ticcmd_t* cmd, char **data_p) {
-  char at = 0; // e6y: for tasdoom demo format
+static void read_demo_ticcmd(ticcmd_t *cmd) {
+  demo_curr_tic++;
+
+  if (*demo_p == DEMOMARKER) {
+    G_CheckDemoStatus();      // end of demo data stream
+  }
+  else if (demoplayback && demo_p + bytes_per_tic > demobuffer + demolength) {
+    D_Msg(MSG_WARN, "read_demo_ticcmd: missing DEMOMARKER\n");
+    G_CheckDemoStatus();
+  }
+  else {
+    read_one_tick(cmd, &demo_p);
+  }
+}
+
+static void read_one_tick(ticcmd_t* cmd, const unsigned char **data_p) {
+  unsigned char at = 0; // e6y: for tasdoom demo format
 
   cmd->forwardmove = (signed char)(*(*data_p)++);
   cmd->sidemove = (signed char)(*(*data_p)++);
 
   if (!longtics) {
-    cmd->angleturn = ((char)(at = *(*data_p)++)) << 8;
+    cmd->angleturn = ((unsigned char)(at = *(*data_p)++)) << 8;
   }
   else {
-    unsigned int lowbyte = (char)(*(*data_p)++);
+    unsigned int lowbyte = (unsigned char)(*(*data_p)++);
 
     cmd->angleturn = (((signed int)(*(*data_p)++)) << 8) + lowbyte;
   }
@@ -533,6 +521,63 @@ static void read_one_tick(ticcmd_t* cmd, char **data_p) {
     cmd->angleturn = ((unsigned char)cmd->buttons) << 8;
     cmd->buttons = (unsigned char)tmp;
   }
+}
+
+static void read_demo_continue_ticcmd(ticcmd_t* cmd) {
+  if (!demo_continue_p) {
+    return;
+  }
+
+  if (gametic <= demo_tics_count && 
+    demo_continue_p + bytes_per_tic <= demobuffer + demolength &&
+    *demo_continue_p != DEMOMARKER) {
+    read_one_tick(cmd, &demo_continue_p);
+  }
+
+  if (gametic >= demo_tics_count ||
+    demo_continue_p > demobuffer + demolength ||
+    gamekeydown[key_demo_jointogame] || joybuttons[joybuse]) {
+    demo_continue_p = NULL;
+    democontinue = false;
+  }
+}
+
+/*
+ * Demo limits removed -- killough
+ * cph - record straight to file
+ */
+static void write_demo_ticcmd(ticcmd_t *cmd) {
+  char buf[5];
+  char *p = buf;
+
+  if (compatibility_level == tasdoom_compatibility) {
+    *p++ = cmd->buttons;
+    *p++ = cmd->forwardmove;
+    *p++ = cmd->sidemove;
+    *p++ = (cmd->angleturn + 128) >> 8;
+  }
+  else {
+    *p++ = cmd->forwardmove;
+    *p++ = cmd->sidemove;
+
+    if (!longtics) {
+      *p++ = (cmd->angleturn + 128) >> 8;
+    }
+    else {
+      signed short a = cmd->angleturn;
+
+      *p++ = a & 0xff;
+      *p++ = (a >> 8) & 0xff;
+    }
+    *p++ = cmd->buttons;
+  } //e6y
+
+  if (fwrite(buf, p-buf, 1, demofp) != 1)
+    I_Error("write_demo_ticcmd: error writing demo");
+
+  /* cph - alias demo_p to it so we can read it back */
+  demo_p = (const unsigned char *)buf;
+  read_demo_ticcmd(cmd);         // make SURE it is exactly the same
 }
 
 static int get_original_doom_compat_level(int ver) {
@@ -567,19 +612,18 @@ static int get_original_doom_compat_level(int ver) {
 }
 
 static char* get_demo_footer(const char *filename,
-                             char **footer,
+                             const unsigned char **footer,
                              size_t *size) {
   char *buffer = NULL;
   size_t file_size = 0;
   char *p = NULL;
-  char *result = NULL;
 
   if (!M_ReadFile(filename, &buffer, &file_size)) {
     return NULL;
   }
 
   // skip demo header
-  p = G_DemoReadHeaderEx(buffer, file_size, RDH_SKIP_HEADER);
+  p = G_ReadDemoHeaderEx(buffer, file_size, RDH_SKIP_HEADER);
 
   // skip demo data
   while (p < buffer + file_size && *p != DEMOMARKER) {
@@ -617,8 +661,8 @@ static char* get_demo_footer(const char *filename,
 
 void set_demo_footer(const char *filename, wadtbl_t *wadtbl) {
   FILE *hfile = NULL;
-  char *buffer = NULL;
-  char *demoex_p = NULL;
+  unsigned char *buffer = NULL;
+  unsigned char *demoex_p = NULL;
   size_t size = 0;
   GString *new_file_name = g_string_sized_new(64);
   ptrdiff_t demosize = 0;
@@ -641,7 +685,7 @@ void set_demo_footer(const char *filename, wadtbl_t *wadtbl) {
   g_string_truncate(new_file_name, new_file_name->len - 5);
   g_string_append(new_file_name, ".out");
 
-  hfile = M_FileOpen(new_file_name->str, "wb");
+  hfile = M_OpenFile(new_file_name->str, "wb");
 
   g_string_free(new_file_name, true);
   if (!hfile) {
@@ -659,35 +703,33 @@ void set_demo_footer(const char *filename, wadtbl_t *wadtbl) {
 
   if (demosize < 0) {
     D_MsgLocalError("set_demo_footer: Pointer arithmetic problem\n");
-    M_FileClose(hfile);
+    M_CloseFile(hfile);
     free(buffer);
   }
 
   // write pwad header, all data and lookup table to the end of a demo
-  if (!M_FileWrite(hfile, buffer, demosize, sizeof(char))) {
+  if (!M_WriteFile(hfile, buffer, demosize, sizeof(char))) {
     D_MsgLocalError("set_demo_footer: Error writing demo size: %s\n",
       M_GetFileError()
     );
   }
-  else if (!M_FileWrite(hfile, (char *)&wadtbl->header, headersize,
-                                                        sizeof(char))) {
+  else if (!M_WriteFile(hfile, &wadtbl->header, headersize, sizeof(char))) {
     D_MsgLocalError("set_demo_footer: Error writing WAD table header: %s\n",
       M_GetFileError()
     );
   }
-  else if (!M_FileWrite(hfile, (char *)wadtbl->data, datasize, sizeof(char))) {
+  else if (!M_WriteFile(hfile, wadtbl->data, datasize, sizeof(char))) {
     D_MsgLocalError("set_demo_footer: Error writing WAD table data: %s\n",
       M_GetFileError()
     );
   }
-  else if (!M_FileWrite(hfile, (char *)wadtbl->lumps, lumpssize,
-                                                      sizeof(char))) {
+  else if (!M_WriteFile(hfile, wadtbl->lumps, lumpssize, sizeof(char))) {
     D_MsgLocalError("set_demo_footer: Error writing WAD table lumps: %s\n",
       M_GetFileError()
     );
   }
 
-  M_FileClose(hfile);
+  M_CloseFile(hfile);
   free(buffer);
 }
 
@@ -723,30 +765,26 @@ static bool check_wad_buf_integrity(const char *buffer, size_t size) {
 
   for (size_t i = 0; i < header->numlumps; i++, fileinfo++) {
     if (fileinfo->filepos < 0 ||
-        fileinfo->filepos > header->infotableofs ||
-        fileinfo->filepos + fileinfo->size > header->infotableofs) {
-      return false;
+      fileinfo->filepos > header->infotableofs ||
+      fileinfo->filepos + fileinfo->size > header->infotableofs) {
+      break;
     }
+  }
+
+  if (i != header->numlumps) {
+    return false;
   }
 
   return true;
 }
 
-static void change_demo_extended_format(void) {
-  if (demo_extendedformat == -1) {
-    demo_extendedformat = demo_extendedformat_default;
-  }
-
-  use_demoex_info = demo_extendedformat || M_CheckParm("-auto");
-}
-
 static bool read_demo_footer(const char *filename) {
   bool result = false;
-  char *buffer = NULL;
-  char *demoex_p = NULL;
+  unsigned char *buffer = NULL;
+  const unsigned char *demoex_p = NULL;
   size_t size;
 
-  change_demo_extended_format();
+  M_ChangeDemoExtendedFormat();
 
   if (!use_demoex_info) {
     return false;
@@ -800,10 +838,11 @@ static bool read_demo_footer(const char *filename) {
     buffer = get_demo_footer(filename, &demoex_p, &size);
     if (buffer) {
       // the demo has an additional information itself
+      size_t i;
       GPtrArray *wads;
 
       if (!check_wad_buf_integrity((const char *)demoex_p, size)) {
-        D_MsgLocalError("read_demo_footer: demo footer is corrupted\n");
+        D_Msg(MSG_ERROR, "read_demo_footer: demo footer is corrupted\n");
       }
       else if (!M_WriteFile(demoex_filename, (const char *)demoex_p, size)) {
         // write an additional info from a demo to demoex.wad
@@ -814,7 +853,7 @@ static bool read_demo_footer(const char *filename) {
       }
       else {
         // add demoex.wad to the wads list
-        D_AddResource(demoex_filename, source_auto_load);
+        W_AddResource(demoex_filename, source_auto_load);
 
         // cache demoex.wad for immediately getting its data with
         // W_CacheLumpName
@@ -859,64 +898,6 @@ static bool read_demo_footer(const char *filename) {
   }
 
   return result;
-}
-
-static size_t parse_demo_pattern(const char *str, GPtrArray *resources,
-                                                  char **missed,
-                                                  bool trytodownload) {
-  size_t processed = 0;
-  char *pStr = strdup(str);
-  char *pToken = pStr;
-
-  D_ResClear(resources);
-
-  if (missed) {
-    *missed = NULL;
-  }
-
-  for (; (pToken = strtok(pToken, "|")); pToken = NULL) {
-    char *token = NULL;
-
-    processed++;
-
-    if (trytodownload && !I_FindFile2(pToken, ".wad")) {
-      N_GetWad(pToken);
-    }
-
-#ifdef _MSC_VER
-    token = malloc(PATH_MAX);
-    if (GetFullPath(pToken, ".wad", token, PATH_MAX))
-#else  /* ifdef _MSC_VER */
-    if ((token = I_FindFile(pToken, ".wad")))
-#endif /* ifdef _MSC_VER */
-    {
-      size_t len = strlen(token);
-
-      if (pToken == pStr) {
-        D_ResAdd(resources, token, source_iwad, 0);
-      }
-      else if (!strcasecmp(&token[len - 4], ".wad")) {
-        D_ResAdd(resources, token, source_pwad, 0);
-      }
-      else if (!strcasecmp(&token[len - 4], ".deh") ||
-               !strcasecmp(&token[len - 4], ".bex")) {
-        D_AddDEH(token, 0);
-      }
-      else {
-        I_Error("parse_demo_pattern: Unknown resource type for %s\n", token);
-      }
-    }
-    else if (missed) {
-      int len = (*missed ? strlen(*missed) : 0);
-
-      *missed = realloc(*missed, len + strlen(pToken) + 100);
-      sprintf(*missed + len, " %s not found\n", pToken);
-    }
-  }
-
-  free(pStr);
-
-  return processed;
 }
 
 static size_t demo_name_to_wad_data(const char *demoname,
@@ -964,7 +945,7 @@ static size_t demo_name_to_wad_data(const char *demoname,
       if (result != 0) {
         regerror(result, &preg, errbuf, sizeof(errbuf));
         D_MsgLocalWarn(
-          "Incorrect regular expressions in the <%s%zu = \"%s\"> config "
+          "Incorrect regular expressions in the <%s%d = \"%s\"> config "
           "entry - %s\n",
           demo_patterns_mask,
           i,
@@ -975,8 +956,10 @@ static size_t demo_name_to_wad_data(const char *demoname,
       else {
         result = regexec(&preg, demofilename, 1, &demo_match[0], 0);
         if (result == 0 && demo_match[0].rm_so == 0 &&
-            demo_match[0].rm_eo == (int)strlen(demofilename)) {
-          int count = parse_demo_pattern(
+          int count = 0;
+
+          demo_match[0].rm_eo == (int)strlen(demofilename)) {
+          count = parse_demo_pattern(
             buf + pmatch[3].rm_so,
             resources,
             (patterndata ? &patterndata->missed : NULL),
@@ -1016,27 +999,73 @@ static size_t demo_name_to_wad_data(const char *demoname,
   return numwadfiles_required;
 }
 
-static bool check_for_overrun(char *start_p, char *current_p,
-                                             ptrdiff_t maxsize,
-                                             ptrdiff_t size,
-                                             bool failonerror) {
-  ptrdiff_t pos = current_p - start_p;
+static size_t parse_demo_pattern(const char *str, GPtrArray *resources,
+                                                  char **missed,
+                                                  bool trytodownload) {
+  size_t processed = 0;
+  char *pStr = strdup(str);
+  char *pToken = pStr;
 
-  if (pos + size > maxsize) {
-    if (failonerror) {
-      I_Error("check_for_overrun: Overrun detected\n");
-    }
+  D_ResClear(resources);
 
-    return true;
+  if (missed) {
+    *missed = NULL;
   }
 
-  return false;
+  for (; (pToken = strtok(pToken, "|")); pToken = NULL) {
+    wad_source_e src;
+    char *token = NULL;
+
+    processed++;
+
+    if (trytodownload && !I_FindFile2(pToken, ".wad")) {
+      N_GetWad(pToken);
+    }
+
+#ifdef _MSC_VER
+    token = malloc(PATH_MAX);
+    if (GetFullPath(pToken, ".wad", token, PATH_MAX))
+#else  /* ifdef _MSC_VER */
+    if ((token = I_FindFile(pToken, ".wad")))
+#endif /* ifdef _MSC_VER */
+    {
+      if (pToken == pStr) {
+        src = source_iwad;
+      }
+      else {
+        char *p = (char *)wadfiles[numwadfiles].name;
+        int len = strlen(p);
+
+        if (!strcasecmp(&p[len - 4], ".wad")) {
+          src = source_pwad;
+        }
+        else if (!strcasecmp(&p[len - 4], ".deh") ||
+            !strcasecmp(&p[len - 4], ".bex")) {
+          src = source_deh;
+        }
+        else {
+          I_Error("parse_demo_pattern: Unknown resource type for %s\n", p);
+        }
+      }
+      D_ResAdd(resources, token, src, 0);
+    }
+    else if (missed) {
+      int len = (*missed ? strlen(*missed) : 0);
+
+      *missed = realloc(*missed, len + strlen(pToken) + 100);
+      sprintf(*missed + len, " %s not found\n", pToken);
+    }
+  }
+
+  free(pStr);
+
+  return processed;
 }
 
 void G_BeginRecording(void) {
   int i;
   unsigned char game_options[GAME_OPTION_SIZE];
-  char *demostart, *demo_p;
+  unsigned char *demostart, *demo_p;
   size_t bytes_written;
 
   demostart = demo_p = malloc(1000);
@@ -1088,7 +1117,7 @@ void G_BeginRecording(void) {
     *demo_p++ = gameepisode;
     *demo_p++ = gamemap;
     *demo_p++ = deathmatch;
-    *demo_p++ = P_GetConsolePlayer()->id;
+    *demo_p++ = consoleplayer;
 
     G_WriteOptions(game_options); // killough 3/1/98: Save game options
     for (i = 0; i < GAME_OPTION_SIZE; i++) {
@@ -1154,7 +1183,7 @@ void G_BeginRecording(void) {
     *demo_p++ = gameepisode;
     *demo_p++ = gamemap;
     *demo_p++ = deathmatch;
-    *demo_p++ = P_GetConsolePlayer()->id;
+    *demo_p++ = consoleplayer;
 
     G_WriteOptions(game_options); // killough 3/1/98: Save game options
     for (i = 0; i < GAME_OPTION_SIZE; i++) {
@@ -1204,7 +1233,7 @@ void G_BeginRecording(void) {
     *demo_p++ = respawnparm;
     *demo_p++ = fastparm;
     *demo_p++ = nomonsters;
-    *demo_p++ = P_GetConsolePlayer()->id;
+    *demo_p++ = consoleplayer;
 
     for (i = 0; i < VANILLA_MAXPLAYERS; i++) {
       if (P_PlayersLookup(i + 1)) {
@@ -1234,11 +1263,14 @@ void G_DeferedPlayDemo(const char *name) {
   G_SetGameAction(ga_playdemo);
 }
 
-char* G_DemoReadHeader(char *demo_p, size_t size) {
-  return G_DemoReadHeaderEx(demo_p, size, 0);
+const unsigned char* G_ReadDemoHeader(const unsigned char *demo_p,
+                                      size_t size) {
+  return G_ReadDemoHeaderEx(demo_p, size, 0);
 }
 
-char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
+const unsigned char* G_ReadDemoHeaderEx(const unsigned char *demo_p,
+                                        size_t size,
+                                        unsigned int params) {
   skill_t skill;
   int i;
   int episode;
@@ -1248,7 +1280,7 @@ char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
   // e6y
   // The local variable should be used instead of demobuffer,
   // because demobuffer can be uninitialized
-  char *header_p = demo_p;
+  const unsigned char *header_p = demo_p;
   bool failonerror = (params & RDH_SAFE);
 
   basetic = gametic;  // killough 9/29/98
@@ -1258,7 +1290,7 @@ char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
   // compatibility flag, and other flags as well, as a part of the demo.
 
   //e6y: check for overrun
-  if (check_for_overrun(header_p, demo_p, size, 1, failonerror)) {
+  if (CheckForOverrun(header_p, demo_p, size, 1, failonerror)) {
     return NULL;
   }
 
@@ -1273,7 +1305,7 @@ char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
   if (!((demover >=   0  && demover <=   4) ||
         (demover >= 104  && demover <= 111) ||
         (demover >= 200  && demover <= 214))) {
-    I_Error("G_DemoReadHeader: Unknown demo format %d.", demover);
+    I_Error("G_ReadDemoHeader: Unknown demo format %d.", demover);
   }
 
   if (demover < 200) {   // Autodetect old demos
@@ -1303,10 +1335,8 @@ char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
     skill = demover;
 
     if (demover >= 100) {                 // For demos from versions >= 1.4
-      unsigned char consoleplayer;
-
       //e6y: check for overrun
-      if (check_for_overrun(header_p, demo_p, size, 8, failonerror)) {
+      if (CheckForOverrun(header_p, demo_p, size, 8, failonerror)) {
         return NULL;
       }
 
@@ -1319,12 +1349,10 @@ char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
       fastparm = *demo_p++;
       nomonsters = *demo_p++;
       consoleplayer = *demo_p++;
-
-      P_SetConsolePlayer(P_PlayersGetNewWithID(consoleplayer));
     }
     else {
       //e6y: check for overrun
-      if (check_for_overrun(header_p, demo_p, size, 2, failonerror)) {
+      if (CheckForOverrun(header_p, demo_p, size, 2, failonerror)) {
         return NULL;
       }
 
@@ -1335,6 +1363,7 @@ char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
       respawnparm = 0;
       fastparm = 0;
       nomonsters = 0;
+      consoleplayer = 0;
       
       // e6y
       // Ability to force -nomonsters and -respawn for playback of 1.2 demos.
@@ -1365,15 +1394,13 @@ char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
     G_Compatibility();
   }
   else {  // new versions of demos
-    unsigned char consoleplayer;
-
     demo_p += 6;               // skip signature;
 
     switch (demover) {
       case 200: /* BOOM */
       case 201:
         //e6y: check for overrun
-        if (check_for_overrun(header_p, demo_p, size, 1, failonerror)) {
+        if (CheckForOverrun(header_p, demo_p, size, 1, failonerror)) {
           return NULL;
         }
 
@@ -1386,7 +1413,7 @@ char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
       break;
       case 202:
         //e6y: check for overrun
-        if (check_for_overrun(header_p, demo_p, size, 1, failonerror)) {
+        if (CheckForOverrun(header_p, demo_p, size, 1, failonerror)) {
           return NULL;
         }
 
@@ -1435,9 +1462,8 @@ char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
       break;
     }
     //e6y: check for overrun
-    if (check_for_overrun(header_p, demo_p, size, 5, failonerror)) {
+    if (CheckForOverrun(header_p, demo_p, size, 5, failonerror))
       return NULL;
-    }
 
     skill = *demo_p++;
     episode = *demo_p++;
@@ -1445,11 +1471,12 @@ char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
     deathmatch = *demo_p++;
     consoleplayer = *demo_p++;
 
-    P_SetConsolePlayer(P_PlayersGetNewWithID(consoleplayer));
-
     //e6y: check for overrun
-    if (check_for_overrun(header_p, demo_p, size, GAME_OPTION_SIZE,
-                                                  failonerror)) {
+    if (CheckForOverrun(header_p,
+                        demo_p,
+                        size,
+                        GAME_OPTION_SIZE,
+                        failonerror)) {
       return NULL;
     }
 
@@ -1459,12 +1486,16 @@ char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
 
     G_ReadOptions(game_options);  // killough 3/1/98: Read game options
 
-    if (demover == 200) { // killough 6/3/98: partially fix v2.00 demos
+    if (demover == 200) {            // killough 6/3/98: partially fix v2.00 demos
       demo_p += 256 - GAME_OPTION_SIZE;
     }
   }
 
-  D_MsgLocalInfo("G_DoPlayDemo: playing demo with %s compatibility\n",
+  if (sizeof(comp_lev_str) / sizeof(comp_lev_str[0]) != MAX_COMPATIBILITY_LEVEL) {
+    I_Error("G_ReadDemoHeader: compatibility level strings incomplete");
+  }
+
+  D_Msg(MSG_INFO, "G_DoPlayDemo: playing demo with %s compatibility\n",
     comp_lev_str[compatibility_level]
   );
 
@@ -1472,7 +1503,7 @@ char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
   // only 4 players can exist in old demos
   if (demo_compatibility || demover < 200) {
     //e6y: check for overrun
-    if (check_for_overrun(header_p, demo_p, size, 4, failonerror)) {
+    if (CheckForOverrun(header_p, demo_p, size, 4, failonerror)) {
       return NULL;
     }
 
@@ -1486,8 +1517,8 @@ char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
   }
   else {
     //e6y: check for overrun
-    if (check_for_overrun(header_p, demo_p, size, VANILLA_MAXPLAYERS,
-                                                  failonerror)) {
+    if (CheckForOverrun(header_p, demo_p, size, VANILLA_MAXPLAYERS,
+                                                failonerror)) {
       return NULL;
     }
 
@@ -1520,7 +1551,7 @@ char* G_DemoReadHeaderEx(char *demo_p, size_t size, unsigned int params) {
   // e6y
   // additional params
   {
-    char *p = demo_p;
+    const unsigned char *p = demo_p;
 
     if (longtics) {
       bytes_per_tic = 5;
@@ -1573,9 +1604,9 @@ bool G_CheckDemoStatus(void) {
     fputc(DEMOMARKER, demofp);
     
     //e6y
-    G_DemoWriteFooter(demofp);
+    G_WriteDemoFooter(demofp);
 
-    D_MsgLocalInfo("G_CheckDemoStatus: Demo recorded\n");
+    D_Msg(MSG_INFO, "G_CheckDemoStatus: Demo recorded\n");
 
     return false;  // killough
   }
@@ -1585,7 +1616,7 @@ bool G_CheckDemoStatus(void) {
     // killough -- added fps information and made it work for longer demos:
     unsigned realtics = endtime-starttime;
 
-    MN_SaveDefaults();
+    M_SaveDefaults();
 
     I_Error("Timed %u gametics in %u realtics = %-.1f frames per second",
       (unsigned) gametic, realtics,
@@ -1616,8 +1647,8 @@ bool G_CheckDemoStatus(void) {
 //e6y
 void G_CheckDemoContinue(void) {
   if (democontinue) {
-    if (G_DemoLoad(defdemoname, &demobuffer, &demolength, &demolumpnum)) {
-      demo_continue_p = G_DemoReadHeaderEx(demobuffer, demolength, RDH_SAFE);
+    if (LoadDemo(defdemoname, &demobuffer, &demolength, &demolumpnum)) {
+      demo_continue_p = G_ReadDemoHeaderEx(demobuffer, demolength, RDH_SAFE);
 
       singledemo = true;
       autostart = true;
@@ -1668,16 +1699,16 @@ void G_RecordDemo(const char* name) {
     demofp = fopen(demoname, "rb+");
     if (demofp) {
       int slot = -1;
-      char *pos;
-      char buf[200];
+      const unsigned char* pos;
+      unsigned char buf[200];
       size_t len;
 
-      //e6y: save all data which can be changed by G_DemoReadHeader
+      //e6y: save all data which can be changed by G_ReadDemoHeader
       G_SaveRestoreGameOptions(true);
 
       /* Read the demo header for options etc */
-      len = M_FileRead(demofp, buf, 1, sizeof(buf));
-      pos = G_DemoReadHeader(buf, len);
+      len = fread(buf, 1, sizeof(buf), demofp);
+      pos = G_ReadDemoHeader(buf, len);
       if (pos) {
         int rc;
         int bytes_per_tic;
@@ -1689,31 +1720,28 @@ void G_RecordDemo(const char* name) {
           bytes_per_tic = 4;
         }
 
-        M_FileSeek(demofp, pos - buf, SEEK_SET);
+        fseek(demofp, pos - buf, SEEK_SET);
 
         /* Now read the demo to find the last save slot */
         do {
-          char buf2[5];
-          unsigned char buttons;
+          unsigned char buf[5];
 
-          rc = M_FileRead(demofp, buf2, 1, bytes_per_tic);
+          rc = fread(buf, 1, bytes_per_tic, demofp);
 
-          if (buf2[0] == DEMOMARKER || rc < bytes_per_tic - 1) {
+          if (buf[0] == DEMOMARKER || rc < bytes_per_tic - 1) {
             break;
           }
 
-          buttons = (unsigned char)buf2[bytes_per_tic - 1];
-
-          if (buttons & BT_SPECIAL) {
-            if ((buttons & BT_SPECIALMASK) == BTS_SAVEGAME) {
-              slot = (buttons & BTS_SAVEMASK) >> BTS_SAVESHIFT;
+          if (buf[bytes_per_tic-1] & BT_SPECIAL) {
+            if ((buf[bytes_per_tic - 1] & BT_SPECIALMASK) == BTS_SAVEGAME) {
+              slot = (buf[bytes_per_tic - 1] & BTS_SAVEMASK) >> BTS_SAVESHIFT;
             }
           }
         } while (rc == bytes_per_tic);
 
         if (slot != -1) {
           /* Return to the last save position, and load the relevant savegame */
-          M_FileSeek(demofp, -rc, SEEK_CUR);
+          fseek(demofp, -rc, SEEK_CUR);
           G_LoadGame(slot, false);
           autostart = false;
           return;
@@ -1721,11 +1749,11 @@ void G_RecordDemo(const char* name) {
       }
 
       //demo cannot be continued
-      M_FileClose(demofp);
+      fclose(demofp);
       if (demo_overwriteexisting) {
-        //restoration of all data which could be changed by G_DemoReadHeader
+        //restoration of all data which could be changed by G_ReadDemoHeader
         G_SaveRestoreGameOptions(false);
-        demofp = M_FileOpen(demoname, "wb");
+        demofp = fopen(demoname, "wb");
       }
       else {
         I_Error("G_RecordDemo: No save in demo, can't continue");
@@ -1800,10 +1828,10 @@ bool G_DemoIsContinue(void) {
   return true;
 }
 
-bool G_DemoLoad(const char *name, char **buffer, size_t *length, int *lump) {
-  char basename[9];
-  int  num = -1;
-  int  intlen = 0;
+bool G_DemoLoad(const char *name, unsigned char **buffer, int *length,
+                                                          int *lump) {
+  char  basename[9];
+  int   num = -1;
 
   M_ExtractFileBase(name, basename);
   basename[8] = 0;
@@ -1824,23 +1852,20 @@ bool G_DemoLoad(const char *name, char **buffer, size_t *length, int *lump) {
       return false;
     }
 
-    success = M_ReadFile(filename, buffer, length);
+    success = M_ReadFile(filename, buffer, &len);
     free(filename);
 
     return success;
   }
 
-  *buffer = (char *)W_CacheLumpNum(num);
-  intlen = W_LumpLength(num);
+  *buffer = W_CacheLumpNum(num);
+  *length = W_LumpLength(num);
 
   if (*lump) {
     *lump = num;
   }
 
-  if (intlen > 0) {
-    if (*length) {
-      *length = (size_t)intlen;
-    }
+  if ((*length) > 0) {
     return true;
   }
 
@@ -1871,7 +1896,7 @@ void G_DemoSmoothPlayingReset(player_t *player) {
 }
 
 void G_DemoSmoothPlayingAdd(int delta) {
-  if (!should_smooth(NULL)) {
+  if (!should_smooth) {
     return;
   }
 
@@ -1890,6 +1915,14 @@ angle_t G_DemoSmoothPlayingGet(player_t *player) {
   return player->mo->angle;
 }
 
+void G_DemoChangeDemoExtendedFormat(void) {
+  if (demo_extendedformat == -1) {
+    demo_extendedformat = demo_extendedformat_default;
+  }
+
+  use_demoex_info = demo_extendedformat || M_CheckParm("-auto");
+}
+
 angle_t G_DemoReadMouseLook(void) {
   angle_t pitch;
 
@@ -1899,16 +1932,14 @@ angle_t G_DemoReadMouseLook(void) {
 
   // mlook data must be initialised here
   if (mlook_lump.lump == -2) {
-    if (get_version() < 2) { // unsupported format
+    if (get_version() < 2) {
+      // unsupported format
       mlook_lump.lump = -1;
     }
     else {
       mlook_lump.lump = W_CheckNumForName(mlook_lump.name);
-
       if (mlook_lump.lump != -1) {
-        unsigned char *data = (unsigned char *)W_CacheLumpName(
-          mlook_lump.name
-        );
+        const unsigned char *data = W_CacheLumpName(mlook_lump.name);
         int size = W_LumpLength(mlook_lump.lump);
 
         mlook_lump.maxtick = size / sizeof(mlook_lump.data[0]);
@@ -1920,10 +1951,8 @@ angle_t G_DemoReadMouseLook(void) {
 
   pitch = 0;
 
-  if (mlook_lump.data &&
-      mlook_lump.tick < mlook_lump.maxtick &&
-      P_GetConsolePlayer() == P_GetDisplayPlayer() &&
-      walkcamera.mode == camera_mode_disabled) {
+  if (mlook_lump.data && mlook_lump.tick < mlook_lump.maxtick &&
+    consoleplayer == displayplayer && !walkcamera.type) {
     pitch = mlook_lump.data[mlook_lump.tick];
   }
   mlook_lump.tick++;
@@ -1981,14 +2010,14 @@ void G_DemoWriteFooter(FILE *file) {
   W_AddLump(
     &demoex,
     NULL,
-    DEMOEX_SEPARATOR,
+    (const unsigned char *)DEMOEX_SEPARATOR,
     strlen(DEMOEX_SEPARATOR)
   );
 
   W_AddLump(
     &demoex,
     NULL,
-    DEMOEX_SEPARATOR,
+    (const unsigned char *)DEMOEX_SEPARATOR,
     strlen(DEMOEX_SEPARATOR)
   );
 
@@ -1996,14 +2025,14 @@ void G_DemoWriteFooter(FILE *file) {
   W_AddLump(
     &demoex,
     DEMOEX_VERSION_LUMPNAME,
-    DEMOEX_VERSION,
+    (const unsigned char *)DEMOEX_VERSION,
     strlen(DEMOEX_VERSION)
   );
 
   W_AddLump(
     &demoex,
     NULL,
-    DEMOEX_SEPARATOR,
+    (const unsigned char *)DEMOEX_SEPARATOR,
     strlen(DEMOEX_SEPARATOR)
   );
 
@@ -2013,7 +2042,7 @@ void G_DemoWriteFooter(FILE *file) {
   W_AddLump(
     &demoex,
     NULL,
-    DEMOEX_SEPARATOR,
+    (const unsigned char *)DEMOEX_SEPARATOR,
     strlen(DEMOEX_SEPARATOR)
   );
 
@@ -2021,14 +2050,14 @@ void G_DemoWriteFooter(FILE *file) {
   W_AddLump(
     &demoex,
     DEMOEX_PORTNAME_LUMPNAME,
-    PACKAGE_NAME " " PACKAGE_VERSION,
+    (const unsigned char *)(PACKAGE_NAME " " PACKAGE_VERSION),
     strlen(PACKAGE_NAME " " PACKAGE_VERSION)
   );
 
   W_AddLump(
     &demoex,
     NULL,
-    DEMOEX_SEPARATOR,
+    (const unsigned char *)DEMOEX_SEPARATOR,
     strlen(DEMOEX_SEPARATOR)
   );
 
@@ -2038,23 +2067,23 @@ void G_DemoWriteFooter(FILE *file) {
   W_AddLump(
     &demoex,
     NULL,
-    DEMOEX_SEPARATOR,
+    (const unsigned char *)DEMOEX_SEPARATOR,
     strlen(DEMOEX_SEPARATOR)
   );
 
   // write pwad header, all data and lookup table to the end of a demo
-  if (!M_FileWrite(file, (char *)&demoex.header, 1, sizeof(demoex.header))) {
+  if (!M_WriteFile(file, &demoex.header, 1, sizeof(demoex.header))) {
     D_MsgLocalError("G_WriteDemoFooter: Error writing header: %s\n",
       M_GetFileError()
     );
   }
-  else if (!M_FileWrite(file, demoex.data, demoex.datasize, sizeof(char))) {
+  else if (!M_WriteFile(file, demoex.data, demoex.datasize, sizeof(char))) {
     D_MsgLocalError("G_WriteDemoFooter: Error writing size: %s\n",
       M_GetFileError()
     );
   }
-  else if (!M_FileWrite(file, (char *)demoex.lumps, demoex.header.numlumps,
-                                                    sizeof(demoex.lumps[0]))) {
+  else if (!M_WriteFile(file, demoex.lumps, demoex.header.numlumps,
+                                            sizeof(demoex.lumps[0]))) {
     D_MsgLocalError("G_WriteDemoFooter: Error writing lumps: %s\n",
       M_GetFileError()
     );
@@ -2099,7 +2128,7 @@ bool G_DemoCheckAutoDemo(void) {
             patterndata.pattern_num
           );
         }
-        D_ResourcesSet(resources);
+        WadDataToWadFiles(resources);
       }
 
       free(patterndata.missed);
@@ -2118,7 +2147,7 @@ bool G_DemoCheckExDemo(void) {
   char *demoname = NULL;
   bool result = false;
 
-  change_demo_extended_format();
+  M_ChangeDemoExtendedFormat();
 
   demo_arg = G_DemoGetDemoArg();
 
@@ -2141,101 +2170,4 @@ bool G_DemoCheckExDemo(void) {
   return result;
 }
 
-// e6y: Check for overrun
-void G_DoPlayDemo(void) {
-  if (G_DemoLoad(defdemoname, &demobuffer, &demolength, &demolumpnum)) {
-    demo_p = G_DemoReadHeaderEx(demobuffer, demolength, RDH_SAFE);
-
-    G_SetGameAction(ga_nothing);
-    usergame = false;
-
-    demoplayback = true;
-    G_DemoSmoothPlayingReset(NULL); // e6y
-  }
-  else {
-    // e6y
-    // Do not exit if corresponding demo lump is not found.
-    // It makes sense for Plutonia and TNT IWADs, which have no DEMO4 lump,
-    // but DEMO4 should be in a demo cycle as real Plutonia and TNT have.
-    //
-    // Plutonia/Tnt executables exit with "W_GetNumForName: DEMO4 not found"
-    // message after playing of DEMO3, because DEMO4 is not present
-    // in the corresponding IWADs.
-    usergame = false;
-    D_StartTitle();               // Start the title screen
-    G_SetGameState(GS_DEMOSCREEN);// And set the game state accordingly
-  }
-}
-
-void G_DemoReadTiccmd(ticcmd_t *cmd) {
-  demo_curr_tic++;
-
-  if (*demo_p == DEMOMARKER) {
-    G_CheckDemoStatus();      // end of demo data stream
-  }
-  else if (demoplayback && demo_p + bytes_per_tic > demobuffer + demolength) {
-    D_MsgLocalWarn("G_DemoReadTiccmd: missing DEMOMARKER\n");
-    G_CheckDemoStatus();
-  }
-  else {
-    read_one_tick(cmd, &demo_p);
-  }
-}
-
-void G_DemoReadContinueTiccmd(ticcmd_t* cmd) {
-  if (!demo_continue_p) {
-    return;
-  }
-
-  if (gametic <= demo_tics_count && 
-    demo_continue_p + bytes_per_tic <= demobuffer + demolength &&
-    *demo_continue_p != DEMOMARKER) {
-    read_one_tick(cmd, &demo_continue_p);
-  }
-
-  if (gametic >= demo_tics_count ||
-    demo_continue_p > demobuffer + demolength ||
-    gamekeydown[key_demo_jointogame] || joybuttons[joybuse]) {
-    demo_continue_p = NULL;
-    democontinue = false;
-  }
-}
-
-/*
- * Demo limits removed -- killough
- * cph - record straight to file
- */
-void G_DemoWriteTiccmd(ticcmd_t *cmd) {
-  char buf[5];
-  char *p = buf;
-
-  if (compatibility_level == tasdoom_compatibility) {
-    *p++ = cmd->buttons;
-    *p++ = cmd->forwardmove;
-    *p++ = cmd->sidemove;
-    *p++ = (cmd->angleturn + 128) >> 8;
-  }
-  else {
-    *p++ = cmd->forwardmove;
-    *p++ = cmd->sidemove;
-
-    if (!longtics) {
-      *p++ = (cmd->angleturn + 128) >> 8;
-    }
-    else {
-      signed short a = cmd->angleturn;
-
-      *p++ = a & 0xff;
-      *p++ = (a >> 8) & 0xff;
-    }
-    *p++ = cmd->buttons;
-  } //e6y
-
-  if (fwrite(buf, p-buf, 1, demofp) != 1)
-    I_Error("G_DemoWriteTiccmd: error writing demo");
-
-  /* cph - alias demo_p to it so we can read it back */
-  demo_p = buf;
-  G_DemoReadTiccmd(cmd);         // make SURE it is exactly the same
-}
 /* vi: set et ts=2 sw=2: */

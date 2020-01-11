@@ -40,6 +40,7 @@
 #include "r_defs.h"
 #include "s_advsound.h"
 
+extern int forceOldBsp;
 extern int numspechit;
 
 static const char *dump_file_name = NULL;
