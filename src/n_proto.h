@@ -32,7 +32,7 @@ typedef struct netpeer_s netpeer_t;
 
 typedef enum {
   CHAT_CHANNEL_SERVER = 1,
-  CHAT_CHANNEL_PEER,
+  CHAT_CHANNEL_PLAYER,
   CHAT_CHANNEL_TEAM,
   CHAT_CHANNEL_ALL
 } chat_channel_e;
