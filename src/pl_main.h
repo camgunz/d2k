@@ -212,16 +212,10 @@ typedef struct player_s {
 typedef struct {
   size_t index;
   player_t *player;
-  bool wrap_around;
 } players_iterator_t;
 
-#define PLAYERS_FOR_EACH(iter) \
-  for (players_iterator_t (iter) = {0, NULL, false}; \
-       P_PlayersIter(&iter.index, &iter.player);)
-
-#define PLAYERS_FOR_EACH_AFTER(iter, p) \
-  for (players_iterator_t (iter) = {0, p, false}; \
-       P_PlayersIter(&iter.index, &iter.player);)
+#define PLAYERS_FOR_EACH(p) \
+  for (players_iterator_t (p) = {0, NULL}; P_PlayersIter(&p.index, &p.player);)
 
 void      P_PlayersInit(void);
 uint32_t  P_PlayersGetCount(void);

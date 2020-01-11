@@ -113,15 +113,15 @@ static const struct {
   weapontype_t weapon;
   weapontype_t weapon_num;
 } weapon_order_table[] = {
-  { wp_fist,         wp_fist     },
-  { wp_chainsaw,     wp_fist     },
-  { wp_pistol,       wp_pistol   },
-  { wp_shotgun,      wp_shotgun  },
-  { wp_supershotgun, wp_shotgun  },
+  { wp_fist,         wp_fist },
+  { wp_chainsaw,     wp_fist },
+  { wp_pistol,       wp_pistol },
+  { wp_shotgun,      wp_shotgun },
+  { wp_supershotgun, wp_shotgun },
   { wp_chaingun,     wp_chaingun },
-  { wp_missile,      wp_missile  },
-  { wp_plasma,       wp_plasma   },
-  { wp_bfg,          wp_bfg      }
+  { wp_missile,      wp_missile },
+  { wp_plasma,       wp_plasma },
+  { wp_bfg,          wp_bfg }
 };
 
 static int mousearray[6];
@@ -1120,15 +1120,12 @@ bool G_Responder(event_t *ev) {
     }
 
     if (ev->type == ev_key && ev->pressed && !gamekeydown[key_spy]) {
-      player_t *displayplayer = P_GetDisplayPlayer();
-
       gamekeydown[key_spy] = true;
-
-      PLAYERS_FOR_EACH_AFTER(iter, displayplayer) {
-        if (iter.player != displayplayer) {
-          break; // spy mode
+      do {                                        // spy mode
+        if (++displayplayer >= MAXPLAYERS) {
+          displayplayer = 0;
         }
-      }
+      } while (!playeringame[displayplayer] && displayplayer != consoleplayer);
 
       ST_Start(); // killough 3/7/98: switch status bar views too
       HU_Start();
@@ -2133,7 +2130,7 @@ void G_DoReborn(player_t *player) {
     }
 
     // try to spawn at one of the other players spots
-    for (size_t i = 0; i < VANILLA_MAXPLAYERS; i++) {
+    for (int i = 0; i < VANILLA_MAXPLAYERS; i++) {
       mapthing_t *other_start = &playerstarts[i % num_playerstarts];
       if (G_CheckSpot(player, other_start)) {
         PL_Spawn(player, other_start);
@@ -2330,12 +2327,7 @@ void G_DoCompleted(void) {
 
   e6y_G_DoCompleted();//e6y
 
-  if (demo_compatibility) {
-    WI_Start(par_time);
-  }
-  else if (!X_Call(X_GetState(), "intermission", "start", 1, 0, par_time)) {
-    I_Error("Error starting intermission: %s\n", X_GetError(X_GetState()));
-  }
+  WI_Start(par_time);
 }
 
 //
@@ -3350,11 +3342,11 @@ void G_SaveRestoreGameOptions(int save) {
   };
 
   static bool was_saved_once = false;
-  static bool playeringame_o[VANILLA_MAXPLAYERS];
-  static bool playerscheats_o[VANILLA_MAXPLAYERS];
+  static bool playeringame_o[MAXPLAYERS];
+  static bool playerscheats_o[MAXPLAYERS];
   static int  comp_o[COMP_TOTAL];
 
-  size_t i = 0;
+  int i = 0;
 
   if (save) {
     was_saved_once = true;
@@ -3383,16 +3375,14 @@ void G_SaveRestoreGameOptions(int save) {
     i++;
   }
 
-  for (i = 0; i < VANILLA_MAXPLAYERS; i++) {
+  for (i = 0; i < MAXPLAYERS; i++) {
     if (save) {
-      player_t *player = P_PlayersLookup(i);
-
-      playeringame_o[i] = player != NULL;
-      playerscheats_o[i] = player ? player->cheats : 0;
+      playeringame_o[i] = playeringame[i];
+      playerscheats_o[i] = players[i].cheats;
     }
-    else if (playeringame_o[i]) {
-      player_t *player = P_PlayersGetNew();
-      player->cheats = playerscheats_o[i];
+    else {
+      playeringame[i] = playeringame_o[i];
+      players[i].cheats = playerscheats_o[i];
     }
   }
 
@@ -3406,18 +3396,14 @@ void G_SaveRestoreGameOptions(int save) {
   }
 }
 
-const unsigned char* G_ReadDemoHeader(const unsigned char *demo_p,
-                                      size_t size) {
+const unsigned char* G_ReadDemoHeader(const unsigned char *demo_p, size_t size) {
   return G_ReadDemoHeaderEx(demo_p, size, 0);
 }
 
-const unsigned char* G_ReadDemoHeaderEx(const unsigned char *demo_p,
-                                        size_t size,
+const unsigned char* G_ReadDemoHeaderEx(const unsigned char *demo_p, size_t size,
                                         unsigned int params) {
   skill_t skill;
-  int i;
-  int episode;
-  int map;
+  int i, episode, map;
   unsigned char game_options[GAME_OPTION_SIZE];
 
   // e6y
@@ -3690,12 +3676,8 @@ const unsigned char* G_ReadDemoHeaderEx(const unsigned char *demo_p,
     }
   }
 
-  for (i = 0; i < VANILLA_MAXPLAYERS; i++) { // killough 4/24/98
-    player_t *player = P_PlayersLookup(i + 1);
-
-    if (player) {
-      player->cheats = 0;
-    }
+  for (i = 0; i < MAXPLAYERS; i++) { // killough 4/24/98
+    players[i].cheats = 0;
   }
 
   // e6y
@@ -3936,12 +3918,10 @@ void P_WalkTicker() {
   if (gamekeydown[key_fire] ||
       mousebuttons[mousebfire] ||
       joybuttons[joybfire]) {
-    player_t consoleplayer = P_GetConsolePlayer();
-
-    walkcamera.x = consoleplayer->mo->x;
-    walkcamera.y = consoleplayer->mo->y;
-    walkcamera.angle = consoleplayer->mo->angle;
-    walkcamera.pitch = consoleplayer->mo->pitch;
+    walkcamera.x = players[0].mo->x;
+    walkcamera.y = players[0].mo->y;
+    walkcamera.angle = players[0].mo->angle;
+    walkcamera.pitch = players[0].mo->pitch;
   }
 
   if (forward > MAXPLMOVE) {
