@@ -42,47 +42,56 @@
 
 #define MAX_SETUP_REQUEST_INTERVAL 2.0
 
+struct netpeer_s {
+  uint32_t          id;
+  netpeer_status_e  status;
+  netcom_t          com;
+  netsync_t         sync;
+  time_t            connect_start_time;
+  time_t            disconnect_start_time;
+  time_t            last_setup_request_time;
+  auth_level_e      auth_level;
+  unsigned int      ping;
+  int               connect_tic;
+  char             *name;
+  team_t           *team;
+  uint32_t          player_id;
+};
+
 static id_hash_t net_peers;
 
-static void peer_free(net_peer_t *np) {
+static void free_peer(netpeer_t *np) {
+  player_t *player;
+
   D_MsgLocalInfo("Removing peer %u (%s:%u)\n",
     np->id,
     N_PeerGetIPAddressConstString(np),
     N_PeerGetPort(np)
   );
 
-  switch (np->type) {
-    case PEER_TYPE_CLIENT:
-      N_ComFree(&np->as.client.link.com);
-      N_SyncFree(&np->as.client.link.sync);
-      if (np->as.client.info.player) {
-        np->as.client.info.player->playerstate = PST_DISCONNECTED;
-      }
-      break;
-    case PEER_TYPE_SERVER:
-      N_ComFree(&np->as.client.link.com);
-      N_SyncFree(&np->as.client.link.sync);
-      break;
-    case PEER_TYPE_OTHER_CLIENT:
-      if (ci->player) {
-        player->playerstate = PST_DISCONNECTED;
-      }
-      break;
+  player = N_PeerGetPlayer(np);
+
+  if (player) {
+    player->playerstate = PST_DISCONNECTED;
   }
+
+  N_ComFree(&np->com);
+  N_SyncFree(&np->sync);
+  free(np);
 }
 
 static void peer_destroy_func(gpointer data) {
-  free_peer((net_peer_t *)data);
+  free_peer((netpeer_t *)data);
 }
 
 void N_PeersInit(void) {
   M_IDHashInit(&net_peers, peer_destroy_func);
 }
 
-net_peer_t* N_PeersAdd(void *enet_peer) {
-  net_peer_t *np = NULL;
+netpeer_t* N_PeersAdd(void *enet_peer) {
+  netpeer_t *np = NULL;
 
-  np = calloc(1, sizeof(net_peer_t));
+  np = calloc(1, sizeof(netpeer_t));
 
   if (!np) {
     I_Error("N_PeersAdd: Error allocating memory for new net peer\n");
@@ -109,11 +118,11 @@ net_peer_t* N_PeersAdd(void *enet_peer) {
   return np;
 }
 
-net_peer_t* N_PeersLookup(uint32_t id) {
+netpeer_t* N_PeersLookup(uint32_t id) {
   return M_IDHashLookup(&net_peers, id);
 }
 
-net_peer_t* N_PeersLookupByENetPeer(void *enet_peer) {
+netpeer_t* N_PeersLookupByENetPeer(void *enet_peer) {
   ENetPeer *epeer = (ENetPeer *)enet_peer;
 
   NETPEER_FOR_EACH(iter) {
@@ -127,7 +136,7 @@ net_peer_t* N_PeersLookupByENetPeer(void *enet_peer) {
   return NULL;
 }
 
-net_peer_t* N_PeersLookupByPlayer(player_t *player) {
+netpeer_t* N_PeersLookupByPlayer(player_t *player) {
   NETPEER_FOR_EACH(iter) {
     if (iter.np->player_id == player->id) {
       return iter.np;
@@ -154,7 +163,7 @@ bool N_PeerIterate(netpeer_iterator_t *iter) {
     return false;
   }
 
-  iter->np = (net_peer_t *)iter->iter.obj;
+  iter->np = (netpeer_t *)iter->iter.obj;
 
   return true;
 }
@@ -163,11 +172,11 @@ void N_PeerIterateRemove(netpeer_iterator_t *iter) {
   M_IDHashIterateRemove(&iter->iter);
 }
 
-void N_PeerRemove(net_peer_t *np) {
+void N_PeerRemove(netpeer_t *np) {
   M_IDHashRemoveID(&net_peers, np->id);
 }
 
-bool N_PeerCheckTimeout(net_peer_t *np) {
+bool N_PeerCheckTimeout(netpeer_t *np) {
   time_t now = time(NULL);
 
   if (np->connect_start_time != 0) {
@@ -187,7 +196,7 @@ bool N_PeerCheckTimeout(net_peer_t *np) {
   return false;
 }
 
-bool N_PeerCanRequestSetup(net_peer_t *np) {
+bool N_PeerCanRequestSetup(netpeer_t *np) {
   time_t now = time(NULL);
 
   if (np->last_setup_request_time == 0) {
@@ -199,76 +208,92 @@ bool N_PeerCanRequestSetup(net_peer_t *np) {
   );
 }
 
-void N_PeerSetConnected(net_peer_t *np) {
+void N_PeerSetConnected(netpeer_t *np) {
   np->connect_start_time = 0;
 }
 
-bool N_PeerTooLagged(net_peer_t *np) {
+bool N_PeerTooLagged(netpeer_t *np) {
   return N_SyncTooLagged(&np->sync);
 }
 
-void N_PeerDisconnect(net_peer_t *np, disconnection_reason_e reason) {
+void N_PeerDisconnect(netpeer_t *np, disconnection_reason_e reason) {
   ENetPeer *epeer = N_ComGetENetPeer(&np->com);
 
   enet_peer_disconnect(epeer, reason);
   np->disconnect_start_time = time(NULL);
 }
 
-uint32_t N_PeerGetID(net_peer_t *np) {
+uint32_t N_PeerGetID(netpeer_t *np) {
   return np->id;
 }
 
-uint32_t N_PeerGetIPAddress(net_peer_t *np) {
+uint32_t N_PeerGetIPAddress(netpeer_t *np) {
   ENetPeer *enet_peer = N_ComGetENetPeer(&np->com);
 
   return ENET_NET_TO_HOST_32(enet_peer->address.host);
 }
 
-const char* N_PeerGetIPAddressConstString(net_peer_t *np) {
+const char* N_PeerGetIPAddressConstString(netpeer_t *np) {
   ENetPeer *enet_peer = N_ComGetENetPeer(&np->com);
 
   return N_IPToConstString(ENET_NET_TO_HOST_32(enet_peer->address.host));
 }
 
-unsigned short N_PeerGetPort(net_peer_t * np) {
+unsigned short N_PeerGetPort(netpeer_t * np) {
   ENetPeer *enet_peer = N_ComGetENetPeer(&np->com);
 
   return enet_peer->address.port;
 }
 
-netpeer_status_e N_PeerGetStatus(net_peer_t *np) {
+netpeer_status_e N_PeerGetStatus(netpeer_t *np) {
   return np->status;
 }
 
-void N_PeerSetStatus(net_peer_t *np, netpeer_status_e status) {
+void N_PeerSetStatus(netpeer_t *np, netpeer_status_e status) {
   np->status = status;
 }
 
-auth_level_e N_PeerGetAuthLevel(net_peer_t *np) {
+double N_PeerGetConnecionWaitTime(netpeer_t *np) {
+  return difftime(time(NULL), np->connect_start_time);
+}
+
+double N_PeerGetDisconnectionWaitTime(netpeer_t *np) {
+  return difftime(time(NULL), np->disconnect_start_time);
+}
+
+double N_PeerGetLastSetupRequestTime(netpeer_t *np) {
+  return difftime(time(NULL), np->last_setup_request_time);
+}
+
+void N_PeerUpdateLastSetupRequestTime(netpeer_t *np) {
+  np->last_setup_request_time = time(NULL);
+}
+
+auth_level_e N_PeerGetAuthLevel(netpeer_t *np) {
   return np->auth_level;
 }
 
-void N_PeerSetAuthLevel(net_peer_t *np, auth_level_e auth_level) {
+void N_PeerSetAuthLevel(netpeer_t *np, auth_level_e auth_level) {
   np->auth_level = auth_level;
 }
 
-unsigned int N_PeerGetPing(net_peer_t *np) {
+unsigned int N_PeerGetPing(netpeer_t *np) {
   return np->ping;
 }
 
-void N_PeerSetPing(net_peer_t *np, unsigned int ping) {
+void N_PeerSetPing(netpeer_t *np, unsigned int ping) {
   np->ping = ping;
 }
 
-int N_PeerGetConnectTic(net_peer_t *np) {
+int N_PeerGetConnectTic(netpeer_t *np) {
   return np->connect_tic;
 }
 
-const char* N_PeerGetName(net_peer_t *np) {
+const char* N_PeerGetName(netpeer_t *np) {
   return np->name;
 }
 
-void N_PeerSetName(net_peer_t *np, const char *name) {
+void N_PeerSetName(netpeer_t *np, const char *name) {
   if (np->name) {
     free(np->name);
   }
@@ -276,15 +301,15 @@ void N_PeerSetName(net_peer_t *np, const char *name) {
   np->name = strdup(name);
 }
 
-team_t* N_PeerGetTeam(net_peer_t *np) {
+team_t* N_PeerGetTeam(netpeer_t *np) {
   return np->team;
 }
 
-void N_PeerSetTeam(net_peer_t *np, team_t *team) {
+void N_PeerSetTeam(netpeer_t *np, team_t *team) {
   np->team = team;
 }
 
-bool N_PeerHasTeam(net_peer_t *np) {
+bool N_PeerHasTeam(netpeer_t *np) {
   if (np->team) {
     return true;
   }
@@ -292,7 +317,7 @@ bool N_PeerHasTeam(net_peer_t *np) {
   return false;
 }
 
-player_t* N_PeerGetPlayer(net_peer_t *np) {
+player_t* N_PeerGetPlayer(netpeer_t *np) {
   if (!np->player_id) {
     return NULL;
   }
@@ -300,11 +325,11 @@ player_t* N_PeerGetPlayer(net_peer_t *np) {
   return P_PlayersLookup(np->player_id);
 }
 
-void N_PeerSetPlayer(net_peer_t *np, player_t *player) {
+void N_PeerSetPlayer(netpeer_t *np, player_t *player) {
   np->player_id = player->id;
 }
 
-bool N_PeerHasPlayer(net_peer_t *np) {
+bool N_PeerHasPlayer(netpeer_t *np) {
   player_t *player = N_PeerGetPlayer(np);
 
   if (player) {
@@ -314,186 +339,186 @@ bool N_PeerHasPlayer(net_peer_t *np) {
   return false;
 }
 
-void N_PeerFlushReliableChannel(net_peer_t *np) {
+void N_PeerFlushReliableChannel(netpeer_t *np) {
   N_ComFlushReliableChannel(&np->com);
 }
 
-void N_PeerFlushUnreliableChannel(net_peer_t *np) {
+void N_PeerFlushUnreliableChannel(netpeer_t *np) {
   N_ComFlushUnreliableChannel(&np->com);
 }
 
-void N_PeerFlushChannels(net_peer_t *np) {
+void N_PeerFlushChannels(netpeer_t *np) {
   N_PeerFlushReliableChannel(np);
   N_PeerFlushUnreliableChannel(np);
 }
 
-pbuf_t* N_PeerBeginMessage(net_peer_t *np, net_message_e type) {
+pbuf_t* N_PeerBeginMessage(netpeer_t *np, net_message_e type) {
   return N_ComBeginMessage(&np->com, type);
 }
 
-bool N_PeerSetIncoming(net_peer_t *np, unsigned char *data, size_t size) {
+bool N_PeerSetIncoming(netpeer_t *np, unsigned char *data, size_t size) {
   return N_ComSetIncoming(&np->com, data, size);
 }
 
-bool N_PeerLoadNextMessage(net_peer_t *np, net_message_e *message_type) {
+bool N_PeerLoadNextMessage(netpeer_t *np, net_message_e *message_type) {
   return N_ComLoadNextMessage(&np->com, message_type);
 }
 
-pbuf_t* N_PeerGetIncomingMessageData(net_peer_t *np) {
+pbuf_t* N_PeerGetIncomingMessageData(netpeer_t *np) {
   return N_ComGetIncomingMessageData(&np->com);
 }
 
-void N_PeerClearReliableChannel(net_peer_t *np) {
+void N_PeerClearReliableChannel(netpeer_t *np) {
   N_ComClearReliableChannel(&np->com);
 }
 
-void N_PeerClearUnreliableChannel(net_peer_t *np) {
+void N_PeerClearUnreliableChannel(netpeer_t *np) {
   N_ComClearUnreliableChannel(&np->com);
 }
 
-void N_PeerSendReset(net_peer_t *np) {
+void N_PeerSendReset(netpeer_t *np) {
   N_ComSendReset(&np->com);
 }
 
-size_t N_PeerGetBytesUploaded(net_peer_t *np) {
+size_t N_PeerGetBytesUploaded(netpeer_t *np) {
   return N_ComGetBytesUploaded(&np->com);
 }
 
-size_t N_PeerGetBytesDownloaded(net_peer_t *np) {
+size_t N_PeerGetBytesDownloaded(netpeer_t *np) {
   return N_ComGetBytesDownloaded(&np->com);
 }
 
-void* N_PeerGetENetPeer(net_peer_t *np) {
+void* N_PeerGetENetPeer(netpeer_t *np) {
   return N_ComGetENetPeer(&np->com);
 }
 
-float N_PeerGetPacketLoss(net_peer_t *np) {
+float N_PeerGetPacketLoss(netpeer_t *np) {
   ENetPeer *epeer = N_PeerGetENetPeer(np);
 
   return epeer->packetLoss / (float)ENET_PEER_PACKET_LOSS_SCALE;
 }
 
-float N_PeerGetPacketLossJitter(net_peer_t *np) {
+float N_PeerGetPacketLossJitter(netpeer_t *np) {
   ENetPeer *epeer = N_PeerGetENetPeer(np);
 
   return epeer->packetLossVariance / (float)ENET_PEER_PACKET_LOSS_SCALE;
 }
 
-bool N_PeerSyncOutdated(net_peer_t *np) {
+bool N_PeerSyncOutdated(netpeer_t *np) {
   return N_SyncOutdated(&np->sync);
 }
 
-void N_PeerSyncSetOutdated(net_peer_t *np) {
+void N_PeerSyncSetOutdated(netpeer_t *np) {
   N_SyncSetOutdated(&np->sync);
 }
 
-void N_PeerSyncSetNotOutdated(net_peer_t *np) {
+void N_PeerSyncSetNotOutdated(netpeer_t *np) {
   N_SyncSetNotOutdated(&np->sync);
 }
 
-bool N_PeerSyncNeedsGameInfo(net_peer_t *np) {
+bool N_PeerSyncNeedsGameInfo(netpeer_t *np) {
   return N_SyncNeedsGameInfo(&np->sync);
 }
 
-void N_PeerSyncSetNeedsGameInfo(net_peer_t *np) {
+void N_PeerSyncSetNeedsGameInfo(netpeer_t *np) {
   N_SyncSetNeedsGameInfo(&np->sync);
 }
 
-void N_PeerSyncSetHasGameInfo(net_peer_t *np) {
+void N_PeerSyncSetHasGameInfo(netpeer_t *np) {
   N_SyncSetHasGameInfo(&np->sync);
 }
 
-bool N_PeerSyncNeedsGameState(net_peer_t *np) {
+bool N_PeerSyncNeedsGameState(netpeer_t *np) {
   return N_SyncNeedsGameState(&np->sync);
 }
 
-void N_PeerSyncSetNeedsGameState(net_peer_t *np) {
+void N_PeerSyncSetNeedsGameState(netpeer_t *np) {
   N_SyncSetNeedsGameState(&np->sync);
 }
 
-void N_PeerSyncSetHasGameState(net_peer_t *np) {
+void N_PeerSyncSetHasGameState(netpeer_t *np) {
   N_SyncSetHasGameState(&np->sync);
 }
 
-bool N_PeerSynchronized(net_peer_t *np) {
+bool N_PeerSynchronized(netpeer_t *np) {
   return !(N_PeerSyncNeedsGameInfo(np) || N_PeerSyncNeedsGameState(np));
 }
 
-bool N_PeerSyncUpdated(net_peer_t *np) {
+bool N_PeerSyncUpdated(netpeer_t *np) {
   return N_SyncUpdated(&np->sync);
 }
 
-void N_PeerSyncSetUpdated(net_peer_t *np) {
+void N_PeerSyncSetUpdated(netpeer_t *np) {
   N_SyncSetUpdated(&np->sync);
 }
 
-void N_PeerSyncSetNotUpdated(net_peer_t *np) {
+void N_PeerSyncSetNotUpdated(netpeer_t *np) {
   N_SyncSetNotUpdated(&np->sync);
 }
 
-int N_PeerSyncGetTIC(net_peer_t *np) {
+int N_PeerSyncGetTIC(netpeer_t *np) {
   return N_SyncGetTIC(&np->sync);
 }
 
-void N_PeerSyncSetTIC(net_peer_t *np, int sync_tic) {
+void N_PeerSyncSetTIC(netpeer_t *np, int sync_tic) {
   N_SyncSetTIC(&np->sync, sync_tic);
 }
 
-void N_PeerSyncUpdateTIC(net_peer_t *np, int sync_tic) {
+void N_PeerSyncUpdateTIC(netpeer_t *np, int sync_tic) {
   N_SyncUpdateTIC(&np->sync, sync_tic);
 }
 
-unsigned int N_PeerSyncGetCommandIndex(net_peer_t *np) {
+unsigned int N_PeerSyncGetCommandIndex(netpeer_t *np) {
   return N_SyncGetCommandIndex(&np->sync);
 }
 
-void N_PeerSyncSetCommandIndex(net_peer_t *np, unsigned int command_index) {
+void N_PeerSyncSetCommandIndex(netpeer_t *np, unsigned int command_index) {
   N_SyncSetCommandIndex(&np->sync, command_index);
 }
 
-void N_PeerSyncUpdateCommandIndex(net_peer_t *np, unsigned int command_index) {
+void N_PeerSyncUpdateCommandIndex(netpeer_t *np, unsigned int command_index) {
   N_SyncUpdateCommandIndex(&np->sync, command_index);
 }
 
-game_state_delta_t* N_PeerSyncGetStateDelta(net_peer_t *np) {
+game_state_delta_t* N_PeerSyncGetStateDelta(netpeer_t *np) {
   return N_SyncGetStateDelta(&np->sync);
 }
 
-void N_PeerSyncUpdateStateDelta(net_peer_t *np, int from_tic,
+void N_PeerSyncUpdateStateDelta(netpeer_t *np, int from_tic,
                                                int to_tic,
                                                pbuf_t *delta_data) {
   N_SyncUpdateStateDelta(&np->sync, from_tic, to_tic, delta_data);
 }
 
-void N_PeerSyncBuildNewStateDelta(net_peer_t *np) {
+void N_PeerSyncBuildNewStateDelta(netpeer_t *np) {
   N_SyncBuildNewStateDelta(&np->sync);
 }
 
-bool N_PeerSyncStateDeltaUpdated(net_peer_t *np) {
+bool N_PeerSyncStateDeltaUpdated(netpeer_t *np) {
   return N_SyncUpdated(&np->sync);
 }
 
-void N_PeerSyncResetStateDelta(net_peer_t *np, int sync_tic, int from_tic,
+void N_PeerSyncResetStateDelta(netpeer_t *np, int sync_tic, int from_tic,
                                                             int to_tic) {
   N_SyncResetStateDelta(&np->sync, sync_tic, from_tic, to_tic);
 }
 
-uint32_t N_PeerSyncGetCommandIndexForPlayer(net_peer_t *np, player_t *player) {
+uint32_t N_PeerSyncGetCommandIndexForPlayer(netpeer_t *np, player_t *player) {
   return N_SyncGetCommandIndexForPlayer(&np->sync, player);
 }
 
-void N_PeerSyncSetCommandIndexForPlayer(net_peer_t *np, player_t *player,
+void N_PeerSyncSetCommandIndexForPlayer(netpeer_t *np, player_t *player,
                                                        uint32_t command_index) {
   N_SyncSetCommandIndexForPlayer(&np->sync, player, command_index);
 }
 
-void N_PeerSyncUpdateCommandIndexForPlayer(net_peer_t *np,
+void N_PeerSyncUpdateCommandIndexForPlayer(netpeer_t *np,
                                            player_t *player,
                                            uint32_t command_index) {
   N_SyncUpdateCommandIndexForPlayer(&np->sync, player, command_index);
 }
 
-void N_PeerSyncReset(net_peer_t *np) {
+void N_PeerSyncReset(netpeer_t *np) {
   N_SyncReset(&np->sync);
 }
 

@@ -54,15 +54,11 @@ typedef enum {
   MSG_VISIBILITY_HIGH
 } msg_visibility_e;
 
-/*
- * I think messages need a sender ID
- */
 typedef struct message_s {
   uint32_t channel_id;
   msg_level_e level;
   msg_recipient_e recipient;
   msg_visibility_e visibility;
-  uint32_t sender_id;
   uint32_t recipient_id;
   bool is_markup;
   int sfx;

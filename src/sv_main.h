@@ -24,11 +24,6 @@
 #ifndef SV_MAIN_H__
 #define SV_MAIN_H__
 
-typedef struct remote_server_s {
-  netcom_t  com;
-  netsync_t sync;
-} remote_server_t;
-
 extern int   sv_limit_player_commands;
 extern char *sv_spectate_password;
 extern char *sv_join_password;
@@ -44,11 +39,6 @@ const char*    SV_GetServerName(void);
 const char*    SV_GetDirSrvGroup(const char *address, unsigned short port);
 const char*    SV_GetHost(void);
 unsigned short SV_GetPort(void);
-void           SV_DisconnectPeer(netpeer_t *np, disconnection_reason_e reason);
-void           SV_DisconnectPlayerID(uint32_t player_id,
-                                     disconnection_reason_e reason);
-void           SV_DisconnectPlayer(player_t *player,
-                                   disconnection_reason_e reason);
 
 #endif
 

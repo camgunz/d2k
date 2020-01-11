@@ -241,11 +241,11 @@ void N_PackSetup(netpeer_t *np) {
 
   pbuf = N_PeerBeginMessage(np, NM_SETUP);
 
-  M_PBufWriteUNum(pbuf, N_PeerGetID(np));
   M_PBufWriteNum(pbuf, deathmatch);
+
   M_PBufWriteString(pbuf, iwad, strlen(iwad));
 
-  for (size_t i = 0; i < resource_files->len; i++) {
+  for (unsigned int i = 0; i < resource_files->len; i++) {
     wadfile_info_t *wf = g_ptr_array_index(resource_files, i);
 
     if (wf->src != source_iwad && wf->src != source_auto_load)
@@ -256,7 +256,7 @@ void N_PackSetup(netpeer_t *np) {
   if (resource_count > 0) {
     M_PBufWriteArray(pbuf, resource_count);
 
-    for (size_t i = 0; i < resource_files->len; i++) {
+    for (unsigned int i = 0; i < resource_files->len; i++) {
       wadfile_info_t *wf = g_ptr_array_index(resource_files, i);
       char *wad_name;
 
@@ -265,9 +265,8 @@ void N_PackSetup(netpeer_t *np) {
 
       wad_name = M_Basename(wf->name);
 
-      if (!wad_name) {
+      if (!wad_name)
         I_Error("N_PackSetup: Error getting basename of %s\n", wf->name);
-      }
 
       M_PBufWriteString(pbuf, wad_name, strlen(wad_name));
 
@@ -277,7 +276,7 @@ void N_PackSetup(netpeer_t *np) {
 
   M_PBufWriteUNum(pbuf, deh_count);
   if (deh_count > 0) {
-    for (size_t i = 0; i < deh_files->len; i++) {
+    for (unsigned int i = 0; i < deh_files->len; i++) {
       deh_file_t *df = g_ptr_array_index(deh_files, i);
       char *deh_name;
 
@@ -304,7 +303,6 @@ void N_PackSetup(netpeer_t *np) {
 
 bool N_UnpackSetup(netpeer_t *np) {
   pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
-  uint32_t m_local_peer_id;
   int m_deathmatch = 0;
   int m_state_tic;
   game_state_t *gs;
@@ -315,7 +313,6 @@ bool N_UnpackSetup(netpeer_t *np) {
   char *iwad_path;
   GPtrArray *rf_list;
 
-  pbuf_read_uint(pbuf, m_local_peer_id, "local peer ID")
   pbuf_read_ranged_int(pbuf, m_deathmatch, "deathmatch", 0, 2);
 
   M_BufferInit(&iwad_buf);

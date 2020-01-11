@@ -34,8 +34,8 @@
 struct player_s;
 typedef struct player_s player_t;
 
-struct net_peer_s;
-typedef struct net_peer_s net_peer_t;
+struct netpeer_s;
+typedef struct netpeer_s netpeer_t;
 
 typedef enum {
   NM_NONE,
@@ -93,7 +93,7 @@ bool     N_Connect(const char *host, uint16_t port);
 bool     N_Connected(void);
 bool     N_Reconnect(void);
 bool     N_ConnectToServer(const char *address);
-void     N_DisconnectPeer(net_peer_t *np, disconnection_reason_e reason);
+void     N_DisconnectPeer(netpeer_t *np, disconnection_reason_e reason);
 void     N_DisconnectPlayerID(uint32_t player_id,
                               disconnection_reason_e reason);
 void     N_DisconnectPlayer(player_t *player, disconnection_reason_e reason);
