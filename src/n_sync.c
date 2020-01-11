@@ -35,7 +35,7 @@ void N_SyncInit(netsync_t *ns) {
   ns->state = SYNC_NEEDS_GAME_INFO | SYNC_NEEDS_GAME_STATE;
   ns->tic = 0;
   ns->command_index = 0;
-  ns->command_indices = g_hash_table_new(NULL, NULL);
+  memset(ns->command_indices, 0, MAXPLAYERS * sizeof(unsigned int));
   G_DeltaInit(&ns->delta);
 }
 
@@ -43,7 +43,7 @@ void N_SyncReset(netsync_t *ns) {
   ns->state = SYNC_NEEDS_GAME_INFO | SYNC_NEEDS_GAME_STATE;
   ns->tic = 0;
   ns->command_index = 0;
-  g_hash_table_remove_all(ns->command_indices);
+  memset(ns->command_indices, 0, MAXPLAYERS * sizeof(unsigned int));
   G_DeltaClear(&ns->delta);
 }
 
@@ -51,7 +51,7 @@ void N_SyncFree(netsync_t *ns) {
   ns->state = SYNC_NEEDS_GAME_INFO | SYNC_NEEDS_GAME_STATE;
   ns->tic = 0;
   ns->command_index = 0;
-  g_hash_table_destroy(ns->command_indices);
+  memset(ns->command_indices, 0, MAXPLAYERS * sizeof(unsigned int));
   G_DeltaFree(&ns->delta);
 }
 
@@ -178,23 +178,20 @@ void N_SyncResetStateDelta(netsync_t *ns, int sync_tic, int from_tic,
   ns->delta.to_tic = to_tic;
 }
 
-uint32_t N_SyncGetCommandIndexForPlayer(netsync_t *ns, player_t *player) {
-  return GPOINTER_TO_UINT(g_hash_table_lookup(ns->command_indices, player->id));
+unsigned int N_SyncGetCommandIndexForPlayer(netsync_t *ns,
+                                            unsigned int playernum) {
+  return ns->command_indices[playernum];
 }
 
 void N_SyncSetCommandIndexForPlayer(netsync_t *ns,
-                                    player_t *player,
-                                    uint32_t command_index) {
-  g_hash_table_insert(
-    ns->command_indices,
-    player->id,
-    GUINT_TO_POINTER(command_index)
-  );
+                                    unsigned int playernum,
+                                    unsigned int command_index) {
+  ns->command_indices[playernum] = command_index;
 }
 
 void N_SyncUpdateCommandIndexForPlayer(netsync_t *ns,
-                                       player_t *player,
-                                       uint32_t command_index) {
+                                       unsigned int playernum,
+                                       unsigned int command_index) {
   if (command_index <= ns->command_indices[playernum]) {
     return;
   }

@@ -27,13 +27,10 @@
 
 #include "g_game.h"
 #include "g_state.h"
-#include "pl_main.h"
-
-#include "n_addr.h"
 #include "n_main.h"
+#include "p_user.h"
 #include "n_chan.h"
 #include "n_com.h"
-#include "n_peer.h"
 #include "n_sync.h"
 
 #define NET_THROTTLE_INTERVAL 300
@@ -43,38 +40,27 @@
 #define MAX_SETUP_REQUEST_INTERVAL 2.0
 
 struct netpeer_s {
-  uint32_t          id;
-  netpeer_status_e  status;
-  netcom_t          com;
-  netsync_t         sync;
-  time_t            connect_start_time;
-  time_t            disconnect_start_time;
-  time_t            last_setup_request_time;
-  auth_level_e      auth_level;
-  unsigned int      ping;
-  int               connect_tic;
-  char             *name;
-  team_t           *team;
-  uint32_t          player_id;
+  netpeer_status_e status;
+  uint32_t         id;
+  uint32_t         player_id;
+  netcom_t         com;
+  netsync_t        sync;
+  time_t           connect_start_time;
+  time_t           disconnect_start_time;
+  time_t           last_setup_request_time;
+  auth_level_e     auth_level;
 };
 
-static id_hash_t net_peers;
+static GHashTable *net_peers = NULL;
 
 static void free_peer(netpeer_t *np) {
-  player_t *player;
-
-  D_MsgLocalInfo("Removing peer %u (%s:%u)\n",
-    np->id,
+  P_Printf(consoleplayer, "Removing peer for %u (%s:%u)\n",
+    np->playernum,
     N_PeerGetIPAddressConstString(np),
     N_PeerGetPort(np)
   );
 
-  player = N_PeerGetPlayer(np);
-
-  if (player) {
-    player->playerstate = PST_DISCONNECTED;
-  }
-
+  players[np->playernum].playerstate = PST_DISCONNECTED;
   N_ComFree(&np->com);
   N_SyncFree(&np->sync);
   free(np);
@@ -84,96 +70,36 @@ static void peer_destroy_func(gpointer data) {
   free_peer((netpeer_t *)data);
 }
 
-void N_PeersInit(void) {
-  M_IDHashInit(&net_peers, peer_destroy_func);
+unsigned int N_PeerGetPlayernum(netpeer_t *np) {
+  return np->playernum;
 }
 
-netpeer_t* N_PeersAdd(void *enet_peer) {
-  netpeer_t *np = NULL;
-
-  np = calloc(1, sizeof(netpeer_t));
-
-  if (!np) {
-    I_Error("N_PeersAdd: Error allocating memory for new net peer\n");
-  }
-
-  np->connect_start_time = time(NULL);
-  np->connect_tic = gametic;
-
-  N_ComInit(&np->com, enet_peer);
-  N_SyncInit(&np->sync);
-
-  if (SERVER) {
-    enet_peer_throttle_configure(
-      enet_peer,
-      NET_THROTTLE_INTERVAL,
-      NET_THROTTLE_ACCEL,
-      NET_THROTTLE_DECEL
-    );
-    N_SyncSetTIC(&np->sync, gametic);
-  }
-
-  np->id = M_IDHashAdd(&net_peers, np);
-
-  return np;
+void N_PeerSetPlayernum(netpeer_t *np, unsigned int playernum) {
+  np->playernum = playernum;
 }
 
-netpeer_t* N_PeersLookup(uint32_t id) {
-  return M_IDHashLookup(&net_peers, id);
+double N_PeerGetConnecionWaitTime(netpeer_t *np) {
+  return difftime(time(NULL), np->connect_start_time);
 }
 
-netpeer_t* N_PeersLookupByENetPeer(void *enet_peer) {
-  ENetPeer *epeer = (ENetPeer *)enet_peer;
-
-  NETPEER_FOR_EACH(iter) {
-    ENetPeer *np_epeer = N_ComGetENetPeer(&iter.np->com);
-
-    if (np_epeer->connectID == epeer->connectID) {
-      return iter.np;
-    }
-  }
-
-  return NULL;
+double N_PeerGetDisconnectionWaitTime(netpeer_t *np) {
+  return difftime(time(NULL), np->disconnect_start_time);
 }
 
-netpeer_t* N_PeersLookupByPlayer(player_t *player) {
-  NETPEER_FOR_EACH(iter) {
-    if (iter.np->player_id == player->id) {
-      return iter.np;
-    }
-  }
-
-  return NULL;
+double N_PeerGetLastSetupRequestTime(netpeer_t *np) {
+  return difftime(time(NULL), np->last_setup_request_time);
 }
 
-size_t N_PeersGetCount(void) {
-  return M_IDHashGetCount(&net_peers);
+void N_PeerUpdateLastSetupRequestTime(netpeer_t *np) {
+  np->last_setup_request_time = time(NULL);
 }
 
-bool N_PeersPeerExists(uint32_t id) {
-  if (N_PeersLookup(id)) {
-    return true;
-  }
-
-  return false;
+auth_level_e N_PeerGetAuthLevel(netpeer_t *np) {
+  return np->auth_level;
 }
 
-bool N_PeerIterate(netpeer_iterator_t *iter) {
-  if (!M_IDHashIterate(&net_peers, &iter->iter)) {
-    return false;
-  }
-
-  iter->np = (netpeer_t *)iter->iter.obj;
-
-  return true;
-}
-
-void N_PeerIterateRemove(netpeer_iterator_t *iter) {
-  M_IDHashIterateRemove(&iter->iter);
-}
-
-void N_PeerRemove(netpeer_t *np) {
-  M_IDHashRemoveID(&net_peers, np->id);
+void N_PeerSetAuthLevel(netpeer_t *np, auth_level_e auth_level) {
+  np->auth_level = auth_level;
 }
 
 bool N_PeerCheckTimeout(netpeer_t *np) {
@@ -208,23 +134,12 @@ bool N_PeerCanRequestSetup(netpeer_t *np) {
   );
 }
 
-void N_PeerSetConnected(netpeer_t *np) {
-  np->connect_start_time = 0;
-}
-
-bool N_PeerTooLagged(netpeer_t *np) {
-  return N_SyncTooLagged(&np->sync);
-}
-
-void N_PeerDisconnect(netpeer_t *np, disconnection_reason_e reason) {
-  ENetPeer *epeer = N_ComGetENetPeer(&np->com);
-
-  enet_peer_disconnect(epeer, reason);
-  np->disconnect_start_time = time(NULL);
-}
-
 uint32_t N_PeerGetID(netpeer_t *np) {
   return np->id;
+}
+
+netpeer_status_e N_PeerGetStatus(netpeer_t *np) {
+  return np->status;
 }
 
 uint32_t N_PeerGetIPAddress(netpeer_t *np) {
@@ -245,106 +160,136 @@ unsigned short N_PeerGetPort(netpeer_t * np) {
   return enet_peer->address.port;
 }
 
-netpeer_status_e N_PeerGetStatus(netpeer_t *np) {
-  return np->status;
+void N_PeersInit(void) {
+  M_IDHashInit(&net_peers, peer_destroy_func);
 }
 
-void N_PeerSetStatus(netpeer_t *np, netpeer_status_e status) {
-  np->status = status;
+unsigned int N_PeersGetCount(void) {
+  return M_IDHashTableGetCount(&net_peers);
 }
 
-double N_PeerGetConnecionWaitTime(netpeer_t *np) {
-  return difftime(time(NULL), np->connect_start_time);
-}
+netpeer_t* N_PeersAdd(void *enet_peer) {
+  netpeer_t *np = NULL;
 
-double N_PeerGetDisconnectionWaitTime(netpeer_t *np) {
-  return difftime(time(NULL), np->disconnect_start_time);
-}
+  np = calloc(1, sizeof(netpeer_t));
 
-double N_PeerGetLastSetupRequestTime(netpeer_t *np) {
-  return difftime(time(NULL), np->last_setup_request_time);
-}
-
-void N_PeerUpdateLastSetupRequestTime(netpeer_t *np) {
-  np->last_setup_request_time = time(NULL);
-}
-
-auth_level_e N_PeerGetAuthLevel(netpeer_t *np) {
-  return np->auth_level;
-}
-
-void N_PeerSetAuthLevel(netpeer_t *np, auth_level_e auth_level) {
-  np->auth_level = auth_level;
-}
-
-unsigned int N_PeerGetPing(netpeer_t *np) {
-  return np->ping;
-}
-
-void N_PeerSetPing(netpeer_t *np, unsigned int ping) {
-  np->ping = ping;
-}
-
-int N_PeerGetConnectTic(netpeer_t *np) {
-  return np->connect_tic;
-}
-
-const char* N_PeerGetName(netpeer_t *np) {
-  return np->name;
-}
-
-void N_PeerSetName(netpeer_t *np, const char *name) {
-  if (np->name) {
-    free(np->name);
+  if (!np) {
+    I_Error("N_PeersAdd: Error allocating memory for new net peer\n");
   }
 
-  np->name = strdup(name);
+  np->connect_start_time = time(NULL);
+
+  N_ComInit(&np->com, enet_peer);
+  N_SyncInit(&np->sync);
+
+  if (SERVER) {
+    enet_peer_throttle_configure(
+      enet_peer,
+      NET_THROTTLE_INTERVAL,
+      NET_THROTTLE_ACCEL,
+      NET_THROTTLE_DECEL
+    );
+    N_SyncSetTIC(&np->sync, gametic);
+  }
+
+  np->id = M_IDHashAdd(&net_peers, np);
+
+  return np;
 }
 
-team_t* N_PeerGetTeam(netpeer_t *np) {
-  return np->team;
+netpeer_t* N_PeersLookup(uint32_t id) {
+  return M_IDHashLookup(&net_peers, id);
 }
 
-void N_PeerSetTeam(netpeer_t *np, team_t *team) {
-  np->team = team;
+netpeer_t* N_PeersLookupByENetPeer(void *enet_peer) {
+  GHashTableIter it;
+  gpointer key, value;
+  ENetPeer *epeer = (ENetPeer *)enet_peer;
+
+  g_hash_table_iter_init(&it, net_peers);
+
+  while (g_hash_table_iter_next(&it, &key, &value)) {
+    netpeer_t *np = (netpeer_t *)value;
+    ENetPeer *np_epeer = N_ComGetENetPeer(&np->com);
+
+    if (np_epeer->connectID == epeer->connectID) {
+      return np;
+    }
+  }
+
+  return NULL;
 }
 
-bool N_PeerHasTeam(netpeer_t *np) {
-  if (np->team) {
+netpeer_t* N_PeersLookupByPlayer(unsigned int playernum) {
+  GHashTableIter it;
+  gpointer key, value;
+
+  g_hash_table_iter_init(&it, net_peers);
+
+  while (g_hash_table_iter_next(&it, &key, &value)) {
+    netpeer_t *np = (netpeer_t *)value;
+
+    if (np->playernum == playernum) {
+      return np;
+    }
+  }
+
+  return NULL;
+}
+
+unsigned int N_PeerGetNumForPlayer(unsigned int playernum) {
+  netpeer_t *np = N_PeerForPlayer(playernum);
+
+  if (np) {
+    return np->peernum;
+  }
+
+  return 0;
+}
+
+void N_PeerRemove(netpeer_t *np) {
+  g_hash_table_remove(net_peers, GUINT_TO_POINTER(np->peernum));
+}
+
+void N_PeerSetConnected(netpeer_t *np) {
+  np->connect_start_time = 0;
+}
+
+void N_PeerDisconnect(netpeer_t *np, disconnection_reason_e reason) {
+  ENetPeer *epeer = N_ComGetENetPeer(&np->com);
+
+  enet_peer_disconnect(epeer, reason);
+  np->disconnect_start_time = time(NULL);
+}
+
+bool N_PeerIter(netpeer_iter_t **it, netpeer_t **np) {
+  gpointer key, value;
+
+  if (!*it) {
+    *it = malloc(sizeof(GHashTableIter));
+    g_hash_table_iter_init(*it, net_peers);
+  }
+
+  if (g_hash_table_iter_next(*it, &key, &value)) {
+    *np = (netpeer_t *)value;
     return true;
   }
+
+  free(*it);
 
   return false;
 }
 
-player_t* N_PeerGetPlayer(netpeer_t *np) {
-  if (!np->player_id) {
-    return NULL;
-  }
-
-  return P_PlayersLookup(np->player_id);
-}
-
-void N_PeerSetPlayer(netpeer_t *np, player_t *player) {
-  np->player_id = player->id;
-}
-
-bool N_PeerHasPlayer(netpeer_t *np) {
-  player_t *player = N_PeerGetPlayer(np);
-
-  if (player) {
-    return true;
-  }
-
-  return false;
+void N_PeerIterRemove(netpeer_iter_t *it, netpeer_t *np) {
+  g_hash_table_iter_remove(it);
 }
 
 void N_PeerFlushReliableChannel(netpeer_t *np) {
-  N_ComFlushReliableChannel(&np->com);
+  N_ComFlushChannel(&np->com, NET_CHANNEL_RELIABLE);
 }
 
 void N_PeerFlushUnreliableChannel(netpeer_t *np) {
-  N_ComFlushUnreliableChannel(&np->com);
+  N_ComFlushChannel(&np->com, NET_CHANNEL_UNRELIABLE);
 }
 
 void N_PeerFlushChannels(netpeer_t *np) {
@@ -369,11 +314,11 @@ pbuf_t* N_PeerGetIncomingMessageData(netpeer_t *np) {
 }
 
 void N_PeerClearReliableChannel(netpeer_t *np) {
-  N_ComClearReliableChannel(&np->com);
+  N_ComClearChannel(&np->com, NET_CHANNEL_RELIABLE);
 }
 
 void N_PeerClearUnreliableChannel(netpeer_t *np) {
-  N_ComClearUnreliableChannel(&np->com);
+  N_ComClearChannel(&np->com, NET_CHANNEL_UNRELIABLE);
 }
 
 void N_PeerSendReset(netpeer_t *np) {
@@ -386,22 +331,6 @@ size_t N_PeerGetBytesUploaded(netpeer_t *np) {
 
 size_t N_PeerGetBytesDownloaded(netpeer_t *np) {
   return N_ComGetBytesDownloaded(&np->com);
-}
-
-void* N_PeerGetENetPeer(netpeer_t *np) {
-  return N_ComGetENetPeer(&np->com);
-}
-
-float N_PeerGetPacketLoss(netpeer_t *np) {
-  ENetPeer *epeer = N_PeerGetENetPeer(np);
-
-  return epeer->packetLoss / (float)ENET_PEER_PACKET_LOSS_SCALE;
-}
-
-float N_PeerGetPacketLossJitter(netpeer_t *np) {
-  ENetPeer *epeer = N_PeerGetENetPeer(np);
-
-  return epeer->packetLossVariance / (float)ENET_PEER_PACKET_LOSS_SCALE;
 }
 
 bool N_PeerSyncOutdated(netpeer_t *np) {
@@ -456,6 +385,10 @@ void N_PeerSyncSetNotUpdated(netpeer_t *np) {
   N_SyncSetNotUpdated(&np->sync);
 }
 
+bool N_PeerTooLagged(netpeer_t *np) {
+  return N_SyncTooLagged(&np->sync);
+}
+
 int N_PeerSyncGetTIC(netpeer_t *np) {
   return N_SyncGetTIC(&np->sync);
 }
@@ -503,23 +436,41 @@ void N_PeerSyncResetStateDelta(netpeer_t *np, int sync_tic, int from_tic,
   N_SyncResetStateDelta(&np->sync, sync_tic, from_tic, to_tic);
 }
 
-uint32_t N_PeerSyncGetCommandIndexForPlayer(netpeer_t *np, player_t *player) {
-  return N_SyncGetCommandIndexForPlayer(&np->sync, player);
+unsigned int N_PeerSyncGetCommandIndexForPlayer(netpeer_t *np,
+                                            unsigned int playernum) {
+  return N_SyncGetCommandIndexForPlayer(&np->sync, playernum);
 }
 
-void N_PeerSyncSetCommandIndexForPlayer(netpeer_t *np, player_t *player,
-                                                       uint32_t command_index) {
-  N_SyncSetCommandIndexForPlayer(&np->sync, player, command_index);
+void N_PeerSyncSetCommandIndexForPlayer(netpeer_t *np,
+                                       unsigned int playernum,
+                                       unsigned int command_index) {
+  N_SyncSetCommandIndexForPlayer(&np->sync, playernum, command_index);
 }
 
 void N_PeerSyncUpdateCommandIndexForPlayer(netpeer_t *np,
-                                           player_t *player,
-                                           uint32_t command_index) {
-  N_SyncUpdateCommandIndexForPlayer(&np->sync, player, command_index);
+                                           unsigned int playernum,
+                                           unsigned int command_index) {
+  N_SyncUpdateCommandIndexForPlayer(&np->sync, playernum, command_index);
 }
 
 void N_PeerSyncReset(netpeer_t *np) {
   N_SyncReset(&np->sync);
+}
+
+void* N_PeerGetENetPeer(netpeer_t *np) {
+  return N_ComGetENetPeer(&np->com);
+}
+
+float N_PeerGetPacketLoss(netpeer_t *np) {
+  ENetPeer *epeer = N_PeerGetENetPeer(np);
+
+  return epeer->packetLoss / (float)ENET_PEER_PACKET_LOSS_SCALE;
+}
+
+float N_PeerGetPacketLossJitter(netpeer_t *np) {
+  ENetPeer *epeer = N_PeerGetENetPeer(np);
+
+  return epeer->packetLossVariance / (float)ENET_PEER_PACKET_LOSS_SCALE;
 }
 
 /* vi: set et ts=2 sw=2: */

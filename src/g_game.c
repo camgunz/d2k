@@ -726,7 +726,7 @@ void G_Ticker(void) {
         S_StartSound(actor, sfx_telept);
       }
 
-      P_PlayersIterateRemove(&iter);
+      iter.player->playerstate = PST_LIVE;
     }
   }
 
@@ -799,7 +799,7 @@ void G_Ticker(void) {
           !(gametic & 31) &&
           ((gametic >> 5) & 3) == PL_GetVanillaNum(iter.player)) {
         /* cph - don't use sprintf, use doom_printf */
-        D_MsgLocalWarn("Player %u is turbo!\n", iter.player->id);
+        D_MsgLocalWarn("%s is turbo!\n", iter.player->name);
       }
     }
 

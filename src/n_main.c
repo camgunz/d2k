@@ -199,7 +199,7 @@ void N_Disconnect(disconnection_reason_e reason) {
 
   NETPEER_FOR_EACH(iter) {
     N_PeerSendReset(iter.np);
-    N_PeerIterateRemove(&iter);
+    N_PeerIterRemove(&iter);
   }
 
   memset(&net_event, 0, sizeof(ENetEvent));
@@ -462,7 +462,7 @@ void N_ServiceNetworkTimeout(int timeout_ms) {
         N_PeerGetPort(iter.np)
       );
       N_PeerSendReset(iter.np);
-      N_PeerIterateRemove(&iter);
+      N_PeerIterRemove(&iter);
       continue;
     }
 

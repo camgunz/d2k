@@ -208,17 +208,17 @@ bool M_IDListIterate(id_list_t *idlist, GList **node, void **obj,
       );
     }
 
-    *node = idlist->objs;
+    (*node) = idlist->objs;
   }
   else if (!(*node)) {
-    *node = g_list_find(idlist->objs, (*obj));
+    (*node) = g_list_find(idlist->objs, (*obj));
 
     if ((*node)) {
-      *node = g_list_next((*node));
+      (*node) = g_list_next((*node));
     }
   }
   else if ((*obj)) {
-    *node = g_list_next((*node));
+    (*node) = g_list_next((*node));
   }
   else {
     I_Error("M_IDListIterate: iterator has node but no object");
@@ -229,7 +229,7 @@ bool M_IDListIterate(id_list_t *idlist, GList **node, void **obj,
       return false;
     }
 
-    *node = idlist->objs;
+    (*node) = idlist->objs;
 
     if (!(*node)) {
       return false;
@@ -240,18 +240,9 @@ bool M_IDListIterate(id_list_t *idlist, GList **node, void **obj,
     return false;
   }
 
-  *obj = (*node)->data;
+  (*obj) = (*node)->data;
 
   return true;
-}
-
-void M_IDListIterateRemove(id_list_t *idlist, GList **node, void **obj) {
-  GList *prev_node = g_list_previous(*node);
-
-  idlist->objs = g_list_delete_link(idlist->objs, *node);
-
-  *node = prev_node;
-  *obj = (*node)->data;
 }
 
 uint32_t M_IDListGetCount(id_list_t *idlist) {

@@ -56,10 +56,6 @@ bool P_PlayersIterate(players_iter_t *iter) {
   );
 }
 
-void P_PlayersIterateRemove(player_iter_t *iter) {
-  M_IDListIterateRemove(&new_players, &iter->node, &iter->player);
-}
-
 player_t* P_PlayersGetNew(void) {
   player_t *player = PL_New();
 
@@ -166,7 +162,7 @@ void PL_AddDeath(player_t *victim, player_t *fragger) {
         GUINT_TO_POINTER(victim->id)
       )) + 1;
 
-      g_hash_table_insert(GUINT_TO_POINTER(
+      g_hash_table_insert(G_UINT_TO_POINTER(
         fragger->frags,
         GUINT_TO_POINTER(victim->id),
         GUINT_TO_POINTER(frag_count)
@@ -181,7 +177,7 @@ void PL_AddDeath(player_t *victim, player_t *fragger) {
     GUINT_TO_POINTER(fragger_id),
   )) + 1;
 
-  g_hash_table_insert(GUINT_TO_POINTER(
+  g_hash_table_insert(G_UINT_TO_POINTER(
     victim->deaths,
     GUINT_TO_POINTER(fragger_id),
     GUINT_TO_POINTER(death_count)
@@ -277,6 +273,14 @@ void PL_ClearFragsAndDeaths(player_t *player) {
 
 int P_PlayerGetPing(player_t *player) {
   return player->ping;
+}
+
+int P_PlayerGetTime(player_t *player) {
+  if (!MULTINET) {
+    return gametic / TICRATE;
+  }
+
+  return (gametic - player->connect_tic) / TICRATE;
 }
 
 //

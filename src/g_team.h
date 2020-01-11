@@ -25,10 +25,8 @@
 #define G_TEAM_H__
 
 typedef struct team_s {
-  uint32_t  id;
-  char     *name;
+  uint32_t id;
+  char *name;
 } team_t;
-
-team_t* G_TeamsLookup(uint32_t id);
 
 /* vi: set et ts=2 sw=2: */

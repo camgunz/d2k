@@ -56,9 +56,9 @@ typedef enum {
 
 typedef enum {
   WSOP_NONE   = 0,
-  WSOP_WEAPON = 1 << 0,
-  WSOP_AMMO   = 1 << 1,
-  WSOP_MAX    = (WSOP_AMMO * 2) - 1,
+  WSOP_WEAPON = 1,
+  WSOP_AMMO   = 2,
+  WSOP_MAX    = 4,
 } wsop_e;
 
 /* Weapon info: sprite frames, ammunition use. */

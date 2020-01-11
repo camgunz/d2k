@@ -3,15 +3,19 @@
 - Remove ENet
   - Replace with libuv and regular sockets
 
-- Need to keep track of peers in the state, so that clients will get them.
-  - Clients need to know about spectators, and they may as well know about
-    non-playing/spectating clients too.  Naturally client types are available
-    so the HUD can display them however it chooses, but right now clients know
-    about the server peer and that's it.  Previously we jammed a lot of
-    client-specific stuff in `player_t`, but we should now move that to
-    `netpeer_t`.
+- Define the distinction between peers, spectators, and players
+  - The main thing is that it's possible for there to be peer connected to a
+    server that other peers don't ever know about, or there can be peers
+    connected to a server that don't have a player.  I ran into this when
+    refactoring the chat message stuff; that code currently presumes that if
+    there's a peer there's a player, which is wrong if the peer is spectating.
+    This has other implications, like assuming that if connected you have a
+    player in the game, you have a consoleplayer, and so on.  A lot of work to
+    do here probably.
 
 ## Smaller Issues
+
+1. Add error codes to `n_proto`
 
 1. Servers shouldn't `quit`, they should `shutdown`; also prevents accidentally
    running `/quit` in the console instead of `:quit` and closing the server....
@@ -73,7 +77,7 @@
 1. EDF
 1. ExtraData
 1. MAPINFO
-1. 3D Floors
+1. 3D floors
 1. 3D MixTex
 1. Portals
 1. Polyobjects

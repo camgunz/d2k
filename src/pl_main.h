@@ -261,10 +261,14 @@ typedef struct player_s {
 
   /* CG 4/3/2014: New fields for netcode */
   uint32_t id;
+  const char *name;
+  unsigned char team;
   command_queue_t cmdq;
   player_messages_t messages;
   GHashTable *frags;
   GHashTable *deaths;
+  int ping;
+  int connect_tic;
   bool telefragged_by_spawn;
   fixed_t saved_momx;
   fixed_t saved_momy;
@@ -295,7 +299,6 @@ static inline uint32_t PL_GetVanillaNum(player_t *player) {
 void      P_PlayersInit(void);
 uint32_t  P_PlayersGetCount(void);
 bool      P_PlayersIterate(players_iter_t *iter);
-void      P_PlayersIterateRemove(players_iter_t *iter);
 player_t* P_PlayersGetNew(void);
 player_t* P_PlayersGetNewWithID(uint32_t id);
 player_t* P_PlayersLookup(uint32_t id);
@@ -309,6 +312,8 @@ player_t* P_GetDisplayPlayer(void);
 player_t* PL_New(void);
 bool      PL_IsConsolePlayer(player_t *player);
 bool      PL_IsDisplayPlayer(player_t *player);
+void      PL_SetNameRaw(player_t *player, const char *name);
+void      PL_SetName(player_t *player, const char *name);
 void      PL_AddDeath(player_t *victim, player_t *fragger);
 uint32_t  PL_GetFrags(player_t *fragger, player_t *victim);
 uint32_t  PL_GetTotalFrags(player_t *player);
@@ -318,10 +323,9 @@ uint32_t  PL_GetTotalDeaths(player_t *victim);
 uint32_t  PL_GetTotalSuicides(player_t *victim);
 int32_t   PL_GetFragScore(player_t *player);
 void      PL_ClearFragsAndDeaths(player_t *player);
+int       P_PlayerGetPing(player_t *player);
+int       P_PlayerGetTime(player_t *player);
 void      PL_Spawn(player_t *player, const mapthing_t *mthing);
-
-void      PL_SetNameRaw(player_t *player, const char *name);
-void      PL_SetName(player_t *player, const char *name);
 
 #endif
 
