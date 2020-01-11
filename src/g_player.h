@@ -31,7 +31,7 @@ struct player_s;
 typedef struct player_s player_t;
 
 void G_PlayerFinishLevel(player_t *player);
-void G_ChangedPlayerColour(player_t *player, unsigned char color_index);
+void G_ChangedPlayerColour(int pn, int cl);
 void G_PlayerReborn(player_t *player);
 bool G_CheckSpot(player_t *player, mapthing_t *mthing);
 void G_DeathMatchSpawnPlayer(player_t *player);

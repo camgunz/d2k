@@ -30,7 +30,6 @@
 
 /* Persistent storage/archiving.
  * These are the load / save game routines. */
-void P_ArchivePeers(pbuf_t *savebuffer);
 void P_ArchivePlayers(pbuf_t *savebuffer);
 void P_UnArchivePlayers(pbuf_t *savebuffer);
 void P_ArchiveWorld(pbuf_t *savebuffer);

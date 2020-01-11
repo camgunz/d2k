@@ -74,6 +74,31 @@ void G_PlayerFinishLevel(player_t *player) {
 //
 // G_SetPlayerColour
 
+void G_ChangedPlayerColour(int pn, int cl) {
+  if (!netgame) {
+    return;
+  }
+
+  vanilla_mapplayer_colors[pn % VANILLA_MAXPLAYERS] = cl;
+
+  // Rebuild colour translation tables accordingly
+  R_InitTranslationTables();
+
+  // Change translations on existing player mobj's
+  if (gamestate == GS_LEVEL) {
+    PLAYERS_FOR_EACH(iter) {
+      if (iter.player->mo) {
+        uint32_t playernum = iter.player->id - 1;
+        uint32_t translation_index = playernum % VANILLA_MAXPLAYERS;
+        uint64_t translation_flag = playernumtotrans[translation_index];
+
+        iter.player->mo->flags &= ~MF_TRANSLATION;
+        iter.player->mo->flags |= translation_flag << MF_TRANSSHIFT;
+      }
+    }
+  }
+}
+
 //
 // G_PlayerReborn
 // Called after a player dies

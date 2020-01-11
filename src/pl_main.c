@@ -377,22 +377,4 @@ void PL_Spawn(player_t *player, const mapthing_t *mthing) {
   R_SmoothPlaying_Reset(player); // e6y
 }
 
-void PL_SetColormapIndex(player_t *player, unsigned char colormap_index) {
-  player->colormap_index = colormap_index;
-
-  // Rebuild colour translation tables accordingly
-  R_InitTranslationTables();
-
-  if (gamestate != GS_LEVEL) {
-    return;
-  }
-
-  if (!player->mo) {
-    return;
-  }
-
-  player->mo->flags &= ~MF_TRANSLATION;
-  player->mo->flags |= ((uint64_t)colormap_index) << MF_TRANSSHIFT;
-}
-
 /* vi: set et ts=2 sw=2: */

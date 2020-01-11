@@ -266,7 +266,6 @@ typedef struct player_s {
   GHashTable *frags;
   GHashTable *deaths;
   bool telefragged_by_spawn;
-  unsigned char colormap_index;
   fixed_t saved_momx;
   fixed_t saved_momy;
   fixed_t saved_momz;
@@ -320,7 +319,6 @@ uint32_t  PL_GetTotalSuicides(player_t *victim);
 int32_t   PL_GetFragScore(player_t *player);
 void      PL_ClearFragsAndDeaths(player_t *player);
 void      PL_Spawn(player_t *player, const mapthing_t *mthing);
-void      PL_SetColormapIndex(player_t *player, unsigned char colormap_index);
 
 void      PL_SetNameRaw(player_t *player, const char *name);
 void      PL_SetName(player_t *player, const char *name);

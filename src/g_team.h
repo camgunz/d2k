@@ -26,18 +26,9 @@
 
 typedef struct team_s {
   uint32_t  id;
-  char     *name;         /* ex: "Blue" */
-  char     *message_name; /* ex: "the Blue Team" */
+  char     *name;
 } team_t;
 
 team_t* G_TeamsLookup(uint32_t id);
-team_t* G_TeamsAddRaw(uint32_t id);
-
-void        G_TeamSetName(team_t *team, const char *name);
-const char* G_TeamGetName(team_t *team);
-void        G_TeamSetMessageName(team_t *team, const char *message_name);
-const char* G_TeamGetMessageName(team_t *team);
-
-#endif
 
 /* vi: set et ts=2 sw=2: */
