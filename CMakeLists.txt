@@ -804,7 +804,6 @@ SET(D2K_SOURCES
   ${CMAKE_SOURCE_DIR}/src/g_player.c
   ${CMAKE_SOURCE_DIR}/src/g_save.c
   ${CMAKE_SOURCE_DIR}/src/g_state.c
-  ${CMAKE_SOURCE_DIR}/src/g_team.c
   ${CMAKE_SOURCE_DIR}/src/gl_clipper.c
   ${CMAKE_SOURCE_DIR}/src/gl_detail.c
   ${CMAKE_SOURCE_DIR}/src/gl_drawinfo.c
