@@ -24,15 +24,6 @@
 #ifndef D_MSG_H__
 #define D_MSG_H__
 
-#define MSG_LEVEL_MIN MSG_LEVEL_DEBUG
-#define MSG_LEVEL_MAX MSG_LEVEL_ERROR
-
-#define MSG_RECIPIENT_MIN MSG_RECIPIENT_EVERYONE
-#define MSG_RECIPIENT_MAX MSG_RECIPIENT_PEER
-
-#define MSG_VISIBILITY_MIN MSG_VISIBILITY_CONSOLE_ONLY
-#define MSG_VISIBILITY_MAX MSG_VISIBILITY_HIGH
-
 typedef enum {
   MSG_LEVEL_DEBUG,
   MSG_LEVEL_INFO,
@@ -43,22 +34,20 @@ typedef enum {
 typedef enum {
   MSG_RECIPIENT_EVERYONE,
   MSG_RECIPIENT_LOCAL,
-  MSG_RECIPIENT_TEAM,
   MSG_RECIPIENT_PLAYER,
   MSG_RECIPIENT_PEER
 } msg_recipient_e;
 
-typedef enum {
-  MSG_VISIBILITY_CONSOLE_ONLY,
-  MSG_VISIBILITY_NORMAL,
-  MSG_VISIBILITY_HIGH
-} msg_visibility_e;
+#define MSG_SINK_NONE     (0)
+#define MSG_SINK_CONSOLE  (1 << 0)
+#define MSG_SINK_MESSAGES (1 << 1)
+#define MSG_SINK_HIGH     (1 << 2)
 
 typedef struct message_s {
   uint32_t channel_id;
   msg_level_e level;
   msg_recipient_e recipient;
-  msg_visibility_e visibility;
+  unsigned int sinks;
   uint32_t recipient_id;
   bool is_markup;
   int sfx;
@@ -86,7 +75,7 @@ const char* D_MsgChanGetName(uint32_t channel_id);
 
 void D_MsgChanVMsg(uint32_t channel_id, msg_level_e level,
                                         msg_recipient_e recipient,
-                                        msg_visibility_e visibility,
+                                        unsigned int sinks,
                                         uint32_t recipient_id,
                                         bool is_markup,
                                         int sfx,
@@ -94,7 +83,7 @@ void D_MsgChanVMsg(uint32_t channel_id, msg_level_e level,
                                         va_list args);
 void D_MsgChanMsg(uint32_t channel_id, msg_level_e level,
                                        msg_recipient_e recipient,
-                                       msg_visibility_e visibility,
+                                       unsigned int sinks,
                                        uint32_t recipient_id,
                                        bool is_markup,
                                        int sfx,

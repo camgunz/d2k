@@ -41,7 +41,7 @@ static void free_team(team_t *team) {
 }
 
 static void team_destroy_func(gpointer data) {
-  free_team((team_t *)data);
+  free_team((team_t)data);
 }
 
 void G_TeamsInit(void) {

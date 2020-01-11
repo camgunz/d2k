@@ -54,7 +54,6 @@
 #define MAX_PASSWORD_LENGTH 256
 #define MAX_COMMAND_LENGTH 32
 #define MAX_CHAT_MESSAGE_SIZE 256
-#define MAX_MESSAGE_LENGTH 256
 
 #define read_packed_game_state(pbuf, var, tic, name)                          \
   var = G_ReadNewStateFromPackedBuffer(tic, pbuf);                            \
@@ -397,7 +396,7 @@ bool N_UnpackSetup(netpeer_t *np) {
   }
 
   pbuf_read_int(pbuf, m_state_tic, "game state tic");
-  read_packed_game_state(pbuf, gs, m_state_tic, "game state data");
+  pbuf_read_packed_game_state(pbuf, gs, m_state_tic, "game state data");
 
   deathmatch = m_deathmatch;
 
@@ -446,121 +445,6 @@ bool N_UnpackPing(netpeer_t *np, double *server_time) {
   pbuf_read_double(pbuf, m_server_time, "server time");
 
   *server_time = m_server_time;
-
-  return true;
-}
-
-void N_PackMessage(netpeer_t *np, message_t *message) {
-  pbuf_t *pbuf = N_PeerBeginMessage(np, NM_MESSAGE);
-
-  M_PBufWriteUNum(pbuf, message->channel_id);
-  M_PBufWriteNum(pbuf, message->level);
-  M_PBufWriteNum(pbuf, message->recipient);
-  M_PBufWriteNum(pbuf, message->visibility);
-  M_PBufWriteUNum(pbuf, recipient_id);
-  M_PBufWriteBool(pbuf, message->is_markup);
-  M_PBufWriteNum(pbuf, message->sfx);
-  M_PBufWriteString(pbuf, message->contents, strlen(message->contents));
-}
-
-void N_UnpackMessage(netpeer_t *np, message_t *message) {
-  static buf_t *m_contents = NULL;
-
-  if (!m_contents) {
-    m_contents = M_BufferSizedNew(64);
-  }
-
-  pbuf_t *pbuf = N_PeerGetIncomingMessageData(np);
-  uint32_t m_channel_id;
-  msg_level_e m_level;
-  msg_recipient_e m_recipient;
-  msg_visibility_e m_visibility;
-  uint32_t m_recipient_id;
-  bool m_is_markup;
-  int m_sfx;
-
-  read_uint(pbuf, m_channel_id, "message channel ID");
-  read_ranged_int(
-    pbuf, m_level, "message level", MSG_LEVEL_MIN, MSG_LEVEL_MAX
-  );
-  read_ranged_int(
-    pbuf,
-    m_recipient,
-    "message recipient",
-    MSG_RECIPIENT_MIN,
-    MSG_RECIPIENT_MAX
-  );
-  read_ranged_uint(
-    pbuf,
-    m_visibility,
-    "message visibility",
-    MSG_VISIBILITY_MIN,
-    MSG_VISIBILITY_MAX
-  );
-
-  read_uint(pbuf, m_recipient_id, "message recipient ID");
-
-  switch (m_recipient) {
-    case MSG_RECIPIENT_TEAM:
-      if (!G_TeamsTeamExists(m_recipient_id)) {
-        D_MsgLocalError(
-          "N_UnpackMessage: Team message sent to non-existent team (%u)\n",
-          recipient_id
-        );
-        return false;
-      }
-      break;
-    case MSG_RECIPIENT_PLAYER:
-      if (!P_PlayersPlayerExists(m_recipient_id)) {
-        D_MsgLocalError(
-          "N_UnpackMessage: Player message sent to non-existent player (%u)\n",
-          recipient_id
-        );
-        return false;
-      }
-      break;
-    case MSG_RECIPIENT_PEER:
-      if (!N_PeersPeerExists(m_recipient_id)) {
-        D_MsgLocalError(
-          "N_UnpackMessage: Peer message sent to non-existent peer (%u)\n",
-          recipient_id
-        );
-        return false;
-      }
-      break;
-    default:
-      if (recipient_id != 0) {
-        D_MsgLocalError(
-          "N_UnpackMessage: Unspecific message specifies message recipient "
-          "ID (%u)\n",
-          recipient_id
-        );
-        return false;
-      }
-      break;
-  }
-
-  read_bool(pbuf, m_is_markup, "message is markup");
-  read_int(pbuf, m_sfx, "message SFX");
-
-  if ((m_sfx < 0) || (m_sfx >= NUMSFX)) {
-    D_MsgLocalError(
-      "N_UnpackMessage: Error reading message SFX: %s.\n", M_PBufGetError(pbuf)
-    );
-    return false;
-  }
-
-  read_string(pbuf, m_contents, "message contents", MAX_MESSAGE_LENGTH);
-
-  message->channel_id = m_channel_id;
-  message->level = m_level;
-  message->recipient = m_recipient;
-  message->visibility = m_visibility;
-  message->recipient_id = m_recipient_id;
-  message->is_markup = m_is_markup;
-  message->sfx = m_sfx;
-  message->contents = strdup(m_contents->data);
-  message->processed = false;
 
   return true;
 }

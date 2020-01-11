@@ -32,7 +32,7 @@ typedef struct player_s player_t;
 struct team_s;
 typedef struct team_s team_t;
 
-struct game_state_delta_s;
+struct game_state_delta_s;;
 typedef struct game_state_delta_s game_state_delta_t;
 
 struct netpeer_s;
