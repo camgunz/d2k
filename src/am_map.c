@@ -31,6 +31,7 @@
 #include "gl_struct.h"
 
 #include "am_map.h"
+#include "p_user.h"
 #include "r_state.h"
 #include "r_patch.h"
 #include "w_wad.h"
@@ -47,10 +48,7 @@
 #include "m_bbox.h"
 #include "r_demo.h"
 #include "n_main.h"
-#include "pl_main.h"
-#include "pl_pspr.h"
-#include "pl_msg.h"
-#include "m_cheat.h"
+#include "p_player.h"
 
 extern bool gamekeydown[];
 
@@ -548,8 +546,7 @@ void AM_SetPosition(void) {
 // Passed nothing, returns nothing
 //
 static void AM_initVariables(void) {
-  // find player to center on initially
-  player_t *player = P_GetConsolePlayer();
+  player_t *player = NULL;
 
   automapmode |= am_active;
 
@@ -559,6 +556,9 @@ static void AM_initVariables(void) {
 
   m_w = FTOM(f_w);
   m_h = FTOM(f_h);
+
+  // find player to center on initially
+  player = P_PlayersGetConsolePlayer();
 
   if (!player) {
     bool found_player = false;
@@ -802,42 +802,40 @@ bool AM_Responder(event_t *ev) {
 
       // Ty 03/27/98 - externalized
       if (automapmode & am_follow) {
-        PL_Echo(P_GetConsolePlayer(), s_AMSTR_FOLLOWON);
+        P_Echo(consoleplayer, s_AMSTR_FOLLOWON);
       }
       else {
-        PL_Echo(P_GetConsolePlayer(), s_AMSTR_FOLLOWOFF);
+        P_Echo(consoleplayer, s_AMSTR_FOLLOWOFF);
       }
     }
     else if (ch == key_map_grid) {
       automapmode ^= am_grid;                     // CPhipps
       // Ty 03/27/98 - *not* externalized
       if (automapmode & am_grid) {
-        PL_Echo(P_GetConsolePlayer(), s_AMSTR_GRIDON);
+        P_Echo(consoleplayer, s_AMSTR_GRIDON);
       }
       else {
-        PL_Echo(P_GetConsolePlayer(), s_AMSTR_GRIDOFF);
+        P_Echo(consoleplayer, s_AMSTR_GRIDOFF);
       }
     }
     else if (ch == key_map_mark) {
       /* Ty 03/27/98 - *not* externalized
        * cph 2001/11/20 - use doom_printf so we don't have our own buffer */
-      PL_Printf(P_GetConsolePlayer(), "%s %d\n",
-        s_AMSTR_MARKEDSPOT, markpointnum
-      );
+      P_Printf(consoleplayer, "%s %d\n", s_AMSTR_MARKEDSPOT, markpointnum);
       AM_addMark();
     }
     else if (ch == key_map_clear) {
-      AM_clearMarks();                                     // Ty 03/27/98 *not*
-                                                           // externalized
-      PL_Echo(P_GetConsolePlayer(), s_AMSTR_MARKSCLEARED); //    ^
-    }                                                      //    |
+      AM_clearMarks();                            // Ty 03/27/98 - *not*
+                                                  // externalized
+      P_Echo(consoleplayer, s_AMSTR_MARKSCLEARED);//    ^
+    }                                             //    |
     else if (ch == key_map_rotate) {
       automapmode ^= am_rotate;
       if (automapmode & am_rotate) {
-        PL_Echo(P_GetConsolePlayer(), s_AMSTR_ROTATEON);
+        P_Echo(consoleplayer, s_AMSTR_ROTATEON);
       }
       else {
-        PL_Echo(P_GetConsolePlayer(), s_AMSTR_ROTATEOFF);
+        P_Echo(consoleplayer, s_AMSTR_ROTATEOFF);
       }
     }
     else if (ch == key_map_overlay) {
@@ -846,10 +844,10 @@ bool AM_Responder(event_t *ev) {
       AM_SetScale();
       AM_initVariables();
       if (automapmode & am_overlay) {
-        PL_Echo(P_GetConsolePlayer(), s_AMSTR_OVERLAYON);
+        P_Echo(consoleplayer, s_AMSTR_OVERLAYON);
       }
       else {
-        PL_Echo(P_GetConsolePlayer(), s_AMSTR_OVERLAYOFF);
+        P_Echo(consoleplayer, s_AMSTR_OVERLAYOFF);
       }
     }
 #ifdef GL_DOOM
@@ -857,10 +855,10 @@ bool AM_Responder(event_t *ev) {
       map_textured = !map_textured;
       M_ChangeMapTextured();
       if (map_textured) {
-        PL_Echo(P_GetConsolePlayer(), s_AMSTR_TEXTUREDON);
+        P_Echo(consoleplayer, s_AMSTR_TEXTUREDON);
       }
       else {
-        PL_Echo(P_GetConsolePlayer(), s_AMSTR_TEXTUREDOFF);
+        P_Echo(consoleplayer, s_AMSTR_TEXTUREDOFF);
       }
     }
 #endif /* ifdef GL_DOOM */
@@ -1947,7 +1945,7 @@ static void AM_DrawNiceThings(void) {
   if (ddt_cheating == 2) {
     // for all sectors
     for (i = 0; i < numsectors; i++) {
-      if (!(P_GetDisplayPlayer()->cheats & CF_NOCLIP) && (
+      if (!(P_PlayersGetDisplayPlayer()->cheats & CF_NOCLIP) && (
             sectors[i].bbox[BOXLEFT]   > am_frame.bbox[BOXRIGHT] ||
             sectors[i].bbox[BOXRIGHT]  < am_frame.bbox[BOXLEFT]  ||
             sectors[i].bbox[BOXBOTTOM] > am_frame.bbox[BOXTOP]   ||
@@ -2060,7 +2058,7 @@ static void AM_drawThings(void) {
     int pass;
     int enemies = 0;
 
-    if (!(P_GetDisplayPlayer()->cheats & CF_NOCLIP) &&
+    if (!(P_PlayersGetDisplayPlayer()->cheats & CF_NOCLIP) &&
        (sectors[i].bbox[BOXLEFT]   > am_frame.bbox[BOXRIGHT] ||
         sectors[i].bbox[BOXRIGHT]  < am_frame.bbox[BOXLEFT]  ||
         sectors[i].bbox[BOXBOTTOM] > am_frame.bbox[BOXTOP]   ||

@@ -30,12 +30,12 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
-#include "pl_main.h"
+#include "p_user.h"
 #include "g_game.h"
 
 // Game Mode - identify IWAD as shareware, retail etc.
 GameMode_t gamemode = indetermined;
-GameMission_t gamemission = doom;
+GameMission_t   gamemission = doom;
 
 // Language.
 Language_t   language = english;

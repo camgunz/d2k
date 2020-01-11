@@ -20,60 +20,34 @@
 /*                                                                           */
 /*****************************************************************************/
 
+
 #ifndef WI_STUFF_H__
 #define WI_STUFF_H__
 
-//
-// INTERMISSION
-// Structure passed e.g. to WI_Start(wb)
-//
-typedef struct {
-  bool in;                    // whether the player is in game
-  int  skills;                // Player stats, kills, collected items etc.
-  int  sitems;
-  int  ssecret;
-  int  stime;
-  int  frags[MAXPLAYERS];
-  int  score;                 // current score on entry, modified on return
-} wbplayerstruct_t;
-
-typedef struct {
-  int              epsd;      // episode # (0-2)
-  bool             didsecret; // if true, splash the secret level
-  int              last;      // previous and next levels, origin 0
-  int              next;
-  int              maxkills;
-  int              maxitems;
-  int              maxsecret;
-  int              maxfrags;
-  int              partime;   // the par time
-  int              pnum;      // index of this player in game
-  wbplayerstruct_t plyr[VANILLA_MAXPLAYERS];
-  int              totaltimes; // CPhipps - total game time for completed
-                               // levels so far
-} wbstartstruct_t;
-
 // States for the intermission
 
-typedef enum {
+typedef enum
+{
   NoState = -1,
   StatCount,
   ShowNextLoc
+
 } stateenum_t;
 
 // Called by main loop, animate the intermission.
-void WI_Ticker(void);
+void WI_Ticker (void);
 
 // Called by main loop,
 // draws the intermission directly into the screen buffer.
-void WI_Drawer(void);
+void WI_Drawer (void);
 
 // Setup for an intermission screen.
-void WI_Start(int par_time);
+void WI_Start(wbstartstruct_t*   wbstartstruct);
 
 // Release intermission screen memory
 void WI_End(void);
 
-#endif // ifndef WI_STUFF_H__
+#endif
 
 /* vi: set et ts=2 sw=2: */
+

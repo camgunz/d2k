@@ -254,7 +254,9 @@ typedef struct timetable_s
 const char* WINError(void);
 #endif
 
+extern int stats_level;
 void e6y_G_DoCompleted(void);
+void e6y_WriteStats(void);
 
 void e6y_G_DoWorldDone(void);
 

@@ -28,7 +28,7 @@
 #include "d_event.h"
 #include "am_map.h"
 #include "d_dump.h"
-#include "pl_main.h"
+#include "p_user.h"
 #include "g_game.h"
 #include "m_delta.h"
 #include "m_random.h"
@@ -324,8 +324,8 @@ void D_Dump(pbuf_t *savebuffer) {
 
   /** Players **/
 
-  for (uint32_t i = 1; i <= VANILLA_MAXPLAYERS; i++) {
-    if (P_PlayersLookup(i)) {
+  for (int i = 0; i < VANILLA_MAXPLAYERS; i++) {
+    if (playeringame[i]) {
       M_PBufWriteInt(savebuffer, 1);
     }
     else {
@@ -337,10 +337,10 @@ void D_Dump(pbuf_t *savebuffer) {
     M_PBufWriteInt(savebuffer, 0);
   }
 
-  for (uint32_t i = 1; i <= VANILLA_MAXPLAYERS; i++) {
-    player_t *player = P_PlayersLookup(i);
+  for (int i = 0; i < VANILLA_MAXPLAYERS; i++) {
+    if (playeringame[i]) {
+      player_t *player = &players[i];
 
-    if (player) {
       M_PBufWriteInt(savebuffer, player->playerstate);
       M_PBufWriteChar(savebuffer, player->cmd.forwardmove);
       M_PBufWriteChar(savebuffer, player->cmd.sidemove);
@@ -355,33 +355,23 @@ void D_Dump(pbuf_t *savebuffer) {
       M_PBufWriteInt(savebuffer, player->health);
       M_PBufWriteInt(savebuffer, player->armorpoints);
       M_PBufWriteInt(savebuffer, player->armortype);
-      for (int j = 0; j < NUMPOWERS; j++)
+      for (int i = 0; i < NUMPOWERS; i++)
         M_PBufWriteInt(savebuffer, player->powers[i]);
-      for (int j = 0; j < NUMCARDS; j++)
+      for (int i = 0; i < NUMCARDS; i++)
         M_PBufWriteInt(savebuffer, player->cards[i]);
       M_PBufWriteInt(savebuffer, player->backpack);
 
-      for (uint32_t j = 1; j <= VANILLA_MAXPLAYERS; j++) {
-        if (i != j) {
-          M_PBufWriteInt(savebuffer, PL_GetFrags(player, P_PlayersLookup(j)));
-        }
-        else {
-          M_PBufWriteInt(savebuffer, (
-            PL_GetTotalMurders(player) +
-            PL_GetTotalDeaths(player) +
-            PL_GetTotalSuicides(player)
-          ));
-        }
-      }
+      for (int i = 0; i < VANILLA_MAXPLAYERS; i++)
+        M_PBufWriteInt(savebuffer, player->frags[i]);
 
       M_PBufWriteInt(savebuffer, player->readyweapon);
       M_PBufWriteInt(savebuffer, player->pendingweapon);
-      for (int j = 0; j < NUMWEAPONS; j++)
-        M_PBufWriteInt(savebuffer, player->weaponowned[j]);
-      for (int j = 0; j < NUMAMMO; j++)
-        M_PBufWriteInt(savebuffer, player->ammo[j]);
-      for (int j = 0; j < NUMAMMO; j++)
-        M_PBufWriteInt(savebuffer, player->maxammo[j]);
+      for (int i = 0; i < NUMWEAPONS; i++)
+        M_PBufWriteInt(savebuffer, player->weaponowned[i]);
+      for (int i = 0; i < NUMAMMO; i++)
+        M_PBufWriteInt(savebuffer, player->ammo[i]);
+      for (int i = 0; i < NUMAMMO; i++)
+        M_PBufWriteInt(savebuffer, player->maxammo[i]);
 
       M_PBufWriteInt(savebuffer, player->attackdown);
       M_PBufWriteInt(savebuffer, player->usedown);
@@ -395,28 +385,28 @@ void D_Dump(pbuf_t *savebuffer) {
       M_PBufWriteInt(savebuffer, player->extralight);
       M_PBufWriteInt(savebuffer, player->fixedcolormap);
       M_PBufWriteInt(savebuffer, player->colormap);
-      for (int j = 0; j < NUMPSPRITES; j++) {
-        if (player->psprites[j].state) {
+      for (int i = 0; i < NUMPSPRITES; i++) {
+        if (player->psprites[i].state) {
           uint64_t state_index;
 
-          if (player->psprites[j].state < states) {
+          if (player->psprites[i].state < states) {
             I_Error(
-              "D_Dump: Invalid psprite state %p", player->psprites[j].state
+              "D_Dump: Invalid psprite state %p", player->psprites[i].state
             );
           }
 
-          state_index = player->psprites[j].state - states;
+          state_index = player->psprites[i].state - states;
 
           if (state_index > NUMSTATES) {
             I_Error(
-              "D_Dump: Invalid psprite state %p", player->psprites[j].state
+              "D_Dump: Invalid psprite state %p", player->psprites[i].state
             );
           }
 
           M_PBufWriteULong(savebuffer, state_index + 1);
-          M_PBufWriteInt(savebuffer, player->psprites[j].tics);
-          M_PBufWriteInt(savebuffer, player->psprites[j].sx);
-          M_PBufWriteInt(savebuffer, player->psprites[j].sy);
+          M_PBufWriteInt(savebuffer, player->psprites[i].tics);
+          M_PBufWriteInt(savebuffer, player->psprites[i].sx);
+          M_PBufWriteInt(savebuffer, player->psprites[i].sy);
         }
         else {
           M_PBufWriteULong(savebuffer, 0);
@@ -594,7 +584,7 @@ void D_Dump(pbuf_t *savebuffer) {
 
     if (mobj->player) {
       for (unsigned int i = 0; i < VANILLA_MAXPLAYERS; i++) {
-        if (mobj->player == P_PlayersLookup(i + 1)) {
+        if (mobj->player == &players[i]) {
           player_index = i + 1;
           break;
         }

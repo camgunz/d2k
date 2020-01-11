@@ -28,17 +28,15 @@
 #include "g_game.h"
 #include "g_state.h"
 #include "n_main.h"
-#include "pl_main.h"
-#include "pl_cmd.h"
-#include "pl_msg.h"
+#include "cl_cmd.h"
+#include "cl_net.h"
 #include "p_setup.h"
 #include "p_mobj.h"
+#include "p_user.h"
 #include "r_defs.h"
 #include "r_state.h"
 #include "r_fps.h"
 #include "s_sound.h"
-#include "cl_cmd.h"
-#include "cl_net.h"
 
 /*
  * Marked true when the client is loading a state
@@ -102,11 +100,9 @@ static void cl_clear_repredicting(void) {
 static bool cl_load_new_state(netpeer_t *server) {
   game_state_delta_t *delta = N_PeerGetSyncStateDelta(server);
   bool state_loaded;
-  size_t index = 0;;
-  player_t *player;
 
   if (!G_ApplyStateDelta(delta)) {
-    PL_Echo(P_GetConsolePlayer(), "Error applying state delta");
+    P_Echo(consoleplayer, "Error applying state delta");
     return false;
   }
 
@@ -115,7 +111,7 @@ static bool cl_load_new_state(netpeer_t *server) {
   cl_loading_state = false;
 
   if (!state_loaded) {
-    PL_Echo(P_GetConsolePlayer(), "Error loading latest state");
+    P_Echo(consoleplayer, "Error loading latest state");
     return false;
   }
 
@@ -126,18 +122,26 @@ static bool cl_load_new_state(netpeer_t *server) {
   cl_loading_state = false;
 
   if (!state_loaded) {
-    PL_Echo(P_GetConsolePlayer(), "Error loading previous state");
+    P_Echo(consoleplayer, "Error loading previous state");
     return false;
   }
 
-  while (P_PlayersIter(&index, &player)) {
+  for (int i = 0; i < MAXPLAYERS; i++) {
+    player_t *player;
+    
+    if (!playeringame[i]) {
+      continue;
+    }
+
+    player = &players[i];
+
     if (player->cmdq.commands->len) {
-      D_Msg(MSG_SYNC, "(%d) (%zu) [ ", gametic, index);
+      D_Msg(MSG_SYNC, "(%d) (%d) [ ", gametic, i);
 
-      for (size_t i = 0; i < player->cmdq.commands->len; i++) {
-        idxticcmd_t *icmd = g_ptr_array_index(player->cmdq.commands, i);
+      for (unsigned int i = 0; i < player->cmdq.commands->len; i++) {
+        netticcmd_t *ncmd = g_ptr_array_index(player->cmdq.commands, i);
 
-        D_Msg(MSG_SYNC, "%d/%d/%d ", icmd->index, icmd->tic, icmd->server_tic);
+        D_Msg(MSG_SYNC, "%d/%d/%d ", ncmd->index, ncmd->tic, ncmd->server_tic);
       }
 
       D_Msg(MSG_SYNC, "]\n");
@@ -155,8 +159,8 @@ static bool cl_load_new_state(netpeer_t *server) {
   for (int i = gametic; i <= N_PeerGetSyncTIC(server); i++) {
     N_RunTic();
 
-    if (P_GetDisplayPlayer()->mo != NULL) {
-      R_InterpolateView(P_GetDisplayPlayer());
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
       R_RestoreInterpolations();
     }
   }
@@ -176,7 +180,7 @@ static bool cl_load_new_state(netpeer_t *server) {
   cl_loading_state = false;
 
   if (!state_loaded) {
-    PL_Echo(P_GetConsolePlayer(), "Error loading latest state");
+    P_Echo(consoleplayer, "Error loading latest state");
     return false;
   }
 
@@ -213,7 +217,7 @@ void CL_CheckForStateUpdates(void) {
   server = CL_GetServerPeer();
 
   if (!server) {
-    PL_Echo(P_GetConsolePlayer(), "Server disconnected");
+    P_Echo(consoleplayer, "Server disconnected");
     N_Disconnect(DISCONNECT_REASON_LOST_PEER_CONNECTION);
     return;
   }
@@ -231,7 +235,7 @@ void CL_CheckForStateUpdates(void) {
     N_PeerGetSyncCommandIndex(server),
     saved_state_delta_from_tic,
     saved_state_delta_to_tic,
-    P_GetConsolePlayer()->cmdq.latest_command_run_index
+    players[consoleplayer].cmdq.latest_command_run_index
   );
 
   S_ResetSoundLog();
@@ -254,20 +258,20 @@ void CL_CheckForStateUpdates(void) {
     "(%d): %d: {%4d/%4d/%4d %4d/%4d/%4d %4d %4d/%4d/%4d/%4d %4d/%4u/%4u}\n", 
     gametic,
     consoleplayer,
-    P_GetConsolePlayer()->mo->x           >> FRACBITS,
-    P_GetConsolePlayer()->mo->y           >> FRACBITS,
-    P_GetConsolePlayer()->mo->z           >> FRACBITS,
-    P_GetConsolePlayer()->mo->momx        >> FRACBITS,
-    P_GetConsolePlayer()->mo->momy        >> FRACBITS,
-    P_GetConsolePlayer()->mo->momz        >> FRACBITS,
-    P_GetConsolePlayer()->mo->angle       /  ANG1,
-    P_GetConsolePlayer()->viewz           >> FRACBITS,
-    P_GetConsolePlayer()->viewheight      >> FRACBITS,
-    P_GetConsolePlayer()->deltaviewheight >> FRACBITS,
-    P_GetConsolePlayer()->bob             >> FRACBITS,
-    P_GetConsolePlayer()->prev_viewz      >> FRACBITS,
-    P_GetConsolePlayer()->prev_viewangle  /  ANG1,
-    P_GetConsolePlayer()->prev_viewpitch  /  ANG1
+    players[consoleplayer].mo->x           >> FRACBITS,
+    players[consoleplayer].mo->y           >> FRACBITS,
+    players[consoleplayer].mo->z           >> FRACBITS,
+    players[consoleplayer].mo->momx        >> FRACBITS,
+    players[consoleplayer].mo->momy        >> FRACBITS,
+    players[consoleplayer].mo->momz        >> FRACBITS,
+    players[consoleplayer].mo->angle       /  ANG1,
+    players[consoleplayer].viewz           >> FRACBITS,
+    players[consoleplayer].viewheight      >> FRACBITS,
+    players[consoleplayer].deltaviewheight >> FRACBITS,
+    players[consoleplayer].bob             >> FRACBITS,
+    players[consoleplayer].prev_viewz      >> FRACBITS,
+    players[consoleplayer].prev_viewangle  /  ANG1,
+    players[consoleplayer].prev_viewpitch  /  ANG1
   );
 
 #ifdef LOG_SECTOR
@@ -383,8 +387,8 @@ void CL_SetNewGameState(gamestate_t new_gamestate) {
 }
 
 void CL_RePredict(int saved_gametic) {
-  player_t *player = P_GetConsolePlayer();
-  uint32_t latest_command_index = PL_GetLatestCommandIndex(player);
+  player_t *player = &players[consoleplayer];
+  unsigned int latest_command_index = P_GetLatestCommandIndex(consoleplayer);
   
   if (gametic == -1) {
     return;
@@ -407,8 +411,8 @@ void CL_RePredict(int saved_gametic) {
   while (player->cmdq.latest_command_run_index < latest_command_index) {
     N_RunTic();
 
-    if (P_GetDisplayPlayer()->mo != NULL) {
-      R_InterpolateView(P_GetDisplayPlayer());
+    if (players[displayplayer].mo != NULL) {
+      R_InterpolateView(&players[displayplayer]);
       R_RestoreInterpolations();
     }
   }
@@ -433,16 +437,16 @@ void CL_SetNeedsInitNew(void) {
 }
 
 void CL_ResetSync(void) {
-  size_t index = 0;
-  player_t *player = NULL;
   netpeer_t *server = CL_GetServerPeer();
 
   cl_state_tic = -1;
   cl_repredicting_start_tic = 0;
   cl_repredicting_end_tic = 0;
 
-  while (P_PlayersIter(&index, &player)) {
-    PL_ResetCommands(player);
+  for (size_t i = 0; i < MAXPLAYERS; i++) {
+    if (playeringame[i]) {
+      P_ResetPlayerCommands(i);
+    }
   }
 
   G_ClearStates();

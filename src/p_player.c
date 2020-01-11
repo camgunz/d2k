@@ -21,23 +21,72 @@
 /*****************************************************************************/
 
 
-#ifndef PL_WEAP_H__
-#define PL_WEAP_H__
+#include "z_zone.h"
 
-typedef enum {
-  WSOP_NONE   = 0,
-  WSOP_WEAPON = 1,
-  WSOP_AMMO   = 2,
-  WSOP_MAX    = 4,
-} wsop_e;
+#include "doomdef.h"
+#include "doomstat.h"
+#include "m_idlist.h"
+#include "p_user.h"
+#include "p_player.h"
 
-extern int weapon_preferences[2][NUMWEAPONS + 1]; /* killough 5/2/98 */
+static id_list_t new_players;
+static uint32_t console_player_id;
+static uint32_t display_player_id;
 
-int  P_WeaponPreferred(int w1, int w2);
-int  P_SwitchWeapon(player_t *player);
-bool P_CheckAmmo(player_t *player);
-void P_DropWeapon(player_t *player);
+static void free_player(gpointer data) {
+  free(data);
+}
 
-#endif
+void P_PlayersInit(void) {
+  M_IDListInit(&new_players, free_player);
+}
+
+uint32_t P_PlayersGetCount(void) {
+  return M_IDListGetSize(&new_players);
+}
+
+bool P_PlayersIter(size_t *index, player_t **start) {
+  return M_IDListIterate(&new_players, index, (void **)start);
+}
+
+player_t* P_PlayersGetNew(void) {
+  player_t *new_player = malloc(sizeof(player_t));
+
+  new_player->id = M_IDListGetNewID(&new_players, new_player);
+
+  return new_player;
+}
+
+player_t* P_PlayersLookup(uint32_t id) {
+  return M_IDListLookupObj(&new_players, id);
+}
+
+void P_PlayerRemove(player_t *player) {
+  M_IDListReleaseID(&new_players, player->id);
+}
+
+void P_PlayersSetConsolePlayerID(uint32_t new_console_player_id) {
+  console_player_id = new_console_player_id;
+}
+
+void P_PlayersSetDisplayPlayerID(uint32_t new_display_player_id) {
+  display_player_id = new_display_player_id;
+}
+
+player_t* P_PlayersGetConsolePlayer(void) {
+  return P_PlayersLookup(console_player_id);
+}
+
+player_t* P_PlayersGetDisplayPlayer(void) {
+  return P_PlayersLookup(display_player_id);
+}
+
+bool PL_IsConsolePlayer(player_t *player) {
+  return player->id == console_player_id;
+}
+
+bool PL_IsDisplayPlayer(player_t *player) {
+  return player->id == display_player_id;
+}
 
 /* vi: set et ts=2 sw=2: */

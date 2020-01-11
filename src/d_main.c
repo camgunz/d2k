@@ -40,8 +40,7 @@
 #include "dstrings.h"
 #include "f_finale.h"
 #include "m_swap.h"
-#include "pl_main.h"
-#include "pl_msg.h"
+#include "p_user.h"
 #include "g_game.h"
 #include "g_keys.h"
 #include "hu_lib.h"
@@ -264,9 +263,7 @@ bool D_Responder(event_t *ev) {
         if (useglgamma > MAX_GLGAMMA)
           useglgamma = 0;
 
-        PL_Printf(P_GetConsolePlayer(), "Gamma correction level %d",
-          useglgamma
-        );
+        P_Printf(consoleplayer, "Gamma correction level %d", useglgamma);
 
         gld_SetGammaRamp(useglgamma);
       }
@@ -278,18 +275,14 @@ bool D_Responder(event_t *ev) {
         if (usegamma > 4)
           usegamma = 0;
 
-        if (usegamma == 0) {
-          PL_Echo(P_GetConsolePlayer(), s_GAMMALVL0);
-        }
-        else if (usegamma == 1) {
-          PL_Echo(P_GetConsolePlayer(), s_GAMMALVL1);
-        }
-        else if (usegamma == 2) {
-          PL_Echo(P_GetConsolePlayer(), s_GAMMALVL2);
-        }
-        else if (usegamma == 3) {
-          PL_Echo(P_GetConsolePlayer(), s_GAMMALVL3);
-        }
+        if (usegamma == 0)
+          P_Echo(consoleplayer, s_GAMMALVL0);
+        else if (usegamma == 1)
+          P_Echo(consoleplayer, s_GAMMALVL1);
+        else if (usegamma == 2)
+          P_Echo(consoleplayer, s_GAMMALVL2);
+        else if (usegamma == 3)
+          P_Echo(consoleplayer, s_GAMMALVL3);
 
         V_SetPalette(0);
 
@@ -393,15 +386,12 @@ bool D_Responder(event_t *ev) {
     if (V_GetMode() == VID_MODEGL) {
       if (ev->key == key_showalive) {
         show_alive = (show_alive + 1) % 3;
-        if (show_alive == 0) {
-          PL_Echo(P_GetConsolePlayer(), "Show Alive Monsters off");
-        }
-        if (show_alive == 1) {
-          PL_Echo(P_GetConsolePlayer(), "Show Alive Monsters (mode 1) on");
-        }
-        if (show_alive == 2) {
-          PL_Echo(P_GetConsolePlayer(), "Show Alive Monsters (mode 2) on");
-        }
+        if (show_alive == 0)
+          P_Echo(consoleplayer, "Show Alive Monsters off");
+        if (show_alive == 1)
+          P_Echo(consoleplayer, "Show Alive Monsters (mode 1) on");
+        if (show_alive == 2)
+          P_Echo(consoleplayer, "Show Alive Monsters (mode 2) on");
       }
     }
 #endif
@@ -626,19 +616,17 @@ static const char *auto_shot_fname;
 static void D_DoomLoop(void) {
   bool tic_elapsed;
 
-  while (true) {
+  for (;;) {
     // frame syncronous IO operations
 
-    if (ffmap == gamemap) {
+    if (ffmap == gamemap)
       ffmap = 0;
-    }
 
     // process one or more tics
     if (singletics) {
-      G_BuildTiccmd(&P_GetConsolePlayer()->cmd);
-      if (advancedemo) {
+      G_BuildTiccmd(&players[consoleplayer].cmd);
+      if (advancedemo)
         D_DoAdvanceDemo();
-      }
       M_Ticker();
       G_Ticker();
       P_Checksum(gametic);
@@ -649,18 +637,15 @@ static void D_DoomLoop(void) {
       tic_elapsed = N_TryRunTics(); // Returns true if a TIC was run
     }
 
-    if (nodrawers) {
+    if (nodrawers)
       continue;
-    }
 
-    if (!tic_elapsed) {
+    if (!tic_elapsed)
       continue;
-    }
 
     // killough 3/16/98: change consoleplayer to displayplayer
-    if (P_GetDisplayPlayer()->mo) { // cph 2002/08/10
-      S_UpdateSounds(P_GetDisplayPlayer()->mo);// move positional sounds
-    }
+    if (players[displayplayer].mo) // cph 2002/08/10
+      S_UpdateSounds(players[displayplayer].mo);// move positional sounds
 
     // CPhipps - auto screenshot
     if (auto_shot_fname && !--auto_shot_count) {
@@ -682,9 +667,8 @@ static void D_DoomLoop(void) {
     }
 
     // NSM
-    if (capturing_video && !doSkip) {
+    if (capturing_video && !doSkip)
       I_CaptureFrame();
-    }
   }
 }
 
@@ -832,19 +816,17 @@ static struct
  */
 
 void D_DoAdvanceDemo(void) {
-  P_GetConsolePlayer()->playerstate = PST_LIVE;  /* not reborn */
+  players[consoleplayer].playerstate = PST_LIVE;  /* not reborn */
   advancedemo = usergame = paused = false;
   G_SetGameAction(ga_nothing);
 
   pagetic = TICRATE * 11;         /* killough 11/98: default behavior */
   G_SetGameState(GS_DEMOSCREEN);
 
-  if (netgame && !demoplayback) {
+  if (netgame && !demoplayback)
     demosequence = 0;
-  }
-  else if (!demostates[++demosequence][gamemode].func) {
+  else if (!demostates[++demosequence][gamemode].func)
     demosequence = 0;
-  }
 
   demostates[demosequence][gamemode].func(
     demostates[demosequence][gamemode].name

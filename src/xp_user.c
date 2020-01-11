@@ -45,10 +45,6 @@ static int XF_Say(lua_State *L) {
   if (!message)
     return 0;
 
-  /*
-   * [CG] [TODO] This needs to be a network API call that then calls the player
-   *             messaging API to display the message.
-   */
   P_SendMessage(message);
 
   return 0;

@@ -40,15 +40,21 @@
 #include <SDL_mixer.h>
 #endif
 
-#include "i_pcsound.h"
-#include "i_sound.h"
-
 #include "doomdef.h"
+#include "doomstat.h"
+#include "d_event.h"
 #include "d_main.h"
-#include "s_sound.h"
+#include "i_pcsound.h"
 #include "sounds.h"
-#include "g_game.h"
+#include "i_sound.h"
+#include "m_argv.h"
+#include "m_swap.h"
+#include "p_setup.h"
+#include "p_mobj.h"
+#include "s_sound.h"
 #include "w_wad.h"
+#include "p_user.h"
+#include "g_game.h"
 
 bool sound_inited_once = false;
 
@@ -106,9 +112,8 @@ int use_experimental_music = -1;
 // Stops a sound, unlocks the data
 //
 static void stop_chan(int i) {
-  if (SOUND_DISABLED) {
+  if (SOUND_DISABLED)
     return;
-  }
 
   if (channelinfo[i].data) { /* cph - prevent excess unlocks */
     channelinfo[i].data = NULL;
@@ -124,11 +129,9 @@ static void stop_chan(int i) {
 //
 // Returns a handle.
 //
-static int add_sfx(int sfxid, int channel, const unsigned char *data,
-                                           size_t len) {
-  if (SOUND_DISABLED) {
+static int add_sfx(int sfxid, int channel, const unsigned char *data, size_t len) {
+  if (SOUND_DISABLED)
     return 0;
-  }
 
   stop_chan(channel);
 
@@ -150,26 +153,22 @@ static int add_sfx(int sfxid, int channel, const unsigned char *data,
   return channel;
 }
 
-static void update_sound_params(int handle, int volume, int separation,
-                                                        int pitch) {
+static void update_sound_params(int handle, int volume, int separation, int pitch) {
   int slot = handle;
   int rightvol;
   int leftvol;
   int step = steptable[pitch];
 
 #ifdef RANGECHECK
-  if ((handle < 0) || (handle >= MAX_SOUND_CHANNELS)) {
+  if ((handle < 0) || (handle >= MAX_SOUND_CHANNELS))
     I_Error("update_sound_params: handle out of range");
-  }
 #endif
 
-  if (SOUND_DISABLED) {
+  if (SOUND_DISABLED)
     return;
-  }
 
-  if (snd_pcspeaker) {
+  if (snd_pcspeaker)
     return;
-  }
 
   // Set stepping
   // MWM 2000-12-24: Calculates proportion of channel samplerate to global
@@ -199,13 +198,11 @@ static void update_sound_params(int handle, int volume, int separation,
   rightvol = volume - ((volume * separation * separation) >> 16);
 
   // Sanity check, clamp volume.
-  if (rightvol < 0 || rightvol > 127) {
+  if (rightvol < 0 || rightvol > 127)
     I_Error("rightvol out of bounds");
-  }
 
-  if (leftvol < 0 || leftvol > 127) {
+  if (leftvol < 0 || leftvol > 127)
     I_Error("leftvol out of bounds");
-  }
 
   // Get the proper lookup table piece for this volume level???
   channelinfo[slot].leftvol = leftvol;
@@ -240,15 +237,13 @@ static void update_sound(void *unused, Uint8 *stream, int len) {
   // Number of channels.
   int channel_count;
 
-  if (SOUND_DISABLED) {
+  if (SOUND_DISABLED)
     return;
-  }
 
   // NSM: when dumping sound, ignore the callback calls and only
   // service dumping calls
-  if (dumping_sound && unused != (void *)0xDEADBEEF) {
+  if (dumping_sound && unused != (void *)0xDEADBEEF)
     return;
-  }
 
 #ifndef HAVE_OWN_MUSIC
   // do music update
@@ -338,26 +333,20 @@ static void update_sound(void *unused, Uint8 *stream, int len) {
     // else if (dl < -128) *leftout = -128;
     // else *leftout = dl;
 
-    if (dl > SHRT_MAX) {
+    if (dl > SHRT_MAX)
       *leftout = SHRT_MAX;
-    }
-    else if (dl < SHRT_MIN) {
+    else if (dl < SHRT_MIN)
       *leftout = SHRT_MIN;
-    }
-    else {
+    else
       *leftout = (signed short)dl;
-    }
 
     // Same for right hardware channel.
-    if (dr > SHRT_MAX) {
+    if (dr > SHRT_MAX)
       *rightout = SHRT_MAX;
-    }
-    else if (dr < SHRT_MIN) {
+    else if (dr < SHRT_MIN)
       *rightout = SHRT_MIN;
-    }
-    else {
+    else
       *rightout = (signed short)dr;
-    }
 
     // Increment current pointers in stream
     leftout += step;
@@ -367,9 +356,8 @@ static void update_sound(void *unused, Uint8 *stream, int len) {
 }
 
 void I_UpdateSoundParams(int handle, int volume, int separation, int pitch) {
-  if (SOUND_DISABLED) {
+  if (SOUND_DISABLED)
     return;
-  }
 
   SDL_LockMutex(sfxmutex);
   update_sound_params(handle, volume, separation, pitch);
@@ -396,9 +384,8 @@ void I_SetChannels(void) {
   int *steptablemid = steptable + 128;
 
   // Okay, reset internal mixing channels to zero.
-  for (i = 0; i < MAX_SOUND_CHANNELS; i++) {
+  for (i = 0; i < MAX_SOUND_CHANNELS; i++)
     memset(&channelinfo[i], 0, sizeof(channel_info_t));
-  }
 
   // This table provides step widths for pitch parameters.
   // I fail to see that this is currently used.
@@ -452,27 +439,23 @@ int I_GetSfxLumpNum(sfxinfo_t *sfx) {
 // Pitching (that is, increased speed of playback) is set, but currently not
 // used by mixing.
 //
-int I_StartSound(int id, int channel, int vol, int sep, int pitch,
-                                                        int priority) {
+int I_StartSound(int id, int channel, int vol, int sep, int pitch, int priority) {
   const unsigned char *data;
   int lump;
   size_t len;
 
-  if ((channel < 0) || (channel >= MAX_SOUND_CHANNELS)) {
+  if ((channel < 0) || (channel >= MAX_SOUND_CHANNELS))
 #ifdef RANGECHECK
     I_Error("I_StartSound: handle out of range");
 #else
     return -1;
 #endif
-  }
 
-  if (SOUND_DISABLED) {
+  if (SOUND_DISABLED)
     return 0;
-  }
 
-  if (snd_pcspeaker) {
+  if (snd_pcspeaker)
     return I_PCS_StartSound(id, channel, vol, sep, pitch, priority);
-  }
 
   lump = S_sfx[id].lumpnum;
 
@@ -483,9 +466,8 @@ int I_StartSound(int id, int channel, int vol, int sep, int pitch,
   // e6y: Crash with zero-length sounds.
   // Example wad: dakills (http://www.doomworld.com/idgames/index.php?id=2803)
   // The entries DSBSPWLK, DSBSPACT, DSSWTCHN and DSSWTCHX are all zero-length sounds
-  if (len <= 8) {
+  if (len <= 8)
     return -1;
-  }
 
   /* Find padded length */
   len -= 8;
@@ -504,14 +486,12 @@ int I_StartSound(int id, int channel, int vol, int sep, int pitch,
 
 void I_StopSound (int handle) {
 #ifdef RANGECHECK
-  if ((handle < 0) || (handle >= MAX_SOUND_CHANNELS)) {
+  if ((handle < 0) || (handle >= MAX_SOUND_CHANNELS))
     I_Error("I_StopSound: handle out of range");
-  }
 #endif
 
-  if (SOUND_DISABLED) {
+  if (SOUND_DISABLED)
     return;
-  }
 
   if (snd_pcspeaker) {
     I_PCS_StopSound(handle);
@@ -525,18 +505,15 @@ void I_StopSound (int handle) {
 
 bool I_SoundIsPlaying(int handle) {
 #ifdef RANGECHECK
-  if ((handle < 0) || (handle >= MAX_SOUND_CHANNELS)) {
+  if ((handle < 0) || (handle >= MAX_SOUND_CHANNELS))
     I_Error("I_SoundIsPlaying: handle out of range");
-  }
 #endif
 
-  if (SOUND_DISABLED) {
+  if (SOUND_DISABLED)
     return false;
-  }
 
-  if (snd_pcspeaker) {
+  if (snd_pcspeaker)
     return I_PCS_SoundIsPlaying(handle);
-  }
 
   return channelinfo[handle].data != NULL;
 }
@@ -544,27 +521,23 @@ bool I_SoundIsPlaying(int handle) {
 bool I_AnySoundStillPlaying(void) {
   int i;
 
-  if (SOUND_DISABLED) {
+  if (SOUND_DISABLED)
     return false;
-  }
 
-  if (snd_pcspeaker) {
+  if (snd_pcspeaker)
     return false;
-  }
 
   for (i = 0; i < MAX_SOUND_CHANNELS; i++) {
-    if (channelinfo[i].data != NULL) {
+    if (channelinfo[i].data != NULL)
       return true;
-    }
   }
 
   return false;
 }
 
 void I_ShutdownSound(void) {
-  if (SOUND_DISABLED) {
+  if (SOUND_DISABLED)
     return;
-  }
 
   if (sound_inited) {
     D_Msg(MSG_INFO, "I_ShutdownSound: ");
@@ -589,9 +562,8 @@ void I_InitSound(void) {
   int res;
   SDL_AudioSpec audio;
 
-  if (SOUND_DISABLED) {
+  if (SOUND_DISABLED)
     return;
-  }
 
   // haleyjd: the docs say we should do this
   if (SDL_InitSubSystem(SDL_INIT_AUDIO)) {
@@ -601,9 +573,8 @@ void I_InitSound(void) {
     return;
   }
 
-  if (sound_inited) {
+  if (sound_inited)
     I_ShutdownSound();
-  }
 
   // Secure and configure sound device first.
   D_Msg(MSG_INFO, "I_InitSound: ");
@@ -622,9 +593,7 @@ void I_InitSound(void) {
     );
     
     if (res < 0) {
-      D_Msg(MSG_INFO, "couldn't open audio with desired format (%s)\n",
-        SDL_GetError()
-      );
+      D_Msg(MSG_INFO,"couldn't open audio with desired format (%s)\n", SDL_GetError());
       nosfxparm = true;
       nomusicparm = true;
 
@@ -635,9 +604,7 @@ void I_InitSound(void) {
     sound_inited = true;
     SAMPLECOUNT = audio_buffers;
     Mix_SetPostMix(update_sound, NULL);
-    D_Msg(MSG_INFO, " configured audio device with %d samples/slice\n",
-      SAMPLECOUNT
-    );
+    D_Msg(MSG_INFO, " configured audio device with %d samples/slice\n", SAMPLECOUNT);
   }
   else
 #else // HAVE_MIXER
@@ -656,9 +623,7 @@ void I_InitSound(void) {
     audio.callback = update_sound;
 
     if (SDL_OpenAudio(&audio, NULL) < 0) {
-      D_Msg(MSG_INFO, "couldn't open audio with desired format (%s))\n",
-        SDL_GetError()
-      );
+      D_Msg(MSG_INFO, "couldn't open audio with desired format (%s))\n", SDL_GetError());
       nosfxparm = true;
       nomusicparm = true;
 
@@ -668,9 +633,7 @@ void I_InitSound(void) {
     sound_inited_once = true;//e6y
     sound_inited = true;
     SAMPLECOUNT = audio.samples;
-    D_Msg(MSG_INFO, " configured audio device with %d samples/slice\n",
-      SAMPLECOUNT
-    );
+    D_Msg(MSG_INFO, " configured audio device with %d samples/slice\n", SAMPLECOUNT);
   }
 
   if (first_sound_init) {
@@ -681,13 +644,11 @@ void I_InitSound(void) {
   sfxmutex = SDL_CreateMutex();
 
   // If we are using the PC speaker, we now need to initialise it.
-  if (snd_pcspeaker) {
+  if (snd_pcspeaker)
     I_PCS_InitSound();
-  }
 
-  if (!nomusicparm) {
+  if (!nomusicparm)
     I_InitMusic();
-  }
 
   // Finished initialization.
   D_Msg(MSG_INFO, "I_InitSound: sound module ready\n");
@@ -710,13 +671,11 @@ unsigned char* I_GrabSound (int len) {
 
   size_t size;
 
-  if (SOUND_DISABLED) {
+  if (SOUND_DISABLED)
     return false;
-  }
 
-  if (!dumping_sound) {
+  if (!dumping_sound)
     return NULL;
-  }
 
   size = len * 4;
   if (!buffer || size > buffer_size) {
@@ -750,9 +709,8 @@ void I_ResampleStream(void *dest, unsigned nsamp,
   if (nreq > sinsamp) {
     sin = realloc(sin, (nreq + 1) * 4);
 
-    if (!sinsamp) { // avoid pop when first starting stream
+    if (!sinsamp) // avoid pop when first starting stream
       sin[0] = sin[1] = 0;
-    }
 
     sinsamp = nreq;
   }
@@ -778,3 +736,4 @@ void I_ResampleStream(void *dest, unsigned nsamp,
 }  
   
 /* vi: set et ts=2 sw=2: */
+

@@ -61,7 +61,7 @@
 #include "hu_tracers.h"
 #include "gl_opengl.h"
 #include "gl_struct.h"
-#include "pl_main.h"
+#include "p_user.h"
 #include "w_wad.h"
 #include "r_demo.h"
 #include "d_deh.h"
@@ -112,6 +112,7 @@ int render_fov;
 int render_multisampling;
 int render_paperitems;
 int render_wipescreen;
+int mouse_acceleration;
 int demo_overwriteexisting;
 
 int showendoom;
@@ -120,8 +121,11 @@ int palette_ondamage;
 int palette_onbonus;
 int palette_onpowers;
 
+float mouse_accelfactor;
+
 camera_t walkcamera;
 
+int mouseSensitivity_mlook;
 angle_t viewpitch;
 float skyscale;
 float screen_skybox_zplane;
@@ -239,6 +243,7 @@ void e6y_InitCommandLine(void)
     G_SkipDemoStart();
   if ((p = M_CheckParm("-avidemo")) && (p < myargc-1))
     avi_shot_fname = myargv[p + 1];
+  stats_level = M_CheckParm("-levelstat");
 
   // TAS-tracers
   InitTracers();
@@ -650,6 +655,23 @@ void M_ChangeTextureHQResize(void)
 }
 #endif //GL_DOOM
 
+void M_Mouse(int choice, int *sens);
+void M_MouseMLook(int choice)
+{
+  M_Mouse(choice, &mouseSensitivity_mlook);
+}
+
+void M_MouseAccel(int choice)
+{
+  M_Mouse(choice, &mouse_acceleration);
+  MouseAccelChanging();
+}
+
+void MouseAccelChanging(void)
+{
+  mouse_accelfactor = (float)mouse_acceleration/100.0f+1.0f;
+}
+
 float viewPitch;
 bool transparentpresent;
 
@@ -692,14 +714,155 @@ int StepwiseSum(int value, int direction, int step, int minval, int maxval, int 
   return newvalue;
 }
 
+int stats_level;
 int numlevels = 0;
 int levels_max = 0;
 timetable_t *stats = NULL;
 
-void e6y_G_DoCompleted(void) {
-  if (doSkip && (demo_stoponend || demo_warp)) {
+void e6y_G_DoCompleted(void)
+{
+  int i;
+
+  if (doSkip && (demo_stoponend || demo_warp))
     G_SkipDemoStop();
+
+  if(!stats_level)
+    return;
+
+  if (numlevels >= levels_max)
+  {
+    levels_max = levels_max ? levels_max*2 : 32;
+    stats = realloc(stats,sizeof(*stats)*levels_max);
   }
+
+  memset(&stats[numlevels], 0, sizeof(timetable_t));
+
+  if (gamemode==commercial)
+    sprintf(stats[numlevels].map,"MAP%02i",gamemap);
+  else
+    sprintf(stats[numlevels].map,"E%iM%i",gameepisode,gamemap);
+
+  stats[numlevels].stat[TT_TIME]        = leveltime;
+  stats[numlevels].stat[TT_TOTALTIME]   = totalleveltimes;
+  stats[numlevels].stat[TT_TOTALKILL]   = totalkills;
+  stats[numlevels].stat[TT_TOTALITEM]   = totalitems;
+  stats[numlevels].stat[TT_TOTALSECRET] = totalsecret;
+
+  for (i=0 ; i<MAXPLAYERS ; i++)
+  {
+    if (playeringame[i])
+    {
+      stats[numlevels].kill[i]   = players[i].killcount - players[i].resurectedkillcount;
+      stats[numlevels].item[i]   = players[i].itemcount;
+      stats[numlevels].secret[i] = players[i].secretcount;
+      
+      stats[numlevels].stat[TT_ALLKILL]   += stats[numlevels].kill[i];
+      stats[numlevels].stat[TT_ALLITEM]   += stats[numlevels].item[i];
+      stats[numlevels].stat[TT_ALLSECRET] += stats[numlevels].secret[i];
+    }
+  }
+
+  numlevels++;
+
+  e6y_WriteStats();
+}
+
+typedef struct tmpdata_s
+{
+  char kill[200];
+  char item[200];
+  char secret[200];
+} tmpdata_t;
+
+void e6y_WriteStats(void)
+{
+  FILE *f;
+  char str[200];
+  int i, level, playerscount;
+  timetable_t max;
+  tmpdata_t tmp;
+  tmpdata_t all[32];
+  size_t allkills_len=0, allitems_len=0, allsecrets_len=0;
+
+  f = fopen("levelstat.txt", "wb");
+  
+  memset(&max, 0, sizeof(timetable_t));
+
+  playerscount = 0;
+  for (i=0; i<MAXPLAYERS; i++)
+    if (playeringame[i])
+      playerscount++;
+
+  for (level=0;level<numlevels;level++)
+  {
+    memset(&tmp, 0, sizeof(tmpdata_t));
+    for (i=0 ; i<MAXPLAYERS ; i++)
+    {
+      if (playeringame[i])
+      {
+        char strtmp[200];
+        strcpy(str, tmp.kill[0] == '\0' ? "%s%d" : "%s+%d");
+
+        snprintf(strtmp, sizeof(strtmp), str, tmp.kill, stats[level].kill[i]);
+        strcpy(tmp.kill, strtmp);
+        
+        snprintf(strtmp, sizeof(strtmp), str, tmp.item, stats[level].item[i]);
+        strcpy(tmp.item, strtmp);
+        
+        snprintf(strtmp, sizeof(strtmp), str, tmp.secret, stats[level].secret[i]);
+        strcpy(tmp.secret, strtmp);
+      }
+    }
+    if (playerscount<2)
+      memset(&all[level], 0, sizeof(tmpdata_t));
+    else
+    {
+      sprintf(all[level].kill,   " (%s)", tmp.kill  );
+      sprintf(all[level].item,   " (%s)", tmp.item  );
+      sprintf(all[level].secret, " (%s)", tmp.secret);
+    }
+
+    if (strlen(all[level].kill) > allkills_len)
+      allkills_len = strlen(all[level].kill);
+    if (strlen(all[level].item) > allitems_len)
+      allitems_len = strlen(all[level].item);
+    if (strlen(all[level].secret) > allsecrets_len)
+      allsecrets_len = strlen(all[level].secret);
+
+    for(i=0; i<TT_MAX; i++)
+      if (stats[level].stat[i] > max.stat[i])
+        max.stat[i] = stats[level].stat[i];
+  }
+  max.stat[TT_TIME] = max.stat[TT_TIME]/TICRATE/60;
+  max.stat[TT_TOTALTIME] = max.stat[TT_TOTALTIME]/TICRATE/60;
+  
+  for(i=0; i<TT_MAX; i++) {
+    snprintf(str, 200, "%d", max.stat[i]);
+    max.stat[i] = strlen(str);
+  }
+
+  for (level=0;level<numlevels;level++)
+  {
+    sprintf(str,
+      "%%s - %%%dd:%%05.2f (%%%dd:%%02d)  K: %%%dd/%%-%dd%%%zus  I: %%%dd/%%-%dd%%%zus  S: %%%dd/%%-%dd %%%zus\r\n",
+      max.stat[TT_TIME],      max.stat[TT_TOTALTIME],
+      max.stat[TT_ALLKILL],   max.stat[TT_TOTALKILL],   allkills_len,
+      max.stat[TT_ALLITEM],   max.stat[TT_TOTALITEM],   allitems_len,
+      max.stat[TT_ALLSECRET], max.stat[TT_TOTALSECRET], allsecrets_len);
+    
+    fprintf(f, str, stats[level].map, 
+      stats[level].stat[TT_TIME]/TICRATE/60,
+      (float)(stats[level].stat[TT_TIME]%(60*TICRATE))/TICRATE,
+      (stats[level].stat[TT_TOTALTIME])/TICRATE/60, 
+      (stats[level].stat[TT_TOTALTIME]%(60*TICRATE))/TICRATE,
+      stats[level].stat[TT_ALLKILL],  stats[level].stat[TT_TOTALKILL],   all[level].kill,
+      stats[level].stat[TT_ALLITEM],  stats[level].stat[TT_TOTALITEM],   all[level].item,
+      stats[level].stat[TT_ALLSECRET],stats[level].stat[TT_TOTALSECRET], all[level].secret
+      );
+    
+  }
+  
+  fclose(f);
 }
 
 void e6y_G_DoWorldDone(void)
@@ -758,6 +921,17 @@ HWND WIN32_GetHWND(void)
   return Window;
 }
 #endif
+
+int AccelerateMouse(int val)
+{
+  if (!mouse_acceleration)
+    return val;
+
+  if (val < 0)
+    return -AccelerateMouse(-val);
+
+  return M_DoubleToInt(pow((double)val, (double)mouse_accelfactor));
+}
 
 int mlooky = 0;
 

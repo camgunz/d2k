@@ -37,6 +37,7 @@
 #include "i_main.h"
 #include "i_system.h"
 #include "i_video.h"
+#include "p_user.h"
 #include "x_main.h"
 #include "p_setup.h"
 #include "g_game.h"

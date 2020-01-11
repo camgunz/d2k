@@ -30,14 +30,6 @@
 
 #define CHEAT_ARGS_MAX 8  /* Maximum number of args at end of cheats */
 
-typedef enum {
-  CF_NOCLIP           = 1,  /* No clipping, walk through barriers. */
-  CF_GODMODE          = 2,  /* No damage, no health loss. */
-  CF_NOMOMENTUM       = 4,  /* Not really a cheat, just a debug aid. */
-  CF_NOTARGET         = 8,  /* [RH] Monsters don't target */
-  CF_FLY              = 16, /* [RH] Flying player */
-} cheat_e;
-
 /* killough 4/16/98: Cheat table structure */
 
 typedef struct cheatseq_s {

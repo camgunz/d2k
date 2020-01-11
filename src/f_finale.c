@@ -30,8 +30,7 @@
 #include "am_map.h"
 #include "d_deh.h"  // Ty 03/22/98 - externalizations
 #include "f_finale.h" // CPhipps - hmm...
-#include "pl_main.h"
-#include "pl_pspr.h"
+#include "p_user.h"
 #include "g_game.h"
 #include "n_main.h"
 #include "r_defs.h"
@@ -242,16 +241,15 @@ static float Get_TextSpeed(void) {
 //
 
 void F_Ticker(void) {
-  size_t index = 0;
-  player_t *player = NULL;
+  int i;
 
   if (!demo_compatibility) {
     WI_checkForAccelerate();  // killough 3/28/98: check for acceleration
   }
   else if (!MULTINET) {
     if (gamemode == commercial && finalecount > 50) { // check for skipping
-      while (P_PlayersIter(&index, &player)) {
-        if (player->cmd.buttons) {
+      for (i = 0; i < MAXPLAYERS; i++) {
+        if (players[i].cmd.buttons) {
           goto next_level;      // go on to the next level
         }
       }
