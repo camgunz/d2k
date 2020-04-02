@@ -798,11 +798,13 @@ int P_PlayerGetFragCount(int playernum) {
   int frag_count = 0;
 
   for (int i = 0; i < MAXPLAYERS; i++) {
-    if (i == playernum) {
-      frag_count -= players[playernum].frags[i];
-    }
-    else {
-      frag_count += players[playernum].frags[i];
+    if (playeringame[i]) {
+      if (i == playernum) {
+        frag_count -= players[playernum].frags[i];
+      }
+      else {
+        frag_count += players[playernum].frags[i];
+      }
     }
   }
 
@@ -813,10 +815,8 @@ int P_PlayerGetDeathCount(int playernum) {
   int death_count = 0;
 
   for (int i = 0; i < MAXPLAYERS; i++) {
-    for (int j = 0; j < MAXPLAYERS; j++) {
-      if (j == playernum) {
-        death_count += players[i].frags[j];
-      }
+    if (playeringame[i]) {
+      death_count += players[i].frags[playernum];
     }
   }
 

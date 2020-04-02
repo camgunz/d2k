@@ -122,13 +122,13 @@ static int XG_GameGetPlayers(lua_State *L) {
     lua_pushinteger(L, P_PlayerGetFragCount(i)); // 3
     lua_setfield(L, 2, "frags");
 
-    lua_pushinteger(L, P_PlayerGetDeathCount(i)); // 3
+    lua_pushinteger(L, P_PlayerGetDeathCount(i)); // 4
     lua_setfield(L, 2, "deaths");
 
-    lua_pushinteger(L, P_PlayerGetPing(i)); // 3
+    lua_pushinteger(L, P_PlayerGetPing(i)); // 5
     lua_setfield(L, 2, "ping");
 
-    lua_pushinteger(L, P_PlayerGetTime(i)); // 3
+    lua_pushinteger(L, P_PlayerGetTime(i)); // 6
     lua_setfield(L, 2, "time");
 
     lua_rawseti(L, 1, (i + 1) - player_start); // players[i + 1] = player
