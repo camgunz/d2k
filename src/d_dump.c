@@ -89,17 +89,19 @@ static void dump_sector_index(pbuf_t *savebuffer, sector_t *s, const char *fn) {
 static void dump_line_index(pbuf_t *savebuffer, line_t *li, const char *fn) {
   uint64_t line_index;
 
-  if (li < lines) {
-    // I_Error("%s: Invalid line %p < %p", fn, li, lines);
-    line_index = 0;
-  }
-  else {
-    line_index = li - lines;
+  if (!li) {
+    M_PBufWriteULong(savebuffer, 0);
+    return;
   }
 
+  if (li < lines) {
+    I_Error("%s: Invalid line %p", fn, li);
+  }
+
+  line_index = li - lines;
+
   if (line_index > numlines) {
-    // I_Error("%s: Invalid line %p", fn, li);
-    line_index = 0;
+    I_Error("%s: Invalid line %p", fn, li);
   }
 
   M_PBufWriteULong(savebuffer, line_index + 1);
@@ -151,12 +153,9 @@ void D_Dump(pbuf_t *savebuffer) {
     M_PBufWriteInt(savebuffer, weapon_recoil);
     M_PBufWriteInt(savebuffer, allow_pushers);
     M_PBufWriteInt(savebuffer, player_bobbing);
-    /* [CG] respawnparm is > 1 in some demos */
-    M_PBufWriteInt(savebuffer, respawnparm ? 1 : 0);
-    /* [CG] fastparm is > 1 in some demos */
-    M_PBufWriteInt(savebuffer, fastparm ? 1 : 0);
-    /* [CG] nomonsters is > 1 in some demos */
-    M_PBufWriteInt(savebuffer, nomonsters ? 1 : 0);
+    M_PBufWriteInt(savebuffer, respawnparm);
+    M_PBufWriteInt(savebuffer, fastparm);
+    M_PBufWriteInt(savebuffer, nomonsters);
     M_PBufWriteInt(savebuffer, demo_insurance);
     M_PBufWriteUInt(savebuffer, rngseed);
     M_PBufWriteInt(savebuffer, monster_infighting);
@@ -220,12 +219,9 @@ void D_Dump(pbuf_t *savebuffer) {
     M_PBufWriteInt(savebuffer, weapon_recoil);
     M_PBufWriteInt(savebuffer, allow_pushers);
     M_PBufWriteInt(savebuffer, player_bobbing);
-    /* [CG] respawnparm is > 1 in some demos */
-    M_PBufWriteInt(savebuffer, respawnparm ? 1 : 0);
-    /* [CG] fastparm is > 1 in some demos */
-    M_PBufWriteInt(savebuffer, fastparm ? 1 : 0);
-    /* [CG] nomonsters is > 1 in some demos */
-    M_PBufWriteInt(savebuffer, nomonsters ? 1 : 0);
+    M_PBufWriteInt(savebuffer, respawnparm);
+    M_PBufWriteInt(savebuffer, fastparm);
+    M_PBufWriteInt(savebuffer, nomonsters);
     M_PBufWriteInt(savebuffer, demo_insurance);
     M_PBufWriteUInt(savebuffer, rngseed);
     M_PBufWriteInt(savebuffer, monster_infighting);
@@ -278,12 +274,9 @@ void D_Dump(pbuf_t *savebuffer) {
     M_PBufWriteInt(savebuffer, gameepisode);
     M_PBufWriteInt(savebuffer, gamemap);
     M_PBufWriteInt(savebuffer, deathmatch);
-    /* [CG] respawnparm is > 1 in some demos */
-    M_PBufWriteInt(savebuffer, respawnparm ? 1 : 0);
-    /* [CG] fastparm is > 1 in some demos */
-    M_PBufWriteInt(savebuffer, fastparm ? 1 : 0);
-    /* [CG] nomonsters is > 1 in some demos */
-    M_PBufWriteInt(savebuffer, nomonsters ? 1 : 0);
+    M_PBufWriteInt(savebuffer, respawnparm);
+    M_PBufWriteInt(savebuffer, fastparm);
+    M_PBufWriteInt(savebuffer, nomonsters);
     M_PBufWriteInt(savebuffer, consoleplayer);
   }
 
@@ -337,10 +330,8 @@ void D_Dump(pbuf_t *savebuffer) {
     M_PBufWriteInt(savebuffer, 0);
   }
 
-  for (int i = 0; i < VANILLA_MAXPLAYERS; i++) {
-    if (playeringame[i]) {
-      player_t *player = &players[i];
-
+  for (player_t *player = &players[0]; player - players < MAXPLAYERS; player++) {
+    if (playeringame[player - players]) {
       M_PBufWriteInt(savebuffer, player->playerstate);
       M_PBufWriteChar(savebuffer, player->cmd.forwardmove);
       M_PBufWriteChar(savebuffer, player->cmd.sidemove);

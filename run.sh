@@ -8,12 +8,8 @@ CMD="${BASE_DIR}/cbuild/d2k -iwad doom2.wad -file gothicdm.wad -playdemo DEMO1 -
 CMD="${BASE_DIR}/cbuild/d2k -iwad doom2.wad -file dwango5.wad -skill 5 -warp 1 -nomonsters -nomouse -deathmatch -frags 50 -timer 10"
 CMD="${BASE_DIR}/cbuild/d2k -skill 5 -warp 1 -nomonsters -nomouse"
 
-mkdir -p ~/.d2k/scripts
-mkdir -p ~/.d2k/fonts
-
-cp "${BASE_DIR}/d2k_config_schema.json" ~/.d2k/
-cp -r "${BASE_DIR}/scripts/"* ~/.d2k/scripts/
-cp "${BASE_DIR}/fonts/"* ~/.d2k/fonts/
+# mkdir -p ~/.d2k/scripts && cp -r "${BASE_DIR}/scripts/"* ~/.d2k/scripts/
+# mkdir -p ~/.d2k/fonts && cp "${BASE_DIR}/fonts/"* ~/.d2k/fonts/
 
 # gdb -ex 'source gdbserver.txt' --args $CMD
 # gdb -ex run --args $CMD

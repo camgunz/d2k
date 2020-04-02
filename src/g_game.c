@@ -4012,6 +4012,10 @@ void G_SetOldGameState(gamestate_t new_oldgamestate) {
   oldgamestate = new_oldgamestate;
 }
 
+gamestate_t G_GetWipeGameState(void) {
+  return wipegamestate;
+}
+
 void G_SetWipeGameState(gamestate_t new_wipegamestate) {
   if ((!CLIENT) || (CL_Predicting())) {
     wipegamestate = new_wipegamestate;

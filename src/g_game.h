@@ -473,13 +473,14 @@ void G_RestartLevel(void); // CPhipps - menu involked level restart
 void G_DoVictory(void);
 void G_ChangedPlayerColour(int pn, int cl); // CPhipps - On-the-fly player colour changing
 void G_MakeSpecialEvent(buttoncode_t bc, ...); /* cph - new event stuff */
-void G_SetGameState(gamestate_t new_gamestate);
-void G_SetPrevGameState(gamestate_t new_prevgamestate);
-void G_SetOldGameState(gamestate_t new_oldgamestate);
-void G_SetWipeGameState(gamestate_t new_wipegamestate);
-void G_ResetGameState(void);
 
-gamestate_t  G_GetGameState(void);
+gamestate_t G_GetGameState(void);
+void        G_SetGameState(gamestate_t new_gamestate);
+void        G_SetPrevGameState(gamestate_t new_prevgamestate);
+void        G_SetOldGameState(gamestate_t new_oldgamestate);
+gamestate_t G_GetWipeGameState(void);
+void        G_SetWipeGameState(gamestate_t new_wipegamestate);
+void        G_ResetGameState(void);
 
 gameaction_t G_GetGameAction(void);
 void         G_SetGameAction(gameaction_t new_gameaction);

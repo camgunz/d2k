@@ -431,11 +431,9 @@ bool N_TryRunTics(void) {
   static int tics_built = 0;
 
   int tics_elapsed = I_GetTime() - tics_built;
-  bool needs_rendering = should_render();
+  bool needs_rendering = (tics_elapsed > 0) || should_render();
 
-  if ((gametic > 0) &&
-      (((tics_elapsed <= 0) && (!needs_rendering)) ||
-       (SERVER && N_PeerGetCount() == 0))) {
+  if (((!needs_rendering) || (SERVER && N_PeerGetCount() == 0))) {
     N_ServiceNetwork();
     C_ECIService();
     I_Sleep(1);
@@ -471,8 +469,10 @@ bool N_TryRunTics(void) {
       I_Error("Error ticking console: %s\n", X_GetError(X_GetState()));
     }
 
-    HU_Ticker();
-    D_Display();
+    if (needs_rendering) {
+      HU_Ticker();
+      D_Display();
+    }
   }
 
   X_RunGC(X_GetState());
