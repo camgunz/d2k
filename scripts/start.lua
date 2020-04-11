@@ -22,7 +22,6 @@
 -------------------------------------------------------------------------------
 
 local Fonts = require('fonts')
-local Config = require('config')
 
 function cprint(s)
     io.write(string.format('%s\n', s))

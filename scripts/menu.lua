@@ -27,57 +27,56 @@ local InputInterface = require('input_interface')
 Menu = class('Menu', InputInterface.InputInterface)
 
 function Menu:initialize(m)
-  m = m or {}
+    m = m or {}
 
-  m.name = m.name or 'Menu'
-  m.fullscreen = m.fullscreen or true
+    m.name = m.name or 'Menu'
+    m.fullscreen = m.fullscreen or true
 
-  InputInterface.InputInterface.initialize(self, m)
+    InputInterface.InputInterface.initialize(self, m)
 end
 
 function Menu:activate()
-  InputInterface.InputInterface.activate(self)
-  d2k.Menu.activate()
+    InputInterface.InputInterface.activate(self)
+    d2k.Menu.activate()
 end
 
 function Menu:deactivate()
-  InputInterface.InputInterface.deactivate(self)
-  d2k.Menu.deactivate()
+    InputInterface.InputInterface.deactivate(self)
+    d2k.Menu.deactivate()
 end
 
 function Menu:reset()
-  InputInterface.InputInterface.reset(self)
-  self:deactivate()
+    InputInterface.InputInterface.reset(self)
+    self:deactivate()
 end
 
 function Menu:tick()
-  InputInterface.InputInterface.tick(self)
-  d2k.Menu.tick()
+    InputInterface.InputInterface.tick(self)
+    d2k.Menu.tick()
 end
 
 function Menu:render()
-  InputInterface.InputInterface.render(self)
-  d2k.Menu.render()
+    InputInterface.InputInterface.render(self)
+    d2k.Menu.render()
 end
 
 function Menu:handle_event(event)
-  local active_before = self:is_active()
-  local handled = d2k.Menu.handle_event(event)
+    local active_before = self:is_active()
+    local handled = d2k.Menu.handle_event(event)
 
-  if handled then
-    local active_after = self:is_active()
+    if handled then
+        local active_after = self:is_active()
 
-    if active_before == false and active_after == true then
-      self:activate()
-    elseif active_before == true and active_after == false then
-      self:deactivate()
+        if active_before == false and active_after == true then
+            self:activate()
+        elseif active_before == true and active_after == false then
+            self:deactivate()
+        end
     end
-  end
 
-  return handled
+    return handled
 end
 
 return {Menu = Menu}
 
 -- vi: et ts=2 sw=2
-

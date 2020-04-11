@@ -309,11 +309,8 @@ function Config:get_values()
             if type(value) ~= 'table' then
                 error('Corrupt cvars')
             end
+
             if value['isInstanceOf'] and value:isInstanceOf(CVar) then
-                cprint(string.format('  Getting value of %s (%s)',
-                    name,
-                    value:get_value()
-                ))
                 values[name] = value:get_value()
             else
                 values[name] = {}
@@ -322,7 +319,6 @@ function Config:get_values()
                         table.insert(values[name], element)
                     end
                 else
-                    cprint('Walking ' .. name)
                     walk(section[name], values[name])
                 end
             end
@@ -334,28 +330,23 @@ function Config:get_values()
     return out
 end
 
+-- FIXME Could leave the config in a bad state.
 function Config:update(values)
     local cvars = self:get_cvars()
 
     for name, value in pairs(values) do
-        local value_type = type(value)
+        local succeeded, err = pcall(function()
+            config[name]:set_value(value)
+        end)
 
-        if value_type == 'table' and not is_array(value) then
-            validate(cvars[name], config[name])
-        else
-            local succeeded, err = pcall(function()
-                config['name']:set_value(value)
-            end)
-
-            if not succeeded then
-                mprint(string.format('<span color="red">%s</span>', err))
-            end
+        if not succeeded then
+            mprint(string.format('<span color="red">%s</span>', err))
         end
     end
 end
 
 function Config:serialize()
-    return 'return ' .. serpent.block(self:get_values(), { comment = false })
+    return 'return ' .. serpent.block(self:get_values())
 end
 
 function cvar(args)
@@ -380,4 +371,3 @@ return {
 }
 
 -- vi: et ts=4 sw=4
-

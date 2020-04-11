@@ -27,51 +27,50 @@ local InputInterface = require('input_interface')
 GameInterface = class('GameInterface', InputInterface.InputInterface)
 
 function GameInterface:initialize(gi)
-  gi = gi or {}
+    gi = gi or {}
 
-  gi.name = gi.name or 'Game Interface'
+    gi.name = gi.name or 'Game Interface'
 
-  InputInterface.InputInterface.initialize(self, gi)
+    InputInterface.InputInterface.initialize(self, gi)
 end
 
 function GameInterface:in_level()
-  return d2k.Game.in_level()
+    return d2k.Game.in_level()
 end
 
 function GameInterface:tick()
-  InputInterface.InputInterface.tick(self)
-  d2k.Game.tick()
+    InputInterface.InputInterface.tick(self)
+    d2k.Game.tick()
 end
 
 function GameInterface:render()
-  InputInterface.InputInterface.render(self)
-  d2k.Game.render()
+    InputInterface.InputInterface.render(self)
+    d2k.Game.render()
 end
 
 function GameInterface:handle_event(event)
-  local handled = false
-  local active_before = self:is_active()
+    local handled = false
+    local active_before = self:is_active()
 
-  if not d2k.Game.in_level() and not d2k.Game.in_intermission() then
-    return false
-  end
-
-  handled = d2k.Game.handle_event(event)
-
-  if handled then
-    local active_after = self:is_active()
-
-    if active_before == false and active_after == true then
-      self:activate()
-    elseif active_before == true and active_after == false then
-      self:deactivate()
+    if not d2k.Game.in_level() and not d2k.Game.in_intermission() then
+        return false
     end
-  end
 
-  return handled
+    handled = d2k.Game.handle_event(event)
+
+    if handled then
+        local active_after = self:is_active()
+
+        if active_before == false and active_after == true then
+            self:activate()
+        elseif active_before == true and active_after == false then
+            self:deactivate()
+        end
+    end
+
+    return handled
 end
 
 return {GameInterface = GameInterface}
 
--- vi: et ts=2 sw=2
-
+-- vi: et ts=4 sw=4
