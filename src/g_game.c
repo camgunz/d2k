@@ -202,7 +202,11 @@ bool            demorecording;
 bool            demoplayback;
 bool            democontinue = false;
 char*           demo_continue_name;
+
+// e6y
+// it's required for demos recorded in "demo compatibility" mode by boom201 for example
 int             demover;
+
 bool            singledemo;           // quit after playing a demo from cmdline
 wbstartstruct_t wminfo;               // parms for world map / intermission
 bool            haswolflevels = false;// jff 4/18/98 wolf levels present
