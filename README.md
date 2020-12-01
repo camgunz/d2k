@@ -6,7 +6,7 @@ lofty goals.
 Maintain Compatibility
 ----------------------
 
-D2K maintains the PrBoom+'s commitment to compatibility, using a compatibility
+D2K maintains PrBoom+'s commitment to compatibility, using a compatibility
 testing framework to guard against regressions.
 
 Enhance Network Play
