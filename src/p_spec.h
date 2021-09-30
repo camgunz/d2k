@@ -196,7 +196,7 @@ typedef struct sector_s sector_t;
 #define LockedKindShift            5
 #define LockedSpeedShift           3
 
-enum {
+typedef enum {
   tc_ceiling,
   tc_door,
   tc_floor,
@@ -768,10 +768,10 @@ extern platlist_t *activeplats;        // killough 2/14/98
 extern ceilinglist_t *activeceilings;  // jff 2/22/98
 
 // Game globals
-bool levelTimer;
-int  levelTimeCount;
-bool levelFragLimit;      // Ty 03/18/98 Added -frags support
-int  levelFragLimitCount; // Ty 03/18/98 Added -frags support
+extern bool levelTimer;
+extern int  levelTimeCount;
+extern bool levelFragLimit;      // Ty 03/18/98 Added -frags support
+extern int  levelFragLimitCount; // Ty 03/18/98 Added -frags support
 
 ////////////////////////////////////////////////////////////////
 //

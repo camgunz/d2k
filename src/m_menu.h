@@ -55,7 +55,7 @@ typedef struct menu_s {
   short           lastOn;       // last item user was on in menu
 } menu_t;
 
-enum {
+typedef enum {
   sfx_vol,
   sfx_empty1,
   music_vol,

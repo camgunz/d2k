@@ -36,7 +36,6 @@ src/POSIX/Makefile.in
 src/SDL/Makefile.in
 src/TEXTSCREEN/Makefile.in
 ICONS/Makefile
-Makefile
 VisualC6/Makefile
 VisualC8/Makefile
 config.h
